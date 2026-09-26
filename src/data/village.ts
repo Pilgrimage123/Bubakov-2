@@ -1,0 +1,48 @@
+import { VillageBuilding } from '../types';
+
+export const VILLAGE_BUILDINGS: VillageBuilding[] = [
+  {
+    id: 'oven',
+    name: 'Pekárna u rozpálené pece',
+    levelKey: 'ovenLevel',
+    role: 'Pekařství a kovářská výheň',
+    helpers: 'Ochočení rarášci s lopatami',
+    story: 'Pekař Jan zjistil, že když raráškům nabídne misku švestkových povidel, přestanou dělat neplechu a naopak neúnavně přikládají dubová polena do pece. Buchty z této pece pečou tak žhavé, že popálí každého bubáka!',
+    bonusDesc: (lvl) => `Pekelný žár: +${lvl * 10}% k poškození všech zbraní lovce`,
+    cost: (lvl) => 35 * (lvl + 1),
+    canvasDrawer: 'drawOvenScene',
+  },
+  {
+    id: 'scarecrow',
+    name: 'Pšeničné lano a polní mez',
+    levelKey: 'scarecrowLevel',
+    role: 'Ochrana úrody a polí',
+    helpers: 'Zpacifikovaní bubáci jako strašáci',
+    story: 'Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pšeničného pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a mince se k lovci samy kutálejí!',
+    bonusDesc: (lvl) => `Děsivá aura: +${lvl * 25} k dosahu sběru krejcarů a předmětů`,
+    cost: (lvl) => 35 * (lvl + 1),
+    canvasDrawer: 'drawScarecrowScene',
+  },
+  {
+    id: 'mill',
+    name: 'Vodní mlýn na náhonu',
+    levelKey: 'millLevel',
+    role: 'Mletí mouky a pohon struhy',
+    helpers: 'Hastrmani roztáčející mlýnské kolo',
+    story: 'Mlynář slíbil hastrmanům, že jim nechá celý rákosový rybníček pod splavem pro jejich dušičky, pokud pomohou točit těžkým mlýnským kolem. Hastrmani nadšeně stříkají vodu a proud žene celou vesnici kupředu!',
+    bonusDesc: (lvl) => `Vodní proud: +${lvl * 15} k rychlosti chůze lovce`,
+    cost: (lvl) => 35 * (lvl + 1),
+    canvasDrawer: 'drawMillScene',
+  },
+  {
+    id: 'wall',
+    name: 'Kamenné hradby a bašta',
+    levelKey: 'wallLevel',
+    role: 'Obrana vesnice a zdi gruntů',
+    helpers: 'Kostliví zedníci se zednickými lžícemi',
+    story: 'Hroboví kostlivci vyměnili své rezavé sekery za zednické lžíce a maltu. Celou noc pilně rovnají žulové kvádry a zalévají spáry, takže zdi vesnice vydrží i nápor nejzuřivějších pekelníků.',
+    bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 25} max HP & +${lvl * 5}% odolnost proti zranění`,
+    cost: (lvl) => 35 * (lvl + 1),
+    canvasDrawer: 'drawWallScene',
+  },
+];
