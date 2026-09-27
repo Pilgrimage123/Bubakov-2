@@ -88,6 +88,11 @@ export interface MetaProgression {
   bestiaryKills: Record<string, number>;
   villageStoryRead?: Record<string, boolean>;
   highestSurviveTime?: number;
+  unlockedHunters?: Record<CharacterType, boolean>;
+  unlockedWeapons?: Record<string, boolean>;
+  hunterKillCounts?: Partial<Record<CharacterType, Record<string, number>>>;
+  weaponKillCounts?: Record<string, Record<string, number>>;
+  lightningWitnessed?: boolean;
 }
 
 export interface Trophy {

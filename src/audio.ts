@@ -139,6 +139,23 @@ class SoundManager {
     setTimeout(() => this.playTone(523, 'triangle', 0.2, 0.25), 400);
     setTimeout(() => this.playTone(784, 'triangle', 0.6, 0.35), 580);
   }
+
+  public thunder() {
+    // Deep thunder rumble with low frequency sawtooth sweep
+    this.playTone(110, 'sawtooth', 0.3, 0.35, 0.1);
+    setTimeout(() => this.playTone(65, 'sawtooth', 0.8, 0.4, 0.001), 120);
+    setTimeout(() => this.playTone(45, 'sawtooth', 1.2, 0.3, 0.001), 350);
+  }
+
+  public pause() {
+    this.playTone(520, 'sine', 0.12, 0.15);
+    setTimeout(() => this.playTone(390, 'sine', 0.15, 0.12), 60);
+  }
+
+  public resume() {
+    this.playTone(390, 'sine', 0.12, 0.12);
+    setTimeout(() => this.playTone(520, 'sine', 0.15, 0.15), 60);
+  }
 }
 
 export const sound = new SoundManager();

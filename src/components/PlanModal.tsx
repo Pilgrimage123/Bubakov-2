@@ -28,7 +28,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
               sound.coin();
             }}
           >
-            🗺️ Plán kol změn (1.–5. kolo)
+            🗺️ Plán kol změn (1.–8. kolo)
           </button>
           <button
             className={`tab-btn ${activeTab === 'changelog' ? 'active' : ''}`}
@@ -43,6 +43,71 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
         {activeTab === 'plan' ? (
           <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            {/* 8. KOLO - PAUZA HRY, BLESKY SV. ELIÁŠE & MISTROVSKÉ TROFEJE */}
+            <div className="plan-card" style={{ border: '4px solid #1E3A8A', color: '#000000', background: '#EFF6FF' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>8. KOLO ZMĚN (v8.0.0 – Pauza hry s inventářem, blesk sv. Eliáše & mistrovské trofeje)</h3>
+                <span className="plan-badge-done" style={{ background: '#1E3A8A', color: '#FFFFFF' }}>Právě nasazeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  ⏸️ <strong>Pauza hry s přehledem výbavy („Odpočinek u milníku“):</strong> Kdykoliv během výpravy stiskněte klávesu <code>Esc</code> nebo <code>P</code>, či klepněte na tlačítko ⏸️ v horním rohu obrazovky. Zobrazí se pergamenové okno s kompletní inventurou nesených zbraní, jejich úrovněmi a popisem, statistikami přežití i možností bezpečně ustoupit do hospody.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  ⚡ <strong>Bouřkový blesk svatého Eliáše:</strong> V nočních hodinách a při soumraku může do arény s burácivým hromem sjet posvátný blesk! Spálí shluk dotírajících strašidel a na okamžik ozáří temná ladovská pole.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🏆 <strong>Mistrovské trofeje v Síni slávy:</strong> Získejte štědré odměny za odemčení 5 zbraní v kovářské dílně, shromáždění všech 4 hrdinů družiny, pokoření Skalního obra a přežití úderu blesku!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🔊 <strong>Zvukový syntezátor pro hrom, pauzu a návrat do boje:</strong> Nové autentické procedurální zvukové efekty Web Audio API pro atmosférický hromobití a přechody stavu.
+                </li>
+              </ul>
+            </div>
+
+            {/* 7. KOLO - POSTUPNÉ ODEMYKÁNÍ ZBRANÍ */}
+            <div className="plan-card" style={{ border: '4px solid #E06D29', color: '#000000', background: '#FFF7ED' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>7. KOLO ZMĚN (v7.0.0 – Postupné odemykání zbraní & Zbrojnice)</h3>
+                <span className="plan-badge-done" style={{ background: '#E06D29', color: '#FFFFFF' }}>Dokončeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  ⛓️ <strong>Přísné sekvenční odemykání zbraní i lovců:</strong> Nový lovec se nikdy nezačne odemykat, dokud není plně odemčen lovec před ním (Poutník ➔ Pasáček ➔ Bába kořenářka ➔ Ponocný). Stejné pravidlo platí pro zamčené zbraně v kovářské dílně (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  ⚔️ <strong>Uzamčení zbraní kromě Rákosky a Povidlových buchet:</strong> Všech 9 ostatních zbraní je na začátku uzamčeno a postupně se odemyká plněním tematických výzev kováře. Kovář začne pracovat na nové zbrani teprve po ukování předchozí.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🕵️ <strong>Třístupňové odhalování identity zbraní (25 %, 50 %, 75 %):</strong>
+                  Zbraně začínají jako tajemné siluety v kouři (???). Při 25 % se odhalí první stopa a část názvu, při 50 % detailní skica s poškozením a mechanikou, při 75 % téměř ukovaná zbraň a při 100 % se trvale zařadí do výběru vylepšení na nové úrovni!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🗡️ <strong>Nová interaktivní Zbrojnice a Arzenál Bubákova:</strong> Přehledné okno zbrojnice s filtry (všechny, odemčené, uzamčené), živými počítadly zahnadých cílových potvor pro každou zbraň a pergamenovým detailem odhalování.
+                </li>
+              </ul>
+            </div>
+
+            {/* 6. KOLO - POSTUPNÉ ODEMYKÁNÍ LOVCŮ */}
+            <div className="plan-card" style={{ border: '4px solid var(--mustard)', color: '#000000', background: '#FFFBEB' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>6. KOLO ZMĚN (v6.0.0 – Postupné odemykání lovců & stopy)</h3>
+                <span className="plan-badge-done" style={{ background: 'var(--mustard)', color: 'var(--ink)' }}>Dokončeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  🔒 <strong>Uzamčení lovců kromě Poutníka:</strong> Poutník je výchozím hrdinou. Pasáček, Bába kořenářka i Ponocný jsou zpočátku zahaleni tajemstvím a odemykají se splněním náročných tematických výzev (zahánění vybraných nepřátel z pastvin, rybníků a nočních stodol).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🕵️ <strong>Postupné odhalování identity (25 %, 50 % a 75 %):</strong>
+                  Identity lovců jsou na začátku skryty jako neprostupné stínové siluety (???). Při 25 % se odhalí první stopa a obrys postavy, při 50 % detailní uhelná kresba s odhalenou zbraní a při 75 % téměř plné barvy s odhalením jména a speciální schopnosti!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📊 <strong>Interaktivní sledování postupu a cílových monster:</strong> Každá karta v nabídce zobrazuje ukazatel postupu s milníky 25 %, 50 %, 75 %, 100 % a přesný počet zahnadých cílových potvor. Kliknutím na zamčenou kartu se otevře pergamenová kronika s podrobnostmi výzvy.
+                </li>
+              </ul>
+            </div>
+
             {/* 5. KOLO */}
             <div className="plan-card" style={{ border: '4px solid var(--leaf-green)', color: '#000000' }}>
               <div className="plan-header">
@@ -131,6 +196,28 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
           </div>
         ) : (
           <div className="changelog-list" style={{ maxHeight: '450px', overflowY: 'auto', color: '#000000' }}>
+            <h4 style={{ color: '#000000' }}>v8.0.0 – 8. kolo: Pauza hry, blesky sv. Eliáše, mistrovské trofeje a nové zvuky</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Pauza s inventářem výbavy („Odpočinek u milníku“):</strong> Stisknutím <code>Esc</code> / <code>P</code> nebo klepnutím na tlačítko ⏸️ lze hru kdykoliv pozastavit, prohlédnout aktuální zbraně, jejich úrovně, poškození a statistiky, nebo bezpečně ukončit výpravu a sečíst skóre.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Bouřkový blesk svatého Eliáše:</strong> Příležitostný posvátný blesk za doprovodu burácivého hromu udeří do bojiště a sežehne zástupy bubáků.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Nové mistrovské trofeje:</strong> Síň slávy byla rozšířena o 4 nové výzvy: Mistr vesnické zbrojnice, Slavná vesnická družina, Pokořitel sázavského obra a Blesk svatého Eliáše.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Procedurální Web Audio efekty:</strong> Realistické ladění hromu, pozastavení a pokračování hry.</li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v7.0.0 – 7. kolo: Postupné odemykání zbraní a kovářská Zbrojnice</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sekvenční odemykání zbraní:</strong> Zbraně (kromě Povidlových buchet a Rákosky) jsou na začátku uzamčeny a kovář na nich pracuje přísně postupně podle řady (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda).</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Třístupňové odhalování identity:</strong> Milníky 25 %, 50 % a 75 % odhalují jméno, nákres zbraně i bojové statistiky.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Interaktivní Zbrojnice (Arzenál):</strong> Nové modální okno s filtry, přehlednými kartami a živými počítadly.</li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v6.0.0 – 6. kolo: Postupné sekvenční odemykání lovců a stopy</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sekvenční odemykání hrdinů:</strong> Poutník je výchozí, Pasáček se odemyká zaháněním vodníků a polednic, Bába kořenářka po Pasáčkovi a Ponocný jako vrcholný strážce noci.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Stínové siluety a uhelné kresby:</strong> Postupné odhalování podoby lovců v nabídce podle procentuálního postupu.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Pergamenový detail lovce:</strong> Možnost prohlédnout si cílové nepřátele a indicie pro každého zamčeného hrdinu.</li>
+            </ul>
+
             <h4 style={{ color: '#000000' }}>v5.0.0 – 5. kolo: Velké rozšíření arzenálu, cyklus Poledne až Půlnoc a vesnice Bubákov</h4>
             <ul style={{ color: '#000000' }}>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Nový arzenál zbraní:</strong> Makový koláč, horký brambor, včelí roj, dřevěný cep a kropenka.</li>

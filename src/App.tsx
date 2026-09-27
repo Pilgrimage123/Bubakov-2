@@ -16,6 +16,120 @@ import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { VillageView } from './components/VillageView';
 import { TouchControls } from './components/TouchControls';
+import { HunterUnlockModal } from './components/HunterUnlockModal';
+import { getHunterProgress, HUNTER_UNLOCKS, HunterProgress, getActiveUnlockingHunter } from './data/hunterUnlocks';
+import { ArsenalModal } from './components/ArsenalModal';
+import { WeaponUnlockModal } from './components/WeaponUnlockModal';
+import { getWeaponProgress, WEAPON_UNLOCKS, WeaponProgress, getActiveUnlockingWeapon } from './data/weaponUnlocks';
+
+// Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
+function renderHunterPortrait(
+  canvas: HTMLCanvasElement | null,
+  drawFn: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number) => void,
+  tier: 0 | 1 | 2 | 3 | 4,
+  t: number
+) {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, 180, 180);
+
+  if (tier === 4) {
+    // 100%: Normal, fully unlocked vivid animation
+    drawFn(ctx, 90, 120, t, 0, 0, false, 1.4);
+    return;
+  }
+
+  // Draw base figure first
+  drawFn(ctx, 90, 120, t, 0, 0, false, 1.4);
+
+  if (tier === 3) {
+    // 75% - 99%: Nearly full color, but with a golden lock mist and mystic veil
+    ctx.save();
+    ctx.fillStyle = 'rgba(243, 233, 210, 0.22)';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.strokeStyle = '#D9A036';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(6, 6, 168, 168);
+    ctx.fillStyle = 'rgba(45, 25, 10, 0.85)';
+    ctx.fillRect(25, 148, 130, 22);
+    ctx.strokeStyle = '#D9A036';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(25, 148, 130, 22);
+    ctx.fillStyle = '#FEF3C7';
+    ctx.font = '900 11px Eczar, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⚡ 75 % ODHALENO', 90, 159);
+    ctx.restore();
+  } else if (tier === 2) {
+    // 50% - 74%: Sepia / monochrome charcoal sketch. Distinct shapes, hat, and props visible
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = 'rgba(92, 72, 50, 0.78)';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(235, 222, 198, 0.3)';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.fillStyle = 'rgba(45, 25, 10, 0.85)';
+    ctx.fillRect(25, 148, 130, 22);
+    ctx.strokeStyle = '#D9A036';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(25, 148, 130, 22);
+    ctx.fillStyle = '#FEF3C7';
+    ctx.font = '900 11px Eczar, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔎 50 % ODHALENO', 90, 159);
+    ctx.restore();
+  } else if (tier === 1) {
+    // 25% - 49%: Deep charcoal silhouette, rough outline visible
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = '#241E18';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(25, 20, 15, 0.35)';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.fillStyle = 'rgba(30, 20, 10, 0.9)';
+    ctx.fillRect(25, 148, 130, 22);
+    ctx.strokeStyle = '#8C5A35';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(25, 148, 130, 22);
+    ctx.fillStyle = '#F3E9D2';
+    ctx.font = '900 11px Eczar, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔍 25 % ODHALENO', 90, 159);
+    ctx.restore();
+  } else {
+    // 0% - 24%: Pitch-black silhouette shrouded in dense mystery fog with glowing question mark
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = '#111111';
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.globalCompositeOperation = 'source-over';
+    const grad = ctx.createRadialGradient(90, 90, 15, 90, 90, 85);
+    grad.addColorStop(0, 'rgba(35, 28, 20, 0.65)');
+    grad.addColorStop(1, 'rgba(12, 10, 8, 0.95)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.fillStyle = '#D9A036';
+    ctx.font = '900 48px Eczar, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', 90, 80);
+    ctx.fillStyle = 'rgba(25, 15, 10, 0.9)';
+    ctx.fillRect(25, 148, 130, 22);
+    ctx.strokeStyle = '#5E3A21';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(25, 148, 130, 22);
+    ctx.fillStyle = '#D4CBBA';
+    ctx.font = '900 11px Eczar, serif';
+    ctx.fillText('🔒 ZAMČENO (0 %)', 90, 159);
+    ctx.restore();
+  }
+}
 
 // Floating damage / status text
 class DamageText {
@@ -182,8 +296,15 @@ export default function App() {
       trophiesClaimed: {},
       bestiaryKills: {},
       highestSurviveTime: 0,
+      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false },
+      unlockedWeapons: { buns: true, cane: true },
+      hunterKillCounts: {},
+      weaponKillCounts: {},
     };
   });
+
+  const metaRef = useRef(meta);
+  metaRef.current = meta;
 
   const saveMeta = (updated: MetaProgression) => {
     setMeta(updated);
@@ -192,8 +313,26 @@ export default function App() {
     } catch {}
   };
 
+  // Hunter detail modal, arsenal modal & unlock toast
+  const [selectedHunterDetail, setSelectedHunterDetail] = useState<HunterProgress | null>(null);
+  const [selectedWeaponDetail, setSelectedWeaponDetail] = useState<WeaponProgress | null>(null);
+  const [isArsenalOpen, setIsArsenalOpen] = useState(false);
+  const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string } | null>(null);
+  const [downloadToast, setDownloadToast] = useState<string | null>(null);
+
+  // Progressive unlock calculations for all 4 hunters
+  const wandererProg = getHunterProgress('wanderer', meta);
+  const shepherdProg = getHunterProgress('shepherd', meta);
+  const korenarkaProg = getHunterProgress('korenarka', meta);
+  const watchmanProg = getHunterProgress('watchman', meta);
+
+  // Weapon unlock count
+  const unlockedWeaponsCount = Object.keys(WEAPONS).filter(
+    (k) => getWeaponProgress(k, meta).isUnlocked
+  ).length;
+
   // Game UI state
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'levelup' | 'chest' | 'fleeing' | 'tally' | 'tavern'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'levelup' | 'chest' | 'fleeing' | 'tally' | 'tavern'>('menu');
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
@@ -222,6 +361,7 @@ export default function App() {
     xp: 0,
     xpNeeded: 10,
     kills: 0,
+    chestProgress: 0,
     coins: 0,
     souls: 0,
     chasniks: 0,
@@ -266,6 +406,9 @@ export default function App() {
     lastTime: number;
     uiTime: number;
     fleeTimer: number;
+    lightningTimer: number;
+    lightningFlash: number;
+    lightningStrike: { x: number; y: number; time: number } | null;
   }>({
     player: null,
     enemies: [],
@@ -287,7 +430,42 @@ export default function App() {
     lastTime: performance.now(),
     uiTime: 0,
     fleeTimer: 0,
+    lightningTimer: 45,
+    lightningFlash: 0,
+    lightningStrike: null,
   });
+
+  // Pause toggle handler
+  const togglePause = useCallback(() => {
+    setGameState((cur) => {
+      if (cur === 'playing') {
+        sound.pause();
+        return 'paused';
+      } else if (cur === 'paused') {
+        sound.resume();
+        return 'playing';
+      }
+      return cur;
+    });
+  }, []);
+
+  // Surrender / return to tavern from pause with score tally
+  const quitToTavernFromPause = () => {
+    sound.coin();
+    const timeSurvived = runStats.time;
+    const updatedHighest = Math.max(meta.highestSurviveTime || 0, timeSurvived);
+    setTallyCounters({
+      kills: runStats.kills,
+      coins: runStats.coins,
+      souls: runStats.souls,
+      time: timeSurvived,
+    });
+    saveMeta({
+      ...meta,
+      highestSurviveTime: updatedHighest,
+    });
+    setGameState('tally');
+  };
 
   // Sync season change
   const toggleSeason = () => {
@@ -320,6 +498,10 @@ export default function App() {
         e.preventDefault();
         triggerUltimate();
       }
+      if ((e.code === 'Escape' || e.code === 'KeyP') && (gameState === 'playing' || gameState === 'paused')) {
+        e.preventDefault();
+        togglePause();
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       engineRef.current.keys[e.code] = false;
@@ -331,10 +513,29 @@ export default function App() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameState]);
+  }, [gameState, togglePause]);
 
   // Start new run
   const startGame = (type: CharacterType) => {
+    const hunterProg = getHunterProgress(type, metaRef.current);
+    if (!hunterProg.isUnlocked) {
+      sound.hit();
+      setSelectedHunterDetail(hunterProg);
+      if (hunterProg.isQueued) {
+        setUnlockNotice({
+          title: `🔒 ${hunterProg.spoiledName} je v pořadí!`,
+          desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
+        });
+      } else {
+        setUnlockNotice({
+          title: `🔒 ${hunterProg.spoiledName} je uzamčen!`,
+          desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
+        });
+      }
+      setTimeout(() => setUnlockNotice(null), 4500);
+      return;
+    }
+
     sound.init();
     sound.coin();
 
@@ -507,6 +708,9 @@ export default function App() {
       lastTime: performance.now(),
       uiTime: 0,
       fleeTimer: 0,
+      lightningTimer: 45,
+      lightningFlash: 0,
+      lightningStrike: null,
     };
 
     setRunStats({
@@ -515,6 +719,7 @@ export default function App() {
       xp: 0,
       xpNeeded: 10,
       kills: 0,
+      chestProgress: 0,
       coins: 0,
       souls: 0,
       chasniks: 0,
@@ -589,9 +794,10 @@ export default function App() {
     const choices: UpgradeChoice[] = [];
     const availableWeaponKeys = Object.keys(WEAPONS);
 
-    // New weapons
+    // New weapons - only offered if unlocked in meta progression!
     for (const key of availableWeaponKeys) {
-      if (!p.weapons.find((w: any) => w.id === key)) {
+      const wProg = getWeaponProgress(key, metaRef.current);
+      if (wProg.isUnlocked && !p.weapons.find((w: any) => w.id === key)) {
         choices.push({
           type: 'new_weapon',
           id: key,
@@ -767,34 +973,16 @@ export default function App() {
       // Animate character portraits in main menu
       if (gameState === 'menu') {
         const t = engineRef.current.uiTime;
-        if (wandererRef.current) {
-          const wCtx = wandererRef.current.getContext('2d');
-          if (wCtx) {
-            wCtx.clearRect(0, 0, 180, 180);
-            Lada.drawWanderer(wCtx, 90, 120, t, 0, 0, false, 1.4);
-          }
-        }
-        if (shepherdRef.current) {
-          const sCtx = shepherdRef.current.getContext('2d');
-          if (sCtx) {
-            sCtx.clearRect(0, 0, 180, 180);
-            Lada.drawShepherd(sCtx, 90, 120, t, 0, 0, false, 1.4);
-          }
-        }
-        if (korenarkaRef.current) {
-          const kCtx = korenarkaRef.current.getContext('2d');
-          if (kCtx) {
-            kCtx.clearRect(0, 0, 180, 180);
-            Lada.drawKorenarka(kCtx, 90, 120, t, 0, 0, false, 1.4);
-          }
-        }
-        if (watchmanRef.current) {
-          const mCtx = watchmanRef.current.getContext('2d');
-          if (mCtx) {
-            mCtx.clearRect(0, 0, 180, 180);
-            Lada.drawWatchman(mCtx, 90, 120, t, 0, 0, false, 1.4);
-          }
-        }
+        const curMeta = metaRef.current;
+        const wProg = getHunterProgress('wanderer', curMeta);
+        const sProg = getHunterProgress('shepherd', curMeta);
+        const kProg = getHunterProgress('korenarka', curMeta);
+        const mProg = getHunterProgress('watchman', curMeta);
+
+        renderHunterPortrait(wandererRef.current, Lada.drawWanderer.bind(Lada), wProg.tier, t);
+        renderHunterPortrait(shepherdRef.current, Lada.drawShepherd.bind(Lada), sProg.tier, t);
+        renderHunterPortrait(korenarkaRef.current, Lada.drawKorenarka.bind(Lada), kProg.tier, t);
+        renderHunterPortrait(watchmanRef.current, Lada.drawWatchman.bind(Lada), mProg.tier, t);
       }
 
       // In-game simulation
@@ -857,6 +1045,20 @@ export default function App() {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
+            if (!engine.obrSpawned && (newTime >= 300 || runStats.kills >= 190)) {
+              engine.obrSpawned = true;
+              const ang = Math.random() * Math.PI * 2;
+              engine.enemies.push(createEnemyInstance('obr', player.x + Math.cos(ang) * 600, player.y + Math.sin(ang) * 600, 2.0, true));
+              sound.roar();
+              setRunStats((s) => ({
+                ...s,
+                bossTitle: '🗿 SKALNÍ OBR ZE SÁZAVY',
+                bossHpPct: 100,
+                warningBanner: '🗿 PŘICHÁZÍ SKALNÍ OBR! 🗿',
+              }));
+              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
+            }
+
             if (!engine.chasnikSpawned && (newTime >= 50 || runStats.kills >= 40)) {
               engine.chasnikSpawned = true;
               const ang = Math.random() * Math.PI * 2;
@@ -878,6 +1080,41 @@ export default function App() {
               sound.hit();
             }
 
+            // Saint Elias holy lightning strike event in dusk, night, and midnight
+            if (currentPhase.id === 'dusk' || currentPhase.id === 'night' || currentPhase.id === 'midnight') {
+              engine.lightningTimer -= dt;
+              if (engine.lightningTimer <= 0) {
+                engine.lightningTimer = 35 + Math.random() * 30;
+                sound.thunder();
+                engine.lightningFlash = 0.45;
+
+                const living = player.getLivingEnemies();
+                let strikeX = player.x + (Math.random() - 0.5) * 240;
+                let strikeY = player.y + (Math.random() - 0.5) * 240;
+                if (living.length > 0) {
+                  const target = living[Math.floor(Math.random() * living.length)];
+                  strikeX = target.x;
+                  strikeY = target.y;
+                }
+
+                engine.lightningStrike = { x: strikeX, y: strikeY, time: 0.45 };
+
+                // Burn enemies in blast radius
+                for (const e of engine.enemies) {
+                  if (!e.isDefeated && Math.hypot(e.x - strikeX, e.y - strikeY) < 220) {
+                    e.takeDamage(80 * player.damageMultiplier, 'holy', (e.x - strikeX) * 3, (e.y - strikeY) * 3);
+                  }
+                }
+
+                engine.texts.push(new DamageText(strikeX, strikeY - 45, '⚡ BLESK SV. ELIÁŠE!', COLORS.mustard, true));
+
+                if (!metaRef.current.lightningWitnessed) {
+                  const updatedMeta = { ...metaRef.current, lightningWitnessed: true };
+                  saveMeta(updatedMeta);
+                }
+              }
+            }
+
             // Regular mob spawn waves
             const enemyCap = 180;
             if (engine.enemies.length < enemyCap && Math.random() < 0.35) {
@@ -888,15 +1125,15 @@ export default function App() {
                 let mobId = 'rarach';
 
                 if (currentPhase.id === 'noon') {
-                  mobId = Math.random() > 0.6 ? 'zaba' : Math.random() > 0.3 ? 'rarach' : 'sotek';
+                  mobId = Math.random() > 0.65 ? 'zaba' : Math.random() > 0.45 ? 'rarach' : Math.random() > 0.25 ? 'sotek' : Math.random() > 0.12 ? 'mysak' : 'skodnik';
                 } else if (currentPhase.id === 'afternoon') {
-                  mobId = Math.random() > 0.7 ? 'divozenka' : Math.random() > 0.4 ? 'hastrman' : 'rarach';
+                  mobId = Math.random() > 0.7 ? 'divozenka' : Math.random() > 0.48 ? 'hastrman' : Math.random() > 0.32 ? 'vodnicek' : Math.random() > 0.16 ? 'blatouch' : 'rarach';
                 } else if (currentPhase.id === 'dusk') {
-                  mobId = Math.random() > 0.65 ? 'klekanice' : Math.random() > 0.35 ? 'skeleton' : 'certik';
+                  mobId = Math.random() > 0.65 ? 'klekanice' : Math.random() > 0.45 ? 'skeleton' : Math.random() > 0.28 ? 'topivec' : Math.random() > 0.12 ? 'umrlec' : 'certik';
                 } else if (currentPhase.id === 'night') {
-                  mobId = Math.random() > 0.7 ? 'bubak' : Math.random() > 0.4 ? 'skeleton_scythe' : 'bludicka';
+                  mobId = Math.random() > 0.68 ? 'bubak' : Math.random() > 0.48 ? 'skeleton_scythe' : Math.random() > 0.32 ? 'bludicka' : Math.random() > 0.16 ? 'stodolnik' : 'cerny_pes';
                 } else if (currentPhase.id === 'midnight') {
-                  mobId = Math.random() > 0.7 ? 'hromotluk' : Math.random() > 0.4 ? 'drab' : 'meluzina';
+                  mobId = Math.random() > 0.65 ? 'hromotluk' : Math.random() > 0.45 ? 'drab' : Math.random() > 0.25 ? 'cerny_pes' : 'meluzina';
                 }
 
                 if (season === 'winter' && Math.random() > 0.5) {
@@ -1026,6 +1263,7 @@ export default function App() {
               hp: player.hp,
               maxHp: player.maxHp,
               ultCd: player.ultCd,
+              chestProgress: engine.chestCounter,
             }));
           } else if (gameState === 'fleeing') {
             engine.fleeTimer -= dt;
@@ -1220,12 +1458,23 @@ export default function App() {
         }
       }
 
+      // Update lightning atmospheric timers
+      if (engineRef.current.lightningFlash > 0) {
+        engineRef.current.lightningFlash -= dt;
+      }
+      if (engineRef.current.lightningStrike) {
+        engineRef.current.lightningStrike.time -= dt;
+        if (engineRef.current.lightningStrike.time <= 0) {
+          engineRef.current.lightningStrike = null;
+        }
+      }
+
       // -------------------------------------------------------------
       // RENDER
       // -------------------------------------------------------------
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (gameState === 'playing' || gameState === 'fleeing' || gameState === 'levelup' || gameState === 'chest') {
+      if (gameState === 'playing' || gameState === 'fleeing' || gameState === 'levelup' || gameState === 'chest' || gameState === 'paused') {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
@@ -1378,7 +1627,40 @@ export default function App() {
           txt.draw(ctx);
         }
 
+        // Draw lightning strike bolt
+        if (engine.lightningStrike) {
+          const ls = engine.lightningStrike;
+          ctx.save();
+          ctx.strokeStyle = '#FEF08A';
+          ctx.shadowColor = '#60A5FA';
+          ctx.shadowBlur = 22;
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          let curX = ls.x + (Math.random() - 0.5) * 40;
+          let curY = cam.y - 120;
+          ctx.moveTo(curX, curY);
+          const steps = 7;
+          for (let s = 1; s <= steps; s++) {
+            const targetY = (cam.y - 120) + (ls.y - (cam.y - 120)) * (s / steps);
+            const targetX = s === steps ? ls.x : ls.x + (Math.random() - 0.5) * 55;
+            ctx.lineTo(targetX, targetY);
+          }
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
+          ctx.beginPath();
+          ctx.arc(ls.x, ls.y, 65, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
         ctx.restore();
+
+        // Screen flash from Saint Elias lightning
+        if (engine.lightningFlash > 0) {
+          ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(0.65, engine.lightningFlash * 1.5)})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
         // Winter falling snowflakes overlay
         if (season === 'winter') {
@@ -1497,18 +1779,105 @@ export default function App() {
           this.isDefeated = true;
           this.panicked = true;
 
-          // Bestiary tracking
-          const updatedKills = { ...meta.bestiaryKills, [this.id]: (meta.bestiaryKills[this.id] || 0) + 1 };
-          saveMeta({ ...meta, bestiaryKills: updatedKills });
+          // Bestiary tracking & progressive sequential hunter unlocks
+          const curMeta = metaRef.current;
+          const updatedKills = { ...curMeta.bestiaryKills, [this.id]: (curMeta.bestiaryKills[this.id] || 0) + 1 };
+          let nextMeta: MetaProgression = { ...curMeta, bestiaryKills: updatedKills };
+
+          // 1. Sequential Hunter Progression: only active hunter collects kills!
+          const activeHunterId = getActiveUnlockingHunter(curMeta);
+          let announceName = '';
+          if (activeHunterId) {
+            const hDef = HUNTER_UNLOCKS[activeHunterId];
+            if (hDef && hDef.targetEnemies.some((e) => e.id === this.id)) {
+              const prevHunterCounts = curMeta.hunterKillCounts || {};
+              const curHunterKills = {
+                ...(prevHunterCounts[activeHunterId] || (activeHunterId === 'shepherd' ? curMeta.bestiaryKills || {} : {})),
+              };
+              curHunterKills[this.id] = (curHunterKills[this.id] || 0) + 1;
+
+              const nextHunterCounts = {
+                ...prevHunterCounts,
+                [activeHunterId]: curHunterKills,
+              };
+              nextMeta = { ...nextMeta, hunterKillCounts: nextHunterCounts };
+
+              const nextHunterProg = getHunterProgress(activeHunterId, nextMeta);
+              if (nextHunterProg.isUnlocked) {
+                const newlyUnlockedHunters = {
+                  ...(curMeta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false }),
+                  [activeHunterId]: true,
+                };
+                nextMeta = { ...nextMeta, unlockedHunters: newlyUnlockedHunters };
+                announceName = hDef.realName;
+              }
+            }
+          }
+
+          if (announceName) {
+            sound.victory();
+            sound.cheer();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 75, `🎉 ${announceName.toUpperCase()} ODEMČEN!`, COLORS.mustard, true));
+            setUnlockNotice({
+              title: `🎉 Odemčen nový lovec: ${announceName}!`,
+              desc: `Nyní si ho můžete vybrat v hlavní nabídce pro novou výpravu.`,
+            });
+            setTimeout(() => setUnlockNotice(null), 5000);
+          }
+
+          // 2. Sequential Weapon Progression: only active weapon collects kills!
+          const activeWeaponId = getActiveUnlockingWeapon(nextMeta);
+          let announceWeaponName = '';
+          if (activeWeaponId) {
+            const wDef = WEAPON_UNLOCKS[activeWeaponId];
+            if (wDef && wDef.targetEnemies.some((e) => e.id === this.id)) {
+              const prevWeaponCounts = nextMeta.weaponKillCounts || {};
+              const curWeaponKills = {
+                ...(prevWeaponCounts[activeWeaponId] || (activeWeaponId === 'pitchfork' ? curMeta.bestiaryKills || {} : {})),
+              };
+              curWeaponKills[this.id] = (curWeaponKills[this.id] || 0) + 1;
+
+              const nextWeaponCounts = {
+                ...prevWeaponCounts,
+                [activeWeaponId]: curWeaponKills,
+              };
+              nextMeta = { ...nextMeta, weaponKillCounts: nextWeaponCounts };
+
+              const nextWeaponProg = getWeaponProgress(activeWeaponId, nextMeta);
+              if (nextWeaponProg.isUnlocked) {
+                const newlyUnlockedWeapons = {
+                  ...(curMeta.unlockedWeapons || { buns: true, cane: true }),
+                  [activeWeaponId]: true,
+                };
+                nextMeta = { ...nextMeta, unlockedWeapons: newlyUnlockedWeapons };
+                announceWeaponName = wDef.realName;
+              }
+            }
+          }
+
+          if (announceWeaponName) {
+            sound.victory();
+            sound.cheer();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 85, `🎉 ZBRAŇ: ${announceWeaponName.toUpperCase()}`, COLORS.mustard, true));
+            setUnlockNotice({
+              title: `🎉 Odemčena nová zbraň: ${announceWeaponName}!`,
+              desc: 'Tato zbraň se trvale přidala do výběru vylepšení při postupu na novou úroveň!',
+            });
+            setTimeout(() => setUnlockNotice(null), 5000);
+          }
+
+          saveMeta(nextMeta);
 
           setRunStats((s) => ({ ...s, kills: s.kills + 1 }));
 
-          if (this.isBoss) {
+          const isBossMonster = this.isBoss || this.category === 'bosses';
+
+          if (isBossMonster) {
             setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
             sound.victory();
             sound.cheer();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} POKOŘEN!`, COLORS.mustard, true));
-            // Spawn big reward chest and coins
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} POKOŘEN! POKLAD!`, COLORS.mustard, true));
+            // Spawn treasure chest and golden coins after boss kill
             engineRef.current.drops.push({ type: 'chest', x: this.x, y: this.y, radius: 25, time: 0 });
             for (let i = 0; i < 6; i++) {
               engineRef.current.drops.push({
@@ -1521,34 +1890,36 @@ export default function App() {
               });
             }
           } else {
-            // Drop coins & items
+            // Drop coins & items, treasure chest drops after 100 enemies chased away
             engineRef.current.chestCounter++;
-            if (engineRef.current.chestCounter >= 40) {
+            if (engineRef.current.chestCounter >= 100) {
               engineRef.current.chestCounter = 0;
               engineRef.current.drops.push({ type: 'chest', x: this.x, y: this.y, radius: 25, time: 0 });
-            } else {
-              // Coin drop
-              engineRef.current.drops.push({
-                type: 'coin',
-                value: this.coinValue || 1,
-                x: this.x,
-                y: this.y,
-                radius: 8,
-                time: Math.random() * 5,
-              });
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'POKLAD (100 ZAHNANÝCH)!', COLORS.mustard, true));
+              sound.chest();
+            }
 
-              // Rare healing drop (Potion or Bread)
-              const roll = Math.random();
-              if (roll < 0.04) {
-                engineRef.current.drops.push({ type: 'potion', x: this.x + 10, y: this.y, radius: 12, time: 0 });
-              } else if (roll < 0.09) {
-                engineRef.current.drops.push({ type: 'bread', x: this.x + 10, y: this.y, radius: 10, time: 0 });
-              }
+            // Coin drop
+            engineRef.current.drops.push({
+              type: 'coin',
+              value: this.coinValue || 1,
+              x: this.x,
+              y: this.y,
+              radius: 8,
+              time: Math.random() * 5,
+            });
 
-              // Hastrman drops soul jars
-              if (this.category === 'water' && Math.random() < 0.65) {
-                engineRef.current.drops.push({ type: 'soul', x: this.x - 12, y: this.y, radius: 14, time: 0 });
-              }
+            // Rare healing drop (Potion or Bread)
+            const roll = Math.random();
+            if (roll < 0.04) {
+              engineRef.current.drops.push({ type: 'potion', x: this.x + 10, y: this.y, radius: 12, time: 0 });
+            } else if (roll < 0.09) {
+              engineRef.current.drops.push({ type: 'bread', x: this.x + 10, y: this.y, radius: 10, time: 0 });
+            }
+
+            // Hastrman drops soul jars
+            if (this.category === 'water' && Math.random() < 0.65) {
+              engineRef.current.drops.push({ type: 'soul', x: this.x - 12, y: this.y, radius: 14, time: 0 });
             }
           }
         }
@@ -1603,34 +1974,98 @@ export default function App() {
     };
   };
 
-  // Download standalone offline HTML game
-  const downloadGameHtml = () => {
-    sound.coin();
-    const docHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const blob = new Blob([docHtml], { type: 'text/html;charset=utf-8' });
+  // Helper to trigger file download in browser
+  const triggerFileDownload = (content: string, filename: string, mimeType: string) => {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'bubakov_hra_ladovska_edice.html';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2500);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  };
+
+  // Helper to retrieve the complete, standalone offline game code
+  const getCompleteStandaloneGame = async (): Promise<string> => {
+    // 1. Try to fetch the prebuilt offline bundle which contains complete bundled JS + CSS + HTML
+    try {
+      const res = await fetch('/bubakov_hra_ladovska_edice.html');
+      if (res.ok) {
+        const fullContent = await res.text();
+        if (
+          fullContent &&
+          fullContent.length > 50000 &&
+          fullContent.includes('id="root"') &&
+          (fullContent.includes('<script') || fullContent.includes('React'))
+        ) {
+          return fullContent;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch standalone HTML from server, falling back...', e);
+    }
+
+    // 2. If running directly from an existing standalone file, document.documentElement.outerHTML is already complete
+    const scripts = Array.from(document.querySelectorAll('script'));
+    const hasInlineBundle = scripts.some(
+      (s) => !s.src && (s.textContent?.length || 0) > 20000
+    );
+    if (hasInlineBundle) {
+      return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    }
+
+    // 3. Fallback: synthesize a standalone document with all stylesheets and scripts
+    const headClone = document.head.cloneNode(true) as HTMLElement;
+    const bodyClone = document.body.cloneNode(true) as HTMLElement;
+    return `<!DOCTYPE html>\n<html lang="cs">\n${headClone.outerHTML}\n${bodyClone.outerHTML}\n</html>`;
+  };
+
+  // Download standalone offline HTML game
+  const downloadGameHtml = async () => {
+    sound.coin();
+    setDownloadToast('⏳ Připravuji kompletní offline hru ke stažení (HTML)...');
+    try {
+      const gameCode = await getCompleteStandaloneGame();
+      triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.html', 'text/html;charset=utf-8');
+      sound.cheer();
+      setDownloadToast('✅ Celá hra úspěšně stažena! Lze hrát offline bez internetu.');
+    } catch (e) {
+      console.error(e);
+      setDownloadToast('❌ Chyba při stahování hry.');
+    }
+    setTimeout(() => setDownloadToast(null), 4500);
   };
 
   // Download complete game HTML saved as TXT file
-  const downloadGameTxt = () => {
+  const downloadGameTxt = async () => {
     sound.coin();
-    const docHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    const blob = new Blob([docHtml], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bubakov_hra_ladovska_edice.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2500);
+    setDownloadToast('⏳ Připravuji kompletní kód hry ke stažení (TXT)...');
+    try {
+      let gameCode = '';
+      try {
+        const res = await fetch('/bubakov_hra_ladovska_edice.txt');
+        if (res.ok) {
+          const txt = await res.text();
+          if (txt && txt.length > 50000) {
+            gameCode = txt;
+          }
+        }
+      } catch {}
+
+      if (!gameCode) {
+        gameCode = await getCompleteStandaloneGame();
+      }
+
+      triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.txt', 'text/plain;charset=utf-8');
+      sound.cheer();
+      setDownloadToast('✅ Celý kód hry stažen jako TXT! Lze přejmenovat na .html a hrát.');
+    } catch (e) {
+      console.error(e);
+      setDownloadToast('❌ Chyba při stahování souboru TXT.');
+    }
+    setTimeout(() => setDownloadToast(null), 4500);
   };
 
   const formatTimer = (secs: number) => {
@@ -1652,15 +2087,176 @@ export default function App() {
     });
   };
 
+  // Helper to render hunter card with progressive spoil
+  const renderHunterSelectCard = (
+    prog: HunterProgress,
+    canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+  ) => {
+    const isUnlocked = prog.isUnlocked;
+
+    return (
+      <div
+        key={prog.id}
+        className={`char-card ${isUnlocked ? '' : 'char-card-locked'}`}
+        onClick={() => {
+          if (isUnlocked) {
+            startGame(prog.id);
+          } else {
+            sound.hit();
+            setSelectedHunterDetail(prog);
+            if (prog.isQueued) {
+              setUnlockNotice({
+                title: `🔒 ${prog.spoiledName} je v pořadí!`,
+                desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prog.requiredHunterName}).`,
+              });
+            } else {
+              setUnlockNotice({
+                title: `🔒 ${prog.spoiledName} je uzamčen!`,
+                desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno.`,
+              });
+            }
+            setTimeout(() => setUnlockNotice(null), 4500);
+          }
+        }}
+        title={isUnlocked ? `Zvolit lovce: ${HUNTER_UNLOCKS[prog.id].realName}` : 'Klikněte pro podrobnosti výzvy'}
+      >
+        <span className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}>
+          {isUnlocked ? '✅ Odemčeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+        </span>
+        <canvas ref={canvasRef} className="portrait-canvas" width={180} height={180} />
+        <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px' }}>
+          {prog.spoiledName}
+        </h3>
+        <div>
+          <span className={`hunter-tier-stamp tier-stamp-${prog.tier}`}>
+            {prog.clueTag}
+          </span>
+        </div>
+
+        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.84rem', lineHeight: 1.3, color: 'var(--ink)' }}>
+          {prog.spoiledLore}
+        </p>
+
+        {/* Weapons and Ability hints */}
+        <div className="hunter-clue-box">
+          <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>
+            🗡️ {prog.spoiledWeaponHint}
+          </div>
+          <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>
+            ⚡ {prog.spoiledAbilityHint}
+          </div>
+        </div>
+
+        {/* Challenge progress bar for locked characters */}
+        {!isUnlocked && (
+          <div className="hunter-progress-wrap">
+            <div className="hunter-progress-header">
+              <span>{prog.isQueued ? `Čeká na: ${prog.requiredHunterName}` : 'Výzva k odemčení:'}</span>
+              <span>
+                {prog.curCount} / {prog.maxCount} ({prog.percent} %)
+              </span>
+            </div>
+            <div className="hunter-progress-bar-outer">
+              <div
+                className="hunter-progress-bar-fill"
+                style={{ width: `${prog.percent}%` }}
+              />
+            </div>
+            <div className="hunter-progress-ticks">
+              <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
+              <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`}>
+                {prog.percent >= 25 ? '✓' : '🔒'} 25%
+              </span>
+              <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`}>
+                {prog.percent >= 50 ? '✓' : '🔒'} 50%
+              </span>
+              <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`}>
+                {prog.percent >= 75 ? '✓' : '🔒'} 75%
+              </span>
+              <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`}>
+                {prog.percent >= 100 ? '✓' : '🔒'} 100%
+              </span>
+            </div>
+            {prog.enemiesBreakdown.length > 0 && (
+              <div className="hunter-enemy-pills">
+                {prog.enemiesBreakdown.map((e) => (
+                  <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`}>
+                    {e.icon} {e.count}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+          {isUnlocked ? (
+            <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+              Vyrazit do noci ⚔️
+            </button>
+          ) : (
+            <button
+              className="lada-btn btn-small"
+              style={{
+                width: '100%',
+                fontSize: '0.84rem',
+                background: 'var(--wood-dark)',
+                color: 'var(--parchment)',
+                padding: '6px 8px',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                sound.coin();
+                setSelectedHunterDetail(prog);
+              }}
+            >
+              {prog.isQueued ? `🔒 Čeká na: ${prog.requiredHunterName}` : `📜 Zobrazit výzvu (${prog.percent} %)`}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <canvas id="gameCanvas" ref={canvasRef} />
+
+      {/* DOWNLOAD NOTIFICATION TOAST */}
+      {downloadToast && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'var(--parchment)',
+            color: 'var(--ink)',
+            border: '4px solid var(--wood-dark)',
+            boxShadow: '6px 6px 0px var(--ink)',
+            padding: '12px 26px',
+            borderRadius: '10px',
+            zIndex: 9999,
+            fontWeight: 900,
+            fontSize: '1.02rem',
+            textAlign: 'center',
+            maxWidth: '90vw',
+            fontFamily: 'Eczar, serif',
+            pointerEvents: 'none',
+          }}
+        >
+          {downloadToast}
+        </div>
+      )}
 
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (
         <div id="hud">
           {/* Top-right menu controls */}
           <div className="hud-top-right">
+            <button className="pause-toggle-btn" onClick={togglePause} title="Pozastavit hru a zobrazit výbavu (Esc / P)">
+              ⏸️ Odpočinek
+            </button>
             <button className="season-toggle-btn" onClick={toggleSeason} title="Přepnout roční období">
               <span className="season-toggle-text">
                 {season === 'winter' ? '❄️ Zima: Ladovská' : '🍂 Podzim: Zlatavý'}
@@ -1703,7 +2299,10 @@ export default function App() {
               </div>
               <div id="coins-text">Krejcary: {runStats.coins} 🪙</div>
               <div id="souls-text">🏺 Dušičky: {runStats.souls}</div>
-              <div id="kills-text">Přemoženo: {runStats.kills} 💀</div>
+              <div id="kills-text">Zahnáno: {runStats.kills} 💀</div>
+              <div id="chest-progress-text" title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
+                🎁 Poklad: {runStats.chestProgress}/100
+              </div>
             </div>
 
             {/* Boss Bar if boss spawned */}
@@ -1778,42 +2377,41 @@ export default function App() {
             </p>
 
             <h3 style={{ marginTop: '20px' }}>Vyberte si svého lovce:</h3>
-            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}>
-              {/* Poutník */}
-              <div className="char-card" onClick={() => startGame('wanderer')}>
+            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '15px' }}>
+              {/* Poutník - Výchozí odemčený lovec */}
+              <div
+                className="char-card"
+                onClick={() => startGame('wanderer')}
+                title="Poutník – připraven k výpravě"
+              >
+                <span className="char-card-unlocked-badge">✅ Odemčeno</span>
                 <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.65rem', margin: '6px 0 2px 0' }}>Poutník</h3>
-                <p style={{ fontWeight: 700, margin: 0, fontSize: '0.92rem' }}>
+                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
+                <div>
+                  <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
+                </div>
+                <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
                   Vysoké zdraví. Povidlové buchty a rákoska. Schopnost: Rázová vlna.
                 </p>
+                <div className="hunter-clue-box">
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Rákoska & Povidlové buchty</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>⚡ Schopnost: Rázová vlna</div>
+                </div>
+                <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+                    Vyrazit do noci ⚔️
+                  </button>
+                </div>
               </div>
 
-              {/* Pasáček */}
-              <div className="char-card" onClick={() => startGame('shepherd')}>
-                <canvas ref={shepherdRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.65rem', margin: '6px 0 2px 0' }}>Pasáček</h3>
-                <p style={{ fontWeight: 700, margin: 0, fontSize: '0.92rem' }}>
-                  Rychlý, snadno sbírá krejcary. Schopnost: Dusot stáda.
-                </p>
-              </div>
+              {/* Pasáček (Progressive unlock) */}
+              {renderHunterSelectCard(shepherdProg, shepherdRef)}
 
-              {/* Bába kořenářka */}
-              <div className="char-card" onClick={() => startGame('korenarka')}>
-                <canvas ref={korenarkaRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.65rem', margin: '6px 0 2px 0' }}>Bába kořenářka</h3>
-                <p style={{ fontWeight: 700, margin: 0, fontSize: '0.92rem' }}>
-                  Léčivý balzám, Devatery kvítí. Schopnost: Očistné kadidlo.
-                </p>
-              </div>
+              {/* Bába kořenářka (Progressive unlock) */}
+              {renderHunterSelectCard(korenarkaProg, korenarkaRef)}
 
-              {/* Ponocný */}
-              <div className="char-card" onClick={() => startGame('watchman')}>
-                <canvas ref={watchmanRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.65rem', margin: '6px 0 2px 0' }}>Ponocný</h3>
-                <p style={{ fontWeight: 700, margin: 0, fontSize: '0.92rem' }}>
-                  Halapartna, svatá záře lucerny. Schopnost: Noční roh & Voříšek.
-                </p>
-              </div>
+              {/* Ponocný (Progressive unlock) */}
+              {renderHunterSelectCard(watchmanProg, watchmanRef)}
             </div>
 
             <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -1826,6 +2424,13 @@ export default function App() {
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
                 📖 Bestiář nočního venkova
               </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#E06D29', color: '#FFFFFF' }}
+                onClick={() => setIsArsenalOpen(true)}
+              >
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/11)
+              </button>
               <button className="lada-btn btn-small" onClick={() => setIsPlanOpen(true)}>
                 📜 Plán změn a kronika
               </button>
@@ -1835,6 +2440,139 @@ export default function App() {
                 onClick={() => setGameState('tavern')}
               >
                 🏘️ Vesnice & Hospoda ({meta.krejcary} 🪙)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PAUSE MODAL (ODPOČINEK U MILNÍKU) */}
+      {gameState === 'paused' && (
+        <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
+          <div className="panel" style={{ maxWidth: '820px' }}>
+            <h1>⏸️ ODPOČINEK U MILNÍKU</h1>
+            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--mustard)', marginTop: '-8px' }}>
+              Výprava je pozastavena. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
+            </p>
+
+            {/* Run summary stats card */}
+            <div
+              style={{
+                background: 'var(--parchment)',
+                color: 'var(--ink)',
+                border: '4px solid var(--ink)',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                margin: '16px 0',
+                textAlign: 'left',
+                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>
+                    Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Poutník'}
+                  </span>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--wood-light)', marginTop: '2px' }}>
+                    {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický poutník'}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900 }}>
+                    {runStats.dayPhase.icon} {runStats.dayPhase.name}
+                  </span>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--mustard)' }}>
+                    Čas přežití: {formatTimer(runStats.time)}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
+
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800 }}>
+                <span>❤️ Životy: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150} HP</span>
+                <span>⭐ Úroveň: <strong>{runStats.level}</strong></span>
+                <span>🪙 Krejcary: <strong>{runStats.coins}</strong></span>
+                <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
+                <span>🌾 Chasníci: <strong>{runStats.chasniks}</strong></span>
+                <span>💀 Zahnáno: <strong>{runStats.kills}</strong></span>
+              </div>
+            </div>
+
+            {/* Current weapons inventory */}
+            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--parchment)' }}>
+              🗡️ Nesený arzenál a výbava lovce:
+            </h3>
+
+            <div className="pause-weapons-grid">
+              {(engineRef.current.player?.weapons || []).map((w: any) => {
+                const wDef = WEAPONS[w.id];
+                if (!wDef) return null;
+                const dmgMult = engineRef.current.player?.damageMultiplier || 1;
+                const estDmg = Math.round((wDef.baseDmg + (w.level - 1) * 5) * dmgMult);
+
+                return (
+                  <div key={w.id} className="pause-weapon-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 900, fontSize: '1.15rem' }}>
+                        {wDef.icon} {wDef.name}
+                      </span>
+                      <span
+                        style={{
+                          background: 'var(--blood-red)',
+                          color: '#FFFFFF',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 900,
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        Úr. {w.level}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.84rem', fontWeight: 800 }}>
+                      <span style={{ color: 'var(--wood-dark)' }}>💥 Zásah: ~{estDmg}</span>
+                      <span style={{ color: 'var(--leaf-green)' }}>⏱️ Kadence: {wDef.baseCd} s</span>
+                    </div>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
+                      {wDef.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* In-pause toggles */}
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
+              <button className="season-toggle-btn" onClick={toggleSeason} title="Přepnout roční období">
+                <span className="season-toggle-text">
+                  {season === 'winter' ? '❄️ Zima: Ladovská' : '🍂 Podzim: Zlatavý'}
+                </span>
+              </button>
+              <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
+                🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
+              </button>
+              <button className="sound-toggle-btn" onClick={toggleSound}>
+                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              </button>
+            </div>
+
+            {/* Pause Action Buttons */}
+            <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+              <button
+                className="lada-btn"
+                style={{ padding: '12px 36px', fontSize: '1.3rem', background: 'var(--leaf-green)' }}
+                onClick={togglePause}
+              >
+                Pokračovat ve výpravě (Esc / P) ⚔️
+              </button>
+              <button
+                className="lada-btn"
+                style={{ padding: '12px 24px', fontSize: '1.05rem', background: 'var(--wood-dark)' }}
+                onClick={quitToTavernFromPause}
+                title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
+              >
+                Ukončit výpravu a sečíst skóre 🍺
               </button>
             </div>
           </div>
@@ -2018,6 +2756,13 @@ export default function App() {
             )}
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#E06D29', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => setIsArsenalOpen(true)}
+              >
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/11)
+              </button>
               <button className="lada-btn btn-download" style={{ padding: '12px 28px' }} onClick={downloadGameHtml} title="Stáhnout celou hru jako HTML soubor">
                 📥 Stáhnout hru (HTML)
               </button>
@@ -2045,6 +2790,39 @@ export default function App() {
         onClose={() => setIsPlanOpen(false)}
         defaultTab="plan"
       />
+
+      {/* HUNTER UNLOCK DETAILS MODAL */}
+      <HunterUnlockModal
+        progress={selectedHunterDetail}
+        onClose={() => setSelectedHunterDetail(null)}
+        onStartIfUnlocked={(id) => startGame(id)}
+      />
+
+      {/* ARSENAL & WEAPONS UNLOCK MODAL */}
+      <ArsenalModal
+        isOpen={isArsenalOpen}
+        onClose={() => setIsArsenalOpen(false)}
+        meta={meta}
+        onInspectWeapon={(prog) => setSelectedWeaponDetail(prog)}
+      />
+
+      {/* WEAPON UNLOCK DETAILS MODAL */}
+      <WeaponUnlockModal
+        progress={selectedWeaponDetail}
+        onClose={() => setSelectedWeaponDetail(null)}
+      />
+
+      {/* UNLOCK TOAST BANNER */}
+      {unlockNotice && (
+        <div className="unlock-toast-banner" onClick={() => setUnlockNotice(null)}>
+          <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px' }}>
+            {unlockNotice.title}
+          </div>
+          <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>
+            {unlockNotice.desc}
+          </div>
+        </div>
+      )}
     </>
   );
 }

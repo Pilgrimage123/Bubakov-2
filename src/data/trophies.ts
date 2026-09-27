@@ -117,4 +117,49 @@ export const TROPHIES: Trophy[] = [
       return { cur: Math.min(3, max), max: 3 };
     },
   },
+  {
+    id: 'blacksmith_master',
+    title: '🗡️ Mistr vesnické zbrojnice',
+    desc: 'Odemkni v kovářském arzenálu celkem alespoň 5 různých zbraní.',
+    reward: 120,
+    isMet: (meta) => {
+      const unlockedCount = Object.keys(meta.unlockedWeapons || {}).filter((k) => meta.unlockedWeapons?.[k]).length;
+      return unlockedCount >= 5;
+    },
+    getProgress: (meta) => {
+      const unlockedCount = Object.keys(meta.unlockedWeapons || {}).filter((k) => meta.unlockedWeapons?.[k]).length;
+      return { cur: Math.min(5, unlockedCount), max: 5 };
+    },
+  },
+  {
+    id: 'fellowship_hunters',
+    title: '📯 Slavná vesnická družina',
+    desc: 'Odemkni všechny 4 lidové hrdiny (Poutník, Pasáček, Bába kořenářka a Ponocný).',
+    reward: 150,
+    isMet: (meta) => {
+      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false };
+      return Boolean(uh.wanderer && uh.shepherd && uh.korenarka && uh.watchman);
+    },
+    getProgress: (meta) => {
+      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false };
+      const count = (uh.wanderer ? 1 : 0) + (uh.shepherd ? 1 : 0) + (uh.korenarka ? 1 : 0) + (uh.watchman ? 1 : 0);
+      return { cur: count, max: 4 };
+    },
+  },
+  {
+    id: 'obr_slain',
+    title: '🗿 Pokořitel sázavského obra',
+    desc: 'Postav se mohutnému Skalnímu obrovi ze Sázavy a přemož ho v boji.',
+    reward: 180,
+    isMet: (meta) => (meta.bestiaryKills.obr || 0) >= 1,
+    getProgress: (meta) => ({ cur: Math.min(1, meta.bestiaryKills.obr || 0), max: 1 }),
+  },
+  {
+    id: 'lightning_strike',
+    title: '⚡ Blesk svatého Eliáše',
+    desc: 'Přežij v noční bouři mocný úder blesku svatého Eliáše.',
+    reward: 50,
+    isMet: (meta) => (meta as any).lightningWitnessed === true,
+    getProgress: (meta) => ({ cur: (meta as any).lightningWitnessed ? 1 : 0, max: 1 }),
+  },
 ];
