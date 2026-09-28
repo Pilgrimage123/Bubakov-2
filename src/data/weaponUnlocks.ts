@@ -837,24 +837,22 @@ export function getWeaponProgress(id: string, meta: MetaProgression): WeaponProg
   const eligible = canWeaponUnlock(id, meta);
 
   if (!eligible && prevId) {
-    const prevDef = WEAPON_UNLOCKS[prevId];
-    const prevName = prevDef?.realName || prevId;
     const m0 = def.milestones[0];
     return {
       id,
       isUnlocked: false,
       canUnlock: false,
       isQueued: true,
-      requiredWeaponName: prevName,
+      requiredWeaponName: 'Předchozí zbraň',
       curCount: 0,
       maxCount: def.maxCount,
       percent: 0,
       tier: 0,
       spoiledName: m0.spoiledName,
       spoiledTitle: m0.spoiledTitle,
-      spoiledDesc: `Tato zbraň se začne odemykat teprve poté, co ukováte / odemknete předchozí zbraň (${prevName}).`,
+      spoiledDesc: 'Tato zbraň se začne odemykat teprve poté, co ukováte předchozí zbraň v pořadí.',
       spoiledStatsHint: m0.spoiledStatsHint,
-      clueTag: `🔒 Čeká na: ${prevName}`,
+      clueTag: '🔒 Čeká na odemčení předchozí zbraně',
       realIcon: def.realIcon,
       realType: def.realType,
       enemiesBreakdown: def.targetEnemies.map((e) => ({

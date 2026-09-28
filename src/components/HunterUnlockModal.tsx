@@ -67,10 +67,10 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
             >
               {progress.clueTag}
             </span>
-            <h2 style={{ margin: '4px 0 2px 0', fontSize: '1.9rem' }}>
+            <h2 style={{ margin: '4px 0 2px 0', fontSize: '1.9rem', color: '#FEF3C7', textShadow: '2px 2px 0 var(--ink)' }}>
               {progress.spoiledName}
             </h2>
-            <div style={{ fontWeight: 800, color: 'var(--wood-dark)', fontSize: '1.05rem' }}>
+            <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '1.05rem' }}>
               {progress.spoiledTitle}
             </div>
           </div>
@@ -127,7 +127,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--ink)' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#111111' }}>
               {def?.challengeTitle}
             </h3>
             <span
@@ -135,9 +135,9 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                 background: progress.isUnlocked
                   ? 'var(--leaf-green)'
                   : progress.isQueued
-                  ? 'var(--wood-light)'
-                  : 'var(--wood-dark)',
-                color: progress.isQueued ? 'var(--ink)' : '#FFFFFF',
+                  ? 'var(--wood-dark)'
+                  : '#2A170A',
+                color: '#FFFFFF',
                 fontWeight: 900,
                 fontSize: '0.85rem',
                 padding: '3px 8px',
@@ -152,7 +152,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                 : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`}
             </span>
           </div>
-          <p style={{ margin: '6px 0 10px 0', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.35 }}>
+          <p style={{ margin: '6px 0 10px 0', fontSize: '0.94rem', fontWeight: 700, lineHeight: 1.35, color: '#111111' }}>
             {def?.challengeLongDesc}
           </p>
 
@@ -187,7 +187,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
           {/* Targeted enemies counters */}
           {progress.enemiesBreakdown.length > 0 && (
             <div style={{ marginTop: '12px' }}>
-              <div style={{ fontSize: '0.82rem', fontWeight: 900, color: 'var(--wood-dark)', marginBottom: '4px' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 900, color: '#111111', marginBottom: '4px' }}>
                 Zahnáni vybraní nepřátelé:
               </div>
               <div className="hunter-enemy-pills">
@@ -195,7 +195,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                   <div key={e.id} className="hunter-enemy-pill" style={{ padding: '3px 8px' }}>
                     <span>{e.icon}</span>
                     <span>{e.name}:</span>
-                    <strong style={{ color: 'var(--wood-dark)' }}>{e.count}</strong>
+                    <strong style={{ color: '#111111' }}>{e.count}</strong>
                   </div>
                 ))}
               </div>
@@ -204,7 +204,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
         </div>
 
         {/* Progressive Spoil Milestones */}
-        <h4 style={{ margin: '14px 0 8px 0', fontSize: '1.15rem' }}>
+        <h4 style={{ margin: '14px 0 8px 0', fontSize: '1.15rem', color: '#FEF3C7' }}>
           🕵️ Postupné odhalování identity (25 %, 50 % a 75 %):
         </h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
@@ -212,32 +212,32 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
             <div
               key={m.pct}
               style={{
-                background: m.reached ? '#FAF5E8' : 'rgba(0, 0, 0, 0.05)',
-                border: m.reached ? '2.5px solid var(--leaf-green)' : '2px dashed var(--wood-light)',
+                background: m.reached ? '#FAF5E8' : '#EDE4D1',
+                border: m.reached ? '2.5px solid var(--leaf-green)' : '2px solid #3D2210',
                 borderRadius: '8px',
                 padding: '8px 12px',
-                opacity: m.reached ? 1 : 0.65,
+                color: '#111111',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong style={{ fontSize: '0.9rem', color: m.reached ? '#065F46' : 'var(--wood-dark)' }}>
+                <strong style={{ fontSize: '0.9rem', color: m.reached ? '#065F46' : '#2A170A' }}>
                   {m.reached ? '✅' : '🔒'} {m.title}
                 </strong>
                 <span
                   style={{
                     fontSize: '0.75rem',
-                    fontWeight: 800,
+                    fontWeight: 900,
                     color: m.reached ? '#065F46' : '#78350F',
                   }}
                 >
                   {m.reached ? 'ODHALENO' : `Vyžaduje ${m.pct} %`}
                 </span>
               </div>
-              <p style={{ margin: '4px 0 2px 0', fontSize: '0.84rem', lineHeight: 1.3 }}>
+              <p style={{ margin: '4px 0 2px 0', fontSize: '0.86rem', lineHeight: 1.3, color: '#111111', fontWeight: 600 }}>
                 {m.reached ? m.desc : 'Tato stopa a část identity se odhalí po splnění tohoto milníku.'}
               </p>
               {m.reached && m.weapon && (
-                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--wood-dark)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 900, color: '#2A170A', marginTop: '2px' }}>
                   💡 {m.weapon}
                 </div>
               )}

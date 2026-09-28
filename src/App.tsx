@@ -1,12 +1,46 @@
+/**
+ * ============================================================================
+ * BUBÁKOV – ANIMOVANÁ LADOVSKÁ EDICE
+ * ============================================================================
+ * ZÁVAZNÉ PRAVIDLO PRO SOUBORY KE STAŽENÍ (HTML & TXT STANDALONE & EDIT INTEGRITA):
+ * ============================================================================
+ * Soubory ke stažení v textovém formátu (.txt) i formátu (.html)
+ * ('bubakov_hra_ladovska_edice.txt' a 'bubakov_hra_ladovska_edice.html')
+ * MUSÍ VŽDY OBSAHOVAT NAPROSTO KOMPLETNÍ HRU PŘIPRAVENOU K HRANÍ I K ÚPRAVÁM:
+ *
+ * 1. 100% SAMOSTATNOU A SPOUSTITELNOU OFFLINE HRU (žádná instalace ani síť).
+ * 2. NEMINIFIKOVANÝ, ČISTÝ A ČITELNÝ BĚHOVÝ KÓD (s plnými názvy funkcí a proměnných).
+ * 3. KOMPLETNÍ PŮVODNÍ ZDROJOVÉ KÓDY VŠECH MODULŮ (v JSON bloku <script id="bubakov-source-tree">).
+ * 4. DETAILNÍHO PRŮVODCE PRO AI MODELY (CLAUDE, GPT) A VÝVOJÁŘE K ÚPRAVÁM HRY.
+ *
+ * NIKDY NESMÍ BÝT STAŽEN ŽÁDNÝ PLACEHOLDER, ŽÁDNÁ OŘEZANÁ VERZE ANI MINIFIKOVANÝ NEČITELNÝ GIBBERISH!
+ *
+ * Všechny herní moduly:
+ * - Kompletní běhový engine a herní smyčka
+ * - 4 venkovští hrdinové (Poutník, Pasáček, Bába kořenářka, Ponocný)
+ * - 32 lidových monster a velcí venkovští bossové
+ * - 11 zbraní, jejich větvení a úrovně
+ * - Ladovský plátnový kreslící engine (HTML5 Canvas 2D)
+ * - Zvukový Web Audio syntezátor tradičních venkovských nástrojů
+ * - Hospoda U Černého kocoura, vývoj vesnice Bubákov, Bestiář a Výzvy
+ * - Veškeré CSS styly, typografie a původní TypeScript zdrojáky
+ * jsou plně obsaženy uvnitř tohoto jediného souboru.
+ *
+ * Soubor .txt je přímou kopií .html hry – stačí jej přejmenovat na .html a spustit!
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   CharacterType,
   Season,
+  GameLevelId,
   MetaProgression,
   UpgradeChoice,
   DayPhase,
 } from './types';
 import { COLORS, DAY_PHASES, getCurrentDayPhase } from './constants';
+import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS } from './data/weapons';
 import { ENEMIES } from './data/enemies';
@@ -21,6 +55,14 @@ import { getHunterProgress, HUNTER_UNLOCKS, HunterProgress, getActiveUnlockingHu
 import { ArsenalModal } from './components/ArsenalModal';
 import { WeaponUnlockModal } from './components/WeaponUnlockModal';
 import { getWeaponProgress, WEAPON_UNLOCKS, WeaponProgress, getActiveUnlockingWeapon } from './data/weaponUnlocks';
+import { LevelUnlockModal } from './components/LevelUnlockModal';
+import {
+  getLevelProgress,
+  LEVEL_UNLOCKS,
+  LevelProgress,
+  getActiveUnlockingLevel,
+  isLevelFullyUnlocked,
+} from './data/levelUnlocks';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -185,7 +227,7 @@ class DecorItem {
     this.flip = Math.random() > 0.5 ? 1 : -1;
   }
 
-  draw(ctx: CanvasRenderingContext2D, season: Season) {
+  draw(ctx: CanvasRenderingContext2D, season: Season, theme?: string) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.scale(this.flip * this.scale, this.scale);
@@ -200,11 +242,113 @@ class DecorItem {
       ctx.fill();
       ctx.stroke();
 
-      Lada.setupPath(ctx, season === 'winter' ? '#FFFFFF' : COLORS.white);
+      if (theme === 'autumn_graveyard') {
+        // Gnarled spooky bare branches for graveyard
+        ctx.strokeStyle = COLORS.woodDark;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, -50);
+        ctx.lineTo(-24, -75);
+        ctx.lineTo(-34, -70);
+        ctx.moveTo(0, -50);
+        ctx.lineTo(22, -78);
+        ctx.lineTo(32, -92);
+        ctx.moveTo(-10, -60);
+        ctx.lineTo(-12, -90);
+        ctx.moveTo(10, -62);
+        ctx.lineTo(14, -88);
+        ctx.stroke();
+      } else {
+        const leafColor = season === 'winter' ? '#FFFFFF' : '#D9A036';
+        Lada.setupPath(ctx, leafColor);
+        ctx.beginPath();
+        ctx.arc(0, -60, 30, 0, Math.PI * 2);
+        ctx.arc(-20, -50, 25, 0, Math.PI * 2);
+        ctx.arc(20, -50, 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        if (season !== 'winter') {
+          // Warm autumn leaf accent
+          ctx.fillStyle = '#C65D24';
+          ctx.beginPath();
+          ctx.arc(-8, -65, 12, 0, Math.PI * 2);
+          ctx.arc(12, -55, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    } else if (this.type === 'snowman') {
+      // Classic Josef Lada Snowman
+      Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 3.5);
+      // Bottom snowball
       ctx.beginPath();
-      ctx.arc(0, -60, 30, 0, Math.PI * 2);
-      ctx.arc(-20, -50, 25, 0, Math.PI * 2);
-      ctx.arc(20, -50, 25, 0, Math.PI * 2);
+      ctx.arc(0, -18, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Middle snowball
+      ctx.beginPath();
+      ctx.arc(0, -44, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Head snowball
+      ctx.beginPath();
+      ctx.arc(0, -68, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Coal buttons
+      ctx.fillStyle = COLORS.ink;
+      ctx.beginPath();
+      ctx.arc(0, -48, 2.5, 0, Math.PI * 2);
+      ctx.arc(0, -40, 2.5, 0, Math.PI * 2);
+      ctx.arc(0, -22, 3, 0, Math.PI * 2);
+      ctx.arc(0, -14, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Coal eyes
+      ctx.beginPath();
+      ctx.arc(-4, -70, 2, 0, Math.PI * 2);
+      ctx.arc(4, -70, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Carrot nose
+      ctx.fillStyle = '#E06D29';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -67);
+      ctx.lineTo(12, -65);
+      ctx.lineTo(0, -63);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Pot hat
+      Lada.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2.5);
+      ctx.beginPath();
+      ctx.rect(-8, -84, 16, 12);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.rect(-12, -73, 24, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      // Twig broom
+      Lada.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.moveTo(14, 0);
+      ctx.lineTo(22, -60);
+      ctx.stroke();
+      // Broom bristles
+      Lada.setupPath(ctx, COLORS.mustard, COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.moveTo(22, -60);
+      ctx.lineTo(28, -75);
+      ctx.lineTo(18, -72);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
     } else if (this.type === 'cross') {
@@ -281,7 +425,18 @@ export default function App() {
   const [meta, setMeta] = useState<MetaProgression>(() => {
     try {
       const saved = localStorage.getItem('bubakov_meta');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          selectedLevel: parsed.selectedLevel || 1,
+          highestLevelUnlocked: parsed.highestLevelUnlocked || (
+            (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 3 :
+            (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
+          ),
+          completedLevels: parsed.completedLevels || {},
+        };
+      }
     } catch {}
     return {
       krejcary: 0,
@@ -300,6 +455,9 @@ export default function App() {
       unlockedWeapons: { buns: true, cane: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
+      selectedLevel: 1,
+      highestLevelUnlocked: 1,
+      completedLevels: {},
     };
   });
 
@@ -313,9 +471,19 @@ export default function App() {
     } catch {}
   };
 
+  // Selected level state
+  const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
+    const s = meta.selectedLevel;
+    return (s === 1 || s === 2 || s === 3 ? s : 1) as GameLevelId;
+  });
+
+  const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[1];
+  const season: Season = currentLevel.season;
+
   // Hunter detail modal, arsenal modal & unlock toast
   const [selectedHunterDetail, setSelectedHunterDetail] = useState<HunterProgress | null>(null);
   const [selectedWeaponDetail, setSelectedWeaponDetail] = useState<WeaponProgress | null>(null);
+  const [selectedLevelDetail, setSelectedLevelDetail] = useState<LevelProgress | null>(null);
   const [isArsenalOpen, setIsArsenalOpen] = useState(false);
   const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string } | null>(null);
   const [downloadToast, setDownloadToast] = useState<string | null>(null);
@@ -325,6 +493,11 @@ export default function App() {
   const shepherdProg = getHunterProgress('shepherd', meta);
   const korenarkaProg = getHunterProgress('korenarka', meta);
   const watchmanProg = getHunterProgress('watchman', meta);
+
+  // Progressive unlock calculations for all 3 levels
+  const level1Prog = getLevelProgress(1, meta);
+  const level2Prog = getLevelProgress(2, meta);
+  const level3Prog = getLevelProgress(3, meta);
 
   // Weapon unlock count
   const unlockedWeaponsCount = Object.keys(WEAPONS).filter(
@@ -337,7 +510,6 @@ export default function App() {
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [season, setSeason] = useState<Season>(meta.season || 'autumn');
 
   // Touch controls
   const [touchEnabled, setTouchEnabled] = useState(() => {
@@ -373,6 +545,9 @@ export default function App() {
     bossTitle: '',
     warningBanner: '',
     chasnikIndicator: '',
+    levelId: 1 as GameLevelId,
+    levelTitle: GAME_LEVELS[1].name,
+    levelWon: false,
   });
 
   // Level Up choices
@@ -382,7 +557,14 @@ export default function App() {
   const [chestRewards, setChestRewards] = useState<any[]>([]);
 
   // Tally state
-  const [tallyCounters, setTallyCounters] = useState({ kills: 0, coins: 0, souls: 0, time: 0 });
+  const [tallyCounters, setTallyCounters] = useState({
+    kills: 0,
+    coins: 0,
+    souls: 0,
+    time: 0,
+    isVictory: false,
+    levelId: 1 as GameLevelId,
+  });
 
   // Game engine refs (persistent through renders)
   const engineRef = useRef<{
@@ -396,11 +578,12 @@ export default function App() {
     texts: DamageText[];
     camera: { x: number; y: number };
     keys: Record<string, boolean>;
-    bossSpawned: boolean;
-    hejkalSpawned: boolean;
-    obrSpawned: boolean;
+    miniBossSpawned: boolean;
+    midBossSpawned: boolean;
+    finalBossSpawned: boolean;
+    levelVictoryTriggered: boolean;
+    activeLevelId: GameLevelId;
     chasnikSpawned: boolean;
-    poledniceSpawned: boolean;
     chestCounter: number;
     companion: any;
     lastTime: number;
@@ -420,11 +603,12 @@ export default function App() {
     texts: [],
     camera: { x: 0, y: 0 },
     keys: {},
-    bossSpawned: false,
-    hejkalSpawned: false,
-    obrSpawned: false,
+    miniBossSpawned: false,
+    midBossSpawned: false,
+    finalBossSpawned: false,
+    levelVictoryTriggered: false,
+    activeLevelId: 1,
     chasnikSpawned: false,
-    poledniceSpawned: false,
     chestCounter: 0,
     companion: null,
     lastTime: performance.now(),
@@ -459,6 +643,8 @@ export default function App() {
       coins: runStats.coins,
       souls: runStats.souls,
       time: timeSurvived,
+      isVictory: runStats.levelWon,
+      levelId: runStats.levelId,
     });
     saveMeta({
       ...meta,
@@ -467,12 +653,53 @@ export default function App() {
     setGameState('tally');
   };
 
-  // Sync season change
-  const toggleSeason = () => {
-    const next: Season = season === 'autumn' ? 'winter' : 'autumn';
-    setSeason(next);
-    saveMeta({ ...meta, season: next });
-    sound.coin();
+  // Level victory handler when final boss is defeated or dawn reached
+  const triggerLevelVictory = (lvlId: GameLevelId, reason: 'boss' | 'dawn') => {
+    if (engineRef.current.levelVictoryTriggered) return;
+    engineRef.current.levelVictoryTriggered = true;
+
+    sound.victory();
+    sound.cheer();
+
+    const curMeta = metaRef.current;
+    const nextLvlId = (lvlId + 1) as GameLevelId;
+    const canUnlockNext = nextLvlId <= 3;
+    const nextHighest = canUnlockNext
+      ? Math.max(curMeta.highestLevelUnlocked || 1, nextLvlId)
+      : (curMeta.highestLevelUnlocked || 1);
+    const updatedCompleted = {
+      ...(curMeta.completedLevels || {}),
+      [lvlId]: true,
+    };
+
+    const nextMeta: MetaProgression = {
+      ...curMeta,
+      highestLevelUnlocked: nextHighest,
+      completedLevels: updatedCompleted,
+    };
+    saveMeta(nextMeta);
+
+    setRunStats((s) => ({
+      ...s,
+      levelWon: true,
+      warningBanner: reason === 'boss'
+        ? `🏆 ${GAME_LEVELS[lvlId].finalBoss.name} POKOŘEN – VÍTĚZSTVÍ!`
+        : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!',
+    }));
+
+    if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
+      setUnlockNotice({
+        title: `🎉 ${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
+        desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
+      });
+      setTimeout(() => setUnlockNotice(null), 6000);
+    } else if (lvlId === 3) {
+      setUnlockNotice({
+        title: `👑 VŠECHNY 3 ÚROVNĚ DOKONČENY!`,
+        desc: `Skalní obr ze Sázavy padl! Celý Bubákov oslavuje vaše legendární hrdinství!`,
+      });
+      setTimeout(() => setUnlockNotice(null), 6000);
+    }
   };
 
   const toggleSound = () => {
@@ -516,7 +743,29 @@ export default function App() {
   }, [gameState, togglePause]);
 
   // Start new run
-  const startGame = (type: CharacterType) => {
+  const startGame = (type: CharacterType, targetLevelId?: GameLevelId) => {
+    const chosenLevelId = targetLevelId || selectedLevelId || 1;
+    const chosenLevel = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
+    const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
+
+    if (!levelProg.isUnlocked) {
+      sound.hit();
+      setSelectedLevelDetail(levelProg);
+      if (levelProg.isQueued) {
+        setUnlockNotice({
+          title: `🔒 ${levelProg.spoiledName} je v pořadí!`,
+          desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
+        });
+      } else {
+        setUnlockNotice({
+          title: `🔒 ${levelProg.spoiledName} je uzamčena!`,
+          desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
+        });
+      }
+      setTimeout(() => setUnlockNotice(null), 4500);
+      return;
+    }
+
     const hunterProg = getHunterProgress(type, metaRef.current);
     if (!hunterProg.isUnlocked) {
       sound.hit();
@@ -658,32 +907,13 @@ export default function App() {
       },
     };
 
-    // Decor seed around starting zone
+    // Decor seed around starting zone tailored to level
     const decor: DecorItem[] = [];
+    const pool = chosenLevel.decorTypes;
     for (let i = 0; i < 90; i++) {
       const dist = 100 + Math.random() * 1400;
       const ang = Math.random() * Math.PI * 2;
-      const roll = Math.random();
-      const decType =
-        season === 'winter'
-          ? roll > 0.85
-            ? 'cottage'
-            : roll > 0.7
-            ? 'snowman'
-            : roll > 0.5
-            ? 'tree'
-            : roll > 0.35
-            ? 'cross'
-            : 'will_o_wisp'
-          : roll > 0.82
-          ? 'tree'
-          : roll > 0.68
-          ? 'cross'
-          : roll > 0.52
-          ? 'tombstone'
-          : roll > 0.35
-          ? 'cottage'
-          : 'will_o_wisp';
+      const decType = pool[Math.floor(Math.random() * pool.length)];
       decor.push(new DecorItem(Math.cos(ang) * dist, Math.sin(ang) * dist, decType));
     }
 
@@ -698,11 +928,12 @@ export default function App() {
       texts: [],
       camera: { x: 0, y: 0 },
       keys: {},
-      bossSpawned: false,
-      hejkalSpawned: false,
-      obrSpawned: false,
+      miniBossSpawned: false,
+      midBossSpawned: false,
+      finalBossSpawned: false,
+      levelVictoryTriggered: false,
+      activeLevelId: chosenLevelId,
       chasnikSpawned: false,
-      poledniceSpawned: false,
       chestCounter: 0,
       companion: null,
       lastTime: performance.now(),
@@ -731,6 +962,9 @@ export default function App() {
       bossTitle: '',
       warningBanner: '',
       chasnikIndicator: '',
+      levelId: chosenLevelId,
+      levelTitle: chosenLevel.name,
+      levelWon: false,
     });
 
     setGameState('playing');
@@ -996,8 +1230,10 @@ export default function App() {
             const newTime = runStats.time + dt;
             const currentPhase = getCurrentDayPhase(newTime);
 
+            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
+
             // Check dawn victory
-            if (newTime >= 360 && runStats.time < 360) {
+            if (newTime >= 300 && runStats.time < 300) {
               sound.rooster();
               sound.victory();
               engine.texts.push(new DamageText(player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true));
@@ -1006,55 +1242,64 @@ export default function App() {
                 e.panicked = true;
                 e.isDefeated = true;
               });
+              triggerLevelVictory(engine.activeLevelId || 1, 'dawn');
             }
 
-            // Spawn bosses and events
-            if (!engine.poledniceSpawned && newTime >= 35) {
-              engine.poledniceSpawned = true;
+            // 1. Mini-boss encounter
+            if (!engine.miniBossSpawned && (newTime >= curLvl.miniBoss.time || runStats.kills >= curLvl.miniBoss.kills)) {
+              engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(createEnemyInstance('polednice', player.x + Math.cos(ang) * 550, player.y + Math.sin(ang) * 550, 1.2));
-              engine.texts.push(new DamageText(player.x, player.y - 50, 'POZOR: POLEDNICE SE SRPEM!', COLORS.mustard, true));
+              engine.enemies.push(
+                createEnemyInstance(
+                  curLvl.miniBoss.id,
+                  player.x + Math.cos(ang) * 550,
+                  player.y + Math.sin(ang) * 550,
+                  curLvl.miniBoss.multiplier
+                )
+              );
+              engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.miniBoss.name, COLORS.mustard, true));
+              setRunStats((s) => ({ ...s, warningBanner: curLvl.miniBoss.warning }));
               sound.slash();
-            }
-
-            if (!engine.bossSpawned && (newTime >= 120 || runStats.kills >= 60)) {
-              engine.bossSpawned = true;
-              const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(createEnemyInstance('cert', player.x + Math.cos(ang) * 560, player.y + Math.sin(ang) * 560, 1.5, true));
-              sound.boss();
-              setRunStats((s) => ({
-                ...s,
-                bossTitle: '👹 PEKELNÝ ČERT',
-                bossHpPct: 100,
-                warningBanner: '⚠️ PŘICHÁZÍ PEKELNÝ ČERT! ⚠️',
-              }));
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
 
-            if (!engine.hejkalSpawned && (newTime >= 240 || runStats.kills >= 130)) {
-              engine.hejkalSpawned = true;
+            // 2. Mid-boss encounter
+            if (!engine.midBossSpawned && (newTime >= curLvl.midBoss.time || runStats.kills >= curLvl.midBoss.kills)) {
+              engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(createEnemyInstance('hejkal', player.x + Math.cos(ang) * 580, player.y + Math.sin(ang) * 580, 1.8, true));
-              sound.roar();
-              setRunStats((s) => ({
-                ...s,
-                bossTitle: '🌲 PŮLNOČNÍ HEJKAL',
-                bossHpPct: 100,
-                warningBanner: '🌲 PŘICHÁZÍ PŮLNOČNÍ HEJKAL! 🌲',
-              }));
-              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
+              engine.enemies.push(
+                createEnemyInstance(
+                  curLvl.midBoss.id,
+                  player.x + Math.cos(ang) * 560,
+                  player.y + Math.sin(ang) * 560,
+                  curLvl.midBoss.multiplier
+                )
+              );
+              engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.midBoss.name, COLORS.mustard, true));
+              setRunStats((s) => ({ ...s, warningBanner: curLvl.midBoss.warning }));
+              sound.boss();
+              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
 
-            if (!engine.obrSpawned && (newTime >= 300 || runStats.kills >= 190)) {
-              engine.obrSpawned = true;
+            // 3. Final Level Boss encounter
+            if (!engine.finalBossSpawned && (newTime >= curLvl.finalBoss.time || runStats.kills >= curLvl.finalBoss.kills)) {
+              engine.finalBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(createEnemyInstance('obr', player.x + Math.cos(ang) * 600, player.y + Math.sin(ang) * 600, 2.0, true));
+              engine.enemies.push(
+                createEnemyInstance(
+                  curLvl.finalBoss.id,
+                  player.x + Math.cos(ang) * 580,
+                  player.y + Math.sin(ang) * 580,
+                  curLvl.finalBoss.multiplier,
+                  true
+                )
+              );
               sound.roar();
               setRunStats((s) => ({
                 ...s,
-                bossTitle: '🗿 SKALNÍ OBR ZE SÁZAVY',
+                bossTitle: curLvl.finalBoss.name,
                 bossHpPct: 100,
-                warningBanner: '🗿 PŘICHÁZÍ SKALNÍ OBR! 🗿',
+                warningBanner: curLvl.finalBoss.warning,
               }));
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
@@ -1115,32 +1360,25 @@ export default function App() {
               }
             }
 
-            // Regular mob spawn waves
+            // Regular mob spawn waves from current level's pool
             const enemyCap = 180;
             if (engine.enemies.length < enemyCap && Math.random() < 0.35) {
               const spawnCount = Math.floor(1 + newTime / 30);
               for (let i = 0; i < spawnCount; i++) {
                 const ang = Math.random() * Math.PI * 2;
                 const dist = 700 + Math.random() * 200;
-                let mobId = 'rarach';
+                const phaseKey = currentPhase.id as keyof typeof curLvl.spawnPools;
+                const pool = curLvl.spawnPools[phaseKey] || curLvl.spawnPools.noon;
+                const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
 
-                if (currentPhase.id === 'noon') {
-                  mobId = Math.random() > 0.65 ? 'zaba' : Math.random() > 0.45 ? 'rarach' : Math.random() > 0.25 ? 'sotek' : Math.random() > 0.12 ? 'mysak' : 'skodnik';
-                } else if (currentPhase.id === 'afternoon') {
-                  mobId = Math.random() > 0.7 ? 'divozenka' : Math.random() > 0.48 ? 'hastrman' : Math.random() > 0.32 ? 'vodnicek' : Math.random() > 0.16 ? 'blatouch' : 'rarach';
-                } else if (currentPhase.id === 'dusk') {
-                  mobId = Math.random() > 0.65 ? 'klekanice' : Math.random() > 0.45 ? 'skeleton' : Math.random() > 0.28 ? 'topivec' : Math.random() > 0.12 ? 'umrlec' : 'certik';
-                } else if (currentPhase.id === 'night') {
-                  mobId = Math.random() > 0.68 ? 'bubak' : Math.random() > 0.48 ? 'skeleton_scythe' : Math.random() > 0.32 ? 'bludicka' : Math.random() > 0.16 ? 'stodolnik' : 'cerny_pes';
-                } else if (currentPhase.id === 'midnight') {
-                  mobId = Math.random() > 0.65 ? 'hromotluk' : Math.random() > 0.45 ? 'drab' : Math.random() > 0.25 ? 'cerny_pes' : 'meluzina';
-                }
-
-                if (season === 'winter' && Math.random() > 0.5) {
-                  mobId = Math.random() > 0.5 ? 'meluzina' : 'zmrzlik';
-                }
-
-                engine.enemies.push(createEnemyInstance(mobId, player.x + Math.cos(ang) * dist, player.y + Math.sin(ang) * dist, 1 + newTime / 90));
+                engine.enemies.push(
+                  createEnemyInstance(
+                    mobId,
+                    player.x + Math.cos(ang) * dist,
+                    player.y + Math.sin(ang) * dist,
+                    1 + newTime / 90
+                  )
+                );
               }
             }
 
@@ -1274,6 +1512,8 @@ export default function App() {
                 coins: runStats.coins,
                 souls: runStats.souls,
                 time: Math.floor(runStats.time),
+                isVictory: runStats.levelWon,
+                levelId: runStats.levelId,
               });
               const updatedHighest = Math.max(meta.highestSurviveTime || 0, runStats.time);
               saveMeta({
@@ -1480,8 +1720,17 @@ export default function App() {
         const cam = engine.camera;
         const phase = runStats.dayPhase;
 
-        // Sky / Grass background
-        ctx.fillStyle = season === 'winter' ? '#E9F1F7' : phase.skyColor;
+        const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
+        const isWinter = curLvl.season === 'winter';
+
+        // Sky / Grass background tailored to level
+        if (isWinter) {
+          ctx.fillStyle = '#E9F1F7';
+        } else if (curLvl.theme === 'autumn_graveyard') {
+          ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
+        } else {
+          ctx.fillStyle = phase.skyColor;
+        }
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Apply camera translate
@@ -1489,14 +1738,20 @@ export default function App() {
         ctx.translate(-cam.x, -cam.y);
 
         // Ambient night/day tint over world
-        if (season !== 'winter' && phase.ambientTint !== 'transparent') {
+        if (curLvl.theme === 'autumn_graveyard') {
+          ctx.fillStyle = phase.ambientTint !== 'transparent' ? 'rgba(32, 24, 45, 0.42)' : 'rgba(25, 20, 30, 0.22)';
+          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+        } else if (!isWinter && phase.ambientTint !== 'transparent') {
           ctx.fillStyle = phase.ambientTint;
+          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+        } else if (isWinter) {
+          ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
           ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
         }
 
         // Draw Decor
         for (const dec of engine.decor) {
-          dec.draw(ctx, season);
+          dec.draw(ctx, curLvl.season, curLvl.theme);
         }
 
         // Draw Drops
@@ -1662,15 +1917,38 @@ export default function App() {
           ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Winter falling snowflakes overlay
-        if (season === 'winter') {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        // Weather overlay per level: snowflakes, autumn leaves, or graveyard mist
+        if (curLvl.weatherEffect === 'snow') {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
           const t = engine.uiTime;
-          for (let i = 0; i < 45; i++) {
-            const sx = ((i * 123 + t * 40) % canvas.width);
-            const sy = ((i * 77 + t * 80) % canvas.height);
+          for (let i = 0; i < 55; i++) {
+            const sx = ((i * 123 + t * 45) % canvas.width);
+            const sy = ((i * 77 + t * 85) % canvas.height);
             ctx.beginPath();
             ctx.arc(sx, sy, 2 + (i % 3), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (curLvl.weatherEffect === 'leaves') {
+          const t = engine.uiTime;
+          for (let i = 0; i < 35; i++) {
+            const sx = ((i * 147 + t * 35 + Math.sin(t + i) * 25) % canvas.width);
+            const sy = ((i * 93 + t * 45) % canvas.height);
+            ctx.fillStyle = i % 3 === 0 ? 'rgba(217, 160, 54, 0.75)' : i % 3 === 1 ? 'rgba(209, 52, 43, 0.65)' : 'rgba(140, 90, 53, 0.7)';
+            ctx.beginPath();
+            ctx.ellipse(sx, sy, 4, 2.5, Math.sin(t * 1.5 + i), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (curLvl.weatherEffect === 'fog') {
+          const t = engine.uiTime;
+          for (let i = 0; i < 22; i++) {
+            const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
+            const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
+            const grad = ctx.createRadialGradient(sx, sy, 10, sx, sy, 120);
+            grad.addColorStop(0, 'rgba(180, 195, 215, 0.12)');
+            grad.addColorStop(1, 'rgba(180, 195, 215, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 120, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -1684,7 +1962,7 @@ export default function App() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animId);
     };
-  }, [gameState, season]);
+  }, [gameState, selectedLevelId]);
 
   // Enemy instance factory
   const createEnemyInstance = (id: string, x: number, y: number, multiplier = 1, isBoss = false) => {
@@ -1866,6 +2144,47 @@ export default function App() {
             setTimeout(() => setUnlockNotice(null), 5000);
           }
 
+          // 3. Sequential Level Progression: track kills towards revealing / unlocking the next level!
+          const activeLevelId = getActiveUnlockingLevel(nextMeta);
+          let announceLevelName = '';
+          if (activeLevelId) {
+            const lDef = LEVEL_UNLOCKS[activeLevelId];
+            if (lDef && lDef.targetEnemies.some((e) => e.id === this.id)) {
+              const prevLevelCounts = nextMeta.levelKillCounts || {};
+              const curLevelKills = {
+                ...(prevLevelCounts[activeLevelId] || {}),
+              };
+              curLevelKills[this.id] = (curLevelKills[this.id] || 0) + 1;
+
+              const nextLevelCounts = {
+                ...prevLevelCounts,
+                [activeLevelId]: curLevelKills,
+              };
+              nextMeta = { ...nextMeta, levelKillCounts: nextLevelCounts };
+
+              const nextLevelProg = getLevelProgress(activeLevelId, nextMeta);
+              if (nextLevelProg.isUnlocked) {
+                const nextHighest = Math.max(nextMeta.highestLevelUnlocked || 1, activeLevelId);
+                nextMeta = {
+                  ...nextMeta,
+                  highestLevelUnlocked: nextHighest,
+                };
+                announceLevelName = lDef.realName;
+              }
+            }
+          }
+
+          if (announceLevelName) {
+            sound.victory();
+            sound.cheer();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 95, `🎉 ${announceLevelName.toUpperCase()} ODEMČENA!`, COLORS.mustard, true));
+            setUnlockNotice({
+              title: `🎉 Odemčena nová výprava: ${announceLevelName}!`,
+              desc: 'Tato úroveň je nyní otevřena v hlavní nabídce pro novou výpravu!',
+            });
+            setTimeout(() => setUnlockNotice(null), 5500);
+          }
+
           saveMeta(nextMeta);
 
           setRunStats((s) => ({ ...s, kills: s.kills + 1 }));
@@ -1888,6 +2207,13 @@ export default function App() {
                 radius: 12,
                 time: Math.random() * 5,
               });
+            }
+
+            // Check if final boss of this level
+            const curLvlId = engineRef.current.activeLevelId || 1;
+            const curLvl = GAME_LEVELS[curLvlId];
+            if (this.id === curLvl.finalBoss.id || this.isBoss) {
+              triggerLevelVictory(curLvlId, 'boss');
             }
           } else {
             // Drop coins & items, treasure chest drops after 100 enemies chased away
@@ -1990,24 +2316,32 @@ export default function App() {
   // Helper to retrieve the complete, standalone offline game code
   const getCompleteStandaloneGame = async (): Promise<string> => {
     // 1. Try to fetch the prebuilt offline bundle which contains complete bundled JS + CSS + HTML
-    try {
-      const res = await fetch('/bubakov_hra_ladovska_edice.html');
-      if (res.ok) {
-        const fullContent = await res.text();
-        if (
-          fullContent &&
-          fullContent.length > 50000 &&
-          fullContent.includes('id="root"') &&
-          (fullContent.includes('<script') || fullContent.includes('React'))
-        ) {
-          return fullContent;
+    const cacheBuster = `?t=${Date.now()}`;
+    const candidates = [
+      `/bubakov_hra_ladovska_edice.html${cacheBuster}`,
+      `/bubakov_hra_ladovska_edice.txt${cacheBuster}`,
+    ];
+
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const fullContent = await res.text();
+          if (
+            fullContent &&
+            fullContent.length > 50000 &&
+            fullContent.includes('id="root"') &&
+            (fullContent.includes('<script') || fullContent.includes('React'))
+          ) {
+            return fullContent;
+          }
         }
+      } catch (e) {
+        console.warn(`Could not fetch ${url}:`, e);
       }
-    } catch (e) {
-      console.warn('Could not fetch standalone HTML from server, falling back...', e);
     }
 
-    // 2. If running directly from an existing standalone file, document.documentElement.outerHTML is already complete
+    // 2. If running directly inside a standalone bundle where script is inlined
     const scripts = Array.from(document.querySelectorAll('script'));
     const hasInlineBundle = scripts.some(
       (s) => !s.src && (s.textContent?.length || 0) > 20000
@@ -2016,7 +2350,7 @@ export default function App() {
       return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
     }
 
-    // 3. Fallback: synthesize a standalone document with all stylesheets and scripts
+    // 3. Fallback: synthesize with embedded stylesheets
     const headClone = document.head.cloneNode(true) as HTMLElement;
     const bodyClone = document.body.cloneNode(true) as HTMLElement;
     return `<!DOCTYPE html>\n<html lang="cs">\n${headClone.outerHTML}\n${bodyClone.outerHTML}\n</html>`;
@@ -2025,47 +2359,61 @@ export default function App() {
   // Download standalone offline HTML game
   const downloadGameHtml = async () => {
     sound.coin();
-    setDownloadToast('⏳ Připravuji kompletní offline hru ke stažení (HTML)...');
+    setDownloadToast('⏳ Připravuji 100% kompletní offline hru ke stažení (HTML)...');
     try {
       const gameCode = await getCompleteStandaloneGame();
+      if (!gameCode || gameCode.length < 50000) {
+        throw new Error('Chyba integrity: Stažený soubor hry není kompletní.');
+      }
       triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.html', 'text/html;charset=utf-8');
       sound.cheer();
-      setDownloadToast('✅ Celá hra úspěšně stažena! Lze hrát offline bez internetu.');
+      setDownloadToast('✅ 100% kompletní hra úspěšně stažena! Lze hrát offline bez internetu.');
     } catch (e) {
       console.error(e);
       setDownloadToast('❌ Chyba při stahování hry.');
     }
-    setTimeout(() => setDownloadToast(null), 4500);
+    setTimeout(() => setDownloadToast(null), 5000);
   };
 
   // Download complete game HTML saved as TXT file
   const downloadGameTxt = async () => {
     sound.coin();
-    setDownloadToast('⏳ Připravuji kompletní kód hry ke stažení (TXT)...');
+    setDownloadToast('⏳ Připravuji 100% kompletní kód hry ke stažení (TXT)...');
     try {
       let gameCode = '';
       try {
-        const res = await fetch('/bubakov_hra_ladovska_edice.txt');
+        const res = await fetch(`/bubakov_hra_ladovska_edice.txt?t=${Date.now()}`);
         if (res.ok) {
           const txt = await res.text();
-          if (txt && txt.length > 50000) {
+          if (
+            txt &&
+            txt.length > 50000 &&
+            txt.includes('id="root"') &&
+            (txt.includes('<script') || txt.includes('React'))
+          ) {
             gameCode = txt;
           }
         }
-      } catch {}
+      } catch (e) {
+        console.warn('Fetch txt error:', e);
+      }
 
       if (!gameCode) {
         gameCode = await getCompleteStandaloneGame();
       }
 
+      if (!gameCode || gameCode.length < 50000) {
+        throw new Error('Chyba integrity: Stažený soubor hry není kompletní.');
+      }
+
       triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.txt', 'text/plain;charset=utf-8');
       sound.cheer();
-      setDownloadToast('✅ Celý kód hry stažen jako TXT! Lze přejmenovat na .html a hrát.');
+      setDownloadToast('✅ 100% kompletní hra stažena jako TXT! Stačí přejmenovat na .html a spustit.');
     } catch (e) {
       console.error(e);
       setDownloadToast('❌ Chyba při stahování souboru TXT.');
     }
-    setTimeout(() => setDownloadToast(null), 4500);
+    setTimeout(() => setDownloadToast(null), 5000);
   };
 
   const formatTimer = (secs: number) => {
@@ -2133,16 +2481,16 @@ export default function App() {
           </span>
         </div>
 
-        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.84rem', lineHeight: 1.3, color: 'var(--ink)' }}>
+        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.84rem', lineHeight: 1.3, color: '#111111' }}>
           {prog.spoiledLore}
         </p>
 
         {/* Weapons and Ability hints */}
         <div className="hunter-clue-box">
-          <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>
+          <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#111111' }}>
             🗡️ {prog.spoiledWeaponHint}
           </div>
-          <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>
+          <div style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '2px', color: '#111111' }}>
             ⚡ {prog.spoiledAbilityHint}
           </div>
         </div>
@@ -2257,18 +2605,26 @@ export default function App() {
             <button className="pause-toggle-btn" onClick={togglePause} title="Pozastavit hru a zobrazit výbavu (Esc / P)">
               ⏸️ Odpočinek
             </button>
-            <button className="season-toggle-btn" onClick={toggleSeason} title="Přepnout roční období">
-              <span className="season-toggle-text">
-                {season === 'winter' ? '❄️ Zima: Ladovská' : '🍂 Podzim: Zlatavý'}
-              </span>
-            </button>
+            <div className="hud-level-badge" title={`Aktuální úroveň: ${GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}`}>
+              <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
+              <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.shortTitle}</span>
+            </div>
+            {runStats.levelWon && (
+              <button
+                className="hud-victory-banner-btn"
+                onClick={quitToTavernFromPause}
+                title="Úroveň dokončena! Triumfální návrat do hospody"
+              >
+                🏆 Vítězství! Do hospody 🍺
+              </button>
+            )}
             <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
               🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
             </button>
-            <button className="download-toggle-btn" onClick={downloadGameHtml} title="Stáhnout hru pro offline hraní (HTML)">
+            <button className="download-toggle-btn" onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru pro offline hraní (HTML)">
               📥 Stáhnout HTML
             </button>
-            <button className="download-toggle-btn btn-txt-download" onClick={downloadGameTxt} title="Stáhnout celou hru jako TXT soubor">
+            <button className="download-toggle-btn btn-txt-download" onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru v TXT formátu (stačí přejmenovat na .html a hrát)">
               📄 Stáhnout TXT
             </button>
             <button className="sound-toggle-btn" onClick={toggleSound}>
@@ -2291,16 +2647,16 @@ export default function App() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '1.6rem' }}>{runStats.dayPhase.icon}</span>
                 <div>
-                  <div style={{ fontSize: '1.4rem', lineHeight: 1 }}>{formatTimer(runStats.time)}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--wood-dark)', fontWeight: 800 }}>
+                  <div style={{ fontSize: '1.4rem', lineHeight: 1, color: '#111111' }}>{formatTimer(runStats.time)}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#451A03', fontWeight: 900 }}>
                     {runStats.dayPhase.name}
                   </div>
                 </div>
               </div>
-              <div id="coins-text">Krejcary: {runStats.coins} 🪙</div>
-              <div id="souls-text">🏺 Dušičky: {runStats.souls}</div>
-              <div id="kills-text">Zahnáno: {runStats.kills} 💀</div>
-              <div id="chest-progress-text" title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
+              <div id="coins-text" style={{ color: '#111111' }}>Krejcary: {runStats.coins} 🪙</div>
+              <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
+              <div id="kills-text" style={{ color: '#7F1D1D' }}>Zahnáno: {runStats.kills} 💀</div>
+              <div id="chest-progress-text" style={{ color: '#78350F' }} title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
                 🎁 Poklad: {runStats.chestProgress}/100
               </div>
             </div>
@@ -2357,11 +2713,6 @@ export default function App() {
       {gameState === 'menu' && (
         <div id="main-menu" className="overlay">
           <div className="menu-top-right">
-            <button className="season-toggle-btn" onClick={toggleSeason}>
-              <span className="season-toggle-text">
-                {season === 'winter' ? '❄️ Zima: Ladovská' : '🍂 Podzim: Zlatavý'}
-              </span>
-            </button>
             <button className="touch-toggle-btn" onClick={toggleTouch}>
               🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
             </button>
@@ -2376,7 +2727,227 @@ export default function App() {
               Přežijte noc ve světě venkovského děsu Josefa Lady.
             </p>
 
-            <h3 style={{ marginTop: '20px' }}>Vyberte si svého lovce:</h3>
+            {/* 3 PROGRESSIVE GAME LEVELS SELECTOR */}
+            <div className="level-select-section">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.38rem', color: '#111111' }}>
+                  🗺️ Výprava: Úroveň {selectedLevelId} ze 3
+                </h3>
+                <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#3D2210' }}>
+                  Každá úroveň má odlišné nepřátele, ladovské prostředí a unikátního velkého bosse
+                </span>
+              </div>
+
+              <div className="level-grid">
+                {([1, 2, 3] as GameLevelId[]).map((lvlId) => {
+                  const prog = lvlId === 1 ? level1Prog : lvlId === 2 ? level2Prog : level3Prog;
+                  const lvl = GAME_LEVELS[lvlId];
+                  const isUnlocked = prog.isUnlocked;
+                  const isSelected = selectedLevelId === lvlId;
+                  const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
+                    (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
+                    (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
+                    (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1);
+
+                  return (
+                    <div
+                      key={lvlId}
+                      className={`level-card ${isSelected ? 'level-card-selected' : ''} ${isUnlocked ? '' : 'level-card-locked'}`}
+                      onClick={() => {
+                        if (isUnlocked) {
+                          sound.coin();
+                          setSelectedLevelId(lvlId);
+                          saveMeta({ ...meta, selectedLevel: lvlId });
+                        } else {
+                          sound.hit();
+                          setSelectedLevelDetail(prog);
+                          if (prog.isQueued) {
+                            setUnlockNotice({
+                              title: `🔒 ${prog.spoiledName} je v pořadí!`,
+                              desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${prog.requiredLevelName}).`,
+                            });
+                          } else {
+                            setUnlockNotice({
+                              title: `🔒 ${prog.spoiledName} (${prog.percent} %)`,
+                              desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno. Klikněte pro podrobnosti výzvy!`,
+                            });
+                          }
+                          setTimeout(() => setUnlockNotice(null), 4500);
+                        }
+                      }}
+                      title={isUnlocked ? `Zvolit výpravu: ${lvl.name}` : 'Klikněte pro podrobnosti výzvy a milníků'}
+                    >
+                      <div className="level-card-header">
+                        <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`}>
+                          {isSelected ? '⭐ Zvolená výprava' : isCompleted ? '✅ Pokořeno' : isUnlocked ? '🔓 Otevřeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+                        </span>
+                        <span className="level-theme-tag">{prog.spoiledIcon} {prog.spoiledBadge}</span>
+                      </div>
+
+                      <div className="level-title" style={{ fontSize: '1.25rem', fontWeight: 900 }}>
+                        {prog.spoiledName}
+                      </div>
+                      <div className="level-subtitle" style={{ fontSize: '0.85rem', color: 'var(--wood-dark)', fontWeight: 800, minHeight: '32px' }}>
+                        {prog.spoiledSubtitle}
+                      </div>
+
+                      <div>
+                        <span className={`hunter-tier-stamp tier-stamp-${prog.tier}`} style={{ fontSize: '0.74rem', margin: '4px 0 6px 0' }}>
+                          {prog.clueTag}
+                        </span>
+                      </div>
+
+                      <div className="level-desc" style={{ fontSize: '0.84rem', lineHeight: 1.32, color: 'var(--ink)' }}>
+                        {prog.spoiledDesc}
+                      </div>
+
+                      <div className="level-boss-preview" style={{ fontSize: '0.84rem', fontWeight: 800, margin: '6px 0' }}>
+                        {prog.spoiledBossHint}
+                      </div>
+
+                      {/* Enemies preview tailored to milestone tier */}
+                      <div className="level-enemies-preview">
+                        {isUnlocked || prog.tier === 4 ? (
+                          lvl.keyEnemies.map((e) => (
+                            <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
+                              {e.icon} {e.name}
+                            </span>
+                          ))
+                        ) : prog.tier === 3 ? (
+                          <>
+                            {lvl.keyEnemies.slice(0, 4).map((e) => (
+                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
+                                {e.icon} {e.name}
+                              </span>
+                            ))}
+                            <span className="level-enemy-tag" style={{ opacity: 0.7 }}>❓ ???</span>
+                          </>
+                        ) : prog.tier === 2 ? (
+                          <>
+                            {lvl.keyEnemies.slice(0, 3).map((e) => (
+                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
+                                {e.icon} {e.name}
+                              </span>
+                            ))}
+                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
+                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
+                          </>
+                        ) : prog.tier === 1 ? (
+                          <>
+                            {lvl.keyEnemies.slice(0, 1).map((e) => (
+                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
+                                {e.icon} {e.name}
+                              </span>
+                            ))}
+                            <span className="level-enemy-tag" style={{ opacity: 0.55 }}>🌫️ Zahaleno v mlze</span>
+                            <span className="level-enemy-tag" style={{ opacity: 0.55 }}>❓ ???</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>🔒 Neznámé bytosti</span>
+                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ Skryto v mlze</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Challenge progress bar for locked / progressive levels */}
+                      {!isUnlocked && (
+                        <div className="hunter-progress-wrap" style={{ marginTop: 'auto', paddingTop: '6px' }}>
+                          <div className="hunter-progress-header">
+                            <span>{prog.isQueued ? `Čeká na: ${prog.requiredLevelName}` : 'Výzva k odhalení cesty:'}</span>
+                            <span>
+                              {prog.curCount} / {prog.maxCount} ({prog.percent} %)
+                            </span>
+                          </div>
+                          <div className="hunter-progress-bar-outer" style={{ height: '12px' }}>
+                            <div
+                              className="hunter-progress-bar-fill"
+                              style={{ width: `${prog.percent}%` }}
+                            />
+                          </div>
+                          <div className="hunter-progress-ticks">
+                            <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
+                            <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`}>
+                              {prog.percent >= 25 ? '✓' : '🔒'} 25%
+                            </span>
+                            <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`}>
+                              {prog.percent >= 50 ? '✓' : '🔒'} 50%
+                            </span>
+                            <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`}>
+                              {prog.percent >= 75 ? '✓' : '🔒'} 75%
+                            </span>
+                            <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`}>
+                              {prog.percent >= 100 ? '✓' : '🔒'} 100%
+                            </span>
+                          </div>
+                          {prog.enemiesBreakdown.length > 0 && (
+                            <div className="hunter-enemy-pills">
+                              {prog.enemiesBreakdown.map((e) => (
+                                <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`}>
+                                  {e.icon} {e.count}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Interactive detail button */}
+                      <div style={{ marginTop: isUnlocked ? 'auto' : '6px', paddingTop: '6px', display: 'flex', gap: '6px' }}>
+                        {!isUnlocked ? (
+                          <button
+                            className="lada-btn btn-small"
+                            style={{ width: '100%', fontSize: '0.84rem', padding: '5px 8px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              sound.coin();
+                              setSelectedLevelDetail(prog);
+                            }}
+                          >
+                            📜 Prozkoumat stopy a milníky
+                          </button>
+                        ) : (
+                          <div style={{ display: 'flex', width: '100%', gap: '6px' }}>
+                            <button
+                              className="lada-btn btn-small"
+                              style={{
+                                flex: 1,
+                                fontSize: '0.84rem',
+                                padding: '5px 8px',
+                                background: isSelected ? 'var(--mustard)' : undefined,
+                                color: isSelected ? 'var(--ink)' : undefined,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                sound.coin();
+                                setSelectedLevelId(lvlId);
+                                saveMeta({ ...meta, selectedLevel: lvlId });
+                              }}
+                            >
+                              {isSelected ? '⭐ Zvolená výprava' : 'Zvolit úroveň 🗺️'}
+                            </button>
+                            <button
+                              className="tab-btn"
+                              style={{ padding: '4px 10px', fontSize: '0.8rem', minWidth: 'auto' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                sound.coin();
+                                setSelectedLevelDetail(prog);
+                              }}
+                              title="Zobrazit kroniku a milníky této úrovně"
+                            >
+                              📜
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <h3 style={{ marginTop: '16px' }}>Vyberte si svého lovce pro výpravu do: {currentLevel.shortTitle}:</h3>
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '15px' }}>
               {/* Poutník - Výchozí odemčený lovec */}
               <div
@@ -2415,10 +2986,10 @@ export default function App() {
             </div>
 
             <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button className="lada-btn btn-download" onClick={downloadGameHtml} title="Stáhnout celou hru jako HTML soubor">
+              <button className="lada-btn btn-download" onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru pro offline hraní (HTML soubor)">
                 📥 Stáhnout celou hru (HTML)
               </button>
-              <button className="lada-btn btn-download-txt" onClick={downloadGameTxt} title="Stáhnout celou hru (HTML) jako TXT soubor">
+              <button className="lada-btn btn-download-txt" onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru jako TXT (stačí přejmenovat na .html a hrát)">
                 📄 Stáhnout celou hru (TXT)
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
@@ -2451,7 +3022,7 @@ export default function App() {
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel" style={{ maxWidth: '820px' }}>
             <h1>⏸️ ODPOČINEK U MILNÍKU</h1>
-            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--mustard)', marginTop: '-8px' }}>
+            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-8px' }}>
               Výprava je pozastavena. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
             </p>
 
@@ -2459,7 +3030,7 @@ export default function App() {
             <div
               style={{
                 background: 'var(--parchment)',
-                color: 'var(--ink)',
+                color: '#111111',
                 border: '4px solid var(--ink)',
                 borderRadius: '8px',
                 padding: '14px 18px',
@@ -2470,18 +3041,18 @@ export default function App() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <div>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>
+                  <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>
                     Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Poutník'}
                   </span>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--wood-light)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#451A03', marginTop: '2px' }}>
                     {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický poutník'}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900 }}>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111111' }}>
                     {runStats.dayPhase.icon} {runStats.dayPhase.name}
                   </span>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--mustard)' }}>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#78350F' }}>
                     Čas přežití: {formatTimer(runStats.time)}
                   </div>
                 </div>
@@ -2489,7 +3060,7 @@ export default function App() {
 
               <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
 
-              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800 }}>
+              <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
                 <span>❤️ Životy: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150} HP</span>
                 <span>⭐ Úroveň: <strong>{runStats.level}</strong></span>
                 <span>🪙 Krejcary: <strong>{runStats.coins}</strong></span>
@@ -2500,7 +3071,7 @@ export default function App() {
             </div>
 
             {/* Current weapons inventory */}
-            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--parchment)' }}>
+            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: '#FEF3C7' }}>
               🗡️ Nesený arzenál a výbava lovce:
             </h3>
 
@@ -2514,7 +3085,7 @@ export default function App() {
                 return (
                   <div key={w.id} className="pause-weapon-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.15rem' }}>
+                      <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111' }}>
                         {wDef.icon} {wDef.name}
                       </span>
                       <span
@@ -2530,11 +3101,11 @@ export default function App() {
                         Úr. {w.level}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.84rem', fontWeight: 800 }}>
-                      <span style={{ color: 'var(--wood-dark)' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: 'var(--leaf-green)' }}>⏱️ Kadence: {wDef.baseCd} s</span>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900 }}>
+                      <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
+                      <span style={{ color: '#166534' }}>⏱️ Kadence: {wDef.baseCd} s</span>
                     </div>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.25, opacity: 0.85 }}>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}
                     </p>
                   </div>
@@ -2544,11 +3115,10 @@ export default function App() {
 
             {/* In-pause toggles */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
-              <button className="season-toggle-btn" onClick={toggleSeason} title="Přepnout roční období">
-                <span className="season-toggle-text">
-                  {season === 'winter' ? '❄️ Zima: Ladovská' : '🍂 Podzim: Zlatavý'}
-                </span>
-              </button>
+              <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
+                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
+                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}</span>
+              </div>
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
                 🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
               </button>
@@ -2606,8 +3176,8 @@ export default function App() {
       {gameState === 'chest' && (
         <div id="chest-ui" className="overlay" style={{ background: 'rgba(0,0,0,0.85)' }}>
           <div className="panel" style={{ maxWidth: '600px', background: 'var(--wood-dark)' }}>
-            <h1 style={{ color: 'var(--mustard)' }}>MALOVANÁ TRUHLA!</h1>
-            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--parchment)' }}>
+            <h1 style={{ color: '#FDE047', textShadow: '3px 3px 0 var(--ink)' }}>MALOVANÁ TRUHLA!</h1>
+            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7' }}>
               Bohatá kořist z venkovského pokladu:
             </p>
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', margin: '25px 0', flexWrap: 'wrap' }}>
@@ -2640,9 +3210,13 @@ export default function App() {
       {/* TALLY SCREEN */}
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
-          <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards' }}>
-            VÝPRAVA SKONČILA!
+          <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#FDE047' : '#FEF3C7', textShadow: '3px 3px 0 var(--ink)' }}>
+            {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'VÝPRAVA SKONČILA!'}
           </h1>
+          <p style={{ fontWeight: 900, fontSize: '1.2rem', color: '#FEF3C7', textShadow: '1px 1px 0 var(--ink)', marginTop: '-8px', marginBottom: '16px' }}>
+            {GAME_LEVELS[tallyCounters.levelId]?.name || 'Venkovská výprava'}
+          </p>
+
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
             <span>Přemožených bubáků:</span>
             <span className="tally-number">{tallyCounters.kills}</span>
@@ -2660,21 +3234,44 @@ export default function App() {
             <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
           </div>
 
-          <button
-            className="lada-btn"
-            style={{ marginTop: '35px', fontSize: '1.4rem', padding: '12px 35px' }}
-            onClick={() => {
-              saveMeta({
-                ...meta,
-                krejcary: meta.krejcary + tallyCounters.coins,
-                totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
-                totalChasnikSaved: (meta.totalChasnikSaved || 0) + runStats.chasniks,
-              });
-              setGameState('tavern');
-            }}
-          >
-            Vstoupit do hospody
-          </button>
+          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
+            {tallyCounters.isVictory && tallyCounters.levelId < 3 && (
+              <button
+                className="lada-btn"
+                style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}
+                onClick={() => {
+                  const nextId = (tallyCounters.levelId + 1) as GameLevelId;
+                  saveMeta({
+                    ...meta,
+                    krejcary: meta.krejcary + tallyCounters.coins,
+                    totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
+                    totalChasnikSaved: (meta.totalChasnikSaved || 0) + runStats.chasniks,
+                    selectedLevel: nextId,
+                  });
+                  setSelectedLevelId(nextId);
+                  setGameState('menu');
+                }}
+              >
+                Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) ⏩
+              </button>
+            )}
+
+            <button
+              className="lada-btn"
+              style={{ fontSize: '1.25rem', padding: '12px 32px' }}
+              onClick={() => {
+                saveMeta({
+                  ...meta,
+                  krejcary: meta.krejcary + tallyCounters.coins,
+                  totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
+                  totalChasnikSaved: (meta.totalChasnikSaved || 0) + runStats.chasniks,
+                });
+                setGameState('tavern');
+              }}
+            >
+              Vstoupit do hospody 🍺
+            </button>
+          </div>
         </div>
       )}
 
@@ -2683,7 +3280,7 @@ export default function App() {
         <div id="tavern-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '1000px' }}>
             <h1>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
-            <p style={{ fontWeight: 900, fontSize: '1.35rem', marginTop: '-12px', color: 'var(--mustard)' }}>
+            <p style={{ fontWeight: 900, fontSize: '1.35rem', marginTop: '-12px', color: '#FEF3C7' }}>
               🎶 V koutě vyhrávají pekelné dudy a voní čerstvý chléb... 🎵
             </p>
 
@@ -2763,10 +3360,10 @@ export default function App() {
               >
                 🗡️ Zbrojnice ({unlockedWeaponsCount}/11)
               </button>
-              <button className="lada-btn btn-download" style={{ padding: '12px 28px' }} onClick={downloadGameHtml} title="Stáhnout celou hru jako HTML soubor">
+              <button className="lada-btn btn-download" style={{ padding: '12px 28px' }} onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru jako offline HTML soubor">
                 📥 Stáhnout hru (HTML)
               </button>
-              <button className="lada-btn btn-download-txt" style={{ padding: '12px 28px' }} onClick={downloadGameTxt} title="Stáhnout celou hru (HTML) jako TXT soubor">
+              <button className="lada-btn btn-download-txt" style={{ padding: '12px 28px' }} onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru v TXT (stačí přejmenovat na .html a hrát)">
                 📄 Stáhnout hru (TXT)
               </button>
               <button className="lada-btn" style={{ padding: '12px 28px' }} onClick={() => setGameState('menu')}>
@@ -2796,6 +3393,17 @@ export default function App() {
         progress={selectedHunterDetail}
         onClose={() => setSelectedHunterDetail(null)}
         onStartIfUnlocked={(id) => startGame(id)}
+      />
+
+      {/* LEVEL UNLOCK DETAILS MODAL */}
+      <LevelUnlockModal
+        progress={selectedLevelDetail}
+        onClose={() => setSelectedLevelDetail(null)}
+        onSelectIfUnlocked={(id) => {
+          setSelectedLevelId(id);
+          saveMeta({ ...meta, selectedLevel: id });
+          setSelectedLevelDetail(null);
+        }}
       />
 
       {/* ARSENAL & WEAPONS UNLOCK MODAL */}

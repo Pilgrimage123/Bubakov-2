@@ -114,7 +114,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
     challengeTitle: '🌾 Ochránce obecních pastvin',
     challengeShortDesc: 'Zažeň celkem 120 polních a lučních škůdců z pastvin.',
     challengeLongDesc:
-      'Pastviny pod Hůrkou jsou zamořeny nezbednými rarášky, sýpkovými myšáky, almarovými šotky a lesními veverčáky. Zažeň 120 těchto potvůrek, aby se mladý pastevec mohl vrátit do vsi!',
+      'Pastviny pod Hůrkou jsou zamořeny nezbednými rarášky, sýpkovými myšáky, almarovými šotky a lesními veverčáky. Zažeň 120 těchto potvůrek, aby se mladý ochránce stád mohl bezpečně vydat na výpravu!',
     targetEnemies: [
       { id: 'rarach', name: 'Rarášek', icon: '😈' },
       { id: 'mysak', name: 'Půdní myšák', icon: '🐭' },
@@ -139,7 +139,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 25,
         tierLevel: 1,
-        spoiledName: 'P _ _ _ _ _ k (Mladý pastevec?)',
+        spoiledName: 'P _ _ _ _ _ k',
         spoiledTitle: 'Rychlonožka z obecních lad',
         spoiledLore:
           'Z luk je o poledni slyšet pískání na vrbovou píšťalku. Podle stop v trávě jde o mladého hocha s plstěným kloboučkem, co běhá rychleji než zajíc.',
@@ -151,10 +151,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 50,
         tierLevel: 2,
-        spoiledName: 'Pas...ek (Vesnický pasáček)',
+        spoiledName: 'P a s _ _ _ k',
         spoiledTitle: 'Kamarád beranů a rychlý sběrač krejcarů',
         spoiledLore:
-          'Sousedé už mají jasno – je to ten šikovný pasáček ze sousedního gruntu! Vyniká mimořádnou rychlostí (220) a obřím magnetickým dosahem na krejcary.',
+          'Sousedé už mají jasno – je to šikovný hoch ze sousedního gruntu! Vyniká mimořádnou rychlostí (220) a obřím magnetickým dosahem na krejcary.',
         spoiledWeaponHint: 'Zbraň: Horké buchty z pece a velký magnet na mince',
         spoiledAbilityHint: 'Schopnost: Dusot stáda (přivolá běžící berany)',
         clueTag: '🔎 50 %: Znáš jeho tvář, rychlost i schopnost beranů!',
@@ -163,10 +163,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 75,
         tierLevel: 3,
-        spoiledName: 'Pasáček (Téměř v družině!)',
+        spoiledName: 'P a s á č _ k',
         spoiledTitle: 'Nejrychlejší hoch z ladovských Hrusic',
         spoiledLore:
-          'Pasáček už má sbalenou mošnu, berani stojí v řadě a mává z vršku kopce! Zažeň posledních několik škůdců a přidá se do tvé družiny!',
+          'Mladý dobrodruh už má sbalenou mošnu, berani stojí v řadě a mává z vršku kopce! Zažeň posledních několik škůdců a přidá se do tvé družiny!',
         spoiledWeaponHint: 'Start: Povidlové buchty, Rychlost 220, Dosah sběru 160',
         spoiledAbilityHint: '⚡ Speciál: Dusot stáda (přes 120 plošného poškození)',
         clueTag: '⚡ 75 %: Téměř odemčeno! Zbývá už jen krůček k odemčení!',
@@ -193,7 +193,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
     challengeTitle: '🐸 Vymítač vodních tůní a blat',
     challengeShortDesc: 'Zažeň celkem 60 vodních a bažinných příšer z rybníků.',
     challengeLongDesc:
-      'Vodníci, topivci a zákeřné bludičky topí pocestné a schovávají dušičky v hrnkách pod vrbami. Zažeň 60 těchto vodních bytostí, aby mohla moudrá kořenářka bezpečně nasbírat devatero kvítí!',
+      'Vodníci, topivci a zákeřné bludičky topí pocestné a schovávají dušičky v hrnkách pod vrbami. Zažeň 60 těchto vodních bytostí, aby se k tobě přidala moudrá bylinkářka a ranhojička!',
     targetEnemies: [
       { id: 'hastrman', name: 'Hastrman v šosu', icon: '🎩' },
       { id: 'topivec', name: 'Rákosový topivec', icon: '🌊' },
@@ -219,7 +219,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 25,
         tierLevel: 1,
-        spoiledName: 'B _ _ _   K _ _ _ _ _ _ _ a (Moudrá stařenka?)',
+        spoiledName: 'B _ _ _   k _ _ _ _ _ _ _ a',
         spoiledTitle: 'Bylinkářka z lesní samoty',
         spoiledLore:
           'Rybáři našli na břehu rozsypané kvítí a kelímek s hojivou mastí. Jde o zkušenou stařenku v červeném šátku, která nosí na zádech plný proutěný košík.',
@@ -231,10 +231,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 50,
         tierLevel: 2,
-        spoiledName: 'Bába Koř...řka (Znalec tajných bylin)',
+        spoiledName: 'B á _ _   k o ř _ _ _ _ _ a',
         spoiledTitle: 'Vesnická ranhojička s pasivní regenerací',
         spoiledLore:
-          'To je přece naše bába kořenářka! Její masti léčí rány i v tom nejprudším boji. Sama od sebe regeneruje +2 HP každé 4 sekundy a metá ostré léčivé lístky.',
+          'To je přece naše zkušená léčitelka! Její masti léčí rány i v tom nejprudším boji. Sama od sebe regeneruje +2 HP každé 4 sekundy a metá ostré léčivé lístky.',
         spoiledWeaponHint: 'Zbraň: Devatery bylinky (poškozují a máčí nepřátele)',
         spoiledAbilityHint: 'Schopnost: Očistné kadidlo (+45 HP a plošná zkáza)',
         clueTag: '🔎 50 %: Znáš její léky i očistné kadidlo!',
@@ -243,10 +243,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 75,
         tierLevel: 3,
-        spoiledName: 'Bába kořenářka (Téměř v družině!)',
+        spoiledName: 'B á b a   k o ř e n á _ _ a',
         spoiledTitle: 'Strážkyně lidového zdraví a čistých tůní',
         spoiledLore:
-          'Bába kořenářka už v chaloupce dopéká posvátné balzámy a bere hůl! Ještě několik zahnadých vodníků a vyrazí do boje uzdravovat celou vesnici.',
+          'Moudrá stařenka už v chaloupce dopéká posvátné balzámy a bere hůl! Ještě několik zahnadých vodníků a vyrazí do boje uzdravovat celou vesnici.',
         spoiledWeaponHint: 'Start: Devatery kvítí, Pasivní léčení ran (+2 HP/4s)',
         spoiledAbilityHint: '⚡ Speciál: Očistné kadidlo (+45 HP léčení & plošný úder)',
         clueTag: '⚡ 75 %: Bylinný dým stoupá! Zbývá už jen pár vodních běsů!',
@@ -273,7 +273,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
     challengeTitle: '🌙 Pán hluboké noci a stodol',
     challengeShortDesc: 'Zažeň celkem 40 těžkých nočních stínů a umrlců.',
     challengeLongDesc:
-      'Za hluboké noci a o půlnoci vylézají ze stodol Bubáci, Hromotluci, hroboví umrlci a černí psi s planoucíma očima. Zažeň 40 těchto nebezpečných nočních monster a probuď legendárního ponocného!',
+      'Za hluboké noci a o půlnoci vylézají ze stodol Bubáci, Hromotluci, hroboví umrlci a černí psi s planoucíma očima. Zažeň 40 těchto nebezpečných nočních monster a povolej zkušeného nočního strážce!',
     targetEnemies: [
       { id: 'bubak', name: 'Noční Bubák', icon: '👤' },
       { id: 'hromotluk', name: 'Hromotluk ze seníku', icon: '👹' },
@@ -301,7 +301,7 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 25,
         tierLevel: 1,
-        spoiledName: 'P _ _ _ _ _ ý (Noční hlídač?)',
+        spoiledName: 'P _ _ _ _ _ ý',
         spoiledTitle: 'Obránce spící vsi s lucernou',
         spoiledLore:
           'V temných uličkách se zaleskla okovaná čepel a zaznělo hluboké troubení na volský roh. Tento mohutný muž v beranici nespí, když ostatní leží v peřinách.',
@@ -313,10 +313,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 50,
         tierLevel: 2,
-        spoiledName: 'Pono...ný (Strážce desáté hodiny)',
+        spoiledName: 'P o _ _ _ n ý',
         spoiledTitle: 'Ladovská ikona v kožichu s věrným Voříškem',
         spoiledLore:
-          'Vždyť je to pan ponocný! Nejodvážnější muž v Bubákově. Světlo jeho lucerny pálí okolní strašidla svatou září a jeho troubení zažene do paniky i ty největší běsy.',
+          'Statný obránce v těžkém kožichu! Světlo jeho lucerny pálí okolní strašidla svatou září a jeho troubení na volský roh zažene do paniky i ty největší běsy.',
         spoiledWeaponHint: 'Zbraň: Halapartna & Svatá záře lucerny (aura poškození)',
         spoiledAbilityHint: 'Schopnost: Noční roh & Voříšek (poplach vyvolá paniku a zkázu)',
         clueTag: '🔎 50 %: Znáš jeho roh, psa Voříška i svatou lucernu!',
@@ -325,10 +325,10 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
       {
         minPercent: 75,
         tierLevel: 3,
-        spoiledName: 'Ponocný (Téměř v družině!)',
+        spoiledName: 'P o n o c _ ý',
         spoiledTitle: 'Hrdina z Ladových obrázků s rozsvícenou lucernou',
         spoiledLore:
-          'Ponocný už si leští halapartnu a Voříšek netrpělivě vrtí ocasem před vraty! Ještě pár zahnadých nočních stínů a rozezní svůj roh v aréně!',
+          'Noční hlídač už si leští ostrou čepel a Voříšek netrpělivě vrtí ocasem před vraty! Ještě pár zahnadých nočních stínů a rozezní svůj roh v aréně!',
         spoiledWeaponHint: 'Start: Kovaná halapartna, Pasivní svatá aura lucerny',
         spoiledAbilityHint: '⚡ Speciál: Noční roh & Voříšek (plošná panika a 110 poškození)',
         clueTag: '⚡ 75 %: Voříšek už štěká! Poslední noční stíny tě dělí od odemčení!',
@@ -428,25 +428,23 @@ export function getHunterProgress(type: CharacterType, meta: MetaProgression): H
   const eligible = canHunterUnlock(type, meta);
 
   if (!eligible && prevId) {
-    const prevDef = HUNTER_UNLOCKS[prevId];
-    const prevName = prevDef?.realName || prevId;
     const m0 = def.milestones[0];
     return {
       id: type,
       isUnlocked: false,
       canUnlock: false,
       isQueued: true,
-      requiredHunterName: prevName,
+      requiredHunterName: 'Předchozí lovec',
       curCount: 0,
       maxCount: def.maxCount,
       percent: 0,
       tier: 0,
       spoiledName: m0.spoiledName,
       spoiledTitle: m0.spoiledTitle,
-      spoiledLore: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prevName}).`,
+      spoiledLore: 'Tento lovec se začne odemykat teprve poté, co odemknete předchozího hrdinu v pořadí.',
       spoiledWeaponHint: m0.spoiledWeaponHint,
       spoiledAbilityHint: m0.spoiledAbilityHint,
-      clueTag: `🔒 Čeká na: ${prevName}`,
+      clueTag: '🔒 Čeká na odemčení předchozího lovce',
       enemiesBreakdown: def.targetEnemies.map((e) => ({
         id: e.id,
         name: e.name,

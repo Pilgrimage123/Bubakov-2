@@ -42,10 +42,10 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.9rem' }}>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.9rem', color: '#FEF3C7', textShadow: '2px 2px 0 var(--ink)' }}>
               🗡️ Zbrojnice & Arzenál Bubákova
             </h2>
-            <p style={{ fontWeight: 800, margin: 0, color: 'var(--wood-dark)', fontSize: '0.96rem' }}>
+            <p style={{ fontWeight: 800, margin: 0, color: '#FEF3C7', fontSize: '0.96rem' }}>
               Zbraně se odemykají postupně jedna po druhé v kovářské dílně – nová zbraň se začne odemykat teprve po odemčení zbraně předchozí!
             </p>
           </div>
@@ -76,8 +76,8 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({
             border: '2px solid var(--ink)',
           }}
         >
-          <div style={{ fontWeight: 900, fontSize: '0.95rem', color: 'var(--ink)' }}>
-            📊 Stav zbrojnice: <span style={{ color: 'var(--wood-dark)' }}>{unlockedCount} / {totalCount}</span> zbraní odemčeno ({Math.floor((unlockedCount / totalCount) * 100)} %)
+          <div style={{ fontWeight: 900, fontSize: '0.95rem', color: '#111111' }}>
+            📊 Stav zbrojnice: <span style={{ color: '#111111', fontWeight: 900 }}>{unlockedCount} / {totalCount}</span> zbraní odemčeno ({Math.floor((unlockedCount / totalCount) * 100)} %)
           </div>
 
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -170,7 +170,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({
                   {prog.tier === 0 ? '❓' : prog.realIcon}
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', margin: '2px 0', minHeight: '32px' }}>
+                <h3 style={{ fontSize: '1.25rem', margin: '2px 0', minHeight: '32px', color: '#111111', fontWeight: 900 }}>
                   {prog.spoiledName}
                 </h3>
 
@@ -180,7 +180,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({
                   </span>
                 </div>
 
-                <p style={{ margin: '4px 0', fontSize: '0.82rem', fontWeight: 700, lineHeight: 1.3, minHeight: '44px' }}>
+                <p style={{ margin: '4px 0', fontSize: '0.84rem', fontWeight: 700, lineHeight: 1.3, minHeight: '44px', color: '#111111' }}>
                   {prog.spoiledDesc}
                 </p>
 

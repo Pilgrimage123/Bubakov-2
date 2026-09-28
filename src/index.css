@@ -92,14 +92,14 @@ body {
 
 .panel h1 {
   font-size: 3.5rem;
-  color: var(--mustard);
+  color: #FDE047;
   margin-bottom: 10px;
   line-height: 1;
 }
 
 .panel h2 {
   font-size: 2rem;
-  color: var(--blood-red);
+  color: #FEF3C7;
 }
 
 .lada-btn {
@@ -201,8 +201,8 @@ body {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #3D2210;
-  color: var(--mustard);
+  background: #2A170A;
+  color: #FEF3C7;
   border: 2px solid var(--ink);
   font-size: 0.72rem;
   font-weight: 900;
@@ -222,27 +222,27 @@ body {
 }
 
 .tier-stamp-0 {
-  background: #30261E;
-  color: #D4CBBA;
+  background: #1C150E;
+  color: #F3E9D2;
 }
 
 .tier-stamp-1 {
   background: #78350F;
-  color: #FEF3C7;
+  color: #FFFFFF;
 }
 
 .tier-stamp-2 {
-  background: var(--mustard);
-  color: var(--ink);
+  background: #D97706;
+  color: #FFFFFF;
 }
 
 .tier-stamp-3 {
-  background: #E06D29;
+  background: #C2410C;
   color: #FFFFFF;
 }
 
 .tier-stamp-4 {
-  background: var(--leaf-green);
+  background: #15803D;
   color: #FFFFFF;
 }
 
@@ -261,7 +261,7 @@ body {
   align-items: center;
   font-size: 0.78rem;
   font-weight: 900;
-  color: var(--wood-dark);
+  color: #111111;
   margin-bottom: 4px;
 }
 
@@ -287,7 +287,7 @@ body {
   margin-top: 3px;
   font-size: 0.68rem;
   font-weight: 800;
-  color: #4A3525;
+  color: #2A170A;
 }
 
 .hunter-tick {
@@ -295,18 +295,19 @@ body {
 }
 
 .hunter-tick.reached {
-  color: #065F46;
+  color: #047857;
   font-weight: 900;
 }
 
 .hunter-clue-box {
-  background: rgba(255, 255, 255, 0.45);
-  border: 1.5px dashed #5E3A21;
+  background: #FFFDF8;
+  border: 2px solid #3D2210;
   border-radius: 6px;
   padding: 6px 8px;
   margin: 6px 0;
-  font-size: 0.8rem;
-  color: var(--ink);
+  font-size: 0.82rem;
+  color: #111111;
+  font-weight: 800;
   line-height: 1.25;
 }
 
@@ -457,10 +458,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 900;
-  color: var(--ink);
-  text-shadow: 2px 2px 0px var(--parchment), -2px -2px 0px var(--parchment), 2px -2px 0px var(--parchment), -2px 2px 0px var(--parchment);
+  color: #111111;
+  background: rgba(243, 233, 210, 0.95);
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  padding: 6px 16px;
+  box-shadow: 4px 4px 0px var(--ink);
 }
 
 /* TALLY */
@@ -815,8 +820,8 @@ body {
 }
 
 .vignette-level-badge {
-  background: var(--wood-dark);
-  color: var(--mustard);
+  background: #2A170A;
+  color: #FEF3C7;
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 900;
@@ -825,9 +830,9 @@ body {
 }
 
 .vignette-bonus-desc {
-  font-size: 0.85rem;
-  color: var(--leaf-green);
-  font-weight: 800;
+  font-size: 0.88rem;
+  color: #166534;
+  font-weight: 900;
   margin-top: 4px;
 }
 
@@ -878,24 +883,188 @@ body {
   color: var(--ink);
 }
 
-.season-toggle-btn {
-  background: var(--water-blue);
-  color: #FFFFFF;
+/* 3-Level Selection Grid & Cards */
+.level-select-section {
+  background: #F3E9D2;
+  color: #111111;
   border: 3px solid var(--ink);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-family: 'Eczar', serif;
-  font-size: 0.95rem;
-  font-weight: 800;
-  cursor: pointer;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 16px 0 22px 0;
+  text-align: left;
   box-shadow: 4px 4px 0px var(--ink);
-  transition: all 0.1s;
-  pointer-events: auto;
 }
 
-.season-toggle-btn:hover {
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 14px;
+}
+
+.level-card {
+  background: #FAF6ED;
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 4px 4px 0px var(--ink);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.level-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px var(--ink);
+}
+
+.level-card-selected {
+  border-color: var(--mustard);
+  outline: 3px solid var(--mustard);
+  box-shadow: 5px 5px 0px var(--wood-dark);
+  background: #FFFDF8;
+}
+
+.level-card-locked {
+  background: #E2D9C3;
+  border-color: #3D2210;
+}
+
+.level-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.level-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 900;
+  font-size: 0.76rem;
+  border: 1.5px solid var(--ink);
+  display: inline-block;
+}
+
+.badge-selected {
   background: var(--mustard);
   color: var(--ink);
+}
+
+.badge-completed {
+  background: #3A76A8;
+  color: #FFFFFF;
+}
+
+.badge-unlocked {
+  background: #4A633B;
+  color: #FFFFFF;
+}
+
+.badge-locked {
+  background: #5E3A21;
+  color: #F3E9D2;
+}
+
+.level-theme-tag {
+  font-size: 0.86rem;
+  font-weight: 900;
+  color: #451A03;
+}
+
+.level-title {
+  font-size: 1.25rem;
+  margin: 3px 0 2px 0;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.2;
+}
+
+.level-subtitle {
+  font-size: 0.84rem;
+  font-weight: 900;
+  color: #2A170A;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+}
+
+.level-desc {
+  font-size: 0.84rem;
+  line-height: 1.32;
+  color: #111111;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  opacity: 1;
+}
+
+.level-boss-preview {
+  background: rgba(209, 52, 43, 0.12);
+  border: 2px solid var(--blood-red);
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 2px 0 8px 0;
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #7F1D1D;
+  display: flex;
+  align-items: center;
+}
+
+.level-enemies-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: auto;
+}
+
+.level-enemy-tag {
+  background: #FFFDF8;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #111111;
+}
+
+.level-lock-hint {
+  margin-top: 8px;
+  background: rgba(61, 34, 16, 0.92);
+  color: #F3E9D2;
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* In-game HUD level badge */
+.hud-level-badge {
+  background: var(--wood-dark);
+  color: var(--parchment);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hud-victory-banner-btn {
+  background: var(--mustard);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0px var(--ink);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  animation: ultReadyPulse 1.2s infinite alternate;
 }
 
 .bestiary-container {
@@ -1309,7 +1478,7 @@ body {
     right: 8px;
     gap: 4px;
   }
-  .download-toggle-btn, .sound-toggle-btn, .touch-toggle-btn, .season-toggle-btn {
+  .download-toggle-btn, .sound-toggle-btn, .touch-toggle-btn {
     padding: 4px 7px;
     font-size: 0.75rem;
     border-width: 2px;

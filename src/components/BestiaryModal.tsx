@@ -3,6 +3,7 @@ import { ENEMIES } from '../data/enemies';
 import { Lada } from '../render/ladaRenderer';
 import { EnemyCategory } from '../types';
 import { sound } from '../audio';
+import { getEnemyProgress, EnemyProgress } from '../data/enemyUnlocks';
 
 interface BestiaryModalProps {
   isOpen: boolean;
@@ -32,7 +33,10 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
   );
 
   const currentMonster = ENEMIES[selectedId] || monsterList[0] || ENEMIES.rarach;
+  const currentKills = bestiaryKills[currentMonster.id] || 0;
+  const enemyProg = getEnemyProgress(currentMonster.id, currentKills);
 
+  // Progressive canvas portrait rendering respecting tiers (0 = locked silhouette with ?, 1 = dark charcoal, 2 = sepia, 3 = mystic veil, 4 = full color)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -51,7 +55,9 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
       const m = currentMonster;
       const cx = canvas.width / 2;
       const cy = canvas.height * 0.65;
+      const tier = enemyProg.tier;
 
+      // Draw the monster base
       if (m.id === 'cert') {
         Lada.drawCert(ctx, cx, cy + 5, elapsed, 0, false, true);
       } else if (m.id === 'hejkal') {
@@ -73,35 +79,134 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
         }
       }
 
+      // Progressive tier visual filters
+      if (tier === 4) {
+        // Fully revealed vivid animation
+      } else if (tier === 3) {
+        // 75%: Golden mystical veil
+        ctx.save();
+        ctx.fillStyle = 'rgba(243, 233, 210, 0.22)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#D9A036';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+        ctx.restore();
+      } else if (tier === 2) {
+        // 50%: Sepia / monochrome charcoal sketch
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = 'rgba(92, 72, 50, 0.76)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(235, 222, 198, 0.28)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else if (tier === 1) {
+        // 25%: Deep charcoal silhouette, rough outline visible
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = '#241E18';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = 'rgba(25, 20, 15, 0.35)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      } else {
+        // 0%: Pitch-black silhouette shrouded in dense mystery fog with glowing question mark
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over';
+        const grad = ctx.createRadialGradient(cx, cy, 15, cx, cy, 80);
+        grad.addColorStop(0, 'rgba(35, 28, 20, 0.7)');
+        grad.addColorStop(1, 'rgba(12, 10, 8, 0.96)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#D9A036';
+        ctx.font = '900 48px Eczar, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', cx, cy - 8);
+        ctx.restore();
+      }
+
       animId = requestAnimationFrame(render);
     };
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [isOpen, selectedId, currentMonster]);
+  }, [isOpen, selectedId, currentMonster, enemyProg.tier]);
 
   if (!isOpen) return null;
 
-  const kills = bestiaryKills[currentMonster.id] || 0;
+  // Stats for the encyclopedia overview
+  const totalMonsters = Object.keys(ENEMIES).length;
+  const discoveredCount = Object.keys(ENEMIES).filter((id) => (bestiaryKills[id] || 0) > 0).length;
+  const fullyMasteredCount = Object.keys(ENEMIES).filter((id) => {
+    const k = bestiaryKills[id] || 0;
+    return getEnemyProgress(id, k).isUnlocked;
+  }).length;
 
   return (
     <div className="overlay" style={{ zIndex: 30 }}>
-      <div className="panel" style={{ maxWidth: '920px', width: '95%' }}>
-        <h2>📖 Bestiář nočního venkova Josefa Lady</h2>
-        <p style={{ fontWeight: 700, marginTop: '-8px', marginBottom: '12px' }}>
-          Encyklopedie 32 lidových strašidel, diblíků a obrů. Zkoumejte jejich slabiny, folklorní pověsti a záznamy střetnutí.
-        </p>
+      <div className="panel" style={{ maxWidth: '960px', width: '95%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ margin: '0 0 2px 0' }}>📖 Bestiář nočního venkova Josefa Lady</h2>
+            <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem' }}>
+              Encyklopedie {totalMonsters} lidových strašidel, diblíků a obrů. Zkoumejte jejich slabiny, folklorní pověsti a záznamy střetnutí.
+            </p>
+          </div>
+          <button
+            className="tab-btn"
+            style={{ padding: '4px 10px', fontSize: '1.1rem', minWidth: 'auto' }}
+            onClick={() => {
+              sound.coin();
+              onClose();
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Global Progress Banner */}
+        <div
+          style={{
+            background: 'var(--parchmentDark)',
+            border: '2px solid var(--ink)',
+            borderRadius: '8px',
+            padding: '6px 14px',
+            marginBottom: '10px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.88rem',
+            fontWeight: 900,
+            color: '#111111',
+          }}
+        >
+          <span>
+            🔍 Spatřeno strašidel: <strong>{discoveredCount} / {totalMonsters}</strong>
+          </span>
+          <span>
+            🏆 Zcela probádáno (100 %): <strong>{fullyMasteredCount} / {totalMonsters}</strong>
+          </span>
+          <span style={{ color: '#2A170A', fontWeight: 900 }}>
+            📜 Úrovně odhalení: 0 % ➔ 25 % ➔ 50 % ➔ 75 % ➔ 100 %
+          </span>
+        </div>
 
         {/* Category tabs */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '12px' }}>
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               className={`btn-small lada-btn ${selectedCategory === cat.id ? 'active' : ''}`}
               style={{
                 margin: '2px',
-                padding: '4px 10px',
-                fontSize: '0.85rem',
+                padding: '4px 9px',
+                fontSize: '0.82rem',
                 backgroundColor: selectedCategory === cat.id ? 'var(--mustard)' : 'var(--wood-dark)',
                 color: selectedCategory === cat.id ? 'var(--ink)' : 'var(--parchment)',
               }}
@@ -121,18 +226,33 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
           <div className="bestiary-list">
             {monsterList.map((m) => {
               const k = bestiaryKills[m.id] || 0;
+              const prog = getEnemyProgress(m.id, k);
               const isSelected = m.id === currentMonster.id;
               return (
                 <button
                   key={m.id}
                   className={`bestiary-item-btn ${isSelected ? 'active' : ''}`}
+                  style={{
+                    background: isSelected ? 'var(--mustard)' : prog.tier === 4 ? '#ECFDF5' : prog.tier === 0 ? '#F3F4F6' : undefined,
+                    color: '#111111',
+                  }}
                   onClick={() => {
                     setSelectedId(m.id);
                     sound.slash();
                   }}
                 >
-                  <span style={{ fontWeight: 800 }}>{m.name}</span>
-                  <span style={{ fontSize: '0.82rem', opacity: 0.85 }}>💀 {k}×</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{prog.icon}</span>
+                    <span style={{ fontWeight: 800, fontSize: '0.94rem', color: '#111111' }}>
+                      {prog.name}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 900, color: prog.tier === 4 ? '#065F46' : '#2A170A' }}>
+                      {prog.tier === 4 ? '✅ 100 %' : prog.tier === 0 ? '🔒 0 %' : `${prog.percent} %`}
+                    </span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: '#111111' }}>💀 {k}×</span>
+                  </div>
                 </button>
               );
             })}
@@ -140,27 +260,102 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
           {/* Monster Detail Card */}
           <div className="bestiary-detail-card">
+            {/* Header with tier badge */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <span
+                  className={`hunter-tier-stamp tier-stamp-${enemyProg.tier}`}
+                  style={{ fontSize: '0.8rem', marginBottom: '4px', display: 'inline-block' }}
+                >
+                  {enemyProg.clueTag}
+                </span>
+                <h2 style={{ margin: '2px 0 2px 0', fontSize: '1.85rem', color: '#2A170A' }}>
+                  {enemyProg.name}
+                </h2>
+                <div style={{ fontWeight: 900, fontSize: '1.02rem', color: '#78350F', marginBottom: '8px' }}>
+                  {enemyProg.title}
+                </div>
+              </div>
+
+              {/* Progress pill indicator */}
+              <div
+                style={{
+                  background: enemyProg.isUnlocked ? 'var(--leaf-green)' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  fontSize: '0.85rem',
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  border: '2px solid var(--ink)',
+                  textAlign: 'right',
+                }}
+              >
+                {enemyProg.isUnlocked
+                  ? '✅ ZCELA PROBÁDÁNO'
+                  : `VÝZKUM: ${enemyProg.kills} / ${enemyProg.maxKills} (${enemyProg.percent} %)`}
+              </div>
+            </div>
+
+            {/* Canvas illustration with visual stage */}
             <div className="bestiary-canvas-wrap">
               <canvas ref={previewCanvasRef} width={180} height={180} className="bestiary-canvas" />
             </div>
 
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.8rem', color: 'var(--wood-dark)' }}>{currentMonster.name}</h2>
-            <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--mustard)', marginBottom: '8px' }}>
-              {currentMonster.title}
+            {/* Study Progress Bar (0% - 25% - 50% - 75% - 100%) */}
+            <div className="hunter-progress-wrap" style={{ margin: '10px 0 14px 0' }}>
+              <div className="hunter-progress-header">
+                <span>Postup terénního výzkumu a zápisů v kronice:</span>
+                <span>
+                  {enemyProg.kills} / {enemyProg.maxKills} zahnáno ({enemyProg.percent} %)
+                </span>
+              </div>
+              <div className="hunter-progress-bar-outer" style={{ height: '14px' }}>
+                <div
+                  className="hunter-progress-bar-fill"
+                  style={{
+                    width: `${enemyProg.percent}%`,
+                    background: enemyProg.isUnlocked ? 'linear-gradient(90deg, #10B981, #059669)' : undefined,
+                  }}
+                />
+              </div>
+              <div className="hunter-progress-ticks" style={{ fontSize: '0.75rem', marginTop: '3px' }}>
+                <span className={`hunter-tick ${enemyProg.percent >= 0 ? 'reached' : ''}`}>0%</span>
+                <span className={`hunter-tick ${enemyProg.percent >= 25 ? 'reached' : ''}`}>
+                  {enemyProg.percent >= 25 ? '✓' : '🔒'} 25%
+                </span>
+                <span className={`hunter-tick ${enemyProg.percent >= 50 ? 'reached' : ''}`}>
+                  {enemyProg.percent >= 50 ? '✓' : '🔒'} 50%
+                </span>
+                <span className={`hunter-tick ${enemyProg.percent >= 75 ? 'reached' : ''}`}>
+                  {enemyProg.percent >= 75 ? '✓' : '🔒'} 75%
+                </span>
+                <span className={`hunter-tick ${enemyProg.percent >= 100 ? 'reached' : ''}`}>
+                  {enemyProg.percent >= 100 ? '✓' : '🔒'} 100%
+                </span>
+              </div>
             </div>
 
+            {/* Tags / Stats */}
             <div className="bestiary-tags">
-              <span className="tag-badge tag-weak">Nebezpečnost: {currentMonster.danger}</span>
-              <span className="tag-badge tag-neutral">💀 Přemoženo: {kills}×</span>
+              <span className="tag-badge tag-weak">Nebezpečnost: {enemyProg.spoiledStats.danger}</span>
+              <span className="tag-badge tag-neutral">💀 Přemoženo: {enemyProg.kills}×</span>
               <span className="tag-badge" style={{ background: '#E2E8F0', color: 'var(--ink)' }}>
-                ❤️ {currentMonster.hp} HP
+                ❤️ {enemyProg.spoiledStats.hp}
               </span>
               <span className="tag-badge" style={{ background: '#FEF3C7', color: 'var(--ink)' }}>
-                💰 {currentMonster.coinValue} 🪙
+                💰 {enemyProg.spoiledStats.coinValue}
               </span>
+              {enemyProg.tier >= 3 && (
+                <span className="tag-badge" style={{ background: '#E0E7FF', color: 'var(--ink)' }}>
+                  ⚡ Rychlost: {enemyProg.spoiledStats.speed}
+                </span>
+              )}
             </div>
 
-            <p style={{ fontWeight: 700, lineHeight: 1.35, margin: '10px 0' }}>{currentMonster.lore}</p>
+            {/* Lore */}
+            <p style={{ fontWeight: 700, lineHeight: 1.35, margin: '10px 0' }}>
+              {enemyProg.spoiledLore}
+            </p>
 
             <div
               style={{
@@ -173,15 +368,22 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                 fontSize: '0.92rem',
               }}
             >
-              📜 „Z kroniky Ladova kraje: Proti tomuto tvoru se nejlépe osvědčily poctivé zbraně a odvaha venkovanů.“
+              📜 „Z kroniky Ladova kraje: {enemyProg.tier >= 2 ? 'Kdo chce přemoci tohoto tvora, musí znát jeho zvyky a nenechat se překvapit nočním přepadem.' : 'Kronikáři zatím shromažďují zkazky o tomto tajemném nočním úkazu.'}“
             </div>
 
+            {/* Weakness & Strength */}
             <div style={{ borderTop: '2px dashed #bbb', paddingTop: '10px', marginTop: '10px', fontSize: '0.92rem' }}>
               <div>
-                <strong style={{ color: '#166534' }}>🌿 Slabiny:</strong> {currentMonster.weakness}
+                <strong style={{ color: '#166534' }}>🌿 Slabiny:</strong>{' '}
+                <span style={{ color: enemyProg.tier >= 2 ? '#166534' : '#6B7280', fontWeight: 700 }}>
+                  {enemyProg.spoiledWeakness}
+                </span>
               </div>
               <div style={{ marginTop: '4px' }}>
-                <strong style={{ color: '#991b1b' }}>⚠️ Přednosti:</strong> {currentMonster.strength}
+                <strong style={{ color: '#991b1b' }}>⚠️ Přednosti a záludnosti:</strong>{' '}
+                <span style={{ color: enemyProg.tier >= 3 ? '#991b1b' : '#6B7280', fontWeight: 700 }}>
+                  {enemyProg.spoiledStrength}
+                </span>
               </div>
             </div>
           </div>

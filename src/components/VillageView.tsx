@@ -65,23 +65,24 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '10px',
+            color: '#111111',
           }}
         >
           <span>
             Hospodská pokladna:{' '}
-            <strong style={{ color: 'var(--mustard)', textShadow: '1px 1px 0 var(--ink)' }}>
+            <strong style={{ color: '#78350F' }}>
               {meta.krejcary}
             </strong>{' '}
             krejcarů 🪙
           </span>
           <span>
             🏺 Osvobozeno dušiček:{' '}
-            <strong style={{ color: 'var(--water-blue)', textShadow: '1px 1px 0 var(--ink)' }}>
+            <strong style={{ color: '#1E40AF' }}>
               {meta.totalSoulsSaved || 0}
             </strong>
           </span>
         </h3>
-        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem' }}>
+        <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem', color: '#111111' }}>
           Každé vylepšení cechu rozšiřuje naši vesnici a trvale posílí vašeho lovce do všech nočních výprav!
         </p>
       </div>
@@ -103,13 +104,13 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
                 width={300}
                 height={140}
               />
-              <div style={{ fontWeight: 900, fontSize: '1.25rem', marginBottom: '4px', color: 'var(--wood-dark)' }}>
+              <div style={{ fontWeight: 900, fontSize: '1.25rem', marginBottom: '4px', color: '#2A170A' }}>
                 {b.name}
               </div>
-              <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--mustard)', marginBottom: '6px' }}>
+              <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#78350F', marginBottom: '6px' }}>
                 🤝 Pomocníci: {b.helpers}
               </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.25, minHeight: '44px' }}>
+              <div style={{ fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.25, minHeight: '44px', color: '#111111' }}>
                 {b.story}
               </div>
 
@@ -150,10 +151,10 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div>
-            <strong style={{ fontSize: '1.25rem' }}>🍺 Tekutá kuráž z pivovarských ležáků</strong>{' '}
-            <span style={{ fontWeight: 900, color: 'var(--leaf-green)' }}>(Úr. {meta.regenLevel || 0})</span>
+            <strong style={{ fontSize: '1.25rem', color: '#111111' }}>🍺 Tekutá kuráž z pivovarských ležáků</strong>{' '}
+            <span style={{ fontWeight: 900, color: '#166534' }}>(Úr. {meta.regenLevel || 0})</span>
             <br />
-            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#111111' }}>
               Přidá trvalou regeneraci +1 HP za každých 5 sekund pro všechny další výpravy do Bubákova.
             </span>
           </div>

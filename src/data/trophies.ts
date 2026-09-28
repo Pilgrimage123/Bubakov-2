@@ -134,7 +134,7 @@ export const TROPHIES: Trophy[] = [
   {
     id: 'fellowship_hunters',
     title: '📯 Slavná vesnická družina',
-    desc: 'Odemkni všechny 4 lidové hrdiny (Poutník, Pasáček, Bába kořenářka a Ponocný).',
+    desc: 'Odemkni všechny 4 lidové hrdiny a shromáždi celou slavnou družinu.',
     reward: 150,
     isMet: (meta) => {
       const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false };
@@ -161,5 +161,29 @@ export const TROPHIES: Trophy[] = [
     reward: 50,
     isMet: (meta) => (meta as any).lightningWitnessed === true,
     getProgress: (meta) => ({ cur: (meta as any).lightningWitnessed ? 1 : 0, max: 1 }),
+  },
+  {
+    id: 'level1_completed',
+    title: '🍂 Osvoboditel návsi a rybníka',
+    desc: 'Dokonči 1. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.',
+    reward: 120,
+    isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[1]) || (meta.bestiaryKills.cert || 0) >= 1,
+    getProgress: (meta) => ({ cur: (meta.completedLevels && meta.completedLevels[1]) || (meta.bestiaryKills.cert || 0) >= 1 ? 1 : 0, max: 1 }),
+  },
+  {
+    id: 'level2_completed',
+    title: '🪦 Pokořitel hvozdů a hřbitova',
+    desc: 'Dokonči 2. úroveň: přemož mocného vládce hvozdů a očisti starobylý hřbitov od nočních stínů.',
+    reward: 180,
+    isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills.hejkal || 0) >= 1,
+    getProgress: (meta) => ({ cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills.hejkal || 0) >= 1 ? 1 : 0, max: 1 }),
+  },
+  {
+    id: 'level3_completed',
+    title: '❄️ Vládce Ladovské zimy',
+    desc: 'Dokonči 3. úroveň: sraz na kolena obřího titána a osvoboď celý zasněžený kraj!',
+    reward: 250,
+    isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills.obr || 0) >= 1,
+    getProgress: (meta) => ({ cur: (meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills.obr || 0) >= 1 ? 1 : 0, max: 1 }),
   },
 ];

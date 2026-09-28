@@ -1,4 +1,5 @@
 export type Season = 'autumn' | 'winter';
+export type GameLevelId = 1 | 2 | 3;
 
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman';
 
@@ -93,6 +94,10 @@ export interface MetaProgression {
   hunterKillCounts?: Partial<Record<CharacterType, Record<string, number>>>;
   weaponKillCounts?: Record<string, Record<string, number>>;
   lightningWitnessed?: boolean;
+  selectedLevel?: GameLevelId;
+  highestLevelUnlocked?: number;
+  completedLevels?: Record<number, boolean>;
+  levelKillCounts?: Record<number, Record<string, number>>;
 }
 
 export interface Trophy {

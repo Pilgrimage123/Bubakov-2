@@ -28,7 +28,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
               sound.coin();
             }}
           >
-            🗺️ Plán kol změn (1.–8. kolo)
+            🗺️ Plán kol změn (1.–11. kolo)
           </button>
           <button
             className={`tab-btn ${activeTab === 'changelog' ? 'active' : ''}`}
@@ -43,11 +43,107 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
         {activeTab === 'plan' ? (
           <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            {/* 12. KOLO - 100% KOMPLETNÍ OFFLINE HRA V TXT I HTML A PLNÁ UPRAVITELNOST PRO CLAUDE / AI */}
+            <div className="plan-card" style={{ border: '4px solid #1D4ED8', color: '#000000', background: '#EFF6FF' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>12. KOLO ZMĚN (v12.0.0 – 100% kompletní offline hra i plná upravitelnost pro AI/Claude & Původní zdrojáky)</h3>
+                <span className="plan-badge-done" style={{ background: '#1D4ED8', color: '#FFFFFF' }}>Právě nasazeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  📄 <strong>Garance stoprocentně kompletního a soběstačného souboru:</strong>
+                  Stahovaný soubor hry (ať už jako <code>.html</code> nebo jako <code>.txt</code>) obsahuje naprosto kompletní, 100% samostatnou hru připravenou nejen k okamžitému offline hraní, ale i k plnohodnotným úpravám libovolným vývojářem nebo AI modelem (Claude, GPT)!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🤖 <strong>Čistý neminifikovaný kód & Příručka pro Claude:</strong>
+                  Kód v souboru již není nečitelný minifikovaný shluk. Všechny funkce, proměnné i datové struktury (<code>WEAPONS</code>, <code>ENEMY_TYPES</code>, <code>updateGame</code>) mají plná jména a na začátku souboru je podrobný návod pro Claude a programátory, jak do hry přidat nové monstrum, zbraň či upravit ladovský canvas renderer.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📦 <strong>Všechny původní zdrojové kódy přímo v souboru (Embedded Source Tree):</strong>
+                  Soubor obsahuje kompletní strom 27 původních zdrojových souborů projektu (TypeScript, React, CSS) a utilitu <code>window.BUBAKOV.exportSources()</code> pro okamžitý export celého projektu z konzole prohlížeče.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🎮 <strong>Spuštění pouhým přejmenováním:</strong>
+                  Soubor <code>bubakov_hra_ladovska_edice.txt</code> stačí přejmenovat na <code>.html</code> a otevřít v jakémkoliv prohlížeči zcela bez internetu a serveru.
+                </li>
+              </ul>
+            </div>
+
+            {/* 11. KOLO - KONTRAST PÍSMA, ZÁSADY DESIGNU A POSÍLENÍ NEPŘÁTEL */}
+            <div className="plan-card" style={{ border: '4px solid #166534', color: '#000000', background: '#F0FDF4' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>11. KOLO ZMĚN (v11.0.0 – Vysoký kontrast písma, zásady designu & +80 % útok i zdraví nepřátel)</h3>
+                <span className="plan-badge-done" style={{ background: '#166534', color: '#FFFFFF' }}>Dokončeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  👁️ <strong>Zásada bezvadné viditelnosti a vysokého kontrastu písma:</strong>
+                  Do zásad designu hry (`DESIGN_PRINCIPLES.md`) bylo zakotveno neměnné pravidlo: Na vysokou viditelnost a bezvadný kontrast písma je vždy třeba dbát. Veškeré texty, štítky, čísla a popisy v celé aplikaci (v HUDu, panelech, Zbrojnici, Bestiáři, postupu lovců, úrovní i hospodě) mají zaručen ostrý kontrast: tmavý sytý inkoust na světlém pergamenu a jasné písmo se stínem na tmavém dřevě.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📜 <strong>Pergamenové destičky a orámování HUDu:</strong>
+                  Ukazatele času, fází dne, mincí, dušiček a počtu zahnadých nepřátel v horní liště HUDu dostaly samostatnou parchmentovou desku s tmavým inkoustovým orámováním, aby byl text bezchybně čitelný za všech fází dne (od jasného poledne až po temnou noc).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  ⚔️ <strong>Zvýšení útoku a zdraví všech nepřátel o 80 %:</strong>
+                  Všech 35 druhů ladovských běsů, vodníků, čertů, hejkalů i skalních obrů má trvale zvýšeno maximální zdraví (HP) i sílu útoku (damage) o plných 80 % pro náročnější a napínavější taktickou hratelnost!
+                </li>
+              </ul>
+            </div>
+
+            {/* 10. KOLO - POSTUPNÉ ODHALOVÁNÍ STRAŠIDEL V BESTIÁŘI */}
+            <div className="plan-card" style={{ border: '4px solid #78350F', color: '#000000', background: '#FEF3C7' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>10. KOLO ZMĚN (v10.0.0 – Postupné odhalování strašidel v Bestiáři jako u lovců a úrovní)</h3>
+                <span className="plan-badge-done" style={{ background: '#78350F', color: '#FFFFFF' }}>Dokončeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  📖 <strong>Pětistupňové odhalování strašidel (0 %, 25 %, 50 %, 75 %, 100 %):</strong>
+                  Všechna lidová strašidla a diblíci jsou v Bestiáři zpočátku zahaleni hustou mlhou s otazníkem (???). Postupným zaháněním v herních výpravách se odkrývají stopy v kronice: silueta a původ (25 %), slabiny a odměny v mincích (50 %), přednosti a rychlost pohybu (75 %) a při 100 % kompletní folklorní zápis s plnobarevnou Ladovskou ilustrací!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🎨 <strong>Vizuální fáze v kruhovém medailonu (Canvas filtry):</strong>
+                  Stejně jako u lovců se ilustrace strašidla vizuálně proměňuje z tajemného černého stínu s otazníkem (0 %), přes uhelnou siluetu (25 %), sépiový náčrt (50 %) a mystický závoj (75 %) až po plně oživenou animaci (100 %).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📊 <strong>Ukazatel výzkumu a přehled kroniky:</strong>
+                  Každé strašidlo má vlastní interaktivní teploměr výzkumu s milníky (0 %, 25 %, 50 %, 75 %, 100 %) a počítadlem zahnání. Horní lišta Bestiáře nově ukazuje celkový počet spatřených i zcela probádaných tvorů ze všech 32 druhů.
+                </li>
+              </ul>
+            </div>
+
+            {/* 9. KOLO - POSTUPNÉ ODHALOVÁNÍ ÚROVNÍ A TAJEMSTVÍ KRAJINY */}
+            <div className="plan-card" style={{ border: '4px solid #065F46', color: '#000000', background: '#ECFDF5' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>9. KOLO ZMĚN (v9.0.0 – Postupné odhalování úrovní jako u lovců)</h3>
+                <span className="plan-badge-done" style={{ background: '#065F46', color: '#FFFFFF' }}>Dokončeno</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  🕵️ <strong>Postupné odhalování nových úrovní (25 %, 50 %, 75 % a 100 %):</strong>
+                  Nové úrovně jsou na počátku zahaleny do neproniknutelné mlhy a tajemství (???). Postupným průzkumem se při 25 % odhalí první stopa, počasí a obrys krajiny, při 50 % zřetelná stezka, přední příšery a mini-bossové, při 75 % téměř celá mapa s odhalením hlavního bosse a při 100 % se brána úrovně trvale otevře!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  ⛓️ <strong>Sekvenční řád průzkumu:</strong>
+                  Úroveň 3 (Ladovská zima na Melechově) čeká v pořadí, dokud není plně probádána a otevřena Úroveň 2 (Starý hřbitov a Hrusický hvozd).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  👑 <strong>Dvojí cesta k otevření (Královská zkratka vs. Průzkum):</strong>
+                  Každou úroveň lze otevřít buď postupným zaháněním stanoveného počtu potvor z předchozí úrovně, NEBO okamžitě skolením hlavního bosse (Pekelný Čert otevře 2. úroveň, Půlnoční Hejkal otevře 3. úroveň)!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📜 <strong>Interaktivní pergamenový detail úrovně (Kronika průzkumu):</strong>
+                  Klepnutím na kartu zamčené či odemykané úrovně se zobrazí pergamenová kronika s ukazatelem zahnadých potvor, nápovědami k počasí, bossovi a přehledem milníků.
+                </li>
+              </ul>
+            </div>
+
             {/* 8. KOLO - PAUZA HRY, BLESKY SV. ELIÁŠE & MISTROVSKÉ TROFEJE */}
             <div className="plan-card" style={{ border: '4px solid #1E3A8A', color: '#000000', background: '#EFF6FF' }}>
               <div className="plan-header">
                 <h3 style={{ color: '#000000' }}>8. KOLO ZMĚN (v8.0.0 – Pauza hry s inventářem, blesk sv. Eliáše & mistrovské trofeje)</h3>
-                <span className="plan-badge-done" style={{ background: '#1E3A8A', color: '#FFFFFF' }}>Právě nasazeno</span>
+                <span className="plan-badge-done" style={{ background: '#1E3A8A', color: '#FFFFFF' }}>Dokončeno</span>
               </div>
               <ul className="plan-items" style={{ color: '#000000' }}>
                 <li style={{ color: '#000000' }}>
@@ -196,6 +292,35 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
           </div>
         ) : (
           <div className="changelog-list" style={{ maxHeight: '450px', overflowY: 'auto', color: '#000000' }}>
+            <h4 style={{ color: '#000000' }}>v12.0.0 – 12. kolo: 100% kompletní offline hra i plná upravitelnost pro AI (Claude) a programátory</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Garance celistvosti pro hraní i úpravy (Claude & vývojáři):</strong> Závazně zakotveno v <code>DESIGN_PRINCIPLES.md</code> i v kódu. Soubory ke stažení (HTML i TXT) obsahují kompletní offline hru a veškeré náležitosti pro snadné rozšiřování novým obsahem.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Neminifikovaný čistý kód & Vývojářská příručka:</strong> Běhový kód v souboru již není nečitelný spletenec. Všechny proměnné a funkce mají plná jména a v záhlaví souboru je podrobný návod pro Claude a programátory, kde najít a jak přidat zbraň, monstrum, bosse či upravit ladovský canvas renderer.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Plné původní zdrojové kódy přímo v souboru (Embedded Source Tree):</strong> Uvnitř souboru je zabaleno všech 27 původních TypeScript/React souborů v JSON bloku <code>bubakov-source-tree</code> s konzolovou exportní utilitou <code>window.BUBAKOV.exportSources()</code>.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Snadné offline hraní:</strong> Stažený <code>.txt</code> soubor stačí přejmenovat na <code>.html</code> a spustit v libovolném internetovém prohlížeči kdekoliv bez sítě.</li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v11.0.0 – 11. kolo: Zásady designu, dokonalý kontrast písma & +80 % útok i zdraví nepřátel</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Zásada bezvadné viditelnosti textu:</strong> Formálně zapsáno do zásad designu: „Na vysokou viditelnost a bezvadný kontrast písma je vždy třeba dbát!“ Přísný zákaz slabého kontrastu a vybledlých textů v jakémkoliv stavu.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Kontrastní pergamenové podložky a orámování HUDu:</strong> Všechny texty v HUDu, lištách a panelech mají zajištěn stoprocentní kontrast i při přechodu z denního světla do půlnoční tmy.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>+80 % zdraví a útok všech nepřátel:</strong> Všech 35 monster v souboru <code>enemies.ts</code> bylo posíleno o 80 % (HP i útočné číslo damage) pro náročnější výpravy.</li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v10.0.0 – 10. kolo: Postupné odhalování strašidel v Bestiáři jako u lovců a úrovní</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Postupné zkoumání 32 lidových strašidel (0 %, 25 %, 50 %, 75 %, 100 %):</strong> Strašidla, která hráč dosud neporazil, jsou v bestiáři zahalena rouškou tajemství (???). Postupnými zářezy se v kronice odhalují jejich slabiny, přednosti, odměny a přesné statistiky.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Postupná vizualizace v kresbě:</strong> Obrazovka kreslí strašidlo podle fáze průzkumu – od stínu s otazníkem (0 %), přes uhelnou kresbu (25 %) a sépiový náčrt (50 %) až po plnobarevný Ladovský medailon.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Počítadla výzkumu:</strong> Zobrazení celkového počtu spatřených a 100% probádaných tvorů přímo v záhlaví Bestiáře.</li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v9.0.0 – 9. kolo: Postupné odhalování úrovní jako u lovců</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Progresivní odhalování mapy (25 %, 50 %, 75 %, 100 %):</strong> Úrovně 2 a 3 jsou zpočátku zahaleny mlhou a tajemstvím. Splněním tematických milníků (nebo poražením bosse) se odhalují názvy, indicie, počasí, přední příšery i hlavní bossové.</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Královská zkratka i postupné zářezy:</strong> Porážka Pekelného Čerta v 1. úrovni okamžitě na 100 % zpřístupní Starý hřbitov; porážka Půlnočního Hejkala ve 2. úrovni okamžitě zpřístupní Ladovskou zimu na Melechově. Pro nováčky se mapa otevírá postupným zaháněním potvor!</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Interaktivní okno Kroniky úrovní:</strong> Klepnutím na kartu úrovně se otevře pergamen s postupem, cílovými potvorami a milníky.</li>
+            </ul>
+
             <h4 style={{ color: '#000000' }}>v8.0.0 – 8. kolo: Pauza hry, blesky sv. Eliáše, mistrovské trofeje a nové zvuky</h4>
             <ul style={{ color: '#000000' }}>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Pauza s inventářem výbavy („Odpočinek u milníku“):</strong> Stisknutím <code>Esc</code> / <code>P</code> nebo klepnutím na tlačítko ⏸️ lze hru kdykoliv pozastavit, prohlédnout aktuální zbraně, jejich úrovně, poškození a statistiky, nebo bezpečně ukončit výpravu a sečíst skóre.</li>
