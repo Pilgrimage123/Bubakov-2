@@ -49,7 +49,7 @@ export interface HunterProgress {
   enemiesBreakdown: { id: string; name: string; icon: string; count: number }[];
 }
 
-export const HUNTER_ORDER: CharacterType[] = ['wanderer', 'shepherd', 'korenarka', 'watchman'];
+export const HUNTER_ORDER: CharacterType[] = ['wanderer', 'shepherd', 'korenarka', 'watchman', 'sexton', 'granny'];
 
 export function getPreviousHunter(type: CharacterType): CharacterType | null {
   const idx = HUNTER_ORDER.indexOf(type);
@@ -342,6 +342,171 @@ export const HUNTER_UNLOCKS: Record<CharacterType, HunterUnlockDef> = {
         spoiledLore: 'Halapartna, svatá záře lucerny. Schopnost: Noční roh & Voříšek.',
         spoiledWeaponHint: 'Halapartna & Svatá záře lucerny',
         spoiledAbilityHint: 'Noční roh & Voříšek (poplašná panika)',
+        clueTag: '✅ Plně odemčeno!',
+      },
+    ],
+  },
+
+  sexton: {
+    id: 'sexton',
+    realName: 'Pobožný kostelník',
+    realTitle: 'Zvoník a správce farního kostela',
+    defaultUnlocked: false,
+    challengeTitle: '⛪ Očista hřbitova i pekla',
+    challengeShortDesc: 'Zažeň celkem 60 nemrtvých a pekelníků.',
+    challengeLongDesc:
+      'Kolem hřbitova se potulují kostlivci, písaři z hrobů, umrlci a rozpustilí čertíci. Zažeň 60 nemrtvých a pekelných potvor, aby se správce farního kostela odvážil rozezvonit zvon a přidal se k výpravě!',
+    targetEnemies: [
+      { id: 'skeleton', name: 'Kostlivec ze svatého Jiří', icon: '💀' },
+      { id: 'skeleton_scythe', name: 'Kostlivec s rezavou kosou', icon: '🌾' },
+      { id: 'umrlec', name: 'Rychtářův umrlec', icon: '⚰️' },
+      { id: 'pisar', name: 'Panský písař po smrti', icon: '📜' },
+      { id: 'hrobnik', name: 'Prokletý hrobník', icon: '⚱️' },
+      { id: 'certik', name: 'Čertík s měchem', icon: '😈' },
+      { id: 'ohnivy_muz', name: 'Ohnivý rarach', icon: '🔥' },
+      { id: 'drab', name: 'Pekelný dráb', icon: '👺' },
+    ],
+    maxCount: 60,
+    milestones: [
+      // 0% - 24%
+      {
+        minPercent: 0,
+        tierLevel: 0,
+        spoiledName: '??? [ZAMČENÝ LOVEC]',
+        spoiledTitle: 'Stín u zvonice',
+        spoiledLore:
+          'Ve věži farního kostela se v noci samo rozezní zvon. Kdosi tam nahoře drží klíče od všeho svatého, ale jeho tvář nikdo neviděl.',
+        spoiledWeaponHint: 'Výzbroj: Zahaleno hustou mlhou',
+        spoiledAbilityHint: 'Schopnost: Neznámá (???)',
+        clueTag: '🔒 0 %: Zcela utajeno – zažeň 25 % nemrtvých a pekelníků pro první stopu',
+      },
+      // 25% - 49%
+      {
+        minPercent: 25,
+        tierLevel: 1,
+        spoiledName: 'K _ _ _ _ _ _ _ k',
+        spoiledTitle: 'Správce farního kostela s klíči',
+        spoiledLore:
+          'Slyšíš cinkot klíčů a hluboký hlas farního zvonu. Ten, kdo ho rozhoupává, se nebojí ani hrobů.',
+        spoiledWeaponHint: 'Nápověda: Svěcená voda a kropenka...',
+        spoiledAbilityHint: 'Nápověda: Úder zvonu a sloup svatého světla...',
+        clueTag: '🔍 25 %: Slyšíš klíče a zvon! Zažeň další nemrtvé',
+      },
+      // 50% - 74%
+      {
+        minPercent: 50,
+        tierLevel: 2,
+        spoiledName: 'K o s _ _ _ n í k',
+        spoiledTitle: 'Zbožný muž se zvonem a kropenkou',
+        spoiledLore:
+          'Zbožný muž v černém kabátě! Svěcená voda z jeho kropenky pálí čerty a umrlce dvojnásobně a jeho zvon rozezní celou náves.',
+        spoiledWeaponHint: 'Zbraň: Kropenka se svěcenou vodou (dvojitá zkáza nemrtvým)',
+        spoiledAbilityHint: 'Schopnost: Farní požehnání (zvon a sloup světla)',
+        clueTag: '🔎 50 %: Znáš zvon, klíče i svěcenou vodu!',
+      },
+      // 75% - 99%
+      {
+        minPercent: 75,
+        tierLevel: 3,
+        spoiledName: 'K o s t e _ n í k',
+        spoiledTitle: 'Hrdina z Ladových obrázků s klíči od kostela',
+        spoiledLore:
+          'Kostelník už nahoře ve zvonici uvazuje provaz! Ještě pár zahnaných umrlců a rozezní farní zvon přímo v aréně!',
+        spoiledWeaponHint: 'Start: Kropenka se svěcenou vodou',
+        spoiledAbilityHint: '⚡ Speciál: Farní požehnání (očistí všechny okolní démony a nemrtvé)',
+        clueTag: '⚡ 75 %: Zvon se už rozhoupává! Poslední nemrtví tě dělí od odemčení!',
+      },
+      // 100%
+      {
+        minPercent: 100,
+        tierLevel: 4,
+        spoiledName: 'Pobožný kostelník',
+        spoiledTitle: 'Zvoník a správce farního kostela',
+        spoiledLore: 'Kropenka se svěcenou vodou a farní zvon. Schopnost: Farní požehnání.',
+        spoiledWeaponHint: 'Kropenka se svěcenou vodou',
+        spoiledAbilityHint: 'Farní požehnání (očištění nemrtvých a démonů)',
+        clueTag: '✅ Plně odemčeno!',
+      },
+    ],
+  },
+
+  granny: {
+    id: 'granny',
+    realName: 'Babička a Barunka',
+    realTitle: 'Vlídná babička z Ratibořic a její vnučka',
+    defaultUnlocked: false,
+    challengeTitle: '🥖 Vlídné slovo pro zabloudilé duše',
+    challengeShortDesc: 'Zažeň celkem 80 polních a lesních běsů.',
+    challengeLongDesc:
+      'Na mezích a v lesích se to hemží polednicemi, klekanicemi, divoženkami, bludičkami i dřevorubci-strašidly. Zažeň 80 těchto polních a lesních běsů, aby se mohla vydat na cestu babička s vnučkou Barunkou, které mají vždycky po ruce chleba se solí!',
+    targetEnemies: [
+      { id: 'polednice', name: 'Polednice', icon: '🌾' },
+      { id: 'klekanice', name: 'Klekánice', icon: '🧙‍♀️' },
+      { id: 'divozenka', name: 'Lesní divoženka', icon: '🌲' },
+      { id: 'bludicka', name: 'Bludička močálová', icon: '🔥' },
+      { id: 'drevorubec', name: 'Duch starého dřevorubce', icon: '🪓' },
+      { id: 'plivnik', name: 'Plivník', icon: '💦' },
+      { id: 'zaba', name: 'Rybniční žabka', icon: '🐸' },
+    ],
+    maxCount: 80,
+    milestones: [
+      // 0% - 24%
+      {
+        minPercent: 0,
+        tierLevel: 0,
+        spoiledName: '??? [ZAMČENÝ LOVEC]',
+        spoiledTitle: 'Světýlko v okně chaloupky',
+        spoiledLore:
+          'V okně chaloupky za vsí se stále svítí a voní tam čerstvý chleba. Kdo tam zaklepe, dostane hřejivé slovo, ať je to člověk, nebo strašidlo.',
+        spoiledWeaponHint: 'Výzbroj: Zahaleno hustou mlhou',
+        spoiledAbilityHint: 'Schopnost: Neznámá (???)',
+        clueTag: '🔒 0 %: Zcela utajeno – zažeň 25 % polních běsů pro první stopu',
+      },
+      // 25% - 49%
+      {
+        minPercent: 25,
+        tierLevel: 1,
+        spoiledName: 'B _ _ _ _ _ a & B _ _ _ _ _ a',
+        spoiledTitle: 'Dvě postavy s košíkem a copánky',
+        spoiledLore:
+          'Slyšíš šoupání pantoflí a dětský smích. Starší žena s košíkem a malá holčička s copánky obcházejí ves.',
+        spoiledWeaponHint: 'Nápověda: Něco sladkého sypaného mákem...',
+        spoiledAbilityHint: 'Nápověda: Chleba, sůl a hezké slovo...',
+        clueTag: '🔍 25 %: Vidíš košík a copánky! Zažeň další běsy',
+      },
+      // 50% - 74%
+      {
+        minPercent: 50,
+        tierLevel: 2,
+        spoiledName: 'B a b _ _ k a & B a r _ _ k a',
+        spoiledTitle: 'Ladovská babička s vnučkou',
+        spoiledLore:
+          'Babička nosí v košíku chleba a sůl, vnučka jí pomáhá a zpívá. Dokázaly by uklidnit i největšího zuřivce jediným vlídným slovem!',
+        spoiledWeaponHint: 'Zbraň: Kynutý koláč s mákem (odrazí se k dalšímu)',
+        spoiledAbilityHint: 'Schopnost: Zastavený čas a vlídné slovo (uklidní hordu)',
+        clueTag: '🔎 50 %: Znáš chleba, sůl i Barunčiny copánky!',
+      },
+      // 75% - 99%
+      {
+        minPercent: 75,
+        tierLevel: 3,
+        spoiledName: 'B a b i č _ a & B a r u n _ a',
+        spoiledTitle: 'Hrdinky z Ladových obrázků s čerstvým chlebem',
+        spoiledLore:
+          'Babička už zabalila chleba do ubrousku a Barunka si zavazuje copánky! Ještě pár zahnaných polních běsů a vyrazí do arény!',
+        spoiledWeaponHint: 'Start: Kynutý koláč s mákem, Barunka po boku',
+        spoiledAbilityHint: '⚡ Speciál: Chléb se solí a vlídné slovo (čas se zastaví, horda se uklidní)',
+        clueTag: '⚡ 75 %: Chleba už voní! Poslední běsi tě dělí od odemčení!',
+      },
+      // 100%
+      {
+        minPercent: 100,
+        tierLevel: 4,
+        spoiledName: 'Babička a Barunka',
+        spoiledTitle: 'Vlídná babička z Ratibořic a její vnučka',
+        spoiledLore: 'Kynutý koláč s mákem a Barunka po boku. Schopnost: Chléb se solí a vlídné slovo.',
+        spoiledWeaponHint: 'Kynutý koláč s mákem',
+        spoiledAbilityHint: 'Chléb se solí a vlídné slovo (zastavený čas, uklidněná horda)',
         clueTag: '✅ Plně odemčeno!',
       },
     ],

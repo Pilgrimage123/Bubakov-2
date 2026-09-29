@@ -134,16 +134,16 @@ export const TROPHIES: Trophy[] = [
   {
     id: 'fellowship_hunters',
     title: '📯 Slavná vesnická družina',
-    desc: 'Odemkni všechny 4 lidové hrdiny a shromáždi celou slavnou družinu.',
+    desc: 'Odemkni všech 6 lidových hrdinů a shromáždi celou slavnou družinu.',
     reward: 150,
     isMet: (meta) => {
-      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false };
-      return Boolean(uh.wanderer && uh.shepherd && uh.korenarka && uh.watchman);
+      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false };
+      return Boolean(uh.wanderer && uh.shepherd && uh.korenarka && uh.watchman && uh.sexton && uh.granny);
     },
     getProgress: (meta) => {
-      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false };
-      const count = (uh.wanderer ? 1 : 0) + (uh.shepherd ? 1 : 0) + (uh.korenarka ? 1 : 0) + (uh.watchman ? 1 : 0);
-      return { cur: count, max: 4 };
+      const uh = meta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false };
+      const count = (uh.wanderer ? 1 : 0) + (uh.shepherd ? 1 : 0) + (uh.korenarka ? 1 : 0) + (uh.watchman ? 1 : 0) + (uh.sexton ? 1 : 0) + (uh.granny ? 1 : 0);
+      return { cur: count, max: 6 };
     },
   },
   {

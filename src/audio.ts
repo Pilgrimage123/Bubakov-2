@@ -127,9 +127,40 @@ class SoundManager {
     });
   }
 
+  public splash() {
+    this.playTone(280, 'triangle', 0.22, 0.28, 0.01);
+    setTimeout(() => this.playTone(180, 'sine', 0.35, 0.32, 0.001), 60);
+    setTimeout(() => this.playTone(130, 'sawtooth', 0.28, 0.2, 0.001), 120);
+  }
+
   public bell() {
     this.playTone(440, 'sine', 1.2, 0.3, 0.0001);
     this.playTone(880, 'sine', 0.8, 0.15, 0.0001);
+  }
+
+  public churchBell() {
+    // Hluboký farní zvon: nízký základní tón + nesouměrné alikvoty s dlouhým doznívání
+    const base = 98;
+    [1, 2, 2.4, 3, 4.2, 5.4].forEach((mul, i) => {
+      this.playTone(base * mul, 'sine', Math.max(0.8, 3.4 - i * 0.4), 0.3 / (1 + i * 0.55), 0.0001);
+    });
+    // Ozvěna: druhý, tišší úder zvonu
+    setTimeout(() => this.playTone(base, 'sine', 3.0, 0.2, 0.0001), 950);
+    setTimeout(() => this.playTone(base * 2.4, 'sine', 2.0, 0.08, 0.0001), 950);
+  }
+
+  public timeStop() {
+    // Čas se zastavuje: klesající tón a tlumený dozvuk
+    [660, 520, 400, 300].forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.45, 0.16, 0.0001), i * 110);
+    });
+  }
+
+  public kindChime() {
+    // Vlídné zvonění: klidné, hřejivé akordy
+    [523, 659, 784, 988, 1175].forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 'sine', 1.3, 0.13, 0.0001), i * 200);
+    });
   }
 
   public rooster() {

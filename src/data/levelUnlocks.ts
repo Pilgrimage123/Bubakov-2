@@ -65,7 +65,7 @@ export interface LevelProgress {
   bossDefeated: boolean;
 }
 
-export const LEVEL_ORDER: GameLevelId[] = [1, 2, 3];
+export const LEVEL_ORDER: GameLevelId[] = [1, 2, 3, 4, 5, 6];
 
 export function getPreviousLevel(id: GameLevelId): GameLevelId | null {
   const idx = LEVEL_ORDER.indexOf(id);
@@ -81,6 +81,9 @@ export function isLevelFullyUnlocked(id: GameLevelId, meta: MetaProgression): bo
   // Backward compatibility with boss bestiary kills
   if (id === 2 && ((meta.bestiaryKills?.cert || 0) >= 1 || !!meta.completedLevels?.[1])) return true;
   if (id === 3 && ((meta.bestiaryKills?.hejkal || 0) >= 1 || !!meta.completedLevels?.[2])) return true;
+  if (id === 4 && ((meta.bestiaryKills?.obr || 0) >= 1 || !!meta.completedLevels?.[3])) return true;
+  if (id === 5 && ((meta.bestiaryKills?.mlynar || 0) >= 1 || !!meta.completedLevels?.[4])) return true;
+  if (id === 6 && ((meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta.completedLevels?.[5])) return true;
 
   return false;
 }
@@ -102,6 +105,32 @@ export function getActiveUnlockingLevel(meta: MetaProgression): GameLevelId | nu
     }
   }
   return null;
+}
+
+function makeSequentialUnlock(id: 4 | 5 | 6, targetEnemies: LevelTargetEnemyInfo[]): LevelUnlockDef {
+  const level = GAME_LEVELS[id];
+  const previous = GAME_LEVELS[(id - 1) as GameLevelId];
+  const locked = (percent: number, tierLevel: 0 | 1 | 2 | 3 | 4): LevelUnlockMilestone => ({
+    minPercent: percent, tierLevel,
+    spoiledName: percent === 100 ? level.name : `${id}. ??? [ZAMČENÁ VÝPRAVA]`,
+    spoiledShortTitle: percent === 100 ? level.shortTitle : 'Neznámá končina',
+    spoiledSubtitle: percent >= 50 ? level.subtitle : 'Zatím jen útržky pověstí a vzdálené výkřiky',
+    spoiledDesc: percent >= 50 ? level.description : `Cesta se odhalí po průzkumu ${previous.shortTitle}.`,
+    spoiledLore: percent >= 75 ? level.lore : 'Kronikář zatím sbírá jen kusé zprávy.',
+    spoiledBossHint: percent >= 75 ? `👑 Hlavní boss: ${level.finalBoss.name}` : '👑 Hlavní boss: ???',
+    spoiledWeatherHint: percent >= 50 ? `Počasí: ${level.subtitle}` : 'Počasí: neznámé',
+    spoiledEnemiesHint: percent >= 50 ? targetEnemies.map((enemy) => enemy.name).join(', ') : 'Nepřátelé: skryto',
+    spoiledIcon: percent >= 50 ? level.icon : '🔒', spoiledBadge: percent === 100 ? level.badge : `🔒 ${id}. úroveň (${percent} %)`,
+    clueTag: percent === 100 ? '✅ Plně odemčeno!' : `🔒 ${percent} %: pokračuj v předchozí výpravě`,
+  });
+  return {
+    id, realName: level.name, realShortTitle: level.shortTitle, realSubtitle: level.subtitle, realIcon: level.icon, realBadge: level.badge,
+    defaultUnlocked: false, challengeTitle: `Průzkum: ${level.shortTitle}`,
+    challengeShortDesc: `Poražte ${previous.finalBoss.name} nebo zažeňte potvory z předchozí výpravy.`,
+    challengeLongDesc: `Dokončete výpravu „${previous.shortTitle}“. Vítězství nad jejím hlavním bossem otevře cestu do oblasti „${level.shortTitle}“.`,
+    bossDefeatRequirement: `Porazit ${previous.finalBoss.name}`,
+    targetEnemies, maxCount: 100, milestones: [locked(0, 0), locked(25, 1), locked(50, 2), locked(75, 3), locked(100, 4)],
+  };
 }
 
 export const LEVEL_UNLOCKS: Record<GameLevelId, LevelUnlockDef> = {
@@ -369,6 +398,9 @@ export const LEVEL_UNLOCKS: Record<GameLevelId, LevelUnlockDef> = {
       },
     ],
   },
+  4: makeSequentialUnlock(4, [{ id: 'zbojnik', name: 'Zbojník', icon: '🗡️' }, { id: 'jiskrivec', name: 'Jiskřivec', icon: '✨' }, { id: 'mlynar', name: 'Mlynář', icon: '🌊' }]),
+  5: makeSequentialUnlock(5, [{ id: 'bila_pani', name: 'Bílá paní', icon: '👻' }, { id: 'zbrojnos', name: 'Zbrojnoš', icon: '🛡️' }, { id: 'bezhlavy_rytir', name: 'Bezhlavý rytíř', icon: '🗡️' }]),
+  6: makeSequentialUnlock(6, [{ id: 'snehulak', name: 'Sněhulák', icon: '☃️' }, { id: 'nocni_mura', name: 'Noční můra', icon: '🌑' }, { id: 'drak', name: 'Drak', icon: '🐉' }]),
 };
 
 /**

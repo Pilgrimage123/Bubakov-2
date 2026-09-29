@@ -39,7 +39,7 @@ import {
   UpgradeChoice,
   DayPhase,
 } from './types';
-import { COLORS, DAY_PHASES, getCurrentDayPhase } from './constants';
+import { COLORS, DAY_PHASES, getCurrentDayPhase, ENEMY_POINTS, DROP_THRESHOLDS, GRANNY_CUTSCENE } from './constants';
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS } from './data/weapons';
@@ -420,6 +420,8 @@ export default function App() {
   const shepherdRef = useRef<HTMLCanvasElement | null>(null);
   const korenarkaRef = useRef<HTMLCanvasElement | null>(null);
   const watchmanRef = useRef<HTMLCanvasElement | null>(null);
+  const sextonRef = useRef<HTMLCanvasElement | null>(null);
+  const grannyRef = useRef<HTMLCanvasElement | null>(null);
 
   // Meta progression in LocalStorage
   const [meta, setMeta] = useState<MetaProgression>(() => {
@@ -451,7 +453,7 @@ export default function App() {
       trophiesClaimed: {},
       bestiaryKills: {},
       highestSurviveTime: 0,
-      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false },
+      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
       unlockedWeapons: { buns: true, cane: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
@@ -474,7 +476,7 @@ export default function App() {
   // Selected level state
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (s === 1 || s === 2 || s === 3 ? s : 1) as GameLevelId;
+    return (s && s >= 1 && s <= 6 ? s : 1) as GameLevelId;
   });
 
   const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[1];
@@ -493,11 +495,12 @@ export default function App() {
   const shepherdProg = getHunterProgress('shepherd', meta);
   const korenarkaProg = getHunterProgress('korenarka', meta);
   const watchmanProg = getHunterProgress('watchman', meta);
+  const sextonProg = getHunterProgress('sexton', meta);
+  const grannyProg = getHunterProgress('granny', meta);
 
-  // Progressive unlock calculations for all 3 levels
-  const level1Prog = getLevelProgress(1, meta);
-  const level2Prog = getLevelProgress(2, meta);
-  const level3Prog = getLevelProgress(3, meta);
+  const levelProgress = Object.fromEntries(
+    ([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+  ) as Record<GameLevelId, LevelProgress>;
 
   // Weapon unlock count
   const unlockedWeaponsCount = Object.keys(WEAPONS).filter(
@@ -550,6 +553,9 @@ export default function App() {
     levelWon: false,
   });
 
+  const runStatsRef = useRef(runStats);
+  runStatsRef.current = runStats;
+
   // Level Up choices
   const [levelUpChoices, setLevelUpChoices] = useState<UpgradeChoice[]>([]);
 
@@ -561,6 +567,7 @@ export default function App() {
     kills: 0,
     coins: 0,
     souls: 0,
+    chasniks: 0,
     time: 0,
     isVictory: false,
     levelId: 1 as GameLevelId,
@@ -584,7 +591,13 @@ export default function App() {
     levelVictoryTriggered: boolean;
     activeLevelId: GameLevelId;
     chasnikSpawned: boolean;
-    chestCounter: number;
+    pointsChest: number;
+    pointsPotion: number;
+    pointsBread: number;
+    pointsCoin: number;
+    pointsSoul: number;
+    blessing: { x: number; y: number; t: number; dur: number } | null;
+    cutscene: { t: number; dur: number; applyAt: number; applied: boolean } | null;
     companion: any;
     lastTime: number;
     uiTime: number;
@@ -592,6 +605,18 @@ export default function App() {
     lightningTimer: number;
     lightningFlash: number;
     lightningStrike: { x: number; y: number; time: number } | null;
+    nextBossMechanicAt: number;
+    gameTime: number;
+    kills: number;
+    coins: number;
+    souls: number;
+    chasniks: number;
+    dawnVictoryTriggered: boolean;
+    flourStormTimer: number;
+    mlynarStoneTimer: number;
+    mlynarWaveTimer: number;
+    mlynarStormTimer: number;
+    lastStatsSync: number;
   }>({
     player: null,
     enemies: [],
@@ -609,7 +634,9 @@ export default function App() {
     levelVictoryTriggered: false,
     activeLevelId: 1,
     chasnikSpawned: false,
-    chestCounter: 0,
+    pointsChest: 0, pointsPotion: 0, pointsBread: 0, pointsCoin: 0, pointsSoul: 0,
+    blessing: null,
+    cutscene: null,
     companion: null,
     lastTime: performance.now(),
     uiTime: 0,
@@ -617,6 +644,18 @@ export default function App() {
     lightningTimer: 45,
     lightningFlash: 0,
     lightningStrike: null,
+    nextBossMechanicAt: 0,
+    gameTime: 0,
+    kills: 0,
+    coins: 0,
+    souls: 0,
+    chasniks: 0,
+    dawnVictoryTriggered: false,
+    flourStormTimer: 0,
+    mlynarStoneTimer: 5,
+    mlynarWaveTimer: 11,
+    mlynarStormTimer: 16,
+    lastStatsSync: 0,
   });
 
   // Pause toggle handler
@@ -627,6 +666,7 @@ export default function App() {
         return 'paused';
       } else if (cur === 'paused') {
         sound.resume();
+        engineRef.current.lastTime = performance.now();
         return 'playing';
       }
       return cur;
@@ -636,18 +676,19 @@ export default function App() {
   // Surrender / return to tavern from pause with score tally
   const quitToTavernFromPause = () => {
     sound.coin();
-    const timeSurvived = runStats.time;
-    const updatedHighest = Math.max(meta.highestSurviveTime || 0, timeSurvived);
+    const timeSurvived = engineRef.current.gameTime;
+    const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, timeSurvived);
     setTallyCounters({
-      kills: runStats.kills,
-      coins: runStats.coins,
-      souls: runStats.souls,
-      time: timeSurvived,
-      isVictory: runStats.levelWon,
-      levelId: runStats.levelId,
+      kills: engineRef.current.kills,
+      coins: engineRef.current.coins,
+      souls: engineRef.current.souls,
+      chasniks: engineRef.current.chasniks,
+      time: Math.floor(timeSurvived),
+      isVictory: engineRef.current.levelVictoryTriggered,
+      levelId: engineRef.current.activeLevelId || 1,
     });
     saveMeta({
-      ...meta,
+      ...metaRef.current,
       highestSurviveTime: updatedHighest,
     });
     setGameState('tally');
@@ -663,7 +704,7 @@ export default function App() {
 
     const curMeta = metaRef.current;
     const nextLvlId = (lvlId + 1) as GameLevelId;
-    const canUnlockNext = nextLvlId <= 3;
+    const canUnlockNext = nextLvlId <= 6;
     const nextHighest = canUnlockNext
       ? Math.max(curMeta.highestLevelUnlocked || 1, nextLvlId)
       : (curMeta.highestLevelUnlocked || 1);
@@ -693,13 +734,38 @@ export default function App() {
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
       });
       setTimeout(() => setUnlockNotice(null), 6000);
-    } else if (lvlId === 3) {
+    } else if (lvlId >= 6) {
       setUnlockNotice({
-        title: `👑 VŠECHNY 3 ÚROVNĚ DOKONČENY!`,
-        desc: `Skalní obr ze Sázavy padl! Celý Bubákov oslavuje vaše legendární hrdinství!`,
+        title: `👑 VŠECHNY ÚROVNĚ DOKONČENY!`,
+        desc: `Čertův mlýn, bezhlavý rytíř i drak padli! Celý Bubákov oslavuje vaše legendární hrdinství!`,
       });
       setTimeout(() => setUnlockNotice(null), 6000);
     }
+
+    // Remaining monsters flee
+    engineRef.current.enemies.forEach((m) => {
+      m.panicked = true;
+      m.isDefeated = true;
+    });
+
+    // Schedule transition to triumphant victory tally
+    setTimeout(() => {
+      setTallyCounters({
+        kills: engineRef.current.kills,
+        coins: engineRef.current.coins,
+        souls: engineRef.current.souls,
+        chasniks: engineRef.current.chasniks,
+        time: Math.floor(engineRef.current.gameTime),
+        isVictory: true,
+        levelId: lvlId,
+      });
+      const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, engineRef.current.gameTime);
+      saveMeta({
+        ...metaRef.current,
+        highestSurviveTime: updatedHighest,
+      });
+      setGameState('tally');
+    }, 3500);
   };
 
   const toggleSound = () => {
@@ -789,11 +855,11 @@ export default function App() {
     sound.coin();
 
     const baseMaxHp =
-      type === 'wanderer' ? 150 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : 140;
+      type === 'wanderer' ? 150 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
     const baseSpeed =
-      type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : 175;
+      type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
     const basePickup =
-      type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : 115;
+      type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
 
     const initialWeapons =
       type === 'wanderer'
@@ -802,6 +868,10 @@ export default function App() {
         ? [{ id: 'buns', level: 1, cd: 0 }]
         : type === 'korenarka'
         ? [{ id: 'herbs', level: 1, cd: 0 }]
+        : type === 'sexton'
+        ? [{ id: 'holywater', level: 1, cd: 0 }]
+        : type === 'granny'
+        ? [{ id: 'kolac', level: 1, cd: 0 }]
         : [{ id: 'halberd', level: 1, cd: 0 }];
 
     const wallBonusHp = (meta.wallLevel || 0) * 25;
@@ -826,12 +896,35 @@ export default function App() {
       regenTimer: 0,
       herbTimer: 0,
       soulBuffTimer: 0,
+      waterSoakedTimer: 0,
       hasSoakedCane: false,
       ultCd: 0,
-      ultMaxCd: 30,
+      ultMaxCd: type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
+
+      // Take damage from mob contact or hazard attacks
+      takeDamage(amount: number, type = 'physical') {
+        if (gameState !== 'playing' || this.hp <= 0) return;
+        const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
+        this.hp = Math.max(0, this.hp - hurtDmg);
+        sound.hit();
+        engineRef.current.texts.push(
+          new DamageText(this.x, this.y - 35, `-${Math.ceil(hurtDmg)}`, COLORS.red)
+        );
+        if (this.hp <= 0) {
+          this.hp = 0;
+          sound.hit();
+          setGameState('fleeing');
+          engineRef.current.fleeTimer = 3.0;
+          engineRef.current.enemies.forEach((m) => {
+            m.panicked = true;
+            m.vx = -m.vx * 3;
+            m.vy = -m.vy * 3;
+          });
+        }
+      },
 
       // Helper methods for weapon scripts
       distTo(e: any) {
@@ -901,6 +994,10 @@ export default function App() {
           Lada.drawKorenarka(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
         } else if (this.type === 'watchman') {
           Lada.drawWatchman(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+        } else if (this.type === 'sexton') {
+          Lada.drawSexton(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+        } else if (this.type === 'granny') {
+          Lada.drawGranny(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
         } else {
           Lada.drawWanderer(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
         }
@@ -934,7 +1031,9 @@ export default function App() {
       levelVictoryTriggered: false,
       activeLevelId: chosenLevelId,
       chasnikSpawned: false,
-      chestCounter: 0,
+      pointsChest: 0, pointsPotion: 0, pointsBread: 0, pointsCoin: 0, pointsSoul: 0,
+      blessing: null,
+      cutscene: null,
       companion: null,
       lastTime: performance.now(),
       uiTime: 0,
@@ -942,6 +1041,18 @@ export default function App() {
       lightningTimer: 45,
       lightningFlash: 0,
       lightningStrike: null,
+      nextBossMechanicAt: chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY,
+      gameTime: 0,
+      kills: 0,
+      coins: 0,
+      souls: 0,
+      chasniks: 0,
+      dawnVictoryTriggered: false,
+      flourStormTimer: 0,
+      mlynarStoneTimer: 5,
+      mlynarWaveTimer: 11,
+      mlynarStormTimer: 16,
+      lastStatsSync: 0,
     };
 
     setRunStats({
@@ -1005,6 +1116,28 @@ export default function App() {
           e.soak();
         }
       }
+    } else if (p.type === 'sexton') {
+      // Farní požehnání: úder zvonu a sloup svatého světla očistí démony a nemrtvé
+      sound.churchBell();
+      engineRef.current.blessing = { x: p.x, y: p.y, t: 0, dur: 3.6 };
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'FARNÍ POŽEHNÁNÍ!', '#FDE047', true));
+      for (const e of engineRef.current.enemies) {
+        if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 650 + e.radius) continue;
+        const unholy = e.category === 'undead' || e.category === 'demons' || e.category === 'bosses';
+        if (!unholy) {
+          e.takeDamage(45 * p.damageMultiplier, 'holy', (e.x - p.x) * 3, (e.y - p.y) * 3);
+        } else if (e.isBoss || e.category === 'bosses') {
+          e.takeDamage(e.maxHp * 0.25, 'holy', 0, 0);
+          engineRef.current.texts.push(new DamageText(e.x, e.y - 50, 'SVATÁ ZKÁZA!', '#FDE047', true));
+        } else {
+          e.takeDamage(e.hp + 1, 'holy', (e.x - p.x) * 2, (e.y - p.y) * 2);
+        }
+      }
+    } else if (p.type === 'granny') {
+      // Chléb se solí a vlídné slovo: čas se zastaví a přehraje se scénka, její účinek nastane v jejím vrcholu
+      sound.timeStop();
+      engineRef.current.cutscene = { t: 0, dur: GRANNY_CUTSCENE.duration, applyAt: GRANNY_CUTSCENE.applyAt, applied: false };
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'ČAS SE ZASTAVIL…', '#FDE047', true));
     } else {
       // Night watchman horn & dog pack
       sound.horn();
@@ -1013,6 +1146,25 @@ export default function App() {
         e.panicTimer = 5.0 * (1 - (e.willpower || 0) * 0.7);
         e.panicked = true;
         e.takeDamage(110 * p.damageMultiplier, 'physical', (e.x - p.x) * 4, (e.y - p.y) * 4);
+      }
+    }
+  };
+
+  // Účinek Babiččiny scény: laskavost uklidní a zažene většinu hordy
+  const applyGrannyKindness = () => {
+    const eng = engineRef.current;
+    const p = eng.player;
+    if (!p) return;
+    sound.kindChime();
+    eng.texts.push(new DamageText(p.x, p.y - 70, 'VLÍDNÉ SLOVO! ❤', '#F4A6BF', true));
+    for (const e of eng.enemies) {
+      if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 1100) continue;
+      const bossLike = e.isBoss || e.category === 'bosses';
+      if (!bossLike && Math.random() < 0.75) {
+        e.takeDamage(e.hp + 1, 'magic', 0, 0);
+      } else {
+        e.calmTimer = bossLike ? 10 : 8;
+        eng.texts.push(new DamageText(e.x, e.y - 45, 'UKLIDNĚN', '#F4A6BF', true));
       }
     }
   };
@@ -1154,8 +1306,10 @@ export default function App() {
   // Rescue Chasník Kuba event
   const triggerRescueChasnik = (x: number, y: number) => {
     sound.cheer();
+    engineRef.current.coins += 50;
+    engineRef.current.chasniks += 1;
     engineRef.current.texts.push(new DamageText(x, y - 50, 'CHASNÍK KUBA ZACHRÁNĚN! +50 🪙', COLORS.mustard, true));
-    setRunStats((s) => ({ ...s, coins: s.coins + 50, chasniks: s.chasniks + 1 }));
+    setRunStats((s) => ({ ...s, coins: engineRef.current.coins, chasniks: engineRef.current.chasniks }));
 
     const p = engineRef.current.player;
     if (p) {
@@ -1212,28 +1366,47 @@ export default function App() {
         const sProg = getHunterProgress('shepherd', curMeta);
         const kProg = getHunterProgress('korenarka', curMeta);
         const mProg = getHunterProgress('watchman', curMeta);
+        const xProg = getHunterProgress('sexton', curMeta);
+        const gProg = getHunterProgress('granny', curMeta);
 
         renderHunterPortrait(wandererRef.current, Lada.drawWanderer.bind(Lada), wProg.tier, t);
         renderHunterPortrait(shepherdRef.current, Lada.drawShepherd.bind(Lada), sProg.tier, t);
         renderHunterPortrait(korenarkaRef.current, Lada.drawKorenarka.bind(Lada), kProg.tier, t);
         renderHunterPortrait(watchmanRef.current, Lada.drawWatchman.bind(Lada), mProg.tier, t);
+        renderHunterPortrait(sextonRef.current, Lada.drawSexton.bind(Lada), xProg.tier, t);
+        renderHunterPortrait(grannyRef.current, Lada.drawGranny.bind(Lada), gProg.tier, t);
       }
 
-      // In-game simulation
-      if (gameState === 'playing' || gameState === 'fleeing') {
+      // In-game simulation (při scénce Babičky a Barunky je čas zastaven)
+      if ((gameState === 'playing' || gameState === 'fleeing') && engineRef.current.player && engineRef.current.cutscene && gameState === 'playing') {
+        const engine = engineRef.current;
+        // Scénka Babičky a Barunky: čas je zastaven, běží jen scénka
+          if (engine.cutscene && gameState === 'playing') {
+            const cs = engine.cutscene;
+            cs.t += dt;
+            if (!cs.applied && cs.t >= cs.applyAt) {
+              cs.applied = true;
+              applyGrannyKindness();
+            }
+            if (cs.t >= cs.dur) engine.cutscene = null;
+          }
+      } else if (gameState === 'playing' || gameState === 'fleeing') {
         const engine = engineRef.current;
         const player = engine.player;
 
         if (player) {
           // Time & Day/Night phase tracking
           if (gameState === 'playing') {
-            const newTime = runStats.time + dt;
+            engine.gameTime += dt;
+            if (engine.flourStormTimer > 0) engine.flourStormTimer -= dt;
+            const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
             const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
 
             // Check dawn victory
-            if (newTime >= 300 && runStats.time < 300) {
+            if (newTime >= 300 && !engine.dawnVictoryTriggered) {
+              engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
               engine.texts.push(new DamageText(player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true));
@@ -1245,8 +1418,8 @@ export default function App() {
               triggerLevelVictory(engine.activeLevelId || 1, 'dawn');
             }
 
-            // 1. Mini-boss encounter
-            if (!engine.miniBossSpawned && (newTime >= curLvl.miniBoss.time || runStats.kills >= curLvl.miniBoss.kills)) {
+            // 1. Mini-boss encounter (polední přízrak podle plánu úrovně)
+            if (!engine.miniBossSpawned && newTime >= curLvl.miniBoss.time) {
               engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               engine.enemies.push(
@@ -1263,8 +1436,8 @@ export default function App() {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
 
-            // 2. Mid-boss encounter
-            if (!engine.midBossSpawned && (newTime >= curLvl.midBoss.time || runStats.kills >= curLvl.midBoss.kills)) {
+            // 2. Mid-boss encounter (odpolední protivník po mini-bossovi)
+            if (!engine.midBossSpawned && (engine.miniBossSpawned || newTime >= curLvl.midBoss.time + 10) && newTime >= curLvl.midBoss.time) {
               engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               engine.enemies.push(
@@ -1281,8 +1454,8 @@ export default function App() {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
 
-            // 3. Final Level Boss encounter
-            if (!engine.finalBossSpawned && (newTime >= curLvl.finalBoss.time || runStats.kills >= curLvl.finalBoss.kills)) {
+            // 3. Final Level Boss encounter (hlavní šéf úrovně za soumraku / v noci)
+            if (!engine.finalBossSpawned && (engine.midBossSpawned || newTime >= curLvl.finalBoss.time + 10) && newTime >= curLvl.finalBoss.time) {
               engine.finalBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               engine.enemies.push(
@@ -1304,7 +1477,152 @@ export default function App() {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
-            if (!engine.chasnikSpawned && (newTime >= 50 || runStats.kills >= 40)) {
+            // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
+            if (curLvl.id === 4 && engine.finalBossSpawned) {
+              const mlynar = engine.enemies.find((e) => e.id === 'mlynar' && !e.isDefeated);
+              if (mlynar) {
+                const isPhase2 = mlynar.hp <= mlynar.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Pekelné mletí)
+                if (isPhase2 && !mlynar.enraged) {
+                  mlynar.enraged = true;
+                  mlynar.speed = 82;
+                  sound.roar();
+                  engine.texts.push(new DamageText(mlynar.x, mlynar.y - 70, '🔥 PEKELNÉ MLETÍ!', COLORS.red, true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🔥 PEKELNÉ MLETÍ! ČERTŮV MLÝN SE ROZTÁČÍ!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  // Forge sparks burst
+                  for (let i = 0; i < 2; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    engine.enemies.push(createEnemyInstance('jiskrivec', mlynar.x + Math.cos(ang) * 80, mlynar.y + Math.sin(ang) * 80, 0.9));
+                  }
+                  // Flour & spark explosion
+                  for (let i = 0; i < 25; i++) {
+                    engine.particles.push({
+                      x: mlynar.x,
+                      y: mlynar.y,
+                      vx: (Math.random() - 0.5) * 200,
+                      vy: (Math.random() - 0.5) * 200,
+                      life: 0.8,
+                      color: i % 2 === 0 ? '#FFFFFF' : '#F97316',
+                      size: 6,
+                    });
+                  }
+                }
+
+                // Rolling Millstones (Mlýnské kameny)
+                engine.mlynarStoneTimer -= dt;
+                if (engine.mlynarStoneTimer <= 0) {
+                  engine.mlynarStoneTimer = isPhase2 ? 4.2 : 6.5;
+                  const stonesCount = isPhase2 ? 2 : 1;
+                  for (let i = 0; i < stonesCount; i++) {
+                    const baseAng = Math.atan2(player.y - mlynar.y, player.x - mlynar.x);
+                    const ang = baseAng + (i === 0 ? -0.2 : 0.2) * (stonesCount > 1 ? 1 : 0);
+                    engine.projectiles.push({
+                      x: mlynar.x,
+                      y: mlynar.y,
+                      vx: Math.cos(ang) * 230,
+                      vy: Math.sin(ang) * 230,
+                      angle: ang,
+                      rotation: 0,
+                      rotSpeed: 5.5,
+                      speed: 230,
+                      dmg: 28,
+                      radius: 20,
+                      type: 'blunt',
+                      visual: 'millstone',
+                      life: 5.5,
+                      isEnemy: true,
+                      pushback: 35,
+                      dead: false,
+                    });
+                  }
+                  sound.slash();
+                  engine.texts.push(new DamageText(mlynar.x, mlynar.y - 40, 'MLÝNSKÝ KÁMEN! ⚙️', COLORS.grey, true));
+                }
+
+                // Sluice Gate Flood Waves (Povodňová vlna ze stavidel)
+                engine.mlynarWaveTimer -= dt;
+                if (engine.mlynarWaveTimer <= 0) {
+                  engine.mlynarWaveTimer = isPhase2 ? 8.5 : 12.5;
+                  sound.splash();
+                  setRunStats((s) => ({ ...s, warningBanner: '🌊 STAVIDLA OTEVŘENA – POVODŇOVÁ VLNA!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
+                  engine.texts.push(new DamageText(mlynar.x, mlynar.y - 50, 'POVODEŇ ZE STAVIDEL! 🌊', '#38BDF8', true));
+
+                  const waveCount = isPhase2 ? 5 : 3;
+                  const baseAng = Math.atan2(player.y - mlynar.y, player.x - mlynar.x);
+                  const spread = isPhase2 ? 0.75 : 0.5;
+                  for (let i = 0; i < waveCount; i++) {
+                    const ang = baseAng - spread / 2 + (i * spread) / (waveCount - 1);
+                    engine.projectiles.push({
+                      x: mlynar.x,
+                      y: mlynar.y,
+                      vx: Math.cos(ang) * 280,
+                      vy: Math.sin(ang) * 280,
+                      angle: ang,
+                      speed: 280,
+                      dmg: 22,
+                      radius: 26,
+                      type: 'water',
+                      visual: 'water_wave',
+                      life: 3.5,
+                      isEnemy: true,
+                      pushback: 55,
+                      soakPlayer: true,
+                      dead: false,
+                    });
+                  }
+                }
+
+                // Flour Storm & Blindness (Moučný mrak)
+                engine.mlynarStormTimer -= dt;
+                if (engine.mlynarStormTimer <= 0) {
+                  engine.mlynarStormTimer = 16.0;
+                  engine.flourStormTimer = 4.5;
+                  sound.hit();
+                  setRunStats((s) => ({ ...s, warningBanner: '💨 MOUČNÝ OBLAK – BÍLÁ TMA!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2800);
+                  engine.texts.push(new DamageText(mlynar.x, mlynar.y - 60, 'MOUČNÝ MRAK!', '#F5F5F4', true));
+                  // Shove player gently from blast
+                  player.x += (Math.random() - 0.5) * 80;
+                  player.y += (Math.random() - 0.5) * 80;
+                  // Flour particles
+                  for (let i = 0; i < 35; i++) {
+                    const pAng = Math.random() * Math.PI * 2;
+                    const pDist = Math.random() * 120;
+                    engine.particles.push({
+                      x: mlynar.x + Math.cos(pAng) * pDist,
+                      y: mlynar.y + Math.sin(pAng) * pDist,
+                      vx: (Math.random() - 0.5) * 160,
+                      vy: (Math.random() - 0.5) * 160,
+                      life: 1.5,
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      size: 8,
+                    });
+                  }
+                  // Spawn one jiskrivec
+                  engine.enemies.push(createEnemyInstance('jiskrivec', mlynar.x + (Math.random() - 0.5) * 120, mlynar.y + (Math.random() - 0.5) * 120, 0.8));
+                }
+              }
+            } else if (engine.finalBossSpawned && curLvl.bossMechanic && newTime >= engine.nextBossMechanicAt) {
+              engine.nextBossMechanicAt = newTime + curLvl.bossMechanic.cadenceSeconds;
+              engine.texts.push(new DamageText(player.x, player.y - 60, curLvl.bossMechanic.label.toUpperCase(), COLORS.red, true));
+              setRunStats((s) => ({ ...s, warningBanner: `⚠️ ${curLvl.bossMechanic!.label.toUpperCase()}!` }));
+              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
+              if (curLvl.id === 5) {
+                // Returning head: a fast spectral attacker approaches from a random side.
+                engine.enemies.push(createEnemyInstance('nocni_mura', player.x + (Math.random() > 0.5 ? 300 : -300), player.y, 1.2));
+              } else if (curLvl.id === 6) {
+                // Falling icicles: three frozen shards use the existing projectile collision path.
+                for (let shard = 0; shard < 3; shard++) {
+                  player.takeDamage(4, 'rampouch');
+                  engine.particles.push({ x: player.x + (shard - 1) * 42, y: player.y - 80, vx: 0, vy: 80, life: 0.8, color: COLORS.ice, size: 8 });
+                }
+              }
+            }
+
+            if (!engine.chasnikSpawned && newTime >= 50) {
               engine.chasnikSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               const cx = player.x + Math.cos(ang) * 480;
@@ -1398,7 +1716,7 @@ export default function App() {
 
             if (mx !== 0 || my !== 0) {
               const len = Math.hypot(mx, my);
-              const speedMultiplier = player.soulBuffTimer > 0 ? 1.25 : 1;
+              const speedMultiplier = (player.soulBuffTimer > 0 ? 1.25 : 1) * (player.waterSoakedTimer > 0 ? 0.75 : 1);
               player.x += (mx / len) * player.speed * speedMultiplier * dt;
               player.y += (my / len) * player.speed * speedMultiplier * dt;
               player.lastDx = mx;
@@ -1409,6 +1727,7 @@ export default function App() {
             }
 
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
+            if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
             if (player.ultCd > 0) player.ultCd -= dt;
 
             // Player regeneration
@@ -1494,30 +1813,49 @@ export default function App() {
             engine.camera.y += (player.y - canvas.height / 2 - engine.camera.y) * 0.1;
 
             // Sync run stats
-            setRunStats((prev) => ({
-              ...prev,
-              time: newTime,
-              dayPhase: currentPhase,
-              hp: player.hp,
-              maxHp: player.maxHp,
-              ultCd: player.ultCd,
-              chestProgress: engine.chestCounter,
-            }));
+            runStatsRef.current.time = newTime;
+            runStatsRef.current.dayPhase = currentPhase;
+            runStatsRef.current.hp = player.hp;
+            runStatsRef.current.maxHp = player.maxHp;
+            runStatsRef.current.ultCd = player.ultCd;
+            runStatsRef.current.kills = engine.kills;
+            runStatsRef.current.coins = engine.coins;
+            runStatsRef.current.souls = engine.souls;
+            runStatsRef.current.chasniks = engine.chasniks;
+
+            engine.lastStatsSync += dt;
+            if (engine.lastStatsSync >= 0.05) {
+              engine.lastStatsSync = 0;
+              setRunStats((prev) => ({
+                ...prev,
+                time: newTime,
+                dayPhase: currentPhase,
+                kills: engine.kills,
+                coins: engine.coins,
+                souls: engine.souls,
+                chasniks: engine.chasniks,
+                hp: player.hp,
+                maxHp: player.maxHp,
+                ultCd: player.ultCd,
+                chestProgress: Math.floor(engine.pointsChest),
+              }));
+            }
           } else if (gameState === 'fleeing') {
             engine.fleeTimer -= dt;
             if (engine.fleeTimer <= 0) {
               // Transition to tally screen
               setTallyCounters({
-                kills: runStats.kills,
-                coins: runStats.coins,
-                souls: runStats.souls,
-                time: Math.floor(runStats.time),
-                isVictory: runStats.levelWon,
-                levelId: runStats.levelId,
+                kills: engine.kills,
+                coins: engine.coins,
+                souls: engine.souls,
+                chasniks: engine.chasniks,
+                time: Math.floor(engine.gameTime),
+                isVictory: false,
+                levelId: engine.activeLevelId || 1,
               });
-              const updatedHighest = Math.max(meta.highestSurviveTime || 0, runStats.time);
+              const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, engine.gameTime);
               saveMeta({
-                ...meta,
+                ...metaRef.current,
                 highestSurviveTime: updatedHighest,
               });
               setGameState('tally');
@@ -1530,6 +1868,38 @@ export default function App() {
             p.y += p.vy * dt;
             p.life -= dt;
             if (p.life <= 0) p.dead = true;
+
+            // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave)
+            if (p.isEnemy) {
+              if (p.rotation !== undefined) {
+                p.rotation += (p.rotSpeed || 5) * dt;
+              }
+              if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+                player.takeDamage(p.dmg, p.type || 'blunt');
+                if (p.pushback) {
+                  player.x += Math.cos(p.angle) * p.pushback;
+                  player.y += Math.sin(p.angle) * p.pushback;
+                }
+                if (p.soakPlayer) {
+                  player.waterSoakedTimer = 3.5;
+                  engine.texts.push(new DamageText(player.x, player.y - 40, 'PROMOČEN! 🌊', '#60A5FA'));
+                }
+                sound.hit();
+                for (let k = 0; k < 6; k++) {
+                  engine.particles.push({
+                    x: p.x,
+                    y: p.y,
+                    vx: (Math.random() - 0.5) * 120,
+                    vy: (Math.random() - 0.5) * 120,
+                    life: 0.4,
+                    color: p.visual === 'millstone' ? COLORS.grey : COLORS.ice,
+                    size: 5,
+                  });
+                }
+                p.dead = true;
+              }
+              continue;
+            }
 
             // Homing bees
             if (p.homing) {
@@ -1656,9 +2026,10 @@ export default function App() {
                 if (d.type === 'coin') {
                   const val = d.value || 1;
                   sound.coin();
+                  engine.coins += val;
                   setRunStats((s) => {
                     const nextXp = s.xp + val;
-                    const nextCoins = s.coins + val;
+                    const nextCoins = engine.coins;
                     if (nextXp >= s.xpNeeded) {
                       openLevelUpModal();
                       return {
@@ -1682,7 +2053,9 @@ export default function App() {
                 } else if (d.type === 'soul') {
                   sound.soul();
                   player.soulBuffTimer = 6.0;
-                  setRunStats((s) => ({ ...s, souls: s.souls + 1, coins: s.coins + 25 }));
+                  engine.souls += 1;
+                  engine.coins += 25;
+                  setRunStats((s) => ({ ...s, souls: engine.souls, coins: engine.coins }));
                   engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 🪙', COLORS.mustard, true));
                 } else if (d.type === 'chest') {
                   openChestSequence();
@@ -1696,6 +2069,10 @@ export default function App() {
           for (const txt of engine.texts) txt.update(dt);
           engine.texts = engine.texts.filter((t) => t.life > 0);
         }
+      }      // Doznívání Farního požehnání
+      if (engineRef.current.blessing) {
+        engineRef.current.blessing.t += dt;
+        if (engineRef.current.blessing.t >= engineRef.current.blessing.dur) engineRef.current.blessing = null;
       }
 
       // Update lightning atmospheric timers
@@ -1718,7 +2095,7 @@ export default function App() {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
-        const phase = runStats.dayPhase;
+        const phase = getCurrentDayPhase(engine.gameTime);
 
         const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
         const isWinter = curLvl.season === 'winter';
@@ -1747,6 +2124,15 @@ export default function App() {
         } else if (isWinter) {
           ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
           ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+        }
+
+        // Ambient flour storm haze from Mlynář
+        if (engine.flourStormTimer > 0) {
+          ctx.save();
+          const alpha = Math.min(0.35, engine.flourStormTimer * 0.08);
+          ctx.fillStyle = `rgba(255, 252, 240, ${alpha})`;
+          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          ctx.restore();
         }
 
         // Draw Decor
@@ -1842,6 +2228,10 @@ export default function App() {
             ctx.arc(0, 0, 7, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+          } else if (p.visual === 'millstone') {
+            Lada.drawMillstone(ctx, 0, 0, p.radius || 20, p.rotation || 0);
+          } else if (p.visual === 'water_wave') {
+            Lada.drawWaterWave(ctx, 0, 0, p.radius || 26, 0, engine.uiTime);
           } else {
             Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
             ctx.beginPath();
@@ -1907,6 +2297,9 @@ export default function App() {
           ctx.arc(ls.x, ls.y, 65, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
+        }        // Farní požehnání: zvon a sloup svatého světla
+        if (engine.blessing) {
+          Lada.drawBlessingFx(ctx, engine.blessing.x, engine.blessing.y, engine.blessing.t, engine.blessing.dur);
         }
 
         ctx.restore();
@@ -1915,6 +2308,9 @@ export default function App() {
         if (engine.lightningFlash > 0) {
           ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(0.65, engine.lightningFlash * 1.5)})`;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }        // Babička a Barunka: scénka se zastaveným časem
+        if (engine.cutscene) {
+          Lada.drawGrannyScene(ctx, canvas.width, canvas.height, engine.cutscene.t, engine.cutscene.dur, engine.cutscene.applyAt);
         }
 
         // Weather overlay per level: snowflakes, autumn leaves, or graveyard mist
@@ -1993,8 +2389,8 @@ export default function App() {
       chillTimer: 0,
       dead: false,
       isDefeated: false,
-      panicked: false,
-      panicTimer: 0,
+      panicked: false,      panicTimer: 0,
+      calmTimer: 0,
       animTime: Math.random() * 10,
 
       update(dt: number, player: any) {
@@ -2023,6 +2419,9 @@ export default function App() {
           spd *= 0.45;
           this.chillTimer -= dt;
           if (this.chillTimer <= 0) this.chilled = false;
+        }        if (this.calmTimer > 0) {
+          spd *= 0.3;
+          this.calmTimer -= dt;
         }
 
         const ang = this.panicked
@@ -2056,8 +2455,55 @@ export default function App() {
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
           this.panicked = true;
+          const eng = engineRef.current;
+          const pt = ENEMY_POINTS[this.id] ?? 10;
+          eng.pointsChest += pt;
+          eng.pointsPotion += pt;
+          eng.pointsBread += pt;
+          eng.pointsCoin += pt;
+          if (this.category === 'water') eng.pointsSoul += pt;
+          let ox = 0;
+          if (eng.pointsChest >= DROP_THRESHOLDS.chest) {
+            eng.pointsChest -= DROP_THRESHOLDS.chest;
+            eng.drops.push({ type: 'chest', x: this.x + (ox += 5), y: this.y, radius: 25, time: 0 });
+            eng.texts.push(new DamageText(this.x, this.y - 50, 'POKLAD (3500 BODŮ)!', COLORS.mustard, true));
+            sound.chest();
+          }
+          if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
+            eng.pointsPotion -= DROP_THRESHOLDS.potion;
+            eng.drops.push({ type: 'potion', x: this.x + (ox += 5), y: this.y, radius: 12, time: 0 });
+          }
+          if (eng.pointsBread >= DROP_THRESHOLDS.bread) {
+            eng.pointsBread -= DROP_THRESHOLDS.bread;
+            eng.drops.push({ type: 'bread', x: this.x + (ox += 5), y: this.y, radius: 10, time: 0 });
+          }
+          if (eng.pointsSoul >= DROP_THRESHOLDS.soul) {
+            eng.pointsSoul -= DROP_THRESHOLDS.soul;
+            eng.drops.push({ type: 'soul', x: this.x + (ox += 5), y: this.y, radius: 14, time: 0 });
+          }
+          if (eng.pointsCoin >= DROP_THRESHOLDS.coin) {
+            const v = Math.floor(eng.pointsCoin / DROP_THRESHOLDS.coin);
+            eng.pointsCoin %= DROP_THRESHOLDS.coin;
+            if (v <= 15) {
+              eng.drops.push({ type: 'coin', value: v, x: this.x + (ox += 5), y: this.y, radius: v >= 5 ? 12 : 8, time: Math.random() * 5 });
+            } else {
+              const maxCoins = Math.min(6, v);
+              const baseVal = Math.floor(v / maxCoins);
+              const rem = v % maxCoins;
+              for (let i = 0; i < maxCoins; i++) {
+                eng.drops.push({
+                  type: 'coin',
+                  value: baseVal + (i === 0 ? rem : 0),
+                  x: this.x + (Math.random() * 60 - 30),
+                  y: this.y + (Math.random() * 60 - 30),
+                  radius: 12,
+                  time: Math.random() * 5,
+                });
+              }
+            }
+          }
 
-          // Bestiary tracking & progressive sequential hunter unlocks
+// Bestiary tracking & progressive sequential hunter unlocks
           const curMeta = metaRef.current;
           const updatedKills = { ...curMeta.bestiaryKills, [this.id]: (curMeta.bestiaryKills[this.id] || 0) + 1 };
           let nextMeta: MetaProgression = { ...curMeta, bestiaryKills: updatedKills };
@@ -2083,7 +2529,7 @@ export default function App() {
               const nextHunterProg = getHunterProgress(activeHunterId, nextMeta);
               if (nextHunterProg.isUnlocked) {
                 const newlyUnlockedHunters = {
-                  ...(curMeta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false }),
+                  ...(curMeta.unlockedHunters || { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false }),
                   [activeHunterId]: true,
                 };
                 nextMeta = { ...nextMeta, unlockedHunters: newlyUnlockedHunters };
@@ -2187,7 +2633,8 @@ export default function App() {
 
           saveMeta(nextMeta);
 
-          setRunStats((s) => ({ ...s, kills: s.kills + 1 }));
+          engineRef.current.kills += 1;
+          setRunStats((s) => ({ ...s, kills: engineRef.current.kills }));
 
           const isBossMonster = this.isBoss || this.category === 'bosses';
 
@@ -2195,57 +2642,12 @@ export default function App() {
             setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
             sound.victory();
             sound.cheer();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} POKOŘEN! POKLAD!`, COLORS.mustard, true));
-            // Spawn treasure chest and golden coins after boss kill
-            engineRef.current.drops.push({ type: 'chest', x: this.x, y: this.y, radius: 25, time: 0 });
-            for (let i = 0; i < 6; i++) {
-              engineRef.current.drops.push({
-                type: 'coin',
-                value: 15, // Golden Tolars
-                x: this.x + (Math.random() - 0.5) * 60,
-                y: this.y + (Math.random() - 0.5) * 60,
-                radius: 12,
-                time: Math.random() * 5,
-              });
-            }
-
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} POKOŘEN!`, COLORS.mustard, true));
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId || 1;
             const curLvl = GAME_LEVELS[curLvlId];
-            if (this.id === curLvl.finalBoss.id || this.isBoss) {
+            if (this.isBoss && (this.id === curLvl.finalBoss.id || this.id === 'mlynar' || this.id === 'bezhlavy_rytir' || this.id === 'drak' || this.id === 'obr' || this.id === 'cert')) {
               triggerLevelVictory(curLvlId, 'boss');
-            }
-          } else {
-            // Drop coins & items, treasure chest drops after 100 enemies chased away
-            engineRef.current.chestCounter++;
-            if (engineRef.current.chestCounter >= 100) {
-              engineRef.current.chestCounter = 0;
-              engineRef.current.drops.push({ type: 'chest', x: this.x, y: this.y, radius: 25, time: 0 });
-              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'POKLAD (100 ZAHNANÝCH)!', COLORS.mustard, true));
-              sound.chest();
-            }
-
-            // Coin drop
-            engineRef.current.drops.push({
-              type: 'coin',
-              value: this.coinValue || 1,
-              x: this.x,
-              y: this.y,
-              radius: 8,
-              time: Math.random() * 5,
-            });
-
-            // Rare healing drop (Potion or Bread)
-            const roll = Math.random();
-            if (roll < 0.04) {
-              engineRef.current.drops.push({ type: 'potion', x: this.x + 10, y: this.y, radius: 12, time: 0 });
-            } else if (roll < 0.09) {
-              engineRef.current.drops.push({ type: 'bread', x: this.x + 10, y: this.y, radius: 10, time: 0 });
-            }
-
-            // Hastrman drops soul jars
-            if (this.category === 'water' && Math.random() < 0.65) {
-              engineRef.current.drops.push({ type: 'soul', x: this.x - 12, y: this.y, radius: 14, time: 0 });
             }
           }
         }
@@ -2259,16 +2661,19 @@ export default function App() {
       chill(duration = 3.5) {
         this.chilled = true;
         this.chillTimer = duration;
-      },
-
-      draw(ctx: CanvasRenderingContext2D) {
+      },      draw(ctx: CanvasRenderingContext2D) {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
+        if (this.calmTimer > 0 && !this.isDefeated) {
+          Lada.drawHeart(ctx, this.x, this.y - this.radius - 22 - Math.sin(this.animTime * 4) * 3, 8, '#F4A6BF');
+        }
         if (this.id === 'cert') {
           Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, this.panicked, this.isBoss);
         } else if (this.id === 'hejkal') {
           Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
         } else if (this.id === 'obr') {
           Lada.drawObr(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+        } else if (this.id === 'mlynar') {
+          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, this.vx, this.panicked, this.hp <= this.maxHp * 0.5);
         } else if (this.id === 'meluzina') {
           Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
         } else if (this.id === 'polednice') {
@@ -2731,7 +3136,7 @@ export default function App() {
             <div className="level-select-section">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                 <h3 style={{ margin: 0, fontSize: '1.38rem', color: '#111111' }}>
-                  🗺️ Výprava: Úroveň {selectedLevelId} ze 3
+                  🗺️ Výprava: Úroveň {selectedLevelId} ze 6
                 </h3>
                 <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#3D2210' }}>
                   Každá úroveň má odlišné nepřátele, ladovské prostředí a unikátního velkého bosse
@@ -2739,15 +3144,18 @@ export default function App() {
               </div>
 
               <div className="level-grid">
-                {([1, 2, 3] as GameLevelId[]).map((lvlId) => {
-                  const prog = lvlId === 1 ? level1Prog : lvlId === 2 ? level2Prog : level3Prog;
+                {([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
+                  const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
                   const isUnlocked = prog.isUnlocked;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
                     (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
                     (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
-                    (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1);
+                    (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||
+                    (lvlId === 4 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
+                    (lvlId === 5 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
+                    (lvlId === 6 && (meta.bestiaryKills?.drak || 0) >= 1);
 
                   return (
                     <div
@@ -2983,6 +3391,12 @@ export default function App() {
 
               {/* Ponocný (Progressive unlock) */}
               {renderHunterSelectCard(watchmanProg, watchmanRef)}
+
+              {/* Pobožný kostelník (Progressive unlock) */}
+              {renderHunterSelectCard(sextonProg, sextonRef)}
+
+              {/* Babička a Barunka (Progressive unlock) */}
+              {renderHunterSelectCard(grannyProg, grannyRef)}
             </div>
 
             <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -3229,13 +3643,19 @@ export default function App() {
             <span>Osvobozených dušiček:</span>
             <span className="tally-number">{tallyCounters.souls}</span>
           </div>
+          {tallyCounters.chasniks > 0 && (
+            <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
+              <span>Zachráněných chasníků:</span>
+              <span className="tally-number">{tallyCounters.chasniks} 🌾</span>
+            </div>
+          )}
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
             <span>Doba přežití:</span>
             <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
           </div>
 
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
-            {tallyCounters.isVictory && tallyCounters.levelId < 3 && (
+            {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
               <button
                 className="lada-btn"
                 style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}
@@ -3245,7 +3665,7 @@ export default function App() {
                     ...meta,
                     krejcary: meta.krejcary + tallyCounters.coins,
                     totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
-                    totalChasnikSaved: (meta.totalChasnikSaved || 0) + runStats.chasniks,
+                    totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
                     selectedLevel: nextId,
                   });
                   setSelectedLevelId(nextId);
@@ -3264,7 +3684,7 @@ export default function App() {
                   ...meta,
                   krejcary: meta.krejcary + tallyCounters.coins,
                   totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
-                  totalChasnikSaved: (meta.totalChasnikSaved || 0) + runStats.chasniks,
+                  totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
                 });
                 setGameState('tavern');
               }}

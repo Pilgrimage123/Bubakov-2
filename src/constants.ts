@@ -92,3 +92,24 @@ export function getCurrentDayPhase(seconds: number): DayPhase {
   }
   return DAY_PHASES[0];
 }
+
+// -------------------------------------------------------------
+// BODOVÝ SYSTÉM DROPŮ
+// Každý zahnaný nepřítel přinese body. Body plní samostatná počítadla a jakmile
+// počítadlo překročí práh, padne odpovídající předmět (přebytek se přenáší dál).
+// -------------------------------------------------------------
+export const ENEMY_POINTS: Record<string, number> = {
+  zaba: 10, mysak: 14, rarach: 18, sotek: 20, plivnik: 24, zmrzlik: 25, blatouch: 30, skodnik: 30,
+  bludicka: 48, vodnicek: 50, vanicka: 50, skeleton: 52, mrazik: 52, pisar: 63, hrobnik: 69,
+  skeleton_scythe: 71, meluzina: 85, divozenka: 87, umrlec: 90, certik: 100, hastrman: 110,
+  topivec: 128, ohnivy_muz: 142, stodolnik: 145, cerny_pes: 164, severak: 165, klekanice: 179,
+  drevorubec: 182, bubak: 211, polednice: 236, drab: 261, hromotluk: 330, cert: 1540,
+  hejkal: 2760, obr: 4600,
+  zbojnik: 135, jiskrivec: 95, bila_pani: 185, zbrojnos: 290, snehulak: 220, nocni_mura: 110,
+  ohnivy_pes: 175, mlynar: 5500, bezhlavy_rytir: 6800, drak: 9900,
+};
+
+export const DROP_THRESHOLDS = { chest: 3500, potion: 450, bread: 250, soul: 120, coin: 20 };
+
+// Načasování scénky Babičky a Barunky (v sekundách): celková délka a okamžik, kdy se rozlije aura laskavosti
+export const GRANNY_CUTSCENE = { duration: 5.6, applyAt: 3.2 };

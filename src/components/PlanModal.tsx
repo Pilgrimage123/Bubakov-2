@@ -28,7 +28,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
               sound.coin();
             }}
           >
-            🗺️ Plán kol změn (1.–11. kolo)
+            🗺️ Plán kol změn (1.–13. kolo)
           </button>
           <button
             className={`tab-btn ${activeTab === 'changelog' ? 'active' : ''}`}
@@ -43,6 +43,22 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
         {activeTab === 'plan' ? (
           <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            {/* 13. KOLO - PLÁN REVIZE 2.0: ÚROVNĚ 4–6, NOVÁ MONSTRA, ODMYKÁNÍ A BOSSÍ MECHANIKY */}
+            <div className="plan-card" style={{ border: '4px solid #92400E', color: '#000000', background: '#FFFBEB' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>13. KOLO ZMĚN – PLÁN REVIZE 2.0 (Úrovně 4–6, nová monstra, odemykání a bossí mechaniky)</h3>
+                <span className="plan-badge-done" style={{ background: '#92400E', color: '#FFFFFF' }}>Plánováno – NEIMPLEMENTOVÁNO</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li>🧩 <strong>1. Typy úrovní:</strong> rozšířit <code>GameLevelId</code> z 1–3 na 1–6.</li>
+                <li>🎯 <strong>2. Body:</strong> doplnit <code>ENEMY_POINTS</code> pro Zbojníka 135, Jiskřivce 95, Bílou paní 185, Zbrojnoše 290, Sněhuláka 220, Noční můru 110, Mlynáře 5500, Bezhlavého rytíře 6800 a Draka 9900.</li>
+                <li>👹 <strong>3. Bestiář:</strong> přidat Zbojníka, Jiskřivce, Mlynáře, Ohnivého psa, Bílou paní, Zbrojnoše, Bezhlavého rytíře, Sněhuláka, Noční můru a Draka včetně statistik, renderů, slabin, silných stránek, lore a nebezpečnosti.</li>
+                <li>🗺️ <strong>4. Úrovně 4–6:</strong> Staré hamry a Čertův mlýn; Pustá Hláska a Zlenické podhradí; Dračí sluj pod Melechovskou skálou; spawn pooly a mini/mid/final bossové.</li>
+                <li>🔐 <strong>5. Odemykání:</strong> rozšířit <code>LEVEL_ORDER</code> na [1, 2, 3, 4, 5, 6] a doplnit závislosti, metadata a milníky pro úrovně 4–6.</li>
+                <li>⚙️ <strong>6. Herní smyčka:</strong> rozšířit navigaci a vítěznou logiku; připravit stav enginu pro povodňovou vlnu Mlynáře, moučné mraky, odraženou hlavu Bezhlavého rytíře, padající rampouchy a mechaniku Tříhlavého líného Draka.</li>
+              </ul>
+            </div>
+
             {/* 12. KOLO - 100% KOMPLETNÍ OFFLINE HRA V TXT I HTML A PLNÁ UPRAVITELNOST PRO CLAUDE / AI */}
             <div className="plan-card" style={{ border: '4px solid #1D4ED8', color: '#000000', background: '#EFF6FF' }}>
               <div className="plan-header">

@@ -1,7 +1,7 @@
 export type Season = 'autumn' | 'winter';
-export type GameLevelId = 1 | 2 | 3;
+export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 
-export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman';
+export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
 export type WeaponDamageType = 'food' | 'physical' | 'nature' | 'ice' | 'holy' | 'fire' | 'magic';
 

@@ -1,11 +1,11 @@
-export type GameLevelId = 1 | 2 | 3;
+export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface GameLevelDef {
   id: GameLevelId;
   name: string;
   shortTitle: string;
   subtitle: string;
-  theme: 'autumn_village' | 'autumn_graveyard' | 'winter_frost';
+  theme: 'autumn_village' | 'autumn_graveyard' | 'winter_frost' | 'mill_forge' | 'ruined_castle' | 'dragon_cave';
   season: 'autumn' | 'winter';
   icon: string;
   badge: string;
@@ -63,6 +63,11 @@ export interface GameLevelDef {
     icon: string;
     role: string;
   }>;
+  bossMechanic?: {
+    label: string;
+    description: string;
+    cadenceSeconds: number;
+  };
 }
 
 export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
@@ -91,7 +96,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '☀️ Polednice se srpem',
       warning: '☀️ POZOR: PŘICHÁZÍ POLEDNICE SE SRPEM! ☀️',
       time: 35,
-      kills: 22,
+      kills: 60,
       multiplier: 1.15,
     },
     midBoss: {
@@ -99,7 +104,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '💧 Hastrman z Brčálníku',
       warning: '💧 POZOR: Z HLUBIN VYSTUPUJE HASTRMAN! 💧',
       time: 85,
-      kills: 50,
+      kills: 140,
       multiplier: 1.35,
     },
     finalBoss: {
@@ -107,7 +112,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '👹 Pekelný Čert s vidlemi',
       warning: '⚠️ PŘICHÁZÍ ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️',
       time: 150,
-      kills: 75,
+      kills: 260,
       multiplier: 1.6,
     },
 
@@ -153,7 +158,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '🔔 Večerní Klekánice',
       warning: '🔔 POZOR: ZVONÍ KLEKÁNÍ A PŘICHÁZÍ KLEKÁNICE! 🔔',
       time: 40,
-      kills: 25,
+      kills: 70,
       multiplier: 1.25,
     },
     midBoss: {
@@ -161,7 +166,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '⛓️ Pekelný dráb s karabáčem',
       warning: '⛓️ POZOR: PŘICHÁZÍ PEKELNÝ DRÁB S ŘETĚZY! ⛓️',
       time: 90,
-      kills: 55,
+      kills: 160,
       multiplier: 1.45,
     },
     finalBoss: {
@@ -169,7 +174,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '🌲 Půlnoční Hejkal z hvozdů',
       warning: '🌲 PŘICHÁZÍ ŠÉF ÚROVNĚ: PŮLNOČNÍ HEJKAL! 🌲',
       time: 155,
-      kills: 85,
+      kills: 280,
       multiplier: 1.75,
     },
 
@@ -215,7 +220,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '💨 Větrná Meluzína z komína',
       warning: '💨 POZOR: VÁNICE PŘINÁŠÍ DIVOKOU MELUZÍNU! 💨',
       time: 40,
-      kills: 28,
+      kills: 75,
       multiplier: 1.35,
     },
     midBoss: {
@@ -223,7 +228,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '🔥 Ohnivý rarach z pece',
       warning: '🔥 POZOR: Z PECE VYLETĚL ŽHOUCÍ OHNIVÝ RARACH! 🔥',
       time: 90,
-      kills: 60,
+      kills: 170,
       multiplier: 1.5,
     },
     finalBoss: {
@@ -231,7 +236,7 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       name: '🗿 Skalní obr ze Sázavy',
       warning: '🗿 PŘICHÁZÍ LEGENDÁRNÍ BOSS: SKALNÍ OBR ZE SÁZAVY! 🗿',
       time: 160,
-      kills: 95,
+      kills: 300,
       multiplier: 1.9,
     },
 
@@ -251,6 +256,30 @@ export const GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
       { id: 'obr', name: 'Skalní obr', icon: '🗿', role: 'Legendární boss' },
     ],
   },
+  4: {
+    id: 4, name: '4. Staré hamry a Čertův mlýn', shortTitle: 'Hamry a Čertův mlýn',
+    subtitle: 'Žhavé výhně, moučný prach a zrádná povodeň', theme: 'mill_forge', season: 'autumn', icon: '⚙️', badge: '4. Úroveň',
+    description: 'Pod zčernalými hamry se otáčí prokletý mlýn. Jiskry létají z kovadlin a mlynářova voda bere vše, co jí stojí v cestě.',
+    lore: 'Zastavte zbojníky, jiskřivce a mlynářovy služebníky dřív, než se Čertův mlýn roztočí naplno.',
+    unlockRequirementText: 'Odemkne se po poražení Skalního obra ve 3. úrovni', skyColor: '#8B5E3C', nightSkyColor: '#21150F', groundColor: '#514237', ambientTint: 'rgba(255, 125, 30, 0.16)', weatherEffect: 'fog', decorTypes: ['cottage', 'tree', 'will_o_wisp'],
+    miniBoss: { id: 'zbojnik', name: '🗡️ Zbojník z hamrů', warning: '🗡️ ZE SOUTĚSKY VYRÁŽÍ ZBOJNÍK!', time: 42, kills: 80, multiplier: 1.45 },
+    midBoss: { id: 'ohnivy_pes', name: '🔥 Ohnivý pes z výhně', warning: '🔥 VÝHEŇ VYPUSTILA OHNIVÉHO PSA!', time: 95, kills: 180, multiplier: 1.65 },
+    finalBoss: { id: 'mlynar', name: '🌊 Prokletý Mlynář', warning: '🌊 ŠÉF ÚROVNĚ: MLYNÁŘ OTEVÍRÁ STAVIDLA!', time: 165, kills: 320, multiplier: 2.05 },
+    spawnPools: { noon: ['zbojnik', 'jiskrivec', 'rarach', 'sotek'], afternoon: ['zbojnik', 'jiskrivec', 'ohnivy_pes', 'certik'], dusk: ['ohnivy_pes', 'drab', 'zbojnik'], night: ['ohnivy_pes', 'jiskrivec', 'certik'], midnight: ['ohnivy_pes', 'zbojnik', 'drab'] },
+    keyEnemies: [{ id: 'zbojnik', name: 'Zbojník', icon: '🗡️', role: 'Hamerský lapka' }, { id: 'jiskrivec', name: 'Jiskřivec', icon: '✨', role: 'Žhavý skřítek' }, { id: 'ohnivy_pes', name: 'Ohnivý pes', icon: '🔥', role: 'Strážce výhně' }, { id: 'mlynar', name: 'Mlynář', icon: '🌊', role: 'Hlavní boss' }],
+    bossMechanic: { label: 'Povodňová vlna a moučný mrak', description: 'Pravidelné vlny tlačí lovce; moučný mrak na chvíli zhoršuje výhled.', cadenceSeconds: 14 },
+  },
+  5: {
+    id: 5, name: '5. Pustá Hláska a Zlenické podhradí', shortTitle: 'Hláska a podhradí', subtitle: 'Bílé paní, zbrojnoši a bezhlavý jezdec', theme: 'ruined_castle', season: 'autumn', icon: '🏰', badge: '5. Úroveň',
+    description: 'Rozbitými zdmi podhradí táhne ledový vítr. Přízraky hlídají cestu k věži, kde čeká rytíř bez hlavy.', lore: 'Přelstěte hradní stráž a vyhněte se odražené hlavě, která se vrací k pánovi jako střela.', unlockRequirementText: 'Odemkne se po poražení Prokletého Mlynáře ve 4. úrovni', skyColor: '#77808C', nightSkyColor: '#121520', groundColor: '#55545B', ambientTint: 'rgba(191, 219, 254, 0.15)', weatherEffect: 'fog', decorTypes: ['tombstone', 'cross', 'tree'],
+    miniBoss: { id: 'bila_pani', name: '👻 Bílá paní z věže', warning: '👻 VĚŽ OPOUŠTÍ BÍLÁ PANÍ!', time: 45, kills: 90, multiplier: 1.6 }, midBoss: { id: 'zbrojnos', name: '🛡️ Zbrojnoš z podhradí', warning: '🛡️ BRÁNU DRŽÍ TĚŽKÝ ZBROJNOŠ!', time: 100, kills: 200, multiplier: 1.8 }, finalBoss: { id: 'bezhlavy_rytir', name: '🗡️ Bezhlavý rytíř', warning: '🗡️ ŠÉF ÚROVNĚ: BEZHLAVÝ RYTÍŘ VYJÍŽDÍ!', time: 170, kills: 340, multiplier: 2.2 },
+    spawnPools: { noon: ['bila_pani', 'zbrojnos', 'skeleton'], afternoon: ['bila_pani', 'zbrojnos', 'cerny_pes'], dusk: ['zbrojnos', 'skeleton', 'skeleton_scythe'], night: ['bila_pani', 'zbrojnos', 'bubak'], midnight: ['zbrojnos', 'cerny_pes', 'drab'] }, keyEnemies: [{ id: 'bila_pani', name: 'Bílá paní', icon: '👻', role: 'Hradní přízrak' }, { id: 'zbrojnos', name: 'Zbrojnoš', icon: '🛡️', role: 'Těžká stráž' }, { id: 'bezhlavy_rytir', name: 'Bezhlavý rytíř', icon: '🗡️', role: 'Hlavní boss' }], bossMechanic: { label: 'Odražená hlava', description: 'Rytířův odražený útok se vrací po bojišti a nutí měnit směr.', cadenceSeconds: 12 },
+  },
+  6: {
+    id: 6, name: '6. Dračí sluj pod Melechovskou skálou', shortTitle: 'Dračí sluj', subtitle: 'Rampouchy, noční můry a líný tříhlavý drak', theme: 'dragon_cave', season: 'winter', icon: '🐉', badge: '6. Úroveň', description: 'V nejhlubší sluji pod skálou se střídá ledový dech s ohněm. Každý krok může spustit rampouch.', lore: 'Poslední výprava vede k tříhlavému drakovi: jedna hlava spí, druhá chrlí oheň a třetí hlídá kořist.', unlockRequirementText: 'Odemkne se po poražení Bezhlavého rytíře v 5. úrovni', skyColor: '#334155', nightSkyColor: '#080B15', groundColor: '#25313D', ambientTint: 'rgba(96, 165, 250, 0.18)', weatherEffect: 'snow', decorTypes: ['tree', 'cross', 'snowman'],
+    miniBoss: { id: 'snehulak', name: '☃️ Prokletý Sněhulák', warning: '☃️ LEDOVÝ SNĚHULÁK SE KUTÁLÍ ZE SLUJE!', time: 48, kills: 100, multiplier: 1.75 }, midBoss: { id: 'nocni_mura', name: '🌑 Noční můra', warning: '🌑 TEMNOTOU SE ŽENE NOČNÍ MŮRA!', time: 105, kills: 220, multiplier: 1.95 }, finalBoss: { id: 'drak', name: '🐉 Tříhlavý líný Drak', warning: '🐉 ŠÉF ÚROVNĚ: PROBUDIL SE TŘÍHLAVÝ DRAK!', time: 180, kills: 360, multiplier: 2.45 },
+    spawnPools: { noon: ['snehulak', 'zmrzlik', 'severak'], afternoon: ['snehulak', 'nocni_mura', 'mrazik'], dusk: ['nocni_mura', 'snehulak', 'ohnivy_pes'], night: ['nocni_mura', 'snehulak', 'severak'], midnight: ['snehulak', 'nocni_mura', 'mrazik'] }, keyEnemies: [{ id: 'snehulak', name: 'Sněhulák', icon: '☃️', role: 'Ledový bijec' }, { id: 'nocni_mura', name: 'Noční můra', icon: '🌑', role: 'Stínový lovec' }, { id: 'drak', name: 'Drak', icon: '🐉', role: 'Hlavní boss' }], bossMechanic: { label: 'Rampouchy a tři dračí hlavy', description: 'Rampouchy padají ze stropu; drak střídá spící, ohnivou a hlídající hlavu.', cadenceSeconds: 10 },
+  },
 };
 
 export function isLevelUnlocked(levelId: GameLevelId, highestUnlocked: number, bestiaryKills?: Record<string, number>): boolean {
@@ -260,6 +289,9 @@ export function isLevelUnlocked(levelId: GameLevelId, highestUnlocked: number, b
   // Backward compatibility check with existing bestiary kills
   if (levelId === 2 && (bestiaryKills?.cert || 0) >= 1) return true;
   if (levelId === 3 && (bestiaryKills?.hejkal || 0) >= 1) return true;
+  if (levelId === 4 && (bestiaryKills?.obr || 0) >= 1) return true;
+  if (levelId === 5 && (bestiaryKills?.mlynar || 0) >= 1) return true;
+  if (levelId === 6 && (bestiaryKills?.bezhlavy_rytir || 0) >= 1) return true;
 
   return false;
 }
