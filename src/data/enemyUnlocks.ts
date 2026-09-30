@@ -168,7 +168,7 @@ export function getEnemyProgress(enemyId: string, kills: number): EnemyProgress 
   const spoiledStats = {
     hp: tier >= 3 ? `${enemy.hp} HP` : tier >= 1 ? `cca ${Math.round(enemy.hp / 10) * 10} HP` : '??? HP',
     danger: tier >= 2 ? enemy.danger : tier >= 1 ? 'Nebezpečný' : '???',
-    coinValue: tier >= 2 ? `${enemy.coinValue} 🪙` : '??? 🪙',
+    coinValue: tier >= 2 ? `${enemy.coinValue} kr.` : '??? kr.',
     speed: tier >= 3 ? `${enemy.speed}` : '???',
   };
 

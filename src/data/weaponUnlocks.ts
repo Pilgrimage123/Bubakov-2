@@ -99,12 +99,12 @@ export const WEAPON_UNLOCKS: Record<string, WeaponUnlockDef> = {
   buns: {
     id: 'buns',
     realName: 'Povidlové buchty',
-    realIcon: '🥟',
+    realIcon: 'czech_buchta',
     realType: 'food',
     defaultUnlocked: true,
     challengeTitle: 'Výchozí venkovská výzbroj',
-    challengeShortDesc: 'Připraveno v ranči od samého začátku.',
-    challengeLongDesc: 'Tradiční pečené buchty se švestkovým povidlem. Dostupné pro každého lovce bez omezení.',
+    challengeShortDesc: 'Čerstvě upečené buchty sypané moučkovým cukrem v ranči od začátku.',
+    challengeLongDesc: 'Tradiční pečené kynuté buchty sypané moučkovým cukrem a plněné švestkovým povidlem. Dostupné pro každého lovce bez omezení.',
     targetEnemies: [],
     maxCount: 0,
     milestones: [
@@ -112,34 +112,61 @@ export const WEAPON_UNLOCKS: Record<string, WeaponUnlockDef> = {
         minPercent: 0,
         tierLevel: 4,
         spoiledName: 'Povidlové buchty',
-        spoiledTitle: 'Sladká pochoutka z pece',
-        spoiledDesc: 'Vláčné české buchty plněné švestkovým povidlem. Způsobují, že obyčejní bubáci s chutí zpanikaří a utíkají.',
+        spoiledTitle: 'Zlatavé buchty sypané moučkovým cukrem',
+        spoiledDesc: 'Tradiční české kynuté buchty pečené v pekáči, bohatě poprášené moučkovým cukrem a plněné švestkovým povidlem. Obyčejní bubáci po nich mlsně lapají a v panice ustupují.',
         spoiledStatsHint: 'Poškození: 20 • Typ: Jídlo • Střely se rozptylem',
         clueTag: '✅ Výchozí zbraň',
       },
     ],
   },
 
-  // EXEMPT: Rákoska (always unlocked)
+  // EXEMPT: Vrbový prut (always unlocked)
   cane: {
     id: 'cane',
-    realName: 'Rákoska',
-    realIcon: '🦯',
+    realName: 'Vrbový prut',
+    realIcon: '🎋',
     realType: 'physical',
     defaultUnlocked: true,
     challengeTitle: 'Výchozí venkovská výzbroj',
-    challengeShortDesc: 'Ohebný vrbový proutek dostupný od začátku.',
-    challengeLongDesc: 'Rychlý sečný proutek z vrby u potoka. Základní výbava každého hrusického poutníka.',
+    challengeShortDesc: 'Ohebný vrbový prut dostupný od začátku (lze namočit na Mokrý prut).',
+    challengeLongDesc: 'Rychlý sečný prut z vrby u rybníčku. Základní výbava každého hrusického poutníka, kterou lze proměnit na Mokrý prut.',
     targetEnemies: [],
     maxCount: 0,
     milestones: [
       {
         minPercent: 0,
         tierLevel: 4,
-        spoiledName: 'Rákoska',
-        spoiledTitle: 'Ohebný vrbový proutek',
-        spoiledDesc: 'Ohebný proutek ze vrbového rákosí. Rychlý sečný oblouk, který odhání dotěrné skřítky a zloděje.',
-        spoiledStatsHint: 'Poškození: 16 • Rychlý sečný oblouk před hráčem',
+        spoiledName: 'Vrbový prut (Mokrý prut)',
+        spoiledTitle: 'Ohebný vrbový prut od potoka',
+        spoiledDesc: 'Ohebný vrbový prut uříznutý u potoka. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S rybniční vodou získáte Mokrý prut.',
+        spoiledStatsHint: 'Poškození: 16 • Rychlý sečný oblouk • Vylepšení na Mokrý prut',
+        clueTag: '✅ Výchozí zbraň',
+      },
+    ],
+  },
+
+  // EXEMPT: Hromnička (always unlocked)
+  hromnicka: {
+    id: 'hromnicka',
+    realName: 'Hromnička',
+    realIcon: '🕯️',
+    realType: 'holy',
+    defaultUnlocked: true,
+    challengeTitle: 'Výchozí posvěcená výzbroj',
+    challengeShortDesc: 'Posvěcená hromniční svíce chránící před bouřemi a nočními běsy.',
+    challengeLongDesc:
+      'Posvěcená vosková svíce z kostelíka sv. Jiří. Vytváří plápolající posvátnou auru mírného dosahu, která odtlačuje běsy a každé 2 s je zraňuje svatým světlem.',
+    targetEnemies: [],
+    maxCount: 0,
+    milestones: [
+      {
+        minPercent: 0,
+        tierLevel: 4,
+        spoiledName: 'Hromnička',
+        spoiledTitle: 'Posvěcená svíce proti bouřím a běsům',
+        spoiledDesc:
+          'Tradiční hromniční svíce posvěcená v kostelíku. Její plápolající světlo tvoří auru mírného dosahu, mírně odhání nepřátele a každé 2 s uděluje posvátné zranění (odolatelné Strachem). Nemrtví a pekelníci mají k němu silně sníženou odolnost a utrží podstatně vyšší zranění.',
+        spoiledStatsHint: 'Poškození: 10 každé 2 s • Typ: Svaté • Odtlačující plápolající aura mírného dosahu',
         clueTag: '✅ Výchozí zbraň',
       },
     ],

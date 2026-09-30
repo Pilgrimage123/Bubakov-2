@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="100%" height="100%">
+  <defs>
+    <!-- Warm drop shadow for coin -->
+    <radialGradient id="kcShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#26170E" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#26170E" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Outer coin bevel gradient -->
+    <linearGradient id="kcBevel" x1="15%" y1="15%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="35%" stop-color="#F59E0B" />
+      <stop offset="70%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#78350F" />
+    </linearGradient>
+
+    <!-- Inner coin face gradient -->
+    <linearGradient id="kcFace" x1="20%" y1="15%" x2="80%" y2="85%">
+      <stop offset="0%" stop-color="#FFFBEB" />
+      <stop offset="25%" stop-color="#FDE68A" />
+      <stop offset="60%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Embossed letter K gradient -->
+    <linearGradient id="kcLetter" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#78350F" />
+      <stop offset="100%" stop-color="#451A03" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <ellipse cx="18" cy="32" rx="14" ry="3.5" fill="url(#kcShadow)" />
+
+  <!-- Outer Rim / Coin Body -->
+  <circle
+    cx="18"
+    cy="17"
+    r="14"
+    fill="url(#kcBevel)"
+    stroke="#1C140D"
+    stroke-width="2.2"
+  />
+
+  <!-- Inner Recessed Coin Field -->
+  <circle
+    cx="18"
+    cy="17"
+    r="11.2"
+    fill="url(#kcFace)"
+    stroke="#92400E"
+    stroke-width="1.2"
+  />
+
+  <!-- Beaded milled ring (embossed decorative dots) -->
+  <circle
+    cx="18"
+    cy="17"
+    r="9.6"
+    fill="none"
+    stroke="#FDE68A"
+    stroke-width="0.9"
+    stroke-dasharray="1.2 1.6"
+    opacity="0.9"
+  />
+
+  <!-- Top gleam / shine reflection -->
+  <path
+    d="M 9 13 C 11 9, 16 7, 21 8 C 17 8.5, 12 11, 10 15 Z"
+    fill="#FFFFFF"
+    opacity="0.55"
+  />
+
+  <!-- Embossed Rustic Letter "K" (Krejcar) with drop shadow -->
+  <!-- Shadow of letter -->
+  <path
+    d="M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5"
+    fill="none"
+    stroke="#FEF08A"
+    stroke-width="2.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    transform="translate(0.6, 0.6)"
+  />
+  <!-- Main dark embossed letter -->
+  <path
+    d="M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5"
+    fill="none"
+    stroke="url(#kcLetter)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Small star gleam on rim -->
+  <circle cx="9.5" cy="10.5" r="1.2" fill="#FFFFFF" opacity="0.9" />
+</svg>

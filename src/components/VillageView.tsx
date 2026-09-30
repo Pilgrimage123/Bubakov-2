@@ -3,6 +3,7 @@ import { VILLAGE_BUILDINGS } from '../data/village';
 import { MetaProgression } from '../types';
 import { Lada } from '../render/ladaRenderer';
 import { sound } from '../audio';
+import { KrejcarIcon } from './KrejcarIcon';
 
 interface VillageViewProps {
   meta: MetaProgression;
@@ -68,12 +69,12 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
             color: '#111111',
           }}
         >
-          <span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             Hospodská pokladna:{' '}
             <strong style={{ color: '#78350F' }}>
               {meta.krejcary}
             </strong>{' '}
-            krejcarů 🪙
+            krejcarů <KrejcarIcon size={18} />
           </span>
           <span>
             🏺 Osvobozeno dušiček:{' '}
@@ -160,7 +161,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
           </div>
           <button
             className="lada-btn"
-            style={{ margin: 0 }}
+            style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             disabled={meta.krejcary < regenCost}
             onClick={() => {
               onUpgrade('regenLevel', regenCost);
@@ -168,7 +169,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onClo
               sound.levelUp();
             }}
           >
-            Koupit ({regenCost} 🪙)
+            Koupit ({regenCost} <KrejcarIcon size={16} />)
           </button>
         </div>
       </div>

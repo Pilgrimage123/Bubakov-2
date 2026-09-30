@@ -6,22 +6,22 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: 'buns',
     name: 'Povidlové buchty',
     type: 'food',
-    icon: '🥟',
+    icon: 'czech_buchta',
     baseDmg: 20,
     baseCd: 1.2,
     speed: 460,
-    desc: 'Vláčné české buchty plněné švestkovým povidlem. Způsobují, že obyčejní bubáci s chutí zpanikaří a utíkají.',
+    desc: 'Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 4 s zastaví a mlsají s poznámkou „Ňam, ňam“. Vícero buchet čas sčítá (odolnost dle Hladu).',
     fire: (player, level) => {
       const enemies = player.getLivingEnemies();
       if (enemies.length === 0) return false;
 
       // Smart targeting: pick closest non-immune
       let target = enemies[0];
-      let bestDist = player.distTo(target) + (target.foodResist || 0) * 400;
+      let bestDist = player.distTo(target) + (target.hunger ?? target.foodResist ?? 0) * 400;
 
       for (let i = 1; i < enemies.length; i++) {
         const e = enemies[i];
-        const d = player.distTo(e) + (e.foodResist || 0) * 400;
+        const d = player.distTo(e) + (e.hunger ?? e.foodResist ?? 0) * 400;
         if (d < bestDist) {
           bestDist = d;
           target = e;
@@ -45,6 +45,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
           radius: 12,
           type: 'food',
           visual: 'bun',
+          snackDuration: 4.0,
           life: 2.2,
         });
       }
@@ -54,12 +55,12 @@ export const WEAPONS: Record<string, WeaponDef> = {
 
   cane: {
     id: 'cane',
-    name: 'Rákoska',
+    name: 'Vrbový prut',
     type: 'physical',
-    icon: '🦯',
+    icon: '🎋',
     baseDmg: 16,
     baseCd: 0.8,
-    desc: 'Ohebný proutek ze vrbového rákosí. Rychlý sečný oblouk, který odhání dotěrné skřítky a zloděje.',
+    desc: 'Ohebný vrbový prut uříznutý u potoka. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.',
     fire: (player, level) => {
       const angle = Math.atan2(player.lastDy, player.lastDx);
       const reach = 85 + level * 12;
@@ -261,7 +262,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     baseDmg: 28,
     baseCd: 1.4,
     speed: 380,
-    desc: 'Velký kulatý koláč sypaný máslovou drobenkou. Po nárazu se odrazí k dalšímu lačnému bubákovi.',
+    desc: 'Velký kulatý koláč sypaný máslovou drobenkou. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).',
     fire: (player, level) => {
       const enemies = player.getLivingEnemies();
       if (enemies.length === 0) return false;
@@ -280,6 +281,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
         radius: 16,
         type: 'food',
         visual: 'kolac',
+        snackDuration: 4.0,
         bounces,
         life: 3.5,
       });
@@ -351,6 +353,23 @@ export const WEAPONS: Record<string, WeaponDef> = {
     },
   },
 
+  hromnicka: {
+    id: 'hromnicka',
+    name: 'Hromnička',
+    type: 'holy',
+    icon: '🕯️',
+    baseDmg: 10,
+    baseCd: 2.0,
+    desc: 'Posvěcená hromniční svíce z kostela. Plápolající záře mírného dosahu jemně odtlačuje nepřátele a každé 2 s způsobuje posvátné zranění (obojí ovlivněno odolností proti Strachu). Nemrtví a pekelníci mají k ní silně sníženou odolnost a utrží podstatně vyšší zranění.',
+    fire: (player, level) => {
+      const reach = 135 + level * 15;
+      const dmg = 10 + level * 3;
+      player.spawnHromnickaPulse(reach, dmg, level);
+      sound.candlePulse();
+      return true;
+    },
+  },
+
   holywater: {
     id: 'holywater',
     name: 'Kropenka se svěcenou vodou',
@@ -358,7 +377,7 @@ export const WEAPONS: Record<string, WeaponDef> = {
     icon: '✨',
     baseDmg: 30,
     baseCd: 1.5,
-    desc: 'Svěcená voda z kapličky svatého Jiří. Kropí široký vějíř kapek a způsobuje dvojnásobnou zkázu umrlcům a čertům.',
+    desc: 'Svěcená voda z kapličky svatého Jiří. Kropí široký vějíř kapek a způsobuje zkázu silám temna. Nemrtví a pekelníci mají proti ní silně sníženou odolnost vůči Strachu a utrží až dvojnásobné poškození.',
     fire: (player, level) => {
       const angle = Math.atan2(player.lastDy, player.lastDx);
       const count = 5 + level;

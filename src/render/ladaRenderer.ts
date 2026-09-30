@@ -45,6 +45,125 @@ export const Lada = {
     if (extra) extra(ctx, x1, y1, x2, y2, width);
   },
 
+  drawBentLimb(
+    ctx: CanvasRenderingContext2D,
+    x1: number,
+    y1: number,
+    kx: number,
+    ky: number,
+    x2: number,
+    y2: number,
+    color: string,
+    width: number,
+    extra?: (ctx: CanvasRenderingContext2D, x1: number, y1: number, kx: number, ky: number, x2: number, y2: number, width: number) => void
+  ) {
+    // Outer outline
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(kx, ky);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = width + 4;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Inner fill
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(kx, ky);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    if (extra) extra(ctx, x1, y1, kx, ky, x2, y2, width);
+  },
+
+  // Calculate lively multi-frame comic run cycle with the distinct high-knee lift & tuck frame
+  getRunLegCycle(phase: number, hipX: number, hipY: number, legLen: number) {
+    const p = ((phase % 1) + 1) % 1;
+    let kx = hipX;
+    let ky = hipY + legLen * 0.5;
+    let fx = hipX;
+    let fy = hipY + legLen;
+
+    if (p < 0.25) {
+      // Frame 1: Contact & Heel Plant forward
+      const t = p / 0.25;
+      kx = hipX + legLen * (0.35 - t * 0.15);
+      ky = hipY + legLen * (0.42 + t * 0.08);
+      fx = hipX + legLen * (0.68 - t * 0.25);
+      fy = hipY + legLen * (0.88 + t * 0.12);
+    } else if (p < 0.50) {
+      // Frame 2: Push-off & Drive backward
+      const t = (p - 0.25) / 0.25;
+      kx = hipX + legLen * (0.20 - t * 0.40);
+      ky = hipY + legLen * (0.50 - t * 0.05);
+      fx = hipX + legLen * (0.43 - t * 0.95);
+      fy = hipY + legLen * (1.00 - t * 0.18);
+    } else if (p < 0.75) {
+      // Frame 3: HIGH KNEE LIFT & TUCK (THE EXTRA RUNNING FRAME!)
+      const t = (p - 0.50) / 0.25;
+      kx = hipX + legLen * (-0.20 + t * 0.70);
+      ky = hipY + legLen * (0.45 - t * 0.24); // knee pulled high!
+      fx = hipX + legLen * (-0.52 + t * 0.55); // foot tucked up under hip/body!
+      fy = hipY + legLen * (0.82 - t * 0.35); // foot lifted off ground!
+    } else {
+      // Frame 4: Extension & Strike Re-reach
+      const t = (p - 0.75) / 0.25;
+      kx = hipX + legLen * (0.50 - t * 0.15);
+      ky = hipY + legLen * (0.21 + t * 0.21);
+      fx = hipX + legLen * (0.03 + t * 0.65);
+      fy = hipY + legLen * (0.47 + t * 0.41);
+    }
+
+    return { kx, ky, fx, fy };
+  },
+
+  // Comic panic sweat droplets flying backward in terror
+  drawPanicDrops(ctx: CanvasRenderingContext2D, headX: number, headY: number, time: number) {
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const dropT = (time * 4.2 + i * 0.33) % 1;
+      const dx = headX - 12 - dropT * 22 - i * 4;
+      const dy = headY - 4 - Math.sin(dropT * Math.PI) * 12 + i * 5;
+      const r = (1 - dropT * 0.45) * 2.8;
+      if (dropT > 0.08 && dropT < 0.92) {
+        ctx.fillStyle = '#60A5FA';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(dx, dy, Math.max(1, r), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  },
+
+  // Comic scramble dust puffs at feet
+  drawRunDust(ctx: CanvasRenderingContext2D, footX: number, groundY: number, time: number) {
+    ctx.save();
+    for (let i = 0; i < 2; i++) {
+      const puffT = (time * 4.8 + i * 0.5) % 1;
+      const px = footX - 8 - puffT * 20;
+      const py = groundY - 2 - puffT * 5;
+      const r = 2.5 + puffT * 7;
+      const alpha = (1 - puffT) * 0.65;
+      ctx.fillStyle = `rgba(224, 212, 188, ${alpha})`;
+      ctx.strokeStyle = `rgba(45, 28, 14, ${alpha * 0.75})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(px, py, Math.max(1, r), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
   // -------------------------------------------------------------
   // HEROES
   // -------------------------------------------------------------
@@ -356,40 +475,104 @@ export const Lada = {
     ctx.fill();
     ctx.stroke();
 
-    // Head with red scarf
+    // Hlava a červený puntíkovaný šátek (obličej orámovaný, zřetelně viditelný)
     ctx.translate(0, headBob);
-    this.setupPath(ctx, COLORS.skin);
-    ctx.beginPath();
-    ctx.arc(0, -18, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
 
-    // Red polka dot scarf
+    // 1) Červený šátek - temeno, zátylek a podvázání
     this.setupPath(ctx, COLORS.red, COLORS.ink, 3);
     ctx.beginPath();
-    ctx.arc(0, -22, 14, Math.PI * 0.85, Math.PI * 0.15);
-    ctx.quadraticCurveTo(12, -7, 0, -6);
-    ctx.quadraticCurveTo(-12, -7, -14, -14);
+    ctx.arc(0, -18, 14, Math.PI * 0.65, Math.PI * 1.85); // temeno a zátylek
+    ctx.quadraticCurveTo(8, -32, 13, -20); // shora dopředu k čelu
+    ctx.quadraticCurveTo(15, -12, 6, -5);  // podél lícní kosti pod bradu
+    ctx.quadraticCurveTo(-4, -4, -10, -8); // pod bradou
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // White dots
+    // Cípy a uzel šátku pod bradou
+    ctx.beginPath();
+    ctx.moveTo(3, -6);
+    ctx.lineTo(8, -1);
+    ctx.lineTo(2, 2);
+    ctx.lineTo(-1, -5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Bílé puntíky na červeném šátku (pouze na látce, ne přes obličej)
     ctx.fillStyle = COLORS.white;
-    [-7, 0, 7].forEach((dx, i) => {
+    [[-8, -25], [-2, -30], [-9, -17], [-4, -23], [-8, -10], [5, -31], [4, 0]].forEach(([px, py]) => {
       ctx.beginPath();
-      ctx.arc(dx, -26 + (i % 2 === 0 ? 3 : 0), 2, 0, Math.PI * 2);
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Spectacles
-    ctx.strokeStyle = COLORS.woodDark;
-    ctx.lineWidth = 1.5;
+    // 2) Obličej (odhalená kůže orámovaná šátkem)
+    this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
     ctx.beginPath();
-    ctx.arc(4, -20, 4.5, 0, Math.PI * 2);
+    ctx.ellipse(3, -17, 9.5, 11, 0.1, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
+
+    // Stříbrné vlasy s pěšinkou pod okrajem šátku
+    this.setupPath(ctx, '#9C968B', COLORS.ink, 1.8);
+    ctx.beginPath();
+    ctx.arc(2, -22, 6.5, Math.PI * 1.0, Math.PI * 1.8);
+    ctx.stroke();
+
+    // 3) Rysy obličeje: brýle na nose, laskavé oko, nos a úsměv
+    // Drátěné kulaté brýle
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(5, -18, 4.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fill();
+
+    // Očko za brýlemi s odleskem
     ctx.fillStyle = COLORS.ink;
     ctx.beginPath();
-    ctx.arc(4, -20, 2, 0, Math.PI * 2);
+    ctx.arc(5.5, -18, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS.white;
+    ctx.beginPath();
+    ctx.arc(6.2, -18.7, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stranice brýlí k uchu
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    ctx.moveTo(0.5, -18);
+    ctx.lineTo(9.5, -18);
+    ctx.stroke();
+
+    // Obočí
+    ctx.strokeStyle = '#5A5043';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(5, -23, 3, Math.PI * 1.1, Math.PI * 1.8);
+    ctx.stroke();
+
+    // Nosík kořenářky
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(7.5, -19);
+    ctx.lineTo(10.5, -16);
+    ctx.lineTo(8, -15);
+    ctx.stroke();
+
+    // Vlídný úsměv
+    ctx.beginPath();
+    ctx.arc(5, -12, 3.2, 0.2, Math.PI * 0.7);
+    ctx.stroke();
+
+    // Rumělka na tváři (Ladovské červené líčko)
+    ctx.fillStyle = 'rgba(224, 82, 82, 0.5)';
+    ctx.beginPath();
+    ctx.arc(4, -13, 2.6, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -837,50 +1020,95 @@ export const Lada = {
 
     // Hlava
     ctx.translate(0, headBob);
-    this.setupPath(ctx, COLORS.skin);
+
+    // 1) Bílý šátek s červenými puntíky - kapuce obepínající temeno a zátylek
+    this.setupPath(ctx, '#F8F9FA', COLORS.ink, 3);
     ctx.beginPath();
-    ctx.arc(0, -20, 12, 0, Math.PI * 2);
+    ctx.arc(0, -20, 15, Math.PI * 0.6, Math.PI * 1.85); // temeno a zátylek
+    ctx.quadraticCurveTo(9, -34, 13, -22); // shora dopředu k čelu
+    ctx.quadraticCurveTo(15, -13, 6, -7);  // dolů podél tváře pod bradu
+    ctx.quadraticCurveTo(-3, -5, -9, -9);  // pod bradou k zátylku
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Bílý šátek s červenými puntíky, uvázaný pod bradou
-    this.setupPath(ctx, '#F8F9FA', COLORS.ink, 3);
+    // Cípy šátku uvázané pod bradou
+    this.setupPath(ctx, '#F8F9FA', COLORS.ink, 2.5);
     ctx.beginPath();
-    ctx.arc(0, -23, 14, Math.PI * 0.95, Math.PI * 2.05);
-    ctx.lineTo(13, -14);
-    ctx.quadraticCurveTo(0, -8, -13, -14);
+    ctx.moveTo(3, -7);
+    ctx.lineTo(8, -2);
+    ctx.lineTo(1, 2);
+    ctx.lineTo(-2, -6);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(-10, -8);
-    ctx.lineTo(-17, -2);
-    ctx.lineTo(-7, -4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+
+    // Červené puntíky na bílém šátku (pouze na látce, ne přes obličej)
     ctx.fillStyle = COLORS.red;
-    [[-7, -31], [1, -33], [8, -28], [-2, -27], [-11, -24], [11, -22]].forEach(([px, py]) => {
+    [[-9, -26], [-3, -31], [-9, -18], [-4, -24], [-9, -11], [3, -33], [7, -29], [4, -1]].forEach(([px, py]) => {
       ctx.beginPath();
       ctx.arc(px, py, 1.7, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Očka, úsměv a rumělka na tvářích
+    // 2) Odhalený laskavý obličej babičky (kůže)
+    this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.ellipse(3, -19, 10, 11.5, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Šedivé vlnité vlasy vykukující pod okrajem šátku
+    this.setupPath(ctx, '#C8C4BD', COLORS.ink, 1.8);
+    ctx.beginPath();
+    ctx.arc(2, -24, 7.5, Math.PI * 1.05, Math.PI * 1.85);
+    ctx.stroke();
+
+    // 3) Rysy babiččina obličeje: laskavé jiskřivé oči, vrásky úsměvu, nosík a ruměná líčka
     ctx.fillStyle = COLORS.ink;
     ctx.beginPath();
-    ctx.arc(-4, -20, 1.5, 0, Math.PI * 2);
-    ctx.arc(4, -20, 1.5, 0, Math.PI * 2);
+    ctx.arc(1.5, -20, 1.6, 0, Math.PI * 2);
+    ctx.arc(7.5, -20, 1.6, 0, Math.PI * 2);
     ctx.fill();
+
+    // Bělostné jiskřičky v očích
+    ctx.fillStyle = COLORS.white;
+    ctx.beginPath();
+    ctx.arc(2.1, -20.6, 0.7, 0, Math.PI * 2);
+    ctx.arc(8.1, -20.6, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Laskavé vějířkovité vrásky u očí
+    ctx.strokeStyle = '#8C6F54';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(9.5, -20);
+    ctx.lineTo(12, -21);
+    ctx.moveTo(9.5, -19);
+    ctx.lineTo(11.5, -18);
+    ctx.stroke();
+
+    // Babiččin nosík
     ctx.strokeStyle = COLORS.ink;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(0, -15, 4, 0.2, Math.PI - 0.2);
+    ctx.moveTo(6, -21);
+    ctx.lineTo(9.5, -18);
+    ctx.lineTo(7, -17);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(224, 96, 96, 0.5)';
+
+    // Široký hřejivý úsměv
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.arc(-7, -16, 2.2, 0, Math.PI * 2);
-    ctx.arc(7, -16, 2.2, 0, Math.PI * 2);
+    ctx.arc(4.5, -14, 4.2, 0.15, Math.PI * 0.85);
+    ctx.stroke();
+
+    // Ruměná líčka (Ladovská růžová jablíčka)
+    ctx.fillStyle = 'rgba(230, 90, 90, 0.52)';
+    ctx.beginPath();
+    ctx.arc(1, -15, 2.8, 0, Math.PI * 2);
+    ctx.arc(9, -15, 2.8, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -1380,19 +1608,41 @@ export const Lada = {
   // -------------------------------------------------------------
   drawRarach(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const bounce = Math.sin(time * (panicked ? 30 : 15)) * (panicked ? 12 : 8);
-    const tailWave = Math.cos(time * (panicked ? 50 : 25)) * 15;
+    const runSpeed = panicked ? 24 : 12;
+    const bounce = Math.sin(time * runSpeed) * (panicked ? 5 : 4);
+    const tailWave = Math.cos(time * (panicked ? 40 : 20)) * (panicked ? 20 : 12);
 
     ctx.save();
     ctx.translate(x, y + bounce);
     ctx.scale(dir, 1);
-    if (panicked) ctx.rotate(Math.PI / 4);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 22, time);
+      this.drawPanicDrops(ctx, 0, -12, time);
+    }
 
-    // Tail
+    // Animated legs with multi-frame run cycle (high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -4, 8, 16);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 4, 8, 16);
+      this.drawBentLimb(ctx, -4, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#B91C1C', 3.5);
+      this.drawBentLimb(ctx, 4, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#B91C1C', 3.5);
+      // Cloven little hooves
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(leg1.fx - 2, leg1.fy - 1, 4, 3);
+      ctx.fillRect(leg2.fx - 2, leg2.fy - 1, 4, 3);
+    } else {
+      const legSwing = Math.sin(time * 12) * 8;
+      this.drawLimb(ctx, -4, 8, -4 - legSwing, 22, '#B91C1C', 3.5);
+      this.drawLimb(ctx, 4, 8, 4 + legSwing, 22, '#B91C1C', 3.5);
+    }
+
+    // Tail (wagging frantically when running)
     this.setupPath(ctx, '#333');
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(-20, -tailWave, -30, -10);
+    ctx.quadraticCurveTo(-18, -tailWave, -28, -6 + (panicked ? Math.sin(time * 25) * 8 : -4));
     ctx.lineTo(-10, 5);
     ctx.closePath();
     ctx.fill();
@@ -1404,6 +1654,18 @@ export const Lada = {
     ctx.ellipse(0, 5, 8, 12, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // Little claws / arms
+    if (panicked) {
+      // Waving frantically overhead in comical terror
+      const armWave1 = Math.sin(time * 28) * 8;
+      const armWave2 = Math.cos(time * 28) * 8;
+      this.drawLimb(ctx, -5, 2, -12, -14 + armWave1, '#B91C1C', 3);
+      this.drawLimb(ctx, 5, 2, 10, -15 + armWave2, '#B91C1C', 3);
+    } else {
+      this.drawLimb(ctx, -5, 4, -9, 10, '#B91C1C', 3);
+      this.drawLimb(ctx, 5, 4, 9, 10, '#B91C1C', 3);
+    }
 
     // Head
     ctx.beginPath();
@@ -1426,10 +1688,17 @@ export const Lada = {
     ctx.fill();
     ctx.stroke();
 
-    // Eye
+    // Eye (looks back over shoulder periodically when panicked)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    const eyeX = glanceBack ? -4 : 5;
     ctx.fillStyle = COLORS.mustard;
     ctx.beginPath();
-    ctx.arc(5, -8, 3, 0, Math.PI * 2);
+    ctx.arc(eyeX, -8, panicked ? 4 : 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(eyeX + (glanceBack ? -1 : 1), -8, 1.5, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -1437,17 +1706,29 @@ export const Lada = {
 
   drawSkeleton(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const freq = panicked ? 25 : 10;
-    const legSwing = Math.sin(time * freq) * (panicked ? 20 : 12);
+    const bob = panicked ? Math.abs(Math.sin(time * 22)) * 3 : Math.sin(time * 10) * 1.5;
 
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y - bob);
     ctx.scale(dir, 1);
-    if (panicked) ctx.rotate(Math.PI / 6);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 25, time);
+      this.drawPanicDrops(ctx, 0, -28, time);
+    }
 
-    // Legs
-    this.drawLimb(ctx, -4, 5, -legSwing, 25, COLORS.bone, 4);
-    this.drawLimb(ctx, 4, 5, legSwing, 25, COLORS.bone, 4);
+    // Legs with multi-frame running cycle (high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -4, 5, 21);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 4, 5, 21);
+      this.drawBentLimb(ctx, -4, 5, leg1.kx, leg1.ky, leg1.fx, leg1.fy, COLORS.bone, 4);
+      this.drawBentLimb(ctx, 4, 5, leg2.kx, leg2.ky, leg2.fx, leg2.fy, COLORS.bone, 4);
+    } else {
+      const legSwing = Math.sin(time * 10) * 12;
+      this.drawLimb(ctx, -4, 5, -legSwing, 25, COLORS.bone, 4);
+      this.drawLimb(ctx, 4, 5, legSwing, 25, COLORS.bone, 4);
+    }
 
     // Spine & Ribs
     this.drawLimb(ctx, 0, -15, 0, 5, COLORS.bone, 6);
@@ -1463,68 +1744,94 @@ export const Lada = {
       ctx.stroke();
     }
 
+    // Skeletal arms - clattering in panic overhead or walking
+    if (panicked) {
+      const boneShudder = Math.sin(time * 30) * 4;
+      this.drawBentLimb(ctx, -6, -12, -12, -22 + boneShudder, -16, -32 + boneShudder, COLORS.bone, 3.5);
+      this.drawBentLimb(ctx, 6, -12, 12, -24 - boneShudder, 14, -34 - boneShudder, COLORS.bone, 3.5);
+    } else {
+      const armSwing = Math.sin(time * 10) * 8;
+      this.drawLimb(ctx, -6, -12, -10 - armSwing, 2, COLORS.bone, 3.5);
+      this.drawLimb(ctx, 6, -12, 10 + armSwing, 2, COLORS.bone, 3.5);
+    }
+
     // Skull
     this.setupPath(ctx, COLORS.bone);
     ctx.beginPath();
     ctx.arc(0, -24, 11, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // Jaw (drops open in terror when panicked!)
     ctx.beginPath();
-    ctx.rect(-6, -16, 12, 6);
+    const jawY = panicked ? -14 : -16;
+    ctx.rect(-6, jawY, 12, panicked ? 8 : 6);
     ctx.fill();
     ctx.stroke();
 
-    // Eye sockets
+    // Eye sockets (glance back in terror)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
     ctx.fillStyle = COLORS.ink;
     ctx.beginPath();
-    ctx.arc(4, -26, 3, 0, Math.PI * 2);
+    ctx.arc(glanceBack ? -4 : 4, -26, 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(-3, -26, 3, 0, Math.PI * 2);
+    ctx.arc(glanceBack ? -9 : -3, -26, 3, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
   },
 
   drawBubak(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    const bob = Math.sin(time * (panicked ? 15 : 5)) * (panicked ? 10 : 5);
-    const tilt = Math.cos(time * 10) * (panicked ? 0.3 : 0.1);
+    const bob = Math.sin(time * (panicked ? 18 : 5)) * (panicked ? 6 : 5);
+    const tilt = panicked ? 0.12 + Math.sin(time * 14) * 0.05 : Math.cos(time * 10) * 0.1;
 
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.rotate(tilt);
+    if (panicked) {
+      this.drawRunDust(ctx, -12, 26, time);
+      this.drawPanicDrops(ctx, 0, -24, time);
+    }
 
-    // Dark cloud body
+    // Dark cloud body - streams backward in comic speed when panicked
     this.setupPath(ctx, COLORS.ink, 'transparent');
     ctx.beginPath();
     for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + time * (panicked ? 3 : 1);
+      const a = (i / 8) * Math.PI * 2 + time * (panicked ? 4 : 1);
       const r = 28 + Math.sin(time * 6 + i * 2) * 6;
-      ctx.arc(Math.cos(a) * 12, Math.sin(a) * 12, r, 0, Math.PI * 2);
+      const stretchX = panicked ? Math.cos(a) * 16 - (Math.cos(a) < 0 ? 10 : 0) : Math.cos(a) * 12;
+      ctx.arc(stretchX, Math.sin(a) * 12, r, 0, Math.PI * 2);
     }
     ctx.fill();
 
-    // Flowing coat tentacles
+    // Flowing coat tentacles streaming backward in multi-frame flutter
     ctx.strokeStyle = COLORS.ink;
     ctx.lineWidth = 8;
     ctx.lineCap = 'round';
-    for (let i = 0; i < 3; i++) {
-      const cx = Math.cos(time * (panicked ? 9 : 3) + i) * 20;
-      const cy = 20 + Math.abs(Math.sin(time * (panicked ? 12 : 4) + i) * 15);
+    for (let i = 0; i < 4; i++) {
+      const cx = panicked ? -20 - i * 8 + Math.sin(time * 24 + i) * 6 : Math.cos(time * 3 + i) * 20;
+      const cy = panicked ? 15 + Math.sin(time * 24 + i * 1.5) * 12 : 20 + Math.abs(Math.sin(time * 4 + i) * 15);
       ctx.beginPath();
-      ctx.moveTo(i * 10 - 10, 10);
-      ctx.quadraticCurveTo(cx, cy, i * 15 - 15, cy + 10);
+      ctx.moveTo(i * 8 - 12, 10);
+      ctx.quadraticCurveTo(cx, cy, cx - 10, cy + (panicked ? -4 : 10));
       ctx.stroke();
     }
 
-    // Glowing eyes
-    ctx.fillStyle = panicked ? COLORS.red : COLORS.mustard;
+    // Glowing terrified eyes looking backward when running
+    ctx.fillStyle = panicked ? '#FDE047' : COLORS.mustard;
     ctx.shadowColor = ctx.fillStyle;
     ctx.shadowBlur = 10;
-    const lookX = vx < 0 ? -8 : 8;
+    const lookX = panicked ? -10 : (vx < 0 ? -8 : 8);
     ctx.beginPath();
-    ctx.ellipse(lookX - 8, -12, 5, 8, 0, 0, Math.PI * 2);
-    ctx.ellipse(lookX + 8, -12, 5, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(lookX - 6, -12, panicked ? 6 : 5, panicked ? 9 : 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(lookX + 6, -12, panicked ? 6 : 5, panicked ? 9 : 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Pupils dilating in shock
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(lookX - 7, -12, 2, 0, Math.PI * 2);
+    ctx.arc(lookX + 5, -12, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
@@ -1533,22 +1840,43 @@ export const Lada = {
 
   drawHastrman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const legSwing = Math.sin(time * (panicked ? 30 : 12)) * (panicked ? 20 : 12);
+    const bob = panicked ? Math.abs(Math.sin(time * 22)) * 4 : Math.sin(time * 12) * 2;
 
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y - bob);
     ctx.scale(dir, 1);
-    if (panicked) ctx.rotate(Math.PI / 6);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 25, time);
+      this.drawPanicDrops(ctx, 4, -40, time);
+    }
 
-    // Legs
-    this.drawLimb(ctx, -5, 10, -legSwing - 5, 25, COLORS.green, 6);
-    this.drawLimb(ctx, 5, 10, legSwing + 5, 25, COLORS.green, 6);
+    // Running legs with the high-knee lift & tuck frame
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 8, 20);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 8, 20);
+      this.drawBentLimb(ctx, -5, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, COLORS.green, 6);
+      this.drawBentLimb(ctx, 5, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, COLORS.green, 6);
+      // Red boots
+      this.setupPath(ctx, '#DC2626');
+      ctx.beginPath();
+      ctx.arc(leg1.fx, leg1.fy, 4.5, 0, Math.PI * 2);
+      ctx.arc(leg2.fx, leg2.fy, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      const legSwing = Math.sin(time * 12) * 12;
+      this.drawLimb(ctx, -5, 10, -legSwing - 5, 25, COLORS.green, 6);
+      this.drawLimb(ctx, 5, 10, legSwing + 5, 25, COLORS.green, 6);
+    }
 
-    // Green coat with drippy tail
+    // Green coat with coattails flapping behind
     this.setupPath(ctx, COLORS.water);
     ctx.beginPath();
     ctx.moveTo(-15, -5);
-    ctx.lineTo(-25, 20);
+    const tailFlap = panicked ? Math.sin(time * 26) * 10 : 0;
+    ctx.lineTo(panicked ? -34 : -25, 16 + tailFlap);
     ctx.lineTo(-5, 20);
     ctx.lineTo(5, -5);
     ctx.fill();
@@ -1561,6 +1889,18 @@ export const Lada = {
     ctx.fill();
     ctx.stroke();
 
+    // Arms: clutching his top hat brim in panic so it doesn't fly off!
+    if (panicked) {
+      // Hand holding top hat brim
+      this.drawBentLimb(ctx, -8, -4, -14, -20, -6, -34, '#3A76A8', 5);
+      // Other arm flailing behind
+      const armWave = Math.sin(time * 26) * 10;
+      this.drawLimb(ctx, 8, -4, -16, 12 + armWave, '#3A76A8', 5);
+    } else {
+      this.drawLimb(ctx, -8, -4, -12, 10, '#3A76A8', 5);
+      this.drawLimb(ctx, 8, -4, 12, 10, '#3A76A8', 5);
+    }
+
     // Head
     this.setupPath(ctx, '#A3C4A3');
     ctx.beginPath();
@@ -1568,7 +1908,9 @@ export const Lada = {
     ctx.fill();
     ctx.stroke();
 
-    // Top hat
+    // Top hat (wobbling in panic)
+    ctx.save();
+    if (panicked) ctx.rotate(Math.sin(time * 20) * 0.08);
     this.setupPath(ctx, COLORS.ink);
     ctx.beginPath();
     ctx.ellipse(0, -29, 20, 5, 0, 0, Math.PI * 2);
@@ -1578,11 +1920,13 @@ export const Lada = {
     ctx.strokeRect(-12, -45, 24, 18);
     ctx.fillStyle = COLORS.red;
     ctx.fillRect(-12, -32, 24, 4);
+    ctx.restore();
 
     // Eye
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
     ctx.fillStyle = COLORS.ink;
     ctx.beginPath();
-    ctx.arc(7, -19, 3, 0, Math.PI * 2);
+    ctx.arc(glanceBack ? -5 : 7, -19, panicked ? 3.5 : 3, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -1590,20 +1934,32 @@ export const Lada = {
 
   drawMeluzina(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const bob = Math.sin(time * 8) * 8;
-    const wave = Math.cos(time * 12) * 6;
+    const bob = Math.sin(time * (panicked ? 16 : 8)) * 8;
+    const wave = Math.cos(time * (panicked ? 24 : 12)) * (panicked ? 12 : 6);
 
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(dir, 1);
-    if (panicked) ctx.rotate(Math.PI / 4);
+    if (panicked) {
+      ctx.rotate(0.14);
+      this.drawPanicDrops(ctx, -4, -20, time);
+      // Frost trail
+      ctx.fillStyle = 'rgba(190, 227, 248, 0.4)';
+      for (let i = 0; i < 3; i++) {
+        const pt = (time * 4 + i * 0.33) % 1;
+        ctx.beginPath();
+        ctx.arc(-24 - pt * 28, 5 + Math.sin(pt * 5) * 10, 2.5 + pt * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
-    // Swirling veil
+    // Swirling veil streaming out behind
     this.setupPath(ctx, '#E6EEF8', COLORS.water, 2.5);
     ctx.beginPath();
     ctx.moveTo(0, -15);
-    ctx.quadraticCurveTo(-25, -20 + wave, -35, -5 + wave);
-    ctx.quadraticCurveTo(-45, 10, -25, 20);
+    const veilReach = panicked ? -55 : -35;
+    ctx.quadraticCurveTo(-25, -20 + wave, veilReach, -5 + wave);
+    ctx.quadraticCurveTo(panicked ? -65 : -45, 10, -25, 20);
     ctx.quadraticCurveTo(-10, 25, 0, 15);
     ctx.closePath();
     ctx.fill();
@@ -1616,10 +1972,16 @@ export const Lada = {
     ctx.fill();
     ctx.stroke();
 
-    // Wailing mouth
+    // Arms: in panic, clutching her face in horror ("The Scream")!
+    if (panicked) {
+      this.drawLimb(ctx, -8, 2, -12, -8, '#D9E8F5', 3.5);
+      this.drawLimb(ctx, 8, 2, 10, -8, '#D9E8F5', 3.5);
+    }
+
+    // Wailing mouth (wide open in scream when panicked)
     ctx.fillStyle = COLORS.water;
     ctx.beginPath();
-    ctx.ellipse(4, -6, 4, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(panicked ? -2 : 4, -6, panicked ? 5 : 4, panicked ? 9 : 7, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
@@ -1628,7 +1990,7 @@ export const Lada = {
     ctx.shadowColor = COLORS.water;
     ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.arc(5, -14, 3, 0, Math.PI * 2);
+    ctx.arc(panicked ? -4 : 5, -14, panicked ? 3.5 : 3, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
@@ -1637,199 +1999,503 @@ export const Lada = {
 
   drawPolednice(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const legSwing = Math.sin(time * 18) * 14;
+    const walkSpeed = panicked ? 24 : 14;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 4;
+    const legSwing = Math.sin(time * walkSpeed) * 16;
+    const windFlutter = Math.sin(time * (panicked ? 24 : 16)) * (panicked ? 10 : 6);
+    const sickleSwing = panicked ? -0.7 : Math.sin(time * walkSpeed) * 0.45;
 
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(x, y - bob);
     ctx.scale(dir, 1);
-    if (panicked) ctx.rotate(Math.PI / 5);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 28, time);
+      this.drawPanicDrops(ctx, 4, -26, time);
+    }
 
-    // White ragged sheet shroud
-    this.setupPath(ctx, COLORS.white, COLORS.ink, 3);
+    // 1. Shimmering midday solar mirage & heat haze waves
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const wavePhase = time * 5 + i * 2;
+      const wy = -36 - i * 8 + Math.sin(wavePhase) * 3;
+      ctx.strokeStyle = `rgba(245, 158, 11, ${0.28 - i * 0.08})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-18, wy);
+      ctx.bezierCurveTo(-6, wy - 4, 6, wy + 4, 18, wy);
+      ctx.stroke();
+    }
+    // Sun-ray sparkle motes
+    for (let i = 0; i < 4; i++) {
+      const spAng = time * 3 + (i * Math.PI) / 2;
+      const spDist = 28 + Math.sin(time * 6 + i) * 6;
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.45)';
+      ctx.beginPath();
+      ctx.arc(Math.cos(spAng) * spDist, -10 + Math.sin(spAng) * 12, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // 2. Bare bony legs stepping through dry wheat stubble (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 12, 19);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 12, 19);
+      this.drawBentLimb(ctx, -5, 12, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#E2D4C3', 3.5);
+      this.drawBentLimb(ctx, 5, 12, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#E2D4C3', 3.5);
+    } else {
+      this.drawLimb(ctx, -5, 12, -legSwing, 22, '#E2D4C3', 3.5);
+      this.drawLimb(ctx, 5, 12, legSwing, 22, '#E2D4C3', 3.5);
+    }
+
+    // 3. Flowing torn white linen shroud / dress (rozedraná bílá plachta)
+    this.setupPath(ctx, '#F8FAFC', COLORS.ink, 3);
     ctx.beginPath();
-    ctx.moveTo(-16, -10);
-    ctx.lineTo(-22, 28);
-    ctx.lineTo(22, 28);
-    ctx.lineTo(16, -10);
+    ctx.moveTo(-12, -8);
+    // Left waist and fluttering hem
+    ctx.quadraticCurveTo(-18 + windFlutter * 0.5, 10, -22 + windFlutter, 30);
+    // Jagged torn hem folds
+    ctx.lineTo(-14 + windFlutter * 0.6, 26);
+    ctx.lineTo(-6, 32);
+    ctx.lineTo(2 + windFlutter * 0.3, 27);
+    ctx.lineTo(12, 33);
+    ctx.lineTo(20, 28);
+    // Right side back up
+    ctx.quadraticCurveTo(16, 8, 12, -8);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Scythe / Sickle in hand
+    // Fabric fold lines (Ladovské záhyby látky)
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-6, -2);
+    ctx.quadraticCurveTo(-10 + windFlutter * 0.3, 14, -12 + windFlutter * 0.6, 26);
+    ctx.moveTo(4, 0);
+    ctx.quadraticCurveTo(6, 15, 8, 28);
+    ctx.stroke();
+
+    // Straw stalk stuck in the belt
+    ctx.strokeStyle = COLORS.mustard;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(2, 6);
+    ctx.lineTo(14, 18);
+    ctx.stroke();
+
+    // 4. Gaunt neck & witchy head with peasant kerchief (loktuše / šátek)
+    this.setupPath(ctx, '#E7D5C4', COLORS.ink, 2.5);
+    // Wizened face profile
+    ctx.beginPath();
+    ctx.moveTo(2, -26);
+    ctx.lineTo(11, -21); // Hooked witch nose (orlí nos)
+    ctx.lineTo(5, -17);
+    ctx.lineTo(9, -13); // Sharp chin (špičatá brada)
+    ctx.lineTo(0, -10); // Jawline
+    ctx.lineTo(-8, -18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Peasant headscarf wrapping the head and tied under chin
+    this.setupPath(ctx, '#F1F5F9', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.arc(-2, -22, 13, Math.PI * 0.7, Math.PI * 2.1);
+    ctx.lineTo(0, -9);
+    ctx.lineTo(-8, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Trailing fluttering ends of the headscarf in the hot wind
+    ctx.beginPath();
+    ctx.moveTo(-12, -18);
+    ctx.quadraticCurveTo(-24 - windFlutter, -22, -30 - windFlutter * 1.5, -14);
+    ctx.lineTo(-26 - windFlutter, -10);
+    ctx.quadraticCurveTo(-18, -12, -10, -15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Strands of wild gray straw hair escaping the kerchief
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(2, -25);
+    ctx.quadraticCurveTo(-2, -30, -8, -28);
+    ctx.moveTo(5, -19);
+    ctx.lineTo(0, -16);
+    ctx.stroke();
+
+    // Piercing burning noon-sun eye (zlaté planoucí oko)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -4 : 5, -20, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FBBF24';
+    ctx.beginPath();
+    ctx.arc((glanceBack ? -4 : 5) + 0.5, -20.5, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Right arm wielding the sharp curved iron sickle (ostrý zahnutý srp)
+    ctx.save();
+    ctx.translate(6, -4);
+    ctx.rotate(sickleSwing);
+
+    // Bony arm
+    ctx.strokeStyle = '#D6C3B0';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(12, -4);
+    ctx.lineTo(20, -12);
+    ctx.stroke();
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Wooden sickle handle (dřevěná rukojeť)
     ctx.strokeStyle = COLORS.woodDark;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(14, 4);
-    ctx.lineTo(24, -18);
-    ctx.stroke();
-    // Curved sickle blade
-    this.setupPath(ctx, '#CBD5E1', COLORS.ink, 2);
-    ctx.beginPath();
-    ctx.arc(24, -18, 12, Math.PI * 0.8, Math.PI * 1.8);
+    ctx.moveTo(17, -8);
+    ctx.lineTo(25, -18);
     ctx.stroke();
 
-    // Haggard face & scarf
-    this.setupPath(ctx, COLORS.skin, COLORS.ink, 2.5);
+    // Curved razor-sharp iron blade with gleaming edge
+    ctx.fillStyle = '#E2E8F0';
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(0, -20, 12, 0, Math.PI * 2);
+    ctx.moveTo(25, -18);
+    // Outer crescent
+    ctx.quadraticCurveTo(38, -32, 28, -44);
+    // Inner razor crescent
+    ctx.quadraticCurveTo(24, -30, 22, -16);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    this.setupPath(ctx, COLORS.white, COLORS.ink, 2);
+    // Steel highlight on sickle tip (lesk ostří)
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.arc(0, -22, 13, Math.PI, 0);
-    ctx.fill();
+    ctx.moveTo(27, -42);
+    ctx.quadraticCurveTo(34, -32, 25, -20);
     ctx.stroke();
 
-    // Menacing eyes
-    ctx.fillStyle = COLORS.red;
-    ctx.beginPath();
-    ctx.arc(4, -20, 2, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.restore();
     ctx.restore();
   },
 
   drawKlekanice(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(dir, 1);
+    const walkSpeed = panicked ? 22 : 10;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3.5;
 
-    // Jute sack over shoulder
-    this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 3);
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 28, time);
+      this.drawPanicDrops(ctx, 4, -26, time);
+    }
+
+    // Scramble legs beneath the frayed cloak with high knee tuck & kick
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 14, 16);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 14, 16);
+      this.drawBentLimb(ctx, -5, 14, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#3F3F46', 3.5);
+      this.drawBentLimb(ctx, 5, 14, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#3F3F46', 3.5);
+    }
+
+    // Dark twilight shadow aura
+    ctx.save();
+    ctx.shadowColor = 'rgba(76, 29, 149, 0.45)';
+    ctx.shadowBlur = 14;
+
+    // Dark wrinkled burlap sack over hunched back (pytel na zlobivé děti)
+    this.setupPath(ctx, '#5C4033', COLORS.ink, 3);
     ctx.beginPath();
-    ctx.ellipse(-14, 4, 14, 18, 0.3, 0, Math.PI * 2);
+    ctx.ellipse(-16, 2, 14, 18, 0.25, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Dark shawl
-    this.setupPath(ctx, '#3D312A', COLORS.ink, 3);
+    // Hemp tying rope on sack
+    ctx.strokeStyle = '#D97706';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(-15, -10);
-    ctx.lineTo(-18, 25);
-    ctx.lineTo(18, 25);
-    ctx.lineTo(15, -10);
+    ctx.moveTo(-18, -12);
+    ctx.lineTo(-12, -4);
+    ctx.stroke();
+
+    // Shrouded dark cloak with frayed bottom
+    this.setupPath(ctx, '#262626', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.moveTo(-12, -12);
+    ctx.quadraticCurveTo(-18, 10, -18, 28);
+    ctx.lineTo(-8, 25);
+    ctx.lineTo(0, 29);
+    ctx.lineTo(10, 24);
+    ctx.lineTo(16, 27);
+    ctx.quadraticCurveTo(14, 8, 10, -12);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Face in deep hood
-    this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+    // Deep shadowy cowl / hood
+    this.setupPath(ctx, '#171717', COLORS.ink, 3);
     ctx.beginPath();
-    ctx.arc(0, -18, 11, 0, Math.PI * 2);
+    ctx.arc(0, -19, 13, Math.PI * 0.6, Math.PI * 2.2);
+    ctx.lineTo(2, -7);
+    ctx.lineTo(-10, -9);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Yellow sinister eyes
-    ctx.fillStyle = COLORS.mustard;
+    // Gaunt pale face in hood shadow
+    this.setupPath(ctx, '#D4D4D8', COLORS.ink, 2);
     ctx.beginPath();
-    ctx.arc(3, -19, 2.5, 0, Math.PI * 2);
+    ctx.arc(2, -18, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Glowing sinister twilight-amber eyes
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -3 : 5, -19, 2.2, 0, Math.PI * 2);
     ctx.fill();
 
+    // Swinging wooden church bell at belt (clattering furiously in panic)
+    ctx.save();
+    ctx.translate(8, 6);
+    ctx.rotate(Math.sin(time * (panicked ? 26 : 6)) * (panicked ? 0.7 : 0.35));
+    this.setupPath(ctx, '#B45309', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.moveTo(-4, -6);
+    ctx.lineTo(4, -6);
+    ctx.lineTo(6, 4);
+    ctx.lineTo(-6, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
     ctx.restore();
   },
 
   drawCert(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, isBoss = false) {
     const dir = vx < 0 ? -1 : 1;
-    const scale = isBoss ? 2.2 : 1.2;
-    const bounce = Math.sin(time * 8) * 4;
-    const legSwing = Math.sin(time * 12) * 12;
+    const scale = isBoss ? 2.3 : 1.25;
+    const bounce = Math.sin(time * (panicked ? 22 : 9)) * (isBoss ? 5 : 3.5);
+    const legSwing = Math.sin(time * (panicked ? 22 : 11)) * (isBoss ? 16 : 10);
+    const tailWhip = Math.sin(time * (panicked ? 28 : 12)) * (panicked ? 24 : 18);
 
     ctx.save();
     ctx.translate(x, y + bounce);
     ctx.scale(dir * scale, scale);
-    if (panicked) ctx.rotate(Math.PI / 5);
-
-    if (isBoss) {
-      ctx.shadowColor = COLORS.red;
-      ctx.shadowBlur = 20;
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -10, 30, time);
+      this.drawPanicDrops(ctx, 4, -28, time);
     }
 
-    // Tail with arrow tip
-    ctx.strokeStyle = COLORS.ink;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    const tailY = Math.sin(time * 10) * 15;
-    ctx.moveTo(-10, 5);
-    ctx.quadraticCurveTo(-25, tailY, -30, -10 + tailY);
-    ctx.stroke();
-
-    this.setupPath(ctx, COLORS.red, COLORS.ink, 2);
-    ctx.beginPath();
-    ctx.moveTo(-30, -15 + tailY);
-    ctx.lineTo(-24, -8 + tailY);
-    ctx.lineTo(-34, -5 + tailY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Legs with hooves
-    this.drawLimb(ctx, -6, 8, -legSwing - 5, 24, COLORS.woodDark, 6);
-    this.drawLimb(ctx, 6, 8, legSwing + 5, 24, COLORS.woodDark, 6);
-
-    // Black fur coat
-    this.setupPath(ctx, '#221A15', COLORS.ink, 3);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 16, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Red vest
-    this.setupPath(ctx, COLORS.red, COLORS.ink, 2);
-    ctx.beginPath();
-    ctx.moveTo(-10, -10);
-    ctx.lineTo(-14, 10);
-    ctx.lineTo(14, 10);
-    ctx.lineTo(10, -10);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Head
-    this.setupPath(ctx, '#2A1E17', COLORS.ink, 3);
-    ctx.beginPath();
-    ctx.arc(0, -18, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Horns
-    this.setupPath(ctx, COLORS.bone, COLORS.ink, 2);
-    ctx.beginPath();
-    ctx.moveTo(-4, -28);
-    ctx.quadraticCurveTo(-15, -42, -6, -46);
-    ctx.quadraticCurveTo(-2, -38, 2, -28);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(4, -28);
-    ctx.quadraticCurveTo(16, -42, 8, -46);
-    ctx.quadraticCurveTo(4, -38, 0, -28);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Boss pitchfork
+    // Boss demonic aura & ember glow
     if (isBoss) {
-      ctx.strokeStyle = COLORS.woodDark;
-      ctx.lineWidth = 3;
+      ctx.save();
+      ctx.shadowColor = '#DC2626';
+      ctx.shadowBlur = 22;
+      // Brimstone smoke puff beneath hooves
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
       ctx.beginPath();
-      ctx.moveTo(14, 18);
+      ctx.ellipse(0, 24, 22, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Long curled devil's tail with arrow barb (čertovský ocas s ostnem)
+    ctx.strokeStyle = '#18181B';
+    ctx.lineWidth = isBoss ? 4.5 : 3.2;
+    ctx.beginPath();
+    const barbY = panicked ? -26 + Math.sin(time * 28) * 6 : -12 + tailWhip * 0.8;
+    ctx.moveTo(-8, 4);
+    ctx.quadraticCurveTo(-26, tailWhip, -32, barbY);
+    ctx.stroke();
+
+    // Red spade tail tip
+    this.setupPath(ctx, '#DC2626', COLORS.ink, 2);
+    ctx.beginPath();
+    const tipX = -32;
+    const tipY = barbY;
+    ctx.moveTo(tipX, tipY - 8);
+    ctx.lineTo(tipX + 6, tipY + 4);
+    ctx.lineTo(tipX - 7, tipY + 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Legs with cloven hooves (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -7, 8, 20);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 7, 8, 20);
+      this.drawBentLimb(ctx, -7, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#27272A', isBoss ? 7 : 5);
+      this.drawBentLimb(ctx, 7, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#27272A', isBoss ? 7 : 5);
+      this.setupPath(ctx, '#71717A', COLORS.ink, 1.8);
+      ctx.beginPath();
+      ctx.rect(leg1.fx - 4, leg1.fy - 2, 7, 4);
+      ctx.rect(leg2.fx - 4, leg2.fy - 2, 7, 4);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      this.drawLimb(ctx, -7, 8, -legSwing, 23, '#27272A', isBoss ? 7 : 5);
+      this.drawLimb(ctx, 7, 8, legSwing, 23, '#27272A', isBoss ? 7 : 5);
+      this.setupPath(ctx, '#71717A', COLORS.ink, 1.8);
+      ctx.beginPath();
+      ctx.rect(-10, 28 - legSwing * 0.2, 7, 4);
+      ctx.rect(4, 28 + legSwing * 0.2, 7, 4);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Shaggy black sheepskin fur body (huňatý kožich)
+    this.setupPath(ctx, '#18181B', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 17, 19, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Embroidered scarlet village vest with brass buttons (červená vestička s knoflíky)
+    this.setupPath(ctx, '#DC2626', COLORS.ink, 2.4);
+    ctx.beginPath();
+    ctx.moveTo(-11, -9);
+    ctx.lineTo(-15, 9);
+    ctx.lineTo(15, 9);
+    ctx.lineTo(11, -9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Brass buttons on vest
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(0, -4, 2, 0, Math.PI * 2);
+    ctx.arc(0, 1, 2, 0, Math.PI * 2);
+    ctx.arc(0, 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Devil arms waving overhead in panic
+    if (panicked) {
+      const armShudder = Math.sin(time * 30) * 5;
+      this.drawBentLimb(ctx, -10, -5, -16, -18 + armShudder, -20, -28 + armShudder, '#27272A', 4.5);
+      this.drawBentLimb(ctx, 10, -5, 16, -18 - armShudder, 20, -28 - armShudder, '#27272A', 4.5);
+    }
+
+    // Devil's head with scruffy muzzle
+    this.setupPath(ctx, '#27272A', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.arc(0, -19, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Long curling red tongue sticking out cheekily (mlsounský čertovský jazyk)
+    ctx.save();
+    ctx.fillStyle = '#EF4444';
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    const tongueWobble = Math.sin(time * (panicked ? 24 : 14)) * (panicked ? 5 : 3);
+    ctx.moveTo(6, -15);
+    ctx.quadraticCurveTo(14, -13 + tongueWobble, 18, -8 + tongueWobble);
+    ctx.quadraticCurveTo(15, -6 + tongueWobble, 6, -11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Ridged curved ram horns (zakroucené rohy s vroubky)
+    this.setupPath(ctx, '#FEF08A', COLORS.ink, 2.5);
+    // Left horn
+    ctx.beginPath();
+    ctx.moveTo(-4, -29);
+    ctx.quadraticCurveTo(-18, -44, -7, -48);
+    ctx.quadraticCurveTo(-2, -40, 2, -29);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Right horn
+    ctx.beginPath();
+    ctx.moveTo(4, -29);
+    ctx.quadraticCurveTo(18, -44, 9, -48);
+    ctx.quadraticCurveTo(3, -40, 0, -29);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Fiery glowing eyes (looks back in terror)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -4 : 4, -21, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FEF08A';
+    ctx.beginPath();
+    ctx.arc((glanceBack ? -4 : 4) + 0.5, -21.5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Boss Blacksmith Pitchfork (kované vidle s planoucími hroty)
+    if (isBoss && !panicked) {
+      ctx.save();
+      // Wooden shaft
+      ctx.strokeStyle = COLORS.woodDark;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(14, 20);
       ctx.lineTo(26, -26);
       ctx.stroke();
 
-      this.setupPath(ctx, COLORS.mustard, COLORS.ink, 2);
+      // Forged iron base
+      this.setupPath(ctx, '#3F3F46', COLORS.ink, 2.5);
       ctx.beginPath();
       ctx.moveTo(20, -26);
       ctx.lineTo(32, -26);
-      ctx.lineTo(32, -38);
       ctx.lineTo(26, -30);
-      ctx.lineTo(20, -38);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+
+      // 3 Glowing hot iron tines (žhavé hroty)
+      ctx.strokeStyle = '#F97316';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      // Center tine
+      ctx.moveTo(26, -30);
+      ctx.lineTo(28, -44);
+      // Left tine
+      ctx.moveTo(21, -26);
+      ctx.lineTo(19, -40);
+      // Right tine
+      ctx.moveTo(31, -26);
+      ctx.lineTo(35, -40);
+      ctx.stroke();
+
+      // Embers floating off the fork tines
+      for (let i = 0; i < 3; i++) {
+        const emberAng = time * 8 + i * 2;
+        ctx.fillStyle = '#EF4444';
+        ctx.beginPath();
+        ctx.arc(26 + Math.cos(emberAng) * 8, -38 + Math.sin(emberAng) * 6, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     ctx.restore();
@@ -1837,108 +2503,246 @@ export const Lada = {
 
   drawHejkal(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const scale = 2.4;
-    const bob = Math.sin(time * 6) * 3;
-    const legSwing = Math.sin(time * 8) * 10;
+    const scale = 2.5;
+    const runSpeed = panicked ? 18 : 6;
+    const bob = Math.sin(time * runSpeed) * (panicked ? 5 : 3.5);
+    const legSwing = Math.sin(time * (panicked ? 20 : 7)) * 12;
+    const rustle = Math.sin(time * (panicked ? 20 : 10)) * 6;
 
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(dir * scale, scale);
-    if (panicked) ctx.rotate(Math.PI / 6);
+    if (panicked) {
+      ctx.rotate(0.10);
+      this.drawRunDust(ctx, -12, 32, time);
+      this.drawPanicDrops(ctx, 4, -30, time);
+    }
 
-    ctx.shadowColor = COLORS.pineGreen;
-    ctx.shadowBlur = 18;
+    // Deep forest ambient moss-green shadow
+    ctx.save();
+    ctx.shadowColor = '#15803D';
+    ctx.shadowBlur = 24;
 
-    // Tree-trunk legs
-    this.drawLimb(ctx, -8, 8, -legSwing - 4, 25, '#3D2A1D', 8);
-    this.drawLimb(ctx, 8, 8, legSwing + 4, 25, '#3D2A1D', 8);
+    // Gnarly tree-trunk root legs (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.2;
+      const leg1 = this.getRunLegCycle(legPhase, -9, 8, 22);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 9, 8, 22);
+      this.drawBentLimb(ctx, -9, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#3E2723', 8.5);
+      this.drawBentLimb(ctx, 9, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#3E2723', 8.5);
+    } else {
+      this.drawLimb(ctx, -9, 8, -legSwing, 26, '#3E2723', 8.5);
+      this.drawLimb(ctx, 9, 8, legSwing, 26, '#3E2723', 8.5);
+    }
 
-    // Mossy trunk body
-    this.setupPath(ctx, '#2D4428', COLORS.ink, 3.5);
+    // Massive mossy oak trunk torso with deep bark fissures
+    this.setupPath(ctx, '#2E4C23', COLORS.ink, 3.8);
     ctx.beginPath();
-    ctx.ellipse(0, 0, 18, 20, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 20, 23, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Bark club in hand
-    ctx.strokeStyle = '#3D2210';
-    ctx.lineWidth = 4.5;
+    // Bark crevices & texture lines (vrásčitá kůra)
+    ctx.strokeStyle = '#1E1B18';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(14, 12);
-    ctx.lineTo(28, -26);
+    ctx.moveTo(-10, -10);
+    ctx.lineTo(-6, 8);
+    ctx.moveTo(4, -8);
+    ctx.lineTo(8, 12);
+    ctx.moveTo(-2, -14);
+    ctx.lineTo(2, 6);
     ctx.stroke();
 
-    // Antlers / Branches
-    this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2.5);
+    // Hanging Spanish moss & lichen beard (plnovous z lišejníku)
+    this.setupPath(ctx, '#4D7C0F', COLORS.ink, 2.2);
     ctx.beginPath();
-    ctx.moveTo(-4, -32);
-    ctx.lineTo(-12, -46);
-    ctx.lineTo(-20, -42);
-    ctx.moveTo(-12, -46);
-    ctx.lineTo(-8, -52);
+    ctx.moveTo(-12, -8);
+    ctx.quadraticCurveTo(-16, 12, -8 + rustle, 20);
+    ctx.lineTo(0, 16);
+    ctx.quadraticCurveTo(8 + rustle, 18, 12, -8);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
 
+    // Massive knobby wooden club (carried over back in retreat when panicked)
+    ctx.save();
+    ctx.strokeStyle = '#422006';
+    ctx.lineWidth = 5.5;
     ctx.beginPath();
-    ctx.moveTo(4, -32);
-    ctx.lineTo(12, -46);
-    ctx.lineTo(20, -42);
-    ctx.moveTo(12, -46);
-    ctx.lineTo(8, -52);
+    if (panicked) {
+      ctx.moveTo(10, 10);
+      ctx.lineTo(-24, -30);
+    } else {
+      ctx.moveTo(14, 14);
+      ctx.lineTo(30, -28);
+    }
+    ctx.stroke();
+    // Iron spike studs on club
+    ctx.fillStyle = '#71717A';
+    ctx.beginPath();
+    if (panicked) {
+      ctx.arc(-22, -28, 2.2, 0, Math.PI * 2);
+      ctx.arc(-18, -22, 2.2, 0, Math.PI * 2);
+    } else {
+      ctx.arc(28, -26, 2.2, 0, Math.PI * 2);
+      ctx.arc(25, -20, 2.2, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+
+    // Ancient wooden head with wide roaring maw
+    this.setupPath(ctx, '#3E2723', COLORS.ink, 3.2);
+    ctx.beginPath();
+    ctx.arc(0, -20, 14, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
 
+    // Open roaring mouth emitting acoustic tremor rings (zahejkání)
+    ctx.fillStyle = '#14532D';
+    ctx.beginPath();
+    ctx.ellipse(5, -16, panicked ? 6 : 5, panicked ? 6 : 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Branching oak antlers with rustling autumn leaves (dubové paroží s listím)
+    this.setupPath(ctx, '#27170E', COLORS.ink, 2.8);
+    // Left branch
+    ctx.beginPath();
+    ctx.moveTo(-5, -32);
+    ctx.lineTo(-14, -46);
+    ctx.lineTo(-24, -43);
+    ctx.moveTo(-14, -46);
+    ctx.lineTo(-11, -54);
+    ctx.stroke();
+    // Right branch
+    ctx.beginPath();
+    ctx.moveTo(5, -32);
+    ctx.lineTo(14, -46);
+    ctx.lineTo(24, -43);
+    ctx.moveTo(14, -46);
+    ctx.lineTo(11, -54);
+    ctx.stroke();
+
+    // Sprouting green and golden oak leaves on branches
+    ctx.fillStyle = '#EAB308';
+    ctx.beginPath();
+    ctx.ellipse(-22, -43, 4, 2.5, 0.4, 0, Math.PI * 2);
+    ctx.ellipse(22, -43, 4, 2.5, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#16A34A';
+    ctx.beginPath();
+    ctx.ellipse(-10, -54, 4, 2.5, 0.2, 0, Math.PI * 2);
+    ctx.ellipse(10, -54, 4, 2.5, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing ancient timberland eyes
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#4ADE80';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -5 : 5, -22, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
     ctx.restore();
   },
 
   drawObr(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;
-    const scale = 2.8;
-    const bob = Math.sin(time * 4) * 3;
+    const scale = 2.9;
+    const runSpeed = panicked ? 16 : 4;
+    const bob = Math.sin(time * runSpeed) * (panicked ? 4 : 3);
+    const legSwing = Math.sin(time * (panicked ? 16 : 5)) * 8;
 
     ctx.save();
     ctx.translate(x, y + bob);
     ctx.scale(dir * scale, scale);
-    if (panicked) ctx.rotate(Math.PI / 8);
+    if (panicked) {
+      ctx.rotate(0.08);
+      this.drawRunDust(ctx, -14, 34, time);
+      this.drawPanicDrops(ctx, 6, -34, time);
+    }
 
-    // Massive granite body
-    this.setupPath(ctx, COLORS.grey, COLORS.ink, 4);
+    // Heavy earth tremor shadow
+    ctx.save();
+    ctx.shadowColor = '#D97706';
+    ctx.shadowBlur = 20;
+
+    // Colossal stone pillar legs (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 2.8;
+      const leg1 = this.getRunLegCycle(legPhase, -10, 8, 24);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 10, 8, 24);
+      this.drawBentLimb(ctx, -10, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#52525B', 10);
+      this.drawBentLimb(ctx, 10, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#52525B', 10);
+    } else {
+      this.drawLimb(ctx, -10, 8, -legSwing, 28, '#52525B', 10);
+      this.drawLimb(ctx, 10, 8, legSwing, 28, '#52525B', 10);
+    }
+
+    // Massive granite river-boulder torso
+    this.setupPath(ctx, '#71717A', COLORS.ink, 4);
     ctx.beginPath();
-    ctx.ellipse(0, 0, 22, 24, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 24, 26, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Cracks in stone
+    // Giant stone toddler arms flailing overhead in terror
+    if (panicked) {
+      const armWave = Math.sin(time * 20) * 6;
+      this.drawBentLimb(ctx, -18, -4, -26, -20 + armWave, -28, -36 + armWave, '#52525B', 8);
+      this.drawBentLimb(ctx, 18, -4, 26, -20 - armWave, 28, -36 - armWave, '#52525B', 8);
+    }
+
+    // Chiseled Slavic earth runes on chest (svítící prastaré runy)
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-8, -4);
+    ctx.lineTo(0, 4);
+    ctx.lineTo(8, -4);
+    ctx.moveTo(0, 4);
+    ctx.lineTo(0, 14);
+    ctx.stroke();
+
+    // Alpine pine seedling and river moss on broad shoulders
+    this.setupPath(ctx, '#15803D', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(-16, -14, 8, 0, Math.PI * 2);
+    ctx.arc(16, -14, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Little spruce tree on left shoulder
+    ctx.fillStyle = '#166534';
+    ctx.beginPath();
+    ctx.moveTo(-16, -26);
+    ctx.lineTo(-20, -18);
+    ctx.lineTo(-12, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    // Giant carved stone head with boulder brow
+    this.setupPath(ctx, '#52525B', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.arc(0, -23, 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Heavy craggy stone brow ridge
     ctx.strokeStyle = COLORS.ink;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(-10, -5);
-    ctx.lineTo(4, 8);
-    ctx.lineTo(-2, 16);
+    ctx.moveTo(-12, -26);
+    ctx.lineTo(12, -26);
     ctx.stroke();
 
-    // Moss on shoulders
-    this.setupPath(ctx, COLORS.leafGreen, COLORS.ink, 2);
+    // Glowing amber crystal rune eye
+    ctx.fillStyle = '#F59E0B';
     ctx.beginPath();
-    ctx.arc(-14, -14, 8, 0, Math.PI * 2);
-    ctx.arc(14, -14, 8, 0, Math.PI * 2);
+    ctx.arc(6, -23, 3.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
 
-    // Head
-    this.setupPath(ctx, COLORS.stoneGrey, COLORS.ink, 3);
-    ctx.beginPath();
-    ctx.arc(0, -22, 14, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // Glowing rune eyes
-    ctx.fillStyle = COLORS.mustard;
-    ctx.shadowColor = COLORS.mustard;
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(5, -23, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
+    ctx.restore();
     ctx.restore();
   },
 
@@ -1950,42 +2754,546 @@ export const Lada = {
     this.drawRarach(ctx, x, y, time, vx, panicked);
   },
   drawZaba(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    const hop = Math.abs(Math.sin(time * 10)) * 4;
+    const hop = Math.abs(Math.sin(time * (panicked ? 20 : 10))) * (panicked ? 9 : 4);
+    const dir = vx < 0 ? -1 : 1;
     ctx.save();
     ctx.translate(x, y - hop);
-    ctx.scale(vx < 0 ? -1 : 1, 1);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.14);
+      this.drawRunDust(ctx, -8, 12, time);
+      this.drawPanicDrops(ctx, 4, -10, time);
+    }
+
+    // Frog legs kicking and tucking with multi-frame cycle
+    if (panicked) {
+      const legPhase = time * 3.5;
+      const leg1 = this.getRunLegCycle(legPhase, -4, 4, 14);
+      const leg2 = this.getRunLegCycle(legPhase + 0.4, 4, 4, 14);
+      this.drawBentLimb(ctx, -4, 4, leg1.kx - 4, leg1.ky - 2, leg1.fx, leg1.fy, COLORS.green, 3);
+      this.drawBentLimb(ctx, 4, 4, leg2.kx - 4, leg2.ky - 2, leg2.fx, leg2.fy, COLORS.green, 3);
+    } else {
+      this.drawBentLimb(ctx, -6, 2, -10, 8, -6, 12, COLORS.green, 3);
+      this.drawBentLimb(ctx, 6, 2, 2, 8, 6, 12, COLORS.green, 3);
+    }
+
     this.setupPath(ctx, COLORS.green, COLORS.ink, 2);
     ctx.beginPath();
     ctx.ellipse(0, 2, 12, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // Eyes with terror pupils when panicked
     ctx.beginPath();
-    ctx.ellipse(-9, -8, 4, 4, 0, 0, Math.PI * 2);
-    ctx.ellipse(9, -8, 4, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(-8, -7, 4, 4, 0, 0, Math.PI * 2);
+    ctx.ellipse(8, -7, 4, 4, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.arc(glanceBack ? -10 : -7, -7, panicked ? 1.5 : 2, 0, Math.PI * 2);
+    ctx.arc(glanceBack ? 6 : 9, -7, panicked ? 1.5 : 2, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
   },
   drawZmrzlik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     this.drawRarach(ctx, x, y, time, vx, panicked);
   },
   drawSkodnik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawRarach(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const runSpeed = panicked ? 26 : 16;
+    const bob = Math.abs(Math.sin(time * runSpeed)) * 4;
+    const tailSway = Math.sin(time * 20) * (panicked ? 14 : 8);
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -10, 16, time);
+      this.drawPanicDrops(ctx, 4, -16, time);
+    }
+
+    // Running little paws
+    if (panicked) {
+      const pPhase = time * 4.2;
+      const leg1 = this.getRunLegCycle(pPhase, -4, 6, 10);
+      const leg2 = this.getRunLegCycle(pPhase + 0.5, 4, 6, 10);
+      this.drawBentLimb(ctx, -4, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#C2410C', 2.5);
+      this.drawBentLimb(ctx, 4, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#C2410C', 2.5);
+    }
+
+    // Fluffy squirrel tail streaming behind in speed
+    this.setupPath(ctx, '#C2410C', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.moveTo(-8, 2);
+    const tailEndX = panicked ? -26 : -14;
+    const tailEndY = panicked ? -10 + tailSway : -26 + tailSway;
+    ctx.quadraticCurveTo(-22, -12 + tailSway, tailEndX, tailEndY);
+    ctx.quadraticCurveTo(-8, -20, -6, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Red-brown squirrel body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 11, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // White belly
+    ctx.fillStyle = '#FFEDD5';
+    ctx.beginPath();
+    ctx.ellipse(3, 2, 5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head with pointed tufted ears
+    this.setupPath(ctx, '#C2410C', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(6, -12, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Ear tufts (pinned back when running)
+    ctx.beginPath();
+    ctx.moveTo(panicked ? 2 : 5, -18);
+    ctx.lineTo(panicked ? 4 : 8, -25);
+    ctx.lineTo(panicked ? 8 : 11, -17);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Dropping or clutching spruce cone
+    if (!panicked) {
+      this.setupPath(ctx, '#78350F', COLORS.ink, 1.8);
+      ctx.beginPath();
+      ctx.ellipse(12, -4, 4, 6, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Shiny black bead eye (looks back in terror)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? 2 : 8, -13, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
+
   drawMysak(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawZaba(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const runSpeed = panicked ? 28 : 16;
+    const bob = Math.abs(Math.sin(time * runSpeed)) * 3;
+    const tailWiggle = Math.sin(time * 25) * (panicked ? 12 : 8);
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 12, time);
+      this.drawPanicDrops(ctx, 4, -10, time);
+    }
+
+    // Running little mouse feet
+    if (panicked) {
+      const pPhase = time * 4.5;
+      const leg1 = this.getRunLegCycle(pPhase, -4, 4, 8);
+      const leg2 = this.getRunLegCycle(pPhase + 0.5, 4, 4, 8);
+      this.drawBentLimb(ctx, -4, 4, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#F472B6', 2);
+      this.drawBentLimb(ctx, 4, 4, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#F472B6', 2);
+    }
+
+    // Long pink curved mouse tail streaming behind
+    ctx.strokeStyle = '#F472B6';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-10, 4);
+    ctx.quadraticCurveTo(-18, tailWiggle, panicked ? -30 : -24, -2 + tailWiggle);
+    ctx.stroke();
+
+    // Plump grey mouse body
+    this.setupPath(ctx, '#94A3B8', COLORS.ink, 2.4);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 13, 9, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Snout and head
+    ctx.beginPath();
+    ctx.ellipse(8, -4, 8, 6, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Round ears with pink inside (pinned back in sprint)
+    this.setupPath(ctx, '#F472B6', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(panicked ? 2 : 4, -11, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Beady black eye & pink nose (looks back in terror)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? 4 : 10, -5, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#F472B6';
+    ctx.beginPath();
+    ctx.arc(15, -4, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
+
   drawSkeletonScythe(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawSkeleton(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 22 : 11;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 25, time);
+      this.drawPanicDrops(ctx, 4, -28, time);
+    }
+
+    // Bare skeletal legs (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 6, 20);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 6, 20);
+      this.drawBentLimb(ctx, -5, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, COLORS.bone, 4);
+      this.drawBentLimb(ctx, 5, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, COLORS.bone, 4);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 14;
+      this.drawLimb(ctx, -5, 6, -legSwing, 24, COLORS.bone, 4);
+      this.drawLimb(ctx, 5, 6, legSwing, 24, COLORS.bone, 4);
+    }
+
+    // Ragged dark burlap shroud (potrhaný rubáš)
+    this.setupPath(ctx, '#334155', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.moveTo(-10, -12);
+    ctx.lineTo(-15, 18);
+    ctx.lineTo(15, 18);
+    ctx.lineTo(10, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Visible ribcage through tears
+    this.setupPath(ctx, COLORS.bone, COLORS.ink, 2);
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-6, -6 + i * 5);
+      ctx.lineTo(6, -6 + i * 5);
+      ctx.stroke();
+    }
+
+    // Skeletal arms: in panic, one arm waves frantically overhead, other drags scythe behind
+    if (panicked) {
+      const armShudder = Math.sin(time * 30) * 4;
+      this.drawBentLimb(ctx, -6, -10, -14, -22 + armShudder, -18, -32 + armShudder, COLORS.bone, 3.5);
+    }
+
+    // Skull with dark eye sockets
+    this.setupPath(ctx, COLORS.bone, COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.arc(0, -22, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Dropping jaw when panicked
+    ctx.beginPath();
+    ctx.rect(-5, panicked ? -12 : -14, 10, panicked ? 7 : 5);
+    ctx.fill();
+    ctx.stroke();
+
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -3 : 3, -23, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Scythe: carried menacingly or dragged behind on ground in panic retreat
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    if (panicked) {
+      ctx.moveTo(8, 4);
+      ctx.lineTo(-24, 22);
+    } else {
+      ctx.moveTo(10, 16);
+      ctx.lineTo(18, -28);
+    }
+    ctx.stroke();
+
+    // Curved scythe blade
+    this.setupPath(ctx, '#94A3B8', COLORS.ink, 2.2);
+    ctx.beginPath();
+    if (panicked) {
+      ctx.moveTo(-24, 22);
+      ctx.quadraticCurveTo(-40, 26, -38, 14);
+      ctx.quadraticCurveTo(-30, 20, -24, 22);
+    } else {
+      ctx.moveTo(18, -28);
+      ctx.quadraticCurveTo(34, -36, 32, -48);
+      ctx.quadraticCurveTo(24, -36, 18, -28);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
   },
+
   drawUmrlec(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawSkeleton(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 20 : 8;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 2.5;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.25, 1.25);
+    if (panicked) {
+      ctx.rotate(0.10);
+      this.drawRunDust(ctx, -10, 26, time);
+      this.drawPanicDrops(ctx, 4, -26, time);
+    }
+
+    // Heavy dragging legs (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.4;
+      const leg1 = this.getRunLegCycle(legPhase, -6, 6, 19);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 6, 6, 19);
+      this.drawBentLimb(ctx, -6, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#CBD5E1', 5);
+      this.drawBentLimb(ctx, 6, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#CBD5E1', 5);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 8;
+      this.drawLimb(ctx, -6, 6, -legSwing, 22, '#CBD5E1', 5);
+      this.drawLimb(ctx, 6, 6, legSwing, 22, '#CBD5E1', 5);
+    }
+
+    // Burial shroud wrapped around heavy corpse (hrobový rubáš)
+    this.setupPath(ctx, '#E2E8F0', COLORS.ink, 3.2);
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 17, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Flailing swollen wrapped arms in panic
+    if (panicked) {
+      const armWave = Math.sin(time * 24) * 6;
+      this.drawBentLimb(ctx, -10, -4, -18, -18 + armWave, -22, -28 + armWave, '#CBD5E1', 5);
+      this.drawBentLimb(ctx, 10, -4, 18, -18 - armWave, 22, -28 - armWave, '#CBD5E1', 5);
+    }
+
+    // Binding funerary ribbons (obvazy a stuhy streaming behind)
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-14, -6);
+    ctx.lineTo(panicked ? -26 : 14, 2);
+    ctx.moveTo(-15, 6);
+    ctx.lineTo(panicked ? -28 : 13, 14);
+    ctx.stroke();
+
+    // Bloated head with blank dead eyes
+    this.setupPath(ctx, '#CBD5E1', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.arc(0, -20, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Hollow milky eyes (looks back in panic)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -4 : 4, -21, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.restore();
   },
+
   drawPisar(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawSkeleton(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 24 : 12;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.1, 1.1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 25, time);
+      this.drawPanicDrops(ctx, 4, -30, time);
+    }
+
+    // Legs in black stockings (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 6, 18);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 6, 18);
+      this.drawBentLimb(ctx, -5, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#0F172A', 4);
+      this.drawBentLimb(ctx, 5, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#0F172A', 4);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 12;
+      this.drawLimb(ctx, -5, 6, -legSwing, 22, '#0F172A', 4);
+      this.drawLimb(ctx, 5, 6, legSwing, 22, '#0F172A', 4);
+    }
+
+    // Ink-stained scribe coat (písařský frak se skvrnami od inkoustu)
+    this.setupPath(ctx, '#1E293B', COLORS.ink, 2.8);
+    ctx.beginPath();
+    ctx.moveTo(-11, -8);
+    ctx.lineTo(panicked ? -22 : -14, 18);
+    ctx.lineTo(14, 18);
+    ctx.lineTo(11, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Ink bottle at belt (dripping ink when running)
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(8, 6, 6, 8);
+    if (panicked) {
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(12 + Math.sin(time * 20) * 4, 18 + ((time * 15) % 10), 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Arms: clutching powdered wig so it doesn't fly off!
+    if (panicked) {
+      this.drawBentLimb(ctx, -8, -6, -14, -20, -4, -32, '#1E293B', 4);
+      // Other arm flailing with quill pen
+      const quillSwing = Math.sin(time * 28) * 8;
+      this.drawLimb(ctx, 8, -6, 18, 10 + quillSwing, '#1E293B', 4);
+    }
+
+    // Skeletal head with powdered wig (pudrovaná paruka)
+    this.setupPath(ctx, '#F1F5F9', COLORS.ink, 2.2);
+    ctx.beginPath();
+    ctx.arc(-2, -23, 11, Math.PI * 0.7, Math.PI * 2.3);
+    ctx.fill();
+    ctx.stroke();
+
+    // Skull face
+    this.setupPath(ctx, COLORS.bone, COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(2, -20, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Quill pen in hand (husí brko k psaní)
+    if (!panicked) {
+      ctx.save();
+      ctx.translate(10, 2);
+      ctx.rotate(Math.sin(time * 8) * 0.4);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(14, -14);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
   },
+
   drawHrobnik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawSkeleton(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 22 : 10;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.2, 1.2);
+    if (panicked) {
+      ctx.rotate(0.11);
+      this.drawRunDust(ctx, -8, 25, time);
+      this.drawPanicDrops(ctx, 4, -30, time);
+    }
+
+    // Mud-caked boots (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -6, 6, 18);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 6, 6, 18);
+      this.drawBentLimb(ctx, -6, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#451A03', 5.5);
+      this.drawBentLimb(ctx, 6, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#451A03', 5.5);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 10;
+      this.drawLimb(ctx, -6, 6, -legSwing, 22, '#451A03', 5.5);
+      this.drawLimb(ctx, 6, 6, legSwing, 22, '#451A03', 5.5);
+    }
+
+    // Hunched mud-stained topcoat
+    this.setupPath(ctx, '#78350F', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.moveTo(-12, -8);
+    ctx.lineTo(panicked ? -22 : -16, 18);
+    ctx.lineTo(14, 18);
+    ctx.lineTo(10, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Arms: holding hat brim and carrying shovel in retreat
+    if (panicked) {
+      this.drawBentLimb(ctx, -8, -6, -14, -20, -4, -30, '#78350F', 5);
+      this.drawLimb(ctx, 8, -6, -16, 12, '#78350F', 5);
+    }
+
+    // Weathered head with clay streaks
+    this.setupPath(ctx, '#D6C7B2', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.arc(0, -18, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Battered gravedigger's cylinder hat (otlučený cylindr)
+    this.setupPath(ctx, '#1C1917', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.rect(-10, -28, 20, 4); // Brim
+    ctx.rect(-6, -38, 12, 10); // Crown
+    ctx.fill();
+    ctx.stroke();
+
+    // Iron spade / shovel (carried over back in panic retreat)
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    if (panicked) {
+      ctx.moveTo(4, 4);
+      ctx.lineTo(-24, -18);
+    } else {
+      ctx.moveTo(8, 16);
+      ctx.lineTo(20, -20);
+    }
+    ctx.stroke();
+    // Iron spade blade
+    this.setupPath(ctx, '#71717A', COLORS.ink, 2);
+    ctx.beginPath();
+    if (panicked) {
+      ctx.rect(-30, -24, 12, 10);
+    } else {
+      ctx.rect(14, -28, 12, 10);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
   },
   drawHromotluk(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     this.drawBubak(ctx, x, y, time, vx, panicked);
@@ -1994,29 +3302,225 @@ export const Lada = {
     this.drawBubak(ctx, x, y, time, vx, panicked);
   },
   drawCernyPes(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
+    const dir = vx < 0 ? -1 : 1;
+    const runSpeed = panicked ? 28 : 18;
+    const bob = Math.abs(Math.sin(time * runSpeed)) * 4;
+
     ctx.save();
-    ctx.translate(x, y);
-    ctx.scale(vx < 0 ? -1 : 1, 1);
-    this.setupPath(ctx, '#1A1817', COLORS.ink, 3);
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.25, 1.25);
+    if (panicked) {
+      ctx.rotate(0.10);
+      this.drawRunDust(ctx, -14, 20, time);
+      this.drawPanicDrops(ctx, 10, -18, time);
+    }
+
+    // Black dog legs running fast (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const pPhase = time * 4.2;
+      const leg1 = this.getRunLegCycle(pPhase, -9, 4, 15);
+      const leg2 = this.getRunLegCycle(pPhase + 0.45, 9, 4, 15);
+      this.drawBentLimb(ctx, -9, 4, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#18181B', 4.5);
+      this.drawBentLimb(ctx, 9, 4, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#18181B', 4.5);
+    } else {
+      const legSwing = Math.sin(time * runSpeed) * 15;
+      this.drawLimb(ctx, -9, 4, -legSwing, 18, '#18181B', 4.5);
+      this.drawLimb(ctx, 9, 4, legSwing, 18, '#18181B', 4.5);
+    }
+
+    // Sleek black body with raised hackles
+    this.setupPath(ctx, '#18181B', COLORS.ink, 3);
     ctx.beginPath();
-    ctx.ellipse(0, 0, 16, 11, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 18, 12, -0.15, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    // Glowing red eyes
-    ctx.fillStyle = COLORS.red;
+
+    // Black bushy tail (streaming straight behind in high-speed panic)
+    ctx.strokeStyle = '#18181B';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.arc(8, -4, 2.5, 0, Math.PI * 2);
+    ctx.moveTo(-16, -2);
+    if (panicked) {
+      const tailWag = Math.sin(time * 26) * 5;
+      ctx.quadraticCurveTo(-28, -6 + tailWag, -32, -2 + tailWag);
+    } else {
+      ctx.quadraticCurveTo(-26, -14, -20, -20);
+    }
+    ctx.stroke();
+
+    // Snarling wolf/dog head
+    this.setupPath(ctx, '#18181B', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(12, -6, 10, 7, 0.2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
+
+    // Pointed ears (pinned back in sprint)
+    ctx.beginPath();
+    ctx.moveTo(panicked ? 4 : 8, -12);
+    ctx.lineTo(panicked ? 7 : 11, panicked ? -16 : -21);
+    ctx.lineTo(panicked ? 12 : 15, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Fiery glowing red eyes (looks back in terror)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? 6 : 14, -7, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // White fangs & lolling tongue when running
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.moveTo(18, -3);
+    ctx.lineTo(21, 0);
+    ctx.lineTo(19, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    if (panicked) {
+      // Lolling pink tongue in exhaustion/panic
+      ctx.fillStyle = '#F472B6';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(18, 3, 3, 5, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
     ctx.restore();
   },
   drawVodnicek(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawHastrman(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 22 : 12;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.05, 1.05);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -8, 24, time);
+      this.drawPanicDrops(ctx, 4, -28, time);
+    }
+
+    // Red water-boots (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 6, 17);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 6, 17);
+      this.drawBentLimb(ctx, -5, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#DC2626', 4);
+      this.drawBentLimb(ctx, 5, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#DC2626', 4);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 11;
+      this.drawLimb(ctx, -5, 6, -legSwing, 20, '#DC2626', 4);
+      this.drawLimb(ctx, 5, 6, legSwing, 20, '#DC2626', 4);
+    }
+
+    // Green hastrman coat with dripping coattails
+    this.setupPath(ctx, '#16A34A', COLORS.ink, 2.6);
+    ctx.beginPath();
+    ctx.moveTo(-10, -6);
+    ctx.lineTo(panicked ? -22 : -14, 16);
+    ctx.lineTo(14, 16);
+    ctx.lineTo(10, -6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Arms: holding hat in place so wind doesn't blow it away
+    if (panicked) {
+      this.drawBentLimb(ctx, -6, -4, -12, -18, -2, -26, '#16A34A', 3.5);
+    }
+
+    // Dripping water droplets from coat
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(-10, 20 + Math.sin(time * 8) * 3, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Green skin boy face & red cap
+    this.setupPath(ctx, '#86EFAC', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, -16, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Little red hat (červená čepička s pentlí)
+    this.setupPath(ctx, '#DC2626', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, -21, 9, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Eye looking back in panic
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -3 : 3, -16, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
   drawTopivec(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     this.drawHastrman(ctx, x, y, time, vx, panicked);
   },
   drawBlatouch(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawHastrman(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const bob = Math.sin(time * (panicked ? 20 : 8)) * (panicked ? 5 : 4);
+
+    ctx.save();
+    ctx.translate(x, y + bob);
+    ctx.scale(dir, 1);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -6, 20, time);
+      this.drawPanicDrops(ctx, 4, -18, time);
+      // Little leafy scamper legs
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -4, 8, 12);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 4, 8, 12);
+      this.drawBentLimb(ctx, -4, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#65A30D', 3);
+      this.drawBentLimb(ctx, 4, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#65A30D', 3);
+    }
+
+    // Green leaf coat
+    this.setupPath(ctx, '#65A30D', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 11, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Round sprite face
+    this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, -10, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Golden marsh-marigold blossom cap (zlatý květ blatouchu)
+    this.setupPath(ctx, '#FBBF24', COLORS.ink, 2.2);
+    for (let i = 0; i < 5; i++) {
+      const pAng = (i / 5) * Math.PI - Math.PI;
+      const petalWobble = panicked ? Math.sin(time * 24 + i) * 2 : 0;
+      ctx.beginPath();
+      ctx.ellipse(Math.cos(pAng) * 7, -18 + Math.sin(pAng) * 5 + petalWobble, 5, 7, pAng, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Eye looking back in terror
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -3 : 3, -10, panicked ? 2.5 : 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
   drawMrazik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     this.drawMeluzina(ctx, x, y, time, vx, panicked);
@@ -2028,23 +3532,215 @@ export const Lada = {
     this.drawMeluzina(ctx, x, y, time, vx, panicked);
   },
   drawDivozenka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawPolednice(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const danceSpeed = panicked ? 24 : 12;
+    const bob = Math.abs(Math.sin(time * danceSpeed)) * 6;
+    const spinTilt = panicked ? 0.12 : Math.sin(time * 6) * 0.12;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir, 1);
+    ctx.rotate(spinTilt);
+    if (panicked) {
+      this.drawRunDust(ctx, -8, 24, time);
+      this.drawPanicDrops(ctx, 4, -26, time);
+    }
+
+    // Forest motes & swirling green leaf pollen
+    ctx.save();
+    for (let i = 0; i < 4; i++) {
+      const pAng = time * 4 + (i * Math.PI) / 2;
+      const pDist = 20 + Math.sin(time * 5 + i) * 6;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(74, 222, 128, 0.6)' : 'rgba(250, 204, 21, 0.5)';
+      ctx.beginPath();
+      ctx.arc(Math.cos(pAng) * pDist, Math.sin(pAng) * 15, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Bare running feet (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.8;
+      const leg1 = this.getRunLegCycle(legPhase, -5, 8, 18);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 5, 8, 18);
+      this.drawBentLimb(ctx, -5, 8, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#F5D0C5', 3.5);
+      this.drawBentLimb(ctx, 5, 8, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#F5D0C5', 3.5);
+    } else {
+      const legSwing = Math.sin(time * danceSpeed) * 14;
+      this.drawLimb(ctx, -5, 8, -legSwing, 20, '#F5D0C5', 3.5);
+      this.drawLimb(ctx, 5, 8, legSwing, 20, '#F5D0C5', 3.5);
+    }
+
+    // Moss-green swirling fairy dress
+    this.setupPath(ctx, '#2E6930', COLORS.ink, 2.8);
+    ctx.beginPath();
+    ctx.moveTo(-10, -6);
+    ctx.quadraticCurveTo(-18, 8, -18 + Math.sin(time * 10) * 5, 24);
+    ctx.lineTo(-6, 21);
+    ctx.lineTo(0, 25);
+    ctx.lineTo(8, 20);
+    ctx.quadraticCurveTo(18 + Math.sin(time * 10) * 5, 12, 10, -6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Fern apron / floral ribbon
+    ctx.strokeStyle = '#86EFAC';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-6, -2);
+    ctx.lineTo(6, 12);
+    ctx.moveTo(4, -2);
+    ctx.lineTo(-4, 14);
+    ctx.stroke();
+
+    // Arms waving overhead in panic
+    if (panicked) {
+      const armWave = Math.sin(time * 26) * 6;
+      this.drawBentLimb(ctx, -8, -6, -14, -18 + armWave, -18, -28 + armWave, '#FCE7D6', 3);
+      this.drawBentLimb(ctx, 8, -6, 14, -18 - armWave, 18, -28 - armWave, '#FCE7D6', 3);
+    }
+
+    // Head and sweet yet eerie face
+    this.setupPath(ctx, '#FCE7D6', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, -18, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Flowing wild chestnut hair
+    this.setupPath(ctx, '#78350F', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, -20, 11, Math.PI * 0.8, Math.PI * 2.2);
+    ctx.quadraticCurveTo(-14, -8, -16 + Math.sin(time * 8) * 4, 4);
+    ctx.lineTo(-10, 0);
+    ctx.quadraticCurveTo(-6, -10, 0, -12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Flower & fern wreath on head (věnec z lučního kvítí a kapradí)
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(-4, -26, 2.5, 0, Math.PI * 2);
+    ctx.arc(4, -26, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#EF4444';
+    ctx.beginPath();
+    ctx.arc(0, -28, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Emerald captivating eyes (looks back in panic)
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = '#15803D';
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -3 : 3, -18, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
   drawBludicka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    const bob = Math.sin(time * 6) * 6;
+    const bob = Math.sin(time * (panicked ? 14 : 6)) * (panicked ? 8 : 6);
     ctx.save();
     ctx.translate(x, y + bob);
-    ctx.shadowColor = COLORS.water;
-    ctx.shadowBlur = 15;
-    ctx.fillStyle = 'rgba(217, 160, 54, 0.9)';
+    ctx.shadowColor = panicked ? '#F97316' : COLORS.water;
+    ctx.shadowBlur = panicked ? 22 : 15;
+    ctx.fillStyle = panicked ? 'rgba(239, 68, 68, 0.95)' : 'rgba(217, 160, 54, 0.9)';
     ctx.beginPath();
-    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.arc(0, 0, panicked ? 9 : 7, 0, Math.PI * 2);
     ctx.fill();
+
+    // Trailing panic spark motes
+    if (panicked) {
+      for (let i = 0; i < 3; i++) {
+        const pt = (time * 5 + i * 0.33) % 1;
+        ctx.fillStyle = '#FDE047';
+        ctx.beginPath();
+        ctx.arc(-12 - pt * 20, Math.sin(time * 10 + i) * 6, 2 - pt, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     ctx.shadowBlur = 0;
     ctx.restore();
   },
   drawDrevorubec(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-    this.drawSkeleton(ctx, x, y, time, vx, panicked);
+    const dir = vx < 0 ? -1 : 1;
+    const walkSpeed = panicked ? 22 : 10;
+    const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+
+    ctx.save();
+    ctx.translate(x, y - bob);
+    ctx.scale(dir * 1.3, 1.3);
+    if (panicked) {
+      ctx.rotate(0.11);
+      this.drawRunDust(ctx, -8, 26, time);
+      this.drawPanicDrops(ctx, 4, -28, time);
+    }
+
+    // Sturdy work boots (multi-frame high knee tuck & kick)
+    if (panicked) {
+      const legPhase = time * 3.6;
+      const leg1 = this.getRunLegCycle(legPhase, -7, 6, 20);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 7, 6, 20);
+      this.drawBentLimb(ctx, -7, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#3E2723', 6);
+      this.drawBentLimb(ctx, 7, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#3E2723', 6);
+    } else {
+      const legSwing = Math.sin(time * walkSpeed) * 11;
+      this.drawLimb(ctx, -7, 6, -legSwing, 23, '#3E2723', 6);
+      this.drawLimb(ctx, 7, 6, legSwing, 23, '#3E2723', 6);
+    }
+
+    // Rustic flannel shirt & vest
+    this.setupPath(ctx, '#B91C1C', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 16, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Head with bushy beard and woodsman cap
+    this.setupPath(ctx, '#D97706', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.arc(0, -20, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Woodsman's broadaxe (carried back in panic retreat)
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    if (panicked) {
+      ctx.moveTo(8, 8);
+      ctx.lineTo(-20, -24);
+    } else {
+      ctx.moveTo(12, 12);
+      ctx.lineTo(24, -26);
+    }
+    ctx.stroke();
+    // Broadaxe head
+    this.setupPath(ctx, '#CBD5E1', COLORS.ink, 2);
+    ctx.beginPath();
+    if (panicked) {
+      ctx.moveTo(-18, -26);
+      ctx.lineTo(-30, -32);
+      ctx.lineTo(-30, -18);
+    } else {
+      ctx.moveTo(22, -28);
+      ctx.lineTo(34, -34);
+      ctx.lineTo(34, -20);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Eye looking back in terror
+    const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(glanceBack ? -4 : 4, -21, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
   drawCertik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     this.drawCert(ctx, x, y, time, vx, panicked, false);
@@ -2077,7 +3773,11 @@ export const Lada = {
     ctx.save();
     ctx.translate(x, y - bob);
     ctx.scale(dir * scale, scale);
-    if (panicked) ctx.rotate(Math.PI / 10);
+    if (panicked) {
+      ctx.rotate(0.12);
+      this.drawRunDust(ctx, -14, 38, time);
+      this.drawPanicDrops(ctx, 6, -34, time);
+    }
 
     // 1. Water foam & ripples around the miller's boots (millrace stream)
     ctx.save();
@@ -2204,15 +3904,28 @@ export const Lada = {
     ctx.fill();
     ctx.restore();
 
-    // 4. Sturdy Miller Legs & Heavy Boots (Pomoučené holínky)
-    this.drawLimb(ctx, -7, 18, -8 - legSwing * 0.45, 36, '#2D1B0F', 9);
-    this.drawLimb(ctx, 7, 18, 8 + legSwing * 0.45, 36, '#2D1B0F', 9);
-    // Flour dusting on boot tips
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.ellipse(-8 - legSwing * 0.45, 36, 5, 3, 0, 0, Math.PI * 2);
-    ctx.ellipse(8 + legSwing * 0.45, 36, 5, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // 4. Sturdy Miller Legs & Heavy Boots (Pomoučené holínky s vícefázovým během)
+    if (panicked) {
+      const legPhase = time * 3.4;
+      const leg1 = this.getRunLegCycle(legPhase, -7, 18, 20);
+      const leg2 = this.getRunLegCycle(legPhase + 0.5, 7, 18, 20);
+      this.drawBentLimb(ctx, -7, 18, leg1.kx, leg1.ky, leg1.fx, leg1.fy, '#2D1B0F', 9);
+      this.drawBentLimb(ctx, 7, 18, leg2.kx, leg2.ky, leg2.fx, leg2.fy, '#2D1B0F', 9);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.ellipse(leg1.fx, leg1.fy, 5, 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(leg2.fx, leg2.fy, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      this.drawLimb(ctx, -7, 18, -8 - legSwing * 0.45, 36, '#2D1B0F', 9);
+      this.drawLimb(ctx, 7, 18, 8 + legSwing * 0.45, 36, '#2D1B0F', 9);
+      // Flour dusting on boot tips
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.ellipse(-8 - legSwing * 0.45, 36, 5, 3, 0, 0, Math.PI * 2);
+      ctx.ellipse(8 + legSwing * 0.45, 36, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // 5. Stout Peasant Torso & Patched Rustic Vest (Pořádné břicho a vesta)
     this.setupPath(ctx, '#5A3418', COLORS.ink, 3.5);
@@ -2310,16 +4023,17 @@ export const Lada = {
 
     // Cursed Eyes
     if (panicked) {
-      // Wide startled eyes
+      // Wide startled eyes glancing backward in panic
+      const glanceBack = Math.sin(time * 3.5) > 0.6;
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(-5, -13, 3.5, 0, Math.PI * 2);
-      ctx.arc(5, -13, 3.5, 0, Math.PI * 2);
+      ctx.arc(glanceBack ? -7 : -3, -13, 4, 0, Math.PI * 2);
+      ctx.arc(glanceBack ? 3 : 7, -13, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = COLORS.ink;
       ctx.beginPath();
-      ctx.arc(-5, -13, 1.5, 0, Math.PI * 2);
-      ctx.arc(5, -13, 1.5, 0, Math.PI * 2);
+      ctx.arc(glanceBack ? -8 : -2, -13, 1.8, 0, Math.PI * 2);
+      ctx.arc(glanceBack ? 2 : 8, -13, 1.8, 0, Math.PI * 2);
       ctx.fill();
     } else if (isEnraged) {
       // Fiery cursed eyes
@@ -2385,6 +4099,16 @@ export const Lada = {
     ctx.arc(-21 + capSway, -25, 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // In panic: arm clutching cap so it doesn't fly off in the rush
+    if (panicked) {
+      this.drawBentLimb(ctx, -10, 4, -18, -14, -10, -26, '#5A3418', 6);
+      this.setupPath(ctx, '#E5B191', COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.arc(-10, -26, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
 
     // 9. Massive Wooden Flour Shovel (Dřevěná mlynářská lopata)
     ctx.save();
@@ -2535,6 +4259,105 @@ export const Lada = {
 
     ctx.restore();
   },
+
+  drawRollingBoulder(ctx: CanvasRenderingContext2D, x: number, y: number, radius = 24, angle = 0) {
+    this.drawShadow(ctx, x, y, radius);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Granite river boulder with rough chiseled shape
+    this.setupPath(ctx, '#71717A', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Cracks & fissures
+    ctx.strokeStyle = '#27272A';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.6, -radius * 0.2);
+    ctx.lineTo(0, radius * 0.3);
+    ctx.lineTo(radius * 0.7, -radius * 0.1);
+    ctx.moveTo(0, radius * 0.3);
+    ctx.lineTo(-radius * 0.2, radius * 0.7);
+    ctx.stroke();
+
+    // Moss patch on boulder
+    ctx.fillStyle = '#15803D';
+    ctx.beginPath();
+    ctx.arc(-radius * 0.35, -radius * 0.35, radius * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stone highlight
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.beginPath();
+    ctx.arc(radius * 0.25, -radius * 0.35, radius * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  },
+
+  drawHellSpark(ctx: CanvasRenderingContext2D, x: number, y: number, radius = 10, time = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.shadowColor = '#EF4444';
+    ctx.shadowBlur = 12;
+
+    // Glowing core
+    this.setupPath(ctx, '#FBBF24', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Inner bright hot center
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Fire tongues radiating
+    ctx.strokeStyle = '#DC2626';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      const fAng = time * 8 + (i * Math.PI) / 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(fAng) * radius * 0.8, Math.sin(fAng) * radius * 0.8);
+      ctx.lineTo(Math.cos(fAng) * (radius + 5), Math.sin(fAng) * (radius + 5));
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  },
+
+  drawWoodShard(ctx: CanvasRenderingContext2D, x: number, y: number, radius = 12, angle = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+
+    // Jagged flying oak branch / pinecone
+    this.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radius * 1.3, radius * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Pine needles / sharp bark splinters
+    ctx.strokeStyle = '#15803D';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.5, -radius * 0.5);
+    ctx.lineTo(-radius * 0.8, -radius * 1.1);
+    ctx.moveTo(radius * 0.2, -radius * 0.4);
+    ctx.lineTo(radius * 0.1, -radius * 1.0);
+    ctx.moveTo(radius * 0.4, radius * 0.4);
+    ctx.lineTo(radius * 0.7, radius * 0.9);
+    ctx.stroke();
+
+    ctx.restore();
+  },
   drawBilaPani(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) { this.drawBludicka(ctx, x, y, time, vx, panicked); },
   drawZbrojnos(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) { this.drawSkeleton(ctx, x, y, time, vx, panicked); },
   drawBezhlavyRytir(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) { this.drawCert(ctx, x, y, time, vx, panicked, true); },
@@ -2627,29 +4450,86 @@ export const Lada = {
     ctx.restore();
   },
 
-  drawBreadRoll(ctx: CanvasRenderingContext2D, x: number, y: number, time: number) {
-    const bob = Math.sin(time * 4) * 3;
-    this.drawShadow(ctx, x, y, 10);
+  drawCzechBuchta(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, angle = 0) {
     ctx.save();
-    ctx.translate(x, y + bob);
+    ctx.translate(x, y);
+    if (angle !== 0) ctx.rotate(angle);
+    ctx.scale(scale, scale);
 
-    this.setupPath(ctx, '#FDE68A', COLORS.ink, 2.5);
+    // Warm soft shadow underneath
+    ctx.fillStyle = 'rgba(38, 23, 14, 0.28)';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 13, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 10, 15, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tender dough base / crumb (pale golden yellow dough)
+    this.setupPath(ctx, '#FDE8B5', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.moveTo(-16, -2);
+    ctx.bezierCurveTo(-18, 5, -14, 11, -8, 12);
+    ctx.bezierCurveTo(4, 13, 12, 10, 16, 6);
+    ctx.bezierCurveTo(18, 0, 16, -6, 12, -9);
+    ctx.bezierCurveTo(4, -11, -6, -9, -16, -2);
+    ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Cuts on pretzel/roll
-    ctx.strokeStyle = '#D97706';
-    ctx.lineWidth = 2;
+    // Golden-brown roasted top crust (rich amber dome)
+    const crustGrad = ctx.createLinearGradient(-10, -12, 12, 8);
+    crustGrad.addColorStop(0, '#A64812');
+    crustGrad.addColorStop(0.3, '#7E340A');
+    crustGrad.addColorStop(0.7, '#C56A1F');
+    crustGrad.addColorStop(1, '#DB872D');
+
+    ctx.fillStyle = crustGrad;
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-6, -3);
-    ctx.lineTo(-2, 3);
-    ctx.moveTo(2, -3);
-    ctx.lineTo(6, 3);
+    ctx.moveTo(-14, -1);
+    ctx.bezierCurveTo(-11, -11, 2, -12, 12, -8);
+    ctx.bezierCurveTo(17, -4, 17, 3, 13, 6);
+    ctx.bezierCurveTo(4, 8, -4, 6, -11, 3);
+    ctx.bezierCurveTo(-14, 2, -14, 0, -14, -1);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
 
+    // Soft torn crumb on left edge (fluffy bread interior where bun was separated)
+    ctx.fillStyle = '#FFF8E7';
+    ctx.beginPath();
+    ctx.moveTo(-15, 0);
+    ctx.bezierCurveTo(-17, 5, -13, 10, -8, 11);
+    ctx.bezierCurveTo(-5, 9, -5, 4, -10, 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Dark plum povidla filling peek inside the torn crumb
+    ctx.fillStyle = '#54162B';
+    ctx.beginPath();
+    ctx.ellipse(-10, 6, 3, 2, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Powdered sugar (moučkový cukr) - fine white dusting particles on the golden top crust
+    ctx.fillStyle = '#FFFFFF';
+    const sugarGranules: [number, number, number][] = [
+      [-6, -6, 0.9], [-4, -8, 1.1], [-1, -7, 1.2], [2, -8, 1.3], [5, -7, 1.1], [8, -5, 1.0],
+      [-8, -4, 0.8], [-5, -4, 1.0], [-2, -5, 1.2], [1, -5, 1.1], [4, -4, 1.2], [7, -3, 0.9], [10, -2, 0.8],
+      [-10, -2, 0.7], [-7, -2, 0.9], [-3, -2, 1.0], [0, -2, 1.1], [3, -2, 1.0], [6, -1, 0.9], [9, 0, 0.7],
+      [-4, 0, 0.8], [-1, 0, 1.0], [2, 1, 0.9], [5, 2, 0.8],
+      [-5, -7, 0.7], [0, -9, 0.8], [4, -8, 0.7], [7, -6, 0.8], [-2, -7, 0.9], [3, -6, 1.0]
+    ];
+    for (const [sx, sy, sr] of sugarGranules) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
+  },
+
+  drawBreadRoll(ctx: CanvasRenderingContext2D, x: number, y: number, time: number) {
+    const bob = Math.sin(time * 4) * 3;
+    this.drawCzechBuchta(ctx, x, y + bob, 1.0, 0);
   },
 
   drawSoulJar(ctx: CanvasRenderingContext2D, x: number, y: number, time: number) {
@@ -2835,6 +4715,12 @@ export const Lada = {
     ctx.quadraticCurveTo(w / 2 + 10, h - 30 - Math.cos(time * 12) * 10, w / 2 + 15, h);
     ctx.fill();
 
+    // Fresh tray of powdered Czech buchty on wooden baker's peel next to the oven
+    this.setupPath(ctx, '#8C5329', COLORS.ink, 2);
+    ctx.fillRect(w / 2 + 35, h - 32, 40, 7);
+    this.drawCzechBuchta(ctx, w / 2 + 45, h - 38, 0.72, -0.04);
+    this.drawCzechBuchta(ctx, w / 2 + 60, h - 39, 0.68, 0.04);
+
     // Rarášek helper
     const rx = w / 4;
     const ry = h / 2 + Math.sin(time * 5) * 10;
@@ -2932,5 +4818,130 @@ export const Lada = {
     }
 
     this.drawSkeleton(ctx, w / 2 + 20, h - 30, time, -1, false);
+  },
+
+  drawHromnickaAura(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    reach: number,
+    time: number,
+    pulseTimer = 0
+  ) {
+    ctx.save();
+    // Organic flickering of candle light
+    const flicker = Math.sin(time * 12) * 3.5 + Math.sin(time * 23) * 2;
+    const r = Math.max(30, reach + flicker);
+
+    // Warm sacred candlelight radial glow
+    const grad = ctx.createRadialGradient(x, y, 10, x, y, r);
+    grad.addColorStop(0, 'rgba(254, 240, 138, 0.30)');
+    grad.addColorStop(0.45, 'rgba(251, 191, 36, 0.16)');
+    grad.addColorStop(0.82, 'rgba(217, 119, 6, 0.06)');
+    grad.addColorStop(1, 'rgba(217, 119, 6, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Subtle folk dashed aura ring
+    ctx.save();
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.38)';
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Sacred pulse wave if firing every 2s
+    if (pulseTimer > 0) {
+      const progress = 1 - pulseTimer / 0.4; // 0 to 1
+      const waveR = reach * (0.3 + progress * 0.7);
+      const alpha = Math.max(0, (1 - progress) * 0.75);
+
+      ctx.save();
+      ctx.strokeStyle = `rgba(254, 240, 138, ${alpha})`;
+      ctx.lineWidth = 4 * (1 - progress * 0.5);
+      ctx.beginPath();
+      ctx.arc(x, y, waveR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Golden cross beams radiating on holy pulse
+      const crossAlpha = Math.max(0, (1 - progress) * 0.5);
+      ctx.strokeStyle = `rgba(253, 224, 71, ${crossAlpha})`;
+      ctx.lineWidth = 2.5;
+      const bLen = reach * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x - bLen, y);
+      ctx.lineTo(x + bLen, y);
+      ctx.moveTo(x, y - bLen);
+      ctx.lineTo(x, y + bLen);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  },
+
+  drawBlessedCandle(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, time = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+
+    // Candle body (white wax with slight folk warmth)
+    this.setupPath(ctx, '#FFFBEB', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.rect(-3.5, -4, 7, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Wax drips
+    ctx.fillStyle = '#FEF3C7';
+    ctx.beginPath();
+    ctx.ellipse(-3.5, 2, 1.5, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(3.5, 4, 1.5, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Black wick
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -4);
+    ctx.lineTo(0, -8);
+    ctx.stroke();
+
+    // Flickering candle flame
+    const flameSway = Math.sin(time * 16) * 1.5;
+    // Outer flame glow
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.45)';
+    ctx.beginPath();
+    ctx.arc(flameSway * 0.5, -14, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outer flame (warm amber)
+    this.setupPath(ctx, '#F59E0B', COLORS.ink, 1.5);
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.quadraticCurveTo(-4, -13, flameSway, -19);
+    ctx.quadraticCurveTo(4, -13, 0, -8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Inner bright yellow flame
+    ctx.fillStyle = '#FEF08A';
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.quadraticCurveTo(-2.5, -12, flameSway * 0.7, -16);
+    ctx.quadraticCurveTo(2.5, -12, 0, -8);
+    ctx.fill();
+
+    // Blue flame base
+    ctx.fillStyle = '#60A5FA';
+    ctx.beginPath();
+    ctx.arc(0, -8, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   },
 };

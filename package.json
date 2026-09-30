@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "generate:music": "node scripts/generate-menu-music.mjs",
     "build": "vite build && node scripts/bundle-standalone.mjs",
     "bundle:standalone": "node scripts/bundle-standalone.mjs",
     "preview": "vite preview",

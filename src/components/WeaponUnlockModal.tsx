@@ -1,6 +1,8 @@
 import React from 'react';
 import { WeaponProgress, WEAPON_UNLOCKS } from '../data/weaponUnlocks';
 import { sound } from '../audio';
+import { GameIcon } from './GameIcon';
+import { CzechBuchtaIcon } from './CzechBuchtaIcon';
 
 interface WeaponUnlockModalProps {
   progress: WeaponProgress | null;
@@ -79,7 +81,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
                 filter: progress.tier === 0 ? 'grayscale(1) brightness(0.4)' : progress.tier === 1 ? 'contrast(150%) brightness(0.6)' : 'none',
               }}
             >
-              {progress.tier === 0 ? '❓' : progress.realIcon}
+              <GameIcon icon={progress.tier === 0 ? '❓' : progress.realIcon} size={progress.id === 'buns' ? 52 : '2.4rem'} />
             </div>
             <div>
               <span
@@ -133,6 +135,35 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
               </div>
               <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#B45309', marginTop: '4px' }}>
                 🔨 Pořadí kovářské dílny: Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Buchta illustration showcase when viewing buns */}
+        {progress.id === 'buns' && (
+          <div
+            style={{
+              background: '#FFFBEB',
+              border: '3px solid #B45309',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              margin: '12px 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              boxShadow: '3px 3px 0 var(--ink)',
+            }}
+          >
+            <div style={{ flexShrink: 0, width: '96px', height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CzechBuchtaIcon size={84} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 900, color: '#78350F', fontSize: '1.08rem' }}>
+                Tradiční česká pečená buchta s povidly
+              </div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#92400E', marginTop: '2px', lineHeight: 1.35 }}>
+                Zlatavá kynutá buchta upečená v pekáči do křupava, poprášená jemným moučkovým cukrem a plněná lahodným švestkovým povidlem.
               </div>
             </div>
           </div>

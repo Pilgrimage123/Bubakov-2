@@ -44,10 +44,17 @@ import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS } from './data/weapons';
 import { ENEMIES } from './data/enemies';
+import {
+  isUnholyEnemy,
+  getEnemyHolyResistance,
+  getHolyDamageMultiplier,
+  getHolyPushMultiplier,
+} from './data/holy';
 import { TROPHIES } from './data/trophies';
 import { Lada } from './render/ladaRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
+import { ControlsModal } from './components/ControlsModal';
 import { VillageView } from './components/VillageView';
 import { TouchControls } from './components/TouchControls';
 import { HunterUnlockModal } from './components/HunterUnlockModal';
@@ -63,6 +70,11 @@ import {
   getActiveUnlockingLevel,
   isLevelFullyUnlocked,
 } from './data/levelUnlocks';
+import { GameIcon } from './components/GameIcon';
+import { CzechBuchtaIcon } from './components/CzechBuchtaIcon';
+import { KrejcarIcon } from './components/KrejcarIcon';
+import { TestModeModal } from './components/TestModeModal';
+import { ResetProgressModal } from './components/ResetProgressModal';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -437,6 +449,12 @@ export default function App() {
             (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
           ),
           completedLevels: parsed.completedLevels || {},
+          unlockedWeapons: {
+            ...(parsed.unlockedWeapons || {}),
+            buns: true,
+            cane: true,
+            hromnicka: true,
+          },
         };
       }
     } catch {}
@@ -454,7 +472,7 @@ export default function App() {
       bestiaryKills: {},
       highestSurviveTime: 0,
       unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { buns: true, cane: true },
+      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
       selectedLevel: 1,
@@ -512,7 +530,11 @@ export default function App() {
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const [isTestModeOpen, setIsTestModeOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
 
   // Touch controls
   const [touchEnabled, setTouchEnabled] = useState(() => {
@@ -551,6 +573,7 @@ export default function App() {
     levelId: 1 as GameLevelId,
     levelTitle: GAME_LEVELS[1].name,
     levelWon: false,
+    isTestMode: false,
   });
 
   const runStatsRef = useRef(runStats);
@@ -616,6 +639,13 @@ export default function App() {
     mlynarStoneTimer: number;
     mlynarWaveTimer: number;
     mlynarStormTimer: number;
+    certStompTimer: number;
+    certChargeTimer: number;
+    spawnTimer: number;
+    hejkalHowlTimer: number;
+    hejkalSmashTimer: number;
+    obrBoulderTimer: number;
+    obrQuakeTimer: number;
     lastStatsSync: number;
   }>({
     player: null,
@@ -655,6 +685,13 @@ export default function App() {
     mlynarStoneTimer: 5,
     mlynarWaveTimer: 11,
     mlynarStormTimer: 16,
+    certStompTimer: 5,
+    certChargeTimer: 8,
+    spawnTimer: 2.5,
+    hejkalHowlTimer: 6,
+    hejkalSmashTimer: 10,
+    obrBoulderTimer: 5,
+    obrQuakeTimer: 9,
     lastStatsSync: 0,
   });
 
@@ -771,8 +808,24 @@ export default function App() {
   const toggleSound = () => {
     const next = sound.toggle();
     setSoundEnabled(next);
+    setMusicEnabled(sound.musicEnabled);
     if (next) sound.coin();
   };
+
+  const toggleMusic = () => {
+    const next = sound.toggleMusic();
+    setMusicEnabled(next);
+    if (next) sound.coin();
+  };
+
+  // Play "Bubáci a hastrmani" polka in main menu & village tavern, smoothly stop during gameplay
+  useEffect(() => {
+    if (gameState === 'menu' || gameState === 'tavern') {
+      sound.playMenuMusic(true);
+    } else {
+      sound.stopMenuMusic(true);
+    }
+  }, [gameState]);
 
   const toggleTouch = () => {
     const next = !touchEnabled;
@@ -791,8 +844,21 @@ export default function App() {
         e.preventDefault();
         triggerUltimate();
       }
-      if ((e.code === 'Escape' || e.code === 'KeyP') && (gameState === 'playing' || gameState === 'paused')) {
+      const isPKey = e.code === 'KeyP' || e.key === 'p' || e.key === 'P';
+      const isEscKey = e.code === 'Escape' || e.key === 'Escape';
+
+      if (isEscKey && isControlsOpen) {
         e.preventDefault();
+        setIsControlsOpen(false);
+        return;
+      }
+
+      if ((isEscKey || isPKey) && (gameState === 'playing' || gameState === 'paused')) {
+        e.preventDefault();
+        if (isControlsOpen) {
+          setIsControlsOpen(false);
+          return;
+        }
         togglePause();
       }
     };
@@ -806,49 +872,57 @@ export default function App() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [gameState, togglePause]);
+  }, [gameState, togglePause, isControlsOpen]);
 
   // Start new run
-  const startGame = (type: CharacterType, targetLevelId?: GameLevelId) => {
+  const startGame = (
+    type: CharacterType,
+    targetLevelId?: GameLevelId,
+    customWeapons?: { id: string; level: number }[],
+    isTestMode = false
+  ) => {
     const chosenLevelId = targetLevelId || selectedLevelId || 1;
     const chosenLevel = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
-    const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
 
-    if (!levelProg.isUnlocked) {
-      sound.hit();
-      setSelectedLevelDetail(levelProg);
-      if (levelProg.isQueued) {
-        setUnlockNotice({
-          title: `🔒 ${levelProg.spoiledName} je v pořadí!`,
-          desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
-        });
-      } else {
-        setUnlockNotice({
-          title: `🔒 ${levelProg.spoiledName} je uzamčena!`,
-          desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
-        });
-      }
-      setTimeout(() => setUnlockNotice(null), 4500);
-      return;
-    }
+    if (!isTestMode) {
+      const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
 
-    const hunterProg = getHunterProgress(type, metaRef.current);
-    if (!hunterProg.isUnlocked) {
-      sound.hit();
-      setSelectedHunterDetail(hunterProg);
-      if (hunterProg.isQueued) {
-        setUnlockNotice({
-          title: `🔒 ${hunterProg.spoiledName} je v pořadí!`,
-          desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
-        });
-      } else {
-        setUnlockNotice({
-          title: `🔒 ${hunterProg.spoiledName} je uzamčen!`,
-          desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
-        });
+      if (!levelProg.isUnlocked) {
+        sound.hit();
+        setSelectedLevelDetail(levelProg);
+        if (levelProg.isQueued) {
+          setUnlockNotice({
+            title: `🔒 ${levelProg.spoiledName} je v pořadí!`,
+            desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
+          });
+        } else {
+          setUnlockNotice({
+            title: `🔒 ${levelProg.spoiledName} je uzamčena!`,
+            desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
+          });
+        }
+        setTimeout(() => setUnlockNotice(null), 4500);
+        return;
       }
-      setTimeout(() => setUnlockNotice(null), 4500);
-      return;
+
+      const hunterProg = getHunterProgress(type, metaRef.current);
+      if (!hunterProg.isUnlocked) {
+        sound.hit();
+        setSelectedHunterDetail(hunterProg);
+        if (hunterProg.isQueued) {
+          setUnlockNotice({
+            title: `🔒 ${hunterProg.spoiledName} je v pořadí!`,
+            desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
+          });
+        } else {
+          setUnlockNotice({
+            title: `🔒 ${hunterProg.spoiledName} je uzamčen!`,
+            desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
+          });
+        }
+        setTimeout(() => setUnlockNotice(null), 4500);
+        return;
+      }
     }
 
     sound.init();
@@ -862,7 +936,9 @@ export default function App() {
       type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
 
     const initialWeapons =
-      type === 'wanderer'
+      customWeapons && customWeapons.length > 0
+        ? customWeapons.map((w) => ({ id: w.id, level: w.level, cd: 0 }))
+        : type === 'wanderer'
         ? [{ id: 'buns', level: 1, cd: 0 }, { id: 'cane', level: 1, cd: 0 }]
         : type === 'shepherd'
         ? [{ id: 'buns', level: 1, cd: 0 }]
@@ -897,7 +973,10 @@ export default function App() {
       herbTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
+      slowTimer: 0,
       hasSoakedCane: false,
+      hromnickaPulseTimer: 0,
+      hromnickaPulseRadius: 0,
       ultCd: 0,
       ultMaxCd: type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
       lastDx: 1,
@@ -959,6 +1038,43 @@ export default function App() {
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
       },
 
+      spawnHromnickaPulse(reach: number, baseDmg: number, level: number) {
+        this.hromnickaPulseTimer = 0.4;
+        this.hromnickaPulseRadius = reach;
+        const enemies = this.getLivingEnemies();
+        for (const e of enemies) {
+          const dist = Math.hypot(e.x - this.x, e.y - this.y);
+          if (dist <= reach + e.radius) {
+            const holyMult = getHolyDamageMultiplier(e);
+            const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
+            const actualDmg = baseDmg * (this.damageMultiplier || 1) * holyMult;
+            const ang = dist > 0.001 ? Math.atan2(e.y - this.y, e.x - this.x) : Math.random() * Math.PI * 2;
+            const pushForce = 145 + level * 25;
+            const kbx = Math.cos(ang) * pushForce * holyPush;
+            const kby = Math.sin(ang) * pushForce * holyPush;
+
+            if (isUnholyEnemy(e)) {
+              engineRef.current.texts.push(new DamageText(e.x, e.y - 45, 'SVATÁ ZKÁZA!', COLORS.mustard, true));
+            }
+
+            e.takeDamage(actualDmg, 'holy', kbx, kby);
+
+            // Sacred golden embers
+            for (let i = 0; i < 4; i++) {
+              engineRef.current.particles.push({
+                x: e.x + (Math.random() - 0.5) * 16,
+                y: e.y + (Math.random() - 0.5) * 16,
+                vx: Math.cos(ang) * (60 + Math.random() * 80),
+                vy: Math.sin(ang) * (60 + Math.random() * 80),
+                life: 0.4,
+                color: i % 2 === 0 ? '#FEF08A' : '#F59E0B',
+                size: 4,
+              });
+            }
+          }
+        }
+      },
+
       draw(ctx: CanvasRenderingContext2D) {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
 
@@ -1000,6 +1116,12 @@ export default function App() {
           Lada.drawGranny(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
         } else {
           Lada.drawWanderer(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+        }
+
+        // Draw blessed candle in hand if Hromnička is equipped
+        if (this.weapons && this.weapons.some((w: any) => w.id === 'hromnicka')) {
+          const flip = this.lastDx >= 0 ? 1 : -1;
+          Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, this.animTime || 0);
         }
       },
     };
@@ -1052,8 +1174,50 @@ export default function App() {
       mlynarStoneTimer: 5,
       mlynarWaveTimer: 11,
       mlynarStormTimer: 16,
+      certStompTimer: 5,
+      certChargeTimer: 8,
+      spawnTimer: chosenLevelId === 1 ? 3.5 : 2.0,
+      hejkalHowlTimer: 6,
+      hejkalSmashTimer: 10,
+      obrBoulderTimer: 5,
+      obrQuakeTimer: 9,
       lastStatsSync: 0,
     };
+
+    // Thematic opening wave right from second 0 tailored for smooth learning curve
+    if (chosenLevelId === 1) {
+      // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        engineRef.current.enemies.push(createEnemyInstance('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
+      }
+    } else if (chosenLevelId === 2) {
+      // Level 2: Hřbitov – 2 kostlivci a černý pes
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.5;
+        engineRef.current.enemies.push(createEnemyInstance('skeleton', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 0.9));
+      }
+      engineRef.current.enemies.push(createEnemyInstance('cerny_pes', player.x + 480, player.y - 100, 0.9));
+    } else if (chosenLevelId === 3) {
+      // Level 3: Ladovská zima – rampouchoví diblíci
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2;
+        engineRef.current.enemies.push(createEnemyInstance('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0));
+      }
+      engineRef.current.enemies.push(createEnemyInstance('vanicka', player.x - 440, player.y - 180, 1.0));
+    } else if (chosenLevelId === 4) {
+      // Level 4: Hamry – lapka a jiskřivec
+      engineRef.current.enemies.push(createEnemyInstance('zbojnik', player.x + 460, player.y, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('jiskrivec', player.x - 460, player.y, 1.0));
+    } else if (chosenLevelId === 5) {
+      // Level 5: Hláska – zbrojnoš a bílá paní
+      engineRef.current.enemies.push(createEnemyInstance('zbrojnos', player.x + 460, player.y + 100, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('bila_pani', player.x - 460, player.y - 100, 1.0));
+    } else if (chosenLevelId === 6) {
+      // Level 6: Dračí sluj – ledový sněhulák a noční můra
+      engineRef.current.enemies.push(createEnemyInstance('snehulak', player.x + 460, player.y, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x - 460, player.y, 1.0));
+    }
 
     setRunStats({
       time: 0,
@@ -1076,9 +1240,49 @@ export default function App() {
       levelId: chosenLevelId,
       levelTitle: chosenLevel.name,
       levelWon: false,
+      isTestMode: isTestMode,
     });
 
+    setIsTestModeOpen(false);
     setGameState('playing');
+  };
+
+  // Reset all meta progression back to initial state (locks everything, resets all upgrades)
+  const handleResetProgress = () => {
+    const defaultMeta: MetaProgression = {
+      krejcary: 0,
+      regenLevel: 0,
+      ovenLevel: 0,
+      scarecrowLevel: 0,
+      millLevel: 0,
+      wallLevel: 0,
+      bakeryLevel: 0,
+      bellLevel: 0,
+      totalSoulsSaved: 0,
+      totalChasnikSaved: 0,
+      season: 'autumn',
+      trophiesClaimed: {},
+      bestiaryKills: {},
+      villageStoryRead: {},
+      highestSurviveTime: 0,
+      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
+      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
+      hunterKillCounts: {},
+      weaponKillCounts: {},
+      selectedLevel: 1,
+      highestLevelUnlocked: 1,
+      completedLevels: {},
+      levelKillCounts: {},
+    };
+    saveMeta(defaultMeta);
+    setSelectedLevelId(1);
+    sound.hit();
+    setIsResetModalOpen(false);
+    setUnlockNotice({
+      title: '🧹 Postup byl úspěšně vymazán',
+      desc: 'Veškerý postup, odemykatelní lovci, úrovně, zbraně i upgrady vesnice byly vráceny na nulu a uzamčeny.',
+    });
+    setTimeout(() => setUnlockNotice(null), 5000);
   };
 
   // Ultimate ability trigger
@@ -1123,14 +1327,16 @@ export default function App() {
       engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'FARNÍ POŽEHNÁNÍ!', '#FDE047', true));
       for (const e of engineRef.current.enemies) {
         if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 650 + e.radius) continue;
-        const unholy = e.category === 'undead' || e.category === 'demons' || e.category === 'bosses';
+        const unholy = isUnholyEnemy(e) || e.isBoss || e.category === 'bosses';
+        const holyMult = getHolyDamageMultiplier(e);
+        const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
         if (!unholy) {
-          e.takeDamage(45 * p.damageMultiplier, 'holy', (e.x - p.x) * 3, (e.y - p.y) * 3);
+          e.takeDamage(45 * p.damageMultiplier * holyMult, 'holy', (e.x - p.x) * 3 * holyPush, (e.y - p.y) * 3 * holyPush);
         } else if (e.isBoss || e.category === 'bosses') {
-          e.takeDamage(e.maxHp * 0.25, 'holy', 0, 0);
+          e.takeDamage(e.maxHp * 0.25 * Math.min(1.5, holyMult), 'holy', 0, 0);
           engineRef.current.texts.push(new DamageText(e.x, e.y - 50, 'SVATÁ ZKÁZA!', '#FDE047', true));
         } else {
-          e.takeDamage(e.hp + 1, 'holy', (e.x - p.x) * 2, (e.y - p.y) * 2);
+          e.takeDamage((e.hp + 1) * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
         }
       }
     } else if (p.type === 'granny') {
@@ -1150,21 +1356,59 @@ export default function App() {
     }
   };
 
-  // Účinek Babiččiny scény: laskavost uklidní a zažene většinu hordy
+  // Účinek Babiččiny scény: laskavost uklidní a zažene hordu
+  // Speciální schopnost Babičky a Barunky: bere se buď jako Food (Chléb se solí) nebo jako Holy (Vlídné slovo)
+  // podle toho, proti čemu má daný bubák menší resist.
   const applyGrannyKindness = () => {
     const eng = engineRef.current;
     const p = eng.player;
     if (!p) return;
     sound.kindChime();
-    eng.texts.push(new DamageText(p.x, p.y - 70, 'VLÍDNÉ SLOVO! ❤', '#F4A6BF', true));
+    eng.texts.push(new DamageText(p.x, p.y - 70, 'CHLÉB SE SOLÍ A VLÍDNÉ SLOVO! ❤', '#FDE047', true));
     for (const e of eng.enemies) {
       if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 1100) continue;
       const bossLike = e.isBoss || e.category === 'bosses';
-      if (!bossLike && Math.random() < 0.75) {
-        e.takeDamage(e.hp + 1, 'magic', 0, 0);
+
+      // Zjištění resistu na Food a Holy
+      const foodResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+      const holyResist = getEnemyHolyResistance(e);
+
+      // Bere se to, proti čemu má bubák MENŠÍ resist
+      const chosenType: 'food' | 'holy' = foodResist <= holyResist ? 'food' : 'holy';
+
+      if (chosenType === 'food') {
+        // FOOD: chléb se solí bubáka nasytí
+        if (!bossLike && Math.random() < 0.75) {
+          // Běžný bubák je nasycen a odchází (pomalý krok, mlsání Ňam, ňam)
+          e.takeDamage(e.hp + 1, 'food', 0, 0);
+        } else {
+          // Boss nebo přeživší začne mlsat chléb a uklidní se
+          const addedSnack = 8.0 * Math.max(0.1, 1 - foodResist);
+          e.snackTimer = (e.snackTimer || 0) + addedSnack;
+          e.calmTimer = bossLike ? 10 : 8;
+          if (bossLike) {
+            e.takeDamage(e.maxHp * 0.25 * Math.max(0.1, 1 - foodResist), 'food', 0, 0);
+          }
+          eng.texts.push(new DamageText(e.x, e.y - 45, 'CHLÉB SE SOLÍ! 🍞', '#D97706', true));
+          sound.snack();
+        }
       } else {
-        e.calmTimer = bossLike ? 10 : 8;
-        eng.texts.push(new DamageText(e.x, e.y - 45, 'UKLIDNĚN', '#F4A6BF', true));
+        // HOLY: vlídné posvěcené slovo zasáhne zlé síly
+        const holyMult = getHolyDamageMultiplier(e);
+        const holyPush = Math.max(0.1, 1 - holyResist);
+        if (!bossLike && Math.random() < 0.75) {
+          e.takeDamage((e.hp + 1) * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
+          eng.texts.push(new DamageText(e.x, e.y - 45, 'SVATÉ SLOVO! ✨', '#FDE047', true));
+        } else {
+          e.calmTimer = bossLike ? 10 : 8;
+          if (bossLike) {
+            e.takeDamage(e.maxHp * 0.25 * holyMult, 'holy', 0, 0);
+            eng.texts.push(new DamageText(e.x, e.y - 50, 'SVATÁ ZKÁZA! ✨', '#FDE047', true));
+          } else {
+            e.takeDamage(45 * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
+            eng.texts.push(new DamageText(e.x, e.y - 45, 'POŽEHNÁNÍ ✨', '#FDE047', true));
+          }
+        }
       }
     }
   };
@@ -1235,8 +1479,8 @@ export default function App() {
       choices.push({
         type: 'modifier',
         id: 'soaked_cane',
-        name: 'Máčená vrbová rákoska',
-        desc: 'Údery rákoskou namáčí nepřátele v rybniční vodě a zpomalují je.',
+        name: 'Mokrý prut',
+        desc: 'Vrbový prut namočený v rybniční vodě. Údery namáčí nepřátele v chladné vodě a výrazně je zpomalují.',
         icon: '💧',
       });
     }
@@ -1308,7 +1552,7 @@ export default function App() {
     sound.cheer();
     engineRef.current.coins += 50;
     engineRef.current.chasniks += 1;
-    engineRef.current.texts.push(new DamageText(x, y - 50, 'CHASNÍK KUBA ZACHRÁNĚN! +50 🪙', COLORS.mustard, true));
+    engineRef.current.texts.push(new DamageText(x, y - 50, 'CHASNÍK KUBA ZACHRÁNĚN! +50 kr.', COLORS.mustard, true));
     setRunStats((s) => ({ ...s, coins: engineRef.current.coins, chasniks: engineRef.current.chasniks }));
 
     const p = engineRef.current.player;
@@ -1475,6 +1719,267 @@ export default function App() {
                 warningBanner: curLvl.finalBoss.warning,
               }));
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
+            }
+
+            // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 1)
+            if (curLvl.id === 1 && engine.finalBossSpawned) {
+              const cert = engine.enemies.find((e) => e.id === 'cert' && !e.isDefeated);
+              if (cert) {
+                const isPhase2 = cert.hp <= cert.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Čertovské rejdy)
+                if (isPhase2 && !cert.enraged) {
+                  cert.enraged = true;
+                  cert.speed = 102;
+                  sound.roar();
+                  engine.texts.push(new DamageText(cert.x, cert.y - 70, '🔥 ČERTOVSKÉ REJDY!', COLORS.red, true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🔥 ČERTOVSKÉ REJDY! ČERT ZUŘÍ A DUPE KOPYTY!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  // Summon 2 mischievous rarášci
+                  for (let i = 0; i < 2; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    engine.enemies.push(createEnemyInstance('rarach', cert.x + Math.cos(ang) * 90, cert.y + Math.sin(ang) * 90, 1.1));
+                  }
+                  // Brimstone smoke and fiery sparks burst
+                  for (let i = 0; i < 26; i++) {
+                    engine.particles.push({
+                      x: cert.x,
+                      y: cert.y,
+                      vx: (Math.random() - 0.5) * 220,
+                      vy: (Math.random() - 0.5) * 220,
+                      life: 0.8,
+                      color: i % 2 === 0 ? '#DC2626' : '#F59E0B',
+                      size: 6,
+                    });
+                  }
+                }
+
+                // 1. Devil's Stomp (Pekelný dupák - ring of spinning hot embers)
+                engine.certStompTimer -= dt;
+                if (engine.certStompTimer <= 0) {
+                  engine.certStompTimer = isPhase2 ? 7.5 : 11.0;
+                  sound.thunder();
+                  engine.texts.push(new DamageText(cert.x, cert.y - 45, 'PEKELNÝ DUPÁK! 💥', COLORS.red, true));
+                  const sparkCount = isPhase2 ? 10 : 8;
+                  for (let i = 0; i < sparkCount; i++) {
+                    const sAng = (i / sparkCount) * Math.PI * 2;
+                    engine.projectiles.push({
+                      x: cert.x,
+                      y: cert.y,
+                      vx: Math.cos(sAng) * 210,
+                      vy: Math.sin(sAng) * 210,
+                      angle: sAng,
+                      speed: 210,
+                      dmg: isPhase2 ? 26 : 20,
+                      radius: 12,
+                      type: 'fire',
+                      visual: 'hell_spark',
+                      life: 3.5,
+                      maxLife: 3.5,
+                      isEnemy: true,
+                      pushback: 30,
+                      statusText: 'UHLÍK! 🔥',
+                      dead: false,
+                    });
+                  }
+                  for (let i = 0; i < 16; i++) {
+                    const pAng = Math.random() * Math.PI * 2;
+                    engine.particles.push({
+                      x: cert.x,
+                      y: cert.y,
+                      vx: Math.cos(pAng) * 150,
+                      vy: Math.sin(pAng) * 150,
+                      life: 0.55,
+                      color: '#F97316',
+                      size: 5,
+                    });
+                  }
+                }
+
+                // 2. Pitchfork Thrust / Hoofed Charge
+                engine.certChargeTimer -= dt;
+                if (engine.certChargeTimer <= 0) {
+                  engine.certChargeTimer = isPhase2 ? 5.5 : 8.0;
+                  const dToP = Math.hypot(player.x - cert.x, player.y - cert.y);
+                  if (dToP < 320 && dToP > 50) {
+                    sound.slash();
+                    const chAng = Math.atan2(player.y - cert.y, player.x - cert.x);
+                    cert.vx = Math.cos(chAng) * (isPhase2 ? 310 : 250);
+                    cert.vy = Math.sin(chAng) * (isPhase2 ? 310 : 250);
+                    engine.texts.push(new DamageText(cert.x, cert.y - 50, 'VÝPAD VIDLEMI! 🔱', COLORS.mustard, true));
+                  }
+                }
+              }
+            }
+
+            // PŮLNOČNÍ HEJKAL BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
+            if (curLvl.id === 2 && engine.finalBossSpawned) {
+              const hejkal = engine.enemies.find((e) => e.id === 'hejkal' && !e.isDefeated);
+              if (hejkal) {
+                const isPhase2 = hejkal.hp <= hejkal.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Probuzení hvozdu)
+                if (isPhase2 && !hejkal.enraged) {
+                  hejkal.enraged = true;
+                  hejkal.speed = 88;
+                  sound.roar();
+                  engine.texts.push(new DamageText(hejkal.x, hejkal.y - 70, '🌲 PROBUZENÍ HVOZDU!', '#16A34A', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🌲 PROBUZENÍ HVOZDU! HEJKAL PŘIVOLÁVÁ LESNÍ ŠELMY!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  // Summon a forest skodnik & cemetery hound
+                  engine.enemies.push(createEnemyInstance('skodnik', hejkal.x + 80, hejkal.y, 1.1));
+                  engine.enemies.push(createEnemyInstance('cerny_pes', hejkal.x - 80, hejkal.y, 1.1));
+                  for (let i = 0; i < 30; i++) {
+                    engine.particles.push({
+                      x: hejkal.x,
+                      y: hejkal.y,
+                      vx: (Math.random() - 0.5) * 200,
+                      vy: (Math.random() - 0.5) * 200,
+                      life: 1.1,
+                      color: i % 2 === 0 ? '#15803D' : '#D97706',
+                      size: 6,
+                    });
+                  }
+                }
+
+                // 1. Sonic Timber Howl (Hromové zahejkání - acoustic gale & flying oak shards)
+                engine.hejkalHowlTimer -= dt;
+                if (engine.hejkalHowlTimer <= 0) {
+                  engine.hejkalHowlTimer = isPhase2 ? 7.5 : 11.0;
+                  sound.roar();
+                  engine.texts.push(new DamageText(hejkal.x, hejkal.y - 50, 'HÉÉÉ-J! 🌲🔊', '#22C55E', true));
+                  // Push player backward from acoustic blast
+                  const pushAng = Math.atan2(player.y - hejkal.y, player.x - hejkal.x);
+                  player.x += Math.cos(pushAng) * 65;
+                  player.y += Math.sin(pushAng) * 65;
+                  // Spray sharp flying oak shards / pinecones in fan
+                  const shardsCount = isPhase2 ? 6 : 4;
+                  const baseAng = Math.atan2(player.y - hejkal.y, player.x - hejkal.x);
+                  for (let i = 0; i < shardsCount; i++) {
+                    const spread = ((i - (shardsCount - 1) / 2) * Math.PI) / 8;
+                    const wAng = baseAng + spread;
+                    engine.projectiles.push({
+                      x: hejkal.x,
+                      y: hejkal.y,
+                      vx: Math.cos(wAng) * 240,
+                      vy: Math.sin(wAng) * 240,
+                      angle: wAng,
+                      speed: 240,
+                      dmg: isPhase2 ? 28 : 22,
+                      radius: 12,
+                      type: 'physical',
+                      visual: 'wood_shard',
+                      life: 3.0,
+                      maxLife: 3.0,
+                      isEnemy: true,
+                      pushback: 35,
+                      statusText: 'VĚTEV! 🪵',
+                      dead: false,
+                    });
+                  }
+                }
+
+                // 2. Heavy club ground smash in close quarters
+                engine.hejkalSmashTimer -= dt;
+                if (engine.hejkalSmashTimer <= 0) {
+                  engine.hejkalSmashTimer = isPhase2 ? 6.0 : 8.5;
+                  const dToP = Math.hypot(player.x - hejkal.x, player.y - hejkal.y);
+                  if (dToP < 190) {
+                    sound.hit();
+                    engine.texts.push(new DamageText(hejkal.x, hejkal.y - 40, 'DUBILKA! 🔨', '#A16207', true));
+                    player.takeDamage(isPhase2 ? 32 : 24, 'physical');
+                    player.x += (Math.random() - 0.5) * 50;
+                    player.y += (Math.random() - 0.5) * 50;
+                  }
+                }
+              }
+            }
+
+            // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 3)
+            if (curLvl.id === 3 && engine.finalBossSpawned) {
+              const obr = engine.enemies.find((e) => e.id === 'obr' && !e.isDefeated);
+              if (obr) {
+                const isPhase2 = obr.hp <= obr.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Pukající žula)
+                if (isPhase2 && !obr.enraged) {
+                  obr.enraged = true;
+                  obr.speed = 64;
+                  sound.roar();
+                  engine.texts.push(new DamageText(obr.x, obr.y - 70, '🗿 PUKAJÍCÍ ŽULA!', '#F59E0B', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🗿 PUKAJÍCÍ ŽULA! SKÁLY SE HROUTÍ A ŽULA PUKÁ!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  for (let i = 0; i < 30; i++) {
+                    engine.particles.push({
+                      x: obr.x,
+                      y: obr.y,
+                      vx: (Math.random() - 0.5) * 190,
+                      vy: (Math.random() - 0.5) * 190,
+                      life: 0.9,
+                      color: i % 2 === 0 ? '#71717A' : '#F59E0B',
+                      size: 7,
+                    });
+                  }
+                }
+
+                // 1. Rolling river boulders (Valící se balvany)
+                engine.obrBoulderTimer -= dt;
+                if (engine.obrBoulderTimer <= 0) {
+                  engine.obrBoulderTimer = isPhase2 ? 5.2 : 8.0;
+                  sound.hit();
+                  engine.texts.push(new DamageText(obr.x, obr.y - 45, 'VALÍCÍ SE BALVAN! 🪨', '#71717A', true));
+                  const bAng = Math.atan2(player.y - obr.y, player.x - obr.x);
+                  const bCount = isPhase2 ? 2 : 1;
+                  for (let i = 0; i < bCount; i++) {
+                    const offset = (i - (bCount - 1) / 2) * 0.35;
+                    engine.projectiles.push({
+                      x: obr.x,
+                      y: obr.y,
+                      vx: Math.cos(bAng + offset) * 190,
+                      vy: Math.sin(bAng + offset) * 190,
+                      angle: bAng + offset,
+                      speed: 190,
+                      dmg: isPhase2 ? 34 : 26,
+                      radius: 22,
+                      type: 'physical',
+                      visual: 'boulder',
+                      life: 4.5,
+                      maxLife: 4.5,
+                      isEnemy: true,
+                      pushback: 50,
+                      statusText: 'BALVAN! 🪨',
+                      dead: false,
+                    });
+                  }
+                }
+
+                // 2. Riverquake Slam (Sázavské zemětřesení)
+                engine.obrQuakeTimer -= dt;
+                if (engine.obrQuakeTimer <= 0) {
+                  engine.obrQuakeTimer = isPhase2 ? 7.0 : 10.0;
+                  sound.thunder();
+                  engine.texts.push(new DamageText(obr.x, obr.y - 50, 'ZEMĚTŘESENÍ! ⚡', '#D97706', true));
+                  const dist = Math.hypot(player.x - obr.x, player.y - obr.y);
+                  if (dist < 260) {
+                    player.takeDamage(isPhase2 ? 28 : 20, 'physical');
+                    player.x += (Math.random() - 0.5) * 70;
+                    player.y += (Math.random() - 0.5) * 70;
+                  }
+                  for (let i = 0; i < 20; i++) {
+                    const qAng = Math.random() * Math.PI * 2;
+                    const qDist = Math.random() * 200;
+                    engine.particles.push({
+                      x: obr.x + Math.cos(qAng) * qDist,
+                      y: obr.y + Math.sin(qAng) * qDist,
+                      vx: 0,
+                      vy: -30,
+                      life: 0.5,
+                      color: '#52525B',
+                      size: 6,
+                    });
+                  }
+                }
+              }
             }
 
             // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
@@ -1665,7 +2170,9 @@ export default function App() {
                 // Burn enemies in blast radius
                 for (const e of engine.enemies) {
                   if (!e.isDefeated && Math.hypot(e.x - strikeX, e.y - strikeY) < 220) {
-                    e.takeDamage(80 * player.damageMultiplier, 'holy', (e.x - strikeX) * 3, (e.y - strikeY) * 3);
+                    const holyMult = getHolyDamageMultiplier(e);
+                    const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
+                    e.takeDamage(80 * player.damageMultiplier * holyMult, 'holy', (e.x - strikeX) * 3 * holyPush, (e.y - strikeY) * 3 * holyPush);
                   }
                 }
 
@@ -1678,25 +2185,67 @@ export default function App() {
               }
             }
 
-            // Regular mob spawn waves from current level's pool
-            const enemyCap = 180;
-            if (engine.enemies.length < enemyCap && Math.random() < 0.35) {
-              const spawnCount = Math.floor(1 + newTime / 30);
-              for (let i = 0; i < spawnCount; i++) {
-                const ang = Math.random() * Math.PI * 2;
-                const dist = 700 + Math.random() * 200;
-                const phaseKey = currentPhase.id as keyof typeof curLvl.spawnPools;
-                const pool = curLvl.spawnPools[phaseKey] || curLvl.spawnPools.noon;
-                const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
+            // Controlled, time-based enemy spawning with gradual progression both within level and across levels
+            engine.spawnTimer -= dt;
+            const curLvlId = (engine.activeLevelId || selectedLevelId || 1) as GameLevelId;
+            const timeProgress = Math.min(1, newTime / 260); // 0 at start -> 1 at 4:20
 
-                engine.enemies.push(
-                  createEnemyInstance(
-                    mobId,
-                    player.x + Math.cos(ang) * dist,
-                    player.y + Math.sin(ang) * dist,
-                    1 + newTime / 90
-                  )
-                );
+            // 1. Max enemy caps scaled by level and elapsed time
+            // Level 1: starts at 10, climbs to 48
+            // Level 6: starts at 36, climbs to 135
+            const baseCapByLevel: Record<number, number> = { 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
+            const maxCapByLevel: Record<number, number> = { 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
+            const minCap = baseCapByLevel[curLvlId] ?? 12;
+            const maxCap = maxCapByLevel[curLvlId] ?? 60;
+            const currentEnemyCap = Math.floor(minCap + (maxCap - minCap) * timeProgress);
+
+            if (engine.spawnTimer <= 0) {
+              // 2. Spawn interval scaled by level and elapsed time
+              // Level 1: 2.2s at noon, gradually speeding up to 0.95s at midnight
+              // Level 6: 1.1s at start, speeding up to 0.38s at midnight
+              const startIntervalByLevel: Record<number, number> = { 1: 2.2, 2: 1.8, 3: 1.5, 4: 1.3, 5: 1.15, 6: 1.0 };
+              const endIntervalByLevel: Record<number, number> = { 1: 0.95, 2: 0.75, 3: 0.60, 4: 0.50, 5: 0.42, 6: 0.36 };
+              const startInt = startIntervalByLevel[curLvlId] ?? 1.8;
+              const endInt = endIntervalByLevel[curLvlId] ?? 0.8;
+              engine.spawnTimer = startInt - (startInt - endInt) * timeProgress;
+
+              if (engine.enemies.length < currentEnemyCap) {
+                // 3. Batch size scaling:
+                // Level 1: strictly 1 enemy per spawn during first 75s, then 1-2
+                let batchSize = 1;
+                if (curLvlId === 1) {
+                  batchSize = newTime < 75 ? 1 : (newTime < 180 ? (Math.random() < 0.7 ? 1 : 2) : 2);
+                } else if (curLvlId === 2) {
+                  batchSize = newTime < 60 ? 1 : (newTime < 180 ? (Math.random() < 0.5 ? 1 : 2) : (Math.random() < 0.6 ? 2 : 3));
+                } else if (curLvlId === 3) {
+                  batchSize = newTime < 60 ? (Math.random() < 0.6 ? 1 : 2) : (newTime < 180 ? 2 : 3);
+                } else if (curLvlId === 4) {
+                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? (Math.random() < 0.5 ? 2 : 3) : 3);
+                } else if (curLvlId === 5) {
+                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? 3 : 4);
+                } else {
+                  batchSize = newTime < 60 ? (Math.random() < 0.5 ? 2 : 3) : (newTime < 180 ? 3 : (Math.random() < 0.5 ? 4 : 5));
+                }
+
+                // Never exceed current cap
+                const actualCount = Math.min(batchSize, currentEnemyCap - engine.enemies.length);
+
+                for (let i = 0; i < actualCount; i++) {
+                  const ang = Math.random() * Math.PI * 2;
+                  const dist = 650 + Math.random() * 200;
+                  const phaseKey = currentPhase.id as keyof typeof curLvl.spawnPools;
+                  const pool = curLvl.spawnPools[phaseKey] || curLvl.spawnPools.noon;
+                  const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
+
+                  engine.enemies.push(
+                    createEnemyInstance(
+                      mobId,
+                      player.x + Math.cos(ang) * dist,
+                      player.y + Math.sin(ang) * dist,
+                      1
+                    )
+                  );
+                }
               }
             }
 
@@ -1716,7 +2265,10 @@ export default function App() {
 
             if (mx !== 0 || my !== 0) {
               const len = Math.hypot(mx, my);
-              const speedMultiplier = (player.soulBuffTimer > 0 ? 1.25 : 1) * (player.waterSoakedTimer > 0 ? 0.75 : 1);
+              const speedMultiplier =
+                (player.soulBuffTimer > 0 ? 1.25 : 1) *
+                (player.waterSoakedTimer > 0 ? 0.75 : 1) *
+                (player.slowTimer > 0 ? 0.65 : 1);
               player.x += (mx / len) * player.speed * speedMultiplier * dt;
               player.y += (my / len) * player.speed * speedMultiplier * dt;
               player.lastDx = mx;
@@ -1728,6 +2280,7 @@ export default function App() {
 
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
+            if (player.slowTimer > 0) player.slowTimer -= dt;
             if (player.ultCd > 0) player.ultCd -= dt;
 
             // Player regeneration
@@ -1752,7 +2305,28 @@ export default function App() {
             if (player.type === 'watchman') {
               for (const e of engine.enemies) {
                 if (!e.isDefeated && Math.hypot(player.x - e.x, player.y - e.y) < 85 + e.radius) {
-                  e.takeDamage(16 * player.damageMultiplier * dt, 'holy', 0, 0);
+                  const holyMult = getHolyDamageMultiplier(e);
+                  e.takeDamage(16 * player.damageMultiplier * holyMult * dt, 'holy', 0, 0);
+                }
+              }
+            }
+
+            // Hromnička flickering light aura: continuous gentle outward push resisted by Fear resist
+            const hromnickaWp = player.weapons.find((w: any) => w.id === 'hromnicka');
+            if (hromnickaWp) {
+              if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
+              const auraReach = 135 + hromnickaWp.level * 15;
+              for (const e of engine.enemies) {
+                if (e.isDefeated) continue;
+                const dist = Math.hypot(e.x - player.x, e.y - player.y);
+                if (dist < auraReach + e.radius && dist > 0.001) {
+                  const dirX = (e.x - player.x) / dist;
+                  const dirY = (e.y - player.y) / dist;
+                  const holyPush = getHolyPushMultiplier(e);
+                  // Gentle continuous repulsion away from blessed light, resisted by Fear resist & poise
+                  const pushSpeed = (52 + hromnickaWp.level * 6) * holyPush;
+                  e.x += dirX * pushSpeed * dt;
+                  e.y += dirY * pushSpeed * dt;
                 }
               }
             }
@@ -1874,6 +2448,33 @@ export default function App() {
               if (p.rotation !== undefined) {
                 p.rotation += (p.rotSpeed || 5) * dt;
               }
+
+              // Returning Boomerang projectile (Bezhlavý rytíř head)
+              if (p.boomerang && p.owner && !p.owner.isDefeated) {
+                if (p.life < (p.maxLife || 3.0) * 0.55) {
+                  const retAng = Math.atan2(p.owner.y - p.y, p.owner.x - p.x);
+                  p.vx = Math.cos(retAng) * (p.speed || 280);
+                  p.vy = Math.sin(retAng) * (p.speed || 280);
+                  p.angle = retAng;
+                  if (Math.hypot(p.owner.x - p.x, p.owner.y - p.y) < p.owner.radius + 15) {
+                    p.dead = true;
+                    continue;
+                  }
+                }
+              }
+
+              // Stationary Ground Puddle hazard (Hastrman water pools)
+              if (p.isPuddle) {
+                if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+                  if (player.waterSoakedTimer < 1.0) {
+                    player.waterSoakedTimer = 2.5;
+                    engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
+                    sound.splash();
+                  }
+                }
+                continue;
+              }
+
               if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
                 player.takeDamage(p.dmg, p.type || 'blunt');
                 if (p.pushback) {
@@ -1882,7 +2483,12 @@ export default function App() {
                 }
                 if (p.soakPlayer) {
                   player.waterSoakedTimer = 3.5;
-                  engine.texts.push(new DamageText(player.x, player.y - 40, 'PROMOČEN! 🌊', '#60A5FA'));
+                }
+                if (p.slowPlayer) {
+                  player.slowTimer = 2.2;
+                }
+                if (p.statusText) {
+                  engine.texts.push(new DamageText(player.x, player.y - 40, p.statusText, p.statusColor || COLORS.mustard, true));
                 }
                 sound.hit();
                 for (let k = 0; k < 6; k++) {
@@ -1892,7 +2498,7 @@ export default function App() {
                     vx: (Math.random() - 0.5) * 120,
                     vy: (Math.random() - 0.5) * 120,
                     life: 0.4,
-                    color: p.visual === 'millstone' ? COLORS.grey : COLORS.ice,
+                    color: p.visual === 'ink_bottle' ? '#0F172A' : p.visual === 'dirt_clod' ? '#5C4033' : p.visual === 'mud_ball' ? '#365314' : p.visual === 'millstone' || p.visual === 'boulder' ? COLORS.grey : p.visual === 'hell_spark' ? '#EF4444' : p.visual === 'wood_shard' ? '#78350F' : COLORS.ice,
                     size: 5,
                   });
                 }
@@ -1921,16 +2527,32 @@ export default function App() {
               if (e.isDefeated) continue;
               if (!p.hitList.includes(e) && Math.hypot(p.x - e.x, p.y - e.y) < p.radius + e.radius) {
                 p.hitList.push(e);
-                const resist = p.type === 'food' ? e.foodResist || 0 : 0;
+                const hungerResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+                const resist = p.type === 'food' ? hungerResist : 0;
                 if (resist >= 0.95) {
                   engine.texts.push(new DamageText(e.x, e.y - 20, 'IMUNNÍ', COLORS.ink));
                 } else {
                   let dmg = p.dmg * (1 - resist);
-                  if (p.type === 'holy' && (e.category === 'undead' || e.category === 'demons')) {
-                    dmg *= 2.0;
-                    engine.texts.push(new DamageText(e.x, e.y - 45, 'SVATÁ ZKÁZA!', COLORS.mustard, true));
+                  if (p.type === 'food') {
+                    // Food type weapons like Buchta don't cause graphical hit effect or knockback
+                    // but they cause enemy to snack and do nothing for a time, with Ňam, ňam note.
+                    // Buchta causes snack for 4s, multiple hits cumulate time. Snack is resistable with Hunger.
+                    const baseSnack = p.snackDuration ?? 4.0;
+                    const effectiveSnack = baseSnack * Math.max(0, 1 - hungerResist);
+                    e.snackTimer = (e.snackTimer || 0) + effectiveSnack;
+                    engine.texts.push(new DamageText(e.x, e.y - 25, 'Ňam, ňam', '#D97706', true));
+                    sound.snack();
                   }
-                  e.takeDamage(dmg, p.type, p.vx * 0.3, p.vy * 0.3);
+
+                  if (p.type === 'holy') {
+                    const holyMult = getHolyDamageMultiplier(e);
+                    dmg *= holyMult;
+                    if (isUnholyEnemy(e)) {
+                      engine.texts.push(new DamageText(e.x, e.y - 45, 'SVATÁ ZKÁZA!', COLORS.mustard, true));
+                    }
+                  }
+                  const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
+                  e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
                   if (p.type === 'ice') e.chill(3.5);
 
                   // Bouncing poppy cake
@@ -1982,7 +2604,7 @@ export default function App() {
           for (const e of engine.enemies) {
             e.update(dt, player);
 
-            if (!e.isDefeated && Math.hypot(e.x - player.x, e.y - player.y) < e.radius + player.radius) {
+            if (!e.isDefeated && (e.snackTimer || 0) <= 0 && Math.hypot(e.x - player.x, e.y - player.y) < e.radius + player.radius) {
               if (gameState === 'playing') {
                 const hurtDmg = e.damage * dt * (1 - player.damageReduction);
                 player.hp -= hurtDmg;
@@ -2056,7 +2678,7 @@ export default function App() {
                   engine.souls += 1;
                   engine.coins += 25;
                   setRunStats((s) => ({ ...s, souls: engine.souls, coins: engine.coins }));
-                  engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 🪙', COLORS.mustard, true));
+                  engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 kr.', COLORS.mustard, true));
                 } else if (d.type === 'chest') {
                   openChestSequence();
                 }
@@ -2162,6 +2784,13 @@ export default function App() {
           Lada.drawChasnik(ctx, engine.companion.x, engine.companion.y, engine.companion.animTime, false);
         }
 
+        // Draw Hromnička flickering holy light aura on ground under characters
+        const hromnickaWp = player ? player.weapons.find((w: any) => w.id === 'hromnicka') : null;
+        if (player && hromnickaWp) {
+          const reach = 135 + hromnickaWp.level * 15;
+          Lada.drawHromnickaAura(ctx, player.x, player.y, reach, engine.uiTime, player.hromnickaPulseTimer || 0);
+        }
+
         // Sort characters & enemies by Y for correct isometric depth
         const drawables = player ? [player, ...engine.enemies] : [...engine.enemies];
         drawables.sort((a, b) => a.y - b.y);
@@ -2178,15 +2807,7 @@ export default function App() {
           ctx.translate(p.x, p.y);
           ctx.rotate(p.angle);
           if (p.visual === 'bun') {
-            Lada.setupPath(ctx, COLORS.white, COLORS.ink, 3);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = '#6B2046';
-            ctx.beginPath();
-            ctx.arc(0, 0, 4, 0, Math.PI * 2);
-            ctx.fill();
+            Lada.drawCzechBuchta(ctx, 0, 0, 1.15);
           } else if (p.visual === 'herb_leaf') {
             Lada.setupPath(ctx, COLORS.green, COLORS.ink, 2.5);
             ctx.beginPath();
@@ -2232,6 +2853,93 @@ export default function App() {
             Lada.drawMillstone(ctx, 0, 0, p.radius || 20, p.rotation || 0);
           } else if (p.visual === 'water_wave') {
             Lada.drawWaterWave(ctx, 0, 0, p.radius || 26, 0, engine.uiTime);
+          } else if (p.visual === 'ink_bottle') {
+            // Písař's ink bottle
+            Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.5);
+            ctx.beginPath();
+            ctx.rect(-8, -10, 16, 20);
+            ctx.fill();
+            ctx.stroke();
+            Lada.setupPath(ctx, '#D9A036', COLORS.ink, 2);
+            ctx.fillRect(-4, -15, 8, 5);
+            ctx.strokeRect(-4, -15, 8, 5);
+            ctx.fillStyle = '#F3E9D2';
+            ctx.fillRect(-5, -5, 10, 10);
+            ctx.fillStyle = '#0F172A';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.visual === 'dirt_clod') {
+            // Hrobník's dirt clod
+            Lada.setupPath(ctx, '#5C4033', COLORS.ink, 2.5);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#3D2210';
+            ctx.beginPath();
+            ctx.arc(-4, -2, 2.5, 0, Math.PI * 2);
+            ctx.arc(3, 3, 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.visual === 'mud_ball') {
+            // Vodníček's swamp mud
+            Lada.setupPath(ctx, '#365314', COLORS.ink, 2);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 11, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#65A30D';
+            ctx.beginPath();
+            ctx.arc(-2, -1, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p.visual === 'scythe_wave') {
+            // Kostlivec s kosou spectral blade
+            ctx.save();
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.9)';
+            ctx.strokeStyle = COLORS.ink;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, -Math.PI / 3, Math.PI / 3, false);
+            ctx.arc(-6, 0, 18, Math.PI / 3, -Math.PI / 3, true);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          } else if (p.visual === 'water_puddle') {
+            // Hastrman's water puddle hazard
+            ctx.save();
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+            ctx.strokeStyle = '#0284C7';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            const ripple = (Math.sin(engine.uiTime * 3) + 1) * 0.5 * 14;
+            ctx.ellipse(0, 0, ripple + 4, (ripple + 4) * 0.6, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          } else if (p.visual === 'head_projectile') {
+            // Bezhlavý rytíř returning head
+            ctx.save();
+            Lada.setupPath(ctx, '#475569', COLORS.ink, 3);
+            ctx.beginPath();
+            ctx.arc(0, 0, 16, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#FDE047';
+            ctx.fillRect(-8, -3, 16, 5);
+            ctx.strokeRect(-8, -3, 16, 5);
+            ctx.restore();
+          } else if (p.visual === 'boulder') {
+            Lada.drawRollingBoulder(ctx, 0, 0, p.radius || 22, p.angle || 0);
+          } else if (p.visual === 'hell_spark') {
+            Lada.drawHellSpark(ctx, 0, 0, p.radius || 10, engine.uiTime);
+          } else if (p.visual === 'wood_shard') {
+            Lada.drawWoodShard(ctx, 0, 0, p.radius || 12, p.angle || 0);
           } else {
             Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
             ctx.beginPath();
@@ -2360,25 +3068,31 @@ export default function App() {
     };
   }, [gameState, selectedLevelId]);
 
-  // Enemy instance factory
+  // Enemy instance factory with customized AI state machine
+  // Consistent authentic stats: specific enemies (e.g. Kostlivec) always have identical base stats;
+  // challenge scales solely through arrival of advanced enemies and enemy density.
   const createEnemyInstance = (id: string, x: number, y: number, multiplier = 1, isBoss = false) => {
     const stats = ENEMIES[id] || ENEMIES.rarach;
+    const finalHp = isBoss ? Math.round(stats.hp * multiplier) : stats.hp;
+
     return {
       id,
       x,
       y,
       isBoss,
-      maxHp: stats.hp * multiplier * (isBoss ? 1.5 : 1),
-      hp: stats.hp * multiplier * (isBoss ? 1.5 : 1),
+      maxHp: finalHp,
+      hp: finalHp,
       speed: stats.speed,
       damage: stats.damage,
       radius: isBoss ? stats.radius * 1.3 : stats.radius,
       foodResist: stats.foodResist || 0,
+      hunger: stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0),
       poiseResist: stats.poiseResist || 0,
       willpower: stats.willpower || 0,
       coinValue: stats.coinValue || 1,
       category: stats.category,
       method: stats.method,
+      palette: stats.palette,
       vx: 0,
       vy: 0,
       kbx: 0,
@@ -2387,19 +3101,92 @@ export default function App() {
       soakedTimer: 0,
       chilled: false,
       chillTimer: 0,
+      snackTimer: 0,
+      defeatedByFood: false,
+      snackSoundTimer: 0,
       dead: false,
       isDefeated: false,
-      panicked: false,      panicTimer: 0,
+      panicked: false,
+      panicTimer: 0,
       calmTimer: 0,
       animTime: Math.random() * 10,
 
+      // Specialized AI state machine variables
+      aiState: 'idle' as string,
+      aiTimer: Math.random() * 1.2,
+      specialCd: 1.0 + Math.random() * 2.0,
+      orbitRadius: 130 + Math.random() * 60,
+      orbitDir: Math.random() < 0.5 ? 1 : -1,
+      orbitAngle: Math.random() * Math.PI * 2,
+      zigZagTimer: 0,
+      zigZagDir: Math.random() < 0.5 ? 1 : -1,
+      chargeDirX: 0,
+      puddleCd: 2.0 + Math.random() * 2.0,
+
       update(dt: number, player: any) {
         if (this.isDefeated) {
-          const fleeSpd = this.speed * 3.5;
+          if (this.defeatedByFood) {
+            // Defeated by food weapons: slowly walk away (unhittable, untargetable), enjoying the food snack
+            const walkSpd = this.speed * 0.45;
+            const ang = Math.atan2(this.y - player.y, this.x - player.x);
+            this.vx = Math.cos(ang) * walkSpd;
+            this.vy = Math.sin(ang) * walkSpd;
+            this.x += this.vx * dt;
+            this.y += this.vy * dt;
+            this.animTime += dt * 0.75;
+            this.panicked = false;
+
+            // Periodic gentle munch sound while walking away
+            this.snackSoundTimer = (this.snackSoundTimer || 0) + dt;
+            if (this.snackSoundTimer > 1.6) {
+              this.snackSoundTimer = 0;
+              if (Math.hypot(this.x - player.x, this.y - player.y) < 700) {
+                sound.snack();
+              }
+            }
+
+            if (Math.hypot(this.x - player.x, this.y - player.y) > 1400) this.dead = true;
+            return;
+          }
+
+          // Defeated in combat: lively comic scramble sprint away from the hero!
+          const fleeSpd = this.speed * 3.2;
           const ang = Math.atan2(this.y - player.y, this.x - player.x);
-          this.x += Math.cos(ang) * fleeSpd * dt;
-          this.y += Math.sin(ang) * fleeSpd * dt;
+          this.vx = Math.cos(ang) * fleeSpd;
+          this.vy = Math.sin(ang) * fleeSpd;
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+          this.animTime += dt * 2.2;
+          this.panicked = true;
+
+          // Occasionally spawn little cartoon dust puffs behind fleeing feet
+          if (Math.random() < 0.3) {
+            engineRef.current.particles.push({
+              x: this.x - Math.cos(ang) * (this.radius * 0.8) + (Math.random() - 0.5) * 6,
+              y: this.y + this.radius * 0.6 + (Math.random() - 0.5) * 4,
+              vx: -Math.cos(ang) * 40 + (Math.random() - 0.5) * 20,
+              vy: -Math.random() * 20,
+              life: 0.35,
+              color: '#D8C6A5',
+              size: 3.5,
+            });
+          }
+
           if (Math.hypot(this.x - player.x, this.y - player.y) > 1400) this.dead = true;
+          return;
+        }
+
+        // Snacking state (food weapons like Buchta) - enemy snacks and does nothing for a time
+        if (this.snackTimer > 0) {
+          this.snackTimer -= dt;
+          if (this.snackTimer < 0) this.snackTimer = 0;
+          this.vx = 0;
+          this.vy = 0;
+          this.kbx *= 0.85;
+          this.kby *= 0.85;
+          this.animTime += dt * 0.7; // gentle munch animation
+          this.x += this.kbx * dt;
+          this.y += this.kby * dt;
           return;
         }
 
@@ -2419,17 +3206,725 @@ export default function App() {
           spd *= 0.45;
           this.chillTimer -= dt;
           if (this.chillTimer <= 0) this.chilled = false;
-        }        if (this.calmTimer > 0) {
+        }
+        if (this.calmTimer > 0) {
           spd *= 0.3;
           this.calmTimer -= dt;
         }
 
-        const ang = this.panicked
-          ? Math.atan2(this.y - player.y, this.x - player.x)
-          : Math.atan2(player.y - this.y, player.x - this.x);
+        const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+        const dirToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
 
-        this.vx = Math.cos(ang) * spd;
-        this.vy = Math.sin(ang) * spd;
+        // When panicked, always flee
+        if (this.panicked) {
+          const fleeAng = Math.atan2(this.y - player.y, this.x - player.x);
+          this.vx = Math.cos(fleeAng) * spd * 1.8;
+          this.vy = Math.sin(fleeAng) * spd * 1.8;
+          this.x += (this.vx + this.kbx) * dt;
+          this.y += (this.vy + this.kby) * dt;
+          this.animTime += dt * 1.5;
+          if (Math.random() < 0.25) {
+            engineRef.current.particles.push({
+              x: this.x - Math.cos(fleeAng) * (this.radius * 0.7) + (Math.random() - 0.5) * 6,
+              y: this.y + this.radius * 0.5 + (Math.random() - 0.5) * 4,
+              vx: -Math.cos(fleeAng) * 20 + (Math.random() - 0.5) * 15,
+              vy: -Math.sin(fleeAng) * 10 - Math.random() * 20,
+              life: 0.35,
+              color: 'rgba(215, 200, 175, 0.65)',
+              size: 3 + Math.random() * 3,
+            });
+          }
+          return;
+        }
+
+        // ----------------------------------------------------
+        // SPECIALIZED ENEMY AI BEHAVIORS
+        // ----------------------------------------------------
+        this.aiTimer -= dt;
+        this.specialCd -= dt;
+
+        // 1. RARÁŠEK (rarach / sazovy_rarach) - Hejnové obkličování & prudké výpady
+        if (this.id === 'rarach' || this.id === 'sazovy_rarach') {
+          if (this.aiState === 'lunge') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.5;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.5;
+            if (this.aiTimer <= 0 || distToPlayer < this.radius + player.radius) {
+              this.aiState = 'recoil';
+              this.aiTimer = 0.4;
+            }
+          } else if (this.aiState === 'recoil') {
+            this.vx = -Math.cos(dirToPlayer) * spd * 1.5;
+            this.vy = -Math.sin(dirToPlayer) * spd * 1.5;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'circle';
+              this.specialCd = 2.5 + Math.random() * 2.5;
+            }
+          } else {
+            if (this.specialCd <= 0 && distToPlayer < 240) {
+              this.aiState = 'lunge';
+              this.aiTimer = 0.45;
+              this.chargeDirX = dirToPlayer;
+              for (let i = 0; i < 3; i++) {
+                engineRef.current.particles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: (Math.random() - 0.5) * 40,
+                  life: 0.3,
+                  color: this.id === 'sazovy_rarach' ? '#F97316' : '#262626',
+                  size: 3,
+                });
+              }
+            } else {
+              this.aiState = 'circle';
+              this.orbitAngle += this.orbitDir * 1.8 * dt;
+              const targetOrbitX = player.x + Math.cos(this.orbitAngle) * (this.orbitRadius + Math.sin(this.animTime * 3) * 20);
+              const targetOrbitY = player.y + Math.sin(this.orbitAngle) * (this.orbitRadius + Math.sin(this.animTime * 3) * 20);
+              const toOrbitAng = Math.atan2(targetOrbitY - this.y, targetOrbitX - this.x);
+              const circleSpd = distToPlayer > 280 ? spd * 1.3 : spd;
+              this.vx = Math.cos(toOrbitAng) * circleSpd;
+              this.vy = Math.sin(toOrbitAng) * circleSpd;
+            }
+          }
+        }
+
+        // 2. ŠOTEK (sotek) - Náhlé změny směru (erratic zig-zagging)
+        else if (this.id === 'sotek') {
+          this.zigZagTimer -= dt;
+          if (this.zigZagTimer <= 0) {
+            this.zigZagTimer = 0.6 + Math.random() * 0.7;
+            this.zigZagDir = Math.random() < 0.5 ? -1 : 1;
+          }
+          const zigAngle = dirToPlayer + this.zigZagDir * 0.85;
+          this.vx = Math.cos(zigAngle) * spd * 1.15;
+          this.vy = Math.sin(zigAngle) * spd * 1.15;
+        }
+
+        // 3. PLIVNÍK (plivnik) - Hbité poskakování & ohnivé jiskření
+        else if (this.id === 'plivnik') {
+          if (this.aiState === 'hop_leap') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.3;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.3;
+            if (Math.random() < 0.4) {
+              engineRef.current.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: (Math.random() - 0.5) * 70,
+                vy: (Math.random() - 0.5) * 70,
+                life: 0.25,
+                color: Math.random() < 0.5 ? '#F97316' : '#FDE047',
+                size: 3,
+              });
+            }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'hop_rest';
+              this.aiTimer = 0.25 + Math.random() * 0.15;
+            }
+          } else {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'hop_leap';
+              this.aiTimer = 0.32;
+              this.chargeDirX = dirToPlayer + (Math.random() - 0.5) * 0.4;
+            }
+          }
+        }
+
+        // 4. RYBNIČNÍ ŽABKA / ROPUCHA (zaba / ropucha) - Skákavý pohyb
+        else if (this.id === 'zaba' || this.id === 'ropucha') {
+          if (this.aiState === 'hop_leap') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.5;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.5;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'hop_rest';
+              this.aiTimer = 0.55 + Math.random() * 0.25;
+            }
+          } else {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'hop_leap';
+              this.aiTimer = 0.38;
+              this.chargeDirX = dirToPlayer + (Math.random() - 0.5) * 0.3;
+              for (let i = 0; i < 2; i++) {
+                engineRef.current.particles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: (Math.random() - 0.5) * 40,
+                  life: 0.2,
+                  color: this.id === 'ropucha' ? '#15803D' : '#60A5FA',
+                  size: 2.5,
+                });
+              }
+            }
+          }
+        }
+
+        // 5. KOSTLIVEC ZE SVATÉHO JIŘÍ / KRVAVÝ KOSTLIVEC (skeleton / krvavy_kostlivec)
+        else if (this.id === 'skeleton' || this.id === 'krvavy_kostlivec') {
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.22;
+              sound.slash();
+            }
+          } else if (this.aiState === 'charge') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.8;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.8;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 2.4;
+            }
+          } else {
+            if (distToPlayer < 78 && this.specialCd <= 0) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.32;
+              this.chargeDirX = dirToPlayer;
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 6. KOSTLIVEC S KOSOU (skeleton_scythe) - Seknutí kosou & vlnový oblouk
+        else if (this.id === 'skeleton_scythe') {
+          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.6;
+              sound.slash();
+              if (!isLvl1 || this.isBoss) {
+                engineRef.current.projectiles.push({
+                  x: this.x + Math.cos(this.chargeDirX) * 20,
+                  y: this.y + Math.sin(this.chargeDirX) * 20,
+                  vx: Math.cos(this.chargeDirX) * 230,
+                  vy: Math.sin(this.chargeDirX) * 230,
+                  angle: this.chargeDirX,
+                  speed: 230,
+                  dmg: this.damage,
+                  radius: 20,
+                  type: 'physical',
+                  visual: 'scythe_wave',
+                  life: 1.1,
+                  isEnemy: true,
+                  pushback: 30,
+                  statusText: 'SEKNUTÍ KOSOU! 🌾',
+                  dead: false,
+                });
+              } else {
+                if (distToPlayer < 75) {
+                  player.takeDamage(this.damage, 'physical');
+                  engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'SEKNUTÍ KOSOU! 🌾', COLORS.bone, true));
+                }
+              }
+            }
+          } else {
+            if (distToPlayer < 140 && this.specialCd <= 0) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.42;
+              this.chargeDirX = dirToPlayer;
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 7. PANSKÝ PÍSAŘ PO SMRTI (pisar) - Ranged kiting & vrh lahviček s inkoustem
+        else if (this.id === 'pisar') {
+          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.2;
+              sound.slash();
+              if (!isLvl1 || this.isBoss) {
+                engineRef.current.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(this.chargeDirX) * 260,
+                  vy: Math.sin(this.chargeDirX) * 260,
+                  angle: this.chargeDirX,
+                  rotation: 0,
+                  rotSpeed: 8,
+                  speed: 260,
+                  dmg: this.damage,
+                  radius: 14,
+                  type: 'magic',
+                  visual: 'ink_bottle',
+                  life: 2.2,
+                  isEnemy: true,
+                  slowPlayer: true,
+                  statusText: 'ZALEPEN INKOUSTEM! ✒️',
+                  dead: false,
+                });
+              } else {
+                if (distToPlayer < 70) {
+                  player.takeDamage(this.damage, 'magic');
+                }
+              }
+            }
+          } else {
+            if (!isLvl1 || this.isBoss) {
+              if (this.specialCd <= 0 && distToPlayer < 320) {
+                this.aiState = 'windup';
+                this.aiTimer = 0.35;
+                this.chargeDirX = dirToPlayer;
+                this.vx = 0;
+                this.vy = 0;
+              } else {
+                if (distToPlayer < 170) {
+                  this.vx = -Math.cos(dirToPlayer) * spd * 0.9;
+                  this.vy = -Math.sin(dirToPlayer) * spd * 0.9;
+                } else if (distToPlayer > 260) {
+                  this.vx = Math.cos(dirToPlayer) * spd;
+                  this.vy = Math.sin(dirToPlayer) * spd;
+                } else {
+                  this.vx = -Math.sin(dirToPlayer) * spd * 0.45;
+                  this.vy = Math.cos(dirToPlayer) * spd * 0.45;
+                }
+              }
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 8. PROKLETÝ HROBNÍK (hrobnik) - Vrhání hrobové hlíny
+        else if (this.id === 'hrobnik') {
+          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.6;
+              sound.heavyHit();
+              if (!isLvl1 || this.isBoss) {
+                engineRef.current.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(this.chargeDirX) * 230,
+                  vy: Math.sin(this.chargeDirX) * 230,
+                  angle: this.chargeDirX,
+                  speed: 230,
+                  dmg: this.damage,
+                  radius: 16,
+                  type: 'blunt',
+                  visual: 'dirt_clod',
+                  life: 2.2,
+                  isEnemy: true,
+                  pushback: 25,
+                  statusText: 'HROBOVÁ HLÍNA! 🪦',
+                  dead: false,
+                });
+              } else {
+                if (distToPlayer < 75) {
+                  player.takeDamage(this.damage, 'blunt');
+                  engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ÚDER LOPATOU! 🪦', COLORS.grey, true));
+                }
+              }
+            }
+          } else {
+            if (!isLvl1 || this.isBoss) {
+              if (this.specialCd <= 0 && distToPlayer < 300) {
+                this.aiState = 'windup';
+                this.aiTimer = 0.4;
+                this.chargeDirX = dirToPlayer;
+                this.vx = 0;
+                this.vy = 0;
+              } else {
+                if (distToPlayer < 150) {
+                  this.vx = -Math.cos(dirToPlayer) * spd * 0.75;
+                  this.vy = -Math.sin(dirToPlayer) * spd * 0.75;
+                } else if (distToPlayer > 230) {
+                  this.vx = Math.cos(dirToPlayer) * spd;
+                  this.vy = Math.sin(dirToPlayer) * spd;
+                } else {
+                  this.vx = -Math.sin(dirToPlayer) * spd * 0.35;
+                  this.vy = Math.cos(dirToPlayer) * spd * 0.35;
+                }
+              }
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 9. RYCHTÁŘŮV UMRLEC (umrlec) - Těžký dupot s otřesem
+        else if (this.id === 'umrlec') {
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 4.8;
+              sound.heavyHit();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 45, 'DUPOT! 💥', COLORS.ink, true));
+              for (let i = 0; i < 16; i++) {
+                const ang = (i / 16) * Math.PI * 2;
+                engineRef.current.particles.push({
+                  x: this.x + Math.cos(ang) * 20,
+                  y: this.y + Math.sin(ang) * 20,
+                  vx: Math.cos(ang) * 160,
+                  vy: Math.sin(ang) * 160,
+                  life: 0.45,
+                  color: '#78350F',
+                  size: 5,
+                });
+              }
+              if (distToPlayer < 125) {
+                player.takeDamage(22, 'blunt');
+                player.x += Math.cos(dirToPlayer) * 45;
+                player.y += Math.sin(dirToPlayer) * 45;
+              }
+            }
+          } else {
+            if (distToPlayer < 110 && this.specialCd <= 0) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.5;
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 10. ČERNÝ PES (cerny_pes) - Neobyčejně rychlý náběh (stalk & charge)
+        else if (this.id === 'cerny_pes' || this.id === 'ohnivy_pes') {
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (Math.random() < 0.6) {
+              engineRef.current.particles.push({
+                x: this.x + (Math.random() - 0.5) * 12,
+                y: this.y - 10 + (Math.random() - 0.5) * 6,
+                vx: (Math.random() - 0.5) * 20,
+                vy: -Math.random() * 30,
+                life: 0.35,
+                color: '#EF4444',
+                size: 3,
+              });
+            }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.75;
+              sound.roar();
+            }
+          } else if (this.aiState === 'charge') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.4;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.4;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'cooldown';
+              this.aiTimer = 0.8;
+            }
+          } else if (this.aiState === 'cooldown') {
+            this.vx = Math.cos(dirToPlayer) * spd * 0.4;
+            this.vy = Math.sin(dirToPlayer) * spd * 0.4;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.8 + Math.random() * 2.0;
+            }
+          } else {
+            if (this.specialCd <= 0 && distToPlayer < 280) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.5;
+              this.chargeDirX = dirToPlayer;
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 11. BAHENNÍ VODNÍČEK (vodnicek) - Hází mazlavé leknínové bahno (v 1. úrovni nestřílí!)
+        else if (this.id === 'vodnicek') {
+          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.4;
+              sound.splash();
+              if (!isLvl1 || this.isBoss) {
+                engineRef.current.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(this.chargeDirX) * 240,
+                  vy: Math.sin(this.chargeDirX) * 240,
+                  angle: this.chargeDirX,
+                  speed: 240,
+                  dmg: this.damage,
+                  radius: 14,
+                  type: 'nature',
+                  visual: 'mud_ball',
+                  life: 2.0,
+                  isEnemy: true,
+                  soakPlayer: true,
+                  slowPlayer: true,
+                  statusText: 'LEKNÍNOVÉ BAHNO! 🌿',
+                  dead: false,
+                });
+              } else {
+                // V 1. levelu střílí jen bossové – vodníček pouze šplíchne zblízka
+                if (distToPlayer < 70) {
+                  player.takeDamage(Math.round(this.damage * 0.65), 'nature');
+                  engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ŠPLÍCH! 💧', '#38BDF8', true));
+                }
+              }
+            }
+          } else {
+            if (!isLvl1 || this.isBoss) {
+              if (this.specialCd <= 0 && distToPlayer < 290) {
+                this.aiState = 'windup';
+                this.aiTimer = 0.35;
+                this.chargeDirX = dirToPlayer;
+                this.vx = 0;
+                this.vy = 0;
+              } else {
+                if (distToPlayer < 160) {
+                  this.vx = -Math.cos(dirToPlayer) * spd * 0.8;
+                  this.vy = -Math.sin(dirToPlayer) * spd * 0.8;
+                } else if (distToPlayer > 240) {
+                  this.vx = Math.cos(dirToPlayer) * spd;
+                  this.vy = Math.sin(dirToPlayer) * spd;
+                } else {
+                  this.vx = -Math.sin(dirToPlayer) * spd * 0.5;
+                  this.vy = Math.cos(dirToPlayer) * spd * 0.5;
+                }
+              }
+            } else {
+              // V 1. levelu se běžně pohybuje za hráčem
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 12. HASTRMAN V ŠOSU (hastrman) - Rozlévá louže & přivolává žabky
+        else if (this.id === 'hastrman') {
+          this.puddleCd -= dt;
+          if (this.puddleCd <= 0) {
+            this.puddleCd = 3.5;
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: 0,
+              vy: 0,
+              radius: 24,
+              life: 6.0,
+              dmg: 0,
+              isEnemy: true,
+              isPuddle: true,
+              visual: 'water_puddle',
+              dead: false,
+            });
+          }
+          if (this.specialCd <= 0) {
+            this.specialCd = 8.5;
+            sound.splash();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 45, 'ŽABÍ POMOCNÍCI! 🐸', '#38BDF8', true));
+            for (let i = 0; i < 2; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              engineRef.current.enemies.push(
+                createEnemyInstance('zaba', this.x + Math.cos(ang) * 45, this.y + Math.sin(ang) * 45, 0.75)
+              );
+            }
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 13. ZIMNÍ MELUZÍNA (meluzina) - Krouživý let & bleskový náběh
+        else if (this.id === 'meluzina') {
+          if (this.aiState === 'charge') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.8;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.8;
+            if (Math.random() < 0.4) {
+              engineRef.current.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: (Math.random() - 0.5) * 60,
+                vy: (Math.random() - 0.5) * 60,
+                life: 0.35,
+                color: '#E2E8F0',
+                size: 3.5,
+              });
+            }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'circle';
+              this.specialCd = 4.2;
+              this.orbitRadius = 180 + Math.random() * 60;
+            }
+          } else {
+            if (this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.85;
+              this.chargeDirX = dirToPlayer;
+              sound.freeze();
+            } else {
+              this.orbitAngle += 2.0 * dt;
+              const targetX = player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+              const targetY = player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+              const ang = Math.atan2(targetY - this.y, targetX - this.x);
+              this.vx = Math.cos(ang) * spd * 1.2;
+              this.vy = Math.sin(ang) * spd * 1.2;
+            }
+          }
+        }
+
+        // 14. POLEDNICE (polednice) - Extrémní rychlost & srpový výpad
+        else if (this.id === 'polednice') {
+          const phaseId = runStatsRef.current.dayPhase?.id;
+          const isNoon = phaseId === 'noon' || phaseId === 'afternoon';
+          const currentSpd = isNoon ? spd * 1.35 : spd;
+
+          if (this.aiState === 'charge') {
+            this.vx = Math.cos(this.chargeDirX) * currentSpd * 2.5;
+            this.vy = Math.sin(this.chargeDirX) * currentSpd * 2.5;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.0;
+            }
+          } else {
+            if (distToPlayer < 160 && this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.32;
+              this.chargeDirX = dirToPlayer;
+              sound.slash();
+            } else {
+              this.vx = Math.cos(dirToPlayer) * currentSpd;
+              this.vy = Math.sin(dirToPlayer) * currentSpd;
+            }
+          }
+        }
+
+        // 15. BEZHLAVÝ RYTÍŘ (bezhlavy_rytir) - Odražená hlava se vrací
+        else if (this.id === 'bezhlavy_rytir') {
+          if (this.specialCd <= 0 && distToPlayer < 360) {
+            this.specialCd = 6.0;
+            sound.roar();
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: Math.cos(dirToPlayer) * 280,
+              vy: Math.sin(dirToPlayer) * 280,
+              angle: dirToPlayer,
+              speed: 280,
+              dmg: 36,
+              radius: 18,
+              type: 'physical',
+              visual: 'head_projectile',
+              life: 3.0,
+              maxLife: 3.0,
+              boomerang: true,
+              owner: this,
+              isEnemy: true,
+              pushback: 35,
+              statusText: 'ZTRACENÁ HLAVA! 💀',
+              dead: false,
+            });
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 16. PROKLETÝ SNĚHULÁK (snehulak) - Mrazivé kutálení (rolling snowball dash)
+        else if (this.id === 'snehulak') {
+          if (this.aiState === 'charge') {
+            this.vx = Math.cos(this.chargeDirX) * spd * 2.2;
+            this.vy = Math.sin(this.chargeDirX) * spd * 2.2;
+            if (Math.random() < 0.3) {
+              engineRef.current.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: (Math.random() - 0.5) * 50,
+                vy: (Math.random() - 0.5) * 50,
+                life: 0.3,
+                color: '#FFFFFF',
+                size: 4,
+              });
+            }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 4.2;
+            }
+          } else {
+            if (distToPlayer < 240 && this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.9;
+              this.chargeDirX = dirToPlayer;
+              sound.freeze();
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 17. PEKELNÝ DRÁB (drab) - Těžký řetěz s velkým odhozením
+        else if (this.id === 'drab') {
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 4.0;
+              sound.slash();
+              if (distToPlayer < 135) {
+                player.takeDamage(this.damage, 'physical');
+                player.x += Math.cos(dirToPlayer) * 55;
+                player.y += Math.sin(dirToPlayer) * 55;
+                engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ŠLEHNUTÍ ŘETĚZEM! ⛓️', COLORS.red, true));
+              }
+            }
+          } else {
+            if (distToPlayer < 125 && this.specialCd <= 0) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.4;
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 18. BLUDIČKA MOČÁLOVÁ (bludicka) - Vlnivý let vábící do bažin
+        else if (this.id === 'bludicka') {
+          const wave = Math.sin(this.animTime * 3.5) * 0.7;
+          this.vx = Math.cos(dirToPlayer + wave) * spd;
+          this.vy = Math.sin(dirToPlayer + wave) * spd;
+        }
+
+        // STANDARD HOMING FOR OTHER MOBS
+        else {
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
         this.x += (this.vx + this.kbx) * dt;
         this.y += (this.vy + this.kby) * dt;
       },
@@ -2440,12 +3935,18 @@ export default function App() {
         if (this.soaked) finalDmg *= 1.45;
 
         this.hp -= finalDmg;
-        engineRef.current.texts.push(
-          new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
-        );
 
-        this.kbx = kbx * (1 - this.poiseResist);
-        this.kby = kby * (1 - this.poiseResist);
+        // Food type weapons like Buchta don't cause graphical hit effect or knockback
+        if (type !== 'food') {
+          engineRef.current.texts.push(
+            new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
+          );
+          this.kbx = kbx * (1 - this.poiseResist);
+          this.kby = kby * (1 - this.poiseResist);
+        } else {
+          this.kbx = 0;
+          this.kby = 0;
+        }
 
         if (this.isBoss) {
           const pct = Math.max(0, Math.min(100, (this.hp / this.maxHp) * 100));
@@ -2454,9 +3955,16 @@ export default function App() {
 
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
-          this.panicked = true;
+          if (type === 'food') {
+            this.defeatedByFood = true;
+            this.panicked = false;
+            sound.snack();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 30, 'Ňam, ňam', '#D97706', true));
+          } else {
+            this.panicked = true;
+          }
           const eng = engineRef.current;
-          const pt = ENEMY_POINTS[this.id] ?? 10;
+          const pt = ENEMY_POINTS[this.id] ?? Math.max(12, Math.floor((this.maxHp || 40) * 0.38));
           eng.pointsChest += pt;
           eng.pointsPotion += pt;
           eng.pointsBread += pt;
@@ -2661,31 +4169,134 @@ export default function App() {
       chill(duration = 3.5) {
         this.chilled = true;
         this.chillTimer = duration;
-      },      draw(ctx: CanvasRenderingContext2D) {
+      },
+
+      draw(ctx: CanvasRenderingContext2D) {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
         if (this.calmTimer > 0 && !this.isDefeated) {
           Lada.drawHeart(ctx, this.x, this.y - this.radius - 22 - Math.sin(this.animTime * 4) * 3, 8, '#F4A6BF');
         }
+
+        // Snacking state ("Ňam, ňam note")
+        if ((this.snackTimer > 0 && !this.isDefeated) || (this.isDefeated && this.defeatedByFood)) {
+          ctx.save();
+          const bob = Math.sin(this.animTime * 7) * 2;
+          const noteY = this.y - this.radius - 22 + bob;
+          const noteText = 'Ňam, ňam';
+
+          ctx.font = '900 13px "Eczar", serif';
+          const textWidth = ctx.measureText(noteText).width;
+          const boxW = textWidth + 18;
+          const boxH = 20;
+          const boxX = this.x - boxW / 2;
+          const boxY = noteY - boxH / 2;
+
+          // Creamy folk parchment bubble
+          ctx.fillStyle = '#FFFBEB';
+          ctx.strokeStyle = '#2A170A';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === 'function') {
+            (ctx as any).roundRect(boxX, boxY, boxW, boxH, 6);
+          } else {
+            ctx.rect(boxX, boxY, boxW, boxH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Bubble pointer
+          ctx.beginPath();
+          ctx.moveTo(this.x - 3, boxY + boxH);
+          ctx.lineTo(this.x, boxY + boxH + 4);
+          ctx.lineTo(this.x + 3, boxY + boxH);
+          ctx.fillStyle = '#FFFBEB';
+          ctx.fill();
+          ctx.strokeStyle = '#2A170A';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          // Text "Ňam, ňam"
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#92400E';
+          ctx.fillText(noteText, this.x, noteY);
+
+          // Pastry / Buchta crumbs falling
+          const crumbT = (this.animTime * 3.5) % 1;
+          ctx.fillStyle = '#D97706';
+          ctx.beginPath();
+          ctx.arc(this.x - 7 + Math.sin(this.animTime * 4) * 3, this.y - 2 + crumbT * 14, 1.5, 0, Math.PI * 2);
+          ctx.arc(this.x + 7 + Math.cos(this.animTime * 5) * 3, this.y - 4 + ((crumbT + 0.5) % 1) * 14, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        // Telegraphed windup warning cue for tactical combat
+        if (this.aiState === 'windup' && !this.isDefeated) {
+          ctx.save();
+          ctx.font = '900 16px "Eczar", serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.strokeStyle = '#111111';
+          ctx.lineWidth = 3.5;
+          ctx.fillStyle = '#EF4444';
+          const wy = this.y - this.radius - 16;
+          ctx.strokeText('!', this.x, wy);
+          ctx.fillText('!', this.x, wy);
+          ctx.restore();
+        }
+        const palette = this.palette || (ENEMIES[this.id]?.palette);
+        if (palette) {
+          ctx.save();
+          if (palette === 'soot') {
+            ctx.filter = 'brightness(0.52) contrast(1.4) drop-shadow(0 0 3px #EA580C)';
+          } else if (palette === 'crimson') {
+            ctx.filter = 'sepia(1) saturate(5) hue-rotate(320deg) brightness(0.9)';
+          } else if (palette === 'bog') {
+            ctx.filter = 'sepia(0.85) hue-rotate(65deg) saturate(2.5) brightness(0.85)';
+          } else if (palette === 'steel') {
+            ctx.filter = 'grayscale(0.85) contrast(1.35) brightness(1.15)';
+          }
+        }
+
+        const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
+
         if (this.id === 'cert') {
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, this.panicked, this.isBoss);
+          Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.isBoss);
         } else if (this.id === 'hejkal') {
-          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'obr') {
-          Lada.drawObr(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+          Lada.drawObr(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'mlynar') {
-          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, this.vx, this.panicked, this.hp <= this.maxHp * 0.5);
+          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.hp <= this.maxHp * 0.5);
         } else if (this.id === 'meluzina') {
-          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'polednice') {
-          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'klekanice') {
-          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else {
           const drawer = (Lada as any)[this.method];
           if (typeof drawer === 'function') {
-            drawer.call(Lada, ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+            drawer.call(Lada, ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
           } else {
-            Lada.drawRarach(ctx, this.x, this.y, this.animTime, this.vx, this.panicked);
+            Lada.drawRarach(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          }
+        }
+
+        if (palette) {
+          ctx.restore();
+          if (palette === 'soot' && !this.isDefeated) {
+            ctx.fillStyle = '#F59E0B';
+            ctx.beginPath();
+            ctx.arc(this.x + 4 * (this.vx < 0 ? -1 : 1), this.y - 12, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (palette === 'crimson' && !this.isDefeated) {
+            ctx.fillStyle = '#DC2626';
+            ctx.beginPath();
+            ctx.arc(this.x + 3 * (this.vx < 0 ? -1 : 1), this.y - 14, 2.5, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
 
@@ -3007,8 +4618,24 @@ export default function App() {
         <div id="hud">
           {/* Top-right menu controls */}
           <div className="hud-top-right">
-            <button className="pause-toggle-btn" onClick={togglePause} title="Pozastavit hru a zobrazit výbavu (Esc / P)">
-              ⏸️ Odpočinek
+            {runStats.isTestMode && (
+              <div
+                className="hud-level-badge"
+                style={{
+                  background: '#7C3AED',
+                  color: '#FFFFFF',
+                  borderColor: '#4C1D95',
+                  boxShadow: '3px 3px 0 var(--ink)',
+                  fontWeight: 900,
+                }}
+                title="Hrajete v testovacím módu (Sandbox) s volitelnými pravidly"
+              >
+                <span>🧪</span>
+                <span>Testovací mód</span>
+              </div>
+            )}
+            <button className="pause-toggle-btn" onClick={togglePause} title="Pozastavit hru a zobrazit výbavu (klávesa P / Esc)">
+              ⏸️ Pauza [P]
             </button>
             <div className="hud-level-badge" title={`Aktuální úroveň: ${GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}`}>
               <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
@@ -3058,7 +4685,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div id="coins-text" style={{ color: '#111111' }}>Krejcary: {runStats.coins} 🪙</div>
+              <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>Krejcary: {runStats.coins} <KrejcarIcon size={18} /></div>
               <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
               <div id="kills-text" style={{ color: '#7F1D1D' }}>Zahnáno: {runStats.kills} 💀</div>
               <div id="chest-progress-text" style={{ color: '#78350F' }} title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
@@ -3121,8 +4748,19 @@ export default function App() {
             <button className="touch-toggle-btn" onClick={toggleTouch}>
               🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
             </button>
+            <button
+              className="sound-toggle-btn"
+              onClick={toggleMusic}
+              title="Hudba v menu (Ladovská dechovka z Bubáků a hastrmanů)"
+              style={{
+                borderColor: musicEnabled ? '#166534' : undefined,
+                background: musicEnabled ? '#FFFDF8' : undefined,
+              }}
+            >
+              <span className="sound-btn-text">{musicEnabled ? '🎶 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
+            </button>
             <button className="sound-toggle-btn" onClick={toggleSound}>
-              <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuky: Zap' : '🔇 Zvuky: Vyp'}</span>
             </button>
           </div>
 
@@ -3131,6 +4769,40 @@ export default function App() {
             <p style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '-5px' }}>
               Přežijte noc ve světě venkovského děsu Josefa Lady.
             </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              <button
+                onClick={toggleMusic}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: musicEnabled ? '#FAF6ED' : '#E5DEC9',
+                  padding: '5px 16px',
+                  borderRadius: '20px',
+                  border: '2px solid #3D2210',
+                  fontSize: '0.86rem',
+                  fontWeight: 900,
+                  color: '#2A170A',
+                  cursor: 'pointer',
+                  boxShadow: '2px 2px 0px #111111',
+                }}
+                title="Kliknutím zapnete nebo vypnete lidovou muziku v menu"
+              >
+                <span>🎺 🎶</span>
+                <span>Lidová muzika: <strong>Bubáci a hastrmani</strong></span>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '9px',
+                    height: '9px',
+                    borderRadius: '50%',
+                    background: musicEnabled ? '#166534' : '#888888',
+                  }}
+                  title={musicEnabled ? 'Hudba hraje' : 'Hudba je vypnuta'}
+                />
+              </button>
+            </div>
 
             {/* 3 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section">
@@ -3370,10 +5042,10 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoké zdraví. Povidlové buchty a rákoska. Schopnost: Rázová vlna.
+                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Rázová vlna.
                 </p>
                 <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Rákoska & Povidlové buchty</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Vrbový prut & Povidlové buchty</div>
                   <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>⚡ Schopnost: Rázová vlna</div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
@@ -3400,6 +5072,49 @@ export default function App() {
             </div>
 
             <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: '#7C3AED',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setIsTestModeOpen(true);
+                }}
+                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+              >
+                🧪 Testovací mód
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: '#DC2626',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={() => {
+                  sound.hit();
+                  setIsResetModalOpen(true);
+                }}
+                title="Vymazat veškerý postup (zamkne vše odemykatelné a vrátí upgrady na nulu)"
+              >
+                🗑️ Vymazat postup
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#1D4ED8', color: '#FFFFFF', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsControlsOpen(true);
+                }}
+                title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
+              >
+                🎮 Ovládání hry
+              </button>
               <button className="lada-btn btn-download" onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru pro offline hraní (HTML soubor)">
                 📥 Stáhnout celou hru (HTML)
               </button>
@@ -3424,7 +5139,9 @@ export default function App() {
                 style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
                 onClick={() => setGameState('tavern')}
               >
-                🏘️ Vesnice & Hospoda ({meta.krejcary} 🪙)
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                </span>
               </button>
             </div>
           </div>
@@ -3435,9 +5152,9 @@ export default function App() {
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel" style={{ maxWidth: '820px' }}>
-            <h1>⏸️ ODPOČINEK U MILNÍKU</h1>
+            <h1>⏸️ HRA POZASTAVENA</h1>
             <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-8px' }}>
-              Výprava je pozastavena. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
+              Výprava je pozastavena klávesou <strong>[P]</strong>. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
             </p>
 
             {/* Run summary stats card */}
@@ -3477,7 +5194,7 @@ export default function App() {
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
                 <span>❤️ Životy: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150} HP</span>
                 <span>⭐ Úroveň: <strong>{runStats.level}</strong></span>
-                <span>🪙 Krejcary: <strong>{runStats.coins}</strong></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
                 <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
                 <span>🌾 Chasníci: <strong>{runStats.chasniks}</strong></span>
                 <span>💀 Zahnáno: <strong>{runStats.kills}</strong></span>
@@ -3495,12 +5212,16 @@ export default function App() {
                 if (!wDef) return null;
                 const dmgMult = engineRef.current.player?.damageMultiplier || 1;
                 const estDmg = Math.round((wDef.baseDmg + (w.level - 1) * 5) * dmgMult);
+                const isCane = w.id === 'cane';
+                const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
+                const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
+                const displayIcon = hasSoaked ? '💧' : wDef.icon;
 
                 return (
                   <div key={w.id} className="pause-weapon-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111' }}>
-                        {wDef.icon} {wDef.name}
+                      <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <GameIcon icon={displayIcon} size={22} /> {displayName}
                       </span>
                       <span
                         style={{
@@ -3548,7 +5269,17 @@ export default function App() {
                 style={{ padding: '12px 36px', fontSize: '1.3rem', background: 'var(--leaf-green)' }}
                 onClick={togglePause}
               >
-                Pokračovat ve výpravě (Esc / P) ⚔️
+                Pokračovat ve hře (klávesa P / Esc) ⚔️
+              </button>
+              <button
+                className="lada-btn"
+                style={{ padding: '12px 24px', fontSize: '1.05rem', background: '#1D4ED8', color: '#FFFFFF' }}
+                onClick={() => {
+                  sound.coin();
+                  setIsControlsOpen(true);
+                }}
+              >
+                🎮 Ovládání a cíl hry
               </button>
               <button
                 className="lada-btn"
@@ -3574,7 +5305,7 @@ export default function App() {
             <div id="choices-container">
               {levelUpChoices.map((c, i) => (
                 <div key={i} className="choice-card" onClick={() => selectUpgrade(c)}>
-                  <div className="choice-icon">{c.icon}</div>
+                  <div className="choice-icon"><GameIcon icon={c.icon} size={36} /></div>
                   <div className="choice-text">
                     <h3>{c.name}</h3>
                     <p>{c.desc}</p>
@@ -3609,7 +5340,7 @@ export default function App() {
                     boxShadow: '4px 4px 0 var(--mustard)',
                   }}
                 >
-                  <div style={{ fontSize: '3rem' }}>{r.icon}</div>
+                  <div style={{ fontSize: '3rem', display: 'flex', justifyContent: 'center' }}><GameIcon icon={r.icon} size={48} /></div>
                   <div style={{ fontWeight: 900, fontSize: '1.1rem', marginTop: '6px' }}>{r.name}</div>
                 </div>
               ))}
@@ -3637,7 +5368,9 @@ export default function App() {
           </div>
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
             <span>Získaných krejcarů:</span>
-            <span className="tally-number">{tallyCounters.coins}</span>
+            <span className="tally-number" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              {tallyCounters.coins} <KrejcarIcon size={22} />
+            </span>
           </div>
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
             <span>Osvobozených dušiček:</span>
@@ -3747,7 +5480,9 @@ export default function App() {
                         <div>
                           <div className="trophy-header">
                             <h4 className="trophy-title">{t.title}</h4>
-                            <span className="trophy-reward">+{t.reward} 🪙</span>
+                            <span className="trophy-reward" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              +{t.reward} <KrejcarIcon size={16} />
+                            </span>
                           </div>
                           <p className="trophy-desc">{t.desc}</p>
                         </div>
@@ -3775,6 +5510,16 @@ export default function App() {
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
               <button
                 className="lada-btn btn-small"
+                style={{ background: '#1D4ED8', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => {
+                  sound.coin();
+                  setIsControlsOpen(true);
+                }}
+              >
+                🎮 Ovládání hry
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: '#E06D29', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
@@ -3786,6 +5531,17 @@ export default function App() {
               <button className="lada-btn btn-download-txt" style={{ padding: '12px 28px' }} onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru v TXT (stačí přejmenovat na .html a hrát)">
                 📄 Stáhnout hru (TXT)
               </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#DC2626', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => {
+                  sound.hit();
+                  setIsResetModalOpen(true);
+                }}
+                title="Vymazat veškerý postup (zamkne vše odemykatelné a vrátí upgrady na nulu)"
+              >
+                🗑️ Vymazat postup
+              </button>
               <button className="lada-btn" style={{ padding: '12px 28px' }} onClick={() => setGameState('menu')}>
                 Zpět do nabídky
               </button>
@@ -3793,6 +5549,29 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* CONTROLS & OBJECTIVE MODAL */}
+      <ControlsModal
+        isOpen={isControlsOpen}
+        onClose={() => setIsControlsOpen(false)}
+      />
+
+      {/* TEST MODE (SANDBOX) MODAL */}
+      <TestModeModal
+        isOpen={isTestModeOpen}
+        onClose={() => setIsTestModeOpen(false)}
+        onStartTestRun={(hero, levelId, weapons) => {
+          startGame(hero, levelId, weapons, true);
+        }}
+        initialLevelId={selectedLevelId}
+      />
+
+      {/* RESET PROGRESS CONFIRMATION MODAL */}
+      <ResetProgressModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirmReset={handleResetProgress}
+      />
 
       {/* BESTIARY MODAL */}
       <BestiaryModal

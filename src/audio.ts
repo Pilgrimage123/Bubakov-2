@@ -3,6 +3,11 @@
 class SoundManager {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+  private menuMusic: HTMLAudioElement | null = null;
+  private musicFadeInterval: any = null;
+  public musicEnabled: boolean = true;
+  public musicVolume: number = 0.4;
+  private musicUnlockedListenerAdded: boolean = false;
 
   constructor() {
     // Lazy audio context creation on user interaction
@@ -20,8 +25,112 @@ class SoundManager {
     }
   }
 
+  public initMenuMusic() {
+    if (typeof window === 'undefined') return;
+    if (!this.menuMusic) {
+      try {
+        const audio = new Audio('/audio/bubakov_menu.mp3');
+        audio.loop = true;
+        audio.volume = this.musicVolume;
+        this.menuMusic = audio;
+      } catch (e) {
+        console.warn('Nelze načíst hudbu menu:', e);
+      }
+    }
+  }
+
+  public playMenuMusic(fadeIn = true) {
+    if (!this.enabled || !this.musicEnabled) return;
+    this.init();
+    this.initMenuMusic();
+    if (!this.menuMusic) return;
+
+    if (this.musicFadeInterval) {
+      clearInterval(this.musicFadeInterval);
+      this.musicFadeInterval = null;
+    }
+
+    if (fadeIn) {
+      this.menuMusic.volume = 0.05;
+      const targetVol = this.musicVolume;
+      const step = Math.max(0.01, (targetVol - 0.05) / 12);
+      this.musicFadeInterval = setInterval(() => {
+        if (!this.menuMusic) return;
+        if (this.menuMusic.volume + step >= targetVol) {
+          this.menuMusic.volume = targetVol;
+          clearInterval(this.musicFadeInterval);
+          this.musicFadeInterval = null;
+        } else {
+          this.menuMusic.volume = Math.min(targetVol, this.menuMusic.volume + step);
+        }
+      }, 50);
+    } else {
+      this.menuMusic.volume = this.musicVolume;
+    }
+
+    const promise = this.menuMusic.play();
+    if (promise && typeof promise.catch === 'function') {
+      promise.catch(() => {
+        // Autoplay policy prevented playback, auto-unlock on first user interaction
+        if (!this.musicUnlockedListenerAdded && typeof window !== 'undefined') {
+          this.musicUnlockedListenerAdded = true;
+          const unlock = () => {
+            window.removeEventListener('pointerdown', unlock);
+            window.removeEventListener('keydown', unlock);
+            if (this.enabled && this.musicEnabled && this.menuMusic) {
+              this.menuMusic.play().catch(() => {});
+            }
+          };
+          window.addEventListener('pointerdown', unlock, { once: true });
+          window.addEventListener('keydown', unlock, { once: true });
+        }
+      });
+    }
+  }
+
+  public stopMenuMusic(fadeOut = true) {
+    if (!this.menuMusic) return;
+    if (this.musicFadeInterval) {
+      clearInterval(this.musicFadeInterval);
+      this.musicFadeInterval = null;
+    }
+
+    if (fadeOut && !this.menuMusic.paused && this.menuMusic.volume > 0.05) {
+      const startVol = this.menuMusic.volume;
+      const step = startVol / 10;
+      this.musicFadeInterval = setInterval(() => {
+        if (!this.menuMusic) return;
+        if (this.menuMusic.volume - step <= 0.02) {
+          this.menuMusic.volume = 0;
+          this.menuMusic.pause();
+          clearInterval(this.musicFadeInterval);
+          this.musicFadeInterval = null;
+        } else {
+          this.menuMusic.volume = Math.max(0, this.menuMusic.volume - step);
+        }
+      }, 40);
+    } else {
+      this.menuMusic.pause();
+    }
+  }
+
+  public toggleMusic(): boolean {
+    this.musicEnabled = !this.musicEnabled;
+    if (!this.musicEnabled) {
+      this.stopMenuMusic(true);
+    } else {
+      this.playMenuMusic(true);
+    }
+    return this.musicEnabled;
+  }
+
   public toggle(): boolean {
     this.enabled = !this.enabled;
+    if (!this.enabled) {
+      this.stopMenuMusic(false);
+    } else if (this.musicEnabled) {
+      this.playMenuMusic(true);
+    }
     return this.enabled;
   }
 
@@ -133,9 +242,21 @@ class SoundManager {
     setTimeout(() => this.playTone(130, 'sawtooth', 0.28, 0.2, 0.001), 120);
   }
 
+  public snack() {
+    this.playTone(330, 'triangle', 0.08, 0.15, 0.01);
+    setTimeout(() => this.playTone(440, 'triangle', 0.09, 0.16, 0.01), 60);
+    setTimeout(() => this.playTone(392, 'sine', 0.12, 0.14, 0.01), 130);
+  }
+
   public bell() {
     this.playTone(440, 'sine', 1.2, 0.3, 0.0001);
     this.playTone(880, 'sine', 0.8, 0.15, 0.0001);
+  }
+
+  public candlePulse() {
+    // Posvátný hromniční tón svíce: hřejivý vysoký alikvot a jemné plápolavé doznívání
+    this.playTone(659, 'sine', 0.55, 0.16, 0.001);
+    setTimeout(() => this.playTone(988, 'sine', 0.75, 0.12, 0.0001), 60);
   }
 
   public churchBell() {

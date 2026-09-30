@@ -106,11 +106,19 @@ JAK JE HRA ARCHITEKTONICKY STRUKTUROVÁNA:
   Roj divokých včel, Svěcená voda.
   Hledej v kódu: 'WEAPONS', 'WEAPON_UNLOCKS', 'fireWeapon', 'updateProjectiles'.
 
-- Bestiář a nepřátelé (32 lidových monster + bossové):
+- Výpravy a úrovně (6 ladovských úrovní):
+  Hrusická náves a rybník (1), Starý hřbitov a Hrusický hvozd (2),
+  Ladovská zima na Melechově (3), Staré hamry a Čertův mlýn (4),
+  Pustá Hláska a Zlenické podhradí (5), Dračí sluj pod Melechovskou skálou (6).
+  Hledej v kódu: 'GAME_LEVELS', 'LEVEL_ORDER', 'levelProgress'.
+
+- Bestiář a nepřátelé (42 lidových monster a velcí bossové pro všech 6 úrovní):
   Rarášek, Rybniční žabka, Vodníček, Polednice, Hastrman, Čert s vidlemi,
   Bludička, Meluzína, Noční můra, Půlnoční Hejkal, Kostlivec, Černý pes,
-  Ohnivý kohout, Divoženka, Skalní obr a další.
-  Hledej v kódu: 'ENEMY_TYPES', 'ENEMY_UNLOCKS', 'spawnEnemy', 'updateEnemies'.
+  Ohnivý kohout, Divoženka, Skalní obr, Zbojník z hamrů, Jiskřivec, Ohnivý pes,
+  Bílá paní, Zbrojnoš, Prokletý Mlynář, Bezhlavý rytíř, Prokletý Sněhulák,
+  Tříhlavý líný Drak a další.
+  Hledej v kódu: 'ENEMIES', 'ENEMY_POINTS', 'spawnEnemy', 'updateEnemies'.
 
 - Herní smyčka a fyzika:
   Vzdálenosti, kolize střel s nepřáteli, sběr dukátů a kvasnic, poškození,

@@ -25,11 +25,13 @@ export interface EnemyStats {
   damage: number;
   radius: number;
   foodResist: number;     // 0 = full damage from food, 1 = completely immune
+  hunger?: number;        // Resistance against food/snack effects (0 = starving/maximum snack duration, 1 = immune to snacking; defaults to foodResist)
   poiseResist: number;    // 0 = easily knocked back, 1 = immune to knockback
   willpower: number;      // 0 = panics easily from holy/fear, 1 = resolute
   xp: number;
   coinValue: number;
   method: string;         // Name of drawing method
+  palette?: 'soot' | 'crimson' | 'bog' | 'steel';
   weakness: string;
   strength: string;
   lore: string;

@@ -4,6 +4,7 @@ import { Lada } from '../render/ladaRenderer';
 import { EnemyCategory } from '../types';
 import { sound } from '../audio';
 import { getEnemyProgress, EnemyProgress } from '../data/enemyUnlocks';
+import { KrejcarIcon } from './KrejcarIcon';
 
 interface BestiaryModalProps {
   isOpen: boolean;
@@ -58,6 +59,20 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
       const tier = enemyProg.tier;
 
       // Draw the monster base
+      const palette = m.palette;
+      if (palette && tier >= 2) {
+        ctx.save();
+        if (palette === 'soot') {
+          ctx.filter = 'brightness(0.52) contrast(1.4) drop-shadow(0 0 3px #EA580C)';
+        } else if (palette === 'crimson') {
+          ctx.filter = 'sepia(1) saturate(5) hue-rotate(320deg) brightness(0.9)';
+        } else if (palette === 'bog') {
+          ctx.filter = 'sepia(0.85) hue-rotate(65deg) saturate(2.5) brightness(0.85)';
+        } else if (palette === 'steel') {
+          ctx.filter = 'grayscale(0.85) contrast(1.35) brightness(1.15)';
+        }
+      }
+
       if (m.id === 'cert') {
         Lada.drawCert(ctx, cx, cy + 5, elapsed, 0, false, true);
       } else if (m.id === 'hejkal') {
@@ -76,6 +91,21 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
           drawer.call(Lada, ctx, cx, cy, elapsed, 0, false);
         } else {
           Lada.drawRarach(ctx, cx, cy, elapsed, 0, false);
+        }
+      }
+
+      if (palette && tier >= 2) {
+        ctx.restore();
+        if (palette === 'soot') {
+          ctx.fillStyle = '#F59E0B';
+          ctx.beginPath();
+          ctx.arc(cx + 4, cy - 12, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (palette === 'crimson') {
+          ctx.fillStyle = '#DC2626';
+          ctx.beginPath();
+          ctx.arc(cx + 3, cy - 14, 2.5, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
@@ -342,9 +372,14 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
               <span className="tag-badge" style={{ background: '#E2E8F0', color: 'var(--ink)' }}>
                 ❤️ {enemyProg.spoiledStats.hp}
               </span>
-              <span className="tag-badge" style={{ background: '#FEF3C7', color: 'var(--ink)' }}>
-                💰 {enemyProg.spoiledStats.coinValue}
+              <span className="tag-badge" style={{ background: '#FEF3C7', color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <KrejcarIcon size={16} /> {enemyProg.spoiledStats.coinValue}
               </span>
+              {enemyProg.tier >= 2 && (
+                <span className="tag-badge" style={{ background: '#FEF9C3', color: '#854D0E' }}>
+                  🥐 Hlad: {Math.round((1 - (currentMonster.hunger ?? currentMonster.foodResist ?? 0)) * 100)} %
+                </span>
+              )}
               {enemyProg.tier >= 3 && (
                 <span className="tag-badge" style={{ background: '#E0E7FF', color: 'var(--ink)' }}>
                   ⚡ Rychlost: {enemyProg.spoiledStats.speed}

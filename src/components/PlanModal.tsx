@@ -43,19 +43,67 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
         {activeTab === 'plan' ? (
           <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
-            {/* 13. KOLO - PLÁN REVIZE 2.0: ÚROVNĚ 4–6, NOVÁ MONSTRA, ODMYKÁNÍ A BOSSÍ MECHANIKY */}
-            <div className="plan-card" style={{ border: '4px solid #92400E', color: '#000000', background: '#FFFBEB' }}>
+            {/* 15. KOLO - TESTOVACÍ MÓD & VYMAZAT POSTUP */}
+            <div className="plan-card" style={{ border: '4px solid #7C3AED', color: '#000000', background: '#F5F3FF' }}>
               <div className="plan-header">
-                <h3 style={{ color: '#000000' }}>13. KOLO ZMĚN – PLÁN REVIZE 2.0 (Úrovně 4–6, nová monstra, odemykání a bossí mechaniky)</h3>
-                <span className="plan-badge-done" style={{ background: '#92400E', color: '#FFFFFF' }}>Plánováno – NEIMPLEMENTOVÁNO</span>
+                <h3 style={{ color: '#000000' }}>15. KOLO ZMĚN (v15.0.0 – Testovací mód Sandbox & Tlačítko Vymazat postup)</h3>
+                <span className="plan-badge-done" style={{ background: '#7C3AED', color: '#FFFFFF' }}>Dokončeno & Aktivní</span>
               </div>
               <ul className="plan-items" style={{ color: '#000000' }}>
-                <li>🧩 <strong>1. Typy úrovní:</strong> rozšířit <code>GameLevelId</code> z 1–3 na 1–6.</li>
-                <li>🎯 <strong>2. Body:</strong> doplnit <code>ENEMY_POINTS</code> pro Zbojníka 135, Jiskřivce 95, Bílou paní 185, Zbrojnoše 290, Sněhuláka 220, Noční můru 110, Mlynáře 5500, Bezhlavého rytíře 6800 a Draka 9900.</li>
-                <li>👹 <strong>3. Bestiář:</strong> přidat Zbojníka, Jiskřivce, Mlynáře, Ohnivého psa, Bílou paní, Zbrojnoše, Bezhlavého rytíře, Sněhuláka, Noční můru a Draka včetně statistik, renderů, slabin, silných stránek, lore a nebezpečnosti.</li>
-                <li>🗺️ <strong>4. Úrovně 4–6:</strong> Staré hamry a Čertův mlýn; Pustá Hláska a Zlenické podhradí; Dračí sluj pod Melechovskou skálou; spawn pooly a mini/mid/final bossové.</li>
-                <li>🔐 <strong>5. Odemykání:</strong> rozšířit <code>LEVEL_ORDER</code> na [1, 2, 3, 4, 5, 6] a doplnit závislosti, metadata a milníky pro úrovně 4–6.</li>
-                <li>⚙️ <strong>6. Herní smyčka:</strong> rozšířit navigaci a vítěznou logiku; připravit stav enginu pro povodňovou vlnu Mlynáře, moučné mraky, odraženou hlavu Bezhlavého rytíře, padající rampouchy a mechaniku Tříhlavého líného Draka.</li>
+                <li style={{ color: '#000000' }}>
+                  🧪 <strong>Testovací mód (Sandbox):</strong> Možnost vybrat jakéhokoliv ze 6 lidových hrdinů (Poutník, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička a Barunka) na libovolné ze 6 úrovní bez nutnosti jejich odemykání. Navíc lze libovolně navolit libovolné startovní zbraně (včetně více zbraní najednou) a nastavit jejich úrovně od 1 až do 10 s rychlými předvolbami arzenálu!
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🗑️ <strong>Tlačítko Vymazat postup s potvrzovacím dialogem:</strong> Přímo v hlavní nabídce i v hospodě je přidáno tlačítko pro bezpečné vymazání postupu. Po potvrzení uzamkne všechny odemykatelné hrdiny, úrovně i zbraně a vrátí veškeré upgrady vesnice, pokladnu, dušičky i bestiář zpět na nulu.
+                </li>
+              </ul>
+            </div>
+
+            {/* 14. KOLO - PAUZA KLÁVESOU P & OVLÁDÁNÍ HRY V MENU A PRŮVODCE */}
+            <div className="plan-card" style={{ border: '4px solid #1D4ED8', color: '#000000', background: '#EFF6FF' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>14. KOLO ZMĚN (v14.0.0 – Pauza klávesou P, tlačítko Ovládání hry & detailní průvodce venkovského lovce)</h3>
+                <span className="plan-badge-done" style={{ background: '#1D4ED8', color: '#FFFFFF' }}>Dokončeno & Aktivní</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  ⏸️ <strong>Pauza klávesou P i Esc:</strong> Možnost kdykoliv během hraní stiskem klávesy <code>P</code> (nebo <code>Esc</code>) okamžitě pozastavit hru a bezpečně si odpočinout. V pauze se zobrazuje kompletní arzenál se statistikami poškození, čas přežití a možnost sečíst skóre do hospody. Opětovný stisk klávesy <code>P</code> vrací lovce do boje.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🎮 <strong>Tlačítko Ovládání hry v hlavním menu i hospodě:</strong> Přímo v hlavní nabídce i v hospodě U Černého kocoura je nově umístěno výrazné modré tlačítko <code>🎮 Ovládání hry</code>.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  📜 <strong>Komplexní ilustrovaný průvodce ovládáním a cílem hry (ControlsModal):</strong>
+                  Detailní rozpis kláves (WASD, šipky, P, Mezerník), vysvětlení automatických útoků v ladovském survivors stylu, popis dotykového joysticku, přehled všech 5 fází noci až do ranního kuropění kohouta (300 s), tipy na přežití a návod k rozvoji vesnice a hospody.
+                </li>
+              </ul>
+            </div>
+
+            {/* 13. KOLO - ÚROVNĚ 4–6, 10 NOVÝCH MONSTER, ODMYKÁNÍ A BOSSÍ MECHANIKY */}
+            <div className="plan-card" style={{ border: '4px solid #166534', color: '#000000', background: '#F0FDF4' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>13. KOLO ZMĚN (v13.0.0 – Úrovně 4–6, 10 nových monster, odemykání krajin & bossí mechaniky)</h3>
+                <span className="plan-badge-done" style={{ background: '#166534', color: '#FFFFFF' }}>Dokončeno & Aktivní ve hře</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  🗺️ <strong>Tři zbrusu nové ladovské úrovně (Úrovně 4–6):</strong> Rozšíření <code>GameLevelId</code> z 1–3 na 1–6. Úroveň 4: Staré hamry a Čertův mlýn; Úroveň 5: Pustá Hláska a Zlenické podhradí; Úroveň 6: Dračí sluj pod Melechovskou skálou. Každá s vlastním ladovským motivem, počasím, atmosférou i dekorem.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  👹 <strong>Velký Bestiář rozšířen na 42 druhů strašidel:</strong> Doplněno 10 nových lidových monster včetně kompletních Ladovských kreseb, statistik, slabin, předností, folklorního lore a nebezpečnosti: Zbojník z hamrů, Jiskřivec, Ohnivý pes, Bílá paní, Zbrojnoš, Prokletý Sněhulák, Noční můra a 3 titánští bossové.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  ⚔️ <strong>Unikátní interaktivní bossí útoky a mechaniky:</strong> Prokletý Mlynář vrhá rotující žulové mlýnské kameny, valí dravou povodňovou vlnu a oslepuje moučným oblakem; Bezhlavý rytíř metá svou odraženou hlavu jako bumerang; Tříhlavý líný Drak chrlí kužely plamene a způsobuje pád ostrých rampouchů ze stropu sluje.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🔐 <strong>Sekvenční odemykání všech 6 úrovní & Královská zkratka:</strong> Rozšířen <code>LEVEL_ORDER</code> na [1, 2, 3, 4, 5, 6]. Postupné odhalování stop v mlze (0 %, 25 %, 50 %, 75 %, 100 %) nebo okamžité odemčení skolením bosse předchozí úrovně.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🎯 <strong>Vybalancovaný bodový systém dropů:</strong> Doplněny hodnoty <code>ENEMY_POINTS</code> pro všech 10 nových monster (Zbojník 135, Jiskřivec 95, Ohnivý pes 175, Bílá paní 185, Zbrojnoš 290, Sněhulák 220, Noční můra 110, Prokletý Mlynář 5500, Bezhlavý rytíř 6800 a Tříhlavý drak 9900).
+                </li>
+                <li style={{ color: '#000000' }}>
+                  👥 <strong>Nová družina hrdinů (Hrobník & Babička s Barunkou):</strong> Rozšíření sekvenční řady hrdinů o Hrobníka se svatou lucernou a lopatou a Babičku s Barunkou z Ratibořic přinášející vánkem vlídnosti záchranu celé vesnici.
+                </li>
               </ul>
             </div>
 
@@ -63,7 +111,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
             <div className="plan-card" style={{ border: '4px solid #1D4ED8', color: '#000000', background: '#EFF6FF' }}>
               <div className="plan-header">
                 <h3 style={{ color: '#000000' }}>12. KOLO ZMĚN (v12.0.0 – 100% kompletní offline hra i plná upravitelnost pro AI/Claude & Původní zdrojáky)</h3>
-                <span className="plan-badge-done" style={{ background: '#1D4ED8', color: '#FFFFFF' }}>Právě nasazeno</span>
+                <span className="plan-badge-done" style={{ background: '#1D4ED8', color: '#FFFFFF' }}>Dokončeno</span>
               </div>
               <ul className="plan-items" style={{ color: '#000000' }}>
                 <li style={{ color: '#000000' }}>
@@ -188,7 +236,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
                   ⛓️ <strong>Přísné sekvenční odemykání zbraní i lovců:</strong> Nový lovec se nikdy nezačne odemykat, dokud není plně odemčen lovec před ním (Poutník ➔ Pasáček ➔ Bába kořenářka ➔ Ponocný). Stejné pravidlo platí pro zamčené zbraně v kovářské dílně (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda).
                 </li>
                 <li style={{ color: '#000000' }}>
-                  ⚔️ <strong>Uzamčení zbraní kromě Rákosky a Povidlových buchet:</strong> Všech 9 ostatních zbraní je na začátku uzamčeno a postupně se odemyká plněním tematických výzev kováře. Kovář začne pracovat na nové zbrani teprve po ukování předchozí.
+                  ⚔️ <strong>Uzamčení zbraní kromě Vrbového prutu a Povidlových buchet:</strong> Všech 9 ostatních zbraní je na začátku uzamčeno a postupně se odemyká plněním tematických výzev kováře. Kovář začne pracovat na nové zbrani teprve po ukování předchozí.
                 </li>
                 <li style={{ color: '#000000' }}>
                   🕵️ <strong>Třístupňové odhalování identity zbraní (25 %, 50 %, 75 %):</strong>
@@ -234,7 +282,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
                   ☀️ <strong style={{ color: '#000000' }}>Fáze 2 – Cyklus Poledne až Půlnoc & Kuropění:</strong> Výslovné fáze dne v horním HUDu (Poledne, Odpoledne, Klekání & Soumrak, Hluboká noc, Půlnoční hodina, Kuropění). Atmosférické tónování oblohy. Přežijte 6 minut až do zakokrhání kohouta!
                 </li>
                 <li style={{ color: '#000000' }}>
-                  🧪 <strong style={{ color: '#000000' }}>Fáze 3 – Lékárničky a čistá ekonomika mincí:</strong> Svatovítské léčivé balzámy (+30 HP) a pečené koláče (+15 HP) padající z nepřátel. Nominální mince: Krejcar (1 🪙), Stříbrňák (5 🪙), Tolar (15 🪙).
+                  🧪 <strong style={{ color: '#000000' }}>Fáze 3 – Lékárničky a čistá ekonomika mincí:</strong> Svatovítské léčivé balzámy (+30 HP) a pečené koláče (+15 HP) padající z nepřátel. Nominální mince: Krejcar (1 kr.), Stříbrňák (5 kr.), Tolar (15 kr.).
                 </li>
                 <li style={{ color: '#000000' }}>
                   📖 <strong style={{ color: '#000000' }}>Fáze 4 – Velký Bestiář a Síň slávy:</strong> Plně filtrovatelný bestiář se všemi 32 strašidly a rozšířená Síň slávy o nové venkovské trofeje s odměnami do trvalé pokladny.
@@ -308,6 +356,38 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
           </div>
         ) : (
           <div className="changelog-list" style={{ maxHeight: '450px', overflowY: 'auto', color: '#000000' }}>
+            <h4 style={{ color: '#000000' }}>v15.0.0 – 15. kolo: Testovací mód Sandbox & Tlačítko Vymazat postup</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Testovací mód (Sandbox):</strong> Nový dedikovaný režim s volným přístupem ke všem 6 lidovým hrdinům i všem 6 úrovním. Umožňuje libovolný výběr zbraní ze všech 12 typů s volitelným nastavením jejich úrovní od 1 až do 10 a rychlými předvolbami arzenálu.
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Tlačítko Vymazat postup s potvrzením:</strong> Možnost vymazat uložená data v prohlížeči, čímž se zamkne veškerý odemykatelný obsah (hrdinové, zbraně, úrovně) a všechny upgrady vesnice se vrátí na úroveň 0.
+              </li>
+            </ul>
+
+            <h4 style={{ color: '#000000' }}>v13.0.0 – 13. kolo: Úrovně 4–6, 10 nových lidových monster, odemykání krajin & unikátní mechaniky bossů</h4>
+            <ul style={{ color: '#000000' }}>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Tři zbrusu nové ladovské úrovně (Úrovně 4–6):</strong> Přidána Úroveň 4: Staré hamry a Čertův mlýn (horké výhně, náhon, točící se mlýnské lopatky a padající moučný prach), Úroveň 5: Pustá Hláska a Zlenické podhradí (chmurná gotická zřícenina, kamenné hradby a noční stíny) a Úroveň 6: Dračí sluj pod Melechovskou skálou (mrazivá ledová jeskyně, sněhová vánice a spící drak).
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>10 nových lidových monster (Bestiář má 42 druhů):</strong> Do hry vstoupili Zbojník z hamrů, Jiskřivec z kovadliny, Ohnivý pes, Bílá paní z hlásky, Zbrojnoš s těžkým štítem, Prokletý Sněhulák, Noční můra a trojice velkých bossů – Prokletý Mlynář, Bezhlavý rytíř a Tříhlavý líný Drak, včetně kompletních Ladovských kreseb, slabin, statistik i lore.
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Unikátní bossí útoky a mechaniky v enginu:</strong> Prokletý Mlynář vrhá valící se žulové mlýnské kameny, vyvolává dravé povodňové vlny a oslepující moučné mraky; Bezhlavý rytíř vrhá svou odraženou hlavu jako bumerang; Tříhlavý líný Drak chrlí ohnivé kužely a shazuje z klenby jeskyně ostré ledové rampouchy.
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Sekvenční odemykání 6 úrovní & Královská zkratka:</strong> Každá nová úroveň má vlastní zadání výzvy, procentuální postup (0 %, 25 %, 50 %, 75 %, 100 %) i možnost okamžitého odemčení skolením bosse předchozí úrovně.
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Bodový systém dropů pro nová monstra:</strong> Přesně vyladěné hodnoty <code>ENEMY_POINTS</code> pro dropy truhel, léčivých balzámů, koláčů, mincí a dušiček pro všech 10 nových monster.
+              </li>
+              <li style={{ color: '#000000' }}>
+                <strong style={{ color: '#000000' }}>Nová družina hrdinů (Hrobník & Babička s Barunkou):</strong> Doplnění Hrobníka (lopata a posvátná lucerna) a Babičky s Barunkou z Ratibořic (vlídné slovo a chléb se solí) do sekvenčního odemykacího řádu hrdinů.
+              </li>
+            </ul>
+
             <h4 style={{ color: '#000000' }}>v12.0.0 – 12. kolo: 100% kompletní offline hra i plná upravitelnost pro AI (Claude) a programátory</h4>
             <ul style={{ color: '#000000' }}>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Garance celistvosti pro hraní i úpravy (Claude & vývojáři):</strong> Závazně zakotveno v <code>DESIGN_PRINCIPLES.md</code> i v kódu. Soubory ke stažení (HTML i TXT) obsahují kompletní offline hru a veškeré náležitosti pro snadné rozšiřování novým obsahem.</li>
@@ -347,7 +427,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
             <h4 style={{ color: '#000000' }}>v7.0.0 – 7. kolo: Postupné odemykání zbraní a kovářská Zbrojnice</h4>
             <ul style={{ color: '#000000' }}>
-              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sekvenční odemykání zbraní:</strong> Zbraně (kromě Povidlových buchet a Rákosky) jsou na začátku uzamčeny a kovář na nich pracuje přísně postupně podle řady (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda).</li>
+              <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sekvenční odemykání zbraní:</strong> Zbraně (kromě Povidlových buchet a Vrbového prutu) jsou na začátku uzamčeny a kovář na nich pracuje přísně postupně podle řady (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda).</li>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Třístupňové odhalování identity:</strong> Milníky 25 %, 50 % a 75 % odhalují jméno, nákres zbraně i bojové statistiky.</li>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Interaktivní Zbrojnice (Arzenál):</strong> Nové modální okno s filtry, přehlednými kartami a živými počítadly.</li>
             </ul>

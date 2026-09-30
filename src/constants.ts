@@ -107,6 +107,7 @@ export const ENEMY_POINTS: Record<string, number> = {
   hejkal: 2760, obr: 4600,
   zbojnik: 135, jiskrivec: 95, bila_pani: 185, zbrojnos: 290, snehulak: 220, nocni_mura: 110,
   ohnivy_pes: 175, mlynar: 5500, bezhlavy_rytir: 6800, drak: 9900,
+  sazovy_rarach: 68, ropucha: 82, krvavy_kostlivec: 130, obrneny_zbojnik: 240,
 };
 
 export const DROP_THRESHOLDS = { chest: 3500, potion: 450, bread: 250, soul: 120, coin: 20 };

@@ -1558,3 +1558,38 @@ body {
   gap: 6px;
 }
 
+/* Keycap styling for controls guide */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 2px 8px;
+  background: #FFFDF8;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-bottom: 4px solid var(--ink);
+  border-radius: 6px;
+  font-family: 'Eczar', serif;
+  font-weight: 900;
+  font-size: 1.05rem;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+  user-select: none;
+}
+
+.keycap-wide {
+  min-width: 140px;
+  padding: 2px 14px;
+  font-size: 0.95rem;
+}
+
+.keycap-accent {
+  background: #FEF08A;
+  border-color: #78350F;
+  border-bottom: 4px solid #78350F;
+  color: #78350F;
+  font-weight: 900;
+  box-shadow: 2px 2px 0 rgba(120, 53, 15, 0.3);
+}
+

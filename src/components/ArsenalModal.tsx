@@ -3,6 +3,7 @@ import { MetaProgression } from '../types';
 import { WEAPONS } from '../data/weapons';
 import { getWeaponProgress, WeaponProgress } from '../data/weaponUnlocks';
 import { sound } from '../audio';
+import { GameIcon } from './GameIcon';
 
 interface ArsenalModalProps {
   isOpen: boolean;
@@ -167,7 +168,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({
                     filter: prog.tier === 0 ? 'grayscale(1) brightness(0.3)' : prog.tier === 1 ? 'contrast(160%) brightness(0.5)' : 'none',
                   }}
                 >
-                  {prog.tier === 0 ? '❓' : prog.realIcon}
+                  <GameIcon icon={prog.tier === 0 ? '❓' : prog.realIcon} size={prog.id === 'buns' ? 44 : '2.2rem'} />
                 </div>
 
                 <h3 style={{ fontSize: '1.25rem', margin: '2px 0', minHeight: '32px', color: '#111111', fontWeight: 900 }}>
