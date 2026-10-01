@@ -1,3 +1,5 @@
+import type { EnemyRendererMethod } from './render/ladaRenderer';
+
 export type Season = 'autumn' | 'winter';
 export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -30,7 +32,7 @@ export interface EnemyStats {
   willpower: number;      // 0 = panics easily from holy/fear, 1 = resolute
   xp: number;
   coinValue: number;
-  method: string;         // Name of drawing method
+  method: EnemyRendererMethod; // Name of drawing method in the Ladovský renderer
   palette?: 'soot' | 'crimson' | 'bog' | 'steel';
   weakness: string;
   strength: string;
