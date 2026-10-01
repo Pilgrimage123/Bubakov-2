@@ -231,12 +231,12 @@ class DecorItem {
   scale: number;
   flip: number;
 
-  constructor(x: number, y: number, type: string) {
+  constructor(x: number, y: number, type: string, scale = 1, flip = 1) {
     this.x = x;
     this.y = y;
     this.type = type;
-    this.scale = 0.8 + Math.random() * 0.4;
-    this.flip = Math.random() > 0.5 ? 1 : -1;
+    this.scale = scale;
+    this.flip = flip;
   }
 
   draw(ctx: CanvasRenderingContext2D, season: Season, theme?: string) {
@@ -422,6 +422,95 @@ class DecorItem {
     }
     ctx.restore();
   }
+}
+
+/**
+ * Native Bubákov arena composition.
+ *
+ * The arena is deliberately quieter than the old "vivid" patch:
+ * - the player gets a clean 240px combat core;
+ * - large landmarks live on a sparse middle ring;
+ * - small scenery fills the outer ring without forming a wall;
+ * - every object keeps the existing Lada/ink visual vocabulary.
+ *
+ * This is presentation-only. It never changes collision, enemy AI,
+ * pickups, projectiles or level progression.
+ */
+function seedArenaDecor(level: GameLevelDef): DecorItem[] {
+  const pool = level.decorTypes.length ? level.decorTypes : ['tree'];
+  const decor: DecorItem[] = [];
+
+  const themeDensity: Record<GameLevelDef['theme'], number> = {
+    autumn_village: 34,
+    autumn_graveyard: 38,
+    winter_frost: 30,
+    mill_forge: 28,
+    ruined_castle: 32,
+    dragon_cave: 24,
+  };
+
+  const target = themeDensity[level.theme];
+  const minDistance = 115;
+  const coreRadius = 260;
+  const innerRadius = 380;
+  const outerRadius = 1320;
+
+  // Keep landmarks away from the starting/combat area. We only reject
+  // scenery against other scenery; enemies remain completely unaffected.
+  const placed: Array<{ x: number; y: number; radius: number }> = [];
+
+  const pickType = (index: number) => {
+    // First few objects are intentionally thematic anchors. The remaining
+    // objects use the level's existing decor pool.
+    if (index < pool.length) return pool[index];
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
+
+  let attempts = 0;
+  let index = 0;
+
+  while (decor.length < target && attempts < target * 30) {
+    attempts += 1;
+
+    // Area-weighted radial distribution: less clutter near the player,
+    // gradually more scenery farther away.
+    const u = Math.random();
+    const radius = innerRadius + Math.sqrt(u) * (outerRadius - innerRadius);
+    const angle = Math.random() * Math.PI * 2;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+
+    // A few objects may sit in the outer edge only; never place scenery
+    // inside the combat core.
+    if (Math.hypot(x, y) < coreRadius) continue;
+
+    const type = pickType(index);
+    const large = type === 'tree' || type === 'cottage' || type === 'snowman';
+    const objectRadius = large ? 72 : 48;
+
+    let overlaps = false;
+    for (const other of placed) {
+      const dx = x - other.x;
+      const dy = y - other.y;
+      const min = objectRadius + other.radius + minDistance;
+      if (dx * dx + dy * dy < min * min) {
+        overlaps = true;
+        break;
+      }
+    }
+    if (overlaps) continue;
+
+    const scale = large
+      ? 0.72 + Math.random() * 0.23
+      : 0.70 + Math.random() * 0.20;
+
+    const flip = Math.random() > 0.5 ? 1 : -1;
+    decor.push(new DecorItem(x, y, type, scale, flip));
+    placed.push({ x, y, radius: objectRadius });
+    index += 1;
+  }
+
+  return decor;
 }
 
 export default function App() {
@@ -1126,15 +1215,9 @@ export default function App() {
       },
     };
 
-    // Decor seed around starting zone tailored to level
-    const decor: DecorItem[] = [];
-    const pool = chosenLevel.decorTypes;
-    for (let i = 0; i < 90; i++) {
-      const dist = 100 + Math.random() * 1400;
-      const ang = Math.random() * Math.PI * 2;
-      const decType = pool[Math.floor(Math.random() * pool.length)];
-      decor.push(new DecorItem(Math.cos(ang) * dist, Math.sin(ang) * dist, decType));
-    }
+    // Seed a readable, combat-friendly composition instead of filling the
+    // starting area with equally prominent decorative objects.
+    const decor = seedArenaDecor(chosenLevel);
 
     engineRef.current = {
       player,
