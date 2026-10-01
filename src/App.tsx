@@ -52,7 +52,7 @@ import {
   getHolyPushMultiplier,
 } from './data/holy';
 import { TROPHIES } from './data/trophies';
-import { Lada } from './render/ladaRenderer';
+import { Lada, drawEnemyRenderer } from './render/ladaRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
@@ -4229,12 +4229,15 @@ export default function App() {
         } else if (this.id === 'klekanice') {
           Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else {
-          const drawer = (Lada as any)[this.method];
-          if (typeof drawer === 'function') {
-            drawer.call(Lada, ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
-          } else {
-            Lada.drawRarach(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
-          }
+          drawEnemyRenderer(
+            this.method,
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            this.vx,
+            isFleeing,
+          );
         }
 
         if (palette) {
