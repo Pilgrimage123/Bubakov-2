@@ -1,17 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.resolve(rootDir, 'dist');
 const publicDir = path.resolve(rootDir, 'public');
-
-console.log('Building clean unminified assets with Vite...');
-// Always build unminified so that the code in the standalone file has full variable names and comments
-execSync('npx vite build --minify false', { cwd: rootDir, stdio: 'inherit' });
 
 if (!fs.existsSync(publicDir)) {
   fs.mkdirSync(publicDir, { recursive: true });
@@ -47,6 +42,9 @@ console.log(`Collected ${Object.keys(sourceTree).length} original pristine sourc
 // 2. Collect CSS from dist/assets
 let combinedCss = '';
 const assetsDir = path.resolve(distDir, 'assets');
+if (!fs.existsSync(assetsDir)) {
+  throw new Error('FATAL: dist/assets is missing. Run `npm run build` before bundling the standalone artifact.');
+}
 if (fs.existsSync(assetsDir)) {
   const assetFiles = fs.readdirSync(assetsDir);
   for (const file of assetFiles) {
@@ -224,8 +222,8 @@ function assertStandaloneOffline(html) {
 assertStandaloneOffline(finalHtml);
 
 const finalSize = Buffer.byteLength(finalHtml, 'utf-8');
-if (finalSize < 200000) {
-  throw new Error(`FATAL: Standalone bundle size is only ${finalSize} bytes (< 200 KB)! Standalone file MUST be totally complete!`);
+if (finalSize < 1_000_000) {
+  throw new Error(`FATAL: Standalone bundle size is only ${finalSize} bytes (< 1 MB)! Standalone file MUST be totally complete!`);
 }
 if (!finalHtml.includes('id="root"') || !finalHtml.includes('<!doctype html>')) {
   throw new Error('FATAL: Standalone bundle is missing essential HTML structure!');
