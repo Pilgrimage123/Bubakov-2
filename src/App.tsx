@@ -1124,53 +1124,17 @@ export default function App() {
     // starting area with equally prominent decorative objects.
     const decor = seedArenaDecor(chosenLevel);
 
-    engineRef.current = {
-      player,
-      enemies: [],
-      projectiles: [],
-      slashes: [],
-      drops: [],
-      decor,
-      particles: [],
-      texts: [],
-      camera: { x: 0, y: 0 },
-      keys: {},
-      miniBossSpawned: false,
-      midBossSpawned: false,
-      finalBossSpawned: false,
-      levelVictoryTriggered: false,
-      activeLevelId: chosenLevelId,
-      chasnikSpawned: false,
-      pointsChest: 0, pointsPotion: 0, pointsBread: 0, pointsCoin: 0, pointsSoul: 0,
-      blessing: null,
-      cutscene: null,
-      companion: null,
-      lastTime: performance.now(),
-      uiTime: 0,
-      fleeTimer: 0,
-      lightningTimer: 45,
-      lightningFlash: 0,
-      lightningStrike: null,
-      nextBossMechanicAt: chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY,
-      gameTime: 0,
-      kills: 0,
-      coins: 0,
-      souls: 0,
-      chasniks: 0,
-      dawnVictoryTriggered: false,
-      flourStormTimer: 0,
-      mlynarStoneTimer: 5,
-      mlynarWaveTimer: 11,
-      mlynarStormTimer: 16,
-      certStompTimer: 5,
-      certChargeTimer: 8,
-      spawnTimer: chosenLevelId === 1 ? 3.5 : 2.0,
-      hejkalHowlTimer: 6,
-      hejkalSmashTimer: 10,
-      obrBoulderTimer: 5,
-      obrQuakeTimer: 9,
-      lastStatsSync: 0,
-    };
+    // Start from the engine's canonical defaults, then apply only values that
+    // are specific to the selected level/run. This keeps simulation defaults
+    // in one place and prevents startGame() from drifting from engineState.ts.
+    const engine = createInitialEngineState();
+    engine.player = player;
+    engine.decor = decor;
+    engine.activeLevelId = chosenLevelId;
+    engine.nextBossMechanicAt =
+      chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
+    engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
+    engineRef.current = engine;
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
     if (chosenLevelId === 1) {
