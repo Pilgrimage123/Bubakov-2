@@ -17,8 +17,8 @@
  *
  * Všechny herní moduly:
  * - Kompletní běhový engine a herní smyčka
- * - 4 venkovští hrdinové (Poutník, Pasáček, Bába kořenářka, Ponocný)
- * - 32 lidových monster a velcí venkovští bossové
+ * - 6 venkovských hrdinů (Poutník, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička)
+ * - kompletní bestiář lidových monster a velcí venkovští bossové
  * - 11 zbraní, jejich větvení a úrovně
  * - Ladovský plátnový kreslící engine (HTML5 Canvas 2D)
  * - Zvukový Web Audio syntezátor tradičních venkovských nástrojů
