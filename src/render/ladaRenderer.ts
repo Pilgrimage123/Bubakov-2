@@ -4945,3 +4945,29 @@ export const Lada = {
     ctx.restore();
   },
 };
+
+
+/** Renderer methods accepted by enemy data definitions. */
+export type EnemyRendererMethod = Extract<keyof typeof Lada, `draw${string}`>;
+
+export type EnemyDrawFn = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  time: number,
+  vx: number,
+  panicked: boolean,
+) => void;
+
+export function drawEnemyRenderer(
+  method: EnemyRendererMethod,
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  time: number,
+  vx: number,
+  panicked: boolean,
+): void {
+  const drawer = Lada[method] as unknown as EnemyDrawFn;
+  drawer(ctx, x, y, time, vx, panicked);
+}
