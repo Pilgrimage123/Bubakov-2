@@ -6,8 +6,6 @@
  * becoming the canonical definition of the game engine state.
  */
 import type { GameLevelId } from '../types';
-import type { DecorItem } from './decor';
-import type { DamageText } from './effects';
 
 export interface EngineState {
   player: any;
@@ -15,9 +13,9 @@ export interface EngineState {
   projectiles: any[];
   slashes: any[];
   drops: any[];
-  decor: DecorItem[];
+  decor: any[];
   particles: any[];
-  texts: DamageText[];
+  texts: any[];
   camera: { x: number; y: number };
   keys: Record<string, boolean>;
   miniBossSpawned: boolean;
