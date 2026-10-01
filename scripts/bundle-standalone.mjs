@@ -162,9 +162,6 @@ ${gameDocComment}
     <meta property="og:description" content="Přežijte noc ve světě venkovského děsu. Hra inspirovaná ilustracemi Josefa Lady kompletně v češtině." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Eczar:wght@500;700;800;900&display=swap" rel="stylesheet">
     <style>
 ${combinedCss}
     </style>
@@ -216,6 +213,15 @@ ${safeJs}
     </script>
   </body>
 </html>`;
+
+function assertStandaloneOffline(html) {
+  const externalResourcePattern = /(?:href|src)=["']https?:\/\/|@import[^;]*https?:\/\/|url\\(\\s*["']?https?:\\/\\//i;
+  if (externalResourcePattern.test(html)) {
+    throw new Error('FATAL: Standalone bundle contains an external network resource. Offline contract requires all runtime assets to be self-contained.');
+  }
+}
+
+assertStandaloneOffline(finalHtml);
 
 const finalSize = Buffer.byteLength(finalHtml, 'utf-8');
 if (finalSize < 200000) {
