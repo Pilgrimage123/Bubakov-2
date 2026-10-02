@@ -190,6 +190,21 @@ class SoundManager {
     });
   }
 
+  public slotTick() {
+    this.playTone(560 + Math.random() * 90, 'triangle', 0.035, 0.07, 0.005);
+  }
+
+  public slotStop() {
+    this.playTone(520, 'sine', 0.12, 0.18);
+    setTimeout(() => this.playTone(780, 'sine', 0.16, 0.16), 40);
+  }
+
+  public slotJackpot() {
+    [523, 659, 784, 1046, 1318].forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.22, 0.22), i * 75);
+    });
+  }
+
   public boss() {
     this.playTone(80, 'sawtooth', 0.7, 0.35);
     setTimeout(() => this.playTone(65, 'sawtooth', 0.9, 0.35), 250);

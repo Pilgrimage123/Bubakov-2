@@ -551,8 +551,10 @@ export function getLevelProgress(id: GameLevelId, meta: MetaProgression): LevelP
   });
 
   // Check if required boss was defeated (instant 100%)
-  const bossId = id === 2 ? 'cert' : id === 3 ? 'hejkal' : '';
-  const bossDefeated = bossId ? (meta.bestiaryKills?.[bossId] || 0) >= 1 : false;
+  const bossId = id === 2 ? 'cert' : id === 3 ? 'hejkal' : id === 4 ? 'obr' : id === 5 ? 'mlynar' : id === 6 ? 'bezhlavy_rytir' : '';
+  const bossDefeated = bossId
+    ? ((meta.bestiaryKills?.[bossId] || 0) >= 1 || !!meta.completedLevels?.[(id - 1) as GameLevelId])
+    : false;
 
   let percent = 0;
   if (bossDefeated) {

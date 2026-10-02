@@ -736,6 +736,21 @@ body {
   animation: popIn 0.4s ease-out, bossPulse 1s alternate infinite;
 }
 
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  80% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes bossPulse {
   0% { transform: translate(-50%, 0) scale(1); }
   100% { transform: translate(-50%, 0) scale(1.06); }
@@ -847,6 +862,66 @@ body {
 .sound-toggle-btn:hover {
   background: var(--mustard);
   color: var(--ink);
+}
+
+.screen-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--wood-dark);
+  color: #FEF3C7;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 4px 14px;
+  font-size: 0.85rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0px var(--ink);
+  margin-bottom: 6px;
+}
+
+.stage-summary-callout {
+  background: var(--panel-cream);
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 16px 0 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 4px 4px 0px var(--ink);
+  text-align: left;
+}
+
+.hunter-screen-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px dashed rgba(61, 34, 16, 0.4);
+}
+
+.hunter-stage-chip {
+  background: var(--parchment);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 3px 3px 0 var(--ink);
+  transition: transform 0.15s ease;
+}
+
+.hunter-stage-chip:hover {
+  transform: translateY(-1px);
+  background: #FFF9E6;
 }
 
 /* 3-Level Selection Grid & Cards */
@@ -1558,4 +1633,135 @@ body {
   font-weight: 900;
   box-shadow: 2px 2px 0 rgba(120, 53, 15, 0.3);
 }
+
+/* ============================================================================
+ * LADOVSKÁ MALOVANÁ TRUHLA – SLOT MACHINE EFFECT
+ * ============================================================================ */
+.slot-machine-cabinet {
+  background: linear-gradient(180deg, #3D2210 0%, #261408 100%);
+  border: 5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 8px 8px 0px var(--ink);
+  position: relative;
+  overflow: hidden;
+  max-width: 640px;
+  width: 95vw;
+  padding: 24px;
+}
+
+.slot-reel-housing {
+  background: #150D07;
+  border: 4px solid var(--ink);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: stretch;
+  box-shadow: inset 0 4px 18px rgba(0, 0, 0, 0.95);
+  margin: 20px 0;
+}
+
+.slot-reel-card {
+  position: relative;
+  flex: 1;
+  min-width: 140px;
+  max-width: 190px;
+  background: var(--parchment);
+  border: 4px solid var(--ink);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 8px;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s, border-color 0.2s;
+}
+
+.slot-reel-card.slot-spinning {
+  background: #EAE0C8;
+  border-color: #8C5A35;
+  box-shadow: 0 0 10px rgba(217, 160, 54, 0.3), 3px 3px 0 var(--ink);
+}
+
+.slot-reel-card.slot-locked {
+  background: #FFFDF7;
+  border-color: #D97706;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.7), 4px 4px 0 var(--ink);
+  animation: slotReelSlam 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.slot-reel-window {
+  position: relative;
+  width: 100%;
+  height: 98px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAF5EB;
+  border-radius: 8px;
+  border: 2px solid #5E3A21;
+}
+
+/* Drum shadow gradient simulating cylinder curvature of reels */
+.slot-reel-window::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(25, 15, 8, 0.65) 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0) 65%,
+    rgba(25, 15, 8, 0.65) 100%
+  );
+  z-index: 2;
+}
+
+.slot-spinning-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: slotRollFast 0.2s linear infinite;
+  will-change: transform;
+}
+
+@keyframes slotRollFast {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes slotReelSlam {
+  0% {
+    transform: scale(0.9) translateY(-16px);
+  }
+  60% {
+    transform: scale(1.08) translateY(6px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slotGoldenGlow {
+  0%, 100% {
+    box-shadow: 0 0 14px #F59E0B, 4px 4px 0 var(--ink);
+  }
+  50% {
+    box-shadow: 0 0 28px #FDE047, 4px 4px 0 var(--ink);
+  }
+}
+
+.slot-all-locked {
+  animation: slotGoldenGlow 1.5s ease-in-out infinite;
+}
+
 

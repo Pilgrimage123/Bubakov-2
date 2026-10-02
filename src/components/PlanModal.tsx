@@ -28,7 +28,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
               sound.coin();
             }}
           >
-            🗺️ Plán kol změn (1.–13. kolo)
+            🗺️ Plán kol změn (1.–16. kolo)
           </button>
           <button
             className={`tab-btn ${activeTab === 'changelog' ? 'active' : ''}`}
@@ -43,6 +43,22 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
 
         {activeTab === 'plan' ? (
           <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            {/* 16. KOLO - SAMOSTATNÁ OBRAZOVKA VÝBĚRU VÝPRAVY */}
+            <div className="plan-card" style={{ border: '4px solid #15803D', color: '#000000', background: '#F0FDF4' }}>
+              <div className="plan-header">
+                <h3 style={{ color: '#000000' }}>16. KOLO ZMĚN (v16.0.0 – Samostatná obrazovka výběru výpravy předcházející výběru lovce)</h3>
+                <span className="plan-badge-done" style={{ background: '#15803D', color: '#FFFFFF' }}>Dokončeno & Aktivní</span>
+              </div>
+              <ul className="plan-items" style={{ color: '#000000' }}>
+                <li style={{ color: '#000000' }}>
+                  🗺️ <strong>Vlastní obrazovka výběru výpravy (Krok 1):</strong> Výběr kraje/výpravy byl oddělen na samostatnou přehlednou obrazovku. Hráč vidí všech 6 úrovní s jejich atmosférou, monstry, ročním obdobím, bossem i výzvami k odhalení cesty. Zvolená výprava je přehledně potvrzena v dolním pruhu tlačítkem <code>Pokračovat k výběru lovce ➔</code>.
+                </li>
+                <li style={{ color: '#000000' }}>
+                  🏹 <strong>Vyhrazená obrazovka výběru lovce (Krok 2):</strong> Po zvolení výpravy hráč přechází na čistou obrazovku výběru jednoho ze 6 lovců s živými animovanými ladovskými medailony a výbavou pro daný kraj. V záhlaví je neustále vidět zvolená výprava s možností vrátit se tlačítkem <code>⬅️ Zpět k výběru výpravy</code>.
+                </li>
+              </ul>
+            </div>
+
             {/* 15. KOLO - TESTOVACÍ MÓD & VYMAZAT POSTUP */}
             <div className="plan-card" style={{ border: '4px solid #7C3AED', color: '#000000', background: '#F5F3FF' }}>
               <div className="plan-header">

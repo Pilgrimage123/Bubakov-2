@@ -56,6 +56,10 @@ export interface EngineState {
   hejkalSmashTimer: number;
   obrBoulderTimer: number;
   obrQuakeTimer: number;
+  rytirHeadTimer: number;
+  rytirChargeTimer: number;
+  drakBreathTimer: number;
+  drakIcicleTimer: number;
   lastStatsSync: number;
 }
 
@@ -109,6 +113,10 @@ export function createInitialEngineState(): EngineState {
     hejkalSmashTimer: 10,
     obrBoulderTimer: 5,
     obrQuakeTimer: 9,
+    rytirHeadTimer: 5,
+    rytirChargeTimer: 8,
+    drakBreathTimer: 5,
+    drakIcicleTimer: 8,
     lastStatsSync: 0,
   };
 }

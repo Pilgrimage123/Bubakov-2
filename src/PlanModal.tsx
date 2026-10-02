@@ -4643,8 +4643,8 @@ export default function App() {
               <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>Krejcary: {runStats.coins} <KrejcarIcon size={18} /></div>
               <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
               <div id="kills-text" style={{ color: '#7F1D1D' }}>Zahnáno: {runStats.kills} 💀</div>
-              <div id="chest-progress-text" style={{ color: '#78350F' }} title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
-                🎁 Poklad: {runStats.chestProgress}/100
+              <div id="chest-progress-text" style={{ color: '#78350F' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
+                🎁 Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
             </div>
 

@@ -520,6 +520,9 @@ export default function App() {
           ...parsed,
           selectedLevel: parsed.selectedLevel || 1,
           highestLevelUnlocked: parsed.highestLevelUnlocked || (
+            (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
+            (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 5 :
+            (parsed.bestiaryKills?.obr || 0) >= 1 ? 4 :
             (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 3 :
             (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
           ),
@@ -568,6 +571,7 @@ export default function App() {
   metaRef.current = meta;
 
   const saveMeta = (updated: MetaProgression) => {
+    metaRef.current = updated;
     setMeta(updated);
     try {
       localStorage.setItem('bubakov_meta', JSON.stringify(updated));
@@ -609,6 +613,7 @@ export default function App() {
 
   // Game UI state
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'levelup' | 'chest' | 'fleeing' | 'tally' | 'tavern'>('menu');
+  const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
@@ -664,8 +669,22 @@ export default function App() {
   // Level Up choices
   const [levelUpChoices, setLevelUpChoices] = useState<UpgradeChoice[]>([]);
 
-  // Chest sequence state
-  const [chestRewards, setChestRewards] = useState<any[]>([]);
+  // Chest sequence state & slot machine effect
+  interface ChestRewardItem {
+    name: string;
+    desc?: string;
+    icon: string;
+    action: () => void;
+  }
+  const [chestRewards, setChestRewards] = useState<ChestRewardItem[]>([]);
+  const [slotSpinning, setSlotSpinning] = useState(false);
+  const [slotStoppedCount, setSlotStoppedCount] = useState(0);
+  const slotTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const slotSoundIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const slotSpinningRef = useRef(false);
+  slotSpinningRef.current = slotSpinning;
+  const skipSlotSpinRef = useRef<() => void>(() => {});
+  const closeChestSequenceRef = useRef<() => void>(() => {});
 
   // Tally state
   const [tallyCounters, setTallyCounters] = useState({
@@ -839,6 +858,18 @@ export default function App() {
         return;
       }
 
+      if (gameState === 'chest') {
+        if (e.code === 'Space' || e.code === 'Enter') {
+          e.preventDefault();
+          if (slotSpinningRef.current) {
+            skipSlotSpinRef.current();
+          } else {
+            closeChestSequenceRef.current();
+          }
+          return;
+        }
+      }
+
       if ((isEscKey || isPKey) && (gameState === 'playing' || gameState === 'paused')) {
         e.preventDefault();
         if (isControlsOpen) {
@@ -936,11 +967,7 @@ export default function App() {
         ? [{ id: 'kolac', level: 1, cd: 0 }]
         : [{ id: 'halberd', level: 1, cd: 0 }];
 
-    const wallBonusHp = 0;
-    const millBonusSpeed = (meta.millLevel || 0) * 16;
-    const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 30;
-    const ovenDmgMult = (1 + (meta.ovenLevel || 0) * 0.06) * (type === 'wanderer' ? 1.35 : 1);
-    const wallDmgRed = Math.min(0.80, (meta.wallLevel || 0) * 0.08);
+    const wallBonusHp = (meta.wallLevel || 0) * 25;
     const millBonusSpeed = (meta.millLevel || 0) * 15;
     const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
     const ovenDmgMult = 1 + (meta.ovenLevel || 0) * 0.1;
@@ -1246,6 +1273,7 @@ export default function App() {
     };
     saveMeta(defaultMeta);
     setSelectedLevelId(1);
+    setMenuScreen('stage');
     sound.hit();
     setIsResetModalOpen(false);
     setUnlockNotice({
@@ -1502,36 +1530,166 @@ export default function App() {
     engineRef.current.lastTime = performance.now();
   };
 
-  // Open Painted Chest sequence
-  const openChestSequence = () => {
-    sound.chest();
-    setGameState('chest');
+  // Skip slot machine spin
+  const skipSlotSpin = useCallback(() => {
+    slotTimersRef.current.forEach(clearTimeout);
+    slotTimersRef.current = [];
+    if (slotSoundIntervalRef.current) {
+      clearInterval(slotSoundIntervalRef.current);
+      slotSoundIntervalRef.current = null;
+    }
+    setSlotStoppedCount(3);
+    setSlotSpinning(false);
+    sound.slotStop();
+    sound.slotJackpot();
+  }, []);
+  skipSlotSpinRef.current = skipSlotSpin;
 
-    const possibleRewards = [
-      { name: '+50 Krejcarů do měšce', icon: '💰', action: () => setRunStats((s) => ({ ...s, coins: s.coins + 50 })) },
-      { name: 'Svatovítský balzám (+35 HP)', icon: '🧪', action: () => {
-        const p = engineRef.current.player;
-        if (p) p.hp = Math.min(p.maxHp, p.hp + 35);
-      }},
-      { name: 'Kynutý koláč (+20 Max HP)', icon: '🥧', action: () => {
-        const p = engineRef.current.player;
-        if (p) { p.maxHp += 20; p.hp += 20; }
-      }},
-      { name: 'Toulavé boty (+20 Rychlost)', icon: '👢', action: () => {
-        const p = engineRef.current.player;
-        if (p) p.speed += 20;
-      }},
-    ];
-
-    possibleRewards.sort(() => 0.5 - Math.random());
-    setChestRewards(possibleRewards.slice(0, Math.floor(Math.random() * 2) + 2));
-  };
-
-  const closeChestSequence = () => {
+  const closeChestSequence = useCallback(() => {
+    slotTimersRef.current.forEach(clearTimeout);
+    slotTimersRef.current = [];
+    if (slotSoundIntervalRef.current) {
+      clearInterval(slotSoundIntervalRef.current);
+      slotSoundIntervalRef.current = null;
+    }
+    setSlotSpinning(false);
+    setSlotStoppedCount(0);
     chestRewards.forEach((r) => r.action());
     sound.coin();
     setGameState('playing');
     engineRef.current.lastTime = performance.now();
+  }, [chestRewards]);
+  closeChestSequenceRef.current = closeChestSequence;
+
+  // Open Painted Chest sequence with authentic slot machine effect
+  const openChestSequence = () => {
+    sound.chest();
+    setGameState('chest');
+
+    const p = engineRef.current.player;
+    const possibleRewards: ChestRewardItem[] = [
+      {
+        name: '+100 Krejcarů do měšce',
+        desc: 'Hromádka poctivých stříbrňáků',
+        icon: 'krejcar',
+        action: () => setRunStats((s) => ({ ...s, coins: s.coins + 100 })),
+      },
+      {
+        name: 'Svatovítský balzám (+40 HP)',
+        desc: 'Hojivý klášterní balzám',
+        icon: '🧪',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 40);
+        },
+      },
+      {
+        name: 'Kynutý koláč (+25 Max HP)',
+        desc: 'Posilující tradiční venkovská dobrota',
+        icon: '🥧',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) {
+            pl.maxHp += 25;
+            pl.hp += 25;
+          }
+        },
+      },
+      {
+        name: 'Toulavé boty (+25 Rychlost)',
+        desc: 'Pohotovější krok při obcházení temných koutů',
+        icon: '👢',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) pl.speed += 25;
+        },
+      },
+      {
+        name: 'Zlatý dukát (+200 Krejcarů)',
+        desc: 'Velkolepý poklad z kovářské truhly',
+        icon: '💰',
+        action: () => setRunStats((s) => ({ ...s, coins: s.coins + 200 })),
+      },
+      {
+        name: 'Povidlová buchta (Svačina na cestu)',
+        desc: 'Plné posilnění a uzdravení (+50 HP)',
+        icon: 'czech_buchta',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 50);
+        },
+      },
+    ];
+
+    // If player has equipped weapons that can be upgraded, include upgrades in slot machine!
+    if (p && p.weapons) {
+      p.weapons.forEach((pw: any) => {
+        const wDef = WEAPONS[pw.id];
+        if (wDef && pw.level < 8) {
+          possibleRewards.push({
+            name: `${wDef.name} (Úroveň ${pw.level + 1})`,
+            desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
+            icon: wDef.icon,
+            action: () => {
+              pw.level += 1;
+            },
+          });
+        }
+      });
+    }
+
+    possibleRewards.sort(() => 0.5 - Math.random());
+    const selected = possibleRewards.slice(0, 3);
+    while (selected.length < 3) {
+      selected.push({
+        name: '+75 Krejcarů do měšce',
+        desc: 'Drobné z truhly',
+        icon: 'krejcar',
+        action: () => setRunStats((s) => ({ ...s, coins: s.coins + 75 })),
+      });
+    }
+
+    setChestRewards(selected);
+    setSlotStoppedCount(0);
+    setSlotSpinning(true);
+
+    // Clear previous timers
+    slotTimersRef.current.forEach(clearTimeout);
+    slotTimersRef.current = [];
+    if (slotSoundIntervalRef.current) {
+      clearInterval(slotSoundIntervalRef.current);
+    }
+
+    // Audio ticking sound while reels spin
+    slotSoundIntervalRef.current = setInterval(() => {
+      sound.slotTick();
+    }, 110);
+
+    // Sequential deceleration and stops:
+    // Reel 1 locks at 950ms
+    const t1 = setTimeout(() => {
+      setSlotStoppedCount(1);
+      sound.slotStop();
+    }, 950);
+
+    // Reel 2 locks at 1700ms
+    const t2 = setTimeout(() => {
+      setSlotStoppedCount(2);
+      sound.slotStop();
+    }, 1700);
+
+    // Reel 3 locks at 2450ms -> finishes spin
+    const t3 = setTimeout(() => {
+      setSlotStoppedCount(3);
+      setSlotSpinning(false);
+      if (slotSoundIntervalRef.current) {
+        clearInterval(slotSoundIntervalRef.current);
+        slotSoundIntervalRef.current = null;
+      }
+      sound.slotJackpot();
+    }, 2450);
+
+    slotTimersRef.current = [t1, t2, t3];
   };
 
   // Rescue Chasník Kuba event
@@ -1589,8 +1747,8 @@ export default function App() {
       engineRef.current.lastTime = now;
       engineRef.current.uiTime += dt;
 
-      // Animate character portraits in main menu
-      if (gameState === 'menu') {
+      // Animate character portraits in hunter selection screen
+      if (gameState === 'menu' && menuScreen === 'hunter') {
         const t = engineRef.current.uiTime;
         const curMeta = metaRef.current;
         const wProg = getHunterProgress('wanderer', curMeta);
@@ -2097,19 +2255,186 @@ export default function App() {
                   engine.enemies.push(createEnemyInstance('jiskrivec', mlynar.x + (Math.random() - 0.5) * 120, mlynar.y + (Math.random() - 0.5) * 120, 0.8));
                 }
               }
-            } else if (engine.finalBossSpawned && curLvl.bossMechanic && newTime >= engine.nextBossMechanicAt) {
-              engine.nextBossMechanicAt = newTime + curLvl.bossMechanic.cadenceSeconds;
-              engine.texts.push(new DamageText(player.x, player.y - 60, curLvl.bossMechanic.label.toUpperCase(), COLORS.red, true));
-              setRunStats((s) => ({ ...s, warningBanner: `⚠️ ${curLvl.bossMechanic!.label.toUpperCase()}!` }));
-              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
-              if (curLvl.id === 5) {
-                // Returning head: a fast spectral attacker approaches from a random side.
-                engine.enemies.push(createEnemyInstance('nocni_mura', player.x + (Math.random() > 0.5 ? 300 : -300), player.y, 1.2));
-              } else if (curLvl.id === 6) {
-                // Falling icicles: three frozen shards use the existing projectile collision path.
-                for (let shard = 0; shard < 3; shard++) {
-                  player.takeDamage(4, 'rampouch');
-                  engine.particles.push({ x: player.x + (shard - 1) * 42, y: player.y - 80, vx: 0, vy: 80, life: 0.8, color: COLORS.ice, size: 8 });
+            }
+
+            // BEZHLAVÝ RYTÍŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
+            if (curLvl.id === 5 && engine.finalBossSpawned) {
+              const rytir = engine.enemies.find((e) => e.id === 'bezhlavy_rytir' && !e.isDefeated);
+              if (rytir) {
+                const isPhase2 = rytir.hp <= rytir.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Prokletí hlásky)
+                if (isPhase2 && !rytir.enraged) {
+                  rytir.enraged = true;
+                  rytir.speed = 98;
+                  sound.roar();
+                  engine.texts.push(new DamageText(rytir.x, rytir.y - 70, '🗡️ PROKLETÍ HLÁSKY!', '#94A3B8', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🗡️ PROKLETÍ HLÁSKY! BEZHLAVÝ RYTÍŘ CVÁLÁ PO BOJIŠTI!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  engine.enemies.push(createEnemyInstance('zbrojnos', rytir.x + 90, rytir.y, 1.1));
+                  engine.enemies.push(createEnemyInstance('bila_pani', rytir.x - 90, rytir.y, 1.1));
+                  for (let i = 0; i < 28; i++) {
+                    engine.particles.push({
+                      x: rytir.x,
+                      y: rytir.y,
+                      vx: (Math.random() - 0.5) * 210,
+                      vy: (Math.random() - 0.5) * 210,
+                      life: 0.9,
+                      color: i % 2 === 0 ? '#64748B' : '#38BDF8',
+                      size: 6,
+                    });
+                  }
+                }
+
+                // 1. Odražená hlava (Rebounded boomerang skull projectile)
+                engine.rytirHeadTimer -= dt;
+                if (engine.rytirHeadTimer <= 0) {
+                  engine.rytirHeadTimer = isPhase2 ? 5.5 : 8.5;
+                  sound.roar();
+                  engine.texts.push(new DamageText(rytir.x, rytir.y - 45, 'ODRAŽENÁ HLAVA! 💀', '#94A3B8', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '💀 ODRAŽENÁ HLAVA SE VRACÍ!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
+
+                  const headAng = Math.atan2(player.y - rytir.y, player.x - rytir.x);
+                  const headCount = isPhase2 ? 2 : 1;
+                  for (let i = 0; i < headCount; i++) {
+                    const spread = (i - (headCount - 1) / 2) * 0.35;
+                    const ang = headAng + spread;
+                    engine.projectiles.push({
+                      x: rytir.x,
+                      y: rytir.y,
+                      vx: Math.cos(ang) * 290,
+                      vy: Math.sin(ang) * 290,
+                      angle: ang,
+                      speed: 290,
+                      dmg: isPhase2 ? 38 : 30,
+                      radius: 18,
+                      type: 'physical',
+                      visual: 'head_projectile',
+                      life: 3.5,
+                      maxLife: 3.5,
+                      boomerang: true,
+                      owner: rytir,
+                      isEnemy: true,
+                      pushback: 40,
+                      statusText: 'ZTRACENÁ HLAVA! 💀',
+                      dead: false,
+                    });
+                  }
+                }
+
+                // 2. Heavy Cavalry Strike / Blade Thrust (Výpad čepelí)
+                engine.rytirChargeTimer -= dt;
+                if (engine.rytirChargeTimer <= 0) {
+                  engine.rytirChargeTimer = isPhase2 ? 5.0 : 7.5;
+                  const dToP = Math.hypot(player.x - rytir.x, player.y - rytir.y);
+                  if (dToP < 340 && dToP > 60) {
+                    sound.slash();
+                    const chAng = Math.atan2(player.y - rytir.y, player.x - rytir.x);
+                    rytir.vx = Math.cos(chAng) * (isPhase2 ? 330 : 260);
+                    rytir.vy = Math.sin(chAng) * (isPhase2 ? 330 : 260);
+                    engine.texts.push(new DamageText(rytir.x, rytir.y - 50, 'VÝPAD ČEPELÍ! ⚔️', COLORS.red, true));
+                  }
+                }
+              }
+            }
+
+            // TŘÍHLAVÝ DRAK BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 6)
+            if (curLvl.id === 6 && engine.finalBossSpawned) {
+              const drak = engine.enemies.find((e) => e.id === 'drak' && !e.isDefeated);
+              if (drak) {
+                const isPhase2 = drak.hp <= drak.maxHp * 0.5;
+
+                // Enrage trigger when dropping to 50% HP (Probuzení všech tří hlav)
+                if (isPhase2 && !drak.enraged) {
+                  drak.enraged = true;
+                  drak.speed = 66;
+                  sound.roar();
+                  engine.texts.push(new DamageText(drak.x, drak.y - 75, '🐉 PROBUZENÍ VŠECH TŘÍ HLAV!', '#DC2626', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🐉 PROBUZENÍ VŠECH TŘÍ HLAV! DRAČÍ PLAMENY A LEDOVÉ SPUSTY!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+                  engine.enemies.push(createEnemyInstance('snehulak', drak.x + 100, drak.y, 1.1));
+                  engine.enemies.push(createEnemyInstance('nocni_mura', drak.x - 100, drak.y, 1.1));
+                  for (let i = 0; i < 35; i++) {
+                    engine.particles.push({
+                      x: drak.x,
+                      y: drak.y,
+                      vx: (Math.random() - 0.5) * 230,
+                      vy: (Math.random() - 0.5) * 230,
+                      life: 1.0,
+                      color: i % 2 === 0 ? '#DC2626' : '#60A5FA',
+                      size: 7,
+                    });
+                  }
+                }
+
+                // 1. Dragon Flame Breath (Ohnivý dračí dech - fan of blazing sparks)
+                engine.drakBreathTimer -= dt;
+                if (engine.drakBreathTimer <= 0) {
+                  engine.drakBreathTimer = isPhase2 ? 4.5 : 7.0;
+                  sound.roar();
+                  engine.texts.push(new DamageText(drak.x, drak.y - 55, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
+                  const bAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                  const flameCount = isPhase2 ? 7 : 5;
+                  const spread = isPhase2 ? 0.7 : 0.5;
+                  for (let i = 0; i < flameCount; i++) {
+                    const ang = bAng - spread / 2 + (i * spread) / (flameCount - 1);
+                    engine.projectiles.push({
+                      x: drak.x,
+                      y: drak.y,
+                      vx: Math.cos(ang) * 250,
+                      vy: Math.sin(ang) * 250,
+                      angle: ang,
+                      speed: 250,
+                      dmg: isPhase2 ? 32 : 24,
+                      radius: 14,
+                      type: 'fire',
+                      visual: 'hell_spark',
+                      life: 3.2,
+                      maxLife: 3.2,
+                      isEnemy: true,
+                      pushback: 30,
+                      statusText: 'PLAMEN! 🔥',
+                      dead: false,
+                    });
+                  }
+                }
+
+                // 2. Falling Icicles from Cave Ceiling (Rampouchy padající ze stropu)
+                engine.drakIcicleTimer -= dt;
+                if (engine.drakIcicleTimer <= 0) {
+                  engine.drakIcicleTimer = isPhase2 ? 5.5 : 8.5;
+                  sound.freeze();
+                  engine.texts.push(new DamageText(player.x, player.y - 60, 'PADAJÍCÍ RAMPOUCHY! 🧊', '#38BDF8', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🧊 PADAJÍCÍ RAMPOUCHY ZE STROPU SLUJE!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
+
+                  const icicleCount = isPhase2 ? 6 : 4;
+                  for (let i = 0; i < icicleCount; i++) {
+                    const offsetX = (Math.random() - 0.5) * 240;
+                    const offsetY = (Math.random() - 0.5) * 180;
+                    const targetX = player.x + offsetX;
+                    const targetY = player.y + offsetY;
+                    engine.projectiles.push({
+                      x: targetX,
+                      y: targetY - 300,
+                      vx: 0,
+                      vy: 380,
+                      angle: Math.PI / 2,
+                      speed: 380,
+                      dmg: isPhase2 ? 26 : 20,
+                      radius: 14,
+                      type: 'ice',
+                      visual: 'wood_shard',
+                      life: 1.0,
+                      maxLife: 1.0,
+                      isEnemy: true,
+                      slowPlayer: true,
+                      pushback: 20,
+                      statusText: 'RAMPOUCH! 🧊',
+                      dead: false,
+                    });
+                  }
                 }
               }
             }
@@ -2432,8 +2757,11 @@ export default function App() {
             p.life -= dt;
             if (p.life <= 0) p.dead = true;
 
-            // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave)
+            // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave, Bezhlavý rytíř head)
             if (p.isEnemy) {
+              if (p.hitCooldown && p.hitCooldown > 0) {
+                p.hitCooldown -= dt;
+              }
               if (p.rotation !== undefined) {
                 p.rotation += (p.rotSpeed || 5) * dt;
               }
@@ -2465,6 +2793,9 @@ export default function App() {
               }
 
               if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+                if (p.boomerang && (p.hitCooldown || 0) > 0) {
+                  continue;
+                }
                 player.takeDamage(p.dmg, p.type || 'blunt');
                 if (p.pushback) {
                   player.x += Math.cos(p.angle) * p.pushback;
@@ -2491,7 +2822,11 @@ export default function App() {
                     size: 5,
                   });
                 }
-                p.dead = true;
+                if (p.boomerang) {
+                  p.hitCooldown = 0.9;
+                } else {
+                  p.dead = true;
+                }
               }
               continue;
             }
@@ -3065,7 +3400,7 @@ export default function App() {
   // challenge scales solely through arrival of advanced enemies and enemy density.
   const createEnemyInstance = (id: string, x: number, y: number, multiplier = 1, isBoss = false) => {
     const stats = ENEMIES[id] || ENEMIES.rarach;
-    const finalHp = isBoss ? Math.round(stats.hp * multiplier) : stats.hp;
+    const finalHp = Math.round(stats.hp * (multiplier || 1));
 
     return {
       id,
@@ -3814,29 +4149,31 @@ export default function App() {
 
         // 15. BEZHLAVÝ RYTÍŘ (bezhlavy_rytir) - Odražená hlava se vrací
         else if (this.id === 'bezhlavy_rytir') {
-          if (this.specialCd <= 0 && distToPlayer < 360) {
-            this.specialCd = 6.0;
-            sound.roar();
-            engineRef.current.projectiles.push({
-              x: this.x,
-              y: this.y,
-              vx: Math.cos(dirToPlayer) * 280,
-              vy: Math.sin(dirToPlayer) * 280,
-              angle: dirToPlayer,
-              speed: 280,
-              dmg: 36,
-              radius: 18,
-              type: 'physical',
-              visual: 'head_projectile',
-              life: 3.0,
-              maxLife: 3.0,
-              boomerang: true,
-              owner: this,
-              isEnemy: true,
-              pushback: 35,
-              statusText: 'ZTRACENÁ HLAVA! 💀',
-              dead: false,
-            });
+          if (!this.isBoss) {
+            if (this.specialCd <= 0 && distToPlayer < 360) {
+              this.specialCd = 6.0;
+              sound.roar();
+              engineRef.current.projectiles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(dirToPlayer) * 280,
+                vy: Math.sin(dirToPlayer) * 280,
+                angle: dirToPlayer,
+                speed: 280,
+                dmg: 36,
+                radius: 18,
+                type: 'physical',
+                visual: 'head_projectile',
+                life: 3.0,
+                maxLife: 3.0,
+                boomerang: true,
+                owner: this,
+                isEnemy: true,
+                pushback: 35,
+                statusText: 'ZTRACENÁ HLAVA! 💀',
+                dead: false,
+              });
+            }
           }
           this.vx = Math.cos(dirToPlayer) * spd;
           this.vy = Math.sin(dirToPlayer) * spd;
@@ -3964,7 +4301,7 @@ export default function App() {
           eng.pointsCoin += pt;
           if (this.category === 'water') eng.pointsSoul += pt;
           let ox = 0;
-          const chestThreshold = Math.max(10, DROP_THRESHOLDS.chest - 10 * (metaRef.current.undeadLevel || 0));
+          const chestThreshold = Math.max(50, DROP_THRESHOLDS.chest - 20 * (metaRef.current.undeadLevel || 0));
           if (eng.pointsChest >= chestThreshold) {
             eng.pointsChest -= chestThreshold;
             eng.drops.push({ type: 'chest', x: this.x + (ox += 5), y: this.y, radius: 25, time: 0 });
@@ -4148,7 +4485,7 @@ export default function App() {
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId || 1;
             const curLvl = GAME_LEVELS[curLvlId];
-            if (this.isBoss && (this.id === curLvl.finalBoss.id || this.id === 'mlynar' || this.id === 'bezhlavy_rytir' || this.id === 'drak' || this.id === 'obr' || this.id === 'cert')) {
+            if (this.isBoss && (this.id === curLvl.finalBoss.id || this.id === 'cert' || this.id === 'hejkal' || this.id === 'obr' || this.id === 'mlynar' || this.id === 'bezhlavy_rytir' || this.id === 'drak')) {
               triggerLevelVictory(curLvlId, 'boss');
             }
           }
@@ -4470,48 +4807,6 @@ export default function App() {
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (
         <div id="hud">
-          {/* Top-right menu controls */}
-          <div className="hud-top-right">
-            {runStats.isTestMode && (
-              <div
-                className="hud-level-badge"
-                style={{
-                  background: '#7C3AED',
-                  color: '#FFFFFF',
-                  borderColor: '#4C1D95',
-                  boxShadow: '3px 3px 0 var(--ink)',
-                  fontWeight: 900,
-                }}
-                title="Hrajete v testovacím módu (Sandbox) s volitelnými pravidly"
-              >
-                <span>🧪</span>
-                <span>Testovací mód</span>
-              </div>
-            )}
-            <button className="pause-toggle-btn" onClick={togglePause} title="Pozastavit hru a zobrazit výbavu (klávesa P / Esc)">
-              ⏸️ Pauza [P]
-            </button>
-            <div className="hud-level-badge" title={`Aktuální úroveň: ${GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}`}>
-              <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
-              <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.shortTitle}</span>
-            </div>
-            {runStats.levelWon && (
-              <button
-                className="hud-victory-banner-btn"
-                onClick={quitToTavernFromPause}
-                title="Úroveň dokončena! Triumfální návrat do hospody"
-              >
-                🏆 Vítězství! Do hospody 🍺
-              </button>
-            )}
-            <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
-              🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
-            </button>
-            <button className="sound-toggle-btn" onClick={toggleSound}>
-              <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
-            </button>
-          </div>
-
           {/* Top Bar with XP and Stats */}
           <div id="top-bar">
             {/* XP bar */}
@@ -4536,8 +4831,8 @@ export default function App() {
               <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>Krejcary: {runStats.coins} <KrejcarIcon size={18} /></div>
               <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
               <div id="kills-text" style={{ color: '#7F1D1D' }}>Zahnáno: {runStats.kills} 💀</div>
-              <div id="chest-progress-text" style={{ color: '#78350F' }} title="Truhla s pokladem se objeví po každých 100 zahnadých nepřátelích a po každém bossovi">
-                🎁 Poklad: {runStats.chestProgress}/100
+              <div id="chest-progress-text" style={{ color: '#78350F' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
+                🎁 Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
             </div>
 
@@ -4589,80 +4884,29 @@ export default function App() {
         />
       )}
 
-      {/* MAIN MENU */}
-      {gameState === 'menu' && (
+      {/* 1. OBRAZOVKA: VÝBĚR VÝPRAVY (STAGE SELECT) */}
+      {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
-          <div className="menu-top-right">
-            <button className="touch-toggle-btn" onClick={toggleTouch}>
-              🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
-            </button>
-            <button
-              className="sound-toggle-btn"
-              onClick={toggleMusic}
-              title="Hudba v menu (Ladovská dechovka z Bubáků a hastrmanů)"
-              style={{
-                borderColor: musicEnabled ? '#166534' : undefined,
-                background: musicEnabled ? '#FFFDF8' : undefined,
-              }}
-            >
-              <span className="sound-btn-text">{musicEnabled ? '🎶 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
-            </button>
-            <button className="sound-toggle-btn" onClick={toggleSound}>
-              <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuky: Zap' : '🔇 Zvuky: Vyp'}</span>
-            </button>
-          </div>
-
-          <div className="panel" style={{ maxWidth: '980px' }}>
+          <div className="panel" style={{ maxWidth: '1040px' }}>
             <h1>BUBÁKOV</h1>
-            <p style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '-5px' }}>
+            <p style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '-5px', color: '#FEF3C7' }}>
               Přežijte noc ve světě venkovského děsu Josefa Lady.
             </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-              <button
-                onClick={toggleMusic}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: musicEnabled ? '#FAF6ED' : '#E5DEC9',
-                  padding: '5px 16px',
-                  borderRadius: '20px',
-                  border: '2px solid #3D2210',
-                  fontSize: '0.86rem',
-                  fontWeight: 900,
-                  color: '#2A170A',
-                  cursor: 'pointer',
-                  boxShadow: '2px 2px 0px #111111',
-                }}
-                title="Kliknutím zapnete nebo vypnete lidovou muziku v menu"
-              >
-                <span>🎺 🎶</span>
-                <span>Lidová muzika: <strong>Bubáci a hastrmani</strong></span>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: '9px',
-                    height: '9px',
-                    borderRadius: '50%',
-                    background: musicEnabled ? '#166534' : '#888888',
-                  }}
-                  title={musicEnabled ? 'Hudba hraje' : 'Hudba je vypnuta'}
-                />
-              </button>
+            <div style={{ textAlign: 'center', margin: '8px 0 14px 0' }}>
+              <span className="screen-step-badge">
+                🗺️ KROK 1 ZE 2: VÝBĚR VÝPRAVY
+              </span>
+              <h2 style={{ fontSize: '1.85rem', margin: '4px 0 2px 0' }}>
+                Zvolte cíl své výpravy do kraje děsu
+              </h2>
+              <p style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--parchment)', margin: 0 }}>
+                Každá výprava má své specifické noční nestvůry, roční období i obávaného bosse. Po zvolení výpravy vyberete svého lovce.
+              </p>
             </div>
 
-            {/* 3 PROGRESSIVE GAME LEVELS SELECTOR */}
-            <div className="level-select-section">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.38rem', color: '#111111' }}>
-                  🗺️ Výprava: Úroveň {selectedLevelId} ze 6
-                </h3>
-                <span style={{ fontSize: '0.88rem', fontWeight: 900, color: '#3D2210' }}>
-                  Každá úroveň má odlišné nepřátele, ladovské prostředí a unikátního velkého bosse
-                </span>
-              </div>
-
+            {/* 6 PROGRESSIVE GAME LEVELS SELECTOR */}
+            <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
                 {([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
@@ -4703,7 +4947,7 @@ export default function App() {
                           setTimeout(() => setUnlockNotice(null), 4500);
                         }
                       }}
-                      title={isUnlocked ? `Zvolit výpravu: ${lvl.name}` : 'Klikněte pro podrobnosti výzvy a milníků'}
+                      title={isUnlocked ? (isSelected ? `Zvoleno: ${lvl.name} (klikněte pro výběr lovce)` : `Zvolit výpravu: ${lvl.name}`) : 'Klikněte pro podrobnosti výzvy a milníků'}
                     >
                       <div className="level-card-header">
                         <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`}>
@@ -4850,9 +5094,11 @@ export default function App() {
                                 sound.coin();
                                 setSelectedLevelId(lvlId);
                                 saveMeta({ ...meta, selectedLevel: lvlId });
+                                setMenuScreen('hunter');
                               }}
+                              title={isSelected ? 'Pokračovat k výběru lovce' : 'Zvolit tuto výpravu a pokračovat'}
                             >
-                              {isSelected ? '⭐ Zvolená výprava' : 'Zvolit úroveň 🗺️'}
+                              {isSelected ? 'Pokračovat k lovci ➔' : 'Zvolit výpravu 🗺️'}
                             </button>
                             <button
                               className="tab-btn"
@@ -4875,51 +5121,45 @@ export default function App() {
               </div>
             </div>
 
-            <h3 style={{ marginTop: '16px' }}>Vyberte si svého lovce pro výpravu do: {currentLevel.shortTitle}:</h3>
-            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '15px' }}>
-              {/* Poutník - Výchozí odemčený lovec */}
-              <div
-                className="char-card"
-                onClick={() => startGame('wanderer')}
-                title="Poutník – připraven k výpravě"
-              >
-                <span className="char-card-unlocked-badge">✅ Odemčeno</span>
-                <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
-                <div>
-                  <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
+            {/* CONFIRMATION / PROCEED CALLOUT BAR */}
+            <div className="stage-summary-callout">
+              <div style={{ flex: '1 1 300px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
+                  Vybraná výprava pro nadcházející noc:
                 </div>
-                <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Rázová vlna.
-                </p>
-                <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Vrbový prut & Povidlové buchty</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>⚡ Schopnost: Rázová vlna</div>
+                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0' }}>
+                  <span style={{ fontSize: '1.7rem' }}>{currentLevel.icon}</span>
+                  <span>{currentLevel.name}</span>
+                  <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
+                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})
+                  </span>
                 </div>
-                <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
-                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                    Vyrazit do noci ⚔️
-                  </button>
+                <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
+                  ⚔️ {levelProgress[selectedLevelId]?.spoiledBossHint || `Obávaný vládce noci: ${currentLevel.finalBoss.name}`}
                 </div>
               </div>
 
-              {/* Pasáček (Progressive unlock) */}
-              {renderHunterSelectCard(shepherdProg, shepherdRef)}
-
-              {/* Bába kořenářka (Progressive unlock) */}
-              {renderHunterSelectCard(korenarkaProg, korenarkaRef)}
-
-              {/* Ponocný (Progressive unlock) */}
-              {renderHunterSelectCard(watchmanProg, watchmanRef)}
-
-              {/* Pobožný kostelník (Progressive unlock) */}
-              {renderHunterSelectCard(sextonProg, sextonRef)}
-
-              {/* Babička a Barunka (Progressive unlock) */}
-              {renderHunterSelectCard(grannyProg, grannyRef)}
+              <button
+                className="lada-btn"
+                style={{
+                  padding: '12px 28px',
+                  fontSize: '1.25rem',
+                  background: 'var(--leaf-green)',
+                  color: 'var(--white)',
+                  boxShadow: '4px 4px 0px var(--ink)',
+                  whiteSpace: 'nowrap',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setMenuScreen('hunter');
+                }}
+              >
+                Pokračovat k výběru lovce ➔
+              </button>
             </div>
 
-            <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {/* MAIN HUB TOOLBAR */}
+            <div style={{ marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 className="lada-btn btn-small"
                 style={{
@@ -4975,6 +5215,178 @@ export default function App() {
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsPlanOpen(true)}>
                 📜 Plán změn a kronika
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
+                onClick={() => setGameState('tavern')}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. OBRAZOVKA: VÝBĚR LOVCE (HUNTER SELECT) */}
+      {gameState === 'menu' && menuScreen === 'hunter' && (
+        <div id="hunter-menu" className="overlay">
+          <div className="panel" style={{ maxWidth: '1040px' }}>
+            {/* Top Navigation Bar: Back button and chosen stage badge */}
+            <div className="hunter-screen-nav-bar">
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: 'var(--wood-dark)',
+                  color: 'var(--parchment)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.95rem',
+                  padding: '8px 14px',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setMenuScreen('stage');
+                }}
+              >
+                ⬅️ Zpět k výběru výpravy
+              </button>
+
+              <div
+                className="hunter-stage-chip"
+                onClick={() => {
+                  sound.coin();
+                  setMenuScreen('stage');
+                }}
+                title="Klikněte pro změnu výpravy"
+                style={{ cursor: 'pointer' }}
+              >
+                <span style={{ fontSize: '1.5rem' }}>{currentLevel.icon}</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
+                    Cíl výpravy:
+                  </div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
+                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
+                  Změnit 🗺️
+                </span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', margin: '4px 0 16px 0' }}>
+              <span className="screen-step-badge">
+                🏹 KROK 2 ZE 2: VÝBĚR LOVCE
+              </span>
+              <h1 style={{ fontSize: '2.2rem', margin: '4px 0 2px 0' }}>
+                VYBERTE SI SVÉHO LOVCE
+              </h1>
+              <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: '#FEF3C7' }}>
+                Koho vyšlete do noci na výpravu do kraje: <strong>{currentLevel.name}</strong>?
+              </p>
+            </div>
+
+            {/* Character Selection Grid with animated canvas portraits */}
+            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '15px' }}>
+              {/* Poutník - Výchozí odemčený lovec */}
+              <div
+                className="char-card"
+                onClick={() => startGame('wanderer')}
+                title="Poutník – připraven k výpravě"
+              >
+                <span className="char-card-unlocked-badge">✅ Odemčeno</span>
+                <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
+                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
+                <div>
+                  <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
+                </div>
+                <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
+                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Rázová vlna.
+                </p>
+                <div className="hunter-clue-box">
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Vrbový prut & Povidlové buchty</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>⚡ Schopnost: Rázová vlna</div>
+                </div>
+                <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+                    Vyrazit do noci ⚔️
+                  </button>
+                </div>
+              </div>
+
+              {/* Pasáček (Progressive unlock) */}
+              {renderHunterSelectCard(shepherdProg, shepherdRef)}
+
+              {/* Bába kořenářka (Progressive unlock) */}
+              {renderHunterSelectCard(korenarkaProg, korenarkaRef)}
+
+              {/* Ponocný (Progressive unlock) */}
+              {renderHunterSelectCard(watchmanProg, watchmanRef)}
+
+              {/* Pobožný kostelník (Progressive unlock) */}
+              {renderHunterSelectCard(sextonProg, sextonRef)}
+
+              {/* Babička a Barunka (Progressive unlock) */}
+              {renderHunterSelectCard(grannyProg, grannyRef)}
+            </div>
+
+            {/* Bottom Toolbar on Hunter Select Screen */}
+            <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: 'var(--wood-dark)',
+                  color: 'var(--parchment)',
+                  fontWeight: 900,
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setMenuScreen('stage');
+                }}
+              >
+                ⬅️ Zpět k výběru výpravy
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: '#7C3AED',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setIsTestModeOpen(true);
+                }}
+                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+              >
+                🧪 Testovací mód
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#1D4ED8', color: '#FFFFFF', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsControlsOpen(true);
+                }}
+                title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
+              >
+                🎮 Ovládání hry
+              </button>
+              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
+                📖 Bestiář nočního venkova
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#E06D29', color: '#FFFFFF' }}
+                onClick={() => setIsArsenalOpen(true)}
+              >
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
               <button
                 className="lada-btn btn-small"
@@ -5159,37 +5571,155 @@ export default function App() {
         </div>
       )}
 
-      {/* PAINTED CHEST SEQUENCE */}
+      {/* PAINTED CHEST SEQUENCE – LADOVSKÝ VENKOVSKÝ AUTOMAT / SLOT MACHINE */}
       {gameState === 'chest' && (
-        <div id="chest-ui" className="overlay" style={{ background: 'rgba(0,0,0,0.85)' }}>
-          <div className="panel" style={{ maxWidth: '600px', background: 'var(--wood-dark)' }}>
-            <h1 style={{ color: '#FDE047', textShadow: '3px 3px 0 var(--ink)' }}>MALOVANÁ TRUHLA!</h1>
-            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7' }}>
-              Bohatá kořist z venkovského pokladu:
-            </p>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', margin: '25px 0', flexWrap: 'wrap' }}>
-              {chestRewards.map((r, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: 'var(--parchment)',
-                    border: '4px solid var(--ink)',
-                    borderRadius: '8px',
-                    padding: '15px 20px',
-                    color: 'var(--ink)',
-                    textAlign: 'center',
-                    minWidth: '150px',
-                    boxShadow: '4px 4px 0 var(--mustard)',
-                  }}
-                >
-                  <div style={{ fontSize: '3rem', display: 'flex', justifyContent: 'center' }}><GameIcon icon={r.icon} size={48} /></div>
-                  <div style={{ fontWeight: 900, fontSize: '1.1rem', marginTop: '6px' }}>{r.name}</div>
-                </div>
-              ))}
+        <div id="chest-ui" className="overlay" style={{ background: 'rgba(10, 6, 3, 0.88)', backdropFilter: 'blur(3px)' }}>
+          <div className="panel slot-machine-cabinet" style={{ textAlign: 'center' }}>
+            {/* Ornate slot machine header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '2rem' }}>🎰</span>
+              <h1 style={{ color: '#FDE047', textShadow: '3px 3px 0 var(--ink)', margin: 0, fontSize: '2.2rem' }}>
+                MALOVANÁ TRUHLA!
+              </h1>
+              <span style={{ fontSize: '2rem' }}>🎰</span>
             </div>
-            <button className="lada-btn" style={{ padding: '12px 35px', fontSize: '1.4rem' }} onClick={closeChestSequence}>
-              Vyzvednout poklad
-            </button>
+
+            <p style={{ fontWeight: 800, fontSize: '1.15rem', color: '#FEF3C7', marginTop: '6px', marginBottom: '4px' }}>
+              {slotSpinning
+                ? '⚡ Válce venkovského automatu štěstěny se točí...'
+                : '✨ Velkolepá kořist! Zde jsou vaše venkovské poklady:'}
+            </p>
+
+            {/* 3 Reel Housing */}
+            <div className={`slot-reel-housing ${!slotSpinning && slotStoppedCount >= 3 ? 'slot-all-locked' : ''}`}>
+              {chestRewards.map((reward, i) => {
+                const isLocked = i < slotStoppedCount;
+                return (
+                  <div
+                    key={i}
+                    className={`slot-reel-card ${isLocked ? 'slot-locked' : 'slot-spinning'}`}
+                  >
+                    {/* Header / Reel Label */}
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 900,
+                        letterSpacing: '1px',
+                        color: isLocked ? '#78350F' : '#8A887D',
+                        marginBottom: '6px',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {isLocked ? `✨ Válec ${i + 1}` : `🎲 Válec ${i + 1}`}
+                    </div>
+
+                    {/* Reel Window */}
+                    <div className="slot-reel-window">
+                      {!isLocked ? (
+                        <div className="slot-spinning-strip">
+                          {['krejcar', 'czech_buchta', '💰', '🧪', '🥧', '👢', '🎋', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', '🧪', '🥧', '👢', '🎋'].map((sym, sIdx) => (
+                            <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <GameIcon icon={sym} size={38} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', animation: 'popIn 0.3s ease-out' }}>
+                          <GameIcon icon={reward.icon} size={52} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reel Content / Title */}
+                    <div style={{ minHeight: '62px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginTop: '8px', width: '100%' }}>
+                      {isLocked ? (
+                        <>
+                          <div style={{ fontWeight: 900, fontSize: '1.05rem', color: '#111111', lineHeight: '1.2' }}>
+                            {reward.name}
+                          </div>
+                          {reward.desc && (
+                            <div style={{ fontSize: '0.78rem', color: '#5E3A21', fontWeight: 800, marginTop: '3px' }}>
+                              {reward.desc}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ fontWeight: 900, fontSize: '0.9rem', color: '#78350F', fontStyle: 'italic', opacity: 0.85 }}>
+                          Točí se...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Status Badge */}
+                    <div style={{ marginTop: '6px', width: '100%' }}>
+                      {isLocked ? (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            background: '#166534',
+                            color: '#FFFFFF',
+                            fontSize: '0.72rem',
+                            fontWeight: 900,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            border: '1.5px solid #111111',
+                          }}
+                        >
+                          ODHALENO
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            background: '#D97706',
+                            color: '#FFFFFF',
+                            fontSize: '0.72rem',
+                            fontWeight: 900,
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            border: '1.5px solid #111111',
+                          }}
+                        >
+                          V POHYBU...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Actions */}
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              {slotSpinning ? (
+                <button
+                  className="lada-btn"
+                  style={{
+                    padding: '12px 32px',
+                    fontSize: '1.25rem',
+                    background: 'var(--mustard)',
+                    color: 'var(--ink)',
+                  }}
+                  onClick={skipSlotSpin}
+                >
+                  ⏩ Přeskočit točení <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>[Mezerník]</span>
+                </button>
+              ) : (
+                <button
+                  className="lada-btn"
+                  style={{
+                    padding: '14px 42px',
+                    fontSize: '1.4rem',
+                    background: 'var(--red)',
+                    color: '#FEF3C7',
+                    animation: 'popIn 0.3s ease-out',
+                  }}
+                  onClick={closeChestSequence}
+                >
+                  🎁 Vyzvednout poklad <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>[Mezerník]</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -5244,6 +5774,7 @@ export default function App() {
                     selectedLevel: nextId,
                   });
                   setSelectedLevelId(nextId);
+                  setMenuScreen('hunter');
                   setGameState('menu');
                 }}
               >
@@ -5304,7 +5835,10 @@ export default function App() {
               <VillageView
                 meta={meta}
                 onUpgrade={handleVillageUpgrade}
-                onClose={() => setGameState('menu')}
+                onClose={() => {
+                  setMenuScreen('stage');
+                  setGameState('menu');
+                }}
               />
             ) : (
               <div>
@@ -5378,7 +5912,10 @@ export default function App() {
               >
                 🗑️ Vymazat postup
               </button>
-              <button className="lada-btn" style={{ padding: '12px 28px' }} onClick={() => setGameState('menu')}>
+              <button className="lada-btn" style={{ padding: '12px 28px' }} onClick={() => {
+                setMenuScreen('stage');
+                setGameState('menu');
+              }}>
                 Zpět do nabídky
               </button>
             </div>
@@ -5438,6 +5975,7 @@ export default function App() {
           setSelectedLevelId(id);
           saveMeta({ ...meta, selectedLevel: id });
           setSelectedLevelDetail(null);
+          setMenuScreen('hunter');
         }}
       />
 
