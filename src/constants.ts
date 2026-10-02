@@ -24,6 +24,8 @@ export const COLORS = {
   orangeSunset: '#E06D29',
 };
 
+export const DAWN_TIME_SECONDS = 360;
+
 // Day-night phases: Poledne -> Odpoledne -> Soumrak -> Hluboká noc -> Půlnoční hodina -> Kuropění (Svítání)
 export const DAY_PHASES: DayPhase[] = [
   {
@@ -76,7 +78,7 @@ export const DAY_PHASES: DayPhase[] = [
   {
     id: 'dawn',
     name: 'Kuropění & Svítání (04:00)',
-    timeRange: [360, 99999],
+    timeRange: [DAWN_TIME_SECONDS, 99999],
     skyColor: '#FFEBD2',
     ambientTint: 'rgba(255, 220, 180, 0)',
     description: 'Kohout zakokrhal! Noční mocnosti ztrácejí vládu a strašidla prchají do hrobů a bažin!',

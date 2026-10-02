@@ -2,31 +2,8 @@
  * ============================================================================
  * BUBÁKOV – ANIMOVANÁ LADOVSKÁ EDICE
  * ============================================================================
- * ZÁVAZNÉ PRAVIDLO PRO SOUBORY KE STAŽENÍ (HTML & TXT STANDALONE & EDIT INTEGRITA):
- * ============================================================================
- * Soubory ke stažení v textovém formátu (.txt) i formátu (.html)
- * ('bubakov_hra_ladovska_edice.txt' a 'bubakov_hra_ladovska_edice.html')
- * MUSÍ VŽDY OBSAHOVAT NAPROSTO KOMPLETNÍ HRU PŘIPRAVENOU K HRANÍ I K ÚPRAVÁM:
- *
- * 1. 100% SAMOSTATNOU A SPOUSTITELNOU OFFLINE HRU (žádná instalace ani síť).
- * 2. NEMINIFIKOVANÝ, ČISTÝ A ČITELNÝ BĚHOVÝ KÓD (s plnými názvy funkcí a proměnných).
- * 3. KOMPLETNÍ PŮVODNÍ ZDROJOVÉ KÓDY VŠECH MODULŮ (v JSON bloku <script id="bubakov-source-tree">).
- * 4. DETAILNÍHO PRŮVODCE PRO AI MODELY (CLAUDE, GPT) A VÝVOJÁŘE K ÚPRAVÁM HRY.
- *
- * NIKDY NESMÍ BÝT STAŽEN ŽÁDNÝ PLACEHOLDER, ŽÁDNÁ OŘEZANÁ VERZE ANI MINIFIKOVANÝ NEČITELNÝ GIBBERISH!
- *
- * Všechny herní moduly:
- * - Kompletní běhový engine a herní smyčka
- * - 6 venkovských hrdinů (Poutník, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička)
- * - kompletní bestiář lidových monster a velcí venkovští bossové
- * - 12 zbraní, jejich větvení a úrovně
- * - Ladovský plátnový kreslící engine (HTML5 Canvas 2D)
- * - Zvukový Web Audio syntezátor tradičních venkovských nástrojů
- * - Hospoda U Černého kocoura, vývoj vesnice Bubákov, Bestiář a Výzvy
- * - Veškeré CSS styly, typografie a původní TypeScript zdrojáky
- * jsou plně obsaženy uvnitř tohoto jediného souboru.
- *
- * Soubor .txt je přímou kopií .html hry – stačí jej přejmenovat na .html a spustit!
+ * Production React/TypeScript game. The repository is the canonical editable
+ * source; production deployments use the normal Vite build output.
  * ============================================================================
  */
 
@@ -40,7 +17,15 @@ import {
   UpgradeChoice,
   DayPhase,
 } from './types';
-import { COLORS, DAY_PHASES, getCurrentDayPhase, ENEMY_POINTS, DROP_THRESHOLDS, GRANNY_CUTSCENE } from './constants';
+import {
+  COLORS,
+  DAY_PHASES,
+  getCurrentDayPhase,
+  ENEMY_POINTS,
+  DROP_THRESHOLDS,
+  GRANNY_CUTSCENE,
+  DAWN_TIME_SECONDS,
+} from './constants';
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS } from './data/weapons';
@@ -596,7 +581,6 @@ export default function App() {
   const [selectedLevelDetail, setSelectedLevelDetail] = useState<LevelProgress | null>(null);
   const [isArsenalOpen, setIsArsenalOpen] = useState(false);
   const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string } | null>(null);
-  const [downloadToast, setDownloadToast] = useState<string | null>(null);
 
   // Progressive unlock calculations for all 4 hunters
   const wandererProg = getHunterProgress('wanderer', meta);
@@ -1601,7 +1585,7 @@ export default function App() {
             const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
 
             // Check dawn victory
-            if (newTime >= 300 && !engine.dawnVictoryTriggered) {
+            if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
               engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
@@ -4271,122 +4255,6 @@ export default function App() {
     };
   };
 
-  // Helper to trigger file download in browser
-  const triggerFileDownload = (content: string, filename: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-  };
-
-  // Helper to retrieve the complete, standalone offline game code
-  const getCompleteStandaloneGame = async (): Promise<string> => {
-    // 1. Try to fetch the prebuilt offline bundle which contains complete bundled JS + CSS + HTML
-    const cacheBuster = `?t=${Date.now()}`;
-    const candidates = [
-      `/bubakov_hra_ladovska_edice.html${cacheBuster}`,
-      `/bubakov_hra_ladovska_edice.txt${cacheBuster}`,
-    ];
-
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url);
-        if (res.ok) {
-          const fullContent = await res.text();
-          if (
-            fullContent &&
-            fullContent.length > 50000 &&
-            fullContent.includes('id="root"') &&
-            (fullContent.includes('<script') || fullContent.includes('React'))
-          ) {
-            return fullContent;
-          }
-        }
-      } catch (e) {
-        console.warn(`Could not fetch ${url}:`, e);
-      }
-    }
-
-    // 2. If running directly inside a standalone bundle where script is inlined
-    const scripts = Array.from(document.querySelectorAll('script'));
-    const hasInlineBundle = scripts.some(
-      (s) => !s.src && (s.textContent?.length || 0) > 20000
-    );
-    if (hasInlineBundle) {
-      return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    }
-
-    // 3. Fallback: synthesize with embedded stylesheets
-    const headClone = document.head.cloneNode(true) as HTMLElement;
-    const bodyClone = document.body.cloneNode(true) as HTMLElement;
-    return `<!DOCTYPE html>\n<html lang="cs">\n${headClone.outerHTML}\n${bodyClone.outerHTML}\n</html>`;
-  };
-
-  // Download standalone offline HTML game
-  const downloadGameHtml = async () => {
-    sound.coin();
-    setDownloadToast('⏳ Připravuji 100% kompletní offline hru ke stažení (HTML)...');
-    try {
-      const gameCode = await getCompleteStandaloneGame();
-      if (!gameCode || gameCode.length < 50000) {
-        throw new Error('Chyba integrity: Stažený soubor hry není kompletní.');
-      }
-      triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.html', 'text/html;charset=utf-8');
-      sound.cheer();
-      setDownloadToast('✅ 100% kompletní hra úspěšně stažena! Lze hrát offline bez internetu.');
-    } catch (e) {
-      console.error(e);
-      setDownloadToast('❌ Chyba při stahování hry.');
-    }
-    setTimeout(() => setDownloadToast(null), 5000);
-  };
-
-  // Download complete game HTML saved as TXT file
-  const downloadGameTxt = async () => {
-    sound.coin();
-    setDownloadToast('⏳ Připravuji 100% kompletní kód hry ke stažení (TXT)...');
-    try {
-      let gameCode = '';
-      try {
-        const res = await fetch(`/bubakov_hra_ladovska_edice.txt?t=${Date.now()}`);
-        if (res.ok) {
-          const txt = await res.text();
-          if (
-            txt &&
-            txt.length > 50000 &&
-            txt.includes('id="root"') &&
-            (txt.includes('<script') || txt.includes('React'))
-          ) {
-            gameCode = txt;
-          }
-        }
-      } catch (e) {
-        console.warn('Fetch txt error:', e);
-      }
-
-      if (!gameCode) {
-        gameCode = await getCompleteStandaloneGame();
-      }
-
-      if (!gameCode || gameCode.length < 50000) {
-        throw new Error('Chyba integrity: Stažený soubor hry není kompletní.');
-      }
-
-      triggerFileDownload(gameCode, 'bubakov_hra_ladovska_edice.txt', 'text/plain;charset=utf-8');
-      sound.cheer();
-      setDownloadToast('✅ 100% kompletní hra stažena jako TXT! Stačí přejmenovat na .html a spustit.');
-    } catch (e) {
-      console.error(e);
-      setDownloadToast('❌ Chyba při stahování souboru TXT.');
-    }
-    setTimeout(() => setDownloadToast(null), 5000);
-  };
-
   const formatTimer = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = Math.floor(secs % 60).toString().padStart(2, '0');
@@ -4541,33 +4409,6 @@ export default function App() {
     <>
       <canvas id="gameCanvas" ref={canvasRef} />
 
-      {/* DOWNLOAD NOTIFICATION TOAST */}
-      {downloadToast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'var(--parchment)',
-            color: 'var(--ink)',
-            border: '4px solid var(--wood-dark)',
-            boxShadow: '6px 6px 0px var(--ink)',
-            padding: '12px 26px',
-            borderRadius: '10px',
-            zIndex: 9999,
-            fontWeight: 900,
-            fontSize: '1.02rem',
-            textAlign: 'center',
-            maxWidth: '90vw',
-            fontFamily: 'Eczar, serif',
-            pointerEvents: 'none',
-          }}
-        >
-          {downloadToast}
-        </div>
-      )}
-
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (
         <div id="hud">
@@ -4607,12 +4448,6 @@ export default function App() {
             )}
             <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
               🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
-            </button>
-            <button className="download-toggle-btn" onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru pro offline hraní (HTML)">
-              📥 Stáhnout HTML
-            </button>
-            <button className="download-toggle-btn btn-txt-download" onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru v TXT formátu (stačí přejmenovat na .html a hrát)">
-              📄 Stáhnout TXT
             </button>
             <button className="sound-toggle-btn" onClick={toggleSound}>
               <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
@@ -5070,12 +4905,6 @@ export default function App() {
               >
                 🎮 Ovládání hry
               </button>
-              <button className="lada-btn btn-download" onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru pro offline hraní (HTML soubor)">
-                📥 Stáhnout celou hru (HTML)
-              </button>
-              <button className="lada-btn btn-download-txt" onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru jako TXT (stačí přejmenovat na .html a hrát)">
-                📄 Stáhnout celou hru (TXT)
-              </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
                 📖 Bestiář nočního venkova
               </button>
@@ -5479,12 +5308,6 @@ export default function App() {
                 onClick={() => setIsArsenalOpen(true)}
               >
                 🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
-              </button>
-              <button className="lada-btn btn-download" style={{ padding: '12px 28px' }} onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru jako offline HTML soubor">
-                📥 Stáhnout hru (HTML)
-              </button>
-              <button className="lada-btn btn-download-txt" style={{ padding: '12px 28px' }} onClick={downloadGameTxt} title="Stáhnout 100% kompletní hru v TXT (stačí přejmenovat na .html a hrát)">
-                📄 Stáhnout hru (TXT)
               </button>
               <button
                 className="lada-btn btn-small"
