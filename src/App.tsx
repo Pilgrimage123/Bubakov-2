@@ -1602,16 +1602,20 @@ export default function App() {
             if (!engine.miniBossSpawned && newTime >= curLvl.miniBoss.time) {
               engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(
-                createEnemyInstance(
-                  curLvl.miniBoss.id,
-                  player.x + Math.cos(ang) * 550,
-                  player.y + Math.sin(ang) * 550,
-                  curLvl.miniBoss.multiplier
-                )
+              const miniBoss = createEnemyInstance(
+                curLvl.miniBoss.id,
+                player.x + Math.cos(ang) * 550,
+                player.y + Math.sin(ang) * 550,
+                curLvl.miniBoss.multiplier
               );
+              engine.enemies.push(miniBoss);
               engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.miniBoss.name, COLORS.mustard, true));
-              setRunStats((s) => ({ ...s, warningBanner: curLvl.miniBoss.warning }));
+              setRunStats((s) => ({
+                ...s,
+                bossTitle: curLvl.miniBoss.name,
+                bossHpPct: 100,
+                warningBanner: curLvl.miniBoss.warning,
+              }));
               sound.slash();
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
@@ -1620,16 +1624,20 @@ export default function App() {
             if (!engine.midBossSpawned && (engine.miniBossSpawned || newTime >= curLvl.midBoss.time + 10) && newTime >= curLvl.midBoss.time) {
               engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(
-                createEnemyInstance(
-                  curLvl.midBoss.id,
-                  player.x + Math.cos(ang) * 560,
-                  player.y + Math.sin(ang) * 560,
-                  curLvl.midBoss.multiplier
-                )
+              const midBoss = createEnemyInstance(
+                curLvl.midBoss.id,
+                player.x + Math.cos(ang) * 560,
+                player.y + Math.sin(ang) * 560,
+                curLvl.midBoss.multiplier
               );
+              engine.enemies.push(midBoss);
               engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.midBoss.name, COLORS.mustard, true));
-              setRunStats((s) => ({ ...s, warningBanner: curLvl.midBoss.warning }));
+              setRunStats((s) => ({
+                ...s,
+                bossTitle: curLvl.midBoss.name,
+                bossHpPct: 100,
+                warningBanner: curLvl.midBoss.warning,
+              }));
               sound.boss();
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
             }
@@ -3884,7 +3892,11 @@ export default function App() {
           this.kby = 0;
         }
 
-        if (this.isBoss) {
+        // All boss-category encounters participate in the boss HUD.
+        // Do not use `isBoss` here: that flag also controls gameplay
+        // scaling/radius and must remain reserved for final bosses.
+        const isBossHudMonster = this.isBoss || this.category === 'bosses';
+        if (isBossHudMonster) {
           const pct = Math.max(0, Math.min(100, (this.hp / this.maxHp) * 100));
           setRunStats((s) => ({ ...s, bossHpPct: pct }));
         }
