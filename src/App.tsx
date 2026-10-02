@@ -1118,6 +1118,13 @@ export default function App() {
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
+
+    const canvas = canvasRef.current;
+    if (canvas) {
+      engine.camera.x = player.x - canvas.width / 2;
+      engine.camera.y = player.y - canvas.height / 2;
+    }
+
     engineRef.current = engine;
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve

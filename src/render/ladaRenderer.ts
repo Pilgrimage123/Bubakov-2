@@ -4946,6 +4946,13 @@ export const Lada = {
   },
 };
 
+// Auto-bind all methods on Lada so that they retain `this === Lada` even when passed as callbacks or looked up dynamically
+for (const key of Object.keys(Lada)) {
+  const val = (Lada as any)[key];
+  if (typeof val === 'function') {
+    (Lada as any)[key] = val.bind(Lada);
+  }
+}
 
 /** Renderer methods accepted by enemy data definitions. */
 export type EnemyRendererMethod = Extract<keyof typeof Lada, `draw${string}`>;
@@ -4968,6 +4975,8 @@ export function drawEnemyRenderer(
   vx: number,
   panicked: boolean,
 ): void {
-  const drawer = Lada[method] as unknown as EnemyDrawFn;
-  drawer(ctx, x, y, time, vx, panicked);
+  const drawer = Lada[method] as unknown as EnemyDrawFn | undefined;
+  if (typeof drawer === 'function') {
+    drawer.call(Lada, ctx, x, y, time, vx, panicked);
+  }
 }
