@@ -19,7 +19,7 @@
  * - Kompletní běhový engine a herní smyčka
  * - 6 venkovských hrdinů (Poutník, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička)
  * - kompletní bestiář lidových monster a velcí venkovští bossové
- * - 11 zbraní, jejich větvení a úrovně
+ * - 12 zbraní, jejich větvení a úrovně
  * - Ladovský plátnový kreslící engine (HTML5 Canvas 2D)
  * - Zvukový Web Audio syntezátor tradičních venkovských nástrojů
  * - Hospoda U Černého kocoura, vývoj vesnice Bubákov, Bestiář a Výzvy
@@ -5084,7 +5084,7 @@ export default function App() {
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/11)
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsPlanOpen(true)}>
                 📜 Plán změn a kronika
@@ -5478,7 +5478,7 @@ export default function App() {
                 style={{ background: '#E06D29', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/11)
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
               <button className="lada-btn btn-download" style={{ padding: '12px 28px' }} onClick={downloadGameHtml} title="Stáhnout 100% kompletní hru jako offline HTML soubor">
                 📥 Stáhnout hru (HTML)
