@@ -112,7 +112,7 @@ export const ENEMY_POINTS: Record<string, number> = {
   sazovy_rarach: 68, ropucha: 82, krvavy_kostlivec: 130, obrneny_zbojnik: 240,
 };
 
-export const DROP_THRESHOLDS = { chest: 3500, potion: 450, bread: 250, soul: 120, coin: 20 };
+export const DROP_THRESHOLDS = { chest: 100, potion: 450, bread: 250, soul: 120, coin: 20 };
 
 // Načasování scénky Babičky a Barunky (v sekundách): celková délka a okamžik, kdy se rozlije aura laskavosti
 export const GRANNY_CUTSCENE = { duration: 5.6, applyAt: 3.2 };
