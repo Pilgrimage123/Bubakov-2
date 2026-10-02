@@ -1,5 +1,26 @@
 # Bubákov – Internal Changelog
 
+## 2026-10-02 — Battle arena / boss HUD audit
+### Battle arena
+- Audited the current `main` arena renderer, HUD and boss lifecycle.
+- Confirmed arena decoration is presentation-only and remains outside the
+  combat core.
+- Confirmed final bosses correctly initialize and update their persistent
+  boss HP bar.
+- Fixed mini-boss and mid-boss encounters not appearing in the persistent
+  boss HUD.
+- Mini/mid bosses now initialize their HUD title and HP from the same
+  spawned enemy instance used by gameplay.
+- Boss HP updates now include all enemies in the `bosses` category without
+  changing the `isBoss` gameplay-scaling flag.
+- Preserved final-boss victory behavior and existing boss-category cleanup.
+
+### Responsive HUD
+- Made boss warnings constrain themselves to the viewport width.
+- Added wrapping for long Czech boss names/warnings.
+- Made the top stats row wrap on narrow/mobile screens.
+- Reduced mobile boss warning/bar dimensions to prevent HUD overlap.
+
 ## 2026-10-02 — Debug / production cleanup
 
 ### Repository audit
