@@ -8,14 +8,14 @@ export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' |
 export type WeaponDamageType = 'food' | 'physical' | 'nature' | 'ice' | 'holy' | 'fire' | 'magic';
 
 export type EnemyCategory = 
-  | 'swarms'      // Drobní šotci a havěť
-  | 'undead'      // Kostlivci a hrobové přízraky
-  | 'shadows'     // Stodolové a noční stíny
-  | 'water'       // Vodní cháska
-  | 'frost'       // Větrné a zimní bytosti
-  | 'fields'      // Polní a lesní běsi
-  | 'demons'      // Pekelníci
-  | 'bosses';     // Titáni a velcí bossové
+  | 'swarms'
+  | 'undead'
+  | 'shadows'
+  | 'water'
+  | 'frost'
+  | 'fields'
+  | 'demons'
+  | 'bosses';
 
 export interface EnemyStats {
   id: string;
@@ -26,19 +26,19 @@ export interface EnemyStats {
   speed: number;
   damage: number;
   radius: number;
-  foodResist: number;     // 0 = full damage from food, 1 = completely immune
-  hunger?: number;        // Resistance against food/snack effects (0 = starving/maximum snack duration, 1 = immune to snacking; defaults to foodResist)
-  poiseResist: number;    // 0 = easily knocked back, 1 = immune to knockback
-  willpower: number;      // 0 = panics easily from holy/fear, 1 = resolute
+  foodResist: number;
+  hunger?: number;
+  poiseResist: number;
+  willpower: number;
   xp: number;
   coinValue: number;
-  method: EnemyRendererMethod; // Name of drawing method in the Ladovský renderer
+  method: EnemyRendererMethod;
   palette?: 'soot' | 'crimson' | 'bog' | 'steel';
   weakness: string;
   strength: string;
   lore: string;
   danger: string;
-  spawnMinTime?: number;  // In seconds
+  spawnMinTime?: number;
   spawnMaxTime?: number;
   dayPhaseAllowed?: DayPhaseId[];
 }
@@ -48,7 +48,7 @@ export type DayPhaseId = 'noon' | 'afternoon' | 'dusk' | 'night' | 'midnight' | 
 export interface DayPhase {
   id: DayPhaseId;
   name: string;
-  timeRange: [number, number]; // in seconds from run start
+  timeRange: [number, number];
   skyColor: string;
   ambientTint: string;
   description: string;
@@ -86,6 +86,14 @@ export interface MetaProgression {
   wallLevel: number;
   bakeryLevel?: number;
   bellLevel?: number;
+  tavernShieldLevel?: number;
+  forgeLevel?: number;
+  churchLevel?: number;
+  verminLevel?: number;
+  waterLevel?: number;
+  undeadLevel?: number;
+  windLevel?: number;
+  forestLevel?: number;
   totalSoulsSaved: number;
   totalChasnikSaved: number;
   season: Season;
