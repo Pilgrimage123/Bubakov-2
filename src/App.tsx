@@ -9,6 +9,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createInitialEngineState, type EngineState } from './game/engineState';
+import { SpatialHash } from './game/spatialHash';
+import { distanceSq, isInView } from './game/perf';
 import {
   CharacterType,
   Season,
@@ -171,30 +173,15 @@ function renderHunterPortrait(
   }
 }
 
-/** Uniform spatial hash for combat broad-phase queries. */
-class EnemySpatialHash<T extends { x: number; y: number; isDefeated?: boolean }> {
-  private readonly cellSize = 180;
-  private readonly cells = new Map<string, T[]>();
-  private key(x: number, y: number) { return `${Math.floor(x / this.cellSize)},${Math.floor(y / this.cellSize)}`; }
-  rebuild(items: T[]) {
-    this.cells.clear();
-    for (const item of items) {
-      if (item.isDefeated) continue;
-      const key = this.key(item.x, item.y);
-      let bucket = this.cells.get(key);
-      if (!bucket) { bucket = []; this.cells.set(key, bucket); }
-      bucket.push(item);
-    }
+/** Allocation-free cleanup for frequently mutated entity arrays. */
+function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
+  let write = 0;
+  for (let read = 0; read < items.length; read++) {
+    const item = items[read];
+    if (keep(item)) items[write++] = item;
   }
-  query(x: number, y: number, radius: number): T[] {
-    const minX=Math.floor((x-radius)/this.cellSize), maxX=Math.floor((x+radius)/this.cellSize);
-    const minY=Math.floor((y-radius)/this.cellSize), maxY=Math.floor((y+radius)/this.cellSize);
-    const result:T[]=[];
-    for(let cy=minY;cy<=maxY;cy++) for(let cx=minX;cx<=maxX;cx++){const bucket=this.cells.get(`${cx},${cy}`);if(bucket) result.push(...bucket);}
-    return result;
-  }
+  items.length = write;
 }
-function removeDeadInPlace<T extends { dead?: boolean }>(items:T[]){let write=0;for(let read=0;read<items.length;read++){const item=items[read];if(!item.dead)items[write++]=item;}items.length=write;}
 
 // Floating damage / status text
 class DamageText {
@@ -724,7 +711,7 @@ export default function App() {
 
   // Game engine refs (persistent through renders)
   const engineRef = useRef<EngineState>(createInitialEngineState());
-  const enemySpatialHashRef = useRef(new EnemySpatialHash<any>(180));
+  const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
 
   // Pause toggle handler
@@ -1772,7 +1759,8 @@ export default function App() {
     resize();
 
     const loop = (now: number) => {
-      const dt = Math.min(0.1, (now - engineRef.current.lastTime) / 1000);
+      // Prevent a background-tab stall from creating a large simulation burst.
+      const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
       engineRef.current.lastTime = now;
       engineRef.current.uiTime += dt;
 
@@ -2882,11 +2870,11 @@ export default function App() {
               }
             }
 
-            const nearby=enemySpatialHashRef.current.query(p.x,p.y,p.radius+72);
+            const nearby=enemySpatialHashRef.current.queryCircle(p.x,p.y,p.radius+72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
               const dx=p.x-e.x, dy=p.y-e.y, reach=p.radius+e.radius;
-              if (!p.hitList.includes(e) && dx*dx+dy*dy < reach*reach) {
+              if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach*reach) {
                 p.hitList.push(e);
                 const hungerResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
                 const resist = p.type === 'food' ? hungerResist : 0;
@@ -2935,7 +2923,7 @@ export default function App() {
               }
             }
           }
-          engine.projectiles = engine.projectiles.filter((p) => !p.dead);
+          compactInPlace(engine.projectiles, (p) => !p.dead);
 
           // Update Melee Slashes
           for (const s of engine.slashes) {
@@ -2944,11 +2932,11 @@ export default function App() {
             s.life -= dt;
             if (s.life <= 0) s.dead = true;
 
-            const nearby=enemySpatialHashRef.current.query(s.x,s.y,s.reach+72);
+            const nearby=enemySpatialHashRef.current.queryCircle(s.x,s.y,s.reach+72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
               const dx=s.x-e.x, dy=s.y-e.y, reach=s.reach+e.radius;
-              if (!s.hitList.includes(e) && dx*dx+dy*dy <= reach*reach) {
+              if (!s.hitList.includes(e) && distanceSq(s.x, s.y, e.x, e.y) <= reach*reach) {
                 const ang = Math.atan2(e.y - s.y, e.x - s.x);
                 let diff = Math.abs(ang - s.angle);
                 if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -2961,7 +2949,7 @@ export default function App() {
               }
             }
           }
-          engine.slashes = engine.slashes.filter((s) => !s.dead);
+          compactInPlace(engine.slashes, (s) => !s.dead);
 
           // Update Enemies
           for (const e of engine.enemies) {
@@ -2987,7 +2975,7 @@ export default function App() {
               }
             }
           }
-          engine.enemies = engine.enemies.filter((e) => !e.dead);
+          compactInPlace(engine.enemies, (e) => !e.dead);
 
           // Update Drops
           for (const d of engine.drops) {
@@ -3051,11 +3039,11 @@ export default function App() {
               }
             }
           }
-          engine.drops = engine.drops.filter((d) => !d.dead);
+          compactInPlace(engine.drops, (d) => !d.dead);
 
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
-          engine.texts = engine.texts.filter((t) => t.life > 0);
+          compactInPlace(engine.texts, (t) => t.life > 0);
         }
       }      // Doznívání Farního požehnání
       if (engineRef.current.blessing) {
@@ -3161,7 +3149,7 @@ export default function App() {
         const viewLeft=cam.x-120, viewTop=cam.y-160, viewRight=cam.x+canvas.width+120, viewBottom=cam.y+canvas.height+160;
         const drawables:any[]=[];
         if(player) drawables.push(player);
-        for(const enemy of engine.enemies){if(enemy.x+enemy.radius>=viewLeft&&enemy.x-enemy.radius<=viewRight&&enemy.y+enemy.radius>=viewTop&&enemy.y-enemy.radius<=viewBottom)drawables.push(enemy);}
+        for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
         drawables.sort((a,b)=>a.y-b.y);
 
         for (const d of drawables) {
@@ -3172,7 +3160,7 @@ export default function App() {
 
         // Draw Projectiles
         for (const p of engine.projectiles) {
-          if(p.x<viewLeft||p.x>viewRight||p.y<viewTop||p.y>viewBottom)continue;
+          if (!isInView(p.x, p.y, p.radius || 12, viewLeft, viewTop, viewRight, viewBottom)) continue;
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.angle);
