@@ -941,10 +941,6 @@ export default function App() {
     const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 30;
     const ovenDmgMult = (1 + (meta.ovenLevel || 0) * 0.06) * (type === 'wanderer' ? 1.35 : 1);
     const wallDmgRed = Math.min(0.80, (meta.wallLevel || 0) * 0.08);
-    const millBonusSpeed = (meta.millLevel || 0) * 15;
-    const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
-    const ovenDmgMult = 1 + (meta.ovenLevel || 0) * 0.1;
-    const wallDmgRed = Math.min(0.5, (meta.wallLevel || 0) * 0.05);
 
     const player = {
       x: 0,
@@ -1738,6 +1734,68 @@ export default function App() {
                       color: i % 2 === 0 ? '#DC2626' : '#F59E0B',
                       size: 6,
                     });
+                  }
+                }
+
+                // 0. Mariáš ďáblů — Čert pravidelně vytáhne jednu kartu a spustí tematický útok.
+                engine.certMariashCd -= dt;
+                if (engine.certMariashCd <= 0) {
+                  engine.certMariashCd = isPhase2 ? 13.5 : 18.0;
+                  const cards = [
+                    { label: 'SRDCE', icon: '♥', color: '#E11D48' },
+                    { label: 'KULE', icon: '♦', color: '#F59E0B' },
+                    { label: 'LISTY', icon: '♣', color: '#16A34A' },
+                    { label: 'ŽALUDY', icon: '♠', color: '#7C3AED' },
+                  ];
+                  const card = cards[Math.floor(Math.random() * cards.length)];
+                  engine.texts.push(new DamageText(cert.x, cert.y - 95, `MARIÁŠ: ${card.icon} ${card.label}!`, card.color, true));
+
+                  if (card.label === 'SRDCE') {
+                    const heal = cert.maxHp * (isPhase2 ? 0.035 : 0.025);
+                    cert.hp = Math.min(cert.maxHp, cert.hp + heal);
+                    const radius = isPhase2 ? 250 : 210;
+                    if (Math.hypot(player.x - cert.x, player.y - cert.y) <= radius) {
+                      player.takeDamage(isPhase2 ? 24 : 18, 'fire');
+                    }
+                    for (let i = 0; i < 18; i++) {
+                      const a = (i / 18) * Math.PI * 2;
+                      engine.projectiles.push({
+                        x: cert.x, y: cert.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150,
+                        angle: a, speed: 150, dmg: isPhase2 ? 22 : 16, radius: 10, type: 'fire',
+                        visual: 'hell_spark', life: 2.8, maxLife: 2.8, isEnemy: true, pushback: 20,
+                        statusText: 'SRDCE! ♥', dead: false,
+                      });
+                    }
+                  } else if (card.label === 'KULE') {
+                    const baseAng = Math.atan2(player.y - cert.y, player.x - cert.x);
+                    const count = isPhase2 ? 5 : 3;
+                    for (let i = 0; i < count; i++) {
+                      const spread = (i - (count - 1) / 2) * 0.18;
+                      const a = baseAng + spread;
+                      engine.projectiles.push({
+                        x: cert.x, y: cert.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                        angle: a, speed: 300, dmg: isPhase2 ? 30 : 23, radius: 13, type: 'fire',
+                        visual: 'hell_spark', life: 2.6, maxLife: 2.6, isEnemy: true, pushback: 28,
+                        statusText: 'KULE! ♦', dead: false,
+                      });
+                    }
+                  } else if (card.label === 'LISTY') {
+                    const count = isPhase2 ? 3 : 2;
+                    for (let i = 0; i < count; i++) {
+                      const a = Math.random() * Math.PI * 2;
+                      engine.enemies.push(createEnemyInstance(
+                        'sazovy_rarach',
+                        cert.x + Math.cos(a) * 110,
+                        cert.y + Math.sin(a) * 110,
+                        isPhase2 ? 1.15 : 1.0
+                      ));
+                    }
+                  } else {
+                    const dashAng = Math.atan2(player.y - cert.y, player.x - cert.x);
+                    cert.vx = Math.cos(dashAng) * (isPhase2 ? 340 : 285);
+                    cert.vy = Math.sin(dashAng) * (isPhase2 ? 340 : 285);
+                    cert.aiState = 'charge';
+                    cert.aiTimer = isPhase2 ? 0.75 : 0.55;
                   }
                 }
 
