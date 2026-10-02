@@ -540,6 +540,14 @@ export default function App() {
       scarecrowLevel: 0,
       millLevel: 0,
       wallLevel: 0,
+      tavernShieldLevel: 0,
+      forgeLevel: 0,
+      churchLevel: 0,
+      verminLevel: 0,
+      waterLevel: 0,
+      undeadLevel: 0,
+      windLevel: 0,
+      forestLevel: 0,
       totalSoulsSaved: 0,
       totalChasnikSaved: 0,
       season: 'autumn',
@@ -928,7 +936,11 @@ export default function App() {
         ? [{ id: 'kolac', level: 1, cd: 0 }]
         : [{ id: 'halberd', level: 1, cd: 0 }];
 
-    const wallBonusHp = (meta.wallLevel || 0) * 25;
+    const wallBonusHp = 0;
+    const millBonusSpeed = (meta.millLevel || 0) * 16;
+    const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 30;
+    const ovenDmgMult = (1 + (meta.ovenLevel || 0) * 0.06) * (type === 'wanderer' ? 1.35 : 1);
+    const wallDmgRed = Math.min(0.80, (meta.wallLevel || 0) * 0.08);
     const millBonusSpeed = (meta.millLevel || 0) * 15;
     const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
     const ovenDmgMult = 1 + (meta.ovenLevel || 0) * 0.1;
@@ -948,6 +960,9 @@ export default function App() {
       damageReduction: wallDmgRed,
       regenLevel: meta.regenLevel || 0,
       regenTimer: 0,
+      invulnerabilityTimer: 0,
+      dodgeCooldown: 0,
+      tempShield: (meta.tavernShieldLevel || 0) > 0 ? 40 + ((meta.tavernShieldLevel || 0) * 20) : 0,
       herbTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
@@ -964,8 +979,20 @@ export default function App() {
       // Take damage from mob contact or hazard attacks
       takeDamage(amount: number, type = 'physical') {
         if (gameState !== 'playing' || this.hp <= 0) return;
+        if (this.invulnerabilityTimer > 0) return;
+        if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
+          this.dodgeCooldown = Math.max(10, 60 - ((meta.windLevel || 0) * 10));
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', COLORS.mustard, true));
+          return;
+        }
         const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
-        this.hp = Math.max(0, this.hp - hurtDmg);
+        let remainingDmg = hurtDmg;
+        if (this.tempShield > 0) {
+          const absorbed = Math.min(this.tempShield, remainingDmg);
+          this.tempShield -= absorbed;
+          remainingDmg -= absorbed;
+        }
+        if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
         sound.hit();
         engineRef.current.texts.push(
           new DamageText(this.x, this.y - 35, `-${Math.ceil(hurtDmg)}`, COLORS.red)
@@ -1362,6 +1389,23 @@ export default function App() {
     if (!p) return;
 
     sound.levelUp();
+    const churchLevel = metaRef.current.churchLevel || 0;
+    if (churchLevel > 0) {
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 70, 'SVATÁ VLNA!', '#FDE047', true));
+      for (const e of engineRef.current.enemies) {
+        if (e.isDefeated) continue;
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= 400 + e.radius) {
+          const nx = dist > 0.001 ? dx / dist : 1;
+          const ny = dist > 0.001 ? dy / dist : 0;
+          e.takeDamage(100 * churchLevel, 'holy', nx * 520, ny * 520);
+          e.panicked = true;
+          e.panicTimer = Math.max(e.panicTimer || 0, 2.5);
+        }
+      }
+    }
     setGameState('levelup');
 
     const choices: UpgradeChoice[] = [];
@@ -2224,15 +2268,17 @@ export default function App() {
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
             if (player.slowTimer > 0) player.slowTimer -= dt;
-            if (player.ultCd > 0) player.ultCd -= dt;
+            if (player.ultCd > 0) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
+            if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
+            if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
             // Player regeneration
             if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel);
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
                 player.regenTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel} 🍺`, COLORS.green));
+                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🍺`, COLORS.green));
               }
             }
             if (player.type === 'korenarka' && player.hp < player.maxHp) {
@@ -2410,7 +2456,7 @@ export default function App() {
               if (p.isPuddle) {
                 if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
                   if (player.waterSoakedTimer < 1.0) {
-                    player.waterSoakedTimer = 2.5;
+                    player.waterSoakedTimer = 2.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
                     engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
                     sound.splash();
                   }
@@ -2425,10 +2471,10 @@ export default function App() {
                   player.y += Math.sin(p.angle) * p.pushback;
                 }
                 if (p.soakPlayer) {
-                  player.waterSoakedTimer = 3.5;
+                  player.waterSoakedTimer = 3.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
                 }
                 if (p.slowPlayer) {
-                  player.slowTimer = 2.2;
+                  player.slowTimer = 2.2 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
                 }
                 if (p.statusText) {
                   engine.texts.push(new DamageText(player.x, player.y - 40, p.statusText, p.statusColor || COLORS.mustard, true));
@@ -2609,7 +2655,10 @@ export default function App() {
                   });
                 } else if (d.type === 'potion') {
                   sound.potion();
-                  player.hp = Math.min(player.maxHp, player.hp + 30);
+                  const waterLevel = metaRef.current.waterLevel || 0;
+                  const potionHeal = 30 * (1 + waterLevel * 0.20);
+                  player.hp = Math.min(player.maxHp, player.hp + potionHeal);
+                  player.invulnerabilityTimer = waterLevel * 2;
                   engine.texts.push(new DamageText(player.x, player.y - 45, '+30 HP 🧪', COLORS.green, true));
                 } else if (d.type === 'bread') {
                   sound.potion();
@@ -3876,6 +3925,7 @@ export default function App() {
         if (this.isDefeated) return;
         let finalDmg = amount;
         if (this.soaked) finalDmg *= 1.45;
+        finalDmg += (metaRef.current.forgeLevel || 0) * 2;
 
         this.hp -= finalDmg;
 
@@ -3914,10 +3964,11 @@ export default function App() {
           eng.pointsCoin += pt;
           if (this.category === 'water') eng.pointsSoul += pt;
           let ox = 0;
-          if (eng.pointsChest >= DROP_THRESHOLDS.chest) {
-            eng.pointsChest -= DROP_THRESHOLDS.chest;
+          const chestThreshold = Math.max(10, DROP_THRESHOLDS.chest - 10 * (metaRef.current.undeadLevel || 0));
+          if (eng.pointsChest >= chestThreshold) {
+            eng.pointsChest -= chestThreshold;
             eng.drops.push({ type: 'chest', x: this.x + (ox += 5), y: this.y, radius: 25, time: 0 });
-            eng.texts.push(new DamageText(this.x, this.y - 50, 'POKLAD (3500 BODŮ)!', COLORS.mustard, true));
+            eng.texts.push(new DamageText(this.x, this.y - 50, `POKLAD (${chestThreshold} BODŮ)!`, COLORS.mustard, true));
             sound.chest();
           }
           if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
@@ -3936,7 +3987,7 @@ export default function App() {
             const v = Math.floor(eng.pointsCoin / DROP_THRESHOLDS.coin);
             eng.pointsCoin %= DROP_THRESHOLDS.coin;
             if (v <= 15) {
-              eng.drops.push({ type: 'coin', value: v, x: this.x + (ox += 5), y: this.y, radius: v >= 5 ? 12 : 8, time: Math.random() * 5 });
+              eng.drops.push({ type: 'coin', value: v * (Math.random() < 0.06 * (metaRef.current.verminLevel || 0) ? 2 : 1), x: this.x + (ox += 5), y: this.y, radius: v >= 5 ? 12 : 8, time: Math.random() * 5 });
             } else {
               const maxCoins = Math.min(6, v);
               const baseVal = Math.floor(v / maxCoins);
@@ -3944,7 +3995,7 @@ export default function App() {
               for (let i = 0; i < maxCoins; i++) {
                 eng.drops.push({
                   type: 'coin',
-                  value: baseVal + (i === 0 ? rem : 0),
+                  value: (baseVal + (i === 0 ? rem : 0)) * (Math.random() < 0.06 * (metaRef.current.verminLevel || 0) ? 2 : 1),
                   x: this.x + (Math.random() * 60 - 30),
                   y: this.y + (Math.random() * 60 - 30),
                   radius: 12,
