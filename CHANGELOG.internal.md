@@ -1,18 +1,29 @@
 # Bubákov – Internal Changelog
 
-## 2026-10-02 — Production cleanup / standalone retirement
+## 2026-10-02 — Debug / production cleanup
+
+### Repository audit
+- Read the repository before making cleanup changes.
+- No pre-existing internal changelog file was present in the uploaded repository.
+- Audited the legacy standalone HTML/TXT artifacts before removing their production role.
+- Parsed the embedded `bubakov-source-tree` snapshot from the legacy HTML.
+- Compared all embedded `src/data/*` files against the current repository.
+- No current game-data module was found to contain standalone-only data that needed migration.
+- The legacy standalone snapshot is older than the current source in the files where it differs (`App.tsx`, `PlanModal.tsx`, `index.css`, `ladaRenderer.ts`, `types.ts`).
 
 ### Production workflow
-- Retired legacy standalone HTML/TXT generation from the npm build.
-- Retired the in-game standalone HTML/TXT download controls and helpers.
-- Removed the obsolete standalone download CSS.
-- Standard Vite `dist/` output is the canonical production artifact.
+- Retired standalone HTML/TXT generation from the npm build.
+- Removed the standalone bundling npm script.
+- Retired the in-game HTML/TXT download controls and download helpers.
+- Removed standalone-specific CSS.
+- Updated `DESIGN_PRINCIPLES.md` so the repository and normal Vite `dist/` build are the canonical source/output.
+- Kept historical source/documentation files intact where they may still be useful for project history.
 
 ### Gameplay correctness
-- Kept the canonical `DAWN_TIME_SECONDS = 360` constant.
-- Updated the duplicated dawn victory check in `PlanModal.tsx` to use the canonical constant, avoiding the previous timing mismatch.
+- Added canonical `DAWN_TIME_SECONDS = 360`.
+- Updated the dawn phase to use that constant.
+- Updated the victory trigger to use the same constant, eliminating the previous 300-second vs 360-second mismatch.
 
-### Data preservation
-- Preserved the complete current source tree and game assets from the supplied production-cleanup archive.
-- Preserved the 49-entry enemy registry, including the palette variants (Sazový rarášek, Krvavý kostlivec, Močálová ropucha, Obrněný hejtman lapků).
-- No game data was intentionally removed as part of the standalone cleanup.
+### Data-preservation rule
+- Obsolete standalone artifacts were treated as a migration/audit source before cleanup, not as disposable files.
+- No game data was intentionally removed as part of this change.
