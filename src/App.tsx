@@ -171,6 +171,31 @@ function renderHunterPortrait(
   }
 }
 
+/** Uniform spatial hash for combat broad-phase queries. */
+class EnemySpatialHash<T extends { x: number; y: number; isDefeated?: boolean }> {
+  private readonly cellSize = 180;
+  private readonly cells = new Map<string, T[]>();
+  private key(x: number, y: number) { return `${Math.floor(x / this.cellSize)},${Math.floor(y / this.cellSize)}`; }
+  rebuild(items: T[]) {
+    this.cells.clear();
+    for (const item of items) {
+      if (item.isDefeated) continue;
+      const key = this.key(item.x, item.y);
+      let bucket = this.cells.get(key);
+      if (!bucket) { bucket = []; this.cells.set(key, bucket); }
+      bucket.push(item);
+    }
+  }
+  query(x: number, y: number, radius: number): T[] {
+    const minX=Math.floor((x-radius)/this.cellSize), maxX=Math.floor((x+radius)/this.cellSize);
+    const minY=Math.floor((y-radius)/this.cellSize), maxY=Math.floor((y+radius)/this.cellSize);
+    const result:T[]=[];
+    for(let cy=minY;cy<=maxY;cy++) for(let cx=minX;cx<=maxX;cx++){const bucket=this.cells.get(`${cx},${cy}`);if(bucket) result.push(...bucket);}
+    return result;
+  }
+}
+function removeDeadInPlace<T extends { dead?: boolean }>(items:T[]){let write=0;for(let read=0;read<items.length;read++){const item=items[read];if(!item.dead)items[write++]=item;}items.length=write;}
+
 // Floating damage / status text
 class DamageText {
   x: number;
@@ -699,6 +724,8 @@ export default function App() {
 
   // Game engine refs (persistent through renders)
   const engineRef = useRef<EngineState>(createInitialEngineState());
+  const enemySpatialHashRef = useRef(new EnemySpatialHash<any>(180));
+  const livingEnemiesRef = useRef<any[]>([]);
 
   // Pause toggle handler
   const togglePause = useCallback(() => {
@@ -1042,7 +1069,7 @@ export default function App() {
         return Math.hypot(e.x - this.x, e.y - this.y);
       },
       getLivingEnemies() {
-        return engineRef.current.enemies.filter((e) => !e.isDefeated);
+        return livingEnemiesRef.current;
       },
       spawnProjectile(proj: any) {
         engineRef.current.projectiles.push({
@@ -1063,8 +1090,9 @@ export default function App() {
       spawnAreaImpact(impact: any) {
         const enemies = engineRef.current.enemies;
         for (const e of enemies) {
-          if (!e.isDefeated && Math.hypot(e.x - impact.x, e.y - impact.y) <= impact.radius + e.radius) {
-            e.takeDamage(impact.dmg, impact.type, (e.x - impact.x) * 4, (e.y - impact.y) * 4);
+          const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
+          if (!e.isDefeated && dx*dx+dy*dy <= reach*reach) {
+            e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
           }
         }
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
@@ -1075,8 +1103,9 @@ export default function App() {
         this.hromnickaPulseRadius = reach;
         const enemies = this.getLivingEnemies();
         for (const e of enemies) {
-          const dist = Math.hypot(e.x - this.x, e.y - this.y);
-          if (dist <= reach + e.radius) {
+          const dx=e.x-this.x, dy=e.y-this.y, distSq=dx*dx+dy*dy, reachWithRadius=reach+e.radius;
+          if (distSq <= reachWithRadius*reachWithRadius) {
+            const dist=Math.sqrt(distSq);
             const holyMult = getHolyDamageMultiplier(e);
             const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
             const actualDmg = baseDmg * (this.damageMultiplier || 1) * holyMult;
@@ -2468,7 +2497,7 @@ export default function App() {
                 sound.thunder();
                 engine.lightningFlash = 0.45;
 
-                const living = player.getLivingEnemies();
+                const living = livingEnemiesRef.current;
                 let strikeX = player.x + (Math.random() - 0.5) * 240;
                 let strikeY = player.y + (Math.random() - 0.5) * 240;
                 if (living.length > 0) {
@@ -2561,6 +2590,9 @@ export default function App() {
               }
             }
 
+            livingEnemiesRef.current.length=0;
+            for(const e of engine.enemies) if(!e.isDefeated) livingEnemiesRef.current.push(e);
+
             // Player movement
             let mx = 0;
             let my = 0;
@@ -2617,8 +2649,9 @@ export default function App() {
 
             // Night Watchman passive holy aura
             if (player.type === 'watchman') {
-              for (const e of engine.enemies) {
-                if (!e.isDefeated && Math.hypot(player.x - e.x, player.y - e.y) < 85 + e.radius) {
+              for (const e of livingEnemiesRef.current) {
+                const dx=player.x-e.x, dy=player.y-e.y, reach=85+e.radius;
+                if (dx*dx+dy*dy < reach*reach) {
                   const holyMult = getHolyDamageMultiplier(e);
                   e.takeDamage(16 * player.damageMultiplier * holyMult * dt, 'holy', 0, 0);
                 }
@@ -2630,10 +2663,10 @@ export default function App() {
             if (hromnickaWp) {
               if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
               const auraReach = 135 + hromnickaWp.level * 15;
-              for (const e of engine.enemies) {
-                if (e.isDefeated) continue;
-                const dist = Math.hypot(e.x - player.x, e.y - player.y);
-                if (dist < auraReach + e.radius && dist > 0.001) {
+              for (const e of livingEnemiesRef.current) {
+                const dx=e.x-player.x, dy=e.y-player.y, distSq=dx*dx+dy*dy, reach=auraReach+e.radius;
+                if (distSq < reach*reach && distSq > 0.000001) {
+                  const dist=Math.sqrt(distSq);
                   const dirX = (e.x - player.x) / dist;
                   const dirY = (e.y - player.y) / dist;
                   const holyPush = getHolyPushMultiplier(e);
@@ -2750,6 +2783,8 @@ export default function App() {
             }
           }
 
+          enemySpatialHashRef.current.rebuild(engine.enemies);
+
           // Update Projectiles
           for (const p of engine.projectiles) {
             p.x += p.vx * dt;
@@ -2847,9 +2882,11 @@ export default function App() {
               }
             }
 
-            for (const e of engine.enemies) {
+            const nearby=enemySpatialHashRef.current.query(p.x,p.y,p.radius+72);
+            for (const e of nearby) {
               if (e.isDefeated) continue;
-              if (!p.hitList.includes(e) && Math.hypot(p.x - e.x, p.y - e.y) < p.radius + e.radius) {
+              const dx=p.x-e.x, dy=p.y-e.y, reach=p.radius+e.radius;
+              if (!p.hitList.includes(e) && dx*dx+dy*dy < reach*reach) {
                 p.hitList.push(e);
                 const hungerResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
                 const resist = p.type === 'food' ? hungerResist : 0;
@@ -2882,9 +2919,9 @@ export default function App() {
                   // Bouncing poppy cake
                   if (p.bounces && p.bounces > 0) {
                     p.bounces--;
-                    const living = player.getLivingEnemies().filter((x: any) => x !== e);
-                    if (living.length > 0) {
-                      const next = living[0];
+                    let next:any=null;
+                    for(const candidate of livingEnemiesRef.current){if(candidate!==e&&!candidate.isDefeated){next=candidate;break;}}
+                    if(next){
                       const bAng = Math.atan2(next.y - p.y, next.x - p.x);
                       p.vx = Math.cos(bAng) * p.speed;
                       p.vy = Math.sin(bAng) * p.speed;
@@ -2907,9 +2944,11 @@ export default function App() {
             s.life -= dt;
             if (s.life <= 0) s.dead = true;
 
-            for (const e of engine.enemies) {
+            const nearby=enemySpatialHashRef.current.query(s.x,s.y,s.reach+72);
+            for (const e of nearby) {
               if (e.isDefeated) continue;
-              if (!s.hitList.includes(e) && Math.hypot(s.x - e.x, s.y - e.y) <= s.reach + e.radius) {
+              const dx=s.x-e.x, dy=s.y-e.y, reach=s.reach+e.radius;
+              if (!s.hitList.includes(e) && dx*dx+dy*dy <= reach*reach) {
                 const ang = Math.atan2(e.y - s.y, e.x - s.x);
                 let diff = Math.abs(ang - s.angle);
                 if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -3119,8 +3158,11 @@ export default function App() {
         }
 
         // Sort characters & enemies by Y for correct isometric depth
-        const drawables = player ? [player, ...engine.enemies] : [...engine.enemies];
-        drawables.sort((a, b) => a.y - b.y);
+        const viewLeft=cam.x-120, viewTop=cam.y-160, viewRight=cam.x+canvas.width+120, viewBottom=cam.y+canvas.height+160;
+        const drawables:any[]=[];
+        if(player) drawables.push(player);
+        for(const enemy of engine.enemies){if(enemy.x+enemy.radius>=viewLeft&&enemy.x-enemy.radius<=viewRight&&enemy.y+enemy.radius>=viewTop&&enemy.y-enemy.radius<=viewBottom)drawables.push(enemy);}
+        drawables.sort((a,b)=>a.y-b.y);
 
         for (const d of drawables) {
           if (d && typeof d.draw === 'function') {
@@ -3130,6 +3172,7 @@ export default function App() {
 
         // Draw Projectiles
         for (const p of engine.projectiles) {
+          if(p.x<viewLeft||p.x>viewRight||p.y<viewTop||p.y>viewBottom)continue;
           ctx.save();
           ctx.translate(p.x, p.y);
           ctx.rotate(p.angle);

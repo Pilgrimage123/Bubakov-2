@@ -1,5 +1,15 @@
 # Bubákov – Internal Changelog
 
+## 2026-10-02 — Performance optimization: spatial broad-phase and allocation reduction
+- Added an enemy spatial hash for projectile and melee collision queries.
+- Added a per-frame living-enemy snapshot to avoid repeated `filter()` allocations in targeting and aura systems.
+- Replaced hot-path `Math.hypot()` checks with squared-distance comparisons where possible.
+- Optimized bouncing projectile retargeting to reuse the living-enemy snapshot.
+- Added viewport culling for enemies and projectiles before rendering.
+- Added `removeDeadInPlace()` for allocation-free cleanup of frequently mutated entity arrays.
+
+# Bubákov – Internal Changelog
+
 ## 2026-10-02 — Stage selection separated into dedicated screen preceding hunter selection
 - Separated expedition (stage) selection and hunter selection into two distinct sequential screens:
   - Screen 1 (Výběr výpravy): Dedicated screen for choosing from all 6 progressive stages with rich lore, key enemies preview, seasonal themes, boss hints, and unlock challenges/milestones. Selected stage is confirmed via a prominent callout bar with "Pokračovat k výběru lovce ➔".
