@@ -8,6 +8,7 @@ class SoundManager {
   public musicEnabled: boolean = true;
   public musicVolume: number = 0.4;
   private musicUnlockedListenerAdded: boolean = false;
+  private lastCombatHitAt: number = -Infinity;
 
   constructor() {
     // Lazy audio context creation on user interaction
@@ -178,6 +179,13 @@ class SoundManager {
     this.playTone(120, 'sawtooth', 0.1, 0.25);
   }
 
+  public combatHit(minInterval = 0.08) {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this.lastCombatHitAt < minInterval * 1000) return;
+    this.lastCombatHitAt = now;
+    this.hit();
+  }
+
   public levelUp() {
     [440, 554, 659, 880].forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 'triangle', 0.2, 0.18), i * 80);
@@ -297,6 +305,55 @@ class SoundManager {
     [523, 659, 784, 988, 1175].forEach((freq, i) => {
       setTimeout(() => this.playTone(freq, 'sine', 1.3, 0.13, 0.0001), i * 200);
     });
+  }
+
+  public shepherdFlock() {
+    if (!this.enabled) return;
+    // Píšťalka pasáčka: veselá venkovská melodie na vrbovou píšťalku (G5, A5, C6, E6, D6)
+    const notes = [784, 880, 1046, 1318, 1175, 1318];
+    notes.forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.18, 0.22, 0.01), i * 90);
+    });
+    // Zvonky stáda (cinky-cink)
+    setTimeout(() => {
+      [1568, 2093, 1760, 2349, 1975, 2637].forEach((freq, i) => {
+        setTimeout(() => this.playTone(freq, 'sine', 0.22, 0.12, 0.001), i * 65);
+      });
+    }, 450);
+    // Dusot kopýtek stáda beránků
+    setTimeout(() => {
+      for (let i = 0; i < 9; i++) {
+        setTimeout(() => {
+          this.playTone(110 + (i % 3) * 20, 'sawtooth', 0.08, 0.2, 0.01);
+          this.playTone(65, 'triangle', 0.13, 0.26, 0.005);
+        }, i * 85);
+      }
+    }, 700);
+  }
+
+  public herbalIncense() {
+    if (!this.enabled) return;
+    // Klokotání kotlíku
+    [220, 280, 190, 240, 310, 260].forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 'sine', 0.14, 0.15, 0.01), i * 70);
+    });
+    // Očistný šum bylin a kadidla (stoupavé venkovské akordy)
+    setTimeout(() => {
+      [523, 659, 784, 1046, 1318, 1568].forEach((freq, i) => {
+        setTimeout(() => this.playTone(freq, 'sine', 0.8, 0.14 / (1 + i * 0.2), 0.0001), i * 110);
+      });
+    }, 400);
+    // Mystické zvonění devatera bylin
+    setTimeout(() => {
+      [880, 1175, 1397, 1760, 2093].forEach((freq, i) => {
+        setTimeout(() => this.playTone(freq, 'triangle', 0.45, 0.11, 0.001), i * 90);
+      });
+    }, 850);
+  }
+
+  public sheepBell() {
+    this.playTone(1568, 'sine', 0.18, 0.14, 0.001);
+    setTimeout(() => this.playTone(2093, 'sine', 0.22, 0.12, 0.001), 60);
   }
 
   public rooster() {

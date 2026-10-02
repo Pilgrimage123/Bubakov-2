@@ -1604,7 +1604,1322 @@ export const Lada = {
   },
 
   // -------------------------------------------------------------
-  // MONSTERS & BOSSES
+  // PASÁČEK & BÁBA KOŘENÁŘKA: DETAILNÍ LADOVSKÉ GRAFICKÉ & ČÁSTICOVÉ EFEKTY
+  // -------------------------------------------------------------
+
+  drawFourLeafClover(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, angle = 0, color = '#3A7D34') {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = Math.max(1, size * 0.15);
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < 4; i++) {
+      ctx.save();
+      ctx.rotate((i * Math.PI) / 2);
+      ctx.beginPath();
+      const ps = size * 0.7;
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(-ps * 0.9, -ps * 0.4, -ps * 0.8, -ps * 1.2, 0, -ps * 0.8);
+      ctx.bezierCurveTo(ps * 0.8, -ps * 1.2, ps * 0.9, -ps * 0.4, 0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(size * 0.3, size * 0.6, size * 0.4, size * 1.1);
+    ctx.strokeStyle = '#233E2B';
+    ctx.lineWidth = Math.max(1.2, size * 0.18);
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  drawChamomile(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, angle = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const petals = 10;
+    ctx.fillStyle = '#FFFDF8';
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = Math.max(1, size * 0.12);
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < petals; i++) {
+      const a = (i / petals) * Math.PI * 2;
+      ctx.save();
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(0, -size * 0.8, size * 0.22, size * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    this.setupPath(ctx, '#FBBF24', COLORS.ink, Math.max(1.5, size * 0.15));
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#D97706';
+    for (let i = 0; i < 5; i++) {
+      const a = i * 1.25;
+      const r = size * 0.22;
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * r, Math.sin(a) * r, size * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+
+  drawRosehip(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, angle = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    this.setupPath(ctx, '#DC2626', COLORS.ink, Math.max(1.5, size * 0.16));
+    ctx.beginPath();
+    ctx.ellipse(0, 0, size * 0.55, size * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.beginPath();
+    ctx.ellipse(-size * 0.18, -size * 0.25, size * 0.14, size * 0.28, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#166534';
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 1.2;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.75);
+      ctx.lineTo(i * size * 0.22, -size * 1.25);
+      ctx.lineTo(i * size * 0.1, -size * 0.75);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  drawDustPuff(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, alpha = 0.7) {
+    if (radius <= 2 || alpha <= 0.02) return;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
+    ctx.fillStyle = '#F3E9D2';
+    ctx.strokeStyle = 'rgba(40, 30, 20, 0.55)';
+    ctx.lineWidth = Math.max(1.5, radius * 0.12);
+    ctx.beginPath();
+    ctx.arc(x, y, radius * 0.7, 0, Math.PI * 2);
+    ctx.arc(x - radius * 0.4, y + radius * 0.1, radius * 0.5, 0, Math.PI * 2);
+    ctx.arc(x + radius * 0.4, y + radius * 0.1, radius * 0.5, 0, Math.PI * 2);
+    ctx.arc(x, y - radius * 0.35, radius * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  drawLadaSheep(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    time: number,
+    legSwing: number,
+    scale = 1,
+    isRam = false,
+    hasBell = true,
+    colorVariant = 0,
+    facing = 1
+  ) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale * facing, scale);
+
+    const woolColor = colorVariant === 1 ? '#F4EDE0' : colorVariant === 2 ? '#EBE4D5' : '#FFFDF7';
+    const darkSkin = colorVariant === 2 ? '#3E342B' : '#231E1B';
+
+    // Tail
+    const tailWag = Math.sin(time * 24 + legSwing) * 0.4;
+    ctx.save();
+    ctx.translate(-22, 2);
+    ctx.rotate(tailWag);
+    this.setupPath(ctx, woolColor, COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(-6, 2, 7, 5, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Galloping legs
+    const l1 = Math.sin(time * 24 + legSwing) * 12;
+    const l2 = Math.sin(time * 24 + legSwing + 1.6) * 12;
+    const l3 = Math.sin(time * 24 + legSwing + 3.1) * 12;
+    const l4 = Math.sin(time * 24 + legSwing + 4.7) * 12;
+
+    this.drawLimb(ctx, -14, 10, -14 - l1, 24, darkSkin, 4.5);
+    this.drawLimb(ctx, -6, 10, -6 + l2, 24, darkSkin, 4.5);
+    this.drawLimb(ctx, 8, 10, 8 - l3, 24, darkSkin, 4.5);
+    this.drawLimb(ctx, 16, 10, 16 + l4, 24, darkSkin, 4.5);
+
+    // Cloven black hooves
+    ctx.fillStyle = COLORS.ink;
+    [[-14 - l1, 24], [-6 + l2, 24], [8 - l3, 24], [16 + l4, 24]].forEach(([hx, hy]) => {
+      ctx.fillRect(hx - 2.5, hy - 1, 5, 3.5);
+    });
+
+    // Fluffy cloud-like sheep body
+    this.setupPath(ctx, woolColor, COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.arc(-13, 0, 14, 0, Math.PI * 2);
+    ctx.arc(0, -6, 16, 0, Math.PI * 2);
+    ctx.arc(14, -2, 14, 0, Math.PI * 2);
+    ctx.arc(10, 8, 13, 0, Math.PI * 2);
+    ctx.arc(-8, 9, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Wool curl details
+    ctx.strokeStyle = 'rgba(120, 110, 95, 0.45)';
+    ctx.lineWidth = 2;
+    [[-7, -2], [5, -5], [-3, 6], [10, 4]].forEach(([cx, cy]) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0.2, Math.PI * 1.2);
+      ctx.stroke();
+    });
+
+    // Red collar with swinging brass bell
+    if (hasBell) {
+      ctx.strokeStyle = '#D1342B';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(15, 2, 7, 0, Math.PI);
+      ctx.stroke();
+
+      const bellAngle = Math.sin(time * 20 + legSwing) * 0.45;
+      ctx.save();
+      ctx.translate(15, 8);
+      ctx.rotate(bellAngle);
+      this.setupPath(ctx, '#FDE047', COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.moveTo(-4, 0);
+      ctx.lineTo(4, 0);
+      ctx.lineTo(5, 7);
+      ctx.lineTo(-5, 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = COLORS.ink;
+      ctx.beginPath();
+      ctx.arc(0, 8, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Sheep head
+    this.setupPath(ctx, darkSkin, COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.ellipse(22, -6, 9, 12, 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Snout
+    this.setupPath(ctx, '#3E342B', COLORS.ink, 1.5);
+    ctx.beginPath();
+    ctx.ellipse(27, -4, 4, 5, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye with glint
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(22, -9, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(23, -9, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Floppy bouncing ear
+    const earBounce = Math.sin(time * 24 + legSwing) * 0.35;
+    ctx.save();
+    ctx.translate(17, -12);
+    ctx.rotate(earBounce);
+    this.setupPath(ctx, darkSkin, COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(-6, 2, 8, 3.5, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Horns (if Ram)
+    if (isRam) {
+      this.setupPath(ctx, '#B8893A', COLORS.ink, 3.2);
+      ctx.beginPath();
+      ctx.arc(14, -14, 12, 0.5, Math.PI * 1.55, true);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(6, -20, 6, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  },
+
+  drawLadaDog(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, barking: boolean, scale = 1, facing = 1) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale * facing, scale);
+
+    const wag = Math.sin(time * 30) * 0.5;
+    const bounce = Math.abs(Math.sin(time * 16)) * 4;
+
+    ctx.translate(0, -bounce);
+
+    // Curled perky tail (ocásek do kroužku)
+    ctx.save();
+    ctx.translate(-18, -4);
+    ctx.rotate(wag);
+    this.setupPath(ctx, '#E6BA7E', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.arc(-4, -10, 8, 0.4, Math.PI * 1.7);
+    ctx.stroke();
+    ctx.restore();
+
+    // Hind legs
+    this.drawLimb(ctx, -12, 10, -14, 24, '#E6BA7E', 5);
+    this.drawLimb(ctx, -4, 10, -6, 24, '#8C5A35', 5);
+
+    // Body (cream with brown patch)
+    this.setupPath(ctx, '#F3E5C8', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 18, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Brown patch on back
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.ellipse(-2, -2, 9, 6, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Front paws leaping up
+    this.drawLimb(ctx, 10, 6, 18, barking ? -2 : 8, '#F3E5C8', 5);
+    this.drawLimb(ctx, 6, 8, 14, barking ? 2 : 12, '#8C5A35', 5);
+
+    // Red collar
+    ctx.strokeStyle = '#D1342B';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(14, -4, 5, 0, Math.PI);
+    ctx.stroke();
+
+    // Head
+    this.setupPath(ctx, '#F3E5C8', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.arc(18, -12, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Brown eye patch
+    ctx.fillStyle = '#8C5A35';
+    ctx.beginPath();
+    ctx.arc(20, -14, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye with sparkle
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(20, -14, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(21, -14, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Snout & mouth
+    this.setupPath(ctx, '#F3E5C8', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.ellipse(25, -9, 5, 4, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.ink;
+    ctx.beginPath();
+    ctx.arc(28, -10, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Panting pink tongue if barking
+    if (barking) {
+      ctx.fillStyle = '#F472B6';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(27, -5, 3, 5, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Floppy ear
+    const earFlap = Math.sin(time * 20) * 0.3;
+    ctx.save();
+    ctx.translate(13, -18);
+    ctx.rotate(earFlap);
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(-2, 6, 5, 9, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.restore();
+  },
+
+  // =============================================================
+  // PASÁČEK: DUSOT STÁDA – PŘÍBĚHOVÁ SCÉNA A SPOLEČNÉ EFEKTY
+  // =============================================================
+  drawShepherdScene(ctx: CanvasRenderingContext2D, w: number, h: number, t: number, duration: number, applyAt: number) {
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+    const ease = (v: number) => {
+      const c = clamp01(v);
+      return c * c * (3 - 2 * c);
+    };
+    const vis = Math.min(ease(t / 0.5), ease((duration - t) / 0.55));
+    const t2 = Math.max(0, t - applyAt);
+
+    ctx.save();
+
+    // 1) Teplé venkovské ztlumení okolí a sluneční vinětace
+    ctx.fillStyle = `rgba(45, 55, 25, ${0.45 * vis})`;
+    ctx.fillRect(0, 0, w, h);
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.75);
+    vg.addColorStop(0, `rgba(255, 235, 170, ${0.18 * vis})`);
+    vg.addColorStop(1, `rgba(25, 35, 15, ${0.65 * vis})`);
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2) Filmové pruhy nahoře a dole s pasteveckým dekorem
+    const bar = Math.round(h * 0.14 * vis);
+    ctx.fillStyle = '#181C14';
+    ctx.fillRect(0, 0, w, bar);
+    ctx.fillRect(0, h - bar, w, bar);
+    ctx.fillStyle = COLORS.mustard;
+    ctx.fillRect(0, bar - 3, w, 3);
+    ctx.fillRect(0, h - bar, w, 3);
+
+    // 3) Zvoneček a pastevecká trubka nahoře
+    if (vis > 0.05) {
+      const ks = Math.max(0.6, Math.min(1.1, h / 800));
+      ctx.save();
+      ctx.globalAlpha = vis;
+      ctx.translate(w / 2, bar + 32 * ks);
+      ctx.scale(ks, ks);
+
+      const bellSway = Math.sin(t * 14) * 0.25;
+      ctx.save();
+      ctx.rotate(bellSway);
+      this.setupPath(ctx, '#FDE047', COLORS.ink, 3);
+      ctx.beginPath();
+      ctx.moveTo(-16, 12);
+      ctx.quadraticCurveTo(-18, -10, -6, -18);
+      ctx.lineTo(6, -18);
+      ctx.quadraticCurveTo(18, -10, 16, 12);
+      ctx.quadraticCurveTo(0, 16, -16, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = COLORS.ink;
+      ctx.beginPath();
+      ctx.arc(0, 16, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.font = '900 16px Eczar, serif';
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('PASTÝŘSKÁ PÍŠŤALKA A DUSOT STÁDA', 0, 42);
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillText('PASTÝŘSKÁ PÍŠŤALKA A DUSOT STÁDA', 0, 42);
+      ctx.restore();
+    }
+
+    // 4) Malovaný Ladovský obraz uprostřed
+    const s = Math.max(0.55, Math.min(1.5, (w - 30) / 800, (h - 2 * bar - 110) / 360));
+    const pw = 380;
+    const ph = 165;
+    ctx.save();
+    ctx.translate(w / 2, h / 2 + 30 * s);
+    ctx.scale(s, s);
+    ctx.globalAlpha = vis;
+
+    const panelPath = () => {
+      const r = 16;
+      ctx.beginPath();
+      ctx.moveTo(-pw + r, -ph);
+      ctx.lineTo(pw - r, -ph);
+      ctx.quadraticCurveTo(pw, -ph, pw, -ph + r);
+      ctx.lineTo(pw, ph - r);
+      ctx.quadraticCurveTo(pw, ph, pw - r, ph);
+      ctx.lineTo(-pw + r, ph);
+      ctx.quadraticCurveTo(-pw, ph, -pw, ph - r);
+      ctx.lineTo(-pw, -ph + r);
+      ctx.quadraticCurveTo(-pw, -ph, -pw + r, -ph);
+      ctx.closePath();
+    };
+
+    ctx.save();
+    panelPath();
+    ctx.clip();
+
+    // Letní obloha a slunce
+    const sky = ctx.createLinearGradient(0, -ph, 0, ph);
+    sky.addColorStop(0, '#BEE3F8');
+    sky.addColorStop(0.6, '#EBF8FF');
+    sky.addColorStop(1, '#D9E8B5');
+    ctx.fillStyle = sky;
+    ctx.fillRect(-pw, -ph, pw * 2, ph * 2);
+
+    // Zářivé slunce na obloze
+    this.setupPath(ctx, '#FDE047', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.arc(280, -90, 32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Nadýchané Ladovské mráčky
+    const drawCloud = (cx: number, cy: number, cscale: number) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(cscale, cscale);
+      this.setupPath(ctx, '#FFFFFF', COLORS.ink, 2.5);
+      ctx.beginPath();
+      ctx.arc(-22, 0, 16, 0, Math.PI * 2);
+      ctx.arc(0, -8, 20, 0, Math.PI * 2);
+      ctx.arc(24, 0, 17, 0, Math.PI * 2);
+      ctx.arc(10, 10, 15, 0, Math.PI * 2);
+      ctx.arc(-12, 10, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    };
+    drawCloud(-220 + Math.sin(t * 0.5) * 8, -95, 0.9);
+    drawCloud(60 + Math.cos(t * 0.5) * 8, -105, 0.75);
+
+    // Vzdálené kopečky a kupky sena
+    this.setupPath(ctx, '#8FB56A', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.moveTo(-pw, 45);
+    ctx.quadraticCurveTo(-220, -15, -70, 40);
+    ctx.quadraticCurveTo(80, -30, 240, 35);
+    ctx.quadraticCurveTo(320, 15, pw, 45);
+    ctx.lineTo(pw, ph);
+    ctx.lineTo(-pw, ph);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Kupka sena na horizontu
+    this.setupPath(ctx, '#D9A036', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.ellipse(-140, 25, 26, 32, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.stroke();
+    // Kůl v kupce sena
+    ctx.strokeStyle = COLORS.woodDark;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-140, -12);
+    ctx.lineTo(-140, 25);
+    ctx.stroke();
+
+    // Dřevěná ohrada (plot)
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 2.5);
+    [-280, -180, -80, 40, 160, 260].forEach((fx) => {
+      ctx.fillRect(fx, 40, 7, 35);
+      ctx.strokeRect(fx, 40, 7, 35);
+    });
+    ctx.beginPath();
+    ctx.moveTo(-pw, 52);
+    ctx.lineTo(pw, 52);
+    ctx.moveTo(-pw, 66);
+    ctx.lineTo(pw, 66);
+    ctx.strokeStyle = '#5E3A21';
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+
+    // Zelená pastvina v popředí
+    this.setupPath(ctx, '#4A633B', COLORS.ink, 4);
+    ctx.fillRect(-pw, 85, pw * 2, ph - 85);
+    ctx.strokeRect(-pw, 85, pw * 2, ph - 85);
+
+    // Sedmikrásky a jetel na louce
+    for (let i = 0; i < 9; i++) {
+      const fx = -320 + i * 78 + ((i * 19) % 25);
+      const fy = 100 + (i % 3) * 18;
+      if (i % 2 === 0) {
+        this.drawFourLeafClover(ctx, fx, fy, 8, i * 0.7);
+      } else {
+        this.drawChamomile(ctx, fx, fy, 7, i * 0.5);
+      }
+    }
+
+    // Postavy na louce: Pasáček a pejsek vlevo na návrší
+    const pasx = -240;
+    const pasy = 35;
+    this.drawShepherd(ctx, pasx, pasy, t, 1, 0, false, 2.4);
+
+    // Pejsek Voříšek vedle pasáčka (skáče a štěká)
+    this.drawLadaDog(ctx, pasx + 72, pasy + 24, t * 1.5, true, 1.8, 1);
+
+    // Z píšťalky Pasáčka stoupají noty a tóny
+    for (let i = 0; i < 4; i++) {
+      const ntime = (t * 2.5 + i * 0.8) % 3;
+      const nx = pasx + 24 + ntime * 30 + Math.sin(ntime * 3) * 8;
+      const ny = pasy - 50 - ntime * 28;
+      const nAlpha = Math.max(0, 1 - ntime / 2.8);
+      ctx.save();
+      ctx.globalAlpha = vis * nAlpha;
+      ctx.fillStyle = '#FEF08A';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 2;
+      ctx.font = '900 18px Eczar, serif';
+      ctx.fillText('♫', nx, ny);
+      ctx.strokeText('♫', nx, ny);
+      ctx.restore();
+    }
+
+    // Stádo beranů a oveček: běží ze středu doprava
+    const flockMove = ease((t - 0.4) / 1.7);
+    const sheepConfigs = [
+      { bx: -80, by: 42, isRam: true, hasBell: true, s: 2.2, v: 0 },
+      { bx: -10, by: 82, isRam: false, hasBell: true, s: 2.0, v: 1 },
+      { bx: 60, by: 32, isRam: false, hasBell: false, s: 1.8, v: 0 },
+      { bx: 130, by: 74, isRam: true, hasBell: true, s: 2.4, v: 2 },
+      { bx: 200, by: 48, isRam: false, hasBell: true, s: 1.9, v: 1 },
+    ];
+
+    sheepConfigs.forEach((sc, idx) => {
+      const sx = sc.bx + flockMove * 120 + Math.sin(t * 6 + idx) * 10;
+      const sy = sc.by + Math.abs(Math.sin(t * 18 + idx * 1.5)) * 8;
+      this.drawLadaSheep(ctx, sx, sy, t * 1.3, idx * 1.2, sc.s, sc.isRam, sc.hasBell, sc.v, 1);
+      // Prach pod kopýtky
+      this.drawDustPuff(ctx, sx - 25, sy + 30, 9 + (idx % 3) * 3, 0.65);
+    });
+
+    // Bubliny s replikami
+    const bubble = (text: string, cx: number, cy: number, alpha: number, tailX: number, tailY: number) => {
+      if (alpha <= 0.01) return;
+      ctx.save();
+      ctx.globalAlpha = vis * alpha;
+      ctx.font = '900 20px Eczar, serif';
+      const bw = ctx.measureText(text).width + 30;
+      const bh = 42;
+      ctx.fillStyle = '#FFFDF8';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 4;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.rect(cx - bw / 2, cy - bh / 2, bw, bh);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tailX - 10, cy + bh / 2 - 1);
+      ctx.lineTo(tailX, tailY);
+      ctx.lineTo(tailX + 12, cy + bh / 2 - 1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFDF8';
+      ctx.fillRect(tailX - 8, cy + bh / 2 - 3, 18, 5);
+      ctx.fillStyle = COLORS.ink;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, cx, cy + 1);
+      ctx.restore();
+    };
+
+    bubble('Húúú-tůůů! Běžte, beránci, zažeňte ty mátohy!', pasx + 70, -110, ease((t - 0.7) / 0.3) * ease((3.2 - t) / 0.3), pasx + 10, -70);
+    bubble('BÉÉÉ! DUSOT STÁDA!', 130, -75, ease((t - 1.4) / 0.3) * ease((3.3 - t) / 0.3), 110, 0);
+
+    // 5) Vrchol schopnosti: exploze pastevecké síly, létající čtyřlístky, zvonečky a obláčky vlny
+    if (t2 > 0) {
+      const ax = 80;
+      const ay = 40;
+      // Zlaté pastevecké vlny
+      for (let i = 0; i < 3; i++) {
+        const rr = (t2 - i * 0.22) * 580;
+        if (rr <= 1) continue;
+        const al = Math.max(0, 1 - rr / 950) * 0.65;
+        const g = ctx.createRadialGradient(ax, ay, rr * 0.5, ax, ay, rr);
+        g.addColorStop(0, 'rgba(254, 240, 138, 0)');
+        g.addColorStop(0.85, `rgba(234, 179, 8, ${al})`);
+        g.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(ax, ay, rr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Vznášející se čtyřlístky, kvítky a zvonečky
+      for (let i = 0; i < 30; i++) {
+        const a = i * 2.399 + 0.4;
+        const sp = 110 + (i % 7) * 45;
+        const px = ax + Math.cos(a) * sp * t2 * 1.5;
+        const py = ay + Math.sin(a) * sp * t2 * 1.1 - t2 * 35;
+        ctx.globalAlpha = vis * Math.max(0, 1 - t2 / 1.8);
+        if (i % 3 === 0) {
+          this.drawFourLeafClover(ctx, px, py, 9 + (i % 4), a + t2 * 3);
+        } else if (i % 3 === 1) {
+          this.drawChamomile(ctx, px, py, 8 + (i % 3), a - t2 * 2);
+        } else {
+          // Zlatý pastevecký zvoneček
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(Math.sin(t2 * 16 + i) * 0.5);
+          this.setupPath(ctx, '#FDE047', COLORS.ink, 1.8);
+          ctx.beginPath();
+          ctx.moveTo(-5, 4);
+          ctx.lineTo(5, 4);
+          ctx.lineTo(4, -5);
+          ctx.lineTo(-4, -5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      ctx.globalAlpha = vis;
+    }
+
+    ctx.restore(); // Konec ořezu
+
+    // Rám obrazu
+    ctx.globalAlpha = vis;
+    panelPath();
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    panelPath();
+    ctx.strokeStyle = COLORS.mustard;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Titulní nápis dole
+    if (vis > 0.05) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, vis * ease((t - 0.4) / 0.4));
+      ctx.font = `900 ${Math.round(Math.max(20, Math.min(32, h / 24)))}px Eczar, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('Dusot pastýřského stáda', w / 2, h - bar / 2);
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillText('Dusot pastýřského stáda', w / 2, h - bar / 2);
+      ctx.restore();
+    }
+
+    // Celoplošná pastevecká vlna
+    if (t2 > 0) {
+      const Rr = t2 * Math.hypot(w, h) * 0.85;
+      const g = ctx.createRadialGradient(w / 2, h / 2, Math.max(0, Rr - 180), w / 2, h / 2, Rr + 40);
+      g.addColorStop(0, 'rgba(254, 240, 138, 0)');
+      g.addColorStop(0.7, `rgba(234, 179, 8, ${0.32 * Math.max(0, 1 - t2 / 1.8)})`);
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    ctx.restore();
+  },
+
+  // In-world aktivní běžící stádo a částicové efekty Pasáčka
+  drawShepherdStampedeFx(ctx: CanvasRenderingContext2D, stampede: any, dt: number, playerX: number, playerY: number) {
+    if (!stampede) return;
+    const t = stampede.t;
+    const dur = stampede.dur;
+    const fade = Math.max(0, 1 - t / dur);
+    const dir = stampede.dirX >= 0 ? 1 : -1;
+
+    ctx.save();
+
+    // 1) Dunící pastevecké rázové vlny po zemi
+    const waveR = Math.min(580, t * 450);
+    ctx.strokeStyle = `rgba(234, 179, 8, ${0.45 * fade})`;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.ellipse(stampede.x, stampede.y, waveR, waveR * 0.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // 2) Kreslení jednotlivých běžících beranů a oveček
+    if (stampede.sheep && stampede.sheep.length > 0) {
+      stampede.sheep.forEach((sh: any, i: number) => {
+        const prog = (t * sh.speed + i * 45);
+        const sx = stampede.x + dir * (prog - 280 + sh.offsetX * 0.4);
+        const sy = stampede.y + sh.offsetY + Math.sin(t * 12 + i) * 20;
+
+        // Kopýtka dupou v prachu
+        this.drawDustPuff(ctx, sx - dir * 18, sy + 18, 12 * sh.scale, 0.55 * fade);
+
+        // Kresba běžící ovce v Ladovském stylu
+        this.drawLadaSheep(ctx, sx, sy, t + sh.bobPhase, i, sh.scale, sh.isRam, sh.hasBell, sh.colorVariant, dir);
+
+        // Létající čtyřlístek či sedmikráska odražená od kopýtek
+        if (i % 4 === 0) {
+          const ltx = sx - dir * 30 + Math.sin(t * 8 + i) * 15;
+          const lty = sy - 15 - (t * 40) % 60;
+          this.drawFourLeafClover(ctx, ltx, lty, 9 * sh.scale, t * 5 + i);
+        }
+      });
+    }
+
+    // 3) Houpající se pastevecký zvon nad hlavou hráče
+    if (t < 2.0) {
+      const bellFade = Math.max(0, 1 - t / 2.0);
+      const sw = Math.sin(t * 22) * 0.4 * bellFade;
+      ctx.save();
+      ctx.translate(playerX, playerY - 110);
+      ctx.rotate(sw);
+      ctx.globalAlpha = bellFade;
+      this.setupPath(ctx, '#FDE047', COLORS.ink, 4);
+      ctx.beginPath();
+      ctx.moveTo(-24, 20);
+      ctx.quadraticCurveTo(-26, -14, -8, -24);
+      ctx.lineTo(8, -24);
+      ctx.quadraticCurveTo(26, -14, 24, 20);
+      ctx.quadraticCurveTo(0, 26, -24, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = COLORS.ink;
+      ctx.beginPath();
+      ctx.arc(0, 26, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 4) Zvukový nápis CINKY-CINK!
+    if (t < 0.9) {
+      const sc = 1 + (0.9 - t) * 0.5;
+      ctx.save();
+      ctx.translate(playerX, playerY - 170);
+      ctx.scale(sc, sc);
+      ctx.globalAlpha = Math.min(1, (0.9 - t) / 0.4);
+      ctx.font = '900 38px Eczar, serif';
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('CINKY-CINK! DUP!', 0, 0);
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillText('CINKY-CINK! DUP!', 0, 0);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  },
+
+  // =============================================================
+  // BÁBA KOŘENÁŘKA: OČISTNÉ KADIDLO – PŘÍBĚHOVÁ SCÉNA A SPOLEČNÉ EFEKTY
+  // =============================================================
+  drawKorenarkaScene(ctx: CanvasRenderingContext2D, w: number, h: number, t: number, duration: number, applyAt: number) {
+    const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+    const ease = (v: number) => {
+      const c = clamp01(v);
+      return c * c * (3 - 2 * c);
+    };
+    const vis = Math.min(ease(t / 0.5), ease((duration - t) / 0.55));
+    const t2 = Math.max(0, t - applyAt);
+
+    ctx.save();
+
+    // 1) Lesní mechové ztlumení okolí a smaragdová vinětace
+    ctx.fillStyle = `rgba(18, 42, 22, ${0.48 * vis})`;
+    ctx.fillRect(0, 0, w, h);
+    const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.18, w / 2, h / 2, Math.max(w, h) * 0.72);
+    vg.addColorStop(0, `rgba(167, 243, 208, ${0.2 * vis})`);
+    vg.addColorStop(1, `rgba(10, 28, 14, ${0.68 * vis})`);
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2) Filmové pruhy nahoře a dole s bylinkovým dekorem
+    const bar = Math.round(h * 0.14 * vis);
+    ctx.fillStyle = '#0F1F12';
+    ctx.fillRect(0, 0, w, bar);
+    ctx.fillRect(0, h - bar, w, bar);
+    ctx.fillStyle = '#4ADE80';
+    ctx.fillRect(0, bar - 3, w, 3);
+    ctx.fillRect(0, h - bar, w, 3);
+
+    // 3) Hmoždíř a kadidelnice nahoře
+    if (vis > 0.05) {
+      const ks = Math.max(0.6, Math.min(1.1, h / 800));
+      ctx.save();
+      ctx.globalAlpha = vis;
+      ctx.translate(w / 2, bar + 32 * ks);
+      ctx.scale(ks, ks);
+
+      // Malý kotlík se stoupajícím zeleným dýmem
+      this.setupPath(ctx, '#27272A', COLORS.ink, 3);
+      ctx.beginPath();
+      ctx.arc(0, 4, 18, 0, Math.PI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Dým
+      ctx.strokeStyle = 'rgba(74, 222, 128, 0.75)';
+      ctx.lineWidth = 3;
+      for (let i = -1; i <= 1; i++) {
+        const sy = -12 - ((t * 25 + i * 8) % 20);
+        ctx.beginPath();
+        ctx.moveTo(i * 7, -2);
+        ctx.quadraticCurveTo(i * 10 + Math.sin(t * 3 + i) * 6, sy, i * 6, sy - 10);
+        ctx.stroke();
+      }
+
+      ctx.font = '900 16px Eczar, serif';
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('OČISTNÉ KADIDLO Z DEVATERA BYLIN', 0, 42);
+      ctx.fillStyle = '#86EFAC';
+      ctx.fillText('OČISTNÉ KADIDLO Z DEVATERA BYLIN', 0, 42);
+      ctx.restore();
+    }
+
+    // 4) Malovaný Ladovský obraz uprostřed
+    const s = Math.max(0.55, Math.min(1.5, (w - 30) / 800, (h - 2 * bar - 110) / 360));
+    const pw = 380;
+    const ph = 165;
+    ctx.save();
+    ctx.translate(w / 2, h / 2 + 30 * s);
+    ctx.scale(s, s);
+    ctx.globalAlpha = vis;
+
+    const panelPath = () => {
+      const r = 16;
+      ctx.beginPath();
+      ctx.moveTo(-pw + r, -ph);
+      ctx.lineTo(pw - r, -ph);
+      ctx.quadraticCurveTo(pw, -ph, pw, -ph + r);
+      ctx.lineTo(pw, ph - r);
+      ctx.quadraticCurveTo(pw, ph, pw - r, ph);
+      ctx.lineTo(-pw + r, ph);
+      ctx.quadraticCurveTo(-pw, ph, -pw, ph - r);
+      ctx.lineTo(-pw, -ph + r);
+      ctx.quadraticCurveTo(-pw, -ph, -pw + r, -ph);
+      ctx.closePath();
+    };
+
+    ctx.save();
+    panelPath();
+    ctx.clip();
+
+    // Podvečerní hvozd za chaloupkou
+    const sky = ctx.createLinearGradient(0, -ph, 0, ph);
+    sky.addColorStop(0, '#D1FAE5');
+    sky.addColorStop(0.55, '#E6F4EA');
+    sky.addColorStop(1, '#A7D7A0');
+    ctx.fillStyle = sky;
+    ctx.fillRect(-pw, -ph, pw * 2, ph * 2);
+
+    // Staleté smrky v pozadí
+    const drawSpruce = (tx: number, ty: number, tscale: number) => {
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.scale(tscale, tscale);
+      this.setupPath(ctx, '#14532D', COLORS.ink, 3);
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, -90 + i * 22);
+        ctx.lineTo(-35 - i * 8, -50 + i * 26);
+        ctx.lineTo(35 + i * 8, -50 + i * 26);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    drawSpruce(220, 20, 0.9);
+    drawSpruce(290, 10, 0.8);
+    drawSpruce(340, 25, 0.95);
+
+    // Chaloupka báby kořenářky vlevo
+    this.setupPath(ctx, '#EAE0D0', COLORS.ink, 4);
+    ctx.fillRect(-350, 0, 150, 95);
+    ctx.strokeRect(-350, 0, 150, 95);
+
+    // Šindelová střecha
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 4);
+    ctx.beginPath();
+    ctx.moveTo(-365, 5);
+    ctx.lineTo(-275, -65);
+    ctx.lineTo(-185, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Dřevěný trám sušáku bylin
+    this.setupPath(ctx, '#5E3A21', COLORS.ink, 3);
+    ctx.fillRect(-340, 20, 130, 8);
+    ctx.strokeRect(-340, 20, 130, 8);
+
+    // Zavěšené svazky sušících se bylin (třezalka, heřmánek, máta, šípky)
+    [-320, -290, -260, -230].forEach((bx, idx) => {
+      ctx.strokeStyle = '#3D2210';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bx, 28);
+      ctx.lineTo(bx, 36);
+      ctx.stroke();
+      if (idx === 0) {
+        this.drawChamomile(ctx, bx, 44, 10, 0.4);
+      } else if (idx === 1) {
+        this.drawFourLeafClover(ctx, bx, 44, 11, 0.2);
+      } else if (idx === 2) {
+        this.drawRosehip(ctx, bx, 46, 9, 0.1);
+      } else {
+        this.drawChamomile(ctx, bx, 44, 9, -0.3);
+      }
+    });
+
+    // Mechový palouček
+    this.setupPath(ctx, '#2E5A27', COLORS.ink, 4);
+    ctx.fillRect(-pw, 85, pw * 2, ph - 85);
+    ctx.strokeRect(-pw, 85, pw * 2, ph - 85);
+
+    // Černý kocour na pařezu vpravo
+    ctx.save();
+    ctx.translate(160, 70);
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 3);
+    ctx.fillRect(-18, 0, 36, 30);
+    ctx.strokeRect(-18, 0, 36, 30);
+    // Kocour
+    this.setupPath(ctx, '#18181B', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(0, -8, 14, 10, 0, 0, Math.PI * 2);
+    ctx.arc(8, -18, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Ouška
+    ctx.beginPath();
+    ctx.moveTo(4, -24);
+    ctx.lineTo(7, -32);
+    ctx.lineTo(10, -24);
+    ctx.moveTo(11, -24);
+    ctx.lineTo(14, -31);
+    ctx.lineTo(16, -23);
+    ctx.fill();
+    ctx.stroke();
+    // Žlutá očka
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(9, -19, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Kamenné ohniště s velkým litinovým kotlíkem uprostřed
+    const kx = -30;
+    const ky = 70;
+    // Oheň pod kotlíkem
+    this.setupPath(ctx, '#F97316', COLORS.ink, 2);
+    ctx.beginPath();
+    ctx.arc(kx - 10, ky + 14, 8 + Math.sin(t * 12) * 2, 0, Math.PI * 2);
+    ctx.arc(kx + 10, ky + 14, 9 + Math.cos(t * 14) * 2, 0, Math.PI * 2);
+    ctx.arc(kx, ky + 10, 11 + Math.sin(t * 16) * 3, 0, Math.PI * 2);
+    ctx.fill();
+    // Kotlík
+    this.setupPath(ctx, '#18181B', COLORS.ink, 3.5);
+    ctx.beginPath();
+    ctx.arc(kx, ky, 24, 0, Math.PI);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Okraj kotlíku
+    this.setupPath(ctx, '#27272A', COLORS.ink, 2.5);
+    ctx.beginPath();
+    ctx.ellipse(kx, ky, 26, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Zelený bublající lektvar v kotlíku
+    ctx.fillStyle = '#4ADE80';
+    ctx.beginPath();
+    ctx.ellipse(kx, ky, 22, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bába Kořenářka u kotlíku s vařečkou a vonným kadidlem
+    const kox = -120;
+    const koy = 35;
+    this.drawKorenarka(ctx, kox, koy, t, 1, 0, false, 2.4);
+
+    // Doutnající bylinkové kadidlo v ruce
+    ctx.save();
+    ctx.translate(kox + 35, koy + 8);
+    this.setupPath(ctx, '#8C5A35', COLORS.ink, 2);
+    ctx.fillRect(-4, -14, 8, 22);
+    ctx.strokeRect(-4, -14, 8, 22);
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.arc(0, -14, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Kouř z kotlíku a kadidla spirálovitě stoupá
+    for (let i = 0; i < 6; i++) {
+      const smt = (t * 1.5 + i * 0.6) % 2.5;
+      const smx = kx + Math.sin(smt * 4 + i) * 20 + i * 6;
+      const smy = ky - 10 - smt * 45;
+      const smr = 10 + smt * 16;
+      const smAlpha = Math.max(0, 1 - smt / 2.3) * 0.6;
+      ctx.save();
+      ctx.globalAlpha = vis * smAlpha;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(74, 222, 128, 0.7)' : 'rgba(253, 224, 71, 0.65)';
+      ctx.beginPath();
+      ctx.arc(smx, smy, smr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Bubliny s replikami
+    const bubble = (text: string, cx: number, cy: number, alpha: number, tailX: number, tailY: number) => {
+      if (alpha <= 0.01) return;
+      ctx.save();
+      ctx.globalAlpha = vis * alpha;
+      ctx.font = '900 20px Eczar, serif';
+      const bw = ctx.measureText(text).width + 30;
+      const bh = 42;
+      ctx.fillStyle = '#FFFDF8';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 4;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.rect(cx - bw / 2, cy - bh / 2, bw, bh);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tailX - 10, cy + bh / 2 - 1);
+      ctx.lineTo(tailX, tailY);
+      ctx.lineTo(tailX + 12, cy + bh / 2 - 1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFDF8';
+      ctx.fillRect(tailX - 8, cy + bh / 2 - 3, 18, 5);
+      ctx.fillStyle = COLORS.ink;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, cx, cy + 1);
+      ctx.restore();
+    };
+
+    bubble('Devatero bylin z hvozdu vyžene všechno zlé!', kox + 90, -110, ease((t - 0.7) / 0.3) * ease((3.2 - t) / 0.3), kox + 20, -70);
+    bubble('KLOK-KLOK! ✨ OČISTNÝ DÝM!', kx + 80, -65, ease((t - 1.4) / 0.3) * ease((3.3 - t) / 0.3), kx, 20);
+
+    // 5) Vrchol schopnosti: exploze hojivých a očistných bylinných částic
+    if (t2 > 0) {
+      const ax = kx;
+      const ay = ky - 10;
+      for (let i = 0; i < 3; i++) {
+        const rr = (t2 - i * 0.22) * 560;
+        if (rr <= 1) continue;
+        const al = Math.max(0, 1 - rr / 920) * 0.65;
+        const g = ctx.createRadialGradient(ax, ay, rr * 0.5, ax, ay, rr);
+        g.addColorStop(0, 'rgba(167, 243, 208, 0)');
+        g.addColorStop(0.85, `rgba(74, 222, 128, ${al})`);
+        g.addColorStop(1, 'rgba(167, 243, 208, 0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(ax, ay, rr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Smršť devatera bylin (heřmánek, jetel, šípky, zelené lístky)
+      for (let i = 0; i < 32; i++) {
+        const a = i * 2.399 + 0.5;
+        const sp = 95 + (i % 7) * 44;
+        const px = ax + Math.cos(a) * sp * t2 * 1.5;
+        const py = ay + Math.sin(a) * sp * t2 * 1.1 - t2 * 35;
+        ctx.globalAlpha = vis * Math.max(0, 1 - t2 / 1.8);
+        if (i % 4 === 0) {
+          this.drawChamomile(ctx, px, py, 9 + (i % 3), a + t2 * 2);
+        } else if (i % 4 === 1) {
+          this.drawFourLeafClover(ctx, px, py, 9 + (i % 4), a - t2 * 3);
+        } else if (i % 4 === 2) {
+          this.drawRosehip(ctx, px, py, 8 + (i % 3), a);
+        } else {
+          // Zelený zubatý lístek máty
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(a + t2 * 4);
+          this.setupPath(ctx, '#16A34A', COLORS.ink, 1.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      ctx.globalAlpha = vis;
+    }
+
+    ctx.restore(); // Konec ořezu
+
+    // Rám obrazu
+    ctx.globalAlpha = vis;
+    panelPath();
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    panelPath();
+    ctx.strokeStyle = '#4ADE80';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Titulní nápis dole
+    if (vis > 0.05) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, vis * ease((t - 0.4) / 0.4));
+      ctx.font = `900 ${Math.round(Math.max(20, Math.min(32, h / 24)))}px Eczar, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('Očistné kadidlo z devatera bylin', w / 2, h - bar / 2);
+      ctx.fillStyle = '#86EFAC';
+      ctx.fillText('Očistné kadidlo z devatera bylin', w / 2, h - bar / 2);
+      ctx.restore();
+    }
+
+    // Celoplošná hojivá bylinková aura
+    if (t2 > 0) {
+      const Rr = t2 * Math.hypot(w, h) * 0.85;
+      const g = ctx.createRadialGradient(w / 2, h / 2, Math.max(0, Rr - 180), w / 2, h / 2, Rr + 40);
+      g.addColorStop(0, 'rgba(167, 243, 208, 0)');
+      g.addColorStop(0.7, `rgba(74, 222, 128, ${0.32 * Math.max(0, 1 - t2 / 1.8)})`);
+      g.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    ctx.restore();
+  },
+
+  // In-world aktivní bylinkové sanctuarium a očistné kadidlo Kořenářky
+  drawKorenarkaSanctuaryFx(ctx: CanvasRenderingContext2D, sanctuary: any, dt: number, playerX: number, playerY: number) {
+    if (!sanctuary) return;
+    const t = sanctuary.t;
+    const dur = sanctuary.dur;
+    const fade = Math.max(0, 1 - t / dur);
+    const R = 420;
+
+    ctx.save();
+
+    // 1) Ozdobná lidová bylinková mandala na zemi
+    const pulse = 1 + Math.sin(t * 8) * 0.04;
+    const curR = R * pulse;
+
+    // Podkladový zelený opar
+    const bgGlow = ctx.createRadialGradient(sanctuary.x, sanctuary.y, 20, sanctuary.x, sanctuary.y, curR);
+    bgGlow.addColorStop(0, `rgba(167, 243, 208, ${0.45 * fade})`);
+    bgGlow.addColorStop(0.7, `rgba(74, 222, 128, ${0.2 * fade})`);
+    bgGlow.addColorStop(1, 'rgba(74, 222, 128, 0)');
+    ctx.fillStyle = bgGlow;
+    ctx.beginPath();
+    ctx.arc(sanctuary.x, sanctuary.y, curR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Vnější ornamentální obvod s lidovými kvítky
+    ctx.strokeStyle = `rgba(34, 197, 94, ${0.7 * fade})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(sanctuary.x, sanctuary.y, curR * 0.95, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Rotující věnec bylinných lístků
+    const leafCount = 14;
+    for (let i = 0; i < leafCount; i++) {
+      const a = (i / leafCount) * Math.PI * 2 + t * 0.8;
+      const lx = sanctuary.x + Math.cos(a) * curR * 0.95;
+      const ly = sanctuary.y + Math.sin(a) * curR * 0.95;
+      if (i % 2 === 0) {
+        this.drawFourLeafClover(ctx, lx, ly, 10, a + Math.PI / 2);
+      } else {
+        this.drawChamomile(ctx, lx, ly, 9, a);
+      }
+    }
+
+    // 2) Středový bublající kotlík na zemi
+    this.setupPath(ctx, '#18181B', COLORS.ink, 3);
+    ctx.beginPath();
+    ctx.arc(sanctuary.x, sanctuary.y, 16, 0, Math.PI);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#4ADE80';
+    ctx.beginPath();
+    ctx.ellipse(sanctuary.x, sanctuary.y, 14, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3) Vířící spirály aromatického kadidla kolem kotlíku a hráče
+    for (let i = 0; i < 7; i++) {
+      const spAng = t * 2.2 + (i * Math.PI * 2) / 7;
+      const spDist = 30 + ((t * 80 + i * 50) % (R * 0.85));
+      const spx = sanctuary.x + Math.cos(spAng) * spDist;
+      const spy = sanctuary.y + Math.sin(spAng) * spDist * 0.75;
+      const spr = 14 + (spDist / R) * 26;
+      const spAl = Math.max(0, 1 - spDist / R) * 0.55 * fade;
+
+      ctx.save();
+      ctx.globalAlpha = spAl;
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(74, 222, 128, 0.75)' : 'rgba(253, 224, 71, 0.7)';
+      ctx.beginPath();
+      ctx.arc(spx, spy, spr, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 4) Poletující hojivé kvítky, lístky a šípky ve vzduchu
+    for (let i = 0; i < 24; i++) {
+      const a = i * 2.399 + t * 0.6;
+      const dist = (((i * 41) % 100) / 100) * curR * 0.85;
+      const fx = sanctuary.x + Math.cos(a) * dist;
+      const fy = sanctuary.y + Math.sin(a) * dist * 0.75 - ((t * 40 + i * 15) % 80);
+      ctx.save();
+      ctx.globalAlpha = 0.85 * fade;
+      if (i % 3 === 0) {
+        this.drawChamomile(ctx, fx, fy, 8, a);
+      } else if (i % 3 === 1) {
+        this.drawFourLeafClover(ctx, fx, fy, 8, a);
+      } else {
+        this.drawRosehip(ctx, fx, fy, 7, a);
+      }
+      ctx.restore();
+    }
+
+    // 5) Nápis OČISTNÉ KADIDLO!
+    if (t < 0.9) {
+      const sc = 1 + (0.9 - t) * 0.5;
+      ctx.save();
+      ctx.translate(sanctuary.x, sanctuary.y - 80);
+      ctx.scale(sc, sc);
+      ctx.globalAlpha = Math.min(1, (0.9 - t) / 0.4);
+      ctx.font = '900 36px Eczar, serif';
+      ctx.textAlign = 'center';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.strokeText('OČISTNÉ KADIDLO! 🌿', 0, 0);
+      ctx.fillStyle = '#86EFAC';
+      ctx.fillText('OČISTNÉ KADIDLO! 🌿', 0, 0);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  },
   // -------------------------------------------------------------
   drawRarach(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
     const dir = vx < 0 ? -1 : 1;

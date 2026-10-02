@@ -861,6 +861,15 @@ export default function App() {
       engineRef.current.keys[e.code] = true;
       if (e.code === 'Space' && gameState === 'playing') {
         e.preventDefault();
+        const cs = engineRef.current.cutscene;
+        if (cs) {
+          if (!cs.applied) {
+            cs.t = Math.max(cs.t, cs.applyAt);
+          } else {
+            cs.t = cs.dur;
+          }
+          return;
+        }
         triggerUltimate();
       }
       const isPKey = e.code === 'KeyP' || e.key === 'p' || e.key === 'P';
@@ -1316,24 +1325,15 @@ export default function App() {
         }
       }
     } else if (p.type === 'shepherd') {
-      // Stampede of sheep
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'DUSOT STÁDA!', COLORS.mustard, true));
-      for (const e of engineRef.current.enemies) {
-        if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 500) {
-          e.takeDamage(120 * p.damageMultiplier, 'physical', 300, (Math.random() - 0.5) * 200);
-        }
-      }
+      // Dusot stáda: pastýřská píšťalka a běsnění beranů (příběhová scénka se zastaveným časem)
+      sound.shepherdFlock();
+      engineRef.current.cutscene = { type: 'shepherd', t: 0, dur: 4.2, applyAt: 2.2, applied: false };
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'PASTÝŘSKÁ PÍŠŤALKA! 🐑', COLORS.mustard, true));
     } else if (p.type === 'korenarka') {
-      // Herbal incense & cure
-      p.hp = Math.min(p.maxHp, p.hp + 45);
-      sound.victory();
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, '+45 HP! OČISTNÉ KADIDLO 🌿', COLORS.green, true));
-      for (const e of engineRef.current.enemies) {
-        if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 420) {
-          e.takeDamage(100 * p.damageMultiplier, 'nature', (e.x - p.x) * 4, (e.y - p.y) * 4);
-          e.soak();
-        }
-      }
+      // Očistné kadidlo z devatera bylin: klokotání kotlíku a hojivý dým (příběhová scénka se zastaveným časem)
+      sound.herbalIncense();
+      engineRef.current.cutscene = { type: 'korenarka', t: 0, dur: 4.4, applyAt: 2.3, applied: false };
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'OČISTNÉ KADIDLO! 🌿', COLORS.green, true));
     } else if (p.type === 'sexton') {
       // Farní požehnání: úder zvonu a sloup svatého světla očistí démony a nemrtvé
       sound.churchBell();
@@ -1356,7 +1356,7 @@ export default function App() {
     } else if (p.type === 'granny') {
       // Chléb se solí a vlídné slovo: čas se zastaví a přehraje se scénka, její účinek nastane v jejím vrcholu
       sound.timeStop();
-      engineRef.current.cutscene = { t: 0, dur: GRANNY_CUTSCENE.duration, applyAt: GRANNY_CUTSCENE.applyAt, applied: false };
+      engineRef.current.cutscene = { type: 'granny', t: 0, dur: GRANNY_CUTSCENE.duration, applyAt: GRANNY_CUTSCENE.applyAt, applied: false };
       engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'ČAS SE ZASTAVIL…', '#FDE047', true));
     } else {
       // Night watchman horn & dog pack
@@ -1366,6 +1366,81 @@ export default function App() {
         e.panicTimer = 5.0 * (1 - (e.willpower || 0) * 0.7);
         e.panicked = true;
         e.takeDamage(110 * p.damageMultiplier, 'physical', (e.x - p.x) * 4, (e.y - p.y) * 4);
+      }
+    }
+  };
+
+  // Účinek Pasáčkova dusotu stáda
+  const applyShepherdStampede = () => {
+    const eng = engineRef.current;
+    const p = eng.player;
+    if (!p) return;
+    sound.heavyHit();
+    eng.texts.push(new DamageText(p.x, p.y - 70, 'DUSOT STÁDA BERANŮ! 🐑', COLORS.mustard, true));
+
+    // Vytvoření běžícího stáda v herním světě
+    const sheepList = [];
+    const count = 22;
+    for (let i = 0; i < count; i++) {
+      sheepList.push({
+        offsetX: -350 - Math.random() * 250,
+        offsetY: (Math.random() - 0.5) * 550,
+        speed: 550 + Math.random() * 280,
+        scale: 0.8 + Math.random() * 0.45,
+        isRam: Math.random() < 0.35,
+        hasBell: Math.random() < 0.6,
+        bobPhase: Math.random() * Math.PI * 2,
+        colorVariant: Math.floor(Math.random() * 3),
+      });
+    }
+    eng.shepherdStampede = {
+      x: p.x,
+      y: p.y,
+      dirX: p.lastDx || 1,
+      dirY: p.lastDy || 0,
+      t: 0,
+      dur: 3.6,
+      sheep: sheepList,
+    };
+
+    // Smetení nepřátel berany: masivní fyzické poškození a odhození
+    for (const e of eng.enemies) {
+      if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 560) {
+        e.takeDamage(140 * p.damageMultiplier, 'physical', (p.lastDx || 1) * 380, (Math.random() - 0.5) * 260);
+        e.poise = 0;
+        eng.texts.push(new DamageText(e.x, e.y - 45, 'TRK! 💥', COLORS.mustard, false));
+      }
+    }
+  };
+
+  // Účinek Očistného kadidla báby Kořenářky
+  const applyKorenarkaIncense = () => {
+    const eng = engineRef.current;
+    const p = eng.player;
+    if (!p) return;
+    p.hp = Math.min(p.maxHp, p.hp + 55);
+    p.tempShield = (p.tempShield || 0) + 30;
+    p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer, 1.8);
+    sound.potion();
+    sound.victory();
+    eng.texts.push(new DamageText(p.x, p.y - 70, '+55 HP! DEVATERO BYLIN & OČISTNÉ KADIDLO 🌿', '#86EFAC', true));
+
+    // Vytvoření bylinného sanctuaria v herním světě
+    eng.korenarkaSanctuary = {
+      x: p.x,
+      y: p.y,
+      t: 0,
+      dur: 4.8,
+      pulseTimer: 0,
+    };
+
+    // Plošné zasažení přírodou, nasáknutí a zpomalení všech bubáků
+    for (const e of eng.enemies) {
+      if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 480) {
+        e.takeDamage(120 * p.damageMultiplier, 'nature', (e.x - p.x) * 4.5, (e.y - p.y) * 4.5);
+        e.soak();
+        e.slowTimer = Math.max(e.slowTimer || 0, 4.5);
+        eng.texts.push(new DamageText(e.x, e.y - 45, 'OČIŠTĚNO! 🌿', '#4ADE80', false));
       }
     }
   };
@@ -1786,13 +1861,19 @@ export default function App() {
       // In-game simulation (při scénce Babičky a Barunky je čas zastaven)
       if ((gameState === 'playing' || gameState === 'fleeing') && engineRef.current.player && engineRef.current.cutscene && gameState === 'playing') {
         const engine = engineRef.current;
-        // Scénka Babičky a Barunky: čas je zastaven, běží jen scénka
+        // Příběhová scénka se zastaveným časem (Babička, Pasáček, Kořenářka)
           if (engine.cutscene && gameState === 'playing') {
             const cs = engine.cutscene;
             cs.t += dt;
             if (!cs.applied && cs.t >= cs.applyAt) {
               cs.applied = true;
-              applyGrannyKindness();
+              if (cs.type === 'shepherd') {
+                applyShepherdStampede();
+              } else if (cs.type === 'korenarka') {
+                applyKorenarkaIncense();
+              } else {
+                applyGrannyKindness();
+              }
             }
             if (cs.t >= cs.dur) engine.cutscene = null;
           }
@@ -3051,6 +3132,47 @@ export default function App() {
         if (engineRef.current.blessing.t >= engineRef.current.blessing.dur) engineRef.current.blessing = null;
       }
 
+      // Doznívání a aktivní trample Pasáčkova stáda beranů
+      if (engineRef.current.shepherdStampede) {
+        const st = engineRef.current.shepherdStampede;
+        st.t += dt;
+        st.lastTrampleCheck = (st.lastTrampleCheck || 0) + dt;
+        if (st.lastTrampleCheck >= 0.25) {
+          st.lastTrampleCheck = 0;
+          const p = engineRef.current.player;
+          const dmg = 35 * (p?.damageMultiplier || 1);
+          for (const e of engineRef.current.enemies) {
+            if (!e.isDefeated && Math.hypot(e.x - st.x, e.y - st.y) <= 520) {
+              e.takeDamage(dmg, 'physical', (st.dirX || 1) * 140, (Math.random() - 0.5) * 60);
+            }
+          }
+        }
+        if (st.t >= st.dur) engineRef.current.shepherdStampede = null;
+      }
+
+      // Doznívání a pulsy bylinného sanctuaria Kořenářky
+      if (engineRef.current.korenarkaSanctuary) {
+        const sc = engineRef.current.korenarkaSanctuary;
+        sc.t += dt;
+        sc.pulseTimer += dt;
+        if (sc.pulseTimer >= 0.75) {
+          sc.pulseTimer = 0;
+          const p = engineRef.current.player;
+          if (p && p.hp < p.maxHp) {
+            p.hp = Math.min(p.maxHp, p.hp + 6);
+            engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 HP', '#4ADE80', false));
+          }
+          const dmg = 25 * (p?.damageMultiplier || 1);
+          for (const e of engineRef.current.enemies) {
+            if (!e.isDefeated && Math.hypot(e.x - sc.x, e.y - sc.y) <= 420) {
+              e.takeDamage(dmg, 'nature', (e.x - sc.x) * 1.5, (e.y - sc.y) * 1.5);
+              e.soak();
+            }
+          }
+        }
+        if (sc.t >= sc.dur) engineRef.current.korenarkaSanctuary = null;
+      }
+
       // Update lightning atmospheric timers
       if (engineRef.current.lightningFlash > 0) {
         engineRef.current.lightningFlash -= dt;
@@ -3367,6 +3489,14 @@ export default function App() {
         if (engine.blessing) {
           Lada.drawBlessingFx(ctx, engine.blessing.x, engine.blessing.y, engine.blessing.t, engine.blessing.dur);
         }
+        // In-world pastevecké stádo a částicové efekty Pasáčka
+        if (engine.shepherdStampede) {
+          Lada.drawShepherdStampedeFx(ctx, engine.shepherdStampede, dt, player.x, player.y);
+        }
+        // In-world bylinné sanctuarium a očistné kadidlo Kořenářky
+        if (engine.korenarkaSanctuary) {
+          Lada.drawKorenarkaSanctuaryFx(ctx, engine.korenarkaSanctuary, dt, player.x, player.y);
+        }
 
         ctx.restore();
 
@@ -3374,9 +3504,17 @@ export default function App() {
         if (engine.lightningFlash > 0) {
           ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(0.65, engine.lightningFlash * 1.5)})`;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }        // Babička a Barunka: scénka se zastaveným časem
+        }
+
+        // Příběhová scénka se zastaveným časem (Babička, Pasáček, Kořenářka)
         if (engine.cutscene) {
-          Lada.drawGrannyScene(ctx, canvas.width, canvas.height, engine.cutscene.t, engine.cutscene.dur, engine.cutscene.applyAt);
+          if (engine.cutscene.type === 'shepherd') {
+            Lada.drawShepherdScene(ctx, canvas.width, canvas.height, engine.cutscene.t, engine.cutscene.dur, engine.cutscene.applyAt);
+          } else if (engine.cutscene.type === 'korenarka') {
+            Lada.drawKorenarkaScene(ctx, canvas.width, canvas.height, engine.cutscene.t, engine.cutscene.dur, engine.cutscene.applyAt);
+          } else {
+            Lada.drawGrannyScene(ctx, canvas.width, canvas.height, engine.cutscene.t, engine.cutscene.dur, engine.cutscene.applyAt);
+          }
         }
 
         // Weather overlay per level: snowflakes, autumn leaves, or graveyard mist
@@ -4833,7 +4971,20 @@ export default function App() {
 
   return (
     <>
-      <canvas id="gameCanvas" ref={canvasRef} />
+      <canvas
+        id="gameCanvas"
+        ref={canvasRef}
+        onClick={() => {
+          const cs = engineRef.current.cutscene;
+          if (cs) {
+            if (!cs.applied) {
+              cs.t = Math.max(cs.t, cs.applyAt);
+            } else {
+              cs.t = cs.dur;
+            }
+          }
+        }}
+      />
 
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (

@@ -10,6 +10,8 @@ import type { GameLevelId } from '../types';
 export interface EngineState {
   player: any;
   enemies: any[];
+  livingEnemies: any[];
+  renderBuffer: any[];
   projectiles: any[];
   slashes: any[];
   drops: any[];
@@ -30,7 +32,33 @@ export interface EngineState {
   pointsCoin: number;
   pointsSoul: number;
   blessing: { x: number; y: number; t: number; dur: number } | null;
-  cutscene: { t: number; dur: number; applyAt: number; applied: boolean } | null;
+  cutscene: { type?: 'granny' | 'shepherd' | 'korenarka'; t: number; dur: number; applyAt: number; applied: boolean } | null;
+  shepherdStampede: {
+    x: number;
+    y: number;
+    dirX: number;
+    dirY: number;
+    t: number;
+    dur: number;
+    lastTrampleCheck?: number;
+    sheep: Array<{
+      offsetX: number;
+      offsetY: number;
+      speed: number;
+      scale: number;
+      isRam: boolean;
+      hasBell: boolean;
+      bobPhase: number;
+      colorVariant: number;
+    }>;
+  } | null;
+  korenarkaSanctuary: {
+    x: number;
+    y: number;
+    t: number;
+    dur: number;
+    pulseTimer: number;
+  } | null;
   companion: any;
   lastTime: number;
   uiTime: number;
@@ -88,6 +116,8 @@ export function createInitialEngineState(): EngineState {
     pointsSoul: 0,
     blessing: null,
     cutscene: null,
+    shepherdStampede: null,
+    korenarkaSanctuary: null,
     companion: null,
     lastTime: performance.now(),
     uiTime: 0,

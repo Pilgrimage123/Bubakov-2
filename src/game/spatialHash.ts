@@ -14,8 +14,8 @@ export class SpatialHash<T extends { x: number; y: number }> {
   }
 
   clear(): void {
-    for (const key of this.touchedCells) {
-      const bucket = this.cells.get(key);
+    for (let i = 0; i < this.touchedCells.length; i++) {
+      const bucket = this.cells.get(this.touchedCells[i]);
       if (bucket) bucket.length = 0;
     }
     this.touchedCells.length = 0;
@@ -24,7 +24,9 @@ export class SpatialHash<T extends { x: number; y: number }> {
 
   rebuild(entities: readonly T[]): void {
     this.clear();
-    for (const entity of entities) {
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      if ((entity as any).isDefeated || (entity as any).dead) continue;
       const cx = Math.floor(entity.x / this.cellSize);
       const cy = Math.floor(entity.y / this.cellSize);
       const key = this.key(cx, cy);
@@ -32,6 +34,8 @@ export class SpatialHash<T extends { x: number; y: number }> {
       if (!bucket) {
         bucket = [];
         this.cells.set(key, bucket);
+        this.touchedCells.push(key);
+      } else if (bucket.length === 0) {
         this.touchedCells.push(key);
       }
       bucket.push(entity);
@@ -48,8 +52,10 @@ export class SpatialHash<T extends { x: number; y: number }> {
     for (let cy = minY; cy <= maxY; cy++) {
       for (let cx = minX; cx <= maxX; cx++) {
         const bucket = this.cells.get(this.key(cx, cy));
-        if (!bucket) continue;
-        for (const entity of bucket) this.results.push(entity);
+        if (!bucket || bucket.length === 0) continue;
+        for (let i = 0; i < bucket.length; i++) {
+          this.results.push(bucket[i]);
+        }
       }
     }
     return this.results;
