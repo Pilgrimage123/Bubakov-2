@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "generate:music": "node scripts/generate-menu-music.mjs",
-    "build": "vite build && node scripts/bundle-standalone.mjs",
-    "bundle:standalone": "node scripts/bundle-standalone.mjs",
+    "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
