@@ -86,11 +86,7 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
 +  const enemyGridRef = useRef<EnemySpatialGrid | null>(null);
 +  if (!enemyGridRef.current) enemyGridRef.current = new EnemySpatialGrid();
 @@
-       // Helper methods for weapon scripts
-       distTo(e: any) {
-         return Math.hypot(e.x - this.x, e.y - this.y);
-       },
-       getLivingEnemies() {
+      getLivingEnemies() {
 -        return engineRef.current.enemies.filter((e) => !e.isDefeated);
 +        return engineRef.current.livingEnemies;
       },
@@ -119,49 +115,22 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
 +          impact.y,
 +          impact.radius + 64
 +        ) || [];
-        for (const e of enemies) {
-          if (!e.isDefeated && Math.hypot(e.x - impact.x, e.y - impact.y) <= impact.radius + e.radius) {
-            e.takeDamage(impact.dmg, impact.type, (e.x - impact.x) * 4, (e.y - impact.y) * 4);
-@@
-      if ((gameState === 'playing' || gameState === 'fleeing') && engineRef.current.player && engineRef.current.cutscene && gameState === 'playing') {
 @@
         if (player) {
-+          // Refresh the living-enemy cache once per frame. Weapon helpers,
-+          // homing projectiles and boss targeting can then reuse it without
-+          // allocating a new filtered array for every call.
 +          engine.livingEnemies.length = 0;
 +          for (const enemy of engine.enemies) {
 +            if (!enemy.isDefeated && !enemy.dead) engine.livingEnemies.push(enemy);
 +          }
 +          enemyGridRef.current?.rebuild(engine.enemies);
-+
-          // Time & Day/Night phase tracking
 @@
             // Player movement
-+            // Boss mechanics and spawning may have added enemies since the
-+            // frame-start cache. Rebuild once after spawning and reuse it for
-+            // passive auras, weapon targeting and collision queries.
 +            engine.livingEnemies.length = 0;
 +            for (const enemy of engine.enemies) {
 +              if (!enemy.isDefeated && !enemy.dead) engine.livingEnemies.push(enemy);
 +            }
 +            enemyGridRef.current?.rebuild(engine.enemies);
-+
-            let mx = 0;
 @@
-            // Update Projectiles
-            for (const p of engine.projectiles) {
-@@
-            // Homing bees
-            if (p.homing) {
-              const living = player.getLivingEnemies();
-@@
-                }
-              }
-            }
 -            for (const e of engine.enemies) {
-+            // Only inspect enemies in nearby spatial-grid cells. The exact
-+            // circle collision below remains the authoritative hit test.
 +            const candidates = enemyGridRef.current?.queryCircle(
 +              p.x,
 +              p.y,
@@ -174,24 +143,7 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
                 p.hitList.push(e);
 +                p.hitSet?.add(e);
 @@
-                  // Bouncing poppy cake
-                  if (p.bounces && p.bounces > 0) {
-                    p.bounces--;
--                    const living = player.getLivingEnemies().filter((x: any) => x !== e);
-+                    const living = engine.livingEnemies;
-                    if (living.length > 0) {
--                      const next = living[0];
-+                      let next = living[0];
-+                      if (next === e && living.length > 1) next = living[1];
-                      const bAng = Math.atan2(next.y - p.y, next.x - p.x);
-                      p.vx = Math.cos(bAng) * p.speed;
-                      p.vy = Math.sin(bAng) * p.speed;
-                      p.hitList = [];
-+                      p.hitSet?.clear();
-                      break;
-@@
 -          engine.projectiles = engine.projectiles.filter((p) => !p.dead);
-+          // Compact in place to avoid allocating a new array every frame.
 +          {
 +            let write = 0;
 +            for (let read = 0; read < engine.projectiles.length; read += 1) {
@@ -200,8 +152,6 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
 +            }
 +            engine.projectiles.length = write;
 +          }
-          // Update Melee Slashes
-          for (const s of engine.slashes) {
 @@
 -            for (const e of engine.enemies) {
 +            const candidates = enemyGridRef.current?.queryCircle(
@@ -210,21 +160,7 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
 +              s.reach + 64
 +            ) || [];
 +            for (const e of candidates) {
-              if (e.isDefeated) continue;
--              if (!s.hitList.includes(e) && Math.hypot(s.x - e.x, s.y - e.y) <= s.reach + e.radius) {
-+              if (!s.hitSet?.has(e) && Math.hypot(s.x - e.x, s.y - e.y) <= s.reach + e.radius) {
-                const ang = Math.atan2(e.y - s.y, e.x - s.x);
-                let diff = Math.abs(ang - s.angle);
-                if (diff > Math.PI) diff = Math.PI * 2 - diff;
-                if (diff <= s.arc / 2) {
-                  s.hitList.push(e);
-+                  s.hitSet?.add(e);
-                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * 260, Math.sin(s.angle) * 260);
-                  if (s.soaked) e.soak();
-                }
-              }
-            }
-          }
+@@
 -          engine.slashes = engine.slashes.filter((s) => !s.dead);
 +          {
 +            let write = 0;
@@ -233,36 +169,6 @@ cat > "$TMP_DIR/v1.patch" <<'PATCH_V1'
 +              if (!slash.dead) engine.slashes[write++] = slash;
 +            }
 +            engine.slashes.length = write;
-+          }
-@@
--          engine.enemies = engine.enemies.filter((e) => !e.dead);
-+          {
-+            let write = 0;
-+            for (let read = 0; read < engine.enemies.length; read += 1) {
-+              const enemy = engine.enemies[read];
-+              if (!enemy.dead) engine.enemies[write++] = enemy;
-+            }
-+            engine.enemies.length = write;
-+          }
-@@
--          engine.drops = engine.drops.filter((d) => !d.dead);
-+          {
-+            let write = 0;
-+            for (let read = 0; read < engine.drops.length; read += 1) {
-+              const drop = engine.drops[read];
-+              if (!drop.dead) engine.drops[write++] = drop;
-+            }
-+            engine.drops.length = write;
-+          }
-@@
--          engine.texts = engine.texts.filter((t) => t.life > 0);
-+          {
-+            let write = 0;
-+            for (let read = 0; read < engine.texts.length; read += 1) {
-+              const text = engine.texts[read];
-+              if (text.life > 0) engine.texts[write++] = text;
-+            }
-+            engine.texts.length = write;
 +          }
 *** End Patch
 
@@ -280,9 +186,6 @@ cat > "$TMP_DIR/v3.patch" <<'PATCH_V3'
     } catch {}
   };
 +
-+  // Kill-heavy runs must not synchronously serialize the whole progression
-+  // object on every kill. UI state remains current through metaRef/setMeta;
-+  // persistence is coalesced into one write per frame.
 +  const pendingMetaSaveRef = useRef<MetaProgression | null>(null);
 +  const metaSaveRafRef = useRef<number | null>(null);
 +  const queueMetaSave = (updated: MetaProgression) => {
@@ -306,12 +209,6 @@ cat > "$TMP_DIR/v3.patch" <<'PATCH_V3'
 @@
 -          saveMeta(nextMeta);
 +          queueMetaSave(nextMeta);
-
-          engineRef.current.kills += 1;
--          setRunStats((s) => ({ ...s, kills: engineRef.current.kills }));
-+          // Kill count is already available to the game loop. HUD sync below
-+          // publishes it at a fixed cadence instead of forcing a React render
-+          // for every individual kill.
 *** End Patch
 
 PATCH_V3
@@ -414,7 +311,7 @@ replace_once(
     """            // Night Watchman passive holy aura
             if (player.type === 'watchman') {
               const candidates = enemyGridRef.current?.queryCircle(player.x, player.y, 85 + 128) || [];
-              for (const e of candidates {
+              for (const e of candidates) {
 """,
 )
 
