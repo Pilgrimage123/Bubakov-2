@@ -356,7 +356,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({ isOpen, onClose, defaultTa
           </div>
         ) : (
           <div className="changelog-list" style={{ maxHeight: '450px', overflowY: 'auto', color: '#000000' }}>
-            <h4 style={{ color: '#000000' }}>v16.0.0 – 16. kolo: Audit bestiáře a sjednocení počtu zbraní
+            <h4 style={{ color: '#000000' }}>v16.0.0 – 16. kolo: Audit bestiáře a sjednocení počtu zbraní</h4>
             <ul style={{ color: '#000000' }}>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Audit bestiáře:</strong> Datový registr <code>ENEMIES</code> obsahuje 49 položek. Rozdíl proti dřívějšímu údaji 42 není automaticky interpretován jako sedm nových základních druhů; zahrnuje také variantní/posílené nepřátele, např. Obrněného zbojníka a Krvavého kostlivce.</li>
               <li style={{ color: '#000000' }}><strong style={{ color: '#000000' }}>Sjednocení Zbrojnice:</strong> Celkový počet zbraní v UI se nově odvozuje přímo z registru <code>WEAPONS</code>. Aktuálně je registrováno 12 zbraní, takže počítadlo už nemůže zůstat na pevné hodnotě 11.</li>
