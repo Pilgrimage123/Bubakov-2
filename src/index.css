@@ -619,52 +619,6 @@ body {
   filter: brightness(1.15);
 }
 
-.download-toggle-btn {
-  background: var(--leaf-green);
-  color: var(--white);
-  border: 3px solid var(--ink);
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.95rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 4px 4px 0px var(--ink);
-  transition: all 0.1s;
-  pointer-events: auto;
-}
-
-.download-toggle-btn:hover {
-  background: var(--mustard);
-  color: var(--ink);
-}
-
-.btn-download {
-  background-color: var(--leaf-green) !important;
-  color: var(--white) !important;
-}
-.btn-download:hover {
-  background-color: var(--mustard) !important;
-  color: var(--ink) !important;
-}
-
-.download-toggle-btn.btn-txt-download {
-  background: var(--mustard);
-  color: var(--ink);
-}
-.download-toggle-btn.btn-txt-download:hover {
-  background: var(--amber);
-  color: #000000;
-}
-
-.btn-download-txt {
-  background-color: var(--mustard) !important;
-  color: var(--ink) !important;
-}
-.btn-download-txt:hover {
-  background-color: var(--amber) !important;
-  color: #000000 !important;
-}
-
 .modal-tabs {
   display: flex;
   gap: 10px;
