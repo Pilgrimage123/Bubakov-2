@@ -52,19 +52,9 @@
 
 ---
 
-## 3. Zásada kompletního offline souboru a upravitelnosti (Downloadable HTML & TXT Standalone & Edit Integrity)
+## 3. Zásada produkčního zdrojového stromu a buildů
 
-> **ZÁVAZNÉ A NEZRUŠITELNÉ PRAVIDLO:**
-> **Soubor ke stažení v textovém formátu (.txt) i formátu (.html) MUSÍ VŽDY obsahovat naprosto kompletní, 100% samostatnou hru připravenou nejen k okamžitému offline hraní, ale i k plnohodnotným úpravám libovolným vývojářem nebo AI modelem (Claude, GPT)!**
-
-1. **Okamžitá hratelnost pouhým přejmenováním (Offline Runtime):**
-   - Soubor `bubakov_hra_ladovska_edice.txt` je přímým identickým dvojčetem `bubakov_hra_ladovska_edice.html`.
-   - Stačí jej přejmenovat na `.html` (např. `bubakov.html`) a otevřít v jakémkoliv prohlížeči. Běží 100% offline bez nutnosti internetu, instalace či serveru.
-2. **Čistý a neminifikovaný kód (Full AI & Developer Editability):**
-   - Spustitelný kód v souboru NESMÍ být minifikován na nečitelné jednopísmenné zkratky. Všechny názvy proměnných, herních konstant, funkcí a struktur (`WEAPONS`, `ENEMY_TYPES`, `drawLadaHunter`, `updateGame`) musí zůstat plně čitelné a komentované, aby je Claude nebo programátor mohl otevřít v textovém editoru, ihned pochopit a přímo upravovat.
-3. **Plné původní zdrojové kódy přímo v souboru (Embedded Source Tree):**
-   - Uvnitř souboru se nachází kompletní původní strom zdrojových souborů (všechny moduly v TypeScriptu, CSS i konfigurace) ve strukturovaném bloku `<script id="bubakov-source-tree" type="application/json">` s exportní utilitou `window.BUBAKOV.exportSources()`.
-4. **Detailní vývojářská příručka pro Claude a programátory:**
-   - Na začátku souboru je v komentáři obsažen podrobný návod: architektura hry, kde najít a jak přidat zbraň, nepřítele, bosse, upravit ladovský canvas renderer, parametry syntezátoru či kolize.
-5. **Automatická kontrola celistvosti při sestavení:**
-   - Při každém sestavení (`npm run build` / `scripts/bundle-standalone.mjs`) je povinností zkontrolovat, že velikost generovaných souborů `.txt` i `.html` přesahuje minimální prahovou hodnotu (alespoň 1 MB) a že soubory obsahují jak platný kořenový uzel `#root`, tak kompletní unminified kód, zdrojový strom i úvodní dokumentační záhlaví.
+1. **Canonical source:** `src/` je jediný zdroj pravdy pro herní logiku, data, renderování, UI a styly.
+2. **Production build:** standardní Vite build (`npm run build`) vytváří produkční výstup v `dist/`.
+3. **Žádný standalone export:** projekt již negeneruje ani nevyžaduje samostatné HTML/TXT herní snapshoty. Historické standalone artefakty z dřívějších revizí nejsou druhým zdrojem pravdy.
+4. **Data integrity:** úpravy produkčního buildu nesmí odstraňovat herní data pouze proto, že byla dříve také obsažena v legacy standalone artefaktech.
