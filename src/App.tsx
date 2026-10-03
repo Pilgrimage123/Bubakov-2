@@ -68,7 +68,7 @@ import { ResetProgressModal } from './components/ResetProgressModal';
 function renderHunterPortrait(
   canvas: HTMLCanvasElement | null,
   drawFn: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number) => void,
-  tier: 0 | 1 | 2 | 3 | 4,
+  tier: number,
   t: number
 ) {
   if (!canvas) return;
@@ -1021,7 +1021,7 @@ export default function App() {
       hromnickaPulseTimer: 0,
       hromnickaPulseRadius: 0,
       ultCd: 0,
-      ultMaxCd: type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
+      ultMaxCd: type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
@@ -1317,11 +1317,72 @@ export default function App() {
     sound.slash();
 
     if (p.type === 'wanderer') {
-      // Massive shockwave
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'RÁZOVÁ VLNA!', COLORS.mustard, true));
+      // Pověstná sukovice: zatočí kolem sebe sukovitou holí a zraní a odhodí hodně bubáky kolem,
+      // a nepřátelé ve větší vzdálenosti kolem jsou po 4s vystrašení a rychle utíkají pryč (resistable with fear)
+      sound.sukoviceWhirl();
+      engineRef.current.sukovice = {
+        x: p.x,
+        y: p.y,
+        t: 0,
+        dur: 0.85,
+        radius: 260,
+        outerRadius: 600,
+      };
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'POVĚSTNÁ SUKOVICE! 🪵', '#F59E0B', true));
+
+      const innerRadius = 260;
+      const outerRadius = 600;
+
       for (const e of engineRef.current.enemies) {
-        if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 450) {
-          e.takeDamage(130 * p.damageMultiplier, 'magic', (e.x - p.x) * 6, (e.y - p.y) * 6);
+        if (e.isDefeated) continue;
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist <= outerRadius + e.radius) {
+          const nx = dist > 0.001 ? dx / dist : 1;
+          const ny = dist > 0.001 ? dy / dist : 0;
+          const fearResist = Math.min(1, Math.max(0, e.willpower || 0));
+          const fearDuration = 4.0 * (1 - fearResist);
+
+          if (dist <= innerRadius + e.radius) {
+            // Blízký drtivý zásah sukovicí: silné zranění a masivní odhození bubáků kolem
+            const dmg = 185 * p.damageMultiplier;
+            e.takeDamage(dmg, 'physical', nx * 850, ny * 850);
+            e.poise = 0;
+            engineRef.current.texts.push(new DamageText(e.x, e.y - 40, 'PRÁSK! 🪵', '#FBBF24', false));
+
+            // Vystrašení zblízka (pokud přežijí zásah)
+            if (fearDuration > 0) {
+              e.panicTimer = Math.max(e.panicTimer || 0, fearDuration);
+              e.panicked = true;
+            }
+          } else {
+            // Nepřátelé ve větší vzdálenosti: po 4s vystrašení a rychle utíkají pryč (resistable with fear)
+            if (fearDuration > 0) {
+              e.panicTimer = Math.max(e.panicTimer || 0, fearDuration);
+              e.panicked = true;
+              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'DĚS! 😱', '#A7F3D0', false));
+            } else {
+              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'ODOLAL! 🛡️', '#E5E7EB', false));
+            }
+            // Zranění a odhození i ve větší vzdálenosti
+            const outerDmg = 55 * p.damageMultiplier;
+            e.takeDamage(outerDmg, 'physical', nx * 320, ny * 320);
+          }
+
+          // Efektní třísky a prach u zasažených bubáků
+          for (let pi = 0; pi < 5; pi++) {
+            engineRef.current.particles.push({
+              x: e.x + (Math.random() - 0.5) * e.radius,
+              y: e.y + (Math.random() - 0.5) * e.radius,
+              vx: nx * 120 + (Math.random() - 0.5) * 60,
+              vy: ny * 120 + (Math.random() - 0.5) * 60,
+              life: 0.35 + Math.random() * 0.25,
+              color: Math.random() < 0.5 ? '#8B5A2B' : '#D97706',
+              size: 3 + Math.random() * 3,
+            });
+          }
         }
       }
     } else if (p.type === 'shepherd') {
@@ -3051,7 +3112,7 @@ export default function App() {
                     m.vx = -m.vx * 3;
                     m.vy = -m.vy * 3;
                   });
-                  engine.texts.push(new DamageText(player.x, player.y - 60, 'PŘEMOŽEN!', COLORS.red, true));
+                  engine.texts.push(new DamageText(player.x, player.y - 60, 'ÚTĚK DO TEPLA!', COLORS.red, true));
                 }
               }
             }
@@ -3126,7 +3187,21 @@ export default function App() {
           for (const txt of engine.texts) txt.update(dt);
           compactInPlace(engine.texts, (t) => t.life > 0);
         }
-      }      // Doznívání Farního požehnání
+      }      // Doznívání Pověstné sukovice
+      if (engineRef.current.sukovice) {
+        const suk = engineRef.current.sukovice;
+        suk.t += dt;
+        const p = engineRef.current.player;
+        if (p) {
+          suk.x = p.x;
+          suk.y = p.y;
+        }
+        if (suk.t >= suk.dur) {
+          engineRef.current.sukovice = null;
+        }
+      }
+
+      // Doznívání Farního požehnání
       if (engineRef.current.blessing) {
         engineRef.current.blessing.t += dt;
         if (engineRef.current.blessing.t >= engineRef.current.blessing.dur) engineRef.current.blessing = null;
@@ -3496,6 +3571,10 @@ export default function App() {
         // In-world bylinné sanctuarium a očistné kadidlo Kořenářky
         if (engine.korenarkaSanctuary) {
           Lada.drawKorenarkaSanctuaryFx(ctx, engine.korenarkaSanctuary, dt, player.x, player.y);
+        }
+        // Pověstná sukovice – roztočená sukovitá hůl a rázová vlna s aurou děsu
+        if (engine.sukovice) {
+          Lada.drawSukoviceFx(ctx, engine.sukovice, player.x, player.y);
         }
 
         ctx.restore();
@@ -4650,7 +4729,7 @@ export default function App() {
             setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
             sound.victory();
             sound.cheer();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} POKOŘEN!`, COLORS.mustard, true));
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true));
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId || 1;
             const curLvl = GAME_LEVELS[curLvlId];
@@ -5032,7 +5111,7 @@ export default function App() {
               </div>
               <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>Krejcary: {runStats.coins} <KrejcarIcon size={18} /></div>
               <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
-              <div id="kills-text" style={{ color: '#7F1D1D' }}>Zahnáno: {runStats.kills} 💀</div>
+              <div id="kills-text" style={{ color: '#7F1D1D' }}>Zklidněno: {runStats.kills} 🥖</div>
               <div id="chest-progress-text" style={{ color: '#78350F' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
                 🎁 Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
@@ -5054,19 +5133,23 @@ export default function App() {
             <div id="boss-warning-banner">{runStats.warningBanner}</div>
           )}
 
-          {/* Ultimate ability indicator button */}
-          <button
-            id="ult-indicator"
-            onClick={triggerUltimate}
-            style={{
-              backgroundColor: runStats.ultCd <= 0 ? 'var(--blood-red)' : 'var(--wood-light)',
-              transform: runStats.ultCd <= 0 ? 'translateX(-50%) scale(1.05)' : 'translateX(-50%) scale(1)',
-            }}
-          >
-            {runStats.ultCd <= 0
-              ? '⚡ SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)'
-              : `⚡ Speciální schopnost: ${Math.ceil(runStats.ultCd)} s`}
-          </button>
+          {/* Ultimate ability indicator button – skryto na dotykovém displeji a při aktivním dotykovém ovládání, kde bohatě stačí kruhové tlačítko */}
+          {!touchEnabled && (
+            <button
+              id="ult-indicator"
+              onClick={triggerUltimate}
+              style={{
+                backgroundColor: runStats.ultCd <= 0 ? 'var(--blood-red)' : 'var(--wood-light)',
+                transform: runStats.ultCd <= 0 ? 'translateX(-50%) scale(1.05)' : 'translateX(-50%) scale(1)',
+              }}
+            >
+              {runStats.ultCd <= 0
+                ? (engineRef.current.player?.type === 'wanderer'
+                    ? '🪵 POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)'
+                    : '⚡ SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)')
+                : `⚡ ${engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: ${Math.ceil(runStats.ultCd)} s`}
+            </button>
+          )}
         </div>
       )}
 
@@ -5092,19 +5175,13 @@ export default function App() {
           <div className="panel" style={{ maxWidth: '1040px' }}>
             <h1>BUBÁKOV</h1>
             <p style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '-5px', color: '#FEF3C7' }}>
-              Přežijte noc ve světě venkovského děsu Josefa Lady.
+              Česká vesnice, kde se bubáci zklidní poctivým výpraskem nebo je usmíří voňavá pečená buchta.
             </p>
 
-            <div style={{ textAlign: 'center', margin: '8px 0 14px 0' }}>
+            <div style={{ textAlign: 'center', margin: '4px 0 8px 0' }}>
               <span className="screen-step-badge">
                 🗺️ KROK 1 ZE 2: VÝBĚR VÝPRAVY
               </span>
-              <h2 style={{ fontSize: '1.85rem', margin: '4px 0 2px 0' }}>
-                Zvolte cíl své výpravy do kraje děsu
-              </h2>
-              <p style={{ fontSize: '0.98rem', fontWeight: 800, color: 'var(--parchment)', margin: 0 }}>
-                Každá výprava má své specifické noční nestvůry, roční období i obávaného bosse. Po zvolení výpravy vyberete svého lovce.
-              </p>
             </div>
 
             {/* 6 PROGRESSIVE GAME LEVELS SELECTOR */}
@@ -5337,7 +5414,7 @@ export default function App() {
                   </span>
                 </div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
-                  ⚔️ {levelProgress[selectedLevelId]?.spoiledBossHint || `Obávaný vládce noci: ${currentLevel.finalBoss.name}`}
+                  🌾 {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní noční nezbeda: ${currentLevel.finalBoss.name}`}
                 </div>
               </div>
 
@@ -5508,11 +5585,11 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Rázová vlna.
+                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
                   <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Vrbový prut & Povidlové buchty</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>⚡ Schopnost: Rázová vlna</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 Schopnost: Pověstná sukovice (21 s)</div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
                   <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
@@ -5653,7 +5730,7 @@ export default function App() {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
                 <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
                 <span>🌾 Chasníci: <strong>{runStats.chasniks}</strong></span>
-                <span>💀 Zahnáno: <strong>{runStats.kills}</strong></span>
+                <span>🥖 Zklidněno: <strong>{runStats.kills}</strong></span>
               </div>
             </div>
 
@@ -5937,7 +6014,7 @@ export default function App() {
           </p>
 
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Přemožených bubáků:</span>
+            <span>Zklidněných bubáků:</span>
             <span className="tally-number">{tallyCounters.kills}</span>
           </div>
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
@@ -5957,7 +6034,7 @@ export default function App() {
             </div>
           )}
           <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Doba přežití:</span>
+            <span>Čas výpravy:</span>
             <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
           </div>
 

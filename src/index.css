@@ -649,6 +649,13 @@ body {
   filter: brightness(1.15);
 }
 
+/* Na dotykových displejích skrýt lištu Speciální schopnost – stačí dotykové akční tlačítko vpravo dole */
+@media (pointer: coarse), (hover: none) {
+  #ult-indicator {
+    display: none !important;
+  }
+}
+
 .modal-tabs {
   display: flex;
   gap: 10px;
@@ -1547,6 +1554,9 @@ body {
 }
 
 @media (max-width: 650px) {
+  #ult-indicator {
+    display: none !important;
+  }
   .hud-top-right, .menu-top-right {
     top: 8px;
     right: 8px;

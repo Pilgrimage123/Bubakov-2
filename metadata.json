@@ -1,0 +1,6 @@
+{
+  "name": "Bubákov – Česká vesnice s bubáky",
+  "description": "Česká vesnice, kde se nezbední bubáci zklidní poctivým výpraskem nebo je usmíří voňavá pečená buchta.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
