@@ -20,3 +20,11 @@
 - XP ukazatel dostal vlastní identifikátor pro spolehlivé cílení CSS.
 - Herní animační smyčka nyní reaguje i na změnu obrazovky výběru lovce (menuScreen).
 - Na menších displejích jsou horní HP/XP lišty kompaktnější.
+
+
+## 2026-10-03 — Combat HUD: 22% viewport
+- Sloučen a zpřesněn horní HUD tak, aby byl pevně omezen na maximálně 22 % dynamické výšky viewportu včetně safe-area offsetu.
+- Na mobilech odstraněn konflikt se starým `top: 55px`; HUD nyní začíná u horní safe-area a používá stejný 22% limit.
+- Sjednocena mobilní pravidla Kuráže, XP a statistik bez duplicitních `@media` bloků.
+- Zmenšeny mobilní HP/XP lišty, statistický řádek a boss bar; HUD je oříznutý, aby vizuálně nepřetékal mimo vyhrazený prostor.
+- Boss bar wrapper dostal vlastní výškový limit a desktopová výška boss HP lišty byla snížena z 26 na 22 px.
