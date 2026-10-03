@@ -422,25 +422,48 @@ body {
 
 #top-bar {
   position: absolute;
-  top: 15px;
+  /*
+   * HARD VIEWPORT RULE:
+   * The complete top HUD is clipped to a maximum of 22% of the
+   * dynamic viewport height, including the safe-area offset.
+   */
+  top: max(4px, env(safe-area-inset-top));
   left: 50%;
   transform: translate(-50%, 0);
-  width: 90%;
-  max-width: 800px;
+  width: min(90%, 800px);
+  max-height: calc(22dvh - max(4px, env(safe-area-inset-top)));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: clamp(3px, 0.6vh, 8px);
+  overflow: hidden;
 }
 
 .bar-container {
   width: 100%;
   height: 28px;
+  min-height: 0;
+  flex: 0 0 28px;
   background-color: var(--wood-dark);
   border: 4px solid var(--ink);
   border-radius: 14px;
   overflow: hidden;
   position: relative;
   box-shadow: 4px 4px rgba(0,0,0,0.5);
+}
+
+#courage-container {
+  background-color: var(--wood-dark);
+}
+
+#courage-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--blood-red);
+  transition: width 0.12s linear;
+}
+
+#xp-container {
+  flex: 0 0 28px;
 }
 
 #xp-fill {
@@ -468,15 +491,22 @@ body {
 
 #stats-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  font-size: 1.35rem;
+  gap: 10px;
+  min-height: 0;
+  max-height: 34px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(0.72rem, 1.35vw, 1.1rem);
   font-weight: 900;
   color: #111111;
   background: rgba(243, 233, 210, 0.95);
   border: 3px solid var(--ink);
   border-radius: 10px;
-  padding: 6px 16px;
+  padding: 4px 10px;
+  box-sizing: border-box;
   box-shadow: 4px 4px 0px var(--ink);
 }
 
@@ -759,6 +789,9 @@ body {
 #boss-bar-wrap {
   width: 100%;
   max-width: 600px;
+  min-height: 0;
+  max-height: 52px;
+  flex: 0 0 auto;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -768,7 +801,7 @@ body {
 
 #boss-bar-container {
   width: 100%;
-  height: 26px;
+  height: 22px;
   background-color: var(--wood-dark);
   border: 3px solid var(--ink);
   border-radius: 13px;
@@ -1526,11 +1559,60 @@ body {
     box-shadow: 2px 2px 0px var(--ink);
   }
   #top-bar {
-    top: 55px;
-    width: 95%;
+    /*
+     * Keep the complete HUD inside the same 22% viewport budget.
+     * Do not push it down to 55px on mobile.
+     */
+    top: max(4px, env(safe-area-inset-top));
+    width: calc(100% - 10px);
+    max-width: none;
+    max-height: calc(22dvh - max(4px, env(safe-area-inset-top)));
+    gap: 4px;
   }
+
+  #top-bar .bar-container,
+  #xp-container {
+    flex-basis: 23px;
+    height: 23px;
+    border-width: 3px;
+  }
+
+  .bar-text {
+    font-size: 11px;
+    letter-spacing: 0.35px;
+  }
+
   #stats-row {
-    font-size: 1.15rem;
+    max-height: 30px;
+    padding: 3px 7px;
+    gap: 7px;
+    font-size: 0.72rem;
+    border-width: 2px;
+    border-radius: 7px;
+    box-shadow: 2px 2px 0px var(--ink);
+  }
+
+  #stats-row > div:nth-child(n + 4) {
+    display: none;
+  }
+
+  #courage-container,
+  #xp-container {
+    height: 23px;
+  }
+
+  #courage-container .bar-text,
+  #xp-container .bar-text {
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  #boss-bar-wrap {
+    max-height: 44px;
+  }
+
+  #boss-bar-container {
+    height: 18px;
   }
   .joystick-base {
     width: 120px;
@@ -1764,30 +1846,6 @@ body {
   animation: slotGoldenGlow 1.5s ease-in-out infinite;
 }
  
-#courage-fill {
-  width: 0%;
-  height: 100%;
-  background-color: var(--blood-red);
-  transition: width 0.12s linear;
-}
-
 #courage-container .bar-text {
   color: var(--cream);
-}
-
-@media (max-width: 650px) {
-  #courage-container,
-  #xp-container {
-    height: 24px;
-  }
-
-  #courage-container .bar-text,
-  #xp-container .bar-text {
-    font-size: 13px;
-    letter-spacing: 0.5px;
-  }
-
-  #top-bar {
-    gap: 7px;
-  }
 }
