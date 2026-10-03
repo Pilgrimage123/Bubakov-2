@@ -1,6 +1,0 @@
-{
-  "name": "Bubákov – Animovaná ladovská edice",
-  "description": "Přežijte noc ve světě venkovského děsu. Hra inspirovaná ilustracemi Josefa Lady kompletně v češtině.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

@@ -1,9 +1,0 @@
-*** Begin Patch
-*** Update File: src/game/engineState.ts
-@@
-  player: any;
-  enemies: any[];
-+  livingEnemies: any[];
-*** End Patch
-
-# Additional performance passes are documented in bubakov-performance-all-in-one.sh.
