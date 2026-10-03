@@ -14,3 +14,9 @@
 - Added a frame-time clamp to prevent expensive simulation bursts after stalled frames.
 - Centralized squared-distance and viewport checks in reusable performance helpers.
 - Kept the existing living-enemy snapshot and viewport culling from the previous pass.
+
+## 2026-10-03 — Combat HUD: Kuráž
+- Přidán horní ukazatel Kuráže zobrazující aktuální a maximální HP lovce.
+- XP ukazatel dostal vlastní identifikátor pro spolehlivé cílení CSS.
+- Herní animační smyčka nyní reaguje i na změnu obrazovky výběru lovce (menuScreen).
+- Na menších displejích jsou horní HP/XP lišty kompaktnější.
