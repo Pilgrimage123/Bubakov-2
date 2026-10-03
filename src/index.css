@@ -1763,5 +1763,31 @@ body {
 .slot-all-locked {
   animation: slotGoldenGlow 1.5s ease-in-out infinite;
 }
+ 
+#courage-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--blood-red);
+  transition: width 0.12s linear;
+}
 
+#courage-container .bar-text {
+  color: var(--cream);
+}
 
+@media (max-width: 650px) {
+  #courage-container,
+  #xp-container {
+    height: 24px;
+  }
+
+  #courage-container .bar-text,
+  #xp-container .bar-text {
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  #top-bar {
+    gap: 7px;
+  }
+}
