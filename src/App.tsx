@@ -3562,7 +3562,7 @@ export default function App() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animId);
     };
-  }, [gameState, selectedLevelId]);
+  }, [gameState, menuScreen, selectedLevelId]);
 
   // Enemy instance factory with customized AI state machine
   // Consistent authentic stats: specific enemies (e.g. Kostlivec) always have identical base stats;
@@ -4989,10 +4989,30 @@ export default function App() {
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (
         <div id="hud">
-          {/* Top Bar with XP and Stats */}
+          {/* Top HUD: Kuráž + XP + compact combat stats */}
           <div id="top-bar">
+            {/* Kuráž = Lovcovo HP */}
+            <div
+              id="courage-container"
+              className="bar-container"
+              aria-label={`Kuráž ${Math.ceil(runStats.hp)} z ${Math.ceil(runStats.maxHp)}`}
+            >
+              <div
+                id="courage-fill"
+                style={{
+                  width: `${Math.max(
+                    0,
+                    Math.min(100, (runStats.hp / Math.max(1, runStats.maxHp)) * 100)
+                  )}%`,
+                }}
+              />
+              <div className="bar-text">
+                KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
+              </div>
+            </div>
+
             {/* XP bar */}
-            <div className="bar-container">
+            <div id="xp-container" className="bar-container">
               <div id="xp-fill" style={{ width: `${(runStats.xp / runStats.xpNeeded) * 100}%` }} />
               <div className="bar-text" id="level-text">
                 ÚROVEŇ {runStats.level}
