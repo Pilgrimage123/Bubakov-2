@@ -92,7 +92,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "vignettes-grid",
-				style: { gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" },
+				style: { gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))" },
 				children: VILLAGE_BUILDINGS.map((b) => {
 					const lvl = meta[b.levelKey] || 0;
 					const cost = b.cost(lvl);

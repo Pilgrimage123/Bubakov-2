@@ -32,3 +32,15 @@
 ## 2026-10-03 — Dotykové ovládání: Odstranění duplicitní lišty schopnosti
 - Na dotykových displejích a při aktivním dotykovém ovládání byla z bojové arény odstraněna spodní lišta „Speciální schopnost“.
 - Pro aktivaci i přehled o stavu a odpočtu schopnosti plně dostačuje vyhrazené kruhové akční tlačítko vpravo dole, čímž se uvolnil prostor arény.
+
+## 2026-10-03 — Přeměna Svatovítského balzámu na Jitrnici
+- Svatovítský balzám byl nahrazen tradiční českou zabijačkovou jitrnicí se špejlemi na obou koncích podle folklorní předlohy.
+- Vytvořen nový detailní ladovský renderer `drawJitrnice` s přírodním střívkem, viditelným kořením s majoránkou, leskem vařeného střívka a zašpejlovanými konci.
+- Přidán nový vektorový komponent `JitrniceIcon` a SVG grafika `public/images/jitrnice.svg`.
+- Aktualizovány truhly s odměnami, výherní válec i texty dropů v aréně i herním plánu.
+
+## 2026-10-03 — Dotykové ovládání: Zvýšení pozice joysticku a speciální schopnosti
+- Tlačítko virtuálního joysticku a tlačítko speciální schopnosti byly na dotykovém displeji posunuty o 10 % výšky obrazovky výše (`bottom: calc(... + 10vh / 10dvh)`).
+- Upravena a rozšířena i dotyková zóna pro plynulé a pohodlné ovládání palci bez nechtěného přejíždění přes systémové ovládací lišty telefonu.
+
+

@@ -4848,35 +4848,144 @@ var Lada = {
 			ctx.fillText("K", x, y + bob);
 		}
 	},
-	drawPotion(ctx, x, y, time) {
-		const bob = Math.sin(time * 5) * 4;
-		this.drawShadow(ctx, x, y, 12);
+	drawJitrnice(ctx, x, y, scale = 1, angle = 0) {
 		ctx.save();
-		ctx.translate(x, y + bob);
-		ctx.shadowColor = COLORS.green;
-		ctx.shadowBlur = 10;
-		this.setupPath(ctx, "#E8F5E9", COLORS.ink, 2.5);
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.scale(scale, scale);
+
+		// Ground shadow
+		ctx.fillStyle = "rgba(38, 23, 14, 0.28)";
 		ctx.beginPath();
-		ctx.moveTo(-5, -12);
-		ctx.lineTo(-5, -6);
-		ctx.quadraticCurveTo(-14, 0, -12, 14);
-		ctx.lineTo(12, 14);
-		ctx.quadraticCurveTo(14, 0, 5, -6);
-		ctx.lineTo(5, -12);
+		ctx.ellipse(0, 14, 22, 6, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Wooden skewers (špejle) - authentic rustic wooden pegs piercing the casing
+		// Left skewer
+		ctx.strokeStyle = "#22140A";
+		ctx.lineWidth = 4.2;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(-24, -4);
+		ctx.lineTo(-17, 18);
+		ctx.stroke();
+
+		ctx.strokeStyle = "#5C3D24";
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-24, -4);
+		ctx.lineTo(-17, 18);
+		ctx.stroke();
+
+		ctx.strokeStyle = "#8A623F";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(-24, -4);
+		ctx.lineTo(-21, 6);
+		ctx.stroke();
+
+		// Right skewer
+		ctx.strokeStyle = "#22140A";
+		ctx.lineWidth = 4.2;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(24, -4);
+		ctx.lineTo(17, 18);
+		ctx.stroke();
+
+		ctx.strokeStyle = "#5C3D24";
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(24, -4);
+		ctx.lineTo(17, 18);
+		ctx.stroke();
+
+		ctx.strokeStyle = "#8A623F";
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.moveTo(24, -4);
+		ctx.lineTo(21, 6);
+		ctx.stroke();
+
+		// Curved sausage body (classic crescent jitrnice arching upward in center)
+		const casingGrad = ctx.createLinearGradient(0, -14, 0, 14);
+		casingGrad.addColorStop(0, "#F2EADA");
+		casingGrad.addColorStop(0.3, "#E4D7BE");
+		casingGrad.addColorStop(0.7, "#C7B79B");
+		casingGrad.addColorStop(1, "#99876C");
+
+		this.setupPath(ctx, casingGrad, COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-20, 6);
+		ctx.bezierCurveTo(-16, -6, -8, -13, 0, -13);
+		ctx.bezierCurveTo(8, -13, 16, -6, 20, 6);
+		ctx.bezierCurveTo(22, 11, 18, 14, 14, 13);
+		ctx.bezierCurveTo(8, 7, 3, 2, 0, 2);
+		ctx.bezierCurveTo(-3, 2, -8, 7, -14, 13);
+		ctx.bezierCurveTo(-18, 14, -22, 11, -20, 6);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = COLORS.leafGreen;
+
+		// Pinched casing knots at ends
+		// Left knot
+		this.setupPath(ctx, "#D3C2A3", COLORS.ink, 2);
 		ctx.beginPath();
-		ctx.moveTo(-10, 12);
-		ctx.lineTo(10, 12);
-		ctx.quadraticCurveTo(11, 4, 0, 4);
-		ctx.quadraticCurveTo(-11, 4, -10, 12);
+		ctx.ellipse(-20, 8, 3.5, 4.5, -0.3, 0, Math.PI * 2);
 		ctx.fill();
-		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2);
-		ctx.fillRect(-4, -17, 8, 5);
-		ctx.strokeRect(-4, -17, 8, 5);
+		ctx.stroke();
+
+		// Right knot
+		this.setupPath(ctx, "#D3C2A3", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(20, 8, 3.5, 4.5, 0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Visible filling specks under translucent skin (pork meat, majoránka, barley)
+		ctx.fillStyle = "rgba(74, 58, 40, 0.65)";
+		const specks = [
+			[-14, 3, 1.2], [-11, -3, 1.4], [-7, -8, 1.2], [-4, -1, 1.5],
+			[0, -7, 1.6], [4, -1, 1.4], [7, -8, 1.3], [11, -3, 1.4],
+			[14, 3, 1.2], [-3, -6, 1.1], [3, -5, 1.2]
+		];
+		for (const [sx, sy, sr] of specks) {
+			ctx.beginPath();
+			ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Marjoram flecks (greenish herb touches)
+		ctx.fillStyle = "rgba(68, 84, 49, 0.75)";
+		for (const [mx, my] of [[-9, -1], [-2, -8], [2, -2], [9, -4]]) {
+			ctx.beginPath();
+			ctx.ellipse(mx, my, 1.5, 0.8, 0.5, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Glistening wet sheen reflection along top spine (boiled pork natural skin sheen)
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.82)";
+		ctx.lineWidth = 2.2;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(-13, -2);
+		ctx.bezierCurveTo(-8, -9, -3, -11, 0, -11);
+		ctx.bezierCurveTo(3, -11, 8, -9, 13, -2);
+		ctx.stroke();
+
+		// Extra bright apex shine
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(-4, -11);
+		ctx.lineTo(4, -11);
+		ctx.stroke();
+
 		ctx.restore();
+	},
+	drawPotion(ctx, x, y, time) {
+		const bob = Math.sin(time * 5) * 3.5;
+		this.drawJitrnice(ctx, x, y + bob, 1.15, Math.sin(time * 2.5) * 0.06);
 	},
 	drawCzechBuchta(ctx, x, y, scale = 1, angle = 0) {
 		ctx.save();

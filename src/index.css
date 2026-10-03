@@ -1376,6 +1376,98 @@ body {
   pointer-events: auto;
 }
 
+/* In-game HUD quick pause button for mobile & touch */
+.hud-pause-btn {
+  pointer-events: auto;
+  flex: 0 0 auto;
+  height: 28px;
+  min-width: 36px;
+  padding: 0 8px;
+  background: var(--dark-blue);
+  color: var(--white);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: all 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.hud-pause-btn:hover {
+  background: var(--blue);
+}
+.hud-pause-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+/* Stats row elements */
+.stats-clock-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.stats-clock-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.stats-clock-timer {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: #111111;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.stats-clock-phase {
+  font-size: 0.82rem;
+  color: #451A03;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Hub toolbar */
+.menu-hub-toolbar {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Stage summary callout elements */
+.stage-summary-info {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.stage-proceed-btn {
+  white-space: nowrap;
+}
+
+/* Pause & Tally actions rows */
+.pause-actions-row,
+.tally-actions-row {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.tavern-footer-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  width: 100%;
+}
+
 .touch-toggle-btn {
   background: var(--wood-light);
   color: var(--parchment);
@@ -1415,9 +1507,10 @@ body {
   width: 48vw;
   max-width: 420px;
   min-width: 220px;
-  height: 52vh;
-  max-height: 420px;
-  min-height: 240px;
+  height: 62vh;
+  height: 62dvh;
+  max-height: 500px;
+  min-height: 300px;
   pointer-events: auto;
   touch-action: none;
   user-select: none;
@@ -1426,7 +1519,8 @@ body {
 
 .joystick-base {
   position: absolute;
-  bottom: 35px;
+  bottom: calc(35px + 10vh);
+  bottom: calc(35px + 10dvh);
   left: 35px;
   width: 136px;
   height: 136px;
@@ -1494,7 +1588,8 @@ body {
 
 .touch-action-btn {
   position: absolute;
-  bottom: 35px;
+  bottom: calc(35px + 10vh);
+  bottom: calc(35px + 10dvh);
   right: 35px;
   width: 88px;
   height: 88px;
@@ -1554,97 +1649,552 @@ body {
 }
 
 @media (max-width: 650px) {
-  #ult-indicator {
-    display: none !important;
+  /* Panel and general modals for mobile */
+  .panel {
+    padding: 12px 10px;
+    width: 96%;
+    max-width: 100%;
+    max-height: 94vh;
+    border-width: 3px;
+    border-radius: 10px;
+    box-shadow: 4px 4px 0px var(--ink);
   }
+
+  .panel h1 {
+    font-size: clamp(1.6rem, 6.2vw, 2.1rem);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 0px var(--ink);
+  }
+
+  .panel h2 {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 0px var(--ink);
+  }
+
+  .panel p {
+    font-size: 0.88rem;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  /* Buttons & Tabs */
+  .lada-btn {
+    margin: 4px;
+    padding: 8px 14px;
+    font-size: 0.92rem;
+    border-width: 2.5px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .btn-small {
+    padding: 5px 9px;
+    font-size: 0.8rem;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .modal-tabs {
+    gap: 5px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 5px 9px;
+    font-size: 0.82rem;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--ink);
+    border-radius: 6px;
+  }
+
+  .tab-btn.active {
+    box-shadow: 3px 3px 0 var(--ink);
+    transform: translateY(-1px);
+  }
+
+  /* Top Right Controls */
   .hud-top-right, .menu-top-right {
-    top: 8px;
-    right: 8px;
+    top: 6px;
+    right: 6px;
     gap: 4px;
   }
+
   .download-toggle-btn, .sound-toggle-btn, .touch-toggle-btn {
     padding: 4px 7px;
     font-size: 0.75rem;
     border-width: 2px;
     box-shadow: 2px 2px 0px var(--ink);
   }
+
+  /* Main Hub Toolbar */
+  .menu-hub-toolbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 6px;
+    margin-top: 12px;
+    width: 100%;
+  }
+
+  .menu-hub-toolbar .lada-btn {
+    margin: 0;
+    width: 100%;
+    padding: 7px 6px;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Stage Select */
+  .level-select-section {
+    padding: 8px 6px;
+    margin: 10px 0 14px 0;
+    border-width: 2px;
+    border-radius: 8px;
+  }
+
+  .level-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .level-card {
+    padding: 10px 8px;
+    border-width: 2.5px;
+    box-shadow: 3px 3px 0 var(--ink);
+    min-width: 0;
+  }
+
+  .stage-summary-callout {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+    margin: 10px 0 14px 0;
+    gap: 10px;
+  }
+
+  .stage-summary-info {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .stage-proceed-btn {
+    width: 100%;
+    text-align: center;
+    white-space: normal;
+    padding: 10px !important;
+    font-size: 1.05rem !important;
+    margin: 0 !important;
+  }
+
+  /* Hunter Select */
+  .hunter-screen-nav-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+
+  .hunter-screen-nav-bar > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hunter-stage-chip {
+    width: 100%;
+    padding: 6px 10px;
+    justify-content: space-between;
+  }
+
+  .char-select-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  .char-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 10px;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* In-game HUD */
+  #ult-indicator {
+    display: none !important;
+  }
+
+  .hud-pause-btn {
+    height: 24px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0 5px;
+    font-size: 12px;
+    border-width: 2px;
+  }
+
   #top-bar {
-    /*
-     * Keep the complete HUD inside the same 22% viewport budget.
-     * Do not push it down to 55px on mobile.
-     */
-    top: max(4px, env(safe-area-inset-top));
-    width: calc(100% - 10px);
+    top: max(3px, env(safe-area-inset-top));
+    width: calc(100% - 8px);
     max-width: none;
-    max-height: calc(22dvh - max(4px, env(safe-area-inset-top)));
-    gap: 4px;
+    max-height: calc(24dvh - max(3px, env(safe-area-inset-top)));
+    gap: 3px;
   }
 
   #top-bar .bar-container,
   #xp-container {
-    flex-basis: 23px;
-    height: 23px;
-    border-width: 3px;
+    flex-basis: 22px;
+    height: 22px;
+    border-width: 2.5px;
   }
 
   .bar-text {
     font-size: 11px;
-    letter-spacing: 0.35px;
+    letter-spacing: 0.3px;
+  }
+
+  #courage-container .bar-text,
+  #xp-container .bar-text {
+    font-size: 12px;
+    letter-spacing: 0.4px;
   }
 
   #stats-row {
-    max-height: 30px;
-    padding: 3px 7px;
-    gap: 7px;
+    max-height: 28px;
+    padding: 2px 6px;
+    gap: 6px;
     font-size: 0.72rem;
     border-width: 2px;
-    border-radius: 7px;
+    border-radius: 6px;
     box-shadow: 2px 2px 0px var(--ink);
+  }
+
+  .stats-clock-icon {
+    font-size: 1.05rem;
+  }
+
+  .stats-clock-timer {
+    font-size: 0.88rem;
+  }
+
+  .stats-clock-phase {
+    display: none;
   }
 
   #stats-row > div:nth-child(n + 4) {
     display: none;
   }
 
-  #courage-container,
-  #xp-container {
-    height: 23px;
-  }
-
-  #courage-container .bar-text,
-  #xp-container .bar-text {
-    font-size: 13px;
-    letter-spacing: 0.5px;
-  }
-
   #boss-bar-wrap {
-    max-height: 44px;
+    max-height: 40px;
   }
 
   #boss-bar-container {
-    height: 18px;
+    height: 16px;
   }
+
+  /* Touch controls */
+  .joystick-touch-zone {
+    width: 48vw;
+    min-width: 130px;
+    max-width: 180px;
+    height: 44vh;
+    max-height: 280px;
+    min-height: 190px;
+  }
+
   .joystick-base {
-    width: 120px;
-    height: 120px;
-    bottom: 20px;
-    left: 20px;
+    width: 104px;
+    height: 104px;
+    bottom: 14px;
+    left: 14px;
   }
+
   .joystick-knob {
-    width: 54px;
-    height: 54px;
+    width: 46px;
+    height: 46px;
   }
+
   .touch-action-btn {
-    width: 76px;
-    height: 76px;
-    bottom: 20px;
-    right: 20px;
+    width: 68px;
+    height: 68px;
+    bottom: 14px;
+    right: 14px;
+    box-shadow: 3px 3px 0 var(--ink);
   }
+
   .touch-ult-icon {
-    font-size: 24px;
+    font-size: 22px;
   }
+
   .touch-ult-label {
-    font-size: 10px;
+    font-size: 9px;
+  }
+
+  /* Painted Chest Slot Machine */
+  .slot-machine-cabinet {
+    padding: 12px 6px;
+    width: 98vw;
+    max-width: 100%;
+    border-width: 3px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.8), 4px 4px 0 var(--ink);
+  }
+
+  .slot-machine-cabinet h1 {
+    font-size: clamp(1.3rem, 5.5vw, 1.7rem) !important;
+  }
+
+  .slot-reel-housing {
+    gap: 4px;
+    padding: 6px 3px;
+    margin: 10px 0;
+    border-width: 2px;
+    border-radius: 8px;
+  }
+
+  .slot-reel-card {
+    min-width: 0;
+    width: 100%;
+    padding: 6px 3px;
+    border-width: 2px;
+    border-radius: 6px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .slot-reel-window {
+    height: 64px;
+    border-width: 1.5px;
+  }
+
+  .slot-reel-card .game-icon {
+    transform: scale(0.75);
+  }
+
+  /* Pause Screen */
+  .pause-weapons-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  .pause-weapon-card {
+    padding: 8px 10px;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .pause-actions-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .pause-actions-row .lada-btn {
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    font-size: 1rem !important;
+  }
+
+  /* Tally Screen */
+  .tally-title {
+    font-size: clamp(1.6rem, 5.5vw, 2.2rem);
+    margin-bottom: 0.75rem;
+    text-shadow: 2px 2px 0px var(--blood-red), 4px 4px 0px var(--ink);
+  }
+
+  .tally-row {
+    width: 100%;
+    font-size: 1.15rem;
+    margin: 6px 0;
+    padding-bottom: 5px;
+    border-bottom-width: 2px;
+  }
+
+  .tally-number {
+    font-size: 1.6rem;
+    text-shadow: 2px 2px 0px var(--parchment);
+  }
+
+  .tally-actions-row {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .tally-actions-row .lada-btn {
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    font-size: 1.05rem;
+  }
+
+  /* Level Up Screen */
+  .choice-card {
+    padding: 10px 12px;
+    margin: 8px 0;
+    gap: 10px;
+    border-width: 2.5px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .choice-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+  }
+
+  .choice-text h3 {
+    font-size: 1.05rem;
+  }
+
+  .choice-text p {
+    font-size: 0.82rem;
+    line-height: 1.25;
+  }
+
+  /* Village & Tavern */
+  .vignettes-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .vignette-card {
+    padding: 10px;
+    border-width: 2.5px;
+  }
+
+  .trophies-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+    max-height: 380px;
+  }
+
+  .trophy-card {
+    padding: 10px;
+    border-width: 2px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  .tavern-footer-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .tavern-footer-buttons .lada-btn {
+    width: 100%;
+    margin: 0;
+    padding: 8px 4px;
+    font-size: 0.82rem;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Bestiary */
+  .bestiary-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .bestiary-list {
+    max-height: 140px;
+    padding: 6px;
+    gap: 5px;
+  }
+
+  .bestiary-item-btn {
+    padding: 6px 8px;
+    font-size: 0.88rem;
+  }
+
+  .bestiary-detail-card {
+    padding: 12px 10px;
+    max-height: 360px;
+    border-width: 2.5px;
+  }
+
+  .bestiary-canvas {
+    width: 130px;
+    height: 130px;
+    border-width: 3px;
+  }
+
+  /* Keycaps in controls modal */
+  .keycap {
+    min-width: 26px;
+    height: 26px;
+    padding: 1px 5px;
+    font-size: 0.88rem;
+  }
+
+  .keycap-wide {
+    min-width: 100px;
+    padding: 1px 8px;
+    font-size: 0.82rem;
+  }
+
+  /* Plan modal */
+  .plan-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .plan-header h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Extra rules for super narrow older phone screens (<= 380px, e.g. iPhone 5/SE, 320px/360px width) */
+@media (max-width: 380px) {
+  .panel {
+    padding: 9px 6px;
+    width: 98%;
+  }
+
+  .portrait-canvas {
+    width: 140px;
+    height: 140px;
+  }
+
+  .menu-hub-toolbar {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+
+  .menu-hub-toolbar .lada-btn {
+    font-size: 0.76rem;
+    padding: 6px 3px;
+  }
+
+  .tavern-footer-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .joystick-base {
+    width: 96px;
+    height: 96px;
+    bottom: calc(10px + 10vh);
+    bottom: calc(10px + 10dvh);
+    left: 10px;
+  }
+
+  .touch-action-btn {
+    width: 62px;
+    height: 62px;
+    bottom: calc(10px + 10vh);
+    bottom: calc(10px + 10dvh);
+    right: 10px;
   }
 }
 

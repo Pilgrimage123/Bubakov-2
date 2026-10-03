@@ -734,12 +734,12 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 										style: { color: "#000000" },
 										children: [
-											"🧪 ",
+											"🌭 ",
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
 												style: { color: "#000000" },
-												children: "Fáze 3 – Lékárničky a čistá ekonomika mincí:"
+												children: "Fáze 3 – Jitrnice a čistá ekonomika mincí:"
 											}),
-											" Svatovítské léčivé balzámy (+30 HP) a pečené koláče (+15 HP) padající z nepřátel. Nominální mince: Krejcar (1 kr.), Stříbrňák (5 kr.), Tolar (15 kr.)."
+											" Poctivé vesnické jitrnice (+30 HP) a pečené koláče (+15 HP) padající z nepřátel. Nominální mince: Krejcar (1 kr.), Stříbrňák (5 kr.), Tolar (15 kr.)."
 										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
@@ -1079,7 +1079,7 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 										}),
 										" Přesně vyladěné hodnoty ",
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "ENEMY_POINTS" }),
-										" pro dropy truhel, léčivých balzámů, koláčů, mincí a dušiček pro všech 10 nových monster."
+										" pro dropy truhel, jitrnic, koláčů, mincí a dušiček pro všech 10 nových monster."
 									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
@@ -1378,7 +1378,7 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 									style: { color: "#000000" },
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
 										style: { color: "#000000" },
-										children: "Léčivé lahvičky a koláče:"
+										children: "Jitrnice a koláče:"
 									}), " Vzácné předměty na zemi obnovující zdraví."]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {

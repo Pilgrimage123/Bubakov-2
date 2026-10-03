@@ -437,7 +437,7 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								style: {
 									display: "grid",
-									gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+									gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
 									gap: "10px"
 								},
 								children: [
@@ -588,7 +588,7 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								style: {
 									display: "grid",
-									gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+									gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 140px), 1fr))",
 									gap: "8px",
 									fontSize: "0.88rem",
 									fontWeight: 700

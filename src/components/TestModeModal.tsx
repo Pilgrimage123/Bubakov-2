@@ -452,7 +452,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
 								display: "grid",
-								gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+								gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
 								gap: "12px"
 							},
 							children: HUNTER_KEYS.map((hKey) => {
@@ -598,7 +598,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
 								display: "grid",
-								gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+								gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
 								gap: "12px"
 							},
 							children: [
@@ -788,7 +788,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
 								display: "grid",
-								gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+								gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
 								gap: "10px"
 							},
 							children: ALL_WEAPON_KEYS.map((wId) => {

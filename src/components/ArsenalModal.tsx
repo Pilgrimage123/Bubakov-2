@@ -165,7 +165,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					style: {
 						display: "grid",
-						gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+						gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 240px), 1fr))",
 						gap: "14px",
 						overflowY: "auto",
 						padding: "4px",

@@ -1727,9 +1727,9 @@ export default function App() {
         action: () => setRunStats((s) => ({ ...s, coins: s.coins + 100 })),
       },
       {
-        name: 'Svatovítský balzám (+40 HP)',
-        desc: 'Hojivý klášterní balzám',
-        icon: '🧪',
+        name: 'Zabijačková jitrnice (+40 HP)',
+        desc: 'Poctivá špejlovaná jitrnice ze zabijačky',
+        icon: 'jitrnice',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 40);
@@ -3163,7 +3163,7 @@ export default function App() {
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
                   player.hp = Math.min(player.maxHp, player.hp + potionHeal);
                   player.invulnerabilityTimer = waterLevel * 2;
-                  engine.texts.push(new DamageText(player.x, player.y - 45, '+30 HP 🧪', COLORS.green, true));
+                  engine.texts.push(new DamageText(player.x, player.y - 45, '+30 HP Jitrnice', COLORS.green, true));
                 } else if (d.type === 'bread') {
                   sound.potion();
                   player.hp = Math.min(player.maxHp, player.hp + 15);
@@ -5070,24 +5070,35 @@ export default function App() {
         <div id="hud">
           {/* Top HUD: Kuráž + XP + compact combat stats */}
           <div id="top-bar">
-            {/* Kuráž = Lovcovo HP */}
-            <div
-              id="courage-container"
-              className="bar-container"
-              aria-label={`Kuráž ${Math.ceil(runStats.hp)} z ${Math.ceil(runStats.maxHp)}`}
-            >
+            {/* Kuráž = Lovcovo HP + Mobile Quick Pause Button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
               <div
-                id="courage-fill"
-                style={{
-                  width: `${Math.max(
-                    0,
-                    Math.min(100, (runStats.hp / Math.max(1, runStats.maxHp)) * 100)
-                  )}%`,
-                }}
-              />
-              <div className="bar-text">
-                KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
+                id="courage-container"
+                className="bar-container"
+                style={{ flex: 1 }}
+                aria-label={`Kuráž ${Math.ceil(runStats.hp)} z ${Math.ceil(runStats.maxHp)}`}
+              >
+                <div
+                  id="courage-fill"
+                  style={{
+                    width: `${Math.max(
+                      0,
+                      Math.min(100, (runStats.hp / Math.max(1, runStats.maxHp)) * 100)
+                    )}%`,
+                  }}
+                />
+                <div className="bar-text">
+                  KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
+                </div>
               </div>
+              <button
+                className="hud-pause-btn"
+                onClick={togglePause}
+                title="Pozastavit hru [P / Esc]"
+                aria-label="Pozastavit hru"
+              >
+                ⏸️
+              </button>
             </div>
 
             {/* XP bar */}
@@ -5100,11 +5111,11 @@ export default function App() {
 
             {/* Stats row with Day/Night clock indicator */}
             <div id="stats-row">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.6rem' }}>{runStats.dayPhase.icon}</span>
+              <div className="stats-clock-block">
+                <span className="stats-clock-icon">{runStats.dayPhase.icon}</span>
                 <div>
-                  <div style={{ fontSize: '1.4rem', lineHeight: 1, color: '#111111' }}>{formatTimer(runStats.time)}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#451A03', fontWeight: 900 }}>
+                  <div className="stats-clock-timer">{formatTimer(runStats.time)}</div>
+                  <div className="stats-clock-phase">
                     {runStats.dayPhase.name}
                   </div>
                 </div>
@@ -5402,11 +5413,11 @@ export default function App() {
 
             {/* CONFIRMATION / PROCEED CALLOUT BAR */}
             <div className="stage-summary-callout">
-              <div style={{ flex: '1 1 300px' }}>
+              <div className="stage-summary-info">
                 <div style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
                   Vybraná výprava pro nadcházející noc:
                 </div>
-                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0' }}>
+                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '1.7rem' }}>{currentLevel.icon}</span>
                   <span>{currentLevel.name}</span>
                   <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
@@ -5419,14 +5430,13 @@ export default function App() {
               </div>
 
               <button
-                className="lada-btn"
+                className="lada-btn stage-proceed-btn"
                 style={{
                   padding: '12px 28px',
                   fontSize: '1.25rem',
                   background: 'var(--leaf-green)',
                   color: 'var(--white)',
                   boxShadow: '4px 4px 0px var(--ink)',
-                  whiteSpace: 'nowrap',
                 }}
                 onClick={() => {
                   sound.coin();
@@ -5438,7 +5448,7 @@ export default function App() {
             </div>
 
             {/* MAIN HUB TOOLBAR */}
-            <div style={{ marginTop: '16px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="menu-hub-toolbar">
               <button
                 className="lada-btn btn-small"
                 style={{
@@ -5571,7 +5581,7 @@ export default function App() {
             </div>
 
             {/* Character Selection Grid with animated canvas portraits */}
-            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))', gap: '15px' }}>
+            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
               {/* Poutník - Výchozí odemčený lovec */}
               <div
                 className="char-card"
@@ -5615,7 +5625,7 @@ export default function App() {
             </div>
 
             {/* Bottom Toolbar on Hunter Select Screen */}
-            <div style={{ marginTop: '22px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="menu-hub-toolbar">
               <button
                 className="lada-btn btn-small"
                 style={{
@@ -5796,17 +5806,17 @@ export default function App() {
             </div>
 
             {/* Pause Action Buttons */}
-            <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+            <div className="pause-actions-row">
               <button
                 className="lada-btn"
-                style={{ padding: '12px 36px', fontSize: '1.3rem', background: 'var(--leaf-green)' }}
+                style={{ background: 'var(--leaf-green)' }}
                 onClick={togglePause}
               >
-                Pokračovat ve hře (klávesa P / Esc) ⚔️
+                Pokračovat ve hře ⚔️
               </button>
               <button
                 className="lada-btn"
-                style={{ padding: '12px 24px', fontSize: '1.05rem', background: '#1D4ED8', color: '#FFFFFF' }}
+                style={{ background: '#1D4ED8', color: '#FFFFFF' }}
                 onClick={() => {
                   sound.coin();
                   setIsControlsOpen(true);
@@ -5816,7 +5826,7 @@ export default function App() {
               </button>
               <button
                 className="lada-btn"
-                style={{ padding: '12px 24px', fontSize: '1.05rem', background: 'var(--wood-dark)' }}
+                style={{ background: 'var(--wood-dark)' }}
                 onClick={quitToTavernFromPause}
                 title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
               >
@@ -5896,7 +5906,7 @@ export default function App() {
                     <div className="slot-reel-window">
                       {!isLocked ? (
                         <div className="slot-spinning-strip">
-                          {['krejcar', 'czech_buchta', '💰', '🧪', '🥧', '👢', '🎋', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', '🧪', '🥧', '👢', '🎋'].map((sym, sIdx) => (
+                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', '🎋', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', '🎋'].map((sym, sIdx) => (
                             <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <GameIcon icon={sym} size={38} />
                             </div>
@@ -6038,7 +6048,7 @@ export default function App() {
             <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
           </div>
 
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '30px' }}>
+          <div className="tally-actions-row">
             {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
               <button
                 className="lada-btn"
@@ -6162,7 +6172,7 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
+            <div className="tavern-footer-buttons">
               <button
                 className="lada-btn btn-small"
                 style={{ background: '#1D4ED8', color: '#FFFFFF', padding: '12px 24px' }}
