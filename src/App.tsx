@@ -2317,8 +2317,8 @@ export default function App() {
             }
 
             // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 1)
-            if (curLvl.id === 1 && engine.finalBossSpawned) {
-              const cert = engine.enemies.find((e) => e.id === 'cert' && !e.isDefeated);
+            const cert = engine.enemies.find((e) => e.id === 'cert' && !e.isDefeated);
+            if (cert && (cert.isBoss || engine.finalBossSpawned || curLvl.id === 1)) {
               if (cert) {
                 const isPhase2 = cert.hp <= cert.maxHp * 0.5;
 
@@ -2399,8 +2399,13 @@ export default function App() {
                   if (dToP < 320 && dToP > 50) {
                     sound.slash();
                     const chAng = Math.atan2(player.y - cert.y, player.x - cert.x);
-                    cert.vx = Math.cos(chAng) * (isPhase2 ? 310 : 250);
-                    cert.vy = Math.sin(chAng) * (isPhase2 ? 310 : 250);
+                    const chSpd = isPhase2 ? 310 : 250;
+                    cert.aiState = 'charge';
+                    cert.aiTimer = isPhase2 ? 0.75 : 0.65;
+                    cert.chargeDirX = chAng;
+                    cert.chargeSpeed = chSpd;
+                    cert.vx = Math.cos(chAng) * chSpd;
+                    cert.vy = Math.sin(chAng) * chSpd;
                     engine.texts.push(new DamageText(cert.x, cert.y - 50, 'VÝPAD VIDLEMI! 🔱', COLORS.mustard, true));
                   }
                 }
@@ -2408,8 +2413,8 @@ export default function App() {
             }
 
             // PŮLNOČNÍ HEJKAL BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
-            if (curLvl.id === 2 && engine.finalBossSpawned) {
-              const hejkal = engine.enemies.find((e) => e.id === 'hejkal' && !e.isDefeated);
+            const hejkal = engine.enemies.find((e) => e.id === 'hejkal' && !e.isDefeated);
+            if (hejkal && (hejkal.isBoss || engine.finalBossSpawned || curLvl.id === 2)) {
               if (hejkal) {
                 const isPhase2 = hejkal.hp <= hejkal.maxHp * 0.5;
 
@@ -2479,20 +2484,33 @@ export default function App() {
                 if (engine.hejkalSmashTimer <= 0) {
                   engine.hejkalSmashTimer = isPhase2 ? 6.0 : 8.5;
                   const dToP = Math.hypot(player.x - hejkal.x, player.y - hejkal.y);
-                  if (dToP < 190) {
-                    sound.hit();
-                    engine.texts.push(new DamageText(hejkal.x, hejkal.y - 40, 'DUBILKA! 🔨', '#A16207', true));
+                  sound.heavyHit();
+                  engine.texts.push(new DamageText(hejkal.x, hejkal.y - 40, 'DUBILKA! 🔨', '#A16207', true));
+                  for (let i = 0; i < 16; i++) {
+                    const ang = (i / 16) * Math.PI * 2;
+                    engine.particles.push({
+                      x: hejkal.x + Math.cos(ang) * 30,
+                      y: hejkal.y + Math.sin(ang) * 30,
+                      vx: Math.cos(ang) * 140,
+                      vy: Math.sin(ang) * 140,
+                      life: 0.45,
+                      color: i % 2 === 0 ? '#15803D' : '#78350F',
+                      size: 5,
+                    });
+                  }
+                  if (dToP < 210) {
                     player.takeDamage(isPhase2 ? 32 : 24, 'physical');
-                    player.x += (Math.random() - 0.5) * 50;
-                    player.y += (Math.random() - 0.5) * 50;
+                    const pushAng = Math.atan2(player.y - hejkal.y, player.x - hejkal.x);
+                    player.x += Math.cos(pushAng) * 45;
+                    player.y += Math.sin(pushAng) * 45;
                   }
                 }
               }
             }
 
             // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 3)
-            if (curLvl.id === 3 && engine.finalBossSpawned) {
-              const obr = engine.enemies.find((e) => e.id === 'obr' && !e.isDefeated);
+            const obr = engine.enemies.find((e) => e.id === 'obr' && !e.isDefeated);
+            if (obr && (obr.isBoss || engine.finalBossSpawned || curLvl.id === 3)) {
               if (obr) {
                 const isPhase2 = obr.hp <= obr.maxHp * 0.5;
 
@@ -2557,8 +2575,9 @@ export default function App() {
                   const dist = Math.hypot(player.x - obr.x, player.y - obr.y);
                   if (dist < 260) {
                     player.takeDamage(isPhase2 ? 28 : 20, 'physical');
-                    player.x += (Math.random() - 0.5) * 70;
-                    player.y += (Math.random() - 0.5) * 70;
+                    const qAng = Math.atan2(player.y - obr.y, player.x - obr.x);
+                    player.x += Math.cos(qAng) * 55;
+                    player.y += Math.sin(qAng) * 55;
                   }
                   for (let i = 0; i < 20; i++) {
                     const qAng = Math.random() * Math.PI * 2;
@@ -2578,8 +2597,8 @@ export default function App() {
             }
 
             // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
-            if (curLvl.id === 4 && engine.finalBossSpawned) {
-              const mlynar = engine.enemies.find((e) => e.id === 'mlynar' && !e.isDefeated);
+            const mlynar = engine.enemies.find((e) => e.id === 'mlynar' && !e.isDefeated);
+            if (mlynar && (mlynar.isBoss || engine.finalBossSpawned || curLvl.id === 4)) {
               if (mlynar) {
                 const isPhase2 = mlynar.hp <= mlynar.maxHp * 0.5;
 
@@ -2685,8 +2704,9 @@ export default function App() {
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2800);
                   engine.texts.push(new DamageText(mlynar.x, mlynar.y - 60, 'MOUČNÝ MRAK!', '#F5F5F4', true));
                   // Shove player gently from blast
-                  player.x += (Math.random() - 0.5) * 80;
-                  player.y += (Math.random() - 0.5) * 80;
+                  const fAng = Math.atan2(player.y - mlynar.y, player.x - mlynar.x);
+                  player.x += Math.cos(fAng) * 45;
+                  player.y += Math.sin(fAng) * 45;
                   // Flour particles
                   for (let i = 0; i < 35; i++) {
                     const pAng = Math.random() * Math.PI * 2;
@@ -2708,8 +2728,8 @@ export default function App() {
             }
 
             // BEZHLAVÝ RYTÍŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
-            if (curLvl.id === 5 && engine.finalBossSpawned) {
-              const rytir = engine.enemies.find((e) => e.id === 'bezhlavy_rytir' && !e.isDefeated);
+            const rytir = engine.enemies.find((e) => e.id === 'bezhlavy_rytir' && !e.isDefeated);
+            if (rytir && (rytir.isBoss || engine.finalBossSpawned || curLvl.id === 5)) {
               if (rytir) {
                 const isPhase2 = rytir.hp <= rytir.maxHp * 0.5;
 
@@ -2781,8 +2801,13 @@ export default function App() {
                   if (dToP < 340 && dToP > 60) {
                     sound.slash();
                     const chAng = Math.atan2(player.y - rytir.y, player.x - rytir.x);
-                    rytir.vx = Math.cos(chAng) * (isPhase2 ? 330 : 260);
-                    rytir.vy = Math.sin(chAng) * (isPhase2 ? 330 : 260);
+                    const chSpd = isPhase2 ? 330 : 260;
+                    rytir.aiState = 'charge';
+                    rytir.aiTimer = isPhase2 ? 0.75 : 0.65;
+                    rytir.chargeDirX = chAng;
+                    rytir.chargeSpeed = chSpd;
+                    rytir.vx = Math.cos(chAng) * chSpd;
+                    rytir.vy = Math.sin(chAng) * chSpd;
                     engine.texts.push(new DamageText(rytir.x, rytir.y - 50, 'VÝPAD ČEPELÍ! ⚔️', COLORS.red, true));
                   }
                 }
@@ -2790,8 +2815,8 @@ export default function App() {
             }
 
             // TŘÍHLAVÝ DRAK BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 6)
-            if (curLvl.id === 6 && engine.finalBossSpawned) {
-              const drak = engine.enemies.find((e) => e.id === 'drak' && !e.isDefeated);
+            const drak = engine.enemies.find((e) => e.id === 'drak' && !e.isDefeated);
+            if (drak && (drak.isBoss || engine.finalBossSpawned || curLvl.id === 6)) {
               if (drak) {
                 const isPhase2 = drak.hp <= drak.maxHp * 0.5;
 
@@ -4054,6 +4079,7 @@ export default function App() {
       zigZagTimer: 0,
       zigZagDir: Math.random() < 0.5 ? 1 : -1,
       chargeDirX: 0,
+      chargeSpeed: 0,
       puddleCd: 2.0 + Math.random() * 2.0,
 
       update(dt: number, player: any) {
@@ -4778,36 +4804,66 @@ export default function App() {
           }
         }
 
-        // 15. BEZHLAVÝ RYTÍŘ (bezhlavy_rytir) - Odražená hlava se vrací
+        // 15. BEZHLAVÝ RYTÍŘ (bezhlavy_rytir) - Odražená hlava se vrací & těžký výpad čepelí
         else if (this.id === 'bezhlavy_rytir') {
-          if (!this.isBoss) {
-            if (this.specialCd <= 0 && distToPlayer < 360) {
-              this.specialCd = 6.0;
-              sound.roar();
-              engineRef.current.projectiles.push({
-                x: this.x,
-                y: this.y,
-                vx: Math.cos(dirToPlayer) * 280,
-                vy: Math.sin(dirToPlayer) * 280,
-                angle: dirToPlayer,
-                speed: 280,
-                dmg: 36,
-                radius: 18,
-                type: 'physical',
-                visual: 'head_projectile',
-                life: 3.0,
-                maxLife: 3.0,
-                boomerang: true,
-                owner: this,
-                isEnemy: true,
-                pushback: 35,
-                statusText: 'ZTRACENÁ HLAVA! 💀',
-                dead: false,
+          if (this.aiState === 'charge') {
+            const chargeSpd = this.chargeSpeed || (this.enraged ? 330 : 260);
+            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
+            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
+            if (Math.random() < 0.35) {
+              engineRef.current.particles.push({
+                x: this.x + (Math.random() - 0.5) * 20,
+                y: this.y + this.radius * 0.5,
+                vx: (Math.random() - 0.5) * 50,
+                vy: -Math.random() * 30,
+                life: 0.35,
+                color: '#94A3B8',
+                size: 3.5,
               });
             }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+            }
+          } else {
+            if (!this.isBoss) {
+              if (this.specialCd <= 0 && distToPlayer < 360 && distToPlayer >= 180) {
+                this.specialCd = 6.0;
+                sound.roar();
+                engineRef.current.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(dirToPlayer) * 280,
+                  vy: Math.sin(dirToPlayer) * 280,
+                  angle: dirToPlayer,
+                  speed: 280,
+                  dmg: 36,
+                  radius: 18,
+                  type: 'physical',
+                  visual: 'head_projectile',
+                  life: 3.0,
+                  maxLife: 3.0,
+                  boomerang: true,
+                  owner: this,
+                  isEnemy: true,
+                  pushback: 35,
+                  statusText: 'ZTRACENÁ HLAVA! 💀',
+                  dead: false,
+                });
+              } else if (this.specialCd <= 0 && distToPlayer < 180) {
+                this.aiState = 'charge';
+                this.aiTimer = 0.65;
+                this.chargeDirX = dirToPlayer;
+                this.chargeSpeed = 260;
+                this.specialCd = 5.0;
+                sound.slash();
+                engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'VÝPAD ČEPELÍ! ⚔️', COLORS.red, true));
+                this.vx = Math.cos(dirToPlayer) * this.chargeSpeed;
+                this.vy = Math.sin(dirToPlayer) * this.chargeSpeed;
+              }
+            }
+            this.vx = Math.cos(dirToPlayer) * spd;
+            this.vy = Math.sin(dirToPlayer) * spd;
           }
-          this.vx = Math.cos(dirToPlayer) * spd;
-          this.vy = Math.sin(dirToPlayer) * spd;
         }
 
         // 16. PROKLETÝ SNĚHULÁK (snehulak) - Mrazivé kutálení (rolling snowball dash)
@@ -4879,10 +4935,322 @@ export default function App() {
           this.vy = Math.sin(dirToPlayer + wave) * spd;
         }
 
-        // STANDARD HOMING FOR OTHER MOBS
-        else {
+        // 19. PEKELNÝ ČERT (cert) - Pekelný výpad vidlemi & kopyty
+        else if (this.id === 'cert') {
+          if (this.aiState === 'charge') {
+            const chargeSpd = this.chargeSpeed || (this.enraged ? 310 : 250);
+            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
+            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
+            if (Math.random() < 0.4) {
+              engineRef.current.particles.push({
+                x: this.x + (Math.random() - 0.5) * 20,
+                y: this.y + this.radius * 0.4,
+                vx: (Math.random() - 0.5) * 60,
+                vy: (Math.random() - 0.5) * 60,
+                life: 0.35,
+                color: Math.random() < 0.5 ? '#DC2626' : '#F97316',
+                size: 4,
+              });
+            }
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+            }
+          } else {
+            if (!this.isBoss && distToPlayer < 260 && this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.65;
+              this.chargeDirX = dirToPlayer;
+              this.chargeSpeed = 250;
+              this.specialCd = 6.0;
+              sound.slash();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'VÝPAD VIDLEMI! 🔱', COLORS.mustard, true));
+              this.vx = Math.cos(dirToPlayer) * this.chargeSpeed;
+              this.vy = Math.sin(dirToPlayer) * this.chargeSpeed;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 20. PŮLNOČNÍ HEJKAL (hejkal) - Hromové zahejkání & dubilka
+        else if (this.id === 'hejkal') {
+          if (!this.isBoss && this.specialCd <= 0) {
+            this.specialCd = 7.0;
+            sound.roar();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'HÉÉÉ-J! 🌲🔊', '#22C55E', true));
+            const baseAng = dirToPlayer;
+            for (let i = 0; i < 3; i++) {
+              const wAng = baseAng + (i - 1) * 0.28;
+              engineRef.current.projectiles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(wAng) * 230,
+                vy: Math.sin(wAng) * 230,
+                angle: wAng,
+                speed: 230,
+                dmg: 22,
+                radius: 12,
+                type: 'physical',
+                visual: 'wood_shard',
+                life: 2.5,
+                maxLife: 2.5,
+                isEnemy: true,
+                pushback: 30,
+                dead: false,
+              });
+            }
+          }
           this.vx = Math.cos(dirToPlayer) * spd;
           this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 21. SKALNÍ OBR (obr) - Valící se balvan
+        else if (this.id === 'obr') {
+          if (!this.isBoss && this.specialCd <= 0 && distToPlayer > 160) {
+            this.specialCd = 6.5;
+            sound.hit();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 45, 'VALÍCÍ SE BALVAN! 🪨', '#71717A', true));
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: Math.cos(dirToPlayer) * 190,
+              vy: Math.sin(dirToPlayer) * 190,
+              angle: dirToPlayer,
+              speed: 190,
+              dmg: 26,
+              radius: 20,
+              type: 'physical',
+              visual: 'boulder',
+              life: 4.0,
+              maxLife: 4.0,
+              isEnemy: true,
+              pushback: 45,
+              dead: false,
+            });
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 22. PROKLETÝ MLYNÁŘ (mlynar) - Mlýnský kámen
+        else if (this.id === 'mlynar') {
+          if (!this.isBoss && this.specialCd <= 0 && distToPlayer > 150) {
+            this.specialCd = 6.0;
+            sound.slash();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 40, 'MLÝNSKÝ KÁMEN! ⚙️', COLORS.grey, true));
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: Math.cos(dirToPlayer) * 230,
+              vy: Math.sin(dirToPlayer) * 230,
+              angle: dirToPlayer,
+              rotation: 0,
+              rotSpeed: 5.5,
+              speed: 230,
+              dmg: 26,
+              radius: 20,
+              type: 'blunt',
+              visual: 'millstone',
+              life: 4.5,
+              isEnemy: true,
+              pushback: 35,
+              dead: false,
+            });
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 23. TŘÍHLAVÝ DRAK (drak) - Ohnivý dračí dech
+        else if (this.id === 'drak') {
+          if (!this.isBoss && this.specialCd <= 0) {
+            this.specialCd = 6.5;
+            sound.roar();
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 55, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
+            for (let i = 0; i < 4; i++) {
+              const ang = dirToPlayer - 0.3 + i * 0.2;
+              engineRef.current.projectiles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(ang) * 240,
+                vy: Math.sin(ang) * 240,
+                angle: ang,
+                speed: 240,
+                dmg: 24,
+                radius: 14,
+                type: 'fire',
+                visual: 'hell_spark',
+                life: 2.8,
+                maxLife: 2.8,
+                isEnemy: true,
+                pushback: 25,
+                dead: false,
+              });
+            }
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 24. ZBOJNÍK / OBRNĚNÝ ZBOJNÍK (zbojnik / obrneny_zbojnik) - Rychlý výpad z úkrytu
+        else if (this.id === 'zbojnik' || this.id === 'obrneny_zbojnik') {
+          if (this.aiState === 'charge') {
+            const lungeSpd = spd * 2.2;
+            this.vx = Math.cos(this.chargeDirX) * lungeSpd;
+            this.vy = Math.sin(this.chargeDirX) * lungeSpd;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 3.5;
+            }
+          } else {
+            if (distToPlayer < 175 && this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.35;
+              this.chargeDirX = dirToPlayer;
+              sound.slash();
+              const lungeSpd = spd * 2.2;
+              this.vx = Math.cos(dirToPlayer) * lungeSpd;
+              this.vy = Math.sin(dirToPlayer) * lungeSpd;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 25. BÍLÁ PANÍ (bila_pani) - Přízračný plavný let & náhlé zjevení
+        else if (this.id === 'bila_pani') {
+          const wave = Math.sin(this.animTime * 2.8) * 0.45;
+          if (distToPlayer < 240 && this.specialCd <= 0) {
+            this.specialCd = 5.0;
+            const stepAng = dirToPlayer + (Math.random() - 0.5) * 0.35;
+            this.x += Math.cos(stepAng) * 75;
+            this.y += Math.sin(stepAng) * 75;
+            sound.smokePuff();
+            for (let i = 0; i < 8; i++) {
+              engineRef.current.particles.push({
+                x: this.x + (Math.random() - 0.5) * 25,
+                y: this.y + (Math.random() - 0.5) * 25,
+                vx: (Math.random() - 0.5) * 35,
+                vy: (Math.random() - 0.5) * 35,
+                life: 0.45,
+                color: 'rgba(240, 249, 255, 0.85)',
+                size: 3.5,
+              });
+            }
+          }
+          this.vx = Math.cos(dirToPlayer + wave) * spd;
+          this.vy = Math.sin(dirToPlayer + wave) * spd;
+        }
+
+        // 26. NOČNÍ MŮRA (nocni_mura) - Rychlý přepad ze tmy
+        else if (this.id === 'nocni_mura') {
+          if (this.aiState === 'charge') {
+            const rushSpd = spd * 2.1;
+            this.vx = Math.cos(this.chargeDirX) * rushSpd;
+            this.vy = Math.sin(this.chargeDirX) * rushSpd;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+              this.specialCd = 4.0;
+            }
+          } else {
+            if (distToPlayer < 220 && this.specialCd <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = 0.4;
+              this.chargeDirX = dirToPlayer;
+              sound.roar();
+              const rushSpd = spd * 2.1;
+              this.vx = Math.cos(dirToPlayer) * rushSpd;
+              this.vy = Math.sin(dirToPlayer) * rushSpd;
+            } else {
+              this.vx = Math.cos(dirToPlayer) * spd;
+              this.vy = Math.sin(dirToPlayer) * spd;
+            }
+          }
+        }
+
+        // 27. KLEKÁNICE (klekanice) - Šlehnutí pytlem & temný chlad
+        else if (this.id === 'klekanice') {
+          if (distToPlayer < 135 && this.specialCd <= 0) {
+            this.specialCd = 4.5;
+            sound.heavyHit();
+            engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'JUTOVÝ PYTEL! 🎒', '#A16207', true));
+            player.takeDamage(this.damage, 'blunt');
+            player.slowTimer = Math.max(player.slowTimer || 0, 1.8);
+            player.x += Math.cos(dirToPlayer) * 45;
+            player.y += Math.sin(dirToPlayer) * 45;
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 28. ZBROJNOŠ (zbrojnoš) - Úder kovaným štítem
+        else if (this.id === 'zbrojnos') {
+          if (distToPlayer < 120 && this.specialCd <= 0) {
+            this.specialCd = 4.0;
+            sound.heavyHit();
+            engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ÚDER ŠTÍTEM! 🛡️', '#64748B', true));
+            player.takeDamage(Math.round(this.damage * 0.8), 'physical');
+            player.x += Math.cos(dirToPlayer) * 50;
+            player.y += Math.sin(dirToPlayer) * 50;
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 29. DUCH DŘEVORUBCE (drevorubec) - Silný sek širočinou
+        else if (this.id === 'drevorubec') {
+          if (distToPlayer < 95 && this.specialCd <= 0) {
+            this.specialCd = 3.6;
+            sound.slash();
+            engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'SEK SEKEROU! 🪓', '#78350F', true));
+            player.takeDamage(this.damage, 'physical');
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // 30. OHNIVÝ RARACH (ohnivy_muz) - Žhavé jiskry z pece
+        else if (this.id === 'ohnivy_muz') {
+          if (this.specialCd <= 0 && distToPlayer < 300) {
+            this.specialCd = 4.5;
+            sound.slash();
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: Math.cos(dirToPlayer) * 220,
+              vy: Math.sin(dirToPlayer) * 220,
+              angle: dirToPlayer,
+              speed: 220,
+              dmg: this.damage,
+              radius: 12,
+              type: 'fire',
+              visual: 'hell_spark',
+              life: 2.2,
+              maxLife: 2.2,
+              isEnemy: true,
+              pushback: 20,
+              dead: false,
+            });
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+        }
+
+        // STANDARD HOMING FOR OTHER MOBS
+        else {
+          if (this.aiState === 'charge') {
+            const chargeSpd = this.chargeSpeed || (spd * 2.2);
+            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
+            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
+            if (this.aiTimer <= 0) {
+              this.aiState = 'idle';
+            }
+          } else {
+            this.vx = Math.cos(dirToPlayer) * spd;
+            this.vy = Math.sin(dirToPlayer) * spd;
+          }
         }
 
         this.x += (this.vx + this.kbx) * dt;
