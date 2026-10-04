@@ -616,7 +616,7 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 										style: { color: "#000000" },
 										children: [
 											"⚔️ ",
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Uzamčení zbraní kromě Vrbového prutu a Povidlových buchet:" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Uzamčení zbraní kromě Osikového prutu a Povidlových buchet:" }),
 											" Všech 9 ostatních zbraní je na začátku uzamčeno a postupně se odemyká plněním tematických výzev kováře. Kovář začne pracovat na nové zbrani teprve po ukování předchozí."
 										]
 									}),
@@ -1298,7 +1298,7 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
 										style: { color: "#000000" },
 										children: "Sekvenční odemykání zbraní:"
-									}), " Zbraně (kromě Povidlových buchet a Vrbového prutu) jsou na začátku uzamčeny a kovář na nich pracuje přísně postupně podle řady (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda)."]
+									}), " Zbraně (kromě Povidlových buchet a Osikového prutu) jsou na začátku uzamčeny a kovář na nich pracuje přísně postupně podle řady (Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda)."]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 									style: { color: "#000000" },

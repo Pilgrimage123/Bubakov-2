@@ -48,12 +48,12 @@ var WEAPONS = {
 	},
 	cane: {
 		id: "cane",
-		name: "Vrbový prut",
+		name: "Osikový prut",
 		type: "physical",
-		icon: "🎋",
+		icon: "osikovy_prut",
 		baseDmg: 16,
 		baseCd: .8,
-		desc: "Ohebný vrbový prut uříznutý u potoka. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
+		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const reach = 85 + level * 12;

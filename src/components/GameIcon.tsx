@@ -4,6 +4,7 @@ const import_jsx_runtime = jsxRuntime;
 import { KrejcarIcon } from './KrejcarIcon';
 import { CzechBuchtaIcon } from './CzechBuchtaIcon';
 import { JitrniceIcon } from './JitrniceIcon';
+import { OsikovyPrutIcon } from './OsikovyPrutIcon';
 
 function isBuchtaIcon(icon: any) {
 	return icon === "czech_buchta" || icon === "🥟" || icon === "buns";
@@ -13,6 +14,9 @@ function isCoinIcon(icon: any) {
 }
 function isJitrniceIcon(icon: any) {
 	return icon === "jitrnice" || icon === "🌭" || icon === "sausage" || icon === "jaternice" || icon === "balzam";
+}
+function isOsikovyPrutIcon(icon: any) {
+	return icon === "osikovy_prut" || icon === "cane" || icon === "🎋" || icon === "prut" || icon === "osika" || icon === "soaked_cane";
 }
 export interface GameIconProps {
 	icon: any;
@@ -38,6 +42,12 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 		className,
 		style
 	});
+	if (isOsikovyPrutIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(OsikovyPrutIcon, {
+		size,
+		className,
+		style,
+		soaked: icon === "soaked_cane"
+	});
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 		className,
 		style: {
@@ -52,4 +62,4 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 	});
 };
 
-export { isBuchtaIcon, isCoinIcon, isJitrniceIcon, GameIcon };
+export { isBuchtaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, OsikovyPrutIcon, GameIcon };

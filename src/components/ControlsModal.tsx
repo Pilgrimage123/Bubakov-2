@@ -336,7 +336,7 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 									lineHeight: 1.35
 								},
 								children: [
-									"Všechny vaše zbraně (povidlové buchty, vrbový prut, česnek, svěcená voda, máselnice, koňský bič, ...)",
+									"Všechny vaše zbraně (povidlové buchty, osikový prut, česnek, svěcená voda, máselnice, koňský bič, ...)",
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: " útočí na nepřátele zcela automaticky" }),
 									"! Nemusíte mířit myší – vaším úkolem je taktický pohyb, sbírání krejcarů a správný výběr vylepšení při postupu na novou úroveň."
 								]
@@ -752,7 +752,7 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 									"🧄 ",
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Kombinujte zbraně na dálku i na blízko:" }),
-									" Česnekový věnec nebo máselnice vytvoří ochranný kruh kolem lovce, zatímco buchty, prak a vrbový prut kosí vzdálené nepřátele."
+									" Česnekový věnec nebo máselnice vytvoří ochranný kruh kolem lovce, zatímco buchty, prak a osikový prut kosí vzdálené nepřátele."
 								] }),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 									"⏸️ ",

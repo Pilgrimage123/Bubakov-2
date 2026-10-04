@@ -60,21 +60,21 @@ var WEAPON_UNLOCKS = {
 	},
 	cane: {
 		id: "cane",
-		realName: "Vrbový prut",
-		realIcon: "🎋",
+		realName: "Osikový prut",
+		realIcon: "osikovy_prut",
 		realType: "physical",
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovská výzbroj",
-		challengeShortDesc: "Ohebný vrbový prut dostupný od začátku (lze namočit na Mokrý prut).",
-		challengeLongDesc: "Rychlý sečný prut z vrby u rybníčku. Základní výbava každého hrusického poutníka, kterou lze proměnit na Mokrý prut.",
+		challengeShortDesc: "Ohebný osikový prut dostupný od začátku (lze namočit na Mokrý prut).",
+		challengeLongDesc: "Rychlý sečný prut z osiky u háje. Základní výbava každého hrusického poutníka, kterou lze proměnit na Mokrý prut.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
 			minPercent: 0,
 			tierLevel: 4,
-			spoiledName: "Vrbový prut (Mokrý prut)",
-			spoiledTitle: "Ohebný vrbový prut od potoka",
-			spoiledDesc: "Ohebný vrbový prut uříznutý u potoka. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S rybniční vodou získáte Mokrý prut.",
+			spoiledName: "Osikový prut (Mokrý prut)",
+			spoiledTitle: "Ohebný osikový prut z háje",
+			spoiledDesc: "Ohebný osikový prut uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S rybniční vodou získáte Mokrý prut.",
 			spoiledStatsHint: "Poškození: 16 • Rychlý sečný oblouk • Vylepšení na Mokrý prut",
 			clueTag: "✅ Výchozí zbraň"
 		}]

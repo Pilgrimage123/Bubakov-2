@@ -74,7 +74,7 @@ var HUNTER_STATS_INFO = {
 		speed: 165,
 		pickup: 75,
 		ability: "Pověstná sukovice (21 s)",
-		role: "Všestranný vytrvalec s vysokým zdravím a vrbovým prutem"
+		role: "Všestranný vytrvalec s vysokým zdravím a osikovým prutem"
 	},
 	shepherd: {
 		hp: 110,

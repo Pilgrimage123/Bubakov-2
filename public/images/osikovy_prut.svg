@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" width="100%" height="100%">
+  <defs>
+    <!-- Soft warm ground shadow -->
+    <filter id="osikaShadowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5" />
+      <feOffset dx="1" dy="3" result="offsetblur" />
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.32" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Bark linear gradient along the main stem -->
+    <linearGradient id="osikaBark" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4E4438" />
+      <stop offset="25%" stop-color="#6E6455" />
+      <stop offset="50%" stop-color="#7C7262" />
+      <stop offset="75%" stop-color="#8E8474" />
+      <stop offset="100%" stop-color="#5C5244" />
+    </linearGradient>
+
+    <!-- Highlight along upper edge -->
+    <linearGradient id="osikaHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C2B8A5" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#9C9281" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#3A3127" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Cut face gradient showing inner fresh wood -->
+    <radialGradient id="woodCutEnd" cx="45%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#F2E8D5" />
+      <stop offset="55%" stop-color="#D9C7A7" />
+      <stop offset="85%" stop-color="#B29C77" />
+      <stop offset="100%" stop-color="#4D3F33" />
+    </radialGradient>
+
+    <!-- Bud gradients -->
+    <linearGradient id="budGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#825C3E" />
+      <stop offset="50%" stop-color="#5C3F2B" />
+      <stop offset="100%" stop-color="#382519" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow beneath the twig -->
+  <path
+    d="M 12 84 Q 38 78 54 69 T 72 44 T 88 26 T 109 17"
+    fill="none"
+    stroke="#221A14"
+    stroke-width="5"
+    stroke-linecap="round"
+    opacity="0.25"
+    filter="blur(3px)"
+  />
+
+  <g id="osikovy-prut-twig" filter="url(#osikaShadowFilter)">
+    <!-- Base outline & core branch shape (tapering organic polygon path) -->
+    <!-- Lower contour & upper contour forming tapered solid bark -->
+    <path
+      d="M 12.8 80.2
+         C 24 76.5, 36 72.8, 47 67.5
+         C 55.5 63.2, 61.2 55.8, 65.8 47.2
+         C 70.2 39.0, 74.5 30.8, 80.8 24.2
+         C 86.8 17.8, 94.2 14.5, 102.5 13.0
+         L 108.5 12.2
+         L 109.8 11.2
+         L 108.2 11.5
+         C 101.8 12.0, 94.0 13.6, 88.0 16.8
+         C 81.2 20.4, 76.2 27.5, 71.8 34.5
+         C 67.2 42.5, 62.2 50.8, 54.2 57.8
+         C 44.5 66.2, 33.0 70.8, 20.5 75.0
+         C 16.5 76.4, 12.5 77.5, 10.5 78.0
+         Z"
+      fill="url(#osikaBark)"
+      stroke="#2E251D"
+      stroke-width="0.75"
+      stroke-linejoin="round"
+    />
+
+    <!-- Upper lighting highlight stroke running down the stem -->
+    <path
+      d="M 13 77.6
+         Q 28 73 42 68.2
+         T 58 55
+         T 70 36
+         T 84 21
+         T 99 13.8
+         L 107 11.8"
+      fill="none"
+      stroke="url(#osikaHighlight)"
+      stroke-width="1.2"
+      stroke-linecap="round"
+      opacity="0.85"
+    />
+
+    <!-- Underside shadow core for 3D cylindrical stick volume -->
+    <path
+      d="M 13 80.2
+         Q 28 75.8 44 70.5
+         T 60 58.5
+         T 73 39
+         T 86 24
+         T 101 14.8
+         L 108 12.5"
+      fill="none"
+      stroke="#261E17"
+      stroke-width="1.0"
+      stroke-linecap="round"
+      opacity="0.75"
+    />
+
+    <!-- Cut wood face at the bottom-left base -->
+    <g transform="translate(11, 79) rotate(-32)">
+      <!-- Bark ring -->
+      <ellipse cx="0" cy="0" rx="2.5" ry="4.2" fill="#3D3227" stroke="#221A13" stroke-width="0.6" />
+      <!-- Fresh wood heartwood -->
+      <ellipse cx="0" cy="0" rx="1.9" ry="3.4" fill="url(#woodCutEnd)" />
+      <!-- Pith center dot & annular ring hint -->
+      <circle cx="-0.2" cy="0.2" r="0.6" fill="#8C795E" opacity="0.8" />
+    </g>
+
+    <!-- Natural botanical nodes & buds along the osika stem -->
+    <!-- Node 1: near base, small bud lower side -->
+    <g transform="translate(22.5, 76.5) rotate(25)">
+      <path d="M 0 0 C 1 1.2, 2 2.2, 3.2 2.5 C 2.5 1.5, 1.8 0.5, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.6" cy="1.3" r="0.5" fill="#B08B67" />
+    </g>
+
+    <!-- Node 2: upper side bud -->
+    <g transform="translate(32, 71.5) rotate(-35)">
+      <path d="M 0 0 C 1 -1.4, 2.2 -2.2, 3.5 -2.4 C 2.6 -1.2, 1.6 -0.4, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.8" cy="-1.1" r="0.5" fill="#B08B67" />
+    </g>
+
+    <!-- Node 3: lower side node -->
+    <g transform="translate(42, 67) rotate(22)">
+      <path d="M 0 0 C 1.2 1.3, 2.4 2.2, 3.8 2.3 C 2.8 1.4, 1.8 0.5, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="2" cy="1.2" r="0.5" fill="#B08B67" />
+    </g>
+
+    <!-- Node 4: lower side bud before main curve -->
+    <g transform="translate(49, 63) rotate(15)">
+      <path d="M 0 0 C 1.2 1.2, 2.5 2.0, 3.6 2.1 C 2.7 1.2, 1.6 0.4, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.8" cy="1" r="0.4" fill="#B08B67" />
+    </g>
+
+    <!-- Node 5: mid upward curve, outer right bud -->
+    <g transform="translate(61.5, 52) rotate(48)">
+      <path d="M 0 0 C 1.2 1.1, 2.6 1.8, 3.8 1.7 C 2.8 1.0, 1.8 0.4, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.9" cy="0.9" r="0.4" fill="#C29D78" />
+    </g>
+
+    <!-- Node 6: inner curve left bud -->
+    <g transform="translate(65.5, 43.5) rotate(-55)">
+      <path d="M 0 0 C 1 -1.1, 2.2 -1.8, 3.2 -1.9 C 2.4 -1.0, 1.5 -0.3, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.6" cy="-0.9" r="0.4" fill="#B08B67" />
+    </g>
+
+    <!-- Node 7: upper ascent bud -->
+    <g transform="translate(73.5, 33) rotate(32)">
+      <path d="M 0 0 C 1 1, 2.2 1.6, 3.2 1.6 C 2.4 0.9, 1.4 0.3, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.4" />
+      <circle cx="1.6" cy="0.8" r="0.35" fill="#B08B67" />
+    </g>
+
+    <!-- Node 8: transition curve bud -->
+    <g transform="translate(80, 24.5) rotate(20)">
+      <path d="M 0 0 C 0.9 0.9, 2.0 1.4, 3.0 1.4 C 2.2 0.8, 1.3 0.3, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.35" />
+      <circle cx="1.5" cy="0.7" r="0.35" fill="#B08B67" />
+    </g>
+
+    <!-- Node 9: gentle horizontal section bud -->
+    <g transform="translate(89, 17) rotate(10)">
+      <path d="M 0 0 C 0.8 0.8, 1.8 1.2, 2.6 1.2 C 1.9 0.7, 1.1 0.2, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.35" />
+      <circle cx="1.3" cy="0.6" r="0.3" fill="#B08B67" />
+    </g>
+
+    <!-- Node 10: near tip bud -->
+    <g transform="translate(98, 13.5) rotate(-15)">
+      <path d="M 0 0 C 0.8 -0.8, 1.8 -1.1, 2.6 -1.1 C 1.9 -0.6, 1.1 -0.2, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.35" />
+      <circle cx="1.3" cy="-0.5" r="0.3" fill="#B08B67" />
+    </g>
+
+    <!-- Node 11: terminal bud cluster at the very tip -->
+    <g transform="translate(106.5, 11.5) rotate(5)">
+      <path d="M 0 0 C 1 0.6, 2.2 0.8, 3.2 0.7 C 2.3 0.4, 1.4 0.1, 0 0 Z" fill="url(#budGrad)" stroke="#2A1D14" stroke-width="0.3" />
+      <!-- Terminal delicate shoot tip extending to 110 -->
+      <path d="M 1.5 0.2 L 3.8 -0.4" stroke="#88735C" stroke-width="0.6" stroke-linecap="round" />
+      <circle cx="1.7" cy="0.3" r="0.3" fill="#C29D78" />
+      <circle cx="3.8" cy="-0.4" r="0.35" fill="#825C3E" />
+    </g>
+  </g>
+</svg>

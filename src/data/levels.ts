@@ -133,7 +133,7 @@ var GAME_LEVELS = {
 		icon: "🪦",
 		badge: "2. Úroveň",
 		description: "Za vesnickou zdí šumí staré duby a hřbitovní kříže pohlcuje chladná podzimní mlha. Ze země vystupují umrlci a z lesa hejká prastarý běs.",
-		lore: "V hlubokém hvozdu za márnicí se ztratil nejeden chasník. Připravte své vrbové pruty a postavte se nočním kostlivcům i obávanému Hejkalovi!",
+		lore: "V hlubokém hvozdu za márnicí se ztratil nejeden chasník. Připravte své osikové pruty a postavte se nočním kostlivcům i obávanému Hejkalovi!",
 		unlockRequirementText: "Odemkne se po poražení Pekelného Čerta v 1. úrovni",
 		skyColor: "#6B584E",
 		nightSkyColor: "#1A1822",

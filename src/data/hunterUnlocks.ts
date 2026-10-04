@@ -41,7 +41,7 @@ var HUNTER_UNLOCKS = {
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovský hrdina",
 		challengeShortDesc: "Připraven k cestě od samého počátku.",
-		challengeLongDesc: "Poutník s rancem buchet a vrbovým prutem je odemčen ihned.",
+		challengeLongDesc: "Poutník s rancem buchet a osikovým prutem je odemčen ihned.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
@@ -49,8 +49,8 @@ var HUNTER_UNLOCKS = {
 			tierLevel: 4,
 			spoiledName: "Poutník (Tulák)",
 			spoiledTitle: "Vesnický poutník z Hrusic",
-			spoiledLore: "Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
-			spoiledWeaponHint: "Vrbový prut & Povidlové buchty",
+			spoiledLore: "Vysoké zdraví. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
+			spoiledWeaponHint: "Osikový prut & Povidlové buchty",
 			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zraní a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
 			clueTag: "✅ Připraven k boji"
 		}]

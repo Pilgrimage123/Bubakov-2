@@ -1647,7 +1647,7 @@ export default function App() {
         type: 'modifier',
         id: 'soaked_cane',
         name: 'Mokrý prut',
-        desc: 'Vrbový prut namočený v rybniční vodě. Údery namáčí nepřátele v chladné vodě a výrazně je zpomalují.',
+        desc: 'Osikový prut namočený v rybniční vodě. Údery namáčí nepřátele v chladné vodě a výrazně je zpomalují.',
         icon: '💧',
       });
     }
@@ -5595,10 +5595,10 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoké zdraví. Povidlové buchty a Vrbový prut. Schopnost: Pověstná sukovice.
+                  Vysoké zdraví. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Vrbový prut & Povidlové buchty</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut & Povidlové buchty</div>
                   <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 Schopnost: Pověstná sukovice (21 s)</div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
@@ -5906,7 +5906,7 @@ export default function App() {
                     <div className="slot-reel-window">
                       {!isLocked ? (
                         <div className="slot-spinning-strip">
-                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', '🎋', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', '🎋'].map((sym, sIdx) => (
+                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', 'osikovy_prut', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', 'osikovy_prut'].map((sym, sIdx) => (
                             <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <GameIcon icon={sym} size={38} />
                             </div>

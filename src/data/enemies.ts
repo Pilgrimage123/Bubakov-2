@@ -116,7 +116,7 @@ var ENEMIES = {
 		xp: 2,
 		coinValue: 1,
 		method: "drawSkodnik",
-		weakness: "Ořechy, Vrbový prut",
+		weakness: "Ořechy, Osikový prut",
 		strength: "Bleskový běh",
 		lore: "Zdivočelá chlupatá potvůrka se zuby jako dláta, která hází na pocestné suché smrkové šišky.",
 		danger: "★☆☆☆☆"
@@ -496,7 +496,7 @@ var ENEMIES = {
 		xp: 10,
 		coinValue: 7,
 		method: "drawPolednice",
-		weakness: "Stín stromů, Vrbový prut, Chladivá sněhová koule",
+		weakness: "Stín stromů, Osikový prut, Chladivá sněhová koule",
 		strength: "Extrémní rychlost za poledního světla",
 		lore: "Zjevuje se přesně v poledne na rozpálených mezích. V bílém rubáši a s blyštivým srpem v ruce stíhá opozdilce.",
 		danger: "★★★★☆"
