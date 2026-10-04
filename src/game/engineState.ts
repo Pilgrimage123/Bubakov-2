@@ -11,6 +11,7 @@ export interface EngineState {
   decor: any[];
   particles: any[];
   texts: any[];
+  smokePuffs: any[];
   camera: { x: number; y: number };
   keys: Record<string, boolean>;
   miniBossSpawned: boolean;
@@ -71,6 +72,7 @@ export function createInitialEngineState(): EngineState {
     decor: [],
     particles: [],
     texts: [],
+    smokePuffs: [],
     camera: {
       x: 0,
       y: 0

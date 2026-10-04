@@ -402,6 +402,51 @@ var SoundManager = class {
 		this.playTone(390, "sine", .12, .12);
 		setTimeout(() => this.playTone(520, "sine", .15, .15), 60);
 	}
+	smokePuff() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Soft whimsical poof / pop pitch drop (triangle wave)
+			const osc = this.ctx.createOscillator();
+			const gain = this.ctx.createGain();
+			osc.type = "triangle";
+			osc.frequency.setValueAtTime(320, now);
+			osc.frequency.exponentialRampToValueAtTime(75, now + 0.28);
+			gain.gain.setValueAtTime(0.2, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+			osc.connect(gain);
+			gain.connect(this.ctx.destination);
+			osc.start();
+			osc.stop(now + 0.35);
+
+			// 2. Gentle airy noise burst / whoosh for the soft smoke puff
+			const bufferSize = Math.floor(this.ctx.sampleRate * 0.35);
+			const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+			const output = noiseBuffer.getChannelData(0);
+			for (let i = 0; i < bufferSize; i++) {
+				output[i] = (Math.random() * 2 - 1) * 0.35;
+			}
+			const whiteNoise = this.ctx.createBufferSource();
+			whiteNoise.buffer = noiseBuffer;
+
+			const filter = this.ctx.createBiquadFilter();
+			filter.type = "lowpass";
+			filter.frequency.setValueAtTime(900, now);
+			filter.frequency.exponentialRampToValueAtTime(180, now + 0.35);
+
+			const noiseGain = this.ctx.createGain();
+			noiseGain.gain.setValueAtTime(0.18, now);
+			noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+			whiteNoise.connect(filter);
+			filter.connect(noiseGain);
+			noiseGain.connect(this.ctx.destination);
+
+			whiteNoise.start();
+		} catch {}
+	}
 };
 var sound = new SoundManager();
 

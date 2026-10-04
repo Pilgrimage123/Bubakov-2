@@ -221,6 +221,288 @@ class DamageText {
   }
 }
 
+// Nicely animated comic smoke puff in authentic Josef Lada fairy tale art style
+class SmokePuff {
+  x: number;
+  y: number;
+  radius: number;
+  time: number;
+  duration: number;
+  dead: boolean;
+  lobes: Array<{
+    ox: number;
+    oy: number;
+    r: number;
+    vx: number;
+    vy: number;
+  }>;
+  wisps: Array<{
+    ox: number;
+    oy: number;
+    scale: number;
+    rot: number;
+    rotSpd: number;
+    vy: number;
+  }>;
+  poofDots: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    r: number;
+  }>;
+  crumbs: Array<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    size: number;
+    color: string;
+    rot: number;
+  }>;
+
+  constructor(x: number, y: number, radius = 24) {
+    this.x = x;
+    this.y = y;
+    this.radius = Math.max(22, radius);
+    this.time = 0;
+    this.duration = 1.25;
+    this.dead = false;
+
+    // Billowing cloud lobes
+    this.lobes = [];
+    const count = 7;
+    // Main central lobe
+    this.lobes.push({
+      ox: 0,
+      oy: -this.radius * 0.1,
+      r: this.radius * 0.78,
+      vx: 0,
+      vy: -22,
+    });
+    // Perimeter billowing lobes
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+      const dist = this.radius * (0.45 + Math.random() * 0.35);
+      const r = this.radius * (0.42 + Math.random() * 0.28);
+      const pushSpeed = 18 + Math.random() * 20;
+      this.lobes.push({
+        ox: Math.cos(angle) * dist,
+        oy: Math.sin(angle) * dist * 0.85,
+        r,
+        vx: Math.cos(angle) * pushSpeed,
+        vy: Math.sin(angle) * pushSpeed * 0.6 - 28 - Math.random() * 15,
+      });
+    }
+
+    // Cartoon curling smoke wisps
+    this.wisps = [];
+    for (let i = 0; i < 3; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      this.wisps.push({
+        ox: Math.cos(ang) * this.radius * 0.5,
+        oy: Math.sin(ang) * this.radius * 0.4 - 10,
+        scale: 0.6 + Math.random() * 0.5,
+        rot: Math.random() * Math.PI * 2,
+        rotSpd: (Math.random() - 0.5) * 3,
+        vy: -35 - Math.random() * 25,
+      });
+    }
+
+    // Mini poof dot clusters shooting outward
+    this.poofDots = [];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+      const spd = 45 + Math.random() * 45;
+      this.poofDots.push({
+        x: Math.cos(ang) * (this.radius * 0.4),
+        y: Math.sin(ang) * (this.radius * 0.35),
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd * 0.7 - 15,
+        r: 4 + Math.random() * 4,
+      });
+    }
+
+    // Pastry sugar / bread crumb flakes from the delicious food
+    this.crumbs = [];
+    const crumbColors = ['#D97706', '#F59E0B', '#FDE68A', '#FEF08A', '#FFFDF9'];
+    for (let i = 0; i < 8; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 30 + Math.random() * 60;
+      this.crumbs.push({
+        x: (Math.random() - 0.5) * 16,
+        y: (Math.random() - 0.5) * 16,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 20,
+        size: 2 + Math.random() * 2.5,
+        color: crumbColors[Math.floor(Math.random() * crumbColors.length)],
+        rot: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  update(dt: number) {
+    this.time += dt;
+    if (this.time >= this.duration) {
+      this.dead = true;
+      return;
+    }
+
+    for (const lobe of this.lobes) {
+      lobe.ox += lobe.vx * dt;
+      lobe.oy += lobe.vy * dt;
+      lobe.vx *= 0.94;
+      lobe.vy *= 0.96;
+    }
+
+    for (const wisp of this.wisps) {
+      wisp.oy += wisp.vy * dt;
+      wisp.rot += wisp.rotSpd * dt;
+    }
+
+    for (const dot of this.poofDots) {
+      dot.x += dot.vx * dt;
+      dot.y += dot.vy * dt;
+      dot.vx *= 0.92;
+      dot.vy *= 0.94;
+    }
+
+    for (const crumb of this.crumbs) {
+      crumb.x += crumb.vx * dt;
+      crumb.y += crumb.vy * dt;
+      crumb.vy += 80 * dt;
+      crumb.vx *= 0.93;
+    }
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    if (this.dead) return;
+    const progress = Math.min(1, this.time / this.duration);
+
+    // Ease in pop scale (0 -> 1.15 in first 0.18s, then gentle expand to 1.35)
+    let scale = 1;
+    if (progress < 0.18) {
+      const popT = progress / 0.18;
+      scale = Math.sin(popT * Math.PI * 0.5) * 1.15;
+    } else {
+      scale = 1.15 + (progress - 0.18) * 0.35;
+    }
+
+    // Alpha fade out in last 35% of duration
+    let alpha = 1;
+    if (progress > 0.65) {
+      alpha = Math.max(0, 1 - (progress - 0.65) / 0.35);
+    }
+
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.globalAlpha = alpha;
+
+    // 1. Draw outer mini poof dots
+    for (const dot of this.poofDots) {
+      const dotAlpha = Math.max(0, 1 - progress * 1.6);
+      if (dotAlpha <= 0) continue;
+      ctx.save();
+      ctx.globalAlpha = alpha * dotAlpha;
+      ctx.fillStyle = '#FFFDF7';
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 2. Draw ground shadow of smoke cloud
+    const shadowAlpha = alpha * Math.max(0, 0.4 - progress * 0.4);
+    if (shadowAlpha > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = shadowAlpha;
+      ctx.fillStyle = 'rgba(25, 20, 15, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, this.radius * 0.5, this.radius * 0.9 * scale, this.radius * 0.4 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 3. Shadow / depth under-layer of the main cloud (slightly offset downward)
+    ctx.save();
+    ctx.translate(0, 4);
+    ctx.fillStyle = '#E8DEC8';
+    ctx.beginPath();
+    for (const lobe of this.lobes) {
+      const lr = lobe.r * scale;
+      ctx.moveTo(lobe.ox + lr, lobe.oy);
+      ctx.arc(lobe.ox, lobe.oy, lr, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+
+    // 4. Main puffy cloud body with authentic Josef Lada ink border
+    ctx.fillStyle = '#FFFDF7';
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = Math.max(2.5, this.radius * 0.09);
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (const lobe of this.lobes) {
+      const lr = lobe.r * scale;
+      ctx.moveTo(lobe.ox + lr, lobe.oy);
+      ctx.arc(lobe.ox, lobe.oy, lr, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    // 5. Highlight arcs on the tops of the lobes (whiter cream volume)
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = Math.max(1.8, this.radius * 0.05);
+    ctx.beginPath();
+    for (const lobe of this.lobes) {
+      const lr = lobe.r * scale * 0.72;
+      ctx.arc(lobe.ox, lobe.oy - lobe.r * scale * 0.15, lr, -Math.PI * 0.85, -Math.PI * 0.15);
+    }
+    ctx.stroke();
+
+    // 6. Cartoon curling smoke wisps / spirals floating upwards
+    for (const wisp of this.wisps) {
+      ctx.save();
+      ctx.translate(wisp.ox, wisp.oy);
+      ctx.rotate(wisp.rot);
+      ctx.scale(wisp.scale, wisp.scale);
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let a = 0; a < Math.PI * 2.4; a += 0.2) {
+        const sr = 3 + a * 2.2;
+        const sx = Math.cos(a) * sr;
+        const sy = Math.sin(a) * sr;
+        if (a === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 7. Delicious pastry crumbs / sugar sparkles tumbling away
+    for (const crumb of this.crumbs) {
+      ctx.save();
+      ctx.translate(crumb.x, crumb.y);
+      ctx.rotate(crumb.rot);
+      ctx.fillStyle = crumb.color;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(0, 0, crumb.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+}
+
 // Environmental decor item (tombstone, cross, tree, snowman, cottage)
 class DecorItem {
   x: number;
@@ -3186,6 +3468,22 @@ export default function App() {
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
           compactInPlace(engine.texts, (t) => t.life > 0);
+
+          // Update smoke puffs
+          if (engine.smokePuffs) {
+            for (const puff of engine.smokePuffs) puff.update(dt);
+            compactInPlace(engine.smokePuffs, (p) => !p.dead);
+          }
+
+          // Update particles
+          if (engine.particles) {
+            for (const p of engine.particles) {
+              p.x += (p.vx || 0) * dt;
+              p.y += (p.vy || 0) * dt;
+              p.life -= dt;
+            }
+            compactInPlace(engine.particles, (p) => p.life > 0);
+          }
         }
       }      // Doznívání Pověstné sukovice
       if (engineRef.current.sukovice) {
@@ -3347,6 +3645,7 @@ export default function App() {
         const drawables:any[]=[];
         if(player) drawables.push(player);
         for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
+        if(engine.smokePuffs){for(const puff of engine.smokePuffs){if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff);}}
         drawables.sort((a,b)=>a.y-b.y);
 
         for (const d of drawables) {
@@ -3535,6 +3834,20 @@ export default function App() {
           txt.draw(ctx);
         }
 
+        // Draw particles
+        if (engine.particles) {
+          for (const p of engine.particles) {
+            if (!isInView(p.x, p.y, p.size || 6, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, Math.min(1, (p.life || 0) * 2.5));
+            ctx.fillStyle = p.color || COLORS.white;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
         // Draw lightning strike bolt
         if (engine.lightningStrike) {
           const ls = engine.lightningStrike;
@@ -3678,6 +3991,7 @@ export default function App() {
       chillTimer: 0,
       snackTimer: 0,
       defeatedByFood: false,
+      foodDefeatTimer: 0,
       snackSoundTimer: 0,
       dead: false,
       isDefeated: false,
@@ -3702,6 +4016,31 @@ export default function App() {
         if (this.isDefeated) {
           if (this.defeatedByFood) {
             // Defeated by food weapons: slowly walk away (unhittable, untargetable), enjoying the food snack
+            this.foodDefeatTimer = (this.foodDefeatTimer || 0) + dt;
+
+            // In the last 0.35s before disappearing, spawn gentle little anticipatory smoke / steam puffs
+            if (this.foodDefeatTimer >= 1.65 && Math.random() < 0.35) {
+              const ang = Math.random() * Math.PI * 2;
+              engineRef.current.particles.push({
+                x: this.x + Math.cos(ang) * (this.radius * 0.4),
+                y: this.y - this.radius * 0.35 + Math.sin(ang) * (this.radius * 0.25),
+                vx: (Math.random() - 0.5) * 15,
+                vy: -30 - Math.random() * 20,
+                life: 0.35,
+                color: '#FFFDF7',
+                size: 3.5,
+              });
+            }
+
+            // Enemies defeated by food disappear after 2s in nicely animated puff of smoke
+            if (this.foodDefeatTimer >= 2.0) {
+              this.dead = true;
+              engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
+              sound.smokePuff();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - this.radius - 12, 'Puf! 💨', '#A8A29E'));
+              return;
+            }
+
             const walkSpd = this.speed * 0.45;
             const ang = Math.atan2(this.y - player.y, this.x - player.x);
             this.vx = Math.cos(ang) * walkSpd;
@@ -4535,6 +4874,7 @@ export default function App() {
           this.isDefeated = true;
           if (type === 'food') {
             this.defeatedByFood = true;
+            this.foodDefeatTimer = 0;
             this.panicked = false;
             sound.snack();
             engineRef.current.texts.push(new DamageText(this.x, this.y - 30, 'Ňam, ňam', '#D97706', true));

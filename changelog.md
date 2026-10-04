@@ -39,8 +39,12 @@
 - Přidán nový vektorový komponent `JitrniceIcon` a SVG grafika `public/images/jitrnice.svg`.
 - Aktualizovány truhly s odměnami, výherní válec i texty dropů v aréně i herním plánu.
 
-## 2026-10-03 — Dotykové ovládání: Zvýšení pozice joysticku a speciální schopnosti
-- Tlačítko virtuálního joysticku a tlačítko speciální schopnosti byly na dotykovém displeji posunuty o 10 % výšky obrazovky výše (`bottom: calc(... + 10vh / 10dvh)`).
-- Upravena a rozšířena i dotyková zóna pro plynulé a pohodlné ovládání palci bez nechtěného přejíždění přes systémové ovládací lišty telefonu.
+## 2026-10-04 — Dotykové ovládání: Zajištění viditelnosti na všech typech displejů
+- Kontejner dotykového ovládání `.touch-controls-container` i celá obrazovka `body` byly ukotveny přímo k dynamickému viewportu (`position: fixed; inset: 0; 100dvh`), čímž se eliminovalo přepadávání tlačítek pod spodní lištu prohlížeče na mobilním Safari a Chrome.
+- V `index.html` byl přidán parametr `viewport-fit=cover` pro spolehlivou podporu proměnných bezpečných zón `env(safe-area-inset-*)`.
+- Spodní pozice joysticku i tlačítka schopnosti nyní explicitně započítává spodní systémové gesto/lištu (`env(safe-area-inset-bottom)`) a má garantovanou minimální bezpečnou vzdálenost od okraje.
+- Přidána plná podpora orientace na šířku (landscape na mobilech s výškou < 500 px) i pro velmi úzké telefony (<= 380 px), kde jsou prvky proporcionálně zmenšeny a posunuty od výřezů/kamer (`safe-area-inset-left / right`).
+- Dynamické přesouvání základny joysticku v `TouchControls.tsx` nyní respektuje `visualViewport` a nikdy nedovolí posunout tlačítko do spodní systémové zóny.
+
 
 
