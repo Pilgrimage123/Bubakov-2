@@ -63,6 +63,10 @@ import { CzechBuchtaIcon } from './components/CzechBuchtaIcon';
 import { KrejcarIcon } from './components/KrejcarIcon';
 import { TestModeModal } from './components/TestModeModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
+import { BubakovCoverTitle } from './components/BubakovCoverTitle';
+import { LadaFrieze } from './components/LadaFrieze';
+import { LadaCartouche } from './components/LadaCartouche';
+import { LadaCoverScene } from './components/LadaCoverScene';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -2027,7 +2031,7 @@ export default function App() {
       {
         name: 'Kynutý koláč (+25 Max HP)',
         desc: 'Posilující tradiční venkovská dobrota',
-        icon: '🥧',
+        icon: 'kynuty_kolac',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
@@ -2261,36 +2265,50 @@ export default function App() {
             if (!engine.miniBossSpawned && newTime >= curLvl.miniBoss.time) {
               engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(
-                createEnemyInstance(
-                  curLvl.miniBoss.id,
-                  player.x + Math.cos(ang) * 550,
-                  player.y + Math.sin(ang) * 550,
-                  curLvl.miniBoss.multiplier
-                )
+              const miniBossEnemy = createEnemyInstance(
+                curLvl.miniBoss.id,
+                player.x + Math.cos(ang) * 550,
+                player.y + Math.sin(ang) * 550,
+                curLvl.miniBoss.multiplier,
+                false,
+                true,
+                curLvl.miniBoss.name
               );
-              engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.miniBoss.name, COLORS.mustard, true));
-              setRunStats((s) => ({ ...s, warningBanner: curLvl.miniBoss.warning }));
-              sound.slash();
-              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
+              engine.enemies.push(miniBossEnemy);
+              engine.texts.push(new DamageText(player.x, player.y - 50, `👑 ${curLvl.miniBoss.name}`, COLORS.mustard, true));
+              setRunStats((s) => ({
+                ...s,
+                warningBanner: curLvl.miniBoss.warning,
+                bossTitle: `👑 MINIBOSS: ${curLvl.miniBoss.name}`,
+                bossHpPct: 100,
+              }));
+              sound.boss();
+              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
             // 2. Mid-boss encounter (odpolední protivník po mini-bossovi)
             if (!engine.midBossSpawned && (engine.miniBossSpawned || newTime >= curLvl.midBoss.time + 10) && newTime >= curLvl.midBoss.time) {
               engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(
-                createEnemyInstance(
-                  curLvl.midBoss.id,
-                  player.x + Math.cos(ang) * 560,
-                  player.y + Math.sin(ang) * 560,
-                  curLvl.midBoss.multiplier
-                )
+              const midBossEnemy = createEnemyInstance(
+                curLvl.midBoss.id,
+                player.x + Math.cos(ang) * 560,
+                player.y + Math.sin(ang) * 560,
+                curLvl.midBoss.multiplier,
+                false,
+                true,
+                curLvl.midBoss.name
               );
-              engine.texts.push(new DamageText(player.x, player.y - 50, curLvl.midBoss.name, COLORS.mustard, true));
-              setRunStats((s) => ({ ...s, warningBanner: curLvl.midBoss.warning }));
+              engine.enemies.push(midBossEnemy);
+              engine.texts.push(new DamageText(player.x, player.y - 50, `👑 ${curLvl.midBoss.name}`, COLORS.mustard, true));
+              setRunStats((s) => ({
+                ...s,
+                warningBanner: curLvl.midBoss.warning,
+                bossTitle: `👑 MINIBOSS: ${curLvl.midBoss.name}`,
+                bossHpPct: 100,
+              }));
               sound.boss();
-              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
+              setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
             // 3. Final Level Boss encounter (hlavní šéf úrovně za soumraku / v noci)
@@ -2819,96 +2837,256 @@ export default function App() {
             if (drak && (drak.isBoss || engine.finalBossSpawned || curLvl.id === 6)) {
               if (drak) {
                 const isPhase2 = drak.hp <= drak.maxHp * 0.5;
+                const distToP = Math.hypot(player.x - drak.x, player.y - drak.y);
 
-                // Enrage trigger when dropping to 50% HP (Probuzení všech tří hlav)
+                // Enrage trigger when dropping to 50% HP (Probuzení všech tří hlav!)
                 if (isPhase2 && !drak.enraged) {
                   drak.enraged = true;
-                  drak.speed = 66;
+                  drak.speed = 68;
                   sound.roar();
-                  engine.texts.push(new DamageText(drak.x, drak.y - 75, '🐉 PROBUZENÍ VŠECH TŘÍ HLAV!', '#DC2626', true));
-                  setRunStats((s) => ({ ...s, warningBanner: '🐉 PROBUZENÍ VŠECH TŘÍ HLAV! DRAČÍ PLAMENY A LEDOVÉ SPUSTY!' }));
-                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
-                  engine.enemies.push(createEnemyInstance('snehulak', drak.x + 100, drak.y, 1.1));
-                  engine.enemies.push(createEnemyInstance('nocni_mura', drak.x - 100, drak.y, 1.1));
-                  for (let i = 0; i < 35; i++) {
+                  sound.churchBell();
+                  engine.texts.push(new DamageText(drak.x, drak.y - 85, '🐉 PROBUZENÍ VŠECH TŘÍ HLAV!', '#DC2626', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🐉 VŠECHNY TŘI HLAVY PROBUZENY! OHEŇ, MRÁZ A VICHR KŘÍDEL!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
+                  engine.enemies.push(createEnemyInstance('snehulak', drak.x + 110, drak.y, 1.15));
+                  engine.enemies.push(createEnemyInstance('nocni_mura', drak.x - 110, drak.y, 1.15));
+                  for (let i = 0; i < 45; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = 60 + Math.random() * 220;
                     engine.particles.push({
                       x: drak.x,
                       y: drak.y,
-                      vx: (Math.random() - 0.5) * 230,
-                      vy: (Math.random() - 0.5) * 230,
-                      life: 1.0,
-                      color: i % 2 === 0 ? '#DC2626' : '#60A5FA',
-                      size: 7,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd,
+                      life: 1.2,
+                      color: i % 3 === 0 ? '#DC2626' : i % 3 === 1 ? '#38BDF8' : '#FEF08A',
+                      size: 8,
                     });
                   }
                 }
 
-                // 1. Dragon Flame Breath (Ohnivý dračí dech - fan of blazing sparks)
+                // 1. Dragon Flame Breath (Ohnivá hlava - vějíř dračích plamenů)
                 engine.drakBreathTimer -= dt;
                 if (engine.drakBreathTimer <= 0) {
-                  engine.drakBreathTimer = isPhase2 ? 4.5 : 7.0;
+                  engine.drakBreathTimer = isPhase2 ? 3.8 : 5.8;
                   sound.roar();
-                  engine.texts.push(new DamageText(drak.x, drak.y - 55, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
+                  engine.texts.push(new DamageText(drak.x, drak.y - 60, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
                   const bAng = Math.atan2(player.y - drak.y, player.x - drak.x);
-                  const flameCount = isPhase2 ? 7 : 5;
-                  const spread = isPhase2 ? 0.7 : 0.5;
+                  const flameCount = isPhase2 ? 8 : 6;
+                  const spread = isPhase2 ? 0.8 : 0.6;
                   for (let i = 0; i < flameCount; i++) {
                     const ang = bAng - spread / 2 + (i * spread) / (flameCount - 1);
                     engine.projectiles.push({
-                      x: drak.x,
-                      y: drak.y,
-                      vx: Math.cos(ang) * 250,
-                      vy: Math.sin(ang) * 250,
+                      x: drak.x + Math.cos(ang) * 45,
+                      y: drak.y - 15 + Math.sin(ang) * 45,
+                      vx: Math.cos(ang) * 260,
+                      vy: Math.sin(ang) * 260,
                       angle: ang,
-                      speed: 250,
-                      dmg: isPhase2 ? 32 : 24,
-                      radius: 14,
+                      speed: 260,
+                      dmg: isPhase2 ? 34 : 25,
+                      radius: 16,
                       type: 'fire',
-                      visual: 'hell_spark',
-                      life: 3.2,
-                      maxLife: 3.2,
+                      visual: 'dragon_fireball',
+                      life: 3.5,
+                      maxLife: 3.5,
                       isEnemy: true,
-                      pushback: 30,
+                      pushback: 35,
                       statusText: 'PLAMEN! 🔥',
                       dead: false,
                     });
                   }
                 }
 
-                // 2. Falling Icicles from Cave Ceiling (Rampouchy padající ze stropu)
+                // 2. Falling Cave Icicles (Hlídací hlava přivolá pád rampouchů ze stropu sluje)
                 engine.drakIcicleTimer -= dt;
                 if (engine.drakIcicleTimer <= 0) {
-                  engine.drakIcicleTimer = isPhase2 ? 5.5 : 8.5;
+                  engine.drakIcicleTimer = isPhase2 ? 5.0 : 7.5;
                   sound.freeze();
-                  engine.texts.push(new DamageText(player.x, player.y - 60, 'PADAJÍCÍ RAMPOUCHY! 🧊', '#38BDF8', true));
-                  setRunStats((s) => ({ ...s, warningBanner: '🧊 PADAJÍCÍ RAMPOUCHY ZE STROPU SLUJE!' }));
+                  engine.texts.push(new DamageText(player.x, player.y - 65, 'PADAJÍCÍ RAMPOUCHY! 🧊', '#38BDF8', true));
+                  setRunStats((s) => ({ ...s, warningBanner: '🧊 POZOR NA PADAJÍCÍ RAMPOUCHY ZE STROPU SLUJE!' }));
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
 
-                  const icicleCount = isPhase2 ? 6 : 4;
+                  const icicleCount = isPhase2 ? 7 : 5;
                   for (let i = 0; i < icicleCount; i++) {
-                    const offsetX = (Math.random() - 0.5) * 240;
-                    const offsetY = (Math.random() - 0.5) * 180;
+                    const offsetX = (Math.random() - 0.5) * 260;
+                    const offsetY = (Math.random() - 0.5) * 200;
                     const targetX = player.x + offsetX;
                     const targetY = player.y + offsetY;
                     engine.projectiles.push({
                       x: targetX,
-                      y: targetY - 300,
+                      y: targetY - 320,
                       vx: 0,
-                      vy: 380,
+                      vy: 420,
                       angle: Math.PI / 2,
-                      speed: 380,
-                      dmg: isPhase2 ? 26 : 20,
-                      radius: 14,
+                      speed: 420,
+                      dmg: isPhase2 ? 28 : 22,
+                      radius: 16,
                       type: 'ice',
-                      visual: 'wood_shard',
+                      visual: 'icicle',
                       life: 1.0,
                       maxLife: 1.0,
                       isEnemy: true,
                       slowPlayer: true,
-                      pushback: 20,
+                      pushback: 22,
                       statusText: 'RAMPOUCH! 🧊',
                       dead: false,
                     });
+                  }
+                }
+
+                // 3. Spiked Tail Whip (Švih trnitým ocasem v blízkosti nebo periodicky)
+                engine.drakTailWhipTimer -= dt;
+                if (engine.drakTailWhipTimer <= 0 || (distToP < 150 && engine.drakTailWhipTimer <= 3.0)) {
+                  engine.drakTailWhipTimer = isPhase2 ? 5.5 : 8.0;
+                  sound.heavyHit();
+                  engine.texts.push(new DamageText(drak.x, drak.y - 45, 'ŠVIH TRNITÝM OCASEM! 🐉💥', '#D97706', true));
+                  const tailSparks = isPhase2 ? 14 : 10;
+                  for (let i = 0; i < tailSparks; i++) {
+                    const tAng = (i / tailSparks) * Math.PI * 2;
+                    engine.projectiles.push({
+                      x: drak.x + Math.cos(tAng) * 35,
+                      y: drak.y + Math.sin(tAng) * 35,
+                      vx: Math.cos(tAng) * 210,
+                      vy: Math.sin(tAng) * 210,
+                      angle: tAng,
+                      speed: 210,
+                      dmg: isPhase2 ? 26 : 20,
+                      radius: 13,
+                      type: 'physical',
+                      visual: 'hell_spark',
+                      life: 1.8,
+                      maxLife: 1.8,
+                      isEnemy: true,
+                      pushback: 45,
+                      statusText: 'OCAS! 💥',
+                      dead: false,
+                    });
+                  }
+                  if (distToP < 165) {
+                    player.takeDamage(isPhase2 ? 32 : 24, 'physical');
+                    const pushAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                    player.x += Math.cos(pushAng) * 55;
+                    player.y += Math.sin(pushAng) * 55;
+                  }
+                }
+
+                // 4. Lazy / Sleeping Head Snore (Phase 1: Chrápání a sirná kouřová bublina)
+                if (!isPhase2) {
+                  engine.drakSnoreTimer -= dt;
+                  if (engine.drakSnoreTimer <= 0) {
+                    engine.drakSnoreTimer = 6.0;
+                    sound.snack();
+                    engine.texts.push(new DamageText(drak.x - 30, drak.y - 70, 'CHRRR... Zzz 💤', '#FEF08A', false));
+                    const snoreAng = Math.atan2(player.y - drak.y, player.x - drak.x) + (Math.random() - 0.5) * 0.4;
+                    engine.projectiles.push({
+                      x: drak.x - 35,
+                      y: drak.y - 30,
+                      vx: Math.cos(snoreAng) * 110,
+                      vy: Math.sin(snoreAng) * 110,
+                      angle: snoreAng,
+                      speed: 110,
+                      dmg: 18,
+                      radius: 20,
+                      type: 'poison',
+                      visual: 'mud_ball',
+                      life: 4.5,
+                      maxLife: 4.5,
+                      isEnemy: true,
+                      pushback: 15,
+                      statusText: 'SÍRA! 💨',
+                      dead: false,
+                    });
+                  }
+                } else {
+                  // PHASE 2 EXCLUSIVE MECHANICS (All 3 heads awake!):
+                  // 4b. Awakened Frost Head (Mrazivý ledový dech probuzené levé hlavy)
+                  engine.drakSnoreTimer -= dt;
+                  if (engine.drakSnoreTimer <= 0) {
+                    engine.drakSnoreTimer = 4.5;
+                    sound.freeze();
+                    engine.texts.push(new DamageText(drak.x - 30, drak.y - 65, 'MRAZIVÝ DECH! ❄️', '#38BDF8', true));
+                    const fAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                    for (let i = 0; i < 5; i++) {
+                      const ang = fAng - 0.4 + i * 0.2;
+                      engine.projectiles.push({
+                        x: drak.x - 35,
+                        y: drak.y - 30,
+                        vx: Math.cos(ang) * 230,
+                        vy: Math.sin(ang) * 230,
+                        angle: ang,
+                        speed: 230,
+                        dmg: 26,
+                        radius: 15,
+                        type: 'ice',
+                        visual: 'dragon_frostball',
+                        life: 3.0,
+                        maxLife: 3.0,
+                        isEnemy: true,
+                        slowPlayer: true,
+                        pushback: 25,
+                        statusText: 'MRÁZ! ❄️',
+                        dead: false,
+                      });
+                    }
+                  }
+
+                  // 5. Wing Buffet Gale (Vichr z dračích křídel)
+                  engine.drakWingGustTimer -= dt;
+                  if (engine.drakWingGustTimer <= 0) {
+                    engine.drakWingGustTimer = 8.0;
+                    sound.sukoviceWhirl();
+                    engine.texts.push(new DamageText(drak.x, drak.y - 65, 'VICHR DRAČÍCH KŘÍDEL! 💨', '#67E8F9', true));
+                    const gAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                    for (let i = -1; i <= 1; i++) {
+                      const ang = gAng + i * 0.35;
+                      engine.projectiles.push({
+                        x: drak.x,
+                        y: drak.y,
+                        vx: Math.cos(ang) * 310,
+                        vy: Math.sin(ang) * 310,
+                        angle: ang,
+                        speed: 310,
+                        dmg: 22,
+                        radius: 22,
+                        type: 'physical',
+                        visual: 'dragon_wind',
+                        life: 2.2,
+                        maxLife: 2.2,
+                        isEnemy: true,
+                        pushback: 65,
+                        statusText: 'VICHR! 💨',
+                        dead: false,
+                      });
+                    }
+                  }
+
+                  // 6. Dragon Leap Stomp & Cave Shockwave (Dračí střemhlavý skok a zadupání)
+                  engine.drakSwoopTimer -= dt;
+                  if (engine.drakSwoopTimer <= 0) {
+                    engine.drakSwoopTimer = 11.0;
+                    sound.heavyHit();
+                    sound.roar();
+                    engine.texts.push(new DamageText(drak.x, drak.y - 80, 'DRAČÍ ZADUPÁNÍ! 💥🏔️', '#DC2626', true));
+                    const jumpAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                    drak.x += Math.cos(jumpAng) * 90;
+                    drak.y += Math.sin(jumpAng) * 90;
+                    for (let i = 0; i < 24; i++) {
+                      const ang = (i / 24) * Math.PI * 2;
+                      engine.particles.push({
+                        x: drak.x + Math.cos(ang) * 40,
+                        y: drak.y + Math.sin(ang) * 40,
+                        vx: Math.cos(ang) * 160,
+                        vy: Math.sin(ang) * 160,
+                        life: 0.6,
+                        color: i % 2 === 0 ? '#DC2626' : '#E2E8F0',
+                        size: 6,
+                      });
+                    }
+                    if (Math.hypot(player.x - drak.x, player.y - drak.y) < 190) {
+                      player.takeDamage(35, 'physical');
+                      player.x += Math.cos(jumpAng) * 60;
+                      player.y += Math.sin(jumpAng) * 60;
+                    }
                   }
                 }
               }
@@ -3299,7 +3477,7 @@ export default function App() {
                     vx: (Math.random() - 0.5) * 120,
                     vy: (Math.random() - 0.5) * 120,
                     life: 0.4,
-                    color: p.visual === 'ink_bottle' ? '#0F172A' : p.visual === 'dirt_clod' ? '#5C4033' : p.visual === 'mud_ball' ? '#365314' : p.visual === 'millstone' || p.visual === 'boulder' ? COLORS.grey : p.visual === 'hell_spark' ? '#EF4444' : p.visual === 'wood_shard' ? '#78350F' : COLORS.ice,
+                    color: p.visual === 'dragon_fireball' ? '#EF4444' : p.visual === 'dragon_frostball' || p.visual === 'icicle' ? '#38BDF8' : p.visual === 'dragon_wind' ? '#BAE6FD' : p.visual === 'ink_bottle' ? '#0F172A' : p.visual === 'dirt_clod' ? '#5C4033' : p.visual === 'mud_ball' ? '#365314' : p.visual === 'millstone' || p.visual === 'boulder' ? COLORS.grey : p.visual === 'hell_spark' ? '#EF4444' : p.visual === 'wood_shard' ? '#78350F' : COLORS.ice,
                     size: 5,
                   });
                 }
@@ -3438,6 +3616,15 @@ export default function App() {
           // Update Drops
           for (const d of engine.drops) {
             d.time += dt;
+            if (d.vx || d.vy) {
+              d.x += d.vx * dt;
+              d.y += d.vy * dt;
+              const drag = Math.max(0, 1 - 7.5 * dt);
+              d.vx *= drag;
+              d.vy *= drag;
+              if (Math.abs(d.vx) < 1.5) d.vx = 0;
+              if (Math.abs(d.vy) < 1.5) d.vy = 0;
+            }
             const dist = Math.hypot(d.x - player.x, d.y - player.y);
 
             if (d.type === 'chasnik') {
@@ -3458,6 +3645,11 @@ export default function App() {
                   const val = d.value || 1;
                   sound.coin();
                   engine.coins += val;
+                  if (val >= 15) {
+                    engine.texts.push(new DamageText(player.x, player.y - 48, `+${val} kr. (Tolar)`, COLORS.mustard, true));
+                  } else if (val >= 5) {
+                    engine.texts.push(new DamageText(player.x, player.y - 40, `+${val} kr. (Groš)`, '#E2E8F0'));
+                  }
                   setRunStats((s) => {
                     const nextXp = s.xp + val;
                     const nextCoins = engine.coins;
@@ -3480,10 +3672,10 @@ export default function App() {
                   player.hp = Math.min(player.maxHp, player.hp + potionHeal);
                   player.invulnerabilityTimer = waterLevel * 2;
                   engine.texts.push(new DamageText(player.x, player.y - 45, '+30 HP Jitrnice', COLORS.green, true));
-                } else if (d.type === 'bread') {
+                } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
                   player.hp = Math.min(player.maxHp, player.hp + 15);
-                  engine.texts.push(new DamageText(player.x, player.y - 40, '+15 HP 🥧', COLORS.mustard));
+                  engine.texts.push(new DamageText(player.x, player.y - 40, '+15 HP 🍐', '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
                   player.soulBuffTimer = 6.0;
@@ -3668,8 +3860,8 @@ export default function App() {
             Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
           } else if (d.type === 'potion') {
             Lada.drawPotion(ctx, d.x, d.y, d.time);
-          } else if (d.type === 'bread') {
-            Lada.drawBreadRoll(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'bread' || d.type === 'pear') {
+            Lada.drawPear(ctx, d.x, d.y, d.time);
           } else if (d.type === 'soul') {
             Lada.drawSoulJar(ctx, d.x, d.y, d.time);
           } else if (d.type === 'chest') {
@@ -3727,15 +3919,7 @@ export default function App() {
             ctx.fill();
             ctx.stroke();
           } else if (p.visual === 'kolac') {
-            Lada.setupPath(ctx, '#FDE68A', COLORS.ink, 2.5);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 14, 10, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = '#1E1B18';
-            ctx.beginPath();
-            ctx.arc(0, 0, 5, 0, Math.PI * 2);
-            ctx.fill();
+            Lada.drawKynutyKolac(ctx, 0, 0, 1.25, 0);
           } else if (p.visual === 'potato') {
             Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
             ctx.beginPath();
@@ -3845,6 +4029,14 @@ export default function App() {
             Lada.drawHellSpark(ctx, 0, 0, p.radius || 10, engine.uiTime);
           } else if (p.visual === 'wood_shard') {
             Lada.drawWoodShard(ctx, 0, 0, p.radius || 12, p.angle || 0);
+          } else if (p.visual === 'icicle') {
+            Lada.drawIcicle(ctx, 0, 0, p.radius || 14, p.angle || Math.PI / 2);
+          } else if (p.visual === 'dragon_fireball') {
+            Lada.drawDragonFireball(ctx, 0, 0, p.radius || 16, engine.uiTime);
+          } else if (p.visual === 'dragon_frostball') {
+            Lada.drawDragonFrostball(ctx, 0, 0, p.radius || 16, engine.uiTime);
+          } else if (p.visual === 'dragon_wind') {
+            Lada.drawDragonWind(ctx, 0, 0, p.radius || 22, p.angle || 0, engine.uiTime);
           } else {
             Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
             ctx.beginPath();
@@ -4028,25 +4220,52 @@ export default function App() {
   // Enemy instance factory with customized AI state machine
   // Consistent authentic stats: specific enemies (e.g. Kostlivec) always have identical base stats;
   // challenge scales solely through arrival of advanced enemies and enemy density.
-  const createEnemyInstance = (id: string, x: number, y: number, multiplier = 1, isBoss = false) => {
+  // Minibosses are significantly larger, more prominent with golden runic aura/overhead HP bar, and much tougher.
+  const createEnemyInstance = (
+    id: string,
+    x: number,
+    y: number,
+    multiplier = 1,
+    isBoss = false,
+    isMiniboss = false,
+    customBossTitle?: string
+  ) => {
     const stats = ENEMIES[id] || ENEMIES.rarach;
-    const finalHp = Math.round(stats.hp * (multiplier || 1));
+    let finalHp = Math.round(stats.hp * (multiplier || 1));
+    if (isMiniboss) {
+      finalHp = Math.max(finalHp, 1400);
+    }
+    const renderScale = isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
+    const radius = isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
+    const poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
+    const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
+    const hunger = isMiniboss
+      ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0)) + 0.45)
+      : (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0));
+    const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
+    const damage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
+    const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
     return {
       id,
       x,
       y,
       isBoss,
+      isMiniboss,
+      customBossTitle: customBossTitle || '',
+      renderScale,
       maxHp: finalHp,
       hp: finalHp,
-      speed: stats.speed,
-      damage: stats.damage,
-      radius: isBoss ? stats.radius * 1.3 : stats.radius,
-      foodResist: stats.foodResist || 0,
-      hunger: stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0),
-      poiseResist: stats.poiseResist || 0,
-      willpower: stats.willpower || 0,
-      coinValue: stats.coinValue || 1,
+      speed: isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed,
+      damage,
+      radius,
+      foodResist,
+      hunger,
+      poiseResist,
+      willpower,
+      coinValue,
+      xp,
       category: stats.category,
       method: stats.method,
       palette: stats.palette,
@@ -5062,10 +5281,21 @@ export default function App() {
           this.vy = Math.sin(dirToPlayer) * spd;
         }
 
-        // 23. TŘÍHLAVÝ DRAK (drak) - Ohnivý dračí dech
+        // 23. TŘÍHLAVÝ DRAK (drak) - Pohyb, kousnutí a ohnivý dračí dech
         else if (this.id === 'drak') {
-          if (!this.isBoss && this.specialCd <= 0) {
-            this.specialCd = 6.5;
+          if (this.isBoss) {
+            // Close range dragon bite & claw swipe
+            if (distToPlayer < 135 && this.specialCd <= 0) {
+              this.specialCd = 2.8;
+              sound.heavyHit();
+              sound.slash();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 65, 'DRAČÍ KRAFNUTÍ! 🐉🦷', '#DC2626', true));
+              player.takeDamage(this.enraged ? 36 : 28, 'physical');
+              player.x += Math.cos(dirToPlayer) * 55;
+              player.y += Math.sin(dirToPlayer) * 55;
+            }
+          } else if (this.specialCd <= 0) {
+            this.specialCd = 5.5;
             sound.roar();
             engineRef.current.texts.push(new DamageText(this.x, this.y - 55, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
             for (let i = 0; i < 4; i++) {
@@ -5073,18 +5303,18 @@ export default function App() {
               engineRef.current.projectiles.push({
                 x: this.x,
                 y: this.y,
-                vx: Math.cos(ang) * 240,
-                vy: Math.sin(ang) * 240,
+                vx: Math.cos(ang) * 250,
+                vy: Math.sin(ang) * 250,
                 angle: ang,
-                speed: 240,
-                dmg: 24,
-                radius: 14,
+                speed: 250,
+                dmg: 26,
+                radius: 15,
                 type: 'fire',
-                visual: 'hell_spark',
-                life: 2.8,
-                maxLife: 2.8,
+                visual: 'dragon_fireball',
+                life: 3.0,
+                maxLife: 3.0,
                 isEnemy: true,
-                pushback: 25,
+                pushback: 30,
                 dead: false,
               });
             }
@@ -5270,16 +5500,22 @@ export default function App() {
           engineRef.current.texts.push(
             new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
           );
-          this.kbx = kbx * (1 - this.poiseResist);
-          this.kby = kby * (1 - this.poiseResist);
+          const poiseFactor = 1 - this.poiseResist;
+          const kbDamp = this.isMiniboss ? 0.25 : 1.0;
+          this.kbx = kbx * poiseFactor * kbDamp;
+          this.kby = kby * poiseFactor * kbDamp;
         } else {
           this.kbx = 0;
           this.kby = 0;
         }
 
-        if (this.isBoss) {
+        if (this.isBoss || this.isMiniboss) {
           const pct = Math.max(0, Math.min(100, (this.hp / this.maxHp) * 100));
-          setRunStats((s) => ({ ...s, bossHpPct: pct }));
+          setRunStats((s) => ({
+            ...s,
+            bossHpPct: pct,
+            bossTitle: s.bossTitle || (this.isMiniboss ? `👑 MINIBOSS: ${this.customBossTitle || stats.name}` : (this.customBossTitle || stats.name)),
+          }));
         }
 
         if (this.hp <= 0 && !this.isDefeated) {
@@ -5294,51 +5530,198 @@ export default function App() {
             this.panicked = true;
           }
           const eng = engineRef.current;
-          const pt = ENEMY_POINTS[this.id] ?? Math.max(12, Math.floor((this.maxHp || 40) * 0.38));
-          eng.pointsChest += pt;
-          eng.pointsPotion += pt;
-          eng.pointsBread += pt;
-          eng.pointsCoin += pt;
-          if (this.category === 'water') eng.pointsSoul += pt;
-          let ox = 0;
+
+          // Helper to spawn drops with natural radial spray and velocity
+          const spawnScatterDrop = (
+            dropType: string,
+            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string } = {}
+          ) => {
+            const angle = opts.angle ?? Math.random() * Math.PI * 2;
+            const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
+            const radius = opts.radius ?? (
+              dropType === 'chest' ? 25 :
+              dropType === 'soul' ? 14 :
+              dropType === 'potion' ? 12 :
+              dropType === 'bread' ? 10 :
+              (opts.value && opts.value >= 15 ? 12 : opts.value && opts.value >= 5 ? 10 : 8)
+            );
+            eng.drops.push({
+              type: dropType,
+              value: opts.value,
+              x: this.x + Math.cos(angle) * 8,
+              y: this.y + Math.sin(angle) * 8,
+              vx: Math.cos(angle) * burstSpeed,
+              vy: Math.sin(angle) * burstSpeed,
+              radius,
+              time: Math.random() * 6.28,
+            });
+            if (opts.text) {
+              eng.texts.push(new DamageText(this.x, this.y - 45, opts.text, opts.textColor || COLORS.mustard, true));
+            }
+          };
+
+          const rawPt = ENEMY_POINTS[this.id] ?? Math.max(12, Math.floor((this.maxHp || 40) * 0.38));
+          // Natural organic variance (±15%) so points don't feel like rigid clockwork
+          const variance = 0.85 + Math.random() * 0.30;
+          const pt = Math.max(6, Math.round(rawPt * variance));
+
+          const isWater = this.category === 'water';
+          const isFields = this.category === 'fields';
+          const isUndead = this.category === 'undead';
+          const isDemons = this.category === 'demons';
+          const isFrost = this.category === 'frost';
+          const isShadows = this.category === 'shadows';
+          const isSwarms = this.category === 'swarms';
+          const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
+
+          // Thematic category affinities & multipliers
+          const chestMult = isBoss ? 3.0 : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
+          const potionMult = isWater ? 1.6 : isFields ? 1.3 : isBoss ? 2.0 : 1.0;
+          const breadMult = isFields ? 2.0 : isFrost ? 1.5 : isSwarms ? 1.2 : 0.9;
+          const soulMult = isWater ? 2.5 : isShadows ? 2.0 : isUndead ? 1.4 : 0.5;
+          const coinMult = isUndead ? 1.8 : isDemons ? 1.6 : isFrost ? 1.3 : isBoss ? 2.5 : 1.0;
+
+          eng.pointsChest += Math.round(pt * chestMult);
+          eng.pointsPotion += Math.round(pt * potionMult);
+          eng.pointsBread += Math.round(pt * breadMult);
+          eng.pointsCoin += Math.round(pt * coinMult);
+          if (isWater || isShadows || isUndead || isBoss || this.defeatedByFood) {
+            eng.pointsSoul += Math.round(pt * soulMult);
+          }
+
+          // 1. Miniboss & Boss celebration loot cascade
+          if (this.isMiniboss) {
+            sound.chest();
+            spawnScatterDrop('chest', { speed: 85, text: '🎁 POKLAD MINIBOSSE!', textColor: COLORS.mustard });
+            for (let i = 0; i < 5; i++) {
+              spawnScatterDrop('coin', { value: 5, speed: 70 + i * 20 });
+            }
+            spawnScatterDrop('coin', { value: 25, speed: 120, text: 'Zlatý tolar! +25', textColor: COLORS.mustard });
+            spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
+            spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 HP', textColor: '#84CC16' });
+            spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
+            for (let i = 0; i < 24; i++) {
+              eng.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: (Math.random() - 0.5) * 200,
+                vy: (Math.random() - 0.5) * 200,
+                life: 0.8,
+                color: i % 2 === 0 ? '#F59E0B' : '#FDE047',
+                size: 5,
+              });
+            }
+            eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD MINIBOSSE!', COLORS.mustard, true));
+          } else if (isBoss) {
+            sound.chest();
+            spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 HP', textColor: COLORS.green });
+            spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 HP', textColor: '#84CC16' });
+            spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
+            spawnScatterDrop('coin', { value: 25, speed: 130, text: 'ZLATÝ TOLAR!', textColor: COLORS.mustard });
+            spawnScatterDrop('coin', { value: 10, speed: 105 });
+            spawnScatterDrop('coin', { value: 10, speed: 85 });
+            spawnScatterDrop('coin', { value: 5, speed: 70 });
+            eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD VLÁDCE BUBÁKŮ!', COLORS.mustard, true));
+          }
+
+          // 2. Food pacification extra flavor & peaceful rewards
+          if (this.defeatedByFood) {
+            if (Math.random() < 0.28) {
+              spawnScatterDrop('bread', { speed: 65, text: 'Sladká hruška 🍐', textColor: '#84CC16' });
+            }
+            if (Math.random() < 0.16 || isWater) {
+              spawnScatterDrop('soul', { speed: 85, text: 'Vděčná dušička 🕊️', textColor: '#38BDF8' });
+            }
+            const gratefulVal = Math.random() < 0.35 ? 5 : (1 + Math.floor(Math.random() * 3));
+            spawnScatterDrop('coin', { value: gratefulVal, speed: 75 });
+          }
+
+          // 3. Direct surprise / lucky drops (instant chance on kill, scaled by theme)
+          if (!isBoss) {
+            // Surprise bread / snack
+            const breadChance = isFields ? 0.08 : isFrost ? 0.06 : 0.035;
+            if (Math.random() < breadChance) {
+              spawnScatterDrop('bread', { speed: 65 });
+            }
+
+            // Surprise jitrnice balm
+            const potionChance = isWater ? 0.045 : ((this.maxHp || 0) >= 120 ? 0.035 : 0.015);
+            if (Math.random() < potionChance) {
+              spawnScatterDrop('potion', { speed: 75, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
+            }
+
+            // Surprise soul jar
+            const soulChance = isWater ? 0.07 : isShadows ? 0.05 : isUndead ? 0.03 : 0.01;
+            if (Math.random() < soulChance) {
+              spawnScatterDrop('soul', { speed: 85, text: 'Zbloudilá dušička!', textColor: '#38BDF8' });
+            }
+
+            // Surprise coin burst from enemy pouch
+            const coinBonusChance = isUndead ? 0.32 : isDemons ? 0.30 : 0.18;
+            if (Math.random() < coinBonusChance) {
+              const rollDenom = Math.random();
+              let coinVal = 1;
+              let coinTxt: string | undefined = undefined;
+              if (rollDenom < 0.08 || (isDemons && rollDenom < 0.16)) {
+                coinVal = 15 + Math.floor(Math.random() * 10);
+                coinTxt = 'Zlatý tolar!';
+              } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
+                coinVal = 5 + Math.floor(Math.random() * 5);
+              } else {
+                coinVal = 1 + Math.floor(Math.random() * 2);
+              }
+              spawnScatterDrop('coin', { value: coinVal, speed: 70 + Math.random() * 50, text: coinTxt });
+            }
+          }
+
+          // 4. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
           const chestThreshold = Math.max(50, DROP_THRESHOLDS.chest - 20 * (metaRef.current.undeadLevel || 0));
           if (eng.pointsChest >= chestThreshold) {
             eng.pointsChest -= chestThreshold;
-            eng.drops.push({ type: 'chest', x: this.x + (ox += 5), y: this.y, radius: 25, time: 0 });
-            eng.texts.push(new DamageText(this.x, this.y - 50, `POKLAD (${chestThreshold} BODŮ)!`, COLORS.mustard, true));
+            spawnScatterDrop('chest', { speed: 45, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
             sound.chest();
           }
           if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
             eng.pointsPotion -= DROP_THRESHOLDS.potion;
-            eng.drops.push({ type: 'potion', x: this.x + (ox += 5), y: this.y, radius: 12, time: 0 });
+            spawnScatterDrop('potion', { speed: 60 });
           }
           if (eng.pointsBread >= DROP_THRESHOLDS.bread) {
             eng.pointsBread -= DROP_THRESHOLDS.bread;
-            eng.drops.push({ type: 'bread', x: this.x + (ox += 5), y: this.y, radius: 10, time: 0 });
+            spawnScatterDrop('bread', { speed: 60 });
           }
           if (eng.pointsSoul >= DROP_THRESHOLDS.soul) {
             eng.pointsSoul -= DROP_THRESHOLDS.soul;
-            eng.drops.push({ type: 'soul', x: this.x + (ox += 5), y: this.y, radius: 14, time: 0 });
+            spawnScatterDrop('soul', { speed: 70 });
           }
           if (eng.pointsCoin >= DROP_THRESHOLDS.coin) {
-            const v = Math.floor(eng.pointsCoin / DROP_THRESHOLDS.coin);
+            let v = Math.floor(eng.pointsCoin / DROP_THRESHOLDS.coin);
             eng.pointsCoin %= DROP_THRESHOLDS.coin;
-            if (v <= 15) {
-              eng.drops.push({ type: 'coin', value: v * (Math.random() < 0.06 * (metaRef.current.verminLevel || 0) ? 2 : 1), x: this.x + (ox += 5), y: this.y, radius: v >= 5 ? 12 : 8, time: Math.random() * 5 });
-            } else {
-              const maxCoins = Math.min(6, v);
-              const baseVal = Math.floor(v / maxCoins);
-              const rem = v % maxCoins;
-              for (let i = 0; i < maxCoins; i++) {
-                eng.drops.push({
-                  type: 'coin',
-                  value: (baseVal + (i === 0 ? rem : 0)) * (Math.random() < 0.06 * (metaRef.current.verminLevel || 0) ? 2 : 1),
-                  x: this.x + (Math.random() * 60 - 30),
-                  y: this.y + (Math.random() * 60 - 30),
-                  radius: 12,
-                  time: Math.random() * 5,
-                });
+            if (Math.random() < 0.06 * (metaRef.current.verminLevel || 0)) {
+              v *= 2;
+            }
+            let remaining = v;
+            const coinsToSpawn: number[] = [];
+            while (remaining > 0) {
+              if (remaining >= 15 && Math.random() < 0.70) {
+                const tVal = Math.min(25, remaining);
+                coinsToSpawn.push(tVal);
+                remaining -= tVal;
+              } else if (remaining >= 5 && Math.random() < 0.75) {
+                const gVal = Math.min(10, remaining >= 10 ? (Math.random() < 0.5 ? 10 : 5) : 5);
+                coinsToSpawn.push(gVal);
+                remaining -= gVal;
+              } else {
+                const cVal = Math.min(remaining, Math.max(1, Math.min(3, remaining)));
+                coinsToSpawn.push(cVal);
+                remaining -= cVal;
               }
+              if (coinsToSpawn.length >= 7) {
+                if (remaining > 0) coinsToSpawn[coinsToSpawn.length - 1] += remaining;
+                break;
+              }
+            }
+            for (const cVal of coinsToSpawn) {
+              spawnScatterDrop('coin', { value: cVal, speed: 55 + Math.random() * 85 });
             }
           }
 
@@ -5475,13 +5858,35 @@ export default function App() {
           engineRef.current.kills += 1;
           setRunStats((s) => ({ ...s, kills: engineRef.current.kills }));
 
-          const isBossMonster = this.isBoss || this.category === 'bosses';
+          const isBossMonster = this.isBoss || this.isMiniboss || this.category === 'bosses';
 
           if (isBossMonster) {
-            setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
+            const remainingBoss = engineRef.current.enemies.find(
+              (e) => (e.isBoss || e.isMiniboss) && !e.isDefeated && e !== this
+            );
+            if (remainingBoss) {
+              setRunStats((s) => ({
+                ...s,
+                bossHpPct: Math.max(0, Math.min(100, (remainingBoss.hp / remainingBoss.maxHp) * 100)),
+                bossTitle: remainingBoss.customBossTitle
+                  ? `👑 ${remainingBoss.customBossTitle}`
+                  : (remainingBoss.isMiniboss ? `👑 MINIBOSS: ${remainingBoss.name}` : remainingBoss.name),
+              }));
+            } else {
+              setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
+            }
+
             sound.victory();
             sound.cheer();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 60, `${stats.name.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true));
+            const defeatName = this.customBossTitle || stats.name;
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 60, `👑 ${defeatName.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true)
+            );
+            if (this.isMiniboss) {
+              engineRef.current.texts.push(
+                new DamageText(this.x, this.y - 95, '+25 KREJCARŮ! 💰', '#FDE047', true)
+              );
+            }
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId || 1;
             const curLvl = GAME_LEVELS[curLvlId];
@@ -5504,6 +5909,50 @@ export default function App() {
 
       draw(ctx: CanvasRenderingContext2D) {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
+
+        // Ground Miniboss Aura (illuminating halo and rotating folklore radial notches)
+        if (this.isMiniboss && !this.isDefeated) {
+          ctx.save();
+          const auraRadius = this.radius * 1.35;
+          const pulse = Math.sin(this.animTime * 3.5) * 3;
+          const glowAlpha = 0.28 + Math.sin(this.animTime * 3.5) * 0.12;
+
+          // Glowing translucent ground pool
+          const grad = ctx.createRadialGradient(this.x, this.y + this.radius * 0.7, this.radius * 0.2, this.x, this.y + this.radius * 0.7, auraRadius + pulse);
+          grad.addColorStop(0, `rgba(245, 158, 11, ${glowAlpha})`);
+          grad.addColorStop(0.7, `rgba(217, 119, 6, ${glowAlpha * 0.7})`);
+          grad.addColorStop(1, 'rgba(180, 83, 9, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.ellipse(this.x, this.y + this.radius * 0.75, auraRadius + pulse, (auraRadius + pulse) * 0.42, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Rotating folklore runic ring with teeth / notches
+          ctx.strokeStyle = '#D97706';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.ellipse(this.x, this.y + this.radius * 0.75, auraRadius, auraRadius * 0.38, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // 8 rotating folklore dashes/spokes around the ellipse
+          const spokeCount = 8;
+          const rotOffset = this.animTime * 0.8;
+          for (let i = 0; i < spokeCount; i++) {
+            const ang = rotOffset + (i / spokeCount) * Math.PI * 2;
+            const ex1 = this.x + Math.cos(ang) * (auraRadius - 4);
+            const ey1 = this.y + this.radius * 0.75 + Math.sin(ang) * (auraRadius * 0.38 - 1.5);
+            const ex2 = this.x + Math.cos(ang) * (auraRadius + 5);
+            const ey2 = this.y + this.radius * 0.75 + Math.sin(ang) * (auraRadius * 0.38 + 2);
+            ctx.beginPath();
+            ctx.moveTo(ex1, ey1);
+            ctx.lineTo(ex2, ey2);
+            ctx.strokeStyle = i % 2 === 0 ? '#F59E0B' : '#B45309';
+            ctx.lineWidth = 2.4;
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
         if (this.calmTimer > 0 && !this.isDefeated) {
           Lada.drawHeart(ctx, this.x, this.y - this.radius - 22 - Math.sin(this.animTime * 4) * 3, 8, '#F4A6BF');
         }
@@ -5577,6 +6026,15 @@ export default function App() {
           ctx.fillText('!', this.x, wy);
           ctx.restore();
         }
+
+        const scale = this.renderScale || 1.0;
+        if (scale !== 1.0) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.scale(scale, scale);
+          ctx.translate(-this.x, -this.y);
+        }
+
         const palette = this.palette || (ENEMIES[this.id]?.palette);
         if (palette) {
           ctx.save();
@@ -5607,6 +6065,8 @@ export default function App() {
           Lada.drawPolednice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'klekanice') {
           Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+        } else if (this.id === 'drak') {
+          Lada.drawDrak(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5);
         } else {
           drawEnemyRenderer(
             this.method,
@@ -5646,8 +6106,126 @@ export default function App() {
           ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
           ctx.fill();
         }
+
+        if (scale !== 1.0) {
+          ctx.restore();
+        }
+
+        // Miniboss Overhead Crown Badge & Distinct Health Bar
+        if (this.isMiniboss && !this.isDefeated) {
+          ctx.save();
+          const barWidth = Math.max(88, this.radius * 2.2);
+          const barHeight = 8;
+          const barX = this.x - barWidth / 2;
+          const barY = this.y - this.radius * 1.5 - 14;
+
+          // 1. Miniboss Title / Crown Badge
+          const badgeTitle = this.customBossTitle || stats.name;
+          ctx.font = '900 12px "Eczar", serif';
+          const titleText = `👑 ${badgeTitle.toUpperCase()}`;
+          const titleWidth = ctx.measureText(titleText).width;
+          const badgeW = titleWidth + 16;
+          const badgeH = 18;
+          const badgeX = this.x - badgeW / 2;
+          const badgeY = barY - badgeH - 3;
+
+          // Badge Cartouche
+          ctx.fillStyle = '#FEF3C7';
+          ctx.strokeStyle = '#1C1917';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === 'function') {
+            (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, 5);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          // Gold border accent
+          ctx.strokeStyle = '#D97706';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === 'function') {
+            (ctx as any).roundRect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3, 3);
+          } else {
+            ctx.rect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3);
+          }
+          ctx.stroke();
+
+          // Badge text
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#78350F';
+          ctx.fillText(titleText, this.x, badgeY + badgeH / 2);
+
+          // 2. Health Bar Background
+          ctx.fillStyle = '#1C1917';
+          ctx.fillRect(barX, barY, barWidth, barHeight);
+
+          // Health Bar Fill
+          const hpPct = Math.max(0, Math.min(1, this.hp / this.maxHp));
+          const fillW = Math.max(0, barWidth * hpPct);
+          if (fillW > 0) {
+            const barGrad = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+            barGrad.addColorStop(0, '#DC2626');
+            barGrad.addColorStop(0.5, '#EA580C');
+            barGrad.addColorStop(1, '#F59E0B');
+            ctx.fillStyle = barGrad;
+            ctx.fillRect(barX + 1, barY + 1, fillW - 2, barHeight - 2);
+          }
+
+          // Health Bar Frame
+          ctx.strokeStyle = '#FDE047';
+          ctx.lineWidth = 1.6;
+          ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+          // Health HP text
+          ctx.font = '900 9px "Eczar", serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2.5;
+          const hpText = `${Math.ceil(this.hp)} / ${this.maxHp} HP`;
+          ctx.strokeText(hpText, this.x, barY + barHeight / 2);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(hpText, this.x, barY + barHeight / 2);
+
+          ctx.restore();
+        }
       },
     };
+  };
+
+  // Manual trigger to immediately spawn current level's miniboss (available in pause menu for instant action/testing)
+  const spawnMinibossNow = () => {
+    const curLvlId = engineRef.current.activeLevelId || selectedLevelId || 1;
+    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[1];
+    const player = engineRef.current.player;
+    if (!player) return;
+
+    const bossDef = !engineRef.current.miniBossSpawned ? curLvl.miniBoss : curLvl.midBoss;
+    engineRef.current.miniBossSpawned = true;
+    const ang = Math.random() * Math.PI * 2;
+    const bossEnemy = createEnemyInstance(
+      bossDef.id,
+      player.x + Math.cos(ang) * 440,
+      player.y + Math.sin(ang) * 440,
+      bossDef.multiplier,
+      false,
+      true,
+      bossDef.name
+    );
+    engineRef.current.enemies.push(bossEnemy);
+    engineRef.current.texts.push(new DamageText(player.x, player.y - 50, `👑 ${bossDef.name}`, COLORS.mustard, true));
+    setRunStats((s) => ({
+      ...s,
+      warningBanner: bossDef.warning,
+      bossTitle: `👑 MINIBOSS: ${bossDef.name}`,
+      bossHpPct: 100,
+    }));
+    sound.boss();
+    setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
   };
 
   const formatTimer = (secs: number) => {
@@ -5936,15 +6514,12 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
-            <h1>BUBÁKOV</h1>
-            <p style={{ fontSize: '1.25rem', fontWeight: 800, marginTop: '-5px', color: '#FEF3C7' }}>
-              Česká vesnice, kde se bubáci zklidní poctivým výpraskem nebo je usmíří voňavá pečená buchta.
-            </p>
+            <BubakovCoverTitle />
 
-            <div style={{ textAlign: 'center', margin: '4px 0 8px 0' }}>
-              <span className="screen-step-badge">
+            <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
+              <LadaCartouche variant="ochre" size="md">
                 🗺️ KROK 1 ZE 2: VÝBĚR VÝPRAVY
-              </span>
+              </LadaCartouche>
             </div>
 
             {/* 6 PROGRESSIVE GAME LEVELS SELECTOR */}
@@ -6321,15 +6896,16 @@ export default function App() {
             </div>
 
             <div style={{ textAlign: 'center', margin: '4px 0 16px 0' }}>
-              <span className="screen-step-badge">
+              <LadaCartouche variant="green" size="md">
                 🏹 KROK 2 ZE 2: VÝBĚR LOVCE
-              </span>
-              <h1 style={{ fontSize: '2.2rem', margin: '4px 0 2px 0' }}>
+              </LadaCartouche>
+              <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026' }}>
                 VYBERTE SI SVÉHO LOVCE
               </h1>
-              <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: '#FEF3C7' }}>
+              <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: 'var(--wood-dark)' }}>
                 Koho vyšlete do noci na výpravu do kraje: <strong>{currentLevel.name}</strong>?
               </p>
+              <LadaFrieze repeatCount={16} height={18} />
             </div>
 
             {/* Character Selection Grid with animated canvas portraits */}
@@ -6568,6 +7144,17 @@ export default function App() {
               </button>
               <button
                 className="lada-btn"
+                style={{ background: '#D97706', color: '#FFFFFF' }}
+                onClick={() => {
+                  spawnMinibossNow();
+                  togglePause();
+                }}
+                title="Okamžitě přivolá mocného minibosse této úrovně pro testování a boj!"
+              >
+                👑 Přivolat Minibosse! ⚔️
+              </button>
+              <button
+                className="lada-btn"
                 style={{ background: '#1D4ED8', color: '#FFFFFF' }}
                 onClick={() => {
                   sound.coin();
@@ -6658,7 +7245,7 @@ export default function App() {
                     <div className="slot-reel-window">
                       {!isLocked ? (
                         <div className="slot-spinning-strip">
-                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', 'osikovy_prut', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', '🥧', '👢', 'osikovy_prut'].map((sym, sIdx) => (
+                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', 'kynuty_kolac', '👢', 'osikovy_prut', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', 'kynuty_kolac', '👢', 'osikovy_prut'].map((sym, sIdx) => (
                             <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <GameIcon icon={sym} size={38} />
                             </div>
@@ -6846,10 +7433,12 @@ export default function App() {
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '1000px' }}>
-            <h1>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
-            <p style={{ fontWeight: 900, fontSize: '1.35rem', marginTop: '-12px', color: '#FEF3C7' }}>
+            <h1 style={{ color: '#C53026' }}>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
+            <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-6px', color: 'var(--wood-dark)' }}>
               🎶 V koutě vyhrávají pekelné dudy a voní čerstvý chléb... 🎵
             </p>
+            <LadaCoverScene height={150} />
+            <LadaFrieze repeatCount={18} height={20} />
 
             <div className="modal-tabs" style={{ marginBottom: '14px' }}>
               <button

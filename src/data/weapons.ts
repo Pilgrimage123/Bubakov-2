@@ -235,13 +235,13 @@ var WEAPONS = {
 	},
 	kolac: {
 		id: "kolac",
-		name: "Kynutý koláč s mákem",
+		name: "Kynutý koláč",
 		type: "food",
-		icon: "🥧",
+		icon: "kynuty_kolac",
 		baseDmg: 28,
 		baseCd: 1.4,
 		speed: 380,
-		desc: "Velký kulatý koláč sypaný máslovou drobenkou. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
+		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const enemies = player.getLivingEnemies();
 			if (enemies.length === 0) return false;

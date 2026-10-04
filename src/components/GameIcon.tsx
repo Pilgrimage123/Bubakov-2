@@ -5,9 +5,17 @@ import { KrejcarIcon } from './KrejcarIcon';
 import { CzechBuchtaIcon } from './CzechBuchtaIcon';
 import { JitrniceIcon } from './JitrniceIcon';
 import { OsikovyPrutIcon } from './OsikovyPrutIcon';
+import { HruskaIcon } from './HruskaIcon';
+import { KynutyKolacIcon } from './KynutyKolacIcon';
 
 function isBuchtaIcon(icon: any) {
 	return icon === "czech_buchta" || icon === "🥟" || icon === "buns";
+}
+function isKolacIcon(icon: any) {
+	return icon === "kynuty_kolac" || icon === "kolac" || icon === "kynuty_kolac_s_makem" || icon === "chodsky_kolac";
+}
+function isHruskaIcon(icon: any) {
+	return icon === "hruska" || icon === "pear" || icon === "🍐" || icon === "hruška";
 }
 function isCoinIcon(icon: any) {
 	return icon === "🪙" || icon === "coin" || icon === "krejcar" || icon === "coins";
@@ -27,6 +35,16 @@ export interface GameIconProps {
 }
 
 var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "", style = {} }) => {
+	if (isKolacIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KynutyKolacIcon, {
+		size,
+		className,
+		style
+	});
+	if (isHruskaIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HruskaIcon, {
+		size,
+		className,
+		style
+	});
 	if (isBuchtaIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CzechBuchtaIcon, {
 		size,
 		className,
@@ -62,4 +80,4 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 	});
 };
 
-export { isBuchtaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, OsikovyPrutIcon, GameIcon };
+export { isBuchtaIcon, isKolacIcon, isHruskaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, OsikovyPrutIcon, HruskaIcon, KynutyKolacIcon, GameIcon };

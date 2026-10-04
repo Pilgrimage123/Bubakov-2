@@ -512,13 +512,13 @@ var WEAPON_UNLOCKS = {
 	},
 	kolac: {
 		id: "kolac",
-		realName: "Kynutý koláč s mákem",
-		realIcon: "🥧",
+		realName: "Kynutý koláč",
+		realIcon: "kynuty_kolac",
 		realType: "food",
 		defaultUnlocked: false,
 		challengeTitle: "🥧 Mlsná havěť ve spíži",
 		challengeShortDesc: "Zažeň celkem 70 mlsných rarášků, myšáků a šotků.",
-		challengeLongDesc: "Hospodyně upekla velký vázaný koláč sypaný máslovou drobenkou. Zažeň 70 nenasytných rarášků, půdních myšáků a šotků, kteří kradou mouku a máslo!",
+		challengeLongDesc: "Hospodyně upekla velký slavnostní kynutý koláč s tvarohem, povidly a mandlemi. Zažeň 70 nenasytných rarášků, půdních myšáků a šotků, kteří kradou mouku a máslo!",
 		targetEnemies: [
 			{
 				id: "rarach",
@@ -556,7 +556,7 @@ var WEAPON_UNLOCKS = {
 				minPercent: 25,
 				tierLevel: 1,
 				spoiledName: "K _ _ _ _ ý   k _ _ _ č",
-				spoiledTitle: "Velký kulatý koláč s drobenkou",
+				spoiledTitle: "Velký kulatý kynutý koláč",
 				spoiledDesc: "Zlatavý koláč upečený na velkém plechu. Po dopadu mezi strašidla nezmizí, ale divoce se odráží dál.",
 				spoiledStatsHint: "Nápověda: Skákající jídlo s odrazy mezi nepřáteli...",
 				clueTag: "🔍 25 %: První stopa! Znáš odskakující koláč"
@@ -564,27 +564,27 @@ var WEAPON_UNLOCKS = {
 			{
 				minPercent: 50,
 				tierLevel: 2,
-				spoiledName: "Kynutý ko...áč s mákem",
-				spoiledTitle: "Odskakující maková delikatesa",
-				spoiledDesc: "Kynutý koláč s mákem má obrovskou sílu! Po zásahu se odrazí až 2x (a více s úrovněmi) k dalším cílům.",
+				spoiledName: "Kynutý ko...áč",
+				spoiledTitle: "Odskakující povidlová delikatesa",
+				spoiledDesc: "Kynutý koláč s tvarohem a povidly má obrovskou sílu! Po zásahu se odrazí až 2x (a více s úrovněmi) k dalším cílům.",
 				spoiledStatsHint: "Základní poškození: 28 • 2+ odrazy mezi nepřáteli",
 				clueTag: "🔎 50 %: Znáš odrazy i vysoké poškození koláče!"
 			},
 			{
 				minPercent: 75,
 				tierLevel: 3,
-				spoiledName: "Kynutý koláč s mákem (Téměř upečeno!)",
-				spoiledTitle: "Chlouba hrusického posvícení",
-				spoiledDesc: "Koláč už voní z trouby a drobenka zlátne! Ještě několik zahnadých mlsných škůdců a koláč poletí do boje.",
+				spoiledName: "Kynutý koláč (Téměř upečeno!)",
+				spoiledTitle: "Chlouba posvícení",
+				spoiledDesc: "Koláč už voní z trouby a okraje zlátnou! Ještě několik zahnaných mlsných škůdců a koláč poletí do boje.",
 				spoiledStatsHint: "Start: 28 dmg, 2 odrazy, vysoká výdrž střely 3.5 s",
-				clueTag: "⚡ 75 %: Vůně drobenky láká! Už zbývá jen pár myšáků!"
+				clueTag: "⚡ 75 %: Vůně pečení láká! Už zbývá jen pár myšáků!"
 			},
 			{
 				minPercent: 100,
 				tierLevel: 4,
-				spoiledName: "Kynutý koláč s mákem",
-				spoiledTitle: "Velký kulatý koláč sypaný máslovou drobenkou",
-				spoiledDesc: "Velký kulatý koláč sypaný máslovou drobenkou. Po nárazu se odrazí k dalšímu lačnému bubákovi.",
+				spoiledName: "Kynutý koláč",
+				spoiledTitle: "Tradiční kynutý chodský koláč s tvarohem a povidly",
+				spoiledDesc: "Slavnostní kynutý koláč zdobený tvarohem, povidly a mandlemi. Po nárazu se odrazí k dalšímu lačnému bubákovi.",
 				spoiledStatsHint: "Poškození: 28 • Odskakuje mezi více nepřáteli",
 				clueTag: "✅ Plně odemčeno ve zbrojnici!"
 			}

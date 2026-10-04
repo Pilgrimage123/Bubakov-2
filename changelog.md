@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-04 — Nová podoba Kynutého koláče podle předlohy
+- Zbraň a předmět Kynutý koláč získaly novou grafickou podobu přesně podle předlohy tradičního chodského slavnostního koláče.
+- Vytvořena nová detailní SVG grafika `/public/images/kynuty_kolac.svg` a komponent `KynutyKolacIcon.tsx` obsahující zlatavě vypečený kynutý okraj, jemný tvarohový základ, 8 radiálních povidlových paprsků se zvlněnými girlandami, věnec mandlí v květu s rozinkou uprostřed a linku z rozinek.
+- Přidán nový ladovský in-game renderer `drawKynutyKolac` v `ladaRenderer.ts` pro létající projektil v aréně.
+- Zapojena nová ikona `kynuty_kolac` do zbrojnice, odemykání zbraní, výherního válce a `GameIcon`.
+
+## 2026-10-04 — Přeměna léčivé buchty na hrušku
+- Léčivý předmět padající z nepřátel a bossů (dříve buchta/pecen chleba) byl proměněn na šťavnatou českou hrušku s listem a stopkou v ladovském stylu.
+- Implementována nová metoda vykreslování `drawHruska` a `drawPear` v `ladaRenderer.ts` s typickou ladovskou tušovou konturou, teplým barevným přechodem, tečkami a zeleným lístkem.
+- Vytvořena nová SVG grafika `/public/images/hruska.svg` a React komponent `HruskaIcon.tsx`, začleněný do `GameIcon.tsx`.
+- Aktualizovány textové bubliny při sebrání předmětu (`+15 HP 🍐`, „Šťavnatá hruška!“, „Sladká hruška 🍐“), přehled předmětů v `ControlsModal.tsx` i herní plán.
+
 ## 2026-10-02 — Performance optimization
 - Enemy spatial hash for projectile/melee broad-phase collision queries.
 - Per-frame living-enemy snapshot to reduce repeated array filtering.
@@ -45,6 +57,33 @@
 - Spodní pozice joysticku i tlačítka schopnosti nyní explicitně započítává spodní systémové gesto/lištu (`env(safe-area-inset-bottom)`) a má garantovanou minimální bezpečnou vzdálenost od okraje.
 - Přidána plná podpora orientace na šířku (landscape na mobilech s výškou < 500 px) i pro velmi úzké telefony (<= 380 px), kde jsou prvky proporcionálně zmenšeny a posunuty od výřezů/kamer (`safe-area-inset-left / right`).
 - Dynamické přesouvání základny joysticku v `TouchControls.tsx` nyní respektuje `visualViewport` a nikdy nedovolí posunout tlačítko do spodní systémové zóny.
+
+## 2026-10-04 — Úprava frekvence padání pokladů
+- Bodový práh pro upuštění malované truhly s pokladem (`DROP_THRESHOLDS.chest`) byl zvýšen ze 700 na 9 800 bodů (14× méně často).
+
+## 2026-10-04 — Variabilní a dynamický systém dropů
+- **Tématické afinity podle kategorií monster**: Vodní havěť nabízí vysokou šanci na dušičky v hrníčku a léčivé jitrnice; lesní a polní potvory na čerstvé buchty a pecen chleba; kostlivci a démoni na staré stříbrné groše, zlaté tolary a truhly pokladů.
+- **Přímé náhodné dropy (Šťastná náhoda)**: Každý poražený nepřítel má přímou šanci upustit jídlo, jitrnici, dušičku nebo extra minci i bez čekání na naplnění počítadla.
+- **Usmíření jídlem**: Bubáci usmíření pečenou buchtou nyní zanechávají vděčný dar – vyšší šanci na uctivou buchtu, osvobozenou dušičku a stříbrný groš.
+- **Velkolepá kořist z bossů**: Poražení vládci bubáků vybuchnou ve fontánu pokladů (rozptýlené tolary, groše, zaručená jitrnice, pecen i dušička).
+- **Organický fyzikální rozptyl dropů**: Předměty se po porážce rozletí do stran v přirozeném kruhu se simulací tření a hladkého dobrzdění.
+- **Různorodé nominály mincí**: Krejcary se rozpadají do rozmanitých hodnot (měděné krejcary 1–3 kr., stříbrné groše 5–10 kr., zlaté tolary 15–25 kr.) s ladovskou grafikou a plovoucími texty.
+
+## 2026-10-04 — Výrazní, větší a odolnější minibossové
+- **Výrazně větší rozměry (+75 %)**: Minibossové (např. Polednice, Hastrman, Klekánice, Dráb, Meluzína, Ohnivý rarach, Hejtman zbojník, Ohnivý pes, Bílá paní, Zbrojnoš, Sněhulák, Noční můra) se vykreslují v monumentálním měřítku 1.75× a mají odpovídající kolizní poloměr (+65 %).
+- **Výrazný vizuální styl**:
+  - Pod nohama každého minibosse rotuje animovaná zlatavá folklorní aura se zuby a pulzujícím světelným halo.
+  - Nad hlavou se zobrazuje ladovská kartuše s korunkou (`👑 MINIBOSS: JMÉNO`).
+  - Každý miniboss má přímý vyhrazený overhead ukazatel HP s čísly a zlatým orámováním.
+  - Minibossové se propisují do horní lišty bossů (`bossHpPct`) a při příchodu vyvolávají varovný banner se zvukem hromu.
+- **Vysoká odolnost (HP, Poise a imunita vůči snadnému odhození)**:
+  - Multiplikátory HP minibossů byly zvýšeny na 3.5× až 9.6× (garantované minimum 1 400 HP).
+  - Poise resist zvýšen na 82–95 %, redukce odhození na 25 % (neuhýbají snadno úderům).
+  - Vyšší odolnost vůči jídlu (foodResist a willpower).
+- **Bohaté odměny při zklidnění**:
+  - Poražení minibosse zaručuje pokladovou truhlu, spršku stříbrných a zlatých tolarů (+25 kr.), jitrnici, pecen a mocnou dušičku.
+- **Tlačítko v pauze**:
+  - V menu pozastavení hry [P] přidáno tlačítko `👑 Přivolat Minibosse!` pro okamžité vyzkoušení souboje v jakékoliv úrovni.
 
 
 

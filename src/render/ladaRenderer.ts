@@ -4807,8 +4807,733 @@ var Lada = {
 	drawNocniMura(ctx, x, y, time, vx, panicked) {
 		this.drawBubak(ctx, x, y, time, vx, panicked);
 	},
-	drawDrak(ctx, x, y, time, vx, panicked) {
-		this.drawHejkal(ctx, x, y, time, vx, panicked);
+	drawIcicle(ctx, x, y, radius = 14, angle = Math.PI / 2) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		const r = radius * 1.25;
+		const grad = ctx.createLinearGradient(-r * 0.8, 0, r * 1.5, 0);
+		grad.addColorStop(0, "#F0F9FF");
+		grad.addColorStop(0.3, "#BAE6FD");
+		grad.addColorStop(0.7, "#38BDF8");
+		grad.addColorStop(1, "#0284C7");
+
+		this.setupPath(ctx, grad, COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-r * 0.8, -r * 0.45);
+		ctx.lineTo(r * 1.6, 0);
+		ctx.lineTo(-r * 0.8, r * 0.45);
+		ctx.lineTo(-r * 0.6, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Crystalline frost gleam on facet
+		ctx.strokeStyle = "#FFFFFF";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-r * 0.7, -r * 0.2);
+		ctx.lineTo(r * 1.2, -r * 0.05);
+		ctx.stroke();
+
+		// Glint star near tip
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(r * 0.9, -1, 1.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawDragonFireball(ctx, x, y, radius = 16, time = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.shadowColor = "#EF4444";
+		ctx.shadowBlur = 14;
+
+		// Blazing flame core
+		const grad = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.2);
+		grad.addColorStop(0, "#FFFBEB");
+		grad.addColorStop(0.3, "#FBBF24");
+		grad.addColorStop(0.7, "#F97316");
+		grad.addColorStop(1, "#DC2626");
+
+		this.setupPath(ctx, grad, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Outer swirling fire tongues
+		ctx.strokeStyle = "#EA580C";
+		ctx.lineWidth = 2.4;
+		for (let i = 0; i < 4; i++) {
+			const a = time * 7 + (i * Math.PI) / 2;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * radius * 0.7, Math.sin(a) * radius * 0.7);
+			ctx.quadraticCurveTo(
+				Math.cos(a + 0.4) * (radius * 1.3),
+				Math.sin(a + 0.4) * (radius * 1.3),
+				Math.cos(a + 0.7) * (radius * 1.5),
+				Math.sin(a + 0.7) * (radius * 1.5)
+			);
+			ctx.stroke();
+		}
+
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(-radius * 0.25, -radius * 0.25, radius * 0.35, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawDragonFrostball(ctx, x, y, radius = 16, time = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.shadowColor = "#38BDF8";
+		ctx.shadowBlur = 14;
+
+		// Icy crystal core
+		const grad = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.2);
+		grad.addColorStop(0, "#FFFFFF");
+		grad.addColorStop(0.4, "#E0F2FE");
+		grad.addColorStop(0.7, "#38BDF8");
+		grad.addColorStop(1, "#0284C7");
+
+		this.setupPath(ctx, grad, COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Protruding frost crystal spikes
+		this.setupPath(ctx, "#BAE6FD", COLORS.ink, 2);
+		for (let i = 0; i < 6; i++) {
+			const a = time * 5 + (i * Math.PI) / 3;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a - 0.2) * (radius * 0.8), Math.sin(a - 0.2) * (radius * 0.8));
+			ctx.lineTo(Math.cos(a) * (radius * 1.5), Math.sin(a) * (radius * 1.5));
+			ctx.lineTo(Math.cos(a + 0.2) * (radius * 0.8), Math.sin(a + 0.2) * (radius * 0.8));
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius * 0.4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawDragonWind(ctx, x, y, radius = 22, angle = 0, time = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		// Sweeping crescent wind wave
+		ctx.fillStyle = "rgba(224, 242, 254, 0.45)";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.arc(0, 0, radius * 1.2, -Math.PI * 0.4, Math.PI * 0.4);
+		ctx.quadraticCurveTo(radius * 0.4, 0, 0, -radius * 1.2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Wind vortex curls
+		ctx.strokeStyle = "#38BDF8";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(radius * 0.6, -radius * 0.4, radius * 0.25, 0, Math.PI * 1.5);
+		ctx.arc(radius * 0.6, radius * 0.4, radius * 0.25, -Math.PI * 0.5, Math.PI);
+		ctx.stroke();
+		ctx.restore();
+	},
+	drawDrak(ctx, x, y, time, vx, panicked, isEnraged = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 2.45;
+		const walkSpeed = panicked ? 18 : isEnraged ? 8 : 4.5;
+		const bob = Math.sin(time * walkSpeed) * (panicked ? 5 : 3.5);
+		const legSwing = Math.sin(time * walkSpeed) * (panicked ? 16 : 9);
+		const breathBob = Math.sin(time * 3) * 2;
+		const tailWag = Math.sin(time * (isEnraged ? 7 : 3.5)) * 10;
+		const wingFlap = Math.sin(time * (panicked ? 14 : isEnraged ? 7.5 : 4)) * 0.35;
+
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.08);
+			this.drawRunDust(ctx, -24, 32, time);
+			this.drawPanicDrops(ctx, 0, -48, time);
+		}
+
+		// Enraged Dragon Elemental Glow
+		if (isEnraged) {
+			ctx.save();
+			ctx.shadowColor = Math.sin(time * 8) > 0 ? "#EF4444" : "#38BDF8";
+			ctx.shadowBlur = 24;
+			ctx.restore();
+		}
+
+		// 1. FAR WING (Back wing)
+		ctx.save();
+		ctx.translate(-8, -14);
+		ctx.rotate(wingFlap + 0.15);
+		this.setupPath(ctx, isEnraged ? "#1C3E20" : "#1B3B1F", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(-14, -30, -30, -56);
+		ctx.lineTo(-24, -58);
+		ctx.quadraticCurveTo(-45, -42, -54, -28);
+		ctx.quadraticCurveTo(-40, -22, -44, -10);
+		ctx.quadraticCurveTo(-30, -10, -18, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Wing finger struts
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-30, -56);
+		ctx.quadraticCurveTo(-15, -28, 0, 0);
+		ctx.moveTo(-54, -28);
+		ctx.quadraticCurveTo(-26, -18, 0, 0);
+		ctx.moveTo(-44, -10);
+		ctx.quadraticCurveTo(-20, -6, 0, 0);
+		ctx.stroke();
+		ctx.restore();
+
+		// 2. FAR HIND LEG & FAR FORELEG
+		const farLegWalk = -legSwing;
+		this.drawLimb(ctx, -18, 14, -26 - farLegWalk * 0.7, 32, "#234D27", 8.5);
+		this.drawLimb(ctx, 12, 14, 8 + farLegWalk * 0.7, 32, "#234D27", 7.5);
+		ctx.fillStyle = COLORS.ink;
+		ctx.fillRect(-30 - farLegWalk * 0.7, 30, 9, 4);
+		ctx.fillRect(4 + farLegWalk * 0.7, 30, 8, 4);
+
+		// 3. TAIL (Sinuous dragon tail with dorsal spines & arrowhead spade)
+		ctx.save();
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3.8);
+		ctx.beginPath();
+		ctx.moveTo(-22, 10);
+		ctx.bezierCurveTo(
+			-45 + tailWag * 0.3, 14 - tailWag * 0.2,
+			-65 + tailWag * 0.7, -4 - tailWag * 0.5,
+			-78 + tailWag, -18 - tailWag * 0.7
+		);
+		ctx.bezierCurveTo(
+			-62 + tailWag * 0.6, -14 - tailWag * 0.4,
+			-40 + tailWag * 0.2, 0,
+			-20, 2
+		);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Spines along tail
+		for (let i = 0; i < 4; i++) {
+			const st = (i + 1) / 5;
+			const sx = -22 + (-78 + tailWag - (-22)) * st;
+			const sy = 6 + (-18 - tailWag * 0.7 - 6) * st;
+			this.setupPath(ctx, isEnraged ? "#EF4444" : "#DC2626", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(sx, sy);
+			ctx.lineTo(sx - 4, sy - 8);
+			ctx.lineTo(sx + 3, sy - 3);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Spiked tail arrowhead spade (Dračí ocasní hrot)
+		ctx.save();
+		ctx.translate(-78 + tailWag, -18 - tailWag * 0.7);
+		ctx.rotate(-0.4 - tailWag * 0.04);
+		this.setupPath(ctx, isEnraged ? "#DC2626" : "#B91C1C", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(-8, -12);
+		ctx.lineTo(-20, -5);
+		ctx.lineTo(-24, 0);
+		ctx.lineTo(-20, 5);
+		ctx.lineTo(-8, 12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+		ctx.restore();
+
+		// 4. MAIN DRAGON TORSO & ROTUND FOLK BELLY
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 4);
+		ctx.beginPath();
+		ctx.ellipse(0, 2 + breathBob * 0.5, 33, 26, -0.12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Folk scale textures
+		ctx.strokeStyle = "#224E28";
+		ctx.lineWidth = 2.2;
+		[[-12, -4], [-4, -8], [6, -6], [-8, 8], [4, 6], [-16, 2]].forEach(([sx, sy]) => {
+			ctx.beginPath();
+			ctx.arc(sx, sy + breathBob * 0.4, 4.5, 0.2, Math.PI - 0.2);
+			ctx.stroke();
+		});
+
+		// Dorsal Back Spines
+		[[-18, -16], [-10, -22], [-1, -24], [8, -21], [17, -14]].forEach(([spX, spY], idx) => {
+			this.setupPath(ctx, isEnraged ? (idx % 2 === 0 ? "#F97316" : "#EF4444") : "#DC2626", COLORS.ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(spX - 4, spY + 4);
+			ctx.lineTo(spX, spY - 9);
+			ctx.lineTo(spX + 4, spY + 3);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		});
+
+		// Creamy Yellow Folk Belly Plates
+		this.setupPath(ctx, "#E5E7A3", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-10, -10 + breathBob);
+		ctx.quadraticCurveTo(12, -12 + breathBob, 20, 0);
+		ctx.quadraticCurveTo(24, 16, 12, 25);
+		ctx.quadraticCurveTo(-4, 27, -14, 18);
+		ctx.quadraticCurveTo(-18, 4, -10, -10 + breathBob);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Belly segment ribs (ink striping)
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.4;
+		for (let i = -1; i <= 4; i++) {
+			const by = -6 + i * 6 + breathBob * 0.6;
+			ctx.beginPath();
+			ctx.moveTo(-11 + Math.abs(i) * 1.5, by);
+			ctx.quadraticCurveTo(4, by + 2, 18 - Math.abs(i - 2) * 1.8, by);
+			ctx.stroke();
+		}
+
+		// 5. NEAR LEGS & TALONS
+		this.drawLimb(ctx, -14, 14, -18 + legSwing * 0.8, 33, "#2F6A38", 9.5);
+		this.drawLimb(ctx, 16, 14, 20 - legSwing * 0.8, 33, "#2F6A38", 9.5);
+		[[-18 + legSwing * 0.8, 33], [20 - legSwing * 0.8, 33]].forEach(([fx, fy]) => {
+			this.setupPath(ctx, "#FFFBEB", COLORS.ink, 2);
+			for (let c = -1; c <= 1; c++) {
+				ctx.beginPath();
+				ctx.moveTo(fx + c * 4, fy);
+				ctx.lineTo(fx + c * 5 + 4, fy + 4);
+				ctx.lineTo(fx + c * 4 - 1, fy + 4);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+			}
+		});
+
+		// 6. NEAR WING (Front wing - large, prominent, flapping)
+		ctx.save();
+		ctx.translate(6, -10);
+		ctx.rotate(wingFlap);
+		this.setupPath(ctx, isEnraged ? "#2E5C33" : "#2A562F", COLORS.ink, 3.6);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(8, -26, 4, -62);
+		ctx.lineTo(10, -64);
+		ctx.quadraticCurveTo(-14, -48, -28, -34);
+		ctx.quadraticCurveTo(-16, -26, -20, -12);
+		ctx.quadraticCurveTo(-10, -12, 0, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Wing struts
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(4, -62);
+		ctx.quadraticCurveTo(4, -30, 0, 0);
+		ctx.moveTo(-28, -34);
+		ctx.quadraticCurveTo(-10, -22, 0, 0);
+		ctx.moveTo(-20, -12);
+		ctx.quadraticCurveTo(-8, -6, 0, 0);
+		ctx.stroke();
+
+		// Thumb claw on wing elbow
+		this.setupPath(ctx, "#FFFBEB", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(4, -62);
+		ctx.lineTo(8, -68);
+		ctx.lineTo(11, -63);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 7. THE THREE DRAGON NECKS & HEADS
+		const headBob1 = Math.sin(time * 3 + 1.2) * 2;
+		const headBob2 = Math.sin(time * 3.5) * 2.5;
+		const headBob3 = Math.sin(time * 4 + 2) * 2;
+
+		// --- HEAD 1: LEFT HEAD (LÍNÁ / SPÍCÍ HLAVA) ---
+		ctx.save();
+		this.setupPath(ctx, "#2A5B32", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.moveTo(-16, -12);
+		ctx.quadraticCurveTo(-34, -20, -32, -36 + headBob1);
+		ctx.lineTo(-24, -38 + headBob1);
+		ctx.quadraticCurveTo(-24, -20, -8, -16);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Small neck spines
+		this.setupPath(ctx, isEnraged ? "#38BDF8" : "#DC2626", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-32, -26 + headBob1);
+		ctx.lineTo(-39, -28 + headBob1);
+		ctx.lineTo(-30, -32 + headBob1);
+		ctx.fill();
+		ctx.stroke();
+
+		// Skull / Snout (-30, -38)
+		ctx.save();
+		ctx.translate(-30, -38 + headBob1);
+		ctx.rotate(-0.25 + (isEnraged ? Math.sin(time * 8) * 0.1 : 0));
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 11, 8, -0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#2A5B32", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(-7, 2, 6, 4.5, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Swept horn
+		this.setupPath(ctx, isEnraged ? "#93C5FD" : "#D97706", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(3, -6);
+		ctx.quadraticCurveTo(8, -14, 16, -16);
+		ctx.quadraticCurveTo(9, -8, 5, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		if (!isEnraged && !panicked) {
+			// SLEEPING STATE: Closed curved eye slit
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.arc(-2, -2, 3.2, 0.15, Math.PI - 0.15);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.arc(-6, 3, 3, 0.2, Math.PI * 0.85);
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-10, 1, 1.2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Snot / snore dream bubble
+			const bubblePulse = 2.5 + Math.sin(time * 3.5) * 1.5;
+			ctx.fillStyle = "rgba(186, 230, 253, 0.75)";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.2;
+			ctx.beginPath();
+			ctx.arc(-14, 0, bubblePulse, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			// Floating "Zzz" drifting upward
+			const zPhase = (time * 1.2) % 1;
+			const zX = -8 - zPhase * 16 + Math.sin(time * 4) * 4;
+			const zY = -12 - zPhase * 26;
+			ctx.font = "900 12px Eczar, serif";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2.5;
+			ctx.strokeText("Z", zX, zY);
+			ctx.fillStyle = "#FEF08A";
+			ctx.fillText("Z", zX, zY);
+
+			const z2Phase = (time * 1.2 + 0.5) % 1;
+			const z2X = -12 - z2Phase * 18 + Math.cos(time * 4) * 3;
+			const z2Y = -14 - z2Phase * 28;
+			ctx.font = "900 9px Eczar, serif";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2;
+			ctx.strokeText("z", z2X, z2Y);
+			ctx.fillStyle = "#E0F2FE";
+			ctx.fillText("z", z2X, z2Y);
+		} else {
+			// AWAKENED / ENRAGED STATE: Wide furious icy eye, snarling maw, frost breath!
+			ctx.fillStyle = "#E0F2FE";
+			ctx.beginPath();
+			ctx.arc(-2, -2, 3.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#0284C7";
+			ctx.beginPath();
+			ctx.arc(-3, -2, 2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Open snarling mouth with sharp fangs
+			this.setupPath(ctx, "#1E293B", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.moveTo(-4, 2);
+			ctx.lineTo(-12, 6);
+			ctx.lineTo(-5, 5);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.moveTo(-6, 2); ctx.lineTo(-7, 4.5); ctx.lineTo(-8, 2);
+			ctx.moveTo(-10, 2); ctx.lineTo(-11, 4.5); ctx.lineTo(-12, 2);
+			ctx.fill();
+
+			// Frost vapor drifting from snout
+			for (let i = 0; i < 3; i++) {
+				const fT = (time * 4 + i * 0.33) % 1;
+				ctx.fillStyle = i % 2 === 0 ? "#67E8F9" : "#E0F2FE";
+				ctx.beginPath();
+				ctx.arc(-14 - fT * 14, 2 + Math.sin(time * 6 + i) * 4, 1.8 * (1 - fT * 0.5), 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
+		ctx.restore();
+		ctx.restore();
+
+		// --- HEAD 2: CENTER HEAD (HLÍDACÍ / MAJESTÁTNÍ HLAVA) ---
+		ctx.save();
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3.6);
+		ctx.beginPath();
+		ctx.moveTo(-8, -16);
+		ctx.quadraticCurveTo(-4, -36, -6, -50 + headBob2);
+		ctx.lineTo(6, -50 + headBob2);
+		ctx.quadraticCurveTo(6, -36, 10, -16);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		for (let i = 0; i < 3; i++) {
+			const nsy = -24 - i * 9 + headBob2 * 0.6;
+			this.setupPath(ctx, isEnraged ? "#EF4444" : "#DC2626", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-7, nsy);
+			ctx.lineTo(-13, nsy - 4);
+			ctx.lineTo(-5, nsy - 7);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.save();
+		ctx.translate(0, -52 + headBob2);
+		ctx.rotate(Math.sin(time * 2.5) * 0.08);
+
+		// Crown dragon horns
+		this.setupPath(ctx, isEnraged ? "#F59E0B" : "#D97706", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-4, -6);
+		ctx.quadraticCurveTo(-10, -18, -16, -26);
+		ctx.quadraticCurveTo(-8, -16, -1, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(2, -6);
+		ctx.quadraticCurveTo(8, -20, 14, -28);
+		ctx.quadraticCurveTo(7, -16, 5, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, isEnraged ? "#EF4444" : "#EA580C", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-1, -8);
+		ctx.lineTo(0, -23);
+		ctx.lineTo(3, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Head base
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 13, 9, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Snout & Chin beard tuft
+		this.setupPath(ctx, "#25562C", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.ellipse(6, 2, 7, 5, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#B45309", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(3, 7);
+		ctx.lineTo(6, 12);
+		ctx.lineTo(8, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Watchful golden eyes
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.arc(3, -2, 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.ellipse(4.5, -2, 1.6, 2.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.beginPath();
+		ctx.arc(10, 1, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		if (isEnraged) {
+			this.setupPath(ctx, "#991B1B", COLORS.ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(3, 3);
+			ctx.lineTo(13, 7);
+			ctx.lineTo(5, 7);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			ctx.strokeStyle = "#DC2626";
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.moveTo(5, 5);
+			ctx.lineTo(16, 7);
+			ctx.lineTo(21, 5);
+			ctx.moveTo(16, 7);
+			ctx.lineTo(20, 10);
+			ctx.stroke();
+
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.moveTo(5, 3); ctx.lineTo(6, 5.5); ctx.lineTo(7, 3);
+			ctx.moveTo(9, 3); ctx.lineTo(10, 5.5); ctx.lineTo(11, 3);
+			ctx.fill();
+		} else {
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.arc(5, 3, 5, 0.2, Math.PI * 0.65);
+			ctx.stroke();
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.moveTo(6, 4); ctx.lineTo(7, 6.5); ctx.lineTo(8, 4);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.restore();
+
+		// --- HEAD 3: RIGHT HEAD (OHNIVÁ HLAVA - FIRE HEAD) ---
+		ctx.save();
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3.4);
+		ctx.beginPath();
+		ctx.moveTo(12, -14);
+		ctx.quadraticCurveTo(24, -20, 32, -26 + headBob3);
+		ctx.lineTo(26, -34 + headBob3);
+		ctx.quadraticCurveTo(14, -26, 4, -18);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		for (let i = 0; i < 3; i++) {
+			const fsx = 10 + i * 8;
+			const fsy = -19 - i * 4 + headBob3 * 0.5;
+			this.setupPath(ctx, "#EA580C", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(fsx, fsy);
+			ctx.lineTo(fsx + 2, fsy - 7);
+			ctx.lineTo(fsx + 5, fsy - 2);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.save();
+		ctx.translate(34, -28 + headBob3);
+		ctx.rotate(0.18 + Math.sin(time * 5) * 0.08);
+
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-3, -5);
+		ctx.quadraticCurveTo(-10, -16, -18, -20);
+		ctx.quadraticCurveTo(-8, -12, 0, -4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#2F6A38", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 12, 8, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#EF4444";
+		ctx.beginPath();
+		ctx.arc(2, -2, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.ellipse(3, -2, 1, 2.6, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		const fireGrad = ctx.createLinearGradient(4, 2, 16, 4);
+		fireGrad.addColorStop(0, "#FEF08A");
+		fireGrad.addColorStop(0.5, "#F97316");
+		fireGrad.addColorStop(1, "#DC2626");
+
+		this.setupPath(ctx, fireGrad, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(2, 2);
+		ctx.lineTo(15, -1);
+		ctx.lineTo(13, 6);
+		ctx.lineTo(2, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.moveTo(4, 1); ctx.lineTo(5, 3.5); ctx.lineTo(6, 1);
+		ctx.moveTo(9, 0); ctx.lineTo(10, 3); ctx.lineTo(11, 0);
+		ctx.moveTo(4, 6); ctx.lineTo(5, 3.8); ctx.lineTo(6, 6);
+		ctx.moveTo(9, 6); ctx.lineTo(10, 4); ctx.lineTo(11, 6);
+		ctx.fill();
+
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(12, -2, 1.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		const sparkCount = isEnraged ? 6 : 4;
+		for (let i = 0; i < sparkCount; i++) {
+			const sPhase = (time * (isEnraged ? 5.5 : 3.5) + i * 0.25) % 1;
+			const sx = 14 + sPhase * (isEnraged ? 24 : 16);
+			const sy = 2 + Math.sin(time * 8 + i) * 6 - sPhase * 4;
+			ctx.fillStyle = i % 2 === 0 ? "#F59E0B" : "#DC2626";
+			ctx.beginPath();
+			ctx.arc(sx, sy, (1 - sPhase * 0.6) * 2.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.restore();
+
+		ctx.restore();
 	},
 	drawCoin(ctx, x, y, time, value) {
 		const bob = Math.sin(time * 6) * 4;
@@ -5193,9 +5918,217 @@ var Lada = {
 		}
 		ctx.restore();
 	},
+	drawHruska(ctx, x, y, scale = 1, angle = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.scale(scale, scale);
+
+		// Ground shadow
+		ctx.fillStyle = "rgba(38, 23, 14, 0.28)";
+		ctx.beginPath();
+		ctx.ellipse(0, 15, 13, 5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Pear curved stem (stopka)
+		this.setupPath(ctx, "#5C3A21", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(0, -9);
+		ctx.quadraticCurveTo(-2, -16, -5, -20);
+		ctx.quadraticCurveTo(-3, -21, -1, -19);
+		ctx.quadraticCurveTo(2, -15, 2, -9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Fresh green leaf (lístek)
+		this.setupPath(ctx, "#65A30D", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-1, -15);
+		ctx.quadraticCurveTo(7, -21, 13, -17);
+		ctx.quadraticCurveTo(8, -10, -1, -15);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Leaf vein
+		ctx.strokeStyle = "#365314";
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.moveTo(-1, -15);
+		ctx.quadraticCurveTo(6, -16, 12, -17);
+		ctx.stroke();
+
+		// Pear body gradient
+		const pearGrad = ctx.createLinearGradient(-10, -12, 10, 16);
+		pearGrad.addColorStop(0, "#D9F99D");
+		pearGrad.addColorStop(0.3, "#FACC15");
+		pearGrad.addColorStop(0.7, "#EAB308");
+		pearGrad.addColorStop(1, "#EA580C");
+
+		this.setupPath(ctx, pearGrad, COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(0, -9);
+		ctx.bezierCurveTo(-5, -9, -7, -3, -6, 2);
+		ctx.bezierCurveTo(-14, 5, -15, 14, -8, 18);
+		ctx.bezierCurveTo(-3, 20, 3, 20, 8, 18);
+		ctx.bezierCurveTo(15, 14, 14, 5, 6, 2);
+		ctx.bezierCurveTo(7, -3, 5, -9, 0, -9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Bottom calyx (bubák)
+		ctx.fillStyle = "#3D1D08";
+		ctx.beginPath();
+		ctx.ellipse(0, 19, 1.8, 1.2, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Pear skin freckles / rustic flecks
+		ctx.fillStyle = "#78350F";
+		for (const [fx, fy, fr] of [
+			[2, 7, 0.7],
+			[5, 11, 0.8],
+			[-2, 12, 0.6],
+			[-5, 9, 0.7],
+			[6, 14, 0.6],
+			[-4, 15, 0.6],
+			[1, 16, 0.7]
+		]) {
+			ctx.beginPath();
+			ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Folk highlight sheen on left flank
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+		ctx.lineWidth = 2.4;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(-4, -1);
+		ctx.quadraticCurveTo(-9, 4, -9, 11);
+		ctx.stroke();
+
+		ctx.restore();
+	},
+	drawKynutyKolac(ctx, x, y, scale = 1, angle = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.scale(scale, scale);
+
+		// Ground shadow
+		ctx.fillStyle = "rgba(38, 23, 14, 0.28)";
+		ctx.beginPath();
+		ctx.ellipse(0, 3, 17, 16, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Baked yeast crust (outer ring)
+		const crustGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 16);
+		crustGrad.addColorStop(0, "#FCD34D");
+		crustGrad.addColorStop(0.5, "#F59E0B");
+		crustGrad.addColorStop(0.75, "#D97706");
+		crustGrad.addColorStop(0.9, "#9A3412");
+		crustGrad.addColorStop(1, "#451A03");
+
+		this.setupPath(ctx, crustGrad, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, 16, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Roasted crust edge spots
+		ctx.fillStyle = "rgba(107, 40, 10, 0.5)";
+		ctx.beginPath();
+		ctx.arc(9, -9, 4, 0, Math.PI * 2);
+		ctx.arc(-11, 7, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Creamy white Tvaroh filling
+		const tvarohGrad = ctx.createRadialGradient(-1, -1, 1, 0, 0, 13);
+		tvarohGrad.addColorStop(0, "#FFFFFF");
+		tvarohGrad.addColorStop(0.7, "#FFFDF5");
+		tvarohGrad.addColorStop(1, "#F0E7D3");
+
+		this.setupPath(ctx, tvarohGrad, COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.arc(0, 0, 12.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 8 Radial dark plum povidla spokes
+		ctx.strokeStyle = "#240D07";
+		ctx.lineWidth = 1.6;
+		ctx.lineCap = "round";
+		for (let i = 0; i < 8; i++) {
+			const a = (i * Math.PI) / 4;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * 2.8, Math.sin(a) * 2.8);
+			ctx.lineTo(Math.cos(a) * 12.2, Math.sin(a) * 12.2);
+			ctx.stroke();
+		}
+
+		// Scalloped wavy garland between spokes (radius ~10.5)
+		ctx.lineWidth = 1.3;
+		for (let i = 0; i < 8; i++) {
+			const a1 = (i * Math.PI) / 4;
+			const a2 = ((i + 1) * Math.PI) / 4;
+			const amid = (a1 + a2) / 2;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a1) * 10.8, Math.sin(a1) * 10.8);
+			ctx.quadraticCurveTo(Math.cos(amid) * 12.6, Math.sin(amid) * 12.6, Math.cos(a2) * 10.8, Math.sin(a2) * 10.8);
+			ctx.stroke();
+		}
+
+		// Raisin dots ring (radius ~11.8)
+		ctx.fillStyle = "#1E0A04";
+		for (let i = 0; i < 16; i++) {
+			const a = (i * Math.PI) / 8 + 0.2;
+			ctx.beginPath();
+			ctx.arc(Math.cos(a) * 11.6, Math.sin(a) * 11.6, 0.7, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Mid-sector povidla dashes (radius ~7)
+		ctx.lineWidth = 1.2;
+		for (let i = 0; i < 8; i++) {
+			const a = (i * Math.PI) / 4 + Math.PI / 8;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * 5.5, Math.sin(a) * 5.5);
+			ctx.lineTo(Math.cos(a) * 8.2, Math.sin(a) * 8.2);
+			ctx.stroke();
+		}
+
+		// 8 Peeled almonds in center rosette
+		this.setupPath(ctx, "#FFFBF5", COLORS.ink, 0.8);
+		for (let i = 0; i < 8; i++) {
+			const a = (i * Math.PI) / 4 + Math.PI / 8;
+			ctx.save();
+			ctx.rotate(a);
+			ctx.beginPath();
+			ctx.ellipse(0, -3.4, 0.9, 2.2, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		// Center raisin
+		ctx.fillStyle = "#1A0903";
+		ctx.beginPath();
+		ctx.arc(0, 0, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
 	drawBreadRoll(ctx, x, y, time) {
 		const bob = Math.sin(time * 4) * 3;
-		this.drawCzechBuchta(ctx, x, y + bob, 1, 0);
+		const tilt = Math.sin(time * 2.5) * 0.08;
+		this.drawHruska(ctx, x, y + bob, 1.15, tilt);
+	},
+	drawPear(ctx, x, y, time) {
+		const bob = Math.sin(time * 4) * 3;
+		const tilt = Math.sin(time * 2.5) * 0.08;
+		this.drawHruska(ctx, x, y + bob, 1.15, tilt);
 	},
 	drawSoulJar(ctx, x, y, time) {
 		ctx.save();

@@ -60,6 +60,10 @@ export interface EngineState {
   rytirChargeTimer: number;
   drakBreathTimer: number;
   drakIcicleTimer: number;
+  drakTailWhipTimer: number;
+  drakWingGustTimer: number;
+  drakSwoopTimer: number;
+  drakSnoreTimer: number;
   lastStatsSync: number;
 }
 
@@ -125,6 +129,10 @@ export function createInitialEngineState(): EngineState {
     rytirChargeTimer: 8,
     drakBreathTimer: 5,
     drakIcicleTimer: 8,
+    drakTailWhipTimer: 6,
+    drakWingGustTimer: 11,
+    drakSwoopTimer: 14,
+    drakSnoreTimer: 3,
     lastStatsSync: 0
   };
 }

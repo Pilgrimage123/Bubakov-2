@@ -28,18 +28,18 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "polednice",
 			name: "☀️ Polednice se srpem",
-			warning: "☀️ POZOR: PŘICHÁZÍ POLEDNICE SE SRPEM! ☀️",
+			warning: "☀️ POZOR: PŘICHÁZÍ MOCNÁ POLEDNICE SE SRPEM! ☀️",
 			time: 45,
 			kills: 40,
-			multiplier: .85
+			multiplier: 3.5
 		},
 		midBoss: {
 			id: "hastrman",
 			name: "💧 Hastrman z Brčálníku",
-			warning: "💧 POZOR: Z HLUBIN VYSTUPUJE HASTRMAN! 💧",
+			warning: "💧 POZOR: Z HLUBIN VYSTUPUJE VELKÝ HASTRMAN! 💧",
 			time: 95,
 			kills: 95,
-			multiplier: 1.05
+			multiplier: 4.5
 		},
 		finalBoss: {
 			id: "cert",
@@ -150,18 +150,18 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "klekanice",
 			name: "🔔 Večerní Klekánice",
-			warning: "🔔 POZOR: ZVONÍ KLEKÁNÍ A PŘICHÁZÍ KLEKÁNICE! 🔔",
+			warning: "🔔 POZOR: ZVONÍ KLEKÁNÍ A PŘICHÁZÍ DĚSIVÁ KLEKÁNICE! 🔔",
 			time: 45,
 			kills: 55,
-			multiplier: 1.1
+			multiplier: 3.8
 		},
 		midBoss: {
 			id: "drab",
 			name: "⛓️ Pekelný dráb s karabáčem",
-			warning: "⛓️ POZOR: PŘICHÁZÍ PEKELNÝ DRÁB S ŘETĚZY! ⛓️",
+			warning: "⛓️ POZOR: PŘICHÁZÍ OBŘÍ PEKELNÝ DRÁB S ŘETĚZY! ⛓️",
 			time: 95,
 			kills: 125,
-			multiplier: 1.3
+			multiplier: 3.6
 		},
 		finalBoss: {
 			id: "hejkal",
@@ -271,10 +271,10 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "meluzina",
 			name: "💨 Větrná Meluzína z komína",
-			warning: "💨 POZOR: VÁNICE PŘINÁŠÍ DIVOKOU MELUZÍNU! 💨",
+			warning: "💨 POZOR: VÁNICE PŘINÁŠÍ MOCNOU MELUZÍNU! 💨",
 			time: 45,
 			kills: 70,
-			multiplier: 1.25
+			multiplier: 7.8
 		},
 		midBoss: {
 			id: "ohnivy_muz",
@@ -282,7 +282,7 @@ var GAME_LEVELS = {
 			warning: "🔥 POZOR: Z PECE VYLETĚL ŽHOUCÍ OHNIVÝ RARACH! 🔥",
 			time: 100,
 			kills: 150,
-			multiplier: 1.5
+			multiplier: 5.2
 		},
 		finalBoss: {
 			id: "obr",
@@ -391,18 +391,18 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "zbojnik",
 			name: "🗡️ Zbojník z hamrů",
-			warning: "🗡️ ZE SOUTĚSKY VYRÁŽÍ ZBOJNÍK!",
+			warning: "🗡️ ZE SOUTĚSKY VYRÁŽÍ OBÁVANÝ HEJTMAN ZBOJNÍK!",
 			time: 45,
 			kills: 80,
-			multiplier: 1.4
+			multiplier: 5.6
 		},
 		midBoss: {
 			id: "ohnivy_pes",
 			name: "🔥 Ohnivý pes z výhně",
-			warning: "🔥 VÝHEŇ VYPUSTILA OHNIVÉHO PSA!",
+			warning: "🔥 VÝHEŇ VYPUSTILA MOCNÉHO OHNIVÉHO PSA!",
 			time: 100,
 			kills: 170,
-			multiplier: 1.65
+			multiplier: 5.0
 		},
 		finalBoss: {
 			id: "mlynar",
@@ -501,18 +501,18 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "bila_pani",
 			name: "👻 Bílá paní z věže",
-			warning: "👻 VĚŽ OPOUŠTÍ BÍLÁ PANÍ!",
+			warning: "👻 VĚŽ OPOUŠTÍ MOCNÝ PŘÍZRAK BÍLÉ PANÍ!",
 			time: 45,
 			kills: 90,
-			multiplier: 1.55
+			multiplier: 6.2
 		},
 		midBoss: {
 			id: "zbrojnos",
 			name: "🛡️ Zbrojnoš z podhradí",
-			warning: "🛡️ BRÁNU DRŽÍ TĚŽKÝ ZBROJNOŠ!",
+			warning: "🛡️ BRÁNU DRŽÍ TĚŽKÝ OBRNĚNÝ ZBROJNOŠ!",
 			time: 105,
 			kills: 190,
-			multiplier: 1.8
+			multiplier: 5.2
 		},
 		finalBoss: {
 			id: "bezhlavy_rytir",
@@ -606,18 +606,18 @@ var GAME_LEVELS = {
 		miniBoss: {
 			id: "snehulak",
 			name: "☃️ Prokletý Sněhulák",
-			warning: "☃️ LEDOVÝ SNĚHULÁK SE KUTÁLÍ ZE SLUJE!",
+			warning: "☃️ OBŘÍ LEDOVÝ SNĚHULÁK SE KUTÁLÍ ZE SLUJE!",
 			time: 45,
 			kills: 100,
-			multiplier: 1.7
+			multiplier: 6.8
 		},
 		midBoss: {
 			id: "nocni_mura",
 			name: "🌑 Noční můra",
-			warning: "🌑 TEMNOTOU SE ŽENE NOČNÍ MŮRA!",
+			warning: "🌑 TEMNOTOU SE ŽENE DĚSIVÁ NOČNÍ MŮRA!",
 			time: 105,
 			kills: 210,
-			multiplier: 1.95
+			multiplier: 9.6
 		},
 		finalBoss: {
 			id: "drak",

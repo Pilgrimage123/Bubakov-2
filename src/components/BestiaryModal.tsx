@@ -83,6 +83,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 			else if (m.id === "meluzina") Lada.drawMeluzina(ctx, cx, cy - 15, elapsed, 0, false);
 			else if (m.id === "polednice") Lada.drawPolednice(ctx, cx, cy - 5, elapsed, 0, false);
 			else if (m.id === "klekanice") Lada.drawKlekanice(ctx, cx, cy - 5, elapsed, 0, false);
+			else if (m.id === "drak") Lada.drawDrak(ctx, cx, cy + 12, elapsed, 0, false, false);
 			else {
 				const drawer = Lada[m.method];
 				if (typeof drawer === "function") drawer.call(Lada, ctx, cx, cy, elapsed, 0, false);

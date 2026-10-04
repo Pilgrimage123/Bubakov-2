@@ -4,7 +4,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { KrejcarIcon } from './KrejcarIcon';
-import { CzechBuchtaIcon } from './CzechBuchtaIcon';
+import { HruskaIcon } from './HruskaIcon';
 
 var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 	const [activeTab, setActiveTab] = (0, import_react.useState)(defaultTab);
@@ -614,10 +614,10 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 											gap: "4px"
 										},
 										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CzechBuchtaIcon, { size: "1.25em" }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(HruskaIcon, { size: "1.25em" }),
 											" ",
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Povidlové buchty:" }),
-											" Okamžitě vyléčí +25 až +40 HP."
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Šťavnaté hrušky:" }),
+											" Okamžitě vyléčí zdraví (+15 až +25 HP)."
 										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
