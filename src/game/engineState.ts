@@ -4,7 +4,8 @@ export interface EngineState {
   player: any;
   enemies: any[];
   livingEnemies?: any[];
-  renderBuffer?: any[];
+  /** Reused each frame for depth-sorted, visible world entities. */
+  renderBuffer: any[];
   projectiles: any[];
   slashes: any[];
   drops: any[];
@@ -66,6 +67,7 @@ export function createInitialEngineState(): EngineState {
   return {
     player: null,
     enemies: [],
+    renderBuffer: [],
     projectiles: [],
     slashes: [],
     drops: [],

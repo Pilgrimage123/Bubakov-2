@@ -183,6 +183,13 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
   items.length = write;
 }
 
+// Keep HUD changes perceptually smooth while avoiding a React render for every
+// simulation frame. Event-driven changes (level-ups, warnings, rewards) still
+// update immediately through their existing setters.
+const HUD_SYNC_INTERVAL_SECONDS = 0.1;
+const MAX_PARTICLES = 300;
+const MAX_DAMAGE_TEXTS = 90;
+
 // Floating damage / status text
 class DamageText {
   x: number;
@@ -2168,6 +2175,8 @@ export default function App() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    const showPerformanceOverlay = new URLSearchParams(window.location.search).has('perf');
+    let smoothedFrameMs = 16.7;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -3157,7 +3166,7 @@ export default function App() {
             runStatsRef.current.chasniks = engine.chasniks;
 
             engine.lastStatsSync += dt;
-            if (engine.lastStatsSync >= 0.05) {
+            if (engine.lastStatsSync >= HUD_SYNC_INTERVAL_SECONDS) {
               engine.lastStatsSync = 0;
               setRunStats((prev) => ({
                 ...prev,
@@ -3468,6 +3477,9 @@ export default function App() {
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
           compactInPlace(engine.texts, (t) => t.life > 0);
+          if (engine.texts.length > MAX_DAMAGE_TEXTS) {
+            engine.texts.splice(0, engine.texts.length - MAX_DAMAGE_TEXTS);
+          }
 
           // Update smoke puffs
           if (engine.smokePuffs) {
@@ -3483,6 +3495,9 @@ export default function App() {
               p.life -= dt;
             }
             compactInPlace(engine.particles, (p) => p.life > 0);
+            if (engine.particles.length > MAX_PARTICLES) {
+              engine.particles.splice(0, engine.particles.length - MAX_PARTICLES);
+            }
           }
         }
       }      // Doznívání Pověstné sukovice
@@ -3606,13 +3621,24 @@ export default function App() {
           ctx.restore();
         }
 
-        // Draw Decor
+        // Compute a padded viewport once and reuse it for every world layer.
+        // The padding keeps tall art from visibly popping at the edge.
+        const viewLeft = cam.x - 120;
+        const viewTop = cam.y - 160;
+        const viewRight = cam.x + canvas.width + 120;
+        const viewBottom = cam.y + canvas.height + 160;
+
+        // Draw only decor that can contribute pixels this frame. Decor is
+        // generated across the whole level, so drawing it unconditionally
+        // becomes increasingly expensive on large maps.
         for (const dec of engine.decor) {
+          if (!isInView(dec.x, dec.y - 45 * dec.scale, 100 * dec.scale, viewLeft, viewTop, viewRight, viewBottom)) continue;
           dec.draw(ctx, curLvl.season, curLvl.theme);
         }
 
         // Draw Drops
         for (const d of engine.drops) {
+          if (!isInView(d.x, d.y, (d.radius || 14) + 24, viewLeft, viewTop, viewRight, viewBottom)) continue;
           if (d.type === 'coin') {
             Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
           } else if (d.type === 'potion') {
@@ -3641,8 +3667,8 @@ export default function App() {
         }
 
         // Sort characters & enemies by Y for correct isometric depth
-        const viewLeft=cam.x-120, viewTop=cam.y-160, viewRight=cam.x+canvas.width+120, viewBottom=cam.y+canvas.height+160;
-        const drawables:any[]=[];
+        const drawables = engine.renderBuffer;
+        drawables.length = 0;
         if(player) drawables.push(player);
         for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
         if(engine.smokePuffs){for(const puff of engine.smokePuffs){if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff);}}
@@ -3806,6 +3832,7 @@ export default function App() {
 
         // Draw Melee Slashes
         for (const s of engine.slashes) {
+          if (!isInView(s.x, s.y, s.reach || 80, viewLeft, viewTop, viewRight, viewBottom)) continue;
           ctx.save();
           ctx.translate(s.x, s.y);
           if (s.style === 'thrust') {
@@ -3831,6 +3858,7 @@ export default function App() {
 
         // Draw Damage Texts
         for (const txt of engine.texts) {
+          if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
           txt.draw(ctx);
         }
 
@@ -3891,6 +3919,22 @@ export default function App() {
         }
 
         ctx.restore();
+
+        // Enable with ?perf to inspect the live frame budget without React
+        // state updates or devtools. This is deliberately canvas-only so it
+        // cannot perturb the workload being measured.
+        if (showPerformanceOverlay) {
+          const frameMs = performance.now() - now;
+          smoothedFrameMs += (frameMs - smoothedFrameMs) * 0.08;
+          ctx.save();
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          ctx.fillRect(12, 12, 210, 62);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = '700 13px monospace';
+          ctx.fillText(`${Math.round(1000 / Math.max(1, smoothedFrameMs))} FPS  ${smoothedFrameMs.toFixed(1)} ms`, 22, 34);
+          ctx.fillText(`E:${engine.enemies.length} P:${engine.projectiles.length} FX:${engine.particles.length}`, 22, 54);
+          ctx.restore();
+        }
 
         // Screen flash from Saint Elias lightning
         if (engine.lightningFlash > 0) {
