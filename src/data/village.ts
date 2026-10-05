@@ -41,7 +41,7 @@ var VILLAGE_BUILDINGS = [
 		role: "Obrana vesnice a zdi gruntů",
 		helpers: "Kostliví zedníci se zednickými lžícemi",
 		story: "Kostliví pomocníci vyměnili své nářadí za zednické lžíce a maltu. Celou noc pilně rovnají žulové kvádry a zalévají spáry, takže zdi vesnice vydrží i nápor nejdivočejších nezbedů.",
-		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 25} max HP & +${lvl * 5}% odolnost proti zranění`,
+		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 25} max kuráž & +${lvl * 5}% odolnost proti vylekání`,
 		cost: (lvl) => 35 * (lvl + 1),
 		canvasDrawer: "drawWallScene"
 	},
@@ -51,8 +51,8 @@ var VILLAGE_BUILDINGS = [
 		levelKey: "tavernShieldLevel",
 		role: "Dočasná ochrana lovce",
 		helpers: "Šenkýři zpevňující kožené štíty",
-		story: "Šenkýř připraví lovci zásobu pevného krytí, které pohltí první rány každé výpravy.",
-		bonusDesc: (lvl) => `Dočasný štít: ${lvl > 0 ? 40 + lvl * 20 : 0} HP na začátku výpravy`,
+		story: "Šenkýř nalije lovci na kuráž a připraví ho na první leknutí a bubácké schválnosti.",
+		bonusDesc: (lvl) => `Obrněná mysl (štít): ${lvl > 0 ? 40 + lvl * 20 : 0} bodů kuráže na začátku výpravy`,
 		cost: (lvl) => 35 * (lvl + 1),
 		canvasDrawer: "drawWallScene"
 	},

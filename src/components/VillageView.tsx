@@ -213,7 +213,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 								fontSize: "0.95rem",
 								color: "#111111"
 							},
-							children: "Přidá trvalou regeneraci +1 HP za každých 5 sekund pro všechny další výpravy do Bubákova."
+							children: "Stále udržuje dobrou náladu a doplňuje +1 kuráže každých 5 sekund pro všechny další výpravy do Bubákova."
 						})
 					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 						className: "lada-btn",

@@ -7540,6 +7540,399 @@ var Lada = {
 		ctx.arc(0, -8, 1.8, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.restore();
+	},
+	drawOsikovyPrutSlash(ctx: any, s: any) {
+		const maxLife = s.maxLife || 0.30;
+		const progress = Math.max(0, Math.min(1, 1 - (s.life / maxLife)));
+		const fade = Math.max(0, 1 - Math.pow(progress, 2.5));
+		if (fade <= 0.001) return;
+
+		const reach = s.reach || 88;
+		const arc = s.arc || 1.35;
+		const dir = s.swingDir || 1;
+		const soaked = !!s.soaked;
+
+		// Hand grip starting radius from player center
+		const handRadius = 14;
+
+		// Angular bounds
+		const halfArc = arc * 0.55;
+		const startAngle = s.angle - dir * halfArc;
+		const endAngle = s.angle + dir * halfArc;
+
+		// Whip motion easing: rapid acceleration, high-speed sweep, elastic snap follow-through
+		const getSwingP = (p: number) => {
+			if (p < 0.12) {
+				const u = p / 0.12;
+				return -0.04 * Math.sin(u * Math.PI); // subtle windup
+			} else if (p < 0.70) {
+				const u = (p - 0.12) / 0.58;
+				return 1 - Math.pow(1 - u, 3.2); // whip sweep
+			} else {
+				const u = (p - 0.70) / 0.30;
+				return 1.0 + Math.sin(u * Math.PI) * 0.05 * (1 - u); // elastic recoil
+			}
+		};
+
+		// Angle along the flexible stem at fraction f (0=base/grip, 1=tip)
+		const getSpineAngle = (p: number, f: number) => {
+			const sweepP = getSwingP(p);
+			let flex = 0;
+			if (p < 0.48) {
+				// Base leads, stem bows backward (inertial drag)
+				const lagAmount = Math.sin((p / 0.48) * Math.PI);
+				flex = -dir * 0.36 * Math.pow(f, 1.4) * lagAmount;
+			} else if (p < 0.78) {
+				// Apex snap! Slender tip whips violently forward past the base
+				const snapAmount = Math.sin(((p - 0.48) / 0.30) * Math.PI);
+				flex = dir * 0.28 * Math.pow(f, 1.5) * snapAmount;
+			} else {
+				// Settle vibration
+				const recoilAmount = Math.sin(((p - 0.78) / 0.22) * Math.PI * 2) * (1 - (p - 0.78) / 0.22);
+				flex = -dir * 0.07 * f * recoilAmount;
+			}
+			return startAngle + (endAngle - startAngle) * sweepP + flex;
+		};
+
+		// Calculate spine points for a given normalized time p
+		const computeSpine = (p: number, numPoints = 8) => {
+			const pts: { x: number; y: number; angle: number; r: number }[] = [];
+			for (let i = 0; i <= numPoints; i++) {
+				const f = i / numPoints;
+				const ang = getSpineAngle(p, f);
+				// Slight radial bow shortening when bent
+				const bowShortening = 1 - 0.05 * Math.sin(p * Math.PI) * f;
+				const r = (handRadius + f * (reach - handRadius)) * bowShortening;
+				pts.push({
+					x: Math.cos(ang) * r,
+					y: Math.sin(ang) * r,
+					angle: ang,
+					r
+				});
+			}
+			return pts;
+		};
+
+		const currentSpine = computeSpine(progress);
+		const tip = currentSpine[currentSpine.length - 1];
+
+		// -----------------------------------------------------------------
+		// 1. SWEEPING MOTION ARC / SWOOSH (Vějíř sečného větru)
+		// -----------------------------------------------------------------
+		const sweepAlpha = Math.min(1, Math.sin(progress * Math.PI)) * fade;
+		if (sweepAlpha > 0.05) {
+			ctx.save();
+
+			// Swept angular range from start of swing to current tip angle
+			const currentTipAng = tip.angle;
+			const trailSpan = Math.min(arc * 0.85, Math.abs(currentTipAng - startAngle));
+			const trailStartAng = currentTipAng - dir * trailSpan;
+
+			// Soft gradient wind fan
+			const minAngle = Math.min(trailStartAng, currentTipAng);
+			const maxAngle = Math.max(trailStartAng, currentTipAng);
+
+			if (maxAngle - minAngle > 0.02) {
+				// Radial gradient for wind trail
+				const grad = ctx.createRadialGradient(0, 0, reach * 0.25, 0, 0, reach * 1.05);
+				if (soaked) {
+					// Water splash arc
+					grad.addColorStop(0, `rgba(59, 130, 246, 0)`);
+					grad.addColorStop(0.5, `rgba(147, 197, 253, ${0.35 * sweepAlpha})`);
+					grad.addColorStop(0.88, `rgba(186, 230, 253, ${0.65 * sweepAlpha})`);
+					grad.addColorStop(1, `rgba(255, 255, 255, ${0.45 * sweepAlpha})`);
+				} else {
+					// Traditional spring wind swoosh (parchment & golden aura with fresh green tint)
+					grad.addColorStop(0, `rgba(245, 158, 11, 0)`);
+					grad.addColorStop(0.55, `rgba(254, 240, 138, ${0.30 * sweepAlpha})`);
+					grad.addColorStop(0.85, `rgba(253, 230, 138, ${0.55 * sweepAlpha})`);
+					grad.addColorStop(1, `rgba(255, 255, 255, ${0.40 * sweepAlpha})`);
+				}
+
+				ctx.fillStyle = grad;
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.98, minAngle, maxAngle, false);
+				ctx.arc(0, 0, reach * 0.35, maxAngle, minAngle, true);
+				ctx.closePath();
+				ctx.fill();
+
+				// Lada Ink Speedlines (pohybové čáry)
+				// Outer crisp cutting blade line
+				ctx.strokeStyle = soaked ? `rgba(2, 132, 199, ${0.85 * sweepAlpha})` : `rgba(43, 24, 16, ${0.85 * sweepAlpha})`;
+				ctx.lineWidth = 3.5;
+				ctx.lineCap = 'round';
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.96, minAngle, maxAngle);
+				ctx.stroke();
+
+				// Inner dashed whistling air current
+				ctx.strokeStyle = soaked ? `rgba(56, 189, 248, ${0.7 * sweepAlpha})` : `rgba(43, 24, 16, ${0.65 * sweepAlpha})`;
+				ctx.lineWidth = 2.0;
+				ctx.setLineDash([16, 10]);
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.76, minAngle + (maxAngle - minAngle) * 0.15, maxAngle);
+				ctx.stroke();
+				ctx.setLineDash([]);
+
+				// Brilliant white cutting glint along apex edge
+				ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * sweepAlpha})`;
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				const glintStart = dir > 0 ? maxAngle - (maxAngle - minAngle) * 0.6 : minAngle;
+				const glintEnd = dir > 0 ? maxAngle : minAngle + (maxAngle - minAngle) * 0.6;
+				ctx.arc(0, 0, reach * 0.94, glintStart, glintEnd);
+				ctx.stroke();
+			}
+
+			ctx.restore();
+		}
+
+		// -----------------------------------------------------------------
+		// 2. MOTION GHOSTING / SMEAR FRAMES (Rychlostní stíny prutu)
+		// -----------------------------------------------------------------
+		if (progress > 0.15 && progress < 0.75) {
+			const ghostOffsets = [0.06, 0.03];
+			const ghostAlphas = [0.18 * fade, 0.38 * fade];
+
+			for (let g = 0; g < ghostOffsets.length; g++) {
+				const gp = progress - ghostOffsets[g];
+				if (gp < 0.08) continue;
+				const ghostSpine = computeSpine(gp, 6);
+				const gAlpha = ghostAlphas[g];
+
+				ctx.save();
+				ctx.globalAlpha = gAlpha;
+				ctx.strokeStyle = soaked ? '#60A5FA' : '#854D0E';
+				ctx.lineWidth = 3.0;
+				ctx.lineCap = 'round';
+				ctx.lineJoin = 'round';
+				ctx.beginPath();
+				ctx.moveTo(ghostSpine[0].x, ghostSpine[0].y);
+				for (let k = 1; k < ghostSpine.length; k++) {
+					ctx.lineTo(ghostSpine[k].x, ghostSpine[k].y);
+				}
+				ctx.stroke();
+				ctx.restore();
+			}
+		}
+
+		// -----------------------------------------------------------------
+		// 3. THE OSIKOVÝ PRUT (Authentic Josef Lada wooden aspen rod)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.globalAlpha = fade;
+
+		// 3a. Draw base handle cut (čerstvý seříznutý konec prutu)
+		const basePt = currentSpine[0];
+		const baseTangAng = Math.atan2(currentSpine[1].y - basePt.y, currentSpine[1].x - basePt.x);
+		ctx.save();
+		ctx.translate(basePt.x, basePt.y);
+		ctx.rotate(baseTangAng);
+		// Cut oval: dark outer bark contour, light cream sapwood interior
+		this.setupPath(ctx, '#F5EBD8', COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 3.2, 5.0, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Inner wood pith dot
+		ctx.fillStyle = '#8C795E';
+		ctx.beginPath();
+		ctx.arc(0, 0, 1.0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// 3b. Outline pass of the flexible tapering stem
+		// We stroke along the spine with tapering width (5.2px down to 1.8px)
+		// Outer Lada black ink stroke
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		for (let k = 0; k < currentSpine.length - 1; k++) {
+			const p1 = currentSpine[k];
+			const p2 = currentSpine[k + 1];
+			const f = k / (currentSpine.length - 1);
+			const width = (5.2 - f * 3.4) + 3.2; // ink outline width
+			ctx.lineWidth = width;
+			ctx.beginPath();
+			ctx.moveTo(p1.x, p1.y);
+			ctx.lineTo(p2.x, p2.y);
+			ctx.stroke();
+		}
+
+		// Inner natural aspen bark fill pass
+		for (let k = 0; k < currentSpine.length - 1; k++) {
+			const p1 = currentSpine[k];
+			const p2 = currentSpine[k + 1];
+			const f = k / (currentSpine.length - 1);
+			const width = Math.max(1.4, 5.0 - f * 3.4);
+			ctx.strokeStyle = '#6E6455'; // warm grey-brown aspen bark
+			ctx.lineWidth = width;
+			ctx.beginPath();
+			ctx.moveTo(p1.x, p1.y);
+			ctx.lineTo(p2.x, p2.y);
+			ctx.stroke();
+		}
+
+		// Sunlight highlight edge streak along the convex side
+		ctx.strokeStyle = '#D5CBB9'; // bright sunlit bark highlight
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		for (let k = 0; k < currentSpine.length; k++) {
+			const p = currentSpine[k];
+			const f = k / (currentSpine.length - 1);
+			const normAng = p.angle + (dir > 0 ? -Math.PI / 2 : Math.PI / 2);
+			const hOffset = Math.max(0.6, 2.0 - f * 1.4);
+			const hx = p.x + Math.cos(normAng) * hOffset;
+			const hy = p.y + Math.sin(normAng) * hOffset;
+			if (k === 0) ctx.moveTo(hx, hy);
+			else ctx.lineTo(hx, hy);
+		}
+		ctx.stroke();
+
+		// 3c. Botanical Nodes and Aspen Buds (Pupeny s lístky)
+		// Alternating buds at specific node intervals
+		const nodeIndices = [1, 2, 4, 5, 7];
+		for (let b = 0; b < nodeIndices.length; b++) {
+			const idx = nodeIndices[b];
+			if (idx >= currentSpine.length) continue;
+			const nodePt = currentSpine[idx];
+			const nextPt = currentSpine[Math.min(currentSpine.length - 1, idx + 1)];
+			const tangAng = Math.atan2(nextPt.y - nodePt.y, nextPt.x - nodePt.x);
+			// Alternating side (+1 or -1)
+			const side = (b % 2 === 0 ? 1 : -1) * (dir > 0 ? 1 : -1);
+			const budAngle = tangAng + side * (Math.PI * 0.32);
+
+			ctx.save();
+			ctx.translate(nodePt.x, nodePt.y);
+			ctx.rotate(budAngle);
+
+			// Brown woody bud base
+			this.setupPath(ctx, '#825C3E', COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.quadraticCurveTo(2, -2, 4.5, 0);
+			ctx.quadraticCurveTo(2, 2, 0, 0);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// Fresh spring green bud apex (jarní zelený pupen)
+			ctx.fillStyle = '#84CC16';
+			ctx.beginPath();
+			ctx.arc(4.2, 0, 1.2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Glistening water droplet on node if soaked
+			if (soaked) {
+				ctx.fillStyle = '#93C5FD';
+				ctx.strokeStyle = '#1D4ED8';
+				ctx.lineWidth = 1.0;
+				ctx.beginPath();
+				ctx.arc(1.5, side * 2.2, 1.8, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+				// Tiny white glint
+				ctx.fillStyle = '#FFFFFF';
+				ctx.beginPath();
+				ctx.arc(1.1, side * 2.2 - 0.5, 0.6, 0, Math.PI * 2);
+				ctx.fill();
+			}
+
+			ctx.restore();
+		}
+
+		// 3d. Terminal tip bud cluster at the very end
+		ctx.save();
+		const tipPrev = currentSpine[currentSpine.length - 2];
+		const tipAng = Math.atan2(tip.y - tipPrev.y, tip.x - tipPrev.x);
+		ctx.translate(tip.x, tip.y);
+		ctx.rotate(tipAng);
+
+		// Slender terminal bud
+		this.setupPath(ctx, '#65A30D', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(0, -1);
+		ctx.lineTo(5.5, 0);
+		ctx.lineTo(0, 1.2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Tiny delicate spring leaflet
+		ctx.fillStyle = '#84CC16';
+		ctx.beginPath();
+		ctx.ellipse(3, -2.5, 2.5, 1.3, -0.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+
+		// -----------------------------------------------------------------
+		// 4. WHIP-CRACK SPARK & DRIFTING LEAFLETS AT APEX (Prásknutí a lístky)
+		// -----------------------------------------------------------------
+		if (progress >= 0.35 && progress <= 0.78) {
+			const apexProgress = (progress - 0.35) / 0.43;
+			const sparkAlpha = Math.sin(apexProgress * Math.PI) * fade;
+
+			ctx.save();
+			ctx.translate(tip.x, tip.y);
+			ctx.globalAlpha = sparkAlpha;
+
+			// Starburst ink crack lines at tip
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2.4;
+			ctx.lineCap = 'round';
+			const numSpikes = 6;
+			const spikeLen = 8 + 6 * Math.sin(apexProgress * Math.PI);
+			for (let i = 0; i < numSpikes; i++) {
+				const ang = (i / numSpikes) * Math.PI * 2 + apexProgress * 2;
+				ctx.beginPath();
+				ctx.moveTo(Math.cos(ang) * 3, Math.sin(ang) * 3);
+				ctx.lineTo(Math.cos(ang) * spikeLen, Math.sin(ang) * spikeLen);
+				ctx.stroke();
+			}
+
+			// Golden/white core pop
+			ctx.fillStyle = soaked ? '#BAE6FD' : '#FEF08A';
+			ctx.beginPath();
+			ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.restore();
+
+			// Flying spring bud flakes / water spray droplets drifting off
+			ctx.save();
+			for (let pIdx = 0; pIdx < 4; pIdx++) {
+				const pProgress = (apexProgress * 1.5 + pIdx * 0.25) % 1;
+				const driftDist = pProgress * (18 + pIdx * 7);
+				const driftAng = tipAng + (dir * 0.5) + (pIdx - 1.5) * 0.45;
+				const px = tip.x + Math.cos(driftAng) * driftDist;
+				const py = tip.y + Math.sin(driftAng) * driftDist;
+				const pAlpha = (1 - pProgress) * sparkAlpha;
+
+				if (soaked) {
+					// Water droplet bead
+					ctx.fillStyle = `rgba(147, 197, 253, ${pAlpha})`;
+					ctx.strokeStyle = `rgba(30, 64, 175, ${pAlpha * 0.8})`;
+					ctx.lineWidth = 1.0;
+					ctx.beginPath();
+					ctx.arc(px, py, Math.max(1, 2.5 * (1 - pProgress * 0.4)), 0, Math.PI * 2);
+					ctx.fill();
+					ctx.stroke();
+				} else {
+					// Tiny green aspen leaflet / bud scale
+					ctx.fillStyle = `rgba(132, 204, 22, ${pAlpha})`;
+					ctx.strokeStyle = `rgba(43, 24, 16, ${pAlpha * 0.9})`;
+					ctx.lineWidth = 1.0;
+					ctx.beginPath();
+					ctx.ellipse(px, py, 2.6, 1.4, driftAng, 0, Math.PI * 2);
+					ctx.fill();
+					ctx.stroke();
+				}
+			}
+			ctx.restore();
+		}
+
+		ctx.restore();
 	}
 };
 for (const key of Object.keys(Lada)) {

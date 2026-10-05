@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-10-05 — Přejmenování vylepšení: Medvědí mast (dříve Opravdová kuráž)
+- **Přejmenování vylepšení na Medvědí mast**:
+  - Vylepšení pro navýšení maximální kuráže (+25 Max Kuráž) přejmenováno z „Opravdová kuráž“ na tradiční **Medvědí mast**.
+  - Vytvořena nová ladovská ikona tradiční kamenné dózy/kelímku s hojivou medvědí mastí, plátěným kloboučkem převázaným motouzem a emblémem medvědí tlapky (`MedvediMastIcon.tsx` a `medvedi_mast.svg`).
+  - Aktualizována nabídka při postupu na novou úroveň, plovoucí texty zisku (`Medvědí mast! (+25 Max Kuráž)`), truhly i přehled aktivních posílení v pauze hry.
+
+## 2026-10-05 — Nová vylepšení během boje v aréně: Opravdová káva a Krvavé jelito
+- **Opravdová káva (- cooldown)**:
+  - Nové pasivní vylepšení nabízené při postupu na novou úroveň během boje v aréně (i z malovaných truhel).
+  - Každá dávka čerstvě pražené kávy zkracuje cooldown všech zbraní (-15 % cooldown / rychlejší kadence útoků) a zároveň urychluje dobití speciální schopnosti lovce.
+  - Vytvořena nová originální ladovská grafika kouřícího keramického hrnku s kávou a kávovými zrnky (`OpravdovaKavaIcon.tsx` a `/public/images/opravdova_kava.svg`).
+- **Krvavé jelito (+ damage)**:
+  - Nové pasivní vylepšení nabízené při postupu na novou úroveň během boje v aréně (i z malovaných truhel).
+  - Každé poctivé venkovské zabijačkové jelito s kroupami trvale zvyšuje sílu úderů a poškození všech zbraní a útoků (+20 % k zranění).
+  - Vytvořena nová detailní ladovská grafika českého zabijačkového jelita se špejlemi, kroupami a kořením (`KrvaveJelitoIcon.tsx` a `/public/images/krvave_jelito.svg`).
+- **Přehled aktivních vylepšení v pauze hry**:
+  - Do pauzovacího menu přidán nový přehledný blok „✨ Získaná vylepšení a posílení lovce“, kde hráč vidí počty získaných káv, jelit, kuráže, bot i písniček a jejich přesný kumulovaný bonus.
+  - V kartách zbraní se zobrazuje efektivní zkrácená kadence i navýšené poškození v reálném čase.
+
 ## 2026-10-05 — Efektivní charge Pekelného čerta, Zlomyslný sněhulák, unikátní bossové a samostatné dračí hlavy
 - **Pekelný čert — skutečně efektivní a nebezpečný charge**:
   - Důkladná revize mechaniky charge: opraven malý dosah a pomalá rychlost, přidán zřetelný telegrafický windup (dusot kopyt v hlíně, rudé varování, jiskry ze země), zrychlení výpadu na 490–560 px/s se stopou pekelné síry a plamenů.

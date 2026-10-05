@@ -74,7 +74,7 @@ var HUNTER_STATS_INFO = {
 		speed: 165,
 		pickup: 75,
 		ability: "Pověstná sukovice (21 s)",
-		role: "Všestranný vytrvalec s vysokým zdravím a osikovým prutem"
+		role: "Všestranný vytrvalec s vysokou kuráží a osikovým prutem"
 	},
 	shepherd: {
 		hp: 110,
@@ -87,8 +87,8 @@ var HUNTER_STATS_INFO = {
 		hp: 125,
 		speed: 180,
 		pickup: 105,
-		ability: "Hojivá bylinková mlha (30 s)",
-		role: "Přírodní léčitelka, bylinné věnce a podpora zdraví"
+		ability: "Uklidňující bylinková mlha (30 s)",
+		role: "Přírodní bylinkářka, bylinné věnce a stálé doplňování kuráže"
 	},
 	watchman: {
 		hp: 140,

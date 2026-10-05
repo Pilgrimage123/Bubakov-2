@@ -348,7 +348,7 @@ var WEAPON_UNLOCKS = {
 		defaultUnlocked: false,
 		challengeTitle: "🌸 Svatojánské trhání bylin u tůní",
 		challengeShortDesc: "Zažeň celkem 45 vodních a močálových strašidel.",
-		challengeLongDesc: "Znalost devatera bylin trhaných za svatojánské noci chrání před všemi vodními kletbami. Zažeň 45 hastrmanů, topivců a bludiček, abys nasbíral všechny léčivé květy!",
+		challengeLongDesc: "Znalost devatera bylin trhaných za svatojánské noci chrání před všemi vodními kletbami. Zažeň 45 hastrmanů, topivců a bludiček, abys nasbíral všechny vonné květy!",
 		targetEnemies: [
 			{
 				id: "hastrman",
@@ -392,7 +392,7 @@ var WEAPON_UNLOCKS = {
 				tierLevel: 1,
 				spoiledName: "D _ _ _ _ _ _ y   k _ _ _ í",
 				spoiledTitle: "Kouzelný věnec devíti bylin",
-				spoiledDesc: "Devatero léčivých bylin svázaných do kruhového věnce. Při vymetání rotují kolem těla a odrážejí nepřátele.",
+				spoiledDesc: "Devatero svatojánských bylin svázaných do kruhového věnce. Při vymetání rotují kolem těla a odrážejí dotírající bubáky.",
 				spoiledStatsHint: "Nápověda: Kruhové vystřelování rotujících bylinných listů...",
 				clueTag: "🔍 25 %: První stopa! Znáš svatojánský věnec"
 			},
@@ -400,9 +400,9 @@ var WEAPON_UNLOCKS = {
 				minPercent: 50,
 				tierLevel: 2,
 				spoiledName: "Devatery kv...tí",
-				spoiledTitle: "Kruhový štít z léčivých listů",
+				spoiledTitle: "Kruhový štít z vonných listů",
 				spoiledDesc: "Devatery kvítí vytváří rotující vějíř 3 a více listů rozlétajících se ve všech směrech a zahánějících nečisté síly.",
-				spoiledStatsHint: "Základní poškození: 15 • 3 střely ve všech směrech (360°)",
+				spoiledStatsHint: "Základní síla zahnání: 15 • 3 střely ve všech směrech (360°)",
 				clueTag: "🔎 50 %: Znáš kruhový vír i přírodní sílu!"
 			},
 			{
@@ -419,8 +419,8 @@ var WEAPON_UNLOCKS = {
 				tierLevel: 4,
 				spoiledName: "Devatery kvítí",
 				spoiledTitle: "Voňavý ochranný věnec z bylin",
-				spoiledDesc: "Voňavý ochranný věnec z léčivých bylin natrhaných o svatojánské noci. Šíří se v kruhu a zahání nečisté síly.",
-				spoiledStatsHint: "Poškození: 15 • Všesměrový kruhový rozstřik listů",
+				spoiledDesc: "Voňavý ochranný věnec ze svatojánských bylin. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
+				spoiledStatsHint: "Síla zahnání: 15 • Všesměrový kruhový rozstřik listů",
 				clueTag: "✅ Plně odemčeno ve zbrojnici!"
 			}
 		]

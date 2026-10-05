@@ -134,6 +134,52 @@ var SoundManager = class {
 	slash() {
 		this.playTone(220, "triangle", .12, .2);
 	}
+	caneWhip(soaked = false) {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+
+			// 1. Air cutting whoosh with pitch sweep from high to low
+			const osc = this.ctx.createOscillator();
+			const gain = this.ctx.createGain();
+			osc.type = "sine";
+			osc.frequency.setValueAtTime(820, now);
+			osc.frequency.exponentialRampToValueAtTime(170, now + 0.16);
+			gain.gain.setValueAtTime(0.24, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+			osc.connect(gain);
+			gain.connect(this.ctx.destination);
+			osc.start();
+			osc.stop(now + 0.20);
+
+			// 2. Whip-crack snap (high frequency burst + resonant pop)
+			setTimeout(() => {
+				if (!this.ctx) return;
+				const snapTime = this.ctx.currentTime;
+				const snapOsc = this.ctx.createOscillator();
+				const snapGain = this.ctx.createGain();
+				snapOsc.type = "triangle";
+				snapOsc.frequency.setValueAtTime(1100, snapTime);
+				snapOsc.frequency.exponentialRampToValueAtTime(140, snapTime + 0.08);
+				snapGain.gain.setValueAtTime(0.28, snapTime);
+				snapGain.gain.exponentialRampToValueAtTime(0.001, snapTime + 0.09);
+				snapOsc.connect(snapGain);
+				snapGain.connect(this.ctx.destination);
+				snapOsc.start();
+				snapOsc.stop(snapTime + 0.10);
+			}, 40);
+
+			// 3. If soaked with pond water (Mokrý prut): wet water splash & spray
+			if (soaked) {
+				setTimeout(() => {
+					this.playTone(320, "triangle", 0.14, 0.22, 0.01);
+					setTimeout(() => this.playTone(210, "sine", 0.18, 0.24, 0.001), 40);
+				}, 30);
+			}
+		} catch {}
+	}
 	heavyHit() {
 		this.playTone(140, "triangle", .18, .3);
 		setTimeout(() => this.playTone(90, "sawtooth", .22, .25), 40);

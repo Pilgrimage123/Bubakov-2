@@ -1,0 +1,255 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90" width="100%" height="100%">
+  <defs>
+    <!-- Soft shadow -->
+    <radialGradient id="jelitoShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#240D10" stop-opacity="0.45" />
+      <stop offset="65%" stop-color="#240D10" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#240D10" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Blood sausage deep casing gradient -->
+    <linearGradient id="jelitoCasing" x1="50%" y1="15%" x2="50%" y2="85%">
+      <stop offset="0%" stop-color="#8A232F" />
+      <stop offset="25%" stop-color="#701823" />
+      <stop offset="60%" stop-color="#521019" />
+      <stop offset="85%" stop-color="#3B0A11" />
+      <stop offset="100%" stop-color="#26050A" />
+    </linearGradient>
+
+    <!-- Inner rich blood depth overlay -->
+    <radialGradient id="jelitoDepth" cx="45%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#A82E3B" stop-opacity="0.55" />
+      <stop offset="45%" stop-color="#691722" stop-opacity="0.3" />
+      <stop offset="80%" stop-color="#3E0911" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#1E0307" stop-opacity="0.75" />
+    </radialGradient>
+
+    <!-- Sheen along the plump curved casing -->
+    <linearGradient id="jelitoSheen" x1="20%" y1="20%" x2="80%" y2="30%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.75" />
+      <stop offset="65%" stop-color="#FFFFFF" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.1" />
+    </linearGradient>
+
+    <!-- Wooden skewer (špejle) -->
+    <linearGradient id="jelitoWood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5E3C" />
+      <stop offset="50%" stop-color="#5F3F24" />
+      <stop offset="100%" stop-color="#3B2513" />
+    </linearGradient>
+
+    <!-- Pinched knot casing -->
+    <linearGradient id="jelitoKnot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7E222D" />
+      <stop offset="50%" stop-color="#55121B" />
+      <stop offset="100%" stop-color="#33080E" />
+    </linearGradient>
+  </defs>
+
+  <!-- Ground Shadow -->
+  <ellipse cx="60" cy="74" rx="48" ry="11" fill="url(#jelitoShadow)" />
+
+  <!-- Wooden skewers (špejle) through left and right ends -->
+  <!-- Left skewer -->
+  <line
+    x1="11"
+    y1="41"
+    x2="27"
+    y2="75"
+    stroke="#1A080B"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+  <line
+    x1="11"
+    y1="41"
+    x2="27"
+    y2="75"
+    stroke="url(#jelitoWood)"
+    stroke-width="3.2"
+    stroke-linecap="round"
+  />
+  <line
+    x1="12"
+    y1="42"
+    x2="16"
+    y2="51"
+    stroke="#B88A58"
+    stroke-width="1.2"
+    stroke-linecap="round"
+  />
+
+  <!-- Right skewer -->
+  <line
+    x1="109"
+    y1="43"
+    x2="93"
+    y2="77"
+    stroke="#1A080B"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+  <line
+    x1="109"
+    y1="43"
+    x2="93"
+    y2="77"
+    stroke="url(#jelitoWood)"
+    stroke-width="3.2"
+    stroke-linecap="round"
+  />
+  <line
+    x1="108"
+    y1="44"
+    x2="104"
+    y2="53"
+    stroke="#B88A58"
+    stroke-width="1.2"
+    stroke-linecap="round"
+  />
+
+  <!-- Sausage body (curved blood sausage) -->
+  <path
+    d="M 22 56
+       C 28 36, 44 22, 60 22
+       C 76 22, 92 36, 98 56
+       C 100 62, 97 68, 93 68
+       C 84 68, 74 52, 60 51
+       C 46 52, 36 68, 27 68
+       C 23 68, 20 62, 22 56 Z"
+    fill="url(#jelitoCasing)"
+    stroke="#190609"
+    stroke-width="3.5"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+
+  <!-- Deep inner ruby-blood shadow overlay -->
+  <path
+    d="M 23 55
+       C 29 37, 44 23, 60 23
+       C 76 23, 91 37, 97 55
+       C 96 64, 83 53, 60 52
+       C 37 53, 24 64, 23 55 Z"
+    fill="url(#jelitoDepth)"
+  />
+
+  <!-- Pearl Barley Grains (Bílé krupky typické pro české krvavé jelito) -->
+  <g fill="#FFF8EE" stroke="#3A0B12" stroke-width="0.8">
+    <ellipse cx="36" cy="46" rx="2.5" ry="1.6" transform="rotate(-15 36 46)" />
+    <ellipse cx="44" cy="35" rx="2.8" ry="1.7" transform="rotate(25 44 35)" />
+    <ellipse cx="53" cy="33" rx="2.6" ry="1.5" transform="rotate(-30 53 33)" />
+    <ellipse cx="61" cy="31" rx="2.9" ry="1.8" transform="rotate(10 61 31)" />
+    <ellipse cx="70" cy="34" rx="2.7" ry="1.6" transform="rotate(-20 70 34)" />
+    <ellipse cx="79" cy="39" rx="2.5" ry="1.5" transform="rotate(35 79 39)" />
+    <ellipse cx="86" cy="50" rx="2.8" ry="1.7" transform="rotate(-10 86 50)" />
+
+    <ellipse cx="40" cy="42" rx="2.4" ry="1.5" transform="rotate(40 40 42)" />
+    <ellipse cx="49" cy="42" rx="2.7" ry="1.6" transform="rotate(-15 49 42)" />
+    <ellipse cx="58" cy="40" rx="2.5" ry="1.5" transform="rotate(30 58 40)" />
+    <ellipse cx="66" cy="42" rx="2.6" ry="1.6" transform="rotate(-35 66 42)" />
+    <ellipse cx="74" cy="46" rx="2.4" ry="1.5" transform="rotate(15 74 46)" />
+    <ellipse cx="82" cy="54" rx="2.3" ry="1.4" transform="rotate(-25 82 54)" />
+    <ellipse cx="32" cy="53" rx="2.2" ry="1.3" transform="rotate(20 32 53)" />
+  </g>
+
+  <!-- Groat center clefts -->
+  <g stroke="#6B1D25" stroke-width="0.6" stroke-linecap="round">
+    <line x1="34.5" y1="46" x2="37.5" y2="46" transform="rotate(-15 36 46)" />
+    <line x1="42.5" y1="35" x2="45.5" y2="35" transform="rotate(25 44 35)" />
+    <line x1="59.5" y1="31" x2="62.5" y2="31" transform="rotate(10 61 31)" />
+    <line x1="68.5" y1="34" x2="71.5" y2="34" transform="rotate(-20 70 34)" />
+    <line x1="47.5" y1="42" x2="50.5" y2="42" transform="rotate(-15 49 42)" />
+    <line x1="64.5" y1="42" x2="67.5" y2="42" transform="rotate(-35 66 42)" />
+  </g>
+
+  <!-- Spices: Dark caraway and dried marjoram flecks -->
+  <g fill="#210508" opacity="0.8">
+    <circle cx="38" cy="48" r="1.3" />
+    <circle cx="46" cy="38" r="1.4" />
+    <circle cx="55" cy="37" r="1.5" />
+    <circle cx="64" cy="36" r="1.3" />
+    <circle cx="73" cy="38" r="1.4" />
+    <circle cx="81" cy="44" r="1.3" />
+    <!-- Marjoram green flecks -->
+    <ellipse cx="42" cy="37" rx="1.6" ry="0.8" transform="rotate(20 42 37)" fill="#435028" />
+    <ellipse cx="52" cy="45" rx="1.7" ry="0.9" transform="rotate(-30 52 45)" fill="#435028" />
+    <ellipse cx="63" cy="44" rx="1.6" ry="0.8" transform="rotate(45 63 44)" fill="#435028" />
+    <ellipse cx="76" cy="42" rx="1.5" ry="0.8" transform="rotate(-15 76 42)" fill="#435028" />
+  </g>
+
+  <!-- Pinched knots at left end -->
+  <path
+    d="M 18 53
+       C 15 56, 15 63, 19 65
+       C 22 66, 25 64, 25 61
+       C 25 57, 22 53, 18 53 Z"
+    fill="url(#jelitoKnot)"
+    stroke="#190609"
+    stroke-width="2.6"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 19 56 C 22 58, 22 61, 20 63"
+    fill="none"
+    stroke="#190609"
+    stroke-width="1.8"
+    stroke-linecap="round"
+  />
+
+  <!-- Pinched knots at right end -->
+  <path
+    d="M 102 54
+       C 105 57, 105 64, 101 66
+       C 98 67, 95 65, 95 62
+       C 95 58, 98 54, 102 54 Z"
+    fill="url(#jelitoKnot)"
+    stroke="#190609"
+    stroke-width="2.6"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M 101 57 C 98 59, 98 62, 100 64"
+    fill="none"
+    stroke="#190609"
+    stroke-width="1.8"
+    stroke-linecap="round"
+  />
+
+  <!-- Sheen highlight along curve -->
+  <path
+    d="M 29 45
+       C 37 31, 49 25, 60 25
+       C 71 25, 83 31, 91 45
+       C 84 34, 72 29, 60 29
+       C 48 29, 36 34, 29 45 Z"
+    fill="url(#jelitoSheen)"
+  />
+
+  <!-- Bright gouache glints -->
+  <path
+    d="M 46 28 C 52 26, 57 25.5, 62 25.5 C 67 25.5, 72 26, 76 28"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    opacity="0.9"
+  />
+  <path
+    d="M 52 25.5 C 57 24.8, 62 24.8, 67 25.5"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    opacity="0.95"
+  />
+  <path
+    d="M 33 41 C 37 36, 41 32, 45 29"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    opacity="0.75"
+  />
+</svg>

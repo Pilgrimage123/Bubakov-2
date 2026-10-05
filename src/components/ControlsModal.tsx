@@ -309,8 +309,8 @@ var ControlsModal = ({
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Bába kořenářka:" }),
 											" ",
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("em", { children: "Léčivý lektvar z devatera bylin" }),
-											" – okamžitě vyléčí zdraví a očistí postavu."
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("em", { children: "Bylinkové uklidnění mysli" }),
+											" – okamžitě zažene strach, zvedne náladu a doplní kuráž lovce."
 										] }),
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Ponocný:" }),
@@ -643,7 +643,7 @@ var ControlsModal = ({
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(HruskaIcon, { size: "1.25em" }),
 											" ",
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Šťavnaté hrušky:" }),
-											" Okamžitě vyléčí zdraví (+15 až +25 HP)."
+											" Okamžitě zvednou náladu a doplní kuráž lovce (+15 až +25 kuráže)."
 										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
@@ -739,7 +739,7 @@ var ControlsModal = ({
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { children: [
 										"🍺 ",
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Pivovarská tekutá kuráž:" }),
-										" Zajišťuje trvalou regeneraci zdraví (+1 HP každých 5 sekund)!"
+										" Zajišťuje stálé posilování mysli a doplňování kuráže (+1 kuráž každých 5 sekund)!"
 									] })
 								]
 							})
@@ -785,7 +785,7 @@ var ControlsModal = ({
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Nebojte se využívat pauzu [P]:" }),
 									" Když je na obrazovce příliš mnoho projektilů nebo strašidel, stiskněte ",
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "P" }),
-									". Zjistíte, kolik vám zbývá životů, kde se nachází cíl a naplánujete další manévr."
+									". Zjistíte, kolik vám zbývá kuráže, kde se nachází cíl a naplánujete další manévr."
 								] }),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 									"🏆 ",
@@ -795,7 +795,7 @@ var ControlsModal = ({
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 									"👥 ",
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Zkoušejte různé lovce:" }),
-									" Pasáček je velmi rychlý, Kořenářka léčí bylinkami a Babička s Barunkou dokáží vlídným slovem zastavit čas!"
+									" Pasáček je velmi rychlý, Kořenářka zvedá náladu bylinkami a Babička s Barunkou dokáží vlídným slovem zastavit čas!"
 								] })
 							]
 						})]

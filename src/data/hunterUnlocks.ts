@@ -49,9 +49,9 @@ var HUNTER_UNLOCKS = {
 			tierLevel: 4,
 			spoiledName: "Poutník (Tulák)",
 			spoiledTitle: "Vesnický poutník z Hrusic",
-			spoiledLore: "Vysoké zdraví. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
+			spoiledLore: "Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
 			spoiledWeaponHint: "Osikový prut & Povidlové buchty",
-			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zraní a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
+			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zažene a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
 			clueTag: "✅ Připraven k boji"
 		}]
 	},
@@ -200,30 +200,30 @@ var HUNTER_UNLOCKS = {
 				minPercent: 50,
 				tierLevel: 2,
 				spoiledName: "B á _ _   k o ř _ _ _ _ _ a",
-				spoiledTitle: "Vesnická ranhojička s pasivní regenerací",
-				spoiledLore: "To je přece naše zkušená léčitelka! Její masti léčí rány i v tom nejprudším boji. Sama od sebe regeneruje +2 HP každé 4 sekundy a metá ostré léčivé lístky.",
-				spoiledWeaponHint: "Zbraň: Devatery bylinky (poškozují a máčí nepřátele)",
-				spoiledAbilityHint: "Schopnost: Očistné kadidlo (+45 HP a plošný výprask)",
-				clueTag: "🔎 50 %: Znáš její léky i očistné kadidlo!"
+				spoiledTitle: "Vesnická bylinkářka pro klidnou mysl",
+				spoiledLore: "To je přece naše zkušená bylinkářka! Její voňavé bylinky uklidní i v tom nejstrašidelnějším reji. Sama od sebe doplňuje +2 kuráže každé 4 sekundy a zahání bubáky ostrými lístky.",
+				spoiledWeaponHint: "Zbraň: Devatery bylinky (odhánějí a kropí dotírající bubáky)",
+				spoiledAbilityHint: "Schopnost: Očistné kadidlo (+45 kuráže a zahnání strašidel)",
+				clueTag: "🔎 50 %: Znáš její bylinky i očistné kadidlo!"
 			},
 			{
 				minPercent: 75,
 				tierLevel: 3,
 				spoiledName: "B á b a   k o ř e n á _ _ a",
-				spoiledTitle: "Strážkyně lidového zdraví a čistých tůní",
-				spoiledLore: "Moudrá stařenka už v chaloupce dopéká posvátné balzámy a bere hůl! Ještě několik zahnadých vodníků a vyrazí do boje uzdravovat celou vesnici.",
-				spoiledWeaponHint: "Start: Devatery kvítí, Pasivní léčení ran (+2 HP/4s)",
-				spoiledAbilityHint: "⚡ Speciál: Očistné kadidlo (+45 HP léčení & plošný úder)",
+				spoiledTitle: "Strážkyně dobré mysli a čistých tůní",
+				spoiledLore: "Moudrá stařenka už v chaloupce míchá voňavé bylinky na kuráž a bere hůl! Ještě několik zahnaných vodníků a vyrazí povzbuzovat celou vesnici.",
+				spoiledWeaponHint: "Start: Devatery kvítí, Uklidnění mysli (+2 kuráž/4s)",
+				spoiledAbilityHint: "⚡ Speciál: Očistné kadidlo (+45 kuráže & plošné zahnání bubáků)",
 				clueTag: "⚡ 75 %: Bylinný dým stoupá! Zbývá už jen pár vodních běsů!"
 			},
 			{
 				minPercent: 100,
 				tierLevel: 4,
 				spoiledName: "Bába kořenářka",
-				spoiledTitle: "Léčitelka s Devaterem kvítím",
-				spoiledLore: "Léčivý balzám, Devatery kvítí. Schopnost: Očistné kadidlo.",
-				spoiledWeaponHint: "Devatery kvítí & pasivní regenerace zdraví",
-				spoiledAbilityHint: "Očistné kadidlo (+45 HP vyléčení)",
+				spoiledTitle: "Bylinkářka s Devaterem kvítím",
+				spoiledLore: "Voňavé byliny na kuráž, Devatery kvítí. Schopnost: Očistné kadidlo.",
+				spoiledWeaponHint: "Devatery kvítí & stálé doplňování kuráže",
+				spoiledAbilityHint: "Očistné kadidlo (+45 kuráže)",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]

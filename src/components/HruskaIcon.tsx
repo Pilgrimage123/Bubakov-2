@@ -29,7 +29,7 @@ export const HruskaIcon: React.FC<HruskaIconProps> = ({
 				...style
 			}}
 			role="img"
-			aria-label="Šťavnatá česká hruška obnovující zdraví"
+			aria-label="Šťavnatá česká hruška zvedající náladu a doplňující kuráž"
 			{...props}
 		>
 			<defs>

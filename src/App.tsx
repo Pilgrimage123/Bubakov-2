@@ -1300,6 +1300,12 @@ export default function App() {
       pickupRadius: basePickup + scarecrowBonusPickup,
       weapons: initialWeapons,
       damageMultiplier: ovenDmgMult,
+      cooldownMultiplier: 1,
+      kavaCount: 0,
+      jelitoCount: 0,
+      kurazCount: 0,
+      speedCount: 0,
+      magnetCount: 0,
       damageReduction: wallDmgRed,
       regenLevel: meta.regenLevel || 0,
       regenTimer: 0,
@@ -1375,6 +1381,8 @@ export default function App() {
       spawnMeleeSlash(slash: any) {
         engineRef.current.slashes.push({
           ...slash,
+          maxLife: slash.maxLife || slash.life,
+          time: 0,
           hitList: [],
           dead: false,
         });
@@ -1613,7 +1621,7 @@ export default function App() {
     const p = engineRef.current.player;
     if (!p || p.ultCd > 0 || gameState !== 'playing') return;
 
-    p.ultCd = p.ultMaxCd;
+    p.ultCd = p.ultMaxCd * (p.cooldownMultiplier || 1);
     sound.slash();
 
     if (p.type === 'wanderer') {
@@ -1913,7 +1921,7 @@ export default function App() {
           type: 'upgrade_weapon',
           id: w.id,
           name: `${wDef.name} (Úr. ${w.level + 1})`,
-          desc: 'Zvyšuje sílu poškození, počet střel a rychlost útoku.',
+          desc: 'Zvyšuje sílu zahnání bubáků, dosah a rychlost použití.',
           icon: wDef.icon,
         });
       }
@@ -1922,23 +1930,44 @@ export default function App() {
     // Passives
     choices.push({
       type: 'passive',
+      stat: 'cooldown',
+      name: 'Opravdová káva',
+      desc: 'Horká černá káva z pražených zrn. Zkracuje dobu přípravy všech zbraní (-15 % cooldown / rychlejší útoky).',
+      icon: 'opravdova_kava',
+    });
+    choices.push({
+      type: 'passive',
+      stat: 'damage',
+      name: 'Krvavé jelito',
+      desc: 'Zabijačkové jelito plné krup a síly. Trvale zvyšuje zranění všech útoků a zbraní lovce (+20 % k poškození).',
+      icon: 'krvave_jelito',
+    });
+    choices.push({
+      type: 'passive',
       stat: 'maxHp',
-      name: 'Hroší kůže z podhůří',
-      desc: '+25 k maximálnímu zdraví lovce.',
-      icon: '🥩',
+      name: 'Medvědí mast',
+      desc: '+25 k maximální kuráži a odolnosti lovce proti vylekání a strachu.',
+      icon: 'medvedi_mast',
+    });
+    choices.push({
+      type: 'passive',
+      stat: 'regen',
+      name: 'Veselá mysl a písnička',
+      desc: 'Písnička na rtech zažene splín a doplňuje +2 kuráže každých 5 sekund.',
+      icon: '🎵',
     });
     choices.push({
       type: 'passive',
       stat: 'speed',
       name: 'Toulavé boty sedmimílové',
-      desc: '+20 k rychlosti pohybu lovce.',
+      desc: '+20 k rychlosti pohybu při obcházení strašidel.',
       icon: '👢',
     });
     choices.push({
       type: 'passive',
       stat: 'pickupRadius',
       name: 'Magnetický měšec na krejcary',
-      desc: '+35 k dosahu sběru mincí a lektvarů.',
+      desc: '+35 k dosahu přitahování krejcarů a posilujících dobrot.',
       icon: '🧲',
     });
 
@@ -1947,7 +1976,7 @@ export default function App() {
         type: 'modifier',
         id: 'soaked_cane',
         name: 'Mokrý prut',
-        desc: 'Osikový prut namočený v rybniční vodě. Údery namáčí nepřátele v chladné vodě a výrazně je zpomalují.',
+        desc: 'Osikový prut namočený ve studené rybniční vodě. Údery bubáky zchladí, zkrotí a výrazně je zpomalují.',
         icon: '💧',
       });
     }
@@ -1968,10 +1997,32 @@ export default function App() {
         if (choice.stat === 'maxHp') {
           p.maxHp += 25;
           p.hp += 25;
+          p.kurazCount = (p.kurazCount || 0) + 1;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Medvědí mast! (+25 Max Kuráž)', '#F59E0B', true));
+        } else if (choice.stat === 'cooldown') {
+          p.kavaCount = (p.kavaCount || 0) + 1;
+          p.cooldownMultiplier = Math.max(0.30, (p.cooldownMultiplier || 1) * 0.85);
+          if (p.weapons) {
+            p.weapons.forEach((w: any) => {
+              if (w.cd > 0) w.cd *= 0.85;
+            });
+          }
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Opravdová káva! (-15 % Cooldown)', '#38BDF8', true));
+        } else if (choice.stat === 'damage') {
+          p.jelitoCount = (p.jelitoCount || 0) + 1;
+          p.damageMultiplier = (p.damageMultiplier || 1) + 0.20;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Krvavé jelito! (+20 % Zranění)', '#DC2626', true));
+        } else if (choice.stat === 'regen') {
+          p.regenLevel = (p.regenLevel || 0) + 1;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Veselá mysl! (+2 Kuráž/5s)', '#4ADE80', true));
         } else if (choice.stat === 'speed') {
           p.speed += 20;
+          p.speedCount = (p.speedCount || 0) + 1;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+20 Rychlost!', '#60A5FA', true));
         } else if (choice.stat === 'pickupRadius') {
           p.pickupRadius += 35;
+          p.magnetCount = (p.magnetCount || 0) + 1;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+35 Dosah sběru!', '#FCD34D', true));
         }
       } else if (choice.type === 'modifier') {
         p.hasSoakedCane = true;
@@ -2027,8 +2078,8 @@ export default function App() {
         action: () => setRunStats((s) => ({ ...s, coins: s.coins + 100 })),
       },
       {
-        name: 'Zabijačková jitrnice (+40 HP)',
-        desc: 'Poctivá špejlovaná jitrnice ze zabijačky',
+        name: 'Zabijačková jitrnice (+40 Kuráže)',
+        desc: 'Poctivá špejlovaná jitrnice zvedne náladu a zažene strach (+40 kuráže)',
         icon: 'jitrnice',
         action: () => {
           const pl = engineRef.current.player;
@@ -2036,14 +2087,56 @@ export default function App() {
         },
       },
       {
-        name: 'Kynutý koláč (+25 Max HP)',
-        desc: 'Posilující tradiční venkovská dobrota',
+        name: 'Kynutý koláč (+25 Max Kuráž)',
+        desc: 'Posilující tradiční venkovská dobrota pro stálou dobrou náladu a odvahu',
         icon: 'kynuty_kolac',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 25;
             pl.hp += 25;
+          }
+        },
+      },
+      {
+        name: 'Medvědí mast (+25 Max Kuráž)',
+        desc: 'Hojivá mast z divočiny pro nezlomnou sílu a odolnost proti všem strašidlům a běsům',
+        icon: 'medvedi_mast',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) {
+            pl.maxHp += 25;
+            pl.hp += 25;
+            pl.kurazCount = (pl.kurazCount || 0) + 1;
+          }
+        },
+      },
+      {
+        name: 'Opravdová káva (-15 % Cooldown)',
+        desc: 'Čerstvě pražená horká černá káva zkrátí dobu přípravy všech zbraní',
+        icon: 'opravdova_kava',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) {
+            pl.kavaCount = (pl.kavaCount || 0) + 1;
+            pl.cooldownMultiplier = Math.max(0.30, (pl.cooldownMultiplier || 1) * 0.85);
+            if (pl.weapons) {
+              pl.weapons.forEach((w: any) => {
+                if (w.cd > 0) w.cd *= 0.85;
+              });
+            }
+          }
+        },
+      },
+      {
+        name: 'Krvavé jelito (+20 % Zranění)',
+        desc: 'Zabijačkové jelito s kroupami trvale zvýší sílu všech úderů a zbraní',
+        icon: 'krvave_jelito',
+        action: () => {
+          const pl = engineRef.current.player;
+          if (pl) {
+            pl.jelitoCount = (pl.jelitoCount || 0) + 1;
+            pl.damageMultiplier = (pl.damageMultiplier || 1) + 0.20;
           }
         },
       },
@@ -2064,7 +2157,7 @@ export default function App() {
       },
       {
         name: 'Povidlová buchta (Svačina na cestu)',
-        desc: 'Plné posilnění a uzdravení (+50 HP)',
+        desc: 'Sladká svačina pro povzbuzení nálady a okamžité doplnění kuráže (+50)',
         icon: 'czech_buchta',
         action: () => {
           const pl = engineRef.current.player;
@@ -3402,7 +3495,8 @@ export default function App() {
                 const wDef = WEAPONS[w.id];
                 if (wDef) {
                   const fired = wDef.fire(player, w.level);
-                  w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) : 0.1;
+                  const cdMult = player.cooldownMultiplier || 1;
+                  w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult : 0.1;
                 }
               }
             }
@@ -3656,14 +3750,15 @@ export default function App() {
           for (const s of engine.slashes) {
             s.x = player.x;
             s.y = player.y;
+            s.time = (s.time || 0) + dt;
             s.life -= dt;
             if (s.life <= 0) s.dead = true;
 
-            const nearby=enemySpatialHashRef.current.queryCircle(s.x,s.y,s.reach+72);
+            const nearby = enemySpatialHashRef.current.queryCircle(s.x, s.y, s.reach + 72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
-              const dx=s.x-e.x, dy=s.y-e.y, reach=s.reach+e.radius;
-              if (!s.hitList.includes(e) && distanceSq(s.x, s.y, e.x, e.y) <= reach*reach) {
+              const dx = s.x - e.x, dy = s.y - e.y, reach = s.reach + e.radius;
+              if (!s.hitList.includes(e) && distanceSq(s.x, s.y, e.x, e.y) <= reach * reach) {
                 const ang = Math.atan2(e.y - s.y, e.x - s.x);
                 let diff = Math.abs(ang - s.angle);
                 if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -3672,6 +3767,25 @@ export default function App() {
                   s.hitList.push(e);
                   e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * 260, Math.sin(s.angle) * 260);
                   if (s.soaked) e.soak();
+                  if (s.style === 'cane' || s.weaponId === 'cane') {
+                    // Aspen whip hit effects: bud/leaf/wood particles & splash
+                    for (let pIdx = 0; pIdx < (s.soaked ? 4 : 3); pIdx++) {
+                      engine.particles.push({
+                        x: e.x + (Math.random() - 0.5) * 16,
+                        y: e.y + (Math.random() - 0.5) * 16,
+                        vx: Math.cos(s.angle + (Math.random() - 0.5) * 1.4) * (120 + Math.random() * 80),
+                        vy: Math.sin(s.angle + (Math.random() - 0.5) * 1.4) * (120 + Math.random() * 80),
+                        life: 0.35,
+                        color: s.soaked ? (pIdx % 2 === 0 ? '#60A5FA' : '#93C5FD') : (pIdx % 2 === 0 ? '#84CC16' : '#78350F'),
+                        size: s.soaked ? 3.5 : 2.5,
+                      });
+                    }
+                    if (Math.random() < 0.35) {
+                      const whipWords = s.soaked ? ['ŠPLOUCH!', 'PLESK!', 'ŠVIH!'] : ['ŠVIH!', 'PRÁSK!', 'PLESK!', 'ŠLEH!'];
+                      const word = whipWords[Math.floor(Math.random() * whipWords.length)];
+                      engine.texts.push(new DamageText(e.x + (Math.random() - 0.5) * 20, e.y - 30, word, s.soaked ? '#38BDF8' : '#FDE047', false));
+                    }
+                  }
                 }
               }
             }
@@ -3776,11 +3890,11 @@ export default function App() {
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
                   player.hp = Math.min(player.maxHp, player.hp + potionHeal);
                   player.invulnerabilityTimer = waterLevel * 2;
-                  engine.texts.push(new DamageText(player.x, player.y - 45, '+30 HP Jitrnice', COLORS.green, true));
+                  engine.texts.push(new DamageText(player.x, player.y - 45, '+30 Kuráž (Jitrnice)', COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
                   player.hp = Math.min(player.maxHp, player.hp + 15);
-                  engine.texts.push(new DamageText(player.x, player.y - 40, '+15 HP 🍐', '#84CC16'));
+                  engine.texts.push(new DamageText(player.x, player.y - 40, '+15 Kuráž 🍐', '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
                   player.soulBuffTimer = 6.0;
@@ -4173,6 +4287,8 @@ export default function App() {
             ctx.moveTo(15, 12);
             ctx.lineTo(s.reach * 0.9, 12);
             ctx.stroke();
+          } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
+            Lada.drawOsikovyPrutSlash(ctx, s);
           } else {
             Lada.setupPath(ctx, 'transparent', s.style === 'halberd' ? '#94A3B8' : COLORS.white, 8);
             ctx.beginPath();
@@ -5776,7 +5892,7 @@ export default function App() {
             }
             spawnScatterDrop('coin', { value: 25, speed: 120, text: 'Zlatý tolar! +25', textColor: COLORS.mustard });
             spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 HP', textColor: '#84CC16' });
+            spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
             for (let i = 0; i < 24; i++) {
               eng.particles.push({
@@ -5792,8 +5908,8 @@ export default function App() {
             eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD MINIBOSSE!', COLORS.mustard, true));
           } else if (isBoss) {
             sound.chest();
-            spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 HP', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 HP', textColor: '#84CC16' });
+            spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
+            spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
             spawnScatterDrop('coin', { value: 25, speed: 130, text: 'ZLATÝ TOLAR!', textColor: COLORS.mustard });
             spawnScatterDrop('coin', { value: 10, speed: 105 });
@@ -7108,7 +7224,7 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoké zdraví. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice.
+                  Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
                   <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut & Povidlové buchty</div>
@@ -7248,7 +7364,7 @@ export default function App() {
               <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
 
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
-                <span>❤️ Životy: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150} HP</span>
+                <span>🦁 Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
                 <span>⭐ Úroveň: <strong>{runStats.level}</strong></span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
                 <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
@@ -7267,7 +7383,9 @@ export default function App() {
                 const wDef = WEAPONS[w.id];
                 if (!wDef) return null;
                 const dmgMult = engineRef.current.player?.damageMultiplier || 1;
+                const cdMult = engineRef.current.player?.cooldownMultiplier || 1;
                 const estDmg = Math.round((wDef.baseDmg + (w.level - 1) * 5) * dmgMult);
+                const effectiveCd = (wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult).toFixed(2);
                 const isCane = w.id === 'cane';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
@@ -7294,7 +7412,7 @@ export default function App() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900 }}>
                       <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534' }}>⏱️ Kadence: {wDef.baseCd} s</span>
+                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{cdMult < 0.999 ? ` (-${Math.round((1 - cdMult) * 100)} %)` : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}
@@ -7303,6 +7421,123 @@ export default function App() {
                 );
               })}
             </div>
+
+            {/* Active passive perks / upgrades */}
+            {(() => {
+              const pl = engineRef.current.player;
+              if (!pl) return null;
+              const perks: { icon: string; name: string; desc: string; badge?: string }[] = [];
+              if (pl.kavaCount > 0) {
+                const cdReductionPct = Math.round((1 - (pl.cooldownMultiplier || 1)) * 100);
+                perks.push({
+                  icon: 'opravdova_kava',
+                  name: `Opravdová káva`,
+                  desc: `Zkrácení doby přípravy zbraní o -${cdReductionPct} % (svižnější útoky)`,
+                  badge: `${pl.kavaCount}×`,
+                });
+              }
+              if (pl.jelitoCount > 0) {
+                const dmgBonusPct = Math.round(((pl.damageMultiplier || 1) - 1) * 100);
+                perks.push({
+                  icon: 'krvave_jelito',
+                  name: `Krvavé jelito`,
+                  desc: `Zvýšení síly a poškození všech útoků o +${dmgBonusPct} %`,
+                  badge: `${pl.jelitoCount}×`,
+                });
+              }
+              if (pl.kurazCount > 0) {
+                perks.push({
+                  icon: 'medvedi_mast',
+                  name: `Medvědí mast`,
+                  desc: `+${pl.kurazCount * 25} k maximální kuráži a odolnosti lovce`,
+                  badge: `${pl.kurazCount}×`,
+                });
+              }
+              if (pl.regenLevel > 0) {
+                perks.push({
+                  icon: '🎵',
+                  name: `Veselá mysl a písnička`,
+                  desc: `+${pl.regenLevel * 2} kuráže doplňováno každých 5 sekund`,
+                  badge: `Úr. ${pl.regenLevel}`,
+                });
+              }
+              if (pl.speedCount > 0) {
+                perks.push({
+                  icon: '👢',
+                  name: `Toulavé boty sedmimílové`,
+                  desc: `+${pl.speedCount * 20} k rychlosti pohybu při obcházení strašidel`,
+                  badge: `${pl.speedCount}×`,
+                });
+              }
+              if (pl.magnetCount > 0) {
+                perks.push({
+                  icon: '🧲',
+                  name: `Magnetický měšec`,
+                  desc: `+${pl.magnetCount * 35} k dosahu přitahování krejcarů a posilujících dobrot`,
+                  badge: `${pl.magnetCount}×`,
+                });
+              }
+              if (pl.hasSoakedCane) {
+                perks.push({
+                  icon: '💧',
+                  name: 'Mokrý prut',
+                  desc: 'Údery osikového prutu zchladí a výrazně zpomalují zasažené bubáky',
+                  badge: 'Aktivní',
+                });
+              }
+
+              if (perks.length === 0) return null;
+
+              return (
+                <div style={{ marginTop: '12px' }}>
+                  <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: '#FEF3C7', fontSize: '1.05rem' }}>
+                    ✨ Získaná vylepšení a posílení lovce:
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
+                    {perks.map((p, idx) => (
+                      <div
+                        key={idx}
+                        className="pause-weapon-card"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 12px',
+                        }}
+                      >
+                        <div style={{ flexShrink: 0 }}>
+                          <GameIcon icon={p.icon} size={28} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 900, fontSize: '1.02rem', color: '#111111' }}>
+                              {p.name}
+                            </span>
+                            {p.badge && (
+                              <span
+                                style={{
+                                  background: 'var(--wood-dark)',
+                                  color: '#FEF3C7',
+                                  padding: '1px 6px',
+                                  borderRadius: '4px',
+                                  fontWeight: 900,
+                                  fontSize: '0.8rem',
+                                }}
+                              >
+                                {p.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p style={{ margin: '2px 0 0 0', fontSize: '0.82rem', fontWeight: 700, color: '#333333', lineHeight: 1.2 }}>
+                            {p.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* In-pause toggles */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
@@ -7563,7 +7798,7 @@ export default function App() {
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
           <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#FDE047' : '#FEF3C7', textShadow: '3px 3px 0 var(--ink)' }}>
-            {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'VÝPRAVA SKONČILA!'}
+            {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
           </h1>
           <p style={{ fontWeight: 900, fontSize: '1.2rem', color: '#FEF3C7', textShadow: '1px 1px 0 var(--ink)', marginTop: '-8px', marginBottom: '16px' }}>
             {GAME_LEVELS[tallyCounters.levelId]?.name || 'Venkovská výprava'}

@@ -7,7 +7,20 @@ import { JitrniceIcon } from './JitrniceIcon';
 import { OsikovyPrutIcon } from './OsikovyPrutIcon';
 import { HruskaIcon } from './HruskaIcon';
 import { KynutyKolacIcon } from './KynutyKolacIcon';
+import { OpravdovaKurazIcon } from './OpravdovaKurazIcon';
+import { MedvediMastIcon } from './MedvediMastIcon';
+import { OpravdovaKavaIcon } from './OpravdovaKavaIcon';
+import { KrvaveJelitoIcon } from './KrvaveJelitoIcon';
 
+function isKurazIcon(icon: any) {
+	return icon === "medvedi_mast" || icon === "medvedimast" || icon === "mast" || icon === "opravdova_kuraz" || icon === "kuraz" || icon === "courage" || icon === "fist" || icon === "opravdovakuraz" || icon === "hrosi_kuze" || icon === "🥩";
+}
+function isKavaIcon(icon: any) {
+	return icon === "opravdova_kava" || icon === "kava" || icon === "coffee" || icon === "cerna_kava" || icon === "☕";
+}
+function isJelitoIcon(icon: any) {
+	return icon === "krvave_jelito" || icon === "jelito" || icon === "blood_sausage" || icon === "krvavejelito";
+}
 function isBuchtaIcon(icon: any) {
 	return icon === "czech_buchta" || icon === "🥟" || icon === "buns";
 }
@@ -66,6 +79,21 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 		style,
 		soaked: icon === "soaked_cane"
 	});
+	if (isKurazIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MedvediMastIcon, {
+		size,
+		className,
+		style
+	});
+	if (isKavaIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(OpravdovaKavaIcon, {
+		size,
+		className,
+		style
+	});
+	if (isJelitoIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KrvaveJelitoIcon, {
+		size,
+		className,
+		style
+	});
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 		className,
 		style: {
@@ -80,4 +108,4 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 	});
 };
 
-export { isBuchtaIcon, isKolacIcon, isHruskaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, OsikovyPrutIcon, HruskaIcon, KynutyKolacIcon, GameIcon };
+export { isBuchtaIcon, isKolacIcon, isHruskaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, isKurazIcon, isKavaIcon, isJelitoIcon, OsikovyPrutIcon, HruskaIcon, KynutyKolacIcon, OpravdovaKurazIcon, MedvediMastIcon, OpravdovaKavaIcon, KrvaveJelitoIcon, GameIcon };

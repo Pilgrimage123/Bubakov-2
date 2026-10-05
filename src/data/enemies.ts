@@ -257,7 +257,7 @@ var ENEMIES = {
 		coinValue: 8,
 		method: "drawBubak",
 		weakness: "Očistné kadidlo, Pekelný žár z pece, Lucerna ponocného",
-		strength: "Vysoké zdraví, nezastavitelnost (poise)",
+		strength: "Vysoká výdrž a odhodlání, nezastavitelnost (poise)",
 		lore: "Obrovitá černá silueta v plášti se svítícíma očima a širokým kloboukem. Přebývá v temných koutech stodol.",
 		danger: "★★★☆☆"
 	},
@@ -677,7 +677,7 @@ var ENEMIES = {
 		coinValue: 50,
 		method: "drawHejkal",
 		weakness: "Kovářské vidle, Kovaná halapartna, Sněhové koule",
-		strength: "Dvojnásobné zdraví, otřesy půdy, hejna rarášků",
+		strength: "Dvojnásobná výdrž, otřesy půdy, hejna rarášků",
 		lore: "Probouzí se o půlnoční hodině. Běda poutníkovi, který by na jeho zahejkaní z lesa odpověděl!",
 		danger: "★★★★★"
 	},
@@ -939,7 +939,7 @@ var ENEMIES = {
 		method: "drawSkeleton",
 		palette: "crimson",
 		weakness: "Cep na obilí, Svěcená voda",
-		strength: "Vysoké zdraví, tvrdý úder sekerou",
+		strength: "Tuhý kořínek a výdrž, tvrdý úder sekerou",
 		lore: "Kostlivec ze staré kostnice se zvláštním červeným nátěrem. Je neobyčejně tvrdohlavý, dokud ho nepřetáhneš cepem.",
 		danger: "★★★☆☆"
 	},

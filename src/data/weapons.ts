@@ -56,9 +56,10 @@ var WEAPONS = {
 		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const reach = 85 + level * 12;
-			const arc = 1.3 + level * .2;
+			const reach = 88 + level * 14;
+			const arc = 1.35 + level * .2;
 			const dmg = (16 + level * 5) * (player.damageMultiplier || 1);
+			player._caneSwingAlt = !player._caneSwingAlt;
 			player.spawnMeleeSlash({
 				x: player.x,
 				y: player.y,
@@ -66,12 +67,19 @@ var WEAPONS = {
 				reach,
 				arc,
 				dmg,
-				life: .2,
+				life: .30,
+				maxLife: .30,
 				type: "physical",
-				soaked: player.hasSoakedCane,
-				style: "arc"
+				soaked: !!player.hasSoakedCane,
+				style: "cane",
+				weaponId: "cane",
+				swingDir: player._caneSwingAlt ? 1 : -1
 			});
-			sound.slash();
+			if (typeof (sound as any).caneWhip === 'function') {
+				(sound as any).caneWhip(player.hasSoakedCane);
+			} else {
+				sound.slash();
+			}
 			return true;
 		}
 	},
@@ -168,7 +176,7 @@ var WEAPONS = {
 		baseDmg: 15,
 		baseCd: 1.1,
 		speed: 350,
-		desc: "Voňavý ochranný věnec z léčivých bylin natrhaných o svatojánské noci. Šíří se v kruhu a zahání nečisté síly.",
+		desc: "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
 		fire: (player, level) => {
 			const count = 3 + level;
 			const dmg = (15 + level * 4) * (player.damageMultiplier || 1);

@@ -1379,7 +1379,7 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
 										style: { color: "#000000" },
 										children: "Jitrnice a hrušky:"
-									}), " Vzácné předměty na zemi obnovující zdraví."]
+									}), " Vzácné posilňující dobroty na zemi doplňující kuráž a dobrou náladu."]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 									style: { color: "#000000" },
