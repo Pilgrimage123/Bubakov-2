@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-05 — Efektivní charge Pekelného čerta, Zlomyslný sněhulák, unikátní bossové a samostatné dračí hlavy
+- **Pekelný čert — skutečně efektivní a nebezpečný charge**:
+  - Důkladná revize mechaniky charge: opraven malý dosah a pomalá rychlost, přidán zřetelný telegrafický windup (dusot kopyt v hlíně, rudé varování, jiskry ze země), zrychlení výpadu na 490–560 px/s se stopou pekelné síry a plamenů.
+  - Zásah nabíhajícím čertem způsobí masivní drtivý náraz s odhozením hráče o 110 px a těžkým poškozením; po minutí čert sklouzne do brzdné fáze (brake), což dává hráči taktické okno k protiútoku.
+  - V `drawCert` implementována dynamická animace výpadu (`isCharging`) s předklonem, sklopenými rohy, vodorovně napřaženými vidlemi a planoucí aurou.
+- **Zlomyslný sněhulák a unikátní vizuál všech bossů**:
+  - Prokletý sněhulák přejmenován na **Zlomyslný sněhulák** („Ledový bijec ze sluje“) a získal svůj vlastní plně animovaný ladovský sprite `drawSnehulak` (tři kutálející se koule, hrnec na hlavě s tajícími rampouchy, mrkvový nos, uhlíkový úšklebek, větev s proutěným koštětem a vířící sněhové vločky).
+  - Prověřeni a opraveni všichni bossové a minibossové, kteří dosud sdíleli zástupné sprity běžných nepřátel:
+    - **Bílá paní** (`drawBilaPani`): éterická hradní paní v plovoucím rouchu s vysokým henninem a závojem, přízračnou lucernou a vznášejícím se lemem.
+    - **Rytířský zbrojnoš** (`drawZbrojnos`): hradní těžkooděnec v helmici (šlapu), kroužkové kukle, kyrysu s erbovním tabardem, těžkým štítem a halapartnou.
+    - **Bezhlavý rytíř** (`drawBezhlavyRytir`): jezdec na temném obrněném oři třímající v ruce uťatou hlavu s planoucím pohledem a rezavý obouruční meč.
+    - **Noční můra** (`drawNocniMura`): přízrak s jeleními parohy, korunou z lebečních kostí, fialovýma zářícíma očima a cárovitými nočními křídly.
+    - **Pekelný dráb** (`drawDrab`): dráb v uniformním kabátě s mosaznými knoflíky, trojrohém klobouku s kokardou, okovy a karabáčem.
+- **Tříhlavý drak — útoky z jednotlivých hlav a samostatná animace**:
+  - Všechny tři dračí hlavy mají samostatné kinematické křivky, odlišnou frekvenci pohupování, mimiku a reakce:
+    - **Levá hlava (Spící / Mrazivá)**: v 1. fázi líně spí, odfukuje spánkové bubliny a vypouští písmenka „Zzz“; ve 2. fázi se probouzí s ledovýma očima a při mrazivém dechu rozevře čelisti s rampouchovými tesáky.
+    - **Prostřední hlava (Královská / Hlídací)**: pyšná vztyčená hlava s trojitou korunou rohů a vousiskem, ostražitě mrká a při přivolání rampouchů se vzepne k nebi, zařve a vyšle světelný sloup mrazivé energie přímo do klenby sluje.
+    - **Pravá hlava (Ohnivá)**: agresivní dravé vlnění, ohnivé oči se štěrbinovou zornicí, při dračím dechu se tlama široce rozevře, vyšlehne plamenný jazyk a fontána jisker.
+  - Všechny útoky vycházejí z přesných souřadnic tlamy příslušné hlavy podle aktuálního směru otočení draka (dračí plamen z ohnivé tlamy vpravo, mrazivý dech a síra z levé tlamy, přivolání rampouchů a větrný řev ze vztyčené koruny).
+
+## 2026-10-05 — Možnost nastavení zbraní na úroveň nula v testovacím módu
+- Každou jednotlivou zbraň v testovacím módu (sandboxu) lze snížit až na úroveň 0, případně jedním kliknutím vynulovat tlačítkem `[0]`.
+- Zbraň s úrovní 0 je zřetelně označena jako neaktivní („Úr. 0 – lovec s touto zbraní nezačíná“) a lovec s ní do hry nevstupuje.
+- K zahájení testovací výpravy je vyžadována alespoň 1 aktivní zbraň (úroveň >= 1); při nulovém výběru je startovací tlačítko deaktivováno s upozorněním pro hráče.
+
+
 ## 2026-10-04 — Nová podoba Kynutého koláče podle předlohy
 - Zbraň a předmět Kynutý koláč získaly novou grafickou podobu přesně podle předlohy tradičního chodského slavnostního koláče.
 - Vytvořena nová detailní SVG grafika `/public/images/kynuty_kolac.svg` a komponent `KynutyKolacIcon.tsx` obsahující zlatavě vypečený kynutý okraj, jemný tvarohový základ, 8 radiálních povidlových paprsků se zvlněnými girlandami, věnec mandlí v květu s rozinkou uprostřed a linku z rozinek.

@@ -1269,8 +1269,8 @@ export default function App() {
       type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
 
     const initialWeapons =
-      customWeapons && customWeapons.length > 0
-        ? customWeapons.map((w) => ({ id: w.id, level: w.level, cd: 0 }))
+      customWeapons && customWeapons.filter((w) => w.level > 0).length > 0
+        ? customWeapons.filter((w) => w.level > 0).map((w) => ({ id: w.id, level: w.level, cd: 0 }))
         : type === 'wanderer'
         ? [{ id: 'buns', level: 1, cd: 0 }, { id: 'cane', level: 1, cd: 0 }]
         : type === 'shepherd'
@@ -1360,6 +1360,9 @@ export default function App() {
       getLivingEnemies() {
         return livingEnemiesRef.current;
       },
+      getNearbyEnemies(radius = 850) {
+        return enemySpatialHashRef.current.queryCircle(this.x, this.y, radius);
+      },
       spawnProjectile(proj: any) {
         engineRef.current.projectiles.push({
           ...proj,
@@ -1377,10 +1380,12 @@ export default function App() {
         });
       },
       spawnAreaImpact(impact: any) {
-        const enemies = engineRef.current.enemies;
-        for (const e of enemies) {
+        const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
+        for (let i = 0; i < nearby.length; i++) {
+          const e = nearby[i];
+          if (e.isDefeated) continue;
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
-          if (!e.isDefeated && dx*dx+dy*dy <= reach*reach) {
+          if (dx*dx+dy*dy <= reach*reach) {
             e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
           }
         }
@@ -1390,8 +1395,10 @@ export default function App() {
       spawnHromnickaPulse(reach: number, baseDmg: number, level: number) {
         this.hromnickaPulseTimer = 0.4;
         this.hromnickaPulseRadius = reach;
-        const enemies = this.getLivingEnemies();
-        for (const e of enemies) {
+        const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 60);
+        for (let i = 0; i < nearby.length; i++) {
+          const e = nearby[i];
+          if (e.isDefeated) continue;
           const dx=e.x-this.x, dy=e.y-this.y, distSq=dx*dx+dy*dy, reachWithRadius=reach+e.radius;
           if (distSq <= reachWithRadius*reachWithRadius) {
             const dist=Math.sqrt(distSq);
@@ -2409,22 +2416,35 @@ export default function App() {
                   }
                 }
 
-                // 2. Pitchfork Thrust / Hoofed Charge
+                // 2. Pitchfork Thrust / Hoofed Charge (Pekelný efektivní charge s telegrafem a kopyty)
                 engine.certChargeTimer -= dt;
                 if (engine.certChargeTimer <= 0) {
-                  engine.certChargeTimer = isPhase2 ? 5.5 : 8.0;
                   const dToP = Math.hypot(player.x - cert.x, player.y - cert.y);
-                  if (dToP < 320 && dToP > 50) {
-                    sound.slash();
+                  if (dToP < 550 && dToP > 40 && cert.aiState !== 'charge' && cert.aiState !== 'windup') {
+                    engine.certChargeTimer = isPhase2 ? 4.8 : 6.8;
+                    cert.aiState = 'windup';
+                    cert.aiTimer = 0.65;
                     const chAng = Math.atan2(player.y - cert.y, player.x - cert.x);
-                    const chSpd = isPhase2 ? 310 : 250;
-                    cert.aiState = 'charge';
-                    cert.aiTimer = isPhase2 ? 0.75 : 0.65;
                     cert.chargeDirX = chAng;
-                    cert.chargeSpeed = chSpd;
-                    cert.vx = Math.cos(chAng) * chSpd;
-                    cert.vy = Math.sin(chAng) * chSpd;
-                    engine.texts.push(new DamageText(cert.x, cert.y - 50, 'VÝPAD VIDLEMI! 🔱', COLORS.mustard, true));
+                    cert.chargeSpeed = isPhase2 ? 560 : 490;
+                    cert.vx = 0;
+                    cert.vy = 0;
+                    sound.roar();
+                    engine.texts.push(new DamageText(cert.x, cert.y - 55, 'DUSOT KOPYT! 🐂🔥', '#EF4444', true));
+                    // Hoof scratch dust & brimstone sparks
+                    for (let i = 0; i < 14; i++) {
+                      engine.particles.push({
+                        x: cert.x + (Math.random() - 0.5) * 20,
+                        y: cert.y + cert.radius * 0.7,
+                        vx: -Math.cos(chAng) * (60 + Math.random() * 80) + (Math.random() - 0.5) * 30,
+                        vy: -Math.sin(chAng) * (60 + Math.random() * 80) + (Math.random() - 0.5) * 30,
+                        life: 0.5,
+                        color: i % 2 === 0 ? '#F97316' : '#DC2626',
+                        size: 5,
+                      });
+                    }
+                  } else if (cert.aiState !== 'charge' && cert.aiState !== 'windup') {
+                    engine.certChargeTimer = 1.0;
                   }
                 }
               }
@@ -2865,24 +2885,49 @@ export default function App() {
                   }
                 }
 
-                // 1. Dragon Flame Breath (Ohnivá hlava - vějíř dračích plamenů)
+                // Head snout coordinates calculated dynamically from facing direction and head offsets
+                const drakDir = (drak.vx || 1) < 0 ? -1 : 1;
+                const fireHeadX = drak.x + drakDir * 120;
+                const fireHeadY = drak.y - 68;
+                const crownHeadX = drak.x + drakDir * 15;
+                const crownHeadY = drak.y - 127;
+                const frostHeadX = drak.x - drakDir * 103;
+                const frostHeadY = drak.y - 78;
+
+                // 1. Dragon Flame Breath (Ohnivá hlava - vějíř dračích plamenů vychází z ohnivé tlamy)
                 engine.drakBreathTimer -= dt;
                 if (engine.drakBreathTimer <= 0) {
                   engine.drakBreathTimer = isPhase2 ? 3.8 : 5.8;
                   sound.roar();
-                  engine.texts.push(new DamageText(drak.x, drak.y - 60, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
-                  const bAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                  engine.texts.push(new DamageText(fireHeadX, fireHeadY - 30, 'DRAČÍ PLAMEN! 🔥', '#DC2626', true));
+                  const bAng = Math.atan2(player.y - fireHeadY, player.x - fireHeadX);
                   const flameCount = isPhase2 ? 8 : 6;
                   const spread = isPhase2 ? 0.8 : 0.6;
+
+                  // Fire muzzle flash sparks directly at Head 3 snout
+                  for (let i = 0; i < 15; i++) {
+                    const ang = bAng + (Math.random() - 0.5) * 0.9;
+                    const spd = 120 + Math.random() * 180;
+                    engine.particles.push({
+                      x: fireHeadX,
+                      y: fireHeadY,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd,
+                      life: 0.45,
+                      color: i % 3 === 0 ? '#FEF08A' : i % 3 === 1 ? '#F97316' : '#DC2626',
+                      size: 6,
+                    });
+                  }
+
                   for (let i = 0; i < flameCount; i++) {
                     const ang = bAng - spread / 2 + (i * spread) / (flameCount - 1);
                     engine.projectiles.push({
-                      x: drak.x + Math.cos(ang) * 45,
-                      y: drak.y - 15 + Math.sin(ang) * 45,
-                      vx: Math.cos(ang) * 260,
-                      vy: Math.sin(ang) * 260,
+                      x: fireHeadX + Math.cos(ang) * 12,
+                      y: fireHeadY + Math.sin(ang) * 12,
+                      vx: Math.cos(ang) * 270,
+                      vy: Math.sin(ang) * 270,
                       angle: ang,
-                      speed: 260,
+                      speed: 270,
                       dmg: isPhase2 ? 34 : 25,
                       radius: 16,
                       type: 'fire',
@@ -2897,14 +2942,29 @@ export default function App() {
                   }
                 }
 
-                // 2. Falling Cave Icicles (Hlídací hlava přivolá pád rampouchů ze stropu sluje)
+                // 2. Falling Cave Icicles (Hlídací majestátní hlava zařve klenbou sluje a strhne rampouchy)
                 engine.drakIcicleTimer -= dt;
                 if (engine.drakIcicleTimer <= 0) {
                   engine.drakIcicleTimer = isPhase2 ? 5.0 : 7.5;
                   sound.freeze();
-                  engine.texts.push(new DamageText(player.x, player.y - 65, 'PADAJÍCÍ RAMPOUCHY! 🧊', '#38BDF8', true));
+                  sound.roar();
+                  engine.texts.push(new DamageText(crownHeadX, crownHeadY - 45, 'MRAZIVÝ ŘEV DO STROPU! 🧊🔊', '#38BDF8', true));
                   setRunStats((s) => ({ ...s, warningBanner: '🧊 POZOR NA PADAJÍCÍ RAMPOUCHY ZE STROPU SLUJE!' }));
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 2500);
+
+                  // Vertical sonic & frost beam shooting straight from center crown head up into cave ceiling
+                  for (let i = 0; i < 20; i++) {
+                    const beamY = crownHeadY - i * 16;
+                    engine.particles.push({
+                      x: crownHeadX + (Math.random() - 0.5) * 20,
+                      y: beamY,
+                      vx: (Math.random() - 0.5) * 40,
+                      vy: -150 - Math.random() * 120,
+                      life: 0.6,
+                      color: i % 2 === 0 ? '#38BDF8' : '#BAE6FD',
+                      size: 6,
+                    });
+                  }
 
                   const icicleCount = isPhase2 ? 7 : 5;
                   for (let i = 0; i < icicleCount; i++) {
@@ -2970,17 +3030,17 @@ export default function App() {
                   }
                 }
 
-                // 4. Lazy / Sleeping Head Snore (Phase 1: Chrápání a sirná kouřová bublina)
+                // 4. Lazy / Sleeping Head Snore (Phase 1: Chrápání a sirná kouřová bublina z líné levé hlavy)
                 if (!isPhase2) {
                   engine.drakSnoreTimer -= dt;
                   if (engine.drakSnoreTimer <= 0) {
                     engine.drakSnoreTimer = 6.0;
                     sound.snack();
-                    engine.texts.push(new DamageText(drak.x - 30, drak.y - 70, 'CHRRR... Zzz 💤', '#FEF08A', false));
-                    const snoreAng = Math.atan2(player.y - drak.y, player.x - drak.x) + (Math.random() - 0.5) * 0.4;
+                    engine.texts.push(new DamageText(frostHeadX, frostHeadY - 35, 'CHRRR... Zzz 💤', '#FEF08A', false));
+                    const snoreAng = Math.atan2(player.y - frostHeadY, player.x - frostHeadX) + (Math.random() - 0.5) * 0.4;
                     engine.projectiles.push({
-                      x: drak.x - 35,
-                      y: drak.y - 30,
+                      x: frostHeadX,
+                      y: frostHeadY,
                       vx: Math.cos(snoreAng) * 110,
                       vy: Math.sin(snoreAng) * 110,
                       angle: snoreAng,
@@ -3004,13 +3064,29 @@ export default function App() {
                   if (engine.drakSnoreTimer <= 0) {
                     engine.drakSnoreTimer = 4.5;
                     sound.freeze();
-                    engine.texts.push(new DamageText(drak.x - 30, drak.y - 65, 'MRAZIVÝ DECH! ❄️', '#38BDF8', true));
-                    const fAng = Math.atan2(player.y - drak.y, player.x - drak.x);
+                    engine.texts.push(new DamageText(frostHeadX, frostHeadY - 35, 'MRAZIVÝ DECH! ❄️', '#38BDF8', true));
+                    const fAng = Math.atan2(player.y - frostHeadY, player.x - frostHeadX);
+
+                    // Ice frost particles right at Head 1 snout
+                    for (let i = 0; i < 14; i++) {
+                      const ang = fAng + (Math.random() - 0.5) * 0.8;
+                      const spd = 100 + Math.random() * 160;
+                      engine.particles.push({
+                        x: frostHeadX,
+                        y: frostHeadY,
+                        vx: Math.cos(ang) * spd,
+                        vy: Math.sin(ang) * spd,
+                        life: 0.45,
+                        color: i % 2 === 0 ? '#38BDF8' : '#BAE6FD',
+                        size: 5,
+                      });
+                    }
+
                     for (let i = 0; i < 5; i++) {
                       const ang = fAng - 0.4 + i * 0.2;
                       engine.projectiles.push({
-                        x: drak.x - 35,
-                        y: drak.y - 30,
+                        x: frostHeadX,
+                        y: frostHeadY,
                         vx: Math.cos(ang) * 230,
                         vy: Math.sin(ang) * 230,
                         angle: ang,
@@ -3133,7 +3209,9 @@ export default function App() {
                 engine.lightningStrike = { x: strikeX, y: strikeY, time: 0.45 };
 
                 // Burn enemies in blast radius
-                for (const e of engine.enemies) {
+                const blastNearby = enemySpatialHashRef.current.queryCircle(strikeX, strikeY, 260);
+                for (let i = 0; i < blastNearby.length; i++) {
+                  const e = blastNearby[i];
                   if (!e.isDefeated && Math.hypot(e.x - strikeX, e.y - strikeY) < 220) {
                     const holyMult = getHolyDamageMultiplier(e);
                     const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
@@ -3156,10 +3234,14 @@ export default function App() {
             const timeProgress = Math.min(1, newTime / 260); // 0 at start -> 1 at 4:20
 
             // 1. Max enemy caps scaled by level and elapsed time
-            // Level 1: starts at 10, climbs to 48
-            // Level 6: starts at 36, climbs to 135
-            const baseCapByLevel: Record<number, number> = { 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
-            const maxCapByLevel: Record<number, number> = { 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
+            // In Performance Mode, caps are streamlined by ~40% for silky smooth 60 FPS
+            const isPerfMode = !!metaRef.current.performanceMode;
+            const baseCapByLevel: Record<number, number> = isPerfMode
+              ? { 1: 8, 2: 11, 3: 14, 4: 17, 5: 20, 6: 24 }
+              : { 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
+            const maxCapByLevel: Record<number, number> = isPerfMode
+              ? { 1: 30, 2: 40, 3: 50, 4: 60, 5: 68, 6: 76 }
+              : { 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
             const minCap = baseCapByLevel[curLvlId] ?? 12;
             const maxCap = maxCapByLevel[curLvlId] ?? 60;
             const currentEnemyCap = Math.floor(minCap + (maxCap - minCap) * timeProgress);
@@ -3216,6 +3298,7 @@ export default function App() {
 
             livingEnemiesRef.current.length=0;
             for(const e of engine.enemies) if(!e.isDefeated) livingEnemiesRef.current.push(e);
+            enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
             // Player movement
             let mx = 0;
@@ -3271,13 +3354,20 @@ export default function App() {
               }
             }
 
-            // Night Watchman passive holy aura
+            // Night Watchman passive holy aura (throttled to 4 ticks/sec instead of 60 ticks/sec to prevent damage text flood)
             if (player.type === 'watchman') {
-              for (const e of livingEnemiesRef.current) {
-                const dx=player.x-e.x, dy=player.y-e.y, reach=85+e.radius;
-                if (dx*dx+dy*dy < reach*reach) {
-                  const holyMult = getHolyDamageMultiplier(e);
-                  e.takeDamage(16 * player.damageMultiplier * holyMult * dt, 'holy', 0, 0);
+              player.watchmanAuraTimer = (player.watchmanAuraTimer || 0) - dt;
+              if (player.watchmanAuraTimer <= 0) {
+                player.watchmanAuraTimer = 0.25;
+                const nearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, 85 + 40);
+                for (let i = 0; i < nearby.length; i++) {
+                  const e = nearby[i];
+                  if (e.isDefeated) continue;
+                  const dx = player.x - e.x, dy = player.y - e.y, reach = 85 + e.radius;
+                  if (dx * dx + dy * dy < reach * reach) {
+                    const holyMult = getHolyDamageMultiplier(e);
+                    e.takeDamage(4 * player.damageMultiplier * holyMult, 'holy', 0, 0);
+                  }
                 }
               }
             }
@@ -3287,10 +3377,13 @@ export default function App() {
             if (hromnickaWp) {
               if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
               const auraReach = 135 + hromnickaWp.level * 15;
-              for (const e of livingEnemiesRef.current) {
-                const dx=e.x-player.x, dy=e.y-player.y, distSq=dx*dx+dy*dy, reach=auraReach+e.radius;
-                if (distSq < reach*reach && distSq > 0.000001) {
-                  const dist=Math.sqrt(distSq);
+              const nearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, auraReach + 40);
+              for (let i = 0; i < nearby.length; i++) {
+                const e = nearby[i];
+                if (e.isDefeated) continue;
+                const dx = e.x - player.x, dy = e.y - player.y, distSq = dx * dx + dy * dy, reach = auraReach + e.radius;
+                if (distSq < reach * reach && distSq > 0.000001) {
+                  const dist = Math.sqrt(distSq);
                   const dirX = (e.x - player.x) / dist;
                   const dirY = (e.y - player.y) / dist;
                   const holyPush = getHolyPushMultiplier(e);
@@ -3406,8 +3499,6 @@ export default function App() {
               setGameState('tally');
             }
           }
-
-          enemySpatialHashRef.current.rebuild(engine.enemies);
 
           // Update Projectiles
           for (const p of engine.projectiles) {
@@ -3593,9 +3684,23 @@ export default function App() {
 
             if (!e.isDefeated && (e.snackTimer || 0) <= 0 && Math.hypot(e.x - player.x, e.y - player.y) < e.radius + player.radius) {
               if (gameState === 'playing') {
-                const hurtDmg = e.damage * dt * (1 - player.damageReduction);
-                player.hp -= hurtDmg;
-                sound.hit();
+                if (e.id === 'cert' && e.aiState === 'charge') {
+                  const chDmg = (e.damage * 1.55) * (1 - player.damageReduction);
+                  player.hp -= chDmg;
+                  sound.heavyHit();
+                  const pushDist = 110;
+                  player.x += Math.cos(e.chargeDirX) * pushDist;
+                  player.y += Math.sin(e.chargeDirX) * pushDist;
+                  engine.texts.push(new DamageText(player.x, player.y - 50, `DRTIVÝ NÁRAZ VIDLEMI! -${Math.ceil(chDmg)} 🔱💥`, COLORS.red, true));
+                  e.aiState = 'brake';
+                  e.aiTimer = 0.55;
+                  e.vx = 0;
+                  e.vy = 0;
+                } else {
+                  const hurtDmg = e.damage * dt * (1 - player.damageReduction);
+                  player.hp -= hurtDmg;
+                  sound.hit();
+                }
                 if (player.hp <= 0) {
                   // Player defeated -> start flee sequence
                   sound.hit();
@@ -3746,7 +3851,9 @@ export default function App() {
           st.lastTrampleCheck = 0;
           const p = engineRef.current.player;
           const dmg = 35 * (p?.damageMultiplier || 1);
-          for (const e of engineRef.current.enemies) {
+          const nearby = enemySpatialHashRef.current.queryCircle(st.x, st.y, 560);
+          for (let i = 0; i < nearby.length; i++) {
+            const e = nearby[i];
             if (!e.isDefeated && Math.hypot(e.x - st.x, e.y - st.y) <= 520) {
               e.takeDamage(dmg, 'physical', (st.dirX || 1) * 140, (Math.random() - 0.5) * 60);
             }
@@ -3768,7 +3875,9 @@ export default function App() {
             engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 HP', '#4ADE80', false));
           }
           const dmg = 25 * (p?.damageMultiplier || 1);
-          for (const e of engineRef.current.enemies) {
+          const nearby = enemySpatialHashRef.current.queryCircle(sc.x, sc.y, 460);
+          for (let i = 0; i < nearby.length; i++) {
+            const e = nearby[i];
             if (!e.isDefeated && Math.hypot(e.x - sc.x, e.y - sc.y) <= 420) {
               e.takeDamage(dmg, 'nature', (e.x - sc.x) * 1.5, (e.y - sc.y) * 1.5);
               e.soak();
@@ -4137,19 +4246,24 @@ export default function App() {
 
         ctx.restore();
 
-        // Enable with ?perf to inspect the live frame budget without React
-        // state updates or devtools. This is deliberately canvas-only so it
-        // cannot perturb the workload being measured.
-        if (showPerformanceOverlay) {
+        // Enable with ?perf or Settings toggle to inspect the live frame budget
+        const isPerfVisible = showPerformanceOverlay || !!metaRef.current.showPerfOverlay;
+        if (isPerfVisible) {
           const frameMs = performance.now() - now;
           smoothedFrameMs += (frameMs - smoothedFrameMs) * 0.08;
           ctx.save();
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-          ctx.fillRect(12, 12, 210, 62);
-          ctx.fillStyle = '#FFFFFF';
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+          ctx.fillRect(12, 12, 240, 72);
+          ctx.strokeStyle = '#D9A036';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(12, 12, 240, 72);
           ctx.font = '700 13px monospace';
-          ctx.fillText(`${Math.round(1000 / Math.max(1, smoothedFrameMs))} FPS  ${smoothedFrameMs.toFixed(1)} ms`, 22, 34);
-          ctx.fillText(`E:${engine.enemies.length} P:${engine.projectiles.length} FX:${engine.particles.length}`, 22, 54);
+          const currentFps = Math.round(1000 / Math.max(1, smoothedFrameMs));
+          ctx.fillStyle = currentFps >= 50 ? '#4ADE80' : currentFps >= 30 ? '#FBBF24' : '#EF4444';
+          ctx.fillText(`${currentFps} FPS (${smoothedFrameMs.toFixed(1)} ms)${metaRef.current.performanceMode ? ' [PLYNULÝ]' : ''}`, 22, 33);
+          ctx.fillStyle = '#E2E8F0';
+          ctx.fillText(`Nepřátelé: ${engine.enemies.length} | Střely: ${engine.projectiles.length}`, 22, 51);
+          ctx.fillText(`Částice: ${engine.particles.length} | Texty: ${engine.texts.length}`, 22, 69);
           ctx.restore();
         }
 
@@ -4302,13 +4416,15 @@ export default function App() {
       puddleCd: 2.0 + Math.random() * 2.0,
 
       update(dt: number, player: any) {
+        const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+
         if (this.isDefeated) {
           if (this.defeatedByFood) {
             // Defeated by food weapons: slowly walk away (unhittable, untargetable), enjoying the food snack
             this.foodDefeatTimer = (this.foodDefeatTimer || 0) + dt;
 
-            // In the last 0.35s before disappearing, spawn gentle little anticipatory smoke / steam puffs
-            if (this.foodDefeatTimer >= 1.65 && Math.random() < 0.35) {
+            // In the last 0.35s before disappearing, spawn gentle little anticipatory smoke / steam puffs (only if on screen)
+            if (this.foodDefeatTimer >= 1.65 && Math.random() < 0.35 && distToPlayer < 650) {
               const ang = Math.random() * Math.PI * 2;
               engineRef.current.particles.push({
                 x: this.x + Math.cos(ang) * (this.radius * 0.4),
@@ -4321,12 +4437,14 @@ export default function App() {
               });
             }
 
-            // Enemies defeated by food disappear after 2s in nicely animated puff of smoke
-            if (this.foodDefeatTimer >= 2.0) {
+            // Enemies defeated by food disappear after 2s or once off-screen
+            if (this.foodDefeatTimer >= 2.0 || distToPlayer > 800) {
               this.dead = true;
-              engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
-              sound.smokePuff();
-              engineRef.current.texts.push(new DamageText(this.x, this.y - this.radius - 12, 'Puf! 💨', '#A8A29E'));
+              if (distToPlayer < 750) {
+                engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
+                sound.smokePuff();
+                engineRef.current.texts.push(new DamageText(this.x, this.y - this.radius - 12, 'Puf! 💨', '#A8A29E'));
+              }
               return;
             }
 
@@ -4343,16 +4461,21 @@ export default function App() {
             this.snackSoundTimer = (this.snackSoundTimer || 0) + dt;
             if (this.snackSoundTimer > 1.6) {
               this.snackSoundTimer = 0;
-              if (Math.hypot(this.x - player.x, this.y - player.y) < 700) {
+              if (distToPlayer < 650) {
                 sound.snack();
               }
             }
 
-            if (Math.hypot(this.x - player.x, this.y - player.y) > 1400) this.dead = true;
             return;
           }
 
           // Defeated in combat: lively comic scramble sprint away from the hero!
+          this.fleeTimer = (this.fleeTimer || 0) + dt;
+          if (this.fleeTimer >= 2.2 || distToPlayer > 800) {
+            this.dead = true;
+            return;
+          }
+
           const fleeSpd = this.speed * 3.2;
           const ang = Math.atan2(this.y - player.y, this.x - player.x);
           this.vx = Math.cos(ang) * fleeSpd;
@@ -4362,20 +4485,19 @@ export default function App() {
           this.animTime += dt * 2.2;
           this.panicked = true;
 
-          // Occasionally spawn little cartoon dust puffs behind fleeing feet
-          if (Math.random() < 0.3) {
+          // Occasionally spawn little cartoon dust puffs behind fleeing feet ONLY IF ON SCREEN
+          if (distToPlayer < 650 && Math.random() < 0.15) {
             engineRef.current.particles.push({
               x: this.x - Math.cos(ang) * (this.radius * 0.8) + (Math.random() - 0.5) * 6,
               y: this.y + this.radius * 0.6 + (Math.random() - 0.5) * 4,
               vx: -Math.cos(ang) * 40 + (Math.random() - 0.5) * 20,
               vy: -Math.random() * 20,
-              life: 0.35,
+              life: 0.3,
               color: '#D8C6A5',
-              size: 3.5,
+              size: 3,
             });
           }
 
-          if (Math.hypot(this.x - player.x, this.y - player.y) > 1400) this.dead = true;
           return;
         }
 
@@ -4415,8 +4537,28 @@ export default function App() {
           this.calmTimer -= dt;
         }
 
-        const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
         const dirToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+
+        // Reposition stranded enemies that are far away back to active perimeter around player
+        if (distToPlayer > 1350 && !this.isBoss && !this.isMiniboss) {
+          const ang = Math.random() * Math.PI * 2;
+          const dist = 720 + Math.random() * 120;
+          this.x = player.x + Math.cos(ang) * dist;
+          this.y = player.y + Math.sin(ang) * dist;
+          this.vx = 0;
+          this.vy = 0;
+          return;
+        }
+
+        // Streamlined update for distant off-screen enemies: direct pursuit towards hero
+        if (distToPlayer > 850 && !this.isBoss && !this.isMiniboss) {
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
+          this.x += (this.vx + this.kbx) * dt;
+          this.y += (this.vy + this.kby) * dt;
+          this.animTime += dt;
+          return;
+        }
 
         // When panicked, always flee
         if (this.panicked) {
@@ -4426,7 +4568,7 @@ export default function App() {
           this.x += (this.vx + this.kbx) * dt;
           this.y += (this.vy + this.kby) * dt;
           this.animTime += dt * 1.5;
-          if (Math.random() < 0.25) {
+          if (distToPlayer < 650 && Math.random() < 0.15) {
             engineRef.current.particles.push({
               x: this.x - Math.cos(fleeAng) * (this.radius * 0.7) + (Math.random() - 0.5) * 6,
               y: this.y + this.radius * 0.5 + (Math.random() - 0.5) * 4,
@@ -5085,7 +5227,7 @@ export default function App() {
           }
         }
 
-        // 16. PROKLETÝ SNĚHULÁK (snehulak) - Mrazivé kutálení (rolling snowball dash)
+        // 16. ZLOMYSLNÝ SNĚHULÁK (snehulak) - Mrazivé kutálení (rolling snowball dash)
         else if (this.id === 'snehulak') {
           if (this.aiState === 'charge') {
             this.vx = Math.cos(this.chargeDirX) * spd * 2.2;
@@ -5156,35 +5298,69 @@ export default function App() {
 
         // 19. PEKELNÝ ČERT (cert) - Pekelný výpad vidlemi & kopyty
         else if (this.id === 'cert') {
-          if (this.aiState === 'charge') {
-            const chargeSpd = this.chargeSpeed || (this.enraged ? 310 : 250);
-            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
-            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
-            if (Math.random() < 0.4) {
+          if (this.aiState === 'windup') {
+            this.vx = 0;
+            this.vy = 0;
+            this.chargeDirX = dirToPlayer;
+            if (Math.random() < 0.6) {
               engineRef.current.particles.push({
-                x: this.x + (Math.random() - 0.5) * 20,
-                y: this.y + this.radius * 0.4,
-                vx: (Math.random() - 0.5) * 60,
-                vy: (Math.random() - 0.5) * 60,
+                x: this.x + (Math.random() - 0.5) * 22,
+                y: this.y + this.radius * 0.7,
+                vx: -Math.cos(this.chargeDirX) * (50 + Math.random() * 70),
+                vy: -Math.sin(this.chargeDirX) * (50 + Math.random() * 70),
                 life: 0.35,
-                color: Math.random() < 0.5 ? '#DC2626' : '#F97316',
+                color: Math.random() < 0.5 ? '#F97316' : '#EF4444',
                 size: 4,
               });
             }
             if (this.aiTimer <= 0) {
+              this.aiState = 'charge';
+              this.aiTimer = this.isBoss ? (this.enraged ? 1.05 : 0.9) : 0.75;
+              this.chargeSpeed = this.chargeSpeed || (this.isBoss ? (this.enraged ? 560 : 490) : 440);
+              sound.slash();
+              sound.roar();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'PEKELNÝ VÝPAD! 🔱💨', COLORS.mustard, true));
+            }
+          } else if (this.aiState === 'charge') {
+            const chargeSpd = this.chargeSpeed || (this.isBoss ? (this.enraged ? 560 : 490) : 440);
+            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
+            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
+
+            for (let i = 0; i < 2; i++) {
+              engineRef.current.particles.push({
+                x: this.x - Math.cos(this.chargeDirX) * 20 + (Math.random() - 0.5) * 16,
+                y: this.y + this.radius * 0.4 + (Math.random() - 0.5) * 10,
+                vx: (Math.random() - 0.5) * 50,
+                vy: (Math.random() - 0.5) * 50,
+                life: 0.45,
+                color: Math.random() < 0.4 ? '#DC2626' : Math.random() < 0.7 ? '#F97316' : '#FEF08A',
+                size: 5,
+              });
+            }
+
+            if (this.aiTimer <= 0) {
+              this.aiState = 'brake';
+              this.aiTimer = 0.4;
+              this.vx *= 0.25;
+              this.vy *= 0.25;
+              this.specialCd = this.isBoss ? (this.enraged ? 4.5 : 6.5) : 5.5;
+            }
+          } else if (this.aiState === 'brake') {
+            this.vx *= 0.85;
+            this.vy *= 0.85;
+            if (this.aiTimer <= 0) {
               this.aiState = 'idle';
             }
           } else {
-            if (!this.isBoss && distToPlayer < 260 && this.specialCd <= 0) {
-              this.aiState = 'charge';
-              this.aiTimer = 0.65;
+            if (!this.isBoss && distToPlayer < 380 && distToPlayer > 80 && this.specialCd <= 0) {
+              this.aiState = 'windup';
+              this.aiTimer = 0.55;
               this.chargeDirX = dirToPlayer;
-              this.chargeSpeed = 250;
-              this.specialCd = 6.0;
-              sound.slash();
-              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'VÝPAD VIDLEMI! 🔱', COLORS.mustard, true));
-              this.vx = Math.cos(dirToPlayer) * this.chargeSpeed;
-              this.vy = Math.sin(dirToPlayer) * this.chargeSpeed;
+              this.chargeSpeed = 440;
+              this.vx = 0;
+              this.vy = 0;
+              sound.roar();
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'DUSOT KOPYT! 🐂🔥', '#EF4444', true));
             } else {
               this.vx = Math.cos(dirToPlayer) * spd;
               this.vy = Math.sin(dirToPlayer) * spd;
@@ -5497,9 +5673,11 @@ export default function App() {
 
         // Food type weapons like Buchta don't cause graphical hit effect or knockback
         if (type !== 'food') {
-          engineRef.current.texts.push(
-            new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
-          );
+          if (Math.floor(finalDmg) >= 1) {
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
+            );
+          }
           const poiseFactor = 1 - this.poiseResist;
           const kbDamp = this.isMiniboss ? 0.25 : 1.0;
           this.kbx = kbx * poiseFactor * kbDamp;
@@ -6035,24 +6213,10 @@ export default function App() {
           ctx.translate(-this.x, -this.y);
         }
 
-        const palette = this.palette || (ENEMIES[this.id]?.palette);
-        if (palette) {
-          ctx.save();
-          if (palette === 'soot') {
-            ctx.filter = 'brightness(0.52) contrast(1.4) drop-shadow(0 0 3px #EA580C)';
-          } else if (palette === 'crimson') {
-            ctx.filter = 'sepia(1) saturate(5) hue-rotate(320deg) brightness(0.9)';
-          } else if (palette === 'bog') {
-            ctx.filter = 'sepia(0.85) hue-rotate(65deg) saturate(2.5) brightness(0.85)';
-          } else if (palette === 'steel') {
-            ctx.filter = 'grayscale(0.85) contrast(1.35) brightness(1.15)';
-          }
-        }
-
         const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
 
         if (this.id === 'cert') {
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.isBoss);
+          Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300);
         } else if (this.id === 'hejkal') {
           Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'obr') {
@@ -6066,7 +6230,12 @@ export default function App() {
         } else if (this.id === 'klekanice') {
           Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'drak') {
-          Lada.drawDrak(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5);
+          const attacks = {
+            fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
+            ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
+            roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
+          };
+          Lada.drawDrak(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
         } else {
           drawEnemyRenderer(
             this.method,
@@ -6079,8 +6248,24 @@ export default function App() {
           );
         }
 
+        const palette = this.palette || (ENEMIES[this.id]?.palette);
         if (palette) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          if (palette === 'soot') {
+            ctx.fillStyle = 'rgba(25, 20, 18, 0.45)';
+          } else if (palette === 'crimson') {
+            ctx.fillStyle = 'rgba(185, 28, 28, 0.40)';
+          } else if (palette === 'bog') {
+            ctx.fillStyle = 'rgba(65, 95, 30, 0.38)';
+          } else if (palette === 'steel') {
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+          }
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - 5, this.radius * 1.5, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
+
           if (palette === 'soot' && !this.isDefeated) {
             ctx.fillStyle = '#F59E0B';
             ctx.beginPath();
@@ -7101,7 +7286,7 @@ export default function App() {
                           padding: '2px 8px',
                           borderRadius: '4px',
                           fontWeight: 900,
-                          fontSize: '0.82rem',
+                          fontSize: '0.9rem',
                         }}
                       >
                         Úr. {w.level}
@@ -7130,6 +7315,28 @@ export default function App() {
               </button>
               <button className="sound-toggle-btn" onClick={toggleSound}>
                 <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
+                  const nextPerf = !meta.performanceMode;
+                  saveMeta({ ...meta, performanceMode: nextPerf });
+                }}
+                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+              >
+                ⚡ Výkon: <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
+                  const nextShow = !meta.showPerfOverlay;
+                  saveMeta({ ...meta, showPerfOverlay: nextShow });
+                }}
+                title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
+              >
+                📊 FPS: <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
               </button>
             </div>
 
@@ -7533,6 +7740,17 @@ export default function App() {
               </button>
               <button
                 className="lada-btn btn-small"
+                style={{ background: meta.performanceMode ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => {
+                  sound.coin();
+                  saveMeta({ ...meta, performanceMode: !meta.performanceMode });
+                }}
+                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+              >
+                ⚡ Výkon: {meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: '#DC2626', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => {
                   sound.hit();
@@ -7557,6 +7775,14 @@ export default function App() {
       <ControlsModal
         isOpen={isControlsOpen}
         onClose={() => setIsControlsOpen(false)}
+        performanceMode={!!meta.performanceMode}
+        onTogglePerformanceMode={(enabled) => {
+          saveMeta({ ...meta, performanceMode: enabled });
+        }}
+        showPerfOverlay={!!meta.showPerfOverlay}
+        onToggleShowPerfOverlay={(enabled) => {
+          saveMeta({ ...meta, showPerfOverlay: enabled });
+        }}
       />
 
       {/* TEST MODE (SANDBOX) MODAL */}

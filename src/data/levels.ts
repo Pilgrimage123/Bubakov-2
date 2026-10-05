@@ -605,8 +605,8 @@ var GAME_LEVELS = {
 		],
 		miniBoss: {
 			id: "snehulak",
-			name: "☃️ Prokletý Sněhulák",
-			warning: "☃️ OBŘÍ LEDOVÝ SNĚHULÁK SE KUTÁLÍ ZE SLUJE!",
+			name: "☃️ Zlomyslný sněhulák",
+			warning: "☃️ ZE SLUJE SE KUTÁLÍ ZLOMYSLNÝ SNĚHULÁK!",
 			time: 45,
 			kills: 100,
 			multiplier: 6.8

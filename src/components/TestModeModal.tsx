@@ -158,7 +158,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 		ALL_WEAPON_KEYS.forEach((key) => {
 			init[key] = {
 				selected: false,
-				level: 1
+				level: 0
 			};
 		});
 		DEFAULT_HERO_WEAPONS.wanderer.forEach((w) => {
@@ -198,7 +198,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 		ALL_WEAPON_KEYS.forEach((key) => {
 			nextConfig[key] = {
 				selected: false,
-				level: 1
+				level: 0
 			};
 		});
 		(DEFAULT_HERO_WEAPONS[heroType] || [{
@@ -217,7 +217,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 		const nextConfig = {};
 		ALL_WEAPON_KEYS.forEach((key) => {
 			nextConfig[key] = {
-				selected: true,
+				selected: level > 0,
 				level
 			};
 		});
@@ -229,40 +229,56 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 		ALL_WEAPON_KEYS.forEach((key) => {
 			nextConfig[key] = {
 				selected: false,
-				level: 1
+				level: 0
 			};
 		});
 		setWeaponConfig(nextConfig);
 		sound.coin();
 	};
 	const toggleWeapon = (id) => {
-		setWeaponConfig((cur) => ({
-			...cur,
-			[id]: {
-				selected: !cur[id]?.selected,
-				level: cur[id]?.level || 1
-			}
-		}));
+		setWeaponConfig((cur) => {
+			const prev = cur[id] || { selected: false, level: 0 };
+			const nextSel = !prev.selected;
+			return {
+				...cur,
+				[id]: {
+					selected: nextSel,
+					level: nextSel ? (prev.level > 0 ? prev.level : 1) : 0
+				}
+			};
+		});
 		sound.coin();
 	};
 	const changeWeaponLevel = (id, delta) => {
 		setWeaponConfig((cur) => {
-			const currentLevel = cur[id]?.level || 1;
-			const nextLevel = Math.max(1, Math.min(10, currentLevel + delta));
+			const currentLevel = cur[id]?.level ?? (cur[id]?.selected ? 1 : 0);
+			const nextLevel = Math.max(0, Math.min(10, currentLevel + delta));
 			return {
 				...cur,
 				[id]: {
-					selected: true,
+					selected: nextLevel > 0,
 					level: nextLevel
 				}
 			};
 		});
 		sound.coin();
 	};
-	const selectedWeaponsList = ALL_WEAPON_KEYS.filter((k) => weaponConfig[k]?.selected).map((k) => ({
-		id: k,
-		level: weaponConfig[k]?.level || 1
-	}));
+	const setWeaponToZero = (id) => {
+		setWeaponConfig((cur) => ({
+			...cur,
+			[id]: {
+				selected: false,
+				level: 0
+			}
+		}));
+		sound.coin();
+	};
+	const selectedWeaponsList = ALL_WEAPON_KEYS
+		.filter((k) => weaponConfig[k]?.selected && (weaponConfig[k]?.level ?? 0) > 0)
+		.map((k) => ({
+			id: k,
+			level: weaponConfig[k]?.level || 1
+		}));
 	const handleStart = () => {
 		if (selectedWeaponsList.length === 0) {
 			sound.hit();
@@ -733,6 +749,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 											color: "#FEF3C7"
 										},
 										onClick: () => applyHeroDefaultWeapons(selectedHero),
+										title: "Nastaví výchozí startovní zbraně podle vybraného hrdiny",
 										children: "🎯 Dle hrdiny"
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -781,7 +798,8 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 											color: "#FFFFFF"
 										},
 										onClick: clearAllWeapons,
-										children: "🧹 Vyčistit"
+										title: "Vynuluje všechny zbraně na úroveň 0 (pro čistý výběr)",
+										children: "🧹 Vynulovat vše"
 									})
 								]
 							})]
@@ -796,15 +814,15 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 								if (!wDef) return null;
 								const cfg = weaponConfig[wId] || {
 									selected: false,
-									level: 1
+									level: 0
 								};
-								const isSel = cfg.selected;
+								const isSel = (cfg.level > 0) && cfg.selected;
 								const typeTag = WEAPON_TYPE_LABELS[wDef.type] || {
 									label: wDef.type,
 									bg: "#4B5563",
 									color: "#FFFFFF"
 								};
-								const estDmg = Math.round(wDef.baseDmg + (cfg.level - 1) * 5);
+								const estDmg = cfg.level > 0 ? Math.round(wDef.baseDmg + (cfg.level - 1) * 5) : 0;
 								return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									style: {
 										background: isSel ? "#FEF3C7" : "#EFE7D5",
@@ -818,6 +836,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 										color: "var(--ink)",
 										boxShadow: isSel ? "0 0 10px rgba(22, 163, 74, 0.25), 3px 3px 0 var(--ink)" : "2px 2px 0 var(--ink)",
 										textAlign: "left",
+										opacity: cfg.level === 0 ? 0.78 : 1,
 										transition: "all 0.1s ease"
 									},
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -860,7 +879,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 													style: {
 														fontWeight: 900,
 														fontSize: "0.98rem",
-														color: "#111111",
+														color: cfg.level === 0 ? "#4B5563" : "#111111",
 														lineHeight: 1.2
 													},
 													children: wDef.name
@@ -882,43 +901,64 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 											style: {
 												display: "flex",
 												alignItems: "center",
-												gap: "4px",
-												background: isSel ? "#FFFFFF" : "rgba(255,255,255,0.6)",
+												gap: "3px",
+												background: isSel ? "#FFFFFF" : "rgba(255,255,255,0.7)",
 												border: "2px solid var(--ink)",
 												borderRadius: "6px",
 												padding: "2px 4px"
 											},
 											children: [
 												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-													onClick: () => changeWeaponLevel(wId, -1),
-													disabled: cfg.level <= 1,
+													onClick: () => setWeaponToZero(wId),
+													disabled: cfg.level <= 0,
 													style: {
-														width: "24px",
+														width: "22px",
 														height: "24px",
-														background: cfg.level <= 1 ? "#E5E7EB" : "#D1342B",
-														color: cfg.level <= 1 ? "#9CA3AF" : "#FFFFFF",
+														background: cfg.level <= 0 ? "#E5E7EB" : "#FEE2E2",
+														color: cfg.level <= 0 ? "#9CA3AF" : "#DC2626",
 														border: "1.5px solid var(--ink)",
 														borderRadius: "4px",
 														fontWeight: 900,
-														cursor: cfg.level <= 1 ? "not-allowed" : "pointer",
+														cursor: cfg.level <= 0 ? "not-allowed" : "pointer",
+														lineHeight: 1,
+														display: "flex",
+														alignItems: "center",
+														justifyContent: "center",
+														fontSize: "0.76rem"
+													},
+													title: "Vynulovat na úroveň 0 (lovec se zbraní nezačne)",
+													children: "0"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+													onClick: () => changeWeaponLevel(wId, -1),
+													disabled: cfg.level <= 0,
+													style: {
+														width: "24px",
+														height: "24px",
+														background: cfg.level <= 0 ? "#E5E7EB" : "#D1342B",
+														color: cfg.level <= 0 ? "#9CA3AF" : "#FFFFFF",
+														border: "1.5px solid var(--ink)",
+														borderRadius: "4px",
+														fontWeight: 900,
+														cursor: cfg.level <= 0 ? "not-allowed" : "pointer",
 														lineHeight: 1,
 														display: "flex",
 														alignItems: "center",
 														justifyContent: "center",
 														fontSize: "0.9rem"
 													},
-													title: "Snížit úroveň zbraně",
+													title: "Snížit úroveň zbraně (až na 0 = zbraň neaktivní)",
 													children: "-"
 												}),
 												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 													style: {
 														fontWeight: 900,
 														fontSize: "0.85rem",
-														minWidth: "46px",
+														minWidth: "48px",
 														textAlign: "center",
-														color: isSel ? "#111111" : "#6B7280"
+														color: cfg.level > 0 ? (isSel ? "#111111" : "#4B5563") : "#DC2626"
 													},
-													children: ["Úr. ", cfg.level]
+													children: [cfg.level === 0 ? "Úr. 0" : `Úr. ${cfg.level}`]
 												}),
 												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 													onClick: () => changeWeaponLevel(wId, 1),
@@ -946,16 +986,14 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										style: {
 											fontSize: "0.76rem",
-											color: "#4B5563",
+											color: cfg.level === 0 ? "#DC2626" : "#4B5563",
 											fontWeight: 700,
 											lineHeight: 1.25
 										},
 										children: [
-											"💥 Zásah: ~",
-											estDmg,
-											" | ⏱️ Kadence: ",
-											wDef.baseCd,
-											" s"
+											cfg.level === 0
+												? "💤 Úroveň 0 – lovec s touto zbraní nezačíná"
+												: `💥 Zásah: ~${estDmg} | ⏱️ Kadence: ${wDef.baseCd} s`
 										]
 									})]
 								}, wId);
@@ -994,15 +1032,20 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: " s " }),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
-								style: { color: "#86EFAC" },
-								children: [selectedWeaponsList.length, " zbraněmi"]
+								style: { color: selectedWeaponsList.length > 0 ? "#86EFAC" : "#F87171" },
+								children: [
+									selectedWeaponsList.length > 0
+										? `${selectedWeaponsList.length} zbraněmi`
+										: "0 zbraněmi"
+								]
 							}),
 							selectedWeaponsList.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 								style: {
 									color: "#F87171",
-									marginLeft: "6px"
+									marginLeft: "6px",
+									fontWeight: 900
 								},
-								children: "(Vyberte alespoň 1 zbraň!)"
+								children: "(Pro zahájení výpravy vyberte alespoň 1 zbraň s úrovní 1 nebo vyšší!)"
 							})
 						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {

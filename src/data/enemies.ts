@@ -843,7 +843,7 @@ var ENEMIES = {
 	},
 	snehulak: {
 		id: "snehulak",
-		name: "Prokletý Sněhulák",
+		name: "Zlomyslný sněhulák",
 		title: "Ledový bijec ze sluje",
 		category: "frost",
 		hp: 630,
@@ -858,7 +858,7 @@ var ENEMIES = {
 		method: "drawSnehulak",
 		weakness: "Oheň a horký brambor",
 		strength: "Mrazivé kutálení",
-		lore: "Jedno dítě mu zapomnělo dát uhlíky do očí; proto hledá cizí.",
+		lore: "Místo aby na návsi dělal radost dětem, oživl zlým mrazivým kouzlem ze sluje. Místo očí má zlé žhoucí uhlíky, v ruce ostré březové koště a na hlavě otlučený černý hrnec.",
 		danger: "★★★★☆"
 	},
 	nocni_mura: {

@@ -12,8 +12,8 @@ var WEAPONS = {
 		speed: 460,
 		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 4 s zastaví a mlsají s poznámkou „Ňam, ňam“. Vícero buchet čas sčítá (odolnost dle Hladu).",
 		fire: (player, level) => {
-			const enemies = player.getLivingEnemies();
-			if (enemies.length === 0) return false;
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
 			let bestDist = player.distTo(target) + (target.hunger ?? target.foodResist ?? 0) * 400;
 			for (let i = 1; i < enemies.length; i++) {
@@ -201,8 +201,8 @@ var WEAPONS = {
 		speed: 400,
 		desc: "Tuhá ledová koule uválená ze zledovatělého ladovského sněhu. Chlad zpomalí nohy každému strašidlu.",
 		fire: (player, level) => {
-			const enemies = player.getLivingEnemies();
-			if (enemies.length === 0) return false;
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
 			let minDist = player.distTo(target);
 			for (let i = 1; i < enemies.length; i++) {
@@ -243,8 +243,8 @@ var WEAPONS = {
 		speed: 380,
 		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
 		fire: (player, level) => {
-			const enemies = player.getLivingEnemies();
-			if (enemies.length === 0) return false;
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			if (!enemies || enemies.length === 0) return false;
 			const target = enemies[Math.floor(Math.random() * Math.min(6, enemies.length))];
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
 			const bounces = 2 + level;

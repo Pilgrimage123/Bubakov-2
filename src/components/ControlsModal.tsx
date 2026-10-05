@@ -6,7 +6,25 @@ import { sound } from '../audio';
 import { KrejcarIcon } from './KrejcarIcon';
 import { HruskaIcon } from './HruskaIcon';
 
-var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
+interface ControlsModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	defaultTab?: string;
+	performanceMode?: boolean;
+	onTogglePerformanceMode?: (enabled: boolean) => void;
+	showPerfOverlay?: boolean;
+	onToggleShowPerfOverlay?: (enabled: boolean) => void;
+}
+
+var ControlsModal = ({
+	isOpen,
+	onClose,
+	defaultTab = "controls",
+	performanceMode = false,
+	onTogglePerformanceMode,
+	showPerfOverlay = false,
+	onToggleShowPerfOverlay
+}: ControlsModalProps) => {
 	const [activeTab, setActiveTab] = (0, import_react.useState)(defaultTab);
 	if (!isOpen) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -55,7 +73,15 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 								setActiveTab("tips");
 								sound.coin();
 							},
-							children: "💡 Výzbroj, Vesnice & Tipy"
+							children: "💡 Výzbroj & Tipy"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							className: `tab-btn ${activeTab === "perf" ? "active" : ""}`,
+							onClick: () => {
+								setActiveTab("perf");
+								sound.coin();
+							},
+							children: "⚡ Plynulost & Výkon"
 						})
 					]
 				}),
@@ -774,6 +800,203 @@ var ControlsModal = ({ isOpen, onClose, defaultTab = "controls" }) => {
 							]
 						})]
 					})]
+				}),
+				activeTab === "perf" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					style: {
+						maxHeight: "490px",
+						overflowY: "auto",
+						textAlign: "left",
+						display: "flex",
+						flexDirection: "column",
+						gap: "14px"
+					},
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							style: {
+								background: "#FEF3C7",
+								border: "3px solid #B45309",
+								borderRadius: "8px",
+								padding: "14px 18px",
+								color: "#111111",
+								boxShadow: "3px 3px 0 var(--ink)"
+							},
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									style: {
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+										flexWrap: "wrap",
+										gap: "12px",
+										marginBottom: "8px"
+									},
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+													style: {
+														margin: 0,
+														fontSize: "1.22rem",
+														fontWeight: 900,
+														color: "#92400E"
+													},
+													children: "⚡ Režim vysokého výkonu (Plynulý chod 60 FPS)"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+													style: {
+														margin: "4px 0 0 0",
+														fontSize: "0.92rem",
+														fontWeight: 700,
+														color: "#451A03"
+													},
+													children: "Optimální pro slabší počítače, starší notebooky nebo telefony. Snižuje strop nepřátel o ~40 % a omezuje částice, aby hra nikdy neztrácela rychlost."
+												})
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											className: "lada-btn",
+											style: {
+												background: performanceMode ? "#16A34A" : "#78350F",
+												color: "#FFFFFF",
+												padding: "8px 20px",
+												fontSize: "1rem"
+											},
+											onClick: () => {
+												sound.coin();
+												onTogglePerformanceMode?.(!performanceMode);
+											},
+											children: performanceMode ? "✅ ZAPNUTO (Plynulý)" : "⚪ VYPNUTO (Plný)"
+										})
+									]
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							style: {
+								background: "#FEF3C7",
+								border: "3px solid #B45309",
+								borderRadius: "8px",
+								padding: "14px 18px",
+								color: "#111111",
+								boxShadow: "3px 3px 0 var(--ink)"
+							},
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									style: {
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+										flexWrap: "wrap",
+										gap: "12px",
+										marginBottom: "8px"
+									},
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+													style: {
+														margin: 0,
+														fontSize: "1.22rem",
+														fontWeight: 900,
+														color: "#92400E"
+													},
+													children: "📊 Ukazatel FPS a statistik na obrazovce"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+													style: {
+														margin: "4px 0 0 0",
+														fontSize: "0.92rem",
+														fontWeight: 700,
+														color: "#451A03"
+													},
+													children: "Zobrazuje v levém horním rohu aktuální snímkovou frekvenci, čas vykreslení (ms), počet aktivních nepřátel, střel a částic."
+												})
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											className: "lada-btn",
+											style: {
+												background: showPerfOverlay ? "#16A34A" : "#78350F",
+												color: "#FFFFFF",
+												padding: "8px 20px",
+												fontSize: "1rem"
+											},
+											onClick: () => {
+												sound.coin();
+												onToggleShowPerfOverlay?.(!showPerfOverlay);
+											},
+											children: showPerfOverlay ? "✅ ZAPNUTO" : "⚪ VYPNUTO"
+										})
+									]
+								})
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							style: {
+								background: "rgba(40, 25, 15, 0.95)",
+								border: "3px solid #D9A036",
+								borderRadius: "8px",
+								padding: "14px 18px",
+								color: "#F3E9D2",
+								boxShadow: "3px 3px 0 var(--ink)"
+							},
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+									style: {
+										margin: "0 0 8px 0",
+										fontSize: "1.18rem",
+										fontWeight: 900,
+										color: "#FDE047"
+									},
+									children: "⚙️ Implementovaná technologická vylepšení motoru hry:"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+									style: {
+										margin: 0,
+										paddingLeft: "20px",
+										fontSize: "0.92rem",
+										lineHeight: 1.5,
+										fontWeight: 700,
+										display: "flex",
+										flexDirection: "column",
+										gap: "6px"
+									},
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Blesková prostorová mřížka (Spatial Hash O(1)):" }),
+												" Zásahy střel, švihy zbraní i aury hromničky a ponocného používají bezztrátový 32bitový číselný index bez alokací řetězců."
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Hardware-akcelerovaný render barevných variant:" }),
+												" Místo pomalých filtrů prohlížeče (ctx.filter) se sazoví rarášci, krvaví kostlivci a obrnění zbojníci tónují přímým GPU kompozitingem."
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Okamžitý úklid poražených strašidel:" }),
+												" Uprchlí nebo zklidnění bubáci po 2 sekundách či opuštění obrazovky uvolňují paměť a nezpomalují další vlny."
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Cirkulace vzdálených nepřátel:" }),
+												" Zbloudilí nepřátelé v temnotě se automaticky přemisťují k okraji zorného pole, takže se neplýtvá výpočetním časem na prázdné kilometry."
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Tlumení záplavy číselných textů poškození:" }),
+												" Rychlé plošné aury sjednocují mikropoškození, aby se netvořily stovky textů za sekundu."
+											]
+										})
+									]
+								})
+							]
+						})
+					]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					style: {
