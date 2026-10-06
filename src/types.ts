@@ -1,5 +1,5 @@
 export type Season = 'autumn' | 'winter' | string;
-export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6 | number;
+export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
 export interface DayPhase {
