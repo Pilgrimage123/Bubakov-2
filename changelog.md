@@ -1,3 +1,13 @@
+## 2026-10-06 — Nové zbraně: Válečnice, Česneková topinka a Kyselá okurka
+- Přidány tři nové zbraně s novými bojovými mechanikami, úrovněmi a animovanými ladovskými vizuály.
+- Válečnice: orbitující hospodyně s válečkem, silný knockback, druhá instance od úrovně 2 a rozšíření orbitu.
+- Česneková topinka: permanentní animovaná aura s minimálním poškozením, silným knockbackem a zpomalením na nejvyšší úrovni.
+- Kyselá okurka: cílené projektily a až 3 stacky Přejedení; při 3 stackách cíl zezelená, způsobuje méně poškození, přijímá více poškození a je mírně zpomalen.
+- Přidán weapon-specific mastery stav pro knockback, bonus projektilů a penetraci.
+- Přidány React/SVG ikony všech tří nových zbraní a jejich napojení do GameIcon.
+- Nové zbraně jsou vedeny jako výchozí odemčené v arzenálu.
+- Přidána lifecycle správa status efektů nepřátel.
+
 ## 2026-10-06 — Opravy lifecycle a typování prostorového indexu
 - `GameLevelId` je zpřísněn na explicitní union `1 | 2 | 3 | 4 | 5 | 6` bez obecného `number` fallbacku.
 - `SpatialHash` je plně generický bez `any`, interní stav je zapouzdřen jako `private readonly` a konstruktor odmítá neplatnou velikost buňky.
