@@ -1,3 +1,10 @@
+## 2026-10-06 — Rework mastery a rebalance zbraní
+- Mastery byla přepracována z generických bonusů damage/cooldown/projektilů na unikátní weapon-specific efekty se spouštěním podle zásahů/pulzů.
+- Přidán společný systém triggerWeaponMastery() a napojení mastery na zásahy projektilů, melee i pulzy bez dvojího proccování.
+- Přidán Tulácký instinkt: **+30 k poškození všech zbraní**, který se následně násobí globálními damage multiplikátory.
+- Zbraně byly rebalancovány tak, aby růst úrovně zůstal explicitní a mastery nepřidávala skryté generické staty.
+- Upraveny tooltipy a nabídky level-upů, sjednocený level cap na 6 a zpřesněny vybrané progresní škály zbraní.
+- Opravena návaznost nového mastery modelu na Válečnici, Česnekovou topinku a Kyselou okurku; odstraněny již nepoužívané mastery multiplikátory a penetrace z předchozí implementace.
 ## 2026-10-06 — Oddělení úrovně zbraně od implicitního combat bonusu
 - Úroveň zbraně již automaticky nezvyšuje cooldownovou kadenci v herní smyčce.
 - Přehled zbraní v pauze nyní zobrazuje základní poškození a efektivní cooldown bez skrytého bonusu podle úrovně.
