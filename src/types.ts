@@ -2,6 +2,42 @@ export type Season = 'autumn' | 'winter' | string;
 export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
+export type WeaponId =
+  | 'osikovy_prut'
+  | 'valecnice'
+  | 'cesnekova_topinka'
+  | 'kysele_okurky';
+
+export interface MilestoneChoice {
+  id: string;
+  name: string;
+  folkNameCzech: string;
+  description: string;
+  visualEffectTag: string;
+  audioSfx: string;
+  statModifiers: {
+    baseDamageMult?: number;
+    cooldownMult?: number;
+    areaRadiusMult?: number;
+    pierceDelta?: number;
+    projectileCountDelta?: number;
+    knockbackMult?: number;
+    statusDurationSec?: number;
+    specialMechanicFlag?: string;
+  };
+}
+
+export interface WeaponRankDef {
+  rank: number;
+  isMilestone: boolean;
+  passiveBonusDescription: string;
+  flatDamageBonus: number;
+  cooldownReductionBonus: number;
+  areaBonus: number;
+  pierceBonus?: number;
+  choices?: [MilestoneChoice, MilestoneChoice];
+}
+
 export interface DayPhase {
   id: string;
   name: string;
@@ -41,10 +77,13 @@ export interface MetaProgression {
 }
 
 export interface UpgradeChoice {
-  type: 'new_weapon' | 'upgrade_weapon' | 'weapon_mastery' | 'passive' | 'modifier';
+  type: 'new_weapon' | 'upgrade_weapon' | 'weapon_milestone'
+    | 'weapon_mastery' | 'passive' | 'modifier';
   id?: string;
   stat?: string;
   masteryId?: string;
+  milestoneRank?: number;
+  milestoneChoiceId?: string;
   name: string;
   desc: string;
   icon: string;
