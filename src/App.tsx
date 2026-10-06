@@ -1211,7 +1211,7 @@ export default function App() {
   const startGame = (
     type: CharacterType,
     targetLevelId?: GameLevelId,
-    customWeapons?: { id: string; level: number }[],
+    customWeapons?: { id: string; level: number; mastery?: any }[],
     isTestMode = false
   ) => {
     const chosenLevelId = targetLevelId || selectedLevelId || 1;
@@ -1299,6 +1299,7 @@ export default function App() {
       speed: baseSpeed + millBonusSpeed,
       pickupRadius: basePickup + scarecrowBonusPickup,
       weapons: initialWeapons,
+      _firingWeapon: null as any,
       damageMultiplier: ovenDmgMult,
       cooldownMultiplier: 1,
       kavaCount: 0,
@@ -3527,9 +3528,9 @@ export default function App() {
                 const wDef = WEAPONS[w.id];
                 if (wDef) {
                   if (!w.mastery) w.mastery = createWeaponMasteryState();
-                  player._firingWeapon = w;
+                  (player as any)._firingWeapon = w;
                   const fired = wDef.fire(player, w.level);
-                  player._firingWeapon = null;
+                  (player as any)._firingWeapon = null;
                   const cdMult = player.cooldownMultiplier || 1;
                   const masteryCd = w.mastery?.cooldownMultiplier || 1;
                   w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult * masteryCd : 0.1;
