@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-06 — Stabilizace Canvas loopu proti stale React state
+- Herní animační smyčka už nečte přímo hodnoty `gameState`, `menuScreen` a `selectedLevelId` uzavřené ve starém renderu.
+- Tyto hodnoty jsou průběžně synchronizovány do `useRef`, takže dlouho žijící `requestAnimationFrame` callback vždy pracuje s aktuálním stavem.
+- Kontroly poškození, cutscény, simulace, spawnování, kolizí, fleeing režimu a renderování používají aktuální ref hodnoty bez nutnosti znovu vytvářet Canvas loop při React re-renderu.
+
 ## 2026-10-06 — Přemístění Čerta na pravou stranu nápisu Bubákov
 - **Rozmístění postav na úvodní obrazovce:**
   - Čert byl přemístěn na pravou stranu monumentálního nápisu Bubákov (`transform="translate(710, 4)"`), zatímco Bubák (strašák) se nachází na levé straně (`transform="translate(12, 4)"`). Obě postavičky nyní symetricky a nerušeně lemují dekorativní ladovskou vinětu, aniž by se vzájemně překrývaly nebo zasahovaly do textu a postranních zinkografických ornamentů.
