@@ -287,7 +287,7 @@ var WEAPONS = {
 				visual: "kolac",
 				snackDuration: 3,
 				bounces,
-				life: 2.5.5
+				life: 2.5
 			});
 			sound.slash();
 			return true;

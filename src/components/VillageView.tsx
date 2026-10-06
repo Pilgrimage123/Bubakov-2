@@ -6,6 +6,8 @@ import { sound } from '../audio';
 import { Lada } from '../render/ladaRenderer';
 import { KrejcarIcon } from './KrejcarIcon';
 import { VILLAGE_BUILDINGS } from '../data/village';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var VillageView = ({ meta, onUpgrade, onClose }) => {
 	const canvasRefs = (0, import_react.useRef)({});
@@ -43,53 +45,57 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 					borderRadius: "8px",
 					marginBottom: "16px",
 					textAlign: "left",
-					boxShadow: "inset 0 0 10px rgba(0,0,0,0.05)"
+					boxShadow: "inset 0 0 10px rgba(0,0,0,0.05)",
+					position: "relative"
 				},
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
-					style: {
-						margin: "0 0 8px 0",
-						fontSize: "1.45rem",
-						display: "flex",
-						justifyContent: "space-between",
-						flexWrap: "wrap",
-						gap: "10px",
-						color: "#111111"
-					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h3", {
 						style: {
-							display: "inline-flex",
-							alignItems: "center",
-							gap: "4px"
+							margin: "0 0 8px 0",
+							fontSize: "1.45rem",
+							display: "flex",
+							justifyContent: "space-between",
+							flexWrap: "wrap",
+							gap: "10px",
+							color: "#111111"
 						},
-						children: [
-							"Hospodská pokladna:",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							style: {
+								display: "inline-flex",
+								alignItems: "center",
+								gap: "4px"
+							},
+							children: [
+								"Hospodská pokladna:",
+								" ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+									style: { color: "#78350F" },
+									children: meta.krejcary
+								}),
+								" ",
+								"krejcarů ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(KrejcarIcon, { size: 18 })
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+							"🏺 Osvobozeno dušiček:",
 							" ",
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-								style: { color: "#78350F" },
-								children: meta.krejcary
-							}),
-							" ",
-							"krejcarů ",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(KrejcarIcon, { size: 18 })
-						]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-						"🏺 Osvobozeno dušiček:",
-						" ",
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-							style: { color: "#1E40AF" },
-							children: meta.totalSoulsSaved || 0
-						})
-					] })]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					style: {
-						margin: 0,
-						fontWeight: 700,
-						fontSize: "0.95rem",
-						color: "#111111"
-					},
-					children: "Každé vylepšení cechu rozšiřuje naši vesnici a trvale posílí vašeho lovce do všech nočních výprav!"
-				})]
+								style: { color: "#1E40AF" },
+								children: meta.totalSoulsSaved || 0
+							})
+						] })]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						style: {
+							margin: 0,
+							fontWeight: 700,
+							fontSize: "0.95rem",
+							color: "#111111"
+						},
+						children: "Každé vylepšení cechu rozšiřuje naši vesnici a trvale posílí vašeho lovce do všech nočních výprav!"
+					})]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 20 }),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "vignettes-grid",
 				style: { gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))" },
@@ -100,6 +106,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 					return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "vignette-card",
 						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "default", showBottomCorners: true }),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("canvas", {
 								ref: (el) => {
 									canvasRefs.current[b.id] = el;

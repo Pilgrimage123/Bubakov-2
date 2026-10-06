@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 	if (!isOpen) return null;
@@ -28,9 +30,11 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 				boxShadow: "10px 10px 0px var(--ink), 0 0 35px rgba(209, 52, 43, 0.45)",
 				padding: "24px 28px",
 				textAlign: "left",
-				color: "var(--parchment)"
+				color: "var(--parchment)",
+				position: "relative"
 			},
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -53,7 +57,7 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 							textShadow: "2px 2px 0px var(--ink)"
 						},
 						children: "VYMAZAT VEŠKERÝ POSTUP?"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 16 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						style: {
 							margin: "4px 0 0 0",
 							fontWeight: 800,

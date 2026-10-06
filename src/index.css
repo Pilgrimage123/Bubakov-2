@@ -95,7 +95,7 @@ body {
   background-size: 20px 20px, 100% 100%;
   border: 4px solid var(--ink);
   border-left: 14px solid var(--lada-spine);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1.75rem 2rem;
   color: var(--ink);
   box-shadow: 10px 10px 0px var(--ink), inset 0 0 25px rgba(138, 92, 54, 0.08);
@@ -105,6 +105,16 @@ body {
   overflow-y: auto;
   width: 95%;
   max-width: 980px;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1.5px solid rgba(43, 26, 14, 0.28);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .panel::-webkit-scrollbar {
@@ -194,7 +204,7 @@ body {
   background-color: var(--parchment);
   border: 4px solid var(--ink);
   border-radius: 12px;
-  padding: 15px;
+  padding: 16px;
   color: var(--ink);
   cursor: pointer;
   width: 260px;
@@ -205,6 +215,7 @@ body {
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 .char-card:hover {
@@ -425,9 +436,21 @@ body {
   background-color: var(--parchment);
   border: 4px solid var(--ink);
   border-radius: 12px;
-  padding: 15px;
+  padding: 16px;
   color: var(--ink);
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.1), 4px 4px 0px var(--ink);
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.06), 4px 4px 0px var(--ink);
+  position: relative;
+  overflow: visible;
+  transition: all 0.2s ease;
+}
+
+.vignette-card::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.5px solid rgba(43, 26, 14, 0.28);
+  border-radius: 7px;
+  pointer-events: none;
 }
 
 .vig-canvas {
@@ -462,11 +485,11 @@ body {
   left: 50%;
   transform: translate(-50%, 0);
   width: min(90%, 800px);
-  max-height: calc(22dvh - max(4px, env(safe-area-inset-top)));
+  max-height: calc(24dvh - max(4px, env(safe-area-inset-top)));
   display: flex;
   flex-direction: column;
   gap: clamp(3px, 0.6vh, 8px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .bar-container {
@@ -474,22 +497,33 @@ body {
   height: 28px;
   min-height: 0;
   flex: 0 0 28px;
-  background-color: var(--wood-dark);
-  border: 4px solid var(--ink);
+  background-color: #2D1A0E;
+  border: 3.5px solid var(--ink);
   border-radius: 14px;
   overflow: hidden;
   position: relative;
-  box-shadow: 4px 4px rgba(0,0,0,0.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 4px 4px 0px var(--ink);
+}
+
+.bar-container::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(254, 243, 199, 0.35);
+  border-radius: 11px;
+  pointer-events: none;
+  z-index: 2;
 }
 
 #courage-container {
-  background-color: var(--wood-dark);
+  background-color: #2D1A0E;
 }
 
 #courage-fill {
   width: 0%;
   height: 100%;
-  background-color: var(--blood-red);
+  background: linear-gradient(180deg, #DC2626 0%, #B91C1C 60%, #991B1B 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.4);
   transition: width 0.12s linear;
 }
 
@@ -500,7 +534,8 @@ body {
 #xp-fill {
   width: 0%;
   height: 100%;
-  background-color: var(--mustard);
+  background: linear-gradient(180deg, #FDE047 0%, #EAB308 60%, #CA8A04 100%);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.45);
   transition: width 0.2s linear;
 }
 
@@ -515,30 +550,69 @@ body {
   align-items: center;
   color: var(--parchment);
   font-weight: 900;
-  font-size: 16px;
+  font-size: 15px;
   text-shadow: 2px 2px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink), 1px 1px 0 var(--ink);
   letter-spacing: 1px;
+}
+
+.hud-pause-btn {
+  background: #FAF5E8;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  box-shadow: 2px 2px 0px var(--ink);
+  transition: all 0.15s ease;
+  pointer-events: auto;
+}
+
+.hud-pause-btn:hover {
+  background: #FDE047;
+  transform: scale(1.08);
 }
 
 #stats-row {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-height: 0;
   max-height: 34px;
   flex: 0 0 auto;
   overflow: hidden;
   white-space: nowrap;
-  font-size: clamp(0.72rem, 1.35vw, 1.1rem);
+  font-size: clamp(0.72rem, 1.35vw, 1.05rem);
   font-weight: 900;
   color: #111111;
-  background: rgba(243, 233, 210, 0.95);
-  border: 3px solid var(--ink);
-  border-radius: 10px;
-  padding: 4px 10px;
+  background: #FAF6ED;
+  border: 3.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 4px 12px;
   box-sizing: border-box;
   box-shadow: 4px 4px 0px var(--ink);
+  position: relative;
+}
+
+#stats-row::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(43, 26, 14, 0.24);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.hud-stat-divider {
+  color: #4D834B;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  user-select: none;
 }
 
 /* TALLY */
@@ -578,17 +652,19 @@ body {
 .choice-card {
   background-color: #FAF5E8;
   border: 3.5px solid var(--ink);
-  border-radius: 8px;
-  padding: 14px 18px;
+  border-radius: 12px;
+  padding: 16px 20px;
   margin: 12px 0;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 16px;
   color: var(--ink);
   box-shadow: 4px 4px 0px var(--ink);
   transition: all 0.15s ease-out;
   text-align: left;
+  position: relative;
+  overflow: visible;
 }
 
 .choice-card:hover {
@@ -661,12 +737,12 @@ body {
   bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
   left: 50%;
   transform: translate(-50%, 0);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 900;
-  padding: 6px 16px;
-  border: 2px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: 2.5px 2.5px 0px var(--ink);
+  padding: 7px 18px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 3.5px 3.5px 0px var(--ink);
   white-space: nowrap;
   letter-spacing: 0.5px;
   pointer-events: auto;
@@ -676,6 +752,7 @@ body {
   transition: all 0.15s;
   color: var(--parchment);
   max-width: 90vw;
+  text-shadow: 1.5px 1.5px 0 var(--ink);
 }
 
 #ult-indicator:hover {
@@ -847,11 +924,20 @@ body {
   width: 100%;
   height: 22px;
   background-color: var(--wood-dark);
-  border: 3px solid var(--ink);
+  border: 3.5px solid var(--ink);
   border-radius: 13px;
   overflow: hidden;
   position: relative;
-  box-shadow: 4px 4px rgba(0,0,0,0.5);
+  box-shadow: 4px 4px 0px var(--ink);
+}
+
+#boss-bar-container::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(254, 243, 199, 0.35);
+  border-radius: 9px;
+  pointer-events: none;
 }
 
 #boss-hp-fill {
@@ -963,8 +1049,8 @@ body {
 .stage-summary-callout {
   background: #FFFDF8;
   border: 3.5px solid var(--ink);
-  border-radius: 10px;
-  padding: 14px 18px;
+  border-radius: 12px;
+  padding: 18px 22px;
   margin: 16px 0 20px 0;
   display: flex;
   justify-content: space-between;
@@ -973,6 +1059,8 @@ body {
   gap: 14px;
   box-shadow: 5px 5px 0px var(--ink);
   text-align: left;
+  position: relative;
+  overflow: visible;
 }
 
 .hunter-screen-nav-bar {
@@ -1024,9 +1112,9 @@ body {
 
 .level-card {
   background: #FAF5E8;
-  border: 3px solid var(--ink);
-  border-radius: 8px;
-  padding: 12px 14px;
+  border: 3.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 15px 16px 14px 16px;
   cursor: pointer;
   transition: all 0.15s ease;
   box-shadow: 4px 4px 0px var(--ink);
@@ -1034,6 +1122,7 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: visible;
 }
 
 .level-card:hover {
@@ -1044,13 +1133,12 @@ body {
 
 .level-card-selected {
   border-color: #C53026;
-  outline: 3px solid #D9A036;
   box-shadow: 5px 5px 0px var(--ink);
   background: #FFFDF8;
 }
 
 .level-card-locked {
-  background: #E2D9C3;
+  background: #EFE7D6;
   border-color: #3D2210;
 }
 
@@ -1059,6 +1147,7 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
+  padding: 0 4px;
 }
 
 .level-badge {
@@ -2345,15 +2434,26 @@ body {
 }
 
 .pause-weapon-card {
-  background: var(--parchment);
+  background: #FAF5E8;
   color: var(--ink);
   border: 3px solid var(--ink);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px 14px;
   box-shadow: 4px 4px 0 var(--ink);
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+  overflow: visible;
+}
+
+.pause-weapon-card::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(43, 26, 14, 0.22);
+  border-radius: 6px;
+  pointer-events: none;
 }
 
 /* Keycap styling for controls guide */

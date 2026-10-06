@@ -67,6 +67,9 @@ import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
 import { LadaCoverScene } from './components/LadaCoverScene';
+import { LadaCardCorners } from './components/LadaCardCorners';
+import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
+import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -2384,7 +2387,7 @@ export default function App() {
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
-            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelIdRef.current] || GAME_LEVELS[1];
+            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
@@ -6618,6 +6621,7 @@ export default function App() {
         }}
         title={isUnlocked ? `Zvolit lovce: ${HUNTER_UNLOCKS[prog.id].realName}` : 'Klikněte pro podrobnosti výzvy'}
       >
+        <LadaCardCorners variant={isUnlocked ? 'default' : 'locked'} showBottomCorners={true} />
         <span className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}>
           {isUnlocked ? '✅ Odemčeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
         </span>
@@ -6738,8 +6742,10 @@ export default function App() {
         <div id="hud">
           {/* Top HUD: Kuráž + XP + compact combat stats */}
           <div id="top-bar">
+            <LadaHudBotanicalDecor />
+
             {/* Kuráž = Lovcovo HP + Mobile Quick Pause Button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', position: 'relative' }}>
               <div
                 id="courage-container"
                 className="bar-container"
@@ -6756,6 +6762,7 @@ export default function App() {
                   }}
                 />
                 <div className="bar-text">
+                  <span style={{ marginRight: '6px' }}>🦁</span>
                   KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
                 </div>
               </div>
@@ -6773,6 +6780,7 @@ export default function App() {
             <div id="xp-container" className="bar-container">
               <div id="xp-fill" style={{ width: `${(runStats.xp / runStats.xpNeeded) * 100}%` }} />
               <div className="bar-text" id="level-text">
+                <span style={{ marginRight: '6px' }}>🌾</span>
                 ÚROVEŇ {runStats.level}
               </div>
             </div>
@@ -6788,9 +6796,15 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>Krejcary: {runStats.coins} <KrejcarIcon size={18} /></div>
+              <span className="hud-stat-divider">🌿</span>
+              <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                Krejcary: {runStats.coins} <KrejcarIcon size={18} />
+              </div>
+              <span className="hud-stat-divider">🌿</span>
               <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
+              <span className="hud-stat-divider">🌿</span>
               <div id="kills-text" style={{ color: '#7F1D1D' }}>Zklidněno: {runStats.kills} 🥖</div>
+              <span className="hud-stat-divider">🌿</span>
               <div id="chest-progress-text" style={{ color: '#78350F' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
                 🎁 Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
@@ -6799,7 +6813,9 @@ export default function App() {
             {/* Boss Bar if boss spawned */}
             {runStats.bossHpPct !== null && (
               <div id="boss-bar-wrap">
-                <div className="boss-title-text">{runStats.bossTitle}</div>
+                <div className="boss-title-text">
+                  <span style={{ color: '#C53026' }}>👹</span> {runStats.bossTitle} <span style={{ color: '#C53026' }}>👹</span>
+                </div>
                 <div id="boss-bar-container">
                   <div id="boss-hp-fill" style={{ width: `${runStats.bossHpPct}%` }} />
                 </div>
@@ -6852,6 +6868,7 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
+            <LadaCardCorners variant="callout" />
             <BubakovCoverTitle />
 
             <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
@@ -6904,6 +6921,10 @@ export default function App() {
                       }}
                       title={isUnlocked ? (isSelected ? `Zvoleno: ${lvl.name} (klikněte pro výběr lovce)` : `Zvolit výpravu: ${lvl.name}`) : 'Klikněte pro podrobnosti výzvy a milníků'}
                     >
+                      <LadaCardCorners
+                        variant={isSelected ? 'selected' : isUnlocked ? 'default' : 'locked'}
+                        showBottomCorners={true}
+                      />
                       <div className="level-card-header">
                         <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`}>
                           {isSelected ? '⭐ Zvolená výprava' : isCompleted ? '✅ Pokořeno' : isUnlocked ? '🔓 Otevřeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
@@ -7078,6 +7099,7 @@ export default function App() {
 
             {/* CONFIRMATION / PROCEED CALLOUT BAR */}
             <div className="stage-summary-callout">
+              <LadaCardCorners variant="callout" showBottomCorners={true} />
               <div className="stage-summary-info">
                 <div style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
                   Vybraná výprava pro nadcházející noc:
@@ -7188,6 +7210,7 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
+            <LadaCardCorners variant="callout" />
             {/* Top Navigation Bar: Back button and chosen stage badge */}
             <div className="hunter-screen-nav-bar">
               <button
@@ -7240,6 +7263,7 @@ export default function App() {
               <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026' }}>
                 VYBERTE SI SVÉHO LOVCE
               </h1>
+              <LadaBotanicalFlourish height={20} />
               <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: 'var(--wood-dark)' }}>
                 Koho vyšlete do noci na výpravu do kraje: <strong>{currentLevel.name}</strong>?
               </p>
@@ -7254,6 +7278,7 @@ export default function App() {
                 onClick={() => startGame('wanderer')}
                 title="Poutník – připraven k výpravě"
               >
+                <LadaCardCorners variant="default" showBottomCorners={true} />
                 <span className="char-card-unlocked-badge">✅ Odemčeno</span>
                 <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
                 <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
@@ -7361,8 +7386,10 @@ export default function App() {
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel" style={{ maxWidth: '820px' }}>
+            <LadaCardCorners variant="callout" />
             <h1>⏸️ HRA POZASTAVENA</h1>
-            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-8px' }}>
+            <LadaBotanicalFlourish height={20} />
+            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-4px' }}>
               Výprava je pozastavena klávesou <strong>[P]</strong>. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
             </p>
 
@@ -7371,14 +7398,17 @@ export default function App() {
               style={{
                 background: 'var(--parchment)',
                 color: '#111111',
-                border: '4px solid var(--ink)',
-                borderRadius: '8px',
-                padding: '14px 18px',
+                border: '3.5px solid var(--ink)',
+                borderRadius: '12px',
+                padding: '16px 20px',
                 margin: '16px 0',
                 textAlign: 'left',
-                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)',
+                boxShadow: '4px 4px 0px var(--ink)',
+                position: 'relative',
+                overflow: 'visible',
               }}
             >
+              <LadaCardCorners variant="default" showBottomCorners={true} />
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>
@@ -7429,7 +7459,8 @@ export default function App() {
                 const displayIcon = hasSoaked ? '💧' : wDef.icon;
 
                 return (
-                  <div key={w.id} className="pause-weapon-card">
+                  <div key={w.id} className="pause-weapon-card" style={{ position: 'relative' }}>
+                    <LadaCardCorners variant="default" showBottomCorners={false} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: 900, fontSize: '1.15rem', color: '#111111', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <GameIcon icon={displayIcon} size={22} /> {displayName}
@@ -7540,8 +7571,10 @@ export default function App() {
                           alignItems: 'center',
                           gap: '10px',
                           padding: '8px 12px',
+                          position: 'relative',
                         }}
                       >
+                        <LadaCardCorners variant="default" showBottomCorners={false} />
                         <div style={{ flexShrink: 0 }}>
                           <GameIcon icon={p.icon} size={28} />
                         </div>
@@ -7659,13 +7692,16 @@ export default function App() {
       {gameState === 'levelup' && (
         <div id="level-up-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '650px' }}>
-            <h2>NOVÁ ÚROVEŇ!</h2>
-            <p style={{ fontWeight: 700, marginTop: '-5px', marginBottom: '15px' }}>
+            <LadaCardCorners variant="callout" />
+            <h2 style={{ color: '#C53026', fontSize: '2.2rem', margin: '4px 0' }}>NOVÁ ÚROVEŇ!</h2>
+            <LadaBotanicalFlourish height={18} />
+            <p style={{ fontWeight: 800, marginTop: '-2px', marginBottom: '15px', color: 'var(--wood-dark)' }}>
               Vyberte si vylepšení pro svého lovce:
             </p>
             <div id="choices-container">
               {levelUpChoices.map((c, i) => (
                 <div key={i} className="choice-card" onClick={() => selectUpgrade(c)}>
+                  <LadaCardCorners variant="default" showBottomCorners={true} />
                   <div className="choice-icon"><GameIcon icon={c.icon} size={36} /></div>
                   <div className="choice-text">
                     <h3>{c.name}</h3>
@@ -7682,6 +7718,7 @@ export default function App() {
       {gameState === 'chest' && (
         <div id="chest-ui" className="overlay" style={{ background: 'rgba(10, 6, 3, 0.88)', backdropFilter: 'blur(3px)' }}>
           <div className="panel slot-machine-cabinet" style={{ textAlign: 'center' }}>
+            <LadaCardCorners variant="callout" />
             {/* Ornate slot machine header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
               <span style={{ fontSize: '2rem' }}>🎰</span>
@@ -7690,6 +7727,7 @@ export default function App() {
               </h1>
               <span style={{ fontSize: '2rem' }}>🎰</span>
             </div>
+            <LadaBotanicalFlourish height={20} />
 
             <p style={{ fontWeight: 800, fontSize: '1.15rem', color: '#FEF3C7', marginTop: '6px', marginBottom: '4px' }}>
               {slotSpinning
@@ -7706,6 +7744,7 @@ export default function App() {
                     key={i}
                     className={`slot-reel-card ${isLocked ? 'slot-locked' : 'slot-spinning'}`}
                   >
+                    <LadaCardCorners variant={isLocked ? 'selected' : 'default'} showBottomCorners={true} />
                     {/* Header / Reel Label */}
                     <div
                       style={{
@@ -7834,76 +7873,80 @@ export default function App() {
       {/* TALLY SCREEN */}
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
-          <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#FDE047' : '#FEF3C7', textShadow: '3px 3px 0 var(--ink)' }}>
-            {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
-          </h1>
-          <p style={{ fontWeight: 900, fontSize: '1.2rem', color: '#FEF3C7', textShadow: '1px 1px 0 var(--ink)', marginTop: '-8px', marginBottom: '16px' }}>
-            {GAME_LEVELS[tallyCounters.levelId]?.name || 'Venkovská výprava'}
-          </p>
+          <div className="panel" style={{ maxWidth: '780px', margin: 'auto' }}>
+            <LadaCardCorners variant="callout" />
+            <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
+              {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
+            </h1>
+            <LadaBotanicalFlourish height={22} />
+            <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--wood-dark)', marginTop: '-4px', marginBottom: '16px' }}>
+              {GAME_LEVELS[tallyCounters.levelId]?.name || 'Venkovská výprava'}
+            </p>
 
-          <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Zklidněných bubáků:</span>
-            <span className="tally-number">{tallyCounters.kills}</span>
-          </div>
-          <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Získaných krejcarů:</span>
-            <span className="tally-number" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              {tallyCounters.coins} <KrejcarIcon size={22} />
-            </span>
-          </div>
-          <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Osvobozených dušiček:</span>
-            <span className="tally-number">{tallyCounters.souls}</span>
-          </div>
-          {tallyCounters.chasniks > 0 && (
             <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-              <span>Zachráněných chasníků:</span>
-              <span className="tally-number">{tallyCounters.chasniks} 🌾</span>
+              <span>Zklidněných bubáků:</span>
+              <span className="tally-number">{tallyCounters.kills}</span>
             </div>
-          )}
-          <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
-            <span>Čas výpravy:</span>
-            <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
-          </div>
+            <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
+              <span>Získaných krejcarů:</span>
+              <span className="tally-number" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                {tallyCounters.coins} <KrejcarIcon size={22} />
+              </span>
+            </div>
+            <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
+              <span>Osvobozených dušiček:</span>
+              <span className="tally-number">{tallyCounters.souls}</span>
+            </div>
+            {tallyCounters.chasniks > 0 && (
+              <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
+                <span>Zachráněných chasníků:</span>
+                <span className="tally-number">{tallyCounters.chasniks} 🌾</span>
+              </div>
+            )}
+            <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
+              <span>Čas výpravy:</span>
+              <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
+            </div>
 
-          <div className="tally-actions-row">
-            {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
+            <div className="tally-actions-row" style={{ marginTop: '20px' }}>
+              {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
+                <button
+                  className="lada-btn"
+                  style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}
+                  onClick={() => {
+                    const nextId = (tallyCounters.levelId + 1) as GameLevelId;
+                    saveMeta({
+                      ...meta,
+                      krejcary: meta.krejcary + tallyCounters.coins,
+                      totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
+                      totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
+                      selectedLevel: nextId,
+                    });
+                    setSelectedLevelId(nextId);
+                    setMenuScreen('hunter');
+                    setGameState('menu');
+                  }}
+                >
+                  Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) ⏩
+                </button>
+              )}
+
               <button
                 className="lada-btn"
-                style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}
+                style={{ fontSize: '1.25rem', padding: '12px 32px' }}
                 onClick={() => {
-                  const nextId = (tallyCounters.levelId + 1) as GameLevelId;
                   saveMeta({
                     ...meta,
                     krejcary: meta.krejcary + tallyCounters.coins,
                     totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
                     totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
-                    selectedLevel: nextId,
                   });
-                  setSelectedLevelId(nextId);
-                  setMenuScreen('hunter');
-                  setGameState('menu');
+                  setGameState('tavern');
                 }}
               >
-                Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) ⏩
+                Vstoupit do hospody 🍺
               </button>
-            )}
-
-            <button
-              className="lada-btn"
-              style={{ fontSize: '1.25rem', padding: '12px 32px' }}
-              onClick={() => {
-                saveMeta({
-                  ...meta,
-                  krejcary: meta.krejcary + tallyCounters.coins,
-                  totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
-                  totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
-                });
-                setGameState('tavern');
-              }}
-            >
-              Vstoupit do hospody 🍺
-            </button>
+            </div>
           </div>
         </div>
       )}
@@ -7912,8 +7955,10 @@ export default function App() {
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '1000px' }}>
-            <h1 style={{ color: '#C53026' }}>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
-            <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-6px', color: 'var(--wood-dark)' }}>
+            <LadaCardCorners variant="callout" />
+            <h1 style={{ color: '#C53026', margin: '4px 0' }}>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
+            <LadaBotanicalFlourish height={20} />
+            <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>
               🎶 V koutě vyhrávají pekelné dudy a voní čerstvý chléb... 🎵
             </p>
             <LadaCoverScene height={150} />

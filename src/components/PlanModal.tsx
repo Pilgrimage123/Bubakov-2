@@ -8,6 +8,8 @@ import { WEAPONS } from '../data/weapons';
 import { ENEMIES } from '../data/enemies';
 import { ControlsModal } from './ControlsModal';
 import { LEVEL_ORDER } from '../data/levelUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 	const [activeTab, setActiveTab] = (0, import_react.useState)(defaultTab);
@@ -22,7 +24,9 @@ var PlanModal = ({ isOpen, onClose, defaultTab = "plan" }) => {
 				width: "95%"
 			},
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { children: "📜 Plán změn a kronika Bubákova" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					style: {
 						fontWeight: 700,

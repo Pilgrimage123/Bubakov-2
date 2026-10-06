@@ -3,6 +3,8 @@ import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 	if (!progress) return null;
@@ -54,6 +56,7 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 			},
 			onClick: (e) => e.stopPropagation(),
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -82,7 +85,8 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 								fontSize: "1.05rem"
 							},
 							children: progress.spoiledTitle
-						})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 16 })
 					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "tab-btn",
 						style: {

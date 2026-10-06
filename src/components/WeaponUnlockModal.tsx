@@ -7,6 +7,8 @@ import { OsikovyPrutIcon } from './OsikovyPrutIcon';
 import { Lada } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { WEAPON_UNLOCKS } from '../data/weaponUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var CaneWhipPreview = ({ soaked = false }: { soaked?: boolean }) => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -222,10 +224,12 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 			style: {
 				maxWidth: "660px",
 				width: "95%",
-				textAlign: "left"
+				textAlign: "left",
+				position: "relative"
 			},
 			onClick: (e) => e.stopPropagation(),
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -278,7 +282,8 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 									fontSize: "0.98rem"
 								},
 								children: progress.spoiledTitle
-							})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 16 })
 						] })]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "tab-btn",

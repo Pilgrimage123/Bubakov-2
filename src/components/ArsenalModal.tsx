@@ -6,6 +6,8 @@ import { sound } from '../audio';
 import { WEAPONS } from '../data/weapons';
 import { GameIcon } from './GameIcon';
 import { getWeaponProgress } from '../data/weaponUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 	const [filter, setFilter] = (0, import_react.useState)("all");
@@ -33,6 +35,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 			},
 			onClick: (e) => e.stopPropagation(),
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -47,7 +50,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 							textShadow: "2px 2px 0 var(--ink)"
 						},
 						children: "🗡️ Zbrojnice & Arzenál Bubákova"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						style: {
 							fontWeight: 800,
 							margin: 0,

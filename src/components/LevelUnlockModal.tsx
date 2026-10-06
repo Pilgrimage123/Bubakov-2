@@ -3,6 +3,8 @@ import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { LEVEL_UNLOCKS } from '../data/levelUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 	if (!progress) return null;
@@ -58,6 +60,7 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 			},
 			onClick: (e) => e.stopPropagation(),
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -98,7 +101,8 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 								marginTop: "2px"
 							},
 							children: progress.spoiledSubtitle
-						})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 16 })
 					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "tab-btn",
 						style: {

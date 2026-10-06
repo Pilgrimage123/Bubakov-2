@@ -7,6 +7,8 @@ import { ENEMIES } from '../data/enemies';
 import { Lada } from '../render/ladaRenderer';
 import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var CATEGORIES = [
 	{
@@ -173,6 +175,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 				width: "95%"
 			},
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -182,7 +185,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						style: { margin: "0 0 2px 0" },
 						children: "📖 Bestiář noční české vesnice"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 						style: {
 							fontWeight: 700,
 							margin: "0 0 8px 0",

@@ -5,6 +5,8 @@ const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { KrejcarIcon } from './KrejcarIcon';
 import { HruskaIcon } from './HruskaIcon';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 interface ControlsModalProps {
 	isOpen: boolean;
@@ -37,7 +39,9 @@ var ControlsModal = ({
 				width: "95%"
 			},
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", { children: "🎮 OVLÁDÁNÍ A CÍL HRY" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					style: {
 						fontWeight: 800,

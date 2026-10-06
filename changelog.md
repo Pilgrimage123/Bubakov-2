@@ -1,6 +1,22 @@
 # Changelog
 
-## 2026-10-06 — Optimalizace herní smyčky a Boss HUD
+## 2026-10-06 — Přemístění Čerta na pravou stranu nápisu Bubákov
+- **Rozmístění postav na úvodní obrazovce:**
+  - Čert byl přemístěn na pravou stranu monumentálního nápisu Bubákov (`transform="translate(710, 4)"`), zatímco Bubák (strašák) se nachází na levé straně (`transform="translate(12, 4)"`). Obě postavičky nyní symetricky a nerušeně lemují dekorativní ladovskou vinětu, aniž by se vzájemně překrývaly nebo zasahovaly do textu a postranních zinkografických ornamentů.
+  - Spodní interaktivní ovládací tlačítka byla logicky seřazena odpovídajícím způsobem zleva doprava: vlevo tlačítko pro bafnutí bubáka (`Bubák bafnout!`), vpravo tlačítko pro pekelné dupnutí a jiskry čerta (`Čert dupnout & jiskry!`).
+
+## 2026-10-06 — Nový sprite, animace a detaily Čerta na úvodní obrazovce
+- **Kompletní ladovský sprite a anatomie Čerta:**
+  - **Doplněné chybějící ruce a drápy:** Obě paže mají plně prokreslenou anatomii – levá ruka v bok s ostrými černými spáry a ivory hroty gestikuluje a pumpuje pěstí; pravá paže svalnatě svírá dřevěnou násadu vidlí 4 zřetelnými drápatými prsty a při útoku energicky bodá vpřed.
+  - **Červené špičaté rohy:** Původní zlaté rohy nahrazeny sytě karmínově-červenými špičatými rohy s přechodem do ohnivé špičky, typickými ladovskými vruby a odleskem.
+  - **Větší vykulené a koulející se oči:** Průměr očí byl zvětšen (poloměr 7.4 px), mají slonovinové bělmo s jemným červeným lemem, rubínovou duhovku, lesklé zorničky s dvojitými odlesky a animované koulení v rytmu jednotlivých snímků.
+  - **Plynulejší pohyb jazyka:** Čertovský jazyk má nyní plynule se vlnící esovitou křivku, středovou rýhu, jemný růžový odlesk a rozeklaný hrot s hladkými přechody.
+  - **Rudě hořící a doutnající konec ocasu:** Na špičce ocasu plápolá vrstvený rudý plamen se zlatým jádrem a žhavými uhlíky, ze kterého stoupají stylizované ladovské obláčky dýmu a poletující jiskřičky.
+  - **Epické jiskry od dupnutí kopytem:** Při dupnutí kopytem (snímek 3 a interakce) vytryskne vějíř zářivých 4cípých ladovských diamantových hvězd, ohnivých trajektorií, žhavých kapek a rázových vln v zemi.
+- **Květnatý ladovský styl v HUDu:** Horní HUD lišta (`#top-bar`) byla obohacena o postranní ladovské zinkografické větévky se zlatavými stonky, šalvějovými lístky a karmínovými poupaty. Ukazatelé Kuráže (HP) a Úrovně (XP) dostaly vnitřní zlaté rámečky a jemné rohové zakončení. Statistikový řádek má detailní rustikální rámeček a ladovské listové předěly.
+- **Kartová a dialogová menu:** Karty výběru výprav, volby lovců, vylepšení při postupu na úroveň (`.choice-card`), vybavené zbraně v pauze (`.pause-weapon-card`), válce malované truhly štěstěny i budovy ve vsi Hrusice (`VillageView`) mají autentické ladovské dvojité linky a rohy s 5četnými žlutými květy a tečkovaným semeníkem podle velikonočních pohlednic.
+- **Rostlinné předěly v modálech:** Všechny herní modály (arzenál, bestiář, ovládání, odemčení lovců, odemčení úrovní, odemčení zbraní, plán kroniky, sandbox) obsahují dekorativní ladovskou rostlinnou vinetu `LadaBotanicalFlourish` a rohovou kaligrafii.
+
 - Boss/miniboss HP HUD už není aktualizován z `takeDamage()` při každém zásahu; synchronizace je oddělena od gameplay entity logiky.
 - Herní loop má stabilní lifecycle bez opakovaného vytváření animation loopu při změně React state.
 - Neznámé ID nepřítele nyní vyhodí explicitní chybu místo tichého fallbacku na `rarach`.

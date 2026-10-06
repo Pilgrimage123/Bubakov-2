@@ -8,6 +8,8 @@ import { WEAPONS } from '../data/weapons';
 import { Lada } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var HUNTER_KEYS = [
 	"wanderer",
@@ -310,9 +312,11 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 				flexDirection: "column",
 				padding: "20px 24px",
 				background: "var(--wood-light)",
-				border: "4px solid var(--ink)"
+				border: "4px solid var(--ink)",
+				position: "relative"
 			},
 			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",
@@ -339,7 +343,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 							},
 							children: "TESTOVACÍ MÓD (SANDBOX)"
 						})]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 16 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						style: {
 							margin: "2px 0 0 0",
 							fontWeight: 800,
