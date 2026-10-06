@@ -11,6 +11,9 @@ import { OpravdovaKurazIcon } from './OpravdovaKurazIcon';
 import { MedvediMastIcon } from './MedvediMastIcon';
 import { OpravdovaKavaIcon } from './OpravdovaKavaIcon';
 import { KrvaveJelitoIcon } from './KrvaveJelitoIcon';
+import { ValecniceIcon } from './ValecniceIcon';
+import { CesnekovaTopinkaIcon } from './CesnekovaTopinkaIcon';
+import { KyselaOkurkaIcon } from './KyselaOkurkaIcon';
 
 function isKurazIcon(icon: any) {
 	return icon === "medvedi_mast" || icon === "medvedimast" || icon === "mast" || icon === "opravdova_kuraz" || icon === "kuraz" || icon === "courage" || icon === "fist" || icon === "opravdovakuraz" || icon === "hrosi_kuze" || icon === "🥩";
@@ -39,6 +42,9 @@ function isJitrniceIcon(icon: any) {
 function isOsikovyPrutIcon(icon: any) {
 	return icon === "osikovy_prut" || icon === "cane" || icon === "🎋" || icon === "prut" || icon === "osika" || icon === "soaked_cane";
 }
+function isValecniceIcon(icon: any) { return icon === 'valecnice'; }
+function isGarlicIcon(icon: any) { return icon === 'cesnekova_topinka'; }
+function isPickleIcon(icon: any) { return icon === 'kysela_okurka'; }
 export interface GameIconProps {
 	icon: any;
 	size?: string | number;
@@ -48,6 +54,9 @@ export interface GameIconProps {
 }
 
 var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "", style = {} }) => {
+	if (isValecniceIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ValecniceIcon, { size, className, style });
+	if (isGarlicIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CesnekovaTopinkaIcon, { size, className, style });
+	if (isPickleIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KyselaOkurkaIcon, { size, className, style });
 	if (isKolacIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KynutyKolacIcon, {
 		size,
 		className,
@@ -108,4 +117,4 @@ var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "",
 	});
 };
 
-export { isBuchtaIcon, isKolacIcon, isHruskaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, isKurazIcon, isKavaIcon, isJelitoIcon, OsikovyPrutIcon, HruskaIcon, KynutyKolacIcon, OpravdovaKurazIcon, MedvediMastIcon, OpravdovaKavaIcon, KrvaveJelitoIcon, GameIcon };
+export { isValecniceIcon, isGarlicIcon, isPickleIcon, ValecniceIcon, CesnekovaTopinkaIcon, KyselaOkurkaIcon, isBuchtaIcon, isKolacIcon, isHruskaIcon, isCoinIcon, isJitrniceIcon, isOsikovyPrutIcon, isKurazIcon, isKavaIcon, isJelitoIcon, OsikovyPrutIcon, HruskaIcon, KynutyKolacIcon, OpravdovaKurazIcon, MedvediMastIcon, OpravdovaKavaIcon, KrvaveJelitoIcon, GameIcon };
