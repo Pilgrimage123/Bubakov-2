@@ -4484,7 +4484,7 @@ export default function App() {
       ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0)) + 0.45)
       : (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0));
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
-    const damage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const damage = Math.round((isMiniboss ? stats.damage * 1.35 : stats.damage) * 1.6);
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 

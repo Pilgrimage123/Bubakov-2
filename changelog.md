@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-06 — Balancování pokladů a poškození nepřátel
+- **Poklady:** frekvence běžných pokladových truhel snížena na třetinu; práh zvýšen z 9 800 na 29 400.
+- **Nepřátelé:** poškození zvýšeno o 60 %.
+- Garantované poklady minibossů a bossů zůstávají beze změny.
+
 ## 2026-10-06 — Balance arénových vylepšení
 - Level-up nyní garantuje jednu bojovou volbu, jednu pasivní volbu a jednu wildcard volbu; limit 4 zbraní nebyl zaveden.
 - Opravdová káva: -10 % cooldown za stack, minimum 40 %; Krvavé jelito: +15 % poškození.

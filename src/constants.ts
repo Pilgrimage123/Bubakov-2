@@ -137,7 +137,7 @@ var ENEMY_POINTS = {
 	obrneny_zbojnik: 240
 };
 var DROP_THRESHOLDS = {
-	chest: 9800,
+	chest: 29400,
 	potion: 450,
 	bread: 250,
 	soul: 120,
