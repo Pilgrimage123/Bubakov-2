@@ -4842,7 +4842,10 @@ export default function App() {
         this.kbx *= 0.9;
         this.kby *= 0.9;
         this.animTime += dt;
-        if (this.panicTimer > 0) this.panicTimer -= dt;
+
+        if (this.panicTimer > 0) {
+          this.panicTimer = Math.max(0, this.panicTimer - dt);
+        }
         this.panicked = this.panicTimer > 0;
 
         let spd = this.speed * this.getMovementSpeedMultiplier() * (this.garlicSlowTimer > 0 ? 0.9 : 1);
@@ -4863,6 +4866,49 @@ export default function App() {
 
         const dirToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
 
+        // Flee state has absolute priority over distance and specialized AI.
+        if (this.panicked) {
+          const dx = this.x - player.x;
+          const dy = this.y - player.y;
+          const distSq = dx * dx + dy * dy;
+          let fleeX = 1;
+          let fleeY = 0;
+
+          if (distSq > 0.0001) {
+            const invDist = 1 / Math.sqrt(distSq);
+            fleeX = dx * invDist;
+            fleeY = dy * invDist;
+          } else {
+            fleeX = this.lastDx || 1;
+            fleeY = this.lastDy || 0;
+            const len = Math.hypot(fleeX, fleeY) || 1;
+            fleeX /= len;
+            fleeY /= len;
+          }
+
+          const fleeSpd = spd * 1.8;
+          this.vx = fleeX * fleeSpd;
+          this.vy = fleeY * fleeSpd;
+          this.x += (this.vx + this.kbx) * dt;
+          this.y += (this.vy + this.kby) * dt;
+          this.animTime += dt * 0.5;
+          this.lastDx = this.vx;
+          this.lastDy = this.vy;
+
+          if (distSq < 650 * 650 && Math.random() < 0.15) {
+            engineRef.current.particles.push({
+              x: this.x - fleeX * (this.radius * 0.7) + (Math.random() - 0.5) * 6,
+              y: this.y - fleeY * (this.radius * 0.7) + (Math.random() - 0.5) * 6,
+              vx: -fleeX * 20 + (Math.random() - 0.5) * 15,
+              vy: -fleeY * 20 - Math.random() * 20,
+              life: 0.35,
+              color: 'rgba(215, 200, 175, 0.65)',
+              size: 3 + Math.random() * 3,
+            });
+          }
+          return;
+        }
+
         // Reposition stranded enemies that are far away back to active perimeter around player
         if (distToPlayer > 1350 && !this.isBoss && !this.isMiniboss) {
           const ang = Math.random() * Math.PI * 2;
@@ -4880,29 +4926,6 @@ export default function App() {
           this.vy = Math.sin(dirToPlayer) * spd;
           this.x += (this.vx + this.kbx) * dt;
           this.y += (this.vy + this.kby) * dt;
-          this.animTime += dt;
-          return;
-        }
-
-        // When panicked, always flee
-        if (this.panicked) {
-          const fleeAng = Math.atan2(this.y - player.y, this.x - player.x);
-          this.vx = Math.cos(fleeAng) * spd * 1.8;
-          this.vy = Math.sin(fleeAng) * spd * 1.8;
-          this.x += (this.vx + this.kbx) * dt;
-          this.y += (this.vy + this.kby) * dt;
-          this.animTime += dt * 1.5;
-          if (distToPlayer < 650 && Math.random() < 0.15) {
-            engineRef.current.particles.push({
-              x: this.x - Math.cos(fleeAng) * (this.radius * 0.7) + (Math.random() - 0.5) * 6,
-              y: this.y + this.radius * 0.5 + (Math.random() - 0.5) * 4,
-              vx: -Math.cos(fleeAng) * 20 + (Math.random() - 0.5) * 15,
-              vy: -Math.sin(fleeAng) * 10 - Math.random() * 20,
-              life: 0.35,
-              color: 'rgba(215, 200, 175, 0.65)',
-              size: 3 + Math.random() * 3,
-            });
-          }
           return;
         }
 
