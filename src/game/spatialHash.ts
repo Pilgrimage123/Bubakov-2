@@ -4,13 +4,19 @@ function getCellKey(cx: number, cy: number): number {
   return (((cx + HASH_OFFSET) & 0xffff) << 16) | ((cy + HASH_OFFSET) & 0xffff);
 }
 
-export class SpatialHash<T extends { x: number; y: number } = any> {
-  cellSize: number;
-  cells: Map<number, T[]>;
-  touchedCells: number[];
-  results: T[];
+export class SpatialHash<T extends { x: number; y: number }> {
+  private readonly cellSize: number;
+  private readonly cells: Map<number, T[]>;
+  private readonly touchedCells: number[];
+  private readonly results: T[];
 
   constructor(cellSize: number = 180) {
+    if (!Number.isFinite(cellSize) || cellSize <= 0) {
+      throw new RangeError(
+        `SpatialHash cellSize must be > 0, got ${cellSize}`,
+      );
+    }
+
     this.cellSize = cellSize;
     this.cells = new Map();
     this.touchedCells = [];
@@ -28,6 +34,8 @@ export class SpatialHash<T extends { x: number; y: number } = any> {
   }
 
   insert(entity: T): void {
+    if (!Number.isFinite(entity.x) || !Number.isFinite(entity.y)) return;
+
     const cx = Math.floor(entity.x / this.cellSize);
     const cy = Math.floor(entity.y / this.cellSize);
     const key = getCellKey(cx, cy);
@@ -42,9 +50,9 @@ export class SpatialHash<T extends { x: number; y: number } = any> {
     cell.push(entity);
   }
 
-  rebuild(entities: T[]): void {
+  rebuild(entities: readonly T[] | null | undefined): void {
     this.clear();
-    if (!entities) return;
+    if (!entities || entities.length === 0) return;
     const len = entities.length;
     for (let i = 0; i < len; i++) {
       this.insert(entities[i]);
@@ -53,6 +61,42 @@ export class SpatialHash<T extends { x: number; y: number } = any> {
 
   queryCircle(x: number, y: number, radius: number): T[] {
     this.results.length = 0;
+    this.collectCircle(x, y, radius, this.results);
+    return this.results;
+  }
+
+  /**
+   * Fills a caller-owned array.
+   *
+   * Use this when the result must survive another SpatialHash query.
+   * queryCircle() intentionally reuses an internal array to avoid allocations.
+   */
+  queryCircleInto(
+    x: number,
+    y: number,
+    radius: number,
+    out: T[],
+  ): T[] {
+    out.length = 0;
+    this.collectCircle(x, y, radius, out);
+    return out;
+  }
+
+  private collectCircle(
+    x: number,
+    y: number,
+    radius: number,
+    out: T[],
+  ): void {
+    if (
+      !Number.isFinite(x) ||
+      !Number.isFinite(y) ||
+      !Number.isFinite(radius) ||
+      radius < 0
+    ) {
+      return;
+    }
+
     const minX = Math.floor((x - radius) / this.cellSize);
     const maxX = Math.floor((x + radius) / this.cellSize);
     const minY = Math.floor((y - radius) / this.cellSize);
@@ -63,12 +107,11 @@ export class SpatialHash<T extends { x: number; y: number } = any> {
         if (cell) {
           const cellLen = cell.length;
           for (let i = 0; i < cellLen; i++) {
-            this.results.push(cell[i]);
+            out.push(cell[i]);
           }
         }
       }
     }
-    return this.results;
   }
 
   query(x: number, y: number, radius: number): T[] {
