@@ -3606,7 +3606,9 @@ export default function App() {
                   (player as any)._firingWeapon = null;
                   const cdMult = player.cooldownMultiplier || 1;
                   const masteryCd = w.mastery?.cooldownMultiplier || 1;
-                  w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult * masteryCd : 0.1;
+                  // Weapon level is progression state only; combat power comes from
+                  // explicit weapon effects, mastery and global passives.
+                  w.cd = fired ? wDef.baseCd * cdMult * masteryCd : 0.1;
                 }
               }
             }
@@ -7725,8 +7727,8 @@ export default function App() {
                 if (!wDef) return null;
                 const dmgMult = engineRef.current.player?.damageMultiplier || 1;
                 const cdMult = engineRef.current.player?.cooldownMultiplier || 1;
-                const estDmg = Math.round((wDef.baseDmg + (w.level - 1) * 5) * dmgMult);
-                const effectiveCd = (wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult).toFixed(2);
+                const estDmg = Math.round(wDef.baseDmg * dmgMult);
+                const effectiveCd = (wDef.baseCd * cdMult).toFixed(2);
                 const isCane = w.id === 'cane';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
