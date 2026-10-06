@@ -1,3 +1,9 @@
+## 2026-10-06 — Oddělení úrovně zbraně od implicitního combat bonusu
+- Úroveň zbraně již automaticky nezvyšuje cooldownovou kadenci v herní smyčce.
+- Přehled zbraní v pauze nyní zobrazuje základní poškození a efektivní cooldown bez skrytého bonusu podle úrovně.
+- Explicitní bojové bonusy zůstávají řízené samotnými zbraněmi, mastery a globálními pasivy.
+- Změna zabraňuje dvojímu započítání síly zbraně přes úroveň i explicitní upgrade systém.
+
 ## 2026-10-06 — Nové zbraně: Válečnice, Česneková topinka a Kyselá okurka
 - Přidány tři nové zbraně s novými bojovými mechanikami, úrovněmi a animovanými ladovskými vizuály.
 - Válečnice: orbitující hospodyně s válečkem, silný knockback, druhá instance od úrovně 2 a rozšíření orbitu.
