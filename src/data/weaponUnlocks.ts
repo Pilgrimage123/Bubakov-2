@@ -10,7 +10,10 @@ var LOCKED_WEAPONS_ORDER = [
 	"kolac",
 	"potato",
 	"bees",
-	"holywater"
+	"holywater",
+	"valecnice",
+	"cesnekova-topinka",
+	"kysela-okurka"
 ];
 function getPreviousWeapon(id) {
 	const idx = LOCKED_WEAPONS_ORDER.indexOf(id);
@@ -754,6 +757,24 @@ var WEAPON_UNLOCKS = {
 				clueTag: "✅ Plně odemčeno ve zbrojnici!"
 			}
 		]
+	},
+	valecnice: {
+		id:"valecnice", realName:"Válečnice", realIcon:"valecnice", realType:"valecnice", defaultUnlocked:true,
+		challengeTitle:"Rázná hospodyně s válečkem", challengeShortDesc:"Válečnice je odemčena v arzenálu.",
+		challengeLongDesc:"Tlustá rázná paní obíhá kolem hráče a svým dřevěným válečkem odhazuje bubáky.",
+		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Válečnice",spoiledTitle:"Rázná paní s válečkem",spoiledDesc:"Rázná paní s válečkem obíhající kolem hráče.",spoiledStatsHint:"Melee orbit • silný knockback",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+	},
+	"cesnekova-topinka": {
+		id:"cesnekova-topinka", realName:"Česneková topinka", realIcon:"cesnekova_topinka", realType:"garlic", defaultUnlocked:true,
+		challengeTitle:"Smradlavá obranná zóna", challengeShortDesc:"Česneková topinka je odemčena v arzenálu.",
+		challengeLongDesc:"Permanentní aura z česnekové topinky způsobuje malý damage a brutálně odhazuje nepřátele.",
+		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Česneková topinka",spoiledTitle:"Smradlavá aura",spoiledDesc:"Smradlavá aura z česnekové topinky. Skoro neškodí, ale nepřátele brutálně odhazuje.",spoiledStatsHint:"Aura • minimální damage • velmi silný knockback",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+	},
+	"kysela-okurka": {
+		id:"kysela-okurka", realName:"Kyselá okurka", realIcon:"kysela_okurka", realType:"pickle", defaultUnlocked:true,
+		challengeTitle:"Nakládaný chaos", challengeShortDesc:"Kyselá okurka je odemčena v arzenálu.",
+		challengeLongDesc:"Střílí kyselé okurky, které skládají až tři stacky Přejedení a zvyšují zranitelnost cíle.",
+		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Kyselá okurka",spoiledTitle:"Projektil s Přejedením",spoiledDesc:"Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.",spoiledStatsHint:"Projectile • stacky • Přejedení",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
 	},
 	holywater: {
 		id: "holywater",

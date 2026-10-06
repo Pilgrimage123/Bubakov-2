@@ -50,6 +50,18 @@ export interface UpgradeChoice {
   icon: string;
 }
 
+export type StatusEffectType = 'pickle_sickness';
+
+export interface StatusEffect {
+  type: StatusEffectType;
+  stacks: number;
+  maxStacks: number;
+  remaining: number;
+  damageDealtMultiplier?: number;
+  damageTakenMultiplier?: number;
+  movementSpeedMultiplier?: number;
+}
+
 export interface WeaponDef {
   id: string;
   name: string;

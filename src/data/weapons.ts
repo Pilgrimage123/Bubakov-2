@@ -1,9 +1,9 @@
 import React from 'react';
 import { sound } from '../audio';
 /* Weapon mastery state and specialization options. */
-export type WeaponMasteryState = { picked:string[]; projectileMultiplier:number; damageMultiplier:number; cooldownMultiplier:number; radiusMultiplier:number; speedMultiplier:number; bounceBonus:number; synergyActive:boolean; synergyCount:number; projectileRemainder:number; };
-export const createWeaponMasteryState = (): WeaponMasteryState => ({ picked:[], projectileMultiplier:1, damageMultiplier:1, cooldownMultiplier:1, radiusMultiplier:1, speedMultiplier:1, bounceBonus:0, synergyActive:false, synergyCount:0, projectileRemainder:0 });
-export const MASTERY_OPTIONS: Record<string, {id:string;name:string;desc:string;kind:'projectile'|'damage'|'cooldown'|'radius'|'speed'|'bounce';value:number}[]> = {
+export type WeaponMasteryState = { picked:string[]; projectileMultiplier:number; damageMultiplier:number; cooldownMultiplier:number; radiusMultiplier:number; speedMultiplier:number; knockbackMultiplier:number; projectileBonus:number; penetrate:boolean; bounceBonus:number; synergyActive:boolean; synergyCount:number; projectileRemainder:number; };
+export const createWeaponMasteryState = (): WeaponMasteryState => ({ picked:[], projectileMultiplier:1, damageMultiplier:1, cooldownMultiplier:1, radiusMultiplier:1, speedMultiplier:1, knockbackMultiplier:1, projectileBonus:0, penetrate:false, bounceBonus:0, synergyActive:false, synergyCount:0, projectileRemainder:0 });
+export const MASTERY_OPTIONS: Record<string, {id:string;name:string;desc:string;kind:'projectile'|'damage'|'cooldown'|'radius'|'speed'|'bounce'|'knockback';value:number}[]> = {
   projectile:[{id:'more_projectiles',name:'Více projektilů',desc:'+20 % projektilů. Bonus se projeví postupně i u malých počtů projektilů.',kind:'projectile',value:.20},{id:'harder_projectiles',name:'Silnější střely',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_projectiles',name:'Rychlejší střely',desc:'+12 % rychlost projektilů.',kind:'speed',value:.12},{id:'larger_projectiles',name:'Větší střely',desc:'+15 % velikost projektilů.',kind:'radius',value:.15}],
   physical:[{id:'heavier_strike',name:'Těžší úder',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_swing',name:'Rychlejší švih',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08},{id:'longer_reach',name:'Delší dosah',desc:'+12 % dosah/velikost zásahu.',kind:'radius',value:.12},{id:'wide_arc',name:'Širší oblouk',desc:'+10 % plocha zásahu.',kind:'radius',value:.10}],
   food:[{id:'richer_filling',name:'Bohatší náplň',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'more_projectiles',name:'Více dobrot',desc:'+20 % projektilů/porcí.',kind:'projectile',value:.20},{id:'bigger_treat',name:'Větší dobrota',desc:'+15 % velikost zásahu.',kind:'radius',value:.15},{id:'faster_serving',name:'Rychlejší servírování',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
@@ -11,13 +11,80 @@ export const MASTERY_OPTIONS: Record<string, {id:string;name:string;desc:string;
   ice:[{id:'more_snow',name:'Více sněhu',desc:'+20 % projektilů.',kind:'projectile',value:.20},{id:'harder_ice',name:'Tvrdší led',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'bigger_snowball',name:'Větší koule',desc:'+15 % velikost projektilu.',kind:'radius',value:.15},{id:'faster_throw',name:'Rychlejší hod',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
   nature:[{id:'more_projectiles',name:'Hustší roj',desc:'+20 % projektilů.',kind:'projectile',value:.20},{id:'stronger_nature',name:'Silnější příroda',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_projectiles',name:'Rychlejší příroda',desc:'+12 % rychlost projektilů.',kind:'speed',value:.12},{id:'larger_projectiles',name:'Větší listy',desc:'+15 % velikost projektilů.',kind:'radius',value:.15}],
   holy:[{id:'more_projectiles',name:'Více kapek',desc:'+20 % projektilů/pulsů.',kind:'projectile',value:.20},{id:'stronger_holy',name:'Silnější požehnání',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'larger_holy',name:'Širší požehnání',desc:'+15 % velikost zásahu.',kind:'radius',value:.15},{id:'faster_holy',name:'Rychlejší požehnání',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
+  valecnice:[{id:'valecnice_heavier',name:'Těžší váleček',desc:'+25 % poškození.',kind:'damage',value:.25},{id:'valecnice_fury',name:'Válečničin vztek',desc:'+25 % poškození.',kind:'damage',value:.25}],
+  garlic:[{id:'garlic_radius',name:'Větší smrad',desc:'+20 % dosah aury.',kind:'radius',value:.20},{id:'garlic_knockback',name:'Silnější česnek',desc:'+25 % síla odhození.',kind:'knockback',value:.25}],
+  pickle:[{id:'pickle_sour',name:'Kyselost',desc:'+25 % poškození.',kind:'damage',value:.25},{id:'pickle_double',name:'Dvojitá porce',desc:'+1 projektil a kratší cooldown.',kind:'projectile',value:1}],
 };
 export function getMasteryOptions(type:string){return MASTERY_OPTIONS[type]||MASTERY_OPTIONS.physical;}
-export function applyMasteryOption(w:any,o:{kind:string;value:number}){if(!w.mastery)w.mastery=createWeaponMasteryState();switch(o.kind){case'projectile':w.mastery.projectileMultiplier*=1+o.value;break;case'damage':w.mastery.damageMultiplier*=1+o.value;break;case'cooldown':w.mastery.cooldownMultiplier*=1-o.value;break;case'radius':w.mastery.radiusMultiplier*=1+o.value;break;case'speed':w.mastery.speedMultiplier*=1+o.value;break;case'bounce':w.mastery.bounceBonus+=Math.round(o.value);}}
+export function applyMasteryOption(w:any,o:{id?:string;kind:string;value:number}){if(!w.mastery)w.mastery=createWeaponMasteryState();switch(o.kind){case'projectile':w.mastery.projectileMultiplier*=1+o.value;w.mastery.projectileBonus=(w.mastery.projectileBonus||0)+(o.value>=1?1:0);if(o.id==='pickle_double')w.mastery.penetrate=true;break;case'damage':w.mastery.damageMultiplier*=1+o.value;break;case'cooldown':w.mastery.cooldownMultiplier*=1-o.value;break;case'radius':w.mastery.radiusMultiplier*=1+o.value;break;case'speed':w.mastery.speedMultiplier*=1+o.value;break;case'knockback':w.mastery.knockbackMultiplier=(w.mastery.knockbackMultiplier||1)*(1+o.value);break;case'bounce':w.mastery.bounceBonus+=Math.round(o.value);}}
 export function getProjectileCount(baseCount:number,w:any){const m=w?.mastery;if(!m||m.projectileMultiplier<=1)return baseCount;const exact=baseCount*m.projectileMultiplier+(m.projectileRemainder||0);const count=Math.floor(exact);m.projectileRemainder=exact-count;return Math.max(baseCount,count);}
 
 
 var WEAPONS = {
+	valecnice: {
+		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 34, baseCd: 0.55,
+		desc: 'Rázná paní s válečkem obíhající kolem hráče.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const count = level >= 2 ? 2 : 1;
+			const orbitRadius = (55 + (level >= 5 ? 16 : 0)) * (w?.mastery?.radiusMultiplier || 1);
+			const angleBase = player.valecniceAngle || 0;
+			const dmg = 34 * (1 + Math.max(0, level - 1) * 0.18) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
+			const kbForce = 300 * (level >= 4 ? 1.15 : 1) * (w?.mastery?.knockbackMultiplier || 1);
+			const enemies = player.getNearbyEnemies(orbitRadius + 70);
+			for (let i = 0; i < count; i++) {
+				const a = angleBase + i * Math.PI * 2 / count;
+				const ox = player.x + Math.cos(a) * orbitRadius;
+				const oy = player.y + Math.sin(a) * orbitRadius;
+				for (const e of enemies) {
+					if (e.isDefeated) continue;
+					const dx = e.x - ox, dy = e.y - oy, reach = 24 + e.radius;
+					if (dx * dx + dy * dy <= reach * reach) {
+						const dist = Math.hypot(dx, dy) || 1;
+						e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
+					}
+				}
+			}
+			return true;
+		}
+	},
+	'cesnekova-topinka': {
+		id: 'cesnekova-topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 1, baseCd: 0.35,
+		desc: 'Smradlavá aura z česnekové topinky. Skoro neškodí, ale nepřátele brutálně odhazuje.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const radius = 110 * (level >= 2 ? 1.2 : 1) * (level >= 5 ? 1.15 : 1) * (w?.mastery?.radiusMultiplier || 1);
+			const dmg = 1 * (level >= 4 ? 1.25 : 1) * (player.damageMultiplier || 1);
+			const kbForce = 320 * (level >= 3 ? 1.25 : 1) * (level >= 5 ? 1.25 : 1) * (w?.mastery?.knockbackMultiplier || 1);
+			const enemies = player.getNearbyEnemies(radius + 60);
+			for (const e of enemies) {
+				if (e.isDefeated) continue;
+				const dx = e.x - player.x, dy = e.y - player.y, reach = radius + e.radius;
+				if (dx * dx + dy * dy <= reach * reach) {
+					const dist = Math.hypot(dx, dy) || 1;
+					e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
+					if (level >= 6) e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, 1.0);
+				}
+			}
+			return true;
+		}
+	},
+	'kysela-okurka': {
+		id: 'kysela-okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
+		desc: 'Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const count = 1 + (level >= 2 ? 1 : 0) + (level >= 6 ? 1 : 0) + (w?.mastery?.projectileBonus || 0);
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
+			if (!enemies.length) return false;
+			let target = enemies[0], minDist = player.distTo(target);
+			for (let i=1;i<enemies.length;i++){const d=player.distTo(enemies[i]);if(d<minDist){minDist=d;target=enemies[i];}}
+			const angle = Math.atan2(target.y-player.y,target.x-player.x);
+			const dmg = 20 * (level >= 3 ? 1.25 : 1) * (player.damageMultiplier||1) * (w?.mastery?.damageMultiplier||1);
+			for(let i=0;i<count;i++) player.spawnProjectile({x:player.x,y:player.y,angle:angle+(count>1?(i-(count-1)/2)*.10:0),speed:420*(w?.mastery?.speedMultiplier||1),dmg,radius:13,type:'pickle',visual:'pickle',life:2.2,penetrate:!!w?.mastery?.penetrate,pickleDamageTakenMultiplier: level >= 5 ? 1.50 : 1.35});
+			return true;
+		}
+	},
 	buns: {
 		id: "buns",
 		name: "Povidlové buchty",
