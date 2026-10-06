@@ -923,6 +923,14 @@ export default function App() {
   // Game UI state
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'levelup' | 'chest' | 'fleeing' | 'tally' | 'tavern'>('menu');
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
+  // The Canvas loop is intentionally mounted only once. Keep React UI state
+  // in refs so the long-lived RAF callback never reads stale render values.
+  const gameStateRef = useRef(gameState);
+  const menuScreenRef = useRef(menuScreen);
+  const selectedLevelIdRef = useRef(selectedLevelId);
+  gameStateRef.current = gameState;
+  menuScreenRef.current = menuScreen;
+  selectedLevelIdRef.current = selectedLevelId;
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
@@ -1332,7 +1340,7 @@ export default function App() {
 
       // Take damage from mob contact or hazard attacks
       takeDamage(amount: number, type = 'physical') {
-        if (gameState !== 'playing' || this.hp <= 0) return;
+        if (gameStateRef.current !== 'playing' || this.hp <= 0) return;
         if (this.invulnerabilityTimer > 0) return;
         if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - ((meta.windLevel || 0) * 10));
@@ -2333,12 +2341,15 @@ export default function App() {
     // HUD is React-owned; gameplay entities stay Canvas/engine-owned.
     // Boss HP is sampled here instead of calling setState from takeDamage().
     const engine = engineRef.current;
+    const currentGameState = gameStateRef.current;
+    const currentMenuScreen = menuScreenRef.current;
+    const currentSelectedLevelId = selectedLevelIdRef.current;
     const shouldSyncBossHud =
       now - engine.lastStatsSync >= BOSS_HUD_SYNC_INTERVAL_SECONDS * 1000;
       engineRef.current.uiTime += dt;
 
       // Animate character portraits in hunter selection screen
-      if (gameState === 'menu' && menuScreen === 'hunter') {
+      if (currentGameState === 'menu' && currentMenuScreen === 'hunter') {
         const t = engineRef.current.uiTime;
         const curMeta = metaRef.current;
         const wProg = getHunterProgress('wanderer', curMeta);
@@ -2357,10 +2368,10 @@ export default function App() {
       }
 
       // In-game simulation (při scénce Babičky a Barunky je čas zastaven)
-      if ((gameState === 'playing' || gameState === 'fleeing') && engineRef.current.player && engineRef.current.cutscene && gameState === 'playing') {
+      if ((currentGameState === 'playing' || currentGameState === 'fleeing') && engineRef.current.player && engineRef.current.cutscene && currentGameState === 'playing') {
         const engine = engineRef.current;
         // Příběhová scénka se zastaveným časem (Babička, Pasáček, Kořenářka)
-          if (engine.cutscene && gameState === 'playing') {
+          if (engine.cutscene && currentGameState === 'playing') {
             const cs = engine.cutscene;
             cs.t += dt;
             if (!cs.applied && cs.t >= cs.applyAt) {
@@ -2375,19 +2386,19 @@ export default function App() {
             }
             if (cs.t >= cs.dur) engine.cutscene = null;
           }
-      } else if (gameState === 'playing' || gameState === 'fleeing') {
+      } else if (currentGameState === 'playing' || currentGameState === 'fleeing') {
         const engine = engineRef.current;
         const player = engine.player;
 
         if (player) {
           // Time & Day/Night phase tracking
-          if (gameState === 'playing') {
+          if (currentGameState === 'playing') {
             engine.gameTime += dt;
             if (engine.flourStormTimer > 0) engine.flourStormTimer -= dt;
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
-            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
+            const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
@@ -3365,7 +3376,7 @@ export default function App() {
 
             // Controlled, time-based enemy spawning with gradual progression both within level and across levels
             engine.spawnTimer -= dt;
-            const curLvlId = (engine.activeLevelId || selectedLevelId || 1) as GameLevelId;
+            const curLvlId = (engine.activeLevelId || currentSelectedLevelId || 1) as GameLevelId;
             const timeProgress = Math.min(1, newTime / 260); // 0 at start -> 1 at 4:20
 
             // 1. Max enemy caps scaled by level and elapsed time
@@ -3618,7 +3629,7 @@ export default function App() {
                 chestProgress: Math.floor(engine.pointsChest),
               }));
             }
-          } else if (gameState === 'fleeing') {
+          } else if (currentGameState === 'fleeing') {
             engine.fleeTimer -= dt;
             if (engine.fleeTimer <= 0) {
               // Transition to tally screen
@@ -3672,7 +3683,7 @@ export default function App() {
 
               // Stationary Ground Puddle hazard (Hastrman water pools)
               if (p.isPuddle) {
-                if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+                if (currentGameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
                   if (player.waterSoakedTimer < 1.0) {
                     player.waterSoakedTimer = 2.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
                     engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
@@ -3682,7 +3693,7 @@ export default function App() {
                 continue;
               }
 
-              if (gameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+              if (currentGameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
                 if (p.boomerang && (p.hitCooldown || 0) > 0) {
                   continue;
                 }
@@ -4063,13 +4074,13 @@ export default function App() {
       // -------------------------------------------------------------
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (gameState === 'playing' || gameState === 'fleeing' || gameState === 'levelup' || gameState === 'chest' || gameState === 'paused') {
+      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'levelup' || currentGameState === 'chest' || currentGameState === 'paused') {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
         const phase = getCurrentDayPhase(engine.gameTime);
 
-        const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
+        const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
         const isWinter = curLvl.season === 'winter';
 
         // Sky / Grass background tailored to level
@@ -7207,7 +7218,7 @@ export default function App() {
       )}
 
       {/* 2. OBRAZOVKA: VÝBĚR LOVCE (HUNTER SELECT) */}
-      {gameState === 'menu' && menuScreen === 'hunter' && (
+      {currentGameState === 'menu' && currentMenuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
             <LadaCardCorners variant="callout" />
