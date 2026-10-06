@@ -30,7 +30,7 @@ import {
 } from './constants';
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
-import { WEAPONS } from './data/weapons';
+import { WEAPONS, createWeaponMasteryState, getMasteryOptions, applyMasteryOption } from './data/weapons';
 import { ENEMIES } from './data/enemies';
 import {
   isUnholyEnemy,
@@ -1270,18 +1270,18 @@ export default function App() {
 
     const initialWeapons =
       customWeapons && customWeapons.filter((w) => w.level > 0).length > 0
-        ? customWeapons.filter((w) => w.level > 0).map((w) => ({ id: w.id, level: w.level, cd: 0 }))
+        ? customWeapons.filter((w) => w.level > 0).map((w) => ({ ...w, cd: 0, mastery: w.mastery || createWeaponMasteryState() }))
         : type === 'wanderer'
-        ? [{ id: 'buns', level: 1, cd: 0 }, { id: 'cane', level: 1, cd: 0 }]
+        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState() }, { id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
         : type === 'shepherd'
-        ? [{ id: 'buns', level: 1, cd: 0 }]
+        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
         : type === 'korenarka'
-        ? [{ id: 'herbs', level: 1, cd: 0 }]
+        ? [{ id: 'herbs', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
         : type === 'sexton'
-        ? [{ id: 'holywater', level: 1, cd: 0 }]
+        ? [{ id: 'holywater', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
         : type === 'granny'
-        ? [{ id: 'kolac', level: 1, cd: 0 }]
-        : [{ id: 'halberd', level: 1, cd: 0 }];
+        ? [{ id: 'kolac', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
+        : [{ id: 'halberd', level: 1, cd: 0, mastery: createWeaponMasteryState() }];
 
     const wallBonusHp = (meta.wallLevel || 0) * 25;
     const millBonusSpeed = (meta.millLevel || 0) * 15;
@@ -1915,17 +1915,23 @@ export default function App() {
       }
     }
 
-    // Upgrades for existing weapons
+    // Weapon mastery choices specialize existing weapons.
     for (const w of p.weapons) {
       if (w.level < 5) {
         const wDef = WEAPONS[w.id];
-        combatChoices.push({
-          type: 'upgrade_weapon',
-          id: w.id,
-          name: `${wDef.name} (Úr. ${w.level + 1})`,
-          desc: 'Zvyšuje sílu zahnání bubáků, dosah a rychlost použití.',
-          icon: wDef.icon,
-        });
+        if (!w.mastery) w.mastery = createWeaponMasteryState();
+        const picked = new Set(w.mastery.picked || []);
+        const masteryOptions = getMasteryOptions(wDef.type).filter((o) => !picked.has(o.id));
+        for (const option of masteryOptions.slice(0, 2)) {
+          combatChoices.push({
+            type: 'weapon_mastery',
+            id: w.id,
+            masteryId: option.id,
+            name: `${wDef.name}: ${option.name}`,
+            desc: option.desc,
+            icon: wDef.icon,
+          });
+        }
       }
     }
 
@@ -2000,10 +2006,25 @@ export default function App() {
     const p = engineRef.current.player;
     if (p) {
       if (choice.type === 'new_weapon' && choice.id) {
-        p.weapons.push({ id: choice.id, level: 1, cd: 0 });
+        p.weapons.push({ id: choice.id, level: 1, cd: 0, mastery: createWeaponMasteryState() });
       } else if (choice.type === 'upgrade_weapon' && choice.id) {
         const w = p.weapons.find((x: any) => x.id === choice.id);
         if (w) w.level++;
+      } else if (choice.type === 'weapon_mastery' && choice.id && choice.masteryId) {
+        const w = p.weapons.find((x: any) => x.id === choice.id);
+        if (w) {
+          if (!w.mastery) w.mastery = createWeaponMasteryState();
+          const option = getMasteryOptions(WEAPONS[w.id].type).find((o) => o.id === choice.masteryId);
+          if (option && !(w.mastery.picked || []).includes(option.id)) {
+            w.mastery.picked.push(option.id);
+            applyMasteryOption(w, option);
+            if (w.mastery.picked.length >= 2 && !w.mastery.synergyActive) {
+              w.mastery.synergyActive = true;
+              w.mastery.synergyCount = 1;
+              engineRef.current.texts.push(new DamageText(p.x, p.y - 70, `${WEAPONS[w.id].name}: SYNERGIE!`, '#FDE047', true));
+            }
+          }
+        }
       } else if (choice.type === 'passive' && choice.stat) {
         if (choice.stat === 'maxHp') {
           p.maxHp += 30;
@@ -3505,9 +3526,13 @@ export default function App() {
               if (w.cd <= 0) {
                 const wDef = WEAPONS[w.id];
                 if (wDef) {
+                  if (!w.mastery) w.mastery = createWeaponMasteryState();
+                  player._firingWeapon = w;
                   const fired = wDef.fire(player, w.level);
+                  player._firingWeapon = null;
                   const cdMult = player.cooldownMultiplier || 1;
-                  w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult : 0.1;
+                  const masteryCd = w.mastery?.cooldownMultiplier || 1;
+                  w.cd = fired ? wDef.baseCd * Math.max(0.2, 1 - w.level * 0.05) * cdMult * masteryCd : 0.1;
                 }
               }
             }
