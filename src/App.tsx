@@ -1313,6 +1313,7 @@ export default function App() {
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: ovenDmgMult,
+      tulakDamageBonus: type === 'wanderer' ? 30 : 0,
       cooldownMultiplier: 1,
       kavaCount: 0,
       jelitoCount: 0,
@@ -1390,6 +1391,7 @@ export default function App() {
       spawnProjectile(proj: any) {
         engineRef.current.projectiles.push({
           ...proj,
+          weaponId: proj.weaponId || this._firingWeapon?.id,
           vx: Math.cos(proj.angle) * proj.speed,
           vy: Math.sin(proj.angle) * proj.speed,
           hitList: [],
@@ -1399,6 +1401,7 @@ export default function App() {
       spawnMeleeSlash(slash: any) {
         engineRef.current.slashes.push({
           ...slash,
+          weaponId: slash.weaponId || this._firingWeapon?.id,
           maxLife: slash.maxLife || slash.life,
           time: 0,
           hitList: [],
@@ -1413,9 +1416,167 @@ export default function App() {
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
           if (dx*dx+dy*dy <= reach*reach) {
             e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
+            if (!impact.noMasteryProc && impact.weaponId) this.triggerWeaponMastery(impact.weaponId, e, 'hit');
           }
         }
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
+      },
+
+      triggerWeaponMastery(weaponId: string, enemy: any, event: 'hit' | 'pulse' = 'hit') {
+        const weapon = this.weapons.find((candidate: any) => candidate.id === weaponId);
+        const mastery = weapon?.mastery;
+        if (!weapon || !mastery?.picked?.length || !enemy || enemy.isDefeated) return;
+        const now = performance.now();
+        mastery.hitCounter = (mastery.hitCounter || 0) + 1;
+        const hitCount = mastery.hitCounter;
+        const base = (amount: number) => (amount + (this.tulakDamageBonus || 0)) * (this.damageMultiplier || 1);
+        const picked = new Set(mastery.picked);
+
+        const area = (x: number, y: number, radius: number, dmg: number, type = 'physical') => {
+          this.spawnAreaImpact({ x, y, radius, dmg, type, noMasteryProc: true });
+        };
+        const projectile = (x: number, y: number, angle: number, dmg: number, type: string, visual: string, extra: any = {}) => {
+          this.spawnProjectile({
+            x, y, angle, speed: extra.speed || 420, dmg, radius: extra.radius || 10,
+            type, visual, life: extra.life || 2, noMasteryProc: true, ...extra,
+          });
+        };
+
+        if (picked.has('blood_whirl') && weaponId === 'valecnice' && hitCount % 8 === 0) {
+          area(enemy.x, enemy.y, 95, base(34 * 1.6));
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 50, 'KRVAVÝ VÍR!', '#DC2626', true));
+        }
+        if (picked.has('blood_moon') && weaponId === 'valecnice' && hitCount % 24 === 0) {
+          area(this.x, this.y, 170, base(34 * 2.4));
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 65, 'KRVAVÝ MĚSÍC!', '#F43F5E', true));
+        }
+
+        if (picked.has('garlic_burst') && weaponId === 'cesnekova-topinka' && hitCount % 10 === 0) {
+          area(this.x, this.y, 165, base(8 * 2.2));
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 55, 'ČESNEKOVÁ NÁLOŽ!', '#84CC16', true));
+        }
+        if (picked.has('garlic_storm') && weaponId === 'cesnekova-topinka' && hitCount % 24 === 0) {
+          for (let i = 0; i < 3; i++) area(this.x, this.y, 150 + i * 20, base(6 * 1.8));
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 65, 'SMRADLAVÁ BOUŘE!', '#65A30D', true));
+        }
+
+        if (weaponId === 'kysela-okurka') {
+          const stacks = enemy.getStatusEffect?.('pickle_sickness')?.stacks || 0;
+          if (picked.has('pickle_collapse') && stacks >= 3 && Math.random() < 0.22) {
+            area(enemy.x, enemy.y, 90, base(20 * 2.0), 'physical');
+            engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 55, 'OKURKOVÝ KOLAPS!', '#A3E635', true));
+          }
+          if (picked.has('pickle_frenzy') && hitCount % 7 === 0) {
+            const angle = Math.atan2(enemy.y - this.y, enemy.x - this.x);
+            projectile(enemy.x, enemy.y, angle - 0.32, base(20 * 0.85), 'pickle', 'pickle');
+            projectile(enemy.x, enemy.y, angle + 0.32, base(20 * 0.85), 'pickle', 'pickle');
+          }
+        }
+
+        if (picked.has('bakery_burst') && weaponId === 'buns' && hitCount % 6 === 0) {
+          for (let i = 0; i < 3; i++) {
+            projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 3, base(20 * 0.55), 'food', 'bun', { speed: 300, radius: 11, snackDuration: 2.2 });
+          }
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'PEKÁRNA SMRTI!', '#D97706', true));
+        }
+        if (picked.has('jam_storm') && weaponId === 'buns' && hitCount % 18 === 0) {
+          for (let i = 0; i < 8; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 8, base(20 * 0.7), 'food', 'bun', { speed: 260, radius: 10, snackDuration: 2.2 });
+        }
+
+        if (picked.has('whiplash') && weaponId === 'cane' && hitCount % 6 === 0) {
+          this.spawnMeleeSlash({ x: this.x, y: this.y, angle: Math.atan2(enemy.y - this.y, enemy.x - this.x), reach: 220, arc: 0.30, dmg: base(18 * 1.5), life: 0.18, maxLife: 0.18, type: 'physical', weaponId, noMasteryProc: true, style: 'cane' });
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'OSIKOVÝ BLESK!', '#84CC16', true));
+        }
+        if (picked.has('thorn_revenge') && weaponId === 'cane' && hitCount % 15 === 0) {
+          area(this.x, this.y, 120, base(18 * 1.8));
+        }
+
+        if (picked.has('fork_wave') && weaponId === 'pitchfork' && hitCount % 5 === 0) {
+          const angle = Math.atan2(enemy.y - this.y, enemy.x - this.x);
+          for (const offset of [-0.22, 0, 0.22]) {
+            projectile(this.x, this.y, angle + offset, base(24 * 1.2), 'physical', 'fork_mastery', { speed: 520, radius: 9, life: 1.3 });
+          }
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'TŘÍZUBÝ HROM!', '#F59E0B', true));
+        }
+        if (picked.has('fork_execution') && weaponId === 'pitchfork' && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.15 && Math.random() < 0.22) {
+          enemy.takeDamage(enemy.hp + 1, 'physical', 0, 0);
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 50, 'EXEKUCE!', '#FDE047', true));
+        }
+
+        if (picked.has('halberd_execution') && weaponId === 'halberd' && enemy.hp > 0 && enemy.hp <= enemy.maxHp * 0.12 && Math.random() < 0.25) {
+          enemy.takeDamage(enemy.hp + 1, 'physical', 0, 0);
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 50, 'EXEKUCE!', '#FDE047', true));
+        }
+        if (picked.has('halberd_cleave') && weaponId === 'halberd' && hitCount % 7 === 0) {
+          const angle = Math.atan2(enemy.y - this.y, enemy.x - this.x);
+          area(enemy.x + Math.cos(angle) * 50, enemy.y + Math.sin(angle) * 50, 75, base(32 * 1.5));
+        }
+
+        if (picked.has('flail_quake') && weaponId === 'flail' && hitCount % 6 === 0) {
+          area(enemy.x, enemy.y, 95, base(45 * 1.4));
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 50, 'ZEMĚTŘESENÍ!', '#A16207', true));
+        }
+        if (picked.has('flail_berserk') && weaponId === 'flail' && hitCount % 18 === 0) {
+          area(this.x, this.y, 145, base(45 * 2.0));
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 55, 'CEPový BĚS!', '#F97316', true));
+        }
+
+        if (picked.has('death_bloom') && weaponId === 'herbs' && hitCount % 8 === 0) {
+          area(enemy.x, enemy.y, 75, base(15 * 1.9), 'nature');
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'ROZKVETLÁ SMRT!', '#22C55E', true));
+        }
+        if (picked.has('herb_storm') && weaponId === 'herbs' && hitCount % 20 === 0) {
+          for (let i = 0; i < 10; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 10, base(15 * 0.8), 'nature', 'herb_leaf', { speed: 390, radius: 9 });
+        }
+
+        if (picked.has('avalanche') && weaponId === 'snowball' && hitCount % 7 === 0) {
+          for (let i = 0; i < 5; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 5, base(18 * 0.85), 'ice', 'snowball', { speed: 300, radius: 11, life: 2 });
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'LAVINA!', '#38BDF8', true));
+        }
+        if (picked.has('blizzard') && weaponId === 'snowball' && hitCount % 20 === 0) {
+          area(enemy.x, enemy.y, 135, base(18 * 2.0), 'ice');
+          for (let i = 0; i < 8; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 8, base(18 * 0.55), 'ice', 'snowball', { speed: 250, radius: 9 });
+        }
+
+        if (picked.has('feast_chain') && weaponId === 'kolac' && hitCount % 5 === 0) {
+          for (let i = 0; i < 3; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 3, base(28 * 0.75), 'food', 'kolac', { speed: 330, radius: 13, bounces: 1, snackDuration: 2.5 });
+        }
+        if (picked.has('royal_feast') && weaponId === 'kolac' && hitCount % 16 === 0) {
+          for (let i = 0; i < 8; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 8, base(28 * 0.9), 'food', 'kolac', { speed: 300, radius: 14, bounces: 2, snackDuration: 2.5 });
+        }
+
+        if (picked.has('firestorm') && weaponId === 'potato' && hitCount % 6 === 0) {
+          for (let i = 0; i < 8; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 8, base(22 * 0.7), 'fire', 'potato', { speed: 300, radius: 9, leavesFireZone: true });
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'BRAMBOROVÁ BOUŘE!', '#F97316', true));
+        }
+        if (picked.has('inferno') && weaponId === 'potato' && hitCount % 18 === 0) {
+          area(enemy.x, enemy.y, 115, base(22 * 2.0), 'fire');
+        }
+
+        if (picked.has('queen_bee') && weaponId === 'bees' && hitCount % 12 === 0) {
+          projectile(enemy.x, enemy.y, Math.atan2(enemy.y - this.y, enemy.x - this.x), base(12 * 3.5), 'nature', 'bee_queen', { speed: 430, radius: 17, homing: true, piercing: true, maxHits: 12, life: 3.5 });
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 50, 'KRÁLOVNA!', '#FBBF24', true));
+        }
+        if (picked.has('hive_frenzy') && weaponId === 'bees' && hitCount % 24 === 0) {
+          for (let i = 0; i < 8; i++) projectile(enemy.x, enemy.y, (Math.PI * 2 * i) / 8, base(12 * 0.9), 'nature', 'bee', { speed: 360, radius: 8, homing: true, life: 2.5 });
+        }
+
+        if (picked.has('thunder_candle') && weaponId === 'hromnicka' && event === 'pulse' && hitCount % 4 === 0) {
+          area(enemy.x, enemy.y, 85, base(10 * 1.8), 'holy');
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'HROMOVÝ PLAMEN!', '#FDE047', true));
+        }
+        if (picked.has('holy_dawn') && weaponId === 'hromnicka' && event === 'pulse' && hitCount % 12 === 0) {
+          area(this.x, this.y, 190, base(10 * 2.8), 'holy');
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 70, 'POSLEDNÍ SVÍTÁNÍ!', '#FEF08A', true));
+        }
+
+        if (picked.has('baptism') && weaponId === 'holywater' && hitCount % 8 === 0) {
+          area(enemy.x, enemy.y, 90, base(22 * 1.8), 'holy');
+          engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, 'KŘEST OHNĚM!', '#FEF08A', true));
+        }
+        if (picked.has('flood_of_saints') && weaponId === 'holywater' && hitCount % 20 === 0) {
+          for (let i = 0; i < 12; i++) projectile(this.x, this.y, (Math.PI * 2 * i) / 12, base(22 * 0.75), 'holy', 'holy_droplet', { speed: 420, radius: 9, life: 1.5 });
+        }
       },
 
       applyKnockback(enemy: any, force: number, angle: number) {
@@ -1438,7 +1599,7 @@ export default function App() {
             const dist=Math.sqrt(distSq);
             const holyMult = getHolyDamageMultiplier(e);
             const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(e));
-            const actualDmg = baseDmg * (this.damageMultiplier || 1) * holyMult;
+            const actualDmg = (baseDmg + (this.tulakDamageBonus || 0)) * (this.damageMultiplier || 1) * holyMult;
             const ang = dist > 0.001 ? Math.atan2(e.y - this.y, e.x - this.x) : Math.random() * Math.PI * 2;
             const pushForce = 145 + level * 25;
             const kbx = Math.cos(ang) * pushForce * holyPush;
@@ -1449,6 +1610,7 @@ export default function App() {
             }
 
             e.takeDamage(actualDmg, 'holy', kbx, kby);
+            if (this._firingWeapon?.id) this.triggerWeaponMastery(this._firingWeapon.id, e, 'pulse');
 
             // Sacred golden embers
             for (let i = 0; i < 4; i++) {
@@ -1950,7 +2112,7 @@ export default function App() {
         const wDef = WEAPONS[w.id];
         if (!w.mastery) w.mastery = createWeaponMasteryState();
         const picked = new Set(w.mastery.picked || []);
-        const masteryOptions = getMasteryOptions(wDef.type).filter((o) => !picked.has(o.id));
+        const masteryOptions = getMasteryOptions(w.id).filter((o) => !picked.has(o.id));
         for (const option of masteryOptions.slice(0, 2)) {
           combatChoices.push({
             type: 'weapon_mastery',
@@ -1964,37 +2126,64 @@ export default function App() {
       }
     }
 
-    // Weapon level upgrades for the newly added weapons.
+    // Every weapon now shares the same level cap. Level 2/4/6 are the major
+    // breakpoints; intermediate levels primarily improve the weapon's base DPS.
     for (const w of p.weapons) {
-      if (['valecnice', 'cesnekova-topinka', 'kysela-okurka'].includes(w.id) && w.level < 6) {
-        const names: Record<string, {name:string;desc:string}[]> = {
+      if (w.level < 6) {
+        const nextLevel = w.level + 1;
+        const names: Record<string, { name: string; desc: string }[]> = {
           valecnice: [
-            {name:'Válečnice',desc:'Úroveň 1: jedna orbitující Válečnice.'},
-            {name:'Druhá Válečnice',desc:'+1 orbitující instance.'},
-            {name:'Rychlejší Válečnice',desc:'+20 % rychlost orbitu.'},
-            {name:'Těžší váleček',desc:'+25 % damage a +15 % knockback.'},
-            {name:'Válečnický kruh',desc:'+25 % orbit radius a větší hit radius.'},
-            {name:'Válečničin vztek',desc:'+25 % damage a výraznější impact efekt.'},
+            { name: 'Válečnice', desc: 'Úroveň 1: jedna orbitující Válečnice.' },
+            { name: 'Druhá Válečnice', desc: '+1 orbitující instance.' },
+            { name: 'Rychlejší orbit', desc: '+20 % rychlost orbitu.' },
+            { name: 'Těžší váleček', desc: '+15 % knockback a vyšší základní poškození.' },
+            { name: 'Válečnický kruh', desc: '+16 dosah orbitu a větší zásah.' },
+            { name: 'Válečničin vztek', desc: 'Maximální základní síla Válečnice.' },
           ],
           'cesnekova-topinka': [
-            {name:'Česneková topinka',desc:'Úroveň 1: permanentní smradlavá aura.'},
-            {name:'Větší smrad',desc:'+20 % radius aury.'},
-            {name:'Silnější česnek',desc:'+25 % knockback.'},
-            {name:'Česneková nálož',desc:'+25 % damage aury.'},
-            {name:'Dvojitá topinka',desc:'+25 % knockback a větší radius.'},
-            {name:'Extra smrad',desc:'Lehké zpomalení nepřátel v auře.'},
+            { name: 'Česneková topinka', desc: 'Úroveň 1: permanentní smradlavá aura.' },
+            { name: 'Větší smrad', desc: '+20 % radius aury.' },
+            { name: 'Silnější česnek', desc: '+25 % knockback.' },
+            { name: 'Česneková nálož', desc: '+25 % damage aury.' },
+            { name: 'Dvojitá topinka', desc: '+25 % knockback a větší radius.' },
+            { name: 'Extra smrad', desc: 'Lehké zpomalení nepřátel v auře.' },
           ],
           'kysela-okurka': [
-            {name:'Kyselá okurka',desc:'Úroveň 1: vystřeluje kyselé okurky.'},
-            {name:'Více okurek',desc:'+1 projektil.'},
-            {name:'Kyselost',desc:'+25 % projectile damage.'},
-            {name:'Přejedení',desc:'Silnější práce se stacky Přejedení.'},
-            {name:'Extra kyselost',desc:'+15 % damage taken modifier.'},
-            {name:'Dvojitá porce',desc:'+1 projektil a kratší fire cooldown.'},
+            { name: 'Kyselá okurka', desc: 'Úroveň 1: vystřeluje kyselé okurky.' },
+            { name: 'Více okurek', desc: '+1 projektil.' },
+            { name: 'Kyselost', desc: '+25 % damage projektilů.' },
+            { name: 'Přejedení', desc: 'Silnější práce se stacky Přejedení.' },
+            { name: 'Extra kyselost', desc: '+15 % damage taken modifier.' },
+            { name: 'Dvojitá porce', desc: '+1 projektil a kratší fire cooldown.' },
           ],
         };
-        const next = names[w.id][w.level] || names[w.id][names[w.id].length - 1];
-        combatChoices.push({ type:'upgrade_weapon', id:w.id, name:next.name, desc:next.desc, icon:WEAPONS[w.id].icon });
+        const genericNames: Record<string, string> = {
+          buns: 'Povidlové buchty',
+          cane: 'Osikový prut',
+          pitchfork: 'Kovářské vidle',
+          halberd: 'Kovaná halapartna',
+          flail: 'Dřevěný cep',
+          herbs: 'Devatery kvítí',
+          snowball: 'Sněhová koule',
+          kolac: 'Kynutý koláč',
+          potato: 'Horký brambor',
+          bees: 'Včelí roj',
+          hromnicka: 'Hromnička',
+          holywater: 'Kropenka',
+        };
+        const custom = names[w.id]?.[w.level];
+        const desc = custom?.desc || (
+          nextLevel % 2 === 0
+            ? 'Velký power spike: vyšší počet zásahů/projektilů nebo výraznější bojový dosah.'
+            : 'Posílení základního poškození zbraně bez dalšího globálního multiplikátoru.'
+        );
+        combatChoices.push({
+          type: 'upgrade_weapon',
+          id: w.id,
+          name: custom?.name || `${genericNames[w.id] || WEAPONS[w.id].name} — Úroveň ${nextLevel}`,
+          desc,
+          icon: WEAPONS[w.id].icon,
+        });
       }
     }
 
@@ -2081,10 +2270,8 @@ export default function App() {
           if (option && !(w.mastery.picked || []).includes(option.id)) {
             w.mastery.picked.push(option.id);
             applyMasteryOption(w, option);
-            if (w.mastery.picked.length >= 2 && !w.mastery.synergyActive) {
-              w.mastery.synergyActive = true;
-              w.mastery.synergyCount = 1;
-              engineRef.current.texts.push(new DamageText(p.x, p.y - 70, `${WEAPONS[w.id].name}: SYNERGIE!`, '#FDE047', true));
+            if (w.mastery.picked.length >= 2) {
+              engineRef.current.texts.push(new DamageText(p.x, p.y - 70, `${WEAPONS[w.id].name}: MASTERY ODEMČENA!`, '#FDE047', true));
             }
           }
         }
@@ -2093,7 +2280,7 @@ export default function App() {
           p.maxHp += 30;
           p.hp += 30;
           p.kurazCount = (p.kurazCount || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Medvědí mast! (+25 Max Kuráž)', '#F59E0B', true));
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Medvědí mast! (+30 Max Kuráž)', '#F59E0B', true));
         } else if (choice.stat === 'cooldown') {
           p.kavaCount = (p.kavaCount || 0) + 1;
           p.cooldownMultiplier = Math.max(0.40, (p.cooldownMultiplier || 1) * 0.90);
@@ -2102,11 +2289,11 @@ export default function App() {
               if (w.cd > 0) w.cd *= 0.90;
             });
           }
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Opravdová káva! (-15 % Cooldown)', '#38BDF8', true));
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Opravdová káva! (-10 % Cooldown)', '#38BDF8', true));
         } else if (choice.stat === 'damage') {
           p.jelitoCount = (p.jelitoCount || 0) + 1;
-          p.damageMultiplier = (p.damageMultiplier || 1) + 0.15;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Krvavé jelito! (+20 % Zranění)', '#DC2626', true));
+          p.damageMultiplier = (p.damageMultiplier || 1) * 1.15;
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Krvavé jelito! (×1,15 Zranění)', '#DC2626', true));
         } else if (choice.stat === 'regen') {
           p.regenLevel = (p.regenLevel || 0) + 1;
           engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Veselá mysl! (+3 Kuráž/5s)', '#4ADE80', true));
@@ -2200,8 +2387,8 @@ export default function App() {
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
-            pl.maxHp += 25;
-            pl.hp += 25;
+            pl.maxHp += 30;
+            pl.hp += 30;
             pl.kurazCount = (pl.kurazCount || 0) + 1;
           }
         },
@@ -2231,7 +2418,7 @@ export default function App() {
           const pl = engineRef.current.player;
           if (pl) {
             pl.jelitoCount = (pl.jelitoCount || 0) + 1;
-            pl.damageMultiplier = (pl.damageMultiplier || 1) + 0.15;
+            pl.damageMultiplier = (pl.damageMultiplier || 1) * 1.15;
           }
         },
       },
@@ -2265,7 +2452,7 @@ export default function App() {
     if (p && p.weapons) {
       p.weapons.forEach((pw: any) => {
         const wDef = WEAPONS[pw.id];
-        if (wDef && pw.level < 8) {
+        if (wDef && pw.level < 6) {
           possibleRewards.push({
             name: `${wDef.name} (Úroveň ${pw.level + 1})`,
             desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
@@ -3605,10 +3792,7 @@ export default function App() {
                   const fired = wDef.fire(player, w.level);
                   (player as any)._firingWeapon = null;
                   const cdMult = player.cooldownMultiplier || 1;
-                  const masteryCd = w.mastery?.cooldownMultiplier || 1;
-                  // Weapon level is progression state only; combat power comes from
-                  // explicit weapon effects, mastery and global passives.
-                  w.cd = fired ? wDef.baseCd * cdMult * masteryCd : 0.1;
+                  w.cd = fired ? wDef.baseCd * cdMult : 0.1;
                 }
               }
             }
@@ -3841,6 +4025,7 @@ export default function App() {
                   }
                   const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
                   e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
+                  if (!p.noMasteryProc && p.weaponId) player.triggerWeaponMastery(p.weaponId, e, 'hit');
                   if (p.type === 'ice') e.chill(3.5);
                   if (p.type === 'pickle') {
                     e.applyStatusEffect('pickle_sickness', { addStacks: 1, maxStacks: 3, duration: 6, damageTakenMultiplier: p.pickleDamageTakenMultiplier || 1.35, damageDealtMultiplier: 0.65 });
@@ -3896,6 +4081,7 @@ export default function App() {
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
                   e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * 260, Math.sin(s.angle) * 260);
+                  if (!s.noMasteryProc && s.weaponId) player.triggerWeaponMastery(s.weaponId, e, 'hit');
                   if (s.soaked) e.soak();
                   if (s.style === 'cane' || s.weaponId === 'cane') {
                     // Aspen whip hit effects: bud/leaf/wood particles & splash
@@ -4240,7 +4426,7 @@ export default function App() {
         // Persistent weapon visuals: animated garlic stink aura and orbiting Válečnice.
         const garlicWp = player ? player.weapons.find((w: any) => w.id === 'cesnekova-topinka') : null;
         if (player && garlicWp) {
-          const auraRadius = 110 * (garlicWp.mastery?.radiusMultiplier || 1) * (garlicWp.level >= 2 ? 1.2 : 1) * (garlicWp.level >= 5 ? 1.15 : 1);
+          const auraRadius = 110 * (garlicWp.level >= 2 ? 1.2 : 1) * (garlicWp.level >= 5 ? 1.15 : 1);
           ctx.save();
           const pulse = 1 + Math.sin(engine.uiTime * 2.6) * 0.045;
           const grad = ctx.createRadialGradient(player.x, player.y, auraRadius * 0.12, player.x, player.y, auraRadius * pulse);
@@ -4266,7 +4452,7 @@ export default function App() {
         const valecniceWp = player ? player.weapons.find((w: any) => w.id === 'valecnice') : null;
         if (player && valecniceWp) {
           const count = valecniceWp.level >= 2 ? 2 : 1;
-          const orbitRadius = (55 + (valecniceWp.level >= 5 ? 16 : 0)) * (valecniceWp.mastery?.radiusMultiplier || 1);
+          const orbitRadius = 55 + (valecniceWp.level >= 5 ? 16 : 0);
           for (let i=0;i<count;i++) {
             const a = (player.valecniceAngle || 0) + i*Math.PI*2/count;
             const x = player.x + Math.cos(a)*orbitRadius, y = player.y + Math.sin(a)*orbitRadius;
@@ -7562,7 +7748,7 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice.
+                  Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Tulácký instinkt: +30 k poškození všech zbraní. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
                   <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut & Povidlové buchty</div>
@@ -7781,12 +7967,20 @@ export default function App() {
                 });
               }
               if (pl.jelitoCount > 0) {
-                const dmgBonusPct = Math.round(((pl.damageMultiplier || 1) - 1) * 100);
+                const dmgBonusPct = pl.jelitoCount * 15;
                 perks.push({
                   icon: 'krvave_jelito',
                   name: `Krvavé jelito`,
-                  desc: `Zvýšení síly a poškození všech útoků o +${dmgBonusPct} %`,
+                  desc: `Násobení poškození všech zbraní ×${(1.15 ** pl.jelitoCount).toFixed(2)}; každý stack je ×1,15`,
                   badge: `${pl.jelitoCount}×`,
+                });
+              }
+              if ((pl.tulakDamageBonus || 0) > 0) {
+                perks.push({
+                  icon: '🧳',
+                  name: `Tulácký instinkt`,
+                  desc: `+${pl.tulakDamageBonus} k poškození všech zbraní; bonus se násobí se všemi damage multiplikátory`,
+                  badge: `+${pl.tulakDamageBonus}`,
                 });
               }
               if (pl.kurazCount > 0) {
