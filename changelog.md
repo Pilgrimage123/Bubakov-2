@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-06 — Balance arénových vylepšení
+- Level-up nyní garantuje jednu bojovou volbu, jednu pasivní volbu a jednu wildcard volbu; limit 4 zbraní nebyl zaveden.
+- Opravdová káva: -10 % cooldown za stack, minimum 40 %; Krvavé jelito: +15 % poškození.
+- Medvědí mast: +30 Max Kuráže; Veselá mysl: +3 Kuráž každých 5 sekund; Magnetický měšec: +30 dosahu sběru.
+- Zbraně: Osikový prut 18 base damage, Kynutý koláč a Povidlové buchty 3 s food CC, upravené tempo poškození Horkého bramboru, Včelího roje, Sněhové koule a Kropenky.
+
+# Changelog
+
 ## 2026-10-05 — Přejmenování vylepšení: Medvědí mast (dříve Opravdová kuráž)
 - **Přejmenování vylepšení na Medvědí mast**:
   - Vylepšení pro navýšení maximální kuráže (+25 Max Kuráž) přejmenováno z „Opravdová kuráž“ na tradiční **Medvědí mast**.

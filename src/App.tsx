@@ -1897,13 +1897,15 @@ export default function App() {
     setGameState('levelup');
 
     const choices: UpgradeChoice[] = [];
+    const combatChoices: UpgradeChoice[] = [];
+    const passiveChoices: UpgradeChoice[] = [];
     const availableWeaponKeys = Object.keys(WEAPONS);
 
     // New weapons - only offered if unlocked in meta progression!
     for (const key of availableWeaponKeys) {
       const wProg = getWeaponProgress(key, metaRef.current);
       if (wProg.isUnlocked && !p.weapons.find((w: any) => w.id === key)) {
-        choices.push({
+        combatChoices.push({
           type: 'new_weapon',
           id: key,
           name: WEAPONS[key].name,
@@ -1917,7 +1919,7 @@ export default function App() {
     for (const w of p.weapons) {
       if (w.level < 5) {
         const wDef = WEAPONS[w.id];
-        choices.push({
+        combatChoices.push({
           type: 'upgrade_weapon',
           id: w.id,
           name: `${wDef.name} (Úr. ${w.level + 1})`,
@@ -1928,51 +1930,51 @@ export default function App() {
     }
 
     // Passives
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'cooldown',
       name: 'Opravdová káva',
-      desc: 'Horká černá káva z pražených zrn. Zkracuje dobu přípravy všech zbraní (-15 % cooldown / rychlejší útoky).',
+      desc: 'Horká černá káva z pražených zrn. Zkracuje dobu přípravy všech zbraní (-10 % cooldown / rychlejší útoky).',
       icon: 'opravdova_kava',
     });
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'damage',
       name: 'Krvavé jelito',
-      desc: 'Zabijačkové jelito plné krup a síly. Trvale zvyšuje zranění všech útoků a zbraní lovce (+20 % k poškození).',
+      desc: 'Zabijačkové jelito plné krup a síly. Trvale zvyšuje zranění všech útoků a zbraní lovce (+15 % k poškození).',
       icon: 'krvave_jelito',
     });
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'maxHp',
       name: 'Medvědí mast',
-      desc: '+25 k maximální kuráži a odolnosti lovce proti vylekání a strachu.',
+      desc: '+30 k maximální kuráži a odolnosti lovce proti vylekání a strachu.',
       icon: 'medvedi_mast',
     });
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'regen',
       name: 'Veselá mysl a písnička',
-      desc: 'Písnička na rtech zažene splín a doplňuje +2 kuráže každých 5 sekund.',
+      desc: 'Písnička na rtech zažene splín a doplňuje +3 kuráže každých 5 sekund.',
       icon: '🎵',
     });
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'speed',
       name: 'Toulavé boty sedmimílové',
       desc: '+20 k rychlosti pohybu při obcházení strašidel.',
       icon: '👢',
     });
-    choices.push({
+    passiveChoices.push({
       type: 'passive',
       stat: 'pickupRadius',
       name: 'Magnetický měšec na krejcary',
-      desc: '+35 k dosahu přitahování krejcarů a posilujících dobrot.',
+      desc: '+30 k dosahu přitahování krejcarů a posilujících dobrot.',
       icon: '🧲',
     });
 
     if (p.weapons.find((w: any) => w.id === 'cane') && !p.hasSoakedCane) {
-      choices.push({
+      combatChoices.push({
         type: 'modifier',
         id: 'soaked_cane',
         name: 'Mokrý prut',
@@ -1981,8 +1983,17 @@ export default function App() {
       });
     }
 
-    choices.sort(() => 0.5 - Math.random());
-    setLevelUpChoices(choices.slice(0, 3));
+    const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
+    const pick = <T,>(items: T[]) => items.length ? items[Math.floor(Math.random() * items.length)] : undefined;
+    const combat = pick(shuffle(combatChoices));
+    const passive = pick(shuffle(passiveChoices));
+    if (combat) choices.push(combat);
+    if (passive) choices.push(passive);
+    const selectedKeys = new Set(choices.map((c) => c.type + ':' + (c.id ?? c.stat ?? c.name)));
+    const wildcardPool = [...combatChoices, ...passiveChoices].filter((c) => !selectedKeys.has(c.type + ':' + (c.id ?? c.stat ?? c.name)));
+    const wildcard = pick(shuffle(wildcardPool));
+    if (wildcard) choices.push(wildcard);
+    setLevelUpChoices(shuffle(choices).slice(0, 3));
   };
 
   const selectUpgrade = (choice: UpgradeChoice) => {
@@ -1995,34 +2006,34 @@ export default function App() {
         if (w) w.level++;
       } else if (choice.type === 'passive' && choice.stat) {
         if (choice.stat === 'maxHp') {
-          p.maxHp += 25;
-          p.hp += 25;
+          p.maxHp += 30;
+          p.hp += 30;
           p.kurazCount = (p.kurazCount || 0) + 1;
           engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Medvědí mast! (+25 Max Kuráž)', '#F59E0B', true));
         } else if (choice.stat === 'cooldown') {
           p.kavaCount = (p.kavaCount || 0) + 1;
-          p.cooldownMultiplier = Math.max(0.30, (p.cooldownMultiplier || 1) * 0.85);
+          p.cooldownMultiplier = Math.max(0.40, (p.cooldownMultiplier || 1) * 0.90);
           if (p.weapons) {
             p.weapons.forEach((w: any) => {
-              if (w.cd > 0) w.cd *= 0.85;
+              if (w.cd > 0) w.cd *= 0.90;
             });
           }
           engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Opravdová káva! (-15 % Cooldown)', '#38BDF8', true));
         } else if (choice.stat === 'damage') {
           p.jelitoCount = (p.jelitoCount || 0) + 1;
-          p.damageMultiplier = (p.damageMultiplier || 1) + 0.20;
+          p.damageMultiplier = (p.damageMultiplier || 1) + 0.15;
           engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Krvavé jelito! (+20 % Zranění)', '#DC2626', true));
         } else if (choice.stat === 'regen') {
           p.regenLevel = (p.regenLevel || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Veselá mysl! (+2 Kuráž/5s)', '#4ADE80', true));
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Veselá mysl! (+3 Kuráž/5s)', '#4ADE80', true));
         } else if (choice.stat === 'speed') {
           p.speed += 20;
           p.speedCount = (p.speedCount || 0) + 1;
           engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+20 Rychlost!', '#60A5FA', true));
         } else if (choice.stat === 'pickupRadius') {
-          p.pickupRadius += 35;
+          p.pickupRadius += 30;
           p.magnetCount = (p.magnetCount || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+35 Dosah sběru!', '#FCD34D', true));
+          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+30 Dosah sběru!', '#FCD34D', true));
         }
       } else if (choice.type === 'modifier') {
         p.hasSoakedCane = true;
@@ -2093,13 +2104,13 @@ export default function App() {
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
-            pl.maxHp += 25;
-            pl.hp += 25;
+            pl.maxHp += 30;
+            pl.hp += 30;
           }
         },
       },
       {
-        name: 'Medvědí mast (+25 Max Kuráž)',
+        name: 'Medvědí mast (+30 Max Kuráž)',
         desc: 'Hojivá mast z divočiny pro nezlomnou sílu a odolnost proti všem strašidlům a běsům',
         icon: 'medvedi_mast',
         action: () => {
@@ -2112,31 +2123,31 @@ export default function App() {
         },
       },
       {
-        name: 'Opravdová káva (-15 % Cooldown)',
+        name: 'Opravdová káva (-10 % Cooldown)',
         desc: 'Čerstvě pražená horká černá káva zkrátí dobu přípravy všech zbraní',
         icon: 'opravdova_kava',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.kavaCount = (pl.kavaCount || 0) + 1;
-            pl.cooldownMultiplier = Math.max(0.30, (pl.cooldownMultiplier || 1) * 0.85);
+            pl.cooldownMultiplier = Math.max(0.40, (pl.cooldownMultiplier || 1) * 0.90);
             if (pl.weapons) {
               pl.weapons.forEach((w: any) => {
-                if (w.cd > 0) w.cd *= 0.85;
+                if (w.cd > 0) w.cd *= 0.90;
               });
             }
           }
         },
       },
       {
-        name: 'Krvavé jelito (+20 % Zranění)',
+        name: 'Krvavé jelito (+15 % Zranění)',
         desc: 'Zabijačkové jelito s kroupami trvale zvýší sílu všech úderů a zbraní',
         icon: 'krvave_jelito',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.jelitoCount = (pl.jelitoCount || 0) + 1;
-            pl.damageMultiplier = (pl.damageMultiplier || 1) + 0.20;
+            pl.damageMultiplier = (pl.damageMultiplier || 1) + 0.15;
           }
         },
       },
@@ -3433,9 +3444,9 @@ export default function App() {
             if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 3);
                 player.regenTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🍺`, COLORS.green));
+                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 3} 🍺`, COLORS.green));
               }
             }
             if (player.type === 'korenarka' && player.hp < player.maxHp) {
@@ -7457,7 +7468,7 @@ export default function App() {
                 perks.push({
                   icon: '🎵',
                   name: `Veselá mysl a písnička`,
-                  desc: `+${pl.regenLevel * 2} kuráže doplňováno každých 5 sekund`,
+                  desc: `+${pl.regenLevel * 3} kuráže doplňováno každých 5 sekund`,
                   badge: `Úr. ${pl.regenLevel}`,
                 });
               }
@@ -7473,7 +7484,7 @@ export default function App() {
                 perks.push({
                   icon: '🧲',
                   name: `Magnetický měšec`,
-                  desc: `+${pl.magnetCount * 35} k dosahu přitahování krejcarů a posilujících dobrot`,
+                  desc: `+${pl.magnetCount * 30} k dosahu přitahování krejcarů a posilujících dobrot`,
                   badge: `${pl.magnetCount}×`,
                 });
               }

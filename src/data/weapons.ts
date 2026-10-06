@@ -10,7 +10,7 @@ var WEAPONS = {
 		baseDmg: 20,
 		baseCd: 1.2,
 		speed: 460,
-		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 4 s zastaví a mlsají s poznámkou „Ňam, ňam“. Vícero buchet čas sčítá (odolnost dle Hladu).",
+		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 3 s zastaví a mlsají s poznámkou „Ňam, ňam“. Vícero buchet čas sčítá (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
@@ -39,7 +39,7 @@ var WEAPONS = {
 					radius: 12,
 					type: "food",
 					visual: "bun",
-					snackDuration: 4,
+					snackDuration: 3,
 					life: 2.2
 				});
 			}
@@ -51,14 +51,14 @@ var WEAPONS = {
 		name: "Osikový prut",
 		type: "physical",
 		icon: "osikovy_prut",
-		baseDmg: 16,
+		baseDmg: 18,
 		baseCd: .8,
 		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const reach = 88 + level * 14;
 			const arc = 1.35 + level * .2;
-			const dmg = (16 + level * 5) * (player.damageMultiplier || 1);
+			const dmg = (16 + level * 4) * (player.damageMultiplier || 1);
 			player._caneSwingAlt = !player._caneSwingAlt;
 			player.spawnMeleeSlash({
 				x: player.x,
@@ -178,7 +178,7 @@ var WEAPONS = {
 		speed: 350,
 		desc: "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
 		fire: (player, level) => {
-			const count = 3 + level;
+			const count = 2 + level;
 			const dmg = (15 + level * 4) * (player.damageMultiplier || 1);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);
 			for (let i = 0; i < count; i++) {
@@ -256,7 +256,7 @@ var WEAPONS = {
 			const target = enemies[Math.floor(Math.random() * Math.min(6, enemies.length))];
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
 			const bounces = 2 + level;
-			const dmg = (28 + level * 6) * (player.damageMultiplier || 1);
+			const dmg = (32 + level * 6) * (player.damageMultiplier || 1);
 			player.spawnProjectile({
 				x: player.x,
 				y: player.y,
@@ -266,9 +266,9 @@ var WEAPONS = {
 				radius: 16,
 				type: "food",
 				visual: "kolac",
-				snackDuration: 4,
+				snackDuration: 3,
 				bounces,
-				life: 3.5
+				life: 2.5.5
 			});
 			sound.slash();
 			return true;
@@ -285,7 +285,7 @@ var WEAPONS = {
 		desc: "Brambor vytažený přímo z žhavého popela. Způsobuje popáleniny a zanechává na zemi kouřící ohnisko.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx) + (Math.random() - .5) * .4;
-			const dmg = (22 + level * 5) * (player.damageMultiplier || 1);
+			const dmg = (22 + level * 6) * (player.damageMultiplier || 1);
 			player.spawnProjectile({
 				x: player.x,
 				y: player.y,
@@ -296,7 +296,7 @@ var WEAPONS = {
 				type: "fire",
 				visual: "potato",
 				leavesFireZone: true,
-				life: 1.6
+				life: 2
 			});
 			sound.slash();
 			return true;
@@ -359,8 +359,8 @@ var WEAPONS = {
 		desc: "Svěcená voda z kapličky svatého Jiří. Kropí široký vějíř kapek a spolehlivě zklidní noční bubáky. Nemrtví a pekelníci mají proti ní silně sníženou odolnost a utrží až dvojnásobné poškození.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const count = 5 + level;
-			const dmg = (26 + level * 7) * (player.damageMultiplier || 1);
+			const count = 4 + level;
+			const dmg = (22 + level * 5) * (player.damageMultiplier || 1);
 			for (let i = 0; i < count; i++) {
 				const offsetAngle = angle + (i - (count - 1) / 2) * .16;
 				player.spawnProjectile({
