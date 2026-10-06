@@ -17,6 +17,11 @@
 
 # Changelog
 
+## 2026-10-06 — Oprava útěkové AI nepřátel
+- Stav útěku (`panicTimer` / `panicked`) má absolutní prioritu před distance AI i specializovaným chováním nepřítele.
+- Při útěku se vždy současně nastaví rychlost, směr, pozice i animace, takže nepřítel nemůže přehrávat útěkovou animaci a přitom stát na místě.
+- Útěkový směr je odvozen přímo od pozice hráče; při překrytí hráče se použije poslední známý směr pohybu.
+
 ## 2026-10-06 — Oprava sběru předmětů a zranitelnosti lovce i nepřátel
 - **Sběr předmětů (dropů) v aréně:** Opravena kritická chyba, kdy herní smyčka kontrolovala zastaralou hodnotu `gameState === 'playing'` ze starého uzávěru (stale closure), která zůstávala `'menu'`. Nyní používá `currentGameState === 'playing'` (`gameStateRef.current`). Předměty (mince, jitrnice, hrušky, dušičky, truhly) se nyní spolehlivě magnetizují k lovci a při přiblížení se okamžitě seberou.
 - **Zranitelnost lovce při kontaktu s monstry:** Stejná chyba ve starém stavu `gameState` blokovala zásahy nepřítelem při kontaktu s lovcem. Nyní kolize monstra s lovcem řádně volá `player.takeDamage()`, respektuje dočasné štíty, úhyby i brnění a lovec může být zraněn či zahnán na útěk.
