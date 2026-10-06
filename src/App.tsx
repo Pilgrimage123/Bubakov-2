@@ -1337,6 +1337,11 @@ export default function App() {
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
+      valecniceAngle: 0,
+      valecniceHitTimer: 0,
+      garlicAuraTimer: 0,
+      _valecnicePulse: false,
+      _garlicPulse: false,
 
       // Take damage from mob contact or hazard attacks
       takeDamage(amount: number, type = 'physical') {
@@ -1411,6 +1416,14 @@ export default function App() {
           }
         }
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
+      },
+
+      applyKnockback(enemy: any, force: number, angle: number) {
+        if (enemy.knockbackImmune || (enemy.knockbackResistance ?? enemy.poiseResist ?? 0) >= 1) return;
+        const resistance = Math.max(0, Math.min(1, enemy.knockbackResistance ?? 0));
+        const effectiveForce = force * (1 - resistance);
+        enemy.kbx = Math.cos(angle) * effectiveForce;
+        enemy.kby = Math.sin(angle) * effectiveForce;
       },
 
       spawnHromnickaPulse(reach: number, baseDmg: number, level: number) {
@@ -1948,6 +1961,40 @@ export default function App() {
             icon: wDef.icon,
           });
         }
+      }
+    }
+
+    // Weapon level upgrades for the newly added weapons.
+    for (const w of p.weapons) {
+      if (['valecnice', 'cesnekova-topinka', 'kysela-okurka'].includes(w.id) && w.level < 6) {
+        const names: Record<string, {name:string;desc:string}[]> = {
+          valecnice: [
+            {name:'Válečnice',desc:'Úroveň 1: jedna orbitující Válečnice.'},
+            {name:'Druhá Válečnice',desc:'+1 orbitující instance.'},
+            {name:'Rychlejší Válečnice',desc:'+20 % rychlost orbitu.'},
+            {name:'Těžší váleček',desc:'+25 % damage a +15 % knockback.'},
+            {name:'Válečnický kruh',desc:'+25 % orbit radius a větší hit radius.'},
+            {name:'Válečničin vztek',desc:'+25 % damage a výraznější impact efekt.'},
+          ],
+          'cesnekova-topinka': [
+            {name:'Česneková topinka',desc:'Úroveň 1: permanentní smradlavá aura.'},
+            {name:'Větší smrad',desc:'+20 % radius aury.'},
+            {name:'Silnější česnek',desc:'+25 % knockback.'},
+            {name:'Česneková nálož',desc:'+25 % damage aury.'},
+            {name:'Dvojitá topinka',desc:'+25 % knockback a větší radius.'},
+            {name:'Extra smrad',desc:'Lehké zpomalení nepřátel v auře.'},
+          ],
+          'kysela-okurka': [
+            {name:'Kyselá okurka',desc:'Úroveň 1: vystřeluje kyselé okurky.'},
+            {name:'Více okurek',desc:'+1 projektil.'},
+            {name:'Kyselost',desc:'+25 % projectile damage.'},
+            {name:'Přejedení',desc:'Silnější práce se stacky Přejedení.'},
+            {name:'Extra kyselost',desc:'+15 % damage taken modifier.'},
+            {name:'Dvojitá porce',desc:'+1 projektil a kratší fire cooldown.'},
+          ],
+        };
+        const next = names[w.id][w.level] || names[w.id][names[w.id].length - 1];
+        combatChoices.push({ type:'upgrade_weapon', id:w.id, name:next.name, desc:next.desc, icon:WEAPONS[w.id].icon });
       }
     }
 
@@ -3540,6 +3587,13 @@ export default function App() {
               }
             }
 
+            // Update persistent orbit angle for Válečnice.
+            const valecniceWeapon = player.weapons.find((w: any) => w.id === 'valecnice');
+            if (valecniceWeapon) {
+              const orbitSpeed = valecniceWeapon.level >= 3 ? 2.16 : 1.8;
+              player.valecniceAngle = (player.valecniceAngle + dt * orbitSpeed) % (Math.PI * 2);
+            }
+
             // Fire weapons
             for (const w of player.weapons) {
               w.cd -= dt;
@@ -3786,6 +3840,15 @@ export default function App() {
                   const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
                   e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
                   if (p.type === 'ice') e.chill(3.5);
+                  if (p.type === 'pickle') {
+                    e.applyStatusEffect('pickle_sickness', { addStacks: 1, maxStacks: 3, duration: 6, damageTakenMultiplier: p.pickleDamageTakenMultiplier || 1.35, damageDealtMultiplier: 0.65 });
+                    const after = e.getStatusEffect('pickle_sickness')?.stacks || 0;
+                    const burstColor = after >= 3 ? '#84CC16' : '#A3E635';
+                    for (let k = 0; k < (after >= 3 ? 8 : 4); k++) {
+                      engine.particles.push({x:e.x+(Math.random()-.5)*14,y:e.y+(Math.random()-.5)*14,vx:(Math.random()-.5)*100,vy:(Math.random()-.5)*100,life:.35,color:burstColor,size:after>=3?4:2.5});
+                    }
+                    engine.texts.push(new DamageText(e.x, e.y-30, after >= 3 ? 'PŘEJEDENÍ! 🥒' : String(after) + '/3 🥒', burstColor, after >= 3));
+                  }
 
                   // Bouncing poppy cake
                   if (p.bounces && p.bounces > 0) {
@@ -3799,6 +3862,9 @@ export default function App() {
                       p.hitList = [];
                       break;
                     }
+                  }
+                  if (p.type === 'pickle' && p.penetrate) {
+                    continue;
                   }
                   p.dead = true;
                   break;
@@ -3861,7 +3927,7 @@ export default function App() {
             if (!e.isDefeated && (e.snackTimer || 0) <= 0 && Math.hypot(e.x - player.x, e.y - player.y) < e.radius + player.radius) {
               if (currentGameState === 'playing') {
                 if (e.id === 'cert' && e.aiState === 'charge') {
-                  const chDmg = (e.damage * 1.55) * (1 - player.damageReduction);
+                  const chDmg = (e.damage * e.getDamageDealtMultiplier() * 1.55) * (1 - player.damageReduction);
                   player.takeDamage(chDmg, 'physical');
                   sound.heavyHit();
                   const pushDist = 110;
@@ -3876,7 +3942,7 @@ export default function App() {
                   e.contactTimer = (e.contactTimer || 0) - dt;
                   if (e.contactTimer <= 0) {
                     e.contactTimer = 0.45;
-                    player.takeDamage(e.damage, 'physical');
+                    player.takeDamage(e.damage * e.getDamageDealtMultiplier(), 'physical');
                   }
                 }
               }
@@ -4169,6 +4235,56 @@ export default function App() {
           Lada.drawHromnickaAura(ctx, player.x, player.y, reach, engine.uiTime, player.hromnickaPulseTimer || 0);
         }
 
+        // Persistent weapon visuals: animated garlic stink aura and orbiting Válečnice.
+        const garlicWp = player ? player.weapons.find((w: any) => w.id === 'cesnekova-topinka') : null;
+        if (player && garlicWp) {
+          const auraRadius = 110 * (garlicWp.mastery?.radiusMultiplier || 1) * (garlicWp.level >= 2 ? 1.2 : 1) * (garlicWp.level >= 5 ? 1.15 : 1);
+          ctx.save();
+          const pulse = 1 + Math.sin(engine.uiTime * 2.6) * 0.045;
+          const grad = ctx.createRadialGradient(player.x, player.y, auraRadius * 0.12, player.x, player.y, auraRadius * pulse);
+          grad.addColorStop(0, 'rgba(190, 230, 110, 0.05)');
+          grad.addColorStop(0.62, 'rgba(132, 180, 55, 0.12)');
+          grad.addColorStop(1, 'rgba(101, 145, 35, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath(); ctx.arc(player.x, player.y, auraRadius * pulse, 0, Math.PI * 2); ctx.fill();
+          for (let i=0;i<8;i++) {
+            const a = engine.uiTime * (0.28 + i*0.01) + i * Math.PI / 4;
+            const rr = auraRadius * (0.35 + ((engine.uiTime * 0.12 + i * 0.17) % 0.65));
+            const x = player.x + Math.cos(a) * rr, y = player.y + Math.sin(a) * rr;
+            ctx.globalAlpha = 0.28 * (1-rr/auraRadius);
+            ctx.fillStyle = i%2 ? '#A3E635' : '#D9F99D';
+            ctx.beginPath(); ctx.arc(x, y, 7 + Math.sin(engine.uiTime*2+i)*2, 0, Math.PI*2); ctx.fill();
+          }
+          ctx.globalAlpha = 0.8;
+          ctx.strokeStyle = 'rgba(101,145,35,.32)'; ctx.lineWidth = 2;
+          ctx.setLineDash([4,8]); ctx.beginPath(); ctx.arc(player.x, player.y, auraRadius*pulse, 0, Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        const valecniceWp = player ? player.weapons.find((w: any) => w.id === 'valecnice') : null;
+        if (player && valecniceWp) {
+          const count = valecniceWp.level >= 2 ? 2 : 1;
+          const orbitRadius = (55 + (valecniceWp.level >= 5 ? 16 : 0)) * (valecniceWp.mastery?.radiusMultiplier || 1);
+          for (let i=0;i<count;i++) {
+            const a = (player.valecniceAngle || 0) + i*Math.PI*2/count;
+            const x = player.x + Math.cos(a)*orbitRadius, y = player.y + Math.sin(a)*orbitRadius;
+            const bob = Math.sin(engine.uiTime*7+i)*2;
+            ctx.save();
+            ctx.translate(x, y+bob);
+            ctx.rotate(a + Math.sin(engine.uiTime*5+i)*0.08);
+            ctx.fillStyle='#E7B98B'; ctx.strokeStyle=COLORS.ink; ctx.lineWidth=2.5;
+            ctx.beginPath(); ctx.arc(0,-5,13,0,Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle='#B91C1C'; ctx.beginPath(); ctx.arc(0,-8,14,Math.PI,Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle='#7C2D12'; ctx.beginPath(); ctx.ellipse(0,9,13,15,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+            const swing = Math.sin(engine.uiTime*9+i)*0.18;
+            ctx.rotate(swing);
+            ctx.strokeStyle='#8B5A2B'; ctx.lineWidth=6; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(-21,7); ctx.lineTo(21,7); ctx.stroke();
+            ctx.strokeStyle='#D6A15A'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-18,3); ctx.lineTo(18,3); ctx.stroke();
+            ctx.restore();
+          }
+        }
+
         // Sort characters & enemies by Y for correct isometric depth
         const drawables = engine.renderBuffer;
         drawables.length = 0;
@@ -4206,6 +4322,15 @@ export default function App() {
             ctx.stroke();
           } else if (p.visual === 'kolac') {
             Lada.drawKynutyKolac(ctx, 0, 0, 1.25, 0);
+          } else if (p.visual === 'pickle') {
+            ctx.save();
+            ctx.rotate(Math.sin(engine.uiTime * 8 + p.x * 0.01) * 0.08);
+            Lada.setupPath(ctx, '#5E9F3B', '#193B18', 2.5);
+            ctx.beginPath(); ctx.ellipse(0,0,15,8,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle='#A8D96D';
+            for(let i=-1;i<=1;i++){ctx.beginPath();ctx.arc(i*6,-2+(i%2)*3,1.4,0,Math.PI*2);ctx.fill();}
+            ctx.fillStyle='rgba(255,255,255,.75)'; ctx.beginPath();ctx.ellipse(-5,-3,3,1.5,-.3,0,Math.PI*2);ctx.fill();
+            ctx.restore();
           } else if (p.visual === 'potato') {
             Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
             ctx.beginPath();
@@ -4573,6 +4698,10 @@ export default function App() {
       soakedTimer: 0,
       chilled: false,
       chillTimer: 0,
+      statusEffects: {} as Record<string, any>,
+      knockbackImmune: false,
+      knockbackResistance: 0,
+      garlicSlowTimer: 0,
       snackTimer: 0,
       defeatedByFood: false,
       foodDefeatTimer: 0,
@@ -4602,6 +4731,11 @@ export default function App() {
       update(dt: number, player: any) {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
+        if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
+        for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
+          effect.remaining -= dt;
+          if (effect.remaining <= 0) delete this.statusEffects[statusType];
+        }
         const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
 
         if (this.isDefeated) {
@@ -4711,7 +4845,7 @@ export default function App() {
         if (this.panicTimer > 0) this.panicTimer -= dt;
         this.panicked = this.panicTimer > 0;
 
-        let spd = this.speed;
+        let spd = this.speed * this.getMovementSpeedMultiplier() * (this.garlicSlowTimer > 0 ? 0.9 : 1);
         if (this.soaked) {
           spd *= 0.55;
           this.soakedTimer -= dt;
@@ -5855,7 +5989,7 @@ export default function App() {
 
       takeDamage(amount: number, type: string, kbx: number, kby: number) {
         if (this.isDefeated) return;
-        let finalDmg = amount;
+        let finalDmg = amount * this.getDamageTakenMultiplier();
         if (this.soaked) finalDmg *= 1.45;
         finalDmg += (metaRef.current.forgeLevel || 0) * 2;
 
@@ -5876,11 +6010,12 @@ export default function App() {
         }
 
         // Food type weapons like Buchta don't cause knockback
-        if (type !== 'food') {
+        if (type !== 'food' && !this.knockbackImmune && (this.knockbackResistance ?? 0) < 1) {
           const poiseFactor = 1 - this.poiseResist;
+          const resistanceFactor = 1 - Math.max(0, Math.min(1, this.knockbackResistance ?? 0));
           const kbDamp = this.isMiniboss ? 0.25 : 1.0;
-          this.kbx = kbx * poiseFactor * kbDamp;
-          this.kby = kby * poiseFactor * kbDamp;
+          this.kbx = kbx * poiseFactor * resistanceFactor * kbDamp;
+          this.kby = kby * poiseFactor * resistanceFactor * kbDamp;
         } else {
           this.kbx = 0;
           this.kby = 0;
@@ -6266,6 +6401,32 @@ export default function App() {
         }
       },
 
+      applyStatusEffect(type: string, effect: any) {
+        const current = this.statusEffects[type];
+        if (type === 'pickle_sickness') {
+          const nextStacks = Math.min(effect.maxStacks || 3, (current?.stacks || 0) + (effect.addStacks || 1));
+          this.statusEffects[type] = {
+            type,
+            stacks: nextStacks,
+            maxStacks: effect.maxStacks || 3,
+            remaining: effect.duration ?? 6,
+            damageDealtMultiplier: nextStacks >= 3 ? (effect.damageDealtMultiplier ?? 0.65) : 1,
+            damageTakenMultiplier: nextStacks >= 3 ? (effect.damageTakenMultiplier ?? 1.35) : 1,
+            movementSpeedMultiplier: nextStacks >= 3 ? 0.90 : 1,
+          };
+        }
+      },
+      getStatusEffect(type: string) { return this.statusEffects[type]; },
+      getDamageTakenMultiplier() {
+        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.damageTakenMultiplier ?? 1), 1);
+      },
+      getDamageDealtMultiplier() {
+        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.damageDealtMultiplier ?? 1), 1);
+      },
+      getMovementSpeedMultiplier() {
+        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.movementSpeedMultiplier ?? 1), 1);
+      },
+
       soak() {
         this.soaked = true;
         this.soakedTimer = 5.0;
@@ -6489,6 +6650,23 @@ export default function App() {
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
           ctx.fill();
+        }
+        const pickleStatus = this.statusEffects?.pickle_sickness;
+        if (pickleStatus && !this.isDefeated) {
+          const pulse = 0.28 + Math.sin(this.animTime * 7) * 0.08;
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(101, 163, 13, ' + pulse + ')';
+          ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          ctx.save();
+          ctx.fillStyle = '#A3E635';
+          ctx.globalAlpha = 0.8;
+          for(let i=0;i<pickleStatus.stacks;i++){
+            const a=this.animTime*2+i*Math.PI*2/3;
+            ctx.beginPath();ctx.arc(this.x+Math.cos(a)*(this.radius+8),this.y-this.radius-4+Math.sin(a)*4,2.5,0,Math.PI*2);ctx.fill();
+          }
+          ctx.restore();
         }
 
         if (scale !== 1.0) {
