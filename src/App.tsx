@@ -3445,10 +3445,6 @@ export default function App() {
               }
             }
 
-            livingEnemiesRef.current.length=0;
-            for(const e of engine.enemies) if(!e.isDefeated) livingEnemiesRef.current.push(e);
-            enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
-
             // Player movement
             let mx = 0;
             let my = 0;
@@ -3659,7 +3655,13 @@ export default function App() {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
             p.life -= dt;
-            if (p.life <= 0) p.dead = true;
+
+            // An expired projectile must not process collisions
+            // during the same frame in which it expires.
+            if (p.life <= 0) {
+              p.dead = true;
+              continue;
+            }
 
             // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave, Bezhlavý rytíř head)
             if (p.isEnemy) {
@@ -3881,6 +3883,16 @@ export default function App() {
             }
           }
           compactInPlace(engine.enemies, (e) => !e.dead);
+
+          // Rebuild the spatial hash AFTER enemy movement.
+          // Collision systems later in this frame must see current enemy positions.
+          livingEnemiesRef.current.length = 0;
+          for (const e of engine.enemies) {
+            if (!e.isDefeated && !e.dead) {
+              livingEnemiesRef.current.push(e);
+            }
+          }
+          enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
           // Update Drops
           for (const d of engine.drops) {
