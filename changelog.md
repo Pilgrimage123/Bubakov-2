@@ -1,3 +1,10 @@
+## 2026-10-06 — Opravy lifecycle a typování prostorového indexu
+- `GameLevelId` je zpřísněn na explicitní union `1 | 2 | 3 | 4 | 5 | 6` bez obecného `number` fallbacku.
+- `SpatialHash` je plně generický bez `any`, interní stav je zapouzdřen jako `private readonly` a konstruktor odmítá neplatnou velikost buňky.
+- `SpatialHash` ignoruje nefinite entity souřadnice, přijímá `readonly`/prázdné seznamy a nabízí `queryCircleInto()` pro výsledky přežívající další dotaz bez zbytečných alokací.
+- Prostorový index nepoužívá zastaralé pozice před pohybem nepřátel; rebuild probíhá až po jejich pohybu a cleanupu.
+- Expirované projektily jsou okamžitě označeny jako mrtvé a ve stejném snímku již neprovádějí kolize.
+
 # Changelog
 
 ## 2026-10-06 — Oprava sběru předmětů a zranitelnosti lovce i nepřátel
