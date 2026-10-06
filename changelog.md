@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-06 — Optimalizace herní smyčky a Boss HUD
+- Boss/miniboss HP HUD už není aktualizován z `takeDamage()` při každém zásahu; synchronizace je oddělena od gameplay entity logiky.
+- Herní loop má stabilní lifecycle bez opakovaného vytváření animation loopu při změně React state.
+- Neznámé ID nepřítele nyní vyhodí explicitní chybu místo tichého fallbacku na `rarach`.
+- Final-boss victory je vázána pouze na skutečného finálního bosse aktuálního levelu.
+- `src/game/perf.ts` je plně typovaný a bez nepotřebného React importu.
+
 ## 2026-10-06 — Weapon mastery
 - Přidán samostatný systém mastery pro jednotlivé zbraně bez nahrazení jejich úrovní.
 - Mastery nabízí specializace podle typu zbraně; bonus počtu projektilů se propisuje přímo do skutečného počtu vystřelených projektilů a zachovává zlomkový zbytek mezi výstřely.
