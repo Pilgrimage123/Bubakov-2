@@ -193,6 +193,7 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
 const HUD_SYNC_INTERVAL_SECONDS = 0.1;
 const MAX_PARTICLES = 300;
 const MAX_DAMAGE_TEXTS = 90;
+const BOSS_HUD_SYNC_INTERVAL_SECONDS = 0.1;
 
 // Floating damage / status text
 class DamageText {
@@ -2326,6 +2327,11 @@ export default function App() {
       // Prevent a background-tab stall from creating a large simulation burst.
       const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
       engineRef.current.lastTime = now;
+    // HUD is React-owned; gameplay entities stay Canvas/engine-owned.
+    // Boss HP is sampled here instead of calling setState from takeDamage().
+    const engine = engineRef.current;
+    const shouldSyncBossHud =
+      now - engine.lastStatsSync >= BOSS_HUD_SYNC_INTERVAL_SECONDS * 1000;
       engineRef.current.uiTime += dt;
 
       // Animate character portraits in hunter selection screen
@@ -2378,7 +2384,7 @@ export default function App() {
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
-            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelId] || GAME_LEVELS[1];
+            const curLvl = GAME_LEVELS[engine.activeLevelId || selectedLevelIdRef.current] || GAME_LEVELS[1];
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
@@ -4482,7 +4488,7 @@ export default function App() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animId);
     };
-  }, [gameState, menuScreen, selectedLevelId]);
+  }, []);
 
   // Enemy instance factory with customized AI state machine
   // Consistent authentic stats: specific enemies (e.g. Kostlivec) always have identical base stats;
@@ -4497,7 +4503,10 @@ export default function App() {
     isMiniboss = false,
     customBossTitle?: string
   ) => {
-    const stats = ENEMIES[id] || ENEMIES.rarach;
+    const stats = ENEMIES[id];
+    if (!stats) {
+      throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
+    }
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
       finalHp = Math.max(finalHp, 1400);
@@ -5840,15 +5849,6 @@ export default function App() {
           this.kby = 0;
         }
 
-        if (this.isBoss || this.isMiniboss) {
-          const pct = Math.max(0, Math.min(100, (this.hp / this.maxHp) * 100));
-          setRunStats((s) => ({
-            ...s,
-            bossHpPct: pct,
-            bossTitle: s.bossTitle || (this.isMiniboss ? `👑 MINIBOSS: ${this.customBossTitle || stats.name}` : (this.customBossTitle || stats.name)),
-          }));
-        }
-
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
           if (type === 'food') {
@@ -6221,7 +6221,7 @@ export default function App() {
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId || 1;
             const curLvl = GAME_LEVELS[curLvlId];
-            if (this.isBoss && (this.id === curLvl.finalBoss.id || this.id === 'cert' || this.id === 'hejkal' || this.id === 'obr' || this.id === 'mlynar' || this.id === 'bezhlavy_rytir' || this.id === 'drak')) {
+            if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
               triggerLevelVictory(curLvlId, 'boss');
             }
           }
