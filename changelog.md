@@ -1,3 +1,12 @@
+## 2026-10-06 — Weapon milestone progression v2
+- Přidán osmirankový progression systém pro Osikový prut, Válečnici, Česnekovou topinku a Kyselé okurky.
+- Ranky 3/5/8 nyní nabízejí dvě vzájemně výlučné milestone volby; standardní ranky 2/4/6/7 používají +12 % damage, +8 % cooldown bonus a +6 % area.
+- Milestone hodnoty jsou kumulativní a zůstávají aktivní pouze tehdy, když jsou uložené v `weapon.milestones`.
+- Přidána runtime validace: přesně 8 ranků, volby pouze na 3/5/8 a globálně unikátní ID voleb.
+- Staré mastery struktury zůstávají pouze kvůli kompatibilitě uložených her; nové mastery volby pro tyto čtyři zbraně se negenerují.
+- Cooldown používá `Base / (1 + playerCooldownBonus + weaponCooldownBonus)` s podlahou 50 % base cooldown; Opravdová káva přidává +11,11 % cooldown bonus.
+- Přidán nízkonásilný milestone slovník: „vyprášit kožich“, „rozprášit houf“, „bác“ a „obláček prachu“.
+
 ## 2026-10-06 — Rework mastery a rebalance zbraní
 - Mastery byla přepracována z generických bonusů damage/cooldown/projektilů na unikátní weapon-specific efekty se spouštěním podle zásahů/pulzů.
 - Přidán společný systém triggerWeaponMastery() a napojení mastery na zásahy projektilů, melee i pulzy bez dvojího proccování.
