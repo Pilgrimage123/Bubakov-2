@@ -1,5 +1,21 @@
 import React from 'react';
 import { sound } from '../audio';
+/* Weapon mastery state and specialization options. */
+export type WeaponMasteryState = { picked:string[]; projectileMultiplier:number; damageMultiplier:number; cooldownMultiplier:number; radiusMultiplier:number; speedMultiplier:number; bounceBonus:number; synergyActive:boolean; synergyCount:number; projectileRemainder:number; };
+export const createWeaponMasteryState = (): WeaponMasteryState => ({ picked:[], projectileMultiplier:1, damageMultiplier:1, cooldownMultiplier:1, radiusMultiplier:1, speedMultiplier:1, bounceBonus:0, synergyActive:false, synergyCount:0, projectileRemainder:0 });
+export const MASTERY_OPTIONS: Record<string, {id:string;name:string;desc:string;kind:'projectile'|'damage'|'cooldown'|'radius'|'speed'|'bounce';value:number}[]> = {
+  projectile:[{id:'more_projectiles',name:'Více projektilů',desc:'+20 % projektilů. Bonus se projeví postupně i u malých počtů projektilů.',kind:'projectile',value:.20},{id:'harder_projectiles',name:'Silnější střely',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_projectiles',name:'Rychlejší střely',desc:'+12 % rychlost projektilů.',kind:'speed',value:.12},{id:'larger_projectiles',name:'Větší střely',desc:'+15 % velikost projektilů.',kind:'radius',value:.15}],
+  physical:[{id:'heavier_strike',name:'Těžší úder',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_swing',name:'Rychlejší švih',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08},{id:'longer_reach',name:'Delší dosah',desc:'+12 % dosah/velikost zásahu.',kind:'radius',value:.12},{id:'wide_arc',name:'Širší oblouk',desc:'+10 % plocha zásahu.',kind:'radius',value:.10}],
+  food:[{id:'richer_filling',name:'Bohatší náplň',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'more_projectiles',name:'Více dobrot',desc:'+20 % projektilů/porcí.',kind:'projectile',value:.20},{id:'bigger_treat',name:'Větší dobrota',desc:'+15 % velikost zásahu.',kind:'radius',value:.15},{id:'faster_serving',name:'Rychlejší servírování',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
+  fire:[{id:'hotter',name:'Žhavější střela',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'more_fire',name:'Více žáru',desc:'+15 % velikost ohnivé zóny.',kind:'radius',value:.15},{id:'faster_fire',name:'Rychlejší vrh',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08},{id:'more_projectiles',name:'Více uhlíků',desc:'+20 % projektilů.',kind:'projectile',value:.20}],
+  ice:[{id:'more_snow',name:'Více sněhu',desc:'+20 % projektilů.',kind:'projectile',value:.20},{id:'harder_ice',name:'Tvrdší led',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'bigger_snowball',name:'Větší koule',desc:'+15 % velikost projektilu.',kind:'radius',value:.15},{id:'faster_throw',name:'Rychlejší hod',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
+  nature:[{id:'more_projectiles',name:'Hustší roj',desc:'+20 % projektilů.',kind:'projectile',value:.20},{id:'stronger_nature',name:'Silnější příroda',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'faster_projectiles',name:'Rychlejší příroda',desc:'+12 % rychlost projektilů.',kind:'speed',value:.12},{id:'larger_projectiles',name:'Větší listy',desc:'+15 % velikost projektilů.',kind:'radius',value:.15}],
+  holy:[{id:'more_projectiles',name:'Více kapek',desc:'+20 % projektilů/pulsů.',kind:'projectile',value:.20},{id:'stronger_holy',name:'Silnější požehnání',desc:'+12 % poškození této zbraně.',kind:'damage',value:.12},{id:'larger_holy',name:'Širší požehnání',desc:'+15 % velikost zásahu.',kind:'radius',value:.15},{id:'faster_holy',name:'Rychlejší požehnání',desc:'-8 % cooldown této zbraně.',kind:'cooldown',value:.08}],
+};
+export function getMasteryOptions(type:string){return MASTERY_OPTIONS[type]||MASTERY_OPTIONS.physical;}
+export function applyMasteryOption(w:any,o:{kind:string;value:number}){if(!w.mastery)w.mastery=createWeaponMasteryState();switch(o.kind){case'projectile':w.mastery.projectileMultiplier*=1+o.value;break;case'damage':w.mastery.damageMultiplier*=1+o.value;break;case'cooldown':w.mastery.cooldownMultiplier*=1-o.value;break;case'radius':w.mastery.radiusMultiplier*=1+o.value;break;case'speed':w.mastery.speedMultiplier*=1+o.value;break;case'bounce':w.mastery.bounceBonus+=Math.round(o.value);}}
+export function getProjectileCount(baseCount:number,w:any){const m=w?.mastery;if(!m||m.projectileMultiplier<=1)return baseCount;const exact=baseCount*m.projectileMultiplier+(m.projectileRemainder||0);const count=Math.floor(exact);m.projectileRemainder=exact-count;return Math.max(baseCount,count);}
+
 
 var WEAPONS = {
 	buns: {
@@ -26,8 +42,9 @@ var WEAPONS = {
 			}
 			if (player.distTo(target) > 850) return false;
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = 2 + level;
-			const dmg = (20 + level * 5) * (player.damageMultiplier || 1);
+			const w = player._firingWeapon;
+			const count = getProjectileCount(2 + level, w);
+			const dmg = (20 + level * 5) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
 			for (let i = 0; i < count; i++) {
 				const spread = count > 1 ? (Math.random() - .5) * .45 : 0;
 				player.spawnProjectile({
@@ -178,8 +195,9 @@ var WEAPONS = {
 		speed: 350,
 		desc: "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
 		fire: (player, level) => {
-			const count = 2 + level;
-			const dmg = (15 + level * 4) * (player.damageMultiplier || 1);
+			const w = player._firingWeapon;
+			const count = getProjectileCount(2 + level, w);
+			const dmg = (15 + level * 4) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);
 			for (let i = 0; i < count; i++) {
 				const a = baseOffset + i / count * Math.PI * 2;
@@ -221,8 +239,9 @@ var WEAPONS = {
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = 2 + level;
-			const dmg = (18 + level * 5) * (player.damageMultiplier || 1);
+			const w = player._firingWeapon;
+			const count = getProjectileCount(2 + level, w);
+			const dmg = (18 + level * 5) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
 			for (let i = 0; i < count; i++) {
 				const spread = count > 1 ? (Math.random() - .5) * .35 : 0;
 				player.spawnProjectile({
@@ -312,8 +331,9 @@ var WEAPONS = {
 		speed: 330,
 		desc: "Bzučící venkovské včely ze starého špalkového úlu. Samy si nacházejí nejbližší strašidla a neúnavně je bodají.",
 		fire: (player, level) => {
-			const count = 3 + level;
-			const dmg = (12 + level * 3) * (player.damageMultiplier || 1);
+			const w = player._firingWeapon;
+			const count = getProjectileCount(3 + level, w);
+			const dmg = (12 + level * 3) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
 			for (let i = 0; i < count; i++) {
 				const a = Math.random() * Math.PI * 2;
 				player.spawnProjectile({
@@ -359,8 +379,9 @@ var WEAPONS = {
 		desc: "Svěcená voda z kapličky svatého Jiří. Kropí široký vějíř kapek a spolehlivě zklidní noční bubáky. Nemrtví a pekelníci mají proti ní silně sníženou odolnost a utrží až dvojnásobné poškození.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const count = 4 + level;
-			const dmg = (22 + level * 5) * (player.damageMultiplier || 1);
+			const w = player._firingWeapon;
+			const count = getProjectileCount(4 + level, w);
+			const dmg = (22 + level * 5) * (player.damageMultiplier || 1) * (w?.mastery?.damageMultiplier || 1);
 			for (let i = 0; i < count; i++) {
 				const offsetAngle = angle + (i - (count - 1) / 2) * .16;
 				player.spawnProjectile({
