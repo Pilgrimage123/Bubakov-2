@@ -10,16 +10,6 @@ interface BubakovCoverTitleProps {
   interactiveBubak?: boolean;
 }
 
-const FRAME_NAMES = [
-  '1: Čert: Šibalský pohled & klidné vidle • Bubák: Základní postoj',
-  '2: Čert: Nápřah k dupnutí & zatažení jazyka • Bubák: Příprava k bafnutí',
-  '3: Čert: DUPNUTÍ kopytem, jiskry, bodnutí & vyplazený jazyk! • Bubák: Velké BAF!',
-  '4: Čert: Poskok do vzduchu & plápolající ocas • Bubák: Záchvěv děsu',
-  '5: Čert: Vítězné mávání vidlemi & ďábelský smích • Bubák: Cvaknutí zuby',
-  '6: Čert: Dopad na kopyta & doutnající ocas • Bubák: Šibalský úšklebek',
-  '7: Čert: Zklidnění do výchozího postoje • Bubák: Plynulý návrat',
-];
-
 interface BubakFramePose {
   headX: number;
   headY: number;
@@ -488,7 +478,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   const [isCertStomping, setIsCertStomping] = useState<boolean>(false);
   const [isBubakHovered, setIsBubakHovered] = useState<boolean>(false);
   const [isCertHovered, setIsCertHovered] = useState<boolean>(false);
-  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const isPaused = false;
   const scareTimeoutRef = useRef<number | null>(null);
   const certTimeoutRef = useRef<number | null>(null);
 
@@ -574,16 +564,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     };
   }, []);
 
-  const handleStepFrame = (delta: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPaused(true);
-    setBubakFrame((prev) => (prev + delta + 7) % 7);
-  };
-
-  const handleTogglePlay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPaused((prev) => !prev);
-  };
   return (
     <header className={`bubakov-cover-header relative select-none w-full flex flex-col items-center justify-center my-1 ${className}`}>
       {/* Hand-drawn 5-pointed folk star */}
@@ -2045,71 +2025,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
         </p>
       )}
 
-      {/* Animated Bubák 7-Frame Controls & Status */}
-      {interactiveBubak && (
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-1 mb-1 px-3 py-1 bg-amber-100/80 border border-amber-900/30 rounded-full shadow-xs text-xs font-semibold text-amber-950">
-          <button
-            type="button"
-            onClick={handleBubakClick}
-            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-700 hover:bg-red-800 text-white font-bold transition-transform active:scale-95 shadow-xs cursor-pointer"
-            title="Klikni pro strašidelné bafnutí Bubáka!"
-          >
-            <span>👻</span>
-            <span>Bubák bafnout!</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCertClick}
-            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-800 hover:bg-amber-900 text-amber-50 font-bold transition-transform active:scale-95 shadow-xs cursor-pointer"
-            title="Klikni pro dupnutí kopytem, bodnutí vidlemi a spršku jisker Čerta!"
-          >
-            <span>👹</span>
-            <span>Čert dupnout & jiskry!</span>
-          </button>
-
-          <div className="h-3.5 w-px bg-amber-900/25" />
-
-          {/* Stepper buttons */}
-          <button
-            type="button"
-            onClick={(e) => handleStepFrame(-1, e)}
-            className="w-5 h-5 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-200 border border-amber-900/30 text-amber-950 font-bold active:scale-95 cursor-pointer text-[10px]"
-            title="Předchozí snímek"
-          >
-            ◀
-          </button>
-
-          <span
-            className="font-mono font-bold tracking-tight px-1 cursor-pointer select-none"
-            onClick={handleTogglePlay}
-            title={isPaused ? "Klikni pro spuštění animace" : "Klikni pro pozastavení"}
-          >
-            Snímek {bubakFrame + 1}/7 {isPaused ? '⏸' : '▶'}
-          </span>
-
-          <button
-            type="button"
-            onClick={(e) => handleStepFrame(1, e)}
-            className="w-5 h-5 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-200 border border-amber-900/30 text-amber-950 font-bold active:scale-95 cursor-pointer text-[10px]"
-            title="Další snímek"
-          >
-            ▶
-          </button>
-
-          <button
-            type="button"
-            onClick={handleTogglePlay}
-            className="px-2 py-0.5 rounded-md text-[11px] bg-amber-200/80 hover:bg-amber-300 border border-amber-900/20 text-amber-900 font-medium cursor-pointer"
-          >
-            {isPaused ? 'Spustit' : 'Zastavit'}
-          </button>
-
-          <span className="hidden sm:inline text-[11px] text-amber-900/80 italic pl-1 border-l border-amber-900/20">
-            {FRAME_NAMES[bubakFrame]}
-          </span>
-        </div>
-      )}
 
       {/* Iconic Scalloped Folk Frieze (Lada Scallops) */}
       <LadaFrieze repeatCount={compact ? 14 : 22} height={compact ? 18 : 22} />

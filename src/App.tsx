@@ -1164,7 +1164,7 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       engineRef.current.keys[e.code] = true;
-      if (e.code === 'Space' && gameState === 'playing') {
+      if (e.code === 'Space' && gameStateRef.current === 'playing') {
         e.preventDefault();
         const cs = engineRef.current.cutscene;
         if (cs) {
@@ -1562,6 +1562,9 @@ export default function App() {
       engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x - 460, player.y, 1.0));
     }
 
+    livingEnemiesRef.current = engineRef.current.enemies.slice();
+    enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
+
     setRunStats({
       time: 0,
       level: 1,
@@ -1632,7 +1635,7 @@ export default function App() {
   // Ultimate ability trigger
   const triggerUltimate = () => {
     const p = engineRef.current.player;
-    if (!p || p.ultCd > 0 || gameState !== 'playing') return;
+    if (!p || p.ultCd > 0 || gameStateRef.current !== 'playing') return;
 
     p.ultCd = p.ultMaxCd * (p.cooldownMultiplier || 1);
     sound.slash();
@@ -3854,10 +3857,10 @@ export default function App() {
             e.update(dt, player);
 
             if (!e.isDefeated && (e.snackTimer || 0) <= 0 && Math.hypot(e.x - player.x, e.y - player.y) < e.radius + player.radius) {
-              if (gameState === 'playing') {
+              if (currentGameState === 'playing') {
                 if (e.id === 'cert' && e.aiState === 'charge') {
                   const chDmg = (e.damage * 1.55) * (1 - player.damageReduction);
-                  player.hp -= chDmg;
+                  player.takeDamage(chDmg, 'physical');
                   sound.heavyHit();
                   const pushDist = 110;
                   player.x += Math.cos(e.chargeDirX) * pushDist;
@@ -3868,21 +3871,11 @@ export default function App() {
                   e.vx = 0;
                   e.vy = 0;
                 } else {
-                  const hurtDmg = e.damage * dt * (1 - player.damageReduction);
-                  player.hp -= hurtDmg;
-                  sound.hit();
-                }
-                if (player.hp <= 0) {
-                  // Player defeated -> start flee sequence
-                  sound.hit();
-                  setGameState('fleeing');
-                  engine.fleeTimer = 3.0;
-                  engine.enemies.forEach((m) => {
-                    m.panicked = true;
-                    m.vx = -m.vx * 3;
-                    m.vy = -m.vy * 3;
-                  });
-                  engine.texts.push(new DamageText(player.x, player.y - 60, 'ÚTĚK DO TEPLA!', COLORS.red, true));
+                  e.contactTimer = (e.contactTimer || 0) - dt;
+                  if (e.contactTimer <= 0) {
+                    e.contactTimer = 0.45;
+                    player.takeDamage(e.damage, 'physical');
+                  }
                 }
               }
             }
@@ -3909,13 +3902,14 @@ export default function App() {
                 d.dead = true;
                 triggerRescueChasnik(d.x, d.y);
               }
-            } else if (dist < player.pickupRadius && gameState === 'playing') {
-              const spd = 480 * dt;
+            } else if (dist < player.pickupRadius && currentGameState === 'playing') {
+              const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
+              const curDist = Math.hypot(d.x - player.x, d.y - player.y);
 
-              if (dist < player.radius + d.radius) {
+              if (curDist < player.radius + d.radius + 14 || dist < player.radius + d.radius + 14) {
                 d.dead = true;
                 if (d.type === 'coin') {
                   const val = d.value || 1;
@@ -4576,6 +4570,8 @@ export default function App() {
       panicked: false,
       panicTimer: 0,
       calmTimer: 0,
+      hitFlashTimer: 0,
+      contactTimer: 0,
       animTime: Math.random() * 10,
 
       // Specialized AI state machine variables
@@ -4592,15 +4588,17 @@ export default function App() {
       puddleCd: 2.0 + Math.random() * 2.0,
 
       update(dt: number, player: any) {
+        if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
+        if (this.contactTimer > 0) this.contactTimer -= dt;
         const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
 
         if (this.isDefeated) {
           if (this.defeatedByFood) {
-            // Defeated by food weapons: slowly walk away (unhittable, untargetable), enjoying the food snack
+            // Defeated by food weapons: slowly walk away, enjoying the food snack
             this.foodDefeatTimer = (this.foodDefeatTimer || 0) + dt;
 
-            // In the last 0.35s before disappearing, spawn gentle little anticipatory smoke / steam puffs (only if on screen)
-            if (this.foodDefeatTimer >= 1.65 && Math.random() < 0.35 && distToPlayer < 650) {
+            // In the last 0.25s before disappearing, spawn gentle little anticipatory smoke / steam puffs (only if on screen)
+            if (this.foodDefeatTimer >= 0.55 && Math.random() < 0.35 && distToPlayer < 650) {
               const ang = Math.random() * Math.PI * 2;
               engineRef.current.particles.push({
                 x: this.x + Math.cos(ang) * (this.radius * 0.4),
@@ -4613,8 +4611,8 @@ export default function App() {
               });
             }
 
-            // Enemies defeated by food disappear after 2s or once off-screen
-            if (this.foodDefeatTimer >= 2.0 || distToPlayer > 800) {
+            // Enemies defeated by food disappear after 0.85s or once off-screen
+            if (this.foodDefeatTimer >= 0.85 || distToPlayer > 600) {
               this.dead = true;
               if (distToPlayer < 750) {
                 engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
@@ -4647,8 +4645,12 @@ export default function App() {
 
           // Defeated in combat: lively comic scramble sprint away from the hero!
           this.fleeTimer = (this.fleeTimer || 0) + dt;
-          if (this.fleeTimer >= 2.2 || distToPlayer > 800) {
+          if (this.fleeTimer >= 0.85 || distToPlayer > 600) {
             this.dead = true;
+            if (distToPlayer < 750) {
+              engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
+              sound.smokePuff();
+            }
             return;
           }
 
@@ -5846,14 +5848,23 @@ export default function App() {
         finalDmg += (metaRef.current.forgeLevel || 0) * 2;
 
         this.hp -= finalDmg;
+        this.hitFlashTimer = 0.12;
 
-        // Food type weapons like Buchta don't cause graphical hit effect or knockback
-        if (type !== 'food') {
-          if (Math.floor(finalDmg) >= 1) {
+        // Damage numbers displayed for all weapon types
+        if (Math.floor(finalDmg) >= 1) {
+          if (type === 'food') {
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 25, `${Math.floor(finalDmg)} 🥐`, '#F59E0B')
+            );
+          } else {
             engineRef.current.texts.push(
               new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
             );
           }
+        }
+
+        // Food type weapons like Buchta don't cause knockback
+        if (type !== 'food') {
           const poiseFactor = 1 - this.poiseResist;
           const kbDamp = this.isMiniboss ? 0.25 : 1.0;
           this.kbx = kbx * poiseFactor * kbDamp;
@@ -5870,9 +5881,10 @@ export default function App() {
             this.foodDefeatTimer = 0;
             this.panicked = false;
             sound.snack();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 30, 'Ňam, ňam', '#D97706', true));
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Usmířen! 🥐✨', '#D97706', true));
           } else {
             this.panicked = true;
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Zahnán! 💨', COLORS.mustard, true));
           }
           const eng = engineRef.current;
 
@@ -6253,6 +6265,14 @@ export default function App() {
       },
 
       draw(ctx: CanvasRenderingContext2D) {
+        let didSaveAlpha = false;
+        if (this.isDefeated) {
+          const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
+          ctx.save();
+          ctx.globalAlpha = Math.max(0.08, 1 - fadeProgress * 0.92);
+          didSaveAlpha = true;
+        }
+
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
 
         // Ground Miniboss Aura (illuminating halo and rotating folklore radial notches)
@@ -6543,6 +6563,36 @@ export default function App() {
           ctx.fillStyle = '#FFFFFF';
           ctx.fillText(hpText, this.x, barY + barHeight / 2);
 
+          ctx.restore();
+        } else if (this.hp < this.maxHp && !this.isDefeated) {
+          // Standard regular enemy health bar when damaged
+          ctx.save();
+          const barWidth = Math.max(26, this.radius * 1.5);
+          const barHeight = 4;
+          const barX = this.x - barWidth / 2;
+          const barY = this.y - this.radius - 12;
+          ctx.fillStyle = '#1C1917';
+          ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+          const hpPct = Math.max(0, Math.min(1, this.hp / this.maxHp));
+          ctx.fillStyle = hpPct > 0.4 ? '#DC2626' : '#EF4444';
+          ctx.fillRect(barX, barY, Math.max(0, barWidth * hpPct), barHeight);
+          ctx.strokeStyle = '#44403C';
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+          ctx.restore();
+        }
+
+        // Brief hurt/hit flash silhouette
+        if (this.hitFlashTimer > 0 && !this.isDefeated) {
+          ctx.save();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - this.radius * 0.4, this.radius * 1.05, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (didSaveAlpha) {
           ctx.restore();
         }
       },
@@ -7218,7 +7268,7 @@ export default function App() {
       )}
 
       {/* 2. OBRAZOVKA: VÝBĚR LOVCE (HUNTER SELECT) */}
-      {currentGameState === 'menu' && currentMenuScreen === 'hunter' && (
+      {gameState === 'menu' && menuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
             <LadaCardCorners variant="callout" />

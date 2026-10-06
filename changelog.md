@@ -1,6 +1,14 @@
 # Changelog
 
-## 2026-10-06 — Stabilizace Canvas loopu proti stale React state
+## 2026-10-06 — Oprava sběru předmětů a zranitelnosti lovce i nepřátel
+- **Sběr předmětů (dropů) v aréně:** Opravena kritická chyba, kdy herní smyčka kontrolovala zastaralou hodnotu `gameState === 'playing'` ze starého uzávěru (stale closure), která zůstávala `'menu'`. Nyní používá `currentGameState === 'playing'` (`gameStateRef.current`). Předměty (mince, jitrnice, hrušky, dušičky, truhly) se nyní spolehlivě magnetizují k lovci a při přiblížení se okamžitě seberou.
+- **Zranitelnost lovce při kontaktu s monstry:** Stejná chyba ve starém stavu `gameState` blokovala zásahy nepřítelem při kontaktu s lovcem. Nyní kolize monstra s lovcem řádně volá `player.takeDamage()`, respektuje dočasné štíty, úhyby i brnění a lovec může být zraněn či zahnán na útěk.
+- **Zranitelnost a zpětná vazba nepřátel:**
+  - Jídlové zbraně (Povidlové buchty, Kynutý koláč) nyní zřetelně zobrazují udělené poškození v teplé jantarové barvě (`-X 🥐`).
+  - Každý zásah do nepřítele vyvolá jemný bílý záblesk (hit flash) pro okamžitou hmatatelnou odezvu.
+  - Zraněná běžná monstra zobrazují nad hlavou decentní ukazatel zbývajících životů.
+  - Při zklidnění / zahnání se zobrazí jasný text (`Usmířen! 🥐✨` / `Zahnán! 💨`) a zahnání trvá svižných 0,85 s s plynulým vyblednutím a obláčkem dýmu.
+  - Hned při startu hry (`startGame`) se řádně naplní a inicializuje prostorový index (`SpatialHash`) a seznam živých monster.
 - Herní animační smyčka už nečte přímo hodnoty `gameState`, `menuScreen` a `selectedLevelId` uzavřené ve starém renderu.
 - Tyto hodnoty jsou průběžně synchronizovány do `useRef`, takže dlouho žijící `requestAnimationFrame` callback vždy pracuje s aktuálním stavem.
 - Kontroly poškození, cutscény, simulace, spawnování, kolizí, fleeing režimu a renderování používají aktuální ref hodnoty bez nutnosti znovu vytvářet Canvas loop při React re-renderu.
