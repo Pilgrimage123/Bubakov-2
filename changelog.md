@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-06 — Weapon mastery
+- Přidán samostatný systém mastery pro jednotlivé zbraně bez nahrazení jejich úrovní.
+- Mastery nabízí specializace podle typu zbraně; bonus počtu projektilů se propisuje přímo do skutečného počtu vystřelených projektilů a zachovává zlomkový zbytek mezi výstřely.
+- Mastery poškození a weapon-specific cooldown se aplikují přímo v boji; dvě mastery volby aktivují synergii.
+
 ## 2026-10-06 — Balancování pokladů a poškození nepřátel
 - **Poklady:** frekvence běžných pokladových truhel snížena na třetinu; práh zvýšen z 9 800 na 29 400.
 - **Nepřátelé:** poškození zvýšeno o 60 %.
