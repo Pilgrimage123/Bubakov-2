@@ -41,9 +41,10 @@ export interface MetaProgression {
 }
 
 export interface UpgradeChoice {
-  type: 'new_weapon' | 'upgrade_weapon' | 'passive' | 'modifier';
+  type: 'new_weapon' | 'upgrade_weapon' | 'weapon_mastery' | 'passive' | 'modifier';
   id?: string;
   stat?: string;
+  masteryId?: string;
   name: string;
   desc: string;
   icon: string;
