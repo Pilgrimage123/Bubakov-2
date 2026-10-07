@@ -33,7 +33,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
             color: 'var(--parchment)',
           }}
         >
-          Historie skutečných změn Bubákova. Plán vývoje byl odstraněn z herního rozhraní.
+          Historie skutečných změn Bubákova. Nejnovější zápis je vždy nahoře.
         </p>
 
         <KronikaChanges />
