@@ -56,6 +56,7 @@ const KRONIKA: KronikaEntry[] = [
       '🗺️ Přibyly úrovně 4–6: Staré hamry a Čertův mlýn, Pustá Hláska a Zlenické podhradí a Dračí sluj pod Melechovskou skálou.',
       '👹 Bestiář byl rozšířen o nová monstra a tři výrazné titánské bossy s vlastními mechanikami.',
       '🔐 Krajiny se odemykají postupným průzkumem, případně poražením bosse předchozí úrovně.',
+      '🧑‍🌾 Do družiny přibyli Kostelník a Babička, každý s vlastními zvuky a speciálními schopnostmi.',
     ],}
   ,
   {
