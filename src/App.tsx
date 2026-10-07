@@ -32,6 +32,7 @@ import { sound } from './audio';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
 import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
+import { getGingerbreadSize, getGingerbreadValue } from './data/gingerbread';
 import {
   isUnholyEnemy,
   getEnemyHolyResistance,
@@ -200,7 +201,6 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
 const HUD_SYNC_INTERVAL_SECONDS = 0.1;
 const MAX_PARTICLES = 300;
 const MAX_DAMAGE_TEXTS = 90;
-const BOSS_HUD_SYNC_INTERVAL_SECONDS = 0.1;
 
 // Floating damage / status text
 class DamageText {
@@ -2189,9 +2189,7 @@ export default function App() {
     const currentGameState = gameStateRef.current;
     const currentMenuScreen = menuScreenRef.current;
     const currentSelectedLevelId = selectedLevelIdRef.current;
-    const shouldSyncBossHud =
-      now - engine.lastStatsSync >= BOSS_HUD_SYNC_INTERVAL_SECONDS * 1000;
-      engineRef.current.uiTime += dt;
+    engineRef.current.uiTime += dt;
 
       // Animate character portraits in hunter selection screen
       if (currentGameState === 'menu' && currentMenuScreen === 'hunter') {
@@ -3508,6 +3506,31 @@ export default function App() {
             engine.lastStatsSync += dt;
             if (engine.lastStatsSync >= HUD_SYNC_INTERVAL_SECONDS) {
               engine.lastStatsSync = 0;
+
+              // Boss bar je řízený přímo živým bossem, takže reaguje i na běžné zásahy.
+              // Dříve se aktualizoval hlavně při spawn/death událostech a během boje mohl zamrznout.
+              const activeBoss = engine.enemies.find(
+                (e) =>
+                  !e.isDefeated &&
+                  (e.isBoss || e.isMiniboss || e.category === 'bosses')
+              );
+              const nextBossHpPct = activeBoss
+                ? Math.max(
+                    0,
+                    Math.min(
+                      100,
+                      (Math.max(0, activeBoss.hp) / Math.max(1, activeBoss.maxHp)) * 100
+                    )
+                  )
+                : null;
+              const nextBossTitle = activeBoss
+                ? activeBoss.customBossTitle
+                  ? `👑 ${activeBoss.customBossTitle}`
+                  : activeBoss.isMiniboss
+                    ? `👑 MINIBOSS: ${activeBoss.name}`
+                    : activeBoss.name
+                : '';
+
               setRunStats((prev) => ({
                 ...prev,
                 time: newTime,
@@ -3520,6 +3543,8 @@ export default function App() {
                 maxHp: player.maxHp,
                 ultCd: player.ultCd,
                 chestProgress: Math.floor(engine.pointsChest),
+                bossHpPct: nextBossHpPct,
+                bossTitle: nextBossTitle,
               }));
             }
           } else if (currentGameState === 'fleeing') {
@@ -6022,6 +6047,18 @@ export default function App() {
           const isShadows = this.category === 'shadows';
           const isSwarms = this.category === 'swarms';
           const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
+
+          // Dědečkovy perníčky: každý zahnáný nepřítel dá odměnu podle své herní hodnoty.
+          // Hodnoty jsou 1 / 3 / 10 a odpovídají velikostem small / large / giant.
+          const gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
+          const gingerbreadValue = getGingerbreadValue(gingerbreadSize);
+          spawnScatterDrop('gingerbread', {
+            value: gingerbreadValue,
+            radius: gingerbreadSize === 'giant' ? 19 : gingerbreadSize === 'large' ? 14 : 10,
+            speed: 65 + Math.random() * 55,
+            text: `+${gingerbreadValue} 🍪`,
+            textColor: gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309',
+          });
 
           // Thematic category affinities & multipliers
           const chestMult = isBoss ? 3.0 : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;

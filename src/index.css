@@ -908,10 +908,10 @@ body {
 }
 
 #boss-bar-wrap {
-  width: 100%;
+  width: min(100%, 600px);
   max-width: 600px;
-  min-height: 0;
-  max-height: 52px;
+  min-height: 52px;
+  max-height: none;
   flex: 0 0 auto;
   margin: 0 auto;
   display: flex;

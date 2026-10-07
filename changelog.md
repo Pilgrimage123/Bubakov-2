@@ -1,5 +1,12 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Perníčkové odměny a živý boss bar
+
+- Každý poražený nepřítel nyní vytváří perníček podle své **herní bodové hodnoty**, místo odvození velikosti perníčku od HP.
+- Hodnotová pásma používají **1 / 3 / 10 perníčků** pro malé, velké a obří dropy; bossové dávají vždy obří perníček.
+- Boss HP lišta se nyní synchronizuje přímo z živého bosse každých **0,1 s**, takže reaguje průběžně na běžné zásahy a během boje nezamrzá.
+- Boss lišta dostala pevnější layout s maximální šířkou **600 px** a minimální výškou **52 px**.
+
 ## 2026-10-07 — Dědečkův obchod a perníčková ekonomika
 
 - XP a arénový systém Level Up byly odstraněny z průběhu výpravy; lovec místo XP získává **perníčky** jako běhový zdroj.
