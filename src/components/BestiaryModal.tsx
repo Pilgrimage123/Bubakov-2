@@ -175,7 +175,6 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 				width: "95%"
 			},
 			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",

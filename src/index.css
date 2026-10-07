@@ -98,23 +98,13 @@ body {
   border-radius: 14px;
   padding: 1.75rem 2rem;
   color: var(--ink);
-  box-shadow: 10px 10px 0px var(--ink), inset 0 0 25px rgba(138, 92, 54, 0.08);
+  box-shadow: 10px 10px 0px var(--ink), inset 0 0 0 1.5px rgba(43, 26, 14, 0.28), inset 0 0 25px rgba(138, 92, 54, 0.08);
   text-align: center;
   position: relative;
   max-height: 92vh;
   overflow-y: auto;
   width: 95%;
   max-width: 980px;
-}
-
-.panel::before {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1.5px solid rgba(43, 26, 14, 0.28);
-  border-radius: 8px;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .panel::-webkit-scrollbar {

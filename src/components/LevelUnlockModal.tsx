@@ -60,7 +60,6 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 			},
 			onClick: (e) => e.stopPropagation(),
 			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaCardCorners, { variant: "callout" }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						display: "flex",

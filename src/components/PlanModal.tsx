@@ -21,7 +21,6 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
           width: '95%',
         }}
       >
-        <LadaCardCorners variant="callout" />
         <h2>📜 Kronika Bubákova</h2>
         <LadaBotanicalFlourish height={18} />
         <p

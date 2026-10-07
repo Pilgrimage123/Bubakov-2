@@ -7206,7 +7206,6 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
-            <LadaCardCorners variant="callout" />
             <BubakovCoverTitle />
 
             <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
@@ -7548,7 +7547,6 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
-            <LadaCardCorners variant="callout" />
             {/* Top Navigation Bar: Back button and chosen stage badge */}
             <div className="hunter-screen-nav-bar">
               <button
@@ -7724,7 +7722,6 @@ export default function App() {
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel" style={{ maxWidth: '820px' }}>
-            <LadaCardCorners variant="callout" />
             <h1>⏸️ HRA POZASTAVENA</h1>
             <LadaBotanicalFlourish height={20} />
             <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-4px' }}>
@@ -8075,7 +8072,6 @@ export default function App() {
       {gameState === 'chest' && (
         <div id="chest-ui" className="overlay" style={{ background: 'rgba(10, 6, 3, 0.88)', backdropFilter: 'blur(3px)' }}>
           <div className="panel slot-machine-cabinet" style={{ textAlign: 'center' }}>
-            <LadaCardCorners variant="callout" />
             {/* Ornate slot machine header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
               <span style={{ fontSize: '2rem' }}>🎰</span>
@@ -8231,7 +8227,6 @@ export default function App() {
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '780px', margin: 'auto' }}>
-            <LadaCardCorners variant="callout" />
             <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
               {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
             </h1>
@@ -8312,7 +8307,6 @@ export default function App() {
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '1000px' }}>
-            <LadaCardCorners variant="callout" />
             <h1 style={{ color: '#C53026', margin: '4px 0' }}>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
             <LadaBotanicalFlourish height={20} />
             <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>
