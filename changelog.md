@@ -1,5 +1,23 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Aktualizace průvodce Ovládání a cíl hry, Čertův dědeček a nový arzenál
+
+- **Kompletní přepracování a rozšíření průvodce „Ovládání a cíl hry“:**
+  - Vytvořeny přehledné dedikované záložky: *🧓 Čertův dědeček & Nůše*, *⚔️ Nové zbraně & Arzenál*, *🏘️ Vylepšení v hospodě* spolu s aktualizovaným ovládáním, cílem hry a výkonem.
+- **Podrobný rozbor mechanik Čertova dědečka a nůše:**
+  - Zdokumentovány přesné podmínky spuštění a zjevení: čas výpravy ≥ 25 s, minimální zásoba voňavých perníčků pro nákup (25–35 perníčků) a 25s cooldown po odchodu.
+  - Následování lovce po mapě (vzdálenost 220–280 px), zavolání *„Pssst! Perníčky!“* a otevření obchodu klávesou `E`, kliknutím myší či dotykovým tlačítkem.
+  - Bezpečné zastavení času při nákupu, garance 1–2 zbraní v nůši (nové zbraně i vylepšení stávajících zbraní až na úroveň 8), čekací sleva až −30 %, vliv statistiky Štěstí (sleva až 20 % a vzácnější nabídky) a progresivní přebalení nůše (Reroll od 4 perníčků).
+  - Vysvětlena klíčová posvátná synergie s Kaplí svaté vlny ve vesnici (tlaková vlna 100–500 dmg v okruhu 400 px při každém nákupu v nůši).
+- **Zpracování nového arzenálu zbraní v průvodci:**
+  - **Válečnice:** Obíhající rázná hospodyně s válečkem, vysoké plošné poškození (34 dmg) a masivní odhoz (knockback 300).
+  - **Česneková topinka:** Obranná aromatická aura s brutálním odhozením (knockback 320) a znatelným zpomalením dotírajících nepřátel.
+  - **Kyselá okurka:** Vystřelování nakládaných okurek udělující nepřátelům devastující debuff (+35 % až +50 % vyšší zranění ze všech ostatních zbraní).
+  - Přehled všech 15 ladovských zbraní včetně buchet, vidlí, halapartny, cepu, včelího roje a posvěcené vody.
+- **Aktualizace vylepšení vesnice a ovládání:**
+  - Zdokumentovány všechny obecní budovy v hospodě U Černého kocoura a jejich trvalé bonusy za krejcary (včetně Kovářské výhně, Šenkýřova štítu a Kaple svaté vlny).
+  - Do ovládání zanesena klávesa `E` pro otevření nůše v terénu, vylepšen popis pauzy `P / Esc`, ultimátních schopností hrdinů na `Mezerníku` a dotykového virtuálního joysticku.
+
 ## 2026-10-07 — Oprava pádů Hromničky, aktivace milníků v test módu, vyvážení nůše a stabilizace
 
 - **Oprava kritického pádu Hromničky (TypeError: player.spawnHromnickaPulse is not a function):**

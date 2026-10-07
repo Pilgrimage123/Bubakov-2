@@ -10,6 +10,18 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '7. října 2026',
+    title: 'Aktualizace průvodce ovládáním a Čertův dědeček',
+    summary: 'Kompletní aktualizace herního průvodce o Čertova dědečka, nůši, nový arzenál zbraní a obecní vylepšení.',
+    items: [
+      '🧓 Čertův dědeček a nůše: Podrobně popsány podmínky zjevení (od 25 s hry při dostatku perníčků), následování lovce po mapě, otevření nůše klávesou E i 25s cooldown.',
+      '🍪 Mechaniky nůše: Vysvětlena čekací sleva až −30 %, vliv statistiky Štěstí na ceny i vzácnost, progresivní cena zamíchání nabídky a synergie s Kaplí svaté vlny.',
+      '⚔️ Nové zbraně v průvodci: Do přehledu arzenálu zařazeny Válečnice (obíhající hospodyně s odhozem), Česneková topinka (obranné aroma s odhozením) a Kyselá okurka (debuff +35 % až +50 % dmg).',
+      '🏘️ Rozvoj vesnice: Zdokumentovány všechny obecní budovy v hospodě U Černého kocoura včetně Kovářské výhně, Šenkýřova štítu a Kaple svaté vlny.',
+      '🕹️ Ovládání a cíl hry: Doplněna klávesa E pro otevření nůše, podrobný rozpis ultimátních schopností na mezerníku, pauza P/Esc i dotykové ovládání na mobilu.',
+    ],
+  },
+  {
+    date: '7. října 2026',
     title: 'Oprava pádů Hromničky a stabilizace arzenálu',
     summary: 'Odstranění pádů Hromničky, vyvážení Dědečkovy nůše a aktivace milníků v test módu.',
     items: [
