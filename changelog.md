@@ -163,10 +163,19 @@
 - Zbraně lze v sandboxu nastavit až na úroveň 0.
 - Zbraň úrovně 0 se nepovažuje za aktivní.
 - Sandbox vyžaduje alespoň jednu aktivní zbraň.
-## 2026-10-07 — In-game Kronika změn
 
-- Přidána hráčská komponenta **Kronika změn Bubákova**.
-- Kronika je oddělena od technického vývojářského changelogu a zobrazuje hráčsky čitelné, datované zápisy.
-- Obsah Kroniky byl sjednocen s aktuálním stavem evidovaným v `changelog.md`, včetně změn z 2.–6. října 2026 a nové konsolidace zbraní, minibossů, dropů, postav a oprav gameplay loopu.
-- Starší záložka historických zápisků v `PlanModal` byla nahrazena datově řízeným obsahem `KronikaChanges`.
-- Původní **Plán kol změn** zůstává zachován jako samostatná část.
+## 2026-10-07 — Doplnění historie a odstranění Plánu kol změn z hry
+
+### Historické feature změny doplněné z původního Plánu kol změn
+- **v16.0.0:** Výběr výpravy/kraje byl oddělen do samostatného prvního kroku; následný výběr lovce má vlastní obrazovku se zachovanou informací o zvolené výpravě.
+- **v15.0.0:** Sandbox umožňuje volné testování lovců, krajin a zbraní; přidáno bezpečné úplné vymazání postupu včetně odemykání, rozvoje vesnice, pokladny, dušiček a bestiáře.
+- **v14.0.0:** Rozšířena pauza hry o P/Esc, arzenál, statistiky a čas přežití; přidán samostatný průvodce ovládáním a cílem hry.
+- **v12.0.0:** Připraven soběstačný offline export hry v jednom souboru včetně zabudovaných zdrojů pro další úpravy.
+- **v10.0.0:** Bestiář dostal postupný systém výzkumu a odhalování informací v několika úrovních.
+- **v9.0.0:** Krajiny dostaly postupný systém průzkumu a odemykání včetně alternativní cesty přes poražení předchozího bosse.
+- **v11.0.0:** Zaveden důraz na vysoký kontrast a čitelnost textů v ladovských HUD panelech; historické hodnoty balancu z tohoto passu nejsou považovány za aktuální stav.
+
+### Hráčské rozhraní
+- Samostatný **Plán kol změn (1.–16. kolo)** byl odstraněn z herního rozhraní.
+- Hra nyní zobrazuje pouze **Kroniku Bubákova**, která obsahuje hráčsky čitelné historické zápisy.
+- Kronika byla rozšířena o důležité historické feature změny převzaté z původního Plánu kol změn.
