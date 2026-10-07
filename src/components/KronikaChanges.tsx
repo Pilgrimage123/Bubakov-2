@@ -8,7 +8,7 @@ type KronikaEntry = {
 };
 
 const KRONIKA: KronikaEntry[] = [
-  {
+{
     date: '7. října 2026',
     title: 'Nová struktura výběru výpravy a lovce',
     summary: 'Výprava a lovec se vybírají ve dvou samostatných krocích.',
@@ -16,8 +16,8 @@ const KRONIKA: KronikaEntry[] = [
       '🗺️ Nejprve hráč vybírá jednu ze 6 výprav/krajů na samostatné přehledové obrazovce s atmosférou, monstry, ročním obdobím, bossem a výzvami.',
       '🏹 Poté následuje samostatný výběr lovce; zvolená výprava zůstává viditelná a lze se k ní vrátit.',
       '🎨 Výběr lovců používá živé ladovské medailony a výbavu odpovídající zvolené výpravě.',
-    ],
-  },
+    ],}
+  ,
   {
     date: '7. října 2026',
     title: 'Konsolidace Kroniky změn',
@@ -26,55 +26,8 @@ const KRONIKA: KronikaEntry[] = [
       '📜 Hráčská Kronika změn nyní vychází z aktuální historie skutečných herních změn.',
       '⚔️ Nejnovější systém zbraní, milestone upgrady a aktuální balance jsou vedeny jako herní novinky.',
       '🐛 Historické opravy, změny bossů, dropů, postav a výkonu jsou uvedeny v samostatných datovaných zápisech.',
-    ],
-  },
-  {
-    date: '6. října 2026',
-    title: 'Nové úrovně, bestiář a odemykání krajin',
-    summary: 'Bubákov se rozrostl na šest krajin a dostal postupný systém průzkumu.',
-    items: [
-      '🗺️ Přibyly úrovně 4–6: Staré hamry a Čertův mlýn, Pustá Hláska a Zlenické podhradí a Dračí sluj pod Melechovskou skálou.',
-      '👹 Bestiář byl rozšířen o nová monstra a tři výrazné titánské bossy s vlastními mechanikami.',
-      '🔐 Krajiny se odemykají postupným průzkumem, případně poražením bosse předchozí úrovně.',
-    ],
-  },
-  {
-    date: '5. října 2026',
-    title: 'Pauza, ovládání a průvodce lovce',
-    summary: 'Hra dostala bezpečnou pauzu a samostatný průvodce ovládáním.',
-    items: [
-      '⏸️ Hru lze během výpravy pozastavit klávesou P nebo Esc; pauza zobrazuje arzenál, statistiky a čas přežití.',
-      '🎮 V hlavní nabídce a hospodě je dostupné tlačítko Ovládání hry.',
-      '📜 Průvodce vysvětluje pohyb, automatické útoky, dotykový joystick, průběh pěti fází noci a rozvoj vesnice.',
-    ],
-  },
-  {
-    date: '5. října 2026',
-    title: 'Sandbox a bezpečné vymazání postupu',
-    summary: 'Testování hry se oddělilo od běžného postupu a přibyl úplný reset.',
-    items: [
-      '🧪 Sandbox umožňuje testovat libovolného lovce, krajinu, startovní zbraně a jejich úrovně.',
-      '🗑️ Vymazání postupu má potvrzení a resetuje odemykání hrdinů, krajin a zbraní i rozvoj vesnice, pokladnu, dušičky a bestiář.',
-    ],
-  },
-  {
-    date: '4. října 2026',
-    title: 'Samostatná offline hra',
-    summary: 'Hra byla připravena jako soběstačný offline export.',
-    items: [
-      '📄 Samostatný export obsahuje kompletní hru a zdrojové soubory v jednom souboru.',
-      '🤖 Zdrojový strom lze z exportu znovu získat pro další úpravy a práci s AI nástroji.',
-    ],
-  },
-  {
-    date: '3. října 2026',
-    title: 'Postupný průzkum a Bestiář',
-    summary: 'Objevování krajin a bestiáře dostalo vícefázový systém odhalování.',
-    items: [
-      '🔎 Krajiny se postupně odhalují v pěti stavech od neznámé mapy až po úplný přehled.',
-      '📖 Bestiář odhaluje původ, slabiny, odměny, přednosti a nakonec kompletní folklorní zápis.',
-    ],
-  },
+    ],}
+  ,
   {
     date: '6. října 2026',
     title: 'Zbraně, mastery a combat systém',
@@ -93,8 +46,37 @@ const KRONIKA: KronikaEntry[] = [
       '🏆 Level-up byl sjednocen na bojovou volbu + pasivní volbu + wildcard.',
       '💰 Běžná truhla má aktuálně 29 400 bodů.',
       '🧟 Registry byly auditovány: 49 enemy položek a 12 registrovaných zbraní.',
-    ],
-  },
+    ],}
+  ,
+  {
+    date: '6. října 2026',
+    title: 'Nové úrovně, bestiář a odemykání krajin',
+    summary: 'Bubákov se rozrostl na šest krajin a dostal postupný systém průzkumu.',
+    items: [
+      '🗺️ Přibyly úrovně 4–6: Staré hamry a Čertův mlýn, Pustá Hláska a Zlenické podhradí a Dračí sluj pod Melechovskou skálou.',
+      '👹 Bestiář byl rozšířen o nová monstra a tři výrazné titánské bossy s vlastními mechanikami.',
+      '🔐 Krajiny se odemykají postupným průzkumem, případně poražením bosse předchozí úrovně.',
+    ],}
+  ,
+  {
+    date: '5. října 2026',
+    title: 'Pauza, ovládání a průvodce lovce',
+    summary: 'Hra dostala bezpečnou pauzu a samostatný průvodce ovládáním.',
+    items: [
+      '⏸️ Hru lze během výpravy pozastavit klávesou P nebo Esc; pauza zobrazuje arzenál, statistiky a čas přežití.',
+      '🎮 V hlavní nabídce a hospodě je dostupné tlačítko Ovládání hry.',
+      '📜 Průvodce vysvětluje pohyb, automatické útoky, dotykový joystick, průběh pěti fází noci a rozvoj vesnice.',
+    ],}
+  ,
+  {
+    date: '5. října 2026',
+    title: 'Sandbox a bezpečné vymazání postupu',
+    summary: 'Testování hry se oddělilo od běžného postupu a přibyl úplný reset.',
+    items: [
+      '🧪 Sandbox umožňuje testovat libovolného lovce, krajinu, startovní zbraně a jejich úrovně.',
+      '🗑️ Vymazání postupu má potvrzení a resetuje odemykání hrdinů, krajin a zbraní i rozvoj vesnice, pokladnu, dušičky a bestiář.',
+    ],}
+  ,
   {
     date: '5. října 2026',
     title: 'Bossové, minibossové a dropy',
@@ -106,8 +88,17 @@ const KRONIKA: KronikaEntry[] = [
       '🐉 Tříhlavý drak dostal samostatné animace a útoky jednotlivých hlav.',
       '🎁 Dropy získaly tematické afinity, přímé náhodné dropy, bonusy za usmíření jídlem a bossí fontány kořisti.',
       '🪙 Mince mají více nominálních hodnot a dropy používají fyzikální rozptyl.',
-    ],
-  },
+    ],}
+  ,
+  {
+    date: '4. října 2026',
+    title: 'Samostatná offline hra',
+    summary: 'Hra byla připravena jako soběstačný offline export.',
+    items: [
+      '📄 Samostatný export obsahuje kompletní hru a zdrojové soubory v jednom souboru.',
+      '🤖 Zdrojový strom lze z exportu znovu získat pro další úpravy a práci s AI nástroji.',
+    ],}
+  ,
   {
     date: '4. října 2026',
     title: 'Vizuál, obsah a testovací režim',
@@ -119,8 +110,17 @@ const KRONIKA: KronikaEntry[] = [
       '😈 Čert dostal nový sprite, animace, rohy, oči, jazyk, ocas a jiskry.',
       '📱 Čert byl na titulní obrazovce přesunut na pravou stranu nápisu Bubákov.',
       '🧪 Zbraně lze v sandboxu nastavit až na úroveň 0; úroveň 0 není aktivní a sandbox vyžaduje alespoň jednu aktivní zbraň.',
-    ],
-  },
+    ],}
+  ,
+  {
+    date: '3. října 2026',
+    title: 'Postupný průzkum a Bestiář',
+    summary: 'Objevování krajin a bestiáře dostalo vícefázový systém odhalování.',
+    items: [
+      '🔎 Krajiny se postupně odhalují v pěti stavech od neznámé mapy až po úplný přehled.',
+      '📖 Bestiář odhaluje původ, slabiny, odměny, přednosti a nakonec kompletní folklorní zápis.',
+    ],}
+  ,
   {
     date: '3. října 2026',
     title: 'HUD a mobilní ovládání',
@@ -131,8 +131,8 @@ const KRONIKA: KronikaEntry[] = [
       '🎮 Touch controls respektují 100dvh, visualViewport a safe-area insety.',
       '📐 Přidána podpora landscape režimu a velmi úzkých displejů.',
       '⏸️ Duplicitní lišta speciální schopnosti byla na dotykových zařízeních odstraněna.',
-    ],
-  },
+    ],}
+  ,
   {
     date: '2. října 2026',
     title: 'Výkon a stabilita enginu',
@@ -145,7 +145,7 @@ const KRONIKA: KronikaEntry[] = [
       '🗂️ SpatialHash byl přepracován na znovupoužitelný numerický index s retenčními buffery.',
       '⏱️ Přidán frame-time clamp proti simulačním burstům.',
     ],
-  },
+  },}
 ];
 
 export function KronikaChanges() {
