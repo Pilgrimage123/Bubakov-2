@@ -11,6 +11,7 @@ interface Props {
   purchasedIds: string[];
   playerWeapons?: any[];
   purchasesThisEncounter: number;
+  rerollCost?: number;
   onPurchase: (itemId: string) => boolean;
   onRefreshOffers?: () => void;
   onClose: () => void;
@@ -24,6 +25,7 @@ export function GrandfatherShop({
   purchasedIds,
   playerWeapons,
   purchasesThisEncounter,
+  rerollCost = 4,
   onPurchase,
   onRefreshOffers,
   onClose,
@@ -180,18 +182,34 @@ export function GrandfatherShop({
           {onRefreshOffers && (
             <button
               onClick={onRefreshOffers}
+              disabled={gingerbread < rerollCost}
               style={{
                 padding: '10px 18px',
                 fontWeight: 900,
                 border: '2px solid var(--ink)',
                 borderRadius: 9,
-                background: '#FEF3C7',
-                color: '#78350F',
-                cursor: 'pointer',
+                background: gingerbread >= rerollCost ? '#FEF3C7' : '#E5E7EB',
+                color: gingerbread >= rerollCost ? '#78350F' : '#9CA3AF',
+                cursor: gingerbread >= rerollCost ? 'pointer' : 'not-allowed',
+                opacity: gingerbread >= rerollCost ? 1 : 0.65,
+                boxShadow: gingerbread >= rerollCost ? '2px 2px 0 var(--ink)' : 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
               }}
-              title="Vytáhne z nůše další dobroty"
+              title={gingerbread >= rerollCost ? `Vytáhne z nůše další zboží (stojí ${rerollCost} perníčků)` : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} 🍪)`}
             >
-              🧺 ZAMÍCHAT NŮŠI (další zboží)
+              <span>🧺 ZAMÍCHAT NŮŠI</span>
+              <span style={{
+                background: gingerbread >= rerollCost ? '#FDE68A' : '#D1D5DB',
+                padding: '2px 8px',
+                borderRadius: 6,
+                border: '1px solid var(--ink)',
+                fontSize: '0.9rem',
+                color: gingerbread >= rerollCost ? '#78350F' : '#6B7280',
+              }}>
+                🍪 {rerollCost}
+              </span>
             </button>
           )}
           <button

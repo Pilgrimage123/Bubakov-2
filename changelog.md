@@ -1,5 +1,19 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Ladovská animace Dědečka, zbraně v test módu a progresivní reroll nůše
+
+- **Nové zbraně v Testovacím módu (Sandbox):** Do výběru testovacího módu byly přidány **Česneková topinka**, **Válečnice** a **Kyselá okurka** s plnou podporou volby úrovně (0 až 10), dynamickým výpočtem statistik a popiskem zbraně.
+- **Dědečkův obchod (nůše):** Garantuje 1–2 zbraně v nabídce s přednostním nabízením Topinky a Válečnice pro rychlé odemčení i vylepšování na vyšší úrovně.
+- **Progresivní cena zamíchání nabídky (Reroll):** Tlačítko „Zamíchat nůši“ nyní stojí **4 perníčky** a s každým dalším zamícháním v daném setkání rychle a progresivně zdvojnásobuje svou cenu (**4 → 8 → 16 → 32 → 64... 🍪**). Tlačítko přehledně zobrazuje aktuální cenu a při nedostatku perníčků je deaktivováno.
+- **Nová detailní plynulá Ladovská animace Dědečka:**
+  - Vytvořena kompletní procedurální animace `Lada.drawGrandfather` přímo do herního plátna vycházející z Ladovské ilustrace kramáře/čertíka:
+  - **Kulhavá chůze (limping walk):** Asymetrický krok zohledňující jedno mohutné čertovské kopyto (těžký dopad s vířením prachu a poklesem těla) a jednu šněrovanou koženou botu (měkčí zhoupnutí).
+  - **Kouření a bafání z dýmky:** Vyřezávaná dýmka v ústech s cyklem potahování, pulzujícím žhavým uhlíkem a plynule stoupajícími a rozpínajícími se obláčky dýmu.
+  - **Gestikulace ke kameře:** Drápatá ruka v perspektivě vstřícně kyne a gestikuluje směrem k hráči/kameře s vlnícím se pohybem prstů zvoucím k nůši.
+  - **Ladovské folklórní detaily:** Vroubkované beraní rohy, beranice s beránčí vlnou, červená čertovská tvář s špičatýma ušima, kulaté drátěné brýličky, baňatý nos, mohutný zvlněný stříbrný vous, záplatovaný ovčí kožich s křížkovými stehy, kožená brašna s přezkou a švihající pekelný ocas s chomáčem srsti.
+  - **Nůše plná pokladů:** Pletená proutěná kramářská nůše na zádech se setrvačným pohupováním, malovaná truhlička s lidovým ornamentem, svinutá deka, pytel se semínky, zvědavá mrkající polní myška s chvějícími se oušky a houpající se svítící lucernička s konvičkou.
+  - **Klikací interakce:** Kliknutím na Dědečka ve světě (či stiskem klávesy `E`) se otevře jeho obchod.
+
 ## 2026-10-07 — Rozšíření Dědečkova obchodu (Zbraně & Level Up upgrady) a úprava Polednice
 
 - **Dědečkův obchod (nůše)** nyní náhodně nabízí jakýkoli z předchozích level up upgradů (Krvavé jelito, Opravdová káva, Medvědí mast, Veselá mysl, Toulavé boty, Magnetický měšec, Zabijačková jitrnice, Kynutý koláč, Povidlová buchta) i zbraní (Osikový prut, Česneková topinka, Válečnice, Kyselé okurky, Povidlové buchty a další).

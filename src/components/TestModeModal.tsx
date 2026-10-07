@@ -31,7 +31,10 @@ var ALL_WEAPON_KEYS = [
 	"potato",
 	"bees",
 	"hromnicka",
-	"holywater"
+	"holywater",
+	"cesnekova-topinka",
+	"valecnice",
+	"kysela-okurka"
 ];
 var DEFAULT_HERO_WEAPONS = {
 	wanderer: [{
@@ -148,6 +151,21 @@ var WEAPON_TYPE_LABELS = {
 	magic: {
 		label: "Kouzelné",
 		bg: "#9333EA",
+		color: "#FFFFFF"
+	},
+	valecnice: {
+		label: "Válečnice",
+		bg: "#9A3412",
+		color: "#FFFFFF"
+	},
+	garlic: {
+		label: "Česnek / Aura",
+		bg: "#B45309",
+		color: "#FFFFFF"
+	},
+	pickle: {
+		label: "Kyselé",
+		bg: "#15803D",
 		color: "#FFFFFF"
 	}
 };
@@ -996,7 +1014,17 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 										children: [
 											cfg.level === 0
 												? "💤 Úroveň 0 – lovec s touto zbraní nezačíná"
-												: `💥 Zásah: ~${estDmg} | ⏱️ Kadence: ${wDef.baseCd} s`
+												: `💥 Zásah: ~${estDmg} | ⏱️ Kadence: ${wDef.baseCd} s`,
+											wDef.desc && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												style: {
+													fontSize: "0.71rem",
+													color: "#5C3D28",
+													fontStyle: "italic",
+													marginTop: "2px",
+													lineHeight: 1.2
+												},
+												children: wDef.desc
+											})
 										]
 									})]
 								}, wId);

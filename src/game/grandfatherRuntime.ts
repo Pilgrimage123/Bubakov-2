@@ -9,10 +9,16 @@ export interface GrandfatherRuntimeState {
   active: boolean;
   x: number;
   y: number;
+  vx?: number;
+  vy?: number;
+  facingDir?: number;
+  animTime?: number;
+  isMoving?: boolean;
   spawnedAt: number;
   waitStartedAt: number;
   offers: GrandfatherOffer[];
   purchasesThisEncounter: number;
+  rerollsThisEncounter: number;
   cooldown: number;
 }
 
@@ -21,12 +27,24 @@ export function createGrandfatherRuntime(): GrandfatherRuntimeState {
     active: false,
     x: 0,
     y: 0,
+    vx: 0,
+    vy: 0,
+    facingDir: 1,
+    animTime: 0,
+    isMoving: false,
     spawnedAt: 0,
     waitStartedAt: 0,
     offers: [],
     purchasesThisEncounter: 0,
+    rerollsThisEncounter: 0,
     cooldown: 0,
   };
+}
+
+export function getGrandfatherRerollCost(rerollsThisEncounter: number): number {
+  const r = Math.max(0, rerollsThisEncounter || 0);
+  // Starts at 4 perníčky and quickly gets progressively more expensive (4 -> 8 -> 16 -> 32 -> 64 -> 128...)
+  return Math.round(4 * Math.pow(2, r));
 }
 
 export function getWaitDiscount(waitSeconds: number, maxDiscount = 0.30): number {
@@ -69,14 +87,22 @@ export function chooseGrandfatherOffers(
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
 
-  // 1. Vždy garantovaná alespoň jedna zbraň, pokud je nějaká dostupná
-  if (availableWeapons.length > 0) {
-    const shuffledWeapons = [...availableWeapons].sort(() => Math.random() - 0.5);
-    const affordableWeapons = shuffledWeapons.filter((item) => item.baseCost <= gingerbread);
-    const weaponPool = [...affordableWeapons, ...shuffledWeapons.filter((item) => !affordableWeapons.includes(item))];
-    const guaranteedWeapon = weaponPool[0];
-    if (guaranteedWeapon) {
-      selected.push({ itemId: guaranteedWeapon.id, offeredAt: now });
+  // 1. Garantované zbraně (1–2 zbraně v nabídce pro pestrý výběr a rychlý rozvoj arzenálu)
+  const targetWeaponCount = availableWeapons.length >= 2 ? 2 : availableWeapons.length;
+  if (targetWeaponCount > 0) {
+    // Upřednostníme zbraně: Topinka, Válečnice a stávající zbraně lovce
+    const prioritizedWeapons = [...availableWeapons].sort((a, b) => {
+      const aFeatured = (a.id === 'wp_cesnekova-topinka' || a.id === 'wp_valecnice') ? 1 : 0;
+      const bFeatured = (b.id === 'wp_cesnekova-topinka' || b.id === 'wp_valecnice') ? 1 : 0;
+      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
+      return Math.random() - 0.5;
+    });
+
+    for (const w of prioritizedWeapons) {
+      if (selected.length >= targetWeaponCount) break;
+      if (!selected.some((s) => s.itemId === w.id)) {
+        selected.push({ itemId: w.id, offeredAt: now });
+      }
     }
   }
 

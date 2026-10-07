@@ -73,7 +73,7 @@ import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
-import { chooseGrandfatherOffers, getGrandfatherPrice } from './game/grandfatherRuntime';
+import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -1058,6 +1058,7 @@ export default function App() {
     const eng = engineRef.current;
     eng.grandfather.active = false;
     eng.grandfather.cooldown = 25;
+    eng.grandfather.rerollsThisEncounter = 0;
     grandfatherOpenRef.current = false;
     setGameState('playing');
   }, []);
@@ -1097,11 +1098,19 @@ export default function App() {
     const eng = engineRef.current;
     const p = eng.player;
     if (!eng.grandfather.active) return;
+    const rerolls = eng.grandfather.rerollsThisEncounter || 0;
+    const cost = getGrandfatherRerollCost(rerolls);
+    if (eng.gingerbread < cost) return;
+
+    eng.gingerbread -= cost;
+    eng.grandfather.rerollsThisEncounter = rerolls + 1;
     eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck || 0, grandfatherPurchaseIds, p?.weapons || [], 4);
+    sound.coin();
     sound.grandfatherCall();
     if (p) {
-      eng.texts.push(new DamageText(p.x, p.y - 85, '„Zkusme jiné kousky z nůše!“', '#F59E0B', true));
+      eng.texts.push(new DamageText(p.x, p.y - 85, `„Nové zboží z nůše! (−${cost} 🍪)“`, '#F59E0B', true));
     }
+    setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     setGrandfatherVersion((v) => v + 1);
   }, [grandfatherPurchaseIds]);
 
@@ -2333,6 +2342,12 @@ export default function App() {
               engine.grandfather.spawnedAt = engine.gameTime;
               engine.grandfather.waitStartedAt = engine.gameTime;
               engine.grandfather.purchasesThisEncounter = 0;
+              engine.grandfather.rerollsThisEncounter = 0;
+              engine.grandfather.animTime = 0;
+              engine.grandfather.isMoving = false;
+              engine.grandfather.vx = 0;
+              engine.grandfather.vy = 0;
+              engine.grandfather.facingDir = player.x >= engine.grandfather.x ? 1 : -1;
               engine.grandfather.offers = chooseGrandfatherOffers(
                 engine.gingerbread,
                 luck,
@@ -2345,12 +2360,31 @@ export default function App() {
             }
 
             if (engine.grandfather.active) {
-              const grandfatherDistance = Math.hypot(engine.grandfather.x - player.x, engine.grandfather.y - player.y);
-              // Pokud se hráč vzdálí (více než 180 px), dědeček jde pozvolna za ním, aby se neztratil v dálce
-              if (grandfatherDistance > 180) {
-                const moveSpeed = Math.min(1, dt * 0.45);
-                engine.grandfather.x += (player.x - engine.grandfather.x) * moveSpeed;
-                engine.grandfather.y += (player.y - engine.grandfather.y) * moveSpeed;
+              const dx = player.x - engine.grandfather.x;
+              const dy = player.y - engine.grandfather.y;
+              const grandfatherDistance = Math.hypot(dx, dy);
+              engine.grandfather.animTime = (engine.grandfather.animTime || 0) + dt;
+
+              // Pokud se hráč vzdálí (více než 170 px), dědeček jde pozvolna a kulhavě za ním, aby se neztratil v dálce
+              if (grandfatherDistance > 170) {
+                const moveSpeed = Math.min(grandfatherDistance - 150, 75);
+                const stepX = (dx / grandfatherDistance) * moveSpeed * dt;
+                const stepY = (dy / grandfatherDistance) * moveSpeed * dt;
+                engine.grandfather.x += stepX;
+                engine.grandfather.y += stepY;
+                engine.grandfather.vx = stepX / dt;
+                engine.grandfather.vy = stepY / dt;
+                if (Math.abs(dx) > 3) {
+                  engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
+                }
+                engine.grandfather.isMoving = true;
+              } else {
+                engine.grandfather.vx = 0;
+                engine.grandfather.vy = 0;
+                engine.grandfather.isMoving = false;
+                if (Math.abs(dx) > 8) {
+                  engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
+                }
               }
             }
 
@@ -4201,39 +4235,25 @@ export default function App() {
           }
         }
 
-        // Dědeček world encounter: basket is the recognizable landmark.
+        // Dědeček world encounter: colourful, fluent Lada animation (limp, smoking, pipe puffing, gesticulating towards camera)
         if (engine.grandfather.active) {
           const g = engine.grandfather;
-          const pulse = 1 + Math.sin(engine.uiTime * 2.5) * 0.04;
-          ctx.save();
-          ctx.translate(g.x, g.y);
-          ctx.scale(pulse, pulse);
-          ctx.fillStyle = 'rgba(255, 193, 7, 0.16)';
-          ctx.beginPath();
-          ctx.arc(0, 0, 70, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#7C4A21';
-          ctx.strokeStyle = '#2D1609';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.ellipse(0, 16, 42, 25, 0, 0, Math.PI * 2);
-          ctx.fill(); ctx.stroke();
-          ctx.fillStyle = '#E8C79A';
-          ctx.beginPath(); ctx.arc(0, -18, 27, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-          ctx.fillStyle = '#4B2E19';
-          ctx.beginPath(); ctx.arc(0, -38, 31, Math.PI, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#111';
-          ctx.beginPath(); ctx.arc(-9, -20, 3, 0, Math.PI * 2); ctx.arc(9, -20, 3, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#6B3415';
-          ctx.fillRect(-3, -12, 6, 18);
-          ctx.fillStyle = '#FEF3C7';
-          ctx.font = '900 18px Eczar, serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('🍪', 0, 22);
-          ctx.restore();
+          const dist = player ? Math.hypot(g.x - player.x, g.y - player.y) : 999;
+          const isInteracting = dist < 220;
 
-          const dist = Math.hypot(g.x - player.x, g.y - player.y);
-          if (dist < 220) {
+          Lada.drawGrandfather(
+            ctx,
+            g.x,
+            g.y,
+            g.animTime || engine.uiTime,
+            g.vx || 0,
+            !!g.isMoving,
+            g.facingDir || 1,
+            isInteracting,
+            1.2
+          );
+
+          if (isInteracting) {
             ctx.save();
             ctx.fillStyle = '#FFF7DF';
             ctx.strokeStyle = '#2D1609';
@@ -4241,10 +4261,10 @@ export default function App() {
             ctx.font = '900 15px Eczar, serif';
             ctx.textAlign = 'center';
             ctx.beginPath();
-            ctx.roundRect(g.x - 110, g.y - 95, 220, 34, 10);
+            ctx.roundRect(g.x - 110, g.y - 92, 220, 32, 10);
             ctx.fill(); ctx.stroke();
             ctx.fillStyle = '#5B2118';
-            ctx.fillText('DĚDEČEK — nůše [E / klik]', g.x, g.y - 73);
+            ctx.fillText('DĚDEČEK — nůše [E / klik]', g.x, g.y - 71);
             ctx.restore();
           }
         }
@@ -7064,13 +7084,31 @@ export default function App() {
       <canvas
         id="gameCanvas"
         ref={canvasRef}
-        onClick={() => {
+        onClick={(e) => {
           const cs = engineRef.current.cutscene;
           if (cs) {
             if (!cs.applied) {
               cs.t = Math.max(cs.t, cs.applyAt);
             } else {
               cs.t = cs.dur;
+            }
+            return;
+          }
+          if (gameState === 'playing') {
+            const eng = engineRef.current;
+            const p = eng.player;
+            if (eng.grandfather.active && p && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 240) {
+              const canvas = canvasRef.current;
+              if (canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const clickScreenX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                const clickScreenY = (e.clientY - rect.top) * (canvas.height / rect.height);
+                const gScreenX = eng.grandfather.x - eng.camera.x;
+                const gScreenY = eng.grandfather.y - eng.camera.y;
+                if (Math.hypot(clickScreenX - gScreenX, clickScreenY - gScreenY) < 100) {
+                  openGrandfatherShop();
+                }
+              }
             }
           }
         }}
@@ -8060,6 +8098,7 @@ export default function App() {
           purchasedIds={grandfatherPurchaseIds}
           playerWeapons={engineRef.current.player?.weapons || []}
           purchasesThisEncounter={engineRef.current.grandfather.purchasesThisEncounter}
+          rerollCost={getGrandfatherRerollCost(engineRef.current.grandfather.rerollsThisEncounter || 0)}
           onPurchase={purchaseGrandfatherItem}
           onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
