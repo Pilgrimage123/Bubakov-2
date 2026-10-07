@@ -29,16 +29,6 @@ const KRONIKA: KronikaEntry[] = [
     ],
   },
   {
-    date: '7. října 2026',
-    title: 'Konsolidace Kroniky změn',
-    summary: 'Kronika ve hře byla sjednocena s aktuálním vývojářským changelogem.',
-    items: [
-      '📜 Hráčská Kronika změn nyní vychází z aktuální historie skutečných herních změn.',
-      '⚔️ Nejnovější systém zbraní, milestone upgrady a aktuální balance jsou vedeny jako herní novinky.',
-      '🐛 Historické opravy, změny bossů, dropů, postav a výkonu jsou uvedeny v samostatných datovaných zápisech.',
-    ],
-  },
-  {
     date: '6. října 2026',
     title: 'Nové úrovně, bestiář a odemykání krajin',
     summary: 'Bubákov se rozrostl na šest krajin a dostal postupný systém průzkumu.',
