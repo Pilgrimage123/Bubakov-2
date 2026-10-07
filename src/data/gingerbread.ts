@@ -7,22 +7,22 @@ export interface GingerbreadDropConfig {
 }
 
 export const GINGERBREAD_VALUES: Record<GingerbreadSize, number> = {
-  small: 1,
-  large: 3,
-  giant: 10,
+  small: 2,
+  large: 6,
+  giant: 20,
 };
 
 export const GINGERBREAD_CONFIG: Record<GingerbreadSize, GingerbreadDropConfig> = {
-  small: { size: 'small', value: 1, radius: 10 },
-  large: { size: 'large', value: 3, radius: 14 },
-  giant: { size: 'giant', value: 10, radius: 19 },
+  small: { size: 'small', value: 2, radius: 10 },
+  large: { size: 'large', value: 6, radius: 14 },
+  giant: { size: 'giant', value: 20, radius: 19 },
 };
 
 export function getGingerbreadSize(isBoss: boolean, isMiniboss: boolean, points: number): GingerbreadSize {
   // Perníček se řídí herní hodnotou nepřítele (ENEMY_POINTS), ne náhodným HP.
-  // Bossové vždy dávají největší kus; běžní protivníci se dělí podle hodnotových pásem.
-  if (isBoss || points >= 250) return 'giant';
-  if (isMiniboss || points >= 80) return 'large';
+  // Bossové a těžcí protivníci dávají obří kusy; střední protivníci velké; slabí základní.
+  if (isBoss || points >= 180) return 'giant';
+  if (isMiniboss || points >= 50) return 'large';
   return 'small';
 }
 

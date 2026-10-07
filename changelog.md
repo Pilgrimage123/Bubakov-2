@@ -1,5 +1,13 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Rozšíření Dědečkova obchodu (Zbraně & Level Up upgrady) a úprava Polednice
+
+- **Dědečkův obchod (nůše)** nyní náhodně nabízí jakýkoli z předchozích level up upgradů (Krvavé jelito, Opravdová káva, Medvědí mast, Veselá mysl, Toulavé boty, Magnetický měšec, Zabijačková jitrnice, Kynutý koláč, Povidlová buchta) i zbraní (Osikový prut, Česneková topinka, Válečnice, Kyselé okurky, Povidlové buchty a další).
+- **Garantovaná zbraň:** V nabídce nůše je vždy garantována alespoň jedna zbraň z dostupného fondu.
+- **Nákup a vylepšování zbraní:** Zakoupení neznámé zbraně ji přidá lovci do arzenálu; zakoupení již vlastněné zbraně ji povýší na další úroveň (až do úrovně 8). Karty zbraní přehledně zobrazují aktuální úroveň a označení „Nová zbraň“ či „Vylepšení“.
+- **Ikony v nůši:** Všechny položky nůše (včetně ladovských SVG ikon jako Jelito, Topinka, Prut, Káva, Koláč atd.) se vykreslují přes komponentu `GameIcon`.
+- **Polednice v 1. úrovni:** Polednice (miniboss i běžný výskyt v 1. úrovni „Náves a rybník Brčálník“) se nyní pohybuje o **15 % pomaleji** (základní rychlost i výpady jsou sníženy na 85 %).
+
 ## 2026-10-07 — Perníčkové odměny a živý boss bar
 
 - Každý poražený nepřítel nyní vytváří perníček podle své **herní bodové hodnoty**, místo odvození velikosti perníčku od HP.

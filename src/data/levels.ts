@@ -1,7 +1,8 @@
 import React from 'react';
+import type { GameLevelDef, GameLevelId } from '../types';
 export type { GameLevelDef } from '../types';
 
-var GAME_LEVELS = {
+var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	1: {
 		id: 1,
 		name: "1. Náves a rybník Brčálník",

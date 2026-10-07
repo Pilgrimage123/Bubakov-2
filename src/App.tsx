@@ -32,7 +32,7 @@ import { sound } from './audio';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
 import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
-import { getGingerbreadSize, getGingerbreadValue } from './data/gingerbread';
+import { getGingerbreadSize, getGingerbreadValue, GINGERBREAD_CONFIG, GINGERBREAD_VALUES, type GingerbreadSize } from './data/gingerbread';
 import {
   isUnholyEnemy,
   getEnemyHolyResistance,
@@ -74,7 +74,6 @@ import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice } from './game/grandfatherRuntime';
-import { getGingerbreadSize, GINGERBREAD_CONFIG, type GingerbreadSize } from './data/gingerbread';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -985,6 +984,7 @@ export default function App() {
   const runStatsRef = useRef(runStats);
   runStatsRef.current = runStats;
   const [grandfatherPurchaseIds, setGrandfatherPurchaseIds] = useState<string[]>([]);
+  const [, setGrandfatherVersion] = useState(0);
   const grandfatherOpenRef = useRef(false);
   grandfatherOpenRef.current = gameState === 'grandfather';
 
@@ -992,15 +992,59 @@ export default function App() {
     const p = engineRef.current.player;
     if (!p) return;
     const effect = item.effect;
-    if (effect.type === 'speed') p.speed += effect.amount;
-    if (effect.type === 'pickup_radius') p.pickupRadius += effect.amount;
-    if (effect.type === 'damage_multiplier') p.damageMultiplier += effect.amount;
+    if (effect.type === 'speed') {
+      p.speed += effect.amount;
+      p.speedCount = (p.speedCount || 0) + 1;
+    }
+    if (effect.type === 'pickup_radius') {
+      p.pickupRadius += effect.amount;
+      p.magnetCount = (p.magnetCount || 0) + 1;
+    }
+    if (effect.type === 'damage_multiplier') {
+      p.damageMultiplier = (p.damageMultiplier || 1) * (1 + effect.amount);
+      if (item.id === 'krvave_jelito') {
+        p.jelitoCount = (p.jelitoCount || 0) + 1;
+      }
+    }
     if (effect.type === 'max_hp') {
       p.maxHp += effect.amount;
       p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+      if (item.id === 'medvedi_mast') {
+        p.kurazCount = (p.kurazCount || 0) + 1;
+      }
     }
     if (effect.type === 'luck') p.luck = (p.luck || 0) + effect.amount;
-    if (effect.type === 'regen') p.regenLevel = (p.regenLevel || 0) + effect.amount;
+    if (effect.type === 'regen') {
+      p.regenLevel = (p.regenLevel || 0) + Math.round(effect.amount * 10) / 10;
+    }
+    if (effect.type === 'cooldown') {
+      p.cooldownBonus = (p.cooldownBonus || 0) + effect.amount;
+      p.kavaCount = (p.kavaCount || 0) + 1;
+    }
+    if (effect.type === 'heal') {
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+    }
+    if (effect.type === 'weapon') {
+      const weaponId = effect.weaponId;
+      if (!p.weapons) p.weapons = [];
+      const existing = p.weapons.find((w: any) => w.id === weaponId);
+      if (existing) {
+        existing.level = Math.min(8, existing.level + 1);
+        const choices = getMilestoneChoices(weaponId, existing.level);
+        if (choices && !existing.milestones?.some((mId: string) => choices.some((c: any) => c.id === mId))) {
+          if (!existing.milestones) existing.milestones = [];
+          existing.milestones.push(choices[0].id);
+        }
+      } else {
+        p.weapons.push({
+          id: weaponId,
+          level: 1,
+          cd: 0,
+          mastery: createWeaponMasteryState(),
+          milestones: [],
+        });
+      }
+    }
   }, []);
 
   const openGrandfatherShop = useCallback(() => {
@@ -1013,7 +1057,7 @@ export default function App() {
   const closeGrandfatherShop = useCallback(() => {
     const eng = engineRef.current;
     eng.grandfather.active = false;
-    eng.grandfather.cooldown = 45;
+    eng.grandfather.cooldown = 25;
     grandfatherOpenRef.current = false;
     setGameState('playing');
   }, []);
@@ -1029,16 +1073,37 @@ export default function App() {
 
     eng.gingerbread -= price;
     eng.grandfather.purchasesThisEncounter += 1;
-    setGrandfatherPurchaseIds((ids) => [...ids, item.id]);
+    const newPurchasedIds = [...grandfatherPurchaseIds, item.id];
+    setGrandfatherPurchaseIds(newPurchasedIds);
     applyGrandfatherItem(item);
     sound.grandfatherPurchase();
-    eng.texts.push(new DamageText(p.x, p.y - 70, 'PLÁCNUTO!', '#F59E0B', true));
+    eng.texts.push(new DamageText(p.x, p.y - 70, item.isWeapon ? 'ZBRAŇ ZÍSKÁNA!' : 'PLÁCNUTO!', '#F59E0B', true));
     if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
       eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
     }
+    // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
+    const ownedNow = item.isWeapon
+      ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
+      : newPurchasedIds.filter((id) => id === item.id).length;
+    if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck || 0, newPurchasedIds, p.weapons || [], 4);
+      setGrandfatherVersion((v) => v + 1);
+    }
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     return true;
-  }, [applyGrandfatherItem]);
+  }, [applyGrandfatherItem, grandfatherPurchaseIds]);
+
+  const refreshGrandfatherOffers = useCallback(() => {
+    const eng = engineRef.current;
+    const p = eng.player;
+    if (!eng.grandfather.active) return;
+    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck || 0, grandfatherPurchaseIds, p?.weapons || [], 4);
+    sound.grandfatherCall();
+    if (p) {
+      eng.texts.push(new DamageText(p.x, p.y - 85, '„Zkusme jiné kousky z nůše!“', '#F59E0B', true));
+    }
+    setGrandfatherVersion((v) => v + 1);
+  }, [grandfatherPurchaseIds]);
 
   // Level Up choices
 
@@ -1250,6 +1315,16 @@ export default function App() {
         }
       }
 
+      if (gameState === 'playing' && (e.code === 'KeyE' || e.key === 'e' || e.key === 'E')) {
+        const eng = engineRef.current;
+        const p = eng.player;
+        if (eng.grandfather.active && p && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 220) {
+          e.preventDefault();
+          openGrandfatherShop();
+          return;
+        }
+      }
+
       if (gameState === 'chest') {
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
@@ -1290,8 +1365,8 @@ export default function App() {
     customWeapons?: { id: string; level: number; mastery?: any }[],
     isTestMode = false
   ) => {
-    const chosenLevelId = targetLevelId || selectedLevelId || 1;
-    const chosenLevel = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
+    const chosenLevelId: GameLevelId = (targetLevelId || selectedLevelId || 1) as GameLevelId;
+    const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
 
     if (!isTestMode) {
       const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
@@ -2247,10 +2322,11 @@ export default function App() {
               !engine.grandfather.active &&
               engine.grandfather.cooldown <= 0 &&
               affordableBase &&
-              engine.gameTime >= 45
+              engine.gameTime >= 25
             ) {
               const angle = Math.random() * Math.PI * 2;
-              const distance = 850 + Math.random() * 250;
+              // Dědeček se zjevuje v příjemné blízkosti (220–280 px), nespawnuje se příliš daleko
+              const distance = 220 + Math.random() * 60;
               engine.grandfather.active = true;
               engine.grandfather.x = player.x + Math.cos(angle) * distance;
               engine.grandfather.y = player.y + Math.sin(angle) * distance;
@@ -2261,6 +2337,7 @@ export default function App() {
                 engine.gingerbread,
                 luck,
                 grandfatherPurchaseIds,
+                player?.weapons || [],
                 4
               );
               sound.grandfatherCall();
@@ -2269,9 +2346,11 @@ export default function App() {
 
             if (engine.grandfather.active) {
               const grandfatherDistance = Math.hypot(engine.grandfather.x - player.x, engine.grandfather.y - player.y);
-              if (grandfatherDistance < 155) {
-                engine.grandfather.x += (player.x - engine.grandfather.x) * Math.min(1, dt * 0.35);
-                engine.grandfather.y += (player.y - engine.grandfather.y) * Math.min(1, dt * 0.35);
+              // Pokud se hráč vzdálí (více než 180 px), dědeček jde pozvolna za ním, aby se neztratil v dálce
+              if (grandfatherDistance > 180) {
+                const moveSpeed = Math.min(1, dt * 0.45);
+                engine.grandfather.x += (player.x - engine.grandfather.x) * moveSpeed;
+                engine.grandfather.y += (player.y - engine.grandfather.y) * moveSpeed;
               }
             }
 
@@ -4154,7 +4233,7 @@ export default function App() {
           ctx.restore();
 
           const dist = Math.hypot(g.x - player.x, g.y - player.y);
-          if (dist < 180) {
+          if (dist < 220) {
             ctx.save();
             ctx.fillStyle = '#FFF7DF';
             ctx.strokeStyle = '#2D1609';
@@ -4162,10 +4241,10 @@ export default function App() {
             ctx.font = '900 15px Eczar, serif';
             ctx.textAlign = 'center';
             ctx.beginPath();
-            ctx.roundRect(g.x - 100, g.y - 95, 200, 34, 10);
+            ctx.roundRect(g.x - 110, g.y - 95, 220, 34, 10);
             ctx.fill(); ctx.stroke();
             ctx.fillStyle = '#5B2118';
-            ctx.fillText('DĚDEČEK — otevři nůši', g.x, g.y - 73);
+            ctx.fillText('DĚDEČEK — nůše [E / klik]', g.x, g.y - 73);
             ctx.restore();
           }
         }
@@ -4497,6 +4576,39 @@ export default function App() {
 
         ctx.restore();
 
+        // Ladovský ukazatel na dědečka, pokud se ocitne mimo obrazovku
+        if (engine.grandfather.active && player && currentGameState === 'playing') {
+          const gScreenX = engine.grandfather.x - engine.camera.x;
+          const gScreenY = engine.grandfather.y - engine.camera.y;
+          const isOffscreen = gScreenX < 40 || gScreenX > canvas.width - 40 || gScreenY < 40 || gScreenY > canvas.height - 40;
+          if (isOffscreen) {
+            const pScreenX = player.x - engine.camera.x;
+            const pScreenY = player.y - engine.camera.y;
+            const dx = gScreenX - pScreenX;
+            const dy = gScreenY - pScreenY;
+            const angle = Math.atan2(dy, dx);
+            const dist = Math.round(Math.hypot(engine.grandfather.x - player.x, engine.grandfather.y - player.y));
+            const edgeMargin = 55;
+            const cx = Math.max(edgeMargin, Math.min(canvas.width - edgeMargin, canvas.width / 2 + Math.cos(angle) * (canvas.width / 2 - 75)));
+            const cy = Math.max(edgeMargin, Math.min(canvas.height - edgeMargin, canvas.height / 2 + Math.sin(angle) * (canvas.height / 2 - 65)));
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.fillStyle = '#FDECC8';
+            ctx.strokeStyle = '#2D1609';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.roundRect(-60, -16, 120, 32, 10);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#5B2118';
+            ctx.font = '900 13px Eczar, serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`🧺 Dědeček (${dist} m)`, 0, 0);
+            ctx.restore();
+          }
+        }
+
         // Enable with ?perf or Settings toggle to inspect the live frame budget
         const isPerfVisible = showPerformanceOverlay || !!metaRef.current.showPerfOverlay;
         if (isPerfVisible) {
@@ -4615,6 +4727,12 @@ export default function App() {
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
+    const isLevel1 = (engineRef.current.activeLevelId || 1) === 1;
+    let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
+    if (id === 'polednice' && isLevel1) {
+      enemySpeed = Math.round(enemySpeed * 0.85);
+    }
+
     return {
       id,
       x,
@@ -4625,7 +4743,7 @@ export default function App() {
       renderScale,
       maxHp: finalHp,
       hp: finalHp,
-      speed: isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed,
+      speed: enemySpeed,
       damage,
       radius,
       foodResist,
@@ -6008,7 +6126,7 @@ export default function App() {
           // Helper to spawn drops with natural radial spray and velocity
           const spawnScatterDrop = (
             dropType: string,
-            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string } = {}
+            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string } = {}
           ) => {
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
             const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
@@ -6022,6 +6140,7 @@ export default function App() {
             eng.drops.push({
               type: dropType,
               value: opts.value,
+              size: opts.size,
               x: this.x + Math.cos(angle) * 8,
               y: this.y + Math.sin(angle) * 8,
               vx: Math.cos(angle) * burstSpeed,
@@ -6049,7 +6168,7 @@ export default function App() {
           const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
 
           // Dědečkovy perníčky: každý zahnáný nepřítel dá odměnu podle své herní hodnoty.
-          // Hodnoty jsou 1 / 3 / 10 a odpovídají velikostem small / large / giant.
+          // Hodnoty jsou 2 / 6 / 20 a odpovídají velikostem small / large / giant.
           const gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
           const gingerbreadValue = getGingerbreadValue(gingerbreadSize);
           spawnScatterDrop('gingerbread', {
@@ -6058,6 +6177,7 @@ export default function App() {
             speed: 65 + Math.random() * 55,
             text: `+${gingerbreadValue} 🍪`,
             textColor: gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309',
+            size: gingerbreadSize,
           });
 
           // Thematic category affinities & multipliers
@@ -6080,6 +6200,17 @@ export default function App() {
             spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
             spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
+            // Bohatá perníková nadílka od minibosse (3 obří perníčky)
+            for (let g = 0; g < 3; g++) {
+              spawnScatterDrop('gingerbread', {
+                value: GINGERBREAD_VALUES.giant,
+                radius: 19,
+                speed: 65 + Math.random() * 65,
+                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 3} 🍪 (Dar minibosse)` : undefined,
+                textColor: '#F59E0B',
+                size: 'giant',
+              });
+            }
             for (let i = 0; i < 24; i++) {
               eng.particles.push({
                 x: this.x,
@@ -6097,11 +6228,28 @@ export default function App() {
             spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
             spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
+            // Královská kupa perníčků od hlavního bosse (6 obřích perníčků)
+            for (let g = 0; g < 6; g++) {
+              spawnScatterDrop('gingerbread', {
+                value: GINGERBREAD_VALUES.giant,
+                radius: 19,
+                speed: 75 + Math.random() * 75,
+                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 6} 🍪 (Kupa vládce bubáků)` : undefined,
+                textColor: '#F59E0B',
+                size: 'giant',
+              });
+            }
             eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD VLÁDCE BUBÁKŮ!', COLORS.mustard, true));
           }
 
           // 2. Food pacification extra flavor & peaceful rewards
           if (this.defeatedByFood) {
+            spawnScatterDrop('gingerbread', {
+              value: GINGERBREAD_VALUES.large,
+              radius: 14,
+              speed: 55 + Math.random() * 45,
+              size: 'large',
+            });
             if (Math.random() < 0.28) {
               spawnScatterDrop('bread', { speed: 65, text: 'Sladká hruška 🍐', textColor: '#84CC16' });
             }
@@ -6153,6 +6301,8 @@ export default function App() {
           if (eng.pointsChest >= chestThreshold) {
             eng.pointsChest -= chestThreshold;
             spawnScatterDrop('chest', { speed: 45, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
+            spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
+            spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
             sound.chest();
           }
           if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
@@ -7890,17 +8040,17 @@ export default function App() {
 
       {/* DĚDEČEK ENCOUNTER */}
       {gameState === 'playing' && engineRef.current.grandfather.active && engineRef.current.player &&
-        Math.hypot(engineRef.current.grandfather.x - engineRef.current.player.x, engineRef.current.grandfather.y - engineRef.current.player.y) < 190 && (
+        Math.hypot(engineRef.current.grandfather.x - engineRef.current.player.x, engineRef.current.grandfather.y - engineRef.current.player.y) < 220 && (
         <button
           onClick={openGrandfatherShop}
           style={{
             position: 'fixed', left: '50%', bottom: '17%', transform: 'translateX(-50%)',
-            zIndex: 40, padding: '12px 22px', border: '3px solid var(--ink)', borderRadius: 12,
-            background: '#FDECC8', color: '#5B2118', fontWeight: 1000, fontSize: '1rem',
-            boxShadow: '4px 4px 0 rgba(0,0,0,.3)',
+            zIndex: 40, padding: '12px 24px', border: '3px solid var(--ink)', borderRadius: 12,
+            background: '#FDECC8', color: '#5B2118', fontWeight: 1000, fontSize: '1.05rem',
+            boxShadow: '4px 4px 0 rgba(0,0,0,.3)', cursor: 'pointer',
           }}
         >
-          🧺 OTEVŘÍT DĚDEČKOVU NŮŠI
+          🧺 OTEVŘÍT DĚDEČKOVU NŮŠI (E)
         </button>
       )}
 
@@ -7911,8 +8061,10 @@ export default function App() {
           waitSeconds={Math.max(0, engineRef.current.gameTime - engineRef.current.grandfather.waitStartedAt)}
           offers={engineRef.current.grandfather.offers}
           purchasedIds={grandfatherPurchaseIds}
+          playerWeapons={engineRef.current.player?.weapons || []}
           purchasesThisEncounter={engineRef.current.grandfather.purchasesThisEncounter}
           onPurchase={purchaseGrandfatherItem}
+          onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
         />
       )}
