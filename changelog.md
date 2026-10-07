@@ -163,3 +163,10 @@
 - Zbraně lze v sandboxu nastavit až na úroveň 0.
 - Zbraň úrovně 0 se nepovažuje za aktivní.
 - Sandbox vyžaduje alespoň jednu aktivní zbraň.
+## 2026-10-07 — In-game Kronika změn
+
+- Přidána hráčská komponenta **Kronika změn Bubákova**.
+- Kronika je oddělena od technického vývojářského changelogu a zobrazuje hráčsky čitelné, datované zápisy.
+- Obsah Kroniky byl sjednocen s aktuálním stavem evidovaným v `changelog.md`, včetně změn z 2.–6. října 2026 a nové konsolidace zbraní, minibossů, dropů, postav a oprav gameplay loopu.
+- Starší záložka historických zápisků v `PlanModal` byla nahrazena datově řízeným obsahem `KronikaChanges`.
+- Původní **Plán kol změn** zůstává zachován jako samostatná část.
