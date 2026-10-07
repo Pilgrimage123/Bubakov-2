@@ -1,5 +1,25 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Oprava zamrzání hry (Canvas save stack leak), stabilizace Dědečka a Pekelného Čerta
+
+- **Oprava kritického zamrzání hry (Canvas state stack overflow):**
+  - V procedurální animaci `Lada.drawGrandfather` v `ladaRenderer.ts` chybělo volání `ctx.restore()` na konci bloku trupu a kabátu.
+  - V každém snímku docházelo k hromadění neuzavřených `ctx.save()`, což po chvíli vedlo k přetečení zásobníku plátna v prohlížeči, selhání vykreslování kamery a kompletnímu zamrznutí hry.
+  - Stav `drawGrandfather` je nyní dokonale vyvážený (15 save / 15 restore).
+- **Oprava NaN při pohybu Dědečka:**
+  - Odstraněno redundantní a nestabilní dělení `stepX / dt` v `App.tsx`, které při snímcích s nulovou deltou (`dt === 0`) způsobovalo `NaN` v rychlostech a souřadnicích Dědečka a následně zneplatnilo matici Canvasu.
+  - Doplněna bezpečná ochrana proti nulové vzdálenosti a automatické přemístění Dědečka, pokud se hráč vzdálí přes 1400 px, aby se neztratil na mapě.
+- **Vykreslování světa při otevřené nůši:**
+  - Do podmínky vykreslování plátna v `App.tsx` byl přidán herní stav `'grandfather'`. Herní svět za obchodem již nezčerná prázdným `clearRect`, ale zůstává přirozeně viditelný a pozastavený.
+- **Pekelný Čert — vylepšení chování a ochrana:**
+  - Opraveno natáčení Čerta během telegrafu / windupu: Čert se nyní dívá přímo na hráče (`certFacingVx`), místo natáčení doprava při nulové rychlosti.
+  - Odraz hráče při zásahu charge vidlemi je bezpečně ošetřen přes `Number.isFinite`, čímž se zamezilo potenciálnímu poškození pozice hráče.
+- **Kyselá okurka (průraz):**
+  - Opravena detekce průrazu střel okurky v kolizní smyčce tak, aby zohledňovala vlastnost `pierce` a správně prorážela houfy nepřátel podle získaných milníků.
+- **Milníky zbraní a nůše:**
+  - Funkce `getRankedWeaponStats` nyní bezpečně vyhodnocuje milníky zbraní jak z pole ID řetězců, tak z objektu mapy ranků, takže upgrady zakoupené u Dědečka ihned poskytují správné bonusy.
+  - Ošetřeno bezpečné načítání voleb milníků a v `GrandfatherShop` přidáno korektní zobrazení při vykoupení všech dostupných položek.
+
 ## 2026-10-07 — Ladovská animace Dědečka, zbraně v test módu a progresivní reroll nůše
 
 - **Nové zbraně v Testovacím módu (Sandbox):** Do výběru testovacího módu byly přidány **Česneková topinka**, **Válečnice** a **Kyselá okurka** s plnou podporou volby úrovně (0 až 10), dynamickým výpočtem statistik a popiskem zbraně.

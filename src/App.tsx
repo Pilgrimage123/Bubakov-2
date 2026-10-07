@@ -1031,7 +1031,7 @@ export default function App() {
       if (existing) {
         existing.level = Math.min(8, existing.level + 1);
         const choices = getMilestoneChoices(weaponId, existing.level);
-        if (choices && !existing.milestones?.some((mId: string) => choices.some((c: any) => c.id === mId))) {
+        if (choices && choices[0] && !existing.milestones?.some((mId: string) => choices.some((c: any) => c.id === mId))) {
           if (!existing.milestones) existing.milestones = [];
           existing.milestones.push(choices[0].id);
         }
@@ -1088,8 +1088,8 @@ export default function App() {
       : newPurchasedIds.filter((id) => id === item.id).length;
     if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
       eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck || 0, newPurchasedIds, p.weapons || [], 4);
-      setGrandfatherVersion((v) => v + 1);
     }
+    setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     return true;
   }, [applyGrandfatherItem, grandfatherPurchaseIds]);
@@ -2365,15 +2365,23 @@ export default function App() {
               const grandfatherDistance = Math.hypot(dx, dy);
               engine.grandfather.animTime = (engine.grandfather.animTime || 0) + dt;
 
-              // Pokud se hráč vzdálí (více než 170 px), dědeček jde pozvolna a kulhavě za ním, aby se neztratil v dálce
-              if (grandfatherDistance > 170) {
-                const moveSpeed = Math.min(grandfatherDistance - 150, 75);
-                const stepX = (dx / grandfatherDistance) * moveSpeed * dt;
-                const stepY = (dy / grandfatherDistance) * moveSpeed * dt;
-                engine.grandfather.x += stepX;
-                engine.grandfather.y += stepY;
-                engine.grandfather.vx = stepX / dt;
-                engine.grandfather.vy = stepY / dt;
+              // Pokud se hráč vzdálí extrémně daleko (> 1400 px), dědeček se bezpečně přemístí blíž za ním
+              if (grandfatherDistance > 1400) {
+                const ang = Math.random() * Math.PI * 2;
+                engine.grandfather.x = player.x + Math.cos(ang) * 280;
+                engine.grandfather.y = player.y + Math.sin(ang) * 280;
+                engine.grandfather.vx = 0;
+                engine.grandfather.vy = 0;
+                engine.grandfather.isMoving = false;
+              } else if (grandfatherDistance > 170) {
+                const invDist = grandfatherDistance > 0.001 ? 1 / grandfatherDistance : 0;
+                const dirX = dx * invDist;
+                const dirY = dy * invDist;
+                const moveSpeed = Math.min(grandfatherDistance - 150, grandfatherDistance > 550 ? 150 : 75);
+                engine.grandfather.vx = dirX * moveSpeed;
+                engine.grandfather.vy = dirY * moveSpeed;
+                engine.grandfather.x += engine.grandfather.vx * dt;
+                engine.grandfather.y += engine.grandfather.vy * dt;
                 if (Math.abs(dx) > 3) {
                   engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
                 }
@@ -3842,7 +3850,8 @@ export default function App() {
                       break;
                     }
                   }
-                  if (p.type === 'pickle' && p.penetrate) {
+                  if (p.type === 'pickle' && (p.penetrate || (p.pierce && p.pierce > 0))) {
+                    if (p.pierce) p.pierce--;
                     continue;
                   }
                   p.dead = true;
@@ -3911,8 +3920,9 @@ export default function App() {
                   player.takeDamage(chDmg, 'physical');
                   sound.heavyHit();
                   const pushDist = 110;
-                  player.x += Math.cos(e.chargeDirX) * pushDist;
-                  player.y += Math.sin(e.chargeDirX) * pushDist;
+                  const pushAng = Number.isFinite(e.chargeDirX) ? e.chargeDirX : Math.atan2(player.y - e.y, player.x - e.x);
+                  player.x += Math.cos(pushAng) * pushDist;
+                  player.y += Math.sin(pushAng) * pushDist;
                   engine.texts.push(new DamageText(player.x, player.y - 50, `DRTIVÝ NÁRAZ VIDLEMI! -${Math.ceil(chDmg)} 🔱💥`, COLORS.red, true));
                   e.aiState = 'brake';
                   e.aiTimer = 0.55;
@@ -4136,7 +4146,7 @@ export default function App() {
       // -------------------------------------------------------------
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused') {
+      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused' || currentGameState === 'grandfather') {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
@@ -5755,12 +5765,13 @@ export default function App() {
             }
           } else if (this.aiState === 'charge') {
             const chargeSpd = this.chargeSpeed || (this.isBoss ? (this.enraged ? 560 : 490) : 440);
-            this.vx = Math.cos(this.chargeDirX) * chargeSpd;
-            this.vy = Math.sin(this.chargeDirX) * chargeSpd;
+            const chAng = Number.isFinite(this.chargeDirX) ? this.chargeDirX : dirToPlayer;
+            this.vx = Math.cos(chAng) * chargeSpd;
+            this.vy = Math.sin(chAng) * chargeSpd;
 
             for (let i = 0; i < 2; i++) {
               engineRef.current.particles.push({
-                x: this.x - Math.cos(this.chargeDirX) * 20 + (Math.random() - 0.5) * 16,
+                x: this.x - Math.cos(chAng) * 20 + (Math.random() - 0.5) * 16,
                 y: this.y + this.radius * 0.4 + (Math.random() - 0.5) * 10,
                 vx: (Math.random() - 0.5) * 50,
                 vy: (Math.random() - 0.5) * 50,
@@ -6684,7 +6695,10 @@ export default function App() {
         const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
 
         if (this.id === 'cert') {
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300);
+          const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
+            ? Math.cos(this.chargeDirX)
+            : this.vx;
+          Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300);
         } else if (this.id === 'hejkal') {
           Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
         } else if (this.id === 'obr') {

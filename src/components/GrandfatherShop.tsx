@@ -21,9 +21,9 @@ export function GrandfatherShop({
   gingerbread,
   luck,
   waitSeconds,
-  offers,
-  purchasedIds,
-  playerWeapons,
+  offers = [],
+  purchasedIds = [],
+  playerWeapons = [],
   purchasesThisEncounter,
   rerollCost = 4,
   onPurchase,
@@ -70,16 +70,30 @@ export function GrandfatherShop({
           <span>{purchasedIds.length >= 12 ? '✅ Skvělé! Cíl alespoň 12 vylepšení za run splněn!' : `(zbývá ještě ${12 - purchasedIds.length} do cíle 12 nákupů)`}</span>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-          gap: 12,
-          textAlign: 'left',
-        }}>
-          {offers.map((offer) => {
-            const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
-            if (!item) return null;
-            const price = getGrandfatherPrice(item, purchasesThisEncounter, luck, waitSeconds);
+        {(!offers || offers.length === 0) ? (
+          <div style={{
+            padding: '28px 16px',
+            textAlign: 'center',
+            background: '#FEF3C7',
+            borderRadius: 12,
+            border: '2px dashed #92400E',
+            color: '#78350F',
+            fontWeight: 800,
+            fontSize: '1.05rem',
+          }}>
+            🧺 Všechno zboží z nůše bylo vykoupeno! Děkuji ti, poutníče!
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+            gap: 12,
+            textAlign: 'left',
+          }}>
+            {offers.map((offer, idx) => {
+              const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
+              if (!item) return null;
+              const price = getGrandfatherPrice(item, purchasesThisEncounter, luck, waitSeconds);
 
             let owned = 0;
             let maxStacks = item.maxStacks || 5;
@@ -119,7 +133,7 @@ export function GrandfatherShop({
             const affordable = gingerbread >= price && !isMaxed;
 
             return (
-              <div key={item.id} style={{
+              <div key={`${item.id}-${idx}`} style={{
                 border: item.isWeapon ? '2.5px solid #9A3412' : '2px solid var(--ink)',
                 borderRadius: 12,
                 padding: 12,
@@ -177,6 +191,7 @@ export function GrandfatherShop({
             );
           })}
         </div>
+      )}
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 18, flexWrap: 'wrap' }}>
           {onRefreshOffers && (

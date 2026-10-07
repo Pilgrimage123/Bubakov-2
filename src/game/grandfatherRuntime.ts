@@ -42,7 +42,7 @@ export function createGrandfatherRuntime(): GrandfatherRuntimeState {
 }
 
 export function getGrandfatherRerollCost(rerollsThisEncounter: number): number {
-  const r = Math.max(0, rerollsThisEncounter || 0);
+  const r = Math.min(20, Math.max(0, rerollsThisEncounter || 0));
   // Starts at 4 perníčky and quickly gets progressively more expensive (4 -> 8 -> 16 -> 32 -> 64 -> 128...)
   return Math.round(4 * Math.pow(2, r));
 }

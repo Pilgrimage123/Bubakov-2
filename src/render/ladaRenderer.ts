@@ -7815,6 +7815,7 @@ var Lada = {
 		ctx.arc(-8, 5, 1.2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.restore();
+		ctx.restore(); // End Torso
 
 		// 7. Head, Face, Beard, Horns & Hat
 		ctx.save();

@@ -183,9 +183,14 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
 
   for (const rank of [3, 5, 8] as const) {
     if (safeLevel < rank) continue;
+    const rankChoices = WEAPON_RANK_DEFS[canonical][rank - 1].choices;
+    if (!rankChoices) continue;
     const choiceId = w?.milestones?.[rank];
-    if (!choiceId) continue;
-    const selected = WEAPON_RANK_DEFS[canonical][rank - 1].choices?.find((item) => item.id === choiceId);
+    const selected = rankChoices.find((item) =>
+      Array.isArray(w?.milestones)
+        ? w.milestones.includes(item.id)
+        : choiceId === item.id || w?.milestones?.[String(rank)] === item.id
+    );
     if (!selected) continue;
     const mods = selected.statModifiers;
     stats.damageMult *= mods.baseDamageMult ?? 1;
