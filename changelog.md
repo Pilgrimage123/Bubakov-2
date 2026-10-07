@@ -2,7 +2,7 @@
 
 > **Source of truth:** aktuální implementace v `src/`. Historické hodnoty, které byly později změněny, nejsou uváděny jako aktuální stav.
 
-## 2026-10-07 — Konsolidace changelogu a audit proti aktuální hře
+## 2026-10-06 — Konsolidace herních změn a sjednocení changelogu
 
 ### Aktuální stav systému zbraní
 - Čtyři zbraně mají nový **osmirankový progression systém**: Osikový prut, Válečnice, Česneková topinka a Kyselé okurky.
@@ -86,34 +86,6 @@
 - Neznámé enemy ID vyvolá explicitní chybu.
 - Final-boss victory je vázána na skutečného finálního bosse levelu.
 
-## 2026-10-06 — Weapon milestone progression v2
-- Implementován osmirankový progression systém pro čtyři hlavní milestone zbraně.
-- Milestone volby jsou na ranku 3, 5 a 8.
-- Přidány unikátní efekty a vizuální/audio tagy milestone voleb.
-- Přidána runtime validace struktury milestone systému.
-- Cooldown byl převeden na explicitní bonusový model s 50% cooldown capem.
-
-## 2026-10-06 — Rework mastery a rebalance zbraní
-- Generické mastery bonusy damage/cooldown/projektilů byly nahrazeny weapon-specific milestone efekty.
-- Legacy mastery API zůstává pouze kvůli kompatibilitě starých save/import dat.
-- Tulák získal +30 flat damage ke všem zbraním.
-- Level zbraně již není samostatně skrytě násoben dalším implicitním combat bonusem mimo explicitní progression systém.
-
-## 2026-10-06 — Nové zbraně
-- Přidány Válečnice, Česneková topinka a Kyselé okurky.
-- Válečnice používá orbitující váleček, knockback a od ranku 8 může získat další orbitující instanci.
-- Česneková topinka používá permanentní kruhovou auru, knockback a na vysokých rankách zpomalení.
-- Kyselé okurky používají cílené projektily a stav Přejedení; při vysokém počtu stacků nepřítel zezelená, zeslábne a přijímá více damage.
-- Přidány React/SVG ikony a renderery nových zbraní.
-- Nové zbraně jsou dostupné v arzenálu.
-
-## 2026-10-06 — Opravy AI, lifecycle a kolizí
-- Opravena útěková AI, která mohla přehrávat útěkovou animaci bez skutečného pohybu.
-- Opravena stale closure chyba blokující sběr dropů a kontaktové poškození.
-- Stabilizován dlouho žijící Canvas/requestAnimationFrame loop.
-- Zlepšena lifecycle správa status efektů a prostorového indexu.
-- Přidána ochrana proti zastaralým pozicím v SpatialHash.
-
 ## 2026-10-05 — Bossové a minibossové
 - Pekelný čert dostal výrazný charge s windupem, zvýšenou rychlostí, telegrafem, nárazem a brake fází.
 - Prokletý sněhulák byl přejmenován na Zlomyslného sněhuláka a dostal vlastní renderer.
@@ -156,11 +128,3 @@
 - Zbraně lze v sandboxu nastavit až na úroveň 0.
 - Zbraň úrovně 0 se nepovažuje za aktivní.
 - Sandbox vyžaduje alespoň jednu aktivní zbraň.
-
-## Poznámka k historickým hodnotám
-Následující hodnoty byly během vývoje změněny a **nesmí být interpretovány jako aktuální**:
-- Káva: původně −15 %, aktuálně efektivně −10 %.
-- Jelito: původně +20 %, aktuálně +15 %.
-- Medvědí mast: původně +25 Max Kuráž, aktuálně +30.
-- Chest threshold: původně 700 → 9 800 → aktuálně 29 400.
-- Starý mastery systém byl nahrazen milestone progression systémem.
