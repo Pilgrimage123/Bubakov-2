@@ -146,7 +146,7 @@ const KRONIKA: KronikaEntry[] = [
       '🗂️ SpatialHash byl přepracován na znovupoužitelný numerický index s retenčními buffery.',
       '⏱️ Přidán frame-time clamp proti simulačním burstům.',
     ],
-  },}
+  },
 ];
 
 export function KronikaChanges() {

@@ -1,5 +1,16 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Dědečkův obchod a perníčková ekonomika
+
+- XP a arénový systém Level Up byly odstraněny z průběhu výpravy; lovec místo XP získává **perníčky** jako běhový zdroj.
+- Po porážce nepřátel vznikají perníčkové dropy ve třech velikostech s hodnotami **1 / 3 / 10**; minibossové a bossové dávají větší varianty.
+- **Dědečkův obchod** funguje jako nový runový upgrade loop: Dědeček je roaming encounter ve světě a po přiblížení lze otevřít jeho nůši.
+- Nabídka obsahuje čtyři náhodné položky, podporuje omezení stacků, **štěstí**, čekací slevu až **30 %** a postupnou cenovou inflaci při dalších nákupech v jednom setkání.
+- Přidány nové runové bonusy pro rychlost, damage, dosah sběru, Max Kuráž, regeneraci a štěstí.
+- Přidány nové zvuky pro sběr perníčků, přivolání Dědečka a nákup v jeho nůši.
+- UI arény nyní zobrazuje zásobu perníčků místo XP lišty; Dědečkův obchod nahrazuje dosavadní výběr upgradeů v aréně.
+- Dědečkův roaming landmark a perníčky dostaly vlastní ladovské vykreslení.
+
 > **Source of truth:** aktuální implementace v `src/`. Historické hodnoty, které byly později změněny, nejsou uváděny jako aktuální stav.
 
 ## 2026-10-06 — Konsolidace herních změn a sjednocení changelogu

@@ -16,7 +16,6 @@ import {
   Season,
   GameLevelId,
   MetaProgression,
-  UpgradeChoice,
   DayPhase,
 } from './types';
 import {
@@ -71,6 +70,10 @@ import { LadaCoverScene } from './components/LadaCoverScene';
 import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
+import { GrandfatherShop } from './components/GrandfatherShop';
+import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
+import { chooseGrandfatherOffers, getGrandfatherPrice } from './game/grandfatherRuntime';
+import { getGingerbreadSize, GINGERBREAD_CONFIG, type GingerbreadSize } from './data/gingerbread';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -922,7 +925,7 @@ export default function App() {
   ).length;
 
   // Game UI state
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'levelup' | 'chest' | 'fleeing' | 'tally' | 'tavern'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather'>('menu');
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
@@ -959,9 +962,7 @@ export default function App() {
   // Run stats
   const [runStats, setRunStats] = useState({
     time: 0,
-    level: 1,
-    xp: 0,
-    xpNeeded: 10,
+    gingerbread: 0,
     kills: 0,
     chestProgress: 0,
     coins: 0,
@@ -983,9 +984,63 @@ export default function App() {
 
   const runStatsRef = useRef(runStats);
   runStatsRef.current = runStats;
+  const [grandfatherPurchaseIds, setGrandfatherPurchaseIds] = useState<string[]>([]);
+  const grandfatherOpenRef = useRef(false);
+  grandfatherOpenRef.current = gameState === 'grandfather';
+
+  const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
+    const p = engineRef.current.player;
+    if (!p) return;
+    const effect = item.effect;
+    if (effect.type === 'speed') p.speed += effect.amount;
+    if (effect.type === 'pickup_radius') p.pickupRadius += effect.amount;
+    if (effect.type === 'damage_multiplier') p.damageMultiplier += effect.amount;
+    if (effect.type === 'max_hp') {
+      p.maxHp += effect.amount;
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+    }
+    if (effect.type === 'luck') p.luck = (p.luck || 0) + effect.amount;
+    if (effect.type === 'regen') p.regenLevel = (p.regenLevel || 0) + effect.amount;
+  }, []);
+
+  const openGrandfatherShop = useCallback(() => {
+    const eng = engineRef.current;
+    if (!eng.grandfather.active) return;
+    grandfatherOpenRef.current = true;
+    setGameState('grandfather');
+  }, []);
+
+  const closeGrandfatherShop = useCallback(() => {
+    const eng = engineRef.current;
+    eng.grandfather.active = false;
+    eng.grandfather.cooldown = 45;
+    grandfatherOpenRef.current = false;
+    setGameState('playing');
+  }, []);
+
+  const purchaseGrandfatherItem = useCallback((itemId: string) => {
+    const eng = engineRef.current;
+    const p = eng.player;
+    const item = getGrandfatherItem(itemId);
+    if (!p || !item || !eng.grandfather.active) return false;
+    const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
+    const price = getGrandfatherPrice(item, eng.grandfather.purchasesThisEncounter, p.luck || 0, waitSeconds);
+    if (eng.gingerbread < price) return false;
+
+    eng.gingerbread -= price;
+    eng.grandfather.purchasesThisEncounter += 1;
+    setGrandfatherPurchaseIds((ids) => [...ids, item.id]);
+    applyGrandfatherItem(item);
+    sound.grandfatherPurchase();
+    eng.texts.push(new DamageText(p.x, p.y - 70, 'PLÁCNUTO!', '#F59E0B', true));
+    if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
+      eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
+    }
+    setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
+    return true;
+  }, [applyGrandfatherItem]);
 
   // Level Up choices
-  const [levelUpChoices, setLevelUpChoices] = useState<UpgradeChoice[]>([]);
 
   // Chest sequence state & slot machine effect
   interface ChestRewardItem {
@@ -1187,6 +1242,14 @@ export default function App() {
         return;
       }
 
+      if (gameState === 'grandfather') {
+        if (isEscKey || e.code === 'Enter') {
+          e.preventDefault();
+          closeGrandfatherShop();
+          return;
+        }
+      }
+
       if (gameState === 'chest') {
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
@@ -1311,6 +1374,7 @@ export default function App() {
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
       pickupRadius: basePickup + scarecrowBonusPickup,
+      luck: 0,
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: ovenDmgMult,
@@ -1501,6 +1565,7 @@ export default function App() {
     }
 
     engineRef.current = engine;
+    setGrandfatherPurchaseIds([]);
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
     if (chosenLevelId === 1) {
@@ -1542,9 +1607,7 @@ export default function App() {
 
     setRunStats({
       time: 0,
-      level: 1,
-      xp: 0,
-      xpNeeded: 10,
+      gingerbread: 0,
       kills: 0,
       chestProgress: 0,
       coins: 0,
@@ -1862,201 +1925,8 @@ export default function App() {
     }
   };
 
-  // Open Level Up Choice Modal
-  const openLevelUpModal = () => {
-    const p = engineRef.current.player;
-    if (!p) return;
-
-    sound.levelUp();
-    const churchLevel = metaRef.current.churchLevel || 0;
-    if (churchLevel > 0) {
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 70, 'SVATÁ VLNA!', '#FDE047', true));
-      for (const e of engineRef.current.enemies) {
-        if (e.isDefeated) continue;
-        const dx = e.x - p.x;
-        const dy = e.y - p.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist <= 400 + e.radius) {
-          const nx = dist > 0.001 ? dx / dist : 1;
-          const ny = dist > 0.001 ? dy / dist : 0;
-          e.takeDamage(100 * churchLevel, 'holy', nx * 520, ny * 520);
-          e.panicked = true;
-          e.panicTimer = Math.max(e.panicTimer || 0, 2.5);
-        }
-      }
-    }
-    setGameState('levelup');
-
-    const choices: UpgradeChoice[] = [];
-    const combatChoices: UpgradeChoice[] = [];
-    const passiveChoices: UpgradeChoice[] = [];
-    const availableWeaponKeys = Object.keys(WEAPONS);
-
-    // New weapons - only offered if unlocked in meta progression!
-    for (const key of availableWeaponKeys) {
-      const wProg = getWeaponProgress(key, metaRef.current);
-      if (wProg.isUnlocked && !p.weapons.find((w: any) => w.id === key)) {
-        combatChoices.push({
-          type: 'new_weapon',
-          id: key,
-          name: WEAPONS[key].name,
-          desc: WEAPONS[key].desc,
-          icon: WEAPONS[key].icon,
-        });
-      }
-    }
-
-    // Eight-rank progression: milestones 3/5/8, standard upgrades 2/4/6/7.
-    for (const w of p.weapons) {
-      if (w.level >= 8) continue;
-      const nextLevel = w.level + 1;
-      const milestoneChoices = getMilestoneChoices(w.id, nextLevel);
-      if (milestoneChoices) {
-        for (const option of milestoneChoices) {
-          combatChoices.push({
-            type: 'weapon_milestone',
-            id: w.id,
-            milestoneRank: nextLevel,
-            milestoneChoiceId: option.id,
-            name: WEAPONS[w.id].name + ': ' + option.name,
-            desc: option.description,
-            icon: WEAPONS[w.id].icon,
-          });
-        }
-      } else {
-        const rankDef = getWeaponRankDef(w.id, nextLevel);
-        combatChoices.push({
-          type: 'upgrade_weapon',
-          id: w.id,
-          name: WEAPONS[w.id].name + ' — Úroveň ' + nextLevel,
-          desc: rankDef?.passiveBonusDescription || 'Postupné posílení zbraně.',
-          icon: WEAPONS[w.id].icon,
-        });
-      }
-    }
-
-    // Passives
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'cooldown',
-      name: 'Opravdová káva',
-      desc: 'Horká černá káva z pražených zrn. Zkracuje dobu přípravy všech zbraní (-10 % cooldown / rychlejší útoky).',
-      icon: 'opravdova_kava',
-    });
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'damage',
-      name: 'Krvavé jelito',
-      desc: 'Zabijačkové jelito plné krup a síly. Trvale zvyšuje zranění všech útoků a zbraní lovce (+15 % k poškození).',
-      icon: 'krvave_jelito',
-    });
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'maxHp',
-      name: 'Medvědí mast',
-      desc: '+30 k maximální kuráži a odolnosti lovce proti vylekání a strachu.',
-      icon: 'medvedi_mast',
-    });
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'regen',
-      name: 'Veselá mysl a písnička',
-      desc: 'Písnička na rtech zažene splín a doplňuje +3 kuráže každých 5 sekund.',
-      icon: '🎵',
-    });
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'speed',
-      name: 'Toulavé boty sedmimílové',
-      desc: '+20 k rychlosti pohybu při obcházení strašidel.',
-      icon: '👢',
-    });
-    passiveChoices.push({
-      type: 'passive',
-      stat: 'pickupRadius',
-      name: 'Magnetický měšec na krejcary',
-      desc: '+30 k dosahu přitahování krejcarů a posilujících dobrot.',
-      icon: '🧲',
-    });
-
-    if (p.weapons.find((w: any) => w.id === 'cane') && !p.hasSoakedCane) {
-      combatChoices.push({
-        type: 'modifier',
-        id: 'soaked_cane',
-        name: 'Mokrý prut',
-        desc: 'Osikový prut namočený ve studené rybniční vodě. Údery bubáky zchladí, zkrotí a výrazně je zpomalují.',
-        icon: '💧',
-      });
-    }
-
-    const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
-    const pick = <T,>(items: T[]) => items.length ? items[Math.floor(Math.random() * items.length)] : undefined;
-    const combat = pick(shuffle(combatChoices));
-    const passive = pick(shuffle(passiveChoices));
-    if (combat) choices.push(combat);
-    if (passive) choices.push(passive);
-    const selectedKeys = new Set(choices.map((c) => c.type + ':' + (c.id ?? c.stat ?? c.name)));
-    const wildcardPool = [...combatChoices, ...passiveChoices].filter((c) => !selectedKeys.has(c.type + ':' + (c.id ?? c.stat ?? c.name)));
-    const wildcard = pick(shuffle(wildcardPool));
-    if (wildcard) choices.push(wildcard);
-    setLevelUpChoices(shuffle(choices).slice(0, 3));
-  };
-
-  const selectUpgrade = (choice: UpgradeChoice) => {
-    const p = engineRef.current.player;
-    if (p) {
-      if (choice.type === 'new_weapon' && choice.id) {
-        p.weapons.push({ id: choice.id, level: 1, cd: 0, mastery: createWeaponMasteryState() });
-      } else if (choice.type === 'upgrade_weapon' && choice.id) {
-        const w = p.weapons.find((x: any) => x.id === choice.id);
-        if (w) w.level++;
-      } else if (choice.type === 'weapon_milestone' && choice.id && choice.milestoneRank && choice.milestoneChoiceId) {
-        const w = p.weapons.find((x: any) => x.id === choice.id);
-        if (w) {
-          const rank = choice.milestoneRank;
-          const selected = getMilestoneChoice(w.id, rank, choice.milestoneChoiceId);
-          if (selected && (rank === 3 || rank === 5 || rank === 8)) {
-            if (!w.milestones) w.milestones = {};
-            if (!w.milestones[rank]) {
-              w.milestones[rank] = selected.id;
-              w.level = rank;
-            }
-          }
-        }
-      }      } else if (choice.type === 'passive' && choice.stat) {
-        if (choice.stat === 'maxHp') {
-          p.maxHp += 30;
-          p.hp += 30;
-          p.kurazCount = (p.kurazCount || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Medvědí mast! (+30 Max Kuráž)', '#F59E0B', true));
-        } else if (choice.stat === 'cooldown') {
-          p.kavaCount = (p.kavaCount || 0) + 1;
-          p.cooldownBonus = (p.cooldownBonus || 0) + 0.1111111111;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Opravdová káva! (+11,11 % cooldown bonus)', '#38BDF8', true));
-        } else if (choice.stat === 'damage') {
-          p.jelitoCount = (p.jelitoCount || 0) + 1;
-          p.damageMultiplier = (p.damageMultiplier || 1) * 1.15;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Krvavé jelito! (×1,15 Zranění)', '#DC2626', true));
-        } else if (choice.stat === 'regen') {
-          p.regenLevel = (p.regenLevel || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, 'Veselá mysl! (+3 Kuráž/5s)', '#4ADE80', true));
-        } else if (choice.stat === 'speed') {
-          p.speed += 20;
-          p.speedCount = (p.speedCount || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+20 Rychlost!', '#60A5FA', true));
-        } else if (choice.stat === 'pickupRadius') {
-          p.pickupRadius += 30;
-          p.magnetCount = (p.magnetCount || 0) + 1;
-          engineRef.current.texts.push(new DamageText(p.x, p.y - 45, '+30 Dosah sběru!', '#FCD34D', true));
-        }
-      } else if (choice.type === 'modifier') {
-        p.hasSoakedCane = true;
-      }
-    }
-    sound.coin();
-    setGameState('playing');
-    engineRef.current.lastTime = performance.now();
-  };
+  // The old XP/arena Level Up flow is intentionally removed.
+  // Run upgrades are purchased from Dědeček's basket for gingerbread.
 
   // Skip slot machine spin
   const skipSlotSpin = useCallback(() => {
@@ -2370,6 +2240,43 @@ export default function App() {
           if (currentGameState === 'playing') {
             engine.gameTime += dt;
             if (engine.flourStormTimer > 0) engine.flourStormTimer -= dt;
+
+            // Dědeček is a roaming run encounter, not a village NPC.
+            if (engine.grandfather.cooldown > 0) engine.grandfather.cooldown = Math.max(0, engine.grandfather.cooldown - dt);
+            const luck = player.luck || 0;
+            const affordableBase = GRANDFATHER_ITEMS.some((item) => item.baseCost <= engine.gingerbread);
+            if (
+              !engine.grandfather.active &&
+              engine.grandfather.cooldown <= 0 &&
+              affordableBase &&
+              engine.gameTime >= 45
+            ) {
+              const angle = Math.random() * Math.PI * 2;
+              const distance = 850 + Math.random() * 250;
+              engine.grandfather.active = true;
+              engine.grandfather.x = player.x + Math.cos(angle) * distance;
+              engine.grandfather.y = player.y + Math.sin(angle) * distance;
+              engine.grandfather.spawnedAt = engine.gameTime;
+              engine.grandfather.waitStartedAt = engine.gameTime;
+              engine.grandfather.purchasesThisEncounter = 0;
+              engine.grandfather.offers = chooseGrandfatherOffers(
+                engine.gingerbread,
+                luck,
+                grandfatherPurchaseIds,
+                4
+              );
+              sound.grandfatherCall();
+              engine.texts.push(new DamageText(player.x, player.y - 80, '„Pssst! Perníčky!“', '#F59E0B', true));
+            }
+
+            if (engine.grandfather.active) {
+              const grandfatherDistance = Math.hypot(engine.grandfather.x - player.x, engine.grandfather.y - player.y);
+              if (grandfatherDistance < 155) {
+                engine.grandfather.x += (player.x - engine.grandfather.x) * Math.min(1, dt * 0.35);
+                engine.grandfather.y += (player.y - engine.grandfather.y) * Math.min(1, dt * 0.35);
+              }
+            }
+
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
@@ -3596,6 +3503,7 @@ export default function App() {
             runStatsRef.current.coins = engine.coins;
             runStatsRef.current.souls = engine.souls;
             runStatsRef.current.chasniks = engine.chasniks;
+            runStatsRef.current.gingerbread = engine.gingerbread;
 
             engine.lastStatsSync += dt;
             if (engine.lastStatsSync >= HUD_SYNC_INTERVAL_SECONDS) {
@@ -3932,21 +3840,31 @@ export default function App() {
                   } else if (val >= 5) {
                     engine.texts.push(new DamageText(player.x, player.y - 40, `+${val} kr. (Groš)`, '#E2E8F0'));
                   }
-                  setRunStats((s) => {
-                    const nextXp = s.xp + val;
-                    const nextCoins = engine.coins;
-                    if (nextXp >= s.xpNeeded) {
-                      openLevelUpModal();
-                      return {
-                        ...s,
-                        xp: nextXp - s.xpNeeded,
-                        level: s.level + 1,
-                        xpNeeded: Math.floor(s.xpNeeded * 1.5),
-                        coins: nextCoins,
-                      };
-                    }
-                    return { ...s, xp: nextXp, coins: nextCoins };
-                  });
+                  setRunStats((s) => ({ ...s, coins: engine.coins }));
+                } else if (d.type === 'gingerbread') {
+                  const val = d.value || 1;
+                  engine.gingerbread += val;
+                  const size = d.size || 'small';
+                  sound.gingerbreadPickup();
+                  engine.texts.push(new DamageText(
+                    player.x,
+                    player.y - 42,
+                    `+${val} 🍪`,
+                    size === 'giant' ? '#F59E0B' : '#B45309',
+                    true
+                  ));
+                  for (let i = 0; i < (size === 'giant' ? 8 : 4); i++) {
+                    engine.particles.push({
+                      x: player.x,
+                      y: player.y,
+                      vx: (Math.random() - 0.5) * 110,
+                      vy: (Math.random() - 0.5) * 110,
+                      life: 0.45,
+                      color: '#F59E0B',
+                      size: 3,
+                    });
+                  }
+                  setRunStats((s) => ({ ...s, gingerbread: engine.gingerbread }));
                 } else if (d.type === 'potion') {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
@@ -4080,7 +3998,7 @@ export default function App() {
       // -------------------------------------------------------------
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'levelup' || currentGameState === 'chest' || currentGameState === 'paused') {
+      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused') {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
@@ -4144,6 +4062,28 @@ export default function App() {
           if (!isInView(d.x, d.y, (d.radius || 14) + 24, viewLeft, viewTop, viewRight, viewBottom)) continue;
           if (d.type === 'coin') {
             Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
+          } else if (d.type === 'gingerbread') {
+            const size = d.size === 'giant' ? 1.35 : d.size === 'large' ? 1.1 : 0.9;
+            ctx.save();
+            const bob = Math.sin(d.time * 3) * 2;
+            ctx.translate(d.x, d.y + bob);
+            ctx.rotate(Math.sin(d.time * 1.7) * 0.08);
+            ctx.fillStyle = '#A16207';
+            ctx.strokeStyle = '#451A03';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-10 * size, -9 * size, 20 * size, 18 * size, 5 * size);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#FEF3C7';
+            ctx.fillRect(-6 * size, -5 * size, 12 * size, 2.5 * size);
+            ctx.fillRect(-5 * size, 2 * size, 10 * size, 2.5 * size);
+            ctx.fillStyle = '#451A03';
+            ctx.beginPath();
+            ctx.arc(-4 * size, -1 * size, 1.5 * size, 0, Math.PI * 2);
+            ctx.arc(4 * size, -1 * size, 1.5 * size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
           } else if (d.type === 'potion') {
             Lada.drawPotion(ctx, d.x, d.y, d.time);
           } else if (d.type === 'bread' || d.type === 'pear') {
@@ -4154,6 +4094,54 @@ export default function App() {
             Lada.drawChest(ctx, d.x, d.y, 0, Math.abs(Math.sin(d.time * 2)), 0.65);
           } else if (d.type === 'chasnik') {
             Lada.drawChasnik(ctx, d.x, d.y, d.time, true);
+          }
+        }
+
+        // Dědeček world encounter: basket is the recognizable landmark.
+        if (engine.grandfather.active) {
+          const g = engine.grandfather;
+          const pulse = 1 + Math.sin(engine.uiTime * 2.5) * 0.04;
+          ctx.save();
+          ctx.translate(g.x, g.y);
+          ctx.scale(pulse, pulse);
+          ctx.fillStyle = 'rgba(255, 193, 7, 0.16)';
+          ctx.beginPath();
+          ctx.arc(0, 0, 70, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#7C4A21';
+          ctx.strokeStyle = '#2D1609';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.ellipse(0, 16, 42, 25, 0, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#E8C79A';
+          ctx.beginPath(); ctx.arc(0, -18, 27, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#4B2E19';
+          ctx.beginPath(); ctx.arc(0, -38, 31, Math.PI, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#111';
+          ctx.beginPath(); ctx.arc(-9, -20, 3, 0, Math.PI * 2); ctx.arc(9, -20, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#6B3415';
+          ctx.fillRect(-3, -12, 6, 18);
+          ctx.fillStyle = '#FEF3C7';
+          ctx.font = '900 18px Eczar, serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('🍪', 0, 22);
+          ctx.restore();
+
+          const dist = Math.hypot(g.x - player.x, g.y - player.y);
+          if (dist < 180) {
+            ctx.save();
+            ctx.fillStyle = '#FFF7DF';
+            ctx.strokeStyle = '#2D1609';
+            ctx.lineWidth = 2;
+            ctx.font = '900 15px Eczar, serif';
+            ctx.textAlign = 'center';
+            ctx.beginPath();
+            ctx.roundRect(g.x - 100, g.y - 95, 200, 34, 10);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#5B2118';
+            ctx.fillText('DĚDEČEK — otevři nůši', g.x, g.y - 73);
+            ctx.restore();
           }
         }
 
@@ -6040,12 +6028,10 @@ export default function App() {
           const potionMult = isWater ? 1.6 : isFields ? 1.3 : isBoss ? 2.0 : 1.0;
           const breadMult = isFields ? 2.0 : isFrost ? 1.5 : isSwarms ? 1.2 : 0.9;
           const soulMult = isWater ? 2.5 : isShadows ? 2.0 : isUndead ? 1.4 : 0.5;
-          const coinMult = isUndead ? 1.8 : isDemons ? 1.6 : isFrost ? 1.3 : isBoss ? 2.5 : 1.0;
 
           eng.pointsChest += Math.round(pt * chestMult);
           eng.pointsPotion += Math.round(pt * potionMult);
           eng.pointsBread += Math.round(pt * breadMult);
-          eng.pointsCoin += Math.round(pt * coinMult);
           if (isWater || isShadows || isUndead || isBoss || this.defeatedByFood) {
             eng.pointsSoul += Math.round(pt * soulMult);
           }
@@ -6054,10 +6040,6 @@ export default function App() {
           if (this.isMiniboss) {
             sound.chest();
             spawnScatterDrop('chest', { speed: 85, text: '🎁 POKLAD MINIBOSSE!', textColor: COLORS.mustard });
-            for (let i = 0; i < 5; i++) {
-              spawnScatterDrop('coin', { value: 5, speed: 70 + i * 20 });
-            }
-            spawnScatterDrop('coin', { value: 25, speed: 120, text: 'Zlatý tolar! +25', textColor: COLORS.mustard });
             spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
             spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
@@ -6078,10 +6060,6 @@ export default function App() {
             spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
             spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
             spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
-            spawnScatterDrop('coin', { value: 25, speed: 130, text: 'ZLATÝ TOLAR!', textColor: COLORS.mustard });
-            spawnScatterDrop('coin', { value: 10, speed: 105 });
-            spawnScatterDrop('coin', { value: 10, speed: 85 });
-            spawnScatterDrop('coin', { value: 5, speed: 70 });
             eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD VLÁDCE BUBÁKŮ!', COLORS.mustard, true));
           }
 
@@ -6093,8 +6071,6 @@ export default function App() {
             if (Math.random() < 0.16 || isWater) {
               spawnScatterDrop('soul', { speed: 85, text: 'Vděčná dušička 🕊️', textColor: '#38BDF8' });
             }
-            const gratefulVal = Math.random() < 0.35 ? 5 : (1 + Math.floor(Math.random() * 3));
-            spawnScatterDrop('coin', { value: gratefulVal, speed: 75 });
           }
 
           // 3. Direct surprise / lucky drops (instant chance on kill, scaled by theme)
@@ -6154,38 +6130,6 @@ export default function App() {
             eng.pointsSoul -= DROP_THRESHOLDS.soul;
             spawnScatterDrop('soul', { speed: 70 });
           }
-          if (eng.pointsCoin >= DROP_THRESHOLDS.coin) {
-            let v = Math.floor(eng.pointsCoin / DROP_THRESHOLDS.coin);
-            eng.pointsCoin %= DROP_THRESHOLDS.coin;
-            if (Math.random() < 0.06 * (metaRef.current.verminLevel || 0)) {
-              v *= 2;
-            }
-            let remaining = v;
-            const coinsToSpawn: number[] = [];
-            while (remaining > 0) {
-              if (remaining >= 15 && Math.random() < 0.70) {
-                const tVal = Math.min(25, remaining);
-                coinsToSpawn.push(tVal);
-                remaining -= tVal;
-              } else if (remaining >= 5 && Math.random() < 0.75) {
-                const gVal = Math.min(10, remaining >= 10 ? (Math.random() < 0.5 ? 10 : 5) : 5);
-                coinsToSpawn.push(gVal);
-                remaining -= gVal;
-              } else {
-                const cVal = Math.min(remaining, Math.max(1, Math.min(3, remaining)));
-                coinsToSpawn.push(cVal);
-                remaining -= cVal;
-              }
-              if (coinsToSpawn.length >= 7) {
-                if (remaining > 0) coinsToSpawn[coinsToSpawn.length - 1] += remaining;
-                break;
-              }
-            }
-            for (const cVal of coinsToSpawn) {
-              spawnScatterDrop('coin', { value: cVal, speed: 55 + Math.random() * 85 });
-            }
-          }
-
 // Bestiary tracking & progressive sequential hunter unlocks
           const curMeta = metaRef.current;
           const updatedKills = { ...curMeta.bestiaryKills, [this.id]: (curMeta.bestiaryKills[this.id] || 0) + 1 };
@@ -6984,12 +6928,11 @@ export default function App() {
               </button>
             </div>
 
-            {/* XP bar */}
-            <div id="xp-container" className="bar-container">
-              <div id="xp-fill" style={{ width: `${(runStats.xp / runStats.xpNeeded) * 100}%` }} />
-              <div className="bar-text" id="level-text">
-                <span style={{ marginRight: '6px' }}>🌾</span>
-                ÚROVEŇ {runStats.level}
+            {/* Run resource: gingerbread replaces the arena XP bar. */}
+            <div id="gingerbread-container" className="bar-container" style={{ minHeight: '34px' }}>
+              <div className="bar-text" style={{ justifyContent: 'center' }} aria-label={`Perníčky ${runStats.gingerbread}`}>
+                <span style={{ marginRight: '7px' }}>🍪</span>
+                PERNÍČKY <strong>{runStats.gingerbread}</strong>
               </div>
             </div>
 
@@ -7640,7 +7583,7 @@ export default function App() {
 
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
                 <span>🦁 Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
-                <span>⭐ Úroveň: <strong>{runStats.level}</strong></span>
+                <span>🗺️ Výprava: <strong>{runStats.levelTitle}</strong></span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
                 <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
                 <span>🌾 Chasníci: <strong>{runStats.chasniks}</strong></span>
@@ -7692,7 +7635,7 @@ export default function App() {
                     </div>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900 }}>
                       <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{cdMult < 0.999 ? ` (-${Math.round((1 - cdMult) * 100)} %)` : ''}</span>
+                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}
@@ -7908,31 +7851,36 @@ export default function App() {
         </div>
       )}
 
-      {/* LEVEL UP MODAL */}
-      {gameState === 'levelup' && (
-        <div id="level-up-screen" className="overlay">
-          <div className="panel" style={{ maxWidth: '650px' }}>
-            <LadaCardCorners variant="callout" />
-            <h2 style={{ color: '#C53026', fontSize: '2.2rem', margin: '4px 0' }}>NOVÁ ÚROVEŇ!</h2>
-            <LadaBotanicalFlourish height={18} />
-            <p style={{ fontWeight: 800, marginTop: '-2px', marginBottom: '15px', color: 'var(--wood-dark)' }}>
-              Vyberte si vylepšení pro svého lovce:
-            </p>
-            <div id="choices-container">
-              {levelUpChoices.map((c, i) => (
-                <div key={i} className="choice-card" onClick={() => selectUpgrade(c)}>
-                  <LadaCardCorners variant="default" showBottomCorners={true} />
-                  <div className="choice-icon"><GameIcon icon={c.icon} size={36} /></div>
-                  <div className="choice-text">
-                    <h3>{c.name}</h3>
-                    <p>{c.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* DĚDEČEK ENCOUNTER */}
+      {gameState === 'playing' && engineRef.current.grandfather.active && engineRef.current.player &&
+        Math.hypot(engineRef.current.grandfather.x - engineRef.current.player.x, engineRef.current.grandfather.y - engineRef.current.player.y) < 190 && (
+        <button
+          onClick={openGrandfatherShop}
+          style={{
+            position: 'fixed', left: '50%', bottom: '17%', transform: 'translateX(-50%)',
+            zIndex: 40, padding: '12px 22px', border: '3px solid var(--ink)', borderRadius: 12,
+            background: '#FDECC8', color: '#5B2118', fontWeight: 1000, fontSize: '1rem',
+            boxShadow: '4px 4px 0 rgba(0,0,0,.3)',
+          }}
+        >
+          🧺 OTEVŘÍT DĚDEČKOVU NŮŠI
+        </button>
       )}
+
+      {gameState === 'grandfather' && (
+        <GrandfatherShop
+          gingerbread={engineRef.current.gingerbread}
+          luck={engineRef.current.player?.luck || 0}
+          waitSeconds={Math.max(0, engineRef.current.gameTime - engineRef.current.grandfather.waitStartedAt)}
+          offers={engineRef.current.grandfather.offers}
+          purchasedIds={grandfatherPurchaseIds}
+          purchasesThisEncounter={engineRef.current.grandfather.purchasesThisEncounter}
+          onPurchase={purchaseGrandfatherItem}
+          onClose={closeGrandfatherShop}
+        />
+      )}
+
+      {/* Dědečkův obchod je finální runový upgrade loop; původní Level Up modal je odstraněn. */}
 
       {/* PAINTED CHEST SEQUENCE – LADOVSKÝ VENKOVSKÝ AUTOMAT / SLOT MACHINE */}
       {gameState === 'chest' && (

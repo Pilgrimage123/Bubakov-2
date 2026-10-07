@@ -1,4 +1,5 @@
 import type { GameLevelId } from '../types';
+import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 
 export interface EngineState {
   player: any;
@@ -65,6 +66,8 @@ export interface EngineState {
   drakSwoopTimer: number;
   drakSnoreTimer: number;
   lastStatsSync: number;
+  gingerbread: number;
+  grandfather: GrandfatherRuntimeState;
 }
 
 export function createInitialEngineState(): EngineState {
@@ -133,6 +136,8 @@ export function createInitialEngineState(): EngineState {
     drakWingGustTimer: 11,
     drakSwoopTimer: 14,
     drakSnoreTimer: 3,
-    lastStatsSync: 0
+    lastStatsSync: 0,
+    gingerbread: 0,
+    grandfather: createGrandfatherRuntime()
   };
 }

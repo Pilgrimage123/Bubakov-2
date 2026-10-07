@@ -131,6 +131,18 @@ var SoundManager = class {
 		setTimeout(() => this.playTone(1480, "sine", .16, .15), 60);
 		setTimeout(() => this.playTone(1960, "sine", .22, .12), 120);
 	}
+	gingerbreadPickup() {
+		this.playTone(420, "triangle", .07, .11);
+		setTimeout(() => this.playTone(620, "triangle", .11, .09), 35);
+	}
+	grandfatherCall() {
+		this.playTone(190, "triangle", .18, .13);
+		setTimeout(() => this.playTone(150, "triangle", .24, .1), 80);
+	}
+	grandfatherPurchase() {
+		this.playTone(260, "square", .06, .1);
+		setTimeout(() => this.playTone(180, "triangle", .14, .09), 45);
+	}
 	slash() {
 		this.playTone(220, "triangle", .12, .2);
 	}
