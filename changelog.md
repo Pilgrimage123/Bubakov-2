@@ -1,5 +1,24 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Oprava pádů Hromničky, aktivace milníků v test módu, vyvážení nůše a stabilizace
+
+- **Oprava kritického pádu Hromničky (TypeError: player.spawnHromnickaPulse is not a function):**
+  - Implementována chybějící metoda `player.spawnHromnickaPulse` v `App.tsx` s pulzním posvátným poškozením, odhozem odpuzujícím nepřátele a vyšším poškozením proti nemrtvým a pekelníkům.
+  - V `weapons.ts` opraven výpočet zranění Hromničky přes `getWeaponDamage(player, ...)`, aby správně škáloval s perky a poškozením lovce.
+- **Aktivace milníků zbraní v Sandboxu a při vylepšení z truhly:**
+  - Vytvořena funkce `ensureWeaponMilestones`, která automaticky přiřazuje milníky na úrovních 3, 5 a 8 pro testovací běhy, startovní zbraně i vylepšení z malované truhly.
+- **Vyvážení nabídky zbraní v Dědečkově nůši:**
+  - Odstraněno deterministické blokování slotů Topinkou a Válečnicí. Nyní je použit vážený náhodný výběr, který preferuje nesené zbraně lovce a doporučené zbraně, ale dává šanci všem zbraním.
+  - Odstraněn stale closure a race condition při rychlých nákupech v nůši (`grandfatherPurchaseIdsRef`).
+- **Oprava Kaple svaté vlny (vesnická budova Church):**
+  - Budova po odstranění starého Level-up systému nefungovala; nyní při každém nákupu v dědečkově nůši vyšle masivní posvátnou tlakovou vlnu (400 px, 100 dmg / úroveň).
+- **Škálování cooldownu všech zbraní:**
+  - Všechny zbraně (včetně tradičních zbraní bez milníků) nyní správně získávají cooldown bonus při vylepšování úrovně.
+- **Opravy UI a ovládání:**
+  - Zobrazení vstřebaného poškození štítem (`ŠTÍT POHLTIL! 🛡️`) v plovoucím textu.
+  - Přidán `blur` listener na okno prohlížeče, aby při přepnutí okna nezůstaly viset stisknuté klávesy pohybu.
+  - Pravidelná synchronizace počtu perníčků do HUDu.
+
 ## 2026-10-07 — Oprava zamrzání hry (Canvas save stack leak), stabilizace Dědečka a Pekelného Čerta
 
 - **Oprava kritického zamrzání hry (Canvas state stack overflow):**

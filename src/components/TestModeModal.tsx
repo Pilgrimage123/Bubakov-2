@@ -8,7 +8,6 @@ import { WEAPONS } from '../data/weapons';
 import { Lada } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
-import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var HUNTER_KEYS = [

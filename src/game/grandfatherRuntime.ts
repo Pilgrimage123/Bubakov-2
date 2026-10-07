@@ -90,19 +90,30 @@ export function chooseGrandfatherOffers(
   // 1. Garantované zbraně (1–2 zbraně v nabídce pro pestrý výběr a rychlý rozvoj arzenálu)
   const targetWeaponCount = availableWeapons.length >= 2 ? 2 : availableWeapons.length;
   if (targetWeaponCount > 0) {
-    // Upřednostníme zbraně: Topinka, Válečnice a stávající zbraně lovce
-    const prioritizedWeapons = [...availableWeapons].sort((a, b) => {
-      const aFeatured = (a.id === 'wp_cesnekova-topinka' || a.id === 'wp_valecnice') ? 1 : 0;
-      const bFeatured = (b.id === 'wp_cesnekova-topinka' || b.id === 'wp_valecnice') ? 1 : 0;
-      if (aFeatured !== bFeatured) return bFeatured - aFeatured;
-      return Math.random() - 0.5;
-    });
-
-    for (const w of prioritizedWeapons) {
-      if (selected.length >= targetWeaponCount) break;
-      if (!selected.some((s) => s.itemId === w.id)) {
-        selected.push({ itemId: w.id, offeredAt: now });
+    // Upřednostníme zbraně: stávající zbraně lovce (pro level-up) a doporučené kousky (Topinka, Válečnice),
+    // s váženým náhodným výběrem, aby nezablokovaly ostatní zbraně z fondu.
+    const pool = [...availableWeapons];
+    while (selected.length < targetWeaponCount && pool.length > 0) {
+      const weights = pool.map((w) => {
+        const isOwned = playerWeapons.some((pw: any) => pw.id === w.weaponId);
+        const isFeatured = w.id === 'wp_cesnekova-topinka' || w.id === 'wp_valecnice';
+        let weight = 1.0;
+        if (isOwned) weight += 2.0;
+        if (isFeatured) weight += 1.5;
+        return weight;
+      });
+      const totalWeight = weights.reduce((acc, v) => acc + v, 0);
+      let rand = Math.random() * totalWeight;
+      let chosenIdx = 0;
+      for (let i = 0; i < weights.length; i++) {
+        rand -= weights[i];
+        if (rand <= 0) {
+          chosenIdx = i;
+          break;
+        }
       }
+      const chosen = pool.splice(chosenIdx, 1)[0];
+      selected.push({ itemId: chosen.id, offeredAt: now });
     }
   }
 

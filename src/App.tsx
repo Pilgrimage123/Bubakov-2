@@ -30,7 +30,7 @@ import {
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
-import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown } from './data/weaponMilestones';
+import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
 import { getGingerbreadSize, getGingerbreadValue, GINGERBREAD_CONFIG, GINGERBREAD_VALUES, type GingerbreadSize } from './data/gingerbread';
 import {
@@ -984,6 +984,7 @@ export default function App() {
   const runStatsRef = useRef(runStats);
   runStatsRef.current = runStats;
   const [grandfatherPurchaseIds, setGrandfatherPurchaseIds] = useState<string[]>([]);
+  const grandfatherPurchaseIdsRef = useRef<string[]>([]);
   const [, setGrandfatherVersion] = useState(0);
   const grandfatherOpenRef = useRef(false);
   grandfatherOpenRef.current = gameState === 'grandfather';
@@ -1030,19 +1031,17 @@ export default function App() {
       const existing = p.weapons.find((w: any) => w.id === weaponId);
       if (existing) {
         existing.level = Math.min(8, existing.level + 1);
-        const choices = getMilestoneChoices(weaponId, existing.level);
-        if (choices && choices[0] && !existing.milestones?.some((mId: string) => choices.some((c: any) => c.id === mId))) {
-          if (!existing.milestones) existing.milestones = [];
-          existing.milestones.push(choices[0].id);
-        }
+        ensureWeaponMilestones(existing);
       } else {
-        p.weapons.push({
+        const newW = {
           id: weaponId,
           level: 1,
           cd: 0,
           mastery: createWeaponMasteryState(),
           milestones: [],
-        });
+        };
+        ensureWeaponMilestones(newW);
+        p.weapons.push(newW);
       }
     }
   }, []);
@@ -1074,13 +1073,44 @@ export default function App() {
 
     eng.gingerbread -= price;
     eng.grandfather.purchasesThisEncounter += 1;
-    const newPurchasedIds = [...grandfatherPurchaseIds, item.id];
+    const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, item.id];
+    grandfatherPurchaseIdsRef.current = newPurchasedIds;
     setGrandfatherPurchaseIds(newPurchasedIds);
     applyGrandfatherItem(item);
     sound.grandfatherPurchase();
     eng.texts.push(new DamageText(p.x, p.y - 70, item.isWeapon ? 'ZBRAŇ ZÍSKÁNA!' : 'PLÁCNUTO!', '#F59E0B', true));
     if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
       eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
+    }
+    // Kaple svaté vlny: Při nákupu u Dědečka vyšle posvěcenou tlakovou vlnu
+    if ((metaRef.current.churchLevel || 0) > 0) {
+      const waveDmg = (metaRef.current.churchLevel || 0) * 100;
+      const waveRadius = 400;
+      const nearby = enemySpatialHashRef.current.queryCircle(p.x, p.y, waveRadius + 60);
+      for (let i = 0; i < nearby.length; i++) {
+        const e = nearby[i];
+        if (e.isDefeated) continue;
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist <= waveRadius) {
+          e.takeDamage(waveDmg, 'holy', (dx / dist) * 450, (dy / dist) * 450);
+        }
+      }
+      sound.bell();
+      eng.texts.push(new DamageText(p.x, p.y - 120, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
+      for (let i = 0; i < 20; i++) {
+        const ang = (i / 20) * Math.PI * 2;
+        eng.particles.push({
+          x: p.x + Math.cos(ang) * 40,
+          y: p.y + Math.sin(ang) * 40,
+          vx: Math.cos(ang) * 350,
+          vy: Math.sin(ang) * 350,
+          life: 0.6,
+          color: '#FEF08A',
+          size: 6,
+        });
+      }
     }
     // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
     const ownedNow = item.isWeapon
@@ -1092,7 +1122,7 @@ export default function App() {
     setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     return true;
-  }, [applyGrandfatherItem, grandfatherPurchaseIds]);
+  }, [applyGrandfatherItem]);
 
   const refreshGrandfatherOffers = useCallback(() => {
     const eng = engineRef.current;
@@ -1104,7 +1134,7 @@ export default function App() {
 
     eng.gingerbread -= cost;
     eng.grandfather.rerollsThisEncounter = rerolls + 1;
-    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck || 0, grandfatherPurchaseIds, p?.weapons || [], 4);
+    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck || 0, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4);
     sound.coin();
     sound.grandfatherCall();
     if (p) {
@@ -1112,7 +1142,7 @@ export default function App() {
     }
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     setGrandfatherVersion((v) => v + 1);
-  }, [grandfatherPurchaseIds]);
+  }, []);
 
   // Level Up choices
 
@@ -1358,12 +1388,17 @@ export default function App() {
     const handleKeyUp = (e: KeyboardEvent) => {
       engineRef.current.keys[e.code] = false;
     };
+    const handleBlur = () => {
+      engineRef.current.keys = {};
+    };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
     };
   }, [gameState, togglePause, isControlsOpen]);
 
@@ -1430,18 +1465,29 @@ export default function App() {
 
     const initialWeapons =
       customWeapons && customWeapons.filter((w) => w.level > 0).length > 0
-        ? customWeapons.filter((w) => w.level > 0).map((w) => ({ ...w, cd: 0, mastery: w.mastery || createWeaponMasteryState() }))
+        ? customWeapons.filter((w) => w.level > 0).map((w) => {
+            const mapped = {
+              ...w,
+              cd: 0,
+              mastery: w.mastery || createWeaponMasteryState(),
+              milestones: (w as any).milestones || [],
+            };
+            ensureWeaponMilestones(mapped);
+            return mapped;
+          })
         : type === 'wanderer'
-        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState() }, { id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
+        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }, { id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
-        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
+        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'korenarka'
-        ? [{ id: 'herbs', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
+        ? [{ id: 'herbs', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'sexton'
-        ? [{ id: 'holywater', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
+        ? [{ id: 'holywater', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'granny'
-        ? [{ id: 'kolac', level: 1, cd: 0, mastery: createWeaponMasteryState() }]
-        : [{ id: 'halberd', level: 1, cd: 0, mastery: createWeaponMasteryState() }];
+        ? [{ id: 'kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        : [{ id: 'halberd', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
+
+    initialWeapons.forEach(ensureWeaponMilestones);
 
     const wallBonusHp = (meta.wallLevel || 0) * 25;
     const millBonusSpeed = (meta.millLevel || 0) * 15;
@@ -1505,16 +1551,23 @@ export default function App() {
         }
         const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
         let remainingDmg = hurtDmg;
+        let absorbed = 0;
         if (this.tempShield > 0) {
-          const absorbed = Math.min(this.tempShield, remainingDmg);
+          absorbed = Math.min(this.tempShield, remainingDmg);
           this.tempShield -= absorbed;
           remainingDmg -= absorbed;
         }
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
         sound.hit();
-        engineRef.current.texts.push(
-          new DamageText(this.x, this.y - 35, `-${Math.ceil(hurtDmg)}`, COLORS.red)
-        );
+        if (absorbed > 0 && remainingDmg <= 0) {
+          engineRef.current.texts.push(
+            new DamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true)
+          );
+        } else {
+          engineRef.current.texts.push(
+            new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, COLORS.red)
+          );
+        }
         if (this.hp <= 0) {
           this.hp = 0;
           sound.hit();
@@ -1570,6 +1623,38 @@ export default function App() {
           }
         }
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
+      },
+      spawnHromnickaPulse(reach: number, dmg: number, level: number) {
+        this.hromnickaPulseTimer = 0.35;
+        this.hromnickaPulseRadius = reach;
+        const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
+        for (let i = 0; i < nearby.length; i++) {
+          const e = nearby[i];
+          if (e.isDefeated) continue;
+          const dx = e.x - this.x;
+          const dy = e.y - this.y;
+          const distSq = dx * dx + dy * dy;
+          const maxReach = reach + e.radius;
+          if (distSq <= maxReach * maxReach) {
+            const dist = Math.sqrt(distSq) || 1;
+            const holyPush = getHolyPushMultiplier(e);
+            const kbForce = (120 + level * 10) * holyPush;
+            const finalDmg = dmg * (isUnholyEnemy(e) ? 1.5 : 1.0);
+            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce);
+            if (isUnholyEnemy(e)) {
+              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', COLORS.mustard, true));
+            }
+          }
+        }
+        engineRef.current.particles.push({
+          x: this.x,
+          y: this.y,
+          vx: 0,
+          vy: 0,
+          life: 0.35,
+          color: '#FEF08A',
+          size: reach * 0.3,
+        });
       },
 
       triggerWeaponMastery(_weaponId: string, _enemy: any, _event: 'hit' | 'pulse' = 'hit') {
@@ -1649,6 +1734,7 @@ export default function App() {
     }
 
     engineRef.current = engine;
+    grandfatherPurchaseIdsRef.current = [];
     setGrandfatherPurchaseIds([]);
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
@@ -2151,6 +2237,7 @@ export default function App() {
             icon: wDef.icon,
             action: () => {
               pw.level += 1;
+              ensureWeaponMilestones(pw);
             },
           });
         }
@@ -3556,7 +3643,7 @@ export default function App() {
                   const fired = wDef.fire(player, w.level);
                   (player as any)._firingWeapon = null;
                   const rankDef = getWeaponRankDef(w.id, w.level);
-                  const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? 0;
+                  const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
                   const playerCooldownBonus = typeof player.cooldownBonus === 'number'
                     ? Math.max(0, player.cooldownBonus)
                     : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
@@ -3660,6 +3747,7 @@ export default function App() {
                 coins: engine.coins,
                 souls: engine.souls,
                 chasniks: engine.chasniks,
+                gingerbread: engine.gingerbread,
                 hp: player.hp,
                 maxHp: player.maxHp,
                 ultCd: player.ultCd,
@@ -3850,7 +3938,7 @@ export default function App() {
                       break;
                     }
                   }
-                  if (p.type === 'pickle' && (p.penetrate || (p.pierce && p.pierce > 0))) {
+                  if (p.penetrate || (typeof p.pierce === 'number' && p.pierce > 0)) {
                     if (p.pierce) p.pierce--;
                     continue;
                   }
@@ -7839,7 +7927,7 @@ export default function App() {
                 const dmgMult = engineRef.current.player?.damageMultiplier || 1;
                 const cooldownBonus = engineRef.current.player?.cooldownBonus ?? 0;
                 const rankDef = getWeaponRankDef(w.id, w.level);
-                const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? 0;
+                const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
                 const stats = getRankedWeaponStats(w.id, w.level, w);
                 const playerCooldownBonus = cooldownBonus > 0 ? cooldownBonus : Math.max(0, ((engineRef.current.player?.cooldownMultiplier || 1) - 1) / 0.9);
                 const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult);

@@ -155,6 +155,29 @@ export function getMilestoneChoice(id: string, rank: number, choiceId: string): 
   return getMilestoneChoices(id, rank)?.find((item) => item.id === choiceId);
 }
 
+export function ensureWeaponMilestones(w: { id: string; level: number; milestones?: any }) {
+  if (!w) return;
+  if (!w.milestones) w.milestones = [];
+  const safeLevel = Math.min(8, Math.max(1, Math.floor(w.level || 1)));
+  for (const rank of [3, 5, 8] as const) {
+    if (safeLevel >= rank) {
+      const choices = getMilestoneChoices(w.id, rank);
+      if (choices && choices[0]) {
+        const hasChoice = Array.isArray(w.milestones)
+          ? choices.some((c) => w.milestones.includes(c.id))
+          : !!w.milestones[rank] || !!w.milestones[String(rank)];
+        if (!hasChoice) {
+          if (Array.isArray(w.milestones)) {
+            w.milestones.push(choices[0].id);
+          } else {
+            w.milestones[rank] = choices[0].id;
+          }
+        }
+      }
+    }
+  }
+}
+
 export function getEffectiveWeaponCooldown(
   baseCooldown: number,
   playerCooldownBonus: number,

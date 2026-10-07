@@ -8,7 +8,20 @@ type KronikaEntry = {
 };
 
 const KRONIKA: KronikaEntry[] = [
-{
+  {
+    date: '7. října 2026',
+    title: 'Oprava pádů Hromničky a stabilizace arzenálu',
+    summary: 'Odstranění pádů Hromničky, vyvážení Dědečkovy nůše a aktivace milníků v test módu.',
+    items: [
+      '🕯️ Opraven kritický pád při střelbě Hromničkou (doplněna pulzní posvátná vlna s odhozem).',
+      '🌟 V Sandboxu/Test módu a z truhly se nyní automaticky aktivují rank 3, 5 a 8 milníky.',
+      '🧺 V Dědečkově nůši byl vyvážen výběr zbraní tak, aby upřednostňoval nesené zbraně a nezablokoval fond.',
+      '⛪ Kaple svaté vlny ve vesnici nyní funguje i v novém perníčkovém systému (svatá tlaková vlna při nákupu).',
+      '🛡️ Plovoucí text nyní zřetelně zobrazuje vstřebání úderu šenkýřovým štítem.',
+      '⌨️ Při přepnutí okna (Alt-Tab / klik mimo) se již nezasekne chůze.',
+    ],
+  },
+  {
     date: '7. října 2026',
     title: 'Nová struktura výběru výpravy a lovce',
     summary: 'Výprava a lovec se vybírají ve dvou samostatných krocích.',

@@ -82,10 +82,10 @@ var VILLAGE_BUILDINGS = [
 		id: "church",
 		name: "Kaple svaté vlny",
 		levelKey: "churchLevel",
-		role: "Tlaková vlna při Level Up",
+		role: "Svatá vlna při nákupu u Dědečka",
 		helpers: "Kostelníci připravující posvěcený zvon",
-		story: "Při každém postupu na novou úroveň vyšle kaple kolem lovce posvěcenou tlakovou vlnu.",
-		bonusDesc: (lvl) => `Svatá vlna: ${lvl * 100} poškození + silný knockback v okruhu 400 px při Level Up`,
+		story: "Při každém nákupu v dědečkově nůši vyšle kaple kolem lovce posvěcenou tlakovou vlnu.",
+		bonusDesc: (lvl) => `Svatá vlna: ${lvl * 100} posvátného poškození + silný odhoz v okruhu 400 px při nákupu u Dědečka`,
 		cost: (lvl) => 35 * (lvl + 1),
 		canvasDrawer: "drawWallScene"
 	}

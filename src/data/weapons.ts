@@ -445,7 +445,7 @@ var WEAPONS = {
 		desc: "Posvěcená hromniční svíce z kostela. Plápolající záře mírného dosahu jemně odtlačuje nepřátele a každé 2 s způsobuje posvátné zranění (obojí ovlivněno odolností proti Strachu). Nemrtví a pekelníci mají k ní silně sníženou odolnost a utrží podstatně vyšší zranění.",
 		fire: (player, level) => {
 			const reach = 135 + level * 15;
-			const dmg = 10 + (level - 1) * 2.5;
+			const dmg = getWeaponDamage(player, 10 + (level - 1) * 2.5);
 			player.spawnHromnickaPulse(reach, dmg, level);
 			sound.candlePulse();
 			return true;
