@@ -1,232 +1,166 @@
+# Bubákov — Changelog
+
+> **Source of truth:** aktuální implementace v `src/`. Historické hodnoty, které byly později změněny, nejsou uváděny jako aktuální stav.
+
+## 2026-10-07 — Konsolidace changelogu a audit proti aktuální hře
+
+### Aktuální stav systému zbraní
+- Čtyři zbraně mají nový **osmirankový progression systém**: Osikový prut, Válečnice, Česneková topinka a Kyselé okurky.
+- Ranky **3 / 5 / 8** jsou milestone ranky se dvěma vzájemně výlučnými volbami.
+- Ranky **2 / 4 / 6 / 7** mají standardní progres:
+  - +12 % damage za rank,
+  - +8 procentních bodů weapon cooldown bonusu za rank,
+  - +6 % area za rank.
+- Interně se základní weapon damage násobí faktorem `1 + (level - 1) × 0,12`; area faktorem `1 + (level - 1) × 0,06`.
+- Weapon cooldown používá:
+  `baseCooldown / (1 + playerCooldownBonus + weaponCooldownBonus)`
+  s minimem **50 % base cooldownu**.
+- Milestone cooldown modifikátory se aplikují dodatečně jako násobitel.
+- Milestone efekty jsou kumulativní a aktivují se pouze z voleb uložených v `weapon.milestones`.
+- Validace vyžaduje přesně 8 ranků, milestone pouze na 3/5/8 a unikátní ID voleb.
+- Starý mastery stav zůstává pouze kvůli kompatibilitě uložených her; nové mastery volby se negenerují.
+- Tulák má **+30 flat damage ke všem zbraním**, který se přičítá k base damage před globálním damage multiplikátorem.
+
+### Aktuální základní hodnoty čtyř milestone zbraní
+| Zbraň | Base damage | Base cooldown |
+|---|---:|---:|
+| Osikový prut | 18 | 0,80 s |
+| Válečnice | 34 | 0,55 s |
+| Česneková topinka | 1 | 0,35 s |
+| Kyselé okurky | 20 | 1,15 s |
+
+### Aktuální milestone volby
+- **Osikový prut**
+  - Rank 3: Široký švih / Rázný bác
+  - Rank 5: Prut větrník / Pevná násada
+  - Rank 8: Prut košťátko / Prachová smršť
+- **Válečnice**
+  - Rank 3: Válečnický kruh / Rázný váleček
+  - Rank 5: Dvojnásobný bác / druhá specializace kruhu
+  - Rank 8: Válečnický kruh+ / Velký úklid
+- **Česneková topinka**
+  - Rank 3: Široký obláček / Silný obláček
+  - Rank 5: Těžký obláček / specializace plochy
+  - Rank 8: Velký česnekový oblak / Kyselý česnekový bác
+- **Kyselé okurky**
+  - Rank 3: Křupavá porce / specializace síly
+  - Rank 5: Kyselá svačina / specializace síly
+  - Rank 8: Velká okurková porce / Kyselý déšť
+
+### Aktuální pasivní bonusy
+- **Opravdová káva:** interně +0,1111111111 cooldown bonus; při použitém vzorci to odpovídá přibližně **−10 % efektivního cooldownu**.
+- **Krvavé jelito:** `damageMultiplier × 1,15`, tedy **+15 % damage multiplikativně za stack**.
+- **Medvědí mast:** **+30 Max Kuráž** a současně +30 aktuální Kuráže při získání.
+- **Veselá mysl a písnička:** **+3 Kuráž každých 5 s za stack**.
+- **Toulavé boty sedmimílové:** **+20 speed** z level-up volby.
+- **Magnetický měšec:** **+30 pickup radius**.
+- Truhla má pro Toulavé boty aktuálně samostatnou odměnu **+25 speed**.
+
+### Aktuální drop hodnoty
+- Běžná truhla: **29 400 bodů**.
+- Potion: **450 bodů**.
+- Bread: **250 bodů**.
+- Soul: **120 bodů**.
+- Coin: **20 bodů**.
+- Bossové mají garantovanou boss loot logiku; miniboss při zklidnění generuje vlastní odměny.
+
+### Aktuální miniboss systém
+- Miniboss render scale: **1,75×**.
+- Miniboss collision radius: **1,65×** základního radiusu.
+- Minimální HP minibosse: **1 400**.
+- Poise resist minibosse: minimálně **0,82**.
+- Food resist minibosse: minimálně **0,78**.
+- Willpower minibosse: minimálně **0,85**.
+- Damage minibosse se počítá jako `stats.damage × 1,35 × 1,6`.
+- Miniboss získává minimálně 25 coin value a 20 XP.
+- Minibossové mají vlastní overhead HP, zlatou auru a jsou vizuálně zvětšeni.
+
+### Aktuální opravy gameplay loopu
+- Opravena stale-closure chyba herního loopu přes aktuální `gameStateRef` / synchronizované ref hodnoty.
+- Dropy se nyní spolehlivě magnetizují a sbírají.
+- Kontakt nepřítele s lovcem nyní správně způsobuje damage.
+- Útěkový stav má prioritu před běžnou AI a synchronizuje rychlost, směr, pozici i animaci.
+- SpatialHash používá aktuální pozice po pohybu nepřátel a je plně typovaný.
+- Expirované projektily se ve stejném snímku již neúčastní kolizí.
+- Boss HP HUD je oddělen od gameplay `takeDamage()`.
+- Neznámé enemy ID vyvolá explicitní chybu.
+- Final-boss victory je vázána na skutečného finálního bosse levelu.
+
 ## 2026-10-06 — Weapon milestone progression v2
-- Přidán osmirankový progression systém pro Osikový prut, Válečnici, Česnekovou topinku a Kyselé okurky.
-- Ranky 3/5/8 nyní nabízejí dvě vzájemně výlučné milestone volby; standardní ranky 2/4/6/7 používají +12 % damage, +8 % cooldown bonus a +6 % area.
-- Milestone hodnoty jsou kumulativní a zůstávají aktivní pouze tehdy, když jsou uložené v `weapon.milestones`.
-- Přidána runtime validace: přesně 8 ranků, volby pouze na 3/5/8 a globálně unikátní ID voleb.
-- Staré mastery struktury zůstávají pouze kvůli kompatibilitě uložených her; nové mastery volby pro tyto čtyři zbraně se negenerují.
-- Cooldown používá `Base / (1 + playerCooldownBonus + weaponCooldownBonus)` s podlahou 50 % base cooldown; Opravdová káva přidává +11,11 % cooldown bonus.
-- Přidán nízkonásilný milestone slovník: „vyprášit kožich“, „rozprášit houf“, „bác“ a „obláček prachu“.
+- Implementován osmirankový progression systém pro čtyři hlavní milestone zbraně.
+- Milestone volby jsou na ranku 3, 5 a 8.
+- Přidány unikátní efekty a vizuální/audio tagy milestone voleb.
+- Přidána runtime validace struktury milestone systému.
+- Cooldown byl převeden na explicitní bonusový model s 50% cooldown capem.
 
 ## 2026-10-06 — Rework mastery a rebalance zbraní
-- Mastery byla přepracována z generických bonusů damage/cooldown/projektilů na unikátní weapon-specific efekty se spouštěním podle zásahů/pulzů.
-- Přidán společný systém triggerWeaponMastery() a napojení mastery na zásahy projektilů, melee i pulzy bez dvojího proccování.
-- Přidán Tulácký instinkt: **+30 k poškození všech zbraní**, který se následně násobí globálními damage multiplikátory.
-- Zbraně byly rebalancovány tak, aby růst úrovně zůstal explicitní a mastery nepřidávala skryté generické staty.
-- Upraveny tooltipy a nabídky level-upů, sjednocený level cap na 6 a zpřesněny vybrané progresní škály zbraní.
-- Opravena návaznost nového mastery modelu na Válečnici, Česnekovou topinku a Kyselou okurku; odstraněny již nepoužívané mastery multiplikátory a penetrace z předchozí implementace.
-## 2026-10-06 — Oddělení úrovně zbraně od implicitního combat bonusu
-- Úroveň zbraně již automaticky nezvyšuje cooldownovou kadenci v herní smyčce.
-- Přehled zbraní v pauze nyní zobrazuje základní poškození a efektivní cooldown bez skrytého bonusu podle úrovně.
-- Explicitní bojové bonusy zůstávají řízené samotnými zbraněmi, mastery a globálními pasivy.
-- Změna zabraňuje dvojímu započítání síly zbraně přes úroveň i explicitní upgrade systém.
+- Generické mastery bonusy damage/cooldown/projektilů byly nahrazeny weapon-specific milestone efekty.
+- Legacy mastery API zůstává pouze kvůli kompatibilitě starých save/import dat.
+- Tulák získal +30 flat damage ke všem zbraním.
+- Level zbraně již není samostatně skrytě násoben dalším implicitním combat bonusem mimo explicitní progression systém.
 
-## 2026-10-06 — Nové zbraně: Válečnice, Česneková topinka a Kyselá okurka
-- Přidány tři nové zbraně s novými bojovými mechanikami, úrovněmi a animovanými ladovskými vizuály.
-- Válečnice: orbitující hospodyně s válečkem, silný knockback, druhá instance od úrovně 2 a rozšíření orbitu.
-- Česneková topinka: permanentní animovaná aura s minimálním poškozením, silným knockbackem a zpomalením na nejvyšší úrovni.
-- Kyselá okurka: cílené projektily a až 3 stacky Přejedení; při 3 stackách cíl zezelená, způsobuje méně poškození, přijímá více poškození a je mírně zpomalen.
-- Přidán weapon-specific mastery stav pro knockback, bonus projektilů a penetraci.
-- Přidány React/SVG ikony všech tří nových zbraní a jejich napojení do GameIcon.
-- Nové zbraně jsou vedeny jako výchozí odemčené v arzenálu.
-- Přidána lifecycle správa status efektů nepřátel.
+## 2026-10-06 — Nové zbraně
+- Přidány Válečnice, Česneková topinka a Kyselé okurky.
+- Válečnice používá orbitující váleček, knockback a od ranku 8 může získat další orbitující instanci.
+- Česneková topinka používá permanentní kruhovou auru, knockback a na vysokých rankách zpomalení.
+- Kyselé okurky používají cílené projektily a stav Přejedení; při vysokém počtu stacků nepřítel zezelená, zeslábne a přijímá více damage.
+- Přidány React/SVG ikony a renderery nových zbraní.
+- Nové zbraně jsou dostupné v arzenálu.
 
-## 2026-10-06 — Opravy lifecycle a typování prostorového indexu
-- `GameLevelId` je zpřísněn na explicitní union `1 | 2 | 3 | 4 | 5 | 6` bez obecného `number` fallbacku.
-- `SpatialHash` je plně generický bez `any`, interní stav je zapouzdřen jako `private readonly` a konstruktor odmítá neplatnou velikost buňky.
-- `SpatialHash` ignoruje nefinite entity souřadnice, přijímá `readonly`/prázdné seznamy a nabízí `queryCircleInto()` pro výsledky přežívající další dotaz bez zbytečných alokací.
-- Prostorový index nepoužívá zastaralé pozice před pohybem nepřátel; rebuild probíhá až po jejich pohybu a cleanupu.
-- Expirované projektily jsou okamžitě označeny jako mrtvé a ve stejném snímku již neprovádějí kolize.
+## 2026-10-06 — Opravy AI, lifecycle a kolizí
+- Opravena útěková AI, která mohla přehrávat útěkovou animaci bez skutečného pohybu.
+- Opravena stale closure chyba blokující sběr dropů a kontaktové poškození.
+- Stabilizován dlouho žijící Canvas/requestAnimationFrame loop.
+- Zlepšena lifecycle správa status efektů a prostorového indexu.
+- Přidána ochrana proti zastaralým pozicím v SpatialHash.
 
-# Changelog
+## 2026-10-05 — Bossové a minibossové
+- Pekelný čert dostal výrazný charge s windupem, zvýšenou rychlostí, telegrafem, nárazem a brake fází.
+- Prokletý sněhulák byl přejmenován na Zlomyslného sněhuláka a dostal vlastní renderer.
+- Bossové a minibossové dostali vlastní ladovské rendery namísto generických sprite fallbacků.
+- Tříhlavý drak dostal samostatné animace a útoky jednotlivých hlav.
 
-## 2026-10-06 — Oprava útěkové AI nepřátel
-- Stav útěku (`panicTimer` / `panicked`) má absolutní prioritu před distance AI i specializovaným chováním nepřítele.
-- Při útěku se vždy současně nastaví rychlost, směr, pozice i animace, takže nepřítel nemůže přehrávat útěkovou animaci a přitom stát na místě.
-- Útěkový směr je odvozen přímo od pozice hráče; při překrytí hráče se použije poslední známý směr pohybu.
+## 2026-10-05 — Drop systém
+- Zavedena variabilní tematická afinity dropů podle kategorií nepřátel.
+- Přidány přímé náhodné dropy.
+- Usmíření jídlem může vytvářet bonusové odměny.
+- Bossové vytvářejí velkou fontánu kořisti.
+- Dropy používají fyzikální rozptyl.
+- Mince mají více nominálních hodnot.
 
-## 2026-10-06 — Oprava sběru předmětů a zranitelnosti lovce i nepřátel
-- **Sběr předmětů (dropů) v aréně:** Opravena kritická chyba, kdy herní smyčka kontrolovala zastaralou hodnotu `gameState === 'playing'` ze starého uzávěru (stale closure), která zůstávala `'menu'`. Nyní používá `currentGameState === 'playing'` (`gameStateRef.current`). Předměty (mince, jitrnice, hrušky, dušičky, truhly) se nyní spolehlivě magnetizují k lovci a při přiblížení se okamžitě seberou.
-- **Zranitelnost lovce při kontaktu s monstry:** Stejná chyba ve starém stavu `gameState` blokovala zásahy nepřítelem při kontaktu s lovcem. Nyní kolize monstra s lovcem řádně volá `player.takeDamage()`, respektuje dočasné štíty, úhyby i brnění a lovec může být zraněn či zahnán na útěk.
-- **Zranitelnost a zpětná vazba nepřátel:**
-  - Jídlové zbraně (Povidlové buchty, Kynutý koláč) nyní zřetelně zobrazují udělené poškození v teplé jantarové barvě (`-X 🥐`).
-  - Každý zásah do nepřítele vyvolá jemný bílý záblesk (hit flash) pro okamžitou hmatatelnou odezvu.
-  - Zraněná běžná monstra zobrazují nad hlavou decentní ukazatel zbývajících životů.
-  - Při zklidnění / zahnání se zobrazí jasný text (`Usmířen! 🥐✨` / `Zahnán! 💨`) a zahnání trvá svižných 0,85 s s plynulým vyblednutím a obláčkem dýmu.
-  - Hned při startu hry (`startGame`) se řádně naplní a inicializuje prostorový index (`SpatialHash`) a seznam živých monster.
-- Herní animační smyčka už nečte přímo hodnoty `gameState`, `menuScreen` a `selectedLevelId` uzavřené ve starém renderu.
-- Tyto hodnoty jsou průběžně synchronizovány do `useRef`, takže dlouho žijící `requestAnimationFrame` callback vždy pracuje s aktuálním stavem.
-- Kontroly poškození, cutscény, simulace, spawnování, kolizí, fleeing režimu a renderování používají aktuální ref hodnoty bez nutnosti znovu vytvářet Canvas loop při React re-renderu.
+## 2026-10-04 — Vizuální a obsahové úpravy
+- Kynutý koláč dostal nový renderer a SVG grafiku.
+- Léčivá buchta byla nahrazena hruškou.
+- Svatovítský balzám byl nahrazen jitrnicí.
+- Přidány ladovské dekorace HUDu, karet a modálů.
+- Čert dostal nový sprite, animace, rohy, oči, jazyk, ocas a jiskry.
+- Čert byl na titulní obrazovce přesunut na pravou stranu nápisu Bubákov.
 
-## 2026-10-06 — Přemístění Čerta na pravou stranu nápisu Bubákov
-- **Rozmístění postav na úvodní obrazovce:**
-  - Čert byl přemístěn na pravou stranu monumentálního nápisu Bubákov (`transform="translate(710, 4)"`), zatímco Bubák (strašák) se nachází na levé straně (`transform="translate(12, 4)"`). Obě postavičky nyní symetricky a nerušeně lemují dekorativní ladovskou vinětu, aniž by se vzájemně překrývaly nebo zasahovaly do textu a postranních zinkografických ornamentů.
-  - Spodní interaktivní ovládací tlačítka byla logicky seřazena odpovídajícím způsobem zleva doprava: vlevo tlačítko pro bafnutí bubáka (`Bubák bafnout!`), vpravo tlačítko pro pekelné dupnutí a jiskry čerta (`Čert dupnout & jiskry!`).
+## 2026-10-03 — HUD a mobilní ovládání
+- Přidán horní ukazatel Kuráže a XP.
+- HUD byl omezen pro mobilní viewport.
+- Odstraněna duplicitní lišta speciální schopnosti na dotykových zařízeních.
+- Touch controls respektují `100dvh`, `visualViewport` a safe-area insety.
+- Přidána podpora landscape a velmi úzkých displejů.
 
-## 2026-10-06 — Nový sprite, animace a detaily Čerta na úvodní obrazovce
-- **Kompletní ladovský sprite a anatomie Čerta:**
-  - **Doplněné chybějící ruce a drápy:** Obě paže mají plně prokreslenou anatomii – levá ruka v bok s ostrými černými spáry a ivory hroty gestikuluje a pumpuje pěstí; pravá paže svalnatě svírá dřevěnou násadu vidlí 4 zřetelnými drápatými prsty a při útoku energicky bodá vpřed.
-  - **Červené špičaté rohy:** Původní zlaté rohy nahrazeny sytě karmínově-červenými špičatými rohy s přechodem do ohnivé špičky, typickými ladovskými vruby a odleskem.
-  - **Větší vykulené a koulející se oči:** Průměr očí byl zvětšen (poloměr 7.4 px), mají slonovinové bělmo s jemným červeným lemem, rubínovou duhovku, lesklé zorničky s dvojitými odlesky a animované koulení v rytmu jednotlivých snímků.
-  - **Plynulejší pohyb jazyka:** Čertovský jazyk má nyní plynule se vlnící esovitou křivku, středovou rýhu, jemný růžový odlesk a rozeklaný hrot s hladkými přechody.
-  - **Rudě hořící a doutnající konec ocasu:** Na špičce ocasu plápolá vrstvený rudý plamen se zlatým jádrem a žhavými uhlíky, ze kterého stoupají stylizované ladovské obláčky dýmu a poletující jiskřičky.
-  - **Epické jiskry od dupnutí kopytem:** Při dupnutí kopytem (snímek 3 a interakce) vytryskne vějíř zářivých 4cípých ladovských diamantových hvězd, ohnivých trajektorií, žhavých kapek a rázových vln v zemi.
-- **Květnatý ladovský styl v HUDu:** Horní HUD lišta (`#top-bar`) byla obohacena o postranní ladovské zinkografické větévky se zlatavými stonky, šalvějovými lístky a karmínovými poupaty. Ukazatelé Kuráže (HP) a Úrovně (XP) dostaly vnitřní zlaté rámečky a jemné rohové zakončení. Statistikový řádek má detailní rustikální rámeček a ladovské listové předěly.
-- **Kartová a dialogová menu:** Karty výběru výprav, volby lovců, vylepšení při postupu na úroveň (`.choice-card`), vybavené zbraně v pauze (`.pause-weapon-card`), válce malované truhly štěstěny i budovy ve vsi Hrusice (`VillageView`) mají autentické ladovské dvojité linky a rohy s 5četnými žlutými květy a tečkovaným semeníkem podle velikonočních pohlednic.
-- **Rostlinné předěly v modálech:** Všechny herní modály (arzenál, bestiář, ovládání, odemčení lovců, odemčení úrovní, odemčení zbraní, plán kroniky, sandbox) obsahují dekorativní ladovskou rostlinnou vinetu `LadaBotanicalFlourish` a rohovou kaligrafii.
+## 2026-10-02 — Performance
+- Přidán prostorový hash pro broad-phase collision queries.
+- Přidán living-enemy snapshot.
+- Použity squared-distance testy.
+- Přidáno viewport culling.
+- Přidán in-place cleanup entit.
+- SpatialHash byl následně přepracován na znovupoužitelný numerický index s retenčními buffery.
+- Přidán frame-time clamp proti simulačním burstům.
 
-- Boss/miniboss HP HUD už není aktualizován z `takeDamage()` při každém zásahu; synchronizace je oddělena od gameplay entity logiky.
-- Herní loop má stabilní lifecycle bez opakovaného vytváření animation loopu při změně React state.
-- Neznámé ID nepřítele nyní vyhodí explicitní chybu místo tichého fallbacku na `rarach`.
-- Final-boss victory je vázána pouze na skutečného finálního bosse aktuálního levelu.
-- `src/game/perf.ts` je plně typovaný a bez nepotřebného React importu.
+## 2026-10-04 — Testovací režim
+- Zbraně lze v sandboxu nastavit až na úroveň 0.
+- Zbraň úrovně 0 se nepovažuje za aktivní.
+- Sandbox vyžaduje alespoň jednu aktivní zbraň.
 
-## 2026-10-06 — Weapon mastery
-- Přidán samostatný systém mastery pro jednotlivé zbraně bez nahrazení jejich úrovní.
-- Mastery nabízí specializace podle typu zbraně; bonus počtu projektilů se propisuje přímo do skutečného počtu vystřelených projektilů a zachovává zlomkový zbytek mezi výstřely.
-- Mastery poškození a weapon-specific cooldown se aplikují přímo v boji; dvě mastery volby aktivují synergii.
-
-## 2026-10-06 — Balancování pokladů a poškození nepřátel
-- **Poklady:** frekvence běžných pokladových truhel snížena na třetinu; práh zvýšen z 9 800 na 29 400.
-- **Nepřátelé:** poškození zvýšeno o 60 %.
-- Garantované poklady minibossů a bossů zůstávají beze změny.
-
-## 2026-10-06 — Balance arénových vylepšení
-- Level-up nyní garantuje jednu bojovou volbu, jednu pasivní volbu a jednu wildcard volbu; limit 4 zbraní nebyl zaveden.
-- Opravdová káva: -10 % cooldown za stack, minimum 40 %; Krvavé jelito: +15 % poškození.
-- Medvědí mast: +30 Max Kuráže; Veselá mysl: +3 Kuráž každých 5 sekund; Magnetický měšec: +30 dosahu sběru.
-- Zbraně: Osikový prut 18 base damage, Kynutý koláč a Povidlové buchty 3 s food CC, upravené tempo poškození Horkého bramboru, Včelího roje, Sněhové koule a Kropenky.
-
-# Changelog
-
-## 2026-10-05 — Přejmenování vylepšení: Medvědí mast (dříve Opravdová kuráž)
-- **Přejmenování vylepšení na Medvědí mast**:
-  - Vylepšení pro navýšení maximální kuráže (+25 Max Kuráž) přejmenováno z „Opravdová kuráž“ na tradiční **Medvědí mast**.
-  - Vytvořena nová ladovská ikona tradiční kamenné dózy/kelímku s hojivou medvědí mastí, plátěným kloboučkem převázaným motouzem a emblémem medvědí tlapky (`MedvediMastIcon.tsx` a `medvedi_mast.svg`).
-  - Aktualizována nabídka při postupu na novou úroveň, plovoucí texty zisku (`Medvědí mast! (+25 Max Kuráž)`), truhly i přehled aktivních posílení v pauze hry.
-
-## 2026-10-05 — Nová vylepšení během boje v aréně: Opravdová káva a Krvavé jelito
-- **Opravdová káva (- cooldown)**:
-  - Nové pasivní vylepšení nabízené při postupu na novou úroveň během boje v aréně (i z malovaných truhel).
-  - Každá dávka čerstvě pražené kávy zkracuje cooldown všech zbraní (-15 % cooldown / rychlejší kadence útoků) a zároveň urychluje dobití speciální schopnosti lovce.
-  - Vytvořena nová originální ladovská grafika kouřícího keramického hrnku s kávou a kávovými zrnky (`OpravdovaKavaIcon.tsx` a `/public/images/opravdova_kava.svg`).
-- **Krvavé jelito (+ damage)**:
-  - Nové pasivní vylepšení nabízené při postupu na novou úroveň během boje v aréně (i z malovaných truhel).
-  - Každé poctivé venkovské zabijačkové jelito s kroupami trvale zvyšuje sílu úderů a poškození všech zbraní a útoků (+20 % k zranění).
-  - Vytvořena nová detailní ladovská grafika českého zabijačkového jelita se špejlemi, kroupami a kořením (`KrvaveJelitoIcon.tsx` a `/public/images/krvave_jelito.svg`).
-- **Přehled aktivních vylepšení v pauze hry**:
-  - Do pauzovacího menu přidán nový přehledný blok „✨ Získaná vylepšení a posílení lovce“, kde hráč vidí počty získaných káv, jelit, kuráže, bot i písniček a jejich přesný kumulovaný bonus.
-  - V kartách zbraní se zobrazuje efektivní zkrácená kadence i navýšené poškození v reálném čase.
-
-## 2026-10-05 — Efektivní charge Pekelného čerta, Zlomyslný sněhulák, unikátní bossové a samostatné dračí hlavy
-- **Pekelný čert — skutečně efektivní a nebezpečný charge**:
-  - Důkladná revize mechaniky charge: opraven malý dosah a pomalá rychlost, přidán zřetelný telegrafický windup (dusot kopyt v hlíně, rudé varování, jiskry ze země), zrychlení výpadu na 490–560 px/s se stopou pekelné síry a plamenů.
-  - Zásah nabíhajícím čertem způsobí masivní drtivý náraz s odhozením hráče o 110 px a těžkým poškozením; po minutí čert sklouzne do brzdné fáze (brake), což dává hráči taktické okno k protiútoku.
-  - V `drawCert` implementována dynamická animace výpadu (`isCharging`) s předklonem, sklopenými rohy, vodorovně napřaženými vidlemi a planoucí aurou.
-- **Zlomyslný sněhulák a unikátní vizuál všech bossů**:
-  - Prokletý sněhulák přejmenován na **Zlomyslný sněhulák** („Ledový bijec ze sluje“) a získal svůj vlastní plně animovaný ladovský sprite `drawSnehulak` (tři kutálející se koule, hrnec na hlavě s tajícími rampouchy, mrkvový nos, uhlíkový úšklebek, větev s proutěným koštětem a vířící sněhové vločky).
-  - Prověřeni a opraveni všichni bossové a minibossové, kteří dosud sdíleli zástupné sprity běžných nepřátel:
-    - **Bílá paní** (`drawBilaPani`): éterická hradní paní v plovoucím rouchu s vysokým henninem a závojem, přízračnou lucernou a vznášejícím se lemem.
-    - **Rytířský zbrojnoš** (`drawZbrojnos`): hradní těžkooděnec v helmici (šlapu), kroužkové kukle, kyrysu s erbovním tabardem, těžkým štítem a halapartnou.
-    - **Bezhlavý rytíř** (`drawBezhlavyRytir`): jezdec na temném obrněném oři třímající v ruce uťatou hlavu s planoucím pohledem a rezavý obouruční meč.
-    - **Noční můra** (`drawNocniMura`): přízrak s jeleními parohy, korunou z lebečních kostí, fialovýma zářícíma očima a cárovitými nočními křídly.
-    - **Pekelný dráb** (`drawDrab`): dráb v uniformním kabátě s mosaznými knoflíky, trojrohém klobouku s kokardou, okovy a karabáčem.
-- **Tříhlavý drak — útoky z jednotlivých hlav a samostatná animace**:
-  - Všechny tři dračí hlavy mají samostatné kinematické křivky, odlišnou frekvenci pohupování, mimiku a reakce:
-    - **Levá hlava (Spící / Mrazivá)**: v 1. fázi líně spí, odfukuje spánkové bubliny a vypouští písmenka „Zzz“; ve 2. fázi se probouzí s ledovýma očima a při mrazivém dechu rozevře čelisti s rampouchovými tesáky.
-    - **Prostřední hlava (Královská / Hlídací)**: pyšná vztyčená hlava s trojitou korunou rohů a vousiskem, ostražitě mrká a při přivolání rampouchů se vzepne k nebi, zařve a vyšle světelný sloup mrazivé energie přímo do klenby sluje.
-    - **Pravá hlava (Ohnivá)**: agresivní dravé vlnění, ohnivé oči se štěrbinovou zornicí, při dračím dechu se tlama široce rozevře, vyšlehne plamenný jazyk a fontána jisker.
-  - Všechny útoky vycházejí z přesných souřadnic tlamy příslušné hlavy podle aktuálního směru otočení draka (dračí plamen z ohnivé tlamy vpravo, mrazivý dech a síra z levé tlamy, přivolání rampouchů a větrný řev ze vztyčené koruny).
-
-## 2026-10-05 — Možnost nastavení zbraní na úroveň nula v testovacím módu
-- Každou jednotlivou zbraň v testovacím módu (sandboxu) lze snížit až na úroveň 0, případně jedním kliknutím vynulovat tlačítkem `[0]`.
-- Zbraň s úrovní 0 je zřetelně označena jako neaktivní („Úr. 0 – lovec s touto zbraní nezačíná“) a lovec s ní do hry nevstupuje.
-- K zahájení testovací výpravy je vyžadována alespoň 1 aktivní zbraň (úroveň >= 1); při nulovém výběru je startovací tlačítko deaktivováno s upozorněním pro hráče.
-
-
-## 2026-10-04 — Nová podoba Kynutého koláče podle předlohy
-- Zbraň a předmět Kynutý koláč získaly novou grafickou podobu přesně podle předlohy tradičního chodského slavnostního koláče.
-- Vytvořena nová detailní SVG grafika `/public/images/kynuty_kolac.svg` a komponent `KynutyKolacIcon.tsx` obsahující zlatavě vypečený kynutý okraj, jemný tvarohový základ, 8 radiálních povidlových paprsků se zvlněnými girlandami, věnec mandlí v květu s rozinkou uprostřed a linku z rozinek.
-- Přidán nový ladovský in-game renderer `drawKynutyKolac` v `ladaRenderer.ts` pro létající projektil v aréně.
-- Zapojena nová ikona `kynuty_kolac` do zbrojnice, odemykání zbraní, výherního válce a `GameIcon`.
-
-## 2026-10-04 — Přeměna léčivé buchty na hrušku
-- Léčivý předmět padající z nepřátel a bossů (dříve buchta/pecen chleba) byl proměněn na šťavnatou českou hrušku s listem a stopkou v ladovském stylu.
-- Implementována nová metoda vykreslování `drawHruska` a `drawPear` v `ladaRenderer.ts` s typickou ladovskou tušovou konturou, teplým barevným přechodem, tečkami a zeleným lístkem.
-- Vytvořena nová SVG grafika `/public/images/hruska.svg` a React komponent `HruskaIcon.tsx`, začleněný do `GameIcon.tsx`.
-- Aktualizovány textové bubliny při sebrání předmětu (`+15 HP 🍐`, „Šťavnatá hruška!“, „Sladká hruška 🍐“), přehled předmětů v `ControlsModal.tsx` i herní plán.
-
-## 2026-10-02 — Performance optimization
-- Enemy spatial hash for projectile/melee broad-phase collision queries.
-- Per-frame living-enemy snapshot to reduce repeated array filtering.
-- Squared-distance collision checks in hot paths.
-- Reused living-enemy snapshot for projectile retargeting.
-- Viewport culling for enemies and projectiles.
-- Added in-place dead-entity cleanup helper.
-
-## 2026-10-02 — Extended performance optimization
-- Replaced the string-key enemy broad phase with a reusable numeric spatial hash and retained query buffers.
-- Added allocation-free in-place cleanup for projectiles, slashes, enemies, drops and floating texts.
-- Added a frame-time clamp to prevent expensive simulation bursts after stalled frames.
-- Centralized squared-distance and viewport checks in reusable performance helpers.
-- Kept the existing living-enemy snapshot and viewport culling from the previous pass.
-
-## 2026-10-03 — Combat HUD: Kuráž
-- Přidán horní ukazatel Kuráže zobrazující aktuální a maximální HP lovce.
-- XP ukazatel dostal vlastní identifikátor pro spolehlivé cílení CSS.
-- Herní animační smyčka nyní reaguje i na změnu obrazovky výběru lovce (menuScreen).
-- Na menších displejích jsou horní HP/XP lišty kompaktnější.
-
-
-## 2026-10-03 — Combat HUD: 22% viewport
-- Sloučen a zpřesněn horní HUD tak, aby byl pevně omezen na maximálně 22 % dynamické výšky viewportu včetně safe-area offsetu.
-- Na mobilech odstraněn konflikt se starým `top: 55px`; HUD nyní začíná u horní safe-area a používá stejný 22% limit.
-- Sjednocena mobilní pravidla Kuráže, XP a statistik bez duplicitních `@media` bloků.
-- Zmenšeny mobilní HP/XP lišty, statistický řádek a boss bar; HUD je oříznutý, aby vizuálně nepřetékal mimo vyhrazený prostor.
-- Boss bar wrapper dostal vlastní výškový limit a desktopová výška boss HP lišty byla snížena z 26 na 22 px.
-
-## 2026-10-03 — Dotykové ovládání: Odstranění duplicitní lišty schopnosti
-- Na dotykových displejích a při aktivním dotykovém ovládání byla z bojové arény odstraněna spodní lišta „Speciální schopnost“.
-- Pro aktivaci i přehled o stavu a odpočtu schopnosti plně dostačuje vyhrazené kruhové akční tlačítko vpravo dole, čímž se uvolnil prostor arény.
-
-## 2026-10-03 — Přeměna Svatovítského balzámu na Jitrnici
-- Svatovítský balzám byl nahrazen tradiční českou zabijačkovou jitrnicí se špejlemi na obou koncích podle folklorní předlohy.
-- Vytvořen nový detailní ladovský renderer `drawJitrnice` s přírodním střívkem, viditelným kořením s majoránkou, leskem vařeného střívka a zašpejlovanými konci.
-- Přidán nový vektorový komponent `JitrniceIcon` a SVG grafika `public/images/jitrnice.svg`.
-- Aktualizovány truhly s odměnami, výherní válec i texty dropů v aréně i herním plánu.
-
-## 2026-10-04 — Dotykové ovládání: Zajištění viditelnosti na všech typech displejů
-- Kontejner dotykového ovládání `.touch-controls-container` i celá obrazovka `body` byly ukotveny přímo k dynamickému viewportu (`position: fixed; inset: 0; 100dvh`), čímž se eliminovalo přepadávání tlačítek pod spodní lištu prohlížeče na mobilním Safari a Chrome.
-- V `index.html` byl přidán parametr `viewport-fit=cover` pro spolehlivou podporu proměnných bezpečných zón `env(safe-area-inset-*)`.
-- Spodní pozice joysticku i tlačítka schopnosti nyní explicitně započítává spodní systémové gesto/lištu (`env(safe-area-inset-bottom)`) a má garantovanou minimální bezpečnou vzdálenost od okraje.
-- Přidána plná podpora orientace na šířku (landscape na mobilech s výškou < 500 px) i pro velmi úzké telefony (<= 380 px), kde jsou prvky proporcionálně zmenšeny a posunuty od výřezů/kamer (`safe-area-inset-left / right`).
-- Dynamické přesouvání základny joysticku v `TouchControls.tsx` nyní respektuje `visualViewport` a nikdy nedovolí posunout tlačítko do spodní systémové zóny.
-
-## 2026-10-04 — Úprava frekvence padání pokladů
-- Bodový práh pro upuštění malované truhly s pokladem (`DROP_THRESHOLDS.chest`) byl zvýšen ze 700 na 9 800 bodů (14× méně často).
-
-## 2026-10-04 — Variabilní a dynamický systém dropů
-- **Tématické afinity podle kategorií monster**: Vodní havěť nabízí vysokou šanci na dušičky v hrníčku a léčivé jitrnice; lesní a polní potvory na čerstvé buchty a pecen chleba; kostlivci a démoni na staré stříbrné groše, zlaté tolary a truhly pokladů.
-- **Přímé náhodné dropy (Šťastná náhoda)**: Každý poražený nepřítel má přímou šanci upustit jídlo, jitrnici, dušičku nebo extra minci i bez čekání na naplnění počítadla.
-- **Usmíření jídlem**: Bubáci usmíření pečenou buchtou nyní zanechávají vděčný dar – vyšší šanci na uctivou buchtu, osvobozenou dušičku a stříbrný groš.
-- **Velkolepá kořist z bossů**: Poražení vládci bubáků vybuchnou ve fontánu pokladů (rozptýlené tolary, groše, zaručená jitrnice, pecen i dušička).
-- **Organický fyzikální rozptyl dropů**: Předměty se po porážce rozletí do stran v přirozeném kruhu se simulací tření a hladkého dobrzdění.
-- **Různorodé nominály mincí**: Krejcary se rozpadají do rozmanitých hodnot (měděné krejcary 1–3 kr., stříbrné groše 5–10 kr., zlaté tolary 15–25 kr.) s ladovskou grafikou a plovoucími texty.
-
-## 2026-10-04 — Výrazní, větší a odolnější minibossové
-- **Výrazně větší rozměry (+75 %)**: Minibossové (např. Polednice, Hastrman, Klekánice, Dráb, Meluzína, Ohnivý rarach, Hejtman zbojník, Ohnivý pes, Bílá paní, Zbrojnoš, Sněhulák, Noční můra) se vykreslují v monumentálním měřítku 1.75× a mají odpovídající kolizní poloměr (+65 %).
-- **Výrazný vizuální styl**:
-  - Pod nohama každého minibosse rotuje animovaná zlatavá folklorní aura se zuby a pulzujícím světelným halo.
-  - Nad hlavou se zobrazuje ladovská kartuše s korunkou (`👑 MINIBOSS: JMÉNO`).
-  - Každý miniboss má přímý vyhrazený overhead ukazatel HP s čísly a zlatým orámováním.
-  - Minibossové se propisují do horní lišty bossů (`bossHpPct`) a při příchodu vyvolávají varovný banner se zvukem hromu.
-- **Vysoká odolnost (HP, Poise a imunita vůči snadnému odhození)**:
-  - Multiplikátory HP minibossů byly zvýšeny na 3.5× až 9.6× (garantované minimum 1 400 HP).
-  - Poise resist zvýšen na 82–95 %, redukce odhození na 25 % (neuhýbají snadno úderům).
-  - Vyšší odolnost vůči jídlu (foodResist a willpower).
-- **Bohaté odměny při zklidnění**:
-  - Poražení minibosse zaručuje pokladovou truhlu, spršku stříbrných a zlatých tolarů (+25 kr.), jitrnici, pecen a mocnou dušičku.
-- **Tlačítko v pauze**:
-  - V menu pozastavení hry [P] přidáno tlačítko `👑 Přivolat Minibosse!` pro okamžité vyzkoušení souboje v jakékoliv úrovni.
-
-
-
+## Poznámka k historickým hodnotám
+Následující hodnoty byly během vývoje změněny a **nesmí být interpretovány jako aktuální**:
+- Káva: původně −15 %, aktuálně efektivně −10 %.
+- Jelito: původně +20 %, aktuálně +15 %.
+- Medvědí mast: původně +25 Max Kuráž, aktuálně +30.
+- Chest threshold: původně 700 → 9 800 → aktuálně 29 400.
+- Starý mastery systém byl nahrazen milestone progression systémem.
