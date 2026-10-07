@@ -86,6 +86,41 @@
 - Neznámé enemy ID vyvolá explicitní chybu.
 - Final-boss victory je vázána na skutečného finálního bosse levelu.
 
+## 2026-10-06 — Historické feature změny doplněné při auditu commitů
+
+### Character-specific ultimate scénky
+- **Pasáček** dostal příběhovou ultimate scénku se zastavením herního času, zvukem pastýřské píšťalky a následným útokem stáda.
+- Ve scénce je vytvořeno **22 ovcí/beranů**; hlavní zásah způsobuje **140 × damageMultiplier** fyzického poškození v dosahu 560 a výrazný knockback.
+- Po hlavním zásahu pokračuje po dobu přibližně **3,6 s** pravidelný trample efekt s poškozením **35 × damageMultiplier**.
+- **Kořenářka** dostala vlastní příběhovou scénku se zastavením času, zvukem očistného kadidla a bylinným sanctuariem.
+- Účinek Kořenářky obnovuje **55 HP**, přidává **30 dočasného štítu**, poskytuje až **1,8 s nezranitelnosti**, způsobuje **120 × damageMultiplier** přírodního poškození v dosahu 480 a aplikuje soak/slow.
+- Následné sanctuary trvá **4,8 s**, léčí v pulsech po **6 HP** a způsobuje další **25 × damageMultiplier** přírodního poškození.
+- Scénky lze klávesou Space přeskočit/urychlit na jejich účinek nebo dokončit.
+
+### Tulák — Pověstná sukovice
+- Ultimate Tuláka byla přepracována na **Pověstnou sukovici**.
+- Součástí změny byla úprava cooldown balance a odstranění redundantní spodní lišty speciální schopnosti na dotykových zařízeních.
+
+### Level-up a combat balance
+- Výběr level-up odměn byl změněn na strukturu **1 bojová volba + 1 pasivní volba + 1 wildcard volba**.
+- Byly současně upraveny hodnoty základních pasiv a vybraných zbraní; výsledný aktuální stav je uveden v hlavní konsolidované sekci výše.
+
+### Balancování nepřátel a pokladů
+- V rámci historického balance passu byl práh běžné truhly zvýšen z **9 800 na 29 400 bodů**, čímž se frekvence běžných truhel snížila na třetinu.
+- Poškození nepřátel bylo v tomto passu zvýšeno o **60 %**; u minibossů se tato změna promítla do jejich výsledného damage vzorce uvedeného výše.
+
+### Přejmenování zbraně
+- **Vrbový prut** byl přejmenován na **Osikový prut** a název byl sjednocen napříč daty, UI, popisy a ikonami.
+
+### Rozšíření postav a levelů
+- Do hry byly přidány postavy **Kostelník** a **Babička** včetně jejich zvukových efektů a speciálních schopností.
+- Progres levelů byl rozšířen z původních 3 na **6 herních úrovní**.
+- Byl rozšířen systém průběžné synchronizace statistik a vítězného přechodu do výsledkové obrazovky.
+
+### Registry hry
+- Audit registru bestiáře potvrdil **49 registrovaných enemy položek**, přičemž číslo zahrnuje i variantní/posílené nepřátele.
+- Počet zbraní v UI byl sjednocen přímo s registrem `WEAPONS`; aktuálně je registrováno **12 zbraní**.
+
 ## 2026-10-05 — Bossové a minibossové
 - Pekelný čert dostal výrazný charge s windupem, zvýšenou rychlostí, telegrafem, nárazem a brake fází.
 - Prokletý sněhulák byl přejmenován na Zlomyslného sněhuláka a dostal vlastní renderer.
