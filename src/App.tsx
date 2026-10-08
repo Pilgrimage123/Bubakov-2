@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createInitialEngineState, type EngineState } from './game/engineState';
 import { SpatialHash } from './game/spatialHash';
+import { GameEngine } from './game/engine';
 import { distanceSq, isInView } from './game/perf';
 import { migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import {
@@ -1139,10 +1140,11 @@ export default function App() {
     levelId: 1 as GameLevelId,
   });
 
-  // Game engine refs (persistent through renders)
-  const engineRef = useRef<EngineState>(createInitialEngineState());
-  const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
-  const livingEnemiesRef = useRef<any[]>([]);
+  // Headless GameEngine controller (encapsulating state, spatial hash, and simulation stepping)
+  const gameEngineRef = useRef<GameEngine>(new GameEngine());
+  const engineRef = useRef<EngineState>(gameEngineRef.current.state);
+  const enemySpatialHashRef = useRef<SpatialHash<any>>(gameEngineRef.current.spatialHash);
+  const livingEnemiesRef = useRef<any[]>(gameEngineRef.current.livingEnemies);
 
   // Pause toggle handler
   const togglePause = useCallback(() => {
@@ -1609,69 +1611,22 @@ export default function App() {
         return enemySpatialHashRef.current.queryCircle(this.x, this.y, radius);
       },
       spawnProjectile(proj: any) {
-        engineRef.current.projectiles.push({
-          ...proj,
-          weaponId: proj.weaponId || this._firingWeapon?.id,
-          vx: Math.cos(proj.angle) * proj.speed,
-          vy: Math.sin(proj.angle) * proj.speed,
-          hitList: [],
-          dead: false,
-        });
+        return gameEngineRef.current.applyWeaponAction({ type: 'projectile', proj });
       },
       spawnMeleeSlash(slash: any) {
-        engineRef.current.slashes.push({
-          ...slash,
-          weaponId: slash.weaponId || this._firingWeapon?.id,
-          maxLife: slash.maxLife || slash.life,
-          time: 0,
-          hitList: [],
-          dead: false,
-        });
+        return gameEngineRef.current.applyWeaponAction({ type: 'slash', slash });
       },
       spawnAreaImpact(impact: any) {
-        const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
-        for (let i = 0; i < nearby.length; i++) {
-          const e = nearby[i];
-          if (e.isDefeated) continue;
-          const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
-          if (dx*dx+dy*dy <= reach*reach) {
-            const kbMult = impact.knockbackMult ?? 1;
-            e.takeDamage(impact.dmg, impact.type, dx*4*kbMult, dy*4*kbMult, impact.stunDuration ? { stunDuration: impact.stunDuration } : undefined);
-            if (!impact.noMasteryProc && impact.weaponId) this.triggerWeaponMastery(impact.weaponId, e, 'hit');
-          }
-        }
-        engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
+        return gameEngineRef.current.applyWeaponAction({ type: 'areaImpact', impact });
       },
       spawnHromnickaPulse(reach: number, dmg: number, level: number, knockbackMult = 1, stunDuration = 0) {
-        this.hromnickaPulseTimer = 0.35;
-        this.hromnickaPulseRadius = reach;
-        const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
-        for (let i = 0; i < nearby.length; i++) {
-          const e = nearby[i];
-          if (e.isDefeated) continue;
-          const dx = e.x - this.x;
-          const dy = e.y - this.y;
-          const distSq = dx * dx + dy * dy;
-          const maxReach = reach + e.radius;
-          if (distSq <= maxReach * maxReach) {
-            const dist = Math.sqrt(distSq) || 1;
-            const holyPush = getHolyPushMultiplier(e);
-            const kbForce = (120 + level * 10) * holyPush * knockbackMult;
-            const finalDmg = dmg * (isUnholyEnemy(e) ? 1.5 : 1.0);
-            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce, stunDuration ? { stunDuration } : undefined);
-            if (isUnholyEnemy(e)) {
-              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', COLORS.mustard, true));
-            }
-          }
-        }
-        engineRef.current.particles.push({
-          x: this.x,
-          y: this.y,
-          vx: 0,
-          vy: 0,
-          life: 0.35,
-          color: '#FEF08A',
-          size: reach * 0.3,
+        return gameEngineRef.current.applyWeaponAction({
+          type: 'pulse',
+          reach,
+          dmg,
+          level,
+          knockbackMult,
+          stunDuration,
         });
       },
 
@@ -1737,7 +1692,13 @@ export default function App() {
     // Start from the engine's canonical defaults, then apply only values that
     // are specific to the selected level/run. This keeps simulation defaults
     // in one place and prevents startGame() from drifting from engineState.ts.
-    const engine = createInitialEngineState();
+    const engine = gameEngineRef.current.initRun({
+      levelId: chosenLevelId,
+      hunterType: type,
+      meta: metaRef.current,
+      customWeapons,
+      spawnInitialWave: false,
+    });
     engine.player = player;
     engine.decor = decor;
     engine.activeLevelId = chosenLevelId;
@@ -1752,6 +1713,8 @@ export default function App() {
     }
 
     engineRef.current = engine;
+    gameEngineRef.current.state = engine;
+    gameEngineRef.current.spatialHash = enemySpatialHashRef.current;
     grandfatherPurchaseIdsRef.current = [];
     setGrandfatherPurchaseIds([]);
 
@@ -1760,37 +1723,38 @@ export default function App() {
       // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        engineRef.current.enemies.push(createEnemyInstance('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
+        gameEngineRef.current.spawnMonster('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
       }
     } else if (chosenLevelId === 2) {
       // Level 2: Hřbitov – 2 kostlivci a černý pes
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.5;
-        engineRef.current.enemies.push(createEnemyInstance('skeleton', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 0.9));
+        gameEngineRef.current.spawnMonster('skeleton', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 0.9);
       }
-      engineRef.current.enemies.push(createEnemyInstance('cerny_pes', player.x + 480, player.y - 100, 0.9));
+      gameEngineRef.current.spawnMonster('cerny_pes', player.x + 480, player.y - 100, 0.9);
     } else if (chosenLevelId === 3) {
       // Level 3: Ladovská zima – rampouchoví diblíci
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2;
-        engineRef.current.enemies.push(createEnemyInstance('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0));
+        gameEngineRef.current.spawnMonster('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0);
       }
-      engineRef.current.enemies.push(createEnemyInstance('vanicka', player.x - 440, player.y - 180, 1.0));
+      gameEngineRef.current.spawnMonster('vanicka', player.x - 440, player.y - 180, 1.0);
     } else if (chosenLevelId === 4) {
       // Level 4: Hamry – lapka a jiskřivec
-      engineRef.current.enemies.push(createEnemyInstance('zbojnik', player.x + 460, player.y, 1.0));
-      engineRef.current.enemies.push(createEnemyInstance('jiskrivec', player.x - 460, player.y, 1.0));
+      gameEngineRef.current.spawnMonster('zbojnik', player.x + 460, player.y, 1.0);
+      gameEngineRef.current.spawnMonster('jiskrivec', player.x - 460, player.y, 1.0);
     } else if (chosenLevelId === 5) {
       // Level 5: Hláska – zbrojnoš a bílá paní
-      engineRef.current.enemies.push(createEnemyInstance('zbrojnos', player.x + 460, player.y + 100, 1.0));
-      engineRef.current.enemies.push(createEnemyInstance('bila_pani', player.x - 460, player.y - 100, 1.0));
+      gameEngineRef.current.spawnMonster('zbrojnos', player.x + 460, player.y + 100, 1.0);
+      gameEngineRef.current.spawnMonster('bila_pani', player.x - 460, player.y - 100, 1.0);
     } else if (chosenLevelId === 6) {
       // Level 6: Dračí sluj – ledový sněhulák a noční můra
-      engineRef.current.enemies.push(createEnemyInstance('snehulak', player.x + 460, player.y, 1.0));
-      engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x - 460, player.y, 1.0));
+      gameEngineRef.current.spawnMonster('snehulak', player.x + 460, player.y, 1.0);
+      gameEngineRef.current.spawnMonster('nocni_mura', player.x - 460, player.y, 1.0);
     }
 
     livingEnemiesRef.current = engineRef.current.enemies.slice();
+    gameEngineRef.current.livingEnemies = livingEnemiesRef.current;
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
     setRunStats({
@@ -4583,12 +4547,7 @@ export default function App() {
         }
 
         // Sort characters & enemies by Y for correct isometric depth
-        const drawables = engine.renderBuffer;
-        drawables.length = 0;
-        if(player) drawables.push(player);
-        for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
-        if(engine.smokePuffs){for(const puff of engine.smokePuffs){if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff);}}
-        drawables.sort((a,b)=>a.y-b.y);
+        const drawables = gameEngineRef.current.getVisibleEntities(viewLeft, viewTop, viewRight, viewBottom);
 
         for (const d of drawables) {
           if (d && typeof d.draw === 'function') {
@@ -7514,6 +7473,7 @@ export default function App() {
       },
     };
   };
+  gameEngineRef.current.enemyFactory = createEnemyInstance;
 
   // Manual trigger to immediately spawn current level's miniboss (available in pause menu for instant action/testing)
   const spawnMinibossNow = () => {
@@ -7525,7 +7485,7 @@ export default function App() {
     const bossDef = !engineRef.current.miniBossSpawned ? curLvl.miniBoss : curLvl.midBoss;
     engineRef.current.miniBossSpawned = true;
     const ang = Math.random() * Math.PI * 2;
-    const bossEnemy = createEnemyInstance(
+    const bossEnemy = gameEngineRef.current.spawnMonster(
       bossDef.id,
       player.x + Math.cos(ang) * 440,
       player.y + Math.sin(ang) * 440,
@@ -7534,7 +7494,6 @@ export default function App() {
       true,
       bossDef.name
     );
-    engineRef.current.enemies.push(bossEnemy);
     engineRef.current.texts.push(new DamageText(player.x, player.y - 50, `👑 ${bossDef.name}`, COLORS.mustard, true));
     setRunStats((s) => ({
       ...s,
