@@ -3,6 +3,7 @@ import { GRANDFATHER_ITEMS } from '../data/grandfatherItems';
 import { getGrandfatherPrice, getWaitDiscount, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { getGrandfatherItemTranslation, getWeaponTranslation, t } from '../i18n';
+import { getWeaponActiveMilestoneChoice, formatRomanNumeral } from '../data/weaponMilestones';
 
 interface Props {
   gingerbread: number;
@@ -105,6 +106,7 @@ export function GrandfatherShop({
             let displayDesc = item.description;
             let levelBadge = '';
             let buttonLabel = t('grandfather_shop.buy', lang);
+            let activeMilestones: Array<{ choiceId: string; rankIndex: number; name: string }> = [];
 
             if (item.isWeapon && item.weaponId) {
               const pw = playerWeapons?.find((w: any) => w.id === item.weaponId);
@@ -115,6 +117,24 @@ export function GrandfatherShop({
               displayName = wTrans.name || item.name;
               displayDesc = wTrans.desc || item.description;
 
+              if (pw && pw.milestones) {
+                const milestoneList = Array.isArray(pw.milestones)
+                  ? pw.milestones
+                  : [3, 5, 8].map((r) => pw.milestones[r] || pw.milestones[String(r)]).filter(Boolean);
+
+                milestoneList.forEach((choiceId: string, idx: number) => {
+                  const choice = getWeaponActiveMilestoneChoice(item.weaponId!, choiceId);
+                  if (choice) {
+                    const choiceName = t(`milestone.${choice.id}.name`, lang) || choice.name;
+                    activeMilestones.push({
+                      choiceId,
+                      rankIndex: idx,
+                      name: choiceName,
+                    });
+                  }
+                });
+              }
+
               if (owned === 0) {
                 levelBadge = t('grandfather_shop.new_weapon', lang);
                 buttonLabel = t('grandfather_shop.obtain', lang);
@@ -122,12 +142,15 @@ export function GrandfatherShop({
                 levelBadge = `⚔️ ${t('grandfather_shop.level_badge', lang, { current: owned, max: maxStacks })} (${t('grandfather_shop.maxed', lang)})`;
                 buttonLabel = t('grandfather_shop.maxed', lang);
               } else {
-                levelBadge = `⚔️ ${t('grandfather_shop.level_badge', lang, { current: owned, max: maxStacks })}`;
                 const lvlNum = owned + 1;
-                displayName = `${displayName} (${lang === 'cs' ? `Úroveň ${lvlNum}` : `Level ${lvlNum}`})`;
-                displayDesc = lang === 'cs'
-                  ? `Vylepšení zbraně na úroveň ${lvlNum} (+12 % zranění, +8 % kadence, +6 % dosah)`
-                  : `Upgrade weapon to level ${lvlNum} (+12% damage, +8% attack speed, +6% area)`;
+                const isMilestoneNext = lvlNum === 3 || lvlNum === 5 || lvlNum === 8;
+                levelBadge = `⚔️ ${t('grandfather_shop.level_badge', lang, { current: owned, max: maxStacks })}`;
+                displayName = `${displayName} (${lang === 'cs' ? `Hodnost ${lvlNum}` : `Rank ${lvlNum}`})`;
+                displayDesc = isMilestoneNext
+                  ? t('grandfather_shop.milestone_crossroads', lang, { rank: lvlNum })
+                  : (lang === 'cs'
+                      ? `Povýšení zbraně na ${lvlNum}. hodnost (+12 % zranění, +8 % kadence, +6 % dosah)`
+                      : `Upgrade weapon to rank ${lvlNum} (+12% damage, +8% attack speed, +6% area)`);
                 buttonLabel = t('grandfather_shop.upgrade', lang);
               }
             } else {
@@ -180,6 +203,27 @@ export function GrandfatherShop({
                   <p style={{ margin: '2px 0 10px', minHeight: 38, fontWeight: 700, fontSize: '0.88rem', color: '#451A03', lineHeight: 1.35 }}>
                     {displayDesc}
                   </p>
+                  {activeMilestones.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                      {activeMilestones.map((m) => (
+                        <span
+                          key={m.choiceId}
+                          style={{
+                            background: '#FEF3C7',
+                            border: '1px solid #B45309',
+                            color: '#92400E',
+                            borderRadius: 4,
+                            padding: '1px 6px',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                          }}
+                          title={m.name}
+                        >
+                          ✦ {formatRomanNumeral(m.rankIndex)}: {m.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 4 }}>
                   <strong style={{ fontSize: '1.1rem', color: '#78350F' }}>🍪 {price}</strong>

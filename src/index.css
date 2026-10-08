@@ -756,6 +756,81 @@ body {
   }
 }
 
+#hud-weapons-bar {
+  position: absolute;
+  bottom: max(62px, calc(58px + env(safe-area-inset-bottom, 0px)));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  z-index: 24;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse), (hover: none) {
+  #hud-weapons-bar {
+    bottom: max(14px, calc(10px + env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+.hud-weapon-slot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: #FAF6ED;
+  border: 2.5px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: 2.5px 2.5px 0px var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  user-select: none;
+}
+
+.hud-weapon-slot:hover {
+  transform: translateY(-2px);
+  background: #FFFDF7;
+}
+
+.hud-weapon-level-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--blood-red);
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ink);
+  line-height: 1;
+}
+
+.hud-weapon-milestones {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+}
+
+.hud-weapon-milestone-pip {
+  background: #D9A036;
+  color: #1C1610;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 0 3px;
+  border-radius: 3px;
+  border: 1px solid var(--ink);
+  line-height: 1.1;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+}
+
 .modal-tabs {
   display: flex;
   gap: 8px;

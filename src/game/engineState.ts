@@ -1,5 +1,11 @@
-import type { GameLevelId } from '../types';
+import type { GameLevelId, MilestoneChoice } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
+
+export interface PendingMilestoneChoice {
+  weaponId: string;
+  rank: 3 | 5 | 8;
+  choices: [MilestoneChoice, MilestoneChoice];
+}
 
 export interface EngineState {
   player: any;
@@ -69,6 +75,8 @@ export interface EngineState {
   lastStatsSync: number;
   gingerbread: number;
   grandfather: GrandfatherRuntimeState;
+  pendingMilestone: PendingMilestoneChoice | null;
+  pendingMilestones: PendingMilestoneChoice[];
 }
 
 export function createInitialEngineState(): EngineState {
@@ -140,6 +148,8 @@ export function createInitialEngineState(): EngineState {
     lastStatsSync: 0,
     gingerbread: 0,
     grandfather: createGrandfatherRuntime(),
-    currentLang: 'cs'
+    currentLang: 'cs',
+    pendingMilestone: null,
+    pendingMilestones: []
   };
 }

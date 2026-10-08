@@ -8,7 +8,7 @@ import type {
   EnemyAttackCadence,
 } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
-import { type EngineState, createInitialEngineState } from './engineState';
+import { type EngineState, type PendingMilestoneChoice, createInitialEngineState } from './engineState';
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
 import { ENEMIES } from '../data/enemies';
@@ -17,6 +17,7 @@ import { WEAPONS, createWeaponMasteryState, getWeaponDamage } from '../data/weap
 import {
   ensureWeaponMilestones,
   getEffectiveWeaponCooldown,
+  getMilestoneChoices,
   getRankedWeaponStats,
   getWeaponRankDef,
 } from '../data/weaponMilestones';
@@ -831,6 +832,100 @@ export class GameEngine {
     return enemy;
   }
 
+  public upgradeWeapon(weaponId: string): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
+    const player = this.state.player;
+    if (!player) {
+      throw new Error('Cannot upgrade weapon: player is not initialized');
+    }
+    if (!player.weapons) player.weapons = [];
+    let weapon = player.weapons.find((w: any) => w.id === weaponId);
+    if (!weapon) {
+      weapon = {
+        id: weaponId,
+        level: 1,
+        cd: 0,
+        mastery: createWeaponMasteryState(),
+        milestones: [],
+      };
+      player.weapons.push(weapon);
+      return { weapon, pendingMilestone: null };
+    }
+
+    if (weapon.level >= 8) {
+      return { weapon, pendingMilestone: null };
+    }
+
+    weapon.level += 1;
+    if (!Array.isArray(weapon.milestones)) {
+      weapon.milestones = [];
+    }
+
+    let pending: PendingMilestoneChoice | null = null;
+    const rank = weapon.level;
+    if (rank === 3 || rank === 5 || rank === 8) {
+      const choices = getMilestoneChoices(weaponId, rank);
+      if (choices) {
+        const alreadyChosen = choices.some((c) => weapon.milestones.includes(c.id));
+        if (!alreadyChosen) {
+          pending = {
+            weaponId,
+            rank,
+            choices,
+          };
+          if (!this.state.pendingMilestones) {
+            this.state.pendingMilestones = [];
+          }
+          this.state.pendingMilestones.push(pending);
+          this.state.pendingMilestone = this.state.pendingMilestones[0] || null;
+        }
+      }
+    }
+
+    return { weapon, pendingMilestone: pending };
+  }
+
+  public chooseWeaponMilestone(weaponId: string, choiceId: string): any {
+    const player = this.state.player;
+    if (!player) {
+      throw new Error('Cannot choose weapon milestone: player is not initialized');
+    }
+    const weapon = player.weapons?.find((w: any) => w.id === weaponId);
+    if (!weapon) {
+      throw new Error(`Cannot choose weapon milestone: weapon ${weaponId} not found`);
+    }
+
+    if (!Array.isArray(weapon.milestones)) {
+      weapon.milestones = [];
+    }
+
+    if (!weapon.milestones.includes(choiceId)) {
+      weapon.milestones.push(choiceId);
+    }
+
+    if (this.state.pendingMilestones) {
+      const idx = this.state.pendingMilestones.findIndex(
+        (p) => p.weaponId === weaponId && p.choices.some((c) => c.id === choiceId)
+      );
+      if (idx >= 0) {
+        this.state.pendingMilestones.splice(idx, 1);
+      }
+      this.state.pendingMilestone = this.state.pendingMilestones[0] || null;
+    } else {
+      this.state.pendingMilestone = null;
+    }
+
+    const choice =
+      getMilestoneChoices(weaponId, 3)?.find((c) => c.id === choiceId) ||
+      getMilestoneChoices(weaponId, 5)?.find((c) => c.id === choiceId) ||
+      getMilestoneChoices(weaponId, 8)?.find((c) => c.id === choiceId);
+    if (choice) {
+      this.callbacks?.onSound?.('milestoneChosen', choice.audioSfx);
+    }
+
+    const updatedStats = getRankedWeaponStats(weaponId, weapon.level, weapon);
+    return updatedStats;
+  }
+
   public applyWeaponAction(action: WeaponAction): any {
     if (action.type === 'projectile') {
       const p = action.proj || action;
@@ -1018,8 +1113,11 @@ export class GameEngine {
   }
 
   public update(dt: number): void {
-    this.state.gameTime += dt;
     this.state.uiTime += dt;
+    if (this.state.pendingMilestone) {
+      return;
+    }
+    this.state.gameTime += dt;
     const player = this.state.player;
 
     if (this.state.flourStormTimer > 0) this.state.flourStormTimer -= dt;

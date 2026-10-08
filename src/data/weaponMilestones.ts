@@ -315,6 +315,30 @@ export function getMilestoneChoice(id: string, rank: number, choiceId: string): 
   return getMilestoneChoices(id, rank)?.find((item) => item.id === choiceId);
 }
 
+/**
+ * Finds a milestone choice across any of the 3 milestone ranks (3, 5, 8) for a weapon.
+ */
+export function getWeaponActiveMilestoneChoice(id: string, choiceId: string): MilestoneChoice | undefined {
+  return (
+    getMilestoneChoice(id, 3, choiceId) ||
+    getMilestoneChoice(id, 5, choiceId) ||
+    getMilestoneChoice(id, 8, choiceId)
+  );
+}
+
+/**
+ * Returns Roman numeral for milestone indices (0 -> I, 1 -> II, 2 -> III).
+ */
+export function formatRomanNumeral(index: number): string {
+  const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+  return ROMAN[index] || String(index + 1);
+}
+
+/**
+ * Migration & backwards-compatibility helper for legacy saved runs and profiles.
+ * Safe fallback: populates default choices only for milestone ranks that lack an explicit choice.
+ * During active gameplay, player choices are routed through GameEngine.upgradeWeapon instead.
+ */
 export function ensureWeaponMilestones(w: { id: string; level: number; milestones?: any }) {
   if (!w) return;
   if (!w.milestones) w.milestones = [];

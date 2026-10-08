@@ -223,6 +223,45 @@ describe('i18n localization module', () => {
       const { isSupportedLocale } = await import('../src/i18n');
       expect(isSupportedLocale('de')).toBe(false);
     });
+
+    it('translates all milestone UI strings and 90 milestone choices in cs and en', async () => {
+      const { WEAPONS_WITH_MILESTONES, getMilestoneChoices } = await import('../src/data/weaponMilestones');
+
+      // Milestone modal UI strings
+      expect(t('milestone_modal.title', 'cs')).toBe('Křižovatka rozvoje zbraně');
+      expect(t('milestone_modal.title', 'en')).toBe('Weapon Milestone Crossroads');
+      expect(t('grandfather_shop.milestone_crossroads', 'cs', { rank: 3 })).toContain('Křižovatka rozvoje');
+      expect(t('grandfather_shop.milestone_crossroads', 'en', { rank: 3 })).toContain('Milestone crossroads');
+
+      // All 90 choices translated
+      let choiceCount = 0;
+      for (const weaponId of WEAPONS_WITH_MILESTONES) {
+        for (const rank of [3, 5, 8] as const) {
+          const choices = getMilestoneChoices(weaponId, rank);
+          expect(choices).toBeDefined();
+          if (!choices) continue;
+
+          for (const c of choices) {
+            choiceCount++;
+            const nameCs = t(`milestone.${c.id}.name`, 'cs');
+            const nameEn = t(`milestone.${c.id}.name`, 'en');
+            const descCs = t(`milestone.${c.id}.desc`, 'cs');
+            const descEn = t(`milestone.${c.id}.desc`, 'en');
+
+            expect(nameCs).not.toBe(`milestone.${c.id}.name`);
+            expect(nameEn).not.toBe(`milestone.${c.id}.name`);
+            expect(descCs).not.toBe(`milestone.${c.id}.desc`);
+            expect(descEn).not.toBe(`milestone.${c.id}.desc`);
+
+            expect(nameCs.length).toBeGreaterThan(0);
+            expect(nameEn.length).toBeGreaterThan(0);
+            expect(descCs.length).toBeGreaterThan(0);
+            expect(descEn.length).toBeGreaterThan(0);
+          }
+        }
+      }
+      expect(choiceCount).toBe(90);
+    });
   });
 });
 

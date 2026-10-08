@@ -34,7 +34,7 @@ import {
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
-import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones } from './data/weaponMilestones';
+import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones, getWeaponActiveMilestoneChoice, formatRomanNumeral } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
 import { getGingerbreadSize, getGingerbreadValue, GINGERBREAD_CONFIG, GINGERBREAD_VALUES, type GingerbreadSize } from './data/gingerbread';
 import {
@@ -77,6 +77,8 @@ import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
+import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
+import type { PendingMilestoneChoice } from './game/engineState';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
 
@@ -918,6 +920,7 @@ export default function App() {
   // Game UI state
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather'>('menu');
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
+  const [activeMilestone, setActiveMilestone] = useState<PendingMilestoneChoice | null>(null);
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
   const gameStateRef = useRef(gameState);
@@ -975,6 +978,13 @@ export default function App() {
 
   const runStatsRef = useRef(runStats);
   runStatsRef.current = runStats;
+
+  // Headless GameEngine controller (encapsulating state, spatial hash, and simulation stepping)
+  const gameEngineRef = useRef<GameEngine>(new GameEngine());
+  const engineRef = useRef<EngineState>(gameEngineRef.current.state);
+  const enemySpatialHashRef = useRef<SpatialHash<any>>(gameEngineRef.current.spatialHash);
+  const livingEnemiesRef = useRef<any[]>(gameEngineRef.current.livingEnemies);
+
   const [grandfatherPurchaseIds, setGrandfatherPurchaseIds] = useState<string[]>([]);
   const grandfatherPurchaseIdsRef = useRef<string[]>([]);
   const [, setGrandfatherVersion] = useState(0);
@@ -1018,24 +1028,16 @@ export default function App() {
       p.hp = Math.min(p.maxHp, p.hp + effect.amount);
     }
     if (effect.type === 'weapon') {
-      const weaponId = effect.weaponId;
-      if (!p.weapons) p.weapons = [];
-      const existing = p.weapons.find((w: any) => w.id === weaponId);
-      if (existing) {
-        existing.level = Math.min(8, existing.level + 1);
-        ensureWeaponMilestones(existing);
-      } else {
-        const newW = {
-          id: weaponId,
-          level: 1,
-          cd: 0,
-          mastery: createWeaponMasteryState(),
-          milestones: [],
-        };
-        ensureWeaponMilestones(newW);
-        p.weapons.push(newW);
+      const res = gameEngineRef.current.upgradeWeapon(effect.weaponId);
+      if (res.pendingMilestone) {
+        setActiveMilestone(res.pendingMilestone);
       }
     }
+  }, []);
+
+  const handleMilestoneChosen = useCallback((weaponId: string, choiceId: string) => {
+    gameEngineRef.current.chooseWeaponMilestone(weaponId, choiceId);
+    setActiveMilestone(gameEngineRef.current.state.pendingMilestone);
   }, []);
 
   const openGrandfatherShop = useCallback(() => {
@@ -1165,12 +1167,6 @@ export default function App() {
     isVictory: false,
     levelId: 1 as GameLevelId,
   });
-
-  // Headless GameEngine controller (encapsulating state, spatial hash, and simulation stepping)
-  const gameEngineRef = useRef<GameEngine>(new GameEngine());
-  const engineRef = useRef<EngineState>(gameEngineRef.current.state);
-  const enemySpatialHashRef = useRef<SpatialHash<any>>(gameEngineRef.current.spatialHash);
-  const livingEnemiesRef = useRef<any[]>(gameEngineRef.current.livingEnemies);
 
   // Pause toggle handler
   const togglePause = useCallback(() => {
@@ -1805,6 +1801,7 @@ export default function App() {
       isTestMode: isTestMode,
     });
 
+    setActiveMilestone(null);
     setIsTestModeOpen(false);
     setGameState('playing');
   };
@@ -2135,6 +2132,9 @@ export default function App() {
     sound.coin();
     setGameState('playing');
     engineRef.current.lastTime = performance.now();
+    if (gameEngineRef.current.state.pendingMilestone) {
+      setActiveMilestone(gameEngineRef.current.state.pendingMilestone);
+    }
   }, [chestRewards]);
   closeChestSequenceRef.current = closeChestSequence;
 
@@ -2242,12 +2242,14 @@ export default function App() {
         if (wDef && pw.level < 8) {
           const wTrans = getWeaponTranslation(pw.id, currentLang);
           possibleRewards.push({
-            name: `${wTrans.name} (Úroveň ${pw.level + 1})`,
-            desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
+            name: `${wTrans.name} (${currentLang === 'cs' ? `Hodnost ${pw.level + 1}` : `Rank ${pw.level + 1}`})`,
+            desc: currentLang === 'cs' ? `Povýšení zbraně na ${pw.level + 1}. hodnost` : `Upgrade weapon to rank ${pw.level + 1}`,
             icon: wDef.icon,
             action: () => {
-              pw.level += 1;
-              ensureWeaponMilestones(pw);
+              const res = gameEngineRef.current.upgradeWeapon(pw.id);
+              if (res.pendingMilestone) {
+                setActiveMilestone(res.pendingMilestone);
+              }
             },
           });
         }
@@ -4050,7 +4052,7 @@ export default function App() {
 
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
-                  const isCane = s.style === 'cane' || s.weaponId === 'cane' || s.weaponId === 'osikovy_prut';
+                  const isCane = s.style === 'cane' || s.weaponId === 'osikovy_prut';
                   const kbForce = (isCane ? 480 : 260) * (s.knockbackMult ?? 1);
                   e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce, s.stunDuration ? { stunDuration: s.stunDuration } : undefined);
                   if (isCane && e.isAttacking) {
@@ -7861,6 +7863,66 @@ export default function App() {
             <div id="boss-warning-banner">{runStats.warningBanner}</div>
           )}
 
+          {/* Bottom HUD Weapons Bar with Rank & Milestone Indicators */}
+          <div id="hud-weapons-bar" aria-label="Nesené zbraně a milníky">
+            {(engineRef.current.player?.weapons || []).map((w: any) => {
+              const wDef = WEAPONS[w.id];
+              if (!wDef) return null;
+              const wTrans = getWeaponTranslation(w.id, currentLang);
+              const isCane = w.id === 'osikovy_prut';
+              const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
+              const displayName = hasSoaked ? (currentLang === 'en' ? 'Soaked Rod' : 'Mokrý prut') : wTrans.name;
+              const displayIcon = hasSoaked ? '💧' : wDef.icon;
+
+              const activeMilestones = (w.milestones || [])
+                .map((mId: string) => getWeaponActiveMilestoneChoice(w.id, mId))
+                .filter(Boolean);
+
+              const tooltipLines = [
+                `${displayName} (${currentLang === 'cs' ? `Hodnost ${w.level}` : `Rank ${w.level}`})`,
+                wTrans.desc,
+              ];
+              if (activeMilestones.length > 0) {
+                tooltipLines.push('');
+                tooltipLines.push(t('hud.milestones_title', currentLang));
+                activeMilestones.forEach((m: any, mIdx: number) => {
+                  const mRoman = formatRomanNumeral(mIdx);
+                  const mName = t(`milestone.${m.id}.name`, currentLang) || m.name;
+                  const mDesc = t(`milestone.${m.id}.desc`, currentLang) || m.description;
+                  tooltipLines.push(`• [${mRoman}] ${mName}: ${mDesc}`);
+                });
+              }
+
+              return (
+                <div
+                  key={w.id}
+                  className="hud-weapon-slot"
+                  title={tooltipLines.join('\n')}
+                  aria-label={`${displayName} (${w.level})`}
+                >
+                  <GameIcon icon={displayIcon} size={22} />
+                  <span className="hud-weapon-level-badge">{w.level}</span>
+                  {activeMilestones.length > 0 && (
+                    <div className="hud-weapon-milestones">
+                      {activeMilestones.map((m: any, mIdx: number) => {
+                        const mRoman = formatRomanNumeral(mIdx);
+                        return (
+                          <span
+                            key={m.id}
+                            className="hud-weapon-milestone-pip"
+                            title={t(`milestone.${m.id}.name`, currentLang) || m.name}
+                          >
+                            {mRoman}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           {/* Ultimate ability indicator button – skryto na dotykovém displeji a při aktivním dotykovém ovládání, kde bohatě stačí kruhové tlačítko */}
           {!touchEnabled && (
             <button
@@ -8559,7 +8621,7 @@ export default function App() {
                 const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
                 const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
                 const effectiveCd = Math.max(wDef.baseCd * 0.50, getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
-                const isCane = w.id === 'cane' || w.id === 'osikovy_prut';
+                const isCane = w.id === 'osikovy_prut';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const wTrans = getWeaponTranslation(w.id, currentLang);
                 const displayName = hasSoaked ? (currentLang === 'en' ? 'Soaked Rod' : 'Mokrý prut') : wTrans.name;
@@ -8582,13 +8644,41 @@ export default function App() {
                           fontSize: '0.9rem',
                         }}
                       >
-                        Úr. {w.level}
+                        {currentLang === 'cs' ? 'Hodn.' : 'Rank'} {w.level}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900 }}>
                       <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
                       <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}</span>
                     </div>
+                    {w.milestones && w.milestones.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', margin: '4px 0' }}>
+                        {w.milestones.map((mId: string, mIdx: number) => {
+                          const mChoice = getWeaponActiveMilestoneChoice(w.id, mId);
+                          if (!mChoice) return null;
+                          const mRoman = formatRomanNumeral(mIdx);
+                          const mName = t(`milestone.${mChoice.id}.name`, currentLang) || mChoice.name;
+                          const mDesc = t(`milestone.${mChoice.id}.desc`, currentLang) || mChoice.description;
+                          return (
+                            <span
+                              key={mId}
+                              style={{
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                background: '#FEF3C7',
+                                border: '1.5px solid #92400E',
+                                color: '#78350F',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                              }}
+                              title={mDesc}
+                            >
+                              ⭐ {mRoman}: {mName}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wTrans.desc}
                     </p>
@@ -8833,6 +8923,15 @@ export default function App() {
           onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
           lang={currentLang}
+        />
+      )}
+
+      {/* INTERAKTIVNÍ VOLBA MILNÍKU ZBRANĚ */}
+      {activeMilestone && (
+        <WeaponMilestoneModal
+          pendingMilestone={activeMilestone}
+          lang={currentLang}
+          onChoose={handleMilestoneChosen}
         />
       )}
 
