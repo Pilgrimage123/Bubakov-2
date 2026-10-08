@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createInitialEngineState, type EngineState } from './game/engineState';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
+import { migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import {
   CharacterType,
   Season,
@@ -829,56 +830,10 @@ export default function App() {
     try {
       const saved = localStorage.getItem('bubakov_meta');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...parsed,
-          selectedLevel: parsed.selectedLevel || 1,
-          highestLevelUnlocked: parsed.highestLevelUnlocked || (
-            (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
-            (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 5 :
-            (parsed.bestiaryKills?.obr || 0) >= 1 ? 4 :
-            (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 3 :
-            (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
-          ),
-          completedLevels: parsed.completedLevels || {},
-          unlockedWeapons: {
-            ...(parsed.unlockedWeapons || {}),
-            buns: true,
-            cane: true,
-            hromnicka: true,
-          },
-        };
+        return migrateMetaProgression(JSON.parse(saved));
       }
     } catch {}
-    return {
-      krejcary: 0,
-      regenLevel: 0,
-      ovenLevel: 0,
-      scarecrowLevel: 0,
-      millLevel: 0,
-      wallLevel: 0,
-      tavernShieldLevel: 0,
-      forgeLevel: 0,
-      churchLevel: 0,
-      verminLevel: 0,
-      waterLevel: 0,
-      undeadLevel: 0,
-      windLevel: 0,
-      forestLevel: 0,
-      totalSoulsSaved: 0,
-      totalChasnikSaved: 0,
-      season: 'autumn',
-      trophiesClaimed: {},
-      bestiaryKills: {},
-      highestSurviveTime: 0,
-      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
-      hunterKillCounts: {},
-      weaponKillCounts: {},
-      selectedLevel: 1,
-      highestLevelUnlocked: 1,
-      completedLevels: {},
-    };
+    return createDefaultMetaProgression();
   });
 
   const metaRef = useRef(meta);
@@ -1478,16 +1433,16 @@ export default function App() {
             return mapped;
           })
         : type === 'wanderer'
-        ? [{ id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
-        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'korenarka'
-        ? [{ id: 'herbs', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'sexton'
-        ? [{ id: 'holywater', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'granny'
-        ? [{ id: 'kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : [{ id: 'halberd', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
+        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
 
     initialWeapons.forEach(ensureWeaponMilestones);
 
@@ -1874,7 +1829,7 @@ export default function App() {
       villageStoryRead: {},
       highestSurviveTime: 0,
       unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
+      unlockedWeapons: { osikovy_prut: true, povidlove_buchty: true, hromnicka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
       selectedLevel: 1,
@@ -4092,7 +4047,7 @@ export default function App() {
 
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
-                  const isCane = s.style === 'cane' || s.weaponId === 'cane';
+                  const isCane = s.style === 'cane' || s.weaponId === 'cane' || s.weaponId === 'osikovy_prut';
                   const kbForce = isCane ? 480 : 260;
                   e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce);
                   if (isCane && e.isAttacking) {
@@ -4101,7 +4056,7 @@ export default function App() {
                   }
                   if (!s.noMasteryProc && s.weaponId) player.triggerWeaponMastery(s.weaponId, e, 'hit');
                   if (s.soaked) e.soak();
-                  if (s.style === 'cane' || s.weaponId === 'cane') {
+                  if (isCane) {
                     // Aspen whip hit effects: bud/leaf/wood particles & splash
                     for (let pIdx = 0; pIdx < (s.soaked ? 4 : 3); pIdx++) {
                       engine.particles.push({
@@ -4538,7 +4493,7 @@ export default function App() {
         }
 
         // Persistent weapon visuals: animated garlic stink aura and orbiting Válečnice.
-        const garlicWp = player ? player.weapons.find((w: any) => w.id === 'cesnekova-topinka') : null;
+        const garlicWp = player ? player.weapons.find((w: any) => w.id === 'cesnekova_topinka' || w.id === 'cesnekova-topinka') : null;
         if (player && garlicWp) {
           const auraRadius = 110 * (garlicWp.level >= 2 ? 1.2 : 1) * (garlicWp.level >= 5 ? 1.15 : 1);
           ctx.save();
@@ -4826,10 +4781,10 @@ export default function App() {
             ctx.moveTo(15, 12);
             ctx.lineTo(s.reach * 0.9, 12);
             ctx.stroke();
-          } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
+          } else if (s.style === 'cane' || s.weaponId === 'osikovy_prut' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd' && s.weaponId !== 'kovana_halapartna')) {
             Lada.drawOsikovyPrutSlash(ctx, s);
           } else {
-            Lada.setupPath(ctx, 'transparent', s.style === 'halberd' ? '#94A3B8' : COLORS.white, 8);
+            Lada.setupPath(ctx, 'transparent', (s.style === 'halberd' || s.weaponId === 'kovana_halapartna') ? '#94A3B8' : COLORS.white, 8);
             ctx.beginPath();
             ctx.arc(0, 0, s.reach * 0.8, s.angle - s.arc / 2, s.angle + s.arc / 2);
             ctx.stroke();
@@ -7038,7 +6993,7 @@ export default function App() {
               const nextWeaponProg = getWeaponProgress(activeWeaponId, nextMeta);
               if (nextWeaponProg.isUnlocked) {
                 const newlyUnlockedWeapons = {
-                  ...(curMeta.unlockedWeapons || { buns: true, cane: true }),
+                  ...(curMeta.unlockedWeapons || { osikovy_prut: true, povidlove_buchty: true, hromnicka: true }),
                   [activeWeaponId]: true,
                 };
                 nextMeta = { ...nextMeta, unlockedWeapons: newlyUnlockedWeapons };
@@ -8482,7 +8437,7 @@ export default function App() {
                 const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
                 const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
                 const effectiveCd = Math.max(wDef.baseCd * 0.50, getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
-                const isCane = w.id === 'cane';
+                const isCane = w.id === 'cane' || w.id === 'osikovy_prut';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
                 const displayIcon = hasSoaked ? '💧' : wDef.icon;

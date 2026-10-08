@@ -76,8 +76,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	'cesnekova-topinka': {
-		id: 'cesnekova-topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 5, baseCd: 0.35,
+	cesnekova_topinka: {
+		id: 'cesnekova_topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 5, baseCd: 0.35,
 		desc: 'Smradlavá a štiplavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
@@ -92,19 +92,19 @@ var WEAPONS = {
 				if (dx * dx + dy * dy <= reach * reach) {
 					const dist = Math.hypot(dx, dy) || 1;
 					e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
-					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova-topinka', e, 'hit');
+					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova_topinka', e, 'hit');
 					e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.0);
 				}
 			}
 			return true;
 		}
 	},
-	'kysela-okurka': {
-		id: 'kysela-okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
+	kysela_okurka: {
+		id: 'kysela_okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
 		desc: 'Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kysele_okurky', level, w);
+			const stats = getRankedWeaponStats('kysela_okurka', level, w);
 			const count = Math.max(1, 1 + stats.projectileCount);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
 			if (!enemies.length) return false;
@@ -116,8 +116,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	buns: {
-		id: "buns",
+	povidlove_buchty: {
+		id: "povidlove_buchty",
 		name: "Povidlové buchty",
 		type: "food",
 		icon: "czech_buchta",
@@ -161,8 +161,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	cane: {
-		id: "cane",
+	osikovy_prut: {
+		id: "osikovy_prut",
 		name: "Osikový prut",
 		type: "physical",
 		icon: "osikovy_prut",
@@ -189,7 +189,7 @@ var WEAPONS = {
 				type: "physical",
 				soaked: !!player.hasSoakedCane,
 				style: "cane",
-				weaponId: "cane",
+				weaponId: "osikovy_prut",
 				swingDir: player._caneSwingAlt ? 1 : -1
 			});
 			if (typeof (sound as any).caneWhip === 'function') {
@@ -200,8 +200,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	pitchfork: {
-		id: "pitchfork",
+	kovarske_vidle: {
+		id: "kovarske_vidle",
 		name: "Kovářské vidle",
 		type: "physical",
 		icon: "🔱",
@@ -228,8 +228,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	halberd: {
-		id: "halberd",
+	kovana_halapartna: {
+		id: "kovana_halapartna",
 		name: "Kovaná halapartna",
 		type: "physical",
 		icon: "🪓",
@@ -257,8 +257,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	flail: {
-		id: "flail",
+	dreveny_cep: {
+		id: "dreveny_cep",
 		name: "Dřevěný cep na obilí",
 		type: "physical",
 		icon: "🌾",
@@ -285,8 +285,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	herbs: {
-		id: "herbs",
+	devatero_kviti: {
+		id: "devatero_kviti",
 		name: "Devatery kvítí",
 		type: "nature",
 		icon: "🌿",
@@ -317,8 +317,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	snowball: {
-		id: "snowball",
+	snehova_koule: {
+		id: "snehova_koule",
 		name: "Sněhová koule",
 		type: "ice",
 		icon: "❄️",
@@ -360,8 +360,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	kolac: {
-		id: "kolac",
+	kynuty_kolac: {
+		id: "kynuty_kolac",
 		name: "Kynutý koláč",
 		type: "food",
 		icon: "kynuty_kolac",
@@ -393,8 +393,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	potato: {
-		id: "potato",
+	horky_brambor: {
+		id: "horky_brambor",
 		name: "Horký brambor z popela",
 		type: "fire",
 		icon: "🥔",
@@ -421,8 +421,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	bees: {
-		id: "bees",
+	vceli_roj: {
+		id: "vceli_roj",
 		name: "Včelí roj z úlu",
 		type: "nature",
 		icon: "🐝",
@@ -469,8 +469,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	holywater: {
-		id: "holywater",
+	svecena_kropenka: {
+		id: "svecena_kropenka",
 		name: "Kropenka se svěcenou vodou",
 		type: "holy",
 		icon: "✨",
@@ -502,4 +502,29 @@ var WEAPONS = {
 	}
 };
 
-export { WEAPONS };
+// Legacy fallbacky pro zachování zpětné kompatibility
+const WEAPONS_LOOKUP = new Proxy(WEAPONS as any, {
+	get(target, prop: string) {
+		if (prop in target) return target[prop];
+		const legacyMap: Record<string, string> = {
+			cane: 'osikovy_prut',
+			'cesnekova-topinka': 'cesnekova_topinka',
+			'kysela-okurka': 'kysela_okurka',
+			kysele_okurky: 'kysela_okurka',
+			buns: 'povidlove_buchty',
+			pitchfork: 'kovarske_vidle',
+			halberd: 'kovana_halapartna',
+			flail: 'dreveny_cep',
+			herbs: 'devatero_kviti',
+			snowball: 'snehova_koule',
+			kolac: 'kynuty_kolac',
+			potato: 'horky_brambor',
+			bees: 'vceli_roj',
+			holywater: 'svecena_kropenka',
+		};
+		const mapped = legacyMap[prop];
+		return mapped ? target[mapped] : undefined;
+	}
+});
+
+export { WEAPONS_LOOKUP as WEAPONS };

@@ -6,12 +6,22 @@ export type WeaponId =
   | 'osikovy_prut'
   | 'valecnice'
   | 'cesnekova_topinka'
-  | 'kysele_okurky';
+  | 'kysela_okurka'
+  | 'povidlove_buchty'
+  | 'kovarske_vidle'
+  | 'kovana_halapartna'
+  | 'dreveny_cep'
+  | 'devatero_kviti'
+  | 'snehova_koule'
+  | 'kynuty_kolac'
+  | 'horky_brambor'
+  | 'vceli_roj'
+  | 'hromnicka'
+  | 'svecena_kropenka';
 
 export interface MilestoneChoice {
   id: string;
   name: string;
-  folkNameCzech: string;
   description: string;
   visualEffectTag: string;
   audioSfx: string;
@@ -47,6 +57,18 @@ export interface DayPhase {
   description?: string;
   icon?: string;
   bossSpawns?: string[];
+}
+
+export interface VillageBuilding {
+  id: string;
+  name: string;
+  levelKey: keyof MetaProgression;
+  role: string;
+  helpers: string;
+  story: string;
+  bonusDesc: (lvl: number) => string;
+  cost: (lvl: number) => number;
+  canvasDrawer: 'drawOvenScene' | 'drawScarecrowScene' | 'drawMillScene' | 'drawWallScene';
 }
 
 export interface MetaProgression {
@@ -207,15 +229,6 @@ export interface Trophy {
   getProgress?: (meta: any) => { cur: number; max: number };
   icon?: string;
   unlocked?: (meta: any) => boolean;
-}
-
-export interface VillageBuilding {
-  id: string;
-  name: string;
-  desc: string;
-  cost: number[];
-  maxLevel: number;
-  icon: string;
 }
 
 export interface HunterProgress {

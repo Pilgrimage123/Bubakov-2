@@ -1,6 +1,6 @@
-import React from 'react';
+import type { VillageBuilding } from '../types';
 
-var VILLAGE_BUILDINGS = [
+export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 	{
 		id: "oven",
 		name: "Pekárna u rozpálené pece",
@@ -88,7 +88,49 @@ var VILLAGE_BUILDINGS = [
 		bonusDesc: (lvl) => `Svatá vlna: ${lvl * 100} posvátného poškození + silný odhoz v okruhu 400 px při nákupu u Dědečka`,
 		cost: (lvl) => 35 * (lvl + 1),
 		canvasDrawer: "drawWallScene"
+	},
+	{
+		id: "water",
+		name: "Návesní studánka",
+		levelKey: "waterLevel",
+		role: "Pramenitá voda a posílení lektvarů",
+		helpers: "Vodní víly střežící čistý pramen",
+		story: "Uprostřed návsi vyvěrá křišťálový pramen, který nikdy nezamrzá. Napijí-li se z něj lovec, zahojí se mu i hluboké rány a na chvíli získá posvátný klid a odolnost vůči všemu zlu.",
+		bonusDesc: (lvl) => `Pramenitá voda: +${lvl * 20}% k účinku lektvarů & +${lvl * 2} s nezranitelnosti po vypití`,
+		cost: (lvl) => 35 * (lvl + 1),
+		canvasDrawer: "drawMillScene"
+	},
+	{
+		id: "forest",
+		name: "Hustý borový les",
+		levelKey: "forestLevel",
+		role: "Zvyk na mokřady a odolnost terénu",
+		helpers: "Lesní mužíci vysekávající suché stezky",
+		story: "Starý borový les za vsí skrývá nebezpečná rašeliniště a hluboké louže. Kdo se však naučí lesním stezkám, nezapadne do bahna a promočení z něj spadne dvakrát rychleji.",
+		bonusDesc: (lvl) => `Zvyk na mokřad: o ${Math.min(100, lvl * 40)}% kratší trvání promočení a zpomalení`,
+		cost: (lvl) => 35 * (lvl + 1),
+		canvasDrawer: "drawScarecrowScene"
+	},
+	{
+		id: "undead",
+		name: "Hřbitovní brána",
+		levelKey: "undeadLevel",
+		role: "Krocení hrobových běsů a zlevnění truhel",
+		helpers: "Hrobníci s posvěceným vápnem",
+		story: "Kovaná brána se železným křížem drží neklidné umrlce na posvěcené půdě. Když hrobníci bránu řádně zažehnají, poklady starých časů vyplují na povrch mnohem dříve.",
+		bonusDesc: (lvl) => `Zažehnané hroby: o ${lvl * 20} méně poražených strašidel nutných pro objevení truhly`,
+		cost: (lvl) => 35 * (lvl + 1),
+		canvasDrawer: "drawWallScene"
+	},
+	{
+		id: "regen",
+		name: "Bylinková zahrádka",
+		levelKey: "regenLevel",
+		role: "Léčivé bylinky a trvalá regenerace",
+		helpers: "Bába kořenářka sušící mateřídoušku",
+		story: "Na prosluněné mezi za chalupou voní mateřídouška, třezalka a heřmánek. Voňavé masti a horké čaje dodávají lovci klidnou mysl a vrací ztracenou Kuráž každou chvíli.",
+		bonusDesc: (lvl) => `Léčivé bylinky: +${lvl * 3} Kuráže doplňováno každých 5 sekund`,
+		cost: (lvl) => 35 * (lvl + 1),
+		canvasDrawer: "drawOvenScene"
 	}
 ];
-
-export { VILLAGE_BUILDINGS };

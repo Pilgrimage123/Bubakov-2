@@ -1,35 +1,59 @@
 import React from 'react';
 export type { WeaponProgress } from '../types';
 
+const LEGACY_WEAPON_MAP: Record<string, string> = {
+	cane: 'osikovy_prut',
+	'cesnekova-topinka': 'cesnekova_topinka',
+	'kysela-okurka': 'kysela_okurka',
+	kysele_okurky: 'kysela_okurka',
+	buns: 'povidlove_buchty',
+	pitchfork: 'kovarske_vidle',
+	halberd: 'kovana_halapartna',
+	flail: 'dreveny_cep',
+	herbs: 'devatero_kviti',
+	snowball: 'snehova_koule',
+	kolac: 'kynuty_kolac',
+	potato: 'horky_brambor',
+	bees: 'vceli_roj',
+	holywater: 'svecena_kropenka',
+};
+
+function toCanonicalId(id: string): string {
+	return LEGACY_WEAPON_MAP[id] || id;
+}
+
 var LOCKED_WEAPONS_ORDER = [
-	"pitchfork",
-	"halberd",
-	"flail",
-	"herbs",
-	"snowball",
-	"kolac",
-	"potato",
-	"bees",
-	"holywater",
+	"kovarske_vidle",
+	"kovana_halapartna",
+	"dreveny_cep",
+	"devatero_kviti",
+	"snehova_koule",
+	"kynuty_kolac",
+	"horky_brambor",
+	"vceli_roj",
+	"svecena_kropenka",
 	"valecnice",
-	"cesnekova-topinka",
-	"kysela-okurka"
+	"cesnekova_topinka",
+	"kysela_okurka"
 ];
-function getPreviousWeapon(id) {
-	const idx = LOCKED_WEAPONS_ORDER.indexOf(id);
+function getPreviousWeapon(id: string) {
+	const canonical = toCanonicalId(id);
+	const idx = LOCKED_WEAPONS_ORDER.indexOf(canonical);
 	if (idx <= 0) return null;
 	return LOCKED_WEAPONS_ORDER[idx - 1];
 }
-function isWeaponUnlocked(id, meta) {
-	if (WEAPON_UNLOCKS[id]?.defaultUnlocked) return true;
-	return !!meta.unlockedWeapons?.[id];
+function isWeaponUnlocked(id: string, meta: any) {
+	const canonical = toCanonicalId(id);
+	if (WEAPON_UNLOCKS[canonical]?.defaultUnlocked) return true;
+	return !!meta.unlockedWeapons?.[canonical] || !!meta.unlockedWeapons?.[id];
 }
-function canWeaponUnlock(id, meta) {
-	if (WEAPON_UNLOCKS[id]?.defaultUnlocked) return true;
-	const prev = getPreviousWeapon(id);
+function canWeaponUnlock(id: string, meta: any) {
+	const canonical = toCanonicalId(id);
+	if (WEAPON_UNLOCKS[canonical]?.defaultUnlocked) return true;
+	const prev = getPreviousWeapon(canonical);
 	return !prev || isWeaponUnlocked(prev, meta);
 }
-function getActiveUnlockingWeapon(meta) {
+function getActiveUnlockingWeapon(meta: any) {
 	for (let i = 0; i < LOCKED_WEAPONS_ORDER.length; i++) {
 		const id = LOCKED_WEAPONS_ORDER[i];
 		if (!isWeaponUnlocked(id, meta)) {
@@ -877,10 +901,11 @@ var WEAPON_UNLOCKS = {
 /**
 * Calculates current unlock progress and spoil details for a weapon based on meta-progression
 */
-function getWeaponProgress(id, meta) {
-	const def = WEAPON_UNLOCKS[id];
+function getWeaponProgress(id: string, meta: any) {
+	const canonical = toCanonicalId(id);
+	const def = WEAPON_UNLOCKS[canonical] || WEAPON_UNLOCKS[id];
 	if (!def) return {
-		id,
+		id: canonical,
 		isUnlocked: true,
 		canUnlock: true,
 		isQueued: false,
@@ -900,7 +925,7 @@ function getWeaponProgress(id, meta) {
 	if (def.defaultUnlocked) {
 		const m = def.milestones[0];
 		return {
-			id,
+			id: canonical,
 			isUnlocked: true,
 			canUnlock: true,
 			isQueued: false,
@@ -918,10 +943,10 @@ function getWeaponProgress(id, meta) {
 			enemiesBreakdown: []
 		};
 	}
-	if (isWeaponUnlocked(id, meta)) {
+	if (isWeaponUnlocked(canonical, meta)) {
 		const lastMilestone = def.milestones[def.milestones.length - 1] || def.milestones[0];
 		return {
-			id,
+			id: canonical,
 			isUnlocked: true,
 			canUnlock: true,
 			isQueued: false,
@@ -936,19 +961,19 @@ function getWeaponProgress(id, meta) {
 			clueTag: "✅ Plně odemčeno ve zbrojnici!",
 			realIcon: def.realIcon,
 			realType: def.realType,
-			enemiesBreakdown: def.targetEnemies.map((e) => ({
+			enemiesBreakdown: def.targetEnemies.map((e: any) => ({
 				id: e.id,
 				name: e.name,
 				icon: e.icon,
-				count: meta.weaponKillCounts?.[id]?.[e.id] ?? def.maxCount
+				count: meta.weaponKillCounts?.[canonical]?.[e.id] ?? meta.weaponKillCounts?.[id]?.[e.id] ?? def.maxCount
 			}))
 		};
 	}
-	const prevId = getPreviousWeapon(id);
-	if (!canWeaponUnlock(id, meta) && prevId) {
+	const prevId = getPreviousWeapon(canonical);
+	if (!canWeaponUnlock(canonical, meta) && prevId) {
 		const m0 = def.milestones[0];
 		return {
-			id,
+			id: canonical,
 			isUnlocked: false,
 			canUnlock: false,
 			isQueued: true,
@@ -964,7 +989,7 @@ function getWeaponProgress(id, meta) {
 			clueTag: "🔒 Čeká na odemčení předchozí zbraně",
 			realIcon: def.realIcon,
 			realType: def.realType,
-			enemiesBreakdown: def.targetEnemies.map((e) => ({
+			enemiesBreakdown: def.targetEnemies.map((e: any) => ({
 				id: e.id,
 				name: e.name,
 				icon: e.icon,
@@ -972,9 +997,9 @@ function getWeaponProgress(id, meta) {
 			}))
 		};
 	}
-	const weaponKills = meta.weaponKillCounts?.[id] || (id === "pitchfork" ? meta.bestiaryKills || {} : {});
+	const weaponKills = meta.weaponKillCounts?.[canonical] || meta.weaponKillCounts?.[id] || (canonical === "kovarske_vidle" ? meta.bestiaryKills || {} : {});
 	let curCount = 0;
-	const enemiesBreakdown = def.targetEnemies.map((e) => {
+	const enemiesBreakdown = def.targetEnemies.map((e: any) => {
 		const cnt = weaponKills[e.id] || 0;
 		curCount += cnt;
 		return {
@@ -992,9 +1017,9 @@ function getWeaponProgress(id, meta) {
 	else if (percent >= 50) tier = 2;
 	else if (percent >= 25) tier = 1;
 	else tier = 0;
-	const milestone = def.milestones.find((m) => m.tierLevel === tier) || def.milestones[0];
+	const milestone = def.milestones.find((m: any) => m.tierLevel === tier) || def.milestones[0];
 	return {
-		id,
+		id: canonical,
 		isUnlocked,
 		canUnlock: true,
 		isQueued: false,
@@ -1013,4 +1038,12 @@ function getWeaponProgress(id, meta) {
 	};
 }
 
-export { LOCKED_WEAPONS_ORDER, getPreviousWeapon, isWeaponUnlocked, canWeaponUnlock, getActiveUnlockingWeapon, WEAPON_UNLOCKS, getWeaponProgress };
+const WEAPON_UNLOCKS_PROXY = new Proxy(WEAPON_UNLOCKS as any, {
+	get(target, prop: string) {
+		if (prop in target) return target[prop];
+		const mapped = LEGACY_WEAPON_MAP[prop];
+		return mapped ? target[mapped] : undefined;
+	}
+});
+
+export { LOCKED_WEAPONS_ORDER, getPreviousWeapon, isWeaponUnlocked, canWeaponUnlock, getActiveUnlockingWeapon, WEAPON_UNLOCKS_PROXY as WEAPON_UNLOCKS, getWeaponProgress };

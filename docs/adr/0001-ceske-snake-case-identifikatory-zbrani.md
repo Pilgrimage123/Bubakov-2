@@ -1,0 +1,3 @@
+# Sjednocení identifikátorů zbraní na český snake_case
+
+V kódu a datech existovala tříštivost tří různých zápisů pro zbraně (anglické `cane`/`buns`, pomlčkové `cesnekova-topinka` a podtržítkové `cesnekova_topinka`), přičemž `types.ts` znalo jen 4 zbraně. Rozhodli jsme se sjednotit veškeré identifikátory zbraní v datových strukturách, typech i enginu na kanonické české názvy ve formátu `snake_case` (např. `osikovy_prut`, `cesnekova_topinka`, `povidlove_buchty`), rozšířit unii `WeaponId` na všech 15 zbraní a zachovat pouze izolační vrstvu pro migraci starých uložených pozic v LocalStorage. Tento krok odstraňuje chybovost v odkazech mezi Arzenálem, Nůší, odemykáním a milníky a sladí kód s doménovým jazykem hry.
