@@ -24,8 +24,8 @@ export function applyMasteryOption(w: any, o: MasteryOption) {
 }
 export function getProjectileCount(baseCount: number, _w?: any) { return Math.max(1, Math.floor(baseCount)); }
 export function getWeaponDamage(player: any, baseDamage: number) {
-  const tulakBonus = player?.tulakDamageBonus || 0;
-  return (baseDamage + tulakBonus) * (player?.damageMultiplier || 1);
+  const tulakMult = player?.tulakDamageBonus ? 1 + (player.tulakDamageBonus / 100) : 1;
+  return baseDamage * tulakMult * (player?.damageMultiplier || 1);
 }
 
 var WEAPONS = {

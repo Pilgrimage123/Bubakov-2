@@ -37,9 +37,6 @@ var ALL_WEAPON_KEYS = [
 ];
 var DEFAULT_HERO_WEAPONS = {
 	wanderer: [{
-		id: "buns",
-		level: 1
-	}, {
 		id: "cane",
 		level: 1
 	}],
@@ -74,46 +71,46 @@ var HUNTER_DRAW_MAP = {
 };
 var HUNTER_STATS_INFO = {
 	wanderer: {
-		hp: 150,
+		hp: 200,
 		speed: 165,
 		pickup: 75,
 		ability: "Pověstná sukovice (21 s)",
-		role: "Všestranný vytrvalec s vysokou kuráží a osikovým prutem"
+		role: "Všestranný vytrvalec s vysokou kuráží (200), osikovým prutem a tuláckým instinktem (+35 % poškození)"
 	},
 	shepherd: {
 		hp: 110,
 		speed: 220,
 		pickup: 160,
-		ability: "Pastevecký bič (30 s)",
-		role: "Bleskový běžec s velkým dosahem sběru mincí a buchet"
+		ability: "Dusot stáda (30 s)",
+		role: "Bleskový běžec s velkým dosahem sběru mincí a buchet, přivolává běžící stádo beranů"
 	},
 	korenarka: {
 		hp: 125,
 		speed: 180,
 		pickup: 105,
-		ability: "Uklidňující bylinková mlha (30 s)",
-		role: "Přírodní bylinkářka, bylinné věnce a stálé doplňování kuráže"
+		ability: "Očistné kadidlo (30 s)",
+		role: "Ranhojička s léčivými bylinkami, pasivní regenerací kuráže (+2/4 s) a hojivým sanctuariem"
 	},
 	watchman: {
 		hp: 140,
 		speed: 175,
 		pickup: 115,
-		ability: "Hlásná trouba & Lucerna (30 s)",
-		role: "Obrněný strážce noci s kovanou halapartnou a světlem"
+		ability: "Noční roh a poplach (30 s)",
+		role: "Obrněný strážce noci s kovanou halapartnou a posvěcenou lucernou (stálá svatá aura)"
 	},
 	sexton: {
 		hp: 135,
 		speed: 170,
 		pickup: 110,
-		ability: "Svatá záře & Kostelní zvony (35 s)",
-		role: "Pobožný služebník se svěcenou vodou zklidňující noční strašidla"
+		ability: "Farní požehnání (35 s)",
+		role: "Pobožný služebník se svěcenou vodou a plošným vymýcením démonů a nemrtvých"
 	},
 	granny: {
 		hp: 130,
 		speed: 165,
 		pickup: 125,
-		ability: "Vlídné slovo babičky (45 s)",
-		role: "Babička s Barunkou a psem Sultánem, uklidňuje hordy"
+		ability: "Chléb se solí a vlídné slovo (45 s)",
+		role: "Laskavá babička s vnučkou Barunkou, kynutým koláčem a zastavením času s nasycením bubáků"
 	}
 };
 var WEAPON_TYPE_LABELS = {
@@ -584,9 +581,9 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 														},
 														children: [
 															/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
-																"❤️ ",
+																"🦁 ",
 																stats.hp,
-																" HP"
+																" Kuráž"
 															] }),
 															/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["👟 ", stats.speed] }),
 															/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["🧲 ", stats.pickup] })

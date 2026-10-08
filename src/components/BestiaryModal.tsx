@@ -507,17 +507,26 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									enemyProg.tier >= 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge",
 										style: {
-											background: currentMonster.attackCadence === "fast" ? "#ECFDF5" : currentMonster.attackCadence === "slow" ? "#FEF2F2" : "#FFFBEB",
-											color: currentMonster.attackCadence === "fast" ? "#065F46" : currentMonster.attackCadence === "slow" ? "#991B1B" : "#92400E",
+											background: currentMonster.attackCadence === "fast" ? "#ECFDF5" : currentMonster.attackCadence === "slow" ? "#FEF2F2" : "#EFF6FF",
+											color: currentMonster.attackCadence === "fast" ? "#065F46" : currentMonster.attackCadence === "slow" ? "#991B1B" : "#1E40AF",
 											fontWeight: 800
 										},
 										children: [
 											currentMonster.attackCadence === "fast"
 												? "⚡ Útok: Rychlý (0,6 s)"
 												: currentMonster.attackCadence === "slow"
-												? "🔨 Útok: Pomalý (1,8 s, +190 %)"
-												: "⚔️ Útok: Normální (1,2 s, +120 %)"
+												? "🔨 Útok: Pomalý (1,8 s)"
+												: "⚔️ Útok: Normální (1,2 s)"
 										]
+									}),
+									enemyProg.tier >= 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "tag-badge",
+										style: {
+											background: "#FEE2E2",
+											color: "#991B1B",
+											fontWeight: 800
+										},
+										children: ["💥 Úder: ", currentMonster.damage]
 									})
 								]
 							}),

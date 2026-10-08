@@ -9,6 +9,50 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '8. října 2026',
+    title: 'Stabilita běhového prostředí: Sjednocení instancí Reactu a spolehlivý chod',
+    summary: 'Oprava inicializace Reactu v sestavovacím prostředí Vite. Konfigurace zajišťuje striktně jedinou instanci Reactu v celé aplikaci a eliminuje chyby spojené s mezipamětí.',
+    items: [
+      '⚙️ Striktní deduplikace React balíčků: Do konfigurace Vite přidáno vynucené sjednocení react a react-dom, které garantuje společný interní kontext pro všechny komponenty a hooky.',
+      '🧹 Vyčištění předkompilovaných modulů: Odstraněny zastaralé moduly z mezipaměti, které způsobovaly kolizi různých verzí v prohlížeči.',
+      '🚀 Stabilní a plynulý start aplikace: Veškeré herní komponenty a animace nyní startují okamžitě bez výpadků.',
+    ],
+  },
+  {
+    date: '8. října 2026',
+    title: 'Odveta lovců na blízko: Odstrčení bubáka a 15 % maximální Kuráže lovce',
+    summary: 'Každý lovec po zranění na blízko nestvůru energicky odhodí pryč a udělí jí protiúder odpovídající přesně 15 % své maximální Kuráže. Proti tomuto odstrčení i zranění u běžných monster a minibossů nefungují žádné rezistence – odolávají pouze hlavní bossové jednotlivých úrovní.',
+    items: [
+      '🛡️ Automatické odstrčení při zranění na blízko: Kdykoliv je libovolný lovec zraněn úderem či kontaktem strašidla zblízka, okamžitě bubáka prudce odrazí a odstrčí zpět do bezpečné vzdálenosti.',
+      '💥 Protiúder za 15 % maximální Kuráže: Lovec útočníkovi uštědří zranění odpovídající 15 % své maximální Kuráže (např. 30 zranění při 200 Kuráži, 45 zranění při 300 Kuráži).',
+      '⚡ Rezistence nefungují (kromě bossů levelu): Běžní bubáci, elity i minibossové jsou plně odhozeni a obdrží plnou hodnotu zranění bez ohledu na tuhost (poise) či odolnosti. Rezistence fungují výhradně pro finální bossy úrovní.',
+      '⏱️ Taktický prostor: Odstrčení okamžitě přeruší další kontaktní nápřah nestvůry a zabrání zacyklení zranění při obklíčení v chumlu.',
+    ],
+  },
+  {
+    date: '8. října 2026',
+    title: 'Přímé započtení násobitelů do základního zranění a 3,5× úder pomalých nepřátel',
+    summary: 'U pomalu útočících nepřátel a bossů byl násobitel zranění zvýšen na 3,5×. Všechny násobky poškození se již nepíší zvlášť, ale jsou přímo promítnuty do základního zranění každého strašidla v datech i v Bestiáři.',
+    items: [
+      '🔨 Pomalí nepřátelé posíleni na 3,5× základní poškození: Těžcí kolosy, umrlci s pomalým nápřahem, dřevorubci se širočinou, zbrojnoši a velcí bossové (Bubák, Hromotluk, Hejkal, Skalní obr, Mlynář, Bezhlavý rytíř, Drak) nově udílejí drtivý 3,5× násobek původního zranění.',
+      '⚔️ Přímý zápis do základních statistik nepřátel: Násobky poškození (2,2× u normálních a 3,5× u pomalých) se již nerozepisují zvlášť jako umělé procentuální přirážky, ale přímo tvoří reálné základní poškození (damage) v Bestiáři a databázi nepřátel.',
+      '📖 Čistý zápis v Bestiáři: V Bestiáři a kronice se u strašidel uvádí čistá útočná kadence (Rychlý 0,6 s, Normální 1,2 s, Pomalý 1,8 s) a přehledná skutečná hodnota úderu.',
+      '⏱️ Zachování férové prodlevy: Zranění dopadá až po uplynutí příslušné prodlevy od prvního kontaktu (0,6 s / 1,2 s / 1,8 s) a hráč má prostor včas uskočit či monstrum odhodit.',
+    ],
+  },
+  {
+    date: '8. října 2026',
+    title: 'Poutník: 200 Kuráže, +35 % poškození, sjednocení pojmu Kuráž a revize všech hrdinů',
+    summary: 'Poutník (Tulák) vstupuje do boje s navýšenou Kuráží (200), procentuálním bonusem poškození +35 % a čistým startem s Osikovým prutem. Herní terminologie byla plošně sjednocena na pojem Kuráž namísto HP a popisy všech šesti lovců byly detailně zrevidovány podle jejich reálných schopností.',
+    items: [
+      '🦁 Poutník začíná s 200 Kuráže: Výchozí hodnota Kuráže byla navýšena ze 150 na 200, což lovci poskytuje solidní základ pro delší výpravy do nočních blat.',
+      '🗡️ Startovní výzbroj bez Buchet: Poutník začíná pouze se svou ikonickou zbraní Osikový prut. Povidlové buchty zůstávají v nůši Dědečka a ve výbavě Pasáčka.',
+      '💥 Tulácký instinkt dává +35 % poškození: Původní flat bonus (+30) byl změněn na plnohodnotný procentuální násobitel +35 % (×1,35) pro všechny zbraně i schopnost Pověstná sukovice.',
+      '🛡️ Herní pojem Kuráž namísto HP: V celé hře, na HUDu, v plovoucích textech uzdravení (+55 Kuráž, +35 Kuráž, +6 Kuráž), na lištách minibossů i v Bestiáři byl plošně zaveden pojem Kuráž.',
+      '📜 Detailní revize popisků všech 6 lovců: Popisy schopností v kartách postav, odemykání, Sandboxu i v nápovědě ovládání byly kompletně sjednoceny s reálnými herními parametry a cooldowny.',
+    ],
+  },
+  {
     date: '7. října 2026',
     title: 'Válečnice: Větší sprite (+40 %), dosah úderu (+60 %), 3s omráčení a 20% ignorace odolností',
     summary: 'Kompletní posílení a detailní rozpis Válečnice v knihovně zbraní: o 40 % větší sprite hospodyně, dosah úderu válečku rozšířen o 60 % na 58 px, doba omráčení prodloužena na 3 sekundy a ignorace odolností nastavena na 20 %.',
@@ -123,11 +167,11 @@ const KRONIKA: KronikaEntry[] = [
     items: [
       '⚔️ Čtyři hlavní zbraně mají osmirankový progression systém s milestone volbami na ranku 3, 5 a 8.',
       '💥 Standardní ranky přidávají damage, cooldown a area; milestone volby dávají speciální efekty.',
-      '🧭 Tulák získává +30 flat damage ke všem zbraním.',
+      '🧭 Tulák získává +35 % poškození ke všem zbraním a začíná s 200 Kuráže.',
       '🧹 Starý mastery stav zůstává pouze kvůli kompatibilitě uložených her; nové mastery volby se negenerují.',
       '☕ Opravdová káva, Krvavé jelito, Medvědí mast, Veselá mysl a písnička, Toulavé boty a Magnetický měšec mají sjednocené aktuální hodnoty.',
       '🎁 Aktualizovány hodnoty truhel, potionů, chleba, duší a mincí.',
-      '👹 Minibossové dostali vlastní škálování, resistence, HP HUD, zlatou auru a posílený damage model.',
+      '👹 Minibossové dostali vlastní škálování, resistence, ukazatel Kuráže, zlatou auru a posílený damage model.',
       '🐛 Opraveny důležité části gameplay loopu: stale closure, magnetizace dropů, kontakt s nepřítelem, útěková AI, SpatialHash, projektily a boss victory logika.',
       '🎬 Pasáček a Kořenářka dostali vlastní příběhové ultimate scénky.',
       '🪵 Tulákova ultimate byla přepracována na Pověstnou sukovici.',

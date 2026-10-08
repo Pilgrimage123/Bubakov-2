@@ -169,7 +169,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Stisknutím klávesy <strong>P</strong> (nebo <strong>Esc</strong>) okamžitě <strong>pozastavíte celou hru</strong>.
-                Při pauze si můžete v klidu prohlédnout svůj arzenál, úroveň zbraní, zbývající životy a získané krejcary,
+                Při pauze si můžete v klidu prohlédnout svůj arzenál, úroveň zbraní, zbývající kuráž a získané krejcary,
                 nebo výpravu bezpečně ukončit a odnést kořist do hospody. Opětovným stiskem <strong>P</strong> se vrátíte přímo do boje!
               </p>
             </div>
@@ -287,22 +287,22 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <li>
-                  <strong>Poutník (Tulák):</strong> <em>Pověstná sukovice</em> – zatočí kolem sebe sukovitou holí, zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (zkrácený cooldown 21 s).
+                  <strong>Poutník (Tulák):</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (zkrácený cooldown 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
                 </li>
                 <li>
-                  <strong>Pasáček:</strong> <em>Prásknutí bičem</em> – bleskový výpad se zdrcujícím zásahem vpřed.
+                  <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, cooldown 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
                 </li>
                 <li>
-                  <strong>Bába kořenářka:</strong> <em>Bylinkové uklidnění mysli</em> – okamžitě zažene strach, zvedne náladu a doplní hromadu kuráže.
+                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivně doplňuje +2 kuráže každé 4 s.
                 </li>
                 <li>
-                  <strong>Ponocný:</strong> <em>Záře svaté lucerny</em> – oslepí noční stíny a udělí plošné poškození všem nepřátelům v zorném poli.
+                  <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž vystraší nepřátele na 5 s a udělí 110 fyzického poškození s odhozením (cooldown 30 s). Pasivně šíří stálou posvátnou auru lucerny (16 svatého poškození/s).
                 </li>
                 <li>
-                  <strong>Kostelník:</strong> <em>Hlahol farního zvonu</em> – posvátný zvuk zažene pekelníky i kostlivce po celé obrazovce.
+                  <strong>Pobožný kostelník:</strong> <em>Farní požehnání</em> – úder kostelního zvonu a sloup svatého světla očistí nemrtvé a démony v okruhu 650 px (běžné nemrtvé okamžitě vymýtí, bosse zasáhne za 25 % max. kuráže, cooldown 35 s).
                 </li>
                 <li>
-                  <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zmrazí čas; působí buď jako <strong>Food</strong> (chléb nasytí) nebo <strong>Holy</strong> (vlídné slovo zažene démony) podle toho, proti čemu má daný bubák menší odolnost!
+                  <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zmrazí čas; působí buď jako <strong>Food</strong> (chléb nasytí) nebo <strong>Holy</strong> (vlídné slovo zažene démony) podle toho, proti čemu má daný bubák menší odolnost (cooldown 45 s)!
                 </li>
               </ul>
             </div>
@@ -1182,6 +1182,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 </div>
                 <div>
                   🍪 <strong>Sbírejte perníčky okamžitě:</strong> Každý perníček se počítá pro nákup v nůši Čertova dědečka. Čím dříve nakoupíte, tím snáze zdoláte půlnočního minibosse.
+                </div>
+                <div>
+                  💥 <strong>Odveta lovce na blízko:</strong> Kdykoliv vás bubák zraní na blízko, automaticky ho odhodíte pryč a uštědříte mu zranění rovné 15 % vaší maximální Kuráže (odolnosti běžných monster zde nefungují, odolává pouze boss levelu)!
                 </div>
                 <div>
                   ⏸️ <strong>Nebojte se využívat pauzu [P]:</strong> Když je na obrazovce příliš mnoho projektilů nebo strašidel, stiskněte <strong>P</strong>. Zjistíte, kolik vám zbývá kuráže, kde se nachází cíl a naplánujete další manévr.

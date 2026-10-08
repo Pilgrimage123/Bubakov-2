@@ -969,8 +969,8 @@ export default function App() {
     coins: 0,
     souls: 0,
     chasniks: 0,
-    hp: 150,
-    maxHp: 150,
+    hp: 200,
+    maxHp: 200,
     ultCd: 0,
     dayPhase: DAY_PHASES[0],
     bossHpPct: null as number | null,
@@ -1459,7 +1459,7 @@ export default function App() {
     sound.coin();
 
     const baseMaxHp =
-      type === 'wanderer' ? 150 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
+      type === 'wanderer' ? 200 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
     const baseSpeed =
       type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
     const basePickup =
@@ -1478,7 +1478,7 @@ export default function App() {
             return mapped;
           })
         : type === 'wanderer'
-        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }, { id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
         ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'korenarka'
@@ -1510,7 +1510,7 @@ export default function App() {
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: ovenDmgMult,
-      tulakDamageBonus: type === 'wanderer' ? 30 : 0,
+      tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
       kavaCount: 0,
@@ -1542,8 +1542,52 @@ export default function App() {
       _valecnicePulse: false,
       _garlicPulse: false,
 
+      // Každý lovec po zranění na blízko bubákem bubáka odhodí (resist neplatí, pokud nejde o bosse levelu)
+      // a udělí mu zranění rovné 15 % maximální Kuráže lovce
+      counterMeleeAttacker(attacker: any) {
+        if (!attacker || attacker.isDefeated || attacker.dead) return;
+        const dx = attacker.x - this.x;
+        const dy = attacker.y - this.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        let nx = dx / dist;
+        let ny = dy / dist;
+        if (dist < 0.001) {
+          nx = this.lastDx || 1;
+          ny = this.lastDy || 0;
+        }
+
+        // Zranění odpovídající 15 % lovcovy maximální Kuráže
+        const counterDmg = Math.max(1, Math.round(this.maxHp * 0.15));
+        const pushForce = 540;
+        const kbx = nx * pushForce;
+        const kby = ny * pushForce;
+
+        attacker.takeDamage(counterDmg, 'physical', kbx, kby, {
+          isHunterCounter: true,
+          source: 'hunter_melee_counter',
+        });
+
+        sound.heavyHit();
+        engineRef.current.texts.push(
+          new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true)
+        );
+        for (let p = 0; p < 7; p++) {
+          const pAng = Math.random() * Math.PI * 2;
+          const pSpd = 70 + Math.random() * 90;
+          engineRef.current.particles.push({
+            x: attacker.x,
+            y: attacker.y,
+            vx: nx * 130 + Math.cos(pAng) * pSpd,
+            vy: ny * 130 + Math.sin(pAng) * pSpd,
+            life: 0.32,
+            color: p % 2 === 0 ? '#F59E0B' : '#FFFFFF',
+            size: 3.5,
+          });
+        }
+      },
+
       // Take damage from mob contact or hazard attacks
-      takeDamage(amount: number, type = 'physical') {
+      takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (gameStateRef.current !== 'playing' || this.hp <= 0) return;
         if (this.invulnerabilityTimer > 0) return;
         if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
@@ -1570,6 +1614,14 @@ export default function App() {
             new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, COLORS.red)
           );
         }
+
+        // Každý lovec potom co je na blízko zraněn bubákem, bubáka puschne pryč
+        // (resist zde nefunguje, pokud se nejedná o bosse levelu!)
+        // a dá mu zranění, které odpovídá 15 procentům lovcovy maximální Kuráže.
+        if (isMelee && attacker && !attacker.isDefeated && !attacker.dead) {
+          this.counterMeleeAttacker(attacker);
+        }
+
         if (this.hp <= 0) {
           this.hp = 0;
           sound.hit();
@@ -1878,10 +1930,11 @@ export default function App() {
           const ny = dist > 0.001 ? dy / dist : 0;
           const fearResist = Math.min(1, Math.max(0, e.willpower || 0));
           const fearDuration = 4.0 * (1 - fearResist);
+          const tulakMult = 1 + ((p.tulakDamageBonus || 0) / 100);
 
           if (dist <= innerRadius + e.radius) {
             // Blízký drtivý zásah sukovicí: silné zranění a masivní odhození bubáků kolem
-            const dmg = 185 * p.damageMultiplier;
+            const dmg = 185 * p.damageMultiplier * tulakMult;
             e.takeDamage(dmg, 'physical', nx * 850, ny * 850);
             e.poise = 0;
             engineRef.current.texts.push(new DamageText(e.x, e.y - 40, 'PRÁSK! 🪵', '#FBBF24', false));
@@ -1901,7 +1954,7 @@ export default function App() {
               engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'ODOLAL! 🛡️', '#E5E7EB', false));
             }
             // Zranění a odhození i ve větší vzdálenosti
-            const outerDmg = 55 * p.damageMultiplier;
+            const outerDmg = 55 * p.damageMultiplier * tulakMult;
             e.takeDamage(outerDmg, 'physical', nx * 320, ny * 320);
           }
 
@@ -2018,7 +2071,7 @@ export default function App() {
     p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer, 1.8);
     sound.potion();
     sound.victory();
-    eng.texts.push(new DamageText(p.x, p.y - 70, '+55 HP! DEVATERO BYLIN & OČISTNÉ KADIDLO 🌿', '#86EFAC', true));
+    eng.texts.push(new DamageText(p.x, p.y - 70, '+55 Kuráž! DEVATERO BYLIN & OČISTNÉ KADIDLO 🌿', '#86EFAC', true));
 
     // Vytvoření bylinného sanctuaria v herním světě
     eng.korenarkaSanctuary = {
@@ -2311,7 +2364,7 @@ export default function App() {
     const p = engineRef.current.player;
     if (p) {
       p.hp = Math.min(p.maxHp, p.hp + 35);
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 30, '+35 HP (Od souseda)', COLORS.green, true));
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 30, '+35 Kuráž (Od souseda)', COLORS.green, true));
     }
 
     // Companion joins player
@@ -2773,7 +2826,7 @@ export default function App() {
                     });
                   }
                   if (dToP < 210) {
-                    player.takeDamage(isPhase2 ? 32 : 24, 'physical');
+                    player.takeDamage(isPhase2 ? 32 : 24, 'physical', hejkal, true);
                     const pushAng = Math.atan2(player.y - hejkal.y, player.x - hejkal.x);
                     player.x += Math.cos(pushAng) * 45;
                     player.y += Math.sin(pushAng) * 45;
@@ -2848,7 +2901,7 @@ export default function App() {
                   engine.texts.push(new DamageText(obr.x, obr.y - 50, 'ZEMĚTŘESENÍ! ⚡', '#D97706', true));
                   const dist = Math.hypot(player.x - obr.x, player.y - obr.y);
                   if (dist < 260) {
-                    player.takeDamage(isPhase2 ? 28 : 20, 'physical');
+                    player.takeDamage(isPhase2 ? 28 : 20, 'physical', obr, true);
                     const qAng = Math.atan2(player.y - obr.y, player.x - obr.x);
                     player.x += Math.cos(qAng) * 55;
                     player.y += Math.sin(qAng) * 55;
@@ -3259,7 +3312,7 @@ export default function App() {
                     });
                   }
                   if (distToP < 165) {
-                    player.takeDamage(isPhase2 ? 32 : 24, 'physical');
+                    player.takeDamage(isPhase2 ? 32 : 24, 'physical', drak, true);
                     const pushAng = Math.atan2(player.y - drak.y, player.x - drak.x);
                     player.x += Math.cos(pushAng) * 55;
                     player.y += Math.sin(pushAng) * 55;
@@ -3395,7 +3448,7 @@ export default function App() {
                       });
                     }
                     if (Math.hypot(player.x - drak.x, player.y - drak.y) < 190) {
-                      player.takeDamage(35, 'physical');
+                      player.takeDamage(35, 'physical', drak, true);
                       player.x += Math.cos(jumpAng) * 60;
                       player.y += Math.sin(jumpAng) * 60;
                     }
@@ -4086,7 +4139,7 @@ export default function App() {
             // Speciální výpad Čerta s vidlemi
             if (isColliding && currentGameState === 'playing' && e.id === 'cert' && e.aiState === 'charge') {
               const chDmg = (e.damage * (typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1) * 1.55) * (1 - player.damageReduction);
-              player.takeDamage(chDmg, 'physical');
+              player.takeDamage(chDmg, 'physical', e, true);
               sound.heavyHit();
               const pushDist = 110;
               const pushAng = Number.isFinite(e.chargeDirX) ? e.chargeDirX : Math.atan2(player.y - e.y, player.x - e.x);
@@ -4109,7 +4162,7 @@ export default function App() {
                 if (currentGameState === 'playing') {
                   const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
                   const contactDamage = e.damage * mult;
-                  player.takeDamage(contactDamage, 'physical');
+                  player.takeDamage(contactDamage, 'physical', e, true);
                   if (e.attackCadence === 'slow') {
                     sound.heavyHit();
                   }
@@ -4302,7 +4355,7 @@ export default function App() {
           const p = engineRef.current.player;
           if (p && p.hp < p.maxHp) {
             p.hp = Math.min(p.maxHp, p.hp + 6);
-            engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 HP', '#4ADE80', false));
+            engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 Kuráž', '#4ADE80', false));
           }
           const dmg = 25 * (p?.damageMultiplier || 1);
           const nearby = enemySpatialHashRef.current.queryCircle(sc.x, sc.y, 460);
@@ -4991,10 +5044,8 @@ export default function App() {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    // Normální mají +120 % zranění (2,2×), pomalí 190 % (2,9×), rychlí základ (1,0×)
-    const cadenceDamageMultiplier = cadence === 'fast' ? 1.0 : cadence === 'normal' ? 2.2 : 2.9;
-    const baseDamage = isMiniboss ? stats.damage * 1.35 : stats.damage;
-    const damage = Math.round(baseDamage * cadenceDamageMultiplier);
+    const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const damage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
@@ -5027,7 +5078,6 @@ export default function App() {
       isAttacking: false,
       attackCadence: cadence,
       attackInterval,
-      cadenceDamageMultiplier,
       radius,
       foodResist,
       hunger,
@@ -5504,7 +5554,7 @@ export default function App() {
                 });
               } else {
                 if (distToPlayer < 75) {
-                  player.takeDamage(this.damage, 'physical');
+                  player.takeDamage(this.damage, 'physical', this, true);
                   engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'SEKNUTÍ KOSOU! 🌾', COLORS.bone, true));
                 }
               }
@@ -5555,7 +5605,7 @@ export default function App() {
                 });
               } else {
                 if (distToPlayer < 70) {
-                  player.takeDamage(this.damage, 'magic');
+                  player.takeDamage(this.damage, 'magic', this, true);
                 }
               }
             }
@@ -5616,7 +5666,7 @@ export default function App() {
                 });
               } else {
                 if (distToPlayer < 75) {
-                  player.takeDamage(this.damage, 'blunt');
+                  player.takeDamage(this.damage, 'blunt', this, true);
                   engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ÚDER LOPATOU! 🪦', COLORS.grey, true));
                 }
               }
@@ -5671,7 +5721,7 @@ export default function App() {
                 });
               }
               if (distToPlayer < 125) {
-                player.takeDamage(22, 'blunt');
+                player.takeDamage(22, 'blunt', this, true);
                 player.x += Math.cos(dirToPlayer) * 45;
                 player.y += Math.sin(dirToPlayer) * 45;
               }
@@ -5770,7 +5820,7 @@ export default function App() {
               } else {
                 // V 1. levelu střílí jen bossové – vodníček pouze šplíchne zblízka
                 if (distToPlayer < 70) {
-                  player.takeDamage(Math.round(this.damage * 0.65), 'nature');
+                  player.takeDamage(Math.round(this.damage * 0.65), 'nature', this, true);
                   engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ŠPLÍCH! 💧', '#38BDF8', true));
                 }
               }
@@ -6053,7 +6103,7 @@ export default function App() {
               this.specialCd = 4.0 * specialCdMult;
               sound.slash();
               if (distToPlayer < 135) {
-                player.takeDamage(this.damage, 'physical');
+                player.takeDamage(this.damage, 'physical', this, true);
                 player.x += Math.cos(dirToPlayer) * 55;
                 player.y += Math.sin(dirToPlayer) * 55;
                 engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ŠLEHNUTÍ ŘETĚZEM! ⛓️', COLORS.red, true));
@@ -6292,7 +6342,7 @@ export default function App() {
               sound.heavyHit();
               sound.slash();
               engineRef.current.texts.push(new DamageText(this.x, this.y - 65, 'DRAČÍ KRAFNUTÍ! 🐉🦷', '#DC2626', true));
-              player.takeDamage(this.enraged ? 36 : 28, 'physical');
+              player.takeDamage(this.enraged ? 36 : 28, 'physical', this, true);
               player.x += Math.cos(dirToPlayer) * 55;
               player.y += Math.sin(dirToPlayer) * 55;
             }
@@ -6454,7 +6504,7 @@ export default function App() {
               this.specialCd = 4.5 * specialCdMult;
               sound.heavyHit();
               engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'JUTOVÝ PYTEL! 🎒', '#A16207', true));
-              player.takeDamage(this.damage, 'blunt');
+              player.takeDamage(this.damage, 'blunt', this, true);
               player.slowTimer = Math.max(player.slowTimer || 0, 1.8);
               player.x += Math.cos(dirToPlayer) * 45;
               player.y += Math.sin(dirToPlayer) * 45;
@@ -6482,7 +6532,7 @@ export default function App() {
               this.specialCd = 4.0 * specialCdMult;
               sound.heavyHit();
               engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ÚDER ŠTÍTEM! 🛡️', '#64748B', true));
-              player.takeDamage(Math.round(this.damage * 0.8), 'physical');
+              player.takeDamage(Math.round(this.damage * 0.8), 'physical', this, true);
               player.x += Math.cos(dirToPlayer) * 50;
               player.y += Math.sin(dirToPlayer) * 50;
             }
@@ -6509,7 +6559,7 @@ export default function App() {
               this.specialCd = 3.6 * specialCdMult;
               sound.slash();
               engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'SEK SEKEROU! 🪓', '#78350F', true));
-              player.takeDamage(this.damage, 'physical');
+              player.takeDamage(this.damage, 'physical', this, true);
             }
           } else {
             if (distToPlayer < 95 && this.specialCd <= 0) {
@@ -6584,23 +6634,40 @@ export default function App() {
         this.y += (this.vy + this.kby) * dt;
       },
 
-      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string }) {
+      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean }) {
         if (this.isDefeated) return;
-        const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
-        let mult = this.getDamageTakenMultiplier();
-        if (ignore > 0 && mult < 1.0) {
-          mult = mult + (1.0 - mult) * ignore;
+        const isLevelBoss = Boolean(this.isBoss);
+
+        let finalDmg: number;
+        if (options?.isHunterCounter) {
+          // Zranění odpovídající 15 % maximální Kuráže lovce.
+          // Resist zde nefunguje, pokud se nejedná o bosse levelu!
+          if (isLevelBoss) {
+            finalDmg = Math.max(1, amount * this.getDamageTakenMultiplier());
+          } else {
+            finalDmg = Math.max(1, amount);
+          }
+        } else {
+          const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
+          let mult = this.getDamageTakenMultiplier();
+          if (ignore > 0 && mult < 1.0) {
+            mult = mult + (1.0 - mult) * ignore;
+          }
+          finalDmg = amount * mult;
+          if (this.soaked) finalDmg *= 1.45;
+          finalDmg += (metaRef.current.forgeLevel || 0) * 2;
         }
-        let finalDmg = amount * mult;
-        if (this.soaked) finalDmg *= 1.45;
-        finalDmg += (metaRef.current.forgeLevel || 0) * 2;
 
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
 
         // Damage numbers displayed for all weapon types
         if (Math.floor(finalDmg) >= 1) {
-          if (type === 'food') {
+          if (options?.isHunterCounter) {
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 25, `${Math.floor(finalDmg)} 💥`, '#F97316', false)
+            );
+          } else if (type === 'food') {
             engineRef.current.texts.push(
               new DamageText(this.x, this.y - 25, `${Math.floor(finalDmg)} 🥐`, '#F59E0B')
             );
@@ -6613,6 +6680,9 @@ export default function App() {
 
         // Apply stun if provided
         if (options?.stunDuration && options.stunDuration > 0) {
+          const ignore = options?.isHunterCounter
+            ? (!isLevelBoss ? 1 : 0)
+            : Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
           const effectiveWillpower = (this.willpower || 0) * (1 - ignore);
           const finalStun = Math.max(0.25, options.stunDuration * (1 - effectiveWillpower * 0.65));
           this.stunTimer = Math.max(this.stunTimer || 0, finalStun);
@@ -6622,8 +6692,33 @@ export default function App() {
           }
         }
 
-        // Food type weapons like Buchta don't cause knockback
-        if (type !== 'food') {
+        // Push / knockback calculation:
+        if (options?.isHunterCounter) {
+          if (!isLevelBoss) {
+            // Resist nefunguje, pokud se nejedná o bosse levelu!
+            this.kbx = kbx;
+            this.kby = kby;
+            const kDist = Math.hypot(kbx, kby);
+            if (kDist > 0) {
+              this.x += (kbx / kDist) * 65;
+              this.y += (kby / kDist) * 65;
+            }
+            if (this.isAttacking) {
+              this.isAttacking = false;
+              this.windupTimer = 0;
+            }
+          } else {
+            // Boss levelu – resist zde funguje!
+            const effectivePoise = this.poiseResist || 0;
+            const effectiveKbResist = Math.min(1, Math.max(0, this.knockbackResistance ?? 0));
+            const poiseFactor = Math.max(0.1, 1 - effectivePoise);
+            const resistanceFactor = Math.max(0.1, 1 - effectiveKbResist);
+            const kbDamp = this.knockbackImmune ? 0 : 0.25;
+            this.kbx = kbx * poiseFactor * resistanceFactor * kbDamp;
+            this.kby = kby * poiseFactor * resistanceFactor * kbDamp;
+          }
+        } else if (type !== 'food') {
+          const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
           const effectivePoise = (this.poiseResist || 0) * (1 - ignore);
           const effectiveKbResist = Math.min(1, Math.max(0, (this.knockbackResistance ?? 0) * (1 - ignore)));
           const poiseFactor = Math.max(0.1, 1 - effectivePoise);
@@ -7391,7 +7486,7 @@ export default function App() {
           ctx.textBaseline = 'middle';
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = 2.5;
-          const hpText = `${Math.ceil(this.hp)} / ${this.maxHp} HP`;
+          const hpText = `${Math.ceil(this.hp)} / ${this.maxHp} Kuráž`;
           ctx.strokeText(hpText, this.x, barY + barHeight / 2);
           ctx.fillStyle = '#FFFFFF';
           ctx.fillText(hpText, this.x, barY + barHeight / 2);
@@ -8209,10 +8304,10 @@ export default function App() {
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
                 <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Tulácký instinkt: +30 k poškození všech zbraní. Schopnost: Pověstná sukovice.
+                  Vysoká kuráž (200) a dobrá nálada. Osikový prut. Tulácký instinkt: +35 % k poškození všech zbraní. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut & Povidlové buchty</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut (+35 % poškození)</div>
                   <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 Schopnost: Pověstná sukovice (21 s)</div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
@@ -8377,7 +8472,8 @@ export default function App() {
                 const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
                 const stats = getRankedWeaponStats(w.id, w.level, w);
                 const playerCooldownBonus = cooldownBonus > 0 ? cooldownBonus : Math.max(0, ((engineRef.current.player?.cooldownMultiplier || 1) - 1) / 0.9);
-                const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult);
+                const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
+                const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
                 const effectiveCd = Math.max(wDef.baseCd * 0.50, getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
                 const isCane = w.id === 'cane';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
@@ -8443,8 +8539,8 @@ export default function App() {
                 perks.push({
                   icon: '🧳',
                   name: `Tulácký instinkt`,
-                  desc: `+${pl.tulakDamageBonus} k poškození všech zbraní; bonus se násobí se všemi damage multiplikátory`,
-                  badge: `+${pl.tulakDamageBonus}`,
+                  desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi damage multiplikátory`,
+                  badge: `+${pl.tulakDamageBonus} %`,
                 });
               }
               if (pl.kurazCount > 0) {

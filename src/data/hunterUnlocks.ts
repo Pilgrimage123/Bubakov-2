@@ -41,7 +41,7 @@ var HUNTER_UNLOCKS = {
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovský hrdina",
 		challengeShortDesc: "Připraven k cestě od samého počátku.",
-		challengeLongDesc: "Poutník s rancem buchet a osikovým prutem je odemčen ihned.",
+		challengeLongDesc: "Poutník s osikovým prutem a tuláckým instinktem (+35 % poškození) je odemčen ihned.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
@@ -49,8 +49,8 @@ var HUNTER_UNLOCKS = {
 			tierLevel: 4,
 			spoiledName: "Poutník (Tulák)",
 			spoiledTitle: "Vesnický poutník z Hrusic",
-			spoiledLore: "Vysoká kuráž a dobrá nálada. Povidlové buchty a Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
-			spoiledWeaponHint: "Osikový prut & Povidlové buchty",
+			spoiledLore: "Vysoká kuráž (200) a dobrá nálada (+35 % poškození zbraní). Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
+			spoiledWeaponHint: "Osikový prut (+35 % poškození)",
 			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zažene a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
 			clueTag: "✅ Připraven k boji"
 		}]
@@ -124,7 +124,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Nejrychlejší hoch ze starých Hrusic",
 				spoiledLore: "Mladý dobrodruh už má sbalenou mošnu, berani stojí v řadě a mává z vršku kopce! Zažeň posledních několik škůdců a přidá se do tvé družiny!",
 				spoiledWeaponHint: "Start: Povidlové buchty, Rychlost 220, Dosah sběru 160",
-				spoiledAbilityHint: "⚡ Speciál: Dusot stáda (přes 120 plošného poškození)",
+				spoiledAbilityHint: "⚡ Speciál: Dusot stáda (140 plošného poškození a silné odhození berany)",
 				clueTag: "⚡ 75 %: Téměř odemčeno! Zbývá už jen krůček k odemčení!"
 			},
 			{
@@ -134,7 +134,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Rychlý pasáček z obecních lad",
 				spoiledLore: "Rychlý, snadno sbírá krejcary. Schopnost: Dusot stáda.",
 				spoiledWeaponHint: "Povidlové buchty & obří dosah sběru",
-				spoiledAbilityHint: "Dusot stáda (smetení berany)",
+				spoiledAbilityHint: "Dusot stáda (22 beranů smete nepřátele za 140 poškození)",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]
@@ -203,7 +203,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Vesnická bylinkářka pro klidnou mysl",
 				spoiledLore: "To je přece naše zkušená bylinkářka! Její voňavé bylinky uklidní i v tom nejstrašidelnějším reji. Sama od sebe doplňuje +2 kuráže každé 4 sekundy a zahání bubáky ostrými lístky.",
 				spoiledWeaponHint: "Zbraň: Devatery bylinky (odhánějí a kropí dotírající bubáky)",
-				spoiledAbilityHint: "Schopnost: Očistné kadidlo (+45 kuráže a zahnání strašidel)",
+				spoiledAbilityHint: "Schopnost: Očistné kadidlo (+55 kuráže, +30 štít a zahnání strašidel)",
 				clueTag: "🔎 50 %: Znáš její bylinky i očistné kadidlo!"
 			},
 			{
@@ -213,7 +213,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Strážkyně dobré mysli a čistých tůní",
 				spoiledLore: "Moudrá stařenka už v chaloupce míchá voňavé bylinky na kuráž a bere hůl! Ještě několik zahnaných vodníků a vyrazí povzbuzovat celou vesnici.",
 				spoiledWeaponHint: "Start: Devatery kvítí, Uklidnění mysli (+2 kuráž/4s)",
-				spoiledAbilityHint: "⚡ Speciál: Očistné kadidlo (+45 kuráže & plošné zahnání bubáků)",
+				spoiledAbilityHint: "⚡ Speciál: Očistné kadidlo (+55 kuráže, +30 štít & 120 plošné nature poškození)",
 				clueTag: "⚡ 75 %: Bylinný dým stoupá! Zbývá už jen pár vodních běsů!"
 			},
 			{
@@ -223,7 +223,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Bylinkářka s Devaterem kvítím",
 				spoiledLore: "Voňavé byliny na kuráž, Devatery kvítí. Schopnost: Očistné kadidlo.",
 				spoiledWeaponHint: "Devatery kvítí & stálé doplňování kuráže",
-				spoiledAbilityHint: "Očistné kadidlo (+45 kuráže)",
+				spoiledAbilityHint: "Očistné kadidlo (+55 kuráže, +30 štít, 120 nature dmg)",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]
@@ -300,7 +300,7 @@ var HUNTER_UNLOCKS = {
 				tierLevel: 2,
 				spoiledName: "P o _ _ _ n ý",
 				spoiledTitle: "Vesnický ponocný v kožichu s věrným Voříškem",
-				spoiledLore: "Statný obránce v těžkém kožichu! Světlo jeho lucerny pálí okolní strašidla svatou září a jeho troubení na volský roh zažene do paniky i ty největší běsy.",
+				spoiledLore: "Statný obránce v těžkém kožichu! Světlo jeho lucerny pálí okolní strašidla svatou září (16 poškození/s) a jeho troubení na volský roh zažene do paniky i ty největší běsy.",
 				spoiledWeaponHint: "Zbraň: Halapartna & Svatá záře lucerny (aura poškození)",
 				spoiledAbilityHint: "Schopnost: Noční roh & Voříšek (poplach zažene noční nezbedy)",
 				clueTag: "🔎 50 %: Znáš jeho roh, psa Voříška i svatou lucernu!"
@@ -312,7 +312,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Vesnický ochránce s rozsvícenou lucernou",
 				spoiledLore: "Noční hlídač už si leští ostrou čepel a Voříšek netrpělivě vrtí ocasem před vraty! Ještě pár zahnadých nočních stínů a rozezní svůj roh v aréně!",
 				spoiledWeaponHint: "Start: Kovaná halapartna, Pasivní svatá aura lucerny",
-				spoiledAbilityHint: "⚡ Speciál: Noční roh & Voříšek (plošná panika a 110 poškození)",
+				spoiledAbilityHint: "⚡ Speciál: Noční roh & Voříšek (panika na 5 s a 110 fyzického poškození)",
 				clueTag: "⚡ 75 %: Voříšek už štěká! Poslední noční stíny tě dělí od odemčení!"
 			},
 			{
@@ -322,7 +322,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Noční strážce v beranici s halapartnou",
 				spoiledLore: "Halapartna, svatá záře lucerny. Schopnost: Noční roh & Voříšek.",
 				spoiledWeaponHint: "Halapartna & Svatá záře lucerny",
-				spoiledAbilityHint: "Noční roh & Voříšek (poplašná panika)",
+				spoiledAbilityHint: "Noční roh & poplach (panika na 5 s a 110 poškození)",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]
@@ -416,7 +416,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Poctivý kostelník s klíči od kostela",
 				spoiledLore: "Kostelník už nahoře ve zvonici uvazuje provaz! Ještě pár zahnaných umrlců a rozezní farní zvon přímo v aréně!",
 				spoiledWeaponHint: "Start: Kropenka se svěcenou vodou",
-				spoiledAbilityHint: "⚡ Speciál: Farní požehnání (očistí všechny okolní démony a nemrtvé)",
+				spoiledAbilityHint: "⚡ Speciál: Farní požehnání (očistí nemrtvé a démony v okruhu 650 px, 25 % max. kuráže bossů)",
 				clueTag: "⚡ 75 %: Zvon se už rozhoupává! Poslední nemrtví tě dělí od odemčení!"
 			},
 			{
@@ -426,7 +426,7 @@ var HUNTER_UNLOCKS = {
 				spoiledTitle: "Zvoník a správce farního kostela",
 				spoiledLore: "Kropenka se svěcenou vodou a farní zvon. Schopnost: Farní požehnání.",
 				spoiledWeaponHint: "Kropenka se svěcenou vodou",
-				spoiledAbilityHint: "Farní požehnání (očištění nemrtvých a démonů)",
+				spoiledAbilityHint: "Farní požehnání (očištění nemrtvých a 25 % poškození bossů)",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]

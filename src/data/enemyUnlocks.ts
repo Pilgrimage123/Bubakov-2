@@ -74,12 +74,12 @@ function getEnemyProgress(enemyId, kills) {
 	if (tier >= 3) spoiledStrength = enemy.strength;
 	else if (tier === 2) spoiledStrength = "Částečně odhaleno (vyžaduje 75 % pozorování)";
 	const spoiledStats = {
-		hp: tier >= 3 ? `${enemy.hp} HP` : tier >= 1 ? `cca ${Math.round(enemy.hp / 10) * 10} HP` : "??? HP",
+		hp: tier >= 3 ? `${enemy.hp} Kuráž` : tier >= 1 ? `cca ${Math.round(enemy.hp / 10) * 10} Kuráž` : "??? Kuráž",
 		danger: tier >= 2 ? enemy.danger : tier >= 1 ? "Nebezpečný" : "???",
 		coinValue: tier >= 2 ? `${enemy.coinValue} kr.` : "??? kr.",
 		speed: tier >= 3 ? `${enemy.speed}` : "???",
 		attackCadence: tier >= 2
-			? (enemy.attackCadence === "fast" ? "⚡ Rychlý (0,6 s)" : enemy.attackCadence === "slow" ? "🔨 Pomalý (1,8 s, +190 %)" : "⚔️ Normální (1,2 s, +120 %)")
+			? (enemy.attackCadence === "fast" ? "⚡ Rychlý (0,6 s)" : enemy.attackCadence === "slow" ? "🔨 Pomalý (1,8 s)" : "⚔️ Normální (1,2 s)")
 			: "???",
 		attackInterval: tier >= 2 ? `${enemy.attackInterval || 1.2} s` : "???"
 	};

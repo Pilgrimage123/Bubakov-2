@@ -1,5 +1,52 @@
 # Bubákov — Changelog
 
+## 2026-10-08 — Stabilita běhového prostředí: Oprava duplicitních instancí Reactu ve Vite
+
+- **Garantovaná jediná instance Reactu (Deduplikace závislostí):**
+  - Do `vite.config.ts` přidána konfigurace `resolve.dedupe: ['react', 'react-dom']` a `optimizeDeps.include: ['react', 'react-dom', 'react-dom/client']`.
+  - Odstraněna chyba `Invalid hook call / TypeError: Cannot read properties of null (reading 'useRef')`, způsobená nesouladem verzí v mezipaměti předkompilovaných modulů Vite.
+  - Pročištěna cache prebundlingu a restartován vývojový server s jednotným hashováním.
+
+## 2026-10-08 — Odveta lovců na blízko: Odstrčení bubáka a protiúder za 15 % maximální Kuráže
+
+- **Automatické odstrčení útočníka na blízko (Melee Pushback):**
+  - Každý lovec po utrpění zranění na blízko od bubáka nestvůru okamžitě energicky odstrčí pryč ze své bezprostřední blízkosti (okamžitý fyzický posun o 65 px + impuls síly 540).
+  - Tím se přeruší zacyklený nápřah nestvůry a hráč získá prostor k manévrování.
+- **Zranění rovné 15 % maximální Kuráže lovce:**
+  - Lovec při odstrčení udělí bubákovi protiúder, který odpovídá přesně **15 % maximální Kuráže lovce** (např. 30 zranění při výchozích 200 Kuráže, 45 zranění při 300 Kuráže po nákupech a vylepšeních).
+- **Ignorování rezistencí (kromě bossů úrovně):**
+  - U běžných monster, elit i minibossů rezistence proti tomuto protiúderu ani odhození nefungují — monstra utrpí plných 15 % max Kuráže a jsou plně odstrčena.
+  - Výjimkou jsou pouze **hlavní bossové úrovně** (`e.isBoss`), u nichž jejich tuhost (poise) a odolnosti fungují standardně.
+
+## 2026-10-08 — Přímé promítnutí násobitelů do základního zranění nepřátel a posílení pomalých útoků na 3,5×
+
+- **Pomalí nepřátelé posíleni na 3,5× násobek:**
+  - Pro těžké pomalé nepřátele a bosse (`umrlec`, `bubak`, `hromotluk`, `stodolnik`, `drevorubec`, `drab`, `zbrojnos`, `obrneny_zbojnik`, `snehulak`, `ohnivy_pes`, `cert`, `hejkal`, `obr`, `mlynar`, `bezhlavy_rytir`, `drak`) byl násobitel poškození zvýšen z dřívějších 2,9× na **3,5× násobek**.
+- **Přímý zápis do základních statistik bez separátního rozepisování:**
+  - Veškeré násobky poškození (1,0× pro rychlé, 2,2× pro normální a 3,5× pro pomalé) již nejsou počítány jako samostatná dodatečná přirážka ani rozepisovány v popiscích (odstraněny separátní texty `+120 %` a `+190 %`).
+  - Místo toho byly násobky **přímo a trvale promítnuty do základní hodnoty `damage`** každého ze 49 nepřátel v databázi `ENEMIES`.
+  - Herní engine (`createEnemyInstance`) nyní přebírá toto základní poškození přímo bez dodatečného runtime násobení.
+- **Přehlednost v Bestiáři:**
+  - V Bestiáři se u probádaných strašidel zobrazuje čistá útočná kadence (*⚡ Útok: Rychlý (0,6 s)*, *⚔️ Útok: Normální (1,2 s)*, *🔨 Útok: Pomalý (1,8 s)*) spolu s přímou skutečnou hodnotou úderu (*💥 Úder: {damage}*).
+- **Zachování časování a prodlevy:**
+  - Zranění je udělováno až po uplynutí celé prodlevy od prvního kontaktu (0,6 s / 1,2 s / 1,8 s), což dává hráči prostor reagovat a včas uniknout či nepřítele odhodit.
+
+## 2026-10-08 — Poutník: 200 Kuráž, procentuální bonus poškození (+35 %), sjednocení terminologie na Kuráž a revize popisků všech hrdinů
+
+- **Poutník (Tulák) – 200 Kuráže a +35 % poškození:**
+  - Základní hodnota zdraví (Kuráže) Poutníka byla navýšena ze 150 na **200 Kuráže**.
+  - Poutník nově začíná pouze s **Osikovým prutem** (bez počátečních Povidlových buchet).
+  - Bonus *Tulácký instinkt* dává **+35 % ke všem zbraním** (`×1,35`) namísto dřívějšího flat přídavku.
+- **Sjednocení herní terminologie (HP ➔ Kuráž):**
+  - Veškeré texty, ukazatele, plovoucí texty léčení (`+55 Kuráž`, `+35 Kuráž`, `+6 Kuráž`), ukazatele minibossů, Bestiář i Sandbox byly upraveny tak, aby se namísto zkratky „HP“ nebo „životy“ důsledně používalo české označení **Kuráž**.
+- **Kompletní revize a soulad popisků všech 6 lovců s reálnými herními schopnostmi:**
+  - **Poutník:** Pověstná sukovice (21 s cooldown, silné odhození zblízka, vyděšení na 4 s na dálku), Kuráž 200, Osikový prut, +35 % poškození.
+  - **Pasáček:** Dusot stáda (30 s cooldown, přivolá 22 běžících beranů, 140 plošného fyzického poškození a masivní smetení), vysoká rychlost (220) a obří dosah sběru (160), start s Povidlovými buchtami.
+  - **Bába kořenářka:** Očistné kadidlo z devatera bylin (30 s cooldown, +55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost, 120 nature dmg a zpomalení nepřátel na 4,5 s), pasivní obnova +2 kuráže každé 4 s, start s Devaterem kvítí.
+  - **Ponocný:** Noční roh a poplach (30 s cooldown, poplach vystraší strašidla na 5 s a udělí 110 fyzického poškození s odhozením), stálá posvátná aura lucerny (16 svatého poškození/s), start s Kovanou halapartnou.
+  - **Pobožný kostelník:** Farní požehnání (35 s cooldown, úder zvonu a sloup světla očistí nemrtvé a démony v okruhu 650 px, u bossů ubere 25 % max. kuráže), start s Kropenkou se svěcenou vodou.
+  - **Babička a Barunka:** Chléb se solí a vlídné slovo (45 s cooldown, zastavení času, scénka nasytí bubáky či zažene démony dle toho, zda mají nižší odolnost vůči Food nebo Holy), start s Kynutým koláčem s mákem a Barunkou po boku.
+
 ## 2026-10-07 — Válečnice: Větší Ladovský sprite (+40 %), dosah úderu (+60 %), 3s omráčení, 20% ignorace odolností a podrobný rozpis ve zbrojnici
 
 - **Zvětšení spritu Válečnice o 40 % (Měřítko postavy):**
