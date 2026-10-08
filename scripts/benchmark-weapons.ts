@@ -1,5 +1,6 @@
 import { WEAPONS } from '../src/data/weapons';
 import { ENEMIES } from '../src/data/enemies';
+import { getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown } from '../src/data/weaponMilestones';
 
 interface SimEnemy {
   id: string;
@@ -154,9 +155,29 @@ function runSimulation(
   scenarioName: string,
   spawnEnemies: () => SimEnemy[],
   maxSeconds = 15,
-  variant: 'CURRENT' | 'PROPOSED' = 'CURRENT'
+  variant: 'CURRENT' | 'PROPOSED' = 'CURRENT',
+  level = 1,
+  milestones: string[] = []
 ): BenchmarkResult {
-  const enemies = spawnEnemies();
+  let totalDmgDone = 0;
+  const rawEnemies = spawnEnemies();
+  const enemies: SimEnemy[] = rawEnemies.map((e) => ({
+    ...e,
+    takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
+      if (this.isDefeated) return;
+      this.hp -= amount;
+      totalDmgDone += amount;
+      if (this.hp <= 0) {
+        this.isDefeated = true;
+        this.dead = true;
+      }
+      if (options?.stunDuration) {
+        this.stunTimer = Math.max(this.stunTimer, options.stunDuration);
+      }
+      this.kbx = kbx;
+      this.kby = kby;
+    },
+  }));
   const projectiles: SimProjectile[] = [];
   const slashes: SimSlash[] = [];
 
@@ -172,7 +193,7 @@ function runSimulation(
     cooldownMultiplier: 1,
     damageMultiplier: 1,
     tulakDamageBonus: 0,
-    _firingWeapon: { id: weaponDef.id, level: 1, milestones: [], mastery: { picked: [] } },
+    _firingWeapon: { id: weaponDef.id, level, milestones, mastery: { picked: [] } },
     getNearbyEnemies(radius: number) {
       return enemies.filter((e) => !e.dead && Math.hypot(e.x - this.x, e.y - this.y) <= radius);
     },
@@ -221,16 +242,16 @@ function runSimulation(
         if (e.dead) continue;
         const d = Math.hypot(e.x - impact.x, e.y - impact.y);
         if (d <= impact.radius + e.radius) {
-          e.takeDamage(impact.dmg, impact.type, 300, 0);
+          e.takeDamage(impact.dmg, impact.type, 300, 0, impact.stunDuration ? { stunDuration: impact.stunDuration } : undefined);
         }
       }
     },
-    spawnHromnickaPulse(reach: number, dmg: number) {
+    spawnHromnickaPulse(reach: number, dmg: number, lvl: number, knockbackMult = 1, stunDuration = 0) {
       for (const e of enemies) {
         if (e.dead) continue;
         const d = Math.hypot(e.x - this.x, e.y - this.y);
         if (d <= reach + e.radius) {
-          e.takeDamage(dmg, 'holy', (e.x / (d || 1)) * 200, (e.y / (d || 1)) * 200);
+          e.takeDamage(dmg, 'holy', (e.x / (d || 1)) * 200 * knockbackMult, (e.y / (d || 1)) * 200 * knockbackMult, stunDuration ? { stunDuration } : undefined);
         }
       }
     },
@@ -241,20 +262,25 @@ function runSimulation(
   let weaponCd = 0;
   let playerBreached = false;
   let minDist = Infinity;
-  let totalDmgDone = 0;
   let totalCCTime = 0;
 
   while (time < maxSeconds) {
     time += dt;
 
     // Orbit angle for Válečnice
-    player.valecniceAngle = (player.valecniceAngle + dt * 2.2) % (Math.PI * 2);
+    const orbitSpeed = level >= 3 ? 2.5 : 2.2;
+    player.valecniceAngle = (player.valecniceAngle + dt * orbitSpeed) % (Math.PI * 2);
 
     // Fire weapon
     weaponCd -= dt;
     if (weaponCd <= 0) {
-      const fired = weaponDef.fire(player, 1);
-      weaponCd = fired ? weaponDef.baseCd : 0.1;
+      const fired = weaponDef.fire(player, level);
+      const rankDef = getWeaponRankDef(weaponDef.id, level);
+      const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (level - 1) * 0.08);
+      const formulaCd = getEffectiveWeaponCooldown(weaponDef.baseCd, 0, weaponCooldownBonus);
+      const stats = getRankedWeaponStats(weaponDef.id, level, player._firingWeapon);
+      const localCd = Math.max(weaponDef.baseCd * 0.50, formulaCd * stats.cooldownMult);
+      weaponCd = fired ? localCd : 0.1;
     }
 
     // Update projectiles
@@ -286,7 +312,6 @@ function runSimulation(
           p.hitList.push(e);
           const resist = p.type === 'food' ? e.foodResist : 0;
           let effDmg = p.dmg * (1 - resist);
-          totalDmgDone += effDmg;
 
           if (p.type === 'food') {
             const snack = (p.snackDuration ?? 3.0) * (1 - e.foodResist);
@@ -335,7 +360,6 @@ function runSimulation(
           if (diff > Math.PI) diff = Math.PI * 2 - diff;
           if (diff <= s.arc / 2) {
             s.hitList.push(e);
-            totalDmgDone += s.dmg;
             // cane flinch or knockback
             const kbForce = s.weaponId === 'cane' ? (variant === 'PROPOSED' ? 480 : 260) : 260;
             e.takeDamage(s.dmg, 'physical', Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce);
@@ -598,6 +622,46 @@ for (const sc of scenarios) {
     const ccStr = `${res.ccTimeTotal}s`.padEnd(8);
     console.log(
       `| ${(res.weaponName.slice(0, 26)).padEnd(26)} | ${res.variant.padEnd(9)} | ${ttkStr} | ${breachStr.padEnd(10)} | ${minDistStr} | ${dpsStr} | ${ccStr} |`
+    );
+  }
+}
+
+console.log('\n========================================================================');
+console.log('   BUBÁKOV WEAPON MILESTONE BENCHMARK (RANK 3 MILESTONES)               ');
+console.log('========================================================================\n');
+
+const milestoneWeapons = [
+  { id: 'cane', def: WEAPONS.cane, name: 'Prut R3 (Rázný bác)', level: 3, milestones: ['cane_burst_3'] },
+  { id: 'cane', def: WEAPONS.cane, name: 'Prut R3 (Široký švih)', level: 3, milestones: ['cane_crowd_3'] },
+  { id: 'buns', def: WEAPONS.buns, name: 'Buchty R3 (Nadílka)', level: 3, milestones: ['buns_crowd_3'] },
+  { id: 'buns', def: WEAPONS.buns, name: 'Buchty R3 (Cukr)', level: 3, milestones: ['buns_burst_3'] },
+  { id: 'cesnekova-topinka', def: WEAPONS['cesnekova-topinka'], name: 'Topinka R3 (Smrádek)', level: 3, milestones: ['garlic_crowd_3'] },
+  { id: 'valecnice', def: WEAPONS.valecnice, name: 'Válečnice R3 (Bác)', level: 3, milestones: ['valecnice_burst_3'] },
+  { id: 'valecnice', def: WEAPONS.valecnice, name: 'Válečnice R3 (Kolo)', level: 3, milestones: ['valecnice_crowd_3'] },
+  { id: 'halberd', def: WEAPONS.halberd, name: 'Halapartna R3 (Zásek)', level: 3, milestones: ['halberd_burst_3'] },
+  { id: 'kolac', def: WEAPONS.kolac, name: 'Koláč R3 (Výslužka)', level: 3, milestones: ['kolac_crowd_3'] },
+  { id: 'snehova_koule', def: WEAPONS.snehova_koule, name: 'Sníh R3 (Tříšť)', level: 3, milestones: ['snowball_crowd_3'] },
+  { id: 'vceli_roj', def: WEAPONS.vceli_roj, name: 'Včely R3 (Bzukot)', level: 3, milestones: ['bees_crowd_3'] },
+  { id: 'kysela_okurka', def: WEAPONS.kysela_okurka, name: 'Okurka R3 (Porce)', level: 3, milestones: ['pickle_crowd_3'] },
+];
+
+for (const sc of scenarios) {
+  console.log(`\n>>> MILESTONE SCENARIO: ${sc.name}`);
+  console.log('-------------------------------------------------------------------------------------------------');
+  console.log(
+    `| ${'Weapon'.padEnd(26)} | ${'Rank'.padEnd(9)} | ${'TTK (s)'.padEnd(8)} | ${'Breached?'.padEnd(10)} | ${'Min Dist'.padEnd(9)} | ${'Eff DPS'.padEnd(8)} | ${'CC Time'.padEnd(8)} |`
+  );
+  console.log('-------------------------------------------------------------------------------------------------');
+
+  for (const w of milestoneWeapons) {
+    const res = runSimulation(w.def, sc.name, sc.spawn, 12, 'PROPOSED', w.level, w.milestones);
+    const ttkStr = res.ttk !== null ? `${res.ttk}s`.padEnd(8) : 'FAIL (12s+)';
+    const breachStr = res.playerBreached ? '⚠️ YES (HIT)' : '✅ SAFE';
+    const minDistStr = `${res.minDist} px`.padEnd(9);
+    const dpsStr = `${res.effectiveDps}`.padEnd(8);
+    const ccStr = `${res.ccTimeTotal}s`.padEnd(8);
+    console.log(
+      `| ${(w.name.slice(0, 26)).padEnd(26)} | ${('Rank ' + w.level).padEnd(9)} | ${ttkStr} | ${breachStr.padEnd(10)} | ${minDistStr} | ${dpsStr} | ${ccStr} |`
     );
   }
 }
