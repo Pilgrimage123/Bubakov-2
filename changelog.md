@@ -1,5 +1,26 @@
 # Bubákov — Changelog
 
+## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
+
+- **Osikový prut (Poutník) posílen na plnohodnotný úderný bič:**
+  - Základní poškození zvýšeno z 18 na **28** (+55 %), cooldown zkrácen z 0,80 s na **0,65 s** (teoretické DPS stouplo z 22,5 na **43,1 DPS**).
+  - Dosah seku (Reach) rozšířen z 88 px na **115 px** (vytvoření bezpečné 60px zóny před 40px attack dosahy monster), úhel seku rozšířen z 1,55 rad (~89°) na **2,00 rad (~115°)** pro spolehlivé krytí čela i boků.
+  - Odhoz zvýšen z 260 na **480** a přidán mikro-flinch (zásah okamžitě zruší rozběhnutý nápřah útočníka `isAttacking = false; windupTimer = 0`).
+- **Povidlové buchty (Pasáček) zkroceny na taktickou rozptylovací zbraň:**
+  - Počet střel na 1. úrovni snížen z 3 na **1 buchtu** (další střely přibývají s vyšší úrovní: 2 na Lvl 3, 3 na Lvl 5, 4 na Lvl 7).
+  - Poškození upraveno na **22**, cooldown na **1,25 s** (teoretické DPS kleslo z 50,0 na **17,6 DPS**).
+  - Doba mlsání (Snack) zkrácena z 3,0 s na **1,8 s** a zaveden strop na kumulativní trvání (max. 2,5 s) zabraňující nekonečnému perma-stunu.
+- **Česneková topinka proměněna v aktivní obrannou auru:**
+  - Základní poškození zvýšeno z 1 na **5** každých 0,35 s (DPS stouplo z 2,86 na **14,3 DPS**).
+  - Rarášek (48 HP) je v auře udusen za 3,3 s namísto dřívějších 16,8 s.
+  - Odhoz mírně upraven na 300 a přidáno základní 15% zpomalení nepřátel v dosahu.
+- **Válečnice vyvážena do mezí startovního rozpočtu (Level 1 Melee Guardian):**
+  - Základní poškození upraveno z 52 na **32**, cooldown nápřahu zvýšen z 0,48 s na **0,75 s** (DPS zredukováno ze 108,3 na **42,7 DPS**).
+  - Trvání omráčení upraveno z 3,0 s na **1,2 s**, odhoz upraven ze 760 na **520**.
+  - Zpomalovací aura na Lvl 1 nastavena na **25 %** (škáluje na 40 % s vyššími hodnostmi a milníky).
+- **Zaveden standardizovaný Benchmark (`scripts/benchmark-weapons.ts`):**
+  - Implementován deterministický testovací simulátor na 60 FPS enginu pro měření TTK, minimálního odstupu od hráče, průlomu obrany, efektivního DPS a CC času.
+
 ## 2026-10-08 — Stabilita běhového prostředí: Oprava duplicitních instancí Reactu ve Vite
 
 - **Garantovaná jediná instance Reactu (Deduplikace závislostí):**

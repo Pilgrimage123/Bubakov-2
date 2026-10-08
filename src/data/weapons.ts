@@ -30,18 +30,19 @@ export function getWeaponDamage(player: any, baseDamage: number) {
 
 var WEAPONS = {
 	valecnice: {
-		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 52, baseCd: 0.48,
-		desc: 'Rázná venkovská paní s bukovým válečkem (+40 % velikost). Obíhá lovce ve velkém kruhu (115 px), má o 60 % větší dosah (58 px), udílí těžké 3s omráčení, odhození (760) a ignoruje 20 % odolností. V zóně o 15 % větší než orbit navíc zpomaluje nepřátele o 40 % (odolnost dle Vůle).',
+		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 32, baseCd: 0.75,
+		desc: 'Rázná venkovská paní s bukovým válečkem (+40 % velikost). Obíhá lovce ve velkém kruhu (115 px), má dosah 58 px, udílí 1,2s omráčení, důrazné odhození (520) a ignoruje 20 % odolností. V zóně o 15 % větší než orbit navíc zpomaluje nepřátele o 25 % (odolnost dle Vůle).',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('valecnice', level, w);
 			const count = Math.max(1, 1 + stats.projectileCount);
 			const orbitRadius = 115 * stats.areaRadiusMult;
 			player._valecniceSlowRadius = orbitRadius * 1.15;
+			player._valecniceSlowRate = level >= 3 ? 0.40 : 0.25;
 			const angleBase = player.valecniceAngle || 0;
-			const dmg = getWeaponDamage(player, 52) * stats.damageMult;
-			const kbForce = 760 * stats.knockbackMult;
-			const stunDuration = 3.0 * (stats.statusDurationSec > 0 ? stats.statusDurationSec : 1);
+			const dmg = getWeaponDamage(player, 32) * stats.damageMult;
+			const kbForce = 520 * stats.knockbackMult;
+			const stunDuration = 1.2 * (stats.statusDurationSec > 0 ? stats.statusDurationSec : 1);
 			const reachBase = 58 * stats.areaRadiusMult;
 			const enemies = player.getNearbyEnemies(orbitRadius + reachBase + 50);
 			let hitAny = false;
@@ -76,14 +77,14 @@ var WEAPONS = {
 		}
 	},
 	'cesnekova-topinka': {
-		id: 'cesnekova-topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 1, baseCd: 0.35,
-		desc: 'Smradlavá aura z česnekové topinky. Skoro neškodí, ale nepřátele brutálně odhazuje.',
+		id: 'cesnekova-topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 5, baseCd: 0.35,
+		desc: 'Smradlavá a štiplavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('cesnekova_topinka', level, w);
 			const radius = 110 * stats.areaRadiusMult;
-			const dmg = getWeaponDamage(player, 1) * stats.damageMult;
-			const kbForce = 320 * stats.knockbackMult;
+			const dmg = getWeaponDamage(player, 5) * stats.damageMult;
+			const kbForce = 300 * stats.knockbackMult;
 			const enemies = player.getNearbyEnemies(radius + 60);
 			for (const e of enemies) {
 				if (e.isDefeated) continue;
@@ -92,7 +93,7 @@ var WEAPONS = {
 					const dist = Math.hypot(dx, dy) || 1;
 					e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
 					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova-topinka', e, 'hit');
-					if (stats.statusDurationSec > 0) e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, stats.statusDurationSec);
+					e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.0);
 				}
 			}
 			return true;
@@ -120,10 +121,10 @@ var WEAPONS = {
 		name: "Povidlové buchty",
 		type: "food",
 		icon: "czech_buchta",
-		baseDmg: 20,
-		baseCd: 1.2,
+		baseDmg: 22,
+		baseCd: 1.25,
 		speed: 460,
-		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 3 s zastaví a mlsají s poznámkou „Ňam, ňam“. Vícero buchet čas sčítá (odolnost dle Hladu).",
+		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 1,8 s zastaví a mlsají s poznámkou „Ňam, ňam“. S vyšší úrovní přibývají další buchty v salvě (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
@@ -140,8 +141,8 @@ var WEAPONS = {
 			if (player.distTo(target) > 850) return false;
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
 			const w = player._firingWeapon;
-			const count = 3 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 20 + (level - 1) * 4);
+			const count = 1 + Math.floor((level - 1) / 2);
+			const dmg = getWeaponDamage(player, 22 + (level - 1) * 4);
 			for (let i = 0; i < count; i++) {
 				const spread = count > 1 ? (Math.random() - .5) * .45 : 0;
 				player.spawnProjectile({
@@ -153,7 +154,7 @@ var WEAPONS = {
 					radius: 12,
 					type: "food",
 					visual: "bun",
-					snackDuration: 3,
+					snackDuration: 1.8,
 					life: 2.2
 				});
 			}
@@ -165,16 +166,16 @@ var WEAPONS = {
 		name: "Osikový prut",
 		type: "physical",
 		icon: "osikovy_prut",
-		baseDmg: 18,
-		baseCd: .8,
-		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
+		baseDmg: 28,
+		baseCd: .65,
+		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý široký sečný oblouk razantně odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('osikovy_prut', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const reach = 88 * stats.areaRadiusMult;
-			const arc = 1.35 + level * .2;
-			const dmg = getWeaponDamage(player, 18) * stats.damageMult;
+			const reach = 115 * stats.areaRadiusMult;
+			const arc = 2.0 + (level - 1) * .15;
+			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
 			player._caneSwingAlt = !player._caneSwingAlt;
 			player.spawnMeleeSlash({
 				x: player.x,
@@ -183,8 +184,8 @@ var WEAPONS = {
 				reach,
 				arc,
 				dmg,
-				life: .30,
-				maxLife: .30,
+				life: .28,
+				maxLife: .28,
 				type: "physical",
 				soaked: !!player.hasSoakedCane,
 				style: "cane",

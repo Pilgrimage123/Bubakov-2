@@ -111,7 +111,7 @@ var ValecnicePreview = () => {
 							<span style={{ fontSize: '0.78rem', background: '#DC2626', color: '#FFF', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--ink)' }}>+40 % sprite</span>
 						</div>
 						<div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '3px', lineHeight: 1.35 }}>
-							Statná vesnická hospodyně obíhající ve velkém okruhu. V zóně o 15 % větší než orbit zpomaluje nepřátele o 40 % (odolnost dle Vůle), rozdává těžké 3s omráčení a ignoruje 20 % odolností.
+							Statná vesnická hospodyně obíhající ve velkém okruhu. V zóně o 15 % větší než orbit zpomaluje nepřátele o 25 % (odolnost dle Vůle), rozdává 1,2s omráčení a ignoruje 20 % odolností.
 						</div>
 					</div>
 				</div>
@@ -150,19 +150,19 @@ var ValecnicePreview = () => {
 			>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💥 Poškození</span>
-					<strong style={{ fontSize: '0.98rem', color: '#991B1B' }}>52 (fyzické)</strong>
+					<strong style={{ fontSize: '0.98rem', color: '#991B1B' }}>32 (fyzické)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⏱️ Kadence úderů</span>
-					<strong style={{ fontSize: '0.98rem', color: '#1E293B' }}>0,48 s</strong>
+					<strong style={{ fontSize: '0.98rem', color: '#1E293B' }}>0,75 s</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💫 Omráčení (Stun)</span>
-					<strong style={{ fontSize: '0.98rem', color: '#D97706' }}>3,0 s</strong>
+					<strong style={{ fontSize: '0.98rem', color: '#D97706' }}>1,2 s</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🌪️ Zpomalení (Zóna +15 %)</span>
-					<strong style={{ fontSize: '0.98rem', color: '#EA580C' }}>40 % (dle Vůle)</strong>
+					<strong style={{ fontSize: '0.98rem', color: '#EA580C' }}>25 % (dle Vůle)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🛡️ Ignorace resistu</span>
@@ -174,7 +174,7 @@ var ValecnicePreview = () => {
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🔨 Odhození</span>
-					<strong style={{ fontSize: '0.98rem', color: '#B45309' }}>760 (masivní)</strong>
+					<strong style={{ fontSize: '0.98rem', color: '#B45309' }}>520 (důrazné)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
 					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⭕ Poloměr hlídky</span>

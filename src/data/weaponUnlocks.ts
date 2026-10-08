@@ -57,7 +57,7 @@ var WEAPON_UNLOCKS = {
 			spoiledName: "Povidlové buchty",
 			spoiledTitle: "Zlatavé buchty sypané moučkovým cukrem",
 			spoiledDesc: "Tradiční české kynuté buchty pečené v pekáči, bohatě poprášené moučkovým cukrem a plněné švestkovým povidlem. Obyčejní bubáci po nich mlsně lapají a v panice ustupují.",
-			spoiledStatsHint: "Poškození: 20 • Typ: Jídlo • Střely se rozptylem",
+			spoiledStatsHint: "Poškození: 22 • Typ: Jídlo • Sladké mlsání (1,8 s) • Postupné přidávání střel",
 			clueTag: "✅ Výchozí zbraň"
 		}]
 	},
@@ -77,8 +77,8 @@ var WEAPON_UNLOCKS = {
 			tierLevel: 4,
 			spoiledName: "Osikový prut (Mokrý prut)",
 			spoiledTitle: "Ohebný osikový prut z háje",
-			spoiledDesc: "Ohebný osikový prut uříznutý v osikovém háji. Rychlý sečný oblouk odhání dotěrné skřítky a zloděje. S rybniční vodou získáte Mokrý prut.",
-			spoiledStatsHint: "Poškození: 16 • Rychlý sečný oblouk • Vylepšení na Mokrý prut",
+			spoiledDesc: "Ohebný osikový prut uříznutý v osikovém háji. Rychlý široký sečný oblouk odhání dotěrné skřítky a zloděje. S rybniční vodou získáte Mokrý prut.",
+			spoiledStatsHint: "Poškození: 28 • Kadence: 0,65 s • Široký sečný oblouk • Vylepšení na Mokrý prut",
 			clueTag: "✅ Výchozí zbraň"
 		}]
 	},
@@ -761,21 +761,21 @@ var WEAPON_UNLOCKS = {
 	valecnice: {
 		id:"valecnice", realName:"Válečnice", realIcon:"valecnice", realType:"valecnice", defaultUnlocked:true,
 		challengeTitle:"Rázná venkovská hospodyně s bukovým válečkem", challengeShortDesc:"Válečnice obíhá lovce ve velkém kruhu a zpomaluje i drtí bubáky.",
-		challengeLongDesc:"Statná venkovská paní (+40 % velikost) obíhající ve velkém patrolním kruhu (115 px). Bukovým válečkem zasahuje v dosahu 58 px (+60 %), uvrhne bubáky do 3s omráčení, odhazuje silou 760, proráží 20 % odolností a v zóně o 15 % větší než orbit zpomaluje nepřátele o 40 % (odolnost dle Vůle).",
+		challengeLongDesc:"Statná venkovská paní (+40 % velikost) obíhající ve velkém patrolním kruhu (115 px). Bukovým válečkem zasahuje v dosahu 58 px (+60 %), uvrhne bubáky do 1,2s omráčení, odhazuje silou 520, proráží 20 % odolností a v zóně o 15 % větší než orbit zpomaluje nepřátele o 25 % (odolnost dle Vůle).",
 		targetEnemies:[], maxCount:0, milestones:[{
 			minPercent:0,tierLevel:4,
 			spoiledName:"Válečnice s válečkem",
 			spoiledTitle:"Statná rázná hospodyně (Velký kruh & Zpomalení)",
-			spoiledDesc:"Zuřivá paní s bukovým válečkem obíhá lovce (+40 % velikost). Udílí těžké 3s omráčení, odhození 760, má o 60 % větší dosah (58 px), ignoruje 20 % odolností a v kruhu o 15 % větším než orbit navíc zpomaluje nepřátele o 40 % (dle Vůle).",
-			spoiledStatsHint:"💥 Dmg: 52 • ⏱️ Kadence: 0,48 s • 💫 Stun: 3,0 s • 🌪️ Zpomalení: 40 % (+15 % kruh) • 🛡️ Průraz: 20 % • 📏 Dosah: 58 px (+60 %) • 🔨 Odhoz: 760",
+			spoiledDesc:"Zuřivá paní s bukovým válečkem obíhá lovce (+40 % velikost). Udílí 1,2s omráčení, odhození 520, má o 60 % větší dosah (58 px), ignoruje 20 % odolností a v kruhu o 15 % větším než orbit navíc zpomaluje nepřátele o 25 % (dle Vůle).",
+			spoiledStatsHint:"💥 Dmg: 32 • ⏱️ Kadence: 0,75 s • 💫 Stun: 1,2 s • 🌪️ Zpomalení: 25 % (+15 % kruh) • 🛡️ Průraz: 20 % • 📏 Dosah: 58 px • 🔨 Odhoz: 520",
 			clueTag:"✅ Plně odemčeno ve zbrojnici!"
 		}]
 	},
 	"cesnekova-topinka": {
 		id:"cesnekova-topinka", realName:"Česneková topinka", realIcon:"cesnekova_topinka", realType:"garlic", defaultUnlocked:true,
 		challengeTitle:"Smradlavá obranná zóna", challengeShortDesc:"Česneková topinka je odemčena v arzenálu.",
-		challengeLongDesc:"Permanentní aura z česnekové topinky způsobuje malý damage a brutálně odhazuje nepřátele.",
-		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Česneková topinka",spoiledTitle:"Smradlavá aura",spoiledDesc:"Smradlavá aura z česnekové topinky. Skoro neškodí, ale nepřátele brutálně odhazuje.",spoiledStatsHint:"Aura • minimální damage • velmi silný knockback",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+		challengeLongDesc:"Permanentní aura z česnekové topinky zraňuje nepřátele (5 dmg / 0,35 s), odhazuje je a zpomaluje o 15 %.",
+		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Česneková topinka",spoiledTitle:"Smradlavá aura",spoiledDesc:"Smradlavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.",spoiledStatsHint:"Aura • Dmg: 5 každých 0,35 s • Odhození 300 • Zpomalení 15 %",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
 	},
 	"kysela-okurka": {
 		id:"kysela-okurka", realName:"Kyselá okurka", realIcon:"kysela_okurka", realType:"pickle", defaultUnlocked:true,

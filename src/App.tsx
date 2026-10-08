@@ -4022,7 +4022,7 @@ export default function App() {
                     // Buchta causes snack for 4s, multiple hits cumulate time. Snack is resistable with Hunger.
                     const baseSnack = p.snackDuration ?? 4.0;
                     const effectiveSnack = baseSnack * Math.max(0, 1 - hungerResist);
-                    e.snackTimer = (e.snackTimer || 0) + effectiveSnack;
+                    e.snackTimer = Math.min(2.5, (e.snackTimer || 0) + effectiveSnack);
                     engine.texts.push(new DamageText(e.x, e.y - 25, 'Ňam, ňam', '#D97706', true));
                     sound.snack();
                   }
@@ -4092,7 +4092,13 @@ export default function App() {
 
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
-                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * 260, Math.sin(s.angle) * 260);
+                  const isCane = s.style === 'cane' || s.weaponId === 'cane';
+                  const kbForce = isCane ? 480 : 260;
+                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce);
+                  if (isCane && e.isAttacking) {
+                    e.isAttacking = false;
+                    e.windupTimer = 0;
+                  }
                   if (!s.noMasteryProc && s.weaponId) player.triggerWeaponMastery(s.weaponId, e, 'hit');
                   if (s.soaked) e.soak();
                   if (s.style === 'cane' || s.weaponId === 'cane') {
@@ -5269,13 +5275,14 @@ export default function App() {
         }
         this.panicked = this.panicTimer > 0;
 
-        let spd = this.speed * this.getMovementSpeedMultiplier() * (this.garlicSlowTimer > 0 ? 0.9 : 1);
+        let spd = this.speed * this.getMovementSpeedMultiplier() * (this.garlicSlowTimer > 0 ? 0.85 : 1);
         if (player._valecniceSlowRadius && player._valecniceSlowRadius > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
           if (distToPlayer <= player._valecniceSlowRadius + this.radius) {
             this.valecniceSlowed = true;
             const effWillpower = Math.max(0, Math.min(1, (this.willpower || 0) * (1 - 0.20)));
-            const slowFactor = 0.40 * Math.max(0.15, 1 - effWillpower * 0.75);
+            const slowBase = player._valecniceSlowRate || 0.25;
+            const slowFactor = slowBase * Math.max(0.15, 1 - effWillpower * 0.75);
             spd *= (1 - slowFactor);
           } else {
             this.valecniceSlowed = false;
