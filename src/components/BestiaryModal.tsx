@@ -503,6 +503,21 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 											color: "var(--ink)"
 										},
 										children: ["⚡ Rychlost: ", enemyProg.spoiledStats.speed]
+									}),
+									enemyProg.tier >= 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "tag-badge",
+										style: {
+											background: currentMonster.attackCadence === "fast" ? "#ECFDF5" : currentMonster.attackCadence === "slow" ? "#FEF2F2" : "#FFFBEB",
+											color: currentMonster.attackCadence === "fast" ? "#065F46" : currentMonster.attackCadence === "slow" ? "#991B1B" : "#92400E",
+											fontWeight: 800
+										},
+										children: [
+											currentMonster.attackCadence === "fast"
+												? "⚡ Útok: Rychlý (0,6 s)"
+												: currentMonster.attackCadence === "slow"
+												? "🔨 Útok: Pomalý (1,8 s, +190 %)"
+												: "⚔️ Útok: Normální (1,2 s, +120 %)"
+										]
 									})
 								]
 							}),

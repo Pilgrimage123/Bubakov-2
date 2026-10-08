@@ -113,6 +113,35 @@ export interface WeaponDef {
   fire: (player: any, level: number) => boolean;
 }
 
+export type EnemyAttackCadence = 'fast' | 'normal' | 'slow';
+
+export interface Enemy {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  damage: number;
+  hp?: number;
+  maxHp?: number;
+  speed?: number;
+  vx?: number;
+  vy?: number;
+  mass?: number;          // Hmotnost potvory (výchozí hodnota např. radius / 15)
+  attackDelay?: number;   // Délka nápřahu v sekundách (např. 0.45s)
+  attackRange?: number;   // Dosah úderu (musí být větší než radius + player.radius)
+  windupTimer?: number;   // Aktuální časovač nápřahu (0 = nenapřahuje se)
+  isAttacking?: boolean;  // Zda právě probíhá nápřah
+  isBoss?: boolean;
+  isMiniboss?: boolean;
+  isDefeated?: boolean;
+  dead?: boolean;
+  attackCadence?: EnemyAttackCadence;
+  attackInterval?: number;
+  snackTimer?: number;
+  stunTimer?: number;
+  [key: string]: any;
+}
+
 export interface EnemyStats {
   id: string;
   name: string;
@@ -122,6 +151,12 @@ export interface EnemyStats {
   speed: number;
   damage: number;
   radius: number;
+  attackCadence: EnemyAttackCadence;
+  attackInterval: number;
+  cadenceDamageBonusPercent?: number;
+  mass?: number;
+  attackDelay?: number;
+  attackRange?: number;
   foodResist?: number;
   hunger?: number;
   poiseResist?: number;

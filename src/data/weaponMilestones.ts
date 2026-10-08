@@ -53,16 +53,16 @@ const MILESTONES: Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, Milestone
   },
   valecnice: {
     3: [
-      makeChoice('valecnice_crowd_3', 'Široké kolo', 'Široké kolo', 'Válečnice drží širší okruh a lépe vyčistí prostor.', 'wide_orbit', 'granny_attack', { areaRadiusMult: 1.10, knockbackMult: 1.18 }),
-      makeChoice('valecnice_burst_3', 'Rázný váleček', 'Rázný váleček', 'Váleček má větší bác a udeří svižněji.', 'heavy_roll', 'granny_attack', { baseDamageMult: 1.16, cooldownMult: 0.97 }),
+      makeChoice('valecnice_crowd_3', 'Široké kolo', 'Široké kolo', 'Širší strážný okruh (+15 %), dosah úderu (až 67 px) a vyšší odhoz bubáků.', 'wide_orbit', 'granny_attack', { areaRadiusMult: 1.15, knockbackMult: 1.25 }),
+      makeChoice('valecnice_burst_3', 'Rázný váleček', 'Rázný váleček', 'Váleček má těžký bác (+20 % dmg), omráčení na 3,6 s a svižnější kadenci.', 'heavy_roll', 'granny_attack', { baseDamageMult: 1.20, cooldownMult: 0.95, statusDurationSec: 1.2 }),
     ],
     5: [
-      makeChoice('valecnice_crowd_5', 'Válečnický kruh', 'Válečnický kruh', 'Širší kolo přidá jeden orbitující váleček.', 'war_circle', 'granny_attack', { areaRadiusMult: 1.12, knockbackMult: 1.20, projectileCountDelta: 1 }),
-      makeChoice('valecnice_burst_5', 'Dvojnásobný bác', 'Dvojnásobný bác', 'Ráznější váleček prorazí první cíl a pokračuje dál.', 'double_blow', 'granny_attack', { baseDamageMult: 1.18, pierceDelta: 1, cooldownMult: 0.97 }),
+      makeChoice('valecnice_crowd_5', 'Válečnický kruh', 'Válečnický kruh', 'Přiběhne druhá Válečnice do kruhu! Dvojitý perimetr a brutální odhoz.', 'war_circle', 'granny_attack', { areaRadiusMult: 1.15, knockbackMult: 1.25, projectileCountDelta: 1 }),
+      makeChoice('valecnice_burst_5', 'Průrazný bác', 'Průrazný bác', 'Těžký úder ještě lépe proráží odpor monster, prodlouží omráčení na 3,9 s a odhodí i těžká monstra.', 'double_blow', 'granny_attack', { baseDamageMult: 1.22, knockbackMult: 1.25, cooldownMult: 0.95, statusDurationSec: 1.3 }),
     ],
     8: [
-      makeChoice('valecnice_crowd_8', 'Válečnický kruh+', 'Válečnický kruh+', 'Velký kruh, silný odhoz a další orbitující váleček rozpráší celý houf.', 'great_circle', 'granny_attack', { areaRadiusMult: 1.16, knockbackMult: 1.25, projectileCountDelta: 1, cooldownMult: 0.94 }),
-      makeChoice('valecnice_burst_8', 'Velký úklid', 'Velký úklid', 'Rázný váleček má vyšší sílu, průraz a svižnější kadenci.', 'big_cleanup', 'granny_attack', { baseDamageMult: 1.22, pierceDelta: 1, cooldownMult: 0.94 }),
+      makeChoice('valecnice_crowd_8', 'Válečnická garda', 'Válečnická garda', 'Třetí Válečnice do kruhu! Obří perimetr (160+ px), masivní odhoz a omráčení celého houfu.', 'great_circle', 'granny_attack', { areaRadiusMult: 1.20, knockbackMult: 1.35, projectileCountDelta: 1, cooldownMult: 0.92 }),
+      makeChoice('valecnice_burst_8', 'Velký úklid', 'Velký úklid', 'Drtivý váleček má maximální sílu (+30 % dmg), omráčení na 4,5 s a svižnou kadenci.', 'big_cleanup', 'granny_attack', { baseDamageMult: 1.30, knockbackMult: 1.30, cooldownMult: 0.92, statusDurationSec: 1.5 }),
     ],
   },
   cesnekova_topinka: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { COLORS } from '../constants';
+import type { Enemy } from '../types';
 
 var Lada = {
 	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
@@ -8733,6 +8734,540 @@ for (const key of Object.keys(Lada)) {
 function drawEnemyRenderer(method, ctx, x, y, time, vx, panicked) {
 	const drawer = Lada[method];
 	if (typeof drawer === "function") drawer.call(Lada, ctx, x, y, time, vx, panicked);
+}
+
+export function drawEnemyWarningSign(
+  ctx: CanvasRenderingContext2D,
+  enemy: Enemy,
+  cameraOffset: { x: number; y: number } = { x: 0, y: 0 }
+) {
+  if (!enemy.windupTimer || enemy.windupTimer <= 0 || !enemy.attackDelay) return;
+
+  const currentTransform = typeof ctx.getTransform === 'function' ? ctx.getTransform() : null;
+  const isAlreadyTranslated = currentTransform && (
+    Math.abs(currentTransform.e - (-cameraOffset.x)) < 0.5 &&
+    Math.abs(currentTransform.f - (-cameraOffset.y)) < 0.5 &&
+    (cameraOffset.x !== 0 || cameraOffset.y !== 0)
+  );
+
+  const offX = isAlreadyTranslated ? 0 : (cameraOffset ? cameraOffset.x : 0);
+  const offY = isAlreadyTranslated ? 0 : (cameraOffset ? cameraOffset.y : 0);
+
+  const screenX = enemy.x - offX;
+  const screenY = enemy.y - offY - enemy.radius - 14;
+
+  const progress = Math.min(1, enemy.windupTimer / enemy.attackDelay);
+  const scale = 1 + progress * 0.35 + (progress > 0.8 ? Math.sin(Date.now() * 0.03) * 0.15 : 0);
+
+  ctx.save();
+  ctx.translate(screenX, screenY);
+  ctx.scale(scale, scale);
+
+  // Podkladový kruh s ladovskou černou konturou
+  ctx.beginPath();
+  ctx.arc(0, 0, 8, 0, Math.PI * 2);
+  ctx.fillStyle = progress > 0.75 ? "#c82a1e" : "#f1a834"; // Změna barvy z oranžové na rudou
+  ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "#1a120b";
+  ctx.stroke();
+
+  // Inkoustový vykřičník
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 11px serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("!", 0, 0.5);
+
+  ctx.restore();
+}
+
+(Lada as any).drawEnemyWarningSign = drawEnemyWarningSign;
+
+/**
+ * Ladovské točící se hvězdičky omráčení nad hlavou bubáka
+ */
+export function drawStunStars(ctx: CanvasRenderingContext2D, enemy: any, time: number) {
+  const headY = enemy.y - (enemy.radius || 20) - 14;
+  const headX = enemy.x;
+  const numStars = 3;
+  ctx.save();
+  for (let i = 0; i < numStars; i++) {
+    const starAngle = time * 5 + (i * Math.PI * 2) / numStars;
+    const sx = headX + Math.cos(starAngle) * 16;
+    const sy = headY + Math.sin(starAngle) * 6;
+    const rot = starAngle * 1.5;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(rot);
+
+    // 4-cípá ladovská komiksová hvězdička s černou konturou
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(1.8, -1.8);
+    ctx.lineTo(6, 0);
+    ctx.lineTo(1.8, 1.8);
+    ctx.lineTo(0, 6);
+    ctx.lineTo(-1.8, 1.8);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-1.8, -1.8);
+    ctx.closePath();
+    ctx.fillStyle = i === 0 ? '#FBBF24' : i === 1 ? '#F59E0B' : '#FEF08A';
+    ctx.strokeStyle = '#1C130E';
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/**
+ * Plnohodnotná animovaná Válečnice obíhající ve velkém kruhu
+ */
+export function drawValecniceCompanion(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  orbitAngle: number,
+  index: number,
+  uiTime: number,
+  scale: number = 1.71,
+  isStriking: boolean = false
+) {
+  // Tangenciální směr oběhu: po směru hodinových ručiček
+  const dirX = -Math.sin(orbitAngle);
+  const facing = dirX >= 0 ? 1 : -1;
+
+  const runPhase = uiTime * 14 + index * 2.3;
+  const bobY = Math.abs(Math.sin(runPhase)) * 3.5;
+  const legSwing = Math.sin(runPhase) * 14;
+  const skirtSway = Math.sin(runPhase) * 3;
+  const ribbonFlutter = Math.sin(uiTime * 16 + index * 1.7) * 4;
+  const swingPhase = uiTime * 9 + index * 2.1;
+  const rollingPinSwing = Math.sin(swingPhase) * 0.35 + (isStriking ? 0.8 : 0);
+
+  ctx.save();
+  ctx.translate(x, y - bobY);
+  ctx.scale(scale * facing, scale);
+  // Lehký náklon vpřed při divokém sprintu
+  ctx.rotate(0.08);
+
+  // 1. Stín pod nohama
+  ctx.fillStyle = 'rgba(28, 19, 14, 0.22)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24 + bobY, 19, 7.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Zadní mávající šňůrky zástěry
+  ctx.save();
+  ctx.strokeStyle = '#FFFDF7';
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-10, 8);
+  ctx.quadraticCurveTo(-18, 6 + ribbonFlutter, -25, 10 + ribbonFlutter * 1.2);
+  ctx.moveTo(-9, 11);
+  ctx.quadraticCurveTo(-16, 12 - ribbonFlutter, -23, 17 - ribbonFlutter);
+  ctx.stroke();
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. Zadní vlající cípy červeného šátku
+  ctx.save();
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.8;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-8, -12);
+  ctx.quadraticCurveTo(-18, -17 + ribbonFlutter, -23, -13 + ribbonFlutter);
+  ctx.quadraticCurveTo(-17, -9, -7, -9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-7, -9);
+  ctx.quadraticCurveTo(-16, -7 - ribbonFlutter, -21, -3 - ribbonFlutter);
+  ctx.quadraticCurveTo(-14, -4, -6, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 4. Běhající nohy v černých šněrovacích botkách
+  // Levá noha (zadní)
+  ctx.save();
+  ctx.translate(-4, 15);
+  ctx.rotate((-legSwing * Math.PI) / 180);
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-2, 7);
+  ctx.stroke();
+  ctx.strokeStyle = '#F3E8D2';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-2, 7);
+  ctx.stroke();
+  // Bota
+  ctx.fillStyle = '#2B1A12';
+  ctx.strokeStyle = '#1C130E';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-2, 7);
+  ctx.lineTo(-8, 12);
+  ctx.lineTo(-3, 14);
+  ctx.lineTo(2, 9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Pravá noha (přední)
+  ctx.save();
+  ctx.translate(5, 15);
+  ctx.rotate((legSwing * Math.PI) / 180);
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(2, 7);
+  ctx.stroke();
+  ctx.strokeStyle = '#F3E8D2';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(2, 7);
+  ctx.stroke();
+  // Bota
+  ctx.fillStyle = '#2B1A12';
+  ctx.strokeStyle = '#1C130E';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(1, 7);
+  ctx.lineTo(8, 11);
+  ctx.lineTo(4, 14);
+  ctx.lineTo(-2, 9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 5. Tradiční červená lidová sukně se stylizovanou výšivkou
+  ctx.save();
+  ctx.fillStyle = '#B91C1C';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.6;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-11, 4);
+  ctx.quadraticCurveTo(-18 + skirtSway, 14, -16 + skirtSway, 21);
+  ctx.quadraticCurveTo(0, 24, 17 + skirtSway, 20);
+  ctx.quadraticCurveTo(17 + skirtSway, 13, 11, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Lidová výšivka na spodním lemu sukně
+  ctx.strokeStyle = '#FBBF24';
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath();
+  ctx.moveTo(-14 + skirtSway, 18);
+  ctx.quadraticCurveTo(0, 21, 15 + skirtSway, 17);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Zelené ornamentální lístky
+  ctx.fillStyle = '#16A34A';
+  for (let li = -10; li <= 10; li += 5) {
+    ctx.beginPath();
+    ctx.arc(li + skirtSway * 0.7, 19, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // 6. Bílá lněná zástěra s vyšitou kapsičkou
+  ctx.save();
+  ctx.fillStyle = '#FFFDF7';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-7, 4);
+  ctx.quadraticCurveTo(-10 + skirtSway * 0.5, 14, -8 + skirtSway * 0.5, 20);
+  ctx.quadraticCurveTo(2, 22, 11 + skirtSway * 0.5, 18);
+  ctx.quadraticCurveTo(10, 11, 7, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Kapsička na zástěře s modrým lemem a červenou kytičkou
+  ctx.fillStyle = '#F0F9FF';
+  ctx.strokeStyle = '#0284C7';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.rect(1, 9, 6, 7);
+  ctx.fill();
+  ctx.stroke();
+  // Červená kytička v kapsičce
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(4, 12, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 7. Zelená šněrovačka / kordulka a nabírané bílé rukávy
+  // Zadní/levá ruka zatatá v pěst
+  ctx.save();
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = '#FFFDF7';
+  ctx.beginPath();
+  ctx.arc(-8, -1, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Ruka
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(-11, 3, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Zelený živůtek / kordulka
+  ctx.save();
+  ctx.fillStyle = '#1B5E20';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-8, -4);
+  ctx.lineTo(-6, 5);
+  ctx.lineTo(6, 5);
+  ctx.lineTo(8, -4);
+  ctx.quadraticCurveTo(0, -2, -8, -4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Zlaté knoflíčky živůtku
+  ctx.fillStyle = '#FBBF24';
+  ctx.beginPath();
+  ctx.arc(0, -1, 0.9, 0, Math.PI * 2);
+  ctx.arc(0, 2, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Červená mašlička u krku
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-2, -4);
+  ctx.lineTo(2, -4);
+  ctx.lineTo(0, -2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 8. Hlava v červeném puntíkovaném šátku s bojovým výrazem
+  ctx.save();
+  // Obličej
+  ctx.fillStyle = '#FED7AA';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.ellipse(1, -12, 8, 7.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Červené tváře (rosy cheeks)
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.65)';
+  ctx.beginPath();
+  ctx.arc(-3.5, -10.5, 2.2, 0, Math.PI * 2);
+  ctx.arc(5.5, -10.5, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Červený šátek na hlavě
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(1, -15, 8.5, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.quadraticCurveTo(9, -7, 2, -5);
+  ctx.quadraticCurveTo(-5, -6, -8, -13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Bílé puntíky na šátku
+  ctx.fillStyle = '#FFFDF7';
+  const dots = [[-2, -18], [3, -19], [6, -15], [0, -15], [-4, -13], [5, -11]];
+  for (const [dx, dy] of dots) {
+    ctx.beginPath();
+    ctx.arc(dx, dy, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Kudrlinky vykukující ze šátku
+  ctx.strokeStyle = '#451A03';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(-4, -12, 1.5, 0, Math.PI);
+  ctx.stroke();
+
+  // Nos
+  ctx.fillStyle = '#FB7185';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(1, -11.5, 1.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Zuřivé obočí
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 1.8;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-4, -14.5);
+  ctx.lineTo(-0.5, -13);
+  ctx.moveTo(6, -14.5);
+  ctx.lineTo(2.5, -13);
+  ctx.stroke();
+
+  // Odhodlané oči
+  ctx.fillStyle = '#18181B';
+  ctx.beginPath();
+  ctx.arc(-2, -12.5, 1.1, 0, Math.PI * 2);
+  ctx.arc(4, -12.5, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Křičící pusa s viditelnými zuby
+  ctx.fillStyle = '#7F1D1D';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.arc(1, -8, 2.5, 0, Math.PI);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-0.5, -8.3, 3, 1.1);
+  ctx.restore();
+
+  // 9. Pravá ruka s mohutným kuchyňským dřevěným válečkem
+  ctx.save();
+  ctx.translate(6, -3);
+  // Animovaný nápřah a švih válečkem
+  ctx.rotate(-0.35 + rollingPinSwing);
+
+  // Nabíraný bílý rukáv
+  ctx.fillStyle = '#FFFDF7';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Předloktí a pěst držící rukojeť
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(1, 0);
+  ctx.lineTo(4, -7);
+  ctx.stroke();
+  ctx.strokeStyle = '#FED7AA';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(1, 0);
+  ctx.lineTo(4, -7);
+  ctx.stroke();
+
+  // Pěst
+  ctx.fillStyle = '#FED7AA';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(4, -7, 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Mohutný dřevěný váleček na těsto
+  ctx.translate(4, -7);
+  ctx.rotate(-0.4);
+
+  // Vzdušný vír / šmouha při švihu válečkem
+  if (Math.abs(rollingPinSwing) > 0.2 || isStriking) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(254, 240, 138, 0.6)';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(0, -12, 14, -Math.PI * 0.4, Math.PI * 0.35);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Spodní rukojeť
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, 2);
+  ctx.lineTo(0, 7);
+  ctx.stroke();
+  ctx.strokeStyle = '#92400E';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(0, 2);
+  ctx.lineTo(0, 7);
+  ctx.stroke();
+
+  // Hlavní válec válečku (bukové dřevo s ladovskou linkou)
+  ctx.fillStyle = '#D97706';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.rect(-4, -18, 8, 20);
+  ctx.fill();
+  ctx.stroke();
+
+  // Dřevěná kresba / odlesk na válečku
+  ctx.strokeStyle = '#FDE68A';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-1.5, -15);
+  ctx.lineTo(-1.5, 0);
+  ctx.stroke();
+
+  // Horní rukojeť
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, -18);
+  ctx.lineTo(0, -23);
+  ctx.stroke();
+  ctx.strokeStyle = '#92400E';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(0, -18);
+  ctx.lineTo(0, -23);
+  ctx.stroke();
+
+  ctx.restore();
+
+  ctx.restore();
 }
 
 export { Lada, drawEnemyRenderer };

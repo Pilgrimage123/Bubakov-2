@@ -1,5 +1,91 @@
 # Bubákov — Changelog
 
+## 2026-10-07 — Válečnice: Větší Ladovský sprite (+40 %), dosah úderu (+60 %), 3s omráčení, 20% ignorace odolností a podrobný rozpis ve zbrojnici
+
+- **Zvětšení spritu Válečnice o 40 % (Měřítko postavy):**
+  - Měřítko vykreslování Válečnice v modulu `src/render/ladaRenderer.ts` a v herní smyčce bylo navýšeno o 40 % (scale zvýšen z 1,22 na 1,71).
+  - Válečnice nyní působí jako statná, nepřehlédnutelná česká hospodyně v červeném puntíkovaném šátku, zelené šněrovačce, bílé zástěře a lidové sukni, která rázně vymetá prostor kolem lovce.
+- **Rozšíření dosahu úderu o 60 % (Hitbox Reach 58 px):**
+  - Dosah, ve kterém bukový váleček zasahuje okolní bubáky, byl zvětšen o 60 % (ze základních 36 px na 58 px + poloměr monstra, dále škáluje s milníky plošného dosahu).
+  - Detekční okruh pro okolní nepřátele byl rozšířen na `orbitRadius + reachBase + 50`, takže Válečnice s jistotou vyčistí široký pás kolem lovce.
+- **Prodloužení omráčení na 3,0 sekundy (Stun 3,0 s):**
+  - Doba omráčení při zásahu bukovým válečkem byla prodloužena na plné 3,0 sekundy.
+  - Zasažení nepřátelé okamžitě přeruší probíhající nápřah k útoku (`windupTimer = 0`, `aiState = idle`), zastaví svůj pohyb a nad hlavami se jim točí ladovské komiksové hvězdičky (💫).
+- **Nastavení ignorace odolností na 20 %:**
+  - Válečnice nově ignoruje přesně 20 % odolnosti monster (`ignoreResist: 0.20`).
+  - Proráží 20 % tuhosti (`poiseResist`), 20 % odolnosti proti odhození (`knockbackResistance`), 20 % vůle proti omráčení (`willpower`) a překonává 20 % redukce zranění i u minibossů.
+- **Zpomalení o 40 % v kruhu o 15 % větším než orbit (odolnost dle Vůle):**
+  - Kolem lovce se rozprostírá vnější větrná zóna o poloměru o 15 % větším než oběžná dráha Válečnice (základ 132 px, škáluje s plošnými milníky).
+  - Všichni nepřátelé v tomto okruhu jsou zpomaleni o 40 %, přičemž míra zpomalení je odolávána parametrem Vůle (`willpower`) daného monstra (se započtením 20% průrazu odolností Válečnice).
+  - Na zemi je tato zóna vizualizována oranžovým čárkovaným kruhem a zpomalená monstra zanechávají u nohou vířivou prachovou stopu.
+- **Velký patrolní okruh (Orbit 115 px):**
+  - Válečnice obíhá lovce ve velkém okruhu o poloměru 115 px (s milníky dosahuje až 160+ px) a na zemi vykresluje ladovskou tečkovanou patrolní stopu.
+- **Podrobný výpis statistik ve zbrojnici a knihovně zbraní (Arzenál):**
+  - V Zbrojnici (`ArsenalModal`) a detailu odemčení (`WeaponUnlockModal`) přibyl kompletní technický rozpis všech 8 parametrů Válečnice (poškození 52, kadence 0,48 s, stun 3,0 s, průraz 20 %, dosah 58 px, odhoz 760, okruh 115 px, sprite scale 1,71) společně s interaktivním animovaným náhledem.
+
+## 2026-10-07 — Hmotnost nepřátel, zpomalení v davu, klouzavé obtékání a Ladovský varovný nápřah (Fyzika & Bojový systém)
+
+- **Mechanika hmotnosti monster (Enemy Mass & Odpor těl):**
+  - Do rozhraní `Enemy` a `EnemyStats` byl zaveden fyzikální parametr hmotnosti `mass` (výchozí hodnota `radius / 15`, u lehkých skřítků cca 0,95–1,0, u těžkých monster, dřevorubců a bossů 2,0–5,0).
+  - V herní smyčce se těla nepřátel v těsném kontaktu s lovcem sčítají do celkového odporu davu `totalResistance`.
+  - **Efekt lapení při nápřahu:** Pokud monstrum právě provádí nápřah (`isAttacking === true`), jeho lokální odpor se zdvojnásobí, což vytváří věrný pocit, že se lovec v sevření útočícího chumlu nemůže tak snadno vytrhnout.
+- **Plynulé zpomalení hráče při průchodu davem (Crowd Drag):**
+  - Hráčova vlastní vstupní rychlost je dynamicky tlumena vzorcem $speedMultiplier = \max(MIN\_SPEED\_RATIO, \frac{1}{1 + totalResistance \times DRAG\_COEFFICIENT})$ s koeficientem odporu $0{,}35$.
+  - Hráč se nikdy nezastaví na nule – je garantována minimální rychlost $20\,\%$ ($MIN\_SPEED\_RATIO = 0{,}2$), což umožňuje taktické prorážení a manévrování i pod náporem početného hejna.
+- **Klouzavé vektorové obtékání a odtlačení (Sliding Pushback):**
+  - Implementována prostorová detekce přes `spatialHash.queryRadius(player.x, player.y, player.radius + 35)` v jediném vysoce optimalizovaném průchodu bez alokací na haldě.
+  - Pro každé kolidující monstrum se počítá průnik $overlap = (r_{player} + r_{enemy}) - dist$ a akumuluje se odtlačovací vektor $\vec{push} += \frac{\vec{pos}_{player} - \vec{pos}_{enemy}}{dist} \times overlap \times PUSH\_FORCE$ ($PUSH\_FORCE = 6{,}0$).
+  - Vektor je bezpečně zastropován na $MAX\_PUSH\_SPEED = 300\text{ px/s}$ a aplikován na pozici lovce: `player.x += (moveVx + pushX) * dt` a `player.y += (moveVy + pushY) * dt`.
+  - Hráč tak při kontaktu přirozeně a hladce klouže po obvodu monster a nezasekává se v jejich středech.
+- **Telegrafované útoky monster a nápřah (Windup Damage System):**
+  - Každý nepřítel má definován dosah úderu `attackRange` (výchozí `radius + 25`) a čas nápřahu `attackDelay` (výchozí `0,5 s` s ohledem na kadenci úderu).
+  - Pokud je vzdálenost mezi monstrem a lovcem $\le attackRange$, monstrum přejde do stavu nápřahu (`isAttacking = true`) a inkrementuje se časovač `windupTimer += dt`.
+  - Zranění je hráči uděleno až po dokončení celého nápřahu (`windupTimer >= attackDelay`), načež se časovač zresetuje na nulu.
+  - **Taktický únik z dosahu:** Pokud hráč stihne uniknout mimo $attackRange$, nápřah postupně opadá dvojnásobnou rychlostí (`windupTimer = Math.max(0, windupTimer - dt * 2)`), a při poklesu na 0 se stav nápřahu zruší.
+- **Ladovský výstražný vykřičník – Varianta B (`drawEnemyWarningSign`):**
+  - V modulu `src/render/ladaRenderer.ts` byla naimplementována nová funkce pro výstražný symbol nad hlavami útočících nepřátel.
+  - **Vizuální styl:** Terčík s ladovskou černou konturou (`#1a120b`), bílým inkoustovým vykřičníkem a barevným přechodem z teplé oranžové (`#f1a834`) do výstražné rudé (`#c82a1e`) při překročení $75\,\%$ nápřahu.
+  - V závěrečných $20\,\%$ nápřahu terčík dynamicky zvětšuje své měřítko a pulzuje pro maximální čitelnost nebezpečí.
+  - Funkce je volána v renderovací pipeline pro všechna viditelná monstra na obrazovce s aktivním nápřahem.
+- **Optimalizace a stabilita 60 FPS:**
+  - Všechny výpočty jsou chráněny proti dělení nulou (`dist > 0.0001`), prostorový hash znovupoužívá interní pole bez vytváření dočasných instancí a hra si zachovává plynulých 60 snímků za sekundu i v masivních vlnách nepřátel.
+
+## 2026-10-07 — Tématické rozdělení nepřátel na rychlé, normální a pomalé útoky (Bojový systém & Balance)
+
+- **Tématické rozdělení nepřátel do tří kadencí:**
+  - Všech 49 venkovských strašidel a bossů bylo tématicky roztříděno do tří skupin podle jejich ladovského charakteru, váhy a výzbroje:
+    1. **Rychle útočící (0,6 s interval, 100 % základní poškození):** Drobná hejna a hbití skřítci (`rarach`, `plivnik`, `sotek`, `zaba`, `zmrzlik`, `skodnik`, `mysak`, `blatouch`, `vanicka`, `bludicka`, `cerny_pes`, `jiskrivec`, `nocni_mura`, `sazovy_rarach`).
+    2. **Normálně útočící (1,2 s interval, +120 % zranění / 2,2× násobek):** Standardní kostlivci, vodníci, víly, písaři, mrazíci a lapkové (`skeleton`, `skeleton_scythe`, `krvavy_kostlivec`, `pisar`, `hrobnik`, `hastrman`, `vodnicek`, `topivec`, `ropucha`, `meluzina`, `mrazik`, `severak`, `polednice`, `klekanice`, `divozenka`, `zbojnik`, `certik`, `ohnivy_muz`, `bila_pani`).
+    3. **Pomalu útočící (1,8 s interval, +190 % zranění / 2,9× násobek):** Těžcí obři, umrlci s pomalým nápřahem, dřevorubci s širočinou, zbrojnoši v plátech a velcí bossové (`umrlec`, `bubak`, `hromotluk`, `stodolnik`, `drevorubec`, `drab`, `zbrojnos`, `obrneny_zbojnik`, `snehulak`, `ohnivy_pes`, `cert`, `hejkal`, `obr`, `mlynar`, `bezhlavy_rytir`, `drak`).
+- **Časování a zranění až po prodlevě:**
+  - Interval se začíná odpočítávat v okamžiku prvního kontaktu, avšak zranění je uděleno až po uplynutí této prodlevy (0,6 s pro rychlé, 1,2 s pro normální, 1,8 s pro pomalé nepřátele).
+  - **Možnost úniku a přerušení:** Pokud lovec stihne včas uskočit nebo nepřítele odhodit zbraní s odhozem (Válečnice, Česneková topinka, Cep apod.), útok se přeruší a lovec neutrpí žádné poškození.
+  - **Vizuální telegraf nápřahu:** Během kontaktu se kolem útočícího nepřítele vykresluje kruhový indikátor nabíjení úderu (žlutý pro rychlé, oranžový pro normální, červený pro pomalé).
+  - Při trvalém kontaktu pak další údery následují v tomto stálém intervalu.
+- **Audiovizuální odezva:**
+  - Zásahy od pomalu útočících těžkých nepřátel a bossů jsou doprovázeny hutným těžkým zvukovým efektem `sound.heavyHit()`.
+- **Integrace v Bestiáři:**
+  - Každé probádané strašidlo v kronice / bestiáři přehledně zobrazuje štítek s informací o své kadenci a intervalu úderu.
+
+## 2026-10-07 — Oprava dvojitého odpočtu contactTimeru při kontaktu s nepřáteli (Engine & Combat Balance)
+
+- **Podrobná analýza a příčina chyby (Root Cause):**
+  - Herní engine udržuje u každého nepřítele vnitřní časovač kontaktu `contactTimer` s výchozím intervalem **0,45 s**, který slouží jako minimální prodleva mezi fyzickými zásahy hráče při těsném dotyku.
+  - V herní smyčce však docházelo k tomu, že se `contactTimer` při trvalém kontaktu odčítal o deltu času `dt` **na dvou místech v tomtéž snímku**:
+    1. **První odpočet** probíhal v obecné aktualizační metodě nepřítele `e.update(dt, player)` na řádku `if (this.contactTimer > 0) this.contactTimer -= dt;`.
+    2. **Druhý odpočet** probíhal bezprostředně poté v kolizní smyčce nepřátel v `App.tsx` na řádku `e.contactTimer = (e.contactTimer || 0) - dt;`.
+- **Důsledek pro hratelnost — nechtěně 2× vyšší obdržené poškození za čas (DPS):**
+  - Samotná hodnota zranění z jedné rány byla v pořádku, avšak kvůli dvojnásobné rychlosti odpočtu (`2 × dt` za snímek) se interval mezi ranami zkrátil z plánovaných **0,45 s** na pouhých cca **0,22 až 0,23 s**.
+  - **Frekvence zásahů tak vzrostla z plánovaných cca 2,2 úderu/s na 4,4 až 5 úderů za sekundu.**
+  - **Výsledné poškození za sekundu (DPS), které lovec při kontaktu inkasoval, bylo tedy nezamýšleně dvojnásobné.**
+  - Tento bug byl fatální zejména při obklíčení skupinou bubáků (např. 3–4 nepřátelé udíleli neúnosných 15–20 zásahů za sekundu) nebo v soubojích s rychlými nepřáteli a bossy na tělo, kdy lovec ztrácel veškerou Kuráž (HP) během necelé vteřiny bez šance na únik.
+- **Implementované řešení:**
+  - V kolizní smyčce hráč–nepřítel v `App.tsx` byl odstraněn redundantní řádek `e.contactTimer = (e.contactTimer || 0) - dt;`.
+  - Kolizní vyhodnocení nyní pouze bezpečně testuje vypršení časovače: `if ((e.contactTimer || 0) <= 0) { e.contactTimer = 0.45; player.takeDamage(...); }`.
+  - Odpočet `contactTimer` o `dt` probíhá striktně jednou za snímek uvnitř `e.update(dt, player)`.
+  - Frekvence fyzického zranění při těsném kontaktu nyní přesně odpovídá navrženému intervalu **0,45 s** (cca 2,2 zásahu za sekundu), čímž se efektivní kontaktní poškození bubáků vrátilo na správnou, férovou úroveň.
+
+
 ## 2026-10-07 — Aktualizace průvodce Ovládání a cíl hry, Čertův dědeček a nový arzenál
 
 - **Kompletní přepracování a rozšíření průvodce „Ovládání a cíl hry“:**

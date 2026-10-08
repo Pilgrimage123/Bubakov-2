@@ -4,11 +4,190 @@ const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { CzechBuchtaIcon } from './CzechBuchtaIcon';
 import { OsikovyPrutIcon } from './OsikovyPrutIcon';
-import { Lada } from '../render/ladaRenderer';
+import { Lada, drawValecniceCompanion } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { WEAPON_UNLOCKS } from '../data/weaponUnlocks';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+
+var ValecnicePreview = () => {
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const [isWhacking, setIsWhacking] = useState(false);
+	const [, setWhackCount] = useState(0);
+
+	const triggerWhack = useCallback(() => {
+		setIsWhacking(true);
+		setWhackCount((c) => c + 1);
+		if (typeof (sound as any).valecWhack === 'function') {
+			(sound as any).valecWhack();
+		} else {
+			sound.heavyHit();
+		}
+		setTimeout(() => setIsWhacking(false), 380);
+	}, []);
+
+	useEffect(() => {
+		let animId: number;
+		let startTime = performance.now();
+
+		const loop = (now: number) => {
+			const elapsed = (now - startTime) / 1000;
+			const canvas = canvasRef.current;
+			if (canvas) {
+				const ctx = canvas.getContext('2d');
+				if (ctx) {
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+					// Soft decorative background parchment circle
+					ctx.save();
+					ctx.fillStyle = 'rgba(254, 243, 199, 0.45)';
+					ctx.strokeStyle = 'rgba(217, 119, 6, 0.35)';
+					ctx.lineWidth = 1.5;
+					ctx.setLineDash([4, 4]);
+					ctx.beginPath();
+					ctx.arc(canvas.width / 2, canvas.height / 2 + 10, 52, 0, Math.PI * 2);
+					ctx.fill();
+					ctx.stroke();
+					ctx.restore();
+
+					// Draw Válečnice in center
+					ctx.save();
+					drawValecniceCompanion(
+						ctx,
+						canvas.width / 2,
+						canvas.height / 2 + 6,
+						elapsed * 2.4,
+						0,
+						elapsed,
+						1.71,
+						isWhacking
+					);
+					ctx.restore();
+				}
+			}
+			animId = requestAnimationFrame(loop);
+		};
+
+		animId = requestAnimationFrame(loop);
+		return () => cancelAnimationFrame(animId);
+	}, [isWhacking]);
+
+	return (
+		<div
+			style={{
+				background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+				border: '3px solid var(--ink)',
+				borderRadius: '12px',
+				padding: '14px 16px',
+				margin: '12px 0',
+				display: 'flex',
+				flexDirection: 'column',
+				gap: '12px',
+				boxShadow: '3px 3px 0 var(--ink)',
+			}}
+		>
+			<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+				<div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+					<div
+						style={{
+							width: '100px',
+							height: '92px',
+							borderRadius: '12px',
+							background: '#FFFFFF',
+							border: '2.5px solid var(--ink)',
+							overflow: 'hidden',
+							display: 'flex',
+							alignItems: 'center',
+							justifyContent: 'center',
+							boxShadow: 'inset 1px 1px 4px rgba(0,0,0,0.1)',
+							flexShrink: 0,
+						}}
+					>
+						<canvas ref={canvasRef} width={130} height={120} style={{ width: '100%', height: '100%' }} />
+					</div>
+					<div>
+						<div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+							<span>👵 Rázná Válečnice s bukovým válečkem</span>
+							<span style={{ fontSize: '0.78rem', background: '#DC2626', color: '#FFF', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--ink)' }}>+40 % sprite</span>
+						</div>
+						<div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '3px', lineHeight: 1.35 }}>
+							Statná vesnická hospodyně obíhající ve velkém okruhu. V zóně o 15 % větší než orbit zpomaluje nepřátele o 40 % (odolnost dle Vůle), rozdává těžké 3s omráčení a ignoruje 20 % odolností.
+						</div>
+					</div>
+				</div>
+				<div style={{ flexShrink: 0 }}>
+					<button
+						type="button"
+						className="hud-btn"
+						style={{
+							padding: '8px 16px',
+							fontSize: '0.92rem',
+							fontWeight: 900,
+							background: '#EA580C',
+							borderColor: 'var(--ink)',
+							color: '#FFFFFF',
+							boxShadow: '2px 2px 0 var(--ink)',
+							cursor: 'pointer',
+						}}
+						onClick={triggerWhack}
+					>
+						🪵 Bácnout válečkem!
+					</button>
+				</div>
+			</div>
+
+			{/* Podrobný výpis statistik Válečnice */}
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+					gap: '8px',
+					background: 'rgba(255, 255, 255, 0.75)',
+					border: '2px solid var(--ink)',
+					borderRadius: '8px',
+					padding: '10px 12px',
+				}}
+			>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💥 Poškození</span>
+					<strong style={{ fontSize: '0.98rem', color: '#991B1B' }}>52 (fyzické)</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⏱️ Kadence úderů</span>
+					<strong style={{ fontSize: '0.98rem', color: '#1E293B' }}>0,48 s</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💫 Omráčení (Stun)</span>
+					<strong style={{ fontSize: '0.98rem', color: '#D97706' }}>3,0 s</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🌪️ Zpomalení (Zóna +15 %)</span>
+					<strong style={{ fontSize: '0.98rem', color: '#EA580C' }}>40 % (dle Vůle)</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🛡️ Ignorace resistu</span>
+					<strong style={{ fontSize: '0.98rem', color: '#15803D' }}>20 %</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>📏 Dosah zásahu</span>
+					<strong style={{ fontSize: '0.98rem', color: '#0369A1' }}>58 px (+60 %)</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🔨 Odhození</span>
+					<strong style={{ fontSize: '0.98rem', color: '#B45309' }}>760 (masivní)</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⭕ Poloměr hlídky</span>
+					<strong style={{ fontSize: '0.98rem', color: '#7C3AED' }}>115 px (kruh)</strong>
+				</div>
+				<div style={{ display: 'flex', flexDirection: 'column' }}>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>👵 Měřítko postavy</span>
+					<strong style={{ fontSize: '0.98rem', color: '#DC2626' }}>+40 % (scale 1,71)</strong>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 var CaneWhipPreview = ({ soaked = false }: { soaked?: boolean }) => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -386,6 +565,7 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 					})] })]
 				}),
 				progress.id === "cane" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CaneWhipPreview, {}),
+				progress.id === "valecnice" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ValecnicePreview, {}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {
 						background: "var(--parchmentDark)",

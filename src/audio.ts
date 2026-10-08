@@ -196,6 +196,11 @@ var SoundManager = class {
 		this.playTone(140, "triangle", .18, .3);
 		setTimeout(() => this.playTone(90, "sawtooth", .22, .25), 40);
 	}
+	valecWhack() {
+		this.playTone(220, "triangle", 0.08, 0.35);
+		setTimeout(() => this.playTone(110, "sawtooth", 0.16, 0.32), 20);
+		setTimeout(() => this.playTone(70, "sine", 0.22, 0.28), 45);
+	}
 	hit() {
 		this.playTone(120, "sawtooth", .1, .25);
 	}

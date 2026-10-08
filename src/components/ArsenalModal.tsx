@@ -48,7 +48,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 							color: "#FEF3C7",
 							textShadow: "2px 2px 0 var(--ink)"
 						},
-						children: "🗡️ Zbrojnice & Arzenál Bubákova"
+						children: "🗡️ Zbrojnice & Knihovna zbraní Bubákova"
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						style: {
 							fontWeight: 800,

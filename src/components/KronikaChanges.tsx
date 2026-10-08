@@ -10,6 +10,69 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '7. října 2026',
+    title: 'Válečnice: Větší sprite (+40 %), dosah úderu (+60 %), 3s omráčení a 20% ignorace odolností',
+    summary: 'Kompletní posílení a detailní rozpis Válečnice v knihovně zbraní: o 40 % větší sprite hospodyně, dosah úderu válečku rozšířen o 60 % na 58 px, doba omráčení prodloužena na 3 sekundy a ignorace odolností nastavena na 20 %.',
+    items: [
+      '👵 Větší Ladovský sprite (+40 %): Vizuální měřítko rázné hospodyně bylo zvětšeno o 40 % (scale z 1,22 na 1,71). Na bojišti působí jako nepřehlédnutelná statná hrdinka.',
+      '📏 O 60 % větší dosah úderu (58 px): Akční rádius, ve kterém bukový váleček zasahuje nepřátele, byl navýšen o 60 % ze 36 px na 58 px (+ poloměr monstra).',
+      '💫 Omráčení trvá 3,0 s: Každý zásah válečkem znehybní bubáky na 3 celé sekundy, okamžitě přeruší jejich nápřah k útoku a roztočí jim nad hlavami komiksové hvězdičky.',
+      '🛡️ Ignorace odolností nastavena na 20 %: Válečnice nově ignoruje přesně 20 % tuhosti (poise), odolnosti proti odhození i vůle monster a částečně proráží redukci u minibossů.',
+      '🌪️ Zpomalení o 40 % v kruhu o 15 % větším než orbit: V okruhu 132 px kolem lovce jsou všichni nepřátelé zpomaleni o 40 % (odolává se statistikou Vůle se započtením 20% ignorace Válečnice).',
+      '⭕ Velký patrolní okruh (115 px): Válečnice obíhá lovce ve velkém kruhu o poloměru 115 px a drží nepřátele v uctivé vzdálenosti.',
+      '📖 Podrobný výpis statistik v knihovně zbraní: Ve Zbrojnici i detailu zbraně je k dispozici kompletní rozpis všech parametrů a interaktivní animovaný náhled.',
+    ],
+  },
+  {
+    date: '7. října 2026',
+    title: 'Hmotnost nepřátel, zpomalení v davu, klouzavé obtékání a varovný nápřah',
+    summary: 'Kompletní fyzikální simulace hmotnosti monster: lovec je přirozeně brzděn davem, těla nepřátel ho klouzavě obtékají a nápřahy útoků jsou doprovázeny ladovským výstražným vykřičníkem.',
+    items: [
+      '⚖️ Fyzikální hmotnost monster: Každé strašidlo má nyní autentickou váhu (lehcí skřítci cca 1 kg, těžká monstra a velcí bossové 2–5 kg). Odpor těl v kolizi s lovcem se sčítá do celkového brzdného odporu davu.',
+      '🛑 Zpomalení při průchodu davem (Crowd Drag): Procházení hordou nepřátel lovce dynamicky zpomaluje podle celkové váhy těl. Minimální rychlost je však garantována na 20 %, takže lovec nezamrzne a může se z chumlu prorvat.',
+      '🕸️ Efekt sevření při nápřahu: Pokud monstrum v těsné blízkosti právě provádí nápřah k úderu, jeho lokální odpor se zdvojnásobí, což simuluje snahu nestvůry sevřít a lapit lovce na místě.',
+      '🔄 Klouzavé vektorové obtékání (Sliding Pushback): Kolizní systém v jediném průchodu bez záseků plynule vytlačuje lovce ven z těl nepřátel rychlostí až 300 px/s, takže lovec přirozeně klouže po obvodu monster a neuvízne uvnitř nich.',
+      '⏱️ Telegrafované zpožděné útoky (Windup Damage): Monstrum zahajuje nápřah, jakmile se lovec přiblíží do jeho dosahu. Poškození dopadne až po dokončení celého nápřahu. Včasným ústupem z dosahu nápřah rychle vyprchá a úder je zmařen.',
+      '❗ Ladovský výstražný vykřičník (Varianta B): Nad hlavami útočících monster se během nápřahu rozsvěcí ladovský varovný terčík s černou konturou, bílým vykřičníkem a barevným přechodem z teplé oranžové do výstražné rudé, který v závěru pulzuje.',
+    ],
+  },
+  {
+    date: '7. října 2026',
+    title: 'Vyvážení speciálních útoků řadových bubáků (+30 % nápřah a cooldown)',
+    summary: 'Všem bubákům kromě bossů a minibossů byla prodloužena doba nápřahu i cooldown speciálních schopností o 30 %, což dává lovci férový čas k reakci a úskoku.',
+    items: [
+      '⏳ +30 % k době nápřahu (windup): Řadoví i elitní bubáci (Kostlivci, Písař, Hrobník, Umrlec, Černý pes, Vodníček, Meluzína, Polednice, Bezhlavý rytíř, Sněhulák, Dráb, Zbojník, Bílá paní, Noční můra, Klekánice, Zbrojnoš, Dřevorubec, Ohnivý muž atd.) se před provedením speciálního výpadu, vrhu či seknutí napřahují o 30 % déle s viditelným varovným telegrafem.',
+      '⏱️ +30 % k době zotavení (cooldown): Interval mezi opakovaným použitím speciálních dovedností a projektilů byl prodloužen o 30 %, takže nepřátelé v davu nespamují nebezpečné výpady příliš často za sebou.',
+      '👑 Zachování síly bossů a minibossů: Hlavní šéfové jednotlivých úrovní (Pekelný čert, Hejkal, Skalní obr, Mlynář, Bezhlavý rytíř, Tříhlavý drak) a minibossové si ponechávají své původní nekompromisní časování i zuřivost.',
+    ],
+  },
+  {
+    date: '7. října 2026',
+    title: 'Tématická kadence útoků bubáků a zranění po prodlevě (Bojový systém)',
+    summary: 'Nepřátelé jsou nově tématicky rozděleni na rychle, normálně a pomalu útočící. Zranění je uděleno až po uplynutí prodlevy od prvního kontaktu s vizuálním telegrafem nápřahu.',
+    items: [
+      '⚡ Rychle útočící bubáci (0,6 s): Drobná hejna a hbití skřítci (Rarášek, Plivník, Šotek, Žabka, Zmrzlík, Veverčák, Myšák, Blatouch, Vánička, Bludička, Černý pes, Jiskřivec, Noční můra, Sazový rarášek) útočí v prodlevě 0,6 s se základním zraněním (1,0×).',
+      '⚔️ Normálně útočící bubáci (1,2 s, +120 %): Kostlivci, vodníci, víly, písaři a lapkové (Kostlivec, Kostlivec s kosou, Červený kostlivec, Písař, Hrobník, Hastrman, Vodníček, Topivec, Ropucha, Meluzína, Mrazík, Severák, Polednice, Klekánice, Divoženka, Zbojník, Čertík, Ohnivý muž, Bílá paní) útočí v prodlevě 1,2 s a udělují +120 % zranění (2,2× násobek).',
+      '🔨 Pomalu útočící kolosy a bossové (1,8 s, +190 %): Těžcí umrlci, Bubák, Hromotluk, Stodolník, Dřevorubec se širočinou, Dráb, Zbrojnoš, Obrněný hejtman lapků, Sněhulák, Ohnivý pes a všichni velcí bossové (Pekelný Čert, Hejkal, Skalní obr, Mlynář, Bezhlavý rytíř, Drak) mají mohutnou prodlevu 1,8 s a drtivé zranění +190 % (2,9× násobek).',
+      '⏱️ Zranění uděleno až po prodlevě: Interval se počítá od okamžiku prvního kontaktu, ale poškození dopadne až po uplynutí celé prodlevy. Lovec má reálný čas reagovat a útokům se včas vyhnout.',
+      '🛡️ Taktický úskok a odhození: Pokud hráč před vypršením prodlevy ustoupí nebo nepřítele odhodí zbraní s odhozem (Válečnice, Česneková topinka, Cep apod.), útok je přerušen a lovec neutrpí žádné poškození.',
+      '⭕ Vizuální telegraf nápřahu: Během kontaktu se kolem útočícího nepřítele vykresluje kruhový indikátor nabíjení úderu (žlutý pro rychlé, oranžový pro normální, červený pro pomalé).',
+      '🔊 Zvukový dopad těžkých ran: Údery pomalých kolosů a bossů doprovází hutný zvukový efekt těžkého zásahu sound.heavyHit().',
+      '📖 Bestiář a Kronika: V kronice i bestiáři je u všech 49 strašidel přehledně zanesena jejich útočná kadence, interval nápřahu a bonus k poškození.',
+    ],
+  },
+  {
+    date: '7. října 2026',
+    title: 'Oprava dvojitého odpočtu kontaktu nepřátel (Combat Balance)',
+    summary: 'Odstraněna chyba zdvojeného odpočtu contactTimeru v enginu. Zranění za sekundu (DPS) při kontaktu s bubáky bylo nechtěně 2× vyšší a nyní je opraveno.',
+    items: [
+      '⏱️ Oprava dvojitého odpočtu: V enginu se contactTimer odečítal dvakrát v tomtéž snímku (v e.update i v kolizní smyčce), což zkracovalo interval mezi ranami z 0,45 s na pouhých 0,22 s.',
+      '💥 Nechtěně dvojnásobné DPS: Bubáci udíleli 4–5 ran/s místo plánovaných cca 2,2 ran/s, takže poškození v čase (DPS) bylo přesně 2× vyšší, což vedlo k bleskové smrti při obklíčení davem i proti bossům.',
+      '🛡️ Normalizace zranění: Interval je nyní pevně stanoven na 0,45 s (cca 2,2 úderu/s), kontaktové poškození je férové a lovec má prostor na manévrování.',
+      '⚔️ Čistá kolizní smyčka: Redundantní odečet z kolizní detekce v App.tsx byl odstraněn a časování je plně řízeno z aktualizačního cyklu nepřítele.',
+    ],
+  },
+  {
+    date: '7. října 2026',
     title: 'Aktualizace průvodce ovládáním a Čertův dědeček',
     summary: 'Kompletní aktualizace herního průvodce o Čertova dědečka, nůši, nový arzenál zbraní a obecní vylepšení.',
     items: [

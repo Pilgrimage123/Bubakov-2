@@ -30,29 +30,46 @@ export function getWeaponDamage(player: any, baseDamage: number) {
 
 var WEAPONS = {
 	valecnice: {
-		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 34, baseCd: 0.55,
-		desc: 'Rázná paní s válečkem obíhající kolem hráče.',
+		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 52, baseCd: 0.48,
+		desc: 'Rázná venkovská paní s bukovým válečkem (+40 % velikost). Obíhá lovce ve velkém kruhu (115 px), má o 60 % větší dosah (58 px), udílí těžké 3s omráčení, odhození (760) a ignoruje 20 % odolností. V zóně o 15 % větší než orbit navíc zpomaluje nepřátele o 40 % (odolnost dle Vůle).',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('valecnice', level, w);
 			const count = Math.max(1, 1 + stats.projectileCount);
-			const orbitRadius = 55 * stats.areaRadiusMult;
+			const orbitRadius = 115 * stats.areaRadiusMult;
+			player._valecniceSlowRadius = orbitRadius * 1.15;
 			const angleBase = player.valecniceAngle || 0;
-			const dmg = getWeaponDamage(player, 34) * stats.damageMult;
-			const kbForce = 300 * stats.knockbackMult;
-			const enemies = player.getNearbyEnemies(orbitRadius + 70);
+			const dmg = getWeaponDamage(player, 52) * stats.damageMult;
+			const kbForce = 760 * stats.knockbackMult;
+			const stunDuration = 3.0 * (stats.statusDurationSec > 0 ? stats.statusDurationSec : 1);
+			const reachBase = 58 * stats.areaRadiusMult;
+			const enemies = player.getNearbyEnemies(orbitRadius + reachBase + 50);
+			let hitAny = false;
 			for (let i = 0; i < count; i++) {
 				const a = angleBase + i * Math.PI * 2 / count;
 				const ox = player.x + Math.cos(a) * orbitRadius;
 				const oy = player.y + Math.sin(a) * orbitRadius;
 				for (const e of enemies) {
 					if (e.isDefeated) continue;
-					const dx = e.x - ox, dy = e.y - oy, reach = 24 * stats.areaRadiusMult + e.radius;
+					const dx = e.x - ox, dy = e.y - oy, reach = reachBase + e.radius;
 					if (dx * dx + dy * dy <= reach * reach) {
 						const dist = Math.hypot(dx, dy) || 1;
-						e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
+						e.takeDamage(dmg, 'physical', (dx / dist) * kbForce, (dy / dist) * kbForce, {
+							ignoreResist: 0.20,
+							stunDuration,
+							source: 'valecnice'
+						});
+						hitAny = true;
 						if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('valecnice', e, 'hit');
 					}
+				}
+			}
+			if (hitAny) {
+				player._valecnicePulse = true;
+				if (typeof sound.valecWhack === 'function') {
+					sound.valecWhack();
+				} else {
+					sound.heavyHit();
 				}
 			}
 			return true;

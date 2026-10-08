@@ -65,6 +65,10 @@ export class SpatialHash<T extends { x: number; y: number }> {
     return this.results;
   }
 
+  queryRadius(x: number, y: number, radius: number): T[] {
+    return this.queryCircle(x, y, radius);
+  }
+
   /**
    * Fills a caller-owned array.
    *
@@ -80,6 +84,15 @@ export class SpatialHash<T extends { x: number; y: number }> {
     out.length = 0;
     this.collectCircle(x, y, radius, out);
     return out;
+  }
+
+  queryRadiusInto(
+    x: number,
+    y: number,
+    radius: number,
+    out: T[],
+  ): T[] {
+    return this.queryCircleInto(x, y, radius, out);
   }
 
   private collectCircle(

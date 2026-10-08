@@ -760,9 +760,16 @@ var WEAPON_UNLOCKS = {
 	},
 	valecnice: {
 		id:"valecnice", realName:"Válečnice", realIcon:"valecnice", realType:"valecnice", defaultUnlocked:true,
-		challengeTitle:"Rázná hospodyně s válečkem", challengeShortDesc:"Válečnice je odemčena v arzenálu.",
-		challengeLongDesc:"Tlustá rázná paní obíhá kolem hráče a svým dřevěným válečkem odhazuje bubáky.",
-		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Válečnice",spoiledTitle:"Rázná paní s válečkem",spoiledDesc:"Rázná paní s válečkem obíhající kolem hráče.",spoiledStatsHint:"Melee orbit • silný knockback",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+		challengeTitle:"Rázná venkovská hospodyně s bukovým válečkem", challengeShortDesc:"Válečnice obíhá lovce ve velkém kruhu a zpomaluje i drtí bubáky.",
+		challengeLongDesc:"Statná venkovská paní (+40 % velikost) obíhající ve velkém patrolním kruhu (115 px). Bukovým válečkem zasahuje v dosahu 58 px (+60 %), uvrhne bubáky do 3s omráčení, odhazuje silou 760, proráží 20 % odolností a v zóně o 15 % větší než orbit zpomaluje nepřátele o 40 % (odolnost dle Vůle).",
+		targetEnemies:[], maxCount:0, milestones:[{
+			minPercent:0,tierLevel:4,
+			spoiledName:"Válečnice s válečkem",
+			spoiledTitle:"Statná rázná hospodyně (Velký kruh & Zpomalení)",
+			spoiledDesc:"Zuřivá paní s bukovým válečkem obíhá lovce (+40 % velikost). Udílí těžké 3s omráčení, odhození 760, má o 60 % větší dosah (58 px), ignoruje 20 % odolností a v kruhu o 15 % větším než orbit navíc zpomaluje nepřátele o 40 % (dle Vůle).",
+			spoiledStatsHint:"💥 Dmg: 52 • ⏱️ Kadence: 0,48 s • 💫 Stun: 3,0 s • 🌪️ Zpomalení: 40 % (+15 % kruh) • 🛡️ Průraz: 20 % • 📏 Dosah: 58 px (+60 %) • 🔨 Odhoz: 760",
+			clueTag:"✅ Plně odemčeno ve zbrojnici!"
+		}]
 	},
 	"cesnekova-topinka": {
 		id:"cesnekova-topinka", realName:"Česneková topinka", realIcon:"cesnekova_topinka", realType:"garlic", defaultUnlocked:true,
