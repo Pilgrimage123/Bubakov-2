@@ -1,5 +1,29 @@
 # Bubákov — Changelog
 
+## 2026-10-08 — Modulární lokalizační architektura, registr jazyků a vrstvený fallback
+
+- **Rozložení monolitického slovníku do samostatných lokálních souborů:**
+  - Původní soubor `src/i18n/index.ts` (přes 700 řádků slovníku) byl rozdělen na samostatné moduly `src/i18n/locales/cs.ts` a `src/i18n/locales/en.ts`. Index nyní obsahuje pouze infrastrukturu registru a přístupové funkce; každý jazyk žije ve vlastním souboru.
+- **Deklarativní registr jazyků (`SUPPORTED_LOCALES`):**
+  - Přidán typovaný registr `LocaleDefinition[]` (kód, název, vlajka, slovník). UI přepínač jazyka v hlavní liště i v nastavení cykluje výhradně přes tento registr. Přidání nového jazyka v budoucnu = přidání jednoho modulu a jedné položky do registru.
+  - Přidány funkce `registerLocale` / `unregisterLocale` pro dynamické rozšiřování podporovaných jazyků za běhu (např. budoucí jazykové DLC).
+- **Vrstvený fallback řetězec (Target → EN → CS → klíč):**
+  - Při chybějícím překladu v cílovém jazyce se text dohledá nejprve v angličtině, pak v kanonické češtině a až poté vrátí samotný klíč. Žádný text se tedy nikdy nezobrazí prázdný.
+- **Typované přístupové funkce pro herní data:**
+  - Přidány funkce `getLevelTranslation`, `getHunterTranslation`, `getGrandfatherItemTranslation`, `getTrophyTranslation` s automatickým fallbackem. Herní datové entity (úrovně, lovci, předměty nůše, trofeje) si ponechávají jazykově neutrální identifikátory; překlady se tahají výhradně přes tyto funkce.
+- **Předávání aktivního jazyka do Canvas rendereru:**
+  - Kontext jazyka (`currentLang`) je nyní součástí stavu enginu (`engineState.ts`) a předáván vykreslovacím metodám. Varovné pruhy bossů, texty odhalení portrétů a plovoucí hlášky reagují okamžitě na změnu jazyka bez nutnosti restartu herního běhu.
+- **Uvolnění striktní omezení `'cs' | 'en'` v uloženém stavu:**
+  - Pole `currentLang` v `MetaProgression` bylo změněno z literálového union typu na `string`, aby uložené hry nebyly nekompatibilní s budoucími jazyky.
+- **Lokalizovaný ovládací modál (`ControlsModal`):**
+  - Přidána plná lokalizační podpora pro modál Ovládání a cíl hry — všechny texty jsou nyní tahovány z aktivního slovníku.
+- **Lokalizace v `GrandfatherShop`, `HunterUnlockModal`, `LevelUnlockModal`:**
+  - Statické řetězce v těchto komponentách nahrazeny voláními `t()` tak, aby se textový obsah přepínal se změnou jazyka v reálném čase.
+- **Testy lokalizace (`tests/i18n.test.ts`):**
+  - Přidána sada testů pokrývající: kompletnost klíčů v EN slovníku vůči CS předloze, správné chování fallback řetězce, funkci `isSupportedLocale`, `registerLocale` / `unregisterLocale` a typované accessory.
+- **ADR-0004:**
+  - Zaznamenáno architektonické rozhodnutí v `docs/adr/0004-modularni-lokalizacni-architektura-a-registr-jazyku.md`.
+
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 
 - **Osikový prut (Poutník) posílen na plnohodnotný úderný bič:**
