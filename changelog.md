@@ -112,7 +112,7 @@
 - **Aktivace milníků zbraní v Sandboxu a při vylepšení z truhly:**
   - Vytvořena funkce `ensureWeaponMilestones`, která automaticky přiřazuje milníky na úrovních 3, 5 a 8 pro testovací běhy, startovní zbraně i vylepšení z malované truhly.
 - **Vyvážení nabídky zbraní v Dědečkově nůši:**
-  - Odstraněno deterministické blokování slotů Topinkou a Válečnicí. Nyní je použit vážený náhodný výběr, který preferuje nesené zbraně lovce a doporučené zbraně, ale dává šanci všem zbraním.
+  - Odstraněna jakákoliv speciální přednost pro Česnekovou topinku a Válečnici; všechny zbraně mají v nůši rovné šance (upřednostňují se pouze stávající zbraně, které již lovec nese, aby mohl vylepšovat svůj aktuální arzenál).
   - Odstraněn stale closure a race condition při rychlých nákupech v nůši (`grandfatherPurchaseIdsRef`).
 - **Oprava Kaple svaté vlny (vesnická budova Church):**
   - Budova po odstranění starého Level-up systému nefungovala; nyní při každém nákupu v dědečkově nůši vyšle masivní posvátnou tlakovou vlnu (400 px, 100 dmg / úroveň).

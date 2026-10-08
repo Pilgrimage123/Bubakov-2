@@ -90,16 +90,14 @@ export function chooseGrandfatherOffers(
   // 1. Garantované zbraně (1–2 zbraně v nabídce pro pestrý výběr a rychlý rozvoj arzenálu)
   const targetWeaponCount = availableWeapons.length >= 2 ? 2 : availableWeapons.length;
   if (targetWeaponCount > 0) {
-    // Upřednostníme zbraně: stávající zbraně lovce (pro level-up) a doporučené kousky (Topinka, Válečnice),
-    // s váženým náhodným výběrem, aby nezablokovaly ostatní zbraně z fondu.
+    // Upřednostníme stávající zbraně lovce (pro level-up),
+    // ostatní zbraně mají rovné šance bez speciální přednosti pro konkrétní typy.
     const pool = [...availableWeapons];
     while (selected.length < targetWeaponCount && pool.length > 0) {
       const weights = pool.map((w) => {
         const isOwned = playerWeapons.some((pw: any) => pw.id === w.weaponId);
-        const isFeatured = w.id === 'wp_cesnekova-topinka' || w.id === 'wp_valecnice';
         let weight = 1.0;
         if (isOwned) weight += 2.0;
-        if (isFeatured) weight += 1.5;
         return weight;
       });
       const totalWeight = weights.reduce((acc, v) => acc + v, 0);
