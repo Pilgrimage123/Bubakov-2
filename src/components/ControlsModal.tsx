@@ -4,6 +4,7 @@ import { KrejcarIcon } from './KrejcarIcon';
 import { HruskaIcon } from './HruskaIcon';
 import { GameIcon } from './GameIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { SUPPORTED_LOCALES, t } from '../i18n';
 
 interface ControlsModalProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ interface ControlsModalProps {
   onTogglePerformanceMode?: (enabled: boolean) => void;
   showPerfOverlay?: boolean;
   onToggleShowPerfOverlay?: (enabled: boolean) => void;
+  currentLang?: string;
+  onSelectLanguage?: (code: string) => void;
 }
 
 export const ControlsModal: React.FC<ControlsModalProps> = ({
@@ -23,6 +26,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   onTogglePerformanceMode,
   showPerfOverlay = false,
   onToggleShowPerfOverlay,
+  currentLang = 'cs',
+  onSelectLanguage,
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -1207,6 +1212,63 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               paddingRight: '6px',
             }}
           >
+            {/* LANGUAGE SELECTION PICKER */}
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '3px solid #B45309',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
+                    🌐 {t('ui.language', currentLang)}
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
+                    {currentLang === 'cs'
+                      ? 'Vyberte jazyk pro celou hru. Změna se projeví okamžitě bez nutnosti restartu.'
+                      : 'Choose your preferred language. Changes take effect instantly without restarting.'}
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {SUPPORTED_LOCALES.map((locale) => {
+                    const isSelected = (currentLang || 'cs') === locale.code;
+                    return (
+                      <button
+                        key={locale.code}
+                        className="lada-btn"
+                        style={{
+                          background: isSelected ? '#16A34A' : '#78350F',
+                          color: '#FFFFFF',
+                          padding: '8px 16px',
+                          fontSize: '0.95rem',
+                          boxShadow: isSelected ? '0 0 10px rgba(34, 197, 94, 0.7)' : undefined,
+                        }}
+                        onClick={() => {
+                          sound.coin();
+                          onSelectLanguage?.(locale.code);
+                        }}
+                      >
+                        {locale.flag} {locale.label} {isSelected ? '✓' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* HIGH PERF MODE */}
             <div
               style={{

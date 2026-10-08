@@ -40,6 +40,7 @@ export interface EngineState {
   lightningFlash: number;
   lightningStrike: { x: number; y: number; time: number } | null;
   nextBossMechanicAt: number;
+  currentLang?: string;
   gameTime: number;
   kills: number;
   coins: number;
@@ -138,6 +139,7 @@ export function createInitialEngineState(): EngineState {
     drakSnoreTimer: 3,
     lastStatsSync: 0,
     gingerbread: 0,
-    grandfather: createGrandfatherRuntime()
+    grandfather: createGrandfatherRuntime(),
+    currentLang: 'cs'
   };
 }

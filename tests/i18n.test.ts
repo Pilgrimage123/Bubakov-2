@@ -168,4 +168,61 @@ describe('i18n localization module', () => {
       expect(WEAPONS.osikovy_prut.baseDmg).toBe(28);
     });
   });
+
+  describe('Locale registry & layered fallback engine', () => {
+    it('has declarative SUPPORTED_LOCALES registry with code, label, flag and dict', async () => {
+      const { SUPPORTED_LOCALES, isSupportedLocale, getLocale } = await import('../src/i18n');
+      expect(SUPPORTED_LOCALES.length).toBeGreaterThanOrEqual(2);
+
+      const csLocale = getLocale('cs');
+      expect(csLocale.code).toBe('cs');
+      expect(csLocale.label).toBe('Čeština');
+      expect(csLocale.flag).toBe('🇨🇿');
+      expect(typeof csLocale.dict).toBe('object');
+
+      const enLocale = getLocale('en');
+      expect(enLocale.code).toBe('en');
+      expect(enLocale.label).toBe('English');
+      expect(enLocale.flag).toBe('🇬🇧');
+      expect(typeof enLocale.dict).toBe('object');
+
+      expect(isSupportedLocale('cs')).toBe(true);
+      expect(isSupportedLocale('en')).toBe(true);
+      expect(isSupportedLocale('xyz')).toBe(false);
+    });
+
+    it('implements layered fallback chain: Target -> en -> cs -> key', async () => {
+      const { registerLocale, unregisterLocale, t } = await import('../src/i18n');
+
+      // Register temporary test locale 'de'
+      registerLocale({
+        code: 'de',
+        label: 'Deutsch',
+        flag: '🇩🇪',
+        dict: {
+          'test.german_only': 'Nur auf Deutsch',
+        },
+      });
+
+      // 1. Target lang has it
+      expect(t('test.german_only', 'de')).toBe('Nur auf Deutsch');
+
+      // 2. Target lang missing -> falls back to English ('en')
+      expect(t('ui.play', 'de')).toBe('Play');
+
+      // 3. Target lang and en missing -> falls back to Czech ('cs')
+      (dictionaries.cs as any)['test.cs_layered_fallback'] = 'Český unikát';
+      expect(t('test.cs_layered_fallback', 'de')).toBe('Český unikát');
+      delete (dictionaries.cs as any)['test.cs_layered_fallback'];
+
+      // 4. Missing everywhere -> returns key
+      expect(t('test.completely_missing_key', 'de')).toBe('test.completely_missing_key');
+
+      // Clean up
+      unregisterLocale('de');
+      const { isSupportedLocale } = await import('../src/i18n');
+      expect(isSupportedLocale('de')).toBe(false);
+    });
+  });
 });
+

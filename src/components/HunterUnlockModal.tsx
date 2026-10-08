@@ -5,40 +5,42 @@ import { sound } from '../audio';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { getHunterTranslation, t } from '../i18n';
 
-var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
+var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked, lang = 'cs' }: { progress: any; onClose: () => void; onStartIfUnlocked?: (id: string) => void; lang?: string }) => {
 	if (!progress) return null;
 	const def = HUNTER_UNLOCKS[progress.id];
+	const hunterTrans = getHunterTranslation(progress.id, lang);
 	const milestonesList = [
 		{
 			pct: 25,
 			tier: 1,
-			title: "25 % – První stopa z lidových pověstí",
-			desc: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledLore || "",
+			title: t('hunter_unlock.tier1_title', lang),
+			desc: t(`hunter.${progress.id}.bio`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 1)?.spoiledLore || "",
 			weapon: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledWeaponHint || "",
 			reached: progress.percent >= 25
 		},
 		{
 			pct: 50,
 			tier: 2,
-			title: "50 % – Zřetelná kresba a odhalení zbraně",
-			desc: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledLore || "",
+			title: t('hunter_unlock.tier2_title', lang),
+			desc: t(`hunter.${progress.id}.bio`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 2)?.spoiledLore || "",
 			weapon: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledWeaponHint || "",
 			reached: progress.percent >= 50
 		},
 		{
 			pct: 75,
 			tier: 3,
-			title: "75 % – Téměř plné barvy a speciální schopnost",
-			desc: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledLore || "",
+			title: t('hunter_unlock.tier3_title', lang),
+			desc: t(`hunter.${progress.id}.bio`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 3)?.spoiledLore || "",
 			weapon: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledAbilityHint || "",
 			reached: progress.percent >= 75
 		},
 		{
 			pct: 100,
 			tier: 4,
-			title: "100 % – Plné odemčení a vstup do party",
-			desc: `Lovec ${def?.realName || ""} se trvale přidá k tvé družině a bude kdykoliv k dispozici pro novou výpravu!`,
+			title: t('hunter_unlock.tier4_title', lang),
+			desc: t('hunter_unlock.unlocked_all', lang, { name: hunterTrans.name || def?.realName || "" }),
 			weapon: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledWeaponHint || "",
 			reached: progress.isUnlocked || progress.percent >= 100
 		}

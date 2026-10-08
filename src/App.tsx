@@ -69,7 +69,7 @@ import { KrejcarIcon } from './components/KrejcarIcon';
 import { TestModeModal } from './components/TestModeModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
-import { t } from './i18n';
+import { t, getSupportedLocales, getLocale, getLevelTranslation, getHunterTranslation, getGrandfatherItemTranslation, getTrophyTranslation, getWeaponTranslation } from './i18n';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
 import { LadaCoverScene } from './components/LadaCoverScene';
@@ -85,7 +85,8 @@ function renderHunterPortrait(
   canvas: HTMLCanvasElement | null,
   drawFn: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number) => void,
   tier: number,
-  t: number
+  t: number,
+  lang: string = 'cs'
 ) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -100,6 +101,17 @@ function renderHunterPortrait(
 
   // Draw base figure first
   drawFn(ctx, 90, 120, t, 0, 0, false, 1.4);
+
+  // Import t() from i18n – since this is a module-level function we inline the key lookup
+  // Keys: canvas.portrait.tier0..tier3
+  const tierKey = `canvas.portrait.tier${tier}` as const;
+  // We resolve the import lazily to avoid circular issues; fall back to Czech labels
+  const tierLabels: Record<string, Record<number, string>> = {
+    cs: { 0: '🔒 ZAMČENO (0 %)', 1: '🔍 25 % ODHALENO', 2: '🔎 50 % ODHALENO', 3: '⚡ 75 % ODHALENO' },
+    en: { 0: '🔒 LOCKED (0 %)', 1: '🔍 25 % REVEALED', 2: '🔎 50 % REVEALED', 3: '⚡ 75 % REVEALED' },
+  };
+  const labelsForLang = tierLabels[lang] ?? tierLabels['cs'];
+  const label = labelsForLang[tier] ?? tierLabels['cs'][tier];
 
   if (tier === 3) {
     // 75% - 99%: Nearly full color, but with a golden lock mist and mystic veil
@@ -118,7 +130,7 @@ function renderHunterPortrait(
     ctx.font = '900 11px Eczar, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('⚡ 75 % ODHALENO', 90, 159);
+    ctx.fillText(label, 90, 159);
     ctx.restore();
   } else if (tier === 2) {
     // 50% - 74%: Sepia / monochrome charcoal sketch. Distinct shapes, hat, and props visible
@@ -138,7 +150,7 @@ function renderHunterPortrait(
     ctx.font = '900 11px Eczar, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🔎 50 % ODHALENO', 90, 159);
+    ctx.fillText(label, 90, 159);
     ctx.restore();
   } else if (tier === 1) {
     // 25% - 49%: Deep charcoal silhouette, rough outline visible
@@ -158,7 +170,7 @@ function renderHunterPortrait(
     ctx.font = '900 11px Eczar, serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🔍 25 % ODHALENO', 90, 159);
+    ctx.fillText(label, 90, 159);
     ctx.restore();
   } else {
     // 0% - 24%: Pitch-black silhouette shrouded in dense mystery fog with glowing question mark
@@ -184,7 +196,7 @@ function renderHunterPortrait(
     ctx.strokeRect(25, 148, 130, 22);
     ctx.fillStyle = '#D4CBBA';
     ctx.font = '900 11px Eczar, serif';
-    ctx.fillText('🔒 ZAMČENO (0 %)', 90, 159);
+    ctx.fillText(label, 90, 159);
     ctx.restore();
   }
 }
@@ -849,12 +861,26 @@ export default function App() {
     } catch {}
   };
 
-  const currentLang: 'cs' | 'en' = meta.currentLang || 'cs';
+  const currentLang: string = meta.currentLang || 'cs';
   const toggleLanguage = () => {
-    const nextLang: 'cs' | 'en' = currentLang === 'cs' ? 'en' : 'cs';
+    const locales = getSupportedLocales();
+    const curIdx = locales.findIndex((l) => l.code === currentLang);
+    const nextIdx = (curIdx + 1) % locales.length;
+    const nextLocale = locales[nextIdx] || locales[0];
     sound.coin();
-    saveMeta({ ...meta, currentLang: nextLang });
+    saveMeta({ ...meta, currentLang: nextLocale.code });
   };
+  const handleSelectLanguage = (langCode: string) => {
+    sound.coin();
+    saveMeta({ ...meta, currentLang: langCode });
+  };
+
+  const currentLocale = getLocale(currentLang);
+  const supportedLocales = getSupportedLocales();
+  const nextLocale = supportedLocales[(supportedLocales.findIndex((l) => l.code === currentLang) + 1) % supportedLocales.length] || supportedLocales[0];
+  const langToggleLabel = `🌐 ${currentLocale.flag} ${currentLocale.code.toUpperCase()} ➔ ${nextLocale.flag} ${nextLocale.code.toUpperCase()}`;
+  const langCompactLabel = `🌐 ${currentLocale.flag} ${currentLocale.code.toUpperCase()}`;
+  const langToggleTitle = `${t('ui.language', currentLang)}: ${currentLocale.label} ➔ ${nextLocale.label}`;
 
   // Selected level state
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
@@ -2214,8 +2240,9 @@ export default function App() {
       p.weapons.forEach((pw: any) => {
         const wDef = WEAPONS[pw.id];
         if (wDef && pw.level < 8) {
+          const wTrans = getWeaponTranslation(pw.id, currentLang);
           possibleRewards.push({
-            name: `${wDef.name} (Úroveň ${pw.level + 1})`,
+            name: `${wTrans.name} (Úroveň ${pw.level + 1})`,
             desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
             icon: wDef.icon,
             action: () => {
@@ -2356,12 +2383,12 @@ export default function App() {
         const xProg = getHunterProgress('sexton', curMeta);
         const gProg = getHunterProgress('granny', curMeta);
 
-        renderHunterPortrait(wandererRef.current, Lada.drawWanderer.bind(Lada), wProg.tier, t);
-        renderHunterPortrait(shepherdRef.current, Lada.drawShepherd.bind(Lada), sProg.tier, t);
-        renderHunterPortrait(korenarkaRef.current, Lada.drawKorenarka.bind(Lada), kProg.tier, t);
-        renderHunterPortrait(watchmanRef.current, Lada.drawWatchman.bind(Lada), mProg.tier, t);
-        renderHunterPortrait(sextonRef.current, Lada.drawSexton.bind(Lada), xProg.tier, t);
-        renderHunterPortrait(grannyRef.current, Lada.drawGranny.bind(Lada), gProg.tier, t);
+        renderHunterPortrait(wandererRef.current, Lada.drawWanderer.bind(Lada), wProg.tier, t, curMeta.currentLang || 'cs');
+        renderHunterPortrait(shepherdRef.current, Lada.drawShepherd.bind(Lada), sProg.tier, t, curMeta.currentLang || 'cs');
+        renderHunterPortrait(korenarkaRef.current, Lada.drawKorenarka.bind(Lada), kProg.tier, t, curMeta.currentLang || 'cs');
+        renderHunterPortrait(watchmanRef.current, Lada.drawWatchman.bind(Lada), mProg.tier, t, curMeta.currentLang || 'cs');
+        renderHunterPortrait(sextonRef.current, Lada.drawSexton.bind(Lada), xProg.tier, t, curMeta.currentLang || 'cs');
+        renderHunterPortrait(grannyRef.current, Lada.drawGranny.bind(Lada), gProg.tier, t, curMeta.currentLang || 'cs');
       }
 
       // In-game simulation (při scénce Babičky a Barunky je čas zastaven)
@@ -2476,7 +2503,7 @@ export default function App() {
               engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
-              engine.texts.push(new DamageText(player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true));
+              engine.texts.push(new DamageText(player.x, player.y - 70, t('callout.dawn', metaRef.current.currentLang || 'cs'), COLORS.mustard, true));
               // All monsters panic and flee
               engine.enemies.forEach((e) => {
                 e.panicked = true;
@@ -7530,6 +7557,12 @@ export default function App() {
     canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
   ) => {
     const isUnlocked = prog.isUnlocked;
+    const hunterTrans = getHunterTranslation(prog.id, currentLang);
+    const displayName = isUnlocked ? hunterTrans.name : prog.spoiledName;
+    const displayTitle = isUnlocked ? hunterTrans.title : prog.clueTag;
+    const displayLore = isUnlocked ? hunterTrans.lore : prog.spoiledLore;
+    const displayWeaponHint = isUnlocked ? hunterTrans.weaponHint : prog.spoiledWeaponHint;
+    const displayAbilityHint = isUnlocked ? hunterTrans.abilityHint : prog.spoiledAbilityHint;
 
     return (
       <div
@@ -7555,33 +7588,33 @@ export default function App() {
             setTimeout(() => setUnlockNotice(null), 4500);
           }
         }}
-        title={isUnlocked ? `Zvolit lovce: ${HUNTER_UNLOCKS[prog.id].realName}` : 'Klikněte pro podrobnosti výzvy'}
+        title={isUnlocked ? `Zvolit lovce: ${hunterTrans.name}` : 'Klikněte pro podrobnosti výzvy'}
       >
         <LadaCardCorners variant={isUnlocked ? 'default' : 'locked'} showBottomCorners={true} />
         <span className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}>
-          {isUnlocked ? '✅ Odemčeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+          {isUnlocked ? `✅ ${t('ui.unlocked', currentLang)}` : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 ${t('ui.locked', currentLang)} (${prog.percent} %)`}
         </span>
         <canvas ref={canvasRef} className="portrait-canvas" width={180} height={180} />
         <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px' }}>
-          {prog.spoiledName}
+          {displayName}
         </h3>
         <div>
           <span className={`hunter-tier-stamp tier-stamp-${prog.tier}`}>
-            {prog.clueTag}
+            {displayTitle}
           </span>
         </div>
 
         <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.84rem', lineHeight: 1.3, color: '#111111' }}>
-          {prog.spoiledLore}
+          {displayLore}
         </p>
 
         {/* Weapons and Ability hints */}
         <div className="hunter-clue-box">
           <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#111111' }}>
-            🗡️ {prog.spoiledWeaponHint}
+            🗡️ {displayWeaponHint}
           </div>
           <div style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '2px', color: '#111111' }}>
-            ⚡ {prog.spoiledAbilityHint}
+            ⚡ {displayAbilityHint}
           </div>
         </div>
 
@@ -7630,7 +7663,7 @@ export default function App() {
         <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
           {isUnlocked ? (
             <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-              Vyrazit do noci ⚔️
+              {t('ui.start_expedition', currentLang) || 'Vyrazit do noci ⚔️'}
             </button>
           ) : (
             <button
@@ -7834,9 +7867,9 @@ export default function App() {
                   fontSize: '0.9rem',
                 }}
                 onClick={toggleLanguage}
-                title={currentLang === 'cs' ? 'Switch language to English' : 'Přepnout jazyk do češtiny'}
+                title={langToggleTitle}
               >
-                🌐 {currentLang === 'cs' ? 'Jazyk: CZ ➔ EN' : 'Language: EN ➔ CZ'}
+                {langToggleLabel}
               </button>
             </div>
             <BubakovCoverTitle />
@@ -7862,6 +7895,11 @@ export default function App() {
                     (lvlId === 4 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
                     (lvlId === 5 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
                     (lvlId === 6 && (meta.bestiaryKills?.drak || 0) >= 1);
+                  const lvlTrans = getLevelTranslation(lvlId, currentLang);
+                  const displayLevelName = isUnlocked || prog.tier === 4 ? lvlTrans.name : prog.spoiledName;
+                  const displaySubtitle = isUnlocked || prog.tier === 4 ? lvlTrans.subtitle : prog.spoiledSubtitle;
+                  const displayDesc = isUnlocked || prog.tier === 4 ? lvlTrans.description : prog.spoiledDesc;
+                  const displayBossHint = isUnlocked || prog.tier === 4 ? `👑 ${lvlTrans.finalBoss.name}` : prog.spoiledBossHint;
 
                   return (
                     <div
@@ -7877,19 +7915,19 @@ export default function App() {
                           setSelectedLevelDetail(prog);
                           if (prog.isQueued) {
                             setUnlockNotice({
-                              title: `🔒 ${prog.spoiledName} je v pořadí!`,
+                              title: `🔒 ${displayLevelName} je v pořadí!`,
                               desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${prog.requiredLevelName}).`,
                             });
                           } else {
                             setUnlockNotice({
-                              title: `🔒 ${prog.spoiledName} (${prog.percent} %)`,
+                              title: `🔒 ${displayLevelName} (${prog.percent} %)`,
                               desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno. Klikněte pro podrobnosti výzvy!`,
                             });
                           }
                           setTimeout(() => setUnlockNotice(null), 4500);
                         }
                       }}
-                      title={isUnlocked ? (isSelected ? `Zvoleno: ${lvl.name} (klikněte pro výběr lovce)` : `Zvolit výpravu: ${lvl.name}`) : 'Klikněte pro podrobnosti výzvy a milníků'}
+                      title={isUnlocked ? (isSelected ? (currentLang === 'cs' ? `Zvoleno: ${lvlTrans.name} (klikněte pro výběr lovce)` : `Selected: ${lvlTrans.name} (click to choose hunter)`) : (currentLang === 'cs' ? `Zvolit výpravu: ${lvlTrans.name}` : `Choose expedition: ${lvlTrans.name}`)) : (currentLang === 'cs' ? 'Klikněte pro podrobnosti výzvy a milníků' : 'Click for challenge details')}
                     >
                       <LadaCardCorners
                         variant={isSelected ? 'selected' : isUnlocked ? 'default' : 'locked'}
@@ -7897,16 +7935,16 @@ export default function App() {
                       />
                       <div className="level-card-header">
                         <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`}>
-                          {isSelected ? '⭐ Zvolená výprava' : isCompleted ? '✅ Pokořeno' : isUnlocked ? '🔓 Otevřeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+                          {isSelected ? (currentLang === 'cs' ? '⭐ Zvolená výprava' : '⭐ Selected Expedition') : isCompleted ? (currentLang === 'cs' ? '✅ Pokořeno' : '✅ Conquered') : isUnlocked ? (currentLang === 'cs' ? '🔓 Otevřeno' : '🔓 Unlocked') : prog.isQueued ? (currentLang === 'cs' ? '🔒 V pořadí (0 %)' : '🔒 Queued (0%)') : `🔒 ${currentLang === 'cs' ? 'Zamčeno' : 'Locked'} (${prog.percent} %)`}
                         </span>
                         <span className="level-theme-tag">{prog.spoiledIcon} {prog.spoiledBadge}</span>
                       </div>
 
                       <div className="level-title" style={{ fontSize: '1.25rem', fontWeight: 900 }}>
-                        {prog.spoiledName}
+                        {displayLevelName}
                       </div>
                       <div className="level-subtitle" style={{ fontSize: '0.85rem', color: 'var(--wood-dark)', fontWeight: 800, minHeight: '32px' }}>
-                        {prog.spoiledSubtitle}
+                        {displaySubtitle}
                       </div>
 
                       <div>
@@ -7916,11 +7954,11 @@ export default function App() {
                       </div>
 
                       <div className="level-desc" style={{ fontSize: '0.84rem', lineHeight: 1.32, color: 'var(--ink)' }}>
-                        {prog.spoiledDesc}
+                        {displayDesc}
                       </div>
 
                       <div className="level-boss-preview" style={{ fontSize: '0.84rem', fontWeight: 800, margin: '6px 0' }}>
-                        {prog.spoiledBossHint}
+                        {displayBossHint}
                       </div>
 
                       {/* Enemies preview tailored to milestone tier */}
@@ -8115,9 +8153,9 @@ export default function App() {
                   boxShadow: '4px 4px 0px var(--ink)',
                 }}
                 onClick={toggleLanguage}
-                title={currentLang === 'cs' ? 'Přepnout jazyk na angličtinu' : 'Switch language to Czech'}
+                title={langToggleTitle}
               >
-                🌐 {currentLang === 'cs' ? 'Jazyk: CZ' : 'Language: EN'}
+                {langToggleLabel}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8226,9 +8264,9 @@ export default function App() {
                   fontSize: '0.9rem',
                 }}
                 onClick={toggleLanguage}
-                title={currentLang === 'cs' ? 'Switch language to English' : 'Přepnout jazyk do češtiny'}
+                title={langToggleTitle}
               >
-                🌐 {currentLang === 'cs' ? 'Jazyk: CZ ➔ EN' : 'Language: EN ➔ CZ'}
+                {langToggleLabel}
               </button>
 
               <div
@@ -8246,7 +8284,7 @@ export default function App() {
                     Cíl výpravy:
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
-                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})</span>
+                    {getLevelTranslation(selectedLevelId, currentLang).name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({getLevelTranslation(selectedLevelId, currentLang).shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
@@ -8264,7 +8302,7 @@ export default function App() {
               </h1>
               <LadaBotanicalFlourish height={20} />
               <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: 'var(--wood-dark)' }}>
-                Koho vyšlete do noci na výpravu do kraje: <strong>{currentLevel.name}</strong>?
+                Koho vyšlete do noci na výpravu do kraje: <strong>{getLevelTranslation(selectedLevelId, currentLang).name}</strong>?
               </p>
               <LadaFrieze repeatCount={16} height={18} />
             </div>
@@ -8272,31 +8310,36 @@ export default function App() {
             {/* Character Selection Grid with animated canvas portraits */}
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
               {/* Poutník - Výchozí odemčený lovec */}
-              <div
-                className="char-card"
-                onClick={() => startGame('wanderer')}
-                title="Poutník – připraven k výpravě"
-              >
-                <LadaCardCorners variant="default" showBottomCorners={true} />
-                <span className="char-card-unlocked-badge">✅ Odemčeno</span>
-                <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
-                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
-                <div>
-                  <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
-                </div>
-                <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoká kuráž (200) a dobrá nálada. Osikový prut. Tulácký instinkt: +35 % k poškození všech zbraní. Schopnost: Pověstná sukovice.
-                </p>
-                <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut (+35 % poškození)</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 Schopnost: Pověstná sukovice (21 s)</div>
-                </div>
-                <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
-                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                    Vyrazit do noci ⚔️
-                  </button>
-                </div>
-              </div>
+              {(() => {
+                const wandererTrans = getHunterTranslation('wanderer', currentLang);
+                return (
+                  <div
+                    className="char-card"
+                    onClick={() => startGame('wanderer')}
+                    title={`${wandererTrans.name} – ${wandererTrans.title}`}
+                  >
+                    <LadaCardCorners variant="default" showBottomCorners={true} />
+                    <span className="char-card-unlocked-badge">✅ {t('ui.unlocked', currentLang)}</span>
+                    <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
+                    <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>{wandererTrans.name}</h3>
+                    <div>
+                      <span className="hunter-tier-stamp tier-stamp-4">{wandererTrans.title}</span>
+                    </div>
+                    <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
+                      {wandererTrans.lore}
+                    </p>
+                    <div className="hunter-clue-box">
+                      <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ {wandererTrans.weaponHint}</div>
+                      <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 {wandererTrans.abilityHint}</div>
+                    </div>
+                    <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+                      <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+                        {t('ui.start_expedition', currentLang) || 'Vyrazit do noci ⚔️'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Pasáček (Progressive unlock) */}
               {renderHunterSelectCard(shepherdProg, shepherdRef)}
@@ -8325,9 +8368,9 @@ export default function App() {
                   boxShadow: '4px 4px 0px var(--ink)',
                 }}
                 onClick={toggleLanguage}
-                title={currentLang === 'cs' ? 'Přepnout jazyk na angličtinu' : 'Switch language to Czech'}
+                title={langToggleTitle}
               >
-                🌐 {currentLang === 'cs' ? 'Jazyk: CZ' : 'Language: EN'}
+                {langToggleLabel}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8471,7 +8514,8 @@ export default function App() {
                 const effectiveCd = Math.max(wDef.baseCd * 0.50, getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
                 const isCane = w.id === 'cane' || w.id === 'osikovy_prut';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
-                const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
+                const wTrans = getWeaponTranslation(w.id, currentLang);
+                const displayName = hasSoaked ? (currentLang === 'en' ? 'Soaked Rod' : 'Mokrý prut') : wTrans.name;
                 const displayIcon = hasSoaked ? '💧' : wDef.icon;
 
                 return (
@@ -8499,7 +8543,7 @@ export default function App() {
                       <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
-                      {wDef.desc}
+                      {wTrans.desc}
                     </p>
                   </div>
                 );
@@ -8741,6 +8785,7 @@ export default function App() {
           onPurchase={purchaseGrandfatherItem}
           onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
+          lang={currentLang}
         />
       )}
 
@@ -9033,30 +9078,33 @@ export default function App() {
                     const claimed = !!meta.trophiesClaimed[t.id];
                     const isMet = t.isMet(meta);
                     const prog = t.getProgress(meta);
+                    const tTrans = getTrophyTranslation(t.id, currentLang);
+                    const displayTitle = tTrans.title || t.title;
+                    const displayDesc = tTrans.desc || t.desc;
 
                     return (
                       <div key={t.id} className={`trophy-card ${claimed ? 'claimed' : isMet ? 'completed' : ''}`}>
                         <div>
                           <div className="trophy-header">
-                            <h4 className="trophy-title">{t.title}</h4>
+                            <h4 className="trophy-title">{displayTitle}</h4>
                             <span className="trophy-reward" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               +{t.reward} <KrejcarIcon size={16} />
                             </span>
                           </div>
-                          <p className="trophy-desc">{t.desc}</p>
+                          <p className="trophy-desc">{displayDesc}</p>
                         </div>
                         <div className="trophy-action-row">
                           <span className="trophy-progress-text">
-                            Postup: {prog.cur} / {prog.max}
+                            {t('trophy.progress', currentLang, { cur: prog.cur, max: prog.max })}
                           </span>
                           {claimed ? (
-                            <span className="badge-claimed">✅ Splněno</span>
+                            <span className="badge-claimed">{t('trophy.completed', currentLang)}</span>
                           ) : isMet ? (
                             <button className="btn-claim-trophy" onClick={() => claimTrophy(t.id)}>
-                              Vyzvednout (+{t.reward})
+                              {t('trophy.claim', currentLang, { reward: t.reward })}
                             </button>
                           ) : (
-                            <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.6 }}>⏳ Nesplněno</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.6 }}>{t('trophy.uncompleted', currentLang)}</span>
                           )}
                         </div>
                       </div>
@@ -9129,6 +9177,8 @@ export default function App() {
         onToggleShowPerfOverlay={(enabled) => {
           saveMeta({ ...meta, showPerfOverlay: enabled });
         }}
+        currentLang={currentLang}
+        onSelectLanguage={handleSelectLanguage}
       />
 
       {/* TEST MODE (SANDBOX) MODAL */}
@@ -9168,12 +9218,14 @@ export default function App() {
         progress={selectedHunterDetail}
         onClose={() => setSelectedHunterDetail(null)}
         onStartIfUnlocked={(id) => startGame(id)}
+        lang={currentLang}
       />
 
       {/* LEVEL UNLOCK DETAILS MODAL */}
       <LevelUnlockModal
         progress={selectedLevelDetail}
         onClose={() => setSelectedLevelDetail(null)}
+        lang={currentLang}
         onSelectIfUnlocked={(id) => {
           setSelectedLevelId(id);
           saveMeta({ ...meta, selectedLevel: id });

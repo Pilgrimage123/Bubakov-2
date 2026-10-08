@@ -1,6 +1,8 @@
 import type { MetaProgression, WeaponId } from '../types';
 import { WEAPON_LEGACY_ALIASES } from '../data/weapons';
 
+import { isSupportedLocale } from '../i18n';
+
 export function toCanonicalWeaponId(id: string): WeaponId {
   return WEAPON_LEGACY_ALIASES[id] || (id as WeaponId);
 }
@@ -32,7 +34,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
     }
   }
 
-  const validLang: 'cs' | 'en' = parsed.currentLang === 'en' || parsed.currentLang === 'cs' ? parsed.currentLang : 'cs';
+  const validLang: string = isSupportedLocale(parsed.currentLang) ? parsed.currentLang : 'cs';
 
   return {
     ...parsed,

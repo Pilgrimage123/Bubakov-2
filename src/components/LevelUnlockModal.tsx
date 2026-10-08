@@ -5,16 +5,18 @@ import { sound } from '../audio';
 import { LEVEL_UNLOCKS } from '../data/levelUnlocks';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { getLevelTranslation, t } from '../i18n';
 
-var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
+var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked, lang = 'cs' }: { progress: any; onClose: () => void; onSelectIfUnlocked?: (id: number) => void; lang?: string }) => {
 	if (!progress) return null;
 	const def = LEVEL_UNLOCKS[progress.id];
+	const lvlTrans = getLevelTranslation(progress.id, lang);
 	const milestonesList = [
 		{
 			pct: 25,
 			tier: 1,
-			title: "25 % – První stopa, mlha a obrysy krajiny",
-			desc: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledDesc || "",
+			title: t('level_unlock.tier1_title', lang),
+			desc: t(`level.${progress.id}.milestone.1.desc`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 1)?.spoiledDesc || "",
 			boss: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledBossHint || "",
 			weather: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledWeatherHint || "",
 			reached: progress.percent >= 25
@@ -22,8 +24,8 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 		{
 			pct: 50,
 			tier: 2,
-			title: "50 % – Zřetelná stezka, počasí a první běsi",
-			desc: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledDesc || "",
+			title: t('level_unlock.tier2_title', lang),
+			desc: t(`level.${progress.id}.milestone.2.desc`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 2)?.spoiledDesc || "",
 			boss: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledBossHint || "",
 			weather: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledWeatherHint || "",
 			reached: progress.percent >= 50
@@ -31,8 +33,8 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 		{
 			pct: 75,
 			tier: 3,
-			title: "75 % – Téměř plné barvy a odhalení hlavního bosse",
-			desc: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledDesc || "",
+			title: t('level_unlock.tier3_title', lang),
+			desc: t(`level.${progress.id}.milestone.3.desc`, lang, undefined) || def?.milestones.find((m) => m.tierLevel === 3)?.spoiledDesc || "",
 			boss: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledBossHint || "",
 			weather: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledWeatherHint || "",
 			reached: progress.percent >= 75
@@ -40,8 +42,8 @@ var LevelUnlockModal = ({ progress, onClose, onSelectIfUnlocked }) => {
 		{
 			pct: 100,
 			tier: 4,
-			title: "100 % – Otevřená brána a neomezený přístup",
-			desc: `Cesta do ${def?.realName || ""} je plně probádána a přístupna pro všechny vaše hrdiny a výpravy!`,
+			title: t('level_unlock.tier4_title', lang),
+			desc: t('level_unlock.unlocked_all', lang, { name: lvlTrans.name || def?.realName || "" }),
 			boss: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledBossHint || "",
 			weather: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledWeatherHint || "",
 			reached: progress.isUnlocked || progress.percent >= 100

@@ -2,6 +2,7 @@ import React from 'react';
 import { GRANDFATHER_ITEMS } from '../data/grandfatherItems';
 import { getGrandfatherPrice, getWaitDiscount, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
+import { getGrandfatherItemTranslation, getWeaponTranslation, t } from '../i18n';
 
 interface Props {
   gingerbread: number;
@@ -15,6 +16,7 @@ interface Props {
   onPurchase: (itemId: string) => boolean;
   onRefreshOffers?: () => void;
   onClose: () => void;
+  lang?: string;
 }
 
 export function GrandfatherShop({
@@ -29,6 +31,7 @@ export function GrandfatherShop({
   onPurchase,
   onRefreshOffers,
   onClose,
+  lang = 'cs',
 }: Props) {
   const discount = Math.round(getWaitDiscount(waitSeconds) * 100);
 
@@ -36,9 +39,9 @@ export function GrandfatherShop({
     <div className="overlay" style={{ background: 'rgba(25, 12, 5, 0.78)', backdropFilter: 'blur(3px)', zIndex: 100 }}>
       <div className="panel" style={{ maxWidth: 860, width: 'min(95vw, 860px)', textAlign: 'center', position: 'relative' }}>
         <div style={{ fontSize: '4.5rem', lineHeight: 1 }}>🧓</div>
-        <h2 style={{ margin: '4px 0', color: '#C53026', fontSize: '2.2rem' }}>DĚDEČEK A JEHO NŮŠE</h2>
+        <h2 style={{ margin: '4px 0', color: '#C53026', fontSize: '2.2rem' }}>{t('grandfather_shop.title', lang)}</h2>
         <p style={{ margin: '2px 0 10px', fontWeight: 800, color: '#78350F' }}>
-          „Perníčky mám rád víc než zlato! Ber, dokud nůše voní!“
+          {t('grandfather_shop.motto', lang)}
         </p>
 
         <div style={{
@@ -46,9 +49,9 @@ export function GrandfatherShop({
           gap: 12, padding: '10px 14px', marginBottom: 10,
           border: '2px solid var(--ink)', borderRadius: 12, background: '#FDECC8',
         }}>
-          <strong style={{ fontSize: '1.2rem', color: '#5B2118' }}>🍪 Nůše lovce: {gingerbread}</strong>
-          <span style={{ fontWeight: 900, color: '#166534' }}>Čekací sleva: −{discount}%</span>
-          <span style={{ fontWeight: 900, color: '#1E3A8A' }}>ŠTĚSTÍ: {luck}</span>
+          <strong style={{ fontSize: '1.2rem', color: '#5B2118' }}>{t('grandfather_shop.pouch', lang, { count: gingerbread })}</strong>
+          <span style={{ fontWeight: 900, color: '#166534' }}>{t('grandfather_shop.wait_discount', lang, { discount })}</span>
+          <span style={{ fontWeight: 900, color: '#1E3A8A' }}>{t('grandfather_shop.luck', lang, { luck })}</span>
         </div>
 
         <div style={{
@@ -101,32 +104,42 @@ export function GrandfatherShop({
             let displayName = item.name;
             let displayDesc = item.description;
             let levelBadge = '';
-            let buttonLabel = 'KOUPIT';
+            let buttonLabel = t('grandfather_shop.buy', lang);
 
             if (item.isWeapon && item.weaponId) {
               const pw = playerWeapons?.find((w: any) => w.id === item.weaponId);
               owned = pw ? pw.level : 0;
               maxStacks = item.maxStacks || 8;
               isMaxed = owned >= maxStacks;
+              const wTrans = getWeaponTranslation(item.weaponId, lang);
+              displayName = wTrans.name || item.name;
+              displayDesc = wTrans.desc || item.description;
+
               if (owned === 0) {
-                levelBadge = '⚔️ Nová zbraň';
-                buttonLabel = 'ZÍSKAT';
+                levelBadge = t('grandfather_shop.new_weapon', lang);
+                buttonLabel = t('grandfather_shop.obtain', lang);
               } else if (isMaxed) {
-                levelBadge = `⚔️ Úroveň: ${owned} / ${maxStacks} (MAX)`;
-                buttonLabel = 'VYČERPÁNO';
+                levelBadge = `⚔️ ${t('grandfather_shop.level_badge', lang, { current: owned, max: maxStacks })} (${t('grandfather_shop.maxed', lang)})`;
+                buttonLabel = t('grandfather_shop.maxed', lang);
               } else {
-                levelBadge = `⚔️ Úroveň: ${owned} / ${maxStacks}`;
-                displayName = `${item.name} (Úroveň ${owned + 1})`;
-                displayDesc = `Vylepšení zbraně na úroveň ${owned + 1} (+12 % zranění, +8 % kadence, +6 % dosah)`;
-                buttonLabel = 'VYLEPŠIT';
+                levelBadge = `⚔️ ${t('grandfather_shop.level_badge', lang, { current: owned, max: maxStacks })}`;
+                const lvlNum = owned + 1;
+                displayName = `${displayName} (${lang === 'cs' ? `Úroveň ${lvlNum}` : `Level ${lvlNum}`})`;
+                displayDesc = lang === 'cs'
+                  ? `Vylepšení zbraně na úroveň ${lvlNum} (+12 % zranění, +8 % kadence, +6 % dosah)`
+                  : `Upgrade weapon to level ${lvlNum} (+12% damage, +8% attack speed, +6% area)`;
+                buttonLabel = t('grandfather_shop.upgrade', lang);
               }
             } else {
               owned = purchasedIds.filter((id) => id === item.id).length;
               maxStacks = item.maxStacks || 5;
               isMaxed = item.maxStacks !== undefined && owned >= item.maxStacks;
-              levelBadge = `Úroveň: ${owned} / ${item.maxStacks || '∞'}`;
+              const gTrans = getGrandfatherItemTranslation(item.id, lang);
+              displayName = gTrans.name || item.name;
+              displayDesc = gTrans.desc || item.description;
+              levelBadge = `${t('grandfather_shop.level_badge', lang, { current: owned, max: item.maxStacks || '∞' })}`;
               if (isMaxed) {
-                buttonLabel = 'VYČERPÁNO';
+                buttonLabel = t('grandfather_shop.maxed', lang);
               }
             }
 
@@ -212,9 +225,11 @@ export function GrandfatherShop({
                 alignItems: 'center',
                 gap: 8,
               }}
-              title={gingerbread >= rerollCost ? `Vytáhne z nůše další zboží (stojí ${rerollCost} perníčků)` : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} 🍪)`}
+              title={gingerbread >= rerollCost
+                ? (lang === 'cs' ? `Vytáhne z nůše další zboží (stojí ${rerollCost} perníčků)` : `Pulls fresh goods from basket (costs ${rerollCost} gingerbread)`)
+                : (lang === 'cs' ? `Nedostatek perníčků na zamíchání (stojí ${rerollCost} 🍪)` : `Not enough gingerbread to reroll (costs ${rerollCost} 🍪)`)}
             >
-              <span>🧺 ZAMÍCHAT NŮŠI</span>
+              <span>🧺 {lang === 'cs' ? 'ZAMÍCHAT NŮŠI' : 'REROLL BASKET'}</span>
               <span style={{
                 background: gingerbread >= rerollCost ? '#FDE68A' : '#D1D5DB',
                 padding: '2px 8px',
