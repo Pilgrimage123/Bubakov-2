@@ -115,6 +115,35 @@ export interface WeaponDef {
 
 export type EnemyAttackCadence = 'fast' | 'normal' | 'slow';
 
+export interface EnemyAttackInfo {
+  isActive: boolean;
+  isWindup: boolean;
+  isStrike: boolean;
+  cadence: EnemyAttackCadence;
+  sequenceProgress: number;
+  windupProgress: number;
+  strikeProgress: number;
+  currentFrame: number;
+  totalFrames: number;
+  frameName: string;
+  lungeX: number;
+  lungeY: number;
+  squashX: number;
+  squashY: number;
+  leanAngle: number;
+  shakeX: number;
+  shakeY: number;
+  angle: number;
+  facingDir: number;
+  hasShockwave: boolean;
+  shockwaveProgress: number;
+  hasDustPuff: boolean;
+  hasSlashArc: boolean;
+  slashArcProgress: number;
+  hasWeaponGleam: boolean;
+  gleamProgress: number;
+}
+
 export interface Enemy {
   id: string;
   x: number;
@@ -131,6 +160,11 @@ export interface Enemy {
   attackRange?: number;   // Dosah úderu (musí být větší než radius + player.radius)
   windupTimer?: number;   // Aktuální časovač nápřahu (0 = nenapřahuje se)
   isAttacking?: boolean;  // Zda právě probíhá nápřah
+  strikeTimer?: number;   // Časovač probíhajícího úderu a nápřahového návratu
+  strikeMaxTimer?: number;// Maximální délka úderu podle kadence
+  attackAngle?: number;   // Směr úderu vůči cíli
+  attackTargetX?: number; // Cílové souřadnice úderu
+  attackTargetY?: number;
   isBoss?: boolean;
   isMiniboss?: boolean;
   isDefeated?: boolean;

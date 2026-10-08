@@ -165,7 +165,7 @@ var WEAPON_TYPE_LABELS = {
 		color: "#FFFFFF"
 	}
 };
-var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) => {
+var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1, onOpenGrandfatherShop }: { isOpen: boolean; onClose: () => void; onStartTestRun: (hero: any, levelId: any, weapons: any[]) => void; initialLevelId?: number; onOpenGrandfatherShop?: () => void }) => {
 	const [selectedHero, setSelectedHero] = (0, import_react.useState)("wanderer");
 	const [selectedLevel, setSelectedLevel] = (0, import_react.useState)(initialLevelId);
 	const [activeTab, setActiveTab] = (0, import_react.useState)("hero");
@@ -1080,7 +1080,24 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1 }) =>
 							display: "flex",
 							gap: "8px"
 						},
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						children: [
+							onOpenGrandfatherShop && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								className: "lada-btn btn-small",
+								style: {
+									margin: 0,
+									background: "#B45309",
+									color: "#FFFFFF",
+									fontWeight: 900,
+									boxShadow: "3px 3px 0 var(--ink)",
+									cursor: "pointer"
+								},
+								onClick: () => {
+									sound.coin();
+									onOpenGrandfatherShop();
+								},
+								children: "🧺 Dědečkův obchod (Nůše)"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 							className: "lada-btn btn-small",
 							style: {
 								margin: 0,

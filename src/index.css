@@ -2615,3 +2615,41 @@ body {
 #courage-container .bar-text {
   color: var(--cream);
 }
+
+@keyframes grandfatherPullItem {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.92);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes grandfatherBasketShake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-1.5deg) translateY(-2px); }
+  40% { transform: rotate(1.5deg) translateY(1px); }
+  60% { transform: rotate(-1.2deg) translateY(-1px); }
+  80% { transform: rotate(1deg) translateY(1px); }
+}
+
+@keyframes grandfatherCoinSwoosh {
+  0% { transform: scale(0.6) translateY(10px); opacity: 0; }
+  50% { transform: scale(1.15) translateY(-6px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.item-pulled-from-basket {
+  animation: grandfatherPullItem 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.basket-shaking {
+  animation: grandfatherBasketShake 0.45s ease-in-out infinite;
+}
+

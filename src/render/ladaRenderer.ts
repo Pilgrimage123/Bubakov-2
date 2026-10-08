@@ -1,6 +1,6 @@
 import React from 'react';
 import { COLORS } from '../constants';
-import type { Enemy } from '../types';
+import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 
 var Lada = {
 	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
@@ -2606,7 +2606,7 @@ var Lada = {
 		}
 		ctx.restore();
 	},
-	drawRarach(ctx, x, y, time, vx, panicked) {
+	drawRarach(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const bounce = Math.sin(time * (panicked ? 24 : 12)) * (panicked ? 5 : 4);
 		const tailWave = Math.cos(time * (panicked ? 40 : 20)) * (panicked ? 20 : 12);
@@ -2650,6 +2650,16 @@ var Lada = {
 			const armWave2 = Math.cos(time * 28) * 8;
 			this.drawLimb(ctx, -5, 2, -12, -14 + armWave1, "#B91C1C", 3);
 			this.drawLimb(ctx, 5, 2, 10, -15 + armWave2, "#B91C1C", 3);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Claws cocked back near ears, ready to snap
+				this.drawBentLimb(ctx, -5, 2, -12, -8, -16, -16, "#B91C1C", 3.2);
+				this.drawBentLimb(ctx, 5, 2, 12, -8, 16, -16, "#B91C1C", 3.2);
+			} else {
+				// Furious forward claw strike
+				this.drawBentLimb(ctx, -5, 2, 6, 2, 18, 4, "#B91C1C", 3.5);
+				this.drawBentLimb(ctx, 5, 2, 10, -2, 22, -1, "#B91C1C", 3.5);
+			}
 		} else {
 			this.drawLimb(ctx, -5, 4, -9, 10, "#B91C1C", 3);
 			this.drawLimb(ctx, 5, 4, 9, 10, "#B91C1C", 3);
@@ -2747,7 +2757,7 @@ var Lada = {
 		ctx.fill();
 		ctx.restore();
 	},
-	drawBubak(ctx, x, y, time, vx, panicked) {
+	drawBubak(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const bob = Math.sin(time * (panicked ? 18 : 5)) * (panicked ? 6 : 5);
 		const tilt = panicked ? .12 + Math.sin(time * 14) * .05 : Math.cos(time * 10) * .1;
 		ctx.save();
@@ -2777,9 +2787,10 @@ var Lada = {
 			ctx.quadraticCurveTo(cx, cy, cx - 10, cy + (panicked ? -4 : 10));
 			ctx.stroke();
 		}
-		ctx.fillStyle = panicked ? "#FDE047" : COLORS.mustard;
+		const eyeColor = (attackInfo && attackInfo.isActive) ? "#EF4444" : (panicked ? "#FDE047" : COLORS.mustard);
+		ctx.fillStyle = eyeColor;
 		ctx.shadowColor = ctx.fillStyle;
-		ctx.shadowBlur = 10;
+		ctx.shadowBlur = (attackInfo && attackInfo.isActive) ? 18 : 10;
 		const lookX = panicked ? -10 : vx < 0 ? -8 : 8;
 		ctx.beginPath();
 		ctx.ellipse(lookX - 6, -12, panicked ? 6 : 5, panicked ? 9 : 8, 0, 0, Math.PI * 2);
@@ -2791,9 +2802,26 @@ var Lada = {
 		ctx.arc(lookX + 5, -12, 2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.shadowBlur = 0;
+		if (attackInfo && attackInfo.isActive && attackInfo.isStrike) {
+			// Jagged shadow mouth on strike impact
+			ctx.fillStyle = "#FEF08A";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.moveTo(lookX - 9, 3);
+			ctx.lineTo(lookX - 5, 8);
+			ctx.lineTo(lookX - 1, 3);
+			ctx.lineTo(lookX + 3, 8);
+			ctx.lineTo(lookX + 7, 3);
+			ctx.lineTo(lookX + 3, 11);
+			ctx.lineTo(lookX - 3, 11);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
 		ctx.restore();
 	},
-	drawHastrman(ctx, x, y, time, vx, panicked) {
+	drawHastrman(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const bob = panicked ? Math.abs(Math.sin(time * 22)) * 4 : Math.sin(time * 12) * 2;
 		ctx.save();
@@ -2839,6 +2867,38 @@ var Lada = {
 			this.drawBentLimb(ctx, -8, -4, -14, -20, -6, -34, "#3A76A8", 5);
 			const armWave = Math.sin(time * 26) * 10;
 			this.drawLimb(ctx, 8, -4, -16, 12 + armWave, "#3A76A8", 5);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Willow whip cocked high behind hat with water droplets
+				this.drawBentLimb(ctx, -8, -4, -14, -8, -16, -18, "#3A76A8", 5);
+				this.drawBentLimb(ctx, 8, -4, 16, -16, 22, -30, "#3A76A8", 5);
+				ctx.strokeStyle = "#166534";
+				ctx.lineWidth = 3.2;
+				ctx.beginPath();
+				ctx.moveTo(22, -30);
+				ctx.quadraticCurveTo(34, -40, 36, -20);
+				ctx.stroke();
+				ctx.fillStyle = "#38BDF8";
+				ctx.beginPath();
+				ctx.arc(36, -18, 2.8, 0, Math.PI * 2);
+				ctx.arc(30, -28, 2, 0, Math.PI * 2);
+				ctx.fill();
+			} else {
+				// Furious willow whip lash forward with water splashes
+				this.drawBentLimb(ctx, -8, -4, -12, 8, "#3A76A8", 5);
+				this.drawBentLimb(ctx, 8, -4, 20, 2, 28, 8, "#3A76A8", 5);
+				ctx.strokeStyle = "#166534";
+				ctx.lineWidth = 3.5;
+				ctx.beginPath();
+				ctx.moveTo(28, 8);
+				ctx.quadraticCurveTo(42, 4, 48, 18);
+				ctx.stroke();
+				ctx.fillStyle = "#38BDF8";
+				ctx.beginPath();
+				ctx.arc(48, 20, 3.2, 0, Math.PI * 2);
+				ctx.arc(42, 12, 2.2, 0, Math.PI * 2);
+				ctx.fill();
+			}
 		} else {
 			this.drawLimb(ctx, -8, -4, -12, 10, "#3A76A8", 5);
 			this.drawLimb(ctx, 8, -4, 12, 10, "#3A76A8", 5);
@@ -3151,7 +3211,7 @@ var Lada = {
 		ctx.restore();
 		ctx.restore();
 	},
-	drawCert(ctx, x, y, time, vx, panicked, isBoss = false, isCharging = false) {
+	drawCert(ctx, x, y, time, vx, panicked, isBoss = false, isCharging = false, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = isBoss ? 2.3 : 1.25;
 		const charging = isCharging || Math.abs(vx) > 330;
@@ -3286,10 +3346,10 @@ var Lada = {
 		ctx.beginPath();
 		ctx.arc((glanceBack ? -4 : 4) + .5, -21.5, 1.2, 0, Math.PI * 2);
 		ctx.fill();
-		if ((isBoss || charging) && !panicked) {
+		if ((isBoss || charging || (attackInfo && attackInfo.isActive)) && !panicked) {
 			ctx.save();
-			if (charging) {
-				// THRUSTING PITCHFORK STRAIGHT FORWARD IN FULL CHARGE ATTACK
+			if (charging || (attackInfo && attackInfo.isActive && attackInfo.isStrike)) {
+				// THRUSTING PITCHFORK STRAIGHT FORWARD IN FULL CHARGE / STRIKE ATTACK
 				ctx.strokeStyle = COLORS.woodDark;
 				ctx.lineWidth = 4.5;
 				ctx.beginPath();
@@ -3316,6 +3376,29 @@ var Lada = {
 					ctx.fillStyle = i % 2 === 0 ? "#EF4444" : "#FBBF24";
 					ctx.beginPath();
 					ctx.arc(58 + Math.cos(emberAng) * 12, -2 + Math.sin(emberAng) * 8, 2.2, 0, Math.PI * 2);
+					ctx.fill();
+				}
+			} else if (attackInfo && attackInfo.isActive && attackInfo.isWindup) {
+				// PITCHFORK COCKED BACK MENACINGLY WITH EMBER SPARK CLOUD
+				ctx.strokeStyle = COLORS.woodDark;
+				ctx.lineWidth = 4.2;
+				ctx.beginPath();
+				ctx.moveTo(6, 12);
+				ctx.lineTo(-20, -28);
+				ctx.stroke();
+				this.setupPath(ctx, "#3F3F46", COLORS.ink, 2.5);
+				ctx.beginPath();
+				ctx.moveTo(-26, -30);
+				ctx.lineTo(-20, -38);
+				ctx.lineTo(-14, -30);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+				for (let i = 0; i < 4; i++) {
+					const emberAng = time * 14 + i * 1.5;
+					ctx.fillStyle = i % 2 === 0 ? "#EF4444" : "#FBBF24";
+					ctx.beginPath();
+					ctx.arc(-20 + Math.cos(emberAng) * 9, -34 + Math.sin(emberAng) * 7, 2.2, 0, Math.PI * 2);
 					ctx.fill();
 				}
 			} else {
@@ -3355,7 +3438,7 @@ var Lada = {
 		}
 		ctx.restore();
 	},
-	drawHejkal(ctx, x, y, time, vx, panicked) {
+	drawHejkal(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = 2.5;
 		const bob = Math.sin(time * (panicked ? 18 : 6)) * (panicked ? 5 : 3.5);
@@ -3413,6 +3496,16 @@ var Lada = {
 		if (panicked) {
 			ctx.moveTo(10, 10);
 			ctx.lineTo(-24, -30);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Club cocked high back behind head
+				ctx.moveTo(6, 10);
+				ctx.lineTo(-18, -36);
+			} else {
+				// Smashed forward down into earth
+				ctx.moveTo(14, 14);
+				ctx.lineTo(36, 4);
+			}
 		} else {
 			ctx.moveTo(14, 14);
 			ctx.lineTo(30, -28);
@@ -3423,6 +3516,14 @@ var Lada = {
 		if (panicked) {
 			ctx.arc(-22, -28, 2.2, 0, Math.PI * 2);
 			ctx.arc(-18, -22, 2.2, 0, Math.PI * 2);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				ctx.arc(-16, -34, 2.4, 0, Math.PI * 2);
+				ctx.arc(-14, -28, 2.4, 0, Math.PI * 2);
+			} else {
+				ctx.arc(34, 4, 2.6, 0, Math.PI * 2);
+				ctx.arc(30, 8, 2.6, 0, Math.PI * 2);
+			}
 		} else {
 			ctx.arc(28, -26, 2.2, 0, Math.PI * 2);
 			ctx.arc(25, -20, 2.2, 0, Math.PI * 2);
@@ -3472,7 +3573,7 @@ var Lada = {
 		ctx.restore();
 		ctx.restore();
 	},
-	drawObr(ctx, x, y, time, vx, panicked) {
+	drawObr(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = 2.9;
 		const bob = Math.sin(time * (panicked ? 16 : 4)) * (panicked ? 4 : 3);
@@ -3507,6 +3608,43 @@ var Lada = {
 			const armWave = Math.sin(time * 20) * 6;
 			this.drawBentLimb(ctx, -18, -4, -26, -20 + armWave, -28, -36 + armWave, "#52525B", 8);
 			this.drawBentLimb(ctx, 18, -4, 26, -20 - armWave, 28, -36 - armWave, "#52525B", 8);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Obr hoists massive pine club overhead with both hands!
+				this.drawBentLimb(ctx, -18, -4, -24, -26, -10, -42, "#52525B", 8);
+				this.drawBentLimb(ctx, 18, -4, 24, -26, 12, -42, "#52525B", 8);
+				ctx.strokeStyle = "#422006";
+				ctx.lineWidth = 7.5;
+				ctx.beginPath();
+				ctx.moveTo(-34, -46);
+				ctx.lineTo(38, -42);
+				ctx.stroke();
+				ctx.fillStyle = "#713F12";
+				ctx.beginPath();
+				ctx.arc(28, -42, 6, 0, Math.PI * 2);
+				ctx.arc(-24, -46, 5, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.strokeStyle = COLORS.ink;
+				ctx.lineWidth = 2.2;
+				ctx.stroke();
+			} else {
+				// Obr slams giant pine club straight down into ground!
+				this.drawBentLimb(ctx, -18, -4, -20, 6, -8, 24, "#52525B", 8);
+				this.drawBentLimb(ctx, 18, -4, 20, 6, 14, 24, "#52525B", 8);
+				ctx.strokeStyle = "#422006";
+				ctx.lineWidth = 7.5;
+				ctx.beginPath();
+				ctx.moveTo(2, -4);
+				ctx.lineTo(34, 28);
+				ctx.stroke();
+				ctx.fillStyle = "#713F12";
+				ctx.beginPath();
+				ctx.arc(28, 24, 6.5, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.strokeStyle = COLORS.ink;
+				ctx.lineWidth = 2.2;
+				ctx.stroke();
+			}
 		}
 		ctx.strokeStyle = "#F59E0B";
 		ctx.lineWidth = 2.2;
@@ -3709,7 +3847,7 @@ var Lada = {
 		ctx.fill();
 		ctx.restore();
 	},
-	drawSkeletonScythe(ctx, x, y, time, vx, panicked) {
+	drawSkeletonScythe(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 22 : 11;
 		const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
@@ -3751,6 +3889,14 @@ var Lada = {
 		if (panicked) {
 			const armShudder = Math.sin(time * 30) * 4;
 			this.drawBentLimb(ctx, -6, -10, -14, -22 + armShudder, -18, -32 + armShudder, COLORS.bone, 3.5);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				this.drawBentLimb(ctx, -6, -10, -12, -22, -14, -30, COLORS.bone, 3.5);
+				this.drawBentLimb(ctx, 6, -10, 0, -20, -10, -28, COLORS.bone, 3.5);
+			} else {
+				this.drawBentLimb(ctx, -6, -10, 10, -4, 24, -2, COLORS.bone, 3.5);
+				this.drawBentLimb(ctx, 6, -10, 16, -6, 28, -4, COLORS.bone, 3.5);
+			}
 		}
 		this.setupPath(ctx, COLORS.bone, COLORS.ink, 2.5);
 		ctx.beginPath();
@@ -3772,6 +3918,16 @@ var Lada = {
 		if (panicked) {
 			ctx.moveTo(8, 4);
 			ctx.lineTo(-24, 22);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Scythe shaft hoisted way back high behind skull
+				ctx.moveTo(6, 12);
+				ctx.lineTo(-16, -34);
+			} else {
+				// Sweeping across in front
+				ctx.moveTo(8, 12);
+				ctx.lineTo(36, -6);
+			}
 		} else {
 			ctx.moveTo(10, 16);
 			ctx.lineTo(18, -28);
@@ -3783,6 +3939,16 @@ var Lada = {
 			ctx.moveTo(-24, 22);
 			ctx.quadraticCurveTo(-40, 26, -38, 14);
 			ctx.quadraticCurveTo(-30, 20, -24, 22);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				ctx.moveTo(-16, -34);
+				ctx.quadraticCurveTo(-34, -44, -32, -56);
+				ctx.quadraticCurveTo(-22, -44, -16, -34);
+			} else {
+				ctx.moveTo(36, -6);
+				ctx.quadraticCurveTo(52, -18, 50, -32);
+				ctx.quadraticCurveTo(42, -16, 36, -6);
+			}
 		} else {
 			ctx.moveTo(18, -28);
 			ctx.quadraticCurveTo(34, -36, 32, -48);
@@ -4279,7 +4445,7 @@ var Lada = {
 		ctx.shadowBlur = 0;
 		ctx.restore();
 	},
-	drawDrevorubec(ctx, x, y, time, vx, panicked) {
+	drawDrevorubec(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 22 : 10;
 		const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
@@ -4318,6 +4484,16 @@ var Lada = {
 		if (panicked) {
 			ctx.moveTo(8, 8);
 			ctx.lineTo(-20, -24);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Cocked axe high behind head
+				ctx.moveTo(4, 10);
+				ctx.lineTo(-24, -30);
+			} else {
+				// Chopping downward forward into target
+				ctx.moveTo(6, 12);
+				ctx.lineTo(36, 16);
+			}
 		} else {
 			ctx.moveTo(12, 12);
 			ctx.lineTo(24, -26);
@@ -4329,6 +4505,16 @@ var Lada = {
 			ctx.moveTo(-18, -26);
 			ctx.lineTo(-30, -32);
 			ctx.lineTo(-30, -18);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				ctx.moveTo(-22, -32);
+				ctx.lineTo(-36, -36);
+				ctx.lineTo(-34, -22);
+			} else {
+				ctx.moveTo(34, 14);
+				ctx.lineTo(46, 8);
+				ctx.lineTo(46, 24);
+			}
 		} else {
 			ctx.moveTo(22, -28);
 			ctx.lineTo(34, -34);
@@ -5189,7 +5375,7 @@ var Lada = {
 
 		ctx.restore();
 	},
-	drawBezhlavyRytir(ctx, x, y, time, vx, panicked, isEnraged = false) {
+	drawBezhlavyRytir(ctx, x, y, time, vx, panicked, isEnraged = false, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = 2.45;
 		const walkSpeed = panicked ? 24 : isEnraged ? 14 : 8.5;
@@ -5328,8 +5514,12 @@ var Lada = {
 		// 5. RIGHT ARM WIELDING HEAVY KNIGHTLY BROADSWORD
 		ctx.save();
 		const swordSway = Math.sin(time * walkSpeed * 0.8) * 0.15;
+		let swordRot = swordSway + 0.3;
+		if (attackInfo && attackInfo.isActive && !panicked) {
+			swordRot = attackInfo.isWindup ? (-0.85 + Math.sin(time * 30) * 0.08) : 1.25;
+		}
 		ctx.translate(14, -8);
-		ctx.rotate(swordSway + 0.3);
+		ctx.rotate(swordRot);
 		this.drawBentLimb(ctx, 0, 0, 10, 6, 16, 2, "#334155", 6);
 		this.setupPath(ctx, "#B45309", COLORS.ink, 2);
 		ctx.beginPath();
@@ -8731,9 +8921,465 @@ for (const key of Object.keys(Lada)) {
 	const val = Lada[key];
 	if (typeof val === "function") Lada[key] = val.bind(Lada);
 }
-function drawEnemyRenderer(method, ctx, x, y, time, vx, panicked) {
+
+export function getEnemyAttackAnimationState(enemy: any, time: number): EnemyAttackInfo {
+  const cadence: EnemyAttackCadence = enemy.attackCadence || 'normal';
+  const windupTimer = enemy.windupTimer || 0;
+  const strikeTimer = enemy.strikeTimer || 0;
+  
+  // Total interval and timing split
+  const totalInterval = enemy.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
+  const strikeMax = enemy.strikeMaxTimer || (cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42);
+  const attackDelay = enemy.attackDelay || Math.max(0.2, totalInterval - strikeMax);
+
+  const isStrike = strikeTimer > 0;
+  const isWindup = !isStrike && windupTimer > 0;
+  const isActive = (isStrike || isWindup || Boolean(enemy.isAttacking)) && !enemy.isDefeated && !enemy.dead;
+
+  const attackAngle = typeof enemy.attackAngle === 'number'
+    ? enemy.attackAngle
+    : (typeof enemy.vx === 'number' && enemy.vx < 0 ? Math.PI : 0);
+  const facingDir = Math.cos(attackAngle) >= 0 ? 1 : -1;
+
+  if (!isActive) {
+    return {
+      isActive: false,
+      isWindup: false,
+      isStrike: false,
+      cadence,
+      sequenceProgress: 0,
+      windupProgress: 0,
+      strikeProgress: 0,
+      currentFrame: 0,
+      totalFrames: cadence === 'slow' ? 5 : cadence === 'normal' ? 4 : 3,
+      frameName: 'idle',
+      lungeX: 0,
+      lungeY: 0,
+      squashX: 1,
+      squashY: 1,
+      leanAngle: 0,
+      shakeX: 0,
+      shakeY: 0,
+      angle: attackAngle,
+      facingDir,
+      hasShockwave: false,
+      shockwaveProgress: 0,
+      hasDustPuff: false,
+      hasSlashArc: false,
+      slashArcProgress: 0,
+      hasWeaponGleam: false,
+      gleamProgress: 0,
+    };
+  }
+
+  const windupProgress = Math.min(1, Math.max(0, windupTimer / attackDelay));
+  const strikeProgress = isStrike ? Math.min(1, Math.max(0, 1 - (strikeTimer / strikeMax))) : 0;
+  const sequenceProgress = isStrike
+    ? (attackDelay + strikeProgress * strikeMax) / (attackDelay + strikeMax)
+    : (windupProgress * attackDelay) / (attackDelay + strikeMax);
+
+  let currentFrame = 0;
+  let totalFrames = 3;
+  let frameName = 'windup';
+  let lungeDist = 0;
+  let squashX = 1;
+  let squashY = 1;
+  let leanAngle = 0;
+  let shakeX = 0;
+  let shakeY = 0;
+  let hasShockwave = false;
+  let shockwaveProgress = 0;
+  let hasDustPuff = false;
+  let hasSlashArc = false;
+  let slashArcProgress = 0;
+  let hasWeaponGleam = false;
+  let gleamProgress = 0;
+
+  if (cadence === 'fast') {
+    // 3 FAST FRAMES: 0 = crouch_coil (windup), 1 = lightning_strike (early strike), 2 = snap_recovery (late strike)
+    totalFrames = 3;
+    if (isWindup || (!isStrike && windupProgress > 0)) {
+      currentFrame = 0;
+      frameName = 'crouch_coil';
+      const wp = windupProgress;
+      squashX = 1.0 + 0.12 * wp;
+      squashY = 1.0 - 0.14 * wp;
+      lungeDist = -6 * wp;
+      leanAngle = -0.16 * wp;
+      if (wp > 0.65) {
+        shakeX = Math.sin(time * 36) * 1.5;
+        shakeY = Math.cos(time * 36) * 1.5;
+      }
+    } else {
+      if (strikeProgress < 0.45) {
+        currentFrame = 1;
+        frameName = 'lightning_strike';
+        const sp = strikeProgress / 0.45;
+        lungeDist = 18 * (1 - sp * 0.35);
+        squashX = 1.18 - sp * 0.08;
+        squashY = 0.88 + sp * 0.08;
+        leanAngle = 0.24 * (1 - sp * 0.4);
+        hasSlashArc = true;
+        slashArcProgress = sp;
+      } else {
+        currentFrame = 2;
+        frameName = 'snap_recovery';
+        const rp = (strikeProgress - 0.45) / 0.55;
+        const bounce = Math.sin(rp * Math.PI) * 3;
+        lungeDist = (1 - rp) * 6 + bounce;
+        squashX = 1.0 + Math.sin(rp * Math.PI * 2) * 0.05;
+        squashY = 1.0 - Math.sin(rp * Math.PI * 2) * 0.05;
+        leanAngle = 0.12 * (1 - rp);
+      }
+    }
+  } else if (cadence === 'normal') {
+    // 4 NORMAL FRAMES: 0 = alert_raise, 1 = apex_tension, 2 = power_slash, 3 = balance_recovery
+    totalFrames = 4;
+    if (isWindup || (!isStrike && windupProgress > 0)) {
+      if (windupProgress < 0.50) {
+        currentFrame = 0;
+        frameName = 'alert_raise';
+        const p = windupProgress / 0.50;
+        lungeDist = -8 * p;
+        leanAngle = -0.18 * p;
+        squashX = 0.96;
+        squashY = 1.05;
+      } else {
+        currentFrame = 1;
+        frameName = 'apex_tension';
+        const p = (windupProgress - 0.50) / 0.50;
+        lungeDist = -8 - 4 * p;
+        leanAngle = -0.18 - 0.14 * p;
+        squashX = 0.92;
+        squashY = 1.10;
+        shakeX = Math.sin(time * 26) * (1.2 + 0.8 * p);
+        shakeY = Math.cos(time * 26) * (1.2 + 0.8 * p);
+        hasWeaponGleam = p > 0.4;
+        gleamProgress = p;
+      }
+    } else {
+      if (strikeProgress < 0.42) {
+        currentFrame = 2;
+        frameName = 'power_slash';
+        const sp = strikeProgress / 0.42;
+        lungeDist = 24 * (1 - sp * 0.35);
+        leanAngle = 0.32 * (1 - sp * 0.35);
+        squashX = 1.16;
+        squashY = 0.86;
+        hasSlashArc = true;
+        slashArcProgress = sp;
+        hasDustPuff = sp < 0.35;
+      } else {
+        currentFrame = 3;
+        frameName = 'balance_recovery';
+        const rp = (strikeProgress - 0.42) / 0.58;
+        lungeDist = 12 * (1 - rp);
+        leanAngle = 0.18 * (1 - rp);
+        squashX = 1.0 + (1 - rp) * 0.06;
+        squashY = 1.0 - (1 - rp) * 0.06;
+      }
+    }
+  } else {
+    // 5 SLOW FRAMES: 0 = heavy_brace, 1 = overhead_hoist, 2 = trembling_apex, 3 = earth_smash, 4 = heavy_dislodge
+    totalFrames = 5;
+    if (isWindup || (!isStrike && windupProgress > 0)) {
+      if (windupProgress < 0.35) {
+        currentFrame = 0;
+        frameName = 'heavy_brace';
+        const p = windupProgress / 0.35;
+        squashX = 1.0 + 0.20 * p;
+        squashY = 1.0 - 0.18 * p;
+        lungeDist = 0;
+        leanAngle = 0;
+        hasDustPuff = p > 0.35;
+      } else if (windupProgress < 0.70) {
+        currentFrame = 1;
+        frameName = 'overhead_hoist';
+        const p = (windupProgress - 0.35) / 0.35;
+        squashX = 1.20 - 0.32 * p;
+        squashY = 0.82 + 0.40 * p;
+        lungeDist = -10 * p;
+        leanAngle = -0.38 * p;
+      } else {
+        currentFrame = 2;
+        frameName = 'trembling_apex';
+        const p = (windupProgress - 0.70) / 0.30;
+        squashX = 0.88;
+        squashY = 1.22;
+        lungeDist = -10 - 2 * p;
+        leanAngle = -0.38 - 0.06 * p;
+        shakeX = Math.sin(time * 42) * (2.2 + 1.2 * p);
+        shakeY = Math.cos(time * 42) * (2.2 + 1.2 * p);
+        hasWeaponGleam = true;
+        gleamProgress = p;
+      }
+    } else {
+      if (strikeProgress < 0.38) {
+        currentFrame = 3;
+        frameName = 'earth_smash';
+        const sp = strikeProgress / 0.38;
+        lungeDist = 36 * (1 - sp * 0.3);
+        leanAngle = 0.42 * (1 - sp * 0.35);
+        squashX = 1.28;
+        squashY = 0.76;
+        hasShockwave = true;
+        shockwaveProgress = sp;
+        hasSlashArc = true;
+        slashArcProgress = sp;
+        hasDustPuff = true;
+      } else {
+        currentFrame = 4;
+        frameName = 'heavy_dislodge';
+        const rp = (strikeProgress - 0.38) / 0.62;
+        const heaveWobble = Math.sin(rp * 14) * (2.2 * (1 - rp));
+        lungeDist = 20 * (1 - rp) + heaveWobble;
+        leanAngle = 0.22 * (1 - rp);
+        squashX = 1.0 + (1 - rp) * 0.14;
+        squashY = 1.0 - (1 - rp) * 0.14;
+        shakeX = heaveWobble * 0.8;
+      }
+    }
+  }
+
+  const lungeX = Math.cos(attackAngle) * lungeDist;
+  const lungeY = Math.sin(attackAngle) * lungeDist;
+
+  return {
+    isActive: true,
+    isWindup,
+    isStrike,
+    cadence,
+    sequenceProgress,
+    windupProgress,
+    strikeProgress,
+    currentFrame,
+    totalFrames,
+    frameName,
+    lungeX,
+    lungeY,
+    squashX,
+    squashY,
+    leanAngle,
+    shakeX,
+    shakeY,
+    angle: attackAngle,
+    facingDir,
+    hasShockwave,
+    shockwaveProgress,
+    hasDustPuff,
+    hasSlashArc,
+    slashArcProgress,
+    hasWeaponGleam,
+    gleamProgress,
+  };
+}
+
+export function drawEnemyAttackEffectsPre(ctx: CanvasRenderingContext2D, enemy: any, info: EnemyAttackInfo) {
+  if (!info.isActive) return;
+
+  // 1. Heavy impact ground shockwave (for slow cadence)
+  if (info.hasShockwave) {
+    const sp = info.shockwaveProgress;
+    const alpha = Math.max(0, 1 - sp * 1.1);
+    const radiusX = (enemy.radius * 0.9) + sp * (enemy.radius * 2.2);
+    const radiusY = radiusX * 0.42;
+    const shockX = enemy.x + Math.cos(info.angle) * 12;
+    const shockY = enemy.y + enemy.radius * 0.65 + Math.sin(info.angle) * 6;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(shockX, shockY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(28, 19, 14, ${alpha * 0.85})`;
+    ctx.lineWidth = 3.2 * (1 - sp * 0.6);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(shockX, shockY, radiusX * 0.82, radiusY * 0.82, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(220, 38, 38, ${alpha * 0.65})`;
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    // Earth debris / flying pebble specks
+    ctx.fillStyle = `rgba(120, 53, 15, ${alpha})`;
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      const dist = radiusX * (0.6 + sp * 0.5);
+      const px = shockX + Math.cos(a) * dist;
+      const py = shockY + Math.sin(a) * (dist * 0.42) - sp * 10;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2 * (1 - sp * 0.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 2. Foot dust clouds (Ladovské obláčky)
+  if (info.hasDustPuff) {
+    const dustAlpha = info.isStrike ? (1 - info.strikeProgress) : (info.windupProgress);
+    const footY = enemy.y + enemy.radius * 0.75;
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.85, Math.max(0.1, dustAlpha * 0.8));
+    ctx.fillStyle = "#E2D9C8";
+    ctx.strokeStyle = "#1C130E";
+    ctx.lineWidth = 1.6;
+
+    // Left dust puff
+    ctx.beginPath();
+    ctx.arc(enemy.x - enemy.radius * 0.6, footY, 5.5, 0, Math.PI * 2);
+    ctx.arc(enemy.x - enemy.radius * 0.85, footY + 1, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Right dust puff
+    ctx.beginPath();
+    ctx.arc(enemy.x + enemy.radius * 0.6, footY, 5.5, 0, Math.PI * 2);
+    ctx.arc(enemy.x + enemy.radius * 0.85, footY + 1, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+export function drawEnemyAttackEffectsPost(ctx: CanvasRenderingContext2D, enemy: any, info: EnemyAttackInfo) {
+  if (!info.isActive) return;
+
+  const ang = info.angle;
+  const dir = info.facingDir;
+
+  // 1. Weapon Gleam / Warning Star at Apex Tension
+  if (info.hasWeaponGleam) {
+    const p = info.gleamProgress;
+    const gleamScale = 0.6 + p * 0.8 + Math.sin(Date.now() * 0.02) * 0.2;
+    const starX = enemy.x + (dir * enemy.radius * 0.6) - Math.cos(ang) * 4;
+    const starY = enemy.y - enemy.radius * 0.95;
+
+    ctx.save();
+    ctx.translate(starX, starY);
+    ctx.scale(gleamScale, gleamScale);
+
+    ctx.beginPath();
+    ctx.moveTo(0, -9);
+    ctx.lineTo(2.4, -2.4);
+    ctx.lineTo(9, 0);
+    ctx.lineTo(2.4, 2.4);
+    ctx.lineTo(0, 9);
+    ctx.lineTo(-2.4, 2.4);
+    ctx.lineTo(-9, 0);
+    ctx.lineTo(-2.4, -2.4);
+    ctx.closePath();
+    ctx.fillStyle = info.cadence === 'slow' ? '#EF4444' : '#FBBF24';
+    ctx.strokeStyle = '#1C130E';
+    ctx.lineWidth = 1.6;
+    ctx.lineJoin = 'round';
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 2. Dynamic Slash Arcs and Claw Streaks
+  if (info.hasSlashArc) {
+    const sp = info.slashArcProgress;
+    const alpha = Math.max(0, 1 - sp * 1.15);
+
+    ctx.save();
+    ctx.translate(enemy.x, enemy.y);
+    ctx.rotate(ang);
+
+    if (info.cadence === 'fast') {
+      ctx.strokeStyle = `rgba(28, 19, 14, ${alpha})`;
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      const reach = enemy.radius * 1.45 + sp * 8;
+      for (let i = -1; i <= 1; i++) {
+        const oy = i * 7;
+        ctx.beginPath();
+        ctx.moveTo(enemy.radius * 0.4, oy - i * 3);
+        ctx.lineTo(reach, oy + i * 4);
+        ctx.stroke();
+
+        ctx.fillStyle = i === 0 ? '#FBBF24' : '#EF4444';
+        ctx.beginPath();
+        ctx.arc(reach + 2, oy + i * 4, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (info.cadence === 'normal') {
+      const arcRadius = enemy.radius * 1.4 + sp * 6;
+      const startAngle = -Math.PI * 0.35 + sp * 0.2;
+      const endAngle = Math.PI * 0.35 - sp * 0.1;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(245, 158, 11, ${alpha * 0.65})`;
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(28, 19, 14, ${alpha * 0.95})`;
+      ctx.lineWidth = 2.8;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius - 6, startAngle + 0.15, endAngle - 0.15);
+      ctx.strokeStyle = `rgba(254, 240, 138, ${alpha * 0.8})`;
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    } else {
+      const arcRadius = enemy.radius * 1.7 + sp * 10;
+      const startAngle = -Math.PI * 0.48 + sp * 0.15;
+      const endAngle = Math.PI * 0.48 - sp * 0.1;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(220, 38, 38, ${alpha * 0.75})`;
+      ctx.lineWidth = 12;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(251, 191, 36, ${alpha * 0.9})`;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius + 4, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(28, 19, 14, ${alpha})`;
+      ctx.lineWidth = 3.2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, arcRadius - 4, startAngle, endAngle);
+      ctx.strokeStyle = `rgba(28, 19, 14, ${alpha})`;
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      for (let i = 0; i < 5; i++) {
+        const sparkT = startAngle + (i / 4) * (endAngle - startAngle);
+        const sx = Math.cos(sparkT) * (arcRadius + (i % 2 === 0 ? 8 : -6));
+        const sy = Math.sin(sparkT) * (arcRadius + (i % 2 === 0 ? 8 : -6));
+        ctx.fillStyle = i % 2 === 0 ? '#FBBF24' : '#EF4444';
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2.5 * (1 - sp * 0.6), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
+}
+
+function drawEnemyRenderer(method: string, ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: EnemyAttackInfo) {
 	const drawer = Lada[method];
-	if (typeof drawer === "function") drawer.call(Lada, ctx, x, y, time, vx, panicked);
+	if (typeof drawer === "function") drawer.call(Lada, ctx, x, y, time, vx, panicked, attackInfo);
 }
 
 export function drawEnemyWarningSign(
@@ -8742,6 +9388,7 @@ export function drawEnemyWarningSign(
   cameraOffset: { x: number; y: number } = { x: 0, y: 0 }
 ) {
   if (!enemy.windupTimer || enemy.windupTimer <= 0 || !enemy.attackDelay) return;
+  if ((enemy.strikeTimer || 0) > 0) return;
 
   const currentTransform = typeof ctx.getTransform === 'function' ? ctx.getTransform() : null;
   const isAlreadyTranslated = currentTransform && (
@@ -9270,4 +9917,8 @@ export function drawValecniceCompanion(
   ctx.restore();
 }
 
-export { Lada, drawEnemyRenderer };
+export {
+  Lada,
+  drawEnemyRenderer,
+  type EnemyAttackInfo
+};

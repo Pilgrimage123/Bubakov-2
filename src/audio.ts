@@ -139,9 +139,25 @@ var SoundManager = class {
 		this.playTone(190, "triangle", .18, .13);
 		setTimeout(() => this.playTone(150, "triangle", .24, .1), 80);
 	}
+	grandfatherOpen() {
+		this.playTone(240, "triangle", .15, .08);
+		setTimeout(() => this.playTone(320, "sine", .22, .12), 60);
+		setTimeout(() => this.playTone(480, "triangle", .35, .15), 130);
+	}
+	grandfatherReroll() {
+		this.playTone(180, "sawtooth", .1, .06);
+		setTimeout(() => this.playTone(220, "triangle", .12, .08), 50);
+		setTimeout(() => this.playTone(330, "sine", .18, .12), 110);
+		setTimeout(() => this.playTone(440, "triangle", .22, .1), 180);
+	}
+	mouseSqueak() {
+		this.playTone(1850, "sine", .08, .14);
+		setTimeout(() => this.playTone(2400, "sine", .09, .12), 40);
+	}
 	grandfatherPurchase() {
 		this.playTone(260, "square", .06, .1);
 		setTimeout(() => this.playTone(180, "triangle", .14, .09), 45);
+		setTimeout(() => this.playTone(380, "sine", .2, .12), 90);
 	}
 	slash() {
 		this.playTone(220, "triangle", .12, .2);

@@ -42,7 +42,16 @@ import {
   getHolyPushMultiplier,
 } from './data/holy';
 import { TROPHIES } from './data/trophies';
-import { Lada, drawEnemyRenderer, drawEnemyWarningSign, drawStunStars, drawValecniceCompanion } from './render/ladaRenderer';
+import {
+  Lada,
+  drawEnemyRenderer,
+  drawEnemyWarningSign,
+  drawStunStars,
+  drawValecniceCompanion,
+  getEnemyAttackAnimationState,
+  drawEnemyAttackEffectsPre,
+  drawEnemyAttackEffectsPost,
+} from './render/ladaRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
@@ -1055,13 +1064,32 @@ export default function App() {
     setGameState('grandfather');
   }, []);
 
+  const openGrandfatherShopTest = useCallback(() => {
+    const eng = engineRef.current;
+    eng.grandfather.active = true;
+    eng.grandfather.x = eng.player?.x || 0;
+    eng.grandfather.y = eng.player?.y || 0;
+    eng.grandfather.waitStartedAt = eng.gameTime - 180;
+    eng.gingerbread = Math.max(eng.gingerbread, 350);
+    eng.grandfather.offers = chooseGrandfatherOffers(
+      eng.gingerbread,
+      eng.player?.luck || 2,
+      grandfatherPurchaseIdsRef.current,
+      eng.player?.weapons || [{ id: 'cane', level: 1 }],
+      4
+    );
+    setIsTestModeOpen(false);
+    grandfatherOpenRef.current = true;
+    setGameState('grandfather');
+  }, []);
+
   const closeGrandfatherShop = useCallback(() => {
     const eng = engineRef.current;
     eng.grandfather.active = false;
     eng.grandfather.cooldown = 25;
     eng.grandfather.rerollsThisEncounter = 0;
     grandfatherOpenRef.current = false;
-    setGameState('playing');
+    setGameState((prev) => (prev === 'grandfather' ? (engineRef.current.player ? 'playing' : 'menu') : prev));
   }, []);
 
   const purchaseGrandfatherItem = useCallback((itemId: string) => {
@@ -4098,6 +4126,7 @@ export default function App() {
                   if (isCane && e.isAttacking) {
                     e.isAttacking = false;
                     e.windupTimer = 0;
+                    e.strikeTimer = 0;
                   }
                   if (!s.noMasteryProc && s.weaponId) player.triggerWeaponMastery(s.weaponId, e, 'hit');
                   if (s.soaked) e.soak();
@@ -4133,13 +4162,24 @@ export default function App() {
             if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
               e.isAttacking = false;
               e.windupTimer = 0;
+              e.strikeTimer = 0;
               e.inContact = false;
               continue;
             }
 
+            // Tick active strike animation timer
+            if ((e.strikeTimer || 0) > 0) {
+              e.strikeTimer = Math.max(0, e.strikeTimer - dt);
+            }
+
+            const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
+            const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
             const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
             const attackRange = typeof e.attackRange === 'number' ? e.attackRange : (e.radius + 25);
-            const attackDelay = typeof e.attackDelay === 'number' ? e.attackDelay : (e.attackInterval || 0.5);
+            const totalInterval = e.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
+            const attackDelay = typeof e.attackDelay === 'number' && e.attackDelay > 0
+              ? e.attackDelay
+              : Math.max(0.2, totalInterval - strikeDuration);
             const isColliding = distToPlayer < e.radius + player.radius;
 
             // Speciální výpad Čerta s vidlemi
@@ -4158,27 +4198,37 @@ export default function App() {
               e.vy = 0;
             }
 
-            // Telegrafovaný nápřah a útok monster (Windup Damage)
-            if (distToPlayer <= attackRange) {
+            // Telegrafovaný nápřah a útok monster (Windup -> Strike -> Recovery)
+            if ((e.strikeTimer || 0) > 0) {
+              // Enemy is currently playing out the active strike & recovery animation
+              e.isAttacking = true;
+              e.inContact = true;
+            } else if (distToPlayer <= attackRange) {
               e.isAttacking = true;
               e.inContact = true;
               e.contactLeaveTimer = 0;
+              e.attackAngle = Math.atan2(player.y - e.y, player.x - e.x);
+              e.attackTargetX = player.x;
+              e.attackTargetY = player.y;
               e.windupTimer = (e.windupTimer || 0) + dt;
               if (e.windupTimer >= attackDelay) {
+                // THE HIT LANDS: damage is dealt and smooth multi-frame strike is triggered!
+                e.strikeTimer = strikeDuration;
+                e.strikeMaxTimer = strikeDuration;
+                e.windupTimer = 0;
                 if (currentGameState === 'playing') {
                   const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
                   const contactDamage = e.damage * mult;
                   player.takeDamage(contactDamage, 'physical', e, true);
-                  if (e.attackCadence === 'slow') {
+                  if (cadence === 'slow') {
                     sound.heavyHit();
                   }
                 }
-                e.windupTimer = 0;
               }
             } else {
               // Pokud hráč stihne uniknout mimo dosah: postupné snižování nápřahu
               e.windupTimer = Math.max(0, (e.windupTimer || 0) - dt * 2);
-              if (e.windupTimer === 0) {
+              if (e.windupTimer === 0 && (e.strikeTimer || 0) <= 0) {
                 e.isAttacking = false;
                 e.inContact = false;
               }
@@ -4632,7 +4682,7 @@ export default function App() {
         // Výstražný symbol nad hlavami útočících monster a hvězdičky omráčení
         for (const enemy of engine.enemies) {
           if (!enemy.isDefeated && !enemy.dead && isInView(enemy.x, enemy.y, enemy.radius + 35, viewLeft, viewTop, viewRight, viewBottom)) {
-            if ((enemy.windupTimer || 0) > 0) {
+            if ((enemy.windupTimer || 0) > 0 && (enemy.strikeTimer || 0) <= 0) {
               drawEnemyWarningSign(ctx, enemy, cam);
             }
             if ((enemy.stunTimer || 0) > 0) {
@@ -5062,7 +5112,9 @@ export default function App() {
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : (radius / 15);
-    const attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : (typeof stats.attackInterval === 'number' ? stats.attackInterval : 0.5);
+    const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
+    const computedWindupDelay = Math.max(0.2, attackInterval - strikeDuration);
+    const attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
     return {
@@ -5082,6 +5134,11 @@ export default function App() {
       attackRange,
       windupTimer: 0,
       isAttacking: false,
+      strikeTimer: 0,
+      strikeMaxTimer: strikeDuration,
+      attackAngle: 0,
+      attackTargetX: 0,
+      attackTargetY: 0,
       attackCadence: cadence,
       attackInterval,
       radius,
@@ -6696,6 +6753,7 @@ export default function App() {
           if (this.aiState === 'windup') {
             this.aiState = 'idle';
             this.windupTimer = 0;
+            this.strikeTimer = 0;
           }
         }
 
@@ -6713,6 +6771,7 @@ export default function App() {
             if (this.isAttacking) {
               this.isAttacking = false;
               this.windupTimer = 0;
+              this.strikeTimer = 0;
             }
           } else {
             // Boss levelu – resist zde funguje!
@@ -7317,30 +7376,50 @@ export default function App() {
 
         const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
 
+        // Get smart detailed attack animation state according to enemy attack speed & cadence
+        const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
+
+        // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
+        if (attackInfo.isActive) {
+          drawEnemyAttackEffectsPre(ctx, this, attackInfo);
+        }
+
+        // Apply procedural attack kinematics (lunge, lean, squash & stretch, tension tremor)
+        if (attackInfo.isActive) {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.translate(attackInfo.lungeX + attackInfo.shakeX, attackInfo.lungeY + attackInfo.shakeY);
+          ctx.rotate(attackInfo.leanAngle * attackInfo.facingDir);
+          ctx.scale(attackInfo.squashX, attackInfo.squashY);
+          ctx.translate(-this.x, -this.y);
+        }
+
+        const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : this.vx;
+
         if (this.id === 'cert') {
           const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
             ? Math.cos(this.chargeDirX)
-            : this.vx;
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300);
+            : renderFacingVx;
+          Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300, attackInfo);
         } else if (this.id === 'hejkal') {
-          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
         } else if (this.id === 'obr') {
-          Lada.drawObr(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          Lada.drawObr(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
         } else if (this.id === 'mlynar') {
-          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.hp <= this.maxHp * 0.5);
+          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.hp <= this.maxHp * 0.5);
         } else if (this.id === 'meluzina') {
-          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
         } else if (this.id === 'polednice') {
-          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
         } else if (this.id === 'klekanice') {
-          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
         } else if (this.id === 'drak') {
           const attacks = {
             fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
             ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
             roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
           };
-          Lada.drawDrak(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
+          Lada.drawDrak(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
         } else {
           drawEnemyRenderer(
             this.method,
@@ -7348,9 +7427,16 @@ export default function App() {
             this.x,
             this.y,
             this.animTime,
-            this.vx,
+            renderFacingVx,
             isFleeing,
+            attackInfo
           );
+        }
+
+        if (attackInfo.isActive) {
+          ctx.restore();
+          // Post-sprite attack effects (cleave/slash arcs, claws, apex weapon gleam star, impact sparks)
+          drawEnemyAttackEffectsPost(ctx, this, attackInfo);
         }
 
         const palette = this.palette || (ENEMIES[this.id]?.palette);
@@ -7518,7 +7604,7 @@ export default function App() {
         }
 
         // Attack charging / windup telegraph while in attack range
-        if (((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated) {
+        if (((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated && (this.strikeTimer || 0) <= 0) {
           ctx.save();
           const totalInterval = this.attackDelay || this.attackInterval || (this.attackCadence === 'fast' ? 0.6 : this.attackCadence === 'slow' ? 1.8 : 1.2);
           const currentTimer = this.windupTimer || (totalInterval - (this.contactTimer || 0));
@@ -9149,9 +9235,10 @@ export default function App() {
         isOpen={isTestModeOpen}
         onClose={() => setIsTestModeOpen(false)}
         onStartTestRun={(hero, levelId, weapons) => {
-          startGame(hero, levelId, weapons, true);
+          startGame(hero, levelId as any, weapons, true);
         }}
         initialLevelId={selectedLevelId}
+        onOpenGrandfatherShop={openGrandfatherShopTest}
       />
 
       {/* RESET PROGRESS CONFIRMATION MODAL */}
