@@ -9,6 +9,7 @@ import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { t, type SupportedLang } from '../i18n';
 
 var CATEGORIES = [
 	{
@@ -48,7 +49,7 @@ var CATEGORIES = [
 		label: "👑 Velcí bossové"
 	}
 ];
-var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
+var BestiaryModal = ({ isOpen, onClose, bestiaryKills, lang = 'cs' }: { isOpen: boolean; onClose: () => void; bestiaryKills: Record<string, number>; lang?: SupportedLang | string }) => {
 	const [selectedCategory, setSelectedCategory] = (0, import_react.useState)("all");
 	const [selectedId, setSelectedId] = (0, import_react.useState)("rarach");
 	const previewCanvasRef = (0, import_react.useRef)(null);
@@ -300,7 +301,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 											fontSize: "0.94rem",
 											color: "#111111"
 										},
-										children: prog.name
+										children: prog.tier >= 4 ? (t(`bestiary.${m.id}.name`, lang) || prog.name) : prog.name
 									})]
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									style: {
@@ -355,7 +356,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 											fontSize: "1.85rem",
 											color: "#2A170A"
 										},
-										children: enemyProg.name
+										children: enemyProg.tier >= 4 ? (t(`bestiary.${currentMonster.id}.name`, lang) || enemyProg.name) : enemyProg.name
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 										style: {
@@ -364,7 +365,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 											color: "#78350F",
 											marginBottom: "8px"
 										},
-										children: enemyProg.title
+										children: enemyProg.tier >= 3 ? (t(`bestiary.${currentMonster.id}.title`, lang) || enemyProg.title) : enemyProg.title
 									})
 								] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 									style: {
