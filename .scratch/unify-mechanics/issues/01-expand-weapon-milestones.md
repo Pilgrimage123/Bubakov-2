@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] Definovat hodnosti 1–8 a unikátní volby pro hodnosti 3, 5, 8 u všech 11 zbývajících zbraní (povidlove_buchty, kovarske_vidle, kovana_halapartna, dreveny_cep, devatero_kviti, snehova_koule, kynuty_kolac, horky_brambor, vceli_roj, hromnicka, svecena_kropenka).
-- [ ] Zabezpečit, že každá volba má folklórní název, popis a platné statistické modifikátory (baseDamageMult, cooldownMult, projectileCountDelta, areaRadiusMult, knockbackMult, statusDurationSec).
-- [ ] Aktualizovat `WEAPONS_WITH_MILESTONES` na všech 15 zbraní v `src/data/weaponMilestones.ts`.
-- [ ] Zajistit, že `validateWeaponMilestones()` ověří 100% arzenálu bez vyhození výjimky.
+- [x] Definovat hodnosti 1–8 a unikátní volby pro hodnosti 3, 5, 8 u všech 11 zbývajících zbraní (povidlove_buchty, kovarske_vidle, kovana_halapartna, dreveny_cep, devatero_kviti, snehova_koule, kynuty_kolac, horky_brambor, vceli_roj, hromnicka, svecena_kropenka).
+- [x] Zabezpečit, že každá volba má folklórní název, popis a platné statistické modifikátory (baseDamageMult, cooldownMult, projectileCountDelta, areaRadiusMult, knockbackMult, statusDurationSec).
+- [x] Aktualizovat `WEAPONS_WITH_MILESTONES` na všech 15 zbraní v `src/data/weaponMilestones.ts`.
+- [x] Zajistit, že `validateWeaponMilestones()` ověří 100% arzenálu bez vyhození výjimky.
