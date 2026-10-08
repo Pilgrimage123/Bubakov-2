@@ -1,5 +1,30 @@
 # Bubákov — Changelog
 
+## 2026-10-08 — Fázované útočné animace, procedurální kinematika bubáků a bojové zotavení
+
+- **Procedurální kinematika a univerzální obálka v `drawEnemyRenderer`:**
+  - Každý z 49 bubáků nyní disponuje fázovanými animacemi útoku (3 fáze pro rychlé, 4 pro normální, 5 pro pomalé).
+  - Transformace těla zahrnují squash & stretch (stlačení před výskokem, natažení při nápřahu, stlačení při dopadu), dynamický záklon/předklon, vysokofrekvenční třes na vrcholu nápřahu a směrové výpady k lovci (20 px u rychlých, 24 px u normálních, 36 px u pomalých).
+  - Výpočet probíhá s nulovými alokacemi paměti na snímek v cyklu vykreslování a garantuje vyváženost stavů canvasu (stack depth delta = 0).
+- **Ladovské vizuální efekty (VFX):**
+  - Podkladové prachové obláčky a eliptické rázové vlny v zemi (`#2A170A`, `#FBBF24`).
+  - Čtyřcípé výstražné hvězdičky na hrotu zbraně / nápřahu (zlatá pro normální bubáky, rudá pro pomalé), sečné inkoustové oblouky (135° a 160°) a vykreslování siluet zbraní pro klíčové archetypy (kmen borovice u Obra, dvouruční sekera u Dřevorubce a Zbojníka, zubatá kosa u Kostlivce, kované vidle s jiskrami u Čerta a Čertíka).
+- **Synchronizace mechaniky a bojového cyklu v `GameEngine`:**
+  - Časování úderu striktně svázáno s deklarovanou kadencí v bestiáři: rychlý = 0,6 s (zotavení 0,15 s), normální = 1,2 s (zotavení 0,20 s), pomalý = 1,8 s (zotavení 0,25 s) s centrálními konstantami `CADENCE_ATTACK_DELAYS` a `CADENCE_RECOVERY_DURATIONS`.
+  - Fixace úhlu útoku (`attackAngle`) na začátku nápřahu, nehybné zapření během nápřahu a zotavení.
+  - Správná orientace těla (`facingDir` a `effectiveVx`) směrem k cíli i při nulové rychlosti během nápřahu.
+- **Vyhodnocení úskoku a přerušení útoku (User Story 14 a 15):**
+  - Směrový kužel zásahu (~100° půlúhel) a kontrola dosahu na dopadu: včasný úskok mimo dosah nebo za záda bubáka vyprázdní úder do hlíny s nulovým poškozením hráče.
+  - Silný odhoz (knockback) nebo omráčení (stun) okamžitě přeruší běžící nápřah (`interruptAttack()`) a vrátí bubáka do neutrálu.
+- **Podpora bossů a oddělení interaktivních postav:**
+  - Bossové (Sněhulák, Bezhlavý rytíř, Čert, Mlynář, Drak) směrováni přes `drawEnemyRenderer` s předáváním fázových parametrů.
+  - V `BubakovCoverTitle` plně odděleny nezávislé animace a reakce na kliknutí Strašáka a Čertíka.
+  - Odstraněna zastaralá komponenta `AnimatedBubak.tsx`.
+- **Architektonická dokumentace (ADR-0005) a GLOSSARY:**
+  - Zaznamenáno architektonické rozhodnutí v `docs/adr/0005-fazovane-utocne-animace-a-kinematika-bubaku.md` a rozšířen `GLOSSARY.md`.
+- **Testy:**
+  - Kompletní sada vitest testů v `tests/enemyAttackCadence.test.ts` a `tests/enemyRenderKinematics.test.ts` pokrývající všech 49 nepřátel, bossy, kadenci úderů i směrové úskoky.
+
 ## 2026-10-08 — Modulární lokalizační architektura, registr jazyků a vrstvený fallback
 
 - **Rozložení monolitického slovníku do samostatných lokálních souborů:**
