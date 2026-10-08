@@ -68,6 +68,7 @@ import { KrejcarIcon } from './components/KrejcarIcon';
 import { TestModeModal } from './components/TestModeModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
+import { t } from './i18n';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
 import { LadaCoverScene } from './components/LadaCoverScene';
@@ -845,6 +846,13 @@ export default function App() {
     try {
       localStorage.setItem('bubakov_meta', JSON.stringify(updated));
     } catch {}
+  };
+
+  const currentLang: 'cs' | 'en' = meta.currentLang || 'cs';
+  const toggleLanguage = () => {
+    const nextLang: 'cs' | 'en' = currentLang === 'cs' ? 'en' : 'cs';
+    sound.coin();
+    saveMeta({ ...meta, currentLang: nextLang });
   };
 
   // Selected level state
@@ -7850,11 +7858,29 @@ export default function App() {
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '6px' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: 'var(--parchmentDark)',
+                  color: 'var(--ink)',
+                  fontWeight: 900,
+                  boxShadow: '3px 3px 0px var(--ink)',
+                  cursor: 'pointer',
+                  padding: '5px 14px',
+                  fontSize: '0.9rem',
+                }}
+                onClick={toggleLanguage}
+                title={currentLang === 'cs' ? 'Switch language to English' : 'Přepnout jazyk do češtiny'}
+              >
+                🌐 {currentLang === 'cs' ? 'Jazyk: CZ ➔ EN' : 'Language: EN ➔ CZ'}
+              </button>
+            </div>
             <BubakovCoverTitle />
 
             <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
               <LadaCartouche variant="ochre" size="md">
-                🗺️ KROK 1 ZE 2: VÝBĚR VÝPRAVY
+                {t('ui.step1', currentLang)}
               </LadaCartouche>
             </div>
 
@@ -8111,12 +8137,25 @@ export default function App() {
                   setMenuScreen('hunter');
                 }}
               >
-                Pokračovat k výběru lovce ➔
+                {t('ui.proceed_to_hunter', currentLang)}
               </button>
             </div>
 
             {/* MAIN HUB TOOLBAR */}
             <div className="menu-hub-toolbar">
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: '#0D9488',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={toggleLanguage}
+                title={currentLang === 'cs' ? 'Přepnout jazyk na angličtinu' : 'Switch language to Czech'}
+              >
+                🌐 {currentLang === 'cs' ? 'Jazyk: CZ' : 'Language: EN'}
+              </button>
               <button
                 className="lada-btn btn-small"
                 style={{
@@ -8131,7 +8170,7 @@ export default function App() {
                 }}
                 title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
               >
-                🧪 Testovací mód
+                {t('ui.test_mode', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8147,7 +8186,7 @@ export default function App() {
                 }}
                 title="Vymazat veškerý postup (zamkne vše odemykatelné a vrátí upgrady na nulu)"
               >
-                🗑️ Vymazat postup
+                {t('ui.reset_progress', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8158,20 +8197,20 @@ export default function App() {
                 }}
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
-                🎮 Ovládání hry
+                {t('ui.controls', currentLang)}
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
+                {t('ui.bestiary', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                {t('ui.arsenal', currentLang)} ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsPlanOpen(true)}>
-                📜 Plán změn a kronika
+                {t('ui.plan', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8179,7 +8218,7 @@ export default function App() {
                 onClick={() => setGameState('tavern')}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                  {t('ui.village', currentLang)} ({meta.krejcary} <KrejcarIcon size={16} />)
                 </span>
               </button>
             </div>
@@ -8209,7 +8248,24 @@ export default function App() {
                   setMenuScreen('stage');
                 }}
               >
-                ⬅️ Zpět k výběru výpravy
+                {t('ui.back_to_stages', currentLang)}
+              </button>
+
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: 'var(--parchmentDark)',
+                  color: 'var(--ink)',
+                  fontWeight: 900,
+                  boxShadow: '3px 3px 0px var(--ink)',
+                  cursor: 'pointer',
+                  padding: '5px 14px',
+                  fontSize: '0.9rem',
+                }}
+                onClick={toggleLanguage}
+                title={currentLang === 'cs' ? 'Switch language to English' : 'Přepnout jazyk do češtiny'}
+              >
+                🌐 {currentLang === 'cs' ? 'Jazyk: CZ ➔ EN' : 'Language: EN ➔ CZ'}
               </button>
 
               <div
@@ -8238,7 +8294,7 @@ export default function App() {
 
             <div style={{ textAlign: 'center', margin: '4px 0 16px 0' }}>
               <LadaCartouche variant="green" size="md">
-                🏹 KROK 2 ZE 2: VÝBĚR LOVCE
+                {t('ui.step2', currentLang)}
               </LadaCartouche>
               <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026' }}>
                 VYBERTE SI SVÉHO LOVCE
@@ -8300,6 +8356,19 @@ export default function App() {
               <button
                 className="lada-btn btn-small"
                 style={{
+                  background: '#0D9488',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={toggleLanguage}
+                title={currentLang === 'cs' ? 'Přepnout jazyk na angličtinu' : 'Switch language to Czech'}
+              >
+                🌐 {currentLang === 'cs' ? 'Jazyk: CZ' : 'Language: EN'}
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{
                   background: 'var(--wood-dark)',
                   color: 'var(--parchment)',
                   fontWeight: 900,
@@ -8309,7 +8378,7 @@ export default function App() {
                   setMenuScreen('stage');
                 }}
               >
-                ⬅️ Zpět k výběru výpravy
+                {t('ui.back_to_stages', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8325,7 +8394,7 @@ export default function App() {
                 }}
                 title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
               >
-                🧪 Testovací mód
+                {t('ui.test_mode', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8336,17 +8405,17 @@ export default function App() {
                 }}
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
-                🎮 Ovládání hry
+                {t('ui.controls', currentLang)}
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
+                {t('ui.bestiary', currentLang)}
               </button>
               <button
                 className="lada-btn btn-small"
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                {t('ui.arsenal', currentLang)} ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
               <button
                 className="lada-btn btn-small"
@@ -8354,7 +8423,7 @@ export default function App() {
                 onClick={() => setGameState('tavern')}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                  {t('ui.village', currentLang)} ({meta.krejcary} <KrejcarIcon size={16} />)
                 </span>
               </button>
             </div>
@@ -9121,6 +9190,7 @@ export default function App() {
         isOpen={isBestiaryOpen}
         onClose={() => setIsBestiaryOpen(false)}
         bestiaryKills={meta.bestiaryKills || {}}
+        lang={currentLang}
       />
 
       {/* PLAN MODAL */}

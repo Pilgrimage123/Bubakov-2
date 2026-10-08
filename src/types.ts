@@ -73,6 +73,7 @@ export interface VillageBuilding {
 
 export interface MetaProgression {
   krejcary: number;
+  currentLang?: 'cs' | 'en';
   regenLevel?: number;
   ovenLevel?: number;
   scarecrowLevel?: number;
