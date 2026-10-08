@@ -1,25 +1,9 @@
 import React from 'react';
+import { WEAPON_LEGACY_ALIASES } from './weapons';
 export type { WeaponProgress } from '../types';
 
-const LEGACY_WEAPON_MAP: Record<string, string> = {
-	cane: 'osikovy_prut',
-	'cesnekova-topinka': 'cesnekova_topinka',
-	'kysela-okurka': 'kysela_okurka',
-	kysele_okurky: 'kysela_okurka',
-	buns: 'povidlove_buchty',
-	pitchfork: 'kovarske_vidle',
-	halberd: 'kovana_halapartna',
-	flail: 'dreveny_cep',
-	herbs: 'devatero_kviti',
-	snowball: 'snehova_koule',
-	kolac: 'kynuty_kolac',
-	potato: 'horky_brambor',
-	bees: 'vceli_roj',
-	holywater: 'svecena_kropenka',
-};
-
 function toCanonicalId(id: string): string {
-	return LEGACY_WEAPON_MAP[id] || id;
+	return WEAPON_LEGACY_ALIASES[id] || id;
 }
 
 var LOCKED_WEAPONS_ORDER = [
@@ -1041,7 +1025,7 @@ function getWeaponProgress(id: string, meta: any) {
 const WEAPON_UNLOCKS_PROXY = new Proxy(WEAPON_UNLOCKS as any, {
 	get(target, prop: string) {
 		if (prop in target) return target[prop];
-		const mapped = LEGACY_WEAPON_MAP[prop];
+		const mapped = WEAPON_LEGACY_ALIASES[prop];
 		return mapped ? target[mapped] : undefined;
 	}
 });

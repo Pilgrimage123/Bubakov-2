@@ -1,4 +1,5 @@
 import type { MilestoneChoice, WeaponId, WeaponRankDef } from '../types';
+import { WEAPON_LEGACY_ALIASES } from './weapons';
 
 export interface WeaponStats {
   damageMult: number;
@@ -123,7 +124,7 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('pitchfork_crowd_5', 'Jasanové ratiště', 'Dlouhé jasanové ratiště prodlouží bodnutí a udrží odstup od celého houfu.', 'long_reach', 'slash', { areaRadiusMult: 1.20, knockbackMult: 1.30 }),
-      makeChoice('pitchfork_burst_5', 'Kalený trojzubec', 'Prudký výpad probodne řady nepřátel a způsobí krvavé rány.', 'heavy_thrust', 'slash', { baseDamageMult: 1.24, pierceDelta: 1, cooldownMult: 0.94 }),
+      makeChoice('pitchfork_burst_5', 'Kalený trojzubec', 'Prudký výpad probodne řady bubáků a způsobí krvavé rány.', 'heavy_thrust', 'slash', { baseDamageMult: 1.24, pierceDelta: 1, cooldownMult: 0.94 }),
     ],
     8: [
       makeChoice('pitchfork_crowd_8', 'Hradba z vidlí', 'Mocný výpad odhodí celé hejno potvor daleko do tmy a vytvoří bezpečný prostor.', 'fork_barricade', 'slash', { areaRadiusMult: 1.25, knockbackMult: 1.45, cooldownMult: 0.92 }),
@@ -221,11 +222,11 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('bees_crowd_5', 'Včelí mračno', 'Ještě větší roj vyhledává bubáky na velkou dálku a znejisťuje jejich postup.', 'bee_cloud', 'slash', { projectileCountDelta: 2, knockbackMult: 1.20, cooldownMult: 0.96 }),
-      makeChoice('bees_burst_5', 'Jedovatý med', 'Včelí jed oslabí odolnost monster, prodlouží bodavé zranění a prorazí houfy.', 'venom_honey', 'slash', { baseDamageMult: 1.24, statusDurationSec: 2.0, pierceDelta: 1 }),
+      makeChoice('bees_burst_5', 'Jedovatý med', 'Včelí jed oslabí odolnost bubáků, prodlouží bodavé zranění a prorazí houfy.', 'venom_honey', 'slash', { baseDamageMult: 1.24, statusDurationSec: 2.0, pierceDelta: 1 }),
     ],
     8: [
       makeChoice('bees_crowd_8', 'Královnin roj', 'Královna vyvede celý včelín! Záplava včel pokryje bojiště a neustále bodá.', 'queen_swarm', 'slash', { projectileCountDelta: 4, areaRadiusMult: 1.20, cooldownMult: 0.90 }),
-      makeChoice('bees_burst_8', 'Sršní zuřivost', 'Ničivá síla divokých lesních žihadel zlikviduje každého nepřítele v rekordním čase.', 'hornet_fury', 'slash', { baseDamageMult: 1.32, pierceDelta: 1, cooldownMult: 0.88 }),
+      makeChoice('bees_burst_8', 'Sršní zuřivost', 'Ničivá síla divokých lesních žihadel zlikviduje každého bubáka v rekordním čase.', 'hornet_fury', 'slash', { baseDamageMult: 1.32, pierceDelta: 1, cooldownMult: 0.88 }),
     ],
   },
   hromnicka: {
@@ -244,12 +245,12 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
   },
   svecena_kropenka: {
     3: [
-      makeChoice('holy_crowd_3', 'Široký vějíř', 'Vějíř svěcených kapek se rozprostře doširoka a zasáhne celé houfy nepřátel.', 'wide_fan', 'bell', { projectileCountDelta: 2, areaRadiusMult: 1.12 }),
+      makeChoice('holy_crowd_3', 'Široký vějíř', 'Vějíř svěcených kapek se rozprostře doširoka a zasáhne celé houfy bubáků.', 'wide_fan', 'bell', { projectileCountDelta: 2, areaRadiusMult: 1.12 }),
       makeChoice('holy_burst_3', 'Kropení hříchů', 'Každá posvěcená kapka má vyšší účinek a kněz kropí svižnějším tempem.', 'sin_cleansing', 'bell', { baseDamageMult: 1.20, cooldownMult: 0.95 }),
     ],
     5: [
       makeChoice('holy_crowd_5', 'Posvátný liják', 'Hustá sprška kapek zasáhne i vzdálené kouty a odrazí temné síly.', 'sacred_downpour', 'bell', { projectileCountDelta: 2, knockbackMult: 1.25, areaRadiusMult: 1.15 }),
-      makeChoice('holy_burst_5', 'Křest ohněm a vodou', 'Kapky prorážejí první řady démonů a působí hluboké popálení svěcenou vodou.', 'holy_baptism', 'bell', { baseDamageMult: 1.25, pierceDelta: 1, cooldownMult: 0.94 }),
+      makeChoice('holy_burst_5', 'Křest ohněm a vodou', 'Kapky prorážejí první řady pekelníků a působí hluboké popálení svěcenou vodou.', 'holy_baptism', 'bell', { baseDamageMult: 1.25, pierceDelta: 1, cooldownMult: 0.94 }),
     ],
     8: [
       makeChoice('holy_crowd_8', 'Potopa hříšníků', 'Obrovský vějíř posvěcené vody spláchne celé zástupy nočních strašidel.', 'great_flood', 'bell', { projectileCountDelta: 4, areaRadiusMult: 1.22, knockbackMult: 1.35, cooldownMult: 0.90 }),
@@ -292,43 +293,13 @@ export const WEAPON_RANK_DEFS: Partial<Record<WeaponId, WeaponRankDef[]>> = Obje
   }),
 );
 
-const ALIASES: Record<string, WeaponId> = {
-  // Kanonické názvy
-  osikovy_prut: 'osikovy_prut',
-  valecnice: 'valecnice',
-  cesnekova_topinka: 'cesnekova_topinka',
-  kysela_okurka: 'kysela_okurka',
-  povidlove_buchty: 'povidlove_buchty',
-  kovarske_vidle: 'kovarske_vidle',
-  kovana_halapartna: 'kovana_halapartna',
-  dreveny_cep: 'dreveny_cep',
-  devatero_kviti: 'devatero_kviti',
-  snehova_koule: 'snehova_koule',
-  kynuty_kolac: 'kynuty_kolac',
-  horky_brambor: 'horky_brambor',
-  vceli_roj: 'vceli_roj',
-  hromnicka: 'hromnicka',
-  svecena_kropenka: 'svecena_kropenka',
-
-  // Staré / legacy aliasy
-  cane: 'osikovy_prut',
-  'cesnekova-topinka': 'cesnekova_topinka',
-  'kysela-okurka': 'kysela_okurka',
-  kysele_okurky: 'kysela_okurka',
-  buns: 'povidlove_buchty',
-  pitchfork: 'kovarske_vidle',
-  halberd: 'kovana_halapartna',
-  flail: 'dreveny_cep',
-  herbs: 'devatero_kviti',
-  snowball: 'snehova_koule',
-  kolac: 'kynuty_kolac',
-  potato: 'horky_brambor',
-  bees: 'vceli_roj',
-  holywater: 'svecena_kropenka',
-};
+export function resolveCanonicalWeaponId(id: string): WeaponId | undefined {
+  if (WEAPONS_WITH_MILESTONES.includes(id as WeaponId)) return id as WeaponId;
+  return WEAPON_LEGACY_ALIASES[id];
+}
 
 export function getWeaponRankDef(id: string, rank: number): WeaponRankDef | undefined {
-  const canonical = ALIASES[id];
+  const canonical = resolveCanonicalWeaponId(id);
   const safeRank = Math.floor(rank);
   const defs = canonical ? WEAPON_RANK_DEFS[canonical] : undefined;
   return defs && safeRank >= 1 && safeRank <= 8
@@ -380,7 +351,7 @@ export function getEffectiveWeaponCooldown(
 }
 
 export function getRankedWeaponStats(id: string, level: number, w?: any): WeaponStats {
-  const canonical = ALIASES[id];
+  const canonical = resolveCanonicalWeaponId(id);
   const safeLevel = Math.min(8, Math.max(1, Math.floor(level || 1)));
   const stats: WeaponStats = {
     damageMult: 1 + (safeLevel - 1) * 0.12,
@@ -395,7 +366,7 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
 
   for (const rank of [3, 5, 8] as const) {
     if (safeLevel < rank) continue;
-    const rankChoices = WEAPON_RANK_DEFS[canonical][rank - 1].choices;
+    const rankChoices = WEAPON_RANK_DEFS[canonical]?.[rank - 1]?.choices;
     if (!rankChoices) continue;
     const choiceId = w?.milestones?.[rank];
     const selected = rankChoices.find((item) =>

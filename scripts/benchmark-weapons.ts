@@ -631,18 +631,24 @@ console.log('   BUBÁKOV WEAPON MILESTONE BENCHMARK (RANK 3 MILESTONES)         
 console.log('========================================================================\n');
 
 const milestoneWeapons = [
-  { id: 'cane', def: WEAPONS.cane, name: 'Prut R3 (Rázný bác)', level: 3, milestones: ['cane_burst_3'] },
-  { id: 'cane', def: WEAPONS.cane, name: 'Prut R3 (Široký švih)', level: 3, milestones: ['cane_crowd_3'] },
-  { id: 'buns', def: WEAPONS.buns, name: 'Buchty R3 (Nadílka)', level: 3, milestones: ['buns_crowd_3'] },
-  { id: 'buns', def: WEAPONS.buns, name: 'Buchty R3 (Cukr)', level: 3, milestones: ['buns_burst_3'] },
-  { id: 'cesnekova-topinka', def: WEAPONS['cesnekova-topinka'], name: 'Topinka R3 (Smrádek)', level: 3, milestones: ['garlic_crowd_3'] },
+  { id: 'osikovy_prut', def: WEAPONS.osikovy_prut, name: 'Prut R3 (Rázný bác)', level: 3, milestones: ['cane_burst_3'] },
+  { id: 'osikovy_prut', def: WEAPONS.osikovy_prut, name: 'Prut R3 (Široký švih)', level: 3, milestones: ['cane_crowd_3'] },
+  { id: 'povidlove_buchty', def: WEAPONS.povidlove_buchty, name: 'Buchty R3 (Nadílka)', level: 3, milestones: ['buns_crowd_3'] },
+  { id: 'povidlove_buchty', def: WEAPONS.povidlove_buchty, name: 'Buchty R3 (Cukr)', level: 3, milestones: ['buns_burst_3'] },
+  { id: 'cesnekova_topinka', def: WEAPONS.cesnekova_topinka, name: 'Topinka R3 (Smrádek)', level: 3, milestones: ['garlic_crowd_3'] },
   { id: 'valecnice', def: WEAPONS.valecnice, name: 'Válečnice R3 (Bác)', level: 3, milestones: ['valecnice_burst_3'] },
   { id: 'valecnice', def: WEAPONS.valecnice, name: 'Válečnice R3 (Kolo)', level: 3, milestones: ['valecnice_crowd_3'] },
-  { id: 'halberd', def: WEAPONS.halberd, name: 'Halapartna R3 (Zásek)', level: 3, milestones: ['halberd_burst_3'] },
-  { id: 'kolac', def: WEAPONS.kolac, name: 'Koláč R3 (Výslužka)', level: 3, milestones: ['kolac_crowd_3'] },
+  { id: 'kovana_halapartna', def: WEAPONS.kovana_halapartna, name: 'Halapartna R3 (Zásek)', level: 3, milestones: ['halberd_burst_3'] },
+  { id: 'kynuty_kolac', def: WEAPONS.kynuty_kolac, name: 'Koláč R3 (Výslužka)', level: 3, milestones: ['kolac_crowd_3'] },
   { id: 'snehova_koule', def: WEAPONS.snehova_koule, name: 'Sníh R3 (Tříšť)', level: 3, milestones: ['snowball_crowd_3'] },
   { id: 'vceli_roj', def: WEAPONS.vceli_roj, name: 'Včely R3 (Bzukot)', level: 3, milestones: ['bees_crowd_3'] },
   { id: 'kysela_okurka', def: WEAPONS.kysela_okurka, name: 'Okurka R3 (Porce)', level: 3, milestones: ['pickle_crowd_3'] },
+  { id: 'dreveny_cep', def: WEAPONS.dreveny_cep, name: 'Cep R3 (Dvojmlat)', level: 3, milestones: ['flail_crowd_3'] },
+  { id: 'devatero_kviti', def: WEAPONS.devatero_kviti, name: 'Kvítí R3 (Věnec)', level: 3, milestones: ['herbs_crowd_3'] },
+  { id: 'kovarske_vidle', def: WEAPONS.kovarske_vidle, name: 'Vidle R3 (Hroty)', level: 3, milestones: ['pitchfork_crowd_3'] },
+  { id: 'horky_brambor', def: WEAPONS.horky_brambor, name: 'Brambor R3 (Popel)', level: 3, milestones: ['potato_crowd_3'] },
+  { id: 'hromnicka', def: WEAPONS.hromnicka, name: 'Hromnička R3 (Záře)', level: 3, milestones: ['candle_crowd_3'] },
+  { id: 'svecena_kropenka', def: WEAPONS.svecena_kropenka, name: 'Kropenka R3 (Vějíř)', level: 3, milestones: ['holy_crowd_3'] },
 ];
 
 for (const sc of scenarios) {

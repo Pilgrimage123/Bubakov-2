@@ -133,7 +133,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 									color: "#78350F",
 									marginBottom: "6px"
 								},
-								children: ["🤝 Pomocníci: ", t(`building.${b.id}.helpers`, lang) || b.helpers]
+								children: [t('village.helpers_label', lang) || "🤝 Pomocníci: ", t(`building.${b.id}.helpers`, lang) || b.helpers]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 								style: {
@@ -174,78 +174,6 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 							})
 						]
 					}, b.id);
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				style: {
-					background: "var(--parchment)",
-					color: "var(--ink)",
-					border: "4px solid var(--ink)",
-					padding: "14px 20px",
-					borderRadius: "8px",
-					margin: "20px 0",
-					textAlign: "left",
-					boxShadow: "inset 0 0 10px rgba(0,0,0,0.05)"
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					style: {
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-						flexWrap: "wrap",
-						gap: "10px"
-					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-							style: {
-								fontSize: "1.25rem",
-								color: "#111111"
-							},
-							children: "🍺 Tekutá kuráž z pivovarských ležáků"
-						}),
-						" ",
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-							style: {
-								fontWeight: 900,
-								color: "#166534"
-							},
-							children: [
-								"(Úr. ",
-								meta.regenLevel || 0,
-								")"
-							]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							style: {
-								fontWeight: 700,
-								fontSize: "0.95rem",
-								color: "#111111"
-							},
-							children: "Stále udržuje dobrou náladu a doplňuje +1 kuráže každých 5 sekund pro všechny další výpravy do Bubákova."
-						})
-					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						className: "lada-btn",
-						style: {
-							margin: 0,
-							display: "inline-flex",
-							alignItems: "center",
-							gap: "5px"
-						},
-						disabled: meta.krejcary < regenCost,
-						onClick: () => {
-							onUpgrade("regenLevel", regenCost);
-							sound.coin();
-							sound.levelUp();
-						},
-						children: [
-							"Koupit (",
-							regenCost,
-							" ",
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(KrejcarIcon, { size: 16 }),
-							")"
-						]
-					})]
 				})
 			})
 		]

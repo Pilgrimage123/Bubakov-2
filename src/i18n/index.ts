@@ -83,7 +83,8 @@ export const csDict: Record<string, string> = {
   'building.scarecrow.name': 'Pšeničné lano a polní mez',
   'building.scarecrow.role': 'Ochrana úrody a polí',
   'building.scarecrow.helpers': 'Zpacifikovaní bubáci jako strašáci',
-  'building.scarecrow.story': 'Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pšeničného pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a mince se k lovci samy kutálejí!',
+  'building.scarecrow.story': 'Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pšeničného pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a krejcary se k lovci samy kutálejí!',
+  'village.helpers_label': '🤝 Pomocníci: ',
 
   'building.mill.name': 'Vodní mlýn na náhonu',
   'building.mill.role': 'Mletí mouky a pohon struhy',
@@ -367,7 +368,8 @@ export const enDict: Record<string, string> = {
   'building.scarecrow.name': 'Wheat Scarecrow & Field Ridge',
   'building.scarecrow.role': 'Crop & Field Protection',
   'building.scarecrow.helpers': 'Pacified boggarts as scarecrows',
-  'building.scarecrow.story': 'The bailiff dressed vanquished boggarts in tailed coats and put them in the wheat fields. Coins roll straight to the hunter!',
+  'building.scarecrow.story': 'The bailiff dressed vanquished boggarts in tailed coats and put them in the wheat fields. Krejcary roll straight to the hunter!',
+  'village.helpers_label': '🤝 Helpers: ',
 
   'building.mill.name': 'Watermill on the Millrace',
   'building.mill.role': 'Flour Milling & Stream Power',
@@ -615,5 +617,21 @@ export function getBestiaryTranslation(id: string, lang: SupportedLang | string 
   return {
     name: t(`bestiary.${id}.name`, lang),
     title: t(`bestiary.${id}.title`, lang),
+  };
+}
+
+export function getMilestoneTranslation(
+  choiceId: string,
+  fallbackName: string = '',
+  fallbackDesc: string = '',
+  lang: SupportedLang | string = 'cs'
+): { name: string; desc: string } {
+  const nameKey = `milestone.${choiceId}.name`;
+  const descKey = `milestone.${choiceId}.desc`;
+  const translatedName = t(nameKey, lang);
+  const translatedDesc = t(descKey, lang);
+  return {
+    name: translatedName !== nameKey ? translatedName : fallbackName,
+    desc: translatedDesc !== descKey ? translatedDesc : fallbackDesc,
   };
 }

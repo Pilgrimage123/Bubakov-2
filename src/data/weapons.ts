@@ -1,5 +1,6 @@
 import React from 'react';
 import { sound } from '../audio';
+import type { WeaponId } from '../types';
 import { getRankedWeaponStats, type WeaponStats } from './weaponMilestones';
 
 /* Legacy mastery state retained only for backwards save compatibility. */
@@ -42,7 +43,7 @@ var WEAPONS = {
 			const angleBase = player.valecniceAngle || 0;
 			const dmg = getWeaponDamage(player, 32) * stats.damageMult;
 			const kbForce = 520 * stats.knockbackMult;
-			const stunDuration = 1.2 * (stats.statusDurationSec > 0 ? stats.statusDurationSec : 1);
+			const stunDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.2;
 			const reachBase = 58 * stats.areaRadiusMult;
 			const enemies = player.getNearbyEnemies(orbitRadius + reachBase + 50);
 			let hitAny = false;
@@ -565,26 +566,27 @@ var WEAPONS = {
 };
 
 // Legacy fallbacky pro zachování zpětné kompatibility
+export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
+	cane: 'osikovy_prut',
+	'cesnekova-topinka': 'cesnekova_topinka',
+	'kysela-okurka': 'kysela_okurka',
+	kysele_okurky: 'kysela_okurka',
+	buns: 'povidlove_buchty',
+	pitchfork: 'kovarske_vidle',
+	halberd: 'kovana_halapartna',
+	flail: 'dreveny_cep',
+	herbs: 'devatero_kviti',
+	snowball: 'snehova_koule',
+	kolac: 'kynuty_kolac',
+	potato: 'horky_brambor',
+	bees: 'vceli_roj',
+	holywater: 'svecena_kropenka',
+};
+
 const WEAPONS_LOOKUP = new Proxy(WEAPONS as any, {
 	get(target, prop: string) {
 		if (prop in target) return target[prop];
-		const legacyMap: Record<string, string> = {
-			cane: 'osikovy_prut',
-			'cesnekova-topinka': 'cesnekova_topinka',
-			'kysela-okurka': 'kysela_okurka',
-			kysele_okurky: 'kysela_okurka',
-			buns: 'povidlove_buchty',
-			pitchfork: 'kovarske_vidle',
-			halberd: 'kovana_halapartna',
-			flail: 'dreveny_cep',
-			herbs: 'devatero_kviti',
-			snowball: 'snehova_koule',
-			kolac: 'kynuty_kolac',
-			potato: 'horky_brambor',
-			bees: 'vceli_roj',
-			holywater: 'svecena_kropenka',
-		};
-		const mapped = legacyMap[prop];
+		const mapped = WEAPON_LEGACY_ALIASES[prop];
 		return mapped ? target[mapped] : undefined;
 	}
 });

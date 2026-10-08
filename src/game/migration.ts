@@ -1,39 +1,8 @@
 import type { MetaProgression, WeaponId } from '../types';
-
-export const WEAPON_KEY_MIGRATION_MAP: Record<string, WeaponId> = {
-  cane: 'osikovy_prut',
-  osikovy_prut: 'osikovy_prut',
-  valecnice: 'valecnice',
-  'cesnekova-topinka': 'cesnekova_topinka',
-  cesnekova_topinka: 'cesnekova_topinka',
-  'kysela-okurka': 'kysela_okurka',
-  kysele_okurky: 'kysela_okurka',
-  kysela_okurka: 'kysela_okurka',
-  buns: 'povidlove_buchty',
-  povidlove_buchty: 'povidlove_buchty',
-  pitchfork: 'kovarske_vidle',
-  kovarske_vidle: 'kovarske_vidle',
-  halberd: 'kovana_halapartna',
-  kovana_halapartna: 'kovana_halapartna',
-  flail: 'dreveny_cep',
-  dreveny_cep: 'dreveny_cep',
-  herbs: 'devatero_kviti',
-  devatero_kviti: 'devatero_kviti',
-  snowball: 'snehova_koule',
-  snehova_koule: 'snehova_koule',
-  kolac: 'kynuty_kolac',
-  kynuty_kolac: 'kynuty_kolac',
-  potato: 'horky_brambor',
-  horky_brambor: 'horky_brambor',
-  bees: 'vceli_roj',
-  vceli_roj: 'vceli_roj',
-  hromnicka: 'hromnicka',
-  holywater: 'svecena_kropenka',
-  svecena_kropenka: 'svecena_kropenka',
-};
+import { WEAPON_LEGACY_ALIASES } from '../data/weapons';
 
 export function toCanonicalWeaponId(id: string): WeaponId {
-  return WEAPON_KEY_MIGRATION_MAP[id] || (id as WeaponId);
+  return WEAPON_LEGACY_ALIASES[id] || (id as WeaponId);
 }
 
 export function migrateMetaProgression(parsed: any): MetaProgression {

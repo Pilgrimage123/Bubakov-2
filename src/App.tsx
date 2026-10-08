@@ -8131,7 +8131,7 @@ export default function App() {
                   sound.coin();
                   setIsTestModeOpen(true);
                 }}
-                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+                title="Otevřít testovací mód: zvolte libovolného lovce, libovolnou úroveň a startovní zbraně včetně jejich hodností"
               >
                 {t('ui.test_mode', currentLang)}
               </button>
@@ -8355,7 +8355,7 @@ export default function App() {
                   sound.coin();
                   setIsTestModeOpen(true);
                 }}
-                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+                title="Otevřít testovací mód: zvolte libovolného lovce, libovolnou úroveň a startovní zbraně včetně jejich hodností"
               >
                 {t('ui.test_mode', currentLang)}
               </button>
