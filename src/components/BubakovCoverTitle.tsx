@@ -472,8 +472,9 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   compact = false,
   interactiveBubak = true,
 }) => {
-  // 7 coordinated animation frames for Bubák and Čert: 0 through 6
+  // Independent 7 animation frames for Bubák and Čert: 0 through 6
   const [bubakFrame, setBubakFrame] = useState<number>(0);
+  const [certFrame, setCertFrame] = useState<number>(0);
   const [isScaring, setIsScaring] = useState<boolean>(false);
   const [isCertStomping, setIsCertStomping] = useState<boolean>(false);
   const [isBubakHovered, setIsBubakHovered] = useState<boolean>(false);
@@ -482,21 +483,27 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   const scareTimeoutRef = useRef<number | null>(null);
   const certTimeoutRef = useRef<number | null>(null);
 
-  // 7-frame animation cycle: significantly slower (540ms default) with smooth transitions
+  // 7-frame animation cycle for Bubák
   useEffect(() => {
-    if (isPaused || isScaring || isCertStomping) return;
-
-    // 540ms per frame gives a theatrical, slow, majestic Czech puppetry cadence (~3.8s total loop)
-    const intervalTime = isBubakHovered || isCertHovered ? 440 : 540;
-
+    if (isPaused || isScaring) return;
+    const intervalTime = isBubakHovered ? 440 : 540;
     const interval = window.setInterval(() => {
       setBubakFrame((prev) => (prev + 1) % 7);
     }, intervalTime);
-
     return () => window.clearInterval(interval);
-  }, [isPaused, isBubakHovered, isCertHovered, isScaring, isCertStomping]);
+  }, [isPaused, isBubakHovered, isScaring]);
 
-  // Click on Bubák: sudden scare reaction (Frame 2 "BAF!") + sound
+  // Independent 7-frame animation cycle for Čert
+  useEffect(() => {
+    if (isPaused || isCertStomping) return;
+    const intervalTime = isCertHovered ? 440 : 540;
+    const interval = window.setInterval(() => {
+      setCertFrame((prev) => (prev + 1) % 7);
+    }, intervalTime);
+    return () => window.clearInterval(interval);
+  }, [isPaused, isCertHovered, isCertStomping]);
+
+  // Click on Bubák: sudden scare reaction (Frame 2 "BAF!") + sound (Čert unaffected!)
   const handleBubakClick = (e: React.MouseEvent) => {
     if (!interactiveBubak) return;
     e.stopPropagation();
@@ -524,7 +531,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     }, 620);
   };
 
-  // Click on Čert: sudden hoof stomp & pitchfork jab reaction (Frame 2 "DUP! & BODNUTÍ!") + sounds
+  // Click on Čert: sudden hoof stomp & pitchfork jab reaction (Frame 2 "DUP! & BODNUTÍ!") + sounds (Bubák unaffected!)
   const handleCertClick = (e: React.MouseEvent) => {
     if (!interactiveBubak) return;
     e.stopPropagation();
@@ -539,19 +546,19 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     } catch {}
 
     setIsCertStomping(true);
-    setBubakFrame(2); // Jump to Frame 3 (index 2: DUPNUTÍ & BODNUTÍ VIDLEMI!)
+    setCertFrame(2); // Jump to Frame 3 (index 2: DUPNUTÍ & BODNUTÍ VIDLEMI!)
 
     if (certTimeoutRef.current) {
       window.clearTimeout(certTimeoutRef.current);
     }
 
     certTimeoutRef.current = window.setTimeout(() => {
-      setBubakFrame(3); // Airborne hop
+      setCertFrame(3); // Airborne hop
       certTimeoutRef.current = window.setTimeout(() => {
-        setBubakFrame(4); // Brandish & taunt
+        setCertFrame(4); // Brandish & taunt
         certTimeoutRef.current = window.setTimeout(() => {
           setIsCertStomping(false);
-          setBubakFrame(0);
+          setCertFrame(0);
         }, 520);
       }, 480);
     }, 620);
@@ -1348,7 +1355,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
           {/* - Epické jiskry a rázové vlny odletující od dupnutí kopytem     */}
           {/* ============================================================== */}
           {showCharacters && (() => {
-            const certPose = CERT_POSES[bubakFrame] || CERT_POSES[0];
+            const certPose = CERT_POSES[certFrame] || CERT_POSES[0];
             return (
               <g transform="translate(710, 4)">
                 <g

@@ -47,3 +47,19 @@ _Avoid_: Run, zápas, kolo, match
 **Kronika**:
 Záznamník vesnických úspěchů, poražených bubáků a odemčených trofejí, který uchovává celkový postup hráče.
 _Avoid_: Statistiky, achievementy, log
+
+**Kadence útoku**:
+Rychlostní a fázová kategorie útoku bubáka (rychlý, normální, pomalý) určující délku přípravy, dynamiku výpadu a časové okno pro úhyb lovce.
+_Avoid_: Attack speed, cadence, interval útoku
+
+**Nápřah**:
+Telegrafovaná fáze přípravy úderu bubáka doprovázená napětím těla, třesem a výstražným signálem, během níž má lovec prostor k reakci či přerušení.
+_Avoid_: Windup, nabíjení, charge, příprava
+
+**Dopad**:
+Vrcholná fáze útoku bubáka, při níž dochází k udělení zranění lovci, doprovázená směrovým výpadem, inkoustovým sečným obloukem a rázovou vlnou v zemi.
+_Avoid_: Strike, hit, smash, dopad zbraně
+
+**Zotavení**:
+Závěrečná fáze útoku bubáka po dopadu, během které vyprošťuje zbraň nebo získává zpět rovnováhu a je dočasně zranitelný.
+_Avoid_: Recovery, cooldown, prodleva

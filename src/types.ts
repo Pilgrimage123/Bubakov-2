@@ -138,6 +138,18 @@ export interface WeaponDef {
 
 export type EnemyAttackCadence = 'fast' | 'normal' | 'slow';
 
+export const CADENCE_ATTACK_DELAYS: Record<EnemyAttackCadence, number> = {
+  fast: 0.6,
+  normal: 1.2,
+  slow: 1.8,
+};
+
+export const CADENCE_RECOVERY_DURATIONS: Record<EnemyAttackCadence, number> = {
+  fast: 0.15,
+  normal: 0.20,
+  slow: 0.25,
+};
+
 export interface Enemy {
   id: string;
   x: number;
@@ -154,6 +166,9 @@ export interface Enemy {
   attackRange?: number;   // Dosah úderu (musí být větší než radius + player.radius)
   windupTimer?: number;   // Aktuální časovač nápřahu (0 = nenapřahuje se)
   isAttacking?: boolean;  // Zda právě probíhá nápřah
+  attackAngle?: number;   // Radiány směru k lovci zafixované při startu nápřahu
+  recoveryTimer?: number; // Odpočet doznění úderu po dopadu
+  interruptAttack?: () => void;
   isBoss?: boolean;
   isMiniboss?: boolean;
   isDefeated?: boolean;

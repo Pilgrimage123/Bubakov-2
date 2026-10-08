@@ -7,6 +7,7 @@ import type {
   EnemyStats,
   EnemyAttackCadence,
 } from '../types';
+import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { type EngineState, createInitialEngineState } from './engineState';
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
@@ -625,7 +626,7 @@ export class GameEngine {
         ? stats.attackDelay
         : typeof stats.attackInterval === 'number'
         ? stats.attackInterval
-        : 0.5;
+        : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : radius + 25;
 
     const self = this;
@@ -647,6 +648,8 @@ export class GameEngine {
       attackRange,
       windupTimer: 0,
       isAttacking: false,
+      attackAngle: 0,
+      recoveryTimer: 0,
       attackCadence: cadence,
       attackInterval,
       radius,
@@ -688,6 +691,11 @@ export class GameEngine {
       contactLeaveTimer: 0,
       animTime: 0,
 
+      interruptAttack() {
+        this.isAttacking = false;
+        this.windupTimer = 0;
+      },
+
       update(dt: number, player: any) {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
@@ -712,6 +720,7 @@ export class GameEngine {
 
         if (this.stunTimer > 0) {
           this.stunTimer -= dt;
+          this.interruptAttack();
           this.vx = 0;
           this.vy = 0;
           return;
@@ -719,12 +728,16 @@ export class GameEngine {
 
         if (this.snackTimer > 0) {
           this.snackTimer -= dt;
+          this.interruptAttack();
           this.vx = 0;
           this.vy = 0;
           return;
         }
 
-        if (player) {
+        if (this.isAttacking || (this.recoveryTimer || 0) > 0) {
+          this.vx = 0;
+          this.vy = 0;
+        } else if (player) {
           const dx = player.x - this.x;
           const dy = player.y - this.y;
           const dist = Math.hypot(dx, dy) || 1;
@@ -768,6 +781,7 @@ export class GameEngine {
         if (options?.stunDuration && options.stunDuration > 0) {
           const stunResist = this.willpower || 0;
           this.stunTimer = Math.max(this.stunTimer || 0, options.stunDuration * (1 - stunResist));
+          this.interruptAttack();
         }
 
         if (kbx !== 0 || kby !== 0) {
@@ -775,6 +789,7 @@ export class GameEngine {
           const kbFactor = Math.max(0.1, 1 - poise);
           this.kbx += kbx * kbFactor;
           this.kby += kby * kbFactor;
+          this.interruptAttack();
         }
 
         if (this.hp <= 0) {
@@ -1247,32 +1262,59 @@ export class GameEngine {
       const e = this.state.enemies[i];
       e.update(dt, player);
 
-      if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
-        e.isAttacking = false;
-        e.windupTimer = 0;
+      if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || (e.stunTimer || 0) > 0 || !player || player.hp <= 0) {
+        if (typeof e.interruptAttack === 'function') {
+          e.interruptAttack();
+        } else {
+          e.isAttacking = false;
+          e.windupTimer = 0;
+        }
         e.inContact = false;
         continue;
       }
 
+      if (e.recoveryTimer && e.recoveryTimer > 0) {
+        e.recoveryTimer = Math.max(0, e.recoveryTimer - dt);
+      }
+
       const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
       const attackRange = typeof e.attackRange === 'number' ? e.attackRange : e.radius + 25;
+      const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
       const attackDelay =
-        typeof e.attackDelay === 'number' ? e.attackDelay : e.attackInterval || 0.5;
+        typeof e.attackDelay === 'number'
+          ? e.attackDelay
+          : typeof e.attackInterval === 'number'
+          ? e.attackInterval
+          : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+      const recoveryDuration = CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
 
-      if (distToPlayer <= attackRange) {
-        e.isAttacking = true;
-        e.inContact = true;
+      if (!e.isAttacking) {
+        if ((!e.recoveryTimer || e.recoveryTimer <= 0) && distToPlayer <= attackRange) {
+          e.isAttacking = true;
+          e.windupTimer = 0;
+          e.attackAngle = Math.atan2(player.y - e.y, player.x - e.x);
+          e.inContact = true;
+        } else {
+          e.inContact = distToPlayer <= attackRange;
+        }
+      }
+
+      if (e.isAttacking) {
         e.windupTimer = (e.windupTimer || 0) + dt;
         if (e.windupTimer >= attackDelay) {
-          const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
-          player.takeDamage(e.damage * mult, 'physical', e, true);
+          const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+          let angleDiff = Math.abs(angleToPlayer - (e.attackAngle ?? angleToPlayer));
+          if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+          const inFrontCone = angleDiff <= Math.PI * 0.55;
+
+          if (distToPlayer <= attackRange && inFrontCone) {
+            const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
+            player.takeDamage(e.damage * mult, 'physical', e, true);
+          }
           e.windupTimer = 0;
-        }
-      } else {
-        e.windupTimer = Math.max(0, (e.windupTimer || 0) - dt * 2);
-        if (e.windupTimer === 0) {
           e.isAttacking = false;
-          e.inContact = false;
+          e.recoveryTimer = recoveryDuration;
+          e.inContact = distToPlayer <= attackRange;
         }
       }
     }

@@ -7274,26 +7274,72 @@ export default function App() {
           const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
             ? Math.cos(this.chargeDirX)
             : this.vx;
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300);
-        } else if (this.id === 'hejkal') {
-          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
-        } else if (this.id === 'obr') {
-          Lada.drawObr(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          drawEnemyRenderer(
+            'drawCert',
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            certFacingVx,
+            isFleeing,
+            this,
+            [this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300]
+          );
+        } else if (this.id === 'snehulak') {
+          const isCharging = this.aiState === 'charge' || !!this.isCharging;
+          drawEnemyRenderer(
+            'drawSnehulak',
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            this.vx,
+            isFleeing,
+            this,
+            [isCharging]
+          );
+        } else if (this.id === 'bezhlavy_rytir') {
+          const isEnraged = this.hp <= this.maxHp * 0.5 || !!this.enraged;
+          drawEnemyRenderer(
+            'drawBezhlavyRytir',
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            this.vx,
+            isFleeing,
+            this,
+            [isEnraged]
+          );
         } else if (this.id === 'mlynar') {
-          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.hp <= this.maxHp * 0.5);
-        } else if (this.id === 'meluzina') {
-          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
-        } else if (this.id === 'polednice') {
-          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
-        } else if (this.id === 'klekanice') {
-          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, this.vx, isFleeing);
+          drawEnemyRenderer(
+            'drawMlynar',
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            this.vx,
+            isFleeing,
+            this,
+            [this.hp <= this.maxHp * 0.5]
+          );
         } else if (this.id === 'drak') {
           const attacks = {
             fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
             ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
             roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
           };
-          Lada.drawDrak(ctx, this.x, this.y, this.animTime, this.vx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
+          drawEnemyRenderer(
+            'drawDrak',
+            ctx,
+            this.x,
+            this.y,
+            this.animTime,
+            this.vx,
+            isFleeing,
+            this,
+            [this.enraged || this.hp <= this.maxHp * 0.5, attacks]
+          );
         } else {
           drawEnemyRenderer(
             this.method,
@@ -7303,6 +7349,7 @@ export default function App() {
             this.animTime,
             this.vx,
             isFleeing,
+            this,
           );
         }
 
@@ -9074,21 +9121,21 @@ export default function App() {
                   Plňte výzvy rychtáře a pamětníků a získejte štědré odměny do své stálé pokladny!
                 </p>
                 <div className="trophies-grid">
-                  {TROPHIES.map((t) => {
-                    const claimed = !!meta.trophiesClaimed[t.id];
-                    const isMet = t.isMet(meta);
-                    const prog = t.getProgress(meta);
-                    const tTrans = getTrophyTranslation(t.id, currentLang);
-                    const displayTitle = tTrans.title || t.title;
-                    const displayDesc = tTrans.desc || t.desc;
+                  {TROPHIES.map((trophy) => {
+                    const claimed = !!meta.trophiesClaimed[trophy.id];
+                    const isMet = trophy.isMet(meta);
+                    const prog = trophy.getProgress(meta);
+                    const tTrans = getTrophyTranslation(trophy.id, currentLang);
+                    const displayTitle = tTrans.title || trophy.title;
+                    const displayDesc = tTrans.desc || trophy.desc;
 
                     return (
-                      <div key={t.id} className={`trophy-card ${claimed ? 'claimed' : isMet ? 'completed' : ''}`}>
+                      <div key={trophy.id} className={`trophy-card ${claimed ? 'claimed' : isMet ? 'completed' : ''}`}>
                         <div>
                           <div className="trophy-header">
                             <h4 className="trophy-title">{displayTitle}</h4>
                             <span className="trophy-reward" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              +{t.reward} <KrejcarIcon size={16} />
+                              +{trophy.reward} <KrejcarIcon size={16} />
                             </span>
                           </div>
                           <p className="trophy-desc">{displayDesc}</p>
@@ -9100,8 +9147,8 @@ export default function App() {
                           {claimed ? (
                             <span className="badge-claimed">{t('trophy.completed', currentLang)}</span>
                           ) : isMet ? (
-                            <button className="btn-claim-trophy" onClick={() => claimTrophy(t.id)}>
-                              {t('trophy.claim', currentLang, { reward: t.reward })}
+                            <button className="btn-claim-trophy" onClick={() => claimTrophy(trophy.id)}>
+                              {t('trophy.claim', currentLang, { reward: trophy.reward })}
                             </button>
                           ) : (
                             <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.6 }}>{t('trophy.uncompleted', currentLang)}</span>
@@ -9217,7 +9264,7 @@ export default function App() {
       <HunterUnlockModal
         progress={selectedHunterDetail}
         onClose={() => setSelectedHunterDetail(null)}
-        onStartIfUnlocked={(id) => startGame(id)}
+        onStartIfUnlocked={(id) => startGame(id as CharacterType)}
         lang={currentLang}
       />
 
@@ -9227,8 +9274,8 @@ export default function App() {
         onClose={() => setSelectedLevelDetail(null)}
         lang={currentLang}
         onSelectIfUnlocked={(id) => {
-          setSelectedLevelId(id);
-          saveMeta({ ...meta, selectedLevel: id });
+          setSelectedLevelId(id as GameLevelId);
+          saveMeta({ ...meta, selectedLevel: id as GameLevelId });
           setSelectedLevelDetail(null);
           setMenuScreen('hunter');
         }}
