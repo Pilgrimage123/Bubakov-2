@@ -8,8 +8,11 @@ import { GameIcon } from './GameIcon';
 import { getWeaponProgress } from '../data/weaponUnlocks';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { t } from '../i18n';
+import { toCanonicalWeaponId } from '../game/migration';
 
 var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
+	const lang = meta?.currentLang || 'cs';
 	const [filter, setFilter] = (0, import_react.useState)("all");
 	if (!isOpen) return null;
 	const progresses = Object.keys(WEAPONS).map((key) => getWeaponProgress(key, meta));
@@ -219,7 +222,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										color: "#111111",
 										fontWeight: 900
 									},
-									children: prog.spoiledName
+									children: isUnlocked ? (t(`weapon.${toCanonicalWeaponId(prog.id)}.name`, lang) || prog.spoiledName) : prog.spoiledName
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: `hunter-tier-stamp tier-stamp-${prog.tier}`,
@@ -235,7 +238,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										minHeight: "44px",
 										color: "#111111"
 									},
-									children: prog.spoiledDesc
+									children: isUnlocked ? (t(`weapon.${toCanonicalWeaponId(prog.id)}.desc`, lang) || prog.spoiledDesc) : prog.spoiledDesc
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "hunter-clue-box",

@@ -63,8 +63,11 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
     }
   }
 
+  const validLang: 'cs' | 'en' = parsed.currentLang === 'en' || parsed.currentLang === 'cs' ? parsed.currentLang : 'cs';
+
   return {
     ...parsed,
+    currentLang: validLang,
     selectedLevel: parsed.selectedLevel || 1,
     highestLevelUnlocked: parsed.highestLevelUnlocked || (
       (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
@@ -82,6 +85,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
 export function createDefaultMetaProgression(): MetaProgression {
   return {
     krejcary: 0,
+    currentLang: 'cs',
     regenLevel: 0,
     ovenLevel: 0,
     scarecrowLevel: 0,

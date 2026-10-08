@@ -8,8 +8,10 @@ import { KrejcarIcon } from './KrejcarIcon';
 import { VILLAGE_BUILDINGS } from '../data/village';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { t } from '../i18n';
 
 var VillageView = ({ meta, onUpgrade, onClose }) => {
+	const lang = meta?.currentLang || 'cs';
 	const canvasRefs = (0, import_react.useRef)({});
 	(0, import_react.useEffect)(() => {
 		let animId;
@@ -122,7 +124,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 									marginBottom: "4px",
 									color: "#2A170A"
 								},
-								children: b.name
+								children: t(`building.${b.id}.name`, lang) || b.name
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								style: {
@@ -131,7 +133,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 									color: "#78350F",
 									marginBottom: "6px"
 								},
-								children: ["🤝 Pomocníci: ", b.helpers]
+								children: ["🤝 Pomocníci: ", t(`building.${b.id}.helpers`, lang) || b.helpers]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 								style: {
@@ -141,7 +143,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 									minHeight: "44px",
 									color: "#111111"
 								},
-								children: b.story
+								children: t(`building.${b.id}.story`, lang) || b.story
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								className: "vignette-craft-action",
@@ -164,7 +166,7 @@ var VillageView = ({ meta, onUpgrade, onClose }) => {
 										sound.levelUp();
 									},
 									children: [
-										"Vylepšit (",
+										`${t('ui.upgrade', lang)} (`,
 										cost,
 										")"
 									]
