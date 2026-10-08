@@ -4,9 +4,9 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Vytvořit lehký modul `src/i18n/index.ts` s funkcí `t(key, lang)` a slovníky pro `cs` a `en`.
-- [ ] Zahrnout překlady pro názvy a popisy zbraní, budov ve vesnici, monster v bestiáři a základních UI textů.
-- [ ] Přidat stav vybraného jazyka (`currentLang: 'cs' | 'en'`) do nastavení / `metaProgression` a přepínač jazyka do menu.
-- [ ] Ověřit, že přepnutí jazyka okamžitě aktualizuje texty v UI bez dopadu na logiku enginu.
+- [x] Vytvořit lehký modul `src/i18n/index.ts` s funkcí `t(key, lang)` a slovníky pro `cs` a `en`.
+- [x] Zahrnout překlady pro názvy a popisy zbraní, budov ve vesnici, monster v bestiáři a základních UI textů.
+- [x] Přidat stav vybraného jazyka (`currentLang: 'cs' | 'en'`) do nastavení / `metaProgression` a přepínač jazyka do menu.
+- [x] Ověřit, že přepnutí jazyka okamžitě aktualizuje texty v UI bez dopadu na logiku enginu.
