@@ -4,8 +4,8 @@
 
 **Blocked by:** 01: Rozšíření milníkového systému na všech 15 zbraní a validace arzenálu
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Zkontrolovat obsluhu střeleckých mechanismů v `src/App.tsx` / enginu pro každou zbraň, aby respektovala modifikátory z `getRankedWeaponStats(w.id, w.level, w)`.
-- [ ] Zabezpečit aplikaci bonusů projektilů (`projectileCountDelta`), dosahu (`areaRadiusMult`), průrazu (`pierceDelta`) a trvání statusů (`statusDurationSec`) v boji.
-- [ ] Ověřit chod benchmarku `scripts/benchmark-weapons.ts` a zkontrolovat, že startovní zbraně a milníky nevykazují regresi.
+- [x] Zkontrolovat obsluhu střeleckých mechanismů v `src/App.tsx` / enginu pro každou zbraň, aby respektovala modifikátory z `getRankedWeaponStats(w.id, w.level, w)`.
+- [x] Zabezpečit aplikaci bonusů projektilů (`projectileCountDelta`), dosahu (`areaRadiusMult`), průrazu (`pierceDelta`) a trvání statusů (`statusDurationSec`) v boji.
+- [x] Ověřit chod benchmarku `scripts/benchmark-weapons.ts` a zkontrolovat, že startovní zbraně a milníky nevykazují regresi.

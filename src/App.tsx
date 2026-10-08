@@ -1635,13 +1635,14 @@ export default function App() {
           if (e.isDefeated) continue;
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
           if (dx*dx+dy*dy <= reach*reach) {
-            e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
+            const kbMult = impact.knockbackMult ?? 1;
+            e.takeDamage(impact.dmg, impact.type, dx*4*kbMult, dy*4*kbMult, impact.stunDuration ? { stunDuration: impact.stunDuration } : undefined);
             if (!impact.noMasteryProc && impact.weaponId) this.triggerWeaponMastery(impact.weaponId, e, 'hit');
           }
         }
         engineRef.current.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true));
       },
-      spawnHromnickaPulse(reach: number, dmg: number, level: number) {
+      spawnHromnickaPulse(reach: number, dmg: number, level: number, knockbackMult = 1, stunDuration = 0) {
         this.hromnickaPulseTimer = 0.35;
         this.hromnickaPulseRadius = reach;
         const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
@@ -1655,9 +1656,9 @@ export default function App() {
           if (distSq <= maxReach * maxReach) {
             const dist = Math.sqrt(distSq) || 1;
             const holyPush = getHolyPushMultiplier(e);
-            const kbForce = (120 + level * 10) * holyPush;
+            const kbForce = (120 + level * 10) * holyPush * knockbackMult;
             const finalDmg = dmg * (isUnholyEnemy(e) ? 1.5 : 1.0);
-            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce);
+            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce, stunDuration ? { stunDuration } : undefined);
             if (isUnholyEnemy(e)) {
               engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', COLORS.mustard, true));
             }
@@ -3687,7 +3688,8 @@ export default function App() {
             const hromnickaWp = player.weapons.find((w: any) => w.id === 'hromnicka');
             if (hromnickaWp) {
               if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
-              const auraReach = 135 + hromnickaWp.level * 15;
+              const stats = getRankedWeaponStats('hromnicka', hromnickaWp.level, hromnickaWp);
+              const auraReach = (135 + hromnickaWp.level * 15) * stats.areaRadiusMult;
               const nearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, auraReach + 40);
               for (let i = 0; i < nearby.length; i++) {
                 const e = nearby[i];
@@ -3699,7 +3701,7 @@ export default function App() {
                   const dirY = (e.y - player.y) / dist;
                   const holyPush = getHolyPushMultiplier(e);
                   // Gentle continuous repulsion away from blessed light, resisted by Fear resist & poise
-                  const pushSpeed = (52 + hromnickaWp.level * 6) * holyPush;
+                  const pushSpeed = (52 + hromnickaWp.level * 6) * holyPush * stats.knockbackMult;
                   e.x += dirX * pushSpeed * dt;
                   e.y += dirY * pushSpeed * dt;
                 }
@@ -3985,7 +3987,8 @@ export default function App() {
                     // Buchta causes snack for 4s, multiple hits cumulate time. Snack is resistable with Hunger.
                     const baseSnack = p.snackDuration ?? 4.0;
                     const effectiveSnack = baseSnack * Math.max(0, 1 - hungerResist);
-                    e.snackTimer = Math.min(2.5, (e.snackTimer || 0) + effectiveSnack);
+                    const maxCap = Math.max(6.0, baseSnack * 1.5);
+                    e.snackTimer = Math.min(maxCap, (e.snackTimer || 0) + effectiveSnack);
                     engine.texts.push(new DamageText(e.x, e.y - 25, 'Ňam, ňam', '#D97706', true));
                     sound.snack();
                   }
@@ -3998,9 +4001,10 @@ export default function App() {
                     }
                   }
                   const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
-                  e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
+                  const kbMult = p.knockbackMult ?? 1;
+                  e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush * kbMult, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush * kbMult, p.stunDuration ? { stunDuration: p.stunDuration } : undefined);
                   if (!p.noMasteryProc && p.weaponId) player.triggerWeaponMastery(p.weaponId, e, 'hit');
-                  if (p.type === 'ice') e.chill(3.5);
+                  if (p.type === 'ice') e.chill(p.chillDuration ?? 3.5);
                   if (p.type === 'pickle') {
                     e.applyStatusEffect('pickle_sickness', { addStacks: 1, maxStacks: 3, duration: 6, damageTakenMultiplier: p.pickleDamageTakenMultiplier || 1.35, damageDealtMultiplier: 0.65 });
                     const after = e.getStatusEffect('pickle_sickness')?.stacks || 0;
@@ -4056,8 +4060,8 @@ export default function App() {
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
                   const isCane = s.style === 'cane' || s.weaponId === 'cane' || s.weaponId === 'osikovy_prut';
-                  const kbForce = isCane ? 480 : 260;
-                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce);
+                  const kbForce = (isCane ? 480 : 260) * (s.knockbackMult ?? 1);
+                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce, s.stunDuration ? { stunDuration: s.stunDuration } : undefined);
                   if (isCane && e.isAttacking) {
                     e.isAttacking = false;
                     e.windupTimer = 0;
