@@ -1,10 +1,10 @@
 # Bubákov — Changelog
 
-## 2026-10-09 — Integrační staging: testy a engine state (rozpracováno)
+## 2026-10-09 — Integrační staging: sjednocení typů pokračuje (rozpracováno)
 
-- Doplněn stav vytaženého enginu (`EngineState`) včetně fronty weapon milestones a údajů Režiséra výpravy.
-- Přidán příkaz `npm test` a závislost Vitest pro testy dodané s feature větví.
-- Konečné sestavení a spuštění testů zatím není potvrzeno; renderer a hlavní `App.tsx` stále vyžadují spojení kontraktů.
+- Zachovány typy starého rendereru `EnemyAttackInfo` současně s novými typy herních dropů a rozšířenými zbraněmi.
+- Pracovní větev zahrnuje vytažený engine, režiséra výpravy, lokalizaci, testovací sadu a příkaz `npm test`.
+- Integrace `App.tsx`, rendereru a Dědečkova obchodu stále potřebuje propojit jejich odlišné API. Build/lint/testy zatím nebyly spuštěny, větev není připravena k produkčnímu merge.
 
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 
