@@ -63,3 +63,64 @@ _Avoid_: Strike, hit, smash, dopad zbraně
 **Zotavení**:
 Závěrečná fáze útoku bubáka po dopadu, během které vyprošťuje zbraň nebo získává zpět rovnováhu a je dočasně zranitelný.
 _Avoid_: Recovery, cooldown, prodleva
+
+**Voňavé perníčky**:
+Běhová měna získávaná zaháněním bubáků (malé za 2, velké za 6, obří za 20), sloužící k nákupu dobrot, posílení a nových zbraní v Dědečkově nůši.
+_Avoid_: XP, zkušenosti, expy, krystaly, orby
+
+**Kovářská podkova**:
+Vzácný kovaný předmět pro štěstí ovázaný červenou stužkou, který po sebrání jasným cinknutím kovářského železa přitáhne veškerou volně ležící kořist (perníčky, krejcary, dušičky) z celé herní plochy přímo k lovci.
+_Avoid_: Magnet, přitahovač, vacuum, pickup magnet
+
+**Hliněný kohoutek**:
+Lidová malovaná keramická píšťalka, jejíž ranní zakokrhání vyvolá záblesk rozbřesku, okamžitě zažene všechny běžné bubáky na obrazovce a bossům udělí drtivý úder svatého světla.
+_Avoid_: Bomba, nuke, screen clear, granát, exploze
+
+**Vyřezávané kukačky**:
+Tradiční dřevěné světnicové hodiny, které po sebrání cvaknutím soukolí a zakytnutím kukačky zastaví běh času na 4 sekundy a zcela znehybní všechny bubáky i jejich letící střely.
+_Avoid_: Time stop, zmrazení času, freeze, časovač
+
+**Horký perníček**:
+Čerstvě upečený perníček z pece stoupající parou vypadlý z bubáka poraženého ve velké vzdálenosti; pokud k němu lovec doběhne do 3 sekund, získá dvojnásobnou hodnotu perníčků, než perníček vychladne.
+_Avoid_: Shatter drop, timed drop, bonusový krystal, risk drop
+
+**Slévání kořisti**:
+Systémová fúze starých malých perníčků a mincí ležících mimo zorné pole kamery do větších celků (velké/obří perníčky a zlaté tolary) při překročení limitu předmětů na scéně pro zachování plynulosti hry a přehlednosti.
+_Avoid_: Agregace krystalů, despawn, mazání dropů, krystalová komprese
+
+**Záchranný drop**:
+Dynamické taktické zvýhodnění šance na záchranné předměty (jitrnice, hrušky, kohoutek, kukačky, podkova) při poklesu Kuráže lovce pod 25 %, vysílané se směrovým odskokem do střední vzdálenosti.
+_Avoid_: Pity drop, dynamic difficulty adjustment, health rubberbanding
+
+**Režisér výpravy**:
+Systém autonomně řídící napětí, tempo a Rejdový rozpočet během výpravy na základě kondice a bojové dominance lovce.
+_Avoid_: AI Director, spawn manager, wave generator
+
+**Rejdový rozpočet**:
+Dynamická měna Režiséra výpravy generovaná v čase, kterou utrácí za nasazování specifických taktických formací a odolnějších bubáků.
+_Avoid_: Threat budget, spawn points, bodový rozpočet
+
+**Rychlost zažehnání**:
+Metrika měřící průměrnou dobu od spatření do zahnání bubáka lovcem indikující dominanci a efektivitu jeho výbavy na bojišti.
+_Avoid_: TTK, Time-To-Kill, kill speed, dps metric
+
+**Oddych a Přepadení**:
+Rytmický cyklus střídající intenzivní boj, krátké ticho pro bezpečný sběr kořisti (oddych) a náhlý koncentrovaný výpad bubáků ze zálohy (přepadení).
+_Avoid_: Pacing valves, tension cycle, spawn lull
+
+**Rozmar výpravy**:
+Procedurální soubor parametrů a pod-archetypů úrovně vylosovaný na začátku výpravy zaručující unikátní průběh a složení událostí.
+_Avoid_: Run seed, level modifier, run archetype, varianta
+
+**Bubácká díra**:
+Pulzující nebezpečná anomálie na bojišti nabízející lovci volbu riskantního rituálu za cennou odměnu oproti hrozbě příchodu zuřivých bubáků.
+_Avoid_: Trhlina, breach, portál, spawn rift
+
+**Rozbroj bubáků**:
+Situační střet dvou znepřátelených čeledí bubáků, při němž útočí i sami na sebe a vítězní bubáci pohlcují perníčky padlých.
+_Avoid_: In-fighting, válka frakcí, mob war
+
+**Přizpůsobivost režiséra**:
+Nastavitelná míra reaktivity Režiséra výpravy na výbavu lovce určující sílu proti-taktik a intenzitu vyvažovací pomoci při znevýhodnění lovce.
+_Avoid_: Anti-meta, adaptivní obtížnost, dynamic counter
+

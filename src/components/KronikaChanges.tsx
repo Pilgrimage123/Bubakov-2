@@ -9,6 +9,21 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '9. října 2026',
+    title: 'Režisér výpravy: Reaktivní rejdový rozpočet, taktické formace a Bubácká díra',
+    summary: 'Kompletní přechod ze statických soustředných kruhů na autonomního Režiséra výpravy. Hra průběžně vyhodnocuje dominanci lovce a rychlost zažehnání (TTK), hospodaří s rejdovým rozpočtem, střídá nápor s oddychem a nasazuje koordinované formace, anomálie i procedurální Rozmary výpravy.',
+    items: [
+      '🎭 Autonomní Režisér výpravy (RunDirector): Veškerá spawn logika opustila UI a přešla do dedikovaného enginu, který inteligentně investuje rejdový rozpočet podle výkonu lovce.',
+      '⚔️ Taktické formace: Kladivo a kovadlina (čelní zeď a křídelní úder), Architekti bojiště (kladoucí lepkavé a mrazivé překážky), Eskortní roje a prediktivní předsazení proti nekonečnému obíhání arény.',
+      '⏳ Křivka napětí (Oddych a Přepadení): Po vyčištění náporu nastává 3,5s ticho pro bezpečný sběr kořisti, ukončené zvukovým telegrafem a bleskovým přepadením ze zálohy.',
+      '🎲 18 procedurálních Rozmarů výpravy: Každá ze 6 úrovní má 3 unikátní folklórní varianty měnící složení nepřátel, počasí a časování anomálií, zobrazené v ozdobné kartuši.',
+      '🌑 Anomálie Bubácká díra: Riskantní 4sekundový rituál v pulzující zóně za truhlu plnou perníčků, při zmeškání času z díry vyleze zuřivý miniboss.',
+      '🤼 Rozbroj bubáků (In-Fighting): Znepřátelené čeledi bubáků se vzájemně zraňují a pohlcují perníčky padlých k mutaci (zastropováno na max. 2 stupně).',
+      '🎯 Nastavitelná Přizpůsobivost v menu (0–150 %): Hráč si může v pauze nastavit agresivitu adaptace; při nesnázích režisér přimíchá křehčí nosiče perníčků (Přízeň osudu).',
+      '🚀 Hard-cap 75 entit: Zastropování počtu živých bubáků pro garantovaných 60 FPS na canvasu bez sekání.',
+    ],
+  },
+  {
     date: '8. října 2026',
     title: 'Stabilita běhového prostředí: Sjednocení instancí Reactu a spolehlivý chod',
     summary: 'Oprava inicializace Reactu v sestavovacím prostředí Vite. Konfigurace zajišťuje striktně jedinou instanci Reactu v celé aplikaci a eliminuje chyby spojené s mezipamětí.',

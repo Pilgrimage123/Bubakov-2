@@ -1,0 +1,597 @@
+import type { GameLevelId, GameLevelDef } from '../types';
+import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
+
+export interface ArenaHazard {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  duration: number;
+  maxDuration: number;
+  type: 'mud' | 'fire' | 'frost';
+  slowFactor: number;
+}
+
+export interface BubackaDiraState {
+  x: number;
+  y: number;
+  radius: number;
+  timeRemaining: number;
+  holdTimeRemaining: number;
+  totalHoldRequired: number;
+  isCompleted: boolean;
+  isFailed: boolean;
+  playerInside: boolean;
+}
+
+export type PacingValvePhase = 'buildup' | 'peak' | 'lull' | 'telegraph' | 'ambush';
+
+export interface DirectorTelemetry {
+  threatBudget: number;
+  budgetCap: number;
+  dominanceIndex: number;
+  avgTTK: number;
+  killCountLast10: number;
+  valvePhase: PacingValvePhase;
+  livingEnemyCount: number;
+  activeHazardsCount: number;
+  bubackaDiraActive: boolean;
+  assistanceActive: boolean;
+}
+
+export interface DirectorConfig {
+  adaptability: number; // 0.0 (off) to 1.5 (maximum), default 1.0
+  maxLivingEnemies: number; // default 75
+}
+
+export interface EnemyKillRecord {
+  spawnedAt: number;
+  killedAt: number;
+  duration: number;
+}
+
+export class RunDirector {
+  public rozmar: RunRozmarDef;
+  public threatBudget = 10;
+  public budgetCap = 35;
+  public valvePhase: PacingValvePhase = 'buildup';
+  public valveTimer = 0;
+  public adaptability = 1.0;
+  public maxLivingEnemies = 75;
+
+  public hazards: ArenaHazard[] = [];
+  public bubackaDira: BubackaDiraState | null = null;
+  public bubackaDiraSpawned = false;
+
+  public telegraphMessage: string | null = null;
+  public telegraphTimer = 0;
+
+  public assistanceActive = false;
+
+  private recentKills: EnemyKillRecord[] = [];
+  private spawnTimeByEnemy = new WeakMap<any, number>();
+  private lastSpawnCheck = 0;
+  private formationCooldown = 4.0;
+  private nextHazardCooldown = 3.0;
+
+  constructor(public levelId: GameLevelId, seed?: number, config?: Partial<DirectorConfig>) {
+    this.rozmar = selectRunRozmar(levelId, seed);
+    if (config?.adaptability !== undefined) {
+      this.adaptability = Math.max(0, Math.min(1.5, config.adaptability));
+    }
+    if (config?.maxLivingEnemies !== undefined) {
+      this.maxLivingEnemies = config.maxLivingEnemies;
+    }
+  }
+
+  public recordEnemySpawn(enemy: any, gameTime: number): void {
+    if (enemy && typeof enemy === 'object') {
+      this.spawnTimeByEnemy.set(enemy, gameTime);
+    }
+  }
+
+  public recordEnemyDeath(enemy: any, gameTime: number): void {
+    if (!enemy || typeof enemy !== 'object') return;
+    const spawnTime = this.spawnTimeByEnemy.get(enemy);
+    if (spawnTime !== undefined) {
+      const duration = Math.max(0.1, gameTime - spawnTime);
+      this.recentKills.push({ spawnedAt: spawnTime, killedAt: gameTime, duration });
+      if (this.recentKills.length > 12) {
+        this.recentKills.shift();
+      }
+    }
+  }
+
+  public getAverageTTK(): number {
+    if (this.recentKills.length === 0) return 1.2;
+    const sum = this.recentKills.reduce((acc, k) => acc + k.duration, 0);
+    return sum / this.recentKills.length;
+  }
+
+  public computeDominanceIndex(player: any): number {
+    if (!player) return 0.5;
+    const ttk = this.getAverageTTK();
+    // Fast kill (< 0.7s) gives high dominance factor (up to 1.0)
+    const ttkFactor = Math.max(0, Math.min(1, (1.8 - ttk) / 1.3));
+    // High player courage gives high courage factor
+    const maxHp = player.maxHp || 100;
+    const hpFactor = Math.max(0, Math.min(1, (player.hp || 1) / maxHp));
+    return ttkFactor * 0.6 + hpFactor * 0.4;
+  }
+
+  public update(dt: number, engine: any): void {
+    const player = engine.state?.player;
+    if (!player || engine.state?.dawnVictoryTriggered) return;
+
+    const gameTime = engine.state.gameTime || 0;
+    const livingCount = engine.livingEnemies?.length || 0;
+
+    // 1. Update threat budget capacity based on daytime
+    this.updateBudgetMetrics(gameTime, dt);
+
+    // 2. Track dominance and assistance need
+    const dominance = this.computeDominanceIndex(player);
+    this.assistanceActive = this.adaptability > 0 && dominance < 0.35 && (player.hp / (player.maxHp || 1)) < 0.5;
+
+    // 3. Update Pacing Valves (Oddych a Přepadení)
+    this.updatePacingValves(dt, engine, livingCount);
+
+    // 4. Update Hazards (decay)
+    this.updateHazards(dt, player);
+
+    // 5. Update Bubácká díra
+    this.updateBubackaDira(dt, engine, player, gameTime);
+
+    // 6. Update Telegraph text display
+    if (this.telegraphTimer > 0) {
+      this.telegraphTimer -= dt;
+      if (this.telegraphTimer <= 0) {
+        this.telegraphMessage = null;
+      }
+    }
+
+    // 7. Tactical Spawning if in buildup or peak
+    this.formationCooldown -= dt;
+    this.nextHazardCooldown -= dt;
+    this.lastSpawnCheck += dt;
+
+    if (this.lastSpawnCheck >= 0.6) {
+      this.lastSpawnCheck = 0;
+      if (this.valvePhase === 'buildup' || this.valvePhase === 'peak') {
+        this.executeTacticalSpawns(engine, player, dominance, livingCount, gameTime);
+      }
+    }
+  }
+
+  private updateBudgetMetrics(gameTime: number, dt: number): void {
+    let baseRate = 4.0;
+    let cap = 35;
+
+    if (gameTime < 75) {
+      baseRate = 4.0;
+      cap = 35;
+    } else if (gameTime < 150) {
+      baseRate = 6.0;
+      cap = 60;
+    } else if (gameTime < 225) {
+      baseRate = 8.0;
+      cap = 85;
+    } else if (gameTime < 300) {
+      baseRate = 10.0;
+      cap = 110;
+    } else {
+      baseRate = 12.0;
+      cap = 135;
+    }
+
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier);
+    const accrual = baseRate * this.rozmar.threatMultiplier * (0.6 + this.adaptability * 0.4) * dt;
+    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
+  }
+
+  private updatePacingValves(dt: number, engine: any, livingCount: number): void {
+    switch (this.valvePhase) {
+      case 'buildup':
+        if (this.threatBudget <= 4 && livingCount >= 18) {
+          this.valvePhase = 'peak';
+          this.valveTimer = 0;
+        }
+        break;
+
+      case 'peak':
+        // Wait for player to suppress enemies to trigger the lull (Oddych)
+        if (livingCount <= 4) {
+          this.valvePhase = 'lull';
+          this.valveTimer = 3.5; // 3.5s of calm
+        }
+        break;
+
+      case 'lull':
+        this.valveTimer -= dt;
+        if (this.valveTimer <= 0) {
+          this.valvePhase = 'telegraph';
+          this.valveTimer = 1.0;
+          this.triggerTelegraph('⚠️ Kradmé kroky za humny... Pozor na přepadení!', 2.2, engine);
+          if (engine.callbacks?.onSound) {
+            engine.callbacks.onSound('howl');
+          }
+        }
+        break;
+
+      case 'telegraph':
+        this.valveTimer -= dt;
+        if (this.valveTimer <= 0) {
+          this.valvePhase = 'ambush';
+          this.executeAmbush(engine);
+          this.valvePhase = 'buildup';
+        }
+        break;
+
+      case 'ambush':
+        this.valvePhase = 'buildup';
+        break;
+    }
+  }
+
+  private triggerTelegraph(msg: string, duration = 2.5, engine?: any): void {
+    this.telegraphMessage = msg;
+    this.telegraphTimer = duration;
+    if (engine?.callbacks?.onDamageText && engine.state?.player) {
+      engine.callbacks.onDamageText({
+        x: engine.state.player.x,
+        y: engine.state.player.y - 70,
+        text: msg,
+        color: '#F59E0B',
+        scale: 1.25,
+        life: duration,
+      });
+    }
+  }
+
+  private executeAmbush(engine: any): void {
+    const player = engine.state.player;
+    if (!player) return;
+
+    // Unexpected vector: perpendicular to player direction or from behind
+    const moveAngle = Math.atan2(player.vy || 0, player.vx || 0);
+    const ambushAngle = moveAngle + Math.PI / 2 + (Math.random() < 0.5 ? 0 : Math.PI);
+    const pool = this.getWeightedPool(engine);
+
+    const leaderId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
+    const minionId = pool[pool.length - 1] || 'rarach';
+
+    const cx = player.x + Math.cos(ambushAngle) * 580;
+    const cy = player.y + Math.sin(ambushAngle) * 580;
+
+    // Leader with slight buff
+    const leader = engine.spawnMonster(leaderId, cx, cy, 1.25, false, false, 'Přepadový velitel');
+    if (leader) this.recordEnemySpawn(leader, engine.state.gameTime);
+
+    // Fast flankers
+    for (let i = -2; i <= 2; i++) {
+      if (i === 0) continue;
+      const ox = cx + Math.cos(ambushAngle + Math.PI / 2) * (i * 45);
+      const oy = cy + Math.sin(ambushAngle + Math.PI / 2) * (i * 45);
+      const minion = engine.spawnMonster(minionId, ox, oy, 1.0);
+      if (minion) this.recordEnemySpawn(minion, engine.state.gameTime);
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 25);
+  }
+
+  private executeTacticalSpawns(
+    engine: any,
+    player: any,
+    dominance: number,
+    livingCount: number,
+    gameTime: number
+  ): void {
+    if (livingCount >= this.maxLivingEnemies) {
+      // FPS Guard: do not add more entities; if budget is high, apply a poise/haste boost to living enemies
+      if (this.threatBudget >= 20 && engine.livingEnemies?.length > 0) {
+        const randMob = engine.livingEnemies[Math.floor(Math.random() * engine.livingEnemies.length)];
+        if (randMob && !randMob.isBoss) {
+          randMob.speed = Math.min(randMob.speed * 1.08, 140);
+          randMob.poiseResist = Math.min(0.9, (randMob.poiseResist || 0) + 0.15);
+          this.threatBudget -= 6;
+        }
+      }
+      return;
+    }
+
+    // High dominance: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite)
+    if (dominance > 0.65 && this.threatBudget >= 18 && this.formationCooldown <= 0) {
+      this.formationCooldown = 5.0 - this.adaptability * 1.5;
+      const pick = Math.random();
+      if (pick < 0.4) {
+        this.spawnHammerAndAnvil(engine, player, gameTime);
+      } else if (pick < 0.75) {
+        this.spawnEscortSwarms(engine, player, gameTime);
+      } else {
+        this.spawnAntiKiteInterception(engine, player, gameTime);
+      }
+      return;
+    }
+
+    // Architects formation if rozmar prefers or budget allows
+    if (this.rozmar.formationBias === 'architects' && this.threatBudget >= 16 && this.formationCooldown <= 0) {
+      this.formationCooldown = 5.5;
+      this.spawnArchitects(engine, player, gameTime);
+      return;
+    }
+
+    // Standard tactical squad / single spawn if budget allows
+    if (this.threatBudget >= 5) {
+      const pool = this.getWeightedPool(engine);
+      const cost = Math.min(this.threatBudget, dominance > 0.7 ? 12 : 6);
+      const count = Math.min(3, Math.floor(cost / 3), this.maxLivingEnemies - livingCount);
+
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 580 + Math.random() * 120;
+
+      for (let i = 0; i < count; i++) {
+        const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
+        const offAngle = angle + (i - (count - 1) / 2) * 0.18;
+        const e = engine.spawnMonster(
+          mobId,
+          player.x + Math.cos(offAngle) * dist,
+          player.y + Math.sin(offAngle) * dist,
+          1.0
+        );
+        if (e) this.recordEnemySpawn(e, gameTime);
+        this.threatBudget -= 3;
+      }
+    }
+  }
+
+  private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
+    const pool = this.getWeightedPool(engine);
+    const heavyId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
+    const fastId = pool[pool.length - 1] || 'rarach';
+
+    const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
+    const frontAngle = pAngle + (Math.random() * 0.4 - 0.2);
+
+    // Frontal wall (anvil)
+    const wallDist = 580;
+    const wallCount = 4;
+    for (let i = 0; i < wallCount; i++) {
+      const spread = (i - (wallCount - 1) / 2) * 55;
+      const wx = player.x + Math.cos(frontAngle) * wallDist + Math.sin(frontAngle) * spread;
+      const wy = player.y + Math.sin(frontAngle) * wallDist - Math.cos(frontAngle) * spread;
+      const e = engine.spawnMonster(heavyId, wx, wy, 1.15);
+      if (e) {
+        e.poiseResist = Math.min(0.85, (e.poiseResist || 0) + 0.25);
+        this.recordEnemySpawn(e, gameTime);
+      }
+    }
+
+    // Flankers (hammer) coming from sides
+    const flankDist = 520;
+    for (const sign of [-1, 1]) {
+      const fAngle = frontAngle + (Math.PI / 2) * sign;
+      const fx = player.x + Math.cos(fAngle) * flankDist;
+      const fy = player.y + Math.sin(fAngle) * flankDist;
+      const f = engine.spawnMonster(fastId, fx, fy, 1.0);
+      if (f) {
+        f.speed *= 1.15;
+        this.recordEnemySpawn(f, gameTime);
+      }
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 18);
+  }
+
+  private spawnEscortSwarms(engine: any, player: any, gameTime: number): void {
+    const pool = this.getWeightedPool(engine);
+    const eliteId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
+    const minionId = pool[pool.length - 1] || 'rarach';
+
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 600;
+    const cx = player.x + Math.cos(angle) * dist;
+    const cy = player.y + Math.sin(angle) * dist;
+
+    const elite = engine.spawnMonster(eliteId, cx, cy, 1.35, false, false, 'Obrněný vůdce');
+    if (elite) {
+      elite.isEscortLeader = true;
+      this.recordEnemySpawn(elite, gameTime);
+    }
+
+    // 4 orbit minions
+    for (let i = 0; i < 4; i++) {
+      const ma = (i / 4) * Math.PI * 2;
+      const mx = cx + Math.cos(ma) * 55;
+      const my = cy + Math.sin(ma) * 55;
+      const m = engine.spawnMonster(minionId, mx, my, 0.9);
+      if (m) {
+        m.isEscortMinion = true;
+        this.recordEnemySpawn(m, gameTime);
+      }
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 22);
+  }
+
+  private spawnArchitects(engine: any, player: any, gameTime: number): void {
+    const pool = this.getWeightedPool(engine);
+    const archId = this.rozmar.preferredEnemyIds[1] || pool[0] || 'rarach';
+
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 550;
+    for (let i = 0; i < 2; i++) {
+      const ax = player.x + Math.cos(angle + i * 0.4) * dist;
+      const ay = player.y + Math.sin(angle + i * 0.4) * dist;
+      const e = engine.spawnMonster(archId, ax, ay, 1.0);
+      if (e) {
+        e.isArchitect = true;
+        this.recordEnemySpawn(e, gameTime);
+      }
+    }
+
+    // Place an organic hazard on the ground
+    if (this.hazards.length < 6) {
+      this.hazards.push({
+        id: `hazard_${Date.now()}_${Math.random()}`,
+        x: player.x + (Math.random() * 200 - 100),
+        y: player.y + (Math.random() * 200 - 100),
+        radius: 65,
+        duration: 4.5,
+        maxDuration: 4.5,
+        type: this.rozmar.weatherOverride === 'snow' ? 'frost' : 'mud',
+        slowFactor: 0.7,
+      });
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 16);
+  }
+
+  private spawnAntiKiteInterception(engine: any, player: any, gameTime: number): void {
+    const pool = this.getWeightedPool(engine);
+    const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
+
+    const pSpeed = Math.hypot(player.vx || 0, player.vy || 0);
+    const pAngle = pSpeed > 10 ? Math.atan2(player.vy || 0, player.vx || 0) : Math.random() * Math.PI * 2;
+
+    // Spawn 2 enemies directly in lead path
+    for (let i = -1; i <= 1; i += 2) {
+      const leadAngle = pAngle + i * 0.22;
+      const dist = 540;
+      const ix = player.x + Math.cos(leadAngle) * dist;
+      const iy = player.y + Math.sin(leadAngle) * dist;
+      const e = engine.spawnMonster(mobId, ix, iy, 1.05);
+      if (e) this.recordEnemySpawn(e, gameTime);
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 14);
+  }
+
+  private updateHazards(dt: number, player: any): void {
+    for (let i = this.hazards.length - 1; i >= 0; i--) {
+      const h = this.hazards[i];
+      h.duration -= dt;
+      if (h.duration <= 0) {
+        this.hazards.splice(i, 1);
+        continue;
+      }
+
+      // Check collision with player
+      const dist = Math.hypot(player.x - h.x, player.y - h.y);
+      if (dist <= h.radius) {
+        player.hazardSlowTimer = 0.25;
+        player.hazardSlowFactor = h.slowFactor;
+      }
+    }
+  }
+
+  private updateBubackaDira(dt: number, engine: any, player: any, gameTime: number): void {
+    // 1. Spawning condition: within anomaly window, not already spawned, no boss present
+    if (!this.bubackaDira && !this.bubackaDiraSpawned) {
+      const [startSec, endSec] = this.rozmar.anomalyWindow;
+      if (gameTime >= startSec && gameTime <= endSec && !engine.state.miniBossSpawned) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 360 + Math.random() * 80;
+        this.bubackaDira = {
+          x: player.x + Math.cos(ang) * dist,
+          y: player.y + Math.sin(ang) * dist,
+          radius: 130,
+          timeRemaining: 15.0,
+          holdTimeRemaining: 4.0,
+          totalHoldRequired: 4.0,
+          isCompleted: false,
+          isFailed: false,
+          playerInside: false,
+        };
+        this.bubackaDiraSpawned = true;
+        this.triggerTelegraph('🌑 Země puká: Objevila se Bubácká díra! Udrž rituál pro poklad!', 3.5, engine);
+      }
+    }
+
+    if (!this.bubackaDira || this.bubackaDira.isCompleted || this.bubackaDira.isFailed) return;
+
+    const dira = this.bubackaDira;
+    dira.timeRemaining -= dt;
+
+    const dist = Math.hypot(player.x - dira.x, player.y - dira.y);
+    dira.playerInside = dist <= dira.radius;
+
+    if (dira.playerInside) {
+      dira.holdTimeRemaining -= dt;
+      if (dira.holdTimeRemaining <= 0) {
+        // Success!
+        dira.isCompleted = true;
+        this.triggerTelegraph('✨ Rituál dokončen! Bubácká díra zapečetěna!', 3.0, engine);
+        this.resolveBubackaDiraSuccess(engine, dira);
+        return;
+      }
+    }
+
+    if (dira.timeRemaining <= 0 && dira.holdTimeRemaining > 0) {
+      // Failed!
+      dira.isFailed = true;
+      this.triggerTelegraph('⚠️ Čas vypršel! Z Bubácké díry se sápe Zuřivý Miniboss!', 3.0, engine);
+      this.resolveBubackaDiraFailure(engine, dira);
+    }
+  }
+
+  private resolveBubackaDiraSuccess(engine: any, dira: BubackaDiraState): void {
+    // Repel nearby enemies
+    if (engine.livingEnemies) {
+      for (const enemy of engine.livingEnemies) {
+        const d = Math.hypot(enemy.x - dira.x, enemy.y - dira.y);
+        if (d < dira.radius + 180) {
+          const a = Math.atan2(enemy.y - dira.y, enemy.x - dira.x);
+          enemy.x += Math.cos(a) * 160;
+          enemy.y += Math.sin(a) * 160;
+          enemy.stunTimer = Math.max(enemy.stunTimer || 0, 1.8);
+        }
+      }
+    }
+
+    // Drop big treasure chest + bonus gingerbread
+    if (engine.spawnScatterDrop) {
+      engine.spawnScatterDrop('chest', { x: dira.x, y: dira.y, text: 'POKLAD Z DÍRY!' });
+      for (let i = 0; i < 4; i++) {
+        engine.spawnScatterDrop('gingerbread', {
+          x: dira.x + (Math.random() * 40 - 20),
+          y: dira.y + (Math.random() * 40 - 20),
+          size: 'giant',
+          value: 20,
+        });
+      }
+    }
+  }
+
+  private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
+    const bossId = this.rozmar.preferredEnemyIds[0] || 'cerny_pes';
+    const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '👹 Zuřivý netvor z díry');
+    if (furious) {
+      furious.speed *= 1.2;
+      this.recordEnemySpawn(furious, engine.state.gameTime);
+    }
+  }
+
+  private getWeightedPool(engine: any): string[] {
+    const curLvl: GameLevelDef = engine.activeLevelDef || engine.state?.activeLevelId ? engine.state.activeLevelId : 1;
+    const pool = this.rozmar.preferredEnemyIds.slice();
+    if (pool.length === 0) {
+      pool.push('rarach');
+    }
+    return pool;
+  }
+
+  public getTelemetry(): DirectorTelemetry {
+    return {
+      threatBudget: Math.round(this.threatBudget * 10) / 10,
+      budgetCap: this.budgetCap,
+      dominanceIndex: Math.round(this.computeDominanceIndex(null) * 100) / 100,
+      avgTTK: Math.round(this.getAverageTTK() * 10) / 10,
+      killCountLast10: this.recentKills.length,
+      valvePhase: this.valvePhase,
+      livingEnemyCount: 0,
+      activeHazardsCount: this.hazards.length,
+      bubackaDiraActive: !!(this.bubackaDira && !this.bubackaDira.isCompleted && !this.bubackaDira.isFailed),
+      assistanceActive: this.assistanceActive,
+    };
+  }
+}

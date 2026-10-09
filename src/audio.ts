@@ -452,6 +452,16 @@ var SoundManager = class {
 		setTimeout(() => this.playTone(523, "triangle", .2, .25), 400);
 		setTimeout(() => this.playTone(784, "triangle", .6, .35), 580);
 	}
+	horseshoe() {
+		this.playTone(1760, "sine", .35, .22, 1e-4);
+		setTimeout(() => this.playTone(2637, "sine", .4, .18, 1e-4), 70);
+		setTimeout(() => this.playTone(3520, "sine", .5, .15, 1e-4), 140);
+	}
+	cuckooClock() {
+		this.playTone(400, "sawtooth", .06, .2, .01);
+		setTimeout(() => this.playTone(1046, "triangle", .2, .25), 80);
+		setTimeout(() => this.playTone(784, "triangle", .35, .3), 280);
+	}
 	thunder() {
 		this.playTone(110, "sawtooth", .3, .35, .1);
 		setTimeout(() => this.playTone(65, "sawtooth", .8, .4, .001), 120);

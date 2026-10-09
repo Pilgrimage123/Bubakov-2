@@ -1,5 +1,35 @@
 # Bubákov — Changelog
 
+## 2026-10-09 — Režisér výpravy (AI Director), reaktivní rejdový rozpočet, taktické formace a Bubácká díra
+
+- **Režisér výpravy (`RunDirector`) v `src/game/director.ts`:**
+  - Odstraněno mechanické spawnování v soustředných kruzích z `App.tsx` v souladu s ADR-0002.
+  - Spawnování nyní plně řídí autonomní Režisér výpravy operující s dynamickým Rejdovým rozpočtem (Threat Budget) a metrikou rychlosti zažehnání (TTK).
+- **Dynamický Rejdový rozpočet a Ochrana 60 FPS:**
+  - Kapacita rozpočtu roste s denní dobou (35 bodů v poledne až 135 bodů o půlnoci).
+  - Pevný limit 75 současně živých bubáků na scéně: při naplnění limitu se nespawnují další entity, ale rozpočet se investuje do aury, zrychlení a odolnosti stávajících bubáků.
+- **Křivka napětí (Oddych a Přepadení / Pacing Valves):**
+  - Střídání fází náběhu hrozby, vyvrcholení a taktického ticha (Oddych trvající 3,5 s při poklesu živých bubáků pod 5).
+  - Telegrafovaný signál (zvukové zahoukání, otřes a textové varování) zakončený náhlým koncentrovaným přepadením z neočekávaného vektoru.
+- **Taktické bojové formace a manipulace prostorem:**
+  - *Kladivo a kovadlina (Pincer Movement):* Čelní neprostupná stěna těžkooděnců doplněná rychlými jednotkami vpadávajícími do křídel.
+  - *Architekti bojiště:* Bubáci zanechávající na zemi dočasné lepkavé louže, mráz a ohnivé brázdy, zužující manévrovací prostor.
+  - *Eskortní roje:* Elitní vůdce obklopený rotujícím ochranným kruhem 4 minionů zachycujících projektily.
+  - *Prediktivní předsazení (Anti-Kite):* Spawnování hlídek přímo do předpokládané trajektorie běhu lovce kroužícího po aréně.
+- **Procedurální garance odlišnosti výprav (Rozmar výpravy):**
+  - Implementováno 18 unikátních folklórních Rozmarů výpravy (3 pro každou z 6 úrovní) v `src/data/runArchetypes.ts`.
+  - Deterministický seed výpravy upravuje složení bubáků, počasí a časové okno anomálií; při startu výpravy se zobrazuje ozdobná Ladovská kartuše s názvem Rozmaru.
+- **Anomálie Bubácká díra (Breach) a Rozbroj bubáků (In-Fighting):**
+  - *Bubácká díra:* Rituální pulzující kruh (radius 130 px). Udržení zóny po dobu 4 sekund vyvolá tlakovou vlnu a odměnu (truhla + obří perníčky); ignorování vypustí Zuřivého Minibosse.
+  - *Rozbroj bubáků:* Bubáci nepřátelských frakcí se vzájemně zraňují a mohou pohlcovat perníčky padlých k mutaci (+60 % HP, +25 % velikost, zastropováno na max. 2 stupně).
+- **Uživatelská volba a vyvažovací pomoc:**
+  - Posuvník *Přizpůsobivost režiséra* (0 % až 150 %) v Pauze hry a nastavení s perzistencí v `localStorage`.
+  - Přízeň osudu: pokud TTK překročí 2,5 s a lovec ztrácí Kuráž, Režisér naředí formace křehčími bubáky nesoucími perníčky pro vyrovnání znevýhodněného buildu.
+- **Architektonická rozhodnutí a doménový model:**
+  - Zaznamenáno [ADR-0007](./docs/adr/0007-reziser-vypravy-a-reaktivni-rejdovy-rozpocet.md) a aktualizován [GLOSSARY.md](./GLOSSARY.md).
+- **Testy:**
+  - Nová testovací sada v `tests/runDirector.test.ts` (12 testů); celkem 104 testů prochází.
+
 ## 2026-10-08 — Fázované útočné animace, procedurální kinematika bubáků a bojové zotavení
 
 - **Procedurální kinematika a univerzální obálka v `drawEnemyRenderer`:**

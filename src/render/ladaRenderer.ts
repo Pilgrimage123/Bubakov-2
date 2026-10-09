@@ -7299,6 +7299,186 @@ var Lada = {
 		ctx.fillRect(-3, -5, 6, 8);
 		ctx.restore();
 	},
+	drawHorseshoe(ctx, x, y, time) {
+		ctx.save();
+		const bob = Math.sin(time * 3.5) * 2.5;
+		const tilt = Math.sin(time * 2) * 0.1;
+		ctx.translate(x, y + bob);
+		ctx.rotate(tilt);
+		ctx.shadowColor = '#F59E0B';
+		ctx.shadowBlur = 8 + Math.sin(time * 4) * 5;
+
+		// Thick ink outline of U-shape horseshoe
+		ctx.lineCap = 'round';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 10;
+		ctx.beginPath();
+		ctx.arc(0, 2, 13, Math.PI * 0.2, Math.PI * 0.8, true);
+		ctx.stroke();
+
+		// Metallic iron / steel body
+		ctx.strokeStyle = '#94A3B8';
+		ctx.lineWidth = 6;
+		ctx.beginPath();
+		ctx.arc(0, 2, 13, Math.PI * 0.2, Math.PI * 0.8, true);
+		ctx.stroke();
+
+		// Inner highlight & nail studs
+		ctx.strokeStyle = '#E2E8F0';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(0, 1.5, 12, Math.PI * 0.28, Math.PI * 0.72, true);
+		ctx.stroke();
+
+		// Calks / tips
+		ctx.fillStyle = COLORS.ink;
+		ctx.fillRect(-14, 5, 4, 6);
+		ctx.fillRect(10, 5, 4, 6);
+
+		// Red festive bow & ribbon
+		this.setupPath(ctx, COLORS.red, COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(-3, -11, 4.5, 3, -0.3, 0, Math.PI * 2);
+		ctx.ellipse(3, -11, 4.5, 3, 0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.arc(0, -11, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+	},
+	drawRooster(ctx, x, y, time) {
+		ctx.save();
+		const bob = Math.sin(time * 3) * 2;
+		ctx.translate(x, y + bob);
+		ctx.shadowColor = '#FDE047';
+		ctx.shadowBlur = 10 + Math.sin(time * 4) * 6;
+
+		// Ceramic whistle body
+		this.setupPath(ctx, '#FFFDF0', COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.ellipse(0, 3, 13, 10, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Tail feathers (traditional folk whistle)
+		this.setupPath(ctx, '#EF4444', COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-11, 1);
+		ctx.quadraticCurveTo(-18, -4, -16, -11);
+		ctx.quadraticCurveTo(-11, -7, -8, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Painted folk ornament on wing (blue & green)
+		ctx.fillStyle = '#2563EB';
+		ctx.beginPath();
+		ctx.arc(-1, 3, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#16A34A';
+		ctx.beginPath();
+		ctx.arc(4, 4, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Head & beak
+		this.setupPath(ctx, '#FFFDF0', COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(8, -5, 6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Yellow beak
+		this.setupPath(ctx, '#F59E0B', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(13, -6);
+		ctx.lineTo(19, -3);
+		ctx.lineTo(13, -1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Red comb on head
+		this.setupPath(ctx, '#DC2626', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(6, -11, 2.5, 0, Math.PI * 2);
+		ctx.arc(9, -12, 2.5, 0, Math.PI * 2);
+		ctx.arc(12, -10, 2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Little eye
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(10, -6, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawCuckooClock(ctx, x, y, time) {
+		ctx.save();
+		const bob = Math.sin(time * 2.5) * 2;
+		ctx.translate(x, y + bob);
+		ctx.shadowColor = '#D97706';
+		ctx.shadowBlur = 8 + Math.sin(time * 3.5) * 5;
+
+		// Swinging pendulum underneath
+		const pendAngle = Math.sin(time * 6) * 0.35;
+		ctx.save();
+		ctx.translate(0, 12);
+		ctx.rotate(pendAngle);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(0, 14);
+		ctx.stroke();
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.arc(0, 14, 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Clock chalet body (carved wood)
+		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3);
+		ctx.fillRect(-12, -10, 24, 22);
+		ctx.strokeRect(-12, -10, 24, 22);
+
+		// Roof eaves (gable triangle)
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-16, -9);
+		ctx.lineTo(0, -20);
+		ctx.lineTo(16, -9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Dial face (cream circle with hands)
+		this.setupPath(ctx, '#FFFBEB', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, 1, 7, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Clock hands pointing to 12
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(0, 1);
+		ctx.lineTo(0, -4);
+		ctx.moveTo(0, 1);
+		ctx.lineTo(3, 0);
+		ctx.stroke();
+
+		// Little cuckoo bird window
+		this.setupPath(ctx, COLORS.ink);
+		ctx.beginPath();
+		ctx.arc(0, -13, 2.5, Math.PI, 0);
+		ctx.fill();
+		ctx.restore();
+	},
 	drawChasnik(ctx, x, y, time, panicked) {
 		ctx.save();
 		ctx.translate(x, y);

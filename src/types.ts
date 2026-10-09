@@ -2,6 +2,36 @@ export type Season = 'autumn' | 'winter' | string;
 export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
+export type DropType =
+  | 'coin'
+  | 'gingerbread'
+  | 'potion'
+  | 'bread'
+  | 'pear'
+  | 'soul'
+  | 'chest'
+  | 'chasnik'
+  | 'horseshoe'
+  | 'rooster'
+  | 'cuckoo_clock';
+
+export interface GameDrop {
+  type: DropType;
+  x: number;
+  y: number;
+  vx?: number;
+  vy?: number;
+  radius?: number;
+  value?: number;
+  size?: 'small' | 'large' | 'giant' | string;
+  time?: number;
+  dead?: boolean;
+  isHot?: boolean;
+  goldenRushTimer?: number;
+  rescued?: boolean;
+  [key: string]: any;
+}
+
 export type WeaponId =
   | 'osikovy_prut'
   | 'valecnice'

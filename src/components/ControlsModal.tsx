@@ -548,6 +548,36 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     Venkovský ladovský výherní automat (slot machine) se štědrou nadílkou zbraní a krejcarů.
                   </div>
                 </div>
+
+                <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#D97706', fontWeight: 900 }}>
+                    <span>🧲</span>
+                    <span>Kovářská podkova (Magnet):</span>
+                  </div>
+                  <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
+                    Kovaná železná podkova pro štěstí – přitáhne veškeré perníčky, krejcary a dušičky z celé louky přímo k lovci.
+                  </div>
+                </div>
+
+                <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EA580C', fontWeight: 900 }}>
+                    <span>🐓</span>
+                    <span>Hliněný kohoutek (Board Clear):</span>
+                  </div>
+                  <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
+                    Lidová píšťalka s ranním zakokrháním – zažene všechny běžné bubáky na obrazovce a bossům uštědří drtivý úder.
+                  </div>
+                </div>
+
+                <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#78350F', fontWeight: 900 }}>
+                    <span>⏰</span>
+                    <span>Vyřezávané kukačky (Time Stop):</span>
+                  </div>
+                  <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
+                    Světnicové dřevěné hodiny – cvaknutím soukolí znehybní čas na 4 sekundy a zastaví všechny bubáky i střely.
+                  </div>
+                </div>
               </div>
             </div>
           </div>

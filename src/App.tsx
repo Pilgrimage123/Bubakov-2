@@ -34,9 +34,19 @@ import {
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
-import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones, getWeaponActiveMilestoneChoice, formatRomanNumeral } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
+import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones, getWeaponActiveMilestoneChoice, formatRomanNumeral } from './data/weaponMilestones';
 import { getGingerbreadSize, getGingerbreadValue, GINGERBREAD_CONFIG, GINGERBREAD_VALUES, type GingerbreadSize } from './data/gingerbread';
+import {
+  performDropFusion,
+  applyMagnetWave,
+  registerKillAndCheckCombo,
+  calculateUncollectedGingerbread,
+  HOT_GINGERBREAD_DURATION,
+  SPECIAL_DROP_PITY_COOLDOWN,
+  UNCOLLECTED_GINGERBREAD_PITY_THRESHOLD,
+  EMERGENCY_HEALTH_RATIO,
+} from './game/drops';
 import {
   isUnholyEnemy,
   getEnemyHolyResistance,
@@ -953,6 +963,12 @@ export default function App() {
     intensity: 0,
   });
 
+  const [directorAdaptability, setDirectorAdaptability] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1.0;
+    const stored = localStorage.getItem('bubakov_director_adaptability');
+    return stored !== null ? parseFloat(stored) : 1.0;
+  });
+
   // Run stats
   const [runStats, setRunStats] = useState({
     time: 0,
@@ -1720,7 +1736,18 @@ export default function App() {
       meta: metaRef.current,
       customWeapons,
       spawnInitialWave: false,
+      directorAdaptability,
     });
+    gameEngineRef.current.callbacks = {
+      onSound: (snd: string, ...args: any[]) => {
+        if (typeof (sound as any)[snd] === 'function') {
+          (sound as any)[snd](...args);
+        }
+      },
+      onDamageText: (txt: any) => {
+        engineRef.current.texts.push(new DamageText(txt.x, txt.y, txt.text, txt.color, true));
+      },
+    };
     engine.player = player;
     engine.decor = decor;
     engine.activeLevelId = chosenLevelId;
@@ -3492,54 +3519,13 @@ export default function App() {
             const maxCap = maxCapByLevel[curLvlId] ?? 60;
             const currentEnemyCap = Math.floor(minCap + (maxCap - minCap) * timeProgress);
 
-            if (engine.spawnTimer <= 0) {
-              // 2. Spawn interval scaled by level and elapsed time
-              // Level 1: 2.2s at noon, gradually speeding up to 0.95s at midnight
-              // Level 6: 1.1s at start, speeding up to 0.38s at midnight
-              const startIntervalByLevel: Record<number, number> = { 1: 2.2, 2: 1.8, 3: 1.5, 4: 1.3, 5: 1.15, 6: 1.0 };
-              const endIntervalByLevel: Record<number, number> = { 1: 0.95, 2: 0.75, 3: 0.60, 4: 0.50, 5: 0.42, 6: 0.36 };
-              const startInt = startIntervalByLevel[curLvlId] ?? 1.8;
-              const endInt = endIntervalByLevel[curLvlId] ?? 0.8;
-              engine.spawnTimer = startInt - (startInt - endInt) * timeProgress;
-
-              if (engine.enemies.length < currentEnemyCap) {
-                // 3. Batch size scaling:
-                // Level 1: strictly 1 enemy per spawn during first 75s, then 1-2
-                let batchSize = 1;
-                if (curLvlId === 1) {
-                  batchSize = newTime < 75 ? 1 : (newTime < 180 ? (Math.random() < 0.7 ? 1 : 2) : 2);
-                } else if (curLvlId === 2) {
-                  batchSize = newTime < 60 ? 1 : (newTime < 180 ? (Math.random() < 0.5 ? 1 : 2) : (Math.random() < 0.6 ? 2 : 3));
-                } else if (curLvlId === 3) {
-                  batchSize = newTime < 60 ? (Math.random() < 0.6 ? 1 : 2) : (newTime < 180 ? 2 : 3);
-                } else if (curLvlId === 4) {
-                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? (Math.random() < 0.5 ? 2 : 3) : 3);
-                } else if (curLvlId === 5) {
-                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? 3 : 4);
-                } else {
-                  batchSize = newTime < 60 ? (Math.random() < 0.5 ? 2 : 3) : (newTime < 180 ? 3 : (Math.random() < 0.5 ? 4 : 5));
-                }
-
-                // Never exceed current cap
-                const actualCount = Math.min(batchSize, currentEnemyCap - engine.enemies.length);
-
-                for (let i = 0; i < actualCount; i++) {
-                  const ang = Math.random() * Math.PI * 2;
-                  const dist = 650 + Math.random() * 200;
-                  const phaseKey = currentPhase.id as keyof typeof curLvl.spawnPools;
-                  const pool = curLvl.spawnPools[phaseKey] || curLvl.spawnPools.noon;
-                  const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
-
-                  engine.enemies.push(
-                    createEnemyInstance(
-                      mobId,
-                      player.x + Math.cos(ang) * dist,
-                      player.y + Math.sin(ang) * dist,
-                      1
-                    )
-                  );
-                }
-              }
+            // 2. Režisér výpravy (AI Director & Threat Budget)
+            if (gameEngineRef.current.director) {
+              gameEngineRef.current.director.update(dt, gameEngineRef.current);
+              engine.activeHazards = gameEngineRef.current.director.hazards;
+              engine.bubackaDira = gameEngineRef.current.director.bubackaDira;
+              engine.directorTelegraphText = gameEngineRef.current.director.telegraphMessage;
+              engine.directorTelegraphTimer = gameEngineRef.current.director.telegraphTimer;
             }
 
             // Player movement
@@ -4086,9 +4072,17 @@ export default function App() {
           }
           compactInPlace(engine.slashes, (s) => !s.dead);
 
+          if (engine.timeStopTimer > 0) {
+            engine.timeStopTimer = Math.max(0, engine.timeStopTimer - dt);
+          }
+          if (engine.screenFlashTimer > 0) {
+            engine.screenFlashTimer = Math.max(0, engine.screenFlashTimer - dt);
+          }
+
           // Update Enemies
-          for (const e of engine.enemies) {
-            e.update(dt, player);
+          if (engine.timeStopTimer <= 0) {
+            for (const e of engine.enemies) {
+              e.update(dt, player);
 
             if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
               e.isAttacking = false;
@@ -4145,6 +4139,7 @@ export default function App() {
             }
           }
           compactInPlace(engine.enemies, (e) => !e.dead);
+          }
 
           // Rebuild the spatial hash AFTER enemy movement.
           // Collision systems later in this frame must see current enemy positions.
@@ -4159,6 +4154,12 @@ export default function App() {
           // Update Drops
           for (const d of engine.drops) {
             d.time += dt;
+            if (d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0) {
+              d.goldenRushTimer -= dt;
+              if (d.goldenRushTimer <= 0) {
+                d.isHot = false;
+              }
+            }
             if (d.vx || d.vy) {
               d.x += d.vx * dt;
               d.y += d.vy * dt;
@@ -4196,18 +4197,19 @@ export default function App() {
                   }
                   setRunStats((s) => ({ ...s, coins: engine.coins }));
                 } else if (d.type === 'gingerbread') {
-                  const val = d.value || 1;
+                  const isHotActive = Boolean(d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0);
+                  const val = (d.value || 1) * (isHotActive ? 2 : 1);
                   engine.gingerbread += val;
                   const size = d.size || 'small';
                   sound.gingerbreadPickup();
                   engine.texts.push(new DamageText(
                     player.x,
                     player.y - 42,
-                    `+${val} 🍪`,
-                    size === 'giant' ? '#F59E0B' : '#B45309',
+                    isHotActive ? `+${val} 🍪 (ČERSTVÝ Z PECE! 2×)` : `+${val} 🍪`,
+                    isHotActive ? '#F59E0B' : (size === 'giant' ? '#F59E0B' : '#B45309'),
                     true
                   ));
-                  for (let i = 0; i < (size === 'giant' ? 8 : 4); i++) {
+                  for (let i = 0; i < (size === 'giant' || isHotActive ? 8 : 4); i++) {
                     engine.particles.push({
                       x: player.x,
                       y: player.y,
@@ -4219,6 +4221,50 @@ export default function App() {
                     });
                   }
                   setRunStats((s) => ({ ...s, gingerbread: engine.gingerbread }));
+                } else if (d.type === 'horseshoe') {
+                  sound.horseshoe();
+                  applyMagnetWave(engine.drops, player.x, player.y, 99999, true);
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'KOVÁŘSKÁ PODKOVA! 🧲', '#F59E0B', true));
+                  for (let i = 0; i < 16; i++) {
+                    engine.particles.push({
+                      x: player.x,
+                      y: player.y,
+                      vx: (Math.random() - 0.5) * 180,
+                      vy: (Math.random() - 0.5) * 180,
+                      life: 0.55,
+                      color: i % 2 === 0 ? '#F59E0B' : '#FDE047',
+                      size: 3.5,
+                    });
+                  }
+                } else if (d.type === 'rooster') {
+                  sound.rooster();
+                  engine.screenFlashTimer = 0.45;
+                  engine.screenFlashColor = '#FFFFFF';
+                  engine.texts.push(new DamageText(player.x, player.y - 55, 'KOHOUT ZAKOKRHAL! 🐓 ROZBŘESK!', '#FDE047', true));
+                  for (const foe of engine.enemies) {
+                    if (!foe.isDefeated && !foe.dead) {
+                      if (foe.isBoss || foe.isMiniboss) {
+                        foe.takeDamage(650, 'holy', 0, 0);
+                      } else {
+                        foe.takeDamage((foe.hp || 50) + 10, 'holy', 0, 0);
+                      }
+                    }
+                  }
+                } else if (d.type === 'cuckoo_clock') {
+                  sound.cuckooClock();
+                  engine.timeStopTimer = 4.0;
+                  engine.texts.push(new DamageText(player.x, player.y - 50, 'VYŘEZÁVANÉ KUKAČKY! ⏰ ČAS STOJÍ!', '#D97706', true));
+                  for (let i = 0; i < 12; i++) {
+                    engine.particles.push({
+                      x: player.x,
+                      y: player.y,
+                      vx: (Math.random() - 0.5) * 130,
+                      vy: (Math.random() - 0.5) * 130,
+                      life: 0.5,
+                      color: '#D97706',
+                      size: 3,
+                    });
+                  }
                 } else if (d.type === 'potion') {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
@@ -4244,6 +4290,12 @@ export default function App() {
             }
           }
           compactInPlace(engine.drops, (d) => !d.dead);
+          performDropFusion(engine.drops, {
+            left: engine.camera.x - (canvasRef.current?.width || 1200) / 2,
+            top: engine.camera.y - (canvasRef.current?.height || 800) / 2,
+            right: engine.camera.x + (canvasRef.current?.width || 1200) / 2,
+            bottom: engine.camera.y + (canvasRef.current?.height || 800) / 2,
+          }, 250);
 
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
@@ -4396,6 +4448,27 @@ export default function App() {
           ctx.restore();
         }
 
+        // Ambient time stop effect (Vyřezávané kukačky)
+        if (engine.timeStopTimer > 0) {
+          ctx.save();
+          const tAlpha = Math.min(0.24, engine.timeStopTimer * 0.06 + 0.08);
+          ctx.fillStyle = `rgba(180, 120, 50, ${tAlpha})`;
+          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          ctx.strokeStyle = '#F59E0B';
+          ctx.lineWidth = 6;
+          ctx.strokeRect(cam.x + 3, cam.y + 3, canvas.width - 6, canvas.height - 6);
+          ctx.restore();
+        }
+
+        // Screen flash effect (Hliněný kohoutek)
+        if (engine.screenFlashTimer > 0) {
+          ctx.save();
+          const fAlpha = Math.min(0.85, engine.screenFlashTimer * 2.0);
+          ctx.fillStyle = `rgba(255, 255, 255, ${fAlpha})`;
+          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          ctx.restore();
+        }
+
         // Compute a padded viewport once and reuse it for every world layer.
         // The padding keeps tall art from visibly popping at the edge.
         const viewLeft = cam.x - 120;
@@ -4409,6 +4482,83 @@ export default function App() {
         for (const dec of engine.decor) {
           if (!isInView(dec.x, dec.y - 45 * dec.scale, 100 * dec.scale, viewLeft, viewTop, viewRight, viewBottom)) continue;
           dec.draw(ctx, curLvl.season, curLvl.theme);
+        }
+
+        // Draw Arena Hazards (Architekti bojiště - bláto, mráz, oheň)
+        if (engine.activeHazards && engine.activeHazards.length > 0) {
+          for (const h of engine.activeHazards) {
+            if (!isInView(h.x, h.y, h.radius + 20, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            ctx.save();
+            const pulse = 1 + Math.sin(engine.gameTime * 4) * 0.05;
+            const rad = h.radius * pulse;
+            if (h.type === 'frost') {
+              ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+              ctx.strokeStyle = '#0284C7';
+            } else if (h.type === 'fire') {
+              ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+              ctx.strokeStyle = '#B91C1C';
+            } else {
+              ctx.fillStyle = 'rgba(69, 26, 3, 0.40)';
+              ctx.strokeStyle = '#270E02';
+            }
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(h.x, h.y, rad, rad * 0.65, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // Draw Bubácká díra (Rift anomaly)
+        if (engine.bubackaDira && !engine.bubackaDira.isCompleted && !engine.bubackaDira.isFailed) {
+          const dira = engine.bubackaDira;
+          if (isInView(dira.x, dira.y, dira.radius + 60, viewLeft, viewTop, viewRight, viewBottom)) {
+            ctx.save();
+            const rot = engine.gameTime * 1.5;
+            const alphaPulse = 0.55 + Math.sin(engine.gameTime * 5) * 0.2;
+            ctx.fillStyle = `rgba(17, 17, 17, ${alphaPulse})`;
+            ctx.strokeStyle = dira.playerInside ? '#10B981' : '#7C3AED';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.ellipse(dira.x, dira.y, dira.radius, dira.radius * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Swirling ritual rings
+            ctx.save();
+            ctx.translate(dira.x, dira.y);
+            ctx.rotate(rot);
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.6)';
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([12, 10]);
+            ctx.beginPath();
+            ctx.arc(0, 0, dira.radius * 0.8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Progress bar / hold gauge
+            const holdProgress = Math.max(0, Math.min(1, (dira.totalHoldRequired - dira.holdTimeRemaining) / dira.totalHoldRequired));
+            ctx.strokeStyle = '#34D399';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(dira.x, dira.y - dira.radius * 0.7 - 14, 18, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * holdProgress);
+            ctx.stroke();
+
+            // Indicator text
+            ctx.font = '900 13px "Eczar", serif';
+            ctx.fillStyle = '#FEF3C7';
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 3;
+            ctx.textAlign = 'center';
+            const label = dira.playerInside
+              ? `Udržuj! ${(dira.holdTimeRemaining).toFixed(1)} s`
+              : `Vstup do kruhu! (${Math.ceil(dira.timeRemaining)} s)`;
+            ctx.strokeText(label, dira.x, dira.y - dira.radius * 0.7 - 24);
+            ctx.fillText(label, dira.x, dira.y - dira.radius * 0.7 - 24);
+
+            ctx.restore();
+          }
         }
 
         // Draw Drops
@@ -4438,6 +4588,22 @@ export default function App() {
             ctx.arc(4 * size, -1 * size, 1.5 * size, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+            if (d.isHot) {
+              ctx.save();
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+              const sBob = Math.sin(d.time * 6) * 3;
+              ctx.beginPath();
+              ctx.arc(d.x - 3, d.y - 14 + sBob, 2.5, 0, Math.PI * 2);
+              ctx.arc(d.x + 4, d.y - 19 + sBob, 3, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+          } else if (d.type === 'horseshoe') {
+            Lada.drawHorseshoe(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'rooster') {
+            Lada.drawRooster(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'cuckoo_clock') {
+            Lada.drawCuckooClock(ctx, d.x, d.y, d.time);
           } else if (d.type === 'potion') {
             Lada.drawPotion(ctx, d.x, d.y, d.time);
           } else if (d.type === 'bread' || d.type === 'pear') {
@@ -4449,6 +4615,53 @@ export default function App() {
           } else if (d.type === 'chasnik') {
             Lada.drawChasnik(ctx, d.x, d.y, d.time, true);
           }
+        }
+
+        // Draw off-screen indicator arrows for rare drops
+        for (const d of engine.drops) {
+          if (d.dead) continue;
+          const isRare = d.type === 'chest' || d.type === 'horseshoe' || d.type === 'rooster' || d.type === 'cuckoo_clock';
+          if (!isRare) continue;
+          if (isInView(d.x, d.y, 40, cam.x, cam.y, cam.x + canvas.width, cam.y + canvas.height)) continue;
+
+          const margin = 42;
+          const leftEdge = cam.x + margin;
+          const rightEdge = cam.x + canvas.width - margin;
+          const topEdge = cam.y + margin;
+          const bottomEdge = cam.y + canvas.height - margin;
+
+          const edgeX = Math.max(leftEdge, Math.min(rightEdge, d.x));
+          const edgeY = Math.max(topEdge, Math.min(bottomEdge, d.y));
+          const edgeAngle = Math.atan2(d.y - edgeY, d.x - edgeX);
+
+          ctx.save();
+          ctx.translate(edgeX, edgeY);
+          const pulse = 1 + Math.sin(engine.uiTime * 6) * 0.12;
+          ctx.scale(pulse, pulse);
+
+          ctx.fillStyle = '#FFF7DF';
+          ctx.strokeStyle = '#2D1609';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = '14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const icon = d.type === 'chest' ? '🎁' : d.type === 'horseshoe' ? '🧲' : d.type === 'rooster' ? '🐓' : '⏰';
+          ctx.fillText(icon, 0, 1);
+
+          ctx.rotate(edgeAngle);
+          ctx.fillStyle = '#DC2626';
+          ctx.beginPath();
+          ctx.moveTo(17, -5);
+          ctx.lineTo(24, 0);
+          ctx.lineTo(17, 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
         }
 
         // Dědeček world encounter: colourful, fluent Lada animation (limp, smoking, pipe puffing, gesticulating towards camera)
@@ -5020,7 +5233,7 @@ export default function App() {
     const attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : (typeof stats.attackInterval === 'number' ? stats.attackInterval : 0.5);
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
-    return {
+    const enemyInst = {
       id,
       x,
       y,
@@ -6720,6 +6933,10 @@ export default function App() {
 
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
+          gameEngineRef.current.director?.recordEnemyDeath(this, engineRef.current.gameTime);
+          if (finalDmg >= (this.maxHp || 40) * 3) {
+            this.overkill = true;
+          }
           if (type === 'food') {
             this.defeatedByFood = true;
             this.foodDefeatTimer = 0;
@@ -6731,39 +6948,81 @@ export default function App() {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Zahnán! 💨', COLORS.mustard, true));
           }
           const eng = engineRef.current;
+          const player = eng.player;
+
+          // Combo pulz: 30 zahnání během 1.2 s spustí magnetickou rázovou vlnu
+          const comboTriggered = registerKillAndCheckCombo(eng, eng.gameTime);
+          if (comboTriggered && player) {
+            sound.horseshoe();
+            applyMagnetWave(eng.drops, player.x, player.y, 550, false);
+            eng.texts.push(new DamageText(player.x, player.y - 50, '⚡ KOMBO MAGNET! (30 BUBÁKŮ)', '#F59E0B', true));
+            for (let i = 0; i < 20; i++) {
+              const ang = Math.random() * Math.PI * 2;
+              const spd = 120 + Math.random() * 140;
+              eng.particles.push({
+                x: player.x,
+                y: player.y,
+                vx: Math.cos(ang) * spd,
+                vy: Math.sin(ang) * spd,
+                life: 0.6,
+                color: i % 2 === 0 ? '#F59E0B' : '#FDE047',
+                size: 3.5,
+              });
+            }
+          }
 
           // Helper to spawn drops with natural radial spray and velocity
           const spawnScatterDrop = (
             dropType: string,
-            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string } = {}
+            opts: { value?: number; radius?: number; speed?: number; angle?: number; vx?: number; vy?: number; text?: string; textColor?: string; size?: string; isHot?: boolean; goldenRushTimer?: number } = {}
           ) => {
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
             const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
             const radius = opts.radius ?? (
               dropType === 'chest' ? 25 :
+              dropType === 'horseshoe' ? 18 :
+              dropType === 'rooster' ? 18 :
+              dropType === 'cuckoo_clock' ? 18 :
               dropType === 'soul' ? 14 :
               dropType === 'potion' ? 12 :
               dropType === 'bread' ? 10 :
               (opts.value && opts.value >= 15 ? 12 : opts.value && opts.value >= 5 ? 10 : 8)
             );
             eng.drops.push({
-              type: dropType,
+              type: dropType as any,
               value: opts.value,
               size: opts.size,
               x: this.x + Math.cos(angle) * 8,
               y: this.y + Math.sin(angle) * 8,
-              vx: Math.cos(angle) * burstSpeed,
-              vy: Math.sin(angle) * burstSpeed,
+              vx: opts.vx ?? Math.cos(angle) * burstSpeed,
+              vy: opts.vy ?? Math.sin(angle) * burstSpeed,
               radius,
               time: Math.random() * 6.28,
+              isHot: opts.isHot || false,
+              goldenRushTimer: opts.goldenRushTimer || 0,
             });
             if (opts.text) {
               eng.texts.push(new DamageText(this.x, this.y - 45, opts.text, opts.textColor || COLORS.mustard, true));
             }
           };
 
+          // Ejection helper: vystřelí drop do střední vzdálenosti od lovce při riziku
+          const spawnEmergencyEjectedDrop = (dropType: string, options: any = {}) => {
+            const dist = player ? Math.hypot(this.x - player.x, this.y - player.y) : 999;
+            if (dist < 200 && player) {
+              const awayAngle = Math.atan2(this.y - player.y, this.x - player.x) + (Math.random() - 0.5) * 0.4;
+              const ejectSpd = 280 + Math.random() * 70;
+              spawnScatterDrop(dropType, {
+                ...options,
+                vx: Math.cos(awayAngle) * ejectSpd,
+                vy: Math.sin(awayAngle) * ejectSpd,
+              });
+            } else {
+              spawnScatterDrop(dropType, options);
+            }
+          };
+
           const rawPt = ENEMY_POINTS[this.id] ?? Math.max(12, Math.floor((this.maxHp || 40) * 0.38));
-          // Natural organic variance (±15%) so points don't feel like rigid clockwork
           const variance = 0.85 + Math.random() * 0.30;
           const pt = Math.max(6, Math.round(rawPt * variance));
 
@@ -6776,18 +7035,62 @@ export default function App() {
           const isSwarms = this.category === 'swarms';
           const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
 
-          // Dědečkovy perníčky: každý zahnáný nepřítel dá odměnu podle své herní hodnoty.
-          // Hodnoty jsou 2 / 6 / 20 a odpovídají velikostem small / large / giant.
-          const gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
-          const gingerbreadValue = getGingerbreadValue(gingerbreadSize);
-          spawnScatterDrop('gingerbread', {
-            value: gingerbreadValue,
-            radius: gingerbreadSize === 'giant' ? 19 : gingerbreadSize === 'large' ? 14 : 10,
-            speed: 65 + Math.random() * 55,
-            text: `+${gingerbreadValue} 🍪`,
-            textColor: gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309',
-            size: gingerbreadSize,
-          });
+          // 1. Ghost Swarm Reservoir: Slabí nepřátelé z hejn nevytvářejí desítky drobných předmětů
+          const isSwarmMinion = isSwarms && (this.maxHp || 40) <= 25 && !this.isBoss && !this.isMiniboss;
+          if (isSwarmMinion) {
+            if (!eng.swarmReservoir) eng.swarmReservoir = { points: 0, gingerbread: 0, coins: 0 };
+            eng.swarmReservoir.points += pt;
+            eng.swarmReservoir.gingerbread += 2;
+            eng.swarmReservoir.coins += Math.random() < 0.25 ? 1 : 0;
+          } else {
+            // Overkill Tiering & Risk Zones (Horký perníček z pece):
+            const isOverkill = Boolean(this.overkill);
+            let gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
+            if (isOverkill) {
+              if (gingerbreadSize === 'small') gingerbreadSize = 'large';
+              else if (gingerbreadSize === 'large') gingerbreadSize = 'giant';
+            }
+            const gingerbreadValue = getGingerbreadValue(gingerbreadSize);
+
+            const distToPlayer = player ? Math.hypot(this.x - player.x, this.y - player.y) : 0;
+            const isFarKill = distToPlayer > 420 && !isBoss;
+            const hotTimer = isFarKill ? HOT_GINGERBREAD_DURATION : 0;
+
+            spawnScatterDrop('gingerbread', {
+              value: gingerbreadValue,
+              radius: gingerbreadSize === 'giant' ? 19 : gingerbreadSize === 'large' ? 14 : 10,
+              speed: 65 + Math.random() * 55,
+              text: isFarKill
+                ? `+${gingerbreadValue} 🍪 (HORKÝ Z PECE! 2×)`
+                : isOverkill
+                ? `+${gingerbreadValue} 🍪 (DRTIVÝ ÚDER!)`
+                : `+${gingerbreadValue} 🍪`,
+              textColor: isFarKill ? '#F59E0B' : isOverkill ? '#EA580C' : (gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309'),
+              size: gingerbreadSize,
+              isHot: isFarKill,
+              goldenRushTimer: hotTimer,
+            });
+          }
+
+          // Vyplacení nashromážděného roje po zahnání vůdce nebo při plném rezervoáru
+          if ((isSwarms && (this.isMiniboss || (this.maxHp || 0) >= 80)) || (eng.swarmReservoir && eng.swarmReservoir.points >= 120)) {
+            if (eng.swarmReservoir && eng.swarmReservoir.gingerbread > 0) {
+              const bGinger = eng.swarmReservoir.gingerbread;
+              const bCoins = eng.swarmReservoir.coins;
+              eng.swarmReservoir = { points: 0, gingerbread: 0, coins: 0 };
+              spawnScatterDrop('gingerbread', {
+                value: Math.max(GINGERBREAD_VALUES.large, bGinger),
+                radius: 19,
+                speed: 70,
+                size: 'giant',
+                text: `+${bGinger} 🍪 (Poklad roje!)`,
+                textColor: '#F59E0B',
+              });
+              if (bCoins > 0) {
+                spawnScatterDrop('coin', { value: bCoins, radius: 12, speed: 65, text: `+${bCoins} kr. (Z roje)` });
+              }
+            }
+          }
 
           // Thematic category affinities & multipliers
           const chestMult = isBoss ? 3.0 : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
@@ -6802,14 +7105,21 @@ export default function App() {
             eng.pointsSoul += Math.round(pt * soulMult);
           }
 
+          // Context-Aware stav lovce (No-Waste vs. Emergency Bias)
+          const isFullHealth = Boolean(player && player.hp >= player.maxHp);
+          const isLowHealth = Boolean(player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO);
+
           // 1. Miniboss & Boss celebration loot cascade
           if (this.isMiniboss) {
             sound.chest();
             spawnScatterDrop('chest', { speed: 85, text: '🎁 POKLAD MINIBOSSE!', textColor: COLORS.mustard });
-            spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
+            if (isFullHealth) {
+              spawnScatterDrop('coin', { value: 15, speed: 90, text: 'Zlatý tolar! +15 kr.', textColor: COLORS.mustard });
+            } else {
+              spawnEmergencyEjectedDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
+              spawnEmergencyEjectedDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
+            }
             spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
-            // Bohatá perníková nadílka od minibosse (3 obří perníčky)
             for (let g = 0; g < 3; g++) {
               spawnScatterDrop('gingerbread', {
                 value: GINGERBREAD_VALUES.giant,
@@ -6834,10 +7144,14 @@ export default function App() {
             eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD MINIBOSSE!', COLORS.mustard, true));
           } else if (isBoss) {
             sound.chest();
-            spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
-            spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
-            // Královská kupa perníčků od hlavního bosse (6 obřích perníčků)
+            if (isFullHealth) {
+              spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
+              spawnScatterDrop('coin', { value: 30, speed: 100, text: 'Královský tolar! +30 kr.', textColor: COLORS.mustard });
+            } else {
+              spawnEmergencyEjectedDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
+              spawnEmergencyEjectedDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
+              spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
+            }
             for (let g = 0; g < 6; g++) {
               spawnScatterDrop('gingerbread', {
                 value: GINGERBREAD_VALUES.giant,
@@ -6860,7 +7174,11 @@ export default function App() {
               size: 'large',
             });
             if (Math.random() < 0.28) {
-              spawnScatterDrop('bread', { speed: 65, text: 'Sladká hruška 🍐', textColor: '#84CC16' });
+              if (isFullHealth) {
+                spawnScatterDrop('coin', { value: 5, speed: 65, text: '+5 kr.', textColor: '#E2E8F0' });
+              } else {
+                spawnEmergencyEjectedDrop('bread', { speed: 65, text: 'Sladká hruška 🍐', textColor: '#84CC16' });
+              }
             }
             if (Math.random() < 0.16 || isWater) {
               spawnScatterDrop('soul', { speed: 85, text: 'Vděčná dušička 🕊️', textColor: '#38BDF8' });
@@ -6869,16 +7187,24 @@ export default function App() {
 
           // 3. Direct surprise / lucky drops (instant chance on kill, scaled by theme)
           if (!isBoss) {
-            // Surprise bread / snack
-            const breadChance = isFields ? 0.08 : isFrost ? 0.06 : 0.035;
+            // Surprise bread / snack (No-waste check)
+            const breadChance = isLowHealth ? 0.14 : (isFields ? 0.08 : isFrost ? 0.06 : 0.035);
             if (Math.random() < breadChance) {
-              spawnScatterDrop('bread', { speed: 65 });
+              if (isFullHealth) {
+                spawnScatterDrop('coin', { value: 3, speed: 65, text: '+3 kr. (Plná kuráž)', textColor: '#E2E8F0' });
+              } else {
+                spawnEmergencyEjectedDrop('bread', { speed: 65 });
+              }
             }
 
-            // Surprise jitrnice balm
-            const potionChance = isWater ? 0.045 : ((this.maxHp || 0) >= 120 ? 0.035 : 0.015);
+            // Surprise jitrnice balm (No-waste vs Emergency bias)
+            const potionChance = isLowHealth ? 0.12 : (isWater ? 0.045 : ((this.maxHp || 0) >= 120 ? 0.035 : 0.015));
             if (Math.random() < potionChance) {
-              spawnScatterDrop('potion', { speed: 75, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
+              if (isFullHealth) {
+                spawnScatterDrop('coin', { value: 8, speed: 75, text: '+8 kr. (Zbytek léčení)', textColor: '#E2E8F0' });
+              } else {
+                spawnEmergencyEjectedDrop('potion', { speed: 75, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
+              }
             }
 
             // Surprise soul jar
@@ -6893,7 +7219,7 @@ export default function App() {
               const rollDenom = Math.random();
               let coinVal = 1;
               let coinTxt: string | undefined = undefined;
-              if (rollDenom < 0.08 || (isDemons && rollDenom < 0.16)) {
+              if (rollDenom < 0.08 || (isDemons && rollDenom < 0.16) || this.overkill) {
                 coinVal = 15 + Math.floor(Math.random() * 10);
                 coinTxt = 'Zlatý tolar!';
               } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
@@ -6905,7 +7231,52 @@ export default function App() {
             }
           }
 
-          // 4. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
+          // 4. Drop Director: Vzácné pomocné předměty (Podkova, Kohoutek, Kukačky)
+          const uncollectedG = calculateUncollectedGingerbread(eng.drops);
+          const timeSinceSpecial = eng.gameTime - (eng.lastSpecialDropTime || -999);
+          const isMagnetPityMet = uncollectedG >= UNCOLLECTED_GINGERBREAD_PITY_THRESHOLD && timeSinceSpecial >= 20.0;
+          const isEligibleForSpecial = this.isMiniboss || isBoss || rawPt >= 80;
+
+          if (isEligibleForSpecial) {
+            let specialDropType: 'horseshoe' | 'rooster' | 'cuckoo_clock' | null = null;
+            let specialText = '';
+
+            if (isMagnetPityMet) {
+              specialDropType = 'horseshoe';
+              specialText = '🧲 ŠŤASTNÁ PODKOVA!';
+            } else {
+              // Velký bonus k padání pokud je na tom lovec špatně s Kuráží (< 25 %):
+              // Cooldown 45 s se při nouzi ignoruje, šance stoupá na 28 % z elit / 85 % z minibossů!
+              const cooldownReady = isLowHealth || (timeSinceSpecial >= SPECIAL_DROP_PITY_COOLDOWN);
+              const specialChance = isLowHealth ? (this.isMiniboss ? 0.85 : 0.28) : (this.isMiniboss ? 0.45 : 0.06);
+
+              if (cooldownReady && Math.random() < specialChance) {
+                const roll = Math.random();
+                if (roll < 0.35) {
+                  specialDropType = 'rooster';
+                  specialText = '🐓 HLINĚNÝ KOHOUTEK!';
+                } else if (roll < 0.70) {
+                  specialDropType = 'cuckoo_clock';
+                  specialText = '⏰ VYŘEZÁVANÉ KUKAČKY!';
+                } else {
+                  specialDropType = 'horseshoe';
+                  specialText = '🧲 KOVÁŘSKÁ PODKOVA!';
+                }
+              }
+            }
+
+            if (specialDropType) {
+              eng.lastSpecialDropTime = eng.gameTime;
+              spawnEmergencyEjectedDrop(specialDropType, {
+                speed: 100,
+                text: specialText,
+                textColor: COLORS.mustard,
+              });
+              sound.chest();
+            }
+          }
+
+          // 5. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
           const chestThreshold = Math.max(50, DROP_THRESHOLDS.chest - 20 * (metaRef.current.undeadLevel || 0));
           if (eng.pointsChest >= chestThreshold) {
             eng.pointsChest -= chestThreshold;
@@ -6916,11 +7287,19 @@ export default function App() {
           }
           if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
             eng.pointsPotion -= DROP_THRESHOLDS.potion;
-            spawnScatterDrop('potion', { speed: 60 });
+            if (isFullHealth) {
+              spawnScatterDrop('coin', { value: 12, speed: 60, text: '+12 kr. (Plná kuráž)', textColor: COLORS.mustard });
+            } else {
+              spawnEmergencyEjectedDrop('potion', { speed: 60 });
+            }
           }
           if (eng.pointsBread >= DROP_THRESHOLDS.bread) {
             eng.pointsBread -= DROP_THRESHOLDS.bread;
-            spawnScatterDrop('bread', { speed: 60 });
+            if (isFullHealth) {
+              spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.large, radius: 14, speed: 60, size: 'large' });
+            } else {
+              spawnEmergencyEjectedDrop('bread', { speed: 60 });
+            }
           }
           if (eng.pointsSoul >= DROP_THRESHOLDS.soul) {
             eng.pointsSoul -= DROP_THRESHOLDS.soul;
@@ -7548,6 +7927,8 @@ export default function App() {
         }
       },
     };
+    gameEngineRef.current.director?.recordEnemySpawn(enemyInst, engineRef.current.gameTime);
+    return enemyInst;
   };
   gameEngineRef.current.enemyFactory = createEnemyInstance;
 
@@ -7861,6 +8242,51 @@ export default function App() {
           {/* Warning Banner */}
           {runStats.warningBanner && (
             <div id="boss-warning-banner">{runStats.warningBanner}</div>
+          )}
+
+          {/* Rozmar výpravy opening announcement */}
+          {engineRef.current.gameTime < 6.0 && engineRef.current.activeRozmar && (
+            <div
+              style={{
+                position: 'fixed',
+                top: '75px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 35,
+                pointerEvents: 'none',
+                textAlign: 'center',
+              }}
+            >
+              <LadaCartouche variant="ochre" size="lg">
+                <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>
+                  {engineRef.current.activeRozmar.icon} Rozmar výpravy: {engineRef.current.activeRozmar.name}
+                </span>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#451A03' }}>
+                  {engineRef.current.activeRozmar.subtitle}
+                </div>
+              </LadaCartouche>
+            </div>
+          )}
+
+          {/* Director Telegraph Announcement Banner */}
+          {engineRef.current.directorTelegraphText && (engineRef.current.directorTelegraphTimer ?? 0) > 0 && (
+            <div
+              style={{
+                position: 'fixed',
+                top: '125px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 35,
+                pointerEvents: 'none',
+                textAlign: 'center',
+              }}
+            >
+              <LadaCartouche variant="red" size="md">
+                <span style={{ fontSize: '1.1rem', fontWeight: 900 }}>
+                  {engineRef.current.directorTelegraphText}
+                </span>
+              </LadaCartouche>
+            </div>
           )}
 
           {/* Bottom HUD Weapons Bar with Rank & Milestone Indicators */}
@@ -8602,6 +9028,66 @@ export default function App() {
                 <span>🥖 Zklidněno: <strong>{runStats.kills}</strong></span>
               </div>
             </div>
+
+            {/* Rozmar výpravy and Režisér controls */}
+            {engineRef.current.activeRozmar && (
+              <div
+                style={{
+                  background: 'rgba(251, 191, 36, 0.12)',
+                  border: '2px solid #F59E0B',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  margin: '12px 0',
+                  textAlign: 'left',
+                  color: '#FEF3C7',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#FBBF24' }}>
+                    {engineRef.current.activeRozmar.icon} Rozmar výpravy: {engineRef.current.activeRozmar.name}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: '#D1D5DB' }}>
+                    {engineRef.current.activeRozmar.subtitle}
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.9rem', color: '#E2E8F0', marginTop: '4px' }}>
+                  {engineRef.current.activeRozmar.description}
+                </div>
+                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                  <label style={{ fontWeight: 800, fontSize: '0.95rem', color: '#FCD34D' }}>
+                    🎯 Přizpůsobivost režiséra ({Math.round(directorAdaptability * 100)} %):
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1.5"
+                    step="0.25"
+                    value={directorAdaptability}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setDirectorAdaptability(val);
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('bubakov_director_adaptability', String(val));
+                      }
+                      if (gameEngineRef.current.director) {
+                        gameEngineRef.current.director.adaptability = val;
+                      }
+                      engineRef.current.directorAdaptability = val;
+                    }}
+                    style={{ flex: '1', minWidth: '160px', accentColor: '#F59E0B' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: '#9CA3AF' }}>
+                    {directorAdaptability === 0
+                      ? 'Vypnuto'
+                      : directorAdaptability <= 0.75
+                      ? 'Mírná asistence'
+                      : directorAdaptability <= 1.0
+                      ? 'Standardní'
+                      : 'Nekompromisní výzva'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Current weapons inventory */}
             <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: '#FEF3C7' }}>

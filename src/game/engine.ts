@@ -6,6 +6,8 @@ import type {
   WeaponId,
   EnemyStats,
   EnemyAttackCadence,
+  DropType,
+  GameDrop,
 } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { type EngineState, type PendingMilestoneChoice, createInitialEngineState } from './engineState';
@@ -27,6 +29,8 @@ import {
   getHolyPushMultiplier,
   isUnholyEnemy,
 } from '../data/holy';
+import { performDropFusion, applyMagnetWave, registerKillAndCheckCombo, createDropInstance, type DropSpawnOptions } from './drops';
+import { RunDirector } from './director';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -195,6 +199,8 @@ export interface RunInitOptions {
   meta?: MetaProgression;
   customWeapons?: any[];
   spawnInitialWave?: boolean;
+  seed?: number;
+  directorAdaptability?: number;
 }
 
 export interface GameEngineCallbacks {
@@ -213,6 +219,7 @@ export class GameEngine {
   public state: EngineState;
   public spatialHash: SpatialHash<any>;
   public livingEnemies: any[];
+  public director: RunDirector | null = null;
   public callbacks?: GameEngineCallbacks;
   public enemyFactory?: (
     id: string,
@@ -277,6 +284,17 @@ export class GameEngine {
     const levelDef: GameLevelDef = GAME_LEVELS[levelId] || GAME_LEVELS[1];
     nextState.nextBossMechanicAt = levelDef.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     nextState.spawnTimer = levelId === 1 ? 3.5 : 2.0;
+
+    const seed = typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null ? optionsOrLevelId.seed : undefined;
+    const adaptability =
+      typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.directorAdaptability !== undefined
+        ? optionsOrLevelId.directorAdaptability
+        : 1.0;
+
+    this.director = new RunDirector(levelId, seed, { adaptability });
+    nextState.director = this.director;
+    nextState.activeRozmar = this.director.rozmar;
+    nextState.directorAdaptability = adaptability;
 
     this.state = nextState;
     this.spatialHash.clear();
@@ -576,8 +594,15 @@ export class GameEngine {
     if (!enemy.isDefeated && !enemy.dead) {
       this.livingEnemies.push(enemy);
       this.spatialHash.insert(enemy);
+      this.director?.recordEnemySpawn(enemy, this.state.gameTime);
     }
     return enemy;
+  }
+
+  public spawnDrop(type: DropType, x: number, y: number, opts: DropSpawnOptions = {}): GameDrop {
+    const drop = createDropInstance(type, x, y, opts);
+    this.state.drops.push(drop);
+    return drop;
   }
 
   public createHeadlessEnemy(
@@ -793,11 +818,21 @@ export class GameEngine {
           this.interruptAttack();
         }
 
+        if (finalDamage >= (this.maxHp || 40) * 3) {
+          this.overkill = true;
+        }
+
         if (this.hp <= 0) {
           this.hp = 0;
           this.isDefeated = true;
           self.state.kills += 1;
+          const comboTriggered = registerKillAndCheckCombo(self.state, self.state.gameTime);
+          if (comboTriggered && self.state.player) {
+            applyMagnetWave(self.state.drops, self.state.player.x, self.state.player.y, 550, false);
+            self.callbacks?.onSound?.('horseshoe');
+          }
           self.callbacks?.onEnemyDefeated?.(this);
+          self.director?.recordEnemyDeath(this, self.state.gameTime);
           if (type === 'food') {
             this.defeatedByFood = true;
           } else {
@@ -1147,10 +1182,14 @@ export class GameEngine {
 
       if (mx !== 0 || my !== 0) {
         const len = Math.hypot(mx, my);
+        if (player.hazardSlowTimer > 0) {
+          player.hazardSlowTimer -= dt;
+        }
         const buffMultiplier =
           (player.soulBuffTimer > 0 ? 1.25 : 1) *
           (player.waterSoakedTimer > 0 ? 0.75 : 1) *
-          (player.slowTimer > 0 ? 0.65 : 1);
+          (player.slowTimer > 0 ? 0.65 : 1) *
+          (player.hazardSlowTimer > 0 ? (player.hazardSlowFactor || 0.7) : 1);
         const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
         moveVx = (mx / len) * effectiveSpeed;
         moveVy = (my / len) * effectiveSpeed;
@@ -1356,9 +1395,19 @@ export class GameEngine {
     compactInPlace(this.state.slashes, (s) => !s.dead);
 
     // Step enemies
-    for (let i = 0; i < this.state.enemies.length; i++) {
-      const e = this.state.enemies[i];
-      e.update(dt, player);
+    if (this.state.timeStopTimer > 0) {
+      this.state.timeStopTimer = Math.max(0, this.state.timeStopTimer - dt);
+    }
+    if (this.state.screenFlashTimer > 0) {
+      this.state.screenFlashTimer = Math.max(0, this.state.screenFlashTimer - dt);
+    }
+
+    if (this.state.timeStopTimer <= 0) {
+      for (let i = 0; i < this.state.enemies.length; i++) {
+        const e = this.state.enemies[i];
+        if (typeof e.update === 'function') {
+          e.update(dt, player);
+        }
 
       if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || (e.stunTimer || 0) > 0 || !player || player.hp <= 0) {
         if (typeof e.interruptAttack === 'function') {
@@ -1417,6 +1466,7 @@ export class GameEngine {
       }
     }
     compactInPlace(this.state.enemies, (e) => !e.dead);
+    }
 
     // Rebuild spatial hash with active living enemies
     this.livingEnemies.length = 0;
@@ -1433,6 +1483,12 @@ export class GameEngine {
       for (let i = 0; i < this.state.drops.length; i++) {
         const d = this.state.drops[i];
         d.time = (d.time || 0) + dt;
+        if (d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0) {
+          d.goldenRushTimer -= dt;
+          if (d.goldenRushTimer <= 0) {
+            d.isHot = false;
+          }
+        }
         if (d.vx || d.vy) {
           d.x += d.vx * dt;
           d.y += d.vy * dt;
@@ -1458,9 +1514,30 @@ export class GameEngine {
                 this.state.coins += val;
                 this.callbacks?.onSound?.('coin');
               } else if (d.type === 'gingerbread') {
-                const val = d.value || 1;
+                const isHotActive = d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0;
+                const val = (d.value || 1) * (isHotActive ? 2 : 1);
                 this.state.gingerbread += val;
                 this.callbacks?.onSound?.('gingerbreadPickup');
+              } else if (d.type === 'horseshoe') {
+                this.callbacks?.onSound?.('horseshoe');
+                applyMagnetWave(this.state.drops, player.x, player.y, 99999, true);
+              } else if (d.type === 'rooster') {
+                this.callbacks?.onSound?.('rooster');
+                this.state.screenFlashTimer = 0.45;
+                this.state.screenFlashColor = '#FFFFFF';
+                for (let k = 0; k < this.state.enemies.length; k++) {
+                  const foe = this.state.enemies[k];
+                  if (!foe.isDefeated && !foe.dead) {
+                    if (foe.isBoss || foe.isMiniboss) {
+                      foe.takeDamage(650, 'holy');
+                    } else {
+                      foe.takeDamage(foe.hp || 50, 'holy');
+                    }
+                  }
+                }
+              } else if (d.type === 'cuckoo_clock') {
+                this.callbacks?.onSound?.('cuckooClock');
+                this.state.timeStopTimer = 4.0;
               } else if (d.type === 'potion') {
                 this.callbacks?.onSound?.('potion');
                 player.hp = Math.min(player.maxHp, player.hp + 30);
@@ -1482,6 +1559,7 @@ export class GameEngine {
         }
       }
       compactInPlace(this.state.drops, (d) => !d.dead);
+      performDropFusion(this.state.drops, undefined, 250);
     }
 
     // Step texts
@@ -1515,6 +1593,15 @@ export class GameEngine {
       if (this.state.particles.length > MAX_PARTICLES) {
         this.state.particles.splice(0, this.state.particles.length - MAX_PARTICLES);
       }
+    }
+
+    // Step RunDirector (Threat budget, tactical spawns, pacing valves, hazards, Bubacka dira)
+    if (this.director) {
+      this.director.update(dt, this);
+      this.state.activeHazards = this.director.hazards;
+      this.state.bubackaDira = this.director.bubackaDira;
+      this.state.directorTelegraphText = this.director.telegraphMessage;
+      this.state.directorTelegraphTimer = this.director.telegraphTimer;
     }
   }
 }
