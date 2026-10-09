@@ -6,6 +6,8 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { toCanonicalWeaponId } from '../game/migration';
+import { getWeaponRankDef } from '../data/weaponMilestones';
 
 interface Props {
   gingerbread: number;
@@ -16,6 +18,7 @@ interface Props {
   playerWeapons?: any[];
   purchasesThisEncounter: number;
   rerollCost?: number;
+  churchLevel?: number;
   onPurchase: (itemId: string) => boolean;
   onRefreshOffers?: () => void;
   onClose: () => void;
@@ -93,6 +96,7 @@ export function GrandfatherShop({
   playerWeapons = [],
   purchasesThisEncounter,
   rerollCost = 4,
+  churchLevel = 0,
   onPurchase,
   onRefreshOffers,
   onClose,
@@ -389,6 +393,33 @@ export function GrandfatherShop({
                 </div>
               </div>
             )}
+
+            {/* Kaple svaté vlny Synergy */}
+            {churchLevel > 0 && (
+              <div
+                style={{
+                  background: 'rgba(254, 240, 138, 0.18)',
+                  border: '1.5px solid #F59E0B',
+                  borderRadius: 10,
+                  padding: isMobile ? '8px 10px' : '10px 14px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  fontSize: '0.84rem',
+                  color: '#451A03',
+                  lineHeight: 1.35,
+                  boxShadow: '2px 2px 0 rgba(120, 53, 15, 0.2)',
+                }}
+              >
+                <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>⛪</span>
+                <div>
+                  <strong style={{ color: '#92400E' }}>Kaple svaté vlny (Úr. {churchLevel}):</strong>
+                  <div style={{ fontSize: '0.78rem', color: '#78350F', marginTop: 2 }}>
+                    Při každém nákupu v nůši vyšle posvěcenou rázovou vlnu ({churchLevel * 100} zranění v okruhu 400 px)!
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* === RIGHT COLUMN: Market Shelf & Wares === */}
@@ -525,10 +556,15 @@ export function GrandfatherShop({
                   let buttonLabel = 'KOUPIT';
 
                   if (item.isWeapon && item.weaponId) {
-                    const pw = playerWeapons?.find((w: any) => w.id === item.weaponId);
+                    const canonicalId = toCanonicalWeaponId(item.weaponId);
+                    const pw = playerWeapons?.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
                     owned = pw ? pw.level : 0;
                     maxStacks = item.maxStacks || 8;
                     isMaxed = owned >= maxStacks;
+                    const nextRank = owned + 1;
+                    const rankDef = nextRank <= 8 ? getWeaponRankDef(canonicalId, nextRank) : undefined;
+                    const isMilestoneRank = !!rankDef?.isMilestone;
+
                     if (owned === 0) {
                       levelBadge = '⚔️ Nová zbraň';
                       buttonLabel = 'ZÍSKAT';
@@ -536,10 +572,14 @@ export function GrandfatherShop({
                       levelBadge = `⚔️ Úroveň: ${owned} / ${maxStacks} (MAX)`;
                       buttonLabel = 'VYČERPÁNO';
                     } else {
-                      levelBadge = `⚔️ Úroveň: ${owned} / ${maxStacks}`;
-                      displayName = `${item.name} (Úroveň ${owned + 1})`;
-                      displayDesc = `Vylepšení na úroveň ${owned + 1} (+12 % zranění, +8 % kadence, +6 % dosah)`;
-                      buttonLabel = 'VYLEPŠIT';
+                      levelBadge = isMilestoneRank
+                        ? `🌟 Úroveň: ${owned} ➔ ${nextRank} (MILNÍK!)`
+                        : `⚔️ Úroveň: ${owned} / ${maxStacks}`;
+                      displayName = `${item.name} (Úroveň ${nextRank})`;
+                      displayDesc = isMilestoneRank
+                        ? `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`
+                        : (rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank} (+12 % zranění, +8 % kadence, +6 % dosah)`);
+                      buttonLabel = isMilestoneRank ? 'VYLEPŠIT MILNÍK' : 'VYLEPŠIT';
                     }
                   } else {
                     owned = purchasedIds.filter((id) => id === item.id).length;

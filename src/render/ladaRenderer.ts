@@ -1,6 +1,7 @@
 import React from 'react';
 import { COLORS } from '../constants';
 import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
+import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 
 var Lada = {
 	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
@@ -9377,9 +9378,718 @@ export function drawEnemyAttackEffectsPost(ctx: CanvasRenderingContext2D, enemy:
   }
 }
 
-function drawEnemyRenderer(method: string, ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: EnemyAttackInfo) {
-	const drawer = Lada[method];
-	if (typeof drawer === "function") drawer.call(Lada, ctx, x, y, time, vx, panicked, attackInfo);
+export interface KinematicsParams {
+  cadence: EnemyAttackCadence;
+  isAttacking: boolean;
+  windupTimer: number;
+  recoveryTimer: number;
+  attackDelay?: number;
+  recoveryDuration?: number;
+  attackAngle?: number;
+  facingDir?: number;
+  time?: number;
+}
+
+export interface EnemyKinematicsResult {
+  lungeX: number;
+  lungeY: number;
+  scaleX: number;
+  scaleY: number;
+  leanAngle: number;
+  shakeX: number;
+  shakeY: number;
+  phase: number;
+  hasShockwave: boolean;
+  hasSlashingArc: boolean;
+  hasClawSparks: boolean;
+  hasGroundDust: boolean;
+  showWarningFlare: boolean;
+  flareColor: 'red' | 'gold';
+  flareX: number;
+  flareY: number;
+}
+
+function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
+  const cadence: EnemyAttackCadence = params.cadence || 'normal';
+  const isAttacking = !!params.isAttacking;
+  const windupTimer = params.windupTimer || 0;
+  const recoveryTimer = params.recoveryTimer || 0;
+  const attackDelay =
+    typeof params.attackDelay === 'number'
+      ? params.attackDelay
+      : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+  const recoveryDuration =
+    typeof params.recoveryDuration === 'number'
+      ? params.recoveryDuration
+      : CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
+  const attackAngle = params.attackAngle || 0;
+  const facingDir = params.facingDir || 1;
+  const time = params.time || 0;
+
+  const result: EnemyKinematicsResult = {
+    lungeX: 0,
+    lungeY: 0,
+    scaleX: 1,
+    scaleY: 1,
+    leanAngle: 0,
+    shakeX: 0,
+    shakeY: 0,
+    phase: 0,
+    hasShockwave: false,
+    hasSlashingArc: false,
+    hasClawSparks: false,
+    hasGroundDust: false,
+    showWarningFlare: false,
+    flareColor: 'gold',
+    flareX: 0,
+    flareY: 0,
+  };
+
+  if (!isAttacking && recoveryTimer <= 0) {
+    return result;
+  }
+
+  if (cadence === 'slow') {
+    if (isAttacking) {
+      const progress = Math.min(1, windupTimer / attackDelay);
+      if (progress <= 0.28) {
+        // Phase 1: Heavy crouch & brace
+        result.phase = 1;
+        const p1 = Math.max(0.2, progress / 0.28);
+        result.scaleY = 1.0 - 0.12 * p1;
+        result.scaleX = 1.0 + 0.12 * p1;
+        result.hasGroundDust = true;
+      } else if (progress <= 0.67) {
+        // Phase 2: Monumental lift & stretch
+        result.phase = 2;
+        const p2 = (progress - 0.28) / 0.39;
+        result.scaleY = 0.92 + 0.26 * p2;
+        result.scaleX = 1.08 - 0.16 * p2;
+        result.leanAngle = -0.16 * Math.max(0.2, p2) * facingDir;
+        result.lungeX = -6 * Math.cos(attackAngle) * p2;
+        result.lungeY = -6 * Math.sin(attackAngle) * p2;
+      } else {
+        // Phase 3: Apex tension & high frequency shake
+        result.phase = 3;
+        const p3 = (progress - 0.67) / 0.33;
+        result.scaleY = 1.18;
+        result.scaleX = 0.92;
+        result.shakeX = Math.sin(time * 50) * (2.2 * Math.max(0.3, p3));
+        result.shakeY = Math.cos(time * 45) * (1.6 * Math.max(0.3, p3));
+        result.leanAngle = -0.16 * facingDir;
+        result.lungeX = -6 * Math.cos(attackAngle);
+        result.lungeY = -6 * Math.sin(attackAngle);
+        result.showWarningFlare = true;
+        result.flareColor = 'red';
+      }
+    } else if (recoveryTimer > 0) {
+      const recProgress = 1 - recoveryTimer / recoveryDuration;
+      if (recProgress < 0.35) {
+        // Phase 4: Massive forward lunge (36px) & impact
+        result.phase = 4;
+        result.lungeX = Math.cos(attackAngle) * 36;
+        result.lungeY = Math.sin(attackAngle) * 36;
+        result.scaleY = 0.82;
+        result.scaleX = 1.18;
+        result.leanAngle = 0.22 * facingDir;
+        result.hasSlashingArc = true;
+        result.hasShockwave = true;
+      } else {
+        // Phase 5: Weapon dislodgement & recovery
+        result.phase = 5;
+        const p5 = (recProgress - 0.35) / 0.65;
+        const ease = 1 - p5;
+        result.lungeX = Math.cos(attackAngle) * 36 * ease;
+        result.lungeY = Math.sin(attackAngle) * 36 * ease;
+        result.scaleY = 0.82 + 0.18 * p5;
+        result.scaleX = 1.18 - 0.18 * p5;
+        result.leanAngle = 0.22 * ease * facingDir;
+      }
+    }
+  } else if (cadence === 'normal') {
+    if (isAttacking) {
+      const progress = Math.min(1, windupTimer / attackDelay);
+      if (progress <= 0.375) {
+        // Phase 1: Anticipation step back & lift
+        result.phase = 1;
+        const p1 = Math.max(0.2, progress / 0.375);
+        result.lungeX = -8 * Math.cos(attackAngle) * p1;
+        result.lungeY = -8 * Math.sin(attackAngle) * p1;
+        result.scaleY = 1.0 + 0.08 * p1;
+        result.scaleX = 1.0 - 0.05 * p1;
+        result.leanAngle = -0.12 * p1 * facingDir;
+      } else {
+        // Phase 2: Curve with shake & golden star flare
+        result.phase = 2;
+        const p2 = (progress - 0.375) / 0.625;
+        result.scaleY = 1.08;
+        result.scaleX = 0.95;
+        result.shakeX = Math.sin(time * 45) * (1.6 * p2);
+        result.shakeY = Math.cos(time * 40) * (1.2 * p2);
+        result.leanAngle = -0.12 * facingDir;
+        result.lungeX = -8 * Math.cos(attackAngle);
+        result.lungeY = -8 * Math.sin(attackAngle);
+        result.showWarningFlare = true;
+        result.flareColor = 'gold';
+      }
+    } else if (recoveryTimer > 0) {
+      const recProgress = 1 - recoveryTimer / recoveryDuration;
+      if (recProgress < 0.35) {
+        // Phase 3: Spring lunge (24px)
+        result.phase = 3;
+        result.lungeX = Math.cos(attackAngle) * 24;
+        result.lungeY = Math.sin(attackAngle) * 24;
+        result.scaleY = 0.88;
+        result.scaleX = 1.12;
+        result.leanAngle = 0.16 * facingDir;
+        result.hasSlashingArc = true;
+        result.hasGroundDust = true;
+      } else {
+        // Phase 4: Smooth balance settling
+        result.phase = 4;
+        const p4 = (recProgress - 0.35) / 0.65;
+        const ease = 1 - p4;
+        result.lungeX = Math.cos(attackAngle) * 24 * ease;
+        result.lungeY = Math.sin(attackAngle) * 24 * ease;
+        result.scaleY = 0.88 + 0.12 * p4;
+        result.scaleX = 1.12 - 0.12 * p4;
+        result.leanAngle = 0.16 * ease * facingDir;
+      }
+    }
+  } else {
+    // Fast cadence
+    if (isAttacking) {
+      const progress = Math.min(1, windupTimer / attackDelay);
+      if (progress <= 0.67) {
+        // Phase 1: Spring compression
+        result.phase = 1;
+        const p1 = Math.max(0.3, progress / 0.67);
+        result.scaleY = 1.0 - 0.22 * p1;
+        result.scaleX = 1.0 + 0.22 * p1;
+        result.leanAngle = 0.05 * p1 * facingDir;
+        result.shakeX = Math.sin(time * 60) * (0.8 * p1);
+        result.hasGroundDust = true;
+      } else {
+        result.phase = 1;
+        result.scaleY = 0.78;
+        result.scaleX = 1.22;
+        result.shakeX = Math.sin(time * 70) * 1.5;
+        result.shakeY = Math.cos(time * 65) * 1.0;
+        result.leanAngle = 0.05 * facingDir;
+      }
+    } else if (recoveryTimer > 0) {
+      const recProgress = 1 - recoveryTimer / recoveryDuration;
+      if (recProgress < 0.4) {
+        // Phase 2: Rapid lunge & 3 claw sparks
+        result.phase = 2;
+        result.lungeX = Math.cos(attackAngle) * 20;
+        result.lungeY = Math.sin(attackAngle) * 20;
+        result.scaleY = 1.16;
+        result.scaleX = 0.86;
+        result.leanAngle = 0.18 * facingDir;
+        result.hasClawSparks = true;
+      } else {
+        // Phase 3: Instant bounce back to neutral
+        result.phase = 3;
+        const p3 = (recProgress - 0.4) / 0.6;
+        const ease = 1 - p3;
+        result.lungeX = Math.cos(attackAngle) * 20 * ease;
+        result.lungeY = Math.sin(attackAngle) * 20 * ease;
+        result.scaleY = 1.16 - 0.16 * p3;
+        result.scaleX = 0.86 + 0.14 * p3;
+        result.leanAngle = 0.18 * ease * facingDir;
+      }
+    }
+  }
+
+  return result;
+}
+
+function drawFourPointedStar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rOuter: number,
+  rInner: number,
+  fill: string,
+  stroke: string = COLORS.ink
+) {
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4 - Math.PI / 2;
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const px = cx + Math.cos(angle) * r;
+    const py = cy + Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.6;
+  ctx.lineJoin = 'round';
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGroundVfx(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  k: EnemyKinematicsResult,
+  radius: number
+) {
+  const groundY = y + radius * 0.82;
+  if (k.hasGroundDust) {
+    ctx.save();
+    for (let i = 0; i < 3; i++) {
+      const offsetX = (i - 1) * (radius * 0.45);
+      const puffR = radius * 0.22 * (1 - i * 0.15);
+      ctx.beginPath();
+      ctx.ellipse(x + offsetX, groundY + 2, Math.max(1, puffR), Math.max(1, puffR * 0.45), 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(217, 180, 130, 0.45)';
+      ctx.strokeStyle = 'rgba(42, 23, 10, 0.4)';
+      ctx.lineWidth = 1.2;
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  if (k.hasShockwave) {
+    ctx.save();
+    // Inner amber flash
+    ctx.beginPath();
+    ctx.ellipse(x + k.lungeX * 0.6, groundY, radius * 1.3, radius * 0.4, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#FBBF24';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Outer dark ink shockwave line
+    ctx.beginPath();
+    ctx.ellipse(x + k.lungeX * 0.6, groundY, radius * 1.7, radius * 0.5, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#2A170A';
+    ctx.lineWidth = 2.2;
+    ctx.setLineDash([8, 6]);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawOverlayVfx(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  k: EnemyKinematicsResult,
+  radius: number,
+  enemy: any,
+  facingDir: number,
+  time: number,
+  attackAngle: number
+) {
+  const charX = x + k.lungeX + k.shakeX;
+  const charY = y + k.lungeY + k.shakeY;
+
+  // 1. Dynamic ink slashing arc
+  if (k.hasSlashingArc) {
+    ctx.save();
+    const arcRadius = radius * 1.35;
+    const arcSpan = k.phase === 4 ? (160 * Math.PI) / 180 : (135 * Math.PI) / 180;
+    const startAngle = attackAngle - arcSpan / 2;
+    const endAngle = attackAngle + arcSpan / 2;
+
+    // Ink stroke
+    ctx.beginPath();
+    ctx.arc(charX, charY, arcRadius, startAngle, endAngle);
+    ctx.strokeStyle = COLORS.ink;
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Inner amber/red core
+    ctx.beginPath();
+    ctx.arc(charX, charY, Math.max(1, arcRadius - 1.5), startAngle + 0.1, endAngle - 0.1);
+    ctx.strokeStyle = k.phase === 4 ? '#EF4444' : '#F59E0B';
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 2. Three sharp claw sparks (for fast cadence)
+  if (k.hasClawSparks) {
+    ctx.save();
+    ctx.translate(charX, charY);
+    ctx.rotate(attackAngle);
+    const slashDist = radius * 0.9;
+    for (let i = -1; i <= 1; i++) {
+      const cy = i * 9;
+      ctx.beginPath();
+      ctx.moveTo(slashDist - 12, cy - 4);
+      ctx.lineTo(slashDist + 16, cy + 3);
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(slashDist - 10, cy - 3);
+      ctx.lineTo(slashDist + 14, cy + 2);
+      ctx.strokeStyle = '#FBBF24';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+
+      // Spark dot
+      ctx.fillStyle = '#DC2626';
+      ctx.beginPath();
+      ctx.arc(slashDist + 18, cy + 3, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 3. Four-pointed warning star (apex windup) positioned at weapon tip / raised strike arm
+  if (k.showWarningFlare) {
+    const enemyId = enemy?.id || '';
+    const method = enemy?.method || '';
+    let tipOffsetX = facingDir * (radius * 0.65);
+    let tipOffsetY = -radius * 0.75;
+
+    if (enemyId === 'obr' || method === 'drawObr') {
+      tipOffsetX = facingDir * 10;
+      tipOffsetY = -radius * 1.45;
+    } else if (enemyId === 'drevorubec' || enemyId === 'zbojnik' || method === 'drawDrevorubec' || method === 'drawZbojnik') {
+      tipOffsetX = facingDir * (radius * 0.8);
+      tipOffsetY = -radius * 0.95;
+    } else if (enemyId === 'kostlivec' || method === 'drawKostlivec') {
+      tipOffsetX = facingDir * (radius * 0.9);
+      tipOffsetY = -radius * 1.1;
+    } else if (enemyId === 'cert' || enemyId === 'certik' || method === 'drawCert' || method === 'drawCertik') {
+      tipOffsetX = facingDir * (radius * 1.05);
+      tipOffsetY = -radius * 0.45;
+    }
+
+    const starX = charX + tipOffsetX;
+    const starY = charY + tipOffsetY;
+    const fillColor = k.flareColor === 'red' ? '#DC2626' : '#F59E0B';
+    drawFourPointedStar(ctx, starX, starY, 11, 4, fillColor, COLORS.ink);
+  }
+
+  // 4. Archetype weapon silhouettes:
+  const enemyId = enemy?.id || '';
+  const method = enemy?.method || '';
+
+  // Obr: Pine tree trunk (borovice)
+  if (enemyId === 'obr' || method === 'drawObr') {
+    ctx.save();
+    ctx.translate(charX, charY);
+    ctx.scale(facingDir, 1);
+    if (k.phase === 1 || k.phase === 2 || k.phase === 3) {
+      ctx.save();
+      ctx.rotate(-0.45);
+      Lada.setupPath(ctx, '#5E3A21', COLORS.ink, 3.5);
+      ctx.beginPath();
+      ctx.moveTo(-6, -26);
+      ctx.lineTo(-4, -76);
+      ctx.lineTo(4, -74);
+      ctx.lineTo(6, -28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#3D2210';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(-3, -34);
+      ctx.lineTo(-2, -72);
+      ctx.moveTo(2, -32);
+      ctx.lineTo(3, -70);
+      ctx.stroke();
+
+      Lada.setupPath(ctx, '#233E2B', COLORS.ink, 2.5);
+      ctx.beginPath();
+      ctx.moveTo(-14, -76);
+      ctx.lineTo(0, -96);
+      ctx.lineTo(15, -74);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    } else if (k.phase === 4 || k.phase === 5) {
+      ctx.save();
+      ctx.rotate(0.35);
+      Lada.setupPath(ctx, '#5E3A21', COLORS.ink, 3.5);
+      ctx.beginPath();
+      ctx.moveTo(10, -10);
+      ctx.lineTo(44, 26);
+      ctx.lineTo(34, 34);
+      ctx.lineTo(2, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Dřevorubec & Zbojník: Two-handed axe
+  else if (
+    enemyId === 'drevorubec' ||
+    enemyId === 'zbojnik' ||
+    enemyId === 'obrneny_zbojnik' ||
+    method === 'drawDrevorubec' ||
+    method === 'drawZbojnik'
+  ) {
+    ctx.save();
+    ctx.translate(charX, charY);
+    ctx.scale(facingDir, 1);
+    if (k.phase === 1 || k.phase === 2) {
+      ctx.save();
+      ctx.rotate(-0.55);
+      ctx.strokeStyle = '#8C5A35';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-12, -4);
+      ctx.lineTo(-24, -48);
+      ctx.stroke();
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      Lada.setupPath(ctx, '#94A3B8', COLORS.ink, 2.5);
+      ctx.beginPath();
+      ctx.moveTo(-24, -46);
+      ctx.lineTo(-42, -56);
+      ctx.quadraticCurveTo(-46, -42, -40, -32);
+      ctx.lineTo(-22, -38);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    } else if (k.phase === 3 || k.phase === 4) {
+      ctx.save();
+      ctx.rotate(0.4);
+      ctx.strokeStyle = '#8C5A35';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(4, -12);
+      ctx.lineTo(26, 22);
+      ctx.stroke();
+      Lada.setupPath(ctx, '#94A3B8', COLORS.ink, 2.5);
+      ctx.beginPath();
+      ctx.moveTo(24, 18);
+      ctx.lineTo(40, 14);
+      ctx.quadraticCurveTo(44, 26, 38, 36);
+      ctx.lineTo(22, 28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Kostlivec s kosou: Scythe over skull
+  else if (enemyId === 'skeleton_scythe' || method === 'drawSkeletonScythe') {
+    ctx.save();
+    ctx.translate(charX, charY);
+    ctx.scale(facingDir, 1);
+    if (k.phase === 1 || k.phase === 2 || k.phase === 3) {
+      ctx.save();
+      ctx.rotate(-0.5);
+      ctx.strokeStyle = COLORS.woodDark;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, 8);
+      ctx.lineTo(-6, -54);
+      ctx.stroke();
+
+      Lada.setupPath(ctx, '#94A3B8', COLORS.ink, 2.4);
+      ctx.beginPath();
+      ctx.moveTo(-6, -54);
+      ctx.quadraticCurveTo(-28, -62, -44, -50);
+      ctx.lineTo(-40, -46);
+      ctx.quadraticCurveTo(-26, -54, -6, -50);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    } else if (k.phase === 4 || k.phase === 5) {
+      ctx.save();
+      ctx.rotate(0.25);
+      ctx.strokeStyle = COLORS.woodDark;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(-6, -10);
+      ctx.lineTo(24, 18);
+      ctx.stroke();
+      Lada.setupPath(ctx, '#94A3B8', COLORS.ink, 2.4);
+      ctx.beginPath();
+      ctx.moveTo(24, 18);
+      ctx.quadraticCurveTo(46, 12, 54, 28);
+      ctx.lineTo(48, 30);
+      ctx.quadraticCurveTo(42, 18, 22, 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Čert & Čertík: Wrought pitchfork
+  else if (
+    enemyId === 'cert' ||
+    enemyId === 'certik' ||
+    method === 'drawCert' ||
+    method === 'drawCertik'
+  ) {
+    ctx.save();
+    ctx.translate(charX, charY);
+    ctx.scale(facingDir, 1);
+    if (k.phase === 1 || k.phase === 2) {
+      ctx.save();
+      ctx.rotate(-0.4);
+      ctx.strokeStyle = '#3D2210';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(-14, 12);
+      ctx.lineTo(-24, -40);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#1F2937';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(-30, -38);
+      ctx.lineTo(-18, -42);
+      ctx.moveTo(-29, -38);
+      ctx.lineTo(-35, -58);
+      ctx.moveTo(-24, -40);
+      ctx.lineTo(-24, -62);
+      ctx.moveTo(-19, -42);
+      ctx.lineTo(-13, -58);
+      ctx.stroke();
+
+      for (const [tx, ty] of [[-35, -58], [-24, -62], [-13, -58]]) {
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.arc(tx, ty, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#DC2626';
+        ctx.beginPath();
+        ctx.arc(tx, ty + (Math.sin(time * 30) > 0 ? -3 : 2), 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (k.phase === 3 || k.phase === 4) {
+      ctx.save();
+      ctx.rotate(0.2);
+      ctx.strokeStyle = '#3D2210';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, -4);
+      ctx.lineTo(28, -2);
+      ctx.stroke();
+      ctx.strokeStyle = '#1F2937';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(28, -9);
+      ctx.lineTo(28, 5);
+      ctx.moveTo(28, -8);
+      ctx.lineTo(46, -12);
+      ctx.moveTo(28, -2);
+      ctx.lineTo(50, -2);
+      ctx.moveTo(28, 4);
+      ctx.lineTo(46, 8);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+}
+
+function drawEnemyRenderer(
+  method: string,
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  time: number,
+  vx: number,
+  panicked: boolean,
+  enemy?: any,
+  extraArgs: any[] = []
+) {
+  const drawer = (Lada as any)[method];
+  if (typeof drawer !== 'function') return;
+
+  const radius = enemy?.radius || 24;
+  const cadence: EnemyAttackCadence = enemy?.attackCadence || enemy?.cadence || 'normal';
+  const isAttacking = !!enemy?.isAttacking || !!enemy?.isWindup;
+  const windupTimer = enemy?.windupTimer || 0;
+  const recoveryTimer = enemy?.recoveryTimer || 0;
+  const facingDir =
+    (isAttacking || recoveryTimer > 0) && typeof enemy?.attackAngle === 'number'
+      ? (Math.cos(enemy.attackAngle) < 0 ? -1 : 1)
+      : (vx < 0 ? -1 : 1);
+  const effectiveVx = (isAttacking || recoveryTimer > 0) ? (facingDir < 0 ? -1 : 1) : vx;
+
+  const attackDelay =
+    typeof enemy?.attackDelay === 'number'
+      ? enemy.attackDelay
+      : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+  const recoveryDuration =
+    typeof enemy?.recoveryDuration === 'number'
+      ? enemy.recoveryDuration
+      : CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
+  const attackAngle =
+    typeof enemy?.attackAngle === 'number'
+      ? enemy.attackAngle
+      : facingDir < 0
+      ? Math.PI
+      : 0;
+
+  const k = computeEnemyKinematics({
+    cadence,
+    isAttacking,
+    windupTimer,
+    recoveryTimer,
+    attackDelay,
+    recoveryDuration,
+    attackAngle,
+    facingDir,
+    time,
+  });
+
+  // 1. Underlay Ground VFX (under feet)
+  if (k.phase > 0) {
+    drawGroundVfx(ctx, x, y, k, radius);
+  }
+
+  // 2. Kinematically Transformed Character Body
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.translate(k.lungeX + k.shakeX, k.lungeY + k.shakeY);
+  ctx.rotate(k.leanAngle);
+  ctx.scale(k.scaleX, k.scaleY);
+  ctx.translate(-x, -y);
+
+  if (extraArgs && extraArgs.length > 0) {
+    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
+  } else if (enemy && (enemy.isActive !== undefined || enemy.isWindup !== undefined)) {
+    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, enemy);
+  } else {
+    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked);
+  }
+
+  ctx.restore();
+
+  // 3. Overlay VFX (weapon silhouettes, star flares, slashing arcs)
+  if (k.phase > 0) {
+    drawOverlayVfx(ctx, x, y, k, radius, enemy, facingDir, time, attackAngle);
+  }
 }
 
 export function drawEnemyWarningSign(
@@ -9920,5 +10630,6 @@ export function drawValecniceCompanion(
 export {
   Lada,
   drawEnemyRenderer,
-  type EnemyAttackInfo
+  computeEnemyKinematics,
+  type EnemyAttackInfo,
 };

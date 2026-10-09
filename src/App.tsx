@@ -19,6 +19,7 @@ import {
   DayPhase,
   EnemyAttackCadence,
   Enemy,
+  DropType,
 } from './types';
 import {
   COLORS,
@@ -83,6 +84,10 @@ import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
+import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
+import type { PendingMilestoneChoice } from './game/engineState';
+import { RunDirector } from './game/director';
+import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
 
@@ -838,56 +843,10 @@ export default function App() {
     try {
       const saved = localStorage.getItem('bubakov_meta');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...parsed,
-          selectedLevel: parsed.selectedLevel || 1,
-          highestLevelUnlocked: parsed.highestLevelUnlocked || (
-            (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
-            (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 5 :
-            (parsed.bestiaryKills?.obr || 0) >= 1 ? 4 :
-            (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 3 :
-            (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
-          ),
-          completedLevels: parsed.completedLevels || {},
-          unlockedWeapons: {
-            ...(parsed.unlockedWeapons || {}),
-            buns: true,
-            cane: true,
-            hromnicka: true,
-          },
-        };
+        return migrateMetaProgression(JSON.parse(saved));
       }
     } catch {}
-    return {
-      krejcary: 0,
-      regenLevel: 0,
-      ovenLevel: 0,
-      scarecrowLevel: 0,
-      millLevel: 0,
-      wallLevel: 0,
-      tavernShieldLevel: 0,
-      forgeLevel: 0,
-      churchLevel: 0,
-      verminLevel: 0,
-      waterLevel: 0,
-      undeadLevel: 0,
-      windLevel: 0,
-      forestLevel: 0,
-      totalSoulsSaved: 0,
-      totalChasnikSaved: 0,
-      season: 'autumn',
-      trophiesClaimed: {},
-      bestiaryKills: {},
-      highestSurviveTime: 0,
-      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
-      hunterKillCounts: {},
-      weaponKillCounts: {},
-      selectedLevel: 1,
-      highestLevelUnlocked: 1,
-      completedLevels: {},
-    };
+    return createDefaultMetaProgression();
   });
 
   const metaRef = useRef(meta);
@@ -935,7 +894,8 @@ export default function App() {
   ).length;
 
   // Game UI state
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather' | 'milestone'>('menu');
+  const [pendingMilestones, setPendingMilestones] = useState<PendingMilestoneChoice[]>([]);
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
@@ -1037,21 +997,26 @@ export default function App() {
       p.hp = Math.min(p.maxHp, p.hp + effect.amount);
     }
     if (effect.type === 'weapon') {
-      const weaponId = effect.weaponId;
+      const canonicalId = toCanonicalWeaponId(effect.weaponId);
       if (!p.weapons) p.weapons = [];
-      const existing = p.weapons.find((w: any) => w.id === weaponId);
+      const existing = p.weapons.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
       if (existing) {
+        existing.id = canonicalId;
         existing.level = Math.min(8, existing.level + 1);
-        ensureWeaponMilestones(existing);
+        if (existing.level === 3 || existing.level === 5 || existing.level === 8) {
+          const choices = getMilestoneChoices(canonicalId, existing.level);
+          if (choices) {
+            setPendingMilestones((prev) => [...prev, { weaponId: canonicalId, rank: existing.level, choices }]);
+          }
+        }
       } else {
         const newW = {
-          id: weaponId,
+          id: canonicalId,
           level: 1,
           cd: 0,
           mastery: createWeaponMasteryState(),
           milestones: [],
         };
-        ensureWeaponMilestones(newW);
         p.weapons.push(newW);
       }
     }
@@ -1089,8 +1054,14 @@ export default function App() {
     eng.grandfather.cooldown = 25;
     eng.grandfather.rerollsThisEncounter = 0;
     grandfatherOpenRef.current = false;
-    setGameState((prev) => (prev === 'grandfather' ? (engineRef.current.player ? 'playing' : 'menu') : prev));
-  }, []);
+    setGameState((prev) => {
+      if (prev === 'grandfather') {
+        if (pendingMilestones.length > 0) return 'milestone';
+        return engineRef.current.player ? 'playing' : 'menu';
+      }
+      return prev;
+    });
+  }, [pendingMilestones]);
 
   const purchaseGrandfatherItem = useCallback((itemId: string) => {
     const eng = engineRef.current;
@@ -1208,6 +1179,7 @@ export default function App() {
   const engineRef = useRef<EngineState>(createInitialEngineState());
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
+  const directorRef = useRef<RunDirector | null>(null);
 
   // Pause toggle handler
   const togglePause = useCallback(() => {
@@ -1498,6 +1470,7 @@ export default function App() {
         ? customWeapons.filter((w) => w.level > 0).map((w) => {
             const mapped = {
               ...w,
+              id: toCanonicalWeaponId(w.id),
               cd: 0,
               mastery: w.mastery || createWeaponMasteryState(),
               milestones: (w as any).milestones || [],
@@ -1506,16 +1479,16 @@ export default function App() {
             return mapped;
           })
         : type === 'wanderer'
-        ? [{ id: 'cane', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
-        ? [{ id: 'buns', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'korenarka'
-        ? [{ id: 'herbs', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'sexton'
-        ? [{ id: 'holywater', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'granny'
-        ? [{ id: 'kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : [{ id: 'halberd', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
+        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
 
     initialWeapons.forEach(ensureWeaponMilestones);
 
@@ -1856,6 +1829,8 @@ export default function App() {
 
     livingEnemiesRef.current = engineRef.current.enemies.slice();
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
+    directorRef.current = new RunDirector(chosenLevelId);
+    engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
 
     setRunStats({
       time: 0,
@@ -2207,9 +2182,9 @@ export default function App() {
     setSlotStoppedCount(0);
     chestRewards.forEach((r) => r.action());
     sound.coin();
-    setGameState('playing');
+    setGameState((prev) => (pendingMilestones.length > 0 ? 'milestone' : 'playing'));
     engineRef.current.lastTime = performance.now();
-  }, [chestRewards]);
+  }, [chestRewards, pendingMilestones]);
   closeChestSequenceRef.current = closeChestSequence;
 
   // Open Painted Chest sequence with authentic slot machine effect
@@ -2312,15 +2287,23 @@ export default function App() {
     // If player has equipped weapons that can be upgraded, include upgrades in slot machine!
     if (p && p.weapons) {
       p.weapons.forEach((pw: any) => {
-        const wDef = WEAPONS[pw.id];
+        const canonicalId = toCanonicalWeaponId(pw.id);
+        const wDef = WEAPONS[canonicalId];
         if (wDef && pw.level < 8) {
           possibleRewards.push({
             name: `${wDef.name} (Úroveň ${pw.level + 1})`,
             desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
             icon: wDef.icon,
             action: () => {
+              pw.id = canonicalId;
               pw.level += 1;
-              ensureWeaponMilestones(pw);
+              if (pw.level === 3 || pw.level === 5 || pw.level === 8) {
+                const choices = getMilestoneChoices(canonicalId, pw.level);
+                if (choices) {
+                  setPendingMilestones((prev) => [...prev, { weaponId: canonicalId, rank: pw.level, choices }]);
+                  setGameState('milestone');
+                }
+              }
             },
           });
         }
@@ -2583,6 +2566,13 @@ export default function App() {
                 e.isDefeated = true;
               });
               triggerLevelVictory(engine.activeLevelId || 1, 'dawn');
+            }
+
+            if (directorRef.current) {
+              directorRef.current.step(dt, { state: engine, livingEnemies: livingEnemiesRef.current });
+              if (directorRef.current.telegraphMessage) {
+                setRunStats((s) => (s.warningBanner !== directorRef.current!.telegraphMessage ? { ...s, warningBanner: directorRef.current!.telegraphMessage || '' } : s));
+              }
             }
 
             // 1. Mini-boss encounter (polední přízrak podle plánu úrovně)
@@ -6824,6 +6814,9 @@ export default function App() {
 
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
+          if (directorRef.current) {
+            directorRef.current.recordEnemyDeath(this, engineRef.current.gameTime);
+          }
           if (type === 'food') {
             this.defeatedByFood = true;
             this.foodDefeatTimer = 0;
@@ -6838,7 +6831,7 @@ export default function App() {
 
           // Helper to spawn drops with natural radial spray and velocity
           const spawnScatterDrop = (
-            dropType: string,
+            dropType: DropType,
             opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string } = {}
           ) => {
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
@@ -7375,68 +7368,66 @@ export default function App() {
         }
 
         const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
+        const isSpecialBoss = this.id === 'cert' || this.id === 'hejkal' || this.id === 'obr' || this.id === 'mlynar' || this.id === 'drak';
 
-        // Get smart detailed attack animation state according to enemy attack speed & cadence
-        const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
+        if (isSpecialBoss) {
+          // Get smart detailed attack animation state according to enemy attack speed & cadence
+          const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
 
-        // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
-        if (attackInfo.isActive) {
-          drawEnemyAttackEffectsPre(ctx, this, attackInfo);
-        }
+          // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
+          if (attackInfo.isActive) {
+            drawEnemyAttackEffectsPre(ctx, this, attackInfo);
+          }
 
-        // Apply procedural attack kinematics (lunge, lean, squash & stretch, tension tremor)
-        if (attackInfo.isActive) {
-          ctx.save();
-          ctx.translate(this.x, this.y);
-          ctx.translate(attackInfo.lungeX + attackInfo.shakeX, attackInfo.lungeY + attackInfo.shakeY);
-          ctx.rotate(attackInfo.leanAngle * attackInfo.facingDir);
-          ctx.scale(attackInfo.squashX, attackInfo.squashY);
-          ctx.translate(-this.x, -this.y);
-        }
+          // Apply procedural attack kinematics (lunge, lean, squash & stretch, tension tremor)
+          if (attackInfo.isActive) {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.translate(attackInfo.lungeX + attackInfo.shakeX, attackInfo.lungeY + attackInfo.shakeY);
+            ctx.rotate(attackInfo.leanAngle * attackInfo.facingDir);
+            ctx.scale(attackInfo.squashX, attackInfo.squashY);
+            ctx.translate(-this.x, -this.y);
+          }
 
-        const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : this.vx;
+          const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : this.vx;
 
-        if (this.id === 'cert') {
-          const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
-            ? Math.cos(this.chargeDirX)
-            : renderFacingVx;
-          Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300, attackInfo);
-        } else if (this.id === 'hejkal') {
-          Lada.drawHejkal(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
-        } else if (this.id === 'obr') {
-          Lada.drawObr(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
-        } else if (this.id === 'mlynar') {
-          Lada.drawMlynar(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.hp <= this.maxHp * 0.5);
-        } else if (this.id === 'meluzina') {
-          Lada.drawMeluzina(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
-        } else if (this.id === 'polednice') {
-          Lada.drawPolednice(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
-        } else if (this.id === 'klekanice') {
-          Lada.drawKlekanice(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing);
-        } else if (this.id === 'drak') {
-          const attacks = {
-            fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
-            ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
-            roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
-          };
-          Lada.drawDrak(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
+          if (this.id === 'cert') {
+            const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
+              ? Math.cos(this.chargeDirX)
+              : renderFacingVx;
+            Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300, attackInfo);
+          } else if (this.id === 'hejkal') {
+            Lada.drawHejkal(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
+          } else if (this.id === 'obr') {
+            Lada.drawObr(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
+          } else if (this.id === 'mlynar') {
+            Lada.drawMlynar(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.hp <= this.maxHp * 0.5);
+          } else if (this.id === 'drak') {
+            const attacks = {
+              fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
+              ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
+              roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
+            };
+            Lada.drawDrak(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
+          }
+
+          if (attackInfo.isActive) {
+            ctx.restore();
+            // Post-sprite attack effects (cleave/slash arcs, claws, apex weapon gleam star, impact sparks)
+            drawEnemyAttackEffectsPost(ctx, this, attackInfo);
+          }
         } else {
+          // Unified modern enemy renderer with computeEnemyKinematics, underlay ground VFX, single transform and overlay weapon VFX
           drawEnemyRenderer(
             this.method,
             ctx,
             this.x,
             this.y,
             this.animTime,
-            renderFacingVx,
+            this.vx,
             isFleeing,
-            attackInfo
+            this
           );
-        }
-
-        if (attackInfo.isActive) {
-          ctx.restore();
-          // Post-sprite attack effects (cleave/slash arcs, claws, apex weapon gleam star, impact sparks)
-          drawEnemyAttackEffectsPost(ctx, this, attackInfo);
         }
 
         const palette = this.palette || (ENEMIES[this.id]?.palette);
@@ -8837,9 +8828,38 @@ export default function App() {
           playerWeapons={engineRef.current.player?.weapons || []}
           purchasesThisEncounter={engineRef.current.grandfather.purchasesThisEncounter}
           rerollCost={getGrandfatherRerollCost(engineRef.current.grandfather.rerollsThisEncounter || 0)}
+          churchLevel={metaRef.current.churchLevel || 0}
           onPurchase={purchaseGrandfatherItem}
           onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
+        />
+      )}
+
+      {gameState === 'milestone' && pendingMilestones.length > 0 && (
+        <WeaponMilestoneModal
+          pendingMilestone={pendingMilestones[0]}
+          lang={(metaRef.current.currentLang as any) || 'cs'}
+          onChoose={(weaponId, choiceId) => {
+            const p = engineRef.current.player;
+            if (p && p.weapons) {
+              const canonicalId = toCanonicalWeaponId(weaponId);
+              const wp = p.weapons.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
+              if (wp) {
+                if (!wp.milestones) wp.milestones = [];
+                if (!wp.milestones.includes(choiceId)) {
+                  wp.milestones.push(choiceId);
+                }
+              }
+            }
+            setPendingMilestones((prev) => {
+              const remaining = prev.slice(1);
+              if (remaining.length === 0) {
+                setGameState('playing');
+                engineRef.current.lastTime = performance.now();
+              }
+              return remaining;
+            });
+          }}
         />
       )}
 

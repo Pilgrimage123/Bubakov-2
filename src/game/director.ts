@@ -119,12 +119,17 @@ export class RunDirector {
     return ttkFactor * 0.6 + hpFactor * 0.4;
   }
 
-  public update(dt: number, engine: any): void {
-    const player = engine.state?.player;
-    if (!player || engine.state?.dawnVictoryTriggered) return;
+  public step(dt: number, engine: any): void {
+    this.update(dt, engine);
+  }
 
-    const gameTime = engine.state.gameTime || 0;
-    const livingCount = engine.livingEnemies?.length || 0;
+  public update(dt: number, engine: any): void {
+    const state = engine.state ?? engine;
+    const player = state.player;
+    if (!player || state.dawnVictoryTriggered) return;
+
+    const gameTime = state.gameTime || 0;
+    const livingCount = engine.livingEnemies?.length ?? state.enemies?.length ?? 0;
 
     // 1. Update threat budget capacity based on daytime
     this.updateBudgetMetrics(gameTime, dt);

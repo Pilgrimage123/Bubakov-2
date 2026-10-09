@@ -52,7 +52,7 @@ export type WeaponId =
 export interface MilestoneChoice {
   id: string;
   name: string;
-  folkNameCzech: string;
+  folkNameCzech?: string;
   description: string;
   visualEffectTag: string;
   audioSfx: string;

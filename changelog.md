@@ -1,10 +1,27 @@
 # Bubákov — Changelog
 
-## 2026-10-09 — Integrační staging: sjednocení typů pokračuje (rozpracováno)
+## 2026-10-09 — Integrační staging: Propojení enginu, sjednocení rendereru a plné ověření
 
-- Zachovány typy starého rendereru `EnemyAttackInfo` současně s novými typy herních dropů a rozšířenými zbraněmi.
-- Pracovní větev zahrnuje vytažený engine, režiséra výpravy, lokalizaci, testovací sadu a příkaz `npm test`.
-- Integrace `App.tsx`, rendereru a Dědečkova obchodu stále potřebuje propojit jejich odlišné API. Build/lint/testy zatím nebyly spuštěny, větev není připravena k produkčnímu merge.
+- **Propojení modulárního subsystému do App.tsx:**
+  - Napojen Režisér výpravy (`RunDirector`) pro dynamické varovné bannery, pacing fází a sledování TTK a spawnu monster.
+  - Implementován herní stav `'milestone'` a zapojena komponenta `WeaponMilestoneModal` pro interaktivní volbu schopností při postupu na milníkové ranky (3, 5 a 8).
+  - Použita migrace profilu `migrateMetaProgression` pro automatický převod historických uložených dat na kanonická ID zbraní (`osikovy_prut`, `povidlove_buchty`, `hromnicka`).
+- **Sjednocení vykreslování v `ladaRenderer.ts` a `App.tsx`:**
+  - Odstraněna duplicitní transformace plátna v `App.tsx`; monstra jsou předávána přímo do `drawEnemyRenderer`.
+  - Zapojena moderní Ladovská kinematika (`computeEnemyKinematics`), podkresové prachové stopy, otřesy těl a zbraňové siluety.
+  - Zachována specifická větvení pro hlavní bossy (`drak`, `cert`, `mlynar`).
+- **Dědečkův obchod (`GrandfatherShop.tsx`):**
+  - Normalizována ID zbraní přes `toCanonicalWeaponId`.
+  - Přidán dynamický náhled milníků zbraní z `weaponMilestones.ts` a zařazování voleb do fronty (`pendingMilestones`).
+  - Doplněna vizualizace vesnické synergie pro Kapli svaté vlny (`churchLevel`).
+- **Architektonická dokumentace a slovník:**
+  - Založen `GLOSSARY.md` s kanonickou terminologií (*Kuráž*, *Nápřah*, *Milník zbraně*, *Perníčky*, *Krejcar*, *Čertův dědeček*, *Režisér výpravy*).
+  - Zapsán záznam architektonického rozhodnutí `docs/adr/0001-phased-game-engine-integration.md`.
+- **Plná verifikace prostředí:**
+  - `vitest run`: 9 testovacích souborů, všech 104 testů úspěšných.
+  - `tsc --noEmit`: 0 chyb, typy `DropType` a zbraní sjednoceny.
+  - `eslint .`: konfigurace `eslint.config.js` vytvořena, lint čistý.
+  - `npm run build`: produkční bundle Vite úspěšně sestaven.
 
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 
