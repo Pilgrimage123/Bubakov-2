@@ -8,6 +8,19 @@ import {
   BASE_LANTERN_RADIUS,
   WATCHMAN_RADIUS_MULTIPLIER,
   PHASE_AMBIENT_DARKNESS,
+  HROMNICKA_BASE_RADIUS,
+  HROMNICKA_RADIUS_PER_LEVEL,
+  HROMNICKA_COLOR,
+  HROMNICKA_INTENSITY,
+  BLUDICKA_RADIUS,
+  BLUDICKA_COLOR,
+  BLUDICKA_INTENSITY,
+  PROJECTILE_LIGHT_RADIUS,
+  PROJECTILE_LIGHT_COLOR,
+  PROJECTILE_LIGHT_INTENSITY,
+  RARE_LOOT_LIGHT_RADIUS,
+  RARE_LOOT_LIGHT_COLOR,
+  RARE_LOOT_LIGHT_INTENSITY,
 } from '../src/game/lighting';
 import type { LightSource } from '../src/types';
 
@@ -221,4 +234,211 @@ describe('Dynamic Folk Lighting Model (Ticket 01)', () => {
       expect(env.sources[0].id).toBe('player_lantern');
     });
   });
+
+  describe('Folklore Entity Emitters and Loot Glow (Ticket 03)', () => {
+    let engine: GameEngine;
+
+    beforeEach(() => {
+      engine = new GameEngine();
+      engine.initRun({
+        hunterType: 'wanderer',
+        spawnInitialWave: false,
+      });
+      engine.state.gameTime = 0;
+    });
+
+    it('having hromnicka weapon adds the holy_candle light source with expected radius', () => {
+      engine.state.player.weapons = [{ id: 'hromnicka', level: 1 }];
+
+      const lights = computeLightSources(engine);
+      expect(lights.length).toBe(2);
+
+      const lantern = lights.find((l) => l.kind === 'player_lantern');
+      const holyCandle = lights.find((l) => l.kind === 'holy_candle');
+
+      expect(lantern).toBeDefined();
+      expect(holyCandle).toBeDefined();
+
+      // Formula: radius = 135 + (w.level || 1) * 18 -> 135 + 18 = 153
+      expect(holyCandle!.radius).toBe(153);
+      expect(holyCandle!.color).toBe('#FEF08A');
+      expect(holyCandle!.intensity).toBe(0.9);
+      expect(holyCandle!.kind).toBe('holy_candle');
+      expect(holyCandle!.x).toBe(engine.state.player.x);
+      expect(holyCandle!.y).toBe(engine.state.player.y);
+
+      // Weapon level 2 scaling: 135 + 2 * 18 = 171
+      engine.state.player.weapons = [{ id: 'hromnicka', level: 2 }];
+      const lightsLvl2 = computeLightSources(engine);
+      const candleLvl2 = lightsLvl2.find((l) => l.kind === 'holy_candle');
+      expect(candleLvl2!.radius).toBe(171);
+
+      // Pulsing with time * 4: at time = PI / 8 (4*t = PI/2 => sin=1)
+      engine.state.gameTime = Math.PI / 8;
+      const pulsedLights = computeLightSources(engine);
+      const pulsedCandle = pulsedLights.find((l) => l.kind === 'holy_candle');
+      expect(pulsedCandle!.radius).toBeCloseTo(177, 2); // 171 + 6
+    });
+
+    it('living bludicka enemies add will_o_wisp light sources', () => {
+      engine.state.enemies.push({
+        id: 'bludicka_1',
+        type: 'bludicka',
+        x: 420,
+        y: 690,
+        dead: false,
+        isDefeated: false,
+      });
+
+      const lights = computeLightSources(engine);
+      const wisp = lights.find((l) => l.kind === 'will_o_wisp');
+
+      expect(wisp).toBeDefined();
+      expect(wisp!.x).toBe(420);
+      expect(wisp!.y).toBe(690);
+      expect(wisp!.radius).toBe(75);
+      expect(wisp!.color).toBe('#67E8F9');
+      expect(wisp!.intensity).toBe(0.85);
+
+      // Wobble / flicker over time: at time = PI / 12 (6*t = PI/2 => sin=1)
+      engine.state.gameTime = Math.PI / 12;
+      const pulsedLights = computeLightSources(engine);
+      const pulsedWisp = pulsedLights.find((l) => l.kind === 'will_o_wisp');
+      expect(pulsedWisp!.radius).toBeCloseTo(79, 2); // 75 + 4
+    });
+
+    it('flying fire projectiles add projectile light sources', () => {
+      engine.state.projectiles.push(
+        { id: 'p_spark', x: 100, y: 150, visual: 'hell_spark', dead: false },
+        { id: 'p_fireball', x: 200, y: 250, visual: 'dragon_fireball', dead: false },
+        { id: 'p_boulder', x: 300, y: 350, visual: 'boulder', dead: false },
+        { id: 'p_potato', x: 400, y: 450, weaponId: 'horky_brambor', dead: false },
+        { id: 'p_snow', x: 500, y: 550, visual: 'snowball', dead: false } // non-fiery
+      );
+
+      const lights = computeLightSources(engine);
+      const projectileLights = lights.filter((l) => l.kind === 'projectile');
+
+      expect(projectileLights.length).toBe(4);
+      for (const pLight of projectileLights) {
+        expect(pLight.radius).toBe(45);
+        expect(pLight.color).toBe('#F97316');
+        expect(pLight.intensity).toBe(0.75);
+      }
+
+      // Check coordinates matched respective projectiles
+      expect(projectileLights.some((l) => l.x === 100 && l.y === 150)).toBe(true);
+      expect(projectileLights.some((l) => l.x === 200 && l.y === 250)).toBe(true);
+      expect(projectileLights.some((l) => l.x === 300 && l.y === 350)).toBe(true);
+      expect(projectileLights.some((l) => l.x === 400 && l.y === 450)).toBe(true);
+      expect(projectileLights.some((l) => l.x === 500 && l.y === 550)).toBe(false);
+    });
+
+    it('rare drops (chest/horseshoe/giant gingerbread) emit loot glow sources', () => {
+      engine.state.drops.push(
+        { type: 'chest', x: 120, y: 140, dead: false },
+        { type: 'horseshoe', x: 220, y: 240, dead: false },
+        { type: 'rooster', x: 320, y: 340, dead: false },
+        { type: 'gingerbread', size: 'giant', x: 420, y: 440, dead: false },
+        { type: 'coin', x: 520, y: 540, dead: false }, // common
+        { type: 'gingerbread', size: 'small', x: 620, y: 640, dead: false } // common
+      );
+
+      const lights = computeLightSources(engine);
+      const lootLights = lights.filter((l) => l.kind === 'loot');
+
+      expect(lootLights.length).toBe(4);
+      for (const lLight of lootLights) {
+        expect(lLight.radius).toBe(32);
+        expect(lLight.color).toBe('#FDE68A');
+        expect(lLight.intensity).toBe(0.6);
+      }
+
+      expect(lootLights.some((l) => l.x === 120 && l.y === 140)).toBe(true);
+      expect(lootLights.some((l) => l.x === 220 && l.y === 240)).toBe(true);
+      expect(lootLights.some((l) => l.x === 320 && l.y === 340)).toBe(true);
+      expect(lootLights.some((l) => l.x === 420 && l.y === 440)).toBe(true);
+      expect(lootLights.some((l) => l.x === 520 && l.y === 540)).toBe(false);
+      expect(lootLights.some((l) => l.x === 620 && l.y === 640)).toBe(false);
+    });
+
+    it('dead/defeated enemies or collected drops do not emit lights', () => {
+      engine.state.enemies.push(
+        { id: 'dead_wisp', type: 'bludicka', x: 100, y: 100, dead: true },
+        { id: 'defeated_wisp', type: 'bludicka', x: 150, y: 150, isDefeated: true },
+        { id: 'zerohp_wisp', type: 'bludicka', x: 200, y: 200, hp: 0 }
+      );
+      engine.state.projectiles.push({
+        id: 'dead_proj',
+        x: 250,
+        y: 250,
+        visual: 'dragon_fireball',
+        dead: true,
+      });
+      engine.state.drops.push(
+        { type: 'chest', x: 300, y: 300, dead: true },
+        { type: 'horseshoe', x: 350, y: 350, collected: true }
+      );
+
+      const lights = computeLightSources(engine);
+      expect(lights.some((l) => l.kind === 'will_o_wisp')).toBe(false);
+      expect(lights.some((l) => l.kind === 'projectile')).toBe(false);
+      expect(lights.some((l) => l.kind === 'loot')).toBe(false);
+    });
+
+    it('culls off-screen folklore entities and loot glow with isLightInView', () => {
+      // Put player at 0, 0
+      engine.state.player.x = 0;
+      engine.state.player.y = 0;
+
+      // Inside view [0, 0, 500, 500]
+      engine.state.enemies.push({
+        id: 'in_view_wisp',
+        type: 'bludicka',
+        x: 200,
+        y: 200,
+      });
+      // Far outside view
+      engine.state.enemies.push({
+        id: 'out_view_wisp',
+        type: 'bludicka',
+        x: 3000,
+        y: 3000,
+      });
+
+      // Far outside projectile
+      engine.state.projectiles.push({
+        id: 'out_proj',
+        x: 4000,
+        y: 4000,
+        visual: 'hell_spark',
+      });
+
+      // Far outside drop
+      engine.state.drops.push({
+        id: 'out_drop',
+        type: 'chest',
+        x: 5000,
+        y: 5000,
+      });
+
+      const visible = engine.getVisibleLightSources(0, 0, 500, 500);
+      expect(visible.some((l) => l.id === 'wisp_in_view_wisp')).toBe(true);
+      expect(visible.some((l) => l.id === 'wisp_out_view_wisp')).toBe(false);
+      expect(visible.some((l) => l.kind === 'projectile')).toBe(false);
+      expect(visible.some((l) => l.kind === 'loot')).toBe(false);
+    });
+
+    it('supports isLightInView called directly with (x, y, radius, viewLeft, viewTop, viewRight, viewBottom)', () => {
+      // Light at x=100, y=100, radius=50 inside [0, 0, 500, 500]
+      expect(isLightInView(100, 100, 50, 0, 0, 500, 500)).toBe(true);
+
+      // Light completely off to right (x - radius = 600 - 50 = 550 > 500)
+      expect(isLightInView(600, 100, 50, 0, 0, 500, 500)).toBe(false);
+
+      // Light edge reaches into view (x - radius = 530 - 50 = 480 <= 500)
+      expect(isLightInView(530, 100, 50, 0, 0, 500, 500)).toBe(true);
+    });
+  });
 });
+

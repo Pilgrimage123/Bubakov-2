@@ -9,10 +9,10 @@ Přidání specifických světelných emitérů pro folklórní entity v `src/ga
 
 **Blocked by:** 02-canvas-2d-lighting-renderer.md
 
-**Status:** ready-for-agent
+**Status:** completed
 
-- [ ] Přidat vyhodnocení zbraně `hromnicka` do `getVisibleLightSources` (rozšiřuje poloměr a intenzitu světla lovce).
-- [ ] Přidat světelné zdroje pro bubáky typu `bludicka`.
-- [ ] Přidat světelné zdroje pro ohnivé a zářivé projektily v letu.
-- [ ] Přidat bodové emitery pro vzácné dropy (truhly, podkova, obří perníčky).
-- [ ] Rozšířit testy v `tests/dynamicLighting.test.ts` pro ověření přítomnosti těchto specifických světel.
+- [x] Přidat vyhodnocení zbraně `hromnicka` do `getVisibleLightSources` (rozšiřuje poloměr a intenzitu světla lovce).
+- [x] Přidat světelné zdroje pro bubáky typu `bludicka`.
+- [x] Přidat světelné zdroje pro ohnivé a zářivé projektily v letu.
+- [x] Přidat bodové emitery pro vzácné dropy (truhly, podkova, obří perníčky).
+- [x] Rozšířit testy v `tests/dynamicLighting.test.ts` pro ověření přítomnosti těchto specifických světel.

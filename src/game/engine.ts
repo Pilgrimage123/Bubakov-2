@@ -1189,6 +1189,18 @@ export class GameEngine {
     return this.spatialHash.queryNearest(x, y, maxRadius, filter);
   }
 
+  public get enemies(): any[] {
+    return this.state?.enemies ?? [];
+  }
+
+  public get projectiles(): any[] {
+    return this.state?.projectiles ?? [];
+  }
+
+  public get drops(): GameDrop[] {
+    return this.state?.drops ?? [];
+  }
+
   public getVisibleLightSources(
     viewLeft?: number,
     viewTop?: number,
