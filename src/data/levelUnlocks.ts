@@ -3,6 +3,7 @@ export type { LevelProgress } from '../types';
 import { GAME_LEVELS } from './levels';
 
 var LEVEL_ORDER = [
+	0,
 	1,
 	2,
 	3,
@@ -16,7 +17,7 @@ function getPreviousLevel(id) {
 	return LEVEL_ORDER[idx - 1];
 }
 function isLevelFullyUnlocked(id, meta) {
-	if (id === 1) return true;
+	if (id === 0 || id === 1) return true;
 	if ((meta.highestLevelUnlocked || 1) >= id) return true;
 	if (meta.completedLevels && meta.completedLevels[id]) return true;
 	if (id === 2 && ((meta.bestiaryKills?.cert || 0) >= 1 || !!meta.completedLevels?.[1])) return true;
@@ -27,7 +28,7 @@ function isLevelFullyUnlocked(id, meta) {
 	return false;
 }
 function canLevelUnlock(id, meta) {
-	if (id === 1) return true;
+	if (id === 0 || id === 1) return true;
 	const prev = getPreviousLevel(id);
 	return !prev || isLevelFullyUnlocked(prev, meta);
 }

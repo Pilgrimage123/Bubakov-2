@@ -36,7 +36,7 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('valecnice', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const orbitRadius = 115 * stats.areaRadiusMult;
 			player._valecniceSlowRadius = orbitRadius * 1.15;
 			player._valecniceSlowRate = level >= 3 ? 0.40 : 0.25;
@@ -106,7 +106,7 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('kysela_okurka', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
 			if (!enemies.length) return false;
 			let target = enemies[0], minDist = player.distTo(target);
@@ -144,7 +144,7 @@ var WEAPONS = {
 			}
 			if (player.distTo(target) > 850 * stats.areaRadiusMult) return false;
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = Math.max(1, 1 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(12 * stats.areaRadiusMult);
 			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.8;
@@ -318,7 +318,7 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('devatero_kviti', level, w);
-			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((3 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 15) * stats.damageMult;
 			const radius = Math.round(14 * stats.areaRadiusMult);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);
@@ -366,7 +366,7 @@ var WEAPONS = {
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((3 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 18) * stats.damageMult;
 			const radius = Math.round(15 * stats.areaRadiusMult);
 			const chillDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3.5;
@@ -405,7 +405,7 @@ var WEAPONS = {
 			const stats = getRankedWeaponStats('kynuty_kolac', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
 			const bounces = 2 + Math.min(4, level - 1);
 			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3;
@@ -445,7 +445,7 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('horky_brambor', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(14 * stats.areaRadiusMult);
 			const fireZoneRadius = Math.round(45 * stats.areaRadiusMult);
@@ -486,7 +486,7 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('vceli_roj', level, w);
-			const count = Math.max(1, 4 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((4 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 12) * stats.damageMult;
 			const radius = Math.round(9 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
@@ -540,7 +540,7 @@ var WEAPONS = {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('svecena_kropenka', level, w);
-			const count = Math.max(1, 5 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((5 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(11 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {

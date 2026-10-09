@@ -1478,6 +1478,91 @@ export class GameEngine {
     }
     this.spatialHash.rebuild(this.livingEnemies);
 
+    // Step decor
+    if (this.state.decor) {
+      for (let i = 0; i < this.state.decor.length; i++) {
+        const d = this.state.decor[i];
+        if (d.animTime !== undefined) d.animTime += dt;
+        
+        if (d.vx || d.vy) {
+          d.x += d.vx * dt;
+          d.y += d.vy * dt;
+          // Apply drag to káča
+          if (d.type === 'kaca') {
+            const drag = Math.max(0, 1 - 2.5 * dt);
+            d.vx *= drag;
+            d.vy *= drag;
+            // Stop slowly
+            if (Math.abs(d.vx) < 5) d.vx = 0;
+            if (Math.abs(d.vy) < 5) d.vy = 0;
+          }
+          // Wrap around approx bounds for ice floes
+          if (d.type === 'ice_floe') {
+             if (d.x > 1800) d.x = -1800;
+             if (d.x < -1800) d.x = 1800;
+             if (d.y > 1800) d.y = -1800;
+             if (d.y < -1800) d.y = 1800;
+          }
+        }
+
+        if (d.isObstacle) {
+          // Push player
+          if (player && player.hp > 0) {
+            const dx = player.x - d.x;
+            const dy = player.y - d.y;
+            const dist = Math.hypot(dx, dy);
+            const reach = player.radius + d.radius;
+            if (dist < reach) {
+              const overlap = reach - dist;
+              if (dist > 0.001) {
+                player.x += (dx / dist) * overlap;
+                player.y += (dy / dist) * overlap;
+              }
+              if (d.type === 'granny_stove' && Math.random() < 0.05) {
+                player.hp = Math.min(player.maxHp || 100, player.hp + 2);
+              }
+              if (d.type === 'ice_floe') {
+                player.x += d.vx * dt;
+              }
+              if (d.type === 'kaca' && dist < reach - 2) {
+                // Player kicks the top!
+                d.vx = (dx / dist) * -300;
+                d.vy = (dy / dist) * -300;
+              }
+            }
+          }
+          // Push enemies
+          for (let j = 0; j < this.livingEnemies.length; j++) {
+            const e = this.livingEnemies[j];
+            const edx = e.x - d.x;
+            const edy = e.y - d.y;
+            const edist = Math.hypot(edx, edy);
+            const ereach = (e.radius || 15) + d.radius;
+            if (edist < ereach) {
+              const eoverlap = ereach - edist;
+              if (edist > 0.001) {
+                e.x += (edx / edist) * eoverlap;
+                e.y += (edy / edist) * eoverlap;
+              }
+              if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
+                e.hp -= 20; // The spinning top damages them if it's moving fast!
+                if (e.hp <= 0) e.isDefeated = true;
+                d.vx = (edx / edist) * -200;
+                d.vy = (edy / edist) * -200;
+              } else if (d.type === 'kaca') {
+                // Enemy kicks the top
+                d.vx = (edx / edist) * -150;
+                d.vy = (edy / edist) * -150;
+              }
+              if (d.type === 'ice_floe') {
+                e.x += d.vx * dt; // Carried by ice
+              }
+            }
+          }
+        }
+      }
+    }
+
     // Step drops
     if (this.state.drops) {
       for (let i = 0; i < this.state.drops.length; i++) {

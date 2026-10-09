@@ -15,6 +15,21 @@ export interface RunRozmarDef {
 }
 
 export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
+  0: [
+    {
+      id: 'tani_ker',
+      levelId: 0,
+      name: 'Rychlé Tání',
+      subtitle: 'Voda stoupá a kry se lámou',
+      icon: '🧊',
+      description: 'Záplava tajících ker přináší chlad. Jarní havěť je agresivnější.',
+      weatherOverride: 'ice_drift',
+      threatMultiplier: 1.1,
+      anomalyWindow: [60, 90],
+      preferredEnemyIds: ['vodnicek', 'zaba'],
+      formationBias: 'balanced'
+    }
+  ],
   1: [
     {
       id: 'rybnicni_zaplava',

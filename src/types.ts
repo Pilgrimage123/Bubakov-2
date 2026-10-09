@@ -1,5 +1,5 @@
 export type Season = 'autumn' | 'winter' | string;
-export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
+export type GameLevelId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
 export type DropType =
@@ -61,6 +61,7 @@ export interface MilestoneChoice {
     areaRadiusMult?: number;
     pierceDelta?: number;
     projectileCountDelta?: number;
+    projectileCountMult?: number;
     knockbackMult?: number;
     statusDurationSec?: number;
     specialMechanicFlag?: string;
