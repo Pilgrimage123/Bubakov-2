@@ -1,5 +1,11 @@
 # Bubákov — Changelog
 
+## 2026-10-09 — Integrační staging: příprava typů sjednocených mechanik (ve validaci)
+
+- Zahájena integrace na oddělené větvi `staging/integration-work`; `main` a záložní větev zůstávají beze změny.
+- Připraveny společné typy pro herní dropy, rozšířenou sadu zbraní a časování útočných kadencí.
+- Nejde zatím o dokončené sloučení; engine, renderer a UI je nutné integrovat a následně ověřit buildem, lintem a testy.
+
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 
 - **Osikový prut (Poutník) posílen na plnohodnotný úderný bič:**

@@ -2,11 +2,52 @@ export type Season = 'autumn' | 'winter' | string;
 export type GameLevelId = 1 | 2 | 3 | 4 | 5 | 6;
 export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
+export type DropType =
+  | 'coin'
+  | 'gingerbread'
+  | 'potion'
+  | 'bread'
+  | 'pear'
+  | 'soul'
+  | 'chest'
+  | 'chasnik'
+  | 'horseshoe'
+  | 'rooster'
+  | 'cuckoo_clock';
+
+export interface GameDrop {
+  type: DropType;
+  x: number;
+  y: number;
+  vx?: number;
+  vy?: number;
+  radius?: number;
+  value?: number;
+  size?: 'small' | 'large' | 'giant' | string;
+  time?: number;
+  dead?: boolean;
+  isHot?: boolean;
+  goldenRushTimer?: number;
+  rescued?: boolean;
+  [key: string]: any;
+}
+
 export type WeaponId =
   | 'osikovy_prut'
   | 'valecnice'
   | 'cesnekova_topinka'
-  | 'kysele_okurky';
+  | 'kysela_okurka'
+  | 'povidlove_buchty'
+  | 'kovarske_vidle'
+  | 'kovana_halapartna'
+  | 'dreveny_cep'
+  | 'devatero_kviti'
+  | 'snehova_koule'
+  | 'kynuty_kolac'
+  | 'horky_brambor'
+  | 'vceli_roj'
+  | 'hromnicka'
+  | 'svecena_kropenka';
 
 export interface MilestoneChoice {
   id: string;
@@ -114,6 +155,19 @@ export interface WeaponDef {
 }
 
 export type EnemyAttackCadence = 'fast' | 'normal' | 'slow';
+
+export const CADENCE_ATTACK_DELAYS: Record<EnemyAttackCadence, number> = {
+  fast: 0.6,
+  normal: 1.2,
+  slow: 1.8,
+};
+
+export const CADENCE_RECOVERY_DURATIONS: Record<EnemyAttackCadence, number> = {
+  fast: 0.15,
+  normal: 0.20,
+  slow: 0.25,
+};
+
 
 export interface EnemyAttackInfo {
   isActive: boolean;
@@ -246,10 +300,13 @@ export interface Trophy {
 export interface VillageBuilding {
   id: string;
   name: string;
-  desc: string;
-  cost: number[];
-  maxLevel: number;
-  icon: string;
+  levelKey: keyof MetaProgression;
+  role: string;
+  helpers: string;
+  story: string;
+  bonusDesc: (lvl: number) => string;
+  cost: (lvl: number) => number;
+  canvasDrawer: 'drawOvenScene' | 'drawScarecrowScene' | 'drawMillScene' | 'drawWallScene';
 }
 
 export interface HunterProgress {
