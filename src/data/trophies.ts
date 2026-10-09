@@ -1,4 +1,5 @@
 import React from 'react';
+import { VILLAGE_BUILDINGS } from './village';
 
 var TROPHIES = [
 	{
@@ -131,11 +132,11 @@ var TROPHIES = [
 	{
 		id: "village_patron",
 		title: "🍺 Vesnický mecenáš",
-		desc: "Vylepši alespoň jedno hospodské řemeslo na 3. nebo vyšší úroveň.",
+		desc: "Vylepši alespoň jedno vesnické stavení či řemeslo na 3. nebo vyšší úroveň.",
 		reward: 80,
-		isMet: (meta) => (meta.ovenLevel || 0) >= 3 || (meta.scarecrowLevel || 0) >= 3 || (meta.millLevel || 0) >= 3 || (meta.wallLevel || 0) >= 3 || (meta.regenLevel || 0) >= 3,
+		isMet: (meta) => VILLAGE_BUILDINGS.some((b) => ((meta[b.levelKey] as number) || 0) >= 3),
 		getProgress: (meta) => {
-			const max = Math.max(meta.ovenLevel || 0, meta.scarecrowLevel || 0, meta.millLevel || 0, meta.wallLevel || 0, meta.regenLevel || 0);
+			const max = Math.max(0, ...VILLAGE_BUILDINGS.map((b) => ((meta[b.levelKey] as number) || 0)));
 			return {
 				cur: Math.min(3, max),
 				max: 3

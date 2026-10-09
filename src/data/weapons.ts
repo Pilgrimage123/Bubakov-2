@@ -1,5 +1,6 @@
 import React from 'react';
 import { sound } from '../audio';
+import type { WeaponId } from '../types';
 import { getRankedWeaponStats, type WeaponStats } from './weaponMilestones';
 
 /* Legacy mastery state retained only for backwards save compatibility. */
@@ -42,7 +43,7 @@ var WEAPONS = {
 			const angleBase = player.valecniceAngle || 0;
 			const dmg = getWeaponDamage(player, 32) * stats.damageMult;
 			const kbForce = 520 * stats.knockbackMult;
-			const stunDuration = 1.2 * (stats.statusDurationSec > 0 ? stats.statusDurationSec : 1);
+			const stunDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.2;
 			const reachBase = 58 * stats.areaRadiusMult;
 			const enemies = player.getNearbyEnemies(orbitRadius + reachBase + 50);
 			let hitAny = false;
@@ -76,8 +77,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	'cesnekova-topinka': {
-		id: 'cesnekova-topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 5, baseCd: 0.35,
+	cesnekova_topinka: {
+		id: 'cesnekova_topinka', name: 'Česneková topinka', type: 'garlic', icon: 'cesnekova_topinka', baseDmg: 5, baseCd: 0.35,
 		desc: 'Smradlavá a štiplavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
@@ -92,19 +93,19 @@ var WEAPONS = {
 				if (dx * dx + dy * dy <= reach * reach) {
 					const dist = Math.hypot(dx, dy) || 1;
 					e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
-					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova-topinka', e, 'hit');
+					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova_topinka', e, 'hit');
 					e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.0);
 				}
 			}
 			return true;
 		}
 	},
-	'kysela-okurka': {
-		id: 'kysela-okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
+	kysela_okurka: {
+		id: 'kysela_okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
 		desc: 'Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kysele_okurky', level, w);
+			const stats = getRankedWeaponStats('kysela_okurka', level, w);
 			const count = Math.max(1, 1 + stats.projectileCount);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
 			if (!enemies.length) return false;
@@ -112,12 +113,13 @@ var WEAPONS = {
 			for (let i=1;i<enemies.length;i++){const d=player.distTo(enemies[i]);if(d<minDist){minDist=d;target=enemies[i];}}
 			const angle = Math.atan2(target.y-player.y,target.x-player.x);
 			const dmg = getWeaponDamage(player, 20) * stats.damageMult;
-			for(let i=0;i<count;i++) player.spawnProjectile({x:player.x,y:player.y,angle:angle+(count>1?(i-(count-1)/2)*.10:0),speed:420,dmg,radius:13,type:'pickle',visual:'pickle',life:2.2,pickleDamageTakenMultiplier: level >= 5 ? 1.50 : 1.35, pierce: stats.pierce});
+			const radius = Math.round(13 * stats.areaRadiusMult);
+			for(let i=0;i<count;i++) player.spawnProjectile({x:player.x,y:player.y,angle:angle+(count>1?(i-(count-1)/2)*.10:0),speed:420,dmg,radius,type:'pickle',visual:'pickle',life:2.2,pickleDamageTakenMultiplier: level >= 5 ? 1.50 : 1.35, pierce: stats.pierce, knockbackMult: stats.knockbackMult});
 			return true;
 		}
 	},
-	buns: {
-		id: "buns",
+	povidlove_buchty: {
+		id: "povidlove_buchty",
 		name: "Povidlové buchty",
 		type: "food",
 		icon: "czech_buchta",
@@ -126,7 +128,9 @@ var WEAPONS = {
 		speed: 460,
 		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 1,8 s zastaví a mlsají s poznámkou „Ňam, ňam“. S vyšší úrovní přibývají další buchty v salvě (odolnost dle Hladu).",
 		fire: (player, level) => {
-			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('povidlove_buchty', level, w);
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
 			let bestDist = player.distTo(target) + (target.hunger ?? target.foodResist ?? 0) * 400;
@@ -138,11 +142,12 @@ var WEAPONS = {
 					target = e;
 				}
 			}
-			if (player.distTo(target) > 850) return false;
+			if (player.distTo(target) > 850 * stats.areaRadiusMult) return false;
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const w = player._firingWeapon;
-			const count = 1 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 22 + (level - 1) * 4);
+			const count = Math.max(1, 1 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
+			const radius = Math.round(12 * stats.areaRadiusMult);
+			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.8;
 			for (let i = 0; i < count; i++) {
 				const spread = count > 1 ? (Math.random() - .5) * .45 : 0;
 				player.spawnProjectile({
@@ -151,18 +156,20 @@ var WEAPONS = {
 					angle: angle + spread,
 					speed: 460,
 					dmg,
-					radius: 12,
+					radius,
 					type: "food",
 					visual: "bun",
-					snackDuration: 1.8,
+					snackDuration,
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
 					life: 2.2
 				});
 			}
 			return true;
 		}
 	},
-	cane: {
-		id: "cane",
+	osikovy_prut: {
+		id: "osikovy_prut",
 		name: "Osikový prut",
 		type: "physical",
 		icon: "osikovy_prut",
@@ -184,12 +191,13 @@ var WEAPONS = {
 				reach,
 				arc,
 				dmg,
+				knockbackMult: stats.knockbackMult,
 				life: .28,
 				maxLife: .28,
 				type: "physical",
 				soaked: !!player.hasSoakedCane,
 				style: "cane",
-				weaponId: "cane",
+				weaponId: "osikovy_prut",
 				swingDir: player._caneSwingAlt ? 1 : -1
 			});
 			if (typeof (sound as any).caneWhip === 'function') {
@@ -200,8 +208,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	pitchfork: {
-		id: "pitchfork",
+	kovarske_vidle: {
+		id: "kovarske_vidle",
 		name: "Kovářské vidle",
 		type: "physical",
 		icon: "🔱",
@@ -209,9 +217,11 @@ var WEAPONS = {
 		baseCd: 1,
 		desc: "Třízubé kované vidle z vesnické kovárny. Proráží řady strašidel mocným bodnutím přímo vpřed.",
 		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('kovarske_vidle', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const reach = 130 + level * 16;
-			const dmg = getWeaponDamage(player, 24 + (level - 1) * 5);
+			const reach = (130 + level * 16) * stats.areaRadiusMult;
+			const dmg = getWeaponDamage(player, 24) * stats.damageMult;
 			player.spawnMeleeSlash({
 				x: player.x,
 				y: player.y,
@@ -219,17 +229,19 @@ var WEAPONS = {
 				reach,
 				arc: .65,
 				dmg,
+				knockbackMult: stats.knockbackMult,
 				life: .18,
 				type: "physical",
 				soaked: player.hasSoakedCane,
-				style: "thrust"
+				style: "thrust",
+				weaponId: "kovarske_vidle"
 			});
 			sound.slash();
 			return true;
 		}
 	},
-	halberd: {
-		id: "halberd",
+	kovana_halapartna: {
+		id: "kovana_halapartna",
 		name: "Kovaná halapartna",
 		type: "physical",
 		icon: "🪓",
@@ -237,10 +249,12 @@ var WEAPONS = {
 		baseCd: 1.25,
 		desc: "Těžká zbraň ponocných a panských drábů. Široký rázný švih, který spolehlivě zažene i celé houfy kostlivců.",
 		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('kovana_halapartna', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const reach = 145 + level * 15;
+			const reach = (145 + level * 15) * stats.areaRadiusMult;
 			const arc = 1.7 + level * .15;
-			const dmg = getWeaponDamage(player, 32 + (level - 1) * 6);
+			const dmg = getWeaponDamage(player, 32) * stats.damageMult;
 			player.spawnMeleeSlash({
 				x: player.x,
 				y: player.y,
@@ -248,17 +262,19 @@ var WEAPONS = {
 				reach,
 				arc,
 				dmg,
+				knockbackMult: stats.knockbackMult,
 				life: .24,
 				type: "physical",
 				soaked: player.hasSoakedCane,
-				style: "halberd"
+				style: "halberd",
+				weaponId: "kovana_halapartna"
 			});
 			sound.slash();
 			return true;
 		}
 	},
-	flail: {
-		id: "flail",
+	dreveny_cep: {
+		id: "dreveny_cep",
 		name: "Dřevěný cep na obilí",
 		type: "physical",
 		icon: "🌾",
@@ -266,27 +282,32 @@ var WEAPONS = {
 		baseCd: 1.5,
 		desc: "Okovaný venkovský cep na mlácení žita. Drtivý dopad do země vyvolá rázovou vlnu a odhodí těžké nepřátele.",
 		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('dreveny_cep', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const dist = 90 + level * 10;
+			const dist = (90 + level * 10) * stats.areaRadiusMult;
 			const targetX = player.x + Math.cos(angle) * dist;
 			const targetY = player.y + Math.sin(angle) * dist;
-			const radius = 65 + level * 10;
-			const dmg = getWeaponDamage(player, 45 + (level - 1) * 8);
+			const radius = (65 + level * 10) * stats.areaRadiusMult;
+			const dmg = getWeaponDamage(player, 45) * stats.damageMult;
 			player.spawnAreaImpact({
 				x: targetX,
 				y: targetY,
 				radius,
 				dmg,
+				knockbackMult: stats.knockbackMult,
+				stunDuration: stats.statusDurationSec,
 				type: "physical",
 				visual: "flail_smash",
-				duration: .3
+				duration: .3,
+				weaponId: "dreveny_cep"
 			});
 			sound.heavyHit();
 			return true;
 		}
 	},
-	herbs: {
-		id: "herbs",
+	devatero_kviti: {
+		id: "devatero_kviti",
 		name: "Devatery kvítí",
 		type: "nature",
 		icon: "🌿",
@@ -296,8 +317,10 @@ var WEAPONS = {
 		desc: "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const count = 3 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 15 + (level - 1) * 3.5);
+			const stats = getRankedWeaponStats('devatero_kviti', level, w);
+			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 15) * stats.damageMult;
+			const radius = Math.round(14 * stats.areaRadiusMult);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);
 			for (let i = 0; i < count; i++) {
 				const a = baseOffset + i / count * Math.PI * 2;
@@ -307,9 +330,11 @@ var WEAPONS = {
 					angle: a,
 					speed: 350,
 					dmg,
-					radius: 14,
+					radius,
 					type: "nature",
 					visual: "herb_leaf",
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
 					life: 2
 				});
 			}
@@ -317,8 +342,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	snowball: {
-		id: "snowball",
+	snehova_koule: {
+		id: "snehova_koule",
 		name: "Sněhová koule",
 		type: "ice",
 		icon: "❄️",
@@ -327,7 +352,9 @@ var WEAPONS = {
 		speed: 400,
 		desc: "Tuhá ledová koule uválená ze zledovatělého ladovského sněhu. Chlad zpomalí nohy každému strašidlu.",
 		fire: (player, level) => {
-			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('snehova_koule', level, w);
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
 			let minDist = player.distTo(target);
@@ -339,9 +366,10 @@ var WEAPONS = {
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const w = player._firingWeapon;
-			const count = 3 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 18 + (level - 1) * 4);
+			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 18) * stats.damageMult;
+			const radius = Math.round(15 * stats.areaRadiusMult);
+			const chillDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3.5;
 			for (let i = 0; i < count; i++) {
 				const spread = count > 1 ? (Math.random() - .5) * .35 : 0;
 				player.spawnProjectile({
@@ -350,9 +378,12 @@ var WEAPONS = {
 					angle: angle + spread,
 					speed: 400,
 					dmg,
-					radius: 15,
+					radius,
 					type: "ice",
 					visual: "snowball",
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
+					chillDuration,
 					life: 2.2
 				});
 			}
@@ -360,8 +391,8 @@ var WEAPONS = {
 			return true;
 		}
 	},
-	kolac: {
-		id: "kolac",
+	kynuty_kolac: {
+		id: "kynuty_kolac",
 		name: "Kynutý koláč",
 		type: "food",
 		icon: "kynuty_kolac",
@@ -370,31 +401,40 @@ var WEAPONS = {
 		speed: 380,
 		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
 		fire: (player, level) => {
-			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850) : player.getLivingEnemies();
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('kynuty_kolac', level, w);
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
-			const target = enemies[Math.floor(Math.random() * Math.min(6, enemies.length))];
-			const angle = Math.atan2(target.y - player.y, target.x - player.x);
+			const count = Math.max(1, 1 + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
 			const bounces = 2 + Math.min(4, level - 1);
-			const dmg = getWeaponDamage(player, 28 + (level - 1) * 5);
-			player.spawnProjectile({
-				x: player.x,
-				y: player.y,
-				angle,
-				speed: 380,
-				dmg,
-				radius: 16,
-				type: "food",
-				visual: "kolac",
-				snackDuration: 3,
-				bounces,
-				life: 2.5
-			});
+			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3;
+			const radius = Math.round(16 * stats.areaRadiusMult);
+			for (let i = 0; i < count; i++) {
+				const target = enemies[Math.floor(Math.random() * Math.min(6, enemies.length))];
+				const angle = Math.atan2(target.y - player.y, target.x - player.x) + (count > 1 ? (i - (count - 1) / 2) * 0.2 : 0);
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle,
+					speed: 380,
+					dmg,
+					radius,
+					type: "food",
+					visual: "kolac",
+					snackDuration,
+					bounces,
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
+					life: 2.5
+				});
+			}
 			sound.slash();
 			return true;
 		}
 	},
-	potato: {
-		id: "potato",
+	horky_brambor: {
+		id: "horky_brambor",
 		name: "Horký brambor z popela",
 		type: "fire",
 		icon: "🥔",
@@ -403,26 +443,39 @@ var WEAPONS = {
 		speed: 320,
 		desc: "Brambor vytažený přímo z žhavého popela. Způsobuje popáleniny a zanechává na zemi kouřící ohnisko.",
 		fire: (player, level) => {
-			const angle = Math.atan2(player.lastDy, player.lastDx) + (Math.random() - .5) * .4;
-			const dmg = getWeaponDamage(player, 22 + (level - 1) * 5);
-			player.spawnProjectile({
-				x: player.x,
-				y: player.y,
-				angle,
-				speed: 340,
-				dmg,
-				radius: 14,
-				type: "fire",
-				visual: "potato",
-				leavesFireZone: true,
-				life: 2
-			});
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('horky_brambor', level, w);
+			const count = Math.max(1, 1 + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
+			const radius = Math.round(14 * stats.areaRadiusMult);
+			const fireZoneRadius = Math.round(45 * stats.areaRadiusMult);
+			const fireZoneDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 2.0;
+			for (let i = 0; i < count; i++) {
+				const spread = count > 1 ? (i - (count - 1) / 2) * 0.25 : (Math.random() - .5) * .4;
+				const angle = Math.atan2(player.lastDy, player.lastDx) + spread;
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle,
+					speed: 340,
+					dmg,
+					radius,
+					type: "fire",
+					visual: "potato",
+					leavesFireZone: true,
+					fireZoneRadius,
+					fireZoneDuration,
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
+					life: 2
+				});
+			}
 			sound.slash();
 			return true;
 		}
 	},
-	bees: {
-		id: "bees",
+	vceli_roj: {
+		id: "vceli_roj",
 		name: "Včelí roj z úlu",
 		type: "nature",
 		icon: "🐝",
@@ -432,8 +485,10 @@ var WEAPONS = {
 		desc: "Bzučící venkovské včely ze starého špalkového úlu. Samy si nacházejí nejbližší strašidla a neúnavně je bodají.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const count = 4 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 12 + (level - 1) * 2.5);
+			const stats = getRankedWeaponStats('vceli_roj', level, w);
+			const count = Math.max(1, 4 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 12) * stats.damageMult;
+			const radius = Math.round(9 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
 				const a = Math.random() * Math.PI * 2;
 				player.spawnProjectile({
@@ -442,10 +497,12 @@ var WEAPONS = {
 					angle: a,
 					speed: 310 + Math.random() * 60,
 					dmg,
-					radius: 9,
+					radius,
 					type: "nature",
 					visual: "bee",
 					homing: true,
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
 					life: 3
 				});
 			}
@@ -462,15 +519,17 @@ var WEAPONS = {
 		baseCd: 2,
 		desc: "Posvěcená hromniční svíce z kostela. Plápolající záře mírného dosahu jemně odtlačuje nepřátele a každé 2 s způsobuje posvátné zranění (obojí ovlivněno odolností proti Strachu). Nemrtví a pekelníci mají k ní silně sníženou odolnost a utrží podstatně vyšší zranění.",
 		fire: (player, level) => {
-			const reach = 135 + level * 15;
-			const dmg = getWeaponDamage(player, 10 + (level - 1) * 2.5);
-			player.spawnHromnickaPulse(reach, dmg, level);
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('hromnicka', level, w);
+			const reach = (135 + level * 15) * stats.areaRadiusMult;
+			const dmg = getWeaponDamage(player, 10) * stats.damageMult;
+			player.spawnHromnickaPulse(reach, dmg, level, stats.knockbackMult, stats.statusDurationSec);
 			sound.candlePulse();
 			return true;
 		}
 	},
-	holywater: {
-		id: "holywater",
+	svecena_kropenka: {
+		id: "svecena_kropenka",
 		name: "Kropenka se svěcenou vodou",
 		type: "holy",
 		icon: "✨",
@@ -480,8 +539,10 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const w = player._firingWeapon;
-			const count = 5 + Math.floor((level - 1) / 2);
-			const dmg = getWeaponDamage(player, 22 + (level - 1) * 4);
+			const stats = getRankedWeaponStats('svecena_kropenka', level, w);
+			const count = Math.max(1, 5 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
+			const radius = Math.round(11 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
 				const offsetAngle = angle + (i - (count - 1) / 2) * .16;
 				player.spawnProjectile({
@@ -490,9 +551,11 @@ var WEAPONS = {
 					angle: offsetAngle,
 					speed: 420 + Math.random() * 40,
 					dmg,
-					radius: 11,
+					radius,
 					type: "holy",
 					visual: "holy_droplet",
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult,
 					life: 1.4
 				});
 			}
@@ -502,4 +565,30 @@ var WEAPONS = {
 	}
 };
 
-export { WEAPONS };
+// Legacy fallbacky pro zachování zpětné kompatibility
+export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
+	cane: 'osikovy_prut',
+	'cesnekova-topinka': 'cesnekova_topinka',
+	'kysela-okurka': 'kysela_okurka',
+	kysele_okurky: 'kysela_okurka',
+	buns: 'povidlove_buchty',
+	pitchfork: 'kovarske_vidle',
+	halberd: 'kovana_halapartna',
+	flail: 'dreveny_cep',
+	herbs: 'devatero_kviti',
+	snowball: 'snehova_koule',
+	kolac: 'kynuty_kolac',
+	potato: 'horky_brambor',
+	bees: 'vceli_roj',
+	holywater: 'svecena_kropenka',
+};
+
+const WEAPONS_LOOKUP = new Proxy(WEAPONS as any, {
+	get(target, prop: string) {
+		if (prop in target) return target[prop];
+		const mapped = WEAPON_LEGACY_ALIASES[prop];
+		return mapped ? target[mapped] : undefined;
+	}
+});
+
+export { WEAPONS_LOOKUP as WEAPONS };
