@@ -1,10 +1,10 @@
 # Bubákov — Changelog
 
-## 2026-10-09 — Integrační staging: sdílené typy, zvuk a HUD (rozpracováno)
+## 2026-10-09 — Integrační staging: testy a engine state (rozpracováno)
 
-- Pracovní větev `staging/integration-work` oddělená od `main`; produkční větev zůstává beze změny.
-- Doplněny společné typy pro dropy, rozšířenou sadu zbraní, budovy vesnice a časování útočných kadencí; přidány chybějící zvukové efekty a styly HUD z feature větve.
-- Hlavní integrace engine/renderer/UI a ověření buildem, lintem a testy stále čekají; tato větev není připravena k produkčnímu nasazení.
+- Doplněn stav vytaženého enginu (`EngineState`) včetně fronty weapon milestones a údajů Režiséra výpravy.
+- Přidán příkaz `npm test` a závislost Vitest pro testy dodané s feature větví.
+- Konečné sestavení a spuštění testů zatím není potvrzeno; renderer a hlavní `App.tsx` stále vyžadují spojení kontraktů.
 
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 

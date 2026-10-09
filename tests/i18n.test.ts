@@ -1,0 +1,267 @@
+import { describe, it, expect } from 'vitest';
+import { t, type SupportedLang, dictionaries } from '../src/i18n';
+import { WEAPONS } from '../src/data/weapons';
+import { VILLAGE_BUILDINGS } from '../src/data/village';
+import { ENEMIES } from '../src/data/enemies';
+import { migrateMetaProgression, createDefaultMetaProgression } from '../src/game/migration';
+
+describe('i18n localization module', () => {
+  it('translates simple keys in both cs and en', () => {
+    expect(t('ui.play', 'cs')).toBe('Hrát');
+    expect(t('ui.play', 'en')).toBe('Play');
+  });
+
+  it('falls back to cs when key is missing in en', () => {
+    // Temporarily add a key only to cs dictionary
+    (dictionaries.cs as any)['test.only_in_cs'] = 'Pouze v češtině';
+    delete (dictionaries.en as any)['test.only_in_cs'];
+
+    expect(t('test.only_in_cs', 'en')).toBe('Pouze v češtině');
+    delete (dictionaries.cs as any)['test.only_in_cs'];
+  });
+
+  it('returns key itself when key is missing in both dictionaries', () => {
+    expect(t('nonexistent.key.123', 'en')).toBe('nonexistent.key.123');
+    expect(t('nonexistent.key.123', 'cs')).toBe('nonexistent.key.123');
+  });
+
+  it('translates all 15 weapons in both cs and en', () => {
+    const weaponIds = [
+      'osikovy_prut',
+      'valecnice',
+      'cesnekova_topinka',
+      'kysela_okurka',
+      'povidlove_buchty',
+      'kovarske_vidle',
+      'kovana_halapartna',
+      'dreveny_cep',
+      'devatero_kviti',
+      'snehova_koule',
+      'kynuty_kolac',
+      'horky_brambor',
+      'vceli_roj',
+      'hromnicka',
+      'svecena_kropenka',
+    ];
+
+    expect(weaponIds.length).toBe(15);
+
+    for (const id of weaponIds) {
+      const nameCs = t(`weapon.${id}.name`, 'cs');
+      const nameEn = t(`weapon.${id}.name`, 'en');
+      const descCs = t(`weapon.${id}.desc`, 'cs');
+      const descEn = t(`weapon.${id}.desc`, 'en');
+
+      expect(nameCs).not.toBe(`weapon.${id}.name`);
+      expect(nameEn).not.toBe(`weapon.${id}.name`);
+      expect(descCs).not.toBe(`weapon.${id}.desc`);
+      expect(descEn).not.toBe(`weapon.${id}.desc`);
+
+      expect(nameCs.length).toBeGreaterThan(0);
+      expect(nameEn.length).toBeGreaterThan(0);
+      expect(descCs.length).toBeGreaterThan(0);
+      expect(descEn.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('translates all village buildings in both cs and en', () => {
+    const buildingIds = VILLAGE_BUILDINGS.map(b => b.id);
+    expect(buildingIds.length).toBe(12);
+
+    for (const id of buildingIds) {
+      const nameCs = t(`building.${id}.name`, 'cs');
+      const nameEn = t(`building.${id}.name`, 'en');
+      const storyCs = t(`building.${id}.story`, 'cs');
+      const storyEn = t(`building.${id}.story`, 'en');
+
+      expect(nameCs).not.toBe(`building.${id}.name`);
+      expect(nameEn).not.toBe(`building.${id}.name`);
+      expect(storyCs).not.toBe(`building.${id}.story`);
+      expect(storyEn).not.toBe(`building.${id}.story`);
+
+      expect(nameCs.length).toBeGreaterThan(0);
+      expect(nameEn.length).toBeGreaterThan(0);
+      expect(storyCs.length).toBeGreaterThan(0);
+      expect(storyEn.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('translates all bestiary entries in both cs and en', () => {
+    const enemyIds = Object.keys(ENEMIES);
+    expect(enemyIds.length).toBeGreaterThanOrEqual(40);
+
+    for (const id of enemyIds) {
+      const nameCs = t(`bestiary.${id}.name`, 'cs');
+      const nameEn = t(`bestiary.${id}.name`, 'en');
+      const titleCs = t(`bestiary.${id}.title`, 'cs');
+      const titleEn = t(`bestiary.${id}.title`, 'en');
+
+      expect(nameCs).not.toBe(`bestiary.${id}.name`);
+      expect(nameEn).not.toBe(`bestiary.${id}.name`);
+      expect(titleCs).not.toBe(`bestiary.${id}.title`);
+      expect(titleEn).not.toBe(`bestiary.${id}.title`);
+
+      expect(nameCs.length).toBeGreaterThan(0);
+      expect(nameEn.length).toBeGreaterThan(0);
+      expect(titleCs.length).toBeGreaterThan(0);
+      expect(titleEn.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('supports parameter substitution in translation strings', () => {
+    (dictionaries.cs as any)['test.params'] = 'Máš {count} krejcarů a {level} úroveň';
+    expect(t('test.params', 'cs', { count: 42, level: 3 })).toBe('Máš 42 krejcarů a 3 úroveň');
+    delete (dictionaries.cs as any)['test.params'];
+  });
+
+  it('provides helper functions for typed entity translation', () => {
+    const weapon = t('weapon.osikovy_prut.name', 'en');
+    expect(weapon).toBe('Aspen Rod');
+
+    const building = t('building.oven.name', 'en');
+    expect(building).toBe('Bakery with Blazing Oven');
+
+    const enemy = t('bestiary.cert.name', 'en');
+    expect(enemy).toBe('Horned Devil');
+  });
+
+  describe('MetaProgression language state & migration', () => {
+    it('sets currentLang default to cs in createDefaultMetaProgression', () => {
+      const def = createDefaultMetaProgression();
+      expect(def.currentLang).toBe('cs');
+    });
+
+    it('persists currentLang when migrated from saved state', () => {
+      const migrated = migrateMetaProgression({ currentLang: 'en' });
+      expect(migrated.currentLang).toBe('en');
+
+      const migratedCs = migrateMetaProgression({ currentLang: 'cs' });
+      expect(migratedCs.currentLang).toBe('cs');
+    });
+
+    it('falls back to cs if currentLang is unknown or missing in saved state', () => {
+      const migratedEmpty = migrateMetaProgression({});
+      expect(migratedEmpty.currentLang).toBe('cs');
+
+      const migratedInvalid = migrateMetaProgression({ currentLang: 'de' });
+      expect(migratedInvalid.currentLang).toBe('cs');
+    });
+
+    it('verifies language switching updates UI texts without impacting weapon base stats or engine keys', () => {
+      const meta = createDefaultMetaProgression();
+      expect(meta.currentLang).toBe('cs');
+
+      // Check weapon definitions remain untouched
+      expect(WEAPONS.osikovy_prut.id).toBe('osikovy_prut');
+      expect(WEAPONS.osikovy_prut.baseDmg).toBe(28);
+
+      // Switching lang toggles translated UI text immediately
+      let lang: 'cs' | 'en' = meta.currentLang!;
+      expect(t('ui.play', lang)).toBe('Hrát');
+
+      lang = 'en';
+      expect(t('ui.play', lang)).toBe('Play');
+      expect(t('weapon.osikovy_prut.name', lang)).toBe('Aspen Rod');
+
+      // Weapon logic and IDs are completely identical and intact
+      expect(WEAPONS.osikovy_prut.id).toBe('osikovy_prut');
+      expect(WEAPONS.osikovy_prut.baseDmg).toBe(28);
+    });
+  });
+
+  describe('Locale registry & layered fallback engine', () => {
+    it('has declarative SUPPORTED_LOCALES registry with code, label, flag and dict', async () => {
+      const { SUPPORTED_LOCALES, isSupportedLocale, getLocale } = await import('../src/i18n');
+      expect(SUPPORTED_LOCALES.length).toBeGreaterThanOrEqual(2);
+
+      const csLocale = getLocale('cs');
+      expect(csLocale.code).toBe('cs');
+      expect(csLocale.label).toBe('Čeština');
+      expect(csLocale.flag).toBe('🇨🇿');
+      expect(typeof csLocale.dict).toBe('object');
+
+      const enLocale = getLocale('en');
+      expect(enLocale.code).toBe('en');
+      expect(enLocale.label).toBe('English');
+      expect(enLocale.flag).toBe('🇬🇧');
+      expect(typeof enLocale.dict).toBe('object');
+
+      expect(isSupportedLocale('cs')).toBe(true);
+      expect(isSupportedLocale('en')).toBe(true);
+      expect(isSupportedLocale('xyz')).toBe(false);
+    });
+
+    it('implements layered fallback chain: Target -> en -> cs -> key', async () => {
+      const { registerLocale, unregisterLocale, t } = await import('../src/i18n');
+
+      // Register temporary test locale 'de'
+      registerLocale({
+        code: 'de',
+        label: 'Deutsch',
+        flag: '🇩🇪',
+        dict: {
+          'test.german_only': 'Nur auf Deutsch',
+        },
+      });
+
+      // 1. Target lang has it
+      expect(t('test.german_only', 'de')).toBe('Nur auf Deutsch');
+
+      // 2. Target lang missing -> falls back to English ('en')
+      expect(t('ui.play', 'de')).toBe('Play');
+
+      // 3. Target lang and en missing -> falls back to Czech ('cs')
+      (dictionaries.cs as any)['test.cs_layered_fallback'] = 'Český unikát';
+      expect(t('test.cs_layered_fallback', 'de')).toBe('Český unikát');
+      delete (dictionaries.cs as any)['test.cs_layered_fallback'];
+
+      // 4. Missing everywhere -> returns key
+      expect(t('test.completely_missing_key', 'de')).toBe('test.completely_missing_key');
+
+      // Clean up
+      unregisterLocale('de');
+      const { isSupportedLocale } = await import('../src/i18n');
+      expect(isSupportedLocale('de')).toBe(false);
+    });
+
+    it('translates all milestone UI strings and 90 milestone choices in cs and en', async () => {
+      const { WEAPONS_WITH_MILESTONES, getMilestoneChoices } = await import('../src/data/weaponMilestones');
+
+      // Milestone modal UI strings
+      expect(t('milestone_modal.title', 'cs')).toBe('Křižovatka rozvoje zbraně');
+      expect(t('milestone_modal.title', 'en')).toBe('Weapon Milestone Crossroads');
+      expect(t('grandfather_shop.milestone_crossroads', 'cs', { rank: 3 })).toContain('Křižovatka rozvoje');
+      expect(t('grandfather_shop.milestone_crossroads', 'en', { rank: 3 })).toContain('Milestone crossroads');
+
+      // All 90 choices translated
+      let choiceCount = 0;
+      for (const weaponId of WEAPONS_WITH_MILESTONES) {
+        for (const rank of [3, 5, 8] as const) {
+          const choices = getMilestoneChoices(weaponId, rank);
+          expect(choices).toBeDefined();
+          if (!choices) continue;
+
+          for (const c of choices) {
+            choiceCount++;
+            const nameCs = t(`milestone.${c.id}.name`, 'cs');
+            const nameEn = t(`milestone.${c.id}.name`, 'en');
+            const descCs = t(`milestone.${c.id}.desc`, 'cs');
+            const descEn = t(`milestone.${c.id}.desc`, 'en');
+
+            expect(nameCs).not.toBe(`milestone.${c.id}.name`);
+            expect(nameEn).not.toBe(`milestone.${c.id}.name`);
+            expect(descCs).not.toBe(`milestone.${c.id}.desc`);
+            expect(descEn).not.toBe(`milestone.${c.id}.desc`);
+
+            expect(nameCs.length).toBeGreaterThan(0);
+            expect(nameEn.length).toBeGreaterThan(0);
+            expect(descCs.length).toBeGreaterThan(0);
+            expect(descEn.length).toBeGreaterThan(0);
+          }
+        }
+      }
+      expect(choiceCount).toBe(90);
+    });
+  });
+});
+

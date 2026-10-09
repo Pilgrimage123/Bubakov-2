@@ -1,5 +1,11 @@
-import type { GameLevelId } from '../types';
+import type { GameLevelId, MilestoneChoice, GameDrop } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
+
+export interface PendingMilestoneChoice {
+  weaponId: string;
+  rank: 3 | 5 | 8;
+  choices: [MilestoneChoice, MilestoneChoice];
+}
 
 export interface EngineState {
   player: any;
@@ -9,7 +15,7 @@ export interface EngineState {
   renderBuffer: any[];
   projectiles: any[];
   slashes: any[];
-  drops: any[];
+  drops: GameDrop[];
   decor: any[];
   particles: any[];
   texts: any[];
@@ -40,6 +46,7 @@ export interface EngineState {
   lightningFlash: number;
   lightningStrike: { x: number; y: number; time: number } | null;
   nextBossMechanicAt: number;
+  currentLang?: string;
   gameTime: number;
   kills: number;
   coins: number;
@@ -68,6 +75,22 @@ export interface EngineState {
   lastStatsSync: number;
   gingerbread: number;
   grandfather: GrandfatherRuntimeState;
+  pendingMilestone: PendingMilestoneChoice | null;
+  pendingMilestones: PendingMilestoneChoice[];
+  timeStopTimer: number;
+  lastSpecialDropTime: number;
+  swarmReservoir: { points: number; gingerbread: number; coins: number };
+  killTimestamps: number[];
+  screenFlashTimer: number;
+  screenFlashColor: string;
+  uncollectedGingerbreadValue: number;
+  director?: any;
+  activeRozmar?: any;
+  activeHazards?: any[];
+  bubackaDira?: any;
+  directorAdaptability: number;
+  directorTelegraphText: string | null;
+  directorTelegraphTimer: number;
 }
 
 export function createInitialEngineState(): EngineState {
@@ -138,6 +161,23 @@ export function createInitialEngineState(): EngineState {
     drakSnoreTimer: 3,
     lastStatsSync: 0,
     gingerbread: 0,
-    grandfather: createGrandfatherRuntime()
+    grandfather: createGrandfatherRuntime(),
+    currentLang: 'cs',
+    pendingMilestone: null,
+    pendingMilestones: [],
+    timeStopTimer: 0,
+    lastSpecialDropTime: -999,
+    swarmReservoir: { points: 0, gingerbread: 0, coins: 0 },
+    killTimestamps: [],
+    screenFlashTimer: 0,
+    screenFlashColor: '#FFFFFF',
+    uncollectedGingerbreadValue: 0,
+    director: null,
+    activeRozmar: null,
+    activeHazards: [],
+    bubackaDira: null,
+    directorAdaptability: 1.0,
+    directorTelegraphText: null,
+    directorTelegraphTimer: 0,
   };
 }
