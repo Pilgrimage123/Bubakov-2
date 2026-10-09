@@ -55,6 +55,7 @@ import {
 } from './data/holy';
 import { TROPHIES } from './data/trophies';
 import { Lada, drawEnemyRenderer, drawEnemyWarningSign, drawStunStars, drawValecniceCompanion } from './render/ladaRenderer';
+import { renderLightingMask } from './render/lightingRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
@@ -627,7 +628,7 @@ class DecorItem {
         ctx.lineTo(14, -88);
         ctx.stroke();
       } else {
-        const leafColor = season === 'winter' ? '#FFFFFF' : '#D9A036';
+        const leafColor = season === 'winter' ? '#FFFFFF' : (season === 'spring' ? '#93C068' : '#D9A036');
         Lada.setupPath(ctx, leafColor);
         ctx.beginPath();
         ctx.arc(0, -60, 30, 0, Math.PI * 2);
@@ -636,7 +637,14 @@ class DecorItem {
         ctx.fill();
         ctx.stroke();
 
-        if (season !== 'winter') {
+        if (season === 'spring') {
+          // Tender spring budding accent / pussy willow catkins
+          ctx.fillStyle = '#C2E59C';
+          ctx.beginPath();
+          ctx.arc(-8, -65, 10, 0, Math.PI * 2);
+          ctx.arc(12, -55, 9, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (season !== 'winter') {
           // Warm autumn leaf accent
           ctx.fillStyle = '#C65D24';
           ctx.beginPath();
@@ -1027,10 +1035,10 @@ export default function App() {
   // Selected level state
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (s && s >= 1 && s <= 6 ? s : 1) as GameLevelId;
+    return (s !== undefined && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
   });
 
-  const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[1];
+  const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0];
   const season: Season = currentLevel.season;
 
   // Hunter detail modal, arsenal modal & unlock toast
@@ -1049,7 +1057,7 @@ export default function App() {
   const grannyProg = getHunterProgress('granny', meta);
 
   const levelProgress = Object.fromEntries(
-    ([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+    ([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
   ) as Record<GameLevelId, LevelProgress>;
 
   // Weapon unlock count
@@ -1116,8 +1124,8 @@ export default function App() {
     bossTitle: '',
     warningBanner: '',
     chasnikIndicator: '',
-    levelId: 1 as GameLevelId,
-    levelTitle: GAME_LEVELS[1].name,
+    levelId: 0 as GameLevelId,
+    levelTitle: GAME_LEVELS[0].name,
     levelWon: false,
     isTestMode: false,
   });
@@ -1341,7 +1349,7 @@ export default function App() {
       chasniks: engineRef.current.chasniks,
       time: Math.floor(timeSurvived),
       isVictory: engineRef.current.levelVictoryTriggered,
-      levelId: engineRef.current.activeLevelId || 1,
+      levelId: engineRef.current.activeLevelId ?? 0,
     });
     saveMeta({
       ...metaRef.current,
@@ -1544,8 +1552,8 @@ export default function App() {
     customWeapons?: { id: string; level: number; mastery?: any }[],
     isTestMode = false
   ) => {
-    const chosenLevelId: GameLevelId = (targetLevelId || selectedLevelId || 1) as GameLevelId;
-    const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
+    const chosenLevelId: GameLevelId = (targetLevelId ?? selectedLevelId ?? 0) as GameLevelId;
+    const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[0];
 
     if (!isTestMode) {
       const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
@@ -1883,7 +1891,7 @@ export default function App() {
     engine.activeLevelId = chosenLevelId;
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
-    engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
+    engine.spawnTimer = (chosenLevelId === 1 || chosenLevelId === 0) ? 3.5 : 2.0;
 
     const canvas = canvasRef.current;
     if (canvas) {
@@ -1898,7 +1906,13 @@ export default function App() {
     setGrandfatherPurchaseIds([]);
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
-    if (chosenLevelId === 1) {
+    if (chosenLevelId === 0) {
+      // Level 0: Předjaří – 2 zvědavé žabky na mírný začátek
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        gameEngineRef.current.spawnMonster('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7);
+      }
+    } else if (chosenLevelId === 1) {
       // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
@@ -2655,7 +2669,7 @@ export default function App() {
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
-            const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
+            const curLvl = GAME_LEVELS[engine.activeLevelId ?? currentSelectedLevelId ?? 0] || GAME_LEVELS[0];
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
@@ -2668,7 +2682,7 @@ export default function App() {
                 e.panicked = true;
                 e.isDefeated = true;
               });
-              triggerLevelVictory(engine.activeLevelId || 1, 'dawn');
+              triggerLevelVictory(engine.activeLevelId ?? 0, 'dawn');
             }
 
             // 1. Mini-boss encounter (polední přízrak podle plánu úrovně)
@@ -3633,20 +3647,20 @@ export default function App() {
 
             // Controlled, time-based enemy spawning with gradual progression both within level and across levels
             engine.spawnTimer -= dt;
-            const curLvlId = (engine.activeLevelId || currentSelectedLevelId || 1) as GameLevelId;
+            const curLvlId = (engine.activeLevelId ?? currentSelectedLevelId ?? 0) as GameLevelId;
             const timeProgress = Math.min(1, newTime / 260); // 0 at start -> 1 at 4:20
 
             // 1. Max enemy caps scaled by level and elapsed time
             // In Performance Mode, caps are streamlined by ~40% for silky smooth 60 FPS
             const isPerfMode = !!metaRef.current.performanceMode;
             const baseCapByLevel: Record<number, number> = isPerfMode
-              ? { 1: 8, 2: 11, 3: 14, 4: 17, 5: 20, 6: 24 }
-              : { 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
+              ? { 0: 6, 1: 8, 2: 11, 3: 14, 4: 17, 5: 20, 6: 24 }
+              : { 0: 8, 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
             const maxCapByLevel: Record<number, number> = isPerfMode
-              ? { 1: 30, 2: 40, 3: 50, 4: 60, 5: 68, 6: 76 }
-              : { 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
-            const minCap = baseCapByLevel[curLvlId] ?? 12;
-            const maxCap = maxCapByLevel[curLvlId] ?? 60;
+              ? { 0: 24, 1: 30, 2: 40, 3: 50, 4: 60, 5: 68, 6: 76 }
+              : { 0: 36, 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
+            const minCap = baseCapByLevel[curLvlId] ?? 8;
+            const maxCap = maxCapByLevel[curLvlId] ?? 36;
             const currentEnemyCap = Math.floor(minCap + (maxCap - minCap) * timeProgress);
 
             // 2. Režisér výpravy (AI Director & Threat Budget)
@@ -3964,7 +3978,7 @@ export default function App() {
                 chasniks: engine.chasniks,
                 time: Math.floor(engine.gameTime),
                 isVictory: false,
-                levelId: engine.activeLevelId || 1,
+                levelId: engine.activeLevelId ?? 0,
               });
               const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, engine.gameTime);
               saveMeta({
@@ -4540,7 +4554,7 @@ export default function App() {
         const cam = engine.camera;
         const phase = getCurrentDayPhase(engine.gameTime);
 
-        const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
+        const curLvl = GAME_LEVELS[engine.activeLevelId ?? currentSelectedLevelId ?? 0] || GAME_LEVELS[0];
         const isWinter = curLvl.season === 'winter';
 
         // Sky / Grass background tailored to level
@@ -4560,15 +4574,28 @@ export default function App() {
         ctx.translate(-cam.x, -cam.y);
 
         // Ambient night/day tint over world
-        if (curLvl.theme === 'autumn_graveyard') {
-          ctx.fillStyle = phase.ambientTint !== 'transparent' ? 'rgba(32, 24, 45, 0.42)' : 'rgba(25, 20, 30, 0.22)';
-          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
-        } else if (!isWinter && phase.ambientTint !== 'transparent') {
-          ctx.fillStyle = phase.ambientTint;
-          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
-        } else if (isWinter) {
-          ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
-          ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+        const dynamicLightingActive = (metaRef.current as any)?.dynamicLightingEnabled !== false;
+        if (!dynamicLightingActive) {
+          if (curLvl.theme === 'autumn_graveyard') {
+            ctx.fillStyle = phase.ambientTint !== 'transparent' ? 'rgba(32, 24, 45, 0.42)' : 'rgba(25, 20, 30, 0.22)';
+            ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          } else if (!isWinter && phase.ambientTint !== 'transparent') {
+            ctx.fillStyle = phase.ambientTint;
+            ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          } else if (isWinter) {
+            ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
+            ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          }
+        } else {
+          // Dynamic lighting handles night darkness via renderLightingMask.
+          // Maintain subtle daytime environmental tone if applicable:
+          if (curLvl.theme === 'autumn_graveyard' && phase.ambientTint === 'transparent') {
+            ctx.fillStyle = 'rgba(25, 20, 30, 0.22)';
+            ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          } else if (isWinter) {
+            ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
+            ctx.fillRect(cam.x, cam.y, canvas.width, canvas.height);
+          }
         }
 
         // Ambient flour storm haze from Mlynář
@@ -5137,6 +5164,21 @@ export default function App() {
           ctx.restore();
         }
 
+        // Dynamic Folk Lighting (Josef Lada Stylized 2D Darkness Mask & Stepped Cel-Rings)
+        if (dynamicLightingActive) {
+          const lightingEnv = gameEngineRef.current.getLightingEnvironment(viewLeft, viewTop, viewRight, viewBottom);
+          renderLightingMask(
+            ctx,
+            lightingEnv.sources,
+            cam,
+            canvas.width,
+            canvas.height,
+            lightingEnv.ambientDarkness,
+            curLvl.theme,
+            !!metaRef.current?.performanceMode
+          );
+        }
+
         // Draw Damage Texts
         for (const txt of engine.texts) {
           if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
@@ -5295,35 +5337,35 @@ export default function App() {
           }
         } else if (curLvl.weatherEffect === 'ice_drift') {
           const t = engine.uiTime;
-          Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 3);
-          for (let i = 0; i < 15; i++) {
-            const sx = ((i * 220 + t * 35) % (canvas.width + 400)) - 200;
-            const sy = ((i * 87 + Math.sin(t * 0.2 + i) * 12) % (canvas.height + 300)) - 150;
-            const rot = Math.sin(t * 0.15 + i) * 0.15;
+          for (let i = 0; i < 30; i++) {
+            const sx = ((i * 95 + t * 40 + Math.sin(t * 0.8 + i) * 20) % canvas.width);
+            const sy = ((i * 73 + t * 55) % canvas.height);
+            const size = 3 + (i % 4);
+            const rot = t * 1.5 + i;
             
             ctx.save();
             ctx.translate(sx, sy);
             ctx.rotate(rot);
-            
-            ctx.beginPath();
-            ctx.moveTo(-35, -5);
-            ctx.lineTo(-5, -20);
-            ctx.lineTo(25, -10);
-            ctx.lineTo(40, 5);
-            ctx.lineTo(10, 20);
-            ctx.lineTo(-20, 15);
-            ctx.closePath();
-            
-            ctx.fillStyle = (i % 2 === 0) ? '#FFFFFF' : '#E9F1F7';
-            ctx.fill();
-            ctx.stroke();
-            
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(-10, -5);
-            ctx.lineTo(10, 5);
-            ctx.stroke();
-            
+            if (i % 2 === 0) {
+              // Tiny drifting ice crystal / shard
+              ctx.fillStyle = 'rgba(230, 245, 255, 0.75)';
+              ctx.strokeStyle = 'rgba(30, 45, 60, 0.4)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(0, -size * 1.5);
+              ctx.lineTo(size, 0);
+              ctx.lineTo(0, size * 1.5);
+              ctx.lineTo(-size, 0);
+              ctx.closePath();
+              ctx.fill();
+              ctx.stroke();
+            } else {
+              // Melting thaw droplet
+              ctx.fillStyle = 'rgba(186, 225, 255, 0.65)';
+              ctx.beginPath();
+              ctx.ellipse(0, 0, size * 0.9, size * 1.4, 0.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
             ctx.restore();
           }
         } else if (curLvl.weatherEffect === 'fog') {
@@ -5369,9 +5411,10 @@ export default function App() {
     if (!stats) {
       throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
     }
+    const isLevel0 = (engineRef.current.activeLevelId ?? 0) === 0;
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = Math.max(finalHp, 1400);
+      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
     }
     const renderScale = isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
@@ -5383,12 +5426,12 @@ export default function App() {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     const damage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
-    const isLevel1 = (engineRef.current.activeLevelId || 1) === 1;
+    const isLevel1 = (engineRef.current.activeLevelId ?? 1) === 1;
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
     if (id === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
@@ -5866,7 +5909,7 @@ export default function App() {
 
         // 6. KOSTLIVEC S KOSOU (skeleton_scythe) - Seknutí kosou & vlnový oblouk
         else if (this.id === 'skeleton_scythe') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -5915,7 +5958,7 @@ export default function App() {
 
         // 7. PANSKÝ PÍSAŘ PO SMRTI (pisar) - Ranged kiting & vrh lahviček s inkoustem
         else if (this.id === 'pisar') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -5978,7 +6021,7 @@ export default function App() {
 
         // 8. PROKLETÝ HROBNÍK (hrobnik) - Vrhání hrobové hlíny
         else if (this.id === 'hrobnik') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -6130,7 +6173,7 @@ export default function App() {
 
         // 11. BAHENNÍ VODNÍČEK (vodnicek) - Hází mazlavé leknínové bahno (v 1. úrovni nestřílí!)
         else if (this.id === 'vodnicek') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -7633,7 +7676,7 @@ export default function App() {
               );
             }
             // Check if final boss of this level
-            const curLvlId = engineRef.current.activeLevelId || 1;
+            const curLvlId = engineRef.current.activeLevelId ?? 0;
             const curLvl = GAME_LEVELS[curLvlId];
             if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
               triggerLevelVictory(curLvlId, 'boss');
@@ -8099,8 +8142,8 @@ export default function App() {
 
   // Manual trigger to immediately spawn current level's miniboss (available in pause menu for instant action/testing)
   const spawnMinibossNow = () => {
-    const curLvlId = engineRef.current.activeLevelId || selectedLevelId || 1;
-    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[1];
+    const curLvlId = engineRef.current.activeLevelId ?? selectedLevelId ?? 0;
+    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[0];
     const player = engineRef.current.player;
     if (!player) return;
 
@@ -8580,15 +8623,16 @@ export default function App() {
               </LadaCartouche>
             </div>
 
-            {/* 6 PROGRESSIVE GAME LEVELS SELECTOR */}
+            {/* 7 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
-                {([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
+                {([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
                   const isUnlocked = prog.isUnlocked;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
+                    (lvlId === 0 && (meta.bestiaryKills?.hastrman || 0) >= 1) ||
                     (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
                     (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||
@@ -8984,7 +9028,7 @@ export default function App() {
                     Cíl výpravy:
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
-                    {getLevelTranslation(selectedLevelId, currentLang).name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({getLevelTranslation(selectedLevelId, currentLang).shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})</span>
+                    {getLevelTranslation(selectedLevelId, currentLang).name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({getLevelTranslation(selectedLevelId, currentLang).shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : (currentLevel.season === 'spring' ? '🌱 Jaro' : '🍂 Podzim')})</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
@@ -9468,8 +9512,8 @@ export default function App() {
             {/* In-pause toggles */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
               <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
-                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
-                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}</span>
+                <span>{GAME_LEVELS[runStats.levelId ?? selectedLevelId]?.icon}</span>
+                <span>{GAME_LEVELS[runStats.levelId ?? selectedLevelId]?.name}</span>
               </div>
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
                 🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
