@@ -1,5 +1,6 @@
 import type { MilestoneChoice, WeaponId, WeaponRankDef } from '../types';
 import { WEAPON_LEGACY_ALIASES } from './weapons';
+import { getSynergisticUpgrade } from './synergisticUpgrades';
 
 export interface WeaponStats {
   damageMult: number;
@@ -414,6 +415,24 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
     }
     if (mods.specialMechanicFlag) {
       stats.specialMechanicFlag = mods.specialMechanicFlag;
+    }
+  }
+
+  if (Array.isArray(w?.synergisticUpgrades)) {
+    for (const synId of w.synergisticUpgrades) {
+      const synDef = getSynergisticUpgrade(synId);
+      if (!synDef) continue;
+      const mods = synDef.statModifiers;
+      stats.damageMult *= mods.baseDamageMult ?? 1;
+      stats.cooldownMult *= mods.cooldownMult ?? 1;
+      stats.areaRadiusMult *= mods.areaRadiusMult ?? 1;
+      stats.pierce += mods.pierceDelta ?? 0;
+      stats.projectileCount += mods.projectileCountDelta ?? 0;
+      stats.projectileCountMult *= mods.projectileCountMult ?? 1;
+      stats.knockbackMult *= mods.knockbackMult ?? 1;
+      if (mods.statusDurationSec !== undefined) {
+        stats.statusDurationSec = Math.max(stats.statusDurationSec, mods.statusDurationSec);
+      }
     }
   }
 

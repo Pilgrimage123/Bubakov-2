@@ -79,6 +79,26 @@ export interface WeaponRankDef {
   choices?: [MilestoneChoice, MilestoneChoice];
 }
 
+export type SynergisticArchetype = 'swarm' | 'burst' | 'tempo' | 'heavy';
+
+export interface SynergisticUpgradeDef {
+  id: string;
+  weaponId: WeaponId;
+  name: string;
+  description: string;
+  archetype: SynergisticArchetype;
+  statModifiers: {
+    baseDamageMult?: number;
+    cooldownMult?: number;
+    areaRadiusMult?: number;
+    pierceDelta?: number;
+    projectileCountDelta?: number;
+    projectileCountMult?: number;
+    knockbackMult?: number;
+    statusDurationSec?: number;
+  };
+}
+
 export interface DayPhase {
   id: string;
   name: string;
@@ -353,4 +373,31 @@ export interface EnemyProgress {
   maxKills: number;
   tier: number;
   isFullyRevealed: boolean;
+}
+
+export type LightKind =
+  | 'player_lantern'
+  | 'holy_candle'
+  | 'will_o_wisp'
+  | 'projectile'
+  | 'loot'
+  | 'ambient';
+
+export interface LightSource {
+  id: string;
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  intensity: number; // 0.0 to 1.0
+  flickerSpeed?: number;
+  flickerAmount?: number;
+  pulseAmount?: number;
+  shape?: 'circle' | 'cone' | string;
+  kind: LightKind;
+}
+
+export interface LightingEnvironment {
+  ambientDarkness: number;
+  sources: LightSource[];
 }

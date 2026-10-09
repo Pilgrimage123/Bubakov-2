@@ -8,6 +8,8 @@ import type {
   EnemyAttackCadence,
   DropType,
   GameDrop,
+  LightSource,
+  LightingEnvironment,
 } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { type EngineState, type PendingMilestoneChoice, createInitialEngineState } from './engineState';
@@ -31,6 +33,7 @@ import {
 } from '../data/holy';
 import { performDropFusion, applyMagnetWave, registerKillAndCheckCombo, createDropInstance, type DropSpawnOptions } from './drops';
 import { RunDirector } from './director';
+import { computeLightSources, computeLightingEnvironment } from './lighting';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -283,7 +286,7 @@ export class GameEngine {
     nextState.activeLevelId = levelId;
     const levelDef: GameLevelDef = GAME_LEVELS[levelId] || GAME_LEVELS[1];
     nextState.nextBossMechanicAt = levelDef.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
-    nextState.spawnTimer = levelId === 1 ? 3.5 : 2.0;
+    nextState.spawnTimer = (levelId === 1 || levelId === 0) ? 3.5 : 2.0;
 
     const seed = typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null ? optionsOrLevelId.seed : undefined;
     const adaptability =
@@ -363,21 +366,22 @@ export class GameEngine {
                 cd: 0,
                 mastery: w.mastery || createWeaponMasteryState(),
                 milestones: (w as any).milestones || [],
+                synergisticUpgrades: (w as any).synergisticUpgrades || [],
               };
               ensureWeaponMilestones(mapped);
               return mapped;
             })
         : type === 'wanderer'
-        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'shepherd'
-        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'korenarka'
-        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'sexton'
-        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'granny'
-        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
+        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
+        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }];
 
     initialWeapons.forEach(ensureWeaponMilestones);
 
@@ -548,7 +552,12 @@ export class GameEngine {
     const player = this.state.player;
     if (!player) return;
 
-    if (levelId === 1) {
+    if (levelId === 0) {
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        this.spawnMonster('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7);
+      }
+    } else if (levelId === 1) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
         this.spawnMonster('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
@@ -619,9 +628,10 @@ export class GameEngine {
       throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
     }
 
+    const isLevel0 = (this.state.activeLevelId ?? 0) === 0;
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = Math.max(finalHp, 1400);
+      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
     }
     const renderScale = isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
@@ -635,12 +645,12 @@ export class GameEngine {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     const damage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : stats.coinValue || 1;
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
-    const isLevel1 = (this.state.activeLevelId || 1) === 1;
+    const isLevel1 = (this.state.activeLevelId ?? 1) === 1;
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
     if (id === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
@@ -867,7 +877,10 @@ export class GameEngine {
     return enemy;
   }
 
-  public upgradeWeapon(weaponId: string): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
+  public upgradeWeapon(
+    weaponId: string,
+    synergisticUpgradeId?: string,
+  ): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
     const player = this.state.player;
     if (!player) {
       throw new Error('Cannot upgrade weapon: player is not initialized');
@@ -881,9 +894,21 @@ export class GameEngine {
         cd: 0,
         mastery: createWeaponMasteryState(),
         milestones: [],
+        synergisticUpgrades: [],
       };
+      if (synergisticUpgradeId) {
+        weapon.synergisticUpgrades.push(synergisticUpgradeId);
+      }
       player.weapons.push(weapon);
       return { weapon, pendingMilestone: null };
+    }
+
+    if (!Array.isArray(weapon.synergisticUpgrades)) {
+      weapon.synergisticUpgrades = [];
+    }
+
+    if (synergisticUpgradeId && !weapon.synergisticUpgrades.includes(synergisticUpgradeId)) {
+      weapon.synergisticUpgrades.push(synergisticUpgradeId);
     }
 
     if (weapon.level >= 8) {
@@ -917,6 +942,23 @@ export class GameEngine {
     }
 
     return { weapon, pendingMilestone: pending };
+  }
+
+  public applySynergisticUpgrade(weaponId: string, upgradeId: string): void {
+    const player = this.state.player;
+    if (!player) {
+      throw new Error('Cannot apply synergistic upgrade: player is not initialized');
+    }
+    const weapon = player.weapons?.find((w: any) => w.id === weaponId);
+    if (!weapon) {
+      throw new Error(`Cannot apply synergistic upgrade: weapon ${weaponId} not found`);
+    }
+    if (!Array.isArray(weapon.synergisticUpgrades)) {
+      weapon.synergisticUpgrades = [];
+    }
+    if (!weapon.synergisticUpgrades.includes(upgradeId)) {
+      weapon.synergisticUpgrades.push(upgradeId);
+    }
   }
 
   public chooseWeaponMilestone(weaponId: string, choiceId: string): any {
@@ -1145,6 +1187,24 @@ export class GameEngine {
 
   public queryNearest(x: number, y: number, maxRadius: number, filter?: (e: any) => boolean): any | null {
     return this.spatialHash.queryNearest(x, y, maxRadius, filter);
+  }
+
+  public getVisibleLightSources(
+    viewLeft?: number,
+    viewTop?: number,
+    viewRight?: number,
+    viewBottom?: number
+  ): LightSource[] {
+    return computeLightSources(this, viewLeft, viewTop, viewRight, viewBottom);
+  }
+
+  public getLightingEnvironment(
+    viewLeft?: number,
+    viewTop?: number,
+    viewRight?: number,
+    viewBottom?: number
+  ): LightingEnvironment {
+    return computeLightingEnvironment(this, viewLeft, viewTop, viewRight, viewBottom);
   }
 
   public update(dt: number): void {
@@ -1545,8 +1605,12 @@ export class GameEngine {
                 e.y += (edy / edist) * eoverlap;
               }
               if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
-                e.hp -= 20; // The spinning top damages them if it's moving fast!
-                if (e.hp <= 0) e.isDefeated = true;
+                if (typeof e.takeDamage === 'function') {
+                  e.takeDamage(20, false, 'physical', player);
+                } else {
+                  e.hp -= 20;
+                  if (e.hp <= 0) e.isDefeated = true;
+                }
                 d.vx = (edx / edist) * -200;
                 d.vy = (edy / edist) * -200;
               } else if (d.type === 'kaca') {
