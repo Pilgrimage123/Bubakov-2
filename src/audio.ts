@@ -139,6 +139,43 @@ var SoundManager = class {
 		this.playTone(190, "triangle", .18, .13);
 		setTimeout(() => this.playTone(150, "triangle", .24, .1), 80);
 	}
+	horseshoe() {
+		this.playTone(1760, "sine", .35, .22, 1e-4);
+		setTimeout(() => this.playTone(2637, "sine", .4, .18, 1e-4), 70);
+		setTimeout(() => this.playTone(3520, "sine", .5, .15, 1e-4), 140);
+	}
+
+
+	cuckooClock() {
+		this.playTone(400, "sawtooth", .06, .2, .01);
+		setTimeout(() => this.playTone(1046, "triangle", .2, .25), 80);
+		setTimeout(() => this.playTone(784, "triangle", .35, .3), 280);
+	}
+
+
+	milestoneChosen(audioSfxTag?: string) {
+		this.levelUp();
+		if (!audioSfxTag) return;
+		try {
+			if (audioSfxTag.includes('cane') && typeof (this as any).caneWhip === 'function') {
+				(this as any).caneWhip(false);
+			} else if (audioSfxTag.includes('granny') && typeof (this as any).valecWhack === 'function') {
+				(this as any).valecWhack();
+			} else if (audioSfxTag.includes('candle') && typeof (this as any).candlePulse === 'function') {
+				(this as any).candlePulse();
+			} else if (audioSfxTag.includes('snow') || audioSfxTag.includes('frost')) {
+				this.freeze();
+			} else if (audioSfxTag.includes('splash') || audioSfxTag.includes('aspersorium')) {
+				this.splash();
+			} else if (audioSfxTag.includes('hit') || audioSfxTag.includes('smash') || audioSfxTag.includes('pitchfork')) {
+				this.heavyHit();
+			} else {
+				this.slash();
+			}
+		} catch {}
+	}
+
+
 	grandfatherOpen() {
 		this.playTone(240, "triangle", .15, .08);
 		setTimeout(() => this.playTone(320, "sine", .22, .12), 60);

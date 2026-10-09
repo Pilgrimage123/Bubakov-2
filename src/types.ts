@@ -216,6 +216,8 @@ export interface Enemy {
   isAttacking?: boolean;  // Zda právě probíhá nápřah
   strikeTimer?: number;   // Časovač probíhajícího úderu a nápřahového návratu
   strikeMaxTimer?: number;// Maximální délka úderu podle kadence
+  interruptAttack?: () => void;
+  recoveryTimer?: number; // Odpočet doznění úderu po dopadu
   attackAngle?: number;   // Směr úderu vůči cíli
   attackTargetX?: number; // Cílové souřadnice úderu
   attackTargetY?: number;

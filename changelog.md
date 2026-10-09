@@ -1,10 +1,10 @@
 # Bubákov — Changelog
 
-## 2026-10-09 — Integrační staging: příprava typů sjednocených mechanik (ve validaci)
+## 2026-10-09 — Integrační staging: sdílené typy, zvuk a HUD (rozpracováno)
 
-- Zahájena integrace na oddělené větvi `staging/integration-work`; `main` a záložní větev zůstávají beze změny.
-- Připraveny společné typy pro herní dropy, rozšířenou sadu zbraní a časování útočných kadencí.
-- Nejde zatím o dokončené sloučení; engine, renderer a UI je nutné integrovat a následně ověřit buildem, lintem a testy.
+- Pracovní větev `staging/integration-work` oddělená od `main`; produkční větev zůstává beze změny.
+- Doplněny společné typy pro dropy, rozšířenou sadu zbraní, budovy vesnice a časování útočných kadencí; přidány chybějící zvukové efekty a styly HUD z feature větve.
+- Hlavní integrace engine/renderer/UI a ověření buildem, lintem a testy stále čekají; tato větev není připravena k produkčnímu nasazení.
 
 ## 2026-10-08 — Rebalanc startovních zbraní (Level 1) & Benchmark systém
 
