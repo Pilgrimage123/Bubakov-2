@@ -1,5 +1,30 @@
 # Bubákov — Changelog
 
+## 2026-10-09 — Začátečnická úroveň: 0. Předjaří v Hrusicích (Tutorial & Prologue)
+
+- **Nová začátečnická úroveň „0. Předjaří v Hrusicích“ (`spring_river`):**
+  - Do hry přidán plnohodnotný výukový prolog zasazený do atmosféry březnového tání na březích řeky v Hrusicích.
+  - Výchozí úroveň s mírným tempem pro první krůčky nového hráče, seznámení s pohybem, uhýbáním a zbraněmi.
+- **Folklórní nepřátelé a křivka bossů:**
+  - Výukový miniboss v 30. vteřině: **🐸 Probuzená Žába** s vyváženým zdravím (~220 HP) a citlivým škálováním pro startovní zbraně na 1. úrovni.
+  - Odpolední midboss v 75. vteřině: **💧 Jarní Vodníček** (~400 HP).
+  - Finální šéf úrovně ve 120. vteřině: **🌊 Vodník z tajících ker** (~500 HP) se speciální mechanikou *Březnová povodeň*.
+  - Klidná otevírací vlna od 0. vteřiny (2 žabky) a přívětivější časovač spawnování (3,5 s).
+- **Interaktivní prostředí arény a fyzikální prvky:**
+  - *Tající ledové kry (`ice_floe`):* Plující kry pomalu unášené proudem, které posouvají lovce i nepřátele.
+  - *Dřevěná káča (`kaca`):* Tradiční roztočená hračka, kterou hráč i potvory mohou kopat po aréně a ve vysoké rychlosti zraňuje nepřátele.
+  - *Babiččina kamna (`granny_stove`):* Teplá kachlová kamna s babičkou v šátku, u kterých se lovec v souladu s lidovou pranostikou („Březen, za kamna vlezem“) může zahřát a doplňovat Kuráž.
+- **Vizuální styl a jarní atmosféra:**
+  - Svěží jarní olistění stromů s rašícími pupeny a kočičkami (`#93C068`, `#C2E59C`).
+  - Efekt počasí `ice_drift`: rotující třpytivé ledové krystalky a tající kapky unášené vánkem, které neruší výhled na bojiště.
+  - Odpovídající jarní štítek `🌱 Jaro` ve výběru lovců.
+- **Integrace do herních systémů:**
+  - Zahrnuto do Režiséra výpravy se 3 unikátními rozmary (*Rychlé Tání*, *Jarní Probuzení*, *Březnový Chlad*) v `src/data/runArchetypes.ts`.
+  - Kompletní začlenění do výběru úrovní v hlavním menu, do `LEVEL_UNLOCKS` a do Testovacího módu (`TestModeModal`).
+  - Plná lokalizace všech textů a milníků v češtině i angličtině (`level.0.*`).
+- **Testy:**
+  - Nová dedikovaná integrační testovací sada v `tests/level0Predjari.test.ts`.
+
 ## 2026-10-09 — Režisér výpravy (AI Director), reaktivní rejdový rozpočet, taktické formace a Bubácká díra
 
 - **Režisér výpravy (`RunDirector`) v `src/game/director.ts`:**

@@ -4,9 +4,9 @@ import { GameEngine } from '../src/game/engine';
 import { selectRunRozmar, RUN_ROZMARY } from '../src/data/runArchetypes';
 
 describe('RunRozmar and Procedural Variance', () => {
-  it('defines exactly 3 unique folklore Rozmars for each of the 6 levels', () => {
-    for (let lvl = 1; lvl <= 6; lvl++) {
-      const rozmary = RUN_ROZMARY[lvl as 1 | 2 | 3 | 4 | 5 | 6];
+  it('defines exactly 3 unique folklore Rozmars for all levels (0-6)', () => {
+    for (let lvl = 0; lvl <= 6; lvl++) {
+      const rozmary = RUN_ROZMARY[lvl as 0 | 1 | 2 | 3 | 4 | 5 | 6];
       expect(rozmary).toBeDefined();
       expect(rozmary.length).toBe(3);
       const ids = new Set(rozmary.map((r) => r.id));

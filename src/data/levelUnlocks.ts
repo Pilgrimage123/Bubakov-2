@@ -84,6 +84,36 @@ function makeSequentialUnlock(id, targetEnemies) {
 	};
 }
 var LEVEL_UNLOCKS = {
+	0: {
+		id: 0,
+		realName: "0. Předjaří v Hrusicích",
+		realShortTitle: "Předjaří",
+		realSubtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
+		realIcon: "🌱",
+		realBadge: "Začátečnická úroveň",
+		defaultUnlocked: true,
+		challengeTitle: "Výchozí začátečnická výprava",
+		challengeShortDesc: "Klidný úvod do hry – seznámení s pohybem, zbraněmi a jarní havětí.",
+		challengeLongDesc: "Pomozte sedlákům připravit pole po zimě, vyzkoušejte si boj a zažeňte vodníka z tajících ker!",
+		bossDefeatRequirement: "Žádné – výchozí úroveň",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "0. Předjaří v Hrusicích",
+			spoiledShortTitle: "Předjaří",
+			spoiledSubtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
+			spoiledDesc: "Sníh pomalu taje a řeka je plná březnových ker tajícího ledu. Příroda se probouzí a s ní i vyhladovělá havěť.",
+			spoiledLore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole a odežeňte vodníky z tajících ker.",
+			spoiledBossHint: "👑 Hlavní boss: Vodník z tajících ker (120 s)",
+			spoiledWeatherHint: "Počasí: Tání ker a jarní tůně",
+			spoiledEnemiesHint: "Rybniční žabka, Blatouchový skřítek, Vodníček, Vodník",
+			spoiledIcon: "🌱",
+			spoiledBadge: "Začátečnická úroveň",
+			clueTag: "✅ Připraveno k výpravě"
+		}]
+	},
 	1: {
 		id: 1,
 		realName: "1. Náves a rybník Brčálník",
