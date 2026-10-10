@@ -50,6 +50,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
       (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
     ),
     completedLevels: parsed.completedLevels || {},
+    dynamicDifficulty: typeof parsed.dynamicDifficulty === 'number' ? parsed.dynamicDifficulty : 2.0,
     unlockedWeapons: migratedUnlockedWeapons,
     weaponKillCounts: migratedWeaponKillCounts,
   };
@@ -58,6 +59,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
 export function createDefaultMetaProgression(): MetaProgression {
   return {
     krejcary: 0,
+    dynamicDifficulty: 2.0,
     currentLang: 'cs',
     regenLevel: 0,
     ovenLevel: 0,

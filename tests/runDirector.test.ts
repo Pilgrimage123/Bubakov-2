@@ -238,3 +238,146 @@ describe('Anomálie: Bubácká díra', () => {
     expect(engine.state.enemies.length).toBeGreaterThan(enemiesBefore);
   });
 });
+
+describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
+  it('defaults to 2.0 (Pekelná štvanice - Max) and clamps to [1.0, 2.0]', () => {
+    const defaultDirector = new RunDirector(1);
+    expect(defaultDirector.dynamicDifficulty).toBe(2.0);
+
+    const clampedLow = new RunDirector(1, undefined, { dynamicDifficulty: 0.5 });
+    expect(clampedLow.dynamicDifficulty).toBe(1.0);
+
+    const clampedHigh = new RunDirector(1, undefined, { dynamicDifficulty: 3.0 });
+    expect(clampedHigh.dynamicDifficulty).toBe(2.0);
+
+    const midDirector = new RunDirector(1, undefined, { dynamicDifficulty: 1.5 });
+    expect(midDirector.dynamicDifficulty).toBe(1.5);
+  });
+
+  it('scales budget cap and accrual higher with dynamicDifficulty', () => {
+    const engine1 = new GameEngine();
+    engine1.initRun({ levelId: 1, dynamicDifficulty: 1.0, spawnInitialWave: false });
+    const dir1 = engine1.director!;
+
+    const engine2 = new GameEngine();
+    engine2.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const dir2 = engine2.director!;
+
+    engine1.livingEnemies = new Array(75).fill({ hp: 50 });
+    engine2.livingEnemies = new Array(75).fill({ hp: 50 });
+
+    dir1.threatBudget = 0;
+    dir2.threatBudget = 0;
+
+    dir1.update(1.0, engine1);
+    dir2.update(1.0, engine2);
+
+    expect(dir2.threatBudget).toBeGreaterThan(dir1.threatBudget);
+    expect(dir2.budgetCap).toBeGreaterThan(dir1.budgetCap);
+  });
+
+  it('triggers Drtivý přepad with dual commanders and poise buffs after lull', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const director = engine.director!;
+
+    director.valvePhase = 'lull';
+    director.threatBudget = 35;
+    director.valveTimer = 0.05;
+
+    // Advance past lull (0.05s) to telegraph
+    director.update(0.1, engine);
+    expect(director.valvePhase).toBe('telegraph');
+    expect(director.telegraphMessage).toContain('přepad');
+
+    // Advance past telegraph (1.0s) to ambush / drtivý přepad
+    const enemiesBefore = engine.state.enemies.length;
+    director.update(1.1, engine);
+
+    const newEnemies = engine.state.enemies.slice(enemiesBefore);
+    expect(newEnemies.length).toBeGreaterThanOrEqual(4);
+
+    // Look for commanders with Drtivý přepad buffs
+    const commanders = newEnemies.filter((e: any) => e.name === 'Přepadový velitel');
+    expect(commanders.length).toBe(2);
+    for (const c of commanders) {
+      expect(c.poiseResist).toBeGreaterThanOrEqual(0.35);
+      expect(c.drtivyBuffTimer).toBe(3.5);
+    }
+  });
+
+  it('spawns Zrádný terén when player moves straight for 3.5s (anti-kiting)', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const director = engine.director!;
+    const player = engine.state.player;
+
+    player.vx = 80;
+    player.vy = 0; // moving straight right
+
+    expect(director.hazards.length).toBe(0);
+
+    // Run for 3.6 seconds in the same direction
+    for (let i = 0; i < 36; i++) {
+      director.update(0.1, engine);
+    }
+
+    expect(director.hazards.length).toBeGreaterThanOrEqual(1);
+    const zradny = director.hazards[0];
+    expect(zradny.id).toContain('hazard_zradny');
+    expect(zradny.slowFactor).toBe(0.75); // -25% slow
+    expect(zradny.x).toBeGreaterThan(player.x); // ahead of player
+  });
+
+  it('transforms existing enemies into Ostřílení běsi when reaching 75 entity cap', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const director = engine.director!;
+
+    // 75 living enemies
+    const fakeMobs = Array.from({ length: 75 }, (_, i) => ({
+      id: `mob_${i}`,
+      hp: 50,
+      speed: 80,
+      poiseResist: 0.1,
+      isBoss: false,
+    }));
+    engine.livingEnemies = fakeMobs;
+    director.threatBudget = 30;
+
+    // Trigger update at cap
+    director.update(1.0, engine);
+
+    const ostri = fakeMobs.filter((m: any) => m.isOstryBes);
+    expect(ostri.length).toBeGreaterThanOrEqual(1);
+    expect(ostri[0].poiseResist).toBeGreaterThanOrEqual(0.5);
+    expect(ostri[0].speed).toBeGreaterThan(80);
+    // Entity count remains capped at 75
+    expect(engine.livingEnemies.length).toBe(75);
+  });
+
+  it('halves the assistance penalty on maximum difficulty 2.0 vs standard 1.0', () => {
+    const engineLow = new GameEngine();
+    engineLow.initRun({ levelId: 1, dynamicDifficulty: 1.0, spawnInitialWave: false });
+    const dirLow = engineLow.director!;
+    engineLow.livingEnemies = new Array(75).fill({ hp: 50 });
+
+    const engineHigh = new GameEngine();
+    engineHigh.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const dirHigh = engineHigh.director!;
+    engineHigh.livingEnemies = new Array(75).fill({ hp: 50 });
+
+    // Enable assistance
+    dirLow.assistanceActive = true;
+    dirHigh.assistanceActive = true;
+    dirLow.threatBudget = 0;
+    dirHigh.threatBudget = 0;
+
+    dirLow.update(1.0, engineLow);
+    dirHigh.update(1.0, engineHigh);
+
+    // On 2.0x, penalty is only 25% (0.75x factor), on 1.0x penalty is 50% (0.50x factor)
+    // Combined with higher base accrual on 2.0x, dirHigh accrues significantly more
+    expect(dirHigh.threatBudget).toBeGreaterThan(dirLow.threatBudget * 1.5);
+  });
+});

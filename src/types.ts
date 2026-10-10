@@ -134,6 +134,7 @@ export interface MetaProgression {
   highestLevelUnlocked?: number;
   completedLevels?: Record<string, boolean>;
   lightningWitnessed?: boolean;
+  dynamicDifficulty?: number;
   [key: string]: any;
 }
 

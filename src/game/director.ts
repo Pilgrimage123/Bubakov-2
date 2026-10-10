@@ -38,11 +38,13 @@ export interface DirectorTelemetry {
   activeHazardsCount: number;
   bubackaDiraActive: boolean;
   assistanceActive: boolean;
+  dynamicDifficulty: number;
 }
 
 export interface DirectorConfig {
-  adaptability: number; // 0.0 (off) to 1.5 (maximum), default 1.0
-  maxLivingEnemies: number; // default 75
+  adaptability?: number; // legacy alias
+  dynamicDifficulty?: number; // 1.0 (Běžná) to 2.0 (Pekelná štvanice - default)
+  maxLivingEnemies?: number; // default 75
 }
 
 export interface EnemyKillRecord {
@@ -57,7 +59,8 @@ export class RunDirector {
   public budgetCap = 35;
   public valvePhase: PacingValvePhase = 'buildup';
   public valveTimer = 0;
-  public adaptability = 1.0;
+  public adaptability = 2.0;
+  public dynamicDifficulty = 2.0;
   public maxLivingEnemies = 75;
 
   public hazards: ArenaHazard[] = [];
@@ -75,11 +78,15 @@ export class RunDirector {
   private formationCooldown = 4.0;
   private nextHazardCooldown = 3.0;
 
+  private playerHeadingDuration = 0;
+  private lastPlayerAngle: number | null = null;
+  private kitingHazardCooldown = 0;
+
   constructor(public levelId: GameLevelId, seed?: number, config?: Partial<DirectorConfig>) {
     this.rozmar = selectRunRozmar(levelId, seed);
-    if (config?.adaptability !== undefined) {
-      this.adaptability = Math.max(0, Math.min(1.5, config.adaptability));
-    }
+    const diff = config?.dynamicDifficulty ?? config?.adaptability ?? 2.0;
+    this.dynamicDifficulty = Math.max(1.0, Math.min(2.0, diff));
+    this.adaptability = this.dynamicDifficulty;
     if (config?.maxLivingEnemies !== undefined) {
       this.maxLivingEnemies = config.maxLivingEnemies;
     }
@@ -132,23 +139,27 @@ export class RunDirector {
     const gameTime = state.gameTime || 0;
     const livingCount = engine.livingEnemies?.length ?? state.enemies?.length ?? 0;
 
-    // 1. Update threat budget capacity based on daytime
+    // 1. Track player movement vector for Zrádný terén (anti-kiting)
+    this.kitingHazardCooldown -= dt;
+    this.trackPlayerMovement(dt, player);
+
+    // 2. Update threat budget capacity and accrual based on daytime & dynamicDifficulty
     this.updateBudgetMetrics(gameTime, dt);
 
-    // 2. Track dominance and assistance need
+    // 3. Track dominance and assistance need
     const dominance = this.computeDominanceIndex(player);
-    this.assistanceActive = this.adaptability > 0 && dominance < 0.35 && (player.hp / (player.maxHp || 1)) < 0.5;
+    this.assistanceActive = dominance < 0.35 && (player.hp / (player.maxHp || 1)) < 0.5;
 
-    // 3. Update Pacing Valves (Oddych a Přepadení)
+    // 4. Update Pacing Valves (Oddych a Drtivý přepad)
     this.updatePacingValves(dt, engine, livingCount);
 
-    // 4. Update Hazards (decay)
+    // 5. Update Hazards (decay)
     this.updateHazards(dt, player);
 
-    // 5. Update Bubácká díra
+    // 6. Update Bubácká díra
     this.updateBubackaDira(dt, engine, player, gameTime);
 
-    // 6. Update Telegraph text display
+    // 7. Update Telegraph text display
     if (this.telegraphTimer > 0) {
       this.telegraphTimer -= dt;
       if (this.telegraphTimer <= 0) {
@@ -156,7 +167,7 @@ export class RunDirector {
       }
     }
 
-    // 7. Tactical Spawning if in buildup or peak
+    // 8. Tactical Spawning if in buildup or peak
     this.formationCooldown -= dt;
     this.nextHazardCooldown -= dt;
     this.lastSpawnCheck += dt;
@@ -167,6 +178,50 @@ export class RunDirector {
         this.executeTacticalSpawns(engine, player, dominance, livingCount, gameTime);
       }
     }
+  }
+
+  private trackPlayerMovement(dt: number, player: any): void {
+    if (!player) return;
+    const speed = Math.hypot(player.vx || 0, player.vy || 0);
+    if (speed < 20) {
+      this.playerHeadingDuration = Math.max(0, this.playerHeadingDuration - dt * 1.5);
+      return;
+    }
+
+    const currentAngle = Math.atan2(player.vy || 0, player.vx || 0);
+    if (this.lastPlayerAngle !== null) {
+      let diff = Math.abs(currentAngle - this.lastPlayerAngle);
+      while (diff > Math.PI) diff = Math.abs(diff - 2 * Math.PI);
+      // Within +/- 35 degrees (0.61 rad)
+      if (diff <= 0.61) {
+        this.playerHeadingDuration += dt;
+        if (this.playerHeadingDuration >= 3.5 && this.kitingHazardCooldown <= 0) {
+          this.triggerZradnyTeren(player, currentAngle);
+          this.playerHeadingDuration = 0;
+          this.kitingHazardCooldown = 5.0;
+        }
+      } else {
+        this.playerHeadingDuration = Math.max(0, this.playerHeadingDuration - dt * 2.0);
+      }
+    }
+    this.lastPlayerAngle = currentAngle;
+  }
+
+  private triggerZradnyTeren(player: any, angle: number): void {
+    if (this.hazards.length >= 8) return;
+    const dist = 250;
+    const hx = player.x + Math.cos(angle) * dist;
+    const hy = player.y + Math.sin(angle) * dist;
+    this.hazards.push({
+      id: `hazard_zradny_${Date.now()}_${Math.random()}`,
+      x: hx,
+      y: hy,
+      radius: 70,
+      duration: 4.0,
+      maxDuration: 4.0,
+      type: this.rozmar.weatherOverride === 'snow' ? 'frost' : 'mud',
+      slowFactor: 0.75, // -25% rychlost
+    });
   }
 
   private updateBudgetMetrics(gameTime: number, dt: number): void {
@@ -190,8 +245,22 @@ export class RunDirector {
       cap = 135;
     }
 
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier);
-    const accrual = baseRate * this.rozmar.threatMultiplier * (0.6 + this.adaptability * 0.4) * dt;
+    // Capacity scales with dynamicDifficulty
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.8 + this.dynamicDifficulty * 0.3));
+
+    // Base accrual factor scales with dynamicDifficulty (1.0 at diff 1.0, 1.5 at diff 2.0)
+    let accrualMult = 0.5 + this.dynamicDifficulty * 0.5;
+
+    // Scaled assistance:
+    // When courage < 50% and slow TTK:
+    // On 1.0 diff: 50% slow (accrualMult *= 0.50)
+    // On 2.0 diff: 25% slow (accrualMult *= 0.75)
+    if (this.assistanceActive) {
+      const penalty = 0.50 + ((this.dynamicDifficulty - 1.0) / 1.0) * 0.25;
+      accrualMult *= penalty;
+    }
+
+    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * dt;
     this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
   }
 
@@ -217,7 +286,7 @@ export class RunDirector {
         if (this.valveTimer <= 0) {
           this.valvePhase = 'telegraph';
           this.valveTimer = 1.0;
-          this.triggerTelegraph('⚠️ Kradmé kroky za humny... Pozor na přepadení!', 2.2, engine);
+          this.triggerTelegraph('⚠️ Kradmé kroky za humny... Pozor na přepadení a drtivý přepad!', 2.2, engine);
           if (engine.callbacks?.onSound) {
             engine.callbacks.onSound('howl');
           }
@@ -228,7 +297,7 @@ export class RunDirector {
         this.valveTimer -= dt;
         if (this.valveTimer <= 0) {
           this.valvePhase = 'ambush';
-          this.executeAmbush(engine);
+          this.executeDrtivyPrepad(engine);
           this.valvePhase = 'buildup';
         }
         break;
@@ -254,13 +323,12 @@ export class RunDirector {
     }
   }
 
-  private executeAmbush(engine: any): void {
+  private executeDrtivyPrepad(engine: any): void {
     const player = engine.state.player;
     if (!player) return;
 
-    // Unexpected vector: perpendicular to player direction or from behind
-    const moveAngle = Math.atan2(player.vy || 0, player.vx || 0);
-    const ambushAngle = moveAngle + Math.PI / 2 + (Math.random() < 0.5 ? 0 : Math.PI);
+    // Up to 40 budget spent
+    const budgetToSpend = Math.min(40, Math.max(25, this.threatBudget));
     const pool = this.getWeightedPool(engine);
 
     const leaderCandidate = this.rozmar.preferredEnemyIds[0];
@@ -268,23 +336,54 @@ export class RunDirector {
     const minionCandidate = pool[pool.length - 1];
     const minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
 
-    const cx = player.x + Math.cos(ambushAngle) * 580;
-    const cy = player.y + Math.sin(ambushAngle) * 580;
+    const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
+    // Two opposite angles (Klešťové sevření)
+    const angle1 = pAngle + Math.PI / 2 + (Math.random() * 0.4 - 0.2);
+    const angle2 = angle1 + Math.PI;
 
-    // Leader with slight buff
-    const leader = engine.spawnMonster(leaderId, cx, cy, 1.25, false, false, 'Přepadový velitel');
-    if (leader) this.recordEnemySpawn(leader, engine.state.gameTime);
-
-    // Fast flankers
-    for (let i = -2; i <= 2; i++) {
-      if (i === 0) continue;
-      const ox = cx + Math.cos(ambushAngle + Math.PI / 2) * (i * 45);
-      const oy = cy + Math.sin(ambushAngle + Math.PI / 2) * (i * 45);
-      const minion = engine.spawnMonster(minionId, ox, oy, 1.0);
-      if (minion) this.recordEnemySpawn(minion, engine.state.gameTime);
+    // Leader 1
+    const l1x = player.x + Math.cos(angle1) * 560;
+    const l1y = player.y + Math.sin(angle1) * 560;
+    const leader1 = engine.spawnMonster(leaderId, l1x, l1y, 1.3, false, false, 'Přepadový velitel');
+    if (leader1) {
+      leader1.name = 'Přepadový velitel';
+      leader1.customBossTitle = 'Přepadový velitel';
+      leader1.speed *= 1.20;
+      leader1.poiseResist = Math.min(0.85, (leader1.poiseResist || 0) + 0.35);
+      leader1.drtivyBuffTimer = 3.5;
+      this.recordEnemySpawn(leader1, engine.state.gameTime);
     }
 
-    this.threatBudget = Math.max(0, this.threatBudget - 25);
+    // Leader 2 from opposite angle
+    const l2x = player.x + Math.cos(angle2) * 560;
+    const l2y = player.y + Math.sin(angle2) * 560;
+    const leader2 = engine.spawnMonster(leaderId, l2x, l2y, 1.3, false, false, 'Přepadový velitel');
+    if (leader2) {
+      leader2.name = 'Přepadový velitel';
+      leader2.customBossTitle = 'Přepadový velitel';
+      leader2.speed *= 1.20;
+      leader2.poiseResist = Math.min(0.85, (leader2.poiseResist || 0) + 0.35);
+      leader2.drtivyBuffTimer = 3.5;
+      this.recordEnemySpawn(leader2, engine.state.gameTime);
+    }
+
+    // Flankers in an arc around both angles
+    const minionCount = Math.min(6, Math.max(4, Math.floor(budgetToSpend / 6)));
+    for (let i = 0; i < minionCount; i++) {
+      const useAngle = (i % 2 === 0) ? angle1 : angle2;
+      const offset = ((Math.floor(i / 2) + 1) * 0.25) * (i % 4 < 2 ? 1 : -1);
+      const mx = player.x + Math.cos(useAngle + offset) * 580;
+      const my = player.y + Math.sin(useAngle + offset) * 580;
+      const minion = engine.spawnMonster(minionId, mx, my, 1.0);
+      if (minion) {
+        minion.speed *= 1.20;
+        minion.poiseResist = Math.min(0.70, (minion.poiseResist || 0) + 0.25);
+        minion.drtivyBuffTimer = 3.5;
+        this.recordEnemySpawn(minion, engine.state.gameTime);
+      }
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - budgetToSpend);
   }
 
   private executeTacticalSpawns(
@@ -295,28 +394,36 @@ export class RunDirector {
     gameTime: number
   ): void {
     if (livingCount >= this.maxLivingEnemies) {
-      // FPS Guard: do not add more entities; if budget is high, apply a poise/haste boost to living enemies
-      if (this.threatBudget >= 20 && engine.livingEnemies?.length > 0) {
-        const randMob = engine.livingEnemies[Math.floor(Math.random() * engine.livingEnemies.length)];
+      // FPS Guard & Ostřílení běsi: buff existing mobs with excess threat budget (>= 18) to preserve 60 FPS
+      if (this.threatBudget >= 18 && engine.livingEnemies?.length > 0) {
+        const eligible = engine.livingEnemies.filter((m: any) => !m.isBoss && !m.isOstryBes);
+        const pool = eligible.length > 0 ? eligible : engine.livingEnemies;
+        const randMob = pool[Math.floor(Math.random() * pool.length)];
         if (randMob && !randMob.isBoss) {
-          randMob.speed = Math.min(randMob.speed * 1.08, 140);
-          randMob.poiseResist = Math.min(0.9, (randMob.poiseResist || 0) + 0.15);
-          this.threatBudget -= 6;
+          randMob.speed = Math.min(randMob.speed * 1.15, 155);
+          randMob.poiseResist = Math.min(0.9, (randMob.poiseResist || 0) + 0.40);
+          randMob.isOstryBes = true;
+          this.threatBudget -= 10;
         }
       }
       return;
     }
 
-    // High dominance: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite)
+    // High dominance or high dynamicDifficulty: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite, Klešťové sevření)
     if (dominance > 0.65 && this.threatBudget >= 18 && this.formationCooldown <= 0) {
-      this.formationCooldown = 5.0 - this.adaptability * 1.5;
+      const baseCd = 5.0 - (this.dynamicDifficulty - 1.0) * 1.5;
+      const assistDelay = this.assistanceActive ? (this.dynamicDifficulty >= 2.0 ? 1.0 : 2.0) : 0;
+      this.formationCooldown = baseCd + assistDelay;
+
       const pick = Math.random();
-      if (pick < 0.4) {
+      if (pick < 0.25) {
         this.spawnHammerAndAnvil(engine, player, gameTime);
-      } else if (pick < 0.75) {
+      } else if (pick < 0.50) {
         this.spawnEscortSwarms(engine, player, gameTime);
-      } else {
+      } else if (pick < 0.75) {
         this.spawnAntiKiteInterception(engine, player, gameTime);
+      } else {
+        this.spawnKlestoveSevreni(engine, player, gameTime);
       }
       return;
     }
@@ -350,6 +457,44 @@ export class RunDirector {
         this.threatBudget -= 3;
       }
     }
+  }
+
+  private spawnKlestoveSevreni(engine: any, player: any, gameTime: number): void {
+    const pool = this.getWeightedPool(engine);
+    const heavyCandidate = this.rozmar.preferredEnemyIds[0];
+    const heavyId = (heavyCandidate && ENEMIES[heavyCandidate]) ? heavyCandidate : pool[0] || 'rarach';
+    const fastCandidate = pool[pool.length - 1];
+    const fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
+
+    const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
+    const baseAngle = pAngle + (Math.random() * 0.4 - 0.2);
+    const oppositeAngle = baseAngle + Math.PI;
+
+    // Side 1
+    for (let i = -1; i <= 1; i++) {
+      const a = baseAngle + i * 0.22;
+      const x = player.x + Math.cos(a) * 570;
+      const y = player.y + Math.sin(a) * 570;
+      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, x, y, 1.1);
+      if (e) {
+        e.speed *= 1.1;
+        this.recordEnemySpawn(e, gameTime);
+      }
+    }
+
+    // Side 2 (opposite)
+    for (let i = -1; i <= 1; i++) {
+      const a = oppositeAngle + i * 0.22;
+      const x = player.x + Math.cos(a) * 570;
+      const y = player.y + Math.sin(a) * 570;
+      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, x, y, 1.1);
+      if (e) {
+        e.speed *= 1.1;
+        this.recordEnemySpawn(e, gameTime);
+      }
+    }
+
+    this.threatBudget = Math.max(0, this.threatBudget - 20);
   }
 
   private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
@@ -611,6 +756,7 @@ export class RunDirector {
       activeHazardsCount: this.hazards.length,
       bubackaDiraActive: !!(this.bubackaDira && !this.bubackaDira.isCompleted && !this.bubackaDira.isFailed),
       assistanceActive: this.assistanceActive,
+      dynamicDifficulty: this.dynamicDifficulty,
     };
   }
 }

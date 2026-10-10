@@ -91,6 +91,7 @@ export interface EngineState {
   activeHazards?: any[];
   bubackaDira?: any;
   directorAdaptability: number;
+  dynamicDifficulty?: number;
   directorTelegraphText: string | null;
   directorTelegraphTimer: number;
   dropFusionTimer: number;

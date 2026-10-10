@@ -1,5 +1,23 @@
 # Bubákov — Changelog
 
+## 2026-10-10 — Dynamická obtížnost, posílení Režiséra výpravy a volič v herním menu
+
+- **Posuvník Dynamická obtížnost v nabídce hry:**
+  - Přidán interaktivní posuvník v předstartovní nabídce výpravy (`App.tsx`) i v nastavení hry (`ControlsModal.tsx`) s 5 stupni od 1.00× po 2.00× (krok 0.25).
+  - Výchozí nastavení nastaveno na maximum: **2.00× – Pekelná štvanice (Výchozí / Max)** s perzistentním uložením do profilu hráče (`meta.dynamicDifficulty`).
+  - Stupně obtížnosti: 1.00× Běžná výprava, 1.25× Neklidné povětří, 1.50× Zlověstná noc, 1.75× Divoká štvanice, 2.00× Pekelná štvanice.
+- **Aktivní Režisér výpravy a eliminace hluchých míst:**
+  - **Drtivý přepad:** Po zachování 3.5sekundové fáze Oddychu (`lull`) Režisér zformuje masivní protiúder se dvěma obrněnými Přepadovými veliteli a obkličujícím rojem s úvodním zrychlením (+20 %) a odolností proti odhození (poise) na 3.5 s.
+  - **Zrádný terén:** Sledování vektoru pohybu lovce – při vytrvalém jednosměrném běhu či kroužení (> 3.5 s) Režisér klade 250 px před hráče zpomalující zóny (bláto / led) trvající 4 s (-25 % rychlost, cooldown 5 s).
+  - **Klešťové sevření:** Taktické líhnutí útočných hlídek z protilehlých úhlů zamezující snadnému kroužení po obvodu.
+  - **Ostřílení běsi (Ochrana 60 FPS při 75 entitách):** Při dosažení limitu 75 živých monster investuje Režisér přebytečný rozpočet hrozeb do povýšení stávajících strašidel (+40 % poise resist, zrychlení na 155 px/s) namísto nečinnosti.
+  - **Škálovaná asistence:** Asistence Režiséra při poklesu Kuráže pod 50 % zpomaluje přísun hrozeb na maximální obtížnosti 2.00× pouze o 25 % (oproti 50 % na základu 1.00×), čímž udržuje neustálý bojový tlak.
+- **Doménový model a dokumentace:**
+  - Založen záznam architektonického rozhodnutí `docs/adr/0005-dynamicka-obtiznost-a-reziser-vypravy.md`.
+  - V `GLOSSARY.md` zapsány kanonické pojmy: *Dynamická obtížnost*, *Ostřílení běsi*, *Klešťové sevření*, *Zrádný terén*, *Drtivý přepad*.
+- **Testy a kompatibilita:**
+  - Rozšířena testovací sada `tests/runDirector.test.ts` o 6 nových testů pokrývajících škálování rozpočtu, Drtivý přepad, Zrádný terén, Ostřílené běsy a asistenci (všech 154 testů v projektu prochází, `tsc && vite build` bez chyb).
+
 ## 2026-10-10 — Vyvážení a harmonizace hospodských vylepšení, Obecní přirážka a Zoufalá kuráž
 
 - **Obecní přirážka (Sdílené zdražování vesnice):**

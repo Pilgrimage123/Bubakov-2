@@ -20,6 +20,26 @@ _Avoid_: weapon mastery, upgrade tier, perk
 Řídicí subsystém koordinující tempo příchodu vln nepřátel, časování příchodu bossů a dynamickou obtížnost během výpravy.
 _Avoid_: wave spawner, AI director, spawn scheduler
 
+**Dynamická obtížnost**:
+Herní nastavení a ukazatel vlivu Režiséra výpravy na chování a hustotu strašidel, volitelné v nabídce hry od základní míry po nejvyšší.
+_Avoid_: difficulty level, obtížnost hry, challenge rating
+
+**Ostřílení běsi**:
+Strašidla posílená Režisérem výpravy o zvýšenou odolnost proti odhození a vyšší rychlost v momentech, kdy je bojiště již zaplněno na maximální kapacitu entit.
+_Avoid_: elite buff, buffnutá monstra, enraged enemies
+
+**Klešťové sevření**:
+Koordinovaný taktický výpad strašidel iniciovaný Režisérem výpravy ze dvou či více protilehlých směrů, zamezující jednotvárnému kroužení hráče po bojišti.
+_Avoid_: pincer attack, obklíčení, flanking spawn
+
+**Zrádný terén**:
+Dočasná povrchová překážka (blátivá louže či námraza) vyvolaná Režisérem výpravy v dráze lovce, který příliš dlouho krouží stejným směrem.
+_Avoid_: hazard, snare zone, ground effect, past
+
+**Drtivý přepad**:
+Masivní protiúder Režiséra výpravy následující po fázi Oddychu, vedený dvojicí zrychlených velitelů s odolností proti odhození a obkličujícím rojem.
+_Avoid_: ambush wave, wave rush, counter-attack
+
 **Bubácká díra**:
 Dočasná anomálie a trhlina v zemi vyvolaná Režisérem výpravy, ze které vyvěrá neklid; lovec ji musí zapečetit setrváním v jejím kruhu dříve, než z ní vystoupí zuřivý netvor.
 _Avoid_: rift, portál, portal, spawner, trhlina

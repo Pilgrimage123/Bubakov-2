@@ -13,6 +13,8 @@ interface ControlsModalProps {
   onTogglePerformanceMode?: (enabled: boolean) => void;
   showPerfOverlay?: boolean;
   onToggleShowPerfOverlay?: (enabled: boolean) => void;
+  dynamicDifficulty?: number;
+  onChangeDynamicDifficulty?: (diff: number) => void;
 }
 
 export const ControlsModal: React.FC<ControlsModalProps> = ({
@@ -23,6 +25,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   onTogglePerformanceMode,
   showPerfOverlay = false,
   onToggleShowPerfOverlay,
+  dynamicDifficulty = 2.0,
+  onChangeDynamicDifficulty,
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
@@ -1207,6 +1211,144 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               paddingRight: '6px',
             }}
           >
+            {/* DYNAMIC DIFFICULTY SLIDER */}
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '3px solid #B45309',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginBottom: '10px',
+                }}
+              >
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
+                    🔥 Dynamická obtížnost (Režisér výpravy)
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
+                    Řídí chování Režiséra výpravy, rozpočet hrozeb, Klešťové sevření a drtivé protiúdery po oddychu.
+                  </p>
+                </div>
+                <span
+                  style={{
+                    background:
+                      dynamicDifficulty >= 1.95
+                        ? '#7F1D1D'
+                        : dynamicDifficulty >= 1.7
+                        ? '#DC2626'
+                        : dynamicDifficulty >= 1.45
+                        ? '#D97706'
+                        : dynamicDifficulty >= 1.2
+                        ? '#0284C7'
+                        : '#16A34A',
+                    color: '#FFFFFF',
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontWeight: 900,
+                    fontSize: '0.98rem',
+                    border: '2px solid var(--ink)',
+                  }}
+                >
+                  {dynamicDifficulty >= 1.95
+                    ? '2.00× Pekelná štvanice (Výchozí / Max)'
+                    : dynamicDifficulty >= 1.7
+                    ? '1.75× Divoká štvanice'
+                    : dynamicDifficulty >= 1.45
+                    ? '1.50× Zlověstná noc'
+                    : dynamicDifficulty >= 1.2
+                    ? '1.25× Neklidné povětří'
+                    : '1.00× Běžná výprava'}
+                </span>
+              </div>
+
+              <div style={{ margin: '10px 0 8px 0' }}>
+                <input
+                  type="range"
+                  min="1.0"
+                  max="2.0"
+                  step="0.25"
+                  value={dynamicDifficulty}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    sound.coin();
+                    onChangeDynamicDifficulty?.(val);
+                  }}
+                  style={{
+                    width: '100%',
+                    accentColor: '#92400E',
+                    cursor: 'pointer',
+                    height: '10px',
+                  }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    color: '#78350F',
+                    marginTop: '4px',
+                  }}
+                >
+                  <span>1.00× (Běžná)</span>
+                  <span>1.25×</span>
+                  <span>1.50×</span>
+                  <span>1.75×</span>
+                  <span>2.00× (Pekelná - Max)</span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: 'rgba(255,255,255,0.7)',
+                  border: '1.5px dashed #B45309',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  color: '#451A03',
+                  marginTop: '8px',
+                }}
+              >
+                {dynamicDifficulty >= 1.95 && (
+                  <span>
+                    👹 <strong>Pekelná štvanice (Doporučeno pro zkušené lovce):</strong> Drtivý přepad po každém oddychu, zkrácená asistence Režiséra při nízké Kuráži, přetékající rozpočet tvoří Ostřílené běsy a nepřetržitý tlak.
+                  </span>
+                )}
+                {dynamicDifficulty >= 1.7 && dynamicDifficulty < 1.95 && (
+                  <span>
+                    🐺 <strong>Divoká štvanice:</strong> +75 % rozpočet hrozeb, časté taktické formace a rychlý nástup Ostřílených běsů při zaplnění arény.
+                  </span>
+                )}
+                {dynamicDifficulty >= 1.45 && dynamicDifficulty < 1.7 && (
+                  <span>
+                    🌲 <strong>Zlověstná noc:</strong> +50 % rozpočet hrozeb, Režisér aktivuje Klešťové sevření z obou stran a Zrádný terén v dráze pohybu.
+                  </span>
+                )}
+                {dynamicDifficulty >= 1.2 && dynamicDifficulty < 1.45 && (
+                  <span>
+                    💨 <strong>Neklidné povětří:</strong> +25 % rozpočet hrozeb, častější nástup taktických hlídek a pružnější střídání fází.
+                  </span>
+                )}
+                {dynamicDifficulty < 1.2 && (
+                  <span>
+                    🌾 <strong>Běžná výprava:</strong> Původní tempo hry, základní rozpočet hrozeb a standardní asistence při lovcově oslabení.
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* HIGH PERF MODE */}
             <div
               style={{

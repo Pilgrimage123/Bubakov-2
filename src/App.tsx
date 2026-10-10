@@ -2096,7 +2096,8 @@ export default function App() {
 
     livingEnemiesRef.current = engineRef.current.enemies.slice();
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
-    directorRef.current = new RunDirector(chosenLevelId);
+    const dynamicDiff = meta.dynamicDifficulty ?? 2.0;
+    directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff });
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
 
     setRunStats({
@@ -2151,6 +2152,7 @@ export default function App() {
       highestLevelUnlocked: 1,
       completedLevels: {},
       levelKillCounts: {},
+      dynamicDifficulty: 2.0,
     };
     saveMeta(defaultMeta);
     setSelectedLevelId(0);
@@ -8914,6 +8916,105 @@ export default function App() {
               </div>
             </div>
 
+            {/* DYNAMIC DIFFICULTY PRE-RUN SELECTOR */}
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '3px solid #B45309',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                margin: '10px 0 14px 0',
+                color: 'var(--ink)',
+                boxShadow: '3px 3px 0 var(--ink)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>🔥</span>
+                  <div>
+                    <strong style={{ fontSize: '1.05rem', color: '#92400E' }}>
+                      Dynamická obtížnost (Režisér výpravy)
+                    </strong>
+                    <div style={{ fontSize: '0.82rem', color: '#451A03', fontWeight: 700 }}>
+                      Agresivita a tempo vln Režiséra výpravy během noci
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background:
+                      (meta.dynamicDifficulty ?? 2.0) >= 1.95
+                        ? '#7F1D1D'
+                        : (meta.dynamicDifficulty ?? 2.0) >= 1.7
+                        ? '#DC2626'
+                        : (meta.dynamicDifficulty ?? 2.0) >= 1.45
+                        ? '#D97706'
+                        : (meta.dynamicDifficulty ?? 2.0) >= 1.2
+                        ? '#0284C7'
+                        : '#16A34A',
+                    color: '#FFFFFF',
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    fontWeight: 900,
+                    fontSize: '0.92rem',
+                    border: '2px solid var(--ink)',
+                  }}
+                >
+                  {(meta.dynamicDifficulty ?? 2.0) >= 1.95
+                    ? '2.00× Pekelná štvanice (Výchozí / Max)'
+                    : (meta.dynamicDifficulty ?? 2.0) >= 1.7
+                    ? '1.75× Divoká štvanice'
+                    : (meta.dynamicDifficulty ?? 2.0) >= 1.45
+                    ? '1.50× Zlověstná noc'
+                    : (meta.dynamicDifficulty ?? 2.0) >= 1.2
+                    ? '1.25× Neklidné povětří'
+                    : '1.00× Běžná výprava'}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0' }}>
+                <input
+                  type="range"
+                  min="1.0"
+                  max="2.0"
+                  step="0.25"
+                  value={meta.dynamicDifficulty ?? 2.0}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    sound.coin();
+                    saveMeta({ ...meta, dynamicDifficulty: val });
+                  }}
+                  style={{ flex: 1, accentColor: '#92400E', cursor: 'pointer', height: '8px' }}
+                />
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  color: '#78350F',
+                }}
+              >
+                <span>1.00× Běžná</span>
+                <span>1.25× Neklidné</span>
+                <span>1.50× Zlověstná</span>
+                <span>1.75× Divoká</span>
+                <span>2.00× Pekelná (Max)</span>
+              </div>
+            </div>
+
             {/* CONFIRMATION / PROCEED CALLOUT BAR */}
             <div className="stage-summary-callout">
               <LadaCardCorners variant="callout" showBottomCorners={true} />
@@ -9987,6 +10088,10 @@ export default function App() {
         showPerfOverlay={!!meta.showPerfOverlay}
         onToggleShowPerfOverlay={(enabled) => {
           saveMeta({ ...meta, showPerfOverlay: enabled });
+        }}
+        dynamicDifficulty={meta.dynamicDifficulty ?? 2.0}
+        onChangeDynamicDifficulty={(diff) => {
+          saveMeta({ ...meta, dynamicDifficulty: diff });
         }}
       />
 

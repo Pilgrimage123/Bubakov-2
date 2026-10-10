@@ -216,6 +216,7 @@ export interface RunInitOptions {
   spawnInitialWave?: boolean;
   seed?: number;
   directorAdaptability?: number;
+  dynamicDifficulty?: number;
 }
 
 export interface GameEngineCallbacks {
@@ -301,15 +302,18 @@ export class GameEngine {
     nextState.spawnTimer = (levelId === 1 || levelId === 0) ? 3.5 : 2.0;
 
     const seed = typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null ? optionsOrLevelId.seed : undefined;
-    const adaptability =
-      typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.directorAdaptability !== undefined
+    const dynamicDifficulty =
+      typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.dynamicDifficulty !== undefined
+        ? optionsOrLevelId.dynamicDifficulty
+        : typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.directorAdaptability !== undefined
         ? optionsOrLevelId.directorAdaptability
-        : 1.0;
+        : 2.0;
 
-    this.director = new RunDirector(levelId, seed, { adaptability });
+    this.director = new RunDirector(levelId, seed, { dynamicDifficulty });
     nextState.director = this.director;
     nextState.activeRozmar = this.director.rozmar;
-    nextState.directorAdaptability = adaptability;
+    nextState.directorAdaptability = dynamicDifficulty;
+    nextState.dynamicDifficulty = dynamicDifficulty;
 
     this.state = nextState;
     this.spatialHash.clear();
