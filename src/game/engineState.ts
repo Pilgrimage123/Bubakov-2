@@ -58,6 +58,7 @@ export interface EngineState {
   mlynarStoneTimer: number;
   mlynarWaveTimer: number;
   mlynarStormTimer: number;
+  certMariashCd: number;
   certStompTimer: number;
   certChargeTimer: number;
   spawnTimer: number;
@@ -148,6 +149,7 @@ export function createInitialEngineState(): EngineState {
     mlynarStoneTimer: 5,
     mlynarWaveTimer: 11,
     mlynarStormTimer: 16,
+    certMariashCd: 12,
     certStompTimer: 5,
     certChargeTimer: 8,
     spawnTimer: 2.5,

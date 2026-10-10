@@ -298,7 +298,7 @@ export class GameEngine {
     nextState.activeLevelId = levelId;
     const levelDef: GameLevelDef = GAME_LEVELS[levelId] || GAME_LEVELS[1];
     nextState.nextBossMechanicAt = levelDef.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
-    nextState.spawnTimer = levelId === 1 ? 3.5 : 2.0;
+    nextState.spawnTimer = (levelId === 1 || levelId === 0) ? 3.5 : 2.0;
 
     const seed = typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null ? optionsOrLevelId.seed : undefined;
     const adaptability =
@@ -378,21 +378,22 @@ export class GameEngine {
                 cd: 0,
                 mastery: w.mastery || createWeaponMasteryState(),
                 milestones: (w as any).milestones || [],
+                synergisticUpgrades: (w as any).synergisticUpgrades || [],
               };
               ensureWeaponMilestones(mapped);
               return mapped;
             })
         : type === 'wanderer'
-        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'shepherd'
-        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'korenarka'
-        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'sexton'
-        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'granny'
-        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
+        ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
+        : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }];
 
     initialWeapons.forEach(ensureWeaponMilestones);
 
@@ -563,7 +564,12 @@ export class GameEngine {
     const player = this.state.player;
     if (!player) return;
 
-    if (levelId === 1) {
+    if (levelId === 0) {
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        this.spawnMonster('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7);
+      }
+    } else if (levelId === 1) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
         this.spawnMonster('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
@@ -634,9 +640,10 @@ export class GameEngine {
       throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
     }
 
+    const isLevel0 = (this.state.activeLevelId ?? 0) === 0;
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = Math.max(finalHp, 1400);
+      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
     }
     const renderScale = isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
@@ -650,7 +657,7 @@ export class GameEngine {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     const damage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : stats.coinValue || 1;
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
@@ -890,7 +897,10 @@ export class GameEngine {
     return enemy;
   }
 
-  public upgradeWeapon(weaponId: string): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
+  public upgradeWeapon(
+    weaponId: string,
+    synergisticUpgradeId?: string
+  ): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
     const player = this.state.player;
     if (!player) {
       throw new Error('Cannot upgrade weapon: player is not initialized');
@@ -904,9 +914,21 @@ export class GameEngine {
         cd: 0,
         mastery: createWeaponMasteryState(),
         milestones: [],
+        synergisticUpgrades: [],
       };
+      if (synergisticUpgradeId) {
+        weapon.synergisticUpgrades.push(synergisticUpgradeId);
+      }
       player.weapons.push(weapon);
       return { weapon, pendingMilestone: null };
+    }
+
+    if (!Array.isArray(weapon.synergisticUpgrades)) {
+      weapon.synergisticUpgrades = [];
+    }
+
+    if (synergisticUpgradeId && !weapon.synergisticUpgrades.includes(synergisticUpgradeId)) {
+      weapon.synergisticUpgrades.push(synergisticUpgradeId);
     }
 
     if (weapon.level >= 8) {
@@ -940,6 +962,23 @@ export class GameEngine {
     }
 
     return { weapon, pendingMilestone: pending };
+  }
+
+  public applySynergisticUpgrade(weaponId: string, upgradeId: string): void {
+    const player = this.state.player;
+    if (!player) {
+      throw new Error('Cannot apply synergistic upgrade: player is not initialized');
+    }
+    const weapon = player.weapons?.find((w: any) => w.id === weaponId);
+    if (!weapon) {
+      throw new Error(`Cannot apply synergistic upgrade: weapon ${weaponId} not found`);
+    }
+    if (!Array.isArray(weapon.synergisticUpgrades)) {
+      weapon.synergisticUpgrades = [];
+    }
+    if (!weapon.synergisticUpgrades.includes(upgradeId)) {
+      weapon.synergisticUpgrades.push(upgradeId);
+    }
   }
 
   public chooseWeaponMilestone(weaponId: string, choiceId: string): any {
@@ -1578,6 +1617,94 @@ export class GameEngine {
     }
     this.spatialHash.rebuild(this.livingEnemies);
     evaluateBludickaAura(this.livingEnemies, this.state.lightSources, player);
+
+    // Step decor
+    if (this.state.decor) {
+      for (let i = 0; i < this.state.decor.length; i++) {
+        const d = this.state.decor[i];
+        if (d.animTime !== undefined) d.animTime += dt;
+
+        if (d.vx || d.vy) {
+          d.x += d.vx * dt;
+          d.y += d.vy * dt;
+          // Apply drag to káča
+          if (d.type === 'kaca') {
+            const drag = Math.max(0, 1 - 2.5 * dt);
+            d.vx *= drag;
+            d.vy *= drag;
+            if (Math.abs(d.vx) < 5) d.vx = 0;
+            if (Math.abs(d.vy) < 5) d.vy = 0;
+          }
+          // Wrap around approx bounds for ice floes
+          if (d.type === 'ice_floe') {
+            if (d.x > 1800) d.x = -1800;
+            if (d.x < -1800) d.x = 1800;
+            if (d.y > 1800) d.y = -1800;
+            if (d.y < -1800) d.y = 1800;
+          }
+        }
+
+        if (d.isObstacle) {
+          // Push player
+          if (player && player.hp > 0) {
+            const dx = player.x - d.x;
+            const dy = player.y - d.y;
+            const dist = Math.hypot(dx, dy);
+            const reach = player.radius + d.radius;
+            if (dist < reach) {
+              const overlap = reach - dist;
+              if (dist > 0.001) {
+                player.x += (dx / dist) * overlap;
+                player.y += (dy / dist) * overlap;
+              }
+              if (d.type === 'granny_stove' && Math.random() < 0.05) {
+                player.hp = Math.min(player.maxHp || 100, player.hp + 2);
+              }
+              if (d.type === 'ice_floe') {
+                player.x += d.vx * dt;
+              }
+              if (d.type === 'kaca' && dist < reach - 2) {
+                // Player kicks the top!
+                d.vx = (dx / dist) * -300;
+                d.vy = (dy / dist) * -300;
+              }
+            }
+          }
+          // Push enemies
+          for (let j = 0; j < this.livingEnemies.length; j++) {
+            const e = this.livingEnemies[j];
+            const edx = e.x - d.x;
+            const edy = e.y - d.y;
+            const edist = Math.hypot(edx, edy);
+            const ereach = (e.radius || 15) + d.radius;
+            if (edist < ereach) {
+              const eoverlap = ereach - edist;
+              if (edist > 0.001) {
+                e.x += (edx / edist) * eoverlap;
+                e.y += (edy / edist) * eoverlap;
+              }
+              if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
+                if (typeof e.takeDamage === 'function') {
+                  e.takeDamage(20, false, 'physical', player);
+                } else {
+                  e.hp -= 20;
+                  if (e.hp <= 0) e.isDefeated = true;
+                }
+                d.vx = (edx / edist) * -200;
+                d.vy = (edy / edist) * -200;
+              } else if (d.type === 'kaca') {
+                // Enemy kicks the top
+                d.vx = (edx / edist) * -150;
+                d.vy = (edy / edist) * -150;
+              }
+              if (d.type === 'ice_floe') {
+                e.x += d.vx * dt; // Carried by ice
+              }
+            }
+          }
+        }
+      }
+    }
 
     // Step drops
     if (this.state.drops) {

@@ -24,6 +24,14 @@ _Avoid_: wave spawner, AI director, spawn scheduler
 Dočasná anomálie a trhlina v zemi vyvolaná Režisérem výpravy, ze které vyvěrá neklid; lovec ji musí zapečetit setrváním v jejím kruhu dříve, než z ní vystoupí zuřivý netvor.
 _Avoid_: rift, portál, portal, spawner, trhlina
 
+**Mariáš ďáblů**:
+Bojová mechanika Pekelného Čerta, kdy ze svého balíčku pravidelně tasí mariášovou kartu (Srdce, Kule, Listy, Žaludy) s tematickým útokem či vyvoláním pekelné havěti.
+_Avoid_: card attack, boss deck, spell cards
+
+**Synergický upgrade**:
+Pokročilá varianta zbraňového vylepšení navázaná na zvolený folklórní rozmar a herní archetyp výpravy.
+_Avoid_: perk, weapon synergy, build upgrade
+
 ## Světlo a atmosféra
 
 **Petrolejka**:

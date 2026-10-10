@@ -1,5 +1,31 @@
 # Bubákov — Changelog
 
+## 2026-10-10 — Integrace Úrovně 0 (Předjaří), synergických upgradů zbraní, Mariáše ďáblů a responzivního HUDu
+
+- **Úroveň 0: Předjaří v Hrusicích (Tutorial & Prologue):**
+  - Rozšířen typ `GameLevelId` na `0 | 1 | 2 | 3 | 4 | 5 | 6` v `types.ts`.
+  - Zavedena definice úrovně v `levels.ts` a výchozí odemčení v `levelUnlocks.ts`.
+  - Nový herní obsah: protivníci Probuzená žába, Jarní vodníček a boss Vodník z tajících ker (Hastrman) s mechanikou Březnové povodně.
+  - Simulace a vykreslování jarních překážek: interaktivní plující kry (`ice_floe`), roztočená dřevěná káča (`kaca`), babiččina kachlová kamna (`granny_stove`) a skály (`rock`).
+  - Atmosférické pozadí `spring_river` a počasí `ice_drift` (tání ker s tušovými konturami).
+  - 3 folklórní rozmary pro Předjaří v `runArchetypes.ts`: Rychlé Tání, Jarní Probuzení, Březnový Chlad.
+  - Kompletní CZ/EN lokalizace v `cs.ts` a `en.ts`.
+  - Nová testovací sada `tests/level0Predjari.test.ts`.
+- **Synergické upgrady zbraní (`synergisticUpgrades.ts`):**
+  - Vytvořen datový model synergických variant zbraňových upgradů pro herní archetypy (swarm, burst, tempo, heavy).
+  - Aplikace variant v enginu (`upgradeWeapon` a `applySynergisticUpgrade` v `engine.ts`).
+  - Podpora výpočtu statistik v `weaponMilestones.ts` včetně násobitele projektilů (`projectileCountMult`).
+  - Nová testovací sada `tests/synergisticWeaponUpgrades.test.ts`.
+- **Mariáš ďáblů pro Čerta (`boss-engine-update`):**
+  - Do souboje s pekelným Čertem v `App.tsx` začleněna mechanika tažení mariášových karet (Srdce – léčení/plamenný kruh, Kule – vějíř střel, Listy – vyvolání sazových rarášků, Žaludy – zuřivý výpad).
+  - Časovač `certMariashCd` registrován ve stavu enginu (`engineState.ts`).
+- **Responzivní Boss HUD (`index.css`):**
+  - Varovný banner `#boss-warning-banner` a lišta `#boss-bar-wrap` upraveny pro bezpečné zalamování a responzivní zobrazení na mobilních zařízeních (`max-width: 768px`).
+- **Doménový model a úklid větví:**
+  - V `GLOSSARY.md` zapsány kanonické pojmy *Mariáš ďáblů* a *Synergický upgrade*.
+  - Ponecháno Ladovské kvašové svícení dle ADR 0003; starší generic modul dynamického svícení odmítnut.
+  - Větve `retire-standalone`, `sync-production-cleanup-zip` a `new-food-weapons` potvrzeny jako plně absorbované.
+
 ## 2026-10-10 — Ladovské kvašové svícení (Storybook Illumination System)
 
 - **Ladovská kvašová renderovací pipeline (`storybookLightingRenderer.ts`):**

@@ -600,6 +600,11 @@ class DecorItem {
   type: string;
   scale: number;
   flip: number;
+  isObstacle: boolean;
+  radius: number;
+  vx: number;
+  vy: number;
+  animTime: number;
 
   constructor(x: number, y: number, type: string, scale = 1, flip = 1) {
     this.x = x;
@@ -607,6 +612,30 @@ class DecorItem {
     this.type = type;
     this.scale = scale;
     this.flip = flip;
+    this.vx = 0;
+    this.vy = 0;
+    this.animTime = Math.random() * 100;
+
+    if (type === 'cottage') {
+      this.isObstacle = true;
+      this.radius = 45;
+    } else if (type === 'rock') {
+      this.isObstacle = true;
+      this.radius = 25;
+    } else if (type === 'ice_floe') {
+      this.isObstacle = true;
+      this.radius = 30;
+      this.vx = 10 + Math.random() * 10;
+    } else if (type === 'granny_stove') {
+      this.isObstacle = true;
+      this.radius = 35;
+    } else if (type === 'kaca') {
+      this.isObstacle = true;
+      this.radius = 12;
+    } else {
+      this.isObstacle = false;
+      this.radius = 0;
+    }
   }
 
   draw(ctx: CanvasRenderingContext2D, season: Season, theme?: string, time = 0, isNight = false) {
@@ -823,6 +852,92 @@ class DecorItem {
       }
     } else if (this.type === 'bozi_muka') {
       drawBoziMukaDecor(ctx, 0, 0, 1, time, isNight);
+    } else if (this.type === 'rock') {
+      Lada.setupPath(ctx, '#95A5A6', COLORS.ink, 3);
+      ctx.beginPath();
+      ctx.moveTo(-25, 10);
+      ctx.lineTo(-15, -20);
+      ctx.lineTo(5, -25);
+      ctx.lineTo(20, -5);
+      ctx.lineTo(15, 15);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-10, -5);
+      ctx.lineTo(5, 5);
+      ctx.stroke();
+    } else if (this.type === 'ice_floe') {
+      Lada.setupPath(ctx, '#E5F3F9', COLORS.ink, 3.5);
+      ctx.beginPath();
+      ctx.moveTo(-35, 5);
+      ctx.lineTo(-20, -15);
+      ctx.lineTo(15, -20);
+      ctx.lineTo(35, -5);
+      ctx.lineTo(25, 15);
+      ctx.lineTo(-15, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.moveTo(-30, 0);
+      ctx.lineTo(-15, -10);
+      ctx.lineTo(10, -15);
+      ctx.lineTo(25, -5);
+      ctx.lineTo(15, 5);
+      ctx.lineTo(-10, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (this.type === 'granny_stove') {
+      Lada.setupPath(ctx, '#F8F9F9', COLORS.ink, 3.5);
+      ctx.fillRect(-35, -50, 70, 70);
+      ctx.strokeRect(-35, -50, 70, 70);
+      ctx.fillStyle = '#1A1A1A';
+      ctx.beginPath();
+      ctx.arc(-15, -20, 15, Math.PI, 0);
+      ctx.lineTo(0, -5);
+      ctx.lineTo(-30, -5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      Lada.setupPath(ctx, '#90A4AE', COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.arc(20, 0, 15, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#FAD7A1';
+      ctx.beginPath();
+      ctx.arc(20, -25, 12, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#C0392B';
+      ctx.beginPath();
+      ctx.arc(20, -25, 13, Math.PI, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    } else if (this.type === 'kaca') {
+      const rot = (this.animTime || 0) * 15;
+      ctx.translate(0, -10);
+      ctx.rotate(rot);
+      Lada.setupPath(ctx, '#E67E22', COLORS.ink, 2);
+      ctx.beginPath();
+      ctx.moveTo(-10, -5);
+      ctx.lineTo(10, -5);
+      ctx.lineTo(15, 5);
+      ctx.lineTo(0, 20);
+      ctx.lineTo(-15, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#D35400';
+      ctx.beginPath();
+      ctx.arc(0, -5, 10, Math.PI, 0);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, -15);
+      ctx.lineTo(0, -25);
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -855,6 +970,7 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     mill_forge: 30,
     ruined_castle: 32,
     dragon_cave: 24,
+    spring_river: 45,
   };
 
   const target = themeDensity[level.theme] || 32;
@@ -2930,6 +3046,68 @@ export default function App() {
                   }
                 }
 
+                // 0. Mariáš ďáblů — Čert pravidelně vytáhne jednu kartu a spustí tematický útok.
+                engine.certMariashCd -= dt;
+                if (engine.certMariashCd <= 0) {
+                  engine.certMariashCd = isPhase2 ? 13.5 : 18.0;
+                  const cards = [
+                    { label: 'SRDCE', icon: '♥', color: '#E11D48' },
+                    { label: 'KULE', icon: '♦', color: '#F59E0B' },
+                    { label: 'LISTY', icon: '♣', color: '#16A34A' },
+                    { label: 'ŽALUDY', icon: '♠', color: '#7C3AED' },
+                  ];
+                  const card = cards[Math.floor(Math.random() * cards.length)];
+                  engine.texts.push(new DamageText(cert.x, cert.y - 95, `MARIÁŠ: ${card.icon} ${card.label}!`, card.color, true));
+
+                  if (card.label === 'SRDCE') {
+                    const heal = cert.maxHp * (isPhase2 ? 0.035 : 0.025);
+                    cert.hp = Math.min(cert.maxHp, cert.hp + heal);
+                    const radius = isPhase2 ? 250 : 210;
+                    if (Math.hypot(player.x - cert.x, player.y - cert.y) <= radius) {
+                      player.takeDamage(isPhase2 ? 24 : 18, 'fire');
+                    }
+                    for (let i = 0; i < 18; i++) {
+                      const a = (i / 18) * Math.PI * 2;
+                      engine.projectiles.push({
+                        x: cert.x, y: cert.y, vx: Math.cos(a) * 150, vy: Math.sin(a) * 150,
+                        angle: a, speed: 150, dmg: isPhase2 ? 22 : 16, radius: 10, type: 'fire',
+                        visual: 'hell_spark', life: 2.8, maxLife: 2.8, isEnemy: true, pushback: 20,
+                        statusText: 'SRDCE! ♥', dead: false,
+                      });
+                    }
+                  } else if (card.label === 'KULE') {
+                    const baseAng = Math.atan2(player.y - cert.y, player.x - cert.x);
+                    const count = isPhase2 ? 5 : 3;
+                    for (let i = 0; i < count; i++) {
+                      const spread = (i - (count - 1) / 2) * 0.18;
+                      const a = baseAng + spread;
+                      engine.projectiles.push({
+                        x: cert.x, y: cert.y, vx: Math.cos(a) * 300, vy: Math.sin(a) * 300,
+                        angle: a, speed: 300, dmg: isPhase2 ? 30 : 23, radius: 13, type: 'fire',
+                        visual: 'hell_spark', life: 2.6, maxLife: 2.6, isEnemy: true, pushback: 28,
+                        statusText: 'KULE! ♦', dead: false,
+                      });
+                    }
+                  } else if (card.label === 'LISTY') {
+                    const count = isPhase2 ? 3 : 2;
+                    for (let i = 0; i < count; i++) {
+                      const a = Math.random() * Math.PI * 2;
+                      engine.enemies.push(createEnemyInstance(
+                        'sazovy_rarach',
+                        cert.x + Math.cos(a) * 110,
+                        cert.y + Math.sin(a) * 110,
+                        isPhase2 ? 1.15 : 1.0
+                      ));
+                    }
+                  } else {
+                    const dashAng = Math.atan2(player.y - cert.y, player.x - cert.x);
+                    cert.vx = Math.cos(dashAng) * (isPhase2 ? 340 : 285);
+                    cert.vy = Math.sin(dashAng) * (isPhase2 ? 340 : 285);
+                    cert.aiState = 'charge';
+                    cert.aiTimer = isPhase2 ? 0.75 : 0.55;
+                  }
+                }
+
                 // 1. Devil's Stomp (Pekelný dupák - ring of spinning hot embers)
                 engine.certStompTimer -= dt;
                 if (engine.certStompTimer <= 0) {
@@ -4670,6 +4848,8 @@ export default function App() {
           ctx.fillStyle = getStorybookSnowColor(phase.id, kurazRatio);
         } else if (curLvl.theme === 'autumn_graveyard') {
           ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
+        } else if (curLvl.theme === 'spring_river') {
+          ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#D6EAF8' : (phase.id === 'dusk' ? '#9AA9BB' : '#1B2A38');
         } else {
           ctx.fillStyle = phase.skyColor;
         }
@@ -5372,6 +5552,39 @@ export default function App() {
             const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
             const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
             ctx.drawImage(fogCanvas, sx - 120, sy - 120);
+          }
+        } else if (curLvl.weatherEffect === 'ice_drift') {
+          const t = engine.uiTime;
+          Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 3);
+          for (let i = 0; i < 15; i++) {
+            const sx = ((i * 220 + t * 35) % (canvas.width + 400)) - 200;
+            const sy = ((i * 87 + Math.sin(t * 0.2 + i) * 12) % (canvas.height + 300)) - 150;
+            const rot = Math.sin(t * 0.15 + i) * 0.15;
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(rot);
+
+            ctx.beginPath();
+            ctx.moveTo(-35, -5);
+            ctx.lineTo(-5, -20);
+            ctx.lineTo(25, -10);
+            ctx.lineTo(40, 5);
+            ctx.lineTo(10, 20);
+            ctx.lineTo(-20, 15);
+            ctx.closePath();
+
+            ctx.fillStyle = (i % 2 === 0) ? '#FFFFFF' : '#E9F1F7';
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-10, -5);
+            ctx.lineTo(10, 5);
+            ctx.stroke();
+
+            ctx.restore();
           }
         }
       }

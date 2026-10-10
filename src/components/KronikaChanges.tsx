@@ -9,6 +9,20 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '9. října 2026',
+    title: 'Začátečnická úroveň: 0. Předjaří v Hrusicích (Tutorial & Prologue)',
+    summary: 'Do hry přibyla nová výchozí úroveň Předjaří v Hrusicích. Březnové tající kry, probuzené žabky a vodníci vytvářejí vlídné prostředí pro první krůčky nového hráče, doplněné o interaktivní dřevěnou káču, léčivá babiččina kamna a jarní tání.',
+    items: [
+      '🌱 Výchozí začátečnická úroveň: Úroveň 0. Předjaří v Hrusicích nabízí klidnější tempo (délka 2–3 minuty) a bezpečné seznámení s pohybem, uhýbáním a zbraněmi.',
+      '🐸 Výuková křivka bossů: Miniboss Probuzená Žába (30 s, ~220 HP), Jarní Vodníček (75 s, ~400 HP) a finální Vodník z tajících ker (120 s, ~500 HP) s mechanikou Březnová povodeň.',
+      '🧊 Interaktivní tající kry: Plující ledové kry na řece pozvolna unášejí lovce i potvory ve směru proudu.',
+      '🌀 Dřevěná káča: Roztočená lidová káča, kterou lze kopnutím vrhnout proti davu monster a zraňovat je.',
+      '👵 Babiččina kamna: Teplá kachlová kamna s babičkou v šátku, kde si lovec v duchu rčení „Březen, za kamna vlezem“ zahřátím doplňuje Kuráž.',
+      '🌿 Jarní ladovská atmosféra: Svěží rašící vrby s kočičkami, tání na řece a jemné poletování třpytivých ledových krystalků ve vánku.',
+      '🎭 Plné zapojení do Režiséra výpravy: 3 folklórní Rozmary (Rychlé Tání, Jarní Probuzení, Březnový Chlad), integrace do Testovacího módu i kompletní lokalizace (CZ/EN).',
+    ],
+  },
+  {
     date: '8. října 2026',
     title: 'Stabilita běhového prostředí: Sjednocení instancí Reactu a spolehlivý chod',
     summary: 'Oprava inicializace Reactu v sestavovacím prostředí Vite. Konfigurace zajišťuje striktně jedinou instanci Reactu v celé aplikaci a eliminuje chyby spojené s mezipamětí.',

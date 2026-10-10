@@ -11,10 +11,51 @@ export interface RunRozmarDef {
   threatMultiplier: number;
   anomalyWindow: [number, number]; // [startSec, endSec] for Bubacka dira
   preferredEnemyIds: string[];
-  formationBias: 'hammer_anvil' | 'architects' | 'escort' | 'balanced';
+  formationBias: 'hammer_anvil' | 'architects' | 'escort' | 'balanced' | 'swarms' | 'pincer';
 }
 
 export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
+  0: [
+    {
+      id: 'tani_ker',
+      levelId: 0,
+      name: 'Rychlé Tání',
+      subtitle: 'Voda stoupá a kry se lámou',
+      icon: '🧊',
+      description: 'Záplava tajících ker přináší chlad. Jarní havěť je agresivnější.',
+      weatherOverride: 'ice_drift',
+      threatMultiplier: 1.05,
+      anomalyWindow: [50, 75],
+      preferredEnemyIds: ['vodnicek', 'zaba'],
+      formationBias: 'balanced',
+    },
+    {
+      id: 'jarni_probuzeni',
+      levelId: 0,
+      name: 'Jarní Probuzení',
+      subtitle: 'V mezích pučí blatouchy a skřítci ožívají',
+      icon: '🌼',
+      description: 'Slunce prohřívá břehy potoka. Z mechu vylézají blatouchoví skřítci a šotci.',
+      weatherOverride: 'ice_drift',
+      threatMultiplier: 0.95,
+      anomalyWindow: [40, 65],
+      preferredEnemyIds: ['blatouch', 'sotek'],
+      formationBias: 'swarms',
+    },
+    {
+      id: 'breznovy_chlad',
+      levelId: 0,
+      name: 'Březnový Chlad',
+      subtitle: 'Ranní mrazík a rákosový opar',
+      icon: '🌱',
+      description: 'Chladný jarní vánek zvedá opar nad řekou. Hladové myši a divocí rarášci šmejdí po polích.',
+      weatherOverride: 'ice_drift',
+      threatMultiplier: 1.0,
+      anomalyWindow: [60, 85],
+      preferredEnemyIds: ['mysak', 'rarach'],
+      formationBias: 'pincer',
+    },
+  ],
   1: [
     {
       id: 'rybnicni_zaplava',

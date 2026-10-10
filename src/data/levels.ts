@@ -3,6 +3,118 @@ import type { GameLevelDef, GameLevelId } from '../types';
 export type { GameLevelDef } from '../types';
 
 var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
+	0: {
+		id: 0,
+		name: "0. Předjaří v Hrusicích",
+		shortTitle: "Předjaří",
+		subtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
+		theme: "spring_river",
+		season: "spring",
+		icon: "🌱",
+		badge: "Začátečnická úroveň",
+		description: "Sníh pomalu taje a řeka je plná březnových ker tajícího ledu. Příroda se probouzí a s ní i vyhladovělá havěť.",
+		lore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole a odežeňte vodníky z tajících ker.",
+		unlockRequirementText: "Výchozí začátečnická úroveň – ideální pro první krůčky",
+		skyColor: "#D6EAF8",
+		nightSkyColor: "#1B2A38",
+		groundColor: "#D0D3D4",
+		ambientTint: "rgba(244, 208, 63, 0.05)",
+		weatherEffect: "ice_drift",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"ice_floe",
+			"granny_stove",
+			"kaca"
+		],
+		miniBoss: {
+			id: "zaba",
+			name: "🐸 Probuzená Žába",
+			warning: "🐸 POZOR: Z BAHNA SKÁČE OBŘÍ PROBUZENÁ ŽÁBA!",
+			time: 30,
+			kills: 20,
+			multiplier: 4.5
+		},
+		midBoss: {
+			id: "vodnicek",
+			name: "💧 Jarní Vodníček",
+			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
+			time: 75,
+			kills: 60,
+			multiplier: 4.0
+		},
+		finalBoss: {
+			id: "hastrman",
+			name: "🌊 Vodník z tajících ker",
+			warning: "⚠️ PŘICHÁZÍ ŠÉF ÚROVNĚ: VODNÍK JARNÍHO TÁNÍ! ⚠️",
+			time: 120,
+			kills: 100,
+			multiplier: 0.95
+		},
+		spawnPools: {
+			noon: [
+				"zaba",
+				"mysak",
+				"sotek"
+			],
+			afternoon: [
+				"zaba",
+				"blatouch",
+				"sotek",
+				"rarach"
+			],
+			dusk: [
+				"blatouch",
+				"topivec",
+				"vodnicek",
+				"rarach"
+			],
+			night: [
+				"topivec",
+				"vodnicek",
+				"ropucha",
+				"bludicka"
+			],
+			midnight: [
+				"vodnicek",
+				"ropucha",
+				"topivec",
+				"bludicka"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "zaba",
+				name: "Rybniční žabka",
+				icon: "🐸",
+				role: "Probuzená havěť"
+			},
+			{
+				id: "blatouch",
+				name: "Blatouchový skřítek",
+				icon: "🌼",
+				role: "Jarní diblík"
+			},
+			{
+				id: "vodnicek",
+				name: "Vodníček",
+				icon: "💧",
+				role: "Obyvatel ker"
+			},
+			{
+				id: "hastrman",
+				name: "Vodník Jarního Tání",
+				icon: "🌊",
+				role: "Hlavní boss"
+			}
+		],
+		bossMechanic: {
+			label: "Březnová povodeň",
+			description: "Tající ledy zvedají hladinu řeky a vodník z ní povolává další havěť.",
+			cadenceSeconds: 15
+		}
+	},
 	1: {
 		id: 1,
 		name: "1. Náves a rybník Brčálník",

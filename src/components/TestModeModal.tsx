@@ -635,6 +635,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1, onOp
 								gap: "12px"
 							},
 							children: [
+								0,
 								1,
 								2,
 								3,
