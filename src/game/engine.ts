@@ -398,10 +398,9 @@ export class GameEngine {
     initialWeapons.forEach(ensureWeaponMilestones);
 
     const wallBonusHp = (meta?.wallLevel || 0) * 25;
-    const millBonusSpeed = (meta?.millLevel || 0) * 15;
+    const millBonusSpeed = (meta?.millLevel || 0) * 10;
     const scarecrowBonusPickup = (meta?.scarecrowLevel || 0) * 25;
-    const ovenDmgMult = 1 + (meta?.ovenLevel || 0) * 0.1;
-    const wallDmgRed = Math.min(0.5, (meta?.wallLevel || 0) * 0.05);
+    const wallDmgRed = Math.min(0.5, (meta?.wallLevel || 0) * 0.04);
 
     const self = this;
 
@@ -417,7 +416,7 @@ export class GameEngine {
       luck: 0,
       weapons: initialWeapons,
       _firingWeapon: null as any,
-      damageMultiplier: ovenDmgMult,
+      damageMultiplier: 1,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
@@ -431,7 +430,8 @@ export class GameEngine {
       regenTimer: 0,
       invulnerabilityTimer: 0,
       dodgeCooldown: 0,
-      tempShield: (meta?.tavernShieldLevel || 0) > 0 ? 40 + (meta?.tavernShieldLevel || 0) * 20 : 0,
+      tavernShieldLevel: meta?.tavernShieldLevel || 0,
+      tempShield: 0,
       herbTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,

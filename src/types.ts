@@ -326,8 +326,9 @@ export interface VillageBuilding {
   role: string;
   helpers: string;
   story: string;
+  baseCost: number;
   bonusDesc: (lvl: number) => string;
-  cost: (lvl: number) => number;
+  cost: (lvl: number, totalVillageLevels?: number) => number;
   canvasDrawer: 'drawOvenScene' | 'drawScarecrowScene' | 'drawMillScene' | 'drawWallScene';
 }
 

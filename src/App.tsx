@@ -76,6 +76,7 @@ import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
 import { VillageView } from './components/VillageView';
+import { calculateTotalVillageInvested } from './data/village';
 import { TouchControls } from './components/TouchControls';
 import { HunterUnlockModal } from './components/HunterUnlockModal';
 import { getHunterProgress, HUNTER_UNLOCKS, HunterProgress, getActiveUnlockingHunter } from './data/hunterUnlocks';
@@ -1715,10 +1716,9 @@ export default function App() {
     initialWeapons.forEach(ensureWeaponMilestones);
 
     const wallBonusHp = (meta.wallLevel || 0) * 25;
-    const millBonusSpeed = (meta.millLevel || 0) * 15;
+    const millBonusSpeed = (meta.millLevel || 0) * 10;
     const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
-    const ovenDmgMult = 1 + (meta.ovenLevel || 0) * 0.1;
-    const wallDmgRed = Math.min(0.5, (meta.wallLevel || 0) * 0.05);
+    const wallDmgRed = Math.min(0.5, (meta.wallLevel || 0) * 0.04);
 
     const player = {
       x: 0,
@@ -1732,7 +1732,7 @@ export default function App() {
       luck: 0,
       weapons: initialWeapons,
       _firingWeapon: null as any,
-      damageMultiplier: ovenDmgMult,
+      damageMultiplier: 1,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
@@ -1746,7 +1746,8 @@ export default function App() {
       regenTimer: 0,
       invulnerabilityTimer: 0,
       dodgeCooldown: 0,
-      tempShield: (meta.tavernShieldLevel || 0) > 0 ? 40 + ((meta.tavernShieldLevel || 0) * 20) : 0,
+      tavernShieldLevel: meta.tavernShieldLevel || 0,
+      tempShield: 0,
       herbTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
@@ -2668,6 +2669,28 @@ export default function App() {
       ...meta,
       krejcary: meta.krejcary - cost,
       [key]: curLevel + 1,
+    });
+  };
+
+  // Village refund handler (100% respec)
+  const handleVillageRefund = () => {
+    const totalRefund = calculateTotalVillageInvested(meta);
+    if (totalRefund <= 0) return;
+    saveMeta({
+      ...meta,
+      krejcary: meta.krejcary + totalRefund,
+      scarecrowLevel: 0,
+      millLevel: 0,
+      forestLevel: 0,
+      wallLevel: 0,
+      forgeLevel: 0,
+      ovenLevel: 0,
+      undeadLevel: 0,
+      bellLevel: 0,
+      regenLevel: 0,
+      tavernShieldLevel: 0,
+      waterLevel: 0,
+      churchLevel: 0,
     });
   };
 
@@ -4079,13 +4102,13 @@ export default function App() {
             if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
             if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
-            // Player regeneration
+            // Player regeneration (+2 Kuráže per 5s per level from Bylinková zahrádka)
             if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 3);
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
                 player.regenTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 3} 🍺`, COLORS.green));
+                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🌿`, COLORS.green));
               }
             }
             if (player.type === 'korenarka' && player.hp < player.maxHp) {
@@ -4095,6 +4118,32 @@ export default function App() {
                 player.herbTimer = 0;
                 engine.texts.push(new DamageText(player.x, player.y - 45, '+2 🌿', COLORS.green));
               }
+            }
+
+            // Zoufalá kuráž visual feedback & aura
+            const kurazRatioNow = player.maxHp > 0 ? player.hp / player.maxHp : 1;
+            const tavernLvl = player.tavernShieldLevel || 0;
+            if (tavernLvl > 0 && kurazRatioNow <= 0.35) {
+              if (!player._inZoufalaKurazState) {
+                player._inZoufalaKurazState = true;
+                engine.texts.push(new DamageText(player.x, player.y - 50, '🍺 ZOUFALÁ KURÁŽ!', '#F97316', true));
+                sound.levelUp();
+              }
+              player._zoufalaParticleTimer = (player._zoufalaParticleTimer || 0) + dt;
+              if (player._zoufalaParticleTimer >= 0.25) {
+                player._zoufalaParticleTimer = 0;
+                engine.particles.push({
+                  x: player.x + (Math.random() - 0.5) * 24,
+                  y: player.y + (Math.random() - 0.5) * 24,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: -30 - Math.random() * 30,
+                  life: 0.45,
+                  color: '#EA580C',
+                  size: 3.5,
+                });
+              }
+            } else {
+              player._inZoufalaKurazState = false;
             }
 
             // Night Watchman passive holy aura (throttled to 4 ticks/sec instead of 60 ticks/sec to prevent damage text flood)
@@ -4671,7 +4720,9 @@ export default function App() {
               if (curDist < player.radius + d.radius + 14 || dist < player.radius + d.radius + 14) {
                 d.dead = true;
                 if (d.type === 'coin') {
-                  const val = d.value || 1;
+                  const undeadLvl = metaRef.current.undeadLevel || 0;
+                  const rawVal = d.value || 1;
+                  const val = Math.max(1, Math.round(rawVal * (1 + undeadLvl * 0.10)));
                   sound.coin();
                   engine.coins += val;
                   if (val >= 15) {
@@ -4680,7 +4731,9 @@ export default function App() {
                     engine.texts.push(new DamageText(player.x, player.y - 40, `+${val} kr. (Groš)`, '#E2E8F0'));
                   }
                 } else if (d.type === 'gingerbread') {
-                  const val = d.value || 1;
+                  const ovenLvl = metaRef.current.ovenLevel || 0;
+                  const rawVal = d.value || 1;
+                  const val = Math.max(1, Math.round(rawVal * (1 + ovenLvl * 0.10)));
                   engine.gingerbread += val;
                   const size = d.size || 'small';
                   sound.gingerbreadPickup();
@@ -4707,8 +4760,8 @@ export default function App() {
                   const waterLevel = metaRef.current.waterLevel || 0;
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
                   player.hp = Math.min(player.maxHp, player.hp + potionHeal);
-                  player.invulnerabilityTimer = waterLevel * 2;
-                  engine.texts.push(new DamageText(player.x, player.y - 45, '+30 Kuráž (Jitrnice)', COLORS.green, true));
+                  player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
+                  engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
                   player.hp = Math.min(player.maxHp, player.hp + 15);
@@ -7620,12 +7673,13 @@ export default function App() {
             }
 
             // Surprise coin burst from enemy pouch
-            const coinBonusChance = isUndead ? 0.32 : isDemons ? 0.30 : 0.18;
+            const undeadLvl = metaRef.current.undeadLevel || 0;
+            const coinBonusChance = (isUndead ? 0.32 : isDemons ? 0.30 : 0.18) + (undeadLvl * 0.01);
             if (Math.random() < coinBonusChance) {
               const rollDenom = Math.random();
               let coinVal = 1;
               let coinTxt: string | undefined = undefined;
-              if (rollDenom < 0.08 || (isDemons && rollDenom < 0.16)) {
+              if (rollDenom < (0.08 + undeadLvl * 0.01) || (isDemons && rollDenom < 0.16)) {
                 coinVal = 15 + Math.floor(Math.random() * 10);
                 coinTxt = 'Zlatý tolar!';
               } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
@@ -7638,7 +7692,7 @@ export default function App() {
           }
 
           // 4. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
-          const chestThreshold = Math.max(50, DROP_THRESHOLDS.chest - 20 * (metaRef.current.undeadLevel || 0));
+          const chestThreshold = DROP_THRESHOLDS.chest;
           if (eng.pointsChest >= chestThreshold) {
             eng.pointsChest -= chestThreshold;
             spawnScatterDrop('chest', { speed: 45, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
@@ -9812,6 +9866,7 @@ export default function App() {
               <VillageView
                 meta={meta}
                 onUpgrade={handleVillageUpgrade}
+                onRefundAll={handleVillageRefund}
                 onClose={() => {
                   setMenuScreen('stage');
                   setGameState('menu');

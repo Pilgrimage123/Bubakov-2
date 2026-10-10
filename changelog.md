@@ -1,5 +1,28 @@
 # Bubákov — Changelog
 
+## 2026-10-10 — Vyvážení a harmonizace hospodských vylepšení, Obecní přirážka a Zoufalá kuráž
+
+- **Obecní přirážka (Sdílené zdražování vesnice):**
+  - Zaveden vzorec ceny se sdílenou přirážkou za rozvoj vsi: každá zakoupená úroveň jakékoliv budovy zvýší cenu všech dalších nákupů o +15 % základní ceny.
+  - Odstupňovány základní ceny budov do 3 úrovní (30 / 50 / 75 krejcarů) podle dopadu na hru.
+  - Úrovně jsou neomezené s bezpečnými asymptotickými stropy pro obranné a časové efekty (redukce zranění max 50 %, nezranitelnost z lektvaru max 5 s, odolnost proti zpomalení max 80 %).
+- **Vrácení krejcarů (100% bezplatný respec):**
+  - Deterministický výpočet hodnoty investovaných krejcarů `calculateTotalVillageInvested` umožňující kdykoliv bezplatně vyrovnat obecní účet a přerozdělit úspory.
+  - Do záhlaví hospody U Černého kocoura přidán informační panel rozvoje vsi s procentem přirážky a tlačítkem `🔄 Vrátit krejcary`.
+- **Harmonizace 12 budov a folklórní pomocníci:**
+  - Všech 12 budov důsledně sjednoceno na Ladovský motiv zkrocených strašidel pomáhajících vesničanům (rarášci, hastrmani, divoženky, diblíci, ohniví mužíci, klekánice, bezhlaví furianti, bludičky).
+  - Odstraněna dřívější duplicita pivovarských ležáků; regenerace Kuráže sjednocena v Bylinkové zahrádce (+2 Kuráže / 5 s za úroveň).
+- **Nové herní efekty:**
+  - **Perníková vůně (Pekárna):** +10 % za úroveň k hodnotě všech sebraných Perníčků.
+  - **Poklady starých časů (Hřbitovní brána):** +10 % za úroveň k hodnotě Krejcarů a +1 % šance za úroveň na vypadnutí stříbrného tolaru z nepřítele.
+  - **Zoufalá kuráž (Šenkýřova kuráž):** Při poklesu Kuráže pod 35 % aktivuje lovec +15 % poškození za úroveň a jantarovou Ladovskou auru s plovoucím textem `🍺 ZOUFALÁ KURÁŽ!`.
+- **Doménový model a dokumentace:**
+  - Založen záznam architektonického rozhodnutí `docs/adr/0004-hospodska-ekonomika-a-obecni-prirazka.md`.
+  - Do `GLOSSARY.md` zapsány kanonické pojmy: *Obecní přirážka*, *Vrácení krejcarů*, *Zoufalá kuráž*.
+- **Testy a lokalizace:**
+  - Nová testovací sada `tests/villageEconomy.test.ts` (6 testů, ověřeno všech 142 testů v projektu).
+  - Kompletní aktualizace CZ/EN lokalizací v `cs.ts` a `en.ts`.
+
 ## 2026-10-10 — Integrace Úrovně 0 (Předjaří), synergických upgradů zbraní, Mariáše ďáblů a responzivního HUDu
 
 - **Úroveň 0: Předjaří v Hrusicích (Tutorial & Prologue):**

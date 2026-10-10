@@ -32,6 +32,11 @@ _Avoid_: card attack, boss deck, spell cards
 Pokročilá varianta zbraňového vylepšení navázaná na zvolený folklórní rozmar a herní archetyp výpravy.
 _Avoid_: perk, weapon synergy, build upgrade
 
+**Zoufalá kuráž**:
+Posílení útočné síly lovce probouzející se při poklesu Kuráže pod 35 %, inspirované odhodláním v hospodské rvačce.
+_Avoid_: berserk, rage mode, low hp buff, záchvat zuřivosti
+
+
 ## Světlo a atmosféra
 
 **Petrolejka**:
@@ -83,3 +88,12 @@ _Avoid_: run, zápas, kolo, match
 **Vesnice**:
 Místní zázemí a hospoda U Černého kocoura, kde hráč za nastřádané krejcary investuje do trvalých obecních vylepšení (Kovářská výheň, Kaple svaté vlny, Šenkýřův štít).
 _Avoid_: hub, lobby, město
+
+**Obecní přirážka**:
+Pravidlo sdíleného zdražování obecních vylepšení, kdy každý zakoupený stupeň libovolné budovy ve vsi zvyšuje cenu všech ostatních budov.
+_Avoid_: daň, globální inflace, cost multiplier, village tax
+
+**Vrácení krejcarů**:
+Bezplatné a úplné vyrovnání všech investic do obecních budov v hospodě, umožňující volné přerozdělení nastřádaných krejcarů.
+_Avoid_: respec, reset vylepšení, refund, přerozdělení bodů
+
