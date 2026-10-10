@@ -8524,6 +8524,81 @@ var Lada = {
 		ctx.fill();
 		ctx.restore();
 	},
+	drawPetrolejka(ctx: any, x: number, y: number, scale = 1, time = 0, kurazRatio = 1) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(scale, scale);
+
+		// Wire handle
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.arc(0, -18, 9, Math.PI, 0);
+		ctx.stroke();
+
+		// Brass cap
+		this.setupPath(ctx, "#D97706", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.rect(-6, -18, 12, 5);
+		ctx.fill();
+		ctx.stroke();
+
+		// Glass chimney cylinder
+		ctx.fillStyle = "rgba(254, 240, 138, 0.28)";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.ellipse(0, -9, 7.5, 9.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Inner kerosene flame
+		const isCritical = kurazRatio < 0.25;
+		const flicker = isCritical
+			? (Math.sin(time * 26) * 1.5 + Math.sin(time * 42)) * 0.8
+			: Math.sin(time * 12) * 1.2;
+		const flameH = isCritical ? 5 + flicker : 9 + flicker;
+
+		// Soft flame warm aura
+		ctx.fillStyle = isCritical ? "rgba(239, 68, 68, 0.35)" : "rgba(251, 191, 36, 0.45)";
+		ctx.beginPath();
+		ctx.arc(0, -9, isCritical ? 8 : 14, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Flame teardrop
+		ctx.fillStyle = isCritical ? "#F97316" : "#F59E0B";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(-2.5, -6);
+		ctx.quadraticCurveTo(-3.5, -6 - flameH * 0.5, flicker * 0.4, -6 - flameH);
+		ctx.quadraticCurveTo(3.5, -6 - flameH * 0.5, 2.5, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Bright white-yellow inner wick core
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.arc(0, -6 - flameH * 0.4, 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Brass oil font / tank base
+		this.setupPath(ctx, "#B45309", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-8, 0, 16, 7);
+		ctx.fill();
+		ctx.stroke();
+
+		// Bottom brass rim
+		ctx.fillStyle = "#92400E";
+		ctx.beginPath();
+		ctx.rect(-9.5, 6, 19, 3);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
+	},
 	drawOsikovyPrutSlash(ctx: any, s: any) {
 		const maxLife = s.maxLife || 0.30;
 		const progress = Math.max(0, Math.min(1, 1 - (s.life / maxLife)));

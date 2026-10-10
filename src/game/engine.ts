@@ -31,6 +31,21 @@ import {
 } from '../data/holy';
 import { performDropFusion, applyMagnetWave, registerKillAndCheckCombo, createDropInstance, type DropSpawnOptions } from './drops';
 import { RunDirector } from './director';
+import { getCurrentDayPhase } from '../constants';
+import {
+  getPetrolejkaRadius,
+  isPositionIlluminated,
+  evaluateShadowDefense,
+  getShadowDefenseMultipliers,
+  updateLightSources,
+  evaluateBludickaAura,
+  createOsikovySlashLight,
+  createHolyCathedralLight,
+  createGarlicHearthSpark,
+  createCertEmberLight,
+  type DynamicLightSource,
+  type ShadowZone,
+} from './storybookLighting';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -768,7 +783,9 @@ export class GameEngine {
           const dy = player.y - this.y;
           const dist = Math.hypot(dx, dy) || 1;
           const dir = Math.atan2(dy, dx);
-          let spd = this.speed;
+          const shadowMods = getShadowDefenseMultipliers(this);
+          let spd = this.speed * shadowMods.speedMult;
+          if (this.bludickaAttracted) spd *= 1.15;
           if (this.chilled) spd *= 0.65;
           if (this.garlicSlowTimer > 0) spd *= 0.75;
           if (this.panicked) spd *= 1.35;
@@ -788,6 +805,12 @@ export class GameEngine {
 
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
+
+        const shadowMods = getShadowDefenseMultipliers(this);
+        amount *= shadowMods.damageTakenMult;
+        if (type === 'holy') {
+          this.silhouetteInvertTimer = 0.12;
+        }
 
         const ignoreResist = options?.ignoreResist || 0;
         let effectiveResist = 0;
@@ -1007,6 +1030,7 @@ export class GameEngine {
         dead: false,
       };
       this.state.slashes.push(slash);
+      this.state.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
       return slash;
     }
 
@@ -1015,6 +1039,9 @@ export class GameEngine {
       const radius = impact.radius ?? 60;
       const dmg = impact.dmg ?? 20;
       const impactType = impact.type || 'blunt';
+      if (impactType === 'holy') {
+        this.state.lightSources.push(createHolyCathedralLight(impact.x, impact.y));
+      }
       const nearby = this.spatialHash.queryCircle(impact.x, impact.y, radius + 60);
 
       for (let i = 0; i < nearby.length; i++) {
@@ -1161,6 +1188,32 @@ export class GameEngine {
       this.state.lightningStrike.time -= dt;
       if (this.state.lightningStrike.time <= 0) this.state.lightningStrike = null;
     }
+
+    const dayPhase = getCurrentDayPhase(this.state.gameTime);
+    if (player && player.hp > 0) {
+      const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, this.state.gameTime);
+      let pLight = this.state.lightSources.find((ls) => ls.id === 'player_petrolejka');
+      if (petrolejkaRadius > 0) {
+        if (!pLight) {
+          pLight = {
+            id: 'player_petrolejka',
+            x: player.x,
+            y: player.y,
+            radius: petrolejkaRadius,
+            color: '#F59E0B',
+            type: 'petrolejka',
+          };
+          this.state.lightSources.push(pLight);
+        } else {
+          pLight.x = player.x;
+          pLight.y = player.y;
+          pLight.radius = petrolejkaRadius;
+        }
+      } else if (pLight) {
+        pLight.radius = 0;
+      }
+    }
+    this.state.lightSources = updateLightSources(this.state.lightSources, dt);
 
     if (player && player.hp > 0) {
       let mx = 0;
@@ -1405,8 +1458,55 @@ export class GameEngine {
     if (this.state.timeStopTimer <= 0) {
       for (let i = 0; i < this.state.enemies.length; i++) {
         const e = this.state.enemies[i];
+        if (e.category === 'shadows' && !e.dead && !e.isDefeated) {
+          const isLit = isPositionIlluminated(
+            e.x,
+            e.y,
+            this.state.lightSources,
+            dayPhase.id,
+            this.state.shadowZones
+          );
+          evaluateShadowDefense(e, isLit, dt, {
+            onBreak: (shadowEnemy) => {
+              if (this.state.particles.length < MAX_PARTICLES - 8) {
+                for (let k = 0; k < 6; k++) {
+                  const ang = Math.random() * Math.PI * 2;
+                  const spd = 40 + Math.random() * 50;
+                  this.state.particles.push({
+                    x: shadowEnemy.x,
+                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    life: 0.35,
+                    color: '#1E1B18',
+                    size: 3.5,
+                  });
+                }
+              }
+            },
+          });
+        }
+
         if (typeof e.update === 'function') {
           e.update(dt, player);
+        }
+
+        if (e.id === 'bludicka' && !e.dead && !e.isDefeated) {
+          const bId = `bludicka_${e.id}_${i}`;
+          let bLight = this.state.lightSources.find((ls) => ls.id === bId);
+          if (!bLight) {
+            this.state.lightSources.push({
+              id: bId,
+              x: e.x,
+              y: e.y,
+              radius: 175,
+              color: '#67E8F9',
+              type: 'bludicka',
+            });
+          } else {
+            bLight.x = e.x;
+            bLight.y = e.y;
+          }
         }
 
       if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || (e.stunTimer || 0) > 0 || !player || player.hp <= 0) {
@@ -1477,6 +1577,7 @@ export class GameEngine {
       }
     }
     this.spatialHash.rebuild(this.livingEnemies);
+    evaluateBludickaAura(this.livingEnemies, this.state.lightSources, player);
 
     // Step drops
     if (this.state.drops) {

@@ -53,6 +53,25 @@ import {
   drawEnemyAttackEffectsPre,
   drawEnemyAttackEffectsPost,
 } from './render/ladaRenderer';
+import {
+  getPetrolejkaRadius,
+  isPositionIlluminated,
+  evaluateShadowDefense,
+  getShadowDefenseMultipliers,
+  updateLightSources,
+  evaluateBludickaAura,
+  createOsikovySlashLight,
+  createHolyCathedralLight,
+  createGarlicHearthSpark,
+  createCertEmberLight,
+} from './game/storybookLighting';
+import {
+  getStorybookSnowColor,
+  drawCottageWindowLight,
+  drawBoziMukaDecor,
+  drawArchitecturalSunShadow,
+  renderStorybookLightingComposite,
+} from './render/storybookLightingRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
@@ -590,7 +609,7 @@ class DecorItem {
     this.flip = flip;
   }
 
-  draw(ctx: CanvasRenderingContext2D, season: Season, theme?: string) {
+  draw(ctx: CanvasRenderingContext2D, season: Season, theme?: string, time = 0, isNight = false) {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.scale(this.flip * this.scale, this.scale);
@@ -759,9 +778,36 @@ class DecorItem {
       ctx.fill();
       ctx.shadowBlur = 0;
     } else if (this.type === 'cottage') {
+      // Daylight cast ink shadow behind cottage
+      if (!isNight) {
+        drawArchitecturalSunShadow(ctx, 0, 10, 56, 35);
+      }
+
+      // Cottage wooden logs body
       Lada.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3.5);
       ctx.fillRect(-28, -25, 56, 35);
       ctx.strokeRect(-28, -25, 56, 35);
+
+      // Horizontal log lines
+      ctx.strokeStyle = COLORS.woodLight;
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(-26, -14); ctx.lineTo(26, -14);
+      ctx.moveTo(-26, -4); ctx.lineTo(26, -4);
+      ctx.stroke();
+
+      // Multi-pane cozy window
+      const windowFill = isNight ? '#FEF08A' : '#78350F';
+      Lada.setupPath(ctx, windowFill, COLORS.ink, 2);
+      ctx.fillRect(-8, -15, 16, 13);
+      ctx.strokeRect(-8, -15, 16, 13);
+      // Window mullions (cross)
+      ctx.beginPath();
+      ctx.moveTo(0, -15); ctx.lineTo(0, -2);
+      ctx.moveTo(-8, -8.5); ctx.lineTo(8, -8.5);
+      ctx.stroke();
+
+      // Snow roof
       Lada.setupPath(ctx, '#F8FAFC', COLORS.ink, 4);
       ctx.beginPath();
       ctx.moveTo(-36, -22);
@@ -770,6 +816,13 @@ class DecorItem {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+
+      // At night, cast butter-yellow trapezoid onto snowbank
+      if (isNight) {
+        drawCottageWindowLight(ctx, 0, 10, 1, 1, time);
+      }
+    } else if (this.type === 'bozi_muka') {
+      drawBoziMukaDecor(ctx, 0, 0, 1, time, isNight);
     }
     ctx.restore();
   }
@@ -788,20 +841,24 @@ class DecorItem {
  * pickups, projectiles or level progression.
  */
 function seedArenaDecor(level: GameLevelDef): DecorItem[] {
-  const pool = level.decorTypes.length ? level.decorTypes : ['tree'];
+  const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
+  if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
+    if (!pool.includes('cottage')) pool.push('cottage');
+    if (!pool.includes('bozi_muka')) pool.push('bozi_muka');
+  }
   const decor: DecorItem[] = [];
 
   const themeDensity: Record<GameLevelDef['theme'], number> = {
-    autumn_village: 34,
+    autumn_village: 36,
     autumn_graveyard: 38,
-    winter_frost: 30,
-    mill_forge: 28,
+    winter_frost: 34,
+    mill_forge: 30,
     ruined_castle: 32,
     dragon_cave: 24,
   };
 
-  const target = themeDensity[level.theme];
-  const minDistance = 115;
+  const target = themeDensity[level.theme] || 32;
+  const minDistance = 110;
   const coreRadius = 260;
   const innerRadius = 380;
   const outerRadius = 1320;
@@ -811,8 +868,13 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
   const placed: Array<{ x: number; y: number; radius: number }> = [];
 
   const pickType = (index: number) => {
-    // First few objects are intentionally thematic anchors. The remaining
-    // objects use the level's existing decor pool.
+    // Priority seeding for roubenky (cottages) and roadside shrines (Boží muka)
+    if (pool.includes('cottage') && (index === 0 || index === 2 || index === 5)) {
+      return 'cottage';
+    }
+    if (pool.includes('bozi_muka') && (index === 1 || index === 4)) {
+      return 'bozi_muka';
+    }
     if (index < pool.length) return pool[index];
     return pool[Math.floor(Math.random() * pool.length)];
   };
@@ -1707,8 +1769,12 @@ export default function App() {
           hitList: [],
           dead: false,
         });
+        engineRef.current.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
       },
       spawnAreaImpact(impact: any) {
+        if (impact.type === 'holy') {
+          engineRef.current.lightSources.push(createHolyCathedralLight(impact.x, impact.y));
+        }
         const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
@@ -1724,6 +1790,7 @@ export default function App() {
       spawnHromnickaPulse(reach: number, dmg: number, level: number) {
         this.hromnickaPulseTimer = 0.35;
         this.hromnickaPulseRadius = reach;
+        engineRef.current.lightSources.push(createHolyCathedralLight(this.x, this.y));
         const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
@@ -1806,6 +1873,15 @@ export default function App() {
           const flip = this.lastDx >= 0 ? 1 : -1;
           Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, this.animTime || 0);
         }
+
+        // Draw Petrolejka brass lantern in hand during low-visibility phases
+        const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
+        const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
+        const petrolejkaRadius = getPetrolejkaRadius(this.hp, this.maxHp, dayPhase.id, engineRef.current?.gameTime || 0);
+        if (petrolejkaRadius > 0) {
+          const flip = this.lastDx >= 0 ? 1 : -1;
+          Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
+        }
       },
     };
 
@@ -1820,6 +1896,36 @@ export default function App() {
     engine.player = player;
     engine.decor = decor;
     engine.activeLevelId = chosenLevelId;
+
+    // Seed architectural lights & shadow zones from decor
+    for (let i = 0; i < decor.length; i++) {
+      const d = decor[i];
+      if (d.type === 'cottage') {
+        engine.lightSources.push({
+          id: `cottage_window_${i}`,
+          x: d.x,
+          y: d.y + 12,
+          radius: 145,
+          color: '#FEF08A',
+          type: 'window',
+        });
+        engine.shadowZones.push({
+          id: `cottage_shadow_${i}`,
+          x: d.x + 18,
+          y: d.y + 25,
+          radius: 80,
+        });
+      } else if (d.type === 'bozi_muka') {
+        engine.lightSources.push({
+          id: `bozi_muka_${i}`,
+          x: d.x,
+          y: d.y - 45,
+          radius: 115,
+          color: '#FEF08A',
+          type: 'bozi_muka',
+        });
+      }
+    }
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
@@ -2523,6 +2629,48 @@ export default function App() {
           if (currentGameState === 'playing') {
             engine.gameTime += dt;
             if (engine.flourStormTimer > 0) engine.flourStormTimer -= dt;
+
+            // Storybook Illumination: update Petrolejka & dynamic light sources
+            const dayPhase = getCurrentDayPhase(engine.gameTime);
+            const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, engine.gameTime);
+            let pLight = engine.lightSources.find((ls) => ls.id === 'player_petrolejka');
+            if (petrolejkaRadius > 0) {
+              if (!pLight) {
+                pLight = {
+                  id: 'player_petrolejka',
+                  x: player.x,
+                  y: player.y,
+                  radius: petrolejkaRadius,
+                  color: '#F59E0B',
+                  type: 'petrolejka',
+                };
+                engine.lightSources.push(pLight);
+              } else {
+                pLight.x = player.x;
+                pLight.y = player.y;
+                pLight.radius = petrolejkaRadius;
+              }
+            } else if (pLight) {
+              pLight.radius = 0;
+            }
+            engine.lightSources = updateLightSources(engine.lightSources, dt);
+
+            if (engine.grandfather.active) {
+              let gHearth = engine.lightSources.find((ls) => ls.id === 'grandfather_hearth');
+              if (!gHearth) {
+                engine.lightSources.push({
+                  id: 'grandfather_hearth',
+                  x: engine.grandfather.x,
+                  y: engine.grandfather.y,
+                  radius: 240,
+                  color: '#EA580C',
+                  type: 'hearth',
+                });
+              } else {
+                gHearth.x = engine.grandfather.x;
+                gHearth.y = engine.grandfather.y;
+              }
+            }
 
             // Dědeček is a roaming run encounter, not a village NPC.
             if (engine.grandfather.cooldown > 0) engine.grandfather.cooldown = Math.max(0, engine.grandfather.cooldown - dt);
@@ -4515,9 +4663,11 @@ export default function App() {
         const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
         const isWinter = curLvl.season === 'winter';
 
+        const kurazRatio = player ? Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp))) : 1;
+
         // Sky / Grass background tailored to level
         if (isWinter) {
-          ctx.fillStyle = '#E9F1F7';
+          ctx.fillStyle = getStorybookSnowColor(phase.id, kurazRatio);
         } else if (curLvl.theme === 'autumn_graveyard') {
           ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
         } else {
@@ -4560,9 +4710,10 @@ export default function App() {
         // Draw only decor that can contribute pixels this frame. Decor is
         // generated across the whole level, so drawing it unconditionally
         // becomes increasingly expensive on large maps.
+        const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
         for (const dec of engine.decor) {
           if (!isInView(dec.x, dec.y - 45 * dec.scale, 100 * dec.scale, viewLeft, viewTop, viewRight, viewBottom)) continue;
-          dec.draw(ctx, curLvl.season, curLvl.theme);
+          dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime, isNight);
         }
 
         // Draw Director Arena Hazards (Bláto, Oheň, Mráz)
@@ -5110,6 +5261,18 @@ export default function App() {
 
         ctx.restore();
 
+        // Ladovské kvašové svícení – kompozitní vrstva světla a stínu (Storybook Illumination)
+        renderStorybookLightingComposite(
+          ctx,
+          canvas.width,
+          canvas.height,
+          cam,
+          engine.lightSources || [],
+          phase.id,
+          kurazRatio,
+          isWinter
+        );
+
         // Ladovský ukazatel na dědečka, pokud se ocitne mimo obrazovku
         if (engine.grandfather.active && player && currentGameState === 'playing') {
           const gScreenX = engine.grandfather.x - engine.camera.x;
@@ -5334,6 +5497,11 @@ export default function App() {
       contactLeaveTimer: 0,
       animTime: Math.random() * 10,
 
+      hasShadowDefense: false,
+      shadowVulnerabilityTimer: 0,
+      silhouetteInvertTimer: 0,
+      bludickaAttracted: false,
+
       // Specialized AI state machine variables
       aiState: 'idle' as string,
       aiTimer: Math.random() * 1.2,
@@ -5352,6 +5520,56 @@ export default function App() {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
+        if (this.silhouetteInvertTimer > 0) this.silhouetteInvertTimer -= dt;
+
+        if (this.id === 'bludicka' && !this.dead && !this.isDefeated) {
+          const bId = `bludicka_${this.id}_${Math.round(this.x)}`;
+          let bLight = engineRef.current?.lightSources?.find((ls) => ls.id === bId);
+          if (!bLight) {
+            engineRef.current?.lightSources?.push({
+              id: bId,
+              x: this.x,
+              y: this.y,
+              radius: 175,
+              color: '#67E8F9',
+              type: 'bludicka',
+            });
+          } else {
+            bLight.x = this.x;
+            bLight.y = this.y;
+          }
+        }
+
+        if (this.category === 'shadows' && !this.dead && !this.isDefeated) {
+          const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
+          const isLit = isPositionIlluminated(
+            this.x,
+            this.y,
+            engineRef.current?.lightSources || [],
+            dayPhase.id,
+            engineRef.current?.shadowZones || []
+          );
+          evaluateShadowDefense(this, isLit, dt, {
+            onBreak: (shadowEnemy) => {
+              if (engineRef.current?.particles && engineRef.current.particles.length < MAX_PARTICLES - 8) {
+                for (let k = 0; k < 6; k++) {
+                  const ang = Math.random() * Math.PI * 2;
+                  const spd = 40 + Math.random() * 50;
+                  engineRef.current.particles.push({
+                    x: shadowEnemy.x,
+                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    life: 0.35,
+                    color: '#1E1B18',
+                    size: 3.5,
+                  });
+                }
+              }
+            },
+          });
+        }
+
         for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
@@ -5486,7 +5704,9 @@ export default function App() {
         }
         this.panicked = this.panicTimer > 0;
 
-        let spd = this.speed * this.getMovementSpeedMultiplier() * (this.garlicSlowTimer > 0 ? 0.85 : 1);
+        const shadowMods = getShadowDefenseMultipliers(this);
+        let spd = this.speed * this.getMovementSpeedMultiplier() * shadowMods.speedMult * (this.garlicSlowTimer > 0 ? 0.85 : 1);
+        if (this.bludickaAttracted) spd *= 1.15;
         if (player._valecniceSlowRadius && player._valecniceSlowRadius > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
           if (distToPlayer <= player._valecniceSlowRadius + this.radius) {
@@ -6876,6 +7096,12 @@ export default function App() {
           finalDmg += (metaRef.current.forgeLevel || 0) * 2;
         }
 
+        const shadowMods = getShadowDefenseMultipliers(this);
+        finalDmg *= shadowMods.damageTakenMult;
+        if (type === 'holy') {
+          this.silhouetteInvertTimer = 0.12;
+        }
+
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
 
@@ -7407,6 +7633,28 @@ export default function App() {
         }
 
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
+
+        // Stínová záštita - dark gouache smoke aura around shadow enemies in darkness
+        if (this.hasShadowDefense && !this.isDefeated) {
+          ctx.save();
+          const p = Math.sin(this.animTime * 3) * 3;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - 8, this.radius * 1.25 + p, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Fairytale Silhouette Inversion (chalk-white woodcut contour on holy/flare burst)
+        if (this.silhouetteInvertTimer > 0) {
+          ctx.save();
+          ctx.strokeStyle = '#FFFBEB';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - 10, this.radius * 1.15, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
 
         // Ground Miniboss Aura (illuminating halo and rotating folklore radial notches)
         if (this.isMiniboss && !this.isDefeated) {

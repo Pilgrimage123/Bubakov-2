@@ -1,5 +1,31 @@
 # Bubákov — Changelog
 
+## 2026-10-10 — Ladovské kvašové svícení (Storybook Illumination System)
+
+- **Ladovská kvašová renderovací pipeline (`storybookLightingRenderer.ts`):**
+  - Implementována kompozitní vrstva světla s předrenderovanými kvašovými stupni (3–4 tonální pásy) a procedurálním tušovým tečkováním/šrafováním na okrajích namísto digitálního rozostření.
+  - Dynamické tónování zimního sněhu podle denních fází: idylická smetanová běloba v poledním slunci (`#FFFDF5`), romantické pastelové indigo za soumraku a v noci (`#433858` až `#171A31`), a oslepující mrazivý zákal s roztřesenými tušovými konturami při kritické Kuráži (< 25 %).
+  - Zavedena **Pohádková inverze siluet** (`silhouetteInvertTimer`): zasažení svěceným světlem či zábleskem přepne kontury na 2–3 snímky do křídově bílých dřevoryteckých vrypů (`#FFFBEB`).
+- **Herní mechaniky světla a stínu (`storybookLighting.ts`):**
+  - **Petrolejka lovce:** Mosazná lampa v ruce lovce s doshem škálovaným podle **Kuráže** (až 225 px); při kritické Kuráži plamínek mihotavě skomírá do tísnivé viněty, v poledním slunci Petrolejka spočívá na opasku.
+  - **Stínová záštita Bubáka a nočních strašidel (`category: "shadows"`):** Ve tmě a stínu budov získávají strašidla +35 % rychlost, 40 % odolnost proti zranění a tušový kouř. Při vyhnání na světlo záštita praská s 0,25s zavrávoráním, +25% zranitelností a sprškou tušových kaněk (`ink_specks`).
+  - **Bludička močálová:** Éterická azurově-fialová záře maskující varovné obrysy pozemních nástrah a vábící okolní nemrtvé k lovci s +15% rychlostním bonusem.
+- **Dynamická světla zbraní a prostředí:**
+  - **Osikový prut:** Švihnutí vytváří nebesky modrý oblouk prosvěcující tmu na 0,4 s.
+  - **Svěcené předměty & Hromnička:** Katedrální sluneční sloupy zanechávající zářící stopy na 3,5 s.
+  - **Česneková topinka & Dědeček:** Hřejivá máslová aura plotny s praskajícími jiskrami.
+  - **Pekelný Čert:** Sirná a šarlatová záře rohů a kopyt zanechávající žhnoucí uhlíky.
+- **Rozšíření architektury map:**
+  - Zvýšené zastoupení **Roubenek** v generátoru dekorací arény: v noci vrhají máslově žluté lichoběžníky s tušovými okenními kříži na sníh, ve dne vrhají stíny pro Bubáky.
+  - Zavedena **Boží muka** se zapálenou svící u polních cest jako noční orientační a bezpečné body.
+  - Dědečkova **Kachlová kamna** s trvalým hlubokým oranžovým žárem pece odhánějícím strašidla.
+- **Doménový model a dokumentace:**
+  - Vytvořen záznam architektonického rozhodnutí `docs/adr/0003-ladovske-kvasove-sviceni-a-kompozitni-vrstva-svetla.md`.
+  - Do `GLOSSARY.md` doplněny kanonické pojmy: *Petrolejka*, *Kvašová záře*, *Stínová záštita*, *Roubenka*, *Boží muka*, *Kachlová kamna*.
+- **Plná verifikace:**
+  - Všech 122 testů v 11 testovacích souborech ve Vitestu úspěšných (nové testy `storybookLighting.test.ts` a `gameEngineLighting.test.ts`).
+  - Produkční sestavení `npm run build` (`tsc && vite build`) bez jediné chyby.
+
 ## 2026-10-10 — Stabilizace integračního stagingu a Ladovská harmonizace
 
 - **Oprava pádu a plné napojení Režiséra výpravy (`RunDirector`):**
