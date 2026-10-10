@@ -39,7 +39,9 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
   return {
     ...parsed,
     currentLang: validLang,
-    selectedLevel: parsed.selectedLevel || 1,
+    selectedLevel: typeof parsed.selectedLevel === 'number' && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
+      ? parsed.selectedLevel
+      : 0,
     highestLevelUnlocked: parsed.highestLevelUnlocked || (
       (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
       (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 5 :
@@ -70,7 +72,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     undeadLevel: 0,
     totalSoulsSaved: 0,
     totalChasnikSaved: 0,
-    season: 'autumn',
+    season: 'spring',
     trophiesClaimed: {},
     bestiaryKills: {},
     highestSurviveTime: 0,
@@ -78,7 +80,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     unlockedWeapons: { osikovy_prut: true, povidlove_buchty: true, hromnicka: true },
     hunterKillCounts: {},
     weaponKillCounts: {},
-    selectedLevel: 1,
+    selectedLevel: 0,
     highestLevelUnlocked: 1,
     completedLevels: {},
   };

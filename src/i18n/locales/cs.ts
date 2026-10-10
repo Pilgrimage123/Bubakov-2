@@ -1,6 +1,7 @@
 export const cs: Record<string, string> = {
   "ui.play": "Hrát",
   "ui.test_mode": "🧪 Testovací mód",
+  "ui.animation_tester": "🎬 Tester animací",
   "ui.reset_progress": "🗑️ Vymazat postup",
   "ui.controls": "🎮 Ovládání hry",
   "ui.bestiary": "📖 Bestiář nočního venkova",

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { RunDirector } from '../src/game/director';
 import { GameEngine } from '../src/game/engine';
 import { selectRunRozmar, RUN_ROZMARY } from '../src/data/runArchetypes';
+import { ENEMIES } from '../src/data/enemies';
 
 describe('RunRozmar and Procedural Variance', () => {
   it('defines exactly 3 unique folklore Rozmars for each of the 6 levels', () => {
@@ -17,6 +18,9 @@ describe('RunRozmar and Procedural Variance', () => {
         expect(r.icon).toBeTruthy();
         expect(r.threatMultiplier).toBeGreaterThan(0.8);
         expect(r.anomalyWindow[0]).toBeLessThan(r.anomalyWindow[1]);
+        for (const enemyId of r.preferredEnemyIds) {
+          expect(ENEMIES[enemyId]).toBeDefined();
+        }
       }
     }
   });
@@ -27,6 +31,28 @@ describe('RunRozmar and Procedural Variance', () => {
     const r3 = selectRunRozmar(1, 43);
     expect(r1.id).toBe(r2.id);
     expect(typeof r3.id).toBe('string');
+  });
+
+  it('level 2 runs smoothly without throwing unknown enemy errors for all rozmary', () => {
+    for (const seed of [0, 1, 2]) {
+      const eng = new GameEngine();
+      eng.initRun({ levelId: 2, seed, spawnInitialWave: true });
+      expect(() => {
+        for (let i = 0; i < 50; i++) {
+          eng.update(0.1);
+        }
+      }).not.toThrow();
+    }
+  });
+
+  it('createHeadlessEnemy recovers safely with fallback when given an unknown enemy id', () => {
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 2, seed: 0, spawnInitialWave: false });
+    expect(() => {
+      const mob = eng.createHeadlessEnemy('unknown_dummy_mob', 0, 0);
+      expect(mob).toBeDefined();
+      expect(mob.hp).toBeGreaterThan(0);
+    }).not.toThrow();
   });
 });
 

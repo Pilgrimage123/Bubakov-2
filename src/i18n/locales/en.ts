@@ -1,6 +1,7 @@
 export const en: Record<string, string> = {
   "ui.play": "Play",
   "ui.test_mode": "🧪 Test Mode",
+  "ui.animation_tester": "🎬 Animation Tester",
   "ui.reset_progress": "🗑️ Reset Progress",
   "ui.controls": "🎮 Controls",
   "ui.bestiary": "📖 Countryside Bestiary",

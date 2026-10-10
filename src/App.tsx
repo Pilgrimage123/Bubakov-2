@@ -94,6 +94,7 @@ import { GameIcon } from './components/GameIcon';
 import { CzechBuchtaIcon } from './components/CzechBuchtaIcon';
 import { KrejcarIcon } from './components/KrejcarIcon';
 import { TestModeModal } from './components/TestModeModal';
+import { AnimationTesterModal } from './components/AnimationTesterModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
@@ -1075,13 +1076,13 @@ export default function App() {
     } catch {}
   };
 
-  // Selected level state
+  // Selected level state - Level 0 (Předjaří) default for new players
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (s && s >= 1 && s <= 6 ? s : 1) as GameLevelId;
+    return (typeof s === 'number' && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
   });
 
-  const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[1];
+  const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0] || GAME_LEVELS[1];
   const season: Season = currentLevel.season;
 
   // Hunter detail modal, arsenal modal & unlock toast
@@ -1100,7 +1101,7 @@ export default function App() {
   const grannyProg = getHunterProgress('granny', meta);
 
   const levelProgress = Object.fromEntries(
-    ([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+    ([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
   ) as Record<GameLevelId, LevelProgress>;
 
   // Weapon unlock count
@@ -1127,6 +1128,7 @@ export default function App() {
   const [isPlanOpen, setIsPlanOpen] = useState(false);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
+  const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
@@ -1428,7 +1430,7 @@ export default function App() {
       chasniks: engineRef.current.chasniks,
       time: Math.floor(timeSurvived),
       isVictory: engineRef.current.levelVictoryTriggered,
-      levelId: engineRef.current.activeLevelId || 1,
+      levelId: engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : 0,
     });
     saveMeta({
       ...metaRef.current,
@@ -1631,8 +1633,8 @@ export default function App() {
     customWeapons?: { id: string; level: number; mastery?: any }[],
     isTestMode = false
   ) => {
-    const chosenLevelId: GameLevelId = (targetLevelId || selectedLevelId || 1) as GameLevelId;
-    const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[1];
+    const chosenLevelId: GameLevelId = (targetLevelId !== undefined ? targetLevelId : selectedLevelId !== undefined ? selectedLevelId : 0) as GameLevelId;
+    const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[0];
 
     if (!isTestMode) {
       const levelProg = getLevelProgress(chosenLevelId, metaRef.current);
@@ -2144,13 +2146,13 @@ export default function App() {
       unlockedWeapons: { buns: true, cane: true, hromnicka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
-      selectedLevel: 1,
+      selectedLevel: 0,
       highestLevelUnlocked: 1,
       completedLevels: {},
       levelKillCounts: {},
     };
     saveMeta(defaultMeta);
-    setSelectedLevelId(1);
+    setSelectedLevelId(0);
     setMenuScreen('stage');
     sound.hit();
     setIsResetModalOpen(false);
@@ -2864,7 +2866,7 @@ export default function App() {
             const newTime = engine.gameTime;
             const currentPhase = getCurrentDayPhase(newTime);
 
-            const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
+            const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : currentSelectedLevelId] || GAME_LEVELS[0];
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
@@ -2877,7 +2879,7 @@ export default function App() {
                 e.panicked = true;
                 e.isDefeated = true;
               });
-              triggerLevelVictory(engine.activeLevelId || 1, 'dawn');
+              triggerLevelVictory(engine.activeLevelId ?? 0, 'dawn');
             }
 
             if (directorRef.current) {
@@ -4283,7 +4285,7 @@ export default function App() {
                 chasniks: engine.chasniks,
                 time: Math.floor(engine.gameTime),
                 isVictory: false,
-                levelId: engine.activeLevelId || 1,
+                levelId: engine.activeLevelId !== undefined ? engine.activeLevelId : 0,
               });
               const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, engine.gameTime);
               saveMeta({
@@ -4838,7 +4840,7 @@ export default function App() {
         const cam = engine.camera;
         const phase = getCurrentDayPhase(engine.gameTime);
 
-        const curLvl = GAME_LEVELS[engine.activeLevelId || currentSelectedLevelId] || GAME_LEVELS[1];
+        const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : (currentSelectedLevelId !== undefined ? currentSelectedLevelId : 0)] || GAME_LEVELS[0];
         const isWinter = curLvl.season === 'winter';
 
         const kurazRatio = player ? Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp))) : 1;
@@ -5548,10 +5550,12 @@ export default function App() {
         } else if (curLvl.weatherEffect === 'fog') {
           const t = engine.uiTime;
           const fogCanvas = getFogPuffCanvas();
-          for (let i = 0; i < 22; i++) {
-            const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
-            const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
-            ctx.drawImage(fogCanvas, sx - 120, sy - 120);
+          if (fogCanvas) {
+            for (let i = 0; i < 22; i++) {
+              const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
+              const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
+              ctx.drawImage(fogCanvas, sx - 120, sy - 120);
+            }
           }
         } else if (curLvl.weatherEffect === 'ice_drift') {
           const t = engine.uiTime;
@@ -5612,9 +5616,34 @@ export default function App() {
     isMiniboss = false,
     customBossTitle?: string
   ) => {
-    const stats = ENEMIES[id];
+    let resolvedId = id;
+    let stats = ENEMIES[resolvedId];
     if (!stats) {
-      throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
+      console.warn(`[Bubakov] Unknown enemy id: "${id}", resolving safe fallback`);
+      const fallbackMap: Record<string, string> = {
+        kostlivec_obr: 'umrlec',
+        kostlivec: 'skeleton',
+        kostlivec_koste: 'skeleton_scythe',
+        smrtka_minion: 'krvavy_kostlivec',
+        rampouch: 'severak',
+        sanice: 'vanicka',
+        medved_bubak: 'hromotluk',
+        lapka: 'zbojnik',
+        uhlif: 'sazovy_rarach',
+        cernokneznik_minion: 'plivnik',
+        permonik: 'zbojnik',
+        kamenny_bubak: 'obrneny_zbojnik',
+        prizrak: 'bila_pani',
+        panos: 'zbrojnos',
+        strazce: 'obrneny_zbojnik',
+        chrlivka: 'nocni_mura',
+        netopyr_obr: 'bubak',
+        draci_plivnik: 'plivnik',
+        lavy_rarach: 'sazovy_rarach',
+        pekelny_pes: 'ohnivy_pes',
+      };
+      resolvedId = fallbackMap[id] || ((engineRef.current?.activeLevelId ?? 1) === 2 ? 'skeleton' : 'rarach');
+      stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
@@ -5637,7 +5666,7 @@ export default function App() {
 
     const isLevel1 = (engineRef.current.activeLevelId || 1) === 1;
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
-    if (id === 'polednice' && isLevel1) {
+    if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
     }
 
@@ -5648,7 +5677,7 @@ export default function App() {
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
     const instance = {
-      id,
+      id: resolvedId,
       x,
       y,
       isBoss,
@@ -7791,7 +7820,7 @@ export default function App() {
               );
             }
             // Check if final boss of this level
-            const curLvlId = engineRef.current.activeLevelId || 1;
+            const curLvlId = engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : 0;
             const curLvl = GAME_LEVELS[curLvlId];
             if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
               triggerLevelVictory(curLvlId, 'boss');
@@ -8257,8 +8286,8 @@ export default function App() {
 
   // Manual trigger to immediately spawn current level's miniboss (available in pause menu for instant action/testing)
   const spawnMinibossNow = () => {
-    const curLvlId = engineRef.current.activeLevelId || selectedLevelId || 1;
-    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[1];
+    const curLvlId = engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : (selectedLevelId !== undefined ? selectedLevelId : 0);
+    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[0];
     const player = engineRef.current.player;
     if (!player) return;
 
@@ -8610,15 +8639,16 @@ export default function App() {
               </LadaCartouche>
             </div>
 
-            {/* 6 PROGRESSIVE GAME LEVELS SELECTOR */}
+            {/* 7 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
-                {([1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
+                {([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
-                  const isUnlocked = prog.isUnlocked;
+                  const isUnlocked = prog?.isUnlocked ?? false;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
+                    (lvlId === 0 && (meta.bestiaryKills?.hastrman || 0) >= 1) ||
                     (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
                     (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||
@@ -8841,7 +8871,7 @@ export default function App() {
                   <span style={{ fontSize: '1.7rem' }}>{currentLevel.icon}</span>
                   <span>{currentLevel.name}</span>
                   <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
-                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})
+                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : currentLevel.season === 'spring' ? '🌱 Jaro' : '🍂 Podzim'})
                   </span>
                 </div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
@@ -8884,6 +8914,22 @@ export default function App() {
                 title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
               >
                 🧪 Testovací mód
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: '#0284C7',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  boxShadow: '4px 4px 0px var(--ink)',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setIsAnimationTesterOpen(true);
+                }}
+                title="Otevřít tester animací: ukazuje animace všech nepřátel, lovců a dědečka"
+              >
+                🎬 Tester animací
               </button>
               <button
                 className="lada-btn btn-small"
@@ -9356,8 +9402,8 @@ export default function App() {
             {/* In-pause toggles */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
               <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
-                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.icon}</span>
-                <span>{GAME_LEVELS[runStats.levelId || selectedLevelId]?.name}</span>
+                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon}</span>
+                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
               </div>
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
                 🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
@@ -9834,6 +9880,16 @@ export default function App() {
               </button>
               <button
                 className="lada-btn btn-small"
+                style={{ background: '#0284C7', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => {
+                  sound.coin();
+                  setIsAnimationTesterOpen(true);
+                }}
+              >
+                🎬 Tester animací
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: meta.performanceMode ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => {
                   sound.coin();
@@ -9888,6 +9944,12 @@ export default function App() {
         }}
         initialLevelId={selectedLevelId}
         onOpenGrandfatherShop={openGrandfatherShopTest}
+      />
+
+      {/* ANIMATION TESTER MODAL */}
+      <AnimationTesterModal
+        isOpen={isAnimationTesterOpen}
+        onClose={() => setIsAnimationTesterOpen(false)}
       />
 
       {/* RESET PROGRESS CONFIRMATION MODAL */}

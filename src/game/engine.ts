@@ -635,9 +635,34 @@ export class GameEngine {
     isMiniboss = false,
     customBossTitle?: string
   ): any {
-    const stats: EnemyStats = ENEMIES[id];
+    let resolvedId = id;
+    let stats: EnemyStats = ENEMIES[resolvedId];
     if (!stats) {
-      throw new Error(`[Bubakov] Unknown enemy id: "${id}"`);
+      console.warn(`[Bubakov] Unknown enemy id: "${id}" in createHeadlessEnemy, resolving safe fallback`);
+      const fallbackMap: Record<string, string> = {
+        kostlivec_obr: 'umrlec',
+        kostlivec: 'skeleton',
+        kostlivec_koste: 'skeleton_scythe',
+        smrtka_minion: 'krvavy_kostlivec',
+        rampouch: 'severak',
+        sanice: 'vanicka',
+        medved_bubak: 'hromotluk',
+        lapka: 'zbojnik',
+        uhlif: 'sazovy_rarach',
+        cernokneznik_minion: 'plivnik',
+        permonik: 'zbojnik',
+        kamenny_bubak: 'obrneny_zbojnik',
+        prizrak: 'bila_pani',
+        panos: 'zbrojnos',
+        strazce: 'obrneny_zbojnik',
+        chrlivka: 'nocni_mura',
+        netopyr_obr: 'bubak',
+        draci_plivnik: 'plivnik',
+        lavy_rarach: 'sazovy_rarach',
+        pekelny_pes: 'ohnivy_pes',
+      };
+      resolvedId = fallbackMap[id] || (this.state.activeLevelId === 2 ? 'skeleton' : 'rarach');
+      stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
 
     const isLevel0 = (this.state.activeLevelId ?? 0) === 0;
@@ -664,7 +689,7 @@ export class GameEngine {
 
     const isLevel1 = (this.state.activeLevelId || 1) === 1;
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
-    if (id === 'polednice' && isLevel1) {
+    if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
     }
 
@@ -680,7 +705,7 @@ export class GameEngine {
     const self = this;
 
     const enemy = {
-      id,
+      id: resolvedId,
       x,
       y,
       isBoss,

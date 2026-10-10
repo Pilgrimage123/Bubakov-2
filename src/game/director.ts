@@ -1,5 +1,6 @@
 import type { GameLevelId, GameLevelDef } from '../types';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
+import { ENEMIES } from '../data/enemies';
 
 export interface ArenaHazard {
   id: string;
@@ -262,8 +263,10 @@ export class RunDirector {
     const ambushAngle = moveAngle + Math.PI / 2 + (Math.random() < 0.5 ? 0 : Math.PI);
     const pool = this.getWeightedPool(engine);
 
-    const leaderId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
-    const minionId = pool[pool.length - 1] || 'rarach';
+    const leaderCandidate = this.rozmar.preferredEnemyIds[0];
+    const leaderId = (leaderCandidate && ENEMIES[leaderCandidate]) ? leaderCandidate : pool[0] || 'rarach';
+    const minionCandidate = pool[pool.length - 1];
+    const minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
 
     const cx = player.x + Math.cos(ambushAngle) * 580;
     const cy = player.y + Math.sin(ambushAngle) * 580;
@@ -351,8 +354,10 @@ export class RunDirector {
 
   private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const heavyId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
-    const fastId = pool[pool.length - 1] || 'rarach';
+    const heavyCandidate = this.rozmar.preferredEnemyIds[0];
+    const heavyId = (heavyCandidate && ENEMIES[heavyCandidate]) ? heavyCandidate : pool[0] || 'rarach';
+    const fastCandidate = pool[pool.length - 1];
+    const fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
 
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
     const frontAngle = pAngle + (Math.random() * 0.4 - 0.2);
@@ -389,8 +394,10 @@ export class RunDirector {
 
   private spawnEscortSwarms(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const eliteId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
-    const minionId = pool[pool.length - 1] || 'rarach';
+    const eliteCandidate = this.rozmar.preferredEnemyIds[0];
+    const eliteId = (eliteCandidate && ENEMIES[eliteCandidate]) ? eliteCandidate : pool[0] || 'rarach';
+    const minionCandidate = pool[pool.length - 1];
+    const minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
 
     const angle = Math.random() * Math.PI * 2;
     const dist = 600;
@@ -420,7 +427,8 @@ export class RunDirector {
 
   private spawnArchitects(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const archId = this.rozmar.preferredEnemyIds[1] || pool[0] || 'rarach';
+    const archCandidate = this.rozmar.preferredEnemyIds[1];
+    const archId = (archCandidate && ENEMIES[archCandidate]) ? archCandidate : pool[0] || 'rarach';
 
     const angle = Math.random() * Math.PI * 2;
     const dist = 550;
@@ -568,7 +576,8 @@ export class RunDirector {
   }
 
   private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
-    const bossId = this.rozmar.preferredEnemyIds[0] || 'cerny_pes';
+    const bossCandidate = this.rozmar.preferredEnemyIds[0];
+    const bossId = (bossCandidate && ENEMIES[bossCandidate]) ? bossCandidate : 'cerny_pes';
     const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '👹 Zuřivý netvor z díry');
     if (furious) {
       furious.speed *= 1.2;
@@ -583,7 +592,7 @@ export class RunDirector {
       ? curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools]
       : (curLvl?.spawnPools?.noon || []);
 
-    const combined = [...new Set([...dayPool, ...this.rozmar.preferredEnemyIds])];
+    const combined = [...new Set([...dayPool, ...this.rozmar.preferredEnemyIds])].filter((id) => !!ENEMIES[id]);
     if (combined.length === 0) {
       combined.push('rarach');
     }
