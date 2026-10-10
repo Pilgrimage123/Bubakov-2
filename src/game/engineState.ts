@@ -91,6 +91,7 @@ export interface EngineState {
   directorAdaptability: number;
   directorTelegraphText: string | null;
   directorTelegraphTimer: number;
+  dropFusionTimer: number;
 }
 
 export function createInitialEngineState(): EngineState {
@@ -179,5 +180,6 @@ export function createInitialEngineState(): EngineState {
     directorAdaptability: 1.0,
     directorTelegraphText: null,
     directorTelegraphTimer: 0,
+    dropFusionTimer: 0,
   };
 }

@@ -113,7 +113,7 @@ var HUNTER_UNLOCKS = {
 				spoiledName: "P a s _ _ _ k",
 				spoiledTitle: "Kamarád beranů a rychlý sběrač krejcarů",
 				spoiledLore: "Sousedé už mají jasno – je to šikovný hoch ze sousedního gruntu! Vyniká mimořádnou rychlostí (220) a obřím magnetickým dosahem na krejcary.",
-				spoiledWeaponHint: "Zbraň: Horké buchty z pece a velký magnet na mince",
+				spoiledWeaponHint: "Zbraň: Horké buchty z pece a velký magnet na krejcary",
 				spoiledAbilityHint: "Schopnost: Dusot stáda (přivolá běžící berany)",
 				clueTag: "🔎 50 %: Znáš jeho tvář, rychlost i schopnost beranů!"
 			},

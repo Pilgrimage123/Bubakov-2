@@ -497,10 +497,10 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#92400E', fontWeight: 900 }}>
                     <KrejcarIcon size="1.25em" />
-                    <span>Krajcové mince (Vesnická měna):</span>
+                    <span>Krejcar (Vesnická měna):</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
-                    Trvalé mince ukládané do hospody U Černého kocoura pro stálá vylepšení řemesel a budov v Bubákově.
+                    Trvalá měna ukládaná do hospody U Černého kocoura pro stálá vylepšení řemesel a budov v Bubákově.
                   </div>
                 </div>
 
@@ -579,7 +579,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     ČERTŮV DĚDEČEK A JEHO NŮŠE
                   </h3>
                   <p style={{ margin: '4px 0 0 0', fontWeight: 800, color: '#92400E', fontSize: '0.98rem' }}>
-                    „Perníčky mám rád víc než zlato! Ber, dokud nůše voní!“ – Hlavní systém vylepšování zbraní a pasivních perků v terénu.
+                    „Perníčky mám rád víc než zlato! Ber, dokud nůše voní!“ – Hlavní systém vylepšování zbraní a pasivních schopností v terénu.
                   </p>
                 </div>
               </div>

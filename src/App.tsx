@@ -87,6 +87,7 @@ import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
 import { RunDirector } from './game/director';
+import { performDropFusion } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
@@ -213,9 +214,29 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
 // Keep HUD changes perceptually smooth while avoiding a React render for every
 // simulation frame. Event-driven changes (level-ups, warnings, rewards) still
 // update immediately through their existing setters.
-const HUD_SYNC_INTERVAL_SECONDS = 0.1;
+const HUD_SYNC_INTERVAL_SECONDS = 0.15;
 const MAX_PARTICLES = 300;
-const MAX_DAMAGE_TEXTS = 90;
+const MAX_DAMAGE_TEXTS = 40;
+
+let fogPuffCanvas: HTMLCanvasElement | null = null;
+function getFogPuffCanvas(): HTMLCanvasElement {
+  if (!fogPuffCanvas && typeof document !== 'undefined') {
+    fogPuffCanvas = document.createElement('canvas');
+    fogPuffCanvas.width = 240;
+    fogPuffCanvas.height = 240;
+    const fctx = fogPuffCanvas.getContext('2d');
+    if (fctx) {
+      const grad = fctx.createRadialGradient(120, 120, 10, 120, 120, 120);
+      grad.addColorStop(0, 'rgba(180, 195, 215, 0.12)');
+      grad.addColorStop(1, 'rgba(180, 195, 215, 0)');
+      fctx.fillStyle = grad;
+      fctx.beginPath();
+      fctx.arc(120, 120, 120, 0, Math.PI * 2);
+      fctx.fill();
+    }
+  }
+  return fogPuffCanvas!;
+}
 
 // Floating damage / status text
 class DamageText {
@@ -226,6 +247,7 @@ class DamageText {
   life: number;
   size: number;
   vy: number;
+  numericVal: number | null = null;
 
   constructor(x: number, y: number, text: string, color = COLORS.white, big = false) {
     this.x = x + (Math.random() - 0.5) * 20;
@@ -235,6 +257,20 @@ class DamageText {
     this.life = 1.0;
     this.size = big ? 26 : 18;
     this.vy = -45;
+    const parsed = parseInt(text, 10);
+    if (!Number.isNaN(parsed) && String(parsed) === text) {
+      this.numericVal = parsed;
+    }
+  }
+
+  addAmount(amount: number) {
+    if (this.numericVal !== null) {
+      this.numericVal += Math.round(amount);
+      this.text = String(this.numericVal);
+      this.life = Math.min(1.0, this.life + 0.35);
+      this.vy = -35;
+      this.size = Math.min(26, this.size + 1.2);
+    }
   }
 
   update(dt: number) {
@@ -245,13 +281,14 @@ class DamageText {
   draw(ctx: CanvasRenderingContext2D) {
     ctx.globalAlpha = Math.max(0, this.life);
     ctx.fillStyle = this.color;
-    ctx.font = `900 ${this.size}px Eczar`;
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = COLORS.ink;
-    ctx.lineJoin = 'round';
+    if (this.size !== 18) {
+      ctx.font = `900 ${this.size}px Eczar`;
+    }
     ctx.strokeText(this.text, this.x, this.y);
     ctx.fillText(this.text, this.x, this.y);
-    ctx.globalAlpha = 1;
+    if (this.size !== 18) {
+      ctx.font = '900 18px Eczar';
+    }
   }
 }
 
@@ -902,9 +939,11 @@ export default function App() {
   const gameStateRef = useRef(gameState);
   const menuScreenRef = useRef(menuScreen);
   const selectedLevelIdRef = useRef(selectedLevelId);
+  const pendingMilestonesRef = useRef<PendingMilestoneChoice[]>([]);
   gameStateRef.current = gameState;
   menuScreenRef.current = menuScreen;
   selectedLevelIdRef.current = selectedLevelId;
+  pendingMilestonesRef.current = pendingMilestones;
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
@@ -1006,7 +1045,9 @@ export default function App() {
         if (existing.level === 3 || existing.level === 5 || existing.level === 8) {
           const choices = getMilestoneChoices(canonicalId, existing.level);
           if (choices) {
-            setPendingMilestones((prev) => [...prev, { weaponId: canonicalId, rank: existing.level, choices }]);
+            const nextChoices = [...pendingMilestonesRef.current, { weaponId: canonicalId, rank: existing.level, choices }];
+            pendingMilestonesRef.current = nextChoices;
+            setPendingMilestones(nextChoices);
           }
         }
       } else {
@@ -1056,12 +1097,12 @@ export default function App() {
     grandfatherOpenRef.current = false;
     setGameState((prev) => {
       if (prev === 'grandfather') {
-        if (pendingMilestones.length > 0) return 'milestone';
+        if (pendingMilestonesRef.current.length > 0) return 'milestone';
         return engineRef.current.player ? 'playing' : 'menu';
       }
       return prev;
     });
-  }, [pendingMilestones]);
+  }, []);
 
   const purchaseGrandfatherItem = useCallback((itemId: string) => {
     const eng = engineRef.current;
@@ -1179,6 +1220,7 @@ export default function App() {
   const engineRef = useRef<EngineState>(createInitialEngineState());
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
+  const secondarySpatialResultsRef = useRef<any[]>([]);
   const directorRef = useRef<RunDirector | null>(null);
 
   // Pause toggle handler
@@ -2182,9 +2224,13 @@ export default function App() {
     setSlotStoppedCount(0);
     chestRewards.forEach((r) => r.action());
     sound.coin();
-    setGameState((prev) => (pendingMilestones.length > 0 ? 'milestone' : 'playing'));
+    if (pendingMilestonesRef.current.length > 0) {
+      setGameState('milestone');
+    } else {
+      setGameState('playing');
+    }
     engineRef.current.lastTime = performance.now();
-  }, [chestRewards, pendingMilestones]);
+  }, [chestRewards]);
   closeChestSequenceRef.current = closeChestSequence;
 
   // Open Painted Chest sequence with authentic slot machine effect
@@ -2300,7 +2346,9 @@ export default function App() {
               if (pw.level === 3 || pw.level === 5 || pw.level === 8) {
                 const choices = getMilestoneChoices(canonicalId, pw.level);
                 if (choices) {
-                  setPendingMilestones((prev) => [...prev, { weaponId: canonicalId, rank: pw.level, choices }]);
+                  const nextChoices = [...pendingMilestonesRef.current, { weaponId: canonicalId, rank: pw.level, choices }];
+                  pendingMilestonesRef.current = nextChoices;
+                  setPendingMilestones(nextChoices);
                   setGameState('milestone');
                 }
               }
@@ -2569,9 +2617,60 @@ export default function App() {
             }
 
             if (directorRef.current) {
-              directorRef.current.step(dt, { state: engine, livingEnemies: livingEnemiesRef.current });
-              if (directorRef.current.telegraphMessage) {
-                setRunStats((s) => (s.warningBanner !== directorRef.current!.telegraphMessage ? { ...s, warningBanner: directorRef.current!.telegraphMessage || '' } : s));
+              const isPerfMode = !!metaRef.current.performanceMode;
+              directorRef.current.maxLivingEnemies = isPerfMode ? 45 : 70;
+              const directorAdapter = {
+                state: engine,
+                livingEnemies: livingEnemiesRef.current,
+                activeLevelDef: curLvl,
+                currentPhase: currentPhase,
+                callbacks: {
+                  onSound: (soundName: string) => {
+                    if (soundName === 'howl') sound.horn?.();
+                    else if (soundName === 'bell') sound.bell?.();
+                  },
+                  onDamageText: (opts: any) => {
+                    engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true));
+                  },
+                },
+                spawnScatterDrop: (type: any, opts: any = {}) => {
+                  const angle = opts.angle ?? Math.random() * Math.PI * 2;
+                  const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
+                  const radius = opts.radius ?? (type === 'chest' ? 25 : opts.size === 'giant' ? 19 : opts.size === 'large' ? 14 : 10);
+                  engine.drops.push({
+                    type,
+                    value: opts.value,
+                    size: opts.size,
+                    x: opts.x,
+                    y: opts.y,
+                    vx: opts.vx ?? Math.cos(angle) * burstSpeed,
+                    vy: opts.vy ?? Math.sin(angle) * burstSpeed,
+                    radius,
+                    time: Math.random() * 6.28,
+                  });
+                  if (opts.text) {
+                    engine.texts.push(new DamageText(opts.x, opts.y - 45, opts.text, opts.textColor || COLORS.mustard, true));
+                  }
+                },
+                spawnMonster: (
+                  mobId: string,
+                  x: number,
+                  y: number,
+                  multiplier = 1,
+                  isBoss = false,
+                  isMiniboss = false,
+                  customBossTitle?: string
+                ) => {
+                  const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle);
+                  engine.enemies.push(newMob);
+                  directorRef.current?.recordEnemySpawn(newMob, newTime);
+                  return newMob;
+                },
+              };
+              directorRef.current.step(dt, directorAdapter);
+              if (directorRef.current.telegraphMessage && runStatsRef.current.warningBanner !== directorRef.current.telegraphMessage) {
+                runStatsRef.current.warningBanner = directorRef.current.telegraphMessage;
+                setRunStats((s) => ({ ...s, warningBanner: directorRef.current!.telegraphMessage || '' }));
               }
             }
 
@@ -2589,6 +2688,7 @@ export default function App() {
                 curLvl.miniBoss.name
               );
               engine.enemies.push(miniBossEnemy);
+              directorRef.current?.recordEnemySpawn(miniBossEnemy, newTime);
               engine.texts.push(new DamageText(player.x, player.y - 50, `👑 ${curLvl.miniBoss.name}`, COLORS.mustard, true));
               setRunStats((s) => ({
                 ...s,
@@ -2614,6 +2714,7 @@ export default function App() {
                 curLvl.midBoss.name
               );
               engine.enemies.push(midBossEnemy);
+              directorRef.current?.recordEnemySpawn(midBossEnemy, newTime);
               engine.texts.push(new DamageText(player.x, player.y - 50, `👑 ${curLvl.midBoss.name}`, COLORS.mustard, true));
               setRunStats((s) => ({
                 ...s,
@@ -2629,15 +2730,15 @@ export default function App() {
             if (!engine.finalBossSpawned && (engine.midBossSpawned || newTime >= curLvl.finalBoss.time + 10) && newTime >= curLvl.finalBoss.time) {
               engine.finalBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              engine.enemies.push(
-                createEnemyInstance(
-                  curLvl.finalBoss.id,
-                  player.x + Math.cos(ang) * 580,
-                  player.y + Math.sin(ang) * 580,
-                  curLvl.finalBoss.multiplier,
-                  true
-                )
+              const finalBossEnemy = createEnemyInstance(
+                curLvl.finalBoss.id,
+                player.x + Math.cos(ang) * 580,
+                player.y + Math.sin(ang) * 580,
+                curLvl.finalBoss.multiplier,
+                true
               );
+              engine.enemies.push(finalBossEnemy);
+              directorRef.current?.recordEnemySpawn(finalBossEnemy, newTime);
               sound.roar();
               setRunStats((s) => ({
                 ...s,
@@ -3516,7 +3617,7 @@ export default function App() {
                 engine.lightningStrike = { x: strikeX, y: strikeY, time: 0.45 };
 
                 // Burn enemies in blast radius
-                const blastNearby = enemySpatialHashRef.current.queryCircle(strikeX, strikeY, 260);
+                const blastNearby = enemySpatialHashRef.current.queryCircleInto(strikeX, strikeY, 260, secondarySpatialResultsRef.current);
                 for (let i = 0; i < blastNearby.length; i++) {
                   const e = blastNearby[i];
                   if (!e.isDefeated && Math.hypot(e.x - strikeX, e.y - strikeY) < 220) {
@@ -3535,73 +3636,9 @@ export default function App() {
               }
             }
 
-            // Controlled, time-based enemy spawning with gradual progression both within level and across levels
-            engine.spawnTimer -= dt;
-            const curLvlId = (engine.activeLevelId || currentSelectedLevelId || 1) as GameLevelId;
-            const timeProgress = Math.min(1, newTime / 260); // 0 at start -> 1 at 4:20
-
-            // 1. Max enemy caps scaled by level and elapsed time
-            // In Performance Mode, caps are streamlined by ~40% for silky smooth 60 FPS
-            const isPerfMode = !!metaRef.current.performanceMode;
-            const baseCapByLevel: Record<number, number> = isPerfMode
-              ? { 1: 8, 2: 11, 3: 14, 4: 17, 5: 20, 6: 24 }
-              : { 1: 10, 2: 15, 3: 20, 4: 25, 5: 30, 6: 36 };
-            const maxCapByLevel: Record<number, number> = isPerfMode
-              ? { 1: 30, 2: 40, 3: 50, 4: 60, 5: 68, 6: 76 }
-              : { 1: 48, 2: 65, 3: 82, 4: 100, 5: 118, 6: 135 };
-            const minCap = baseCapByLevel[curLvlId] ?? 12;
-            const maxCap = maxCapByLevel[curLvlId] ?? 60;
-            const currentEnemyCap = Math.floor(minCap + (maxCap - minCap) * timeProgress);
-
-            if (engine.spawnTimer <= 0) {
-              // 2. Spawn interval scaled by level and elapsed time
-              // Level 1: 2.2s at noon, gradually speeding up to 0.95s at midnight
-              // Level 6: 1.1s at start, speeding up to 0.38s at midnight
-              const startIntervalByLevel: Record<number, number> = { 1: 2.2, 2: 1.8, 3: 1.5, 4: 1.3, 5: 1.15, 6: 1.0 };
-              const endIntervalByLevel: Record<number, number> = { 1: 0.95, 2: 0.75, 3: 0.60, 4: 0.50, 5: 0.42, 6: 0.36 };
-              const startInt = startIntervalByLevel[curLvlId] ?? 1.8;
-              const endInt = endIntervalByLevel[curLvlId] ?? 0.8;
-              engine.spawnTimer = startInt - (startInt - endInt) * timeProgress;
-
-              if (engine.enemies.length < currentEnemyCap) {
-                // 3. Batch size scaling:
-                // Level 1: strictly 1 enemy per spawn during first 75s, then 1-2
-                let batchSize = 1;
-                if (curLvlId === 1) {
-                  batchSize = newTime < 75 ? 1 : (newTime < 180 ? (Math.random() < 0.7 ? 1 : 2) : 2);
-                } else if (curLvlId === 2) {
-                  batchSize = newTime < 60 ? 1 : (newTime < 180 ? (Math.random() < 0.5 ? 1 : 2) : (Math.random() < 0.6 ? 2 : 3));
-                } else if (curLvlId === 3) {
-                  batchSize = newTime < 60 ? (Math.random() < 0.6 ? 1 : 2) : (newTime < 180 ? 2 : 3);
-                } else if (curLvlId === 4) {
-                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? (Math.random() < 0.5 ? 2 : 3) : 3);
-                } else if (curLvlId === 5) {
-                  batchSize = newTime < 60 ? 2 : (newTime < 180 ? 3 : 4);
-                } else {
-                  batchSize = newTime < 60 ? (Math.random() < 0.5 ? 2 : 3) : (newTime < 180 ? 3 : (Math.random() < 0.5 ? 4 : 5));
-                }
-
-                // Never exceed current cap
-                const actualCount = Math.min(batchSize, currentEnemyCap - engine.enemies.length);
-
-                for (let i = 0; i < actualCount; i++) {
-                  const ang = Math.random() * Math.PI * 2;
-                  const dist = 650 + Math.random() * 200;
-                  const phaseKey = currentPhase.id as keyof typeof curLvl.spawnPools;
-                  const pool = curLvl.spawnPools[phaseKey] || curLvl.spawnPools.noon;
-                  const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
-
-                  engine.enemies.push(
-                    createEnemyInstance(
-                      mobId,
-                      player.x + Math.cos(ang) * dist,
-                      player.y + Math.sin(ang) * dist,
-                      1
-                    )
-                  );
-                }
-              }
-            }
+            // Spawning strašidel je konsolidováno výhradně pod Režiséra výpravy (RunDirector).
+            // Původní duplicitní vlnový generátor byl deaktivován, aby chránil plynulých 60 FPS
+            // a udržoval počet aktivních monster do stropu 70 (45 v Performance Mode).
 
             // Player movement
             let mx = 0;
@@ -3628,10 +3665,22 @@ export default function App() {
 
             if (mx !== 0 || my !== 0) {
               const len = Math.hypot(mx, my);
+              let hazardSpeedMult = 1;
+              if (directorRef.current && directorRef.current.hazards.length > 0) {
+                for (const h of directorRef.current.hazards) {
+                  const distH = Math.hypot(player.x - h.x, player.y - h.y);
+                  if (distH <= h.radius) {
+                    if (h.type === 'mud' || h.type === 'frost') {
+                      hazardSpeedMult = Math.min(hazardSpeedMult, h.slowFactor || 0.6);
+                    }
+                  }
+                }
+              }
               const buffMultiplier =
                 (player.soulBuffTimer > 0 ? 1.25 : 1) *
                 (player.waterSoakedTimer > 0 ? 0.75 : 1) *
-                (player.slowTimer > 0 ? 0.65 : 1);
+                (player.slowTimer > 0 ? 0.65 : 1) *
+                hazardSpeedMult;
               const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
               moveVx = (mx / len) * effectiveSpeed;
               moveVy = (my / len) * effectiveSpeed;
@@ -4006,19 +4055,33 @@ export default function App() {
               continue;
             }
 
-            // Homing bees
+            // Homing bees: vyhledání nejbližšího strašidla přes SpatialHash s přirozenou hmyzí vlnivou křivkou
             if (p.homing) {
-              const living = player.getLivingEnemies();
-              if (living.length > 0) {
-                const target = living[0];
-                const targetAng = Math.atan2(target.y - p.y, target.x - p.x);
-                p.vx += Math.cos(targetAng) * 400 * dt;
-                p.vy += Math.sin(targetAng) * 400 * dt;
+              const nearbyTargets = enemySpatialHashRef.current.queryCircle(p.x, p.y, 380);
+              let nearest: any = null;
+              let nearestDistSq = Infinity;
+              for (let i = 0; i < nearbyTargets.length; i++) {
+                const cand = nearbyTargets[i];
+                if (cand.isDefeated || cand.dead) continue;
+                const dSq = distanceSq(p.x, p.y, cand.x, cand.y);
+                if (dSq < nearestDistSq) {
+                  nearestDistSq = dSq;
+                  nearest = cand;
+                }
+              }
+              if (nearest) {
+                const baseAng = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+                // Přirozená křivka letu hmyzu (sinusové vlnění kmitající v průběhu letu)
+                const wobble = Math.sin((p.life || 0) * 16 + p.x * 0.04) * 0.45;
+                const targetAng = baseAng + wobble;
+                p.vx += Math.cos(targetAng) * 450 * dt;
+                p.vy += Math.sin(targetAng) * 450 * dt;
                 const spd = Math.hypot(p.vx, p.vy);
                 if (spd > 350) {
                   p.vx = (p.vx / spd) * 350;
                   p.vy = (p.vy / spd) * 350;
                 }
+                p.angle = Math.atan2(p.vy, p.vx);
               }
             }
 
@@ -4236,6 +4299,20 @@ export default function App() {
           }
           enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
+          // Slévání perníčků (Drop Fusion) každých 1.5 s nebo při nahromadění > 200 kusů
+          engine.dropFusionTimer = (engine.dropFusionTimer || 0) + dt;
+          if (engine.dropFusionTimer >= 1.5 || engine.drops.length > 200) {
+            engine.dropFusionTimer = 0;
+            const viewBounds = {
+              left: engine.camera.x - 120,
+              top: engine.camera.y - 160,
+              right: engine.camera.x + canvas.width + 120,
+              bottom: engine.camera.y + canvas.height + 160,
+            };
+            performDropFusion(engine.drops, viewBounds, 200);
+            compactInPlace(engine.drops, (d) => !d.dead);
+          }
+
           // Update Drops
           for (const d of engine.drops) {
             d.time += dt;
@@ -4274,7 +4351,6 @@ export default function App() {
                   } else if (val >= 5) {
                     engine.texts.push(new DamageText(player.x, player.y - 40, `+${val} kr. (Groš)`, '#E2E8F0'));
                   }
-                  setRunStats((s) => ({ ...s, coins: engine.coins }));
                 } else if (d.type === 'gingerbread') {
                   const val = d.value || 1;
                   engine.gingerbread += val;
@@ -4298,7 +4374,6 @@ export default function App() {
                       size: 3,
                     });
                   }
-                  setRunStats((s) => ({ ...s, gingerbread: engine.gingerbread }));
                 } else if (d.type === 'potion') {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
@@ -4315,7 +4390,6 @@ export default function App() {
                   player.soulBuffTimer = 6.0;
                   engine.souls += 1;
                   engine.coins += 25;
-                  setRunStats((s) => ({ ...s, souls: engine.souls, coins: engine.coins }));
                   engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 kr.', COLORS.mustard, true));
                 } else if (d.type === 'chest') {
                   openChestSequence();
@@ -4489,6 +4563,95 @@ export default function App() {
         for (const dec of engine.decor) {
           if (!isInView(dec.x, dec.y - 45 * dec.scale, 100 * dec.scale, viewLeft, viewTop, viewRight, viewBottom)) continue;
           dec.draw(ctx, curLvl.season, curLvl.theme);
+        }
+
+        // Draw Director Arena Hazards (Bláto, Oheň, Mráz)
+        if (directorRef.current && directorRef.current.hazards.length > 0) {
+          for (const h of directorRef.current.hazards) {
+            if (!isInView(h.x, h.y, h.radius + 20, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            ctx.save();
+            ctx.translate(h.x, h.y);
+            const fadeAlpha = Math.min(1, h.duration / 1.0);
+            ctx.globalAlpha = 0.75 * fadeAlpha;
+            if (h.type === 'mud') {
+              // Ladovská louže bláta s tušovým lemem
+              ctx.fillStyle = '#5A3825';
+              ctx.strokeStyle = '#26150C';
+              ctx.lineWidth = 2.5;
+              ctx.beginPath();
+              ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+              // Bublinky a textura bláta
+              ctx.fillStyle = '#784323';
+              ctx.beginPath();
+              ctx.arc(-h.radius * 0.3, -h.radius * 0.1, 4, 0, Math.PI * 2);
+              ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
+              ctx.fill();
+            } else if (h.type === 'frost') {
+              // Mrazivá námraza
+              ctx.fillStyle = 'rgba(186, 230, 253, 0.55)';
+              ctx.strokeStyle = '#0284C7';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            } else {
+              // Oheň / uhlíky
+              ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+              ctx.strokeStyle = '#991B1B';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+        }
+
+        // Draw Bubácká díra (anomálie Režiséra výpravy)
+        if (directorRef.current && directorRef.current.bubackaDira) {
+          const dira = directorRef.current.bubackaDira;
+          if (!dira.isCompleted && !dira.isFailed && isInView(dira.x, dira.y, dira.radius + 30, viewLeft, viewTop, viewRight, viewBottom)) {
+            ctx.save();
+            ctx.translate(dira.x, dira.y);
+            // Kreslená černá díra v zemi
+            ctx.fillStyle = '#0F172A';
+            ctx.strokeStyle = '#1E293B';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, dira.radius, dira.radius * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Ladovská fialovo-červená temná záře
+            ctx.strokeStyle = '#7C3AED';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, dira.radius * 0.85, dira.radius * 0.55, Math.sin(engine.gameTime * 3) * 0.1, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Indikátor pečetění (kruh postupu)
+            const holdProgress = 1 - Math.max(0, dira.holdTimeRemaining / dira.totalHoldRequired);
+            ctx.strokeStyle = dira.playerInside ? '#22C55E' : '#F59E0B';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, dira.radius + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * holdProgress);
+            ctx.stroke();
+
+            // Textová výzva pro hráče
+            ctx.fillStyle = dira.playerInside ? '#86EFAC' : '#FDE047';
+            ctx.font = 'bold 12px "Cinzel", "Crimson Text", serif';
+            ctx.textAlign = 'center';
+            const label = dira.playerInside
+              ? `PEČETĚNÍ... ${Math.ceil(dira.holdTimeRemaining)}s`
+              : `ZAPEČEŤ DÍRU! (${Math.ceil(dira.timeRemaining)}s)`;
+            ctx.fillText(label, 0, -dira.radius - 12);
+
+            ctx.restore();
+          }
         }
 
         // Draw Drops
@@ -4673,7 +4836,7 @@ export default function App() {
         for (const enemy of engine.enemies) {
           if (!enemy.isDefeated && !enemy.dead && isInView(enemy.x, enemy.y, enemy.radius + 35, viewLeft, viewTop, viewRight, viewBottom)) {
             if ((enemy.windupTimer || 0) > 0 && (enemy.strikeTimer || 0) <= 0) {
-              drawEnemyWarningSign(ctx, enemy, cam);
+              drawEnemyWarningSign(ctx, enemy);
             }
             if ((enemy.stunTimer || 0) > 0) {
               drawStunStars(ctx, enemy, engine.uiTime);
@@ -4877,24 +5040,30 @@ export default function App() {
           ctx.restore();
         }
 
-        // Draw Damage Texts
-        for (const txt of engine.texts) {
-          if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
-          txt.draw(ctx);
+        // Draw Damage Texts (batched font and ink outline)
+        if (engine.texts.length > 0) {
+          ctx.font = '900 18px Eczar';
+          ctx.lineWidth = 4;
+          ctx.strokeStyle = COLORS.ink;
+          ctx.lineJoin = 'round';
+          for (const txt of engine.texts) {
+            if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            txt.draw(ctx);
+          }
+          ctx.globalAlpha = 1;
         }
 
-        // Draw particles
-        if (engine.particles) {
+        // Draw particles in a single batch without individual save/restore
+        if (engine.particles && engine.particles.length > 0) {
           for (const p of engine.particles) {
             if (!isInView(p.x, p.y, p.size || 6, viewLeft, viewTop, viewRight, viewBottom)) continue;
-            ctx.save();
             ctx.globalAlpha = Math.max(0, Math.min(1, (p.life || 0) * 2.5));
             ctx.fillStyle = p.color || COLORS.white;
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
           }
+          ctx.globalAlpha = 1;
         }
 
         // Draw lightning strike bolt
@@ -5035,16 +5204,11 @@ export default function App() {
           }
         } else if (curLvl.weatherEffect === 'fog') {
           const t = engine.uiTime;
+          const fogCanvas = getFogPuffCanvas();
           for (let i = 0; i < 22; i++) {
             const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
             const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
-            const grad = ctx.createRadialGradient(sx, sy, 10, sx, sy, 120);
-            grad.addColorStop(0, 'rgba(180, 195, 215, 0.12)');
-            grad.addColorStop(1, 'rgba(180, 195, 215, 0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 120, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.drawImage(fogCanvas, sx - 120, sy - 120);
           }
         }
       }
@@ -5107,7 +5271,7 @@ export default function App() {
     const attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
-    return {
+    const instance = {
       id,
       x,
       y,
@@ -6715,20 +6879,23 @@ export default function App() {
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
 
-        // Damage numbers displayed for all weapon types
-        if (Math.floor(finalDmg) >= 1) {
-          if (options?.isHunterCounter) {
-            engineRef.current.texts.push(
-              new DamageText(this.x, this.y - 25, `${Math.floor(finalDmg)} 💥`, '#F97316', false)
-            );
-          } else if (type === 'food') {
-            engineRef.current.texts.push(
-              new DamageText(this.x, this.y - 25, `${Math.floor(finalDmg)} 🥐`, '#F59E0B')
-            );
+        // Damage numbers displayed for all weapon types, aggregated within 0.25s for fast multi-hits
+        const dmgInt = Math.floor(finalDmg);
+        if (dmgInt >= 1) {
+          if ((this as any)._lastDamageText && (this as any)._lastDamageText.life > 0.45 && (this as any)._lastDamageTextType === type) {
+            (this as any)._lastDamageText.addAmount(dmgInt);
           } else {
-            engineRef.current.texts.push(
-              new DamageText(this.x, this.y - 25, Math.floor(finalDmg).toString(), COLORS.white, this.soaked)
-            );
+            let dt: DamageText;
+            if (options?.isHunterCounter) {
+              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 💥`, '#F97316', false);
+            } else if (type === 'food') {
+              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 🥐`, '#F59E0B');
+            } else {
+              dt = new DamageText(this.x, this.y - 25, dmgInt.toString(), COLORS.white, this.soaked);
+            }
+            (this as any)._lastDamageText = dt;
+            (this as any)._lastDamageTextType = type;
+            engineRef.current.texts.push(dt);
           }
         }
 
@@ -7154,7 +7321,6 @@ export default function App() {
           saveMeta(nextMeta);
 
           engineRef.current.kills += 1;
-          setRunStats((s) => ({ ...s, kills: engineRef.current.kills }));
 
           const isBossMonster = this.isBoss || this.isMiniboss || this.category === 'bosses';
 
@@ -7433,18 +7599,17 @@ export default function App() {
         const palette = this.palette || (ENEMIES[this.id]?.palette);
         if (palette) {
           ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
           if (palette === 'soot') {
-            ctx.fillStyle = 'rgba(25, 20, 18, 0.45)';
+            ctx.fillStyle = 'rgba(25, 20, 18, 0.32)';
           } else if (palette === 'crimson') {
-            ctx.fillStyle = 'rgba(185, 28, 28, 0.40)';
+            ctx.fillStyle = 'rgba(185, 28, 28, 0.28)';
           } else if (palette === 'bog') {
-            ctx.fillStyle = 'rgba(65, 95, 30, 0.38)';
+            ctx.fillStyle = 'rgba(65, 95, 30, 0.26)';
           } else if (palette === 'steel') {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.24)';
           }
           ctx.beginPath();
-          ctx.arc(this.x, this.y - 5, this.radius * 1.5, 0, Math.PI * 2);
+          ctx.arc(this.x, this.y - 5, this.radius * 1.05, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
 
@@ -7623,6 +7788,10 @@ export default function App() {
         }
       },
     };
+    if (directorRef.current) {
+      directorRef.current.recordEnemySpawn(instance, engineRef.current.gameTime || 0);
+    }
+    return instance;
   };
 
   // Manual trigger to immediately spawn current level's miniboss (available in pause menu for instant action/testing)
@@ -8851,14 +9020,13 @@ export default function App() {
                 }
               }
             }
-            setPendingMilestones((prev) => {
-              const remaining = prev.slice(1);
-              if (remaining.length === 0) {
-                setGameState('playing');
-                engineRef.current.lastTime = performance.now();
-              }
-              return remaining;
-            });
+            const remaining = pendingMilestonesRef.current.slice(1);
+            pendingMilestonesRef.current = remaining;
+            setPendingMilestones(remaining);
+            if (remaining.length === 0) {
+              setGameState('playing');
+              engineRef.current.lastTime = performance.now();
+            }
           }}
         />
       )}

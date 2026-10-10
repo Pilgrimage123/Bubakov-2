@@ -220,7 +220,7 @@ const KRONIKA: KronikaEntry[] = [
       '🎨 Bossové a minibossové dostali vlastní ladovské rendery.',
       '🐉 Tříhlavý drak dostal samostatné animace a útoky jednotlivých hlav.',
       '🎁 Dropy získaly tematické afinity, přímé náhodné dropy, bonusy za usmíření jídlem a bossí fontány kořisti.',
-      '🪙 Mince mají více nominálních hodnot a dropy používají fyzikální rozptyl.',
+      '🪙 Krejcary mají více nominálních hodnot a dropy používají fyzikální rozptyl.',
     ],}
   ,
   {

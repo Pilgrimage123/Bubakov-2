@@ -18,7 +18,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		levelKey: "scarecrowLevel",
 		role: "Ochrana úrody a polí",
 		helpers: "Zpacifikovaní bubáci jako strašáci",
-		story: "Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pšeničného pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a mince se k lovci samy kutálejí!",
+		story: "Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pšeničného pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a krejcary se k lovci samy kutálejí!",
 		bonusDesc: (lvl) => `Pozorná aura: +${lvl * 25} k dosahu sběru krejcarů a předmětů`,
 		cost: (lvl) => 35 * (lvl + 1),
 		canvasDrawer: "drawScarecrowScene"

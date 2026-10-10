@@ -577,12 +577,17 @@ export class RunDirector {
   }
 
   private getWeightedPool(engine: any): string[] {
-    const curLvl: GameLevelDef = engine.activeLevelDef || engine.state?.activeLevelId ? engine.state.activeLevelId : 1;
-    const pool = this.rozmar.preferredEnemyIds.slice();
-    if (pool.length === 0) {
-      pool.push('rarach');
+    const curLvl: GameLevelDef | undefined = engine.activeLevelDef;
+    const phaseKey = engine.currentPhase?.id || engine.activePhase?.id || 'noon';
+    const dayPool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools])
+      ? curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools]
+      : (curLvl?.spawnPools?.noon || []);
+
+    const combined = [...new Set([...dayPool, ...this.rozmar.preferredEnemyIds])];
+    if (combined.length === 0) {
+      combined.push('rarach');
     }
-    return pool;
+    return combined;
   }
 
   public getTelemetry(): DirectorTelemetry {

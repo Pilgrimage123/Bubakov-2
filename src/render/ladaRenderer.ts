@@ -10027,23 +10027,35 @@ function drawEnemyRenderer(
 
   const radius = enemy?.radius || 24;
   const cadence: EnemyAttackCadence = enemy?.attackCadence || enemy?.cadence || 'normal';
-  const isAttacking = !!enemy?.isAttacking || !!enemy?.isWindup;
+  const isAttacking =
+    !!enemy?.isAttacking ||
+    !!enemy?.isWindup ||
+    enemy?.aiState === 'windup' ||
+    ((enemy?.windupTimer || 0) > 0 && (enemy?.strikeTimer || 0) <= 0);
   const windupTimer = enemy?.windupTimer || 0;
-  const recoveryTimer = enemy?.recoveryTimer || 0;
+  const recoveryTimer =
+    typeof enemy?.recoveryTimer === 'number'
+      ? enemy.recoveryTimer
+      : typeof enemy?.strikeTimer === 'number'
+      ? enemy.strikeTimer
+      : 0;
+  const recoveryDuration =
+    typeof enemy?.recoveryDuration === 'number'
+      ? enemy.recoveryDuration
+      : typeof enemy?.strikeMaxTimer === 'number'
+      ? enemy.strikeMaxTimer
+      : CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
+  const attackDelay =
+    typeof enemy?.attackDelay === 'number'
+      ? enemy.attackDelay
+      : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+
   const facingDir =
     (isAttacking || recoveryTimer > 0) && typeof enemy?.attackAngle === 'number'
       ? (Math.cos(enemy.attackAngle) < 0 ? -1 : 1)
       : (vx < 0 ? -1 : 1);
   const effectiveVx = (isAttacking || recoveryTimer > 0) ? (facingDir < 0 ? -1 : 1) : vx;
 
-  const attackDelay =
-    typeof enemy?.attackDelay === 'number'
-      ? enemy.attackDelay
-      : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
-  const recoveryDuration =
-    typeof enemy?.recoveryDuration === 'number'
-      ? enemy.recoveryDuration
-      : CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
   const attackAngle =
     typeof enemy?.attackAngle === 'number'
       ? enemy.attackAngle
@@ -10076,12 +10088,14 @@ function drawEnemyRenderer(
   ctx.scale(k.scaleX, k.scaleY);
   ctx.translate(-x, -y);
 
+  const attackInfo = enemy && (enemy.isActive !== undefined || enemy.isWindup !== undefined)
+    ? enemy
+    : getEnemyAttackAnimationState(enemy || {}, time);
+
   if (extraArgs && extraArgs.length > 0) {
     drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
-  } else if (enemy && (enemy.isActive !== undefined || enemy.isWindup !== undefined)) {
-    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, enemy);
   } else {
-    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked);
+    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo);
   }
 
   ctx.restore();
@@ -10100,16 +10114,8 @@ export function drawEnemyWarningSign(
   if (!enemy.windupTimer || enemy.windupTimer <= 0 || !enemy.attackDelay) return;
   if ((enemy.strikeTimer || 0) > 0) return;
 
-  const currentTransform = typeof ctx.getTransform === 'function' ? ctx.getTransform() : null;
-  const isAlreadyTranslated = currentTransform && (
-    Math.abs(currentTransform.e - (-cameraOffset.x)) < 0.5 &&
-    Math.abs(currentTransform.f - (-cameraOffset.y)) < 0.5 &&
-    (cameraOffset.x !== 0 || cameraOffset.y !== 0)
-  );
-
-  const offX = isAlreadyTranslated ? 0 : (cameraOffset ? cameraOffset.x : 0);
-  const offY = isAlreadyTranslated ? 0 : (cameraOffset ? cameraOffset.y : 0);
-
+  const offX = cameraOffset ? cameraOffset.x : 0;
+  const offY = cameraOffset ? cameraOffset.y : 0;
   const screenX = enemy.x - offX;
   const screenY = enemy.y - offY - enemy.radius - 14;
 

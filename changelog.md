@@ -1,5 +1,29 @@
 # Bubákov — Changelog
 
+## 2026-10-10 — Stabilizace integračního stagingu a Ladovská harmonizace
+
+- **Oprava pádu a plné napojení Režiséra výpravy (`RunDirector`):**
+  - Implementován robustní adaptér pro `RunDirector.step` v `App.tsx` s podporou `spawnMonster` a `spawnScatterDrop`.
+  - Každé zrození nepřítele (běžné vlny, minibossové i taktické přepadové skupiny) je nyní automaticky a přesně zaznamenáno v `recordEnemySpawn`, což zaručuje správný výpočet TTK a dynamické obtížnosti.
+  - Vykresleny arénové pasti (`ArenaHazard` — louže bláta, oheň, mráz) a **Bubácká díra** (`BubackaDira`) s kruhovým odpočtem pečetění a vlivem na pohyb hráče.
+- **Oprava procedurální Ladovské kinematiky nepřátel:**
+  - `drawEnemyRenderer` v `ladaRenderer.ts` nyní transparentně rozpoznává nápřah (`windupTimer`, `aiState === 'windup'`) a úder (`strikeTimer`), čímž se v `App.tsx` poprvé v plné kráse aktivují animace otřesů, náklonů, podkresového prachu a siluet zbraní.
+- **Odstranění race condition u Milníků zbraní:**
+  - Zaveden `pendingMilestonesRef`, který zabraňuje přepsání stavu `'milestone'` starou uzávěrou po roztočení Malované truhly či nákupu u Čertova dědečka.
+- **Sjednocení doménové terminologie a ADR:**
+  - Zapsán termín **Bubácká díra** a **Slévání perníčků** do `GLOSSARY.md`.
+  - Aktualizován záznam `docs/adr/0001-phased-game-engine-integration.md` pro pravdivý stav Phase-1 Adaptéru.
+  - Zapsáno nové architektonické rozhodnutí `docs/adr/0002-konsolidace-rezisera-a-ramec-vykonu.md`.
+  - Vyčištěny zakázané výrazy (*mince*, *perků*) v `ControlsModal.tsx`, `hunterUnlocks.ts`, `village.ts` a `KronikaChanges.tsx`.
+- **Optimalizace výkonu a konsolidace běhové smyčky (60 FPS stabilizace):**
+  - Duplicitní vlnový spawner v `App.tsx` deaktivován; líheň strašidel řízena výhradně Režisérem výpravy (`RunDirector`) s hard-capem 70 monster (45 v Performance Mode) a napojením na denní fáze úrovně.
+  - Okamžitá volání `setRunStats` ze smyčky odstraněna; ukazatele se synchronizují dávkově každých 150 ms (`HUD_SYNC_INTERVAL_SECONDS`), čímž se eliminovalo zasekávání Reactu.
+  - Aktivováno **Slévání perníčků** (`performDropFusion`) každých 1,5 s se stropem 200 položek mimo obrazovku.
+  - Odstraněno přepínání `ctx.globalCompositeOperation = 'source-atop'` a alokace `ctx.getTransform()` v `drawEnemyWarningSign`.
+  - Radiální gradienty mlhy předrenderovány do offscreen plátna a částice kresleny v jedné dávce bez individuálních `save/restore`.
+  - Plovoucí texty poškození zastropovány na 40 instancí s kumulativním sčítáním rychlých vícečetných zásahů a dávkovým nastavením fontu.
+  - Samonavádění včel přepnuto na vyhledání nejbližšího cíle přes `SpatialHash` s přirozenou hmyzí vlnivou trajektorií a ochranou re-entrancie přes `queryCircleInto`.
+
 ## 2026-10-09 — Integrační staging: Propojení enginu, sjednocení rendereru a plné ověření
 
 - **Propojení modulárního subsystému do App.tsx:**
