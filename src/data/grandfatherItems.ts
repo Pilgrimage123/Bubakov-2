@@ -7,6 +7,7 @@ export type GrandfatherEffect =
   | { type: 'regen'; amount: number }
   | { type: 'cooldown'; amount: number }
   | { type: 'heal'; amount: number }
+  | { type: 'coins'; amount: number }
   | { type: 'weapon'; weaponId: string };
 
 export interface GrandfatherItemDef {
@@ -40,9 +41,16 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'vesela_mysl', name: 'Veselá mysl a písnička', icon: '🎵', description: '+3 Kuráž doplňováno každých 5 s (+0,6 reg/s)', baseCost: 45, maxStacks: 5, luckWeight: 0.85, effect: { type: 'regen', amount: 0.6 } },
   { id: 'toulave_boty', name: 'Toulavé boty sedmimílové', icon: '👢', description: '+20 rychlost pohybu při obcházení strašidel', baseCost: 40, maxStacks: 5, luckWeight: 1.0, effect: { type: 'speed', amount: 20 } },
   { id: 'magneticky_mesec', name: 'Magnetický měšec', icon: '🧲', description: '+30 dosah sběru krejcarů a perníčků', baseCost: 35, maxStacks: 5, luckWeight: 1.0, effect: { type: 'pickup_radius', amount: 30 } },
-  { id: 'zabijackova_jitrnice', name: 'Zabijačková jitrnice', icon: 'jitrnice', description: '+40 okamžité doplnění Kuráže', baseCost: 25, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 40 } },
-  { id: 'povidlova_buchta_snack', name: 'Povidlová buchta na cestu', icon: 'czech_buchta', description: '+50 okamžité doplnění Kuráže sladkou svačinou', baseCost: 30, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 50 } },
+  { id: 'tepla_cikorka', name: 'Teplá cikorka', icon: 'tepla_cikorka', description: '+30 okamžité doplnění Kuráže', baseCost: 20, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 30 } },
+  { id: 'zejdlik_piva', name: 'Žejdlík piva', icon: 'zejdlik_piva', description: '+40 okamžité doplnění Kuráže', baseCost: 25, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 40 } },
+  { id: 'panak_koralky', name: 'Panák kořalky', icon: 'panak_koralky', description: '+55 okamžité doplnění Kuráže', baseCost: 30, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 55 } },
+  
   { id: 'kynuty_kolac_perk', name: 'Kynutý koláč z pece', icon: 'kynuty_kolac', description: '+25 maximální Kuráž i okamžité posílení', baseCost: 40, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
+
+  // --- Pekelné poklady: nákup se okamžitě promění v krejcary ---
+  { id: 'pekeln_poklad_drobny', name: 'Pekelný měšec', icon: 'pekeln_poklad_drobny', description: 'Dědeček ti hned vyplatí 40 krejcarů.', baseCost: 8, maxStacks: 99, luckWeight: 1.0, effect: { type: 'coins', amount: 40 } },
+  { id: 'pekeln_poklad_stribrny', name: 'Pekelný stříbrňák', icon: 'pekeln_poklad_stribrny', description: 'Dědeček ti hned vyplatí 100 krejcarů.', baseCost: 18, maxStacks: 99, luckWeight: 0.75, effect: { type: 'coins', amount: 100 } },
+  { id: 'pekeln_poklad_zlaty', name: 'Pekelný tolar z pekla', icon: 'pekeln_poklad_zlaty', description: 'Dědeček ti hned vyplatí 250 krejcarů.', baseCost: 40, maxStacks: 99, luckWeight: 0.45, effect: { type: 'coins', amount: 250 } },
 
   // --- Zbraně (vždy garantována alespoň jedna v nůši) ---
   { id: 'wp_cane', name: 'Osikový prut', icon: 'osikovy_prut', description: 'Rychlý sečný oblouk odhání dotěrné skřítky a zloděje.', baseCost: 55, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'osikovy_prut', effect: { type: 'weapon', weaponId: 'osikovy_prut' } },
