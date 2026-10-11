@@ -39,7 +39,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
   return {
     ...parsed,
     currentLang: validLang,
-    selectedLevel: typeof parsed.selectedLevel === 'number' && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
+    selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
       ? parsed.selectedLevel
       : 0,
     highestLevelUnlocked: parsed.highestLevelUnlocked || (
