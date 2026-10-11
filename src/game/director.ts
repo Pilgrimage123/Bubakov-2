@@ -135,6 +135,12 @@ export interface EnemyKillRecord {
 }
 
 export class RunDirector {
+  public static readonly CELL_COUNT = 8;
+  public static readonly CELL_ANGLES = Array.from(
+    { length: 8 },
+    (_, index) => (index * Math.PI * 2) / 8
+  );
+
   public rozmar: RunRozmarDef;
   public threatBudget = 10;
   public budgetCap = 35;
@@ -491,6 +497,35 @@ export class RunDirector {
     return (elite && ENEMIES[elite]) ? elite : null;
   }
 
+  /**
+   * Returns the full bestiary available to high-difficulty expeditions,
+   * including defined elite variants as well as this run's preferred enemies.
+   */
+  public getAllBubaksPool(engine: any): string[] {
+    const preferredPool = this.getWeightedPool(engine);
+    const nonBossBestiary = Object.entries(ENEMIES)
+      .filter(([, enemy]) => enemy && enemy.category !== 'bosses')
+      .map(([id]) => id);
+    const pool = new Set<string>([...preferredPool, ...nonBossBestiary]);
+
+    // Keep variants that are declared through the base-enemy mapping even
+    // when the variant is not part of the selected run's preferred pool.
+    for (const baseId of [...pool]) {
+      const eliteId = this.getEliteVariantForId(baseId);
+      if (eliteId) pool.add(eliteId);
+    }
+
+    return [...pool].filter((id) => Boolean(ENEMIES[id]));
+  }
+
+  /** Regular tactical mobs cost 3; named elite variants cost 8 threat. */
+  public getBubakThreatCost(enemyId: string): number {
+    const isEliteVariant = Object.keys(ENEMIES).some(
+      (baseId) => this.getEliteVariantForId(baseId) === enemyId
+    );
+    return isEliteVariant ? 8 : 3;
+  }
+
   private executeDrtivyPrepad(engine: any): void {
     const player = engine.state.player;
     if (!player) return;
@@ -624,29 +659,49 @@ export class RunDirector {
       return;
     }
 
-    // Standard tactical squad / burst spawn if budget allows
-    if (this.threatBudget >= 4) {
-      const pool = this.getWeightedPool(engine);
+    // Standard tactical squad / burst spawn if budget allows.
+    // On higher difficulties, pick from the entire bestiary (including elite
+    // variants) and account for each enemy's actual threat cost.
+    if (this.threatBudget >= 3) {
+      const pool = this.dynamicDifficulty >= 3.0
+        ? this.getAllBubaksPool(engine)
+        : this.getWeightedPool(engine);
       const maxBatchCost = this.dynamicDifficulty >= 3.4 ? 18 : this.dynamicDifficulty >= 2.8 ? 14 : (dominance > 0.7 ? 12 : 6);
-      const cost = Math.min(this.threatBudget, maxBatchCost);
+      const availableBudget = Math.min(this.threatBudget, maxBatchCost);
       const maxCount = this.dynamicDifficulty >= 3.4 ? 5 : this.dynamicDifficulty >= 2.8 ? 4 : 3;
-      const count = Math.min(maxCount, Math.floor(cost / 3), this.maxLivingEnemies - livingCount);
+      const spawnLimit = Math.max(0, Math.min(maxCount, this.maxLivingEnemies - livingCount));
+      const spawnPlan: string[] = [];
+      let plannedCost = 0;
 
-      if (count > 0) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 500 + Math.random() * 80;
+      for (let i = 0; i < spawnLimit; i++) {
+        const remainingBudget = availableBudget - plannedCost;
+        const affordable = pool.filter((id) => this.getBubakThreatCost(id) <= remainingBudget);
+        if (affordable.length === 0) break;
 
-        for (let i = 0; i < count; i++) {
-          const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
-          const offAngle = angle + (i - (count - 1) / 2) * 0.18;
+        const mobId = affordable[Math.floor(Math.random() * affordable.length)] || 'rarach';
+        spawnPlan.push(mobId);
+        plannedCost += this.getBubakThreatCost(mobId);
+      }
+
+      if (spawnPlan.length > 0) {
+        // Distribute spawns across distinct sectors instead of clustering all
+        // reinforcements around one random angle.
+        const startCell = Math.floor(Math.random() * RunDirector.CELL_COUNT);
+        for (let i = 0; i < spawnPlan.length; i++) {
+          const mobId = spawnPlan[i];
+          const cell = (startCell + i) % RunDirector.CELL_COUNT;
+          const angle = RunDirector.CELL_ANGLES[cell] + (Math.random() - 0.5) * 0.12;
+          const dist = 500 + Math.random() * 80;
           const e = engine.spawnMonster(
             mobId,
-            player.x + Math.cos(offAngle) * dist,
-            player.y + Math.sin(offAngle) * dist,
+            player.x + Math.cos(angle) * dist,
+            player.y + Math.sin(angle) * dist,
             1.0
           );
-          if (e) this.recordEnemySpawn(e, gameTime);
-          this.threatBudget -= 3;
+          if (e) {
+            this.recordEnemySpawn(e, gameTime);
+            this.threatBudget = Math.max(0, this.threatBudget - this.getBubakThreatCost(mobId));
+          }
         }
       }
     }
