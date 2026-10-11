@@ -1,4 +1,6 @@
 import type { GameLevelId, GameLevelDef, EnemyPrefixType } from '../types';
+import { getCurrentDayPhase } from '../constants';
+import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES } from '../data/enemies';
 
@@ -1072,10 +1074,12 @@ export class RunDirector {
   }
 
   private getWeightedPool(engine: any): string[] {
-    const curLvl: GameLevelDef | undefined = engine.activeLevelDef;
-    const phaseKey = engine.currentPhase?.id || engine.activePhase?.id || 'noon';
-    const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools])
-      ? curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools]
+    const state = engine.state ?? engine;
+    const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
+    const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
+    const phaseKey = getCurrentDayPhase(state.gameTime || 0).id;
+    const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey])
+      ? curLvl.spawnPools[phaseKey]
       : (curLvl?.spawnPools?.noon || []);
 
     // Never mix enemies from other phases into the current phase.
