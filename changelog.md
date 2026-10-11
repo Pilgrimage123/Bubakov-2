@@ -1,5 +1,19 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Oprava CI konfigurace
+
+- Doplněn skript `typecheck` (`tsc --noEmit`), který workflow CI již používá.
+- Kompletně regenerován `package-lock.json` příkazem `npm install --package-lock-only --ignore-scripts --no-audit --no-fund` v Node.js 22 / npm 10 na GitHub Actions; doplněny tranzitivní závislosti ESLint a Vitest.
+- Sjednocena deklarace `esbuild` na `^0.28.0`, odpovídající Vite 8 peer požadavku.
+- Dočasný workflow použitý k regeneraci lockfile byl po dokončení odstraněn.
+
+## 2026-10-11 — Režisér výpravy: sektory a rozpočet hrozeb
+
+- Doplněno osm rovnoměrně rozmístěných spawn sektorů a rozložení běžných taktických posil mezi různé sektory.
+- Přidána veřejná metoda `getAllBubaksPool` pro výběr bestiáře bez bossů včetně elitních variant a metoda `getBubakThreatCost` pro jednotný výpočet ceny hrozby.
+- Běžní bubáci spotřebují 3 body rozpočtu, definované elitní varianty 8; plán spawnu respektuje rozpočet a odečítá body pouze za úspěšně vytvořeného nepřítele.
+- Při dosažení limitu 75 živých nepřátel převádí Režisér přebytečný rozpočet na posílení existujícího běsa i během fáze Oddychu; převod je omezen cooldownem, aby se neopakoval každý snímek.
+
 ## 2026-10-10 — Dynamická obtížnost, posílení Režiséra výpravy a volič v herním menu
 
 - **Posuvník Dynamická obtížnost v nabídce hry:**
