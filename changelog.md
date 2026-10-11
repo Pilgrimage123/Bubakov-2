@@ -1,5 +1,13 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Léčivé dropy se při plné Kuráži nesbírají
+
+- Sběrná logika ponechává léčivé dropy (jitrnice/potion, chléb a hrušku) na mapě, pokud má Lovec plnou Kuráž; magnetický dosah je také nepřitahuje.
+- Jakmile Kuráž klesne pod maximum, léčivé dropy lze opět normálně přitáhnout a sebrat.
+- Ostatní kořist, včetně krejcarů, perníčků a dušiček, se při plné Kuráži sbírá beze změny.
+- Přidány regresní testy pro léčivé i neléčivé dropy.
+
+
 ## 2026-10-11 — Spotřební Kuráž, pekelné poklady a obchodní přirážka
 
 - Léčivé předměty mají vlastní názvy a SVG ikony: Teplá cikorka (+30 Kuráže), Žejdlík piva (+40) a Panák kořalky (+55). Při plné Kuráži nelze léčivý nákup provést.
