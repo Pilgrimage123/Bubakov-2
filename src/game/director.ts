@@ -422,8 +422,8 @@ export class RunDirector {
         this.buildupDuration += dt;
         // Pacing deadlock fix:
         // Transition to peak when:
-        // 1) Threat budget depleted (<= 8 on high diff, <= 4 on low) AND either high livingCount (>= 18) OR at least 6 mobs after 12s
-        // 2) OR timer threshold reached (18s on 5.0x, 24s on 4.0x, 48s on 2.0x) even if god-tier player one-shots everything!
+        // 1) Threat budget depleted (<= 6 at every preset) AND either high livingCount (>= 18) OR at least 6 mobs after 12s
+        // 2) OR timer threshold reached, with the opening phase deliberately extended on every preset.
         const gameTime = engine.state?.gameTime || 0;
         const openingPhaseFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
         const maxBuildupTime = Math.max(18, 48 - ((this.dynamicDifficulty - 2.0) / 2.0) * 24) * openingPhaseFactor;
@@ -714,8 +714,8 @@ export class RunDirector {
     }
 
     // Standard tactical squad / burst spawn if budget allows.
-    // On higher difficulties, pick from the entire bestiary (including elite
-    // variants) and account for each enemy's actual threat cost.
+    // Every preset uses the same phase-appropriate pool, including eligible
+    // elite variants; difficulty controls pressure quantity and cadence.
     if (this.threatBudget >= 3) {
       const pool = this.getAllBubaksPool(engine);
       const maxBatchCost = this.dynamicDifficulty >= 3.4 ? 18 : this.dynamicDifficulty >= 2.8 ? 14 : (dominance > 0.7 ? 12 : 6);
