@@ -14,6 +14,8 @@ import { KrvaveJelitoIcon } from './KrvaveJelitoIcon';
 import { ValecniceIcon } from './ValecniceIcon';
 import { CesnekovaTopinkaIcon } from './CesnekovaTopinkaIcon';
 import { KyselaOkurkaIcon } from './KyselaOkurkaIcon';
+import { HunterConsumableIcon } from './HunterConsumableIcon';
+import { PekelnyPokladIcon } from './PekelnyPokladIcon';
 
 function isKurazIcon(icon: any) {
 	return icon === "medvedi_mast" || icon === "medvedimast" || icon === "mast" || icon === "opravdova_kuraz" || icon === "kuraz" || icon === "courage" || icon === "fist" || icon === "opravdovakuraz" || icon === "hrosi_kuze" || icon === "🥩";
@@ -54,7 +56,8 @@ export interface GameIconProps {
 }
 
 var GameIcon: React.FC<GameIconProps> = ({ icon, size = "1.2em", className = "", style = {} }) => {
-	if (isValecniceIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ValecniceIcon, { size, className, style });
+	if (icon === 'tepla_cikorka' || icon === 'zejdlik_piva' || icon === 'panak_koralky') return <HunterConsumableIcon kind={icon} size={size} className={className} style={style} />;
+	if (icon === 'pekeln_poklad_drobny' || icon === 'pekeln_poklad_stribrny' || icon === 'pekeln_poklad_zlaty') return <PekelnyPokladIcon kind={icon} size={size} className={className} style={style} />;	if (isValecniceIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ValecniceIcon, { size, className, style });
 	if (isGarlicIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CesnekovaTopinkaIcon, { size, className, style });
 	if (isPickleIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KyselaOkurkaIcon, { size, className, style });
 	if (isKolacIcon(icon)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(KynutyKolacIcon, {
