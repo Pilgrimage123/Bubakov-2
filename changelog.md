@@ -1,5 +1,12 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Režisér výpravy: tematicky správný výběr nepřátel
+
+- Výběr nepřátel nyní respektuje aktivní úroveň a fázi dne; do aktuálního fondu se již nepřimíchávají nepřátelé z ostatních fází ani globální bestiář.
+- Při dynamické obtížnosti 3,0× a vyšší se mohou přidat elitní varianty pouze nepřátel povolených v aktuální fázi, takže tematické eskalování zůstává zachováno.
+- Výběr vůdců, prefixed nepřátel a taktických formací kontroluje způsobilost vůči fondu fáze; selhání Bubácké díry používá stejný bezpečný výběr.
+- Přidán bezpečný fallback pro neúplné definice úrovní, aniž by se běžné složení rozšířilo o bossy.
+
 ## 2026-10-11 — Elitní prefixy: anti-kiting a blesková odveta
 
 - Implementováno postupné zrychlení Pekelného bubáka při vzdáleném kitingu (15 % za sekundu, nejvýše +120 %) a reset při přiblížení.
