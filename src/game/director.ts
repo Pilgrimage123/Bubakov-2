@@ -52,7 +52,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '2.00× Poklid za pecí',
     shortLabel: '2.00× Poklid',
     name: 'Poklid za pecí',
-    subtitle: 'Kocour přede na peci, v kamnech praská a strašidla jen nesměle vykukují škvírou ve vratech stodoly. Původní mírné tempo s velkorysou asistencí.',
+    subtitle: 'Nejklidnější tempo: pomalejší přísun hrozeb, menší rozpočet a delší prodlevy. Všechny typy nepřátel a střetnutí zůstávají dostupné.',
     color: '#16A34A',
   },
   {
@@ -60,7 +60,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '2.50× Šramot za humny',
     shortLabel: '2.50× Šramot',
     name: 'Šramot za humny',
-    subtitle: 'Ve starém seníku to podezřele šramotí a na mezi poskakují první nezbední rarášci. Mírné zvýšení rozpočtu hrozeb a pružnější tempo.',
+    subtitle: 'Lehce svižnější tempo a větší rozpočet hrozeb. Stejné nepřátele, formace i speciální mechaniky jako na ostatních obtížnostech.',
     color: '#0284C7',
   },
   {
@@ -68,7 +68,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '3.00× Zlověstná noc (Výchozí)',
     shortLabel: '3.00× Zlověstná noc',
     name: 'Zlověstná noc (Bubácká polízanice)',
-    subtitle: 'Zvoní večerní klekání! Z rybníka stoupá chladná mlha, Režisér klade zrádné bahno do cesty a vysílá klešťové hlídky z obou stran.',
+    subtitle: 'Vyvážené výchozí tempo a rozpočet hrozeb. Obtížnost mění četnost a velikost tlakových vln, ne dostupné herní mechaniky.',
     color: '#D97706',
   },
   {
@@ -76,7 +76,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '3.50× Čertovské posvícení',
     shortLabel: '3.50× Posvícení',
     name: 'Čertovské posvícení',
-    subtitle: 'Vesnická chasa utíká, hastrman cáká po návsi a z lesa vyrážejí organizované hlídky s obrněnými veliteli.',
+    subtitle: 'Vyšší tempo, větší rozpočet a kratší prodlevy mezi střetnutími. Žádná formace ani speciální mechanika není vyhrazena této obtížnosti.',
     color: '#EA580C',
   },
   {
@@ -84,7 +84,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '4.00× Divoká tancovačka',
     shortLabel: '4.00× Tancovačka',
     name: 'Divoká noční tancovačka',
-    subtitle: 'Dudy hrají na plné pecky, čerti metají kozelce a po každém oddechu následuje neprodleně Drtivý přepad!',
+    subtitle: 'Výrazně hustší tlakové vlny, větší rozpočet na jednu vlnu a kratší cooldowny. Všechny herní systémy jsou dostupné i na nižších stupních.',
     color: '#DC2626',
   },
   {
@@ -92,7 +92,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '4.50× Hrusická šlamastyka',
     shortLabel: '4.50× Šlamastyka',
     name: 'Velká hrusická šlamastyka',
-    subtitle: 'Všechna strašidla z celého ladovského kraje mají sraz na návsi. Zkrácená asistence, bleskové formace a neutuchající bojový tlak.',
+    subtitle: 'Velmi vysoká četnost střetnutí a velkorysý rozpočet hrozeb. Adaptivní pomoc zůstává stejně účinná bez ohledu na zvolený stupeň.',
     color: '#B91C1C',
   },
   {
@@ -100,7 +100,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '5.00× Pekelné boží dopuštění (5× Max)',
     shortLabel: '5.00× Boží dopuštění',
     name: 'Pekelné boží dopuštění (5,0× Maximální výzva)',
-    subtitle: 'Nejvyšší možná nálož! 5× větší dynamická obtížnost – posílení elitní běsi v čele přepadů, bleskové obklíčení a žádné slitování Režiséra.',
+    subtitle: 'Nejrychlejší tempo, největší rozpočet a nejkratší prodlevy. Obtížnost nepřidává exkluzivní mechaniky ani nezakazuje žádné mechaniky nižším stupňům.',
     color: '#7F1D1D',
   },
 ];
@@ -180,6 +180,7 @@ export class RunDirector {
   private prefixSpawnCooldown = 3.5;
   private eliteBudgetCooldown = 0;
 
+  private currentGameTime = 0;
   private playerHeadingDuration = 0;
   private lastPlayerAngle: number | null = null;
   private kitingHazardCooldown = 0;
@@ -246,6 +247,7 @@ export class RunDirector {
     if (!player || state.dawnVictoryTriggered) return;
 
     const gameTime = state.gameTime || 0;
+    this.currentGameTime = gameTime;
     const livingCount = engine.livingEnemies?.length ?? state.enemies?.length ?? 0;
 
     // 1. Track player movement vector for Zrádný terén (anti-kiting)
@@ -259,7 +261,9 @@ export class RunDirector {
     this.assistanceActive = dominance < 0.35 && hpRatio < 0.5;
     this.updateAdaptivePressure(dominance, hpRatio, dt);
 
-    // 3. Update threat budget using baseline difficulty plus bounded adaptive pressure.
+    // 3. Update threat budget. The opening 90 seconds use a gentler ramp on
+    // every preset; difficulty changes pressure quantity/timing, never access
+    // to encounter mechanics.
     this.updateBudgetMetrics(gameTime, dt);
 
     // At the living-enemy cap, do not convert surplus threat into stronger elites
@@ -292,7 +296,8 @@ export class RunDirector {
     this.prefixSpawnCooldown -= dt;
     this.lastSpawnCheck += dt;
 
-    const spawnInterval = Math.max(0.24, 0.6 - ((this.dynamicDifficulty - 2.0) / 2.0) * 0.22);
+    const openingSpawnFactor = gameTime < 30 ? 1.85 : gameTime < 60 ? 1.55 : gameTime < 90 ? 1.25 : 1.0;
+    const spawnInterval = Math.max(0.24, (0.6 - ((this.dynamicDifficulty - 2.0) / 2.0) * 0.22) * openingSpawnFactor);
     if (this.lastSpawnCheck >= spawnInterval) {
       this.lastSpawnCheck = 0;
       if (this.valvePhase === 'buildup' || this.valvePhase === 'peak') {
@@ -316,10 +321,12 @@ export class RunDirector {
       // Within +/- 35 degrees (0.61 rad)
       if (diff <= 0.61) {
         this.playerHeadingDuration += dt;
-        if (this.playerHeadingDuration >= 3.5 && this.kitingHazardCooldown <= 0) {
+        const gameTime = this.currentGameTime;
+        const openingTriggerFactor = gameTime < 30 ? 2.0 : gameTime < 60 ? 1.7 : gameTime < 90 ? 1.3 : 1.0;
+        if (this.playerHeadingDuration >= 3.5 * openingTriggerFactor && this.kitingHazardCooldown <= 0) {
           this.triggerZradnyTeren(player, currentAngle);
           this.playerHeadingDuration = 0;
-          this.kitingHazardCooldown = 5.0;
+          this.kitingHazardCooldown = 5.0 * openingTriggerFactor;
         }
       } else {
         this.playerHeadingDuration = Math.max(0, this.playerHeadingDuration - dt * 2.0);
@@ -384,27 +391,29 @@ export class RunDirector {
       cap = 135;
     }
 
-    // Normalized diff factor from 1.0 (at 2.0x) to 2.5 (at 5.0x)
+    // Difficulty affects only pressure quantity and cadence. Encounter types,
+    // enemy families, and special mechanics are available on every preset.
     const normalizedDiff = 1.0 + ((this.dynamicDifficulty - 2.0) / 3.0) * 1.5;
 
-    // Capacity scales assertively with dynamicDifficulty (up to 2.5x at diff 5.0)
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * this.pressureMultiplier);
+    // Strongly soften the opening 90 seconds on every preset. The rate ramps
+    // up in stages; the budget cap is also temporarily lower to prevent an
+    // early bank of threat from being dumped all at once.
+    const openingRateFactor = gameTime < 30 ? 0.35 : gameTime < 60 ? 0.50 : gameTime < 90 ? 0.70 : 1.0;
+    const openingCapFactor = gameTime < 30 ? 0.55 : gameTime < 60 ? 0.65 : gameTime < 90 ? 0.80 : 1.0;
 
-    // Base accrual factor scales with dynamicDifficulty (1.0x at diff 2.0, 1.8x at diff 3.0, 3.2x at diff 5.0)
+    // Capacity and accrual scale with the selected baseline difficulty.
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * this.pressureMultiplier * openingCapFactor);
+
     let accrualMult = 0.35 + Math.pow(normalizedDiff, 1.42) * 0.75;
 
-    // Scaled assistance:
-    // When courage < 50% and slow TTK:
-    // On 2.0 diff: 50% slow (accrualMult *= 0.50)
-    // On 3.0 diff: 38% slow (accrualMult *= 0.62)
-    // On 5.0 diff: only 15% slow (accrualMult *= 0.85) - preserves intense pressure!
+    // Assistance is equally effective at every preset; higher difficulty must
+    // not weaken the director's response when the player is struggling.
     if (this.assistanceActive) {
-      const penalty = Math.min(0.85, 0.50 + ((this.dynamicDifficulty - 2.0) / 3.0) * 0.35);
-      accrualMult *= penalty;
+      accrualMult *= 0.50;
     }
 
-    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * this.pressureMultiplier * dt;
-    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
+    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * openingRateFactor * this.pressureMultiplier * dt;
+    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
   }
 
   private updatePacingValves(dt: number, engine: any, livingCount: number): void {
@@ -413,10 +422,12 @@ export class RunDirector {
         this.buildupDuration += dt;
         // Pacing deadlock fix:
         // Transition to peak when:
-        // 1) Threat budget depleted (<= 8 on high diff, <= 4 on low) AND either high livingCount (>= 18) OR at least 6 mobs after 12s
-        // 2) OR timer threshold reached (18s on 5.0x, 24s on 4.0x, 48s on 2.0x) even if god-tier player one-shots everything!
-        const maxBuildupTime = Math.max(18, 48 - ((this.dynamicDifficulty - 2.0) / 2.0) * 24);
-        const budgetThreshold = this.dynamicDifficulty >= 3.0 ? 8 : 4;
+        // 1) Threat budget depleted (<= 6 at every preset) AND either high livingCount (>= 18) OR at least 6 mobs after 12s
+        // 2) OR timer threshold reached, with the opening phase deliberately extended on every preset.
+        const gameTime = engine.state?.gameTime || 0;
+        const openingPhaseFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
+        const maxBuildupTime = Math.max(18, 48 - ((this.dynamicDifficulty - 2.0) / 2.0) * 24) * openingPhaseFactor;
+        const budgetThreshold = 6;
         const mobsMet = livingCount >= 18 || (livingCount >= 6 && this.buildupDuration >= 12);
         if ((this.threatBudget <= budgetThreshold && mobsMet) || this.buildupDuration >= maxBuildupTime) {
           this.valvePhase = 'peak';
@@ -430,7 +441,9 @@ export class RunDirector {
       case 'peak': {
         this.peakDuration += dt;
         // Wait for player to suppress enemies to trigger the lull (Oddych) OR max peak duration (8s on 5.0x, 16s on 2.0x)
-        const maxPeakTime = Math.max(8, 16 - ((this.dynamicDifficulty - 2.0) / 2.0) * 5.3);
+        const gameTime = engine.state?.gameTime || 0;
+        const openingPhaseFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
+        const maxPeakTime = Math.max(8, 16 - ((this.dynamicDifficulty - 2.0) / 2.0) * 5.3) * openingPhaseFactor;
         if (livingCount <= 4 || this.peakDuration >= maxPeakTime) {
           this.valvePhase = 'lull';
           this.valveTimer = 3.5; // 3.5s of calm
@@ -572,14 +585,14 @@ export class RunDirector {
 
     const leaderCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let leaderId = leaderCandidate || pool[0] || 'rarach';
-    if (this.dynamicDifficulty >= 3.0) {
+    {
       const elite = this.getEliteVariantForId(leaderId);
       if (elite) leaderId = elite;
     }
 
     const minionCandidate = pool[pool.length - 1];
     let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
-    if (this.dynamicDifficulty >= 4.0) {
+    {
       const eliteMinion = this.getEliteVariantForId(minionId);
       if (eliteMinion) minionId = eliteMinion;
     }
@@ -665,17 +678,19 @@ export class RunDirector {
     const avgTTK = this.getAverageTTK();
     const canSpawnPrefixed = !this.assistanceActive && (dominance >= 0.60 || (this.recentKills.length > 0 && avgTTK < 0.85)) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
     if (canSpawnPrefixed) {
-      this.prefixSpawnCooldown = Math.max(3.0, 6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0);
+      const openingCooldownFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
+      this.prefixSpawnCooldown = Math.max(3.0, 6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0) * openingCooldownFactor;
       this.spawnPrefixedEnemy(engine, player, gameTime);
       return;
     }
 
     // High dominance OR high dynamicDifficulty: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite, Klešťové sevření)
-    const allowHeavyFormation = !this.assistanceActive && (dominance > 0.60 || (this.dynamicDifficulty >= 2.9 && this.pressureMultiplier >= 0.92)) && this.threatBudget >= 16 && this.formationCooldown <= 0;
+    const allowHeavyFormation = !this.assistanceActive && this.threatBudget >= 16 && this.formationCooldown <= 0;
     if (allowHeavyFormation) {
       const baseCd = Math.max(2.2, 5.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.2);
-      const assistDelay = this.assistanceActive ? (this.dynamicDifficulty >= 4.0 ? 0.8 : 2.0) : 0;
-      this.formationCooldown = baseCd + assistDelay;
+      const openingCooldownFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
+      const assistDelay = this.assistanceActive ? 2.0 : 0;
+      this.formationCooldown = baseCd * openingCooldownFactor + assistDelay;
 
       const pick = Math.random();
       if (pick < 0.25) {
@@ -699,12 +714,10 @@ export class RunDirector {
     }
 
     // Standard tactical squad / burst spawn if budget allows.
-    // On higher difficulties, pick from the entire bestiary (including elite
-    // variants) and account for each enemy's actual threat cost.
+    // Every preset uses the same phase-appropriate pool, including eligible
+    // elite variants; difficulty controls pressure quantity and cadence.
     if (this.threatBudget >= 3) {
-      const pool = this.dynamicDifficulty >= 3.0
-        ? this.getAllBubaksPool(engine)
-        : this.getWeightedPool(engine);
+      const pool = this.getAllBubaksPool(engine);
       const maxBatchCost = this.dynamicDifficulty >= 3.4 ? 18 : this.dynamicDifficulty >= 2.8 ? 14 : (dominance > 0.7 ? 12 : 6);
       const availableBudget = Math.min(this.threatBudget, maxBatchCost);
       const maxCount = this.dynamicDifficulty >= 3.4 ? 5 : this.dynamicDifficulty >= 2.8 ? 4 : 3;
@@ -773,13 +786,13 @@ export class RunDirector {
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let heavyId = heavyCandidate || pool[0] || 'rarach';
     // Deploy elite heavy variant only into heavy tactical encounters
-    if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
+    if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
       if (elite) heavyId = elite;
     }
     const fastCandidate = pool[pool.length - 1];
     let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
-    if (this.dynamicDifficulty >= 4.2 && this.threatBudget >= 32) {
+    if (this.threatBudget >= 32) {
       const eliteFast = this.getEliteVariantForId(fastId);
       if (eliteFast) fastId = eliteFast;
     }
@@ -820,13 +833,13 @@ export class RunDirector {
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let heavyId = heavyCandidate || pool[0] || 'rarach';
     // Deploy elite heavy variant only into heavy tactical encounters
-    if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
+    if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
       if (elite) heavyId = elite;
     }
     const fastCandidate = pool[pool.length - 1];
     let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
-    if (this.dynamicDifficulty >= 4.2 && this.threatBudget >= 32) {
+    if (this.threatBudget >= 32) {
       const eliteFast = this.getEliteVariantForId(fastId);
       if (eliteFast) fastId = eliteFast;
     }
@@ -869,13 +882,13 @@ export class RunDirector {
     const eliteCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let eliteId = eliteCandidate || pool[0] || 'rarach';
     // Deploy elite leader only into heavy tactical encounters
-    if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
+    if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(eliteId);
       if (elite) eliteId = elite;
     }
     const minionCandidate = pool[pool.length - 1];
     let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
-    if (this.dynamicDifficulty >= 4.2 && this.threatBudget >= 32) {
+    if (this.threatBudget >= 32) {
       const eliteMinion = this.getEliteVariantForId(minionId);
       if (eliteMinion) minionId = eliteMinion;
     }
@@ -1131,14 +1144,12 @@ export class RunDirector {
       eligible.push('rarach');
     }
 
-    // Preserve high-difficulty elite escalation, but only for eligible
-    // phase enemies. Elite variants inherit the theme of their base enemy.
-    if (this.dynamicDifficulty >= 3.0) {
-      for (const baseId of [...eligible]) {
-        const eliteId = this.getEliteVariantForId(baseId);
-        if (eliteId && ENEMIES[eliteId] && !eligible.includes(eliteId)) {
-          eligible.push(eliteId);
-        }
+    // Elite variants are available on every difficulty. The slider controls
+    // pressure quantity/cadence, not access to enemy families or mechanics.
+    for (const baseId of [...eligible]) {
+      const eliteId = this.getEliteVariantForId(baseId);
+      if (eliteId && ENEMIES[eliteId] && !eligible.includes(eliteId)) {
+        eligible.push(eliteId);
       }
     }
 

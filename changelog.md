@@ -1,5 +1,13 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Přepracování dynamické obtížnosti a mírnější začátek výpravy
+
+- Sedm předvoleb obtížnosti (2,00×–5,00×) nyní mění především přísun rozpočtu hrozeb, jeho kapacitu, spawn intervaly a cooldowny. Typy nepřátel, elitní varianty a taktické formace jsou dostupné na všech předvolbách; tematický fond stále respektuje aktivní úroveň a fázi dne.
+- Prvních 90 sekund má odstupňovaně mírnější rozjezd na každé obtížnosti: přírůstek hrozeb činí 35 % / 50 % / 70 % běžné hodnoty během úseků 0–30 / 30–60 / 60–90 s, kapacita rozpočtu 55 % / 65 % / 80 %. Poté se obnoví běžné hodnoty. Tyto dočasné faktory se násobí i stávajícím adaptivním tlakem 0,72×–1,12×.
+- Spawn interval, prefixy, těžké formace, přechody fází Režiséra a anti-kiting terén mají v úvodu delší prodlevy, takže se rozpočet i střetnutí rozbíhají postupně.
+- Asistence je stejně účinná na všech předvolbách a násobí přírůstek rozpočtu 0,50×, pokud má hráč nízkou Kuráž i nízkou dominanci; těžké formace zůstávají při aktivní asistenci potlačené.
+- Přidány regresní testy pro všech sedm předvoleb, přístupnost těžkých formací i při 2,00×, stejnou účinnost asistence a zachování tematických elitních fondů.
+
 ## 2026-10-11 — Dynamická obtížnost: aktuální předvolby a adaptivní tlak
 
 - Aktuální volič nabízí sedm předvoleb: 2,00×, 2,50×, 3,00×, 3,50×, 4,00×, 4,50× a 5,00×; výchozí je 3,00× Zlověstná noc. Rozsah 1,00×–2,00× uvedený u prvního nasazení 10. října je historický a byl následně nahrazen.
