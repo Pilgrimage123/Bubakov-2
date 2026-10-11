@@ -165,6 +165,7 @@ export class RunDirector {
   private formationCooldown = 4.0;
   private nextHazardCooldown = 3.0;
   private prefixSpawnCooldown = 3.5;
+  private eliteBudgetCooldown = 0;
 
   private playerHeadingDuration = 0;
   private lastPlayerAngle: number | null = null;
@@ -235,6 +236,13 @@ export class RunDirector {
 
     // 2. Update threat budget capacity and accrual based on daytime & dynamicDifficulty
     this.updateBudgetMetrics(gameTime, dt);
+
+    // At the living-enemy cap, spend surplus threat on existing elites even
+    // while the pacing valve is in a lull; rate-limit this conversion.
+    this.eliteBudgetCooldown = Math.max(0, this.eliteBudgetCooldown - dt);
+    if (livingCount >= this.maxLivingEnemies) {
+      this.spendExcessBudgetOnElite(engine);
+    }
 
     // 3. Track dominance and assistance need
     const dominance = this.computeDominanceIndex(player);
@@ -599,6 +607,23 @@ export class RunDirector {
     this.threatBudget = Math.max(0, this.threatBudget - budgetToSpend);
   }
 
+  private spendExcessBudgetOnElite(engine: any): void {
+    if (this.threatBudget < 22 || this.eliteBudgetCooldown > 0) return;
+    const enemies: any[] = engine.livingEnemies || [];
+    if (enemies.length === 0) return;
+
+    const eligible = enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isOstryBes);
+    const pool = eligible.length > 0 ? eligible : enemies.filter((enemy: any) => !enemy.isBoss);
+    const target = pool[Math.floor(Math.random() * pool.length)];
+    if (!target || target.isBoss) return;
+
+    target.speed = Math.min((target.speed || 0) * 1.15, 155);
+    target.poiseResist = Math.min(0.9, (target.poiseResist || 0) + 0.40);
+    target.isOstryBes = true;
+    this.threatBudget = Math.max(0, this.threatBudget - 10);
+    this.eliteBudgetCooldown = 1.0;
+  }
+
   private executeTacticalSpawns(
     engine: any,
     player: any,
@@ -606,21 +631,7 @@ export class RunDirector {
     livingCount: number,
     gameTime: number
   ): void {
-    if (livingCount >= this.maxLivingEnemies) {
-      // FPS Guard & Ostřílení běsi: buff existing mobs with excess threat budget (>= 22) to preserve 60 FPS
-      if (this.threatBudget >= 22 && engine.livingEnemies?.length > 0) {
-        const eligible = engine.livingEnemies.filter((m: any) => !m.isBoss && !m.isOstryBes);
-        const pool = eligible.length > 0 ? eligible : engine.livingEnemies;
-        const randMob = pool[Math.floor(Math.random() * pool.length)];
-        if (randMob && !randMob.isBoss) {
-          randMob.speed = Math.min(randMob.speed * 1.15, 155);
-          randMob.poiseResist = Math.min(0.9, (randMob.poiseResist || 0) + 0.40);
-          randMob.isOstryBes = true;
-          this.threatBudget -= 10;
-        }
-      }
-      return;
-    }
+    if (livingCount >= this.maxLivingEnemies) return;
 
     // Special Prefixes: when player kills common mobs too quickly (high dominance / low TTK)
     // and Director needs to deplete excess threat budget (costs 5x normal = 15 threat budget)
