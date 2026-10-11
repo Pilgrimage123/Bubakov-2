@@ -12,6 +12,7 @@
 - Doplněno osm rovnoměrně rozmístěných spawn sektorů a rozložení běžných taktických posil mezi různé sektory.
 - Přidána veřejná metoda `getAllBubaksPool` pro výběr bestiáře bez bossů včetně elitních variant a metoda `getBubakThreatCost` pro jednotný výpočet ceny hrozby.
 - Běžní bubáci spotřebují 3 body rozpočtu, definované elitní varianty 8; plán spawnu respektuje rozpočet a odečítá body pouze za úspěšně vytvořeného nepřítele.
+- Při dosažení limitu 75 živých nepřátel převádí Režisér přebytečný rozpočet na posílení existujícího běsa i během fáze Oddychu; převod je omezen cooldownem, aby se neopakoval každý snímek.
 
 ## 2026-10-10 — Dynamická obtížnost, posílení Režiséra výpravy a volič v herním menu
 
