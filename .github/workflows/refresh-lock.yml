@@ -1,0 +1,40 @@
+name: Temporary lockfile regeneration
+
+on:
+  push:
+    branches:
+      - fix/ci-lockfile-typecheck-20261011
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Regenerate package lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit regenerated lockfile and remove temporary workflow
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/refresh-lock.yml
+          git add package-lock.json
+          git commit -m "fix(ci): regenerate npm lockfile"
+          git push origin "HEAD:${BRANCH_NAME}"
