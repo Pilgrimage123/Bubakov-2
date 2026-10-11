@@ -1,4 +1,6 @@
 import type { GameLevelId, GameLevelDef, EnemyPrefixType } from '../types';
+import { getCurrentDayPhase } from '../constants';
+import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES } from '../data/enemies';
 
@@ -514,24 +516,12 @@ export class RunDirector {
   }
 
   /**
-   * Returns the full bestiary available to high-difficulty expeditions,
-   * including defined elite variants as well as this run's preferred enemies.
+   * Returns only enemies appropriate to the current level and phase.
+   * High difficulty may add elite variants of eligible enemies, but never
+   * unrelated enemies from other phases or the global bestiary.
    */
   public getAllBubaksPool(engine: any): string[] {
-    const preferredPool = this.getWeightedPool(engine);
-    const nonBossBestiary = Object.entries(ENEMIES)
-      .filter(([, enemy]) => enemy && enemy.category !== 'bosses')
-      .map(([id]) => id);
-    const pool = new Set<string>([...preferredPool, ...nonBossBestiary]);
-
-    // Keep variants that are declared through the base-enemy mapping even
-    // when the variant is not part of the selected run's preferred pool.
-    for (const baseId of [...pool]) {
-      const eliteId = this.getEliteVariantForId(baseId);
-      if (eliteId) pool.add(eliteId);
-    }
-
-    return [...pool].filter((id) => Boolean(ENEMIES[id]));
+    return this.getWeightedPool(engine);
   }
 
   /** Regular tactical mobs cost 3; named elite variants cost 8 threat. */
@@ -551,8 +541,8 @@ export class RunDirector {
     const budgetToSpend = Math.min(maxSpend, Math.max(25, this.threatBudget));
     const pool = this.getWeightedPool(engine);
 
-    const leaderCandidate = this.rozmar.preferredEnemyIds[0];
-    let leaderId = (leaderCandidate && ENEMIES[leaderCandidate]) ? leaderCandidate : pool[0] || 'rarach';
+    const leaderCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    let leaderId = leaderCandidate || pool[0] || 'rarach';
     if (this.dynamicDifficulty >= 3.0) {
       const elite = this.getEliteVariantForId(leaderId);
       if (elite) leaderId = elite;
@@ -728,8 +718,8 @@ export class RunDirector {
 
   public spawnPrefixedEnemy(engine: any, player: any, gameTime: number, forcedPrefix?: EnemyPrefixType): any {
     const pool = this.getWeightedPool(engine);
-    const candidateId = this.rozmar.preferredEnemyIds[0] || pool[0] || 'rarach';
-    const mobId = ENEMIES[candidateId] ? candidateId : (pool[0] || 'rarach');
+    const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    const mobId = candidateId || pool[0] || 'rarach';
 
     const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
     const prefix = forcedPrefix || prefixes[Math.floor(Math.random() * prefixes.length)];
@@ -750,8 +740,8 @@ export class RunDirector {
 
   private spawnKlestoveSevreni(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const heavyCandidate = this.rozmar.preferredEnemyIds[0];
-    let heavyId = (heavyCandidate && ENEMIES[heavyCandidate]) ? heavyCandidate : pool[0] || 'rarach';
+    const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    let heavyId = heavyCandidate || pool[0] || 'rarach';
     // Deploy elite heavy variant only into heavy tactical encounters
     if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
@@ -797,8 +787,8 @@ export class RunDirector {
 
   private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const heavyCandidate = this.rozmar.preferredEnemyIds[0];
-    let heavyId = (heavyCandidate && ENEMIES[heavyCandidate]) ? heavyCandidate : pool[0] || 'rarach';
+    const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    let heavyId = heavyCandidate || pool[0] || 'rarach';
     // Deploy elite heavy variant only into heavy tactical encounters
     if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
@@ -846,8 +836,8 @@ export class RunDirector {
 
   private spawnEscortSwarms(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const eliteCandidate = this.rozmar.preferredEnemyIds[0];
-    let eliteId = (eliteCandidate && ENEMIES[eliteCandidate]) ? eliteCandidate : pool[0] || 'rarach';
+    const eliteCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    let eliteId = eliteCandidate || pool[0] || 'rarach';
     // Deploy elite leader only into heavy tactical encounters
     if (this.dynamicDifficulty >= 3.5 && this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(eliteId);
@@ -888,8 +878,8 @@ export class RunDirector {
 
   private spawnArchitects(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const archCandidate = this.rozmar.preferredEnemyIds[1];
-    const archId = (archCandidate && ENEMIES[archCandidate]) ? archCandidate : pool[0] || 'rarach';
+    const archCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[1]);
+    const archId = archCandidate || pool[0] || 'rarach';
 
     const angle = Math.random() * Math.PI * 2;
     const dist = 550;
@@ -1073,8 +1063,9 @@ export class RunDirector {
   }
 
   private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
-    const bossCandidate = this.rozmar.preferredEnemyIds[0];
-    const bossId = (bossCandidate && ENEMIES[bossCandidate]) ? bossCandidate : 'cerny_pes';
+    const pool = this.getWeightedPool(engine);
+    const bossCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
+    const bossId = bossCandidate || pool[0] || 'rarach';
     const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '🧌 Procitlý noční hromotluk z díry');
     if (furious) {
       furious.speed *= 1.2;
@@ -1083,46 +1074,45 @@ export class RunDirector {
   }
 
   private getWeightedPool(engine: any): string[] {
-    const curLvl: GameLevelDef | undefined = engine.activeLevelDef;
-    const phaseKey = engine.currentPhase?.id || engine.activePhase?.id || 'noon';
-    const dayPool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools])
-      ? curLvl.spawnPools[phaseKey as keyof typeof curLvl.spawnPools]
+    const state = engine.state ?? engine;
+    const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
+    const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
+    const phaseKey = getCurrentDayPhase(state.gameTime || 0).id;
+    const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey])
+      ? curLvl.spawnPools[phaseKey]
       : (curLvl?.spawnPools?.noon || []);
 
-    // Collect enemies from all phases of the current level so Director can use all bubáks native to the level
-    const allLevelPhaseEnemies: string[] = [];
-    if (curLvl?.spawnPools) {
-      for (const pool of Object.values(curLvl.spawnPools)) {
-        if (Array.isArray(pool)) {
-          allLevelPhaseEnemies.push(...pool);
+    // Never mix enemies from other phases into the current phase.
+    const eligible = [...new Set(phasePool)]
+      .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+
+    // Keep a valid fallback for incomplete level definitions.
+    if (eligible.length === 0) {
+      const fallback = [...new Set(curLvl?.spawnPools?.noon || [])]
+        .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+      if (fallback.length > 0) eligible.push(...fallback);
+    }
+    if (eligible.length === 0) {
+      const preferred = this.rozmar.preferredEnemyIds
+        .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+      if (preferred.length > 0) eligible.push(...preferred);
+    }
+    if (eligible.length === 0 && ENEMIES['rarach']) {
+      eligible.push('rarach');
+    }
+
+    // Preserve high-difficulty elite escalation, but only for eligible
+    // phase enemies. Elite variants inherit the theme of their base enemy.
+    if (this.dynamicDifficulty >= 3.0) {
+      for (const baseId of [...eligible]) {
+        const eliteId = this.getEliteVariantForId(baseId);
+        if (eliteId && ENEMIES[eliteId] && !eligible.includes(eliteId)) {
+          eligible.push(eliteId);
         }
       }
     }
 
-    // High dynamic difficulty (>= 3.0): Režisér výpravy has access to the full bestiary of bubáks!
-    const globalBestiaryPool: string[] = [];
-    if (this.dynamicDifficulty >= 3.0) {
-      const allEnemyIds = Object.keys(ENEMIES).filter((id) => {
-        const enemy = ENEMIES[id];
-        // Exclude big story bosses from regular mob squads
-        return enemy && enemy.category !== 'bosses';
-      });
-      globalBestiaryPool.push(...allEnemyIds);
-    }
-
-    const combined = [
-      ...new Set([
-        ...dayPool,
-        ...this.rozmar.preferredEnemyIds,
-        ...allLevelPhaseEnemies,
-        ...globalBestiaryPool,
-      ]),
-    ].filter((id) => !!ENEMIES[id]);
-
-    if (combined.length === 0) {
-      combined.push('rarach');
-    }
-    return combined;
+    return eligible;
   }
 
   public getTelemetry(): DirectorTelemetry {

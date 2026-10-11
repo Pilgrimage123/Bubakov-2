@@ -3,6 +3,8 @@ import { RunDirector } from '../src/game/director';
 import { GameEngine } from '../src/game/engine';
 import { selectRunRozmar, RUN_ROZMARY } from '../src/data/runArchetypes';
 import { ENEMIES } from '../src/data/enemies';
+import { GAME_LEVELS } from '../src/data/levels';
+import { getCurrentDayPhase } from '../src/constants';
 
 describe('RunRozmar and Procedural Variance', () => {
   it('defines exactly 3 unique folklore Rozmars for each of the 6 levels', () => {
@@ -450,45 +452,64 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(ENEMIES.kalny_hastrman.palette).toBe('bog');
   });
 
-  it('allows the director to use all spatial cells and all bubaks whenever exhausting threat budget', () => {
+  it('keeps eight angular spawn directions and spends threat budget on tactical spawns', () => {
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
 
-    // 1. Spatial cells definition exists with 8 sectors
+    // Spawn directions are angles around the player, not world/map cells.
     expect(RunDirector.CELL_COUNT).toBe(8);
     expect(RunDirector.CELL_ANGLES.length).toBe(8);
 
-    // 2. All bubaks pool includes special elites and level monsters
-    const allBubaks = director.getAllBubaksPool(engine);
-    expect(allBubaks).toContain('krvavy_rarach');
-    expect(allBubaks).toContain('krvavy_kostlivec');
-    expect(allBubaks).toContain('kalny_hastrman');
-    expect(allBubaks).toContain('cerny_vlkodlak');
-    expect(allBubaks).toContain('obrneny_zbojnik');
-    expect(allBubaks.length).toBeGreaterThan(6);
-
-    // 3. Threat cost resolves accurately
-    expect(director.getBubakThreatCost('rarach')).toBe(3);
-    expect(director.getBubakThreatCost('krvavy_rarach')).toBe(8);
-    expect(director.getBubakThreatCost('obrneny_zbojnik')).toBe(8);
-
-    // 4. Director actively exhausts threat budget across cells
     director.threatBudget = 30;
-    (director as any).formationCooldown = 10; // bypass heavy formation to test cell spawns
+    (director as any).formationCooldown = 10; // Bypass heavy formation to test ordinary tactical spawns.
     (director as any).lastSpawnCheck = 1.0;
 
     const initialLiving = engine.state.enemies.length;
     director.update(0.1, engine);
 
-    // Should have spawned monsters and deducted budget
     expect(engine.state.enemies.length).toBeGreaterThan(initialLiving);
     expect(director.threatBudget).toBeLessThan(30);
 
-    // 5. When maxLivingEnemies is reached, exhausts budget into Ostřílení běsi
+    // At the living-enemy cap, excess threat is still converted into elite upgrades.
     director.threatBudget = 25;
     engine.livingEnemies = new Array(75).fill({ hp: 50, speed: 80, x: 0, y: 0 });
     director.update(0.1, engine);
     expect(director.threatBudget).toBeLessThan(25);
+  });
+
+  it('limits the available enemy pool to the active phase and its elite variants', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+    const levelDef = GAME_LEVELS[engine.state.activeLevelId];
+    const phaseKey = getCurrentDayPhase(engine.state.gameTime || 0).id;
+    const phasePool = levelDef.spawnPools?.[phaseKey] ?? levelDef.spawnPools?.noon ?? [];
+
+    const expectedPool = new Set(
+      phasePool.filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses')
+    );
+    // At high difficulty, only add elite variants whose base enemies are in this phase.
+    for (const baseId of [...expectedPool]) {
+      const eliteId = director.getEliteVariantForId(baseId);
+      if (eliteId && ENEMIES[eliteId]) {
+        expectedPool.add(eliteId);
+      }
+    }
+
+    const actualPool = director.getAllBubaksPool(engine);
+    expect(actualPool.length).toBeGreaterThan(0);
+    expect(actualPool.every((id) => expectedPool.has(id))).toBe(true);
+    expect(actualPool).not.toContain('krvavy_kostlivec');
+    expect(actualPool).not.toContain('cerny_vlkodlak');
+    expect(actualPool).not.toContain('obrneny_zbojnik');
+  });
+
+  it('keeps regular and elite threat costs distinct', () => {
+    const director = new RunDirector(1, undefined, { dynamicDifficulty: 4.0 });
+
+    expect(director.getBubakThreatCost('rarach')).toBe(3);
+    expect(director.getBubakThreatCost('krvavy_rarach')).toBe(8);
+    expect(director.getBubakThreatCost('obrneny_zbojnik')).toBe(8);
   });
 });
