@@ -1,7 +1,9 @@
 ## 2026-10-11 — Oprava CI konfigurace
 
 - Doplněn skript `typecheck` (`tsc --noEmit`), který workflow CI již používá.
-- Synchronizovány přímé vývojové závislosti ESLint a Vitest v kořenovém záznamu `package-lock.json` s `package.json`. Úplná regenerace lockfile pomocí `npm install --package-lock-only` a ověření `npm ci` stále vyžadují běh npm; tento patch proto neprohlašuje instalaci za ověřenou.
+- Kompletně regenerován `package-lock.json` příkazem `npm install --package-lock-only --ignore-scripts --no-audit --no-fund` v Node.js 22 / npm 10 na GitHub Actions; doplněny tranzitivní závislosti ESLint a Vitest.
+- Sjednocena deklarace `esbuild` na `^0.28.0`, odpovídající Vite 8 peer požadavku.
+- Odstraněn dočasný workflow použitý pro regeneraci lockfile. Instalace a následné testovací kroky čekají na nový běh CI.
 
 # Bubákov — Changelog
 
