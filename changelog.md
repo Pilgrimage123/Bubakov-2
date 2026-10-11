@@ -1,5 +1,10 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Oprava CI PR #11
+
+- Odstraněno zastaralé očekávání, že vysoká dynamická obtížnost zpřístupní celý globální bestiář.
+- Regresní testy ověřují odděleně osm úhlových směrů, utrácení rozpočtu hrozby a tematický fond aktivní fáze včetně způsobilých elitních variant.
+
 ## 2026-10-11 — Režisér výpravy: tematicky správný výběr nepřátel
 
 - Výběr nepřátel nyní respektuje aktivní úroveň a fázi dne; do aktuálního fondu se již nepřimíchávají nepřátelé z ostatních fází ani globální bestiář.
