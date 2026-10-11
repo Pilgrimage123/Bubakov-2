@@ -9,6 +9,64 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '11. října 2026',
+    title: 'Režisér výpravy: obtížnost reaguje na hráče a drží se tématu krajiny',
+    summary: 'Zvolená obtížnost určuje základní náročnost, zatímco Režisér průběžně vyhodnocuje Kuráž a skutečně zaznamenaná zabití. Současně vybírá nepřátele podle aktivní úrovně a denní fáze.',
+    items: [
+      '🎚️ Sedm předvoleb obtížnosti: 2,00× Poklid za pecí až 5,00× Pekelné boží dopuštění. Výchozí volba je 3,00× Zlověstná noc.',
+      '🫶 Přiměřený tlak: Adaptivní násobitel rozpočtu se postupně pohybuje mezi 0,72× a 1,12×. Nízká Kuráž spolu se slabší dominancí tlak tlumí; vysoká Kuráž, silná dominance a alespoň tři zaznamenaná zabití mohou tlak mírně zvýšit. Zvolená předvolba se tím nemění.',
+      '🛑 Když se lovci nedaří, aktivní asistence omezuje těžké formace, prefixované nepřátele i posilování existujících běsů. Bez záznamu zabití se čerstvá výprava automaticky nepovažuje za snadno vyhrávanou.',
+      '🧭 Tematické posily: fond odpovídá krajině a denní fázi; povolené elitní varianty vycházejí jen z nepřátel dané fáze a bossové se nepřimíchávají do běžného taktického fondu.',
+      '↗️ Osm směrů znamená osm úhlů rozmístění kolem lovce, nikoli osm sektorů mapy. Při limitu 75 živých nepřátel se další entity nepřidávají; přebytečný rozpočet může posílit existujícího běsa.',
+      '🧪 Pro testery: ověřte pokles tlaku při nízké Kuráži a dominanci, mírné zvýšení po několika rychlých zabitích při vysoké Kuráži a to, že asistence potlačí i formaci architektů. Aktuální hodnota je dostupná v telemetrii Režiséra jako pressureMultiplier.'
+    ],
+  },
+  {
+    date: '11. října 2026',
+    title: 'Čtyři elitní prefixy a trestání opakovaného kroužení',
+    summary: 'Elitní prefixy dávají stejnému nepříteli odlišnou bojovou roli. Pekelný prefix navíc reaguje na dlouhé kitingové úniky a čitelně varuje před nebezpečnou puklinou.',
+    items: [
+      '💨 Vichřicový: +110 rychlosti a 50% šance vyhnout se zásahu.',
+      '⚡ Hromový: +70 rychlosti a blesková odveta ve výši 50 % utrženého poškození, pokud je lovec do 200 px.',
+      '🪨 Kamenný: pohybuje se na 80 % běžné rychlosti, snižuje příchozí poškození o 91 % a odolává omráčení i omračujícím účinkům jídla.',
+      '🔥 Pekelný: při vzdáleném kitingu získává 15 % rychlosti za sekundu až do +120 % a při přiblížení se bonus vynuluje. Za sebou zanechává magmatické louže na 9 sekund, které způsobují 6 poškození.',
+      '⚠️ Při přímém běhu lovce po 2,5 sekundách vytvoří Pekelný puklinu 200–250 px před jeho směrem. Puklina varuje 1,2 sekundy a následně jednorázově udělí 24 poškození.',
+      '🧪 Všechny prefixy stojí 15 bodů rozpočtu hrozeb; běžný taktický nepřítel 3. Tester může ověřit hranici odrazu Hromového na 200/201 px a strop rychlosti Pekelného +120 %.'
+    ],
+  },
+  {
+    date: '11. října 2026',
+    title: 'Spravedlivá hodnota kořisti a bezpečné načtení postupu',
+    summary: 'Slučování dropů kvůli výkonu nesmí ubírat ani přidávat hodnotu odměn. Načítání uloženého profilu nově bezpečně odmítá neplatné identifikátory úrovní.',
+    items: [
+      '🍪 Tři velké perníčky se při slučování spojí do obřího s hodnotou součtu skutečných dropů. Například 6 + 6 + 6 = 18; hodnota se nenahrazuje pevnou částkou 20.',
+      '🗺️ Uložená úroveň musí být celé číslo od 0 do 6. Neplatná, zlomková nebo mimo rozsah ležící hodnota bezpečně přejde na výchozí úroveň 0.',
+      '🛟 Když prohlížeč zablokuje přístup k localStorage, hra pokračuje s výchozím profilem místo pádu při načítání.',
+      '🧪 Test: překročte limit dropů velkým množstvím předmětů mimo obrazovku a zkontrolujte, že jejich sloučená hodnota zůstane zachována.'
+    ],
+  },
+  {
+    date: '11. října 2026',
+    title: 'Obecní přirážka: rozvoj vsi zdražuje další nákupy',
+    summary: 'Vylepšení vesnice používají společnou přirážku, která se počítá ze všech dříve pořízených úrovní budov. Rozpočet lze stále celý přerozdělit.',
+    items: [
+      '🏡 Každá dříve zakoupená úroveň jakékoli budovy přidává k základní ceně dalšího vylepšení 30 % základní ceny. Čím rozvinutější vesnice, tím dražší další nákup napříč všemi budovami.',
+      '🔄 U Dědečka zůstává bezplatné 100% vrácení investovaných krejcarů, takže je možné přerozdělit rozvoj vsi podle aktuálního sestavení.',
+      '🧪 Pro testery: nákup první úrovně by neměl ovlivnit jen další úroveň téže budovy; sdílená přirážka se vztahuje také na nákup jiné budovy.'
+    ],
+  },
+  {
+    date: '10. října 2026',
+    title: 'Ladovské kvašové svícení: světlo chrání před stínovou záštitou',
+    summary: 'Osvětlení používá malované tonální vrstvy a tušové kontury místo nákladného rozmazávání velkého množství světelných přechodů. Světlo má také přímý bojový význam.',
+    items: [
+      '🏮 Petrolejka lovce mění dosah podle Kuráže, nejvýše přibližně 225 px. V kritickém stavu působí světlo slaběji a okolní obraz ztemní.',
+      '🌑 Strašidla ve stínu získávají rychlost a odolnost; vstup do světla jejich stínovou záštitu ruší a krátce je rozhodí.',
+      '🎨 Vykreslení používá 3–4 zřetelné kvašové tónové pásy a tušové tečkování či šrafování po hranách, aby si hra zachovala pohádkový rukopis i při velkém počtu entit.',
+      '🧪 Při výkonovém testu porovnejte plynulost při větším počtu nepřátel a ověřte, že světlo mění stínovou obranu, nejen vzhled scény.'
+    ],
+  },
+  {
     date: '9. října 2026',
     title: 'Začátečnická úroveň: 0. Předjaří v Hrusicích (Tutorial & Prologue)',
     summary: 'Do hry přibyla nová výchozí úroveň Předjaří v Hrusicích. Březnové tající kry, probuzené žabky a vodníci vytvářejí vlídné prostředí pro první krůčky nového hráče, doplněné o interaktivní dřevěnou káču, léčivá babiččina kamna a jarní tání.',
