@@ -1,5 +1,9 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Regresní test hodnoty slévaných perníčků
+
+- Aktualizováno očekávání testu velkých perníčků: tři dropy s hodnotou 6 se sloučí do dropu s hodnotou 18, aby test ověřoval zachování celkové hodnoty místo historické pevné hodnoty 20.
+
 ## 2026-10-11 — Opravy ekonomiky dropů a validace uložené úrovně
 
 - Slévání tří velkých perníčků nyní zachovává součet jejich hodnot místo nahrazení pevnou hodnotou obřího perníčku.
