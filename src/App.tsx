@@ -2929,8 +2929,8 @@ export default function App() {
             }
 
             if (directorRef.current) {
-              const isPerfMode = !!metaRef.current.performanceMode;
-              directorRef.current.maxLivingEnemies = isPerfMode ? 45 : 70;
+              const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+              directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 45 : performanceProfile === 'balanced' ? 55 : 70;
               const directorAdapter = {
                 state: engine,
                 livingEnemies: livingEnemiesRef.current,
