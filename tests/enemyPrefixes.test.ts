@@ -66,6 +66,9 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     const engine = new GameEngine();
     engine.initRun(1, 'wanderer', createDefaultMetaProgression());
     const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'hromovy');
+    // Keep the enemy alive so the observed HP delta is the full applied damage.
+    enemy.hp = 200;
+    enemy.maxHp = 200;
     const player = {
       x: 100 + distance,
       y: 100,
