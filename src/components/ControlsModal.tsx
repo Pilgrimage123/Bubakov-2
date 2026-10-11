@@ -1365,7 +1365,6 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   const next = profiles[Number(event.target.value)] ?? 'balanced';
                   sound.coin();
                   onChangePerformanceProfile?.(next);
-                  onTogglePerformanceMode?.(next === 'performance');
                 }}
                 style={{ width: '100%', accentColor: '#B45309', cursor: 'pointer', margin: '12px 0 6px' }}
               />
