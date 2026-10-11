@@ -5,6 +5,7 @@ import {
   registerKillAndCheckCombo,
   calculateUncollectedGingerbread,
   createDropInstance,
+  canCollectDrop,
   MAX_DROPS_LIMIT,
   HOT_GINGERBREAD_DURATION,
 } from '../src/game/drops';
@@ -13,6 +14,26 @@ import { createInitialEngineState } from '../src/game/engineState';
 import type { GameDrop } from '../src/types';
 
 describe('Smart Drops System (Chytrý drop systém)', () => {
+  describe('healing drop pickup rules', () => {
+    it('leaves potion, bread and pear on the map at full Courage', () => {
+      expect(canCollectDrop('potion', 100, 100)).toBe(false);
+      expect(canCollectDrop('bread', 100, 100)).toBe(false);
+      expect(canCollectDrop('pear', 100, 100)).toBe(false);
+    });
+
+    it('allows healing drops when Courage is below maximum', () => {
+      expect(canCollectDrop('potion', 99, 100)).toBe(true);
+      expect(canCollectDrop('bread', 0, 100)).toBe(true);
+      expect(canCollectDrop('pear', 50, 100)).toBe(true);
+    });
+
+    it('continues to allow non-healing pickups at full Courage', () => {
+      expect(canCollectDrop('coin', 100, 100)).toBe(true);
+      expect(canCollectDrop('gingerbread', 100, 100)).toBe(true);
+      expect(canCollectDrop('soul', 100, 100)).toBe(true);
+    });
+  });
+
   describe('performDropFusion (Slévání kořisti)', () => {
     it('does not fuse drops when count is below limit', () => {
       const drops: GameDrop[] = [
