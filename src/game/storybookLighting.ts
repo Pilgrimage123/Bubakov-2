@@ -576,7 +576,8 @@ export function computeSurfaceReliefHighlight(
   surfaceX: number,
   surfaceY: number,
   surfaceRadius: number,
-  lightSources: DynamicLightSource[]
+  lightSources: DynamicLightSource[],
+  maxLights: number = lightSources.length
 ): { dominantDirAngle: number; intensity: number; color: string; normalDotLight: number } | null {
   if (!lightSources || lightSources.length === 0) return null;
 
@@ -586,7 +587,7 @@ export function computeSurfaceReliefHighlight(
   let maxIntensity = 0;
   let dominantColor = '#FEF08A';
 
-  for (let i = 0; i < lightSources.length; i++) {
+  for (let i = 0, limit = Math.min(lightSources.length, maxLights); i < limit; i++) {
     const src = lightSources[i];
     const reach = src.radius * (src.intensity ?? 1);
     if (reach <= 0) continue;
