@@ -59,30 +59,38 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     randSpy.mockRestore();
   });
 
-  it('Hromový prefix reflects 50% damage back to player within 200px', () => {
+  it.each([
+    { distance: 200, shouldReflect: true },
+    { distance: 201, shouldReflect: false },
+  ])('Hromový reflection obeys the 200px boundary (distance=$distance)', ({ distance, shouldReflect }) => {
     const engine = new GameEngine();
     engine.initRun(1, 'wanderer', createDefaultMetaProgression());
     const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'hromovy');
-
-    expect(enemy.prefix).toBe('hromovy');
-    expect(enemy.isThunderous).toBe(true);
-
-    // Player standing at (120, 100) -> distance 20px (<= 200px)
-    engine.state.player = {
-      x: 120,
+    const player = {
+      x: 100 + distance,
       y: 100,
       hp: 100,
       maxHp: 100,
       takeDamage: vi.fn(),
     } as any;
+    engine.state.player = player;
 
+    const hpBefore = enemy.hp;
     enemy.takeDamage(50, 'physical', 0, 0);
-    expect(engine.state.player.takeDamage).toHaveBeenCalledWith(
-      expect.any(Number),
-      'lightning',
-      enemy,
-      false
-    );
+    const damageTaken = hpBefore - enemy.hp;
+
+    expect(enemy.prefix).toBe('hromovy');
+    expect(enemy.isThunderous).toBe(true);
+    if (shouldReflect) {
+      expect(player.takeDamage).toHaveBeenCalledWith(
+        Math.max(1, Math.round(damageTaken * 0.5)),
+        'lightning',
+        enemy,
+        false
+      );
+    } else {
+      expect(player.takeDamage).not.toHaveBeenCalled();
+    }
   });
 
   it('Kamenný prefix applies 91% damage reduction, -20% speed, stun and snack immunity', () => {
@@ -118,13 +126,101 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     expect(stoneEnemy.kbx).toBeLessThan(baseEnemy.kbx);
   });
 
-  it('Pekelný prefix sets fire trail and anti-kiting capabilities', () => {
+  it('Pekelný stalk acceleration grows by 15% per second, caps at 120%, and resets at close range', () => {
     const engine = new GameEngine();
     engine.initRun(1, 'wanderer', createDefaultMetaProgression());
     const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'pekelny');
+    const player = { x: 500, y: 100, vx: 0, vy: 0 };
 
+    enemy.update(1.0, player);
     expect(enemy.prefix).toBe('pekelny');
     expect(enemy.hasFireTrail).toBe(true);
+    expect(enemy.stalkSpeedBonus).toBeCloseTo(0.15);
+
+    for (let i = 0; i < 12; i++) enemy.update(1.0, player);
+    expect(enemy.stalkSpeedBonus).toBe(1.2);
+
+    player.x = enemy.x + 100;
+    player.y = enemy.y;
+    enemy.update(0.1, player);
+    expect(enemy.stalkSpeedBonus).toBe(0);
+  });
+
+  it('Pekelný leaves damaging magma hazards while moving', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'pekelny');
+    const player = engine.state.player;
+
+    enemy.update(0.6, { x: 500, y: 100, vx: 0, vy: 0 });
+    const magma = engine.director!.hazards.find((hazard: any) => hazard.kind === 'magma-trail');
+    expect(magma).toBeDefined();
+    expect(magma.duration).toBe(9);
+    expect(magma.damage).toBe(6);
+
+    player.x = magma.x;
+    player.y = magma.y;
+    player.takeDamage = vi.fn();
+    engine.director!.update(0.1, engine);
+    expect(player.takeDamage).toHaveBeenCalledWith(6, 'fire', null, false);
+  });
+
+  it('Pekelný creates a telegraphed fissure 200–250px ahead after 2.5 seconds of straight running', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'pekelny');
+    const player = engine.state.player;
+    player.x = 500;
+    player.y = 100;
+    player.vx = 60;
+    player.vy = 0;
+
+    for (let i = 0; i < 30; i++) {
+      player.x += 5;
+      enemy.update(0.1, player);
+    }
+
+    const fissure = engine.director!.hazards.find((hazard: any) => hazard.kind === 'predictive-fissure');
+    expect(fissure).toBeDefined();
+    expect(fissure.warningTimer).toBe(1.2);
+    expect(fissure.damage).toBe(24);
+    expect(fissure.oneShot).toBe(true);
+    const distanceAhead = fissure.x - player.x;
+    expect(distanceAhead).toBeGreaterThanOrEqual(200);
+    expect(distanceAhead).toBeLessThanOrEqual(250);
+  });
+
+  it('predictive fissure damages at the end of its warning and only once', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const player = engine.state.player;
+    player.x = 220;
+    player.y = 180;
+    player.takeDamage = vi.fn();
+    const fissure: any = {
+      id: 'test-fissure',
+      x: 220,
+      y: 180,
+      radius: 42,
+      duration: 1.55,
+      maxDuration: 1.55,
+      type: 'fire',
+      slowFactor: 1,
+      kind: 'predictive-fissure',
+      warningTimer: 1.2,
+      damage: 24,
+      oneShot: true,
+      exploded: false,
+    };
+    engine.director!.hazards.push(fissure);
+
+    (engine.director as any).updateHazards(1.21, player);
+    expect(player.takeDamage).toHaveBeenCalledTimes(1);
+    expect(player.takeDamage).toHaveBeenCalledWith(24, 'fire', null, false);
+    expect(fissure.exploded).toBe(true);
+
+    (engine.director as any).updateHazards(0.05, player);
+    expect(player.takeDamage).toHaveBeenCalledTimes(1);
   });
 
   it('All 4 prefixed enemies retain non-enlarged base enemy drops and stats', () => {
