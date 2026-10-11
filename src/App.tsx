@@ -5054,14 +5054,32 @@ export default function App() {
               ctx.fill();
               ctx.stroke();
             } else {
-              // Oheň / uhlíky
-              ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
-              ctx.strokeStyle = '#991B1B';
-              ctx.lineWidth = 2;
+              const isFissure = h.kind === 'predictive-fissure';
+              const isWarning = isFissure && (h.warningTimer || 0) > 0;
+              const justExploded = isFissure && h.exploded;
+              // Magma is a persistent ember pool; a fissure gets a clear warning ring
+              // followed by a short, bright eruption flash.
+              ctx.fillStyle = isWarning
+                ? 'rgba(251, 146, 60, 0.28)'
+                : justExploded
+                  ? 'rgba(254, 240, 138, 0.8)'
+                  : 'rgba(239, 68, 68, 0.45)';
+              ctx.strokeStyle = isWarning ? '#FBBF24' : justExploded ? '#FEF08A' : '#991B1B';
+              ctx.lineWidth = isWarning ? 3 : 2;
+              if (isWarning) ctx.setLineDash([7, 5]);
               ctx.beginPath();
               ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
               ctx.fill();
               ctx.stroke();
+              ctx.setLineDash([]);
+              if (isFissure) {
+                ctx.beginPath();
+                ctx.moveTo(-h.radius * 0.75, -h.radius * 0.15);
+                ctx.lineTo(-h.radius * 0.2, h.radius * 0.18);
+                ctx.lineTo(h.radius * 0.15, -h.radius * 0.28);
+                ctx.lineTo(h.radius * 0.72, h.radius * 0.12);
+                ctx.stroke();
+              }
             }
             ctx.restore();
           }
