@@ -325,6 +325,10 @@ export interface Enemy {
   prefixDamageReduction?: number;
   isThunderous?: boolean;
   hasFireTrail?: boolean;
+  lastTrackedPlayerX?: number;
+  lastTrackedPlayerY?: number;
+  lastPlayerHeadingAngle?: number;
+  fissureCooldown?: number;
   immuneToStun?: boolean;
   immuneToSnackStun?: boolean;
   thornsReflectRatio?: number;

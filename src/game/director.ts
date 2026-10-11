@@ -11,6 +11,14 @@ export interface ArenaHazard {
   maxDuration: number;
   type: 'mud' | 'fire' | 'frost';
   slowFactor: number;
+  kind?: 'magma-trail' | 'predictive-fissure' | string;
+  damage?: number;
+  damageInterval?: number;
+  damageTimer?: number;
+  warningTimer?: number;
+  oneShot?: boolean;
+  exploded?: boolean;
+  sourceEnemyId?: string;
 }
 
 export interface BubackaDiraState {
@@ -936,16 +944,52 @@ export class RunDirector {
     for (let i = this.hazards.length - 1; i >= 0; i--) {
       const h = this.hazards[i];
       h.duration -= dt;
+      if (typeof h.warningTimer === 'number') {
+        h.warningTimer = Math.max(0, h.warningTimer - dt);
+      }
       if (h.duration <= 0) {
         this.hazards.splice(i, 1);
         continue;
       }
 
-      // Check collision with player
+      // Telegraph hazards are inert until their warning window ends.
+      if (typeof h.warningTimer === 'number' && h.warningTimer > 0) continue;
+
       const dist = Math.hypot(player.x - h.x, player.y - h.y);
-      if (dist <= h.radius) {
+      if (dist > h.radius) {
+        if (typeof h.damageTimer === 'number') h.damageTimer = Math.max(0, h.damageTimer - dt);
+        continue;
+      }
+
+      if (h.type === 'mud' || h.type === 'frost') {
         player.hazardSlowTimer = 0.25;
         player.hazardSlowFactor = h.slowFactor;
+        continue;
+      }
+
+      if (h.type !== 'fire' || !(h.damage && h.damage > 0)) continue;
+
+      if (h.oneShot) {
+        if (!h.exploded) {
+          if (typeof player.takeDamage === 'function') {
+            player.takeDamage(h.damage, 'fire', null, false);
+          } else {
+            player.hp = Math.max(0, (player.hp || 0) - h.damage);
+          }
+          h.exploded = true;
+          // Keep the eruption visible briefly, without applying its damage again.
+          h.duration = Math.min(h.duration, 0.25);
+        }
+      } else {
+        h.damageTimer = Math.max(0, (h.damageTimer || 0) - dt);
+        if (h.damageTimer <= 0) {
+          if (typeof player.takeDamage === 'function') {
+            player.takeDamage(h.damage, 'fire', null, false);
+          } else {
+            player.hp = Math.max(0, (player.hp || 0) - h.damage);
+          }
+          h.damageTimer = h.damageInterval ?? 0.6;
+        }
       }
     }
   }

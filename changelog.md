@@ -1,5 +1,12 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Elitní prefixy: anti-kiting a blesková odveta
+
+- Implementováno postupné zrychlení Pekelného bubáka při vzdáleném kitingu (15 % za sekundu, nejvýše +120 %) a reset při přiblížení.
+- Pekelný bubák zanechává po dobu 9 sekund poškozující magmatické louže; přímý běh lovce po 2,5 sekundách vyvolá varovanou puklinu 200–250 px před jeho trajektorií s jednorázovou erupcí.
+- Rozšířen správce arénových hazardů o časované varování, požární poškození a ochranu proti opakovanému poškození jednou erupcí; doplněno vykreslení varovných puklin.
+- Rozšířeny regresní testy pro limit odrazu Hromového bubáka (200/201 px), rychlostní buff a reset Pekelného, magmatické poškození a prediktivní erupci.
+
 ## 2026-10-11 — Rozhodnutí integrace PR #6
 
 - Zachovány ověřené verze z aktuálního `main` pro App/UI, audio, enginové API, renderer, vesnická data a sdílené typy; konfliktní starší kopie z `feat/unify-mechanics` nebyly převzaty, aby se nerozbily navazující kontrakty.
