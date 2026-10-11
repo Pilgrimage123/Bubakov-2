@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
-import { getGrandfatherPrice, getWaitDiscount, type GrandfatherOffer } from '../game/grandfatherRuntime';
+import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
@@ -19,6 +19,8 @@ interface Props {
   totalPurchases?: number;
   rerollCost?: number;
   churchLevel?: number;
+  playerHp: number;
+  playerMaxHp: number;
   onPurchase: (itemId: string) => boolean;
   onRefreshOffers?: () => void;
   onClose: () => void;
@@ -81,9 +83,12 @@ function getItemQuote(item: GrandfatherItemDef): string {
   if (item.id === 'medvedi_mast') {
     return '„Hojivá medvědí mast! Zacelí každý šrám a kousnutí od nočních můr!“';
   }
-  if (item.id === 'zabijackova_jitrnice') {
-    return '„Špejlovaná jitrnička! Spolkneš a ztracená kuráž je hned zpátky v těle!“';
+  if (item.effect.type === 'heal') {
+    if (item.id === 'tepla_cikorka') return '„Teplá cikorka, pocuchané nervy i Kuráž dá do pořádku!“';
+    if (item.id === 'zejdlik_piva') return '„Žejdlík poctivého piva, a hned ti naroste kuráž!“';
+    if (item.id === 'panak_koralky') return '„Panák kořalky na zahřátí — jen ať se ti nohy nerozklepou!“';
   }
+  if (item.effect.type === 'coins') return `„${item.name}! Pekelný poklad, hned ti za něj sypu krejcary!“`;
   return `„${item.name}! Vzácná věc, z mé nůše putuje přímo k tobě!“`;
 }
 
@@ -98,6 +103,8 @@ export function GrandfatherShop({
   totalPurchases,
   rerollCost = 4,
   churchLevel = 0,
+  playerHp,
+  playerMaxHp,
   onPurchase,
   onRefreshOffers,
   onClose,
@@ -548,6 +555,7 @@ export function GrandfatherShop({
 
                   const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
                   const price = getGrandfatherPrice(item, purchaseCount, luck, waitSeconds);
+                  const priceExempt = isGrandfatherPriceExempt(item);
 
                   let owned = 0;
                   let maxStacks = item.maxStacks || 5;
@@ -593,7 +601,8 @@ export function GrandfatherShop({
                     }
                   }
 
-                  const affordable = gingerbread >= price && !isMaxed;
+                  const fullCourage = item.effect.type === 'heal' && playerHp >= playerMaxHp;
+                  const affordable = gingerbread >= price && !isMaxed && !fullCourage;
                   const isHighlighted = activeItem?.id === item.id;
                   const isPurchasedNow = justPurchasedId === item.id;
 
@@ -707,7 +716,7 @@ export function GrandfatherShop({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>🍪</span>
+                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{priceExempt ? '🪙' : '🍪'}</span>
                           <strong
                             style={{
                               fontSize: '1.15rem',
@@ -717,6 +726,7 @@ export function GrandfatherShop({
                           >
                             {price}
                           </strong>
+                          {priceExempt && <small style={{ color: '#78350F', fontWeight: 800 }}>{item.effect.type === 'coins' ? 'perníčků • výplata v krejc arech'.replace(/ /g, '') : 'perníčků • cena bez přirážky'}</small>}
                         </div>
 
                         <button
@@ -742,7 +752,7 @@ export function GrandfatherShop({
                             transition: 'transform 0.1s ease',
                           }}
                         >
-                          {isMaxed ? 'VYČERPÁNO' : affordable ? buttonLabel : 'MÁLO PERNÍKŮ'}
+                          {isMaxed ? 'VYČERPÁNO' : fullCourage ? 'PLNÁ KURÁŽ' : affordable ? buttonLabel : 'MÁLO PERNÍKŮ'}
                         </button>
                       </div>
                     </div>
