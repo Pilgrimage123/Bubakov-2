@@ -12,6 +12,8 @@ interface ControlsModalProps {
   defaultTab?: string;
   performanceMode?: boolean;
   onTogglePerformanceMode?: (enabled: boolean) => void;
+  performanceProfile?: 'fidelity' | 'balanced' | 'performance';
+  onChangePerformanceProfile?: (profile: 'fidelity' | 'balanced' | 'performance') => void;
   showPerfOverlay?: boolean;
   onToggleShowPerfOverlay?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
@@ -24,6 +26,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   defaultTab = 'controls',
   performanceMode = false,
   onTogglePerformanceMode,
+  performanceProfile = performanceMode ? 'performance' : 'balanced',
+  onChangePerformanceProfile,
   showPerfOverlay = false,
   onToggleShowPerfOverlay,
   dynamicDifficulty = 3.0,
@@ -1329,7 +1333,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               </div>
             </div>
 
-            {/* HIGH PERF MODE */}
+            {/* PERFORMANCE PROFILE */}
             <div
               style={{
                 background: '#FEF3C7',
@@ -1340,40 +1344,41 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  marginBottom: '8px',
-                }}
-              >
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
-                    ⚡ Režim vysokého výkonu (Plynulý chod 60 FPS)
-                  </h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
-                    Optimální pro slabší počítače, starší notebooky nebo telefony. Snižuje strop nepřátel o ~40 % a omezuje částice, aby hra nikdy neztrácela rychlost.
-                  </p>
-                </div>
-                <button
-                  className="lada-btn"
-                  style={{
-                    background: performanceMode ? '#16A34A' : '#78350F',
-                    color: '#FFFFFF',
-                    padding: '8px 20px',
-                    fontSize: '1rem',
-                  }}
-                  onClick={() => {
-                    sound.coin();
-                    onTogglePerformanceMode?.(!performanceMode);
-                  }}
-                >
-                  {performanceMode ? '✅ ZAPNUTO (Plynulý)' : '⚪ VYPNUTO (Plný)'}
-                </button>
+              <h3 style={{ margin: '0 0 6px', fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
+                ⚙️ Optimalizace výkonu
+              </h3>
+              <p style={{ margin: '0 0 14px', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
+                Vyberte poměr mezi vizuální kvalitou a plynulostí. Výchozí nastavení je Vyvážený.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontWeight: 900, fontSize: '0.9rem', color: '#78350F' }}>
+                <span>Grafika</span><span>Vyvážený</span><span>FPS</span>
               </div>
+              <input
+                aria-label="Optimalizace výkonu"
+                type="range"
+                min={0}
+                max={2}
+                step={1}
+                value={({ fidelity: 0, balanced: 1, performance: 2 } as const)[performanceProfile]}
+                onChange={(event) => {
+                  const profiles = ['fidelity', 'balanced', 'performance'] as const;
+                  const next = profiles[Number(event.target.value)] ?? 'balanced';
+                  sound.coin();
+                  onChangePerformanceProfile?.(next);
+                  onTogglePerformanceMode?.(next === 'performance');
+                }}
+                style={{ width: '100%', accentColor: '#B45309', cursor: 'pointer', margin: '12px 0 6px' }}
+              />
+              <div style={{ textAlign: 'center', fontSize: '1.05rem', fontWeight: 900, color: '#92400E' }}>
+                {performanceProfile === 'fidelity' ? '🎨 Vizuální kvalita' : performanceProfile === 'performance' ? '⚡ Maximum FPS' : '⚖️ Vyvážený (doporučeno)'}
+              </div>
+              <p style={{ margin: '8px 0 0', fontSize: '0.88rem', fontWeight: 700, color: '#451A03' }}>
+                {performanceProfile === 'fidelity'
+                  ? 'Upřednostňuje plné efekty a vyšší počet nepřátel. Vhodné pro výkonnější zařízení.'
+                  : performanceProfile === 'performance'
+                    ? 'Omezuje počet nepřátel a světelné efekty pro co nejplynulejší chod při velkých bitvách.'
+                    : 'Zachovává většinu efektů a mírně omezuje zátěž při velkých bitvách.'}
+              </p>
             </div>
 
             {/* FPS OVERLAY */}
