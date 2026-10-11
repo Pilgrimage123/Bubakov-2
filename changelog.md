@@ -1,43 +1,42 @@
 # Bubákov — Changelog
 
-## 2026-10-11 — Adaptivní tlak dynamické obtížnosti
+## 2026-10-11 — Dynamická obtížnost: aktuální předvolby a adaptivní tlak
 
-- Přidán vyhlazovaný násobitel tlaku (0,72–1,12×), který upravuje kapacitu a přírůstek rozpočtu hrozeb podle zdraví a doložené výkonnosti hráče, aniž mění zvolenou základní obtížnost.
-- Nepřítomnost zaznamenaných zabití se již nepovažuje za důkaz dominance; aktivní asistence blokuje i architektonické těžké formace, prefixované nepřátele a posilování elit.
-- Telemetrie Režiséra nyní uvádí aktuální násobitel tlaku; rozšířeny regresní testy pro počáteční stav, trápení hráče a dlouhodobou dominanci.
+- Aktuální volič nabízí sedm předvoleb: 2,00×, 2,50×, 3,00×, 3,50×, 4,00×, 4,50× a 5,00×; výchozí je 3,00× Zlověstná noc. Rozsah 1,00×–2,00× uvedený u prvního nasazení 10. října je historický a byl následně nahrazen.
+- Režisér upravuje kapacitu i přírůstek rozpočtu hrozeb vyhlazovaným násobitelem 0,72×–1,12×. Volba obtížnosti zůstává základním nastavením; adaptační násobitel se mění podle Kuráže a naměřené dominance založené na časech zabití (TTK).
+- Při Kuráži pod 35 % a dominanci pod 0,45 míří násobitel k 0,72×; při Kuráži pod 50 % a dominanci pod 0,35 k 0,82×. Při Kuráži nad 75 %, dominanci nad 0,68 a alespoň třech zaznamenaných zabitích může vzrůst na 1,12×. Změna je postupná, maximálně přibližně 25 % rozdílu za sekundu.
+- Bez záznamu zabití se hráč nepovažuje automaticky za dominantního. Při aktivní asistenci Režisér blokuje těžké formace včetně architektů, prefixované nepřátele i přeměňování přebytečného rozpočtu na silnější běsy.
+- Při dosažení limitu 75 živých nepřátel se nepřidávají další entity; pokud asistence není aktivní, přebytečný rozpočet může posílit již přítomného běsa. Telemetrie Režiséra uvádí aktuální násobitel tlaku jako `pressureMultiplier`.
+- Finální CI po sloučení na `main` úspěšně dokončilo instalaci, typovou kontrolu, lint, všech 189 testů a produkční build ([běh CI](https://github.com/Pilgrimage123/Bubakov-2/actions/runs/38155762303)).
 
-## 2026-10-11 — Regresní test hodnoty slévaných perníčků
+## 2026-10-11 — Zvýšení Obecní přirážky na 30 %
 
-- Aktualizováno očekávání testu velkých perníčků: tři dropy s hodnotou 6 se sloučí do dropu s hodnotou 18, aby test ověřoval zachování celkové hodnoty místo historické pevné hodnoty 20.
+- Cena každého vylepšení vesnice se počítá jako základní cena navýšená o 30 % základní ceny za každou již zakoupenou úroveň napříč všemi budovami. Přirážka je sdílená, nikoli oddělená pro každou budovu.
+- Zachováno úplné 100% vrácení investovaných krejcarů; výpočet rekonstruuje posloupnost nákupů podle základních cen a stejného cenového vzorce.
 
-## 2026-10-11 — Opravy ekonomiky dropů a validace uložené úrovně
+## 2026-10-11 — Zachování hodnoty kořisti a bezpečná migrace postupu
 
-- Slévání tří velkých perníčků nyní zachovává součet jejich hodnot místo nahrazení pevnou hodnotou obřího perníčku.
-- Migrace postupu a výchozí výběr úrovně přijímají pouze celočíselné ID v podporovaném rozsahu.
-- Načítání nastavení dotykového joysticku bezpečně pokračuje i tehdy, když prohlížeč blokuje přístup k `localStorage`.
+- Při slučování tří velkých perníčků do obřího se zachovává součet skutečných hodnot vstupních dropů. Například tři perníčky po 6 vytvoří obří perníček za 18, nikoli za historicky natvrdo nastavených 20.
+- Načítání uložené úrovně přijímá pouze celočíselné ID v rozsahu 0–6; neplatné, zlomkové nebo mimo rozsah ležící hodnoty bezpečně přejdou na výchozí úroveň 0.
+- Načtení profilu bezpečně pokračuje i tehdy, když prohlížeč blokuje přístup k `localStorage`; v takovém případě se použije výchozí postup.
+- Regresní test slučování ověřuje zachování celkové hodnoty, nikoli historickou pevnou hodnotu 20.
 
-## 2026-10-11 — Oprava CI PR #11
+## 2026-10-11 — Režisér výpravy: tematický fond a regresní ověření (#11)
 
-- Odstraněno zastaralé očekávání, že vysoká dynamická obtížnost zpřístupní celý globální bestiář.
-- Regresní testy ověřují odděleně osm úhlových směrů, utrácení rozpočtu hrozby a tematický fond aktivní fáze včetně způsobilých elitních variant.
+- Spawnování respektuje aktuální úroveň a fázi dne. Při vysoké obtížnosti se mohou přidat pouze elitní varianty nepřátel, jejichž základní typ je povolený v dané fázi; nesouvisející bestiář ani bossové se do fondu nepřimíchávají.
+- Výběr fáze vychází ze skutečného stavu enginu: aktivní úrovně a herního času. Při neúplné definici úrovně je zachován bezpečný fallback bez rozšiřování běžného fondu o bossy.
+- Opraven test, který nesprávně očekával `krvavy_kostlivec` z globálního bestiáře v tematicky omezeném fondu.
+- Testy samostatně ověřují osm úhlových směrů kolem hráče, utrácení rozpočtu a tematický fond. Osm směrů jsou úhly pro rozmístění, nikoli osm sektorů mapy.
 
-## 2026-10-11 — Režisér výpravy: tematicky správný výběr nepřátel
+## 2026-10-11 — Elitní prefixy: čtyři bojové archetypy a anti-kiting
 
-- Výběr nepřátel nyní respektuje aktivní úroveň a fázi dne; do aktuálního fondu se již nepřimíchávají nepřátelé z ostatních fází ani globální bestiář.
-- Při dynamické obtížnosti 3,0× a vyšší se mohou přidat elitní varianty pouze nepřátel povolených v aktuální fázi, takže tematické eskalování zůstává zachováno.
-- Výběr vůdců, prefixed nepřátel a taktických formací kontroluje způsobilost vůči fondu fáze; selhání Bubácké díry používá stejný bezpečný výběr.
-- Přidán bezpečný fallback pro neúplné definice úrovní, aniž by se běžné složení rozšířilo o bossy.
-
-- Regresní test nyní odděluje výběr tematických nepřátel od sektorového rozmístění; osm úhlových směrů a současná spawnovací mechanika zůstávají beze změny.
-
-- Úroveň a fáze se nyní odvozují ze skutečného stavu `GameEngine` (`activeLevelId` a herní čas), nikoli z neexistujících vlastností enginu.
-
-## 2026-10-11 — Elitní prefixy: anti-kiting a blesková odveta
-
-- Implementováno postupné zrychlení Pekelného bubáka při vzdáleném kitingu (15 % za sekundu, nejvýše +120 %) a reset při přiblížení.
-- Pekelný bubák zanechává po dobu 9 sekund poškozující magmatické louže; přímý běh lovce po 2,5 sekundách vyvolá varovanou puklinu 200–250 px před jeho trajektorií s jednorázovou erupcí.
-- Rozšířen správce arénových hazardů o časované varování, požární poškození a ochranu proti opakovanému poškození jednou erupcí; doplněno vykreslení varovných puklin.
-- Rozšířeny regresní testy pro limit odrazu Hromového bubáka (200/201 px), rychlostní buff a reset Pekelného, magmatické poškození a prediktivní erupci.
+- Všechny čtyři prefixy stojí 15 bodů rozpočtu hrozeb (běžný taktický nepřítel stojí 3). Zachovávají identitu i základní odměny původního nepřítele.
+- **Vichřicový:** +110 rychlosti a 50% šance vyhnout se zásahu.
+- **Hromový:** +70 rychlosti; při zásahu vrací hráči jako bleskové poškození 50 % skutečně utrženého poškození, pokud je hráč do 200 px.
+- **Kamenný:** rychlost snížena na 80 %, redukce příchozího poškození 91 % a imunita vůči omráčení i omračujícím účinkům jídla.
+- **Pekelný:** při vzdáleném kitingu zvyšuje rychlost o 15 % za sekundu až na +120 %; při přiblížení se bonus resetuje. Zanechává magmatické louže trvající 9 sekund a způsobující 6 poškození.
+- Při vytrvalém přímém běhu lovce Pekelný vyvolá puklinu 200–250 px před hráčem. Puklina před výbuchem 1,2 s varuje a poté udělí jednorázové poškození 24.
+- Regresní testy pokrývají hranici odrazu Hromového na 200/201 px, rychlostní strop Pekelného, poškození magmatu i jednorázovou erupci.
 
 ## 2026-10-11 — Rozhodnutí integrace PR #6
 
@@ -55,12 +54,14 @@
 
 ## 2026-10-11 — Režisér výpravy: sektory a rozpočet hrozeb
 
-- Doplněno osm rovnoměrně rozmístěných spawn sektorů a rozložení běžných taktických posil mezi různé sektory.
+- Doplněno osm rovnoměrně rozmístěných úhlových směrů pro spawn kolem hráče a rozložení taktických posil; jde o směry rozmístění, nikoli osm sektorů mapy.
 - Přidána veřejná metoda `getAllBubaksPool` pro výběr bestiáře bez bossů včetně elitních variant a metoda `getBubakThreatCost` pro jednotný výpočet ceny hrozby.
 - Běžní bubáci spotřebují 3 body rozpočtu, definované elitní varianty 8; plán spawnu respektuje rozpočet a odečítá body pouze za úspěšně vytvořeného nepřítele.
 - Při dosažení limitu 75 živých nepřátel převádí Režisér přebytečný rozpočet na posílení existujícího běsa i během fáze Oddychu; převod je omezen cooldownem, aby se neopakoval každý snímek.
 
 ## 2026-10-10 — Dynamická obtížnost, posílení Režiséra výpravy a volič v herním menu
+
+> Historický stav při prvním nasazení: pět úrovní 1,00×–2,00× a výchozí 2,00×. Dne 11. října byl rozsah rozšířen na aktuálních sedm předvoleb 2,00×–5,00× s výchozí hodnotou 3,00×. Dřívější volný výběr z celého bestiáře a samotná Kuráž jako spouštěč asistence byly následně upraveny; aktuálně se fond drží úrovně/fáze a asistence vyžaduje také dominanci pod 0,35.
 
 - **Posuvník Dynamická obtížnost v nabídce hry:**
   - Přidán interaktivní posuvník v předstartovní nabídce výpravy (`App.tsx`) i v nastavení hry (`ControlsModal.tsx`) s 5 stupni od 1.00× po 2.00× (krok 0.25).
@@ -79,6 +80,8 @@
   - Rozšířena testovací sada `tests/runDirector.test.ts` o 6 nových testů pokrývajících škálování rozpočtu, Drtivý přepad, Zrádný terén, Ostřílené běsy a asistenci (všech 154 testů v projektu prochází, `tsc && vite build` bez chyb).
 
 ## 2026-10-10 — Vyvážení a harmonizace hospodských vylepšení, Obecní přirážka a Zoufalá kuráž
+
+> Historická podoba při prvním nasazení používala obecní přirážku 15 % ze základní ceny za každou dříve zakoupenou úroveň. Dne 11. října byla sazba upravena na 30 %; aktuální stav je popsán v novějším záznamu nahoře.
 
 - **Obecní přirážka (Sdílené zdražování vesnice):**
   - Zaveden vzorec ceny se sdílenou přirážkou za rozvoj vsi: každá zakoupená úroveň jakékoliv budovy zvýší cenu všech dalších nákupů o +15 % základní ceny.
