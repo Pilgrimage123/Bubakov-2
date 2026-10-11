@@ -741,6 +741,12 @@ export class GameEngine {
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : radius + 25;
 
     const self = this;
+    const addEnemyHazard = (hazard: any): boolean => {
+      const hazards = self.director?.hazards;
+      if (!Array.isArray(hazards) || hazards.length >= 8) return false;
+      hazards.push(hazard);
+      return true;
+    };
 
     const enemy = {
       id: resolvedId,
@@ -792,6 +798,13 @@ export class GameEngine {
       garlicSlowTimer: 0,
       snackTimer: 0,
       stunTimer: 0,
+      stalkSpeedBonus: 0,
+      magmaTrailTimer: 0,
+      fissureTimer: 0,
+      fissureCooldown: 0,
+      lastTrackedPlayerX: undefined,
+      lastTrackedPlayerY: undefined,
+      lastPlayerHeadingAngle: undefined,
       valecniceSlowed: false,
       defeatedByFood: false,
       foodDefeatTimer: 0,
@@ -834,6 +847,72 @@ export class GameEngine {
           }
         }
 
+        if (this.prefix === 'pekelny' && player) {
+          const playerDistance = Math.hypot(player.x - this.x, player.y - this.y);
+          this.fissureCooldown = Math.max(0, (this.fissureCooldown || 0) - dt);
+
+          // Gain 15% base speed per second while the hunter remains far away.
+          if (playerDistance > 220) {
+            this.stalkSpeedBonus = Math.min(1.2, (this.stalkSpeedBonus || 0) + 0.15 * dt);
+          } else if (playerDistance < 120) {
+            this.stalkSpeedBonus = 0;
+          }
+
+          // Track actual player displacement and only accumulate a straight run
+          // while consecutive movement vectors remain within a 15-degree cone.
+          const hasPreviousPlayerPosition =
+            typeof this.lastTrackedPlayerX === 'number' &&
+            typeof this.lastTrackedPlayerY === 'number';
+          if (hasPreviousPlayerPosition) {
+            const moveX = player.x - this.lastTrackedPlayerX;
+            const moveY = player.y - this.lastTrackedPlayerY;
+            if (Math.hypot(moveX, moveY) > 2) {
+              const heading = Math.atan2(moveY, moveX);
+              if (typeof this.lastPlayerHeadingAngle === 'number') {
+                const rawAngleDelta = Math.abs(heading - this.lastPlayerHeadingAngle);
+                const angleDelta = Math.min(rawAngleDelta, Math.PI * 2 - rawAngleDelta);
+                this.fissureTimer =
+                  angleDelta <= Math.PI / 12 ? (this.fissureTimer || 0) + dt : 0;
+              } else {
+                this.fissureTimer = 0;
+              }
+              this.lastPlayerHeadingAngle = heading;
+            } else {
+              this.fissureTimer = Math.max(0, (this.fissureTimer || 0) - dt * 1.5);
+            }
+          }
+          this.lastTrackedPlayerX = player.x;
+          this.lastTrackedPlayerY = player.y;
+
+          if ((this.fissureTimer || 0) >= 2.5 && (this.fissureCooldown || 0) <= 0) {
+            const heading =
+              typeof this.lastPlayerHeadingAngle === 'number'
+                ? this.lastPlayerHeadingAngle
+                : Math.atan2(player.vy || 0, player.vx || 0);
+            const leadDistance = 200 + Math.random() * 50;
+            const spawned = addEnemyHazard({
+              id: `hazard_pekelny_fissure_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+              x: player.x + Math.cos(heading) * leadDistance,
+              y: player.y + Math.sin(heading) * leadDistance,
+              radius: 42,
+              duration: 1.55,
+              maxDuration: 1.55,
+              type: 'fire',
+              slowFactor: 1,
+              kind: 'predictive-fissure',
+              warningTimer: 1.2,
+              damage: 24,
+              oneShot: true,
+              exploded: false,
+              sourceEnemyId: this.id,
+            });
+            if (spawned) {
+              this.fissureTimer = 0;
+              this.fissureCooldown = 5.0;
+            }
+          }
+        }
+
         if (this.prefix === 'kamenny') {
           this.stunTimer = 0;
           this.snackTimer = 0;
@@ -865,6 +944,7 @@ export class GameEngine {
           const dir = Math.atan2(dy, dx);
           const shadowMods = getShadowDefenseMultipliers(this);
           let spd = this.speed * shadowMods.speedMult;
+          if (this.prefix === 'pekelny') spd *= 1 + (this.stalkSpeedBonus || 0);
           if (this.bludickaAttracted) spd *= 1.15;
           if (this.chilled) spd *= 0.65;
           if (this.garlicSlowTimer > 0) spd *= 0.75;
@@ -875,8 +955,35 @@ export class GameEngine {
           this.vy = Math.sin(moveDir) * spd;
         }
 
+        const previousX = this.x;
+        const previousY = this.y;
         this.x += (this.vx + this.kbx) * dt;
         this.y += (this.vy + this.kby) * dt;
+
+        if (
+          this.hasFireTrail &&
+          Math.hypot(this.x - previousX, this.y - previousY) > 1
+        ) {
+          this.magmaTrailTimer = (this.magmaTrailTimer || 0) + dt;
+          if (this.magmaTrailTimer >= 0.55) {
+            const spawned = addEnemyHazard({
+              id: `hazard_pekelny_magma_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+              x: this.x,
+              y: this.y,
+              radius: 36,
+              duration: 9.0,
+              maxDuration: 9.0,
+              type: 'fire',
+              slowFactor: 1,
+              kind: 'magma-trail',
+              damage: 6,
+              damageInterval: 0.6,
+              damageTimer: 0,
+              sourceEnemyId: this.id,
+            });
+            this.magmaTrailTimer = spawned ? 0 : Math.min(this.magmaTrailTimer, 0.55);
+          }
+        }
 
         const kbDecay = Math.max(0, 1 - 8 * dt);
         this.kbx *= kbDecay;
@@ -895,7 +1002,16 @@ export class GameEngine {
           }
         }
 
-        // Kamenný: +60% redukce poškození
+        // A close encounter breaks Pekelný's accumulated pursuit speed.
+        if (this.prefix === 'pekelny' && self.state.player) {
+          const distanceToPlayer = Math.hypot(
+            self.state.player.x - this.x,
+            self.state.player.y - this.y
+          );
+          if (distanceToPlayer < 120) this.stalkSpeedBonus = 0;
+        }
+
+        // Kamenný: 91% redukce poškození
         if (this.prefixDamageReduction) {
           amount *= (1 - this.prefixDamageReduction);
         }
