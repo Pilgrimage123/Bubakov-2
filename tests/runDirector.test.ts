@@ -278,6 +278,32 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(dir2.budgetCap).toBeGreaterThan(dir1.budgetCap);
   });
 
+  it.each([2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0])(
+    'is significantly more forgiving during the opening 90 seconds at difficulty %s',
+    (difficulty) => {
+      const openingEngine = new GameEngine();
+      openingEngine.initRun({ levelId: 1, dynamicDifficulty: difficulty, spawnInitialWave: false });
+      const openingDirector = openingEngine.director!;
+      openingEngine.livingEnemies = new Array(75).fill({ hp: 50 });
+      openingEngine.state.gameTime = 20;
+      openingDirector.threatBudget = 0;
+      openingDirector.update(1.0, openingEngine);
+      const openingAccrual = openingDirector.threatBudget;
+      const openingCap = openingDirector.budgetCap;
+
+      const establishedEngine = new GameEngine();
+      establishedEngine.initRun({ levelId: 1, dynamicDifficulty: difficulty, spawnInitialWave: false });
+      const establishedDirector = establishedEngine.director!;
+      establishedEngine.livingEnemies = new Array(75).fill({ hp: 50 });
+      establishedEngine.state.gameTime = 120;
+      establishedDirector.threatBudget = 0;
+      establishedDirector.update(1.0, establishedEngine);
+
+      expect(openingAccrual).toBeLessThan(establishedDirector.threatBudget);
+      expect(openingCap).toBeLessThan(establishedDirector.budgetCap);
+    }
+  );
+
   it('triggers Drtivý přepad with dual commanders and poise buffs after lull', () => {
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
@@ -314,6 +340,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const director = engine.director!;
     const player = engine.state.player;
 
+    engine.state.gameTime = 100; // exercise normal hazard timing after the protected opening
     player.vx = 80;
     player.vy = 0; // moving straight right
 
@@ -358,7 +385,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(engine.livingEnemies.length).toBe(75);
   });
 
-  it('halves the assistance penalty on maximum difficulty 4.0 vs standard 2.0', () => {
+  it('keeps assistance equally effective across difficulty presets while preserving higher baseline pressure', () => {
     const engineLow = new GameEngine();
     engineLow.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
     const dirLow = engineLow.director!;
@@ -369,7 +396,9 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const dirHigh = engineHigh.director!;
     engineHigh.livingEnemies = new Array(75).fill({ hp: 50 });
 
-    // Enable assistance
+    // Assistance is recalculated by update; give both runs a genuinely struggling player.
+    engineLow.state.player.hp = engineLow.state.player.maxHp * 0.2;
+    engineHigh.state.player.hp = engineHigh.state.player.maxHp * 0.2;
     dirLow.assistanceActive = true;
     dirHigh.assistanceActive = true;
     dirLow.threatBudget = 0;
@@ -378,8 +407,8 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     dirLow.update(1.0, engineLow);
     dirHigh.update(1.0, engineHigh);
 
-    // On 4.0x (or 5.0x), penalty is smaller than on 2.0x
-    // Combined with higher base accrual, dirHigh accrues significantly more
+    // Assistance uses the same reduction at every preset; the higher preset
+    // still accrues more because its baseline threat rate is higher.
     expect(dirHigh.threatBudget).toBeGreaterThan(dirLow.threatBudget * 1.5);
   });
 
@@ -392,13 +421,17 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     engine.livingEnemies = [];
     expect(director.valvePhase).toBe('buildup');
 
-    // Simulate 24.5 seconds of gameplay (past maxBuildupTime of 24s for 4.0x)
-    for (let i = 0; i < 245; i++) {
+    // Advance the simulated run clock as well as director time. The protected
+    // opening is longer than the ordinary buildup threshold on this preset.
+    for (let i = 0; i <= 360; i++) {
+      engine.state.gameTime = i * 0.1;
       director.update(0.1, engine);
       engine.livingEnemies = []; // Keep clear
     }
+    // The threshold transition moves buildup -> peak; the next tick sees an
+    // empty arena and enters lull.
+    director.update(0.1, engine);
 
-    // Must have advanced through peak into lull (since livingCount <= 4)
     expect(director.valvePhase).toBe('lull');
     expect(director.valveTimer).toBeGreaterThan(0);
 
@@ -424,12 +457,29 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const dom = director.computeDominanceIndex(engine.state.player);
     expect(dom).toBeLessThan(0.35);
 
-    (director as any).lastSpawnCheck = 0.5;
+    (director as any).lastSpawnCheck = 2.0; // exercise the spawn gate during the opening ramp
     director.update(0.1, engine);
 
     expect(director.assistanceActive).toBe(true);
     expect(director.pressureMultiplier).toBeLessThan(1);
     expect((director as any).formationCooldown).toBeLessThanOrEqual(0);
+  });
+
+  it('allows heavy formations on the lowest difficulty when the player is not struggling', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const director = engine.director!;
+    engine.state.gameTime = 120;
+    engine.state.player.hp = engine.state.player.maxHp;
+    director.threatBudget = 25;
+    (director as any).formationCooldown = 0;
+    (director as any).lastSpawnCheck = 2.0;
+
+    const before = engine.state.enemies.length;
+    director.update(0.1, engine);
+
+    expect(engine.state.enemies.length).toBeGreaterThan(before);
+    expect((director as any).formationCooldown).toBeGreaterThan(0);
   });
 
   it('does not classify a healthy player as dominating before any kills are recorded', () => {
@@ -517,7 +567,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const expectedPool = new Set(
       phasePool.filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses')
     );
-    // At high difficulty, only add elite variants whose base enemies are in this phase.
+    // At every difficulty, only add elite variants whose base enemies are in this phase.
     for (const baseId of [...expectedPool]) {
       const eliteId = director.getEliteVariantForId(baseId);
       if (eliteId && ENEMIES[eliteId]) {
@@ -531,6 +581,9 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(actualPool).not.toContain('krvavy_kostlivec');
     expect(actualPool).not.toContain('cerny_vlkodlak');
     expect(actualPool).not.toContain('obrneny_zbojnik');
+
+    const lowDirector = new RunDirector(1, undefined, { dynamicDifficulty: 2.0 });
+    expect(lowDirector.getAllBubaksPool(engine)).toEqual(actualPool);
   });
 
   it('keeps regular and elite threat costs distinct', () => {
