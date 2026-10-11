@@ -411,27 +411,55 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(director.telegraphMessage).toContain('přepad');
   });
 
-  it('triggers heavy formations on high dynamic difficulty even when dominance is low', () => {
+  it('suppresses heavy formations when the player is struggling, even on high baseline difficulty', () => {
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
 
-    // Low player courage (20% HP) and slow TTK, causing dominance < 0.35
+    // Low health and no kill evidence must not be mistaken for dominance.
     engine.state.player.hp = engine.state.player.maxHp * 0.2;
     director.threatBudget = 25;
     (director as any).formationCooldown = 0;
 
     const dom = director.computeDominanceIndex(engine.state.player);
-    expect(dom).toBeLessThan(0.40);
+    expect(dom).toBeLessThan(0.35);
 
-    const mobsBefore = engine.state.enemies.length;
-    // Update director with spawn check ready
     (director as any).lastSpawnCheck = 0.5;
     director.update(0.1, engine);
 
-    // Formations should still trigger because dynamicDifficulty >= 2.9
-    expect(engine.state.enemies.length).toBeGreaterThan(mobsBefore);
-    expect((director as any).formationCooldown).toBeGreaterThan(0);
+    expect(director.assistanceActive).toBe(true);
+    expect(director.pressureMultiplier).toBeLessThan(1);
+    expect((director as any).formationCooldown).toBeLessThanOrEqual(0);
+  });
+
+  it('does not classify a healthy player as dominating before any kills are recorded', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, spawnInitialWave: false });
+    const director = engine.director!;
+    engine.state.player.hp = engine.state.player.maxHp;
+
+    expect(director.computeDominanceIndex(engine.state.player)).toBeLessThan(0.6);
+  });
+
+  it('raises adaptive pressure for sustained dominance and lowers it for sustained struggle', () => {
+    const struggling = new GameEngine();
+    struggling.initRun({ levelId: 1, spawnInitialWave: false });
+    const strugglingDirector = struggling.director!;
+    struggling.state.player.hp = struggling.state.player.maxHp * 0.2;
+    for (let i = 0; i < 12; i++) strugglingDirector.update(0.5, struggling);
+    expect(strugglingDirector.pressureMultiplier).toBeLessThan(0.9);
+
+    const thriving = new GameEngine();
+    thriving.initRun({ levelId: 1, spawnInitialWave: false });
+    const thrivingDirector = thriving.director!;
+    thriving.state.player.hp = thriving.state.player.maxHp;
+    for (let i = 0; i < 4; i++) {
+      const mob = { id: `fast_${i}` };
+      thrivingDirector.recordEnemySpawn(mob, i);
+      thrivingDirector.recordEnemyDeath(mob, i + 0.3);
+    }
+    for (let i = 0; i < 12; i++) thrivingDirector.update(0.5, thriving);
+    expect(thrivingDirector.pressureMultiplier).toBeGreaterThan(1);
   });
 
   it('deploys Ladovske visual elite variants without inflating base enemy stats (Zero-Cheat Policy)', () => {
