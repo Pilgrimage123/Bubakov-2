@@ -1,6 +1,6 @@
 import type { GameLevelId, MilestoneChoice, GameDrop } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
-import type { DynamicLightSource, ShadowZone } from './storybookLighting';
+import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -97,6 +97,7 @@ export interface EngineState {
   dropFusionTimer: number;
   lightSources: DynamicLightSource[];
   shadowZones: ShadowZone[];
+  occluders: LightOccluder[];
 }
 
 export function createInitialEngineState(): EngineState {
@@ -183,11 +184,13 @@ export function createInitialEngineState(): EngineState {
     activeRozmar: null,
     activeHazards: [],
     bubackaDira: null,
-    directorAdaptability: 1.0,
+    directorAdaptability: 3.0,
+    dynamicDifficulty: 3.0,
     directorTelegraphText: null,
     directorTelegraphTimer: 0,
     dropFusionTimer: 0,
     lightSources: [],
     shadowZones: [],
+    occluders: [],
   };
 }

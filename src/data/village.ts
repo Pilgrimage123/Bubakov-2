@@ -1,6 +1,6 @@
 import type { VillageBuilding, MetaProgression } from '../types';
 
-export const VILLAGE_TAX_RATE = 0.15;
+export const VILLAGE_TAX_RATE = 0.30;
 
 /**
  * Returns total number of upgrade levels purchased across all village buildings.
@@ -12,9 +12,10 @@ export function getVillageTotalLevels(meta: Partial<MetaProgression>): number {
 /**
  * Calculates current price for a building upgrade based on its base cost
  * and the total number of village upgrade levels purchased so far (Obecní přirážka).
+ * Grows 2x faster than the original rate (+30% per total level).
  */
 export function getVillageBuildingCost(baseCost: number, totalVillageLevels: number): number {
-	return Math.round((baseCost * (100 + totalVillageLevels * 15)) / 100);
+	return Math.round((baseCost * (100 + totalVillageLevels * 30)) / 100);
 }
 
 /**

@@ -341,5 +341,81 @@ describe('Enemy Procedural Kinematics & Rendering System', () => {
       }).not.toThrow();
       expect(mock.getDepth()).toBe(0);
     });
+
+    it('ensures every single enemy in ENEMIES has a valid drawer and zero stack leaks', () => {
+      for (const [id, enemyDef] of Object.entries(ENEMIES)) {
+        mock.reset();
+        const drawer = (Lada as any)[enemyDef.method];
+        expect(typeof drawer).toBe('function');
+
+        expect(() => {
+          drawEnemyRenderer(enemyDef.method, mock.ctx, 100, 100, 1.0, 10, false, {
+            ...enemyDef,
+            x: 100,
+            y: 100,
+          });
+        }).not.toThrow();
+
+        expect(mock.getDepth()).toBe(0);
+        expect(mock.getMinDepth()).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('ensures all 14 previously stubbed enemies have their own distinct drawing implementations without delegating to another method', () => {
+      const uniqueMethods = [
+        'drawPlivnik',
+        'drawSotek',
+        'drawZmrzlik',
+        'drawHromotluk',
+        'drawStodolnik',
+        'drawTopivec',
+        'drawMrazik',
+        'drawSeverak',
+        'drawVanicka',
+        'drawCertik',
+        'drawOhnivyMuz',
+        'drawZbojnik',
+        'drawJiskrivec',
+        'drawOhnivyPes',
+      ];
+
+      for (const methodName of uniqueMethods) {
+        const fn = (Lada as any)[methodName];
+        expect(typeof fn).toBe('function');
+        const fnBody = fn.toString();
+        // None of these methods should merely call another drawer method
+        expect(fnBody).not.toMatch(/this\.draw(Rarach|Bubak|Hastrman|Meluzina|Cert|Drevorubec|OhnivyMuz|CernyPes)\s*\(/);
+      }
+    });
+
+    it('renders all 7 palette-swapped variants with their smart thematic details and balanced canvas stack', () => {
+      const paletteVariants = [
+        'sazovy_rarach',
+        'krvavy_rarach',
+        'krvavy_kostlivec',
+        'ropucha',
+        'obrneny_zbojnik',
+        'kalny_hastrman',
+        'cerny_vlkodlak',
+      ];
+
+      for (const id of paletteVariants) {
+        const enemyDef = ENEMIES[id];
+        expect(enemyDef).toBeDefined();
+        expect(enemyDef.palette).toBeDefined();
+
+        mock.reset();
+        expect(() => {
+          drawEnemyRenderer(enemyDef.method, mock.ctx, 120, 120, 1.5, 20, false, {
+            ...enemyDef,
+            x: 120,
+            y: 120,
+          });
+        }).not.toThrow();
+
+        expect(mock.getDepth()).toBe(0);
+        expect(mock.getMinDepth()).toBeGreaterThanOrEqual(0);
+      }
+    });
   });
 });

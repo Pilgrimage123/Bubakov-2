@@ -4,6 +4,7 @@ import { KrejcarIcon } from './KrejcarIcon';
 import { HruskaIcon } from './HruskaIcon';
 import { GameIcon } from './GameIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
 
 interface ControlsModalProps {
   isOpen: boolean;
@@ -25,7 +26,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   onTogglePerformanceMode,
   showPerfOverlay = false,
   onToggleShowPerfOverlay,
-  dynamicDifficulty = 2.0,
+  dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -1240,44 +1241,33 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     Řídí chování Režiséra výpravy, rozpočet hrozeb, Klešťové sevření a drtivé protiúdery po oddychu.
                   </p>
                 </div>
-                <span
-                  style={{
-                    background:
-                      dynamicDifficulty >= 1.95
-                        ? '#7F1D1D'
-                        : dynamicDifficulty >= 1.7
-                        ? '#DC2626'
-                        : dynamicDifficulty >= 1.45
-                        ? '#D97706'
-                        : dynamicDifficulty >= 1.2
-                        ? '#0284C7'
-                        : '#16A34A',
-                    color: '#FFFFFF',
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    fontWeight: 900,
-                    fontSize: '0.98rem',
-                    border: '2px solid var(--ink)',
-                  }}
-                >
-                  {dynamicDifficulty >= 1.95
-                    ? '2.00× Pekelná štvanice (Výchozí / Max)'
-                    : dynamicDifficulty >= 1.7
-                    ? '1.75× Divoká štvanice'
-                    : dynamicDifficulty >= 1.45
-                    ? '1.50× Zlověstná noc'
-                    : dynamicDifficulty >= 1.2
-                    ? '1.25× Neklidné povětří'
-                    : '1.00× Běžná výprava'}
-                </span>
+                {(() => {
+                  const activePreset = getDifficultyPreset(dynamicDifficulty);
+                  return (
+                    <span
+                      style={{
+                        background: activePreset.color,
+                        color: '#FFFFFF',
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        fontWeight: 900,
+                        fontSize: '0.98rem',
+                        border: '2px solid var(--ink)',
+                        boxShadow: '1px 1px 0 var(--ink)',
+                      }}
+                    >
+                      {activePreset.badge}
+                    </span>
+                  );
+                })()}
               </div>
 
               <div style={{ margin: '10px 0 8px 0' }}>
                 <input
                   type="range"
-                  min="1.0"
-                  max="2.0"
-                  step="0.25"
+                  min="2.0"
+                  max="5.0"
+                  step="0.5"
                   value={dynamicDifficulty}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
@@ -1295,17 +1285,31 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    fontSize: '0.78rem',
+                    fontSize: '0.76rem',
                     fontWeight: 800,
                     color: '#78350F',
                     marginTop: '4px',
+                    flexWrap: 'wrap',
+                    gap: '4px',
                   }}
                 >
-                  <span>1.00× (Běžná)</span>
-                  <span>1.25×</span>
-                  <span>1.50×</span>
-                  <span>1.75×</span>
-                  <span>2.00× (Pekelná - Max)</span>
+                  {DYNAMIC_DIFFICULTY_PRESETS.map((preset) => (
+                    <span
+                      key={preset.value}
+                      style={{
+                        cursor: 'pointer',
+                        color: Math.abs(dynamicDifficulty - preset.value) < 0.24 ? '#9A3412' : '#78350F',
+                        fontWeight: Math.abs(dynamicDifficulty - preset.value) < 0.24 ? 900 : 700,
+                        textDecoration: Math.abs(dynamicDifficulty - preset.value) < 0.24 ? 'underline' : 'none',
+                      }}
+                      onClick={() => {
+                        sound.coin();
+                        onChangeDynamicDifficulty?.(preset.value);
+                      }}
+                    >
+                      {preset.shortLabel}
+                    </span>
+                  ))}
                 </div>
               </div>
 
@@ -1321,31 +1325,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   marginTop: '8px',
                 }}
               >
-                {dynamicDifficulty >= 1.95 && (
-                  <span>
-                    👹 <strong>Pekelná štvanice (Doporučeno pro zkušené lovce):</strong> Drtivý přepad po každém oddychu, zkrácená asistence Režiséra při nízké Kuráži, přetékající rozpočet tvoří Ostřílené běsy a nepřetržitý tlak.
-                  </span>
-                )}
-                {dynamicDifficulty >= 1.7 && dynamicDifficulty < 1.95 && (
-                  <span>
-                    🐺 <strong>Divoká štvanice:</strong> +75 % rozpočet hrozeb, časté taktické formace a rychlý nástup Ostřílených běsů při zaplnění arény.
-                  </span>
-                )}
-                {dynamicDifficulty >= 1.45 && dynamicDifficulty < 1.7 && (
-                  <span>
-                    🌲 <strong>Zlověstná noc:</strong> +50 % rozpočet hrozeb, Režisér aktivuje Klešťové sevření z obou stran a Zrádný terén v dráze pohybu.
-                  </span>
-                )}
-                {dynamicDifficulty >= 1.2 && dynamicDifficulty < 1.45 && (
-                  <span>
-                    💨 <strong>Neklidné povětří:</strong> +25 % rozpočet hrozeb, častější nástup taktických hlídek a pružnější střídání fází.
-                  </span>
-                )}
-                {dynamicDifficulty < 1.2 && (
-                  <span>
-                    🌾 <strong>Běžná výprava:</strong> Původní tempo hry, základní rozpočet hrozeb a standardní asistence při lovcově oslabení.
-                  </span>
-                )}
+                📜 <strong>{getDifficultyPreset(dynamicDifficulty).name}:</strong> {getDifficultyPreset(dynamicDifficulty).subtitle}
               </div>
             </div>
 

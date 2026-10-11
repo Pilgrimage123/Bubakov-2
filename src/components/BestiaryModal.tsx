@@ -4,7 +4,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { ENEMIES } from '../data/enemies';
-import { Lada } from '../render/ladaRenderer';
+import { Lada, drawEnemyRenderer } from '../render/ladaRenderer';
 import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
 import { LadaCardCorners } from './LadaCardCorners';
@@ -71,40 +71,21 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 			const cx = canvas.width / 2;
 			const cy = canvas.height * .65;
 			const tier = enemyProg.tier;
-			const palette = m.palette;
-			if (palette && tier >= 2) {
-				ctx.save();
-				if (palette === "soot") ctx.filter = "brightness(0.52) contrast(1.4) drop-shadow(0 0 3px #EA580C)";
-				else if (palette === "crimson") ctx.filter = "sepia(1) saturate(5) hue-rotate(320deg) brightness(0.9)";
-				else if (palette === "bog") ctx.filter = "sepia(0.85) hue-rotate(65deg) saturate(2.5) brightness(0.85)";
-				else if (palette === "steel") ctx.filter = "grayscale(0.85) contrast(1.35) brightness(1.15)";
-			}
-			if (m.id === "cert") Lada.drawCert(ctx, cx, cy + 5, elapsed, 0, false, true);
-			else if (m.id === "hejkal") Lada.drawHejkal(ctx, cx, cy + 5, elapsed, 0, false);
-			else if (m.id === "obr") Lada.drawObr(ctx, cx, cy + 10, elapsed, 0, false);
-			else if (m.id === "meluzina") Lada.drawMeluzina(ctx, cx, cy - 15, elapsed, 0, false);
-			else if (m.id === "polednice") Lada.drawPolednice(ctx, cx, cy - 5, elapsed, 0, false);
-			else if (m.id === "klekanice") Lada.drawKlekanice(ctx, cx, cy - 5, elapsed, 0, false);
-			else if (m.id === "drak") Lada.drawDrak(ctx, cx, cy + 12, elapsed, 0, false, false);
-			else {
-				const drawer = Lada[m.method];
-				if (typeof drawer === "function") drawer.call(Lada, ctx, cx, cy, elapsed, 0, false);
-				else Lada.drawRarach(ctx, cx, cy, elapsed, 0, false);
-			}
-			if (palette && tier >= 2) {
-				ctx.restore();
-				if (palette === "soot") {
-					ctx.fillStyle = "#F59E0B";
-					ctx.beginPath();
-					ctx.arc(cx + 4, cy - 12, 2.5, 0, Math.PI * 2);
-					ctx.fill();
-				} else if (palette === "crimson") {
-					ctx.fillStyle = "#DC2626";
-					ctx.beginPath();
-					ctx.arc(cx + 3, cy - 14, 2.5, 0, Math.PI * 2);
-					ctx.fill();
-				}
-			}
+			const extraY = m.id === "cert" ? 5 : m.id === "obr" ? 10 : m.id === "meluzina" ? -15 : m.id === "polednice" || m.id === "klekanice" ? -5 : m.id === "drak" ? 12 : 0;
+			const extraArgs = m.id === "cert" ? [true] : m.id === "drak" ? [false, false] : [];
+			const enemyToRender = tier >= 2 ? m : { ...m, palette: undefined };
+
+			drawEnemyRenderer(
+				m.method,
+				ctx,
+				cx,
+				cy + extraY,
+				elapsed,
+				0,
+				false,
+				enemyToRender,
+				extraArgs
+			);
 			if (tier === 4) {} else if (tier === 3) {
 				ctx.save();
 				ctx.fillStyle = "rgba(243, 233, 210, 0.22)";

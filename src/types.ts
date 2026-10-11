@@ -219,6 +219,76 @@ export interface EnemyAttackInfo {
   gleamProgress: number;
 }
 
+export type EnemyPrefixType = 'vichricovy' | 'hromovy' | 'kamenny' | 'pekelny';
+
+export interface EnemyPrefixDef {
+  id: EnemyPrefixType;
+  name: string;
+  badge: string;
+  color: string;
+  glowColor: string;
+  threatBudgetCost: number; // 15 (5x regular 3)
+  speedBonus?: number;      // +110 for vichricovy, +70 for hromovy
+  speedMultiplier?: number; // 0.80 for kamenny (-20% rychlost)
+  dodgeChance?: number;     // 0.50 for vichricovy
+  damageReduction?: number; // 0.91 for kamenny (91% redukce)
+  immuneToStun?: boolean;   // true for kamenny
+  immuneToSnackStun?: boolean; // true for kamenny
+  thornsReflectRatio?: number; // 0.50 for hromovy (50% zranění zpět hráči)
+  thornsRange?: number;        // 200 px for hromovy
+  magmaTrail?: boolean;        // true for pekelny (zanechává hořící louže)
+  predatoryStalk?: boolean;    // true for pekelny (zrychluje při kitingu hráče v dálce)
+  predictiveEruption?: boolean;// true for pekelny (prediktivní erupce před hráčem)
+}
+
+export const ENEMY_PREFIX_DEFS: Record<EnemyPrefixType, EnemyPrefixDef> = {
+  vichricovy: {
+    id: 'vichricovy',
+    name: 'Vichřicový',
+    badge: '💨 Vichřicový',
+    color: '#38BDF8',
+    glowColor: 'rgba(56, 189, 248, 0.45)',
+    threatBudgetCost: 15,
+    speedBonus: 110,
+    dodgeChance: 0.50,
+  },
+  hromovy: {
+    id: 'hromovy',
+    name: 'Hromový',
+    badge: '⚡ Hromový',
+    color: '#FDE047',
+    glowColor: 'rgba(253, 224, 71, 0.45)',
+    threatBudgetCost: 15,
+    speedBonus: 70,
+    thornsReflectRatio: 0.50,
+    thornsRange: 200,
+  },
+  kamenny: {
+    id: 'kamenny',
+    name: 'Kamenný',
+    badge: '🪨 Kamenný',
+    color: '#A8A29E',
+    glowColor: 'rgba(168, 162, 158, 0.45)',
+    threatBudgetCost: 15,
+    speedMultiplier: 0.80,
+    damageReduction: 0.91,
+    immuneToStun: true,
+    immuneToSnackStun: true,
+  },
+  pekelny: {
+    id: 'pekelny',
+    name: 'Pekelný',
+    badge: '🔥 Pekelný',
+    color: '#EF4444',
+    glowColor: 'rgba(239, 68, 68, 0.45)',
+    threatBudgetCost: 15,
+    magmaTrail: true,
+    predatoryStalk: true,
+    predictiveEruption: true,
+  },
+};
+
+
 export interface Enemy {
   id: string;
   x: number;
@@ -250,6 +320,18 @@ export interface Enemy {
   attackInterval?: number;
   snackTimer?: number;
   stunTimer?: number;
+  prefix?: EnemyPrefixType;
+  dodgeChance?: number;
+  prefixDamageReduction?: number;
+  isThunderous?: boolean;
+  hasFireTrail?: boolean;
+  immuneToStun?: boolean;
+  immuneToSnackStun?: boolean;
+  thornsReflectRatio?: number;
+  thornsRange?: number;
+  stalkSpeedBonus?: number;
+  magmaTrailTimer?: number;
+  fissureTimer?: number;
   [key: string]: any;
 }
 

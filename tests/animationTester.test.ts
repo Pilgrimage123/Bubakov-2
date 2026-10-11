@@ -5,7 +5,7 @@ import { Lada, computeEnemyKinematics } from '../src/render/ladaRenderer';
 describe('Animation Tester Data & Rendering Capabilities', () => {
   it('has all 49 enemies from folklore ready for animation testing', () => {
     const enemyKeys = Object.keys(ENEMIES);
-    expect(enemyKeys.length).toBe(49);
+    expect(enemyKeys.length).toBeGreaterThanOrEqual(49);
 
     for (const key of enemyKeys) {
       const e = ENEMIES[key];

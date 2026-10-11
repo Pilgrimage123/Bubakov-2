@@ -1,113 +1,135 @@
-# Integrace Úrovně 0 (Předjaří v Hrusicích) do Hlavního Menu
+# Vybalancování elitních prefixů bubáků a anti-kiting systém
 
-Kompletní zapojení Úrovně 0 (Předjaří) do obrazovky výběru výprav jako první karty před Úrovní 1, nastavení jako výchozí volby pro nového hráče a ošetření nulové hodnoty v celém stavu aplikace.
+Komplexní plán na herní vybalancování 4 unikátních prefixů elitních bubáků nasazovaných Režisérem výpravy (`RunDirector`), zavedení 91% redukce poškození a imunit Kamenného bubáka, bleskové odvety Hromového bubáka do 200 px a zavedení trojité anti-kiting mechaniky Pekelného bubáka (magmatické stopy, predátorský sprint a prediktivní sopečné trhliny).
 
-## Uživatelská rozhodnutí a schválené preference
+---
+
+## Uživatelské volby a potvrzená rozhodnutí
 
 > [!IMPORTANT]
-> Následující rozhodnutí byla potvrzena uživatelem v 1. fázi dotazování:
-> - **Umístění karty:** Vložit Úroveň 0 jako první kartu v mřížce před Úroveň 1 (seznam všech 7 úrovní 0–6).
-> - **Výchozí volba:** Úroveň 0 bude výchozí předvybranou výpravou pro nové hráče jako doporučený úvod.
+> Na základě uživatelských požadavků a vyjasňujícího dotazníku jsou potvrzeny následující herní mechaniky:
+
+- **Nezvětšené dropy pro všechny prefixy**: Všichni prefixovaní bubáci (`vichricovy`, `kamenny`, `hromovy`, `pekelny`) mají standardní odměny a dropy shodné s běžnými bubáky daného druhu (žádné minibossí násobení bodů či dropů).
+- **Kamenný bubák (Neproniknutelný kolos)**:
+  - Redukce poškození: **91 %** (přijímá pouze 9 % zranění).
+  - Rychlost pohybu: **-20 %** z báze.
+  - Imunita proti omráčení: 100% imunita proti klasickému stunu i pseudoomráčení ze svačin (např. Buchty / koláče).
+  - Masivní odolnost proti odhození (knokback resist 0.15×).
+- **Hromový bubák (Blesková odveta)**:
+  - Bleskový odraz (retaliation thorns): Při zásahu hráčem do vzdálenosti **200 px** okamžitě vrátí hráči **50 % uděleného poškození** formou bleskového oblouku.
+  - Zvýšená rychlost pohybu a agresivní útoky.
+- **Pekelný bubák (Anti-Kite predátor - syntéza 3 inspirací)**:
+  - **1. Trvalá magmatická stopa (Track Denier)**: Pekelný bubák za sebou při pohybu zanechává hořící louže lávy (trvající 8–10 sekund), které blokují oblíbené kruhové kiting smyčky kolem arény.
+  - **2. Predátorský hon (Predatory Stalk)**: Pokud se hráč zdržuje ve vzdálenosti > 220 px, Pekelný bubák nabírá každou sekundu +15 % rychlosti (až do +120 % maxima). Přiblížení na tělo (< 120 px) nebo zásah na blízko tento bonus resetuje.
+  - **3. Prediktivní vulkanická erupce (Trajectory Interceptor)**: Pokud hráč nepřetržitě utíká přímočaře déle než 2,5 sekundy, Pekelný bubák vyvolá varovnou sopečnou puklinu 200–250 px před běžícím hráčem na jeho vektoru pohybu, nutící hráče k prudkému úhybu o 90°.
 
 ---
 
-## 1. Přehled a hlavní cíl
+## 1. Přehled a herní koncept
 
-Úroveň 0 (*Předjaří v Hrusicích*) byla do datových struktur (`levels.ts`, `levelUnlocks.ts`, `runArchetypes.ts`, testy) již přidána, avšak v uživatelském rozhraní `App.tsx` nebyla viditelná z těchto technických důvodů:
-1. Mřížka karet v hlavním menu iterovala pouze fixní pole `[1, 2, 3, 4, 5, 6]`.
-2. Mapování postupu úrovní `levelProgress` vynechávalo ID `0`.
-3. Validace stavu `selectedLevelId` a fallbacky používaly `s >= 1 && s <= 6` a operátor `|| 1`, které pro falsy hodnotu `0` vždy vracely `1`.
+### Cíl rozšíření
+Běžné kiting strategie (neustálé couvání a kroužení po okraji mapy za pasivního kropení nepřátel zbraněmi) jsou v bullet-heaven / survivor hrách často dominantní a triviální. Cílem je dát Režisérovi (`RunDirector`) nástroj v podobě 4 diametrálně odlišných taktických výzev:
 
-Cílem je plně otevřít Úroveň 0 v nabídce, umožnit její přímé spuštění, vizualizaci odznaků, postupu a zobrazení jarního ladovského motivu.
+1. **💨 Vichřicový**: Extrémní hbitost (+110 speed) a 50% šance na úhyb (`MINUL! 💨`).
+2. **🪨 Kamenný**: Nezastavitelná zeď s 91% redukcí zranění, imunitou na omráčení a svačinové uklidnění, která ignoruje knockback a pomalu, ale neúprosně tlačí hráče do kouta.
+3. **⚡ Hromový**: Trestá střelbu na krátkou až střední vzdálenost (< 200 px) – hráč musí držet distanc, jinak utrpí 50% bleskový protiúder.
+4. **🔥 Pekelný**: Ultimátní anti-kiter – trestá hráče, kteří utíkají daleko (zrychluje), běhají v kruzích (pálí je stopa) nebo běží v přímce (odřízne je erupce).
 
 ---
 
-## 2. Uživatelské rozhraní a vizuální podoba (UX & Design)
+## 2. Uživatelský zážitek a vizuální styl
+
+Všechny vizuální a grafické prvky striktně ctí lidovou pohádkovou gouache estetiku Josefa Lady:
+
+- **Kamenný bubák**:
+  - Hrubá břidlicová aura s rotujícími zemitými oblázky.
+  - Textový efekt `ODRAŽENO! 🪨` při pokusu o omráčení buchtou.
+  - Zvuk tupého kamenného dopadu při absorpci 91 % zranění.
+- **Hromový bubák**:
+  - Praskající modro-zlatý bleskový oblouk spojující bubáka a hráče při aktivaci odvety do 200 px.
+  - Zvuk hromového prasknutí a zobrazení čísla odraženého poškození.
+- **Pekelný bubák**:
+  - **Magmatické stopy**: Plošky doutnajícího uhlí a žhavé lávy kreslené kvašovou texturou s plamínky stoupajícími vzhůru.
+  - **Predátorský sprint**: Zintenzivňující se rudá aura a stopa ohně za běžícím bubákem, jak nabírá rychlost.
+  - **Prediktivní puklina**: Kouřící trhlina v zemi s praskající zeminou, která po 1,2 s vybuchne ohnivým gejzírem.
+
+---
+
+## 3. Klíčová produktová rozhodnutí a herní rovnováha
+
+### Rozhodnutí 1: Standardní dropy pro všechny prefixy
+- **Zvolený přístup**: Žádný prefixovaný bubák nezvyšuje množství jitrnic, bodů ani dropů. Odměnou za přežití je samotný postup a eliminace nebezpečí.
+- **Proč**: Zabraňuje "farming exploitům", kdy by hráč záměrně nechával Režiséra generovat těžké bubáky pro snadné získání zdrojů, a přesně odpovídá požadavku uživatele.
+
+### Rozhodnutí 2: Trojitá anti-kiting kompozice u Pekelného bubáka
+- **Zvolený přístup**: Pekelný bubák kombinuje 3 mechaniky z vyjasňovacího zadání:
+  - Zakázání staré stopy (magmatická stopa).
+  - Trest za zbabělý útěk do dálky (predátorské zrychlení).
+  - Narušení přímého úprku (prediktivní erupce před hráčem).
+- **Proč**: Jednotlivá mechanika by šla snadno obejít, ale tato trojice nutí hráče hrát aktivně, měnit směry, přibližovat se a řešit střety čelem.
+
+### Rozhodnutí 3: Hromový bleskový odraz do 200 px
+- **Zvolený přístup**: Poškození se vrací hráči pouze, pokud je hráč v okruhu 200 px od bubáka v okamžiku dopadu zásahu.
+- **Proč**: Vytváří přirozený protipól k Pekelnému bubákovi. Proti Pekelnému se hráč musí přiblížit nebo manévrovat, zatímco proti Hromovému musí zachovat odstup a nestřílet z bezprostřední blízkosti.
+
+---
+
+## 4. Technická architektura a realizace
+
+### Systémový diagram interakcí
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      VÝBĚR VÝPRAVY (STAGE SELECT)                      │
-│                                                                        │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐   │
-│ │ 🌱 Úroveň 0  │ │ 🍂 Úroveň 1  │ │ 🌲 Úroveň 2  │ │ ❄️ Úroveň 3  │   │
-│ │ Předjaří     │ │ Náves        │ │ Hřbitov      │ │ Zima         │   │
-│ │ [Začátečník] │ │ [Výchozí]    │ │ [Postup]     │ │ [Postup]     │   │
-│ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘   │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                     │
-│ │ 🌊 Úroveň 4  │ │ 👻 Úroveň 5  │ │ 🐉 Úroveň 6  │                     │
-│ │ Hamry        │ │ Hláska       │ │ Dračí sluj   │                     │
-│ └──────────────┘ └──────────────┘ └──────────────┘                     │
-└────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                    RunDirector (Taktika)                     │
+│  Nasazuje prefixované bubáky při rychlé likvidaci a rozpočtu  │
+└──────────────────────────────┬────────────────────────────────┘
+                               │ spawnuje s prefixem
+                               ▼
+┌───────────────────────────────────────────────────────────────┐
+│                      Enemy Instance                           │
+│  - prefix: 'vichricovy' | 'kamenny' | 'hromovy' | 'pekelny'   │
+│  - prefixDamageReduction: 0.91 (kamenny)                      │
+│  - immuneToStun & immuneToSnackStun: true (kamenny)           │
+│  - speedModifier: 0.8 (kamenny)                               │
+│  - thornsDist: 200, thornsRatio: 0.5 (hromovy)                │
+│  - stalkTimer, magmaTrailTimer, fissureTimer (pekelny)        │
+└───────┬───────────────────────────────┬───────────────────────┘
+        │                               │
+        ▼ (při zásahu hráče)            ▼ (v update loopu)
+┌───────────────────────────────┐ ┌─────────────────────────────┐
+│    takeDamage Handlery        │ │     Herní simulace          │
+│ • Vichřicový: 50% dodge       │ │ • Pekelný: Magma louže      │
+│ • Kamenný: 91% redukce &      │ │ • Pekelný: Stalk speed buff │
+│   ignorování stunu/snacku     │ │ • Pekelný: Erupce před      │
+│ • Hromový: 50% lightning zap  │ │   hráčem na predikci vektoru│
+│   zpět hráči do 200 px        │ │ • Vykreslení Ladových aur   │
+└───────────────────────────────┘ └─────────────────────────────┘
 ```
 
-- **První karta v mřížce (Úroveň 0):**
-  - Ikona: 🌱 (*Předjaří v Hrusicích*)
-  - Odznak: `Začátečnická úroveň`
-  - Vizuální styl: Ladovské jarní blankytné tóny (`#D6EAF8`), tající kry, zelenající se meze.
-  - Stav odemčení: Zelené odemčené záhlaví, ihned přístupné.
-- **Responzivní mřížka:**
-  - Mřížka `level-grid` pojme všech 7 karet přirozeně (ve 3–4 sloupcích na desktopu, 2 na tabletu, 1 na mobilu).
-- **Detaily a volba výpravy:**
-  - Kliknutím na kartu Předjaří se nastaví `selectedLevelId = 0`.
-  - V pravém / spodním sumáři výpravy se zobrazí jarní náhled, boss *Vodník z tajících ker* a varování před probuzenou žábou.
-  - Tlačítko *"Vyrazit na výpravu"* spouští engine přímo s `levelId: 0`.
+### Konkrétní kroky implementace:
 
----
+1. **Typy (`src/types.ts`)**:
+   - Aktualizace `ENEMY_PREFIX_DEFS`:
+     - `kamenny`: `damageReduction: 0.91`, `speedMultiplier: 0.8`, `immuneToStun: true`, `immuneToSnackStun: true`.
+     - `hromovy`: `thornsReflectRatio: 0.5`, `thornsRange: 200`.
+     - `pekelny`: `magmaTrail: true`, `predatoryStalk: true`, `predictiveEruption: true`.
+   - Rozšíření stavu instance nepřátel o sledování pozic magmatických stop a erupcí.
 
-## 3. Klíčová rozhodnutí a architektura změn
+2. **Herní jádro & bojové metody (`src/App.tsx` & `src/game/engine.ts`)**:
+   - V `takeDamage`:
+     - Zajištění 91% redukce poškození pro Kamenného bubáka.
+     - Blokování stunů a snack-pacifikace (buchty) u Kamenného bubáka.
+     - Blesková odveta u Hromového bubáka: Pokud `dist <= 200`, hráč obdrží `amount * 0.5` zranění se zobrazením blesku a číselného zranění hráče.
+   - V `update` cyklu:
+     - Pekelný bubák: Generování zón magmatické stopy (hazardy ubírající hráči zdraví při kontaktu).
+     - Predátorský sprint: Zvyšování rychlosti Pekelného bubáka při `distance > 220 px`, reset při zásahu na blízko nebo přiblížení hráče.
+     - Prediktivní puklina: Detekce rovného běhu hráče, vytvoření varovného kruhu před hráčem a následná exploze.
 
-- **Náhrada `|| 1` za bezpečné nullish operátory (`??`):**
-  - V JavaScriptu je `0` vyhodnoceno jako nepravda. Kód jako `levelId || 1` nebo `s && s >= 1` proto mění ID 0 na 1.
-  - Úprava stavu:
-    ```typescript
-    const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
-      const s = meta.selectedLevel;
-      return (typeof s === 'number' && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
-    });
-    ```
-  - Mapování postupu:
-    ```typescript
-    const levelProgress = Object.fromEntries(
-      LEVEL_ORDER.map((id) => [id, getLevelProgress(id, meta)])
-    ) as Record<GameLevelId, LevelProgress>;
-    ```
-- **Konzistence postupu po vítězství (Tally Screen):**
-  - Pokud hráč pokoří Úroveň 0, tlačítko *"Vyrazit do další úrovně"* nabídne přechod do Úrovně 1 (Náves a rybník Brčálník).
-  - Stav dokončení `meta.completedLevels[0]` a poražení bosse Hastrmana korektně označí Předjaří zlatým věncem / odznakem splnění.
+3. **Vizuální vykreslování (`src/render/ladaRenderer.ts`)**:
+   - Vykreslení magmatických louží a sopečných puklin v ladovském kvašovém stylu.
+   - Vykreslení bleskového výboje z Hromového bubáka do hráče při odrazu poškození.
+   - Vykreslení štítu a nulového omráčení u Kamenného bubáka.
 
----
-
-## 4. Technický diagram toku dat
-
-```
-                   ┌──────────────────────────────────────┐
-                   │    Uložený stav meta.selectedLevel   │
-                   └──────────────────┬───────────────────┘
-                                      │ (0 ?? výchozí 0)
-                                      ▼
-                   ┌──────────────────────────────────────┐
-                   │        selectedLevelId: 0..6         │
-                   └──────────────────┬───────────────────┘
-                                      │
-            ┌─────────────────────────┴─────────────────────────┐
-            ▼                                                   ▼
-┌────────────────────────┐                             ┌────────────────────────┐
-│ UI: Mřížka level-grid  │                             │ Engine: initRun        │
-│ Vykreslení karet [0..6]│                             │ levelId: 0 (Předjaří)  │
-│ 0 = Předjaří (vybráno) │                             │ Jarní kry, žáby, boss  │
-└────────────────────────┘                             └────────────────────────┘
-```
-
----
-
-## 5. Plán realizace
-
-1. **Úprava `App.tsx`:**
-   - Přidat `0` do iterace úrovní v mřížce (`LEVEL_ORDER` nebo `[0, 1, 2, 3, 4, 5, 6]`).
-   - Upravit inicializaci `selectedLevelId` tak, aby výchozí byla hodnota `0` pro nové hráče a hodnota `0` nebyla přepisována na `1`.
-   - Zahrnout `0` do mapování `levelProgress`.
-   - Aktualizovat podmínky pro spuštění hry (`chosenLevelId: targetLevelId ?? selectedLevelId ?? 0`).
-   - Aktualizovat zobrazení splněné úrovně (`isCompleted`) pro Úroveň 0 (kontrola `meta.bestiaryKills?.hastrman` nebo `completedLevels[0]`).
-2. **Ověření a kompilace:**
-   - Spustit Vitest testy (`npx vitest run`).
-   - Spustit `compile_applet` pro ověření bezchybného buildu.
+4. **Verifikace a testy (`tests/enemyPrefixes.test.ts`)**:
+   - Rozšíření jednotkových testů o ověření 91% redukce poškození, imunity vůči omráčení a svačinám u Kamenného bubáka, odrazu poškození u Hromového bubáka a anti-kiting mechanismů u Pekelného bubáka.
+   - Spuštění kompletní sady testů a linteru.

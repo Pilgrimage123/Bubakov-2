@@ -34,22 +34,22 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
     expect(getVillageTotalLevels(meta)).toBe(7);
   });
 
-  it('calculates building costs with Obecní přirážka (+15% per total level)', () => {
-    expect(VILLAGE_TAX_RATE).toBe(0.15);
+  it('calculates building costs with Obecní přirážka (+30% per total level)', () => {
+    expect(VILLAGE_TAX_RATE).toBe(0.30);
 
     // Tier 1 (Base 30)
     expect(getVillageBuildingCost(30, 0)).toBe(30);
-    expect(getVillageBuildingCost(30, 1)).toBe(35); // 30 * 1.15 = 34.5 -> 35
-    expect(getVillageBuildingCost(30, 2)).toBe(39); // 30 * 1.30 = 39
+    expect(getVillageBuildingCost(30, 1)).toBe(39); // 30 * 1.30 = 39
+    expect(getVillageBuildingCost(30, 2)).toBe(48); // 30 * 1.60 = 48
 
     // Tier 2 (Base 50)
     expect(getVillageBuildingCost(50, 0)).toBe(50);
-    expect(getVillageBuildingCost(50, 2)).toBe(65); // 50 * 1.30 = 65
-    expect(getVillageBuildingCost(50, 10)).toBe(125); // 50 * 2.50 = 125
+    expect(getVillageBuildingCost(50, 2)).toBe(80); // 50 * 1.60 = 80
+    expect(getVillageBuildingCost(50, 10)).toBe(200); // 50 * 4.00 = 200
 
     // Tier 3 (Base 75)
     expect(getVillageBuildingCost(75, 0)).toBe(75);
-    expect(getVillageBuildingCost(75, 4)).toBe(120); // 75 * 1.60 = 120
+    expect(getVillageBuildingCost(75, 4)).toBe(165); // 75 * 2.20 = 165
   });
 
   it('deterministically calculates 100% fair village refund (Respec)', () => {
@@ -60,9 +60,9 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
 
     // 1 level of scarecrow (Base 30) + 1 level of forge (Base 50)
     // Step 0: Base 30 at total 0 = 30
-    // Step 1: Base 50 at total 1 = round(50 * 1.15) = 58
-    // Total = 88
-    expect(calculateTotalVillageInvested({ scarecrowLevel: 1, forgeLevel: 1 })).toBe(88);
+    // Step 1: Base 50 at total 1 = round(50 * 1.30) = 65
+    // Total = 95
+    expect(calculateTotalVillageInvested({ scarecrowLevel: 1, forgeLevel: 1 })).toBe(95);
 
     // Multiple levels across tiers
     const meta: Partial<MetaProgression> = {
@@ -72,11 +72,11 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
     };
     // Steps:
     // 0: 30 * 1.00 = 30
-    // 1: 30 * 1.15 = 35
-    // 2: 50 * 1.30 = 65
-    // 3: 75 * 1.45 = 109
-    // Sum = 30 + 35 + 65 + 109 = 239
-    expect(calculateTotalVillageInvested(meta)).toBe(239);
+    // 1: 30 * 1.30 = 39
+    // 2: 50 * 1.60 = 80
+    // 3: 75 * 1.90 = 143 (75 * 1.90 = 142.5 -> 143)
+    // Sum = 30 + 39 + 80 + 143 = 292
+    expect(calculateTotalVillageInvested(meta)).toBe(292);
   });
 
   it('applies Zoufalá kuráž damage multiplier when Kuráž is at or below 35%', () => {

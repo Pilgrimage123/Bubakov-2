@@ -20,6 +20,8 @@ import {
   EnemyAttackCadence,
   Enemy,
   DropType,
+  EnemyPrefixType,
+  ENEMY_PREFIX_DEFS,
 } from './types';
 import {
   COLORS,
@@ -52,6 +54,7 @@ import {
   getEnemyAttackAnimationState,
   drawEnemyAttackEffectsPre,
   drawEnemyAttackEffectsPost,
+  drawPrefixAura,
 } from './render/ladaRenderer';
 import {
   getPetrolejkaRadius,
@@ -64,6 +67,7 @@ import {
   createHolyCathedralLight,
   createGarlicHearthSpark,
   createCertEmberLight,
+  seedLightingAndOccludersFromDecor,
 } from './game/storybookLighting';
 import {
   getStorybookSnowColor,
@@ -71,6 +75,7 @@ import {
   drawBoziMukaDecor,
   drawArchitecturalSunShadow,
   renderStorybookLightingComposite,
+  drawNormalMappedReliefRim,
 } from './render/storybookLightingRenderer';
 import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
@@ -107,7 +112,7 @@ import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
-import { RunDirector } from './game/director';
+import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
 import { performDropFusion } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
@@ -1291,11 +1296,13 @@ export default function App() {
     const item = getGrandfatherItem(itemId);
     if (!p || !item || !eng.grandfather.active) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
-    const price = getGrandfatherPrice(item, eng.grandfather.purchasesThisEncounter, p.luck || 0, waitSeconds);
+    const purchaseCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
+    const price = getGrandfatherPrice(item, purchaseCount, p.luck || 0, waitSeconds);
     if (eng.gingerbread < price) return false;
 
     eng.gingerbread -= price;
     eng.grandfather.purchasesThisEncounter += 1;
+    eng.grandfather.totalPurchases = (eng.grandfather.totalPurchases || 0) + 1;
     const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, item.id];
     grandfatherPurchaseIdsRef.current = newPurchasedIds;
     setGrandfatherPurchaseIds(newPurchasedIds);
@@ -2016,35 +2023,8 @@ export default function App() {
     engine.decor = decor;
     engine.activeLevelId = chosenLevelId;
 
-    // Seed architectural lights & shadow zones from decor
-    for (let i = 0; i < decor.length; i++) {
-      const d = decor[i];
-      if (d.type === 'cottage') {
-        engine.lightSources.push({
-          id: `cottage_window_${i}`,
-          x: d.x,
-          y: d.y + 12,
-          radius: 145,
-          color: '#FEF08A',
-          type: 'window',
-        });
-        engine.shadowZones.push({
-          id: `cottage_shadow_${i}`,
-          x: d.x + 18,
-          y: d.y + 25,
-          radius: 80,
-        });
-      } else if (d.type === 'bozi_muka') {
-        engine.lightSources.push({
-          id: `bozi_muka_${i}`,
-          x: d.x,
-          y: d.y - 45,
-          radius: 115,
-          color: '#FEF08A',
-          type: 'bozi_muka',
-        });
-      }
-    }
+    // Seed architectural lights, shadow zones, and 2D vector occluders from decor
+    seedLightingAndOccludersFromDecor(decor, engine.lightSources, engine.shadowZones, engine.occluders);
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
@@ -2096,7 +2076,7 @@ export default function App() {
 
     livingEnemiesRef.current = engineRef.current.enemies.slice();
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
-    const dynamicDiff = meta.dynamicDifficulty ?? 2.0;
+    const dynamicDiff = meta.dynamicDifficulty ?? 3.0;
     directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff });
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
 
@@ -2152,7 +2132,7 @@ export default function App() {
       highestLevelUnlocked: 1,
       completedLevels: {},
       levelKillCounts: {},
-      dynamicDifficulty: 2.0,
+      dynamicDifficulty: 3.0,
     };
     saveMeta(defaultMeta);
     setSelectedLevelId(0);
@@ -2391,15 +2371,19 @@ export default function App() {
           // Běžný bubák je nasycen a odchází (pomalý krok, mlsání Ňam, ňam)
           e.takeDamage(e.hp + 1, 'food', 0, 0);
         } else {
-          // Boss nebo přeživší začne mlsat chléb a uklidní se
-          const addedSnack = 8.0 * Math.max(0.1, 1 - foodResist);
-          e.snackTimer = (e.snackTimer || 0) + addedSnack;
-          e.calmTimer = bossLike ? 10 : 8;
-          if (bossLike) {
-            e.takeDamage(e.maxHp * 0.25 * Math.max(0.1, 1 - foodResist), 'food', 0, 0);
+          // Boss nebo přeživší začne mlsat chléb a uklidní se (pokud nemá imunitu proti snacku)
+          if (e.prefix === 'kamenny' || e.immuneToSnackStun) {
+            eng.texts.push(new DamageText(e.x, e.y - 45, 'ODRAŽENO! 🪨', '#A8A29E', true));
+          } else {
+            const addedSnack = 8.0 * Math.max(0.1, 1 - foodResist);
+            e.snackTimer = (e.snackTimer || 0) + addedSnack;
+            e.calmTimer = bossLike ? 10 : 8;
+            if (bossLike) {
+              e.takeDamage(e.maxHp * 0.25 * Math.max(0.1, 1 - foodResist), 'food', 0, 0);
+            }
+            eng.texts.push(new DamageText(e.x, e.y - 45, 'CHLÉB SE SOLÍ! 🍞', '#D97706', true));
+            sound.snack();
           }
-          eng.texts.push(new DamageText(e.x, e.y - 45, 'CHLÉB SE SOLÍ! 🍞', '#D97706', true));
-          sound.snack();
         }
       } else {
         // HOLY: vlídné posvěcené slovo zasáhne zlé síly
@@ -2796,6 +2780,32 @@ export default function App() {
             } else if (pLight) {
               pLight.radius = 0;
             }
+
+            // Hromnička blessed candle light
+            const hasHromnicka = player.weapons && player.weapons.some((w: any) => w.id === 'hromnicka');
+            let hLight = engine.lightSources.find((ls) => ls.id === 'player_hromnicka');
+            if (hasHromnicka && player.hp > 0) {
+              const hromWp = player.weapons.find((w: any) => w.id === 'hromnicka');
+              const hReach = 110 + (hromWp?.level || 1) * 12;
+              if (!hLight) {
+                engine.lightSources.push({
+                  id: 'player_hromnicka',
+                  x: player.x,
+                  y: player.y,
+                  radius: hReach,
+                  color: '#FEF9C3',
+                  type: 'holy',
+                  intensity: 0.9,
+                });
+              } else {
+                hLight.x = player.x;
+                hLight.y = player.y;
+                hLight.radius = hReach;
+              }
+            } else if (hLight) {
+              hLight.radius = 0;
+            }
+
             engine.lightSources = updateLightSources(engine.lightSources, dt);
 
             if (engine.grandfather.active) {
@@ -2812,6 +2822,11 @@ export default function App() {
               } else {
                 gHearth.x = engine.grandfather.x;
                 gHearth.y = engine.grandfather.y;
+              }
+            } else {
+              const gHearthIdx = engine.lightSources.findIndex((ls) => ls.id === 'grandfather_hearth');
+              if (gHearthIdx !== -1) {
+                engine.lightSources.splice(gHearthIdx, 1);
               }
             }
 
@@ -2950,9 +2965,10 @@ export default function App() {
                   multiplier = 1,
                   isBoss = false,
                   isMiniboss = false,
-                  customBossTitle?: string
+                  customBossTitle?: string,
+                  prefix?: EnemyPrefixType
                 ) => {
-                  const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle);
+                  const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
                   engine.enemies.push(newMob);
                   directorRef.current?.recordEnemySpawn(newMob, newTime);
                   return newMob;
@@ -4383,16 +4399,64 @@ export default function App() {
                 }
               }
 
-              // Stationary Ground Puddle hazard (Hastrman water pools)
+              // Stationary Ground Puddle hazard (Hastrman water pools & Pekelný magma pools)
               if (p.isPuddle) {
                 if (currentGameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
-                  if (player.waterSoakedTimer < 1.0) {
-                    player.waterSoakedTimer = 2.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
-                    engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
-                    sound.splash();
+                  if (p.visual === 'magma_trail') {
+                    if ((p.burnCooldown || 0) <= 0) {
+                      p.burnCooldown = 0.5;
+                      player.takeDamage(p.dmg || 6, 'fire');
+                      engine.texts.push(new DamageText(player.x, player.y - 40, 'LÁVA! -6 🔥', '#EA580C', true));
+                      sound.hit();
+                    }
+                  } else {
+                    if (player.waterSoakedTimer < 1.0) {
+                      player.waterSoakedTimer = 2.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
+                      engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
+                      sound.splash();
+                    }
                   }
                 }
+                if (p.burnCooldown && p.burnCooldown > 0) p.burnCooldown -= dt;
                 continue;
+              }
+
+              // Trajectory Eruption telegraph (Pekelný anti-kiting interceptor)
+              if (p.isFissureTelegraph) {
+                if (p.life <= dt) {
+                  sound.heavyHit();
+                  const pDist = Math.hypot(p.x - player.x, p.y - player.y);
+                  if (pDist < p.radius + player.radius) {
+                    player.takeDamage(p.dmg || 18, 'fire');
+                    engine.texts.push(new DamageText(player.x, player.y - 45, 'SOPEČNÝ VÝBUCH! -18 🔥💥', '#EF4444', true));
+                  }
+                  for (let i = 0; i < 12; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = 60 + Math.random() * 110;
+                    engine.particles.push({
+                      x: p.x,
+                      y: p.y,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd - 25,
+                      life: 0.45,
+                      color: Math.random() < 0.5 ? '#EF4444' : '#F59E0B',
+                      size: 4.2,
+                    });
+                  }
+                  engine.projectiles.push({
+                    x: p.x,
+                    y: p.y,
+                    vx: 0,
+                    vy: 0,
+                    radius: 26,
+                    life: 6.0,
+                    dmg: 8,
+                    isEnemy: true,
+                    isPuddle: true,
+                    visual: 'magma_trail',
+                    dead: false,
+                  });
+                }
               }
 
               if (currentGameState === 'playing' && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
@@ -4479,12 +4543,16 @@ export default function App() {
                   if (p.type === 'food') {
                     // Food type weapons like Buchta don't cause graphical hit effect or knockback
                     // but they cause enemy to snack and do nothing for a time, with Ňam, ňam note.
-                    // Buchta causes snack for 4s, multiple hits cumulate time. Snack is resistable with Hunger.
-                    const baseSnack = p.snackDuration ?? 4.0;
-                    const effectiveSnack = baseSnack * Math.max(0, 1 - hungerResist);
-                    e.snackTimer = Math.min(2.5, (e.snackTimer || 0) + effectiveSnack);
-                    engine.texts.push(new DamageText(e.x, e.y - 25, 'Ňam, ňam', '#D97706', true));
-                    sound.snack();
+                    // Kamenný bubák má kompletní imunitu vůči snack-omráčení!
+                    if (e.prefix === 'kamenny' || e.immuneToSnackStun) {
+                      engine.texts.push(new DamageText(e.x, e.y - 25, 'ODRAŽENO! 🪨', '#A8A29E', true));
+                    } else {
+                      const baseSnack = p.snackDuration ?? 4.0;
+                      const effectiveSnack = baseSnack * Math.max(0, 1 - hungerResist);
+                      e.snackTimer = Math.min(2.5, (e.snackTimer || 0) + effectiveSnack);
+                      engine.texts.push(new DamageText(e.x, e.y - 25, 'Ňam, ňam', '#D97706', true));
+                      sound.snack();
+                    }
                   }
 
                   if (p.type === 'holy') {
@@ -5364,6 +5432,64 @@ export default function App() {
             ctx.ellipse(0, 0, ripple + 4, (ripple + 4) * 0.6, 0, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
+          } else if (p.visual === 'magma_trail') {
+            // Pekelný bubák - Lingering Magma Trail (Slag Snails)
+            ctx.save();
+            const r = p.radius || 20;
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.40)';
+            ctx.strokeStyle = '#991B1B';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, r, r * 0.62, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Vnitřní žhavé jádro
+            const pulse = (Math.sin(engine.uiTime * 5 + p.x) + 1) * 0.5;
+            ctx.fillStyle = pulse > 0.45 ? '#F59E0B' : '#DC2626';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, r * 0.55, r * 0.35, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Jiskra
+            ctx.fillStyle = '#FEF08A';
+            ctx.beginPath();
+            ctx.arc(Math.sin(engine.uiTime * 6) * 5, Math.cos(engine.uiTime * 6) * 3, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          } else if (p.visual === 'volcanic_fissure') {
+            // Pekelný bubák - Trajectory Eruption telegraph (Subterranean / Seismic)
+            ctx.save();
+            const lifeRatio = Math.max(0, p.life / 1.25);
+            const expandRatio = 1 - lifeRatio;
+            const r = p.radius || 36;
+            const warnAlpha = 0.35 + Math.sin(engine.uiTime * 14) * 0.22;
+
+            // Výstražný červeno-zlatý telegrafní kruh
+            ctx.strokeStyle = `rgba(239, 68, 68, ${warnAlpha + 0.35})`;
+            ctx.lineWidth = 2.8;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Narůstající výbušná zóna
+            ctx.fillStyle = `rgba(220, 38, 38, ${warnAlpha * 0.65})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, r * expandRatio, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pukliny v zemi
+            ctx.strokeStyle = '#7F1D1D';
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.5, -2);
+            ctx.lineTo(-r * 0.1, 4);
+            ctx.lineTo(r * 0.2, -6);
+            ctx.lineTo(r * 0.45, 3);
+            ctx.stroke();
+            ctx.restore();
           } else if (p.visual === 'head_projectile') {
             // Bezhlavý rytíř returning head
             ctx.save();
@@ -5507,7 +5633,9 @@ export default function App() {
           engine.lightSources || [],
           phase.id,
           kurazRatio,
-          isWinter
+          isWinter,
+          engine.shadowZones || [],
+          engine.occluders || []
         );
 
         // Ladovský ukazatel na dědečka, pokud se ocitne mimo obrazovku
@@ -5669,7 +5797,8 @@ export default function App() {
     multiplier = 1,
     isBoss = false,
     isMiniboss = false,
-    customBossTitle?: string
+    customBossTitle?: string,
+    prefix?: EnemyPrefixType
   ) => {
     let resolvedId = id;
     let stats = ENEMIES[resolvedId];
@@ -5706,7 +5835,7 @@ export default function App() {
     }
     const renderScale = isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
-    const poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
+    let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
     const hunger = isMiniboss
       ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0)) + 0.45)
@@ -5715,7 +5844,7 @@ export default function App() {
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
-    const damage = baseDamage;
+    let enemyDamage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
@@ -5723,6 +5852,32 @@ export default function App() {
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
     if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
+    }
+
+    let dodgeChance = 0;
+    let prefixDamageReduction = 0;
+    let isThunderous = false;
+    let hasFireTrail = false;
+    let immuneToStun = false;
+    let immuneToSnackStun = false;
+    let thornsReflectRatio = 0;
+    let thornsRange = 0;
+
+    if (prefix) {
+      const pDef = ENEMY_PREFIX_DEFS[prefix];
+      if (pDef) {
+        if (pDef.speedBonus) enemySpeed += pDef.speedBonus;
+        if (pDef.speedMultiplier) enemySpeed = Math.round(enemySpeed * pDef.speedMultiplier);
+        if (pDef.dodgeChance) dodgeChance = pDef.dodgeChance;
+        if (pDef.damageReduction) prefixDamageReduction = pDef.damageReduction;
+        if (pDef.immuneToStun) immuneToStun = true;
+        if (pDef.immuneToSnackStun) immuneToSnackStun = true;
+        if (pDef.thornsReflectRatio) thornsReflectRatio = pDef.thornsReflectRatio;
+        if (pDef.thornsRange) thornsRange = pDef.thornsRange;
+        if (prefix === 'hromovy') isThunderous = true;
+        if (prefix === 'pekelny') hasFireTrail = true;
+        if (prefix === 'kamenny') poiseResist = Math.min(0.98, poiseResist + 0.6);
+      }
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : (radius / 15);
@@ -5738,11 +5893,23 @@ export default function App() {
       isBoss,
       isMiniboss,
       customBossTitle: customBossTitle || '',
+      prefix,
+      dodgeChance,
+      prefixDamageReduction,
+      isThunderous,
+      hasFireTrail,
+      immuneToStun,
+      immuneToSnackStun,
+      thornsReflectRatio,
+      thornsRange,
+      stalkSpeedBonus: 0,
+      magmaTrailTimer: 0,
+      fissureTimer: 0,
       renderScale,
       maxHp: finalHp,
       hp: finalHp,
       speed: enemySpeed,
-      damage,
+      damage: enemyDamage,
       mass,
       attackDelay,
       attackRange,
@@ -5819,6 +5986,19 @@ export default function App() {
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
         if (this.silhouetteInvertTimer > 0) this.silhouetteInvertTimer -= dt;
 
+        // Pekelný: Stopa žhavých uhlíků a plamínků
+        if (this.hasFireTrail && !this.dead && !this.isDefeated && Math.random() < 0.28) {
+          engineRef.current?.particles?.push({
+            x: this.x + (Math.random() - 0.5) * (this.radius * 0.8),
+            y: this.y + this.radius * 0.4 + (Math.random() - 0.5) * 6,
+            vx: (Math.random() - 0.5) * 20,
+            vy: -15 - Math.random() * 25,
+            life: 0.35,
+            color: Math.random() < 0.5 ? '#F97316' : '#EF4444',
+            size: 3.5,
+          });
+        }
+
         if (this.id === 'bludicka' && !this.dead && !this.isDefeated) {
           const bId = `bludicka_${this.id}_${Math.round(this.x)}`;
           let bLight = engineRef.current?.lightSources?.find((ls) => ls.id === bId);
@@ -5844,7 +6024,8 @@ export default function App() {
             this.y,
             engineRef.current?.lightSources || [],
             dayPhase.id,
-            engineRef.current?.shadowZones || []
+            engineRef.current?.shadowZones || [],
+            engineRef.current?.occluders || []
           );
           evaluateShadowDefense(this, isLit, dt, {
             onBreak: (shadowEnemy) => {
@@ -5960,6 +6141,11 @@ export default function App() {
           return;
         }
 
+        if (this.prefix === 'kamenny' || this.immuneToStun || this.immuneToSnackStun) {
+          this.stunTimer = 0;
+          this.snackTimer = 0;
+        }
+
         // Stunned state (e.g. struck by Válečnice's heavy rolling pin)
         if (this.stunTimer > 0) {
           this.stunTimer -= dt;
@@ -6031,6 +6217,84 @@ export default function App() {
         if (this.calmTimer > 0) {
           spd *= 0.3;
           this.calmTimer -= dt;
+        }
+
+        // ----------------------------------------------------
+        // PEKELNÝ PREFIX: ANTI-KITING SYSTÉM (3 INSPIRACE)
+        // ----------------------------------------------------
+        if (this.prefix === 'pekelny' && !this.panicked && !this.isDefeated) {
+          // 1. INSPIRACE: Slag Snails (Lingering Magma Trail)
+          // Zanechává za sebou trvalé hořící louže lávy trvající 8-10 sekund
+          this.magmaTrailTimer = (this.magmaTrailTimer || 0) - dt;
+          if (this.magmaTrailTimer <= 0) {
+            this.magmaTrailTimer = 0.38;
+            engineRef.current.projectiles.push({
+              x: this.x,
+              y: this.y,
+              vx: 0,
+              vy: 0,
+              radius: 20,
+              life: 8.5,
+              dmg: 6,
+              isEnemy: true,
+              isPuddle: true,
+              visual: 'magma_trail',
+              dead: false,
+            });
+            if (Math.random() < 0.5) {
+              engineRef.current.particles.push({
+                x: this.x + (Math.random() - 0.5) * 12,
+                y: this.y + (Math.random() - 0.5) * 12,
+                vx: (Math.random() - 0.5) * 20,
+                vy: -30 - Math.random() * 25,
+                life: 0.4,
+                color: Math.random() < 0.5 ? '#EA580C' : '#F59E0B',
+                size: 3.5,
+              });
+            }
+          }
+
+          // 2. INSPIRACE: Apex Prowler (Predatory Stalk)
+          // Pokud hráč drží odstup > 220px, nabírá každou sekundu +18% rychlosti (až do +120%)
+          if (distToPlayer > 220) {
+            this.stalkSpeedBonus = Math.min(1.20, (this.stalkSpeedBonus || 0) + dt * 0.18);
+          } else if (distToPlayer < 120) {
+            // Přiblížení na tělo resetuje predátorský hon
+            this.stalkSpeedBonus = Math.max(0, (this.stalkSpeedBonus || 0) - dt * 0.8);
+          }
+
+          if ((this.stalkSpeedBonus || 0) > 0) {
+            spd *= (1 + this.stalkSpeedBonus);
+          }
+
+          // 3. INSPIRACE: Predictive Path Interceptors (Trajectory Eruption)
+          // Pokud hráč nepřetržitě utíká přímočaře, pošle sopečnou erupci 210px dopředu na hráčův vektor
+          this.fissureTimer = (this.fissureTimer || 0) - dt;
+          const playerSpeed = Math.hypot(player.vx || 0, player.vy || 0);
+          if (this.fissureTimer <= 0 && distToPlayer > 180 && distToPlayer < 700 && playerSpeed > 40) {
+            this.fissureTimer = 4.2;
+            const pMoveAng = Math.atan2(player.vy || 0, player.vx || 0);
+            const leadDist = 210;
+            const targetX = player.x + Math.cos(pMoveAng) * leadDist;
+            const targetY = player.y + Math.sin(pMoveAng) * leadDist;
+
+            engineRef.current.projectiles.push({
+              x: targetX,
+              y: targetY,
+              vx: 0,
+              vy: 0,
+              radius: 36,
+              life: 1.25,
+              dmg: 18,
+              isEnemy: true,
+              isFissureTelegraph: true,
+              visual: 'volcanic_fissure',
+              dead: false,
+            });
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 45, 'SOPEČNÁ TRHLINA! 🔥', '#EF4444', true)
+            );
+          }
         }
 
         const dirToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
@@ -7371,6 +7635,21 @@ export default function App() {
 
       takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean }) {
         if (this.isDefeated) return;
+
+        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
+        if (this.prefix === 'vichricovy') {
+          const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
+          if (Math.random() < dodge) {
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
+            return;
+          }
+        }
+
+        // Kamenný: +60% redukce poškození
+        if (this.prefixDamageReduction) {
+          amount *= (1 - this.prefixDamageReduction);
+        }
+
         const isLevelBoss = Boolean(this.isBoss);
 
         let finalDmg: number;
@@ -7402,6 +7681,43 @@ export default function App() {
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
 
+        const player = engineRef.current.player;
+
+        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px
+        if (this.prefix === 'hromovy' && player && player.hp > 0 && finalDmg > 0) {
+          const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+          if (distToPlayer <= 200 && (player.invulnerabilityTimer || 0) <= 0) {
+            const reflectDmg = Math.max(1, Math.round(finalDmg * 0.5));
+            player.takeDamage(reflectDmg, 'lightning', this, false);
+            sound.heavyHit();
+            engineRef.current.texts.push(
+              new DamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflectDmg} ⚡`, '#FDE047', true)
+            );
+            for (let i = 0; i < 7; i++) {
+              const t = i / 6;
+              const px = this.x + (player.x - this.x) * t + (Math.random() - 0.5) * 20;
+              const py = this.y + (player.y - this.y) * t + (Math.random() - 0.5) * 20;
+              engineRef.current.particles.push({
+                x: px,
+                y: py,
+                vx: (Math.random() - 0.5) * 60,
+                vy: (Math.random() - 0.5) * 60,
+                life: 0.22,
+                color: '#FDE047',
+                size: 3.5,
+              });
+            }
+          }
+        }
+
+        // Pekelný: Útok na blízko (<140px) nebo kontaktní zranění resetuje predatory stalk zrychlení
+        if (this.prefix === 'pekelny') {
+          const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+          if (distToPlayer <= 140 || options?.isHunterCounter || options?.source === 'valecnice') {
+            this.stalkSpeedBonus = 0;
+          }
+        }
+
         // Damage numbers displayed for all weapon types, aggregated within 0.25s for fast multi-hits
         const dmgInt = Math.floor(finalDmg);
         if (dmgInt >= 1) {
@@ -7422,18 +7738,22 @@ export default function App() {
           }
         }
 
-        // Apply stun if provided
+        // Apply stun if provided (Kamenný má kompletní imunitu!)
         if (options?.stunDuration && options.stunDuration > 0) {
-          const ignore = options?.isHunterCounter
-            ? (!isLevelBoss ? 1 : 0)
-            : Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
-          const effectiveWillpower = (this.willpower || 0) * (1 - ignore);
-          const finalStun = Math.max(0.25, options.stunDuration * (1 - effectiveWillpower * 0.65));
-          this.stunTimer = Math.max(this.stunTimer || 0, finalStun);
-          if (this.aiState === 'windup') {
-            this.aiState = 'idle';
-            this.windupTimer = 0;
-            this.strikeTimer = 0;
+          if (this.prefix === 'kamenny' || this.immuneToStun) {
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 42, 'IMUNNÍ! 🪨', '#A8A29E', true));
+          } else {
+            const ignore = options?.isHunterCounter
+              ? (!isLevelBoss ? 1 : 0)
+              : Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
+            const effectiveWillpower = (this.willpower || 0) * (1 - ignore);
+            const finalStun = Math.max(0.25, options.stunDuration * (1 - effectiveWillpower * 0.65));
+            this.stunTimer = Math.max(this.stunTimer || 0, finalStun);
+            if (this.aiState === 'windup') {
+              this.aiState = 'idle';
+              this.windupTimer = 0;
+              this.strikeTimer = 0;
+            }
           }
         }
 
@@ -7463,6 +7783,10 @@ export default function App() {
             this.kbx = kbx * poiseFactor * resistanceFactor * kbDamp;
             this.kby = kby * poiseFactor * resistanceFactor * kbDamp;
           }
+        } else if (this.prefix === 'kamenny') {
+          // Kamenný bubák má masivní kamennou setrvačnost
+          this.kbx = kbx * 0.15;
+          this.kby = kby * 0.15;
         } else if (type !== 'food') {
           const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
           const effectivePoise = (this.poiseResist || 0) * (1 - ignore);
@@ -7932,6 +8256,11 @@ export default function App() {
 
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
 
+        // Animovaná tematická svítící aura pro bubáky se speciálními prefixy
+        if (this.prefix && !this.isDefeated) {
+          drawPrefixAura(ctx, this.x, this.y, this.radius, this.prefix, this.animTime);
+        }
+
         // Stínová záštita - dark gouache smoke aura around shadow enemies in darkness
         if (this.hasShadowDefense && !this.isDefeated) {
           ctx.save();
@@ -8142,36 +8471,6 @@ export default function App() {
           );
         }
 
-        const palette = this.palette || (ENEMIES[this.id]?.palette);
-        if (palette) {
-          ctx.save();
-          if (palette === 'soot') {
-            ctx.fillStyle = 'rgba(25, 20, 18, 0.32)';
-          } else if (palette === 'crimson') {
-            ctx.fillStyle = 'rgba(185, 28, 28, 0.28)';
-          } else if (palette === 'bog') {
-            ctx.fillStyle = 'rgba(65, 95, 30, 0.26)';
-          } else if (palette === 'steel') {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.24)';
-          }
-          ctx.beginPath();
-          ctx.arc(this.x, this.y - 5, this.radius * 1.05, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-
-          if (palette === 'soot' && !this.isDefeated) {
-            ctx.fillStyle = '#F59E0B';
-            ctx.beginPath();
-            ctx.arc(this.x + 4 * (this.vx < 0 ? -1 : 1), this.y - 12, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-          } else if (palette === 'crimson' && !this.isDefeated) {
-            ctx.fillStyle = '#DC2626';
-            ctx.beginPath();
-            ctx.arc(this.x + 3 * (this.vx < 0 ? -1 : 1), this.y - 14, 2.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
         if (this.soaked && !this.isDefeated) {
           ctx.fillStyle = 'rgba(58, 118, 168, 0.4)';
           ctx.beginPath();
@@ -8200,6 +8499,10 @@ export default function App() {
             ctx.beginPath();ctx.arc(this.x+Math.cos(a)*(this.radius+8),this.y-this.radius-4+Math.sin(a)*4,2.5,0,Math.PI*2);ctx.fill();
           }
           ctx.restore();
+        }
+
+        if (!this.isDefeated && engineRef.current?.lightSources) {
+          drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources);
         }
 
         if (scale !== 1.0) {
@@ -8302,6 +8605,37 @@ export default function App() {
           ctx.strokeStyle = '#44403C';
           ctx.lineWidth = 0.8;
           ctx.strokeRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+          ctx.restore();
+        }
+
+        // Název / odznak pro prefixovaného bubáka
+        if (this.prefix && !this.isMiniboss && !this.isDefeated) {
+          ctx.save();
+          const pDef = ENEMY_PREFIX_DEFS[this.prefix as EnemyPrefixType];
+          const badgeText = pDef ? pDef.badge : this.prefix;
+          ctx.font = '900 11px "Eczar", serif';
+          const bWidth = ctx.measureText(badgeText).width;
+          const badgeW = bWidth + 14;
+          const badgeH = 17;
+          const badgeX = this.x - badgeW / 2;
+          const badgeY = this.y - this.radius - 18 - (this.hp < this.maxHp ? 8 : 0);
+
+          ctx.fillStyle = 'rgba(255, 251, 235, 0.94)';
+          ctx.strokeStyle = pDef ? pDef.color : '#38BDF8';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          if (typeof (ctx as any).roundRect === 'function') {
+            (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+          } else {
+            ctx.rect(badgeX, badgeY, badgeW, badgeH);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#1C1917';
+          ctx.fillText(badgeText, this.x, badgeY + badgeH / 2);
           ctx.restore();
         }
 
@@ -8951,45 +9285,34 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div
-                  style={{
-                    background:
-                      (meta.dynamicDifficulty ?? 2.0) >= 1.95
-                        ? '#7F1D1D'
-                        : (meta.dynamicDifficulty ?? 2.0) >= 1.7
-                        ? '#DC2626'
-                        : (meta.dynamicDifficulty ?? 2.0) >= 1.45
-                        ? '#D97706'
-                        : (meta.dynamicDifficulty ?? 2.0) >= 1.2
-                        ? '#0284C7'
-                        : '#16A34A',
-                    color: '#FFFFFF',
-                    padding: '4px 12px',
-                    borderRadius: '6px',
-                    fontWeight: 900,
-                    fontSize: '0.92rem',
-                    border: '2px solid var(--ink)',
-                  }}
-                >
-                  {(meta.dynamicDifficulty ?? 2.0) >= 1.95
-                    ? '2.00× Pekelná štvanice (Výchozí / Max)'
-                    : (meta.dynamicDifficulty ?? 2.0) >= 1.7
-                    ? '1.75× Divoká štvanice'
-                    : (meta.dynamicDifficulty ?? 2.0) >= 1.45
-                    ? '1.50× Zlověstná noc'
-                    : (meta.dynamicDifficulty ?? 2.0) >= 1.2
-                    ? '1.25× Neklidné povětří'
-                    : '1.00× Běžná výprava'}
-                </div>
+                {(() => {
+                  const activePreset = getDifficultyPreset(meta.dynamicDifficulty ?? 3.0);
+                  return (
+                    <div
+                      style={{
+                        background: activePreset.color,
+                        color: '#FFFFFF',
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        fontWeight: 900,
+                        fontSize: '0.92rem',
+                        border: '2px solid var(--ink)',
+                        boxShadow: '1px 1px 0 var(--ink)',
+                      }}
+                    >
+                      {activePreset.badge}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0' }}>
                 <input
                   type="range"
-                  min="1.0"
-                  max="2.0"
-                  step="0.25"
-                  value={meta.dynamicDifficulty ?? 2.0}
+                  min="2.0"
+                  max="5.0"
+                  step="0.5"
+                  value={meta.dynamicDifficulty ?? 3.0}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
                     sound.coin();
@@ -9002,16 +9325,45 @@ export default function App() {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.75rem',
+                  fontSize: '0.74rem',
                   fontWeight: 800,
                   color: '#78350F',
+                  flexWrap: 'wrap',
+                  gap: '4px',
                 }}
               >
-                <span>1.00× Běžná</span>
-                <span>1.25× Neklidné</span>
-                <span>1.50× Zlověstná</span>
-                <span>1.75× Divoká</span>
-                <span>2.00× Pekelná (Max)</span>
+                {DYNAMIC_DIFFICULTY_PRESETS.map((preset) => (
+                  <span
+                    key={preset.value}
+                    style={{
+                      cursor: 'pointer',
+                      color: Math.abs((meta.dynamicDifficulty ?? 3.0) - preset.value) < 0.24 ? '#9A3412' : '#78350F',
+                      fontWeight: Math.abs((meta.dynamicDifficulty ?? 3.0) - preset.value) < 0.24 ? 900 : 700,
+                      textDecoration: Math.abs((meta.dynamicDifficulty ?? 3.0) - preset.value) < 0.24 ? 'underline' : 'none',
+                    }}
+                    onClick={() => {
+                      sound.coin();
+                      saveMeta({ ...meta, dynamicDifficulty: preset.value });
+                    }}
+                  >
+                    {preset.shortLabel}
+                  </span>
+                ))}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: '#451A03',
+                  background: 'rgba(255,255,255,0.6)',
+                  border: '1.5px dashed #B45309',
+                  borderRadius: '6px',
+                  padding: '6px 10px',
+                  marginTop: '6px',
+                  lineHeight: 1.35,
+                }}
+              >
+                📜 <em>{getDifficultyPreset(meta.dynamicDifficulty ?? 3.0).subtitle}</em>
               </div>
             </div>
 
@@ -9658,6 +10010,7 @@ export default function App() {
           purchasedIds={grandfatherPurchaseIds}
           playerWeapons={engineRef.current.player?.weapons || []}
           purchasesThisEncounter={engineRef.current.grandfather.purchasesThisEncounter}
+          totalPurchases={engineRef.current.grandfather.totalPurchases ?? grandfatherPurchaseIds.length}
           rerollCost={getGrandfatherRerollCost(engineRef.current.grandfather.rerollsThisEncounter || 0)}
           churchLevel={metaRef.current.churchLevel || 0}
           onPurchase={purchaseGrandfatherItem}
@@ -10089,7 +10442,7 @@ export default function App() {
         onToggleShowPerfOverlay={(enabled) => {
           saveMeta({ ...meta, showPerfOverlay: enabled });
         }}
-        dynamicDifficulty={meta.dynamicDifficulty ?? 2.0}
+        dynamicDifficulty={meta.dynamicDifficulty ?? 3.0}
         onChangeDynamicDifficulty={(diff) => {
           saveMeta({ ...meta, dynamicDifficulty: diff });
         }}

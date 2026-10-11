@@ -8,8 +8,9 @@ import type {
   EnemyAttackCadence,
   DropType,
   GameDrop,
+  EnemyPrefixType,
 } from '../types';
-import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
+import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS, ENEMY_PREFIX_DEFS } from '../types';
 import { type EngineState, type PendingMilestoneChoice, createInitialEngineState } from './engineState';
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
@@ -43,8 +44,10 @@ import {
   createHolyCathedralLight,
   createGarlicHearthSpark,
   createCertEmberLight,
+  seedLightingAndOccludersFromDecor,
   type DynamicLightSource,
   type ShadowZone,
+  type LightOccluder,
 } from './storybookLighting';
 
 export const MAX_PARTICLES = 300;
@@ -244,7 +247,8 @@ export class GameEngine {
     multiplier?: number,
     isBoss?: boolean,
     isMiniboss?: boolean,
-    customBossTitle?: string
+    customBossTitle?: string,
+    prefix?: EnemyPrefixType
   ) => any;
 
   constructor(
@@ -307,7 +311,7 @@ export class GameEngine {
         ? optionsOrLevelId.dynamicDifficulty
         : typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.directorAdaptability !== undefined
         ? optionsOrLevelId.directorAdaptability
-        : 2.0;
+        : 1.5;
 
     this.director = new RunDirector(levelId, seed, { dynamicDifficulty });
     nextState.director = this.director;
@@ -320,6 +324,15 @@ export class GameEngine {
     this.livingEnemies = [];
 
     this.state.player = this.createPlayer(chosenHunter, metaProg, weapons);
+
+    if (this.state.decor && this.state.decor.length > 0) {
+      seedLightingAndOccludersFromDecor(
+        this.state.decor,
+        this.state.lightSources,
+        this.state.shadowZones,
+        this.state.occluders
+      );
+    }
 
     if (spawnInitialWave) {
       this.spawnOpeningWave(levelId);
@@ -609,11 +622,12 @@ export class GameEngine {
     multiplier = 1,
     isBoss = false,
     isMiniboss = false,
-    customBossTitle?: string
+    customBossTitle?: string,
+    prefix?: EnemyPrefixType
   ): any {
     const enemy = this.enemyFactory
-      ? this.enemyFactory(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle)
-      : this.createHeadlessEnemy(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle);
+      ? this.enemyFactory(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix)
+      : this.createHeadlessEnemy(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
 
     this.state.enemies.push(enemy);
     if (!enemy.isDefeated && !enemy.dead) {
@@ -637,7 +651,8 @@ export class GameEngine {
     multiplier = 1,
     isBoss = false,
     isMiniboss = false,
-    customBossTitle?: string
+    customBossTitle?: string,
+    prefix?: EnemyPrefixType
   ): any {
     let resolvedId = id;
     let stats: EnemyStats = ENEMIES[resolvedId];
@@ -676,7 +691,7 @@ export class GameEngine {
     }
     const renderScale = isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
-    const poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
+    let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
     const hunger = isMiniboss
       ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : stats.foodResist || 0) + 0.45)
@@ -687,14 +702,33 @@ export class GameEngine {
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
-    const damage = baseDamage;
+    let enemySpeed = stats.speed;
+    let enemyDamage = baseDamage;
+    let dodgeChance = 0;
+    let prefixDamageReduction = 0;
+    let isThunderous = false;
+    let hasFireTrail = false;
+
+    if (prefix) {
+      const pDef = ENEMY_PREFIX_DEFS[prefix];
+      if (pDef) {
+        if (pDef.speedBonus) enemySpeed += pDef.speedBonus;
+        if (pDef.speedMultiplier) enemySpeed = Math.round(enemySpeed * pDef.speedMultiplier);
+        if (pDef.dodgeChance) dodgeChance = pDef.dodgeChance;
+        if (pDef.damageReduction) prefixDamageReduction = pDef.damageReduction;
+        if (prefix === 'hromovy') isThunderous = true;
+        if (prefix === 'pekelny') hasFireTrail = true;
+        if (prefix === 'kamenny') poiseResist = Math.min(0.98, poiseResist + 0.6);
+      }
+    }
+
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : stats.coinValue || 1;
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
     const isLevel1 = (this.state.activeLevelId || 1) === 1;
-    let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
+    let finalSpeed = isMiniboss ? Math.max(enemySpeed * 0.95, 68) : enemySpeed;
     if (resolvedId === 'polednice' && isLevel1) {
-      enemySpeed = Math.round(enemySpeed * 0.85);
+      finalSpeed = Math.round(finalSpeed * 0.85);
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : radius / 15;
@@ -715,11 +749,16 @@ export class GameEngine {
       isBoss,
       isMiniboss,
       customBossTitle: customBossTitle || '',
+      prefix,
+      dodgeChance,
+      prefixDamageReduction,
+      isThunderous,
+      hasFireTrail,
       renderScale,
       maxHp: finalHp,
       hp: finalHp,
-      speed: enemySpeed,
-      damage,
+      speed: finalSpeed,
+      damage: enemyDamage,
       mass,
       attackDelay,
       attackRange,
@@ -795,6 +834,11 @@ export class GameEngine {
           }
         }
 
+        if (this.prefix === 'kamenny') {
+          this.stunTimer = 0;
+          this.snackTimer = 0;
+        }
+
         if (this.stunTimer > 0) {
           this.stunTimer -= dt;
           this.interruptAttack();
@@ -842,6 +886,20 @@ export class GameEngine {
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
 
+        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
+        if (this.prefix === 'vichricovy') {
+          const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
+          if (Math.random() < dodge) {
+            self.state.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
+            return;
+          }
+        }
+
+        // Kamenný: +60% redukce poškození
+        if (this.prefixDamageReduction) {
+          amount *= (1 - this.prefixDamageReduction);
+        }
+
         const shadowMods = getShadowDefenseMultipliers(this);
         amount *= shadowMods.damageTakenMult;
         if (type === 'holy') {
@@ -863,18 +921,37 @@ export class GameEngine {
         this.hp = Math.max(0, this.hp - finalDamage);
         this.hitFlashTimer = 0.12;
 
-        if (options?.stunDuration && options.stunDuration > 0) {
+        if (options?.stunDuration && options.stunDuration > 0 && this.prefix !== 'kamenny') {
           const stunResist = this.willpower || 0;
           this.stunTimer = Math.max(this.stunTimer || 0, options.stunDuration * (1 - stunResist));
           this.interruptAttack();
         }
 
+        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px
+        if (this.prefix === 'hromovy' && self.state.player && self.state.player.hp > 0 && finalDamage > 0) {
+          const pDist = Math.hypot(self.state.player.x - this.x, self.state.player.y - this.y);
+          if (pDist <= 200) {
+            const reflect = Math.max(1, Math.round(finalDamage * 0.5));
+            if (typeof self.state.player.takeDamage === 'function') {
+              self.state.player.takeDamage(reflect, 'lightning', this, false);
+            } else {
+              self.state.player.hp = Math.max(0, self.state.player.hp - reflect);
+            }
+            self.state.texts.push(new DamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflect} ⚡`, '#FDE047', true));
+          }
+        }
+
         if (kbx !== 0 || kby !== 0) {
-          const poise = this.poiseResist || 0;
-          const kbFactor = Math.max(0.1, 1 - poise);
-          this.kbx += kbx * kbFactor;
-          this.kby += kby * kbFactor;
-          this.interruptAttack();
+          if (this.prefix === 'kamenny') {
+            this.kbx += kbx * 0.15;
+            this.kby += kby * 0.15;
+          } else {
+            const poise = this.poiseResist || 0;
+            const kbFactor = Math.max(0.1, 1 - poise);
+            this.kbx += kbx * kbFactor;
+            this.kby += kby * kbFactor;
+            this.interruptAttack();
+          }
         }
 
         if (finalDamage >= (this.maxHp || 40) * 3) {
@@ -1280,7 +1357,55 @@ export class GameEngine {
       } else if (pLight) {
         pLight.radius = 0;
       }
+
+      // Hromnička blessed candle light
+      const hasHromnicka = player.weapons && player.weapons.some((w: any) => w.id === 'hromnicka');
+      let hLight = this.state.lightSources.find((ls) => ls.id === 'player_hromnicka');
+      if (hasHromnicka) {
+        const hromWp = player.weapons.find((w: any) => w.id === 'hromnicka');
+        const hReach = 110 + (hromWp?.level || 1) * 12;
+        if (!hLight) {
+          this.state.lightSources.push({
+            id: 'player_hromnicka',
+            x: player.x,
+            y: player.y,
+            radius: hReach,
+            color: '#FEF9C3',
+            type: 'holy',
+            intensity: 0.9,
+          });
+        } else {
+          hLight.x = player.x;
+          hLight.y = player.y;
+          hLight.radius = hReach;
+        }
+      } else if (hLight) {
+        hLight.radius = 0;
+      }
     }
+
+    if (this.state.grandfather && this.state.grandfather.active) {
+      let gHearth = this.state.lightSources.find((ls) => ls.id === 'grandfather_hearth');
+      if (!gHearth) {
+        this.state.lightSources.push({
+          id: 'grandfather_hearth',
+          x: this.state.grandfather.x,
+          y: this.state.grandfather.y,
+          radius: 240,
+          color: '#EA580C',
+          type: 'hearth',
+        });
+      } else {
+        gHearth.x = this.state.grandfather.x;
+        gHearth.y = this.state.grandfather.y;
+      }
+    } else {
+      const gHearthIdx = this.state.lightSources.findIndex((ls) => ls.id === 'grandfather_hearth');
+      if (gHearthIdx !== -1) {
+        this.state.lightSources.splice(gHearthIdx, 1);
+      }
+    }
+
     this.state.lightSources = updateLightSources(this.state.lightSources, dt);
 
     if (player && player.hp > 0) {
@@ -1532,7 +1657,8 @@ export class GameEngine {
             e.y,
             this.state.lightSources,
             dayPhase.id,
-            this.state.shadowZones
+            this.state.shadowZones,
+            this.state.occluders
           );
           evaluateShadowDefense(e, isLit, dt, {
             onBreak: (shadowEnemy) => {

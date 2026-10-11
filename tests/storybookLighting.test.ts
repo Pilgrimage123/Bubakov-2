@@ -10,8 +10,16 @@ import {
   createHolyCathedralLight,
   createGarlicHearthSpark,
   createCertEmberLight,
+  computeOccluderSegments,
+  computeShadowVolume,
+  isRayBlockedByOccluders,
+  computeLambertianDiffuse,
+  computeNormalFromAngles,
+  computeSurfaceReliefHighlight,
+  seedLightingAndOccludersFromDecor,
   type DynamicLightSource,
   type ShadowZone,
+  type LightOccluder,
 } from '../src/game/storybookLighting';
 
 describe('Storybook Illumination System (Headless Mechanics)', () => {
@@ -196,6 +204,134 @@ describe('Storybook Illumination System (Headless Mechanics)', () => {
 
       const cert = createCertEmberLight(200, 200);
       expect(cert.type).toBe('cert');
+    });
+  });
+
+  describe('Dynamic 2D Vector Shadow Geometry (Occluder Raycasting)', () => {
+    const cottageWall: LightOccluder = {
+      id: 'cottage_wall',
+      x: 200,
+      y: 100,
+      width: 40,
+      height: 120,
+    };
+
+    const treeTrunk: LightOccluder = {
+      id: 'tree_trunk',
+      x: 200,
+      y: 100,
+      radius: 20,
+    };
+
+    it('extracts bounding segments from rectangular and circular occluders', () => {
+      const boxSegs = computeOccluderSegments(cottageWall);
+      expect(boxSegs.length).toBe(4);
+
+      const circleSegs = computeOccluderSegments(treeTrunk);
+      expect(circleSegs.length).toBe(8);
+    });
+
+    it('generates extruded shadow volumes extending away from the light source', () => {
+      const volumes = computeShadowVolume(50, 100, 250, cottageWall);
+      expect(volumes.length).toBeGreaterThan(0);
+      for (const vol of volumes) {
+        expect(vol.e1.x).toBeGreaterThan(vol.p1.x); // Extruded away from light at x=50
+        expect(vol.e2.x).toBeGreaterThan(vol.p2.x);
+      }
+    });
+
+    it('detects blocked line-of-sight rays through occluders', () => {
+      // Light at (100, 100), Target at (300, 100), Wall at x=200, y in [40, 160]
+      const blocked = isRayBlockedByOccluders(100, 100, 300, 100, [cottageWall]);
+      expect(blocked).toBe(true);
+
+      // Light at (100, 100), Target clearing above the wall at (300, -80)
+      const clear = isRayBlockedByOccluders(100, 100, 300, -80, [cottageWall]);
+      expect(clear).toBe(false);
+    });
+
+    it('denies illumination in isPositionIlluminated when occluded behind a wall', () => {
+      const lantern: DynamicLightSource = {
+        id: 'lantern',
+        x: 100,
+        y: 100,
+        radius: 250,
+        color: '#F59E0B',
+      };
+
+      // Unobstructed target is illuminated
+      expect(isPositionIlluminated(150, 100, [lantern], 'night', [], [cottageWall])).toBe(true);
+
+      // Target behind the cottage wall is in shadow
+      expect(isPositionIlluminated(280, 100, [lantern], 'night', [], [cottageWall])).toBe(false);
+    });
+  });
+
+  describe('2D Surface Relief and Normal Map Diffuse Shading', () => {
+    it('calculates Lambertian diffuse shading: I = max(0, N · L) with distance attenuation', () => {
+      const lightPos = { x: 100, y: 100, z: 35 };
+      const surfacePos = { x: 100, y: 100 }; // directly underneath light
+      const upwardNormal = { x: 0, y: 0, z: 1 }; // pointing out toward camera/light
+
+      const diffuseIntensity = computeLambertianDiffuse(lightPos, surfacePos, upwardNormal, 1.0, 200);
+      expect(diffuseIntensity).toBeGreaterThan(0.65);
+      expect(diffuseIntensity).toBeLessThanOrEqual(1.0);
+
+      // Normal facing away from light (dot product <= 0)
+      const oppositeNormal = { x: 0, y: 0, z: -1 };
+      const zeroIntensity = computeLambertianDiffuse(lightPos, surfacePos, oppositeNormal, 1.0, 200);
+      expect(zeroIntensity).toBe(0);
+    });
+
+    it('maps surface tilt angles to unit normal vectors with depth Z', () => {
+      const flat = computeNormalFromAngles(0, 0);
+      expect(flat.x).toBe(0);
+      expect(flat.y).toBe(0);
+      expect(flat.z).toBe(1);
+
+      const beveled = computeNormalFromAngles(0.6, 0);
+      expect(beveled.x).toBe(0.6);
+      expect(beveled.y).toBe(0);
+      expect(beveled.z).toBeCloseTo(0.8);
+      expect(Math.hypot(beveled.x, beveled.y, beveled.z)).toBeCloseTo(1.0);
+    });
+
+    it('computes directional surface relief highlight angle and intensity from nearby light', () => {
+      const lantern: DynamicLightSource = {
+        id: 'lantern',
+        x: 150,
+        y: 100,
+        radius: 120,
+        color: '#F59E0B',
+      };
+
+      const highlight = computeSurfaceReliefHighlight(100, 100, 20, [lantern]);
+      expect(highlight).not.toBeNull();
+      expect(highlight!.dominantDirAngle).toBeCloseTo(0, 1); // Lantern is directly to the right (+X, angle ~ 0)
+      expect(highlight!.intensity).toBeGreaterThan(0.3);
+      expect(highlight!.color).toBe('#F59E0B');
+    });
+  });
+
+  describe('Decor lighting and occluder seeding', () => {
+    it('seeds lights, shadow zones, and occluders from cottages and shrines', () => {
+      const decorList = [
+        { type: 'cottage', x: 200, y: 300, scale: 1 },
+        { type: 'bozi_muka', x: 400, y: 500, scale: 1 },
+        { type: 'tree', x: 100, y: 150, scale: 1 },
+      ];
+
+      const lights: DynamicLightSource[] = [];
+      const shadows: ShadowZone[] = [];
+      const occluders: LightOccluder[] = [];
+
+      seedLightingAndOccludersFromDecor(decorList, lights, shadows, occluders);
+
+      expect(lights.some((l) => l.type === 'window')).toBe(true);
+      expect(lights.some((l) => l.type === 'bozi_muka')).toBe(true);
+      expect(shadows.some((s) => s.id.includes('cottage_shadow'))).toBe(true);
+      expect(occluders.some((o) => o.id.includes('cottage_occ'))).toBe(true);
+      expect(occluders.some((o) => o.id.includes('tree_occ'))).toBe(true);
     });
   });
 });

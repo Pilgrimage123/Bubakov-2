@@ -375,16 +375,6 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               attackAngle: attackAngleRad,
               mass: e.mass || 1,
             };
-
-            const palette = e.palette;
-            if (palette) {
-              ctx.save();
-              if (palette === 'soot') ctx.filter = 'brightness(0.55) contrast(1.4) drop-shadow(0 0 3px #EA580C)';
-              else if (palette === 'crimson') ctx.filter = 'sepia(1) saturate(5) hue-rotate(320deg) brightness(0.9)';
-              else if (palette === 'bog') ctx.filter = 'sepia(0.85) hue-rotate(65deg) saturate(2.5) brightness(0.85)';
-              else if (palette === 'steel') ctx.filter = 'grayscale(0.85) contrast(1.35) brightness(1.15)';
-            }
-
             ctx.save();
             ctx.translate(cx, cy);
             ctx.scale(zoomScale / 1.4, zoomScale / 1.4);
@@ -402,10 +392,6 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             );
 
             ctx.restore();
-
-            if (palette) {
-              ctx.restore();
-            }
 
             if (showWarningSign && windupTimer > 0) {
               drawEnemyWarningSign(ctx, {

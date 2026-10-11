@@ -4,8 +4,8 @@
 Trvalá vylepšení vesnice v hospodě U Černého kocoura byla původně oceňována nezávisle jednoduchým vzorcem `35 * (lvl + 1)` pro každou budovu zvlášť. To vedlo k triviálnímu hromadění levných vylepšení bez nutnosti zvažovat strategické priority. Některé efekty se navíc překrývaly nebo byly příliš úzce zaměřené (např. pouhé krácení počítadla truhel či vliv jen na bažiny), v rozhraní docházelo k duplicitě u pivovarských ležáků a chyběly klíčové ekonomické a záchranné mechaniky (násobení zisku perníčků, krejcarů a posílení při nízké Kuráži).
 
 ## Rozhodnutí
-Rozhodli jsme se zavést systém sdíleného zdražování (**Obecní přirážka**) a harmonizovat všech 12 budov do folklórní Ladovské tématiky:
-1. **Vzorec ceny se sdíleným zdražováním**: Každá zakoupená úroveň libovolné budovy ve vsi zvyšuje cenu všech budov o +15 %: `cena = round(baseCost * (1 + celkemZakoupeno * 0.15))`.
+Rozhodli jsme se zavést systém sdíleného zdražováni (**Obecní přirážka**) a harmonizovat všech 12 budov do folklórní Ladovské tématiky:
+1. **Vzorec ceny se sdíleným zdražováním**: Každá zakoupená úroveň libovolné budovy ve vsi zvyšuje cenu všech budov o +30 % (upraveno na 2x rychlejší růst, dříve +15 %): `cena = round(baseCost * (1 + celkemZakoupeno * 0.30))`.
 2. **Odstupňované základní ceny**: Budovy jsou rozděleny do tří hladin (30 / 50 / 75 krejcarů) podle dopadu na hru.
 3. **Neomezené úrovně se stabilními mezemi**: Úrovně budov jsou neomezené pro pozdní fázi hry; obranné a časové efekty (redukce zranění, nezranitelnost, zkrácení debuffů) mají asymptotické stropy, aby nerozbily simulaci.
 4. **Nové klíčové efekty**:

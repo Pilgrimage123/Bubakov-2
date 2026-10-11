@@ -240,27 +240,27 @@ describe('Anomálie: Bubácká díra', () => {
 });
 
 describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
-  it('defaults to 2.0 (Pekelná štvanice - Max) and clamps to [1.0, 2.0]', () => {
+  it('defaults to 3.0 (Zlověstná noc) and clamps to [2.0, 5.0]', () => {
     const defaultDirector = new RunDirector(1);
-    expect(defaultDirector.dynamicDifficulty).toBe(2.0);
+    expect(defaultDirector.dynamicDifficulty).toBe(3.0);
 
-    const clampedLow = new RunDirector(1, undefined, { dynamicDifficulty: 0.5 });
-    expect(clampedLow.dynamicDifficulty).toBe(1.0);
+    const clampedLow = new RunDirector(1, undefined, { dynamicDifficulty: 1.0 });
+    expect(clampedLow.dynamicDifficulty).toBe(2.0);
 
-    const clampedHigh = new RunDirector(1, undefined, { dynamicDifficulty: 3.0 });
-    expect(clampedHigh.dynamicDifficulty).toBe(2.0);
+    const clampedHigh = new RunDirector(1, undefined, { dynamicDifficulty: 6.0 });
+    expect(clampedHigh.dynamicDifficulty).toBe(5.0);
 
-    const midDirector = new RunDirector(1, undefined, { dynamicDifficulty: 1.5 });
-    expect(midDirector.dynamicDifficulty).toBe(1.5);
+    const midDirector = new RunDirector(1, undefined, { dynamicDifficulty: 3.0 });
+    expect(midDirector.dynamicDifficulty).toBe(3.0);
   });
 
   it('scales budget cap and accrual higher with dynamicDifficulty', () => {
     const engine1 = new GameEngine();
-    engine1.initRun({ levelId: 1, dynamicDifficulty: 1.0, spawnInitialWave: false });
+    engine1.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
     const dir1 = engine1.director!;
 
     const engine2 = new GameEngine();
-    engine2.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    engine2.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const dir2 = engine2.director!;
 
     engine1.livingEnemies = new Array(75).fill({ hp: 50 });
@@ -278,7 +278,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
 
   it('triggers Drtivý přepad with dual commanders and poise buffs after lull', () => {
     const engine = new GameEngine();
-    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
 
     director.valvePhase = 'lull';
@@ -298,7 +298,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(newEnemies.length).toBeGreaterThanOrEqual(4);
 
     // Look for commanders with Drtivý přepad buffs
-    const commanders = newEnemies.filter((e: any) => e.name === 'Přepadový velitel');
+    const commanders = newEnemies.filter((e: any) => e.name === 'Přepadový strážmistr');
     expect(commanders.length).toBe(2);
     for (const c of commanders) {
       expect(c.poiseResist).toBeGreaterThanOrEqual(0.35);
@@ -308,7 +308,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
 
   it('spawns Zrádný terén when player moves straight for 3.5s (anti-kiting)', () => {
     const engine = new GameEngine();
-    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
     const player = engine.state.player;
 
@@ -331,7 +331,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
 
   it('transforms existing enemies into Ostřílení běsi when reaching 75 entity cap', () => {
     const engine = new GameEngine();
-    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
 
     // 75 living enemies
@@ -356,14 +356,14 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(engine.livingEnemies.length).toBe(75);
   });
 
-  it('halves the assistance penalty on maximum difficulty 2.0 vs standard 1.0', () => {
+  it('halves the assistance penalty on maximum difficulty 4.0 vs standard 2.0', () => {
     const engineLow = new GameEngine();
-    engineLow.initRun({ levelId: 1, dynamicDifficulty: 1.0, spawnInitialWave: false });
+    engineLow.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
     const dirLow = engineLow.director!;
     engineLow.livingEnemies = new Array(75).fill({ hp: 50 });
 
     const engineHigh = new GameEngine();
-    engineHigh.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    engineHigh.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const dirHigh = engineHigh.director!;
     engineHigh.livingEnemies = new Array(75).fill({ hp: 50 });
 
@@ -376,8 +376,119 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     dirLow.update(1.0, engineLow);
     dirHigh.update(1.0, engineHigh);
 
-    // On 2.0x, penalty is only 25% (0.75x factor), on 1.0x penalty is 50% (0.50x factor)
-    // Combined with higher base accrual on 2.0x, dirHigh accrues significantly more
+    // On 4.0x (or 5.0x), penalty is smaller than on 2.0x
+    // Combined with higher base accrual, dirHigh accrues significantly more
     expect(dirHigh.threatBudget).toBeGreaterThan(dirLow.threatBudget * 1.5);
+  });
+
+  it('deadlock fix: transitions buildup -> peak -> lull even when player wipes all enemies instantly', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+
+    // Player keeps screen completely clear (0 living enemies)
+    engine.livingEnemies = [];
+    expect(director.valvePhase).toBe('buildup');
+
+    // Simulate 24.5 seconds of gameplay (past maxBuildupTime of 24s for 4.0x)
+    for (let i = 0; i < 245; i++) {
+      director.update(0.1, engine);
+      engine.livingEnemies = []; // Keep clear
+    }
+
+    // Must have advanced through peak into lull (since livingCount <= 4)
+    expect(director.valvePhase).toBe('lull');
+    expect(director.valveTimer).toBeGreaterThan(0);
+
+    // Advance past remaining lull timer to enter telegraph
+    const lullSteps = Math.ceil(director.valveTimer / 0.1) + 1;
+    for (let i = 0; i < lullSteps; i++) {
+      director.update(0.1, engine);
+    }
+    expect(director.valvePhase).toBe('telegraph');
+    expect(director.telegraphMessage).toContain('přepad');
+  });
+
+  it('triggers heavy formations on high dynamic difficulty even when dominance is low', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+
+    // Low player courage (20% HP) and slow TTK, causing dominance < 0.35
+    engine.state.player.hp = engine.state.player.maxHp * 0.2;
+    director.threatBudget = 25;
+    (director as any).formationCooldown = 0;
+
+    const dom = director.computeDominanceIndex(engine.state.player);
+    expect(dom).toBeLessThan(0.40);
+
+    const mobsBefore = engine.state.enemies.length;
+    // Update director with spawn check ready
+    (director as any).lastSpawnCheck = 0.5;
+    director.update(0.1, engine);
+
+    // Formations should still trigger because dynamicDifficulty >= 2.9
+    expect(engine.state.enemies.length).toBeGreaterThan(mobsBefore);
+    expect((director as any).formationCooldown).toBeGreaterThan(0);
+  });
+
+  it('deploys Ladovske visual elite variants without inflating base enemy stats (Zero-Cheat Policy)', () => {
+    const director = new RunDirector(1, undefined, { dynamicDifficulty: 4.0 });
+
+    // Verify mapping from base to visually distinct elite variant
+    expect(director.getEliteVariantForId('rarach')).toBe('krvavy_rarach');
+    expect(director.getEliteVariantForId('skeleton')).toBe('krvavy_kostlivec');
+    expect(director.getEliteVariantForId('hastrman')).toBe('kalny_hastrman');
+    expect(director.getEliteVariantForId('cerny_pes')).toBe('cerny_vlkodlak');
+    expect(director.getEliteVariantForId('zbojnik')).toBe('obrneny_zbojnik');
+
+    // Verify authentic base stats and buffed special bubaks
+    expect(ENEMIES.rarach.hp).toBe(48);
+    expect(ENEMIES.krvavy_rarach.hp).toBe(160);
+    expect(ENEMIES.krvavy_rarach.palette).toBe('crimson');
+    expect(ENEMIES.cerny_vlkodlak.palette).toBe('soot');
+    expect(ENEMIES.kalny_hastrman.palette).toBe('bog');
+  });
+
+  it('allows the director to use all spatial cells and all bubaks whenever exhausting threat budget', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+
+    // 1. Spatial cells definition exists with 8 sectors
+    expect(RunDirector.CELL_COUNT).toBe(8);
+    expect(RunDirector.CELL_ANGLES.length).toBe(8);
+
+    // 2. All bubaks pool includes special elites and level monsters
+    const allBubaks = director.getAllBubaksPool(engine);
+    expect(allBubaks).toContain('krvavy_rarach');
+    expect(allBubaks).toContain('krvavy_kostlivec');
+    expect(allBubaks).toContain('kalny_hastrman');
+    expect(allBubaks).toContain('cerny_vlkodlak');
+    expect(allBubaks).toContain('obrneny_zbojnik');
+    expect(allBubaks.length).toBeGreaterThan(6);
+
+    // 3. Threat cost resolves accurately
+    expect(director.getBubakThreatCost('rarach')).toBe(3);
+    expect(director.getBubakThreatCost('krvavy_rarach')).toBe(8);
+    expect(director.getBubakThreatCost('obrneny_zbojnik')).toBe(8);
+
+    // 4. Director actively exhausts threat budget across cells
+    director.threatBudget = 30;
+    (director as any).formationCooldown = 10; // bypass heavy formation to test cell spawns
+    (director as any).lastSpawnCheck = 1.0;
+
+    const initialLiving = engine.state.enemies.length;
+    director.update(0.1, engine);
+
+    // Should have spawned monsters and deducted budget
+    expect(engine.state.enemies.length).toBeGreaterThan(initialLiving);
+    expect(director.threatBudget).toBeLessThan(30);
+
+    // 5. When maxLivingEnemies is reached, exhausts budget into Ostřílení běsi
+    director.threatBudget = 25;
+    engine.livingEnemies = new Array(75).fill({ hp: 50, speed: 80, x: 0, y: 0 });
+    director.update(0.1, engine);
+    expect(director.threatBudget).toBeLessThan(25);
   });
 });

@@ -18,6 +18,7 @@ export interface GrandfatherRuntimeState {
   waitStartedAt: number;
   offers: GrandfatherOffer[];
   purchasesThisEncounter: number;
+  totalPurchases: number;
   rerollsThisEncounter: number;
   cooldown: number;
 }
@@ -36,6 +37,7 @@ export function createGrandfatherRuntime(): GrandfatherRuntimeState {
     waitStartedAt: 0,
     offers: [],
     purchasesThisEncounter: 0,
+    totalPurchases: 0,
     rerollsThisEncounter: 0,
     cooldown: 0,
   };
@@ -51,13 +53,15 @@ export function getWaitDiscount(waitSeconds: number, maxDiscount = 0.30): number
   return Math.min(maxDiscount, Math.max(0, waitSeconds) * 0.0025);
 }
 
+export const GRANDFATHER_INFLATION_RATE = 0.10;
+
 export function getGrandfatherPrice(
   item: GrandfatherItemDef,
   purchasedCount: number,
   luck: number,
   waitSeconds: number,
 ): number {
-  const inflation = 1 + Math.max(0, purchasedCount) * 0.05;
+  const inflation = 1 + Math.max(0, purchasedCount) * GRANDFATHER_INFLATION_RATE;
   const luckDiscount = Math.min(0.20, Math.max(0, luck) * 0.015);
   const waitDiscount = getWaitDiscount(waitSeconds);
   const price = item.baseCost * inflation * (1 - luckDiscount) * (1 - waitDiscount);

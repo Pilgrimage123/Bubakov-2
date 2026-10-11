@@ -1,7 +1,10 @@
 /**
  * Storybook Illumination Renderer (Ladovské kvašové svícení)
- * Handcrafted Lada fairytale lighting pipeline:
+ * Handcrafted Josef Lada fairytale lighting pipeline:
+ * - 2D Lightmap Pipeline (Multiplicative Blending): Final Color = Scene Color * Lightmap Color
+ * - Dynamic 2D Vector Shadow Geometry (Vertex Raycasting / Extruded Shadow Volumes)
  * - Stepped Gouache Halos (3-4 tonal bands) & Pen Stippling rims
+ * - 2D Surface Relief / Normal Map Diffuse Shading: I = max(0, N · L)
  * - Seasonal snow color shifts (midday warm-white -> night pastel indigo)
  * - Cottage window butter-yellow trapezoids with mullions
  * - Boží muka & Grandfather's stove hearth warmth
@@ -11,10 +14,14 @@
  */
 
 import { COLORS } from '../constants';
-import type { DynamicLightSource, ShadowZone } from '../game/storybookLighting';
+import type { DynamicLightSource, ShadowZone, LightOccluder, ShadowPolygon } from '../game/storybookLighting';
+import { computeShadowVolume, computeSurfaceReliefHighlight } from '../game/storybookLighting';
 
 let lightBufferCanvas: HTMLCanvasElement | null = null;
 let lightBufferCtx: CanvasRenderingContext2D | null = null;
+
+let singleLightCanvas: HTMLCanvasElement | null = null;
+let singleLightCtx: CanvasRenderingContext2D | null = null;
 
 let stipplePatternCanvas: HTMLCanvasElement | null = null;
 let stipplePattern: CanvasPattern | null = null;
@@ -78,6 +85,24 @@ function getLightBuffer(width: number, height: number): { canvas: HTMLCanvasElem
 }
 
 /**
+ * Reusable scratch buffer for rendering an individual light source with shadow volume cutouts.
+ */
+function getSingleLightBuffer(requiredDim: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
+  if (typeof document === 'undefined') return null;
+  const dim = Math.min(1600, Math.max(256, Math.ceil(requiredDim)));
+  if (!singleLightCanvas) {
+    singleLightCanvas = document.createElement('canvas');
+    singleLightCtx = singleLightCanvas.getContext('2d');
+  }
+  if (singleLightCanvas.width < dim || singleLightCanvas.height < dim) {
+    singleLightCanvas.width = dim;
+    singleLightCanvas.height = dim;
+  }
+  if (!singleLightCtx) return null;
+  return { canvas: singleLightCanvas, ctx: singleLightCtx };
+}
+
+/**
  * Computes winter snow ground tint according to day phase and Kuráž.
  */
 export function getStorybookSnowColor(dayPhaseId: string, kurazRatio: number): string {
@@ -110,13 +135,91 @@ export function getStorybookSnowColor(dayPhaseId: string, kurazRatio: number): s
 }
 
 /**
- * Renders a single Stepped Gouache Halo:
+ * Returns RGB tuple for ambient lightmap color according to day phase.
+ */
+function getAmbientLightmapRgb(
+  dayPhaseId: string,
+  kurazRatio: number,
+  isWinter = true
+): { r: number; g: number; b: number; hex: string } {
+  if (dayPhaseId === 'noon' || dayPhaseId === 'afternoon') {
+    if (kurazRatio < 0.25) {
+      // Glaring winter haze
+      return { r: 235, g: 232, b: 220, hex: '#EBE8DC' };
+    }
+    return { r: 255, g: 255, b: 255, hex: '#FFFFFF' };
+  }
+
+  if (dayPhaseId === 'dusk') {
+    const scale = kurazRatio < 0.25 ? 0.8 : 1.0;
+    return {
+      r: Math.round(112 * scale),
+      g: Math.round(98 * scale),
+      b: Math.round(142 * scale),
+      hex: '#70628E',
+    };
+  }
+
+  if (dayPhaseId === 'night') {
+    const scale = kurazRatio < 0.25 ? 0.75 : 1.0;
+    if (isWinter) {
+      return {
+        r: Math.round(52 * scale),
+        g: Math.round(62 * scale),
+        b: Math.round(98 * scale),
+        hex: '#343E62',
+      };
+    }
+    return {
+      r: Math.round(58 * scale),
+      g: Math.round(54 * scale),
+      b: Math.round(82 * scale),
+      hex: '#3A3652',
+    };
+  }
+
+  if (dayPhaseId === 'midnight') {
+    const scale = kurazRatio < 0.25 ? 0.7 : 1.0;
+    return {
+      r: Math.round(28 * scale),
+      g: Math.round(34 * scale),
+      b: Math.round(65 * scale),
+      hex: '#1C2241',
+    };
+  }
+
+  // Dawn
+  const scale = kurazRatio < 0.25 ? 0.85 : 1.0;
+  return {
+    r: Math.round(212 * scale),
+    g: Math.round(175 * scale),
+    b: Math.round(168 * scale),
+    hex: '#D4AFA8',
+  };
+}
+
+/**
+ * Parses hex color or returns fallback RGB.
+ */
+function parseHexToRgb(color: string): { r: number; g: number; b: number } {
+  if (color.startsWith('#') && color.length === 7) {
+    return {
+      r: parseInt(color.slice(1, 3), 16),
+      g: parseInt(color.slice(3, 5), 16),
+      b: parseInt(color.slice(5, 7), 16),
+    };
+  }
+  return { r: 254, g: 240, b: 138 }; // Default warm butter
+}
+
+/**
+ * Renders a single Stepped Gouache Halo onto an offscreen scratch buffer:
  * 3-4 soft, painterly stepped tone bands with a stippled ink rim.
  */
-function renderSteppedGouacheHalo(
+function renderSteppedGouacheHaloToBuffer(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
+  cx: number,
+  cy: number,
   radius: number,
   baseColor: string,
   stipplePat: CanvasPattern | null,
@@ -124,59 +227,50 @@ function renderSteppedGouacheHalo(
 ): void {
   if (radius <= 0 || intensity <= 0) return;
 
+  const rgb = parseHexToRgb(baseColor);
+  const coreR = radius * 0.38;
+  const midR = radius * 0.70;
+  const haloR = radius * 0.92;
+
   ctx.save();
-  ctx.globalCompositeOperation = 'destination-out';
 
   // 1. Core Band (brightest inner gouache pool: 0% - 38%)
-  const coreR = radius * 0.38;
-  ctx.fillStyle = `rgba(0, 0, 0, ${0.92 * intensity})`;
+  ctx.fillStyle = `rgba(${Math.min(255, rgb.r + 30)}, ${Math.min(255, rgb.g + 30)}, ${Math.min(255, rgb.b + 30)}, ${0.98 * intensity})`;
   ctx.beginPath();
-  ctx.arc(x, y, coreR, 0, Math.PI * 2);
+  ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
   ctx.fill();
 
   // 2. Midtone Band (warm gouache tone: 38% - 70%)
-  const midR = radius * 0.70;
-  ctx.fillStyle = `rgba(0, 0, 0, ${0.68 * intensity})`;
+  ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.75 * intensity})`;
   ctx.beginPath();
-  ctx.arc(x, y, midR, 0, Math.PI * 2);
+  ctx.arc(cx, cy, midR, 0, Math.PI * 2);
   ctx.fill();
 
   // 3. Halo Periphery Band (soft stepped transition: 70% - 92%)
-  const haloR = radius * 0.92;
-  ctx.fillStyle = `rgba(0, 0, 0, ${0.40 * intensity})`;
+  ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`;
   ctx.beginPath();
-  ctx.arc(x, y, haloR, 0, Math.PI * 2);
+  ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
   ctx.fill();
 
   // 4. Outer rim fade (92% - 100%)
-  ctx.fillStyle = `rgba(0, 0, 0, ${0.18 * intensity})`;
+  const grad = ctx.createRadialGradient(cx, cy, haloR, cx, cy, radius);
+  grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`);
+  grad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.restore();
-
-  // 5. Procedural Pen Stippling & Gouache Color overlay
-  ctx.save();
-  ctx.globalAlpha = 0.42 * intensity;
-  const colGrad = ctx.createRadialGradient(x, y, coreR, x, y, radius);
-  colGrad.addColorStop(0, baseColor);
-  colGrad.addColorStop(0.65, baseColor);
-  colGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = colGrad;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Stippled ink edge
+  // 5. Stippled ink edge
   if (stipplePat && radius > 40) {
-    ctx.globalAlpha = 0.22 * intensity;
+    ctx.globalAlpha = 0.26 * intensity;
     ctx.strokeStyle = stipplePat;
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 5;
     ctx.beginPath();
-    ctx.arc(x, y, radius * 0.88, 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius * 0.88, 0, Math.PI * 2);
     ctx.stroke();
   }
+
   ctx.restore();
 }
 
@@ -336,8 +430,56 @@ export function drawArchitecturalSunShadow(
 }
 
 /**
- * Main Composite Pass:
- * Renders the storybook lighting darkness veil and carves out stepped gouache halos.
+ * Draws 2D directional surface relief bevel highlights & ink depth crescent on sprites:
+ * Uses Lambertian diffuse reflection I = max(0, N · L) from virtual 3D point light positions.
+ */
+export function drawNormalMappedReliefRim(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  lightSources: DynamicLightSource[],
+  options?: { bevelWidth?: number; rimAlpha?: number }
+): void {
+  const relief = computeSurfaceReliefHighlight(x, y, radius, lightSources);
+  if (!relief || relief.intensity <= 0.05) return;
+
+  const bevelW = options?.bevelWidth ?? Math.max(2.5, radius * 0.16);
+  const alpha = (options?.rimAlpha ?? 0.65) * relief.intensity;
+
+  ctx.save();
+
+  // 1. Directional rim highlight along facing surface bevel
+  const lightAngle = relief.dominantDirAngle;
+  ctx.strokeStyle = relief.color;
+  ctx.globalAlpha = Math.min(1.0, alpha);
+  ctx.lineWidth = bevelW;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(1, radius - bevelW * 0.5), lightAngle - Math.PI * 0.35, lightAngle + Math.PI * 0.35);
+  ctx.stroke();
+
+  // 2. Volumetric depth ink shadow along opposite bevel
+  const oppAngle = lightAngle + Math.PI;
+  ctx.strokeStyle = 'rgba(15, 12, 10, 0.45)';
+  ctx.globalAlpha = Math.min(0.6, alpha * 0.8);
+  ctx.lineWidth = bevelW * 0.9;
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(1, radius - bevelW * 0.5), oppAngle - Math.PI * 0.28, oppAngle + Math.PI * 0.28);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Main 2D Storybook Lighting Pipeline:
+ *
+ * 1. Base Pass: The game renders world sprites under flat neutral lighting (already in ctx).
+ * 2. Light Pass: Clears screen-sized lightmap texture with ambient color (moonlight / twilight).
+ *    Each dynamic light source draws onto this texture using additive blending ('lighter').
+ *    Dynamic 2D shadow geometry extrudes occluder edges to prevent light from passing through solid walls.
+ * 3. Composite Pass: Multiplicative Blending over scene: Final Color = Scene Color * Lightmap Color.
+ * 4. Luminous Bloom Pass: Gentle warm screen glow on brightest flame cores.
  */
 export function renderStorybookLightingComposite(
   ctx: CanvasRenderingContext2D,
@@ -347,7 +489,9 @@ export function renderStorybookLightingComposite(
   lightSources: DynamicLightSource[],
   dayPhaseId: string,
   kurazRatio: number,
-  isWinter = true
+  isWinter = true,
+  shadowZones: ShadowZone[] = [],
+  occluders: LightOccluder[] = []
 ): void {
   const isNightPhase =
     dayPhaseId === 'dusk' ||
@@ -367,25 +511,34 @@ export function renderStorybookLightingComposite(
   // Clear offscreen light buffer
   lCtx.clearRect(0, 0, screenWidth, screenHeight);
 
-  // Compute ambient darkness veil color
-  let ambientDarkness = 'rgba(0, 0, 0, 0)';
-  if (dayPhaseId === 'dusk') {
-    ambientDarkness = isWinter ? 'rgba(38, 30, 56, 0.48)' : 'rgba(48, 28, 20, 0.42)';
-  } else if (dayPhaseId === 'night') {
-    ambientDarkness = isWinter ? 'rgba(22, 28, 48, 0.65)' : 'rgba(25, 20, 35, 0.62)';
-  } else if (dayPhaseId === 'midnight') {
-    ambientDarkness = isWinter ? 'rgba(12, 16, 32, 0.82)' : 'rgba(15, 15, 24, 0.80)';
-  } else if (dayPhaseId === 'dawn') {
-    ambientDarkness = 'rgba(45, 30, 35, 0.35)';
-  } else if (kurazRatio < 0.25) {
-    // Critical Kuráž daytime winter glare wash
-    ambientDarkness = 'rgba(255, 248, 230, 0.22)';
-  }
-
-  lCtx.fillStyle = ambientDarkness;
+  // -------------------------------------------------------------
+  // 1. LIGHT PASS: Ambient fill
+  // -------------------------------------------------------------
+  const ambient = getAmbientLightmapRgb(dayPhaseId, kurazRatio, isWinter);
+  lCtx.fillStyle = ambient.hex;
   lCtx.fillRect(0, 0, screenWidth, screenHeight);
 
-  // Carve out Stepped Gouache Halos from light sources
+  // Daytime cast shadows on daylight lightmap
+  if (!isNightPhase && shadowZones.length > 0) {
+    lCtx.save();
+    lCtx.fillStyle = 'rgba(180, 190, 215, 0.45)';
+    for (let i = 0; i < shadowZones.length; i++) {
+      const sz = shadowZones[i];
+      const sx = sz.x - camera.x;
+      const sy = sz.y - camera.y;
+      if (sx + sz.radius < 0 || sx - sz.radius > screenWidth || sy + sz.radius < 0 || sy - sz.radius > screenHeight) {
+        continue;
+      }
+      lCtx.beginPath();
+      lCtx.ellipse(sx, sy, sz.radius, sz.radius * 0.65, 0, 0, Math.PI * 2);
+      lCtx.fill();
+    }
+    lCtx.restore();
+  }
+
+  // -------------------------------------------------------------
+  // 2. LIGHT PASS: Dynamic Light Sources with Vector Shadow Volumes
+  // -------------------------------------------------------------
   const stipple = getStipplePattern(lCtx);
 
   for (let i = 0; i < lightSources.length; i++) {
@@ -393,39 +546,180 @@ export function renderStorybookLightingComposite(
     const reach = src.radius * (src.intensity ?? 1);
     if (reach <= 0) continue;
 
-    // Translate from world coordinates to screen coordinates
     const sx = src.x - camera.x;
     const sy = src.y - camera.y;
 
     // Viewport cull with safety padding
-    if (sx + reach < -50 || sx - reach > screenWidth + 50 || sy + reach < -50 || sy - reach > screenHeight + 50) {
+    if (sx + reach < -80 || sx - reach > screenWidth + 80 || sy + reach < -80 || sy - reach > screenHeight + 80) {
       continue;
     }
 
-    renderSteppedGouacheHalo(lCtx, sx, sy, reach, src.color || '#FEF08A', stipple, src.intensity ?? 1);
+    // Check for nearby occluders within light range
+    const nearbyOccluders: LightOccluder[] = [];
+    if (occluders.length > 0) {
+      for (let j = 0; j < occluders.length; j++) {
+        const occ = occluders[j];
+        const occRad = occ.radius || (occ.width ? Math.max(occ.width, occ.height || 0) * 0.75 : 40);
+        if (Math.hypot(occ.x - src.x, occ.y - src.y) <= reach + occRad) {
+          nearbyOccluders.push(occ);
+        }
+      }
+    }
+
+    // Render individual light source with shadow volume cutouts
+    const lightSize = Math.ceil(reach * 2 + 10);
+    const sBuf = getSingleLightBuffer(lightSize);
+
+    if (sBuf) {
+      const { canvas: sCanvas, ctx: sCtx } = sBuf;
+      const halfSize = lightSize * 0.5;
+
+      // Clear scratch light canvas
+      sCtx.clearRect(0, 0, lightSize, lightSize);
+
+      // Render stepped gouache halo into scratch buffer
+      renderSteppedGouacheHaloToBuffer(
+        sCtx,
+        halfSize,
+        halfSize,
+        reach,
+        src.color || '#FEF08A',
+        stipple,
+        src.intensity ?? 1
+      );
+
+      // If there are occluders, extrude vector shadow volumes and erase light from blocked zones
+      if (nearbyOccluders.length > 0) {
+        sCtx.save();
+        sCtx.globalCompositeOperation = 'destination-out';
+        sCtx.fillStyle = '#000000';
+
+        for (let j = 0; j < nearbyOccluders.length; j++) {
+          const occ = nearbyOccluders[j];
+          const shadowVols = computeShadowVolume(src.x, src.y, reach, occ);
+
+          for (let k = 0; k < shadowVols.length; k++) {
+            const poly = shadowVols[k];
+            sCtx.beginPath();
+            // Transform world coordinates to scratch buffer relative coordinates
+            sCtx.moveTo(poly.p1.x - src.x + halfSize, poly.p1.y - src.y + halfSize);
+            sCtx.lineTo(poly.p2.x - src.x + halfSize, poly.p2.y - src.y + halfSize);
+            sCtx.lineTo(poly.e2.x - src.x + halfSize, poly.e2.y - src.y + halfSize);
+            sCtx.lineTo(poly.e1.x - src.x + halfSize, poly.e1.y - src.y + halfSize);
+            sCtx.closePath();
+            sCtx.fill();
+          }
+
+          // Also mask out the occluder interior so light doesn't shine inside the solid house
+          if (occ.width && occ.height) {
+            const ox = occ.x - src.x + halfSize;
+            const oy = occ.y - src.y + halfSize;
+            sCtx.fillRect(ox - occ.width * 0.5, oy - occ.height * 0.5, occ.width, occ.height);
+          } else if (occ.radius) {
+            const ox = occ.x - src.x + halfSize;
+            const oy = occ.y - src.y + halfSize;
+            sCtx.beginPath();
+            sCtx.arc(ox, oy, occ.radius, 0, Math.PI * 2);
+            sCtx.fill();
+          }
+        }
+        sCtx.restore();
+      }
+
+      // Additively composite the masked light onto the main lightmap
+      lCtx.save();
+      lCtx.globalCompositeOperation = 'lighter';
+      lCtx.drawImage(
+        sCanvas,
+        0,
+        0,
+        lightSize,
+        lightSize,
+        sx - halfSize,
+        sy - halfSize,
+        lightSize,
+        lightSize
+      );
+      lCtx.restore();
+    }
   }
 
-  // Draw offscreen composite light buffer directly onto main canvas
+  // -------------------------------------------------------------
+  // 3. COMPOSITE PASS: Multiplicative Blending
+  // Final Color = Scene Color * Lightmap Color
+  // -------------------------------------------------------------
   ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
   ctx.drawImage(lCanvas, 0, 0);
+  ctx.restore();
 
-  // Critical Kuráž screen edge jittering ink contours
-  if (kurazRatio < 0.25 && !isNightPhase) {
-    ctx.strokeStyle = 'rgba(25, 20, 15, 0.35)';
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    const t = performance.now() * 0.01;
-    // Four trembling vignette corners
-    ctx.moveTo(10, 10 + Math.sin(t) * 4);
-    ctx.lineTo(80, 10 + Math.cos(t) * 3);
-    ctx.moveTo(screenWidth - 10, 10 + Math.sin(t * 1.2) * 4);
-    ctx.lineTo(screenWidth - 80, 10);
-    ctx.moveTo(10, screenHeight - 10 + Math.cos(t * 1.5) * 4);
-    ctx.lineTo(80, screenHeight - 10);
-    ctx.moveTo(screenWidth - 10, screenHeight - 10);
-    ctx.lineTo(screenWidth - 80, screenHeight - 10 + Math.sin(t) * 4);
-    ctx.stroke();
+  // -------------------------------------------------------------
+  // 4. LUMINOUS BLOOM PASS: Warm Incandescent Glow for Flame Cores
+  // -------------------------------------------------------------
+  if (isNightPhase) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (let i = 0; i < lightSources.length; i++) {
+      const src = lightSources[i];
+      const reach = src.radius * (src.intensity ?? 1);
+      if (reach <= 0) continue;
+
+      const sx = src.x - camera.x;
+      const sy = src.y - camera.y;
+
+      if (sx + reach < 0 || sx - reach > screenWidth || sy + reach < 0 || sy - reach > screenHeight) {
+        continue;
+      }
+
+      const coreR = reach * 0.32;
+      const glowGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, coreR);
+      glowGrad.addColorStop(0, `rgba(255, 250, 220, ${0.45 * (src.intensity ?? 1)})`);
+      glowGrad.addColorStop(0.55, `rgba(245, 158, 11, ${0.22 * (src.intensity ?? 1)})`);
+      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(sx, sy, coreR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
-  ctx.restore();
+  // -------------------------------------------------------------
+  // 5. CRITICAL KURÁŽ FEAR VIGNETTE & TREMBLING INK CONTOURS
+  // -------------------------------------------------------------
+  if (kurazRatio < 0.25) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(25, 20, 15, 0.40)';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    const t = performance.now() * 0.012;
+
+    // Jittering vignette pen corners
+    ctx.moveTo(10, 10 + Math.sin(t) * 4);
+    ctx.lineTo(85, 10 + Math.cos(t) * 3);
+    ctx.moveTo(screenWidth - 10, 10 + Math.sin(t * 1.2) * 4);
+    ctx.lineTo(screenWidth - 85, 10);
+    ctx.moveTo(10, screenHeight - 10 + Math.cos(t * 1.5) * 4);
+    ctx.lineTo(85, screenHeight - 10);
+    ctx.moveTo(screenWidth - 10, screenHeight - 10);
+    ctx.lineTo(screenWidth - 85, screenHeight - 10 + Math.sin(t) * 4);
+    ctx.stroke();
+
+    // Darkening edge fear wash
+    const fearGrad = ctx.createRadialGradient(
+      screenWidth * 0.5,
+      screenHeight * 0.5,
+      screenHeight * 0.35,
+      screenWidth * 0.5,
+      screenHeight * 0.5,
+      Math.hypot(screenWidth, screenHeight) * 0.52
+    );
+    fearGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    fearGrad.addColorStop(1, 'rgba(12, 10, 20, 0.42)');
+    ctx.fillStyle = fearGrad;
+    ctx.fillRect(0, 0, screenWidth, screenHeight);
+
+    ctx.restore();
+  }
 }

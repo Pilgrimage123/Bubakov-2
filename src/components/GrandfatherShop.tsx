@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
 import { getGrandfatherPrice, getWaitDiscount, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
-import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { toCanonicalWeaponId } from '../game/migration';
 import { getWeaponRankDef } from '../data/weaponMilestones';
 
@@ -17,6 +16,7 @@ interface Props {
   purchasedIds: string[];
   playerWeapons?: any[];
   purchasesThisEncounter: number;
+  totalPurchases?: number;
   rerollCost?: number;
   churchLevel?: number;
   onPurchase: (itemId: string) => boolean;
@@ -95,6 +95,7 @@ export function GrandfatherShop({
   purchasedIds = [],
   playerWeapons = [],
   purchasesThisEncounter,
+  totalPurchases,
   rerollCost = 4,
   churchLevel = 0,
   onPurchase,
@@ -545,7 +546,8 @@ export function GrandfatherShop({
                   const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
                   if (!item) return null;
 
-                  const price = getGrandfatherPrice(item, purchasesThisEncounter, luck, waitSeconds);
+                  const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
+                  const price = getGrandfatherPrice(item, purchaseCount, luck, waitSeconds);
 
                   let owned = 0;
                   let maxStacks = item.maxStacks || 5;
