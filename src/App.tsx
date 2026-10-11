@@ -1085,7 +1085,7 @@ export default function App() {
   // Selected level state - Level 0 (Předjaří) default for new players
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (typeof s === 'number' && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
+    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
   });
 
   const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0] || GAME_LEVELS[1];
@@ -1143,8 +1143,14 @@ export default function App() {
   const [touchEnabled, setTouchEnabled] = useState(() => {
     if (typeof window === 'undefined') return false;
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const stored = localStorage.getItem('bubakov_touch_joystick');
-    return stored === null ? isTouch || window.innerWidth <= 1024 : stored === 'true';
+    try {
+      const stored = window.localStorage.getItem('bubakov_touch_joystick');
+      return stored === null ? isTouch || window.innerWidth <= 1024 : stored === 'true';
+    } catch {
+      // Storage can be unavailable in private/restricted browser contexts.
+      // Keep the game usable by falling back to device detection.
+      return isTouch || window.innerWidth <= 1024;
+    }
   });
 
   const touchMoveRef = useRef<{ x: number; y: number; active: boolean; intensity: number }>({

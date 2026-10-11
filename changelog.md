@@ -1,5 +1,15 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Regresní test hodnoty slévaných perníčků
+
+- Aktualizováno očekávání testu velkých perníčků: tři dropy s hodnotou 6 se sloučí do dropu s hodnotou 18, aby test ověřoval zachování celkové hodnoty místo historické pevné hodnoty 20.
+
+## 2026-10-11 — Opravy ekonomiky dropů a validace uložené úrovně
+
+- Slévání tří velkých perníčků nyní zachovává součet jejich hodnot místo nahrazení pevnou hodnotou obřího perníčku.
+- Migrace postupu a výchozí výběr úrovně přijímají pouze celočíselné ID v podporovaném rozsahu.
+- Načítání nastavení dotykového joysticku bezpečně pokračuje i tehdy, když prohlížeč blokuje přístup k `localStorage`.
+
 ## 2026-10-11 — Oprava CI PR #11
 
 - Odstraněno zastaralé očekávání, že vysoká dynamická obtížnost zpřístupní celý globální bestiář.

@@ -50,7 +50,7 @@ describe('Smart Drops System (Chytrý drop systém)', () => {
       const alive = drops.filter((d) => !d.dead);
       expect(alive.length).toBe(1);
       expect(alive[0].size).toBe('giant');
-      expect(alive[0].value).toBe(20);
+      expect(alive[0].value).toBe(18); // 6 + 6 + 6: fusion preserves the exact input value.
     });
 
     it('fuses small coins into a accumulated value coin', () => {
