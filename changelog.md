@@ -1,5 +1,12 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Rozhodnutí integrace PR #6
+
+- Zachovány ověřené verze z aktuálního `main` pro App/UI, audio, enginové API, renderer, vesnická data a sdílené typy; konfliktní starší kopie z `feat/unify-mechanics` nebyly převzaty, aby se nerozbily navazující kontrakty.
+- Převzato sedm architektonických rozhodnutí do `docs/adr/`, relevantní změny CSS a aktualizace zbraňového benchmarku.
+- Odstraněny pracovní specifikace v `.scratch/` a jednorázové skripty `scratch_*.js`; nepřenášejí se znovu změny jídla/zbraní ani cleanup, které už jsou v `main`.
+- Ověření výsledné integrační větve prošlo: `npm ci`, `npm run typecheck`, `npm run lint`, `npm test` (181/181) a `npm run build`.
+
 ## 2026-10-11 — Oprava CI konfigurace
 
 - Doplněn skript `typecheck` (`tsc --noEmit`), který workflow CI již používá.
