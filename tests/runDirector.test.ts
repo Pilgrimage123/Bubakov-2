@@ -3,6 +3,8 @@ import { RunDirector } from '../src/game/director';
 import { GameEngine } from '../src/game/engine';
 import { selectRunRozmar, RUN_ROZMARY } from '../src/data/runArchetypes';
 import { ENEMIES } from '../src/data/enemies';
+import { GAME_LEVELS } from '../src/data/levels';
+import { getCurrentDayPhase } from '../src/constants';
 
 describe('RunRozmar and Procedural Variance', () => {
   it('defines exactly 3 unique folklore Rozmars for each of the 6 levels', () => {
@@ -480,8 +482,9 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
-    const phaseKey = engine.currentPhase?.id || engine.activePhase?.id || 'noon';
-    const phasePool = engine.activeLevelDef.spawnPools?.[phaseKey] ?? engine.activeLevelDef.spawnPools?.noon ?? [];
+    const levelDef = GAME_LEVELS[engine.state.activeLevelId];
+    const phaseKey = getCurrentDayPhase(engine.state.gameTime || 0).id;
+    const phasePool = levelDef.spawnPools?.[phaseKey] ?? levelDef.spawnPools?.noon ?? [];
 
     const expectedPool = new Set(
       phasePool.filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses')
