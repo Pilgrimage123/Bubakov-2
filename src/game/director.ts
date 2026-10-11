@@ -130,6 +130,7 @@ export interface DirectorTelemetry {
   bubackaDiraActive: boolean;
   assistanceActive: boolean;
   dynamicDifficulty: number;
+  pressureMultiplier: number;
 }
 
 export interface DirectorConfig {
@@ -168,6 +169,8 @@ export class RunDirector {
   public telegraphTimer = 0;
 
   public assistanceActive = false;
+  /** Runtime pressure adjustment; the selected difficulty remains the baseline. */
+  public pressureMultiplier = 1.0;
 
   private recentKills: EnemyKillRecord[] = [];
   private spawnTimeByEnemy = new WeakMap<any, number>();
@@ -212,6 +215,8 @@ export class RunDirector {
   }
 
   public getAverageTTK(): number {
+    // Keep the legacy fallback for pacing calculations, but never treat it as
+    // measured evidence that the player is dominating.
     if (this.recentKills.length === 0) return 1.2;
     const sum = this.recentKills.reduce((acc, k) => acc + k.duration, 0);
     return sum / this.recentKills.length;
@@ -220,8 +225,11 @@ export class RunDirector {
   public computeDominanceIndex(player: any): number {
     if (!player) return 0.5;
     const ttk = this.getAverageTTK();
-    // Fast kill (< 0.7s) gives high dominance factor (up to 1.0)
-    const ttkFactor = Math.max(0, Math.min(1, (1.8 - ttk) / 1.3));
+    // No recorded kills means performance is unknown, not excellent.
+    // Neutral evidence avoids classifying a fresh run as dominant at full HP.
+    const ttkFactor = this.recentKills.length === 0
+      ? 0.25
+      : Math.max(0, Math.min(1, (1.8 - ttk) / 1.3));
     // High player courage gives high courage factor
     const maxHp = player.maxHp || 100;
     const hpFactor = Math.max(0, Math.min(1, (player.hp || 1) / maxHp));
@@ -244,19 +252,22 @@ export class RunDirector {
     this.kitingHazardCooldown -= dt;
     this.trackPlayerMovement(dt, player);
 
-    // 2. Update threat budget capacity and accrual based on daytime & dynamicDifficulty
+    // 2. Estimate performance before accruing threat so current player state
+    // affects this frame's pressure rather than lagging one update behind.
+    const dominance = this.computeDominanceIndex(player);
+    const hpRatio = Math.max(0, Math.min(1, (player.hp || 0) / (player.maxHp || 1)));
+    this.assistanceActive = dominance < 0.35 && hpRatio < 0.5;
+    this.updateAdaptivePressure(dominance, hpRatio, dt);
+
+    // 3. Update threat budget using baseline difficulty plus bounded adaptive pressure.
     this.updateBudgetMetrics(gameTime, dt);
 
-    // At the living-enemy cap, spend surplus threat on existing elites even
-    // while the pacing valve is in a lull; rate-limit this conversion.
+    // At the living-enemy cap, do not convert surplus threat into stronger elites
+    // while the player is in an active struggling state.
     this.eliteBudgetCooldown = Math.max(0, this.eliteBudgetCooldown - dt);
-    if (livingCount >= this.maxLivingEnemies) {
+    if (livingCount >= this.maxLivingEnemies && !this.assistanceActive) {
       this.spendExcessBudgetOnElite(engine);
     }
-
-    // 3. Track dominance and assistance need
-    const dominance = this.computeDominanceIndex(player);
-    this.assistanceActive = dominance < 0.35 && (player.hp / (player.maxHp || 1)) < 0.5;
 
     // 4. Update Pacing Valves (Oddych a Drtivý přepad)
     this.updatePacingValves(dt, engine, livingCount);
@@ -334,6 +345,24 @@ export class RunDirector {
     });
   }
 
+  private updateAdaptivePressure(dominance: number, hpRatio: number, dt: number): void {
+    // React to sustained performance, not a single hit/kill. Recovery and
+    // escalation are deliberately bounded around the chosen difficulty preset.
+    let target = 1.0;
+    if (hpRatio < 0.35 && dominance < 0.45) {
+      target = 0.72;
+    } else if (hpRatio < 0.5 && dominance < 0.35) {
+      target = 0.82;
+    } else if (hpRatio > 0.75 && dominance > 0.68 && this.recentKills.length >= 3) {
+      target = 1.12;
+    }
+
+    // Exponential-style smoothing with a maximum 25% response per second.
+    const alpha = Math.min(1, Math.max(0, dt) * 0.25);
+    this.pressureMultiplier += (target - this.pressureMultiplier) * alpha;
+    this.pressureMultiplier = Math.max(0.72, Math.min(1.12, this.pressureMultiplier));
+  }
+
   private updateBudgetMetrics(gameTime: number, dt: number): void {
     let baseRate = 4.0;
     let cap = 35;
@@ -359,7 +388,7 @@ export class RunDirector {
     const normalizedDiff = 1.0 + ((this.dynamicDifficulty - 2.0) / 3.0) * 1.5;
 
     // Capacity scales assertively with dynamicDifficulty (up to 2.5x at diff 5.0)
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8));
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * this.pressureMultiplier);
 
     // Base accrual factor scales with dynamicDifficulty (1.0x at diff 2.0, 1.8x at diff 3.0, 3.2x at diff 5.0)
     let accrualMult = 0.35 + Math.pow(normalizedDiff, 1.42) * 0.75;
@@ -374,7 +403,7 @@ export class RunDirector {
       accrualMult *= penalty;
     }
 
-    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * dt;
+    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * this.pressureMultiplier * dt;
     this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
   }
 
@@ -634,7 +663,7 @@ export class RunDirector {
     // Special Prefixes: when player kills common mobs too quickly (high dominance / low TTK)
     // and Director needs to deplete excess threat budget (costs 5x normal = 15 threat budget)
     const avgTTK = this.getAverageTTK();
-    const canSpawnPrefixed = (dominance >= 0.60 || avgTTK < 0.85) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
+    const canSpawnPrefixed = !this.assistanceActive && (dominance >= 0.60 || (this.recentKills.length > 0 && avgTTK < 0.85)) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
     if (canSpawnPrefixed) {
       this.prefixSpawnCooldown = Math.max(3.0, 6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0);
       this.spawnPrefixedEnemy(engine, player, gameTime);
@@ -642,7 +671,7 @@ export class RunDirector {
     }
 
     // High dominance OR high dynamicDifficulty: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite, Klešťové sevření)
-    const allowHeavyFormation = (dominance > 0.60 || this.dynamicDifficulty >= 2.9) && this.threatBudget >= 16 && this.formationCooldown <= 0;
+    const allowHeavyFormation = !this.assistanceActive && (dominance > 0.60 || (this.dynamicDifficulty >= 2.9 && this.pressureMultiplier >= 0.92)) && this.threatBudget >= 16 && this.formationCooldown <= 0;
     if (allowHeavyFormation) {
       const baseCd = Math.max(2.2, 5.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.2);
       const assistDelay = this.assistanceActive ? (this.dynamicDifficulty >= 4.0 ? 0.8 : 2.0) : 0;
@@ -1128,6 +1157,7 @@ export class RunDirector {
       bubackaDiraActive: !!(this.bubackaDira && !this.bubackaDira.isCompleted && !this.bubackaDira.isFailed),
       assistanceActive: this.assistanceActive,
       dynamicDifficulty: this.dynamicDifficulty,
+      pressureMultiplier: Math.round(this.pressureMultiplier * 100) / 100,
     };
   }
 }
