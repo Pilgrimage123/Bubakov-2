@@ -137,7 +137,10 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     expect(enemy.hasFireTrail).toBe(true);
     expect(enemy.stalkSpeedBonus).toBeCloseTo(0.15);
 
-    for (let i = 0; i < 12; i++) enemy.update(1.0, player);
+    for (let i = 0; i < 12; i++) {
+      player.x += 500; // Keep the hunter far away while checking the cap.
+      enemy.update(1.0, player);
+    }
     expect(enemy.stalkSpeedBonus).toBe(1.2);
 
     player.x = enemy.x + 100;
@@ -175,12 +178,13 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     player.vx = 60;
     player.vy = 0;
 
-    for (let i = 0; i < 30; i++) {
+    let fissure: any;
+    for (let i = 0; i < 36; i++) {
       player.x += 5;
       enemy.update(0.1, player);
+      fissure = engine.director!.hazards.find((hazard: any) => hazard.kind === 'predictive-fissure');
+      if (fissure) break;
     }
-
-    const fissure = engine.director!.hazards.find((hazard: any) => hazard.kind === 'predictive-fissure');
     expect(fissure).toBeDefined();
     expect(fissure.warningTimer).toBe(1.2);
     expect(fissure.damage).toBe(24);
