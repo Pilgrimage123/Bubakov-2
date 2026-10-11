@@ -1,3 +1,8 @@
+## 2026-10-11 — Oprava CI konfigurace
+
+- Doplněn skript `typecheck` (`tsc --noEmit`), který workflow CI již používá.
+- Synchronizovány přímé vývojové závislosti ESLint a Vitest v kořenovém záznamu `package-lock.json` s `package.json`. Úplná regenerace lockfile pomocí `npm install --package-lock-only` a ověření `npm ci` stále vyžadují běh npm; tento patch proto neprohlašuje instalaci za ověřenou.
+
 # Bubákov — Changelog
 
 ## 2026-10-10 — Dynamická obtížnost, posílení Režiséra výpravy a volič v herním menu
