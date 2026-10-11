@@ -12,6 +12,12 @@ export const COMBO_PULSE_KILL_COUNT = 30;
 export const COMBO_PULSE_WINDOW_SECONDS = 1.2;
 export const COMBO_PULSE_RADIUS = 550;
 export const FAR_KILL_DISTANCE = 420;
+
+/** Healing drops stay on the map until the player can benefit from them. */
+export function canCollectDrop(type: DropType, currentHp: number, maxHp: number): boolean {
+  const isHealingDrop = type === 'potion' || type === 'bread' || type === 'pear';
+  return !isHealingDrop || currentHp < maxHp;
+}
 export const TIME_STOP_DURATION = 4.0;
 
 export interface DropSpawnOptions {
