@@ -325,7 +325,6 @@ export interface Enemy {
   prefixDamageReduction?: number;
   isThunderous?: boolean;
   hasFireTrail?: boolean;
-  stalkSpeedBonus?: number;
   lastTrackedPlayerX?: number;
   lastTrackedPlayerY?: number;
   lastPlayerHeadingAngle?: number;
