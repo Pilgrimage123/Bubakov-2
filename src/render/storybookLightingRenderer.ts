@@ -439,9 +439,9 @@ export function drawNormalMappedReliefRim(
   y: number,
   radius: number,
   lightSources: DynamicLightSource[],
-  options?: { bevelWidth?: number; rimAlpha?: number }
+  options?: { bevelWidth?: number; rimAlpha?: number; maxLights?: number }
 ): void {
-  const relief = computeSurfaceReliefHighlight(x, y, radius, lightSources);
+  const relief = computeSurfaceReliefHighlight(x, y, radius, lightSources, options?.maxLights);
   if (!relief || relief.intensity <= 0.05) return;
 
   const bevelW = options?.bevelWidth ?? Math.max(2.5, radius * 0.16);
@@ -491,7 +491,8 @@ export function renderStorybookLightingComposite(
   kurazRatio: number,
   isWinter = true,
   shadowZones: ShadowZone[] = [],
-  occluders: LightOccluder[] = []
+  occluders: LightOccluder[] = [],
+  quality: 'fidelity' | 'balanced' | 'performance' = 'fidelity'
 ): void {
   const isNightPhase =
     dayPhaseId === 'dusk' ||
@@ -554,9 +555,11 @@ export function renderStorybookLightingComposite(
       continue;
     }
 
-    // Check for nearby occluders within light range
+    // Fidelity keeps all shadows. Balanced bounds expensive shadow-volume work;
+    // performance keeps light halos but skips dynamic occlusion shadows.
+    const castShadows = quality === 'fidelity' || (quality === 'balanced' && i < 12);
     const nearbyOccluders: LightOccluder[] = [];
-    if (occluders.length > 0) {
+    if (castShadows && occluders.length > 0) {
       for (let j = 0; j < occluders.length; j++) {
         const occ = occluders[j];
         const occRad = occ.radius || (occ.width ? Math.max(occ.width, occ.height || 0) * 0.75 : 40);
