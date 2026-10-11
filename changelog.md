@@ -1,5 +1,13 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Spotřební Kuráž, pekelné poklady a obchodní přirážka
+
+- Léčivé předměty mají vlastní názvy a SVG ikony: Teplá cikorka (+30 Kuráže), Žejdlík piva (+40) a Panák kořalky (+55). Při plné Kuráži nelze léčivý nákup provést.
+- Přidány tři pekelné poklady: Pekelný měšec (40 krejcarů), Pekelný stříbrňák (100) a Pekelný tolar z pekla (250); krejcary se připíšou okamžitě.
+- Běžné položky zdražují o 50 % za každý předchozí nákup. Léčení a poklady s přímou výplatou krejcarů jsou z inflace vyňaty.
+- Aktualizovány regresní testy cen a výjimek z inflace.
+
+
 ## 2026-10-11 — Přepracování dynamické obtížnosti a mírnější začátek výpravy
 
 - Sedm předvoleb obtížnosti (2,00×–5,00×) nyní mění především přísun rozpočtu hrozeb, jeho kapacitu, spawn intervaly a cooldowny. Typy nepřátel, elitní varianty a taktické formace jsou dostupné na všech předvolbách; tematický fond stále respektuje aktivní úroveň a fázi dne.
