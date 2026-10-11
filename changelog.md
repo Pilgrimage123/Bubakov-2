@@ -3,7 +3,7 @@
 ## 2026-10-11 — Adaptivní tlak dynamické obtížnosti
 
 - Přidán vyhlazovaný násobitel tlaku (0,72–1,12×), který upravuje kapacitu a přírůstek rozpočtu hrozeb podle zdraví a doložené výkonnosti hráče, aniž mění zvolenou základní obtížnost.
-- Nepřítomnost zaznamenaných zabití se již nepovažuje za důkaz dominance; těžké formace, prefixovaní nepřátelé a posilování elit jsou omezeny při aktivní asistenci.
+- Nepřítomnost zaznamenaných zabití se již nepovažuje za důkaz dominance; aktivní asistence blokuje i architektonické těžké formace, prefixované nepřátele a posilování elit.
 - Telemetrie Režiséra nyní uvádí aktuální násobitel tlaku; rozšířeny regresní testy pro počáteční stav, trápení hráče a dlouhodobou dominanci.
 
 ## 2026-10-11 — Regresní test hodnoty slévaných perníčků
