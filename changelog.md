@@ -14,6 +14,8 @@
 
 - Regresní test nyní odděluje výběr tematických nepřátel od sektorového rozmístění; osm úhlových směrů a současná spawnovací mechanika zůstávají beze změny.
 
+- Úroveň a fáze se nyní odvozují ze skutečného stavu `GameEngine` (`activeLevelId` a herní čas), nikoli z neexistujících vlastností enginu.
+
 ## 2026-10-11 — Elitní prefixy: anti-kiting a blesková odveta
 
 - Implementováno postupné zrychlení Pekelného bubáka při vzdáleném kitingu (15 % za sekundu, nejvýše +120 %) a reset při přiblížení.
