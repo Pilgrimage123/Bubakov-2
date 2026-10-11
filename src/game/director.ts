@@ -402,7 +402,7 @@ export class RunDirector {
     const openingCapFactor = gameTime < 30 ? 0.55 : gameTime < 60 ? 0.65 : gameTime < 90 ? 0.80 : 1.0;
 
     // Capacity and accrual scale with the selected baseline difficulty.
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * openingCapFactor);
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * this.pressureMultiplier * openingCapFactor);
 
     let accrualMult = 0.35 + Math.pow(normalizedDiff, 1.42) * 0.75;
 
