@@ -10426,15 +10426,15 @@ export default function App() {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: meta.performanceMode ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
+                style={{ background: (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => {
                   sound.coin();
                   const nextPerf = !meta.performanceMode;
                   saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
                 }}
-                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+                title="Plynulý režim: přepne profil optimalizace mezi Vyvážený a Maximum FPS"
               >
-                ⚡ Výkon: {meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}
+                ⚡ Výkon: {(meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? 'Maximum FPS' : (meta.performanceProfile || 'balanced') === 'fidelity' ? 'Grafika' : 'Vyvážený'}
               </button>
               <button
                 className="lada-btn btn-small"
