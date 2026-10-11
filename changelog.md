@@ -1,5 +1,11 @@
 # Bubákov — Changelog
 
+## 2026-10-11 — Profily optimalizace výkonu
+
+- Jediný přepínač výkonu nahrazen posuvníkem se třemi profily: Vizuální kvalita, Vyvážený (výchozí) a Maximum FPS.
+- Profily nastavují strop živých nepřátel (70 / 55 / 45), počet světel pro reliéfní okraje a nákladné dynamické stínování; Maximum FPS zachovává světelné halo a vynechává dynamické stíny.
+- Starší uložené nastavení `performanceMode` se migruje na odpovídající profil; mobilní přepínač dál synchronizuje profil.
+
 ## 2026-10-11 — Přepracování dynamické obtížnosti a mírnější začátek výpravy
 
 - Sedm předvoleb obtížnosti (2,00×–5,00×) nyní mění především přísun rozpočtu hrozeb, jeho kapacitu, spawn intervaly a cooldowny. Typy nepřátel, elitní varianty a taktické formace jsou dostupné na všech předvolbách; tematický fond stále respektuje aktivní úroveň a fázi dne.
