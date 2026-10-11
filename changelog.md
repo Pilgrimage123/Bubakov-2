@@ -1,3 +1,9 @@
+## 2026-10-11 — Integrace PR #6: sjednocené herní mechaniky
+
+- Zachovány ověřené kontrakty z aktuálního `main` pro React UI, herní engine, renderer, obchod a vesnická data při řešení překryvných změn.
+- Převzaty pouze ne-konfliktní změny z `feat/unify-mechanics`, včetně potřebných datových a testovacích souborů a architektonické dokumentace.
+- Zachována shoda `package.json` / `package-lock.json` z aktuálního `main`; do integrace nebyly přeneseny scratch/spec pracovní adresáře ani jednorázové generátory.
+- Integrace se ověřuje příkazy `npm ci`, `npm run typecheck`, `npm run lint`, `npm test` a `npm run build` před zveřejněním výsledné větve.
 # Bubákov — Changelog
 
 ## 2026-10-11 — Oprava CI konfigurace
