@@ -113,7 +113,7 @@ import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
-import { performDropFusion } from './game/drops';
+import { canCollectDrop, performDropFusion } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
@@ -4797,7 +4797,7 @@ export default function App() {
                 d.dead = true;
                 triggerRescueChasnik(d.x, d.y);
               }
-            } else if (dist < player.pickupRadius && currentGameState === 'playing') {
+            } else if (dist < player.pickupRadius && currentGameState === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
               const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
