@@ -145,6 +145,8 @@ export function performDropFusion(
     const d1 = largeGingerbreads.pop()!;
     const d2 = largeGingerbreads.pop()!;
     const d3 = largeGingerbreads.pop()!;
+    // Fusion must preserve the value of the drops it replaces.
+    const accumulatedValue = (d1.value ?? GINGERBREAD_VALUES.large) + (d2.value ?? GINGERBREAD_VALUES.large) + (d3.value ?? GINGERBREAD_VALUES.large);
     d1.dead = true;
     d2.dead = true;
     d3.dead = true;
@@ -152,7 +154,7 @@ export function performDropFusion(
     fusedCount += 2;
 
     const fused = createDropInstance('gingerbread', d1.x, d1.y, {
-      value: GINGERBREAD_VALUES.giant,
+      value: accumulatedValue,
       size: 'giant',
       radius: 19,
       speed: 0,
