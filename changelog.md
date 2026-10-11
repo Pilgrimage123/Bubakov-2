@@ -7,6 +7,8 @@
 - Výběr vůdců, prefixed nepřátel a taktických formací kontroluje způsobilost vůči fondu fáze; selhání Bubácké díry používá stejný bezpečný výběr.
 - Přidán bezpečný fallback pro neúplné definice úrovní, aniž by se běžné složení rozšířilo o bossy.
 
+- Regresní test nyní odděluje výběr tematických nepřátel od sektorového rozmístění; osm úhlových směrů a současná spawnovací mechanika zůstávají beze změny.
+
 ## 2026-10-11 — Elitní prefixy: anti-kiting a blesková odveta
 
 - Implementováno postupné zrychlení Pekelného bubáka při vzdáleném kitingu (15 % za sekundu, nejvýše +120 %) a reset při přiblížení.
