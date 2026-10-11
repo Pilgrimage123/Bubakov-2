@@ -1227,6 +1227,12 @@ export default function App() {
     if (effect.type === 'heal') {
       p.hp = Math.min(p.maxHp, p.hp + effect.amount);
     }
+    if (effect.type === 'coins') {
+      const reward = Math.max(0, Math.floor(effect.amount));
+      engineRef.current.coins += reward;
+      engineRef.current.texts.push(new DamageText(p.x, p.y - 55, `+${reward} krejcarů!`, COLORS.mustard, true));
+      sound.coin();
+    }
     if (effect.type === 'weapon') {
       const canonicalId = toCanonicalWeaponId(effect.weaponId);
       if (!p.weapons) p.weapons = [];
@@ -1301,6 +1307,8 @@ export default function App() {
     const p = eng.player;
     const item = getGrandfatherItem(itemId);
     if (!p || !item || !eng.grandfather.active) return false;
+    // Healing consumables have no value at full Courage, so reject the purchase.
+    if (item.effect.type === 'heal' && p.hp >= p.maxHp) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
     const purchaseCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
     const price = getGrandfatherPrice(item, purchaseCount, p.luck || 0, waitSeconds);
@@ -1314,6 +1322,9 @@ export default function App() {
     setGrandfatherPurchaseIds(newPurchasedIds);
     applyGrandfatherItem(item);
     sound.grandfatherPurchase();
+    if (item.effect.type === 'coins') {
+      setRunStats((state) => ({ ...state, coins: eng.coins, gingerbread: eng.gingerbread }));
+    }
     eng.texts.push(new DamageText(p.x, p.y - 70, item.isWeapon ? 'ZBRAŇ ZÍSKÁNA!' : 'PLÁCNUTO!', '#F59E0B', true));
     if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
       eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
@@ -10037,6 +10048,8 @@ export default function App() {
           totalPurchases={engineRef.current.grandfather.totalPurchases ?? grandfatherPurchaseIds.length}
           rerollCost={getGrandfatherRerollCost(engineRef.current.grandfather.rerollsThisEncounter || 0)}
           churchLevel={metaRef.current.churchLevel || 0}
+          playerHp={engineRef.current.player?.hp ?? 0}
+          playerMaxHp={engineRef.current.player?.maxHp ?? 0}
           onPurchase={purchaseGrandfatherItem}
           onRefreshOffers={refreshGrandfatherOffers}
           onClose={closeGrandfatherShop}
