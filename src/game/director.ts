@@ -690,8 +690,9 @@ export class RunDirector {
       return;
     }
 
-    // Architects formation if rozmar prefers or budget allows
-    if (this.rozmar.formationBias === 'architects' && this.threatBudget >= 16 && this.formationCooldown <= 0) {
+    // Architects are also a heavy formation, so assistance must suppress
+    // this path rather than allowing it to bypass the heavy-formation gate.
+    if (!this.assistanceActive && this.rozmar.formationBias === 'architects' && this.threatBudget >= 16 && this.formationCooldown <= 0) {
       this.formationCooldown = Math.max(3.0, 5.5 - ((this.dynamicDifficulty - 2.0) / 2.0) * 1.8);
       this.spawnArchitects(engine, player, gameTime);
       return;
