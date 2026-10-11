@@ -2929,8 +2929,8 @@ export default function App() {
             }
 
             if (directorRef.current) {
-              const isPerfMode = !!metaRef.current.performanceMode;
-              directorRef.current.maxLivingEnemies = isPerfMode ? 45 : 70;
+              const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+              directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 45 : performanceProfile === 'balanced' ? 55 : 70;
               const directorAdapter = {
                 state: engine,
                 livingEnemies: livingEnemiesRef.current,
@@ -5659,7 +5659,8 @@ export default function App() {
           kurazRatio,
           isWinter,
           engine.shadowZones || [],
-          engine.occluders || []
+          engine.occluders || [],
+          metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')
         );
 
         // Ladovský ukazatel na dědečka, pokud se ocitne mimo obrazovku
@@ -5709,7 +5710,7 @@ export default function App() {
           ctx.font = '700 13px monospace';
           const currentFps = Math.round(1000 / Math.max(1, smoothedFrameMs));
           ctx.fillStyle = currentFps >= 50 ? '#4ADE80' : currentFps >= 30 ? '#FBBF24' : '#EF4444';
-          ctx.fillText(`${currentFps} FPS (${smoothedFrameMs.toFixed(1)} ms)${metaRef.current.performanceMode ? ' [PLYNULÝ]' : ''}`, 22, 33);
+          ctx.fillText(`${currentFps} FPS (${smoothedFrameMs.toFixed(1)} ms)${(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance' ? ' [MAX FPS]' : (metaRef.current.performanceProfile || 'balanced') === 'fidelity' ? ' [GRAFIKA]' : ' [VYVÁŽENÝ]'}`, 22, 33);
           ctx.fillStyle = '#E2E8F0';
           ctx.fillText(`Nepřátelé: ${engine.enemies.length} | Střely: ${engine.projectiles.length}`, 22, 51);
           ctx.fillText(`Částice: ${engine.particles.length} | Texty: ${engine.texts.length}`, 22, 69);
@@ -8526,7 +8527,9 @@ export default function App() {
         }
 
         if (!this.isDefeated && engineRef.current?.lightSources) {
-          drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources);
+          const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+          const maxLights = profile === 'performance' ? 4 : profile === 'balanced' ? 8 : Number.MAX_SAFE_INTEGER;
+          drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources, { maxLights });
         }
 
         if (scale !== 1.0) {
@@ -9946,8 +9949,8 @@ export default function App() {
                 className="touch-toggle-btn"
                 onClick={() => {
                   sound.coin();
-                  const nextPerf = !meta.performanceMode;
-                  saveMeta({ ...meta, performanceMode: nextPerf });
+                  const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
+                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
                 }}
                 title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
               >
@@ -10423,14 +10426,15 @@ export default function App() {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: meta.performanceMode ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
+                style={{ background: (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => {
                   sound.coin();
-                  saveMeta({ ...meta, performanceMode: !meta.performanceMode });
+                  const nextPerf = !meta.performanceMode;
+                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
                 }}
-                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+                title="Plynulý režim: přepne profil optimalizace mezi Vyvážený a Maximum FPS"
               >
-                ⚡ Výkon: {meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}
+                ⚡ Výkon: {(meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? 'Maximum FPS' : (meta.performanceProfile || 'balanced') === 'fidelity' ? 'Grafika' : 'Vyvážený'}
               </button>
               <button
                 className="lada-btn btn-small"
@@ -10459,8 +10463,12 @@ export default function App() {
         isOpen={isControlsOpen}
         onClose={() => setIsControlsOpen(false)}
         performanceMode={!!meta.performanceMode}
+        performanceProfile={meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')}
+        onChangePerformanceProfile={(profile) => {
+          saveMeta({ ...meta, performanceProfile: profile, performanceMode: profile === 'performance' });
+        }}
         onTogglePerformanceMode={(enabled) => {
-          saveMeta({ ...meta, performanceMode: enabled });
+          saveMeta({ ...meta, performanceMode: enabled, performanceProfile: enabled ? 'performance' : 'balanced' });
         }}
         showPerfOverlay={!!meta.showPerfOverlay}
         onToggleShowPerfOverlay={(enabled) => {

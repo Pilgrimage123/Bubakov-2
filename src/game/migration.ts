@@ -38,6 +38,10 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
 
   return {
     ...parsed,
+    performanceProfile: parsed.performanceProfile === 'fidelity' || parsed.performanceProfile === 'balanced' || parsed.performanceProfile === 'performance'
+      ? parsed.performanceProfile
+      : parsed.performanceMode ? 'performance' : 'balanced',
+    performanceMode: parsed.performanceProfile ? parsed.performanceProfile === 'performance' : !!parsed.performanceMode,
     currentLang: validLang,
     selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
       ? parsed.selectedLevel

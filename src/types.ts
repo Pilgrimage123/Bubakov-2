@@ -135,6 +135,8 @@ export interface MetaProgression {
   completedLevels?: Record<string, boolean>;
   lightningWitnessed?: boolean;
   dynamicDifficulty?: number;
+  performanceProfile?: 'fidelity' | 'balanced' | 'performance';
+  performanceMode?: boolean;
   [key: string]: any;
 }
 
