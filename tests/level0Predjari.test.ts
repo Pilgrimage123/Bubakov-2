@@ -18,7 +18,8 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('hastrman');
     expect(lvl0.spawnPools.noon).toContain('zaba');
-    expect(lvl0.spawnPools.midnight).toContain('hastrman' in lvl0.spawnPools.midnight ? 'hastrman' : 'vodnicek');
+    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'ropucha', 'topivec', 'bludicka']);
+    expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
   });
 
@@ -34,6 +35,8 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('provides complete LEVEL_UNLOCKS entry and getLevelProgress', () => {
     expect(LEVEL_UNLOCKS[0]).toBeDefined();
     expect(LEVEL_UNLOCKS[0].defaultUnlocked).toBe(true);
+    expect(LEVEL_UNLOCKS[0].realShortTitle).toBe(GAME_LEVELS[0].shortTitle);
+    expect(LEVEL_UNLOCKS[0].milestones[0].spoiledShortTitle).toBe(GAME_LEVELS[0].shortTitle);
 
     const prog = getLevelProgress(0, {});
     expect(prog.isUnlocked).toBe(true);
