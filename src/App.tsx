@@ -4744,9 +4744,10 @@ export default function App() {
             const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
             const attackRange = typeof e.attackRange === 'number' ? e.attackRange : (e.radius + 25);
             const totalInterval = e.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-            const attackDelay = typeof e.attackDelay === 'number' && e.attackDelay > 0
+            const attackSlowFactor = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
+            const attackDelay = (typeof e.attackDelay === 'number' && e.attackDelay > 0
               ? e.attackDelay
-              : Math.max(0.2, totalInterval - strikeDuration);
+              : Math.max(0.2, totalInterval - strikeDuration)) / attackSlowFactor;
             const isColliding = distToPlayer < e.radius + player.radius;
 
             // Speciální výpad Čerta s vidlemi
