@@ -117,6 +117,7 @@ import { canCollectDrop, performDropFusion } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
+import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 function renderHunterPortrait(
@@ -604,6 +605,125 @@ class SmokePuff {
   }
 }
 
+function drawMarchRibbon(ctx: CanvasRenderingContext2D, text: string, y: number, width = 118): void {
+  ctx.save();
+  ctx.fillStyle = '#F6DCAB';
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-width / 2 - 16, y + 2); ctx.lineTo(-width / 2, y - 10);
+  ctx.lineTo(width / 2, y - 10); ctx.lineTo(width / 2 + 16, y + 2);
+  ctx.lineTo(width / 2, y + 15); ctx.lineTo(-width / 2, y + 15); ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = '900 14px Eczar, Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 0, y + 3);
+  ctx.restore();
+}
+
+function drawMarchPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, dress = '#B45335'): void {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(scale, scale);
+  ctx.fillStyle = '#F1C7A1'; ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = dress;
+  ctx.beginPath(); ctx.moveTo(-7, 7); ctx.lineTo(-4, -10); ctx.lineTo(4, -10); ctx.lineTo(8, 7); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = COLORS.ink; ctx.beginPath(); ctx.moveTo(-3, 7); ctx.lineTo(-5, 13); ctx.moveTo(3, 7); ctx.lineTo(5, 13); ctx.stroke();
+  ctx.restore();
+}
+
+function drawMarchCottage(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, stork = false): void {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+  Lada.setupPath(ctx, '#A65A3C', COLORS.ink, 2.8);
+  ctx.fillRect(-32, -26, 64, 35); ctx.strokeRect(-32, -26, 64, 35);
+  ctx.strokeStyle = '#6B341D'; ctx.lineWidth = 1.4;
+  for (let yy = -18; yy < 8; yy += 8) { ctx.beginPath(); ctx.moveTo(-30, yy); ctx.lineTo(30, yy); ctx.stroke(); }
+  Lada.setupPath(ctx, '#75351F', COLORS.ink, 3);
+  ctx.beginPath(); ctx.moveTo(-40, -24); ctx.lineTo(0, -53); ctx.lineTo(40, -24); ctx.closePath(); ctx.fill(); ctx.stroke();
+  Lada.setupPath(ctx, '#F7E6B8', COLORS.ink, 1.8); ctx.fillRect(-7, -14, 14, 14); ctx.strokeRect(-7, -14, 14, 14);
+  if (stork) {
+    ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(4, -59, 16, 5, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#F8FAFC'; ctx.beginPath(); ctx.ellipse(2, -66, 6, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#E05C3C'; ctx.beginPath(); ctx.moveTo(5, -57); ctx.lineTo(8, -47); ctx.moveTo(0, -57); ctx.lineTo(-2, -47); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawMarchThawLandmark(ctx: CanvasRenderingContext2D, type: string, time: number, isNight: boolean): void {
+  const ink = COLORS.ink;
+  if (type === 'march_banner') {
+    ctx.fillStyle = '#F5D8A5'; ctx.strokeStyle = ink; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(-112, -25); ctx.quadraticCurveTo(0, -48, 112, -25); ctx.lineTo(96, 30); ctx.quadraticCurveTo(0, 16, -96, 30); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 36px Eczar, Georgia, serif'; ctx.fillText('BŘEZEN', 0, -3);
+    return;
+  }
+
+  if (type === 'march_fields') {
+    Lada.setupPath(ctx, '#BFA76B', ink, 3); ctx.beginPath(); ctx.ellipse(0, 0, 178, 102, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#715235'; ctx.lineWidth = 2;
+    for (let i = -5; i <= 5; i++) { ctx.beginPath(); ctx.moveTo(-145, i * 15 - 28); ctx.quadraticCurveTo(0, i * 19, 145, i * 15 + 28); ctx.stroke(); }
+    // two draft horses, ploughman and a moving cloud of crows
+    for (const x of [-38, 0]) { ctx.fillStyle = x < 0 ? '#804A2A' : '#E9E2D2'; ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, -20, 20, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x + 15, -29, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    ctx.strokeStyle = ink; ctx.beginPath(); ctx.moveTo(22, -15); ctx.lineTo(70, 5); ctx.lineTo(98, 5); ctx.stroke();
+    drawMarchPerson(ctx, 55, 2, 0.7, '#496A4B');
+    ctx.fillStyle = ink; for (let i = 0; i < 10; i++) { const x = 42 + ((i * 31 + time * 36) % 155) - 78; const y = -64 + (i % 4) * 9; ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x, y - 3); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 2); ctx.closePath(); ctx.fill(); }
+    drawMarchRibbon(ctx, 'HORNÍ POLE', -132, 130); return;
+  }
+
+  if (type === 'march_church') {
+    Lada.setupPath(ctx, '#D9D0B8', ink, 3); ctx.beginPath(); ctx.ellipse(0, 12, 132, 60, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#7A6A55'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 12, 114, 47, 0, 0, Math.PI * 2); ctx.stroke();
+    Lada.setupPath(ctx, '#F5E8C8', ink, 3); ctx.fillRect(-32, -49, 66, 57); ctx.strokeRect(-32, -49, 66, 57);
+    Lada.setupPath(ctx, '#E46A47', ink, 3); ctx.beginPath(); ctx.moveTo(-44, -49); ctx.lineTo(1, -79); ctx.lineTo(46, -49); ctx.closePath(); ctx.fill(); ctx.stroke();
+    Lada.setupPath(ctx, '#EEE5CC', ink, 3); ctx.fillRect(22, -96, 26, 104); ctx.strokeRect(22, -96, 26, 104);
+    ctx.fillStyle = '#343038'; ctx.beginPath(); ctx.arc(35, -76, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4B2D25'; ctx.beginPath(); ctx.moveTo(17, -96); ctx.lineTo(35, -130); ctx.lineTo(53, -96); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(35, -130); ctx.lineTo(35, -144); ctx.moveTo(29, -138); ctx.lineTo(41, -138); ctx.stroke();
+    for (let i = -2; i <= 2; i++) { ctx.fillStyle = '#8D8A7C'; ctx.beginPath(); ctx.roundRect(i * 23 - 8, 6 + (i & 1) * 10, 13, 20, 3); ctx.fill(); ctx.stroke(); }
+    drawMarchRibbon(ctx, 'KOSTEL', -170, 96); return;
+  }
+
+  if (type === 'march_village') {
+    drawMarchCottage(ctx, -66, 12, 0.82, true); drawMarchCottage(ctx, 8, -14, 1, false); drawMarchCottage(ctx, 82, 14, 0.82, false);
+    // tavern sign and little everyday-life tableau
+    ctx.fillStyle = '#F7E0A6'; ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.fillRect(4, -61, 39, 17); ctx.strokeRect(4, -61, 39, 17); ctx.fillStyle = ink; ctx.font = '900 9px Eczar, serif'; ctx.textAlign = 'center'; ctx.fillText('HOSPODA', 23, -49);
+    drawMarchPerson(ctx, -15, 28, 0.66, '#844B38'); drawMarchPerson(ctx, 20, 30, 0.66, '#4A6B92'); drawMarchPerson(ctx, 47, 25, 0.55, '#746055');
+    ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-105, 34); ctx.lineTo(-91, -28); ctx.moveTo(-108, -3); ctx.lineTo(-82, -3); ctx.moveTo(-103, 18); ctx.lineTo(-84, 18); ctx.stroke();
+    drawMarchPerson(ctx, -98, 34, 0.52, '#4C6C47');
+    drawMarchRibbon(ctx, 'HOSPODA A NÁVES', -94, 156); return;
+  }
+
+  if (type === 'march_pond') {
+    Lada.setupPath(ctx, '#90C9D8', ink, 3); ctx.beginPath(); ctx.ellipse(0, 0, 152, 84, -0.08, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#EFF9FB'; ctx.strokeStyle = ink; ctx.lineWidth = 1.7; for (let i = 0; i < 6; i++) { const x = -70 + i * 29; const y = -16 + (i % 3) * 22; ctx.beginPath(); ctx.moveTo(x - 12, y); ctx.lineTo(x - 4, y - 7); ctx.lineTo(x + 13, y - 3); ctx.lineTo(x + 10, y + 7); ctx.lineTo(x - 9, y + 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    // weeping willows, catkins and first flowers
+    for (const x of [-112, -82]) { ctx.strokeStyle = '#69462D'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, 42); ctx.lineTo(x + 2, -58); ctx.stroke(); ctx.strokeStyle = '#8BAA4B'; ctx.lineWidth = 3; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(x + i * 5, -48); ctx.quadraticCurveTo(x + i * 12, -18, x + i * 7, 20); ctx.stroke(); } }
+    ctx.fillStyle = '#F6DE50'; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(75 + (i % 3) * 12, 48 + Math.floor(i / 3) * 10, 4, 0, Math.PI * 2); ctx.fill(); }
+    drawMarchPerson(ctx, -125, 67, 0.55, '#6A8552'); drawMarchPerson(ctx, -94, 73, 0.5, '#9B5A41');
+    drawMarchRibbon(ctx, 'RYBNÍK', -116, 105); return;
+  }
+
+  if (type === 'march_mill') {
+    ctx.strokeStyle = '#76B5CE'; ctx.lineWidth = 30; ctx.beginPath(); ctx.moveTo(-150, 38); ctx.quadraticCurveTo(-25, -8, 150, 42); ctx.stroke(); ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.stroke();
+    drawMarchCottage(ctx, -18, -17, 1.15, false);
+    ctx.save(); ctx.translate(47, 6); ctx.rotate(time * 0.55); ctx.strokeStyle = ink; ctx.fillStyle = '#A66E40'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 34, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.fillRect(4, -6, 29, 12); } ctx.fillStyle = '#F0C57A'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+    for (let i = 0; i < 5; i++) { const x = 82 + (i % 3) * 24; const y = 52 + Math.floor(i / 3) * 22; ctx.fillStyle = '#F4F1E5'; ctx.strokeStyle = ink; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.ellipse(x, y, 12, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x + 11, y - 4, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    drawMarchPerson(ctx, 130, 68, 0.72, '#526C46'); drawMarchRibbon(ctx, 'MLÝN A ŘEKA', -95, 134); return;
+  }
+
+  if (type === 'march_forest') {
+    for (let i = 0; i < 13; i++) { const x = -145 + (i % 7) * 48; const y = -10 + Math.floor(i / 7) * 46 + (i % 2) * 9; const s = 0.75 + (i % 3) * 0.13; ctx.save(); ctx.translate(x, y); ctx.scale(s, s); Lada.setupPath(ctx, '#365D3A', ink, 2.5); ctx.beginPath(); ctx.moveTo(0, -72); ctx.lineTo(-28, 10); ctx.lineTo(28, 10); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#69462D'; ctx.fillRect(-4, 8, 8, 18); ctx.restore(); }
+    drawMarchRibbon(ctx, 'HUSTÝ LES', -105, 116); return;
+  }
+
+  if (type === 'march_shrine') {
+    if (isNight) { const glow = 56 + Math.sin(time * 3) * 8; const grad = ctx.createRadialGradient(0, -50, 6, 0, -50, glow); grad.addColorStop(0, 'rgba(255,245,170,.55)'); grad.addColorStop(1, 'rgba(255,245,170,0)'); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, -50, glow, 0, Math.PI * 2); ctx.fill(); }
+    drawBoziMukaDecor(ctx, 0, 0, 1.25, time, isNight); drawMarchRibbon(ctx, 'BOŽÍ MUKA', -115, 122);
+  }
+}
+
 // Environmental decor item (tombstone, cross, tree, snowman, cottage)
 class DecorItem {
   x: number;
@@ -654,7 +774,9 @@ class DecorItem {
     ctx.translate(this.x, this.y);
     ctx.scale(this.flip * this.scale, this.scale);
 
-    if (this.type === 'tree') {
+    if (this.type.startsWith('march_')) {
+      drawMarchThawLandmark(ctx, this.type, time, isNight);
+    } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
       ctx.moveTo(-6, 0);
@@ -967,6 +1089,9 @@ class DecorItem {
  * pickups, projectiles or level progression.
  */
 function seedArenaDecor(level: GameLevelDef): DecorItem[] {
+  if (level.id === 0 && level.arena?.id === 'breznove_tani') {
+    return MARCH_THAW_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale));
+  }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
     if (!pool.includes('cottage')) pool.push('cottage');
@@ -1642,6 +1767,43 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (gameState === 'playing' && (e.code === 'KeyE' || e.key === 'e' || e.key === 'E')) {
         const eng = engineRef.current;
         const p = eng.player;
+        if (eng.activeLevelId === 0 && p) {
+          const thaw = eng.marchThaw;
+          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 25) && thaw.bellCooldown <= 0) {
+            e.preventDefault();
+            thaw.bellCooldown = 90;
+            for (const enemy of eng.enemies) {
+              if (enemy.dead || enemy.isDefeated || enemy.isBoss || enemy.category === 'bosses') continue;
+              const dx = enemy.x - MARCH_THAW_POIS.church.x;
+              const dy = enemy.y - MARCH_THAW_POIS.church.y;
+              if (dx * dx + dy * dy > 1000 * 1000) continue;
+              const holyMult = getHolyDamageMultiplier(enemy);
+              const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(enemy));
+              enemy.takeDamage((enemy.hp + 1) * holyMult, 'holy', dx * 2.2 * holyPush, dy * 2.2 * holyPush);
+            }
+            eng.texts.push(new DamageText(p.x, p.y - 52, '🔔 ZVONICE! SVATÝ OTŘES!', COLORS.mustard, true));
+            sound.bell();
+            return;
+          }
+          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 25) && thaw.kegCooldown <= 0) {
+            e.preventDefault();
+            thaw.kegCooldown = 16;
+            const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
+            const x = p.x + ((p.lastDx || 1) / direction) * 90;
+            const y = p.y + ((p.lastDy || 0) / direction) * 90;
+            thaw.beerPuddle = { x, y, time: 6 };
+            for (const enemy of eng.enemies) {
+              const dx = enemy.x - x; const dy = enemy.y - y;
+              if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 170 * 170) {
+                enemy.takeDamage(110 * (p.damageMultiplier || 1), 'physical', dx * 3, dy * 3);
+                enemy.stunTimer = Math.max(enemy.stunTimer || 0, 2.4);
+              }
+            }
+            eng.texts.push(new DamageText(x, y - 30, '🍺 HOSPODSKÁ RVAČKA!', '#F6D365', true));
+            sound.hit();
+            return;
+          }
+        }
         if (eng.grandfather.active && p && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 220) {
           e.preventDefault();
           openGrandfatherShop();
@@ -1883,7 +2045,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', COLORS.mustard, true));
           return;
         }
-        const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
+        const totalReduction = Math.min(0.85, (this.damageReduction || 0) + (this.arenaArmorBonus || 0));
+        const hurtDmg = Math.max(1, amount * (1 - totalReduction));
         let remainingDmg = hurtDmg;
         let absorbed = 0;
         if (this.tempShield > 0) {
@@ -4106,7 +4269,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 (player.soulBuffTimer > 0 ? 1.25 : 1) *
                 (player.waterSoakedTimer > 0 ? 0.75 : 1) *
                 (player.slowTimer > 0 ? 0.65 : 1) *
-                hazardSpeedMult;
+                hazardSpeedMult *
+                ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
               const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
               moveVx = (mx / len) * effectiveSpeed;
               moveVy = (my / len) * effectiveSpeed;
@@ -4169,6 +4333,94 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Výsledný posun hráče
             player.x += (moveVx + pushX) * dt;
             player.y += (moveVy + pushY) * dt;
+
+            // Level 0 is a hand-composed, asymmetric map rather than a flat
+            // decoration field.  These local rules intentionally run after
+            // movement so every POI remains a readable, opt-in playstyle.
+            if (engine.activeLevelId === 0) {
+              const thaw = engine.marchThaw;
+              thaw.bellCooldown = Math.max(0, thaw.bellCooldown - dt);
+              thaw.shrineCooldown = Math.max(0, thaw.shrineCooldown - dt);
+              thaw.kegCooldown = Math.max(0, thaw.kegCooldown - dt);
+
+              const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
+              player.arenaArmorBonus = inChurch ? 0.20 : 0;
+              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt);
+
+              const inPond = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond);
+              if (inPond) {
+                thaw.floeExposure += dt;
+                player.x += (22 + Math.sin(engine.uiTime * 1.7) * 9) * dt;
+                player.y += Math.cos(engine.uiTime * 1.15) * 7 * dt;
+                if (thaw.floeExposure > 4.5) {
+                  thaw.floeExposure = 0;
+                  player.takeDamage(7, 'cold');
+                  engine.texts.push(new DamageText(player.x, player.y - 35, 'KRA PRASKÁ! ❄️', '#BDEAF7', true));
+                }
+              } else {
+                thaw.floeExposure = Math.max(0, thaw.floeExposure - dt * 2);
+              }
+
+              if (isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine)) {
+                thaw.shrineCharge += dt;
+                if (thaw.shrineCharge >= 2 && thaw.shrineCooldown <= 0) {
+                  thaw.shrineCharge = 0;
+                  thaw.shrineCooldown = 22;
+                  for (const enemy of engine.enemies) {
+                    const dx = enemy.x - MARCH_THAW_POIS.shrine.x;
+                    const dy = enemy.y - MARCH_THAW_POIS.shrine.y;
+                    const dist = Math.hypot(dx, dy) || 1;
+                    if (!enemy.dead && !enemy.isDefeated && dist < 520 + (enemy.radius || 0)) {
+                      enemy.takeDamage(135 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520);
+                      enemy.panicked = true;
+                      enemy.panicTimer = Math.max(enemy.panicTimer || 0, 4.5);
+                    }
+                  }
+                  engine.lightningFlash = Math.max(engine.lightningFlash, 0.35);
+                  engine.texts.push(new DamageText(MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 90, '✦ ZJEVENÍ SVĚTCE!', '#FEF08A', true));
+                  sound.bell();
+                }
+              } else {
+                thaw.shrineCharge = Math.max(0, thaw.shrineCharge - dt * 1.5);
+              }
+
+              // The mill's flume is a rewarding environmental trap, while the
+              // field's moving plough lane is dangerous to both sides.
+              const inMill = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.mill, -30);
+              if (inMill) player.y += 45 * dt;
+              const ploughY = MARCH_THAW_POIS.fields.y + Math.sin(engine.uiTime * 0.62) * 54;
+              const playerInPlough = Math.abs(player.y - ploughY) < 34 && Math.abs(player.x - MARCH_THAW_POIS.fields.x) < 150;
+              if (playerInPlough) {
+                player.ploughHitCooldown = Math.max(0, (player.ploughHitCooldown || 0) - dt);
+                if (player.ploughHitCooldown <= 0) {
+                  player.ploughHitCooldown = 0.8;
+                  player.takeDamage(12, 'physical');
+                  engine.texts.push(new DamageText(player.x, player.y - 35, 'POZOR, SPŘEŽENÍ!', '#B45309', true));
+                }
+              }
+              for (const enemy of engine.enemies) {
+                if (enemy.dead || enemy.isDefeated) continue;
+                if (isInsideMarchPoi(enemy.x, enemy.y, MARCH_THAW_POIS.mill, -35)) {
+                  enemy.takeDamage(46 * dt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35);
+                }
+                if (Math.abs(enemy.y - ploughY) < 28 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 165) {
+                  enemy.takeDamage(32 * dt, 'physical', 210, 15);
+                }
+              }
+
+              if (thaw.beerPuddle) {
+                thaw.beerPuddle.time -= dt;
+                if (thaw.beerPuddle.time <= 0) thaw.beerPuddle = null;
+                else for (const enemy of engine.enemies) {
+                  const dx = enemy.x - thaw.beerPuddle.x; const dy = enemy.y - thaw.beerPuddle.y;
+                  if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 100 * 100) {
+                    enemy.stunTimer = Math.max(enemy.stunTimer || 0, 0.22);
+                  }
+                }
+              }
+            } else {
+              player.arenaArmorBonus = 0;
+            }
 
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
@@ -5147,8 +5399,39 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // becomes increasingly expensive on large maps.
         const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
         for (const dec of engine.decor) {
-          if (!isInView(dec.x, dec.y - 45 * dec.scale, 100 * dec.scale, viewLeft, viewTop, viewRight, viewBottom)) continue;
+          const decorExtent = dec.type.startsWith('march_') ? 270 * dec.scale : 100 * dec.scale;
+          if (!isInView(dec.x, dec.y - 45 * dec.scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) continue;
           dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime, isNight);
+        }
+
+        if (engine.activeLevelId === 0) {
+          const thaw = engine.marchThaw;
+          if (thaw.beerPuddle) {
+            ctx.save();
+            ctx.translate(thaw.beerPuddle.x, thaw.beerPuddle.y);
+            ctx.globalAlpha = Math.min(0.72, thaw.beerPuddle.time / 1.2);
+            ctx.fillStyle = '#D98B22'; ctx.strokeStyle = '#6B3510'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.ellipse(0, 0, 52, 24, 0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.strokeStyle = '#FFF1AE'; ctx.lineWidth = 2;
+            for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.arc(i * 13, -3 + (i & 1) * 5, 4, 0, Math.PI * 2); ctx.stroke(); }
+            ctx.restore();
+          }
+
+          if (player) {
+            const nearby = Object.values(MARCH_THAW_POIS).find((poi) => isInsideMarchPoi(player.x, player.y, poi, 30));
+            if (nearby) {
+              let detail = nearby.hint;
+              if (nearby.id === 'church' && thaw.bellCooldown > 0) detail = `Zvonice se rozezní za ${Math.ceil(thaw.bellCooldown)} s`;
+              if (nearby.id === 'tavern' && thaw.kegCooldown > 0) detail = `Soudek dovalí za ${Math.ceil(thaw.kegCooldown)} s`;
+              if (nearby.id === 'shrine' && thaw.shrineCooldown > 0) detail = `Světlo svatyně sílí za ${Math.ceil(thaw.shrineCooldown)} s`;
+              ctx.save();
+              ctx.fillStyle = 'rgba(255, 248, 222, .94)'; ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 2;
+              ctx.beginPath(); ctx.roundRect(player.x - 134, player.y - 88, 268, 31, 8); ctx.fill(); ctx.stroke();
+              ctx.fillStyle = '#472A16'; ctx.font = '900 13px Eczar, Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText(detail, player.x, player.y - 72);
+              ctx.restore();
+            }
+          }
         }
 
         // Draw Director Arena Hazards (Bláto, Oheň, Mráz)

@@ -98,6 +98,15 @@ export interface EngineState {
   lightSources: DynamicLightSource[];
   shadowZones: ShadowZone[];
   occluders: LightOccluder[];
+  /** Runtime-only state for the fixed Březnové tání arena. */
+  marchThaw: {
+    bellCooldown: number;
+    shrineCharge: number;
+    shrineCooldown: number;
+    kegCooldown: number;
+    floeExposure: number;
+    beerPuddle: { x: number; y: number; time: number } | null;
+  };
 }
 
 export function createInitialEngineState(): EngineState {
@@ -192,5 +201,13 @@ export function createInitialEngineState(): EngineState {
     lightSources: [],
     shadowZones: [],
     occluders: [],
+    marchThaw: {
+      bellCooldown: 0,
+      shrineCharge: 0,
+      shrineCooldown: 0,
+      kegCooldown: 0,
+      floeExposure: 0,
+      beerPuddle: null,
+    },
   };
 }

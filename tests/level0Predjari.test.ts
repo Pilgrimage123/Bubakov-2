@@ -4,6 +4,7 @@ import { LEVEL_UNLOCKS, getLevelProgress } from '../src/data/levelUnlocks';
 import { RUN_ROZMARY, selectRunRozmar } from '../src/data/runArchetypes';
 import { GameEngine } from '../src/game/engine';
 import { getLevelTranslation } from '../src/i18n';
+import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from '../src/data/marchThawArena';
 
 describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('defines valid Level 0 structure with correct theme and bosses', () => {
@@ -18,6 +19,16 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.finalBoss.id).toBe('hastrman');
     expect(lvl0.spawnPools.noon).toContain('zaba');
     expect(lvl0.spawnPools.midnight).toContain('hastrman' in lvl0.spawnPools.midnight ? 'hastrman' : 'vodnicek');
+    expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
+  });
+
+  it('uses a fixed March Thaw composition instead of random scenery for its POIs', () => {
+    expect(MARCH_THAW_DECOR).toHaveLength(8);
+    expect(MARCH_THAW_DECOR.map((item) => item.type)).toEqual(expect.arrayContaining([
+      'march_banner', 'march_fields', 'march_church', 'march_village', 'march_pond', 'march_mill', 'march_forest', 'march_shrine',
+    ]));
+    expect(isInsideMarchPoi(MARCH_THAW_POIS.church.x, MARCH_THAW_POIS.church.y, MARCH_THAW_POIS.church)).toBe(true);
+    expect(isInsideMarchPoi(MARCH_THAW_POIS.church.x + MARCH_THAW_POIS.church.radius + 1, MARCH_THAW_POIS.church.y, MARCH_THAW_POIS.church)).toBe(false);
   });
 
   it('provides complete LEVEL_UNLOCKS entry and getLevelProgress', () => {
@@ -33,12 +44,12 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('has localized names in Czech and English', () => {
     const csTrans = getLevelTranslation(0, 'cs');
     expect(csTrans.name).toBe('0. Předjaří v Hrusicích');
-    expect(csTrans.shortTitle).toBe('Předjaří');
+    expect(csTrans.shortTitle).toBe('Březnové tání');
     expect(csTrans.finalBoss.name).toContain('Vodník');
 
     const enTrans = getLevelTranslation(0, 'en');
     expect(enTrans.name).toBe('0. Early Spring in Hrusice');
-    expect(enTrans.shortTitle).toBe('Early Spring');
+    expect(enTrans.shortTitle).toBe('March Thaw');
   });
 
   it('has exactly 3 unique folklore Rozmars', () => {
