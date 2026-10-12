@@ -129,7 +129,7 @@ var WEAPONS = {
 		baseDmg: 22,
 		baseCd: 1.25,
 		speed: 460,
-		desc: "Zlatavé kynuté české buchty pečené v pekáči, sypané jemným cukrem a plněné povidly. Nezpůsobují odhození ani grafický zásah, ale bubáci se na 1,8 s zastaví a mlsají s poznámkou „Ňam, ňam“. S vyšší úrovní přibývají další buchty v salvě (odolnost dle Hladu).",
+		desc: "Zlatavé kynuté buchty plněné povidly. Po zásahu vytvoří fialový oblak vůně o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního poškození buchty za sekundu (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('povidlove_buchty', level, w);
@@ -163,6 +163,9 @@ var WEAPONS = {
 					type: "food",
 					visual: "bun",
 					snackDuration,
+					plumScent: true,
+					plumScentRadius: 140 * (stats.specialMechanicFlag === 'plum_scent_plus' ? 1.4 : 1),
+					plumScentDuration: 3.5 * (stats.specialMechanicFlag === 'plum_scent_plus' ? 1.4 : 1),
 					pierce: stats.pierce,
 					knockbackMult: stats.knockbackMult,
 					life: 2.2
@@ -311,17 +314,17 @@ var WEAPONS = {
 	},
 	devatero_kviti: {
 		id: "devatero_kviti",
-		name: "Devatery kvítí",
+		name: "Devatero kvítí",
 		type: "nature",
 		icon: "🌿",
 		baseDmg: 15,
 		baseCd: 1.1,
 		speed: 350,
-		desc: "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
+		desc: "Devatero kvítí vystřeluje pět bylin v počátečním věnci, který zahání dotírající nečisté síly.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('devatero_kviti', level, w);
-			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(5, 5 + Math.floor((level - 1) / 2) + stats.projectileCount);
 			const dmg = getWeaponDamage(player, 15) * stats.damageMult;
 			const radius = Math.round(14 * stats.areaRadiusMult);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);

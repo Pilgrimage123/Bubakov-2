@@ -174,8 +174,8 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       const wDef = WEAPONS.devatero_kviti;
       wDef.fire(player, 5);
 
-      // Base count at lvl 5 = 3 + floor(4/2) = 5. Herbs crowd 3 (+1) + Herbs crowd 5 (+2) = 8
-      expect(projectiles).toHaveLength(8);
+      // Base count at lvl 5 = 5 + floor(4/2) = 7. Herbs crowd 3 (+1) + Herbs crowd 5 (+2) = 10
+      expect(projectiles).toHaveLength(10);
       // areaRadiusMult increases radius
       expect(projectiles[0].radius).toBeGreaterThan(14);
     });

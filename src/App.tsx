@@ -326,6 +326,9 @@ class SmokePuff {
   time: number;
   duration: number;
   dead: boolean;
+  kind: 'smoke' | 'plum-scent' | 'fajfka' = 'smoke';
+  damagePerSecond = 0;
+  damageAccumulator = 0;
   lobes: Array<{
     ox: number;
     oy: number;
@@ -358,12 +361,13 @@ class SmokePuff {
     rot: number;
   }>;
 
-  constructor(x: number, y: number, radius = 24) {
+  constructor(x: number, y: number, radius = 24, kind: 'smoke' | 'plum-scent' | 'fajfka' = 'smoke', duration = 1.25) {
     this.x = x;
     this.y = y;
-    this.radius = Math.max(22, radius);
+    this.radius = Math.max(8, radius);
+    this.kind = kind;
     this.time = 0;
-    this.duration = 1.25;
+    this.duration = duration;
     this.dead = false;
 
     // Billowing cloud lobes
@@ -501,8 +505,8 @@ class SmokePuff {
       if (dotAlpha <= 0) continue;
       ctx.save();
       ctx.globalAlpha = alpha * dotAlpha;
-      ctx.fillStyle = '#FFFDF7';
-      ctx.strokeStyle = COLORS.ink;
+      ctx.fillStyle = this.kind === 'plum-scent' ? '#9D4EDD' : this.kind === 'fajfka' ? '#898994' : '#FFFDF7';
+      ctx.strokeStyle = this.kind === 'plum-scent' ? '#5B167D' : this.kind === 'fajfka' ? '#42424A' : COLORS.ink;
       ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
@@ -526,7 +530,7 @@ class SmokePuff {
     // 3. Shadow / depth under-layer of the main cloud (slightly offset downward)
     ctx.save();
     ctx.translate(0, 4);
-    ctx.fillStyle = '#E8DEC8';
+    ctx.fillStyle = this.kind === 'plum-scent' ? '#7E22CE' : this.kind === 'fajfka' ? '#6B7280' : '#E8DEC8';
     ctx.beginPath();
     for (const lobe of this.lobes) {
       const lr = lobe.r * scale;
@@ -551,7 +555,7 @@ class SmokePuff {
     ctx.stroke();
 
     // 5. Highlight arcs on the tops of the lobes (whiter cream volume)
-    ctx.strokeStyle = '#FFFFFF';
+    ctx.strokeStyle = this.kind === 'plum-scent' ? '#D8B4FE' : this.kind === 'fajfka' ? '#D4D4D8' : '#FFFFFF';
     ctx.lineWidth = Math.max(1.8, this.radius * 0.05);
     ctx.beginPath();
     for (const lobe of this.lobes) {
@@ -1191,7 +1195,21 @@ export default function App() {
   const grandfatherOpenRef = useRef(false);
   grandfatherOpenRef.current = gameState === 'grandfather';
 
-  const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
+const applyBearMaskOverheal = (player: any, healing: number) => {
+    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0));
+    const missingHp = Math.max(0, player.maxHp - player.hp);
+    const overheal = Math.max(0, effectiveHeal - missingHp);
+    player.hp = Math.min(player.maxHp, player.hp + effectiveHeal);
+    if ((player.bearMaskLevel || 0) > 0 && overheal > 0) {
+      const damage = overheal * 0.5 * (1 + Math.max(0, player.bearMaskLevel - 1) * 0.2) * (player.damageMultiplier || 1);
+      for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
+        if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
+        enemy.takeDamage(damage, 'mask', 0, 0, { allowFractionalDamage: true });
+      }
+    }
+  };
+
+    const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
     const p = engineRef.current.player;
     if (!p) return;
     const effect = item.effect;
@@ -1209,6 +1227,14 @@ export default function App() {
         p.jelitoCount = (p.jelitoCount || 0) + 1;
       }
     }
+    if (effect.type === 'fajfka') {
+      p.fajfkaLevel = Math.min(2, (p.fajfkaLevel || 0) + 1);
+      p.fajfkaCooldown = 0;
+    }
+    if (effect.type === 'bear_mask') {
+      p.bearMaskLevel = (p.bearMaskLevel || 0) + 1;
+      p.bearMaskHealBonus = Math.max(0, (p.bearMaskLevel - 1) * 0.20);
+    }
     if (effect.type === 'max_hp') {
       p.maxHp += effect.amount;
       p.hp = Math.min(p.maxHp, p.hp + effect.amount);
@@ -1225,7 +1251,17 @@ export default function App() {
       p.kavaCount = (p.kavaCount || 0) + 1;
     }
     if (effect.type === 'heal') {
-      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0));
+      const missingHp = Math.max(0, p.maxHp - p.hp);
+      const overheal = Math.max(0, effectiveHeal - missingHp);
+      p.hp = Math.min(p.maxHp, p.hp + effectiveHeal);
+      if ((p.bearMaskLevel || 0) > 0 && overheal > 0) {
+        const damage = overheal * 0.5 * (1 + Math.max(0, p.bearMaskLevel - 1) * 0.2) * (p.damageMultiplier || 1);
+        for (const enemy of enemySpatialHashRef.current.queryCircle(p.x, p.y, 290)) {
+          if (enemy.isDefeated || enemy.dead) continue;
+          if (Math.hypot(enemy.x - p.x, enemy.y - p.y) <= 230 + (enemy.radius || 0)) enemy.takeDamage(damage, 'mask', 0, 0, { allowFractionalDamage: true });
+        }
+      }
     }
     if (effect.type === 'coins') {
       const reward = Math.max(0, Math.floor(effect.amount));
@@ -1308,7 +1344,7 @@ export default function App() {
     const item = getGrandfatherItem(itemId);
     if (!p || !item || !eng.grandfather.active) return false;
     // Healing consumables have no value at full Courage, so reject the purchase.
-    if (item.effect.type === 'heal' && p.hp >= p.maxHp) return false;
+    if (item.effect.type === 'heal' && p.hp >= p.maxHp && !(p.bearMaskLevel > 0)) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
     const purchaseCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
     const price = getGrandfatherPrice(item, purchaseCount, p.luck || 0, waitSeconds);
@@ -1763,6 +1799,10 @@ export default function App() {
       kavaCount: 0,
       jelitoCount: 0,
       kurazCount: 0,
+      fajfkaLevel: 0,
+      fajfkaCooldown: 0,
+      bearMaskLevel: 0,
+      bearMaskHealBonus: 0,
       speedCount: 0,
       magnetCount: 0,
       damageReduction: wallDmgRed,
@@ -2335,7 +2375,7 @@ export default function App() {
     const eng = engineRef.current;
     const p = eng.player;
     if (!p) return;
-    p.hp = Math.min(p.maxHp, p.hp + 55);
+    applyBearMaskOverheal(p, 55);
     p.tempShield = (p.tempShield || 0) + 30;
     p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer, 1.8);
     sound.potion();
@@ -2480,7 +2520,7 @@ export default function App() {
         icon: 'jitrnice',
         action: () => {
           const pl = engineRef.current.player;
-          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 40);
+          if (pl) applyBearMaskOverheal(pl, 40);
         },
       },
       {
@@ -2553,7 +2593,7 @@ export default function App() {
         icon: 'czech_buchta',
         action: () => {
           const pl = engineRef.current.player;
-          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 50);
+          if (pl) applyBearMaskOverheal(pl, 50);
         },
       },
     ];
@@ -2650,7 +2690,7 @@ export default function App() {
 
     const p = engineRef.current.player;
     if (p) {
-      p.hp = Math.min(p.maxHp, p.hp + 35);
+      applyBearMaskOverheal(p, 35);
       engineRef.current.texts.push(new DamageText(p.x, p.y - 30, '+35 Kuráž (Od souseda)', COLORS.green, true));
     }
 
@@ -4138,7 +4178,49 @@ export default function App() {
             if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
             // Player regeneration (+2 Kuráže per 5s per level from Bylinková zahrádka)
-            if (player.regenLevel > 0 && player.hp < player.maxHp) {
+            if ((player as any).fajfkaCooldown > 0) (player as any).fajfkaCooldown = Math.max(0, (player as any).fajfkaCooldown - dt);
+      if ((player as any).fajfkaLevel > 0 && (player as any).fajfkaCooldown <= 0) {
+        const upgraded = (player as any).fajfkaLevel >= 2;
+        const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
+        cloud.damagePerSecond = 9;
+        engineRef.current.smokePuffs.push(cloud);
+        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0));
+        const missingHp = Math.max(0, player.maxHp - player.hp);
+        const overheal = Math.max(0, requestedHeal - missingHp);
+        player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
+        if ((player as any).bearMaskLevel > 0 && overheal > 0) {
+          const maskDamage = overheal * 0.5 * (1 + ((player as any).bearMaskLevel - 1) * 0.2) * (player.damageMultiplier || 1);
+          for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
+            if (enemy.isDefeated || enemy.dead) continue;
+            if (Math.hypot(enemy.x - player.x, enemy.y - player.y) <= 230 + (enemy.radius || 0)) enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
+          }
+        }
+        (player as any).fajfkaCooldown = 3.5;
+      }
+      if ((player as any).bearMaskLevel > 0) {
+        const mask = player as any;
+        const heals: Array<{ amount: number; timer?: string }> = [];
+        if (player.regenLevel > 0 && player.hp < player.maxHp) {
+          player.regenTimer += dt;
+          if (player.regenTimer >= 5) {
+            heals.push({ amount: player.regenLevel * 2, timer: 'regenTimer' });
+          }
+        }
+        if (player.type === 'korenarka' && player.hp < player.maxHp) {
+          player.herbTimer += dt;
+          if (player.herbTimer >= 4) {
+            heals.push({ amount: 2, timer: 'herbTimer' });
+          }
+        }
+        if (heals.length > 0) {
+          for (const heal of heals) {
+            applyBearMaskOverheal(player, heal.amount);
+            if (heal.timer === 'regenTimer') player.regenTimer = 0;
+            if (heal.timer === 'herbTimer') player.herbTimer = 0;
+            engine.texts.push(new DamageText(player.x, player.y - 40, '+' + heal.amount + ' 🌿', COLORS.green));
+          }
+        }
+      } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
                 player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
@@ -4581,6 +4663,11 @@ export default function App() {
                   }
                   const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
                   e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
+                  if (p.plumScent) {
+                    const cloud = new SmokePuff(e.x, e.y, p.plumScentRadius || 140, 'plum-scent', p.plumScentDuration || 3.5) as any;
+                    cloud.damagePerSecond = (p.dmg || dmg) * 0.20;
+                    engine.smokePuffs.push(cloud);
+                  }
                   if (!p.noMasteryProc && p.weaponId) player.triggerWeaponMastery(p.weaponId, e, 'hit');
                   if (p.type === 'ice') e.chill(3.5);
                   if (p.type === 'pickle') {
@@ -4686,7 +4773,8 @@ export default function App() {
 
             // Tick active strike animation timer
             if ((e.strikeTimer || 0) > 0) {
-              e.strikeTimer = Math.max(0, e.strikeTimer - dt);
+              const fajfkaAttackSlow = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
+              e.strikeTimer = Math.max(0, e.strikeTimer - dt * fajfkaAttackSlow);
             }
 
             const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
@@ -4694,9 +4782,10 @@ export default function App() {
             const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
             const attackRange = typeof e.attackRange === 'number' ? e.attackRange : (e.radius + 25);
             const totalInterval = e.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-            const attackDelay = typeof e.attackDelay === 'number' && e.attackDelay > 0
+            const attackSlowFactor = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
+            const attackDelay = (typeof e.attackDelay === 'number' && e.attackDelay > 0
               ? e.attackDelay
-              : Math.max(0.2, totalInterval - strikeDuration);
+              : Math.max(0.2, totalInterval - strikeDuration)) / attackSlowFactor;
             const isColliding = distToPlayer < e.radius + player.radius;
 
             // Speciální výpad Čerta s vidlemi
@@ -4846,12 +4935,12 @@ export default function App() {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
-                  player.hp = Math.min(player.maxHp, player.hp + potionHeal);
+                  applyBearMaskOverheal(player, potionHeal);
                   player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
                   engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
-                  player.hp = Math.min(player.maxHp, player.hp + 15);
+                  applyBearMaskOverheal(player, 15);
                   engine.texts.push(new DamageText(player.x, player.y - 40, '+15 Kuráž 🍐', '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
@@ -4876,7 +4965,31 @@ export default function App() {
 
           // Update smoke puffs
           if (engine.smokePuffs) {
-            for (const puff of engine.smokePuffs) puff.update(dt);
+            for (const puff of engine.smokePuffs) {
+              puff.update(dt);
+              if (puff.kind === 'plum-scent' || puff.kind === 'fajfka') {
+                puff.damageAccumulator = (puff.damageAccumulator || 0) + dt;
+                while (puff.damageAccumulator >= 0.25) {
+                  const tick = 0.25;
+                  puff.damageAccumulator -= 0.25;
+                  const targets = enemySpatialHashRef.current.queryCircle(puff.x, puff.y, puff.radius + 60);
+                  for (const enemy of targets) {
+                    if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - puff.x, enemy.y - puff.y) > puff.radius + (enemy.radius || 0)) continue;
+                    if (puff.kind === 'plum-scent') {
+                      enemy.takeDamage((puff.damagePerSecond || 0) * tick, 'food', 0, 0, { allowFractionalDamage: true });
+                    } else {
+                      const maxHp = Math.max(1, enemy.maxHp || 75);
+                      const resistance = maxHp <= 75 ? 2 - (maxHp - 1) / 74 : Math.max(0, 1 - (maxHp - 75) / 75);
+                      if (resistance <= 0) continue;
+                      enemy.fajfkaSlowTimer = Math.max(enemy.fajfkaSlowTimer || 0, 0.30);
+                      enemy.fajfkaMoveSlowFactor = 1 - 0.35 * resistance;
+                      enemy.fajfkaAttackSlowFactor = 1 - 0.35 * resistance;
+                      enemy.takeDamage((puff.damagePerSecond || 9) * tick * resistance, 'food', 0, 0, { allowFractionalDamage: true });
+                    }
+                  }
+                }
+              }
+            }
             compactInPlace(engine.smokePuffs, (p) => !p.dead);
           }
 
@@ -4942,7 +5055,7 @@ export default function App() {
           sc.pulseTimer = 0;
           const p = engineRef.current.player;
           if (p && p.hp < p.maxHp) {
-            p.hp = Math.min(p.maxHp, p.hp + 6);
+            applyBearMaskOverheal(p, 6);
             engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 Kuráž', '#4ADE80', false));
           }
           const dmg = 25 * (p?.damageMultiplier || 1);
@@ -5980,6 +6093,9 @@ export default function App() {
       knockbackImmune: false,
       knockbackResistance: 0,
       garlicSlowTimer: 0,
+      fajfkaSlowTimer: 0,
+      fajfkaMoveSlowFactor: 1,
+      fajfkaAttackSlowFactor: 1,
       snackTimer: 0,
       stunTimer: 0,
       valecniceSlowed: false,
@@ -6020,6 +6136,9 @@ export default function App() {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
+        if (this.fajfkaSlowTimer > 0) this.fajfkaSlowTimer -= dt;
+        if (this.fajfkaSlowTimer <= 0) { this.fajfkaMoveSlowFactor = 1; this.fajfkaAttackSlowFactor = 1; }
+        if ((this.fajfkaSlowTimer || 0) > 0 && this.strikeTimer > 0) this.strikeTimer += dt * ((1 / Math.max(0.1, this.fajfkaAttackSlowFactor || 0.65)) - 1);
         if (this.silhouetteInvertTimer > 0) this.silhouetteInvertTimer -= dt;
 
         // Pekelný: Stopa žhavých uhlíků a plamínků
@@ -6224,7 +6343,7 @@ export default function App() {
         this.panicked = this.panicTimer > 0;
 
         const shadowMods = getShadowDefenseMultipliers(this);
-        let spd = this.speed * this.getMovementSpeedMultiplier() * shadowMods.speedMult * (this.garlicSlowTimer > 0 ? 0.85 : 1);
+        let spd = this.speed * this.getMovementSpeedMultiplier() * shadowMods.speedMult * (this.garlicSlowTimer > 0 ? 0.85 : 1) * ((this.fajfkaSlowTimer || 0) > 0 ? (this.fajfkaMoveSlowFactor || 0.65) : 1);
         if (this.bludickaAttracted) spd *= 1.15;
         if (player._valecniceSlowRadius && player._valecniceSlowRadius > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
@@ -7669,7 +7788,7 @@ export default function App() {
         this.y += (this.vy + this.kby) * dt;
       },
 
-      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean }) {
+      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean }) {
         if (this.isDefeated) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
@@ -7700,10 +7819,12 @@ export default function App() {
         } else {
           const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
           let mult = this.getDamageTakenMultiplier();
+          if (type === 'mask') mult = Math.max(0, 1 - Math.max(0, Math.min(1, typeof this.willpower === 'number' ? this.willpower : 0)));
           if (ignore > 0 && mult < 1.0) {
             mult = mult + (1.0 - mult) * ignore;
           }
           finalDmg = amount * mult;
+          if (!options?.allowFractionalDamage) finalDmg = Math.max(1, finalDmg);
           if (this.soaked) finalDmg *= 1.45;
           finalDmg += (metaRef.current.forgeLevel || 0) * 2;
         }

@@ -1,3 +1,11 @@
+## 2026-10-12 — Povidlová vůně, Dědečkova fajfka, Maska medvěda a Devatero kvítí
+
+- Povidlové buchty po zásahu vytvářejí fialový oblak o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního zásahu za sekundu. Specifický upgrade přidává +40 % k poloměru i trvání.
+- Dědečkova fajfka se mění z pasivní regenerace na automatickou aktivní schopnost: kouř 110 px / 4 s, 9 poškození/s, zpomalení pohybu i útoku o 35 % po zohlednění odolnosti dle maximální Kuráže, obnova 8 % Kuráže a cooldown 3,5 s. Druhý stupeň přidá +30 % k velikosti oblaku a zvýší obnovu na 12 %.
+- Maska medvěda převádí přebytečné léčení na plošné poškození do 230 px; základ je 50 % overhealu s odolností dle Vůle. Další úrovně přidávají +20 % k léčení i zranění maskou.
+- Název je sjednocen na „Devatero kvítí“ a základní salva má 5 projektilů.
+- Upraveny regresní testy pro počet projektilů Devatera kvítí.
+
 # Bubákov — Changelog
 
 ## 2026-10-11 — Léčivé dropy se při plné Kuráži nesbírají

@@ -8,7 +8,9 @@ export type GrandfatherEffect =
   | { type: 'cooldown'; amount: number }
   | { type: 'heal'; amount: number }
   | { type: 'coins'; amount: number }
-  | { type: 'weapon'; weaponId: string };
+  | { type: 'weapon'; weaponId: string }
+  | { type: 'fajfka'; amount: number }
+  | { type: 'bear_mask'; amount: number };
 
 export interface GrandfatherItemDef {
   id: string;
@@ -31,7 +33,8 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'zaplacovany_kabat', name: 'Záplatovaný kabát', icon: '🧥', description: '+25 maximální Kuráž', baseCost: 45, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
   { id: 'krajac_na_podmasli', name: 'Kráječ na podmáslí', icon: '🥣', description: '+0,6 regenerace / s', baseCost: 50, maxStacks: 4, luckWeight: 0.8, effect: { type: 'regen', amount: 0.6 } },
   { id: 'podkova_pro_stesti', name: 'Podkova pro štěstí', icon: '🧲', description: '+1 ŠTĚSTÍ', baseCost: 50, maxStacks: 5, luckWeight: 0.8, effect: { type: 'luck', amount: 1 } },
-  { id: 'bylinkova_fajfka', name: 'Bylinková fajfka', icon: '🚬', description: '+1,2 regenerace / s', baseCost: 60, maxStacks: 4, luckWeight: 0.7, effect: { type: 'regen', amount: 1.2 } },
+  { id: 'bylinkova_fajfka', name: 'Dědečkova fajfka', icon: '🚬', description: 'Aktivní vyfouknutí: kouř 110 px / 4 s, 9 poškození/s, −35 % rychlosti pohybu a útoku podle odolnosti Max Kuráže, +8 % Kuráže, cooldown 3,5 s. Druhý nákup: +30 % velikost oblaku a +50 % obnova Kuráže.', baseCost: 60, maxStacks: 2, luckWeight: 0.7, effect: { type: 'fajfka', amount: 8 } },
+  { id: 'maska_medveda', name: 'Maska medvěda', icon: '🐻', description: 'Přebytečná Kuráž při léčení zraňuje nepřátele do 230 px za 50 % overhealu, s odolností dle Vůle. Každé další vylepšení přidá +20 % k léčení i zranění maskou.', baseCost: 85, maxStacks: 6, luckWeight: 0.55, effect: { type: 'bear_mask', amount: 0.5 } },
   { id: 'rehtacka', name: 'Řehtačka', icon: '🪇', description: '+15 % poškození', baseCost: 65, maxStacks: 4, luckWeight: 0.65, effect: { type: 'damage_multiplier', amount: 0.15 } },
 
   // --- Předchozí level up pasivní upgrady a posílení ---
@@ -61,7 +64,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'wp_pitchfork', name: 'Kovářské vidle', icon: '🔱', description: 'Třízubé kované vidle prorážejí řady strašidel bodnutím vpřed.', baseCost: 50, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'kovarske_vidle', effect: { type: 'weapon', weaponId: 'kovarske_vidle' } },
   { id: 'wp_halberd', name: 'Kovaná halapartna', icon: '🪓', description: 'Těžká zbraň ponocných. Široký rázný švih zažene celé houfy.', baseCost: 60, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'kovana_halapartna', effect: { type: 'weapon', weaponId: 'kovana_halapartna' } },
   { id: 'wp_flail', name: 'Dřevěný cep na obilí', icon: '🌾', description: 'Drtivý dopad do země vyvolá rázovou vlnu a odhodí nepřátele.', baseCost: 65, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'dreveny_cep', effect: { type: 'weapon', weaponId: 'dreveny_cep' } },
-  { id: 'wp_herbs', name: 'Devatery kvítí', icon: '🌿', description: 'Voňavý ochranný věnec bylin v kruhu zahání nečisté síly.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'devatero_kviti', effect: { type: 'weapon', weaponId: 'devatero_kviti' } },
+  { id: 'wp_herbs', name: 'Devatero kvítí', icon: '🌿', description: 'Pět bylin v počátečním věnci střel zahání nečisté síly.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'devatero_kviti', effect: { type: 'weapon', weaponId: 'devatero_kviti' } },
   { id: 'wp_snowball', name: 'Sněhová koule', icon: '❄️', description: 'Tuhá ledová koule ze sněhu, chlad zpomalí každé strašidlo.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'snehova_koule', effect: { type: 'weapon', weaponId: 'snehova_koule' } },
   { id: 'wp_kolac', name: 'Kynutý koláč', icon: 'kynuty_kolac', description: 'Tradiční koláč se odráží mezi bubáky a přiměje je mlsat.', baseCost: 50, maxStacks: 8, luckWeight: 0.95, isWeapon: true, weaponId: 'kynuty_kolac', effect: { type: 'weapon', weaponId: 'kynuty_kolac' } },
   { id: 'wp_potato', name: 'Horký brambor z popela', icon: '🥔', description: 'Brambor z popela popálí bubáky a zanechá kouřící ohnisko.', baseCost: 50, maxStacks: 8, luckWeight: 0.95, isWeapon: true, weaponId: 'horky_brambor', effect: { type: 'weapon', weaponId: 'horky_brambor' } },
