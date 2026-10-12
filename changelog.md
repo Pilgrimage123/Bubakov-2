@@ -1,3 +1,8 @@
+## 2026-10-12 — Oprava konzistence názvu úrovně 0
+
+- Sjednocen krátký název úrovně 0 v metadatech odemykání a v prvním milníku s kanonickým názvem `Březnové tání` z `GAME_LEVELS[0]`.
+- Rozšířeny testy úrovně 0 o přesnou noční spawn pool kompozici, vyloučení finálního bosse z běžného spawn poolu a konzistenci názvů v `LEVEL_UNLOCKS`.
+
 ## 2026-10-12 — Povidlová vůně, Dědečkova fajfka, Maska medvěda a Devatero kvítí
 
 - Povidlové buchty po zásahu vytvářejí fialový oblak o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního zásahu za sekundu. Specifický upgrade přidává +40 % k poloměru i trvání.
