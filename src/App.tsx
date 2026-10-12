@@ -1195,7 +1195,21 @@ export default function App() {
   const grandfatherOpenRef = useRef(false);
   grandfatherOpenRef.current = gameState === 'grandfather';
 
-  const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
+const applyBearMaskOverheal = (player: any, healing: number) => {
+    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0));
+    const missingHp = Math.max(0, player.maxHp - player.hp);
+    const overheal = Math.max(0, effectiveHeal - missingHp);
+    player.hp = Math.min(player.maxHp, player.hp + effectiveHeal);
+    if ((player.bearMaskLevel || 0) > 0 && overheal > 0) {
+      const damage = overheal * 0.5 * (1 + Math.max(0, player.bearMaskLevel - 1) * 0.2) * (player.damageMultiplier || 1);
+      for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
+        if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
+        enemy.takeDamage(damage, 'mask', 0, 0, { allowFractionalDamage: true });
+      }
+    }
+  };
+
+    const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
     const p = engineRef.current.player;
     if (!p) return;
     const effect = item.effect;
@@ -2361,7 +2375,7 @@ export default function App() {
     const eng = engineRef.current;
     const p = eng.player;
     if (!p) return;
-    p.hp = Math.min(p.maxHp, p.hp + 55);
+    applyBearMaskOverheal(p, 55);
     p.tempShield = (p.tempShield || 0) + 30;
     p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer, 1.8);
     sound.potion();
@@ -2506,7 +2520,7 @@ export default function App() {
         icon: 'jitrnice',
         action: () => {
           const pl = engineRef.current.player;
-          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 40);
+          if (pl) applyBearMaskOverheal(pl, 40);
         },
       },
       {
@@ -2579,7 +2593,7 @@ export default function App() {
         icon: 'czech_buchta',
         action: () => {
           const pl = engineRef.current.player;
-          if (pl) pl.hp = Math.min(pl.maxHp, pl.hp + 50);
+          if (pl) applyBearMaskOverheal(pl, 50);
         },
       },
     ];
@@ -2676,7 +2690,7 @@ export default function App() {
 
     const p = engineRef.current.player;
     if (p) {
-      p.hp = Math.min(p.maxHp, p.hp + 35);
+      applyBearMaskOverheal(p, 35);
       engineRef.current.texts.push(new DamageText(p.x, p.y - 30, '+35 Kuráž (Od souseda)', COLORS.green, true));
     }
 
@@ -4930,30 +4944,12 @@ export default function App() {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
-                  const potionEffectiveHeal = potionHeal * (1 + (((player as any).bearMaskHealBonus) || 0));
-                  const potionOverheal = Math.max(0, potionEffectiveHeal - Math.max(0, player.maxHp - player.hp));
-                  player.hp = Math.min(player.maxHp, player.hp + potionEffectiveHeal);
-                  if ((player as any).bearMaskLevel > 0 && potionOverheal > 0) {
-                    const maskDamage = potionOverheal * 0.5 * (1 + (((player as any).bearMaskLevel - 1) * 0.2)) * (player.damageMultiplier || 1);
-                    for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
-                      if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
-                      enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
-                    }
-                  }
+                  applyBearMaskOverheal(player, potionHeal);
                   player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
                   engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
-                  const healDropAmount = 15 * (1 + (((player as any).bearMaskHealBonus) || 0));
-                  const healDropOverheal = Math.max(0, healDropAmount - Math.max(0, player.maxHp - player.hp));
-                  player.hp = Math.min(player.maxHp, player.hp + healDropAmount);
-                  if ((player as any).bearMaskLevel > 0 && healDropOverheal > 0) {
-                    const maskDamage = healDropOverheal * 0.5 * (1 + (((player as any).bearMaskLevel - 1) * 0.2)) * (player.damageMultiplier || 1);
-                    for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
-                      if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
-                      enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
-                    }
-                  }
+                  applyBearMaskOverheal(player, 15);
                   engine.texts.push(new DamageText(player.x, player.y - 40, '+15 Kuráž 🍐', '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
@@ -5068,7 +5064,7 @@ export default function App() {
           sc.pulseTimer = 0;
           const p = engineRef.current.player;
           if (p && p.hp < p.maxHp) {
-            p.hp = Math.min(p.maxHp, p.hp + 6);
+            applyBearMaskOverheal(p, 6);
             engineRef.current.texts.push(new DamageText(p.x + (Math.random() - 0.5) * 20, p.y - 45, '+6 Kuráž', '#4ADE80', false));
           }
           const dmg = 25 * (p?.damageMultiplier || 1);
