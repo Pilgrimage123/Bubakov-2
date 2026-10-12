@@ -87,7 +87,7 @@ var LEVEL_UNLOCKS = {
 	0: {
 		id: 0,
 		realName: "0. Předjaří v Hrusicích",
-		realShortTitle: "Předjaří",
+		realShortTitle: "Březnové tání",
 		realSubtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
 		realIcon: "🌱",
 		realBadge: "Začátečnická úroveň",
@@ -102,7 +102,7 @@ var LEVEL_UNLOCKS = {
 			minPercent: 0,
 			tierLevel: 4,
 			spoiledName: "0. Předjaří v Hrusicích",
-			spoiledShortTitle: "Předjaří",
+			spoiledShortTitle: "Březnové tání",
 			spoiledSubtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
 			spoiledDesc: "Sníh pomalu taje a řeka je plná březnových ker tajícího ledu. Příroda se probouzí a s ní i vyhladovělá havěť.",
 			spoiledLore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole a odežeňte vodníky z tajících ker.",
