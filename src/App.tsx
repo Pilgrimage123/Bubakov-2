@@ -4773,7 +4773,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Tick active strike animation timer
             if ((e.strikeTimer || 0) > 0) {
-              e.strikeTimer = Math.max(0, e.strikeTimer - dt);
+              const fajfkaAttackSlow = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
+              e.strikeTimer = Math.max(0, e.strikeTimer - dt * fajfkaAttackSlow);
             }
 
             const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
