@@ -213,6 +213,17 @@ var TROPHIES = [
 		})
 	},
 	{
+		id: "level0_completed",
+		title: "🌱 První krůčky v předjaří",
+		desc: "Dokonči úvodní výpravu: zažeň vodníka z tajících ker nebo přežij noc v Předjaří.",
+		reward: 80,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]),
+		getProgress: (meta) => ({
+			cur: meta.completedLevels && meta.completedLevels[0] ? 1 : 0,
+			max: 1
+		})
+	},
+	{
 		id: "level1_completed",
 		title: "🍂 Osvoboditel návsi a rybníka",
 		desc: "Dokonči 1. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.",

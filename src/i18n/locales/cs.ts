@@ -664,6 +664,8 @@ export const cs: Record<string, string> = {
   "trophy.obr_slain.desc": "Postav se mohutnému Skalnímu obrovi ze Sázavy a přemož ho v boji.",
   "trophy.lightning_strike.title": "⚡ Blesk svatého Eliáše",
   "trophy.lightning_strike.desc": "Přežij v noční bouři mocný úder blesku svatého Eliáše.",
+  "trophy.level0_completed.title": "🌱 První krůčky v předjaří",
+  "trophy.level0_completed.desc": "Dokonči úvodní výpravu: zažeň vodníka z tajících ker nebo přežij noc v Předjaří.",
   "trophy.level1_completed.title": "🍂 Osvoboditel návsi a rybníka",
   "trophy.level1_completed.desc": "Dokonči 1. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.",
   "trophy.level2_completed.title": "🪦 Pokořitel hvozdů a hřbitova",

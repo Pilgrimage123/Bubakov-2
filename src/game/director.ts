@@ -1028,10 +1028,13 @@ export class RunDirector {
   }
 
   private updateBubackaDira(dt: number, engine: any, player: any, gameTime: number): void {
-    // 1. Spawning condition: within anomaly window, not already spawned, no boss present
+    // 1. Spawning condition: within anomaly window, not already spawned, no active boss present
     if (!this.bubackaDira && !this.bubackaDiraSpawned) {
       const [startSec, endSec] = this.rozmar.anomalyWindow;
-      if (gameTime >= startSec && gameTime <= endSec && !engine.state.miniBossSpawned) {
+      const activeBossPresent = Boolean(
+        engine.state?.enemies?.some((e: any) => (e.isBoss || e.isMiniboss) && !e.dead && !e.isDefeated)
+      );
+      if (gameTime >= startSec && gameTime <= endSec && !activeBossPresent) {
         const ang = Math.random() * Math.PI * 2;
         const dist = 360 + Math.random() * 80;
         this.bubackaDira = {

@@ -96,4 +96,26 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(frogMiniBoss.hp).toBeLessThan(500);
     expect(frogMiniBoss.hp).toBeGreaterThanOrEqual(100);
   });
+
+  it('includes level0_completed trophy and verifies completion against meta', async () => {
+    const { TROPHIES } = await import('../src/data/trophies');
+    const trophy = TROPHIES.find((t) => t.id === 'level0_completed');
+    expect(trophy).toBeDefined();
+    expect(trophy?.reward).toBeGreaterThan(0);
+    expect(trophy?.isMet({ completedLevels: { 0: true } })).toBe(true);
+    expect(trophy?.isMet({ completedLevels: {} })).toBe(false);
+  });
+
+  it('seeds storybook lighting and occluders from march landmarks', async () => {
+    const { seedLightingAndOccludersFromDecor } = await import('../src/game/storybookLighting');
+    const lights: any[] = [];
+    const shadows: any[] = [];
+    const occluders: any[] = [];
+    seedLightingAndOccludersFromDecor(MARCH_THAW_DECOR as any, lights, shadows, occluders);
+
+    // Church, village, shrine, mill should produce lights
+    expect(lights.length).toBeGreaterThanOrEqual(4);
+    // Church, village, shrine, mill, forest should produce occluders
+    expect(occluders.length).toBeGreaterThanOrEqual(5);
+  });
 });

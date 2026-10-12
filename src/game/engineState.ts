@@ -106,6 +106,7 @@ export interface EngineState {
     kegCooldown: number;
     floeExposure: number;
     beerPuddle: { x: number; y: number; time: number } | null;
+    forestAmbushCooldown: number;
   };
 }
 
@@ -208,6 +209,7 @@ export function createInitialEngineState(): EngineState {
       kegCooldown: 0,
       floeExposure: 0,
       beerPuddle: null,
+      forestAmbushCooldown: 0,
     },
   };
 }

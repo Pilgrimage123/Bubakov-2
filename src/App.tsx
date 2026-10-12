@@ -1090,7 +1090,12 @@ class DecorItem {
  */
 function seedArenaDecor(level: GameLevelDef): DecorItem[] {
   if (level.id === 0 && level.arena?.id === 'breznove_tani') {
-    return MARCH_THAW_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale));
+    const items: DecorItem[] = MARCH_THAW_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale));
+    items.push(new DecorItem(MARCH_THAW_POIS.tavern.x + 85, MARCH_THAW_POIS.tavern.y - 45, 'granny_stove', 1));
+    items.push(new DecorItem(MARCH_THAW_POIS.tavern.x - 40, MARCH_THAW_POIS.tavern.y + 65, 'kaca', 1));
+    items.push(new DecorItem(MARCH_THAW_POIS.pond.x + 60, MARCH_THAW_POIS.pond.y + 20, 'ice_floe', 1));
+    items.push(new DecorItem(MARCH_THAW_POIS.pond.x - 70, MARCH_THAW_POIS.pond.y - 30, 'ice_floe', 1));
+    return items;
   }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
@@ -1769,7 +1774,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const p = eng.player;
         if (eng.activeLevelId === 0 && p) {
           const thaw = eng.marchThaw;
-          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 25) && thaw.bellCooldown <= 0) {
+          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 30) && thaw.bellCooldown <= 0) {
             e.preventDefault();
             thaw.bellCooldown = 90;
             for (const enemy of eng.enemies) {
@@ -1785,7 +1790,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.bell();
             return;
           }
-          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 25) && thaw.kegCooldown <= 0) {
+          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 30) && thaw.kegCooldown <= 0) {
             e.preventDefault();
             thaw.kegCooldown = 16;
             const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
@@ -2247,7 +2252,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     seedLightingAndOccludersFromDecor(decor, engine.lightSources, engine.shadowZones, engine.occluders);
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
-    engine.spawnTimer = chosenLevelId === 1 ? 3.5 : 2.0;
+    engine.spawnTimer = (chosenLevelId === 1 || chosenLevelId === 0) ? 3.5 : 2.0;
 
     const canvas = canvasRef.current;
     if (canvas) {
@@ -2260,7 +2265,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     setGrandfatherPurchaseIds([]);
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
-    if (chosenLevelId === 1) {
+    if (chosenLevelId === 0) {
+      // Level 0: Předjaří – 2 rybniční žabky ve vzdálenosti na seznámení s pohybem a první zásah
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        engineRef.current.enemies.push(createEnemyInstance('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7));
+      }
+    } else if (chosenLevelId === 1) {
       // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
@@ -3274,6 +3285,41 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 warningBanner: curLvl.finalBoss.warning,
               }));
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
+            }
+
+            // VODNÍK JARNÍHO TÁNÍ BOSS DYNAMIC MECHANICS (LEVEL 0 - BŘEZNOVÁ POVODEŇ)
+            const hastrmanBoss = engine.enemies.find((e) => e.id === 'hastrman' && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned)) && !e.isDefeated);
+            if (hastrmanBoss && curLvl.id === 0) {
+              hastrmanBoss.floodTimer = (hastrmanBoss.floodTimer !== undefined ? hastrmanBoss.floodTimer : 15) - dt;
+              if (hastrmanBoss.floodTimer <= 0) {
+                hastrmanBoss.floodTimer = 15;
+                sound.splash();
+                engine.texts.push(new DamageText(hastrmanBoss.x, hastrmanBoss.y - 75, '🌊 BŘEZNOVÁ POVODEŇ!', '#38BDF8', true));
+                setRunStats((s) => ({ ...s, warningBanner: '🌊 BŘEZNOVÁ POVODEŇ! VODNÍK ZVEDÁ HLADINU A VOLÁ ŽÁBY!' }));
+                setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
+
+                // Summon 2 spring minions from the swollen river
+                for (let i = 0; i < 2; i++) {
+                  const ang = (i / 2) * Math.PI * 2 + Math.random() * 0.5;
+                  const mobId = Math.random() < 0.65 ? 'zaba' : 'vodnicek';
+                  engine.enemies.push(createEnemyInstance(mobId, hastrmanBoss.x + Math.cos(ang) * 95, hastrmanBoss.y + Math.sin(ang) * 95, 0.85));
+                }
+
+                // Water flood wave particles & surge
+                for (let i = 0; i < 24; i++) {
+                  const ang = (i / 24) * Math.PI * 2;
+                  const spd = 100 + Math.random() * 120;
+                  engine.particles.push({
+                    x: hastrmanBoss.x,
+                    y: hastrmanBoss.y,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    life: 0.8,
+                    color: i % 2 === 0 ? '#38BDF8' : '#BAE6FD',
+                    size: 5,
+                  });
+                }
+              }
             }
 
             // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 1)
@@ -4401,10 +4447,55 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               for (const enemy of engine.enemies) {
                 if (enemy.dead || enemy.isDefeated) continue;
                 if (isInsideMarchPoi(enemy.x, enemy.y, MARCH_THAW_POIS.mill, -35)) {
-                  enemy.takeDamage(46 * dt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35);
+                  enemy.takeDamage(46 * dt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35, { allowFractionalDamage: true });
                 }
                 if (Math.abs(enemy.y - ploughY) < 28 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 165) {
-                  enemy.takeDamage(32 * dt, 'physical', 210, 15);
+                  enemy.takeDamage(32 * dt, 'physical', 210, 15, { allowFractionalDamage: true });
+                }
+              }
+
+              // Hustý les: "Pozor na přepady z houštin"
+              if (isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.forest)) {
+                thaw.forestAmbushCooldown = (thaw.forestAmbushCooldown !== undefined ? thaw.forestAmbushCooldown : 10) - dt;
+                if (thaw.forestAmbushCooldown <= 0) {
+                  thaw.forestAmbushCooldown = 18;
+                  const ang1 = Math.random() * Math.PI * 2;
+                  const ang2 = ang1 + Math.PI * 0.7;
+                  engine.enemies.push(createEnemyInstance('mysak', player.x + Math.cos(ang1) * 240, player.y + Math.sin(ang1) * 240, 0.75));
+                  engine.enemies.push(createEnemyInstance('sotek', player.x + Math.cos(ang2) * 240, player.y + Math.sin(ang2) * 240, 0.75));
+                  engine.texts.push(new DamageText(player.x, player.y - 35, 'PŘEPAD Z HOUŠTIN! 🌲🐾', '#84CC16', true));
+                }
+              }
+
+              // Interaktivní vesnické objekty: Babiččina kamna a dřevěná Káča
+              for (const dec of engine.decor) {
+                dec.animTime = (dec.animTime || 0) + dt;
+                if (dec.type === 'kaca') {
+                  const distP = Math.hypot(player.x - dec.x, player.y - dec.y);
+                  if (distP < player.radius + dec.radius) {
+                    const dx = dec.x - player.x || 1;
+                    const dy = dec.y - player.y || 0;
+                    const len = Math.hypot(dx, dy) || 1;
+                    dec.vx = (dx / len) * 250;
+                    dec.vy = (dy / len) * 250;
+                  }
+                  dec.x += (dec.vx || 0) * dt;
+                  dec.y += (dec.vy || 0) * dt;
+                  dec.vx = (dec.vx || 0) * Math.max(0, 1 - 2.5 * dt);
+                  dec.vy = (dec.vy || 0) * Math.max(0, 1 - 2.5 * dt);
+                  if (Math.hypot(dec.vx, dec.vy) > 40) {
+                    for (const enemy of engine.enemies) {
+                      if (!enemy.dead && !enemy.isDefeated && Math.hypot(enemy.x - dec.x, enemy.y - dec.y) < enemy.radius + dec.radius) {
+                        enemy.takeDamage(24, 'physical', dec.vx * 1.5, dec.vy * 1.5);
+                        dec.vx *= -0.5;
+                        dec.vy *= -0.5;
+                      }
+                    }
+                  }
+                } else if (dec.type === 'granny_stove') {
+                  if (Math.hypot(player.x - dec.x, player.y - dec.y) < player.radius + dec.radius + 20) {
+                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt);
+                  }
                 }
               }
 
@@ -6261,9 +6352,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       resolvedId = fallbackMap[id] || ((engineRef.current?.activeLevelId ?? 1) === 2 ? 'skeleton' : 'rarach');
       stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
+    const isLevel0 = (engineRef.current?.activeLevelId ?? 0) === 0;
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = Math.max(finalHp, 1400);
+      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
     }
     const renderScale = isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
     const radius = isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
@@ -6275,12 +6367,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * 1.35) : stats.damage;
+    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     let enemyDamage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
-    const isLevel1 = (engineRef.current.activeLevelId || 1) === 1;
+    const isLevel1 = (engineRef.current?.activeLevelId ?? 1) === 1;
     let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
     if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
@@ -6963,7 +7055,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // 6. KOSTLIVEC S KOSOU (skeleton_scythe) - Seknutí kosou & vlnový oblouk
         else if (this.id === 'skeleton_scythe') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -7012,7 +7104,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // 7. PANSKÝ PÍSAŘ PO SMRTI (pisar) - Ranged kiting & vrh lahviček s inkoustem
         else if (this.id === 'pisar') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -7075,7 +7167,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // 8. PROKLETÝ HROBNÍK (hrobnik) - Vrhání hrobové hlíny
         else if (this.id === 'hrobnik') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -7225,9 +7317,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // 11. BAHENNÍ VODNÍČEK (vodnicek) - Hází mazlavé leknínové bahno (v 1. úrovni nestřílí!)
+        // 11. BAHENNÍ VODNÍČEK (vodnicek) - Hází mazlavé leknínové bahno (v úvodních úrovních nestřílí!)
         else if (this.id === 'vodnicek') {
-          const isLvl1 = (engineRef.current.activeLevelId || 1) === 1;
+          const isIntroLvl = (engineRef.current.activeLevelId ?? 1) <= 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -7235,7 +7327,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               this.aiState = 'idle';
               this.specialCd = 3.4 * specialCdMult;
               sound.splash();
-              if (!isLvl1 || this.isBoss) {
+              if (!isIntroLvl || this.isBoss) {
                 engineRef.current.projectiles.push({
                   x: this.x,
                   y: this.y,
@@ -7255,7 +7347,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   dead: false,
                 });
               } else {
-                // V 1. levelu střílí jen bossové – vodníček pouze šplíchne zblízka
+                // V úvodních úrovních střílí jen bossové – vodníček pouze šplíchne zblízka
                 if (distToPlayer < 70) {
                   player.takeDamage(Math.round(this.damage * 0.65), 'nature', this, true);
                   engineRef.current.texts.push(new DamageText(player.x, player.y - 45, 'ŠPLÍCH! 💧', '#38BDF8', true));
@@ -7263,7 +7355,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
           } else {
-            if (!isLvl1 || this.isBoss) {
+            if (!isIntroLvl || this.isBoss) {
               if (this.specialCd <= 0 && distToPlayer < 290) {
                 this.aiState = 'windup';
                 this.aiTimer = 0.35 * windupMult;
@@ -9480,7 +9572,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const isUnlocked = prog?.isUnlocked ?? false;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
-                    (lvlId === 0 && (meta.bestiaryKills?.hastrman || 0) >= 1) ||
                     (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
                     (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||

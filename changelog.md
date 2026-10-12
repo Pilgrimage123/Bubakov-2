@@ -1,3 +1,17 @@
+## 2026-10-12 — Opravy a sjednocení arény Březnové tání (úroveň 0)
+
+- Opraveno škálování začátečnického minibosse v reálném běhu hry: `createEnemyInstance` v `App.tsx` nově respektuje strop 220 HP a mírný násobič zranění pro úroveň 0 namísto chybného 1400 HP bloatu.
+- Doplněna chybějící úvodní vlna v čase 0 s (2 rybniční žabky) a mírnější 3,5s počáteční spawn timer při spuštění úrovně 0 z uživatelského rozhraní.
+- Zaveden parametr `allowFractionalDamage: true` u environmentálního poškození v mlýně a na poli, čímž bylo odstraněno zaokrouhlování na 1 dmg/snímek a závislost na snímkové frekvenci monitoru.
+- Opraveno vyhodnocení aktivní úrovně (`activeLevelId ?? 1` namísto falsy `|| 1`), aby úroveň 0 nebyla mylně považována za úroveň 1.
+- Z podmínky dokončení úrovně ve výběru výprav odstraněna falešná závislost na `meta.bestiaryKills.hastrman`, která označovala úroveň 0 jako pokořenou po porážce mid-bosse v úrovni 1.
+- Opravena podmínka spuštění rituálu Bubácké díry v Režisérovi výpravy (`director.ts`), aby se anomálie mohla v okně 40–85 s řádně objevit, pokud v aréně aktivně nebojuje živý boss.
+- Do herní smyčky zapojena bossova dynamická mechanika „Březnová povodeň“ s 15s periodou a vyvoláním žabích posil ze zvednuté řeky.
+- Do arény umístěny chybějící interaktivní objekty: Babiččina kamna s léčením, rotující dřevěná Káča odrážející nepřátele a plovoucí kry u rybníka.
+- V POI Hustý les implementováno přepadení z houštin (myšák a šotek) v souladu s textem nápovědy.
+- Rozšířeno dynamické nasvícení Storybook Lighting o okna, světla a okluzory všech orientačních bodů Březnového tání (`march_*`).
+- Sjednocen interakční dosah klávesy [E] u kostela a hospody na 30 px a přidána nová trofej `level0_completed` (První krůčky v předjaří) v češtině i angličtině.
+
 ## 2026-10-12 — Oprava konzistence názvu úrovně 0
 
 - Sjednocen krátký název úrovně 0 v metadatech odemykání a v prvním milníku s kanonickým názvem `Březnové tání` z `GAME_LEVELS[0]`.

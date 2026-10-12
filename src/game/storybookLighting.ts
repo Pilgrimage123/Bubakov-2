@@ -703,6 +703,82 @@ export function seedLightingAndOccludersFromDecor(
         width: 60 * (d.scale || 1),
         height: 50 * (d.scale || 1),
       });
+    } else if (d.type === 'march_church') {
+      lightSources.push({
+        id: `march_church_win_${i}`,
+        x: d.x + 35,
+        y: d.y - 76,
+        radius: 155,
+        color: '#FEF08A',
+        type: 'window',
+      });
+      occluders.push({
+        id: `march_church_occ_${i}`,
+        x: d.x,
+        y: d.y - 20,
+        width: 140 * (d.scale || 1),
+        height: 90 * (d.scale || 1),
+      });
+    } else if (d.type === 'march_village') {
+      lightSources.push({
+        id: `march_village_win_${i}`,
+        x: d.x + 8,
+        y: d.y - 14,
+        radius: 145,
+        color: '#FEF08A',
+        type: 'window',
+      });
+      shadowZones.push({
+        id: `march_village_shadow_${i}`,
+        x: d.x + 20,
+        y: d.y + 20,
+        radius: 85,
+      });
+      occluders.push({
+        id: `march_village_occ_${i}`,
+        x: d.x,
+        y: d.y,
+        width: 130 * (d.scale || 1),
+        height: 60 * (d.scale || 1),
+      });
+    } else if (d.type === 'march_shrine') {
+      lightSources.push({
+        id: `march_shrine_light_${i}`,
+        x: d.x,
+        y: d.y - 45,
+        radius: 120,
+        color: '#FEF08A',
+        type: 'bozi_muka',
+      });
+      occluders.push({
+        id: `march_shrine_occ_${i}`,
+        x: d.x,
+        y: d.y - 20,
+        radius: 16 * (d.scale || 1),
+      });
+    } else if (d.type === 'march_mill') {
+      lightSources.push({
+        id: `march_mill_win_${i}`,
+        x: d.x - 18,
+        y: d.y - 17,
+        radius: 130,
+        color: '#FEF08A',
+        type: 'window',
+      });
+      occluders.push({
+        id: `march_mill_occ_${i}`,
+        x: d.x,
+        y: d.y,
+        width: 100 * (d.scale || 1),
+        height: 60 * (d.scale || 1),
+      });
+    } else if (d.type === 'march_forest') {
+      occluders.push({
+        id: `march_forest_occ_${i}`,
+        x: d.x,
+        y: d.y,
+        radius: 60 * (d.scale || 1),
+      });
     }
   }
 }

@@ -725,7 +725,7 @@ export class GameEngine {
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : stats.coinValue || 1;
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
-    const isLevel1 = (this.state.activeLevelId || 1) === 1;
+    const isLevel1 = (this.state.activeLevelId ?? 1) === 1;
     let finalSpeed = isMiniboss ? Math.max(enemySpeed * 0.95, 68) : enemySpeed;
     if (resolvedId === 'polednice' && isLevel1) {
       finalSpeed = Math.round(finalSpeed * 0.85);

@@ -664,6 +664,8 @@ export const en: Record<string, string> = {
   "trophy.obr_slain.desc": "Face and fell the mythic Sázava Rock Giant in battle.",
   "trophy.lightning_strike.title": "⚡ Storm Witness",
   "trophy.lightning_strike.desc": "Survive a nighttime lightning strike in the open meadow.",
+  "trophy.level0_completed.title": "🌱 Early Spring Steps",
+  "trophy.level0_completed.desc": "Complete the tutorial prologue: drive away the thawing water goblin or survive the night in Early Spring.",
   "trophy.level1_completed.title": "🍂 Peace by Duckweed Pond",
   "trophy.level1_completed.desc": "Complete Level 1: Village Green and Duckweed Pond.",
   "trophy.level2_completed.title": "🌲 Calm over Graveyard",
