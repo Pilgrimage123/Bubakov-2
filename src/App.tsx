@@ -7780,7 +7780,7 @@ export default function App() {
         } else {
           const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
           let mult = this.getDamageTakenMultiplier();
-          if (type === 'mask') mult = Math.max(0, Math.min(1, typeof this.willpower === 'number' ? this.willpower : 1));
+          if (type === 'mask') mult = Math.max(0, 1 - Math.max(0, Math.min(1, typeof this.willpower === 'number' ? this.willpower : 0)));
           if (ignore > 0 && mult < 1.0) {
             mult = mult + (1.0 - mult) * ignore;
           }
