@@ -6100,6 +6100,7 @@ export default function App() {
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
         if (this.fajfkaSlowTimer > 0) this.fajfkaSlowTimer -= dt;
         if (this.fajfkaSlowTimer <= 0) { this.fajfkaMoveSlowFactor = 1; this.fajfkaAttackSlowFactor = 1; }
+        if ((this.fajfkaSlowTimer || 0) > 0 && this.strikeTimer > 0) this.strikeTimer += dt * ((1 / Math.max(0.1, this.fajfkaAttackSlowFactor || 0.65)) - 1);
         if (this.silhouetteInvertTimer > 0) this.silhouetteInvertTimer -= dt;
 
         // Pekelný: Stopa žhavých uhlíků a plamínků
