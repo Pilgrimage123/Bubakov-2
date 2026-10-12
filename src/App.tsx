@@ -4930,12 +4930,30 @@ export default function App() {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
                   const potionHeal = 30 * (1 + waterLevel * 0.20);
-                  player.hp = Math.min(player.maxHp, player.hp + potionHeal);
+                  const potionEffectiveHeal = potionHeal * (1 + (((player as any).bearMaskHealBonus) || 0));
+                  const potionOverheal = Math.max(0, potionEffectiveHeal - Math.max(0, player.maxHp - player.hp));
+                  player.hp = Math.min(player.maxHp, player.hp + potionEffectiveHeal);
+                  if ((player as any).bearMaskLevel > 0 && potionOverheal > 0) {
+                    const maskDamage = potionOverheal * 0.5 * (1 + (((player as any).bearMaskLevel - 1) * 0.2)) * (player.damageMultiplier || 1);
+                    for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
+                      if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
+                      enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
+                    }
+                  }
                   player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
                   engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
-                  player.hp = Math.min(player.maxHp, player.hp + 15);
+                  const healDropAmount = 15 * (1 + (((player as any).bearMaskHealBonus) || 0));
+                  const healDropOverheal = Math.max(0, healDropAmount - Math.max(0, player.maxHp - player.hp));
+                  player.hp = Math.min(player.maxHp, player.hp + healDropAmount);
+                  if ((player as any).bearMaskLevel > 0 && healDropOverheal > 0) {
+                    const maskDamage = healDropOverheal * 0.5 * (1 + (((player as any).bearMaskLevel - 1) * 0.2)) * (player.damageMultiplier || 1);
+                    for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
+                      if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
+                      enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
+                    }
+                  }
                   engine.texts.push(new DamageText(player.x, player.y - 40, '+15 Kuráž 🍐', '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
