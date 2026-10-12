@@ -4214,19 +4214,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
         if (heals.length > 0) {
           for (const heal of heals) {
-            const effectiveHeal = heal.amount * (1 + (mask.bearMaskHealBonus || 0));
-            const missingHp = Math.max(0, player.maxHp - player.hp);
-            const overhealAmount = Math.max(0, effectiveHeal - missingHp);
-            player.hp = Math.min(player.maxHp, player.hp + effectiveHeal);
+            applyBearMaskOverheal(player, heal.amount);
             if (heal.timer === 'regenTimer') player.regenTimer = 0;
             if (heal.timer === 'herbTimer') player.herbTimer = 0;
-            if (overhealAmount > 0) {
-              const damage = overhealAmount * 0.5 * (1 + (mask.bearMaskLevel - 1) * 0.2) * (player.damageMultiplier || 1);
-              for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
-                if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - player.x, enemy.y - player.y) > 230 + (enemy.radius || 0)) continue;
-                enemy.takeDamage(damage, 'mask', 0, 0, { allowFractionalDamage: true });
-              }
-            }
             engine.texts.push(new DamageText(player.x, player.y - 40, '+' + heal.amount + ' 🌿', COLORS.green));
           }
         }
