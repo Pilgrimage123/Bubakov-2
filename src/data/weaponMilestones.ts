@@ -107,7 +107,7 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
   },
   povidlove_buchty: {
     3: [
-      makeChoice('buns_crowd_3', 'Povidlová nadílka', 'Víc buchet v salvě omámí mlsající bubáky na delší dobu.', 'bun_scatter', 'buns_eat', { projectileCountDelta: 1, statusDurationSec: 2.2 }),
+      makeChoice('buns_crowd_3', 'Povidlová vůně', 'Oblak povidlové vůně má o 40 % větší poloměr i trvání.', 'plum_scent', 'buns_eat', { projectileCountDelta: 1, statusDurationSec: 2.2, specialMechanicFlag: 'plum_scent_plus' }),
       makeChoice('buns_burst_3', 'Cukrové sypání', 'Čerstvě upečené buchty s pořádnou vrstvou cukru mají vyšší sílu a rychlejší pečení.', 'sugar_dust', 'buns_eat', { baseDamageMult: 1.18, cooldownMult: 0.95 }),
     ],
     5: [
