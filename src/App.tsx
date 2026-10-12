@@ -6304,7 +6304,7 @@ export default function App() {
         this.panicked = this.panicTimer > 0;
 
         const shadowMods = getShadowDefenseMultipliers(this);
-        let spd = this.speed * this.getMovementSpeedMultiplier() * shadowMods.speedMult * (this.garlicSlowTimer > 0 ? 0.85 : 1);
+        let spd = this.speed * this.getMovementSpeedMultiplier() * shadowMods.speedMult * (this.garlicSlowTimer > 0 ? 0.85 : 1) * ((this.fajfkaSlowTimer || 0) > 0 ? (this.fajfkaMoveSlowFactor || 0.65) : 1);
         if (this.bludickaAttracted) spd *= 1.15;
         if (player._valecniceSlowRadius && player._valecniceSlowRadius > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
