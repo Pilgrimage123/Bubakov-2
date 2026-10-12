@@ -4931,9 +4931,9 @@ export default function App() {
               puff.update(dt);
               if (puff.kind === 'plum-scent' || puff.kind === 'fajfka') {
                 puff.damageAccumulator = (puff.damageAccumulator || 0) + dt;
-                if (puff.damageAccumulator >= 0.25) {
-                  const tick = puff.damageAccumulator;
-                  puff.damageAccumulator = 0;
+                while (puff.damageAccumulator >= 0.25) {
+                  const tick = 0.25;
+                  puff.damageAccumulator -= 0.25;
                   const targets = enemySpatialHashRef.current.queryCircle(puff.x, puff.y, puff.radius + 60);
                   for (const enemy of targets) {
                     if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - puff.x, enemy.y - puff.y) > puff.radius + (enemy.radius || 0)) continue;
