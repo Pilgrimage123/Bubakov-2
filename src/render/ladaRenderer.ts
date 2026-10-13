@@ -3134,6 +3134,218 @@ var Lada = {
 		ctx.restore();
 		ctx.restore();
 	},
+	drawMorana(ctx, x, y, time, vx, panicked, attackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const bob = Math.sin(time * (panicked ? 16 : 7)) * (panicked ? 5 : 2);
+		const sway = Math.sin(time * 3.2) * (panicked ? 12 : 7);
+		const gust = Math.sin(time * 8) * 7;
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir, 1);
+
+		// Straw legs and tied ankles.
+		this.drawLimb(ctx, -8, 15, -12, 34, '#8B6B36', 7);
+		this.drawLimb(ctx, 8, 15, 12, 34, '#8B6B36', 7);
+		ctx.strokeStyle = '#D6B66B';
+		ctx.lineWidth = 2;
+		for (let i = 0; i < 5; i++) {
+			const yy = 23 + i * 2;
+			ctx.beginPath();
+			ctx.moveTo(-15, yy);
+			ctx.lineTo(-7, yy + 2);
+			ctx.moveTo(7, yy + 2);
+			ctx.lineTo(15, yy);
+			ctx.stroke();
+		}
+
+		// Ragged dark winter skirt and embroidered apron.
+		this.setupPath(ctx, '#29252C', COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.moveTo(-13, -3);
+		ctx.lineTo(12, -3);
+		ctx.quadraticCurveTo(20, 15, 31 + sway * .25, 28);
+		ctx.lineTo(16, 35);
+		ctx.lineTo(4, 29);
+		ctx.lineTo(-3, 36);
+		ctx.lineTo(-17, 29);
+		ctx.quadraticCurveTo(-29, 15, -13, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, '#E8DDC5', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-7, 3);
+		ctx.lineTo(7, 3);
+		ctx.lineTo(16, 27);
+		ctx.lineTo(0, 32);
+		ctx.lineTo(-15, 26);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		const flowers = ['#E87855', '#7CA5A5', '#E6B94D'];
+		for (let i = 0; i < 6; i++) {
+			const fx = -9 + (i % 3) * 8;
+			const fy = 12 + Math.floor(i / 3) * 8;
+			ctx.fillStyle = flowers[i % flowers.length];
+			ctx.beginPath();
+			ctx.arc(fx, fy, 2.1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = .8;
+			ctx.stroke();
+		}
+
+		// Straw torso, arms and splayed fingers.
+		this.setupPath(ctx, '#7C6845', COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-16, -24);
+		ctx.lineTo(-12, 1);
+		ctx.lineTo(12, 1);
+		ctx.lineTo(16, -24);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#BDA06A';
+		ctx.lineWidth = 10;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		ctx.moveTo(-9, -18);
+		ctx.lineTo(-40 - sway * .2, -22 + gust * .12);
+		ctx.moveTo(9, -18);
+		ctx.lineTo(40 + sway * .2, -22 - gust * .12);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-9, -18);
+		ctx.lineTo(-40 - sway * .2, -22 + gust * .12);
+		ctx.moveTo(9, -18);
+		ctx.lineTo(40 + sway * .2, -22 - gust * .12);
+		ctx.stroke();
+		ctx.strokeStyle = '#94723F';
+		ctx.lineWidth = 2.4;
+		for (let i = 0; i < 5; i++) {
+			const yy = -29 + i * 4;
+			ctx.beginPath();
+			ctx.moveTo(-34, yy);
+			ctx.lineTo(-47 - (i % 2) * 4, yy - 7 + gust * .15);
+			ctx.moveTo(34, yy);
+			ctx.lineTo(47 + (i % 2) * 4, yy - 7 - gust * .15);
+			ctx.stroke();
+		}
+
+		// Frozen sleeves and cord ties.
+		ctx.strokeStyle = '#D8E0E5';
+		ctx.lineWidth = 7;
+		ctx.beginPath();
+		ctx.moveTo(-19, -20);
+		ctx.lineTo(-25, -21);
+		ctx.moveTo(19, -20);
+		ctx.lineTo(25, -21);
+		ctx.stroke();
+		ctx.strokeStyle = '#A75B4A';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-25, -25);
+		ctx.lineTo(-24, -15);
+		ctx.moveTo(25, -25);
+		ctx.lineTo(24, -15);
+		ctx.stroke();
+
+		// Speckled hood and a grim sack-mask face.
+		this.setupPath(ctx, '#302831', COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.moveTo(-19, -23);
+		ctx.quadraticCurveTo(-18, -42, -1, -47);
+		ctx.quadraticCurveTo(16, -47, 20, -29);
+		ctx.lineTo(16, -11);
+		ctx.quadraticCurveTo(0, -2, -15, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#6D604E';
+		ctx.beginPath();
+		ctx.ellipse(1, -25, 13, 16, -.08, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		for (let i = 0; i < 24; i++) {
+			const hx = -15 + ((i * 7) % 29);
+			const hy = -44 + ((i * 11) % 28);
+			ctx.fillStyle = i % 3 === 0 ? '#C88762' : i % 3 === 1 ? '#D1B577' : '#7CA5A5';
+			ctx.beginPath();
+			ctx.arc(hx, hy, i % 4 === 0 ? 1.5 : 1, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(-8, -30);
+		ctx.lineTo(-3, -26);
+		ctx.moveTo(4, -26);
+		ctx.lineTo(9, -30);
+		ctx.stroke();
+		ctx.fillStyle = '#111827';
+		ctx.beginPath();
+		ctx.ellipse(-6, -29, 2.8, 3.5, -.2, 0, Math.PI * 2);
+		ctx.ellipse(7, -29, 2.8, 3.5, .2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#E5E7EB';
+		ctx.beginPath();
+		ctx.moveTo(0, -25);
+		ctx.lineTo(-3.5, -18);
+		ctx.lineTo(3.5, -18);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#1F2937';
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(-8, -16);
+		ctx.lineTo(-5, -12);
+		ctx.lineTo(-2, -15);
+		ctx.lineTo(1, -11);
+		ctx.lineTo(4, -15);
+		ctx.lineTo(8, -12);
+		ctx.stroke();
+
+		// Bone-white scarf flaps like a pennant in the winter gust.
+		this.setupPath(ctx, '#E5EDF2', COLORS.water, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-13, -39);
+		ctx.quadraticCurveTo(-27 - gust, -43, -35 - gust * 1.4, -33);
+		ctx.quadraticCurveTo(-24 - gust, -27, -12, -32);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Pale blue wind spirals and sparkling snow around the effigy.
+		ctx.save();
+		ctx.strokeStyle = 'rgba(191, 219, 254, 0.8)';
+		ctx.lineWidth = 2.4;
+		for (let i = 0; i < 3; i++) {
+			const radius = 28 + i * 7;
+			const start = time * (panicked ? 2.8 : 1.6) + i * 2.1;
+			ctx.beginPath();
+			ctx.ellipse(Math.sin(start) * 3, 0, radius, 14 + i * 3, start * .3, start, start + Math.PI * 1.45);
+			ctx.stroke();
+		}
+		for (let i = 0; i < 6; i++) {
+			const angle = time * 1.8 + i * Math.PI / 3;
+			const sx = Math.cos(angle) * 43;
+			const sy = -18 + Math.sin(angle) * 32;
+			ctx.strokeStyle = '#DBF4FF';
+			ctx.beginPath();
+			ctx.moveTo(sx - 3, sy);
+			ctx.lineTo(sx + 3, sy);
+			ctx.moveTo(sx, sy - 3);
+			ctx.lineTo(sx, sy + 3);
+			ctx.stroke();
+		}
+		ctx.restore();
+		ctx.restore();
+	},
 	drawKlekanice(ctx, x, y, time, vx, panicked) {
 		const dir = vx < 0 ? -1 : 1;
 		const bob = Math.abs(Math.sin(time * (panicked ? 22 : 10))) * 3.5;
