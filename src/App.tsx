@@ -1712,10 +1712,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const lastHunterTypeRef = useRef<CharacterType>('wanderer' as CharacterType);
 
   useEffect(() => {
-    if (gameState !== 'tally') {
-      setReturnBonus(null);
-      return;
-    }
+    if (gameState !== 'tally') { setReturnBonus(null); return; }
     const roll = Math.random();
     const multiplier = roll < 0.005 ? 6 : roll < 0.015 ? 5 : roll < 0.04 ? 4 : roll < 0.12 ? 3 : roll < 0.32 ? 2 : 1;
     const kinds: ReturnBonus['kind'][] = ['damage', 'courage', 'coins'];
@@ -1729,10 +1726,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const timer = window.setInterval(() => {
       const remaining = Math.max(0, Math.ceil((returnBonusDeadlineRef.current - Date.now()) / 1000));
       setReturnBonusSeconds(remaining);
-      if (remaining <= 0) {
-        setReturnBonusExpired(true);
-        window.clearInterval(timer);
-      }
+      if (remaining <= 0) { setReturnBonusExpired(true); window.clearInterval(timer); }
     }, 100);
     return () => window.clearInterval(timer);
   }, [gameState]);
@@ -2399,21 +2393,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     };
 
 
-    // Apply the claimed one-shot reward only after level/hunter validation succeeds.
-    // Test/sandbox runs neither consume nor apply a pending reward.
+    // Apply the claimed reward only after unlock validation succeeds.
+    // Sandbox/test runs neither consume nor apply a pending reward.
     const earnedReturnBonus = isTestMode ? null : pendingReturnBonusRef.current;
     activeRunBonusRef.current = earnedReturnBonus;
     if (!isTestMode) pendingReturnBonusRef.current = null;
     if (earnedReturnBonus) {
       const factor = 1 + (earnedReturnBonus.percent * earnedReturnBonus.multiplier) / 100;
-      if (earnedReturnBonus.kind === 'damage') {
-        player.damageMultiplier *= factor;
-      } else if (earnedReturnBonus.kind === 'courage') {
+      if (earnedReturnBonus.kind === 'damage') player.damageMultiplier *= factor;
+      else if (earnedReturnBonus.kind === 'courage') {
         const extraHp = Math.round(player.maxHp * (factor - 1));
         player.maxHp += extraHp;
         player.hp += extraHp;
       }
-      // Krejcar bonus is applied once, when final tally statistics are created.
+      // Coin bonus is applied once when final tally statistics are created.
     }
 
     // Seed a readable, combat-friendly composition instead of filling the
@@ -11549,30 +11542,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   {!returnBonusExpired && returnBonusSeconds > 0 && !returnBonusClaimedRef.current ? (
                     <>
                       <div className="return-bonus-orb" aria-live="polite">
-                        <span className="return-bonus-slogan">
-                          {returnBonus.multiplier >= 4 ? 'NEBUDE SE OPAKOVAT!' : returnBonus.multiplier >= 2 ? 'POJĎ NA TO!' : 'ŠTĚSTÍ PŘEJE ODVÁŽNÝM!'}
-                        </span>
+                        <span className="return-bonus-slogan">{returnBonus.multiplier >= 4 ? 'NEBUDE SE OPAKOVAT!' : returnBonus.multiplier >= 2 ? 'POJĎ NA TO!' : 'ŠTĚSTÍ PŘEJE ODVÁŽNÝM!'}</span>
                         <span className="return-bonus-emoji">{returnBonus.kind === 'damage' ? '⚔️' : returnBonus.kind === 'courage' ? '❤️' : '🪙'}</span>
                         <strong>+{returnBonus.percent * returnBonus.multiplier}%</strong>
                         <span>{returnBonus.kind === 'damage' ? 'POŠKOZENÍ' : returnBonus.kind === 'courage' ? 'KURÁŽ' : 'KREJCARŮ'}{returnBonus.multiplier > 1 ? ` · ${returnBonus.multiplier}×` : ''}</span>
                       </div>
                       <div className="return-bonus-countdown">Z PEKLA SMŮLA ZA <strong>{returnBonusSeconds}</strong> SEKUND!</div>
                       <button className="lada-btn return-to-field-btn" onClick={() => {
-                        if (returnBonusClaimedRef.current || returnBonusExpired || Date.now() >= returnBonusDeadlineRef.current) {
-                          setReturnBonusExpired(true);
-                          return;
-                        }
+                        if (returnBonusClaimedRef.current || returnBonusExpired || Date.now() >= returnBonusDeadlineRef.current) { setReturnBonusExpired(true); return; }
                         returnBonusClaimedRef.current = true;
                         pendingReturnBonusRef.current = returnBonus;
                         sound.coin();
                         startGame(lastHunterTypeRef.current, tallyCounters.levelId);
-                      }}>
-                        ⚔️ Zpátky na plac
-                      </button>
+                      }}>⚔️ Zpátky na plac</button>
                     </>
-                  ) : (
-                    <div className="return-bonus-expired">💨 Z PEKLA SMŮLA!! Bonus uletěl.</div>
-                  )}
+                  ) : <div className="return-bonus-expired">💨 Z PEKLA SMŮLA!! Bonus uletěl.</div>}
                 </div>
               )}
             <div className="tally-actions-row" style={{ marginTop: '20px' }}>
