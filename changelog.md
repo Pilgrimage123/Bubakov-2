@@ -1,3 +1,10 @@
+## 2026-10-13 — Mobilní usnadnění obtížnosti
+
+- Přidán posuvník „Mobilní usnadnění“ do pauzy hry (úrovně 1–10, výchozí úroveň 5) s uložením do localStorage.
+- Každá úroveň snižuje rychlost pohybu a rychlost útoků nepřátel o 2 % a jejich poškození o 3 %, včetně nepřátel s prefixem, minibossů a bossů.
+- Dosah sběru se zvětšuje o 5 % za úroveň a hitbox lovce se zmenšuje o 5 % za úroveň. Účinky jsou ve výchozím stavu aktivní na dotykových zařízeních; přepínač dovoluje aktivaci i na ostatních zařízeních.
+- Opraven přepočet kadence, aby se výchozí doba nápřahu nezpomalovala dvakrát, a změna dosahu sběru nyní zachovává bonusy z magnetických vylepšení.
+
 ## 2026-10-13 — Začlenění přívlastků do taktických formací a balanc bleskového odrazu
 
 - **Přívlastky u velitelů formací**: Na dynamické obtížnosti >= 3.5 Režisér výpravy přiřazuje velitelům taktických formací (Klešťové sevření, Kladivo a kovadlina, Drtivý přepad) tematické bojové přívlastky.

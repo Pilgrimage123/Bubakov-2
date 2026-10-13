@@ -1303,6 +1303,56 @@ export default function App() {
     }
   });
 
+  // Mobile accessibility settings persist across runs; effects default to touch devices.
+  const [mobileAccessibilityLevel, setMobileAccessibilityLevel] = useState(() => {
+    try {
+      const saved = Number(window.localStorage.getItem('bubakov_mobile_accessibility_level'));
+      return Number.isInteger(saved) && saved >= 1 && saved <= 10 ? saved : 5;
+    } catch { return 5; }
+  });
+  const [mobileAccessibilityAllDevices, setMobileAccessibilityAllDevices] = useState(() => {
+    try { return window.localStorage.getItem('bubakov_mobile_accessibility_all_devices') === 'true'; }
+    catch { return false; }
+  });
+  const isTouchScreen = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  const mobileAccessibilityEnabled = isTouchScreen || mobileAccessibilityAllDevices;
+  const mobileAccessibilityScale = mobileAccessibilityEnabled ? mobileAccessibilityLevel : 0;
+  const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
+  mobileAccessibilityLevelRef.current = mobileAccessibilityScale;
+
+  // Apply the slider to a live hunter without compounding the pickup range modifier.
+  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
+    if (!player) return;
+    const safeLevel = Math.max(0, Math.min(10, Math.round(level)));
+    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - safeLevel * 0.05);
+    player.accessibilityBasePickupRadius ??= player.pickupRadius / (1 + (player.accessibilityAppliedLevel || 0) * 0.05);
+    player.pickupRadius = player.accessibilityBasePickupRadius * (1 + safeLevel * 0.05);
+    player.accessibilityAppliedLevel = safeLevel;
+  };
+
+  const updateMobileAccessibilityLevel = (level: number) => {
+    const next = Math.max(1, Math.min(10, Math.round(level)));
+    setMobileAccessibilityLevel(next);
+    const effectiveLevel = (isTouchScreen || mobileAccessibilityAllDevices) ? next : 0;
+    mobileAccessibilityLevelRef.current = effectiveLevel;
+    try { window.localStorage.setItem('bubakov_mobile_accessibility_level', String(next)); } catch {}
+    const player = engineRef.current?.player;
+    if (player) {
+      applyMobileAccessibilityToPlayer(player, effectiveLevel);
+    }
+  };
+
+  const updateMobileAccessibilityAllDevices = (enabled: boolean) => {
+    setMobileAccessibilityAllDevices(enabled);
+    const effectiveLevel = (isTouchScreen || enabled) ? mobileAccessibilityLevel : 0;
+    mobileAccessibilityLevelRef.current = effectiveLevel;
+    try { window.localStorage.setItem('bubakov_mobile_accessibility_all_devices', String(enabled)); } catch {}
+    const player = engineRef.current?.player;
+    if (player) {
+      applyMobileAccessibilityToPlayer(player, effectiveLevel);
+    }
+  };
+
   const touchMoveRef = useRef<{ x: number; y: number; active: boolean; intensity: number }>({
     x: 0,
     y: 0,
@@ -1364,7 +1414,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.speedCount = (p.speedCount || 0) + 1;
     }
     if (effect.type === 'pickup_radius') {
-      p.pickupRadius += effect.amount;
+      const appliedAccessibilityLevel = Math.max(0, Math.min(10, p.accessibilityAppliedLevel || 0));
+      p.accessibilityBasePickupRadius ??= p.pickupRadius / (1 + appliedAccessibilityLevel * 0.05);
+      p.accessibilityBasePickupRadius += effect.amount;
+      p.pickupRadius = p.accessibilityBasePickupRadius * (1 + appliedAccessibilityLevel * 0.05);
       p.magnetCount = (p.magnetCount || 0) + 1;
     }
     if (effect.type === 'damage_multiplier') {
@@ -1978,12 +2031,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const player = {
       x: 0,
       y: 0,
-      radius: 20,
+      radius: 20 * (1 - mobileAccessibilityScale * 0.05),
+      accessibilityBaseRadius: 20,
       type,
       maxHp: baseMaxHp + wallBonusHp,
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
-      pickupRadius: basePickup + scarecrowBonusPickup,
+      pickupRadius: (basePickup + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
+      accessibilityBasePickupRadius: basePickup + scarecrowBonusPickup,
+      accessibilityAppliedLevel: mobileAccessibilityScale,
       luck: 0,
       weapons: initialWeapons,
       _firingWeapon: null as any,
@@ -6748,11 +6804,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : (radius / 15);
+    // Accessibility modifiers apply after enemy prefixes, including elites and bosses.
+    const accessibilityLevel = mobileAccessibilityLevelRef.current;
+    const accessibilityAttackMultiplier = 1 - accessibilityLevel * 0.02;
+    if (accessibilityLevel > 0) {
+      enemySpeed *= accessibilityAttackMultiplier;
+      enemyDamage = Math.max(1, Math.round(enemyDamage * (1 - accessibilityLevel * 0.03)));
+      attackInterval /= accessibilityAttackMultiplier;
+    }
+
     const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
     const computedWindupDelay = Math.max(0.2, attackInterval - strikeDuration);
     let attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
     if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier && typeof stats.attackDelay === 'number') {
       attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
+    }
+    // Computed windup delay already uses the reduced attack interval; avoid scaling it twice.
+    if (accessibilityLevel > 0 && typeof stats.attackDelay === 'number') {
+      attackDelay /= accessibilityAttackMultiplier;
     }
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
@@ -10948,6 +11017,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
                 <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon}</span>
                 <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
+              </div>
+              <div className="touch-toggle-btn" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240, maxWidth: '100%', padding: '8px 12px', textAlign: 'left' }}>
+                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900 }}>📱 Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
+                <input id="mobile-accessibility-level" type="range" min={1} max={10} step={1} value={mobileAccessibilityLevel}
+                  onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
+                  aria-label="Úroveň mobilního usnadnění" style={{ width: '100%', accentColor: '#4D7C0F' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.8rem', fontWeight: 700 }}>
+                  <input type="checkbox" checked={mobileAccessibilityAllDevices} onChange={(event) => updateMobileAccessibilityAllDevices(event.target.checked)} />
+                  Použít i na jiných zařízeních
+                </label>
+                <span style={{ fontSize: '0.72rem', lineHeight: 1.25, opacity: 0.85 }}>
+                  {mobileAccessibilityEnabled
+                    ? `Útok a pohyb nepřátel −${mobileAccessibilityLevel * 2} %, poškození −${mobileAccessibilityLevel * 3} %, magnet +${mobileAccessibilityLevel * 5} %, hitbox lovce −${mobileAccessibilityLevel * 5} %.`
+                    : 'Účinky jsou vypnuté mimo dotyková zařízení.'}
+                </span>
               </div>
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
                 🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
