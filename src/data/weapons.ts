@@ -41,7 +41,8 @@ export function getWeaponDamage(player: any, baseDamage: number) {
   const tulakMult = player?.tulakDamageBonus ? 1 + (player.tulakDamageBonus / 100) : 1;
   const kurazRatio = player && player.maxHp > 0 ? Math.max(0, Math.min(1, player.hp / player.maxHp)) : 1;
   const tavernLvl = (player?.tavernShieldLevel as number) || 0;
-  const zoufalaMult = (kurazRatio <= 0.35 && tavernLvl > 0) ? 1 + tavernLvl * 0.15 : 1;
+  const missingHpRatio = 1 - kurazRatio;
+  const zoufalaMult = tavernLvl > 0 ? 1 + missingHpRatio * (tavernLvl * 0.25) : 1;
   return baseDamage * tulakMult * (player?.damageMultiplier || 1) * zoufalaMult;
 }
 
