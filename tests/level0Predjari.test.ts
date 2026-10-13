@@ -6,12 +6,19 @@ import { GameEngine } from '../src/game/engine';
 import { getLevelTranslation } from '../src/i18n';
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from '../src/data/marchThawArena';
 
-describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
+describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
+  it('numbers player-facing game stages from 1 through 7 without changing internal IDs', () => {
+    expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\\d+/)?.[0])))
+      .toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(GAME_LEVELS[0].id).toBe(0);
+    expect(GAME_LEVELS[6].id).toBe(6);
+  });
+
   it('defines valid Level 0 structure with correct theme and bosses', () => {
     const lvl0 = GAME_LEVELS[0];
     expect(lvl0).toBeDefined();
     expect(lvl0.id).toBe(0);
-    expect(lvl0.name).toBe('0. Předjaří v Hrusicích');
+    expect(lvl0.name).toBe('1. Předjaří v Hrusicích');
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
     expect(lvl0.miniBoss.id).toBe('zaba');
@@ -40,18 +47,18 @@ describe('Level 0: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
 
     const prog = getLevelProgress(0, {});
     expect(prog.isUnlocked).toBe(true);
-    expect(prog.spoiledName).toBe('0. Předjaří v Hrusicích');
+    expect(prog.spoiledName).toBe('1. Předjaří v Hrusicích');
     expect(prog.tier).toBe(4);
   });
 
   it('has localized names in Czech and English', () => {
     const csTrans = getLevelTranslation(0, 'cs');
-    expect(csTrans.name).toBe('0. Předjaří v Hrusicích');
+    expect(csTrans.name).toBe('1. Předjaří v Hrusicích');
     expect(csTrans.shortTitle).toBe('Březnové tání');
     expect(csTrans.finalBoss.name).toContain('Vodník');
 
     const enTrans = getLevelTranslation(0, 'en');
-    expect(enTrans.name).toBe('0. Early Spring in Hrusice');
+    expect(enTrans.name).toBe('1. Early Spring in Hrusice');
     expect(enTrans.shortTitle).toBe('March Thaw');
   });
 
