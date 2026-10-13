@@ -181,7 +181,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             👁️ Zapnuté efekty
           </button>
           <button
-            className={`tab-btn ${activeTab === 'perf' ? 'active' : ''}`
+            className={`tab-btn ${activeTab === 'perf' ? 'active' : ''}`}
             onClick={() => {
               setActiveTab('perf');
               sound.coin();
