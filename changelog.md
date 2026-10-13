@@ -796,3 +796,4 @@
 - Herní engine nyní uplatňuje pasivní bonus Kaple svaté vlny (+8 % svatého poškození za úroveň) na všechna svatá poškození; testováno samostatným testem.
 - Aktualizována očekávání ekonomických testů a test inicializace hradeb podle nového balancu.
 - Opraveny regresní testy: nová 20% přirážka, přepočet refundací, spojité škálování Šenkýřovy kuráže, strop hradeb a nové maximum Kuráže.
+- Test kaple porovnává stejného nepřítele s nulovou a druhou úrovní kaple, aby izoloval přesný bonus +16 % i při nepřátelské svaté odolnosti.
