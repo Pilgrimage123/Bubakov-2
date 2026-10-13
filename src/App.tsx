@@ -1534,7 +1534,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       applyAnanasUpgrade(p, {
         onSound: (name) => (sound as any)[name]?.(),
         onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-      });
+      }, getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
     }
   }, []);
 
@@ -2827,7 +2827,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 30;
-            pl.hp += 30;
+            pl.hp = Math.min(
+              pl.maxHp,
+              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+            );
           }
         },
       },
@@ -2839,7 +2842,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 30;
-            pl.hp += 30;
+            pl.hp = Math.min(
+              pl.maxHp,
+              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+            );
             pl.kurazCount = (pl.kurazCount || 0) + 1;
           }
         },
@@ -5674,7 +5680,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   applyAnanasUpgrade(player, {
                     onSound: (name) => (sound as any)[name]?.(),
                     onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-                  });
+                  }, getFrostAuraHealingMultiplier(player, engine.enemies));
                 }
               }
             }
