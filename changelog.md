@@ -1,3 +1,10 @@
+## 2026-10-13 — Přečíslování herních úrovní od 1
+
+- Hráčsky viditelné číslování výprav nyní začíná na **1**: dřívější úroveň 0 (Předjaří v Hrusicích) je úroveň 1 a ostatní výpravy se posouvají až po úroveň 7.
+- Interní ID úrovní 0–6 zůstávají beze změny, aby se nepoškodil herní engine, odemykání ani uložený postup.
+- Aktualizovány české a anglické lokalizace, názvy a odznaky úrovní, požadavky k odemčení, popisky testovacího režimu a testy.
+- Identifikátory trofejí a datové klíče zůstávají kompatibilní.
+
 ## 2026-10-12 — Opravy a sjednocení arény Březnové tání (úroveň 0)
 
 - Opraveno škálování začátečnického minibosse v reálném běhu hry: `createEnemyInstance` v `App.tsx` nově respektuje strop 220 HP a mírný násobič zranění pro úroveň 0 namísto chybného 1400 HP bloatu.
