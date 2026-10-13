@@ -6707,7 +6707,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       : (stats.hunger !== undefined ? stats.hunger : (stats.foodResist || 0));
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
-    const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
+    let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     let enemyDamage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
@@ -6731,8 +6731,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (prefix) {
       const pDef = ENEMY_PREFIX_DEFS[prefix];
       if (pDef) {
+        if (pDef.hpMultiplier) finalHp = Math.max(1, Math.round(finalHp * pDef.hpMultiplier));
         if (pDef.speedBonus) enemySpeed += pDef.speedBonus;
         if (pDef.speedMultiplier) enemySpeed = Math.round(enemySpeed * pDef.speedMultiplier);
+        if (pDef.attackIntervalMultiplier) attackInterval = attackInterval * pDef.attackIntervalMultiplier;
         if (pDef.dodgeChance) dodgeChance = pDef.dodgeChance;
         if (pDef.damageReduction) prefixDamageReduction = pDef.damageReduction;
         if (pDef.immuneToStun) immuneToStun = true;
@@ -6748,7 +6750,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const mass = typeof stats.mass === 'number' ? stats.mass : (radius / 15);
     const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
     const computedWindupDelay = Math.max(0.2, attackInterval - strikeDuration);
-    const attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
+    let attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
+    if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier && typeof stats.attackDelay === 'number') {
+      attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
+    }
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
     const instance = {

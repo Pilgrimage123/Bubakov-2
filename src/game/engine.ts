@@ -714,7 +714,7 @@ export class GameEngine {
       : stats.foodResist || 0;
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
-    const attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
+    let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
     let enemySpeed = stats.speed;
     let enemyDamage = baseDamage;
@@ -726,8 +726,10 @@ export class GameEngine {
     if (prefix) {
       const pDef = ENEMY_PREFIX_DEFS[prefix];
       if (pDef) {
+        if (pDef.hpMultiplier) finalHp = Math.max(1, Math.round(finalHp * pDef.hpMultiplier));
         if (pDef.speedBonus) enemySpeed += pDef.speedBonus;
         if (pDef.speedMultiplier) enemySpeed = Math.round(enemySpeed * pDef.speedMultiplier);
+        if (pDef.attackIntervalMultiplier) attackInterval = attackInterval * pDef.attackIntervalMultiplier;
         if (pDef.dodgeChance) dodgeChance = pDef.dodgeChance;
         if (pDef.damageReduction) prefixDamageReduction = pDef.damageReduction;
         if (prefix === 'hromovy') isThunderous = true;
@@ -746,12 +748,15 @@ export class GameEngine {
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : radius / 15;
-    const attackDelay =
+    let attackDelay =
       typeof stats.attackDelay === 'number'
         ? stats.attackDelay
         : typeof stats.attackInterval === 'number'
         ? stats.attackInterval
         : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+    if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier) {
+      attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
+    }
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : radius + 25;
 
     const self = this;

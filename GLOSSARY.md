@@ -56,6 +56,17 @@ _Avoid_: perk, weapon synergy, build upgrade
 Posílení útočné síly lovce probouzející se při poklesu Kuráže pod 35 %, inspirované odhodláním v hospodské rvačce.
 _Avoid_: berserk, rage mode, low hp buff, záchvat zuřivosti
 
+**Přívlastek bubáka**:
+Viditelný přívlastek a magická aura modifikující chování nebo vlastnosti strašidla bez skrytých cheatů.
+_Avoid_: affix, mob prefix, monster modifier, prefix
+
+**Dvojče minibosse**:
+Trestná kopie oblastního minibosse povolaná Režisérem výpravy na nejvyšší dynamickou obtížnost při drtivé dominanci hráče.
+_Avoid_: twin miniboss, boss clone, dvojník
+
+**Vyčerpaný bubák**:
+Oslabená varianta strašidla s poloviční Kuráží i rychlostí nasazovaná v krizi pro záchranu lovce při zachování plné hodnoty odměn.
+_Avoid_: debuffed enemy, unavený bubák, oslabený nepřítel
 
 ## Světlo a atmosféra
 

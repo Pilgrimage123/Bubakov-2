@@ -1,3 +1,12 @@
+## 2026-10-13 — Sjednocení rejdového rozpočtu, trestání úspěchu a přívlastek Vyčerpaný
+
+- **Sjednocení rozpočtu hrozeb**: Režisér výpravy (`RunDirector`) nově naceňuje strašidla ve shodě s hodnotami dropů (`ENEMY_POINTS`), čímž se sjednocuje kalkulace dropů a zátěže scény.
+- **Trestání úspěchu na nejvyšší obtížnosti**: Při dynamické obtížnosti >= 4.5 a vysoké dominanci hráče (>= 0.70) Režisér povolává do pole trestné **Dvojče minibosse** (`👑 Dvojče: [Jméno]`) za 30 bodů rozpočtu.
+- **Ochrana na nejnižší obtížnosti**: Na obtížnosti <= 2.0 Režisér úspěch hráče netrestá vůbec (multiplikátor tlaku je pevně zastropován <= 1.0 a Dvojče minibosse se nikdy nenazpawnuje).
+- **Progresivní asistence a přívlastek Vyčerpaný**: Asistence je plynule vázána na index tísně (kombinace nízké Kuráže a nízké dominance). V tísni Režisér proporčně nasazuje strašidla s přívlastkem **Vyčerpaný** (-50 % rychlost pohybu, -50 % kadence útoků a -50 % HP, přičemž plná hodnota pro dropy předmětů a perníčků zůstává 100% zachována).
+- **Nezakrytý výhled na obrazovku**: Veškerá varování a telegrafy Režiséra byly přemístěny z plovoucího textu nad hlavou hráče do horního HUD banneru pro čistý výhled i na mobilních telefonech.
+- **Doménová dokumentace a ADR**: Doplněny pojmy `Přívlastek bubáka`, `Dvojče minibosse` a `Vyčerpaný bubák` do `GLOSSARY.md` a sepsán architektonický záznam `docs/adr/0009-sjednoceni-rejdoveho-rozpoctu-a-progresivni-privlastky.md`.
+
 ## 2026-10-13 — Oprava CI závislostí a vyčištění repozitáře
 
 - Opraven soubor `package-lock.json` pro bezchybné spouštění `npm ci` v CI pipeline (obnoveny chybějící položky pro vitest a podpůrné nástroje).

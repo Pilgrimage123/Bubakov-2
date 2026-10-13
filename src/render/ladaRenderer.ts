@@ -14332,6 +14332,28 @@ export function drawPrefixAura(
     ctx.arc(x, y, effR * 0.95, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+  } else if (prefix === 'vycerpany') {
+    // Vyčerpaný: Tlumená šedo-prachová unavená aura s líně klesajícími částicemi spánku / únavy
+    const pulse = Math.sin(time * 1.8) * 2;
+    const effR = auraR + pulse;
+
+    const grad = ctx.createRadialGradient(x, y + radius * 0.4, radius * 0.15, x, y + radius * 0.4, effR);
+    grad.addColorStop(0, 'rgba(120, 113, 108, 0.35)');
+    grad.addColorStop(0.7, 'rgba(168, 162, 158, 0.18)');
+    grad.addColorStop(1, 'rgba(120, 113, 108, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(x, y + radius * 0.45, effR, effR * 0.40, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Lazy drowsy dashed ring
+    ctx.strokeStyle = 'rgba(120, 113, 108, 0.50)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 7]);
+    ctx.beginPath();
+    ctx.ellipse(x, y + radius * 0.45, effR * 0.95, effR * 0.38, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   ctx.restore();

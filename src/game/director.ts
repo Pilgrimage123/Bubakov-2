@@ -244,6 +244,7 @@ export class RunDirector {
   public assistanceActive = false;
   /** Runtime pressure adjustment; the selected difficulty remains the baseline. */
   public pressureMultiplier = 1.0;
+  public activePunitiveMiniboss: any = null;
 
   private recentKills: EnemyKillRecord[] = [];
   private spawnTimeByEnemy = new WeakMap<any, number>();
@@ -331,7 +332,10 @@ export class RunDirector {
     // affects this frame's pressure rather than lagging one update behind.
     const dominance = this.computeDominanceIndex(player);
     const hpRatio = Math.max(0, Math.min(1, (player.hp || 0) / (player.maxHp || 1)));
-    this.assistanceActive = (dominance < 0.40 && hpRatio < 0.50) || hpRatio < 0.30;
+    const hpDistress = Math.max(0, 1 - hpRatio);
+    const domDistress = Math.max(0, 1 - dominance);
+    const distressIndex = hpDistress * 0.65 + domDistress * 0.35;
+    this.assistanceActive = distressIndex >= 0.28 || hpDistress >= 0.40 || domDistress >= 0.70;
     this.updateAdaptivePressure(dominance, hpRatio, dt);
 
     // 3. Update threat budget. The opening 90 seconds use a gentler ramp on
@@ -577,15 +581,9 @@ export class RunDirector {
   private triggerTelegraph(msg: string, duration = 2.5, engine?: any): void {
     this.telegraphMessage = msg;
     this.telegraphTimer = duration;
-    if (engine?.callbacks?.onDamageText && engine.state?.player) {
-      engine.callbacks.onDamageText({
-        x: engine.state.player.x,
-        y: engine.state.player.y - 70,
-        text: msg,
-        color: '#F59E0B',
-        scale: 1.25,
-        life: duration,
-      });
+    if (engine?.state) {
+      engine.state.directorTelegraphText = msg;
+      engine.state.directorTelegraphTimer = duration;
     }
   }
 
@@ -760,6 +758,39 @@ export class RunDirector {
   ): void {
     if (livingCount >= this.maxLivingEnemies) return;
 
+    // Extreme difficulty (4.5+) punishment of success: deploy punitive Dvojče Miniboss
+    if (
+      this.dynamicDifficulty >= 4.5 &&
+      dominance >= 0.70 &&
+      this.threatBudget >= 30 &&
+      (!this.activePunitiveMiniboss || this.activePunitiveMiniboss.dead || this.activePunitiveMiniboss.isDefeated)
+    ) {
+      const curLvl: GameLevelDef = GAME_LEVELS[this.levelId] || GAME_LEVELS[1];
+      const targetMini = gameTime > 150 && curLvl.midBoss ? curLvl.midBoss : curLvl.miniBoss;
+      if (targetMini) {
+        const ang = Math.random() * Math.PI * 2;
+        const pos = this.getOffscreenPosition(player, ang, engine, 180);
+        const cleanName = targetMini.name.replace(/^[^a-zA-Z0-9áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ]+/, '').trim();
+        const twin = engine.spawnMonster(
+          targetMini.id,
+          pos.x,
+          pos.y,
+          (targetMini.multiplier || 2.5) * 1.15,
+          false,
+          true,
+          `👑 Dvojče: ${cleanName}`
+        );
+        if (twin) {
+          twin.isPunitiveTwin = true;
+          this.activePunitiveMiniboss = twin;
+          this.recordEnemySpawn(twin, gameTime);
+          this.threatBudget = Math.max(0, this.threatBudget - 30);
+          this.triggerTelegraph('⚠️ Neúprosný hněv: Přichází Dvojče minibosse!', 3.2, engine);
+          return;
+        }
+      }
+    }
+
     // Special Prefixes: when player kills common mobs too quickly (high dominance / low TTK)
     // and Director needs to deplete excess threat budget (costs 5x normal = 15 threat budget)
     const avgTTK = this.getAverageTTK();
@@ -839,16 +870,28 @@ export class RunDirector {
       if (spawnPlan.length > 0) {
         // Distribute spawns across distinct sectors outside the visible field
         const startCell = Math.floor(Math.random() * RunDirector.CELL_COUNT);
+        const hpRatio = Math.max(0, Math.min(1, (player.hp || 0) / (player.maxHp || 1)));
+        const hpDistress = Math.max(0, 1 - hpRatio);
+        const domDistress = Math.max(0, 1 - dominance);
+        const distressIndex = hpDistress * 0.65 + domDistress * 0.35;
+
         for (let i = 0; i < spawnPlan.length; i++) {
           const mobId = spawnPlan[i];
           const cell = (startCell + i) % RunDirector.CELL_COUNT;
           const angle = RunDirector.CELL_ANGLES[cell] + (Math.random() - 0.5) * 0.12;
           const pos = this.getOffscreenPosition(player, angle, engine, 160);
+          const isVycerpany = this.assistanceActive && Math.random() < distressIndex;
+          const prefixToApply = isVycerpany ? 'vycerpany' : undefined;
+
           const e = engine.spawnMonster(
             mobId,
             pos.x,
             pos.y,
-            1.0
+            1.0,
+            false,
+            false,
+            undefined,
+            prefixToApply
           );
           if (e) {
             this.recordEnemySpawn(e, gameTime);
@@ -862,7 +905,7 @@ export class RunDirector {
   public spawnPrefixedEnemy(engine: any, player: any, gameTime: number, forcedPrefix?: EnemyPrefixType): any {
     const pool = this.getWeightedPool(engine);
     const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    const mobId = candidateId || pool[0] || 'rarach';
+    const mobId = forcedPrefix ? (candidateId || pool[0] || 'rarach') : (pool[Math.floor(Math.random() * pool.length)] || 'rarach');
 
     const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
     const prefix = forcedPrefix || prefixes[Math.floor(Math.random() * prefixes.length)];

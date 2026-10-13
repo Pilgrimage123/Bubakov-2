@@ -284,7 +284,7 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
       lineCap: 'butt',
     } as unknown as CanvasRenderingContext2D;
 
-    const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
+    const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny', 'vycerpany'];
     prefixes.forEach((p) => {
       expect(() => {
         drawPrefixAura(mockCtx, 100, 100, 25, p, 1.5);
@@ -292,6 +292,101 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     });
     expect(mockCtx.save).toHaveBeenCalled();
     expect(mockCtx.restore).toHaveBeenCalled();
+  });
+
+  it('Vyčerpaný prefix applies -50% HP, -50% speed, -50% attack cadence, and retains 100% full drop values', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const baseStats = ENEMIES.rarach;
+    const baseEnemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0);
+    const exhaustedEnemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'vycerpany');
+
+    expect(exhaustedEnemy.prefix).toBe('vycerpany');
+    // -50% HP
+    expect(exhaustedEnemy.maxHp).toBe(Math.round(baseStats.hp * 0.50));
+    expect(exhaustedEnemy.hp).toBe(Math.round(baseStats.hp * 0.50));
+    // -50% movement speed
+    expect(exhaustedEnemy.speed).toBe(Math.round(baseStats.speed * 0.50));
+    // -50% attack speed (interval multiplied by 1.5)
+    expect(exhaustedEnemy.attackInterval).toBeCloseTo(baseEnemy.attackInterval * 1.5);
+    expect(exhaustedEnemy.attackDelay).toBeCloseTo(baseEnemy.attackDelay * 1.5);
+
+    // Full drop values preserved
+    expect(exhaustedEnemy.coinValue).toBe(baseEnemy.coinValue);
+    expect(exhaustedEnemy.xp).toBe(baseEnemy.xp);
+  });
+
+  it('Director deploys punitive Dvojče minibosse at extreme difficulty (>= 4.5) when player dominates', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 5.0, spawnInitialWave: false });
+    const director = engine.director!;
+    director.threatBudget = 40;
+    director.valvePhase = 'buildup';
+
+    // Player dominating: rapid kills leading to high dominance
+    for (let i = 0; i < 8; i++) {
+      const mob = { id: `quick_mob_${i}` };
+      director.recordEnemySpawn(mob, i * 0.2);
+      director.recordEnemyDeath(mob, i * 0.2 + 0.1);
+    }
+    const dominance = director.computeDominanceIndex(engine.state.player);
+    expect(dominance).toBeGreaterThanOrEqual(0.70);
+
+    // Run tactical update
+    director.update(0.5, engine);
+
+    // Punitive twin miniboss spawned
+    expect(director.activePunitiveMiniboss).toBeTruthy();
+    expect(director.activePunitiveMiniboss.isPunitiveTwin).toBe(true);
+    expect(director.activePunitiveMiniboss.customBossTitle).toContain('Dvojče:');
+    expect(engine.state.directorTelegraphText).toContain('Dvojče minibosse');
+  });
+
+  it('Lowest difficulty (2.0) never deploys punitive twin miniboss even with full player dominance', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    const director = engine.director!;
+    director.threatBudget = 40;
+    director.valvePhase = 'buildup';
+
+    // Player dominating: rapid kills leading to high dominance
+    for (let i = 0; i < 8; i++) {
+      const mob = { id: `quick_mob_${i}` };
+      director.recordEnemySpawn(mob, i * 0.2);
+      director.recordEnemyDeath(mob, i * 0.2 + 0.1);
+    }
+
+    // Run tactical update
+    director.update(0.5, engine);
+
+    expect(director.activePunitiveMiniboss).toBeNull();
+    const hasTwin = engine.livingEnemies.some((e: any) => e.isPunitiveTwin);
+    expect(hasTwin).toBe(false);
+    expect(director.pressureMultiplier).toBeLessThanOrEqual(1.0);
+  });
+
+  it('Progressive assistance deploys Vyčerpaný enemies when player is in distress', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 3.0, spawnInitialWave: false });
+    const director = engine.director!;
+    director.threatBudget = 30;
+    director.valvePhase = 'buildup';
+
+    // Player in distress: low HP
+    engine.state.player.hp = Math.round(engine.state.player.maxHp * 0.25);
+    director.update(0.1, engine);
+    expect(director.assistanceActive).toBe(true);
+
+    // Set lastSpawnCheck so spawn check interval triggers tactical spawns
+    director.lastSpawnCheck = 5.0;
+
+    // Mock Math.random to return 0.05 so distressIndex triggers Vyčerpaný spawn
+    const randSpy = vi.spyOn(Math, 'random').mockReturnValue(0.05);
+    director.update(0.5, engine);
+    randSpy.mockRestore();
+
+    const vycerpanyMobs = engine.livingEnemies.filter((e: any) => e.prefix === 'vycerpany');
+    expect(vycerpanyMobs.length).toBeGreaterThan(0);
   });
 
   it('Zero-Hidden-Cheat Policy: enemies strictly receive base stats and only prefix or explicit abilities bonuses', () => {

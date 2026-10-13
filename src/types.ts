@@ -240,7 +240,7 @@ export interface EnemyAttackInfo {
   gleamProgress: number;
 }
 
-export type EnemyPrefixType = 'vichricovy' | 'hromovy' | 'kamenny' | 'pekelny';
+export type EnemyPrefixType = 'vichricovy' | 'hromovy' | 'kamenny' | 'pekelny' | 'vycerpany';
 
 export interface EnemyPrefixDef {
   id: EnemyPrefixType;
@@ -250,7 +250,9 @@ export interface EnemyPrefixDef {
   glowColor: string;
   threatBudgetCost: number; // 15 (5x regular 3)
   speedBonus?: number;      // +110 for vichricovy, +70 for hromovy
-  speedMultiplier?: number; // 0.80 for kamenny (-20% rychlost)
+  speedMultiplier?: number; // 0.80 for kamenny (-20% rychlost), 0.50 for vycerpany (-50% rychlost)
+  attackIntervalMultiplier?: number; // 1.50 for vycerpany (-50% rychlost útoku)
+  hpMultiplier?: number;    // 0.50 for vycerpany (-50% HP)
   dodgeChance?: number;     // 0.50 for vichricovy
   damageReduction?: number; // 0.91 for kamenny (91% redukce)
   immuneToStun?: boolean;   // true for kamenny
@@ -306,6 +308,17 @@ export const ENEMY_PREFIX_DEFS: Record<EnemyPrefixType, EnemyPrefixDef> = {
     magmaTrail: true,
     predatoryStalk: true,
     predictiveEruption: true,
+  },
+  vycerpany: {
+    id: 'vycerpany',
+    name: 'Vyčerpaný',
+    badge: '💤 Vyčerpaný',
+    color: '#78716C',
+    glowColor: 'rgba(120, 113, 108, 0.45)',
+    threatBudgetCost: 1,
+    speedMultiplier: 0.50,
+    attackIntervalMultiplier: 1.50,
+    hpMultiplier: 0.50,
   },
 };
 
