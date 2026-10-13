@@ -24,8 +24,10 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.miniBoss.id).toBe('zaba');
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('morana');
-    expect(lvl0.spawnPools.noon).toContain('zaba');
-    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'ropucha', 'topivec', 'bludicka']);
+    expect(lvl0.spawnPools.noon).toContain('vrana');
+    expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
+    expect(lvl0.spawnPools.noon).not.toContain('zaba');
+    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'mrazovy_skritek', 'topivec', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
   });
@@ -98,8 +100,17 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(state.activeLevelId).toBe(0);
     expect(state.spawnTimer).toBeGreaterThanOrEqual(3.0);
     expect(state.enemies.length).toBe(2);
-    expect(state.enemies[0].id).toBe('zaba');
-    expect(state.enemies[1].id).toBe('zaba');
+    expect(state.enemies[0].id).toBe('vrana');
+    expect(state.enemies[1].id).toBe('vrana');
+  });
+
+  it('defines the fast crow and weak frostling for stage 1', async () => {
+    const { ENEMIES } = await import('../src/data/enemies');
+    expect(ENEMIES.vrana).toMatchObject({ method: 'drawStageCrow', speed: 188, hp: 28 });
+    expect(ENEMIES.mrazovy_skritek).toMatchObject({ method: 'drawFrostling', hp: 38, damage: 4 });
+    expect(ENEMIES.mrazovy_skritek.strength).toContain('Široká aura');
+    expect(GAME_LEVELS[0].spawnPools.noon).not.toContain('zaba');
+    expect(GAME_LEVELS[0].spawnPools.afternoon).not.toContain('zaba');
   });
 
   it('scales miniboss frog reasonably for tutorial difficulty without excessive 1400 HP sponge', () => {
