@@ -1320,6 +1320,12 @@ export default function App() {
   const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
   mobileAccessibilityLevelRef.current = mobileAccessibilityScale;
 
+  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
+    if (!player) return;
+    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - level * 0.05);
+    player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + level * 0.05);
+  };
+
   const updateMobileAccessibilityLevel = (level: number) => {
     const next = Math.max(1, Math.min(10, Math.round(level)));
     setMobileAccessibilityLevel(next);
