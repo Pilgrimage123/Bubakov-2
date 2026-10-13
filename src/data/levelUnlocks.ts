@@ -153,7 +153,7 @@ var LEVEL_UNLOCKS = {
 		realBadge: "3. Úroveň",
 		defaultUnlocked: false,
 		challengeTitle: "🪦 Průzkum stezky za hřbitovní zeď",
-		challengeShortDesc: "Zažeň 60 potvor z návsi a rybníka NEBO poraž Pekelného Čerta v 2. úrovni.",
+		challengeShortDesc: "Zažeň 60 potvor z návsi a rybníka NEBO poraž Pekelného Čerta ve 2. úrovni.",
 		challengeLongDesc: "Za vsí se rozkládá staré pohřebiště s márnicí a hluboký hvozd, kam se nikdo neodváží. Zažeňte 60 polních a vodních potvor v 2. úrovni, nebo rovnou skolte Pekelného Čerta, a stará kovaná brána se vám otevře!",
 		bossDefeatRequirement: "Porazit Pekelného Čerta v 2. úrovni",
 		targetEnemies: [
