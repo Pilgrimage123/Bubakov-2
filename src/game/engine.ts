@@ -584,7 +584,7 @@ export class GameEngine {
     if (levelId === 0) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        this.spawnMonster('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7);
+        this.spawnMonster('vrana', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7);
       }
     } else if (levelId === 1) {
       for (let i = 0; i < 2; i++) {
