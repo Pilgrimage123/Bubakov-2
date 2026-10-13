@@ -458,6 +458,7 @@ export class GameEngine {
       _firingWeapon: null as any,
       damageMultiplier: 1,
       churchLevel: meta?.churchLevel || 0,
+      holyDamageMultiplier: 1 + Math.max(0, meta?.churchLevel || 0) * 0.08,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
