@@ -51,12 +51,12 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 4.0
 		},
 		finalBoss: {
-			id: "hastrman",
-			name: "🌊 Vodník z tajících ker",
-			warning: "⚠️ PŘICHÁZÍ ŠÉF ÚROVNĚ: VODNÍK JARNÍHO TÁNÍ! ⚠️",
+			id: "morana",
+			name: "❄️ Morana — špatně vynesená smrtka",
+			warning: "❄️ ZIMU NELZE VYNÉST! MORANA SE VRACÍ Z MRÁZŮ! ❄️",
 			time: 120,
 			kills: 100,
-			multiplier: 0.95
+			multiplier: 1.05
 		},
 		spawnPools: {
 			noon: [
@@ -109,16 +109,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				role: "Obyvatel ker"
 			},
 			{
-				id: "hastrman",
-				name: "Vodník Jarního Tání",
-				icon: "🌊",
+				id: "morana",
+				name: "Morana, špatně vynesená smrtka",
+				icon: "❄️",
 				role: "Hlavní boss"
 			}
 		],
 		bossMechanic: {
-			label: "Březnová povodeň",
-			description: "Tající ledy zvedají hladinu řeky a vodník z ní povolává další havěť.",
-			cadenceSeconds: 15
+			label: "Mrazivý dech Morany",
+			description: "Morana z dálky žene na lovce větrné čepele plné ledu. Při polovině zdraví přivolá vánici a vypouští hustší salvy.",
+			cadenceSeconds: 6
 		}
 	},
 	1: {
