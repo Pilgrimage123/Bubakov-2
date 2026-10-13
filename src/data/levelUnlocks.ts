@@ -459,12 +459,12 @@ function getLevelProgress(id, meta) {
 		tier: 4,
 		spoiledName: `Úroveň ${id + 1}`,
 		spoiledShortTitle: `Úroveň ${id + 1}`,
-		spoiledSubtitle: "",
-		spoiledDesc: "",
-		spoiledLore: "",
-		spoiledBossHint: "",
-		spoiledWeatherHint: "",
-		spoiledEnemiesHint: "",
+		spoiledSubtitle: ",
+		spoiledDesc: ",
+		spoiledLore: ",
+		spoiledBossHint: ",
+		spoiledWeatherHint: ",
+		spoiledEnemiesHint: ",
 		spoiledIcon: "🗺️",
 		spoiledBadge: `${id + 1}. Úroveň`,
 		clueTag: "✅ Odemčeno",
@@ -573,7 +573,7 @@ function getLevelProgress(id, meta) {
 			count: cnt
 		};
 	});
-	const bossId = id === 2 ? "cert" : id === 3 ? "hejkal" : id === 4 ? "obr" : id === 5 ? "mlynar" : id === 6 ? "bezhlavy_rytir" : "";
+	const bossId = id === 2 ? "cert" : id === 3 ? "hejkal" : id === 4 ? "obr" : id === 5 ? "mlynar" : id === 6 ? "bezhlavy_rytir" : ";
 	const bossDefeated = bossId ? (meta.bestiaryKills?.[bossId] || 0) >= 1 || !!meta.completedLevels?.[id - 1] : false;
 	let percent = 0;
 	if (bossDefeated) {
