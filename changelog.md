@@ -793,3 +793,5 @@
 - Kamenné hradby stojí 75 kr; dávají +20 maximální Kuráže a +3 % odolnosti za úroveň, nejvýše 30 %.
 - Bylinková zahrádka stojí 50 kr a regeneruje +4 Kuráže každých 5 sekund za úroveň.
 - Kaple svaté vlny stojí 30 kr a při nákupu u Dědečka způsobuje 150 svatého poškození za úroveň v okruhu 400 px; její karta uvádí také +8 % svatého poškození za úroveň.
+- Herní engine nyní uplatňuje pasivní bonus Kaple svaté vlny (+8 % svatého poškození za úroveň) na všechna svatá poškození; testováno samostatným testem.
+- Aktualizována očekávání ekonomických testů a test inicializace hradeb podle nového balancu.
