@@ -1320,21 +1320,12 @@ export default function App() {
   const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
   mobileAccessibilityLevelRef.current = mobileAccessibilityScale;
 
+  // Apply the slider to a live hunter without compounding the pickup range modifier.
   const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
     if (!player) return;
     const safeLevel = Math.max(0, Math.min(10, Math.round(level)));
     player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - safeLevel * 0.05);
-    player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + safeLevel * 0.05);
-  };
-
-  // Cache the effective base pickup range before the accessibility multiplier so later changes
-  // do not compound and still retain magnet/scarecrow bonuses.
-  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
-    if (!player) return;
-    const safeLevel = Math.max(0, Math.min(10, Math.round(level)));
-    const previousScale = 1 + (player.accessibilityAppliedLevel || 0) * 0.05;
-    player.accessibilityBasePickupRadius ??= player.pickupRadius / previousScale;
-    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - safeLevel * 0.05);
+    player.accessibilityBasePickupRadius ??= player.pickupRadius / (1 + (player.accessibilityAppliedLevel || 0) * 0.05);
     player.pickupRadius = player.accessibilityBasePickupRadius * (1 + safeLevel * 0.05);
     player.accessibilityAppliedLevel = safeLevel;
   };
