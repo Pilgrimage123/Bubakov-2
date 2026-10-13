@@ -3287,36 +3287,102 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
-            // VODNÍK JARNÍHO TÁNÍ BOSS DYNAMIC MECHANICS (LEVEL 0 - BŘEZNOVÁ POVODEŇ)
-            const hastrmanBoss = engine.enemies.find((e) => e.id === 'hastrman' && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned)) && !e.isDefeated);
-            if (hastrmanBoss && curLvl.id === 0) {
-              hastrmanBoss.floodTimer = (hastrmanBoss.floodTimer !== undefined ? hastrmanBoss.floodTimer : 15) - dt;
-              if (hastrmanBoss.floodTimer <= 0) {
-                hastrmanBoss.floodTimer = 15;
-                sound.splash();
-                engine.texts.push(new DamageText(hastrmanBoss.x, hastrmanBoss.y - 75, '🌊 BŘEZNOVÁ POVODEŇ!', '#38BDF8', true));
-                setRunStats((s) => ({ ...s, warningBanner: '🌊 BŘEZNOVÁ POVODEŇ! VODNÍK ZVEDÁ HLADINU A VOLÁ ŽÁBY!' }));
+            // MORANA BOSS DYNAMIC MECHANICS (LEVEL 0 - MRAZIVÝ DECH A SNĚŽNÁ VÁNICE)
+            const moranaBoss = engine.enemies.find((e) => e.id === 'morana' && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned)) && !e.isDefeated);
+            if (moranaBoss && curLvl.id === 0) {
+              const isPhase2 = moranaBoss.hp <= moranaBoss.maxHp * 0.5;
+              moranaBoss.moranaWindTimer = (moranaBoss.moranaWindTimer !== undefined ? moranaBoss.moranaWindTimer : 4.5) - dt;
+              moranaBoss.moranaBlizzardTimer = (moranaBoss.moranaBlizzardTimer !== undefined ? moranaBoss.moranaBlizzardTimer : 10.5) - dt;
+
+              if (isPhase2 && !moranaBoss.enraged) {
+                moranaBoss.enraged = true;
+                moranaBoss.speed = 82;
+                sound.roar();
+                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 78, '❄️ SMRTÍCÍ MRAZ!', '#BAE6FD', true));
+                setRunStats((s) => ({ ...s, warningBanner: '❄️ MORANA SE ROZHNĚVALA! PŘICHÁZÍ SNĚŽNÁ VÁNICE!' }));
                 setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
-
-                // Summon 2 spring minions from the swollen river
-                for (let i = 0; i < 2; i++) {
-                  const ang = (i / 2) * Math.PI * 2 + Math.random() * 0.5;
-                  const mobId = Math.random() < 0.65 ? 'zaba' : 'vodnicek';
-                  engine.enemies.push(createEnemyInstance(mobId, hastrmanBoss.x + Math.cos(ang) * 95, hastrmanBoss.y + Math.sin(ang) * 95, 0.85));
-                }
-
-                // Water flood wave particles & surge
-                for (let i = 0; i < 24; i++) {
-                  const ang = (i / 24) * Math.PI * 2;
-                  const spd = 100 + Math.random() * 120;
+                for (let i = 0; i < 28; i++) {
+                  const ang = (i / 28) * Math.PI * 2;
                   engine.particles.push({
-                    x: hastrmanBoss.x,
-                    y: hastrmanBoss.y,
-                    vx: Math.cos(ang) * spd,
-                    vy: Math.sin(ang) * spd,
-                    life: 0.8,
-                    color: i % 2 === 0 ? '#38BDF8' : '#BAE6FD',
-                    size: 5,
+                    x: moranaBoss.x,
+                    y: moranaBoss.y,
+                    vx: Math.cos(ang) * (95 + Math.random() * 100),
+                    vy: Math.sin(ang) * (95 + Math.random() * 100),
+                    life: 0.9,
+                    color: i % 2 === 0 ? '#E0F2FE' : '#93C5FD',
+                    size: 4 + Math.random() * 3,
+                  });
+                }
+              }
+
+              // Aimed icy wind blades fan toward the player's current position.
+              if (moranaBoss.moranaWindTimer <= 0) {
+                moranaBoss.moranaWindTimer = isPhase2 ? 3.3 : 4.8;
+                const targetAngle = Math.atan2(player.y - moranaBoss.y, player.x - moranaBoss.x);
+                const count = isPhase2 ? 5 : 3;
+                const spread = isPhase2 ? 0.30 : 0.22;
+                for (let i = 0; i < count; i++) {
+                  const angle = targetAngle + (i - (count - 1) / 2) * spread;
+                  const speed = isPhase2 ? 245 : 210;
+                  engine.projectiles.push({
+                    x: moranaBoss.x,
+                    y: moranaBoss.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    angle,
+                    speed,
+                    dmg: isPhase2 ? 22 : 16,
+                    radius: isPhase2 ? 15 : 13,
+                    type: 'physical',
+                    visual: 'dragon_wind',
+                    life: 2.8,
+                    maxLife: 2.8,
+                    isEnemy: true,
+                    pushback: isPhase2 ? 48 : 34,
+                    statusText: 'MRAZIVÝ VÍTR! ❄️',
+                    dead: false,
+                  });
+                }
+                for (let i = 0; i < 10; i++) {
+                  const angle = targetAngle + (Math.random() - 0.5) * 1.4;
+                  engine.particles.push({
+                    x: moranaBoss.x,
+                    y: moranaBoss.y,
+                    vx: Math.cos(angle) * (100 + Math.random() * 110),
+                    vy: Math.sin(angle) * (100 + Math.random() * 110),
+                    life: 0.55,
+                    color: i % 2 === 0 ? '#E0F2FE' : '#7DD3FC',
+                    size: 4 + Math.random() * 3,
+                  });
+                }
+              }
+
+              // A second attack fills the arena with slower, dodgeable spiral gusts.
+              if (moranaBoss.moranaBlizzardTimer <= 0) {
+                moranaBoss.moranaBlizzardTimer = isPhase2 ? 8 : 12;
+                sound.roar();
+                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 52, '🌨️ VÁNICE!', '#E0F2FE', true));
+                const count = isPhase2 ? 12 : 8;
+                for (let i = 0; i < count; i++) {
+                  const angle = (i / count) * Math.PI * 2;
+                  const speed = isPhase2 ? 175 : 145;
+                  engine.projectiles.push({
+                    x: moranaBoss.x,
+                    y: moranaBoss.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    angle,
+                    speed,
+                    dmg: isPhase2 ? 18 : 12,
+                    radius: isPhase2 ? 13 : 11,
+                    type: 'physical',
+                    visual: 'dragon_wind',
+                    life: 2.5,
+                    maxLife: 2.5,
+                    isEnemy: true,
+                    pushback: 32,
+                    statusText: 'VÁNICE! 🌨️',
+                    dead: false,
                   });
                 }
               }
