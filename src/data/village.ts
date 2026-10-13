@@ -86,7 +86,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		helpers: "Kostliví zedníci se zednickými lžícemi",
 		story: "Kostliví pomocníci vyměnili své nářadí za zednické lžíce a maltu. Celou noc pilně rovnají žulové kvádry a zalévají spáry, takže zdi vesnice vydrží i nápor nejdivočejších nezbedů.",
 		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 20} max Kuráž & +${Math.min(30, lvl * 3)}% odolnost proti poškození`,
-		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
+		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
 	{
@@ -146,7 +146,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		helpers: "Divoženky a bába kořenářka sušící mateřídoušku",
 		story: "Na prosluněné mezi za chalupou pomáhají lesní divoženky sbírat mateřídoušku, třezalku a heřmánek. Voňavé masti a horké odvary dodávají lovci klidnou mysl a vracejí ztracenou Kuráž v průběhu celé noci.",
 		bonusDesc: (lvl) => `Voňavé býlí: +${lvl * 4} Kuráže doplňováno každých 5 sekund`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawOvenScene"
 	},
 	{
@@ -158,7 +158,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		helpers: "Zkrocení diblíci a permoníci leštící korbele",
 		story: "V hospodě U Černého kocoura se diblíci naučili čepovat chladné ležáky a pobízet chasníky k odvaze. Když jde do tuhého a lovci docházejí síly, vzpomene si na hospodskou rvačku a zasadí drtivý úder!",
 		bonusDesc: (lvl) => `Zoufalá kuráž: +${lvl * 25}% k poškození zbraní úměrně chybějící Kuráži`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
 	{
@@ -182,7 +182,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		helpers: "Kající se bludičky leštící posvěcený zvon",
 		story: "Bludičky přilétly z močálů do kaple a omývají svěcenou vodou oltář. Při každém nákupu v Dědečkově nůši vyšle posvěcený zvon kolem lovce mocnou rázovou vlnu, která smete okolní bubáky.",
 		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 150} posvátného poškození (400 px) při nákupu u Dědečka`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	}
 ];
