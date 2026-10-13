@@ -8,7 +8,7 @@ import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from '../src/data
 
 describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('numbers player-facing game stages from 1 through 7 without changing internal IDs', () => {
-    expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\\d+/)?.[0])))
+    expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
       .toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(GAME_LEVELS[0].id).toBe(0);
     expect(GAME_LEVELS[6].id).toBe(6);
@@ -33,7 +33,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('defines Morana as the first stage boss with ranged frost-wind attacks', async () => {
     const { ENEMIES } = await import('../src/data/enemies');
     expect(GAME_LEVELS[0].finalBoss.id).toBe('morana');
-    expect(GAME_LEVELS[0].bossMechanic.label).toContain('Morana');
+    expect(GAME_LEVELS[0].bossMechanic.label).toContain('Moran');
     expect(ENEMIES.morana).toMatchObject({
       category: 'bosses',
       method: 'drawMorana',
