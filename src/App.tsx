@@ -35,6 +35,7 @@ import {
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
 import { DEFAULT_GAME_EFFECT_SETTINGS, setGameEffectSettings, isGameEffectEnabled, shouldDrawFloatingText, type EffectCategory } from './game/effectSettings';
+import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/frostAura';
 import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
 import { HunterInfoModal } from './components/HunterInfoModal';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
@@ -1420,7 +1421,8 @@ export default function App() {
   grandfatherOpenRef.current = gameState === 'grandfather';
 
 const applyBearMaskOverheal = (player: any, healing: number) => {
-    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0));
+    const frostHealingMultiplier = getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
+    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0)) * frostHealingMultiplier;
     const missingHp = Math.max(0, player.maxHp - player.hp);
     const overheal = Math.max(0, effectiveHeal - missingHp);
     player.hp = Math.min(player.maxHp, player.hp + effectiveHeal);
@@ -1464,7 +1466,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     if (effect.type === 'max_hp') {
       p.maxHp += effect.amount;
-      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
       if (item.id === 'medvedi_mast') {
         p.kurazCount = (p.kurazCount || 0) + 1;
       }
@@ -1478,7 +1480,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.kavaCount = (p.kavaCount || 0) + 1;
     }
     if (effect.type === 'heal') {
-      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0));
+      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []);
       const missingHp = Math.max(0, p.maxHp - p.hp);
       const overheal = Math.max(0, effectiveHeal - missingHp);
       p.hp = Math.min(p.maxHp, p.hp + effectiveHeal);
@@ -4635,7 +4637,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
               player.arenaArmorBonus = inChurch ? 0.20 : 0;
-              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt);
+              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
 
               const inPond = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond);
               if (inPond) {
@@ -4738,7 +4740,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 } else if (dec.type === 'granny_stove') {
                   if (Math.hypot(player.x - dec.x, player.y - dec.y) < player.radius + dec.radius + 20) {
-                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt);
+                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
                   }
                 }
               }
@@ -4769,17 +4771,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const accessibilityLevel = Math.max(0, Math.min(10, player.accessibilityAppliedLevel || 0));
               const accessibilityMultiplier = 1 + accessibilityLevel * 0.05;
               const baseMagnetRadius = player.accessibilityBasePickupRadius ?? player.pickupRadius;
-              player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * (player.herbBoostTimer > 0 ? 2 : 1);
+              player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * (player.herbBoostTimer > 0 ? 5 : 1);
               player.herbTimer = (player.herbTimer || 0) + dt;
               if (player.herbTimer >= 9) {
                 player.herbTimer = 0;
                 const hpBefore = player.hp;
-                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.18);
+                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.18 * getFrostAuraHealingMultiplier(player, engine.enemies));
                 const actualHeal = Math.max(0, player.hp - hpBefore);
                 player.herbBoostTimer = 3;
                 player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 3);
-                player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * 2;
-                engine.texts.push(new DamageText(player.x, player.y - 58, '🌿 BYLINNÝ ZÁBLESK! MAGNET ×2 · 3 s NEZRANITELNOST', COLORS.green, true));
+                player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * 5;
+                engine.texts.push(new DamageText(player.x, player.y - 58, '🌿 BYLINNÝ ZÁBLESK! MAGNET ×5 · 3 s NEZRANITELNOST', COLORS.green, true));
                 if (actualHeal > 0) {
                   engine.texts.push(new DamageText(player.x, player.y - 36, '+' + Math.round(actualHeal) + ' Kuráž', COLORS.green));
                 }
@@ -4794,7 +4796,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
         cloud.damagePerSecond = 9;
         engineRef.current.smokePuffs.push(cloud);
-        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0));
+        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
         const missingHp = Math.max(0, player.maxHp - player.hp);
         const overheal = Math.max(0, requestedHeal - missingHp);
         player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
@@ -4827,7 +4829,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2 * getFrostAuraHealingMultiplier(player, engine.enemies));
                 player.regenTimer = 0;
                 engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🌿`, COLORS.green));
               }
@@ -5569,7 +5571,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 triggerRescueChasnik(d.x, d.y);
               }
             } else if (dist < player.pickupRadius && currentGameState === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
-              const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 2 : 1;
+              const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
               const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
@@ -7374,7 +7376,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.vx = Math.cos(dirToPlayer) * spd * 0.82;
           this.vy = Math.sin(dirToPlayer) * spd * 0.82;
           this.frostAuraTimer = Math.max(0, (this.frostAuraTimer || 0) - dt);
-          if (distToPlayer <= 78 && this.frostAuraTimer <= 0) {
+          if (distToPlayer <= FROSTLING_AURA_RADIUS && this.frostAuraTimer <= 0) {
             this.frostAuraTimer = 0.7;
             player.takeDamage(3, 'cold');
             if (typeof player.chill === 'function') player.chill(0.65);
