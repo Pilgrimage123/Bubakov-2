@@ -36,8 +36,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		miniBoss: {
 			id: "vrana",
-			name: "🐸 Probuzená Žába",
-			warning: "🐸 POZOR: Z BAHNA SKÁČE OBŘÍ PROBUZENÁ ŽÁBA!",
+			name: "🐦‍⬛ Hejno mrazivých vran",
+			warning: "🐦‍⬛ POZOR: Z VÁNICE SE ŘÍTÍ HEJNO MRAZIVÝCH VRAN!",
 			time: 30,
 			kills: 20,
 			multiplier: 4.5
