@@ -1318,11 +1318,6 @@ export default function App() {
   const mobileAccessibilityEnabled = isTouchScreen || mobileAccessibilityAllDevices;
   const mobileAccessibilityScale = mobileAccessibilityEnabled ? mobileAccessibilityLevel : 0;
   const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
-  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
-    if (!player) return;
-    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - level * 0.05);
-    player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + level * 0.05);
-  };
   mobileAccessibilityLevelRef.current = mobileAccessibilityScale;
 
   const updateMobileAccessibilityLevel = (level: number) => {
