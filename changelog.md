@@ -1,6 +1,6 @@
 ## 2026-10-13 — Morana, finální boss první výpravy
 
-- Vodního bosse první výpravy nahrazuje **Morana, špatně vynesená smrtka**; interní ID úrovně i úvodní mini-bossové zůstávají zachované.
+- Vodního bosse první výpravy nahrazuje **Morana, špatně vynesená smrtka**; interní ID úrovně a její úvodní mini-bossové zůstávají zachované.
 - Přidána vlastní kresba Morany inspirovaná dodanou ilustrací: slaměné údy, tmavý květovaný šátek, zlověstná tvář a obíhající ledový vítr se sněhovými záblesky.
 - Morana útočí z dálky vějířovou salvou mrazivého větru a pravidelnou radiální vánicí. Pod polovinou zdraví přechází do druhé fáze s hustšími a silnějšími salvami.
 - Aktualizovány české a anglické názvy finálního bosse, bestiář, popis trofeje první výpravy a regresní testy.
