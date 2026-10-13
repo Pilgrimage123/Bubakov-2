@@ -457,6 +457,7 @@ export class GameEngine {
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: 1,
+      churchLevel: meta?.churchLevel || 0,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
@@ -1036,6 +1037,10 @@ export class GameEngine {
 
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
+
+        if (type === 'holy' && self.state.player?.churchLevel) {
+          amount *= 1 + Math.max(0, self.state.player.churchLevel) * 0.08;
+        }
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
         if (this.prefix === 'vichricovy') {
