@@ -52,7 +52,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '2.00× Poklid za pecí',
     shortLabel: '2.00× Poklid',
     name: 'Poklid za pecí',
-    subtitle: 'Nejklidnější tempo: pomalejší přísun hrozeb, menší rozpočet a delší prodlevy. Všechny typy nepřátel a střetnutí zůstávají dostupné.',
+    subtitle: 'Nejklidnější tempo: žádné trestání úspěchu lovce (tlak se při dominanci nezvyšuje). Silná adaptivní pomoc při potížích.',
     color: '#16A34A',
   },
   {
@@ -100,7 +100,7 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
     badge: '5.00× Pekelné boží dopuštění (5× Max)',
     shortLabel: '5.00× Boží dopuštění',
     name: 'Pekelné boží dopuštění (5,0× Maximální výzva)',
-    subtitle: 'Nejrychlejší tempo, největší rozpočet a nejkratší prodlevy. Obtížnost nepřidává exkluzivní mechaniky ani nezakazuje žádné mechaniky nižším stupňům.',
+    subtitle: 'Nejvyšší výzva: při úspěchu a dominanci nastává šílené, nepřiměřené a brutální trestání úspěchu (téměř nehratelná záplava běsů a elit!). Pomoc při potížích zůstává aktivní.',
     color: '#7F1D1D',
   },
 ];
@@ -151,6 +151,79 @@ export class RunDirector {
     { length: 8 },
     (_, index) => (index * Math.PI * 2) / 8
   );
+
+  /**
+   * Calculates a spawn position guaranteed to be strictly outside the player's
+   * visible viewport, ensuring enemies never pop into existence on screen.
+   */
+  public static getOffscreenPosition(
+    player: { x: number; y: number },
+    angle: number,
+    engine?: any,
+    extraMargin: number = 160
+  ): { x: number; y: number } {
+    let viewW = 1920;
+    let viewH = 1080;
+
+    if (typeof window !== 'undefined' && window.innerWidth && window.innerHeight) {
+      viewW = Math.max(1400, window.innerWidth);
+      viewH = Math.max(800, window.innerHeight);
+    }
+
+    const state = engine?.state ?? engine;
+    const camera = engine?.camera ?? state?.camera;
+    let camX = player.x - viewW / 2;
+    let camY = player.y - viewH / 2;
+
+    if (camera && typeof camera.x === 'number' && typeof camera.y === 'number') {
+      camX = camera.x;
+      camY = camera.y;
+    }
+
+    const halfW = viewW / 2 + extraMargin;
+    const halfH = viewH / 2 + extraMargin;
+
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    const dx = Math.abs(cos) > 0.0001 ? halfW / Math.abs(cos) : 99999;
+    const dy = Math.abs(sin) > 0.0001 ? halfH / Math.abs(sin) : 99999;
+    const edgeDist = Math.min(dx, dy);
+
+    // Guaranteed minimum radial distance of 750px regardless of screen size
+    const dist = Math.max(edgeDist, 750) + Math.random() * 80;
+    let sx = player.x + cos * dist;
+    let sy = player.y + sin * dist;
+
+    // Strict boundary enforcement: verify (sx, sy) is outside [camX - pad, camY - pad, camX + viewW + pad, camY + viewH + pad]
+    const pad = 80;
+    const left = camX - pad;
+    const right = camX + viewW + pad;
+    const top = camY - pad;
+    const bottom = camY + viewH + pad;
+
+    if (sx >= left && sx <= right && sy >= top && sy <= bottom) {
+      const push = Math.max(
+        Math.abs(right - player.x),
+        Math.abs(left - player.x),
+        Math.abs(bottom - player.y),
+        Math.abs(top - player.y)
+      ) + extraMargin;
+      sx = player.x + cos * push;
+      sy = player.y + sin * push;
+    }
+
+    return { x: sx, y: sy };
+  }
+
+  public getOffscreenPosition(
+    player: { x: number; y: number },
+    angle: number,
+    engine?: any,
+    extraMargin: number = 160
+  ): { x: number; y: number } {
+    return RunDirector.getOffscreenPosition(player, angle, engine, extraMargin);
+  }
 
   public rozmar: RunRozmarDef;
   public threatBudget = 10;
@@ -258,7 +331,7 @@ export class RunDirector {
     // affects this frame's pressure rather than lagging one update behind.
     const dominance = this.computeDominanceIndex(player);
     const hpRatio = Math.max(0, Math.min(1, (player.hp || 0) / (player.maxHp || 1)));
-    this.assistanceActive = dominance < 0.35 && hpRatio < 0.5;
+    this.assistanceActive = (dominance < 0.40 && hpRatio < 0.50) || hpRatio < 0.30;
     this.updateAdaptivePressure(dominance, hpRatio, dt);
 
     // 3. Update threat budget. The opening 90 seconds use a gentler ramp on
@@ -297,7 +370,10 @@ export class RunDirector {
     this.lastSpawnCheck += dt;
 
     const openingSpawnFactor = gameTime < 30 ? 1.85 : gameTime < 60 ? 1.55 : gameTime < 90 ? 1.25 : 1.0;
-    const spawnInterval = Math.max(0.24, (0.6 - ((this.dynamicDifficulty - 2.0) / 2.0) * 0.22) * openingSpawnFactor);
+    const punishIntervalFactor = this.pressureMultiplier > 1.2
+      ? Math.max(0.25, 1.0 - (this.pressureMultiplier - 1.0) * 0.20)
+      : 1.0;
+    const spawnInterval = Math.max(0.08, ((0.6 - ((this.dynamicDifficulty - 2.0) / 2.0) * 0.22) * openingSpawnFactor) * punishIntervalFactor);
     if (this.lastSpawnCheck >= spawnInterval) {
       this.lastSpawnCheck = 0;
       if (this.valvePhase === 'buildup' || this.valvePhase === 'peak') {
@@ -323,10 +399,11 @@ export class RunDirector {
         this.playerHeadingDuration += dt;
         const gameTime = this.currentGameTime;
         const openingTriggerFactor = gameTime < 30 ? 2.0 : gameTime < 60 ? 1.7 : gameTime < 90 ? 1.3 : 1.0;
+        const kitingCd = this.pressureMultiplier >= 2.0 ? 2.5 : 5.0 * openingTriggerFactor;
         if (this.playerHeadingDuration >= 3.5 * openingTriggerFactor && this.kitingHazardCooldown <= 0) {
           this.triggerZradnyTeren(player, currentAngle);
           this.playerHeadingDuration = 0;
-          this.kitingHazardCooldown = 5.0 * openingTriggerFactor;
+          this.kitingHazardCooldown = kitingCd;
         }
       } else {
         this.playerHeadingDuration = Math.max(0, this.playerHeadingDuration - dt * 2.0);
@@ -353,21 +430,34 @@ export class RunDirector {
   }
 
   private updateAdaptivePressure(dominance: number, hpRatio: number, dt: number): void {
-    // React to sustained performance, not a single hit/kill. Recovery and
-    // escalation are deliberately bounded around the chosen difficulty preset.
+    const normDiff = Math.max(0, Math.min(1, (this.dynamicDifficulty - 2.0) / 3.0));
     let target = 1.0;
+
+    // 1. Helping struggling hunters (cushions players across all difficulties, strongest on low)
     if (hpRatio < 0.35 && dominance < 0.45) {
-      target = 0.72;
-    } else if (hpRatio < 0.5 && dominance < 0.35) {
-      target = 0.82;
-    } else if (hpRatio > 0.75 && dominance > 0.68 && this.recentKills.length >= 3) {
-      target = 1.12;
+      target = 0.55 + normDiff * 0.17; // 0.55 at 2.0, 0.72 at 5.0
+    } else if (hpRatio < 0.50 && dominance < 0.35) {
+      target = 0.65 + normDiff * 0.17; // 0.65 at 2.0, 0.82 at 5.0
+    } else if (hpRatio > 0.65 && dominance > 0.55 && this.recentKills.length >= 2) {
+      // 2. Punishing success:
+      // Lowest difficulty (2.0): lowest should not punish success at all (target = 1.0, clamp <= 1.0)
+      // Highest difficulty (5.0): insane and disproportionate punishment of success (practically unplayable)!
+      if (normDiff <= 0) {
+        target = 1.0; // Exactly 0 punishment at 2.0!
+      } else {
+        const domExcess = Math.max(0, (dominance - 0.55) / 0.45);
+        // Exponential / disproportionate escalation on high difficulties
+        const punishmentFactor = Math.pow(normDiff, 1.35) * (1.2 + Math.pow(domExcess, 1.25) * 2.8);
+        target = 1.0 + punishmentFactor; // Up to 5.0x at 5.0!
+      }
     }
 
-    // Exponential-style smoothing with a maximum 25% response per second.
-    const alpha = Math.min(1, Math.max(0, dt) * 0.25);
+    const alpha = Math.min(1, Math.max(0, dt) * (0.25 + normDiff * 0.35));
     this.pressureMultiplier += (target - this.pressureMultiplier) * alpha;
-    this.pressureMultiplier = Math.max(0.72, Math.min(1.12, this.pressureMultiplier));
+
+    // Strict clamping: on 2.0, strictly never exceed 1.0! On 5.0, up to 5.0!
+    const maxAllowedPressure = 1.0 + normDiff * 4.0;
+    this.pressureMultiplier = Math.max(0.55, Math.min(maxAllowedPressure, this.pressureMultiplier));
   }
 
   private updateBudgetMetrics(gameTime: number, dt: number): void {
@@ -401,19 +491,24 @@ export class RunDirector {
     const openingRateFactor = gameTime < 30 ? 0.35 : gameTime < 60 ? 0.50 : gameTime < 90 ? 0.70 : 1.0;
     const openingCapFactor = gameTime < 30 ? 0.55 : gameTime < 60 ? 0.65 : gameTime < 90 ? 0.80 : 1.0;
 
-    // Capacity and accrual scale with the selected baseline difficulty.
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * this.pressureMultiplier * openingCapFactor);
+    // Pressure surge scales threat accrual and cap when dominating on higher difficulty
+    const pressureSurge = this.pressureMultiplier > 1.0
+      ? Math.pow(this.pressureMultiplier, 1.3)
+      : this.pressureMultiplier;
+
+    // Capacity and accrual scale with the selected baseline difficulty and adaptive pressure.
+    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * pressureSurge * openingCapFactor);
 
     let accrualMult = 0.35 + Math.pow(normalizedDiff, 1.42) * 0.75;
 
     // Assistance is equally effective at every preset; higher difficulty must
     // not weaken the director's response when the player is struggling.
     if (this.assistanceActive) {
-      accrualMult *= 0.50;
+      accrualMult *= 0.45;
     }
 
-    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * openingRateFactor * this.pressureMultiplier * dt;
-    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
+    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * openingRateFactor * pressureSurge * dt;
+    this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
   }
 
   private updatePacingValves(dt: number, engine: any, livingCount: number): void {
@@ -598,47 +693,41 @@ export class RunDirector {
     }
 
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
-    // Two opposite angles (Klešťové sevření)
+    // Two opposite angles (Klešťové sevření) outside player visible field
     const angle1 = pAngle + Math.PI / 2 + (Math.random() * 0.4 - 0.2);
     const angle2 = angle1 + Math.PI;
 
-    // Leader 1 (closer spawn for punchier ambush: 490px)
-    const l1x = player.x + Math.cos(angle1) * 490;
-    const l1y = player.y + Math.sin(angle1) * 490;
-    const leader1 = engine.spawnMonster(leaderId, l1x, l1y, 1.3, false, false, 'Přepadový strážmistr');
+    // Leader 1 (spawned strictly outside visible field)
+    const pos1 = this.getOffscreenPosition(player, angle1, engine, 180);
+    const leader1 = engine.spawnMonster(leaderId, pos1.x, pos1.y, 1.3, false, false, 'Přepadový strážmistr');
     if (leader1) {
       leader1.name = 'Přepadový strážmistr';
       leader1.customBossTitle = 'Přepadový strážmistr';
       leader1.speed *= 1.20;
-      leader1.poiseResist = Math.min(0.85, (leader1.poiseResist || 0) + 0.35);
       leader1.drtivyBuffTimer = 3.5;
       this.recordEnemySpawn(leader1, engine.state.gameTime);
     }
 
-    // Leader 2 from opposite angle
-    const l2x = player.x + Math.cos(angle2) * 490;
-    const l2y = player.y + Math.sin(angle2) * 490;
-    const leader2 = engine.spawnMonster(leaderId, l2x, l2y, 1.3, false, false, 'Přepadový strážmistr');
+    // Leader 2 from opposite angle outside visible field
+    const pos2 = this.getOffscreenPosition(player, angle2, engine, 180);
+    const leader2 = engine.spawnMonster(leaderId, pos2.x, pos2.y, 1.3, false, false, 'Přepadový strážmistr');
     if (leader2) {
       leader2.name = 'Přepadový strážmistr';
       leader2.customBossTitle = 'Přepadový strážmistr';
       leader2.speed *= 1.20;
-      leader2.poiseResist = Math.min(0.85, (leader2.poiseResist || 0) + 0.35);
       leader2.drtivyBuffTimer = 3.5;
       this.recordEnemySpawn(leader2, engine.state.gameTime);
     }
 
-    // Flankers in an arc around both angles
+    // Flankers in an arc around both angles outside visible field
     const minionCount = Math.min(this.dynamicDifficulty >= 4.0 ? 10 : this.dynamicDifficulty >= 3.0 ? 7 : 5, Math.max(4, Math.floor(budgetToSpend / 5)));
     for (let i = 0; i < minionCount; i++) {
       const useAngle = (i % 2 === 0) ? angle1 : angle2;
-      const offset = ((Math.floor(i / 2) + 1) * 0.25) * (i % 4 < 2 ? 1 : -1);
-      const mx = player.x + Math.cos(useAngle + offset) * 510;
-      const my = player.y + Math.sin(useAngle + offset) * 510;
-      const minion = engine.spawnMonster(minionId, mx, my, 1.0);
+      const offset = ((Math.floor(i / 2) + 1) * 0.20) * (i % 4 < 2 ? 1 : -1);
+      const mPos = this.getOffscreenPosition(player, useAngle + offset, engine, 160 + (i % 3) * 30);
+      const minion = engine.spawnMonster(minionId, mPos.x, mPos.y, 1.0);
       if (minion) {
         minion.speed *= 1.20;
-        minion.poiseResist = Math.min(0.70, (minion.poiseResist || 0) + 0.25);
         minion.drtivyBuffTimer = 3.5;
         this.recordEnemySpawn(minion, engine.state.gameTime);
       }
@@ -657,8 +746,6 @@ export class RunDirector {
     const target = pool[Math.floor(Math.random() * pool.length)];
     if (!target || target.isBoss) return;
 
-    target.speed = Math.min((target.speed || 0) * 1.15, 155);
-    target.poiseResist = Math.min(0.9, (target.poiseResist || 0) + 0.40);
     target.isOstryBes = true;
     this.threatBudget = Math.max(0, this.threatBudget - 10);
     this.eliteBudgetCooldown = 1.0;
@@ -676,10 +763,11 @@ export class RunDirector {
     // Special Prefixes: when player kills common mobs too quickly (high dominance / low TTK)
     // and Director needs to deplete excess threat budget (costs 5x normal = 15 threat budget)
     const avgTTK = this.getAverageTTK();
-    const canSpawnPrefixed = !this.assistanceActive && (dominance >= 0.60 || (this.recentKills.length > 0 && avgTTK < 0.85)) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
+    const canSpawnPrefixed = !this.assistanceActive && (dominance >= 0.55 || (this.recentKills.length > 0 && avgTTK < 0.95)) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
     if (canSpawnPrefixed) {
       const openingCooldownFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
-      this.prefixSpawnCooldown = Math.max(3.0, 6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0) * openingCooldownFactor;
+      const punishCdDiv = Math.max(1.0, this.pressureMultiplier * 0.85);
+      this.prefixSpawnCooldown = Math.max(0.8, (6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0) / punishCdDiv) * openingCooldownFactor;
       this.spawnPrefixedEnemy(engine, player, gameTime);
       return;
     }
@@ -687,7 +775,8 @@ export class RunDirector {
     // High dominance OR high dynamicDifficulty: prefer heavy formations (Hammer & Anvil, Escort, Anti-Kite, Klešťové sevření)
     const allowHeavyFormation = !this.assistanceActive && this.threatBudget >= 16 && this.formationCooldown <= 0;
     if (allowHeavyFormation) {
-      const baseCd = Math.max(2.2, 5.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.2);
+      const punishCdDiv = Math.max(1.0, this.pressureMultiplier * 0.75);
+      const baseCd = Math.max(0.9, (5.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.2) / punishCdDiv);
       const openingCooldownFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
       const assistDelay = this.assistanceActive ? 2.0 : 0;
       this.formationCooldown = baseCd * openingCooldownFactor + assistDelay;
@@ -708,7 +797,7 @@ export class RunDirector {
     // Architects are also a heavy formation, so assistance must suppress
     // this path rather than allowing it to bypass the heavy-formation gate.
     if (!this.assistanceActive && this.rozmar.formationBias === 'architects' && this.threatBudget >= 16 && this.formationCooldown <= 0) {
-      this.formationCooldown = Math.max(3.0, 5.5 - ((this.dynamicDifficulty - 2.0) / 2.0) * 1.8);
+      this.formationCooldown = Math.max(2.5, 5.5 - ((this.dynamicDifficulty - 2.0) / 2.0) * 1.8);
       this.spawnArchitects(engine, player, gameTime);
       return;
     }
@@ -718,9 +807,21 @@ export class RunDirector {
     // elite variants; difficulty controls pressure quantity and cadence.
     if (this.threatBudget >= 3) {
       const pool = this.getAllBubaksPool(engine);
-      const maxBatchCost = this.dynamicDifficulty >= 3.4 ? 18 : this.dynamicDifficulty >= 2.8 ? 14 : (dominance > 0.7 ? 12 : 6);
+      const maxBatchCost = this.dynamicDifficulty >= 4.5 && this.pressureMultiplier >= 1.6
+        ? 36
+        : this.dynamicDifficulty >= 3.4
+        ? 18
+        : this.dynamicDifficulty >= 2.8
+        ? 14
+        : (dominance > 0.7 ? 12 : 6);
       const availableBudget = Math.min(this.threatBudget, maxBatchCost);
-      const maxCount = this.dynamicDifficulty >= 3.4 ? 5 : this.dynamicDifficulty >= 2.8 ? 4 : 3;
+      const maxCount = this.dynamicDifficulty >= 4.5 && this.pressureMultiplier >= 1.6
+        ? 8
+        : this.dynamicDifficulty >= 3.4
+        ? 5
+        : this.dynamicDifficulty >= 2.8
+        ? 4
+        : 3;
       const spawnLimit = Math.max(0, Math.min(maxCount, this.maxLivingEnemies - livingCount));
       const spawnPlan: string[] = [];
       let plannedCost = 0;
@@ -736,18 +837,17 @@ export class RunDirector {
       }
 
       if (spawnPlan.length > 0) {
-        // Distribute spawns across distinct sectors instead of clustering all
-        // reinforcements around one random angle.
+        // Distribute spawns across distinct sectors outside the visible field
         const startCell = Math.floor(Math.random() * RunDirector.CELL_COUNT);
         for (let i = 0; i < spawnPlan.length; i++) {
           const mobId = spawnPlan[i];
           const cell = (startCell + i) % RunDirector.CELL_COUNT;
           const angle = RunDirector.CELL_ANGLES[cell] + (Math.random() - 0.5) * 0.12;
-          const dist = 500 + Math.random() * 80;
+          const pos = this.getOffscreenPosition(player, angle, engine, 160);
           const e = engine.spawnMonster(
             mobId,
-            player.x + Math.cos(angle) * dist,
-            player.y + Math.sin(angle) * dist,
+            pos.x,
+            pos.y,
             1.0
           );
           if (e) {
@@ -768,11 +868,9 @@ export class RunDirector {
     const prefix = forcedPrefix || prefixes[Math.floor(Math.random() * prefixes.length)];
 
     const angle = Math.random() * Math.PI * 2;
-    const dist = 480 + Math.random() * 60;
-    const sx = player.x + Math.cos(angle) * dist;
-    const sy = player.y + Math.sin(angle) * dist;
+    const pos = this.getOffscreenPosition(player, angle, engine, 170);
 
-    const enemy = engine.spawnMonster(mobId, sx, sy, 1.0, false, false, undefined, prefix);
+    const enemy = engine.spawnMonster(mobId, pos.x, pos.y, 1.0, false, false, undefined, prefix);
     if (enemy) {
       this.recordEnemySpawn(enemy, gameTime);
     }
@@ -801,24 +899,22 @@ export class RunDirector {
     const baseAngle = pAngle + (Math.random() * 0.4 - 0.2);
     const oppositeAngle = baseAngle + Math.PI;
 
-    // Side 1 (closer engagement 500 px)
+    // Side 1 outside visible field
     for (let i = -1; i <= 1; i++) {
-      const a = baseAngle + i * 0.22;
-      const x = player.x + Math.cos(a) * 500;
-      const y = player.y + Math.sin(a) * 500;
-      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, x, y, 1.1);
+      const a = baseAngle + i * 0.18;
+      const pos = this.getOffscreenPosition(player, a, engine, 170 + Math.abs(i) * 25);
+      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1);
       if (e) {
         e.speed *= 1.1;
         this.recordEnemySpawn(e, gameTime);
       }
     }
 
-    // Side 2 (opposite 500 px)
+    // Side 2 outside visible field
     for (let i = -1; i <= 1; i++) {
-      const a = oppositeAngle + i * 0.22;
-      const x = player.x + Math.cos(a) * 500;
-      const y = player.y + Math.sin(a) * 500;
-      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, x, y, 1.1);
+      const a = oppositeAngle + i * 0.18;
+      const pos = this.getOffscreenPosition(player, a, engine, 170 + Math.abs(i) * 25);
+      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1);
       if (e) {
         e.speed *= 1.1;
         this.recordEnemySpawn(e, gameTime);
@@ -847,27 +943,22 @@ export class RunDirector {
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
     const frontAngle = pAngle + (Math.random() * 0.4 - 0.2);
 
-    // Frontal wall (anvil)
-    const wallDist = 510;
+    // Frontal wall (anvil) outside visible field
     const wallCount = 4;
     for (let i = 0; i < wallCount; i++) {
-      const spread = (i - (wallCount - 1) / 2) * 55;
-      const wx = player.x + Math.cos(frontAngle) * wallDist + Math.sin(frontAngle) * spread;
-      const wy = player.y + Math.sin(frontAngle) * wallDist - Math.cos(frontAngle) * spread;
-      const e = engine.spawnMonster(heavyId, wx, wy, 1.15);
+      const spreadAngle = frontAngle + ((i - (wallCount - 1) / 2) * 0.14);
+      const pos = this.getOffscreenPosition(player, spreadAngle, engine, 180 + Math.abs(i - 1.5) * 20);
+      const e = engine.spawnMonster(heavyId, pos.x, pos.y, 1.15);
       if (e) {
-        e.poiseResist = Math.min(0.85, (e.poiseResist || 0) + 0.25);
         this.recordEnemySpawn(e, gameTime);
       }
     }
 
-    // Flankers (hammer) coming from sides
-    const flankDist = 470;
+    // Flankers (hammer) coming from sides outside visible field
     for (const sign of [-1, 1]) {
       const fAngle = frontAngle + (Math.PI / 2) * sign;
-      const fx = player.x + Math.cos(fAngle) * flankDist;
-      const fy = player.y + Math.sin(fAngle) * flankDist;
-      const f = engine.spawnMonster(fastId, fx, fy, 1.0);
+      const pos = this.getOffscreenPosition(player, fAngle, engine, 170);
+      const f = engine.spawnMonster(fastId, pos.x, pos.y, 1.0);
       if (f) {
         f.speed *= 1.15;
         this.recordEnemySpawn(f, gameTime);
@@ -894,21 +985,19 @@ export class RunDirector {
     }
 
     const angle = Math.random() * Math.PI * 2;
-    const dist = 520;
-    const cx = player.x + Math.cos(angle) * dist;
-    const cy = player.y + Math.sin(angle) * dist;
+    const centerPos = this.getOffscreenPosition(player, angle, engine, 220);
 
-    const elite = engine.spawnMonster(eliteId, cx, cy, 1.35, false, false, 'Obrněný vůdce');
+    const elite = engine.spawnMonster(eliteId, centerPos.x, centerPos.y, 1.35, false, false, 'Obrněný vůdce');
     if (elite) {
       elite.isEscortLeader = true;
       this.recordEnemySpawn(elite, gameTime);
     }
 
-    // 4 orbit minions
+    // 4 orbit minions around the leader
     for (let i = 0; i < 4; i++) {
       const ma = (i / 4) * Math.PI * 2;
-      const mx = cx + Math.cos(ma) * 55;
-      const my = cy + Math.sin(ma) * 55;
+      const mx = centerPos.x + Math.cos(ma) * 55;
+      const my = centerPos.y + Math.sin(ma) * 55;
       const m = engine.spawnMonster(minionId, mx, my, 0.9);
       if (m) {
         m.isEscortMinion = true;
@@ -925,11 +1014,10 @@ export class RunDirector {
     const archId = archCandidate || pool[0] || 'rarach';
 
     const angle = Math.random() * Math.PI * 2;
-    const dist = 550;
     for (let i = 0; i < 2; i++) {
-      const ax = player.x + Math.cos(angle + i * 0.4) * dist;
-      const ay = player.y + Math.sin(angle + i * 0.4) * dist;
-      const e = engine.spawnMonster(archId, ax, ay, 1.0);
+      const a = angle + i * 0.35;
+      const pos = this.getOffscreenPosition(player, a, engine, 180);
+      const e = engine.spawnMonster(archId, pos.x, pos.y, 1.0);
       if (e) {
         e.isArchitect = true;
         this.recordEnemySpawn(e, gameTime);
@@ -960,14 +1048,14 @@ export class RunDirector {
     const pSpeed = Math.hypot(player.vx || 0, player.vy || 0);
     const pAngle = pSpeed > 10 ? Math.atan2(player.vy || 0, player.vx || 0) : Math.random() * Math.PI * 2;
 
-    // Spawn 2 enemies directly in lead path
+    // Spawn 2 enemies directly in lead path outside visible field
     for (let i = -1; i <= 1; i += 2) {
-      const leadAngle = pAngle + i * 0.22;
-      const dist = 540;
-      const ix = player.x + Math.cos(leadAngle) * dist;
-      const iy = player.y + Math.sin(leadAngle) * dist;
-      const e = engine.spawnMonster(mobId, ix, iy, 1.05);
-      if (e) this.recordEnemySpawn(e, gameTime);
+      const leadAngle = pAngle + i * 0.20;
+      const pos = this.getOffscreenPosition(player, leadAngle, engine, 180);
+      const e = engine.spawnMonster(mobId, pos.x, pos.y, 1.05);
+      if (e) {
+        this.recordEnemySpawn(e, gameTime);
+      }
     }
 
     this.threatBudget = Math.max(0, this.threatBudget - 14);
@@ -1114,7 +1202,6 @@ export class RunDirector {
     const bossId = bossCandidate || pool[0] || 'rarach';
     const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '🧌 Procitlý noční hromotluk z díry');
     if (furious) {
-      furious.speed *= 1.2;
       this.recordEnemySpawn(furious, engine.state.gameTime);
     }
   }

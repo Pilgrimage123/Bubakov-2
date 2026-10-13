@@ -1,3 +1,16 @@
+## 2026-10-13 — Doplnění folklórních předmětů, chytrého drop systému a lokalizací
+
+- Doplněna a sjednocena celá sestava folklórních pomocných předmětů (ADR 0006 a Dědečkova nůše): Kovářská podkova, Hliněný kohoutek, Vyřezávané kukačky, Trouba obecního ponocného, Masopustní řehtačka, Babiččina kropenatá zástěra, Hlt slivovice, Dudácká čertovská skočná, Kominický knoflík a Arcivzácný ananas.
+- Do `ladaRenderer.ts` doplněna ladovská kresba Arcivzácného ananasu (`drawAnanas`) s medovou aurou, smaragdovou korunkou a diamantovým křížkováním, stejně jako kresby Podkovy, Kohoutka a Kukaček.
+- Do `App.tsx` zapojeno dynamické nahrazování léčivých dropů (`resolveDynamicDrop`), záchranný systém (Emergency Bias pod 25 % Kuráže), horké perníčky z dálkového zahnání (`FAR_KILL_DISTANCE`) i komprese dropů při Overkillu.
+- Do Dědečkovy nůše (`GRANDFATHER_ITEMS`) doplněny chybějící položky `kovarska_podkova`, `hlineny_kohoutek` a `vyrezavane_kukacky` včetně autentických ladovských hlášek.
+- Kompletně lokalizovány všechny instantní a pekelné předměty v českém (`cs.ts`) i anglickém (`en.ts`) slovníku a rozšířeny testy pokrývající všech 18 testovacích sad.
+
+## 2026-10-13 — Opravy typové kontroly a výchozí dynamické obtížnosti
+
+- Opravena typová chyba v `src/App.tsx` při zpracování `GrandfatherEffect` pro `fajfka` a `bear_mask`: doplněny chybějící varianty `{ type: 'fajfka' }` a `{ type: 'bear_mask' }` do unie `GrandfatherEffect` v `grandfatherItems.ts` a sjednoceno vyhodnocení nákupu bylinkové fajfky i medvědí masti.
+- Opravena výchozí dynamická obtížnost v `GameEngine.initRun`: zastaralá fallback hodnota 1,5 z historického škálování nahrazena kanonickou výchozí hodnotou 3,0 (Zlověstná noc), což opravilo adaptivní škálování tlaku Režiséra výpravy a související test.
+
 ## 2026-10-13 — Vrány a mraziví skřítci v první výpravě
 
 - Běžné žáby v spawn fondech první výpravy nahrazeny rychle létajícími vránami a slabými mrazivými skřítky; úvodní vlna nyní začíná dvojicí vran.

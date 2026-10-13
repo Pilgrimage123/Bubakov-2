@@ -563,6 +563,341 @@ var SoundManager = class {
 			whiteNoise.start();
 		} catch {}
 	}
+	bootSnowCrunch() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
+			const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+			const output = noiseBuffer.getChannelData(0);
+			for (let i = 0; i < bufferSize; i++) {
+				output[i] = (Math.random() * 2 - 1) * 0.3;
+			}
+			const whiteNoise = this.ctx.createBufferSource();
+			whiteNoise.buffer = noiseBuffer;
+			const filter = this.ctx.createBiquadFilter();
+			filter.type = "bandpass";
+			filter.frequency.setValueAtTime(1400, now);
+			filter.Q.setValueAtTime(2.2, now);
+			const gain = this.ctx.createGain();
+			gain.gain.setValueAtTime(0.14, now);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+			whiteNoise.connect(filter);
+			filter.connect(gain);
+			gain.connect(this.ctx.destination);
+			whiteNoise.start();
+		} catch {}
+	}
+	ponocnyHorn() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Deep resonant brass blast (Night watchman cow horn)
+			const osc1 = this.ctx.createOscillator();
+			const osc2 = this.ctx.createOscillator();
+			const gain = this.ctx.createGain();
+			const filter = this.ctx.createBiquadFilter();
+
+			osc1.type = "sawtooth";
+			osc2.type = "triangle";
+			osc1.frequency.setValueAtTime(110, now);
+			osc1.frequency.linearRampToValueAtTime(146.8, now + 0.35);
+			osc1.frequency.exponentialRampToValueAtTime(110, now + 1.6);
+
+			osc2.frequency.setValueAtTime(164.8, now);
+			osc2.frequency.linearRampToValueAtTime(220, now + 0.35);
+			osc2.frequency.exponentialRampToValueAtTime(164.8, now + 1.6);
+
+			filter.type = "lowpass";
+			filter.frequency.setValueAtTime(450, now);
+			filter.frequency.linearRampToValueAtTime(1200, now + 0.4);
+			filter.frequency.exponentialRampToValueAtTime(280, now + 2.0);
+
+			gain.gain.setValueAtTime(0.01, now);
+			gain.gain.linearRampToValueAtTime(0.38, now + 0.25);
+			gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+
+			osc1.connect(filter);
+			osc2.connect(filter);
+			filter.connect(gain);
+			gain.connect(this.ctx.destination);
+
+			osc1.start(now);
+			osc2.start(now);
+			osc1.stop(now + 2.3);
+			osc2.stop(now + 2.3);
+
+			// 2. Muffle / pause background music for muffled winter silence
+			if (this.menuMusic && !this.menuMusic.paused) {
+				const prevVol = this.menuMusic.volume;
+				this.menuMusic.volume = 0.02;
+				setTimeout(() => {
+					if (this.menuMusic && this.musicEnabled) {
+						this.menuMusic.volume = prevVol;
+					}
+				}, 5000);
+			}
+
+			// 3. Speech chant: "Chval každý duch Hospodina!"
+			if (typeof window !== "undefined" && "speechSynthesis" in window) {
+				try {
+					const utterance = new SpeechSynthesisUtterance("Chval každý duch Hospodina!");
+					utterance.lang = "cs-CZ";
+					utterance.pitch = 0.65; // deep solemn night watchman voice
+					utterance.rate = 0.85;
+					utterance.volume = 0.75;
+					window.speechSynthesis.cancel();
+					window.speechSynthesis.speak(utterance);
+				} catch {}
+			}
+		} catch {}
+	}
+	masopustRattle() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// Rapid series of 9 loud, snappy wooden clatter clicks
+			for (let i = 0; i < 9; i++) {
+				const t = now + i * 0.038;
+				const osc = this.ctx.createOscillator();
+				const gain = this.ctx.createGain();
+				osc.type = "sawtooth";
+				osc.frequency.setValueAtTime(480 + (i % 3) * 120, t);
+				gain.gain.setValueAtTime(0.28, t);
+				gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+				osc.connect(gain);
+				gain.connect(this.ctx.destination);
+				osc.start(t);
+				osc.stop(t + 0.035);
+			}
+			// Heavy wooden resonance thud
+			const sub = this.ctx.createOscillator();
+			const subGain = this.ctx.createGain();
+			sub.type = "triangle";
+			sub.frequency.setValueAtTime(140, now);
+			sub.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+			subGain.gain.setValueAtTime(0.35, now);
+			subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+			sub.connect(subGain);
+			subGain.connect(this.ctx.destination);
+			sub.start(now);
+			sub.stop(now + 0.42);
+		} catch {}
+	}
+	grandmothersApron() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Brisk breeze whistling through trees (swept bandpass noise)
+			const bufferSize = Math.floor(this.ctx.sampleRate * 0.6);
+			const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+			const output = noiseBuffer.getChannelData(0);
+			for (let i = 0; i < bufferSize; i++) {
+				output[i] = (Math.random() * 2 - 1) * 0.3;
+			}
+			const windSource = this.ctx.createBufferSource();
+			windSource.buffer = noiseBuffer;
+			const windFilter = this.ctx.createBiquadFilter();
+			windFilter.type = "bandpass";
+			windFilter.frequency.setValueAtTime(400, now);
+			windFilter.frequency.exponentialRampToValueAtTime(1400, now + 0.3);
+			windFilter.frequency.exponentialRampToValueAtTime(350, now + 0.6);
+			const windGain = this.ctx.createGain();
+			windGain.gain.setValueAtTime(0.18, now);
+			windGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+			windSource.connect(windFilter);
+			windFilter.connect(windGain);
+			windGain.connect(this.ctx.destination);
+			windSource.start(now);
+
+			// 2. Playful xylophone / glockenspiel rattle arpeggio (pickups scurrying into pockets)
+			const notes = [880, 1046.5, 1174.7, 1318.5, 1568, 1760, 2093];
+			for (let i = 0; i < notes.length; i++) {
+				const nt = now + 0.12 + i * 0.055;
+				const osc = this.ctx.createOscillator();
+				const gain = this.ctx.createGain();
+				osc.type = "sine";
+				osc.frequency.setValueAtTime(notes[i], nt);
+				gain.gain.setValueAtTime(0.18, nt);
+				gain.gain.exponentialRampToValueAtTime(0.001, nt + 0.18);
+				osc.connect(gain);
+				gain.connect(this.ctx.destination);
+				osc.start(nt);
+				osc.stop(nt + 0.2);
+			}
+		} catch {}
+	}
+	slivoviceSplash() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Wet glug-glug bubbles
+			for (let i = 0; i < 3; i++) {
+				const t = now + i * 0.08;
+				const osc = this.ctx.createOscillator();
+				const gain = this.ctx.createGain();
+				osc.type = "sine";
+				osc.frequency.setValueAtTime(420 - i * 40, t);
+				osc.frequency.exponentialRampToValueAtTime(160, t + 0.07);
+				gain.gain.setValueAtTime(0.22, t);
+				gain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+				osc.connect(gain);
+				gain.connect(this.ctx.destination);
+				osc.start(t);
+				osc.stop(t + 0.075);
+			}
+			// 2. Fiery whoosh vapour cloud
+			const whooshBuffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * 0.45), this.ctx.sampleRate);
+			const out = whooshBuffer.getChannelData(0);
+			for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * 0.35;
+			const whooshSource = this.ctx.createBufferSource();
+			whooshSource.buffer = whooshBuffer;
+			const filter = this.ctx.createBiquadFilter();
+			filter.type = "lowpass";
+			filter.frequency.setValueAtTime(800, now + 0.15);
+			filter.frequency.exponentialRampToValueAtTime(200, now + 0.55);
+			const wGain = this.ctx.createGain();
+			wGain.gain.setValueAtTime(0.2, now + 0.15);
+			wGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+			whooshSource.connect(filter);
+			filter.connect(wGain);
+			wGain.connect(this.ctx.destination);
+			whooshSource.start(now + 0.15);
+
+			// 3. Raspy sigh "A je to doma!"
+			if (typeof window !== "undefined" && "speechSynthesis" in window) {
+				try {
+					const utterance = new SpeechSynthesisUtterance("A je to doma!");
+					utterance.lang = "cs-CZ";
+					utterance.pitch = 0.8;
+					utterance.rate = 1.05;
+					utterance.volume = 0.8;
+					setTimeout(() => {
+						try { window.speechSynthesis.speak(utterance); } catch {}
+					}, 250);
+				} catch {}
+			}
+		} catch {}
+	}
+	svandaBagpipes() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Rustic continuous drone (A2 110Hz + E3 165Hz)
+			const drone1 = this.ctx.createOscillator();
+			const drone2 = this.ctx.createOscillator();
+			const droneGain = this.ctx.createGain();
+			drone1.type = "sawtooth";
+			drone2.type = "sawtooth";
+			drone1.frequency.setValueAtTime(110, now);
+			drone2.frequency.setValueAtTime(164.8, now);
+			droneGain.gain.setValueAtTime(0.12, now);
+			droneGain.gain.linearRampToValueAtTime(0.14, now + 0.4);
+			droneGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+			drone1.connect(droneGain);
+			drone2.connect(droneGain);
+			droneGain.connect(this.ctx.destination);
+			drone1.start(now);
+			drone2.start(now);
+			drone1.stop(now + 1.85);
+			drone2.stop(now + 1.85);
+
+			// 2. Jaunty squealing polka chanter riff
+			const riff = [440, 493.88, 554.37, 659.25, 554.37, 493.88, 440, 659.25, 740, 880];
+			for (let i = 0; i < riff.length; i++) {
+				const t = now + i * 0.075;
+				const chanter = this.ctx.createOscillator();
+				const chanterGain = this.ctx.createGain();
+				chanter.type = "sawtooth";
+				chanter.frequency.setValueAtTime(riff[i], t);
+				chanterGain.gain.setValueAtTime(0.16, t);
+				chanterGain.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+				chanter.connect(chanterGain);
+				chanterGain.connect(this.ctx.destination);
+				chanter.start(t);
+				chanter.stop(t + 0.075);
+			}
+		} catch {}
+	}
+	kominikButton() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// 1. Cheerful two-tone whistle (1760Hz -> 2093Hz)
+			const osc1 = this.ctx.createOscillator();
+			const gain1 = this.ctx.createGain();
+			osc1.type = "sine";
+			osc1.frequency.setValueAtTime(1760, now);
+			gain1.gain.setValueAtTime(0.24, now);
+			gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+			osc1.connect(gain1);
+			gain1.connect(this.ctx.destination);
+			osc1.start(now);
+			osc1.stop(now + 0.15);
+
+			const osc2 = this.ctx.createOscillator();
+			const gain2 = this.ctx.createGain();
+			osc2.type = "sine";
+			osc2.frequency.setValueAtTime(2093, now + 0.12);
+			gain2.gain.setValueAtTime(0.26, now + 0.12);
+			gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+			osc2.connect(gain2);
+			gain2.connect(this.ctx.destination);
+			osc2.start(now + 0.12);
+			osc2.stop(now + 0.35);
+
+			// 2. Metallic rattle of chimney ball-and-chain
+			for (let i = 0; i < 4; i++) {
+				const t = now + 0.18 + i * 0.045;
+				const ch = this.ctx.createOscillator();
+				const chGain = this.ctx.createGain();
+				ch.type = "triangle";
+				ch.frequency.setValueAtTime(2400 + i * 280, t);
+				chGain.gain.setValueAtTime(0.12, t);
+				chGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+				ch.connect(chGain);
+				chGain.connect(this.ctx.destination);
+				ch.start(t);
+				ch.stop(t + 0.045);
+			}
+		} catch {}
+	}
+	ananasPickup() {
+		if (!this.enabled) return;
+		try {
+			this.init();
+			if (!this.ctx) return;
+			const now = this.ctx.currentTime;
+			// Bright celebratory fanfare chord (C5, E5, G5, C6)
+			const freqs = [523.25, 659.25, 783.99, 1046.5];
+			freqs.forEach((f, idx) => {
+				const osc = this.ctx.createOscillator();
+				const gain = this.ctx.createGain();
+				osc.type = "triangle";
+				osc.frequency.setValueAtTime(f, now + idx * 0.04);
+				gain.gain.setValueAtTime(0.2, now + idx * 0.04);
+				gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+				osc.connect(gain);
+				gain.connect(this.ctx.destination);
+				osc.start(now + idx * 0.04);
+				osc.stop(now + 0.75);
+			});
+		} catch {}
+	}
 };
 var sound = new SoundManager();
 

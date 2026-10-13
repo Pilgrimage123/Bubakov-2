@@ -492,8 +492,13 @@ export function renderStorybookLightingComposite(
   isWinter = true,
   shadowZones: ShadowZone[] = [],
   occluders: LightOccluder[] = [],
-  quality: 'fidelity' | 'balanced' | 'performance' = 'fidelity'
+  quality: 'fidelity' | 'balanced' | 'performance' | 'off' = 'fidelity',
+  enabled = true
 ): void {
+  if (!enabled || quality === 'off') {
+    return;
+  }
+
   const isNightPhase =
     dayPhaseId === 'dusk' ||
     dayPhaseId === 'night' ||

@@ -16,6 +16,8 @@ interface ControlsModalProps {
   onChangePerformanceProfile?: (profile: 'fidelity' | 'balanced' | 'performance') => void;
   showPerfOverlay?: boolean;
   onToggleShowPerfOverlay?: (enabled: boolean) => void;
+  dynamicLightingEnabled?: boolean;
+  onToggleDynamicLighting?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
   onChangeDynamicDifficulty?: (diff: number) => void;
 }
@@ -30,6 +32,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   onChangePerformanceProfile,
   showPerfOverlay = false,
   onToggleShowPerfOverlay,
+  dynamicLightingEnabled = true,
+  onToggleDynamicLighting,
   dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
 }) => {
@@ -1423,6 +1427,53 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   {showPerfOverlay ? '✅ ZAPNUTO' : '⚪ VYPNUTO'}
+                </button>
+              </div>
+            </div>
+
+            {/* DYNAMIC LIGHTING */}
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '3px solid #B45309',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginBottom: '8px',
+                }}
+              >
+                <div style={{ flex: '1 1 300px' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
+                    🕯️ Dynamické osvětlení a kvašové stíny
+                  </h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
+                    Ladovské kvašové svícení petrolejky, světelné kužely chalup a noční stíny. Při vypnutí je scéna plně a rovnoměrně osvětlená bez tmavého nočního závoje (vhodné pro maximální viditelnost nebo slabší hardware).
+                  </p>
+                </div>
+                <button
+                  className="lada-btn"
+                  style={{
+                    background: dynamicLightingEnabled ? '#16A34A' : '#78350F',
+                    color: '#FFFFFF',
+                    padding: '8px 20px',
+                    fontSize: '1rem',
+                  }}
+                  onClick={() => {
+                    sound.coin();
+                    onToggleDynamicLighting?.(!dynamicLightingEnabled);
+                  }}
+                >
+                  {dynamicLightingEnabled ? '✅ ZAPNUTO' : '⚪ VYPNUTO'}
                 </button>
               </div>
             </div>

@@ -30,7 +30,18 @@ import {
   getHolyPushMultiplier,
   isUnholyEnemy,
 } from '../data/holy';
-import { performDropFusion, applyMagnetWave, registerKillAndCheckCombo, createDropInstance, type DropSpawnOptions } from './drops';
+import {
+  performDropFusion,
+  applyMagnetWave,
+  registerKillAndCheckCombo,
+  createDropInstance,
+  applyRareItemEffect,
+  applyAnanasUpgrade,
+  canSpawnRareBattleDrop,
+  rollRareBattleDrop,
+  getRareDropAnnouncement,
+  type DropSpawnOptions,
+} from './drops';
 import { RunDirector } from './director';
 import { getCurrentDayPhase } from '../constants';
 import {
@@ -311,7 +322,7 @@ export class GameEngine {
         ? optionsOrLevelId.dynamicDifficulty
         : typeof optionsOrLevelId === 'object' && optionsOrLevelId !== null && optionsOrLevelId.directorAdaptability !== undefined
         ? optionsOrLevelId.directorAdaptability
-        : 1.5;
+        : 3.0;
 
     this.director = new RunDirector(levelId, seed, { dynamicDifficulty });
     nextState.director = this.director;
@@ -446,6 +457,9 @@ export class GameEngine {
       regenLevel: meta?.regenLevel || 0,
       regenTimer: 0,
       invulnerabilityTimer: 0,
+      intangibleTimer: 0,
+      guaranteedCritTimer: 0,
+      facingAngle: 0,
       dodgeCooldown: 0,
       tavernShieldLevel: meta?.tavernShieldLevel || 0,
       tempShield: 0,
@@ -529,7 +543,7 @@ export class GameEngine {
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (this.hp <= 0) return;
-        if (this.invulnerabilityTimer > 0) return;
+        if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true));
@@ -1033,7 +1047,11 @@ export class GameEngine {
         }
         effectiveResist = Math.max(0, effectiveResist * (1 - ignoreResist));
 
-        const finalDamage = Math.max(1, amount * (1 - effectiveResist));
+        let finalDamage = Math.max(1, amount * (1 - effectiveResist));
+        if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
+          finalDamage = Math.round(finalDamage * 2.2);
+          self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
+        }
         this.hp = Math.max(0, this.hp - finalDamage);
         this.hitFlashTimer = 0.12;
 
@@ -1760,6 +1778,21 @@ export class GameEngine {
     if (this.state.timeStopTimer > 0) {
       this.state.timeStopTimer = Math.max(0, this.state.timeStopTimer - dt);
     }
+    if (this.state.ponocnyFrostTimer > 0) {
+      this.state.ponocnyFrostTimer = Math.max(0, this.state.ponocnyFrostTimer - dt);
+    }
+    if (this.state.masopustShockwaveTimer > 0) {
+      this.state.masopustShockwaveTimer = Math.max(0, this.state.masopustShockwaveTimer - dt);
+    }
+    if (this.state.cameraTremorTimer > 0) {
+      this.state.cameraTremorTimer = Math.max(0, this.state.cameraTremorTimer - dt);
+    }
+    if (player.intangibleTimer > 0) {
+      player.intangibleTimer = Math.max(0, player.intangibleTimer - dt);
+    }
+    if (player.guaranteedCritTimer > 0) {
+      player.guaranteedCritTimer = Math.max(0, player.guaranteedCritTimer - dt);
+    }
     if (this.state.screenFlashTimer > 0) {
       this.state.screenFlashTimer = Math.max(0, this.state.screenFlashTimer - dt);
     }
@@ -1767,6 +1800,37 @@ export class GameEngine {
     if (this.state.timeStopTimer <= 0) {
       for (let i = 0; i < this.state.enemies.length; i++) {
         const e = this.state.enemies[i];
+        if (e.brawlTimer && e.brawlTimer > 0) {
+          e.brawlTimer = Math.max(0, e.brawlTimer - dt);
+          let nearestFoe: any = null;
+          let nearestDist = 999999;
+          for (let k = 0; k < this.state.enemies.length; k++) {
+            const other = this.state.enemies[k];
+            if (other === e || other.dead || other.isDefeated) continue;
+            const d = Math.hypot(other.x - e.x, other.y - e.y);
+            if (d < nearestDist) {
+              nearestDist = d;
+              nearestFoe = other;
+            }
+          }
+          if (nearestFoe) {
+            const bAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
+            e.x += Math.cos(bAng) * (e.speed || 100) * 1.15 * dt;
+            e.y += Math.sin(bAng) * (e.speed || 100) * 1.15 * dt;
+            if (nearestDist < e.radius + nearestFoe.radius + 18) {
+              e.brawlAttackCooldown = (e.brawlAttackCooldown || 0) - dt;
+              if (e.brawlAttackCooldown <= 0) {
+                e.brawlAttackCooldown = 0.55;
+                const bDmg = Math.max(8, Math.round((e.damage || 15) * (0.8 + Math.random() * 0.5)));
+                nearestFoe.takeDamage(bDmg, 'physical', Math.cos(bAng) * 200, Math.sin(bAng) * 200);
+                if (nearestFoe.hp <= 0) {
+                  nearestFoe.killedByFriendlyFire = true;
+                }
+              }
+            }
+            continue;
+          }
+        }
         if (e.category === 'shadows' && !e.dead && !e.isDefeated) {
           const isLit = isPositionIlluminated(
             e.x,
@@ -2052,6 +2116,31 @@ export class GameEngine {
                 this.callbacks?.onOpenChest?.();
               } else if (d.type === 'chasnik') {
                 this.callbacks?.onRescueChasnik?.(d.x, d.y);
+              } else if (
+                d.type === 'ponocny_horn' ||
+                d.type === 'masopust_rattle' ||
+                d.type === 'babicka_apron' ||
+                d.type === 'slivovice_splash' ||
+                d.type === 'svanda_bagpipes' ||
+                d.type === 'kominik_button'
+              ) {
+                applyRareItemEffect(this.state, player, d.type, {
+                  onSound: (s) => this.callbacks?.onSound?.(s),
+                  onDamageText: (opts) => {
+                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true);
+                    this.state.texts.push(dt);
+                    this.callbacks?.onDamageText?.(dt);
+                  },
+                });
+              } else if (d.type === 'arcivzacny_ananas') {
+                applyAnanasUpgrade(player, {
+                  onSound: (s) => this.callbacks?.onSound?.(s),
+                  onDamageText: (opts) => {
+                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
+                    this.state.texts.push(dt);
+                    this.callbacks?.onDamageText?.(dt);
+                  },
+                });
               }
             }
           }

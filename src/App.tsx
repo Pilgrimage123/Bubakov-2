@@ -113,7 +113,23 @@ import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
-import { canCollectDrop, performDropFusion } from './game/drops';
+import {
+  canCollectDrop,
+  performDropFusion,
+  applyRareItemEffect,
+  applyAnanasUpgrade,
+  applyMagnetWave,
+  canSpawnRareBattleDrop,
+  rollRareBattleDrop,
+  getRareDropAnnouncement,
+  resolveDynamicDrop,
+  isHealingDrop,
+  createFolkloreDropTracker,
+  evaluateFolkloreDrop,
+  FAR_KILL_DISTANCE,
+  HOT_GINGERBREAD_DURATION,
+  EMERGENCY_HEALTH_RATIO,
+} from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
@@ -1357,11 +1373,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         p.jelitoCount = (p.jelitoCount || 0) + 1;
       }
     }
-    if (effect.type === 'fajfka') {
+    if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
       p.fajfkaLevel = Math.min(2, (p.fajfkaLevel || 0) + 1);
       p.fajfkaCooldown = 0;
     }
-    if (effect.type === 'bear_mask') {
+    if (effect.type === 'bear_mask' || item.id === 'medvedi_mast') {
       p.bearMaskLevel = (p.bearMaskLevel || 0) + 1;
       p.bearMaskHealBonus = Math.max(0, (p.bearMaskLevel - 1) * 0.20);
     }
@@ -1424,6 +1440,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         };
         p.weapons.push(newW);
       }
+    }
+    if (effect.type === 'rare_instant') {
+      applyRareItemEffect(engineRef.current, p, effect.rareItemId, {
+        onSound: (name) => (sound as any)[name]?.(),
+        onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true)),
+      });
+    }
+    if (effect.type === 'arcivzacny_ananas') {
+      applyAnanasUpgrade(p, {
+        onSound: (name) => (sound as any)[name]?.(),
+        onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
+      });
     }
   }, []);
 
@@ -1976,6 +2004,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       regenLevel: meta.regenLevel || 0,
       regenTimer: 0,
       invulnerabilityTimer: 0,
+      intangibleTimer: 0,
+      guaranteedCritTimer: 0,
+      facingAngle: 0,
       dodgeCooldown: 0,
       tavernShieldLevel: meta.tavernShieldLevel || 0,
       tempShield: 0,
@@ -2044,7 +2075,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Take damage from mob contact or hazard attacks
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (gameStateRef.current !== 'playing' || this.hp <= 0) return;
-        if (this.invulnerabilityTimer > 0) return;
+        if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
         if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - ((meta.windLevel || 0) * 10));
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', COLORS.mustard, true));
@@ -2987,6 +3018,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (currentGameState === 'playing') {
             engine.gameTime += dt;
             if (engine.flourStormTimer > 0) engine.flourStormTimer -= dt;
+            if (engine.timeStopTimer > 0) engine.timeStopTimer = Math.max(0, engine.timeStopTimer - dt);
+            if (engine.ponocnyFrostTimer > 0) engine.ponocnyFrostTimer = Math.max(0, engine.ponocnyFrostTimer - dt);
+            if (engine.masopustShockwaveTimer > 0) engine.masopustShockwaveTimer = Math.max(0, engine.masopustShockwaveTimer - dt);
+            if (engine.cameraTremorTimer > 0) engine.cameraTremorTimer = Math.max(0, engine.cameraTremorTimer - dt);
+            if (player.intangibleTimer > 0) player.intangibleTimer = Math.max(0, player.intangibleTimer - dt);
+            if (player.guaranteedCritTimer > 0) player.guaranteedCritTimer = Math.max(0, player.guaranteedCritTimer - dt);
+            if (engine.activeRareOverlay) {
+              engine.activeRareOverlay.timer -= dt;
+              if (engine.activeRareOverlay.timer <= 0) engine.activeRareOverlay = null;
+            }
+            if (engine.slivoviceVapor) {
+              engine.slivoviceVapor.life -= dt;
+              if (engine.slivoviceVapor.life <= 0) engine.slivoviceVapor = null;
+            }
+            if (engine.sootFootprints && engine.sootFootprints.length > 0) {
+              for (let i = 0; i < engine.sootFootprints.length; i++) {
+                engine.sootFootprints[i].life -= dt;
+              }
+              compactInPlace(engine.sootFootprints, (sf: any) => sf.life > 0);
+            }
 
             // Storybook Illumination: update Petrolejka & dynamic light sources
             const dayPhase = getCurrentDayPhase(engine.gameTime);
@@ -4446,6 +4497,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             player.x += (moveVx + pushX) * dt;
             player.y += (moveVy + pushY) * dt;
 
+            if (moveVx !== 0 || moveVy !== 0) {
+              player.facingAngle = Math.atan2(moveVy, moveVx);
+            }
+
+            if (player.intangibleTimer > 0) {
+              const moveDist = Math.hypot(moveVx, moveVy);
+              if (moveDist > 20 && Math.random() < 0.25) {
+                if (!engine.sootFootprints) engine.sootFootprints = [];
+                engine.sootFootprints.push({
+                  x: player.x,
+                  y: player.y,
+                  life: 3.0,
+                  angle: Math.atan2(moveVy, moveVx),
+                });
+              }
+              const enemiesNearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, player.radius + 35);
+              for (const e of enemiesNearby) {
+                if (e.dead || e.isDefeated) continue;
+                if (Math.hypot(e.x - player.x, e.y - player.y) < player.radius + e.radius) {
+                  if ((e.sootBlindedVolleys || 0) < 3) {
+                    e.sootBlindedVolleys = 3;
+                    engine.texts.push(new DamageText(e.x, e.y - 30, 'SAZE V OČÍCH! 🔘💨', '#FDE047', true));
+                    for (let p = 0; p < 6; p++) {
+                      engine.particles.push({
+                        x: e.x + (Math.random() - 0.5) * 16,
+                        y: e.y + (Math.random() - 0.5) * 16,
+                        vx: (Math.random() - 0.5) * 90,
+                        vy: (Math.random() - 0.5) * 90,
+                        life: 0.35,
+                        color: '#1C1917',
+                        size: 3.5,
+                      });
+                    }
+                  }
+                }
+              }
+            }
+
             // Level 0 is a hand-composed, asymmetric map rather than a flat
             // decoration field.  These local rules intentionally run after
             // movement so every POI remains a readable, opt-in playstyle.
@@ -4886,6 +4975,34 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave, Bezhlavý rytíř head)
             if (p.isEnemy) {
+              if (engine.timeStopTimer > 0) {
+                p.x -= p.vx * dt;
+                p.y -= p.vy * dt;
+                p.life += dt;
+                continue;
+              }
+              if (engine.masopustShockwaveTimer > 0) {
+                const distToPlayer = Math.hypot(p.x - player.x, p.y - player.y);
+                if (distToPlayer <= 180) {
+                  p.dead = true;
+                  sound.hit();
+                  const confettiColors = ['#EF4444', '#10B981', '#3B82F6', '#F59E0B', '#EC4899'];
+                  for (let c = 0; c < 6; c++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = 60 + Math.random() * 80;
+                    engine.particles.push({
+                      x: p.x,
+                      y: p.y,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd,
+                      life: 0.4,
+                      color: confettiColors[c % confettiColors.length],
+                      size: 3.5,
+                    });
+                  }
+                  continue;
+                }
+              }
               if (p.hitCooldown && p.hitCooldown > 0) {
                 p.hitCooldown -= dt;
               }
@@ -5004,6 +5121,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }
               }
               continue;
+            }
+
+            // Vapor ignition for friendly projectiles (Slivovice blue flame)
+            if (engine.slivoviceVapor && !p.slivoviceFlame) {
+              const dx = p.x - engine.slivoviceVapor.x;
+              const dy = p.y - engine.slivoviceVapor.y;
+              if (Math.hypot(dx, dy) <= 260) {
+                p.slivoviceFlame = true;
+                p.dmg = Math.round((p.dmg || 15) * 1.4);
+                engine.particles.push({
+                  x: p.x,
+                  y: p.y,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: (Math.random() - 0.5) * 40,
+                  life: 0.35,
+                  color: '#60A5FA',
+                  size: 4,
+                });
+              }
             }
 
             // Homing bees: vyhledání nejbližšího strašidla přes SpatialHash s přirozenou hmyzí vlnivou křivkou
@@ -5170,6 +5306,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // Update Enemies
           for (const e of engine.enemies) {
+            if (engine.timeStopTimer > 0) {
+              continue;
+            }
+
+            if (e.brawlTimer && e.brawlTimer > 0) {
+              e.brawlTimer = Math.max(0, e.brawlTimer - dt);
+              let nearestFoe: any = null;
+              let nearestDist = 999999;
+              for (const other of engine.enemies) {
+                if (other === e || other.dead || other.isDefeated) continue;
+                const d = Math.hypot(other.x - e.x, other.y - e.y);
+                if (d < nearestDist) {
+                  nearestDist = d;
+                  nearestFoe = other;
+                }
+              }
+              if (nearestFoe) {
+                const brawlAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
+                e.vx = Math.cos(brawlAng) * (e.speed || 100) * 1.15;
+                e.vy = Math.sin(brawlAng) * (e.speed || 100) * 1.15;
+                e.x += e.vx * dt;
+                e.y += e.vy * dt;
+                if (nearestDist < e.radius + nearestFoe.radius + 18) {
+                  e.brawlAttackCooldown = (e.brawlAttackCooldown || 0) - dt;
+                  if (e.brawlAttackCooldown <= 0) {
+                    e.brawlAttackCooldown = 0.55;
+                    const bDmg = Math.max(8, Math.round((e.damage || 15) * (0.8 + Math.random() * 0.5)));
+                    nearestFoe.takeDamage(bDmg, 'physical', Math.cos(brawlAng) * 200, Math.sin(brawlAng) * 200);
+                    if (nearestFoe.hp <= 0) {
+                      nearestFoe.killedByFriendlyFire = true;
+                    }
+                    sound.hit();
+                  }
+                }
+                continue;
+              }
+            }
+
             e.update(dt, player);
 
             if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
@@ -5359,6 +5533,46 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 kr.', COLORS.mustard, true));
                 } else if (d.type === 'chest') {
                   openChestSequence();
+                } else if (d.type === 'horseshoe') {
+                  sound.horseshoe();
+                  applyMagnetWave(engine.drops, player.x, player.y, 99999, true);
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'KOVÁŘSKÁ PODKOVA! 🧲', '#EAB308', true));
+                } else if (d.type === 'rooster') {
+                  sound.rooster();
+                  engine.screenFlashTimer = 0.45;
+                  engine.screenFlashColor = '#FFFFFF';
+                  for (let k = 0; k < engine.enemies.length; k++) {
+                    const foe = engine.enemies[k];
+                    if (!foe.isDefeated && !foe.dead) {
+                      if (foe.isBoss || foe.isMiniboss) {
+                        foe.takeDamage(650, 'holy');
+                      } else {
+                        foe.takeDamage(foe.hp || 50, 'holy');
+                      }
+                    }
+                  }
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'HLINĚNÝ KOHOUTEK! 🐓☀️', '#F59E0B', true));
+                } else if (d.type === 'cuckoo_clock') {
+                  sound.cuckooClock();
+                  engine.timeStopTimer = 4.0;
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'VYŘEZÁVANÉ KUKAČKY! ⏰', '#EAB308', true));
+                } else if (
+                  d.type === 'ponocny_horn' ||
+                  d.type === 'masopust_rattle' ||
+                  d.type === 'babicka_apron' ||
+                  d.type === 'slivovice_splash' ||
+                  d.type === 'svanda_bagpipes' ||
+                  d.type === 'kominik_button'
+                ) {
+                  applyRareItemEffect(engine, player, d.type, {
+                    onSound: (name) => (sound as any)[name]?.(),
+                    onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true)),
+                  });
+                } else if (d.type === 'arcivzacny_ananas') {
+                  applyAnanasUpgrade(player, {
+                    onSound: (name) => (sound as any)[name]?.(),
+                    onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
+                  });
                 }
               }
             }
@@ -5735,6 +5949,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             Lada.drawChest(ctx, d.x, d.y, 0, Math.abs(Math.sin(d.time * 2)), 0.65);
           } else if (d.type === 'chasnik') {
             Lada.drawChasnik(ctx, d.x, d.y, d.time, true);
+          } else if (d.type === 'horseshoe') {
+            Lada.drawHorseshoe(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'rooster') {
+            Lada.drawRooster(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'cuckoo_clock') {
+            Lada.drawCuckooClock(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'ponocny_horn') {
+            Lada.drawPonocnyHorn(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'masopust_rattle') {
+            Lada.drawMasopustRattle(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'babicka_apron') {
+            Lada.drawBabickaApron(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'slivovice_splash') {
+            Lada.drawSlivoviceJug(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'svanda_bagpipes') {
+            Lada.drawSvandaBagpipes(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'kominik_button') {
+            Lada.drawKominikButton(ctx, d.x, d.y, d.time);
+          } else if (d.type === 'arcivzacny_ananas') {
+            Lada.drawAnanas(ctx, d.x, d.y, d.time);
           }
         }
 
@@ -6210,22 +6444,63 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           Lada.drawSukoviceFx(ctx, engine.sukovice, player.x, player.y);
         }
 
+        // Kominické stopy sazí
+        if (engine.sootFootprints && engine.sootFootprints.length > 0) {
+          for (const sf of engine.sootFootprints) {
+            Lada.drawSootFootprint(ctx, sf.x, sf.y, sf.angle);
+          }
+        }
+
+        // Hlt slivovice: mrak ovocného lihu s modrým plamenem
+        if (engine.slivoviceVapor) {
+          Lada.drawSlivoviceVapor(ctx, engine.slivoviceVapor.x, engine.slivoviceVapor.y, engine.slivoviceVapor.dirAngle, engine.slivoviceVapor.life);
+        }
+
+        // Masopustní řehtačka: aktivní rázový štít odrážející střely
+        if (engine.masopustShockwaveTimer > 0) {
+          Lada.drawMasopustShockwave(ctx, player.x, player.y, 140, engine.uiTime);
+        }
+
+        // Dudácká skočná: komický oblak prachu nad peroucími se bubáky
+        for (const e of engine.enemies) {
+          if (!e.dead && !e.isDefeated && e.brawlTimer && e.brawlTimer > 0) {
+            Lada.drawSvandaBrawlCloud(ctx, e.x, e.y, engine.uiTime);
+          }
+        }
+
         ctx.restore();
 
         // Ladovské kvašové svícení – kompozitní vrstva světla a stínu (Storybook Illumination)
-        renderStorybookLightingComposite(
-          ctx,
-          canvas.width,
-          canvas.height,
-          cam,
-          engine.lightSources || [],
-          phase.id,
-          kurazRatio,
-          isWinter,
-          engine.shadowZones || [],
-          engine.occluders || [],
-          metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')
-        );
+        if (metaRef.current.dynamicLightingEnabled !== false) {
+          renderStorybookLightingComposite(
+            ctx,
+            canvas.width,
+            canvas.height,
+            cam,
+            engine.lightSources || [],
+            phase.id,
+            kurazRatio,
+            isWinter,
+            engine.shadowZones || [],
+            engine.occluders || [],
+            metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced'),
+            true
+          );
+        }
+
+        // Mrazivý zimní okraj z Trouby obecního ponocného
+        if (engine.ponocnyFrostTimer > 0) {
+          Lada.drawFrostBorder(ctx, canvas.width, canvas.height, Math.min(1, engine.ponocnyFrostTimer / 2));
+        }
+
+        // Atmosférický banner vzácných pomocných předmětů
+        if (engine.activeRareOverlay) {
+          if (engine.activeRareOverlay.type === 'ponocny_horn') {
+            Lada.drawPonocnyNightOverlay(ctx, canvas.width, canvas.height, Math.min(1, engine.activeRareOverlay.timer));
+          } else if (engine.activeRareOverlay.type === 'kominik_button') {
+            Lada.drawKominikOverlay(ctx, canvas.width, canvas.height, Math.min(1, engine.activeRareOverlay.timer));
+          }
+        }
 
         // Ladovský ukazatel na dědečka, pokud se ocitne mimo obrazovku
         if (engine.grandfather.active && player && currentGameState === 'playing') {
@@ -8295,10 +8570,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.silhouetteInvertTimer = 0.12;
         }
 
+        const player = engineRef.current.player;
+        if (player && player.guaranteedCritTimer > 0) {
+          finalDmg = Math.round(finalDmg * 2.2);
+          if (finalDmg >= 1) {
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
+          }
+        }
+
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
-
-        const player = engineRef.current.player;
 
         // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px
         if (this.prefix === 'hromovy' && player && player.hp > 0 && finalDmg > 0) {
@@ -8463,30 +8744,64 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           // Helper to spawn drops with natural radial spray and velocity
           const spawnScatterDrop = (
             dropType: DropType,
-            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string } = {}
+            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string; isHot?: boolean; goldenRushTimer?: number } = {}
           ) => {
+            let finalType = dropType;
+            let finalValue = opts.value;
+            let finalSize = opts.size;
+            let finalSpeed = opts.speed;
+            let finalText = opts.text;
+            let finalTextColor = opts.textColor;
+            let finalRadius = opts.radius;
+
+            // ADR 0006: Context-aware dynamic drop resolution for healing items at full Courage
+            if (isHealingDrop(dropType) && player) {
+              const res = resolveDynamicDrop(dropType, player.hp, player.maxHp, {
+                isBoss,
+                isMiniboss: this.isMiniboss,
+                category: this.category,
+                text: opts.text,
+                textColor: opts.textColor,
+                value: opts.value,
+                speed: opts.speed,
+                size: opts.size,
+                radius: opts.radius,
+              });
+              finalType = res.type;
+              finalValue = res.value;
+              finalSize = res.size;
+              finalSpeed = res.speed;
+              finalText = res.text;
+              finalTextColor = res.textColor;
+              finalRadius = res.radius;
+            }
+
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
-            const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
-            const radius = opts.radius ?? (
-              dropType === 'chest' ? 25 :
-              dropType === 'soul' ? 14 :
-              dropType === 'potion' ? 12 :
-              dropType === 'bread' ? 10 :
-              (opts.value && opts.value >= 15 ? 12 : opts.value && opts.value >= 5 ? 10 : 8)
+            const burstSpeed = finalSpeed ?? (55 + Math.random() * 85);
+            const radius = finalRadius ?? (
+              finalType === 'chest' ? 25 :
+              finalType === 'ponocny_horn' || finalType === 'masopust_rattle' || finalType === 'babicka_apron' || finalType === 'slivovice_splash' || finalType === 'svanda_bagpipes' || finalType === 'kominik_button' || finalType === 'arcivzacny_ananas' ? 20 :
+              finalType === 'horseshoe' || finalType === 'rooster' || finalType === 'cuckoo_clock' ? 18 :
+              finalType === 'soul' ? 14 :
+              finalType === 'potion' ? 12 :
+              finalType === 'bread' ? 10 :
+              (finalValue && finalValue >= 15 ? 12 : finalValue && finalValue >= 5 ? 10 : 8)
             );
             eng.drops.push({
-              type: dropType,
-              value: opts.value,
-              size: opts.size,
+              type: finalType,
+              value: finalValue,
+              size: finalSize,
               x: this.x + Math.cos(angle) * 8,
               y: this.y + Math.sin(angle) * 8,
               vx: Math.cos(angle) * burstSpeed,
               vy: Math.sin(angle) * burstSpeed,
               radius,
               time: Math.random() * 6.28,
+              isHot: opts.isHot || false,
+              goldenRushTimer: opts.goldenRushTimer || 0,
             });
-            if (opts.text) {
-              eng.texts.push(new DamageText(this.x, this.y - 45, opts.text, opts.textColor || COLORS.mustard, true));
+            if (finalText) {
+              eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true));
             }
           };
 
@@ -8505,17 +8820,77 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
 
           // Dědečkovy perníčky: každý zahnáný nepřítel dá odměnu podle své herní hodnoty.
-          // Hodnoty jsou 2 / 6 / 20 a odpovídají velikostem small / large / giant.
-          const gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
-          const gingerbreadValue = getGingerbreadValue(gingerbreadSize);
+          // ADR 0006: Overkill poškození (> 200 % max Kuráže) komprimuje dropy do vyšších řádů (Velké za 6 a Obří za 20).
+          let gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
+          if (this.overkill) {
+            if (gingerbreadSize === 'small') gingerbreadSize = 'large';
+            else if (gingerbreadSize === 'large') gingerbreadSize = 'giant';
+          }
+          let gingerbreadValue = getGingerbreadValue(gingerbreadSize);
+          if (this.killedByFriendlyFire) {
+            gingerbreadValue *= 2;
+          }
+
+          // ADR 0006: Rizikové zóny: Dropy z bubáků poražených ve velké vzdálenosti (> 420 px) se stávají Horkými perníčky s 3s časovačem na 2× výnos.
+          const distToPlayer = player ? Math.hypot(this.x - player.x, this.y - player.y) : 0;
+          const isFarKill = distToPlayer >= FAR_KILL_DISTANCE;
+
           spawnScatterDrop('gingerbread', {
             value: gingerbreadValue,
             radius: gingerbreadSize === 'giant' ? 19 : gingerbreadSize === 'large' ? 14 : 10,
             speed: 65 + Math.random() * 55,
-            text: `+${gingerbreadValue} 🍪`,
-            textColor: gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309',
+            text: isFarKill
+              ? `+${gingerbreadValue} 🍪🔥 HORKÝ PERNÍK (2×)`
+              : `+${gingerbreadValue} 🍪${this.killedByFriendlyFire ? ' (2x Rvačka!)' : ''}`,
+            textColor: isFarKill ? '#F97316' : (gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309'),
             size: gingerbreadSize,
+            isHot: isFarKill,
+            goldenRushTimer: isFarKill ? HOT_GINGERBREAD_DURATION : 0,
           });
+
+          // ADR 0006: Záchranný systém (Emergency Bias): Při poklesu Kuráže pod 25 % vystřelí elita záchrannou jitrnici
+          if (player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO && (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650)) {
+            const rescueAngle = Math.random() * Math.PI * 2;
+            spawnScatterDrop('potion', {
+              speed: 130,
+              angle: rescueAngle,
+              text: 'ZÁCHRANNÁ JITRNICE! 🍖🚨',
+              textColor: COLORS.green,
+            });
+          }
+
+          // Folklórní mocné předměty s Pity Timerem (ADR 0006: Podkova při > 120 perníčcích, Kohoutek, Kukačky)
+          if (!eng.folkloreDropTracker) {
+            eng.folkloreDropTracker = createFolkloreDropTracker();
+          }
+          const folkloreItem = evaluateFolkloreDrop(
+            eng.folkloreDropTracker,
+            eng.drops,
+            eng.gameTime,
+            0.016,
+            isBoss || this.isMiniboss
+          );
+          if (folkloreItem) {
+            const ann = getRareDropAnnouncement(folkloreItem);
+            spawnScatterDrop(folkloreItem, {
+              speed: 90,
+              text: ann.text,
+              textColor: ann.textColor,
+            });
+            sound.bell();
+          }
+
+          // Vzácné folklórní pomocné předměty (2 až 4 za výpravu)
+          if (canSpawnRareBattleDrop(eng.rareDropTracker, eng.gameTime, isBoss || this.isMiniboss)) {
+            const rareType = rollRareBattleDrop(eng.rareDropTracker, eng.gameTime);
+            const ann = getRareDropAnnouncement(rareType);
+            spawnScatterDrop(rareType, {
+              speed: 85,
+              text: ann.text,
+              textColor: ann.textColor,
+            });
+            sound.bell();
+          }
 
           // Thematic category affinities & multipliers
           const chestMult = isBoss ? 3.0 : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
@@ -9118,7 +9493,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        if (!this.isDefeated && engineRef.current?.lightSources) {
+        if (!this.isDefeated && engineRef.current?.lightSources && metaRef.current.dynamicLightingEnabled !== false) {
           const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
           const maxLights = profile === 'performance' ? 4 : profile === 'balanced' ? 8 : Number.MAX_SAFE_INTEGER;
           drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources, { maxLights });
@@ -9322,6 +9697,41 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }));
     sound.boss();
     setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
+  };
+
+  // Manual trigger to immediately spawn an elite enemy with one of the 4 prefixes (Vichřicový, Hromový, Kamenný, Pekelný)
+  const spawnPrefixedEnemyNow = (forcedPrefix?: EnemyPrefixType) => {
+    const curLvlId = engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : (selectedLevelId !== undefined ? selectedLevelId : 0);
+    const curLvl = GAME_LEVELS[curLvlId] || GAME_LEVELS[0];
+    const player = engineRef.current.player;
+    if (!player) return;
+
+    const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
+    const prefix = forcedPrefix || prefixes[Math.floor(Math.random() * prefixes.length)];
+    const pDef = ENEMY_PREFIX_DEFS[prefix];
+    const mobPool = curLvl.enemies || ['rarach'];
+    const mobId = mobPool[Math.floor(Math.random() * mobPool.length)] || 'rarach';
+
+    const ang = Math.random() * Math.PI * 2;
+    const enemy = createEnemyInstance(
+      mobId,
+      player.x + Math.cos(ang) * 440,
+      player.y + Math.sin(ang) * 440,
+      1.0,
+      false,
+      false,
+      undefined,
+      prefix
+    );
+    engineRef.current.enemies.push(enemy);
+    directorRef.current?.recordEnemySpawn(enemy, engineRef.current.gameTime || 0);
+    engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, `${pDef.badge}!`, pDef.color, true));
+    sound.roar();
+    setRunStats((s) => ({
+      ...s,
+      warningBanner: `⚠️ ELITNÍ BUBÁK: ${pDef.badge} (${ENEMIES[mobId]?.name || mobId})!`,
+    }));
+    setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
   };
 
   const formatTimer = (secs: number) => {
@@ -10551,6 +10961,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 className="touch-toggle-btn"
                 onClick={() => {
                   sound.coin();
+                  const nextLighting = meta.dynamicLightingEnabled === false ? true : false;
+                  saveMeta({ ...meta, dynamicLightingEnabled: nextLighting });
+                }}
+                title="Zapnout / vypnout dynamické osvětlení a kvašové noční stíny"
+              >
+                🕯️ Světlo: <span className="touch-toggle-text">{meta.dynamicLightingEnabled !== false ? 'Zap' : 'Vyp'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
                   const nextShow = !meta.showPerfOverlay;
                   saveMeta({ ...meta, showPerfOverlay: nextShow });
                 }}
@@ -10568,6 +10989,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={togglePause}
               >
                 Pokračovat ve hře ⚔️
+              </button>
+              <button
+                className="lada-btn"
+                style={{ background: '#7C3AED', color: '#FFFFFF' }}
+                onClick={() => {
+                  spawnPrefixedEnemyNow();
+                  togglePause();
+                }}
+                title="Okamžitě přivolá náhodného elitního bubáka s jedním ze 4 prefixů (Vichřicový, Hromový, Kamenný, Pekelný)!"
+              >
+                ⚡ Elitní Bubák (Prefix)! 👹
               </button>
               <button
                 className="lada-btn"
@@ -11031,6 +11463,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
+                style={{ background: meta.dynamicLightingEnabled !== false ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
+                onClick={() => {
+                  sound.coin();
+                  const nextLighting = meta.dynamicLightingEnabled === false ? true : false;
+                  saveMeta({ ...meta, dynamicLightingEnabled: nextLighting });
+                }}
+                title="Zapnout / vypnout dynamické osvětlení a kvašové noční stíny"
+              >
+                🕯️ Světlo: {meta.dynamicLightingEnabled !== false ? 'Zapnuto' : 'Vypnuto'}
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: '#DC2626', color: '#FFFFFF', padding: '12px 24px' }}
                 onClick={() => {
                   sound.hit();
@@ -11066,6 +11510,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         showPerfOverlay={!!meta.showPerfOverlay}
         onToggleShowPerfOverlay={(enabled) => {
           saveMeta({ ...meta, showPerfOverlay: enabled });
+        }}
+        dynamicLightingEnabled={meta.dynamicLightingEnabled !== false}
+        onToggleDynamicLighting={(enabled) => {
+          saveMeta({ ...meta, dynamicLightingEnabled: enabled });
         }}
         dynamicDifficulty={meta.dynamicDifficulty ?? 3.0}
         onChangeDynamicDifficulty={(diff) => {

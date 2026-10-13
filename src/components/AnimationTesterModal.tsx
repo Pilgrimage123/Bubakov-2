@@ -7,12 +7,14 @@ import {
   drawEnemyWarningSign,
   drawStunStars,
   drawValecniceCompanion,
+  drawPrefixAura,
 } from '../render/ladaRenderer';
 import { GrandfatherScene } from './GrandfatherScene';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
-import type { EnemyAttackCadence } from '../types';
+import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
+import { ENEMY_PREFIX_DEFS } from '../types';
 
 interface AnimationTesterModalProps {
   isOpen: boolean;
@@ -152,6 +154,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
   // Enemy-specific animation state
   const [enemyAction, setEnemyAction] = useState<'idle' | 'chase' | 'windup' | 'strike' | 'panicked' | 'stunned' | 'cycle'>('cycle');
   const [enemyCadence, setEnemyCadence] = useState<EnemyAttackCadence>('normal');
+  const [selectedPrefix, setSelectedPrefix] = useState<EnemyPrefixType | null>(null);
   const [showWarningSign, setShowWarningSign] = useState<boolean>(true);
   const [showHitbox, setShowHitbox] = useState<boolean>(false);
   const [attackAngleDeg, setAttackAngleDeg] = useState<number>(0);
@@ -375,6 +378,10 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               attackAngle: attackAngleRad,
               mass: e.mass || 1,
             };
+            if (selectedPrefix) {
+              drawPrefixAura(ctx, cx, cy, rad * (zoomScale / 1.4), selectedPrefix, t);
+            }
+
             ctx.save();
             ctx.translate(cx, cy);
             ctx.scale(zoomScale / 1.4, zoomScale / 1.4);
@@ -392,6 +399,36 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             );
 
             ctx.restore();
+
+            if (selectedPrefix) {
+              ctx.save();
+              const pDef = ENEMY_PREFIX_DEFS[selectedPrefix];
+              const badgeText = pDef ? pDef.badge : selectedPrefix;
+              ctx.font = '900 13px "Eczar", serif';
+              const bWidth = ctx.measureText(badgeText).width;
+              const badgeW = bWidth + 16;
+              const badgeH = 20;
+              const badgeX = cx - badgeW / 2;
+              const badgeY = cy - rad * (zoomScale / 1.4) - 24;
+
+              ctx.fillStyle = 'rgba(255, 251, 235, 0.95)';
+              ctx.strokeStyle = pDef ? pDef.color : '#38BDF8';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              if (typeof (ctx as any).roundRect === 'function') {
+                (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+              } else {
+                ctx.rect(badgeX, badgeY, badgeW, badgeH);
+              }
+              ctx.fill();
+              ctx.stroke();
+
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillStyle = '#1C1917';
+              ctx.fillText(badgeText, cx, badgeY + badgeH / 2);
+              ctx.restore();
+            }
 
             if (showWarningSign && windupTimer > 0) {
               drawEnemyWarningSign(ctx, {
@@ -1788,6 +1825,50 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         </span>
                       </div>
                     </div>
+
+                    {/* Elite Prefix Selector */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap', paddingTop: '2px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#FEF3C7' }}>
+                        Prefix:
+                      </span>
+                      <button
+                        onClick={() => setSelectedPrefix(null)}
+                        style={{
+                          padding: '2px 6px',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          background: selectedPrefix === null ? '#FDE047' : '#FAF5E8',
+                          color: 'var(--ink)',
+                          border: '1px solid var(--ink)',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ⚪ Běžný
+                      </button>
+                      {(['vichricovy', 'hromovy', 'kamenny', 'pekelny'] as const).map((pKey) => {
+                        const pDef = ENEMY_PREFIX_DEFS[pKey];
+                        const isSel = selectedPrefix === pKey;
+                        return (
+                          <button
+                            key={pKey}
+                            onClick={() => setSelectedPrefix(pKey)}
+                            style={{
+                              padding: '2px 6px',
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              background: isSel ? pDef.color : '#FAF5E8',
+                              color: isSel ? '#000000' : 'var(--ink)',
+                              border: `1.5px solid ${isSel ? '#000000' : pDef.color}`,
+                              borderRadius: '3px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {pDef.badge}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -1930,6 +2011,16 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       <div style={{ fontSize: '0.7rem', color: '#78350F', marginTop: '1px', fontWeight: 700 }}>
                         🗡️ <strong>Slabost:</strong> {currentEnemy.weakness} | 🛡️ <strong>Síla:</strong> {currentEnemy.strength}
                       </div>
+                      {selectedPrefix && (
+                        <div style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px', fontWeight: 900 }}>
+                          <span style={{ color: ENEMY_PREFIX_DEFS[selectedPrefix].color }}>{ENEMY_PREFIX_DEFS[selectedPrefix].badge}</span>: {
+                            selectedPrefix === 'vichricovy' ? '+110 rychlost, 50 % úhyb' :
+                            selectedPrefix === 'hromovy' ? '+70 rychlost, 50 % bleskový odraz (dosah 200 px)' :
+                            selectedPrefix === 'kamenny' ? '91 % redukce poškození, imunita na omráčení i dobroty' :
+                            'stopa hořící lávy, +18 %/s zrychlení při kitingu (až +120 %), sopečná puklina před běžícím hráčem'
+                          }
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: isSmallMobile ? 'left' : 'right', whiteSpace: 'nowrap', display: 'flex', gap: '6px', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.76rem', color: '#B91C1C', fontWeight: 900 }}>

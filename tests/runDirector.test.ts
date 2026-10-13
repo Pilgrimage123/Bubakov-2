@@ -325,11 +325,13 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     const newEnemies = engine.state.enemies.slice(enemiesBefore);
     expect(newEnemies.length).toBeGreaterThanOrEqual(4);
 
-    // Look for commanders with Drtivý přepad buffs
+    // Look for commanders with Drtivý přepad tactical formation bonus
     const commanders = newEnemies.filter((e: any) => e.name === 'Přepadový strážmistr');
     expect(commanders.length).toBe(2);
     for (const c of commanders) {
-      expect(c.poiseResist).toBeGreaterThanOrEqual(0.35);
+      // Tactical formation speed is applied (1.20x), but poiseResist remains strictly unbuffed
+      expect(c.speed).toBeGreaterThan(ENEMIES[c.id]?.speed || 40);
+      expect(c.poiseResist).toBe(ENEMIES[c.id]?.poiseResist || 0);
       expect(c.drtivyBuffTimer).toBe(3.5);
     }
   });
@@ -358,7 +360,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(zradny.x).toBeGreaterThan(player.x); // ahead of player
   });
 
-  it('transforms existing enemies into Ostřílení běsi when reaching 75 entity cap', () => {
+  it('transforms existing enemies into Ostřílení běsi when reaching 75 entity cap without hidden stat cheating', () => {
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
@@ -379,8 +381,10 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
 
     const ostri = fakeMobs.filter((m: any) => m.isOstryBes);
     expect(ostri.length).toBeGreaterThanOrEqual(1);
-    expect(ostri[0].poiseResist).toBeGreaterThanOrEqual(0.5);
-    expect(ostri[0].speed).toBeGreaterThan(80);
+    // Marked as veteran without artificially boosting poise or speed stats behind player back
+    expect(ostri[0].isOstryBes).toBe(true);
+    expect(ostri[0].poiseResist).toBe(0.1);
+    expect(ostri[0].speed).toBe(80);
     // Entity count remains capped at 75
     expect(engine.livingEnemies.length).toBe(75);
   });
@@ -592,5 +596,62 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(director.getBubakThreatCost('rarach')).toBe(3);
     expect(director.getBubakThreatCost('krvavy_rarach')).toBe(8);
     expect(director.getBubakThreatCost('obrneny_zbojnik')).toBe(8);
+  });
+
+  it('lowest difficulty (2.0) does not punish success at all while highest (5.0) provides insane punishment', () => {
+    // 1. Lowest difficulty (2.0): player dominating with full HP and rapid kills
+    const lowDirector = new RunDirector(1, undefined, { dynamicDifficulty: 2.0 });
+    const lowEngine = new GameEngine();
+    lowEngine.initRun({ levelId: 1, dynamicDifficulty: 2.0, spawnInitialWave: false });
+    lowEngine.state.player.hp = lowEngine.state.player.maxHp;
+
+    for (let i = 0; i < 6; i++) {
+      const mob = { id: `fast_low_${i}` };
+      lowDirector.recordEnemySpawn(mob, i);
+      lowDirector.recordEnemyDeath(mob, i + 0.2);
+    }
+    for (let i = 0; i < 20; i++) {
+      lowDirector.update(0.5, lowEngine);
+    }
+    // Lowest difficulty must NEVER punish success: pressure multiplier stays <= 1.0
+    expect(lowDirector.pressureMultiplier).toBeLessThanOrEqual(1.0);
+
+    // 2. Highest difficulty (5.0): player dominating triggers disproportionate insane pressure
+    const highDirector = new RunDirector(1, undefined, { dynamicDifficulty: 5.0 });
+    const highEngine = new GameEngine();
+    highEngine.initRun({ levelId: 1, dynamicDifficulty: 5.0, spawnInitialWave: false });
+    highEngine.state.player.hp = highEngine.state.player.maxHp;
+
+    for (let i = 0; i < 6; i++) {
+      const mob = { id: `fast_high_${i}` };
+      highDirector.recordEnemySpawn(mob, i);
+      highDirector.recordEnemyDeath(mob, i + 0.2);
+    }
+    for (let i = 0; i < 20; i++) {
+      highDirector.update(0.5, highEngine);
+    }
+    // Disproportionate punishment: pressure skyrockets well above normal
+    expect(highDirector.pressureMultiplier).toBeGreaterThan(2.5);
+  });
+
+  it('RunDirector.getOffscreenPosition guarantees enemy spawns outside visible viewport', () => {
+    const player = { x: 1000, y: 1000 };
+    const mockEngine = {
+      camera: { x: player.x - 960, y: player.y - 540 },
+    };
+
+    // Test across all 8 cardinal / diagonal angles
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI * 2) / 8;
+      const pos = RunDirector.getOffscreenPosition(player, angle, mockEngine, 160);
+      const dist = Math.hypot(pos.x - player.x, pos.y - player.y);
+      // Must be safely beyond viewport diagonal/distance
+      expect(dist).toBeGreaterThanOrEqual(750);
+
+      // Verify coordinate is outside camera viewport rect [camX, camY, camX + 1920, camY + 1080]
+      const inViewX = pos.x >= mockEngine.camera.x && pos.x <= mockEngine.camera.x + 1920;
+      const inViewY = pos.y >= mockEngine.camera.y && pos.y <= mockEngine.camera.y + 1080;
+      expect(inViewX && inViewY).toBe(false);
+    }
   });
 });

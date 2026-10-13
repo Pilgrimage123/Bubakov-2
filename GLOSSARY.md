@@ -25,7 +25,7 @@ Herní nastavení a ukazatel vlivu Režiséra výpravy na chování a hustotu st
 _Avoid_: difficulty level, obtížnost hry, challenge rating
 
 **Ostřílení běsi**:
-Strašidla posílená Režisérem výpravy o zvýšenou odolnost proti odhození a vyšší rychlost v momentech, kdy je bojiště již zaplněno na maximální kapacitu entit.
+Zkušenější strašidla označená Režisérem výpravy při zaplnění bojiště na maximální kapacitu entit, čímž Režisér plynule odčerpává přebytečný rejdový rozpočet bez umělého skrytého navyšování základních statistik.
 _Avoid_: elite buff, buffnutá monstra, enraged enemies
 
 **Klešťové sevření**:

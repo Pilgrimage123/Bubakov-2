@@ -89,6 +89,16 @@ function getItemQuote(item: GrandfatherItemDef): string {
     if (item.id === 'panak_koralky') return '„Panák kořalky na zahřátí — jen ať se ti nohy nerozklepou!“';
   }
   if (item.effect.type === 'coins') return `„${item.name}! Pekelný poklad, hned ti za něj sypu krejcary!“`;
+  if (item.id === 'ponocny_horn') return '„Trouba obecního ponocného! Zmrazí každé strašidlo i střely a celá vesnice ztichne pod mrazem!“';
+  if (item.id === 'masopust_rattle') return '„Masopustní řehtačka! Udělá takový randál, že se bubáci rozpadnou na slámu, konfety a škvarky!“';
+  if (item.id === 'babicka_apron') return '„Babiččina kropenatá zástěra! Všechny perníčky, groše a poklady z celé louky ti v mžiku vletí do kapes!“';
+  if (item.id === 'slivovice_splash') return '„Pořádný hlt domácí slivovice z modrého džbánku! Vyžene neduhy, omráčí potvory a střely se rozhoří modrým plamenem!“';
+  if (item.id === 'svanda_bagpipes') return '„Dudácká čertovská skočná! Jakmile Švanda zadudá, čerti i bubáci se začnou mlátit mezi sebou a nechají tě být!“';
+  if (item.id === 'kominik_button') return '„Kominický knoflík pro štěstí! Šáhni na něj a projdeš každým hejnem jako černý stín s jistými kritickými ranami!“';
+  if (item.id === 'kovarska_podkova') return '„Poctivá podkova z panské kovárny! Všechny perníčky, krejcary a dušičky z celé louky se k tobě v mžiku sletí!“';
+  if (item.id === 'hlineny_kohoutek') return '„Malovaný hliněný kohoutek! Jakmile zakokrhá na ranní rozbřesk, noční havěť se rozprchne a bossové dostanou pořádnou ránu!“';
+  if (item.id === 'vyrezavane_kukacky') return '„Vyřezávané kukačky ze Šumavy! Když zakukají, čas se na čtyři vteřiny úplně zastaví!“';
+  if (item.id === 'arcivzacny_ananas') return '„Arcivzácný ananas z císařské zahrady! Zázračné ovoce, které se vidí jednou za sto let — dá ti královskou sílu a nezranitelnost!“';
   return `„${item.name}! Vzácná věc, z mé nůše putuje přímo k tobě!“`;
 }
 
@@ -591,6 +601,16 @@ export function GrandfatherShop({
                         : (rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank} (+12 % zranění, +8 % kadence, +6 % dosah)`);
                       buttonLabel = isMilestoneRank ? 'VYLEPŠIT MILNÍK' : 'VYLEPŠIT';
                     }
+                  } else if (item.isRareInstant) {
+                    levelBadge = '✨ Okamžitý zásah';
+                    buttonLabel = 'POUŽÍT';
+                    displayDesc = `${item.description} (Ihned zavře nůši a spustí se na louce!)`;
+                  } else if (item.isAnanas) {
+                    owned = purchasedIds.filter((id) => id === item.id).length;
+                    maxStacks = item.maxStacks || 2;
+                    isMaxed = owned >= maxStacks;
+                    levelBadge = isMaxed ? '🍍 Arcivzácné (MAX)' : '🍍 Arcivzácné (2,5×)';
+                    buttonLabel = isMaxed ? 'VYČERPÁNO' : 'KOUPIT';
                   } else {
                     owned = purchasedIds.filter((id) => id === item.id).length;
                     maxStacks = item.maxStacks || 5;
@@ -615,7 +635,11 @@ export function GrandfatherShop({
                       onTouchStart={() => handleItemHover(item)}
                       style={{
                         animationDelay: `${idx * 0.08}s`,
-                        border: item.isWeapon
+                        border: item.isAnanas
+                          ? isHighlighted ? '3px solid #EAB308' : '2.5px solid #CA8A04'
+                          : item.isRareInstant
+                          ? isHighlighted ? '3px solid #38BDF8' : '2.5px solid #0284C7'
+                          : item.isWeapon
                           ? isHighlighted ? '3px solid #DC2626' : '2.5px solid #9A3412'
                           : isHighlighted ? '2.5px solid #D97706' : '2px solid var(--ink)',
                         borderRadius: 14,
@@ -627,10 +651,18 @@ export function GrandfatherShop({
                             : isHighlighted
                               ? '#FFFDF5'
                               : affordable
-                                ? item.isWeapon ? '#FFFBEB' : '#FFF7DF'
+                                ? item.isAnanas
+                                  ? '#FEF9C3'
+                                  : item.isRareInstant
+                                  ? '#F0F9FF'
+                                  : item.isWeapon ? '#FFFBEB' : '#FFF7DF'
                                 : '#F5E6CA',
                         boxShadow: isHighlighted
-                          ? '0 0 14px rgba(245, 158, 11, 0.45), 3px 3px 0 var(--ink)'
+                          ? item.isRareInstant
+                            ? '0 0 14px rgba(56, 189, 248, 0.45), 3px 3px 0 var(--ink)'
+                            : item.isAnanas
+                            ? '0 0 14px rgba(234, 179, 8, 0.5), 3px 3px 0 var(--ink)'
+                            : '0 0 14px rgba(245, 158, 11, 0.45), 3px 3px 0 var(--ink)'
                           : item.isWeapon
                             ? '3px 3px 0 rgba(154, 52, 18, 0.4)'
                             : '3px 3px 0 rgba(0,0,0,0.25)',
@@ -716,7 +748,7 @@ export function GrandfatherShop({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{priceExempt ? '🪙' : '🍪'}</span>
+                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>🍪</span>
                           <strong
                             style={{
                               fontSize: '1.15rem',

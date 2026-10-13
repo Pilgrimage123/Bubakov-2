@@ -57,7 +57,7 @@ export const GRANDFATHER_INFLATION_RATE = 0.50;
 
 /** Healing consumables and direct-currency treasures keep their base price. */
 export function isGrandfatherPriceExempt(item: GrandfatherItemDef): boolean {
-  return item.effect.type === 'heal' || item.effect.type === 'coins';
+  return item.effect.type === 'heal' || item.effect.type === 'coins' || !!item.isRareInstant;
 }
 
 export function getGrandfatherPrice(
@@ -92,17 +92,29 @@ export function chooseGrandfatherOffers(
 
   const availableItems = GRANDFATHER_ITEMS.filter(isAvailable);
   const availableWeapons = availableItems.filter((item) => item.isWeapon);
+  const rareInstants = availableItems.filter((item) => item.isRareInstant);
+  const ananasDef = availableItems.find((item) => item.isAnanas);
 
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
 
-  // 1. Garantované zbraně (1–2 zbraně v nabídce pro pestrý výběr a rychlý rozvoj arzenálu)
-  const targetWeaponCount = availableWeapons.length >= 2 ? 2 : availableWeapons.length;
+  // 1. Vzácná nabídka z nůše: zřídka se objeví Arcivzácný ananas nebo jeden z 6 vzácných pomocných předmětů
+  const rareRollChance = Math.min(0.40, 0.22 + Math.max(0, luck) * 0.025);
+  if (Math.random() < rareRollChance) {
+    const rollSpecial = Math.random();
+    if (ananasDef && rollSpecial < 0.38) {
+      selected.push({ itemId: ananasDef.id, offeredAt: now });
+    } else if (rareInstants.length > 0) {
+      const chosenRare = rareInstants[Math.floor(Math.random() * rareInstants.length)];
+      selected.push({ itemId: chosenRare.id, offeredAt: now });
+    }
+  }
+
+  // 2. Garantované zbraně (1–2 zbraně v nabídce pro pestrý výběr a rychlý rozvoj arzenálu)
+  const targetWeaponCount = Math.min(availableWeapons.length, count - selected.length >= 3 ? 2 : 1);
   if (targetWeaponCount > 0) {
-    // Upřednostníme stávající zbraně lovce (pro level-up),
-    // ostatní zbraně mají rovné šance bez speciální přednosti pro konkrétní typy.
     const pool = [...availableWeapons];
-    while (selected.length < targetWeaponCount && pool.length > 0) {
+    while (selected.filter((s) => availableWeapons.some((w) => w.id === s.itemId)).length < targetWeaponCount && pool.length > 0) {
       const weights = pool.map((w) => {
         const isOwned = playerWeapons.some((pw: any) => pw.id === w.weaponId);
         let weight = 1.0;
@@ -120,13 +132,17 @@ export function chooseGrandfatherOffers(
         }
       }
       const chosen = pool.splice(chosenIdx, 1)[0];
-      selected.push({ itemId: chosen.id, offeredAt: now });
+      if (!selected.some((s) => s.itemId === chosen.id)) {
+        selected.push({ itemId: chosen.id, offeredAt: now });
+      }
     }
   }
 
-  // 2. Zbývající pozice z náhodného mixu všech zbývajících dostupných položek (zbraně i upgrady)
-  const remainingPool = availableItems.filter((item) => !selected.some((s) => s.itemId === item.id));
-  const weighted = [...remainingPool].sort(() => Math.random() - 0.5);
+  // 3. Zbývající pozice z běžného fondu (bez dalších vzácných instancí a duplicit)
+  const regularPool = availableItems.filter(
+    (item) => !item.isRareInstant && !item.isAnanas && !selected.some((s) => s.itemId === item.id)
+  );
+  const weighted = [...regularPool].sort(() => Math.random() - 0.5);
   const affordable = weighted.filter((item) => item.baseCost <= gingerbread);
   const candidatePool = [...affordable, ...weighted.filter((item) => !affordable.includes(item))];
 

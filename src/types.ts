@@ -13,6 +13,24 @@ export type DropType =
   | 'chasnik'
   | 'horseshoe'
   | 'rooster'
+  | 'cuckoo_clock'
+  | 'ponocny_horn'
+  | 'masopust_rattle'
+  | 'babicka_apron'
+  | 'slivovice_splash'
+  | 'svanda_bagpipes'
+  | 'kominik_button'
+  | 'arcivzacny_ananas';
+
+export type RareItemType =
+  | 'ponocny_horn'
+  | 'masopust_rattle'
+  | 'babicka_apron'
+  | 'slivovice_splash'
+  | 'svanda_bagpipes'
+  | 'kominik_button'
+  | 'horseshoe'
+  | 'rooster'
   | 'cuckoo_clock';
 
 export interface GameDrop {
@@ -137,6 +155,7 @@ export interface MetaProgression {
   dynamicDifficulty?: number;
   performanceProfile?: 'fidelity' | 'balanced' | 'performance';
   performanceMode?: boolean;
+  dynamicLightingEnabled?: boolean;
   [key: string]: any;
 }
 

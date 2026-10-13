@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from '../src/game/engine';
+import { migrateMetaProgression, createDefaultMetaProgression } from '../src/game/migration';
+import { renderStorybookLightingComposite } from '../src/render/storybookLightingRenderer';
 
 describe('GameEngine Storybook Lighting Integration', () => {
   let engine: GameEngine;
@@ -116,5 +118,63 @@ describe('GameEngine Storybook Lighting Integration', () => {
 
     // Skeleton is inside the Bludička aura
     expect(skeleton.bludickaAttracted).toBe(true);
+  });
+
+  it('dynamicLightingEnabled defaults to true in default and migrated meta progression', () => {
+    const defaultMeta = createDefaultMetaProgression();
+    expect(defaultMeta.dynamicLightingEnabled).toBe(true);
+
+    const migratedWithFalse = migrateMetaProgression({ dynamicLightingEnabled: false });
+    expect(migratedWithFalse.dynamicLightingEnabled).toBe(false);
+
+    const migratedWithTrue = migrateMetaProgression({ dynamicLightingEnabled: true });
+    expect(migratedWithTrue.dynamicLightingEnabled).toBe(true);
+
+    const migratedEmpty = migrateMetaProgression({});
+    expect(migratedEmpty.dynamicLightingEnabled).toBe(true);
+  });
+
+  it('renderStorybookLightingComposite skips cleanly when enabled=false or quality=off', () => {
+    const mockCtx = {
+      save: vi.fn(),
+      restore: vi.fn(),
+      clearRect: vi.fn(),
+      fillRect: vi.fn(),
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    // Disabled flag
+    renderStorybookLightingComposite(
+      mockCtx,
+      800,
+      600,
+      { x: 0, y: 0 },
+      [],
+      'night',
+      0.1,
+      true,
+      [],
+      [],
+      'fidelity',
+      false // enabled = false
+    );
+    expect(mockCtx.drawImage).not.toHaveBeenCalled();
+
+    // Quality 'off'
+    renderStorybookLightingComposite(
+      mockCtx,
+      800,
+      600,
+      { x: 0, y: 0 },
+      [],
+      'night',
+      0.1,
+      true,
+      [],
+      [],
+      'off',
+      true
+    );
+    expect(mockCtx.drawImage).not.toHaveBeenCalled();
   });
 });

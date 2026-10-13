@@ -14,10 +14,281 @@ export const COMBO_PULSE_RADIUS = 550;
 export const FAR_KILL_DISTANCE = 420;
 
 /** Healing drops stay on the map until the player can benefit from them. */
-export function canCollectDrop(type: DropType, currentHp: number, maxHp: number): boolean {
-  const isHealingDrop = type === 'potion' || type === 'bread' || type === 'pear';
-  return !isHealingDrop || currentHp < maxHp;
+export function isHealingDrop(type: DropType): boolean {
+  return type === 'potion' || type === 'bread' || type === 'pear';
 }
+
+export function canCollectDrop(type: DropType, currentHp: number, maxHp: number): boolean {
+  return !isHealingDrop(type) || currentHp < maxHp;
+}
+
+export interface DynamicDropResolution {
+  type: DropType;
+  value?: number;
+  size?: 'small' | 'large' | 'giant' | string;
+  speed?: number;
+  text?: string;
+  textColor?: string;
+  radius?: number;
+}
+
+/**
+ * Dynamický drop systém: Pokud má lovec plnou Kuráž (nebo téměř plnou >= 95%),
+ * šance na padnutí léčivých předmětů se dramaticky sníží (o 85-90%)
+ * a místo nich padají užitečnější předměty: krejcary, perníčky, dušičky nebo podkovy.
+ */
+export function resolveDynamicDrop(
+  intendedType: DropType,
+  currentHp: number,
+  maxHp: number,
+  opts: {
+    isBoss?: boolean;
+    isMiniboss?: boolean;
+    category?: string;
+    text?: string;
+    textColor?: string;
+    value?: number;
+    speed?: number;
+    size?: string;
+    radius?: number;
+    forceDivert?: boolean;
+  } = {}
+): DynamicDropResolution {
+  const isFullCourage = currentHp >= maxHp * 0.95;
+  const isHealing = isHealingDrop(intendedType);
+
+  if (!isHealing || !isFullCourage) {
+    return {
+      type: intendedType,
+      value: opts.value,
+      size: opts.size,
+      speed: opts.speed,
+      radius: opts.radius,
+      text: opts.text,
+      textColor: opts.textColor,
+    };
+  }
+
+  // Lovec má plnou Kuráž! 88% šance vyměnit zbytečné léčení za cennější kořist.
+  const roll = Math.random();
+  if (roll < 0.12 && !opts.forceDivert) {
+    // 12% šance ponechat léčení na zemi pro budoucí nouzi
+    return {
+      type: intendedType,
+      value: opts.value,
+      size: opts.size,
+      speed: opts.speed,
+      radius: opts.radius,
+      text: opts.text,
+      textColor: opts.textColor,
+    };
+  }
+
+  if (opts.isBoss || opts.isMiniboss) {
+    if (roll < 0.48) {
+      return {
+        type: 'coin',
+        value: 30,
+        speed: opts.speed ?? 85,
+        text: 'Zlatý tolar! +30 kr. 🪙',
+        textColor: '#F59E0B',
+      };
+    } else if (roll < 0.82) {
+      return {
+        type: 'gingerbread',
+        value: GINGERBREAD_VALUES.giant,
+        size: 'giant',
+        radius: 19,
+        speed: opts.speed ?? 80,
+        text: '+20 🍪 Obří perník!',
+        textColor: '#F59E0B',
+      };
+    } else {
+      return {
+        type: 'soul',
+        radius: 14,
+        speed: opts.speed ?? 95,
+        text: 'Vděčná dušička! 🕊️',
+        textColor: '#38BDF8',
+      };
+    }
+  }
+
+  if (roll < 0.52) {
+    const coinVal = roll < 0.22 ? 10 : 5;
+    return {
+      type: 'coin',
+      value: coinVal,
+      speed: opts.speed ?? 70,
+      text: `+${coinVal} kr. do měšce! 🪙`,
+      textColor: '#FCD34D',
+    };
+  } else if (roll < 0.82) {
+    return {
+      type: 'gingerbread',
+      value: GINGERBREAD_VALUES.large,
+      size: 'large',
+      radius: 14,
+      speed: opts.speed ?? 65,
+      text: '+6 🍪 Perníček!',
+      textColor: '#B45309',
+    };
+  } else if (roll < 0.94) {
+    return {
+      type: 'soul',
+      radius: 14,
+      speed: opts.speed ?? 80,
+      text: 'Zbloudilá dušička! 🕊️',
+      textColor: '#38BDF8',
+    };
+  } else {
+    const rareType: DropType = Math.random() < 0.5 ? 'horseshoe' : 'cuckoo_clock';
+    return {
+      type: rareType,
+      radius: 18,
+      speed: opts.speed ?? 75,
+      text: rareType === 'horseshoe' ? 'Kovářská podkova! 🧲' : 'Vyřezávané kukačky! ⏰',
+      textColor: '#EAB308',
+    };
+  }
+}
+
+export const RARE_BATTLE_ITEMS: DropType[] = [
+  'ponocny_horn',
+  'masopust_rattle',
+  'babicka_apron',
+  'slivovice_splash',
+  'svanda_bagpipes',
+  'kominik_button',
+];
+
+export interface RareDropTracker {
+  rareDropsSpawned: number;
+  targetRareDrops: number; // 2 to 4 per run
+  lastRareDropTime: number;
+  scheduledWindows: number[];
+}
+
+export function createRareDropTracker(targetDrops?: number): RareDropTracker {
+  const target = targetDrops ?? (2 + Math.floor(Math.random() * 3)); // 2, 3, or 4 per run
+  const clamped = Math.min(4, Math.max(2, target));
+  const windows = clamped === 2
+    ? [140, 380]
+    : clamped === 3
+    ? [110, 290, 480]
+    : [95, 240, 410, 600];
+
+  return {
+    rareDropsSpawned: 0,
+    targetRareDrops: clamped,
+    lastRareDropTime: -999,
+    scheduledWindows: windows,
+  };
+}
+
+export function canSpawnRareBattleDrop(
+  tracker: RareDropTracker,
+  gameTime: number,
+  isEliteOrBoss = false
+): boolean {
+  if (tracker.rareDropsSpawned >= tracker.targetRareDrops) return false;
+  if (gameTime - tracker.lastRareDropTime < 60) return false;
+  const nextWindow = tracker.scheduledWindows[tracker.rareDropsSpawned] ?? 120;
+  if (gameTime >= nextWindow) return true;
+  if (isEliteOrBoss && gameTime >= nextWindow * 0.75) return true;
+  return false;
+}
+
+export function rollRareBattleDrop(tracker: RareDropTracker, gameTime: number): DropType {
+  tracker.rareDropsSpawned++;
+  tracker.lastRareDropTime = gameTime;
+  const available = [...RARE_BATTLE_ITEMS];
+  return available[Math.floor(Math.random() * available.length)];
+}
+
+export function getRareDropAnnouncement(type: DropType): { text: string; textColor: string } {
+  switch (type) {
+    case 'ponocny_horn':
+      return { text: 'Trouba ponocného! 📯❄️', textColor: '#38BDF8' };
+    case 'masopust_rattle':
+      return { text: 'Masopustní řehtačka! 🪇💥', textColor: '#EF4444' };
+    case 'babicka_apron':
+      return { text: 'Babiččina zástěra! 🧺✨', textColor: '#60A5FA' };
+    case 'slivovice_splash':
+      return { text: 'Hlt slivovice! 🏺🔥', textColor: '#A855F7' };
+    case 'svanda_bagpipes':
+      return { text: 'Dudácká skočná! 🎶😈', textColor: '#F59E0B' };
+    case 'kominik_button':
+      return { text: 'Kominický knoflík! 🔘🎩', textColor: '#FDE047' };
+    case 'horseshoe':
+      return { text: 'Kovářská podkova! 🧲', textColor: '#EAB308' };
+    case 'rooster':
+      return { text: 'Hliněný kohoutek! 🐓☀️', textColor: '#F59E0B' };
+    case 'cuckoo_clock':
+      return { text: 'Vyřezávané kukačky! ⏰', textColor: '#EAB308' };
+    case 'arcivzacny_ananas':
+      return { text: 'Arcivzácný ananas! 🍍👑', textColor: '#FDE047' };
+    default:
+      return { text: 'Vzácný poklad! ✨', textColor: '#F59E0B' };
+  }
+}
+
+export interface FolkloreDropTracker {
+  lastFolkloreDropTime: number;
+  uncollectedAccumulationTimer: number;
+}
+
+export function createFolkloreDropTracker(): FolkloreDropTracker {
+  return {
+    lastFolkloreDropTime: -999,
+    uncollectedAccumulationTimer: 0,
+  };
+}
+
+/**
+ * ADR 0006: Folklórní mocné předměty s Pity Timerem (45 s cooldown):
+ * - Kovářská podkova: Magnet přitahující veškeré perníčky a kořist (garantovaný drop při nahromadění > 120 perníčků po 20 s)
+ * - Hliněný kohoutek: Board clear a poškození bossů
+ * - Vyřezávané kukačky: Zastavení času na 4 s
+ */
+export function evaluateFolkloreDrop(
+  tracker: FolkloreDropTracker,
+  drops: GameDrop[],
+  gameTime: number,
+  dt: number,
+  isEliteOrBoss: boolean
+): DropType | null {
+  const uncollected = calculateUncollectedGingerbread(drops);
+  if (uncollected >= UNCOLLECTED_GINGERBREAD_PITY_THRESHOLD) {
+    tracker.uncollectedAccumulationTimer += dt;
+  } else {
+    tracker.uncollectedAccumulationTimer = Math.max(0, tracker.uncollectedAccumulationTimer - dt * 0.5);
+  }
+
+  // Cooldown between folklore drops (45 s)
+  if (gameTime - tracker.lastFolkloreDropTime < SPECIAL_DROP_PITY_COOLDOWN) {
+    return null;
+  }
+
+  // Guaranteed horseshoe when > 120 gingerbread has accumulated on meadow for > 20s
+  if (tracker.uncollectedAccumulationTimer >= 20.0) {
+    tracker.uncollectedAccumulationTimer = 0;
+    tracker.lastFolkloreDropTime = gameTime;
+    return 'horseshoe';
+  }
+
+  // Elite or boss defeat can trigger a folklore drop
+  if (isEliteOrBoss) {
+    tracker.lastFolkloreDropTime = gameTime;
+    const roll = Math.random();
+    if (roll < 0.40) return 'horseshoe';
+    if (roll < 0.70) return 'cuckoo_clock';
+    return 'rooster';
+  }
+
+  return null;
+}
+
 export const TIME_STOP_DURATION = 4.0;
 
 export interface DropSpawnOptions {
@@ -51,6 +322,15 @@ export function createDropInstance(
   let radius = opts.radius;
   if (!radius) {
     if (type === 'chest') radius = 25;
+    else if (type === 'arcivzacny_ananas') radius = 22;
+    else if (
+      type === 'ponocny_horn' ||
+      type === 'masopust_rattle' ||
+      type === 'babicka_apron' ||
+      type === 'slivovice_splash' ||
+      type === 'svanda_bagpipes' ||
+      type === 'kominik_button'
+    ) radius = 20;
     else if (type === 'horseshoe') radius = 18;
     else if (type === 'rooster') radius = 18;
     else if (type === 'cuckoo_clock') radius = 18;
@@ -266,3 +546,270 @@ export function calculateUncollectedGingerbread(drops: GameDrop[]): number {
   }
   return sum;
 }
+
+export function applyRareItemEffect(
+  engineState: any,
+  player: any,
+  type: DropType,
+  callbacks?: {
+    onSound?: (name: string) => void;
+    onDamageText?: (opts: { x: number; y: number; text: string; color?: string }) => void;
+  }
+): void {
+  if (!player) return;
+
+  if (type === 'ponocny_horn') {
+    callbacks?.onSound?.('ponocnyHorn');
+    engineState.timeStopTimer = 5.0;
+    engineState.ponocnyFrostTimer = 5.0;
+    engineState.activeRareOverlay = {
+      type: 'ponocny_horn',
+      timer: 3.5,
+      title: 'TROUBA OBECNÍHO PONOCNÉHO',
+      subtitle: '„Chval každý duch Hospodina!“',
+    };
+    if (engineState.particles) {
+      for (let i = 0; i < 28; i++) {
+        const ang = (i / 28) * Math.PI * 2;
+        engineState.particles.push({
+          x: player.x + Math.cos(ang) * 45,
+          y: player.y + Math.sin(ang) * 45,
+          vx: Math.cos(ang) * 220,
+          vy: Math.sin(ang) * 220,
+          life: 1.2,
+          color: i % 2 === 0 ? '#E0F2FE' : '#38BDF8',
+          size: 4,
+        });
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 70,
+      text: '„CHVAL KAŽDÝ DUCH HOSPODINA!“ 📯❄️',
+      color: '#38BDF8',
+    });
+  } else if (type === 'masopust_rattle') {
+    callbacks?.onSound?.('masopustRattle');
+    engineState.cameraTremorTimer = 0.8;
+    engineState.masopustShockwaveTimer = 2.0;
+
+    if (engineState.enemies) {
+      const confettiColors = ['#EF4444', '#10B981', '#3B82F6', '#F59E0B', '#EC4899', '#EAB308', '#78350F'];
+      for (let i = 0; i < engineState.enemies.length; i++) {
+        const foe = engineState.enemies[i];
+        if (foe.isDefeated || foe.dead) continue;
+        const isEliteOrBoss = foe.isBoss || foe.isMiniboss || (foe.maxHp && foe.maxHp >= 650);
+        if (isEliteOrBoss) {
+          const dmg = Math.max(1, Math.round((foe.maxHp || 100) * 0.35));
+          foe.takeDamage(dmg, 'physical');
+          const ang = Math.atan2(foe.y - player.y, foe.x - player.x) || (Math.random() * Math.PI * 2);
+          foe.x += Math.cos(ang) * 1600;
+          foe.y += Math.sin(ang) * 1600;
+        } else {
+          foe.takeDamage(foe.hp || 9999, 'physical');
+          if (engineState.particles) {
+            for (let p = 0; p < 8; p++) {
+              const pAng = Math.random() * Math.PI * 2;
+              const spd = 60 + Math.random() * 120;
+              engineState.particles.push({
+                x: foe.x,
+                y: foe.y,
+                vx: Math.cos(pAng) * spd,
+                vy: Math.sin(pAng) * spd,
+                life: 0.65,
+                color: confettiColors[p % confettiColors.length],
+                size: p % 3 === 0 ? 4 : 2.5,
+              });
+            }
+          }
+        }
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 70,
+      text: 'MASOPUSTNÍ ŘEHTAČKA! 🪇💥',
+      color: '#EF4444',
+    });
+  } else if (type === 'babicka_apron') {
+    callbacks?.onSound?.('grandmothersApron');
+    applyMagnetWave(engineState.drops, player.x, player.y, 99999, true);
+    if (engineState.particles) {
+      for (let i = 0; i < 22; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 70 + Math.random() * 180;
+        engineState.particles.push({
+          x: player.x + Math.cos(ang) * dist,
+          y: player.y + Math.sin(ang) * dist,
+          vx: -Math.cos(ang) * 280,
+          vy: -Math.sin(ang) * 280,
+          life: 0.75,
+          color: i % 2 === 0 ? '#60A5FA' : '#DBEAFE',
+          size: 3.5,
+        });
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 65,
+      text: 'BABIČČINA KROPENATÁ ZÁSTĚRA! 🧺✨',
+      color: '#60A5FA',
+    });
+  } else if (type === 'slivovice_splash') {
+    callbacks?.onSound?.('slivoviceSplash');
+    player.slowTimer = 0;
+    player.waterSoakedTimer = 0;
+    player.burnTimer = 0;
+    player.fissureBurnTimer = 0;
+    player.hexTimer = 0;
+
+    const facingAngle = typeof player.facingAngle === 'number'
+      ? player.facingAngle
+      : ((player.facingDir && player.facingDir < 0) ? Math.PI : 0);
+
+    if (engineState.enemies) {
+      for (let i = 0; i < engineState.enemies.length; i++) {
+        const foe = engineState.enemies[i];
+        if (foe.isDefeated || foe.dead) continue;
+        const dx = foe.x - player.x;
+        const dy = foe.y - player.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= 260) {
+          const angleToFoe = Math.atan2(dy, dx);
+          let angleDiff = Math.abs(angleToFoe - facingAngle);
+          while (angleDiff > Math.PI) angleDiff = Math.abs(angleDiff - Math.PI * 2);
+          if (angleDiff <= (Math.PI / 2) + 0.1) {
+            foe.stunTimer = Math.max(foe.stunTimer || 0, 4.5);
+            foe.drunkenStaggerTimer = 4.5;
+            const pushX = (dx / (dist || 1)) * 180;
+            const pushY = (dy / (dist || 1)) * 180;
+            foe.x += pushX;
+            foe.y += pushY;
+          }
+        }
+      }
+    }
+
+    engineState.slivoviceVapor = {
+      x: player.x,
+      y: player.y,
+      dirAngle: facingAngle,
+      life: 4.0,
+    };
+
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 65,
+      text: '„A JE TO DOMA!“ 🏺🔥 (Omráčení na 4,5 s & Modrý plamen)',
+      color: '#A855F7',
+    });
+  } else if (type === 'svanda_bagpipes') {
+    callbacks?.onSound?.('svandaBagpipes');
+    if (engineState.enemies) {
+      for (let i = 0; i < engineState.enemies.length; i++) {
+        const foe = engineState.enemies[i];
+        if (!foe.isDefeated && !foe.dead) {
+          foe.brawlTimer = 6.0;
+        }
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 70,
+      text: 'DUDÁCKÁ ČERTOVSKÁ SKOČNÁ! 🎶😈 (Rvačka na 6 s & 2x perníčky)',
+      color: '#F59E0B',
+    });
+  } else if (type === 'kominik_button') {
+    callbacks?.onSound?.('kominikButton');
+    player.intangibleTimer = 7.0;
+    player.guaranteedCritTimer = 7.0;
+    engineState.activeRareOverlay = {
+      type: 'kominik_button',
+      timer: 3.5,
+      title: 'KOMINICKÝ KNOFLÍK PRO ŠTĚSTÍ',
+      subtitle: '„Štěstí v kapse, saze v očích!“',
+    };
+    if (engineState.particles) {
+      for (let i = 0; i < 22; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 30 + Math.random() * 85;
+        engineState.particles.push({
+          x: player.x,
+          y: player.y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          life: 1.0,
+          color: '#1C1917',
+          size: 4,
+        });
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 70,
+      text: 'KOMINICKÝ KNOFLÍK! 🔘🎩 (Nehmotnost & Kritické zásahy na 7 s)',
+      color: '#FDE047',
+    });
+  } else if (type === 'horseshoe') {
+    callbacks?.onSound?.('horseshoe');
+    applyMagnetWave(engineState.drops, player.x, player.y, 99999, true);
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 65,
+      text: 'KOVÁŘSKÁ PODKOVA! 🧲 (Přitažení celé louky)',
+      color: '#EAB308',
+    });
+  } else if (type === 'rooster') {
+    callbacks?.onSound?.('rooster');
+    engineState.screenFlashTimer = 0.45;
+    engineState.screenFlashColor = '#FFFFFF';
+    if (engineState.enemies) {
+      for (let k = 0; k < engineState.enemies.length; k++) {
+        const foe = engineState.enemies[k];
+        if (!foe.isDefeated && !foe.dead) {
+          if (foe.isBoss || foe.isMiniboss) {
+            foe.takeDamage(650, 'holy');
+          } else {
+            foe.takeDamage(foe.hp || 50, 'holy');
+          }
+        }
+      }
+    }
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 65,
+      text: 'HLINĚNÝ KOHOUTEK! 🐓☀️ (Ranní rozbřesk & Posvátná záře)',
+      color: '#F59E0B',
+    });
+  } else if (type === 'cuckoo_clock') {
+    callbacks?.onSound?.('cuckooClock');
+    engineState.timeStopTimer = 4.0;
+    callbacks?.onDamageText?.({
+      x: player.x,
+      y: player.y - 65,
+      text: 'VYŘEZÁVANÉ KUKAČKY! ⏰ (Zastavení času na 4 s)',
+      color: '#EAB308',
+    });
+  }
+}
+
+export function applyAnanasUpgrade(
+  player: any,
+  callbacks?: {
+    onSound?: (name: string) => void;
+    onDamageText?: (opts: { x: number; y: number; text: string; color?: string }) => void;
+  }
+): void {
+  callbacks?.onSound?.('ananasPickup');
+  player.maxHp = Math.round(player.maxHp * 1.30);
+  player.hp = player.maxHp;
+  player.speed = Math.round(player.speed * 1.30);
+  player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 10.0);
+  callbacks?.onDamageText?.({
+    x: player.x,
+    y: player.y - 75,
+    text: '🍍 ARCIVZÁCNÝ ANANAS! (+30 % Kuráž & Rychlost, plné zdraví a 10 s nezranitelnost)',
+    color: '#FDE047',
+  });
+}
+

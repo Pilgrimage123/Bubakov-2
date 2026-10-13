@@ -1,6 +1,6 @@
 {
-  "summary":  "Plán vybalancování 4 unikátních prefixů bubáků (Vichřicový, Kamenný, Hromový, Pekelný) se zachováním standardních dropů, kompletní imunitou Kamenného proti omráčení a snack-omráčení s 91% redukcí poškození, bleskovou odvetou Hromového (vracení 50 % zranění do 200 px) a trojitou anti-kiting mechanikou Pekelného bubáka (magmatická stopa, predátorský sprint na dálku a prediktivní sopečné trhliny).",
-  "updatedAt":  "2026-10-11T12:01:36.101521121Z",
+  "summary":  "Implementation plan to remove all hidden stat bonuses from enemies, ensuring they only receive bonuses from explicit enemy abilities and prefixes, while preserving formation tactical speeds and base stats.",
+  "updatedAt":  "2026-10-12T09:07:43.502624065Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

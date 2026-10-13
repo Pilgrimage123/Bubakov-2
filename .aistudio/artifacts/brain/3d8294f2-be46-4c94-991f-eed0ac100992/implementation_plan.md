@@ -1,135 +1,102 @@
-# Vybalancování elitních prefixů bubáků a anti-kiting systém
+# Odstranění skrytých bonusů nepřátel (Zero-Hidden-Cheat Policy)
 
-Komplexní plán na herní vybalancování 4 unikátních prefixů elitních bubáků nasazovaných Režisérem výpravy (`RunDirector`), zavedení 91% redukce poškození a imunit Kamenného bubáka, bleskové odvety Hromového bubáka do 200 px a zavedení trojité anti-kiting mechaniky Pekelného bubáka (magmatické stopy, predátorský sprint a prediktivní sopečné trhliny).
+Zajištění transparentního bojového systému, kde strašidla a bubáci nikdy nezískávají skryté statistické bonusy (žádné umělé škálování životů/Kuráže, žádná skrytá odolnost proti odhození, žádné skryté zvyšování poškození či rychlosti z adaptivního tlaku Režiséra). Jediné povolené úpravy statistik plynou z explicitních schopností nestvůr a zřetelných přívlastků (Vichřicový, Hromový, Kamenný, Pekelný).
 
----
-
-## Uživatelské volby a potvrzená rozhodnutí
+## Uživatelská rozhodnutí & kritické volby
 
 > [!IMPORTANT]
-> Na základě uživatelských požadavků a vyjasňujícího dotazníku jsou potvrzeny následující herní mechaniky:
-
-- **Nezvětšené dropy pro všechny prefixy**: Všichni prefixovaní bubáci (`vichricovy`, `kamenny`, `hromovy`, `pekelny`) mají standardní odměny a dropy shodné s běžnými bubáky daného druhu (žádné minibossí násobení bodů či dropů).
-- **Kamenný bubák (Neproniknutelný kolos)**:
-  - Redukce poškození: **91 %** (přijímá pouze 9 % zranění).
-  - Rychlost pohybu: **-20 %** z báze.
-  - Imunita proti omráčení: 100% imunita proti klasickému stunu i pseudoomráčení ze svačin (např. Buchty / koláče).
-  - Masivní odolnost proti odhození (knokback resist 0.15×).
-- **Hromový bubák (Blesková odveta)**:
-  - Bleskový odraz (retaliation thorns): Při zásahu hráčem do vzdálenosti **200 px** okamžitě vrátí hráči **50 % uděleného poškození** formou bleskového oblouku.
-  - Zvýšená rychlost pohybu a agresivní útoky.
-- **Pekelný bubák (Anti-Kite predátor - syntéza 3 inspirací)**:
-  - **1. Trvalá magmatická stopa (Track Denier)**: Pekelný bubák za sebou při pohybu zanechává hořící louže lávy (trvající 8–10 sekund), které blokují oblíbené kruhové kiting smyčky kolem arény.
-  - **2. Predátorský hon (Predatory Stalk)**: Pokud se hráč zdržuje ve vzdálenosti > 220 px, Pekelný bubák nabírá každou sekundu +15 % rychlosti (až do +120 % maxima). Přiblížení na tělo (< 120 px) nebo zásah na blízko tento bonus resetuje.
-  - **3. Prediktivní vulkanická erupce (Trajectory Interceptor)**: Pokud hráč nepřetržitě utíká přímočaře déle než 2,5 sekundy, Pekelný bubák vyvolá varovnou sopečnou puklinu 200–250 px před běžícím hráčem na jeho vektoru pohybu, nutící hráče k prudkému úhybu o 90°.
+> Na základě ujasnění v 1. fázi byla potvrzena následující pravidla:
+> - **Dynamický tlak Režiséra (`pressureMultiplier`)**: Odstranit veškeré skryté zrychlování a navyšování odolnosti nepřátel (`e.speed *= ...`, `e.poiseResist += ...`) při dominanci hráče.
+> - **Taktické formace**: Ponechat pevné taktické role formací (např. obkličující křídla a předvoj), avšak bez skrytých multiplikátorů z tlaku.
+> - **Základní statistiky nepřátel**: Všechna strašidla se líhnou s přesnými základními statistikami definovanými v bestiáři `ENEMIES[id]`. Odstraňují se skryté multiplikátory životů a skryté miniboss buffy (`poiseResist`, `damage`, `hunger`).
+> - **Explicitní schopnosti a folklórní mechaniky**: Zachovat explicitní schopnosti nestvůr (Stínová záštita pro kategorii stínů ve tmě, aura Bludičky, mariášové karty Čerta) a přívlastky.
 
 ---
 
-## 1. Přehled a herní koncept
+## 1. Přehled a cíl změn
 
-### Cíl rozšíření
-Běžné kiting strategie (neustálé couvání a kroužení po okraji mapy za pasivního kropení nepřátel zbraněmi) jsou v bullet-heaven / survivor hrách často dominantní a triviální. Cílem je dát Režisérovi (`RunDirector`) nástroj v podobě 4 diametrálně odlišných taktických výzev:
-
-1. **💨 Vichřicový**: Extrémní hbitost (+110 speed) a 50% šance na úhyb (`MINUL! 💨`).
-2. **🪨 Kamenný**: Nezastavitelná zeď s 91% redukcí zranění, imunitou na omráčení a svačinové uklidnění, která ignoruje knockback a pomalu, ale neúprosně tlačí hráče do kouta.
-3. **⚡ Hromový**: Trestá střelbu na krátkou až střední vzdálenost (< 200 px) – hráč musí držet distanc, jinak utrpí 50% bleskový protiúder.
-4. **🔥 Pekelný**: Ultimátní anti-kiter – trestá hráče, kteří utíkají daleko (zrychluje), běhají v kruzích (pálí je stopa) nebo běží v přímce (odřízne je erupce).
+- **Co změna přináší**: Úplnou transparentnost a čitelnost bojového střetu. Hráč ví, že když čelí Kostlivci nebo Raráškovi, nestvůra má vždy identické atributy podle Kodexu/Bestiáře. Obtížnost hry a Režisér výpravy škálují tempo střetnutí, kompozici vln a četnost elit, nikoliv skryté staty jednotlivých řadových nepřátel.
+- **Cílová skupina**: Hráči oceňující férový rogue-lite zážitek, kde znalost slabin a vlastností bubáků platí bez skrytých deformací.
+- **Klíčová hodnota**: Odstranění frustrace z "gumových" a nepředvídatelně zrychlených či odolných monster při úspěšném hraní.
 
 ---
 
-## 2. Uživatelský zážitek a vizuální styl
+## 2. Uživatelská zkušenost & herní design
 
-Všechny vizuální a grafické prvky striktně ctí lidovou pohádkovou gouache estetiku Josefa Lady:
-
-- **Kamenný bubák**:
-  - Hrubá břidlicová aura s rotujícími zemitými oblázky.
-  - Textový efekt `ODRAŽENO! 🪨` při pokusu o omráčení buchtou.
-  - Zvuk tupého kamenného dopadu při absorpci 91 % zranění.
-- **Hromový bubák**:
-  - Praskající modro-zlatý bleskový oblouk spojující bubáka a hráče při aktivaci odvety do 200 px.
-  - Zvuk hromového prasknutí a zobrazení čísla odraženého poškození.
-- **Pekelný bubák**:
-  - **Magmatické stopy**: Plošky doutnajícího uhlí a žhavé lávy kreslené kvašovou texturou s plamínky stoupajícími vzhůru.
-  - **Predátorský sprint**: Zintenzivňující se rudá aura a stopa ohně za běžícím bubákem, jak nabírá rychlost.
-  - **Prediktivní puklina**: Kouřící trhlina v zemi s praskající zeminou, která po 1,2 s vybuchne ohnivým gejzírem.
+- **Vizuální a herní zpětná vazba**:
+  - Pokud má nepřítel zvláštní vlastnost, hráč ji vidí na první pohled:
+    - **Přívlastky**: Zřetelná ladovská runová aura, ikona a banner (Vichřicový, Hromový, Kamenný, Pekelný).
+    - **Explicitní schopnosti**: Vizuální kvašová záře Stínové záštity (rozpadající se při vstupu do světla Petrolejky s omráčením), hořící lávová stopa Pekelného čerta.
+    - **Taktické formace**: Formace mají jasné geometrické rozmístění (kleště z obou stran, kovadlina zepředu), ne neviditelná kouzla zvedající staty v pozadí.
 
 ---
 
-## 3. Klíčová produktová rozhodnutí a herní rovnováha
+## 3. Klíčová systémová rozhodnutí
 
-### Rozhodnutí 1: Standardní dropy pro všechny prefixy
-- **Zvolený přístup**: Žádný prefixovaný bubák nezvyšuje množství jitrnic, bodů ani dropů. Odměnou za přežití je samotný postup a eliminace nebezpečí.
-- **Proč**: Zabraňuje "farming exploitům", kdy by hráč záměrně nechával Režiséra generovat těžké bubáky pro snadné získání zdrojů, a přesně odpovídá požadavku uživatele.
+- **Rozhodnutí 1: Čisté líhnutí ze základních dat (`ENEMIES[id]`)**:
+  - *Zvolený přístup*: V `createHeadlessEnemy` (`engine.ts`) i `createEnemyInstance` (`App.tsx`) se `hp`, `speed`, `damage`, `poiseResist`, `foodResist`/`hunger` a `willpower` nastavují přímo z `stats = ENEMIES[resolvedId]`.
+  - *Důvod*: Zaručuje absolutní konzistenci napříč všemi úrovněmi a zamezuje skrytému ztěžování.
+  - *Alternativa*: Ponechat multiplikátory pro minibosse — zamítnuto uživatelem, každý nepřítel má své definované statistiky v bestiáři.
 
-### Rozhodnutí 2: Trojitá anti-kiting kompozice u Pekelného bubáka
-- **Zvolený přístup**: Pekelný bubák kombinuje 3 mechaniky z vyjasňovacího zadání:
-  - Zakázání staré stopy (magmatická stopa).
-  - Trest za zbabělý útěk do dálky (predátorské zrychlení).
-  - Narušení přímého úprku (prediktivní erupce před hráčem).
-- **Proč**: Jednotlivá mechanika by šla snadno obejít, ale tato trojice nutí hráče hrát aktivně, měnit směry, přibližovat se a řešit střety čelem.
+- **Rozhodnutí 2: Očištění Režiséra výpravy (`RunDirector`) od skrytých statových buffů**:
+  - *Zvolený přístup*:
+    - V `executeTacticalSpawns` odstranit `this.pressureMultiplier > 1.2` buffy na rychlost a odolnost.
+    - V `spawnPrefixedEnemy` odstranit tlakový rychlostní buff.
+    - Ve formacích (`spawnKlestoveSevreni`, `spawnHammerAndAnvil`, `spawnEscortSwarms`, `spawnArchitects`, `spawnAntiKiteInterception`, `executeDrtivyPrepad`) odstranit dodatečné multiplikátory závislé na `pressureMultiplier`.
+    - V `spendExcessBudgetOnElite` (Ostřílení běsi) zrušit náhodné navyšování rychlosti a poise resistu již živým nepřátelům na ploše. Místo toho Režisér utrácí přebytečný rozpočet za nasazení nových taktických elit či formací v mezích limitu.
+  - *Důvod*: Režisér má modulovat hrozbu skladbou a kadencí vln, ne potají "přitápět" statistikami jednotek.
 
-### Rozhodnutí 3: Hromový bleskový odraz do 200 px
-- **Zvolený přístup**: Poškození se vrací hráči pouze, pokud je hráč v okruhu 200 px od bubáka v okamžiku dopadu zásahu.
-- **Proč**: Vytváří přirozený protipól k Pekelnému bubákovi. Proti Pekelnému se hráč musí přiblížit nebo manévrovat, zatímco proti Hromovému musí zachovat odstup a nestřílet z bezprostřední blízkosti.
+- **Rozhodnutí 3: Zachování folklórních schopností a přívlastků**:
+  - *Zvolený přístup*: Přívlastky z `ENEMY_PREFIX_DEFS` i Stínová záštita (`evaluateShadowDefense` / `getShadowDefenseMultipliers`) zůstávají plně aktivní jako explicitní pravidla svícení a přívlastků.
 
 ---
 
-## 4. Technická architektura a realizace
-
-### Systémový diagram interakcí
+## 4. Technická architektura & tok dat
 
 ```
-┌───────────────────────────────────────────────────────────────┐
-│                    RunDirector (Taktika)                     │
-│  Nasazuje prefixované bubáky při rychlé likvidaci a rozpočtu  │
-└──────────────────────────────┬────────────────────────────────┘
-                               │ spawnuje s prefixem
-                               ▼
-┌───────────────────────────────────────────────────────────────┐
-│                      Enemy Instance                           │
-│  - prefix: 'vichricovy' | 'kamenny' | 'hromovy' | 'pekelny'   │
-│  - prefixDamageReduction: 0.91 (kamenny)                      │
-│  - immuneToStun & immuneToSnackStun: true (kamenny)           │
-│  - speedModifier: 0.8 (kamenny)                               │
-│  - thornsDist: 200, thornsRatio: 0.5 (hromovy)                │
-│  - stalkTimer, magmaTrailTimer, fissureTimer (pekelny)        │
-└───────┬───────────────────────────────┬───────────────────────┘
-        │                               │
-        ▼ (při zásahu hráče)            ▼ (v update loopu)
-┌───────────────────────────────┐ ┌─────────────────────────────┐
-│    takeDamage Handlery        │ │     Herní simulace          │
-│ • Vichřicový: 50% dodge       │ │ • Pekelný: Magma louže      │
-│ • Kamenný: 91% redukce &      │ │ • Pekelný: Stalk speed buff │
-│   ignorování stunu/snacku     │ │ • Pekelný: Erupce před      │
-│ • Hromový: 50% lightning zap  │ │   hráčem na predikci vektoru│
-│   zpět hráči do 200 px        │ │ • Vykreslení Ladových aur   │
-└───────────────────────────────┘ └─────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│                      BESTIÁŘ                           │
+│        src/data/enemies.ts (ENEMIES[id])               │
+│   (Pevná Kuráž, Základní rychlost, Poškození, Resist)  │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│                   PŘÍVLASTKY MONSTER                   │
+│       src/types.ts (ENEMY_PREFIX_DEFS[prefix])         │
+│   (Explicitní bonusy: vichřicový, kamenný, atd.)       │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│                 ENGINE & LÍHNUTÍ ENTIT                 │
+│  src/game/engine.ts & src/App.tsx                      │
+│  - finalHp = stats.hp (+ prefix)                       │
+│  - speed = stats.speed (+ prefix)                      │
+│  - damage = stats.damage                               │
+│  - poiseResist = stats.poiseResist (+ prefix)          │
+│  - ŽÁDNÉ skryté multiplikátory ani clampy              │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+                           ▼
+┌────────────────────────────────────────────────────────┐
+│                   REŽISÉR VÝPRAVY                      │
+│                src/game/director.ts                    │
+│  - Řídí pouze rozpočet hrozeb, pauzy (lull),           │
+│    četnost a složení vln a taktické formace            │
+│  - ŽÁDNÉ skryté buffy z pressureMultiplier             │
+└────────────────────────────────────────────────────────┘
 ```
 
-### Konkrétní kroky implementace:
-
-1. **Typy (`src/types.ts`)**:
-   - Aktualizace `ENEMY_PREFIX_DEFS`:
-     - `kamenny`: `damageReduction: 0.91`, `speedMultiplier: 0.8`, `immuneToStun: true`, `immuneToSnackStun: true`.
-     - `hromovy`: `thornsReflectRatio: 0.5`, `thornsRange: 200`.
-     - `pekelny`: `magmaTrail: true`, `predatoryStalk: true`, `predictiveEruption: true`.
-   - Rozšíření stavu instance nepřátel o sledování pozic magmatických stop a erupcí.
-
-2. **Herní jádro & bojové metody (`src/App.tsx` & `src/game/engine.ts`)**:
-   - V `takeDamage`:
-     - Zajištění 91% redukce poškození pro Kamenného bubáka.
-     - Blokování stunů a snack-pacifikace (buchty) u Kamenného bubáka.
-     - Blesková odveta u Hromového bubáka: Pokud `dist <= 200`, hráč obdrží `amount * 0.5` zranění se zobrazením blesku a číselného zranění hráče.
-   - V `update` cyklu:
-     - Pekelný bubák: Generování zón magmatické stopy (hazardy ubírající hráči zdraví při kontaktu).
-     - Predátorský sprint: Zvyšování rychlosti Pekelného bubáka při `distance > 220 px`, reset při zásahu na blízko nebo přiblížení hráče.
-     - Prediktivní puklina: Detekce rovného běhu hráče, vytvoření varovného kruhu před hráčem a následná exploze.
-
-3. **Vizuální vykreslování (`src/render/ladaRenderer.ts`)**:
-   - Vykreslení magmatických louží a sopečných puklin v ladovském kvašovém stylu.
-   - Vykreslení bleskového výboje z Hromového bubáka do hráče při odrazu poškození.
-   - Vykreslení štítu a nulového omráčení u Kamenného bubáka.
-
-4. **Verifikace a testy (`tests/enemyPrefixes.test.ts`)**:
-   - Rozšíření jednotkových testů o ověření 91% redukce poškození, imunity vůči omráčení a svačinám u Kamenného bubáka, odrazu poškození u Hromového bubáka a anti-kiting mechanismů u Pekelného bubáka.
-   - Spuštění kompletní sady testů a linteru.
+### Plánované úpravy v souborech:
+1. `src/game/engine.ts`:
+   - V `createHeadlessEnemy`: Odstranit skryté multiplikátory HP, `isMiniboss` úpravy `poiseResist`, `foodResist`, `hunger`, `willpower`, `damage` a `speed`, a odstranit level-specifickou redukci rychlosti Polednice.
+2. `src/App.tsx`:
+   - V `createEnemyInstance`: Synchronizovat stejné odstranění skrytých bonusů jako v `createHeadlessEnemy`.
+3. `src/game/director.ts`:
+   - Odstranit všechny větve `if (this.pressureMultiplier > 1.2)` aplikující `speed` a `poiseResist` buffy.
+   - Odstranit dynamické navyšování statů v `spendExcessBudgetOnElite`.
+4. `docs/adr/0008-odstraneni-skrytych-bonusu-nepratel.md`:
+   - Zaznamenat architektonické rozhodnutí o odstranění skrytých bonusů a zachování Zero-Hidden-Cheat principu.
+5. `tests/`:
+   - Aktualizovat a rozšířit testy v `tests/enemyPrefixes.test.ts`, `tests/runDirector.test.ts` a `tests/gameEngine.test.ts` pro ověření striktního dodržování základních statistik.

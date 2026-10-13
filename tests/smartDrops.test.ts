@@ -6,6 +6,7 @@ import {
   calculateUncollectedGingerbread,
   createDropInstance,
   canCollectDrop,
+  resolveDynamicDrop,
   MAX_DROPS_LIMIT,
   HOT_GINGERBREAD_DURATION,
 } from '../src/game/drops';
@@ -303,4 +304,35 @@ describe('Smart Drops System (Chytrý drop systém)', () => {
       expect(enemy.isDefeated).toBe(true);
     });
   });
+
+  describe('resolveDynamicDrop (Chytré nahrazení léčiv při plné Kuráži)', () => {
+    it('keeps healing drops intact when Courage is low or injured', () => {
+      const potionDrop = resolveDynamicDrop('potion', 30, 100);
+      expect(potionDrop.type).toBe('potion');
+
+      const breadDrop = resolveDynamicDrop('bread', 50, 100);
+      expect(breadDrop.type).toBe('bread');
+    });
+
+    it('significantly reduces healing drops when Courage is full, converting to coins, gingerbread, or souls', () => {
+      let convertedCount = 0;
+      let healingCount = 0;
+      const totalRolls = 200;
+
+      for (let i = 0; i < totalRolls; i++) {
+        const resolved = resolveDynamicDrop('potion', 100, 100);
+        if (resolved.type === 'potion') {
+          healingCount++;
+        } else {
+          convertedCount++;
+          expect(['coin', 'gingerbread', 'soul', 'horseshoe', 'cuckoo_clock']).toContain(resolved.type);
+        }
+      }
+
+      // Over 70% should be converted away from healing items when Courage is full
+      expect(convertedCount).toBeGreaterThan(140);
+      expect(healingCount).toBeLessThan(60);
+    });
+  });
 });
+

@@ -1,6 +1,7 @@
 import type { GameLevelId, MilestoneChoice, GameDrop } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
+import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker } from './drops';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -95,6 +96,14 @@ export interface EngineState {
   directorTelegraphText: string | null;
   directorTelegraphTimer: number;
   dropFusionTimer: number;
+  rareDropTracker: RareDropTracker;
+  folkloreDropTracker: FolkloreDropTracker;
+  ponocnyFrostTimer: number;
+  masopustShockwaveTimer: number;
+  activeRareOverlay: { type: string; timer: number; title: string; subtitle: string } | null;
+  slivoviceVapor: { x: number; y: number; dirAngle: number; life: number } | null;
+  sootFootprints: Array<{ x: number; y: number; life: number; angle: number }>;
+  cameraTremorTimer: number;
   lightSources: DynamicLightSource[];
   shadowZones: ShadowZone[];
   occluders: LightOccluder[];
@@ -199,6 +208,14 @@ export function createInitialEngineState(): EngineState {
     directorTelegraphText: null,
     directorTelegraphTimer: 0,
     dropFusionTimer: 0,
+    rareDropTracker: createRareDropTracker(),
+    folkloreDropTracker: createFolkloreDropTracker(),
+    ponocnyFrostTimer: 0,
+    masopustShockwaveTimer: 0,
+    activeRareOverlay: null,
+    slivoviceVapor: null,
+    sootFootprints: [],
+    cameraTremorTimer: 0,
     lightSources: [],
     shadowZones: [],
     occluders: [],

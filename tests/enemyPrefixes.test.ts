@@ -293,4 +293,30 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     expect(mockCtx.save).toHaveBeenCalled();
     expect(mockCtx.restore).toHaveBeenCalled();
   });
+
+  it('Zero-Hidden-Cheat Policy: enemies strictly receive base stats and only prefix or explicit abilities bonuses', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const baseStats = ENEMIES.rarach;
+
+    // 1. Regular enemy: strictly base stats
+    const normalEnemy = engine.createHeadlessEnemy('rarach', 100, 100);
+    expect(normalEnemy.hp).toBe(baseStats.hp);
+    expect(normalEnemy.speed).toBe(baseStats.speed);
+    expect(normalEnemy.damage).toBe(baseStats.damage);
+    expect(normalEnemy.poiseResist).toBe(baseStats.poiseResist || 0);
+
+    // 2. Prefixed enemy under high director pressure: only prefix bonus, zero hidden pressure buffs
+    const director = engine.director!;
+    director.pressureMultiplier = 3.5; // Extreme pressure
+    const player = { x: 500, y: 500, vx: 0, vy: 0 };
+    const vichriceMob = director.spawnPrefixedEnemy(engine, player, 50.0, 'vichricovy');
+
+    // Expected speed is strictly mobBaseStats.speed + ENEMY_PREFIX_DEFS.vichricovy.speedBonus (no pressureMultiplier buff)
+    const mobBaseStats = ENEMIES[vichriceMob.id];
+    const expectedSpeed = mobBaseStats.speed + ENEMY_PREFIX_DEFS.vichricovy.speedBonus!;
+    expect(vichriceMob.speed).toBe(expectedSpeed);
+    expect(vichriceMob.poiseResist).toBe(mobBaseStats.poiseResist || 0);
+    expect(vichriceMob.hp).toBe(mobBaseStats.hp);
+  });
 });

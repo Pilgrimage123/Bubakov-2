@@ -42,6 +42,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
       ? parsed.performanceProfile
       : parsed.performanceMode ? 'performance' : 'balanced',
     performanceMode: parsed.performanceProfile ? parsed.performanceProfile === 'performance' : !!parsed.performanceMode,
+    dynamicLightingEnabled: parsed.dynamicLightingEnabled !== undefined ? Boolean(parsed.dynamicLightingEnabled) : true,
     currentLang: validLang,
     selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
       ? parsed.selectedLevel
@@ -66,6 +67,7 @@ export function createDefaultMetaProgression(): MetaProgression {
   return {
     krejcary: 0,
     dynamicDifficulty: 3.0,
+    dynamicLightingEnabled: true,
     currentLang: 'cs',
     regenLevel: 0,
     ovenLevel: 0,
