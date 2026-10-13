@@ -1327,6 +1327,18 @@ export default function App() {
     player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + safeLevel * 0.05);
   };
 
+  // Cache the effective base pickup range before the accessibility multiplier so later changes
+  // do not compound and still retain magnet/scarecrow bonuses.
+  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
+    if (!player) return;
+    const safeLevel = Math.max(0, Math.min(10, Math.round(level)));
+    const previousScale = 1 + (player.accessibilityAppliedLevel || 0) * 0.05;
+    player.accessibilityBasePickupRadius ??= player.pickupRadius / previousScale;
+    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - safeLevel * 0.05);
+    player.pickupRadius = player.accessibilityBasePickupRadius * (1 + safeLevel * 0.05);
+    player.accessibilityAppliedLevel = safeLevel;
+  };
+
   const updateMobileAccessibilityLevel = (level: number) => {
     const next = Math.max(1, Math.min(10, Math.round(level)));
     setMobileAccessibilityLevel(next);
@@ -2025,13 +2037,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const player = {
       x: 0,
       y: 0,
-      radius: 20 * (1 - mobileAccessibilityScale * 0.05),
+      radius: 20,
       accessibilityBaseRadius: 20,
       type,
       maxHp: baseMaxHp + wallBonusHp,
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
-      pickupRadius: (basePickup + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
+      pickupRadius: basePickup + scarecrowBonusPickup,
       accessibilityBasePickupRadius: basePickup + scarecrowBonusPickup,
       luck: 0,
       weapons: initialWeapons,
