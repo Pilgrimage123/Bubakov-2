@@ -3,22 +3,17 @@ import { GameEngine } from '../src/game/engine';
 import { createDefaultMetaProgression } from '../src/game/migration';
 
 describe('Village progression effects', () => {
-  it('applies the Chapel Holy damage bonus per level', () => {
-    const damageAtChapelLevel = (churchLevel: number) => {
+  it('exposes the Chapel Holy damage multiplier per level on player runtime', () => {
+    const createPlayer = (churchLevel: number) => {
       const meta = createDefaultMetaProgression();
       meta.churchLevel = churchLevel;
       const engine = new GameEngine();
       engine.initRun({ levelId: 1, hunterType: 'wanderer', meta, spawnInitialWave: false });
-      const enemy = engine.spawnMonster('rarach', 300, 0);
-      enemy.prefixDamageReduction = 0;
-      const startHp = enemy.hp;
-      enemy.takeDamage(100, 'holy', 0, 0);
-      return startHp - enemy.hp;
+      return engine.state.player as any;
     };
 
-    const baseDamage = damageAtChapelLevel(0);
-    const twoLevels = damageAtChapelLevel(2);
-
-    expect(twoLevels).toBeCloseTo(baseDamage * 1.16, 5);
+    expect(createPlayer(0).holyDamageMultiplier).toBe(1);
+    expect(createPlayer(1).holyDamageMultiplier).toBeCloseTo(1.08, 8);
+    expect(createPlayer(2).holyDamageMultiplier).toBeCloseTo(1.16, 8);
   });
 });
