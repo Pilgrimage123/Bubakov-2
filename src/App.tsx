@@ -6989,7 +6989,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // 1. RARÁŠEK (rarach / sazovy_rarach) - Hejnové obkličování & prudké výpady
-        if (this.id === 'rarach' || this.id === 'sazovy_rarach') {
+        else if (this.id === 'rarach' || this.id === 'sazovy_rarach') {
           if (this.aiState === 'lunge') {
             this.vx = Math.cos(this.chargeDirX) * spd * 2.5;
             this.vy = Math.sin(this.chargeDirX) * spd * 2.5;
