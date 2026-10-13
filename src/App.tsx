@@ -2055,7 +2055,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     sound.init();
     sound.coin();
-    // Preserve the selected hunter for the quick-return action.
+    if (!isTestMode) lastHunterTypeRef.current = type;
+
 
     const baseMaxHp =
       type === 'wanderer' ? 200 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
@@ -2393,8 +2394,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     };
 
 
-    // Apply the claimed reward only after unlock validation succeeds.
-    // Sandbox/test runs neither consume nor apply a pending reward.
     const earnedReturnBonus = isTestMode ? null : pendingReturnBonusRef.current;
     activeRunBonusRef.current = earnedReturnBonus;
     if (!isTestMode) pendingReturnBonusRef.current = null;
@@ -2406,7 +2405,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         player.maxHp += extraHp;
         player.hp += extraHp;
       }
-      // Coin bonus is applied once when final tally statistics are created.
     }
 
     // Seed a readable, combat-friendly composition instead of filling the

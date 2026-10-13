@@ -4689,8 +4689,7 @@ body {
 }
 
 
-
-/* Timed post-run reward: compact, responsive and reduced-motion friendly. */
+/* Timed post-run reward: responsive and reduced-motion aware. */
 .return-bonus-card { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; flex:1 1 240px; min-width:min(100%,230px); max-width:310px; padding:12px; text-align:center; }
 .return-bonus-orb { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:clamp(150px,24vw,205px); min-height:150px; padding:18px; box-sizing:border-box; border:4px solid #fff0a6; border-radius:50%; color:#422006; background:radial-gradient(circle at 35% 25%,#fff7c2 0%,#fbbf24 48%,#b45309 100%); box-shadow:0 0 0 3px #92400e,0 0 24px 8px rgb(251 191 36 / 50%); animation:return-bonus-pulse 1s ease-in-out infinite alternate; font-weight:1000; }
 .return-bonus-slogan { font-size:clamp(.65rem,2.5vw,.8rem); line-height:1.15; }
