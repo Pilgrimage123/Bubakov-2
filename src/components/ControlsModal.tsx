@@ -359,7 +359,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, cooldown 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
                 </li>
                 <li>
-                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zdvojnásobí dosah magnetu i rychlost přitahování dropů a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
+                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
                 </li>
                 <li>
                   <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž vystraší nepřátele na 5 s a udělí 110 fyzického poškození s odhozením (cooldown 30 s). Pasivně šíří stálou posvátnou auru lucerny (16 svatého poškození/s).
