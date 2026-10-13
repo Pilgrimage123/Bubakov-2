@@ -1,3 +1,9 @@
+## 2026-10-13 — Vrány a mraziví skřítci v první výpravě
+
+- Běžné žáby v spawn fondech první výpravy nahrazeny rychle létajícími vránami a slabými mrazivými skřítky; úvodní vlna nyní začíná dvojicí vran.
+- Vrány mají rychlý vlnivý let a náletové chování; mraziví skřítci mají nízké HP, pomalý pohyb a viditelnou auru o poloměru 78 px, která každých 0,7 s způsobí 3 body mrazivého poškození a krátce zpomalí lovce.
+- Přidány vlastní kresby obou nepřátel, lokalizované názvy bestiáře a regresní testy. Morana zůstává finálním bossem první výpravy.
+
 ## 2026-10-13 — Morana, finální boss první výpravy
 
 - Vodního bosse první výpravy nahrazuje **Morana, špatně vynesená smrtka**; interní ID úrovně a její úvodní mini-bossové zůstávají zachované.

@@ -21,11 +21,13 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.name).toBe('1. Předjaří v Hrusicích');
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
-    expect(lvl0.miniBoss.id).toBe('zaba');
+    expect(lvl0.miniBoss.id).toBe('vrana');
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('morana');
-    expect(lvl0.spawnPools.noon).toContain('zaba');
-    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'ropucha', 'topivec', 'bludicka']);
+    expect(lvl0.spawnPools.noon).toContain('vrana');
+    expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
+    expect(lvl0.spawnPools.noon).not.toContain('zaba');
+    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'mrazovy_skritek', 'topivec', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
   });
@@ -98,11 +100,20 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(state.activeLevelId).toBe(0);
     expect(state.spawnTimer).toBeGreaterThanOrEqual(3.0);
     expect(state.enemies.length).toBe(2);
-    expect(state.enemies[0].id).toBe('zaba');
-    expect(state.enemies[1].id).toBe('zaba');
+    expect(state.enemies[0].id).toBe('vrana');
+    expect(state.enemies[1].id).toBe('vrana');
   });
 
-  it('scales miniboss frog reasonably for tutorial difficulty without excessive 1400 HP sponge', () => {
+  it('defines the fast crow and weak frostling for stage 1', async () => {
+    const { ENEMIES } = await import('../src/data/enemies');
+    expect(ENEMIES.vrana).toMatchObject({ method: 'drawStageCrow', speed: 188, hp: 28 });
+    expect(ENEMIES.mrazovy_skritek).toMatchObject({ method: 'drawFrostling', hp: 38, damage: 4 });
+    expect(ENEMIES.mrazovy_skritek.strength).toContain('Široká aura');
+    expect(GAME_LEVELS[0].spawnPools.noon).not.toContain('zaba');
+    expect(GAME_LEVELS[0].spawnPools.afternoon).not.toContain('zaba');
+  });
+
+  it('scales the stage 1 crow miniboss reasonably for tutorial difficulty', () => {
     const engine = new GameEngine();
     engine.initRun({
       levelId: 0,
@@ -110,11 +121,11 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
       spawnInitialWave: false,
     });
 
-    const frogMiniBoss = engine.spawnMonster('zaba', 100, 100, 4.5, false, true, '🐸 Probuzená Žába');
-    expect(frogMiniBoss.isMiniboss).toBe(true);
+    const crowMiniBoss = engine.spawnMonster('vrana', 100, 100, 4.5, false, true, '🐦‍⬛ Hejno mrazivých vran');
+    expect(crowMiniBoss.isMiniboss).toBe(true);
     // Beginner tutorial miniboss should be balanced (~220 HP), not 1400 HP
-    expect(frogMiniBoss.hp).toBeLessThan(500);
-    expect(frogMiniBoss.hp).toBeGreaterThanOrEqual(100);
+    expect(crowMiniBoss.hp).toBeLessThan(500);
+    expect(crowMiniBoss.hp).toBeGreaterThanOrEqual(100);
   });
 
   it('includes level0_completed trophy and verifies completion against meta', async () => {

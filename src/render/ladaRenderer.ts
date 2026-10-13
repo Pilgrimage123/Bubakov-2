@@ -5697,6 +5697,31 @@ var Lada = {
 		ctx.fill();
 		ctx.restore();
 	},
+	drawStageCrow(ctx, x, y, time, vx, panicked) {
+		const flap = Math.sin(time * (panicked ? 19 : 13)) * 8;
+		const bob = Math.sin(time * 7) * 2, dir = vx < 0 ? -1 : 1;
+		ctx.save(); ctx.translate(x, y + bob); ctx.scale(dir, 1);
+		ctx.fillStyle = "#171923"; ctx.strokeStyle = "#090B12"; ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.ellipse(0, 0, 10, 7, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(-3, 0); ctx.quadraticCurveTo(-17, -flap, -21, -5); ctx.quadraticCurveTo(-12, 1, -4, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(2, 1); ctx.quadraticCurveTo(15, flap, 19, -3); ctx.quadraticCurveTo(11, 5, 4, 5); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#F59E0B"; ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(17, -3); ctx.lineTo(10, -1); ctx.closePath(); ctx.fill();
+		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
+		ctx.strokeStyle = "#171923"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-4, 10); ctx.moveTo(3, 5); ctx.lineTo(4, 10); ctx.stroke(); ctx.restore();
+	},
+	drawFrostling(ctx, x, y, time, vx, panicked) {
+		const bob = Math.sin(time * (panicked ? 12 : 5)) * 2.5;
+		ctx.save(); ctx.translate(x, y + bob); ctx.shadowColor = "#93E5FF"; ctx.shadowBlur = 12;
+		// Match the visible rime aura to the 78 px gameplay damage/chill radius.
+		ctx.fillStyle = "rgba(125, 211, 252, 0.10)"; ctx.beginPath(); ctx.arc(0, 0, 78 + Math.sin(time * 4) * 3, 0, Math.PI * 2); ctx.fill();
+		ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(186, 230, 253, 0.65)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 7]);
+		ctx.beginPath(); ctx.arc(0, 0, 75 + Math.sin(time * 4) * 3, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+		ctx.fillStyle = "#BAE6FD"; ctx.strokeStyle = "#164E63"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 10, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#E0F2FE"; ctx.beginPath(); ctx.arc(0, -10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#0F172A"; ctx.beginPath(); ctx.arc(-3, -11, 1.5, 0, Math.PI * 2); ctx.arc(3, -11, 1.5, 0, Math.PI * 2); ctx.fill();
+		ctx.strokeStyle = "#7DD3FC"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-5, -17); ctx.lineTo(-8, -22); ctx.moveTo(4, -17); ctx.lineTo(8, -22); ctx.stroke(); ctx.restore();
+	},
 	drawBludicka(ctx, x, y, time, vx, panicked) {
 		const bob = Math.sin(time * (panicked ? 14 : 6)) * (panicked ? 8 : 6);
 		ctx.save();
