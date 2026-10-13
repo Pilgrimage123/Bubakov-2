@@ -34,22 +34,22 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
     expect(getVillageTotalLevels(meta)).toBe(7);
   });
 
-  it('calculates building costs with Obecní přirážka (+30% per total level)', () => {
-    expect(VILLAGE_TAX_RATE).toBe(0.30);
+  it('calculates building costs with Obecní přirážka (+20% per total level)', () => {
+    expect(VILLAGE_TAX_RATE).toBe(0.20);
 
     // Tier 1 (Base 30)
     expect(getVillageBuildingCost(30, 0)).toBe(30);
-    expect(getVillageBuildingCost(30, 1)).toBe(39); // 30 * 1.30 = 39
-    expect(getVillageBuildingCost(30, 2)).toBe(48); // 30 * 1.60 = 48
+    expect(getVillageBuildingCost(30, 1)).toBe(36); // 30 * 1.20 = 36
+    expect(getVillageBuildingCost(30, 2)).toBe(42); // 30 * 1.40 = 42
 
     // Tier 2 (Base 50)
     expect(getVillageBuildingCost(50, 0)).toBe(50);
-    expect(getVillageBuildingCost(50, 2)).toBe(80); // 50 * 1.60 = 80
-    expect(getVillageBuildingCost(50, 10)).toBe(200); // 50 * 4.00 = 200
+    expect(getVillageBuildingCost(50, 2)).toBe(70); // 50 * 1.40 = 70
+    expect(getVillageBuildingCost(50, 10)).toBe(150); // 50 * 3.00 = 150
 
     // Tier 3 (Base 75)
     expect(getVillageBuildingCost(75, 0)).toBe(75);
-    expect(getVillageBuildingCost(75, 4)).toBe(165); // 75 * 2.20 = 165
+    expect(getVillageBuildingCost(75, 4)).toBe(135); // 75 * 1.80 = 135
   });
 
   it('deterministically calculates 100% fair village refund (Respec)', () => {
@@ -60,38 +60,38 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
 
     // 1 level of scarecrow (Base 30) + 1 level of forge (Base 50)
     // Step 0: Base 30 at total 0 = 30
-    // Step 1: Base 50 at total 1 = round(50 * 1.30) = 65
-    // Total = 95
-    expect(calculateTotalVillageInvested({ scarecrowLevel: 1, forgeLevel: 1 })).toBe(95);
+    // Step 1: Base 50 at total 1 = round(50 * 1.20) = 60
+    // Total = 90
+    expect(calculateTotalVillageInvested({ scarecrowLevel: 1, forgeLevel: 1 })).toBe(90);
 
     // Multiple levels across tiers
     const meta: Partial<MetaProgression> = {
       millLevel: 2, // 2x 30
       ovenLevel: 1, // 1x 50
-      tavernShieldLevel: 1, // 1x 75
+      tavernShieldLevel: 1, // 1x 50
     };
     // Steps:
     // 0: 30 * 1.00 = 30
-    // 1: 30 * 1.30 = 39
-    // 2: 50 * 1.60 = 80
-    // 3: 75 * 1.90 = 143 (75 * 1.90 = 142.5 -> 143)
-    // Sum = 30 + 39 + 80 + 143 = 292
-    expect(calculateTotalVillageInvested(meta)).toBe(292);
+    // 1: 30 * 1.20 = 36
+    // 2: 50 * 1.40 = 70
+    // 3: 50 * 1.60 = 80
+    // Sum = 30 + 36 + 70 + 80 = 216
+    expect(calculateTotalVillageInvested(meta)).toBe(216);
   });
 
-  it('applies Zoufalá kuráž damage multiplier when Kuráž is at or below 35%', () => {
+  it('scales Zoufalá kuráž continuously with missing Kuráž', () => {
     const baseDamage = 40;
 
-    // Normal courage (> 35%): no bonus even with tavernShieldLevel
+    // 80% Kuráž means 20% missing: two levels grant +10% damage.
     const healthyPlayer = {
       hp: 80,
       maxHp: 100,
       tavernShieldLevel: 2,
       damageMultiplier: 1,
     };
-    expect(getWeaponDamage(healthyPlayer, baseDamage)).toBe(40);
+    expect(getWeaponDamage(healthyPlayer, baseDamage)).toBe(44);
 
-    // Low courage (<= 35%) with level 0 tavern: no bonus
+    // Level 0 tavern never grants a bonus.
     const lowCourageNoTavern = {
       hp: 30,
       maxHp: 100,
@@ -100,14 +100,14 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
     };
     expect(getWeaponDamage(lowCourageNoTavern, baseDamage)).toBe(40);
 
-    // Low courage (<= 35%) with level 2 tavern: +30% damage (15% per level)
+    // 35% Kuráž means 65% missing: two levels grant +32.5% damage.
     const desperatePlayer = {
       hp: 35,
       maxHp: 100,
       tavernShieldLevel: 2,
       damageMultiplier: 1,
     };
-    expect(getWeaponDamage(desperatePlayer, baseDamage)).toBe(52); // 40 * 1.30 = 52
+    expect(getWeaponDamage(desperatePlayer, baseDamage)).toBe(53); // 40 * 1.325 = 53 after floating-point rounding
   });
 
   it('enforces safe asymptotic caps for defensive/time stats at high levels', () => {
