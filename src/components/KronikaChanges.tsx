@@ -9,6 +9,43 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '13. října 2026',
+    title: 'Začlenění přívlastků do taktických formací a balanc bleskového odrazu',
+    summary: 'Při vyšší dynamické obtížnosti (3,50× a více) velí taktickým formacím strašidla s bojovými přívlastky. Bleskový odraz Hromových běsů má bezpečnostní strop proti nechtěnému sebezničení a Vyčerpaný bubák dostal autentické potácení a unavenou auru.',
+    items: [
+      '🎖️ Velitelé formací s přívlastky: Na dynamické obtížnosti 3,50× a výše přiřazuje Režisér velitelům taktických formací (Klešťové sevření, Kladivo a kovadlina, Drtivý přepad) tematické bojové přívlastky podle nátury kraje a rozmaru.',
+      '⚡ Bezpečnostní strop bleskového odrazu: Odražené poškození Hromového přívlastku je zastropováno na nejvýše 25 % maximální Kuráže lovce s vnitřním cooldownem 0,25 s. Silný zásah zblízka tak lovce okamžitě nezahubí.',
+      '🥱 Potácení a ospalá aura Vyčerpaného: Vyčerpaní běsové se po bojišti viditelně klátí a potácejí, doprovázeni unavenou ladovskou aurou a poletujícími spánkovými symboly.',
+      '📖 Záložka Přívlastků v Bestiáři: Do Bestiáře přibyla samostatná encyklopedická sekce se živým náhledem všech elitních i záchranných přívlastků, popisem jejich nátury a loveckou taktikou.',
+      '🧪 Pro testery: ověřte, že velitel formace na obtížnosti 3,5+ nese přívlastek, a vyzkoušejte silný úder do Hromového bubáka těsně u sebe – odraz nesmí překročit čtvrtinu vaší celkové Kuráže.',
+    ],
+  },
+  {
+    date: '13. října 2026',
+    title: 'Sjednocení rejdového rozpočtu, Dvojče minibosse a záchranný přívlastek Vyčerpaný',
+    summary: 'Režisér výpravy nově oceňuje strašidla jednotnou hodnotou odpovídající jejich dropům. Na nejvyšší obtížnosti trestá přemíru úspěchu přivoláním Dvojčete minibosse, zatímco v tísni nabízí pomocnou ruku v podobě Vyčerpaných monster.',
+    items: [
+      '⚖️ Sjednocení bodového rozpočtu: Každý bubák stojí Režiséra přesně tolik bodů rozpočtu hrozeb, jaká je jeho hodnota pro výpočet odměn a perníčků (ENEMY_POINTS).',
+      '👑 Dvojče minibosse na extrémní obtížnosti: Pokud na obtížnosti 4,50× a vyšší lovec drtivě dominuje aréně (dominance 0,70+), Režisér za 30 bodů rozpočtu povolá trestné Dvojče minibosse se zlatou korunkou.',
+      '🕊️ Poklid za pecí bez trestání: Na mírné obtížnosti do 2,00× Režisér hráče za úspěch vůbec netrestá – násobitel tlaku zůstává pevně zastropován na 1,00× a Dvojče minibosse se nikdy nezjeví.',
+      '🛟 Progresivní asistence a Vyčerpaný přívlastek: V tísni (nízká Kuráž a dominance) Režisér plynule nasazuje Vyčerpané bubáky (-50 % rychlost, -50 % útok, -50 % životy), jejichž kořist a perníčky zůstávají plně zachovány.',
+      '📱 Přehledný výhled na bojiště: Výstrahy a oznámení Režiséra se nově zobrazují výhradně v horní liště HUDu, aby nikdy nezakrývaly dění kolem lovce ani na menších obrazovkách telefonů.',
+      '🧪 Pro testery: při vysoké dominanci na obtížnosti 4,5+ sledujte příchod Dvojčete; naopak při poklesu Kuráže pod 25 % ověřte výskyt zesláblých Vyčerpaných monster.',
+    ],
+  },
+  {
+    date: '13. října 2026',
+    title: 'Dědečkova nůše, folklórní předměty a chytré odměny z padlých běsů',
+    summary: 'Rozšíření výbavy o autentické lidové relikvie, ladovské ilustrace a chytré vyhodnocování dropů perníčků i záchranných pokrmů.',
+    items: [
+      '🎒 Nové folklórní předměty: Kovářská podkova, Hliněný kohoutek, Vyřezávané kukačky, Trouba ponocného, Řehtačka, Kropenatá zástěra, Hlt slivovice, Kominický knoflík i Arcivzácný ananas.',
+      '🍍 Ladovská kresba ananasu a relikvií: Originální kvašová podoba Arcivzácného ananasu se smaragdovou korunkou a diamantovým křížkováním, stejně jako kovářské podkovy a kukaček.',
+      '🩹 Chytré záchranné kapky: Pokud Kuráž klesne pod 25 %, padlé kořisti automaticky upřednostňují léčivé buchty a jitrnice namísto útočných cetek.',
+      '🔥 Horké perníčky z dálky a Overkill: Zahánění monster na dálku a drtivé údery spojují malé perníčky do výživnějších větších odměn bez zahlcení obrazovky.',
+      '🌐 Kompletní dvojjazyčný překlad: Všechny předměty a hlášky Dědečka jsou plně lokalizovány v češtině i angličtině.',
+    ],
+  },
+  {
     date: '11. října 2026',
     title: 'Režisér výpravy: obtížnost reaguje na hráče a drží se tématu krajiny',
     summary: 'Zvolená obtížnost určuje základní náročnost, zatímco Režisér průběžně vyhodnocuje Kuráž a skutečně zaznamenaná zabití. Současně vybírá nepřátele podle aktivní úrovně a denní fáze.',
