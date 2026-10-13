@@ -795,3 +795,4 @@
 - Kaple svaté vlny stojí 30 kr a při nákupu u Dědečka způsobuje 150 svatého poškození za úroveň v okruhu 400 px; její karta uvádí také +8 % svatého poškození za úroveň.
 - Herní engine nyní uplatňuje pasivní bonus Kaple svaté vlny (+8 % svatého poškození za úroveň) na všechna svatá poškození; testováno samostatným testem.
 - Aktualizována očekávání ekonomických testů a test inicializace hradeb podle nového balancu.
+- Opraveny regresní testy: nová 20% přirážka, přepočet refundací, spojité škálování Šenkýřovy kuráže, strop hradeb a nové maximum Kuráže.
