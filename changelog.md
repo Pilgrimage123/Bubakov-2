@@ -798,3 +798,4 @@
 - Opraveny regresní testy: nová 20% přirážka, přepočet refundací, spojité škálování Šenkýřovy kuráže, strop hradeb a nové maximum Kuráže.
 - Test kaple porovnává stejného nepřítele s nulovou a druhou úrovní kaple, aby izoloval přesný bonus +16 % i při nepřátelské svaté odolnosti.
 - Upraven test pasivního svatého bonusu tak, aby přesně porovnával úroveň 0 a 2 a ověřoval násobek 1,16.
+- Hráčská runtime data nyní nesou násobič svatého poškození Kaple svaté vlny (1 + 0,08 × úroveň); přidán cílený test úrovní 0/1/2.
