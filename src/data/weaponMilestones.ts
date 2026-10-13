@@ -14,7 +14,12 @@ export interface WeaponStats {
   specialMechanicFlag?: string;
 }
 
-export const WEAPONS_WITH_MILESTONES: WeaponId[] = [
+export type WeaponMilestonesSet = Set<WeaponId> & {
+  readonly length: number;
+  map<U>(callback: (value: WeaponId, index: number, array: WeaponId[]) => U): U[];
+};
+
+export const WEAPONS_WITH_MILESTONES: WeaponMilestonesSet = new Set<WeaponId>([
   'osikovy_prut',
   'valecnice',
   'cesnekova_topinka',
@@ -30,7 +35,19 @@ export const WEAPONS_WITH_MILESTONES: WeaponId[] = [
   'vceli_roj',
   'hromnicka',
   'svecena_kropenka',
-];
+]) as WeaponMilestonesSet;
+
+Object.defineProperty(WEAPONS_WITH_MILESTONES, 'length', {
+  get() {
+    return this.size;
+  },
+  configurable: true,
+});
+(WEAPONS_WITH_MILESTONES as any).map = function <U>(
+  callback: (value: WeaponId, index: number, array: WeaponId[]) => U
+): U[] {
+  return Array.from(this as Set<WeaponId>).map(callback);
+};
 
 const makeChoice = (
   id: string,
@@ -296,7 +313,7 @@ export const WEAPON_RANK_DEFS: Partial<Record<WeaponId, WeaponRankDef[]>> = Obje
 );
 
 export function resolveCanonicalWeaponId(id: string): WeaponId | undefined {
-  if (WEAPONS_WITH_MILESTONES.includes(id as WeaponId)) return id as WeaponId;
+  if (WEAPONS_WITH_MILESTONES.has(id as WeaponId)) return id as WeaponId;
   return WEAPON_LEGACY_ALIASES[id];
 }
 

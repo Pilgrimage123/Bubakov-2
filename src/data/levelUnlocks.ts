@@ -1,4 +1,3 @@
-import React from 'react';
 export type { LevelProgress } from '../types';
 import { GAME_LEVELS } from './levels';
 
@@ -442,10 +441,13 @@ var LEVEL_UNLOCKS = {
 		}
 	])
 };
+
+const LEVEL_PROGRESS_CACHE = new WeakMap<object, Map<any, any>>();
+
 /**
 * Calculates progressive reveal information and unlock status for a game level
 */
-function getLevelProgress(id, meta) {
+function computeLevelProgress(id: any, meta: any) {
 	const def = LEVEL_UNLOCKS[id];
 	const lvlOriginal = GAME_LEVELS[id];
 	if (!def || !lvlOriginal) return {
@@ -611,6 +613,22 @@ function getLevelProgress(id, meta) {
 		enemiesBreakdown,
 		bossDefeated
 	};
+}
+
+function getLevelProgress(id: any, meta: any) {
+	if (!meta || typeof meta !== 'object') {
+		return computeLevelProgress(id, meta);
+	}
+	let metaCache = LEVEL_PROGRESS_CACHE.get(meta);
+	if (!metaCache) {
+		metaCache = new Map();
+		LEVEL_PROGRESS_CACHE.set(meta, metaCache);
+	}
+	const cached = metaCache.get(id);
+	if (cached) return cached;
+	const res = computeLevelProgress(id, meta);
+	metaCache.set(id, res);
+	return res;
 }
 
 export { LEVEL_ORDER, getPreviousLevel, isLevelFullyUnlocked, canLevelUnlock, getActiveUnlockingLevel, makeSequentialUnlock, LEVEL_UNLOCKS, getLevelProgress };

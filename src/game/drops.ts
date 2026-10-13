@@ -312,7 +312,8 @@ export function createDropInstance(
   type: DropType,
   x: number,
   y: number,
-  opts: DropSpawnOptions = {}
+  opts: DropSpawnOptions = {},
+  target?: GameDrop
 ): GameDrop {
   const angle = opts.angle ?? Math.random() * Math.PI * 2;
   const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
@@ -345,20 +346,20 @@ export function createDropInstance(
     }
   }
 
-  return {
-    type,
-    x: x + (opts.vx !== undefined ? 0 : Math.cos(angle) * 8),
-    y: y + (opts.vy !== undefined ? 0 : Math.sin(angle) * 8),
-    vx,
-    vy,
-    radius,
-    value: opts.value,
-    size: opts.size,
-    time: Math.random() * 6.28,
-    isHot: opts.isHot || false,
-    goldenRushTimer: opts.goldenRushTimer || 0,
-    dead: false,
-  };
+  const drop = target || ({} as GameDrop);
+  drop.type = type;
+  drop.x = x + (opts.vx !== undefined ? 0 : Math.cos(angle) * 8);
+  drop.y = y + (opts.vy !== undefined ? 0 : Math.sin(angle) * 8);
+  drop.vx = vx;
+  drop.vy = vy;
+  drop.radius = radius;
+  drop.value = opts.value;
+  drop.size = opts.size;
+  drop.time = Math.random() * 6.28;
+  drop.isHot = opts.isHot || false;
+  drop.goldenRushTimer = opts.goldenRushTimer || 0;
+  drop.dead = false;
+  return drop;
 }
 
 /**

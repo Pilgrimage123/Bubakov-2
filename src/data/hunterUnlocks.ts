@@ -1,4 +1,3 @@
-import React from 'react';
 export type { HunterProgress } from '../types';
 
 var HUNTER_ORDER = [
@@ -531,10 +530,13 @@ var HUNTER_UNLOCKS = {
 		]
 	}
 };
+
+const HUNTER_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
+
 /**
 * Calculates current unlock progress and spoil details for a hunter based on meta-progression
 */
-function getHunterProgress(type, meta) {
+function computeHunterProgress(type: any, meta: any) {
 	const def = HUNTER_UNLOCKS[type];
 	if (!def) return {
 		id: type,
@@ -663,6 +665,22 @@ function getHunterProgress(type, meta) {
 		clueTag: milestone.clueTag,
 		enemiesBreakdown
 	};
+}
+
+function getHunterProgress(type: any, meta: any) {
+	if (!meta || typeof meta !== 'object') {
+		return computeHunterProgress(type, meta);
+	}
+	let metaCache = HUNTER_PROGRESS_CACHE.get(meta);
+	if (!metaCache) {
+		metaCache = new Map();
+		HUNTER_PROGRESS_CACHE.set(meta, metaCache);
+	}
+	const cached = metaCache.get(type);
+	if (cached) return cached;
+	const res = computeHunterProgress(type, meta);
+	metaCache.set(type, res);
+	return res;
 }
 
 export { HUNTER_ORDER, getPreviousHunter, isHunterUnlocked, canHunterUnlock, getActiveUnlockingHunter, HUNTER_UNLOCKS, getHunterProgress };

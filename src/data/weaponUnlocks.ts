@@ -1,4 +1,3 @@
-import React from 'react';
 import { WEAPON_LEGACY_ALIASES } from './weapons';
 export type { WeaponProgress } from '../types';
 
@@ -882,10 +881,13 @@ var WEAPON_UNLOCKS = {
 		]
 	}
 };
+
+const WEAPON_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
+
 /**
 * Calculates current unlock progress and spoil details for a weapon based on meta-progression
 */
-function getWeaponProgress(id: string, meta: any) {
+function computeWeaponProgress(id: string, meta: any) {
 	const canonical = toCanonicalId(id);
 	const def = WEAPON_UNLOCKS[canonical] || WEAPON_UNLOCKS[id];
 	if (!def) return {
@@ -1022,12 +1024,26 @@ function getWeaponProgress(id: string, meta: any) {
 	};
 }
 
-const WEAPON_UNLOCKS_PROXY = new Proxy(WEAPON_UNLOCKS as any, {
-	get(target, prop: string) {
-		if (prop in target) return target[prop];
-		const mapped = WEAPON_LEGACY_ALIASES[prop];
-		return mapped ? target[mapped] : undefined;
+function getWeaponProgress(id: string, meta: any) {
+	if (!meta || typeof meta !== 'object') {
+		return computeWeaponProgress(id, meta);
 	}
-});
+	let metaCache = WEAPON_PROGRESS_CACHE.get(meta);
+	if (!metaCache) {
+		metaCache = new Map();
+		WEAPON_PROGRESS_CACHE.set(meta, metaCache);
+	}
+	const cached = metaCache.get(id);
+	if (cached) return cached;
+	const res = computeWeaponProgress(id, meta);
+	metaCache.set(id, res);
+	return res;
+}
 
-export { LOCKED_WEAPONS_ORDER, getPreviousWeapon, isWeaponUnlocked, canWeaponUnlock, getActiveUnlockingWeapon, WEAPON_UNLOCKS_PROXY as WEAPON_UNLOCKS, getWeaponProgress };
+for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {
+	if ((WEAPON_UNLOCKS as any)[canonical] && !(WEAPON_UNLOCKS as any)[alias]) {
+		(WEAPON_UNLOCKS as any)[alias] = (WEAPON_UNLOCKS as any)[canonical];
+	}
+}
+
+export { LOCKED_WEAPONS_ORDER, getPreviousWeapon, isWeaponUnlocked, canWeaponUnlock, getActiveUnlockingWeapon, WEAPON_UNLOCKS, getWeaponProgress };

@@ -92,6 +92,12 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'arcivzacny_ananas', name: 'Arcivzácný ananas', icon: '🍍', description: '+30 % max. Kuráž i rychlost, plně doplní Kuráž a daruje 10 s nezranitelnost.', baseCost: 125, maxStacks: 2, luckWeight: 0.25, isAnanas: true, effect: { type: 'arcivzacny_ananas' } },
 ];
 
+export const GRANDFATHER_ITEMS_MAP: Record<string, GrandfatherItemDef> = {};
+for (let i = 0; i < GRANDFATHER_ITEMS.length; i++) {
+  const item = GRANDFATHER_ITEMS[i];
+  GRANDFATHER_ITEMS_MAP[item.id] = item;
+}
+
 export function getGrandfatherItem(id: string): GrandfatherItemDef | undefined {
-  return GRANDFATHER_ITEMS.find((item) => item.id === id);
+  return GRANDFATHER_ITEMS_MAP[id];
 }

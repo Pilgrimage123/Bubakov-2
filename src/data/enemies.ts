@@ -1228,4 +1228,17 @@ const ENEMIES: Record<string, EnemyStats> = {
 	}
 };
 
+const UNHOLY_IDS = new Set<string>([
+	"cert",
+	"bezhlavy_rytir",
+	"rarach",
+	"plivnik",
+	"sazovy_rarach",
+	"krvavy_kostlivec"
+]);
+
+for (const enemy of Object.values(ENEMIES)) {
+	(enemy as any).isUnholy = enemy.category === "undead" || enemy.category === "demons" || UNHOLY_IDS.has(enemy.id);
+}
+
 export { ENEMIES };

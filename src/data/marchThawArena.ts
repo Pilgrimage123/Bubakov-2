@@ -35,6 +35,11 @@ export const MARCH_THAW_DECOR = [
   { type: 'march_shrine', x: MARCH_THAW_POIS.shrine.x, y: MARCH_THAW_POIS.shrine.y, scale: 1 },
 ] as const;
 
+export const MARCH_THAW_POIS_LIST: MarchThawPoi[] = Object.values(MARCH_THAW_POIS);
+
 export function isInsideMarchPoi(x: number, y: number, poi: MarchThawPoi, padding = 0): boolean {
-  return Math.hypot(x - poi.x, y - poi.y) <= poi.radius + padding;
+  const dx = x - poi.x;
+  const dy = y - poi.y;
+  const r = poi.radius + padding;
+  return dx * dx + dy * dy <= r * r;
 }

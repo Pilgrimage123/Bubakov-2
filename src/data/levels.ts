@@ -1,4 +1,3 @@
-import React from 'react';
 import type { GameLevelDef, GameLevelId } from '../types';
 export type { GameLevelDef } from '../types';
 

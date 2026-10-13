@@ -127,8 +127,16 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
   },
 };
 
+export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
+for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
+  if (!SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId]) {
+    SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId] = [];
+  }
+  SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId].push(upgrade);
+}
+
 export function getSynergisticUpgradesForWeapon(weaponId: string): SynergisticUpgradeDef[] {
-  return Object.values(SYNERGISTIC_UPGRADES).filter((item) => item.weaponId === weaponId);
+  return SYNERGISTIC_UPGRADES_BY_WEAPON[weaponId] || [];
 }
 
 export function getSynergisticUpgrade(id: string): SynergisticUpgradeDef | undefined {

@@ -47,6 +47,8 @@ export interface GameDrop {
   isHot?: boolean;
   goldenRushTimer?: number;
   rescued?: boolean;
+  text?: string;
+  textColor?: string;
   [key: string]: any;
 }
 
@@ -147,6 +149,7 @@ export interface MetaProgression {
   hunterKillCounts?: Record<string, any>;
   weaponKillCounts?: Record<string, any>;
   bestiaryKills?: Record<string, any>;
+  totalBestiaryKills?: number;
   highestSurviveTime?: number;
   selectedLevel?: number;
   highestLevelUnlocked?: number;
@@ -203,6 +206,46 @@ export interface WeaponDef {
   speed?: number;
   desc: string;
   fire: (player: any, level: number) => boolean;
+}
+
+export interface WeaponInstance {
+  id: WeaponId | string;
+  level: number;
+  cd: number;
+  mastery?: any;
+  milestones?: any;
+  synergisticUpgrades?: string[];
+  _cachedStats?: any;
+}
+
+export interface Player {
+  x: number;
+  y: number;
+  radius: number;
+  type: CharacterType;
+  maxHp: number;
+  hp: number;
+  speed: number;
+  pickupRadius: number;
+  luck: number;
+  weapons: WeaponInstance[];
+  _firingWeapon?: WeaponInstance | null;
+  _valecniceSlowRadius?: number;
+  _valecniceSlowRate?: number;
+  _valecnicePulse?: boolean;
+  _caneSwingAlt?: boolean;
+  damageMultiplier?: number;
+  tulakDamageBonus?: number;
+  cooldownMultiplier?: number;
+  cooldownBonus?: number;
+  distTo: (e: any) => number;
+  distSqTo: (e: any) => number;
+  getLivingEnemies: () => any[];
+  getNearbyEnemies: (radius?: number) => any[];
+  spawnProjectile: (proj: any) => any;
+  spawnMeleeSlash: (slash: any) => any;
+  spawnAreaImpact: (impact: any) => any;
+  [key: string]: any;
 }
 
 export type EnemyAttackCadence = 'fast' | 'normal' | 'slow';
@@ -359,10 +402,12 @@ export interface Enemy {
   isMiniboss?: boolean;
   isDefeated?: boolean;
   dead?: boolean;
+  isUnholy?: boolean;
   attackCadence?: EnemyAttackCadence;
   attackInterval?: number;
   snackTimer?: number;
   stunTimer?: number;
+  garlicSlowTimer?: number;
   prefix?: EnemyPrefixType;
   dodgeChance?: number;
   prefixDamageReduction?: number;
@@ -387,6 +432,7 @@ export interface EnemyStats {
   name: string;
   title: string;
   category: string;
+  isUnholy?: boolean;
   hp: number;
   speed: number;
   damage: number;

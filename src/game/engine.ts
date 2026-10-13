@@ -64,12 +64,15 @@ import {
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
 
-export function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
+export function compactInPlace<T>(items: T[], keep: (item: T) => boolean, onRecycle?: (item: T) => void): void {
   let write = 0;
   for (let read = 0; read < items.length; read++) {
-    if (keep(items[read])) {
-      items[write] = items[read];
+    const item = items[read];
+    if (keep(item)) {
+      items[write] = item;
       write++;
+    } else if (onRecycle) {
+      onRecycle(item);
     }
   }
   items.length = write;
@@ -261,6 +264,9 @@ export class GameEngine {
     customBossTitle?: string,
     prefix?: EnemyPrefixType
   ) => any;
+  private projectilePool: any[] = [];
+  private slashPool: any[] = [];
+  private dropPool: GameDrop[] = [];
 
   constructor(
     initialStateOrOptions?: EngineState | RunInitOptions,
@@ -426,7 +432,10 @@ export class GameEngine {
         ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }];
 
-    initialWeapons.forEach(ensureWeaponMilestones);
+    initialWeapons.forEach((w: any) => {
+      ensureWeaponMilestones(w);
+      w._cachedStats = getRankedWeaponStats(w.id, w.level, w);
+    });
 
     const wallBonusHp = (meta?.wallLevel || 0) * 25;
     const millBonusSpeed = (meta?.millLevel || 0) * 10;
@@ -481,11 +490,20 @@ export class GameEngine {
       valecniceAngle: 0,
       valecniceHitTimer: 0,
       garlicAuraTimer: 0,
+      _valecniceSlowRadius: 0,
+      _valecniceSlowRate: 0,
       _valecnicePulse: false,
       _garlicPulse: false,
+      _caneSwingAlt: false,
 
       distTo(e: any) {
         return Math.hypot(e.x - this.x, e.y - this.y);
+      },
+
+      distSqTo(e: any) {
+        const dx = e.x - this.x;
+        const dy = e.y - this.y;
+        return dx * dx + dy * dy;
       },
 
       getLivingEnemies() {
@@ -656,7 +674,8 @@ export class GameEngine {
   }
 
   public spawnDrop(type: DropType, x: number, y: number, opts: DropSpawnOptions = {}): GameDrop {
-    const drop = createDropInstance(type, x, y, opts);
+    const pooled = this.dropPool.pop();
+    const drop = createDropInstance(type, x, y, opts, pooled);
     this.state.drops.push(drop);
     return drop;
   }
@@ -820,6 +839,9 @@ export class GameEngine {
       garlicSlowTimer: 0,
       snackTimer: 0,
       stunTimer: 0,
+      strikeTimer: 0,
+      strikeMaxTimer: 0,
+      isUnholy: typeof stats.isUnholy === 'boolean' ? stats.isUnholy : (stats.category === 'unholy' || isUnholyEnemy({ id: resolvedId, category: stats.category } as any)),
       stalkSpeedBonus: 0,
       magmaTrailTimer: 0,
       fissureTimer: 0,
@@ -1171,6 +1193,7 @@ export class GameEngine {
       if (synergisticUpgradeId) {
         weapon.synergisticUpgrades.push(synergisticUpgradeId);
       }
+      weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
       player.weapons.push(weapon);
       return { weapon, pendingMilestone: null };
     }
@@ -1184,6 +1207,7 @@ export class GameEngine {
     }
 
     if (weapon.level >= 8) {
+      weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
       return { weapon, pendingMilestone: null };
     }
 
@@ -1213,6 +1237,7 @@ export class GameEngine {
       }
     }
 
+    weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
     return { weapon, pendingMilestone: pending };
   }
 
@@ -1230,6 +1255,7 @@ export class GameEngine {
     }
     if (!weapon.synergisticUpgrades.includes(upgradeId)) {
       weapon.synergisticUpgrades.push(upgradeId);
+      weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
     }
   }
 
@@ -1272,6 +1298,7 @@ export class GameEngine {
     }
 
     const updatedStats = getRankedWeaponStats(weaponId, weapon.level, weapon);
+    weapon._cachedStats = updatedStats;
     return updatedStats;
   }
 
@@ -1281,22 +1308,46 @@ export class GameEngine {
       const weaponId = p.weaponId || this.state.player?._firingWeapon?.id;
       const angle = p.angle ?? 0;
       const speed = p.speed ?? 0;
-      const projectile = {
-        ...p,
-        weaponId,
-        x: p.x ?? this.state.player?.x ?? 0,
-        y: p.y ?? this.state.player?.y ?? 0,
-        angle,
-        speed,
-        vx: p.vx !== undefined ? p.vx : Math.cos(angle) * speed,
-        vy: p.vy !== undefined ? p.vy : Math.sin(angle) * speed,
-        hitList: p.hitList || [],
-        dead: false,
-        life: p.life ?? 2.0,
-        radius: p.radius ?? 12,
-        dmg: p.dmg ?? 10,
-        type: p.type || 'physical',
-      };
+      const pooled = this.projectilePool.pop();
+      let projectile: any;
+      if (pooled) {
+        if (pooled.hitList) {
+          pooled.hitList.length = 0;
+        } else {
+          pooled.hitList = [];
+        }
+        projectile = Object.assign(pooled, p, {
+          weaponId,
+          x: p.x ?? this.state.player?.x ?? 0,
+          y: p.y ?? this.state.player?.y ?? 0,
+          angle,
+          speed,
+          vx: p.vx !== undefined ? p.vx : Math.cos(angle) * speed,
+          vy: p.vy !== undefined ? p.vy : Math.sin(angle) * speed,
+          dead: false,
+          life: p.life ?? 2.0,
+          radius: p.radius ?? 12,
+          dmg: p.dmg ?? 10,
+          type: p.type || 'physical',
+        });
+      } else {
+        projectile = {
+          ...p,
+          weaponId,
+          x: p.x ?? this.state.player?.x ?? 0,
+          y: p.y ?? this.state.player?.y ?? 0,
+          angle,
+          speed,
+          vx: p.vx !== undefined ? p.vx : Math.cos(angle) * speed,
+          vy: p.vy !== undefined ? p.vy : Math.sin(angle) * speed,
+          hitList: p.hitList ? [...p.hitList] : [],
+          dead: false,
+          life: p.life ?? 2.0,
+          radius: p.radius ?? 12,
+          dmg: p.dmg ?? 10,
+          type: p.type || 'physical',
+        };
+      }
       this.state.projectiles.push(projectile);
       return projectile;
     }
@@ -1304,22 +1355,46 @@ export class GameEngine {
     if (action.type === 'slash') {
       const s = action.slash || action;
       const weaponId = s.weaponId || this.state.player?._firingWeapon?.id;
-      const slash = {
-        ...s,
-        weaponId,
-        x: s.x ?? this.state.player?.x ?? 0,
-        y: s.y ?? this.state.player?.y ?? 0,
-        maxLife: s.maxLife || s.life || 0.2,
-        life: s.life || 0.2,
-        time: 0,
-        reach: s.reach ?? 80,
-        arc: s.arc ?? Math.PI,
-        angle: s.angle ?? 0,
-        dmg: s.dmg ?? 20,
-        type: s.type || 'physical',
-        hitList: s.hitList || [],
-        dead: false,
-      };
+      const pooled = this.slashPool.pop();
+      let slash: any;
+      if (pooled) {
+        if (pooled.hitList) {
+          pooled.hitList.length = 0;
+        } else {
+          pooled.hitList = [];
+        }
+        slash = Object.assign(pooled, s, {
+          weaponId,
+          x: s.x ?? this.state.player?.x ?? 0,
+          y: s.y ?? this.state.player?.y ?? 0,
+          maxLife: s.maxLife || s.life || 0.2,
+          life: s.life || 0.2,
+          time: 0,
+          reach: s.reach ?? 80,
+          arc: s.arc ?? Math.PI,
+          angle: s.angle ?? 0,
+          dmg: s.dmg ?? 20,
+          type: s.type || 'physical',
+          dead: false,
+        });
+      } else {
+        slash = {
+          ...s,
+          weaponId,
+          x: s.x ?? this.state.player?.x ?? 0,
+          y: s.y ?? this.state.player?.y ?? 0,
+          maxLife: s.maxLife || s.life || 0.2,
+          life: s.life || 0.2,
+          time: 0,
+          reach: s.reach ?? 80,
+          arc: s.arc ?? Math.PI,
+          angle: s.angle ?? 0,
+          dmg: s.dmg ?? 20,
+          type: s.type || 'physical',
+          hitList: s.hitList ? [...s.hitList] : [],
+          dead: false,
+        };
+      }
       this.state.slashes.push(slash);
       this.state.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
       return slash;
@@ -1672,7 +1747,7 @@ export class GameEngine {
                   : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
               const baseCd = wDef.baseCd;
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
-              const stats = getRankedWeaponStats(w.id, w.level, w);
+              const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
               const localCd = Math.max(baseCd * 0.5, formulaCd * stats.cooldownMult);
               w.cd = fired ? localCd : 0.1;
             }
@@ -1745,7 +1820,9 @@ export class GameEngine {
         }
       }
     }
-    compactInPlace(this.state.projectiles, (p) => !p.dead);
+    compactInPlace(this.state.projectiles, (p) => !p.dead, (p) => {
+      if (this.projectilePool.length < 200) this.projectilePool.push(p);
+    });
 
     // Step slashes
     for (let i = 0; i < this.state.slashes.length; i++) {
@@ -1784,7 +1861,9 @@ export class GameEngine {
         }
       }
     }
-    compactInPlace(this.state.slashes, (s) => !s.dead);
+    compactInPlace(this.state.slashes, (s) => !s.dead, (s) => {
+      if (this.slashPool.length < 50) this.slashPool.push(s);
+    });
 
     // Step enemies
     if (this.state.timeStopTimer > 0) {
@@ -2158,7 +2237,9 @@ export class GameEngine {
           }
         }
       }
-      compactInPlace(this.state.drops, (d) => !d.dead);
+      compactInPlace(this.state.drops, (d) => !d.dead, (d) => {
+        if (this.dropPool.length < 100) this.dropPool.push(d);
+      });
       performDropFusion(this.state.drops, undefined, 250);
     }
 

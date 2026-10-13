@@ -7,7 +7,7 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createInitialEngineState, type EngineState } from './game/engineState';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
@@ -1278,21 +1278,29 @@ export default function App() {
   const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string } | null>(null);
 
   // Progressive unlock calculations for all 4 hunters
-  const wandererProg = getHunterProgress('wanderer', meta);
-  const shepherdProg = getHunterProgress('shepherd', meta);
-  const korenarkaProg = getHunterProgress('korenarka', meta);
-  const watchmanProg = getHunterProgress('watchman', meta);
-  const sextonProg = getHunterProgress('sexton', meta);
-  const grannyProg = getHunterProgress('granny', meta);
+  const wandererProg = useMemo(() => getHunterProgress('wanderer', meta), [meta]);
+  const shepherdProg = useMemo(() => getHunterProgress('shepherd', meta), [meta]);
+  const korenarkaProg = useMemo(() => getHunterProgress('korenarka', meta), [meta]);
+  const watchmanProg = useMemo(() => getHunterProgress('watchman', meta), [meta]);
+  const sextonProg = useMemo(() => getHunterProgress('sexton', meta), [meta]);
+  const grannyProg = useMemo(() => getHunterProgress('granny', meta), [meta]);
 
-  const levelProgress = Object.fromEntries(
-    ([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
-  ) as Record<GameLevelId, LevelProgress>;
+  const levelProgress = useMemo(
+    () =>
+      Object.fromEntries(
+        ([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+      ) as Record<GameLevelId, LevelProgress>,
+    [meta]
+  );
 
   // Weapon unlock count
-  const unlockedWeaponsCount = Object.keys(WEAPONS).filter(
-    (k) => getWeaponProgress(k, meta).isUnlocked
-  ).length;
+  const unlockedWeaponsCount = useMemo(
+    () =>
+      Object.keys(WEAPONS).filter(
+        (k) => getWeaponProgress(k, meta).isUnlocked
+      ).length,
+    [meta]
+  );
 
   // Game UI state
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather' | 'milestone'>('menu');
@@ -2092,7 +2100,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
 
-    initialWeapons.forEach(ensureWeaponMilestones);
+    initialWeapons.forEach((w: any) => {
+      ensureWeaponMilestones(w);
+      w._cachedStats = getRankedWeaponStats(w.id, w.level, w);
+    });
 
     const wallBonusHp = (meta.wallLevel || 0) * 25;
     const millBonusSpeed = (meta.millLevel || 0) * 10;
@@ -2153,8 +2164,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       valecniceAngle: 0,
       valecniceHitTimer: 0,
       garlicAuraTimer: 0,
+      _valecniceSlowRadius: 0,
+      _valecniceSlowRate: 0,
       _valecnicePulse: false,
       _garlicPulse: false,
+      _caneSwingAlt: false,
 
       // Každý lovec po zranění na blízko bubákem bubáka odhodí (resist neplatí, pokud nejde o bosse levelu)
       // a udělí mu zranění rovné 15 % maximální Kuráže lovce
@@ -2253,6 +2267,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Helper methods for weapon scripts
       distTo(e: any) {
         return Math.hypot(e.x - this.x, e.y - this.y);
+      },
+      distSqTo(e: any) {
+        const dx = e.x - this.x;
+        const dy = e.y - this.y;
+        return dx * dx + dy * dy;
       },
       getLivingEnemies() {
         return livingEnemiesRef.current;
@@ -4968,7 +4987,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Update persistent orbit angle and slow aura for Válečnice.
             const valecniceWeapon = player.weapons.find((w: any) => w.id === 'valecnice');
             if (valecniceWeapon) {
-              const stats = getRankedWeaponStats('valecnice', valecniceWeapon.level, valecniceWeapon);
+              const stats = (valecniceWeapon as any)._cachedStats || ((valecniceWeapon as any)._cachedStats = getRankedWeaponStats('valecnice', valecniceWeapon.level, valecniceWeapon));
               const orbitRadius = 115 * stats.areaRadiusMult;
               player._valecniceSlowRadius = orbitRadius * 1.15;
               const orbitSpeed = valecniceWeapon.level >= 3 ? 2.5 : 2.2;
@@ -4994,7 +5013,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
                   const baseCd = wDef.baseCd;
                   const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
-                  const stats = getRankedWeaponStats(w.id, w.level, w);
+                  const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
                   const localCd = Math.max(baseCd * 0.50, formulaCd * stats.cooldownMult);
                   w.cd = fired ? localCd : 0.1;
                 }

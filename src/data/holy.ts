@@ -1,11 +1,19 @@
-import React from 'react';
+export const UNHOLY_ENEMY_IDS = new Set<string>([
+	"cert",
+	"bezhlavy_rytir",
+	"rarach",
+	"plivnik",
+	"sazovy_rarach",
+	"krvavy_kostlivec"
+]);
 
 /**
 * Checks whether an enemy is considered undead or devil/demon type.
 */
-function isUnholyEnemy(e) {
+function isUnholyEnemy(e: any): boolean {
 	if (!e) return false;
-	return e.category === "undead" || e.category === "demons" || e.id === "cert" || e.id === "bezhlavy_rytir" || e.id === "rarach" || e.id === "plivnik" || e.id === "sazovy_rarach" || e.id === "krvavy_kostlivec";
+	if (typeof e.isUnholy === 'boolean') return e.isUnholy;
+	return e.category === "undead" || e.category === "demons" || UNHOLY_ENEMY_IDS.has(e.id);
 }
 /**
 * Computes the enemy's effective resistance to Holy / Fear effects.

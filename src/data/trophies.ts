@@ -1,5 +1,16 @@
-import React from 'react';
 import { VILLAGE_BUILDINGS } from './village';
+
+export function getTotalBestiaryKills(meta: any): number {
+	if (!meta) return 0;
+	if (typeof meta.totalBestiaryKills === 'number') return meta.totalBestiaryKills;
+	const kills = meta.bestiaryKills;
+	if (!kills) return 0;
+	let total = 0;
+	for (const k in kills) {
+		total += Number(kills[k]) || 0;
+	}
+	return total;
+}
 
 var TROPHIES = [
 	{
@@ -95,9 +106,9 @@ var TROPHIES = [
 		title: "⚔️ Postrach nočních bubáků",
 		desc: "Přemož v bojích celkem alespoň 100 venkovských strašidel.",
 		reward: 80,
-		isMet: (meta: any) => Number(Object.values(meta?.bestiaryKills || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0)) >= 100,
+		isMet: (meta: any) => getTotalBestiaryKills(meta) >= 100,
 		getProgress: (meta: any) => {
-			const sum = Number(Object.values(meta?.bestiaryKills || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0));
+			const sum = getTotalBestiaryKills(meta);
 			return {
 				cur: Math.min(100, sum),
 				max: 100
@@ -109,9 +120,9 @@ var TROPHIES = [
 		title: "🏰 Legendární venkovský hrdina",
 		desc: "Přemož v bojích celkem alespoň 300 venkovských strašidel.",
 		reward: 200,
-		isMet: (meta: any) => Number(Object.values(meta?.bestiaryKills || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0)) >= 300,
+		isMet: (meta: any) => getTotalBestiaryKills(meta) >= 300,
 		getProgress: (meta: any) => {
-			const sum = Number(Object.values(meta?.bestiaryKills || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0));
+			const sum = getTotalBestiaryKills(meta);
 			return {
 				cur: Math.min(300, sum),
 				max: 300

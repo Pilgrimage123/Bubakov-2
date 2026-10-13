@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 const import_react = React;
 import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
@@ -11,8 +11,8 @@ import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 
 var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 	const [filter, setFilter] = (0, import_react.useState)("all");
+	const progresses = (0, import_react.useMemo)(() => Object.keys(WEAPONS).map((key) => getWeaponProgress(key, meta)), [meta]);
 	if (!isOpen) return null;
-	const progresses = Object.keys(WEAPONS).map((key) => getWeaponProgress(key, meta));
 	const unlockedCount = progresses.filter((p) => p.isUnlocked).length;
 	const totalCount = progresses.length;
 	const filtered = progresses.filter((p) => {

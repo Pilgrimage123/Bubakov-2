@@ -1,7 +1,20 @@
-import React from 'react';
 import { sound } from '../audio';
 import type { WeaponId } from '../types';
 import { getRankedWeaponStats, type WeaponStats } from './weaponMilestones';
+
+function getDistSqTo(player: any, target: any): number {
+  if (typeof player.distSqTo === 'function') return player.distSqTo(target);
+  const dx = target.x - player.x;
+  const dy = target.y - player.y;
+  return dx * dx + dy * dy;
+}
+
+export function getWeaponStats(id: string, level: number, w?: any): WeaponStats {
+  if (w && w._cachedStats) return w._cachedStats;
+  const s = getRankedWeaponStats(id, level, w);
+  if (w) w._cachedStats = s;
+  return s;
+}
 
 /* Legacy mastery state retained only for backwards save compatibility. */
 export type WeaponMasteryState = {
@@ -38,8 +51,8 @@ var WEAPONS = {
 		desc: 'Rázná venkovská paní s bukovým válečkem (+40 % velikost). Obíhá lovce ve velkém kruhu (115 px), má dosah 58 px, udílí 1,2s omráčení, důrazné odhození (520) a ignoruje 20 % odolností. V zóně o 15 % větší než orbit navíc zpomaluje nepřátele o 25 % (odolnost dle Vůle).',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('valecnice', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const stats = getWeaponStats('valecnice', level, w);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const orbitRadius = 115 * stats.areaRadiusMult;
 			player._valecniceSlowRadius = orbitRadius * 1.15;
 			player._valecniceSlowRate = level >= 3 ? 0.40 : 0.25;
@@ -57,9 +70,10 @@ var WEAPONS = {
 				for (const e of enemies) {
 					if (e.isDefeated) continue;
 					const dx = e.x - ox, dy = e.y - oy, reach = reachBase + e.radius;
-					if (dx * dx + dy * dy <= reach * reach) {
-						const dist = Math.hypot(dx, dy) || 1;
-						e.takeDamage(dmg, 'physical', (dx / dist) * kbForce, (dy / dist) * kbForce, {
+					const distSq = dx * dx + dy * dy;
+					if (distSq <= reach * reach) {
+						const invDist = distSq > 0 ? 1 / Math.sqrt(distSq) : 1;
+						e.takeDamage(dmg, 'physical', dx * invDist * kbForce, dy * invDist * kbForce, {
 							ignoreResist: 0.20,
 							stunDuration,
 							source: 'valecnice'
@@ -85,7 +99,7 @@ var WEAPONS = {
 		desc: 'Smradlavá a štiplavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('cesnekova_topinka', level, w);
+			const stats = getWeaponStats('cesnekova_topinka', level, w);
 			const radius = 110 * stats.areaRadiusMult;
 			const dmg = getWeaponDamage(player, 5) * stats.damageMult;
 			const kbForce = 300 * stats.knockbackMult;
@@ -93,9 +107,10 @@ var WEAPONS = {
 			for (const e of enemies) {
 				if (e.isDefeated) continue;
 				const dx = e.x - player.x, dy = e.y - player.y, reach = radius + e.radius;
-				if (dx * dx + dy * dy <= reach * reach) {
-					const dist = Math.hypot(dx, dy) || 1;
-					e.takeDamage(dmg, 'physical', dx / dist * kbForce, dy / dist * kbForce);
+				const distSq = dx * dx + dy * dy;
+				if (distSq <= reach * reach) {
+					const invDist = distSq > 0 ? 1 / Math.sqrt(distSq) : 1;
+					e.takeDamage(dmg, 'physical', dx * invDist * kbForce, dy * invDist * kbForce);
 					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova_topinka', e, 'hit');
 					e.garlicSlowTimer = Math.max(e.garlicSlowTimer || 0, stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.0);
 				}
@@ -108,16 +123,38 @@ var WEAPONS = {
 		desc: 'Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kysela_okurka', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const stats = getWeaponStats('kysela_okurka', level, w);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
 			if (!enemies.length) return false;
-			let target = enemies[0], minDist = player.distTo(target);
-			for (let i=1;i<enemies.length;i++){const d=player.distTo(enemies[i]);if(d<minDist){minDist=d;target=enemies[i];}}
-			const angle = Math.atan2(target.y-player.y,target.x-player.x);
+			let target = enemies[0];
+			let minDistSq = getDistSqTo(player, target);
+			for (let i = 1; i < enemies.length; i++) {
+				const dSq = getDistSqTo(player, enemies[i]);
+				if (dSq < minDistSq) {
+					minDistSq = dSq;
+					target = enemies[i];
+				}
+			}
+			const angle = Math.atan2(target.y - player.y, target.x - player.x);
 			const dmg = getWeaponDamage(player, 20) * stats.damageMult;
 			const radius = Math.round(13 * stats.areaRadiusMult);
-			for(let i=0;i<count;i++) player.spawnProjectile({x:player.x,y:player.y,angle:angle+(count>1?(i-(count-1)/2)*.10:0),speed:420,dmg,radius,type:'pickle',visual:'pickle',life:2.2,pickleDamageTakenMultiplier: level >= 5 ? 1.50 : 1.35, pierce: stats.pierce, knockbackMult: stats.knockbackMult});
+			for (let i = 0; i < count; i++) {
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle: angle + (count > 1 ? (i - (count - 1) / 2) * .10 : 0),
+					speed: 420,
+					dmg,
+					radius,
+					type: 'pickle',
+					visual: 'pickle',
+					life: 2.2,
+					pickleDamageTakenMultiplier: level >= 5 ? 1.50 : 1.35,
+					pierce: stats.pierce,
+					knockbackMult: stats.knockbackMult
+				});
+			}
 			return true;
 		}
 	},
@@ -132,22 +169,30 @@ var WEAPONS = {
 		desc: "Zlatavé kynuté buchty plněné povidly. Po zásahu vytvoří fialový oblak vůně o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního poškození buchty za sekundu (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('povidlove_buchty', level, w);
-			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
+			const stats = getWeaponStats('povidlove_buchty', level, w);
+			const maxRange = 850 * stats.areaRadiusMult;
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(maxRange) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
-			let bestDist = player.distTo(target) + (target.hunger ?? target.foodResist ?? 0) * 400;
+			const getBuchtyScore = (e: any) => {
+				const dx = e.x - player.x;
+				const dy = e.y - player.y;
+				return Math.sqrt(dx * dx + dy * dy) + (e.hunger ?? e.foodResist ?? 0) * 400;
+			};
+			let bestDist = getBuchtyScore(target);
 			for (let i = 1; i < enemies.length; i++) {
 				const e = enemies[i];
-				const d = player.distTo(e) + (e.hunger ?? e.foodResist ?? 0) * 400;
+				const d = getBuchtyScore(e);
 				if (d < bestDist) {
 					bestDist = d;
 					target = e;
 				}
 			}
-			if (player.distTo(target) > 850 * stats.areaRadiusMult) return false;
-			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = Math.max(1, 1 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const tdx = target.x - player.x;
+			const tdy = target.y - player.y;
+			if (tdx * tdx + tdy * tdy > maxRange * maxRange) return false;
+			const angle = Math.atan2(tdy, tdx);
+			const count = Math.max(1, Math.round((1 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(12 * stats.areaRadiusMult);
 			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.8;
@@ -184,7 +229,7 @@ var WEAPONS = {
 		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý široký sečný oblouk razantně odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('osikovy_prut', level, w);
+			const stats = getWeaponStats('osikovy_prut', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const reach = 115 * stats.areaRadiusMult;
 			const arc = 2.0 + (level - 1) * .15;
@@ -224,24 +269,28 @@ var WEAPONS = {
 		desc: "Třízubé kované vidle z vesnické kovárny. Proráží řady strašidel mocným bodnutím přímo vpřed.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kovarske_vidle', level, w);
+			const stats = getWeaponStats('kovarske_vidle', level, w);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const reach = (130 + level * 16) * stats.areaRadiusMult;
 			const dmg = getWeaponDamage(player, 24) * stats.damageMult;
-			player.spawnMeleeSlash({
-				x: player.x,
-				y: player.y,
-				angle,
-				reach,
-				arc: .65,
-				dmg,
-				knockbackMult: stats.knockbackMult,
-				life: .18,
-				type: "physical",
-				soaked: player.hasSoakedCane,
-				style: "thrust",
-				weaponId: "kovarske_vidle"
-			});
+			for (let i = 0; i < count; i++) {
+				const spreadAngle = count > 1 ? angle + (i - (count - 1) / 2) * 0.18 : angle;
+				player.spawnMeleeSlash({
+					x: player.x,
+					y: player.y,
+					angle: spreadAngle,
+					reach,
+					arc: .65,
+					dmg,
+					knockbackMult: stats.knockbackMult,
+					life: .18,
+					type: "physical",
+					soaked: player.hasSoakedCane,
+					style: "thrust",
+					weaponId: "kovarske_vidle"
+				});
+			}
 			sound.slash();
 			return true;
 		}
@@ -256,7 +305,7 @@ var WEAPONS = {
 		desc: "Těžká zbraň ponocných a panských drábů. Široký rázný švih, který spolehlivě zažene i celé houfy kostlivců.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kovana_halapartna', level, w);
+			const stats = getWeaponStats('kovana_halapartna', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const reach = (145 + level * 15) * stats.areaRadiusMult;
 			const arc = 1.7 + level * .15;
@@ -289,7 +338,7 @@ var WEAPONS = {
 		desc: "Okovaný venkovský cep na mlácení žita. Drtivý dopad do země vyvolá rázovou vlnu a odhodí těžké nepřátele.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('dreveny_cep', level, w);
+			const stats = getWeaponStats('dreveny_cep', level, w);
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const dist = (90 + level * 10) * stats.areaRadiusMult;
 			const targetX = player.x + Math.cos(angle) * dist;
@@ -323,8 +372,8 @@ var WEAPONS = {
 		desc: "Devatero kvítí vystřeluje pět bylin v počátečním věnci, který zahání dotírající nečisté síly.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('devatero_kviti', level, w);
-			const count = Math.max(5, 5 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const stats = getWeaponStats('devatero_kviti', level, w);
+			const count = Math.max(5, Math.round((5 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 15) * stats.damageMult;
 			const radius = Math.round(14 * stats.areaRadiusMult);
 			const baseOffset = player.animTime * 3.5 % (Math.PI * 2);
@@ -359,20 +408,20 @@ var WEAPONS = {
 		desc: "Tuhá ledová koule uválená ze zledovatělého ladovského sněhu. Chlad zpomalí nohy každému strašidlu.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('snehova_koule', level, w);
+			const stats = getWeaponStats('snehova_koule', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
 			let target = enemies[0];
-			let minDist = player.distTo(target);
+			let minDistSq = getDistSqTo(player, target);
 			for (let i = 1; i < enemies.length; i++) {
-				const d = player.distTo(enemies[i]);
-				if (d < minDist) {
-					minDist = d;
+				const dSq = getDistSqTo(player, enemies[i]);
+				if (dSq < minDistSq) {
+					minDistSq = dSq;
 					target = enemies[i];
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
-			const count = Math.max(1, 3 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const count = Math.max(1, Math.round((3 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 18) * stats.damageMult;
 			const radius = Math.round(15 * stats.areaRadiusMult);
 			const chillDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3.5;
@@ -408,10 +457,10 @@ var WEAPONS = {
 		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('kynuty_kolac', level, w);
+			const stats = getWeaponStats('kynuty_kolac', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
 			if (!enemies || enemies.length === 0) return false;
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
 			const bounces = 2 + Math.min(4, level - 1);
 			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3;
@@ -450,8 +499,8 @@ var WEAPONS = {
 		desc: "Brambor vytažený přímo z žhavého popela. Způsobuje popáleniny a zanechává na zemi kouřící ohnisko.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('horky_brambor', level, w);
-			const count = Math.max(1, 1 + stats.projectileCount);
+			const stats = getWeaponStats('horky_brambor', level, w);
+			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(14 * stats.areaRadiusMult);
 			const fireZoneRadius = Math.round(45 * stats.areaRadiusMult);
@@ -491,8 +540,8 @@ var WEAPONS = {
 		desc: "Bzučící venkovské včely ze starého špalkového úlu. Samy si nacházejí nejbližší strašidla a neúnavně je bodají.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('vceli_roj', level, w);
-			const count = Math.max(1, 4 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const stats = getWeaponStats('vceli_roj', level, w);
+			const count = Math.max(1, Math.round((4 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 12) * stats.damageMult;
 			const radius = Math.round(9 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
@@ -526,7 +575,7 @@ var WEAPONS = {
 		desc: "Posvěcená hromniční svíce z kostela. Plápolající záře mírného dosahu jemně odtlačuje nepřátele a každé 2 s způsobuje posvátné zranění (obojí ovlivněno odolností proti Strachu). Nemrtví a pekelníci mají k ní silně sníženou odolnost a utrží podstatně vyšší zranění.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('hromnicka', level, w);
+			const stats = getWeaponStats('hromnicka', level, w);
 			const reach = (135 + level * 15) * stats.areaRadiusMult;
 			const dmg = getWeaponDamage(player, 10) * stats.damageMult;
 			player.spawnHromnickaPulse(reach, dmg, level, stats.knockbackMult, stats.statusDurationSec);
@@ -545,8 +594,8 @@ var WEAPONS = {
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const w = player._firingWeapon;
-			const stats = getRankedWeaponStats('svecena_kropenka', level, w);
-			const count = Math.max(1, 5 + Math.floor((level - 1) / 2) + stats.projectileCount);
+			const stats = getWeaponStats('svecena_kropenka', level, w);
+			const count = Math.max(1, Math.round((5 + Math.floor((level - 1) / 2) + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 22) * stats.damageMult;
 			const radius = Math.round(11 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
@@ -589,12 +638,10 @@ export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	holywater: 'svecena_kropenka',
 };
 
-const WEAPONS_LOOKUP = new Proxy(WEAPONS as any, {
-	get(target, prop: string) {
-		if (prop in target) return target[prop];
-		const mapped = WEAPON_LEGACY_ALIASES[prop];
-		return mapped ? target[mapped] : undefined;
+for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {
+	if ((WEAPONS as any)[canonical] && !(WEAPONS as any)[alias]) {
+		(WEAPONS as any)[alias] = (WEAPONS as any)[canonical];
 	}
-});
+}
 
-export { WEAPONS_LOOKUP as WEAPONS };
+export { WEAPONS };

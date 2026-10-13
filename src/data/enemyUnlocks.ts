@@ -1,43 +1,76 @@
-import React from 'react';
 import { ENEMIES } from './enemies';
 
-function getEnemyMaxKills(enemy) {
+function getEnemyMaxKills(enemy: any) {
 	if (enemy.category === "bosses") return 3;
 	if (enemy.category === "demons" || enemy.hp >= 300) return 10;
 	if (enemy.category === "undead" || enemy.category === "shadows" || enemy.category === "frost" || enemy.category === "fields" || enemy.category === "water") return 15;
 	return 20;
 }
-function getObscuredName(name, tier) {
-	if (tier >= 4) return name;
-	if (tier === 3) return name.split(" ").map((p) => {
-		if (p.length <= 2) return p;
-		if (p.length <= 4) return p[0] + ".." + p[p.length - 1];
-		const half = Math.floor(p.length * .6);
-		return p.slice(0, half) + "..." + p.slice(-1);
-	}).join(" ");
-	if (tier === 2) return name.split(" ").map((p) => {
-		if (p.length <= 3) return p[0] + "..";
-		return p[0] + ".." + p[p.length - 1];
-	}).join(" ");
-	if (tier === 1) return name.split(" ").map((p) => p.length > 0 ? p[0] + " _ _ _" : "").join(" ");
-	return "??? [Neznámé strašidlo]";
-}
-function getObscuredTitle(title, category, tier) {
-	if (tier >= 3) return title;
-	if (tier === 2) return `Tajemná bytost (${title.slice(0, 15)}...)`;
-	if (tier === 1) switch (category) {
-		case "bosses": return "Pověst o obávaném vládci kraje";
-		case "demons": return "Rozpustilý pekelník z pohádek";
-		case "water": return "Mokrý přízrak od rybníka či potoka";
-		case "frost": return "Mrazivý noční vítr a rampouchy";
-		case "undead": return "Bílý kostlivec od starého kostela";
-		case "shadows": return "Temný stín z podkroví a stodol";
-		case "fields": return "Polní strašidlo z poledního žáru či mezí";
-		default: return "Rychlý diblík a noční škůdce";
+
+const OBSCURED_NAME_CACHE = new Map<string, string>();
+
+function getObscuredName(name: string, tier: number): string {
+	const cacheKey = `${name}:${tier}`;
+	const cached = OBSCURED_NAME_CACHE.get(cacheKey);
+	if (cached !== undefined) return cached;
+
+	let result: string;
+	if (tier >= 4) {
+		result = name;
+	} else if (tier === 3) {
+		result = name.split(" ").map((p) => {
+			if (p.length <= 2) return p;
+			if (p.length <= 4) return p[0] + ".." + p[p.length - 1];
+			const half = Math.floor(p.length * .6);
+			return p.slice(0, half) + "..." + p.slice(-1);
+		}).join(" ");
+	} else if (tier === 2) {
+		result = name.split(" ").map((p) => {
+			if (p.length <= 3) return p[0] + "..";
+			return p[0] + ".." + p[p.length - 1];
+		}).join(" ");
+	} else if (tier === 1) {
+		result = name.split(" ").map((p) => p.length > 0 ? p[0] + " _ _ _" : "").join(" ");
+	} else {
+		result = "??? [Neznámé strašidlo]";
 	}
-	return "Dosud nespatřený tvor z nočních bájí";
+
+	OBSCURED_NAME_CACHE.set(cacheKey, result);
+	return result;
 }
-function getEnemyProgress(enemyId, kills) {
+
+const OBSCURED_TITLE_CACHE = new Map<string, string>();
+
+function getObscuredTitle(title: string, category: string, tier: number): string {
+	const cacheKey = `${title}:${category}:${tier}`;
+	const cached = OBSCURED_TITLE_CACHE.get(cacheKey);
+	if (cached !== undefined) return cached;
+
+	let result: string;
+	if (tier >= 3) {
+		result = title;
+	} else if (tier === 2) {
+		result = `Tajemná bytost (${title.slice(0, 15)}...)`;
+	} else if (tier === 1) {
+		switch (category) {
+			case "bosses": result = "Pověst o obávaném vládci kraje"; break;
+			case "demons": result = "Rozpustilý pekelník z pohádek"; break;
+			case "water": result = "Mokrý přízrak od rybníka či potoka"; break;
+			case "frost": result = "Mrazivý noční vítr a rampouchy"; break;
+			case "undead": result = "Bílý kostlivec od starého kostela"; break;
+			case "shadows": result = "Temný stín z podkroví a stodol"; break;
+			case "fields": result = "Polní strašidlo z poledního žáru či mezí"; break;
+			default: result = "Rychlý diblík a noční škůdce"; break;
+		}
+	} else {
+		result = "Dosud nespatřený tvor z nočních bájí";
+	}
+
+	OBSCURED_TITLE_CACHE.set(cacheKey, result);
+	return result;
+}
+
+function computeEnemyProgress(enemyId: any, kills: any) {
 	const enemy = ENEMIES[enemyId] || ENEMIES.rarach;
 	const maxKills = getEnemyMaxKills(enemy);
 	const curKills = Math.max(0, kills || 0);
@@ -127,6 +160,18 @@ function getEnemyProgress(enemyId, kills) {
 		icon,
 		realEnemy: enemy
 	};
+}
+
+const ENEMY_PROGRESS_CACHE = new Map<string, any>();
+
+function getEnemyProgress(enemyId: any, kills: any) {
+	const curKills = Math.max(0, kills || 0);
+	const cacheKey = `${enemyId}:${curKills}`;
+	const cached = ENEMY_PROGRESS_CACHE.get(cacheKey);
+	if (cached !== undefined) return cached;
+	const res = computeEnemyProgress(enemyId, curKills);
+	ENEMY_PROGRESS_CACHE.set(cacheKey, res);
+	return res;
 }
 
 export { getEnemyMaxKills, getObscuredName, getObscuredTitle, getEnemyProgress };
