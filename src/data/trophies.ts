@@ -215,7 +215,7 @@ var TROPHIES = [
 	{
 		id: "level0_completed",
 		title: "🌱 První krůčky v předjaří",
-		desc: "Dokonči úvodní výpravu: zažeň vodníka z tajících ker nebo přežij noc v Předjaří.",
+		desc: "Dokonči úvodní výpravu: zažeň Moranu, špatně vynesenou smrtku, nebo přežij noc v Předjaří.",
 		reward: 80,
 		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]),
 		getProgress: (meta) => ({
