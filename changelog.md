@@ -751,3 +751,18 @@
 - Samostatný **Plán kol změn (1.–16. kolo)** byl odstraněn z herního rozhraní.
 - Hra nyní zobrazuje pouze **Kroniku Bubákova**, která obsahuje hráčsky čitelné historické zápisy.
 - Kronika byla rozšířena o důležité historické feature změny převzaté z původního Plánu kol změn.
+
+## 2026-10-13 — Zapnuté efekty, karty lovců a pasiv Kořenářky
+
+- Přidána trvalá nabídka „Zapnuté efekty“ s hlavním vypínačem a kategoriemi pro dynamické osvětlení, bojové VFX, varovné značky, prefixy bubáků, popisy útoků, ukazatele stavů, oznámení o odemčení, zvukové efekty a hudbu.
+- Vypínání efektů ovlivňuje vykreslování a zvuk, nikoli herní simulaci: poškození, kolize, stavy, odemykání, pohyb projektilů a sbírání dropů pokračují. Starší uložené profily mají všechny nové kategorie ve výchozím zapnutém stavu.
+- Odemčené karty lovců nově zobrazují základní statistiky, počáteční zbraň, pasivní schopnost a podrobný popis zvláštní schopnosti. Přidána samostatná rolovatelná informační karta.
+- Kořenářce byl základní magnet snížen o 75 % (před bonusy vesnice a usnadnění). Každých 9 sekund se vyléčí až o 18 % maximální Kuráže a na 3 sekundy získá pětinásobný dosah magnetu, pětinásobnou rychlost přitahování dropů a nezranitelnost.
+
+## 2026-10-13 — Kořenářka ×5 a mrazivá aura skřítka
+
+- Bylinný záblesk Kořenářky nyní na 3 sekundy násobí dosah magnetu i rychlost přitahování dropů hodnotou 5; oznámení i popisy schopnosti tomu odpovídají.
+- Mrazivý skřítek má auru s dosahem zvětšeným o 55 % (78 → 120,9 px); vykreslená aura používá stejný poloměr jako bojový účinek.
+- Každý aktivní Mrazivý skřítek v dosahu snižuje získané léčení o 20 procentních bodů. Více skřítků se sčítá a snížení je omezeno na 100 %. Penalty platí pro pasivní regeneraci i léčení předměty/oblastmi; neblokuje změnu maximální Kuráže samotnou.
+- Stejný koeficient ovlivňuje i obnovu Kuráže z jednorázových bonusů: navýšení maxima se provede vždy, ale doplnění aktuální Kuráže (včetně Ananasu a bonusů z truhel) je zkráceno podle aktivní aury.
+- Přidány unit testy rozsahu, kumulace mrazivé aury a jejího vlivu na Ananasové léčení.

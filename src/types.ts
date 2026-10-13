@@ -155,7 +155,16 @@ export interface MetaProgression {
   dynamicDifficulty?: number;
   performanceProfile?: 'fidelity' | 'balanced' | 'performance';
   performanceMode?: boolean;
+  effectsEnabled?: boolean;
   dynamicLightingEnabled?: boolean;
+  combatVfxEnabled?: boolean;
+  warningIndicatorsEnabled?: boolean;
+  enemyDescriptorsEnabled?: boolean;
+  attackDescriptorsEnabled?: boolean;
+  statusIndicatorsEnabled?: boolean;
+  unlockNotificationsEnabled?: boolean;
+  soundEffectsEnabled?: boolean;
+  musicEnabled?: boolean;
   [key: string]: any;
 }
 

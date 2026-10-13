@@ -5,6 +5,7 @@ import { HruskaIcon } from './HruskaIcon';
 import { GameIcon } from './GameIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
+import type { EffectCategory } from '../game/effectSettings';
 
 interface ControlsModalProps {
   isOpen: boolean;
@@ -20,7 +21,43 @@ interface ControlsModalProps {
   onToggleDynamicLighting?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
   onChangeDynamicDifficulty?: (diff: number) => void;
+  effectsEnabled?: boolean;
+  effectSettings?: Partial<Record<EffectCategory, boolean>>;
+  onToggleEffectsEnabled?: (enabled: boolean) => void;
+  onToggleEffectCategory?: (category: Exclude<EffectCategory, 'effectsEnabled'>, enabled: boolean) => void;
 }
+
+const EffectToggle: React.FC<{
+  title: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (enabled: boolean) => void;
+}> = ({ title, description, checked, disabled = false, onChange }) => (
+  <label
+    style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '10px',
+      padding: '9px 2px',
+      borderTop: '1px solid rgba(120, 53, 15, 0.18)',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      opacity: disabled ? 0.55 : 1,
+    }}
+  >
+    <input
+      type="checkbox"
+      checked={checked}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.checked)}
+      style={{ width: '20px', height: '20px', marginTop: '2px', flex: '0 0 auto', accentColor: '#15803D' }}
+    />
+    <span style={{ display: 'block' }}>
+      <strong style={{ display: 'block', color: '#451A03', fontSize: '0.98rem' }}>{title}</strong>
+      <span style={{ display: 'block', marginTop: '2px', color: '#5B4636', fontSize: '0.84rem', lineHeight: 1.35 }}>{description}</span>
+    </span>
+  </label>
+);
 
 export const ControlsModal: React.FC<ControlsModalProps> = ({
   isOpen,
@@ -36,8 +73,15 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   onToggleDynamicLighting,
   dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
+  effectsEnabled = true,
+  effectSettings = {},
+  onToggleEffectsEnabled,
+  onToggleEffectCategory,
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  React.useEffect(() => {
+    if (isOpen) setActiveTab(defaultTab);
+  }, [defaultTab, isOpen]);
 
   if (!isOpen) return null;
 
@@ -126,6 +170,15 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             🏘️ Vylepšení v hospodě
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'effects' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('effects');
+              sound.coin();
+            }}
+          >
+            👁️ Zapnuté efekty
           </button>
           <button
             className={`tab-btn ${activeTab === 'perf' ? 'active' : ''}`}
@@ -306,7 +359,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, cooldown 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
                 </li>
                 <li>
-                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivně doplňuje +2 kuráže každé 4 s.
+                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
                 </li>
                 <li>
                   <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž vystraší nepřátele na 5 s a udělí 110 fyzického poškození s odhozením (cooldown 30 s). Pasivně šíří stálou posvátnou auru lucerny (16 svatého poškození/s).
@@ -1203,6 +1256,137 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   ⏸️ <strong>Nebojte se využívat pauzu [P]:</strong> Když je na obrazovce příliš mnoho projektilů nebo strašidel, stiskněte <strong>P</strong>. Zjistíte, kolik vám zbývá kuráže, kde se nachází cíl a naplánujete další manévr.
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: EFFECTS & PRESENTATION SETTINGS */}
+        {activeTab === 'effects' && (
+          <div
+            style={{
+              maxHeight: '500px',
+              overflowY: 'auto',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              paddingRight: '6px',
+            }}
+          >
+            <div
+              style={{
+                background: '#FEF3C7',
+                border: '3px solid #B45309',
+                borderRadius: '8px',
+                padding: '14px 18px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#92400E' }}>
+                    👁️ Zapnuté efekty
+                  </h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.92rem', fontWeight: 700, color: '#451A03' }}>
+                    Hlavní vypínač pouze skryje obrazové a zvukové efekty. Jednotlivé volby si pamatují vlastní nastavení.
+                  </p>
+                </div>
+                <button
+                  className="lada-btn"
+                  role="switch"
+                  aria-checked={effectsEnabled}
+                  style={{ background: effectsEnabled ? '#15803D' : '#78350F', color: '#FFFFFF', padding: '8px 20px', fontWeight: 900 }}
+                  onClick={() => {
+                    const next = !effectsEnabled;
+                    onToggleEffectsEnabled?.(next);
+                  }}
+                >
+                  {effectsEnabled ? '✅ EFEKTY ZAPNUTÉ' : '⚪ EFEKTY VYPNUTÉ'}
+                </button>
+              </div>
+              <p style={{ margin: '10px 0 0', fontSize: '0.87rem', fontWeight: 800, color: '#451A03' }}>
+                Vypnutí nemění poškození, rychlost útoků, stavové efekty, odemykání ani odměny. Skryje jen jejich vizuální nebo zvukovou prezentaci.
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--parchment)', border: '2px solid var(--ink)', borderRadius: '8px', padding: '12px 14px', color: '#111111' }}>
+              <h3 style={{ margin: '0 0 8px', color: '#78350F', fontSize: '1.12rem' }}>🕯️ Osvětlení a atmosféra</h3>
+              <EffectToggle
+                title="Dynamické osvětlení a kvašové stíny"
+                description="Petrolejka, světelné kužely, noční ztmavení a světelné odlesky. Neovlivňuje herní účinky světla."
+                checked={effectSettings.dynamicLightingEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('dynamicLightingEnabled', enabled)}
+              />
+            </div>
+
+            <div style={{ background: 'var(--parchment)', border: '2px solid var(--ink)', borderRadius: '8px', padding: '12px 14px', color: '#111111' }}>
+              <h3 style={{ margin: '0 0 8px', color: '#78350F', fontSize: '1.12rem' }}>💥 Bojová grafika</h3>
+              <EffectToggle
+                title="Bojové částice, aury a záblesky"
+                description="Prach, jiskry, prefixové aury, záblesky zásahu, kosmetické stopy a doprovodné animace."
+                checked={effectSettings.combatVfxEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('combatVfxEnabled', enabled)}
+              />
+              <EffectToggle
+                title="Varovné značky a nápřahy"
+                description="Značky nad bubáky, kruhy přípravy útoku, hvězdičky omráčení a výstražné bannery bossů."
+                checked={effectSettings.warningIndicatorsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('warningIndicatorsEnabled', enabled)}
+              />
+            </div>
+
+            <div style={{ background: 'var(--parchment)', border: '2px solid var(--ink)', borderRadius: '8px', padding: '12px 14px', color: '#111111' }}>
+              <h3 style={{ margin: '0 0 8px', color: '#78350F', fontSize: '1.12rem' }}>📜 Popisky a informační značky</h3>
+              <EffectToggle
+                title="Prefixy bubáků"
+                description="Nápisy Vichřicový, Hromový, Kamenný, Pekelný a Vyčerpaný nad nepřáteli."
+                checked={effectSettings.enemyDescriptorsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('enemyDescriptorsEnabled', enabled)}
+              />
+              <EffectToggle
+                title="Popisy útoků"
+                description="Velké textové hlášky speciálních útoků a schopností. Číselné hodnoty poškození zůstávají viditelné."
+                checked={effectSettings.attackDescriptorsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('attackDescriptorsEnabled', enabled)}
+              />
+              <EffectToggle
+                title="Ukazatele stavových efektů"
+                description="Vizuální zabarvení, značky a texty informující o mokru, chladu, omráčení, odolnosti či jiných stavech. Samotné stavy zůstávají aktivní."
+                checked={effectSettings.statusIndicatorsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('statusIndicatorsEnabled', enabled)}
+              />
+              <EffectToggle
+                title="Oznámení o odemčení"
+                description="Plovoucí zprávy a toastové notifikace o odemčených lovcích, úrovních a odměnách. Stav odemčení v nabídce zůstane zobrazen."
+                checked={effectSettings.unlockNotificationsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('unlockNotificationsEnabled', enabled)}
+              />
+            </div>
+
+            <div style={{ background: 'var(--parchment)', border: '2px solid var(--ink)', borderRadius: '8px', padding: '12px 14px', color: '#111111' }}>
+              <h3 style={{ margin: '0 0 8px', color: '#78350F', fontSize: '1.12rem' }}>🔊 Zvuk</h3>
+              <EffectToggle
+                title="Zvukové efekty"
+                description="Bojové zvuky, sbírání předmětů, nákupy, zvukové signály a hlasové/folklorní efekty."
+                checked={effectSettings.soundEffectsEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('soundEffectsEnabled', enabled)}
+              />
+              <EffectToggle
+                title="Hudba"
+                description="Hudba menu a hudební podkres. Nastavení je nezávislé na zvukových efektech."
+                checked={effectSettings.musicEnabled !== false}
+                disabled={!effectsEnabled}
+                onChange={(enabled) => onToggleEffectCategory?.('musicEnabled', enabled)}
+              />
             </div>
           </div>
         )}

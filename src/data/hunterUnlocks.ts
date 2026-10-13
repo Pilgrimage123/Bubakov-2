@@ -201,7 +201,7 @@ var HUNTER_UNLOCKS = {
 				tierLevel: 2,
 				spoiledName: "B á _ _   k o ř _ _ _ _ _ a",
 				spoiledTitle: "Vesnická bylinkářka pro klidnou mysl",
-				spoiledLore: "To je přece naše zkušená bylinkářka! Její voňavé bylinky uklidní i v tom nejstrašidelnějším reji. Sama od sebe doplňuje +2 kuráže každé 4 sekundy a zahání bubáky ostrými lístky.",
+				spoiledLore: "To je přece naše zkušená bylinkářka! Základní magnet má o 75 % kratší, ale každých 9 sekund se vyléčí o 18 % maximální Kuráže a na 3 sekundy získá pětinásobný dosah magnetu i rychlost přitahování dropů a nezranitelnost.",
 				spoiledWeaponHint: "Zbraň: Devatery bylinky (odhánějí a kropí dotírající bubáky)",
 				spoiledAbilityHint: "Schopnost: Očistné kadidlo (+55 kuráže, +30 štít a zahnání strašidel)",
 				clueTag: "🔎 50 %: Znáš její bylinky i očistné kadidlo!"
@@ -212,7 +212,7 @@ var HUNTER_UNLOCKS = {
 				spoiledName: "B á b a   k o ř e n á _ _ a",
 				spoiledTitle: "Strážkyně dobré mysli a čistých tůní",
 				spoiledLore: "Moudrá stařenka už v chaloupce míchá voňavé bylinky na kuráž a bere hůl! Ještě několik zahnaných vodníků a vyrazí povzbuzovat celou vesnici.",
-				spoiledWeaponHint: "Start: Devatery kvítí, Uklidnění mysli (+2 kuráž/4s)",
+				spoiledWeaponHint: "Start: Devatery kvítí; pasivní bylinný záblesk každých 9 s (léčení, magnet ×5 a rychlost přitažení ×5, nezranitelnost na 3 s)",
 				spoiledAbilityHint: "⚡ Speciál: Očistné kadidlo (+55 kuráže, +30 štít & 120 plošné nature poškození)",
 				clueTag: "⚡ 75 %: Bylinný dým stoupá! Zbývá už jen pár vodních běsů!"
 			},
@@ -222,7 +222,7 @@ var HUNTER_UNLOCKS = {
 				spoiledName: "Bába kořenářka",
 				spoiledTitle: "Bylinkářka s Devaterem kvítím",
 				spoiledLore: "Voňavé byliny na kuráž, Devatery kvítí. Schopnost: Očistné kadidlo.",
-				spoiledWeaponHint: "Devatery kvítí & stálé doplňování kuráže",
+				spoiledWeaponHint: "Devatery kvítí & bylinný záblesk každých 9 s (léčení, magnet ×5, rychlost přitažení ×5, nezranitelnost)",
 				spoiledAbilityHint: "Očistné kadidlo (+55 kuráže, +30 štít, 120 nature dmg)",
 				clueTag: "✅ Plně odemčeno!"
 			}

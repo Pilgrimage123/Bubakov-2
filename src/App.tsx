@@ -34,6 +34,10 @@ import {
 } from './constants';
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
+import { DEFAULT_GAME_EFFECT_SETTINGS, setGameEffectSettings, isGameEffectEnabled, shouldDrawFloatingText, type EffectCategory } from './game/effectSettings';
+import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/frostAura';
+import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
+import { HunterInfoModal } from './components/HunterInfoModal';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
 import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
@@ -1224,8 +1228,31 @@ export default function App() {
   const metaRef = useRef(meta);
   metaRef.current = meta;
 
+  // Preferences added after existing saves default to enabled, preserving the previous game presentation.
+  const syncGameEffectSettings = (source: MetaProgression) => {
+    const effectSettings = {
+      ...DEFAULT_GAME_EFFECT_SETTINGS,
+      effectsEnabled: source.effectsEnabled !== false,
+      dynamicLightingEnabled: source.dynamicLightingEnabled !== false,
+      combatVfxEnabled: source.combatVfxEnabled !== false,
+      warningIndicatorsEnabled: source.warningIndicatorsEnabled !== false,
+      enemyDescriptorsEnabled: source.enemyDescriptorsEnabled !== false,
+      attackDescriptorsEnabled: source.attackDescriptorsEnabled !== false,
+      statusIndicatorsEnabled: source.statusIndicatorsEnabled !== false,
+      unlockNotificationsEnabled: source.unlockNotificationsEnabled !== false,
+      soundEffectsEnabled: source.soundEffectsEnabled !== false,
+      musicEnabled: source.musicEnabled !== false,
+    };
+    setGameEffectSettings(effectSettings);
+    sound.enabled = effectSettings.effectsEnabled && effectSettings.soundEffectsEnabled;
+    sound.musicEnabled = effectSettings.effectsEnabled && effectSettings.musicEnabled;
+    if (!sound.musicEnabled) sound.stopMenuMusic(false);
+  };
+  syncGameEffectSettings(meta);
+
   const saveMeta = (updated: MetaProgression) => {
     metaRef.current = updated;
+    syncGameEffectSettings(updated);
     setMeta(updated);
     try {
       localStorage.setItem('bubakov_meta', JSON.stringify(updated));
@@ -1286,8 +1313,10 @@ export default function App() {
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
   const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [controlsDefaultTab, setControlsDefaultTab] = useState('controls');
+  const [selectedHunterInfo, setSelectedHunterInfo] = useState<HunterDetail | null>(null);
+  const soundEnabled = meta.effectsEnabled !== false && meta.soundEffectsEnabled !== false;
+  const musicEnabled = meta.effectsEnabled !== false && meta.musicEnabled !== false;
 
   // Touch controls
   const [touchEnabled, setTouchEnabled] = useState(() => {
@@ -1392,7 +1421,8 @@ export default function App() {
   grandfatherOpenRef.current = gameState === 'grandfather';
 
 const applyBearMaskOverheal = (player: any, healing: number) => {
-    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0));
+    const frostHealingMultiplier = getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
+    const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0)) * frostHealingMultiplier;
     const missingHp = Math.max(0, player.maxHp - player.hp);
     const overheal = Math.max(0, effectiveHeal - missingHp);
     player.hp = Math.min(player.maxHp, player.hp + effectiveHeal);
@@ -1436,7 +1466,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     if (effect.type === 'max_hp') {
       p.maxHp += effect.amount;
-      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
       if (item.id === 'medvedi_mast') {
         p.kurazCount = (p.kurazCount || 0) + 1;
       }
@@ -1450,7 +1480,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.kavaCount = (p.kavaCount || 0) + 1;
     }
     if (effect.type === 'heal') {
-      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0));
+      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []);
       const missingHp = Math.max(0, p.maxHp - p.hp);
       const overheal = Math.max(0, effectiveHeal - missingHp);
       p.hp = Math.min(p.maxHp, p.hp + effectiveHeal);
@@ -1504,7 +1534,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       applyAnanasUpgrade(p, {
         onSound: (name) => (sound as any)[name]?.(),
         onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-      });
+      }, getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
     }
   }, []);
 
@@ -1786,26 +1816,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   };
 
   const toggleSound = () => {
-    const next = sound.toggle();
-    setSoundEnabled(next);
-    setMusicEnabled(sound.musicEnabled);
+    const next = metaRef.current.soundEffectsEnabled === false;
+    saveMeta({ ...metaRef.current, soundEffectsEnabled: next });
     if (next) sound.coin();
   };
 
   const toggleMusic = () => {
-    const next = sound.toggleMusic();
-    setMusicEnabled(next);
+    const next = metaRef.current.musicEnabled === false;
+    saveMeta({ ...metaRef.current, musicEnabled: next });
     if (next) sound.coin();
+  };
+
+  const openEffectSettings = () => {
+    setControlsDefaultTab('effects');
+    setIsControlsOpen(true);
   };
 
   // Play "Bubáci a hastrmani" polka in main menu & village tavern, smoothly stop during gameplay
   useEffect(() => {
-    if (gameState === 'menu' || gameState === 'tavern') {
+    if ((gameState === 'menu' || gameState === 'tavern') && meta.effectsEnabled !== false && meta.musicEnabled !== false) {
       sound.playMenuMusic(true);
     } else {
       sound.stopMenuMusic(true);
     }
-  }, [gameState]);
+  }, [gameState, meta.effectsEnabled, meta.musicEnabled]);
 
   const toggleTouch = () => {
     const next = !touchEnabled;
@@ -2037,8 +2071,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       maxHp: baseMaxHp + wallBonusHp,
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
-      pickupRadius: (basePickup + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
-      accessibilityBasePickupRadius: basePickup + scarecrowBonusPickup,
+      pickupRadius: (basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
+      accessibilityBasePickupRadius: basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup,
       accessibilityAppliedLevel: mobileAccessibilityScale,
       luck: 0,
       weapons: initialWeapons,
@@ -2067,6 +2101,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       tavernShieldLevel: meta.tavernShieldLevel || 0,
       tempShield: 0,
       herbTimer: 0,
+      herbBoostTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
       slowTimer: 0,
@@ -2792,7 +2827,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 30;
-            pl.hp += 30;
+            pl.hp = Math.min(
+              pl.maxHp,
+              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+            );
           }
         },
       },
@@ -2804,7 +2842,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 30;
-            pl.hp += 30;
+            pl.hp = Math.min(
+              pl.maxHp,
+              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+            );
             pl.kurazCount = (pl.kurazCount || 0) + 1;
           }
         },
@@ -4602,7 +4643,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
               player.arenaArmorBonus = inChurch ? 0.20 : 0;
-              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt);
+              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
 
               const inPond = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond);
               if (inPond) {
@@ -4705,7 +4746,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 } else if (dec.type === 'granny_stove') {
                   if (Math.hypot(player.x - dec.x, player.y - dec.y) < player.radius + dec.radius + 20) {
-                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt);
+                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
                   }
                 }
               }
@@ -4731,6 +4772,29 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
             if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
+            if (player.type === 'korenarka') {
+              player.herbBoostTimer = Math.max(0, (player.herbBoostTimer || 0) - dt);
+              const accessibilityLevel = Math.max(0, Math.min(10, player.accessibilityAppliedLevel || 0));
+              const accessibilityMultiplier = 1 + accessibilityLevel * 0.05;
+              const baseMagnetRadius = player.accessibilityBasePickupRadius ?? player.pickupRadius;
+              player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * (player.herbBoostTimer > 0 ? 5 : 1);
+              player.herbTimer = (player.herbTimer || 0) + dt;
+              if (player.herbTimer >= 9) {
+                player.herbTimer = 0;
+                const hpBefore = player.hp;
+                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.18 * getFrostAuraHealingMultiplier(player, engine.enemies));
+                const actualHeal = Math.max(0, player.hp - hpBefore);
+                player.herbBoostTimer = 3;
+                player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 3);
+                player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * 5;
+                engine.texts.push(new DamageText(player.x, player.y - 58, '🌿 BYLINNÝ ZÁBLESK! MAGNET ×5 · 3 s NEZRANITELNOST', COLORS.green, true));
+                if (actualHeal > 0) {
+                  engine.texts.push(new DamageText(player.x, player.y - 36, '+' + Math.round(actualHeal) + ' Kuráž', COLORS.green));
+                }
+                sound.potion();
+              }
+            }
+
             // Player regeneration (+2 Kuráže per 5s per level from Bylinková zahrádka)
             if ((player as any).fajfkaCooldown > 0) (player as any).fajfkaCooldown = Math.max(0, (player as any).fajfkaCooldown - dt);
       if ((player as any).fajfkaLevel > 0 && (player as any).fajfkaCooldown <= 0) {
@@ -4738,7 +4802,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
         cloud.damagePerSecond = 9;
         engineRef.current.smokePuffs.push(cloud);
-        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0));
+        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
         const missingHp = Math.max(0, player.maxHp - player.hp);
         const overheal = Math.max(0, requestedHeal - missingHp);
         player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
@@ -4760,12 +4824,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             heals.push({ amount: player.regenLevel * 2, timer: 'regenTimer' });
           }
         }
-        if (player.type === 'korenarka' && player.hp < player.maxHp) {
-          player.herbTimer += dt;
-          if (player.herbTimer >= 4) {
-            heals.push({ amount: 2, timer: 'herbTimer' });
-          }
-        }
         if (heals.length > 0) {
           for (const heal of heals) {
             applyBearMaskOverheal(player, heal.amount);
@@ -4777,19 +4835,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2);
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2 * getFrostAuraHealingMultiplier(player, engine.enemies));
                 player.regenTimer = 0;
                 engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🌿`, COLORS.green));
               }
             }
-            if (player.type === 'korenarka' && player.hp < player.maxHp) {
-              player.herbTimer += dt;
-              if (player.herbTimer >= 4) {
-                player.hp = Math.min(player.maxHp, player.hp + 2);
-                player.herbTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 45, '+2 🌿', COLORS.green));
-              }
-            }
+            // Kořenářka's timed passive runs independently of the optional garden regeneration above.
 
             // Zoufalá kuráž visual feedback & aura
             const kurazRatioNow = player.maxHp > 0 ? player.hp / player.maxHp : 1;
@@ -5526,7 +5577,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 triggerRescueChasnik(d.x, d.y);
               }
             } else if (dist < player.pickupRadius && currentGameState === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
-              const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
+              const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
+              const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
@@ -5628,7 +5680,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   applyAnanasUpgrade(player, {
                     onSound: (name) => (sound as any)[name]?.(),
                     onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-                  });
+                  }, getFrostAuraHealingMultiplier(player, engine.enemies));
                 }
               }
             }
@@ -6157,7 +6209,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         drawables.length = 0;
         if(player) drawables.push(player);
         for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
-        if(engine.smokePuffs){for(const puff of engine.smokePuffs){if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff);}}
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.smokePuffs) { for (const puff of engine.smokePuffs) { if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff); } }
         drawables.sort((a,b)=>a.y-b.y);
 
         for (const d of drawables) {
@@ -6169,10 +6221,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Výstražný symbol nad hlavami útočících monster a hvězdičky omráčení
         for (const enemy of engine.enemies) {
           if (!enemy.isDefeated && !enemy.dead && isInView(enemy.x, enemy.y, enemy.radius + 35, viewLeft, viewTop, viewRight, viewBottom)) {
-            if ((enemy.windupTimer || 0) > 0 && (enemy.strikeTimer || 0) <= 0) {
+            if (isGameEffectEnabled('warningIndicatorsEnabled') && (enemy.windupTimer || 0) > 0 && (enemy.strikeTimer || 0) <= 0) {
               drawEnemyWarningSign(ctx, enemy);
             }
-            if ((enemy.stunTimer || 0) > 0) {
+            if (isGameEffectEnabled('statusIndicatorsEnabled') && (enemy.stunTimer || 0) > 0) {
               drawStunStars(ctx, enemy, engine.uiTime);
             }
             if (enemy.valecniceSlowed) {
@@ -6187,8 +6239,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Draw Projectiles
-        for (const p of engine.projectiles) {
+        // Draw Projectiles. Movement and collision continue while their graphics are hidden.
+        if (isGameEffectEnabled('combatVfxEnabled')) for (const p of engine.projectiles) {
           if (!isInView(p.x, p.y, p.radius || 12, viewLeft, viewTop, viewRight, viewBottom)) continue;
           ctx.save();
           ctx.translate(p.x, p.y);
@@ -6404,8 +6456,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        // Draw Melee Slashes
-        for (const s of engine.slashes) {
+        // Draw Melee Slashes (melee hit logic has already been simulated independently).
+        if (isGameEffectEnabled('combatVfxEnabled')) for (const s of engine.slashes) {
           if (!isInView(s.x, s.y, s.reach || 80, viewLeft, viewTop, viewRight, viewBottom)) continue;
           ctx.save();
           ctx.translate(s.x, s.y);
@@ -6433,20 +6485,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Draw Damage Texts (batched font and ink outline)
-        if (engine.texts.length > 0) {
+        if (isGameEffectEnabled('effectsEnabled') && engine.texts.length > 0) {
           ctx.font = '900 18px Eczar';
           ctx.lineWidth = 4;
           ctx.strokeStyle = COLORS.ink;
           ctx.lineJoin = 'round';
           for (const txt of engine.texts) {
             if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            if (!shouldDrawFloatingText(txt.text)) continue;
             txt.draw(ctx);
           }
           ctx.globalAlpha = 1;
         }
 
         // Draw particles in a single batch without individual save/restore
-        if (engine.particles && engine.particles.length > 0) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.particles && engine.particles.length > 0) {
           for (const p of engine.particles) {
             if (!isInView(p.x, p.y, p.size || 6, viewLeft, viewTop, viewRight, viewBottom)) continue;
             ctx.globalAlpha = Math.max(0, Math.min(1, (p.life || 0) * 2.5));
@@ -6459,7 +6512,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Draw lightning strike bolt
-        if (engine.lightningStrike) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.lightningStrike) {
           const ls = engine.lightningStrike;
           ctx.save();
           ctx.strokeStyle = '#FEF08A';
@@ -6484,19 +6537,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.fill();
           ctx.restore();
         }        // Farní požehnání: zvon a sloup svatého světla
-        if (engine.blessing) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.blessing) {
           Lada.drawBlessingFx(ctx, engine.blessing.x, engine.blessing.y, engine.blessing.t, engine.blessing.dur);
         }
         // In-world pastevecké stádo a částicové efekty Pasáčka
-        if (engine.shepherdStampede) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.shepherdStampede) {
           Lada.drawShepherdStampedeFx(ctx, engine.shepherdStampede, dt, player.x, player.y);
         }
         // In-world bylinné sanctuarium a očistné kadidlo Kořenářky
-        if (engine.korenarkaSanctuary) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.korenarkaSanctuary) {
           Lada.drawKorenarkaSanctuaryFx(ctx, engine.korenarkaSanctuary, dt, player.x, player.y);
         }
         // Pověstná sukovice – roztočená sukovitá hůl a rázová vlna s aurou děsu
-        if (engine.sukovice) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.sukovice) {
           Lada.drawSukoviceFx(ctx, engine.sukovice, player.x, player.y);
         }
 
@@ -6527,7 +6580,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         ctx.restore();
 
         // Ladovské kvašové svícení – kompozitní vrstva světla a stínu (Storybook Illumination)
-        if (metaRef.current.dynamicLightingEnabled !== false) {
+        if (isGameEffectEnabled('dynamicLightingEnabled')) {
           renderStorybookLightingComposite(
             ctx,
             canvas.width,
@@ -6545,12 +6598,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Mrazivý zimní okraj z Trouby obecního ponocného
-        if (engine.ponocnyFrostTimer > 0) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.ponocnyFrostTimer > 0) {
           Lada.drawFrostBorder(ctx, canvas.width, canvas.height, Math.min(1, engine.ponocnyFrostTimer / 2));
         }
 
         // Atmosférický banner vzácných pomocných předmětů
-        if (engine.activeRareOverlay) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.activeRareOverlay) {
           if (engine.activeRareOverlay.type === 'ponocny_horn') {
             Lada.drawPonocnyNightOverlay(ctx, canvas.width, canvas.height, Math.min(1, engine.activeRareOverlay.timer));
           } else if (engine.activeRareOverlay.type === 'kominik_button') {
@@ -7329,7 +7382,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.vx = Math.cos(dirToPlayer) * spd * 0.82;
           this.vy = Math.sin(dirToPlayer) * spd * 0.82;
           this.frostAuraTimer = Math.max(0, (this.frostAuraTimer || 0) - dt);
-          if (distToPlayer <= 78 && this.frostAuraTimer <= 0) {
+          if (distToPlayer <= FROSTLING_AURA_RADIUS && this.frostAuraTimer <= 0) {
             this.frostAuraTimer = 0.7;
             player.takeDamage(3, 'cold');
             if (typeof player.chill === 'function') player.chill(0.65);
@@ -9327,12 +9380,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
 
         // Animovaná tematická svítící aura pro bubáky se speciálními prefixy
-        if (this.prefix && !this.isDefeated) {
+        if (isGameEffectEnabled('combatVfxEnabled') && this.prefix && !this.isDefeated) {
           drawPrefixAura(ctx, this.x, this.y, this.radius, this.prefix, this.animTime);
         }
 
         // Stínová záštita - dark gouache smoke aura around shadow enemies in darkness
-        if (this.hasShadowDefense && !this.isDefeated) {
+        if (isGameEffectEnabled('combatVfxEnabled') && this.hasShadowDefense && !this.isDefeated) {
           ctx.save();
           const p = Math.sin(this.animTime * 3) * 3;
           ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
@@ -9343,7 +9396,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Fairytale Silhouette Inversion (chalk-white woodcut contour on holy/flare burst)
-        if (this.silhouetteInvertTimer > 0) {
+        if (isGameEffectEnabled('combatVfxEnabled') && this.silhouetteInvertTimer > 0) {
           ctx.save();
           ctx.strokeStyle = '#FFFBEB';
           ctx.lineWidth = 3.5;
@@ -9354,7 +9407,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Ground Miniboss Aura (illuminating halo and rotating folklore radial notches)
-        if (this.isMiniboss && !this.isDefeated) {
+        if (isGameEffectEnabled('combatVfxEnabled') && this.isMiniboss && !this.isDefeated) {
           ctx.save();
           const auraRadius = this.radius * 1.35;
           const pulse = Math.sin(this.animTime * 3.5) * 3;
@@ -9396,12 +9449,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        if (this.calmTimer > 0 && !this.isDefeated) {
+        if (isGameEffectEnabled('statusIndicatorsEnabled') && this.calmTimer > 0 && !this.isDefeated) {
           Lada.drawHeart(ctx, this.x, this.y - this.radius - 22 - Math.sin(this.animTime * 4) * 3, 8, '#F4A6BF');
         }
 
         // Snacking state ("Ňam, ňam note")
-        if ((this.snackTimer > 0 && !this.isDefeated) || (this.isDefeated && this.defeatedByFood)) {
+        if (isGameEffectEnabled('statusIndicatorsEnabled') && ((this.snackTimer > 0 && !this.isDefeated) || (this.isDefeated && this.defeatedByFood))) {
           ctx.save();
           const bob = Math.sin(this.animTime * 7) * 2;
           const noteY = this.y - this.radius - 22 + bob;
@@ -9456,7 +9509,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Telegraphed windup warning cue for tactical combat
-        if (this.aiState === 'windup' && !this.isDefeated) {
+        if (isGameEffectEnabled('warningIndicatorsEnabled') && this.aiState === 'windup' && !this.isDefeated) {
           ctx.save();
           ctx.font = '900 16px "Eczar", serif';
           ctx.textAlign = 'center';
@@ -9486,7 +9539,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
 
           // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
-          if (attackInfo.isActive) {
+          if (isGameEffectEnabled('combatVfxEnabled') && attackInfo.isActive) {
             drawEnemyAttackEffectsPre(ctx, this, attackInfo);
           }
 
@@ -9524,8 +9577,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           if (attackInfo.isActive) {
             ctx.restore();
-            // Post-sprite attack effects (cleave/slash arcs, claws, apex weapon gleam star, impact sparks)
-            drawEnemyAttackEffectsPost(ctx, this, attackInfo);
+            // Optional post-sprite attack graphics; hit/damage simulation is independent.
+            if (isGameEffectEnabled('combatVfxEnabled')) drawEnemyAttackEffectsPost(ctx, this, attackInfo);
           }
         } else {
           // Unified modern enemy renderer with computeEnemyKinematics, underlay ground VFX, single transform and overlay weapon VFX
@@ -9541,20 +9594,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           );
         }
 
-        if (this.soaked && !this.isDefeated) {
+        if (isGameEffectEnabled('statusIndicatorsEnabled') && this.soaked && !this.isDefeated) {
           ctx.fillStyle = 'rgba(58, 118, 168, 0.4)';
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
           ctx.fill();
         }
-        if (this.chilled && !this.isDefeated) {
+        if (isGameEffectEnabled('statusIndicatorsEnabled') && this.chilled && !this.isDefeated) {
           ctx.fillStyle = 'rgba(196, 225, 246, 0.45)';
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
           ctx.fill();
         }
         const pickleStatus = this.statusEffects?.pickle_sickness;
-        if (pickleStatus && !this.isDefeated) {
+        if (isGameEffectEnabled('statusIndicatorsEnabled') && pickleStatus && !this.isDefeated) {
           const pulse = 0.28 + Math.sin(this.animTime * 7) * 0.08;
           ctx.save();
           ctx.globalCompositeOperation = 'source-atop';
@@ -9571,7 +9624,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        if (!this.isDefeated && engineRef.current?.lightSources && metaRef.current.dynamicLightingEnabled !== false) {
+        if (!this.isDefeated && engineRef.current?.lightSources && isGameEffectEnabled('dynamicLightingEnabled')) {
           const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
           const maxLights = profile === 'performance' ? 4 : profile === 'balanced' ? 8 : Number.MAX_SAFE_INTEGER;
           drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources, { maxLights });
@@ -9589,7 +9642,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const barX = this.x - barWidth / 2;
           const barY = this.y - this.radius * 1.5 - 14;
 
-          // 1. Miniboss Title / Crown Badge
+          // 1. Miniboss Title / Crown Badge (optional descriptor)
+          if (isGameEffectEnabled('enemyDescriptorsEnabled')) {
           const badgeTitle = this.customBossTitle || stats.name;
           ctx.font = '900 12px "Eczar", serif';
           const titleText = `👑 ${badgeTitle.toUpperCase()}`;
@@ -9628,6 +9682,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.textBaseline = 'middle';
           ctx.fillStyle = '#78350F';
           ctx.fillText(titleText, this.x, badgeY + badgeH / 2);
+          }
 
           // 2. Health Bar Background
           ctx.fillStyle = '#1C1917';
@@ -9681,7 +9736,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Název / odznak pro prefixovaného bubáka
-        if (this.prefix && !this.isMiniboss && !this.isDefeated) {
+        if (isGameEffectEnabled('enemyDescriptorsEnabled') && this.prefix && !this.isMiniboss && !this.isDefeated) {
           ctx.save();
           const pDef = ENEMY_PREFIX_DEFS[this.prefix as EnemyPrefixType];
           const badgeText = pDef ? pDef.badge : this.prefix;
@@ -9712,7 +9767,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Attack charging / windup telegraph while in attack range
-        if (((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated && (this.strikeTimer || 0) <= 0) {
+        if (isGameEffectEnabled('warningIndicatorsEnabled') && ((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated && (this.strikeTimer || 0) <= 0) {
           ctx.save();
           const totalInterval = this.attackDelay || this.attackInterval || (this.attackCadence === 'fast' ? 0.6 : this.attackCadence === 'slow' ? 1.8 : 1.2);
           const currentTimer = this.windupTimer || (totalInterval - (this.contactTimer || 0));
@@ -9837,11 +9892,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
   ) => {
     const isUnlocked = prog.isUnlocked;
+    const hunterInfo = isUnlocked ? HUNTER_DETAILS[prog.id as HunterDetailKey] : null;
 
     return (
       <div
         key={prog.id}
         className={`char-card ${isUnlocked ? '' : 'char-card-locked'}`}
+        style={isUnlocked ? { maxHeight: '680px', overflowY: 'auto' } : undefined}
         onClick={() => {
           if (isUnlocked) {
             startGame(prog.id);
@@ -9892,6 +9949,33 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </div>
         </div>
 
+        {isUnlocked && hunterInfo && (
+          <div
+            style={{
+              background: '#FFFBEB',
+              border: '2px solid #78350F',
+              borderRadius: '7px',
+              padding: '8px 10px',
+              marginTop: '7px',
+              color: '#1C1917',
+              textAlign: 'left',
+              maxHeight: '158px',
+              overflowY: 'auto',
+              fontSize: '0.79rem',
+              lineHeight: 1.32,
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '4px', marginBottom: '7px' }}>
+              <div><strong>❤️ Kuráž</strong><br />{hunterInfo.maxHp}</div>
+              <div><strong>🏃 Rychlost</strong><br />{hunterInfo.speed}</div>
+              <div><strong>🧲 Magnet</strong><br />{hunterInfo.pickupRadius} px</div>
+            </div>
+            <div><strong>🗡️ Zbraň:</strong> {hunterInfo.weapon}</div>
+            <div style={{ marginTop: '5px' }}><strong>🌿 Pasivní:</strong> {hunterInfo.passive}</div>
+            <div style={{ marginTop: '5px' }}><strong>⚡ Schopnost ({hunterInfo.cooldownSeconds} s):</strong> {hunterInfo.ability}</div>
+          </div>
+        )}
+
         {/* Challenge progress bar for locked characters */}
         {!isUnlocked && (
           <div className="hunter-progress-wrap">
@@ -9936,9 +10020,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
           {isUnlocked ? (
-            <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-              Vyrazit do noci ⚔️
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{ width: '100%', fontSize: '0.9rem' }}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  sound.coin();
+                  if (hunterInfo) setSelectedHunterInfo(hunterInfo);
+                }}
+              >
+                ℹ️ Podrobné statistiky a schopnosti
+              </button>
+              <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+                Vyrazit do noci ⚔️
+              </button>
+            </div>
           ) : (
             <button
               className="lada-btn btn-small"
@@ -10084,7 +10181,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </div>
 
           {/* Warning Banner */}
-          {runStats.warningBanner && (
+          {runStats.warningBanner && isGameEffectEnabled('warningIndicatorsEnabled') && (
             <div id="boss-warning-banner">{runStats.warningBanner}</div>
           )}
 
@@ -10570,6 +10667,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 🎮 Ovládání hry
+              </button>
+              <button className="lada-btn btn-small" onClick={openEffectSettings} title="Přepínat osvětlení, efekty boje, výstrahy, popisky, zvuky a hudbu">
+                👁️ Zapnuté efekty
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
                 📖 Bestiář nočního venkova
@@ -11566,6 +11666,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 🕯️ Světlo: {meta.dynamicLightingEnabled !== false ? 'Zapnuto' : 'Vypnuto'}
               </button>
+              <button className="lada-btn btn-small" style={{ background: '#0F766E', color: '#FFFFFF', padding: '12px 24px' }} onClick={openEffectSettings}>
+                👁️ Zapnuté efekty
+              </button>
               <button
                 className="lada-btn btn-small"
                 style={{ background: '#DC2626', color: '#FFFFFF', padding: '12px 24px' }}
@@ -11591,7 +11694,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* CONTROLS & OBJECTIVE MODAL */}
       <ControlsModal
         isOpen={isControlsOpen}
-        onClose={() => setIsControlsOpen(false)}
+        onClose={() => { setIsControlsOpen(false); setControlsDefaultTab('controls'); }}
+        defaultTab={controlsDefaultTab}
+        effectsEnabled={meta.effectsEnabled !== false}
+        effectSettings={{
+          dynamicLightingEnabled: meta.dynamicLightingEnabled !== false,
+          combatVfxEnabled: meta.combatVfxEnabled !== false,
+          warningIndicatorsEnabled: meta.warningIndicatorsEnabled !== false,
+          enemyDescriptorsEnabled: meta.enemyDescriptorsEnabled !== false,
+          attackDescriptorsEnabled: meta.attackDescriptorsEnabled !== false,
+          statusIndicatorsEnabled: meta.statusIndicatorsEnabled !== false,
+          unlockNotificationsEnabled: meta.unlockNotificationsEnabled !== false,
+          soundEffectsEnabled: meta.soundEffectsEnabled !== false,
+          musicEnabled: meta.musicEnabled !== false,
+        }}
+        onToggleEffectsEnabled={(enabled) => saveMeta({ ...metaRef.current, effectsEnabled: enabled })}
+        onToggleEffectCategory={(category: Exclude<EffectCategory, 'effectsEnabled'>, enabled) => {
+          saveMeta({ ...metaRef.current, [category]: enabled });
+        }}
         performanceMode={!!meta.performanceMode}
         performanceProfile={meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')}
         onChangePerformanceProfile={(profile) => {
@@ -11658,6 +11778,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onClose={() => setSelectedHunterDetail(null)}
         onStartIfUnlocked={(id) => startGame(id)}
       />
+      <HunterInfoModal hunter={selectedHunterInfo} onClose={() => setSelectedHunterInfo(null)} />
 
       {/* LEVEL UNLOCK DETAILS MODAL */}
       <LevelUnlockModal
@@ -11686,7 +11807,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       />
 
       {/* UNLOCK TOAST BANNER */}
-      {unlockNotice && (
+      {unlockNotice && isGameEffectEnabled('unlockNotificationsEnabled') && (
         <div className="unlock-toast-banner" onClick={() => setUnlockNotice(null)}>
           <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px' }}>
             {unlockNotice.title}
