@@ -120,7 +120,7 @@ var LEVEL_UNLOCKS = {
 		realShortTitle: "Náves a rybník",
 		realSubtitle: "Zlatavý podzim, skotačivá havěť a rybniční rejdy",
 		realIcon: "🍂",
-		realBadge: ": "2. Úroveň",
+		realBadge: "2. Úroveň",
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovská výprava",
 		challengeShortDesc: "Přístupná pro každého odvážného poutníka od samého počátku.",
@@ -140,7 +140,7 @@ var LEVEL_UNLOCKS = {
 			spoiledWeatherHint: "Počasí: Zlatavé podzimní listí a slunce",
 			spoiledEnemiesHint: "Rarášek, Rybniční žabka, Vodníček, Polednice, Hastrman",
 			spoiledIcon: "🍂",
-			spoiledBadge: ": "2. Úroveň",
+			spoiledBadge: "2. Úroveň",
 			clueTag: "✅ Připraveno k výpravě"
 		}]
 	},
@@ -150,7 +150,7 @@ var LEVEL_UNLOCKS = {
 		realShortTitle: "Hřbitov a hvozd",
 		realSubtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
 		realIcon: "🪦",
-		realBadge: ": "3. Úroveň",
+		realBadge: "3. Úroveň",
 		defaultUnlocked: false,
 		challengeTitle: "🪦 Průzkum stezky za hřbitovní zeď",
 		challengeShortDesc: "Zažeň 60 potvor z návsi a rybníka NEBO poraž Pekelného Čerta v 2. úrovni.",
@@ -202,7 +202,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí a atmosféra: Neznámo (zahalená mlhou)",
 				spoiledEnemiesHint: "Běsi a přízraky: Skryto v husté mlze (???)",
 				spoiledIcon: "🔒",
-				spoiledBadge: ": "🔒 3. Úroveň (0 %)",
+				spoiledBadge: "🔒 3. Úroveň (0 %)",
 				clueTag: "🔒 0 %: Zcela utajeno – zažeň 25 % škůdců z 1. úrovně pro první stopu"
 			},
 			{
@@ -217,7 +217,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Sychravá hřbitovní mlha a podzimní šero",
 				spoiledEnemiesHint: "💀 Odhaleni: Kostlivci a noční stíny",
 				spoiledIcon: "🌫️",
-				spoiledBadge: ": "🔍 3. Úroveň (25 %)",
+				spoiledBadge: "🔍 3. Úroveň (25 %)",
 				clueTag: "🔍 25 %: První stopa! Odhalena mlha, hřbitovní zeď a kostlivci"
 			},
 			{
@@ -232,7 +232,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Hustá podzimní mlha a chladný vítr v korunách",
 				spoiledEnemiesHint: "💀 Kostlivec, Černý pes, Klekánice a Pekelný dráb",
 				spoiledIcon: "⚰️",
-				spoiledBadge: ": "🔎 3. Úroveň (50 %)",
+				spoiledBadge: "🔎 3. Úroveň (50 %)",
 				clueTag: "🔎 50 %: Znáš náhrobky, Klekánici, Pekelného drába i počasí!"
 			},
 			{
@@ -247,7 +247,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Plíživá mlha a noční temnota mezi staletými duby",
 				spoiledEnemiesHint: "💀 Kostlivec, Černý pes, Bubák ze stodoly, Klekánice, Hejkal",
 				spoiledIcon: "🪦",
-				spoiledBadge: ": "⚡ 3. Úroveň (75 %)",
+				spoiledBadge: "⚡ 3. Úroveň (75 %)",
 				clueTag: "⚡ 75 %: Téměř odemčeno! Zbývá už jen krůček k otevření hřbitova!"
 			},
 			{
@@ -262,7 +262,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Sychravá podzimní mlha",
 				spoiledEnemiesHint: "Kostlivec, Černý pes, Bubák, Klekánice, Hejkal",
 				spoiledIcon: "🪦",
-				spoiledBadge: ": "3. Úroveň",
+				spoiledBadge: "3. Úroveň",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]
@@ -273,7 +273,7 @@ var LEVEL_UNLOCKS = {
 		realShortTitle: "Ladovská zima",
 		realSubtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
 		realIcon: "❄️",
-		realBadge: ": "4. Úroveň",
+		realBadge: "4. Úroveň",
 		defaultUnlocked: false,
 		challengeTitle: "❄️ Cesta do zasněžených hor na Melechov",
 		challengeShortDesc: "Zažeň 60 hřbitovních monster NEBO poraž Půlnočního Hejkala ve 3. úrovni.",
@@ -325,7 +325,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí a nálada: Neznámo (vzdálený ledový opar)",
 				spoiledEnemiesHint: "Mrazivé běsy: Skryto pod hlubokým sněhem (???)",
 				spoiledIcon: "🔒",
-				spoiledBadge: ": "🔒 4. Úroveň (0 %)",
+				spoiledBadge: "🔒 4. Úroveň (0 %)",
 				clueTag: "🔒 0 %: Zcela utajeno – zažeň 25 % běsů z hřbitova pro první stopu"
 			},
 			{
@@ -340,7 +340,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Hustá sněhová vánice a padající vločky",
 				spoiledEnemiesHint: "🧊 Odhaleni: Rampouchoví Zmrzlíci a divoká Meluzína",
 				spoiledIcon: "🌨️",
-				spoiledBadge: ": "🔍 4. Úroveň (25 %)",
+				spoiledBadge: "🔍 4. Úroveň (25 %)",
 				clueTag: "🔍 25 %: První vločky! Odhalena mrazivá zima a sněhové závěje"
 			},
 			{
@@ -355,7 +355,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Třeskutý mráz (-15 °C) a skučí vichřice",
 				spoiledEnemiesHint: "🧊 Zmrzlík, Meluzína, Ohnivý rarach a Hromotluk",
 				spoiledIcon: "☃️",
-				spoiledBadge: ": "🔎 4. Úroveň (50 %)",
+				spoiledBadge: "🔎 4. Úroveň (50 %)",
 				clueTag: "🔎 50 %: Znáš zasněžený vrch, Meluzínu, Ohnivého raracha i mráz!"
 			},
 			{
@@ -370,7 +370,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Hrstě sněhu, bílá tma a ledový vítr",
 				spoiledEnemiesHint: "🧊 Zmrzlík z okapu, Meluzína, Ohnivý rarach, Hromotluk, Skalní obr",
 				spoiledIcon: "❄️",
-				spoiledBadge: ": "⚡ 4. Úroveň (75 %)",
+				spoiledBadge: "⚡ 4. Úroveň (75 %)",
 				clueTag: "⚡ 75 %: Téměř odemčeno! Obří titán už dupe ve sněhu!"
 			},
 			{
@@ -385,7 +385,7 @@ var LEVEL_UNLOCKS = {
 				spoiledWeatherHint: "Počasí: Třeskutý mráz a vánice",
 				spoiledEnemiesHint: "Zmrzlík, Meluzína, Ohnivý rarach, Hromotluk, Skalní obr",
 				spoiledIcon: "❄️",
-				spoiledBadge: ": "4. Úroveň",
+				spoiledBadge: "4. Úroveň",
 				clueTag: "✅ Plně odemčeno!"
 			}
 		]
