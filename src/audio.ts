@@ -1,4 +1,5 @@
 import React from 'react';
+import { isGameEffectEnabled } from './game/effectSettings';
 
 var SoundManager = class {
 	ctx: any = null;
@@ -39,7 +40,7 @@ var SoundManager = class {
 		}
 	}
 	playMenuMusic(fadeIn = true) {
-		if (!this.enabled || !this.musicEnabled) return;
+		if (!this.musicEnabled || !isGameEffectEnabled('musicEnabled')) return;
 		this.init();
 		this.initMenuMusic();
 		if (!this.menuMusic) return;
@@ -106,7 +107,7 @@ var SoundManager = class {
 		return this.enabled;
 	}
 	playTone(freq, type, duration, vol = .15, endVol = .001) {
-		if (!this.enabled) return;
+		if (!this.enabled || !isGameEffectEnabled('soundEffectsEnabled')) return;
 		try {
 			this.init();
 			if (!this.ctx) return;
