@@ -1318,6 +1318,11 @@ export default function App() {
   const mobileAccessibilityEnabled = isTouchScreen || mobileAccessibilityAllDevices;
   const mobileAccessibilityScale = mobileAccessibilityEnabled ? mobileAccessibilityLevel : 0;
   const mobileAccessibilityLevelRef = useRef(mobileAccessibilityScale);
+  const applyMobileAccessibilityToPlayer = (player: any, level: number) => {
+    if (!player) return;
+    player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - level * 0.05);
+    player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + level * 0.05);
+  };
   mobileAccessibilityLevelRef.current = mobileAccessibilityScale;
 
   const updateMobileAccessibilityLevel = (level: number) => {
@@ -1328,8 +1333,7 @@ export default function App() {
     try { window.localStorage.setItem('bubakov_mobile_accessibility_level', String(next)); } catch {}
     const player = engineRef.current?.player;
     if (player) {
-      player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - effectiveLevel * 0.05);
-      player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + effectiveLevel * 0.05);
+      applyMobileAccessibilityToPlayer(player, effectiveLevel);
     }
   };
 
@@ -1340,8 +1344,7 @@ export default function App() {
     try { window.localStorage.setItem('bubakov_mobile_accessibility_all_devices', String(enabled)); } catch {}
     const player = engineRef.current?.player;
     if (player) {
-      player.radius = (player.accessibilityBaseRadius ?? 20) * (1 - effectiveLevel * 0.05);
-      player.pickupRadius = (player.accessibilityBasePickupRadius ?? player.pickupRadius) * (1 + effectiveLevel * 0.05);
+      applyMobileAccessibilityToPlayer(player, effectiveLevel);
     }
   };
 
@@ -6803,12 +6806,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       attackInterval /= attackSpeedMultiplier;
     }
 
+    // Accessibility modifiers apply after enemy prefixes, including elites and bosses.
+    const accessibilityLevel = mobileAccessibilityLevelRef.current;
+    if (accessibilityLevel > 0) {
+      const attackSpeedMultiplier = 1 - accessibilityLevel * 0.02;
+      enemySpeed *= attackSpeedMultiplier;
+      enemyDamage = Math.max(1, Math.round(enemyDamage * (1 - accessibilityLevel * 0.03)));
+      attackInterval /= attackSpeedMultiplier;
+    }
+
     const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
     const computedWindupDelay = Math.max(0.2, attackInterval - strikeDuration);
     let attackDelay = typeof stats.attackDelay === 'number' ? stats.attackDelay : computedWindupDelay;
     if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier && typeof stats.attackDelay === 'number') {
       attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
     }
+    if (accessibilityLevel > 0) attackDelay /= 1 - accessibilityLevel * 0.02;
     if (accessibilityLevel > 0) {
       attackDelay /= 1 - accessibilityLevel * 0.02;
     }
