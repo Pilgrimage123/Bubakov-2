@@ -6201,7 +6201,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         drawables.length = 0;
         if(player) drawables.push(player);
         for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
-        if(engine.smokePuffs){for(const puff of engine.smokePuffs){if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff);}}
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.smokePuffs) { for (const puff of engine.smokePuffs) { if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff); } }
         drawables.sort((a,b)=>a.y-b.y);
 
         for (const d of drawables) {
@@ -6448,8 +6448,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        // Draw Melee Slashes
-        for (const s of engine.slashes) {
+        // Draw Melee Slashes (melee hit logic has already been simulated independently).
+        if (isGameEffectEnabled('combatVfxEnabled')) for (const s of engine.slashes) {
           if (!isInView(s.x, s.y, s.reach || 80, viewLeft, viewTop, viewRight, viewBottom)) continue;
           ctx.save();
           ctx.translate(s.x, s.y);
@@ -6590,12 +6590,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Mrazivý zimní okraj z Trouby obecního ponocného
-        if (engine.ponocnyFrostTimer > 0) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.ponocnyFrostTimer > 0) {
           Lada.drawFrostBorder(ctx, canvas.width, canvas.height, Math.min(1, engine.ponocnyFrostTimer / 2));
         }
 
         // Atmosférický banner vzácných pomocných předmětů
-        if (engine.activeRareOverlay) {
+        if (isGameEffectEnabled('combatVfxEnabled') && engine.activeRareOverlay) {
           if (engine.activeRareOverlay.type === 'ponocny_horn') {
             Lada.drawPonocnyNightOverlay(ctx, canvas.width, canvas.height, Math.min(1, engine.activeRareOverlay.timer));
           } else if (engine.activeRareOverlay.type === 'kominik_button') {
@@ -9531,7 +9531,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
 
           // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
-          if (attackInfo.isActive) {
+          if (isGameEffectEnabled('combatVfxEnabled') && attackInfo.isActive) {
             drawEnemyAttackEffectsPre(ctx, this, attackInfo);
           }
 
@@ -9569,8 +9569,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           if (attackInfo.isActive) {
             ctx.restore();
-            // Post-sprite attack effects (cleave/slash arcs, claws, apex weapon gleam star, impact sparks)
-            drawEnemyAttackEffectsPost(ctx, this, attackInfo);
+            // Optional post-sprite attack graphics; hit/damage simulation is independent.
+            if (isGameEffectEnabled('combatVfxEnabled')) drawEnemyAttackEffectsPost(ctx, this, attackInfo);
           }
         } else {
           // Unified modern enemy renderer with computeEnemyKinematics, underlay ground VFX, single transform and overlay weapon VFX
