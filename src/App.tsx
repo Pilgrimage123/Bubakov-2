@@ -6790,24 +6790,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
 
     const mass = typeof stats.mass === 'number' ? stats.mass : (radius / 15);
-    // Accessibility modifiers apply after enemy prefixes, including to elites and bosses.
-    const accessibilityLevel = mobileAccessibilityLevelRef.current;
-    if (accessibilityLevel > 0) {
-      const movementMultiplier = 1 - accessibilityLevel * 0.02;
-      const damageMultiplier = 1 - accessibilityLevel * 0.03;
-      const attackSpeedMultiplier = 1 - accessibilityLevel * 0.02;
-      enemySpeed *= movementMultiplier;
-      enemyDamage = Math.max(1, Math.round(enemyDamage * damageMultiplier));
-      attackInterval /= attackSpeedMultiplier;
-    }
-
     // Accessibility modifiers apply after enemy prefixes, including elites and bosses.
     const accessibilityLevel = mobileAccessibilityLevelRef.current;
+    const accessibilityAttackMultiplier = 1 - accessibilityLevel * 0.02;
     if (accessibilityLevel > 0) {
-      const attackSpeedMultiplier = 1 - accessibilityLevel * 0.02;
-      enemySpeed *= attackSpeedMultiplier;
+      enemySpeed *= accessibilityAttackMultiplier;
       enemyDamage = Math.max(1, Math.round(enemyDamage * (1 - accessibilityLevel * 0.03)));
-      attackInterval /= attackSpeedMultiplier;
+      attackInterval /= accessibilityAttackMultiplier;
     }
 
     const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
@@ -6816,10 +6805,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier && typeof stats.attackDelay === 'number') {
       attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
     }
-    if (accessibilityLevel > 0) attackDelay /= 1 - accessibilityLevel * 0.02;
-    if (accessibilityLevel > 0) {
-      attackDelay /= 1 - accessibilityLevel * 0.02;
-    }
+    if (accessibilityLevel > 0) attackDelay /= accessibilityAttackMultiplier;
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
     const instance = {
