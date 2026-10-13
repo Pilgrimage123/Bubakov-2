@@ -13596,10 +13596,18 @@ function drawEnemyRenderer(
   }
 
   // 2. Kinematically Transformed Character Body
+  let staggerAngle = 0;
+  let staggerY = 0;
+  if (enemy?.prefix === 'vycerpany' && !enemy?.dead && !enemy?.isDefeated) {
+    // Potácení: unavené vrávorání ze strany na stranu a pokles v kolenou
+    staggerAngle = Math.sin(time * 3.2) * 0.16;
+    staggerY = Math.abs(Math.sin(time * 3.2)) * 3.5;
+  }
+
   ctx.save();
   ctx.translate(x, y);
-  ctx.translate(k.lungeX + k.shakeX, k.lungeY + k.shakeY);
-  ctx.rotate(k.leanAngle);
+  ctx.translate(k.lungeX + k.shakeX, k.lungeY + k.shakeY + staggerY);
+  ctx.rotate(k.leanAngle + staggerAngle);
   ctx.scale(k.scaleX, k.scaleY);
   ctx.translate(-x, -y);
 
@@ -14333,27 +14341,43 @@ export function drawPrefixAura(
     ctx.stroke();
     ctx.setLineDash([]);
   } else if (prefix === 'vycerpany') {
-    // Vyčerpaný: Tlumená šedo-prachová unavená aura s líně klesajícími částicemi spánku / únavy
-    const pulse = Math.sin(time * 1.8) * 2;
+    // Vyčerpaný: Tlumená šedo-prachová unavená aura s potácivým oválem a vznášejícími se ospalými částicemi
+    const pulse = Math.sin(time * 2.8) * 3;
     const effR = auraR + pulse;
 
-    const grad = ctx.createRadialGradient(x, y + radius * 0.4, radius * 0.15, x, y + radius * 0.4, effR);
-    grad.addColorStop(0, 'rgba(120, 113, 108, 0.35)');
-    grad.addColorStop(0.7, 'rgba(168, 162, 158, 0.18)');
+    const grad = ctx.createRadialGradient(x + Math.sin(time * 3.2) * 4, y + radius * 0.45, radius * 0.1, x, y + radius * 0.45, effR);
+    grad.addColorStop(0, 'rgba(120, 113, 108, 0.40)');
+    grad.addColorStop(0.65, 'rgba(168, 162, 158, 0.18)');
     grad.addColorStop(1, 'rgba(120, 113, 108, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.ellipse(x, y + radius * 0.45, effR, effR * 0.40, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + Math.sin(time * 3.2) * 4, y + radius * 0.45, effR * 0.95, effR * 0.38, Math.sin(time * 3.2) * 0.1, 0, Math.PI * 2);
     ctx.fill();
 
     // Lazy drowsy dashed ring
-    ctx.strokeStyle = 'rgba(120, 113, 108, 0.50)';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([3, 7]);
+    ctx.strokeStyle = 'rgba(120, 113, 108, 0.55)';
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([4, 6]);
     ctx.beginPath();
-    ctx.ellipse(x, y + radius * 0.45, effR * 0.95, effR * 0.38, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + radius * 0.45, effR * 0.88, effR * 0.34, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Drowsy floating 'z' particles drifting upward
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
+    ctx.font = 'bold 11px serif';
+    for (let i = 0; i < 2; i++) {
+      const zOffset = (time * 1.2 + i * 1.5) % 3.0;
+      const zAlpha = Math.max(0, 1 - zOffset / 3.0);
+      const zX = x + Math.sin(time * 2.0 + i) * 12 + 10;
+      const zY = y - radius * 0.6 - zOffset * 14;
+      ctx.save();
+      ctx.globalAlpha = zAlpha;
+      if (typeof ctx.fillText === 'function') {
+        ctx.fillText('z', zX, zY);
+      }
+      ctx.restore();
+    }
   }
 
   ctx.restore();

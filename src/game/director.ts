@@ -696,8 +696,9 @@ export class RunDirector {
     const angle2 = angle1 + Math.PI;
 
     // Leader 1 (spawned strictly outside visible field)
+    const leaderPrefix1 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
     const pos1 = this.getOffscreenPosition(player, angle1, engine, 180);
-    const leader1 = engine.spawnMonster(leaderId, pos1.x, pos1.y, 1.3, false, false, 'Přepadový strážmistr');
+    const leader1 = engine.spawnMonster(leaderId, pos1.x, pos1.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix1);
     if (leader1) {
       leader1.name = 'Přepadový strážmistr';
       leader1.customBossTitle = 'Přepadový strážmistr';
@@ -707,8 +708,9 @@ export class RunDirector {
     }
 
     // Leader 2 from opposite angle outside visible field
+    const leaderPrefix2 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
     const pos2 = this.getOffscreenPosition(player, angle2, engine, 180);
-    const leader2 = engine.spawnMonster(leaderId, pos2.x, pos2.y, 1.3, false, false, 'Přepadový strážmistr');
+    const leader2 = engine.spawnMonster(leaderId, pos2.x, pos2.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix2);
     if (leader2) {
       leader2.name = 'Přepadový strážmistr';
       leader2.customBossTitle = 'Přepadový strážmistr';
@@ -902,13 +904,42 @@ export class RunDirector {
     }
   }
 
+  /**
+   * Selects a thematic combat prefix based on current level and rozmar archetype.
+   * Every prefix retains at least 15% probability.
+   */
+  public getThematicPrefix(): EnemyPrefixType {
+    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 1;
+    const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId >= 4;
+    const isNightCemetery = this.levelId === 2 || this.rozmar.formationBias === 'architects';
+
+    let weights: Record<EnemyPrefixType, number>;
+    if (isWinter) {
+      weights = { vichricovy: 35, kamenny: 35, pekelny: 15, hromovy: 15, vycerpany: 0 };
+    } else if (isCrimson) {
+      weights = { pekelny: 40, hromovy: 30, kamenny: 15, vichricovy: 15, vycerpany: 0 };
+    } else if (isNightCemetery) {
+      weights = { kamenny: 35, hromovy: 30, pekelny: 20, vichricovy: 15, vycerpany: 0 };
+    } else {
+      weights = { vichricovy: 25, hromovy: 25, kamenny: 25, pekelny: 25, vycerpany: 0 };
+    }
+
+    const roll = Math.random() * 100;
+    let accum = 0;
+    const list: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
+    for (const p of list) {
+      accum += weights[p];
+      if (roll < accum) return p;
+    }
+    return 'vichricovy';
+  }
+
   public spawnPrefixedEnemy(engine: any, player: any, gameTime: number, forcedPrefix?: EnemyPrefixType): any {
     const pool = this.getWeightedPool(engine);
     const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     const mobId = forcedPrefix ? (candidateId || pool[0] || 'rarach') : (pool[Math.floor(Math.random() * pool.length)] || 'rarach');
 
-    const prefixes: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny'];
-    const prefix = forcedPrefix || prefixes[Math.floor(Math.random() * prefixes.length)];
+    const prefix = forcedPrefix || this.getThematicPrefix();
 
     const angle = Math.random() * Math.PI * 2;
     const pos = this.getOffscreenPosition(player, angle, engine, 170);
@@ -938,6 +969,7 @@ export class RunDirector {
       if (eliteFast) fastId = eliteFast;
     }
 
+    const leaderPrefix = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
     const baseAngle = pAngle + (Math.random() * 0.4 - 0.2);
     const oppositeAngle = baseAngle + Math.PI;
@@ -946,7 +978,7 @@ export class RunDirector {
     for (let i = -1; i <= 1; i++) {
       const a = baseAngle + i * 0.18;
       const pos = this.getOffscreenPosition(player, a, engine, 170 + Math.abs(i) * 25);
-      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1);
+      const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1, false, false, undefined, i === 0 ? leaderPrefix : undefined);
       if (e) {
         e.speed *= 1.1;
         this.recordEnemySpawn(e, gameTime);
@@ -983,6 +1015,7 @@ export class RunDirector {
       if (eliteFast) fastId = eliteFast;
     }
 
+    const leaderPrefix = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
     const frontAngle = pAngle + (Math.random() * 0.4 - 0.2);
 
@@ -991,7 +1024,7 @@ export class RunDirector {
     for (let i = 0; i < wallCount; i++) {
       const spreadAngle = frontAngle + ((i - (wallCount - 1) / 2) * 0.14);
       const pos = this.getOffscreenPosition(player, spreadAngle, engine, 180 + Math.abs(i - 1.5) * 20);
-      const e = engine.spawnMonster(heavyId, pos.x, pos.y, 1.15);
+      const e = engine.spawnMonster(heavyId, pos.x, pos.y, 1.15, false, false, undefined, (i === 1 && leaderPrefix) ? leaderPrefix : undefined);
       if (e) {
         this.recordEnemySpawn(e, gameTime);
       }
@@ -1027,10 +1060,11 @@ export class RunDirector {
       if (eliteMinion) minionId = eliteMinion;
     }
 
+    const leaderPrefix = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
     const angle = Math.random() * Math.PI * 2;
     const centerPos = this.getOffscreenPosition(player, angle, engine, 220);
 
-    const elite = engine.spawnMonster(eliteId, centerPos.x, centerPos.y, 1.35, false, false, 'Obrněný vůdce');
+    const elite = engine.spawnMonster(eliteId, centerPos.x, centerPos.y, 1.35, false, false, 'Obrněný vůdce', leaderPrefix);
     if (elite) {
       elite.isEscortLeader = true;
       this.recordEnemySpawn(elite, gameTime);

@@ -68,6 +68,14 @@ _Avoid_: twin miniboss, boss clone, dvojník
 Oslabená varianta strašidla s poloviční Kuráží i rychlostí nasazovaná v krizi pro záchranu lovce při zachování plné hodnoty odměn.
 _Avoid_: debuffed enemy, unavený bubák, oslabený nepřítel
 
+**Bleskový odraz**:
+Obranný mechanismus Hromových strašidel vracející část utrženého zranění zpět lovci na blízko, chráněný bezpečnostním stropem.
+_Avoid_: thorns, reflect damage, trny
+
+**Potácení**:
+Kolébavý a vrávoravý pohyb Vyčerpaných strašidel indikující jejich únavu a zpomalenou bojovou připravenost.
+_Avoid_: stagger, stumble, pajdání
+
 ## Světlo a atmosféra
 
 **Petrolejka**:

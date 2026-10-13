@@ -1,3 +1,11 @@
+## 2026-10-13 — Začlenění přívlastků do taktických formací a balanc bleskového odrazu
+
+- **Přívlastky u velitelů formací**: Na dynamické obtížnosti >= 3.5 Režisér výpravy přiřazuje velitelům taktických formací (Klešťové sevření, Kladivo a kovadlina, Drtivý přepad) tematické bojové přívlastky.
+- **Bezpečnostní strop bleskového odrazu**: Odražené poškození Hromových strašidel je zastropováno na max 25 % maximální Kuráže hráče s interním cooldownem 0,25 s, což eliminuje nechtěnou smrt silným úderem zblízka.
+- **Aura a potácení Vyčerpaného bubáka**: Vizuální styl Vyčerpaného bubáka doplněn o kolébavou kinematiku potácení a vznášející se ospalé částice únavy.
+- **Encyklopedie přívlastků v Bestiáři**: Do Bestiáře přidána dedikovaná kategorie „Přívlastky“ s interaktivním náhledem a taktickými radami pro boj proti jednotlivým folklórním afixům.
+- **Doménová dokumentace a ADR**: Doplněny pojmy `Bleskový odraz` a `Potácení` do `GLOSSARY.md` a sepsán záznam `docs/adr/0010-zacleneni-privlastku-do-formaci-a-balanc-odrazu.md`.
+
 ## 2026-10-13 — Sjednocení rejdového rozpočtu, trestání úspěchu a přívlastek Vyčerpaný
 
 - **Sjednocení rozpočtu hrozeb**: Režisér výpravy (`RunDirector`) nově naceňuje strašidla ve shodě s hodnotami dropů (`ENEMY_POINTS`), čímž se sjednocuje kalkulace dropů a zátěže scény.

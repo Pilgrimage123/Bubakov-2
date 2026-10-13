@@ -414,4 +414,68 @@ describe('Special Enemy Prefixes (Vichřicový, Hromový, Kamenný, Pekelný)', 
     expect(vichriceMob.poiseResist).toBe(mobBaseStats.poiseResist || 0);
     expect(vichriceMob.hp).toBe(mobBaseStats.hp);
   });
+
+  it('Hromový thorns reflect is capped at 25% of player max HP and respects cooldown', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer', createDefaultMetaProgression());
+    const enemy = engine.createHeadlessEnemy('rarach', 100, 100, 1.0, false, false, undefined, 'hromovy');
+    enemy.hp = 500;
+    enemy.maxHp = 500;
+    const player = {
+      x: 150,
+      y: 100,
+      hp: 200,
+      maxHp: 200,
+      takeDamage: vi.fn(),
+    } as any;
+    engine.state.player = player;
+    engine.state.gameTime = 10.0;
+
+    // Deal 180 damage (raw 50% reflect would be 90, but cap is 25% of 200 = 50)
+    enemy.takeDamage(180, 'physical', 0, 0);
+    expect(player.takeDamage).toHaveBeenCalledWith(50, 'lightning', enemy, false);
+
+    // Hit again immediately at the exact same game time (should be blocked by 0.25s cooldown)
+    player.takeDamage.mockClear();
+    enemy.takeDamage(50, 'physical', 0, 0);
+    expect(player.takeDamage).not.toHaveBeenCalled();
+
+    // After 0.3s cooldown expires, reflect triggers again
+    engine.state.gameTime = 10.35;
+    enemy.takeDamage(50, 'physical', 0, 0);
+    expect(player.takeDamage).toHaveBeenCalledWith(25, 'lightning', enemy, false);
+  });
+
+  it('Formation leaders receive combat prefixes on dynamicDifficulty >= 3.5', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+    director.threatBudget = 40;
+
+    const initialCount = engine.livingEnemies.length;
+    (director as any).spawnKlestoveSevreni(engine, engine.state.player, 60.0);
+
+    const newlySpawned = engine.livingEnemies.slice(initialCount);
+    expect(newlySpawned.length).toBeGreaterThan(0);
+    // At least one leader enemy in the formation must possess a combat prefix
+    const prefixedLeader = newlySpawned.find((e: any) => e.prefix && e.prefix !== 'vycerpany');
+    expect(prefixedLeader).toBeDefined();
+    expect(['vichricovy', 'hromovy', 'kamenny', 'pekelny']).toContain(prefixedLeader.prefix);
+  });
+
+  it('getThematicPrefix selects valid combat prefixes with probability affinity', () => {
+    const winterDirector = new RunDirector(1, undefined, { dynamicDifficulty: 4.0 });
+    const p = winterDirector.getThematicPrefix();
+    expect(['vichricovy', 'hromovy', 'kamenny', 'pekelny']).toContain(p);
+
+    const rolls: Record<string, number> = { vichricovy: 0, hromovy: 0, kamenny: 0, pekelny: 0 };
+    for (let i = 0; i < 100; i++) {
+      rolls[winterDirector.getThematicPrefix()]++;
+    }
+    // All 4 prefixes should be reachable due to minimum 15% floor
+    expect(rolls.vichricovy).toBeGreaterThan(0);
+    expect(rolls.kamenny).toBeGreaterThan(0);
+    expect(rolls.pekelny).toBeGreaterThan(0);
+    expect(rolls.hromovy).toBeGreaterThan(0);
+  });
 });

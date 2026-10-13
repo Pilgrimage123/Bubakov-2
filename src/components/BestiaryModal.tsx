@@ -4,11 +4,47 @@ import * as jsxRuntime from 'react/jsx-runtime';
 const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { ENEMIES } from '../data/enemies';
-import { Lada, drawEnemyRenderer } from '../render/ladaRenderer';
+import { Lada, drawEnemyRenderer, drawPrefixAura } from '../render/ladaRenderer';
 import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { ENEMY_PREFIX_DEFS, EnemyPrefixType } from '../types';
+
+const PREFIX_KEYS: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny', 'vycerpany'];
+
+const PREFIX_LORE: Record<EnemyPrefixType, { title: string; lore: string; advice: string; traits: string[] }> = {
+	vichricovy: {
+		title: 'Vichřicové strašidlo',
+		lore: 'Strašidlo ovinuté divokým podzimním vichrem z polí, jež se míhá jako stín mezi stromy.',
+		advice: 'Vyhýbá se 50 % všech přímých úderů. Použijte zbraně s plošným účinkem nebo husté krupobití střel, aby se úhyb rychle vyčerpal.',
+		traits: ['+110 rychlost pohybu', '50 % šance na úhyb zásahu', 'Azurová větrná spirála'],
+	},
+	hromovy: {
+		title: 'Hromový běs',
+		lore: 'Běs nabitý letním hromobitím, jehož tělem probíjejí nezkrotné elektrické výboje.',
+		advice: 'Vrací 50 % zranění zpět lovci do 200 px (zastropováno na max 25 % Kuráže, cooldown 0,25 s). Neútočte silným úderem zblízka, odstřelujte ho z bezpečné vzdálenosti!',
+		traits: ['+70 rychlost pohybu', 'Bleskový odraz (50 % dmg do 200 px)', 'Ochranný bezpečnostní strop', 'Zlato-modrá blesková aura'],
+	},
+	kamenny: {
+		title: 'Kamenný krunýřník',
+		lore: 'Monstrum obrostlé starobylou žulovou krustou z hrusických lomů a mezí.',
+		advice: 'Pohlcuje 91 % veškerého poškození a nelze jej omráčit ani uplatit jídlem. Plouží se pomalu – není nutné s ním plýtvat časem, raději kolem něj manévrujte.',
+		traits: ['91 % redukce veškerého zranění', '-20 % rychlost pohybu', 'Imunita vůči omráčení i buchtám', 'Puklinová kamenná krusta'],
+	},
+	pekelny: {
+		title: 'Pekelný spřeženec',
+		lore: 'Plamenný pekelník vyvržený přímo z Čertova kotle, soptící síru a žhavé uhlíky.',
+		advice: 'Zanechává hořící magmatickou stopu a při dlouhém přímém běhu před vás vychrlí prediktivní puklinu. Nekružte přímočaře a přerušujte jeho sprint.',
+		traits: ['Magmatická stopa na 9 s', 'Pronásledovací zrychlení až +120 %', 'Prediktivní lávová puklina', 'Sálavá rudozlatá aura'],
+	},
+	vycerpany: {
+		title: 'Vyčerpaný bubák',
+		lore: 'Strašidlo zmožené nočním bojem a tísní lovce, sotva pletoucí nohama a zívající v chladu.',
+		advice: 'Zjevuje se v kritických chvílích na záchranu hráče. Má poloviční zdraví, poloviční rychlost a potácí se, avšak zanechává plnou odměnu perníčků i dropů!',
+		traits: ['-50 % Kuráž (HP)', '-50 % rychlost pohybu', '-50 % kadence útoků', 'Kolébavé potácení a ospalá aura', '100 % plné odměny a perníčky'],
+	},
+};
 
 var CATEGORIES = [
 	{
@@ -46,11 +82,16 @@ var CATEGORIES = [
 	{
 		id: "bosses",
 		label: "👑 Velcí bossové"
+	},
+	{
+		id: "prefixes",
+		label: "✨ Přívlastky"
 	}
 ];
 var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 	const [selectedCategory, setSelectedCategory] = (0, import_react.useState)("all");
 	const [selectedId, setSelectedId] = (0, import_react.useState)("rarach");
+	const [selectedPrefixId, setSelectedPrefixId] = (0, import_react.useState)<EnemyPrefixType>("vichricovy");
 	const previewCanvasRef = (0, import_react.useRef)(null);
 	const monsterList = Object.values(ENEMIES).filter((m) => selectedCategory === "all" || m.category === selectedCategory);
 	const currentMonster = ENEMIES[selectedId] || monsterList[0] || ENEMIES.rarach;
@@ -64,12 +105,32 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 		let startTime = performance.now();
-		const render = (now) => {
+		const render = (now: number) => {
 			const elapsed = (now - startTime) / 1e3;
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			const m = currentMonster;
 			const cx = canvas.width / 2;
 			const cy = canvas.height * .65;
+
+			if (selectedCategory === "prefixes") {
+				const m = ENEMIES.rarach;
+				const demoEnemy = { ...m, prefix: selectedPrefixId };
+				drawPrefixAura(ctx, cx, cy, 30, selectedPrefixId, elapsed);
+				drawEnemyRenderer(
+					m.method,
+					ctx,
+					cx,
+					cy,
+					elapsed,
+					0,
+					false,
+					demoEnemy,
+					[]
+				);
+				animId = requestAnimationFrame(render);
+				return;
+			}
+
+			const m = currentMonster;
 			const tier = enemyProg.tier;
 			const extraY = m.id === "cert" ? 5 : m.id === "obr" ? 10 : m.id === "meluzina" ? -15 : m.id === "polednice" || m.id === "klekanice" ? -5 : m.id === "drak" ? 12 : 0;
 			const extraArgs = m.id === "cert" ? [true] : m.id === "drak" ? [false, false] : [];
@@ -252,7 +313,36 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 					className: "bestiary-container",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						className: "bestiary-list",
-						children: monsterList.map((m) => {
+						children: selectedCategory === "prefixes"
+							? PREFIX_KEYS.map((pKey) => {
+								const pDef = ENEMY_PREFIX_DEFS[pKey];
+								const isSelected = pKey === selectedPrefixId;
+								return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									className: `bestiary-item-btn ${isSelected ? "active" : ""}`,
+									style: {
+										background: isSelected ? "var(--mustard)" : "#F3F4F6",
+										color: "#111111"
+									},
+									onClick: () => {
+										setSelectedPrefixId(pKey);
+										sound.slash();
+									},
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											style: { display: "flex", alignItems: "center", gap: "6px" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontSize: "1.1rem" }, children: pDef.badge.split(" ")[0] }),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: 800, fontSize: "0.94rem", color: "#111111" }, children: pDef.name })
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											style: { fontSize: "0.74rem", fontWeight: 700, color: "#78350F" },
+											children: "✨ Přívlastek"
+										})
+									]
+								}, pKey);
+							})
+							: monsterList.map((m) => {
 							const k = bestiaryKills[m.id] || 0;
 							const prog = getEnemyProgress(m.id, k);
 							const isSelected = m.id === currentMonster.id;
@@ -313,7 +403,94 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 						})
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "bestiary-detail-card",
-						children: [
+						children: selectedCategory === "prefixes"
+							? [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "hunter-tier-stamp tier-stamp-4",
+													style: { fontSize: "0.8rem", marginBottom: "4px", display: "inline-block" },
+													children: "✨ FOLKLÓRNÍ PŘÍVLASTEK"
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+													style: { margin: "2px 0 2px 0", fontSize: "1.85rem", color: "#2A170A" },
+													children: ENEMY_PREFIX_DEFS[selectedPrefixId].badge
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+													style: { fontWeight: 900, fontSize: "1.02rem", color: "#78350F", marginBottom: "8px" },
+													children: PREFIX_LORE[selectedPrefixId].title
+												})
+											]
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											style: {
+												background: "var(--mustard)",
+												color: "var(--ink)",
+												fontWeight: 900,
+												fontSize: "0.85rem",
+												padding: "3px 10px",
+												borderRadius: "6px",
+												border: "2px solid var(--ink)",
+												textAlign: "right"
+											},
+											children: "Rejdový afix"
+										})
+									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "bestiary-canvas-wrap",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("canvas", {
+										ref: previewCanvasRef,
+										width: 180,
+										height: 180,
+										className: "bestiary-canvas"
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									style: { display: "flex", flexWrap: "wrap", gap: "6px", margin: "10px 0" },
+									children: PREFIX_LORE[selectedPrefixId].traits.map((t, idx) =>
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											key: idx,
+											className: "tag-badge",
+											style: { background: "#FEF3C7", color: "#92400E", fontWeight: 800 },
+											children: `⚡ ${t}`
+										})
+									)
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									style: { fontWeight: 700, lineHeight: 1.35, margin: "10px 0" },
+									children: PREFIX_LORE[selectedPrefixId].lore
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									style: {
+										background: "rgba(0,0,0,0.04)",
+										borderLeft: "4px solid var(--mustard)",
+										padding: "8px 12px",
+										margin: "10px 0",
+										fontStyle: "italic",
+										fontWeight: 600,
+										fontSize: "0.92rem"
+									},
+									children: [
+										"📜 „Z kroniky Ladova kraje: ",
+										PREFIX_LORE[selectedPrefixId].lore,
+										"“"
+									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									style: { borderTop: "2px dashed #bbb", paddingTop: "10px", marginTop: "10px", fontSize: "0.92rem" },
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { style: { color: "#166534" }, children: "🌿 Taktika a rady pro lovce: " }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: "#166534", fontWeight: 700 }, children: PREFIX_LORE[selectedPrefixId].advice })
+										]
+									})
+								})
+							]
+							: [
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								style: {
 									display: "flex",

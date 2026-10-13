@@ -1066,11 +1066,15 @@ export class GameEngine {
           this.interruptAttack();
         }
 
-        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px
+        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px (zastropováno na max 25 % maxHp hráče, cooldown 0.25 s)
         if (this.prefix === 'hromovy' && self.state.player && self.state.player.hp > 0 && finalDamage > 0) {
           const pDist = Math.hypot(self.state.player.x - this.x, self.state.player.y - this.y);
-          if (pDist <= 200) {
-            const reflect = Math.max(1, Math.round(finalDamage * 0.5));
+          const now = self.state.gameTime;
+          if (pDist <= 200 && (!this._lastThornsTime || now - this._lastThornsTime >= 0.25)) {
+            this._lastThornsTime = now;
+            const maxReflect = Math.max(1, Math.round((self.state.player.maxHp || 100) * 0.25));
+            const rawReflect = Math.max(1, Math.round(finalDamage * 0.5));
+            const reflect = Math.min(rawReflect, maxReflect);
             if (typeof self.state.player.takeDamage === 'function') {
               self.state.player.takeDamage(reflect, 'lightning', this, false);
             } else {

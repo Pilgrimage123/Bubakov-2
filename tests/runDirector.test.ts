@@ -330,8 +330,13 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(commanders.length).toBe(2);
     for (const c of commanders) {
       // Tactical formation speed is applied (1.20x), but poiseResist remains strictly unbuffed
-      expect(c.speed).toBeGreaterThan(ENEMIES[c.id]?.speed || 40);
-      expect(c.poiseResist).toBe(ENEMIES[c.id]?.poiseResist || 0);
+      const prefixMult = c.prefix === 'kamenny' ? 0.8 : c.prefix === 'vycerpany' ? 0.5 : 1.0;
+      const expectedBase = (ENEMIES[c.id]?.speed || 40) * prefixMult;
+      expect(c.speed).toBeGreaterThan(expectedBase);
+      const expectedPoise = c.prefix === 'kamenny'
+        ? Math.min(0.95, (ENEMIES[c.id]?.poiseResist || 0) + 0.60)
+        : (ENEMIES[c.id]?.poiseResist || 0);
+      expect(c.poiseResist).toBe(expectedPoise);
       expect(c.drtivyBuffTimer).toBe(3.5);
     }
   });

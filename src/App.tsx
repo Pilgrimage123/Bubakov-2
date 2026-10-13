@@ -8586,11 +8586,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         this.hp -= finalDmg;
         this.hitFlashTimer = 0.12;
 
-        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px
+        // Hromový: Blesky vrací hráči polovinu zranění ve vzdálenosti 200px (zastropováno na max 25 % maxHp hráče, cooldown 0.25 s)
         if (this.prefix === 'hromovy' && player && player.hp > 0 && finalDmg > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
-          if (distToPlayer <= 200 && (player.invulnerabilityTimer || 0) <= 0) {
-            const reflectDmg = Math.max(1, Math.round(finalDmg * 0.5));
+          const now = engineRef.current?.gameTime ?? 0;
+          if (distToPlayer <= 200 && (player.invulnerabilityTimer || 0) <= 0 && (!(this as any)._lastThornsTime || now - (this as any)._lastThornsTime >= 0.25)) {
+            (this as any)._lastThornsTime = now;
+            const maxReflect = Math.max(1, Math.round((player.maxHp || 100) * 0.25));
+            const rawReflect = Math.max(1, Math.round(finalDmg * 0.5));
+            const reflectDmg = Math.min(rawReflect, maxReflect);
             player.takeDamage(reflectDmg, 'lightning', this, false);
             sound.heavyHit();
             engineRef.current.texts.push(
