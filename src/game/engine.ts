@@ -1055,6 +1055,13 @@ export class GameEngine {
           if (distanceToPlayer < 120) this.stalkSpeedBonus = 0;
         }
 
+        // Chapel of the Holy Wave increases all holy damage dealt by the player.
+        // Keep this in enemy damage intake so weapon, projectile and area Holy effects
+        // all receive the passive bonus consistently.
+        if (type === 'holy' && meta?.churchLevel) {
+          amount *= 1 + Math.max(0, meta.churchLevel) * 0.08;
+        }
+
         // Kamenný: 91% redukce poškození
         if (this.prefixDamageReduction) {
           amount *= (1 - this.prefixDamageReduction);
