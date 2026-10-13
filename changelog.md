@@ -1,3 +1,8 @@
+## 2026-10-13 — Oprava CI závislostí a vyčištění repozitáře
+
+- Opraven soubor `package-lock.json` pro bezchybné spouštění `npm ci` v CI pipeline (obnoveny chybějící položky pro vitest a podpůrné nástroje).
+- Z repozitáře odstraněny omylem verzované artefakty `.aistudio/` a přidány do `.gitignore`.
+
 ## 2026-10-13 — Doplnění folklórních předmětů, chytrého drop systému a lokalizací
 
 - Doplněna a sjednocena celá sestava folklórních pomocných předmětů (ADR 0006 a Dědečkova nůše): Kovářská podkova, Hliněný kohoutek, Vyřezávané kukačky, Trouba obecního ponocného, Masopustní řehtačka, Babiččina kropenatá zástěra, Hlt slivovice, Dudácká čertovská skočná, Kominický knoflík a Arcivzácný ananas.
