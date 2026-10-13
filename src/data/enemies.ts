@@ -122,6 +122,22 @@ const ENEMIES: Record<string, EnemyStats> = {
 		lore: "Zelené rosničky z rybníka Brčálníku, které hastrman posílá jako předvoj svých vodních rejdů.",
 		danger: "★☆☆☆☆"
 	},
+	vrana: {
+		id: "vrana", name: "Mrazivá vrána", title: "Rychlý černý letec z předjarní vánice",
+		category: "frost", hp: 28, speed: 188, damage: 8, attackCadence: "fast", attackInterval: 0.6,
+		radius: 13, mass: 0.65, foodResist: 0, poiseResist: 0, willpower: 0, xp: 1, coinValue: 1,
+		method: "drawStageCrow", weakness: "Povidlové buchty, horké jídlo",
+		strength: "Velmi rychlý let a kličkování",
+		lore: "Vrána vyhnaná z hejna zimní smrtkou nalétává na lovce z nečekaných směrů.", danger: "★☆☆☆☆"
+	},
+	mrazovy_skritek: {
+		id: "mrazovy_skritek", name: "Mrazivý skřítek", title: "Drobný duch s širokou jinovatkovou aurou",
+		category: "frost", hp: 38, speed: 66, damage: 4, attackCadence: "slow", attackInterval: 1.8,
+		radius: 14, mass: 0.75, foodResist: 0.05, poiseResist: 0, willpower: 0.05, xp: 2, coinValue: 1,
+		method: "drawFrostling", weakness: "Horké brambory, oheň",
+		strength: "Široká aura průběžně zraňující a zpomalující lovce",
+		lore: "Slabý skřítek, který se drží blízko lovce a kolem sebe šíří studenou jinovatku.", danger: "★☆☆☆☆"
+	},
 	zmrzlik: {
 		id: "zmrzlik",
 		name: "Zmrzlík z okapu",
