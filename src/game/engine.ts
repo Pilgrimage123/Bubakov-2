@@ -1037,6 +1037,13 @@ export class GameEngine {
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
 
+        // Chapel of the Holy Wave increases all holy damage dealt by the player.
+        // Keep this in enemy damage intake so weapon, projectile and area Holy effects
+        // all receive the passive bonus consistently.
+        if (type === 'holy' && meta?.churchLevel) {
+          amount *= 1 + Math.max(0, meta.churchLevel) * 0.08;
+        }
+
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
         if (this.prefix === 'vichricovy') {
           const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
