@@ -757,7 +757,7 @@
 - Přidána trvalá nabídka „Zapnuté efekty“ s hlavním vypínačem a kategoriemi pro dynamické osvětlení, bojové VFX, varovné značky, prefixy bubáků, popisy útoků, ukazatele stavů, oznámení o odemčení, zvukové efekty a hudbu.
 - Vypínání efektů ovlivňuje vykreslování a zvuk, nikoli herní simulaci: poškození, kolize, stavy, odemykání, pohyb projektilů a sbírání dropů pokračují. Starší uložené profily mají všechny nové kategorie ve výchozím zapnutém stavu.
 - Odemčené karty lovců nově zobrazují základní statistiky, počáteční zbraň, pasivní schopnost a podrobný popis zvláštní schopnosti. Přidána samostatná rolovatelná informační karta.
-- Kořenářce byl základní magnet snížen o 75 % (před bonusy vesnice a usnadnění). Každých 9 sekund se vyléčí až o 18 % maximální Kuráže a na 3 sekundy získá dvojnásobný dosah magnetu, dvojnásobnou rychlost přitahování dropů a nezranitelnost.
+- Kořenářce byl základní magnet snížen o 75 % (před bonusy vesnice a usnadnění). Každých 9 sekund se vyléčí až o 18 % maximální Kuráže a na 3 sekundy získá pětinásobný dosah magnetu, pětinásobnou rychlost přitahování dropů a nezranitelnost.
 
 ## 2026-10-13 — Kořenářka ×5 a mrazivá aura skřítka
 
