@@ -492,7 +492,7 @@ export function renderStorybookLightingComposite(
   isWinter = true,
   shadowZones: ShadowZone[] = [],
   occluders: LightOccluder[] = [],
-  quality: 'fidelity' | 'balanced' | 'performance' | 'off' = 'fidelity',
+  quality: 'fidelity' | 'balanced' | 'performance' | 'off' = 'balanced',
   enabled = true
 ): void {
   if (!enabled || quality === 'off') {

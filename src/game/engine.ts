@@ -324,7 +324,10 @@ export class GameEngine {
         ? optionsOrLevelId.directorAdaptability
         : 3.0;
 
-    this.director = new RunDirector(levelId, seed, { dynamicDifficulty });
+    const profile = metaProg?.performanceProfile || (metaProg?.performanceMode ? 'performance' : 'balanced');
+    const maxLivingEnemies = profile === 'performance' ? 45 : profile === 'balanced' ? 55 : 70;
+
+    this.director = new RunDirector(levelId, seed, { dynamicDifficulty, maxLivingEnemies });
     nextState.director = this.director;
     nextState.activeRozmar = this.director.rozmar;
     nextState.directorAdaptability = dynamicDifficulty;

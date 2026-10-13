@@ -134,6 +134,24 @@ describe('GameEngine Storybook Lighting Integration', () => {
     expect(migratedEmpty.dynamicLightingEnabled).toBe(true);
   });
 
+  it('performanceProfile defaults to balanced in default and migrated meta progression', () => {
+    const defaultMeta = createDefaultMetaProgression();
+    expect(defaultMeta.performanceProfile).toBe('balanced');
+    expect(defaultMeta.performanceMode).toBe(false);
+
+    const migratedEmpty = migrateMetaProgression({});
+    expect(migratedEmpty.performanceProfile).toBe('balanced');
+    expect(migratedEmpty.performanceMode).toBe(false);
+
+    const migratedLegacyPerfMode = migrateMetaProgression({ performanceMode: true });
+    expect(migratedLegacyPerfMode.performanceProfile).toBe('performance');
+    expect(migratedLegacyPerfMode.performanceMode).toBe(true);
+
+    const migratedFidelity = migrateMetaProgression({ performanceProfile: 'fidelity' });
+    expect(migratedFidelity.performanceProfile).toBe('fidelity');
+    expect(migratedFidelity.performanceMode).toBe(false);
+  });
+
   it('renderStorybookLightingComposite skips cleanly when enabled=false or quality=off', () => {
     const mockCtx = {
       save: vi.fn(),

@@ -67,6 +67,8 @@ export function createDefaultMetaProgression(): MetaProgression {
   return {
     krejcary: 0,
     dynamicDifficulty: 3.0,
+    performanceProfile: 'balanced',
+    performanceMode: false,
     dynamicLightingEnabled: true,
     currentLang: 'cs',
     regenLevel: 0,

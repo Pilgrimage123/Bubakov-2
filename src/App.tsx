@@ -2481,7 +2481,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     livingEnemiesRef.current = engineRef.current.enemies.slice();
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
     const dynamicDiff = meta.dynamicDifficulty ?? 3.0;
-    directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff });
+    const perfProfile = meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced');
+    const maxLivingEnemies = perfProfile === 'performance' ? 45 : perfProfile === 'balanced' ? 55 : 70;
+    directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff, maxLivingEnemies });
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
 
     setRunStats({
@@ -2537,6 +2539,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       completedLevels: {},
       levelKillCounts: {},
       dynamicDifficulty: 3.0,
+      performanceProfile: 'balanced',
+      performanceMode: false,
+      dynamicLightingEnabled: true,
     };
     saveMeta(defaultMeta);
     setSelectedLevelId(0);
