@@ -573,7 +573,7 @@ function getLevelProgress(id, meta) {
 			count: cnt
 		};
 	});
-	const bossId = id === 2 ? "cert" : id === 3 ? "hejkal" : id === 4 ? "obr" : id === 5 ? "mlynar" : id === 6 ? "bezhlavy_rytir" : ";
+	const bossId = id === 1 ? "morana" : id === 2 ? "cert" : id === 3 ? "hejkal" : id === 4 ? "obr" : id === 5 ? "mlynar" : id === 6 ? "bezhlavy_rytir" : "";
 	const bossDefeated = bossId ? (meta.bestiaryKills?.[bossId] || 0) >= 1 || !!meta.completedLevels?.[id - 1] : false;
 	let percent = 0;
 	if (bossDefeated) {
