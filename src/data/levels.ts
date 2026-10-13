@@ -61,6 +61,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		spawnPools: {
 			noon: [
 				"vrana",
+				"mrazovy_skritek",
 				"mysak",
 				"sotek"
 			],
