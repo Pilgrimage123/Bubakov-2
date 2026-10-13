@@ -627,7 +627,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1, onOp
 								fontSize: "1.05rem",
 								color: "#FEF3C7"
 							},
-							children: "Zvolte si stage pro testování (přístupných je všech 6 úrovní včetně bossů):"
+							children: "Zvolte si stage pro testování (přístupných je všech 7 úrovní včetně bossů):"
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
 								display: "grid",
@@ -680,7 +680,7 @@ var TestModeModal = ({ isOpen, onClose, onStartTestRun, initialLevelId = 1, onOp
 													fontSize: "0.78rem",
 													fontWeight: 900
 												},
-												children: isSelected ? "✓ ZVOLENO" : `Úroveň ${lvlId}`
+												children: isSelected ? "✓ ZVOLENO" : `Úroveň ${lvlId + 1}`
 											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 												style: { fontSize: "1.25rem" },
 												children: lvl.icon
