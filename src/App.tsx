@@ -2269,7 +2269,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Level 0: Předjaří – 2 rybniční žabky ve vzdálenosti na seznámení s pohybem a první zásah
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        engineRef.current.enemies.push(createEnemyInstance('zaba', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7));
+        engineRef.current.enemies.push(createEnemyInstance('vrana', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7));
       }
     } else if (chosenLevelId === 1) {
       // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
@@ -6968,6 +6968,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Všem bubákům, kteří nejsou boss nebo miniboss, se zvyšuje doba nápřahu i cooldown speciálních útoků o 30 %
         const windupMult = isEliteOrBoss ? 1.0 : 1.3;
         const specialCdMult = isEliteOrBoss ? 1.0 : 1.3;
+
+        // Stage 1: fast airborne crows weave around the hunter instead of hopping on the ground.
+        if (this.id === 'vrana') {
+          const weave = Math.sin(this.animTime * 8 + (this.orbitAngle || 0)) * 0.48;
+          const flightAngle = dirToPlayer + weave;
+          const flightSpeed = spd * (distToPlayer > 170 ? 1.22 : 0.88);
+          this.vx = Math.cos(flightAngle) * flightSpeed;
+          this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 10) * 12;
+        } else if (this.id === 'mrazovy_skritek') {
+          this.vx = Math.cos(dirToPlayer) * spd * 0.82;
+          this.vy = Math.sin(dirToPlayer) * spd * 0.82;
+          this.frostAuraTimer = Math.max(0, (this.frostAuraTimer || 0) - dt);
+          if (distToPlayer <= 78 && this.frostAuraTimer <= 0) {
+            this.frostAuraTimer = 0.7;
+            player.takeDamage(3, 'cold');
+            if (typeof player.chill === 'function') player.chill(0.65);
+            engineRef.current.particles.push({ x: player.x, y: player.y, vx: (Math.random() - 0.5) * 24, vy: (Math.random() - 0.5) * 24, life: 0.35, color: '#BAE6FD', size: 3 });
+          }
+        }
 
         // 1. RARÁŠEK (rarach / sazovy_rarach) - Hejnové obkličování & prudké výpady
         if (this.id === 'rarach' || this.id === 'sazovy_rarach') {
