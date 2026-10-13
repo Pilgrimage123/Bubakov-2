@@ -1414,7 +1414,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.speedCount = (p.speedCount || 0) + 1;
     }
     if (effect.type === 'pickup_radius') {
-      p.pickupRadius += effect.amount;
+      const appliedAccessibilityLevel = Math.max(0, Math.min(10, p.accessibilityAppliedLevel || 0));
+      p.accessibilityBasePickupRadius ??= p.pickupRadius / (1 + appliedAccessibilityLevel * 0.05);
+      p.accessibilityBasePickupRadius += effect.amount;
+      p.pickupRadius = p.accessibilityBasePickupRadius * (1 + appliedAccessibilityLevel * 0.05);
       p.magnetCount = (p.magnetCount || 0) + 1;
     }
     if (effect.type === 'damage_multiplier') {
@@ -6816,7 +6819,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (prefix && ENEMY_PREFIX_DEFS[prefix]?.attackIntervalMultiplier && typeof stats.attackDelay === 'number') {
       attackDelay = attackDelay * ENEMY_PREFIX_DEFS[prefix].attackIntervalMultiplier!;
     }
-    if (accessibilityLevel > 0) attackDelay /= accessibilityAttackMultiplier;
+    // Computed windup delay already uses the reduced attack interval; avoid scaling it twice.
+    if (accessibilityLevel > 0 && typeof stats.attackDelay === 'number') {
+      attackDelay /= accessibilityAttackMultiplier;
+    }
     const attackRange = typeof stats.attackRange === 'number' ? stats.attackRange : (radius + 25);
 
     const instance = {
