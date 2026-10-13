@@ -798,11 +798,16 @@ export function applyAnanasUpgrade(
   callbacks?: {
     onSound?: (name: string) => void;
     onDamageText?: (opts: { x: number; y: number; text: string; color?: string }) => void;
-  }
+  },
+  healingMultiplier = 1,
 ): void {
   callbacks?.onSound?.('ananasPickup');
   player.maxHp = Math.round(player.maxHp * 1.30);
-  player.hp = player.maxHp;
+  // The max-Courage upgrade always applies; only restoration of missing Courage
+  // is reduced by nearby frostlings' healing dampening.
+  const missingHp = Math.max(0, player.maxHp - player.hp);
+  const safeHealingMultiplier = Math.max(0, Math.min(1, healingMultiplier));
+  player.hp = Math.min(player.maxHp, player.hp + missingHp * safeHealingMultiplier);
   player.speed = Math.round(player.speed * 1.30);
   player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 10.0);
   callbacks?.onDamageText?.({
