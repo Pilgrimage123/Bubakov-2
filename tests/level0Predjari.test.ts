@@ -23,11 +23,23 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.season).toBe('spring');
     expect(lvl0.miniBoss.id).toBe('zaba');
     expect(lvl0.midBoss.id).toBe('vodnicek');
-    expect(lvl0.finalBoss.id).toBe('hastrman');
+    expect(lvl0.finalBoss.id).toBe('morana');
     expect(lvl0.spawnPools.noon).toContain('zaba');
     expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'ropucha', 'topivec', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
+  });
+
+  it('defines Morana as the first stage boss with ranged frost-wind attacks', async () => {
+    const { ENEMIES } = await import('../src/data/enemies');
+    expect(GAME_LEVELS[0].finalBoss.id).toBe('morana');
+    expect(GAME_LEVELS[0].bossMechanic.label).toContain('Morana');
+    expect(ENEMIES.morana).toMatchObject({
+      category: 'bosses',
+      method: 'drawMorana',
+      radius: 34,
+    });
+    expect(ENEMIES.morana.strength).toContain('Mrazivé větrné salvy');
   });
 
   it('uses a fixed March Thaw composition instead of random scenery for its POIs', () => {
@@ -55,11 +67,12 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     const csTrans = getLevelTranslation(0, 'cs');
     expect(csTrans.name).toBe('1. Předjaří v Hrusicích');
     expect(csTrans.shortTitle).toBe('Březnové tání');
-    expect(csTrans.finalBoss.name).toContain('Vodník');
+    expect(csTrans.finalBoss.name).toContain('Morana');
 
     const enTrans = getLevelTranslation(0, 'en');
     expect(enTrans.name).toBe('1. Early Spring in Hrusice');
     expect(enTrans.shortTitle).toBe('March Thaw');
+    expect(enTrans.finalBoss.name).toContain('Morana');
   });
 
   it('has exactly 3 unique folklore Rozmars', () => {
