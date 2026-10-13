@@ -1038,8 +1038,9 @@ export class GameEngine {
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
 
-        if (type === 'holy' && self.state.player?.churchLevel) {
-          amount *= 1 + Math.max(0, self.state.player.churchLevel) * 0.08;
+        // Chapel of the Holy Wave: +8% Holy damage per purchased level.
+        if (type === 'holy') {
+          amount *= 1 + Math.max(0, self.state.player?.churchLevel || 0) * 0.08;
         }
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
