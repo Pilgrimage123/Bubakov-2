@@ -518,7 +518,8 @@ class SmokePuff {
 
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.globalAlpha = alpha;
+    // Keep the plum-scent cloud translucent so combat remains visible.
+    ctx.globalAlpha = alpha * (this.kind === 'plum-scent' ? 0.58 : 1);
 
     // 1. Draw outer mini poof dots
     for (const dot of this.poofDots) {
@@ -1698,6 +1699,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     levelId: 1 as GameLevelId,
   });
 
+
+  // One-use, time-limited reward offered on the tally screen.
+  type ReturnBonus = { kind: 'damage' | 'courage' | 'coins'; percent: number; multiplier: number };
+  const [returnBonus, setReturnBonus] = useState<ReturnBonus | null>(null);
+  const [returnBonusSeconds, setReturnBonusSeconds] = useState(7);
+  const [returnBonusExpired, setReturnBonusExpired] = useState(false);
+  const returnBonusDeadlineRef = useRef(0);
+  const returnBonusClaimedRef = useRef(false);
+  const pendingReturnBonusRef = useRef<ReturnBonus | null>(null);
+  const activeRunBonusRef = useRef<ReturnBonus | null>(null);
+  const lastHunterTypeRef = useRef<CharacterType>('wanderer' as CharacterType);
+
+  useEffect(() => {
+    if (gameState !== 'tally') {
+      setReturnBonus(null);
+      return;
+    }
+    const roll = Math.random();
+    const multiplier = roll < 0.005 ? 6 : roll < 0.015 ? 5 : roll < 0.04 ? 4 : roll < 0.12 ? 3 : roll < 0.32 ? 2 : 1;
+    const kinds: ReturnBonus['kind'][] = ['damage', 'courage', 'coins'];
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    const percent = kind === 'damage' ? 15 : kind === 'courage' ? 25 : 20;
+    setReturnBonus({ kind, percent, multiplier });
+    setReturnBonusSeconds(7);
+    setReturnBonusExpired(false);
+    returnBonusClaimedRef.current = false;
+    returnBonusDeadlineRef.current = Date.now() + 7000;
+    const timer = window.setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((returnBonusDeadlineRef.current - Date.now()) / 1000));
+      setReturnBonusSeconds(remaining);
+      if (remaining <= 0) {
+        setReturnBonusExpired(true);
+        window.clearInterval(timer);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [gameState]);
+
   // Game engine refs (persistent through renders)
   const engineRef = useRef<EngineState>(createInitialEngineState());
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
@@ -1727,7 +1766,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, timeSurvived);
     setTallyCounters({
       kills: engineRef.current.kills,
-      coins: engineRef.current.coins,
+      coins: Math.floor(engineRef.current.coins * (activeRunBonusRef.current?.kind === 'coins' ? 1 + activeRunBonusRef.current.percent * activeRunBonusRef.current.multiplier / 100 : 1)),
       souls: engineRef.current.souls,
       chasniks: engineRef.current.chasniks,
       time: Math.floor(timeSurvived),
@@ -1799,7 +1838,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     setTimeout(() => {
       setTallyCounters({
         kills: engineRef.current.kills,
-        coins: engineRef.current.coins,
+        coins: Math.floor(engineRef.current.coins * (activeRunBonusRef.current?.kind === 'coins' ? 1 + activeRunBonusRef.current.percent * activeRunBonusRef.current.multiplier / 100 : 1)),
         souls: engineRef.current.souls,
         chasniks: engineRef.current.chasniks,
         time: Math.floor(engineRef.current.gameTime),
@@ -2022,6 +2061,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     sound.init();
     sound.coin();
+    // Preserve the selected hunter for the quick-return action.
 
     const baseMaxHp =
       type === 'wanderer' ? 200 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
@@ -2357,6 +2397,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
       },
     };
+
+
+    // Apply the claimed one-shot reward only after level/hunter validation succeeds.
+    // Test/sandbox runs neither consume nor apply a pending reward.
+    const earnedReturnBonus = isTestMode ? null : pendingReturnBonusRef.current;
+    activeRunBonusRef.current = earnedReturnBonus;
+    if (!isTestMode) pendingReturnBonusRef.current = null;
+    if (earnedReturnBonus) {
+      const factor = 1 + (earnedReturnBonus.percent * earnedReturnBonus.multiplier) / 100;
+      if (earnedReturnBonus.kind === 'damage') {
+        player.damageMultiplier *= factor;
+      } else if (earnedReturnBonus.kind === 'courage') {
+        const extraHp = Math.round(player.maxHp * (factor - 1));
+        player.maxHp += extraHp;
+        player.hp += extraHp;
+      }
+      // Krejcar bonus is applied once, when final tally statistics are created.
+    }
 
     // Seed a readable, combat-friendly composition instead of filling the
     // starting area with equally prominent decorative objects.
@@ -5051,7 +5109,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // Transition to tally screen
               setTallyCounters({
                 kills: engine.kills,
-                coins: engine.coins,
+                coins: Math.floor(engine.coins * (activeRunBonusRef.current?.kind === 'coins' ? 1 + activeRunBonusRef.current.percent * activeRunBonusRef.current.multiplier / 100 : 1)),
                 souls: engine.souls,
                 chasniks: engine.chasniks,
                 time: Math.floor(engine.gameTime),
@@ -11485,6 +11543,38 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <span className="tally-number">{formatTimer(tallyCounters.time)}</span>
             </div>
 
+
+              {returnBonus && (
+                <div className="return-bonus-card">
+                  {!returnBonusExpired && returnBonusSeconds > 0 && !returnBonusClaimedRef.current ? (
+                    <>
+                      <div className="return-bonus-orb" aria-live="polite">
+                        <span className="return-bonus-slogan">
+                          {returnBonus.multiplier >= 4 ? 'NEBUDE SE OPAKOVAT!' : returnBonus.multiplier >= 2 ? 'POJĎ NA TO!' : 'ŠTĚSTÍ PŘEJE ODVÁŽNÝM!'}
+                        </span>
+                        <span className="return-bonus-emoji">{returnBonus.kind === 'damage' ? '⚔️' : returnBonus.kind === 'courage' ? '❤️' : '🪙'}</span>
+                        <strong>+{returnBonus.percent * returnBonus.multiplier}%</strong>
+                        <span>{returnBonus.kind === 'damage' ? 'POŠKOZENÍ' : returnBonus.kind === 'courage' ? 'KURÁŽ' : 'KREJCARŮ'}{returnBonus.multiplier > 1 ? ` · ${returnBonus.multiplier}×` : ''}</span>
+                      </div>
+                      <div className="return-bonus-countdown">Z PEKLA SMŮLA ZA <strong>{returnBonusSeconds}</strong> SEKUND!</div>
+                      <button className="lada-btn return-to-field-btn" onClick={() => {
+                        if (returnBonusClaimedRef.current || returnBonusExpired || Date.now() >= returnBonusDeadlineRef.current) {
+                          setReturnBonusExpired(true);
+                          return;
+                        }
+                        returnBonusClaimedRef.current = true;
+                        pendingReturnBonusRef.current = returnBonus;
+                        sound.coin();
+                        startGame(lastHunterTypeRef.current, tallyCounters.levelId);
+                      }}>
+                        ⚔️ Zpátky na plac
+                      </button>
+                    </>
+                  ) : (
+                    <div className="return-bonus-expired">💨 Z PEKLA SMŮLA!! Bonus uletěl.</div>
+                  )}
+                </div>
+              )}
             <div className="tally-actions-row" style={{ marginTop: '20px' }}>
               {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
                 <button

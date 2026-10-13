@@ -1,3 +1,11 @@
+## 2026-10-13 — Bonusový návrat po výpravě
+
+- Na výsledkové obrazovce se zobrazí časově omezená jednorázová nabídka návratu do stejné úrovně se stejným lovcem a bonusem k poškození, Kuráži nebo krejcarům.
+- Bonus se uplatní až při skutečném startu běžné výpravy; běhy v testovacím režimu jej nespotřebují.
+- Krejcarový bonus se počítá pouze při vytvoření konečných výsledků, nikoli opakovaně do průběžných statistik či při záchraně chasníka.
+- Oblak povidlové vůně se vykresluje s nižší neprůhledností, aby méně zakrýval boj.
+- Přidáno responzivní zobrazení bonusu a respektování nastavení omezeného pohybu.
+
 ## 2026-10-13 — Mobilní usnadnění obtížnosti
 
 - Přidán posuvník „Mobilní usnadnění“ do pauzy hry (úrovně 1–10, výchozí úroveň 5) s uložením do localStorage.
