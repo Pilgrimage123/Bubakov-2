@@ -1,3 +1,15 @@
+## 2026-10-13 — Úklid textů, oprava kontrastu a optimalizace UI pro dotykové displeje
+
+- Odstraněny nečitelné světle žluté podtituly a texty s nízkým kontrastem v modalech Pauzy, Zbrojnice a Ovládání; nadpisy sjednoceny do kanonické tmavé barvy `--ink`.
+- V `index.css` definována chybějící proměnná `--parchmentDark` a opraven odkaz na neexistující `var(--red)` v Malované truhle.
+- Ze spodních lišt hlavní nabídky a výběru lovce odstraněna vývojářská a destruktivní tlačítka (`Testovací mód`, `Tester animací`, `Plán změn`, `Vymazat postup`) a sdružena do nového dialogu `⚙️ Nastavení a vývoj`.
+- V dialogu Nastavení a vývoj integrováno nastavení vizuální kvality a plných efektů, plynulého režimu (60 FPS), ukazatele FPS a dynamické obtížnosti.
+- V dialogu Ovládání a cíl hry byl odstraněn technický tab Plynulost a záložky byly na mobilních zařízeních upraveny do plynulé horizontální scrollovací lišty zabraňující neuspořádanému rozházení.
+- V Dědečkově nůši na mobilních zařízeních upřednostněna nabídka zboží k nákupu a zůstatek perníčků (`order: 1`), takže jsou ihned viditelné bez nutnosti rolovat.
+- V herním HUDu zrušena 34px vysoká lišta perníčků a nahrazena kompaktním odznakem v horním řádku vedle ukazatele Kuráže a tlačítka pauzy, čímž se uvolnil prostor pro herní scénu.
+- Z obrazovky výběru výpravy byl na všech zařízeních odstraněn redundantní úvodní blok „KROK 1 ZE 2“, čímž se nabídka výprav posunula nahoru.
+- V nabídce pozastavení hry (Pauza) bylo tlačítko „Pokračovat ve hře“ a rychlé přepínače přesunuto nahoru pod nadpis a odstraněno testovací tlačítko přivolání minibosse.
+
 ## 2026-10-13 — Bonusový návrat po výpravě
 
 - Přidána časově omezená nabídka návratu do stejné úrovně se stejným lovcem a jednorázovým bonusem k poškození, Kuráži nebo krejcarům.
@@ -41,7 +53,7 @@
 - Do `ladaRenderer.ts` doplněna ladovská kresba Arcivzácného ananasu (`drawAnanas`) s medovou aurou, smaragdovou korunkou a diamantovým křížkováním, stejně jako kresby Podkovy, Kohoutka a Kukaček.
 - Do `App.tsx` zapojeno dynamické nahrazování léčivých dropů (`resolveDynamicDrop`), záchranný systém (Emergency Bias pod 25 % Kuráže), horké perníčky z dálkového zahnání (`FAR_KILL_DISTANCE`) i komprese dropů při Overkillu.
 - Do Dědečkovy nůše (`GRANDFATHER_ITEMS`) doplněny chybějící položky `kovarska_podkova`, `hlineny_kohoutek` a `vyrezavane_kukacky` včetně autentických ladovských hlášek.
-- Kompletně lokalizovány všechny instantní a pekelné předměty v českém (`cs.ts`) i anglickém (`en.ts`) slovníku a rozšířeny testy pokrývající všech 18 testovacích sad.
+- Kompletně lokalizovány všechny instantní a pekelné předměty v českém (`cs.ts`) i anglickém (`en.ts`) slovníku a rozšířeny testy pokrývajících všech 18 testovacích sad.
 
 ## 2026-10-13 — Opravy typové kontroly a výchozí dynamické obtížnosti
 

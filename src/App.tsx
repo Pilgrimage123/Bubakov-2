@@ -106,6 +106,7 @@ import { KrejcarIcon } from './components/KrejcarIcon';
 import { TestModeModal } from './components/TestModeModal';
 import { AnimationTesterModal } from './components/AnimationTesterModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
+import { SettingsDevModal } from './components/SettingsDevModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
@@ -1316,6 +1317,7 @@ export default function App() {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [controlsDefaultTab, setControlsDefaultTab] = useState('controls');
   const [selectedHunterInfo, setSelectedHunterInfo] = useState<HunterDetail | null>(null);
+  const [isSettingsDevOpen, setIsSettingsDevOpen] = useState(false);
   const soundEnabled = meta.effectsEnabled !== false && meta.soundEffectsEnabled !== false;
   const musicEnabled = meta.effectsEnabled !== false && meta.musicEnabled !== false;
 
@@ -10151,7 +10153,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           <div id="top-bar">
             <LadaHudBotanicalDecor />
 
-            {/* Kuráž = Lovcovo HP + Mobile Quick Pause Button */}
+            {/* Kuráž = Lovcovo HP + Kompaktní perníčky + Mobile Quick Pause Button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', position: 'relative' }}>
               <div
                 id="courage-container"
@@ -10173,6 +10175,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
                 </div>
               </div>
+              <div
+                id="hud-gingerbread-chip"
+                className="hud-gingerbread-chip"
+                title="Perníčky pro Čertova dědečka"
+                aria-label={`Perníčky ${runStats.gingerbread}`}
+              >
+                <span>🍪</span>
+                <span>{runStats.gingerbread}</span>
+              </div>
               <button
                 className="hud-pause-btn"
                 onClick={togglePause}
@@ -10181,14 +10192,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 ⏸️
               </button>
-            </div>
-
-            {/* Run resource: gingerbread replaces the arena XP bar. */}
-            <div id="gingerbread-container" className="bar-container" style={{ minHeight: '34px' }}>
-              <div className="bar-text" style={{ justifyContent: 'center' }} aria-label={`Perníčky ${runStats.gingerbread}`}>
-                <span style={{ marginRight: '7px' }}>🍪</span>
-                PERNÍČKY <strong>{runStats.gingerbread}</strong>
-              </div>
             </div>
 
             {/* Stats row with Day/Night clock indicator */}
@@ -10275,12 +10278,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
             <BubakovCoverTitle />
-
-            <div style={{ textAlign: 'center', margin: '6px 0 10px 0' }}>
-              <LadaCartouche variant="ochre" size="md">
-                🗺️ KROK 1 ZE 2: VÝBĚR VÝPRAVY
-              </LadaCartouche>
-            </div>
 
             {/* 7 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
@@ -10660,51 +10657,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <div className="menu-hub-toolbar">
               <button
                 className="lada-btn btn-small"
-                style={{
-                  background: '#7C3AED',
-                  color: '#FFFFFF',
-                  fontWeight: 900,
-                  boxShadow: '4px 4px 0px var(--ink)',
-                }}
-                onClick={() => {
-                  sound.coin();
-                  setIsTestModeOpen(true);
-                }}
-                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
+                onClick={() => setGameState('tavern')}
               >
-                🧪 Testovací mód
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{
-                  background: '#0284C7',
-                  color: '#FFFFFF',
-                  fontWeight: 900,
-                  boxShadow: '4px 4px 0px var(--ink)',
-                }}
-                onClick={() => {
-                  sound.coin();
-                  setIsAnimationTesterOpen(true);
-                }}
-                title="Otevřít tester animací: ukazuje animace všech nepřátel, lovců a dědečka"
+                style={{ background: '#E06D29', color: '#FFFFFF' }}
+                onClick={() => setIsArsenalOpen(true)}
               >
-                🎬 Tester animací
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
               </button>
-              <button
-                className="lada-btn btn-small"
-                style={{
-                  background: '#DC2626',
-                  color: '#FFFFFF',
-                  fontWeight: 900,
-                  boxShadow: '4px 4px 0px var(--ink)',
-                }}
-                onClick={() => {
-                  sound.hit();
-                  setIsResetModalOpen(true);
-                }}
-                title="Vymazat veškerý postup (zamkne vše odemykatelné a vrátí upgrady na nulu)"
-              >
-                🗑️ Vymazat postup
+              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
+                📖 Bestiář nočního venkova
               </button>
               <button
                 className="lada-btn btn-small"
@@ -10717,30 +10685,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 🎮 Ovládání hry
               </button>
-              <button className="lada-btn btn-small" onClick={openEffectSettings} title="Přepínat osvětlení, efekty boje, výstrahy, popisky, zvuky a hudbu">
-                👁️ Zapnuté efekty
-              </button>
-              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
-              </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#E06D29', color: '#FFFFFF' }}
-                onClick={() => setIsArsenalOpen(true)}
+                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsSettingsDevOpen(true);
+                }}
+                title="Nastavení grafiky, výkonu a vývojářské nástroje"
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
-              </button>
-              <button className="lada-btn btn-small" onClick={() => setIsPlanOpen(true)}>
-                📜 Plán změn a kronika
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
-                onClick={() => setGameState('tavern')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
-                </span>
+                ⚙️ Nastavení a vývoj
               </button>
             </div>
           </div>
@@ -10873,19 +10827,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{
-                  background: '#7C3AED',
-                  color: '#FFFFFF',
-                  fontWeight: 900,
-                  boxShadow: '4px 4px 0px var(--ink)',
-                }}
-                onClick={() => {
-                  sound.coin();
-                  setIsTestModeOpen(true);
-                }}
-                title="Otevřít testovací mód: zvolte libovolného hrdinu, libovolnou úroveň a startovní zbraně včetně jejich levelů"
+                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
+                onClick={() => setGameState('tavern')}
               >
-                🧪 Testovací mód
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                </span>
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#E06D29', color: '#FFFFFF' }}
+                onClick={() => setIsArsenalOpen(true)}
+              >
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+              </button>
+              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
+                📖 Bestiář nočního venkova
               </button>
               <button
                 className="lada-btn btn-small"
@@ -10898,24 +10855,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 🎮 Ovládání hry
               </button>
-              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
-              </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#E06D29', color: '#FFFFFF' }}
-                onClick={() => setIsArsenalOpen(true)}
+                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsSettingsDevOpen(true);
+                }}
+                title="Nastavení grafiky, výkonu a vývojářské nástroje"
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
-                onClick={() => setGameState('tavern')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
-                </span>
+                ⚙️ Nastavení a vývoj
               </button>
             </div>
           </div>
@@ -10928,9 +10877,86 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           <div className="panel" style={{ maxWidth: '820px' }}>
             <h1>⏸️ HRA POZASTAVENA</h1>
             <LadaBotanicalFlourish height={20} />
-            <p style={{ fontWeight: 800, fontSize: '1.2rem', color: '#FEF3C7', marginTop: '-4px' }}>
-              Výprava je pozastavena klávesou <strong>[P]</strong>. Zkontrolujte svůj arzenál, posilněte se chlebem a nadechněte se!
-            </p>
+
+            {/* Top Primary Actions */}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', margin: '12px 0 10px' }}>
+              <button
+                className="lada-btn"
+                style={{ background: 'var(--leaf-green)', fontSize: '1.2rem', padding: '10px 32px' }}
+                onClick={togglePause}
+              >
+                Pokračovat ve hře ⚔️
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#1D4ED8', color: '#FFFFFF', padding: '10px 18px', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsControlsOpen(true);
+                }}
+              >
+                🎮 Ovládání hry
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: 'var(--wood-dark)', padding: '10px 18px', color: 'var(--parchment)' }}
+                onClick={quitToTavernFromPause}
+                title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
+              >
+                Ukončit výpravu 🍺
+              </button>
+            </div>
+
+            {/* In-pause toggles */}
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '6px 0 16px' }}>
+              <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
+                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon}</span>
+                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
+              </div>
+              <div className="touch-toggle-btn" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240, maxWidth: '100%', padding: '8px 12px', textAlign: 'left' }}>
+                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900 }}>📱 Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
+                <input id="mobile-accessibility-level" type="range" min={1} max={10} step={1} value={mobileAccessibilityLevel}
+                  onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
+                  aria-label="Úroveň mobilního usnadnění" style={{ width: '100%', accentColor: '#4D7C0F' }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.8rem', fontWeight: 700 }}>
+                  <input type="checkbox" checked={mobileAccessibilityAllDevices} onChange={(event) => updateMobileAccessibilityAllDevices(event.target.checked)} />
+                  Použít i na jiných zařízeních
+                </label>
+                <span style={{ fontSize: '0.72rem', lineHeight: 1.25, opacity: 0.85 }}>
+                  {mobileAccessibilityEnabled
+                    ? `Útok a pohyb nepřátel −${mobileAccessibilityLevel * 2} %, poškození −${mobileAccessibilityLevel * 3} %, magnet +${mobileAccessibilityLevel * 5} %, hitbox lovce −${mobileAccessibilityLevel * 5} %.`
+                    : 'Účinky jsou vypnuté mimo dotyková zařízení.'}
+                </span>
+              </div>
+              <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
+                🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
+              </button>
+              <button className="sound-toggle-btn" onClick={toggleSound}>
+                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
+                  const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
+                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
+                }}
+                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
+              >
+                ⚡ Výkon: <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
+                  const nextShow = !meta.showPerfOverlay;
+                  saveMeta({ ...meta, showPerfOverlay: nextShow });
+                }}
+                title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
+              >
+                📊 FPS: <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
+              </button>
+            </div>
 
             {/* Run summary stats card */}
             <div
@@ -10980,7 +11006,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
 
             {/* Current weapons inventory */}
-            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: '#FEF3C7' }}>
+            <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--ink)' }}>
               🗡️ Nesený arzenál a výbava lovce:
             </h3>
 
@@ -11110,7 +11136,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               return (
                 <div style={{ marginTop: '12px' }}>
-                  <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: '#FEF3C7', fontSize: '1.05rem' }}>
+                  <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: 'var(--ink)', fontSize: '1.05rem' }}>
                     ✨ Získaná vylepšení a posílení lovce:
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
@@ -11144,6 +11170,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                                   borderRadius: '4px',
                                   fontWeight: 900,
                                   fontSize: '0.8rem',
+                                  border: '1px solid var(--ink)',
                                 }}
                               >
                                 {p.badge}
@@ -11160,119 +11187,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </div>
               );
             })()}
-
-            {/* In-pause toggles */}
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '14px 0' }}>
-              <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
-                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon}</span>
-                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
-              </div>
-              <div className="touch-toggle-btn" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240, maxWidth: '100%', padding: '8px 12px', textAlign: 'left' }}>
-                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900 }}>📱 Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
-                <input id="mobile-accessibility-level" type="range" min={1} max={10} step={1} value={mobileAccessibilityLevel}
-                  onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
-                  aria-label="Úroveň mobilního usnadnění" style={{ width: '100%', accentColor: '#4D7C0F' }} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.8rem', fontWeight: 700 }}>
-                  <input type="checkbox" checked={mobileAccessibilityAllDevices} onChange={(event) => updateMobileAccessibilityAllDevices(event.target.checked)} />
-                  Použít i na jiných zařízeních
-                </label>
-                <span style={{ fontSize: '0.72rem', lineHeight: 1.25, opacity: 0.85 }}>
-                  {mobileAccessibilityEnabled
-                    ? `Útok a pohyb nepřátel −${mobileAccessibilityLevel * 2} %, poškození −${mobileAccessibilityLevel * 3} %, magnet +${mobileAccessibilityLevel * 5} %, hitbox lovce −${mobileAccessibilityLevel * 5} %.`
-                    : 'Účinky jsou vypnuté mimo dotyková zařízení.'}
-                </span>
-              </div>
-              <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
-                🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
-              </button>
-              <button className="sound-toggle-btn" onClick={toggleSound}>
-                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
-                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
-                }}
-                title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
-              >
-                ⚡ Výkon: <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  const nextLighting = meta.dynamicLightingEnabled === false ? true : false;
-                  saveMeta({ ...meta, dynamicLightingEnabled: nextLighting });
-                }}
-                title="Zapnout / vypnout dynamické osvětlení a kvašové noční stíny"
-              >
-                🕯️ Světlo: <span className="touch-toggle-text">{meta.dynamicLightingEnabled !== false ? 'Zap' : 'Vyp'}</span>
-              </button>
-              <button
-                className="touch-toggle-btn"
-                onClick={() => {
-                  sound.coin();
-                  const nextShow = !meta.showPerfOverlay;
-                  saveMeta({ ...meta, showPerfOverlay: nextShow });
-                }}
-                title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
-              >
-                📊 FPS: <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
-              </button>
-            </div>
-
-            {/* Pause Action Buttons */}
-            <div className="pause-actions-row">
-              <button
-                className="lada-btn"
-                style={{ background: 'var(--leaf-green)' }}
-                onClick={togglePause}
-              >
-                Pokračovat ve hře ⚔️
-              </button>
-              <button
-                className="lada-btn"
-                style={{ background: '#7C3AED', color: '#FFFFFF' }}
-                onClick={() => {
-                  spawnPrefixedEnemyNow();
-                  togglePause();
-                }}
-                title="Okamžitě přivolá náhodného elitního bubáka s jedním ze 4 prefixů (Vichřicový, Hromový, Kamenný, Pekelný)!"
-              >
-                ⚡ Elitní Bubák (Prefix)! 👹
-              </button>
-              <button
-                className="lada-btn"
-                style={{ background: '#D97706', color: '#FFFFFF' }}
-                onClick={() => {
-                  spawnMinibossNow();
-                  togglePause();
-                }}
-                title="Okamžitě přivolá mocného minibosse této úrovně pro testování a boj!"
-              >
-                👑 Přivolat Minibosse! ⚔️
-              </button>
-              <button
-                className="lada-btn"
-                style={{ background: '#1D4ED8', color: '#FFFFFF' }}
-                onClick={() => {
-                  sound.coin();
-                  setIsControlsOpen(true);
-                }}
-              >
-                🎮 Ovládání a cíl hry
-              </button>
-              <button
-                className="lada-btn"
-                style={{ background: 'var(--wood-dark)' }}
-                onClick={quitToTavernFromPause}
-                title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
-              >
-                Ukončit výpravu a sečíst skóre 🍺
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -11483,7 +11397,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   style={{
                     padding: '14px 42px',
                     fontSize: '1.4rem',
-                    background: 'var(--red)',
+                    background: 'var(--blood-red)',
                     color: '#FEF3C7',
                     animation: 'popIn 0.3s ease-out',
                   }}
@@ -11766,24 +11680,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* CONTROLS & OBJECTIVE MODAL */}
       <ControlsModal
         isOpen={isControlsOpen}
-        onClose={() => { setIsControlsOpen(false); setControlsDefaultTab('controls'); }}
-        defaultTab={controlsDefaultTab}
-        effectsEnabled={meta.effectsEnabled !== false}
-        effectSettings={{
-          dynamicLightingEnabled: meta.dynamicLightingEnabled !== false,
-          combatVfxEnabled: meta.combatVfxEnabled !== false,
-          warningIndicatorsEnabled: meta.warningIndicatorsEnabled !== false,
-          enemyDescriptorsEnabled: meta.enemyDescriptorsEnabled !== false,
-          attackDescriptorsEnabled: meta.attackDescriptorsEnabled !== false,
-          statusIndicatorsEnabled: meta.statusIndicatorsEnabled !== false,
-          unlockNotificationsEnabled: meta.unlockNotificationsEnabled !== false,
-          soundEffectsEnabled: meta.soundEffectsEnabled !== false,
-          musicEnabled: meta.musicEnabled !== false,
-        }}
-        onToggleEffectsEnabled={(enabled) => saveMeta({ ...metaRef.current, effectsEnabled: enabled })}
-        onToggleEffectCategory={(category: Exclude<EffectCategory, 'effectsEnabled'>, enabled) => {
-          saveMeta({ ...metaRef.current, [category]: enabled });
-        }}
+        onClose={() => setIsControlsOpen(false)}
+      />
+
+      {/* SETTINGS & DEV MODAL */}
+      <SettingsDevModal
+        isOpen={isSettingsDevOpen}
+        onClose={() => setIsSettingsDevOpen(false)}
         performanceMode={!!meta.performanceMode}
         performanceProfile={meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')}
         onChangePerformanceProfile={(profile) => {
@@ -11804,6 +11707,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onChangeDynamicDifficulty={(diff) => {
           saveMeta({ ...meta, dynamicDifficulty: diff });
         }}
+        onOpenTestMode={() => setIsTestModeOpen(true)}
+        onOpenAnimationTester={() => setIsAnimationTesterOpen(true)}
+        onOpenPlan={() => setIsPlanOpen(true)}
+        onOpenResetProgress={() => setIsResetModalOpen(true)}
       />
 
       {/* TEST MODE (SANDBOX) MODAL */}

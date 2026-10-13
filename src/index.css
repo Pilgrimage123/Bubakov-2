@@ -14,6 +14,7 @@
   --lada-spine: #284E33;
   --lada-paper: #FAF5E8;
   --lada-paper-border: #E8DCC2;
+  --parchmentDark: #EADBCA;
 
   --gold-bright: #FDE047;
   --cream: #FEF3C7;
@@ -565,6 +566,23 @@ body {
 .hud-pause-btn:hover {
   background: #FDE047;
   transform: scale(1.08);
+}
+
+.hud-gingerbread-chip {
+  background: #FFFBEB;
+  border: 2.5px solid var(--ink);
+  border-radius: 9999px;
+  height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 900;
+  font-size: 0.92rem;
+  color: var(--ink);
+  box-shadow: 2px 2px 0px var(--ink);
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 #stats-row {
@@ -1977,13 +1995,22 @@ body {
   }
 
   .modal-tabs {
-    gap: 5px;
+    gap: 6px;
     margin-bottom: 12px;
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+    width: 100%;
+    scrollbar-width: thin;
   }
 
   .tab-btn {
-    padding: 5px 9px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 11px;
     font-size: 0.82rem;
     border-width: 2px;
     box-shadow: 2px 2px 0 var(--ink);
@@ -3966,13 +3993,22 @@ body {
   }
 
   .modal-tabs {
-    gap: 5px;
+    gap: 6px;
     margin-bottom: 12px;
-    flex-wrap: wrap;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+    width: 100%;
+    scrollbar-width: thin;
   }
 
   .tab-btn {
-    padding: 5px 9px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 6px 11px;
     font-size: 0.82rem;
     border-width: 2px;
     box-shadow: 2px 2px 0 var(--ink);

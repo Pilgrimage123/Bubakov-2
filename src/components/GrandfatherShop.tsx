@@ -335,6 +335,7 @@ export function GrandfatherShop({
               display: 'flex',
               flexDirection: 'column',
               gap: 10,
+              order: isMobile ? 2 : 1,
             }}
           >
             {/* The Animated Canvas Stage */}
@@ -448,6 +449,7 @@ export function GrandfatherShop({
               flexDirection: 'column',
               gap: 12,
               minWidth: 0,
+              order: isMobile ? 1 : 2,
             }}
           >
             {/* Status & Currencies Bar */}

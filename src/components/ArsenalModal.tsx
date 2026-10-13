@@ -45,19 +45,10 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 						style: {
 							margin: "0 0 4px 0",
 							fontSize: "1.9rem",
-							color: "#FEF3C7",
-							textShadow: "2px 2px 0 var(--ink)"
+							color: "var(--ink)"
 						},
 						children: "🗡️ Zbrojnice & Knihovna zbraní Bubákova"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						style: {
-							fontWeight: 800,
-							margin: 0,
-							color: "#FEF3C7",
-							fontSize: "0.96rem"
-						},
-						children: "Zbraně se odemykají postupně jedna po druhé v kovářské dílně – nová zbraň se začne odemykat teprve po odemčení zbraně předchozí!"
-					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "tab-btn",
 						style: {
 							padding: "6px 12px",
