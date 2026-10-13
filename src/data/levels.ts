@@ -35,7 +35,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			poiOrder: ["fields", "church", "tavern", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
-			id: "zaba",
+			id: "vrana",
 			name: "🐸 Probuzená Žába",
 			warning: "🐸 POZOR: Z BAHNA SKÁČE OBŘÍ PROBUZENÁ ŽÁBA!",
 			time: 30,
@@ -60,12 +60,12 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		spawnPools: {
 			noon: [
-				"zaba",
+				"vrana",
 				"mysak",
 				"sotek"
 			],
 			afternoon: [
-				"zaba",
+				"vrana",
 				"blatouch",
 				"sotek",
 				"rarach"
@@ -79,22 +79,28 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			night: [
 				"topivec",
 				"vodnicek",
-				"ropucha",
+				"mrazovy_skritek",
 				"bludicka"
 			],
 			midnight: [
 				"vodnicek",
-				"ropucha",
+				"mrazovy_skritek",
 				"topivec",
 				"bludicka"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "zaba",
-				name: "Rybniční žabka",
-				icon: "🐸",
-				role: "Probuzená havěť"
+				id: "vrana",
+				name: "Rychlá vrána",
+				icon: "🐦‍⬛",
+				role: "Létající náletník"
+			},
+			{
+				id: "mrazovy_skritek",
+				name: "Mrazivý skřítek",
+				icon: "🧊",
+				role: "Široká mrazivá aura"
 			},
 			{
 				id: "blatouch",
