@@ -21,7 +21,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.name).toBe('1. Předjaří v Hrusicích');
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
-    expect(lvl0.miniBoss.id).toBe('zaba');
+    expect(lvl0.miniBoss.id).toBe('vrana');
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('morana');
     expect(lvl0.spawnPools.noon).toContain('vrana');
@@ -113,7 +113,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(GAME_LEVELS[0].spawnPools.afternoon).not.toContain('zaba');
   });
 
-  it('scales miniboss frog reasonably for tutorial difficulty without excessive 1400 HP sponge', () => {
+  it('scales the stage 1 crow miniboss reasonably for tutorial difficulty', () => {
     const engine = new GameEngine();
     engine.initRun({
       levelId: 0,
@@ -121,11 +121,11 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
       spawnInitialWave: false,
     });
 
-    const frogMiniBoss = engine.spawnMonster('zaba', 100, 100, 4.5, false, true, '🐸 Probuzená Žába');
-    expect(frogMiniBoss.isMiniboss).toBe(true);
+    const crowMiniBoss = engine.spawnMonster('vrana', 100, 100, 4.5, false, true, '🐦‍⬛ Hejno mrazivých vran');
+    expect(crowMiniBoss.isMiniboss).toBe(true);
     // Beginner tutorial miniboss should be balanced (~220 HP), not 1400 HP
-    expect(frogMiniBoss.hp).toBeLessThan(500);
-    expect(frogMiniBoss.hp).toBeGreaterThanOrEqual(100);
+    expect(crowMiniBoss.hp).toBeLessThan(500);
+    expect(crowMiniBoss.hp).toBeGreaterThanOrEqual(100);
   });
 
   it('includes level0_completed trophy and verifies completion against meta', async () => {
