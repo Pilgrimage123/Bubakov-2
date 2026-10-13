@@ -1057,6 +1057,9 @@ export class GameEngine {
         }
 
         // Kamenný: 91% redukce poškození
+        if (type === 'holy') {
+          amount *= 1 + Math.max(0, self.state.player?.churchLevel || 0) * 0.08;
+        }
         if (this.prefixDamageReduction) {
           amount *= (1 - this.prefixDamageReduction);
         }
