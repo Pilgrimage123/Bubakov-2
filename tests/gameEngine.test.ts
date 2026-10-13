@@ -30,15 +30,15 @@ describe('GameEngine Headless Simulation', () => {
 
     it('initializes a run with specific level, hunter, and meta progression', () => {
       const meta = createDefaultMetaProgression();
-      meta.wallLevel = 2; // +50 hp bonus
+      meta.wallLevel = 2; // +40 hp bonus
       engine.initRun(1, 'wanderer', meta);
 
       expect(engine.state.activeLevelId).toBe(1);
       expect(engine.state.player).toBeDefined();
       expect(engine.state.player.type).toBe('wanderer');
-      // Wanderer base 200 hp + wallBonus (2 * 25) = 250 hp
-      expect(engine.state.player.maxHp).toBe(250);
-      expect(engine.state.player.hp).toBe(250);
+      // Wanderer base 200 hp + wallBonus (2 * 20) = 240 hp
+      expect(engine.state.player.maxHp).toBe(240);
+      expect(engine.state.player.hp).toBe(240);
       expect(engine.state.player.weapons.length).toBeGreaterThan(0);
       expect(engine.state.player.weapons[0].id).toBe('osikovy_prut');
     });

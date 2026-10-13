@@ -437,10 +437,10 @@ export class GameEngine {
       w._cachedStats = getRankedWeaponStats(w.id, w.level, w);
     });
 
-    const wallBonusHp = (meta?.wallLevel || 0) * 25;
+    const wallBonusHp = (meta?.wallLevel || 0) * 20;
     const millBonusSpeed = (meta?.millLevel || 0) * 10;
     const scarecrowBonusPickup = (meta?.scarecrowLevel || 0) * 25;
-    const wallDmgRed = Math.min(0.5, (meta?.wallLevel || 0) * 0.04);
+    const wallDmgRed = Math.min(0.3, (meta?.wallLevel || 0) * 0.03);
 
     const self = this;
 
@@ -457,6 +457,8 @@ export class GameEngine {
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: 1,
+      churchLevel: meta?.churchLevel || 0,
+      holyDamageMultiplier: 1 + Math.max(0, meta?.churchLevel || 0) * 0.08,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
@@ -1721,7 +1723,7 @@ export class GameEngine {
       if (player.regenLevel > 0 && player.hp < player.maxHp) {
         player.regenTimer += dt;
         if (player.regenTimer >= 5) {
-          player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 3);
+          player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 4);
           player.regenTimer = 0;
         }
       }

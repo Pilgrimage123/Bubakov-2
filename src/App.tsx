@@ -1619,7 +1619,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     // Kaple svaté vlny: Při nákupu u Dědečka vyšle posvěcenou tlakovou vlnu
     if ((metaRef.current.churchLevel || 0) > 0) {
-      const waveDmg = (metaRef.current.churchLevel || 0) * 100;
+      const waveDmg = (metaRef.current.churchLevel || 0) * 150 * (1 + (metaRef.current.churchLevel || 0) * 0.08);
       const waveRadius = 400;
       const nearby = enemySpatialHashRef.current.queryCircle(p.x, p.y, waveRadius + 60);
       for (let i = 0; i < nearby.length; i++) {

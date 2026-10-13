@@ -1,6 +1,6 @@
 import type { VillageBuilding, MetaProgression } from '../types';
 
-export const VILLAGE_TAX_RATE = 0.30;
+export const VILLAGE_TAX_RATE = 0.20;
 
 /**
  * Returns total number of upgrade levels purchased across all village buildings.
@@ -12,10 +12,10 @@ export function getVillageTotalLevels(meta: Partial<MetaProgression>): number {
 /**
  * Calculates current price for a building upgrade based on its base cost
  * and the total number of village upgrade levels purchased so far (Obecní přirážka).
- * Grows 2x faster than the original rate (+30% per total level).
+ * Adds 20% of the base price per total village upgrade level.
  */
 export function getVillageBuildingCost(baseCost: number, totalVillageLevels: number): number {
-	return Math.round((baseCost * (100 + totalVillageLevels * 30)) / 100);
+	return Math.round((baseCost * (100 + totalVillageLevels * 20)) / 100);
 }
 
 /**
@@ -82,11 +82,11 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		name: "Kamenné hradby a bašta",
 		levelKey: "wallLevel",
 		role: "Obrana vesnice a zdi gruntů",
-		baseCost: 50,
+		baseCost: 75,
 		helpers: "Kostliví zedníci se zednickými lžícemi",
 		story: "Kostliví pomocníci vyměnili své nářadí za zednické lžíce a maltu. Celou noc pilně rovnají žulové kvádry a zalévají spáry, takže zdi vesnice vydrží i nápor nejdivočejších nezbedů.",
-		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 25} max Kuráž & +${Math.min(50, lvl * 4)}% odolnost proti poškození`,
-		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
+		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 20} max Kuráž & +${Math.min(30, lvl * 3)}% odolnost proti poškození`,
+		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
 	{
@@ -142,11 +142,11 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		name: "Bylinková zahrádka",
 		levelKey: "regenLevel",
 		role: "Léčivé bylinky a trvalá regenerace",
-		baseCost: 75,
+		baseCost: 50,
 		helpers: "Divoženky a bába kořenářka sušící mateřídoušku",
 		story: "Na prosluněné mezi za chalupou pomáhají lesní divoženky sbírat mateřídoušku, třezalku a heřmánek. Voňavé masti a horké odvary dodávají lovci klidnou mysl a vracejí ztracenou Kuráž v průběhu celé noci.",
-		bonusDesc: (lvl) => `Voňavé býlí: +${lvl * 2} Kuráže doplňováno každých 5 sekund`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		bonusDesc: (lvl) => `Voňavé býlí: +${lvl * 4} Kuráže doplňováno každých 5 sekund`,
+		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawOvenScene"
 	},
 	{
@@ -154,11 +154,11 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		name: "Šenkýřova kuráž",
 		levelKey: "tavernShieldLevel",
 		role: "Hospodská rvačka a zoufalá odvaha",
-		baseCost: 75,
+		baseCost: 50,
 		helpers: "Zkrocení diblíci a permoníci leštící korbele",
 		story: "V hospodě U Černého kocoura se diblíci naučili čepovat chladné ležáky a pobízet chasníky k odvaze. Když jde do tuhého a lovci docházejí síly, vzpomene si na hospodskou rvačku a zasadí drtivý úder!",
-		bonusDesc: (lvl) => `Zoufalá kuráž: +${lvl * 15}% k poškození zbraní při poklesu Kuráže pod 35%`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		bonusDesc: (lvl) => `Zoufalá kuráž: +${lvl * 25}% k poškození zbraní úměrně chybějící Kuráži`,
+		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
 	{
@@ -177,12 +177,12 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		id: "church",
 		name: "Kaple svaté vlny",
 		levelKey: "churchLevel",
-		role: "Svatá vlna při nákupu u Dědečka",
-		baseCost: 75,
+		role: "Svatá vlna a posvěcená výzbroj",
+		baseCost: 30,
 		helpers: "Kající se bludičky leštící posvěcený zvon",
 		story: "Bludičky přilétly z močálů do kaple a omývají svěcenou vodou oltář. Při každém nákupu v Dědečkově nůši vyšle posvěcený zvon kolem lovce mocnou rázovou vlnu, která smete okolní bubáky.",
-		bonusDesc: (lvl) => `Svatá vlna: ${lvl * 100} posvátného poškození a silný odhoz v okruhu 400 px při nákupu u Dědečka`,
-		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
+		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 150} posvátného poškození (400 px) při nákupu u Dědečka`,
+		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	}
 ];

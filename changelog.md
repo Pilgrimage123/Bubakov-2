@@ -786,3 +786,16 @@
 - Každý aktivní Mrazivý skřítek v dosahu snižuje získané léčení o 20 procentních bodů. Více skřítků se sčítá a snížení je omezeno na 100 %. Penalty platí pro pasivní regeneraci i léčení předměty/oblastmi; neblokuje změnu maximální Kuráže samotnou.
 - Stejný koeficient ovlivňuje i obnovu Kuráže z jednorázových bonusů: navýšení maxima se provede vždy, ale doplnění aktuální Kuráže (včetně Ananasu a bonusů z truhel) je zkráceno podle aktivní aury.
 - Přidány unit testy rozsahu, kumulace mrazivé aury a jejího vlivu na Ananasové léčení.
+## 2026-10-13 — Balancování rozvoje vesnice a svaté výzbroje
+
+- Obecní přirážka k cenám staveb snížena z 30 % na 20 % za každou zakoupenou úroveň.
+- Šenkýřova kuráž zlevněna na 50 kr a přepracována na plynulý bonus k poškození úměrný chybějící Kuráži: až +25 % za úroveň při nulové Kuráži.
+- Kamenné hradby stojí 75 kr; dávají +20 maximální Kuráže a +3 % odolnosti za úroveň, nejvýše 30 %.
+- Bylinková zahrádka stojí 50 kr a regeneruje +4 Kuráže každých 5 sekund za úroveň.
+- Kaple svaté vlny stojí 30 kr a při nákupu u Dědečka způsobuje 150 svatého poškození za úroveň v okruhu 400 px; její karta uvádí také +8 % svatého poškození za úroveň.
+- Herní engine nyní uplatňuje pasivní bonus Kaple svaté vlny (+8 % svatého poškození za úroveň) na všechna svatá poškození; testováno samostatným testem.
+- Aktualizována očekávání ekonomických testů a test inicializace hradeb podle nového balancu.
+- Opraveny regresní testy: nová 20% přirážka, přepočet refundací, spojité škálování Šenkýřovy kuráže, strop hradeb a nové maximum Kuráže.
+- Test kaple porovnává stejného nepřítele s nulovou a druhou úrovní kaple, aby izoloval přesný bonus +16 % i při nepřátelské svaté odolnosti.
+- Upraven test pasivního svatého bonusu tak, aby přesně porovnával úroveň 0 a 2 a ověřoval násobek 1,16.
+- Hráčská runtime data nyní nesou násobič svatého poškození Kaple svaté vlny (1 + 0,08 × úroveň); přidán cílený test úrovní 0/1/2.
