@@ -5713,9 +5713,10 @@ var Lada = {
 	drawFrostling(ctx, x, y, time, vx, panicked) {
 		const bob = Math.sin(time * (panicked ? 12 : 5)) * 2.5;
 		ctx.save(); ctx.translate(x, y + bob); ctx.shadowColor = "#93E5FF"; ctx.shadowBlur = 12;
-		ctx.fillStyle = "rgba(125, 211, 252, 0.16)"; ctx.beginPath(); ctx.arc(0, 0, 27 + Math.sin(time * 4) * 2, 0, Math.PI * 2); ctx.fill();
-		ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(186, 230, 253, 0.8)"; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
-		ctx.beginPath(); ctx.arc(0, 0, 24 + Math.sin(time * 4) * 2, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+		// Match the visible rime aura to the 78 px gameplay damage/chill radius.
+		ctx.fillStyle = "rgba(125, 211, 252, 0.10)"; ctx.beginPath(); ctx.arc(0, 0, 78 + Math.sin(time * 4) * 3, 0, Math.PI * 2); ctx.fill();
+		ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(186, 230, 253, 0.65)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 7]);
+		ctx.beginPath(); ctx.arc(0, 0, 75 + Math.sin(time * 4) * 3, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
 		ctx.fillStyle = "#BAE6FD"; ctx.strokeStyle = "#164E63"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 10, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 		ctx.fillStyle = "#E0F2FE"; ctx.beginPath(); ctx.arc(0, -10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 		ctx.fillStyle = "#0F172A"; ctx.beginPath(); ctx.arc(-3, -11, 1.5, 0, Math.PI * 2); ctx.arc(3, -11, 1.5, 0, Math.PI * 2); ctx.fill();
