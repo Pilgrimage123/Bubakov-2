@@ -184,5 +184,17 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 150} posvátného poškození (400 px) při nákupu u Dědečka`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
+	},
+	{
+		id: "boziMuka",
+		name: "Boží muka u polní cesty",
+		levelKey: "boziMukaLevel",
+		role: "Přízeň osudu a posvěcená ochrana",
+		baseCost: 50,
+		helpers: "Svatojánští broučci střežící věčné světlo",
+		story: "Drobná kamenná boží muka na rozcestí se zapálenou svící chrání pocestné a zahánějí zlé moci. Kdo u nich v tichosti postojí, toho provází štěstěna na každém kroku.",
+		bonusDesc: (lvl) => `Přízeň osudu: +${lvl * 5} k výchozímu Štěstí lovce na výpravě`,
+		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
+		canvasDrawer: "drawWallScene"
 	}
 ];

@@ -70,7 +70,7 @@ export function getGrandfatherPrice(
   waitSeconds: number,
 ): number {
   const inflation = isGrandfatherPriceExempt(item) ? 1 : 1 + Math.max(0, purchasedCount) * GRANDFATHER_INFLATION_RATE;
-  const luckDiscount = Math.min(0.20, Math.max(0, luck) * 0.015);
+  const luckDiscount = Math.min(0.20, Math.max(0, (luck - 80) * 0.003));
   const waitDiscount = getWaitDiscount(waitSeconds);
   const price = item.baseCost * inflation * (1 - luckDiscount) * (1 - waitDiscount);
   return Math.max(1, Math.round(price));
@@ -124,7 +124,7 @@ export function chooseGrandfatherOffers(
   };
 
   // 1. Vzácná nabídka z nůše: zřídka se objeví Arcivzácný ananas nebo jeden z 6 vzácných pomocných předmětů
-  const rareRollChance = Math.min(0.40, 0.22 + Math.max(0, luck) * 0.025);
+  const rareRollChance = Math.min(0.50, 0.20 * (Math.max(0, luck) / 100));
   if (Math.random() < rareRollChance) {
     const rollSpecial = Math.random();
     if (ananasDef && rollSpecial < 0.38) {
@@ -162,7 +162,7 @@ export function chooseGrandfatherOffers(
   for (const item of candidates) {
     if (selected.length >= count) break;
     if (selected.some((offer) => offer.itemId === item.id)) continue;
-    const luckBoost = Math.max(0, luck) * 0.04 * (item.luckWeight ?? 1);
+    const luckBoost = Math.max(0, (luck - 80) / 20) * 0.04 * (item.luckWeight ?? 1);
     if (Math.random() > Math.min(1, 0.45 + luckBoost) && selected.length < count - 1) continue;
     selected.push(makeOffer(item));
   }

@@ -79,9 +79,9 @@ describe('Dědečkův obchod ekonomika (Grandfather Shop Economy)', () => {
   it('correctly incorporates luck and waiting discounts with the new inflation', () => {
     const item = getGrandfatherItem('sedmimile_krpce')!; // baseCost 35
     // 2 purchases = 70 base before discounts
-    // With 4 luck (6% discount) and 40 seconds wait (10% discount):
+    // With 100 luck (6% discount) and 40 seconds wait (10% discount):
     // 35 * 2 * 0.94 * 0.90 = 59.22 -> 59
-    expect(getGrandfatherPrice(item, 2, 4, 40)).toBe(59);
+    expect(getGrandfatherPrice(item, 2, 100, 40)).toBe(59);
   });
 
   it('does not inflate healing consumables or direct-currency treasures', () => {

@@ -10,8 +10,8 @@ import { getWeaponDamage } from '../src/data/weapons';
 import type { MetaProgression } from '../src/types';
 
 describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
-  it('has exactly 12 harmonized village buildings with appropriate tiers and folklore helpers', () => {
-    expect(VILLAGE_BUILDINGS).toHaveLength(12);
+  it('has harmonized village buildings with appropriate tiers and folklore helpers', () => {
+    expect(VILLAGE_BUILDINGS).toHaveLength(13);
 
     const validBaseCosts = [30, 50, 75];
     for (const b of VILLAGE_BUILDINGS) {

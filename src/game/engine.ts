@@ -453,6 +453,22 @@ export class GameEngine {
     const scarecrowBonusPickup = (meta?.scarecrowLevel || 0) * 25;
     const wallDmgRed = Math.min(0.3, (meta?.wallLevel || 0) * 0.03);
 
+    const baseLuck =
+      type === 'granny'
+        ? 120
+        : type === 'shepherd'
+        ? 105
+        : type === 'wanderer'
+        ? 100
+        : type === 'sexton'
+        ? 100
+        : type === 'watchman'
+        ? 90
+        : type === 'korenarka'
+        ? 85
+        : 100;
+    const boziMukaBonusLuck = (meta?.boziMukaLevel || 0) * 5;
+
     const self = this;
 
     const player = {
@@ -464,7 +480,7 @@ export class GameEngine {
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
       pickupRadius: basePickup + scarecrowBonusPickup,
-      luck: 0,
+      luck: baseLuck + boziMukaBonusLuck,
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: 1,
@@ -1111,6 +1127,12 @@ export class GameEngine {
         if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
           finalDamage = Math.round(finalDamage * 2.2);
           self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
+        } else if (self.state.player) {
+          const critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
+          if (Math.random() < critChance) {
+            finalDamage = Math.round(finalDamage * 1.65);
+            self.state.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
+          }
         }
         this.hp = Math.max(0, this.hp - finalDamage);
         this.hitFlashTimer = 0.12;

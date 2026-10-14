@@ -38,7 +38,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'pytlacka_lucerna', name: 'Pytlácká lucerna', icon: '🏮', description: '+30 dosahu sběru', baseCost: 35, maxStacks: 5, luckWeight: 1.1, effect: { type: 'pickup_radius', amount: 30 } },
   { id: 'zaplacovany_kabat', name: 'Záplatovaný kabát', icon: '🧥', description: '+25 maximální Kuráž', baseCost: 45, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
   { id: 'krajac_na_podmasli', name: 'Kráječ na podmáslí', icon: '🥣', description: '+0,6 regenerace / s', baseCost: 50, maxStacks: 4, luckWeight: 0.8, effect: { type: 'regen', amount: 0.6 } },
-  { id: 'podkova_pro_stesti', name: 'Podkova pro štěstí', icon: '🧲', description: '+1 ŠTĚSTÍ', baseCost: 50, maxStacks: 5, luckWeight: 0.8, effect: { type: 'luck', amount: 1 } },
+  { id: 'podkova_pro_stesti', name: 'Podkova pro štěstí', icon: '🧲', description: '+10 ŠTĚSTÍ', baseCost: 50, maxStacks: 5, luckWeight: 0.8, effect: { type: 'luck', amount: 10 } },
   { id: 'bylinkova_fajfka', name: 'Bylinková fajfka', icon: '🚬', description: '+1,2 regenerace / s', baseCost: 60, maxStacks: 4, luckWeight: 0.7, effect: { type: 'regen', amount: 1.2 } },
   { id: 'rehtacka', name: 'Řehtačka', icon: '🪇', description: '+15 % poškození', baseCost: 65, maxStacks: 4, luckWeight: 0.65, effect: { type: 'damage_multiplier', amount: 0.15 } },
 

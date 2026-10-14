@@ -1575,7 +1575,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     eng.gingerbread = Math.max(eng.gingerbread, 350);
     eng.grandfather.offers = chooseGrandfatherOffers(
       eng.gingerbread,
-      eng.player?.luck || 2,
+      eng.player?.luck || 100,
       grandfatherPurchaseIdsRef.current,
       eng.player?.weapons || [{ id: 'cane', level: 1 }],
       4
@@ -1620,7 +1620,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         id: weaponUpgrade.id, name: weaponUpgrade.name, icon: weaponUpgrade.icon,
         description: weaponUpgrade.description, baseCost: weaponUpgrade.baseCost,
         effect: { type: 'luck', amount: 0 },
-      } as GrandfatherItemDef, purchasedCount, p.luck || 0, waitSeconds);
+      } as GrandfatherItemDef, purchasedCount, p.luck ?? 100, waitSeconds);
       if (eng.gingerbread < price) return false;
       eng.gingerbread -= price;
       weapon.synergisticUpgrades.push(weaponUpgrade.upgradeId);
@@ -1632,7 +1632,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       setGrandfatherPurchaseIds(newPurchasedIds);
       sound.grandfatherPurchase();
       eng.texts.push(new DamageText(p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true));
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck || 0, newPurchasedIds, p.weapons || [], 4);
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, newPurchasedIds, p.weapons || [], 4);
       setGrandfatherVersion((v) => v + 1);
       setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
       return true;
@@ -1642,7 +1642,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (item.effect.type === 'heal' && p.hp >= p.maxHp && !(p.bearMaskLevel > 0)) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
     const purchaseCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
-    const price = getGrandfatherPrice(item, purchaseCount, p.luck || 0, waitSeconds);
+    const price = getGrandfatherPrice(item, purchaseCount, p.luck ?? 100, waitSeconds);
     if (eng.gingerbread < price) return false;
 
     eng.gingerbread -= price;
@@ -1695,7 +1695,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
       : newPurchasedIds.filter((id) => id === item.id).length;
     if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck || 0, newPurchasedIds, p.weapons || [], 4);
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, newPurchasedIds, p.weapons || [], 4);
     }
     setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
@@ -1712,7 +1712,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     eng.gingerbread -= cost;
     eng.grandfather.rerollsThisEncounter = rerolls + 1;
-    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck || 0, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4);
+    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck ?? 100, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4);
     sound.coin();
     sound.grandfatherCall();
     if (p) {
@@ -2153,6 +2153,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
     const wallDmgRed = Math.min(0.5, (meta.wallLevel || 0) * 0.04);
 
+    const baseLuck =
+      type === 'granny'
+        ? 120
+        : type === 'shepherd'
+        ? 105
+        : type === 'wanderer'
+        ? 100
+        : type === 'sexton'
+        ? 100
+        : type === 'watchman'
+        ? 90
+        : type === 'korenarka'
+        ? 85
+        : 100;
+    const boziMukaBonusLuck = (meta.boziMukaLevel || 0) * 5;
+
     const player = {
       x: 0,
       y: 0,
@@ -2165,7 +2181,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       pickupRadius: (basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
       accessibilityBasePickupRadius: basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup,
       accessibilityAppliedLevel: mobileAccessibilityScale,
-      luck: 0,
+      luck: baseLuck + boziMukaBonusLuck,
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: 1,
@@ -2605,6 +2621,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       wallLevel: 0,
       bakeryLevel: 0,
       bellLevel: 0,
+      boziMukaLevel: 0,
       totalSoulsSaved: 0,
       totalChasnikSaved: 0,
       season: 'autumn',
@@ -3214,6 +3231,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       tavernShieldLevel: 0,
       waterLevel: 0,
       churchLevel: 0,
+      boziMukaLevel: 0,
     });
   };
 
@@ -3389,7 +3407,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Dědeček is a roaming run encounter, not a village NPC.
             if (engine.grandfather.cooldown > 0) engine.grandfather.cooldown = Math.max(0, engine.grandfather.cooldown - dt);
-            const luck = player.luck || 0;
+            const luck = player.luck ?? 100;
             const affordableBase = GRANDFATHER_ITEMS.some((item) => item.baseCost <= engine.gingerbread);
             if (
               !engine.grandfather.active &&
@@ -8882,6 +8900,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (finalDmg >= 1) {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
           }
+        } else if (player) {
+          const critChance = Math.max(0, player.luck ?? 0) * 0.001;
+          if (Math.random() < critChance) {
+            finalDmg = Math.round(finalDmg * 1.65);
+            if (finalDmg >= 1) {
+              engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
+            }
+          }
         }
 
         this.hp -= finalDmg;
@@ -9136,6 +9162,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (gingerbreadSize === 'small') gingerbreadSize = 'large';
             else if (gingerbreadSize === 'large') gingerbreadSize = 'giant';
           }
+          const playerLuck = player?.luck ?? 100;
+          const luckGingerbreadUpgradeChance = Math.max(0, playerLuck) * 0.001;
+          if (Math.random() < luckGingerbreadUpgradeChance) {
+            if (gingerbreadSize === 'small') gingerbreadSize = 'large';
+            else if (gingerbreadSize === 'large') gingerbreadSize = 'giant';
+          }
           let gingerbreadValue = getGingerbreadValue(gingerbreadSize);
           if (this.killedByFriendlyFire) {
             gingerbreadValue *= 2;
@@ -9157,6 +9189,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             isHot: isFarKill,
             goldenRushTimer: isFarKill ? HOT_GINGERBREAD_DURATION : 0,
           });
+
+          // ADR 0013: Šance na extra krejcar podle Štěstí lovce (Štěstí * 0.05 %)
+          const coinChance = Math.max(0, playerLuck) * 0.0005;
+          if (Math.random() < coinChance) {
+            spawnScatterDrop('coin', {
+              value: 1,
+              speed: 70 + Math.random() * 40,
+              text: '+1 krejcar! 🪙🍀',
+              textColor: '#F59E0B',
+            });
+          }
 
           // ADR 0006: Záchranný systém (Emergency Bias): Při poklesu Kuráže pod 25 % vystřelí elita záchrannou jitrnici
           if (player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO && (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650)) {
@@ -10144,10 +10187,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               lineHeight: 1.32,
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '4px', marginBottom: '7px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', marginBottom: '7px' }}>
               <div><strong>❤️ Kuráž</strong><br />{hunterInfo.maxHp}</div>
               <div><strong>🏃 Rychlost</strong><br />{hunterInfo.speed}</div>
               <div><strong>🧲 Magnet</strong><br />{hunterInfo.pickupRadius} px</div>
+              <div><strong>🍀 Štěstí</strong><br />{hunterInfo.luck}</div>
             </div>
             <div><strong>🗡️ Zbraň:</strong> {hunterInfo.weapon}</div>
             <div style={{ marginTop: '5px' }}><strong>🌿 Pasivní:</strong> {hunterInfo.passive}</div>
@@ -11339,7 +11383,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {gameState === 'grandfather' && (
         <GrandfatherShop
           gingerbread={engineRef.current.gingerbread}
-          luck={engineRef.current.player?.luck || 0}
+          luck={engineRef.current.player?.luck ?? 100}
           waitSeconds={Math.max(0, engineRef.current.gameTime - engineRef.current.grandfather.waitStartedAt)}
           offers={engineRef.current.grandfather.offers}
           purchasedIds={grandfatherPurchaseIds}

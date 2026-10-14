@@ -169,6 +169,7 @@ export interface MetaProgression {
   forestLevel?: number;
   waterLevel?: number;
   undeadLevel?: number;
+  boziMukaLevel?: number;
   unlockedHunters?: Record<string, boolean>;
   unlockedWeapons?: Record<string, boolean>;
   hunterKillCounts?: Record<string, any>;

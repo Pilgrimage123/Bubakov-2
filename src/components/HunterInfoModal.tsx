@@ -54,6 +54,10 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
                 <strong style={{ display: 'block', fontSize: '0.78rem' }}>Základní magnet</strong>
                 <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>{hunter.pickupRadius} px</span>
               </div>
+              <div style={{ background: '#FEF3C7', border: '1px solid #D6B98C', borderRadius: '6px', padding: '8px' }}>
+                <strong style={{ display: 'block', fontSize: '0.78rem' }}>Štěstí</strong>
+                <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>{hunter.luck}</span>
+              </div>
             </div>
             <p style={{ margin: '8px 0 0', fontSize: '0.82rem', lineHeight: 1.35 }}>
               Jde o základní hodnoty před dalšími bonusy z hospody, předmětů a mobilního usnadnění. Dočasné bonusy mohou výsledné hodnoty změnit.

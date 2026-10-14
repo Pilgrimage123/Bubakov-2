@@ -82,6 +82,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     waterLevel: 0,
     forestLevel: 0,
     undeadLevel: 0,
+    boziMukaLevel: 0,
     totalSoulsSaved: 0,
     totalChasnikSaved: 0,
     season: 'spring',

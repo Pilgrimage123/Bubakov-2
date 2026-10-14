@@ -67,7 +67,7 @@ describe('i18n localization module', () => {
 
   it('translates all village buildings in both cs and en', () => {
     const buildingIds = VILLAGE_BUILDINGS.map(b => b.id);
-    expect(buildingIds.length).toBe(12);
+    expect(buildingIds.length).toBe(13);
 
     for (const id of buildingIds) {
       const nameCs = t(`building.${id}.name`, 'cs');

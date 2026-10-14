@@ -522,8 +522,8 @@ var HUNTER_UNLOCKS = {
 				tierLevel: 4,
 				spoiledName: "Babička a Barunka",
 				spoiledTitle: "Vlídná babička z Ratibořic a její vnučka",
-				spoiledLore: "Kynutý koláč s mákem a Barunka po boku. Schopnost: Chléb se solí a vlídné slovo (bere se jako Food nebo Holy podle toho, co má bubák slabší).",
-				spoiledWeaponHint: "Kynutý koláč s mákem",
+				spoiledLore: "Vysoké Štěstí (120), kynutý koláč s mákem a Barunka po boku. Schopnost: Chléb se solí a vlídné slovo (bere se jako Food nebo Holy podle toho, co má bubák slabší).",
+				spoiledWeaponHint: "Kynutý koláč s mákem (120 Štěstí)",
 				spoiledAbilityHint: "Chléb se solí a vlídné slovo (Food/Holy dle menší odolnosti bubáka)",
 				clueTag: "✅ Plně odemčeno!"
 			}

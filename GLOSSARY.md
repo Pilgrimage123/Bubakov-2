@@ -8,6 +8,10 @@
 Základní míra životní síly a odolnosti lovce; při jejím vyčerpání výprava končí porážkou.
 _Avoid_: HP, životy, zdraví, hitpoints
 
+**Štěstí**:
+Míra přízně osudu lovce (se základní hodnotou kolem 100), jež ovlivňuje šanci na kritické zásahy, hodnotnější kořist na bojišti a výhodnější nabídky u Čertova dědečka.
+_Avoid_: luck, štěstěna, náhoda, RNG
+
 **Nápřah**:
 Telegrafovaná přípravná fáze útoku strašidla, během které lovec vidí vizuální varování a může uskočit nebo útok přerušit.
 _Avoid_: windup, attack charge, casting
