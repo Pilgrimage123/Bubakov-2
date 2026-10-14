@@ -1,5 +1,5 @@
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
-import { getSynergisticUpgrade } from '../data/synergisticUpgrades';
+import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from '../data/synergisticUpgrades';
 
 export interface GrandfatherOffer {
   itemId: string;
@@ -84,105 +84,90 @@ export function chooseGrandfatherOffers(
   const isAvailable = (item: GrandfatherItemDef) => {
     if (item.isWeapon && item.weaponId) {
       const pw = playerWeapons.find((w: any) => w.id === item.weaponId);
-      const lvl = pw ? pw.level : 0;
-      return lvl < (item.maxStacks ?? 8);
+      return (pw ? pw.level : 0) < (item.maxStacks ?? 8);
     }
-    const owned = purchasedIds.filter((id) => id === item.id).length;
-    return owned < (item.maxStacks ?? Number.POSITIVE_INFINITY);
+    return purchasedIds.filter((id) => id === item.id).length < (item.maxStacks ?? Number.POSITIVE_INFINITY);
   };
-
   const availableItems = GRANDFATHER_ITEMS.filter(isAvailable);
   const availableWeapons = availableItems.filter((item) => item.isWeapon);
   const rareInstants = availableItems.filter((item) => item.isRareInstant);
   const ananasDef = availableItems.find((item) => item.isAnanas);
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
-
-  // Random weapon specializations are offered only for owned projectile weapons.
-  // The two alternatives are mutually exclusive for a weapon after purchase.
-  const projectileUpgradePairs: Record<string, [string, string]> = {
-    kysela_okurka: ['pickle_flood', 'pickle_crunch'],
-    povidlove_buchty: ['buns_generosity', 'buns_dense'],
-  };
+  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka']);
   const weaponUpgradeOffers: GrandfatherOffer[] = [];
   for (const weapon of playerWeapons) {
-    const pair = projectileUpgradePairs[weapon.id];
-    if (!pair || (weapon.level || 0) <= 0) continue;
-    if (Array.isArray(weapon.synergisticUpgrades) && weapon.synergisticUpgrades.length > 0) continue;
-    for (const upgradeId of pair) {
-      weaponUpgradeOffers.push({
-        itemId: `weapon_upgrade:${weapon.id}:${upgradeId}`,
-        offeredAt: now,
-      });
+    if (!projectileIds.has(weapon.id) || (weapon.level || 0) <= 0) continue;
+    const alreadySpecialized = (weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weapon.id);
+    if (alreadySpecialized) continue;
+    for (const upgrade of Object.values(SYNERGISTIC_UPGRADES).filter((entry) => entry.weaponId === weapon.id)) {
+      weaponUpgradeOffers.push({ itemId: `weapon_upgrade:${weapon.id}:${upgrade.id}`, offeredAt: now });
     }
   }
-
-  // Rare bonus slot.
   const rareRollChance = Math.min(0.40, 0.22 + Math.max(0, luck) * 0.025);
   if (Math.random() < rareRollChance) {
-    const rollSpecial = Math.random();
-    if (ananasDef && rollSpecial < 0.38) {
-      selected.push({ itemId: ananasDef.id, offeredAt: now });
-    } else if (rareInstants.length > 0) {
-      const chosenRare = rareInstants[Math.floor(Math.random() * rareInstants.length)];
-      selected.push({ itemId: chosenRare.id, offeredAt: now });
-    }
+    if (ananasDef && Math.random() < 0.38) selected.push({ itemId: ananasDef.id, offeredAt: now });
+    else if (rareInstants.length > 0) selected.push({ itemId: rareInstants[Math.floor(Math.random() * rareInstants.length)].id, offeredAt: now });
   }
-
-  // Sometimes dedicate one shop slot to a random weapon specialization.
   if (weaponUpgradeOffers.length > 0 && selected.length < count && Math.random() < 0.45) {
     selected.push(weaponUpgradeOffers[Math.floor(Math.random() * weaponUpgradeOffers.length)]);
   }
-
-  // Keep the existing guarantee of at least one weapon in the bag.
   const targetWeaponCount = Math.min(availableWeapons.length, count - selected.length >= 3 ? 2 : 1);
   if (targetWeaponCount > 0) {
     const pool = [...availableWeapons];
-    while (selected.filter((s) => availableWeapons.some((w) => w.id === s.itemId)).length < targetWeaponCount && pool.length > 0) {
-      const weights = pool.map((w) => {
-        const owned = playerWeapons.some((pw: any) => pw.id === w.weaponId);
-        return owned ? 3 : 1;
-      });
-      const totalWeight = weights.reduce((acc, value) => acc + value, 0);
-      let rand = Math.random() * totalWeight;
+    while (selected.filter((offer) => availableWeapons.some((weapon) => weapon.id === offer.itemId)).length < targetWeaponCount && pool.length > 0) {
+      const weights = pool.map((item) => playerWeapons.some((weapon: any) => weapon.id === item.weaponId) ? 3 : 1);
+      const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+      let roll = Math.random() * totalWeight;
       let chosenIdx = 0;
-      for (let i = 0; i < weights.length; i++) {
-        rand -= weights[i];
-        if (rand <= 0) { chosenIdx = i; break; }
-      }
+      for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) { chosenIdx = i; break; } }
       const chosen = pool.splice(chosenIdx, 1)[0];
-      if (!selected.some((offer) => offer.itemId === chosen.id)) {
-        selected.push({ itemId: chosen.id, offeredAt: now });
-      }
+      if (!selected.some((offer) => offer.itemId === chosen.id)) selected.push({ itemId: chosen.id, offeredAt: now });
     }
   }
-
-  const regularPool = availableItems.filter(
-    (item) => !item.isRareInstant && !item.isAnanas && !selected.some((offer) => offer.itemId === item.id)
-  );
+  const regularPool = availableItems.filter((item) => !item.isRareInstant && !item.isAnanas && !selected.some((offer) => offer.itemId === item.id));
   const shuffled = [...regularPool].sort(() => Math.random() - 0.5);
   const affordable = shuffled.filter((item) => item.baseCost <= gingerbread);
-  const candidatePool = [...affordable, ...shuffled.filter((item) => !affordable.includes(item))];
-
-  for (const item of candidatePool) {
+  const candidates = [...affordable, ...shuffled.filter((item) => !affordable.includes(item))];
+  for (const item of candidates) {
     if (selected.length >= count) break;
     if (selected.some((offer) => offer.itemId === item.id)) continue;
     const luckBoost = Math.max(0, luck) * 0.04 * (item.luckWeight ?? 1);
     if (Math.random() > Math.min(1, 0.45 + luckBoost) && selected.length < count - 1) continue;
     selected.push({ itemId: item.id, offeredAt: now });
   }
-
-  for (const offer of weaponUpgradeOffers.sort(() => Math.random() - 0.5)) {
+  for (const offer of [...weaponUpgradeOffers].sort(() => Math.random() - 0.5)) {
     if (selected.length >= count) break;
     if (!selected.some((entry) => entry.itemId === offer.itemId)) selected.push(offer);
   }
-  for (const item of candidatePool) {
+  for (const item of candidates) {
     if (selected.length >= count) break;
     if (!selected.some((offer) => offer.itemId === item.id)) selected.push({ itemId: item.id, offeredAt: now });
   }
-
-  if (selected.length === 0 && availableItems[0]) {
-    selected.push({ itemId: availableItems[0].id, offeredAt: now });
-  }
+  if (selected.length === 0 && availableItems[0]) selected.push({ itemId: availableItems[0].id, offeredAt: now });
   return selected.sort(() => Math.random() - 0.5);
+}
+export interface WeaponUpgradeOfferDef {
+  id: string;
+  weaponId: string;
+  upgradeId: string;
+  name: string;
+  description: string;
+  icon: string;
+  baseCost: number;
+}
+
+const PROJECTILE_WEAPON_IDS = new Set([
+  'kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule',
+  'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka',
+]);
+
+export function getWeaponUpgradeOffer(itemId: string): WeaponUpgradeOfferDef | undefined {
+  const match = /^weapon_upgrade:([^:]+):([^:]+)$/.exec(itemId);
+  if (!match) return undefined;
+  const [, weaponId, upgradeId] = match;
+  if (!PROJECTILE_WEAPON_IDS.has(weaponId)) return undefined;
+  const upgrade = getSynergisticUpgrade(upgradeId);
+  if (!upgrade || upgrade.weaponId !== weaponId) return undefined;
+  return { id: itemId, weaponId, upgradeId, name: upgrade.name, description: upgrade.description, icon: '✨', baseCost: 35 };
 }
