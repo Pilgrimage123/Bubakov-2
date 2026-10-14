@@ -127,9 +127,6 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
   },
 };
 
- 
-// Shared specializations for every weapon that fires actual projectiles.
-// Values map to the existing WeaponStats calculation: +130% count means x2.3.
 const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
   { id: 'kysela_okurka', name: 'Kyselá okurka' },
   { id: 'povidlove_buchty', name: 'Povidlové buchty' },
@@ -184,6 +181,11 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
     };
   }
 }
+
+
+ 
+// Shared specializations for every weapon that fires actual projectiles.
+// Values map to the existing WeaponStats calculation: +130% count means x2.3.
 
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
