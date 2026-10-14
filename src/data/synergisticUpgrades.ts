@@ -1,4 +1,4 @@
-import type { WeaponId, SynergisticUpgradeDef } from '../types';
+import type { WeaponId, SynergisticArchetype, SynergisticUpgradeDef } from '../types';
 
 export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
   // Kyselá okurka
