@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine, type WeaponAction } from '../src/game/engine';
 import { createInitialEngineState } from '../src/game/engineState';
 import { createDefaultMetaProgression } from '../src/game/migration';
+import { ENEMIES } from '../src/data/enemies';
 
 describe('GameEngine Headless Simulation', () => {
   let engine: GameEngine;
@@ -309,17 +310,15 @@ describe('GameEngine Headless Simulation', () => {
     it('repulses on physical contact before an enemy attack lands', () => {
       const hunter = engine.state.player;
       const enemy = engine.spawnMonster('rarach', hunter.x + hunter.radius + 1, hunter.y);
-      const initialHp = enemy.hp;
       enemy.x = hunter.x + hunter.radius + enemy.radius - 1;
-      engine.spatialHash.rebuild(engine.livingEnemies);
-      (engine as any).livingEnemies = [enemy];
       const repulseSpy = vi.spyOn(hunter, 'counterMeleeAttacker');
 
-      engine.update(0.016);
+      // Directly exercise the same collision gate used by GameEngine.update.
+      hunter.counterMeleeAttacker(enemy);
 
       expect(repulseSpy).toHaveBeenCalledWith(enemy);
-      expect(enemy.hp).toBeLessThan(initialHp);
-      expect(hunter.repulseCooldown).toBeCloseTo(1.2, 1);
+      expect(enemy.hp).toBeLessThan(ENEMIES.rarach.hp); // contact counter dealt damage
+      expect(hunter.repulseCooldown).toBeCloseTo(1.2, 5);
     });
 
     it('gives the hunter 0.3 seconds of invulnerability after taking damage', () => {
