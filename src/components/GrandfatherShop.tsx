@@ -635,7 +635,7 @@ export function GrandfatherShop({
                   const fullCourage = !!item && item.effect.type === 'heal' && playerHp >= playerMaxHp;
                   const affordable = gingerbread >= price && !isMaxed && !fullCourage;
                   const isHighlighted = activeItem?.id === item?.id || (!!weaponUpgrade && activeItem === null);
-                  const isPurchasedNow = justPurchasedId === item?.id;
+                  const isPurchasedNow = justPurchasedId === offer.itemId;
 
                   return (
                     <div
@@ -769,7 +769,7 @@ export function GrandfatherShop({
                           >
                             {price}
                           </strong>
-                          {priceExempt && <small style={{ color: '#78350F', fontWeight: 800 }}>{item!.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
+                          {priceExempt && item && <small style={{ color: '#78350F', fontWeight: 800 }}>{item.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
                         </div>
 
                         <button
