@@ -1,3 +1,10 @@
+## 2026-10-14 — Náhodná specializace projektilových zbraní
+
+- Dědečkova nůše může náhodně nabídnout specializaci už vlastněné projektilové zbraně; garance běžné nabídky alespoň jedné zbraně zůstává zachována.
+- Malovaná truhla může náhodně obsahovat specializaci projektilové zbraně.
+- Pro osm zbraní s projektily jsou dostupné tři alternativy: Kobercový nálet (+130 % projektilů, −30 % poškození), Rychlopalný mechanismus (−30 % cooldownu) a Těžká munice (+100 % poškození).
+- Každá zbraň může z těchto synergických specializací získat nejvýše jednu; aplikace aktualizuje běhové statistiky zbraně.
+
 ## 2026-10-14 — Kontaktní odstrčení a krátká nezranitelnost lovců
 
 - Odstrčení se aktivuje ihned při fyzickém dotyku s nepřítelem, nikoli až po jeho úspěšném útoku; samostatný cooldown lovce je 1,2 s.
