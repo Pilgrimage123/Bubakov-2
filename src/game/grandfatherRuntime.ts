@@ -94,7 +94,7 @@ export function chooseGrandfatherOffers(
   const ananasDef = availableItems.find((item) => item.isAnanas);
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
-  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka']);
+  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'hromnicka', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka']);
   const weaponUpgradeOffers: GrandfatherOffer[] = [];
   for (const weapon of playerWeapons) {
     if (!projectileIds.has(weapon.id) || (weapon.level || 0) <= 0) continue;
