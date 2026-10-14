@@ -471,6 +471,7 @@ export class GameEngine {
       regenLevel: meta?.regenLevel || 0,
       regenTimer: 0,
       invulnerabilityTimer: 0,
+      repulseCooldown: 0,
       intangibleTimer: 0,
       guaranteedCritTimer: 0,
       facingAngle: 0,
@@ -541,6 +542,8 @@ export class GameEngine {
 
       counterMeleeAttacker(attacker: any) {
         if (!attacker || attacker.isDefeated || attacker.dead) return;
+        if ((this.repulseCooldown || 0) > 0) return;
+        this.repulseCooldown = 1.2;
         const dx = attacker.x - this.x;
         const dy = attacker.y - this.y;
         const dist = Math.hypot(dx, dy) || 1;
@@ -550,14 +553,18 @@ export class GameEngine {
           nx = this.lastDx || 1;
           ny = this.lastDy || 0;
         }
-        const counterDmg = Math.max(1, Math.round(this.maxHp * 0.15));
-        const pushForce = 540;
+        // Poškození, odhození a stun škálují s maximální Kuráží lovce.
+        const courageScale = Math.max(0.25, (this.maxHp || 200) / 200);
+        const counterDmg = Math.max(1, Math.round((this.maxHp || 0) * 0.30));
+        const pushForce = 1080 * courageScale;
+        const stunDuration = 0.35 * courageScale;
         const kbx = nx * pushForce;
         const kby = ny * pushForce;
 
         attacker.takeDamage(counterDmg, 'physical', kbx, kby, {
           isHunterCounter: true,
-          source: 'hunter_melee_counter',
+          stunDuration,
+          source: 'hunter_contact_repulse',
         });
 
         self.callbacks?.onSound?.('heavyHit');
@@ -581,6 +588,8 @@ export class GameEngine {
           remainingDmg -= absorbed;
         }
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
+        // Každý úspěšný zásah dává lovci 0,3 s nezranitelnosti.
+        this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.3);
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
 
@@ -588,10 +597,6 @@ export class GameEngine {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true));
         } else {
           self.state.texts.push(new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444'));
-        }
-
-        if (isMelee && attacker && !attacker.isDefeated && !attacker.dead) {
-          this.counterMeleeAttacker(attacker);
         }
 
         if (this.hp <= 0) {
@@ -1684,6 +1689,8 @@ export class GameEngine {
         const collisionReach = player.radius + e.radius;
 
         if (dist < collisionReach) {
+          // Odstrčení reaguje na dotyk, aniž by čekalo na zásah nepřítele.
+          player.counterMeleeAttacker?.(e);
           const overlap = collisionReach - dist;
           if (dist > 0.0001) {
             const invDist = 1 / dist;
@@ -1717,7 +1724,8 @@ export class GameEngine {
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
       if (player.slowTimer > 0) player.slowTimer -= dt;
       if (player.ultCd > 0) player.ultCd -= dt;
-      if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
+      if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
+      if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
       if (player.regenLevel > 0 && player.hp < player.maxHp) {
