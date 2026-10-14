@@ -184,11 +184,6 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
 }
 
 
- 
-// Shared specializations for every weapon that fires actual projectiles.
-// Values map to the existing WeaponStats calculation: +130% count means x2.3.
-  return upgrades;
-})();
 
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
