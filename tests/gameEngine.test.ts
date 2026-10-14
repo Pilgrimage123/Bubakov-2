@@ -341,6 +341,10 @@ describe('GameEngine Headless Simulation', () => {
       const initialHp = enemy.hp;
 
       hunter.maxHp = 300;
+      enemy.x = 100;
+      enemy.y = 0;
+      hunter.x = 0;
+      hunter.y = 0;
       hunter.counterMeleeAttacker(enemy);
 
       expect(enemy.hp).toBeLessThanOrEqual(initialHp - 90);
