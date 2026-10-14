@@ -1,4 +1,5 @@
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
+import { getSynergisticUpgrade } from '../data/synergisticUpgrades';
 
 export interface GrandfatherOffer {
   itemId: string;
