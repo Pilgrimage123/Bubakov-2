@@ -16,6 +16,8 @@ describe('Enemy Attack Cadence, Windup & Recovery System (Kadence útoku, Nápř
     engine.state.player.y = 0;
     engine.state.player.hp = 1000;
     engine.state.player.maxHp = 1000;
+    // These tests focus on windup/cadence, not the separate contact-repulse mechanic.
+    engine.state.player.repulseCooldown = 999;
     // Clear any weapons so automatic attacks don't kill test enemies
     engine.state.player.weapons = [];
   });
