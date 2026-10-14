@@ -137,7 +137,8 @@ import {
 } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
-import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost } from './game/grandfatherRuntime';
+import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost, getWeaponUpgradeOffer } from './game/grandfatherRuntime';
+import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticUpgrades';
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
@@ -1593,8 +1594,41 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const purchaseGrandfatherItem = useCallback((itemId: string) => {
     const eng = engineRef.current;
     const p = eng.player;
+    const weaponUpgrade = getWeaponUpgradeOffer(itemId);
     const item = getGrandfatherItem(itemId);
-    if (!p || !item || !eng.grandfather.active) return false;
+    if (!p || (!item && !weaponUpgrade) || !eng.grandfather.active) return false;
+
+    // Dynamic weapon specializations are run upgrades, not static inventory items.
+    if (weaponUpgrade) {
+      const weapon = p.weapons?.find((w: any) => toCanonicalWeaponId(w.id) === weaponUpgrade.weaponId);
+      const upgradeDef = getSynergisticUpgrade(weaponUpgrade.upgradeId);
+      if (!weapon || !upgradeDef) return false;
+      weapon.synergisticUpgrades ??= [];
+      if (weapon.synergisticUpgrades.some((id: string) => getSynergisticUpgrade(id)?.weaponId === weaponUpgrade.weaponId)) return false;
+      const purchasedCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
+      const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
+      const price = getGrandfatherPrice({
+        id: weaponUpgrade.id, name: weaponUpgrade.name, icon: weaponUpgrade.icon,
+        description: weaponUpgrade.description, baseCost: weaponUpgrade.baseCost,
+        effect: { type: 'luck', amount: 0 },
+      } as GrandfatherItemDef, purchasedCount, p.luck || 0, waitSeconds);
+      if (eng.gingerbread < price) return false;
+      eng.gingerbread -= price;
+      weapon.synergisticUpgrades.push(weaponUpgrade.upgradeId);
+      weapon._cachedStats = undefined;
+      eng.grandfather.purchasesThisEncounter += 1;
+      eng.grandfather.totalPurchases = (eng.grandfather.totalPurchases || 0) + 1;
+      const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, weaponUpgrade.id];
+      grandfatherPurchaseIdsRef.current = newPurchasedIds;
+      setGrandfatherPurchaseIds(newPurchasedIds);
+      sound.grandfatherPurchase();
+      eng.texts.push(new DamageText(p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true));
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck || 0, newPurchasedIds, p.weapons || [], 4);
+      setGrandfatherVersion((v) => v + 1);
+      setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
+      return true;
+    }
+    if (!item) return false;
     // Healing consumables have no value at full Courage, so reject the purchase.
     if (item.effect.type === 'heal' && p.hp >= p.maxHp && !(p.bearMaskLevel > 0)) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
@@ -3001,6 +3035,31 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           });
         }
       });
+    }
+
+    // A painted treasure may randomly reveal a specialization for an owned projectile weapon.
+    if (p?.weapons && Math.random() < 0.45) {
+      const eligible = p.weapons.flatMap((weapon: any) => {
+        const weaponId = toCanonicalWeaponId(weapon.id);
+        if (!['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka'].includes(weaponId)) return [];
+        if ((weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weaponId)) return [];
+        return Object.values(SYNERGISTIC_UPGRADES).filter((upgrade) => upgrade.weaponId === weaponId).map((upgrade) => ({ weapon, upgrade }));
+      });
+      if (eligible.length > 0) {
+        const chosen = eligible[Math.floor(Math.random() * eligible.length)];
+        possibleRewards.push({
+          name: chosen.upgrade.name, desc: chosen.upgrade.description, icon: '✨',
+          action: () => {
+            const target = engineRef.current.player?.weapons?.find((weapon: any) => toCanonicalWeaponId(weapon.id) === chosen.upgrade.weaponId);
+            if (!target) return;
+            target.synergisticUpgrades ??= [];
+            if (!target.synergisticUpgrades.some((id: string) => getSynergisticUpgrade(id)?.weaponId === chosen.upgrade.weaponId)) {
+              target.synergisticUpgrades.push(chosen.upgrade.id);
+              target._cachedStats = undefined;
+            }
+          },
+        });
+      }
     }
 
     possibleRewards.sort(() => 0.5 - Math.random());
