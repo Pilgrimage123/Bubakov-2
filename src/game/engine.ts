@@ -546,13 +546,12 @@ export class GameEngine {
         this.repulseCooldown = 1.2;
         const dx = attacker.x - this.x;
         const dy = attacker.y - this.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        let nx = dx / dist;
-        let ny = dy / dist;
-        if (dist < 0.001) {
-          nx = this.lastDx || 1;
-          ny = this.lastDy || 0;
-        }
+        const rawDist = Math.hypot(dx, dy);
+        let nx = rawDist > 0.001 ? dx / rawDist : (this.lastDx || 1);
+        let ny = rawDist > 0.001 ? dy / rawDist : (this.lastDy || 0);
+        const dirLength = Math.hypot(nx, ny) || 1;
+        nx /= dirLength;
+        ny /= dirLength;
         // Poškození, odhození a stun škálují s maximální Kuráží lovce.
         const courageScale = Math.max(0.25, (this.maxHp || 200) / 200);
         const counterDmg = Math.max(1, Math.round((this.maxHp || 0) * 0.30));
