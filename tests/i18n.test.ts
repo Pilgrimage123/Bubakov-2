@@ -261,7 +261,7 @@ describe('i18n localization module', () => {
           }
         }
       }
-      expect(choiceCount).toBe(96);
+      expect(choiceCount).toBe(102);
     });
   });
 });

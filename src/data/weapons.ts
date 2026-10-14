@@ -642,6 +642,88 @@ var WEAPONS = {
 			if (typeof sound.candlePulse === 'function') sound.candlePulse();
 			return true;
 		}
+	},
+	formansky_bic: {
+		id: 'formansky_bic',
+		name: 'Formanský bič',
+		type: 'physical',
+		icon: '🪢',
+		baseDmg: 28,
+		baseCd: 0.95,
+		desc: 'Dlouhý kožený bič s jasanovým bičištěm. Švihá v úzké linii, přerušuje nápřah, ignoruje úhyb a přitahuje kořist v dráze švihu.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getWeaponStats('formansky_bic', level, w);
+			const reach = (210 + level * 10) * stats.areaRadiusMult;
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(reach + 80) : (player.getLivingEnemies ? player.getLivingEnemies() : []);
+
+			// Find enemy winding up first (isAttacking / windupTimer > 0 / aiState === 'windup'), or closest target
+			let target = null;
+			let minWindupDistSq = Infinity;
+			for (let i = 0; i < enemies.length; i++) {
+				const e = enemies[i];
+				if (e.isDefeated || e.dead) continue;
+				const dSq = getDistSqTo(player, e);
+				if (e.isAttacking || (e.windupTimer && e.windupTimer > 0) || e.aiState === 'windup') {
+					if (dSq < minWindupDistSq) {
+						minWindupDistSq = dSq;
+						target = e;
+					}
+				}
+			}
+			if (!target) {
+				let minCloseDistSq = Infinity;
+				for (let i = 0; i < enemies.length; i++) {
+					const e = enemies[i];
+					if (e.isDefeated || e.dead) continue;
+					const dSq = getDistSqTo(player, e);
+					if (dSq < minCloseDistSq) {
+						minCloseDistSq = dSq;
+						target = e;
+					}
+				}
+			}
+
+			const baseAngle = target
+				? Math.atan2(target.y - player.y, target.x - player.x)
+				: Math.atan2(player.lastDy || 0, player.lastDx || 1);
+
+			const milestones = w?.milestones || [];
+			const hasDoubleSwing = milestones.includes('whip_double_swing_3') || stats.projectileCount > 0;
+			const hasSevenStraps = milestones.includes('whip_seven_straps_8');
+			const arc = hasSevenStraps ? 1.35 : 0.38;
+			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
+			const angles = hasDoubleSwing ? [baseAngle, baseAngle + Math.PI * 0.5] : [baseAngle];
+
+			for (let i = 0; i < angles.length; i++) {
+				const ang = angles[i];
+				player.spawnMeleeSlash({
+					x: player.x,
+					y: player.y,
+					angle: ang,
+					reach,
+					arc,
+					dmg,
+					knockbackMult: stats.knockbackMult,
+					life: 0.28,
+					maxLife: 0.28,
+					type: 'physical',
+					style: 'whip',
+					weaponId: 'formansky_bic',
+					ignoreResist: stats.ignoreResist,
+					milestones,
+					soaked: !!(player.hasSoakedCane || milestones.includes('whip_wet_strap_5')),
+					pullLoot: true,
+				});
+			}
+
+			if (typeof (sound as any).caneWhip === 'function') {
+				(sound as any).caneWhip(player.hasSoakedCane || milestones.includes('whip_wet_strap_5'));
+			} else {
+				sound.slash();
+			}
+			return true;
+		}
 	}
 };
 
@@ -661,6 +743,9 @@ export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	potato: 'horky_brambor',
 	bees: 'vceli_roj',
 	holywater: 'svecena_kropenka',
+	wp_whip: 'formansky_bic',
+	whip: 'formansky_bic',
+	formansky_bic: 'formansky_bic',
 };
 
 for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {

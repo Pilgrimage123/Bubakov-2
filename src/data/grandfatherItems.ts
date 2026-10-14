@@ -14,7 +14,10 @@ export type GrandfatherEffect =
   | { type: 'rare_instant'; rareItemId: RareItemType }
   | { type: 'arcivzacny_ananas' }
   | { type: 'fajfka' }
-  | { type: 'bear_mask' };
+  | { type: 'bear_mask' }
+  | { type: 'holy_circle'; damageReduction: number }
+  | { type: 'kren_spice'; foodResistReduction: number; snackBonusDmg: number }
+  | { type: 'gingerbread_heart'; cdReductionMult: number; giantHeal: number };
 
 export interface GrandfatherItemDef {
   id: string;
@@ -55,12 +58,56 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   
   { id: 'kynuty_kolac_perk', name: 'Pomeranč z Orientu', icon: 'pomeranc_z_orientu', description: '+25 maximální Kuráž i okamžité posílení', baseCost: 40, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
 
+  // --- Nové pasivní posvěcení a dobroty ---
+  {
+    id: 'trikralova_krida',
+    name: 'Posvěcená tříkrálová křída',
+    icon: '🖍️',
+    description: 'Při zastavení nakreslí ochranný kruh: odrazí nemrtvé i čerty a sníží utržené zranění o 20 %.',
+    baseCost: 50,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'holy_circle', damageReduction: 0.20 },
+  },
+  {
+    id: 'strouhany_kren',
+    name: 'Strouhaný křen v ubrousku',
+    icon: '🫚',
+    description: '-25 % odolnost bubáků vůči jídlu (platí i na kostlivce) a +15 % poškození do mlsajících cílů.',
+    baseCost: 45,
+    maxStacks: 4,
+    luckWeight: 0.9,
+    effect: { type: 'kren_spice', foodResistReduction: 0.25, snackBonusDmg: 0.15 },
+  },
+  {
+    id: 'poutove_srdce',
+    name: 'Pouťové perníkové srdce',
+    icon: '💝',
+    description: 'Sebrané perníčky zkracují dobu obnovy schopnosti; obří perníčky navíc zhojí 8 Kuráže.',
+    baseCost: 50,
+    maxStacks: 4,
+    luckWeight: 0.85,
+    effect: { type: 'gingerbread_heart', cdReductionMult: 1.0, giantHeal: 8 },
+  },
+
   // --- Pekelné poklady: nákup se okamžitě promění v krejcary ---
   { id: 'pekeln_poklad_drobny', name: 'Pekelný měšec', icon: 'pekeln_poklad_drobny', description: 'Dědeček ti hned vyplatí 40 krejcarů.', baseCost: 8, maxStacks: 99, luckWeight: 1.0, effect: { type: 'coins', amount: 40 } },
   { id: 'pekeln_poklad_stribrny', name: 'Pekelný stříbrňák', icon: 'pekeln_poklad_stribrny', description: 'Dědeček ti hned vyplatí 100 krejcarů.', baseCost: 18, maxStacks: 99, luckWeight: 0.75, effect: { type: 'coins', amount: 100 } },
   { id: 'pekeln_poklad_zlaty', name: 'Pekelný tolar z pekla', icon: 'pekeln_poklad_zlaty', description: 'Dědeček ti hned vyplatí 250 krejcarů.', baseCost: 40, maxStacks: 99, luckWeight: 0.45, effect: { type: 'coins', amount: 250 } },
 
   // --- Zbraně (vždy garantována alespoň jedna v nůši) ---
+  {
+    id: 'wp_whip',
+    name: 'Formanský bič',
+    icon: '🪢',
+    description: 'Prásknutí bičem přeruší nápřah bubáků, ignoruje úhyb a přitáhne kořist v dráze.',
+    baseCost: 55,
+    maxStacks: 8,
+    luckWeight: 0.95,
+    isWeapon: true,
+    weaponId: 'formansky_bic',
+    effect: { type: 'weapon', weaponId: 'formansky_bic' },
+  },
   { id: 'wp_cane', name: 'Osikový prut', icon: 'osikovy_prut', description: 'Rychlý sečný oblouk odhání dotěrné skřítky a zloděje.', baseCost: 55, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'osikovy_prut', effect: { type: 'weapon', weaponId: 'osikovy_prut' } },
   { id: 'wp_cesnekova-topinka', name: 'Česneková topinka', icon: 'cesnekova_topinka', description: 'Smradlavá aura z česnekové topinky s brutálním odhozením.', baseCost: 40, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'cesnekova_topinka', effect: { type: 'weapon', weaponId: 'cesnekova_topinka' } },
   { id: 'wp_valecnice', name: 'Válečnice', icon: 'valecnice', description: 'Rázná paní s válečkem obíhající kolem lovce.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'valecnice', effect: { type: 'weapon', weaponId: 'valecnice' } },

@@ -120,6 +120,7 @@ export interface EngineState {
     beerPuddle: { x: number; y: number; time: number } | null;
     forestAmbushCooldown: number;
   };
+  holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
 }
 
 export function createInitialEngineState(): EngineState {
@@ -233,5 +234,6 @@ export function createInitialEngineState(): EngineState {
       beerPuddle: null,
       forestAmbushCooldown: 0,
     },
+    holyCircle: null,
   };
 }

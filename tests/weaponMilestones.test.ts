@@ -28,7 +28,7 @@ import {
 } from '../src/data/weaponMilestones';
 import type { WeaponId } from '../src/types';
 
-const CANONICAL_16_WEAPONS: WeaponId[] = [
+const CANONICAL_17_WEAPONS: WeaponId[] = [
   'osikovy_prut',
   'valecnice',
   'cesnekova_topinka',
@@ -45,12 +45,13 @@ const CANONICAL_16_WEAPONS: WeaponId[] = [
   'hromnicka',
   'svecena_kropenka',
   'bylinkova_fajfka',
+  'formansky_bic',
 ];
 
 describe('Weapon Milestones System', () => {
-  it('contains all 16 canonical weapons in WEAPONS_WITH_MILESTONES', () => {
-    expect(WEAPONS_WITH_MILESTONES).toHaveLength(16);
-    expect(new Set(WEAPONS_WITH_MILESTONES)).toEqual(new Set(CANONICAL_16_WEAPONS));
+  it('contains all 17 canonical weapons in WEAPONS_WITH_MILESTONES', () => {
+    expect(WEAPONS_WITH_MILESTONES).toHaveLength(17);
+    expect(new Set(WEAPONS_WITH_MILESTONES)).toEqual(new Set(CANONICAL_17_WEAPONS));
   });
 
   it('passes validateWeaponMilestones() without throwing', () => {
@@ -59,7 +60,7 @@ describe('Weapon Milestones System', () => {
   });
 
   it('has 8 ranks for every canonical weapon with correct milestone flags', () => {
-    for (const weaponId of CANONICAL_16_WEAPONS) {
+    for (const weaponId of CANONICAL_17_WEAPONS) {
       const defs = WEAPON_RANK_DEFS[weaponId];
       expect(defs, `Defs for ${weaponId} must exist`).toBeDefined();
       expect(defs).toHaveLength(8);
@@ -83,7 +84,7 @@ describe('Weapon Milestones System', () => {
   it('has unique IDs and valid fields for all milestone choices across all weapons', () => {
     const seenChoiceIds = new Set<string>();
 
-    for (const weaponId of CANONICAL_16_WEAPONS) {
+    for (const weaponId of CANONICAL_17_WEAPONS) {
       for (const rank of [3, 5, 8] as const) {
         const choices = getMilestoneChoices(weaponId, rank);
         expect(choices, `Choices for ${weaponId} rank ${rank}`).toBeDefined();
@@ -136,12 +137,12 @@ describe('Weapon Milestones System', () => {
       }
     }
 
-    // 16 weapons * 3 milestone ranks * 2 choices = 96 distinct choices
-    expect(seenChoiceIds.size).toBe(96);
+    // 17 weapons * 3 milestone ranks * 2 choices = 102 distinct choices
+    expect(seenChoiceIds.size).toBe(102);
   });
 
   it('computes ranked stats correctly with milestones chosen', () => {
-    for (const weaponId of CANONICAL_16_WEAPONS) {
+    for (const weaponId of CANONICAL_17_WEAPONS) {
       const rankDef1 = getWeaponRankDef(weaponId, 1);
       expect(rankDef1).toBeDefined();
       expect(rankDef1?.rank).toBe(1);
@@ -212,8 +213,8 @@ describe('Weapon Milestones System', () => {
       }
     });
 
-    it('replaces simple generic upgrades on melee weapons (prut, vidle, halapartna, cep, valecnice)', () => {
-      for (const weaponId of ['osikovy_prut', 'kovarske_vidle', 'kovana_halapartna', 'dreveny_cep', 'valecnice'] as const) {
+    it('replaces simple generic upgrades on melee weapons (prut, vidle, halapartna, cep, valecnice, formansky_bic)', () => {
+      for (const weaponId of ['osikovy_prut', 'kovarske_vidle', 'kovana_halapartna', 'dreveny_cep', 'valecnice', 'formansky_bic'] as const) {
         for (const rank of [2, 4, 6, 7] as const) {
           const rankDef = getWeaponRankDef(weaponId, rank);
           expect(rankDef).toBeDefined();
@@ -384,7 +385,7 @@ describe('Weapon Milestones System', () => {
 
   describe('Bylinková fajfka Weapon and Milestone Integrity', () => {
     it('is registered as a canonical weapon with 8 ranks and correct milestone ranks', () => {
-      expect(CANONICAL_16_WEAPONS).toContain('bylinkova_fajfka');
+      expect(CANONICAL_17_WEAPONS).toContain('bylinkova_fajfka');
       for (let r = 1; r <= 8; r++) {
         const def = getWeaponRankDef('bylinkova_fajfka', r);
         expect(def).toBeDefined();

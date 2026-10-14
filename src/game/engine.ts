@@ -46,6 +46,7 @@ import {
 import {
   performDropFusion,
   applyMagnetWave,
+  pullWhipLoot,
   registerKillAndCheckCombo,
   createDropInstance,
   applyRareItemEffect,
@@ -55,6 +56,7 @@ import {
   getRareDropAnnouncement,
   type DropSpawnOptions,
 } from './drops';
+import type { GrandfatherItemDef } from '../data/grandfatherItems';
 import { RunDirector } from './director';
 import { getCurrentDayPhase } from '../constants';
 import {
@@ -627,7 +629,14 @@ export class GameEngine {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true));
           return;
         }
-        const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
+        let totalDamageReduction = this.damageReduction;
+        if (self.state.holyCircle && (this.holyCircleStacks || 0) > 0) {
+          const pDist = Math.hypot(this.x - self.state.holyCircle.x, this.y - self.state.holyCircle.y);
+          if (pDist <= self.state.holyCircle.radius) {
+            totalDamageReduction = Math.min(0.85, totalDamageReduction + Math.min(0.60, this.holyCircleStacks * 0.20));
+          }
+        }
+        const hurtDmg = Math.max(1, amount * (1 - totalDamageReduction));
         const hpBeforeDamage = this.hp;
         let remainingDmg = hurtDmg;
         let absorbed = 0;
@@ -1095,8 +1104,8 @@ export class GameEngine {
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
         if (this.isDefeated || this.dead) return;
 
-        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
-        if (this.prefix === 'vichricovy') {
+        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (bič ignoruje úhyb)
+        if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
           const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
           if (Math.random() < dodge) {
             self.state.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
@@ -1127,7 +1136,9 @@ export class GameEngine {
         const ignoreResist = options?.ignoreResist || 0;
         let effectiveResist = 0;
         if (type === 'food') {
-          effectiveResist = this.hunger ?? this.foodResist ?? 0;
+          const baseFood = this.hunger ?? this.foodResist ?? 0;
+          const red = self.state.player?.foodResistReduction || 0;
+          effectiveResist = Math.max(0, baseFood * (1 - red));
         } else if (type === 'holy') {
           effectiveResist = getEnemyHolyResistance(this);
         } else {
@@ -1136,6 +1147,9 @@ export class GameEngine {
         effectiveResist = Math.max(0, effectiveResist * (1 - ignoreResist));
 
         let finalDamage = Math.max(1, amount * (1 - effectiveResist));
+        if (self.state.player?.snackBonusDmg && ((this.snackTimer || 0) > 0 || this.statusEffects.pickle_sickness) && type !== 'food') {
+          finalDamage *= (1 + self.state.player.snackBonusDmg);
+        }
         if (type === 'holy') {
           const holyMult = (self.state.player?.holyDamageMultiplier) || (1 + Math.max(0, self.state.meta?.churchLevel || 0) * 0.08);
           finalDamage *= holyMult;
@@ -1378,6 +1392,66 @@ export class GameEngine {
     return updatedStats;
   }
 
+  public applyGrandfatherItem(item: GrandfatherItemDef, offer?: any): void {
+    const p = this.state.player;
+    if (!p) return;
+    const effect = item.effect;
+    if (effect.type === 'speed') {
+      p.speed += effect.amount;
+      p.speedCount = (p.speedCount || 0) + 1;
+    }
+    if (effect.type === 'pickup_radius') {
+      p.pickupRadius += effect.amount;
+      p.magnetCount = (p.magnetCount || 0) + 1;
+    }
+    if (effect.type === 'damage_multiplier') {
+      p.damageMultiplier = (p.damageMultiplier || 1) * (1 + effect.amount);
+      if (item.id === 'krvave_jelito') p.jelitoCount = (p.jelitoCount || 0) + 1;
+    }
+    if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
+      p.fajfkaLevel = Math.min(2, (p.fajfkaLevel || 0) + 1);
+    }
+    if (effect.type === 'bear_mask' || item.id === 'medvedi_mast') {
+      p.bearMaskLevel = (p.bearMaskLevel || 0) + 1;
+      p.bearMaskHealBonus = Math.max(0, (p.bearMaskLevel - 1) * 0.20);
+    }
+    if (effect.type === 'max_hp') {
+      p.maxHp += effect.amount;
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+      if (item.id === 'medvedi_mast') p.kurazCount = (p.kurazCount || 0) + 1;
+    }
+    if (effect.type === 'luck') p.luck = (p.luck || 0) + effect.amount;
+    if (effect.type === 'regen') {
+      p.regenLevel = (p.regenLevel || 0) + Math.round(effect.amount * 10) / 10;
+    }
+    if (effect.type === 'cooldown') {
+      p.cooldownBonus = (p.cooldownBonus || 0) + effect.amount;
+      p.kavaCount = (p.kavaCount || 0) + 1;
+    }
+    if (effect.type === 'heal') {
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount);
+    }
+    if (effect.type === 'coins') {
+      this.state.coins += Math.max(0, Math.floor(effect.amount));
+    }
+    if (effect.type === 'weapon') {
+      this.upgradeWeapon(effect.weaponId);
+    }
+    if (effect.type === 'holy_circle') {
+      p.holyCircleStacks = Math.min(3, (p.holyCircleStacks || 0) + 1);
+      p.holyCircleReduction = (p.holyCircleReduction || 0) + effect.damageReduction;
+    }
+    if (effect.type === 'kren_spice') {
+      p.krenSpiceStacks = Math.min(4, (p.krenSpiceStacks || 0) + 1);
+      p.foodResistReduction = (p.foodResistReduction || 0) + effect.foodResistReduction;
+      p.snackBonusDmg = (p.snackBonusDmg || 0) + effect.snackBonusDmg;
+    }
+    if (effect.type === 'gingerbread_heart') {
+      p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
+      p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
+    }
+  }
+
   public applyWeaponAction(action: WeaponAction): any {
     if (action.type === 'projectile') {
       const p = action.proj || action;
@@ -1472,6 +1546,9 @@ export class GameEngine {
         };
       }
       this.state.slashes.push(slash);
+      if (slash.pullLoot && this.state.player) {
+        pullWhipLoot(this.state.drops, this.state.player.x, this.state.player.y, slash.angle, slash.reach);
+      }
       this.state.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
       return slash;
     }
@@ -1752,6 +1829,7 @@ export class GameEngine {
         }
         const buffMultiplier =
           (player.soulBuffTimer > 0 ? 1.25 : 1) *
+          (player.gingerbreadSpeedTimer > 0 ? (1 + (player.gingerbreadSpeedBonus || 0.15)) : 1) *
           (player.waterSoakedTimer > 0 ? 0.75 : 1) *
           (player.slowTimer > 0 ? 0.65 : 1) *
           (player.hazardSlowTimer > 0 ? (player.hazardSlowFactor || 0.7) : 1);
@@ -1812,12 +1890,80 @@ export class GameEngine {
       player.y += (moveVy + pushY) * dt;
 
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
+      if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
       if (player.slowTimer > 0) player.slowTimer -= dt;
       if (player.ultCd > 0) player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
       if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
       if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
+
+      // Holy Chalk Circle (Posvěcená tříkrálová křída)
+      if (player.holyCircleStacks > 0) {
+        if (mx === 0 && my === 0) {
+          player.stillTimer = (player.stillTimer || 0) + dt;
+          if (player.stillTimer >= 0.6) {
+            if (!this.state.holyCircle) {
+              this.state.holyCircle = {
+                x: player.x,
+                y: player.y,
+                radius: 120,
+                life: 1.5,
+                active: true,
+              };
+              this.callbacks?.onSound?.('bell');
+              this.state.texts.push(new DamageText(player.x, player.y - 40, 'K + M + B 🖍️', '#FDE047', true));
+            } else {
+              this.state.holyCircle.x = player.x;
+              this.state.holyCircle.y = player.y;
+              this.state.holyCircle.life = 1.5;
+              this.state.holyCircle.active = true;
+            }
+          }
+        } else {
+          player.stillTimer = 0;
+          if (this.state.holyCircle) {
+            this.state.holyCircle.life -= dt;
+            if (this.state.holyCircle.life <= 0) {
+              this.state.holyCircle = null;
+            }
+          }
+        }
+      }
+
+      // Holy Chalk Circle unholy barrier & repellent damage
+      if (this.state.holyCircle && this.state.holyCircle.active) {
+        const hc = this.state.holyCircle;
+        const nearbyUnholy = this.spatialHash.queryCircle(hc.x, hc.y, hc.radius + 60);
+        for (let ui = 0; ui < nearbyUnholy.length; ui++) {
+          const foe = nearbyUnholy[ui];
+          if (foe.isDefeated || foe.dead || !isUnholyEnemy(foe)) continue;
+          const dx = foe.x - hc.x;
+          const dy = foe.y - hc.y;
+          const dist = Math.hypot(dx, dy);
+          const reach = hc.radius + (foe.radius || 15);
+          if (dist < reach) {
+            const nx = dist > 0.001 ? dx / dist : 1;
+            const ny = dist > 0.001 ? dy / dist : 0;
+            const holyPush = getHolyPushMultiplier(foe);
+            const pushForce = 380 * holyPush;
+            foe.kbx += nx * pushForce * dt * 10;
+            foe.kby += ny * pushForce * dt * 10;
+            const overlap = reach - dist;
+            foe.x += nx * overlap * Math.min(1, dt * 15);
+            foe.y += ny * overlap * Math.min(1, dt * 15);
+
+            foe._holyCircleTick = (foe._holyCircleTick || 0) - dt;
+            if (foe._holyCircleTick <= 0) {
+              foe._holyCircleTick = 0.4;
+              const holyDmgMult = getHolyDamageMultiplier(foe);
+              const dmg = 24 * holyDmgMult * (player.damageMultiplier || 1);
+              foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
+              this.state.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
+            }
+          }
+        }
+      }
 
       if (player.regenLevel > 0 && player.hp < player.maxHp) {
         player.regenTimer += dt;
@@ -1892,7 +2038,9 @@ export class GameEngine {
         const reach = p.radius + e.radius;
         if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach * reach) {
           p.hitList.push(e);
-          const hungerResist = typeof e.hunger === 'number' ? e.hunger : e.foodResist || 0;
+          const baseHunger = typeof e.hunger === 'number' ? e.hunger : e.foodResist || 0;
+          const red = this.state.player?.foodResistReduction || 0;
+          const hungerResist = Math.max(0, baseHunger * (1 - red));
           const resist = p.type === 'food' ? hungerResist : 0;
           if (resist >= 0.95) {
             this.state.texts.push(new DamageText(e.x, e.y - 20, 'IMUNNÍ', '#0F172A'));
@@ -1956,13 +2104,68 @@ export class GameEngine {
 
           if (diff <= s.arc / 2) {
             s.hitList.push(e);
-            const kbForce = 260 * (s.knockbackMult ?? 1);
+            const isWhip = s.weaponId === 'formansky_bic' || s.style === 'whip';
+            let kbForce = (isWhip ? 340 : 260) * (s.knockbackMult ?? 1);
+            let dmg = s.dmg;
+            let dmgType = s.type;
             const dmgOpts: any = {};
             if (s.stunDuration) dmgOpts.stunDuration = s.stunDuration;
             if (s.ignoreResist) dmgOpts.ignoreResist = s.ignoreResist;
+
+            if (isWhip) {
+              dmgOpts.cannotDodge = true;
+              dmgOpts.ignoreDodge = true;
+              const milestones = s.milestones || [];
+              const distFromPlayer = Math.hypot(e.x - s.x, e.y - s.y);
+              const isTipHit = distFromPlayer >= s.reach * 0.65;
+
+              // Immediately interrupt attack
+              if (typeof e.interruptAttack === 'function') {
+                e.interruptAttack();
+              }
+              e.isAttacking = false;
+              e.windupTimer = 0;
+              e.strikeTimer = 0;
+              if (e.aiState === 'windup') e.aiState = 'idle';
+
+              if (isTipHit) {
+                // Třesk na konci biče
+                if (milestones.includes('whip_lead_knot_3')) {
+                  dmgOpts.ignoreResist = 1.0;
+                  dmg *= 1.25;
+                }
+                if (milestones.includes('whip_tar_tip_5')) {
+                  dmgType = 'fire';
+                  if (e.prefix === 'mrazivy' || e.category === 'frost') {
+                    dmg *= 1.5;
+                  }
+                }
+                if (milestones.includes('whip_thunder_crack_8')) {
+                  const fearResist = e.willpower || 0;
+                  e.panicTimer = Math.max(e.panicTimer || 0, 2.0 * (1 - fearResist * 0.5));
+                  e.panicked = true;
+                  const tipNear = this.spatialHash.queryCircle(e.x, e.y, 100);
+                  for (let ti = 0; ti < tipNear.length; ti++) {
+                    const te = tipNear[ti];
+                    if (!te.isDefeated && !te.dead) {
+                      te.panicTimer = Math.max(te.panicTimer || 0, 2.0 * (1 - (te.willpower || 0) * 0.5));
+                      te.panicked = true;
+                    }
+                  }
+                }
+                this.state.texts.push(new DamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true));
+              }
+
+              if (s.soaked || milestones.includes('whip_wet_strap_5')) {
+                kbForce *= 1.45;
+                if (typeof e.soak === 'function') e.soak();
+                if (typeof e.chill === 'function') e.chill(2.0);
+              }
+            }
+
             e.takeDamage(
-              s.dmg,
-              s.type,
+              dmg,
+              dmgType,
               Math.cos(s.angle) * kbForce,
               Math.sin(s.angle) * kbForce,
               dmgOpts
@@ -2302,6 +2505,31 @@ export class GameEngine {
                 const val = Math.max(1, whole + extra);
                 this.state.gingerbread += val;
                 this.callbacks?.onSound?.('gingerbreadPickup');
+
+                // Pouťové perníkové srdce
+                if (player && (player.poutoveSrdceStacks || 0) > 0) {
+                  const size = d.size || 'small';
+                  const cdMult = player.gingerbreadHeartCdMult || 1.0;
+                  if (size === 'small') {
+                    player.ultCd = Math.max(0, (player.ultCd || 0) - 0.2 * cdMult);
+                  } else if (size === 'large') {
+                    player.ultCd = Math.max(0, (player.ultCd || 0) - 0.6 * cdMult);
+                    player.gingerbreadSpeedTimer = 2.0;
+                    player.gingerbreadSpeedBonus = 0.15;
+                  } else if (size === 'giant') {
+                    player.ultCd = Math.max(0, (player.ultCd || 0) - 2.0 * cdMult);
+                    const heal = 8 * player.poutoveSrdceStacks;
+                    player.hp = Math.min(player.maxHp, player.hp + heal);
+                    this.state.texts.push(new DamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true));
+                    const nearbyEnemies = this.spatialHash.queryCircle(player.x, player.y, 110);
+                    for (let ci = 0; ci < nearbyEnemies.length; ci++) {
+                      const foe = nearbyEnemies[ci];
+                      if (!foe.isDefeated && !foe.dead) {
+                        foe.takeDamage(15 * (player.damageMultiplier || 1), 'physical', (foe.x - player.x) * 2, (foe.y - player.y) * 2);
+                      }
+                    }
+                  }
+                }
               } else if (d.type === 'horseshoe') {
                 this.callbacks?.onSound?.('horseshoe');
                 applyMagnetWave(this.state.drops, player.x, player.y, 99999, true);

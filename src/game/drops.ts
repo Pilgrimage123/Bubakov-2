@@ -512,6 +512,41 @@ export function applyMagnetWave(
 }
 
 /**
+ * Stržení kořisti Formanským bičem:
+ * Přitáhne všechny krejcary (coin) a perníčky (gingerbread) ležící v dráze švihu přímo k hráči.
+ */
+export function pullWhipLoot(
+  drops: GameDrop[],
+  originX: number,
+  originY: number,
+  angle: number,
+  reach: number,
+  width: number = 75
+): number {
+  let pulled = 0;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  for (let i = 0; i < drops.length; i++) {
+    const d = drops[i];
+    if (d.dead || (d.type !== 'coin' && d.type !== 'gingerbread')) continue;
+    const dx = d.x - originX;
+    const dy = d.y - originY;
+    const projAlong = dx * cos + dy * sin;
+    if (projAlong < -10 || projAlong > reach + 35) continue;
+    const perpDist = Math.abs(-dx * sin + dy * cos);
+    if (perpDist <= width) {
+      const distToPlayer = Math.hypot(dx, dy);
+      const angToPlayer = Math.atan2(originY - d.y, originX - d.x);
+      const impulseSpeed = Math.max(680, Math.min(960, distToPlayer * 4.5));
+      d.vx = Math.cos(angToPlayer) * impulseSpeed;
+      d.vy = Math.sin(angToPlayer) * impulseSpeed;
+      pulled++;
+    }
+  }
+  return pulled;
+}
+
+/**
  * Záznam zahnání bubáka a vyhodnocení kombo pulzu (30 zahnání za 1.2 s).
  */
 export function registerKillAndCheckCombo(

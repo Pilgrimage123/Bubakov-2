@@ -47,6 +47,7 @@ export const WEAPONS_WITH_MILESTONES: WeaponMilestonesSet = new Set<WeaponId>([
   'hromnicka',
   'svecena_kropenka',
   'bylinkova_fajfka',
+  'formansky_bic',
 ]) as WeaponMilestonesSet;
 
 Object.defineProperty(WEAPONS_WITH_MILESTONES, 'length', {
@@ -303,6 +304,20 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
       makeChoice('pipe_burst_8', 'Léčivý tabák mistrů', 'Vzácné sušené byliny dodají fajfce maximální ničivou i léčivou sílu a bleskový rytmus.', 'master_tobacco', 'smoke_puff', { baseDamageMult: 1.40, cooldownMult: 0.85 }),
     ],
   },
+  formansky_bic: {
+    3: [
+      makeChoice('whip_double_swing_3', 'Kočího dvojšvih', '+1 švih v salvě do kříže.', 'double_swing', 'cane_whip', { projectileCountDelta: 1, baseDamageMult: 1.10 }),
+      makeChoice('whip_lead_knot_3', 'Olověný uzlík', '+25 % poškození na špičce a prolomení poiseResist.', 'lead_knot', 'cane_whip', { baseDamageMult: 1.25, ignoreResist: 1.0 }),
+    ],
+    5: [
+      makeChoice('whip_tar_tip_5', 'Dehtový konec', 'Špička biče hoří a přidává fire poškození proti mrazivým běsům.', 'tar_tip', 'cane_whip', { specialMechanicFlag: 'whip_tar_tip', baseDamageMult: 1.20 }),
+      makeChoice('whip_wet_strap_5', 'Mokrý řemen', 'Využívá player.hasSoakedCane pro vyšší odhoz a zpomalení.', 'wet_strap', 'cane_whip', { knockbackMult: 1.45, statusDurationSec: 2.0, baseDamageMult: 1.15 }),
+    ],
+    8: [
+      makeChoice('whip_thunder_crack_8', 'Hromové prásknutí', 'Akustický třesk na konci biče vystraší okolní houf na 2 s.', 'thunder_crack', 'cane_whip', { specialMechanicFlag: 'whip_thunder_crack', cooldownMult: 0.92, statusDurationSec: 2.0 }),
+      makeChoice('whip_seven_straps_8', 'Sedmero řemenů', 'Bič švihá v širokém kuželu a zasáhne celou skupinu.', 'seven_straps', 'cane_whip', { areaRadiusMult: 1.45, cooldownMult: 0.90, baseDamageMult: 1.15 }),
+    ],
+  },
 };
 
 export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
@@ -380,6 +395,7 @@ export const MELEE_WEAPONS: WeaponId[] = [
   'kovana_halapartna',
   'dreveny_cep',
   'valecnice',
+  'formansky_bic',
 ];
 
 export const MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, Record<2 | 4 | 6 | 7, string>>> = {
@@ -387,6 +403,12 @@ export const MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, 
     2: 'melee_flurry',
     4: 'melee_reach',
     6: 'melee_frenzy',
+    7: 'melee_titan',
+  },
+  formansky_bic: {
+    2: 'melee_reach',
+    4: 'melee_flurry',
+    6: 'melee_heavy',
     7: 'melee_titan',
   },
   kovarske_vidle: {

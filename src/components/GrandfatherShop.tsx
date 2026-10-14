@@ -106,6 +106,10 @@ function getItemQuote(item: GrandfatherItemDef): string {
   if (item.id === 'hlineny_kohoutek') return '„Malovaný hliněný kohoutek! Jakmile zakokrhá na ranní rozbřesk, noční havěť se rozprchne a bossové dostanou pořádnou ránu!“';
   if (item.id === 'vyrezavane_kukacky') return '„Vyřezávané kukačky ze Šumavy! Když zakukají, čas se na čtyři vteřiny úplně zastaví!“';
   if (item.id === 'arcivzacny_ananas') return '„Arcivzácný ananas z císařské zahrady! Zázračné ovoce, které se vidí jednou za sto let — dá ti královskou sílu a nezranitelnost!“';
+  if (item.id === 'wp_whip') return '„Formanský bič! Poctivá kožená práce s jasanovým bičištěm — práskni a žádný zbojník ani bubák se ti nenapřáhne!“';
+  if (item.id === 'trikralova_krida') return '„Posvěcená tříkrálová křída od svatého Jiří! Napiš na zem K+M+B a žádný čert ani umrlec přes práh nepřejde!“';
+  if (item.id === 'strouhany_kren') return '„Čerstvě strouhaný křen z mé zahrádky v ubrousku! Protáhne dutiny tak, že i kostlivci začnou slzet a mlsat!“';
+  if (item.id === 'poutove_srdce') return '„Malované perníkové srdce z pouti! Babičce jsem ho kdysi koupil za mlada — mlsni si a hned máš víc elánu a sil!“';
   return `„${item.name}! Vzácná věc, z mé nůše putuje přímo k tobě!“`;
 }
 

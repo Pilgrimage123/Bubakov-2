@@ -134,6 +134,7 @@ import {
   applyRareItemEffect,
   applyAnanasUpgrade,
   applyMagnetWave,
+  pullWhipLoot,
   canSpawnRareBattleDrop,
   rollRareBattleDrop,
   getRareDropAnnouncement,
@@ -1567,6 +1568,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
       }, getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
     }
+    if (effect.type === 'holy_circle') {
+      p.holyCircleStacks = Math.min(3, (p.holyCircleStacks || 0) + 1);
+      p.holyCircleReduction = (p.holyCircleReduction || 0) + effect.damageReduction;
+    }
+    if (effect.type === 'kren_spice') {
+      p.krenSpiceStacks = Math.min(4, (p.krenSpiceStacks || 0) + 1);
+      p.foodResistReduction = (p.foodResistReduction || 0) + effect.foodResistReduction;
+      p.snackBonusDmg = (p.snackBonusDmg || 0) + effect.snackBonusDmg;
+    }
+    if (effect.type === 'gingerbread_heart') {
+      p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
+      p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
+    }
   }, []);
 
   const openGrandfatherShop = useCallback(() => {
@@ -2266,7 +2280,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', COLORS.mustard, true));
           return;
         }
-        const totalReduction = Math.min(0.85, (this.damageReduction || 0) + (this.arenaArmorBonus || 0));
+        let totalReduction = Math.min(0.85, (this.damageReduction || 0) + (this.arenaArmorBonus || 0));
+        if (engineRef.current.holyCircle && (this.holyCircleStacks || 0) > 0) {
+          const pDist = Math.hypot(this.x - engineRef.current.holyCircle.x, this.y - engineRef.current.holyCircle.y);
+          if (pDist <= engineRef.current.holyCircle.radius) {
+            totalReduction = Math.min(0.85, totalReduction + Math.min(0.60, this.holyCircleStacks * 0.20));
+          }
+        }
         const hurtDmg = Math.max(1, amount * (1 - totalReduction));
         let remainingDmg = hurtDmg;
         let absorbed = 0;
@@ -2341,6 +2361,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           hitList: [],
           dead: false,
         });
+        if (slash.pullLoot) {
+          pullWhipLoot(engineRef.current.drops, slash.x, slash.y, slash.angle, slash.reach);
+        }
         engineRef.current.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
       },
       spawnAreaImpact(impact: any) {
@@ -2851,7 +2874,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const bossLike = e.isBoss || e.category === 'bosses';
 
       // Zjištění resistu na Food a Holy
-      const foodResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+      const foodResistRaw = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+      const foodResist = Math.max(0, foodResistRaw - (p.foodResistReduction || 0));
       const holyResist = getEnemyHolyResistance(e);
 
       // Bere se to, proti čemu má bubák MENŠÍ resist
@@ -4707,6 +4731,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               const buffMultiplier =
                 (player.soulBuffTimer > 0 ? 1.25 : 1) *
+                (player.gingerbreadSpeedTimer > 0 ? 1.15 : 1) *
                 (player.waterSoakedTimer > 0 ? 0.75 : 1) *
                 (player.slowTimer > 0 ? 0.65 : 1) *
                 hazardSpeedMult *
@@ -4776,6 +4801,71 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             if (moveVx !== 0 || moveVy !== 0) {
               player.facingAngle = Math.atan2(moveVy, moveVx);
+            }
+
+            const isMoving = Math.hypot(moveVx, moveVy) > 10;
+            if (player.holyCircleStacks && player.holyCircleStacks > 0) {
+              if (!isMoving) {
+                player.stillTimer = (player.stillTimer || 0) + dt;
+                if (player.stillTimer >= 0.6) {
+                  if (!engine.holyCircle) {
+                    engine.holyCircle = {
+                      x: player.x,
+                      y: player.y,
+                      radius: 120,
+                      life: 1.5,
+                      active: true,
+                    };
+                  } else {
+                    engine.holyCircle.x = player.x;
+                    engine.holyCircle.y = player.y;
+                    engine.holyCircle.life = 1.5;
+                    engine.holyCircle.active = true;
+                  }
+                }
+              } else {
+                player.stillTimer = 0;
+                if (engine.holyCircle) {
+                  engine.holyCircle.life -= dt;
+                  if (engine.holyCircle.life <= 0) {
+                    engine.holyCircle = null;
+                  }
+                }
+              }
+            }
+
+            // Holy Chalk Circle unholy barrier & repellent damage
+            if (engine.holyCircle && engine.holyCircle.active) {
+              const hc = engine.holyCircle;
+              const nearbyUnholy = enemySpatialHashRef.current.queryCircle(hc.x, hc.y, hc.radius + 60);
+              for (let ui = 0; ui < nearbyUnholy.length; ui++) {
+                const foe = nearbyUnholy[ui];
+                if (foe.isDefeated || foe.dead || !isUnholyEnemy(foe)) continue;
+                const dx = foe.x - hc.x;
+                const dy = foe.y - hc.y;
+                const dist = Math.hypot(dx, dy);
+                const reach = hc.radius + (foe.radius || 15);
+                if (dist < reach) {
+                  const nx = dist > 0.001 ? dx / dist : 1;
+                  const ny = dist > 0.001 ? dy / dist : 0;
+                  const holyPush = getHolyPushMultiplier(foe);
+                  const pushForce = 380 * holyPush;
+                  foe.kbx += nx * pushForce * dt * 10;
+                  foe.kby += ny * pushForce * dt * 10;
+                  const overlap = reach - dist;
+                  foe.x += nx * overlap * Math.min(1, dt * 15);
+                  foe.y += ny * overlap * Math.min(1, dt * 15);
+
+                  foe._holyCircleTick = (foe._holyCircleTick || 0) - dt;
+                  if (foe._holyCircleTick <= 0) {
+                    foe._holyCircleTick = 0.4;
+                    const holyDmgMult = getHolyDamageMultiplier(foe);
+                    const dmg = 24 * holyDmgMult * (player.damageMultiplier || 1);
+                    foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
+                    engine.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
+                  }
+                }
+              }
             }
 
             if (player.intangibleTimer > 0) {
@@ -4946,6 +5036,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
+            if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
             if (player.slowTimer > 0) player.slowTimer -= dt;
             if (player.ultCd > 0) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
@@ -5466,7 +5557,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const dx=p.x-e.x, dy=p.y-e.y, reach=p.radius+e.radius;
               if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach*reach) {
                 p.hitList.push(e);
-                const hungerResist = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+                const baseHunger = typeof e.hunger === 'number' ? e.hunger : (e.foodResist || 0);
+                const red = player.foodResistReduction || 0;
+                const hungerResist = Math.max(0, baseHunger * (1 - red));
                 const resist = p.type === 'food' ? hungerResist : 0;
                 if (resist >= 0.95) {
                   engine.texts.push(new DamageText(e.x, e.y - 20, 'IMUNNÍ', COLORS.ink));
@@ -5558,15 +5651,82 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (diff <= s.arc / 2) {
                   s.hitList.push(e);
                   const isCane = s.style === 'cane' || s.weaponId === 'cane';
-                  const kbForce = isCane ? 480 : 260;
-                  e.takeDamage(s.dmg, s.type, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce);
+                  const isWhip = s.style === 'whip' || s.weaponId === 'formansky_bic';
+                  let kbForce = isWhip ? 340 : (isCane ? 480 : 260);
+                  let dmg = s.dmg;
+                  let dmgType = s.type;
+                  const dmgOpts: any = {};
+                  const milestones = s.milestones || [];
+
+                  if (isWhip) {
+                    dmgOpts.cannotDodge = true;
+                    dmgOpts.ignoreDodge = true;
+                    const distFromPlayer = Math.hypot(e.x - s.x, e.y - s.y);
+                    const isTipHit = distFromPlayer >= s.reach * 0.65;
+
+                    // Immediately interrupt attack
+                    if (typeof e.interruptAttack === 'function') {
+                      e.interruptAttack();
+                    }
+                    e.isAttacking = false;
+                    e.windupTimer = 0;
+                    e.strikeTimer = 0;
+                    if (e.aiState === 'windup') e.aiState = 'idle';
+
+                    if (isTipHit) {
+                      // Třesk na konci biče
+                      if (milestones.includes('whip_lead_knot_3')) {
+                        dmgOpts.ignoreResist = 1.0;
+                        dmg *= 1.25;
+                      }
+                      if (milestones.includes('whip_tar_tip_5')) {
+                        dmgType = 'fire';
+                        if (e.prefix === 'mrazivy' || e.category === 'frost') {
+                          dmg *= 1.5;
+                        }
+                      }
+                      if (milestones.includes('whip_thunder_crack_8')) {
+                        const fearResist = e.willpower || 0;
+                        e.panicTimer = Math.max(e.panicTimer || 0, 2.0 * (1 - fearResist * 0.5));
+                        e.panicked = true;
+                        const tipNear = enemySpatialHashRef.current.queryCircle(e.x, e.y, 100);
+                        for (let ti = 0; ti < tipNear.length; ti++) {
+                          const te = tipNear[ti];
+                          if (!te.isDefeated && !te.dead) {
+                            te.panicTimer = Math.max(te.panicTimer || 0, 2.0 * (1 - (te.willpower || 0) * 0.5));
+                            te.panicked = true;
+                          }
+                        }
+                      }
+                      engine.texts.push(new DamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true));
+                      for (let pIdx = 0; pIdx < 4; pIdx++) {
+                        engine.particles.push({
+                          x: e.x + (Math.random() - 0.5) * 12,
+                          y: e.y + (Math.random() - 0.5) * 12,
+                          vx: (Math.random() - 0.5) * 120,
+                          vy: (Math.random() - 0.5) * 120,
+                          life: 0.3,
+                          color: milestones.includes('whip_tar_tip_5') ? '#F97316' : '#FDE047',
+                          size: 3,
+                        });
+                      }
+                    }
+
+                    if (s.soaked || milestones.includes('whip_wet_strap_5')) {
+                      kbForce *= 1.45;
+                      if (typeof e.soak === 'function') e.soak();
+                      if (typeof e.chill === 'function') e.chill(2.0);
+                    }
+                  }
+
+                  e.takeDamage(dmg, dmgType, Math.cos(s.angle) * kbForce, Math.sin(s.angle) * kbForce, dmgOpts);
                   if (isCane && e.isAttacking) {
                     e.isAttacking = false;
                     e.windupTimer = 0;
                     e.strikeTimer = 0;
                   }
                   if (!s.noMasteryProc && s.weaponId) player.triggerWeaponMastery(s.weaponId, e, 'hit');
-                  if (s.soaked) e.soak();
+                  if (s.soaked && !isWhip) e.soak();
                   if (s.style === 'cane' || s.weaponId === 'cane') {
                     // Aspen whip hit effects: bud/leaf/wood particles & splash
                     for (let pIdx = 0; pIdx < (s.soaked ? 4 : 3); pIdx++) {
@@ -5808,6 +5968,33 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     size === 'giant' ? '#F59E0B' : '#B45309',
                     true
                   ));
+                  if (player.poutoveSrdceStacks && player.poutoveSrdceStacks > 0) {
+                    const cdMult = player.gingerbreadHeartCdMult || 1;
+                    if (size === 'small') {
+                      player.ultCd = Math.max(0, player.ultCd - 0.2 * cdMult);
+                    } else if (size === 'large') {
+                      player.ultCd = Math.max(0, player.ultCd - 0.6 * cdMult);
+                      player.gingerbreadSpeedTimer = 2.0;
+                      engine.texts.push(new DamageText(player.x, player.y - 60, 'CUKROVÝ SPĚCH! ⚡', '#F59E0B', true));
+                    } else if (size === 'giant') {
+                      player.ultCd = Math.max(0, player.ultCd - 2.0 * cdMult);
+                      const heal = 8 * player.poutoveSrdceStacks;
+                      player.hp = Math.min(player.maxHp, player.hp + heal);
+                      engine.texts.push(new DamageText(player.x, player.y - 60, `+${heal} KURÁŽ! 💝`, '#EC4899', true));
+                      for (let k = 0; k < 10; k++) {
+                        const ang = (k / 10) * Math.PI * 2;
+                        engine.particles.push({
+                          x: player.x,
+                          y: player.y,
+                          vx: Math.cos(ang) * 90,
+                          vy: Math.sin(ang) * 90,
+                          life: 0.4,
+                          color: '#FDE047',
+                          size: 3.5,
+                        });
+                      }
+                    }
+                  }
                   for (let i = 0; i < (size === 'giant' ? 8 : 4); i++) {
                     engine.particles.push({
                       x: player.x,
@@ -6242,6 +6429,54 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               ? `PEČETĚNÍ... ${Math.ceil(dira.holdTimeRemaining)}s`
               : `ZAPEČEŤ DÍRU! (${Math.ceil(dira.timeRemaining)}s)`;
             ctx.fillText(label, 0, -dira.radius - 12);
+
+            ctx.restore();
+          }
+        }
+
+        // Draw Posvěcená tříkrálová křída (Holy Chalk Circle)
+        if (engine.holyCircle && engine.holyCircle.active) {
+          const hc = engine.holyCircle;
+          if (isInView(hc.x, hc.y, hc.radius + 30, viewLeft, viewTop, viewRight, viewBottom)) {
+            ctx.save();
+            ctx.translate(hc.x, hc.y);
+            const fade = Math.min(1, hc.life / 0.5);
+            ctx.globalAlpha = 0.85 * fade;
+
+            // Inner holy glowing aura
+            const grad = ctx.createRadialGradient(0, 0, hc.radius * 0.2, 0, 0, hc.radius);
+            grad.addColorStop(0, 'rgba(254, 240, 138, 0.25)');
+            grad.addColorStop(0.7, 'rgba(253, 224, 71, 0.12)');
+            grad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, hc.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Chalk perimeter ring (dashed chalk stroke)
+            ctx.strokeStyle = '#FEF9C3';
+            ctx.lineWidth = 3.5;
+            ctx.setLineDash([12, 8]);
+            ctx.beginPath();
+            ctx.arc(0, 0, hc.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Outer chalk faint outline
+            ctx.strokeStyle = '#FDE047';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.arc(0, 0, hc.radius - 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // K + M + B inscription in traditional folk chalk lettering
+            ctx.fillStyle = '#FEF08A';
+            ctx.font = 'bold 13px "Eczar", "Cinzel", Georgia, serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✝ K + M + B ✝', 0, -hc.radius + 16);
+            ctx.fillText('✝ K + M + B ✝', 0, hc.radius - 16);
 
             ctx.restore();
           }
@@ -6699,6 +6934,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.lineTo(s.reach * 0.9, -12);
             ctx.moveTo(15, 12);
             ctx.lineTo(s.reach * 0.9, 12);
+            ctx.stroke();
+          } else if (s.style === 'whip' || s.weaponId === 'formansky_bic') {
+            ctx.rotate(s.angle);
+            const reach = s.reach;
+            ctx.strokeStyle = '#451A03';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            const wave = Math.sin((s.time || 0) * 25) * 12 * (1 - Math.min(1, (s.time || 0) / 0.15));
+            ctx.quadraticCurveTo(reach * 0.5, wave, reach * 0.85, -wave * 0.5);
+            ctx.lineTo(reach, 0);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#92400E';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(12, 0);
+            ctx.quadraticCurveTo(reach * 0.5, wave, reach * 0.85, -wave * 0.5);
+            ctx.stroke();
+
+            ctx.fillStyle = '#FDE047';
+            ctx.beginPath();
+            ctx.arc(reach, 0, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#EA580C';
+            ctx.lineWidth = 1.5;
             ctx.stroke();
           } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
             Lada.drawOsikovyPrutSlash(ctx, s);
@@ -8877,11 +9138,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         this.y += (this.vy + this.kby) * dt;
       },
 
-      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean }) {
+      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean }) {
         if (this.isDefeated) return;
 
-        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění
-        if (this.prefix === 'vichricovy') {
+        // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (pokud útok neignoruje úhyb např. Formanský bič)
+        if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
           const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
           if (Math.random() < dodge) {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
@@ -8927,6 +9188,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         const player = engineRef.current.player;
+        if (player && player.snackBonusDmg && player.snackBonusDmg > 0 && type !== 'food') {
+          const isSnacking = (this.snackTimer || 0) > 0;
+          const isPickled = Boolean(this.statusEffects?.pickle_sickness);
+          if (isSnacking || isPickled) {
+            finalDmg *= (1 + player.snackBonusDmg);
+          }
+        }
+
         if (player && player.guaranteedCritTimer > 0) {
           finalDmg = Math.round(finalDmg * 2.2);
           if (finalDmg >= 1) {
@@ -9621,6 +9890,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       chill(duration = 3.5) {
         this.chilled = true;
         this.chillTimer = duration;
+      },
+
+      interruptAttack() {
+        this.isAttacking = false;
+        this.windupTimer = 0;
+        this.strikeTimer = 0;
+        if (this.aiState === 'windup') this.aiState = 'idle';
       },
 
       draw(ctx: CanvasRenderingContext2D) {

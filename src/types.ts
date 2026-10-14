@@ -68,7 +68,8 @@ export type WeaponId =
   | 'vceli_roj'
   | 'hromnicka'
   | 'svecena_kropenka'
-  | 'bylinkova_fajfka';
+  | 'bylinkova_fajfka'
+  | 'formansky_bic';
 
 export interface MilestoneChoice {
   id: string;
