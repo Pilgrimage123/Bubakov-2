@@ -100,7 +100,9 @@ export function chooseGrandfatherOffers(
     if (!projectileIds.has(weapon.id) || (weapon.level || 0) <= 0) continue;
     const alreadySpecialized = (weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weapon.id);
     if (alreadySpecialized) continue;
-    for (const upgrade of Object.values(SYNERGISTIC_UPGRADES).filter((entry) => entry.weaponId === weapon.id)) {
+    const alternatives = Object.values(SYNERGISTIC_UPGRADES).filter((entry) => entry.weaponId === weapon.id);
+    if (alternatives.length > 0) {
+      const upgrade = alternatives[Math.floor(Math.random() * alternatives.length)];
       weaponUpgradeOffers.push({ itemId: `weapon_upgrade:${weapon.id}:${upgrade.id}`, offeredAt: now });
     }
   }
