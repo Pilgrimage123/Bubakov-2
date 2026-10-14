@@ -86,6 +86,15 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       });
     }
 
+    if (mods.ignoreResist && mods.ignoreResist > 0) {
+      const pct = Math.round(mods.ignoreResist * 100);
+      badges.push({
+        label: t('milestone_modal.ignore_resist', lang, { val: pct }),
+        icon: '🛡️',
+        color: '#D97706',
+      });
+    }
+
     if (mods.statusDurationSec && mods.statusDurationSec > 0) {
       badges.push({
         label: t('milestone_modal.status', lang, { val: mods.statusDurationSec }),

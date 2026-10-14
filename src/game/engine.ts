@@ -1912,12 +1912,15 @@ export class GameEngine {
           if (diff <= s.arc / 2) {
             s.hitList.push(e);
             const kbForce = 260 * (s.knockbackMult ?? 1);
+            const dmgOpts: any = {};
+            if (s.stunDuration) dmgOpts.stunDuration = s.stunDuration;
+            if (s.ignoreResist) dmgOpts.ignoreResist = s.ignoreResist;
             e.takeDamage(
               s.dmg,
               s.type,
               Math.cos(s.angle) * kbForce,
               Math.sin(s.angle) * kbForce,
-              s.stunDuration ? { stunDuration: s.stunDuration } : undefined
+              dmgOpts
             );
           }
         }

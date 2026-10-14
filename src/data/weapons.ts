@@ -250,7 +250,8 @@ var WEAPONS = {
 				soaked: !!player.hasSoakedCane,
 				style: "cane",
 				weaponId: "osikovy_prut",
-				swingDir: player._caneSwingAlt ? 1 : -1
+				swingDir: player._caneSwingAlt ? 1 : -1,
+				ignoreResist: stats.ignoreResist,
 			});
 			if (typeof (sound as any).caneWhip === 'function') {
 				(sound as any).caneWhip(player.hasSoakedCane);
@@ -289,7 +290,8 @@ var WEAPONS = {
 					type: "physical",
 					soaked: player.hasSoakedCane,
 					style: "thrust",
-					weaponId: "kovarske_vidle"
+					weaponId: "kovarske_vidle",
+					ignoreResist: stats.ignoreResist,
 				});
 			}
 			sound.slash();
@@ -323,7 +325,8 @@ var WEAPONS = {
 				type: "physical",
 				soaked: player.hasSoakedCane,
 				style: "halberd",
-				weaponId: "kovana_halapartna"
+				weaponId: "kovana_halapartna",
+				ignoreResist: stats.ignoreResist,
 			});
 			sound.slash();
 			return true;

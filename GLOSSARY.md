@@ -77,7 +77,7 @@ Kolébavý a vrávoravý pohyb Vyčerpaných strašidel indikující jejich úna
 _Avoid_: stagger, stumble, pajdání
 
 **Kategorie vylepšení zbraní**:
-Tematické bazény běžných vylepšení (pro sečné zbraně a aury), které nahrazují generické bonusy na úrovních 2, 4, 6 a 7.
+Tematické bazény běžných vylepšení (pro sečné zbraně, aury a projektilové zbraně), které nahrazují generické bonusy na úrovních 2, 4, 6 a 7.
 _Avoid_: perk tree, weapon skill tree, upgrade category
 
 **Strop kadence**:

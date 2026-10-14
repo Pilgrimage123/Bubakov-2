@@ -4,6 +4,7 @@ import type {
   WeaponRankDef,
   MeleeNormalUpgradeDef,
   AuraNormalUpgradeDef,
+  ProjectileNormalUpgradeDef,
   WeaponNormalUpgradeDef,
   WeaponNormalUpgradeCategory,
 } from '../types';
@@ -21,6 +22,7 @@ export interface WeaponStats {
   statusDurationSec: number;
   specialMechanicFlag?: string;
   cooldownReduction?: number;
+  ignoreResist?: number;
 }
 
 export type WeaponMilestonesSet = Set<WeaponId> & {
@@ -84,11 +86,11 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('cane_crowd_5', 'Prut větrník', 'Švih rozpráší houf a udrží bubáky v bezpečném odstupu.', 'wind_sweep', 'cane_whip', { areaRadiusMult: 1.16, knockbackMult: 1.22 }),
-      makeChoice('cane_burst_5', 'Pevná násada', 'Silnější bác přidá průraz a udrží tempo útoků.', 'piercing_blow', 'cane_whip', { baseDamageMult: 1.20, pierceDelta: 1, cooldownMult: 0.97 }),
+      makeChoice('cane_burst_5', 'Pevná násada', 'Silnější bác ignoruje 25 % odolností strašidel a udrží tempo útoků.', 'piercing_blow', 'cane_whip', { baseDamageMult: 1.20, ignoreResist: 0.25, cooldownMult: 0.97 }),
     ],
     8: [
       makeChoice('cane_crowd_8', 'Prut košťátko', 'Mimořádně široký bác vypráší celé kolečko kolem lovce.', 'broom_sweep', 'cane_whip', { areaRadiusMult: 1.20, knockbackMult: 1.25, cooldownMult: 0.94 }),
-      makeChoice('cane_burst_8', 'Prachová smršť', 'Každý švih rozpráší houf, přidá průraz a ještě trochu zrychlí kadenci.', 'dust_storm', 'cane_whip', { baseDamageMult: 1.24, pierceDelta: 1, cooldownMult: 0.94 }),
+      makeChoice('cane_burst_8', 'Prachová smršť', 'Každý švih rozpráší houf, ignoruje 40 % odolností strašidel a ještě trochu zrychlí kadenci.', 'dust_storm', 'cane_whip', { baseDamageMult: 1.24, ignoreResist: 0.40, cooldownMult: 0.94 }),
     ],
   },
   valecnice: {
@@ -154,11 +156,11 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('pitchfork_crowd_5', 'Jasanové ratiště', 'Dlouhé jasanové ratiště prodlouží bodnutí a udrží odstup od celého houfu.', 'long_reach', 'slash', { areaRadiusMult: 1.20, knockbackMult: 1.30 }),
-      makeChoice('pitchfork_burst_5', 'Kalený trojzubec', 'Prudký výpad probodne řady bubáků a způsobí krvavé rány.', 'heavy_thrust', 'slash', { baseDamageMult: 1.24, pierceDelta: 1, cooldownMult: 0.94 }),
+      makeChoice('pitchfork_burst_5', 'Kalený trojzubec', 'Prudký výpad ignoruje 25 % odolností strašidel a způsobí krvavé rány.', 'heavy_thrust', 'slash', { baseDamageMult: 1.24, ignoreResist: 0.25, cooldownMult: 0.94 }),
     ],
     8: [
       makeChoice('pitchfork_crowd_8', 'Hradba z vidlí', 'Mocný výpad odhodí celé hejno potvor daleko do tmy a vytvoří bezpečný prostor.', 'fork_barricade', 'slash', { areaRadiusMult: 1.25, knockbackMult: 1.45, cooldownMult: 0.92 }),
-      makeChoice('pitchfork_burst_8', 'Mistrovský kovářský hrot', 'Mistrovské dílo z vesnické výhně probodne jakéhokoliv bubáka s obrovskou silou a rychlostí.', 'master_forge', 'slash', { baseDamageMult: 1.32, pierceDelta: 1, cooldownMult: 0.90 }),
+      makeChoice('pitchfork_burst_8', 'Mistrovský kovářský hrot', 'Mistrovské dílo z vesnické výhně ignoruje 40 % odolností jakéhokoliv bubáka s obrovskou silou a rychlostí.', 'master_forge', 'slash', { baseDamageMult: 1.32, ignoreResist: 0.40, cooldownMult: 0.90 }),
     ],
   },
   kovana_halapartna: {
@@ -168,11 +170,11 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('halberd_crowd_5', 'Kolenářský sek', 'Nízký švih podrazí nohy útočícímu houfu a odrazí je vzad.', 'low_sweep', 'slash', { areaRadiusMult: 1.22, knockbackMult: 1.30 }),
-      makeChoice('halberd_burst_5', 'Hák a hrot', 'Kombinace háku a hrotu snadno rozpoltí těžká strašidla a zrychlí nápřah.', 'hook_point', 'slash', { baseDamageMult: 1.24, pierceDelta: 1, cooldownMult: 0.93 }),
+      makeChoice('halberd_burst_5', 'Hák a hrot', 'Kombinace háku a hrotu ignoruje 25 % odolností strašidel a zrychlí nápřah.', 'hook_point', 'slash', { baseDamageMult: 1.24, ignoreResist: 0.25, cooldownMult: 0.93 }),
     ],
     8: [
       makeChoice('halberd_crowd_8', 'Ponocného stráž', 'Gigantický sečný oblouk zamete všechna strašidla v dosahu a vyčistí bojiště.', 'night_guard', 'slash', { areaRadiusMult: 1.28, knockbackMult: 1.40, cooldownMult: 0.92 }),
-      makeChoice('halberd_burst_8', 'Rychtářův rozsudek', 'Nekompromisní katovský zásek s maximálním poškozením proráží houfy bez zaváhání.', 'bailiff_judgment', 'slash', { baseDamageMult: 1.32, pierceDelta: 1, cooldownMult: 0.90 }),
+      makeChoice('halberd_burst_8', 'Rychtářův rozsudek', 'Nekompromisní katovský zásek s maximálním poškozením ignoruje 40 % odolností a proráží houfy bez zaváhání.', 'bailiff_judgment', 'slash', { baseDamageMult: 1.32, ignoreResist: 0.40, cooldownMult: 0.90 }),
     ],
   },
   dreveny_cep: {
@@ -509,6 +511,143 @@ export const AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, R
   },
 };
 
+export const PROJECTILE_NORMAL_UPGRADES: Record<string, ProjectileNormalUpgradeDef> = {
+  proj_barrage: {
+    id: 'proj_barrage',
+    name: 'Kobercový nálet',
+    ui_text: '+130 % projektilů, -30 % zranění',
+    category: 'projectile',
+    stats: {
+      projectile_bonus: 1.30,
+      damage_bonus: -0.30,
+      cooldown_reduction: 0.00,
+      area_bonus: 0.00,
+    },
+  },
+  cd_hyper: {
+    id: 'cd_hyper',
+    name: 'Rychlopalný mechanismus',
+    ui_text: '-30 % cooldown',
+    category: 'projectile',
+    stats: {
+      cooldown_reduction: 0.30,
+      damage_bonus: 0.00,
+      area_bonus: 0.00,
+      projectile_bonus: 0.00,
+    },
+  },
+  dmg_heavy: {
+    id: 'dmg_heavy',
+    name: 'Těžká munice',
+    ui_text: '+100 % zranění',
+    category: 'projectile',
+    stats: {
+      damage_bonus: 1.00,
+      cooldown_reduction: 0.00,
+      area_bonus: 0.00,
+      projectile_bonus: 0.00,
+    },
+  },
+  proj_pierce: {
+    id: 'proj_pierce',
+    name: 'Průrazné kování',
+    ui_text: '+2 průraz, -15 % zranění',
+    category: 'projectile',
+    stats: {
+      pierce_bonus: 2,
+      damage_bonus: -0.15,
+      cooldown_reduction: 0.00,
+      area_bonus: 0.00,
+    },
+  },
+  proj_reach: {
+    id: 'proj_reach',
+    name: 'Dalekonosný rozptyl',
+    ui_text: '+50 % dosah a plošný rozstřik',
+    category: 'projectile',
+    stats: {
+      area_bonus: 0.50,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.00,
+      projectile_bonus: 0.00,
+    },
+  },
+  proj_volley: {
+    id: 'proj_volley',
+    name: 'Hustá salva',
+    ui_text: '+60 % zranění, +40 % projektilů',
+    category: 'projectile',
+    stats: {
+      damage_bonus: 0.60,
+      projectile_bonus: 0.40,
+      cooldown_reduction: 0.00,
+      area_bonus: 0.00,
+    },
+  },
+};
+
+export const PROJECTILE_WEAPONS: WeaponId[] = [
+  'kysela_okurka',
+  'povidlove_buchty',
+  'devatero_kviti',
+  'snehova_koule',
+  'kynuty_kolac',
+  'horky_brambor',
+  'vceli_roj',
+  'svecena_kropenka',
+];
+
+export const PROJECTILE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, Record<2 | 4 | 6 | 7, string>>> = {
+  kysela_okurka: {
+    2: 'proj_barrage',
+    4: 'cd_hyper',
+    6: 'proj_pierce',
+    7: 'dmg_heavy',
+  },
+  povidlove_buchty: {
+    2: 'proj_reach',
+    4: 'proj_volley',
+    6: 'cd_hyper',
+    7: 'dmg_heavy',
+  },
+  devatero_kviti: {
+    2: 'proj_barrage',
+    4: 'proj_pierce',
+    6: 'proj_volley',
+    7: 'cd_hyper',
+  },
+  snehova_koule: {
+    2: 'proj_reach',
+    4: 'dmg_heavy',
+    6: 'cd_hyper',
+    7: 'proj_volley',
+  },
+  kynuty_kolac: {
+    2: 'proj_reach',
+    4: 'proj_barrage',
+    6: 'dmg_heavy',
+    7: 'proj_volley',
+  },
+  horky_brambor: {
+    2: 'dmg_heavy',
+    4: 'proj_reach',
+    6: 'proj_volley',
+    7: 'cd_hyper',
+  },
+  vceli_roj: {
+    2: 'proj_barrage',
+    4: 'cd_hyper',
+    6: 'dmg_heavy',
+    7: 'proj_volley',
+  },
+  svecena_kropenka: {
+    2: 'proj_pierce',
+    4: 'proj_volley',
+    6: 'cd_hyper',
+    7: 'dmg_heavy',
+  },
+};
+
 export const COOLDOWN_REDUCTION_CAP = 0.75;
 
 export function getMeleeNormalUpgrade(id: string): MeleeNormalUpgradeDef | undefined {
@@ -519,8 +658,12 @@ export function getAuraNormalUpgrade(id: string): AuraNormalUpgradeDef | undefin
   return AURA_NORMAL_UPGRADES[id];
 }
 
+export function getProjectileNormalUpgrade(id: string): ProjectileNormalUpgradeDef | undefined {
+  return PROJECTILE_NORMAL_UPGRADES[id];
+}
+
 export function getWeaponNormalUpgrade(id: string): WeaponNormalUpgradeDef | undefined {
-  return MELEE_NORMAL_UPGRADES[id] || AURA_NORMAL_UPGRADES[id];
+  return MELEE_NORMAL_UPGRADES[id] || AURA_NORMAL_UPGRADES[id] || PROJECTILE_NORMAL_UPGRADES[id];
 }
 
 export function getWeaponCategory(weaponId: string): WeaponNormalUpgradeCategory {
@@ -528,6 +671,7 @@ export function getWeaponCategory(weaponId: string): WeaponNormalUpgradeCategory
   if (!canonical) return 'default';
   if (MELEE_WEAPONS.includes(canonical)) return 'melee';
   if (AURA_WEAPONS.includes(canonical)) return 'aura';
+  if (PROJECTILE_WEAPONS.includes(canonical)) return 'projectile';
   return 'default';
 }
 
@@ -537,7 +681,7 @@ export function getWeaponCooldownReduction(weapon: any): number {
     let sum = 0;
     for (const upId of weapon.normalUpgrades) {
       const up = getWeaponNormalUpgrade(upId);
-      if (up) sum += up.stats.cooldown_reduction;
+      if (up) sum += up.stats.cooldown_reduction || 0;
     }
     return sum;
   }
@@ -567,6 +711,8 @@ export function getEligibleNormalUpgrades(weaponId: string, weapon?: any): Weapo
     pool = Object.values(MELEE_NORMAL_UPGRADES);
   } else if (category === 'aura') {
     pool = Object.values(AURA_NORMAL_UPGRADES);
+  } else if (category === 'projectile') {
+    pool = Object.values(PROJECTILE_NORMAL_UPGRADES);
   } else {
     return [];
   }
@@ -574,7 +720,7 @@ export function getEligibleNormalUpgrades(weaponId: string, weapon?: any): Weapo
   const headroom = getWeaponCooldownReductionHeadroom(weapon);
   // Nedropovat vylepšení s cooldown_reduction > 0, pokud zbývá méně než 10 % do stropu
   if (headroom < 0.10) {
-    return pool.filter((up) => up.stats.cooldown_reduction <= 0);
+    return pool.filter((up) => (up.stats.cooldown_reduction || 0) <= 0);
   }
   return pool;
 }
@@ -610,7 +756,8 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
 
 function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
   const choices = MILESTONES[id];
-  const progression = MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id] || AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id];
+  const progression = MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id]
+    || AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id];
 
   if (!progression) {
     return [
@@ -628,6 +775,8 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
   let cumulativeArea = 0;
   let cumulativeDamage = 0;
   let cumulativeCooldown = 0;
+  let cumulativePierce = 0;
+  let cumulativeProjectileMult = 1;
 
   const ranks: WeaponRankDef[] = [];
   for (let rank = 1; rank <= 8; rank++) {
@@ -636,9 +785,11 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
     const upgrade = upgradeId ? getWeaponNormalUpgrade(upgradeId) : undefined;
 
     if (upgrade) {
-      cumulativeArea += upgrade.stats.area_bonus;
-      cumulativeDamage += upgrade.stats.damage_bonus;
-      cumulativeCooldown = Math.min(COOLDOWN_REDUCTION_CAP, cumulativeCooldown + upgrade.stats.cooldown_reduction);
+      cumulativeArea += upgrade.stats.area_bonus || 0;
+      cumulativeDamage += upgrade.stats.damage_bonus || 0;
+      cumulativeCooldown = Math.min(COOLDOWN_REDUCTION_CAP, cumulativeCooldown + (upgrade.stats.cooldown_reduction || 0));
+      if (upgrade.stats.pierce_bonus) cumulativePierce += upgrade.stats.pierce_bonus;
+      if (upgrade.stats.projectile_bonus) cumulativeProjectileMult *= (1 + upgrade.stats.projectile_bonus);
     }
 
     if (rank === 1) {
@@ -649,6 +800,8 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         flatDamageBonus: 0,
         cooldownReductionBonus: 0,
         areaBonus: 0,
+        pierceBonus: 0,
+        projectileMultBonus: 1,
       });
     } else if (isMilestone) {
       ranks.push({
@@ -658,6 +811,8 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         flatDamageBonus: cumulativeDamage,
         cooldownReductionBonus: cumulativeCooldown,
         areaBonus: cumulativeArea,
+        pierceBonus: cumulativePierce,
+        projectileMultBonus: cumulativeProjectileMult,
         choices: choices?.[rank as 3 | 5 | 8],
       });
     } else {
@@ -670,6 +825,8 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         flatDamageBonus: cumulativeDamage,
         cooldownReductionBonus: cumulativeCooldown,
         areaBonus: cumulativeArea,
+        pierceBonus: cumulativePierce,
+        projectileMultBonus: cumulativeProjectileMult,
         normalUpgradeId: upgrade?.id,
         normalUpgradeName: upgrade?.name,
       });
@@ -775,19 +932,22 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
   const isAuraCustom = canonical && AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
   const isCategoryCustom = isMeleeCustom || isAuraCustom;
 
-  let hasDynamicNormalUpgrades = false;
+  const hasDynamicNormalUpgrades = Array.isArray(w?.normalUpgrades) && w.normalUpgrades.length > 0;
   let dynamicDamage = 0;
   let dynamicArea = 0;
   let dynamicCooldown = 0;
+  let dynamicProjectileMult = 1;
+  let dynamicPierce = 0;
 
-  if (Array.isArray(w?.normalUpgrades)) {
-    hasDynamicNormalUpgrades = true;
+  if (hasDynamicNormalUpgrades) {
     for (const upId of w.normalUpgrades) {
       const up = getWeaponNormalUpgrade(upId);
       if (up) {
-        dynamicDamage += up.stats.damage_bonus;
-        dynamicArea += up.stats.area_bonus;
-        dynamicCooldown += up.stats.cooldown_reduction;
+        if (up.stats.damage_bonus) dynamicDamage += up.stats.damage_bonus;
+        if (up.stats.area_bonus) dynamicArea += up.stats.area_bonus;
+        if (up.stats.cooldown_reduction) dynamicCooldown += up.stats.cooldown_reduction;
+        if (up.stats.projectile_bonus) dynamicProjectileMult *= (1 + up.stats.projectile_bonus);
+        if (up.stats.pierce_bonus) dynamicPierce += up.stats.pierce_bonus;
       }
     }
   }
@@ -808,16 +968,25 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
     ? Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, dynamicCooldown))
     : Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, rankDef?.cooldownReductionBonus ?? (isCategoryCustom ? 0 : (safeLevel - 1) * 0.08)));
 
+  const effectivePierce = hasDynamicNormalUpgrades
+    ? dynamicPierce
+    : (rankDef?.pierceBonus ?? 0);
+
+  const effectiveProjectileMult = hasDynamicNormalUpgrades
+    ? dynamicProjectileMult
+    : (rankDef?.projectileMultBonus ?? 1);
+
   const stats: WeaponStats = {
     damageMult: Math.max(0.05, 1 + effectiveDamageBonus),
     cooldownMult: 1,
     areaRadiusMult: Math.max(0.10, 1 + effectiveAreaBonus),
-    pierce: 0,
+    pierce: effectivePierce,
     projectileCount: 0,
-    projectileCountMult: 1,
+    projectileCountMult: effectiveProjectileMult,
     knockbackMult: 1,
     statusDurationSec: 0,
     cooldownReduction: effectiveCooldownReduction,
+    ignoreResist: 0,
   };
   if (!canonical) return stats;
 
@@ -844,6 +1013,9 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
     }
     if (mods.specialMechanicFlag) {
       stats.specialMechanicFlag = mods.specialMechanicFlag;
+    }
+    if (mods.ignoreResist !== undefined) {
+      stats.ignoreResist = Math.max(stats.ignoreResist || 0, mods.ignoreResist);
     }
   }
 

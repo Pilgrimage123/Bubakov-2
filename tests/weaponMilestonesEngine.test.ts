@@ -165,7 +165,7 @@ describe('Weapon Milestones GameEngine Seam', () => {
       // Verify all 3 milestones recorded
       const weapon = engine.state.player.weapons.find((w: any) => w.id === 'osikovy_prut');
       expect(weapon.milestones).toEqual(['cane_burst_3', 'cane_burst_5', 'cane_burst_8']);
-      expect(finalStats.pierce).toBeGreaterThanOrEqual(2); // cane_burst_5 and cane_burst_8 grant pierceDelta
+      expect(finalStats.ignoreResist).toBeCloseTo(0.40, 2); // cane_burst_8 grants ignoreResist 0.40
 
       // Attempting to upgrade beyond rank 8 stays at rank 8 and does not prompt
       const beyondRes = engine.upgradeWeapon('osikovy_prut');

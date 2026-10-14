@@ -86,6 +86,7 @@ export interface MilestoneChoice {
     knockbackMult?: number;
     statusDurationSec?: number;
     specialMechanicFlag?: string;
+    ignoreResist?: number;
   };
 }
 
@@ -97,27 +98,31 @@ export interface WeaponRankDef {
   cooldownReductionBonus: number;
   areaBonus: number;
   pierceBonus?: number;
+  projectileMultBonus?: number;
   choices?: [MilestoneChoice, MilestoneChoice];
   normalUpgradeId?: string;
   normalUpgradeName?: string;
 }
 
-export type WeaponNormalUpgradeCategory = 'melee' | 'aura' | 'default';
+export type WeaponNormalUpgradeCategory = 'melee' | 'aura' | 'projectile' | 'default';
 
 export interface WeaponNormalUpgradeDef {
   id: string;
   name: string;
   ui_text: string;
-  category: 'melee' | 'aura';
+  category: 'melee' | 'aura' | 'projectile';
   stats: {
-    area_bonus: number;
-    damage_bonus: number;
-    cooldown_reduction: number;
+    area_bonus?: number;
+    damage_bonus?: number;
+    cooldown_reduction?: number;
+    projectile_bonus?: number;
+    pierce_bonus?: number;
   };
 }
 
 export type MeleeNormalUpgradeDef = WeaponNormalUpgradeDef;
 export type AuraNormalUpgradeDef = WeaponNormalUpgradeDef;
+export type ProjectileNormalUpgradeDef = WeaponNormalUpgradeDef;
 
 export type SynergisticArchetype = 'swarm' | 'burst' | 'tempo' | 'heavy';
 

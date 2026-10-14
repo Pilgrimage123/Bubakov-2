@@ -1532,6 +1532,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             setPendingMilestones(nextChoices);
           }
         }
+        existing._cachedStats = getRankedWeaponStats(canonicalId, existing.level, existing);
       } else {
         const newW = {
           id: canonicalId,
@@ -3064,6 +3065,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (!pw.normalUpgrades) pw.normalUpgrades = [];
                 pw.normalUpgrades.push(candidateUpgrade.id);
               }
+              pw._cachedStats = getRankedWeaponStats(canonicalId, pw.level, pw);
               if (pw.level === 3 || pw.level === 5 || pw.level === 8) {
                 const choices = getMilestoneChoices(canonicalId, pw.level);
                 if (choices) {
@@ -11359,15 +11361,35 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           pendingMilestone={pendingMilestones[0]}
           lang={(metaRef.current.currentLang as any) || 'cs'}
           onChoose={(weaponId, choiceId) => {
-            const p = engineRef.current.player;
+            const canonicalId = toCanonicalWeaponId(weaponId);
+            const currentPending = pendingMilestones[0];
+            if (currentPending) {
+              const choice = getMilestoneChoice(canonicalId, currentPending.rank, choiceId);
+              if (choice?.audioSfx) {
+                const sfxCamel = choice.audioSfx.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+                if (typeof (sound as any)[sfxCamel] === 'function') {
+                  (sound as any)[sfxCamel]();
+                } else if (typeof (sound as any)[choice.audioSfx] === 'function') {
+                  (sound as any)[choice.audioSfx]();
+                }
+              }
+            }
+            if (engineRef.current && typeof (engineRef.current as any).chooseWeaponMilestone === 'function') {
+              try {
+                (engineRef.current as any).chooseWeaponMilestone(canonicalId, choiceId);
+              } catch (e) {
+                console.warn('chooseWeaponMilestone warning', e);
+              }
+            }
+            const p = engineRef.current?.player;
             if (p && p.weapons) {
-              const canonicalId = toCanonicalWeaponId(weaponId);
               const wp = p.weapons.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
               if (wp) {
                 if (!wp.milestones) wp.milestones = [];
                 if (!wp.milestones.includes(choiceId)) {
                   wp.milestones.push(choiceId);
                 }
+                wp._cachedStats = getRankedWeaponStats(canonicalId, wp.level, wp);
               }
             }
             const remaining = pendingMilestonesRef.current.slice(1);

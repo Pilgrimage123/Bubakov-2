@@ -19,6 +19,9 @@ import {
   getWeaponCooldownReductionHeadroom,
   isWeaponAtCooldownCap,
   isWeaponNearCooldownCap,
+  PROJECTILE_NORMAL_UPGRADES,
+  PROJECTILE_WEAPONS,
+  getProjectileNormalUpgrade,
   getWeaponCategory,
   getEligibleNormalUpgrades,
   rollRandomWeaponUpgrade,
@@ -533,6 +536,128 @@ describe('Weapon Milestones System', () => {
       const auraUpgrade = rollRandomWeaponUpgrade('bylinkova_fajfka');
       expect(auraUpgrade).toBeDefined();
       expect(auraUpgrade?.category).toBe('aura');
+
+      const projUpgrade = rollRandomWeaponUpgrade('kysela_okurka');
+      expect(projUpgrade).toBeDefined();
+      expect(projUpgrade?.category).toBe('projectile');
+    });
+
+    it('has 6 harmonized projectile normal upgrades with expected user values and stats', () => {
+      const projKeys = Object.keys(PROJECTILE_NORMAL_UPGRADES);
+      expect(projKeys).toHaveLength(6);
+      expect(projKeys).toEqual(
+        expect.arrayContaining(['proj_barrage', 'cd_hyper', 'dmg_heavy', 'proj_pierce', 'proj_reach', 'proj_volley'])
+      );
+
+      // 1. Kobercový nálet (user requested): +130 % projektilů, -30 % zranění
+      const barrage = PROJECTILE_NORMAL_UPGRADES['proj_barrage'];
+      expect(barrage.name).toBe('Kobercový nálet');
+      expect(barrage.stats.projectile_bonus).toBeCloseTo(1.30, 2);
+      expect(barrage.stats.damage_bonus).toBeCloseTo(-0.30, 2);
+
+      // 2. Rychlopalný mechanismus (user requested): -30 % cooldown
+      const cdHyper = PROJECTILE_NORMAL_UPGRADES['cd_hyper'];
+      expect(cdHyper.name).toBe('Rychlopalný mechanismus');
+      expect(cdHyper.stats.cooldown_reduction).toBeCloseTo(0.30, 2);
+
+      // 3. Těžká munice (user requested): +100 % zranění
+      const dmgHeavy = PROJECTILE_NORMAL_UPGRADES['dmg_heavy'];
+      expect(dmgHeavy.name).toBe('Těžká munice');
+      expect(dmgHeavy.stats.damage_bonus).toBeCloseTo(1.00, 2);
+
+      // 4. Průrazné kování: +2 průraz, -15 % zranění
+      const pierce = PROJECTILE_NORMAL_UPGRADES['proj_pierce'];
+      expect(pierce.stats.pierce_bonus).toBe(2);
+      expect(pierce.stats.damage_bonus).toBeCloseTo(-0.15, 2);
+
+      // 5. Dalekonosný rozptyl: +50 % dosah a plošný rozstřik
+      const reach = PROJECTILE_NORMAL_UPGRADES['proj_reach'];
+      expect(reach.stats.area_bonus).toBeCloseTo(0.50, 2);
+
+      // 6. Hustá salva: +60 % zranění, +40 % projektilů
+      const volley = PROJECTILE_NORMAL_UPGRADES['proj_volley'];
+      expect(volley.stats.damage_bonus).toBeCloseTo(0.60, 2);
+      expect(volley.stats.projectile_bonus).toBeCloseTo(0.40, 2);
+    });
+
+    it('classifies all projectile weapons under projectile category and returns 6 eligible upgrades', () => {
+      expect(PROJECTILE_WEAPONS).toHaveLength(8);
+      for (const wId of PROJECTILE_WEAPONS) {
+        expect(getWeaponCategory(wId)).toBe('projectile');
+        const eligible = getEligibleNormalUpgrades(wId);
+        expect(eligible).toHaveLength(6);
+      }
+    });
+
+    it('applies projectile dynamic normal upgrades correctly in getRankedWeaponStats', () => {
+      // Weapon with barrage (+130% projectiles, -30% dmg) and heavy ammo (+100% dmg)
+      const cucumberWithUpgrades = {
+        id: 'kysela_okurka',
+        level: 3,
+        normalUpgrades: ['proj_barrage', 'dmg_heavy'],
+      };
+      const stats = getRankedWeaponStats('kysela_okurka', 3, cucumberWithUpgrades);
+      // dynamicDamage = -0.30 + 1.00 = +0.70 -> damageMult = 1.70
+      expect(stats.damageMult).toBeCloseTo(1.70, 2);
+      // dynamicProjectileMult = (1 + 1.30) = 2.30
+      expect(stats.projectileCountMult).toBeCloseTo(2.30, 2);
+
+      // Weapon with pierce upgrade (+2 pierce, -15% dmg)
+      const bunsWithPierce = {
+        id: 'povidlove_buchty',
+        level: 2,
+        normalUpgrades: ['proj_pierce'],
+      };
+      const bunsStats = getRankedWeaponStats('povidlove_buchty', 2, bunsWithPierce);
+      expect(bunsStats.pierce).toBe(2);
+      expect(bunsStats.damageMult).toBeCloseTo(0.85, 2);
+    });
+
+    it('filters cd_hyper when projectile weapon is near cooldown cap', () => {
+      const weaponNearCap = {
+        id: 'kysela_okurka',
+        level: 4,
+        normalUpgrades: ['cd_hyper', 'cd_hyper'], // 0.30 + 0.30 = 0.60, headroom = 0.75 - 0.60 = 0.15 (still >= 0.10)
+      };
+      expect(getEligibleNormalUpgrades('kysela_okurka', weaponNearCap)).toHaveLength(6);
+
+      const weaponAtCap = {
+        id: 'kysela_okurka',
+        level: 5,
+        normalUpgrades: ['cd_hyper', 'cd_hyper', 'cd_hyper'], // 0.90 -> headroom = 0 (< 0.10)
+      };
+      const eligible = getEligibleNormalUpgrades('kysela_okurka', weaponAtCap);
+      expect(eligible).toHaveLength(5);
+      expect(eligible.some((u) => u.id === 'cd_hyper')).toBe(false);
+    });
+
+    it('verifies melee burst milestones grant ignoreResist instead of phantom pierce', () => {
+      const caneRank5 = getMilestoneChoices('osikovy_prut', 5);
+      const caneBurst5 = caneRank5?.find((c) => c.id === 'cane_burst_5');
+      expect(caneBurst5?.statModifiers.ignoreResist).toBeCloseTo(0.25, 2);
+      expect(caneBurst5?.statModifiers.pierceDelta).toBeUndefined();
+
+      const caneRank8 = getMilestoneChoices('osikovy_prut', 8);
+      const caneBurst8 = caneRank8?.find((c) => c.id === 'cane_burst_8');
+      expect(caneBurst8?.statModifiers.ignoreResist).toBeCloseTo(0.40, 2);
+      expect(caneBurst8?.statModifiers.pierceDelta).toBeUndefined();
+
+      const vidleRank5 = getMilestoneChoices('kovarske_vidle', 5);
+      const vidleBurst5 = vidleRank5?.find((c) => c.id === 'pitchfork_burst_5');
+      expect(vidleBurst5?.statModifiers.ignoreResist).toBeCloseTo(0.25, 2);
+
+      const halberdRank8 = getMilestoneChoices('kovana_halapartna', 8);
+      const halberdBurst8 = halberdRank8?.find((c) => c.id === 'halberd_burst_8');
+      expect(halberdBurst8?.statModifiers.ignoreResist).toBeCloseTo(0.40, 2);
+
+      // Verify that selecting milestone reflects in stats.ignoreResist
+      const weaponWithResist = {
+        id: 'osikovy_prut',
+        level: 5,
+        milestones: ['cane_burst_3', 'cane_burst_5'],
+      };
+      const stats = getRankedWeaponStats('osikovy_prut', 5, weaponWithResist);
+      expect(stats.ignoreResist).toBeCloseTo(0.25, 2);
     });
   });
 });

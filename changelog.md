@@ -1,9 +1,10 @@
-## 2026-10-14 — Náhodná specializace projektilových zbraní
+## 2026-10-14 — Harmonizace vylepšení zbraní (projektilové, aury, sečné) a oprava zbraňových milníků
 
-- Dědečkova nůše může náhodně nabídnout specializaci už vlastněné projektilové zbraně; garance běžné nabídky alespoň jedné zbraně zůstává zachována.
-- Malovaná truhla může náhodně obsahovat specializaci projektilové zbraně.
-- Pro osm zbraní s projektily jsou dostupné tři alternativy: Kobercový nálet (+130 % projektilů, −30 % poškození), Rychlopalný mechanismus (−30 % cooldownu) a Těžká munice (+100 % poškození).
-- Každá zbraň může z těchto synergických specializací získat nejvýše jednu; aplikace aktualizuje běhové statistiky zbraně.
+- **Tematický bazén 6 běžných vylepšení pro projektilové zbraně**: Zaveden kompletní bazén vylepšení pro 8 projektilových a vrhacích zbraní (`kysela_okurka`, `povidlove_buchty`, `devatero_kviti`, `snehova_koule`, `kynuty_kolac`, `horky_brambor`, `vceli_roj`, `svecena_kropenka`) – Kobercový nálet (`proj_barrage`: +130 % projektilů, −30 % poškození), Rychlopalný mechanismus (`cd_hyper`: −30 % cooldownu), Těžká munice (`dmg_heavy`: +100 % poškození), Průrazné kování (`proj_pierce`: +2 průraz, −15 % poškození), Dalekonosný rozptyl (`proj_reach`: +50 % dosah a rozstřik) a Hustá salva (`proj_volley`: +60 % poškození, +40 % projektilů).
+- **Dynamický výběr v Dědečkově nůši a malovaných truhlách**: Vylepšení se nyní nabízejí a losují dynamicky na úrovních 2, 4, 6 a 7 namísto jednoho pevně daného upgradu. Byla odstraněna provizorní syntetická vylepšení ze `synergisticUpgrades.ts`.
+- **Oprava milníků sečných zbraní (`ignoreResist`)**: Nahrazen nefunkční parametr `pierceDelta: 1` mechanikou ignorování odolností strašidel (+25 % na 5. úrovni a +40 % na 8. úrovni) pro Osikový prut, Kovářské vidle a Kovanou halapartnu. Útoky proráží kamennou kůži a houževnatost monster.
+- **Oprava statistického modelu a synchronizace React UI**: Opraven výpočet `_cachedStats` v `getRankedWeaponStats`, aby prázdný seznam vylepšení nenuloval základní postupný růst zbraně. Výběr v `WeaponMilestoneModal` okamžitě přepočítává běhové statistiky v enginu a spouští zvukový efekt volby.
+- **Dokumentace a testy**: Zaktualizován `GLOSSARY.md`, sepsán architektonický záznam `docs/adr/0012-harmonizace-projektilovych-zbrani-a-milniku.md` a rozšířena testovací sada na 268 procházejících testů.
 
 ## 2026-10-14 — Kontaktní odstrčení a krátká nezranitelnost lovců
 
