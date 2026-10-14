@@ -338,17 +338,25 @@ describe('GameEngine Headless Simulation', () => {
     it('scales repulse damage, knockback and stun with max courage', () => {
       const hunter = engine.state.player;
       const enemy = engine.spawnMonster('rarach', 100, 0);
-      const initialHp = enemy.hp;
-
       hunter.maxHp = 300;
-      enemy.x = 100;
-      enemy.y = 0;
       hunter.x = 0;
       hunter.y = 0;
+      enemy.x = 100;
+      enemy.y = 0;
+
+      const initialHp = enemy.hp;
+      const expectedForce = 1080 * (hunter.maxHp / 200);
+      const takeDamageSpy = vi.spyOn(enemy, 'takeDamage');
       hunter.counterMeleeAttacker(enemy);
 
-      expect(enemy.hp).toBeLessThanOrEqual(initialHp - 90);
-      expect(Math.hypot(enemy.kbx, enemy.kby)).toBeGreaterThan(1080);
+      expect(enemy.hp).toBeLessThan(initialHp);
+      expect(takeDamageSpy).toHaveBeenCalledWith(
+        90,
+        'physical',
+        expectedForce,
+        0,
+        expect.objectContaining({ stunDuration: 0.35 * (hunter.maxHp / 200) })
+      );
       expect(enemy.stunTimer).toBeGreaterThan(0);
     });
   });
