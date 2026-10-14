@@ -132,6 +132,7 @@ const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
   { id: 'povidlove_buchty', name: 'Povidlové buchty' },
   { id: 'devatero_kviti', name: 'Devatero kvítí' },
   { id: 'snehova_koule', name: 'Sněhová koule' },
+  { id: 'hromnicka', name: 'Hromnička' },
   { id: 'kynuty_kolac', name: 'Kynutý koláč' },
   { id: 'horky_brambor', name: 'Horký brambor' },
   { id: 'vceli_roj', name: 'Včelí roj' },
