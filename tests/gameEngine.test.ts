@@ -296,6 +296,57 @@ describe('GameEngine Headless Simulation', () => {
     });
   });
 
+
+  describe('Hunter contact repulse and hit invulnerability', () => {
+    beforeEach(() => {
+      engine.initRun({
+        levelId: 1,
+        hunterType: 'wanderer',
+        spawnInitialWave: false,
+      });
+    });
+
+    it('repulses on physical contact before an enemy attack lands', () => {
+      const hunter = engine.state.player;
+      const enemy = engine.spawnMonster('rarach', hunter.x + hunter.radius + 1, hunter.y);
+      const initialHp = enemy.hp;
+      enemy.x = hunter.x + hunter.radius + enemy.radius - 1;
+      engine.spatialHash.rebuild(engine.livingEnemies);
+
+      engine.update(0.016);
+
+      expect(enemy.hp).toBeLessThan(initialHp);
+      expect(hunter.repulseCooldown).toBeCloseTo(1.2, 1);
+    });
+
+    it('gives the hunter 0.3 seconds of invulnerability after taking damage', () => {
+      const hunter = engine.state.player;
+      hunter.takeDamage(10, 'physical');
+      expect(hunter.hp).toBeLessThan(hunter.maxHp);
+      expect(hunter.invulnerabilityTimer).toBeCloseTo(0.3, 5);
+
+      const hpAfterFirstHit = hunter.hp;
+      hunter.takeDamage(10, 'physical');
+      expect(hunter.hp).toBe(hpAfterFirstHit);
+
+      engine.update(0.1);
+      expect(hunter.invulnerabilityTimer).toBeCloseTo(0.2, 5);
+    });
+
+    it('scales repulse damage, knockback and stun with max courage', () => {
+      const hunter = engine.state.player;
+      const enemy = engine.spawnMonster('rarach', 100, 0);
+      const initialHp = enemy.hp;
+
+      hunter.maxHp = 300;
+      hunter.counterMeleeAttacker(enemy);
+
+      expect(enemy.hp).toBeLessThanOrEqual(initialHp - 90);
+      expect(Math.hypot(enemy.kbx, enemy.kby)).toBeGreaterThan(1080);
+      expect(enemy.stunTimer).toBeGreaterThan(0);
+    });
+  });
+
   describe('Deterministic Headless Execution Outside DOM', () => {
     it('executes identically across two distinct instances with identical inputs', () => {
       const engine1 = new GameEngine();
