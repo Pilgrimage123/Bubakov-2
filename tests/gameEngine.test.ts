@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine, type WeaponAction } from '../src/game/engine';
 import { createInitialEngineState } from '../src/game/engineState';
 import { createDefaultMetaProgression } from '../src/game/migration';
+import { ENEMIES } from '../src/data/enemies';
 
 describe('GameEngine Headless Simulation', () => {
   let engine: GameEngine;
@@ -293,6 +294,69 @@ describe('GameEngine Headless Simulation', () => {
 
       expect(enemy1.hp).toBeLessThan(initHp1);
       expect(enemy2.hp).toBe(initHp2);
+    });
+  });
+
+
+  describe('Hunter contact repulse and hit invulnerability', () => {
+    beforeEach(() => {
+      engine.initRun({
+        levelId: 1,
+        hunterType: 'wanderer',
+        spawnInitialWave: false,
+      });
+    });
+
+    it('repulses on physical contact before an enemy attack lands', () => {
+      const hunter = engine.state.player;
+      const enemy = engine.spawnMonster('rarach', hunter.x + hunter.radius + 1, hunter.y);
+      enemy.x = hunter.x + hunter.radius + enemy.radius - 1;
+      const repulseSpy = vi.spyOn(hunter, 'counterMeleeAttacker');
+
+      // Directly exercise the same collision gate used by GameEngine.update.
+      hunter.counterMeleeAttacker(enemy);
+
+      expect(repulseSpy).toHaveBeenCalledWith(enemy);
+      expect(enemy.hp).toBeLessThan(ENEMIES.rarach.hp); // contact counter dealt damage
+      expect(hunter.repulseCooldown).toBeCloseTo(1.2, 5);
+    });
+
+    it('gives the hunter 0.3 seconds of invulnerability after taking damage', () => {
+      const hunter = engine.state.player;
+      hunter.takeDamage(10, 'physical');
+      expect(hunter.hp).toBeLessThan(hunter.maxHp);
+      expect(hunter.invulnerabilityTimer).toBeCloseTo(0.3, 5);
+
+      const hpAfterFirstHit = hunter.hp;
+      hunter.takeDamage(10, 'physical');
+      expect(hunter.hp).toBe(hpAfterFirstHit);
+
+      engine.update(0.1);
+      expect(hunter.invulnerabilityTimer).toBeCloseTo(0.2, 5);
+    });
+
+    it('scales repulse damage, knockback and stun with max courage', () => {
+      const hunter = engine.state.player;
+      const enemy = engine.spawnMonster('rarach', 100, 0);
+      hunter.maxHp = 300;
+      hunter.x = 0;
+      hunter.y = 0;
+      enemy.x = 100;
+      enemy.y = 0;
+
+      const initialHp = enemy.hp;
+      const expectedForce = 1080 * (hunter.maxHp / 200);
+      const takeDamageSpy = vi.spyOn(enemy, 'takeDamage');
+      hunter.counterMeleeAttacker(enemy);
+
+      expect(enemy.hp).toBe(0); // The scaled counter damage defeats this 48-HP enemy.
+      expect(takeDamageSpy).toHaveBeenCalledWith(
+        90,
+        'physical',
+        expectedForce,
+        0,
+        expect.objectContaining({ stunDuration: 0.35 * (hunter.maxHp / 200) })
+      );
     });
   });
 

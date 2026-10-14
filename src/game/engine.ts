@@ -471,6 +471,7 @@ export class GameEngine {
       regenLevel: meta?.regenLevel || 0,
       regenTimer: 0,
       invulnerabilityTimer: 0,
+      repulseCooldown: 0,
       intangibleTimer: 0,
       guaranteedCritTimer: 0,
       facingAngle: 0,
@@ -541,23 +542,28 @@ export class GameEngine {
 
       counterMeleeAttacker(attacker: any) {
         if (!attacker || attacker.isDefeated || attacker.dead) return;
+        if ((this.repulseCooldown || 0) > 0) return;
+        this.repulseCooldown = 1.2;
         const dx = attacker.x - this.x;
         const dy = attacker.y - this.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        let nx = dx / dist;
-        let ny = dy / dist;
-        if (dist < 0.001) {
-          nx = this.lastDx || 1;
-          ny = this.lastDy || 0;
-        }
-        const counterDmg = Math.max(1, Math.round(this.maxHp * 0.15));
-        const pushForce = 540;
+        const rawDist = Math.hypot(dx, dy);
+        let nx = rawDist > 0.001 ? dx / rawDist : (this.lastDx || 1);
+        let ny = rawDist > 0.001 ? dy / rawDist : (this.lastDy || 0);
+        const dirLength = Math.hypot(nx, ny) || 1;
+        nx /= dirLength;
+        ny /= dirLength;
+        // Poškození, odhození a stun škálují s maximální Kuráží lovce.
+        const courageScale = Math.max(0.25, (this.maxHp || 200) / 200);
+        const counterDmg = Math.max(1, Math.round((this.maxHp || 0) * 0.30));
+        const pushForce = 1080 * courageScale;
+        const stunDuration = 0.35 * courageScale;
         const kbx = nx * pushForce;
         const kby = ny * pushForce;
 
         attacker.takeDamage(counterDmg, 'physical', kbx, kby, {
           isHunterCounter: true,
-          source: 'hunter_melee_counter',
+          stunDuration,
+          source: 'hunter_contact_repulse',
         });
 
         self.callbacks?.onSound?.('heavyHit');
@@ -573,6 +579,7 @@ export class GameEngine {
           return;
         }
         const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
+        const hpBeforeDamage = this.hp;
         let remainingDmg = hurtDmg;
         let absorbed = 0;
         if (this.tempShield > 0) {
@@ -581,6 +588,10 @@ export class GameEngine {
           remainingDmg -= absorbed;
         }
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
+        // Grant brief invulnerability only if this hit actually removes courage.
+        if (this.hp < hpBeforeDamage) {
+          this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.3);
+        }
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
 
@@ -588,10 +599,6 @@ export class GameEngine {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true));
         } else {
           self.state.texts.push(new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444'));
-        }
-
-        if (isMelee && attacker && !attacker.isDefeated && !attacker.dead) {
-          this.counterMeleeAttacker(attacker);
         }
 
         if (this.hp <= 0) {
@@ -1684,6 +1691,8 @@ export class GameEngine {
         const collisionReach = player.radius + e.radius;
 
         if (dist < collisionReach) {
+          // Odstrčení reaguje na dotyk, aniž by čekalo na zásah nepřítele.
+          player.counterMeleeAttacker?.(e);
           const overlap = collisionReach - dist;
           if (dist > 0.0001) {
             const invDist = 1 / dist;
@@ -1717,7 +1726,8 @@ export class GameEngine {
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
       if (player.slowTimer > 0) player.slowTimer -= dt;
       if (player.ultCd > 0) player.ultCd -= dt;
-      if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
+      if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
+      if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
       if (player.regenLevel > 0 && player.hp < player.maxHp) {
