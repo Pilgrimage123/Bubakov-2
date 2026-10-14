@@ -623,7 +623,7 @@ export function GrandfatherShop({
                     levelBadge = isMaxed ? '🍍 Arcivzácné (MAX)' : '🍍 Arcivzácné (2,5×)';
                     buttonLabel = isMaxed ? 'VYČERPÁNO' : 'KOUPIT';
                   } else {
-                    owned = purchasedIds.filter((id) => id === item.id).length;
+                    owned = purchasedIds.filter((id) => id === item!.id).length;
                     maxStacks = item!.maxStacks || 5;
                     isMaxed = item?.maxStacks !== undefined && owned >= item!.maxStacks;
                     levelBadge = `Úroveň: ${owned} / ${item?.maxStacks || '∞'}`;
