@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine, type WeaponAction } from '../src/game/engine';
 import { createInitialEngineState } from '../src/game/engineState';
 import { createDefaultMetaProgression } from '../src/game/migration';
@@ -312,9 +312,12 @@ describe('GameEngine Headless Simulation', () => {
       const initialHp = enemy.hp;
       enemy.x = hunter.x + hunter.radius + enemy.radius - 1;
       engine.spatialHash.rebuild(engine.livingEnemies);
+      (engine as any).livingEnemies = [enemy];
+      const repulseSpy = vi.spyOn(hunter, 'counterMeleeAttacker');
 
       engine.update(0.016);
 
+      expect(repulseSpy).toHaveBeenCalledWith(enemy);
       expect(enemy.hp).toBeLessThan(initialHp);
       expect(hunter.repulseCooldown).toBeCloseTo(1.2, 1);
     });
