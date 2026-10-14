@@ -580,6 +580,7 @@ export class GameEngine {
           return;
         }
         const hurtDmg = Math.max(1, amount * (1 - this.damageReduction));
+        const hpBeforeDamage = this.hp;
         let remainingDmg = hurtDmg;
         let absorbed = 0;
         if (this.tempShield > 0) {
@@ -588,8 +589,10 @@ export class GameEngine {
           remainingDmg -= absorbed;
         }
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
-        // Každý úspěšný zásah dává lovci 0,3 s nezranitelnosti.
-        this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.3);
+        // Grant brief invulnerability only if this hit actually removes courage.
+        if (this.hp < hpBeforeDamage) {
+          this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.3);
+        }
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
 
