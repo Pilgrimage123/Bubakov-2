@@ -590,7 +590,7 @@ export function GrandfatherShop({
                     const canonicalId = toCanonicalWeaponId(item.weaponId);
                     const pw = playerWeapons?.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
                     owned = pw ? pw.level : 0;
-                    maxStacks = item.maxStacks || 8;
+                    maxStacks = item!.maxStacks || 8;
                     isMaxed = owned >= maxStacks;
                     const nextRank = owned + 1;
                     const rankDef = nextRank <= 8 ? getWeaponRankDef(canonicalId, nextRank) : undefined;
@@ -617,15 +617,15 @@ export function GrandfatherShop({
                     buttonLabel = 'POUŽÍT';
                     displayDesc = `${item!.description} (Ihned zavře nůši a spustí se na louce!)`;
                   } else if (item?.isAnanas) {
-                    owned = purchasedIds.filter((id) => id === item.id).length;
-                    maxStacks = item.maxStacks || 2;
+                    owned = purchasedIds.filter((id) => id === item!.id).length;
+                    maxStacks = item!.maxStacks || 2;
                     isMaxed = owned >= maxStacks;
                     levelBadge = isMaxed ? '🍍 Arcivzácné (MAX)' : '🍍 Arcivzácné (2,5×)';
                     buttonLabel = isMaxed ? 'VYČERPÁNO' : 'KOUPIT';
                   } else {
                     owned = purchasedIds.filter((id) => id === item.id).length;
-                    maxStacks = item.maxStacks || 5;
-                    isMaxed = item?.maxStacks !== undefined && owned >= item.maxStacks;
+                    maxStacks = item!.maxStacks || 5;
+                    isMaxed = item?.maxStacks !== undefined && owned >= item!.maxStacks;
                     levelBadge = `Úroveň: ${owned} / ${item?.maxStacks || '∞'}`;
                     if (isMaxed) {
                       buttonLabel = 'VYČERPÁNO';
@@ -769,12 +769,12 @@ export function GrandfatherShop({
                           >
                             {price}
                           </strong>
-                          {priceExempt && <small style={{ color: '#78350F', fontWeight: 800 }}>{item.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
+                          {priceExempt && <small style={{ color: '#78350F', fontWeight: 800 }}>{item!.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
                         </div>
 
                         <button
                           disabled={!affordable}
-                          onClick={() => handlePurchase(item.id)}
+                          onClick={() => handlePurchase(offer.itemId)}
                           style={{
                             minHeight: 42,
                             padding: isMobile ? '8px 14px' : '9px 18px',
