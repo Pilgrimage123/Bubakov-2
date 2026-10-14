@@ -420,32 +420,7 @@ export function GrandfatherShop({
               </div>
             )}
 
-            {/* Kaple svaté vlny Synergy */}
-            {churchLevel > 0 && (
-              <div
-                style={{
-                  background: 'rgba(254, 240, 138, 0.18)',
-                  border: '1.5px solid #F59E0B',
-                  borderRadius: 10,
-                  padding: isMobile ? '8px 10px' : '10px 14px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  fontSize: '0.84rem',
-                  color: '#451A03',
-                  lineHeight: 1.35,
-                  boxShadow: '2px 2px 0 rgba(120, 53, 15, 0.2)',
-                }}
-              >
-                <span style={{ fontSize: '1.3rem', lineHeight: 1 }}>⛪</span>
-                <div>
-                  <strong style={{ color: '#92400E' }}>Kaple svaté vlny (Úr. {churchLevel}):</strong>
-                  <div style={{ fontSize: '0.78rem', color: '#78350F', marginTop: 2 }}>
-                    Při každém nákupu v nůši vyšle posvěcenou rázovou vlnu ({churchLevel * 100} zranění v okruhu 400 px)!
-                  </div>
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* === RIGHT COLUMN: Market Shelf & Wares === */}

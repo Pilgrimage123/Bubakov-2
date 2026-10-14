@@ -85,7 +85,17 @@ import { BestiaryModal } from './components/BestiaryModal';
 import { PlanModal } from './components/PlanModal';
 import { ControlsModal } from './components/ControlsModal';
 import { VillageView } from './components/VillageView';
-import { calculateTotalVillageInvested } from './data/village';
+import {
+  calculateTotalVillageInvested,
+  getWallDamageReduction,
+  getForestDebuffReduction,
+  getMillSpeedMultiplier,
+  getScarecrowPickupMultiplier,
+  getWallHpMultiplier,
+  getBoziMukaLuckMultiplier,
+  getUndeadTolarChance,
+  getChurchWaveDamage
+} from './data/village';
 import { TouchControls } from './components/TouchControls';
 import { HunterUnlockModal } from './components/HunterUnlockModal';
 import { getHunterProgress, HUNTER_UNLOCKS, HunterProgress, getActiveUnlockingHunter } from './data/hunterUnlocks';
@@ -1660,36 +1670,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
       eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
     }
-    // Kaple svaté vlny: Při nákupu u Dědečka vyšle posvěcenou tlakovou vlnu
-    if ((metaRef.current.churchLevel || 0) > 0) {
-      const waveDmg = (metaRef.current.churchLevel || 0) * 150 * (1 + (metaRef.current.churchLevel || 0) * 0.08);
-      const waveRadius = 400;
-      const nearby = enemySpatialHashRef.current.queryCircle(p.x, p.y, waveRadius + 60);
-      for (let i = 0; i < nearby.length; i++) {
-        const e = nearby[i];
-        if (e.isDefeated) continue;
-        const dx = e.x - p.x;
-        const dy = e.y - p.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        if (dist <= waveRadius) {
-          e.takeDamage(waveDmg, 'holy', (dx / dist) * 450, (dy / dist) * 450);
-        }
-      }
-      sound.bell();
-      eng.texts.push(new DamageText(p.x, p.y - 120, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
-      for (let i = 0; i < 20; i++) {
-        const ang = (i / 20) * Math.PI * 2;
-        eng.particles.push({
-          x: p.x + Math.cos(ang) * 40,
-          y: p.y + Math.sin(ang) * 40,
-          vx: Math.cos(ang) * 350,
-          vy: Math.sin(ang) * 350,
-          life: 0.6,
-          color: '#FEF08A',
-          size: 6,
-        });
-      }
-    }
+
     // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
     const ownedNow = item.isWeapon
       ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
@@ -2148,10 +2129,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       w._cachedStats = getRankedWeaponStats(w.id, w.level, w);
     });
 
-    const wallBonusHp = (meta.wallLevel || 0) * 25;
-    const millBonusSpeed = (meta.millLevel || 0) * 10;
-    const scarecrowBonusPickup = (meta.scarecrowLevel || 0) * 25;
-    const wallDmgRed = Math.min(0.5, (meta.wallLevel || 0) * 0.04);
+    const wallBonusHp = Math.round(baseMaxHp * getWallHpMultiplier(meta.wallLevel || 0));
+    const millBonusSpeed = Math.round(baseSpeed * getMillSpeedMultiplier(meta.millLevel || 0));
+    const rawBasePickup = basePickup * (type === 'korenarka' ? 0.25 : 1);
+    const scarecrowBonusPickup = Math.round(rawBasePickup * getScarecrowPickupMultiplier(meta.scarecrowLevel || 0));
+    const wallDmgRed = getWallDamageReduction(meta.wallLevel || 0);
 
     const baseLuck =
       type === 'granny'
@@ -2167,7 +2149,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         : type === 'korenarka'
         ? 85
         : 100;
-    const boziMukaBonusLuck = (meta.boziMukaLevel || 0) * 5;
+    const boziMukaBonusLuck = Math.round(baseLuck * getBoziMukaLuckMultiplier(meta.boziMukaLevel || 0));
 
     const player = {
       x: 0,
@@ -2178,13 +2160,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       maxHp: baseMaxHp + wallBonusHp,
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
-      pickupRadius: (basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
-      accessibilityBasePickupRadius: basePickup * (type === 'korenarka' ? 0.25 : 1) + scarecrowBonusPickup,
+      pickupRadius: (rawBasePickup + scarecrowBonusPickup) * (1 + mobileAccessibilityScale * 0.05),
+      accessibilityBasePickupRadius: rawBasePickup + scarecrowBonusPickup,
       accessibilityAppliedLevel: mobileAccessibilityScale,
       luck: baseLuck + boziMukaBonusLuck,
       weapons: initialWeapons,
       _firingWeapon: null as any,
       damageMultiplier: 1,
+      churchLevel: meta.churchLevel || 0,
+      holyDamageMultiplier: 1 + Math.max(0, meta.churchLevel || 0) * 0.08,
       tulakDamageBonus: type === 'wanderer' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
@@ -5017,7 +5001,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (player.regenLevel > 0 && player.hp < player.maxHp) {
           player.regenTimer += dt;
           if (player.regenTimer >= 5) {
-            heals.push({ amount: player.regenLevel * 2, timer: 'regenTimer' });
+            heals.push({ amount: player.regenLevel * 4, timer: 'regenTimer' });
           }
         }
         if (heals.length > 0) {
@@ -5031,9 +5015,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 2 * getFrostAuraHealingMultiplier(player, engine.enemies));
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 4 * getFrostAuraHealingMultiplier(player, engine.enemies));
                 player.regenTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 2} 🌿`, COLORS.green));
+                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 4} 🌿`, COLORS.green));
               }
             }
             // Kořenářka's timed passive runs independently of the optional garden regeneration above.
@@ -5340,7 +5324,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   } else {
                     if (player.waterSoakedTimer < 1.0) {
-                      player.waterSoakedTimer = 2.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
+                      player.waterSoakedTimer = 2.5 * Math.max(0.15, 1 - getForestDebuffReduction(metaRef.current.forestLevel || 0));
                       engine.texts.push(new DamageText(player.x, player.y - 40, 'MOKRÁ LOUŽE! 🌊', '#60A5FA'));
                       sound.splash();
                     }
@@ -5398,10 +5382,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   player.y += Math.sin(p.angle) * p.pushback;
                 }
                 if (p.soakPlayer) {
-                  player.waterSoakedTimer = 3.5 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
+                  player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(metaRef.current.forestLevel || 0));
                 }
                 if (p.slowPlayer) {
-                  player.slowTimer = 2.2 * Math.max(0, 1 - (metaRef.current.forestLevel || 0) * 0.40);
+                  player.slowTimer = 2.2 * Math.max(0.15, 1 - getForestDebuffReduction(metaRef.current.forestLevel || 0));
                 }
                 if (p.statusText) {
                   engine.texts.push(new DamageText(player.x, player.y - 40, p.statusText, p.statusColor || COLORS.mustard, true));
@@ -5786,7 +5770,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (d.type === 'coin') {
                   const undeadLvl = metaRef.current.undeadLevel || 0;
                   const rawVal = d.value || 1;
-                  const val = Math.max(1, Math.round(rawVal * (1 + undeadLvl * 0.10)));
+                  const bonusVal = rawVal * (1 + undeadLvl * 0.10);
+                  const whole = Math.floor(bonusVal);
+                  engine.coinFraction = (engine.coinFraction || 0) + (bonusVal - whole);
+                  let extra = 0;
+                  if (engine.coinFraction >= 1.0) {
+                    extra = Math.floor(engine.coinFraction);
+                    engine.coinFraction -= extra;
+                  }
+                  const val = Math.max(1, whole + extra);
                   sound.coin();
                   engine.coins += val;
                   if (val >= 15) {
@@ -5797,7 +5789,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 } else if (d.type === 'gingerbread') {
                   const ovenLvl = metaRef.current.ovenLevel || 0;
                   const rawVal = d.value || 1;
-                  const val = Math.max(1, Math.round(rawVal * (1 + ovenLvl * 0.10)));
+                  const bonusVal = rawVal * (1 + ovenLvl * 0.10);
+                  const whole = Math.floor(bonusVal);
+                  engine.gingerbreadFraction = (engine.gingerbreadFraction || 0) + (bonusVal - whole);
+                  let extra = 0;
+                  if (engine.gingerbreadFraction >= 1.0) {
+                    extra = Math.floor(engine.gingerbreadFraction);
+                    engine.gingerbreadFraction -= extra;
+                  }
+                  const val = Math.max(1, whole + extra);
                   engine.gingerbread += val;
                   const size = d.size || 'small';
                   sound.gingerbreadPickup();
@@ -5836,6 +5836,36 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.souls += 1;
                   engine.coins += 25;
                   engine.texts.push(new DamageText(player.x, player.y - 45, 'DUŠIČKA OSVOBOZENA! +25 kr.', COLORS.mustard, true));
+                  const churchLvl = metaRef.current.churchLevel || 0;
+                  if (churchLvl > 0) {
+                    const waveDmg = getChurchWaveDamage(churchLvl);
+                    const waveRadius = 350;
+                    const nearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, waveRadius + 60);
+                    for (let i = 0; i < nearby.length; i++) {
+                      const e = nearby[i];
+                      if (e.isDefeated) continue;
+                      const dx = e.x - player.x;
+                      const dy = e.y - player.y;
+                      const dist = Math.hypot(dx, dy) || 1;
+                      if (dist <= waveRadius) {
+                        e.takeDamage(waveDmg, 'holy', (dx / dist) * 280, (dy / dist) * 280);
+                      }
+                    }
+                    sound.bell();
+                    engine.texts.push(new DamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
+                    for (let i = 0; i < 18; i++) {
+                      const ang = (i / 18) * Math.PI * 2;
+                      engine.particles.push({
+                        x: player.x + Math.cos(ang) * 30,
+                        y: player.y + Math.sin(ang) * 30,
+                        vx: Math.cos(ang) * 280,
+                        vy: Math.sin(ang) * 280,
+                        life: 0.35,
+                        color: '#FEF08A',
+                        size: 3.5,
+                      });
+                    }
+                  }
                 } else if (d.type === 'chest') {
                   openChestSequence();
                 } else if (d.type === 'horseshoe') {
@@ -8891,6 +8921,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const shadowMods = getShadowDefenseMultipliers(this);
         finalDmg *= shadowMods.damageTakenMult;
         if (type === 'holy') {
+          const holyMult = (engineRef.current.player?.holyDamageMultiplier) || (1 + Math.max(0, metaRef.current.churchLevel || 0) * 0.08);
+          finalDmg *= holyMult;
           this.silhouetteInvertTimer = 0.12;
         }
 
@@ -9345,12 +9377,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Surprise coin burst from enemy pouch
             const undeadLvl = metaRef.current.undeadLevel || 0;
-            const coinBonusChance = (isUndead ? 0.32 : isDemons ? 0.30 : 0.18) + (undeadLvl * 0.01);
+            const tolarBonus = getUndeadTolarChance(undeadLvl);
+            const coinBonusChance = (isUndead ? 0.32 : isDemons ? 0.30 : 0.18) + tolarBonus;
             if (Math.random() < coinBonusChance) {
               const rollDenom = Math.random();
               let coinVal = 1;
               let coinTxt: string | undefined = undefined;
-              if (rollDenom < (0.08 + undeadLvl * 0.01) || (isDemons && rollDenom < 0.16)) {
+              if (rollDenom < (0.08 + tolarBonus) || (isDemons && rollDenom < 0.16)) {
                 coinVal = 15 + Math.floor(Math.random() * 10);
                 coinTxt = 'Zlatý tolar!';
               } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
@@ -11274,9 +11307,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.regenLevel > 0) {
                 perks.push({
-                  icon: '🎵',
-                  name: `Veselá mysl a písnička`,
-                  desc: `+${pl.regenLevel * 3} kuráže doplňováno každých 5 sekund`,
+                  icon: '🌿',
+                  name: `Voňavé býlí (Bylinková zahrádka)`,
+                  desc: `+${pl.regenLevel * 4} kuráže doplňováno každých 5 sekund`,
                   badge: `Úr. ${pl.regenLevel}`,
                 });
               }

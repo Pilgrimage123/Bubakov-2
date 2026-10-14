@@ -678,7 +678,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   <strong>🌟 Cíl 12 nákupů v jedné výpravě:</strong> V horní části obchodu vidíte ukazatel nákupů. Pokud stihnete nakoupit alespoň 12 vylepšení, získáte obrovskou převahu nad půlnočními bossy!
                 </li>
                 <li>
-                  <strong>⛪ Božská synergie s Kaplí svaté vlny:</strong> Pokud máte v hospodě postavenou Kapli svaté vlny, při KAŽDÉM nákupu v dědečkově nůši vyšlehne posvěcená tlaková vlna (100–500 posvátného dmg + silný odhoz v okruhu 400 px), která bezpečně rozmetá všechny dotírající bubáky kolem!
+                  <strong>⛪ Božská ochrana s Kaplí svaté vlny:</strong> Pokud máte v hospodě postavenou Kapli svaté vlny, při KAŽDÉM osvobození zbloudilé dušičky z hliněného hrnečku vyšlehne posvěcená rázová vlna (75 posvátného dmg za úroveň + odhoz v okruhu 350 px), která bezpečně rozmetá všechny dotírající bubáky kolem!
                 </li>
               </ul>
             </div>
@@ -1127,7 +1127,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <div style={{ background: '#FEF3C7', border: '2px solid #D97706', borderRadius: 6, padding: '10px 12px' }}>
                   <div style={{ fontWeight: 900, color: '#B45309', fontSize: '0.98rem' }}>⛪ Kaple svaté vlny</div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
-                    <strong>Svatá vlna u Dědečka:</strong> Při každém nákupu v dědečkově nůši vyšle kaple posvěcenou tlakovou vlnu (100–500 dmg + odhoz v okruhu 400 px)!
+                    <strong>Svatá vlna při osvobození dušičky:</strong> Kdykoliv rozbijete hrneček a osvobodíte zbloudilou dušičku, kaple vyšle posvěcenou tlakovou vlnu (75 posvátného dmg za úroveň + odhoz v okruhu 350 px) a trvale posiluje svaté zbraně (+8 % za úroveň)!
                   </div>
                 </div>
               </div>

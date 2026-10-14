@@ -1,4 +1,4 @@
-import type { GameLevelId, MilestoneChoice, GameDrop } from '../types';
+import type { GameLevelId, MilestoneChoice, GameDrop, MetaProgression } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
 import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker } from './drops';
@@ -10,6 +10,7 @@ export interface PendingMilestoneChoice {
 }
 
 export interface EngineState {
+  meta?: MetaProgression;
   player: any;
   enemies: any[];
   livingEnemies?: any[];
@@ -87,6 +88,8 @@ export interface EngineState {
   screenFlashTimer: number;
   screenFlashColor: string;
   uncollectedGingerbreadValue: number;
+  coinFraction?: number;
+  gingerbreadFraction?: number;
   director?: any;
   activeRozmar?: any;
   activeHazards?: any[];
@@ -199,6 +202,8 @@ export function createInitialEngineState(): EngineState {
     screenFlashTimer: 0,
     screenFlashColor: '#FFFFFF',
     uncollectedGingerbreadValue: 0,
+    coinFraction: 0,
+    gingerbreadFraction: 0,
     director: null,
     activeRozmar: null,
     activeHazards: [],

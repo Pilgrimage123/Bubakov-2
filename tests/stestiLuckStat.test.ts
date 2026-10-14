@@ -45,8 +45,8 @@ describe('Stat Štěstí (Luck Stat Architecture - ADR 0013)', () => {
     expect(wanderer.luck).toBe(115);
 
     const granny = engine.createPlayer('granny', metaWithBoziMuka as MetaProgression);
-    // Base 120 + 3 * 5 = 135
-    expect(granny.luck).toBe(135);
+    // Base 120 * (1 + 3 * 0.05) = 138 (archetype preservation)
+    expect(granny.luck).toBe(138);
 
     // Verify Boží muka is present in village buildings registry
     const boziMuka = VILLAGE_BUILDINGS.find((b) => b.id === 'boziMuka');

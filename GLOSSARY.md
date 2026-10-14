@@ -57,8 +57,12 @@ Pokročilá varianta zbraňového vylepšení navázaná na zvolený folklórní
 _Avoid_: perk, weapon synergy, build upgrade
 
 **Zoufalá kuráž**:
-Posílení útočné síly lovce probouzející se při poklesu Kuráže pod 35 %, inspirované odhodláním v hospodské rvačce.
+Plynulé posílení útočné síly lovce úměrné chybějící Kuráži (až +25 % za úroveň budovy při nulové Kuráži), inspirované odhodláním v hospodské rvačce; při poklesu Kuráže pod 35 % aktivuje dramatický vizuální pokřik.
 _Avoid_: berserk, rage mode, low hp buff, záchvat zuřivosti
+
+**Posvěcená rázová vlna**:
+Ochranná posvátná vlna vyšlehující z Kaple svaté vlny kolem lovce v okamžiku, kdy rozbije hliněný hrneček a osvobodí zbloudilou dušičku, která odhodí a zraní okolní běsy.
+_Avoid_: holy nova, holy burst, výbuch světla, shockwave
 
 **Přívlastek bubáka**:
 Viditelný přívlastek a magická aura modifikující chování nebo vlastnosti strašidla bez skrytých cheatů.
@@ -141,11 +145,15 @@ Jednotlivý herní běh hráče zvolenou krajinou za účelem přežití, záchr
 _Avoid_: run, zápas, kolo, match
 
 **Vesnice**:
-Místní zázemí a hospoda U Černého kocoura, kde hráč za nastřádané krejcary investuje do trvalých obecních vylepšení (Kovářská výheň, Kaple svaté vlny, Šenkýřův štít).
+Místní zázemí a hospoda U Černého kocoura, kde hráč za nastřádané krejcary investuje do trvalých obecních vylepšení (Kovářská výheň, Kaple svaté vlny, Šenkýřova kuráž a dalších 10 budov).
 _Avoid_: hub, lobby, město
 
+**Obecní vylepšení**:
+Trvalé zvelebování 13 obecních budov v hospodě U Černého kocoura za krejcary, posilující lovce s ohledem na zachování jeho osobního charakteru pomocí procentuálních bonusů.
+_Avoid_: upgrade, upgrady, vylepšení v hospodě, perky
+
 **Obecní přirážka**:
-Pravidlo sdíleného zdražování obecních vylepšení, kdy každý zakoupený stupeň libovolné budovy ve vsi zvyšuje cenu všech ostatních budov.
+Pravidlo sdíleného zdražování obecních vylepšení (+20 % za každou zakoupenou úroveň libovolné budovy), motivující hráče k promyšlenému rozdělování investic při neomezeném rozvoji vsi.
 _Avoid_: daň, globální inflace, cost multiplier, village tax
 
 **Vrácení krejcarů**:

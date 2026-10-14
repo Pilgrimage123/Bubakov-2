@@ -40,6 +40,42 @@ export function calculateTotalVillageInvested(meta: Partial<MetaProgression>): n
 	return totalCost;
 }
 
+export function getWallDamageReduction(level: number): number {
+	if (level <= 0) return 0;
+	return 0.40 * (1 - 1 / (1 + 0.08 * level));
+}
+
+export function getForestDebuffReduction(level: number): number {
+	if (level <= 0) return 0;
+	return 0.85 * (1 - 1 / (1 + 0.25 * level));
+}
+
+export function getMillSpeedMultiplier(level: number): number {
+	if (level <= 0) return 0;
+	return Math.min(0.50, level * 0.03);
+}
+
+export function getScarecrowPickupMultiplier(level: number): number {
+	if (level <= 0) return 0;
+	return Math.min(1.50, level * 0.15);
+}
+
+export function getWallHpMultiplier(level: number): number {
+	return Math.max(0, level * 0.10);
+}
+
+export function getBoziMukaLuckMultiplier(level: number): number {
+	return Math.max(0, level * 0.05);
+}
+
+export function getUndeadTolarChance(level: number): number {
+	return Math.min(0.25, Math.max(0, level * 0.01));
+}
+
+export function getChurchWaveDamage(level: number): number {
+	return Math.max(0, level * 75);
+}
+
 export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 	{
 		id: "scarecrow",
@@ -49,7 +85,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 30,
 		helpers: "Zpacifikovaní bubáci v šosatých kabátech",
 		story: "Rychtář oblékl přemožené bubáky do starých šosatých kabátů a postavil je doprostřed pole. Žádný havran ani cizí diblík se teď neodváží přiblížit a krejcary se k lovci samy kutálejí!",
-		bonusDesc: (lvl) => `Pozorná aura: +${lvl * 25} k dosahu sběru krejcarů a perníčků`,
+		bonusDesc: (lvl) => `Pozorná aura: +${lvl * 15}% k základnímu dosahu sběru krejcarů a perníčků (až +150 %)`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawScarecrowScene"
 	},
@@ -61,7 +97,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 30,
 		helpers: "Hastrmani roztáčející mlýnské kolo",
 		story: "Mlynář slíbil hastrmanům, že jim nechá celý rákosový rybníček pod splavem pro jejich dušičky, pokud pomohou točit těžkým mlýnským kolem. Hastrmani nadšeně stříkají vodu a proud žene lovce kupředu!",
-		bonusDesc: (lvl) => `Vodní proud: +${lvl * 10} k rychlosti chůze lovce`,
+		bonusDesc: (lvl) => `Vodní proud: +${lvl * 3}% k základní rychlosti chůze lovce (až +50 %)`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawMillScene"
 	},
@@ -73,7 +109,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 30,
 		helpers: "Lesní mužíci vysekávající suché stezky",
 		story: "Starý borový les za vsí skrývá nebezpečná rašeliniště a hluboké louže. Kdo se však naučí lesním stezkám s lesními mužíky, nezapadne do bahna a promočení z něj spadne mnohem rychleji.",
-		bonusDesc: (lvl) => `Zvyk na mokřad: o ${Math.min(80, lvl * 20)}% kratší trvání promočení a zpomalení`,
+		bonusDesc: (lvl) => `Zvyk na mokřad: o ${Math.round(getForestDebuffReduction(lvl) * 100)}% kratší trvání promočení a zpomalení`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawScarecrowScene"
 	},
@@ -85,7 +121,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 75,
 		helpers: "Kostliví zedníci se zednickými lžícemi",
 		story: "Kostliví pomocníci vyměnili své nářadí za zednické lžíce a maltu. Celou noc pilně rovnají žulové kvádry a zalévají spáry, takže zdi vesnice vydrží i nápor nejdivočejších nezbedů.",
-		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 20} max Kuráž & +${Math.min(30, lvl * 3)}% odolnost proti poškození`,
+		bonusDesc: (lvl) => `Kamenné zdi: +${lvl * 10}% základní max Kuráže & +${Math.round(getWallDamageReduction(lvl) * 100)}% odolnost proti poškození`,
 		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
@@ -121,7 +157,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 50,
 		helpers: "Zkrocení bezhlaví furianti rovnající náhrobky",
 		story: "Kovaná brána se železným křížem drží neklidné umrlce na posvěcené půdě. Zkrocení strašidelní furianti pomáhají hrobníkům a občas vyhrabou ze starých hrobů cenné stříbrné tolary a měšce krejcarů.",
-		bonusDesc: (lvl) => `Poklady starých časů: +${lvl * 10}% k hodnotě Krejcarů & +${lvl * 1}% šance na tolar z nepřítele`,
+		bonusDesc: (lvl) => `Poklady starých časů: +${lvl * 10}% k hodnotě Krejcarů & +${lvl * 1}% šance na tolar (až 25 %)`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
@@ -157,7 +193,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 50,
 		helpers: "Zkrocení diblíci a permoníci leštící korbele",
 		story: "V hospodě U Černého kocoura se diblíci naučili čepovat chladné ležáky a pobízet chasníky k odvaze. Když jde do tuhého a lovci docházejí síly, vzpomene si na hospodskou rvačku a zasadí drtivý úder!",
-		bonusDesc: (lvl) => `Zoufalá kuráž: +${lvl * 25}% k poškození zbraní úměrně chybějící Kuráži`,
+		bonusDesc: (lvl) => `Zoufalá kuráž: až +${lvl * 25}% k poškození zbraní úměrně chybějící Kuráži`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
@@ -180,8 +216,8 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		role: "Svatá vlna a posvěcená výzbroj",
 		baseCost: 30,
 		helpers: "Kající se bludičky leštící posvěcený zvon",
-		story: "Bludičky přilétly z močálů do kaple a omývají svěcenou vodou oltář. Při každém nákupu v Dědečkově nůši vyšle posvěcený zvon kolem lovce mocnou rázovou vlnu, která smete okolní bubáky.",
-		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 150} posvátného poškození (400 px) při nákupu u Dědečka`,
+		story: "Bludičky přilétly z močálů do kaple a omývají svěcenou vodou oltář. Kdykoliv lovec rozbije hliněný hrneček a osvobodí zbloudilou dušičku, posvěcený zvon vyšle kolem lovce mocnou rázovou vlnu, která smete okolní bubáky.",
+		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 75} posvátného poškození při osvobození dušičky`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	},
@@ -193,7 +229,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		baseCost: 50,
 		helpers: "Svatojánští broučci střežící věčné světlo",
 		story: "Drobná kamenná boží muka na rozcestí se zapálenou svící chrání pocestné a zahánějí zlé moci. Kdo u nich v tichosti postojí, toho provází štěstěna na každém kroku.",
-		bonusDesc: (lvl) => `Přízeň osudu: +${lvl * 5} k výchozímu Štěstí lovce na výpravě`,
+		bonusDesc: (lvl) => `Přízeň osudu: +${lvl * 5}% k základnímu Štěstí lovce na výpravě`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
 		canvasDrawer: "drawWallScene"
 	}

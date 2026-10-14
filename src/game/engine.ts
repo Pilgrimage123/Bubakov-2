@@ -34,6 +34,16 @@ import {
   isUnholyEnemy,
 } from '../data/holy';
 import {
+  getWallDamageReduction,
+  getForestDebuffReduction,
+  getMillSpeedMultiplier,
+  getScarecrowPickupMultiplier,
+  getWallHpMultiplier,
+  getBoziMukaLuckMultiplier,
+  getUndeadTolarChance,
+  getChurchWaveDamage,
+} from '../data/village';
+import {
   performDropFusion,
   applyMagnetWave,
   registerKillAndCheckCombo,
@@ -351,6 +361,7 @@ export class GameEngine {
     nextState.dynamicDifficulty = dynamicDifficulty;
 
     this.state = nextState;
+    this.state.meta = metaProg;
     this.spatialHash.clear();
     this.livingEnemies = [];
 
@@ -448,10 +459,11 @@ export class GameEngine {
       w._cachedStats = getRankedWeaponStats(w.id, w.level, w);
     });
 
-    const wallBonusHp = (meta?.wallLevel || 0) * 20;
-    const millBonusSpeed = (meta?.millLevel || 0) * 10;
-    const scarecrowBonusPickup = (meta?.scarecrowLevel || 0) * 25;
-    const wallDmgRed = Math.min(0.3, (meta?.wallLevel || 0) * 0.03);
+    const wallBonusHp = Math.round(baseMaxHp * getWallHpMultiplier(meta?.wallLevel || 0));
+    const millBonusSpeed = Math.round(baseSpeed * getMillSpeedMultiplier(meta?.millLevel || 0));
+    const rawBasePickup = type === 'korenarka' ? 26 : basePickup;
+    const scarecrowBonusPickup = Math.round(rawBasePickup * getScarecrowPickupMultiplier(meta?.scarecrowLevel || 0));
+    const wallDmgRed = getWallDamageReduction(meta?.wallLevel || 0);
 
     const baseLuck =
       type === 'granny'
@@ -467,7 +479,7 @@ export class GameEngine {
         : type === 'korenarka'
         ? 85
         : 100;
-    const boziMukaBonusLuck = (meta?.boziMukaLevel || 0) * 5;
+    const boziMukaBonusLuck = Math.round(baseLuck * getBoziMukaLuckMultiplier(meta?.boziMukaLevel || 0));
 
     const self = this;
 
@@ -479,7 +491,7 @@ export class GameEngine {
       maxHp: baseMaxHp + wallBonusHp,
       hp: baseMaxHp + wallBonusHp,
       speed: baseSpeed + millBonusSpeed,
-      pickupRadius: basePickup + scarecrowBonusPickup,
+      pickupRadius: rawBasePickup + scarecrowBonusPickup,
       luck: baseLuck + boziMukaBonusLuck,
       weapons: initialWeapons,
       _firingWeapon: null as any,
@@ -1124,6 +1136,11 @@ export class GameEngine {
         effectiveResist = Math.max(0, effectiveResist * (1 - ignoreResist));
 
         let finalDamage = Math.max(1, amount * (1 - effectiveResist));
+        if (type === 'holy') {
+          const holyMult = (self.state.player?.holyDamageMultiplier) || (1 + Math.max(0, self.state.meta?.churchLevel || 0) * 0.08);
+          finalDamage *= holyMult;
+        }
+        finalDamage += (self.state.meta?.forgeLevel || 0) * 2;
         if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
           finalDamage = Math.round(finalDamage * 2.2);
           self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
@@ -1797,7 +1814,7 @@ export class GameEngine {
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
       if (player.slowTimer > 0) player.slowTimer -= dt;
-      if (player.ultCd > 0) player.ultCd -= dt;
+      if (player.ultCd > 0) player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
       if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
       if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
@@ -1855,6 +1872,12 @@ export class GameEngine {
       if (p.isEnemy) {
         if (player && player.hp > 0 && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
           player.takeDamage(p.dmg, p.type || 'blunt');
+          if (p.soakPlayer) {
+            player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
+          }
+          if (p.slowPlayer) {
+            player.slowTimer = 2.2 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
+          }
           p.dead = true;
         }
         continue;
@@ -2251,12 +2274,32 @@ export class GameEngine {
               d.dead = true;
               this.callbacks?.onDropPickup?.(d);
               if (d.type === 'coin') {
-                const val = d.value || 1;
+                const undeadLvl = this.state.meta?.undeadLevel || 0;
+                const rawVal = d.value || 1;
+                const bonusVal = rawVal * (1 + undeadLvl * 0.10);
+                const whole = Math.floor(bonusVal);
+                this.state.coinFraction = (this.state.coinFraction || 0) + (bonusVal - whole);
+                let extra = 0;
+                if (this.state.coinFraction >= 1.0) {
+                  extra = Math.floor(this.state.coinFraction);
+                  this.state.coinFraction -= extra;
+                }
+                const val = Math.max(1, whole + extra);
                 this.state.coins += val;
                 this.callbacks?.onSound?.('coin');
               } else if (d.type === 'gingerbread') {
                 const isHotActive = d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0;
-                const val = (d.value || 1) * (isHotActive ? 2 : 1);
+                const ovenLvl = this.state.meta?.ovenLevel || 0;
+                const rawVal = (d.value || 1) * (isHotActive ? 2 : 1);
+                const bonusVal = rawVal * (1 + ovenLvl * 0.10);
+                const whole = Math.floor(bonusVal);
+                this.state.gingerbreadFraction = (this.state.gingerbreadFraction || 0) + (bonusVal - whole);
+                let extra = 0;
+                if (this.state.gingerbreadFraction >= 1.0) {
+                  extra = Math.floor(this.state.gingerbreadFraction);
+                  this.state.gingerbreadFraction -= extra;
+                }
+                const val = Math.max(1, whole + extra);
                 this.state.gingerbread += val;
                 this.callbacks?.onSound?.('gingerbreadPickup');
               } else if (d.type === 'horseshoe') {
@@ -2281,7 +2324,10 @@ export class GameEngine {
                 this.state.timeStopTimer = 4.0;
               } else if (d.type === 'potion') {
                 this.callbacks?.onSound?.('potion');
-                player.hp = Math.min(player.maxHp, player.hp + 30);
+                const waterLevel = this.state.meta?.waterLevel || 0;
+                const potionHeal = 30 * (1 + waterLevel * 0.20);
+                player.hp = Math.min(player.maxHp, player.hp + potionHeal);
+                player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
               } else if (d.type === 'bread' || d.type === 'pear') {
                 this.callbacks?.onSound?.('potion');
                 player.hp = Math.min(player.maxHp, player.hp + 15);
@@ -2290,6 +2336,22 @@ export class GameEngine {
                 player.soulBuffTimer = 6.0;
                 this.state.souls += 1;
                 this.state.coins += 25;
+                const churchLvl = this.state.meta?.churchLevel || 0;
+                if (churchLvl > 0) {
+                  const waveDmg = getChurchWaveDamage(churchLvl);
+                  const waveRadius = 350;
+                  for (const e of this.livingEnemies) {
+                    if (e.isDefeated || e.dead) continue;
+                    const dx = e.x - player.x;
+                    const dy = e.y - player.y;
+                    const dist = Math.hypot(dx, dy) || 1;
+                    if (dist <= waveRadius) {
+                      e.takeDamage(waveDmg, 'holy', (dx / dist) * 280, (dy / dist) * 280);
+                    }
+                  }
+                  this.callbacks?.onSound?.('bell');
+                  this.state.texts.push(new DamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
+                }
               } else if (d.type === 'chest') {
                 this.callbacks?.onOpenChest?.();
               } else if (d.type === 'chasnik') {

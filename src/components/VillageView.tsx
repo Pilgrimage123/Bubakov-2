@@ -143,7 +143,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
             color: '#4B5563'
           }}
         >
-          Každé zakoupené vylepšení ve vsi posílí lovce a zároveň zvedne obecní přirážku o +15 % k ceně všech budov.
+          Každé zakoupené vylepšení ve vsi posílí lovce a zároveň zvedne obecní přirážku o +20 % k ceně všech budov.
           Investice můžete kdykoliv bezplatně vrátit!
         </p>
       </div>

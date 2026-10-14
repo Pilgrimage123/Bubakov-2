@@ -5,6 +5,13 @@ import {
   getVillageTotalLevels,
   getVillageBuildingCost,
   calculateTotalVillageInvested,
+  getWallDamageReduction,
+  getForestDebuffReduction,
+  getMillSpeedMultiplier,
+  getScarecrowPickupMultiplier,
+  getWallHpMultiplier,
+  getBoziMukaLuckMultiplier,
+  getUndeadTolarChance,
 } from '../src/data/village';
 import { getWeaponDamage } from '../src/data/weapons';
 import type { MetaProgression } from '../src/types';
@@ -113,16 +120,52 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
   it('enforces safe asymptotic caps for defensive/time stats at high levels', () => {
     const highLevel = 30;
 
-    // Wall damage reduction: capped at 50%
-    const wallDmgRed = Math.min(0.5, highLevel * 0.04);
-    expect(wallDmgRed).toBe(0.5);
+    // Wall damage reduction: smoothly approaches 40% limit (0.40 * (1 - 1 / (1 + 0.08 * lvl)))
+    const wallDmgRed = getWallDamageReduction(highLevel);
+    expect(wallDmgRed).toBeLessThan(0.40);
+    expect(wallDmgRed).toBeGreaterThan(0.28);
+    expect(getWallDamageReduction(100)).toBeLessThan(0.40);
 
-    // Forest wet/slow reduction: capped at 80%
-    const forestResistance = Math.min(0.8, highLevel * 0.20);
-    expect(forestResistance).toBe(0.8);
+    // Forest wet/slow reduction: smoothly approaches 85% limit (0.85 * (1 - 1 / (1 + 0.25 * lvl)))
+    const forestResistance = getForestDebuffReduction(highLevel);
+    expect(forestResistance).toBeLessThan(0.85);
+    expect(forestResistance).toBeGreaterThan(0.70);
 
     // Water invulnerability duration: capped at 5 seconds
     const potionInvuln = Math.min(5, 1 + highLevel * 0.5);
     expect(potionInvuln).toBe(5);
+
+    // Mill speed multiplier: soft capped at 50%
+    expect(getMillSpeedMultiplier(highLevel)).toBe(0.50);
+
+    // Scarecrow pickup multiplier: soft capped at 150%
+    expect(getScarecrowPickupMultiplier(highLevel)).toBe(1.50);
+
+    // Undead tolar chance: capped at 25%
+    expect(getUndeadTolarChance(highLevel)).toBe(0.25);
+  });
+
+  it('preserves hunter archetypes through percentage scaling', () => {
+    // Wall max Kuráž: +10% base Kuráž per level
+    // Watchman (130) gains +13/lvl, Granny (85) gains +8.5/lvl
+    const watchmanHpLvl5 = 130 + Math.round(130 * getWallHpMultiplier(5));
+    const grannyHpLvl5 = 85 + Math.round(85 * getWallHpMultiplier(5));
+    expect(watchmanHpLvl5).toBe(195);
+    expect(grannyHpLvl5).toBe(128);
+    expect(grannyHpLvl5).toBeLessThan(130); // Granny at lvl 5 is still more fragile than base Watchman!
+
+    // Mill speed: +3% base speed per level
+    const wandererSpeedLvl5 = 165 + Math.round(165 * getMillSpeedMultiplier(5));
+    const grannySpeedLvl5 = 135 + Math.round(135 * getMillSpeedMultiplier(5));
+    expect(wandererSpeedLvl5).toBe(190);
+    expect(grannySpeedLvl5).toBe(155);
+    expect(grannySpeedLvl5).toBeLessThan(165); // Granny at lvl 5 is still slower than base Wanderer!
+
+    // Scarecrow pickup: +15% base pickup per level
+    const shepherdPickupLvl5 = 160 + Math.round(160 * getScarecrowPickupMultiplier(5));
+    const korenarkaPickupLvl5 = 26 + Math.round(26 * getScarecrowPickupMultiplier(5));
+    expect(shepherdPickupLvl5).toBe(280);
+    expect(korenarkaPickupLvl5).toBe(46);
+    expect(korenarkaPickupLvl5).toBeLessThan(75); // Kořenářka retains intimate harvesting!
   });
 });
