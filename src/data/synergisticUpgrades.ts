@@ -127,6 +127,64 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
   },
 };
 
+ 
+// Shared specializations for every weapon that fires actual projectiles.
+// Values map to the existing WeaponStats calculation: +130% count means x2.3.
+const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
+  { id: 'kysela_okurka', name: 'Kyselá okurka' },
+  { id: 'povidlove_buchty', name: 'Povidlové buchty' },
+  { id: 'devatero_kviti', name: 'Devatero kvítí' },
+  { id: 'snehova_koule', name: 'Sněhová koule' },
+  { id: 'kynuty_kolac', name: 'Kynutý koláč' },
+  { id: 'horky_brambor', name: 'Horký brambor' },
+  { id: 'vceli_roj', name: 'Včelí roj' },
+  { id: 'svecena_kropenka', name: 'Kropenka se svěcenou vodou' },
+];
+
+for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
+  const definitions: Array<{
+    suffix: string;
+    name: string;
+    description: string;
+    archetype: SynergisticArchetype;
+    statModifiers: SynergisticUpgradeDef['statModifiers'];
+  }> = [
+    {
+      suffix: 'proj_barrage',
+      name: 'Kobercový nálet',
+      description: `+130 % projektilů, −30 % poškození pro ${weapon.name}.`,
+      archetype: 'swarm',
+      statModifiers: { projectileCountMult: 2.3, baseDamageMult: 0.70 },
+    },
+    {
+      suffix: 'cd_hyper',
+      name: 'Rychlopalný mechanismus',
+      description: `−30 % cooldownu pro ${weapon.name}.`,
+      archetype: 'tempo',
+      statModifiers: { cooldownMult: 0.70 },
+    },
+    {
+      suffix: 'dmg_heavy',
+      name: 'Těžká munice',
+      description: `+100 % poškození pro ${weapon.name}.`,
+      archetype: 'burst',
+      statModifiers: { baseDamageMult: 2.0 },
+    },
+  ];
+
+  for (const definition of definitions) {
+    const id = `${definition.suffix}_${weapon.id}`;
+    SYNERGISTIC_UPGRADES[id] = {
+      id,
+      weaponId: weapon.id,
+      name: definition.name,
+      description: definition.description,
+      archetype: definition.archetype,
+      statModifiers: definition.statModifiers,
+    };
+  }
+}
+
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
   if (!SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId]) {
