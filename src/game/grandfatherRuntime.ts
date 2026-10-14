@@ -161,7 +161,7 @@ export interface WeaponUpgradeOfferDef {
 
 const PROJECTILE_WEAPON_IDS = new Set([
   'kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule',
-  'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka',
+  'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'hromnicka', 'svecena_kropenka',
 ]);
 
 export function getWeaponUpgradeOffer(itemId: string): WeaponUpgradeOfferDef | undefined {
