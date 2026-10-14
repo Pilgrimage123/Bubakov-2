@@ -1,3 +1,9 @@
+## 2026-10-14 — Kontaktní odstrčení a krátká nezranitelnost lovců
+
+- Odstrčení se aktivuje ihned při fyzickém dotyku s nepřítelem, nikoli až po jeho úspěšném útoku; samostatný cooldown lovce je 1,2 s.
+- Poškození odstrčení a síla odhození jsou zdvojnásobeny. Poškození, síla odhození i stun se škálují s maximální Kuráží lovce.
+- Každý lovec získá po utržení poškození 0,3 s nezranitelnosti.
+
 ## 2026-10-13 — Úklid textů, oprava kontrastu a optimalizace UI pro dotykové displeje
 
 - Odstraněny nečitelné světle žluté podtituly a texty s nízkým kontrastem v modalech Pauzy, Zbrojnice a Ovládání; nadpisy sjednoceny do kanonické tmavé barvy `--ink`.
