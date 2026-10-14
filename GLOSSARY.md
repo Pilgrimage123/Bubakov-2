@@ -76,6 +76,18 @@ _Avoid_: thorns, reflect damage, trny
 Kolébavý a vrávoravý pohyb Vyčerpaných strašidel indikující jejich únavu a zpomalenou bojovou připravenost.
 _Avoid_: stagger, stumble, pajdání
 
+**Kategorie vylepšení zbraní**:
+Tematické bazény běžných vylepšení (pro sečné zbraně a aury), které nahrazují generické bonusy na úrovních 2, 4, 6 a 7.
+_Avoid_: perk tree, weapon skill tree, upgrade category
+
+**Strop kadence**:
+Pevná hranice zkrácení prodlevy mezi útoky (-75 %), zamezující nechtěnému zacyklení zbraní; při zbývajícím prostoru menším než 10 % jsou další redukce prodlevy z nabídky vyloučeny.
+_Avoid_: cooldown cap, attack speed cap, soft cap, hard cap
+
+**Oblak bylinného dýmu**:
+Plošný účinek Bylinkové fajfky, který v zóně zpomaluje dotírající strašidla a léčí lovce bez nutnosti fyzického odhazování nepřátel.
+_Avoid_: smoke aura, poison cloud, AOE dým
+
 ## Světlo a atmosféra
 
 **Petrolejka**:

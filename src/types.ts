@@ -67,7 +67,8 @@ export type WeaponId =
   | 'horky_brambor'
   | 'vceli_roj'
   | 'hromnicka'
-  | 'svecena_kropenka';
+  | 'svecena_kropenka'
+  | 'bylinkova_fajfka';
 
 export interface MilestoneChoice {
   id: string;
@@ -97,7 +98,26 @@ export interface WeaponRankDef {
   areaBonus: number;
   pierceBonus?: number;
   choices?: [MilestoneChoice, MilestoneChoice];
+  normalUpgradeId?: string;
+  normalUpgradeName?: string;
 }
+
+export type WeaponNormalUpgradeCategory = 'melee' | 'aura' | 'default';
+
+export interface WeaponNormalUpgradeDef {
+  id: string;
+  name: string;
+  ui_text: string;
+  category: 'melee' | 'aura';
+  stats: {
+    area_bonus: number;
+    damage_bonus: number;
+    cooldown_reduction: number;
+  };
+}
+
+export type MeleeNormalUpgradeDef = WeaponNormalUpgradeDef;
+export type AuraNormalUpgradeDef = WeaponNormalUpgradeDef;
 
 export type SynergisticArchetype = 'swarm' | 'burst' | 'tempo' | 'heavy';
 

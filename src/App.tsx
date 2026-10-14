@@ -39,7 +39,7 @@ import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/fro
 import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
 import { HunterInfoModal } from './components/HunterInfoModal';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
-import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones } from './data/weaponMilestones';
+import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones, COOLDOWN_REDUCTION_CAP, getWeaponActiveCooldownBonus, rollRandomWeaponUpgrade } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
 import { getGingerbreadSize, getGingerbreadValue, GINGERBREAD_CONFIG, GINGERBREAD_VALUES, type GingerbreadSize } from './data/gingerbread';
 import {
@@ -1447,7 +1447,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
   };
 
-    const applyGrandfatherItem = useCallback((item: GrandfatherItemDef) => {
+    const applyGrandfatherItem = useCallback((item: GrandfatherItemDef, offer?: any) => {
     const p = engineRef.current.player;
     if (!p) return;
     const effect = item.effect;
@@ -1517,7 +1517,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (existing) {
         existing.id = canonicalId;
         existing.level = Math.min(8, existing.level + 1);
-        if (existing.level === 3 || existing.level === 5 || existing.level === 8) {
+        const isMilestone = existing.level === 3 || existing.level === 5 || existing.level === 8;
+        if (!isMilestone) {
+          const upId = offer?.candidateUpgradeId || rollRandomWeaponUpgrade(canonicalId, existing)?.id;
+          if (upId) {
+            if (!existing.normalUpgrades) existing.normalUpgrades = [];
+            existing.normalUpgrades.push(upId);
+          }
+        } else {
           const choices = getMilestoneChoices(canonicalId, existing.level);
           if (choices) {
             const nextChoices = [...pendingMilestonesRef.current, { weaponId: canonicalId, rank: existing.level, choices }];
@@ -1532,6 +1539,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           cd: 0,
           mastery: createWeaponMasteryState(),
           milestones: [],
+          normalUpgrades: [],
         };
         p.weapons.push(newW);
       }
@@ -1641,8 +1649,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     eng.grandfather.totalPurchases = (eng.grandfather.totalPurchases || 0) + 1;
     const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, item.id];
     grandfatherPurchaseIdsRef.current = newPurchasedIds;
-    setGrandfatherPurchaseIds(newPurchasedIds);
-    applyGrandfatherItem(item);
+    const offer = eng.grandfather.offers.find((o) => o.itemId === item.id);
+    applyGrandfatherItem(item, offer);
     sound.grandfatherPurchase();
     if (item.effect.type === 'coins') {
       setRunStats((state) => ({ ...state, coins: eng.coins, gingerbread: eng.gingerbread }));
@@ -2384,6 +2392,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         });
       },
 
+      spawnFajfkaCloud(radius: number, dmg: number, duration: number, stats?: any) {
+        const cloud = new SmokePuff(this.x, this.y, radius, 'fajfka', duration) as any;
+        cloud.damagePerSecond = dmg;
+        engineRef.current.smokePuffs.push(cloud);
+        const healRatio = 0.08 * (stats?.damageMult ? Math.min(2.0, stats.damageMult) : 1);
+        const requestedHeal = this.maxHp * healRatio * (1 + ((this as any).bearMaskHealBonus || 0));
+        const missingHp = Math.max(0, this.maxHp - this.hp);
+        const overheal = Math.max(0, requestedHeal - missingHp);
+        this.hp = Math.min(this.maxHp, this.hp + requestedHeal);
+        if ((this as any).bearMaskLevel > 0 && overheal > 0) {
+          const maskDamage = overheal * 0.5 * (1 + ((this as any).bearMaskLevel - 1) * 0.2) * (this.damageMultiplier || 1);
+          for (const enemy of enemySpatialHashRef.current.queryCircle(this.x, this.y, 290)) {
+            if (enemy.isDefeated || enemy.dead) continue;
+            if (Math.hypot(enemy.x - this.x, enemy.y - this.y) <= 230 + (enemy.radius || 0)) {
+              enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
+            }
+          }
+        }
+      },
+
       triggerWeaponMastery(_weaponId: string, _enemy: any, _event: 'hit' | 'pulse' = 'hit') {
         // Legacy no-op; milestone progression replaces new mastery rewards.
       },
@@ -3015,13 +3043,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const canonicalId = toCanonicalWeaponId(pw.id);
         const wDef = WEAPONS[canonicalId];
         if (wDef && pw.level < 8) {
+          const nextRank = pw.level + 1;
+          const isMilestoneRank = nextRank === 3 || nextRank === 5 || nextRank === 8;
+          const nextRankDef = getWeaponRankDef(canonicalId, nextRank);
+          const candidateUpgrade = !isMilestoneRank ? rollRandomWeaponUpgrade(canonicalId, pw) : undefined;
+          const upgradeDesc = isMilestoneRank
+            ? 'Milník: výběr ze dvou specializací'
+            : candidateUpgrade
+              ? `${candidateUpgrade.name}: ${candidateUpgrade.ui_text}`
+              : (nextRankDef?.passiveBonusDescription || `Vylepšení zbraně na úroveň ${nextRank}`);
+
           possibleRewards.push({
-            name: `${wDef.name} (Úroveň ${pw.level + 1})`,
-            desc: `Vylepšení zbraně na úroveň ${pw.level + 1}`,
+            name: `${wDef.name} (Úroveň ${nextRank})`,
+            desc: upgradeDesc,
             icon: wDef.icon,
             action: () => {
               pw.id = canonicalId;
               pw.level += 1;
+              if (candidateUpgrade) {
+                if (!pw.normalUpgrades) pw.normalUpgrades = [];
+                pw.normalUpgrades.push(candidateUpgrade.id);
+              }
               if (pw.level === 3 || pw.level === 5 || pw.level === 8) {
                 const choices = getMilestoneChoices(canonicalId, pw.level);
                 if (choices) {
@@ -5066,14 +5108,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const fired = wDef.fire(player, w.level);
                   (player as any)._firingWeapon = null;
                   const rankDef = getWeaponRankDef(w.id, w.level);
-                  const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
+                  const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
                   const playerCooldownBonus = typeof player.cooldownBonus === 'number'
                     ? Math.max(0, player.cooldownBonus)
                     : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
                   const baseCd = wDef.baseCd;
                   const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
                   const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-                  const localCd = Math.max(baseCd * 0.50, formulaCd * stats.cooldownMult);
+                  const localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+
                   w.cd = fired ? localCd : 0.1;
                 }
               }
@@ -11100,16 +11143,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 const dmgMult = engineRef.current.player?.damageMultiplier || 1;
                 const cooldownBonus = engineRef.current.player?.cooldownBonus ?? 0;
                 const rankDef = getWeaponRankDef(w.id, w.level);
-                const weaponCooldownBonus = rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
+                const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
                 const stats = getRankedWeaponStats(w.id, w.level, w);
                 const playerCooldownBonus = cooldownBonus > 0 ? cooldownBonus : Math.max(0, ((engineRef.current.player?.cooldownMultiplier || 1) - 1) / 0.9);
                 const tulakMult = 1 + ((engineRef.current.player?.tulakDamageBonus || 0) / 100);
                 const estDmg = Math.round(wDef.baseDmg * stats.damageMult * dmgMult * tulakMult);
-                const effectiveCd = Math.max(wDef.baseCd * 0.50, getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
+                const effectiveCd = Math.max(wDef.baseCd * (1 - COOLDOWN_REDUCTION_CAP), getEffectiveWeaponCooldown(wDef.baseCd, playerCooldownBonus, weaponCooldownBonus) * stats.cooldownMult).toFixed(2);
                 const isCane = w.id === 'cane';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
                 const displayIcon = hasSoaked ? '💧' : wDef.icon;
+                const isAtCap = weaponCooldownBonus >= COOLDOWN_REDUCTION_CAP - 0.001;
 
                 return (
                   <div key={w.id} className="pause-weapon-card" style={{ position: 'relative' }}>
@@ -11131,9 +11175,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         Úr. {w.level}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900 }}>
+                    <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900, flexWrap: 'wrap' }}>
                       <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}</span>
+                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}{isAtCap ? ' [Strop -75 %]' : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}

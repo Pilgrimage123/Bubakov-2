@@ -65,9 +65,9 @@ describe('Weapon Milestones GameEngine Seam', () => {
       // 2. Pending milestone cleared
       expect(engine.state.pendingMilestone).toBeNull();
       // 3. Stats immediately reflect cane_burst_3
-      // Baseline level 3 damage is 1 + 2 * 0.12 = 1.24. With cane_burst_3 (* 1.18) = 1.4632
+      // Osikovy prut rank 2 is melee_flurry (damage bonus: 0). Rank 3 base damage is 1.0. With cane_burst_3 (* 1.18) = 1.18
       expect(updatedStats).toBeDefined();
-      expect(updatedStats.damageMult).toBeCloseTo(1.24 * 1.18, 4);
+      expect(updatedStats.damageMult).toBeCloseTo(1.18, 4);
       expect(updatedStats.cooldownMult).toBeCloseTo(0.97, 4);
     });
 

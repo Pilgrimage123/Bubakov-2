@@ -25,7 +25,7 @@ describe('i18n localization module', () => {
     expect(t('nonexistent.key.123', 'cs')).toBe('nonexistent.key.123');
   });
 
-  it('translates all 15 weapons in both cs and en', () => {
+  it('translates all 16 weapons in both cs and en', () => {
     const weaponIds = [
       'osikovy_prut',
       'valecnice',
@@ -42,9 +42,10 @@ describe('i18n localization module', () => {
       'vceli_roj',
       'hromnicka',
       'svecena_kropenka',
+      'bylinkova_fajfka',
     ];
 
-    expect(weaponIds.length).toBe(15);
+    expect(weaponIds.length).toBe(16);
 
     for (const id of weaponIds) {
       const nameCs = t(`weapon.${id}.name`, 'cs');
@@ -224,7 +225,7 @@ describe('i18n localization module', () => {
       expect(isSupportedLocale('de')).toBe(false);
     });
 
-    it('translates all milestone UI strings and 90 milestone choices in cs and en', async () => {
+    it('translates all milestone UI strings and 96 milestone choices in cs and en', async () => {
       const { WEAPONS_WITH_MILESTONES, getMilestoneChoices } = await import('../src/data/weaponMilestones');
 
       // Milestone modal UI strings
@@ -233,7 +234,7 @@ describe('i18n localization module', () => {
       expect(t('grandfather_shop.milestone_crossroads', 'cs', { rank: 3 })).toContain('Křižovatka rozvoje');
       expect(t('grandfather_shop.milestone_crossroads', 'en', { rank: 3 })).toContain('Milestone crossroads');
 
-      // All 90 choices translated
+      // All 96 choices translated
       let choiceCount = 0;
       for (const weaponId of WEAPONS_WITH_MILESTONES) {
         for (const rank of [3, 5, 8] as const) {
@@ -260,7 +261,7 @@ describe('i18n localization module', () => {
           }
         }
       }
-      expect(choiceCount).toBe(90);
+      expect(choiceCount).toBe(96);
     });
   });
 });

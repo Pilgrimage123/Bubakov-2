@@ -618,6 +618,27 @@ var WEAPONS = {
 			sound.bell();
 			return true;
 		}
+	},
+	bylinkova_fajfka: {
+		id: 'bylinkova_fajfka',
+		name: 'Bylinková fajfka',
+		type: 'nature',
+		icon: '🚬',
+		baseDmg: 9,
+		baseCd: 3.5,
+		desc: 'Dědečkova hliněná fajfka s vonnými bylinkami. Vypouští oblak dýmu (110 px), který zraňuje nepřátele, zpomaluje jejich pohyb i útok o 35 % a léčí lovce.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('bylinkova_fajfka', level, w);
+			const radius = 110 * stats.areaRadiusMult;
+			const dmg = getWeaponDamage(player, 9) * stats.damageMult;
+			const duration = 4 * (stats.statusDurationSec > 0 ? (1 + stats.statusDurationSec / 4) : 1);
+			if (typeof player.spawnFajfkaCloud === 'function') {
+				player.spawnFajfkaCloud(radius, dmg, duration, stats);
+			}
+			if (typeof sound.candlePulse === 'function') sound.candlePulse();
+			return true;
+		}
 	}
 };
 

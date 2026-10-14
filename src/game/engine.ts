@@ -23,6 +23,9 @@ import {
   getMilestoneChoices,
   getRankedWeaponStats,
   getWeaponRankDef,
+  COOLDOWN_REDUCTION_CAP,
+  getWeaponActiveCooldownBonus,
+  rollRandomWeaponUpgrade,
 } from '../data/weaponMilestones';
 import {
   getEnemyHolyResistance,
@@ -222,6 +225,14 @@ export type WeaponAction =
       level?: number;
       knockbackMult?: number;
       stunDuration?: number;
+      [key: string]: any;
+    }
+  | {
+      type: 'cloud';
+      radius?: number;
+      dmg?: number;
+      duration?: number;
+      stats?: any;
       [key: string]: any;
     };
 
@@ -537,6 +548,16 @@ export class GameEngine {
           level,
           knockbackMult,
           stunDuration,
+        });
+      },
+
+      spawnFajfkaCloud(radius: number, dmg: number, duration: number, stats?: any) {
+        return self.applyWeaponAction({
+          type: 'cloud',
+          radius,
+          dmg,
+          duration,
+          stats,
         });
       },
 
@@ -1182,7 +1203,8 @@ export class GameEngine {
 
   public upgradeWeapon(
     weaponId: string,
-    synergisticUpgradeId?: string
+    synergisticUpgradeId?: string,
+    normalUpgradeId?: string
   ): { weapon: any; pendingMilestone: PendingMilestoneChoice | null } {
     const player = this.state.player;
     if (!player) {
@@ -1197,6 +1219,7 @@ export class GameEngine {
         cd: 0,
         mastery: createWeaponMasteryState(),
         milestones: [],
+        normalUpgrades: [],
         synergisticUpgrades: [],
       };
       if (synergisticUpgradeId) {
@@ -1224,6 +1247,9 @@ export class GameEngine {
     if (!Array.isArray(weapon.milestones)) {
       weapon.milestones = [];
     }
+    if (!Array.isArray(weapon.normalUpgrades)) {
+      weapon.normalUpgrades = [];
+    }
 
     let pending: PendingMilestoneChoice | null = null;
     const rank = weapon.level;
@@ -1244,6 +1270,8 @@ export class GameEngine {
           this.state.pendingMilestone = this.state.pendingMilestones[0] || null;
         }
       }
+    } else if (normalUpgradeId) {
+      weapon.normalUpgrades.push(normalUpgradeId);
     }
 
     weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
@@ -1486,6 +1514,28 @@ export class GameEngine {
         color: '#FEF08A',
         size: reach * 0.3,
       });
+      return action;
+    }
+
+    if (action.type === 'cloud') {
+      const player = this.state.player;
+      if (!player) return null;
+      const radius = action.radius ?? 110;
+      const dmg = action.dmg ?? 9;
+      const healRatio = 0.08 * (action.stats?.damageMult ? Math.min(2.0, action.stats.damageMult) : 1);
+      const requestedHeal = player.maxHp * healRatio * (1 + ((player as any).bearMaskHealBonus || 0));
+      player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
+
+      const nearby = this.spatialHash.queryCircle(player.x, player.y, radius + 50);
+      for (let i = 0; i < nearby.length; i++) {
+        const e = nearby[i];
+        if (e.isDefeated || e.dead) continue;
+        const dist = Math.hypot(e.x - player.x, e.y - player.y);
+        if (dist <= radius + (e.radius || 15)) {
+          e.fajfkaSlowTimer = Math.max(e.fajfkaSlowTimer || 0, 0.30);
+          e.takeDamage(dmg, 'nature', 0, 0, { allowFractionalDamage: true });
+        }
+      }
       return action;
     }
 
@@ -1751,8 +1801,7 @@ export class GameEngine {
               const fired = wDef.fire(player, w.level);
               player._firingWeapon = null;
               const rankDef = getWeaponRankDef(w.id, w.level);
-              const weaponCooldownBonus =
-                rankDef?.cooldownReductionBonus ?? Math.max(0, (w.level - 1) * 0.08);
+              const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
               const playerCooldownBonus =
                 typeof player.cooldownBonus === 'number'
                   ? Math.max(0, player.cooldownBonus)
@@ -1760,7 +1809,8 @@ export class GameEngine {
               const baseCd = wDef.baseCd;
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
               const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-              const localCd = Math.max(baseCd * 0.5, formulaCd * stats.cooldownMult);
+              const localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+
               w.cd = fired ? localCd : 0.1;
             }
           }

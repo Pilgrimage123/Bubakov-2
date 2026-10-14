@@ -1,4 +1,12 @@
-import type { MilestoneChoice, WeaponId, WeaponRankDef } from '../types';
+import type {
+  MilestoneChoice,
+  WeaponId,
+  WeaponRankDef,
+  MeleeNormalUpgradeDef,
+  AuraNormalUpgradeDef,
+  WeaponNormalUpgradeDef,
+  WeaponNormalUpgradeCategory,
+} from '../types';
 import { WEAPON_LEGACY_ALIASES } from './weapons';
 import { getSynergisticUpgrade } from './synergisticUpgrades';
 
@@ -12,6 +20,7 @@ export interface WeaponStats {
   knockbackMult: number;
   statusDurationSec: number;
   specialMechanicFlag?: string;
+  cooldownReduction?: number;
 }
 
 export type WeaponMilestonesSet = Set<WeaponId> & {
@@ -35,6 +44,7 @@ export const WEAPONS_WITH_MILESTONES: WeaponMilestonesSet = new Set<WeaponId>([
   'vceli_roj',
   'hromnicka',
   'svecena_kropenka',
+  'bylinkova_fajfka',
 ]) as WeaponMilestonesSet;
 
 Object.defineProperty(WEAPONS_WITH_MILESTONES, 'length', {
@@ -48,6 +58,7 @@ Object.defineProperty(WEAPONS_WITH_MILESTONES, 'length', {
 ): U[] {
   return Array.from(this as Set<WeaponId>).map(callback);
 };
+
 
 const makeChoice = (
   id: string,
@@ -276,7 +287,311 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
       makeChoice('holy_burst_8', 'Milost svatého Jiří', 'Posvěcená voda s maximální silou probodne a okamžitě zničí i nejodolnější ďábly.', 'st_george_grace', 'bell', { baseDamageMult: 1.34, pierceDelta: 1, cooldownMult: 0.88 }),
     ],
   },
+  bylinkova_fajfka: {
+    3: [
+      makeChoice('pipe_cloud_3', 'Hustý bylinný dým', 'Hustší bylinný kouř pokryje širší okolí lovce a déle zklidňuje dotírající bubáky.', 'herbal_smoke', 'smoke_puff', { areaRadiusMult: 1.25, statusDurationSec: 1.5 }),
+      makeChoice('pipe_burst_3', 'Štiplavý tabáček', 'Vůně bylin má větší sílu a dým zahání strašidla ve svižnějším tempu.', 'pungent_smoke', 'smoke_puff', { baseDamageMult: 1.25, cooldownMult: 0.94 }),
+    ],
+    5: [
+      makeChoice('pipe_cloud_5', 'Horská mlhovina', 'Rozpínavý oblak provoní louku a omámení bubáci zůstávají dlouho zpomalení.', 'mountain_fog', 'smoke_puff', { areaRadiusMult: 1.30, statusDurationSec: 2.5 }),
+      makeChoice('pipe_burst_5', 'Silný výdech', 'Mocný oblak zraňuje nepřátele podstatně tvrději a zkracuje odpočinek mezi tahy z fajfky.', 'potent_puff', 'smoke_puff', { baseDamageMult: 1.30, cooldownMult: 0.90 }),
+    ],
+    8: [
+      makeChoice('pipe_cloud_8', 'Krakonošův opar', 'Bájná krkonošská mlha zahalí celé bojiště, léčivá síla bylin trvá déle a čistí louku.', 'krakonos_shroud', 'smoke_puff', { areaRadiusMult: 1.40, statusDurationSec: 3.5, cooldownMult: 0.92 }),
+      makeChoice('pipe_burst_8', 'Léčivý tabák mistrů', 'Vzácné sušené byliny dodají fajfce maximální ničivou i léčivou sílu a bleskový rytmus.', 'master_tobacco', 'smoke_puff', { baseDamageMult: 1.40, cooldownMult: 0.85 }),
+    ],
+  },
 };
+
+export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
+  melee_cleave: {
+    id: 'melee_cleave',
+    name: 'Široký rozmach',
+    ui_text: '+120 % velikost švihu, -20 % zranění',
+    category: 'melee',
+    stats: {
+      area_bonus: 1.20,
+      damage_bonus: -0.20,
+      cooldown_reduction: 0.00,
+    },
+  },
+  melee_reach: {
+    id: 'melee_reach',
+    name: 'Prodloužený dosah',
+    ui_text: '+60 % velikost švihu',
+    category: 'melee',
+    stats: {
+      area_bonus: 0.60,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.00,
+    },
+  },
+  melee_flurry: {
+    id: 'melee_flurry',
+    name: 'Svižná ruka',
+    ui_text: '-30 % cooldown',
+    category: 'melee',
+    stats: {
+      area_bonus: 0.00,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.30,
+    },
+  },
+  melee_heavy: {
+    id: 'melee_heavy',
+    name: 'Drtivý dopad',
+    ui_text: '+100 % zranění',
+    category: 'melee',
+    stats: {
+      area_bonus: 0.00,
+      damage_bonus: 1.00,
+      cooldown_reduction: 0.00,
+    },
+  },
+  melee_titan: {
+    id: 'melee_titan',
+    name: 'Titánský švih',
+    ui_text: '+60 % zranění, +40 % velikost švihu',
+    category: 'melee',
+    stats: {
+      area_bonus: 0.40,
+      damage_bonus: 0.60,
+      cooldown_reduction: 0.00,
+    },
+  },
+  melee_frenzy: {
+    id: 'melee_frenzy',
+    name: 'Zběsilé sekání',
+    ui_text: '-45 % cooldown, -25 % velikost švihu',
+    category: 'melee',
+    stats: {
+      area_bonus: -0.25,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.45,
+    },
+  },
+};
+
+export const MELEE_WEAPONS: WeaponId[] = [
+  'osikovy_prut',
+  'kovarske_vidle',
+  'kovana_halapartna',
+  'dreveny_cep',
+  'valecnice',
+];
+
+export const MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, Record<2 | 4 | 6 | 7, string>>> = {
+  osikovy_prut: {
+    2: 'melee_flurry',
+    4: 'melee_reach',
+    6: 'melee_frenzy',
+    7: 'melee_titan',
+  },
+  kovarske_vidle: {
+    2: 'melee_reach',
+    4: 'melee_heavy',
+    6: 'melee_flurry',
+    7: 'melee_titan',
+  },
+  kovana_halapartna: {
+    2: 'melee_cleave',
+    4: 'melee_heavy',
+    6: 'melee_reach',
+    7: 'melee_titan',
+  },
+  dreveny_cep: {
+    2: 'melee_heavy',
+    4: 'melee_cleave',
+    6: 'melee_frenzy',
+    7: 'melee_titan',
+  },
+  valecnice: {
+    2: 'melee_reach',
+    4: 'melee_flurry',
+    6: 'melee_heavy',
+    7: 'melee_titan',
+  },
+};
+
+export const AURA_NORMAL_UPGRADES: Record<string, AuraNormalUpgradeDef> = {
+  aura_overgrowth: {
+    id: 'aura_overgrowth',
+    name: 'Rozpínavé pole',
+    ui_text: '+85 % poloměr zóny, -25 % zranění',
+    category: 'aura',
+    stats: {
+      area_bonus: 0.85,
+      damage_bonus: -0.25,
+      cooldown_reduction: 0.00,
+    },
+  },
+  aura_reach: {
+    id: 'aura_reach',
+    name: 'Široké vyzařování',
+    ui_text: '+45 % poloměr zóny',
+    category: 'aura',
+    stats: {
+      area_bonus: 0.45,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.00,
+    },
+  },
+  aura_pulse: {
+    id: 'aura_pulse',
+    name: 'Vysoká frekvence',
+    ui_text: '-30 % prodleva mezi pulzy',
+    category: 'aura',
+    stats: {
+      area_bonus: 0.00,
+      damage_bonus: 0.00,
+      cooldown_reduction: 0.30,
+    },
+  },
+  aura_intensity: {
+    id: 'aura_intensity',
+    name: 'Smrtící koncentrace',
+    ui_text: '+100 % zranění',
+    category: 'aura',
+    stats: {
+      area_bonus: 0.00,
+      damage_bonus: 1.00,
+      cooldown_reduction: 0.00,
+    },
+  },
+  aura_unstable: {
+    id: 'aura_unstable',
+    name: 'Přetížené jádro',
+    ui_text: '+60 % zranění, +30 % poloměr zóny',
+    category: 'aura',
+    stats: {
+      area_bonus: 0.30,
+      damage_bonus: 0.60,
+      cooldown_reduction: 0.00,
+    },
+  },
+  aura_singularity: {
+    id: 'aura_singularity',
+    name: 'Zhroucená zóna',
+    ui_text: '+120 % zranění, -30 % prodleva pulzů, -35 % poloměr zóny',
+    category: 'aura',
+    stats: {
+      area_bonus: -0.35,
+      damage_bonus: 1.20,
+      cooldown_reduction: 0.30,
+    },
+  },
+};
+
+export const AURA_WEAPONS: WeaponId[] = [
+  'hromnicka',
+  'cesnekova_topinka',
+  'bylinkova_fajfka',
+];
+
+export const AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, Record<2 | 4 | 6 | 7, string>>> = {
+  hromnicka: {
+    2: 'aura_reach',
+    4: 'aura_intensity',
+    6: 'aura_pulse',
+    7: 'aura_unstable',
+  },
+  cesnekova_topinka: {
+    2: 'aura_overgrowth',
+    4: 'aura_pulse',
+    6: 'aura_reach',
+    7: 'aura_singularity',
+  },
+  bylinkova_fajfka: {
+    2: 'aura_reach',
+    4: 'aura_unstable',
+    6: 'aura_pulse',
+    7: 'aura_intensity',
+  },
+};
+
+export const COOLDOWN_REDUCTION_CAP = 0.75;
+
+export function getMeleeNormalUpgrade(id: string): MeleeNormalUpgradeDef | undefined {
+  return MELEE_NORMAL_UPGRADES[id];
+}
+
+export function getAuraNormalUpgrade(id: string): AuraNormalUpgradeDef | undefined {
+  return AURA_NORMAL_UPGRADES[id];
+}
+
+export function getWeaponNormalUpgrade(id: string): WeaponNormalUpgradeDef | undefined {
+  return MELEE_NORMAL_UPGRADES[id] || AURA_NORMAL_UPGRADES[id];
+}
+
+export function getWeaponCategory(weaponId: string): WeaponNormalUpgradeCategory {
+  const canonical = resolveCanonicalWeaponId(weaponId);
+  if (!canonical) return 'default';
+  if (MELEE_WEAPONS.includes(canonical)) return 'melee';
+  if (AURA_WEAPONS.includes(canonical)) return 'aura';
+  return 'default';
+}
+
+export function getWeaponCooldownReduction(weapon: any): number {
+  if (!weapon) return 0;
+  if (Array.isArray(weapon.normalUpgrades)) {
+    let sum = 0;
+    for (const upId of weapon.normalUpgrades) {
+      const up = getWeaponNormalUpgrade(upId);
+      if (up) sum += up.stats.cooldown_reduction;
+    }
+    return sum;
+  }
+  const canonical = resolveCanonicalWeaponId(weapon.id || weapon);
+  const lvl = typeof weapon.level === 'number' ? weapon.level : 1;
+  const rankDef = canonical ? getWeaponRankDef(canonical, lvl) : undefined;
+  return rankDef?.cooldownReductionBonus ?? 0;
+}
+
+export function getWeaponCooldownReductionHeadroom(weapon: any): number {
+  const current = getWeaponCooldownReduction(weapon);
+  return Math.max(0, COOLDOWN_REDUCTION_CAP - current);
+}
+
+export function isWeaponAtCooldownCap(weapon: any): boolean {
+  return getWeaponCooldownReductionHeadroom(weapon) < 0.01;
+}
+
+export function isWeaponNearCooldownCap(weapon: any): boolean {
+  return getWeaponCooldownReductionHeadroom(weapon) < 0.15;
+}
+
+export function getEligibleNormalUpgrades(weaponId: string, weapon?: any): WeaponNormalUpgradeDef[] {
+  const category = getWeaponCategory(weaponId);
+  let pool: WeaponNormalUpgradeDef[] = [];
+  if (category === 'melee') {
+    pool = Object.values(MELEE_NORMAL_UPGRADES);
+  } else if (category === 'aura') {
+    pool = Object.values(AURA_NORMAL_UPGRADES);
+  } else {
+    return [];
+  }
+
+  const headroom = getWeaponCooldownReductionHeadroom(weapon);
+  // Nedropovat vylepšení s cooldown_reduction > 0, pokud zbývá méně než 10 % do stropu
+  if (headroom < 0.10) {
+    return pool.filter((up) => up.stats.cooldown_reduction <= 0);
+  }
+  return pool;
+}
+
+export function rollRandomWeaponUpgrade(weaponId: string, weapon?: any): WeaponNormalUpgradeDef | undefined {
+  const eligible = getEligibleNormalUpgrades(weaponId, weapon);
+  if (eligible.length === 0) return undefined;
+  const idx = Math.floor(Math.random() * eligible.length);
+  return eligible[idx];
+}
+
+export function getWeaponActiveCooldownBonus(weapon: any, rankDef?: WeaponRankDef): number {
+  if (weapon && Array.isArray(weapon.normalUpgrades)) {
+    return Math.min(COOLDOWN_REDUCTION_CAP, getWeaponCooldownReduction(weapon));
+  }
+  return Math.min(COOLDOWN_REDUCTION_CAP, rankDef?.cooldownReductionBonus ?? Math.max(0, ((weapon?.level || 1) - 1) * 0.08));
+}
 
 const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): WeaponRankDef => ({
   rank,
@@ -293,23 +608,79 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
   ...(choices ? { choices } : {}),
 });
 
-export const WEAPON_RANK_DEFS: Partial<Record<WeaponId, WeaponRankDef[]>> = Object.fromEntries(
-  WEAPONS_WITH_MILESTONES.map((id) => {
-    const choices = MILESTONES[id];
+function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
+  const choices = MILESTONES[id];
+  const progression = MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id] || AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id];
+
+  if (!progression) {
     return [
-      id,
-      [
-        makeRank(1),
-        makeRank(2),
-        makeRank(3, choices?.[3]),
-        makeRank(4),
-        makeRank(5, choices?.[5]),
-        makeRank(6),
-        makeRank(7),
-        makeRank(8, choices?.[8]),
-      ],
+      makeRank(1),
+      makeRank(2),
+      makeRank(3, choices?.[3]),
+      makeRank(4),
+      makeRank(5, choices?.[5]),
+      makeRank(6),
+      makeRank(7),
+      makeRank(8, choices?.[8]),
     ];
-  }),
+  }
+
+  let cumulativeArea = 0;
+  let cumulativeDamage = 0;
+  let cumulativeCooldown = 0;
+
+  const ranks: WeaponRankDef[] = [];
+  for (let rank = 1; rank <= 8; rank++) {
+    const isMilestone = rank === 3 || rank === 5 || rank === 8;
+    const upgradeId = progression[rank as 2 | 4 | 6 | 7];
+    const upgrade = upgradeId ? getWeaponNormalUpgrade(upgradeId) : undefined;
+
+    if (upgrade) {
+      cumulativeArea += upgrade.stats.area_bonus;
+      cumulativeDamage += upgrade.stats.damage_bonus;
+      cumulativeCooldown = Math.min(COOLDOWN_REDUCTION_CAP, cumulativeCooldown + upgrade.stats.cooldown_reduction);
+    }
+
+    if (rank === 1) {
+      ranks.push({
+        rank: 1,
+        isMilestone: false,
+        passiveBonusDescription: 'Základní síla zbraně.',
+        flatDamageBonus: 0,
+        cooldownReductionBonus: 0,
+        areaBonus: 0,
+      });
+    } else if (isMilestone) {
+      ranks.push({
+        rank,
+        isMilestone: true,
+        passiveBonusDescription: 'Milník: vyber jednu ze dvou specializací.',
+        flatDamageBonus: cumulativeDamage,
+        cooldownReductionBonus: cumulativeCooldown,
+        areaBonus: cumulativeArea,
+        choices: choices?.[rank as 3 | 5 | 8],
+      });
+    } else {
+      ranks.push({
+        rank,
+        isMilestone: false,
+        passiveBonusDescription: upgrade
+          ? `${upgrade.name}: ${upgrade.ui_text}`
+          : '+12 % damage, +8 % cooldown bonus, +6 % area.',
+        flatDamageBonus: cumulativeDamage,
+        cooldownReductionBonus: cumulativeCooldown,
+        areaBonus: cumulativeArea,
+        normalUpgradeId: upgrade?.id,
+        normalUpgradeName: upgrade?.name,
+      });
+    }
+  }
+
+  return ranks;
+}
+
+export const WEAPON_RANK_DEFS: Partial<Record<WeaponId, WeaponRankDef[]>> = Object.fromEntries(
+  WEAPONS_WITH_MILESTONES.map((id) => [id, createWeaponRanks(id)]),
 );
 
 export function resolveCanonicalWeaponId(id: string): WeaponId | undefined {
@@ -387,24 +758,66 @@ export function getEffectiveWeaponCooldown(
   weaponCooldownBonus: number,
 ): number {
   const base = Math.max(0, baseCooldown);
+  const cappedWeaponBonus = Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, weaponCooldownBonus));
+  const playerDivisor = 1 + Math.max(0, playerCooldownBonus);
+  const cdAfterWeapon = base * Math.max(1 - COOLDOWN_REDUCTION_CAP, 1 - cappedWeaponBonus);
   return Math.max(
-    base * 0.50,
-    base / (1 + Math.max(0, playerCooldownBonus) + Math.max(0, weaponCooldownBonus)),
+    base * (1 - COOLDOWN_REDUCTION_CAP),
+    cdAfterWeapon / playerDivisor,
   );
 }
 
 export function getRankedWeaponStats(id: string, level: number, w?: any): WeaponStats {
   const canonical = resolveCanonicalWeaponId(id);
   const safeLevel = Math.min(8, Math.max(1, Math.floor(level || 1)));
+  const rankDef = canonical ? getWeaponRankDef(canonical, safeLevel) : undefined;
+  const isMeleeCustom = canonical && MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
+  const isAuraCustom = canonical && AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
+  const isCategoryCustom = isMeleeCustom || isAuraCustom;
+
+  let hasDynamicNormalUpgrades = false;
+  let dynamicDamage = 0;
+  let dynamicArea = 0;
+  let dynamicCooldown = 0;
+
+  if (Array.isArray(w?.normalUpgrades)) {
+    hasDynamicNormalUpgrades = true;
+    for (const upId of w.normalUpgrades) {
+      const up = getWeaponNormalUpgrade(upId);
+      if (up) {
+        dynamicDamage += up.stats.damage_bonus;
+        dynamicArea += up.stats.area_bonus;
+        dynamicCooldown += up.stats.cooldown_reduction;
+      }
+    }
+  }
+
+  const effectiveDamageBonus = hasDynamicNormalUpgrades
+    ? dynamicDamage
+    : isCategoryCustom
+      ? (rankDef?.flatDamageBonus ?? 0)
+      : (safeLevel - 1) * 0.12;
+
+  const effectiveAreaBonus = hasDynamicNormalUpgrades
+    ? dynamicArea
+    : isCategoryCustom
+      ? (rankDef?.areaBonus ?? 0)
+      : (safeLevel - 1) * 0.06;
+
+  const effectiveCooldownReduction = hasDynamicNormalUpgrades
+    ? Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, dynamicCooldown))
+    : Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, rankDef?.cooldownReductionBonus ?? (isCategoryCustom ? 0 : (safeLevel - 1) * 0.08)));
+
   const stats: WeaponStats = {
-    damageMult: 1 + (safeLevel - 1) * 0.12,
+    damageMult: Math.max(0.05, 1 + effectiveDamageBonus),
     cooldownMult: 1,
-    areaRadiusMult: 1 + (safeLevel - 1) * 0.06,
+    areaRadiusMult: Math.max(0.10, 1 + effectiveAreaBonus),
     pierce: 0,
     projectileCount: 0,
     projectileCountMult: 1,
     knockbackMult: 1,
     statusDurationSec: 0,
+    cooldownReduction: effectiveCooldownReduction,
   };
   if (!canonical) return stats;
 

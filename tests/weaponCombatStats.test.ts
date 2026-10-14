@@ -15,11 +15,19 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       expect(stats.statusDurationSec).toBe(0);
     });
 
-    it('scales baseline stats with level progression', () => {
-      // rank 2 has +12% damage, +6% area
-      const stats2 = getRankedWeaponStats('osikovy_prut', 2);
+    it('scales baseline stats with level progression for standard weapons', () => {
+      // standard non-melee weapon (kysela_okurka): rank 2 has +12% damage, +6% area
+      const stats2 = getRankedWeaponStats('kysela_okurka', 2);
       expect(stats2.damageMult).toBeCloseTo(1.12, 5);
       expect(stats2.areaRadiusMult).toBeCloseTo(1.06, 5);
+      expect(stats2.cooldownMult).toBe(1);
+    });
+
+    it('scales melee weapon baseline stats using smart melee normal upgrades', () => {
+      // osikovy_prut rank 2 receives melee_flurry (-30% cooldown, 0 area, 0 dmg)
+      const stats2 = getRankedWeaponStats('osikovy_prut', 2);
+      expect(stats2.damageMult).toBe(1);
+      expect(stats2.areaRadiusMult).toBe(1);
       expect(stats2.cooldownMult).toBe(1);
     });
 
@@ -28,8 +36,8 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       const stats = getRankedWeaponStats('osikovy_prut', 3, {
         milestones: ['cane_burst_3'],
       });
-      // rank 3 base damageMult = 1 + 2*0.12 = 1.24. With choice: 1.24 * 1.18 = 1.4632
-      expect(stats.damageMult).toBeCloseTo(1.24 * 1.18, 4);
+      // rank 3 base damageMult = 1.0 (from rank 2 melee_flurry). With choice: 1.0 * 1.18 = 1.18
+      expect(stats.damageMult).toBeCloseTo(1.18, 4);
       expect(stats.cooldownMult).toBeCloseTo(0.97, 4);
     });
 
@@ -56,8 +64,8 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       const stats = getRankedWeaponStats('kovarske_vidle', 3, {
         milestones: ['pitchfork_crowd_3'],
       });
-      // rank 3 base areaRadiusMult = 1 + 2 * 0.06 = 1.12. With choice: 1.12 * 1.16 = 1.2992
-      expect(stats.areaRadiusMult).toBeCloseTo(1.12 * 1.16, 4);
+      // rank 3 base areaRadiusMult = 1 + 0.60 (melee_reach) = 1.60. With choice: 1.60 * 1.16 = 1.856
+      expect(stats.areaRadiusMult).toBeCloseTo(1.60 * 1.16, 4);
       expect(stats.knockbackMult).toBeCloseTo(1.25, 4);
     });
 

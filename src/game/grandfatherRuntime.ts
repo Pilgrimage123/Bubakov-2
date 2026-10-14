@@ -1,9 +1,11 @@
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from '../data/synergisticUpgrades';
+import { rollRandomWeaponUpgrade } from '../data/weaponMilestones';
 
 export interface GrandfatherOffer {
   itemId: string;
   offeredAt: number;
+  candidateUpgradeId?: string;
 }
 
 export interface GrandfatherRuntimeState {
@@ -94,6 +96,7 @@ export function chooseGrandfatherOffers(
   const ananasDef = availableItems.find((item) => item.isAnanas);
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
+
   const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'hromnicka', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka']);
   const weaponUpgradeOffers: GrandfatherOffer[] = [];
   for (const weapon of playerWeapons) {
@@ -106,14 +109,36 @@ export function chooseGrandfatherOffers(
       weaponUpgradeOffers.push({ itemId: `weapon_upgrade:${weapon.id}:${upgrade.id}`, offeredAt: now });
     }
   }
+
+  const makeOffer = (item: GrandfatherItemDef): GrandfatherOffer => {
+    let candidateUpgradeId: string | undefined;
+    if (item.isWeapon && item.weaponId) {
+      const pw = playerWeapons.find((w: any) => w.id === item.weaponId);
+      const nextLvl = (pw ? pw.level : 0) + 1;
+      const isMilestone = nextLvl === 3 || nextLvl === 5 || nextLvl === 8;
+      if (!isMilestone && nextLvl > 1) {
+        candidateUpgradeId = rollRandomWeaponUpgrade(item.weaponId, pw)?.id;
+      }
+    }
+    return { itemId: item.id, offeredAt: now, candidateUpgradeId };
+  };
+
+  // 1. Vzácná nabídka z nůše: zřídka se objeví Arcivzácný ananas nebo jeden z 6 vzácných pomocných předmětů
   const rareRollChance = Math.min(0.40, 0.22 + Math.max(0, luck) * 0.025);
   if (Math.random() < rareRollChance) {
-    if (ananasDef && Math.random() < 0.38) selected.push({ itemId: ananasDef.id, offeredAt: now });
-    else if (rareInstants.length > 0) selected.push({ itemId: rareInstants[Math.floor(Math.random() * rareInstants.length)].id, offeredAt: now });
+    const rollSpecial = Math.random();
+    if (ananasDef && rollSpecial < 0.38) {
+      selected.push(makeOffer(ananasDef));
+    } else if (rareInstants.length > 0) {
+      const chosenRare = rareInstants[Math.floor(Math.random() * rareInstants.length)];
+      selected.push(makeOffer(chosenRare));
+    }
   }
+
   if (weaponUpgradeOffers.length > 0 && selected.length < count && Math.random() < 0.45) {
     selected.push(weaponUpgradeOffers[Math.floor(Math.random() * weaponUpgradeOffers.length)]);
   }
+
   const targetWeaponCount = Math.min(availableWeapons.length, count - selected.length >= 3 ? 2 : 1);
   if (targetWeaponCount > 0) {
     const pool = [...availableWeapons];
@@ -124,9 +149,12 @@ export function chooseGrandfatherOffers(
       let chosenIdx = 0;
       for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) { chosenIdx = i; break; } }
       const chosen = pool.splice(chosenIdx, 1)[0];
-      if (!selected.some((offer) => offer.itemId === chosen.id)) selected.push({ itemId: chosen.id, offeredAt: now });
+      if (!selected.some((s) => s.itemId === chosen.id)) {
+        selected.push(makeOffer(chosen));
+      }
     }
   }
+
   const regularPool = availableItems.filter((item) => !item.isRareInstant && !item.isAnanas && !selected.some((offer) => offer.itemId === item.id));
   const shuffled = [...regularPool].sort(() => Math.random() - 0.5);
   const affordable = shuffled.filter((item) => item.baseCost <= gingerbread);
@@ -136,7 +164,7 @@ export function chooseGrandfatherOffers(
     if (selected.some((offer) => offer.itemId === item.id)) continue;
     const luckBoost = Math.max(0, luck) * 0.04 * (item.luckWeight ?? 1);
     if (Math.random() > Math.min(1, 0.45 + luckBoost) && selected.length < count - 1) continue;
-    selected.push({ itemId: item.id, offeredAt: now });
+    selected.push(makeOffer(item));
   }
   for (const offer of [...weaponUpgradeOffers].sort(() => Math.random() - 0.5)) {
     if (selected.length >= count) break;
@@ -144,11 +172,17 @@ export function chooseGrandfatherOffers(
   }
   for (const item of candidates) {
     if (selected.length >= count) break;
-    if (!selected.some((offer) => offer.itemId === item.id)) selected.push({ itemId: item.id, offeredAt: now });
+    if (!selected.some((offer) => offer.itemId === item.id)) {
+      selected.push(makeOffer(item));
+    }
   }
-  if (selected.length === 0 && availableItems[0]) selected.push({ itemId: availableItems[0].id, offeredAt: now });
+
+  if (selected.length === 0 && availableItems[0]) {
+    selected.push(makeOffer(availableItems[0]));
+  }
   return selected.sort(() => Math.random() - 0.5);
 }
+
 export interface WeaponUpgradeOfferDef {
   id: string;
   weaponId: string;

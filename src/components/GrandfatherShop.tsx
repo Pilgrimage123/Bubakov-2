@@ -6,7 +6,14 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { toCanonicalWeaponId } from '../game/migration';
-import { getWeaponRankDef } from '../data/weaponMilestones';
+import {
+  getWeaponRankDef,
+  getWeaponNormalUpgrade,
+  getWeaponCooldownReduction,
+  getWeaponCooldownReductionHeadroom,
+  isWeaponAtCooldownCap,
+  isWeaponNearCooldownCap,
+} from '../data/weaponMilestones';
 
 interface Props {
   gingerbread: number;
@@ -595,6 +602,12 @@ export function GrandfatherShop({
                     const nextRank = owned + 1;
                     const rankDef = nextRank <= 8 ? getWeaponRankDef(canonicalId, nextRank) : undefined;
                     const isMilestoneRank = !!rankDef?.isMilestone;
+                    const candidateUpgrade = offer.candidateUpgradeId
+                      ? getWeaponNormalUpgrade(offer.candidateUpgradeId)
+                      : (rankDef?.normalUpgradeId ? getWeaponNormalUpgrade(rankDef.normalUpgradeId) : undefined);
+                    const headroom = getWeaponCooldownReductionHeadroom(pw);
+                    const isNearCap = isWeaponNearCooldownCap(pw);
+                    const isAtCap = isWeaponAtCooldownCap(pw);
 
                     if (owned === 0) {
                       levelBadge = '⚔️ Nová zbraň';
@@ -607,9 +620,19 @@ export function GrandfatherShop({
                         ? `🌟 Úroveň: ${owned} ➔ ${nextRank} (MILNÍK!)`
                         : `⚔️ Úroveň: ${owned} / ${maxStacks}`;
                       displayName = `${item!.name} (Úroveň ${nextRank})`;
-                      displayDesc = isMilestoneRank
-                        ? `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`
-                        : (rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank} (+12 % zranění, +8 % kadence, +6 % dosah)`);
+                      if (isMilestoneRank) {
+                        displayDesc = `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`;
+                      } else if (candidateUpgrade) {
+                        displayDesc = `${candidateUpgrade.name}: ${candidateUpgrade.ui_text}`;
+                        if (isAtCap) {
+                          displayDesc += ` • ⏱️ Strop kadence (-75 %) dosažen`;
+                        } else if (candidateUpgrade.stats.cooldown_reduction > 0 && isNearCap) {
+                          displayDesc += ` • ⏱️ Zbývá ${Math.round(headroom * 100)} % do stropu kadence (-75 %)`;
+                        }
+                      } else {
+                        displayDesc = rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank}`;
+                      }
+
                       buttonLabel = isMilestoneRank ? 'VYLEPŠIT MILNÍK' : 'VYLEPŠIT';
                     }
                   } else if (item?.isRareInstant) {
