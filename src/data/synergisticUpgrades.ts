@@ -183,8 +183,6 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
   }
 }
 
-
-
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
   if (!SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId]) {
