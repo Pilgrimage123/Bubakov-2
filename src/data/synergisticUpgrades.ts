@@ -137,7 +137,7 @@ const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
   { id: 'horky_brambor', name: 'Horký brambor' },
   { id: 'vceli_roj', name: 'Včelí roj' },
   { id: 'svecena_kropenka', name: 'Kropenka se svěcenou vodou' },
-];
+]
 
 for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
   const definitions: Array<{
