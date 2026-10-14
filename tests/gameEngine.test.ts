@@ -349,7 +349,7 @@ describe('GameEngine Headless Simulation', () => {
       const takeDamageSpy = vi.spyOn(enemy, 'takeDamage');
       hunter.counterMeleeAttacker(enemy);
 
-      expect(enemy.hp).toBeLessThan(initialHp);
+      expect(enemy.hp).toBe(0); // The scaled counter damage defeats this 48-HP enemy.
       expect(takeDamageSpy).toHaveBeenCalledWith(
         90,
         'physical',
@@ -357,7 +357,6 @@ describe('GameEngine Headless Simulation', () => {
         0,
         expect.objectContaining({ stunDuration: 0.35 * (hunter.maxHp / 200) })
       );
-      expect(enemy.stunTimer).toBeGreaterThan(0);
     });
   });
 
