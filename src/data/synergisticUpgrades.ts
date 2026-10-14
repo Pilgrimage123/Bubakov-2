@@ -126,7 +126,8 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = (() =
       cooldownMult: 0.88,
     },
   },
-;
+};
+
 const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
   { id: 'kysela_okurka', name: 'Kyselá okurka' },
   { id: 'povidlove_buchty', name: 'Povidlové buchty' },
