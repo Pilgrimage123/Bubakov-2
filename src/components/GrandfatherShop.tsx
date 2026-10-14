@@ -632,7 +632,7 @@ export function GrandfatherShop({
                     }
                   }
 
-                  const fullCourage = !!item && item.effect.type === 'heal' && playerHp >= playerMaxHp;
+                  const fullCourage = item?.effect.type === 'heal' && playerHp >= playerMaxHp;
                   const affordable = gingerbread >= price && !isMaxed && !fullCourage;
                   const isHighlighted = activeItem?.id === item?.id || (!!weaponUpgrade && activeItem === null);
                   const isPurchasedNow = justPurchasedId === offer.itemId;
