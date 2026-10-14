@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
-import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, type GrandfatherOffer } from '../game/grandfatherRuntime';
+import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, getWeaponUpgradeOffer, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
@@ -562,22 +562,31 @@ export function GrandfatherShop({
                 }}
               >
                 {offers.map((offer, idx) => {
+                  const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
                   const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
-                  if (!item) return null;
+                  if (!item && !weaponUpgrade) return null;
 
                   const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
-                  const price = getGrandfatherPrice(item, purchaseCount, luck, waitSeconds);
-                  const priceExempt = isGrandfatherPriceExempt(item);
+                  const price = getGrandfatherPrice(
+                    weaponUpgrade
+                      ? { id: weaponUpgrade.id, name: weaponUpgrade.name, icon: weaponUpgrade.icon, description: weaponUpgrade.description, baseCost: weaponUpgrade.baseCost, effect: { type: 'luck', amount: 0 } } as GrandfatherItemDef
+                      : item!,
+                    purchaseCount, luck, waitSeconds
+                  );
+                  const priceExempt = item ? isGrandfatherPriceExempt(item) : false;
 
                   let owned = 0;
-                  let maxStacks = item.maxStacks || 5;
+                  let maxStacks = item?.maxStacks || 5;
                   let isMaxed = false;
-                  let displayName = item.name;
-                  let displayDesc = item.description;
+                  let displayName = weaponUpgrade?.name ?? item!.name;
+                  let displayDesc = weaponUpgrade?.description ?? item!.description;
                   let levelBadge = '';
                   let buttonLabel = 'KOUPIT';
 
-                  if (item.isWeapon && item.weaponId) {
+                  if (weaponUpgrade) {
+                    levelBadge = '✨ Specializace projektilové zbraně';
+                    buttonLabel = 'VYLEPŠIT';
+                  } else if (item?.isWeapon && item.weaponId) {
                     const canonicalId = toCanonicalWeaponId(item.weaponId);
                     const pw = playerWeapons?.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
                     owned = pw ? pw.level : 0;
@@ -603,11 +612,11 @@ export function GrandfatherShop({
                         : (rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank} (+12 % zranění, +8 % kadence, +6 % dosah)`);
                       buttonLabel = isMilestoneRank ? 'VYLEPŠIT MILNÍK' : 'VYLEPŠIT';
                     }
-                  } else if (item.isRareInstant) {
+                  } else if (item?.isRareInstant) {
                     levelBadge = '✨ Okamžitý zásah';
                     buttonLabel = 'POUŽÍT';
                     displayDesc = `${item.description} (Ihned zavře nůši a spustí se na louce!)`;
-                  } else if (item.isAnanas) {
+                  } else if (item?.isAnanas) {
                     owned = purchasedIds.filter((id) => id === item.id).length;
                     maxStacks = item.maxStacks || 2;
                     isMaxed = owned >= maxStacks;
@@ -630,18 +639,18 @@ export function GrandfatherShop({
 
                   return (
                     <div
-                      key={`${item.id}-${idx}`}
+                      key={`${offer.itemId}-${idx}`}
                       className="item-pulled-from-basket"
-                      onMouseEnter={() => handleItemHover(item)}
+                      onMouseEnter={() => item && handleItemHover(item)}
                       onMouseLeave={handleItemLeave}
-                      onTouchStart={() => handleItemHover(item)}
+                      onTouchStart={() => item && handleItemHover(item)}
                       style={{
                         animationDelay: `${idx * 0.08}s`,
-                        border: item.isAnanas
+                        border: item?.isAnanas
                           ? isHighlighted ? '3px solid #EAB308' : '2.5px solid #CA8A04'
-                          : item.isRareInstant
+                          : item?.isRareInstant
                           ? isHighlighted ? '3px solid #38BDF8' : '2.5px solid #0284C7'
-                          : item.isWeapon
+                          : item?.isWeapon
                           ? isHighlighted ? '3px solid #DC2626' : '2.5px solid #9A3412'
                           : isHighlighted ? '2.5px solid #D97706' : '2px solid var(--ink)',
                         borderRadius: 14,
@@ -653,19 +662,19 @@ export function GrandfatherShop({
                             : isHighlighted
                               ? '#FFFDF5'
                               : affordable
-                                ? item.isAnanas
+                                ? item?.isAnanas
                                   ? '#FEF9C3'
-                                  : item.isRareInstant
+                                  : item?.isRareInstant
                                   ? '#F0F9FF'
-                                  : item.isWeapon ? '#FFFBEB' : '#FFF7DF'
+                                  : item?.isWeapon ? '#FFFBEB' : '#FFF7DF'
                                 : '#F5E6CA',
                         boxShadow: isHighlighted
-                          ? item.isRareInstant
+                          ? item?.isRareInstant
                             ? '0 0 14px rgba(56, 189, 248, 0.45), 3px 3px 0 var(--ink)'
-                            : item.isAnanas
+                            : item?.isAnanas
                             ? '0 0 14px rgba(234, 179, 8, 0.5), 3px 3px 0 var(--ink)'
                             : '0 0 14px rgba(245, 158, 11, 0.45), 3px 3px 0 var(--ink)'
-                          : item.isWeapon
+                          : item?.isWeapon
                             ? '3px 3px 0 rgba(154, 52, 18, 0.4)'
                             : '3px 3px 0 rgba(0,0,0,0.25)',
                         display: 'flex',
@@ -686,13 +695,13 @@ export function GrandfatherShop({
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              background: item.isWeapon ? '#FEF2F2' : '#FEF3C7',
+                              background: item?.isWeapon ? '#FEF2F2' : '#FEF3C7',
                               borderRadius: 10,
                               border: '1.5px solid #78350F',
                               boxShadow: 'inset 0 0 6px rgba(0,0,0,0.08)',
                             }}
                           >
-                            <GameIcon icon={item.icon} size={36} />
+                            <GameIcon icon={weaponUpgrade?.icon ?? item?.icon ?? '✨'} size={36} />
                           </div>
 
                           <span
@@ -701,9 +710,9 @@ export function GrandfatherShop({
                               fontWeight: 900,
                               padding: '3px 8px',
                               borderRadius: 6,
-                              background: isMaxed ? '#9CA3AF' : item.isWeapon ? '#FEE2E2' : '#FEF3C7',
-                              color: isMaxed ? '#374151' : item.isWeapon ? '#991B1B' : '#78350F',
-                              border: item.isWeapon ? '1px solid #DC2626' : '1px solid #78350F',
+                              background: isMaxed ? '#9CA3AF' : item?.isWeapon ? '#FEE2E2' : '#FEF3C7',
+                              color: isMaxed ? '#374151' : item?.isWeapon ? '#991B1B' : '#78350F',
+                              border: item?.isWeapon ? '1px solid #DC2626' : '1px solid #78350F',
                               whiteSpace: 'nowrap',
                             }}
                           >
@@ -778,7 +787,7 @@ export function GrandfatherShop({
                             background: isMaxed
                               ? '#D1D5DB'
                               : affordable
-                                ? item.isWeapon ? '#F59E0B' : '#FBBF24'
+                                ? item?.isWeapon ? '#F59E0B' : '#FBBF24'
                                 : '#E5E7EB',
                             color: isMaxed ? '#4B5563' : '#2D1609',
                             boxShadow: affordable ? '2px 2px 0 var(--ink)' : 'none',
