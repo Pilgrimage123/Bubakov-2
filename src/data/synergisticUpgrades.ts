@@ -1,6 +1,7 @@
 import type { WeaponId, SynergisticUpgradeDef } from '../types';
 
-export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
+export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = (() => {
+  const upgrades: Record<string, SynergisticUpgradeDef> = {
   // Kyselá okurka
   pickle_flood: {
     id: 'pickle_flood',
@@ -125,8 +126,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
       cooldownMult: 0.88,
     },
   },
-};
-
+;
 const PROJECTILE_UPGRADE_WEAPONS: Array<{ id: WeaponId; name: string }> = [
   { id: 'kysela_okurka', name: 'Kyselá okurka' },
   { id: 'povidlove_buchty', name: 'Povidlové buchty' },
@@ -171,7 +171,7 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
 
   for (const definition of definitions) {
     const id = `${definition.suffix}_${weapon.id}`;
-    SYNERGISTIC_UPGRADES[id] = {
+    upgrades[id] = {
       id,
       weaponId: weapon.id,
       name: definition.name,
@@ -186,7 +186,8 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
  
 // Shared specializations for every weapon that fires actual projectiles.
 // Values map to the existing WeaponStats calculation: +130% count means x2.3.
-
+  return upgrades;
+})();
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
   if (!SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId]) {
