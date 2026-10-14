@@ -769,7 +769,7 @@ export function GrandfatherShop({
                           >
                             {price}
                           </strong>
-                          {priceExempt && item && <small style={{ color: '#78350F', fontWeight: 800 }}>{item.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
+                          {priceExempt && item && <small style={{ color: '#78350F', fontWeight: 800 }}>{item!.effect.type === 'coins' ? 'perníčků • výplata v krejcarech' : 'perníčků • cena bez přirážky'}</small>}
                         </div>
 
                         <button
