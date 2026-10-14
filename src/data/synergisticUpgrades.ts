@@ -1,7 +1,6 @@
 import type { WeaponId, SynergisticUpgradeDef } from '../types';
 
-export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = (() => {
-  const upgrades: Record<string, SynergisticUpgradeDef> = {
+export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
   // Kyselá okurka
   pickle_flood: {
     id: 'pickle_flood',
@@ -172,7 +171,7 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
 
   for (const definition of definitions) {
     const id = `${definition.suffix}_${weapon.id}`;
-    upgrades[id] = {
+    SYNERGISTIC_UPGRADES[id] = {
       id,
       weaponId: weapon.id,
       name: definition.name,
@@ -189,6 +188,9 @@ for (const weapon of PROJECTILE_UPGRADE_WEAPONS) {
 // Values map to the existing WeaponStats calculation: +130% count means x2.3.
   return upgrades;
 })();
+
+
+
 export const SYNERGISTIC_UPGRADES_BY_WEAPON: Record<string, SynergisticUpgradeDef[]> = {};
 for (const upgrade of Object.values(SYNERGISTIC_UPGRADES)) {
   if (!SYNERGISTIC_UPGRADES_BY_WEAPON[upgrade.weaponId]) {
