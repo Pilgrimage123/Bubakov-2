@@ -3041,7 +3041,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (p?.weapons && Math.random() < 0.45) {
       const eligible = p.weapons.flatMap((weapon: any) => {
         const weaponId = toCanonicalWeaponId(weapon.id);
-        if (!['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka'].includes(weaponId)) return [];
+        if (!['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'hromnicka', 'svecena_kropenka'].includes(weaponId)) return [];
         if ((weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weaponId)) return [];
         return Object.values(SYNERGISTIC_UPGRADES).filter((upgrade) => upgrade.weaponId === weaponId).map((upgrade) => ({ weapon, upgrade }));
       });
