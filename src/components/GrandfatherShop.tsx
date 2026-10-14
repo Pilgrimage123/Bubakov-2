@@ -606,7 +606,7 @@ export function GrandfatherShop({
                       levelBadge = isMilestoneRank
                         ? `🌟 Úroveň: ${owned} ➔ ${nextRank} (MILNÍK!)`
                         : `⚔️ Úroveň: ${owned} / ${maxStacks}`;
-                      displayName = `${item.name} (Úroveň ${nextRank})`;
+                      displayName = `${item!.name} (Úroveň ${nextRank})`;
                       displayDesc = isMilestoneRank
                         ? `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`
                         : (rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank} (+12 % zranění, +8 % kadence, +6 % dosah)`);
@@ -615,7 +615,7 @@ export function GrandfatherShop({
                   } else if (item?.isRareInstant) {
                     levelBadge = '✨ Okamžitý zásah';
                     buttonLabel = 'POUŽÍT';
-                    displayDesc = `${item.description} (Ihned zavře nůši a spustí se na louce!)`;
+                    displayDesc = `${item!.description} (Ihned zavře nůši a spustí se na louce!)`;
                   } else if (item?.isAnanas) {
                     owned = purchasedIds.filter((id) => id === item.id).length;
                     maxStacks = item.maxStacks || 2;
@@ -625,17 +625,17 @@ export function GrandfatherShop({
                   } else {
                     owned = purchasedIds.filter((id) => id === item.id).length;
                     maxStacks = item.maxStacks || 5;
-                    isMaxed = item.maxStacks !== undefined && owned >= item.maxStacks;
-                    levelBadge = `Úroveň: ${owned} / ${item.maxStacks || '∞'}`;
+                    isMaxed = item?.maxStacks !== undefined && owned >= item.maxStacks;
+                    levelBadge = `Úroveň: ${owned} / ${item?.maxStacks || '∞'}`;
                     if (isMaxed) {
                       buttonLabel = 'VYČERPÁNO';
                     }
                   }
 
-                  const fullCourage = item.effect.type === 'heal' && playerHp >= playerMaxHp;
+                  const fullCourage = !!item && item.effect.type === 'heal' && playerHp >= playerMaxHp;
                   const affordable = gingerbread >= price && !isMaxed && !fullCourage;
-                  const isHighlighted = activeItem?.id === item.id;
-                  const isPurchasedNow = justPurchasedId === item.id;
+                  const isHighlighted = activeItem?.id === item?.id || (!!weaponUpgrade && activeItem === null);
+                  const isPurchasedNow = justPurchasedId === item?.id;
 
                   return (
                     <div
