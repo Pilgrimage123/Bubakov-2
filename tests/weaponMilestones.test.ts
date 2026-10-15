@@ -180,7 +180,7 @@ describe('Weapon Milestones System', () => {
         {
           id: 'melee_flurry',
           name: 'Svižná ruka',
-          ui_text: '-30 % cooldown',
+          ui_text: '+40 % nabíjení',
           stats: { area_bonus: 0.00, damage_bonus: 0.00, cooldown_reduction: 0.30 },
         },
         {
@@ -198,7 +198,7 @@ describe('Weapon Milestones System', () => {
         {
           id: 'melee_frenzy',
           name: 'Zběsilé sekání',
-          ui_text: '-45 % cooldown, -25 % velikost švihu',
+          ui_text: '+80 % nabíjení, -25 % velikost švihu',
           stats: { area_bonus: -0.25, damage_bonus: 0.00, cooldown_reduction: 0.45 },
         },
       ];

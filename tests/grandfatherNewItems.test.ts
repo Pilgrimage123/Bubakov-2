@@ -616,7 +616,7 @@ describe('New Grandfather Items Integration', () => {
       expect(player.pivniTacekStacks).toBe(4);
     });
 
-    it('purchasing a drink (pivo/koralka/cikorka) drops coins from 8 closest enemies and gives 25% weapon cooldown reduction for 6s', () => {
+    it('purchasing a drink (pivo/koralka/cikorka) drops coins from 8 closest enemies and gives +35% weapon charging speed for 6s', () => {
       const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek')!;
       engine.applyGrandfatherItem(tacek);
 
@@ -645,11 +645,11 @@ describe('New Grandfather Items Integration', () => {
       // Check player received the 6s cooldown buff
       expect(player.pivniTacekTimer).toBe(6);
 
-      // Active weapon cooldown was immediately reduced by 25% (2.0 -> 1.5)
-      expect(player.weapons[0].cd).toBeCloseTo(1.5, 2);
+      // Active weapon cooldown was immediately reduced by 35% nabíjení (2.0 / 1.35 = ~1.48)
+      expect(player.weapons[0].cd).toBeCloseTo(2.0 / 1.35, 2);
     });
 
-    it('newly fired weapons during pivniTacekTimer receive 25% shorter cooldown', () => {
+    it('newly fired weapons during pivniTacekTimer receive +35% faster charging', () => {
       const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek')!;
       engine.applyGrandfatherItem(tacek);
 
@@ -668,8 +668,8 @@ describe('New Grandfather Items Integration', () => {
       engine.update(0.05);
 
       const baseWeaponCd = WEAPONS['osikovy_prut'].baseCd;
-      // Weapon cd should be baseCd * 0.75
-      expect(player.weapons[0].cd).toBeLessThanOrEqual(baseWeaponCd * 0.76);
+      // Weapon cd should be baseCd / 1.35
+      expect(player.weapons[0].cd).toBeLessThanOrEqual(baseWeaponCd / 1.35 + 0.01);
     });
   });
 });

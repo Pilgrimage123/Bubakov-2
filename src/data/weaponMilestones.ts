@@ -186,7 +186,7 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('flail_crowd_5', 'Mlatcovo dupnutí', 'Otřes země zasáhne ještě větší plochu a zviklá útočící příšery.', 'ground_thud', 'heavy_hit', { areaRadiusMult: 1.25, knockbackMult: 1.35, statusDurationSec: 1.0 }),
-      makeChoice('flail_burst_5', 'Kalený řetěz', 'Pevnější řetěz umožní mlatci švihat s vyšší razancí a kratší prodlevou.', 'forged_chain', 'heavy_hit', { baseDamageMult: 1.26, cooldownMult: 0.93 }),
+      makeChoice('flail_burst_5', 'Kalený řetěz', 'Pevnější řetěz umožní mlatci švihat s vyšší razancí a svižnějším nabíjením.', 'forged_chain', 'heavy_hit', { baseDamageMult: 1.26, cooldownMult: 0.93 }),
     ],
     8: [
       makeChoice('flail_crowd_8', 'Hromové mlatobí', 'Zemětřesný dopad rozmetá celý zástup bubáků na obrovskou vzdálenost.', 'earthquake', 'heavy_hit', { areaRadiusMult: 1.32, knockbackMult: 1.50, cooldownMult: 0.92 }),
@@ -326,7 +326,7 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     ],
     5: [
       makeChoice('gander_crowd_5', 'Husí pochod', 'Houseři se odrážejí k dalším cílům a divokým máváním křídel je silně odhazují.', 'goose_march', 'slash', { pierceDelta: 2, knockbackMult: 1.30 }),
-      makeChoice('gander_burst_5', 'Rozlícený sykot', 'Bleskové výpady zobákem mají kratší prodlevu a mnohem vyšší poškození.', 'angry_hiss', 'slash', { baseDamageMult: 1.25, cooldownMult: 0.92 }),
+      makeChoice('gander_burst_5', 'Rozlícený sykot', 'Bleskové výpady zobákem mají svižnější nabíjení a mnohem vyšší poškození.', 'angry_hiss', 'slash', { baseDamageMult: 1.25, cooldownMult: 0.92 }),
     ],
     8: [
       makeChoice('gander_crowd_8', 'Posvícenská husí jízda', 'Celé hejno houserů zaplaví bojiště a nenechá jediného bubáka v klidu.', 'goose_stampede', 'slash', { projectileCountDelta: 2, pierceDelta: 2, areaRadiusMult: 1.20, cooldownMult: 0.90 }),
@@ -361,7 +361,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_flurry: {
     id: 'melee_flurry',
     name: 'Svižná ruka',
-    ui_text: '-30 % cooldown',
+    ui_text: '+40 % nabíjení',
     category: 'melee',
     stats: {
       area_bonus: 0.00,
@@ -394,7 +394,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_frenzy: {
     id: 'melee_frenzy',
     name: 'Zběsilé sekání',
-    ui_text: '-45 % cooldown, -25 % velikost švihu',
+    ui_text: '+80 % nabíjení, -25 % velikost švihu',
     category: 'melee',
     stats: {
       area_bonus: -0.25,
@@ -478,7 +478,7 @@ export const AURA_NORMAL_UPGRADES: Record<string, AuraNormalUpgradeDef> = {
   aura_pulse: {
     id: 'aura_pulse',
     name: 'Vysoká frekvence',
-    ui_text: '-30 % prodleva mezi pulzy',
+    ui_text: '+40 % nabíjení pulzů',
     category: 'aura',
     stats: {
       area_bonus: 0.00,
@@ -511,7 +511,7 @@ export const AURA_NORMAL_UPGRADES: Record<string, AuraNormalUpgradeDef> = {
   aura_singularity: {
     id: 'aura_singularity',
     name: 'Zhroucená zóna',
-    ui_text: '+120 % zranění, -30 % prodleva pulzů, -35 % poloměr zóny',
+    ui_text: '+120 % zranění, +40 % nabíjení pulzů, -35 % poloměr zóny',
     category: 'aura',
     stats: {
       area_bonus: -0.35,
@@ -564,7 +564,7 @@ export const PROJECTILE_NORMAL_UPGRADES: Record<string, ProjectileNormalUpgradeD
   cd_hyper: {
     id: 'cd_hyper',
     name: 'Rychlopalný mechanismus',
-    ui_text: '-30 % cooldown',
+    ui_text: '+40 % nabíjení',
     category: 'projectile',
     stats: {
       cooldown_reduction: 0.30,
@@ -791,7 +791,7 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
       ? 'Základní síla zbraně.'
       : choices
         ? 'Milník: vyber jednu ze dvou specializací.'
-        : '+12 % damage, +8 % cooldown bonus, +6 % area.',
+        : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
   flatDamageBonus: 0,
   cooldownReductionBonus: Math.max(0, (rank - 1) * 0.08),
   areaBonus: Math.max(0, (rank - 1) * 0.06),
@@ -865,7 +865,7 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         isMilestone: false,
         passiveBonusDescription: upgrade
           ? `${upgrade.name}: ${upgrade.ui_text}`
-          : '+12 % damage, +8 % cooldown bonus, +6 % area.',
+          : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
         flatDamageBonus: cumulativeDamage,
         cooldownReductionBonus: cumulativeCooldown,
         areaBonus: cumulativeArea,
@@ -961,11 +961,8 @@ export function getEffectiveWeaponCooldown(
   const base = Math.max(0, baseCooldown);
   const cappedWeaponBonus = Math.min(COOLDOWN_REDUCTION_CAP, Math.max(0, weaponCooldownBonus));
   const playerDivisor = 1 + Math.max(0, playerCooldownBonus);
-  const cdAfterWeapon = base * Math.max(1 - COOLDOWN_REDUCTION_CAP, 1 - cappedWeaponBonus);
-  return Math.max(
-    base * (1 - COOLDOWN_REDUCTION_CAP),
-    cdAfterWeapon / playerDivisor,
-  );
+  const cdAfterWeapon = base * (1 - cappedWeaponBonus);
+  return Math.max(0.05, cdAfterWeapon / playerDivisor);
 }
 
 export function getRankedWeaponStats(id: string, level: number, w?: any): WeaponStats {

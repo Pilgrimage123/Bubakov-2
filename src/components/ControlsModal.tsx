@@ -263,22 +263,22 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <li>
-                  <strong>Poutník (Tulák):</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (zkrácený cooldown 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
+                  <strong>Poutník (Tulák):</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (rychlé nabíjení 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
                 </li>
                 <li>
-                  <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, cooldown 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
+                  <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, nabíjení 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
                 </li>
                 <li>
-                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, cooldown 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
+                  <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, nabíjení 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
                 </li>
                 <li>
-                  <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž vystraší nepřátele na 5 s a udělí 110 fyzického poškození s odhozením (cooldown 30 s). Pasivně šíří stálou posvátnou auru lucerny (16 svatého poškození/s).
+                  <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž vystraší nepřátele na 5 s a udělí 110 fyzického poškození s odhozením (nabíjení 30 s). Pasivně šíří stálou posvátnou auru lucerny (16 svatého poškození/s).
                 </li>
                 <li>
-                  <strong>Pobožný kostelník:</strong> <em>Farní požehnání</em> – úder kostelního zvonu a sloup svatého světla očistí nemrtvé a démony v okruhu 650 px (běžné nemrtvé okamžitě vymýtí, bosse zasáhne za 25 % max. kuráže, cooldown 35 s).
+                  <strong>Pobožný kostelník:</strong> <em>Farní požehnání</em> – úder kostelního zvonu a sloup svatého světla očistí nemrtvé a démony v okruhu 650 px (běžné nemrtvé okamžitě vymýtí, bosse zasáhne za 25 % max. kuráže, nabíjení 35 s).
                 </li>
                 <li>
-                  <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zmrazí čas; působí buď jako <strong>Food</strong> (chléb nasytí) nebo <strong>Holy</strong> (vlídné slovo zažene démony) podle toho, proti čemu má daný bubák menší odolnost (cooldown 45 s)!
+                  <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zmrazí čas; působí buď jako <strong>Food</strong> (chléb nasytí) nebo <strong>Holy</strong> (vlídné slovo zažene démony) podle toho, proti čemu má daný bubák menší odolnost (nabíjení 45 s)!
                 </li>
               </ul>
             </div>
@@ -636,7 +636,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   </div>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35 }}>
                     V každé nabídce máte jistotu alespoň jedné až dvou zbraní. Můžete získat zbrusu novou zbraň nebo <strong>vylepšit stávající zbraň až na úroveň 8</strong>
-                    (+12 % zranění, +8 % kadence, +6 % dosah za každou úroveň)!
+                    (+12 % zranění, +8 % nabíjení, +6 % dosah za každou úroveň)!
                   </p>
                 </div>
 
@@ -646,9 +646,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <span>Pasivní posílení a dary:</span>
                   </div>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35 }}>
-                    <strong>Sedmimílové krpce</strong> (+20 rychlost), <strong>Čertovské pírko</strong> a <strong>Krvavé jelito</strong> (+10 až +15 % dmg),
-                    <strong>Pytlácká lucerna</strong> (+30 magnet), <strong>Záplatovaný kabát</strong> (+25 max kuráž), <strong>Opravdová káva</strong> (-10 % cooldown),
-                    <strong>Podkova pro štěstí</strong> (+1 Štěstí), <strong>Bylinková fajfka</strong> (regenerace) a zabijačkové svačiny.
+                    <strong>Sedmimílové krpce</strong> (+20 rychlost), <strong>Krvavé jelito</strong> (+15 % dmg),
+                    <strong>Pytlácká petrolejka</strong> (+30 magnet), <strong>Záplatovaný kabát</strong> (+25 max kuráž), <strong>Opravdová káva</strong> (+15 % nabíjení),
+                    <strong>Podkova pro štěstí</strong> (+10 Štěstí), <strong>Maska medvěda</strong> (přeléčení jako zranění), <strong>Bylinková fajfka</strong> (kouř a regenerace) a zabijačkové svačiny.
                   </p>
                 </div>
               </div>

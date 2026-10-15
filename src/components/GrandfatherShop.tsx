@@ -72,23 +72,29 @@ function getItemQuote(item: GrandfatherItemDef): string {
     if (item.id === 'wp_herbs') return '„Devatery kvítí trhané o svatojánské noci! Nečisté síly před ním hasnou!“';
     return `„${item.name}! Poctivá zbraň, se kterou v lesích nezahyneš!“`;
   }
-  if (item.id === 'sedmimile_krpce' || item.id === 'toulave_boty') {
+  if (item.id === 'sedmimile_krpce') {
     return '„Sedmimílové krpce! S těmi utečeš i polednici za pravého poledne!“';
   }
-  if (item.id === 'certovske_pirko') {
-    return '„Čertovské pírko! Vytržené přímo z pekelného kožichu, dodá pořádnou sílu úderu!“';
+  if (item.id === 'pytlacka_lucerna') {
+    return '„Pytlácká petrolejka! Posvítí do křoví a všechny perníčky i krejcary k tobě v mžiku vletí!“';
+  }
+  if (item.id === 'podkova_pro_stesti') {
+    return '„Podkova a čtyřlístek pro štěstí! S tím ti osud i rány budou přát!“';
   }
   if (item.id === 'bylinkova_fajfka') {
-    return '„Bylinková fajfka! Z mých tajných sušených bylin, hned se ti uleví a dech se vrátí!“';
+    return '„Bylinková fajfka! Z mých tajných sušených bylin, zahalí tě léčivým dýmem a běsy zažene!“';
   }
   if (item.id === 'krvave_jelito') {
     return '„Poctivé krvavé jelito ze zabijačky! Síla a zranění jak ze žuly!“';
   }
   if (item.id === 'opravdova_kava') {
-    return '„Opravdová zrnková káva od zámořských kupců! Zbraně ti poletí jak namazané!“';
+    return '„Opravdová zrnková káva od zámořských kupců! Zbraně ti budou nabíjet jedna báseň!“';
   }
   if (item.id === 'medvedi_mast') {
     return '„Hojivá medvědí mast! Zacelí každý šrám a kousnutí od nočních můr!“';
+  }
+  if (item.id === 'maska_medveda') {
+    return '„Masopustní maska medvěda! Všechen přebytek tvé kuráže vyšlehne na bubáky jako hromová rána!“';
   }
   if (item.effect.type === 'heal') {
     if (item.id === 'tepla_cikorka') return '„Teplá cikorka, pocuchané nervy i Kuráž dá do pořádku!“';

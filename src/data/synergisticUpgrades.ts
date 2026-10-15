@@ -17,7 +17,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'pickle_crunch',
     weaponId: 'kysela_okurka',
     name: 'Kyselý koncentrát',
-    description: '+55 % poškození, -10 % cooldown. Silný výpad těžkými křupavými okurkami.',
+    description: '+55 % poškození, +12 % nabíjení. Silný výpad těžkými křupavými okurkami.',
     archetype: 'burst',
     statModifiers: {
       baseDamageMult: 1.55,
@@ -30,7 +30,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'cane_whirl',
     weaponId: 'osikovy_prut',
     name: 'Proutěný vír',
-    description: '+40 % dosah švihu, -15 % cooldown, -20 % poškození.',
+    description: '+40 % dosah švihu, +20 % nabíjení, -20 % poškození.',
     archetype: 'swarm',
     statModifiers: {
       areaRadiusMult: 1.40,
@@ -42,7 +42,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'cane_heavy',
     weaponId: 'osikovy_prut',
     name: 'Bukový mlat',
-    description: '+65 % poškození, +50 % odhození, +15 % cooldown.',
+    description: '+65 % poškození, +50 % odhození, -15 % nabíjení.',
     archetype: 'heavy',
     statModifiers: {
       baseDamageMult: 1.65,
@@ -67,7 +67,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'buns_dense',
     weaponId: 'povidlove_buchty',
     name: 'Hutné povidlí',
-    description: '+50 % poškození, +40 % trvání mlsání, -10 % cooldown.',
+    description: '+50 % poškození, +40 % trvání mlsání, +12 % nabíjení.',
     archetype: 'burst',
     statModifiers: {
       baseDamageMult: 1.50,
@@ -81,7 +81,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'valecnice_orbit',
     weaponId: 'valecnice',
     name: 'Rychlé válení',
-    description: '+40 % dosah oběhu, -20 % cooldown, -15 % poškození.',
+    description: '+40 % dosah oběhu, +25 % nabíjení, -15 % poškození.',
     archetype: 'tempo',
     statModifiers: {
       areaRadiusMult: 1.40,
@@ -117,7 +117,7 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     id: 'pitchfork_pierce',
     weaponId: 'kovarske_vidle',
     name: 'Kalená ocel',
-    description: '+60 % poškození, +2 průraz, -12 % cooldown.',
+    description: '+60 % poškození, +2 průraz, +15 % nabíjení.',
     archetype: 'burst',
     statModifiers: {
       baseDamageMult: 1.60,

@@ -670,6 +670,7 @@ export function applyRareItemEffect(
   } else if (type === 'babicka_apron') {
     callbacks?.onSound?.('grandmothersApron');
     applyMagnetWave(engineState.drops, player.x, player.y, 99999, true);
+    player.hp = Math.min(player.maxHp, (player.hp || 0) + 15);
     if (engineState.particles) {
       for (let i = 0; i < 22; i++) {
         const ang = Math.random() * Math.PI * 2;
@@ -808,6 +809,8 @@ export function applyRareItemEffect(
           } else {
             foe.takeDamage(foe.hp || 50, 'holy');
           }
+          foe.panicked = true;
+          foe.panicTimer = 3.0;
         }
       }
     }
@@ -823,7 +826,7 @@ export function applyRareItemEffect(
     callbacks?.onDamageText?.({
       x: player.x,
       y: player.y - 65,
-      text: 'VYŘEZÁVANÉ KUKAČKY! ⏰ (Zastavení času na 4 s)',
+      text: 'VYŘEZÁVANÉ KUKAČKY! ⏰ (Zastavení času na 4 s & Popohnání kroku)',
       color: '#EAB308',
     });
   }

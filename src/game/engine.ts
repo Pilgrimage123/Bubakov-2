@@ -1431,10 +1431,11 @@ export class GameEngine {
       if (item.id === 'krvave_jelito') p.jelitoCount = (p.jelitoCount || 0) + 1;
     }
     if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
-      p.fajfkaLevel = Math.min(2, (p.fajfkaLevel || 0) + 1);
+      p.fajfkaLevel = Math.min(3, (p.fajfkaLevel || 0) + 1);
+      p.regenLevel = (p.regenLevel || 0) + 1.2;
     }
-    if (effect.type === 'bear_mask' || item.id === 'medvedi_mast') {
-      p.bearMaskLevel = (p.bearMaskLevel || 0) + 1;
+    if (effect.type === 'bear_mask' || item.id === 'maska_medveda') {
+      p.bearMaskLevel = Math.min(4, (p.bearMaskLevel || 0) + 1);
       p.bearMaskHealBonus = Math.max(0, (p.bearMaskLevel - 1) * 0.20);
     }
     if (effect.type === 'max_hp') {
@@ -1563,11 +1564,11 @@ export class GameEngine {
     if (player.weapons) {
       for (let i = 0; i < player.weapons.length; i++) {
         const w = player.weapons[i];
-        if (w.cd > 0) w.cd *= 0.75;
+        if (w.cd > 0) w.cd /= 1.35;
       }
     }
     this.state.texts.push(new DamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-    this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: -25 % COOLDOWN! ⚡', '#38BDF8', true));
+    this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
 
     // Drop coins from up to 8 closest alive enemies
     const sortedEnemies = (this.livingEnemies || this.state.enemies || [])
@@ -2160,9 +2161,9 @@ export class GameEngine {
               const baseCd = wDef.baseCd;
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
               const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-              let localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+              let localCd = formulaCd * stats.cooldownMult;
               if ((player.pivniTacekTimer || 0) > 0) {
-                localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), localCd * 0.75);
+                localCd = localCd / 1.35;
               }
 
               w.cd = fired ? localCd : 0.1;

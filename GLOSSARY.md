@@ -88,13 +88,21 @@ _Avoid_: stagger, stumble, pajdání
 Tematické bazény běžných vylepšení (pro sečné zbraně, aury a projektilové zbraně), které nahrazují generické bonusy na úrovních 2, 4, 6 a 7.
 _Avoid_: perk tree, weapon skill tree, upgrade category
 
+**Nabíjení**:
+Ukazatel rychlosti přípravy zbraní a schopností lovce, který lineárně zvyšuje frekvenci útoků násobitelem (1 + nabíjení) a zkracuje prodlevu mezi údery bez hyperbolického přehřívání.
+_Avoid_: cooldown, CDR, snížení cooldownu, prodleva, cooldown reduction, attack speed
+
 **Strop kadence**:
-Pevná hranice zkrácení prodlevy mezi útoky (-75 %), zamezující nechtěnému zacyklení zbraní; při zbývajícím prostoru menším než 10 % jsou další redukce prodlevy z nabídky vyloučeny.
+Původní hranice zkrácení prodlevy mezi útoky, nahrazená plynulým lineárním systémem Nabíjení bez nutnosti umělého odřezávání.
 _Avoid_: cooldown cap, attack speed cap, soft cap, hard cap
 
 **Oblak bylinného dýmu**:
 Plošný účinek Bylinkové fajfky, který v zóně zpomaluje dotírající strašidla a léčí lovce bez nutnosti fyzického odhazování nepřátel.
 _Avoid_: smoke aura, poison cloud, AOE dým
+
+**Maska medvěda**:
+Masopustní maska a posvěcení z dědečkovy nůše, díky kterému veškeré přeléčení (overheal) Kuráže vyšlehne jako tlaková vlna zraňující okolní strašidla.
+_Avoid_: bear mask, overheal damage, masopustní maska
 
 ## Světlo a atmosféra
 

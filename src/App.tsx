@@ -1480,11 +1480,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
     if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
-      p.fajfkaLevel = Math.min(2, (p.fajfkaLevel || 0) + 1);
+      p.fajfkaLevel = Math.min(3, (p.fajfkaLevel || 0) + 1);
       p.fajfkaCooldown = 0;
+      p.regenLevel = (p.regenLevel || 0) + 1.2;
     }
-    if (effect.type === 'bear_mask' || item.id === 'medvedi_mast') {
-      p.bearMaskLevel = (p.bearMaskLevel || 0) + 1;
+    if (effect.type === 'bear_mask' || item.id === 'maska_medveda') {
+      p.bearMaskLevel = Math.min(4, (p.bearMaskLevel || 0) + 1);
       p.bearMaskHealBonus = Math.max(0, (p.bearMaskLevel - 1) * 0.20);
     }
     if (effect.type === 'max_hp') {
@@ -1616,11 +1617,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         p.pivniTacekTimer = 6;
         if (p.weapons) {
           for (const w of p.weapons) {
-            if (w.cd > 0) w.cd *= 0.75;
+            if (w.cd > 0) w.cd /= 1.35;
           }
         }
         eng.texts.push(new DamageText(p.x, p.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-        eng.texts.push(new DamageText(p.x, p.y - 55, 'ROZOHNĚNÍ: -25 % COOLDOWN! ⚡', '#38BDF8', true));
+        eng.texts.push(new DamageText(p.x, p.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
         sound.coin();
 
         const sortedEnemies = (livingEnemiesRef.current || eng.enemies || [])
@@ -5346,9 +5347,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const baseCd = wDef.baseCd;
                   const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
                   const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-                  let localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+                  let localCd = formulaCd * stats.cooldownMult;
                   if ((player.pivniTacekTimer || 0) > 0) {
-                    localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), localCd * 0.75);
+                    localCd = localCd / 1.35;
                   }
 
                   w.cd = fired ? localCd : 0.1;
@@ -11773,7 +11774,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     </div>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900, flexWrap: 'wrap' }}>
                       <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534' }}>⏱️ Kadence: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (-${Math.round((1 - stats.cooldownMult) * 100)} %)` : ''}{isAtCap ? ' [Strop -75 %]' : ''}</span>
+                      <span style={{ color: '#166534' }}>⏱️ Nabíjení: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (+${Math.round((1 / stats.cooldownMult - 1) * 100)} %)` : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}
@@ -11793,7 +11794,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 perks.push({
                   icon: 'opravdova_kava',
                   name: `Opravdová káva`,
-                  desc: `+${cdBonusPct.toFixed(1)} % cooldown bonus (svižnější útoky)`,
+                  desc: `+${cdBonusPct.toFixed(0)} % nabíjení (rychlost všech útoků)`,
                   badge: `${pl.kavaCount}×`,
                 });
               }
@@ -11818,8 +11819,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 perks.push({
                   icon: 'medvedi_mast',
                   name: `Medvědí mast`,
-                  desc: `+${pl.kurazCount * 25} k maximální kuráži a odolnosti lovce`,
+                  desc: `+${pl.kurazCount * 30} k maximální kuráži a okamžité zhojení`,
                   badge: `${pl.kurazCount}×`,
+                });
+              }
+              if ((pl.bearMaskLevel || 0) > 0) {
+                const healBonusPct = ((pl.bearMaskLevel || 1) - 1) * 20;
+                const dmgPct = 50 * (1 + ((pl.bearMaskLevel || 1) - 1) * 0.2);
+                perks.push({
+                  icon: '🐻',
+                  name: `Maska medvěda`,
+                  desc: `Přeléčení se mění v ${dmgPct.toFixed(0)} % zranění do okruhu 230 px${healBonusPct > 0 ? `; +${healBonusPct} % léčení i zranění masky` : ''}`,
+                  badge: `Úr. ${pl.bearMaskLevel}`,
                 });
               }
               if (pl.regenLevel > 0) {
@@ -11832,16 +11843,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.speedCount > 0) {
                 perks.push({
-                  icon: '👢',
-                  name: `Toulavé boty sedmimílové`,
+                  icon: '🥾',
+                  name: `Sedmimílové krpce`,
                   desc: `+${pl.speedCount * 20} k rychlosti pohybu při obcházení strašidel`,
                   badge: `${pl.speedCount}×`,
                 });
               }
               if (pl.magnetCount > 0) {
                 perks.push({
-                  icon: '🧲',
-                  name: `Magnetický měšec`,
+                  icon: '🪔',
+                  name: `Pytlácká petrolejka`,
                   desc: `+${pl.magnetCount * 30} k dosahu přitahování krejcarů a posilujících dobrot`,
                   badge: `${pl.magnetCount}×`,
                 });
@@ -11874,7 +11885,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 perks.push({
                   icon: '🧦',
                   name: 'Babiččiny kousavé fusekle',
-                  desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a -${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % prodleva útoků v pohybu`,
+                  desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a +${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % nabíjení v pohybu`,
                   badge: `${pl.itchySocksStacks}×`,
                 });
               }
