@@ -162,7 +162,9 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 						gap: "14px",
 						overflowY: "auto",
 						padding: "4px",
-						flex: 1
+						flex: 1,
+						minHeight: 0,
+						width: "100%"
 					},
 					children: filtered.map((prog) => {
 						const isUnlocked = prog.isUnlocked;
@@ -171,7 +173,10 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 							style: {
 								width: "auto",
 								margin: 0,
-								padding: "12px"
+								padding: "12px",
+								minWidth: 0,
+								maxWidth: "100%",
+								overflowWrap: "break-word"
 							},
 							onClick: () => {
 								sound.coin();
@@ -180,6 +185,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: isUnlocked ? "char-card-unlocked-badge" : "char-card-locked-badge",
+									style: { maxWidth: "calc(100% - 20px)", textAlign: "center", whiteSpace: "normal", lineHeight: 1.2 },
 									children: isUnlocked ? "✅ Odemčeno" : prog.isQueued ? "🔒 V pořadí (0 %)" : `🔒 ${prog.percent} %`
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -195,7 +201,8 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										fontSize: prog.tier === 0 ? "2rem" : "2.3rem",
 										margin: "0 auto 8px auto",
 										boxShadow: "inset 2px 2px 5px rgba(0,0,0,0.3)",
-										filter: prog.tier === 0 ? "grayscale(1) brightness(0.3)" : prog.tier === 1 ? "contrast(160%) brightness(0.5)" : "none"
+										filter: prog.tier === 0 ? "grayscale(1) brightness(0.3)" : prog.tier === 1 ? "contrast(160%) brightness(0.5)" : "none",
+										flexShrink: 0
 									},
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
 										icon: prog.tier === 0 ? "❓" : prog.realIcon,
@@ -208,13 +215,15 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										margin: "2px 0",
 										minHeight: "32px",
 										color: "#111111",
-										fontWeight: 900
+										fontWeight: 900,
+										overflowWrap: "break-word",
+										wordBreak: "break-word"
 									},
 									children: prog.spoiledName
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: `hunter-tier-stamp tier-stamp-${prog.tier}`,
-									style: { fontSize: "0.72rem" },
+									style: { fontSize: "0.72rem", maxWidth: "100%", overflowWrap: "break-word" },
 									children: prog.clueTag
 								}) }),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -224,7 +233,9 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										fontWeight: 700,
 										lineHeight: 1.3,
 										minHeight: "44px",
-										color: "#111111"
+										color: "#111111",
+										overflowWrap: "break-word",
+										wordBreak: "break-word"
 									},
 									children: prog.spoiledDesc
 								}),
@@ -232,7 +243,9 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 									className: "hunter-clue-box",
 									style: {
 										fontSize: "0.75rem",
-										fontWeight: 800
+										fontWeight: 800,
+										overflowWrap: "break-word",
+										wordBreak: "break-word"
 									},
 									children: ["⚡ ", prog.spoiledStatsHint]
 								}),
@@ -242,7 +255,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 									children: [
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 											className: "hunter-progress-header",
-											style: { fontSize: "0.74rem" },
+											style: { fontSize: "0.74rem", flexWrap: "wrap", gap: "4px" },
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: prog.isQueued ? `Čeká na: ${prog.requiredWeaponName}` : "Výzva:" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
 												prog.curCount,
 												" / ",
@@ -312,7 +325,10 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 											fontSize: "0.82rem",
 											padding: "5px 8px",
 											background: isUnlocked ? "var(--mustard)" : "var(--wood-dark)",
-											color: isUnlocked ? "var(--ink)" : "var(--parchment)"
+											color: isUnlocked ? "var(--ink)" : "var(--parchment)",
+											whiteSpace: "normal",
+											overflowWrap: "break-word",
+											lineHeight: 1.2
 										},
 										onClick: (e) => {
 											e.stopPropagation();

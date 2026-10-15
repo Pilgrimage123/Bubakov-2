@@ -403,6 +403,9 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 			style: {
 				maxWidth: "660px",
 				width: "95%",
+				maxHeight: "90vh",
+				display: "flex",
+				flexDirection: "column",
 				textAlign: "left",
 				position: "relative"
 			},
@@ -708,12 +711,16 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								style: {
 									display: "flex",
 									justifyContent: "space-between",
-									alignItems: "center"
+									alignItems: "center",
+									flexWrap: "wrap",
+									gap: "6px"
 								},
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
 									style: {
 										fontSize: "0.88rem",
-										color: m.reached ? "#065F46" : "#2A170A"
+										color: m.reached ? "#065F46" : "#2A170A",
+										minWidth: 0,
+										overflowWrap: "break-word"
 									},
 									children: [
 										m.reached ? "✅" : "🔒",
@@ -724,7 +731,8 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 									style: {
 										fontSize: "0.75rem",
 										fontWeight: 900,
-										color: m.reached ? "#065F46" : "#78350F"
+										color: m.reached ? "#065F46" : "#78350F",
+										whiteSpace: "nowrap"
 									},
 									children: m.reached ? "ODHALENO" : `Vyžaduje ${m.pct} %`
 								})]
@@ -735,7 +743,9 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 									fontSize: "0.85rem",
 									lineHeight: 1.3,
 									color: "#111111",
-									fontWeight: 600
+									fontWeight: 600,
+									overflowWrap: "break-word",
+									wordBreak: "break-word"
 								},
 								children: m.reached ? m.desc : "Tato stopa a vlastnost se odhalí po dosažení tohoto milníku."
 							}),

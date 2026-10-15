@@ -904,6 +904,7 @@ export class GameEngine {
       knockbackImmune: false,
       knockbackResistance: 0,
       garlicSlowTimer: 0,
+      vycerpanyTimer: 0,
       snackTimer: 0,
       stunTimer: 0,
       strikeTimer: 0,
@@ -940,6 +941,7 @@ export class GameEngine {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
+        if (this.vycerpanyTimer > 0) this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
         for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
@@ -1045,6 +1047,12 @@ export class GameEngine {
           return;
         }
 
+        if (this.panicTimer > 0) {
+          this.panicTimer -= dt;
+          this.panicked = true;
+          if (this.panicTimer <= 0) this.panicked = false;
+        }
+
         if (this.isAttacking || (this.recoveryTimer || 0) > 0) {
           this.vx = 0;
           this.vy = 0;
@@ -1060,6 +1068,16 @@ export class GameEngine {
           if (this.chilled) spd *= 0.65;
           if (this.garlicSlowTimer > 0) spd *= 0.75;
           if (this.panicked) spd *= 1.35;
+          if ((this.vycerpanyTimer || 0) > 0) spd *= 0.50;
+          if (self.state.plumPuddles && self.state.plumPuddles.length > 0) {
+            for (let pi = 0; pi < self.state.plumPuddles.length; pi++) {
+              const pud = self.state.plumPuddles[pi];
+              if (Math.hypot(this.x - pud.x, this.y - pud.y) <= pud.radius + this.radius) {
+                spd *= (1 - (pud.slowRatio || 0.35));
+                break;
+              }
+            }
+          }
 
           const moveDir = this.panicked ? dir + Math.PI : dir;
           this.vx = Math.cos(moveDir) * spd;
@@ -1197,7 +1215,8 @@ export class GameEngine {
             this.kbx += kbx * 0.15;
             this.kby += kby * 0.15;
           } else {
-            const poise = this.poiseResist || 0;
+            const poiseRed = self.state.player?.plumPoiseReduction || 0;
+            const poise = Math.max(0, (this.poiseResist || 0) - poiseRed);
             const kbFactor = Math.max(0.1, 1 - poise);
             this.kbx += kbx * kbFactor;
             this.kby += kby * kbFactor;
@@ -1213,6 +1232,9 @@ export class GameEngine {
           this.hp = 0;
           this.isDefeated = true;
           self.state.kills += 1;
+          if ((self.state.player?.stickyPlumJamStacks || 0) > 0) {
+            self.spawnPlumPuddle(this.x, this.y, self.state.player.plumSlowRatio || 0.35);
+          }
           const comboTriggered = registerKillAndCheckCombo(self.state, self.state.gameTime);
           if (comboTriggered && self.state.player) {
             applyMagnetWave(self.state.drops, self.state.player.x, self.state.player.y, 550, false);
@@ -1449,6 +1471,129 @@ export class GameEngine {
     if (effect.type === 'gingerbread_heart') {
       p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
       p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
+    }
+    if (effect.type === 'ulezely_syrecek' || item.id === 'ulezely_syrecek') {
+      p.syrecekStacks = Math.min(3, (p.syrecekStacks || 0) + 1);
+    }
+    if (effect.type === 'pivni_tacek' || item.id === 'pivni_tacek') {
+      p.pivniTacekStacks = Math.min(4, (p.pivniTacekStacks || 0) + 1);
+    }
+    if (effect.type === 'sticky_plum_jam' || item.id === 'bezedny_krajac_povidel') {
+      const slowRatio = 'slowRatio' in effect ? effect.slowRatio : 0.35;
+      const poiseRed = 'poiseReduction' in effect ? effect.poiseReduction : 0.20;
+      p.stickyPlumJamStacks = Math.min(4, (p.stickyPlumJamStacks || 0) + 1);
+      p.plumSlowRatio = Math.min(0.80, (p.plumSlowRatio || 0) + slowRatio);
+      p.plumPoiseReduction = Math.min(0.80, (p.plumPoiseReduction || 0) + poiseRed);
+    }
+    if (effect.type === 'goat_bell' || item.id === 'zvonek_zatoulane_kozy') {
+      const radius = 'radius' in effect ? effect.radius : 180;
+      const intervalSec = 'intervalSec' in effect ? effect.intervalSec : 4.0;
+      p.goatBellStacks = Math.min(4, (p.goatBellStacks || 0) + 1);
+      p.goatBellRadius = radius + 30 * ((p.goatBellStacks || 1) - 1);
+      p.goatBellInterval = Math.max(2.0, intervalSec - 0.4 * ((p.goatBellStacks || 1) - 1));
+      p.goatBellTimer = p.goatBellInterval;
+    }
+    if (effect.type === 'itchy_socks' || item.id === 'babicciny_kousave_fusekle') {
+      const speedBonus = 'speedBonus' in effect ? effect.speedBonus : 15;
+      const movingCd = 'movingCooldownBonus' in effect ? effect.movingCooldownBonus : 0.12;
+      p.itchySocksStacks = Math.min(4, (p.itchySocksStacks || 0) + 1);
+      p.speed = (p.speed || 150) + speedBonus;
+      p.movingCooldownBonus = Math.min(0.48, (p.movingCooldownBonus || 0) + movingCd);
+      p.iceImmunity = true;
+    }
+    if (item.id === 'zejdlik_piva' || item.id === 'panak_koralky' || item.id === 'tepla_cikorka') {
+      if ((p.pivniTacekStacks || 0) > 0) {
+        this.triggerPivniTacekEffect(p);
+      }
+    }
+  }
+
+  public spawnPlumPuddle(x: number, y: number, slowRatio = 0.35): void {
+    if (!this.state.plumPuddles) this.state.plumPuddles = [];
+    if (this.state.plumPuddles.length >= 24) {
+      this.state.plumPuddles.shift();
+    }
+    this.state.plumPuddles.push({
+      x,
+      y,
+      radius: 44,
+      life: 6.5,
+      maxLife: 6.5,
+      slowRatio,
+    });
+    this.state.texts.push(new DamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false));
+  }
+
+  public triggerGoatBell(player: any): void {
+    const rad = player.goatBellRadius || 180;
+    this.callbacks?.onSound?.('bell');
+    this.state.texts.push(new DamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true));
+
+    // Interrupt nearby enemy windups
+    const nearby = this.spatialHash.queryCircle(player.x, player.y, rad);
+    for (let i = 0; i < nearby.length; i++) {
+      const foe = nearby[i];
+      if (foe.isDefeated || foe.dead) continue;
+      if (typeof foe.interruptAttack === 'function') foe.interruptAttack();
+      foe.isAttacking = false;
+      foe.windupTimer = 0;
+      foe.strikeTimer = 0;
+      if (foe.aiState === 'windup') foe.aiState = 'idle';
+      this.state.texts.push(new DamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false));
+    }
+
+    // Pull drops in radius towards player
+    if (this.state.drops) {
+      for (let i = 0; i < this.state.drops.length; i++) {
+        const d = this.state.drops[i];
+        if (d.dead || d.rescued) continue;
+        const dist = Math.hypot(d.x - player.x, d.y - player.y);
+        if (dist <= rad + 100) {
+          const ang = Math.atan2(player.y - d.y, player.x - d.x);
+          const pullSpeed = 380;
+          d.vx = Math.cos(ang) * pullSpeed;
+          d.vy = Math.sin(ang) * pullSpeed;
+        }
+      }
+    }
+  }
+
+  public triggerPivniTacekEffect(player: any): void {
+    player.pivniTacekTimer = 6;
+    if (player.weapons) {
+      for (let i = 0; i < player.weapons.length; i++) {
+        const w = player.weapons[i];
+        if (w.cd > 0) w.cd *= 0.75;
+      }
+    }
+    this.state.texts.push(new DamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
+    this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: -25 % COOLDOWN! ⚡', '#38BDF8', true));
+
+    // Drop coins from up to 8 closest alive enemies
+    const sortedEnemies = (this.livingEnemies || this.state.enemies || [])
+      .filter((e: any) => !e.isDefeated && !e.dead)
+      .map((e: any) => ({ enemy: e, distSq: (e.x - player.x) ** 2 + (e.y - player.y) ** 2 }))
+      .sort((a, b) => a.distSq - b.distSq)
+      .slice(0, 8);
+
+    for (let i = 0; i < sortedEnemies.length; i++) {
+      const foe = sortedEnemies[i].enemy;
+      this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75 });
+      this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
+      if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 5) {
+        for (let k = 0; k < 3; k++) {
+          const ang = Math.random() * Math.PI * 2;
+          this.state.particles.push({
+            x: foe.x,
+            y: foe.y,
+            vx: Math.cos(ang) * 45,
+            vy: Math.sin(ang) * 45 - 20,
+            life: 0.35,
+            color: '#F59E0B',
+            size: 3,
+          });
+        }
+      }
     }
   }
 
@@ -1892,11 +2037,27 @@ export class GameEngine {
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
       if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
-      if (player.slowTimer > 0) player.slowTimer -= dt;
+      if (player.slowTimer > 0) {
+        if (player.iceImmunity) {
+          player.slowTimer = 0;
+        } else {
+          player.slowTimer -= dt;
+        }
+      }
       if (player.ultCd > 0) player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
       if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
       if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
+
+      // Goat Bell (Zvonek ze zatoulané kozy)
+      const isMoving = Math.hypot(moveVx, moveVy) > 15 || mx !== 0 || my !== 0;
+      if (player.goatBellStacks > 0 && isMoving) {
+        player.goatBellTimer = (player.goatBellTimer || player.goatBellInterval || 4.0) - dt;
+        if (player.goatBellTimer <= 0) {
+          player.goatBellTimer = player.goatBellInterval || 4.0;
+          this.triggerGoatBell(player);
+        }
+      }
 
       // Holy Chalk Circle (Posvěcená tříkrálová křída)
       if (player.holyCircleStacks > 0) {
@@ -1973,6 +2134,10 @@ export class GameEngine {
         }
       }
 
+      if (player.pivniTacekTimer > 0) {
+        player.pivniTacekTimer = Math.max(0, player.pivniTacekTimer - dt);
+      }
+
       // Auto-fire weapons
       if (player.weapons) {
         for (let i = 0; i < player.weapons.length; i++) {
@@ -1987,14 +2152,18 @@ export class GameEngine {
               player._firingWeapon = null;
               const rankDef = getWeaponRankDef(w.id, w.level);
               const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
+              const movingBonus = isMoving ? (player.movingCooldownBonus || 0) : 0;
               const playerCooldownBonus =
                 typeof player.cooldownBonus === 'number'
-                  ? Math.max(0, player.cooldownBonus)
-                  : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
+                  ? Math.max(0, player.cooldownBonus + movingBonus)
+                  : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9 + movingBonus);
               const baseCd = wDef.baseCd;
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
               const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-              const localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+              let localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+              if ((player.pivniTacekTimer || 0) > 0) {
+                localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), localCd * 0.75);
+              }
 
               w.cd = fired ? localCd : 0.1;
             }
@@ -2003,9 +2172,48 @@ export class GameEngine {
       }
     }
 
+    // Step plum jam puddles
+    if (this.state.plumPuddles && this.state.plumPuddles.length > 0) {
+      for (let i = 0; i < this.state.plumPuddles.length; i++) {
+        const pud = this.state.plumPuddles[i];
+        pud.life -= dt;
+        if (pud.life <= 0) pud.dead = true;
+      }
+      compactInPlace(this.state.plumPuddles, (p: any) => !p.dead);
+    }
+
     // Step projectiles
     for (let i = 0; i < this.state.projectiles.length; i++) {
       const p = this.state.projectiles[i];
+
+      if (p.homing && !p.isEnemy) {
+        const enemies = this.spatialHash.queryCircle(p.x, p.y, 400);
+        let nearest: any = null;
+        let nearestDistSq = Infinity;
+        for (let ei = 0; ei < enemies.length; ei++) {
+          const fe = enemies[ei];
+          if (fe.isDefeated || fe.dead || p.hitList?.includes(fe)) continue;
+          const dsq = (fe.x - p.x) ** 2 + (fe.y - p.y) ** 2;
+          if (dsq < nearestDistSq) {
+            nearestDistSq = dsq;
+            nearest = fe;
+          }
+        }
+        if (nearest) {
+          const targetAng = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+          const currentAng = Math.atan2(p.vy, p.vx);
+          let diff = targetAng - currentAng;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          const turnRate = 9.0 * dt;
+          const newAng = currentAng + Math.max(-turnRate, Math.min(turnRate, diff));
+          const spd = p.speed || Math.hypot(p.vx, p.vy) || 390;
+          p.vx = Math.cos(newAng) * spd;
+          p.vy = Math.sin(newAng) * spd;
+          p.angle = newAng;
+        }
+      }
+
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
@@ -2065,6 +2273,43 @@ export class GameEngine {
               p.stunDuration ? { stunDuration: p.stunDuration } : undefined
             );
             if (p.type === 'ice') e.chill(p.chillDuration ?? 3.5);
+            if (p.interruptsWindup) {
+              if (typeof e.interruptAttack === 'function') e.interruptAttack();
+              e.isAttacking = false;
+              e.windupTimer = 0;
+              e.strikeTimer = 0;
+              if (e.aiState === 'windup') e.aiState = 'idle';
+              this.state.texts.push(new DamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false));
+            }
+            if (p.panicDuration && !e.isBoss) {
+              e.panicked = true;
+              e.panicTimer = Math.max(e.panicTimer || 0, p.panicDuration);
+              const pAng = Math.atan2(e.y - p.y, e.x - p.x);
+              e.kbx += Math.cos(pAng) * 140;
+              e.kby += Math.sin(pAng) * 140;
+            }
+            if (p.coinStealChance && Math.random() < p.coinStealChance) {
+              this.spawnDrop('coin', e.x, e.y, { value: 1, speed: 60 });
+              this.state.texts.push(new DamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false));
+            }
+            if (p.bounces && p.bounces > 0) {
+              p.bounces--;
+              let next: any = null;
+              for (const candidate of (this.livingEnemies || this.state.enemies || [])) {
+                if (candidate !== e && !candidate.isDefeated && !candidate.dead) {
+                  next = candidate;
+                  break;
+                }
+              }
+              if (next) {
+                const bAng = Math.atan2(next.y - p.y, next.x - p.x);
+                p.vx = Math.cos(bAng) * (p.speed || 390);
+                p.vy = Math.sin(bAng) * (p.speed || 390);
+                p.angle = bAng;
+                p.hitList = [];
+                continue;
+              }
+            }
             if (p.penetrate || (typeof p.pierce === 'number' && p.pierce > 0)) {
               if (p.pierce) p.pierce--;
               continue;
@@ -2324,8 +2569,43 @@ export class GameEngine {
         }
       }
 
+      // Uleželý syreček v kapse:
+      // Jakmile se nepřítel v těsné blízkosti lovce začne napřahovat k útoku (windupTimer),
+      // závan ze syrečku mu podlomí kolena a přepne ho na 4 sekundy do stavu Vyčerpaný (vycerpany – poloviční rychlost pohybu i útoku).
+      const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
+      if (
+        (player.syrecekStacks || 0) > 0 &&
+        e.isAttacking &&
+        distToPlayer <= closeReach &&
+        (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
+      ) {
+        e.vycerpanyTimer = 4.0;
+        if (typeof e.interruptAttack === 'function') {
+          e.interruptAttack();
+        } else {
+          e.isAttacking = false;
+          e.windupTimer = 0;
+        }
+        this.state.texts.push(new DamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true));
+        if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 6) {
+          for (let pIdx = 0; pIdx < 4; pIdx++) {
+            const ang = Math.random() * Math.PI * 2;
+            this.state.particles.push({
+              x: e.x + (Math.random() - 0.5) * 12,
+              y: e.y + (Math.random() - 0.5) * 12,
+              vx: Math.cos(ang) * 35,
+              vy: Math.sin(ang) * 35 - 15,
+              life: 0.45,
+              color: pIdx % 2 === 0 ? '#BEF264' : '#EAB308',
+              size: 3.5,
+            });
+          }
+        }
+      }
+
       if (e.isAttacking) {
-        e.windupTimer = (e.windupTimer || 0) + dt;
+        const attackCadenceMult = ((e.vycerpanyTimer || 0) > 0 || e.prefix === 'vycerpany') ? 0.5 : 1.0;
+        e.windupTimer = (e.windupTimer || 0) + dt * attackCadenceMult;
         if (e.windupTimer >= attackDelay) {
           const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
           let angleDiff = Math.abs(angleToPlayer - (e.attackAngle ?? angleToPlayer));

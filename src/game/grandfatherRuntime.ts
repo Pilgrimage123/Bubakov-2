@@ -97,7 +97,7 @@ export function chooseGrandfatherOffers(
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
 
-  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'hromnicka', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka']);
+  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'hromnicka', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka', 'splaseny_houser']);
   const weaponUpgradeOffers: GrandfatherOffer[] = [];
   for (const weapon of playerWeapons) {
     if (!projectileIds.has(weapon.id) || (weapon.level || 0) <= 0) continue;
@@ -196,6 +196,7 @@ export interface WeaponUpgradeOfferDef {
 const PROJECTILE_WEAPON_IDS = new Set([
   'kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule',
   'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'hromnicka', 'svecena_kropenka',
+  'splaseny_houser',
 ]);
 
 export function getWeaponUpgradeOffer(itemId: string): WeaponUpgradeOfferDef | undefined {

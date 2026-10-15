@@ -110,6 +110,8 @@ function getItemQuote(item: GrandfatherItemDef): string {
   if (item.id === 'trikralova_krida') return '„Posvěcená tříkrálová křída od svatého Jiří! Napiš na zem K+M+B a žádný čert ani umrlec přes práh nepřejde!“';
   if (item.id === 'strouhany_kren') return '„Čerstvě strouhaný křen z mé zahrádky v ubrousku! Protáhne dutiny tak, že i kostlivci začnou slzet a mlsat!“';
   if (item.id === 'poutove_srdce') return '„Malované perníkové srdce z pouti! Babičce jsem ho kdysi koupil za mlada — mlsni si a hned máš víc elánu a sil!“';
+  if (item.id === 'ulezely_syrecek') return '„Poctivě uzrálý tvarůžek zapomenutý v kapse u vesty! Voní tak důrazně, že i otrlý kostlivec raději přejde na druhý břeh rybníka!“';
+  if (item.id === 'pivni_tacek') return '„Umaštěný tácek z hospody U Černého kocoura! Šenkýř tam připsal o pět čárek víc, než jsi vypil — a tenhle účet teď zaplatí bubáci!“';
   return `„${item.name}! Vzácná věc, z mé nůše putuje přímo k tobě!“`;
 }
 
@@ -334,6 +336,7 @@ export function GrandfatherShop({
             display: 'flex',
             flexDirection: isMobile ? 'column' : 'row',
             overflowY: 'auto',
+            minHeight: 0,
             padding: isMobile ? '10px' : '18px 22px',
             gap: isMobile ? 12 : 20,
           }}
@@ -685,11 +688,15 @@ export function GrandfatherShop({
                         position: 'relative',
                         transition: 'transform 0.16s ease, box-shadow 0.16s ease',
                         transform: isHighlighted ? 'translateY(-2px)' : 'none',
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        boxSizing: 'border-box',
+                        overflowWrap: 'break-word',
                       }}
                     >
                       {/* Card Content Top */}
                       <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <div
                             style={{
                               width: 44,
@@ -701,6 +708,7 @@ export function GrandfatherShop({
                               borderRadius: 10,
                               border: '1.5px solid #78350F',
                               boxShadow: 'inset 0 0 6px rgba(0,0,0,0.08)',
+                              flexShrink: 0,
                             }}
                           >
                             <GameIcon icon={weaponUpgrade?.icon ?? item?.icon ?? '✨'} size={36} />
@@ -715,7 +723,9 @@ export function GrandfatherShop({
                               background: isMaxed ? '#9CA3AF' : item?.isWeapon ? '#FEE2E2' : '#FEF3C7',
                               color: isMaxed ? '#374151' : item?.isWeapon ? '#991B1B' : '#78350F',
                               border: item?.isWeapon ? '1px solid #DC2626' : '1px solid #78350F',
-                              whiteSpace: 'nowrap',
+                              maxWidth: '100%',
+                              overflowWrap: 'break-word',
+                              textAlign: 'right',
                             }}
                           >
                             {levelBadge}
@@ -729,6 +739,8 @@ export function GrandfatherShop({
                             fontSize: isMobile ? '1rem' : '1.1rem',
                             fontWeight: 900,
                             lineHeight: 1.25,
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
                           }}
                         >
                           {displayName}
@@ -742,6 +754,8 @@ export function GrandfatherShop({
                             fontSize: '0.86rem',
                             color: '#451A03',
                             lineHeight: 1.35,
+                            overflowWrap: 'break-word',
+                            wordBreak: 'break-word',
                           }}
                         >
                           {displayDesc}

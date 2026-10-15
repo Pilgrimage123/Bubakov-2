@@ -176,7 +176,9 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
                   fontWeight: 900,
                   fontSize: '1.25rem',
                   marginBottom: '4px',
-                  color: '#2A170A'
+                  color: '#2A170A',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
                 }}
               >
                 {b.name}
@@ -186,7 +188,8 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
                   fontSize: '0.88rem',
                   fontWeight: 900,
                   color: '#78350F',
-                  marginBottom: '6px'
+                  marginBottom: '6px',
+                  overflowWrap: 'break-word',
                 }}
               >
                 🤝 Pomocníci: {b.helpers}
@@ -197,21 +200,24 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
                   fontWeight: 700,
                   lineHeight: 1.25,
                   minHeight: '44px',
-                  color: '#111111'
+                  color: '#111111',
+                  overflowWrap: 'break-word',
+                  wordBreak: 'break-word',
                 }}
               >
                 {b.story}
               </div>
-              <div className="vignette-craft-action">
-                <div>
+              <div className="vignette-craft-action" style={{ flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ minWidth: 0, flex: '1 1 auto' }}>
                   <span className="vignette-level-badge">
                     (Úr. {lvl})
                   </span>
-                  <div className="vignette-bonus-desc">{b.bonusDesc(lvl)}</div>
+                  <div className="vignette-bonus-desc" style={{ overflowWrap: 'break-word' }}>{b.bonusDesc(lvl)}</div>
                 </div>
                 <button
                   className="vignette-buy-btn"
                   disabled={!canAfford}
+                  style={{ whiteSpace: 'normal', textAlign: 'center' }}
                   onClick={() => {
                     onUpgrade(b.levelKey, cost);
                     sound.coin();

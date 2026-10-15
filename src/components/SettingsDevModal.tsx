@@ -51,6 +51,7 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
           maxWidth: '740px',
           width: '95%',
           maxHeight: '90vh',
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
@@ -80,6 +81,8 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
 
         <div
           style={{
+            flex: 1,
+            minHeight: 0,
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
@@ -105,10 +108,10 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               Vyberte poměr mezi vizuálními efekty scény a snímkovou frekvencí (FPS).
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontWeight: 900, fontSize: '0.88rem', color: '#78350F' }}>
-              <span>🎨 Vizuální kvalita (plné efekty)</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontWeight: 900, fontSize: '0.88rem', color: '#78350F', flexWrap: 'wrap' }}>
+              <span>🎨 Vizuální kvalita</span>
               <span>⚖️ Vyvážený</span>
-              <span>⚡ Maximum FPS</span>
+              <span>⚡ Max FPS</span>
             </div>
 
             <input

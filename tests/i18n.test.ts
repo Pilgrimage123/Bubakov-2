@@ -234,7 +234,7 @@ describe('i18n localization module', () => {
       expect(t('grandfather_shop.milestone_crossroads', 'cs', { rank: 3 })).toContain('Křižovatka rozvoje');
       expect(t('grandfather_shop.milestone_crossroads', 'en', { rank: 3 })).toContain('Milestone crossroads');
 
-      // All 96 choices translated
+      // All 108 choices translated (18 weapons * 6 choices)
       let choiceCount = 0;
       for (const weaponId of WEAPONS_WITH_MILESTONES) {
         for (const rank of [3, 5, 8] as const) {
@@ -261,7 +261,7 @@ describe('i18n localization module', () => {
           }
         }
       }
-      expect(choiceCount).toBe(102);
+      expect(choiceCount).toBe(108);
     });
   });
 });

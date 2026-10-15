@@ -14385,7 +14385,222 @@ export function drawPrefixAura(
   ctx.restore();
 }
 
+export function drawGander(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius = 16,
+  angle = 0,
+  time = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  const scale = radius / 16;
+  ctx.scale(scale, scale);
+
+  const wingFlap = Math.sin(time * 24) * 0.45;
+  const neckStretch = Math.sin(time * 18) * 2;
+
+  // Shadow under gander
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+  ctx.beginPath();
+  ctx.ellipse(0, 8, 16, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Trailing webbed orange feet
+  ctx.fillStyle = '#EA580C';
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 1.8;
+  const legCycle = Math.sin(time * 22) * 5;
+  // Left foot
+  ctx.beginPath();
+  ctx.ellipse(-14, 4 + legCycle, 5, 2.5, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Right foot
+  ctx.beginPath();
+  ctx.ellipse(-14, -4 - legCycle, 5, 2.5, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Plump white goose body
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 2.4;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.ellipse(-2, 0, 15, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Little pointed tail feathers
+  ctx.beginPath();
+  ctx.moveTo(-15, -2);
+  ctx.lineTo(-21, -6);
+  ctx.lineTo(-17, 1);
+  ctx.lineTo(-20, 4);
+  ctx.lineTo(-14, 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Bottom wing (back)
+  ctx.save();
+  ctx.translate(-2, 4);
+  ctx.rotate(-wingFlap);
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 10, 4.5, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Long outstretched neck leaning forward
+  ctx.beginPath();
+  ctx.moveTo(8, -4);
+  ctx.quadraticCurveTo(14 + neckStretch, -3, 20 + neckStretch, -1);
+  ctx.quadraticCurveTo(22 + neckStretch, 0, 20 + neckStretch, 2);
+  ctx.quadraticCurveTo(14 + neckStretch, 4, 8, 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Aggressive goose head
+  const headX = 20 + neckStretch;
+  ctx.beginPath();
+  ctx.ellipse(headX, 0, 6, 4.5, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Open angry orange beak (hissing!)
+  ctx.fillStyle = '#F97316';
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 1.6;
+  // Upper beak
+  ctx.beginPath();
+  ctx.moveTo(headX + 4, -2.5);
+  ctx.lineTo(headX + 13, -1);
+  ctx.lineTo(headX + 4, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // Lower beak (open gap for hiss)
+  ctx.beginPath();
+  ctx.moveTo(headX + 4, 0.8);
+  ctx.lineTo(headX + 11, 3);
+  ctx.lineTo(headX + 4, 2.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // Tongue/pink inside hiss
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(headX + 6, 0.5, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Angry beady black eye with white rim
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(headX, -2, 2.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.fillStyle = '#111827';
+  ctx.beginPath();
+  ctx.arc(headX + 0.6, -2, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Fierce angled eyebrow
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(headX - 2.5, -4.5);
+  ctx.lineTo(headX + 2.5, -3.2);
+  ctx.stroke();
+
+  // Top wing (front, flapping furiously)
+  ctx.save();
+  ctx.translate(-1, -3);
+  ctx.rotate(wingFlap);
+  ctx.fillStyle = '#FAFAFA';
+  ctx.strokeStyle = '#29180E';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.ellipse(0, -6, 11, 5, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Feather lines
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(-4, -5); ctx.lineTo(-8, -8);
+  ctx.moveTo(0, -6); ctx.lineTo(-2, -10);
+  ctx.moveTo(4, -6); ctx.lineTo(3, -9);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+export function drawPlumPuddle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius = 28,
+  time = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+
+  const pulse = Math.sin(time * 3 + x * 0.1) * 1.5;
+  const rx = radius + pulse;
+  const ry = (radius * 0.58) + (pulse * 0.5);
+
+  // Outer gooey dark plum edge
+  ctx.fillStyle = 'rgba(76, 29, 149, 0.72)';
+  ctx.strokeStyle = '#2E1065';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Rich thick indigo-purple jam center
+  ctx.fillStyle = 'rgba(109, 40, 217, 0.85)';
+  ctx.beginPath();
+  ctx.ellipse(0, 1, rx * 0.75, ry * 0.72, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Glossy reflection arc
+  ctx.strokeStyle = 'rgba(233, 213, 255, 0.75)';
+  ctx.lineWidth = 2.0;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(-rx * 0.25, -ry * 0.3, rx * 0.35, -Math.PI * 0.8, -Math.PI * 0.15);
+  ctx.stroke();
+
+  // Small glossy drop on side
+  ctx.fillStyle = 'rgba(147, 51, 234, 0.9)';
+  ctx.strokeStyle = '#2E1065';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.ellipse(rx * 0.65, ry * 0.35, 4, 3, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(rx * 0.65 - 1, ry * 0.35 - 1, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
+(Lada as any).drawGander = drawGander;
+(Lada as any).drawPlumPuddle = drawPlumPuddle;
 
 export {
   Lada,

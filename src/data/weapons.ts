@@ -724,6 +724,51 @@ var WEAPONS = {
 			}
 			return true;
 		}
+	},
+	splaseny_houser: {
+		id: 'splaseny_houser',
+		name: 'Splašený houser',
+		type: 'nature',
+		icon: '🪿',
+		baseDmg: 26,
+		baseCd: 1.35,
+		speed: 390,
+		desc: 'Rozlícený bílý houser z hrusické návsi. S hlasitým syčením pronásleduje strašidla, štípe je do lýtek, přerušuje jim nápřah a občas z nich vytřese krejcar.',
+		fire: (player, level) => {
+			const w = player._firingWeapon;
+			const stats = getRankedWeaponStats('splaseny_houser', level, w);
+			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
+			if (!enemies || enemies.length === 0) return false;
+			const count = Math.max(1, 1 + Math.floor((level - 1) / 3) + stats.projectileCount);
+			const dmg = getWeaponDamage(player, 26) * stats.damageMult;
+			const radius = Math.round(16 * stats.areaRadiusMult);
+			const bounces = 2 + Math.floor(level / 2) + stats.pierce;
+			const panicDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.2;
+
+			for (let i = 0; i < count; i++) {
+				const target = enemies[Math.floor(Math.random() * Math.min(5, enemies.length))];
+				const angle = Math.atan2(target.y - player.y, target.x - player.x) + (count > 1 ? (i - (count - 1) / 2) * 0.35 : 0);
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle,
+					speed: 390,
+					dmg,
+					radius,
+					type: 'nature',
+					visual: 'gander',
+					homing: true,
+					bounces,
+					interruptsWindup: true,
+					panicDuration,
+					coinStealChance: stats.specialMechanicFlag === 'golden_feather' ? 0.25 : 0.10,
+					knockbackMult: 1.35 * stats.knockbackMult,
+					life: 3.2
+				});
+			}
+			sound.slash();
+			return true;
+		}
 	}
 };
 
@@ -746,6 +791,10 @@ export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	wp_whip: 'formansky_bic',
 	whip: 'formansky_bic',
 	formansky_bic: 'formansky_bic',
+	gander: 'splaseny_houser',
+	houser: 'splaseny_houser',
+	wp_splaseny_houser: 'splaseny_houser',
+	splaseny_houser: 'splaseny_houser',
 };
 
 for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {

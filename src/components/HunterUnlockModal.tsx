@@ -52,6 +52,9 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 			style: {
 				maxWidth: "680px",
 				width: "95%",
+				maxHeight: "90vh",
+				display: "flex",
+				flexDirection: "column",
 				textAlign: "left"
 			},
 			onClick: (e) => e.stopPropagation(),
@@ -289,12 +292,16 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 								style: {
 									display: "flex",
 									justifyContent: "space-between",
-									alignItems: "center"
+									alignItems: "center",
+									flexWrap: "wrap",
+									gap: "6px"
 								},
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
 									style: {
 										fontSize: "0.9rem",
-										color: m.reached ? "#065F46" : "#2A170A"
+										color: m.reached ? "#065F46" : "#2A170A",
+										minWidth: 0,
+										overflowWrap: "break-word"
 									},
 									children: [
 										m.reached ? "✅" : "🔒",
@@ -305,7 +312,8 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 									style: {
 										fontSize: "0.75rem",
 										fontWeight: 900,
-										color: m.reached ? "#065F46" : "#78350F"
+										color: m.reached ? "#065F46" : "#78350F",
+										whiteSpace: "nowrap"
 									},
 									children: m.reached ? "ODHALENO" : `Vyžaduje ${m.pct} %`
 								})]
@@ -316,7 +324,9 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 									fontSize: "0.86rem",
 									lineHeight: 1.3,
 									color: "#111111",
-									fontWeight: 600
+									fontWeight: 600,
+									overflowWrap: "break-word",
+									wordBreak: "break-word"
 								},
 								children: m.reached ? m.desc : "Tato stopa a část identity se odhalí po splnění tohoto milníku."
 							}),
@@ -337,7 +347,8 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 						display: "flex",
 						justifyContent: "flex-end",
 						gap: "10px",
-						marginTop: "16px"
+						marginTop: "16px",
+						flexWrap: "wrap"
 					},
 					children: [progress.isUnlocked && onStartIfUnlocked && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "lada-btn",

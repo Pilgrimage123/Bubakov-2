@@ -17,7 +17,13 @@ export type GrandfatherEffect =
   | { type: 'bear_mask' }
   | { type: 'holy_circle'; damageReduction: number }
   | { type: 'kren_spice'; foodResistReduction: number; snackBonusDmg: number }
-  | { type: 'gingerbread_heart'; cdReductionMult: number; giantHeal: number };
+  | { type: 'gingerbread_heart'; cdReductionMult: number; giantHeal: number }
+  | { type: 'ulezely_syrecek'; duration: number; speedMultiplier: number; attackSpeedMultiplier: number }
+  | { type: 'pivni_tacek'; targetEnemies: number; cooldownReduction: number; buffDuration: number }
+  // --- Nové efekty dědečkovy nůše ---
+  | { type: 'sticky_plum_jam'; slowRatio: number; poiseReduction: number }
+  | { type: 'goat_bell'; intervalSec: number; radius: number }
+  | { type: 'itchy_socks'; speedBonus: number; movingCooldownBonus: number };
 
 export interface GrandfatherItemDef {
   id: string;
@@ -89,6 +95,56 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
     luckWeight: 0.85,
     effect: { type: 'gingerbread_heart', cdReductionMult: 1.0, giantHeal: 8 },
   },
+  {
+    id: 'ulezely_syrecek',
+    name: 'Uleželý syreček v kapse',
+    icon: '🧀',
+    description: 'Při nápřahu nepřítele v těsné blízkosti ho závan ze syrečku na 4 s vyčerpá (poloviční rychlost pohybu i útoku).',
+    baseCost: 40,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'ulezely_syrecek', duration: 4, speedMultiplier: 0.5, attackSpeedMultiplier: 0.5 },
+  },
+  {
+    id: 'pivni_tacek',
+    name: 'Pivní tácek s čárkami',
+    icon: '🍺',
+    description: 'Při nákupu Piva, Kořalky či Cikorky z 8 nejbližších strašidel vypadnou krejcary a všechny zbraně mají na 6 s o 25 % kratší cooldown.',
+    baseCost: 35,
+    maxStacks: 4,
+    luckWeight: 0.85,
+    effect: { type: 'pivni_tacek', targetEnemies: 8, cooldownReduction: 0.25, buffDuration: 6 },
+  },
+  {
+    id: 'bezedny_krajac_povidel',
+    name: 'Bezedný krajáč povidel',
+    icon: '🍯',
+    description: 'Zasaženým bubákům zalepí paty (-20 % odolnost vůči odhození) a po zahnání zanechají zpomalující povidlovou louži.',
+    baseCost: 45,
+    maxStacks: 4,
+    luckWeight: 0.9,
+    effect: { type: 'sticky_plum_jam', slowRatio: 0.35, poiseReduction: 0.20 },
+  },
+  {
+    id: 'zvonek_zatoulane_kozy',
+    name: 'Zvonek ze zatoulané kozy',
+    icon: '🔔',
+    description: 'Při chůzi vesele cinká. Každé 4 s běhu vyruší nápřah blízkých strašidel a přitáhne okolní perníčky a krejcary.',
+    baseCost: 40,
+    maxStacks: 4,
+    luckWeight: 0.95,
+    effect: { type: 'goat_bell', intervalSec: 4.0, radius: 180 },
+  },
+  {
+    id: 'babicciny_kousave_fusekle',
+    name: 'Babiččiny kousavé fusekle',
+    icon: '🧦',
+    description: 'Poctivá ovčí vlna zahřeje v mrazu (+15 rychlost, imunita na led) a tak kouše, že v pohybu zrychluje útoky o 12 %.',
+    baseCost: 50,
+    maxStacks: 4,
+    luckWeight: 0.85,
+    effect: { type: 'itchy_socks', speedBonus: 15, movingCooldownBonus: 0.12 },
+  },
 
   // --- Pekelné poklady: nákup se okamžitě promění v krejcary ---
   { id: 'pekeln_poklad_drobny', name: 'Pekelný měšec', icon: 'pekeln_poklad_drobny', description: 'Dědeček ti hned vyplatí 40 krejcarů.', baseCost: 8, maxStacks: 99, luckWeight: 1.0, effect: { type: 'coins', amount: 40 } },
@@ -96,6 +152,18 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'pekeln_poklad_zlaty', name: 'Pekelný tolar z pekla', icon: 'pekeln_poklad_zlaty', description: 'Dědeček ti hned vyplatí 250 krejcarů.', baseCost: 40, maxStacks: 99, luckWeight: 0.45, effect: { type: 'coins', amount: 250 } },
 
   // --- Zbraně (vždy garantována alespoň jedna v nůši) ---
+  {
+    id: 'wp_splaseny_houser',
+    name: 'Splašený houser',
+    icon: '🪿',
+    description: 'Rozlícený houser z návsi honí bubáky, štípe je do lýtek, ruší jim nápřah a vytřásá z nich krejcary.',
+    baseCost: 55,
+    maxStacks: 8,
+    luckWeight: 0.95,
+    isWeapon: true,
+    weaponId: 'splaseny_houser',
+    effect: { type: 'weapon', weaponId: 'splaseny_houser' },
+  },
   {
     id: 'wp_whip',
     name: 'Formanský bič',

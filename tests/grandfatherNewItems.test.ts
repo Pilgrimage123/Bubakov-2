@@ -368,6 +368,7 @@ describe('New Grandfather Items Integration', () => {
       const kren = GRANDFATHER_ITEMS.find((it) => it.id === 'strouhany_kren')!;
       engine.applyGrandfatherItem(kren);
       expect(player.snackBonusDmg).toBe(0.15);
+      player.critChance = 0;
 
       const normalEnemy = engine.spawnMonster('rarach', 100, 0);
       const normalHpBefore = normalEnemy.hp;
@@ -493,6 +494,180 @@ describe('New Grandfather Items Integration', () => {
       expect(player.ultCd).toBeLessThanOrEqual(8.0);
       // Healed by 16 Kuráže (50 -> 66)
       expect(player.hp).toBe(66);
+    });
+  });
+
+  describe('5. Uleželý syreček v kapse (ulezely_syrecek)', () => {
+    it('has valid definition in GRANDFATHER_ITEMS', () => {
+      const syrecek = GRANDFATHER_ITEMS.find((it) => it.id === 'ulezely_syrecek');
+      expect(syrecek).toBeDefined();
+      expect(syrecek?.name).toBe('Uleželý syreček v kapse');
+      expect(syrecek?.icon).toBe('🧀');
+      expect(syrecek?.baseCost).toBe(40);
+      expect(syrecek?.maxStacks).toBe(3);
+      expect(syrecek?.luckWeight).toBe(0.85);
+      expect(syrecek?.effect).toEqual({ type: 'ulezely_syrecek', duration: 4, speedMultiplier: 0.5, attackSpeedMultiplier: 0.5 });
+    });
+
+    it('applying item increments player.syrecekStacks up to 3', () => {
+      const syrecek = GRANDFATHER_ITEMS.find((it) => it.id === 'ulezely_syrecek')!;
+      const player = engine.state.player!;
+      expect(player.syrecekStacks).toBeUndefined();
+
+      engine.applyGrandfatherItem(syrecek);
+      expect(player.syrecekStacks).toBe(1);
+
+      engine.applyGrandfatherItem(syrecek);
+      expect(player.syrecekStacks).toBe(2);
+
+      engine.applyGrandfatherItem(syrecek);
+      expect(player.syrecekStacks).toBe(3);
+
+      // Max 3 stacks cap
+      engine.applyGrandfatherItem(syrecek);
+      expect(player.syrecekStacks).toBe(3);
+    });
+
+    it('interrupts enemy attack windup and sets vycerpanyTimer to 4s when winding up in close proximity', () => {
+      const syrecek = GRANDFATHER_ITEMS.find((it) => it.id === 'ulezely_syrecek')!;
+      engine.applyGrandfatherItem(syrecek);
+
+      const state = engine.state;
+      const player = state.player!;
+      player.x = 0;
+      player.y = 0;
+      player.weapons = [];
+
+      // Spawn an enemy close to player (within attack range)
+      const enemy = engine.spawnMonster('rarach', 35, 0);
+      enemy.isAttacking = false;
+      enemy.windupTimer = 0;
+
+      // Update engine: enemy gets in attack range, attempts to attack, and is interrupted by syreček
+      engine.update(0.05);
+
+      expect(enemy.vycerpanyTimer).toBeGreaterThanOrEqual(3.9);
+      expect(enemy.isAttacking).toBe(false);
+      expect(enemy.windupTimer).toBe(0);
+    });
+
+    it('halves movement speed and attack cadence while in Vyčerpaný state', () => {
+      const syrecek = GRANDFATHER_ITEMS.find((it) => it.id === 'ulezely_syrecek')!;
+      engine.applyGrandfatherItem(syrecek);
+
+      const state = engine.state;
+      const player = state.player!;
+      player.x = 0;
+      player.y = 0;
+      player.weapons = [];
+
+      const enemy = engine.spawnMonster('rarach', 200, 0);
+      const normalSpeed = enemy.speed;
+
+      // Manually trigger vycerpany state
+      enemy.vycerpanyTimer = 4.0;
+      enemy.update(0.1, player);
+
+      // Velocity magnitude should reflect 50% speed
+      const currentSpeed = Math.hypot(enemy.vx, enemy.vy);
+      expect(currentSpeed).toBeCloseTo(normalSpeed * 0.50, 1);
+
+      // Now test attack cadence accumulation is halved
+      enemy.x = 30; // close to player
+      enemy.y = 0;
+      enemy.isAttacking = true;
+      enemy.windupTimer = 0;
+      const dt = 0.1;
+      // In engine update, winding up enemy with vycerpanyTimer > 0 advances windupTimer at dt * 0.5
+      engine.update(dt);
+      expect(enemy.windupTimer).toBeCloseTo(dt * 0.5, 2);
+    });
+  });
+
+  describe('6. Pivní tácek s čárkami (pivni_tacek)', () => {
+    it('has valid definition in GRANDFATHER_ITEMS', () => {
+      const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek');
+      expect(tacek).toBeDefined();
+      expect(tacek?.name).toBe('Pivní tácek s čárkami');
+      expect(tacek?.icon).toBe('🍺');
+      expect(tacek?.baseCost).toBe(35);
+      expect(tacek?.maxStacks).toBe(4);
+      expect(tacek?.luckWeight).toBe(0.85);
+      expect(tacek?.effect).toEqual({ type: 'pivni_tacek', targetEnemies: 8, cooldownReduction: 0.25, buffDuration: 6 });
+    });
+
+    it('applying item increments player.pivniTacekStacks up to 4', () => {
+      const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek')!;
+      const player = engine.state.player!;
+      expect(player.pivniTacekStacks).toBeUndefined();
+
+      engine.applyGrandfatherItem(tacek);
+      expect(player.pivniTacekStacks).toBe(1);
+
+      engine.applyGrandfatherItem(tacek);
+      engine.applyGrandfatherItem(tacek);
+      engine.applyGrandfatherItem(tacek);
+      expect(player.pivniTacekStacks).toBe(4);
+
+      // Max 4 stacks cap
+      engine.applyGrandfatherItem(tacek);
+      expect(player.pivniTacekStacks).toBe(4);
+    });
+
+    it('purchasing a drink (pivo/koralka/cikorka) drops coins from 8 closest enemies and gives 25% weapon cooldown reduction for 6s', () => {
+      const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek')!;
+      engine.applyGrandfatherItem(tacek);
+
+      const player = engine.state.player!;
+      player.x = 0;
+      player.y = 0;
+      player.weapons = [
+        { id: 'osikovy_prut', level: 1, cd: 2.0 },
+      ];
+
+      // Spawn 10 living enemies at different distances
+      for (let i = 0; i < 10; i++) {
+        engine.spawnMonster('rarach', 50 + i * 20, 0);
+      }
+
+      const dropsBefore = engine.state.drops.length;
+
+      // Purchase a drink, e.g. zejdlik_piva
+      const pivo = GRANDFATHER_ITEMS.find((it) => it.id === 'zejdlik_piva')!;
+      engine.applyGrandfatherItem(pivo);
+
+      // Check coin drops were spawned from 8 closest enemies
+      const newCoinDrops = engine.state.drops.filter((d) => d.type === 'coin');
+      expect(newCoinDrops.length).toBeGreaterThanOrEqual(8);
+
+      // Check player received the 6s cooldown buff
+      expect(player.pivniTacekTimer).toBe(6);
+
+      // Active weapon cooldown was immediately reduced by 25% (2.0 -> 1.5)
+      expect(player.weapons[0].cd).toBeCloseTo(1.5, 2);
+    });
+
+    it('newly fired weapons during pivniTacekTimer receive 25% shorter cooldown', () => {
+      const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek')!;
+      engine.applyGrandfatherItem(tacek);
+
+      const player = engine.state.player!;
+      player.x = 0;
+      player.y = 0;
+      player.pivniTacekTimer = 6;
+      player.weapons = [
+        { id: 'osikovy_prut', level: 1, cd: 0 },
+      ];
+
+      // Spawn dummy enemy so cane has a target to hit
+      engine.spawnMonster('rarach', 40, 0);
+
+      // Update engine so weapon fires
+      engine.update(0.05);
+
+      const baseWeaponCd = WEAPONS['osikovy_prut'].baseCd;
+      // Weapon cd should be baseCd * 0.75
+      expect(player.weapons[0].cd).toBeLessThanOrEqual(baseWeaponCd * 0.76);
     });
   });
 });

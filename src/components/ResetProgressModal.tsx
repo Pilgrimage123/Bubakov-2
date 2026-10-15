@@ -25,6 +25,9 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 			style: {
 				maxWidth: "680px",
 				width: "92%",
+				maxHeight: "90vh",
+				minHeight: 0,
+				overflowY: "auto",
 				background: "var(--wood-dark)",
 				border: "5px solid #D1342B",
 				boxShadow: "10px 10px 0px var(--ink), 0 0 35px rgba(209, 52, 43, 0.45)",

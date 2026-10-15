@@ -48,6 +48,7 @@ export const WEAPONS_WITH_MILESTONES: WeaponMilestonesSet = new Set<WeaponId>([
   'svecena_kropenka',
   'bylinkova_fajfka',
   'formansky_bic',
+  'splaseny_houser',
 ]) as WeaponMilestonesSet;
 
 Object.defineProperty(WEAPONS_WITH_MILESTONES, 'length', {
@@ -316,6 +317,20 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
     8: [
       makeChoice('whip_thunder_crack_8', 'Hromové prásknutí', 'Akustický třesk na konci biče vystraší okolní houf na 2 s.', 'thunder_crack', 'cane_whip', { specialMechanicFlag: 'whip_thunder_crack', cooldownMult: 0.92, statusDurationSec: 2.0 }),
       makeChoice('whip_seven_straps_8', 'Sedmero řemenů', 'Bič švihá v širokém kuželu a zasáhne celou skupinu.', 'seven_straps', 'cane_whip', { areaRadiusMult: 1.45, cooldownMult: 0.90, baseDamageMult: 1.15 }),
+    ],
+  },
+  splaseny_houser: {
+    3: [
+      makeChoice('gander_crowd_3', 'Hejno z návsi', 'Z kurníku vyběhne další houser a společně proženou širší houf bubáků.', 'flock_rush', 'slash', { projectileCountDelta: 1, areaRadiusMult: 1.12 }),
+      makeChoice('gander_burst_3', 'Ostrý zobák', 'Houser štípe do lýtek s větší razancí, častěji vytřese krejcar a déle strašidla zdrží.', 'sharp_beak', 'slash', { baseDamageMult: 1.22, statusDurationSec: 1.8, specialMechanicFlag: 'golden_feather' }),
+    ],
+    5: [
+      makeChoice('gander_crowd_5', 'Husí pochod', 'Houseři se odrážejí k dalším cílům a divokým máváním křídel je silně odhazují.', 'goose_march', 'slash', { pierceDelta: 2, knockbackMult: 1.30 }),
+      makeChoice('gander_burst_5', 'Rozlícený sykot', 'Bleskové výpady zobákem mají kratší prodlevu a mnohem vyšší poškození.', 'angry_hiss', 'slash', { baseDamageMult: 1.25, cooldownMult: 0.92 }),
+    ],
+    8: [
+      makeChoice('gander_crowd_8', 'Posvícenská husí jízda', 'Celé hejno houserů zaplaví bojiště a nenechá jediného bubáka v klidu.', 'goose_stampede', 'slash', { projectileCountDelta: 2, pierceDelta: 2, areaRadiusMult: 1.20, cooldownMult: 0.90 }),
+      makeChoice('gander_burst_8', 'Král dvorku', 'Obří dominantní houser se zuřivým klovancem srazí a vyplaší i nejtěžší noční běsy.', 'yard_king', 'slash', { baseDamageMult: 1.35, knockbackMult: 1.45, statusDurationSec: 2.5, cooldownMult: 0.88 }),
     ],
   },
 };
@@ -617,6 +632,7 @@ export const PROJECTILE_WEAPONS: WeaponId[] = [
   'horky_brambor',
   'vceli_roj',
   'svecena_kropenka',
+  'splaseny_houser',
 ];
 
 export const PROJECTILE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<WeaponId, Record<2 | 4 | 6 | 7, string>>> = {
@@ -667,6 +683,12 @@ export const PROJECTILE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS: Partial<Record<Weapo
     4: 'proj_volley',
     6: 'cd_hyper',
     7: 'dmg_heavy',
+  },
+  splaseny_houser: {
+    2: 'proj_reach',
+    4: 'cd_hyper',
+    6: 'dmg_heavy',
+    7: 'proj_barrage',
   },
 };
 

@@ -19,6 +19,10 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
         style={{
           maxWidth: '880px',
           width: '95%',
+          maxHeight: '90vh',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <h2>📜 Kronika Bubákova</h2>
@@ -29,7 +33,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
             fontSize: '1rem',
             marginTop: '-6px',
             marginBottom: '14px',
-            color: 'var(--parchment)',
+            color: 'var(--wood-dark)',
           }}
         >
           Historie skutečných změn Bubákova. Nejnovější zápis je vždy nahoře.

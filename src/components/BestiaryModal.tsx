@@ -261,6 +261,8 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 						display: "flex",
 						justifyContent: "space-between",
 						alignItems: "center",
+						flexWrap: "wrap",
+						gap: "8px",
 						fontSize: "0.88rem",
 						fontWeight: 900,
 						color: "#111111"

@@ -29,7 +29,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         style={{
           maxWidth: '960px',
           width: '96%',
-          maxHeight: '92vh',
+          maxHeight: '90vh',
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -103,7 +104,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         {activeTab === 'controls' && (
           <div
             style={{
-              maxHeight: '500px',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               textAlign: 'left',
               display: 'flex',
@@ -329,7 +331,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         {activeTab === 'objective' && (
           <div
             style={{
-              maxHeight: '500px',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               textAlign: 'left',
               display: 'flex',
@@ -526,7 +529,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         {activeTab === 'dedecek' && (
           <div
             style={{
-              maxHeight: '500px',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               textAlign: 'left',
               display: 'flex',
@@ -689,7 +693,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         {activeTab === 'weapons' && (
           <div
             style={{
-              maxHeight: '500px',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               textAlign: 'left',
               display: 'flex',
@@ -1033,7 +1038,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         {activeTab === 'village' && (
           <div
             style={{
-              maxHeight: '500px',
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               textAlign: 'left',
               display: 'flex',

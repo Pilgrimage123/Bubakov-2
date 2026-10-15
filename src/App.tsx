@@ -1581,6 +1581,87 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
       p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
     }
+    if (effect.type === 'ulezely_syrecek' || item.id === 'ulezely_syrecek') {
+      p.syrecekStacks = Math.min(3, (p.syrecekStacks || 0) + 1);
+    }
+    if (effect.type === 'pivni_tacek' || item.id === 'pivni_tacek') {
+      p.pivniTacekStacks = Math.min(4, (p.pivniTacekStacks || 0) + 1);
+    }
+    if (effect.type === 'sticky_plum_jam' || item.id === 'bezedny_krajac_povidel') {
+      const slowRatio = 'slowRatio' in effect ? effect.slowRatio : 0.35;
+      const poiseRed = 'poiseReduction' in effect ? effect.poiseReduction : 0.20;
+      p.stickyPlumJamStacks = Math.min(4, (p.stickyPlumJamStacks || 0) + 1);
+      p.plumSlowRatio = Math.min(0.80, (p.plumSlowRatio || 0) + slowRatio);
+      p.plumPoiseReduction = Math.min(0.80, (p.plumPoiseReduction || 0) + poiseRed);
+    }
+    if (effect.type === 'goat_bell' || item.id === 'zvonek_zatoulane_kozy') {
+      const radius = 'radius' in effect ? effect.radius : 180;
+      const intervalSec = 'intervalSec' in effect ? effect.intervalSec : 4.0;
+      p.goatBellStacks = Math.min(4, (p.goatBellStacks || 0) + 1);
+      p.goatBellRadius = radius + 30 * ((p.goatBellStacks || 1) - 1);
+      p.goatBellInterval = Math.max(2.0, intervalSec - 0.4 * ((p.goatBellStacks || 1) - 1));
+      p.goatBellTimer = p.goatBellInterval;
+    }
+    if (effect.type === 'itchy_socks' || item.id === 'babicciny_kousave_fusekle') {
+      const speedBonus = 'speedBonus' in effect ? effect.speedBonus : 15;
+      const movingCd = 'movingCooldownBonus' in effect ? effect.movingCooldownBonus : 0.12;
+      p.itchySocksStacks = Math.min(4, (p.itchySocksStacks || 0) + 1);
+      p.speed = (p.speed || 150) + speedBonus;
+      p.movingCooldownBonus = Math.min(0.48, (p.movingCooldownBonus || 0) + movingCd);
+      p.iceImmunity = true;
+    }
+    if (item.id === 'zejdlik_piva' || item.id === 'panak_koralky' || item.id === 'tepla_cikorka') {
+      if ((p.pivniTacekStacks || 0) > 0) {
+        const eng = engineRef.current;
+        p.pivniTacekTimer = 6;
+        if (p.weapons) {
+          for (const w of p.weapons) {
+            if (w.cd > 0) w.cd *= 0.75;
+          }
+        }
+        eng.texts.push(new DamageText(p.x, p.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
+        eng.texts.push(new DamageText(p.x, p.y - 55, 'ROZOHNĚNÍ: -25 % COOLDOWN! ⚡', '#38BDF8', true));
+        sound.coin();
+
+        const sortedEnemies = (livingEnemiesRef.current || eng.enemies || [])
+          .filter((e: any) => !e.isDefeated && !e.dead)
+          .map((e: any) => ({ enemy: e, distSq: (e.x - p.x) ** 2 + (e.y - p.y) ** 2 }))
+          .sort((a, b) => a.distSq - b.distSq)
+          .slice(0, 8);
+
+        for (let i = 0; i < sortedEnemies.length; i++) {
+          const foe = sortedEnemies[i].enemy;
+          const ang = Math.random() * Math.PI * 2;
+          const spd = 55 + Math.random() * 45;
+          eng.drops.push({
+            type: 'coin',
+            value: 1,
+            x: foe.x,
+            y: foe.y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd,
+            radius: 10,
+            time: 0,
+            dead: false,
+          });
+          eng.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
+          if (eng.particles && eng.particles.length < MAX_PARTICLES - 5) {
+            for (let k = 0; k < 3; k++) {
+              const pAng = Math.random() * Math.PI * 2;
+              eng.particles.push({
+                x: foe.x,
+                y: foe.y,
+                vx: Math.cos(pAng) * 45,
+                vy: Math.sin(pAng) * 45 - 20,
+                life: 0.35,
+                color: '#F59E0B',
+                size: 3,
+              });
+            }
+          }
+        }
+      }
+    }
   }, []);
 
   const openGrandfatherShop = useCallback(() => {
@@ -2055,7 +2136,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     type: CharacterType,
     targetLevelId?: GameLevelId,
     customWeapons?: { id: string; level: number; mastery?: any }[],
-    isTestMode = false
+    isTestMode = false,
+    customGrandfatherUpgrades?: Record<string, number>
   ) => {
     const chosenLevelId: GameLevelId = (targetLevelId !== undefined ? targetLevelId : selectedLevelId !== undefined ? selectedLevelId : 0) as GameLevelId;
     const chosenLevel: GameLevelDef = GAME_LEVELS[chosenLevelId] || GAME_LEVELS[0];
@@ -2539,8 +2621,58 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
 
     engineRef.current = engine;
-    grandfatherPurchaseIdsRef.current = [];
-    setGrandfatherPurchaseIds([]);
+
+    if (customGrandfatherUpgrades && Object.keys(customGrandfatherUpgrades).length > 0) {
+      const purchasedIds: string[] = [];
+      for (const [id, count] of Object.entries(customGrandfatherUpgrades)) {
+        if (!count || count <= 0) continue;
+
+        // 1. Synergické vylepšení zbraně z nůše
+        const synDef = getSynergisticUpgrade(id);
+        if (synDef) {
+          let weapon: any = player.weapons?.find((w: any) => toCanonicalWeaponId(w.id) === synDef.weaponId);
+          if (!weapon) {
+            weapon = {
+              id: synDef.weaponId,
+              level: 1,
+              cd: 0,
+              mastery: createWeaponMasteryState(),
+              milestones: [],
+              synergisticUpgrades: [],
+            } as any;
+            (player.weapons as any[]).push(weapon);
+          }
+          weapon.synergisticUpgrades ??= [];
+          if (!weapon.synergisticUpgrades.includes(id)) {
+            weapon.synergisticUpgrades.push(id);
+            weapon._cachedStats = undefined;
+          }
+          continue;
+        }
+
+        // 2. Položka či vylepšení z dědečkovy nůše
+        const item = getGrandfatherItem(id);
+        if (!item) continue;
+        for (let c = 0; c < count; c++) {
+          purchasedIds.push(item.id);
+          applyGrandfatherItem(item);
+        }
+      }
+
+      if (purchasedIds.length > 0) {
+        grandfatherPurchaseIdsRef.current = purchasedIds;
+        setGrandfatherPurchaseIds(purchasedIds);
+        engine.grandfather.totalPurchases = purchasedIds.length;
+      }
+    } else {
+      grandfatherPurchaseIdsRef.current = [];
+      setGrandfatherPurchaseIds([]);
+    }
+
+    if (isTestMode) {
+      engine.texts = [];
+      setRunStats((state) => ({ ...state, coins: engine.coins, gingerbread: engine.gingerbread }));
+    }
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
     if (chosenLevelId === 0) {
@@ -5192,6 +5324,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               player._valecniceSlowRadius = 0;
             }
 
+            if ((player.pivniTacekTimer || 0) > 0) {
+              player.pivniTacekTimer = Math.max(0, player.pivniTacekTimer - dt);
+            }
+
             // Fire weapons
             for (const w of player.weapons) {
               w.cd -= dt;
@@ -5210,7 +5346,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const baseCd = wDef.baseCd;
                   const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
                   const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
-                  const localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+                  let localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), formulaCd * stats.cooldownMult);
+                  if ((player.pivniTacekTimer || 0) > 0) {
+                    localCd = Math.max(baseCd * (1 - COOLDOWN_REDUCTION_CAP), localCd * 0.75);
+                  }
 
                   w.cd = fired ? localCd : 0.1;
                 }
@@ -5588,7 +5727,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   }
                   const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
-                  e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush);
+                  const poiseMult = 1 + (player.plumPoiseReduction || 0);
+                  e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush * poiseMult, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush * poiseMult);
                   if (p.plumScent) {
                     const cloud = new SmokePuff(e.x, e.y, p.plumScentRadius || 140, 'plum-scent', p.plumScentDuration || 3.5) as any;
                     cloud.damagePerSecond = (p.dmg || dmg) * 0.20;
@@ -5596,6 +5736,36 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                   if (!p.noMasteryProc && p.weaponId) player.triggerWeaponMastery(p.weaponId, e, 'hit');
                   if (p.type === 'ice') e.chill(3.5);
+                  if (p.interruptsWindup) {
+                    if (typeof e.interruptAttack === 'function') e.interruptAttack();
+                    e.isAttacking = false;
+                    e.windupTimer = 0;
+                    e.strikeTimer = 0;
+                    if (e.aiState === 'windup') e.aiState = 'idle';
+                    engine.texts.push(new DamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false));
+                  }
+                  if (p.panicDuration && !e.isBoss) {
+                    e.panicked = true;
+                    e.panicTimer = Math.max(e.panicTimer || 0, p.panicDuration);
+                    const pAng = Math.atan2(e.y - p.y, e.x - p.x);
+                    e.kbx = (e.kbx || 0) + Math.cos(pAng) * 140;
+                    e.kby = (e.kby || 0) + Math.sin(pAng) * 140;
+                  }
+                  if (p.coinStealChance && Math.random() < p.coinStealChance) {
+                    engine.drops.push({
+                      type: 'coin',
+                      value: 1,
+                      x: e.x,
+                      y: e.y,
+                      vx: (Math.random() - 0.5) * 60,
+                      vy: (Math.random() - 0.5) * 60 - 20,
+                      radius: 10,
+                      time: 0,
+                      dead: false,
+                    });
+                    engine.texts.push(new DamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false));
+                    sound.coin();
+                  }
                   if (p.type === 'pickle') {
                     e.applyStatusEffect('pickle_sickness', { addStacks: 1, maxStacks: 3, duration: 6, damageTakenMultiplier: p.pickleDamageTakenMultiplier || 1.35, damageDealtMultiplier: 0.65 });
                     const after = e.getStatusEffect('pickle_sickness')?.stacks || 0;
@@ -5847,7 +6017,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               e.attackAngle = Math.atan2(player.y - e.y, player.x - e.x);
               e.attackTargetX = player.x;
               e.attackTargetY = player.y;
-              e.windupTimer = (e.windupTimer || 0) + dt;
+
+              // Uleželý syreček v kapse:
+              // Jakmile se nepřítel v těsné blízkosti lovce začne napřahovat k útoku (windupTimer),
+              // závan ze syrečku mu podlomí kolena a přepne ho na 4 sekundy do stavu Vyčerpaný (vycerpany – poloviční rychlost pohybu i útoku).
+              const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
+              if (
+                (player.syrecekStacks || 0) > 0 &&
+                distToPlayer <= closeReach &&
+                (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
+              ) {
+                e.vycerpanyTimer = 4.0;
+                if (typeof e.interruptAttack === 'function') {
+                  e.interruptAttack();
+                } else {
+                  e.isAttacking = false;
+                  e.windupTimer = 0;
+                }
+                engine.texts.push(new DamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true));
+                if (engine.particles && engine.particles.length < MAX_PARTICLES - 6) {
+                  for (let pIdx = 0; pIdx < 4; pIdx++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    engine.particles.push({
+                      x: e.x + (Math.random() - 0.5) * 12,
+                      y: e.y + (Math.random() - 0.5) * 12,
+                      vx: Math.cos(ang) * 35,
+                      vy: Math.sin(ang) * 35 - 15,
+                      life: 0.45,
+                      color: pIdx % 2 === 0 ? '#BEF264' : '#EAB308',
+                      size: 3.5,
+                    });
+                  }
+                }
+              }
+
+              const attackSpeedMult = ((e.vycerpanyTimer || 0) > 0 || e.prefix === 'vycerpany') ? 0.5 : 1.0;
+              e.windupTimer = (e.windupTimer || 0) + dt * attackSpeedMult;
               if (e.windupTimer >= attackDelay) {
                 // THE HIT LANDS: damage is dealt and smooth multi-frame strike is triggered!
                 e.strikeTimer = strikeDuration;
@@ -6908,6 +7113,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             Lada.drawDragonFrostball(ctx, 0, 0, p.radius || 16, engine.uiTime);
           } else if (p.visual === 'dragon_wind') {
             Lada.drawDragonWind(ctx, 0, 0, p.radius || 22, p.angle || 0, engine.uiTime);
+          } else if (p.visual === 'gander') {
+            (Lada as any).drawGander?.(ctx, 0, 0, p.radius || 16, 0, engine.uiTime);
           } else {
             Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
             ctx.beginPath();
@@ -7394,6 +7601,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       attackDelay,
       attackRange,
       windupTimer: 0,
+      vycerpanyTimer: 0,
       isAttacking: false,
       strikeTimer: 0,
       strikeMaxTimer: strikeDuration,
@@ -7537,6 +7745,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
+        }
+        if ((this.vycerpanyTimer || 0) > 0) {
+          this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
         }
         const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
 
@@ -7703,6 +7914,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (this.calmTimer > 0) {
           spd *= 0.3;
           this.calmTimer -= dt;
+        }
+        if ((this.vycerpanyTimer || 0) > 0) {
+          spd *= 0.50;
         }
 
         // ----------------------------------------------------
@@ -9910,9 +10124,35 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
 
-        // Animovaná tematická svítící aura pro bubáky se speciálními prefixy
-        if (isGameEffectEnabled('combatVfxEnabled') && this.prefix && !this.isDefeated) {
-          drawPrefixAura(ctx, this.x, this.y, this.radius, this.prefix, this.animTime);
+        // Animovaná tematická svítící aura pro bubáky se speciálními prefixy i stav Vyčerpaný
+        if (isGameEffectEnabled('combatVfxEnabled') && !this.isDefeated) {
+          if (this.prefix) {
+            drawPrefixAura(ctx, this.x, this.y, this.radius, this.prefix, this.animTime);
+          } else if ((this.vycerpanyTimer || 0) > 0) {
+            drawPrefixAura(ctx, this.x, this.y, this.radius, 'vycerpany', this.animTime);
+          }
+        }
+
+        // Vznášející se závan z uleželého tvarůžku (curly cheese aroma vapors)
+        if (isGameEffectEnabled('combatVfxEnabled') && (this.vycerpanyTimer || 0) > 0 && !this.isDefeated) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(163, 230, 53, 0.70)';
+          ctx.lineWidth = 2.0;
+          ctx.lineCap = 'round';
+          const tAroma = this.animTime * 3.5;
+          for (let ai = 0; ai < 2; ai++) {
+            const ox = (ai - 0.5) * (this.radius * 0.9);
+            ctx.beginPath();
+            ctx.moveTo(this.x + ox, this.y - this.radius * 0.7);
+            ctx.quadraticCurveTo(
+              this.x + ox + Math.sin(tAroma + ai * 2) * 8,
+              this.y - this.radius * 0.7 - 12,
+              this.x + ox + Math.cos(tAroma + ai * 2) * 5,
+              this.y - this.radius * 0.7 - 22
+            );
+            ctx.stroke();
+          }
+          ctx.restore();
         }
 
         // Stínová záštita - dark gouache smoke aura around shadow enemies in darkness
@@ -10429,7 +10669,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       <div
         key={prog.id}
         className={`char-card ${isUnlocked ? '' : 'char-card-locked'}`}
-        style={isUnlocked ? { maxHeight: '680px', overflowY: 'auto' } : undefined}
+        style={{ maxHeight: '720px', overflowY: 'auto', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'break-word' }}
         onClick={() => {
           if (isUnlocked) {
             startGame(prog.id);
@@ -10457,7 +10697,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           {isUnlocked ? '✅ Odemčeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
         </span>
         <canvas ref={canvasRef} className="portrait-canvas" width={180} height={180} />
-        <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px' }}>
+        <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
           {prog.spoiledName}
         </h3>
         <div>
@@ -10808,31 +11048,31 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         variant={isSelected ? 'selected' : isUnlocked ? 'default' : 'locked'}
                         showBottomCorners={true}
                       />
-                      <div className="level-card-header">
-                        <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`}>
+                      <div className="level-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                        <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`} style={{ maxWidth: '100%', overflowWrap: 'break-word', whiteSpace: 'normal', lineHeight: 1.2 }}>
                           {isSelected ? '⭐ Zvolená výprava' : isCompleted ? '✅ Pokořeno' : isUnlocked ? '🔓 Otevřeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
                         </span>
-                        <span className="level-theme-tag">{prog.spoiledIcon} {prog.spoiledBadge}</span>
+                        <span className="level-theme-tag" style={{ overflowWrap: 'break-word' }}>{prog.spoiledIcon} {prog.spoiledBadge}</span>
                       </div>
 
-                      <div className="level-title" style={{ fontSize: '1.25rem', fontWeight: 900 }}>
+                      <div className="level-title" style={{ fontSize: '1.25rem', fontWeight: 900, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                         {prog.spoiledName}
                       </div>
-                      <div className="level-subtitle" style={{ fontSize: '0.85rem', color: 'var(--wood-dark)', fontWeight: 800, minHeight: '32px' }}>
+                      <div className="level-subtitle" style={{ fontSize: '0.85rem', color: 'var(--wood-dark)', fontWeight: 800, minHeight: '32px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                         {prog.spoiledSubtitle}
                       </div>
 
                       <div>
-                        <span className={`hunter-tier-stamp tier-stamp-${prog.tier}`} style={{ fontSize: '0.74rem', margin: '4px 0 6px 0' }}>
+                        <span className={`hunter-tier-stamp tier-stamp-${prog.tier}`} style={{ fontSize: '0.74rem', margin: '4px 0 6px 0', maxWidth: '100%', overflowWrap: 'break-word' }}>
                           {prog.clueTag}
                         </span>
                       </div>
 
-                      <div className="level-desc" style={{ fontSize: '0.84rem', lineHeight: 1.32, color: 'var(--ink)' }}>
+                      <div className="level-desc" style={{ fontSize: '0.84rem', lineHeight: 1.32, color: 'var(--ink)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                         {prog.spoiledDesc}
                       </div>
 
-                      <div className="level-boss-preview" style={{ fontSize: '0.84rem', fontWeight: 800, margin: '6px 0' }}>
+                      <div className="level-boss-preview" style={{ fontSize: '0.84rem', fontWeight: 800, margin: '6px 0', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                         {prog.spoiledBossHint}
                       </div>
 
@@ -11250,6 +11490,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               {/* Poutník - Výchozí odemčený lovec */}
               <div
                 className="char-card"
+                style={{ maxHeight: '720px', overflowY: 'auto', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'break-word' }}
                 onClick={() => startGame('wanderer')}
                 title="Poutník – připraven k výpravě"
               >
@@ -11611,6 +11852,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   name: 'Mokrý prut',
                   desc: 'Údery osikového prutu zchladí a výrazně zpomalují zasažené bubáky',
                   badge: 'Aktivní',
+                });
+              }
+              if ((pl.stickyPlumJamStacks || 0) > 0) {
+                perks.push({
+                  icon: '🍯',
+                  name: 'Bezedný krajáč povidel',
+                  desc: `-${Math.round((pl.plumPoiseReduction || 0.20) * 100)} % odolnost bubáků vůči odhození a po zahnání tvoří zpomalující louži (-${Math.round((pl.plumSlowRatio || 0.35) * 100)} % rychlost)`,
+                  badge: `${pl.stickyPlumJamStacks}×`,
+                });
+              }
+              if ((pl.goatBellStacks || 0) > 0) {
+                perks.push({
+                  icon: '🔔',
+                  name: 'Zvonek ze zatoulané kozy',
+                  desc: `Každé ${(pl.goatBellInterval || 4.0).toFixed(1)} s běhu zazvoní: vyruší nápřah strašidel a přitáhne perníčky i krejcary v okruhu ${pl.goatBellRadius || 180} px`,
+                  badge: `${pl.goatBellStacks}×`,
+                });
+              }
+              if ((pl.itchySocksStacks || 0) > 0) {
+                perks.push({
+                  icon: '🧦',
+                  name: 'Babiččiny kousavé fusekle',
+                  desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a -${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % prodleva útoků v pohybu`,
+                  badge: `${pl.itchySocksStacks}×`,
                 });
               }
 
@@ -12219,8 +12484,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       <TestModeModal
         isOpen={isTestModeOpen}
         onClose={() => setIsTestModeOpen(false)}
-        onStartTestRun={(hero, levelId, weapons) => {
-          startGame(hero, levelId as any, weapons, true);
+        onStartTestRun={(hero, levelId, weapons, grandfatherUpgrades) => {
+          startGame(hero, levelId as any, weapons, true, grandfatherUpgrades);
         }}
         initialLevelId={selectedLevelId}
         onOpenGrandfatherShop={openGrandfatherShopTest}

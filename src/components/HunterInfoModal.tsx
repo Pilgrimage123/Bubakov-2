@@ -27,15 +27,15 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
         style={{ maxWidth: '760px', width: '95%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', textAlign: 'left' }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-          <div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: 0, flex: '1 1 auto' }}>
             <span style={{ display: 'inline-block', background: '#166534', color: '#FFFFFF', padding: '4px 9px', borderRadius: '5px', fontWeight: 900, fontSize: '0.8rem' }}>
               ✅ ODEMČENÝ LOVEC
             </span>
-            <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#FEF3C7' }}>{hunter.name}</h2>
-            <div style={{ fontWeight: 800, color: '#FDE68A' }}>{hunter.title}</div>
+            <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#2A170A', overflowWrap: 'break-word' }}>{hunter.name}</h2>
+            <div style={{ fontWeight: 800, color: '#78350F', overflowWrap: 'break-word' }}>{hunter.title}</div>
           </div>
-          <button className="tab-btn" aria-label="Zavřít informace o lovci" onClick={() => { sound.coin(); onClose(); }} style={{ minWidth: 'auto', padding: '5px 12px', fontSize: '1.2rem' }}>✕</button>
+          <button className="tab-btn" aria-label="Zavřít informace o lovci" onClick={() => { sound.coin(); onClose(); }} style={{ minWidth: 'auto', padding: '5px 12px', fontSize: '1.2rem', flexShrink: 0 }}>✕</button>
         </div>
         <LadaBotanicalFlourish height={18} />
         <div style={{ overflowY: 'auto', minHeight: 0, paddingRight: '5px' }}>

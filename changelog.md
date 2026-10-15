@@ -1,3 +1,11 @@
+## 2026-10-15 — Vylepšení z Dědečkovy nůše v testovacím módu (Sandbox) na úrovni 0-X
+
+- **Výběr všech upgradů z dědečkovy nůše v sandboxu na úrovni 0-X**: Do testovacího režimu (`TestModeModal`) byla přidána nová plnohodnotná záložka `🧺 4. Dědečkova nůše (0-X)` obsahující všech 49 vylepšení, posvěcení, vzácných předmětů i synergických zbraňových upgradů.
+- **Konfigurovatelná úroveň 0 až X pro každé vylepšení**: Hráč může každé položce nastavit úroveň od 0 (vypnuto) až po maximum dané položky (až 10 u pokladů/pomocníků, 5 u pasivek, 3 u Tříkrálové křídy a Syrečku, 2 u Ananasu, 1 u synergií) pomocí tlačítek `[ 0 ]`, `[ - ]`, `Úr. L/X` a `[ + ]`, případně rychlého zaškrtávátka.
+- **Rychlé předvolby a filtrování**: K dispozici jsou předvolby pro nastavení všech pasivek na úroveň 1 (`⚡ Pasivky Úr. 1`), na maximum (`🔥 Pasivky MAX`), kompletní nůši na maximum (`👑 Plná nůše`) nebo vyčištění (`🧹 Vynulovat nůši (0)`). Filtrovat lze podle kategorií (`Trvalá posílení`, `Folklórní posvěcení`, `Vzácné předměty`, `Svačiny & Krejcary`, `Synergie zbraní`) i fulltextovým vyhledáváním.
+- **Provázání s enginem hry**: `startGame` v `App.tsx` při spuštění testovací výpravy aplikuje vybrané upgrady z nůše přímo na hráče i engine v požadovaném počtu opakování, inicializuje zbraňové synergie a registruje je do zakoupených položek dědečka.
+- **Doplnění chybějících zbraní do výběru**: Do seznamu zbraní v sandboxu byl přidán Splašený houser a Formanský bič, arzenál je tak 100% kompletní.
+
 ## 2026-10-14 — Harmonizace obecních vylepšení v hospodě a záchrana duší
 
 - **Zachování charakteru lovců (procentuální škálování atributů)**: Vylepšení pro rychlost pohybu (Větrný mlýn: +3 % základní rychlosti/lvl), maximální Kuráž (Kamenná zeď: +10 % základní Kuráže/lvl), štěstí (Boží muka: +5 % základního štěstí/lvl) a dosah sběru (Strašák v poli: +15 % základního dosahu/lvl) se nově počítají procentuálně ze základních atributů konkrétního lovce, čímž zůstávají zachovány jejich unikátní silné stránky i handicapy (např. sběr bylinek u Kořenářky).

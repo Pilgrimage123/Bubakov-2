@@ -159,6 +159,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
+            flexWrap: 'wrap',
           }}
         >
           <GameIcon icon={weaponIcon} size={32} />
@@ -221,6 +222,10 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                   justifyContent: 'space-between',
                   boxShadow: isFirst ? '3px 3px 0 rgba(45, 90, 39, 0.35)' : '3px 3px 0 rgba(154, 52, 18, 0.35)',
                   position: 'relative',
+                  minWidth: 0,
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  overflowWrap: 'break-word',
                 }}
               >
                 <div>
@@ -237,6 +242,8 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                       fontFamily: "'Eczar', serif",
                       color: isFirst ? '#166534' : '#991B1B',
                       lineHeight: 1.2,
+                      overflowWrap: 'break-word',
+                      wordBreak: 'break-word',
                     }}
                   >
                     {choiceName}
@@ -249,6 +256,8 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                       color: '#2A1B12',
                       lineHeight: 1.35,
                       fontWeight: 600,
+                      overflowWrap: 'break-word',
+                      wordBreak: 'break-word',
                     }}
                   >
                     {choiceDesc}
