@@ -369,6 +369,8 @@ describe('New Grandfather Items Integration', () => {
       engine.applyGrandfatherItem(kren);
       expect(player.snackBonusDmg).toBe(0.15);
       player.critChance = 0;
+      player.luck = 0;
+      player.guaranteedCritTimer = 0;
 
       const normalEnemy = engine.spawnMonster('rarach', 100, 0);
       const normalHpBefore = normalEnemy.hp;
