@@ -1345,8 +1345,15 @@ export class GameEngine {
           this.state.pendingMilestone = this.state.pendingMilestones[0] || null;
         }
       }
-    } else if (normalUpgradeId) {
-      weapon.normalUpgrades.push(normalUpgradeId);
+    } else {
+      const rankDef = getWeaponRankDef(weaponId, rank);
+      const chosenUpgradeId =
+        normalUpgradeId ||
+        rankDef?.normalUpgradeId ||
+        rollRandomWeaponUpgrade(weaponId, weapon)?.id;
+      if (chosenUpgradeId) {
+        weapon.normalUpgrades.push(chosenUpgradeId);
+      }
     }
 
     weapon._cachedStats = getRankedWeaponStats(weapon.id, weapon.level, weapon);
@@ -1458,7 +1465,7 @@ export class GameEngine {
       this.state.coins += Math.max(0, Math.floor(effect.amount));
     }
     if (effect.type === 'weapon') {
-      this.upgradeWeapon(effect.weaponId);
+      this.upgradeWeapon(effect.weaponId, undefined, offer?.candidateUpgradeId);
     }
     if (effect.type === 'holy_circle') {
       p.holyCircleStacks = Math.min(3, (p.holyCircleStacks || 0) + 1);

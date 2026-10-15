@@ -43,13 +43,13 @@ describe('Synergistic Weapon Upgrades (Ticket 01)', () => {
         synergisticUpgrades: ['pickle_flood'],
       });
 
-      // Baseline rank 2 damageMult = 1.12, projectileCountMult = 1
-      expect(baseStats.damageMult).toBeCloseTo(1.12, 4);
-      expect(baseStats.projectileCountMult).toBe(1);
+      // Harmonized rank 2 baseline (proj_barrage: +130% proj, -30% dmg): damageMult = 0.70, projectileCountMult = 2.3
+      expect(baseStats.damageMult).toBeCloseTo(0.70, 4);
+      expect(baseStats.projectileCountMult).toBeCloseTo(2.3, 4);
 
-      // With swarm: projectileCountMult = 2.3, damageMult = 1.12 * 0.70
-      expect(withSwarm.projectileCountMult).toBeCloseTo(2.3, 4);
-      expect(withSwarm.damageMult).toBeCloseTo(1.12 * 0.70, 4);
+      // With swarm (pickle_flood: 0.70 dmg, 2.3 proj):
+      expect(withSwarm.projectileCountMult).toBeCloseTo(2.3 * 2.3, 4);
+      expect(withSwarm.damageMult).toBeCloseTo(0.70 * 0.70, 4);
     });
 
     it('applies burst damage and cooldown trade-off correctly to weapon stats', () => {
@@ -57,8 +57,8 @@ describe('Synergistic Weapon Upgrades (Ticket 01)', () => {
         synergisticUpgrades: ['pickle_crunch'],
       });
 
-      // With burst: damageMult = 1.12 * 1.55, cooldownMult = 0.90
-      expect(withBurst.damageMult).toBeCloseTo(1.12 * 1.55, 4);
+      // With burst: damageMult = 0.70 * 1.55, cooldownMult = 0.90
+      expect(withBurst.damageMult).toBeCloseTo(0.70 * 1.55, 4);
       expect(withBurst.cooldownMult).toBeCloseTo(0.90, 4);
     });
 
@@ -68,11 +68,11 @@ describe('Synergistic Weapon Upgrades (Ticket 01)', () => {
         milestones: ['pickle_burst_3'], // baseDamageMult: 1.16, cooldownMult: 0.97
       });
 
-      // Rank 3 base damage = 1.24.
+      // Rank 3 base damage = 0.70 (from rank 2 proj_barrage).
       // Modifiers: milestone (1.16), swarm (0.70)
-      const expectedDamage = 1.24 * 1.16 * 0.70;
+      const expectedDamage = 0.70 * 1.16 * 0.70;
       expect(withBothAndMilestone.damageMult).toBeCloseTo(expectedDamage, 4);
-      expect(withBothAndMilestone.projectileCountMult).toBeCloseTo(2.3, 4);
+      expect(withBothAndMilestone.projectileCountMult).toBeCloseTo(2.3 * 2.3, 4);
       expect(withBothAndMilestone.cooldownMult).toBeCloseTo(0.97, 4);
     });
   });
@@ -115,8 +115,8 @@ describe('Synergistic Weapon Upgrades (Ticket 01)', () => {
         milestones: [],
       };
       const stats = getRankedWeaponStats('kysela_okurka', 2, legacyWeapon);
-      expect(stats.damageMult).toBeCloseTo(1.12, 4);
-      expect(stats.projectileCountMult).toBe(1);
+      expect(stats.damageMult).toBeCloseTo(0.70, 4);
+      expect(stats.projectileCountMult).toBeCloseTo(2.3, 4);
     });
   });
 });

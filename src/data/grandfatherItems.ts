@@ -47,7 +47,6 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'zaplacovany_kabat', name: 'Záplatovaný kabát', icon: '🧥', description: '+25 maximální Kuráž', baseCost: 45, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
   { id: 'krajac_na_podmasli', name: 'Krajáč na podmáslí', icon: '🥣', description: '+0,6 regenerace / s', baseCost: 50, maxStacks: 4, luckWeight: 0.8, effect: { type: 'regen', amount: 0.6 } },
   { id: 'podkova_pro_stesti', name: 'Podkova pro štěstí', icon: '🍀', description: '+10 ŠTĚSTÍ', baseCost: 50, maxStacks: 5, luckWeight: 0.8, effect: { type: 'luck', amount: 10 } },
-  { id: 'bylinkova_fajfka', name: 'Bylinková fajfka', icon: '🪈', description: '+1,2 regenerace Kuráže / s a vyfukuje Oblak bylinného dýmu, který zraňuje běsy a léčí lovce.', baseCost: 60, maxStacks: 3, luckWeight: 0.7, effect: { type: 'fajfka' } },
 
   // --- Předchozí level up pasivní upgrady a posílení ---
   { id: 'krvave_jelito', name: 'Krvavé jelito', icon: 'krvave_jelito', description: '+15 % trvalé zranění všech úderů a zbraní', baseCost: 50, maxStacks: 5, luckWeight: 1.0, effect: { type: 'damage_multiplier', amount: 0.15 } },
@@ -197,6 +196,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'wp_bees', name: 'Včelí roj z úlu', icon: '🐝', description: 'Bzučící včely samy vyhledávají nejbližší strašidla.', baseCost: 50, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'vceli_roj', effect: { type: 'weapon', weaponId: 'vceli_roj' } },
   { id: 'wp_hromnicka', name: 'Hromnička', icon: '🕯️', description: 'Posvěcená svíce pulzuje posvátným zraněním a odpuzuje bubáky.', baseCost: 50, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'hromnicka', effect: { type: 'weapon', weaponId: 'hromnicka' } },
   { id: 'wp_holywater', name: 'Kropenka se svěcenou vodou', icon: '✨', description: 'Svěcená voda z kapličky kropí široký vějíř posvátných kapek.', baseCost: 55, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'svecena_kropenka', effect: { type: 'weapon', weaponId: 'svecena_kropenka' } },
+  { id: 'wp_fajfka', name: 'Bylinková fajfka', icon: '🪈', description: 'Dědečkova hliněná fajfka s vonnými bylinkami. Oblak dýmu zraňuje a zpomaluje běsy a léčí lovce.', baseCost: 55, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'bylinkova_fajfka', effect: { type: 'weapon', weaponId: 'bylinkova_fajfka' } },
 
   // --- Vzácné poklady a okamžité pomocné předměty (The Classic Trinity & Instant Utility) ---
   { id: 'ponocny_horn', name: 'Trouba obecního ponocného', icon: '📯', description: 'Zastaví čas na 5 sekund a mohutným zatroubením odhodí okolní strašidla.', baseCost: 24, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'ponocny_horn' } },
@@ -220,5 +220,6 @@ for (let i = 0; i < GRANDFATHER_ITEMS.length; i++) {
 }
 
 export function getGrandfatherItem(id: string): GrandfatherItemDef | undefined {
+  if (id === 'bylinkova_fajfka') return GRANDFATHER_ITEMS_MAP['wp_fajfka'] || GRANDFATHER_ITEMS_MAP[id];
   return GRANDFATHER_ITEMS_MAP[id];
 }

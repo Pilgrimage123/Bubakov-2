@@ -16,10 +16,10 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
     });
 
     it('scales baseline stats with level progression for standard weapons', () => {
-      // standard non-melee weapon (kysela_okurka): rank 2 has +12% damage, +6% area
+      // standard projectile weapon (kysela_okurka): rank 2 receives proj_barrage (+130% projectiles, -30% damage)
       const stats2 = getRankedWeaponStats('kysela_okurka', 2);
-      expect(stats2.damageMult).toBeCloseTo(1.12, 5);
-      expect(stats2.areaRadiusMult).toBeCloseTo(1.06, 5);
+      expect(stats2.damageMult).toBeCloseTo(0.70, 5);
+      expect(stats2.projectileCountMult).toBeCloseTo(2.30, 5);
       expect(stats2.cooldownMult).toBe(1);
     });
 
@@ -152,13 +152,14 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       const wDef = WEAPONS.povidlove_buchty;
       wDef.fire(player, 5);
 
-      // Level 5 base count = 1 + floor(4/2) = 3. Plus buns_crowd_3 (+1) = 4 projectiles
-      expect(projectiles).toHaveLength(4);
+      // Level 5 base count = 1 + floor(4/2) = 3. Plus buns_crowd_3 (+1) = 4 projectiles.
+      // Scaled by rank 4 proj_volley (+40% projectiles) => 4 * 1.40 = 5.6 -> 6 projectiles
+      expect(projectiles).toHaveLength(6);
       // buns_crowd_3 statusDurationSec = 2.2
       expect(projectiles[0].snackDuration).toBe(2.2);
       // buns_burst_5 pierceDelta = 1
       expect(projectiles[0].pierce).toBe(1);
-      // damageMult should be > 1
+      // damageMult should be > 22
       expect(projectiles[0].dmg).toBeGreaterThan(22);
     });
 
@@ -182,8 +183,9 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
       const wDef = WEAPONS.devatero_kviti;
       wDef.fire(player, 5);
 
-      // Base count at lvl 5 = 5 + floor(4/2) = 7. Herbs crowd 3 (+1) + Herbs crowd 5 (+2) = 10
-      expect(projectiles).toHaveLength(10);
+      // Base count at lvl 5 = 5 + floor(4/2) = 7. Herbs crowd 3 (+1) + Herbs crowd 5 (+2) = 10.
+      // Scaled by rank 2 proj_barrage (+130% projectiles) => 10 * 2.30 = 23 projectiles
+      expect(projectiles).toHaveLength(23);
       // areaRadiusMult increases radius
       expect(projectiles[0].radius).toBeGreaterThan(14);
     });
@@ -195,7 +197,9 @@ describe('Weapon Combat Stats & Milestone Integration', () => {
 
       // Base count at lvl 3 = 5 + floor(2/2) = 6. holy_crowd_3 adds +2 => 8
       expect(projectiles).toHaveLength(8);
-      expect(projectiles[0].dmg).toBeGreaterThan(22);
+      // Rank 2 proj_pierce: -15% dmg, +2 pierce
+      expect(projectiles[0].dmg).toBeCloseTo(22 * 0.85, 1);
+      expect(projectiles[0].pierce).toBe(2);
     });
 
     it('kovarske_vidle respects areaRadiusMult and knockbackMult on melee slash', () => {

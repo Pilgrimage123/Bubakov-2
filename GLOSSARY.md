@@ -53,7 +53,7 @@ Bojová mechanika Pekelného Čerta, kdy ze svého balíčku pravidelně tasí m
 _Avoid_: card attack, boss deck, spell cards
 
 **Synergický upgrade**:
-Pokročilá varianta zbraňového vylepšení navázaná na zvolený folklórní rozmar a herní archetyp výpravy.
+Původní přechodný subsystém zbraňových vylepšení, nahrazený plnohodnotným 8-úrovňovým modelem s Milníky a třemi Kategoriemi vylepšení.
 _Avoid_: perk, weapon synergy, build upgrade
 
 **Zoufalá kuráž**:
@@ -85,7 +85,7 @@ Kolébavý a vrávoravý pohyb Vyčerpaných strašidel indikující jejich úna
 _Avoid_: stagger, stumble, pajdání
 
 **Kategorie vylepšení zbraní**:
-Tematické bazény běžných vylepšení (pro sečné zbraně, aury a projektilové zbraně), které nahrazují generické bonusy na úrovních 2, 4, 6 a 7.
+Tematické bazény 6 běžných vylepšení pro každou ze tří tříd zbraní (sečné zbraně `melee`, aury `aura` a projektilové zbraně `projectile`), které na úrovních 2, 4, 6 a 7 nahrazují generické bonusy.
 _Avoid_: perk tree, weapon skill tree, upgrade category
 
 **Nabíjení**:
@@ -167,4 +167,12 @@ _Avoid_: daň, globální inflace, cost multiplier, village tax
 **Vrácení krejcarů**:
 Bezplatné a úplné vyrovnání všech investic do obecních budov v hospodě, umožňující volné přerozdělení nastřádaných krejcarů.
 _Avoid_: respec, reset vylepšení, refund, přerozdělení bodů
+
+**Škvarková placka**:
+Křupavá pečená venkovská pochoutka získávaná z malovaných truhel pro okamžité doplnění 50 Kuráže, pojmově oddělená od vrhací zbraně Povidlové buchty.
+_Avoid_: buchta z truhly, svačina, heal drop
+
+**Pomeranč z Orientu**:
+Vzácná exotická posilující dobrota z dědečkovy nůše a malovaných truhel trvale zvyšující maximální Kuráž lovce o 25, pojmově oddělená od vrhací zbraně Kynutý koláč.
+_Avoid_: koláč z truhly, kynutý koláč perk, oranž
 

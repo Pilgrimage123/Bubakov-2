@@ -34,6 +34,7 @@ export const ALL_WEAPON_KEYS = [
   'kysela-okurka',
   'splaseny_houser',
   'formansky_bic',
+  'bylinkova_fajfka',
 ];
 
 export const DEFAULT_HERO_WEAPONS: Record<string, { id: string; level: number }[]> = {

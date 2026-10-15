@@ -1531,7 +1531,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         existing.level = Math.min(8, existing.level + 1);
         const isMilestone = existing.level === 3 || existing.level === 5 || existing.level === 8;
         if (!isMilestone) {
-          const upId = offer?.candidateUpgradeId || rollRandomWeaponUpgrade(canonicalId, existing)?.id;
+          const rankDef = getWeaponRankDef(canonicalId, existing.level);
+          const upId = offer?.candidateUpgradeId || rankDef?.normalUpgradeId || rollRandomWeaponUpgrade(canonicalId, existing)?.id;
           if (upId) {
             if (!existing.normalUpgrades) existing.normalUpgrades = [];
             existing.normalUpgrades.push(upId);
@@ -3116,16 +3117,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         },
       },
       {
-        name: 'Kynutý koláč (+25 Max Kuráž)',
-        desc: 'Posilující tradiční venkovská dobrota pro stálou dobrou náladu a odvahu',
-        icon: 'kynuty_kolac',
+        name: 'Pomeranč z Orientu (+25 Max Kuráž)',
+        desc: 'Posilující exotická dobrota pro stálou dobrou náladu a odvahu',
+        icon: 'pomeranc_z_orientu',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
-            pl.maxHp += 30;
+            pl.maxHp += 25;
             pl.hp = Math.min(
               pl.maxHp,
-              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+              pl.hp + 25 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
             );
           }
         },
@@ -3186,9 +3187,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         action: () => setRunStats((s) => ({ ...s, coins: s.coins + 200 })),
       },
       {
-        name: 'Povidlová buchta (Svačina na cestu)',
-        desc: 'Sladká svačina pro povzbuzení nálady a okamžité doplnění kuráže (+50)',
-        icon: 'czech_buchta',
+        name: 'Škvarková placka (Svačina na cestu)',
+        desc: 'Poctivá křupavá placka se sádlem a škvarky pro okamžité doplnění kuráže (+50)',
+        icon: '🫓',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) applyBearMaskOverheal(pl, 50);
@@ -3237,31 +3238,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           });
         }
       });
-    }
-
-    // A painted treasure may randomly reveal a specialization for an owned projectile weapon.
-    if (p?.weapons && Math.random() < 0.45) {
-      const eligible = p.weapons.flatMap((weapon: any) => {
-        const weaponId = toCanonicalWeaponId(weapon.id);
-        if (!['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'hromnicka', 'svecena_kropenka'].includes(weaponId)) return [];
-        if ((weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weaponId)) return [];
-        return Object.values(SYNERGISTIC_UPGRADES).filter((upgrade) => upgrade.weaponId === weaponId).map((upgrade) => ({ weapon, upgrade }));
-      });
-      if (eligible.length > 0) {
-        const chosen = eligible[Math.floor(Math.random() * eligible.length)];
-        possibleRewards.push({
-          name: chosen.upgrade.name, desc: chosen.upgrade.description, icon: '✨',
-          action: () => {
-            const target = engineRef.current.player?.weapons?.find((weapon: any) => toCanonicalWeaponId(weapon.id) === chosen.upgrade.weaponId);
-            if (!target) return;
-            target.synergisticUpgrades ??= [];
-            if (!target.synergisticUpgrades.some((id: string) => getSynergisticUpgrade(id)?.weaponId === chosen.upgrade.weaponId)) {
-              target.synergisticUpgrades.push(chosen.upgrade.id);
-              target._cachedStats = undefined;
-            }
-          },
-        });
-      }
     }
 
     possibleRewards.sort(() => 0.5 - Math.random());

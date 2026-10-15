@@ -801,7 +801,8 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
 function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
   const choices = MILESTONES[id];
   const progression = MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id]
-    || AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id];
+    || AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id]
+    || PROJECTILE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[id];
 
   if (!progression) {
     return [
@@ -971,7 +972,8 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
   const rankDef = canonical ? getWeaponRankDef(canonical, safeLevel) : undefined;
   const isMeleeCustom = canonical && MELEE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
   const isAuraCustom = canonical && AURA_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
-  const isCategoryCustom = isMeleeCustom || isAuraCustom;
+  const isProjectileCustom = canonical && PROJECTILE_WEAPON_NORMAL_UPGRADE_PROGRESSIONS[canonical];
+  const isCategoryCustom = isMeleeCustom || isAuraCustom || isProjectileCustom;
 
   const hasDynamicNormalUpgrades = Array.isArray(w?.normalUpgrades) && w.normalUpgrades.length > 0;
   let dynamicDamage = 0;

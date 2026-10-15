@@ -1,6 +1,6 @@
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from '../data/synergisticUpgrades';
-import { rollRandomWeaponUpgrade } from '../data/weaponMilestones';
+import { rollRandomWeaponUpgrade, getWeaponRankDef } from '../data/weaponMilestones';
 
 export interface GrandfatherOffer {
   itemId: string;
@@ -97,19 +97,6 @@ export function chooseGrandfatherOffers(
   const selected: GrandfatherOffer[] = [];
   const now = performance.now();
 
-  const projectileIds = new Set(['kysela_okurka', 'povidlove_buchty', 'devatero_kviti', 'snehova_koule', 'hromnicka', 'kynuty_kolac', 'horky_brambor', 'vceli_roj', 'svecena_kropenka', 'splaseny_houser']);
-  const weaponUpgradeOffers: GrandfatherOffer[] = [];
-  for (const weapon of playerWeapons) {
-    if (!projectileIds.has(weapon.id) || (weapon.level || 0) <= 0) continue;
-    const alreadySpecialized = (weapon.synergisticUpgrades || []).some((id: string) => getSynergisticUpgrade(id)?.weaponId === weapon.id);
-    if (alreadySpecialized) continue;
-    const alternatives = Object.values(SYNERGISTIC_UPGRADES).filter((entry) => entry.weaponId === weapon.id);
-    if (alternatives.length > 0) {
-      const upgrade = alternatives[Math.floor(Math.random() * alternatives.length)];
-      weaponUpgradeOffers.push({ itemId: `weapon_upgrade:${weapon.id}:${upgrade.id}`, offeredAt: now });
-    }
-  }
-
   const makeOffer = (item: GrandfatherItemDef): GrandfatherOffer => {
     let candidateUpgradeId: string | undefined;
     if (item.isWeapon && item.weaponId) {
@@ -117,7 +104,7 @@ export function chooseGrandfatherOffers(
       const nextLvl = (pw ? pw.level : 0) + 1;
       const isMilestone = nextLvl === 3 || nextLvl === 5 || nextLvl === 8;
       if (!isMilestone && nextLvl > 1) {
-        candidateUpgradeId = rollRandomWeaponUpgrade(item.weaponId, pw)?.id;
+        candidateUpgradeId = rollRandomWeaponUpgrade(item.weaponId, pw)?.id || getWeaponRankDef(item.weaponId, nextLvl)?.normalUpgradeId;
       }
     }
     return { itemId: item.id, offeredAt: now, candidateUpgradeId };
@@ -133,10 +120,6 @@ export function chooseGrandfatherOffers(
       const chosenRare = rareInstants[Math.floor(Math.random() * rareInstants.length)];
       selected.push(makeOffer(chosenRare));
     }
-  }
-
-  if (weaponUpgradeOffers.length > 0 && selected.length < count && Math.random() < 0.45) {
-    selected.push(weaponUpgradeOffers[Math.floor(Math.random() * weaponUpgradeOffers.length)]);
   }
 
   const targetWeaponCount = Math.min(availableWeapons.length, count - selected.length >= 3 ? 2 : 1);
@@ -165,10 +148,6 @@ export function chooseGrandfatherOffers(
     const luckBoost = Math.max(0, (luck - 80) / 20) * 0.04 * (item.luckWeight ?? 1);
     if (Math.random() > Math.min(1, 0.45 + luckBoost) && selected.length < count - 1) continue;
     selected.push(makeOffer(item));
-  }
-  for (const offer of [...weaponUpgradeOffers].sort(() => Math.random() - 0.5)) {
-    if (selected.length >= count) break;
-    if (!selected.some((entry) => entry.itemId === offer.itemId)) selected.push(offer);
   }
   for (const item of candidates) {
     if (selected.length >= count) break;
