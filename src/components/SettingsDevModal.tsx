@@ -17,6 +17,7 @@ interface SettingsDevModalProps {
   onToggleDynamicLighting?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
   onChangeDynamicDifficulty?: (diff: number) => void;
+  onOpenCombatTextSettings?: () => void;
   onOpenTestMode: () => void;
   onOpenAnimationTester: () => void;
   onOpenPlan: () => void;
@@ -36,6 +37,7 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
   onToggleDynamicLighting,
   dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
+  onOpenCombatTextSettings,
   onOpenTestMode,
   onOpenAnimationTester,
   onOpenPlan,
@@ -184,6 +186,24 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   }}
                 >
                   Dynamické osvětlení: {dynamicLightingEnabled ? 'ZAP' : 'VYP'}
+                </button>
+              )}
+
+              {onOpenCombatTextSettings && (
+                <button
+                  className="lada-btn btn-small"
+                  style={{
+                    background: '#B45309',
+                    color: '#FFFFFF',
+                    fontWeight: 900,
+                  }}
+                  onClick={() => {
+                    sound.coin();
+                    onOpenCombatTextSettings();
+                  }}
+                  title="Podrobné nastavení a vypínání 9 kategorií plovoucích textů v aréně"
+                >
+                  💬 Texty v boji...
                 </button>
               )}
             </div>

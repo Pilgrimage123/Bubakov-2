@@ -22,6 +22,9 @@ describe('Village progression effects', () => {
     meta.churchLevel = 2; // +16% holy damage
     const engine = new GameEngine();
     engine.initRun({ levelId: 1, hunterType: 'wanderer', meta, spawnInitialWave: false });
+    if (engine.state.player) {
+      engine.state.player.luck = 0;
+    }
     const enemy = engine.spawnMonster('certik', 100, 100);
     enemy.isIlluminated = true;
     const startHp = enemy.hp;

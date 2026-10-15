@@ -44,28 +44,21 @@ export function isGameEffectEnabled(category: EffectCategory): boolean {
   return currentSettings.effectsEnabled && currentSettings[category];
 }
 
+import {
+  CombatTextCategory,
+  shouldDrawCombatText,
+  isCombatTextCategoryEnabled,
+} from './combatTextSettings';
+
+export * from './combatTextSettings';
+
 /**
- * Classify floating text by purpose: combat values stay visible, while
- * narration and temporary status/unlock/attack descriptors are independently optional.
+ * Classify floating text by purpose using the ADR 0016 9-category system.
  */
-export function shouldDrawFloatingText(text: string): boolean {
+export function shouldDrawFloatingText(text: string, category?: CombatTextCategory): boolean {
   const settings = currentSettings;
   if (!settings.effectsEnabled) return false;
 
-  const normalized = String(text || '').trim();
-  if (!normalized) return false;
-
-  const unlockPattern = /(odem[cč]en|odem[kč]|unlock|zachr[aá]n[eě]n|v[iý]t[eě]zstv[ií]|poko[rř]en|z[bá]v[eě]r|nov[yý] lovec|nov[aá] zbra[nň]|odhalen[aá]?|nov[aý]|postup|miln[ií]k)/i;
-  if (unlockPattern.test(normalized) && !settings.unlockNotificationsEnabled) return false;
-
-  // Pure damage/heal/resource values remain visible when their number is the primary content.
-  if (/^[-+]?\d+(?:[.,]\d+)?(?:\s*(?:❤️|💥|🥐|🍪|⚡))?$/.test(normalized)) return true;
-
-  const statusPattern = /(imunn[ií]|odra[zž]eno|ňam,\s*ňam|mokr[aá] lou[zž]e|zpomal|otr[aá]v|p[rř]ejeden[ií]|zmr[aá]z|mraziv|chlad|namo[cč]|omr[aá]z|stun|status|sv[aá]t[eé] sp[aá]len[ií]|sv[aá]t[aá] zk[aá]za|po[zž]ehn[aá]n|kritick[yý] z[aá]sah|dodge|minul|odolal|[0-3]\s*\/\s*3|bylinn[yý] z[aá]blesk|št[ií]t pohltil)/i;
-  if (statusPattern.test(normalized) && !settings.statusIndicatorsEnabled) return false;
-
-  const attackPattern = /(v[yý]pad|dusot|p[ií][sš][tť]alka|kadidlo|po[zž]ehn[aá]n[ií]|[uú]tok|[uú]der|se[kč] |seknut[ií]|v[aá]nice|dupa[ká]|re[jř]dy|mraziv[yý] v[ií]tr|v[eě]tev!|dubilka|[sš]lehnut[ií]|bleskov[yý] odraz|poplach|[cč]as se zastavil|[oó]c[ií]st[eě]no|p[rř][aá]sk!|d[eě]s!|mari[aá][sš]:|zem[eě]t[rř]esen[ií]|svat[eé] slovo|[uú]der zvonu|r[aá]zov[aá] vlna)/i;
-  if (attackPattern.test(normalized) && !settings.attackDescriptorsEnabled) return false;
-
-  return true;
+  return shouldDrawCombatText(category, text);
 }
+

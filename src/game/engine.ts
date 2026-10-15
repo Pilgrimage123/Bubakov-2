@@ -75,6 +75,11 @@ import {
   type ShadowZone,
   type LightOccluder,
 } from './storybookLighting';
+import {
+  type CombatTextCategory,
+  inferCombatTextCategory,
+  isCombatTextCategoryEnabled,
+} from './combatTextSettings';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -101,8 +106,16 @@ export class DamageText {
   life: number;
   size: number;
   vy: number;
+  category: CombatTextCategory;
 
-  constructor(x: number, y: number, text: string, color = '#FFFFFF', big = false) {
+  constructor(
+    x: number,
+    y: number,
+    text: string,
+    color = '#FFFFFF',
+    big = false,
+    category?: CombatTextCategory
+  ) {
     this.x = x + (Math.random() - 0.5) * 20;
     this.y = y + (Math.random() - 0.5) * 20;
     this.text = text;
@@ -110,11 +123,21 @@ export class DamageText {
     this.life = 1.0;
     this.size = big ? 26 : 18;
     this.vy = -45;
+    this.category = category || inferCombatTextCategory(text);
   }
 
   update(dt: number): void {
     this.y += this.vy * dt;
     this.life -= dt;
+  }
+
+  addAmount(amount: number): void {
+    const num = parseInt(this.text, 10);
+    if (!isNaN(num)) {
+      const suffix = this.text.replace(/^[0-9]+/, '');
+      this.text = `${num + amount}${suffix}`;
+      this.life = Math.min(1.0, this.life + 0.25);
+    }
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -312,6 +335,22 @@ export class GameEngine {
         this.initRun(initialStateOrOptions as RunInitOptions);
       }
     }
+  }
+
+  public addDamageText(
+    x: number,
+    y: number,
+    text: string,
+    color = '#FFFFFF',
+    big = false,
+    category?: CombatTextCategory
+  ): DamageText | null {
+    const cat = category || inferCombatTextCategory(text);
+    if (!isCombatTextCategoryEnabled(cat)) return null;
+    const dt = new DamageText(x, y, text, color, big, cat);
+    this.state.texts.push(dt);
+    this.callbacks?.onDamageText?.(dt);
+    return dt;
   }
 
   public initRun(

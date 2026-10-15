@@ -9,6 +9,18 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '15. října 2026',
+    title: 'Bojové plovoucí texty: 9 kategorií zobrazení, předvolby a optimalizace výkonu',
+    summary: 'Kompletní kontrola nad texty v bojové aréně. Hráč si může zaškrtnutím vybrat z 9 samostatných kategorií textu pro nerušený výhled na bojiště a maximální snímkovou frekvenci (FPS).',
+    items: [
+      '💬 9 samostatně přepínatelných kategorií: Číselná zranění nepřátel, Zranění Kuráže lovce, Léčení a obnova Kuráže, Bojové reakce a stavy, Názvy nápřahů a útoků, Bojové pokřiky a atmosféra, Zisky kořisti a surovin, Odemčení a milníky a Globální oznámení a bossové.',
+      '⚡ Tři rychlé předvolby: Plná atmosféra (vše ZAP), Taktický režim (pouze bojová čísla a stavy) a Čistý výkon (veškeré texty VYP pro maximální FPS i na slabých telefonech).',
+      '⏸️ Okamžitá úprava přímo v boji: Tlačítko „💬 Texty v boji“ a rychlý ukazatel předvolby v okně Pauzy (Esc) umožňují okamžité přizpůsobení uprostřed výpravy.',
+      '🚀 Rychlá O(1) filtrace a šetření paměti: Odstraněny pomalé regulární výrazy, vypnuté kategorie zamezují zbytečným alokacím objektů a zátěži Canvasu.',
+      '🧪 Pro testery: v Pauze otevřete Texty v boji, přepněte na Taktický režim nebo Čistý výkon a ověřte, že v aréně okamžitě zmizí příslušné texty bez vlivu na herní pravidla.',
+    ],
+  },
+  {
     date: '13. října 2026',
     title: 'Začlenění přívlastků do taktických formací a balanc bleskového odrazu',
     summary: 'Při vyšší dynamické obtížnosti (3,50× a více) velí taktickým formacím strašidla s bojovými přívlastky. Bleskový odraz Hromových běsů má bezpečnostní strop proti nechtěnému sebezničení a Vyčerpaný bubák dostal autentické potácení a unavenou auru.',

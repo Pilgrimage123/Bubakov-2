@@ -196,6 +196,7 @@ export interface MetaProgression {
   unlockNotificationsEnabled?: boolean;
   soundEffectsEnabled?: boolean;
   musicEnabled?: boolean;
+  combatTextSettings?: import('./game/combatTextSettings').CombatTextSettings;
   [key: string]: any;
 }
 

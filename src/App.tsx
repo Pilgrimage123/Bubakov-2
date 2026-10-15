@@ -34,7 +34,21 @@ import {
 } from './constants';
 import { GAME_LEVELS, isLevelUnlocked, GameLevelDef } from './data/levels';
 import { sound } from './audio';
-import { DEFAULT_GAME_EFFECT_SETTINGS, setGameEffectSettings, isGameEffectEnabled, shouldDrawFloatingText, type EffectCategory } from './game/effectSettings';
+import {
+  DEFAULT_GAME_EFFECT_SETTINGS,
+  setGameEffectSettings,
+  isGameEffectEnabled,
+  shouldDrawFloatingText,
+  type EffectCategory,
+  DEFAULT_COMBAT_TEXT_SETTINGS,
+  setCombatTextSettings,
+  getCombatTextPreset,
+  shouldDrawCombatText,
+  isCombatTextCategoryEnabled,
+  inferCombatTextCategory,
+  type CombatTextSettings,
+  type CombatTextCategory,
+} from './game/effectSettings';
 import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/frostAura';
 import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
 import { HunterInfoModal } from './components/HunterInfoModal';
@@ -117,6 +131,7 @@ import { TestModeModal } from './components/TestModeModal';
 import { AnimationTesterModal } from './components/AnimationTesterModal';
 import { ResetProgressModal } from './components/ResetProgressModal';
 import { SettingsDevModal } from './components/SettingsDevModal';
+import { CombatTextSettingsModal } from './components/CombatTextSettingsModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
@@ -308,8 +323,16 @@ class DamageText {
   size: number;
   vy: number;
   numericVal: number | null = null;
+  category: CombatTextCategory;
 
-  constructor(x: number, y: number, text: string, color = COLORS.white, big = false) {
+  constructor(
+    x: number,
+    y: number,
+    text: string,
+    color = COLORS.white,
+    big = false,
+    category?: CombatTextCategory
+  ) {
     this.x = x + (Math.random() - 0.5) * 20;
     this.y = y + (Math.random() - 0.5) * 20;
     this.text = text;
@@ -317,6 +340,7 @@ class DamageText {
     this.life = 1.0;
     this.size = big ? 26 : 18;
     this.vy = -45;
+    this.category = category || inferCombatTextCategory(text);
     const parsed = parseInt(text, 10);
     if (!Number.isNaN(parsed) && String(parsed) === text) {
       this.numericVal = parsed;
@@ -1258,6 +1282,11 @@ export default function App() {
       musicEnabled: source.musicEnabled !== false,
     };
     setGameEffectSettings(effectSettings);
+    const combatTextSettings: CombatTextSettings = {
+      ...DEFAULT_COMBAT_TEXT_SETTINGS,
+      ...(source.combatTextSettings || {}),
+    };
+    setCombatTextSettings(combatTextSettings);
     sound.enabled = effectSettings.effectsEnabled && effectSettings.soundEffectsEnabled;
     sound.musicEnabled = effectSettings.effectsEnabled && effectSettings.musicEnabled;
     if (!sound.musicEnabled) sound.stopMenuMusic(false);
@@ -1338,6 +1367,7 @@ export default function App() {
   const [controlsDefaultTab, setControlsDefaultTab] = useState('controls');
   const [selectedHunterInfo, setSelectedHunterInfo] = useState<HunterDetail | null>(null);
   const [isSettingsDevOpen, setIsSettingsDevOpen] = useState(false);
+  const [isCombatTextModalOpen, setIsCombatTextModalOpen] = useState(false);
   const soundEnabled = meta.effectsEnabled !== false && meta.soundEffectsEnabled !== false;
   const musicEnabled = meta.effectsEnabled !== false && meta.musicEnabled !== false;
 
@@ -7164,7 +7194,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.lineJoin = 'round';
           for (const txt of engine.texts) {
             if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) continue;
-            if (!shouldDrawFloatingText(txt.text)) continue;
+            if (!shouldDrawCombatText(txt.category, txt.text)) continue;
             txt.draw(ctx);
           }
           ctx.globalAlpha = 1;
@@ -9446,17 +9476,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Damage numbers displayed for all weapon types, aggregated within 0.25s for fast multi-hits
         const dmgInt = Math.floor(finalDmg);
-        if (dmgInt >= 1) {
+        if (dmgInt >= 1 && isCombatTextCategoryEnabled('enemyDamage')) {
           if ((this as any)._lastDamageText && (this as any)._lastDamageText.life > 0.45 && (this as any)._lastDamageTextType === type) {
-            (this as any)._lastDamageText.addAmount(dmgInt);
+            (this as any)._lastDamageText.addAmount?.(dmgInt);
           } else {
             let dt: DamageText;
             if (options?.isHunterCounter) {
-              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 💥`, '#F97316', false);
+              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 💥`, '#F97316', false, 'enemyDamage');
             } else if (type === 'food') {
-              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 🥐`, '#F59E0B');
+              dt = new DamageText(this.x, this.y - 25, `${dmgInt} 🥐`, '#F59E0B', false, 'enemyDamage');
             } else {
-              dt = new DamageText(this.x, this.y - 25, dmgInt.toString(), COLORS.white, this.soaked);
+              dt = new DamageText(this.x, this.y - 25, dmgInt.toString(), COLORS.white, this.soaked, 'enemyDamage');
             }
             (this as any)._lastDamageText = dt;
             (this as any)._lastDamageTextType = type;
@@ -11598,6 +11628,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
+                style={{ background: '#B45309', color: '#FFFFFF', padding: '10px 18px', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsCombatTextModalOpen(true);
+                }}
+                title="Vypnout či zapnout jednotlivé kategorie plovoucích textů v aréně"
+              >
+                💬 Texty v boji
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: 'var(--wood-dark)', padding: '10px 18px', color: 'var(--parchment)' }}
                 onClick={quitToTavernFromPause}
                 title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
@@ -11654,6 +11695,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
               >
                 📊 FPS: <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
+                  setIsCombatTextModalOpen(true);
+                }}
+                title="Nastavit kategorie plovoucích textů v aréně"
+              >
+                💬 Texty: <span className="touch-toggle-text">
+                  {getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'full'
+                    ? 'Plné'
+                    : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'tactical'
+                    ? 'Taktické'
+                    : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'performance'
+                    ? 'Vypnuto'
+                    : 'Vlastní'}
+                </span>
               </button>
             </div>
 
@@ -12461,10 +12520,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onChangeDynamicDifficulty={(diff) => {
           saveMeta({ ...meta, dynamicDifficulty: diff });
         }}
+        onOpenCombatTextSettings={() => setIsCombatTextModalOpen(true)}
         onOpenTestMode={() => setIsTestModeOpen(true)}
         onOpenAnimationTester={() => setIsAnimationTesterOpen(true)}
         onOpenPlan={() => setIsPlanOpen(true)}
         onOpenResetProgress={() => setIsResetModalOpen(true)}
+      />
+
+      {/* COMBAT TEXT SETTINGS MODAL */}
+      <CombatTextSettingsModal
+        isOpen={isCombatTextModalOpen}
+        onClose={() => setIsCombatTextModalOpen(false)}
+        settings={meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS}
+        onChangeSettings={(nextSettings) => {
+          saveMeta({ ...meta, combatTextSettings: nextSettings });
+          setCombatTextSettings(nextSettings);
+        }}
       />
 
       {/* TEST MODE (SANDBOX) MODAL */}

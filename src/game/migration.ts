@@ -1,5 +1,6 @@
 import type { MetaProgression, WeaponId } from '../types';
 import { WEAPON_LEGACY_ALIASES } from '../data/weapons';
+import { DEFAULT_COMBAT_TEXT_SETTINGS } from './combatTextSettings';
 
 import { isSupportedLocale } from '../i18n';
 
@@ -60,6 +61,9 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
       : 3.0,
     unlockedWeapons: migratedUnlockedWeapons,
     weaponKillCounts: migratedWeaponKillCounts,
+    combatTextSettings: parsed.combatTextSettings
+      ? { ...DEFAULT_COMBAT_TEXT_SETTINGS, ...parsed.combatTextSettings }
+      : { ...DEFAULT_COMBAT_TEXT_SETTINGS },
   };
 }
 
@@ -96,5 +100,6 @@ export function createDefaultMetaProgression(): MetaProgression {
     selectedLevel: 0,
     highestLevelUnlocked: 1,
     completedLevels: {},
+    combatTextSettings: { ...DEFAULT_COMBAT_TEXT_SETTINGS },
   };
 }

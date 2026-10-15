@@ -1,3 +1,20 @@
+## 2026-10-15 — Bojové plovoucí texty: 9 kategorií zobrazení, předvolby a optimalizace výkonu
+
+- **Rozdělení textů v aréně do 9 samostatných kategorií (`CombatTextCategory`)**: Hráč může odděleně zapínat a vypínat:
+  1. *Číselná zranění nepřátel* (běžná bílá čísla, kritické zásahy 💥, blesky ⚡)
+  2. *Zranění a úbytek Kuráže lovce* (červená čísla poškození, bleskové odrazy)
+  3. *Léčení a obnova Kuráže* (zelená/růžová čísla Kuráže z placek, jitrnic a posvěcení)
+  4. *Bojové reakce a stavy* (Dodge, Minul, Štít pohltil, Imunní, Vyčerpán, Usmířen)
+  5. *Názvy nápřahů a útoků* (telegrafované nápřahy bubáků i názvy útoků zbraní)
+  6. *Bojové pokřiky a atmosféra* (hlášky při Zoufalé kuráži, Rozohnění)
+  7. *Zisky kořisti a surovin* (Perníčky, Krejcary, Dušičky, Cukrový spěch)
+  8. *Odemčení a milníky* (nové postavy, zbraně, mapy, milníky zbraní)
+  9. *Globální oznámení a bossové* (příchod bosse, poklady, zklidnění monster)
+- **Tři rychlé předvolby (Presety)**: K dispozici jsou okamžité volby `🎨 Plná atmosféra` (vše zapnuto), `⚖️ Taktický režim` (čísla, stavy a zprávy zapnuty; nápřahy, hlášky a kořist vypnuty) a `⚡ Čistý výkon` (veškeré texty vypnuty pro absolutní plynulost). Libovolná manuální úprava se přepíná na `🛠️ Vlastní výběr`.
+- **Dostupnost v Pauze i Globálním nastavení**: V okně pozastavení výpravy (`Pauza / Esc`) přibylo tlačítko `💬 Texty v boji` i rychlý stavový indikátor; dialog je rovněž plně dostupný v okně `⚙️ Nastavení a vývoj` z hlavní nabídky i vesnice.
+- **Optimalizace výkonu a paměti**: Odstraněno nákladné vyhodnocování regulárními výrazy v každém snímku ve prospěch O(1) kontroly kategorie. Při vypnutí kategorie zranění nepřátel dochází k potlačení alokace objektů v enginu, což šetří garbage collection a náročné vykreslování písma (`ctx.strokeText`).
+- **Architektura a kánon**: Zaveden termín do `GLOSSARY.md` (Bojové plovoucí texty), sepsán `docs/adr/0016-kategorizace-bojovych-plovoucich-textu-a-vykon.md` a přidána ucelená sada testů v `tests/combatTextSettings.test.ts`.
+
 ## 2026-10-15 — Vylepšení z Dědečkovy nůše v testovacím módu (Sandbox) na úrovni 0-X
 
 - **Výběr všech upgradů z dědečkovy nůše v sandboxu na úrovni 0-X**: Do testovacího režimu (`TestModeModal`) byla přidána nová plnohodnotná záložka `🧺 4. Dědečkova nůše (0-X)` obsahující všech 49 vylepšení, posvěcení, vzácných předmětů i synergických zbraňových upgradů.

@@ -1,0 +1,215 @@
+/**
+ * Bojové plovoucí texty (Combat Floating Texts)
+ * Správa kategorií, předvoleb a filtrace pro vysokou plynulost a taktickou přehlednost v aréně.
+ * Dle ADR 0016.
+ */
+
+export type CombatTextCategory =
+  | 'enemyDamage'
+  | 'hunterDamage'
+  | 'healing'
+  | 'combatStates'
+  | 'attackWindups'
+  | 'combatShouts'
+  | 'lootResources'
+  | 'unlocksMilestones'
+  | 'bossAnnouncements';
+
+export interface CombatTextCategoryMeta {
+  key: CombatTextCategory;
+  label: string;
+  description: string;
+  icon: string;
+}
+
+export const COMBAT_TEXT_CATEGORIES: CombatTextCategoryMeta[] = [
+  {
+    key: 'enemyDamage',
+    label: 'Číselná zranění nepřátel',
+    description: 'Běžné, kritické (💥) a bleskové (⚡) hodnoty poškození udělené strašidlům.',
+    icon: '⚔️',
+  },
+  {
+    key: 'hunterDamage',
+    label: 'Zranění a úbytek Kuráže lovce',
+    description: 'Červená čísla poškození při zásahu lovce strašidlem a varovná zranění z odrazu.',
+    icon: '🩸',
+  },
+  {
+    key: 'healing',
+    label: 'Léčení a obnova Kuráže',
+    description: 'Zelené a růžové hodnoty doplněné Kuráže ze škvarkových placek, jitrnic a posvěcení.',
+    icon: '💖',
+  },
+  {
+    key: 'combatStates',
+    label: 'Bojové reakce a stavy',
+    description: 'Taktické stavy na bojišti (DODGE, MINUL, ŠTÍT POHLTIL, IMUNNÍ, VYČERPÁN, Usmířen).',
+    icon: '🛡️',
+  },
+  {
+    key: 'attackWindups',
+    label: 'Názvy nápřahů a útoků',
+    description: 'Telegrafované nápřahy bubáků (Výpad čepelí, Dusot kopyt) a názvy zásahů zbraní lovce.',
+    icon: '🌪️',
+  },
+  {
+    key: 'combatShouts',
+    label: 'Bojové pokřiky a atmosféra',
+    description: 'Příběhové hlášky lovce, bojový pokřik při poklesu Kuráže a hlášky Zoufalé kuráže.',
+    icon: '🗣️',
+  },
+  {
+    key: 'lootResources',
+    label: 'Zisky kořisti a surovin',
+    description: 'Plovoucí počty sebraných perníčků (+1 🍪), krejcarů (+25 kr.), dušiček a cukrový spěch.',
+    icon: '🪙',
+  },
+  {
+    key: 'unlocksMilestones',
+    label: 'Odemčení a milníky',
+    description: 'Zprávy o odemčení nových lovců, zbraní, krajin a dosažení Milníků zbraně v aréně.',
+    icon: '📜',
+  },
+  {
+    key: 'bossAnnouncements',
+    label: 'Globální oznámení a bossové',
+    description: 'Příchod oblastních bossů, poklad vládce bubáků a zklidnění hlavních strašidel.',
+    icon: '👑',
+  },
+];
+
+export type CombatTextSettings = Record<CombatTextCategory, boolean>;
+
+export const DEFAULT_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
+  enemyDamage: true,
+  hunterDamage: true,
+  healing: true,
+  combatStates: true,
+  attackWindups: true,
+  combatShouts: true,
+  lootResources: true,
+  unlocksMilestones: true,
+  bossAnnouncements: true,
+};
+
+export const TACTICAL_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
+  enemyDamage: true,
+  hunterDamage: true,
+  healing: true,
+  combatStates: true,
+  attackWindups: false,
+  combatShouts: false,
+  lootResources: false,
+  unlocksMilestones: true,
+  bossAnnouncements: true,
+};
+
+export const PERFORMANCE_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
+  enemyDamage: false,
+  hunterDamage: false,
+  healing: false,
+  combatStates: false,
+  attackWindups: false,
+  combatShouts: false,
+  lootResources: false,
+  unlocksMilestones: false,
+  bossAnnouncements: false,
+};
+
+export type CombatTextPreset = 'full' | 'tactical' | 'performance' | 'custom';
+
+let activeCombatTextSettings: CombatTextSettings = { ...DEFAULT_COMBAT_TEXT_SETTINGS };
+
+export function setCombatTextSettings(settings: Partial<CombatTextSettings>): void {
+  activeCombatTextSettings = {
+    ...DEFAULT_COMBAT_TEXT_SETTINGS,
+    ...activeCombatTextSettings,
+    ...settings,
+  };
+}
+
+export function getCombatTextSettings(): CombatTextSettings {
+  return activeCombatTextSettings;
+}
+
+export function getCombatTextPreset(settings: CombatTextSettings = activeCombatTextSettings): CombatTextPreset {
+  const matches = (preset: CombatTextSettings) =>
+    COMBAT_TEXT_CATEGORIES.every((cat) => !!settings[cat.key] === !!preset[cat.key]);
+
+  if (matches(DEFAULT_COMBAT_TEXT_SETTINGS)) return 'full';
+  if (matches(TACTICAL_COMBAT_TEXT_SETTINGS)) return 'tactical';
+  if (matches(PERFORMANCE_COMBAT_TEXT_SETTINGS)) return 'performance';
+  return 'custom';
+}
+
+export function getSettingsForPreset(preset: 'full' | 'tactical' | 'performance'): CombatTextSettings {
+  switch (preset) {
+    case 'full':
+      return { ...DEFAULT_COMBAT_TEXT_SETTINGS };
+    case 'tactical':
+      return { ...TACTICAL_COMBAT_TEXT_SETTINGS };
+    case 'performance':
+      return { ...PERFORMANCE_COMBAT_TEXT_SETTINGS };
+  }
+}
+
+export function isCombatTextCategoryEnabled(
+  category: CombatTextCategory,
+  customSettings?: CombatTextSettings
+): boolean {
+  const settings = customSettings || activeCombatTextSettings;
+  return !!settings[category];
+}
+
+/**
+ * Bezpečně odvodí kategorii textu, pokud nebyla předána explicitně.
+ */
+export function inferCombatTextCategory(text: string): CombatTextCategory {
+  const norm = String(text || '').trim();
+  if (!norm) return 'enemyDamage';
+
+  if (/^(?:\+?\d+(?:\s*(?:kr|groš|tolar|🍪|dušička|krejcar))|cukrový|dušička osvobozena|cink)/i.test(norm)) {
+    return 'lootResources';
+  }
+  if (/^-\d+/i.test(norm) || /bleskov[ýy] odraz.*-\d+/i.test(norm) || /drtiv[ýy] n[áa]raz vidlemi.*-\d+/i.test(norm)) {
+    return 'hunterDamage';
+  }
+  if (/^\+\d+.*kur[áa][žz]/i.test(norm) || /^\+\d+\s*(?:❤️|💖)/i.test(norm)) {
+    return 'healing';
+  }
+  if (/^[-+]?\d+(?:[.,]\d+)?(?:\s*(?:💥|⚡))?$/.test(norm)) {
+    return norm.startsWith('-') ? 'hunterDamage' : 'enemyDamage';
+  }
+  if (/(odem[čc]|unlock|miln[íi]k|nov[ýy] lovec|nov[áa] zbra[ňn])/i.test(norm)) {
+    return 'unlocksMilestones';
+  }
+  if (/(poklad.*boss|vl[áa]dce bub[áa]k[ůu]|zklidn[ěe]n|👑)/i.test(norm)) {
+    return 'bossAnnouncements';
+  }
+  if (/(dodge|minul|št[íi]t|imunn|vy[čc]erp|usm[íi][řr]en|odraz|vyru[šs]en)/i.test(norm)) {
+    return 'combatStates';
+  }
+  if (/(v[ýy]pad|dusot|plamen|seknut[íi]|sek |[úu]der|[šs]plouch|pr[áa]sk|bum|trhlina|[šs]lehnut[íi]|povidl[íi]|[šs]t[ěe]p|h[ýy]-j[ée]|balvan|k[áa]men|krafnut[íi]|pytel)/i.test(norm)) {
+    return 'attackWindups';
+  }
+  if (/(ú[čc]et zaplat[íi]|rozohn[ěe]n[íi]|kdy[žz] ne j[áa])/i.test(norm)) {
+    return 'combatShouts';
+  }
+  return 'enemyDamage';
+}
+
+/**
+ * Rychlá O(1) kontrola viditelnosti textu.
+ * Pokud kategorie není zadána (např. starší volání), provede bezpečnou klasifikaci.
+ */
+export function shouldDrawCombatText(
+  category?: CombatTextCategory,
+  text?: string,
+  customSettings?: CombatTextSettings
+): boolean {
+  const settings = customSettings || activeCombatTextSettings;
+  const resolvedCategory = category || (text ? inferCombatTextCategory(text) : 'enemyDamage');
+  return !!settings[resolvedCategory];
+}
+

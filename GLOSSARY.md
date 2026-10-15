@@ -104,6 +104,10 @@ _Avoid_: smoke aura, poison cloud, AOE dým
 Masopustní maska a posvěcení z dědečkovy nůše, díky kterému veškeré přeléčení (overheal) Kuráže vyšlehne jako tlaková vlna zraňující okolní strašidla.
 _Avoid_: bear mask, overheal damage, masopustní maska
 
+**Bojové plovoucí texty**:
+Vizuální textové ukazatele zranění, stavů, nápřahů a oznámení vznášející se nad entitami v bojové aréně, samostatně přepínatelné pro vyšší přehlednost a plynulost.
+_Avoid_: floating combat text, combat text, pop-up čísla, damage numbers
+
 ## Světlo a atmosféra
 
 **Petrolejka**:
