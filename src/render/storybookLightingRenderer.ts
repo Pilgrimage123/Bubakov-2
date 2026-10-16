@@ -67,18 +67,65 @@ function getStipplePattern(mainCtx: CanvasRenderingContext2D): CanvasPattern | n
   return stipplePattern;
 }
 
+export const LIGHT_DOWNSCALE_FACTOR = 0.5;
+
 /**
- * Ensures the offscreen light composite canvas matches current screen dimensions.
+ * Ensures the offscreen light composite canvas matches current screen dimensions at 0.5x resolution.
+ * Achieves 75% fillrate reduction and soft gouache blending.
  */
-function getLightBuffer(width: number, height: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
-  if (typeof document === 'undefined') return null;
+export function getLightBuffer(
+  width: number,
+  height: number
+): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
+  const scaledWidth = Math.ceil(width * LIGHT_DOWNSCALE_FACTOR);
+  const scaledHeight = Math.ceil(height * LIGHT_DOWNSCALE_FACTOR);
+
+  if (typeof document === 'undefined') {
+    if (!lightBufferCanvas) {
+      const mockCtx: any = {
+        save: () => {},
+        restore: () => {},
+        translate: () => {},
+        rotate: () => {},
+        scale: () => {},
+        setTransform: () => {},
+        beginPath: () => {},
+        closePath: () => {},
+        moveTo: () => {},
+        lineTo: () => {},
+        arc: () => {},
+        ellipse: () => {},
+        rect: () => {},
+        fill: () => {},
+        stroke: () => {},
+        fillRect: () => {},
+        clearRect: () => {},
+        drawImage: () => {},
+        createRadialGradient: () => ({ addColorStop: () => {} }),
+        fillStyle: '#000',
+        globalCompositeOperation: 'source-over',
+      };
+      lightBufferCanvas = {
+        width: scaledWidth,
+        height: scaledHeight,
+        getContext: () => mockCtx,
+      } as any;
+      lightBufferCtx = mockCtx;
+    }
+    if (lightBufferCanvas.width !== scaledWidth || lightBufferCanvas.height !== scaledHeight) {
+      lightBufferCanvas.width = scaledWidth;
+      lightBufferCanvas.height = scaledHeight;
+    }
+    return { canvas: lightBufferCanvas, ctx: lightBufferCtx! };
+  }
+
   if (!lightBufferCanvas) {
     lightBufferCanvas = document.createElement('canvas');
     lightBufferCtx = lightBufferCanvas.getContext('2d');
   }
-  if (lightBufferCanvas.width !== width || lightBufferCanvas.height !== height) {
-    lightBufferCanvas.width = width;
-    lightBufferCanvas.height = height;
+  if (lightBufferCanvas.width !== scaledWidth || lightBufferCanvas.height !== scaledHeight) {
+    lightBufferCanvas.width = scaledWidth;
+    lightBufferCanvas.height = scaledHeight;
   }
   if (!lightBufferCtx) return null;
   return { canvas: lightBufferCanvas, ctx: lightBufferCtx };
@@ -513,9 +560,11 @@ export function renderStorybookLightingComposite(
   const buf = getLightBuffer(screenWidth, screenHeight);
   if (!buf) return;
   const { canvas: lCanvas, ctx: lCtx } = buf;
-
-  // Clear offscreen light buffer
-  lCtx.clearRect(0, 0, screenWidth, screenHeight);
+  // Clear offscreen light buffer and apply 0.5x downscaling transform
+  lCtx.save();
+  lCtx.setTransform(1, 0, 0, 1, 0, 0);
+  lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+  lCtx.setTransform(LIGHT_DOWNSCALE_FACTOR, 0, 0, LIGHT_DOWNSCALE_FACTOR, 0, 0);
 
   // -------------------------------------------------------------
   // 1. LIGHT PASS: Ambient fill
@@ -652,13 +701,16 @@ export function renderStorybookLightingComposite(
     }
   }
 
+  lCtx.restore();
+
   // -------------------------------------------------------------
   // 3. COMPOSITE PASS: Multiplicative Blending
   // Final Color = Scene Color * Lightmap Color
   // -------------------------------------------------------------
   ctx.save();
   ctx.globalCompositeOperation = 'multiply';
-  ctx.drawImage(lCanvas, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(lCanvas, 0, 0, lCanvas.width, lCanvas.height, 0, 0, screenWidth, screenHeight);
   ctx.restore();
 
   // -------------------------------------------------------------
