@@ -180,3 +180,13 @@ _Avoid_: buchta z truhly, svačina, heal drop
 Vzácná exotická posilující dobrota z dědečkovy nůše a malovaných truhel trvale zvyšující maximální Kuráž lovce o 25, pojmově oddělená od vrhací zbraně Kynutý koláč.
 _Avoid_: koláč z truhly, kynutý koláč perk, oranž
 
+## Vývoj a architektura
+
+**Dvoukolejný vývoj**:
+Model souběžného vývoje mezi webovým Google AI Studiem (rychlé prototypování UI a parametrů) a lokálním agentem (hloubková architektura a enginové moduly), jištěný samoopravným CI a rušením zastaralých běhů.
+_Avoid_: duální commitování, nesourodý vývoj, neřízený push
+
+**Modální šev**:
+Architektonická hranice v `AppModals.tsx` sdružující veškerá dialogová a nastavovací okna odděleně od herního plátna a simulační smyčky v `App.tsx`, eliminující merge konflikty při souběžné editaci.
+_Avoid_: dialogový kontejner, modal wrapper, UI bundle
+
