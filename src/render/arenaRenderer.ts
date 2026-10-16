@@ -12,6 +12,8 @@ import type { EngineState } from '../game/engineState';
 import { getStorybookSnowColor, renderStorybookLightingComposite } from './storybookLightingRenderer';
 import { shouldDrawCombatText } from '../game/effectSettings';
 
+import { ChunkBitmapCache } from './chunkCache';
+
 export interface CameraViewport {
   x: number;
   y: number;
@@ -31,6 +33,7 @@ export interface ArenaRenderOptions {
   chunkCullingEnabled?: boolean;
   warningIndicatorsEnabled?: boolean;
   statusIndicatorsEnabled?: boolean;
+  chunkCache?: ChunkBitmapCache;
 }
 
 export interface ArenaPhaseTimings {
@@ -103,7 +106,7 @@ export function renderArena(
   const { viewLeft, viewTop, viewRight, viewBottom, width, height } = camera;
   let renderedEntities = 0;
   let renderedDecor = 0;
-  const activeChunks = 0;
+  let activeChunks = 0;
 
   // 1. BACKDROP PASS
   const tBackdropStart = now();
@@ -117,9 +120,27 @@ export function renderArena(
   ctx.fillRect(0, 0, width, height);
   const backdropMs = now() - tBackdropStart;
 
-  // 2. STATIC DECOR PASS
+  // 2. STATIC DECOR PASS (WITH OPTIONAL CHUNK BITMAP CACHE)
   const tDecorStart = now();
-  if (engine.decor && engine.decor.length > 0) {
+  if (opts.chunkCache) {
+    activeChunks = opts.chunkCache.render(ctx, camera);
+    const dynamicDecor = opts.chunkCache.getDynamicDecor();
+    if (dynamicDecor && dynamicDecor.length > 0) {
+      const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
+      for (let i = 0; i < dynamicDecor.length; i++) {
+        const dec = dynamicDecor[i];
+        const scale = dec.scale || 1;
+        const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
+        if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
+          continue;
+        }
+        renderedDecor++;
+        if (typeof dec.draw === 'function') {
+          dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime || 0, isNight);
+        }
+      }
+    }
+  } else if (engine.decor && engine.decor.length > 0) {
     const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
     for (let i = 0; i < engine.decor.length; i++) {
       const dec = engine.decor[i];
