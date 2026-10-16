@@ -7,33 +7,7 @@ import {
 } from '../src/render/arenaRenderer';
 import { createInitialEngineState } from '../src/game/engineState';
 import type { EngineState } from '../src/game/engineState';
-
-function createMockContext(): CanvasRenderingContext2D {
-  return {
-    save: vi.fn(),
-    restore: vi.fn(),
-    translate: vi.fn(),
-    rotate: vi.fn(),
-    scale: vi.fn(),
-    beginPath: vi.fn(),
-    closePath: vi.fn(),
-    moveTo: vi.fn(),
-    lineTo: vi.fn(),
-    arc: vi.fn(),
-    ellipse: vi.fn(),
-    rect: vi.fn(),
-    fill: vi.fn(),
-    stroke: vi.fn(),
-    fillRect: vi.fn(),
-    clearRect: vi.fn(),
-    drawImage: vi.fn(),
-    fillText: vi.fn(),
-    strokeText: vi.fn(),
-    canvas: { width: 1280, height: 720 },
-    fillStyle: '#000',
-    strokeStyle: '#000',
-  } as unknown as CanvasRenderingContext2D;
-}
+import { createMockCanvasContext } from './helpers/mockCanvas';
 
 describe('Zero-Allocation Entity Pipeline (Ticket #30)', () => {
   let ctx: CanvasRenderingContext2D;
@@ -41,7 +15,7 @@ describe('Zero-Allocation Entity Pipeline (Ticket #30)', () => {
   let camera: CameraViewport;
 
   beforeEach(() => {
-    ctx = createMockContext();
+    ctx = createMockCanvasContext();
     engine = createInitialEngineState();
     camera = {
       x: 0,

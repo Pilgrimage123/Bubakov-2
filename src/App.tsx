@@ -365,18 +365,8 @@ class DamageText {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    if (this.text && drawGlyphText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, alpha: this.life })) {
-      return;
-    }
-    ctx.globalAlpha = Math.max(0, this.life);
-    ctx.fillStyle = this.color;
-    if (this.size !== 18) {
-      ctx.font = `900 ${this.size}px Eczar`;
-    }
-    ctx.strokeText(this.text, this.x, this.y);
-    ctx.fillText(this.text, this.x, this.y);
-    if (this.size !== 18) {
-      ctx.font = '900 18px Eczar';
+    if (this.text) {
+      drawGlyphText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, alpha: this.life });
     }
   }
 }
@@ -6512,6 +6502,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // becomes increasingly expensive on large maps.
         const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
         if (arenaChunkCacheRef.current && arenaChunkCacheRef.current.getChunkCount() > 0) {
+          arenaChunkCacheRef.current.rebuildIfChanged(engine.decor, curLvl.season, curLvl.theme, isNight);
           arenaChunkCacheRef.current.render(ctx, { x: cam.x, y: cam.y, width: canvas.width, height: canvas.height, viewLeft, viewTop, viewRight, viewBottom });
           const dynamicDecor = arenaChunkCacheRef.current.getDynamicDecor();
           for (let i = 0; i < dynamicDecor.length; i++) {

@@ -5,43 +5,13 @@ import {
   renderStorybookLightingComposite,
 } from '../src/render/storybookLightingRenderer';
 import type { DynamicLightSource } from '../src/game/storybookLighting';
-
-function createMockContext(): CanvasRenderingContext2D {
-  return {
-    save: vi.fn(),
-    restore: vi.fn(),
-    translate: vi.fn(),
-    rotate: vi.fn(),
-    scale: vi.fn(),
-    setTransform: vi.fn(),
-    beginPath: vi.fn(),
-    closePath: vi.fn(),
-    moveTo: vi.fn(),
-    lineTo: vi.fn(),
-    arc: vi.fn(),
-    ellipse: vi.fn(),
-    rect: vi.fn(),
-    fill: vi.fn(),
-    stroke: vi.fn(),
-    fillRect: vi.fn(),
-    clearRect: vi.fn(),
-    drawImage: vi.fn(),
-    createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-    createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-    createPattern: vi.fn(),
-    canvas: { width: 1280, height: 720 },
-    fillStyle: '#000',
-    strokeStyle: '#000',
-    globalCompositeOperation: 'source-over',
-    imageSmoothingEnabled: false,
-  } as unknown as CanvasRenderingContext2D;
-}
+import { createMockCanvasContext } from './helpers/mockCanvas';
 
 describe('Downscaled Lighting Pipeline (Ticket #31)', () => {
   let ctx: CanvasRenderingContext2D;
 
   beforeEach(() => {
-    ctx = createMockContext();
+    ctx = createMockCanvasContext();
   });
 
   it('allocates offscreen lighting buffer at 0.5x resolution (75% fillrate reduction)', () => {

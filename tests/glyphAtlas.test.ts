@@ -4,34 +4,14 @@ import {
   getGlobalGlyphAtlas,
   drawGlyphText,
 } from '../src/render/glyphAtlas';
-
-function createMockContext(): CanvasRenderingContext2D {
-  return {
-    save: vi.fn(),
-    restore: vi.fn(),
-    translate: vi.fn(),
-    drawImage: vi.fn(),
-    fillText: vi.fn(),
-    strokeText: vi.fn(),
-    measureText: vi.fn((text: string) => ({ width: text.length * 10 })),
-    clearRect: vi.fn(),
-    beginPath: vi.fn(),
-    fill: vi.fn(),
-    stroke: vi.fn(),
-    font: '',
-    fillStyle: '',
-    strokeStyle: '',
-    lineWidth: 1,
-    globalAlpha: 1,
-  } as unknown as CanvasRenderingContext2D;
-}
+import { createMockCanvasContext } from './helpers/mockCanvas';
 
 describe('Bitmap Glyph Cache for Combat Numbers (Ticket #32)', () => {
   let ctx: CanvasRenderingContext2D;
   let atlas: GlyphAtlas;
 
   beforeEach(() => {
-    ctx = createMockContext();
+    ctx = createMockCanvasContext();
     atlas = new GlyphAtlas();
     atlas.init();
   });

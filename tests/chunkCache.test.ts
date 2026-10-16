@@ -1,25 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ChunkBitmapCache, type ChunkBounds } from '../src/render/chunkCache';
 import type { CameraViewport } from '../src/render/arenaRenderer';
-
-function createMockContext(): CanvasRenderingContext2D {
-  return {
-    save: vi.fn(),
-    restore: vi.fn(),
-    translate: vi.fn(),
-    drawImage: vi.fn(),
-    beginPath: vi.fn(),
-    stroke: vi.fn(),
-    fill: vi.fn(),
-  } as unknown as CanvasRenderingContext2D;
-}
+import { createMockCanvasContext } from './helpers/mockCanvas';
 
 describe('Chunk Bitmap Cache (Ticket #29)', () => {
   let ctx: CanvasRenderingContext2D;
   let camera: CameraViewport;
 
   beforeEach(() => {
-    ctx = createMockContext();
+    ctx = createMockCanvasContext();
     camera = {
       x: 0,
       y: 0,
@@ -97,6 +86,27 @@ describe('Chunk Bitmap Cache (Ticket #29)', () => {
 
     // Rebuild when night mode changes
     cache.build(decorList, 'winter', 'meadow', true);
+    expect(drawDecor).toHaveBeenCalledTimes(2);
+  });
+
+  it('rebuildIfChanged only rebuilds when day/night, season or theme actually changes', () => {
+    const drawDecor = vi.fn();
+    const decorList = [
+      { x: 100, y: 100, type: 'tree', scale: 1, draw: drawDecor } as any,
+    ];
+
+    const cache = new ChunkBitmapCache({ chunkSize: 512 });
+    cache.build(decorList, 'winter', 'meadow', false);
+    expect(drawDecor).toHaveBeenCalledTimes(1);
+
+    // Same state: no rebuild
+    const changed1 = cache.rebuildIfChanged(decorList, 'winter', 'meadow', false);
+    expect(changed1).toBe(false);
+    expect(drawDecor).toHaveBeenCalledTimes(1);
+
+    // Night phase transition: rebuilds!
+    const changed2 = cache.rebuildIfChanged(decorList, 'winter', 'meadow', true);
+    expect(changed2).toBe(true);
     expect(drawDecor).toHaveBeenCalledTimes(2);
   });
 });

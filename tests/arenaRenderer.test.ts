@@ -1,45 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderArena, type CameraViewport, type ArenaRenderOptions } from '../src/render/arenaRenderer';
+import { renderArena, isInView, type CameraViewport, type ArenaRenderOptions } from '../src/render/arenaRenderer';
 import { createInitialEngineState } from '../src/game/engineState';
 import type { EngineState } from '../src/game/engineState';
-
-function createMockContext(): CanvasRenderingContext2D {
-  return {
-    save: vi.fn(),
-    restore: vi.fn(),
-    translate: vi.fn(),
-    rotate: vi.fn(),
-    scale: vi.fn(),
-    beginPath: vi.fn(),
-    closePath: vi.fn(),
-    moveTo: vi.fn(),
-    lineTo: vi.fn(),
-    arc: vi.fn(),
-    ellipse: vi.fn(),
-    rect: vi.fn(),
-    fill: vi.fn(),
-    stroke: vi.fn(),
-    fillRect: vi.fn(),
-    strokeRect: vi.fn(),
-    clearRect: vi.fn(),
-    drawImage: vi.fn(),
-    fillText: vi.fn(),
-    strokeText: vi.fn(),
-    measureText: vi.fn(() => ({ width: 10 })),
-    createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-    createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-    createPattern: vi.fn(),
-    canvas: { width: 1280, height: 720 },
-    fillStyle: '#000',
-    strokeStyle: '#000',
-    lineWidth: 1,
-    lineCap: 'round',
-    lineJoin: 'round',
-    globalAlpha: 1,
-    globalCompositeOperation: 'source-over',
-    font: '16px sans-serif',
-  } as unknown as CanvasRenderingContext2D;
-}
+import { createMockCanvasContext } from './helpers/mockCanvas';
 
 describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
   let ctx: CanvasRenderingContext2D;
@@ -47,7 +10,7 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
   let camera: CameraViewport;
 
   beforeEach(() => {
-    ctx = createMockContext();
+    ctx = createMockCanvasContext();
     engine = createInitialEngineState();
     camera = {
       x: 0,
@@ -114,15 +77,20 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     expect(typeof metrics.timings.totalMs).toBe('number');
   });
 
-  it('respects optional toggle flags to skip passes (lighting, VFX, damage texts)', () => {
+  it('supports passing CameraViewport directly to isInView', () => {
+    expect(isInView(0, 0, 20, camera)).toBe(true);
+    expect(isInView(2000, 2000, 20, camera)).toBe(false);
+  });
+
+  it('respects optional toggle flags to skip passes (lighting, VFX, combat texts)', () => {
     const drawText = vi.fn();
     engine.texts = [
-      { x: 10, y: 10, size: 18, category: 'normal_damage', text: '50', draw: drawText } as any,
+      { x: 10, y: 10, size: 18, category: 'enemyDamage', text: '50', draw: drawText } as any,
     ];
 
     const options: ArenaRenderOptions = {
       lightingEnabled: false,
-      damageNumbersEnabled: false,
+      combatTextsEnabled: false,
     };
 
     const metrics = renderArena(ctx, engine, camera, options);
