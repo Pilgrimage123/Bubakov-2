@@ -9,6 +9,33 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '16. října 2026',
+    title: 'Optimalizace kvašového svícení, eliminace Gaussian blurů a zrychlení herní smyčky',
+    summary: 'Důkladná revize výkonu bojové arény při vysokých počtech monster a v nočních fázích. Odstraněny náročné Gaussian blury z kreseb monster a projektilů, světelný buffer rasterizuje stíny ve 4× nižším rozlišení, dropy a projektily se čerpají z mezipaměti sprite bitmap a stínoví nepřátelé mimo obrazovku již nezatěžují procesor raycasty.',
+    items: [
+      '🕯️ Rychlé kvašové svícení bez zbytečných mezipamětí: Světla bez překážek se kreslí přímo do polovičního bufferu. Pomocný stínový buffer zmenšen na 0.5× rozlišení pro 75% úsporu pixelových operací.',
+      '✨ Pre-renderovaný Bloom a viněta strachu: Noční záře světel i celoobrazovková viněta strachu při nízké Kuráži využívají cachované bitmapy namísto per-frame generování radiálních gradientů.',
+      '🚫 Úplná eliminace ctx.shadowBlur z postav i střel: Z kreseb Hejkala, Obra, Klekánice, Čerta, Draka, Rytíře a projektilů byly odstraněny neukončené Gaussian blury, které způsobovaly propady FPS na 15–20 snímků.',
+      '👁️ Ochrana procesoru před mimobrazovkovými stíny: Stínoví nepřátelé i Bludičky mimo dohled lovce (distToPlayer > 850 px) zcela přeskakují raycasty a stínové výpočty. Na obrazovce jsou raycasty throttlovány na 0,10–0,15 s.',
+      '⚡ O(1) správa světel a sloučení vykreslovacích průchodů: Opraven únik paměti Bludiček, trvalá světla se nehledají lineárními skeny a trojnásobné procházení nepřátel při vykreslování bylo sloučeno do jediného rychlého průchodu.',
+      '🍪 Sprite caching pro dropy a projektily: Perníčky všech 3 velikostí, kyselá okurka, včela, sněhová koule i svěcená kapka se vykreslují z předpřipravených off-screen sprite pláten.',
+      '🧪 Pro testery: ověřte stabilních 60 FPS v noční fázi s desítkami monster na obrazovce, při salvách střel a rvačce s dudáckým oblakem.',
+    ],
+  },
+  {
+    date: '16. října 2026',
+    title: 'Výkonnostní pipeline arény: ChunkBitmapCache, GlyphAtlas a plynulý Canvas 2D',
+    summary: 'Kompletní optimalizace vykreslovací pipeline bojové arény při 100% zachování autentické ladovské kresby. Statické kulisy se kreslí z bitmapových dlaždic, texty poškození z runového atlasu a osvětlení šetří 75 % pixelových výpočtů.',
+    items: [
+      '🖼️ ChunkBitmapCache pro statické kulisy: Roubenky, boží muka a stromy jsou pre-renderovány do bitmapových bloků 512×512 px. Při posunu kamery se vykreslují bleskově jediným příkazem drawImage s automatickým přepečením nočních světel oken.',
+      '🔢 Bleskový GlyphAtlas bez sekání: Čísla zranění a bojové symboly se čerpají z předpřipraveného atlasu glyphů s tušovou konturou, čímž odpadá jakékoliv zpomalování prohlížeče úklidem paměti (GC).',
+      '🕯️ 0.5× Kvašová záře s bilineárním vyhlazením: Noční tma a světlo petrolejky se počítají v polovičním rozlišení a promítají přes bilineární filtr – ušetřeno 75 % výpočtů bez ztráty měkké pohádkové atmosféry.',
+      '⚡ Řazení hloubky bez alokací: Vykreslování stovek potvor podle hloubky (Y-sort) využívá znovupoužitelné paměťové buffery. Žádné vytváření zbytečných polí v každém snímku.',
+      '🏛️ Kánon a ADR 0017: Zdokumentováno architektonické rozhodnutí zachovávající ryzí Canvas 2D technologii a odmítající generické WebGL herní enginy.',
+      '🧪 Pro testery: v aréně sledujte plynulost při 100+ strašidlech a ověřte bezchybné zobrazení chalup, nočních stínů a bojových textů.',
+    ],
+  },
+  {
     date: '15. října 2026',
     title: 'Bojové plovoucí texty: 9 kategorií zobrazení, předvolby a optimalizace výkonu',
     summary: 'Kompletní kontrola nad texty v bojové aréně. Hráč si může zaškrtnutím vybrat z 9 samostatných kategorií textu pro nerušený výhled na bojiště a maximální snímkovou frekvenci (FPS).',
