@@ -239,21 +239,20 @@ export function renderArena(
   if (opts.lightingEnabled) {
     const tLightStart = now();
     const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-    if (isNight && engine.lightSources && engine.lightSources.length > 0) {
       renderStorybookLightingComposite(
         ctx,
-        engine.lightSources,
-        engine.shadowZones || [],
-        engine.occluders || [],
-        viewLeft,
-        viewTop,
         width,
         height,
+        { x: camera.x, y: camera.y },
+        engine.lightSources,
         phase.id,
         kurazRatio,
-        engine.uiTime || 0
+        curLvl.season === 'winter',
+        engine.shadowZones || [],
+        engine.occluders || [],
+        opts.performanceProfile === 'battery' ? 'performance' : opts.performanceProfile === 'standard' ? 'balanced' : 'fidelity',
+        true
       );
-    }
     lightingMs = now() - tLightStart;
   }
 
