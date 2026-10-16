@@ -1,3 +1,12 @@
+## 2026-10-16 — Výkonnostní pipeline vykreslování arény: ChunkBitmapCache, GlyphAtlas a optimalizace 2D Canvasu
+
+- **Dedikovaný bezstavový modul vykreslování arény (`renderArena`)**: Veškerá logika vykreslování scény, kulis, entit, stínových a světelných vrstev byla vyčleněna z komponenty `App.tsx` do samostatného modulu `src/render/arenaRenderer.ts` s nulovou vazbou na stavový strom Reactu a herní simulační smyčku.
+- **Dlaždicová mezipaměť statických kulis (`ChunkBitmapCache`)**: Statické objekty krajiny (roubenky, boží muka, stromy, ploty, sněhové závěje) jsou pre-renderovány do offscreen bitmapových dlaždic (chunků o rozměrech 512×512 px). Při pohybu kamery se scéna skládá z hotových bitmap pomocí `drawImage`, čímž se ušetřily stovky volání vektorových cest za snímek. Mezipaměť automaticky plynule detekuje změnu denní/noční fáze a přepeče teplou záři oken a svící.
+- **Pre-renderovaný atlas číslic a symbolů pro bojové plovoucí texty (`GlyphAtlas`)**: Čísla poškození, léčení, kritických zásahů a symboly stavů jsou vykreslovány z pre-renderovaného atlasu s inkoustovým lemováním a stínováním. Zcela eliminuje alokace řetězců a náročná volání `ctx.strokeText()` a `ctx.fillText()` v horké renderovací smyčce.
+- **0.5× offscreen osvětlení s bilineárním vyhlazením (`StorybookLightingRenderer`)**: Ladovské světelné vrstvy (Kvašová záře, Petrolejka a noční stíny) se rasterizují na offscreen plátno v polovičním rozlišení (0,5×) a do hlavní scény promítají s hardwarově akcelerovaným bilineárním škálováním. Šetří 75 % pixelových operací světelné vrstvy při zachování měkkého pohádkového charakteru.
+- **Řazení hloubky bez alokace paměti (Zero-allocation depth sorting)**: Vykreslování entit podle hloubky využívá per-renderer scratch buffer (`entitiesScratch`). Bylo zcela eliminováno vytváření dočasných polí a objektů v každém snímku, což brání propadům FPS způsobeným garbage collectorem prohlížeče.
+- **Architektonické rozhodnutí ADR 0017**: Sepsán a schválen záznam `docs/adr/0017-odmitnuti-phaseru-a-architektura-vykonnostni-pipeline.md`, který formálně odmítá přechod na Phaser/WebGL a kodifikuje čistou Canvas 2D optimalizační pipeline chránící autentický vizuální styl Josefa Lady.
+
 ## 2026-10-15 — Bojové plovoucí texty: 9 kategorií zobrazení, předvolby a optimalizace výkonu
 
 - **Rozdělení textů v aréně do 9 samostatných kategorií (`CombatTextCategory`)**: Hráč může odděleně zapínat a vypínat:
