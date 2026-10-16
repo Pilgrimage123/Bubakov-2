@@ -52,7 +52,6 @@ import {
 } from './game/effectSettings';
 import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/frostAura';
 import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
-import { HunterInfoModal } from './components/HunterInfoModal';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
 import { getMilestoneChoice, getMilestoneChoices, getRankedWeaponStats, getWeaponRankDef, getEffectiveWeaponCooldown, ensureWeaponMilestones, COOLDOWN_REDUCTION_CAP, getWeaponActiveCooldownBonus, rollRandomWeaponUpgrade } from './data/weaponMilestones';
 import { ENEMIES } from './data/enemies';
@@ -98,9 +97,7 @@ import {
   renderStorybookLightingComposite,
   drawNormalMappedReliefRim,
 } from './render/storybookLightingRenderer';
-import { BestiaryModal } from './components/BestiaryModal';
-import { PlanModal } from './components/PlanModal';
-import { ControlsModal } from './components/ControlsModal';
+import { AppModals } from './components/AppModals';
 import { VillageView } from './components/VillageView';
 import {
   calculateTotalVillageInvested,
@@ -114,12 +111,8 @@ import {
   getChurchWaveDamage
 } from './data/village';
 import { TouchControls } from './components/TouchControls';
-import { HunterUnlockModal } from './components/HunterUnlockModal';
 import { getHunterProgress, HUNTER_UNLOCKS, HunterProgress, getActiveUnlockingHunter } from './data/hunterUnlocks';
-import { ArsenalModal } from './components/ArsenalModal';
-import { WeaponUnlockModal } from './components/WeaponUnlockModal';
 import { getWeaponProgress, WEAPON_UNLOCKS, WeaponProgress, getActiveUnlockingWeapon } from './data/weaponUnlocks';
-import { LevelUnlockModal } from './components/LevelUnlockModal';
 import {
   getLevelProgress,
   LEVEL_UNLOCKS,
@@ -130,11 +123,6 @@ import {
 import { GameIcon } from './components/GameIcon';
 import { CzechBuchtaIcon } from './components/CzechBuchtaIcon';
 import { KrejcarIcon } from './components/KrejcarIcon';
-import { TestModeModal } from './components/TestModeModal';
-import { AnimationTesterModal } from './components/AnimationTesterModal';
-import { ResetProgressModal } from './components/ResetProgressModal';
-import { SettingsDevModal } from './components/SettingsDevModal';
-import { CombatTextSettingsModal } from './components/CombatTextSettingsModal';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
@@ -12534,137 +12522,58 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         </div>
       )}
 
-      {/* CONTROLS & OBJECTIVE MODAL */}
-      <ControlsModal
-        isOpen={isControlsOpen}
-        onClose={() => setIsControlsOpen(false)}
-      />
-
-      {/* SETTINGS & DEV MODAL */}
-      <SettingsDevModal
-        isOpen={isSettingsDevOpen}
-        onClose={() => setIsSettingsDevOpen(false)}
-        performanceMode={!!meta.performanceMode}
-        performanceProfile={meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')}
-        onChangePerformanceProfile={(profile) => {
-          saveMeta({ ...meta, performanceProfile: profile, performanceMode: profile === 'performance' });
-        }}
-        onTogglePerformanceMode={(enabled) => {
-          saveMeta({ ...meta, performanceMode: enabled, performanceProfile: enabled ? 'performance' : 'balanced' });
-        }}
-        showPerfOverlay={!!meta.showPerfOverlay}
-        onToggleShowPerfOverlay={(enabled) => {
-          saveMeta({ ...meta, showPerfOverlay: enabled });
-        }}
-        dynamicLightingEnabled={meta.dynamicLightingEnabled !== false}
-        onToggleDynamicLighting={(enabled) => {
-          saveMeta({ ...meta, dynamicLightingEnabled: enabled });
-        }}
-        dynamicDifficulty={meta.dynamicDifficulty ?? 3.0}
-        onChangeDynamicDifficulty={(diff) => {
-          saveMeta({ ...meta, dynamicDifficulty: diff });
-        }}
+      {/* APP MODALS (MODÁLNÍ ŠEV - ADR 0018) */}
+      <AppModals
+        meta={meta}
+        saveMeta={saveMeta}
+        isControlsOpen={isControlsOpen}
+        onCloseControls={() => setIsControlsOpen(false)}
+        isSettingsDevOpen={isSettingsDevOpen}
+        onCloseSettingsDev={() => setIsSettingsDevOpen(false)}
         onOpenCombatTextSettings={() => setIsCombatTextModalOpen(true)}
         onOpenTestMode={() => setIsTestModeOpen(true)}
         onOpenAnimationTester={() => setIsAnimationTesterOpen(true)}
         onOpenPlan={() => setIsPlanOpen(true)}
         onOpenResetProgress={() => setIsResetModalOpen(true)}
-      />
-
-      {/* COMBAT TEXT SETTINGS MODAL */}
-      <CombatTextSettingsModal
-        isOpen={isCombatTextModalOpen}
-        onClose={() => setIsCombatTextModalOpen(false)}
-        settings={meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS}
-        onChangeSettings={(nextSettings) => {
-          saveMeta({ ...meta, combatTextSettings: nextSettings });
-          setCombatTextSettings(nextSettings);
-        }}
-      />
-
-      {/* TEST MODE (SANDBOX) MODAL */}
-      <TestModeModal
-        isOpen={isTestModeOpen}
-        onClose={() => setIsTestModeOpen(false)}
+        isCombatTextModalOpen={isCombatTextModalOpen}
+        onCloseCombatTextModal={() => setIsCombatTextModalOpen(false)}
+        isTestModeOpen={isTestModeOpen}
+        onCloseTestMode={() => setIsTestModeOpen(false)}
         onStartTestRun={(hero, levelId, weapons, grandfatherUpgrades) => {
           startGame(hero, levelId as any, weapons, true, grandfatherUpgrades);
         }}
-        initialLevelId={selectedLevelId}
-        onOpenGrandfatherShop={openGrandfatherShopTest}
-      />
-
-      {/* ANIMATION TESTER MODAL */}
-      <AnimationTesterModal
-        isOpen={isAnimationTesterOpen}
-        onClose={() => setIsAnimationTesterOpen(false)}
-      />
-
-      {/* RESET PROGRESS CONFIRMATION MODAL */}
-      <ResetProgressModal
-        isOpen={isResetModalOpen}
-        onClose={() => setIsResetModalOpen(false)}
-        onConfirmReset={handleResetProgress}
-      />
-
-      {/* BESTIARY MODAL */}
-      <BestiaryModal
-        isOpen={isBestiaryOpen}
-        onClose={() => setIsBestiaryOpen(false)}
-        bestiaryKills={meta.bestiaryKills || {}}
-      />
-
-      {/* PLAN MODAL */}
-      <PlanModal
-        isOpen={isPlanOpen}
-        onClose={() => setIsPlanOpen(false)}
-        defaultTab="plan"
-      />
-
-      {/* HUNTER UNLOCK DETAILS MODAL */}
-      <HunterUnlockModal
-        progress={selectedHunterDetail}
-        onClose={() => setSelectedHunterDetail(null)}
-        onStartIfUnlocked={(id) => startGame(id)}
-      />
-      <HunterInfoModal hunter={selectedHunterInfo} onClose={() => setSelectedHunterInfo(null)} />
-
-      {/* LEVEL UNLOCK DETAILS MODAL */}
-      <LevelUnlockModal
-        progress={selectedLevelDetail}
-        onClose={() => setSelectedLevelDetail(null)}
-        onSelectIfUnlocked={(id) => {
+        selectedLevelId={selectedLevelId}
+        onOpenGrandfatherShopTest={openGrandfatherShopTest}
+        isAnimationTesterOpen={isAnimationTesterOpen}
+        onCloseAnimationTester={() => setIsAnimationTesterOpen(false)}
+        isResetModalOpen={isResetModalOpen}
+        onCloseResetModal={() => setIsResetModalOpen(false)}
+        onConfirmResetProgress={handleResetProgress}
+        isBestiaryOpen={isBestiaryOpen}
+        onCloseBestiary={() => setIsBestiaryOpen(false)}
+        isPlanOpen={isPlanOpen}
+        onClosePlan={() => setIsPlanOpen(false)}
+        selectedHunterDetail={selectedHunterDetail}
+        onCloseHunterDetail={() => setSelectedHunterDetail(null)}
+        onStartIfHunterUnlocked={(id) => startGame(id)}
+        selectedHunterInfo={selectedHunterInfo}
+        onCloseHunterInfo={() => setSelectedHunterInfo(null)}
+        selectedLevelDetail={selectedLevelDetail}
+        onCloseLevelDetail={() => setSelectedLevelDetail(null)}
+        onSelectLevelIfUnlocked={(id) => {
           setSelectedLevelId(id);
           saveMeta({ ...meta, selectedLevel: id });
           setSelectedLevelDetail(null);
           setMenuScreen('hunter');
         }}
-      />
-
-      {/* ARSENAL & WEAPONS UNLOCK MODAL */}
-      <ArsenalModal
-        isOpen={isArsenalOpen}
-        onClose={() => setIsArsenalOpen(false)}
-        meta={meta}
+        isArsenalOpen={isArsenalOpen}
+        onCloseArsenal={() => setIsArsenalOpen(false)}
+        selectedWeaponDetail={selectedWeaponDetail}
+        onCloseWeaponDetail={() => setSelectedWeaponDetail(null)}
         onInspectWeapon={(prog) => setSelectedWeaponDetail(prog)}
+        unlockNotice={unlockNotice}
+        onDismissUnlockNotice={() => setUnlockNotice(null)}
       />
-
-      {/* WEAPON UNLOCK DETAILS MODAL */}
-      <WeaponUnlockModal
-        progress={selectedWeaponDetail}
-        onClose={() => setSelectedWeaponDetail(null)}
-      />
-
-      {/* UNLOCK TOAST BANNER */}
-      {unlockNotice && isGameEffectEnabled('unlockNotificationsEnabled') && (
-        <div className="unlock-toast-banner" onClick={() => setUnlockNotice(null)}>
-          <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px' }}>
-            {unlockNotice.title}
-          </div>
-          <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>
-            {unlockNotice.desc}
-          </div>
-        </div>
-      )}
     </>
   );
 }

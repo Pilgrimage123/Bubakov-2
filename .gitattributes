@@ -1,0 +1,5 @@
+# Treat lockfile conflicts gracefully during parallel branch integrations
+package-lock.json merge=ours
+
+# Normalize line endings
+* text=auto eol=lf
