@@ -149,6 +149,36 @@ function getSingleLightBuffer(requiredDim: number): { canvas: HTMLCanvasElement;
   return { canvas: singleLightCanvas, ctx: singleLightCtx };
 }
 
+let bloomCanvas: HTMLCanvasElement | null = null;
+
+/**
+ * Pre-rendered 64x64 incandescent bloom sprite to avoid per-light radial gradient allocations.
+ */
+function getBloomSprite(): HTMLCanvasElement | null {
+  if (bloomCanvas) return bloomCanvas;
+  if (typeof document === 'undefined') return null;
+  bloomCanvas = document.createElement('canvas');
+  bloomCanvas.width = 64;
+  bloomCanvas.height = 64;
+  const bCtx = bloomCanvas.getContext('2d');
+  if (!bCtx) return null;
+
+  const grad = bCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, 'rgba(255, 250, 220, 1.0)');
+  grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.49)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  bCtx.fillStyle = grad;
+  bCtx.beginPath();
+  bCtx.arc(32, 32, 32, 0, Math.PI * 2);
+  bCtx.fill();
+  return bloomCanvas;
+}
+
+let cachedVignetteGrad: CanvasGradient | null = null;
+let cachedVignetteCtx: CanvasRenderingContext2D | null = null;
+let cachedVignetteWidth = 0;
+let cachedVignetteHeight = 0;
+
 /**
  * Computes winter snow ground tint according to day phase and Kuráž.
  */
@@ -623,16 +653,37 @@ export function renderStorybookLightingComposite(
       }
     }
 
-    // Render individual light source with shadow volume cutouts
+    if (nearbyOccluders.length === 0) {
+      // Direct rendering into 0.5x lightmap without clearRect and scratch buffer copying!
+      lCtx.save();
+      lCtx.globalCompositeOperation = 'lighter';
+      renderSteppedGouacheHaloToBuffer(
+        lCtx,
+        sx,
+        sy,
+        reach,
+        src.color || '#FEF08A',
+        stipple,
+        src.intensity ?? 1
+      );
+      lCtx.restore();
+      continue;
+    }
+
+    // Render individual light source with shadow volume cutouts downscaled by LIGHT_DOWNSCALE_FACTOR
     const lightSize = Math.ceil(reach * 2 + 10);
-    const sBuf = getSingleLightBuffer(lightSize);
+    const scaledLightSize = Math.ceil(lightSize * LIGHT_DOWNSCALE_FACTOR);
+    const sBuf = getSingleLightBuffer(scaledLightSize);
 
     if (sBuf) {
       const { canvas: sCanvas, ctx: sCtx } = sBuf;
       const halfSize = lightSize * 0.5;
 
-      // Clear scratch light canvas
-      sCtx.clearRect(0, 0, lightSize, lightSize);
+      // Clear scratch light canvas (downscaled: 75% fewer pixels)
+      sCtx.clearRect(0, 0, scaledLightSize, scaledLightSize);
+
+      sCtx.save();
+      sCtx.scale(LIGHT_DOWNSCALE_FACTOR, LIGHT_DOWNSCALE_FACTOR);
 
       // Render stepped gouache halo into scratch buffer
       renderSteppedGouacheHaloToBuffer(
@@ -646,42 +697,41 @@ export function renderStorybookLightingComposite(
       );
 
       // If there are occluders, extrude vector shadow volumes and erase light from blocked zones
-      if (nearbyOccluders.length > 0) {
-        sCtx.save();
-        sCtx.globalCompositeOperation = 'destination-out';
-        sCtx.fillStyle = '#000000';
+      sCtx.save();
+      sCtx.globalCompositeOperation = 'destination-out';
+      sCtx.fillStyle = '#000000';
 
-        for (let j = 0; j < nearbyOccluders.length; j++) {
-          const occ = nearbyOccluders[j];
-          const shadowVols = computeShadowVolume(src.x, src.y, reach, occ);
+      for (let j = 0; j < nearbyOccluders.length; j++) {
+        const occ = nearbyOccluders[j];
+        const shadowVols = computeShadowVolume(src.x, src.y, reach, occ);
 
-          for (let k = 0; k < shadowVols.length; k++) {
-            const poly = shadowVols[k];
-            sCtx.beginPath();
-            // Transform world coordinates to scratch buffer relative coordinates
-            sCtx.moveTo(poly.p1.x - src.x + halfSize, poly.p1.y - src.y + halfSize);
-            sCtx.lineTo(poly.p2.x - src.x + halfSize, poly.p2.y - src.y + halfSize);
-            sCtx.lineTo(poly.e2.x - src.x + halfSize, poly.e2.y - src.y + halfSize);
-            sCtx.lineTo(poly.e1.x - src.x + halfSize, poly.e1.y - src.y + halfSize);
-            sCtx.closePath();
-            sCtx.fill();
-          }
-
-          // Also mask out the occluder interior so light doesn't shine inside the solid house
-          if (occ.width && occ.height) {
-            const ox = occ.x - src.x + halfSize;
-            const oy = occ.y - src.y + halfSize;
-            sCtx.fillRect(ox - occ.width * 0.5, oy - occ.height * 0.5, occ.width, occ.height);
-          } else if (occ.radius) {
-            const ox = occ.x - src.x + halfSize;
-            const oy = occ.y - src.y + halfSize;
-            sCtx.beginPath();
-            sCtx.arc(ox, oy, occ.radius, 0, Math.PI * 2);
-            sCtx.fill();
-          }
+        for (let k = 0; k < shadowVols.length; k++) {
+          const poly = shadowVols[k];
+          sCtx.beginPath();
+          // Transform world coordinates to scratch buffer relative coordinates
+          sCtx.moveTo(poly.p1.x - src.x + halfSize, poly.p1.y - src.y + halfSize);
+          sCtx.lineTo(poly.p2.x - src.x + halfSize, poly.p2.y - src.y + halfSize);
+          sCtx.lineTo(poly.e2.x - src.x + halfSize, poly.e2.y - src.y + halfSize);
+          sCtx.lineTo(poly.e1.x - src.x + halfSize, poly.e1.y - src.y + halfSize);
+          sCtx.closePath();
+          sCtx.fill();
         }
-        sCtx.restore();
+
+        // Also mask out the occluder interior so light doesn't shine inside the solid house
+        if (occ.width && occ.height) {
+          const ox = occ.x - src.x + halfSize;
+          const oy = occ.y - src.y + halfSize;
+          sCtx.fillRect(ox - occ.width * 0.5, oy - occ.height * 0.5, occ.width, occ.height);
+        } else if (occ.radius) {
+          const ox = occ.x - src.x + halfSize;
+          const oy = occ.y - src.y + halfSize;
+          sCtx.beginPath();
+          sCtx.arc(ox, oy, occ.radius, 0, Math.PI * 2);
+          sCtx.fill();
+        }
       }
+      sCtx.restore();
+      sCtx.restore();
 
       // Additively composite the masked light onto the main lightmap
       lCtx.save();
@@ -690,8 +740,8 @@ export function renderStorybookLightingComposite(
         sCanvas,
         0,
         0,
-        lightSize,
-        lightSize,
+        scaledLightSize,
+        scaledLightSize,
         sx - halfSize,
         sy - halfSize,
         lightSize,
@@ -719,6 +769,7 @@ export function renderStorybookLightingComposite(
   if (isNightPhase) {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
+    const bloomSprite = getBloomSprite();
     for (let i = 0; i < lightSources.length; i++) {
       const src = lightSources[i];
       const reach = src.radius * (src.intensity ?? 1);
@@ -732,15 +783,22 @@ export function renderStorybookLightingComposite(
       }
 
       const coreR = reach * 0.32;
-      const glowGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, coreR);
-      glowGrad.addColorStop(0, `rgba(255, 250, 220, ${0.45 * (src.intensity ?? 1)})`);
-      glowGrad.addColorStop(0.55, `rgba(245, 158, 11, ${0.22 * (src.intensity ?? 1)})`);
-      glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      const intensity = src.intensity ?? 1;
 
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(sx, sy, coreR, 0, Math.PI * 2);
-      ctx.fill();
+      if (bloomSprite) {
+        ctx.globalAlpha = Math.min(1.0, 0.45 * intensity);
+        ctx.drawImage(bloomSprite, sx - coreR, sy - coreR, coreR * 2, coreR * 2);
+      } else {
+        const glowGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, coreR);
+        glowGrad.addColorStop(0, `rgba(255, 250, 220, ${0.45 * intensity})`);
+        glowGrad.addColorStop(0.55, `rgba(245, 158, 11, ${0.22 * intensity})`);
+        glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(sx, sy, coreR, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -766,18 +824,28 @@ export function renderStorybookLightingComposite(
     ctx.lineTo(screenWidth - 85, screenHeight - 10 + Math.sin(t) * 4);
     ctx.stroke();
 
-    // Darkening edge fear wash
-    const fearGrad = ctx.createRadialGradient(
-      screenWidth * 0.5,
-      screenHeight * 0.5,
-      screenHeight * 0.35,
-      screenWidth * 0.5,
-      screenHeight * 0.5,
-      Math.hypot(screenWidth, screenHeight) * 0.52
-    );
-    fearGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    fearGrad.addColorStop(1, 'rgba(12, 10, 20, 0.42)');
-    ctx.fillStyle = fearGrad;
+    // Darkening edge fear wash (cached on screen resize / context change)
+    if (
+      !cachedVignetteGrad ||
+      cachedVignetteCtx !== ctx ||
+      cachedVignetteWidth !== screenWidth ||
+      cachedVignetteHeight !== screenHeight
+    ) {
+      cachedVignetteCtx = ctx;
+      cachedVignetteWidth = screenWidth;
+      cachedVignetteHeight = screenHeight;
+      cachedVignetteGrad = ctx.createRadialGradient(
+        screenWidth * 0.5,
+        screenHeight * 0.5,
+        screenHeight * 0.35,
+        screenWidth * 0.5,
+        screenHeight * 0.5,
+        Math.hypot(screenWidth, screenHeight) * 0.52
+      );
+      cachedVignetteGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      cachedVignetteGrad.addColorStop(1, 'rgba(12, 10, 20, 0.42)');
+    }
+    ctx.fillStyle = cachedVignetteGrad;
     ctx.fillRect(0, 0, screenWidth, screenHeight);
 
     ctx.restore();

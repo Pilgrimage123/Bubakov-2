@@ -10,6 +10,20 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '16. října 2026',
+    title: 'Optimalizace kvašového svícení, eliminace Gaussian blurů a zrychlení herní smyčky',
+    summary: 'Důkladná revize výkonu bojové arény při vysokých počtech monster a v nočních fázích. Odstraněny náročné Gaussian blury z kreseb monster a projektilů, světelný buffer rasterizuje stíny ve 4× nižším rozlišení, dropy a projektily se čerpají z mezipaměti sprite bitmap a stínoví nepřátelé mimo obrazovku již nezatěžují procesor raycasty.',
+    items: [
+      '🕯️ Rychlé kvašové svícení bez zbytečných mezipamětí: Světla bez překážek se kreslí přímo do polovičního bufferu. Pomocný stínový buffer zmenšen na 0.5× rozlišení pro 75% úsporu pixelových operací.',
+      '✨ Pre-renderovaný Bloom a viněta strachu: Noční záře světel i celoobrazovková viněta strachu při nízké Kuráži využívají cachované bitmapy namísto per-frame generování radiálních gradientů.',
+      '🚫 Úplná eliminace ctx.shadowBlur z postav i střel: Z kreseb Hejkala, Obra, Klekánice, Čerta, Draka, Rytíře a projektilů byly odstraněny neukončené Gaussian blury, které způsobovaly propady FPS na 15–20 snímků.',
+      '👁️ Ochrana procesoru před mimobrazovkovými stíny: Stínoví nepřátelé i Bludičky mimo dohled lovce (distToPlayer > 850 px) zcela přeskakují raycasty a stínové výpočty. Na obrazovce jsou raycasty throttlovány na 0,10–0,15 s.',
+      '⚡ O(1) správa světel a sloučení vykreslovacích průchodů: Opraven únik paměti Bludiček, trvalá světla se nehledají lineárními skeny a trojnásobné procházení nepřátel při vykreslování bylo sloučeno do jediného rychlého průchodu.',
+      '🍪 Sprite caching pro dropy a projektily: Perníčky všech 3 velikostí, kyselá okurka, včela, sněhová koule i svěcená kapka se vykreslují z předpřipravených off-screen sprite pláten.',
+      '🧪 Pro testery: ověřte stabilních 60 FPS v noční fázi s desítkami monster na obrazovce, při salvách střel a rvačce s dudáckým oblakem.',
+    ],
+  },
+  {
+    date: '16. října 2026',
     title: 'Výkonnostní pipeline arény: ChunkBitmapCache, GlyphAtlas a plynulý Canvas 2D',
     summary: 'Kompletní optimalizace vykreslovací pipeline bojové arény při 100% zachování autentické ladovské kresby. Statické kulisy se kreslí z bitmapových dlaždic, texty poškození z runového atlasu a osvětlení šetří 75 % pixelových výpočtů.',
     items: [

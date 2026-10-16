@@ -1,3 +1,23 @@
+## 2026-10-16 — Optimalizace kvašového svícení, eliminace Gaussian blurů v Canvas 2D a zrychlení renderovací smyčky
+
+- **Optimalizace kvašového svícení (`storybookLightingRenderer.ts`)**:
+  - Světla bez překážek (`nearbyOccluders.length === 0`) se vykreslují přímo do polovičního bufferu `lCtx` bez zbytečného alokování a kreslení do 1.0× pomocné mezipaměti.
+  - Pomocný stínový buffer `singleLightCanvas` byl zmenšen faktorem `LIGHT_DOWNSCALE_FACTOR = 0.5`, což ušetřilo 75 % nákladů na fillrate a rasterizaci stínů.
+  - Noční Bloom (Pass 4) byl nahrazen pre-renderovaným offscreen sprite bufferem `getBloomSprite()`, což eliminuje per-frame `ctx.createRadialGradient` a `screen` compositing pro každé světlo.
+  - Celoobrazovková viněta strachu (Pass 5) je nově kešována a regenerována pouze při změně rozlišení okna.
+- **Odstranění neukončených `ctx.shadowBlur` napříč `ladaRenderer.ts`**:
+  - Odstraněny masivní 20–24px Gaussian blury obalující celé postavy (Hejkal, Obr, Klekánice, Čert, Bezhlavý rytíř, Mlynář, Drak, Hastrman, Bílá paní, Nocní můra, Bubák, Mrazový skřítek, Dušička, Bludička) i projektily (ohnivé a mrazivé koule, pekelné jiskry).
+  - Nahrazeno čistou ladovskou technikou vrstvených tušových kontur a gradientních kvašových výplní.
+  - Odstraněno nákladné volání `Date.now()` z animačních smyček monster ve prospěch normalizované fáze útoku.
+- **Optimalizace volání v herní smyčce (`App.tsx` & `engine.ts`)**:
+  - Mimobrazovkoví stínoví nepřátelé (`category === 'shadows'`) přeskočí raycasty a occludery díky přesunu kontroly pod ořezávací guard `distToPlayer > 850`.
+  - Vyhodnocování `isPositionIlluminated` pro stínové nepřátele na obrazovce je throttlováno na 0,10–0,15 s (staggerováno přes `animTime`) s cachováním `_isLit`.
+  - Opraven únik paměti světel Bludičky a nahrazeny lineární `.find()` / `.findIndex()` skeny trvalých světel (`player_petrolejka`, `player_hromnicka`, `grandfather_hearth`, `bludicka`) přímými O(1) referencemi.
+  - Vznik přechodných bojových světel (hole, svěcené dopady, hromničky) je zastropován na nejvýše 16 a podmíněn aktivním nočním svícením.
+  - Sloučeny 3 separátní průchody vykreslování nepřátel do jediného průchodu přes buffer `drawables` (včetně dudáckých oblaků prachu).
+- **Sprite caching pro vysoce frekventované dropy a projektily**:
+  - Pre-renderovány statické bitmapy do `ladaSpriteCache`: perníčky (malý, velký, obří), kyselá okurka, včela, sněhová koule, svěcená kapka, buchta, koláč, jitrnice, hruška a mince (tolar, stříbrňák, krejcar).
+
 ## 2026-10-16 — Výkonnostní pipeline vykreslování arény: ChunkBitmapCache, GlyphAtlas a optimalizace 2D Canvasu
 
 - **Dedikovaný bezstavový modul vykreslování arény (`renderArena`)**: Veškerá logika vykreslování scény, kulis, entit, stínových a světelných vrstev byla vyčleněna z komponenty `App.tsx` do samostatného modulu `src/render/arenaRenderer.ts` s nulovou vazbou na stavový strom Reactu a herní simulační smyčku.

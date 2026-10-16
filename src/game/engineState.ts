@@ -108,6 +108,9 @@ export interface EngineState {
   sootFootprints: Array<{ x: number; y: number; life: number; angle: number }>;
   cameraTremorTimer: number;
   lightSources: DynamicLightSource[];
+  petrolejkaLight?: DynamicLightSource | null;
+  hromnickaLight?: DynamicLightSource | null;
+  grandfatherLight?: DynamicLightSource | null;
   shadowZones: ShadowZone[];
   occluders: LightOccluder[];
   /** Runtime-only state for the fixed Březnové tání arena. */
@@ -224,6 +227,9 @@ export function createInitialEngineState(): EngineState {
     sootFootprints: [],
     cameraTremorTimer: 0,
     lightSources: [],
+    petrolejkaLight: null,
+    hromnickaLight: null,
+    grandfatherLight: null,
     shadowZones: [],
     occluders: [],
     marchThaw: {

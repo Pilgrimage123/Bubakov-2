@@ -88,6 +88,7 @@ import {
   createGarlicHearthSpark,
   createCertEmberLight,
   seedLightingAndOccludersFromDecor,
+  type DynamicLightSource,
 } from './game/storybookLighting';
 import {
   getStorybookSnowColor,
@@ -1884,6 +1885,34 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const secondarySpatialResultsRef = useRef<any[]>([]);
   const directorRef = useRef<RunDirector | null>(null);
 
+  const pushTransientLight = useCallback((light: DynamicLightSource) => {
+    const eng = engineRef.current;
+    if (!eng || !eng.lightSources) return;
+    if (!isGameEffectEnabled('dynamicLightingEnabled')) return;
+
+    const dayPhase = getCurrentDayPhase(eng.gameTime || 0);
+    const player = eng.player;
+    const kurazRatio = player && player.maxHp > 0 ? player.hp / player.maxHp : 1;
+    const isNightPhase =
+      dayPhase.id === 'dusk' ||
+      dayPhase.id === 'night' ||
+      dayPhase.id === 'midnight' ||
+      dayPhase.id === 'dawn';
+    if (!isNightPhase && kurazRatio >= 0.25) {
+      return;
+    }
+
+    let transientCount = 0;
+    for (let i = 0; i < eng.lightSources.length; i++) {
+      if (typeof eng.lightSources[i].duration === 'number') {
+        transientCount++;
+      }
+    }
+    if (transientCount < 16) {
+      eng.lightSources.push(light);
+    }
+  }, []);
+
   // Pause toggle handler
   const togglePause = useCallback(() => {
     setGameState((cur) => {
@@ -2463,11 +2492,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (slash.pullLoot) {
           pullWhipLoot(engineRef.current.drops, slash.x, slash.y, slash.angle, slash.reach);
         }
-        engineRef.current.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
+        pushTransientLight(createOsikovySlashLight(slash.x, slash.y));
       },
       spawnAreaImpact(impact: any) {
         if (impact.type === 'holy') {
-          engineRef.current.lightSources.push(createHolyCathedralLight(impact.x, impact.y));
+          pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
         }
         const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
         for (let i = 0; i < nearby.length; i++) {
@@ -2484,7 +2513,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       spawnHromnickaPulse(reach: number, dmg: number, level: number) {
         this.hromnickaPulseTimer = 0.35;
         this.hromnickaPulseRadius = reach;
-        engineRef.current.lightSources.push(createHolyCathedralLight(this.x, this.y));
+        pushTransientLight(createHolyCathedralLight(this.x, this.y));
         const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
@@ -3469,7 +3498,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Storybook Illumination: update Petrolejka & dynamic light sources
             const dayPhase = getCurrentDayPhase(engine.gameTime);
             const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, engine.gameTime);
-            let pLight = engine.lightSources.find((ls) => ls.id === 'player_petrolejka');
+            let pLight = engine.petrolejkaLight;
             if (petrolejkaRadius > 0) {
               if (!pLight) {
                 pLight = {
@@ -3480,6 +3509,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   color: '#F59E0B',
                   type: 'petrolejka',
                 };
+                engine.petrolejkaLight = pLight;
                 engine.lightSources.push(pLight);
               } else {
                 pLight.x = player.x;
@@ -3492,12 +3522,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Hromnička blessed candle light
             const hasHromnicka = player.weapons && player.weapons.some((w: any) => w.id === 'hromnicka');
-            let hLight = engine.lightSources.find((ls) => ls.id === 'player_hromnicka');
+            let hLight = engine.hromnickaLight;
             if (hasHromnicka && player.hp > 0) {
               const hromWp = player.weapons.find((w: any) => w.id === 'hromnicka');
               const hReach = 110 + (hromWp?.level || 1) * 12;
               if (!hLight) {
-                engine.lightSources.push({
+                hLight = {
                   id: 'player_hromnicka',
                   x: player.x,
                   y: player.y,
@@ -3505,7 +3535,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   color: '#FEF9C3',
                   type: 'holy',
                   intensity: 0.9,
-                });
+                };
+                engine.hromnickaLight = hLight;
+                engine.lightSources.push(hLight);
               } else {
                 hLight.x = player.x;
                 hLight.y = player.y;
@@ -3518,25 +3550,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             engine.lightSources = updateLightSources(engine.lightSources, dt);
 
             if (engine.grandfather.active) {
-              let gHearth = engine.lightSources.find((ls) => ls.id === 'grandfather_hearth');
+              let gHearth = engine.grandfatherLight;
               if (!gHearth) {
-                engine.lightSources.push({
+                gHearth = {
                   id: 'grandfather_hearth',
                   x: engine.grandfather.x,
                   y: engine.grandfather.y,
                   radius: 240,
                   color: '#EA580C',
                   type: 'hearth',
-                });
+                };
+                engine.grandfatherLight = gHearth;
+                engine.lightSources.push(gHearth);
               } else {
                 gHearth.x = engine.grandfather.x;
                 gHearth.y = engine.grandfather.y;
               }
-            } else {
-              const gHearthIdx = engine.lightSources.findIndex((ls) => ls.id === 'grandfather_hearth');
+            } else if (engine.grandfatherLight) {
+              const gHearthIdx = engine.lightSources.indexOf(engine.grandfatherLight);
               if (gHearthIdx !== -1) {
                 engine.lightSources.splice(gHearthIdx, 1);
               }
+              engine.grandfatherLight = null;
             }
 
             // Dědeček is a roaming run encounter, not a village NPC.
@@ -6699,27 +6734,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (d.type === 'coin') {
             Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
           } else if (d.type === 'gingerbread') {
-            const size = d.size === 'giant' ? 1.35 : d.size === 'large' ? 1.1 : 0.9;
-            ctx.save();
             const bob = Math.sin(d.time * 3) * 2;
-            ctx.translate(d.x, d.y + bob);
-            ctx.rotate(Math.sin(d.time * 1.7) * 0.08);
-            ctx.fillStyle = '#A16207';
-            ctx.strokeStyle = '#451A03';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(-10 * size, -9 * size, 20 * size, 18 * size, 5 * size);
-            ctx.fill();
-            ctx.stroke();
-            ctx.fillStyle = '#FEF3C7';
-            ctx.fillRect(-6 * size, -5 * size, 12 * size, 2.5 * size);
-            ctx.fillRect(-5 * size, 2 * size, 10 * size, 2.5 * size);
-            ctx.fillStyle = '#451A03';
-            ctx.beginPath();
-            ctx.arc(-4 * size, -1 * size, 1.5 * size, 0, Math.PI * 2);
-            ctx.arc(4 * size, -1 * size, 1.5 * size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+            Lada.drawGingerbread(ctx, d.x, d.y + bob, (d.size as any) || 'small', Math.sin(d.time * 1.7) * 0.08);
           } else if (d.type === 'potion') {
             Lada.drawPotion(ctx, d.x, d.y, d.time);
           } else if (d.type === 'bread' || d.type === 'pear') {
@@ -6881,7 +6897,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const drawables = engine.renderBuffer;
         drawables.length = 0;
         if(player) drawables.push(player);
-        for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
+        for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius + 40, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
         if (isGameEffectEnabled('combatVfxEnabled') && engine.smokePuffs) { for (const puff of engine.smokePuffs) { if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff); } }
         // In-place stable insertion sort by Y (avoids GC allocations of Array.prototype.sort)
         for (let i = 1; i < drawables.length; i++) {
@@ -6900,24 +6916,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Výstražný symbol nad hlavami útočících monster a hvězdičky omráčení
-        for (const enemy of engine.enemies) {
-          if (!enemy.isDefeated && !enemy.dead && isInView(enemy.x, enemy.y, enemy.radius + 35, viewLeft, viewTop, viewRight, viewBottom)) {
-            if (isGameEffectEnabled('warningIndicatorsEnabled') && (enemy.windupTimer || 0) > 0 && (enemy.strikeTimer || 0) <= 0) {
-              drawEnemyWarningSign(ctx, enemy);
-            }
-            if (isGameEffectEnabled('statusIndicatorsEnabled') && (enemy.stunTimer || 0) > 0) {
-              drawStunStars(ctx, enemy, engine.uiTime);
-            }
-            if (enemy.valecniceSlowed) {
-              ctx.save();
-              ctx.strokeStyle = 'rgba(234, 88, 12, 0.38)';
-              ctx.lineWidth = 1.5;
-              ctx.beginPath();
-              ctx.ellipse(enemy.x, enemy.y + enemy.radius * 0.75, enemy.radius * 0.85, enemy.radius * 0.32, 0, 0, Math.PI * 2);
-              ctx.stroke();
-              ctx.restore();
-            }
+        // Výstražný symbol nad hlavami útočících monster, hvězdičky omráčení a dudácký oblak
+        for (const d of drawables) {
+          if (!d || d === player || d.isDefeated || d.dead || !d.id) continue;
+          if (isGameEffectEnabled('warningIndicatorsEnabled') && (d.windupTimer || 0) > 0 && (d.strikeTimer || 0) <= 0) {
+            drawEnemyWarningSign(ctx, d);
+          }
+          if (isGameEffectEnabled('statusIndicatorsEnabled') && (d.stunTimer || 0) > 0) {
+            drawStunStars(ctx, d, engine.uiTime);
+          }
+          if (d.valecniceSlowed) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(234, 88, 12, 0.38)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.ellipse(d.x, d.y + d.radius * 0.75, d.radius * 0.85, d.radius * 0.32, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+          if (d.brawlTimer && d.brawlTimer > 0) {
+            Lada.drawSvandaBrawlCloud(ctx, d.x, d.y, engine.uiTime);
           }
         }
 
@@ -6936,23 +6954,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.fill();
             ctx.stroke();
           } else if (p.visual === 'snowball' || p.visual === 'snowball_small') {
-            const rad = p.visual === 'snowball' ? 12 : 7;
-            Lada.setupPath(ctx, '#F8FAFC', COLORS.ink, 2.5);
-            ctx.beginPath();
-            ctx.arc(0, 0, rad, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            Lada.drawSnowball(ctx, 0, 0, p.visual === 'snowball' ? 12 : 7);
           } else if (p.visual === 'kolac') {
             Lada.drawKynutyKolac(ctx, 0, 0, 1.25, 0);
           } else if (p.visual === 'pickle') {
-            ctx.save();
-            ctx.rotate(Math.sin(engine.uiTime * 8 + p.x * 0.01) * 0.08);
-            Lada.setupPath(ctx, '#5E9F3B', '#193B18', 2.5);
-            ctx.beginPath(); ctx.ellipse(0,0,15,8,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
-            ctx.fillStyle='#A8D96D';
-            for(let i=-1;i<=1;i++){ctx.beginPath();ctx.arc(i*6,-2+(i%2)*3,1.4,0,Math.PI*2);ctx.fill();}
-            ctx.fillStyle='rgba(255,255,255,.75)'; ctx.beginPath();ctx.ellipse(-5,-3,3,1.5,-.3,0,Math.PI*2);ctx.fill();
-            ctx.restore();
+            const rot = Math.sin(engine.uiTime * 8 + p.x * 0.01) * 0.08;
+            Lada.drawPickle(ctx, 0, 0, rot);
           } else if (p.visual === 'potato') {
             Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
             ctx.beginPath();
@@ -6960,17 +6967,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.fill();
             ctx.stroke();
           } else if (p.visual === 'bee') {
-            Lada.setupPath(ctx, COLORS.mustard, COLORS.ink, 2);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            Lada.drawBee(ctx, 0, 0);
           } else if (p.visual === 'holy_droplet') {
-            Lada.setupPath(ctx, COLORS.ice, COLORS.ink, 2);
-            ctx.beginPath();
-            ctx.arc(0, 0, 7, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            Lada.drawHolyDroplet(ctx, 0, 0);
           } else if (p.visual === 'millstone') {
             Lada.drawMillstone(ctx, 0, 0, p.radius || 20, p.rotation || 0);
           } else if (p.visual === 'water_wave') {
@@ -7278,13 +7277,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Masopustní řehtačka: aktivní rázový štít odrážející střely
         if (engine.masopustShockwaveTimer > 0) {
           Lada.drawMasopustShockwave(ctx, player.x, player.y, 140, engine.uiTime);
-        }
-
-        // Dudácká skočná: komický oblak prachu nad peroucími se bubáky
-        for (const e of engine.enemies) {
-          if (!e.dead && !e.isDefeated && e.brawlTimer && e.brawlTimer > 0) {
-            Lada.drawSvandaBrawlCloud(ctx, e.x, e.y, engine.uiTime);
-          }
         }
 
         ctx.restore();
@@ -7671,6 +7663,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       shadowVulnerabilityTimer: 0,
       silhouetteInvertTimer: 0,
       bludickaAttracted: false,
+      bludickaLight: null as DynamicLightSource | null,
+      _lightCheckTimer: Math.random() * 0.12,
+      _isLit: false,
+
+      cleanupLight() {
+        if (this.bludickaLight && engineRef.current?.lightSources) {
+          const idx = engineRef.current.lightSources.indexOf(this.bludickaLight);
+          if (idx !== -1) {
+            engineRef.current.lightSources.splice(idx, 1);
+          }
+          this.bludickaLight = null;
+        }
+      },
 
       // Specialized AI state machine variables
       aiState: 'idle' as string,
@@ -7708,55 +7713,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           });
         }
 
-        if (this.id === 'bludicka' && !this.dead && !this.isDefeated) {
-          const bId = `bludicka_${this.id}_${Math.round(this.x)}`;
-          let bLight = engineRef.current?.lightSources?.find((ls) => ls.id === bId);
-          if (!bLight) {
-            engineRef.current?.lightSources?.push({
-              id: bId,
-              x: this.x,
-              y: this.y,
-              radius: 175,
-              color: '#67E8F9',
-              type: 'bludicka',
-            });
-          } else {
-            bLight.x = this.x;
-            bLight.y = this.y;
-          }
-        }
-
-        if (this.category === 'shadows' && !this.dead && !this.isDefeated) {
-          const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
-          const isLit = isPositionIlluminated(
-            this.x,
-            this.y,
-            engineRef.current?.lightSources || [],
-            dayPhase.id,
-            engineRef.current?.shadowZones || [],
-            engineRef.current?.occluders || []
-          );
-          evaluateShadowDefense(this, isLit, dt, {
-            onBreak: (shadowEnemy) => {
-              if (engineRef.current?.particles && engineRef.current.particles.length < MAX_PARTICLES - 8) {
-                for (let k = 0; k < 6; k++) {
-                  const ang = Math.random() * Math.PI * 2;
-                  const spd = 40 + Math.random() * 50;
-                  engineRef.current.particles.push({
-                    x: shadowEnemy.x,
-                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
-                    vx: Math.cos(ang) * spd,
-                    vy: Math.sin(ang) * spd,
-                    life: 0.35,
-                    color: '#1E1B18',
-                    size: 3.5,
-                  });
-                }
-              }
-            },
-          });
-        }
-
         for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
@@ -7767,6 +7723,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
 
         if (this.isDefeated) {
+          this.cleanupLight();
           if (this.defeatedByFood) {
             // Defeated by food weapons: slowly walk away, enjoying the food snack
             this.foodDefeatTimer = (this.foodDefeatTimer || 0) + dt;
@@ -8075,6 +8032,60 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.x += (this.vx + this.kbx) * dt;
           this.y += (this.vy + this.kby) * dt;
           return;
+        }
+
+        // Bludička dynamic ambient light (on-screen only)
+        if (this.id === 'bludicka') {
+          if (!this.bludickaLight) {
+            this.bludickaLight = {
+              id: `bludicka_${this.bludickaLightId || (this.bludickaLightId = Math.random().toString(36).substring(2, 9))}`,
+              x: this.x,
+              y: this.y,
+              radius: 175,
+              color: '#67E8F9',
+              type: 'bludicka',
+            };
+            engineRef.current?.lightSources?.push(this.bludickaLight);
+          } else {
+            this.bludickaLight.x = this.x;
+            this.bludickaLight.y = this.y;
+          }
+        }
+
+        // Stínová záštita (Shadow Defense) - throttled ray/occluder check (0.10s-0.15s, staggered by animTime)
+        if (this.category === 'shadows' && !this.dead && !this.isDefeated) {
+          this._lightCheckTimer = (this._lightCheckTimer ?? 0) - dt;
+          if (this._lightCheckTimer <= 0) {
+            this._lightCheckTimer = 0.10 + (Math.abs(Math.sin(this.animTime)) * 0.05);
+            const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
+            this._isLit = isPositionIlluminated(
+              this.x,
+              this.y,
+              engineRef.current?.lightSources || [],
+              dayPhase.id,
+              engineRef.current?.shadowZones || [],
+              engineRef.current?.occluders || []
+            );
+          }
+          evaluateShadowDefense(this, this._isLit ?? false, dt, {
+            onBreak: (shadowEnemy) => {
+              if (engineRef.current?.particles && engineRef.current.particles.length < MAX_PARTICLES - 8) {
+                for (let k = 0; k < 6; k++) {
+                  const ang = Math.random() * Math.PI * 2;
+                  const spd = 40 + Math.random() * 50;
+                  engineRef.current.particles.push({
+                    x: shadowEnemy.x,
+                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
+                    vx: Math.cos(ang) * spd,
+                    vy: Math.sin(ang) * spd,
+                    life: 0.35,
+                    color: '#1E1B18',
+                    size: 3.5,
+                  });
+                }
+              }
+            },
+          });
         }
 
         // ----------------------------------------------------
@@ -9592,6 +9603,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
+          this.cleanupLight();
           if (directorRef.current) {
             directorRef.current.recordEnemyDeath(this, engineRef.current.gameTime);
           }
