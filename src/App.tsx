@@ -44,6 +44,7 @@ import {
   setCombatTextSettings,
   getCombatTextPreset,
   shouldDrawCombatText,
+  shouldShowWarningBanner,
   isCombatTextCategoryEnabled,
   inferCombatTextCategory,
   type CombatTextSettings,
@@ -6573,7 +6574,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               ctx.stroke();
             } else {
               const isFissure = h.kind === 'predictive-fissure';
-              const isWarning = isFissure && (h.warningTimer || 0) > 0;
+              const isWarning = isFissure && (h.warningTimer || 0) > 0 && isGameEffectEnabled('warningIndicatorsEnabled');
               const justExploded = isFissure && h.exploded;
               // Magma is a persistent ember pool; a fissure gets a clear warning ring
               // followed by a short, bright eruption flash.
@@ -10961,8 +10962,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </div>
 
           {/* Warning Banner */}
-          {runStats.warningBanner && isGameEffectEnabled('warningIndicatorsEnabled') && (
-            <div id="boss-warning-banner">{runStats.warningBanner}</div>
+          {runStats.warningBanner &&
+            isGameEffectEnabled('warningIndicatorsEnabled') &&
+            shouldShowWarningBanner(runStats.warningBanner, meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) && (
+              <div id="boss-warning-banner">{runStats.warningBanner}</div>
           )}
 
           {/* Ultimate ability indicator button – skryto na dotykovém displeji a při aktivním dotykovém ovládání, kde bohatě stačí kruhové tlačítko */}
@@ -11415,6 +11418,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
+                style={{ background: '#B45309', color: '#FFFFFF', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsCombatTextModalOpen(true);
+                }}
+                title="Nastavení zobrazení plovoucích čísel, textů a varování před bossem v boji"
+              >
+                💬 Texty v boji
+              </button>
+              <button
+                className="lada-btn btn-small"
                 style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
@@ -11583,6 +11597,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 🎮 Ovládání hry
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#B45309', color: '#FFFFFF', fontWeight: 900 }}
+                onClick={() => {
+                  sound.coin();
+                  setIsCombatTextModalOpen(true);
+                }}
+                title="Nastavení zobrazení plovoucích čísel, textů a varování před bossem v boji"
+              >
+                💬 Texty v boji
               </button>
               <button
                 className="lada-btn btn-small"

@@ -9,20 +9,22 @@ import {
   inferCombatTextCategory,
   shouldDrawCombatText,
   isCombatTextCategoryEnabled,
+  isBossWarningBanner,
+  shouldShowWarningBanner,
   setCombatTextSettings,
   CombatTextCategory,
 } from '../src/game/combatTextSettings';
 import { DamageText, GameEngine } from '../src/game/engine';
 import { createDefaultMetaProgression, migrateMetaProgression } from '../src/game/migration';
 
-describe('Bojové plovoucí texty (ADR 0016)', () => {
+describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
   beforeEach(() => {
     setCombatTextSettings(DEFAULT_COMBAT_TEXT_SETTINGS);
   });
 
   describe('Taxonomie a kategorie', () => {
-    it('obsahuje přesně 9 kanonických kategorií textu', () => {
-      expect(COMBAT_TEXT_CATEGORIES).toHaveLength(9);
+    it('obsahuje přesně 12 kanonických kategorií textu a varování', () => {
+      expect(COMBAT_TEXT_CATEGORIES).toHaveLength(12);
       const keys = COMBAT_TEXT_CATEGORIES.map((c) => c.key);
       expect(keys).toEqual([
         'enemyDamage',
@@ -34,6 +36,9 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
         'lootResources',
         'unlocksMilestones',
         'bossAnnouncements',
+        'bossWarningBanners',
+        'directorWarningBanners',
+        'visualTelegraphCues',
       ]);
     });
 
@@ -49,6 +54,9 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
   describe('Rychlé předvolby (Presety)', () => {
     it('správně rozezná Plnou atmosféru (full)', () => {
       expect(getCombatTextPreset(DEFAULT_COMBAT_TEXT_SETTINGS)).toBe('full');
+      for (const key of Object.keys(DEFAULT_COMBAT_TEXT_SETTINGS) as CombatTextCategory[]) {
+        expect(DEFAULT_COMBAT_TEXT_SETTINGS[key]).toBe(true);
+      }
     });
 
     it('správně rozezná Taktický režim (tactical)', () => {
@@ -57,13 +65,16 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.attackWindups).toBe(false);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.combatShouts).toBe(false);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.lootResources).toBe(false);
-      // Klíčová čísla a stavy jsou zapnuty
+      // Klíčová čísla, stavy a varování jsou zapnuty
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.enemyDamage).toBe(true);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.hunterDamage).toBe(true);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.healing).toBe(true);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.combatStates).toBe(true);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.unlocksMilestones).toBe(true);
       expect(TACTICAL_COMBAT_TEXT_SETTINGS.bossAnnouncements).toBe(true);
+      expect(TACTICAL_COMBAT_TEXT_SETTINGS.bossWarningBanners).toBe(true);
+      expect(TACTICAL_COMBAT_TEXT_SETTINGS.directorWarningBanners).toBe(true);
+      expect(TACTICAL_COMBAT_TEXT_SETTINGS.visualTelegraphCues).toBe(true);
     });
 
     it('správně rozezná Čistý výkon (performance)', () => {
@@ -147,10 +158,70 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
       expect(inferCombatTextCategory('Milník zbraně')).toBe('unlocksMilestones');
     });
 
-    it('správně odvodí globální oznámení a bossy', () => {
+    it('správně odvodí globální oznámení a unikátní chvaty bossů', () => {
       expect(inferCombatTextCategory('👑 PEKELNÝ ČERT')).toBe('bossAnnouncements');
       expect(inferCombatTextCategory('🎁 POKLAD VLÁDCE BUBÁKŮ!')).toBe('bossAnnouncements');
       expect(inferCombatTextCategory('🎉 ČERT ZKLIDNĚN!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('🔥 PEKELNÉ MLETÍ!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('❄️ SMRTÍCÍ MRAZ!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('POVODEŇ ZE STAVIDEL! 🌊')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('MOUČNÝ MRAK!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('🗡️ PROKLETÍ HLÁSKY!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('🐉 PROBUZENÍ VŠECH TŘÍ HLAV!')).toBe('bossAnnouncements');
+      expect(inferCombatTextCategory('MRAZIVÝ ŘEV DO STROPU! 🧊🔊')).toBe('bossAnnouncements');
+    });
+  });
+
+  describe('isBossWarningBanner a shouldShowWarningBanner (Filtrace varování)', () => {
+    it('spolehlivě rozezná varovné bannery bossů oproti varováním výpravy', () => {
+      expect(isBossWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️')).toBe(true);
+      expect(isBossWarningBanner('☀️ POZOR: PŘICHÁZÍ MOCNÁ KOSNÁ POLEDNICE!')).toBe(true);
+      expect(isBossWarningBanner('❄️ MORANA SE ROZHNĚVALA! PŘICHÁZÍ SNĚŽNÁ VÁNICE!')).toBe(true);
+      expect(isBossWarningBanner('🔥 PEKELNÉ MLETÍ! ČERTŮV MLÝN SE ROZTÁČÍ!')).toBe(true);
+      expect(isBossWarningBanner('🌊 STAVIDLA OTEVŘENA – POVODŇOVÁ VLNA!')).toBe(true);
+      expect(isBossWarningBanner('💨 MOUČNÝ OBLAK – BÍLÁ TMA!')).toBe(true);
+      expect(isBossWarningBanner('🐉 VŠECHNY TŘI HLAVY PROBUZENY! OHEŇ, MRÁZ A VICHR KŘÍDEL!')).toBe(true);
+      expect(isBossWarningBanner('🏆 PEKELNÝ ČERT POKOŘEN – VÍTĚZSTVÍ!')).toBe(true);
+
+      // Režisér výpravy a přepadení
+      expect(isBossWarningBanner('⚠️ Kradmé kroky za humny... Pozor na přepadení a drtivý přepad!')).toBe(false);
+      expect(isBossWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový (Hejkal)!')).toBe(false);
+      expect(isBossWarningBanner('🌑 Země puká: Objevila se Bubácká díra! Udrž rituál pro poklad!')).toBe(false);
+      expect(isBossWarningBanner('⚠️ Čas vypršel! Z Bubácké díry se vyvalil velký rozmrzelý bubák!')).toBe(false);
+    });
+
+    it('vypnutí bossWarningBanners spolehlivě skryje varování bossů, ale zachová varování výpravy', () => {
+      const customSettings = {
+        ...DEFAULT_COMBAT_TEXT_SETTINGS,
+        bossWarningBanners: false,
+        directorWarningBanners: true,
+      };
+
+      expect(shouldShowWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️', customSettings)).toBe(false);
+      expect(shouldShowWarningBanner('❄️ MORANA SE ROZHNĚVALA! PŘICHÁZÍ SNĚŽNÁ VÁNICE!', customSettings)).toBe(false);
+      expect(shouldShowWarningBanner('⚠️ Kradmé kroky za humny... Pozor na přepadení!', customSettings)).toBe(true);
+      expect(shouldShowWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový!', customSettings)).toBe(true);
+    });
+
+    it('vypnutí directorWarningBanners skryje přepady a elitní hordy, ale zachová bossy', () => {
+      const customSettings = {
+        ...DEFAULT_COMBAT_TEXT_SETTINGS,
+        bossWarningBanners: true,
+        directorWarningBanners: false,
+      };
+
+      expect(shouldShowWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️', customSettings)).toBe(true);
+      expect(shouldShowWarningBanner('⚠️ Kradmé kroky za humny... Pozor na přepadení!', customSettings)).toBe(false);
+      expect(shouldShowWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový!', customSettings)).toBe(false);
+    });
+
+    it('v režimu Čistý výkon (performance) jsou vypnuty všechny bannery bez výjimky', () => {
+      expect(shouldShowWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+      expect(shouldShowWarningBanner('❄️ MORANA SE ROZHNĚVALA!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+      expect(shouldShowWarningBanner('🔥 PEKELNÉ MLETÍ!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+      expect(shouldShowWarningBanner('⚠️ Kradmé kroky za humny...', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+      expect(shouldShowWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+      expect(shouldShowWarningBanner('🌑 Země puká: Objevila se Bubácká díra!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
     });
   });
 
@@ -217,10 +288,11 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
   });
 
   describe('Migrace a perzistence', () => {
-    it('createDefaultMetaProgression obsahuje výchozí nastavení všech 9 kategorií', () => {
+    it('createDefaultMetaProgression obsahuje výchozí nastavení všech 12 kategorií', () => {
       const meta = createDefaultMetaProgression();
       expect(meta.combatTextSettings).toBeDefined();
       expect(meta.combatTextSettings).toEqual(DEFAULT_COMBAT_TEXT_SETTINGS);
+      expect(Object.keys(meta.combatTextSettings || {})).toHaveLength(12);
     });
 
     it('migrateMetaProgression zachovává existující nastavení a bezpečně doplňuje výchozí', () => {
@@ -233,6 +305,9 @@ describe('Bojové plovoucí texty (ADR 0016)', () => {
       const migrated = migrateMetaProgression(partialSaved);
       expect(migrated.combatTextSettings?.attackWindups).toBe(false);
       expect(migrated.combatTextSettings?.enemyDamage).toBe(true);
+      expect(migrated.combatTextSettings?.bossWarningBanners).toBe(true);
+      expect(migrated.combatTextSettings?.directorWarningBanners).toBe(true);
+      expect(migrated.combatTextSettings?.visualTelegraphCues).toBe(true);
     });
   });
 });
