@@ -104,6 +104,28 @@ export class ChunkBitmapCache {
   }
 
   /**
+   * Rebuilds the chunk bitmap cache only if the season, theme, or night state has changed.
+   * Returns true if rebuilt, false if cached state is still valid.
+   */
+  public rebuildIfChanged(
+    decorList: any[],
+    season = 'winter',
+    theme = 'meadow',
+    isNight = false
+  ): boolean {
+    if (
+      this.chunks.size > 0 &&
+      this.lastSeason === season &&
+      this.lastTheme === theme &&
+      this.lastIsNight === isNight
+    ) {
+      return false;
+    }
+    this.build(decorList, season, theme, isNight);
+    return true;
+  }
+
+  /**
    * Builds or rebuilds the chunk bitmap cache from the provided decor items.
    */
   public build(

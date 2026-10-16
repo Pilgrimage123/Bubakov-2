@@ -27,14 +27,17 @@ export interface CameraViewport {
 }
 
 export interface ArenaRenderOptions {
-  performanceProfile?: 'battery' | 'standard' | 'high';
+  performanceProfile?: 'performance' | 'balanced' | 'fidelity';
   combatVfxEnabled?: boolean;
-  damageNumbersEnabled?: boolean;
+  combatTextsEnabled?: boolean;
+  damageNumbersEnabled?: boolean; // deprecated alias for combatTextsEnabled (GLOSSARY.md)
   lightingEnabled?: boolean;
   chunkCullingEnabled?: boolean;
   warningIndicatorsEnabled?: boolean;
   statusIndicatorsEnabled?: boolean;
   chunkCache?: ChunkBitmapCache;
+  curLvl?: any;
+  dayPhase?: any;
 }
 
 export interface ArenaPhaseTimings {
@@ -74,21 +77,31 @@ export function createReusableRenderMetrics(): ArenaRenderMetrics {
 
 /**
  * Frustum culling test against camera viewport with bounding radius margin.
+ * Supports passing CameraViewport directly or individual coordinate bounds.
  */
 export function isInView(
   x: number,
   y: number,
   radius: number,
-  viewLeft: number,
-  viewTop: number,
-  viewRight: number,
-  viewBottom: number
+  viewLeftOrCamera: number | CameraViewport,
+  viewTop?: number,
+  viewRight?: number,
+  viewBottom?: number
 ): boolean {
+  if (typeof viewLeftOrCamera === 'object') {
+    const cam = viewLeftOrCamera;
+    return (
+      x + radius >= cam.viewLeft &&
+      x - radius <= cam.viewRight &&
+      y + radius >= cam.viewTop &&
+      y - radius <= cam.viewBottom
+    );
+  }
   return (
-    x + radius >= viewLeft &&
-    x - radius <= viewRight &&
-    y + radius >= viewTop &&
-    y - radius <= viewBottom
+    x + radius >= viewLeftOrCamera &&
+    x - radius <= (viewRight ?? 0) &&
+    y + radius >= (viewTop ?? 0) &&
+    y - radius <= (viewBottom ?? 0)
   );
 }
 
@@ -114,9 +127,9 @@ export function renderArena(
   const tStart = now();
 
   const opts: ArenaRenderOptions = {
-    performanceProfile: 'high',
+    performanceProfile: 'balanced',
     combatVfxEnabled: true,
-    damageNumbersEnabled: true,
+    combatTextsEnabled: true,
     lightingEnabled: true,
     chunkCullingEnabled: true,
     warningIndicatorsEnabled: true,
@@ -131,8 +144,8 @@ export function renderArena(
 
   // 1. BACKDROP PASS
   const tBackdropStart = now();
-  const curLvl = (engine as any).curLvl || { season: 'winter', theme: 'meadow' };
-  const phase = (engine as any).dayPhase || { id: 'noon' };
+  const curLvl = opts.curLvl || (engine as any).curLvl || { season: 'winter', theme: 'meadow' };
+  const phase = opts.dayPhase || (engine as any).dayPhase || { id: 'noon' };
   const kurazRatio = engine.player && engine.player.maxKuraz > 0
     ? Math.max(0, engine.player.kuraz / engine.player.maxKuraz)
     : 1;
@@ -223,16 +236,20 @@ export function renderArena(
   }
 
   // Draw sorted entities
-  for (let i = 0; i < drawableCount; i++) {
-    const d = preallocatedDrawables[i];
-    if (d && typeof d.draw === 'function') {
-      d.draw(ctx);
-      renderedEntities++;
+  try {
+    for (let i = 0; i < drawableCount; i++) {
+      const d = preallocatedDrawables[i];
+      if (d && typeof d.draw === 'function') {
+        d.draw(ctx);
+        renderedEntities++;
+      }
     }
-    // Clean reference to avoid memory leaks
-    preallocatedDrawables[i] = null;
+  } finally {
+    for (let i = 0; i < drawableCount; i++) {
+      preallocatedDrawables[i] = null;
+    }
+    drawableCount = 0;
   }
-  drawableCount = 0;
   const entitiesMs = now() - tEntitiesStart;
 
   // 4. LIGHTING PASS
@@ -240,6 +257,7 @@ export function renderArena(
   if (opts.lightingEnabled) {
     const tLightStart = now();
     const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
+    if (isNight && engine.lightSources && engine.lightSources.length > 0) {
       renderStorybookLightingComposite(
         ctx,
         width,
@@ -251,15 +269,17 @@ export function renderArena(
         curLvl.season === 'winter',
         engine.shadowZones || [],
         engine.occluders || [],
-        opts.performanceProfile === 'battery' ? 'performance' : opts.performanceProfile === 'standard' ? 'balanced' : 'fidelity',
+        opts.performanceProfile ?? 'balanced',
         true
       );
+    }
     lightingMs = now() - tLightStart;
   }
 
   // 5. COMBAT FLOATING TEXTS PASS
   let combatTextsMs = 0;
-  if (opts.damageNumbersEnabled && engine.texts && engine.texts.length > 0) {
+  const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
+  if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
     const tTextsStart = now();
     for (let i = 0; i < engine.texts.length; i++) {
       const txt = engine.texts[i];
