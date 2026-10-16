@@ -13,6 +13,7 @@ import { getStorybookSnowColor, renderStorybookLightingComposite } from './story
 import { shouldDrawCombatText } from '../game/effectSettings';
 
 import { ChunkBitmapCache } from './chunkCache';
+import { drawGlyphText } from './glyphAtlas';
 
 export interface CameraViewport {
   x: number;
@@ -270,6 +271,8 @@ export function renderArena(
       }
       if (typeof txt.draw === 'function') {
         txt.draw(ctx);
+      } else if (txt.text) {
+        drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
       }
     }
     combatTextsMs = now() - tTextsStart;
