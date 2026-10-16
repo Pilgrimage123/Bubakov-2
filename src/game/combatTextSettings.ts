@@ -13,7 +13,10 @@ export type CombatTextCategory =
   | 'combatShouts'
   | 'lootResources'
   | 'unlocksMilestones'
-  | 'bossAnnouncements';
+  | 'bossAnnouncements'
+  | 'bossWarningBanners'
+  | 'directorWarningBanners'
+  | 'visualTelegraphCues';
 
 export interface CombatTextCategoryMeta {
   key: CombatTextCategory;
@@ -73,9 +76,27 @@ export const COMBAT_TEXT_CATEGORIES: CombatTextCategoryMeta[] = [
   },
   {
     key: 'bossAnnouncements',
-    label: 'Globální oznámení a bossové',
-    description: 'Příchod oblastních bossů, poklad vládce bubáků a zklidnění hlavních strašidel.',
+    label: 'Plovoucí texty a chvaty bossů',
+    description: 'Plovoucí texty nad bossy v aréně (např. Pekelné mletí, Smrtící mráz, Probuzení tří hlav, Poklad).',
     icon: '👑',
+  },
+  {
+    key: 'bossWarningBanners',
+    label: 'Bannery a příchody bossů',
+    description: 'Velká varovná hlášení nahoře na obrazovce před příchodem minibossů, midbossů i finálních bossů.',
+    icon: '🚨',
+  },
+  {
+    key: 'directorWarningBanners',
+    label: 'Varování výpravy (Režisér)',
+    description: 'Výstražná oznámení režiséra výpravy o blížících se přepadech, elitních bubácích a bubácké díře.',
+    icon: '⚠️',
+  },
+  {
+    key: 'visualTelegraphCues',
+    label: 'Grafické výstrahy a nápřahy',
+    description: 'Vizuální varovné značky nad hlavami nepřátel při nápřahu a telegrafické kruhy trhlin na zemi.',
+    icon: '🎯',
   },
 ];
 
@@ -91,6 +112,9 @@ export const DEFAULT_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
   lootResources: true,
   unlocksMilestones: true,
   bossAnnouncements: true,
+  bossWarningBanners: true,
+  directorWarningBanners: true,
+  visualTelegraphCues: true,
 };
 
 export const TACTICAL_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
@@ -103,6 +127,9 @@ export const TACTICAL_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
   lootResources: false,
   unlocksMilestones: true,
   bossAnnouncements: true,
+  bossWarningBanners: true,
+  directorWarningBanners: true,
+  visualTelegraphCues: true,
 };
 
 export const PERFORMANCE_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
@@ -115,6 +142,9 @@ export const PERFORMANCE_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
   lootResources: false,
   unlocksMilestones: false,
   bossAnnouncements: false,
+  bossWarningBanners: false,
+  directorWarningBanners: false,
+  visualTelegraphCues: false,
 };
 
 export type CombatTextPreset = 'full' | 'tactical' | 'performance' | 'custom';
@@ -184,7 +214,7 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
   if (/(odem[čc]|unlock|miln[íi]k|nov[ýy] lovec|nov[áa] zbra[ňn])/i.test(norm)) {
     return 'unlocksMilestones';
   }
-  if (/(poklad.*boss|vl[áa]dce bub[áa]k[ůu]|zklidn[ěe]n|👑)/i.test(norm)) {
+  if (/(poklad.*boss|vl[áa]dce bub[áa]k[ůu]|zklidn[ěe]n|👑|pekeln[ée] mlet[íi]|stavid|povode[ňn]|smrt[íi]c[íi] mraz|proklet[íi] hl[áa]sky|probuzen[íi].*hlav|mou[čc]n[ýy] mrak|mraziv[ýy] [řr]ev)/i.test(norm)) {
     return 'bossAnnouncements';
   }
   if (/(dodge|minul|št[íi]t|imunn|vy[čc]erp|usm[íi][řr]en|odraz|vyru[šs]en)/i.test(norm)) {
@@ -197,6 +227,38 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
     return 'combatShouts';
   }
   return 'enemyDamage';
+}
+
+/**
+ * Rozpozná, zda varovný text na obrazovce patří k bossovi (příchod, schopnost nebo zuřivost).
+ */
+export function isBossWarningBanner(text: string): boolean {
+  const norm = String(text || '').trim();
+  if (!norm) return false;
+  // Pokud jde o elitního bubáka, přepad režiséra nebo bubáckou díru, jedná se o varování výpravy
+  if (/(?:elitn[íi] bub[áa]k|kradm[ée] kroky|dvoj[čc]e minibosse|bub[áa]ck[áa] d[íi]ra|[čc]as vypr[šs]el.*d[íi]ry|ritu[áa]l dokon[čc]en)/i.test(norm)) {
+    return false;
+  }
+  return /(?:šéf úrovně|level boss|miniboss|midboss|morana|mlynář|mlynar|čert|cert|hejkal|obryně|obr|rytíř|rytir|drak|bílá paní|bila pani|klekánice|polednice|vodník|vodnik|meluzína|ohnivec|zbrojnoš|noční můra|sněhulák|pekelné mletí|stavid|povode[ňn]|moučný oblak|prokletí hlásky|odražená hlava|tři hlavy probuzeny|rampouchy ze stropu|pukající žula|probuzení hvozdu|čertovské rejdy|smrtící mraz|pokořen|vítězství|victory|beware.*boss|awakened frog)/i.test(norm);
+}
+
+/**
+ * Zjistí, zda se má zobrazit varovný banner nahoře na obrazovce (#boss-warning-banner).
+ * Důsledně odděluje a filtruje bannery bossů i varování režiséra výpravy.
+ */
+export function shouldShowWarningBanner(
+  bannerText: string,
+  customSettings?: CombatTextSettings
+): boolean {
+  const norm = String(bannerText || '').trim();
+  if (!norm) return false;
+  const settings = customSettings || activeCombatTextSettings;
+
+  if (isBossWarningBanner(norm)) {
+    return !!settings.bossWarningBanners;
+  }
+  // Jinak jde o varování výpravy (telegraf režiséra, přepadení, elitní bubák, bubácká díra)
+  return !!settings.directorWarningBanners;
 }
 
 /**

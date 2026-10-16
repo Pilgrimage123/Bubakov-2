@@ -66,7 +66,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: '0 0 2px 0', fontSize: '1.75rem', color: 'var(--ink)' }}>
-              💬 BOJOVÉ PLOVOUCÍ TEXTY
+              💬 BOJOVÉ TEXTY A VAROVÁNÍ
             </h2>
             <LadaBotanicalFlourish height={16} />
           </div>
@@ -92,7 +92,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
             lineHeight: 1.4,
           }}
         >
-          Přizpůsobte si zobrazení textů v aréně pro maximální snímkovou frekvenci (FPS) a nerušený taktický přehled v boji.
+          Přizpůsobte si zobrazení čísel, textů i varovných bannerů pro maximální snímkovou frekvenci (FPS) a nerušený přehled v boji.
         </p>
 
         {/* Sekce rychlých předvoleb */}
@@ -152,7 +152,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 fontWeight: 900,
               }}
               onClick={() => handleApplyPreset('full')}
-              title="Zapne všech 9 kategorií pro plný zážitek"
+              title="Zapne všech 12 kategorií textů i varování pro plný zážitek"
             >
               🎨 Plná atmosféra (vše ZAP)
             </button>
@@ -165,7 +165,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 fontWeight: 900,
               }}
               onClick={() => handleApplyPreset('tactical')}
-              title="Ponechá čísla a bojové stavy, vypne nápřahy, pokřiky a loot"
+              title="Ponechá čísla, bojové stavy a varování bossů, vypne nápřahy, pokřiky a suroviny"
             >
               ⚖️ Taktický režim (pouze fakta)
             </button>
@@ -178,7 +178,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 fontWeight: 900,
               }}
               onClick={() => handleApplyPreset('performance')}
-              title="Vypne všechny texty v aréně pro maximální FPS"
+              title="Vypne všechny texty, varovné bannery i telegrafy v aréně pro maximální FPS"
             >
               ⚡ Čistý výkon (vše VYP)
             </button>

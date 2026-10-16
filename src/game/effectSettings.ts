@@ -41,7 +41,11 @@ export function getGameEffectSettings(): GameEffectSettings {
 }
 
 export function isGameEffectEnabled(category: EffectCategory): boolean {
-  return currentSettings.effectsEnabled && currentSettings[category];
+  if (!currentSettings.effectsEnabled) return false;
+  if (category === 'warningIndicatorsEnabled') {
+    return currentSettings.warningIndicatorsEnabled && isCombatTextCategoryEnabled('visualTelegraphCues');
+  }
+  return currentSettings[category];
 }
 
 import {
