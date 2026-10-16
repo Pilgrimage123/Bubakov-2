@@ -53,6 +53,25 @@ export interface ArenaRenderMetrics {
 }
 
 /**
+ * Creates a reusable metrics object to avoid Garbage Collector allocations per frame.
+ */
+export function createReusableRenderMetrics(): ArenaRenderMetrics {
+  return {
+    renderedEntities: 0,
+    renderedDecor: 0,
+    activeChunks: 0,
+    timings: {
+      backdropMs: 0,
+      staticDecorMs: 0,
+      entitiesMs: 0,
+      lightingMs: 0,
+      combatTextsMs: 0,
+      totalMs: 0,
+    },
+  };
+}
+
+/**
  * Frustum culling test against camera viewport with bounding radius margin.
  */
 export function isInView(
@@ -88,7 +107,8 @@ export function renderArena(
   ctx: CanvasRenderingContext2D,
   engine: EngineState,
   camera: CameraViewport,
-  options?: ArenaRenderOptions
+  options?: ArenaRenderOptions,
+  outMetrics?: ArenaRenderMetrics
 ): ArenaRenderMetrics {
   const tStart = now();
 
@@ -257,6 +277,19 @@ export function renderArena(
   }
 
   const totalMs = now() - tStart;
+
+  if (outMetrics) {
+    outMetrics.renderedEntities = renderedEntities;
+    outMetrics.renderedDecor = renderedDecor;
+    outMetrics.activeChunks = activeChunks;
+    outMetrics.timings.backdropMs = backdropMs;
+    outMetrics.timings.staticDecorMs = staticDecorMs;
+    outMetrics.timings.entitiesMs = entitiesMs;
+    outMetrics.timings.lightingMs = lightingMs;
+    outMetrics.timings.combatTextsMs = combatTextsMs;
+    outMetrics.timings.totalMs = totalMs;
+    return outMetrics;
+  }
 
   return {
     renderedEntities,
