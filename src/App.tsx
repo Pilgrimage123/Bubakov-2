@@ -74,6 +74,8 @@ import {
   drawEnemyAttackEffectsPost,
   drawPrefixAura,
 } from './render/ladaRenderer';
+import { drawGlyphText } from './render/glyphAtlas';
+import { ChunkBitmapCache } from './render/chunkCache';
 import {
   getPetrolejkaRadius,
   isPositionIlluminated,
@@ -363,6 +365,9 @@ class DamageText {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
+    if (this.text && drawGlyphText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, alpha: this.life })) {
+      return;
+    }
     ctx.globalAlpha = Math.max(0, this.life);
     ctx.fillStyle = this.color;
     if (this.size !== 18) {
@@ -1251,6 +1256,7 @@ export default function App() {
   const watchmanRef = useRef<HTMLCanvasElement | null>(null);
   const sextonRef = useRef<HTMLCanvasElement | null>(null);
   const grannyRef = useRef<HTMLCanvasElement | null>(null);
+  const arenaChunkCacheRef = useRef<ChunkBitmapCache | null>(null);
 
   // Meta progression in LocalStorage
   const [meta, setMeta] = useState<MetaProgression>(() => {
@@ -2631,6 +2637,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     // Seed a readable, combat-friendly composition instead of filling the
     // starting area with equally prominent decorative objects.
     const decor = seedArenaDecor(chosenLevel);
+    arenaChunkCacheRef.current = new ChunkBitmapCache({ chunkSize: 512 });
+    arenaChunkCacheRef.current.build(decor, chosenLevel.season, chosenLevel.theme, false);
 
     // Start from the engine's canonical defaults, then apply only values that
     // are specific to the selected level/run. This keeps simulation defaults
@@ -6503,10 +6511,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // generated across the whole level, so drawing it unconditionally
         // becomes increasingly expensive on large maps.
         const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-        for (const dec of engine.decor) {
-          const decorExtent = dec.type.startsWith('march_') ? 270 * dec.scale : 100 * dec.scale;
-          if (!isInView(dec.x, dec.y - 45 * dec.scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) continue;
-          dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime, isNight);
+        if (arenaChunkCacheRef.current && arenaChunkCacheRef.current.getChunkCount() > 0) {
+          arenaChunkCacheRef.current.render(ctx, { x: cam.x, y: cam.y, width: canvas.width, height: canvas.height, viewLeft, viewTop, viewRight, viewBottom });
+          const dynamicDecor = arenaChunkCacheRef.current.getDynamicDecor();
+          for (let i = 0; i < dynamicDecor.length; i++) {
+            const dec = dynamicDecor[i];
+            const decorExtent = dec.type.startsWith('march_') ? 270 * dec.scale : 100 * dec.scale;
+            if (!isInView(dec.x, dec.y - 45 * dec.scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime, isNight);
+          }
+        } else {
+          for (const dec of engine.decor) {
+            const decorExtent = dec.type.startsWith('march_') ? 270 * dec.scale : 100 * dec.scale;
+            if (!isInView(dec.x, dec.y - 45 * dec.scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) continue;
+            dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime, isNight);
+          }
         }
 
         if (engine.activeLevelId === 0) {
@@ -6884,7 +6903,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if(player) drawables.push(player);
         for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
         if (isGameEffectEnabled('combatVfxEnabled') && engine.smokePuffs) { for (const puff of engine.smokePuffs) { if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff); } }
-        drawables.sort((a,b)=>a.y-b.y);
+        // In-place stable insertion sort by Y (avoids GC allocations of Array.prototype.sort)
+        for (let i = 1; i < drawables.length; i++) {
+          const item = drawables[i];
+          let j = i - 1;
+          while (j >= 0 && drawables[j].y > item.y) {
+            drawables[j + 1] = drawables[j];
+            j--;
+          }
+          drawables[j + 1] = item;
+        }
 
         for (const d of drawables) {
           if (d && typeof d.draw === 'function') {
