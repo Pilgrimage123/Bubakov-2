@@ -75,15 +75,15 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 							style: {
 								margin: "4px 0 2px 0",
 								fontSize: "1.9rem",
-								color: "#FEF3C7",
-								textShadow: "2px 2px 0 var(--ink)"
+								color: "#8B1E0F",
+								textShadow: "1px 1px 0 rgba(255, 255, 255, 0.8)"
 							},
 							children: progress.spoiledName
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
 								fontWeight: 900,
-								color: "#FEF3C7",
+								color: "#3D2210",
 								fontSize: "1.05rem"
 							},
 							children: progress.spoiledTitle
@@ -267,7 +267,8 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 					style: {
 						margin: "14px 0 8px 0",
 						fontSize: "1.15rem",
-						color: "#FEF3C7"
+						color: "#2A170A",
+						fontWeight: 900
 					},
 					children: "🕵️ Postupné odhalování identity (25 %, 50 % a 75 %):"
 				}),

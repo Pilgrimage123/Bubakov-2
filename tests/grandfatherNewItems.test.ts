@@ -394,7 +394,7 @@ describe('New Grandfather Items Integration', () => {
       const srdce = GRANDFATHER_ITEMS.find((it) => it.id === 'poutove_srdce');
       expect(srdce).toBeDefined();
       expect(srdce?.name).toBe('Pouťové perníkové srdce');
-      expect(srdce?.icon).toBe('💝');
+      expect(srdce?.icon).toBe('poutove_srdce');
       expect(srdce?.baseCost).toBe(50);
       expect(srdce?.maxStacks).toBe(4);
       expect(srdce?.luckWeight).toBe(0.85);

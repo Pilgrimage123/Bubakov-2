@@ -93,7 +93,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   {
     id: 'poutove_srdce',
     name: 'Pouťové perníkové srdce',
-    icon: '💝',
+    icon: 'poutove_srdce',
     description: 'Sebrané perníčky okamžitě dobíjejí schopnost (+0,2 s / +0,6 s / +2 s k nabití); obří perníčky navíc zhojí 8 Kuráže.',
     baseCost: 50,
     maxStacks: 4,
@@ -187,7 +187,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'wp_kysela-okurka', name: 'Kyselá okurka', icon: 'kysela_okurka', description: 'Střílí kyselé okurky. Bubáci zeslábnou a dostávají větší rány.', baseCost: 55, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'kysela_okurka', effect: { type: 'weapon', weaponId: 'kysela_okurka' } },
   { id: 'wp_buns', name: 'Povidlové buchty', icon: 'czech_buchta', description: 'Zlatavé buchty pečené v pekáči. Bubáci mlsají na místě.', baseCost: 45, maxStacks: 8, luckWeight: 1.1, isWeapon: true, weaponId: 'povidlove_buchty', effect: { type: 'weapon', weaponId: 'povidlove_buchty' } },
   { id: 'wp_pitchfork', name: 'Kovářské vidle', icon: '🔱', description: 'Třízubé kované vidle prorážejí řady strašidel bodnutím vpřed.', baseCost: 50, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'kovarske_vidle', effect: { type: 'weapon', weaponId: 'kovarske_vidle' } },
-  { id: 'wp_halberd', name: 'Kovaná halapartna', icon: '🪓', description: 'Těžká zbraň ponocných. Široký rázný švih zažene celé houfy.', baseCost: 60, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'kovana_halapartna', effect: { type: 'weapon', weaponId: 'kovana_halapartna' } },
+  { id: 'wp_halberd', name: 'Kovaná halapartna', icon: 'kovana_halapartna', description: 'Těžká zbraň ponocných. Široký rázný švih zažene celé houfy.', baseCost: 60, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'kovana_halapartna', effect: { type: 'weapon', weaponId: 'kovana_halapartna' } },
   { id: 'wp_flail', name: 'Dřevěný cep na obilí', icon: '🌾', description: 'Drtivý dopad do země vyvolá rázovou vlnu a odhodí nepřátele.', baseCost: 65, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'dreveny_cep', effect: { type: 'weapon', weaponId: 'dreveny_cep' } },
   { id: 'wp_herbs', name: 'Devatery kvítí', icon: '🌿', description: 'Voňavý ochranný věnec bylin v kruhu zahání nečisté síly.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'devatero_kviti', effect: { type: 'weapon', weaponId: 'devatero_kviti' } },
   { id: 'wp_snowball', name: 'Sněhová koule', icon: '❄️', description: 'Tuhá ledová koule ze sněhu, chlad zpomalí každé strašidlo.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'snehova_koule', effect: { type: 'weapon', weaponId: 'snehova_koule' } },
@@ -196,7 +196,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'wp_bees', name: 'Včelí roj z úlu', icon: '🐝', description: 'Bzučící včely samy vyhledávají nejbližší strašidla.', baseCost: 50, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'vceli_roj', effect: { type: 'weapon', weaponId: 'vceli_roj' } },
   { id: 'wp_hromnicka', name: 'Hromnička', icon: '🕯️', description: 'Posvěcená svíce pulzuje posvátným zraněním a odpuzuje bubáky.', baseCost: 50, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'hromnicka', effect: { type: 'weapon', weaponId: 'hromnicka' } },
   { id: 'wp_holywater', name: 'Kropenka se svěcenou vodou', icon: '✨', description: 'Svěcená voda z kapličky kropí široký vějíř posvátných kapek.', baseCost: 55, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'svecena_kropenka', effect: { type: 'weapon', weaponId: 'svecena_kropenka' } },
-  { id: 'wp_fajfka', name: 'Bylinková fajfka', icon: '🪈', description: 'Dědečkova hliněná fajfka s vonnými bylinkami. Oblak dýmu zraňuje a zpomaluje běsy a léčí lovce.', baseCost: 55, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'bylinkova_fajfka', effect: { type: 'weapon', weaponId: 'bylinkova_fajfka' } },
+  { id: 'wp_fajfka', name: 'Bylinková fajfka', icon: 'bylinkova_fajfka', description: 'Dědečkova hliněná fajfka s vonnými bylinkami. Oblak dýmu zraňuje a zpomaluje běsy a léčí lovce.', baseCost: 55, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'bylinkova_fajfka', effect: { type: 'weapon', weaponId: 'bylinkova_fajfka' } },
 
   // --- Vzácné poklady a okamžité pomocné předměty (The Classic Trinity & Instant Utility) ---
   { id: 'ponocny_horn', name: 'Trouba obecního ponocného', icon: '📯', description: 'Zastaví čas na 5 sekund a mohutným zatroubením odhodí okolní strašidla.', baseCost: 24, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'ponocny_horn' } },

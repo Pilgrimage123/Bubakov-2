@@ -451,15 +451,15 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								style: {
 									margin: "2px 0 1px 0",
 									fontSize: "1.75rem",
-									color: "#FEF3C7",
-									textShadow: "2px 2px 0 var(--ink)"
+									color: "#8B1E0F",
+									textShadow: "1px 1px 0 rgba(255, 255, 255, 0.8)"
 								},
 								children: progress.spoiledName
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 								style: {
 									fontWeight: 900,
-									color: "#FEF3C7",
+									color: "#3D2210",
 									fontSize: "0.98rem"
 								},
 								children: progress.spoiledTitle
@@ -686,7 +686,8 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 					style: {
 						margin: "12px 0 6px 0",
 						fontSize: "1.1rem",
-						color: "#FEF3C7"
+						color: "#2A170A",
+						fontWeight: 900
 					},
 					children: "🕵️ Postupné odhalování zbraně (25 %, 50 % a 75 %):"
 				}),

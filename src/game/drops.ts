@@ -100,7 +100,7 @@ export function resolveDynamicDrop(
         size: 'giant',
         radius: 19,
         speed: opts.speed ?? 80,
-        text: '+20 🍪 Obří perník!',
+        text: '+20 Obří perník!',
         textColor: '#F59E0B',
       };
     } else {
@@ -130,7 +130,7 @@ export function resolveDynamicDrop(
       size: 'large',
       radius: 14,
       speed: opts.speed ?? 65,
-      text: '+6 🍪 Perníček!',
+      text: '+6 Perníček!',
       textColor: '#B45309',
     };
   } else if (roll < 0.94) {

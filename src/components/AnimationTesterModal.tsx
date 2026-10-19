@@ -1493,7 +1493,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       mode={isMobile ? 'mobile' : 'desktop'}
                       state={grandfatherSceneState}
                       activeItemName="Čerstvý perníček"
-                      activeItemIcon="🍪"
+                      activeItemIcon="pernicek"
                       onMousePet={() => {
                         setMousePetCount((c) => c + 1);
                       }}

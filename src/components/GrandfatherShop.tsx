@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
 import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, getWeaponUpgradeOffer, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
+import { PernicekIcon } from './PernicekIcon';
 import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
@@ -461,7 +462,7 @@ export function GrandfatherShop({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '1.4rem' }}>🍪</span>
+                <PernicekIcon size={24} />
                 <div>
                   <div style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 800 }}>PERNÍČKY LOVCE</div>
                   <strong style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', color: '#5B2118' }}>
@@ -542,7 +543,11 @@ export function GrandfatherShop({
                       cursor: gingerbread >= rerollCost ? 'pointer' : 'not-allowed',
                     }}
                   >
-                    🧺 Zalovit v nůši znovu (🍪 {rerollCost})
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                      <span>🧺 Zalovit v nůši znovu (</span>
+                      <PernicekIcon size={16} />
+                      <span>{rerollCost})</span>
+                    </span>
                   </button>
                 )}
               </div>
@@ -781,7 +786,7 @@ export function GrandfatherShop({
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>🍪</span>
+                          <PernicekIcon size={20} />
                           <strong
                             style={{
                               fontSize: '1.15rem',
@@ -866,7 +871,7 @@ export function GrandfatherShop({
               title={
                 gingerbread >= rerollCost
                   ? `Vytáhne z nůše další zboží (stojí ${rerollCost} perníčků)`
-                  : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} 🍪)`
+                  : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} perníčků)`
               }
             >
               <span>🧺 ZAMÍCHAT NŮŠI</span>
@@ -879,9 +884,12 @@ export function GrandfatherShop({
                   fontSize: '0.85rem',
                   fontWeight: 900,
                   color: gingerbread >= rerollCost ? '#78350F' : '#6B7280',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
                 }}
               >
-                🍪 {rerollCost}
+                <PernicekIcon size={14} /> {rerollCost}
               </span>
             </button>
           )}

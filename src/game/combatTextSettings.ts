@@ -65,7 +65,7 @@ export const COMBAT_TEXT_CATEGORIES: CombatTextCategoryMeta[] = [
   {
     key: 'lootResources',
     label: 'Zisky kořisti a surovin',
-    description: 'Plovoucí počty sebraných perníčků (+1 🍪), krejcarů (+25 kr.), dušiček a cukrový spěch.',
+    description: 'Plovoucí počty sebraných perníčků (+1), krejcarů (+25 kr.), dušiček a cukrový spěch.',
     icon: '🪙',
   },
   {
@@ -199,7 +199,7 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
   const norm = String(text || '').trim();
   if (!norm) return 'enemyDamage';
 
-  if (/^(?:\+?\d+(?:\s*(?:kr|groš|tolar|🍪|dušička|krejcar))|cukrový|dušička osvobozena|cink)/i.test(norm)) {
+  if (/^(?:\+?\d+(?:\s*(?:kr|groš|tolar|🍪|dušička|krejcar|perník|perníček|perníčky))|cukrový|dušička osvobozena|cink)/i.test(norm)) {
     return 'lootResources';
   }
   if (/^-\d+/i.test(norm) || /bleskov[ýy] odraz.*-\d+/i.test(norm) || /drtiv[ýy] n[áa]raz vidlemi.*-\d+/i.test(norm)) {

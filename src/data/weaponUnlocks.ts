@@ -193,7 +193,7 @@ var WEAPON_UNLOCKS = {
 	halberd: {
 		id: "halberd",
 		realName: "Kovaná halapartna",
-		realIcon: "🪓",
+		realIcon: "kovana_halapartna",
 		realType: "physical",
 		defaultUnlocked: false,
 		challengeTitle: "📯 Panská stráž proti čertům a drábům",

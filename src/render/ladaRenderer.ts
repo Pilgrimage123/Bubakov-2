@@ -3,6 +3,7 @@ import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { COLORS } from '../constants';
 import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
+import { drawGingerbreadHeartCanvas } from './pernicekCanvas';
 
 var Lada = {
 	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
@@ -452,12 +453,16 @@ var Lada = {
 		ctx.fill();
 		ctx.restore();
 	},
-	drawWatchman(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
+	drawWatchman(ctx: any, x: number, y: number, time: number, dx: number, dy: number, fleeing = false, scale = 1) {
 		const dir = dx < 0 ? -1 : 1;
-		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1) && !fleeing;
-		const bob = isMoving ? Math.abs(Math.sin(time * 16)) * 4 : Math.sin(time * 2.5) * 1;
-		const legSwing = isMoving ? Math.sin(time * 16) * 14 : 0;
-		const headBob = Math.sin(time * 3) * 1.2;
+		const isMoving = (Math.abs(dx) > 0.08 || Math.abs(dy) > 0.08) && !fleeing;
+		const walkFreq = isMoving ? 14 : 2.5;
+		const bob = isMoving ? Math.abs(Math.sin(time * walkFreq)) * 3.5 : Math.sin(time * 2.5) * 1.0;
+		const legSwing = isMoving ? Math.sin(time * walkFreq) * 12 : 0;
+		const headBob = Math.sin(time * 3) * 1.0;
+		const lanternSwing = Math.sin(time * (isMoving ? 14 : 3)) * (isMoving ? 0.35 : 0.12);
+		const coatFlutter = isMoving ? Math.sin(time * walkFreq - 0.6) * 4 : 0;
+
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.scale(scale * dir, scale);
@@ -465,74 +470,367 @@ var Lada = {
 			ctx.rotate(Math.PI / 2);
 			ctx.translate(0, -20);
 		}
-		this.drawLimb(ctx, -5, 10, -legSwing - 2, 30, "#1E252B", 9);
-		this.drawLimb(ctx, 5, 10, legSwing + 2, 30, "#1E252B", 9);
-		ctx.translate(0, -bob);
-		this.setupPath(ctx, "#263445", COLORS.ink, 3.5);
+
+		// 1. Ground contact shadow
+		this.drawShadow(ctx, 0, 26, 16);
+
+		// 2. Legs & Boots (Sturdy brown trousers + heavy black leather boots)
+		// Back leg
+		this.drawBentLimb(ctx, -5, 10, -legSwing * 0.7 - 6, 20, -legSwing - 5, 29, "#784A28", 8);
+		// Back boot
+		this.setupPath(ctx, "#18181B", COLORS.ink, 2.5);
 		ctx.beginPath();
-		ctx.moveTo(-18, -4);
-		ctx.quadraticCurveTo(-26, 16, -20, 26);
-		ctx.lineTo(20, 26);
-		ctx.quadraticCurveTo(26, 16, 18, -4);
+		ctx.ellipse(-legSwing - 4, 30, 8, 4.5, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Front leg
+		this.drawBentLimb(ctx, 5, 10, legSwing * 0.7 + 6, 20, legSwing + 5, 29, "#784A28", 8);
+		// Front boot
+		this.setupPath(ctx, "#18181B", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 6, 30, 8.5, 5, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Torso bobbing
+		ctx.translate(0, -bob);
+
+		// 4. Heavy Winter Overcoat (Ponocenský plášť - deep slate teal/navy #2A3B4C)
+		// Rear coat flare
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-18, 0);
+		ctx.quadraticCurveTo(-26 - coatFlutter, 18, -20 - coatFlutter * 1.2, 28);
+		ctx.lineTo(20, 28);
+		ctx.quadraticCurveTo(24, 16, 16, 0);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.woodDark;
+
+		// Main coat body
+		this.setupPath(ctx, "#334155", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.moveTo(-17, -8);
+		ctx.quadraticCurveTo(-22, 12, -18, 26);
+		ctx.lineTo(19, 26);
+		ctx.quadraticCurveTo(23, 12, 17, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Broad leather belt with brass buckle
+		this.setupPath(ctx, "#5A3416", COLORS.ink, 2.5);
+		ctx.fillRect(-17, 7, 35, 6);
+		ctx.strokeRect(-17, 7, 35, 6);
+		// Big rectangular brass buckle
+		this.setupPath(ctx, "#F59E0B", COLORS.ink, 2);
+		ctx.fillRect(-4, 6, 9, 8);
+		ctx.strokeRect(-4, 6, 9, 8);
+		// Buckle prong
+		ctx.fillStyle = COLORS.ink;
+		ctx.fillRect(-1, 8.5, 4, 3);
+
+		// Double-breasted brass buttons (2 columns of 3 buttons)
+		for (let row = 0; row < 3; row++) {
+			const by = -4 + row * 4;
+			// Left column
+			this.setupPath(ctx, "#FBBF24", "#78350F", 1.2);
+			ctx.beginPath();
+			ctx.arc(-7, by, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			// Right column
+			ctx.beginPath();
+			ctx.arc(6, by, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Lapel collar (v-collar)
+		this.setupPath(ctx, "#475569", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-15, -8);
+		ctx.lineTo(-4, -1);
+		ctx.lineTo(0, -7);
+		ctx.lineTo(4, -1);
+		ctx.lineTo(15, -8);
+		ctx.lineTo(9, -14);
+		ctx.lineTo(-9, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Leather shoulder strap for lantern
+		ctx.strokeStyle = "#5A3416";
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.moveTo(10, -10);
+		ctx.lineTo(-14, 11);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1;
+		ctx.stroke();
+
+		// 5. Hanging Watchman Lantern (Lucerna ponocného)
+		ctx.save();
+		const lanternX = -17 - legSwing * 0.25;
+		const lanternY = 12;
+		ctx.translate(lanternX, lanternY);
+		ctx.rotate(lanternSwing);
+
+		// Strap attachment ring
+		ctx.strokeStyle = "#F59E0B";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.arc(0, -6, 2.5, 0, Math.PI * 2);
+		ctx.stroke();
+
+		// Warm amber glow cast by candle
+		const lanternGlow = ctx.createRadialGradient(0, 3, 2, 0, 3, 26);
+		lanternGlow.addColorStop(0, "rgba(253, 224, 71, 0.45)");
+		lanternGlow.addColorStop(0.5, "rgba(245, 158, 11, 0.2)");
+		lanternGlow.addColorStop(1, "rgba(245, 158, 11, 0)");
+		ctx.fillStyle = lanternGlow;
+		ctx.beginPath();
+		ctx.arc(0, 3, 26, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Lantern metal hood / cap
+		this.setupPath(ctx, "#334155", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-7, -4);
+		ctx.lineTo(7, -4);
+		ctx.lineTo(5, -1);
+		ctx.lineTo(-5, -1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Glowing glass chamber with frame
+		this.setupPath(ctx, "#FEF08A", COLORS.ink, 2);
+		ctx.fillRect(-6, -1, 12, 13);
+		ctx.strokeRect(-6, -1, 12, 13);
+
+		// Candle flame inside
+		ctx.fillStyle = "#EA580C";
+		ctx.beginPath();
+		ctx.ellipse(0, 6 + Math.sin(time * 12) * 0.8, 2.2, 4 + Math.sin(time * 14) * 0.7, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(0, 7.5, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Lantern corner struts and crossbars
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.moveTo(0, -1);
+		ctx.lineTo(0, 12);
+		ctx.moveTo(-6, 5);
+		ctx.lineTo(6, 5);
+		ctx.stroke();
+
+		// Lantern bottom tray
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 2);
+		ctx.fillRect(-7, 12, 14, 3);
+		ctx.strokeRect(-7, 12, 14, 3);
+		ctx.restore();
+
+		// 6. Halberd carried in hand (Kovaná halapartna dle předlohy)
+		// Shaft rests diagonally in arm / on shoulder
+		ctx.save();
+		const halberdAngle = -0.22 + Math.sin(time * walkFreq) * 0.05;
+		ctx.rotate(halberdAngle);
+
+		// Wooden shaft
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 6;
+		ctx.beginPath();
+		ctx.moveTo(11, 26);
+		ctx.lineTo(19, -54);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C582B";
 		ctx.lineWidth = 4;
 		ctx.beginPath();
-		ctx.moveTo(14 + legSwing * .3, 24);
-		ctx.lineTo(20 + legSwing * .3, -38);
+		ctx.moveTo(11, 26);
+		ctx.lineTo(19, -54);
 		ctx.stroke();
-		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.5);
+		// Shaft wood highlight
+		ctx.strokeStyle = "#DFBA8A";
+		ctx.lineWidth = 1.2;
 		ctx.beginPath();
-		ctx.moveTo(20 + legSwing * .3, -38);
-		ctx.lineTo(20 + legSwing * .3, -50);
-		ctx.lineTo(26 + legSwing * .3, -44);
-		ctx.lineTo(32 + legSwing * .3, -44);
-		ctx.lineTo(22 + legSwing * .3, -34);
+		ctx.moveTo(11.5, 26);
+		ctx.lineTo(18.5, -53);
+		ctx.stroke();
+
+		// Iron reinforcing collars on shaft
+		this.setupPath(ctx, "#475569", COLORS.ink, 1.6);
+		// Lower ring
+		ctx.fillRect(11.5, 2, 4.5, 3.5);
+		ctx.strokeRect(11.5, 2, 4.5, 3.5);
+		// Upper socket ring
+		ctx.fillRect(15.5, -34, 5, 4);
+		ctx.strokeRect(15.5, -34, 5, 4);
+
+		// Halberd Head (Forged iron spear + crescent axe with clover cutout + rear beak)
+		ctx.save();
+		ctx.translate(19, -54);
+		ctx.rotate(0.18);
+
+		// Steel blade silhouette
+		this.setupPath(ctx, "#64748B", COLORS.ink, 2.2);
+		ctx.beginPath();
+		// Spear point tip
+		ctx.moveTo(0, 0);
+		ctx.lineTo(3, -22); // Sharp spear tip
+		ctx.lineTo(1, -7);
+		// Crescent axe blade
+		ctx.quadraticCurveTo(8, -12, 15, -14); // Upper horn
+		ctx.bezierCurveTo(14, -6, 12, 3, 6, 9); // Crescent cutting arc to lower horn
+		ctx.quadraticCurveTo(2, 6, 0, 0);
+		// Rear beak pick
+		ctx.lineTo(-6, -1);
+		ctx.lineTo(-8, -4);
+		ctx.quadraticCurveTo(-4, -6, 0, -8);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		const lanternX = -20 - legSwing * .4;
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 2;
+
+		// Blade cutting glint highlight
+		ctx.strokeStyle = "#F1F5F9";
+		ctx.lineWidth = 1.5;
+		ctx.lineCap = "round";
 		ctx.beginPath();
-		ctx.moveTo(-16 - legSwing * .4, 4);
-		ctx.lineTo(lanternX, 0);
+		ctx.moveTo(3, -21);
+		ctx.lineTo(1, -7);
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2);
-		ctx.fillRect(lanternX - 6, 0, 12, 4);
-		ctx.strokeRect(lanternX - 6, 0, 12, 4);
-		ctx.fillStyle = COLORS.mustard;
-		ctx.fillRect(lanternX - 6, 4, 12, 14);
-		ctx.strokeRect(lanternX - 6, 4, 12, 14);
-		ctx.fillStyle = COLORS.red;
 		ctx.beginPath();
-		ctx.arc(lanternX, 11, 2.5 + Math.sin(time * 10) * .8, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.translate(0, headBob);
-		this.setupPath(ctx, COLORS.skin);
-		ctx.beginPath();
-		ctx.arc(0, -20, 13, 0, Math.PI * 2);
-		ctx.fill();
+		ctx.moveTo(14.5, -13);
+		ctx.quadraticCurveTo(12, -2, 6, 8.5);
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.white, COLORS.ink, 2);
+
+		// Four-leaf clover cutout (čtyřlístkový otvor) in the axe blade
+		ctx.fillStyle = "#1E293B";
 		ctx.beginPath();
-		ctx.arc(0, -18, 12, .2, Math.PI - .2);
-		ctx.quadraticCurveTo(0, -4, 8, -12);
-		ctx.quadraticCurveTo(-4, 0, 0, -4);
+		ctx.arc(8, -3, 1.3, 0, Math.PI * 2);
+		ctx.arc(8, 0, 1.3, 0, Math.PI * 2);
+		ctx.arc(6.5, -1.5, 1.3, 0, Math.PI * 2);
+		ctx.arc(9.5, -1.5, 1.3, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.stroke();
-		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3);
+
+		ctx.restore();
+		ctx.restore();
+
+		// 7. Arms and Hand gripping halberd
+		this.drawBentLimb(ctx, 12, -6, 15, 6, 14, 10, "#334155", 7.5);
+		// Hand mitten/glove
+		this.setupPath(ctx, "#784A28", COLORS.ink, 2);
 		ctx.beginPath();
-		ctx.arc(0, -26, 14, Math.PI, 0);
-		ctx.fill();
-		ctx.stroke();
-		this.setupPath(ctx, COLORS.bone, COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(0, -26, 16, 6, 0, 0, Math.PI * 2);
+		ctx.ellipse(14, 10, 4.2, 4.2, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
+
+		// 8. Head, Face & Features (flushed face, bushy mustache, determined eye)
+		ctx.save();
+		ctx.translate(0, -20 + headBob);
+
+		// Head base (ruddy peasant skin)
+		this.setupPath(ctx, "#FED7AA", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, 13, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy flushed cheek
+		ctx.fillStyle = "rgba(244, 63, 94, 0.45)";
+		ctx.beginPath();
+		ctx.arc(4, 2, 4.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Cold red round nose
+		this.setupPath(ctx, "#FB7185", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(7, 0, 3.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Bushy grey mustache (pořádný ponocenský knír dle Lada předlohy)
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(5, 2);
+		ctx.quadraticCurveTo(11, 4, 15, 9);
+		ctx.quadraticCurveTo(8, 9, 4, 5);
+		ctx.quadraticCurveTo(0, 9, -7, 8);
+		ctx.quadraticCurveTo(-3, 4, 5, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Determined eye & thick grey eyebrow
+		// Eyebrow
+		ctx.strokeStyle = "#64748B";
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(3, -5);
+		ctx.lineTo(8, -4);
+		ctx.stroke();
+		// Eye
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(5.5, -2, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+		// Catchlight
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(6.2, -2.5, 0.6, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Grey sideburn hair curling out
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(-8, 1, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 9. Black Felt Watchman Hat (Klobouk ponocného s mosazným odznakem)
+		// Hat brim (široká krempa)
+		this.setupPath(ctx, "#1E2229", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.ellipse(0, -9, 18, 5.5, 0.05, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Hat crown (kulatá koruna klobouku)
+		ctx.beginPath();
+		ctx.moveTo(-11, -9);
+		ctx.quadraticCurveTo(-12, -22, 0, -23);
+		ctx.quadraticCurveTo(12, -22, 11, -9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Hat band
+		ctx.strokeStyle = "#334155";
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-11, -11);
+		ctx.quadraticCurveTo(0, -13, 11, -11);
+		ctx.stroke();
+
+		// Brass cockade badge on hat (Mosazný odznak ponocného)
+		this.setupPath(ctx, "#F59E0B", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.arc(4, -13, 2.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.arc(3.5, -13.5, 0.9, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
 		ctx.restore();
 	},
 	drawHeart(ctx, x, y, size, color) {
@@ -5711,18 +6009,494 @@ var Lada = {
 		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
 		ctx.strokeStyle = "#171923"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-4, 10); ctx.moveTo(3, 5); ctx.lineTo(4, 10); ctx.stroke(); ctx.restore();
 	},
-	drawFrostling(ctx, x, y, time, vx, panicked) {
-		const bob = Math.sin(time * (panicked ? 12 : 5)) * 2.5;
-		ctx.save(); ctx.translate(x, y + bob); ctx.shadowColor = "#93E5FF"; ctx.shadowBlur = 12;
-		// Keep the drawn frost aura aligned with gameplay range (+55% from 78 px).
-		const frostAuraPulse = Math.sin(time * 4) * 4;
-		ctx.fillStyle = "rgba(125, 211, 252, 0.10)"; ctx.beginPath(); ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2); ctx.fill();
-		ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(186, 230, 253, 0.65)"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 7]);
-		ctx.beginPath(); ctx.arc(0, 0, FROSTLING_AURA_RADIUS - 3 + frostAuraPulse, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-		ctx.fillStyle = "#BAE6FD"; ctx.strokeStyle = "#164E63"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 0, 10, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#E0F2FE"; ctx.beginPath(); ctx.arc(0, -10, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#0F172A"; ctx.beginPath(); ctx.arc(-3, -11, 1.5, 0, Math.PI * 2); ctx.arc(3, -11, 1.5, 0, Math.PI * 2); ctx.fill();
-		ctx.strokeStyle = "#7DD3FC"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-5, -17); ctx.lineTo(-8, -22); ctx.moveTo(4, -17); ctx.lineTo(8, -22); ctx.stroke(); ctx.restore();
+	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		const dir = vx < 0 ? -1 : 1;
+		const walkSpeed = panicked ? 16 : 8;
+		const bob = Math.sin(time * walkSpeed) * (panicked ? 3.5 : 2.0);
+		const legSwing = Math.sin(time * walkSpeed) * (panicked ? 10 : 6);
+		const shiver = Math.sin(time * 26) * 0.7;
+		const sniffleCycle = (time * 1.5) % 4;
+		const handkerchiefDab = sniffleCycle < 1.4 ? Math.sin((sniffleCycle / 1.4) * Math.PI) * 2.5 : 0;
+
+		// -----------------------------------------------------------------
+		// 1. FROST AURA (Jinovatková aura dle herního dosahu)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.translate(x, y);
+
+		const frostAuraPulse = Math.sin(time * 3.5) * 3.5;
+		ctx.shadowColor = "#93E5FF";
+		ctx.shadowBlur = 10;
+		ctx.fillStyle = "rgba(125, 211, 252, 0.12)";
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.shadowBlur = 0;
+
+		ctx.strokeStyle = "rgba(186, 230, 253, 0.65)";
+		ctx.lineWidth = 1.6;
+		ctx.setLineDash([6, 8]);
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS - 3 + frostAuraPulse, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.setLineDash([]);
+
+		const numCrystals = 6;
+		for (let c = 0; c < numCrystals; c++) {
+			const cAngle = (c / numCrystals) * Math.PI * 2 + time * 0.6;
+			const cDist = FROSTLING_AURA_RADIUS * 0.78 + Math.sin(time * 3 + c) * 4;
+			const cx = Math.cos(cAngle) * cDist;
+			const cy = Math.sin(cAngle) * cDist;
+			ctx.fillStyle = "rgba(224, 242, 254, 0.8)";
+			ctx.beginPath();
+			ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+
+		// -----------------------------------------------------------------
+		// 2. THE ZIMNÍ SKŘÍTEK CHARACTER BODY (Předloha dle ilustrace)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.scale(dir * 1.15, 1.15);
+
+		this.drawShadow(ctx, 0, 16, 12);
+
+		// 2a. Boots & Legs (Teplé kožíškové botky se sněhem a záplatované kalhoty)
+		this.drawBentLimb(ctx, -5, 4, -legSwing - 3, 11, -legSwing - 3, 17, "#5B4433", 6);
+		this.setupPath(ctx, "#543C28", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 3, 17, 5.5, 3.8, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F8FAFC";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 3, 13.5, 4, 1.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 5, 16, 2.5, 1.4, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.drawBentLimb(ctx, 4, 4, legSwing + 3, 11, legSwing + 3, 17, "#5B4433", 6);
+		ctx.fillStyle = "#C2410C";
+		ctx.fillRect(legSwing + 1, 9, 3.5, 3);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(legSwing + 1, 9, 3.5, 3);
+
+		this.setupPath(ctx, "#543C28", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 4, 17, 6, 4, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F8FAFC";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 4, 13.5, 4, 1.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 6.5, 16, 2.8, 1.5, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#E0F2FE";
+		ctx.strokeStyle = "#0891B2";
+		ctx.lineWidth = 0.8;
+		ctx.beginPath();
+		ctx.moveTo(legSwing + 2, 17);
+		ctx.lineTo(legSwing + 2.5, 21);
+		ctx.lineTo(legSwing + 3.2, 17);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2b. Coat with fleece hem & rope belt
+		this.setupPath(ctx, "#6E5540", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-11, -5);
+		ctx.quadraticCurveTo(-14, 2, -12, 8);
+		ctx.lineTo(12, 8);
+		ctx.quadraticCurveTo(14, 2, 11, -5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#F1F5F9", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-12, 7);
+		for (let s = -12; s <= 12; s += 3.5) {
+			ctx.quadraticCurveTo(s + 1.75, 10.5, s + 3.5, 7);
+		}
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#D97706";
+		ctx.fillRect(-7, 2, 3.5, 3.5);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(-7, 2, 3.5, 3.5);
+
+		ctx.strokeStyle = "#FDE68A";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-11, 2);
+		ctx.quadraticCurveTo(0, 3.5, 11, 2);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.stroke();
+		ctx.fillStyle = "#FDE68A";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.arc(1, 3.5, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(1, 4.5);
+		ctx.lineTo(2.5, 9);
+		ctx.moveTo(0.5, 4.5);
+		ctx.lineTo(-0.5, 8.5);
+		ctx.stroke();
+
+		// 2c. Knitted Red Scarf
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.ellipse(0, -6, 11.5, 4.5, 0.05, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		const scarfWave = Math.sin(time * walkSpeed * 0.7) * 2;
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(5, -4);
+		ctx.quadraticCurveTo(11, 0, 12 + scarfWave, 6);
+		ctx.lineTo(14 + scarfWave, 14);
+		ctx.lineTo(9 + scarfWave, 14);
+		ctx.quadraticCurveTo(8, 6, 2, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#991B1B";
+		ctx.lineWidth = 1.2;
+		for (let f = 9; f <= 14; f += 1.5) {
+			ctx.beginPath();
+			ctx.moveTo(f + scarfWave, 14);
+			ctx.lineTo(f + scarfWave, 16.5);
+			ctx.stroke();
+		}
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(8, 2, 0.9, 0, Math.PI * 2);
+		ctx.arc(11 + scarfWave, 8, 1.0, 0, Math.PI * 2);
+		ctx.arc(3, -6, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 2d. Head & Face
+		ctx.save();
+		ctx.translate(shiver, -13);
+
+		// Fluffy snowy beard
+		this.setupPath(ctx, "#F1F5F9", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-11, -3);
+		ctx.quadraticCurveTo(-14, 2, -10, 6);
+		ctx.quadraticCurveTo(-12, 10, -6, 11);
+		ctx.quadraticCurveTo(-2, 13, 2, 11);
+		ctx.quadraticCurveTo(8, 12, 11, 8);
+		ctx.quadraticCurveTo(14, 3, 11, -2);
+		ctx.quadraticCurveTo(7, -1, 3, 2);
+		ctx.quadraticCurveTo(-5, 2, -11, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "rgba(186, 230, 253, 0.5)";
+		ctx.beginPath();
+		ctx.arc(-5, 7, 3, 0, Math.PI * 2);
+		ctx.arc(2, 8, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Elf ear
+		this.setupPath(ctx, "#FED7AA", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-8, -4);
+		ctx.quadraticCurveTo(-15, -7, -17, -5);
+		ctx.quadraticCurveTo(-13, -2, -8, -1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FB7185";
+		ctx.beginPath();
+		ctx.ellipse(-12, -4, 2.5, 1.2, -0.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Face base
+		this.setupPath(ctx, "#FED7AA", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.arc(0, -5, 8.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy cheeks
+		ctx.fillStyle = "rgba(244, 63, 94, 0.45)";
+		ctx.beginPath();
+		ctx.arc(-4, -3, 3, 0, Math.PI * 2);
+		ctx.arc(4, -3, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Cold red nose
+		this.setupPath(ctx, "#EF4444", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(2, -4, 3.4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+		ctx.beginPath();
+		ctx.arc(1.2, -5.2, 0.9, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Eyes
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.ellipse(-2.5, -6.5, 1.6, 2.0, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(-2.9, -7.2, 0.7, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.ellipse(4.2, -6.5, 1.5, 1.9, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(4.6, -7.2, 0.6, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Eyebrows
+		ctx.strokeStyle = "#475569";
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(-4.5, -9.5);
+		ctx.quadraticCurveTo(-2.5, -10.5, -0.5, -9);
+		ctx.moveTo(2.5, -9.5);
+		ctx.quadraticCurveTo(4.5, -10.5, 6.5, -9);
+		ctx.stroke();
+
+		// Handkerchief
+		ctx.save();
+		ctx.translate(6, -3 - handkerchiefDab);
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(-2, -3);
+		ctx.lineTo(4, -5);
+		ctx.lineTo(7, 2);
+		ctx.lineTo(2, 6);
+		ctx.lineTo(-3, 3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#3B82F6";
+		ctx.lineWidth = 1.1;
+		ctx.beginPath();
+		ctx.moveTo(3, -4);
+		ctx.lineTo(6, 1.5);
+		ctx.lineTo(1.5, 5);
+		ctx.stroke();
+
+		// Mitten
+		this.setupPath(ctx, "#4B6B82", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.arc(4, 1, 3.0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Floppy hat
+		this.setupPath(ctx, "#6E5540", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-13, -8);
+		ctx.quadraticCurveTo(-6, -11, 4, -9);
+		ctx.quadraticCurveTo(12, -8, 14, -6);
+		ctx.lineTo(11, -3);
+		ctx.quadraticCurveTo(0, -6, -11, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#5B4433", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-10, -9);
+		ctx.quadraticCurveTo(-14, -18, -9, -24);
+		ctx.quadraticCurveTo(-4, -28, 2, -22);
+		ctx.quadraticCurveTo(8, -17, 10, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#C2410C";
+		ctx.fillRect(-6, -19, 4, 3.5);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(-6, -19, 4, 3.5);
+
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-11, -19);
+		ctx.quadraticCurveTo(-9, -26, -4, -26);
+		ctx.quadraticCurveTo(1, -26, 3, -20);
+		ctx.quadraticCurveTo(0, -21, -5, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FFFFFF";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.ellipse(-2, -9.5, 9, 2.2, 0.05, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		const icicleXs = [-10, -6, -2, 2, 7, 11];
+		const icicleLens = [5, 7, 4, 6, 8, 4.5];
+		for (let i = 0; i < icicleXs.length; i++) {
+			const ix = icicleXs[i];
+			const ilen = icicleLens[i] + Math.sin(time * 3 + i) * 0.5;
+			this.setupPath(ctx, "#E0F2FE", "#0891B2", 1.0);
+			ctx.beginPath();
+			ctx.moveTo(ix - 1.2, -6);
+			ctx.lineTo(ix, -6 + ilen);
+			ctx.lineTo(ix + 1.2, -6);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.strokeStyle = "#FFFFFF";
+			ctx.lineWidth = 0.6;
+			ctx.beginPath();
+			ctx.moveTo(ix - 0.4, -5);
+			ctx.lineTo(ix, -6 + ilen * 0.7);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+
+		// -----------------------------------------------------------------
+		// 3. MAGICAL FROST CROOK STAFF (Mrazivá berla s ledovým vírem)
+		// -----------------------------------------------------------------
+		ctx.save();
+		const staffSway = Math.sin(time * walkSpeed * 0.5) * 0.08;
+		ctx.translate(-15, -4);
+		ctx.rotate(staffSway);
+
+		this.setupPath(ctx, "#4B6B82", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(0, 3, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 4.5;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(0, 20);
+		ctx.quadraticCurveTo(-1.5, 5, 0, -10);
+		ctx.quadraticCurveTo(1.5, -20, -2, -28);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C582B";
+		ctx.lineWidth = 2.8;
+		ctx.stroke();
+
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 4.5;
+		ctx.beginPath();
+		ctx.moveTo(-2, -28);
+		ctx.bezierCurveTo(-5, -34, 4, -40, 8, -34);
+		ctx.bezierCurveTo(10, -30, 8, -24, 3, -26);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C582B";
+		ctx.lineWidth = 2.8;
+		ctx.stroke();
+
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.3);
+		ctx.beginPath();
+		ctx.moveTo(-4, -32);
+		ctx.quadraticCurveTo(3, -41, 9, -35);
+		ctx.quadraticCurveTo(5, -36, -2, -31);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		const staffIcicles = [
+			{ x: -2, len: 6 },
+			{ x: 3, len: 8 },
+			{ x: 7, len: 5 }
+		];
+		for (const si of staffIcicles) {
+			this.setupPath(ctx, "#E0F2FE", "#0891B2", 0.9);
+			ctx.beginPath();
+			ctx.moveTo(si.x - 1, -29);
+			ctx.lineTo(si.x, -29 + si.len);
+			ctx.lineTo(si.x + 1, -29);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.save();
+		ctx.translate(3.5, -31);
+		const magicRot = time * 2.5;
+		const magicPulse = 1 + Math.sin(time * 5) * 0.15;
+		ctx.scale(magicPulse, magicPulse);
+
+		const staffGlow = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+		staffGlow.addColorStop(0, "rgba(224, 242, 254, 0.95)");
+		staffGlow.addColorStop(0.4, "rgba(56, 189, 248, 0.65)");
+		staffGlow.addColorStop(1, "rgba(14, 165, 233, 0)");
+		ctx.fillStyle = staffGlow;
+		ctx.beginPath();
+		ctx.arc(0, 0, 14, 0, Math.PI * 2);
+		ctx.fill();
+
+		for (let sIdx = 0; sIdx < 2; sIdx++) {
+			ctx.save();
+			ctx.rotate(magicRot * (sIdx === 0 ? 1 : -1.2) + sIdx * 0.8);
+			const starRadius = 5.5 - sIdx * 1.5;
+			ctx.fillStyle = sIdx === 0 ? "#FFFFFF" : "#BAE6FD";
+			ctx.beginPath();
+			ctx.moveTo(0, -starRadius);
+			ctx.quadraticCurveTo(0.8, -0.8, starRadius, 0);
+			ctx.quadraticCurveTo(0.8, 0.8, 0, starRadius);
+			ctx.quadraticCurveTo(-0.8, 0.8, -starRadius, 0);
+			ctx.quadraticCurveTo(-0.8, -0.8, 0, -starRadius);
+			ctx.closePath();
+			ctx.fill();
+			ctx.restore();
+		}
+
+		for (let p = 0; p < 4; p++) {
+			const pAngle = (p / 4) * Math.PI * 2 + time * 3;
+			const pDist = 8 + Math.sin(time * 4 + p) * 3;
+			const px = Math.cos(pAngle) * pDist;
+			const py = Math.sin(pAngle) * pDist;
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.arc(px, py, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.restore();
+
+		ctx.restore();
 	},
 	drawBludicka(ctx, x, y, time, vx, panicked) {
 		const bob = Math.sin(time * (panicked ? 14 : 6)) * (panicked ? 8 : 6);
@@ -8807,9 +9581,269 @@ var Lada = {
 			ctx.fillStyle = COLORS.ink;
 			ctx.font = "800 9px Arial";
 			ctx.textAlign = "center";
-			ctx.textBaseline = "middle";
 			ctx.fillText("K", x, y + bob);
 		}
+	},
+	drawGingerbread(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, size: string = 'small', isHot: boolean = false) {
+		const bob = Math.sin(time * 3.5) * 2.5;
+		const rot = Math.sin(time * 1.8) * 0.08;
+
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.rotate(rot);
+
+		// Přízemní stín
+		ctx.save();
+		ctx.fillStyle = "rgba(42, 23, 11, 0.22)";
+		const shadowR = size === 'giant' ? 18 : (size === 'large' ? 13 : 9);
+		ctx.beginPath();
+		ctx.ellipse(0, shadowR * 0.85, shadowR, shadowR * 0.36, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		if (isHot) {
+			// Horký perníček čerstvě z pece – zářivá aura
+			ctx.save();
+			ctx.shadowColor = '#F59E0B';
+			ctx.shadowBlur = 10;
+			ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
+			ctx.lineWidth = 2.5;
+			ctx.beginPath();
+			ctx.arc(0, 0, (size === 'giant' ? 22 : (size === 'large' ? 16 : 12)), 0, Math.PI * 2);
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		if (size === 'giant') {
+			// NEJVĚTŠÍ DENOMINACE: ČERTOVSKÁ HLAVA S RŮŽKY (LADOVSKÝ ČERTÍK)
+			const s = 1.35;
+			ctx.scale(s, s);
+
+			// Perníkový korpus hlavy čerta (horned devil head)
+			ctx.fillStyle = '#6E2E0A';
+			ctx.strokeStyle = '#321404';
+			ctx.lineWidth = 2.2;
+			ctx.lineJoin = 'round';
+			ctx.lineCap = 'round';
+
+			ctx.beginPath();
+			ctx.moveTo(0, -7);
+			// Pravý roh nahoru a ven
+			ctx.bezierCurveTo(4, -8, 8, -13, 11, -19);
+			ctx.bezierCurveTo(13, -19, 14, -15, 12, -9);
+			// Pravé špičaté ouško
+			ctx.lineTo(16, -6);
+			ctx.lineTo(13, -2);
+			// Pravá tvář k bradě
+			ctx.bezierCurveTo(15, 6, 9, 14, 0, 16);
+			// Levá brada k levé tváři
+			ctx.bezierCurveTo(-9, 14, -15, 6, -13, -2);
+			// Levé ouško
+			ctx.lineTo(-16, -6);
+			ctx.lineTo(-12, -9);
+			// Levý roh nahoru
+			ctx.bezierCurveTo(-14, -15, -13, -19, -11, -19);
+			// Vnitřní hrana levého rohu zpět ke středu
+			ctx.bezierCurveTo(-8, -13, -4, -8, 0, -7);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// Teplý pečený kvašový lesk uprostřed tváře
+			ctx.fillStyle = '#8C4215';
+			ctx.beginPath();
+			ctx.ellipse(0, 3, 7.5, 6.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Cukrová poleva – bílé zdobení rohů
+			ctx.strokeStyle = '#FFFDF5';
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.moveTo(3, -9); ctx.lineTo(10, -17);
+			ctx.moveTo(6, -11); ctx.lineTo(10, -11);
+			ctx.moveTo(-3, -9); ctx.lineTo(-10, -17);
+			ctx.moveTo(-6, -11); ctx.lineTo(-10, -11);
+			ctx.stroke();
+
+			// Cukrové obloučky na tvářích
+			ctx.strokeStyle = '#FFFDF5';
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.arc(-8, 3, 2, 0, Math.PI);
+			ctx.arc(8, 3, 2, 0, Math.PI);
+			ctx.stroke();
+
+			// Oči z rubínových cukrových perliček
+			ctx.fillStyle = '#DC2626';
+			ctx.beginPath();
+			ctx.arc(-4.5, 0, 2, 0, Math.PI * 2);
+			ctx.arc(4.5, 0, 2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Jiskřičky v očích
+			ctx.fillStyle = '#FFFFFF';
+			ctx.beginPath();
+			ctx.arc(-4, -0.6, 0.7, 0, Math.PI * 2);
+			ctx.arc(5, -0.6, 0.7, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Lišácký úsměv
+			ctx.strokeStyle = '#321404';
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.arc(0, 6, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+			ctx.stroke();
+
+			// Červený cukrový jazyk
+			ctx.fillStyle = '#EF4444';
+			ctx.beginPath();
+			ctx.arc(0, 8, 2.2, 0, Math.PI);
+			ctx.fill();
+
+			// Bílý cukrový zoubek
+			ctx.fillStyle = '#FFFDF5';
+			ctx.beginPath();
+			ctx.moveTo(-2, 7.5); ctx.lineTo(-1, 9.5); ctx.lineTo(0, 7.5);
+			ctx.fill();
+
+			// Zlatá cukrová perlička na čele
+			ctx.fillStyle = '#F59E0B';
+			ctx.beginPath();
+			ctx.arc(0, -4, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+
+		} else if (size === 'large') {
+			// VELKÝ PERNÍČEK: LADOVSKÝ ČESKÝ PERNÍKOVÝ PANÁČEK
+			const s = 1.15;
+			ctx.scale(s, s);
+
+			ctx.fillStyle = '#78350F';
+			ctx.strokeStyle = '#2B1204';
+			ctx.lineWidth = 2.0;
+			ctx.lineJoin = 'round';
+			ctx.lineCap = 'round';
+
+			// Ladovská silueta perníkového panáčka (hlava, rozpažené ruce, kabátek a nožky)
+			ctx.beginPath();
+			// Hlava panáčka nahoře
+			ctx.arc(0, -11, 5.5, 0.75 * Math.PI, 0.25 * Math.PI, false);
+			// Pravé rameno k paži
+			ctx.lineTo(3.5, -6.5);
+			// Pravá rozpažená ruka ven
+			ctx.lineTo(12, -4);
+			// Pravá ručka (kulatý okraj)
+			ctx.arc(12.5, -2, 2.2, -0.4 * Math.PI, 0.5 * Math.PI, false);
+			// Spodní hrana pravé paže k pasu
+			ctx.lineTo(4.5, 0.5);
+			// Pas k pravému boku
+			ctx.lineTo(5, 4);
+			// Pravá noha dolů
+			ctx.lineTo(6.5, 12);
+			// Pravá botka / patička
+			ctx.arc(4.5, 13, 2.2, 0, Math.PI, false);
+			// Vnitřní šev mezi nožkami k rozkroku
+			ctx.lineTo(2.5, 12);
+			ctx.lineTo(0, 5);
+			// Levá noha vnitřní šev dolů
+			ctx.lineTo(-2.5, 12);
+			// Levá botka
+			ctx.arc(-4.5, 13, 2.2, 0, Math.PI, false);
+			// Levá noha vnější šev nahoru
+			ctx.lineTo(-6.5, 12);
+			// Levý bok k pasu
+			ctx.lineTo(-5, 4);
+			ctx.lineTo(-4.5, 0.5);
+			// Spodní hrana levé paže ven
+			ctx.lineTo(-12.5, -2);
+			// Levá ručka (kulatý okraj)
+			ctx.arc(-12.5, -2, 2.2, 0.5 * Math.PI, 1.4 * Math.PI, false);
+			// Horní hrana levé paže k rameni
+			ctx.lineTo(-3.5, -6.5);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// Teplý pečený kvašový lesk tváře a bříška
+			ctx.fillStyle = '#92400E';
+			ctx.beginPath();
+			ctx.arc(0, -11, 3.8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.ellipse(0, 2, 3.5, 4.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Bílé cukrové oči
+			ctx.fillStyle = '#FFFDF5';
+			ctx.beginPath();
+			ctx.arc(-2, -12, 1.1, 0, Math.PI * 2);
+			ctx.arc(2, -12, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+			// Černé zorničky
+			ctx.fillStyle = '#2B1204';
+			ctx.beginPath();
+			ctx.arc(-2, -12, 0.5, 0, Math.PI * 2);
+			ctx.arc(2, -12, 0.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Ladovský usměvavý oblouček pusy
+			ctx.strokeStyle = '#FFFDF5';
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.arc(0, -10.5, 2.4, 0.15 * Math.PI, 0.85 * Math.PI);
+			ctx.stroke();
+
+			// Červené cukrové tvářičky
+			ctx.fillStyle = '#EF4444';
+			ctx.beginPath();
+			ctx.arc(-3.5, -9.8, 0.9, 0, Math.PI * 2);
+			ctx.arc(3.5, -9.8, 0.9, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Cukrová linka límečku / mašličky
+			ctx.strokeStyle = '#FFFDF5';
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.moveTo(-3, -6.5); ctx.lineTo(0, -5.2); ctx.lineTo(3, -6.5);
+			ctx.stroke();
+			// Rubínový uzlík mašličky
+			ctx.fillStyle = '#DC2626';
+			ctx.beginPath();
+			ctx.arc(0, -5.5, 1.2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// 3 bílé cukrové knoflíčky na vestě
+			ctx.fillStyle = '#FFFDF5';
+			ctx.beginPath();
+			ctx.arc(0, -2, 1.3, 0, Math.PI * 2);
+			ctx.arc(0, 1.5, 1.3, 0, Math.PI * 2);
+			ctx.arc(0, 5, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Cukrové manžetky na zápěstích
+			ctx.strokeStyle = '#FFFDF5';
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.moveTo(-9.5, -4.5); ctx.lineTo(-9, -0.5);
+			ctx.moveTo(9.5, -4.5); ctx.lineTo(9, -0.5);
+			ctx.stroke();
+
+			// Cukrové manžetky na botkách
+			ctx.beginPath();
+			ctx.moveTo(-6, 9.5); ctx.lineTo(-2.5, 9.5);
+			ctx.moveTo(2.5, 9.5); ctx.lineTo(6, 9.5);
+			ctx.stroke();
+
+			// Cukrová vlnovka na čepičce
+			ctx.beginPath();
+			ctx.arc(0, -14.5, 2.5, 0.8 * Math.PI, 0.2 * Math.PI);
+			ctx.stroke();
+
+		} else {
+			// ZÁKLADNÍ DENOMINACE: MALÉ JEDNODUŠE BÍLE ZDOBENÉ PERNÍKOVÉ SRDÍČKO
+			drawGingerbreadHeartCanvas(ctx, 0, 0, 22);
+		}
+
+		ctx.restore();
 	},
 	drawJitrnice(ctx, x, y, scale = 1, angle = 0) {
 		ctx.save();
@@ -12005,6 +13039,306 @@ var Lada = {
 		}
 
 		ctx.restore();
+	},
+	drawHalapartnaSlash(ctx: any, s: any) {
+		const maxLife = s.maxLife || 0.24;
+		const progress = Math.max(0, Math.min(1, 1 - (s.life / maxLife)));
+		const fade = Math.max(0, 1 - Math.pow(progress, 2.2));
+		if (fade <= 0.001) return;
+
+		const reach = s.reach || 145;
+		const arc = s.arc || 1.7;
+		const dir = s.swingDir || 1;
+		const handRadius = 16;
+
+		// Angular bounds of the sweeping cleave
+		const halfArc = arc * 0.52;
+		const startAngle = s.angle - dir * halfArc;
+		const endAngle = s.angle + dir * halfArc;
+
+		// Heavy polearm sweep easing: brief tension -> explosive wide sweep -> heavy follow-through
+		const getSwingP = (p: number) => {
+			if (p < 0.10) {
+				const u = p / 0.10;
+				return -0.05 * Math.sin(u * Math.PI); // heavy windup pull-back
+			} else if (p < 0.65) {
+				const u = (p - 0.10) / 0.55;
+				return 1 - Math.pow(1 - u, 2.8); // explosive cleave
+			} else {
+				const u = (p - 0.65) / 0.35;
+				return 1.0 + Math.sin(u * Math.PI) * 0.03 * (1 - u); // heavy follow-through
+			}
+		};
+
+		const sweepP = getSwingP(progress);
+		const currentBladeAngle = startAngle + (endAngle - startAngle) * sweepP;
+
+		// -----------------------------------------------------------------
+		// 1. DYNAMIC WIND & DUST SWEEP FAN (Vějíř sečného větru a prachu dle předlohy)
+		// -----------------------------------------------------------------
+		const sweepAlpha = Math.min(1, Math.sin(progress * Math.PI)) * fade;
+		if (sweepAlpha > 0.04) {
+			ctx.save();
+			const trailSpan = Math.min(arc * 0.92, Math.abs(currentBladeAngle - startAngle));
+			const trailStartAng = currentBladeAngle - dir * trailSpan;
+			const minAngle = Math.min(trailStartAng, currentBladeAngle);
+			const maxAngle = Math.max(trailStartAng, currentBladeAngle);
+
+			if (maxAngle - minAngle > 0.03) {
+				// Multi-layered radial wash for the sweeping dust and wind
+				const dustGrad = ctx.createRadialGradient(0, 0, reach * 0.25, 0, 0, reach * 1.06);
+				dustGrad.addColorStop(0, "rgba(224, 212, 188, 0)");
+				dustGrad.addColorStop(0.35, `rgba(214, 196, 168, ${0.28 * sweepAlpha})`);
+				dustGrad.addColorStop(0.65, `rgba(180, 140, 100, ${0.40 * sweepAlpha})`);
+				dustGrad.addColorStop(0.85, `rgba(100, 116, 139, ${0.48 * sweepAlpha})`);
+				dustGrad.addColorStop(1, `rgba(255, 255, 255, ${0.60 * sweepAlpha})`);
+
+				ctx.fillStyle = dustGrad;
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 1.04, minAngle, maxAngle, false);
+				ctx.arc(0, 0, reach * 0.28, maxAngle, minAngle, true);
+				ctx.closePath();
+				ctx.fill();
+
+				// Concentric dynamic Lada ink speedlines (Pohybové linky jako v ilustraci)
+				ctx.strokeStyle = `rgba(31, 24, 16, ${0.85 * sweepAlpha})`;
+				ctx.lineWidth = 3.8;
+				ctx.lineCap = "round";
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.98, minAngle, maxAngle);
+				ctx.stroke();
+
+				// Inner whistling air speedline
+				ctx.strokeStyle = `rgba(60, 40, 25, ${0.65 * sweepAlpha})`;
+				ctx.lineWidth = 2.4;
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.78, minAngle + (maxAngle - minAngle) * 0.2, maxAngle);
+				ctx.stroke();
+
+				// Intermediate dashed air current
+				ctx.strokeStyle = `rgba(100, 116, 139, ${0.55 * sweepAlpha})`;
+				ctx.lineWidth = 1.8;
+				ctx.setLineDash([18, 12]);
+				ctx.beginPath();
+				ctx.arc(0, 0, reach * 0.88, minAngle + (maxAngle - minAngle) * 0.1, maxAngle);
+				ctx.stroke();
+				ctx.setLineDash([]);
+
+				// Brilliant razor-sharp white cutting glint on the outer blade path
+				ctx.strokeStyle = `rgba(255, 255, 255, ${0.95 * sweepAlpha})`;
+				ctx.lineWidth = 2.8;
+				ctx.beginPath();
+				const glintStart = dir > 0 ? maxAngle - (maxAngle - minAngle) * 0.65 : minAngle;
+				const glintEnd = dir > 0 ? maxAngle : minAngle + (maxAngle - minAngle) * 0.65;
+				ctx.arc(0, 0, reach * 1.01, glintStart, glintEnd);
+				ctx.stroke();
+			}
+			ctx.restore();
+		}
+
+		// -----------------------------------------------------------------
+		// 2. FLYING DIRT CLODS, DUST SPECKS & SPLINTERS (Hroudy hlíny a prach)
+		// -----------------------------------------------------------------
+		if (progress >= 0.18 && progress <= 0.88) {
+			const debrisProgress = (progress - 0.18) / 0.70;
+			const debrisAlpha = Math.sin(debrisProgress * Math.PI) * fade;
+
+			ctx.save();
+			ctx.globalAlpha = debrisAlpha;
+
+			// Scatter of authentic ink debris trailing the heavy swing (as in Image 2)
+			const debrisCount = 9;
+			for (let d = 0; d < debrisCount; d++) {
+				const dLag = (d / debrisCount) * 0.45;
+				const dAngle = currentBladeAngle - dir * (0.2 + dLag * 0.8);
+				const dRadius = reach * (0.45 + (d % 4) * 0.16) + debrisProgress * 22;
+				const dx = Math.cos(dAngle) * dRadius;
+				const dy = Math.sin(dAngle) * dRadius;
+				const dSize = 2.0 + (d % 3) * 1.5;
+
+				// Dark earth clod with ink outline
+				ctx.fillStyle = d % 2 === 0 ? "#451A03" : "#78350F";
+				ctx.strokeStyle = COLORS.ink;
+				ctx.lineWidth = 1.0;
+				ctx.beginPath();
+				ctx.ellipse(dx, dy, dSize, dSize * 0.75, dAngle, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+			}
+
+			// Soft dust cloud puffs
+			for (let p = 0; p < 4; p++) {
+				const pAng = currentBladeAngle - dir * (0.3 + p * 0.25);
+				const pRad = reach * (0.55 + p * 0.12);
+				const px = Math.cos(pAng) * pRad;
+				const py = Math.sin(pAng) * pRad;
+				ctx.fillStyle = `rgba(214, 196, 168, ${0.45 * debrisAlpha})`;
+				ctx.beginPath();
+				ctx.arc(px, py, 6 + p * 3, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.restore();
+		}
+
+		// -----------------------------------------------------------------
+		// 3. MOTION GHOSTS / SMEAR TRAILS (Pohybové stíny těžkého ratiště)
+		// -----------------------------------------------------------------
+		if (progress > 0.14 && progress < 0.78) {
+			const ghosts = [0.07, 0.035];
+			const ghostAlphas = [0.22 * fade, 0.45 * fade];
+
+			for (let g = 0; g < ghosts.length; g++) {
+				const gp = progress - ghosts[g];
+				if (gp < 0.08) continue;
+				const gSwingP = getSwingP(gp);
+				const gAng = startAngle + (endAngle - startAngle) * gSwingP;
+
+				ctx.save();
+				ctx.globalAlpha = ghostAlphas[g];
+				ctx.rotate(gAng);
+
+				// Smear of wooden shaft
+				ctx.strokeStyle = "#8C582B";
+				ctx.lineWidth = 5.0;
+				ctx.lineCap = "round";
+				ctx.beginPath();
+				ctx.moveTo(handRadius, 0);
+				ctx.lineTo(reach * 0.82, 0);
+				ctx.stroke();
+
+				// Smear of blade silhouette
+				ctx.fillStyle = "#64748B";
+				ctx.beginPath();
+				ctx.arc(reach * 0.88, 0, 16, -0.6, 0.6);
+				ctx.fill();
+				ctx.restore();
+			}
+		}
+
+		// -----------------------------------------------------------------
+		// 4. THE FORGED HALBERD (Kovaná halapartna dle předlohy na špici švihu)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.globalAlpha = fade;
+		ctx.rotate(currentBladeAngle);
+
+		// 4a. Wooden Ash/Oak Shaft (Ratiště z jasanu s léty dřeva a objímkami)
+		// Shaft outline
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 6.2;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(handRadius, 0);
+		ctx.lineTo(reach * 0.82, 0);
+		ctx.stroke();
+
+		// Shaft warm wood core
+		ctx.strokeStyle = "#8C582B";
+		ctx.lineWidth = 4.2;
+		ctx.beginPath();
+		ctx.moveTo(handRadius, 0);
+		ctx.lineTo(reach * 0.82, 0);
+		ctx.stroke();
+
+		// Shaft wood highlight
+		ctx.strokeStyle = "#DFBA8A";
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(handRadius, -0.9);
+		ctx.lineTo(reach * 0.82, -0.9);
+		ctx.stroke();
+
+		// Iron reinforcing collars with rivets along the shaft
+		const collarDistances = [reach * 0.32, reach * 0.58, reach * 0.80];
+		for (const cd of collarDistances) {
+			this.setupPath(ctx, "#475569", COLORS.ink, 1.8);
+			ctx.fillRect(cd - 3, -4.5, 6, 9);
+			ctx.strokeRect(cd - 3, -4.5, 6, 9);
+			// Rivet dot
+			ctx.fillStyle = "#E2E8F0";
+			ctx.beginPath();
+			ctx.arc(cd, -1.8, 1.1, 0, Math.PI * 2);
+			ctx.arc(cd, 1.8, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// 4b. Forged Steel Halberd Head (Hlava halapartny s širokou sekerou a čtyřlístkem)
+		ctx.save();
+		ctx.translate(reach * 0.82, 0);
+
+		// Main forged steel blade:
+		// Forward thrusting spear spike, wide crescent axe blade on cutting side, rear beak on trailing side
+		this.setupPath(ctx, "#64748B", COLORS.ink, 2.5);
+		ctx.beginPath();
+		// Socket base
+		ctx.moveTo(0, -3.5);
+		// Thrusting spear base & central point extending forward
+		ctx.lineTo(12, -2.5);
+		ctx.lineTo(reach * 0.18, 0); // needle-sharp spear tip
+		ctx.lineTo(12, 2.5);
+		// Crescent axe blade extending on cutting side (dir)
+		ctx.quadraticCurveTo(18, dir * 14, 24, dir * 26); // upper horn
+		ctx.bezierCurveTo(16, dir * 16, 6, dir * 6, -4, dir * 22); // crescent cutting arc to lower horn
+		ctx.quadraticCurveTo(-1, dir * 6, 0, 3.5);
+		// Rear beak pick extending on trailing side (-dir)
+		ctx.lineTo(-4, -dir * 3);
+		ctx.lineTo(-12, -dir * 14); // sharp hooked rear pick
+		ctx.lineTo(-7, -dir * 11);
+		ctx.quadraticCurveTo(-2, -dir * 6, 0, -3.5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Aged rust and forged iron patina wash
+		ctx.fillStyle = "rgba(120, 53, 15, 0.35)";
+		ctx.beginPath();
+		ctx.moveTo(4, 0);
+		ctx.quadraticCurveTo(14, dir * 12, 18, dir * 20);
+		ctx.quadraticCurveTo(4, dir * 12, -1, dir * 15);
+		ctx.closePath();
+		ctx.fill();
+
+		// Razor-sharp cutting blade edge glint (Leštěné ostří sekery)
+		ctx.strokeStyle = "#FFFFFF";
+		ctx.lineWidth = 2.2;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(23.5, dir * 25.5);
+		ctx.bezierCurveTo(16, dir * 16, 6, dir * 6, -3.5, dir * 21.5);
+		ctx.stroke();
+
+		// Central reinforcing spear ridge
+		ctx.strokeStyle = "#1E293B";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.lineTo(reach * 0.17, 0);
+		ctx.stroke();
+		ctx.strokeStyle = "#CBD5E1";
+		ctx.lineWidth = 1.0;
+		ctx.beginPath();
+		ctx.moveTo(2, -0.6);
+		ctx.lineTo(reach * 0.16, 0);
+		ctx.stroke();
+
+		// Four-leaf clover cutout (Čtyřlístkový otvor v sekeře halapartny dle Image 1)
+		ctx.save();
+		ctx.translate(10, dir * 13);
+		ctx.fillStyle = "#1E1810";
+		const cloverR = 1.8;
+		ctx.beginPath();
+		ctx.arc(0, -cloverR * 1.4, cloverR, 0, Math.PI * 2);
+		ctx.arc(0, cloverR * 1.4, cloverR, 0, Math.PI * 2);
+		ctx.arc(-cloverR * 1.4, 0, cloverR, 0, Math.PI * 2);
+		ctx.arc(cloverR * 1.4, 0, cloverR, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(0, 0, cloverR * 1.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		ctx.restore();
+		ctx.restore();
 	}
 };
 for (const key of Object.keys(Lada)) {
@@ -14601,10 +15935,12 @@ export function drawPlumPuddle(
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
+(Lada as any).drawGingerbreadHeart = drawGingerbreadHeartCanvas;
 
 export {
   Lada,
   drawEnemyRenderer,
   computeEnemyKinematics,
+  drawGingerbreadHeartCanvas,
   type EnemyAttackInfo,
 };
