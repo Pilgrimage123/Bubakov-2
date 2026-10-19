@@ -17,6 +17,10 @@ interface SettingsDevModalProps {
   onToggleDynamicLighting?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
   onChangeDynamicDifficulty?: (diff: number) => void;
+  soundEffectsEnabled?: boolean;
+  onToggleSoundEffects?: (enabled: boolean) => void;
+  musicEnabled?: boolean;
+  onToggleMusic?: (enabled: boolean) => void;
   onOpenCombatTextSettings?: () => void;
   onOpenTestMode: () => void;
   onOpenAnimationTester: () => void;
@@ -37,12 +41,28 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
   onToggleDynamicLighting,
   dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
+  soundEffectsEnabled = true,
+  onToggleSoundEffects,
+  musicEnabled = true,
+  onToggleMusic,
   onOpenCombatTextSettings,
   onOpenTestMode,
   onOpenAnimationTester,
   onOpenPlan,
   onOpenResetProgress,
 }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        sound.coin();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -93,6 +113,56 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
             paddingRight: '4px',
           }}
         >
+          {/* SEKCE 0: ZVUK A HUDBA */}
+          <div
+            style={{
+              background: 'var(--parchmentDark)',
+              border: '2px solid var(--ink)',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              textAlign: 'left',
+            }}
+          >
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)' }}>
+              🔊 Zvuk a hudba
+            </h3>
+            <p style={{ margin: '0 0 12px', fontSize: '0.88rem', fontWeight: 700, color: '#451A03' }}>
+              Zapněte nebo vypněte zvukové efekty a vesnickou hudbu v pozadí.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {onToggleSoundEffects && (
+                <button
+                  className="lada-btn btn-small"
+                  style={{
+                    background: soundEffectsEnabled ? '#16A34A' : 'var(--wood-dark)',
+                    color: '#FFFFFF',
+                  }}
+                  onClick={() => {
+                    sound.coin();
+                    onToggleSoundEffects(!soundEffectsEnabled);
+                  }}
+                >
+                  {soundEffectsEnabled ? '🔊 Zvukové efekty: ZAP' : '🔇 Zvukové efekty: VYP'}
+                </button>
+              )}
+              {onToggleMusic && (
+                <button
+                  className="lada-btn btn-small"
+                  style={{
+                    background: musicEnabled ? '#16A34A' : 'var(--wood-dark)',
+                    color: '#FFFFFF',
+                  }}
+                  onClick={() => {
+                    sound.coin();
+                    onToggleMusic(!musicEnabled);
+                  }}
+                >
+                  {musicEnabled ? '🎵 Hudba v pozadí: ZAP' : '🔇 Hudba v pozadí: VYP'}
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* SEKCE 1: EFEKTY, PLYNULOST A VÝKON */}
           <div
             style={{

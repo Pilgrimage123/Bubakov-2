@@ -16,6 +16,7 @@ import { WeaponUnlockModal } from './WeaponUnlockModal';
 import {
   DEFAULT_COMBAT_TEXT_SETTINGS,
   setCombatTextSettings,
+  isCombatTextCategoryEnabled,
 } from '../game/combatTextSettings';
 import { isGameEffectEnabled } from '../game/effectSettings';
 
@@ -30,6 +31,10 @@ export interface AppModalsProps {
   // Settings & dev modal
   isSettingsDevOpen: boolean;
   onCloseSettingsDev: () => void;
+  soundEffectsEnabled?: boolean;
+  onToggleSoundEffects?: (enabled: boolean) => void;
+  musicEnabled?: boolean;
+  onToggleMusic?: (enabled: boolean) => void;
   onOpenCombatTextSettings: () => void;
   onOpenTestMode: () => void;
   onOpenAnimationTester: () => void;
@@ -101,6 +106,10 @@ export const AppModals: React.FC<AppModalsProps> = ({
   onCloseControls,
   isSettingsDevOpen,
   onCloseSettingsDev,
+  soundEffectsEnabled,
+  onToggleSoundEffects,
+  musicEnabled,
+  onToggleMusic,
   onOpenCombatTextSettings,
   onOpenTestMode,
   onOpenAnimationTester,
@@ -150,6 +159,10 @@ export const AppModals: React.FC<AppModalsProps> = ({
       <SettingsDevModal
         isOpen={isSettingsDevOpen}
         onClose={onCloseSettingsDev}
+        soundEffectsEnabled={soundEffectsEnabled}
+        onToggleSoundEffects={onToggleSoundEffects}
+        musicEnabled={musicEnabled}
+        onToggleMusic={onToggleMusic}
         performanceMode={!!meta.performanceMode}
         performanceProfile={meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')}
         onChangePerformanceProfile={(profile) => {
@@ -259,7 +272,9 @@ export const AppModals: React.FC<AppModalsProps> = ({
       />
 
       {/* UNLOCK TOAST BANNER */}
-      {unlockNotice && isGameEffectEnabled('unlockNotificationsEnabled') && (
+      {unlockNotice &&
+        isGameEffectEnabled('unlockNotificationsEnabled') &&
+        isCombatTextCategoryEnabled('unlocksMilestones', meta.combatTextSettings) && (
         <div className="unlock-toast-banner" onClick={onDismissUnlockNotice}>
           <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px' }}>
             {unlockNotice.title}

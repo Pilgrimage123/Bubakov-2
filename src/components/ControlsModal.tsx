@@ -18,13 +18,28 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
   React.useEffect(() => {
-    if (isOpen) setActiveTab(defaultTab);
+    if (isOpen) {
+      const validTabs = ['controls', 'objective', 'dedecek', 'weapons', 'village'];
+      setActiveTab(validTabs.includes(defaultTab) ? defaultTab : 'controls');
+    }
   }, [defaultTab, isOpen]);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        sound.coin();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="overlay" style={{ zIndex: 45 }}>
+    <div className="overlay" style={{ zIndex: 45 }} onClick={onClose}>
       <div
         className="panel"
         style={{
@@ -34,10 +49,31 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
+          position: 'relative',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
-        <LadaBotanicalFlourish height={18} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
+            <LadaBotanicalFlourish height={18} />
+          </div>
+          <button
+            className="tab-btn"
+            style={{
+              padding: '6px 12px',
+              fontSize: '1.2rem',
+              minWidth: 'auto',
+            }}
+            onClick={() => {
+              sound.coin();
+              onClose();
+            }}
+            title="Zavřít okno"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* Modal navigation tabs */}
         <div

@@ -190,3 +190,22 @@ _Avoid_: duální commitování, nesourodý vývoj, neřízený push
 Architektonická hranice v `AppModals.tsx` sdružující veškerá dialogová a nastavovací okna odděleně od herního plátna a simulační smyčky v `App.tsx`, eliminující merge konflikty při souběžné editaci.
 _Avoid_: dialogový kontejner, modal wrapper, UI bundle
 
+## Rozhraní a navigace
+
+**Nabídka výprav**:
+Hlavní obrazovka hry sloužící k volbě cílového kraje noční výpravy, úpravě dynamické obtížnosti a přechodu do hospody, zbrojnice, bestiáře či nastavení.
+_Avoid_: stage select, level select, hlavní menu, mission picker
+
+**Výběr lovce**:
+Předsíň výpravy navazující na zvolený kraj, kde hráč vybírá vesnického hrdinu pro nadcházející noc, sleduje postup odemykání zamčených lovců a má přímý přístup zpět do hospody a zbrojnice.
+_Avoid_: character select, hero select, volba postavy
+
+**Odpočinek u milníku**:
+Stav pozastavení probíhající výpravy umožňující prohlédnout nesený arzenál a získaná posílení, rychle upravit zvuk, plynulost či ovládání a v bezpečí sečíst kořist při předčasném návratu.
+_Avoid_: pause menu, pauza, herní pauza, pause screen
+
+**Vyhodnocení výpravy**:
+Závěrečná bilance výpravy shrnující zklidněná strašidla, osvobozené dušičky a krejcary, s možností pokračovat do dalšího kraje, vstoupit do hospody nebo se vrátit přímo do nabídky výprav.
+_Avoid_: tally screen, game over screen, victory screen, výsledková listina
+
+

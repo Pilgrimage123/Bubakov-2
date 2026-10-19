@@ -45,6 +45,9 @@ export function isGameEffectEnabled(category: EffectCategory): boolean {
   if (category === 'warningIndicatorsEnabled') {
     return currentSettings.warningIndicatorsEnabled && isCombatTextCategoryEnabled('visualTelegraphCues');
   }
+  if (category === 'unlockNotificationsEnabled') {
+    return currentSettings.unlockNotificationsEnabled && isCombatTextCategoryEnabled('unlocksMilestones');
+  }
   return currentSettings[category];
 }
 

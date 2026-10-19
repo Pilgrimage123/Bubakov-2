@@ -694,7 +694,7 @@ export class GameEngine {
         });
 
         self.callbacks?.onSound?.('heavyHit');
-        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true));
+        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true, 'combatStates'));
       },
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
@@ -702,7 +702,7 @@ export class GameEngine {
         if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true));
+          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates'));
           return;
         }
         let totalDamageReduction = this.damageReduction;
