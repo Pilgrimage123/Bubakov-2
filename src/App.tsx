@@ -73,6 +73,7 @@ import {
   drawEnemyAttackEffectsPre,
   drawEnemyAttackEffectsPost,
   drawPrefixAura,
+  drawGingerbreadHeartCanvas,
 } from './render/ladaRenderer';
 import { drawGlyphText } from './render/glyphAtlas';
 import { ChunkBitmapCache } from './render/chunkCache';
@@ -124,6 +125,7 @@ import {
 import { GameIcon } from './components/GameIcon';
 import { CzechBuchtaIcon } from './components/CzechBuchtaIcon';
 import { KrejcarIcon } from './components/KrejcarIcon';
+import { PernicekIcon } from './components/PernicekIcon';
 import { BubakovCoverTitle } from './components/BubakovCoverTitle';
 import { LadaFrieze } from './components/LadaFrieze';
 import { LadaCartouche } from './components/LadaCartouche';
@@ -316,6 +318,7 @@ class DamageText {
   vy: number;
   numericVal: number | null = null;
   category: CombatTextCategory;
+  icon?: string;
 
   constructor(
     x: number,
@@ -323,18 +326,30 @@ class DamageText {
     text: string,
     color = COLORS.white,
     big = false,
-    category?: CombatTextCategory
+    category?: CombatTextCategory,
+    icon?: string
   ) {
     this.x = x + (Math.random() - 0.5) * 20;
     this.y = y + (Math.random() - 0.5) * 20;
-    this.text = text;
     this.color = color;
     this.life = 1.0;
     this.size = big ? 26 : 18;
     this.vy = -45;
-    this.category = category || inferCombatTextCategory(text);
-    const parsed = parseInt(text, 10);
-    if (!Number.isNaN(parsed) && String(parsed) === text) {
+
+    // Pokud text obsahuje americkou sušenku 🍪 nebo je předána ikona gingerbread:
+    if (icon) {
+      this.icon = icon;
+      this.text = String(text || '').replace(/🍪/g, '').replace(/\s{2,}/g, ' ').trim();
+    } else if (typeof text === 'string' && text.includes('🍪')) {
+      this.icon = 'gingerbread';
+      this.text = text.replace(/🍪/g, '').replace(/\s{2,}/g, ' ').trim();
+    } else {
+      this.text = text;
+    }
+
+    this.category = category || (this.icon === 'gingerbread' ? 'lootResources' : inferCombatTextCategory(text));
+    const parsed = parseInt(this.text, 10);
+    if (!Number.isNaN(parsed) && String(parsed) === this.text) {
       this.numericVal = parsed;
     }
   }
@@ -355,7 +370,32 @@ class DamageText {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    if (this.text) {
+    if (this.icon === 'gingerbread' || this.icon === 'pernicek') {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, this.life);
+      ctx.fillStyle = this.color;
+      if (this.size !== 18) {
+        ctx.font = `900 ${this.size}px Eczar`;
+      }
+
+      const text = this.text;
+      const textW = text ? ctx.measureText(text).width : 0;
+      const iconSize = Math.round(this.size * 0.95);
+      const gap = text ? 6 : 0;
+      const totalW = textW + gap + iconSize;
+      const startX = this.x - totalW / 2;
+
+      if (text) {
+        ctx.textAlign = 'left';
+        ctx.strokeText(text, startX, this.y);
+        ctx.fillText(text, startX, this.y);
+      }
+
+      const iconX = startX + textW + gap + iconSize / 2;
+      const iconY = this.y - this.size * 0.32;
+      drawGingerbreadHeartCanvas(ctx, iconX, iconY, iconSize);
+      ctx.restore();
+    } else if (this.text) {
       drawGlyphText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, alpha: this.life });
     }
   }
@@ -1350,7 +1390,6 @@ export default function App() {
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
   const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [controlsDefaultTab, setControlsDefaultTab] = useState('controls');
   const [selectedHunterInfo, setSelectedHunterInfo] = useState<HunterDetail | null>(null);
   const [isSettingsDevOpen, setIsSettingsDevOpen] = useState(false);
   const [isCombatTextModalOpen, setIsCombatTextModalOpen] = useState(false);
@@ -1810,7 +1849,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     sound.coin();
     sound.grandfatherCall();
     if (p) {
-      eng.texts.push(new DamageText(p.x, p.y - 85, `„Nové zboží z nůše! (−${cost} 🍪)“`, '#F59E0B', true));
+      eng.texts.push(new DamageText(p.x, p.y - 85, `„Nové zboží z nůše! (−${cost} perníčků)“`, '#F59E0B', true, 'lootResources', 'gingerbread'));
     }
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     setGrandfatherVersion((v) => v + 1);
@@ -2033,11 +2072,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const next = metaRef.current.musicEnabled === false;
     saveMeta({ ...metaRef.current, musicEnabled: next });
     if (next) sound.coin();
-  };
-
-  const openEffectSettings = () => {
-    setControlsDefaultTab('effects');
-    setIsControlsOpen(true);
   };
 
   // Play "Bubáci a hastrmani" polka in main menu & village tavern, smoothly stop during gameplay
@@ -5146,7 +5180,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const ang2 = ang1 + Math.PI * 0.7;
                   engine.enemies.push(createEnemyInstance('mysak', player.x + Math.cos(ang1) * 240, player.y + Math.sin(ang1) * 240, 0.75));
                   engine.enemies.push(createEnemyInstance('sotek', player.x + Math.cos(ang2) * 240, player.y + Math.sin(ang2) * 240, 0.75));
-                  engine.texts.push(new DamageText(player.x, player.y - 35, 'PŘEPAD Z HOUŠTIN! 🌲🐾', '#84CC16', true));
+                  engine.texts.push(new DamageText(player.x, player.y - 35, 'PŘEPAD Z HOUŠTIN! 🌲🐾', '#84CC16', true, 'directorWarningBanners'));
                 }
               }
 
@@ -6198,23 +6232,50 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.texts.push(new DamageText(
                     player.x,
                     player.y - 42,
-                    `+${val} 🍪`,
+                    `+${val}`,
                     size === 'giant' ? '#F59E0B' : '#B45309',
-                    true
+                    true,
+                    'lootResources',
+                    'gingerbread'
                   ));
                   if (player.poutoveSrdceStacks && player.poutoveSrdceStacks > 0) {
                     const cdMult = player.gingerbreadHeartCdMult || 1;
-                    if (size === 'small') {
-                      player.ultCd = Math.max(0, player.ultCd - 0.2 * cdMult);
-                    } else if (size === 'large') {
-                      player.ultCd = Math.max(0, player.ultCd - 0.6 * cdMult);
+                    const oldUltCd = player.ultCd || 0;
+                    let cdReduction = 0.2 * cdMult;
+                    if (size === 'large') cdReduction = 0.6 * cdMult;
+                    else if (size === 'giant') cdReduction = 2.0 * cdMult;
+
+                    player.ultCd = Math.max(0, oldUltCd - cdReduction);
+
+                    // Jemný záblesk zrcátka při dobití schopnosti
+                    const fullyRecharged = oldUltCd > 0 && player.ultCd <= 0;
+                    const sparkCount = fullyRecharged ? 14 : (size === 'giant' ? 8 : (size === 'large' ? 5 : 3));
+                    const mirrorColors = ['#FFFFFF', '#F8FAFC', '#E2E8F0', '#94A3B8', '#BAE6FD'];
+                    for (let sp = 0; sp < sparkCount; sp++) {
+                      const ang = Math.random() * Math.PI * 2;
+                      const speed = (fullyRecharged ? 85 : 50) + Math.random() * 40;
+                      engine.particles.push({
+                        x: player.x + (Math.random() - 0.5) * 16,
+                        y: player.y + (Math.random() - 0.5) * 16,
+                        vx: Math.cos(ang) * speed,
+                        vy: Math.sin(ang) * speed - 15,
+                        life: fullyRecharged ? 0.45 : 0.32,
+                        color: mirrorColors[sp % mirrorColors.length],
+                        size: fullyRecharged ? 3.8 : 2.5,
+                      });
+                    }
+
+                    if (fullyRecharged) {
+                      engine.texts.push(new DamageText(player.x, player.y - 72, '🪞 ZRCÁTKO: NABITO!', '#F8FAFC', true));
+                    }
+
+                    if (size === 'large') {
                       player.gingerbreadSpeedTimer = 2.0;
-                      engine.texts.push(new DamageText(player.x, player.y - 60, 'CUKROVÝ SPĚCH! ⚡', '#F59E0B', true));
+                      engine.texts.push(new DamageText(player.x, player.y - 50, 'CUKROVÝ SPĚCH! ⚡', '#F59E0B', true));
                     } else if (size === 'giant') {
-                      player.ultCd = Math.max(0, player.ultCd - 2.0 * cdMult);
                       const heal = 8 * player.poutoveSrdceStacks;
                       player.hp = Math.min(player.maxHp, player.hp + heal);
-                      engine.texts.push(new DamageText(player.x, player.y - 60, `+${heal} KURÁŽ! 💝`, '#EC4899', true));
+                      engine.texts.push(new DamageText(player.x, player.y - 50, `+${heal} KURÁŽ! 💝`, '#EC4899', true));
                       for (let k = 0; k < 10; k++) {
                         const ang = (k / 10) * Math.PI * 2;
                         engine.particles.push({
@@ -6292,7 +6353,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 } else if (d.type === 'horseshoe') {
                   sound.horseshoe();
                   applyMagnetWave(engine.drops, player.x, player.y, 99999, true);
-                  engine.texts.push(new DamageText(player.x, player.y - 48, 'KOVÁŘSKÁ PODKOVA! 🧲', '#EAB308', true));
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'KOVÁŘSKÁ PODKOVA! 🧲', '#EAB308', true, 'lootResources'));
                 } else if (d.type === 'rooster') {
                   sound.rooster();
                   engine.screenFlashTimer = 0.45;
@@ -6307,11 +6368,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       }
                     }
                   }
-                  engine.texts.push(new DamageText(player.x, player.y - 48, 'HLINĚNÝ KOHOUTEK! 🐓☀️', '#F59E0B', true));
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'HLINĚNÝ KOHOUTEK! 🐓☀️', '#F59E0B', true, 'lootResources'));
                 } else if (d.type === 'cuckoo_clock') {
                   sound.cuckooClock();
                   engine.timeStopTimer = 4.0;
-                  engine.texts.push(new DamageText(player.x, player.y - 48, 'VYŘEZÁVANÉ KUKAČKY! ⏰', '#EAB308', true));
+                  engine.texts.push(new DamageText(player.x, player.y - 48, 'VYŘEZÁVANÉ KUKAČKY! ⏰', '#EAB308', true, 'lootResources'));
                 } else if (
                   d.type === 'ponocny_horn' ||
                   d.type === 'masopust_rattle' ||
@@ -6734,8 +6795,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (d.type === 'coin') {
             Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
           } else if (d.type === 'gingerbread') {
-            const bob = Math.sin(d.time * 3) * 2;
-            Lada.drawGingerbread(ctx, d.x, d.y + bob, (d.size as any) || 'small', Math.sin(d.time * 1.7) * 0.08);
+            Lada.drawGingerbread(ctx, d.x, d.y, d.time, d.size || 'small', !!d.isHot);
           } else if (d.type === 'potion') {
             Lada.drawPotion(ctx, d.x, d.y, d.time);
           } else if (d.type === 'bread' || d.type === 'pear') {
@@ -7182,10 +7242,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.strokeStyle = '#EA580C';
             ctx.lineWidth = 1.5;
             ctx.stroke();
+          } else if (s.style === 'halberd' || s.weaponId === 'kovana_halapartna') {
+            Lada.drawHalapartnaSlash(ctx, s);
           } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
             Lada.drawOsikovyPrutSlash(ctx, s);
           } else {
-            Lada.setupPath(ctx, 'transparent', s.style === 'halberd' ? '#94A3B8' : COLORS.white, 8);
+            Lada.setupPath(ctx, 'transparent', COLORS.white, 8);
             ctx.beginPath();
             ctx.arc(0, 0, s.reach * 0.8, s.angle - s.arc / 2, s.angle + s.arc / 2);
             ctx.stroke();
@@ -9612,10 +9674,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             this.foodDefeatTimer = 0;
             this.panicked = false;
             sound.snack();
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Usmířen! 🥐✨', '#D97706', true));
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Usmířen! 🥐✨', '#D97706', true, 'combatStates'));
           } else {
             this.panicked = true;
-            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Zahnán! 💨', COLORS.mustard, true));
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Zahnán! 💨', COLORS.mustard, true, 'combatStates'));
           }
           const eng = engineRef.current;
 
@@ -9679,7 +9741,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               goldenRushTimer: opts.goldenRushTimer || 0,
             });
             if (finalText) {
-              eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true));
+              eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true, finalType === 'gingerbread' ? 'lootResources' : undefined, finalType === 'gingerbread' ? 'gingerbread' : undefined));
             }
           };
 
@@ -9724,8 +9786,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             radius: gingerbreadSize === 'giant' ? 19 : gingerbreadSize === 'large' ? 14 : 10,
             speed: 65 + Math.random() * 55,
             text: isFarKill
-              ? `+${gingerbreadValue} 🍪🔥 HORKÝ PERNÍK (2×)`
-              : `+${gingerbreadValue} 🍪${this.killedByFriendlyFire ? ' (2x Rvačka!)' : ''}`,
+              ? `+${gingerbreadValue} 🔥 HORKÝ PERNÍK (2×)`
+              : `+${gingerbreadValue}${this.killedByFriendlyFire ? ' (2x Rvačka!)' : ''}`,
             textColor: isFarKill ? '#F97316' : (gingerbreadSize === 'giant' ? '#F59E0B' : '#B45309'),
             size: gingerbreadSize,
             isHot: isFarKill,
@@ -9813,7 +9875,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 value: GINGERBREAD_VALUES.giant,
                 radius: 19,
                 speed: 65 + Math.random() * 65,
-                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 3} 🍪 (Dar minibosse)` : undefined,
+                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 3} (Dar minibosse)` : undefined,
                 textColor: '#F59E0B',
                 size: 'giant',
               });
@@ -9841,7 +9903,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 value: GINGERBREAD_VALUES.giant,
                 radius: 19,
                 speed: 75 + Math.random() * 75,
-                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 6} 🍪 (Kupa vládce bubáků)` : undefined,
+                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 6} (Kupa vládce bubáků)` : undefined,
                 textColor: '#F59E0B',
                 size: 'giant',
               });
@@ -10656,7 +10718,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     );
     engineRef.current.enemies.push(enemy);
     directorRef.current?.recordEnemySpawn(enemy, engineRef.current.gameTime || 0);
-    engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, `${pDef.badge}!`, pDef.color, true));
+    engineRef.current.texts.push(new DamageText(enemy.x, enemy.y - 45, `${pDef.badge}!`, pDef.color, true, 'directorWarningBanners'));
     sound.roar();
     setRunStats((s) => ({
       ...s,
@@ -10929,7 +10991,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Perníčky pro Čertova dědečka"
                 aria-label={`Perníčky ${runStats.gingerbread}`}
               >
-                <span>🍪</span>
+                <PernicekIcon size={20} />
                 <span>{runStats.gingerbread}</span>
               </div>
               <button
@@ -10982,7 +11044,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           {/* Warning Banner */}
           {runStats.warningBanner &&
-            isGameEffectEnabled('warningIndicatorsEnabled') &&
+            isGameEffectEnabled('effectsEnabled') &&
             shouldShowWarningBanner(runStats.warningBanner, meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) && (
               <div id="boss-warning-banner">{runStats.warningBanner}</div>
           )}
@@ -11027,6 +11089,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
           <div className="panel" style={{ maxWidth: '1040px' }}>
+            {/* Top quick audio toggles */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <button
+                className="sound-toggle-btn"
+                style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                onClick={toggleSound}
+                title="Zapnout / vypnout zvukové efekty"
+              >
+                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              </button>
+              <button
+                className="sound-toggle-btn"
+                style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                onClick={toggleMusic}
+                title="Zapnout / vypnout vesnickou hudbu"
+              >
+                <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
+              </button>
+            </div>
+
             <BubakovCoverTitle />
 
             {/* 7 PROGRESSIVE GAME LEVELS SELECTOR */}
@@ -11097,58 +11179,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         </span>
                       </div>
 
-                      <div className="level-desc" style={{ fontSize: '0.84rem', lineHeight: 1.32, color: 'var(--ink)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                        {prog.spoiledDesc}
-                      </div>
-
-                      <div className="level-boss-preview" style={{ fontSize: '0.84rem', fontWeight: 800, margin: '6px 0', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                        {prog.spoiledBossHint}
-                      </div>
-
-                      {/* Enemies preview tailored to milestone tier */}
-                      <div className="level-enemies-preview">
-                        {isUnlocked || prog.tier === 4 ? (
-                          lvl.keyEnemies.map((e) => (
-                            <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                              {e.icon} {e.name}
-                            </span>
-                          ))
-                        ) : prog.tier === 3 ? (
-                          <>
-                            {lvl.keyEnemies.slice(0, 4).map((e) => (
-                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                                {e.icon} {e.name}
-                              </span>
-                            ))}
-                            <span className="level-enemy-tag" style={{ opacity: 0.7 }}>❓ ???</span>
-                          </>
-                        ) : prog.tier === 2 ? (
-                          <>
-                            {lvl.keyEnemies.slice(0, 3).map((e) => (
-                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                                {e.icon} {e.name}
-                              </span>
-                            ))}
-                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
-                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
-                          </>
-                        ) : prog.tier === 1 ? (
-                          <>
-                            {lvl.keyEnemies.slice(0, 1).map((e) => (
-                              <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                                {e.icon} {e.name}
-                              </span>
-                            ))}
-                            <span className="level-enemy-tag" style={{ opacity: 0.55 }}>🌫️ Zahaleno v mlze</span>
-                            <span className="level-enemy-tag" style={{ opacity: 0.55 }}>❓ ???</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>🔒 Neznámé bytosti</span>
-                            <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ Skryto v mlze</span>
-                          </>
-                        )}
-                      </div>
 
                       {/* Challenge progress bar for locked / progressive levels */}
                       {!isUnlocked && (
@@ -11437,23 +11467,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#B45309', color: '#FFFFFF', fontWeight: 900 }}
-                onClick={() => {
-                  sound.coin();
-                  setIsCombatTextModalOpen(true);
-                }}
-                title="Nastavení zobrazení plovoucích čísel, textů a varování před bossem v boji"
-              >
-                💬 Texty v boji
-              </button>
-              <button
-                className="lada-btn btn-small"
                 style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
                   setIsSettingsDevOpen(true);
                 }}
-                title="Nastavení grafiky, výkonu a vývojářské nástroje"
+                title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
                 ⚙️ Nastavení a vývoj
               </button>
@@ -11508,6 +11527,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
                   Změnit 🗺️
                 </span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                <button
+                  className="sound-toggle-btn"
+                  style={{ padding: '5px 10px', fontSize: '0.82rem' }}
+                  onClick={toggleSound}
+                  title="Zapnout / vypnout zvukové efekty"
+                >
+                  <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk' : '🔇 Zvuk'}</span>
+                </button>
+                <button
+                  className="sound-toggle-btn"
+                  style={{ padding: '5px 10px', fontSize: '0.82rem' }}
+                  onClick={toggleMusic}
+                  title="Zapnout / vypnout vesnickou hudbu"
+                >
+                  <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba' : '🔇 Hudba'}</span>
+                </button>
               </div>
             </div>
 
@@ -11619,23 +11657,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#B45309', color: '#FFFFFF', fontWeight: 900 }}
-                onClick={() => {
-                  sound.coin();
-                  setIsCombatTextModalOpen(true);
-                }}
-                title="Nastavení zobrazení plovoucích čísel, textů a varování před bossem v boji"
-              >
-                💬 Texty v boji
-              </button>
-              <button
-                className="lada-btn btn-small"
                 style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
                   setIsSettingsDevOpen(true);
                 }}
-                title="Nastavení grafiky, výkonu a vývojářské nástroje"
+                title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
                 ⚙️ Nastavení a vývoj
               </button>
@@ -11672,18 +11699,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#B45309', color: '#FFFFFF', padding: '10px 18px', fontWeight: 900 }}
+                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', padding: '10px 18px', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
-                  setIsCombatTextModalOpen(true);
+                  setIsSettingsDevOpen(true);
                 }}
-                title="Vypnout či zapnout jednotlivé kategorie plovoucích textů v aréně"
+                title="Nastavení grafiky, osvětlení, audia a zobrazení"
               >
-                💬 Texty v boji
+                ⚙️ Nastavení výpravy
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: 'var(--wood-dark)', padding: '10px 18px', color: 'var(--parchment)' }}
+                style={{ background: 'var(--blood-red)', padding: '10px 18px', color: '#FFFFFF' }}
                 onClick={quitToTavernFromPause}
                 title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
               >
@@ -11715,8 +11742,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
                 🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
               </button>
-              <button className="sound-toggle-btn" onClick={toggleSound}>
+              <button className="sound-toggle-btn" onClick={toggleSound} title="Přepnout zvukové efekty">
                 <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+              </button>
+              <button className="sound-toggle-btn" onClick={toggleMusic} title="Přepnout vesnickou hudbu">
+                <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
               </button>
               <button
                 className="touch-toggle-btn"
@@ -12353,8 +12383,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               <button
                 className="lada-btn"
+                style={{ fontSize: '1.25rem', padding: '12px 28px', background: 'var(--wood-dark)', color: 'var(--parchment)' }}
+                onClick={() => {
+                  sound.coin();
+                  saveMeta({
+                    ...meta,
+                    krejcary: meta.krejcary + tallyCounters.coins,
+                    totalSoulsSaved: (meta.totalSoulsSaved || 0) + tallyCounters.souls,
+                    totalChasnikSaved: (meta.totalChasnikSaved || 0) + tallyCounters.chasniks,
+                  });
+                  setMenuScreen('stage');
+                  setGameState('menu');
+                }}
+              >
+                🗺️ Zpět do nabídky výprav
+              </button>
+
+              <button
+                className="lada-btn"
                 style={{ fontSize: '1.25rem', padding: '12px 32px' }}
                 onClick={() => {
+                  sound.coin();
                   saveMeta({
                     ...meta,
                     krejcary: meta.krejcary + tallyCounters.coins,
@@ -12457,77 +12506,49 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </div>
             )}
 
-            <div className="tavern-footer-buttons">
+            <div className="menu-hub-toolbar" style={{ marginTop: '20px' }}>
+              <button
+                className="lada-btn"
+                style={{ padding: '10px 24px', background: 'var(--wood-dark)', color: 'var(--parchment)' }}
+                onClick={() => {
+                  sound.coin();
+                  setMenuScreen('stage');
+                  setGameState('menu');
+                }}
+              >
+                🗺️ Zpět do nabídky
+              </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#1D4ED8', color: '#FFFFFF', padding: '12px 24px' }}
+                style={{ background: '#E06D29', color: '#FFFFFF' }}
+                onClick={() => setIsArsenalOpen(true)}
+              >
+                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+              </button>
+              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
+                📖 Bestiář nočního venkova
+              </button>
+              <button
+                className="lada-btn btn-small"
+                style={{ background: '#1D4ED8', color: '#FFFFFF', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
                   setIsControlsOpen(true);
                 }}
+                title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 🎮 Ovládání hry
               </button>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#E06D29', color: '#FFFFFF', padding: '12px 24px' }}
-                onClick={() => setIsArsenalOpen(true)}
-              >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: '#0284C7', color: '#FFFFFF', padding: '12px 24px' }}
+                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
                 onClick={() => {
                   sound.coin();
-                  setIsAnimationTesterOpen(true);
+                  setIsSettingsDevOpen(true);
                 }}
+                title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
-                🎬 Tester animací
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
-                onClick={() => {
-                  sound.coin();
-                  const nextPerf = !meta.performanceMode;
-                  saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
-                }}
-                title="Plynulý režim: přepne profil optimalizace mezi Vyvážený a Maximum FPS"
-              >
-                ⚡ Výkon: {(meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) === 'performance' ? 'Maximum FPS' : (meta.performanceProfile || 'balanced') === 'fidelity' ? 'Grafika' : 'Vyvážený'}
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: meta.dynamicLightingEnabled !== false ? '#16A34A' : '#78350F', color: '#FFFFFF', padding: '12px 24px' }}
-                onClick={() => {
-                  sound.coin();
-                  const nextLighting = meta.dynamicLightingEnabled === false ? true : false;
-                  saveMeta({ ...meta, dynamicLightingEnabled: nextLighting });
-                }}
-                title="Zapnout / vypnout dynamické osvětlení a kvašové noční stíny"
-              >
-                🕯️ Světlo: {meta.dynamicLightingEnabled !== false ? 'Zapnuto' : 'Vypnuto'}
-              </button>
-              <button className="lada-btn btn-small" style={{ background: '#0F766E', color: '#FFFFFF', padding: '12px 24px' }} onClick={openEffectSettings}>
-                👁️ Zapnuté efekty
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: '#DC2626', color: '#FFFFFF', padding: '12px 24px' }}
-                onClick={() => {
-                  sound.hit();
-                  setIsResetModalOpen(true);
-                }}
-                title="Vymazat veškerý postup (zamkne vše odemykatelné a vrátí upgrady na nulu)"
-              >
-                🗑️ Vymazat postup
-              </button>
-              <button className="lada-btn" style={{ padding: '12px 28px' }} onClick={() => {
-                setMenuScreen('stage');
-                setGameState('menu');
-              }}>
-                Zpět do nabídky
+                ⚙️ Nastavení a vývoj
               </button>
             </div>
           </div>
@@ -12542,6 +12563,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onCloseControls={() => setIsControlsOpen(false)}
         isSettingsDevOpen={isSettingsDevOpen}
         onCloseSettingsDev={() => setIsSettingsDevOpen(false)}
+        soundEffectsEnabled={soundEnabled}
+        onToggleSoundEffects={toggleSound}
+        musicEnabled={musicEnabled}
+        onToggleMusic={toggleMusic}
         onOpenCombatTextSettings={() => setIsCombatTextModalOpen(true)}
         onOpenTestMode={() => setIsTestModeOpen(true)}
         onOpenAnimationTester={() => setIsAnimationTesterOpen(true)}

@@ -115,7 +115,7 @@ const KRONIKA: KronikaEntry[] = [
     title: 'Spravedlivá hodnota kořisti a bezpečné načtení postupu',
     summary: 'Slučování dropů kvůli výkonu nesmí ubírat ani přidávat hodnotu odměn. Načítání uloženého profilu nově bezpečně odmítá neplatné identifikátory úrovní.',
     items: [
-      '🍪 Tři velké perníčky se při slučování spojí do obřího s hodnotou součtu skutečných dropů. Například 6 + 6 + 6 = 18; hodnota se nenahrazuje pevnou částkou 20.',
+      '🤎 Tři velké perníčky se při slučování spojí do obřího s hodnotou součtu skutečných dropů. Například 6 + 6 + 6 = 18; hodnota se nenahrazuje pevnou částkou 20.',
       '🗺️ Uložená úroveň musí být celé číslo od 0 do 6. Neplatná, zlomková nebo mimo rozsah ležící hodnota bezpečně přejde na výchozí úroveň 0.',
       '🛟 Když prohlížeč zablokuje přístup k localStorage, hra pokračuje s výchozím profilem místo pádu při načítání.',
       '🧪 Test: překročte limit dropů velkým množstvím předmětů mimo obrazovku a zkontrolujte, že jejich sloučená hodnota zůstane zachována.'
@@ -269,7 +269,7 @@ const KRONIKA: KronikaEntry[] = [
     summary: 'Kompletní aktualizace herního průvodce o Čertova dědečka, nůši, nový arzenál zbraní a obecní vylepšení.',
     items: [
       '🧓 Čertův dědeček a nůše: Podrobně popsány podmínky zjevení (od 25 s hry při dostatku perníčků), následování lovce po mapě, otevření nůše klávesou E i 25s cooldown.',
-      '🍪 Mechaniky nůše: Vysvětlena čekací sleva až −30 %, vliv statistiky Štěstí na ceny i vzácnost, progresivní cena zamíchání nabídky a synergie s Kaplí svaté vlny.',
+      '🤎 Mechaniky nůše: Vysvětlena čekací sleva až −30 %, vliv statistiky Štěstí na ceny i vzácnost, progresivní cena zamíchání nabídky a synergie s Kaplí svaté vlny.',
       '⚔️ Nové zbraně v průvodci: Do přehledu arzenálu zařazeny Válečnice (obíhající hospodyně s odhozem), Česneková topinka (obranné aroma s odhozením) a Kyselá okurka (debuff +35 % až +50 % dmg).',
       '🏘️ Rozvoj vesnice: Zdokumentovány všechny obecní budovy v hospodě U Černého kocoura včetně Kovářské výhně, Šenkýřova štítu a Kaple svaté vlny.',
       '🕹️ Ovládání a cíl hry: Doplněna klávesa E pro otevření nůše, podrobný rozpis ultimátních schopností na mezerníku, pauza P/Esc i dotykové ovládání na mobilu.',

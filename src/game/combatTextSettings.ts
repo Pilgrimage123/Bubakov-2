@@ -65,7 +65,7 @@ export const COMBAT_TEXT_CATEGORIES: CombatTextCategoryMeta[] = [
   {
     key: 'lootResources',
     label: 'Zisky kořisti a surovin',
-    description: 'Plovoucí počty sebraných perníčků (+1 🍪), krejcarů (+25 kr.), dušiček a cukrový spěch.',
+    description: 'Plovoucí počty sebraných perníčků (+1), krejcarů (+25 kr.), dušiček a cukrový spěch.',
     icon: '🪙',
   },
   {
@@ -199,7 +199,10 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
   const norm = String(text || '').trim();
   if (!norm) return 'enemyDamage';
 
-  if (/^(?:\+?\d+(?:\s*(?:kr|groš|tolar|🍪|dušička|krejcar))|cukrový|dušička osvobozena|cink)/i.test(norm)) {
+  if (
+    /^(?:\+?\d+(?:\s*(?:kr|groš|tolar|🍪|dušička|krejcar|perník|perníček|perníčky)))/i.test(norm) ||
+    /(?:cukrový|dušička osvobozena|cink|kov[áa][řr]sk|hlin[ěe]n|vy[řr]ez[áa]van|zrc[áa]tko)/i.test(norm)
+  ) {
     return 'lootResources';
   }
   if (/^-\d+/i.test(norm) || /bleskov[ýy] odraz.*-\d+/i.test(norm) || /drtiv[ýy] n[áa]raz vidlemi.*-\d+/i.test(norm)) {
@@ -217,7 +220,7 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
   if (/(poklad.*boss|vl[áa]dce bub[áa]k[ůu]|zklidn[ěe]n|👑|pekeln[ée] mlet[íi]|stavid|povode[ňn]|smrt[íi]c[íi] mraz|proklet[íi] hl[áa]sky|probuzen[íi].*hlav|mou[čc]n[ýy] mrak|mraziv[ýy] [řr]ev)/i.test(norm)) {
     return 'bossAnnouncements';
   }
-  if (/(dodge|minul|št[íi]t|imunn|vy[čc]erp|usm[íi][řr]en|odraz|vyru[šs]en)/i.test(norm)) {
+  if (/(dodge|minul|št[íi]t|imunn|vy[čc]erp|usm[íi][řr]en|zahn[áa]n|odraz|vyru[šs]en|odstr[čc]en|puf|k\s*\+\s*m\s*\+\s*b)/i.test(norm)) {
     return 'combatStates';
   }
   if (/(v[ýy]pad|dusot|plamen|seknut[íi]|sek |[úu]der|[šs]plouch|pr[áa]sk|bum|trhlina|[šs]lehnut[íi]|povidl[íi]|[šs]t[ěe]p|h[ýy]-j[ée]|balvan|k[áa]men|krafnut[íi]|pytel)/i.test(norm)) {
@@ -225,6 +228,9 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
   }
   if (/(ú[čc]et zaplat[íi]|rozohn[ěe]n[íi]|kdy[žz] ne j[áa])/i.test(norm)) {
     return 'combatShouts';
+  }
+  if (/(?:bleskov[ýy]|ohniv[ýy]|obrn[ěe]n[ýy]|up[íi][řr][íi]|hbit[ýy]|jedovat[ýy]|mraziv[ýy]|st[íi]nov[ýy]|svat[ýy]|zu[řr]iv[ýy]|ob[řr][íi]|neviditeln[ýy]|explozivn[íi]|kamenn[ýy]|krvav[ýy]|hromov[ýy]|v[ěe]trn[ýy]|elitn[íi]|p[řr]epad)/i.test(norm)) {
+    return 'directorWarningBanners';
   }
   return 'enemyDamage';
 }
@@ -236,7 +242,7 @@ export function isBossWarningBanner(text: string): boolean {
   const norm = String(text || '').trim();
   if (!norm) return false;
   // Pokud jde o elitního bubáka, přepad režiséra nebo bubáckou díru, jedná se o varování výpravy
-  if (/(?:elitn[íi] bub[áa]k|kradm[ée] kroky|dvoj[čc]e minibosse|bub[áa]ck[áa] d[íi]ra|[čc]as vypr[šs]el.*d[íi]ry|ritu[áa]l dokon[čc]en)/i.test(norm)) {
+  if (/(?:elitn[íi] bub[áa]k|kradm[ée] kroky|dvoj[čc]e minibosse|bub[áa]ck[áa] d[íi]ra|[čc]as vypr[šs]el.*d[íi]ry|ritu[áa]l dokon[čc]en|p[řr]epad)/i.test(norm)) {
     return false;
   }
   return /(?:šéf úrovně|level boss|miniboss|midboss|morana|mlynář|mlynar|čert|cert|hejkal|obryně|obr|rytíř|rytir|drak|bílá paní|bila pani|klekánice|polednice|vodník|vodnik|meluzína|ohnivec|zbrojnoš|noční můra|sněhulák|pekelné mletí|stavid|povode[ňn]|moučný oblak|prokletí hlásky|odražená hlava|tři hlavy probuzeny|rampouchy ze stropu|pukající žula|probuzení hvozdu|čertovské rejdy|smrtící mraz|pokořen|vítězství|victory|beware.*boss|awakened frog)/i.test(norm);

@@ -56,6 +56,7 @@ import {
   getRareDropAnnouncement,
   type DropSpawnOptions,
 } from './drops';
+import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
 import type { GrandfatherItemDef } from '../data/grandfatherItems';
 import { RunDirector } from './director';
 import { getCurrentDayPhase } from '../constants';
@@ -107,6 +108,7 @@ export class DamageText {
   size: number;
   vy: number;
   category: CombatTextCategory;
+  icon?: string;
 
   constructor(
     x: number,
@@ -114,16 +116,28 @@ export class DamageText {
     text: string,
     color = '#FFFFFF',
     big = false,
-    category?: CombatTextCategory
+    category?: CombatTextCategory,
+    icon?: string
   ) {
     this.x = x + (Math.random() - 0.5) * 20;
     this.y = y + (Math.random() - 0.5) * 20;
-    this.text = text;
     this.color = color;
     this.life = 1.0;
     this.size = big ? 26 : 18;
     this.vy = -45;
-    this.category = category || inferCombatTextCategory(text);
+
+    // Pokud text obsahuje americkou sušenku 🍪 nebo je předána ikona gingerbread:
+    if (icon) {
+      this.icon = icon;
+      this.text = String(text || '').replace(/🍪/g, '').replace(/\s{2,}/g, ' ').trim();
+    } else if (typeof text === 'string' && text.includes('🍪')) {
+      this.icon = 'gingerbread';
+      this.text = text.replace(/🍪/g, '').replace(/\s{2,}/g, ' ').trim();
+    } else {
+      this.text = text;
+    }
+
+    this.category = category || (this.icon === 'gingerbread' ? 'lootResources' : inferCombatTextCategory(text));
   }
 
   update(dt: number): void {
@@ -141,15 +155,38 @@ export class DamageText {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
     ctx.globalAlpha = Math.max(0, this.life);
     ctx.fillStyle = this.color;
     ctx.font = `900 ${this.size}px Eczar, serif`;
     ctx.lineWidth = 4;
     ctx.strokeStyle = '#2D1609';
     ctx.lineJoin = 'round';
-    ctx.strokeText(this.text, this.x, this.y);
-    ctx.fillText(this.text, this.x, this.y);
-    ctx.globalAlpha = 1;
+    ctx.lineCap = 'round';
+
+    if (this.icon === 'gingerbread' || this.icon === 'pernicek') {
+      const text = this.text;
+      const textW = text ? ctx.measureText(text).width : 0;
+      const iconSize = Math.round(this.size * 0.95);
+      const gap = text ? 6 : 0;
+      const totalW = textW + gap + iconSize;
+      const startX = this.x - totalW / 2;
+
+      if (text) {
+        ctx.textAlign = 'left';
+        ctx.strokeText(text, startX, this.y);
+        ctx.fillText(text, startX, this.y);
+      }
+
+      const iconX = startX + textW + gap + iconSize / 2;
+      const iconY = this.y - this.size * 0.32;
+      drawGingerbreadHeartCanvas(ctx, iconX, iconY, iconSize);
+    } else {
+      ctx.strokeText(this.text, this.x, this.y);
+      ctx.fillText(this.text, this.x, this.y);
+    }
+
+    ctx.restore();
   }
 }
 
@@ -657,7 +694,7 @@ export class GameEngine {
         });
 
         self.callbacks?.onSound?.('heavyHit');
-        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true));
+        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true, 'combatStates'));
       },
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
@@ -665,7 +702,7 @@ export class GameEngine {
         if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true));
+          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates'));
           return;
         }
         let totalDamageReduction = this.damageReduction;
@@ -2860,14 +2897,39 @@ export class GameEngine {
                 if (player && (player.poutoveSrdceStacks || 0) > 0) {
                   const size = d.size || 'small';
                   const cdMult = player.gingerbreadHeartCdMult || 1.0;
-                  if (size === 'small') {
-                    player.ultCd = Math.max(0, (player.ultCd || 0) - 0.2 * cdMult);
-                  } else if (size === 'large') {
-                    player.ultCd = Math.max(0, (player.ultCd || 0) - 0.6 * cdMult);
+                  const oldUltCd = player.ultCd || 0;
+                  let cdReduction = 0.2 * cdMult;
+                  if (size === 'large') cdReduction = 0.6 * cdMult;
+                  else if (size === 'giant') cdReduction = 2.0 * cdMult;
+
+                  player.ultCd = Math.max(0, oldUltCd - cdReduction);
+
+                  // Jemný záblesk zrcátka při dobití schopnosti
+                  const fullyRecharged = oldUltCd > 0 && player.ultCd <= 0;
+                  const sparkCount = fullyRecharged ? 14 : (size === 'giant' ? 8 : (size === 'large' ? 5 : 3));
+                  const mirrorColors = ['#FFFFFF', '#F8FAFC', '#E2E8F0', '#94A3B8', '#BAE6FD'];
+                  for (let sp = 0; sp < sparkCount; sp++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const speed = (fullyRecharged ? 85 : 50) + Math.random() * 40;
+                    this.state.particles.push({
+                      x: player.x + (Math.random() - 0.5) * 16,
+                      y: player.y + (Math.random() - 0.5) * 16,
+                      vx: Math.cos(ang) * speed,
+                      vy: Math.sin(ang) * speed - 15,
+                      life: fullyRecharged ? 0.45 : 0.32,
+                      color: mirrorColors[sp % mirrorColors.length],
+                      size: fullyRecharged ? 3.8 : 2.5,
+                    });
+                  }
+
+                  if (fullyRecharged) {
+                    this.state.texts.push(new DamageText(player.x, player.y - 68, '🪞 ZRCÁTKO: NABITO!', '#F8FAFC', true));
+                  }
+
+                  if (size === 'large') {
                     player.gingerbreadSpeedTimer = 2.0;
                     player.gingerbreadSpeedBonus = 0.15;
                   } else if (size === 'giant') {
-                    player.ultCd = Math.max(0, (player.ultCd || 0) - 2.0 * cdMult);
                     const heal = 8 * player.poutoveSrdceStacks;
                     player.hp = Math.min(player.maxHp, player.hp + heal);
                     this.state.texts.push(new DamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true));

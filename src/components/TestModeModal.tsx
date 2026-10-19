@@ -288,7 +288,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'poutove_srdce',
     name: 'Pouťové perníkové srdce',
-    icon: '💝',
+    icon: 'poutove_srdce',
     description: 'Sebrané perníčky okamžitě dobíjejí schopnost (+0,2 s / +0,6 s / +2 s k nabití) a obří perníčky navíc zhojí 8 Kuráže.',
     maxLevel: 4,
     category: 'folklore',

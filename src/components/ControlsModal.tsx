@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { sound } from '../audio';
 import { KrejcarIcon } from './KrejcarIcon';
+import { PernicekIcon } from './PernicekIcon';
 import { HruskaIcon } from './HruskaIcon';
 import { GameIcon } from './GameIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
@@ -17,13 +18,28 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
   React.useEffect(() => {
-    if (isOpen) setActiveTab(defaultTab);
+    if (isOpen) {
+      const validTabs = ['controls', 'objective', 'dedecek', 'weapons', 'village'];
+      setActiveTab(validTabs.includes(defaultTab) ? defaultTab : 'controls');
+    }
   }, [defaultTab, isOpen]);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        sound.coin();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="overlay" style={{ zIndex: 45 }}>
+    <div className="overlay" style={{ zIndex: 45 }} onClick={onClose}>
       <div
         className="panel"
         style={{
@@ -33,10 +49,31 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
+          position: 'relative',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
-        <LadaBotanicalFlourish height={18} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
+            <LadaBotanicalFlourish height={18} />
+          </div>
+          <button
+            className="tab-btn"
+            style={{
+              padding: '6px 12px',
+              fontSize: '1.2rem',
+              minWidth: 'auto',
+            }}
+            onClick={() => {
+              sound.coin();
+              onClose();
+            }}
+            title="Zavřít okno"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* Modal navigation tabs */}
         <div
@@ -463,7 +500,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               >
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#B45309', fontWeight: 900 }}>
-                    <span>🍪</span>
+                    <PernicekIcon size={18} />
                     <span>Voňavé perníčky (Měna pro Dědečka):</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
@@ -582,7 +619,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   <strong style={{ color: '#92400E' }}>1. Podmínka zjevení (Čas & Perníčky):</strong>
                   <div>
                     Dědeček se v každé výpravě poprvé zjevuje <strong>od 25. sekundy hry</strong>. Podmínkou je, abyste měli nasbíraný dostatek
-                    <strong> voňavých perníčků 🍪</strong> alespoň na nejlevnější položku z jeho nůše (obvykle 25–35 perníčků). Pokud jste bez perníčků, dědeček zbytečně nepřekáží.
+                    <strong> voňavých perníčků </strong><PernicekIcon size={16} style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0 2px' }} /> alespoň na nejlevnější položku z jeho nůše (obvykle 25–35 perníčků). Pokud jste bez perníčků, dědeček zbytečně nepřekáží.
                   </div>
                 </div>
 
@@ -871,7 +908,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🪓" size={30} />
+                  <GameIcon icon="kovana_halapartna" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Kovaná halapartna</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1160,8 +1197,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <div>
                   🧄 <strong>Kombinujte zbraně na dálku i na blízko:</strong> Česneková topinka nebo Válečnice vytvoří ochranný kruh kolem lovce, zatímco Kyselá okurka nepřátele oslabí a buchty je donutí mlsat na dálku.
                 </div>
-                <div>
-                  🍪 <strong>Sbírejte perníčky okamžitě:</strong> Každý perníček se počítá pro nákup v nůši Čertova dědečka. Čím dříve nakoupíte, tím snáze zdoláte půlnočního minibosse.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', marginTop: 2 }}><PernicekIcon size={16} /></span>
+                  <div><strong>Sbírejte perníčky okamžitě:</strong> Každý perníček se počítá pro nákup v nůši Čertova dědečka. Čím dříve nakoupíte, tím snáze zdoláte půlnočního minibosse.</div>
                 </div>
                 <div>
                   💥 <strong>Odveta lovce na blízko:</strong> Kdykoliv vás bubák zraní na blízko, automaticky ho odhodíte pryč a uštědříte mu zranění rovné 15 % vaší maximální Kuráže (odolnosti běžných monster zde nefungují, odolává pouze boss levelu)!

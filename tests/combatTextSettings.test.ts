@@ -16,6 +16,7 @@ import {
 } from '../src/game/combatTextSettings';
 import { DamageText, GameEngine } from '../src/game/engine';
 import { createDefaultMetaProgression, migrateMetaProgression } from '../src/game/migration';
+import { isGameEffectEnabled } from '../src/game/effectSettings';
 
 describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
   beforeEach(() => {
@@ -123,8 +124,12 @@ describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
       expect(inferCombatTextCategory('IMUNNÍ! 🪨')).toBe('combatStates');
       expect(inferCombatTextCategory('VYČERPÁN! 💫')).toBe('combatStates');
       expect(inferCombatTextCategory('Usmířen! 🕊️')).toBe('combatStates');
+      expect(inferCombatTextCategory('Zahnán! 💨')).toBe('combatStates');
+      expect(inferCombatTextCategory('ODSTRČENÍ! 💨')).toBe('combatStates');
+      expect(inferCombatTextCategory('Puf! 💨')).toBe('combatStates');
       expect(inferCombatTextCategory('POSVÁTNÝ ODRAZ! 🛡️')).toBe('combatStates');
       expect(inferCombatTextCategory('VYRUŠENÍ! 💥')).toBe('combatStates');
+      expect(inferCombatTextCategory('K + M + B 🖍️')).toBe('combatStates');
     });
 
     it('správně odvodí nápřahy a útoky', () => {
@@ -149,6 +154,17 @@ describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
       expect(inferCombatTextCategory('CINK! 🪙')).toBe('lootResources');
       expect(inferCombatTextCategory('CUKROVÝ SPĚCH! ⚡')).toBe('lootResources');
       expect(inferCombatTextCategory('DUŠIČKA OSVOBOZENA! +25 kr.')).toBe('lootResources');
+      expect(inferCombatTextCategory('KOVÁŘSKÁ PODKOVA! 🧲')).toBe('lootResources');
+      expect(inferCombatTextCategory('HLINĚNÝ KOHOUTEK! 🐓☀️')).toBe('lootResources');
+      expect(inferCombatTextCategory('VYŘEZÁVANÉ KUKAČKY! ⏰')).toBe('lootResources');
+      expect(inferCombatTextCategory('🪞 ZRCÁTKO: NABITO!')).toBe('lootResources');
+    });
+
+    it('správně odvodí elitní předpony a varování výpravy (včetně přepadení)', () => {
+      expect(inferCombatTextCategory('⚡ Bleskový!')).toBe('directorWarningBanners');
+      expect(inferCombatTextCategory('🔥 Ohnivý!')).toBe('directorWarningBanners');
+      expect(inferCombatTextCategory('🛡️ Obrněný!')).toBe('directorWarningBanners');
+      expect(inferCombatTextCategory('PŘEPAD Z HOUŠTIN! 🌲🐾')).toBe('directorWarningBanners');
     });
 
     it('správně odvodí odemčení a milníky', () => {
@@ -222,6 +238,36 @@ describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
       expect(shouldShowWarningBanner('⚠️ Kradmé kroky za humny...', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
       expect(shouldShowWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
       expect(shouldShowWarningBanner('🌑 Země puká: Objevila se Bubácká díra!', PERFORMANCE_COMBAT_TEXT_SETTINGS)).toBe(false);
+    });
+
+    it('vypnutí visualTelegraphCues neblokuje bossWarningBanners pokud jsou zapnuté', () => {
+      const customSettings = {
+        ...DEFAULT_COMBAT_TEXT_SETTINGS,
+        visualTelegraphCues: false,
+        bossWarningBanners: true,
+      };
+
+      expect(shouldShowWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️', customSettings)).toBe(true);
+      expect(isCombatTextCategoryEnabled('bossWarningBanners', customSettings)).toBe(true);
+      expect(isCombatTextCategoryEnabled('visualTelegraphCues', customSettings)).toBe(false);
+    });
+
+    it('vypnutí unlocksMilestones v nastavení vypne i vyskakovací toast banner odemčení (unlockNotice)', () => {
+      setCombatTextSettings({
+        ...DEFAULT_COMBAT_TEXT_SETTINGS,
+        unlocksMilestones: false,
+      });
+
+      expect(isCombatTextCategoryEnabled('unlocksMilestones')).toBe(false);
+      expect(isGameEffectEnabled('unlockNotificationsEnabled')).toBe(false);
+
+      setCombatTextSettings({
+        ...DEFAULT_COMBAT_TEXT_SETTINGS,
+        unlocksMilestones: true,
+      });
+
+      expect(isCombatTextCategoryEnabled('unlocksMilestones')).toBe(true);
+      expect(isGameEffectEnabled('unlockNotificationsEnabled')).toBe(true);
     });
   });
 
