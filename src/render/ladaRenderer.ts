@@ -5,6 +5,29 @@ import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { drawGingerbreadHeartCanvas } from './pernicekCanvas';
 
+const ladaSpriteCache = new Map<string, HTMLCanvasElement>();
+
+export function getCachedLadaSprite(
+  key: string,
+  width: number,
+  height: number,
+  renderFn: (ctx: CanvasRenderingContext2D, cx: number, cy: number) => void
+): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+  let canvas = ladaSpriteCache.get(key);
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const cctx = canvas.getContext('2d');
+    if (cctx) {
+      renderFn(cctx, width * 0.5, height * 0.5);
+    }
+    ladaSpriteCache.set(key, canvas);
+  }
+  return canvas;
+}
+
 var Lada = {
 	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
 		ctx.fillStyle = fill;
@@ -3088,20 +3111,26 @@ var Lada = {
 			ctx.stroke();
 		}
 		const eyeColor = (attackInfo && attackInfo.isActive) ? "#EF4444" : (panicked ? "#FDE047" : COLORS.mustard);
-		ctx.fillStyle = eyeColor;
-		ctx.shadowColor = ctx.fillStyle;
-		ctx.shadowBlur = (attackInfo && attackInfo.isActive) ? 18 : 10;
 		const lookX = panicked ? -10 : vx < 0 ? -8 : 8;
+		const ew = panicked ? 6 : 5;
+		const eh = panicked ? 9 : 8;
+		// Soft glow behind eyes instead of costly shadowBlur
+		ctx.fillStyle = (attackInfo && attackInfo.isActive) ? "rgba(239, 68, 68, 0.40)" : (panicked ? "rgba(253, 224, 71, 0.40)" : "rgba(245, 158, 11, 0.35)");
 		ctx.beginPath();
-		ctx.ellipse(lookX - 6, -12, panicked ? 6 : 5, panicked ? 9 : 8, 0, 0, Math.PI * 2);
-		ctx.ellipse(lookX + 6, -12, panicked ? 6 : 5, panicked ? 9 : 8, 0, 0, Math.PI * 2);
+		ctx.ellipse(lookX - 6, -12, ew + 3, eh + 3, 0, 0, Math.PI * 2);
+		ctx.ellipse(lookX + 6, -12, ew + 3, eh + 3, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = eyeColor;
+		ctx.beginPath();
+		ctx.ellipse(lookX - 6, -12, ew, eh, 0, 0, Math.PI * 2);
+		ctx.ellipse(lookX + 6, -12, ew, eh, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.fillStyle = COLORS.ink;
 		ctx.beginPath();
 		ctx.arc(lookX - 7, -12, 2, 0, Math.PI * 2);
 		ctx.arc(lookX + 5, -12, 2, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
 		if (attackInfo && attackInfo.isActive && attackInfo.isStrike) {
 			// Jagged shadow mouth on strike impact
 			ctx.fillStyle = "#FEF08A";
@@ -3268,14 +3297,17 @@ var Lada = {
 		ctx.beginPath();
 		ctx.ellipse(panicked ? -2 : 4, -6, panicked ? 5 : 4, panicked ? 9 : 7, 0, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = COLORS.water;
-		ctx.shadowColor = COLORS.water;
-		ctx.shadowBlur = 8;
+		const hx = panicked ? -4 : 5;
+		const hy = -14;
+		const hr = panicked ? 3.5 : 3;
+		ctx.fillStyle = "rgba(56, 189, 248, 0.35)";
 		ctx.beginPath();
-		ctx.arc(panicked ? -4 : 5, -14, panicked ? 3.5 : 3, 0, Math.PI * 2);
+		ctx.arc(hx, hy, hr + 3, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
+		ctx.fillStyle = COLORS.water;
+		ctx.beginPath();
+		ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.restore();
 	},
 	drawPolednice(ctx, x, y, time, vx, panicked) {
@@ -3664,8 +3696,11 @@ var Lada = {
 			this.drawBentLimb(ctx, 5, 14, leg2.kx, leg2.ky, leg2.fx, leg2.fy, "#3F3F46", 3.5);
 		}
 		ctx.save();
-		ctx.shadowColor = "rgba(76, 29, 149, 0.45)";
-		ctx.shadowBlur = 14;
+		// Soft twilight dusk ground aura instead of heavy Gaussian shadowBlur
+		ctx.fillStyle = "rgba(76, 29, 149, 0.28)";
+		ctx.beginPath();
+		ctx.ellipse(0, 24, 20, 7, 0, 0, Math.PI * 2);
+		ctx.fill();
 		this.setupPath(ctx, "#5C4033", COLORS.ink, 3);
 		ctx.beginPath();
 		ctx.ellipse(-16, 2, 14, 18, .25, 0, Math.PI * 2);
@@ -3743,11 +3778,13 @@ var Lada = {
 		}
 		if (isBoss || charging) {
 			ctx.save();
-			ctx.shadowColor = "#DC2626";
-			ctx.shadowBlur = charging ? 32 : 22;
 			ctx.fillStyle = charging ? "rgba(239, 68, 68, 0.45)" : "rgba(239, 68, 68, 0.22)";
 			ctx.beginPath();
 			ctx.ellipse(charging ? -6 : 0, 24, charging ? 28 : 22, 7, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = charging ? "rgba(220, 38, 38, 0.22)" : "rgba(220, 38, 38, 0.12)";
+			ctx.beginPath();
+			ctx.ellipse(charging ? -6 : 0, 24, charging ? 38 : 30, 10, 0, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.restore();
 		}
@@ -3965,8 +4002,11 @@ var Lada = {
 			this.drawPanicDrops(ctx, 4, -30, time);
 		}
 		ctx.save();
-		ctx.shadowColor = "#15803D";
-		ctx.shadowBlur = 24;
+		// Soft moss ground aura instead of heavy Gaussian shadowBlur
+		ctx.fillStyle = "rgba(21, 128, 61, 0.22)";
+		ctx.beginPath();
+		ctx.ellipse(0, 24, 24, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
 		if (panicked) {
 			const legPhase = time * 3.2;
 			const leg1 = this.getRunLegCycle(legPhase, -9, 8, 22);
@@ -4099,8 +4139,11 @@ var Lada = {
 			this.drawPanicDrops(ctx, 6, -34, time);
 		}
 		ctx.save();
-		ctx.shadowColor = "#D97706";
-		ctx.shadowBlur = 20;
+		// Soft mountain ground aura instead of heavy Gaussian shadowBlur
+		ctx.fillStyle = "rgba(217, 119, 6, 0.20)";
+		ctx.beginPath();
+		ctx.ellipse(0, 26, 26, 9, 0, 0, Math.PI * 2);
+		ctx.fill();
 		if (panicked) {
 			const legPhase = time * 2.8;
 			const leg1 = this.getRunLegCycle(legPhase, -10, 8, 24);
@@ -5168,14 +5211,18 @@ var Lada = {
 
 		// Glowing amber eyes under the heavy straw brim
 		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
-		ctx.fillStyle = '#F59E0B';
-		ctx.shadowColor = '#F59E0B';
-		ctx.shadowBlur = 10;
+		const ex1 = glanceBack ? -5 : 4;
+		const ex2 = glanceBack ? 2 : 11;
+		ctx.fillStyle = "rgba(245, 158, 11, 0.35)";
 		ctx.beginPath();
-		ctx.arc(glanceBack ? -5 : 4, -16, 3.2, 0, Math.PI * 2);
-		ctx.arc(glanceBack ? 2 : 11, -16, 3.2, 0, Math.PI * 2);
+		ctx.arc(ex1, -16, 5.2, 0, Math.PI * 2);
+		ctx.arc(ex2, -16, 5.2, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.arc(ex1, -16, 3.2, 0, Math.PI * 2);
+		ctx.arc(ex2, -16, 3.2, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = COLORS.ink;
 		ctx.beginPath();
 		ctx.arc(glanceBack ? -4.5 : 4.5, -16, 1.4, 0, Math.PI * 2);
@@ -5289,14 +5336,16 @@ var Lada = {
 		ctx.stroke();
 
 		// Hollow glowing spectral pale-green / amber eyes
+		ctx.fillStyle = "rgba(132, 204, 22, 0.35)";
+		ctx.beginPath();
+		ctx.ellipse(-3, -20, 4.2, 5.5, 0, 0, Math.PI * 2);
+		ctx.ellipse(3, -20, 4.2, 5.5, 0, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = '#84CC16';
-		ctx.shadowColor = '#84CC16';
-		ctx.shadowBlur = 10;
 		ctx.beginPath();
 		ctx.ellipse(-3, -20, 2.2, 3.5, 0, 0, Math.PI * 2);
 		ctx.ellipse(3, -20, 2.2, 3.5, 0, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
 
 		ctx.restore();
 	},
@@ -5795,14 +5844,16 @@ var Lada = {
 		ctx.stroke();
 
 		// Piercing bright white blizzard eyes
+		ctx.fillStyle = 'rgba(96, 165, 250, 0.40)';
+		ctx.beginPath();
+		ctx.arc(-4, -17, 4.8, 0, Math.PI * 2);
+		ctx.arc(4, -17, 4.8, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = '#FFFFFF';
-		ctx.shadowColor = '#60A5FA';
-		ctx.shadowBlur = 10;
 		ctx.beginPath();
 		ctx.arc(-4, -17, 2.8, 0, Math.PI * 2);
 		ctx.arc(4, -17, 2.8, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
 		ctx.fillStyle = '#1E3A8A';
 		ctx.beginPath();
 		ctx.arc(-3.5, -17, 1.2, 0, Math.PI * 2);
@@ -6502,11 +6553,16 @@ var Lada = {
 		const bob = Math.sin(time * (panicked ? 14 : 6)) * (panicked ? 8 : 6);
 		ctx.save();
 		ctx.translate(x, y + bob);
-		ctx.shadowColor = panicked ? "#F97316" : COLORS.water;
-		ctx.shadowBlur = panicked ? 22 : 15;
+		const glowColor = panicked ? "rgba(249, 115, 22, 0.35)" : "rgba(103, 232, 249, 0.35)";
+		const r = panicked ? 9 : 7;
+		// Soft halo without costly shadowBlur
+		ctx.fillStyle = glowColor;
+		ctx.beginPath();
+		ctx.arc(0, 0, r + 7, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = panicked ? "rgba(239, 68, 68, 0.95)" : "rgba(217, 160, 54, 0.9)";
 		ctx.beginPath();
-		ctx.arc(0, 0, panicked ? 9 : 7, 0, Math.PI * 2);
+		ctx.arc(0, 0, r, 0, Math.PI * 2);
 		ctx.fill();
 		if (panicked) for (let i = 0; i < 3; i++) {
 			const pt = (time * 5 + i * .33) % 1;
@@ -6515,7 +6571,6 @@ var Lada = {
 			ctx.arc(-12 - pt * 20, Math.sin(time * 10 + i) * 6, 2 - pt, 0, Math.PI * 2);
 			ctx.fill();
 		}
-		ctx.shadowBlur = 0;
 		ctx.restore();
 	},
 	drawDrevorubec(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
@@ -6855,13 +6910,15 @@ var Lada = {
 
 		// Incandescent eyes glowing white-hot
 		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
-		ctx.fillStyle = '#FFFFFF';
-		ctx.shadowColor = '#FBBF24';
-		ctx.shadowBlur = 12;
+		const ox = glanceBack ? -4 : 2;
+		ctx.fillStyle = "rgba(251, 191, 36, 0.40)";
 		ctx.beginPath();
-		ctx.arc(glanceBack ? -4 : 2, -14, 2.5, 0, Math.PI * 2);
+		ctx.arc(ox, -14, 4.8, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(ox, -14, 2.5, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = '#7C2D12';
 		ctx.beginPath();
 		ctx.arc(glanceBack ? -3.5 : 2.5, -14, 1.1, 0, Math.PI * 2);
@@ -7358,13 +7415,15 @@ var Lada = {
 
 		// Blazing sulfur-yellow eye with glowing aura
 		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
-		ctx.fillStyle = '#FEF08A';
-		ctx.shadowColor = '#F59E0B';
-		ctx.shadowBlur = 8;
+		const px = glanceBack ? 8 : 15;
+		ctx.fillStyle = "rgba(245, 158, 11, 0.40)";
 		ctx.beginPath();
-		ctx.arc(glanceBack ? 8 : 15, -8, 2.6, 0, Math.PI * 2);
+		ctx.arc(px, -8, 5, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
+		ctx.fillStyle = '#FEF08A';
+		ctx.beginPath();
+		ctx.arc(px, -8, 2.6, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.fillStyle = '#7F1D1D';
 		ctx.beginPath();
 		ctx.arc(glanceBack ? 7.5 : 15.5, -8, 1.2, 0, Math.PI * 2);
@@ -7409,8 +7468,10 @@ var Lada = {
 		const wheelR = 30;
 		const wheelAngle = time * (panicked ? -4.5 : isEnraged ? 6 : 2.8);
 		if (isEnraged) {
-			ctx.shadowColor = "#F97316";
-			ctx.shadowBlur = 14;
+			ctx.fillStyle = "rgba(249, 115, 22, 0.28)";
+			ctx.beginPath();
+			ctx.arc(wheelX, wheelY, wheelR + 8, 0, Math.PI * 2);
+			ctx.fill();
 		}
 		ctx.translate(wheelX, wheelY);
 		ctx.rotate(wheelAngle);
@@ -7592,9 +7653,12 @@ var Lada = {
 			ctx.arc(glanceBack ? 2 : 8, -13, 1.8, 0, Math.PI * 2);
 			ctx.fill();
 		} else if (isEnraged) {
+			ctx.fillStyle = "rgba(239, 68, 68, 0.40)";
+			ctx.beginPath();
+			ctx.arc(-5, -13, 5, 0, Math.PI * 2);
+			ctx.arc(5, -13, 5, 0, Math.PI * 2);
+			ctx.fill();
 			ctx.fillStyle = "#EF4444";
-			ctx.shadowColor = "#EF4444";
-			ctx.shadowBlur = 8;
 			ctx.beginPath();
 			ctx.arc(-5, -13, 3, 0, Math.PI * 2);
 			ctx.arc(5, -13, 3, 0, Math.PI * 2);
@@ -7604,7 +7668,6 @@ var Lada = {
 			ctx.arc(-4.5, -13, 1.3, 0, Math.PI * 2);
 			ctx.arc(5.5, -13, 1.3, 0, Math.PI * 2);
 			ctx.fill();
-			ctx.shadowBlur = 0;
 		} else {
 			ctx.fillStyle = "#D97706";
 			ctx.beginPath();
@@ -7797,8 +7860,10 @@ var Lada = {
 	drawHellSpark(ctx, x, y, radius = 10, time = 0) {
 		ctx.save();
 		ctx.translate(x, y);
-		ctx.shadowColor = "#EF4444";
-		ctx.shadowBlur = 12;
+		ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius + 6, 0, Math.PI * 2);
+		ctx.fill();
 		this.setupPath(ctx, "#FBBF24", COLORS.ink, 2);
 		ctx.beginPath();
 		ctx.arc(0, 0, radius, 0, Math.PI * 2);
@@ -7849,11 +7914,13 @@ var Lada = {
 
 		// Soft ethereal lunar glow under ghost
 		ctx.save();
-		ctx.shadowColor = "#BAE6FD";
-		ctx.shadowBlur = 18;
-		ctx.fillStyle = "rgba(224, 242, 254, 0.25)";
+		ctx.fillStyle = "rgba(224, 242, 254, 0.30)";
 		ctx.beginPath();
 		ctx.ellipse(x, y + 26, 20 * scale, 7 * scale, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(186, 230, 253, 0.15)";
+		ctx.beginPath();
+		ctx.ellipse(x, y + 26, 28 * scale, 11 * scale, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.restore();
 
@@ -8116,11 +8183,13 @@ var Lada = {
 
 		if (isEnraged) {
 			ctx.save();
-			ctx.shadowColor = "#38BDF8";
-			ctx.shadowBlur = 24;
-			ctx.fillStyle = "rgba(56, 189, 248, 0.18)";
+			ctx.fillStyle = "rgba(56, 189, 248, 0.28)";
 			ctx.beginPath();
 			ctx.ellipse(0, 16, 26, 8, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "rgba(56, 189, 248, 0.14)";
+			ctx.beginPath();
+			ctx.ellipse(0, 16, 36, 12, 0, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.restore();
 		}
@@ -8636,11 +8705,13 @@ var Lada = {
 		}
 
 		ctx.save();
-		ctx.shadowColor = "#818CF8";
-		ctx.shadowBlur = 18;
-		ctx.fillStyle = "rgba(49, 46, 129, 0.35)";
+		ctx.fillStyle = "rgba(129, 140, 248, 0.28)";
 		ctx.beginPath();
 		ctx.ellipse(0, 0, 22, 16, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(49, 46, 129, 0.18)";
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 30, 22, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.restore();
 
@@ -8759,8 +8830,10 @@ var Lada = {
 	drawDragonFireball(ctx, x, y, radius = 16, time = 0) {
 		ctx.save();
 		ctx.translate(x, y);
-		ctx.shadowColor = "#EF4444";
-		ctx.shadowBlur = 14;
+		ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius + 8, 0, Math.PI * 2);
+		ctx.fill();
 
 		// Blazing flame core
 		const grad = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.2);
@@ -8800,8 +8873,10 @@ var Lada = {
 	drawDragonFrostball(ctx, x, y, radius = 16, time = 0) {
 		ctx.save();
 		ctx.translate(x, y);
-		ctx.shadowColor = "#38BDF8";
-		ctx.shadowBlur = 14;
+		ctx.fillStyle = "rgba(56, 189, 248, 0.35)";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius + 8, 0, Math.PI * 2);
+		ctx.fill();
 
 		// Icy crystal core
 		const grad = ctx.createRadialGradient(0, 0, radius * 0.2, 0, 0, radius * 1.2);
@@ -8886,8 +8961,10 @@ var Lada = {
 		// Enraged Dragon Elemental Glow
 		if (isEnraged) {
 			ctx.save();
-			ctx.shadowColor = Math.sin(time * 8) > 0 ? "#EF4444" : "#38BDF8";
-			ctx.shadowBlur = 24;
+			ctx.fillStyle = Math.sin(time * 8) > 0 ? "rgba(239, 68, 68, 0.22)" : "rgba(56, 189, 248, 0.22)";
+			ctx.beginPath();
+			ctx.ellipse(0, 10, 48, 28, 0, 0, Math.PI * 2);
+			ctx.fill();
 			ctx.restore();
 		}
 
@@ -9547,42 +9624,54 @@ var Lada = {
 
 		ctx.restore();
 	},
-	drawCoin(ctx, x, y, time, value) {
-		const bob = Math.sin(time * 6) * 4;
-		this.drawShadow(ctx, x, y, 9);
+	_drawCoinVector(ctx: CanvasRenderingContext2D, cx: number, cy: number, value: number) {
 		if (value >= 15) {
 			this.setupPath(ctx, COLORS.mustard, COLORS.ink, 3);
 			ctx.beginPath();
-			ctx.arc(x, y + bob, 12, 0, Math.PI * 2);
+			ctx.arc(cx, cy, 12, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
 			ctx.fillStyle = COLORS.ink;
 			ctx.font = "800 11px Eczar";
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
-			ctx.fillText("T", x, y + bob);
+			ctx.fillText("T", cx, cy);
 		} else if (value >= 5) {
 			this.setupPath(ctx, "#E2E8F0", COLORS.ink, 2.5);
 			ctx.beginPath();
-			ctx.arc(x, y + bob, 10, 0, Math.PI * 2);
+			ctx.arc(cx, cy, 10, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
 			ctx.fillStyle = COLORS.ink;
 			ctx.font = "800 10px Eczar";
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
-			ctx.fillText("S", x, y + bob);
+			ctx.fillText("S", cx, cy);
 		} else {
 			this.setupPath(ctx, "#D97706", COLORS.ink, 2.5);
 			ctx.beginPath();
-			ctx.arc(x, y + bob, 8, 0, Math.PI * 2);
+			ctx.arc(cx, cy, 8, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
 			ctx.fillStyle = COLORS.ink;
 			ctx.font = "800 9px Arial";
 			ctx.textAlign = "center";
-			ctx.fillText("K", x, y + bob);
+			ctx.textBaseline = "middle";
+			ctx.fillText("K", cx, cy);
 		}
+	},
+	drawCoin(ctx, x, y, time, value) {
+		const bob = Math.sin(time * 6) * 4;
+		this.drawShadow(ctx, x, y, 9);
+		const coinKey = value >= 15 ? 'coin_tolar' : value >= 5 ? 'coin_stribrnak' : 'coin_krejcar';
+		const sprite = getCachedLadaSprite(coinKey, 32, 32, (sCtx, cx, cy) => {
+			this._drawCoinVector(sCtx, cx, cy, value);
+		});
+		if (!sprite) {
+			this._drawCoinVector(ctx, x, y + bob, value);
+			return;
+		}
+		ctx.drawImage(sprite, x - 16, y + bob - 16);
 	},
 	drawGingerbread(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, size: string = 'small', isHot: boolean = false) {
 		const bob = Math.sin(time * 3.5) * 2.5;
@@ -9845,7 +9934,7 @@ var Lada = {
 
 		ctx.restore();
 	},
-	drawJitrnice(ctx, x, y, scale = 1, angle = 0) {
+	_drawJitrniceVector(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, angle = 0) {
 		ctx.save();
 		ctx.translate(x, y);
 		if (angle !== 0) ctx.rotate(angle);
@@ -9980,11 +10069,26 @@ var Lada = {
 
 		ctx.restore();
 	},
+	drawJitrnice(ctx, x, y, scale = 1, angle = 0) {
+		const sprite = getCachedLadaSprite('czech_jitrnice', 64, 52, (sCtx, cx, cy) => {
+			this._drawJitrniceVector(sCtx, cx, cy, 1, 0);
+		});
+		if (!sprite) {
+			this._drawJitrniceVector(ctx, x, y, scale, angle);
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		if (scale !== 1) ctx.scale(scale, scale);
+		ctx.drawImage(sprite, -32, -26);
+		ctx.restore();
+	},
 	drawPotion(ctx, x, y, time) {
 		const bob = Math.sin(time * 5) * 3.5;
 		this.drawJitrnice(ctx, x, y + bob, 1.15, Math.sin(time * 2.5) * 0.06);
 	},
-	drawCzechBuchta(ctx, x, y, scale = 1, angle = 0) {
+	_drawCzechBuchtaVector(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, angle = 0) {
 		ctx.save();
 		ctx.translate(x, y);
 		if (angle !== 0) ctx.rotate(angle);
@@ -10190,7 +10294,22 @@ var Lada = {
 		}
 		ctx.restore();
 	},
-	drawHruska(ctx, x, y, scale = 1, angle = 0) {
+	drawCzechBuchta(ctx, x, y, scale = 1, angle = 0) {
+		const sprite = getCachedLadaSprite('czech_buchta', 52, 48, (sCtx, cx, cy) => {
+			this._drawCzechBuchtaVector(sCtx, cx, cy, 1, 0);
+		});
+		if (!sprite) {
+			this._drawCzechBuchtaVector(ctx, x, y, scale, angle);
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		if (scale !== 1) ctx.scale(scale, scale);
+		ctx.drawImage(sprite, -26, -24);
+		ctx.restore();
+	},
+	_drawHruskaVector(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, angle = 0) {
 		ctx.save();
 		ctx.translate(x, y);
 		if (angle !== 0) ctx.rotate(angle);
@@ -10283,7 +10402,22 @@ var Lada = {
 
 		ctx.restore();
 	},
-	drawKynutyKolac(ctx, x, y, scale = 1, angle = 0) {
+	drawHruska(ctx, x, y, scale = 1, angle = 0) {
+		const sprite = getCachedLadaSprite('czech_hruska', 48, 56, (sCtx, cx, cy) => {
+			this._drawHruskaVector(sCtx, cx, cy, 1, 0);
+		});
+		if (!sprite) {
+			this._drawHruskaVector(ctx, x, y, scale, angle);
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		if (scale !== 1) ctx.scale(scale, scale);
+		ctx.drawImage(sprite, -24, -28);
+		ctx.restore();
+	},
+	_drawKynutyKolacVector(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, angle = 0) {
 		ctx.save();
 		ctx.translate(x, y);
 		if (angle !== 0) ctx.rotate(angle);
@@ -10392,6 +10526,21 @@ var Lada = {
 
 		ctx.restore();
 	},
+	drawKynutyKolac(ctx, x, y, scale = 1, angle = 0) {
+		const sprite = getCachedLadaSprite('kynuty_kolac', 48, 48, (sCtx, cx, cy) => {
+			this._drawKynutyKolacVector(sCtx, cx, cy, 1, 0);
+		});
+		if (!sprite) {
+			this._drawKynutyKolacVector(ctx, x, y, scale, angle);
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		if (scale !== 1) ctx.scale(scale, scale);
+		ctx.drawImage(sprite, -24, -24);
+		ctx.restore();
+	},
 	drawBreadRoll(ctx, x, y, time) {
 		const bob = Math.sin(time * 4) * 3;
 		const tilt = Math.sin(time * 2.5) * 0.08;
@@ -10402,11 +10551,118 @@ var Lada = {
 		const tilt = Math.sin(time * 2.5) * 0.08;
 		this.drawHruska(ctx, x, y + bob, 1.15, tilt);
 	},
+	_drawPickleVector(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+		this.setupPath(ctx, '#5E9F3B', '#193B18', 2.5);
+		ctx.beginPath();
+		ctx.ellipse(cx, cy, 15, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#A8D96D';
+		for (let i = -1; i <= 1; i++) {
+			ctx.beginPath();
+			ctx.arc(cx + i * 6, cy - 2 + (i % 2) * 3, 1.4, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+		ctx.beginPath();
+		ctx.ellipse(cx - 5, cy - 3, 3, 1.5, -0.3, 0, Math.PI * 2);
+		ctx.fill();
+	},
+	drawPickle(ctx: CanvasRenderingContext2D, x: number, y: number, angle = 0) {
+		const sprite = getCachedLadaSprite('pickle_proj', 38, 26, (sCtx, cx, cy) => {
+			this._drawPickleVector(sCtx, cx, cy);
+		});
+		if (!sprite) {
+			ctx.save();
+			ctx.translate(x, y);
+			if (angle !== 0) ctx.rotate(angle);
+			this._drawPickleVector(ctx, 0, 0);
+			ctx.restore();
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.drawImage(sprite, -19, -13);
+		ctx.restore();
+	},
+	drawBee(ctx: CanvasRenderingContext2D, x: number, y: number, angle = 0) {
+		const sprite = getCachedLadaSprite('bee_proj', 26, 20, (sCtx, cx, cy) => {
+			this.setupPath(sCtx, COLORS.mustard, COLORS.ink, 2);
+			sCtx.beginPath();
+			sCtx.ellipse(cx, cy, 8, 5, 0, 0, Math.PI * 2);
+			sCtx.fill();
+			sCtx.stroke();
+			sCtx.fillStyle = COLORS.ink;
+			sCtx.fillRect(cx - 2, cy - 4.5, 2, 9);
+			sCtx.fillRect(cx + 2, cy - 4.5, 2, 9);
+		});
+		if (!sprite) {
+			ctx.save();
+			ctx.translate(x, y);
+			if (angle !== 0) ctx.rotate(angle);
+			this.setupPath(ctx, COLORS.mustard, COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+			return;
+		}
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.drawImage(sprite, -13, -10);
+		ctx.restore();
+	},
+	drawSnowball(ctx: CanvasRenderingContext2D, x: number, y: number, rad = 12) {
+		const isSmall = rad <= 8;
+		const r = isSmall ? 7 : 12;
+		const dim = (r + 3) * 2;
+		const key = isSmall ? 'snowball_small' : 'snowball_large';
+		const sprite = getCachedLadaSprite(key, dim, dim, (sCtx, cx, cy) => {
+			this.setupPath(sCtx, '#F8FAFC', COLORS.ink, 2.5);
+			sCtx.beginPath();
+			sCtx.arc(cx, cy, r, 0, Math.PI * 2);
+			sCtx.fill();
+			sCtx.stroke();
+		});
+		if (!sprite) {
+			this.setupPath(ctx, '#F8FAFC', COLORS.ink, 2.5);
+			ctx.beginPath();
+			ctx.arc(x, y, r, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			return;
+		}
+		ctx.drawImage(sprite, x - dim * 0.5, y - dim * 0.5);
+	},
+	drawHolyDroplet(ctx: CanvasRenderingContext2D, x: number, y: number) {
+		const sprite = getCachedLadaSprite('holy_droplet_proj', 22, 22, (sCtx, cx, cy) => {
+			this.setupPath(sCtx, COLORS.ice, COLORS.ink, 2);
+			sCtx.beginPath();
+			sCtx.arc(cx, cy, 7, 0, Math.PI * 2);
+			sCtx.fill();
+			sCtx.stroke();
+		});
+		if (!sprite) {
+			this.setupPath(ctx, COLORS.ice, COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.arc(x, y, 7, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			return;
+		}
+		ctx.drawImage(sprite, x - 11, y - 11);
+	},
 	drawSoulJar(ctx, x, y, time) {
 		ctx.save();
 		ctx.translate(x, y);
-		ctx.shadowColor = COLORS.water;
-		ctx.shadowBlur = 12 + Math.sin(time * 4) * 6;
+		const auraPulse = Math.sin(time * 4) * 3;
+		ctx.fillStyle = "rgba(56, 189, 248, 0.28)";
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 16 + auraPulse, 18 + auraPulse, 0, 0, Math.PI * 2);
+		ctx.fill();
 		this.setupPath(ctx, COLORS.white, COLORS.ink, 3);
 		ctx.beginPath();
 		ctx.moveTo(-12, -10);
@@ -10443,8 +10699,10 @@ var Lada = {
 		ctx.translate(x + (Math.random() - .5) * shake, y + (Math.random() - .5) * shake);
 		if (scale !== 1) ctx.scale(scale, scale);
 		if (glow > 0) {
-			ctx.shadowColor = COLORS.mustard;
-			ctx.shadowBlur = glow * 40;
+			ctx.fillStyle = `rgba(245, 158, 11, ${Math.min(0.5, glow * 0.4)})`;
+			ctx.beginPath();
+			ctx.arc(0, 5, 52 + glow * 10, 0, Math.PI * 2);
+			ctx.fill();
 		}
 		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 5);
 		ctx.fillRect(-40, -10, 80, 40);
@@ -13674,7 +13932,7 @@ export function drawEnemyAttackEffectsPost(ctx: CanvasRenderingContext2D, enemy:
   // 1. Weapon Gleam / Warning Star at Apex Tension
   if (info.hasWeaponGleam) {
     const p = info.gleamProgress;
-    const gleamScale = 0.6 + p * 0.8 + Math.sin(Date.now() * 0.02) * 0.2;
+    const gleamScale = 0.6 + p * 0.8 + Math.sin(p * Math.PI * 4) * 0.2;
     const starX = enemy.x + (dir * enemy.radius * 0.6) - Math.cos(ang) * 4;
     const starY = enemy.y - enemy.radius * 0.95;
 
@@ -14487,13 +14745,14 @@ function drawThematicEnemyDetails(
     }
 
     // Glowing orange coal eyes
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.40)';
+    ctx.beginPath();
+    ctx.arc(x + 4 * facingDir, y - radius * 0.45, 4.5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#EA580C';
-    ctx.shadowColor = '#F97316';
-    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(x + 4 * facingDir, y - radius * 0.45, 2.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
     ctx.fillStyle = '#18181B';
     ctx.beginPath();
     ctx.arc(x + 4.5 * facingDir, y - radius * 0.45, 1, 0, Math.PI * 2);
@@ -14532,13 +14791,14 @@ function drawThematicEnemyDetails(
     ctx.stroke();
 
     // Blood-red glowing eyes
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.40)';
+    ctx.beginPath();
+    ctx.arc(x + 3 * facingDir, y - radius * 0.45, 4.5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#EF4444';
-    ctx.shadowColor = '#DC2626';
-    ctx.shadowBlur = 10;
     ctx.beginPath();
     ctx.arc(x + 3 * facingDir, y - radius * 0.45, 2.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
 
     // Dripping crimson fury sparks
     ctx.fillStyle = '#DC2626';
@@ -14606,14 +14866,16 @@ function drawThematicEnemyDetails(
     ctx.stroke();
 
     // Glowing red eye sockets
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+    ctx.beginPath();
+    ctx.arc(x - 3 * facingDir, y - radius * 0.65, 3.8, 0, Math.PI * 2);
+    ctx.arc(x + 4 * facingDir, y - radius * 0.65, 3.8, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#EF4444';
-    ctx.shadowColor = '#EF4444';
-    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(x - 3 * facingDir, y - radius * 0.65, 2, 0, Math.PI * 2);
     ctx.arc(x + 4 * facingDir, y - radius * 0.65, 2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
   }
 
   // 4. MOČÁLOVÁ ROPUCHA (Toxic yellow pustules, duckweed clumps, pulsing throat sac & toad slit eyes)
@@ -14820,13 +15082,14 @@ function drawThematicEnemyDetails(
     ctx.fill(); ctx.stroke();
 
     // Predatory amber wolf eyes
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.40)';
+    ctx.beginPath();
+    ctx.arc(x + 14 * facingDir, y - 8, 4.5, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#F59E0B';
-    ctx.shadowColor = '#F59E0B';
-    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(x + 14 * facingDir, y - 8, 2.5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
     ctx.fillStyle = '#18181B';
     ctx.beginPath();
     ctx.arc(x + 14.5 * facingDir, y - 8, 1.1, 0, Math.PI * 2);

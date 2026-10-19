@@ -1681,6 +1681,16 @@ export class GameEngine {
     }
   }
 
+  private pushTransientLight(light: DynamicLightSource): void {
+    let count = 0;
+    for (let i = 0; i < this.state.lightSources.length; i++) {
+      if (typeof this.state.lightSources[i].duration === 'number') count++;
+    }
+    if (count < 16) {
+      this.state.lightSources.push(light);
+    }
+  }
+
   public applyWeaponAction(action: WeaponAction): any {
     if (action.type === 'projectile') {
       const p = action.proj || action;
@@ -1778,7 +1788,7 @@ export class GameEngine {
       if (slash.pullLoot && this.state.player) {
         pullWhipLoot(this.state.drops, this.state.player.x, this.state.player.y, slash.angle, slash.reach);
       }
-      this.state.lightSources.push(createOsikovySlashLight(slash.x, slash.y));
+      this.pushTransientLight(createOsikovySlashLight(slash.x, slash.y));
       return slash;
     }
 
@@ -1788,7 +1798,7 @@ export class GameEngine {
       const dmg = impact.dmg ?? 20;
       const impactType = impact.type || 'blunt';
       if (impactType === 'holy') {
-        this.state.lightSources.push(createHolyCathedralLight(impact.x, impact.y));
+        this.pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
       }
       const nearby = this.spatialHash.queryCircle(impact.x, impact.y, radius + 60);
 
@@ -1962,7 +1972,7 @@ export class GameEngine {
     const dayPhase = getCurrentDayPhase(this.state.gameTime);
     if (player && player.hp > 0) {
       const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, this.state.gameTime);
-      let pLight = this.state.lightSources.find((ls) => ls.id === 'player_petrolejka');
+      let pLight = this.state.petrolejkaLight;
       if (petrolejkaRadius > 0) {
         if (!pLight) {
           pLight = {
@@ -1973,6 +1983,7 @@ export class GameEngine {
             color: '#F59E0B',
             type: 'petrolejka',
           };
+          this.state.petrolejkaLight = pLight;
           this.state.lightSources.push(pLight);
         } else {
           pLight.x = player.x;
@@ -1985,12 +1996,12 @@ export class GameEngine {
 
       // Hromnička blessed candle light
       const hasHromnicka = player.weapons && player.weapons.some((w: any) => w.id === 'hromnicka');
-      let hLight = this.state.lightSources.find((ls) => ls.id === 'player_hromnicka');
+      let hLight = this.state.hromnickaLight;
       if (hasHromnicka) {
         const hromWp = player.weapons.find((w: any) => w.id === 'hromnicka');
         const hReach = 110 + (hromWp?.level || 1) * 12;
         if (!hLight) {
-          this.state.lightSources.push({
+          hLight = {
             id: 'player_hromnicka',
             x: player.x,
             y: player.y,
@@ -1998,7 +2009,9 @@ export class GameEngine {
             color: '#FEF9C3',
             type: 'holy',
             intensity: 0.9,
-          });
+          };
+          this.state.hromnickaLight = hLight;
+          this.state.lightSources.push(hLight);
         } else {
           hLight.x = player.x;
           hLight.y = player.y;
@@ -2010,25 +2023,28 @@ export class GameEngine {
     }
 
     if (this.state.grandfather && this.state.grandfather.active) {
-      let gHearth = this.state.lightSources.find((ls) => ls.id === 'grandfather_hearth');
+      let gHearth = this.state.grandfatherLight;
       if (!gHearth) {
-        this.state.lightSources.push({
+        gHearth = {
           id: 'grandfather_hearth',
           x: this.state.grandfather.x,
           y: this.state.grandfather.y,
           radius: 240,
           color: '#EA580C',
           type: 'hearth',
-        });
+        };
+        this.state.grandfatherLight = gHearth;
+        this.state.lightSources.push(gHearth);
       } else {
         gHearth.x = this.state.grandfather.x;
         gHearth.y = this.state.grandfather.y;
       }
-    } else {
-      const gHearthIdx = this.state.lightSources.findIndex((ls) => ls.id === 'grandfather_hearth');
+    } else if (this.state.grandfatherLight) {
+      const gHearthIdx = this.state.lightSources.indexOf(this.state.grandfatherLight);
       if (gHearthIdx !== -1) {
         this.state.lightSources.splice(gHearthIdx, 1);
       }
+      this.state.grandfatherLight = null;
     }
 
     this.state.lightSources = updateLightSources(this.state.lightSources, dt);
@@ -2598,21 +2614,28 @@ export class GameEngine {
           e.update(dt, player);
         }
 
-        if (e.id === 'bludicka' && !e.dead && !e.isDefeated) {
-          const bId = `bludicka_${e.id}_${i}`;
-          let bLight = this.state.lightSources.find((ls) => ls.id === bId);
-          if (!bLight) {
-            this.state.lightSources.push({
-              id: bId,
-              x: e.x,
-              y: e.y,
-              radius: 175,
-              color: '#67E8F9',
-              type: 'bludicka',
-            });
-          } else {
-            bLight.x = e.x;
-            bLight.y = e.y;
+        if (e.id === 'bludicka') {
+          if (!e.dead && !e.isDefeated) {
+            if (!e.bludickaLight) {
+              e.bludickaLight = {
+                id: e.bludickaLightId || (e.bludickaLightId = `bludicka_${e.id}_${i}`),
+                x: e.x,
+                y: e.y,
+                radius: 175,
+                color: '#67E8F9',
+                type: 'bludicka',
+              };
+              this.state.lightSources.push(e.bludickaLight);
+            } else {
+              e.bludickaLight.x = e.x;
+              e.bludickaLight.y = e.y;
+            }
+          } else if (e.bludickaLight) {
+            const idx = this.state.lightSources.indexOf(e.bludickaLight);
+            if (idx !== -1) {
+              this.state.lightSources.splice(idx, 1);
+            }
+            e.bludickaLight = null;
           }
         }
 
