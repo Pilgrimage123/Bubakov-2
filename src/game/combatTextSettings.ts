@@ -4,7 +4,7 @@
  * Dle ADR 0016.
  */
 
-export type CombatTextCategory =
+export type CanonicalCombatTextCategory =
   | 'enemyDamage'
   | 'hunterDamage'
   | 'healing'
@@ -18,8 +18,14 @@ export type CombatTextCategory =
   | 'directorWarningBanners'
   | 'visualTelegraphCues';
 
+export type CombatTextCategory =
+  | CanonicalCombatTextCategory
+  | 'playerDamage'
+  | 'criticalHits'
+  | 'statusEffects';
+
 export interface CombatTextCategoryMeta {
-  key: CombatTextCategory;
+  key: CanonicalCombatTextCategory;
   label: string;
   description: string;
   icon: string;
@@ -100,7 +106,7 @@ export const COMBAT_TEXT_CATEGORIES: CombatTextCategoryMeta[] = [
   },
 ];
 
-export type CombatTextSettings = Record<CombatTextCategory, boolean>;
+export type CombatTextSettings = Record<CanonicalCombatTextCategory, boolean>;
 
 export const DEFAULT_COMBAT_TEXT_SETTINGS: CombatTextSettings = {
   enemyDamage: true,
@@ -184,12 +190,20 @@ export function getSettingsForPreset(preset: 'full' | 'tactical' | 'performance'
   }
 }
 
+export function resolveCombatTextCategory(category: CombatTextCategory): CanonicalCombatTextCategory {
+  if (category === 'playerDamage') return 'hunterDamage';
+  if (category === 'criticalHits') return 'enemyDamage';
+  if (category === 'statusEffects') return 'combatStates';
+  return category;
+}
+
 export function isCombatTextCategoryEnabled(
   category: CombatTextCategory,
   customSettings?: CombatTextSettings
 ): boolean {
   const settings = customSettings || activeCombatTextSettings;
-  return !!settings[category];
+  const canonical = resolveCombatTextCategory(category);
+  return !!settings[canonical];
 }
 
 /**

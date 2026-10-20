@@ -108,60 +108,8 @@ export function boundArrayInPlace<T>(items: T[], maxCount: number): void {
   }
 }
 
-export class DamageText {
-  x: number;
-  y: number;
-  text: string;
-  color: string;
-  life: number;
-  size: number;
-  vy: number;
-  category: CombatTextCategory;
-
-  constructor(
-    x: number,
-    y: number,
-    text: string,
-    color = '#FFFFFF',
-    big = false,
-    category?: CombatTextCategory
-  ) {
-    this.x = x + (Math.random() - 0.5) * 20;
-    this.y = y + (Math.random() - 0.5) * 20;
-    this.text = text;
-    this.color = color;
-    this.life = 1.0;
-    this.size = big ? 26 : 18;
-    this.vy = -45;
-    this.category = category || inferCombatTextCategory(text);
-  }
-
-  update(dt: number): void {
-    this.y += this.vy * dt;
-    this.life -= dt;
-  }
-
-  addAmount(amount: number): void {
-    const num = parseInt(this.text, 10);
-    if (!isNaN(num)) {
-      const suffix = this.text.replace(/^[0-9]+/, '');
-      this.text = `${num + amount}${suffix}`;
-      this.life = Math.min(1.0, this.life + 0.25);
-    }
-  }
-
-  draw(ctx: CanvasRenderingContext2D): void {
-    ctx.globalAlpha = Math.max(0, this.life);
-    ctx.fillStyle = this.color;
-    ctx.font = `900 ${this.size}px Eczar, serif`;
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#2D1609';
-    ctx.lineJoin = 'round';
-    ctx.strokeText(this.text, this.x, this.y);
-    ctx.fillText(this.text, this.x, this.y);
-    ctx.globalAlpha = 1;
-  }
-}
+import { DamageText, addCombatText } from './combatTextManager';
+export { DamageText };
 
 export class SmokePuff {
   x: number;
@@ -353,13 +301,13 @@ export class GameEngine {
     text: string,
     color = '#FFFFFF',
     big = false,
-    category?: CombatTextCategory
+    category?: CombatTextCategory,
+    targetEnemy?: any
   ): DamageText | null {
-    const cat = category || inferCombatTextCategory(text);
-    if (!isCombatTextCategoryEnabled(cat)) return null;
-    const dt = new DamageText(x, y, text, color, big, cat);
-    this.state.texts.push(dt);
-    this.callbacks?.onDamageText?.(dt);
+    const dt = addCombatText(this.state, x, y, text, color, big, category, targetEnemy);
+    if (dt) {
+      this.callbacks?.onDamageText?.(dt);
+    }
     return dt;
   }
 
@@ -667,7 +615,7 @@ export class GameEngine {
         });
 
         self.callbacks?.onSound?.('heavyHit');
-        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true));
+        self.addDamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true, 'combatStates');
       },
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
@@ -675,7 +623,7 @@ export class GameEngine {
         if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true));
+          self.addDamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates');
           return;
         }
         let totalDamageReduction = this.damageReduction;
@@ -703,9 +651,9 @@ export class GameEngine {
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
 
         if (absorbed > 0 && remainingDmg <= 0) {
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true));
+          self.addDamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true, 'combatStates');
         } else {
-          self.state.texts.push(new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444'));
+          self.addDamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444', false, 'hunterDamage');
         }
 
         if (this.hp <= 0) {
@@ -785,6 +733,9 @@ export class GameEngine {
       this.livingEnemies.push(enemy);
       this.spatialHash.insert(enemy);
       this.director?.recordEnemySpawn(enemy, this.state.gameTime);
+      if (isBoss || isMiniboss || enemy.isBoss || enemy.isMiniboss) {
+        this.state.activeBoss = enemy;
+      }
     }
     return enemy;
   }
@@ -1175,7 +1126,7 @@ export class GameEngine {
         if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
           const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
           if (Math.random() < dodge) {
-            self.state.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
+            self.addDamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true, 'combatStates', this);
             return;
           }
         }
@@ -1224,12 +1175,12 @@ export class GameEngine {
         finalDamage += (self.state.meta?.forgeLevel || 0) * 2;
         if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
           finalDamage = Math.round(finalDamage * 2.2);
-          self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
+          self.addDamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true, 'criticalHits', this);
         } else if (self.state.player) {
           const critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
           if (Math.random() < critChance) {
             finalDamage = Math.round(finalDamage * 1.65);
-            self.state.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
+            self.addDamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true, 'criticalHits', this);
           }
         }
         this.hp = Math.max(0, this.hp - finalDamage);
@@ -1255,7 +1206,7 @@ export class GameEngine {
             } else {
               self.state.player.hp = Math.max(0, self.state.player.hp - reflect);
             }
-            self.state.texts.push(new DamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflect} ⚡`, '#FDE047', true));
+            self.addDamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflect} ⚡`, '#FDE047', true, 'combatStates', this);
           }
         }
 
@@ -1578,13 +1529,13 @@ export class GameEngine {
       maxLife: 6.5,
       slowRatio,
     });
-    this.state.texts.push(new DamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false));
+    this.addDamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false, 'combatStates');
   }
 
   public triggerGoatBell(player: any): void {
     const rad = player.goatBellRadius || 180;
     this.callbacks?.onSound?.('bell');
-    this.state.texts.push(new DamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true));
+    this.addDamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true, 'combatStates');
 
     // Interrupt nearby enemy windups
     const nearby = this.spatialHash.queryCircle(player.x, player.y, rad);
@@ -1596,7 +1547,7 @@ export class GameEngine {
       foe.windupTimer = 0;
       foe.strikeTimer = 0;
       if (foe.aiState === 'windup') foe.aiState = 'idle';
-      this.state.texts.push(new DamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false));
+      this.addDamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false, 'combatStates', foe);
     }
 
     // Pull drops in radius towards player
@@ -1623,20 +1574,20 @@ export class GameEngine {
         if (w.cd > 0) w.cd /= 1.35;
       }
     }
-    this.state.texts.push(new DamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-    this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
+    addCombatText(this.state, player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true, 'combatShouts');
+    addCombatText(this.state, player.x, player.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true, 'combatStates');
 
-    // Drop coins from up to 8 closest alive enemies
-    const sortedEnemies = (this.livingEnemies || this.state.enemies || [])
-      .filter((e: any) => !e.isDefeated && !e.dead)
-      .map((e: any) => ({ enemy: e, distSq: (e.x - player.x) ** 2 + (e.y - player.y) ** 2 }))
-      .sort((a, b) => a.distSq - b.distSq)
-      .slice(0, 8);
-
-    for (let i = 0; i < sortedEnemies.length; i++) {
-      const foe = sortedEnemies[i].enemy;
-      this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75 });
-      this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
+    // Query closest alive enemies via SpatialHash without O(N) array allocation/sort
+    const nearbyFoes = this.spatialHash.queryCircle(player.x, player.y, 600);
+    let targetCount = 0;
+    for (let i = 0; i < nearbyFoes.length && targetCount < 8; i++) {
+      const foe = nearbyFoes[i];
+      if (foe.isDefeated || foe.dead) continue;
+      targetCount++;
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 55 + Math.random() * 45;
+      this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: spd, angle: ang });
+      addCombatText(this.state, foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false, 'lootResources', foe);
       if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 5) {
         for (let k = 0; k < 3; k++) {
           const ang = Math.random() * Math.PI * 2;
@@ -1792,7 +1743,7 @@ export class GameEngine {
           );
         }
       }
-      this.state.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', '#F59E0B', true));
+      this.addDamageText(impact.x, impact.y - 20, 'BUM!', '#F59E0B', true, 'combatStates');
       return impact;
     }
 
@@ -1829,7 +1780,7 @@ export class GameEngine {
             stunDuration ? { stunDuration } : undefined
           );
           if (isUnholyEnemy(e)) {
-            this.state.texts.push(new DamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', '#F59E0B', true));
+            this.addDamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', '#F59E0B', true, 'criticalHits', e);
           }
         }
       }
@@ -2107,6 +2058,232 @@ export class GameEngine {
       player.x += (moveVx + pushX) * dt;
       player.y += (moveVy + pushY) * dt;
 
+      // Step enemies and rebuild spatial index before aura checks and weapons
+      if (this.state.timeStopTimer > 0) {
+        this.state.timeStopTimer = Math.max(0, this.state.timeStopTimer - dt);
+      }
+      if (this.state.ponocnyFrostTimer > 0) {
+        this.state.ponocnyFrostTimer = Math.max(0, this.state.ponocnyFrostTimer - dt);
+      }
+      if (this.state.masopustShockwaveTimer > 0) {
+        this.state.masopustShockwaveTimer = Math.max(0, this.state.masopustShockwaveTimer - dt);
+      }
+      if (this.state.cameraTremorTimer > 0) {
+        this.state.cameraTremorTimer = Math.max(0, this.state.cameraTremorTimer - dt);
+      }
+      if (player.intangibleTimer > 0) {
+        player.intangibleTimer = Math.max(0, player.intangibleTimer - dt);
+      }
+      if (player.guaranteedCritTimer > 0) {
+        player.guaranteedCritTimer = Math.max(0, player.guaranteedCritTimer - dt);
+      }
+      if (this.state.screenFlashTimer > 0) {
+        this.state.screenFlashTimer = Math.max(0, this.state.screenFlashTimer - dt);
+      }
+
+      if (this.state.timeStopTimer <= 0) {
+        for (let i = 0; i < this.state.enemies.length; i++) {
+          const e = this.state.enemies[i];
+          if (e.brawlTimer && e.brawlTimer > 0) {
+            e.brawlTimer = Math.max(0, e.brawlTimer - dt);
+            let nearestFoe: any = null;
+            let nearestDistSq = 250 * 250;
+            const brawlNearby = this.spatialHash.queryCircle(e.x, e.y, 250);
+            for (let k = 0; k < brawlNearby.length; k++) {
+              const other = brawlNearby[k];
+              if (other === e || other.dead || other.isDefeated) continue;
+              const dSq = (other.x - e.x) ** 2 + (other.y - e.y) ** 2;
+              if (dSq < nearestDistSq) {
+                nearestDistSq = dSq;
+                nearestFoe = other;
+              }
+            }
+            if (nearestFoe) {
+              const nearestDist = Math.sqrt(nearestDistSq);
+              const bAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
+              e.x += Math.cos(bAng) * (e.speed || 100) * 1.15 * dt;
+              e.y += Math.sin(bAng) * (e.speed || 100) * 1.15 * dt;
+              if (nearestDist < e.radius + nearestFoe.radius + 18) {
+                e.brawlAttackCooldown = (e.brawlAttackCooldown || 0) - dt;
+                if (e.brawlAttackCooldown <= 0) {
+                  e.brawlAttackCooldown = 0.55;
+                  const bDmg = Math.max(8, Math.round((e.damage || 15) * (0.8 + Math.random() * 0.5)));
+                  nearestFoe.takeDamage(bDmg, 'physical', Math.cos(bAng) * 200, Math.sin(bAng) * 200);
+                  if (nearestFoe.hp <= 0) {
+                    nearestFoe.killedByFriendlyFire = true;
+                  }
+                }
+              }
+              continue;
+            }
+          }
+          if (e.category === 'shadows' && !e.dead && !e.isDefeated) {
+            const isLit = isPositionIlluminated(
+              e.x,
+              e.y,
+              this.state.lightSources,
+              dayPhase.id,
+              this.state.shadowZones,
+              this.state.occluders
+            );
+            evaluateShadowDefense(e, isLit, dt, {
+              onBreak: (shadowEnemy) => {
+                if (this.state.particles.length < MAX_PARTICLES - 8) {
+                  for (let k = 0; k < 6; k++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const spd = 40 + Math.random() * 50;
+                    this.state.particles.push({
+                      x: shadowEnemy.x,
+                      y: shadowEnemy.y - shadowEnemy.radius * 0.4,
+                      vx: Math.cos(ang) * spd,
+                      vy: Math.sin(ang) * spd,
+                      life: 0.35,
+                      color: '#1E1B18',
+                      size: 3.5,
+                    });
+                  }
+                }
+              },
+            });
+          }
+
+          if (typeof e.update === 'function') {
+            e.update(dt, player);
+          }
+
+          if (e.id === 'bludicka') {
+            if (!e.dead && !e.isDefeated) {
+              if (!e.bludickaLight) {
+                e.bludickaLight = {
+                  id: e.bludickaLightId || (e.bludickaLightId = `bludicka_${e.id}_${i}`),
+                  x: e.x,
+                  y: e.y,
+                  radius: 175,
+                  color: '#67E8F9',
+                  type: 'bludicka',
+                };
+                this.state.lightSources.push(e.bludickaLight);
+              } else {
+                e.bludickaLight.x = e.x;
+                e.bludickaLight.y = e.y;
+              }
+            } else if (e.bludickaLight) {
+              const idx = this.state.lightSources.indexOf(e.bludickaLight);
+              if (idx !== -1) {
+                this.state.lightSources.splice(idx, 1);
+              }
+              e.bludickaLight = null;
+            }
+          }
+
+          if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || (e.stunTimer || 0) > 0 || !player || player.hp <= 0) {
+            if (typeof e.interruptAttack === 'function') {
+              e.interruptAttack();
+            } else {
+              e.isAttacking = false;
+              e.windupTimer = 0;
+            }
+            e.inContact = false;
+            continue;
+          }
+
+          if (e.recoveryTimer && e.recoveryTimer > 0) {
+            e.recoveryTimer = Math.max(0, e.recoveryTimer - dt);
+          }
+
+          const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+          const attackRange = typeof e.attackRange === 'number' ? e.attackRange : e.radius + 25;
+          const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
+          const attackDelay =
+            typeof e.attackDelay === 'number'
+              ? e.attackDelay
+              : typeof e.attackInterval === 'number'
+              ? e.attackInterval
+              : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
+          const recoveryDuration = CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
+
+          if (!e.isAttacking) {
+            if ((!e.recoveryTimer || e.recoveryTimer <= 0) && distToPlayer <= attackRange) {
+              e.isAttacking = true;
+              e.windupTimer = 0;
+              e.attackAngle = Math.atan2(player.y - e.y, player.x - e.x);
+              e.inContact = true;
+            } else {
+              e.inContact = distToPlayer <= attackRange;
+            }
+          }
+
+          // Uleželý syreček v kapse:
+          const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
+          if (
+            (player.syrecekStacks || 0) > 0 &&
+            e.isAttacking &&
+            distToPlayer <= closeReach &&
+            (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
+          ) {
+            e.vycerpanyTimer = 4.0;
+            if (typeof e.interruptAttack === 'function') {
+              e.interruptAttack();
+            } else {
+              e.isAttacking = false;
+              e.windupTimer = 0;
+            }
+            this.addDamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true, 'combatStates', e);
+            if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 6) {
+              for (let pIdx = 0; pIdx < 4; pIdx++) {
+                const ang = Math.random() * Math.PI * 2;
+                this.state.particles.push({
+                  x: e.x + (Math.random() - 0.5) * 12,
+                  y: e.y + (Math.random() - 0.5) * 12,
+                  vx: Math.cos(ang) * 35,
+                  vy: Math.sin(ang) * 35 - 15,
+                  life: 0.45,
+                  color: pIdx % 2 === 0 ? '#BEF264' : '#EAB308',
+                  size: 3.5,
+                });
+              }
+            }
+          }
+
+          if (e.isAttacking) {
+            const attackCadenceMult = ((e.vycerpanyTimer || 0) > 0 || e.prefix === 'vycerpany') ? 0.5 : 1.0;
+            e.windupTimer = (e.windupTimer || 0) + dt * attackCadenceMult;
+            if (e.windupTimer >= attackDelay) {
+              const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+              let angleDiff = Math.abs(angleToPlayer - (e.attackAngle ?? angleToPlayer));
+              if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+              const inFrontCone = angleDiff <= Math.PI * 0.55;
+
+              if (distToPlayer <= attackRange && inFrontCone) {
+                const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
+                player.takeDamage(e.damage * mult, 'physical', e, true);
+              }
+              e.windupTimer = 0;
+              e.isAttacking = false;
+              e.recoveryTimer = recoveryDuration;
+              e.inContact = distToPlayer <= attackRange;
+            }
+          }
+        }
+        compactInPlace(this.state.enemies, (e) => !e.dead);
+      }
+
+      // Rebuild spatial hash with active living enemies and track activeBoss
+      this.livingEnemies.length = 0;
+      let foundBossFoe: any = null;
+      for (let i = 0; i < this.state.enemies.length; i++) {
+        const e = this.state.enemies[i];
+        if (!e.isDefeated && !e.dead) {
+          this.livingEnemies.push(e);
+          if (!foundBossFoe && (e.isBoss || e.isMiniboss || e.category === 'bosses')) {
+            foundBossFoe = e;
+          }
+        }
+      }
+      this.state.activeBoss = foundBossFoe || null;
+      this.spatialHash.rebuild(this.livingEnemies);
+      evaluateBludickaAura(this.livingEnemies, this.state.lightSources, player);
+
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
       if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
@@ -2146,7 +2323,7 @@ export class GameEngine {
                 active: true,
               };
               this.callbacks?.onSound?.('bell');
-              this.state.texts.push(new DamageText(player.x, player.y - 40, 'K + M + B 🖍️', '#FDE047', true));
+              this.addDamageText(player.x, player.y - 40, 'K + M + B 🖍️', '#FDE047', true, 'combatStates');
             } else {
               this.state.holyCircle.x = player.x;
               this.state.holyCircle.y = player.y;
@@ -2193,7 +2370,7 @@ export class GameEngine {
               const holyDmgMult = getHolyDamageMultiplier(foe);
               const dmg = 24 * holyDmgMult * (player.damageMultiplier || 1);
               foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
-              this.state.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
+              this.addDamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false, 'combatStates', foe);
             }
           }
         }
@@ -2324,7 +2501,7 @@ export class GameEngine {
           const hungerResist = Math.max(0, baseHunger * (1 - red));
           const resist = p.type === 'food' ? hungerResist : 0;
           if (resist >= 0.95) {
-            this.state.texts.push(new DamageText(e.x, e.y - 20, 'IMUNNÍ', '#0F172A'));
+            this.addDamageText(e.x, e.y - 20, 'IMUNNÍ', '#0F172A', false, 'combatStates', e);
           } else {
             let dmg = p.dmg * (1 - resist);
             if (p.type === 'food') {
@@ -2352,7 +2529,7 @@ export class GameEngine {
               e.windupTimer = 0;
               e.strikeTimer = 0;
               if (e.aiState === 'windup') e.aiState = 'idle';
-              this.state.texts.push(new DamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false));
+              this.addDamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false, 'combatStates', e);
             }
             if (p.panicDuration && !e.isBoss) {
               e.panicked = true;
@@ -2363,7 +2540,7 @@ export class GameEngine {
             }
             if (p.coinStealChance && Math.random() < p.coinStealChance) {
               this.spawnDrop('coin', e.x, e.y, { value: 1, speed: 60 });
-              this.state.texts.push(new DamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false));
+              this.addDamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false, 'lootResources', e);
             }
             if (p.bounces && p.bounces > 0) {
               p.bounces--;
@@ -2471,7 +2648,7 @@ export class GameEngine {
                     }
                   }
                 }
-                this.state.texts.push(new DamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true));
+                this.addDamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true, 'combatStates', e);
               }
 
               if (s.soaked || milestones.includes('whip_wet_strap_5')) {
@@ -2495,227 +2672,6 @@ export class GameEngine {
     compactInPlace(this.state.slashes, (s) => !s.dead, (s) => {
       if (this.slashPool.length < 50) this.slashPool.push(s);
     });
-
-    // Step enemies
-    if (this.state.timeStopTimer > 0) {
-      this.state.timeStopTimer = Math.max(0, this.state.timeStopTimer - dt);
-    }
-    if (this.state.ponocnyFrostTimer > 0) {
-      this.state.ponocnyFrostTimer = Math.max(0, this.state.ponocnyFrostTimer - dt);
-    }
-    if (this.state.masopustShockwaveTimer > 0) {
-      this.state.masopustShockwaveTimer = Math.max(0, this.state.masopustShockwaveTimer - dt);
-    }
-    if (this.state.cameraTremorTimer > 0) {
-      this.state.cameraTremorTimer = Math.max(0, this.state.cameraTremorTimer - dt);
-    }
-    if (player.intangibleTimer > 0) {
-      player.intangibleTimer = Math.max(0, player.intangibleTimer - dt);
-    }
-    if (player.guaranteedCritTimer > 0) {
-      player.guaranteedCritTimer = Math.max(0, player.guaranteedCritTimer - dt);
-    }
-    if (this.state.screenFlashTimer > 0) {
-      this.state.screenFlashTimer = Math.max(0, this.state.screenFlashTimer - dt);
-    }
-
-    if (this.state.timeStopTimer <= 0) {
-      for (let i = 0; i < this.state.enemies.length; i++) {
-        const e = this.state.enemies[i];
-        if (e.brawlTimer && e.brawlTimer > 0) {
-          e.brawlTimer = Math.max(0, e.brawlTimer - dt);
-          let nearestFoe: any = null;
-          let nearestDist = 999999;
-          for (let k = 0; k < this.state.enemies.length; k++) {
-            const other = this.state.enemies[k];
-            if (other === e || other.dead || other.isDefeated) continue;
-            const d = Math.hypot(other.x - e.x, other.y - e.y);
-            if (d < nearestDist) {
-              nearestDist = d;
-              nearestFoe = other;
-            }
-          }
-          if (nearestFoe) {
-            const bAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
-            e.x += Math.cos(bAng) * (e.speed || 100) * 1.15 * dt;
-            e.y += Math.sin(bAng) * (e.speed || 100) * 1.15 * dt;
-            if (nearestDist < e.radius + nearestFoe.radius + 18) {
-              e.brawlAttackCooldown = (e.brawlAttackCooldown || 0) - dt;
-              if (e.brawlAttackCooldown <= 0) {
-                e.brawlAttackCooldown = 0.55;
-                const bDmg = Math.max(8, Math.round((e.damage || 15) * (0.8 + Math.random() * 0.5)));
-                nearestFoe.takeDamage(bDmg, 'physical', Math.cos(bAng) * 200, Math.sin(bAng) * 200);
-                if (nearestFoe.hp <= 0) {
-                  nearestFoe.killedByFriendlyFire = true;
-                }
-              }
-            }
-            continue;
-          }
-        }
-        if (e.category === 'shadows' && !e.dead && !e.isDefeated) {
-          const isLit = isPositionIlluminated(
-            e.x,
-            e.y,
-            this.state.lightSources,
-            dayPhase.id,
-            this.state.shadowZones,
-            this.state.occluders
-          );
-          evaluateShadowDefense(e, isLit, dt, {
-            onBreak: (shadowEnemy) => {
-              if (this.state.particles.length < MAX_PARTICLES - 8) {
-                for (let k = 0; k < 6; k++) {
-                  const ang = Math.random() * Math.PI * 2;
-                  const spd = 40 + Math.random() * 50;
-                  this.state.particles.push({
-                    x: shadowEnemy.x,
-                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
-                    vx: Math.cos(ang) * spd,
-                    vy: Math.sin(ang) * spd,
-                    life: 0.35,
-                    color: '#1E1B18',
-                    size: 3.5,
-                  });
-                }
-              }
-            },
-          });
-        }
-
-        if (typeof e.update === 'function') {
-          e.update(dt, player);
-        }
-
-        if (e.id === 'bludicka') {
-          if (!e.dead && !e.isDefeated) {
-            if (!e.bludickaLight) {
-              e.bludickaLight = {
-                id: e.bludickaLightId || (e.bludickaLightId = `bludicka_${e.id}_${i}`),
-                x: e.x,
-                y: e.y,
-                radius: 175,
-                color: '#67E8F9',
-                type: 'bludicka',
-              };
-              this.state.lightSources.push(e.bludickaLight);
-            } else {
-              e.bludickaLight.x = e.x;
-              e.bludickaLight.y = e.y;
-            }
-          } else if (e.bludickaLight) {
-            const idx = this.state.lightSources.indexOf(e.bludickaLight);
-            if (idx !== -1) {
-              this.state.lightSources.splice(idx, 1);
-            }
-            e.bludickaLight = null;
-          }
-        }
-
-      if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || (e.stunTimer || 0) > 0 || !player || player.hp <= 0) {
-        if (typeof e.interruptAttack === 'function') {
-          e.interruptAttack();
-        } else {
-          e.isAttacking = false;
-          e.windupTimer = 0;
-        }
-        e.inContact = false;
-        continue;
-      }
-
-      if (e.recoveryTimer && e.recoveryTimer > 0) {
-        e.recoveryTimer = Math.max(0, e.recoveryTimer - dt);
-      }
-
-      const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
-      const attackRange = typeof e.attackRange === 'number' ? e.attackRange : e.radius + 25;
-      const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
-      const attackDelay =
-        typeof e.attackDelay === 'number'
-          ? e.attackDelay
-          : typeof e.attackInterval === 'number'
-          ? e.attackInterval
-          : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
-      const recoveryDuration = CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
-
-      if (!e.isAttacking) {
-        if ((!e.recoveryTimer || e.recoveryTimer <= 0) && distToPlayer <= attackRange) {
-          e.isAttacking = true;
-          e.windupTimer = 0;
-          e.attackAngle = Math.atan2(player.y - e.y, player.x - e.x);
-          e.inContact = true;
-        } else {
-          e.inContact = distToPlayer <= attackRange;
-        }
-      }
-
-      // Uleželý syreček v kapse:
-      // Jakmile se nepřítel v těsné blízkosti lovce začne napřahovat k útoku (windupTimer),
-      // závan ze syrečku mu podlomí kolena a přepne ho na 4 sekundy do stavu Vyčerpaný (vycerpany – poloviční rychlost pohybu i útoku).
-      const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
-      if (
-        (player.syrecekStacks || 0) > 0 &&
-        e.isAttacking &&
-        distToPlayer <= closeReach &&
-        (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
-      ) {
-        e.vycerpanyTimer = 4.0;
-        if (typeof e.interruptAttack === 'function') {
-          e.interruptAttack();
-        } else {
-          e.isAttacking = false;
-          e.windupTimer = 0;
-        }
-        this.state.texts.push(new DamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true));
-        if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 6) {
-          for (let pIdx = 0; pIdx < 4; pIdx++) {
-            const ang = Math.random() * Math.PI * 2;
-            this.state.particles.push({
-              x: e.x + (Math.random() - 0.5) * 12,
-              y: e.y + (Math.random() - 0.5) * 12,
-              vx: Math.cos(ang) * 35,
-              vy: Math.sin(ang) * 35 - 15,
-              life: 0.45,
-              color: pIdx % 2 === 0 ? '#BEF264' : '#EAB308',
-              size: 3.5,
-            });
-          }
-        }
-      }
-
-      if (e.isAttacking) {
-        const attackCadenceMult = ((e.vycerpanyTimer || 0) > 0 || e.prefix === 'vycerpany') ? 0.5 : 1.0;
-        e.windupTimer = (e.windupTimer || 0) + dt * attackCadenceMult;
-        if (e.windupTimer >= attackDelay) {
-          const angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
-          let angleDiff = Math.abs(angleToPlayer - (e.attackAngle ?? angleToPlayer));
-          if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-          const inFrontCone = angleDiff <= Math.PI * 0.55;
-
-          if (distToPlayer <= attackRange && inFrontCone) {
-            const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
-            player.takeDamage(e.damage * mult, 'physical', e, true);
-          }
-          e.windupTimer = 0;
-          e.isAttacking = false;
-          e.recoveryTimer = recoveryDuration;
-          e.inContact = distToPlayer <= attackRange;
-        }
-      }
-    }
-    compactInPlace(this.state.enemies, (e) => !e.dead);
-    }
-
-    // Rebuild spatial hash with active living enemies
-    this.livingEnemies.length = 0;
-    for (let i = 0; i < this.state.enemies.length; i++) {
-      const e = this.state.enemies[i];
-      if (!e.isDefeated && !e.dead) {
-        this.livingEnemies.push(e);
-      }
-    }
-    this.spatialHash.rebuild(this.livingEnemies);
-    evaluateBludickaAura(this.livingEnemies, this.state.lightSources, player);
 
     // Step decor
     if (this.state.decor) {
@@ -2825,15 +2781,22 @@ export class GameEngine {
         }
 
         if (player && player.hp > 0) {
-          const dist = Math.hypot(d.x - player.x, d.y - player.y);
-          if (dist < player.pickupRadius) {
-            const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
+          const dx = d.x - player.x;
+          const dy = d.y - player.y;
+          const distSq = dx * dx + dy * dy;
+          const pickupRadius = player.pickupRadius || 120;
+          if (distSq < pickupRadius * pickupRadius) {
+            const dist = Math.sqrt(distSq);
+            const spd = Math.max(520, (pickupRadius - dist) * 7.5 + 380) * dt;
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            const curDist = Math.hypot(d.x - player.x, d.y - player.y);
+            const curDx = d.x - player.x;
+            const curDy = d.y - player.y;
+            const curDistSq = curDx * curDx + curDy * curDy;
+            const collectReach = player.radius + (d.radius || 12) + 14;
 
-            if (curDist < player.radius + (d.radius || 12) + 14 || dist < player.radius + (d.radius || 12) + 14) {
+            if (curDistSq < collectReach * collectReach || distSq < collectReach * collectReach) {
               d.dead = true;
               this.callbacks?.onDropPickup?.(d);
               if (d.type === 'coin') {
@@ -2880,7 +2843,7 @@ export class GameEngine {
                     player.ultCd = Math.max(0, (player.ultCd || 0) - 2.0 * cdMult);
                     const heal = 8 * player.poutoveSrdceStacks;
                     player.hp = Math.min(player.maxHp, player.hp + heal);
-                    this.state.texts.push(new DamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true));
+                    this.addDamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true, 'healing');
                     const nearbyEnemies = this.spatialHash.queryCircle(player.x, player.y, 110);
                     for (let ci = 0; ci < nearbyEnemies.length; ci++) {
                       const foe = nearbyEnemies[ci];
@@ -2938,7 +2901,7 @@ export class GameEngine {
                     }
                   }
                   this.callbacks?.onSound?.('bell');
-                  this.state.texts.push(new DamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
+                  this.addDamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true, 'criticalHits');
                 }
               } else if (d.type === 'chest') {
                 this.callbacks?.onOpenChest?.();
@@ -2955,18 +2918,14 @@ export class GameEngine {
                 applyRareItemEffect(this.state, player, d.type, {
                   onSound: (s) => this.callbacks?.onSound?.(s),
                   onDamageText: (opts) => {
-                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true);
-                    this.state.texts.push(dt);
-                    this.callbacks?.onDamageText?.(dt);
+                    this.addDamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'lootResources');
                   },
                 });
               } else if (d.type === 'arcivzacny_ananas') {
                 applyAnanasUpgrade(player, {
                   onSound: (s) => this.callbacks?.onSound?.(s),
                   onDamageText: (opts) => {
-                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
-                    this.state.texts.push(dt);
-                    this.callbacks?.onDamageText?.(dt);
+                    this.addDamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'lootResources');
                   },
                 });
               }
@@ -2984,10 +2943,6 @@ export class GameEngine {
     if (this.state.texts) {
       for (let i = 0; i < this.state.texts.length; i++) {
         this.state.texts[i].update?.(dt);
-      }
-      compactInPlace(this.state.texts, (t) => (t.life ?? 1) > 0);
-      if (this.state.texts.length > MAX_DAMAGE_TEXTS) {
-        this.state.texts.splice(0, this.state.texts.length - MAX_DAMAGE_TEXTS);
       }
     }
 

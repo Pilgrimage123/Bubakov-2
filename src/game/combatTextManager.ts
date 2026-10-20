@@ -47,15 +47,18 @@ export class DamageText {
     this.vy = -45;
     this.category = category || inferCombatTextCategory(text);
     const parsed = parseInt(text, 10);
-    if (!Number.isNaN(parsed) && String(parsed) === text) {
+    if (!Number.isNaN(parsed)) {
       this.numericVal = parsed;
     }
   }
 
   addAmount(amount: number): void {
-    if (this.numericVal !== null) {
-      this.numericVal += Math.round(amount);
-      this.text = String(this.numericVal);
+    const num = parseInt(this.text, 10);
+    if (!Number.isNaN(num)) {
+      const suffix = this.text.replace(/^[0-9]+/, '');
+      const next = num + Math.round(amount);
+      this.numericVal = next;
+      this.text = `${next}${suffix}`;
       this.life = Math.min(1.0, this.life + 0.35);
       this.vy = -35;
       this.size = Math.min(26, this.size + 1.2);
