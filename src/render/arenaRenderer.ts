@@ -57,6 +57,16 @@ export interface ArenaRenderMetrics {
 }
 
 /**
+ * Optional presentation applied after every visible entity has been drawn.
+ * It keeps world-specific ornaments out of the renderer while preserving the
+ * renderer as the owner of culling and depth ordering.
+ */
+export interface ArenaEntityPassOptions {
+  combatVfxEnabled?: boolean;
+  afterEntitiesDrawn?: (entity: any) => void;
+}
+
+/**
  * Creates a reusable metrics object to avoid Garbage Collector allocations per frame.
  */
 export function createReusableRenderMetrics(): ArenaRenderMetrics {
@@ -112,6 +122,79 @@ let drawableCount = 0;
 
 function now(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
+}
+
+/**
+ * Renders the depth-sorted dynamic entity layer using the reusable buffer.
+ * This is also an incremental migration seam for callers that still own other
+ * world passes (projectiles, hazards and overlays) outside renderArena.
+ */
+export function renderArenaEntities(
+  ctx: CanvasRenderingContext2D,
+  engine: EngineState,
+  camera: CameraViewport,
+  options?: ArenaEntityPassOptions
+): number {
+  const { viewLeft, viewTop, viewRight, viewBottom } = camera;
+  let renderedEntities = 0;
+  drawableCount = 0;
+
+  if (engine.player) {
+    preallocatedDrawables[drawableCount++] = engine.player;
+  }
+
+  if (engine.enemies && engine.enemies.length > 0) {
+    for (let i = 0; i < engine.enemies.length; i++) {
+      const enemy = engine.enemies[i];
+      if (enemy.isDefeated || enemy.dead) continue;
+      const radius = enemy.radius || 20;
+      if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom) && drawableCount < MAX_DRAWABLE_CAPACITY) {
+        preallocatedDrawables[drawableCount++] = enemy;
+      }
+    }
+  }
+
+  if (options?.combatVfxEnabled !== false && engine.smokePuffs && engine.smokePuffs.length > 0) {
+    for (let i = 0; i < engine.smokePuffs.length; i++) {
+      const puff = engine.smokePuffs[i];
+      const radius = (puff.radius || 15) * 2;
+      if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom) && drawableCount < MAX_DRAWABLE_CAPACITY) {
+        preallocatedDrawables[drawableCount++] = puff;
+      }
+    }
+  }
+
+  for (let i = 1; i < drawableCount; i++) {
+    const item = preallocatedDrawables[i];
+    let j = i - 1;
+    while (j >= 0 && preallocatedDrawables[j].y > item.y) {
+      preallocatedDrawables[j + 1] = preallocatedDrawables[j];
+      j--;
+    }
+    preallocatedDrawables[j + 1] = item;
+  }
+
+  try {
+    for (let i = 0; i < drawableCount; i++) {
+      const drawable = preallocatedDrawables[i];
+      if (drawable && typeof drawable.draw === 'function') {
+        drawable.draw(ctx);
+        renderedEntities++;
+      }
+    }
+    if (options?.afterEntitiesDrawn) {
+      for (let i = 0; i < drawableCount; i++) {
+        options.afterEntitiesDrawn(preallocatedDrawables[i]);
+      }
+    }
+  } finally {
+    for (let i = 0; i < drawableCount; i++) {
+      preallocatedDrawables[i] = null;
+    }
+    drawableCount = 0;
+  }
+
+  return renderedEntities;
 }
 
 /**
@@ -193,63 +276,7 @@ export function renderArena(
 
   // 3. DYNAMIC ENTITIES PASS (ZERO-ALLOCATION BUFFER)
   const tEntitiesStart = now();
-  drawableCount = 0;
-
-  if (engine.player) {
-    preallocatedDrawables[drawableCount++] = engine.player;
-  }
-
-  if (engine.enemies && engine.enemies.length > 0) {
-    for (let i = 0; i < engine.enemies.length; i++) {
-      const enemy = engine.enemies[i];
-      if (enemy.isDefeated || enemy.dead) continue;
-      const radius = enemy.radius || 20;
-      if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom)) {
-        if (drawableCount < MAX_DRAWABLE_CAPACITY) {
-          preallocatedDrawables[drawableCount++] = enemy;
-        }
-      }
-    }
-  }
-
-  if (opts.combatVfxEnabled && engine.smokePuffs && engine.smokePuffs.length > 0) {
-    for (let i = 0; i < engine.smokePuffs.length; i++) {
-      const puff = engine.smokePuffs[i];
-      const r = (puff.radius || 15) * 2;
-      if (isInView(puff.x, puff.y, r, viewLeft, viewTop, viewRight, viewBottom)) {
-        if (drawableCount < MAX_DRAWABLE_CAPACITY) {
-          preallocatedDrawables[drawableCount++] = puff;
-        }
-      }
-    }
-  }
-
-  // In-place stable insertion sort by Y position (avoids GC allocations of Array.prototype.sort)
-  for (let i = 1; i < drawableCount; i++) {
-    const item = preallocatedDrawables[i];
-    let j = i - 1;
-    while (j >= 0 && preallocatedDrawables[j].y > item.y) {
-      preallocatedDrawables[j + 1] = preallocatedDrawables[j];
-      j--;
-    }
-    preallocatedDrawables[j + 1] = item;
-  }
-
-  // Draw sorted entities
-  try {
-    for (let i = 0; i < drawableCount; i++) {
-      const d = preallocatedDrawables[i];
-      if (d && typeof d.draw === 'function') {
-        d.draw(ctx);
-        renderedEntities++;
-      }
-    }
-  } finally {
-    for (let i = 0; i < drawableCount; i++) {
-      preallocatedDrawables[i] = null;
-    }
-    drawableCount = 0;
-  }
+  renderedEntities = renderArenaEntities(ctx, engine, camera, { combatVfxEnabled: opts.combatVfxEnabled });
   const entitiesMs = now() - tEntitiesStart;
 
   // 4. LIGHTING PASS

@@ -14,6 +14,7 @@ import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS, ENEMY_PREFIX_DEFS } 
 import { type EngineState, type PendingMilestoneChoice, createInitialEngineState } from './engineState';
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
+import { getCachedHomingTarget } from './homing';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
 import { WEAPONS, createWeaponMasteryState, getWeaponDamage } from '../data/weapons';
@@ -2287,18 +2288,21 @@ export class GameEngine {
       const p = this.state.projectiles[i];
 
       if (p.homing && !p.isEnemy) {
-        const enemies = this.spatialHash.queryCircle(p.x, p.y, 400);
-        let nearest: any = null;
-        let nearestDistSq = Infinity;
-        for (let ei = 0; ei < enemies.length; ei++) {
-          const fe = enemies[ei];
-          if (fe.isDefeated || fe.dead || p.hitList?.includes(fe)) continue;
-          const dsq = (fe.x - p.x) ** 2 + (fe.y - p.y) ** 2;
-          if (dsq < nearestDistSq) {
-            nearestDistSq = dsq;
-            nearest = fe;
+        const nearest = getCachedHomingTarget(p, dt, () => {
+          const enemies = this.spatialHash.queryCircle(p.x, p.y, 400);
+          let candidate: any = null;
+          let nearestDistSq = Infinity;
+          for (let ei = 0; ei < enemies.length; ei++) {
+            const enemy = enemies[ei];
+            if (enemy.isDefeated || enemy.dead || p.hitList?.includes(enemy)) continue;
+            const dsq = (enemy.x - p.x) ** 2 + (enemy.y - p.y) ** 2;
+            if (dsq < nearestDistSq) {
+              nearestDistSq = dsq;
+              candidate = enemy;
+            }
           }
-        }
+          return candidate;
+        });
         if (nearest) {
           const targetAng = Math.atan2(nearest.y - p.y, nearest.x - p.x);
           const currentAng = Math.atan2(p.vy, p.vx);

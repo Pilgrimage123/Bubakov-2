@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderArena, isInView, type CameraViewport, type ArenaRenderOptions } from '../src/render/arenaRenderer';
+import { renderArena, renderArenaEntities, isInView, type CameraViewport, type ArenaRenderOptions } from '../src/render/arenaRenderer';
 import { createInitialEngineState } from '../src/game/engineState';
 import type { EngineState } from '../src/game/engineState';
 import { createMockCanvasContext } from './helpers/mockCanvas';
@@ -98,5 +98,22 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     expect(drawText).not.toHaveBeenCalled();
     expect(metrics.timings.lightingMs).toBe(0);
     expect(metrics.timings.combatTextsMs).toBe(0);
+  });
+
+  it('exposes the entity pass for incremental callers while retaining depth order and post-draw ornaments', () => {
+    const drawOrder: string[] = [];
+    const ornamentOrder: string[] = [];
+    engine.enemies = [
+      { id: 'late', x: 0, y: 80, radius: 20, draw: () => drawOrder.push('late') } as any,
+      { id: 'early', x: 0, y: -20, radius: 20, draw: () => drawOrder.push('early') } as any,
+    ];
+
+    const count = renderArenaEntities(ctx, engine, camera, {
+      afterEntitiesDrawn: (entity) => ornamentOrder.push(entity.id),
+    });
+
+    expect(count).toBe(2);
+    expect(drawOrder).toEqual(['early', 'late']);
+    expect(ornamentOrder).toEqual(['early', 'late']);
   });
 });

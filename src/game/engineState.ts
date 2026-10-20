@@ -122,6 +122,8 @@ export interface EngineState {
     floeExposure: number;
     beerPuddle: { x: number; y: number; time: number } | null;
     forestAmbushCooldown: number;
+    /** Accumulates elapsed time for 4 Hz local terrain-enemy interactions. */
+    terrainHazardTimer: number;
   };
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
@@ -240,6 +242,7 @@ export function createInitialEngineState(): EngineState {
       floeExposure: 0,
       beerPuddle: null,
       forestAmbushCooldown: 0,
+      terrainHazardTimer: 0,
     },
     holyCircle: null,
     plumPuddles: [],

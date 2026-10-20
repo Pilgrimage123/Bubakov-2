@@ -9,6 +9,9 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createInitialEngineState, type EngineState } from './game/engineState';
+import { FrameProfiler } from './game/frameProfiler';
+import { GameEngine } from './game/engine';
+import { getCachedHomingTarget } from './game/homing';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
 import {
@@ -77,6 +80,7 @@ import {
 } from './render/ladaRenderer';
 import { drawGlyphText } from './render/glyphAtlas';
 import { ChunkBitmapCache } from './render/chunkCache';
+import { renderArenaEntities } from './render/arenaRenderer';
 import {
   getPetrolejkaRadius,
   isPositionIlluminated,
@@ -1305,6 +1309,9 @@ export default function App() {
   const sextonRef = useRef<HTMLCanvasElement | null>(null);
   const grannyRef = useRef<HTMLCanvasElement | null>(null);
   const arenaChunkCacheRef = useRef<ChunkBitmapCache | null>(null);
+  // Transitional owner: App keeps presentation callbacks while GameEngine owns
+  // the same state and the spatial index used by gameplay queries.
+  const gameEngineRef = useRef<GameEngine | null>(null);
 
   // Meta progression in LocalStorage
   const [meta, setMeta] = useState<MetaProgression>(() => {
@@ -1950,6 +1957,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
   const secondarySpatialResultsRef = useRef<any[]>([]);
+  const terrainSpatialResultsRef = useRef<any[]>([]);
   const directorRef = useRef<RunDirector | null>(null);
 
   const pushTransientLight = useCallback((light: DynamicLightSource) => {
@@ -2832,6 +2840,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const maxLivingEnemies = perfProfile === 'performance' ? 45 : perfProfile === 'balanced' ? 55 : 70;
     directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff, maxLivingEnemies });
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
+    gameEngineRef.current = new GameEngine(engine);
+    enemySpatialHashRef.current = gameEngineRef.current.spatialHash;
 
     setRunStats({
       time: 0,
@@ -3468,7 +3478,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const showPerformanceOverlay = new URLSearchParams(window.location.search).has('perf');
-    let smoothedFrameMs = 16.7;
+    const frameProfiler = new FrameProfiler();
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -3478,6 +3488,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resize();
 
     const loop = (now: number) => {
+      frameProfiler.start(performance.now());
       // Prevent a background-tab stall from creating a large simulation burst.
       const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
       engineRef.current.lastTime = now;
@@ -5133,6 +5144,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               thaw.bellCooldown = Math.max(0, thaw.bellCooldown - dt);
               thaw.shrineCooldown = Math.max(0, thaw.shrineCooldown - dt);
               thaw.kegCooldown = Math.max(0, thaw.kegCooldown - dt);
+              thaw.terrainHazardTimer = (thaw.terrainHazardTimer || 0) + dt;
+              const shouldTickTerrainHazards = thaw.terrainHazardTimer >= 0.25;
+              const terrainHazardDt = shouldTickTerrainHazards ? thaw.terrainHazardTimer : 0;
+              if (shouldTickTerrainHazards) thaw.terrainHazardTimer = 0;
 
               const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
               player.arenaArmorBonus = inChurch ? 0.20 : 0;
@@ -5189,13 +5204,31 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.texts.push(new DamageText(player.x, player.y - 35, 'POZOR, SPŘEŽENÍ!', '#B45309', true));
                 }
               }
-              for (const enemy of engine.enemies) {
-                if (enemy.dead || enemy.isDefeated) continue;
-                if (isInsideMarchPoi(enemy.x, enemy.y, MARCH_THAW_POIS.mill, -35)) {
-                  enemy.takeDamage(46 * dt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35, { allowFractionalDamage: true });
+              if (shouldTickTerrainHazards) {
+                const nearMill = enemySpatialHashRef.current.queryCircleInto(
+                  MARCH_THAW_POIS.mill.x,
+                  MARCH_THAW_POIS.mill.y,
+                  MARCH_THAW_POIS.mill.radius - 35,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let i = 0; i < nearMill.length; i++) {
+                  const enemy = nearMill[i];
+                  if (!enemy.dead && !enemy.isDefeated && isInsideMarchPoi(enemy.x, enemy.y, MARCH_THAW_POIS.mill, -35)) {
+                    enemy.takeDamage(46 * terrainHazardDt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35, { allowFractionalDamage: true });
+                  }
                 }
-                if (Math.abs(enemy.y - ploughY) < 28 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 165) {
-                  enemy.takeDamage(32 * dt, 'physical', 210, 15, { allowFractionalDamage: true });
+
+                const nearPlough = enemySpatialHashRef.current.queryCircleInto(
+                  MARCH_THAW_POIS.fields.x,
+                  ploughY,
+                  170,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let i = 0; i < nearPlough.length; i++) {
+                  const enemy = nearPlough[i];
+                  if (!enemy.dead && !enemy.isDefeated && Math.abs(enemy.y - ploughY) < 28 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 165) {
+                    enemy.takeDamage(32 * terrainHazardDt, 'physical', 210, 15, { allowFractionalDamage: true });
+                  }
                 }
               }
 
@@ -5229,7 +5262,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   dec.vx = (dec.vx || 0) * Math.max(0, 1 - 2.5 * dt);
                   dec.vy = (dec.vy || 0) * Math.max(0, 1 - 2.5 * dt);
                   if (Math.hypot(dec.vx, dec.vy) > 40) {
-                    for (const enemy of engine.enemies) {
+                    const nearbyEnemies = enemySpatialHashRef.current.queryCircleInto(
+                      dec.x,
+                      dec.y,
+                      dec.radius + 80,
+                      terrainSpatialResultsRef.current,
+                    );
+                    for (let i = 0; i < nearbyEnemies.length; i++) {
+                      const enemy = nearbyEnemies[i];
                       if (!enemy.dead && !enemy.isDefeated && Math.hypot(enemy.x - dec.x, enemy.y - dec.y) < enemy.radius + dec.radius) {
                         enemy.takeDamage(24, 'physical', dec.vx * 1.5, dec.vy * 1.5);
                         dec.vx *= -0.5;
@@ -5247,10 +5287,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (thaw.beerPuddle) {
                 thaw.beerPuddle.time -= dt;
                 if (thaw.beerPuddle.time <= 0) thaw.beerPuddle = null;
-                else for (const enemy of engine.enemies) {
-                  const dx = enemy.x - thaw.beerPuddle.x; const dy = enemy.y - thaw.beerPuddle.y;
-                  if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 100 * 100) {
-                    enemy.stunTimer = Math.max(enemy.stunTimer || 0, 0.22);
+                else if (shouldTickTerrainHazards) {
+                  const nearbyEnemies = enemySpatialHashRef.current.queryCircleInto(
+                    thaw.beerPuddle.x,
+                    thaw.beerPuddle.y,
+                    100,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < nearbyEnemies.length; i++) {
+                    const enemy = nearbyEnemies[i];
+                    const dx = enemy.x - thaw.beerPuddle.x; const dy = enemy.y - thaw.beerPuddle.y;
+                    if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 100 * 100) {
+                      // Slightly overlaps the 0.25 s cadence so the puddle reads as continuous.
+                      enemy.stunTimer = Math.max(enemy.stunTimer || 0, 0.28);
+                    }
                   }
                 }
               }
@@ -5753,18 +5803,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Homing bees: vyhledání nejbližšího strašidla přes SpatialHash s přirozenou hmyzí vlnivou křivkou
             if (p.homing) {
-              const nearbyTargets = enemySpatialHashRef.current.queryCircle(p.x, p.y, 380);
-              let nearest: any = null;
-              let nearestDistSq = Infinity;
-              for (let i = 0; i < nearbyTargets.length; i++) {
-                const cand = nearbyTargets[i];
-                if (cand.isDefeated || cand.dead) continue;
-                const dSq = distanceSq(p.x, p.y, cand.x, cand.y);
-                if (dSq < nearestDistSq) {
-                  nearestDistSq = dSq;
-                  nearest = cand;
+              const nearest = getCachedHomingTarget(p, dt, () => {
+                const nearbyTargets = enemySpatialHashRef.current.queryCircle(p.x, p.y, 380);
+                let candidate: any = null;
+                let nearestDistSq = Infinity;
+                for (let i = 0; i < nearbyTargets.length; i++) {
+                  const target = nearbyTargets[i];
+                  if (target.isDefeated || target.dead) continue;
+                  const dSq = distanceSq(p.x, p.y, target.x, target.y);
+                  if (dSq < nearestDistSq) {
+                    nearestDistSq = dSq;
+                    candidate = target;
+                  }
                 }
-              }
+                return candidate;
+              });
               if (nearest) {
                 const baseAng = Math.atan2(nearest.y - p.y, nearest.x - p.x);
                 // Přirozená křivka letu hmyzu (sinusové vlnění kmitající v průběhu letu)
@@ -6553,6 +6606,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // -------------------------------------------------------------
       // RENDER
       // -------------------------------------------------------------
+      frameProfiler.mark('backdrop', performance.now());
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused' || currentGameState === 'grandfather') {
@@ -6577,6 +6631,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.fillStyle = phase.skyColor;
         }
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        frameProfiler.mark('world', performance.now());
 
         // Apply camera translate
         ctx.save();
@@ -6981,32 +7037,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Sort characters & enemies by Y for correct isometric depth
-        const drawables = engine.renderBuffer;
-        drawables.length = 0;
-        if(player) drawables.push(player);
-        for(const enemy of engine.enemies){if (isInView(enemy.x, enemy.y, enemy.radius + 40, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(enemy);}
-        if (isGameEffectEnabled('combatVfxEnabled') && engine.smokePuffs) { for (const puff of engine.smokePuffs) { if (isInView(puff.x, puff.y, puff.radius * 2, viewLeft, viewTop, viewRight, viewBottom)) drawables.push(puff); } }
-        // In-place stable insertion sort by Y (avoids GC allocations of Array.prototype.sort)
-        for (let i = 1; i < drawables.length; i++) {
-          const item = drawables[i];
-          let j = i - 1;
-          while (j >= 0 && drawables[j].y > item.y) {
-            drawables[j + 1] = drawables[j];
-            j--;
-          }
-          drawables[j + 1] = item;
-        }
-
-        for (const d of drawables) {
-          if (d && typeof d.draw === 'function') {
-            d.draw(ctx);
-          }
-        }
-
-        // Výstražný symbol nad hlavami útočících monster, hvězdičky omráčení a dudácký oblak
-        for (const d of drawables) {
-          if (!d || d === player || d.isDefeated || d.dead || !d.id) continue;
+        // The renderer owns culling and depth ordering. App provides only the
+        // presentation ornaments that are still being migrated with the world pass.
+        renderArenaEntities(ctx, engine, {
+          x: cam.x,
+          y: cam.y,
+          width: canvas.width,
+          height: canvas.height,
+          viewLeft,
+          viewTop,
+          viewRight,
+          viewBottom,
+        }, {
+          combatVfxEnabled: isGameEffectEnabled('combatVfxEnabled'),
+          afterEntitiesDrawn: (d) => {
+          if (!d || d === player || d.isDefeated || d.dead || !d.id) return;
           if (isGameEffectEnabled('warningIndicatorsEnabled') && (d.windupTimer || 0) > 0 && (d.strikeTimer || 0) <= 0) {
             drawEnemyWarningSign(ctx, d);
           }
@@ -7025,7 +7070,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (d.brawlTimer && d.brawlTimer > 0) {
             Lada.drawSvandaBrawlCloud(ctx, d.x, d.y, engine.uiTime);
           }
-        }
+          },
+        });
 
         // Draw Projectiles. Movement and collision continue while their graphics are hidden.
         if (isGameEffectEnabled('combatVfxEnabled')) for (const p of engine.projectiles) {
@@ -7368,6 +7414,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         ctx.restore();
 
+        frameProfiler.mark('lighting', performance.now());
+
         // Ladovské kvašové svícení – kompozitní vrstva světla a stínu (Storybook Illumination)
         if (isGameEffectEnabled('dynamicLightingEnabled')) {
           renderStorybookLightingComposite(
@@ -7385,6 +7433,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             true
           );
         }
+
+        frameProfiler.mark('overlays', performance.now());
 
         // Mrazivý zimní okraj z Trouby obecního ponocného
         if (isGameEffectEnabled('combatVfxEnabled') && engine.ponocnyFrostTimer > 0) {
@@ -7436,21 +7486,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Enable with ?perf or Settings toggle to inspect the live frame budget
         const isPerfVisible = showPerformanceOverlay || !!metaRef.current.showPerfOverlay;
         if (isPerfVisible) {
-          const frameMs = performance.now() - now;
-          smoothedFrameMs += (frameMs - smoothedFrameMs) * 0.08;
+          const timings = frameProfiler.smoothed;
           ctx.save();
           ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-          ctx.fillRect(12, 12, 240, 72);
+          ctx.fillRect(12, 12, 318, 126);
           ctx.strokeStyle = '#D9A036';
           ctx.lineWidth = 1.5;
-          ctx.strokeRect(12, 12, 240, 72);
+          ctx.strokeRect(12, 12, 318, 126);
           ctx.font = '700 13px monospace';
-          const currentFps = Math.round(1000 / Math.max(1, smoothedFrameMs));
+          const currentFps = Math.round(1000 / Math.max(1, timings.total));
           ctx.fillStyle = currentFps >= 50 ? '#4ADE80' : currentFps >= 30 ? '#FBBF24' : '#EF4444';
-          ctx.fillText(`${currentFps} FPS (${smoothedFrameMs.toFixed(1)} ms)${(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance' ? ' [MAX FPS]' : (metaRef.current.performanceProfile || 'balanced') === 'fidelity' ? ' [GRAFIKA]' : ' [VYVÁŽENÝ]'}`, 22, 33);
+          ctx.fillText(`${currentFps} FPS (${timings.total.toFixed(1)} ms)${(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance' ? ' [MAX FPS]' : (metaRef.current.performanceProfile || 'balanced') === 'fidelity' ? ' [GRAFIKA]' : ' [VYVÁŽENÝ]'}`, 22, 33);
           ctx.fillStyle = '#E2E8F0';
           ctx.fillText(`Nepřátelé: ${engine.enemies.length} | Střely: ${engine.projectiles.length}`, 22, 51);
           ctx.fillText(`Částice: ${engine.particles.length} | Texty: ${engine.texts.length}`, 22, 69);
+          ctx.fillText(`Sim: ${timings.simulation.toFixed(1)} | Pozadí: ${timings.backdrop.toFixed(1)} | Svět: ${timings.world.toFixed(1)} ms`, 22, 87);
+          ctx.fillText(`Světla: ${timings.lighting.toFixed(1)} | Overlaye: ${timings.overlays.toFixed(1)} ms`, 22, 105);
+          ctx.fillStyle = '#94A3B8';
+          ctx.fillText('Časy jsou klouzavý průměr dokončených snímků.', 22, 123);
           ctx.restore();
         }
 
@@ -7536,6 +7589,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.restore();
           }
         }
+
+        frameProfiler.end(performance.now());
       }
 
       animId = requestAnimationFrame(loop);
