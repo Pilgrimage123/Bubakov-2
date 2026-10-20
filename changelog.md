@@ -1,3 +1,31 @@
+## 2026-10-20 — Optimalizace simulační smyčky, bezalokační správa entit a modulární pipeline arény (ADR 0020)
+
+- **Správné pořadí simulační smyčky a dvoustupňový prostorový index (`SpatialHash`)**:
+  - Přebudování prostorového indexu (`enemySpatialHash.rebuild`) přesunuto na začátek aktualizačního kroku bezprostředně po pohybu nepřátel a před vyhodnocení zbraní a projektilů. Tím byla odstraněna kolizní latence jednoho snímku a zásahy již netestují včerejší pozice monster.
+  - Zavedena striktní hierarchie prostorových výsledků: `primarySpatialResultsRef` pro hlavní smyčky entit a projektilů a `secondarySpatialResultsRef` pro vnořené sekundární efekty (plošná zranění, blesky, pivní tácek). Zcela odstraněno přepisování sdíleného bufferu i alokace tisíců polí za sekundu.
+  - Detekce cílů při Rozbroji bubáků (`brawlTimer`) nahrazena rychlým dotazem do `SpatialHash` s porovnáním čtverce vzdálenosti namísto kvadratického $O(N^2)$ porovnávání všech monster.
+  - Nahrazeno opakované lineární vyhledávání 7 bossů v `engine.enemies` přímou O(1) referenční mapou `activeBossMap`.
+- **Bezalokační správa a slévání Bojových plovoucích textů (`addCombatText`)**:
+  - Vybudován centralizovaný správce `combatTextManager.ts` s O(1) recyklací ve fixním kruhovém bufferu (40 instancí) bez použití destruktivního `splice(0, n)`.
+  - Slévání opakovaných čísel zranění do jediného aktivního textu (`_activeCombatText` a metoda `addAmount`) u stejného nepřítele, což zásadně snižuje vizuální smog a GC tlak při salvách projektilů a aurách.
+  - Včasné potlačení vypnutých kategorií textů na samotném vstupu bez alokace objektu.
+- **Zero-allocation renderovací pipeline a eliminace záseků Garbage Collectoru**:
+  - **SmokePuffPool**: Zaveden objektový fond pro 25 instancí kouřových obláčků s dávkovým vykreslováním (redukce volání `save`/`restore` na 2 a sloučení kreslicích cest).
+  - **WordStampCache**: Třída `GlyphAtlas` rozšířena o mezipaměť předvykreslených štítků pro libovolné slovní texty a emoji (`'ŠVIH!'`, `'1/3 🥒'`, `'Ňam, ňam'`, `'PŘEJEDENÍ! 🥒'`, `'SVATÁ ZKÁZA!'`), čímž odpadá pomalá CPU vektorová rasterizace přes `strokeText`/`fillText`.
+  - **Neměnná `ChunkBitmapCache` bez zamrzání při soumraku**: Žlutý noční svit oken roubenek a záře svící Božích muk byly vyjmuty ze statických dlaždic a kreslí se dynamicky v rámci světelného průchodu. Statické bitmapy dlaždic jsou 100% neměnné po celou výpravu, což eliminuje synchronní zásek při přechodu z odpoledne do soumraku.
+  - Odstraněny React re-rendery zobrazení varovných bannerů bossů – stav `warningBannerText` a `warningBannerTimer` přesunut do `EngineState` a synchronizován do HUDu v pravidelném 150ms tiku.
+- **Modulární architektura vykreslování arény (`arenaRenderer.ts`)**:
+  - Z `src/App.tsx` bylo vyčleněno přes 1 000 řádků inline kreslicích operací do specializovaných bezstavových modulů:
+    - `src/render/renderDrops.ts` (dropy, perníčky, kořist a suroviny)
+    - `src/render/renderProjectiles.ts` (střely, ohnivé a ledové koule, blesky, paprsky)
+    - `src/render/renderParticles.ts` (drobné jiskry a částice)
+    - `src/render/renderGroundOverlays.ts` (posvěcená křída, louže, mrazové zóny, seknutí)
+    - `src/render/renderTelegraphs.ts` (nápřahy a výstražné zóny bossů)
+  - Všechny vrstvy jsou sjednoceny v hlavní funkci `renderArena(...)` se zero-allocation Y-sortem, frustum cullingem, kamerovou transformací, kvašovým světlem a povětrnostními efekty.
+- **Kánon a verifikace**:
+  - Zdokumentován architektonický záznam `docs/adr/0020-optimalizace-simulacni-smycky-a-bezalokacni-sprava-entit.md`.
+  - Doplněna sada jednotkových testů v `tests/combatTextManager.test.ts`, `tests/smokePuffPool.test.ts`, `tests/glyphAtlas.test.ts`, `tests/chunkCache.test.ts` a `tests/renderModules.test.ts` (celkem 382 testů v 32 testovacích sadách prochází bez chyb).
+
 ## 2026-10-20 — Odpoutání Dvojčete minibosse od voliče obtížnosti a reaktivní dynamická obtížnost
 
 - **Odpoutání Dvojčete minibosse od voliče Dynamické obtížnosti**:

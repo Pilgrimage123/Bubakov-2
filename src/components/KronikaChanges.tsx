@@ -9,6 +9,32 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '20. října 2026',
+    title: 'Optimalizace simulační smyčky, bezalokační správa entit a modulární pipeline arény',
+    summary: 'Kompletní revize simulační smyčky a vykreslovací architektury arény (ADR 0020). Opraveno pořadí prostorového indexu před útoky zbraní, bojové texty se slévají a recyklují v O(1) bufferu, kouřové obláčky a textové štítky s emoji šetří procesor a celá renderovací pipeline byla rozčleněna do čistých bezstavových modulů.',
+    items: [
+      '⚡ Dvoustupňový SpatialHash bez kolizní latence: Přebudování prostorového indexu probíhá ihned po pohybu monster a před útoky zbraní. Zbraně tak netestují včerejší pozice a oddělené buffery eliminují přepisování i tisíce alokací polí za sekundu.',
+      '⚔️ BrawlTimer a správa bossů v O(1): Rozbroj bubáků testuje cíle přes SpatialHash namísto kvadratického O(N²) porovnávání všech monster a bossové jsou dohledatelní v O(1) bez opakovaného lineárního procházení.',
+      '💬 Bezalokační addCombatText a slévání čísel: Čísla zranění u téhož nepřítele se plynule sčítají do jednoho textu, vypnuté kategorie textů se zahazují bez alokací a kruhový buffer o 40 prvcích recykluje instance bez zásahů garbage collectoru.',
+      '💨 SmokePuffPool a WordStampCache pro emoji: Obláčky kouře se recyklují v 25členném objektovém fondu a časté texty s emoji (ŠVIH!, 1/3 🥒, SVATÁ ZKÁZA!) se berou z předvykreslených bitmapových štítků namísto pomalého vektorového písma.',
+      '🌅 Neměnná ChunkBitmapCache bez zamrzání: Noční záře oken roubenek a svící Božích muk byla oddělena do dynamické světelné vrstvy. Dlaždice krajiny se při přechodu do soumraku nepřekreslují, což zcela odstranilo synchronní zásek.',
+      '🎨 Modulární renderArena: Vykreslování arény v App.tsx bylo zjednodušeno o více než 1 000 řádků a vyčleněno do specializovaných vrstev (renderDrops, renderProjectiles, renderParticles, renderGroundOverlays, renderTelegraphs).',
+      '🧪 Pro testery: ověřte naprosto plynulých 60 FPS při vřavě s desítkami střel, Rozbrojem bubáků a při plynulém přechodu ze dne do noci.',
+    ],
+  },
+  {
+    date: '20. října 2026',
+    title: 'Odpoutání Dvojčete minibosse od voliče obtížnosti a reaktivní dynamická obtížnost',
+    summary: 'Dvojče minibosse se nově může objevit i na běžných stupních výzvy a Režisér výpravy na něj sází jako na taktický protitah proti hordovým buildům. Záchranná panická brzda zároveň chrání lovce v kritické tísni.',
+    items: [
+      '👥 Dvojče minibosse dostupné od stupně 2.50×: Odstraněna podmínka dynamicDifficulty >= 4.5. Dvojče může zaskočit lovce na všech běžných obtížnostech kromě Poklidu za pecí (2.00×), kde zůstává trestání úspěchu vypnuto.',
+      '🏹 Taktická odpověď na hordový arzenál: Pokud lovec spoléhá na celokruhové seky, aury a průrazné střely (≥ 50 % zbraní), Režisér nasadí Dvojče přednostně za sníženou cenu 18 bodů rozpočtu.',
+      '🛡️ Záchranná panická brzda (Panic Brake): Skoková ztráta Kuráže okamžitě srazí tlak na 0,75×, odpustí body z rozpočtu a vyvolá unavené a potácející se bubáky s poloviční silou.',
+      '🎁 Truhla za odměnu a koexistence: Dvojče může koexistovat s běžnými bossy a za jeho porážku vždy získáte Malovanou truhlu.',
+      '🧪 Pro testery: zvolte obtížnost 2.50× se Šavlí a Dudy, sledujte příchod Dvojčete minibosse a ověřte záchrannou brzdu při prudkém poklesu Kuráže.',
+    ],
+  },
+  {
     date: '16. října 2026',
     title: 'Optimalizace kvašového svícení, eliminace Gaussian blurů a zrychlení herní smyčky',
     summary: 'Důkladná revize výkonu bojové arény při vysokých počtech monster a v nočních fázích. Odstraněny náročné Gaussian blury z kreseb monster a projektilů, světelný buffer rasterizuje stíny ve 4× nižším rozlišení, dropy a projektily se čerpají z mezipaměti sprite bitmap a stínoví nepřátelé mimo obrazovku již nezatěžují procesor raycasty.',
