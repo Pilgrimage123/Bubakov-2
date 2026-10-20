@@ -125,6 +125,9 @@ export interface EngineState {
   };
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
+  warningBannerText: string;
+  warningBannerTimer: number;
+  activeBoss?: any;
 }
 
 export function createInitialEngineState(): EngineState {
@@ -243,5 +246,8 @@ export function createInitialEngineState(): EngineState {
     },
     holyCircle: null,
     plumPuddles: [],
+    warningBannerText: '',
+    warningBannerTimer: 0,
+    activeBoss: null,
   };
 }

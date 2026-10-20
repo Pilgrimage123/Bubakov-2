@@ -190,3 +190,8 @@ _Avoid_: duální commitování, nesourodý vývoj, neřízený push
 Architektonická hranice v `AppModals.tsx` sdružující veškerá dialogová a nastavovací okna odděleně od herního plátna a simulační smyčky v `App.tsx`, eliminující merge konflikty při souběžné editaci.
 _Avoid_: dialogový kontejner, modal wrapper, UI bundle
 
+**Bezalokační simulační smyčka**:
+Vnitřní architektura 60FPS herního cyklu využívající objektové bazény (pooling), stabilní kruhové buffery a in-place řazení, zabraňující alokaci dočasných objektů na haldě a eliminující zasekávání Garbage Collectoru.
+_Avoid_: zero-alloc loop, GC-free loop, bezalokační běh
+
+
