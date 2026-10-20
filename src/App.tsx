@@ -76,7 +76,7 @@ import {
   drawEnemyAttackEffectsPost,
   drawPrefixAura,
 } from './render/ladaRenderer';
-import { drawGlyphText } from './render/glyphAtlas';
+import { drawGlyphText, resetGlobalGlyphAtlas } from './render/glyphAtlas';
 import { ChunkBitmapCache } from './render/chunkCache';
 import {
   renderArena,
@@ -921,6 +921,28 @@ export default function App() {
   const grannyRef = useRef<HTMLCanvasElement | null>(null);
   const arenaChunkCacheRef = useRef<ChunkBitmapCache | null>(null);
   const reusableRenderMetricsRef = useRef<ArenaRenderMetrics>(createReusableRenderMetrics());
+  const reusableCameraViewportRef = useRef<CameraViewport>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    viewLeft: 0,
+    viewTop: 0,
+    viewRight: 0,
+    viewBottom: 0,
+  });
+  const reusableRenderOptionsRef = useRef<ArenaRenderOptions>({
+    performanceProfile: 'balanced',
+    combatVfxEnabled: true,
+    combatTextsEnabled: true,
+    lightingEnabled: true,
+    chunkCullingEnabled: true,
+    warningIndicatorsEnabled: true,
+    statusIndicatorsEnabled: true,
+    weatherEnabled: true,
+    showPerfOverlay: false,
+  });
+  const reusableDirectorAdapterRef = useRef<any>(null);
 
   // Meta progression in LocalStorage
   const [meta, setMeta] = useState<MetaProgression>(() => {
@@ -1545,6 +1567,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const pendingReturnBonusRef = useRef<ReturnBonus | null>(null);
   const activeRunBonusRef = useRef<ReturnBonus | null>(null);
   const lastHunterTypeRef = useRef<CharacterType>('wanderer' as CharacterType);
+  const victoryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const unlockNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showUnlockNotice = useCallback((notice: { title: string; desc: string } | null, durationMs = 4500) => {
+    if (unlockNoticeTimeoutRef.current) {
+      clearTimeout(unlockNoticeTimeoutRef.current);
+      unlockNoticeTimeoutRef.current = null;
+    }
+    setUnlockNotice(notice);
+    if (notice && durationMs > 0) {
+      unlockNoticeTimeoutRef.current = setTimeout(() => {
+        setUnlockNotice(null);
+        unlockNoticeTimeoutRef.current = null;
+      }, durationMs);
+    }
+  }, []);
 
   useEffect(() => {
     if (gameState !== 'tally') { setReturnBonus(null); return; }
@@ -1625,6 +1663,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   // Surrender / return to tavern from pause with score tally
   const quitToTavernFromPause = () => {
     sound.coin();
+    if (arenaChunkCacheRef.current) {
+      arenaChunkCacheRef.current.dispose();
+      arenaChunkCacheRef.current = null;
+    }
+    resetGlobalGlyphAtlas();
     const timeSurvived = engineRef.current.gameTime;
     const updatedHighest = Math.max(metaRef.current.highestSurviveTime || 0, timeSurvived);
     setTallyCounters({
@@ -1678,17 +1721,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }));
 
     if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
-      setUnlockNotice({
+      showUnlockNotice({
         title: `🎉 ${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
-      });
-      setTimeout(() => setUnlockNotice(null), 6000);
+      }, 6000);
     } else if (lvlId >= 6) {
-      setUnlockNotice({
+      showUnlockNotice({
         title: `👑 VŠECHNY ÚROVNĚ DOKONČENY!`,
         desc: `Čertův mlýn, bezhlavý rytíř i drak padli! Celý Bubákov oslavuje vaše legendární hrdinství!`,
-      });
-      setTimeout(() => setUnlockNotice(null), 6000);
+      }, 6000);
     }
 
     // Remaining monsters flee
@@ -1697,8 +1738,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       m.isDefeated = true;
     });
 
-    // Schedule transition to triumphant victory tally
-    setTimeout(() => {
+    // Schedule transition to triumphant victory tally (tracked to prevent leaking across restarts)
+    if (victoryTimeoutRef.current) {
+      clearTimeout(victoryTimeoutRef.current);
+      victoryTimeoutRef.current = null;
+    }
+    victoryTimeoutRef.current = setTimeout(() => {
+      victoryTimeoutRef.current = null;
       setTallyCounters({
         kills: engineRef.current.kills,
         coins: Math.floor(engineRef.current.coins * (activeRunBonusRef.current?.kind === 'coins' ? 1 + activeRunBonusRef.current.percent * activeRunBonusRef.current.multiplier / 100 : 1)),
@@ -1889,17 +1935,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         setSelectedLevelDetail(levelProg);
         if (levelProg.isQueued) {
-          setUnlockNotice({
+          showUnlockNotice({
             title: `🔒 ${levelProg.spoiledName} je v pořadí!`,
             desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
-          });
+          }, 4500);
         } else {
-          setUnlockNotice({
+          showUnlockNotice({
             title: `🔒 ${levelProg.spoiledName} je uzamčena!`,
             desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
-          });
+          }, 4500);
         }
-        setTimeout(() => setUnlockNotice(null), 4500);
         return;
       }
 
@@ -1908,17 +1953,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         setSelectedHunterDetail(hunterProg);
         if (hunterProg.isQueued) {
-          setUnlockNotice({
+          showUnlockNotice({
             title: `🔒 ${hunterProg.spoiledName} je v pořadí!`,
             desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
-          });
+          }, 4500);
         } else {
-          setUnlockNotice({
+          showUnlockNotice({
             title: `🔒 ${hunterProg.spoiledName} je uzamčen!`,
             desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
-          });
+          }, 4500);
         }
-        setTimeout(() => setUnlockNotice(null), 4500);
         return;
       }
     }
@@ -1927,6 +1971,40 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     sound.coin();
     if (!isTestMode) lastHunterTypeRef.current = type;
 
+    // 1. Cancel any active timeouts or intervals from prior runs to prevent state corruption
+    if (victoryTimeoutRef.current) {
+      clearTimeout(victoryTimeoutRef.current);
+      victoryTimeoutRef.current = null;
+    }
+    if (unlockNoticeTimeoutRef.current) {
+      clearTimeout(unlockNoticeTimeoutRef.current);
+      unlockNoticeTimeoutRef.current = null;
+    }
+    slotTimersRef.current.forEach(clearTimeout);
+    slotTimersRef.current = [];
+    if (slotSoundIntervalRef.current) {
+      clearInterval(slotSoundIntervalRef.current);
+      slotSoundIntervalRef.current = null;
+    }
+    setSlotSpinning(false);
+    setSlotStoppedCount(0);
+
+    // 2. Reset pending milestone queue so old pending modals from previous runs never fire
+    setPendingMilestones([]);
+    pendingMilestonesRef.current = [];
+
+    // 3. Reset persistent spatial query arrays & touch state
+    primarySpatialResultsRef.current.length = 0;
+    secondarySpatialResultsRef.current.length = 0;
+    touchMoveRef.current = { x: 0, y: 0, active: false, intensity: 0 };
+    runStatsRef.current.warningBanner = '';
+
+    // 4. Dispose previous arena chunk canvases and clear cached word stamps to free GPU VRAM immediately
+    if (arenaChunkCacheRef.current) {
+      arenaChunkCacheRef.current.dispose();
+      arenaChunkCacheRef.current = null;
+    }
+    resetGlobalGlyphAtlas();
 
     const baseMaxHp =
       type === 'wanderer' ? 200 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
@@ -2547,11 +2625,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     setMenuScreen('stage');
     sound.hit();
     setIsResetModalOpen(false);
-    setUnlockNotice({
+    showUnlockNotice({
       title: '🧹 Postup byl úspěšně vymazán',
       desc: 'Veškerý postup, odemykatelní lovci, úrovně, zbraně i upgrady vesnice byly vráceny na nulu a uzamčeny.',
-    });
-    setTimeout(() => setUnlockNotice(null), 5000);
+    }, 5000);
   };
 
   // Ultimate ability trigger
@@ -3389,55 +3466,65 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (directorRef.current) {
               const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
               directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 45 : performanceProfile === 'balanced' ? 55 : 70;
-              const directorAdapter = {
-                state: engine,
-                livingEnemies: livingEnemiesRef.current,
-                activeLevelDef: curLvl,
-                currentPhase: currentPhase,
-                callbacks: {
-                  onSound: (soundName: string) => {
-                    if (soundName === 'howl') sound.horn?.();
-                    else if (soundName === 'bell') sound.bell?.();
+              let directorAdapter = reusableDirectorAdapterRef.current;
+              if (!directorAdapter) {
+                directorAdapter = {
+                  state: engine,
+                  livingEnemies: livingEnemiesRef.current,
+                  activeLevelDef: curLvl,
+                  currentPhase: currentPhase,
+                  callbacks: {
+                    onSound: (soundName: string) => {
+                      if (soundName === 'howl') sound.horn?.();
+                      else if (soundName === 'bell') sound.bell?.();
+                    },
+                    onDamageText: (opts: any) => {
+                      addCombatText(engineRef.current, opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'bossAnnouncements');
+                    },
                   },
-                  onDamageText: (opts: any) => {
-                    addCombatText(engine, opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'bossAnnouncements');
+                  spawnScatterDrop: (type: any, opts: any = {}) => {
+                    const eng = engineRef.current;
+                    const angle = opts.angle ?? Math.random() * Math.PI * 2;
+                    const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
+                    const radius = opts.radius ?? (type === 'chest' ? 25 : opts.size === 'giant' ? 19 : opts.size === 'large' ? 14 : 10);
+                    eng.drops.push({
+                      type,
+                      value: opts.value,
+                      size: opts.size,
+                      x: opts.x,
+                      y: opts.y,
+                      vx: opts.vx ?? Math.cos(angle) * burstSpeed,
+                      vy: opts.vy ?? Math.sin(angle) * burstSpeed,
+                      radius,
+                      time: Math.random() * 6.28,
+                    });
+                    if (opts.text) {
+                      addCombatText(eng, opts.x, opts.y - 45, opts.text, opts.textColor || COLORS.mustard, true, 'bossAnnouncements');
+                    }
                   },
-                },
-                spawnScatterDrop: (type: any, opts: any = {}) => {
-                  const angle = opts.angle ?? Math.random() * Math.PI * 2;
-                  const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
-                  const radius = opts.radius ?? (type === 'chest' ? 25 : opts.size === 'giant' ? 19 : opts.size === 'large' ? 14 : 10);
-                  engine.drops.push({
-                    type,
-                    value: opts.value,
-                    size: opts.size,
-                    x: opts.x,
-                    y: opts.y,
-                    vx: opts.vx ?? Math.cos(angle) * burstSpeed,
-                    vy: opts.vy ?? Math.sin(angle) * burstSpeed,
-                    radius,
-                    time: Math.random() * 6.28,
-                  });
-                  if (opts.text) {
-                    addCombatText(engine, opts.x, opts.y - 45, opts.text, opts.textColor || COLORS.mustard, true, 'bossAnnouncements');
-                  }
-                },
-                spawnMonster: (
-                  mobId: string,
-                  x: number,
-                  y: number,
-                  multiplier = 1,
-                  isBoss = false,
-                  isMiniboss = false,
-                  customBossTitle?: string,
-                  prefix?: EnemyPrefixType
-                ) => {
-                  const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
-                  engine.enemies.push(newMob);
-                  directorRef.current?.recordEnemySpawn(newMob, newTime);
-                  return newMob;
-                },
-              };
+                  spawnMonster: (
+                    mobId: string,
+                    x: number,
+                    y: number,
+                    multiplier = 1,
+                    isBoss = false,
+                    isMiniboss = false,
+                    customBossTitle?: string,
+                    prefix?: EnemyPrefixType
+                  ) => {
+                    const eng = engineRef.current;
+                    const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
+                    eng.enemies.push(newMob);
+                    directorRef.current?.recordEnemySpawn(newMob, eng.gameTime);
+                    return newMob;
+                  },
+                };
+                reusableDirectorAdapterRef.current = directorAdapter;
+              }
+              directorAdapter.state = engine;
+              directorAdapter.livingEnemies = livingEnemiesRef.current;
+              directorAdapter.activeLevelDef = curLvl;
+              directorAdapter.currentPhase = currentPhase;
               directorRef.current.step(dt, directorAdapter);
               if (directorRef.current.telegraphMessage && runStatsRef.current.warningBanner !== directorRef.current.telegraphMessage) {
                 runStatsRef.current.warningBanner = directorRef.current.telegraphMessage;
@@ -6113,6 +6200,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
+          compactInPlace(engine.texts, (txt) => txt.life > 0);
 
           // Update smoke puffs
           if (engine.smokePuffs) {
@@ -6242,31 +6330,29 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const phase = getCurrentDayPhase(engine.gameTime);
         const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : (currentSelectedLevelId !== undefined ? currentSelectedLevelId : 0)] || GAME_LEVELS[0];
 
-        const cameraViewport: CameraViewport = {
-          x: cam.x,
-          y: cam.y,
-          width: canvas.width,
-          height: canvas.height,
-          viewLeft: cam.x - 120,
-          viewTop: cam.y - 160,
-          viewRight: cam.x + canvas.width + 120,
-          viewBottom: cam.y + canvas.height + 160,
-        };
+        const cameraViewport = reusableCameraViewportRef.current;
+        cameraViewport.x = cam.x;
+        cameraViewport.y = cam.y;
+        cameraViewport.width = canvas.width;
+        cameraViewport.height = canvas.height;
+        cameraViewport.viewLeft = cam.x - 120;
+        cameraViewport.viewTop = cam.y - 160;
+        cameraViewport.viewRight = cam.x + canvas.width + 120;
+        cameraViewport.viewBottom = cam.y + canvas.height + 160;
 
-        const renderOptions: ArenaRenderOptions = {
-          performanceProfile: metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced'),
-          combatVfxEnabled: isGameEffectEnabled('combatVfxEnabled'),
-          combatTextsEnabled: isGameEffectEnabled('effectsEnabled'),
-          lightingEnabled: isGameEffectEnabled('dynamicLightingEnabled'),
-          chunkCullingEnabled: true,
-          warningIndicatorsEnabled: isGameEffectEnabled('warningIndicatorsEnabled'),
-          statusIndicatorsEnabled: isGameEffectEnabled('statusIndicatorsEnabled'),
-          weatherEnabled: true,
-          showPerfOverlay: showPerformanceOverlay || !!metaRef.current.showPerfOverlay,
-          chunkCache: arenaChunkCacheRef.current || undefined,
-          curLvl,
-          dayPhase: phase,
-        };
+        const renderOptions = reusableRenderOptionsRef.current;
+        renderOptions.performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+        renderOptions.combatVfxEnabled = isGameEffectEnabled('combatVfxEnabled');
+        renderOptions.combatTextsEnabled = isGameEffectEnabled('effectsEnabled');
+        renderOptions.lightingEnabled = isGameEffectEnabled('dynamicLightingEnabled');
+        renderOptions.chunkCullingEnabled = true;
+        renderOptions.warningIndicatorsEnabled = isGameEffectEnabled('warningIndicatorsEnabled');
+        renderOptions.statusIndicatorsEnabled = isGameEffectEnabled('statusIndicatorsEnabled');
+        renderOptions.weatherEnabled = true;
+        renderOptions.showPerfOverlay = showPerformanceOverlay || !!metaRef.current.showPerfOverlay;
+        renderOptions.chunkCache = arenaChunkCacheRef.current || undefined;
+        renderOptions.curLvl = curLvl;
+        renderOptions.dayPhase = phase;
 
         renderArena(ctx, engine, cameraViewport, renderOptions, reusableRenderMetricsRef.current);
       }
@@ -8786,11 +8872,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.victory();
             sound.cheer();
             addCombatText(engineRef.current, this.x, this.y - 75, `🎉 ${announceName.toUpperCase()} ODEMČEN!`, COLORS.mustard, true, 'unlocksMilestones');
-            setUnlockNotice({
+            showUnlockNotice({
               title: `🎉 Odemčen nový lovec: ${announceName}!`,
               desc: `Nyní si ho můžete vybrat v hlavní nabídce pro novou výpravu.`,
-            });
-            setTimeout(() => setUnlockNotice(null), 5000);
+            }, 5000);
           }
 
           // 2. Sequential Weapon Progression: only active weapon collects kills!
@@ -8827,11 +8912,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.victory();
             sound.cheer();
             addCombatText(engineRef.current, this.x, this.y - 85, `🎉 ZBRAŇ: ${announceWeaponName.toUpperCase()}`, COLORS.mustard, true, 'unlocksMilestones');
-            setUnlockNotice({
+            showUnlockNotice({
               title: `🎉 Odemčena nová zbraň: ${announceWeaponName}!`,
               desc: 'Tato zbraň se trvale přidala do výběru vylepšení při postupu na novou úroveň!',
-            });
-            setTimeout(() => setUnlockNotice(null), 5000);
+            }, 5000);
           }
 
           // 3. Sequential Level Progression: track kills towards revealing / unlocking the next level!
@@ -8868,11 +8952,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.victory();
             sound.cheer();
             addCombatText(engineRef.current, this.x, this.y - 95, `🎉 ${announceLevelName.toUpperCase()} ODEMČENA!`, COLORS.mustard, true, 'unlocksMilestones');
-            setUnlockNotice({
+            showUnlockNotice({
               title: `🎉 Odemčena nová výprava: ${announceLevelName}!`,
               desc: 'Tato úroveň je nyní otevřena v hlavní nabídce pro novou výpravu!',
-            });
-            setTimeout(() => setUnlockNotice(null), 5500);
+            }, 5500);
           }
 
           saveMeta(nextMeta);
@@ -9536,17 +9619,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.hit();
             setSelectedHunterDetail(prog);
             if (prog.isQueued) {
-              setUnlockNotice({
+              showUnlockNotice({
                 title: `🔒 ${prog.spoiledName} je v pořadí!`,
                 desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prog.requiredHunterName}).`,
-              });
+              }, 4500);
             } else {
-              setUnlockNotice({
+              showUnlockNotice({
                 title: `🔒 ${prog.spoiledName} je uzamčen!`,
                 desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno.`,
-              });
+              }, 4500);
             }
-            setTimeout(() => setUnlockNotice(null), 4500);
           }
         }}
         title={isUnlocked ? `Zvolit lovce: ${HUNTER_UNLOCKS[prog.id].realName}` : 'Klikněte pro podrobnosti výzvy'}
@@ -9890,17 +9972,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                           sound.hit();
                           setSelectedLevelDetail(prog);
                           if (prog.isQueued) {
-                            setUnlockNotice({
+                            showUnlockNotice({
                               title: `🔒 ${prog.spoiledName} je v pořadí!`,
                               desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${prog.requiredLevelName}).`,
                             });
                           } else {
-                            setUnlockNotice({
+                            showUnlockNotice({
                               title: `🔒 ${prog.spoiledName} (${prog.percent} %)`,
                               desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno. Klikněte pro podrobnosti výzvy!`,
                             });
                           }
-                          setTimeout(() => setUnlockNotice(null), 4500);
                         }
                       }}
                       title={isUnlocked ? (isSelected ? `Zvoleno: ${lvl.name} (klikněte pro výběr lovce)` : `Zvolit výpravu: ${lvl.name}`) : 'Klikněte pro podrobnosti výzvy a milníků'}

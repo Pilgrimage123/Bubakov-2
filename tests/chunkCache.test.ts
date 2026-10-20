@@ -130,4 +130,56 @@ describe('Chunk Bitmap Cache (Ticket #29)', () => {
     expect(changedDay).toBe(false);
     expect(drawDecor).toHaveBeenCalledTimes(1);
   });
+
+  it('dispose() immediately sets all chunk canvas dimensions to 0 and clears cache', () => {
+    const decorList = [
+      { x: 100, y: 100, type: 'tree', scale: 1, draw: vi.fn() } as any,
+      { x: 800, y: 800, type: 'tree', scale: 1, draw: vi.fn() } as any,
+    ];
+
+    const cache = new ChunkBitmapCache({ chunkSize: 512 });
+    cache.build(decorList, 'winter', 'meadow', false);
+    expect(cache.getChunkCount()).toBe(2);
+
+    // Grab chunk canvas references before disposal
+    const chunkCanvases: any[] = [];
+    (cache as any).chunks.forEach((tile: any) => {
+      chunkCanvases.push(tile.canvas);
+      expect(tile.canvas.width).toBe(512);
+      expect(tile.canvas.height).toBe(512);
+    });
+
+    cache.dispose();
+    expect(cache.getChunkCount()).toBe(0);
+    expect(cache.getDynamicDecor()).toHaveLength(0);
+
+    // All previous canvases must have dimensions set to 0 to free GPU memory
+    chunkCanvases.forEach((canvas) => {
+      expect(canvas.width).toBe(0);
+      expect(canvas.height).toBe(0);
+    });
+  });
+
+  it('build() disposes existing chunk canvases before generating new ones', () => {
+    const decorList1 = [{ x: 100, y: 100, type: 'tree', scale: 1, draw: vi.fn() } as any];
+    const decorList2 = [{ x: 200, y: 200, type: 'tree', scale: 1, draw: vi.fn() } as any];
+
+    const cache = new ChunkBitmapCache({ chunkSize: 512 });
+    cache.build(decorList1, 'winter', 'meadow', false);
+
+    const oldCanvases: any[] = [];
+    (cache as any).chunks.forEach((tile: any) => {
+      oldCanvases.push(tile.canvas);
+    });
+
+    cache.build(decorList2, 'winter', 'meadow', false);
+
+    // Old canvases should be disposed (width=0, height=0)
+    oldCanvases.forEach((canvas) => {
+      expect(canvas.width).toBe(0);
+      expect(canvas.height).toBe(0);
+    });
+
+    expect(cache.getChunkCount()).toBe(1);
+  });
 });

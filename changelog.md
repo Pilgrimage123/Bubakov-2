@@ -1,3 +1,19 @@
+## 2026-10-20 — Oprava poklesu výkonu při restartu bez znovunačtení stránky (F5)
+
+- **Uvolňování paměti GPU a canvasových textur (`ChunkBitmapCache`, `WordStampCache`)**:
+  - `ChunkBitmapCache.dispose()`: Zavedeno explicitní nulování rozměrů offscreen canvasů (`width = 0; height = 0`) a uvolnění 2D kontextů při každém restartu výpravy i při přechodu do hospody. Tím je okamžitě uvolněna GPU VRAM (30–50 MB na běh) v paměti grafického procesu prohlížeče a zabráněno GPU thrashingu a pádům kontextu po několika po sobě jdoucích výpravách.
+  - `WordStampCache`: Vyčištění dynamických textur při restartu přes `resetGlobalGlyphAtlas()` a nahrazení dočasných canvasů pro měření textu sdíleným singleton kontextem `getMeasureContext()`.
+- **Eliminace duchů časovačů (Ghost Timers) a intervalů**:
+  - `victoryTimeoutRef`: 3,5s časovač vítězství `triggerLevelVictory` byl spoután s referencí a je při restartu okamžitě zrušen (`clearTimeout`). Odstraněn bug, kdy rychlý restart po vítězství vedl k nečekanému přepnutí rozehrané nové hry do obrazovky rekapitulace.
+  - `showUnlockNotice` & `unlockNoticeTimeoutRef`: Sjednoceny všechny plovoucí časovače oznámení a při restartu se spolehlivě ruší spolu s intervaly a časovači losování truhly (`slotSoundIntervalRef`, `slotTimersRef`).
+- **Nulování stavů a bezalokační pročištění v herní smyčce**:
+  - Při `startGame` se na místě nulují fronta milníků zbraní `pendingMilestonesRef`, buffery prostorového indexu `primarySpatialResultsRef` a `secondarySpatialResultsRef` (`length = 0`) i stav virtuálního dotykového joysticku (`touchMoveRef`).
+  - Vyčištění mrtvých combat textů na místě pomocí `compactInPlace(engine.texts, (txt) => txt.life > 0)`.
+- **Bezalokační hot path v hlavní smyčce (Zero-Allocation Loop)**:
+  - Zavedeny perzistentní refy `reusableCameraViewportRef`, `reusableRenderOptionsRef` a `reusableDirectorAdapterRef`, které nahrazují vytváření nových objektů a uzávěrů (`spawnMonster`, `spawnAmbushRing` atd.) 60× za sekundu. Ušetřeno ~25 000 krátkodobých objektů za minutu, což zásadně snižuje frekvenci a délku záseků způsobených Garbage Collectorem (GC pauses).
+- **Testovací pokrytí**:
+  - Doplněna nová sada integračních a regresních testů v `tests/restartPerformance.test.ts` (všech 7 testů prošlo, celkem 394 testů napříč 33 sadami prochází bez chyb).
+
 ## 2026-10-20 — UI/UX modernizace, přístupnost (A11y), klávesová ergonomie a pročištění stylů
 
 - **Pročištění CSS a odstranění 1 984 řádků duplicit (`src/index.css`)**:

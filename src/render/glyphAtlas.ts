@@ -98,9 +98,20 @@ export interface CachedWordStamp {
 export class WordStampCache {
   private stamps = new Map<string, CachedWordStamp>();
   private readonly maxCapacity: number;
+  private measureCanvas: any = null;
+  private measureCtx: any = null;
 
   constructor(maxCapacity = 128) {
     this.maxCapacity = maxCapacity;
+  }
+
+  private getMeasureContext(): any {
+    if (!this.measureCtx) {
+      const { canvas, ctx } = createAtlasCanvas(1, 1);
+      this.measureCanvas = canvas;
+      this.measureCtx = ctx;
+    }
+    return this.measureCtx;
   }
 
   public get(key: string): CachedWordStamp | undefined {
@@ -118,10 +129,15 @@ export class WordStampCache {
       return existing;
     }
 
-    // Maintain max capacity (FIFO eviction)
+    // Maintain max capacity (FIFO eviction with GPU canvas cleanup)
     if (this.stamps.size >= this.maxCapacity) {
       const firstKey = this.stamps.keys().next().value;
       if (firstKey !== undefined) {
+        const evicted = this.stamps.get(firstKey);
+        if (evicted?.canvas) {
+          evicted.canvas.width = 0;
+          evicted.canvas.height = 0;
+        }
         this.stamps.delete(firstKey);
       }
     }
@@ -129,7 +145,7 @@ export class WordStampCache {
     const strokeWidth = size >= 26 ? 4.0 : 3.0;
     const padding = Math.ceil(strokeWidth * 2) + 6;
 
-    const { ctx: testCtx } = createAtlasCanvas(1, 1);
+    const testCtx = this.getMeasureContext();
     testCtx.font = `900 ${size}px Eczar, "Cinzel Decorative", serif`;
     const metrics = testCtx.measureText ? testCtx.measureText(text) : { width: text.length * size * 0.7 };
     const measuredWidth = Math.ceil(metrics.width || text.length * size * 0.7);
@@ -161,7 +177,23 @@ export class WordStampCache {
   }
 
   public clear(): void {
+    for (const stamp of this.stamps.values()) {
+      if (stamp.canvas) {
+        stamp.canvas.width = 0;
+        stamp.canvas.height = 0;
+      }
+    }
     this.stamps.clear();
+  }
+
+  public dispose(): void {
+    this.clear();
+    if (this.measureCanvas) {
+      this.measureCanvas.width = 0;
+      this.measureCanvas.height = 0;
+      this.measureCanvas = null;
+      this.measureCtx = null;
+    }
   }
 
   public get size(): number {
@@ -388,6 +420,12 @@ export function getGlobalGlyphAtlas(): GlyphAtlas {
     globalGlyphAtlas.init();
   }
   return globalGlyphAtlas;
+}
+
+export function resetGlobalGlyphAtlas(): void {
+  if (globalGlyphAtlas) {
+    globalGlyphAtlas.wordStampCache.clear();
+  }
 }
 
 export function drawGlyphText(

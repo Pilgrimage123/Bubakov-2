@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   GlyphAtlas,
   getGlobalGlyphAtlas,
+  resetGlobalGlyphAtlas,
   drawGlyphText,
 } from '../src/render/glyphAtlas';
 import { createMockCanvasContext } from './helpers/mockCanvas';
@@ -94,5 +95,45 @@ describe('Bitmap Glyph Cache for Combat Numbers (Ticket #32)', () => {
     expect(ctx.drawImage).toHaveBeenCalledTimes(1);
     expect(ctx.fillText).not.toHaveBeenCalled();
     expect(ctx.strokeText).not.toHaveBeenCalled();
+  });
+
+  it('WordStampCache.clear sets canvas dimensions to 0 to free GPU backing buffers', () => {
+    const cache = atlas.wordStampCache;
+    cache.clear();
+
+    const stamp1 = cache.getOrCreate('Test1', 18, '#FFFFFF');
+    const stamp2 = cache.getOrCreate('Test2', 18, '#FFFFFF');
+    expect(stamp1.canvas.width).toBeGreaterThan(0);
+    expect(stamp2.canvas.width).toBeGreaterThan(0);
+
+    cache.clear();
+    expect(cache.size).toBe(0);
+    expect(stamp1.canvas.width).toBe(0);
+    expect(stamp1.canvas.height).toBe(0);
+    expect(stamp2.canvas.width).toBe(0);
+    expect(stamp2.canvas.height).toBe(0);
+  });
+
+  it('WordStampCache evicting oldest item frees its canvas dimensions', () => {
+    const cache = atlas.wordStampCache;
+    cache.clear();
+
+    const stamp0 = cache.getOrCreate('Oldest', 18, '#FFFFFF');
+    expect(stamp0.canvas.width).toBeGreaterThan(0);
+
+    for (let i = 1; i <= 130; i++) {
+      cache.getOrCreate(`Word_${i}`, 18, '#FFFFFF');
+    }
+
+    expect(stamp0.canvas.width).toBe(0);
+    expect(stamp0.canvas.height).toBe(0);
+  });
+
+  it('resetGlobalGlyphAtlas clears cached word stamps', () => {
+    getGlobalGlyphAtlas().wordStampCache.getOrCreate('Global1', 18, '#FFFFFF');
+    expect(getGlobalGlyphAtlas().wordStampCache.size).toBeGreaterThan(0);
+
+    resetGlobalGlyphAtlas();
+    expect(getGlobalGlyphAtlas().wordStampCache.size).toBe(0);
   });
 });

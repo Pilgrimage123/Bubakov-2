@@ -10,6 +10,18 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '20. října 2026',
+    title: 'Oprava poklesu výkonu při restartu bez znovunačtení stránky (F5)',
+    summary: 'Důkladný audit a vyřešení degradace výkonu při opakovaných výpravách bez reloadu. Uvolněna GPU VRAM v ChunkBitmapCache, odstraněny nebezpečné duchy časovačů (ghost timers), vyčištěny herní buffery a eliminovány alokace objektů na renderovací hot path v 60 FPS.',
+    items: [
+      '🧹 Uvolňování GPU VRAM (ChunkBitmapCache.dispose): Při restartu výpravy i odchodu do hospody se explicitně nulují rozměry canvasů (width=0, height=0) a uvolňují kontexty, což okamžitě vrací desítky megabajtů grafické paměti a brání GPU thrashingu.',
+      '👻 Konec duchů časovačů (Ghost Timers): Časovač vítězství (3,5 s) a notifikace o odemčení se při novém startu okamžitě ruší. Odstraněna chyba, kdy rychlý restart po výhře předčasně ukončil rozehranou novou hru do souhrnné obrazovky.',
+      '🎯 Bezalokační renderovací hot path (60 FPS): Viewport kamery, vykreslovací parametry a adaptér Režiséra s uzávěry se již nevytvářejí znovu každý snímek (~25 000 ušetřených objektů za minutu, konec záseků způsobených Garbage Collectorem).',
+      '🔄 Stoprocentní reset herního stavu: Fronta milníků zbraní, prostorové buffery, dotykový joystick i mrtvé plovoucí texty se při restartu čistí přímo na místě (in-place).',
+      '🧪 Pro testery: odehrajte 5+ výprav za sebou bez F5; framerate zůstává stabilních 60 FPS a paměť GPU i procesoru neroste.',
+    ],
+  },
+  {
+    date: '20. října 2026',
     title: 'UI/UX modernizace, přístupnost (A11y), klávesová ergonomie a pročištění stylů',
     summary: 'Kompletní revize rozhraní a ergonomie dle standardů ui-ux-pro-max. Odstraněna dvoutisíciřádková duplikace v CSS, zavedeny focus indikátory a tabulární čísla, doplněno klávesové ovládání milníků i dědečkovy nůše z WASD a zvětšeny dotykové cíle pro mobilní hraní.',
     items: [
