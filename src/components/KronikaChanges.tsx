@@ -10,6 +10,20 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '20. října 2026',
+    title: 'Smart detailní SVG JavaScript animace (Babička, Barunka, Rytíř, Sněhulák, Tulák, Kostelník)',
+    summary: 'Pět nových vysoce detailních vektorových SVG animací s procedurální JavaScriptovou kinematikou a interaktivním sledováním kurzoru. Vytvořeno podle originálních ilustrací z české pohádkové a ladovské tradice s plnou integrací do herního testeru animací i samostatného HTML přehrávače.',
+    items: [
+      '👵👧 Babička a Barunka: Babička s vyšívaným šátkem, vlněným plédem s třásněmi a modrou zástěrou s velikou kapsou plnou čerstvého chleba, ubrousku a bylinek. Barunka s copem, červenou mašlí a kytičkou lučního kvítí. Speciální akce „Laskavý zázrak“.',
+      '⚔️🦁 Bezhlavý rytíř: Kompletní plátová zbroj, zlaté ostruhy, roztrhaný rudý plášť a bílá varkočka s českým dvouocasým lvem. V pravé ruce drží meč a v levé nese svou vlastní useknutou hlavu s přilbicí a chocholem s planoucíma očima.',
+      '⛄🧹 Sněhulák s koštětem: Dvounohý plíživý sněhulák kráčející na nohou s březovým koštětem, otlučeným hrncem se sněhem a jehličím, pletenou pruhovanou šálou a mrkvovým nosem.',
+      '🎒🦯 Veselý Tulák: Rozesmátý bělovousý tulák v záplatovaném kabátě s ranečkem na zádech, čutorou u pasu a mohutnou sukovitou holí (sukovicí).',
+      '🔔✝️ Důstojný Kostelník: Kostelník ve fedoře, olivovém svrchníku se zlatým křížem na prsou, který v rukou nese mosazný kotlík se svěcenou vodou a máchá kropáčem.',
+      '✨ Smart interaktivita: Oči, hlavy a rekvizity přirozeně reagují na kurzor myši/prst. Nechybí volba stavu (Klid, Krok, Akce, Reakce), změna rychlosti, otočení směru a export do SVG.',
+      '🎮 Kde vyzkoušet: V modalu animací v záložce „✨ Smart SVG“ nebo v samostatném souboru public/smart-characters.html.',
+    ],
+  },
+  {
+    date: '20. října 2026',
     title: 'Oprava poklesu výkonu při restartu bez znovunačtení stránky (F5)',
     summary: 'Důkladný audit a vyřešení degradace výkonu při opakovaných výpravách bez reloadu. Uvolněna GPU VRAM v ChunkBitmapCache, odstraněny nebezpečné duchy časovačů (ghost timers), vyčištěny herní buffery a eliminovány alokace objektů na renderovací hot path v 60 FPS.',
     items: [

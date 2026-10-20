@@ -13,6 +13,7 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
+import { SmartSvgViewer } from './svg/SmartSvgViewer';
 import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
 import { ENEMY_PREFIX_DEFS } from '../types';
 
@@ -21,7 +22,7 @@ interface AnimationTesterModalProps {
   onClose: () => void;
 }
 
-type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather';
+type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather' | 'smart_svg';
 type CanvasBg = 'parchment' | 'night' | 'snow' | 'grid';
 
 interface HunterDef {
@@ -724,6 +725,26 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
           >
             🌐 {isSmallMobile ? 'Galerie' : 'Přehlídka'}
           </button>
+
+          <button
+            className={`tab-btn ${activeTab === 'smart_svg' ? 'active' : ''}`}
+            style={{
+              fontSize: isSmallMobile ? '0.74rem' : isMobile ? '0.82rem' : '0.94rem',
+              padding: isSmallMobile ? '5px 4px' : '7px 10px',
+              fontWeight: 900,
+              minWidth: 0,
+              textAlign: 'center',
+              background: activeTab === 'smart_svg' ? '#C53026' : undefined,
+              color: activeTab === 'smart_svg' ? '#FFFFFF' : undefined,
+              boxShadow: activeTab === 'smart_svg' ? '0 2px 8px rgba(197, 48, 38, 0.4)' : undefined,
+            }}
+            onClick={() => {
+              sound.kindChime();
+              setActiveTab('smart_svg');
+            }}
+          >
+            ✨ Smart SVG
+          </button>
         </div>
 
         {/* Tab 1: All Gallery (Synchronized Grid of Everything) */}
@@ -940,8 +961,15 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
           </div>
         )}
 
+        {/* Tab 5: Smart SVG Interactive Showcase */}
+        {activeTab === 'smart_svg' && (
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '4px' : '8px' }}>
+            <SmartSvgViewer />
+          </div>
+        )}
+
         {/* Tab 2, 3, 4: Detailed Inspection View */}
-        {activeTab !== 'all' && (
+        {activeTab !== 'all' && activeTab !== 'smart_svg' && (
           <div
             style={{
               display: 'flex',

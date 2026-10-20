@@ -1,3 +1,21 @@
+## 2026-10-20 — Smart detailní SVG JavaScript animace (Babička a Barunka, Bezhlavý rytíř, Sněhulák, Tulák, Kostelník)
+
+- **Pět nových detailních SVG vektorových postav s procedurální JavaScriptovou kinematikou**:
+  - **Babička a Barunka (`SmartBabickaBarunkaSvg.tsx`)**: Babička v bílém vyšívaném šátku s modrými kvítky, teplém vlněném plédu s třásněmi, cihlovém kabátku a modré kanafaskové zástěře s velikou kapsou (čerstvý pecen chleba, červeno-bílý ubrousek, bylinky) a holí. Doprovází ji Barunka se zapleteným copem, červenou mašlí, naškrobenou bílou zástěrkou a pestrou kyticí lučního kvítí. Speciální akce *„Laskavý zázrak“* se zářícím chlebem a poletujícími okvětními lístky.
+  - **Bezhlavý rytíř (`SmartBezhlavyRytirSvg.tsx`)**: Plátová zbroj s drátěnou košilí, zlaté ostruhy s ozubenými hvězdicemi, roztrhaný rudý plášť a bílá bojová varkočka se slavným **červeným českým dvouocasým lvem**. Useknutý krvavý krk s kapající krví, v pravé ruce těžký meč a v levé ruce nese svou **vlastní useknutou hlavu s přilbicí, rudým chocholem a planoucím hněvem v očích**.
+  - **Sněhulák s koštětem (`SmartSnehulakSvg.tsx`)**: Mračící se dvounohý sněhulák v plíživém kroku s březovým koštětem pevně v dlaních, otlučeným zelenavým hrncem se sněhem a jehličím, pruhovanou vlněnou šálou s třásněmi, uhlíkovými knoflíky a mrkvovým nosem. Speciální akce *„Vánice s koštětem“* s poletujícími vločkami.
+  - **Tulák (`SmartTulakSvg.tsx`)**: Bělovousý rozesmátý poutník v záplatovaném zeleném kabátě s ranečkem přes rameno, čutorou u pasu, provazem místo opasku, ovázanými lýtky a mohutnou sukovitou dřevěnou holí (sukovicí). Speciální akce *„Radostný poskok & sukovice“* s hudebními tóny a smíchem.
+  - **Kostelník (`SmartKostelnikSvg.tsx`)**: Důstojný kostelník v tmavozeleném církevním svrchníku, hnědé plstěné fedoře, vestě se **zlatým křížem na prsou**, v jedné ruce nese těžký mosazný kotlík se svěcenou vodou (kropenku) a v druhé máchá kropáčem (aspergillem) stříkajícím kapky svěcené vody.
+- **Smart interaktivita & audio**:
+  - Reaktivní sledování kurzoru myši/dotyku (oči, mrkev, useknutá hlava i kropáč míří za kurzorem).
+  - Volič stavů animace (*Klid / Idle*, *Krok & chůze*, *Zvláštní akce*, *Reakce*), posuvník rychlosti a volič pozadí (*Papír*, *Noc*, *Sníh*, *Mřížka*).
+  - Tlačítka pro okamžité zkopírování SVG kódu do schránky i stažení čistého `.svg` souboru.
+  - Zvukové efekty propojené s herním zvukovým syntezátorem `sound`.
+- **Integrace a samostatná aplikace**:
+  - Nová záložka `✨ Smart SVG` v herním modalu animací [`AnimationTesterModal.tsx`](file:///c:/Users/kocnaro/.gemini/antigravity/scratch/bubakov/src/components/AnimationTesterModal.tsx).
+  - Samostatná offline HTML webová aplikace v [`public/smart-characters.html`](file:///c:/Users/kocnaro/.gemini/antigravity/scratch/bubakov/public/smart-characters.html) s čistým JavaScriptem a Web Audio.
+  - Nová sada testů v `tests/smartSvgAnimations.test.ts` (397 testů prochází).
+
 ## 2026-10-20 — Oprava poklesu výkonu při restartu bez znovunačtení stránky (F5)
 
 - **Uvolňování paměti GPU a canvasových textur (`ChunkBitmapCache`, `WordStampCache`)**:
