@@ -15,6 +15,7 @@ import { type EngineState, type PendingMilestoneChoice, createInitialEngineState
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
 import { getCachedHomingTarget } from './homing';
+import { tryEmitParticle, getParticleLimit } from './particles';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
 import { WEAPONS, createWeaponMasteryState, getWeaponDamage } from '../data/weapons';
@@ -431,7 +432,7 @@ export class GameEngine {
         : 3.0;
 
     const profile = metaProg?.performanceProfile || (metaProg?.performanceMode ? 'performance' : 'balanced');
-    const maxLivingEnemies = profile === 'performance' ? 45 : profile === 'balanced' ? 55 : 70;
+    const maxLivingEnemies = profile === 'performance' ? 35 : profile === 'balanced' ? 55 : 70;
 
     this.director = new RunDirector(levelId, seed, { dynamicDifficulty, maxLivingEnemies });
     nextState.director = this.director;
@@ -1665,10 +1666,10 @@ export class GameEngine {
       const foe = sortedEnemies[i].enemy;
       this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75 });
       this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
-      if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 5) {
+      if (this.state.particles) {
         for (let k = 0; k < 3; k++) {
           const ang = Math.random() * Math.PI * 2;
-          this.state.particles.push({
+          tryEmitParticle(this.state.particles, () => ({
             x: foe.x,
             y: foe.y,
             vx: Math.cos(ang) * 45,
@@ -1676,7 +1677,7 @@ export class GameEngine {
             life: 0.35,
             color: '#F59E0B',
             size: 3,
-          });
+          }), this.state.meta?.performanceProfile);
         }
       }
     }
@@ -1861,7 +1862,7 @@ export class GameEngine {
           }
         }
       }
-      this.state.particles.push({
+      tryEmitParticle(this.state.particles, () => ({
         x: player.x,
         y: player.y,
         vx: 0,
@@ -1869,7 +1870,7 @@ export class GameEngine {
         life: 0.35,
         color: '#FEF08A',
         size: reach * 0.3,
-      });
+      }), this.state.meta?.performanceProfile);
       return action;
     }
 
@@ -2193,10 +2194,15 @@ export class GameEngine {
         }
       }
 
-      // Holy Chalk Circle unholy barrier & repellent damage
+      // Holy Chalk Circle unholy barrier & repellent damage (10 Hz spatial check, full-rate contact push)
       if (this.state.holyCircle && this.state.holyCircle.active) {
-        const hc = this.state.holyCircle;
-        const nearbyUnholy = this.spatialHash.queryCircle(hc.x, hc.y, hc.radius + 60);
+        const hc = this.state.holyCircle as any;
+        hc._scanTimer = (hc._scanTimer || 0) + dt;
+        if (hc._scanTimer >= 0.1 || !hc._cachedUnholy) {
+          hc._scanTimer = 0;
+          hc._cachedUnholy = this.spatialHash.queryCircle(hc.x, hc.y, hc.radius + 60);
+        }
+        const nearbyUnholy = hc._cachedUnholy;
         for (let ui = 0; ui < nearbyUnholy.length; ui++) {
           const foe = nearbyUnholy[ui];
           if (foe.isDefeated || foe.dead || !isUnholyEnemy(foe)) continue;
@@ -2595,20 +2601,18 @@ export class GameEngine {
           );
           evaluateShadowDefense(e, isLit, dt, {
             onBreak: (shadowEnemy) => {
-              if (this.state.particles.length < MAX_PARTICLES - 8) {
-                for (let k = 0; k < 6; k++) {
-                  const ang = Math.random() * Math.PI * 2;
-                  const spd = 40 + Math.random() * 50;
-                  this.state.particles.push({
-                    x: shadowEnemy.x,
-                    y: shadowEnemy.y - shadowEnemy.radius * 0.4,
-                    vx: Math.cos(ang) * spd,
-                    vy: Math.sin(ang) * spd,
-                    life: 0.35,
-                    color: '#1E1B18',
-                    size: 3.5,
-                  });
-                }
+              for (let k = 0; k < 6; k++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 40 + Math.random() * 50;
+                tryEmitParticle(this.state.particles, () => ({
+                  x: shadowEnemy.x,
+                  y: shadowEnemy.y - shadowEnemy.radius * 0.4,
+                  vx: Math.cos(ang) * spd,
+                  vy: Math.sin(ang) * spd,
+                  life: 0.35,
+                  color: '#1E1B18',
+                  size: 3.5,
+                }), this.state.meta?.performanceProfile);
               }
             },
           });
@@ -2698,10 +2702,10 @@ export class GameEngine {
           e.windupTimer = 0;
         }
         this.state.texts.push(new DamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true));
-        if (this.state.particles && this.state.particles.length < MAX_PARTICLES - 6) {
+        if (this.state.particles) {
           for (let pIdx = 0; pIdx < 4; pIdx++) {
             const ang = Math.random() * Math.PI * 2;
-            this.state.particles.push({
+            tryEmitParticle(this.state.particles, () => ({
               x: e.x + (Math.random() - 0.5) * 12,
               y: e.y + (Math.random() - 0.5) * 12,
               vx: Math.cos(ang) * 35,
@@ -2709,7 +2713,7 @@ export class GameEngine {
               life: 0.45,
               color: pIdx % 2 === 0 ? '#BEF264' : '#EAB308',
               size: 3.5,
-            });
+            }), this.state.meta?.performanceProfile);
           }
         }
       }
@@ -3064,8 +3068,9 @@ export class GameEngine {
         p.life -= dt;
       }
       compactInPlace(this.state.particles, (p) => p.life > 0);
-      if (this.state.particles.length > MAX_PARTICLES) {
-        this.state.particles.splice(0, this.state.particles.length - MAX_PARTICLES);
+      const particleLimit = getParticleLimit(this.state.meta?.performanceProfile);
+      if (this.state.particles.length > particleLimit) {
+        this.state.particles.splice(0, this.state.particles.length - particleLimit);
       }
     }
 

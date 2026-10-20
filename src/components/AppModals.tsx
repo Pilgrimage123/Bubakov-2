@@ -1,5 +1,6 @@
 import React from 'react';
 import type { MetaProgression } from '../types';
+import { GameIcon } from './GameIcon';
 import { ControlsModal } from './ControlsModal';
 import { SettingsDevModal } from './SettingsDevModal';
 import { CombatTextSettingsModal } from './CombatTextSettingsModal';

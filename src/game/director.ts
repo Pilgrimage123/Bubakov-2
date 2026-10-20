@@ -796,10 +796,12 @@ export class RunDirector {
     // Special Prefixes: when player kills common mobs too quickly (high dominance / low TTK)
     // and Director needs to deplete excess threat budget (costs 5x normal = 15 threat budget)
     const avgTTK = this.getAverageTTK();
-    const canSpawnPrefixed = !this.assistanceActive && (dominance >= 0.55 || (this.recentKills.length > 0 && avgTTK < 0.95)) && this.threatBudget >= 15 && this.prefixSpawnCooldown <= 0;
+    const isPerformanceCapped = this.maxLivingEnemies <= 35;
+    const minThreatForPrefixed = isPerformanceCapped ? 10 : 15;
+    const canSpawnPrefixed = !this.assistanceActive && (dominance >= (isPerformanceCapped ? 0.4 : 0.55) || (this.recentKills.length > 0 && avgTTK < (isPerformanceCapped ? 1.1 : 0.95)) || (isPerformanceCapped && this.threatBudget >= 12)) && this.threatBudget >= minThreatForPrefixed && this.prefixSpawnCooldown <= 0;
     if (canSpawnPrefixed) {
       const openingCooldownFactor = gameTime < 30 ? 1.8 : gameTime < 60 ? 1.5 : gameTime < 90 ? 1.25 : 1.0;
-      const punishCdDiv = Math.max(1.0, this.pressureMultiplier * 0.85);
+      const punishCdDiv = Math.max(1.0, this.pressureMultiplier * (this.maxLivingEnemies <= 35 ? 1.05 : 0.85));
       this.prefixSpawnCooldown = Math.max(0.8, (6.0 - ((this.dynamicDifficulty - 2.0) / 2.0) * 2.0) / punishCdDiv) * openingCooldownFactor;
       this.spawnPrefixedEnemy(engine, player, gameTime);
       return;

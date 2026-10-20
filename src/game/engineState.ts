@@ -1,7 +1,7 @@
 import type { GameLevelId, MilestoneChoice, GameDrop, MetaProgression } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
-import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker } from './drops';
+import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker, createSwarmDropReservoir, type SwarmDropReservoir } from './drops';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -83,7 +83,7 @@ export interface EngineState {
   pendingMilestones: PendingMilestoneChoice[];
   timeStopTimer: number;
   lastSpecialDropTime: number;
-  swarmReservoir: { points: number; gingerbread: number; coins: number };
+  swarmReservoir: SwarmDropReservoir;
   killTimestamps: number[];
   screenFlashTimer: number;
   screenFlashColor: string;
@@ -204,7 +204,7 @@ export function createInitialEngineState(): EngineState {
     pendingMilestones: [],
     timeStopTimer: 0,
     lastSpecialDropTime: -999,
-    swarmReservoir: { points: 0, gingerbread: 0, coins: 0 },
+    swarmReservoir: createSwarmDropReservoir(),
     killTimestamps: [],
     screenFlashTimer: 0,
     screenFlashColor: '#FFFFFF',

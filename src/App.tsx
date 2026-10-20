@@ -12,6 +12,7 @@ import { createInitialEngineState, type EngineState } from './game/engineState';
 import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
 import { getCachedHomingTarget } from './game/homing';
+import { tryEmitParticle, tryEmitParticleBurst, getParticleLimit } from './game/particles';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
 import {
@@ -155,6 +156,10 @@ import {
   isHealingDrop,
   createFolkloreDropTracker,
   evaluateFolkloreDrop,
+  createSwarmDropReservoir,
+  accumulateSwarmDrop,
+  shouldReleaseSwarmReservoir,
+  releaseSwarmReservoir,
   FAR_KILL_DISTANCE,
   HOT_GINGERBREAD_DURATION,
   EMERGENCY_HEALTH_RATIO,
@@ -166,6 +171,7 @@ import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticU
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
+// Locked portraits (tier < 4) are pre-rendered statically once per tier change to eliminate 60 FPS menu draw overhead.
 function renderHunterPortrait(
   canvas: HTMLCanvasElement | null,
   drawFn: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number) => void,
@@ -173,18 +179,22 @@ function renderHunterPortrait(
   t: number
 ) {
   if (!canvas) return;
+  if (tier < 4 && (canvas as any)._cachedTier === tier) {
+    return;
+  }
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.clearRect(0, 0, 180, 180);
 
   if (tier === 4) {
     // 100%: Normal, fully unlocked vivid animation
+    (canvas as any)._cachedTier = undefined;
     drawFn(ctx, 90, 120, t, 0, 0, false, 1.4);
     return;
   }
 
-  // Draw base figure first
-  drawFn(ctx, 90, 120, t, 0, 0, false, 1.4);
+  // Draw base figure first with static pose
+  drawFn(ctx, 90, 120, 0, 0, 0, false, 1.4);
 
   if (tier === 3) {
     // 75% - 99%: Nearly full color, but with a golden lock mist and mystic veil
@@ -199,7 +209,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#D9A036';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    drawGlyphText(ctx, '⚡ 75 % ODHALENO', 90, 159, 18, '#FEF3C7', 1, 0, 'center');
+    drawGlyphText(ctx, '⚡ 75 % ODHALENO', 90, 159, { size: 18, color: '#FEF3C7', alpha: 1 });
     ctx.restore();
   } else if (tier === 2) {
     // 50% - 74%: Sepia / monochrome charcoal sketch. Distinct shapes, hat, and props visible
@@ -215,7 +225,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#D9A036';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    drawGlyphText(ctx, '🔎 50 % ODHALENO', 90, 159, 18, '#FEF3C7', 1, 0, 'center');
+    drawGlyphText(ctx, '🔎 50 % ODHALENO', 90, 159, { size: 18, color: '#FEF3C7', alpha: 1 });
     ctx.restore();
   } else if (tier === 1) {
     // 25% - 49%: Deep charcoal silhouette, rough outline visible
@@ -231,7 +241,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#8C5A35';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    drawGlyphText(ctx, '🔍 25 % ODHALENO', 90, 159, 18, '#F3E9D2', 1, 0, 'center');
+    drawGlyphText(ctx, '🔍 25 % ODHALENO', 90, 159, { size: 18, color: '#F3E9D2', alpha: 1 });
     ctx.restore();
   } else {
     // 0% - 24%: Pitch-black silhouette shrouded in dense mystery fog with glowing question mark
@@ -255,9 +265,10 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#5E3A21';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    drawGlyphText(ctx, '🔒 ZAMČENO (0 %)', 90, 159, 18, '#D4CBBA', 1, 0, 'center');
+    drawGlyphText(ctx, '🔒 ZAMČENO (0 %)', 90, 159, { size: 18, color: '#D4CBBA', alpha: 1 });
     ctx.restore();
   }
+  (canvas as any)._cachedTier = tier;
 }
 
 /** Allocation-free cleanup for frequently mutated entity arrays. */
@@ -1964,6 +1975,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const eng = engineRef.current;
     if (!eng || !eng.lightSources) return;
     if (!isGameEffectEnabled('dynamicLightingEnabled')) return;
+    const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+    if (profile === 'performance') return;
 
     const dayPhase = getCurrentDayPhase(eng.gameTime || 0);
     const player = eng.player;
@@ -2837,7 +2850,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
     const dynamicDiff = meta.dynamicDifficulty ?? 3.0;
     const perfProfile = meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced');
-    const maxLivingEnemies = perfProfile === 'performance' ? 45 : perfProfile === 'balanced' ? 55 : 70;
+    const maxLivingEnemies = perfProfile === 'performance' ? 35 : perfProfile === 'balanced' ? 55 : 70;
     directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff, maxLivingEnemies });
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
     gameEngineRef.current = new GameEngine(engine);
@@ -3481,8 +3494,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const frameProfiler = new FrameProfiler();
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const isPerf = (metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance';
+      const scale = isPerf ? 0.75 : 1.0;
+      canvas.width = Math.round(window.innerWidth * scale);
+      canvas.height = Math.round(window.innerHeight * scale);
     };
     window.addEventListener('resize', resize);
     resize();
@@ -3741,7 +3756,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             if (directorRef.current) {
               const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
-              directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 45 : performanceProfile === 'balanced' ? 55 : 70;
+              directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 35 : performanceProfile === 'balanced' ? 55 : 70;
               const directorAdapter = {
                 state: engine,
                 livingEnemies: livingEnemiesRef.current,
@@ -5068,10 +5083,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // Holy Chalk Circle unholy barrier & repellent damage
+            // Holy Chalk Circle unholy barrier & repellent damage (10 Hz spatial check, full-rate contact push)
             if (engine.holyCircle && engine.holyCircle.active) {
-              const hc = engine.holyCircle;
-              const nearbyUnholy = enemySpatialHashRef.current.queryCircle(hc.x, hc.y, hc.radius + 60);
+              const hc = engine.holyCircle as any;
+              hc._scanTimer = (hc._scanTimer || 0) + dt;
+              if (hc._scanTimer >= 0.1 || !hc._cachedUnholy) {
+                hc._scanTimer = 0;
+                hc._cachedUnholy = enemySpatialHashRef.current.queryCircle(hc.x, hc.y, hc.radius + 60);
+              }
+              const nearbyUnholy = hc._cachedUnholy;
               for (let ui = 0; ui < nearbyUnholy.length; ui++) {
                 const foe = nearbyUnholy[ui];
                 if (foe.isDefeated || foe.dead || !isUnholyEnemy(foe)) continue;
@@ -5113,24 +5133,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   angle: Math.atan2(moveVy, moveVx),
                 });
               }
-              const enemiesNearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, player.radius + 35);
+              player._sootScanTimer = (player._sootScanTimer || 0) + dt;
+              if (player._sootScanTimer >= 0.1 || !player._cachedSootEnemies) {
+                player._sootScanTimer = 0;
+                player._cachedSootEnemies = enemySpatialHashRef.current.queryCircle(player.x, player.y, player.radius + 35);
+              }
+              const enemiesNearby = player._cachedSootEnemies;
               for (const e of enemiesNearby) {
                 if (e.dead || e.isDefeated) continue;
                 if (Math.hypot(e.x - player.x, e.y - player.y) < player.radius + e.radius) {
                   if ((e.sootBlindedVolleys || 0) < 3) {
                     e.sootBlindedVolleys = 3;
                     engine.texts.push(new DamageText(e.x, e.y - 30, 'SAZE V OČÍCH! 🔘💨', '#FDE047', true));
-                    for (let p = 0; p < 6; p++) {
-                      engine.particles.push({
-                        x: e.x + (Math.random() - 0.5) * 16,
-                        y: e.y + (Math.random() - 0.5) * 16,
-                        vx: (Math.random() - 0.5) * 90,
-                        vy: (Math.random() - 0.5) * 90,
-                        life: 0.35,
-                        color: '#1C1917',
-                        size: 3.5,
-                      });
-                    }
+                    const currentPerf = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+                    tryEmitParticleBurst(engine.particles, 6, () => ({
+                      x: e.x + (Math.random() - 0.5) * 16,
+                      y: e.y + (Math.random() - 0.5) * 16,
+                      vx: (Math.random() - 0.5) * 90,
+                      vy: (Math.random() - 0.5) * 90,
+                      life: 0.35,
+                      color: '#1C1917',
+                      size: 3.5,
+                    }), currentPerf);
                   }
                 }
               }
@@ -5430,12 +5454,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // Hromnička flickering light aura: continuous gentle outward push resisted by Fear resist
+            // Hromnička flickering light aura: continuous gentle outward push resisted by Fear resist (10 Hz spatial check, full-rate contact push)
             const hromnickaWp = player.weapons.find((w: any) => w.id === 'hromnicka');
             if (hromnickaWp) {
               if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
               const auraReach = 135 + hromnickaWp.level * 15;
-              const nearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, auraReach + 40);
+              player._hromnickaScanTimer = (player._hromnickaScanTimer || 0) + dt;
+              if (player._hromnickaScanTimer >= 0.1 || !player._cachedHromnickaNearby) {
+                player._hromnickaScanTimer = 0;
+                player._cachedHromnickaNearby = enemySpatialHashRef.current.queryCircle(player.x, player.y, auraReach + 40);
+              }
+              const nearby = player._cachedHromnickaNearby;
               for (let i = 0; i < nearby.length; i++) {
                 const e = nearby[i];
                 if (e.isDefeated) continue;
@@ -5553,7 +5582,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             runStatsRef.current.gingerbread = engine.gingerbread;
 
             engine.lastStatsSync += dt;
-            if (engine.lastStatsSync >= HUD_SYNC_INTERVAL_SECONDS) {
+            const isPerfProfile = (metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance';
+            const hudSyncInterval = isPerfProfile ? 0.25 : HUD_SYNC_INTERVAL_SECONDS;
+            if (engine.lastStatsSync >= hudSyncInterval) {
               engine.lastStatsSync = 0;
 
               // Boss bar je řízený přímo živým bossem, takže reaguje i na běžné zásahy.
@@ -5580,22 +5611,40 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     : activeBoss.name
                 : '';
 
-              setRunStats((prev) => ({
-                ...prev,
-                time: newTime,
-                dayPhase: currentPhase,
-                kills: engine.kills,
-                coins: engine.coins,
-                souls: engine.souls,
-                chasniks: engine.chasniks,
-                gingerbread: engine.gingerbread,
-                hp: player.hp,
-                maxHp: player.maxHp,
-                ultCd: player.ultCd,
-                chestProgress: Math.floor(engine.pointsChest),
-                bossHpPct: nextBossHpPct,
-                bossTitle: nextBossTitle,
-              }));
+              const prevStats = runStatsRef.current;
+              const nextChestProgress = Math.floor(engine.pointsChest);
+              const hasChanged =
+                prevStats.time !== newTime ||
+                prevStats.kills !== engine.kills ||
+                prevStats.coins !== engine.coins ||
+                prevStats.souls !== engine.souls ||
+                prevStats.chasniks !== engine.chasniks ||
+                prevStats.gingerbread !== engine.gingerbread ||
+                Math.round(prevStats.hp) !== Math.round(player.hp) ||
+                prevStats.maxHp !== player.maxHp ||
+                Math.round(prevStats.ultCd) !== Math.round(player.ultCd) ||
+                prevStats.bossHpPct !== nextBossHpPct ||
+                prevStats.bossTitle !== nextBossTitle ||
+                prevStats.chestProgress !== nextChestProgress;
+
+              if (hasChanged) {
+                setRunStats((prev) => ({
+                  ...prev,
+                  time: newTime,
+                  dayPhase: currentPhase,
+                  kills: engine.kills,
+                  coins: engine.coins,
+                  souls: engine.souls,
+                  chasniks: engine.chasniks,
+                  gingerbread: engine.gingerbread,
+                  hp: player.hp,
+                  maxHp: player.maxHp,
+                  ultCd: player.ultCd,
+                  chestProgress: nextChestProgress,
+                  bossHpPct: nextBossHpPct,
+                  bossTitle: nextBossTitle,
+                }));
+              }
             }
           } else if (currentGameState === 'fleeing') {
             engine.fleeTimer -= dt;
@@ -6522,8 +6571,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               p.life -= dt;
             }
             compactInPlace(engine.particles, (p) => p.life > 0);
-            if (engine.particles.length > MAX_PARTICLES) {
-              engine.particles.splice(0, engine.particles.length - MAX_PARTICLES);
+            const particleLimit = getParticleLimit(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced'));
+            if (engine.particles.length > particleLimit) {
+              engine.particles.splice(0, engine.particles.length - particleLimit);
             }
           }
         }
@@ -7418,20 +7468,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Ladovské kvašové svícení – kompozitní vrstva světla a stínu (Storybook Illumination)
         if (isGameEffectEnabled('dynamicLightingEnabled')) {
-          renderStorybookLightingComposite(
-            ctx,
-            canvas.width,
-            canvas.height,
-            cam,
-            engine.lightSources || [],
-            phase.id,
-            kurazRatio,
-            isWinter,
-            engine.shadowZones || [],
-            engine.occluders || [],
-            metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced'),
-            true
-          );
+            const currentProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+            renderStorybookLightingComposite(
+              ctx,
+              canvas.width,
+              canvas.height,
+              cam,
+              engine.lightSources || [],
+              phase.id,
+              kurazRatio,
+              isWinter,
+              engine.shadowZones || [],
+              currentProfile === 'performance' ? [] : (engine.occluders || []),
+              currentProfile,
+              true
+            );
         }
 
         frameProfiler.mark('overlays', performance.now());
@@ -9807,19 +9858,33 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               finalType === 'bread' ? 10 :
               (finalValue && finalValue >= 15 ? 12 : finalValue && finalValue >= 5 ? 10 : 8)
             );
-            eng.drops.push({
-              type: finalType,
-              value: finalValue,
-              size: finalSize,
-              x: this.x + Math.cos(angle) * 8,
-              y: this.y + Math.sin(angle) * 8,
-              vx: Math.cos(angle) * burstSpeed,
-              vy: Math.sin(angle) * burstSpeed,
-              radius,
-              time: Math.random() * 6.28,
-              isHot: opts.isHot || false,
-              goldenRushTimer: opts.goldenRushTimer || 0,
-            });
+            const isSwarm = this.category === 'swarms' || this.isSwarmMember;
+            if (isSwarm && !this.isMiniboss && !this.isBoss && (finalType === 'gingerbread' || finalType === 'coin')) {
+              if (!eng.swarmReservoir) eng.swarmReservoir = createSwarmDropReservoir();
+              accumulateSwarmDrop(eng.swarmReservoir, {
+                type: finalType,
+                value: finalValue,
+                x: this.x + Math.cos(angle) * 8,
+                y: this.y + Math.sin(angle) * 8,
+              }, !!this.isSwarmLeader);
+              if (shouldReleaseSwarmReservoir(eng.swarmReservoir)) {
+                releaseSwarmReservoir(eng.swarmReservoir, eng.drops);
+              }
+            } else {
+              eng.drops.push({
+                type: finalType,
+                value: finalValue,
+                size: finalSize,
+                x: this.x + Math.cos(angle) * 8,
+                y: this.y + Math.sin(angle) * 8,
+                vx: Math.cos(angle) * burstSpeed,
+                vy: Math.sin(angle) * burstSpeed,
+                radius,
+                time: Math.random() * 6.28,
+                isHot: opts.isHot || false,
+                goldenRushTimer: opts.goldenRushTimer || 0,
+              });
+            }
             if (finalText) {
               eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true, finalType === 'gingerbread' ? 'lootResources' : undefined, finalType === 'gingerbread' ? 'gingerbread' : undefined));
             }
@@ -10566,8 +10631,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         if (!this.isDefeated && engineRef.current?.lightSources && isGameEffectEnabled('dynamicLightingEnabled')) {
           const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
-          const maxLights = profile === 'performance' ? 4 : profile === 'balanced' ? 8 : Number.MAX_SAFE_INTEGER;
-          drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources, { maxLights });
+          if (profile !== 'performance') {
+            const maxLights = profile === 'balanced' ? 8 : Number.MAX_SAFE_INTEGER;
+            drawNormalMappedReliefRim(ctx, this.x, this.y, this.radius, engineRef.current.lightSources, { maxLights });
+          }
         }
 
         if (scale !== 1.0) {
@@ -12251,7 +12318,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }
               }
             }
-            if (engineRef.current && typeof (engineRef.current as any).chooseWeaponMilestone === 'function') {
+            if (gameEngineRef.current && typeof gameEngineRef.current.chooseWeaponMilestone === 'function') {
+              try {
+                gameEngineRef.current.chooseWeaponMilestone(canonicalId, choiceId);
+              } catch (e) {
+                console.warn('chooseWeaponMilestone warning', e);
+              }
+            } else if (engineRef.current && typeof (engineRef.current as any).chooseWeaponMilestone === 'function') {
               try {
                 (engineRef.current as any).chooseWeaponMilestone(canonicalId, choiceId);
               } catch (e) {

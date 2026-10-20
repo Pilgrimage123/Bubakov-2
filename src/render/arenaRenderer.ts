@@ -5,7 +5,7 @@
  * Encapsulates frustum culling, zero-allocation depth sorting, chunk caching,
  * downscaled lighting pass, and glyph cache for combat numbers.
  * 
- * ADR 0002, ADR 0003, ADR 0017
+ * ADR 0002, ADR 0003, ADR 0017, ADR 0020
  */
 
 import type { EngineState } from '../game/engineState';
@@ -14,6 +14,10 @@ import { shouldDrawCombatText } from '../game/effectSettings';
 
 import { ChunkBitmapCache } from './chunkCache';
 import { drawGlyphText } from './glyphAtlas';
+import { renderDrops } from './renderDrops';
+import { renderParticles } from './renderParticles';
+import { renderProjectilesAndSlashes } from './renderProjectiles';
+import { renderEnemyTelegraphs } from './renderTelegraphs';
 
 export interface CameraViewport {
   x: number;
@@ -44,6 +48,9 @@ export interface ArenaPhaseTimings {
   backdropMs: number;
   staticDecorMs: number;
   entitiesMs: number;
+  projectilesMs?: number;
+  dropsMs?: number;
+  particlesMs?: number;
   lightingMs: number;
   combatTextsMs: number;
   totalMs: number;
@@ -53,6 +60,9 @@ export interface ArenaRenderMetrics {
   renderedEntities: number;
   renderedDecor: number;
   activeChunks: number;
+  renderedProjectiles?: number;
+  renderedDrops?: number;
+  renderedParticles?: number;
   timings: ArenaPhaseTimings;
 }
 
@@ -74,10 +84,16 @@ export function createReusableRenderMetrics(): ArenaRenderMetrics {
     renderedEntities: 0,
     renderedDecor: 0,
     activeChunks: 0,
+    renderedProjectiles: 0,
+    renderedDrops: 0,
+    renderedParticles: 0,
     timings: {
       backdropMs: 0,
       staticDecorMs: 0,
       entitiesMs: 0,
+      projectilesMs: 0,
+      dropsMs: 0,
+      particlesMs: 0,
       lightingMs: 0,
       combatTextsMs: 0,
       totalMs: 0,
@@ -115,137 +131,160 @@ export function isInView(
   );
 }
 
-// Preallocated buffer for zero-allocation isometric depth sorting
-const MAX_DRAWABLE_CAPACITY = 2048;
-const preallocatedDrawables: any[] = new Array(MAX_DRAWABLE_CAPACITY);
-let drawableCount = 0;
+export const MAX_DRAWABLE_CAPACITY = 2048;
 
 function now(): number {
   return typeof performance !== 'undefined' ? performance.now() : Date.now();
 }
 
 /**
- * Renders the depth-sorted dynamic entity layer using the reusable buffer.
- * This is also an incremental migration seam for callers that still own other
- * world passes (projectiles, hazards and overlays) outside renderArena.
+ * ArenaRenderer instance containing isolated preallocated sorting buffers.
+ * Moving the Y-buffer into the instance avoids cross-canvas collisions (Plan Section 2).
  */
-export function renderArenaEntities(
-  ctx: CanvasRenderingContext2D,
-  engine: EngineState,
-  camera: CameraViewport,
-  options?: ArenaEntityPassOptions
-): number {
-  const { viewLeft, viewTop, viewRight, viewBottom } = camera;
-  let renderedEntities = 0;
-  drawableCount = 0;
+export class ArenaRenderer {
+  public preallocatedDrawables: any[] = new Array(MAX_DRAWABLE_CAPACITY);
+  public drawableCount = 0;
 
-  if (engine.player) {
-    preallocatedDrawables[drawableCount++] = engine.player;
-  }
+  /**
+   * Renders the depth-sorted dynamic entity layer using this instance's isolated buffer.
+   */
+  public renderEntities(
+    ctx: CanvasRenderingContext2D,
+    engine: EngineState,
+    camera: CameraViewport,
+    options?: ArenaEntityPassOptions
+  ): number {
+    const { viewLeft, viewTop, viewRight, viewBottom } = camera;
+    let renderedEntities = 0;
+    this.drawableCount = 0;
 
-  if (engine.enemies && engine.enemies.length > 0) {
-    for (let i = 0; i < engine.enemies.length; i++) {
-      const enemy = engine.enemies[i];
-      if (enemy.isDefeated || enemy.dead) continue;
-      const radius = enemy.radius || 20;
-      if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom) && drawableCount < MAX_DRAWABLE_CAPACITY) {
-        preallocatedDrawables[drawableCount++] = enemy;
+    if (engine.player) {
+      this.preallocatedDrawables[this.drawableCount++] = engine.player;
+    }
+
+    if (engine.enemies && engine.enemies.length > 0) {
+      for (let i = 0; i < engine.enemies.length; i++) {
+        const enemy = engine.enemies[i];
+        if (enemy.isDefeated || enemy.dead) continue;
+        const radius = enemy.radius || 20;
+        if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom) && this.drawableCount < MAX_DRAWABLE_CAPACITY) {
+          this.preallocatedDrawables[this.drawableCount++] = enemy;
+        }
       }
     }
-  }
 
-  if (options?.combatVfxEnabled !== false && engine.smokePuffs && engine.smokePuffs.length > 0) {
-    for (let i = 0; i < engine.smokePuffs.length; i++) {
-      const puff = engine.smokePuffs[i];
-      const radius = (puff.radius || 15) * 2;
-      if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom) && drawableCount < MAX_DRAWABLE_CAPACITY) {
-        preallocatedDrawables[drawableCount++] = puff;
+    if (options?.combatVfxEnabled !== false && engine.smokePuffs && engine.smokePuffs.length > 0) {
+      for (let i = 0; i < engine.smokePuffs.length; i++) {
+        const puff = engine.smokePuffs[i];
+        const radius = (puff.radius || 15) * 2;
+        if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom) && this.drawableCount < MAX_DRAWABLE_CAPACITY) {
+          this.preallocatedDrawables[this.drawableCount++] = puff;
+        }
       }
     }
-  }
 
-  for (let i = 1; i < drawableCount; i++) {
-    const item = preallocatedDrawables[i];
-    let j = i - 1;
-    while (j >= 0 && preallocatedDrawables[j].y > item.y) {
-      preallocatedDrawables[j + 1] = preallocatedDrawables[j];
-      j--;
-    }
-    preallocatedDrawables[j + 1] = item;
-  }
-
-  try {
-    for (let i = 0; i < drawableCount; i++) {
-      const drawable = preallocatedDrawables[i];
-      if (drawable && typeof drawable.draw === 'function') {
-        drawable.draw(ctx);
-        renderedEntities++;
+    // Depth sort (insertion sort optimal for nearly sorted arrays)
+    for (let i = 1; i < this.drawableCount; i++) {
+      const item = this.preallocatedDrawables[i];
+      let j = i - 1;
+      while (j >= 0 && this.preallocatedDrawables[j].y > item.y) {
+        this.preallocatedDrawables[j + 1] = this.preallocatedDrawables[j];
+        j--;
       }
+      this.preallocatedDrawables[j + 1] = item;
     }
-    if (options?.afterEntitiesDrawn) {
-      for (let i = 0; i < drawableCount; i++) {
-        options.afterEntitiesDrawn(preallocatedDrawables[i]);
+
+    try {
+      for (let i = 0; i < this.drawableCount; i++) {
+        const drawable = this.preallocatedDrawables[i];
+        if (drawable && typeof drawable.draw === 'function') {
+          drawable.draw(ctx);
+          renderedEntities++;
+        }
       }
+      if (options?.afterEntitiesDrawn) {
+        for (let i = 0; i < this.drawableCount; i++) {
+          options.afterEntitiesDrawn(this.preallocatedDrawables[i]);
+        }
+      }
+    } finally {
+      for (let i = 0; i < this.drawableCount; i++) {
+        this.preallocatedDrawables[i] = null;
+      }
+      this.drawableCount = 0;
     }
-  } finally {
-    for (let i = 0; i < drawableCount; i++) {
-      preallocatedDrawables[i] = null;
-    }
-    drawableCount = 0;
+
+    return renderedEntities;
   }
 
-  return renderedEntities;
-}
+  /**
+   * Primary interface for rendering a full frame of the game arena.
+   */
+  public renderArena(
+    ctx: CanvasRenderingContext2D,
+    engine: EngineState,
+    camera: CameraViewport,
+    options?: ArenaRenderOptions,
+    outMetrics?: ArenaRenderMetrics
+  ): ArenaRenderMetrics {
+    const tStart = now();
 
-/**
- * Primary interface for rendering a full frame of the game arena.
- */
-export function renderArena(
-  ctx: CanvasRenderingContext2D,
-  engine: EngineState,
-  camera: CameraViewport,
-  options?: ArenaRenderOptions,
-  outMetrics?: ArenaRenderMetrics
-): ArenaRenderMetrics {
-  const tStart = now();
+    const opts: ArenaRenderOptions = {
+      performanceProfile: 'balanced',
+      combatVfxEnabled: true,
+      combatTextsEnabled: true,
+      lightingEnabled: true,
+      chunkCullingEnabled: true,
+      warningIndicatorsEnabled: true,
+      statusIndicatorsEnabled: true,
+      ...options,
+    };
 
-  const opts: ArenaRenderOptions = {
-    performanceProfile: 'balanced',
-    combatVfxEnabled: true,
-    combatTextsEnabled: true,
-    lightingEnabled: true,
-    chunkCullingEnabled: true,
-    warningIndicatorsEnabled: true,
-    statusIndicatorsEnabled: true,
-    ...options,
-  };
+    const { width, height, viewLeft, viewTop, viewRight, viewBottom } = camera;
 
-  const { viewLeft, viewTop, viewRight, viewBottom, width, height } = camera;
-  let renderedEntities = 0;
-  let renderedDecor = 0;
-  let activeChunks = 0;
+    let renderedEntities = 0;
+    let renderedDecor = 0;
+    let activeChunks = 0;
+    let renderedProjectiles = 0;
+    let renderedDrops = 0;
+    let renderedParticles = 0;
 
-  // 1. BACKDROP PASS
-  const tBackdropStart = now();
-  const curLvl = opts.curLvl || (engine as any).curLvl || { season: 'winter', theme: 'meadow' };
-  const phase = opts.dayPhase || (engine as any).dayPhase || { id: 'noon' };
-  const kurazRatio = engine.player && engine.player.maxKuraz > 0
-    ? Math.max(0, engine.player.kuraz / engine.player.maxKuraz)
-    : 1;
+    // 1. BACKDROP PASS
+    const tBackdropStart = now();
+    const curLvl = opts.curLvl || (engine as any).curLvl || { season: 'winter', theme: 'meadow' };
+    const phase = opts.dayPhase || (engine as any).dayPhase || { id: 'noon' };
+    const kurazRatio = engine.player && engine.player.maxKuraz > 0
+      ? Math.max(0, engine.player.kuraz / engine.player.maxKuraz)
+      : 1;
 
-  ctx.fillStyle = getStorybookSnowColor(phase.id || 'noon', kurazRatio);
-  ctx.fillRect(0, 0, width, height);
-  const backdropMs = now() - tBackdropStart;
+    ctx.fillStyle = getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+    ctx.fillRect(0, 0, width, height);
+    const backdropMs = now() - tBackdropStart;
 
-  // 2. STATIC DECOR PASS (WITH OPTIONAL CHUNK BITMAP CACHE)
-  const tDecorStart = now();
-  if (opts.chunkCache) {
-    activeChunks = opts.chunkCache.render(ctx, camera);
-    const dynamicDecor = opts.chunkCache.getDynamicDecor();
-    if (dynamicDecor && dynamicDecor.length > 0) {
+    // 2. STATIC DECOR PASS (WITH OPTIONAL CHUNK BITMAP CACHE)
+    const tDecorStart = now();
+    if (opts.chunkCache) {
+      activeChunks = opts.chunkCache.render(ctx, camera);
+      const dynamicDecor = opts.chunkCache.getDynamicDecor();
+      if (dynamicDecor && dynamicDecor.length > 0) {
+        const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
+        for (let i = 0; i < dynamicDecor.length; i++) {
+          const dec = dynamicDecor[i];
+          const scale = dec.scale || 1;
+          const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
+          if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
+            continue;
+          }
+          renderedDecor++;
+          if (typeof dec.draw === 'function') {
+            dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime || 0, isNight);
+          }
+        }
+      }
+    } else if (engine.decor && engine.decor.length > 0) {
       const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-      for (let i = 0; i < dynamicDecor.length; i++) {
-        const dec = dynamicDecor[i];
+      for (let i = 0; i < engine.decor.length; i++) {
+        const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -257,100 +296,155 @@ export function renderArena(
         }
       }
     }
-  } else if (engine.decor && engine.decor.length > 0) {
-    const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-    for (let i = 0; i < engine.decor.length; i++) {
-      const dec = engine.decor[i];
-      const scale = dec.scale || 1;
-      const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
-      if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
-        continue;
-      }
-      renderedDecor++;
-      if (typeof dec.draw === 'function') {
-        dec.draw(ctx, curLvl.season, curLvl.theme, engine.uiTime || 0, isNight);
-      }
+    const staticDecorMs = now() - tDecorStart;
+
+    // 3. DROPS PASS
+    const tDropsStart = now();
+    if (engine.drops && engine.drops.length > 0) {
+      renderedDrops = renderDrops(ctx, engine.drops, camera);
     }
-  }
-  const staticDecorMs = now() - tDecorStart;
+    const dropsMs = now() - tDropsStart;
 
-  // 3. DYNAMIC ENTITIES PASS (ZERO-ALLOCATION BUFFER)
-  const tEntitiesStart = now();
-  renderedEntities = renderArenaEntities(ctx, engine, camera, { combatVfxEnabled: opts.combatVfxEnabled });
-  const entitiesMs = now() - tEntitiesStart;
+    // 4. DYNAMIC ENTITIES PASS (ZERO-ALLOCATION BUFFER)
+    const tEntitiesStart = now();
+    renderedEntities = this.renderEntities(ctx, engine, camera, { combatVfxEnabled: opts.combatVfxEnabled });
+    const entitiesMs = now() - tEntitiesStart;
 
-  // 4. LIGHTING PASS
-  let lightingMs = 0;
-  if (opts.lightingEnabled) {
-    const tLightStart = now();
-    const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-    if (isNight && engine.lightSources && engine.lightSources.length > 0) {
-      renderStorybookLightingComposite(
+    // 5. ENEMY TELEGRAPHS PASS
+    if (engine.enemies && engine.enemies.length > 0) {
+      renderEnemyTelegraphs(ctx, engine.enemies, camera, {
+        warningIndicatorsEnabled: opts.warningIndicatorsEnabled,
+        statusIndicatorsEnabled: opts.statusIndicatorsEnabled,
+      }, engine.uiTime || 0);
+    }
+
+    // 6. PROJECTILES & SLASHES PASS
+    const tProjStart = now();
+    if (opts.combatVfxEnabled !== false && ((engine.projectiles && engine.projectiles.length > 0) || (engine.slashes && engine.slashes.length > 0))) {
+      const projResult = renderProjectilesAndSlashes(
         ctx,
-        width,
-        height,
-        { x: camera.x, y: camera.y },
-        engine.lightSources,
-        phase.id,
-        kurazRatio,
-        curLvl.season === 'winter',
-        engine.shadowZones || [],
-        engine.occluders || [],
-        opts.performanceProfile ?? 'balanced',
-        true
+        engine.projectiles || [],
+        engine.slashes || [],
+        camera,
+        engine.uiTime || 0
       );
+      renderedProjectiles = projResult.renderedProjectiles;
     }
-    lightingMs = now() - tLightStart;
-  }
+    const projectilesMs = now() - tProjStart;
 
-  // 5. COMBAT FLOATING TEXTS PASS
-  let combatTextsMs = 0;
-  const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
-  if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
-    const tTextsStart = now();
-    for (let i = 0; i < engine.texts.length; i++) {
-      const txt = engine.texts[i];
-      if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
-        continue;
-      }
-      if (!shouldDrawCombatText(txt.category, txt.text)) {
-        continue;
-      }
-      if (typeof txt.draw === 'function') {
-        txt.draw(ctx);
-      } else if (txt.text) {
-        drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
-      }
+    // 7. PARTICLES PASS
+    const tParticlesStart = now();
+    if (opts.combatVfxEnabled !== false && engine.particles && engine.particles.length > 0) {
+      renderedParticles = renderParticles(ctx, engine.particles, camera);
     }
-    combatTextsMs = now() - tTextsStart;
+    const particlesMs = now() - tParticlesStart;
+
+    // 8. LIGHTING PASS
+    let lightingMs = 0;
+    if (opts.lightingEnabled) {
+      const tLightStart = now();
+      const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
+      if (isNight && engine.lightSources && engine.lightSources.length > 0) {
+        renderStorybookLightingComposite(
+          ctx,
+          width,
+          height,
+          { x: camera.x, y: camera.y },
+          engine.lightSources,
+          phase.id,
+          kurazRatio,
+          curLvl.season === 'winter',
+          engine.shadowZones || [],
+          opts.performanceProfile === 'performance' ? [] : (engine.occluders || []),
+          opts.performanceProfile ?? 'balanced',
+          true
+        );
+      }
+      lightingMs = now() - tLightStart;
+    }
+
+    // 9. COMBAT FLOATING TEXTS PASS
+    let combatTextsMs = 0;
+    const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
+    if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
+      const tTextsStart = now();
+      for (let i = 0; i < engine.texts.length; i++) {
+        const txt = engine.texts[i];
+        if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
+          continue;
+        }
+        if (!shouldDrawCombatText(txt.category, txt.text)) {
+          continue;
+        }
+        if (typeof txt.draw === 'function') {
+          txt.draw(ctx);
+        } else if (txt.text) {
+          drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
+        }
+      }
+      combatTextsMs = now() - tTextsStart;
+    }
+
+    const totalMs = now() - tStart;
+
+    if (outMetrics) {
+      outMetrics.renderedEntities = renderedEntities;
+      outMetrics.renderedDecor = renderedDecor;
+      outMetrics.activeChunks = activeChunks;
+      outMetrics.renderedProjectiles = renderedProjectiles;
+      outMetrics.renderedDrops = renderedDrops;
+      outMetrics.renderedParticles = renderedParticles;
+      outMetrics.timings.backdropMs = backdropMs;
+      outMetrics.timings.staticDecorMs = staticDecorMs;
+      outMetrics.timings.entitiesMs = entitiesMs;
+      outMetrics.timings.projectilesMs = projectilesMs;
+      outMetrics.timings.dropsMs = dropsMs;
+      outMetrics.timings.particlesMs = particlesMs;
+      outMetrics.timings.lightingMs = lightingMs;
+      outMetrics.timings.combatTextsMs = combatTextsMs;
+      outMetrics.timings.totalMs = totalMs;
+      return outMetrics;
+    }
+
+    return {
+      renderedEntities,
+      renderedDecor,
+      activeChunks,
+      renderedProjectiles,
+      renderedDrops,
+      renderedParticles,
+      timings: {
+        backdropMs,
+        staticDecorMs,
+        entitiesMs,
+        projectilesMs,
+        dropsMs,
+        particlesMs,
+        lightingMs,
+        combatTextsMs,
+        totalMs,
+      },
+    };
   }
+}
 
-  const totalMs = now() - tStart;
+export const defaultArenaRenderer = new ArenaRenderer();
 
-  if (outMetrics) {
-    outMetrics.renderedEntities = renderedEntities;
-    outMetrics.renderedDecor = renderedDecor;
-    outMetrics.activeChunks = activeChunks;
-    outMetrics.timings.backdropMs = backdropMs;
-    outMetrics.timings.staticDecorMs = staticDecorMs;
-    outMetrics.timings.entitiesMs = entitiesMs;
-    outMetrics.timings.lightingMs = lightingMs;
-    outMetrics.timings.combatTextsMs = combatTextsMs;
-    outMetrics.timings.totalMs = totalMs;
-    return outMetrics;
-  }
+export function renderArenaEntities(
+  ctx: CanvasRenderingContext2D,
+  engine: EngineState,
+  camera: CameraViewport,
+  options?: ArenaEntityPassOptions
+): number {
+  return defaultArenaRenderer.renderEntities(ctx, engine, camera, options);
+}
 
-  return {
-    renderedEntities,
-    renderedDecor,
-    activeChunks,
-    timings: {
-      backdropMs,
-      staticDecorMs,
-      entitiesMs,
-      lightingMs,
-      combatTextsMs,
-      totalMs,
-    },
-  };
+export function renderArena(
+  ctx: CanvasRenderingContext2D,
+  engine: EngineState,
+  camera: CameraViewport,
+  options?: ArenaRenderOptions,
+  outMetrics?: ArenaRenderMetrics
+): ArenaRenderMetrics {
+  return defaultArenaRenderer.renderArena(ctx, engine, camera, options, outMetrics);
 }

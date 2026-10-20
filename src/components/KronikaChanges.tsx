@@ -9,6 +9,21 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '20. října 2026',
+    title: 'Výkonnostní optimalizace arény: 60 FPS zátěžový benchmark, rozpočty entit a Ghost rezervoár',
+    summary: 'Kompletní implementace všech fází optimalizačního plánu pro udržení stabilních 60 FPS (p95 pod 16,7 ms). Zaveden deterministický zátěžový benchmark, modulární renderovací pipeline s izolovaným Y-bufferem, škrcení prostorových dotazů, centrální rozpočty částic a Ghost rezervoár zamezující zahlcení bojiště dropy bez ztráty jediné suroviny.',
+    items: [
+      '⚡ Deterministický zátěžový benchmark: Přidán benchmark ověřující p50/p95 časy snímku pro profily performance, balanced a fidelity. Výsledky garantují p95 hluboko pod 16,7 ms i při desítkách aktivních entit.',
+      '🎨 Modulární renderovací pipeline: Vykreslování kořisti, částic, střel a varovných zón bossů vyčleněno do samostatných frustum-culled modulů. Předalokovaný Y-buffer je izolován v instanci ArenaRendereru s nulovými mezialokacemi.',
+      '⏱️ Škrcení drahých prostorových dotazů: Hromnička, Svatý kruh a Saze počítají prostorové dotazy na 10 Hz s časovou akumulací. Kontaktní odezva a pohyb zůstávají na plných 60 Hz.',
+      '✨ Rozpočty částic a bezalokační emitování: Zaveden centrální správce částic s tvrdými stropy podle grafického profilu (60/120/250) bránící zahlcení paměti v husté vřavě.',
+      '👻 Ghost rezervoár pro hejna bubáků: Přebytečné dropy z hejn se kumulují a kondenzují do hodnotnějších svazků. Testy garantují 100% zachování nominální hodnoty perníčků, mincí i zkušeností.',
+      '🖼️ Úsporný profil obrazu (0,75×): V profilu performance se plátno rasterizuje v interním rozlišení 0,75× s automatickou korekcí kurzoru a vypnutím náročných reliéfů a okluderů.',
+      '💬 WordStamp mezipaměť a statické portréty: GlyphAtlas cachuje celá často používaná slova (KRIT!, MINUL!, ODRAZ!), zamčené portréty lovců v nabídce se předrenderují offscreen a byl spuštěn pilotní sprite baker pro raracha, myšáka a bludičku.',
+      '🧪 Pro testery: v Nastavení zvolte profil Plynulý (60 FPS) a ověřte bezchybný chod arény s desítkami nepřátel a stabilní hodnoty získaných surovin.',
+    ],
+  },
+  {
     date: '16. října 2026',
     title: 'Optimalizace kvašového svícení, eliminace Gaussian blurů a zrychlení herní smyčky',
     summary: 'Důkladná revize výkonu bojové arény při vysokých počtech monster a v nočních fázích. Odstraněny náročné Gaussian blury z kreseb monster a projektilů, světelný buffer rasterizuje stíny ve 4× nižším rozlišení, dropy a projektily se čerpají z mezipaměti sprite bitmap a stínoví nepřátelé mimo obrazovku již nezatěžují procesor raycasty.',

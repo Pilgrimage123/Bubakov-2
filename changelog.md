@@ -1,3 +1,29 @@
+## 2026-10-20 — Výkonnostní optimalizace arény: 60 FPS zátěžový benchmark, rozpočty entit, Ghost rezervoár a jednotná pipeline
+
+- **Deterministický zátěžový benchmark (`runDeterministicArenaStressBenchmark`)**:
+  - Do `src/game/benchmark.ts` a `tests/arenaStressBenchmark.test.ts` přidán bezalokační syntetický benchmark ověřující stabilitu 60 FPS pro profily `performance`, `balanced` a `fidelity`.
+  - Měření potvrzuje $p50$ a $p95$ časy snímku hluboko pod cílovou hranicí 16,7 ms při plné zátěži desítek nepřátel, střel a částic.
+- **Jednotná renderovací pipeline a izolovaný Y-buffer (`ArenaRenderer`)**:
+  - Vytvořeny modulární renderery pro jednotlivé vrstvy arény: `renderDrops.ts`, `renderParticles.ts`, `renderProjectiles.ts` a `renderTelegraphs.ts` s frustum cullingem.
+  - Třída `ArenaRenderer` zapouzdřuje instance scratch polí (`Float64Array`, `Int32Array`) pro hloubkové řazení (Y-sorting) bez mezialokací a bez sdílení mezi více plátny.
+- **Škrcení náročných prostorových dotazů a dirty-checking v HUDu**:
+  - Hromnička, Svatý kruh a Saze škrceny na 10 Hz s časovou akumulací; kontaktní odezva a pohyb zůstávají na plných 60 Hz.
+  - Naváděné střely kešují cíl a dotazují strom nejdříve po 0,2 s nebo při zániku cíle.
+  - Synchronizace herního stavu do React HUDu v profilu `performance` snížena na interval 0,25 s a opatřena dirty-check porovnáváním klíčových hodnot, což eliminuje zbytečné re-rendery komponent.
+- **Rozpočty částic a Ghost rezervoár dropů (`SwarmDropReservoir`)**:
+  - Zaveden centrální správce částic `tryEmitParticle` s přísnými stropy podle profilu (60 pro performance, 120 pro balanced, 250 pro fidelity).
+  - Přebytečné dropy z hejn se kumulují v `SwarmDropReservoir` a kondenzují do hodnotnějších svazků při exaktním 100% zachování nominální hodnoty perníčků, mincí a zkušeností (`tests/swarmDropReservoir.test.ts`).
+  - Strop živých nepřátel v profilu `performance` byl snížen na 35 a přebytek rozpočtu hrozeb je Režisérem bezpečně konvertován do elitních a příznakových monster.
+- **Úsporný profil obrazu (0,75× interní rozlišení a geometrie)**:
+  - V profilu `performance` zavedeno interní škálování canvasu faktorem 0,75× s automatickou korekcí přepočtu souřadnic myši a dotyku (`tests/canvasGeometry.test.ts`).
+  - Vypnuty náročné okludery a reliéfní mapy.
+- **Texty, portréty a pilotní sprite baking**:
+  - `GlyphAtlas` rozšířen o `WordStampCache` pro rychlé otisky frekventovaných slov (KRIT!, MINUL!, ODRAZ!) bez alokace řetězců.
+  - Zamčené portréty lovců se staticky předrenderují do offscreen mezipaměti.
+  - Vytvořen pilotní atlas pečených spritů `BakedBubakAtlas` pro raracha, myšáka a bludičku (`tests/bakedBubakAtlas.test.ts`).
+- **Dokončení plánu**:
+  - Všechny sekce a ověřovací brány v `docs/plans/arena-performance-implementation-plan.md` byly kompletně implementovány, otestovány (37 testových sad, 390 testů) a zaškrtnuty.
+
 ## 2026-10-16 — Optimalizace kvašového svícení, eliminace Gaussian blurů v Canvas 2D a zrychlení renderovací smyčky
 
 - **Optimalizace kvašového svícení (`storybookLightingRenderer.ts`)**:

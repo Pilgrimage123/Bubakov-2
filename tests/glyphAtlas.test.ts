@@ -48,12 +48,29 @@ describe('Bitmap Glyph Cache for Combat Numbers (Ticket #32)', () => {
     expect(secondDigitDstX).toBeGreaterThan(firstDigitDstX);
   });
 
-  it('falls back safely to vector text methods for uncached complex words', () => {
-    const handled = atlas.draw(ctx, 'ZOUFALÁ KURÁŽ', 100, 200, { size: 18, color: '#FFFFFF' });
+  it('falls back safely to vector text methods for uncached complex words when useStampCache is false', () => {
+    const handled = atlas.draw(ctx, 'ZOUFALÁ KURÁŽ', 100, 200, { size: 18, color: '#FFFFFF', useStampCache: false });
 
     expect(handled).toBe(false);
     expect(ctx.fillText).toHaveBeenCalledWith('ZOUFALÁ KURÁŽ', 100, 200);
     expect(ctx.strokeText).toHaveBeenCalledWith('ZOUFALÁ KURÁŽ', 100, 200);
+  });
+
+  it('WordStampCache caches offscreen stamps and evicts oldest when exceeding max capacity', () => {
+    const cache = atlas.wordStampCache;
+    const stamp1 = cache.getOrCreate('Word1', 18, '#FFFFFF');
+    const stamp2 = cache.getOrCreate('Word1', 18, '#FFFFFF');
+    expect(stamp1).toBe(stamp2);
+    expect(cache.size).toBe(1);
+    cache.clear();
+    expect(cache.size).toBe(0);
+  });
+
+  it('blits non-numeric combat text via WordStampCache without calling strokeText or fillText on target context', () => {
+    const handled = atlas.draw(ctx, 'DODGE!', 100, 200, { size: 18, color: '#FFFFFF', useStampCache: true });
+    expect(handled).toBe(true);
+    expect(ctx.drawImage).toHaveBeenCalled();
+    expect(ctx.fillText).not.toHaveBeenCalled();
   });
 
   it('global helper drawGlyphText works seamlessly', () => {

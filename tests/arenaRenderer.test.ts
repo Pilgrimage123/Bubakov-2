@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderArena, renderArenaEntities, isInView, type CameraViewport, type ArenaRenderOptions } from '../src/render/arenaRenderer';
+import {
+  renderArena,
+  renderArenaEntities,
+  isInView,
+  ArenaRenderer,
+  type CameraViewport,
+  type ArenaRenderOptions,
+} from '../src/render/arenaRenderer';
 import { createInitialEngineState } from '../src/game/engineState';
 import type { EngineState } from '../src/game/engineState';
 import { createMockCanvasContext } from './helpers/mockCanvas';
@@ -115,5 +122,38 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     expect(count).toBe(2);
     expect(drawOrder).toEqual(['early', 'late']);
     expect(ornamentOrder).toEqual(['early', 'late']);
+  });
+
+  it('provides instance-isolated preallocated buffers to prevent cross-canvas collisions (Plan Section 2)', () => {
+    const rendererA = new ArenaRenderer();
+    const rendererB = new ArenaRenderer();
+
+    expect(rendererA.preallocatedDrawables).not.toBe(rendererB.preallocatedDrawables);
+    expect(rendererA.preallocatedDrawables.length).toBe(2048);
+    expect(rendererB.preallocatedDrawables.length).toBe(2048);
+  });
+
+  it('renders extended arena passes (drops, projectiles, particles, telegraphs) in single seam', () => {
+    engine.drops = [
+      { x: 10, y: 10, type: 'coin', value: 5, time: 0, dead: false },
+      { x: 2000, y: 2000, type: 'coin', value: 5, time: 0, dead: false }, // culled
+    ];
+    engine.projectiles = [
+      { x: 5, y: 5, radius: 10, visual: 'potato', dead: false },
+      { x: 3000, y: 3000, radius: 10, visual: 'potato', dead: false }, // culled
+    ];
+    engine.particles = [
+      { x: 0, y: 0, life: 0.5, size: 4, color: '#F59E0B' },
+      { x: 5000, y: 5000, life: 0.5, size: 4, color: '#F59E0B' }, // culled
+    ];
+
+    const metrics = renderArena(ctx, engine, camera);
+
+    expect(metrics.renderedDrops).toBe(1);
+    expect(metrics.renderedProjectiles).toBe(1);
+    expect(metrics.renderedParticles).toBe(1);
+    expect(metrics.timings.dropsMs).toBeDefined();
+    expect(metrics.timings.projectilesMs).toBeDefined();
+    expect(metrics.timings.particlesMs).toBeDefined();
   });
 });

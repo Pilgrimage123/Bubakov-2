@@ -857,3 +857,123 @@ export function applyAnanasUpgrade(
   });
 }
 
+/**
+ * Ghost rezervoár pro hejna (ADR 0006 & Plan Section 4)
+ * Drobná hejna (swarms) nezasypávají bojiště desítkami drobných samostatných dropů.
+ * Místo toho se jejich hodnota kumuluje do rezervoáru a po zahnání vůdce roje
+ * nebo dosažení limitu se uvolní jako komprimovaný perníček a krejcary.
+ */
+export interface SwarmDropReservoir {
+  points: number;
+  gingerbread: number;
+  coins: number;
+  lastX?: number;
+  lastY?: number;
+  pendingKills?: number;
+  leaderSeen?: boolean;
+}
+
+export function createSwarmDropReservoir(): SwarmDropReservoir {
+  return {
+    points: 0,
+    gingerbread: 0,
+    coins: 0,
+    lastX: 0,
+    lastY: 0,
+    pendingKills: 0,
+    leaderSeen: false,
+  };
+}
+
+export function accumulateSwarmDrop(
+  reservoir: SwarmDropReservoir,
+  drop: { type: DropType; value?: number; x: number; y: number },
+  isLeader = false
+): boolean {
+  if (drop.type === 'gingerbread') {
+    reservoir.gingerbread += drop.value ?? 2;
+  } else if (drop.type === 'coin') {
+    reservoir.coins += drop.value ?? 1;
+  }
+  reservoir.lastX = drop.x;
+  reservoir.lastY = drop.y;
+  reservoir.pendingKills = (reservoir.pendingKills || 0) + 1;
+  if (isLeader) {
+    reservoir.leaderSeen = true;
+  }
+  return true;
+}
+
+export function shouldReleaseSwarmReservoir(reservoir: SwarmDropReservoir, threshold = 6): boolean {
+  return !!reservoir.leaderSeen || (reservoir.pendingKills || 0) >= threshold;
+}
+
+export function releaseSwarmReservoir(
+  reservoir: SwarmDropReservoir,
+  targetDropsArray: GameDrop[]
+): number {
+  if (reservoir.gingerbread <= 0 && reservoir.coins <= 0) {
+    reservoir.pendingKills = 0;
+    reservoir.leaderSeen = false;
+    return 0;
+  }
+
+  let releasedCount = 0;
+  const lx = reservoir.lastX || 0;
+  const ly = reservoir.lastY || 0;
+
+  // Release consolidated gingerbreads
+  let gbVal = reservoir.gingerbread;
+  while (gbVal > 0) {
+    if (gbVal >= GINGERBREAD_VALUES.giant) {
+      targetDropsArray.push(
+        createDropInstance('gingerbread', lx, ly, {
+          value: GINGERBREAD_VALUES.giant,
+          size: 'giant',
+          radius: 18,
+        })
+      );
+      gbVal -= GINGERBREAD_VALUES.giant;
+      releasedCount++;
+    } else if (gbVal >= GINGERBREAD_VALUES.large) {
+      targetDropsArray.push(
+        createDropInstance('gingerbread', lx, ly, {
+          value: GINGERBREAD_VALUES.large,
+          size: 'large',
+          radius: 14,
+        })
+      );
+      gbVal -= GINGERBREAD_VALUES.large;
+      releasedCount++;
+    } else {
+      targetDropsArray.push(
+        createDropInstance('gingerbread', lx, ly, {
+          value: gbVal,
+          size: 'small',
+          radius: 10,
+        })
+      );
+      gbVal = 0;
+      releasedCount++;
+    }
+  }
+
+  // Release consolidated coins
+  if (reservoir.coins > 0) {
+    targetDropsArray.push(
+      createDropInstance('coin', lx + 10, ly - 10, {
+        value: reservoir.coins,
+        speed: 60,
+      })
+    );
+    releasedCount++;
+  }
+
+  reservoir.gingerbread = 0;
+  reservoir.coins = 0;
+  reservoir.pendingKills = 0;
+  reservoir.leaderSeen = false;
+  return releasedCount;
+}
+
+

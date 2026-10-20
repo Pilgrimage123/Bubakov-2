@@ -29,6 +29,7 @@ export interface DrawGlyphOptions {
   size?: number;
   color?: string;
   alpha?: number;
+  useStampCache?: boolean;
 }
 
 const SUPPORTED_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '!', '%', '.', ','];
@@ -147,6 +148,106 @@ function createAtlasCanvas(width: number, height: number): { canvas: any; ctx: a
   };
 
   return { canvas, ctx };
+}
+
+export interface CachedWordStamp {
+  canvas: any;
+  ctx: any;
+  width: number;
+  height: number;
+  baseline: number;
+}
+
+export class WordStampCache {
+  private stamps = new Map<string, CachedWordStamp>();
+  private readonly maxCapacity: number;
+  private measureCanvas: any = null;
+  private measureCtx: any = null;
+
+  constructor(maxCapacity = 128) {
+    this.maxCapacity = maxCapacity;
+  }
+
+  public get size(): number {
+    return this.stamps.size;
+  }
+
+  private getMeasureContext(): any {
+    if (!this.measureCtx) {
+      const { canvas, ctx } = createAtlasCanvas(1, 1);
+      this.measureCanvas = canvas;
+      this.measureCtx = ctx;
+    }
+    return this.measureCtx;
+  }
+
+  public get(key: string): CachedWordStamp | undefined {
+    return this.stamps.get(key);
+  }
+
+  public clear(): void {
+    for (const stamp of this.stamps.values()) {
+      if (stamp.canvas) {
+        stamp.canvas.width = 0;
+        stamp.canvas.height = 0;
+      }
+    }
+    this.stamps.clear();
+  }
+
+  public getOrCreate(text: string, size: number, color: string): CachedWordStamp {
+    const key = `${text}_${size}_${color.toUpperCase()}`;
+    const existing = this.stamps.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    if (this.stamps.size >= this.maxCapacity) {
+      const firstKey = this.stamps.keys().next().value;
+      if (firstKey !== undefined) {
+        const evicted = this.stamps.get(firstKey);
+        if (evicted?.canvas) {
+          evicted.canvas.width = 0;
+          evicted.canvas.height = 0;
+        }
+        this.stamps.delete(firstKey);
+      }
+    }
+
+    const strokeWidth = size >= 26 ? 4.0 : 3.0;
+    const padding = Math.ceil(strokeWidth * 2) + 6;
+
+    const testCtx = this.getMeasureContext();
+    testCtx.font = `900 ${size}px Eczar, "Cinzel Decorative", serif`;
+    const metrics = testCtx.measureText ? testCtx.measureText(text) : { width: text.length * size * 0.7 };
+    const measuredWidth = Math.ceil(metrics.width || text.length * size * 0.7);
+
+    const stampWidth = measuredWidth + padding * 2;
+    const stampHeight = Math.ceil(size * 1.5) + padding * 2;
+    const baseline = Math.ceil(size * 1.1) + padding;
+
+    const { canvas, ctx } = createAtlasCanvas(stampWidth, stampHeight);
+    ctx.font = `900 ${size}px Eczar, "Cinzel Decorative", serif`;
+    ctx.strokeStyle = COLORS?.ink || '#1E1B18';
+    ctx.lineWidth = strokeWidth;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeText(text, padding, baseline);
+
+    ctx.fillStyle = color;
+    ctx.fillText(text, padding, baseline);
+
+    const stamp: CachedWordStamp = {
+      canvas,
+      ctx,
+      width: stampWidth,
+      height: stampHeight,
+      baseline,
+    };
+
+    this.stamps.set(key, stamp);
+    return stamp;
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -827,6 +928,7 @@ export class GlyphAtlas {
   private ctx: any = null;
   private glyphs: Map<string, CachedGlyph> = new Map();
   private initialized = false;
+  public wordStampCache: WordStampCache = new WordStampCache(128);
 
   private makeKey(char: string, size: number, color: string): string {
     const norm = normalizeEmojiToken(char);
@@ -997,7 +1099,7 @@ export class GlyphAtlas {
 
     if (hasUncachedChar) {
       // Fallback: uncached complex words or mixed status sentences
-      return this.fallbackVectorDraw(ctx, text, x, y, size, options?.color ?? '#FFFFFF', alpha);
+      return this.fallbackVectorDraw(ctx, text, x, y, size, options?.color ?? '#FFFFFF', alpha, options?.useStampCache);
     }
 
     // Blit pre-rendered glyphs
@@ -1042,7 +1144,8 @@ export class GlyphAtlas {
     y: number,
     size: number,
     color: string,
-    alpha: number
+    alpha: number,
+    useStampCache = true
   ): boolean {
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
@@ -1052,9 +1155,19 @@ export class GlyphAtlas {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
 
-    // If text does not contain any emojis, perform standard fallback call
+    // If text does not contain any emojis, blit cached word stamp without vector rasterization
     const hasAnyEmoji = SUPPORTED_CANVAS_EMOJIS.some((e) => text.includes(e));
     if (!hasAnyEmoji) {
+      if (useStampCache) {
+        const stamp = this.wordStampCache.getOrCreate(text, size, color);
+        ctx.drawImage(
+          stamp.canvas,
+          Math.round(x - stamp.width * 0.5),
+          Math.round(y - stamp.baseline)
+        );
+        ctx.restore();
+        return true;
+      }
       ctx.strokeText(text, x, y);
       ctx.fillStyle = color;
       ctx.fillText(text, x, y);
@@ -1132,6 +1245,12 @@ export class GlyphAtlas {
 }
 
 let globalGlyphAtlas: GlyphAtlas | null = null;
+
+export function resetGlobalGlyphAtlas(): void {
+  if (globalGlyphAtlas) {
+    globalGlyphAtlas.wordStampCache.clear();
+  }
+}
 
 export function getGlobalGlyphAtlas(): GlyphAtlas {
   if (!globalGlyphAtlas) {
