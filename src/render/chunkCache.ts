@@ -19,6 +19,7 @@ export interface ChunkBounds {
 
 export interface ChunkCacheOptions {
   chunkSize?: number;
+  timeOfDayDecoupled?: boolean;
 }
 
 export interface ChunkTile {
@@ -76,6 +77,7 @@ function createOffscreenCanvas(width: number, height: number): { canvas: any; ct
 
 export class ChunkBitmapCache {
   public readonly chunkSize: number;
+  public readonly timeOfDayDecoupled: boolean;
   private chunks: Map<string, ChunkTile> = new Map();
   private dynamicDecor: any[] = [];
   private lastSeason: string | null = null;
@@ -84,6 +86,7 @@ export class ChunkBitmapCache {
 
   constructor(options?: ChunkCacheOptions) {
     this.chunkSize = options?.chunkSize || 512;
+    this.timeOfDayDecoupled = options?.timeOfDayDecoupled ?? false;
   }
 
   public getChunkKey(x: number, y: number): string {
@@ -113,16 +116,36 @@ export class ChunkBitmapCache {
     theme = 'meadow',
     isNight = false
   ): boolean {
+    const effectiveNight = this.timeOfDayDecoupled ? false : isNight;
     if (
       this.chunks.size > 0 &&
       this.lastSeason === season &&
       this.lastTheme === theme &&
-      this.lastIsNight === isNight
+      this.lastIsNight === effectiveNight
     ) {
       return false;
     }
-    this.build(decorList, season, theme, isNight);
+    this.build(decorList, season, theme, effectiveNight);
     return true;
+  }
+
+  /**
+   * Immediately reclaims GPU/canvas memory by setting all chunk canvas dimensions to 0,
+   * releasing 2D contexts, and clearing internal maps.
+   */
+  public dispose(): void {
+    for (const chunk of this.chunks.values()) {
+      if (chunk.canvas) {
+        chunk.canvas.width = 0;
+        chunk.canvas.height = 0;
+      }
+      chunk.ctx = null;
+    }
+    this.chunks.clear();
+    this.dynamicDecor = [];
+    this.lastSeason = null;
+    this.lastTheme = null;
+    this.lastIsNight = null;
   }
 
   /**
@@ -134,8 +157,7 @@ export class ChunkBitmapCache {
     theme = 'meadow',
     isNight = false
   ): void {
-    this.chunks.clear();
-    this.dynamicDecor = [];
+    this.dispose();
     this.lastSeason = season;
     this.lastTheme = theme;
     this.lastIsNight = isNight;

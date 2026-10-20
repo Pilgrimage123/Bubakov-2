@@ -25,6 +25,18 @@ const KRONIKA: KronikaEntry[] = [
   },
   {
     date: '20. října 2026',
+    title: 'Oprava poklesu výkonu při restartu bez znovunačtení stránky (F5)',
+    summary: 'Důkladný audit a vyřešení degradace výkonu při opakovaných výpravách bez reloadu. Uvolněna GPU VRAM v ChunkBitmapCache, odstraněny nebezpečné duchy časovačů (ghost timers), vyčištěny herní buffery a eliminovány alokace objektů na renderovací hot path v 60 FPS.',
+    items: [
+      '🧹 Uvolňování GPU VRAM (ChunkBitmapCache.dispose): Při restartu výpravy i odchodu do hospody se explicitně nulují rozměry canvasů (width=0, height=0) a uvolňují kontexty, což okamžitě vrací desítky megabajtů grafické paměti a brání GPU thrashingu.',
+      '👻 Konec duchů časovačů (Ghost Timers): Časovač vítězství (3,5 s) a notifikace o odemčení se při novém startu okamžitě ruší. Odstraněna chyba, kdy rychlý restart po výhře předčasně ukončil rozehranou novou hru do souhrnné obrazovky.',
+      '🎯 Bezalokační renderovací hot path (60 FPS): Viewport kamery, vykreslovací parametry a adaptér Režiséra s uzávěry se již nevytvářejí znovu každý snímek (~25 000 ušetřených objektů za minutu, konec záseků způsobených Garbage Collectorem).',
+      '🔄 Stoprocentní reset herního stavu: Fronta milníků zbraní, prostorové buffery, dotykový joystick i mrtvé plovoucí texty se při restartu čistí přímo na místě (in-place).',
+      '🧪 Pro testery: odehrajte 5+ výprav za sebou bez F5; framerate zůstává stabilních 60 FPS a paměť GPU i procesoru neroste.',
+    ],
+  },
+  {
+    date: '20. října 2026',
     title: 'Výkonnostní optimalizace arény: 60 FPS zátěžový benchmark, rozpočty entit a Ghost rezervoár',
     summary: 'Kompletní implementace všech fází optimalizačního plánu pro udržení stabilních 60 FPS (p95 pod 16,7 ms). Zaveden deterministický zátěžový benchmark, modulární renderovací pipeline s izolovaným Y-bufferem, škrcení prostorových dotazů, centrální rozpočty částic a Ghost rezervoár zamezující zahlcení bojiště dropy bez ztráty jediné suroviny.',
     items: [

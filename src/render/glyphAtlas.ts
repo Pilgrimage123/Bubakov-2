@@ -172,6 +172,7 @@ export class WordStampCache {
     return this.stamps.size;
   }
 
+
   private getMeasureContext(): any {
     if (!this.measureCtx) {
       const { canvas, ctx } = createAtlasCanvas(1, 1);
@@ -202,6 +203,7 @@ export class WordStampCache {
       return existing;
     }
 
+    // Maintain max capacity (FIFO eviction with GPU canvas cleanup)
     if (this.stamps.size >= this.maxCapacity) {
       const firstKey = this.stamps.keys().next().value;
       if (firstKey !== undefined) {
@@ -247,6 +249,16 @@ export class WordStampCache {
 
     this.stamps.set(key, stamp);
     return stamp;
+  }
+
+  public dispose(): void {
+    this.clear();
+    if (this.measureCanvas) {
+      this.measureCanvas.width = 0;
+      this.measureCanvas.height = 0;
+      this.measureCanvas = null;
+      this.measureCtx = null;
+    }
   }
 }
 
@@ -1098,6 +1110,9 @@ export class GlyphAtlas {
     }
 
     if (hasUncachedChar) {
+      if (options?.useStampCache) {
+        return this.drawWordStamp(ctx, text, x, y, options);
+      }
       // Fallback: uncached complex words or mixed status sentences
       return this.fallbackVectorDraw(ctx, text, x, y, size, options?.color ?? '#FFFFFF', alpha, options?.useStampCache);
     }
@@ -1242,6 +1257,30 @@ export class GlyphAtlas {
     ctx.restore();
     return false;
   }
+
+  public drawWordStamp(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    options?: DrawGlyphOptions
+  ): boolean {
+    const size = options?.size ?? 18;
+    const color = (options?.color ?? '#FFFFFF').toUpperCase();
+    const alpha = options?.alpha ?? 1.0;
+
+    const stamp = this.wordStampCache.getOrCreate(text, size, color);
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.drawImage(
+      stamp.canvas,
+      Math.round(x - stamp.width * 0.5),
+      Math.round(y - stamp.baseline)
+    );
+    ctx.restore();
+    return true;
+  }
 }
 
 let globalGlyphAtlas: GlyphAtlas | null = null;
@@ -1267,5 +1306,8 @@ export function drawGlyphText(
   y: number,
   options?: DrawGlyphOptions
 ): boolean {
-  return getGlobalGlyphAtlas().draw(ctx, text, x, y, options);
+  return getGlobalGlyphAtlas().draw(ctx, text, x, y, {
+    useStampCache: true,
+    ...options,
+  });
 }
