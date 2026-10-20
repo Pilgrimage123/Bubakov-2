@@ -6,3 +6,4 @@ dist
 .worktrees/
 .aistudio/
 
+*_bundle.txt

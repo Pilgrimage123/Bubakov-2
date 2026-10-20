@@ -3,6 +3,36 @@ import { getCurrentDayPhase } from '../constants';
 import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES } from '../data/enemies';
+import { toCanonicalWeaponId } from './migration';
+
+export const HORDE_CLEARING_WEAPONS = new Set<string>([
+  'hromnicka',
+  'cesnekova_topinka',
+  'bylinkova_fajfka',
+  'valecnice',
+  'kovana_halapartna',
+  'dreveny_cep',
+  'svecena_kropenka',
+  'snehova_koule',
+]);
+
+export function isHordeClearingArsenal(player: any): boolean {
+  if (!player || !Array.isArray(player.weapons) || player.weapons.length === 0) {
+    return false;
+  }
+  let hordeCount = 0;
+  for (const w of player.weapons) {
+    const rawId = typeof w === 'string' ? w : w?.id || w?.weaponId;
+    if (rawId) {
+      const canonical = toCanonicalWeaponId(rawId);
+      if (HORDE_CLEARING_WEAPONS.has(canonical) || HORDE_CLEARING_WEAPONS.has(rawId)) {
+        hordeCount++;
+      }
+    }
+  }
+  const ratio = hordeCount / player.weapons.length;
+  return ratio >= 0.5 || hordeCount >= 2;
+}
 
 export interface ArenaHazard {
   id: string;
@@ -131,6 +161,9 @@ export interface DirectorTelemetry {
   assistanceActive: boolean;
   dynamicDifficulty: number;
   pressureMultiplier: number;
+  killVelocity: number;
+  panicBrakeActive: boolean;
+  punitiveTwinCooldown: number;
 }
 
 export interface DirectorConfig {
@@ -245,6 +278,9 @@ export class RunDirector {
   /** Runtime pressure adjustment; the selected difficulty remains the baseline. */
   public pressureMultiplier = 1.0;
   public activePunitiveMiniboss: any = null;
+  public panicBrakeCooldown = 0;
+  public panicBrakeActiveTimer = 0;
+  public punitiveTwinCooldown = 0;
 
   private recentKills: EnemyKillRecord[] = [];
   private spawnTimeByEnemy = new WeakMap<any, number>();
@@ -260,6 +296,9 @@ export class RunDirector {
   private kitingHazardCooldown = 0;
   private buildupDuration = 0;
   private peakDuration = 0;
+  private lastRecordedPlayerHp: number | null = null;
+  private hpLossWindowTimer = 0;
+  private hpLossInWindow = 0;
 
   constructor(public levelId: GameLevelId, seed?: number, config?: Partial<DirectorConfig>) {
     this.rozmar = selectRunRozmar(levelId, seed);
@@ -297,6 +336,20 @@ export class RunDirector {
     return sum / this.recentKills.length;
   }
 
+  public getKillVelocity(windowSec = 3.0): number {
+    const now = this.currentGameTime;
+    const windowStart = now - windowSec;
+    let count = 0;
+    for (let i = this.recentKills.length - 1; i >= 0; i--) {
+      if (this.recentKills[i].killedAt >= windowStart) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return windowSec > 0 ? count / windowSec : 0;
+  }
+
   public computeDominanceIndex(player: any): number {
     if (!player) return 0.5;
     const ttk = this.getAverageTTK();
@@ -308,7 +361,10 @@ export class RunDirector {
     // High player courage gives high courage factor
     const maxHp = player.maxHp || 100;
     const hpFactor = Math.max(0, Math.min(1, (player.hp || 1) / maxHp));
-    return ttkFactor * 0.6 + hpFactor * 0.4;
+    const killVel = this.getKillVelocity(3.0);
+    const velFactor = Math.max(0, Math.min(1, killVel / 3.0));
+
+    return ttkFactor * 0.40 + hpFactor * 0.35 + velFactor * 0.25;
   }
 
   public step(dt: number, engine: any): void {
@@ -324,6 +380,39 @@ export class RunDirector {
     this.currentGameTime = gameTime;
     const livingCount = engine.livingEnemies?.length ?? state.enemies?.length ?? 0;
 
+    // Tick cooldowns
+    this.punitiveTwinCooldown = Math.max(0, this.punitiveTwinCooldown - dt);
+    this.panicBrakeCooldown = Math.max(0, this.panicBrakeCooldown - dt);
+    this.panicBrakeActiveTimer = Math.max(0, this.panicBrakeActiveTimer - dt);
+
+    // Track sudden burst damage for Panic Brake
+    const maxHp = player.maxHp || 100;
+    const currentHp = player.hp !== undefined ? player.hp : maxHp;
+    if (this.lastRecordedPlayerHp !== null) {
+      const hpDrop = this.lastRecordedPlayerHp - currentHp;
+      if (hpDrop > 0) {
+        this.hpLossInWindow += hpDrop;
+      }
+    }
+    this.lastRecordedPlayerHp = currentHp;
+    this.hpLossWindowTimer += dt;
+    if (this.hpLossWindowTimer >= 1.5) {
+      this.hpLossWindowTimer = 0;
+      this.hpLossInWindow = 0;
+    }
+
+    const currentHpRatio = Math.max(0, Math.min(1, currentHp / maxHp));
+    const suddenBurstLoss = (this.hpLossInWindow / maxHp) >= 0.25;
+    const criticalHp = currentHpRatio < 0.30;
+
+    if ((suddenBurstLoss || criticalHp) && this.panicBrakeCooldown <= 0) {
+      this.panicBrakeCooldown = 18.0;
+      this.panicBrakeActiveTimer = 2.5;
+      this.pressureMultiplier = Math.min(this.pressureMultiplier, 0.75);
+      this.threatBudget = Math.max(0, this.threatBudget - 10);
+      this.hpLossInWindow = 0;
+    }
+
     // 1. Track player movement vector for Zrádný terén (anti-kiting)
     this.kitingHazardCooldown -= dt;
     this.trackPlayerMovement(dt, player);
@@ -335,7 +424,7 @@ export class RunDirector {
     const hpDistress = Math.max(0, 1 - hpRatio);
     const domDistress = Math.max(0, 1 - dominance);
     const distressIndex = hpDistress * 0.65 + domDistress * 0.35;
-    this.assistanceActive = distressIndex >= 0.28 || hpDistress >= 0.40 || domDistress >= 0.70;
+    this.assistanceActive = this.panicBrakeActiveTimer > 0 || distressIndex >= 0.28 || hpDistress >= 0.40 || domDistress >= 0.70;
     this.updateAdaptivePressure(dominance, hpRatio, dt);
 
     // 3. Update threat budget. The opening 90 seconds use a gentler ramp on
@@ -437,8 +526,10 @@ export class RunDirector {
     const normDiff = Math.max(0, Math.min(1, (this.dynamicDifficulty - 2.0) / 3.0));
     let target = 1.0;
 
-    // 1. Helping struggling hunters (cushions players across all difficulties, strongest on low)
-    if (hpRatio < 0.35 && dominance < 0.45) {
+    if (this.panicBrakeActiveTimer > 0) {
+      target = 0.75;
+    } else if (hpRatio < 0.35 && dominance < 0.45) {
+      // 1. Helping struggling hunters (cushions players across all difficulties, strongest on low)
       target = 0.55 + normDiff * 0.17; // 0.55 at 2.0, 0.72 at 5.0
     } else if (hpRatio < 0.50 && dominance < 0.35) {
       target = 0.65 + normDiff * 0.17; // 0.65 at 2.0, 0.82 at 5.0
@@ -456,7 +547,12 @@ export class RunDirector {
       }
     }
 
-    const alpha = Math.min(1, Math.max(0, dt) * (0.25 + normDiff * 0.35));
+    // Asymmetric adaptation rate:
+    // Faster relief / brake (1-2s): alphaRate ~ 1.0
+    // Steady escalation for dominance (5-8s): alphaRate ~ 0.22 + normDiff * 0.18
+    const isRelief = target < this.pressureMultiplier;
+    const alphaRate = isRelief ? 1.0 : (0.22 + normDiff * 0.18);
+    const alpha = Math.min(1, Math.max(0, dt) * alphaRate);
     this.pressureMultiplier += (target - this.pressureMultiplier) * alpha;
 
     // Strict clamping: on 2.0, strictly never exceed 1.0! On 5.0, up to 5.0!
@@ -545,7 +641,7 @@ export class RunDirector {
         const maxPeakTime = Math.max(8, 16 - ((this.dynamicDifficulty - 2.0) / 2.0) * 5.3) * openingPhaseFactor;
         if (livingCount <= 4 || this.peakDuration >= maxPeakTime) {
           this.valvePhase = 'lull';
-          this.valveTimer = 3.5; // 3.5s of calm
+          this.valveTimer = this.assistanceActive ? 5.0 : 3.5; // Extended calm during assistance / distress
           this.peakDuration = 0;
         }
         break;
@@ -760,11 +856,20 @@ export class RunDirector {
   ): void {
     if (livingCount >= this.maxLivingEnemies) return;
 
-    // Extreme difficulty (4.5+) punishment of success: deploy punitive Dvojče Miniboss
+    // Dvojče Miniboss deployment:
+    // Decoupled from difficulty slider (available on all presets >= 2.50x, strictly inactive on 2.00x).
+    // Deployed primarily when player has high dominance (>= 0.70) AND has a horde-clearing arsenal
+    // (auras, cleaves, piercing projectiles) which trivialize common swarms, or extreme dominance (>= 0.88).
+    // Costs only 60% of original director budget (18 points instead of 30).
+    const isHorde = isHordeClearingArsenal(player);
+    const meetsDominance = (dominance >= 0.70 && isHorde) || dominance >= 0.88;
     if (
-      this.dynamicDifficulty >= 4.5 &&
-      dominance >= 0.70 &&
-      this.threatBudget >= 30 &&
+      this.dynamicDifficulty >= 2.5 &&
+      !this.assistanceActive &&
+      this.panicBrakeActiveTimer <= 0 &&
+      this.punitiveTwinCooldown <= 0 &&
+      this.threatBudget >= 18 &&
+      meetsDominance &&
       (!this.activePunitiveMiniboss || this.activePunitiveMiniboss.dead || this.activePunitiveMiniboss.isDefeated)
     ) {
       const curLvl: GameLevelDef = GAME_LEVELS[this.levelId] || GAME_LEVELS[1];
@@ -784,10 +889,15 @@ export class RunDirector {
         );
         if (twin) {
           twin.isPunitiveTwin = true;
+          twin.isMiniboss = true;
           this.activePunitiveMiniboss = twin;
+          this.punitiveTwinCooldown = 60.0;
           this.recordEnemySpawn(twin, gameTime);
-          this.threatBudget = Math.max(0, this.threatBudget - 30);
-          this.triggerTelegraph('⚠️ Neúprosný hněv: Přichází Dvojče minibosse!', 3.2, engine);
+          this.threatBudget = Math.max(0, this.threatBudget - 18);
+          this.triggerTelegraph('👑 PÝCHA PŘEDCHÁZÍ PÁD: Přichází Dvojče minibosse!', 3.5, engine);
+          if (engine.callbacks?.onSound) {
+            engine.callbacks.onSound('boss');
+          }
           return;
         }
       }
@@ -882,7 +992,8 @@ export class RunDirector {
           const cell = (startCell + i) % RunDirector.CELL_COUNT;
           const angle = RunDirector.CELL_ANGLES[cell] + (Math.random() - 0.5) * 0.12;
           const pos = this.getOffscreenPosition(player, angle, engine, 160);
-          const isVycerpany = this.assistanceActive && Math.random() < distressIndex;
+          const vycerpanyThreshold = this.panicBrakeActiveTimer > 0 ? 0.50 : Math.max(0.50, distressIndex);
+          const isVycerpany = this.assistanceActive && Math.random() < vycerpanyThreshold;
           const prefixToApply = isVycerpany ? 'vycerpany' : undefined;
 
           const e = engine.spawnMonster(
@@ -1337,6 +1448,9 @@ export class RunDirector {
       assistanceActive: this.assistanceActive,
       dynamicDifficulty: this.dynamicDifficulty,
       pressureMultiplier: Math.round(this.pressureMultiplier * 100) / 100,
+      killVelocity: Math.round(this.getKillVelocity(3.0) * 10) / 10,
+      panicBrakeActive: this.panicBrakeActiveTimer > 0,
+      punitiveTwinCooldown: Math.max(0, Math.round(this.punitiveTwinCooldown * 10) / 10),
     };
   }
 }

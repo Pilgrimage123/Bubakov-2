@@ -1,3 +1,19 @@
+## 2026-10-20 — Odpoutání Dvojčete minibosse od voliče obtížnosti a reaktivní dynamická obtížnost
+
+- **Odpoutání Dvojčete minibosse od voliče Dynamické obtížnosti**:
+  - Odstraněna podmínka `dynamicDifficulty >= 4.5`. Dvojče minibosse se nově může objevit na všech běžných stupních (od 2.50× *Šramot za humny* výše), zatímco na 2.00× (*Poklid za pecí*) zůstává trestání úspěchu vypnuto v souladu s jeho herním slibem.
+  - Zlevněn rejdový rozpočet pro vyvolání Dvojčete o 40 % – nově stojí pouze 18 bodů (původně 30).
+  - Taktická reakce na hordový arzenál (`isHordeClearingArsenal`): Režisér výpravy nasazuje Dvojče přednostně tehdy, když lovec disponuje hordovými zbraněmi (aury, celokruhové seky, plošné a průrazné projektily tvořící ≥ 50 % arzenálu nebo ≥ 2 zbraně), jako přímý taktický protitah na buildy tavící běžné roje.
+  - Povolena koexistence s ostatními aktivními bossy (nečekané posílení boje), zaveden pojistný cooldown 60 sekund po vyvolání a garantovaný drop Malované truhly za jeho porážku.
+- **Zvýšení reaktivity Režiséra výpravy na úspěch a selhání**:
+  - **Okamžitá panická brzda (Panic Brake)**: Při skokové ztrátě Kuráže (> 25 % maximální Kuráže za 1,5 s nebo poklesu pod 30 %) Režisér srazí multiplikátor tlaku na 0,75×, odpustí 10 bodů z naakumulovaného rozpočtu, prodlouží fázi Oddychu na 5,0 s a minimálně 50 % nově povolaných bubáků dostane záchranný stav *Vyčerpaný bubák* (potácení, -50 % rychlost i útok).
+  - **Asymetrické vyhlazování tlaku**: Zmírnění tlaku v tísni reaguje během 1–2 sekund, zatímco eskalace tlaku při dominanci nabíhá plynule 5–8 sekund (místo původních desítek sekund).
+  - **Rychlá detekce dominance**: Do výpočtu indexu dominance byla začleněna metrika krátkodobé rychlosti eliminace nepřátel (`killVelocity` za poslední 3 sekundy) pro okamžitou odezvu na buildové skoky lovce.
+- **Kánon a architektura**:
+  - Aktualizována definice pojmu **Dvojče minibosse** v `GLOSSARY.md`.
+  - Sepsán a schválen architektonický záznam `docs/adr/0019-odpoutani-dvojcete-minibosse-a-reaktivni-obtiznost.md`.
+  - Doplněna komplexní sada jednotkových testů v `tests/runDirector.test.ts`.
+
 ## 2026-10-16 — Optimalizace kvašového svícení, eliminace Gaussian blurů v Canvas 2D a zrychlení renderovací smyčky
 
 - **Optimalizace kvašového svícení (`storybookLightingRenderer.ts`)**:

@@ -659,4 +659,107 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
       expect(inViewX && inViewY).toBe(false);
     }
   });
+
+  it('isHordeClearingArsenal accurately identifies horde-clearing builds', async () => {
+    const { isHordeClearingArsenal } = await import('../src/game/director');
+    expect(isHordeClearingArsenal(null)).toBe(false);
+    expect(isHordeClearingArsenal({ weapons: [] })).toBe(false);
+
+    // Single-target only loadout
+    expect(isHordeClearingArsenal({ weapons: [{ id: 'osikovy_prut' }, { id: 'povidlove_buchty' }] })).toBe(false);
+
+    // 50% horde-clearing loadout (aura + single-target)
+    expect(isHordeClearingArsenal({ weapons: [{ id: 'osikovy_prut' }, { id: 'hromnicka' }] })).toBe(true);
+
+    // 2+ horde-clearing weapons
+    expect(isHordeClearingArsenal({
+      weapons: [{ id: 'valecnice' }, { id: 'cesnekova_topinka' }, { id: 'kovarske_vidle' }, { id: 'formansky_bic' }]
+    })).toBe(true);
+  });
+
+  it('spawns Dvojce minibosse on standard difficulty (3.0) when dominating with horde-clearing arsenal', () => {
+    const director = new RunDirector(1, 42, { dynamicDifficulty: 3.0 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, dynamicDifficulty: 3.0, spawnInitialWave: false });
+
+    eng.state.player.weapons = [{ id: 'hromnicka' }, { id: 'valecnice' }];
+    eng.state.player.hp = eng.state.player.maxHp;
+    eng.state.gameTime = 120;
+    director.threatBudget = 30;
+
+    // Simulate fast kills within the 3s window for high dominance and kill velocity
+    for (let i = 0; i < 5; i++) {
+      const mob = { id: `fast_kill_${i}` };
+      director.recordEnemySpawn(mob, 118 + i * 0.3);
+      director.recordEnemyDeath(mob, 118 + i * 0.3 + 0.15);
+    }
+
+    // Step tactical spawns with enough dt to pass spawnInterval (~0.49s)
+    director.update(0.6, eng);
+
+    const twin = eng.state.enemies.find((e: any) => e.isPunitiveTwin);
+    expect(twin).toBeDefined();
+    expect(twin.isMiniboss).toBe(true);
+    expect(twin.customBossTitle).toContain('Dvojče');
+    expect(director.threatBudget).toBeLessThanOrEqual(20); // 30 - 18 = 12 (+ accrual during 0.6s)
+    expect(director.punitiveTwinCooldown).toBeGreaterThan(50);
+  });
+
+  it('strictly suppresses Dvojce minibosse on lowest preset 2.00x (Poklid za peci)', () => {
+    const director = new RunDirector(1, 42, { dynamicDifficulty: 2.0 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, dynamicDifficulty: 2.0, spawnInitialWave: false });
+
+    eng.state.player.weapons = [{ id: 'hromnicka' }, { id: 'valecnice' }];
+    eng.state.player.hp = eng.state.player.maxHp;
+    eng.state.gameTime = 120;
+    director.threatBudget = 35;
+
+    for (let i = 0; i < 6; i++) {
+      const mob = { id: `fast_${i}` };
+      director.recordEnemySpawn(mob, 118 + i * 0.3);
+      director.recordEnemyDeath(mob, 118 + i * 0.3 + 0.1);
+    }
+
+    director.update(0.6, eng);
+    const twin = eng.state.enemies.find((e: any) => e.isPunitiveTwin);
+    expect(twin).toBeUndefined();
+  });
+
+  it('triggers panic brake on sudden burst damage and bleeds 10 threat points', () => {
+    const director = new RunDirector(1, 42, { dynamicDifficulty: 3.5 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, dynamicDifficulty: 3.5, spawnInitialWave: false });
+
+    eng.state.player.hp = 100;
+    eng.state.player.maxHp = 100;
+    director.threatBudget = 25;
+    director.pressureMultiplier = 1.4;
+
+    // Normal step with full HP
+    director.update(0.1, eng);
+    expect(director.panicBrakeActiveTimer).toBe(0);
+
+    // Sudden 35% health loss in next frame
+    eng.state.player.hp = 65;
+    director.update(0.1, eng);
+
+    expect(director.panicBrakeActiveTimer).toBeGreaterThan(0);
+    expect(director.panicBrakeCooldown).toBeGreaterThan(15);
+    expect(director.pressureMultiplier).toBeLessThanOrEqual(0.75);
+    expect(director.threatBudget).toBeLessThanOrEqual(16); // 25 - 10 + minor accrual <= 16
+    expect(director.assistanceActive).toBe(true);
+  });
+
+  it('exposes killVelocity, panicBrakeActive, and punitiveTwinCooldown in telemetry', () => {
+    const director = new RunDirector(1, 42, { dynamicDifficulty: 3.0 });
+    director.punitiveTwinCooldown = 45.2;
+    director.panicBrakeActiveTimer = 1.5;
+
+    const telem = director.getTelemetry();
+    expect(telem.punitiveTwinCooldown).toBe(45.2);
+    expect(telem.panicBrakeActive).toBe(true);
+    expect(typeof telem.killVelocity).toBe('number');
+  });
 });
+
