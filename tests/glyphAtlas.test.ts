@@ -61,4 +61,38 @@ describe('Bitmap Glyph Cache for Combat Numbers (Ticket #32)', () => {
     expect(handled).toBe(true);
     expect(ctx.drawImage).toHaveBeenCalledTimes(3);
   });
+
+  it('WordStampCache caches offscreen stamps and evicts oldest when exceeding max capacity', () => {
+    const cache = atlas.wordStampCache;
+    cache.clear();
+
+    for (let i = 0; i < 130; i++) {
+      cache.getOrCreate(`Word_${i}`, 18, '#FFFFFF');
+    }
+
+    expect(cache.size).toBe(128);
+    // Oldest items (Word_0, Word_1) should have been evicted
+    expect(cache.get('Word_0_18_#FFFFFF')).toBeUndefined();
+    expect(cache.get('Word_1_18_#FFFFFF')).toBeUndefined();
+    // Recent items must exist
+    expect(cache.get('Word_129_18_#FFFFFF')).toBeDefined();
+  });
+
+  it('blits non-numeric combat text via WordStampCache without calling strokeText or fillText on target context', () => {
+    const handled = atlas.drawWordStamp(ctx, 'ŠVIH! 🥒', 120, 240, { size: 18, color: '#EF4444' });
+
+    expect(handled).toBe(true);
+    expect(ctx.drawImage).toHaveBeenCalledTimes(1);
+    expect(ctx.fillText).not.toHaveBeenCalled();
+    expect(ctx.strokeText).not.toHaveBeenCalled();
+  });
+
+  it('drawGlyphText automatically uses word stamp cache for words with emoji and diacritics', () => {
+    const handled = drawGlyphText(ctx, 'PŘEJEDENÍ! 🥒', 150, 250, { size: 26, color: '#F59E0B' });
+
+    expect(handled).toBe(true);
+    expect(ctx.drawImage).toHaveBeenCalledTimes(1);
+    expect(ctx.fillText).not.toHaveBeenCalled();
+    expect(ctx.strokeText).not.toHaveBeenCalled();
+  });
 });

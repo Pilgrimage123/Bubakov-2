@@ -51,6 +51,7 @@ import {
   type CombatTextCategory,
 } from './game/effectSettings';
 import { DamageText, addCombatText } from './game/combatTextManager';
+import { SmokePuff, spawnSmokePuff } from './game/smokePuff';
 import { FROSTLING_AURA_RADIUS, getFrostAuraHealingMultiplier } from './game/frostAura';
 import { HUNTER_DETAILS, type HunterDetail, type HunterDetailKey } from './data/hunterDetails';
 import { WEAPONS, createWeaponMasteryState } from './data/weapons';
@@ -280,6 +281,17 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
   items.length = write;
 }
 
+/** Allocation-free bounding for entity arrays without using Array.prototype.splice. */
+function boundArrayInPlace<T>(items: T[], maxCount: number): void {
+  if (items.length > maxCount) {
+    const excess = items.length - maxCount;
+    for (let i = 0; i < maxCount; i++) {
+      items[i] = items[i + excess];
+    }
+    items.length = maxCount;
+  }
+}
+
 // Keep HUD changes perceptually smooth while avoiding a React render for every
 // simulation frame. Event-driven changes (level-ups, warnings, rewards) still
 // update immediately through their existing setters.
@@ -310,292 +322,7 @@ function getFogPuffCanvas(): HTMLCanvasElement {
 // Static constants for allocation avoidance in hot path
 const NIGHT_PHASE_IDS = new Set(['dusk', 'night', 'midnight', 'dawn']);
 
-// Nicely animated comic smoke puff in authentic Josef Lada fairy tale art style
-class SmokePuff {
-  x: number;
-  y: number;
-  radius: number;
-  time: number;
-  duration: number;
-  dead: boolean;
-  kind: 'smoke' | 'plum-scent' | 'fajfka' = 'smoke';
-  damagePerSecond = 0;
-  damageAccumulator = 0;
-  lobes: Array<{
-    ox: number;
-    oy: number;
-    r: number;
-    vx: number;
-    vy: number;
-  }>;
-  wisps: Array<{
-    ox: number;
-    oy: number;
-    scale: number;
-    rot: number;
-    rotSpd: number;
-    vy: number;
-  }>;
-  poofDots: Array<{
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    r: number;
-  }>;
-  crumbs: Array<{
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    size: number;
-    color: string;
-    rot: number;
-  }>;
 
-  constructor(x: number, y: number, radius = 24, kind: 'smoke' | 'plum-scent' | 'fajfka' = 'smoke', duration = 1.25) {
-    this.x = x;
-    this.y = y;
-    this.radius = Math.max(8, radius);
-    this.kind = kind;
-    this.time = 0;
-    this.duration = duration;
-    this.dead = false;
-
-    // Billowing cloud lobes
-    this.lobes = [];
-    const count = 7;
-    // Main central lobe
-    this.lobes.push({
-      ox: 0,
-      oy: -this.radius * 0.1,
-      r: this.radius * 0.78,
-      vx: 0,
-      vy: -22,
-    });
-    // Perimeter billowing lobes
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
-      const dist = this.radius * (0.45 + Math.random() * 0.35);
-      const r = this.radius * (0.42 + Math.random() * 0.28);
-      const pushSpeed = 18 + Math.random() * 20;
-      this.lobes.push({
-        ox: Math.cos(angle) * dist,
-        oy: Math.sin(angle) * dist * 0.85,
-        r,
-        vx: Math.cos(angle) * pushSpeed,
-        vy: Math.sin(angle) * pushSpeed * 0.6 - 28 - Math.random() * 15,
-      });
-    }
-
-    // Cartoon curling smoke wisps
-    this.wisps = [];
-    for (let i = 0; i < 3; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      this.wisps.push({
-        ox: Math.cos(ang) * this.radius * 0.5,
-        oy: Math.sin(ang) * this.radius * 0.4 - 10,
-        scale: 0.6 + Math.random() * 0.5,
-        rot: Math.random() * Math.PI * 2,
-        rotSpd: (Math.random() - 0.5) * 3,
-        vy: -35 - Math.random() * 25,
-      });
-    }
-
-    // Mini poof dot clusters shooting outward
-    this.poofDots = [];
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const spd = 45 + Math.random() * 45;
-      this.poofDots.push({
-        x: Math.cos(ang) * (this.radius * 0.4),
-        y: Math.sin(ang) * (this.radius * 0.35),
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd * 0.7 - 15,
-        r: 4 + Math.random() * 4,
-      });
-    }
-
-    // Pastry sugar / bread crumb flakes from the delicious food
-    this.crumbs = [];
-    const crumbColors = ['#D97706', '#F59E0B', '#FDE68A', '#FEF08A', '#FFFDF9'];
-    for (let i = 0; i < 8; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = 30 + Math.random() * 60;
-      this.crumbs.push({
-        x: (Math.random() - 0.5) * 16,
-        y: (Math.random() - 0.5) * 16,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd - 20,
-        size: 2 + Math.random() * 2.5,
-        color: crumbColors[Math.floor(Math.random() * crumbColors.length)],
-        rot: Math.random() * Math.PI * 2,
-      });
-    }
-  }
-
-  update(dt: number) {
-    this.time += dt;
-    if (this.time >= this.duration) {
-      this.dead = true;
-      return;
-    }
-
-    for (const lobe of this.lobes) {
-      lobe.ox += lobe.vx * dt;
-      lobe.oy += lobe.vy * dt;
-      lobe.vx *= 0.94;
-      lobe.vy *= 0.96;
-    }
-
-    for (const wisp of this.wisps) {
-      wisp.oy += wisp.vy * dt;
-      wisp.rot += wisp.rotSpd * dt;
-    }
-
-    for (const dot of this.poofDots) {
-      dot.x += dot.vx * dt;
-      dot.y += dot.vy * dt;
-      dot.vx *= 0.92;
-      dot.vy *= 0.94;
-    }
-
-    for (const crumb of this.crumbs) {
-      crumb.x += crumb.vx * dt;
-      crumb.y += crumb.vy * dt;
-      crumb.vy += 80 * dt;
-      crumb.vx *= 0.93;
-    }
-  }
-
-  draw(ctx: CanvasRenderingContext2D) {
-    if (this.dead) return;
-    const progress = Math.min(1, this.time / this.duration);
-
-    // Ease in pop scale (0 -> 1.15 in first 0.18s, then gentle expand to 1.35)
-    let scale = 1;
-    if (progress < 0.18) {
-      const popT = progress / 0.18;
-      scale = Math.sin(popT * Math.PI * 0.5) * 1.15;
-    } else {
-      scale = 1.15 + (progress - 0.18) * 0.35;
-    }
-
-    // Alpha fade out in last 35% of duration
-    let alpha = 1;
-    if (progress > 0.65) {
-      alpha = Math.max(0, 1 - (progress - 0.65) / 0.35);
-    }
-
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    // Keep the plum-scent cloud translucent so combat remains visible.
-    ctx.globalAlpha = alpha * (this.kind === 'plum-scent' ? 0.58 : 1);
-
-    // 1. Draw outer mini poof dots
-    for (const dot of this.poofDots) {
-      const dotAlpha = Math.max(0, 1 - progress * 1.6);
-      if (dotAlpha <= 0) continue;
-      ctx.save();
-      ctx.globalAlpha = alpha * dotAlpha;
-      ctx.fillStyle = this.kind === 'plum-scent' ? '#9D4EDD' : this.kind === 'fajfka' ? '#898994' : '#FFFDF7';
-      ctx.strokeStyle = this.kind === 'plum-scent' ? '#5B167D' : this.kind === 'fajfka' ? '#42424A' : COLORS.ink;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 2. Draw ground shadow of smoke cloud
-    const shadowAlpha = alpha * Math.max(0, 0.4 - progress * 0.4);
-    if (shadowAlpha > 0.01) {
-      ctx.save();
-      ctx.globalAlpha = shadowAlpha;
-      ctx.fillStyle = 'rgba(25, 20, 15, 0.35)';
-      ctx.beginPath();
-      ctx.ellipse(0, this.radius * 0.5, this.radius * 0.9 * scale, this.radius * 0.4 * scale, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 3. Shadow / depth under-layer of the main cloud (slightly offset downward)
-    ctx.save();
-    ctx.translate(0, 4);
-    ctx.fillStyle = this.kind === 'plum-scent' ? '#7E22CE' : this.kind === 'fajfka' ? '#6B7280' : '#E8DEC8';
-    ctx.beginPath();
-    for (const lobe of this.lobes) {
-      const lr = lobe.r * scale;
-      ctx.moveTo(lobe.ox + lr, lobe.oy);
-      ctx.arc(lobe.ox, lobe.oy, lr, 0, Math.PI * 2);
-    }
-    ctx.fill();
-    ctx.restore();
-
-    // 4. Main puffy cloud body with authentic Josef Lada ink border
-    ctx.fillStyle = '#FFFDF7';
-    ctx.strokeStyle = COLORS.ink;
-    ctx.lineWidth = Math.max(2.5, this.radius * 0.09);
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    for (const lobe of this.lobes) {
-      const lr = lobe.r * scale;
-      ctx.moveTo(lobe.ox + lr, lobe.oy);
-      ctx.arc(lobe.ox, lobe.oy, lr, 0, Math.PI * 2);
-    }
-    ctx.fill();
-    ctx.stroke();
-
-    // 5. Highlight arcs on the tops of the lobes (whiter cream volume)
-    ctx.strokeStyle = this.kind === 'plum-scent' ? '#D8B4FE' : this.kind === 'fajfka' ? '#D4D4D8' : '#FFFFFF';
-    ctx.lineWidth = Math.max(1.8, this.radius * 0.05);
-    ctx.beginPath();
-    for (const lobe of this.lobes) {
-      const lr = lobe.r * scale * 0.72;
-      ctx.arc(lobe.ox, lobe.oy - lobe.r * scale * 0.15, lr, -Math.PI * 0.85, -Math.PI * 0.15);
-    }
-    ctx.stroke();
-
-    // 6. Cartoon curling smoke wisps / spirals floating upwards
-    for (const wisp of this.wisps) {
-      ctx.save();
-      ctx.translate(wisp.ox, wisp.oy);
-      ctx.rotate(wisp.rot);
-      ctx.scale(wisp.scale, wisp.scale);
-      ctx.strokeStyle = COLORS.ink;
-      ctx.lineWidth = 2.2;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      for (let a = 0; a < Math.PI * 2.4; a += 0.2) {
-        const sr = 3 + a * 2.2;
-        const sx = Math.cos(a) * sr;
-        const sy = Math.sin(a) * sr;
-        if (a === 0) ctx.moveTo(sx, sy);
-        else ctx.lineTo(sx, sy);
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 7. Delicious pastry crumbs / sugar sparkles tumbling away
-    for (const crumb of this.crumbs) {
-      ctx.save();
-      ctx.translate(crumb.x, crumb.y);
-      ctx.rotate(crumb.rot);
-      ctx.fillStyle = crumb.color;
-      ctx.strokeStyle = COLORS.ink;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(0, 0, crumb.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    ctx.restore();
-  }
-}
 
 function drawMarchRibbon(ctx: CanvasRenderingContext2D, text: string, y: number, width = 118): void {
   ctx.save();
@@ -2500,9 +2227,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       },
 
       spawnFajfkaCloud(radius: number, dmg: number, duration: number, stats?: any) {
-        const cloud = new SmokePuff(this.x, this.y, radius, 'fajfka', duration) as any;
+        const cloud = spawnSmokePuff(engineRef.current.smokePuffs, this.x, this.y, radius, 'fajfka', duration) as any;
         cloud.damagePerSecond = dmg;
-        engineRef.current.smokePuffs.push(cloud);
         const healRatio = 0.08 * (stats?.damageMult ? Math.min(2.0, stats.damageMult) : 1);
         const requestedHeal = this.maxHp * healRatio * (1 + ((this as any).bearMaskHealBonus || 0));
         const missingHp = Math.max(0, this.maxHp - this.hp);
@@ -2600,7 +2326,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     // Seed a readable, combat-friendly composition instead of filling the
     // starting area with equally prominent decorative objects.
     const decor = seedArenaDecor(chosenLevel);
-    arenaChunkCacheRef.current = new ChunkBitmapCache({ chunkSize: 512 });
+    arenaChunkCacheRef.current = new ChunkBitmapCache({ chunkSize: 512, timeOfDayDecoupled: true });
     arenaChunkCacheRef.current.build(decor, chosenLevel.season, chosenLevel.theme, false);
 
     // Start from the engine's canonical defaults, then apply only values that
@@ -5189,9 +4915,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if ((player as any).fajfkaCooldown > 0) (player as any).fajfkaCooldown = Math.max(0, (player as any).fajfkaCooldown - dt);
       if ((player as any).fajfkaLevel > 0 && (player as any).fajfkaCooldown <= 0) {
         const upgraded = (player as any).fajfkaLevel >= 2;
-        const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
+        const cloud = spawnSmokePuff(engineRef.current.smokePuffs, player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
         cloud.damagePerSecond = 9;
-        engineRef.current.smokePuffs.push(cloud);
         const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
         const missingHp = Math.max(0, player.maxHp - player.hp);
         const overheal = Math.max(0, requestedHeal - missingHp);
@@ -5892,9 +5617,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const poiseMult = 1 + (player.plumPoiseReduction || 0);
                   e.takeDamage(dmg, p.type, p.type === 'food' ? 0 : p.vx * 0.3 * holyPush * poiseMult, p.type === 'food' ? 0 : p.vy * 0.3 * holyPush * poiseMult);
                   if (p.plumScent) {
-                    const cloud = new SmokePuff(e.x, e.y, p.plumScentRadius || 140, 'plum-scent', p.plumScentDuration || 3.5) as any;
+                    const cloud = spawnSmokePuff(engine.smokePuffs, e.x, e.y, p.plumScentRadius || 140, 'plum-scent', p.plumScentDuration || 3.5) as any;
                     cloud.damagePerSecond = (p.dmg || dmg) * 0.20;
-                    engine.smokePuffs.push(cloud);
                   }
                   if (!p.noMasteryProc && p.weaponId) player.triggerWeaponMastery(p.weaponId, e, 'hit');
                   if (p.type === 'ice') e.chill(3.5);
@@ -6359,9 +6083,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               p.life -= dt;
             }
             compactInPlace(engine.particles, (p) => p.life > 0);
-            if (engine.particles.length > MAX_PARTICLES) {
-              engine.particles.splice(0, engine.particles.length - MAX_PARTICLES);
-            }
+            boundArrayInPlace(engine.particles, MAX_PARTICLES);
           }
         }
       }      // Doznívání Pověstné sukovice
@@ -6505,7 +6227,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // becomes increasingly expensive on large maps.
         const isNight = NIGHT_PHASE_IDS.has(phase.id);
         if (arenaChunkCacheRef.current && arenaChunkCacheRef.current.getChunkCount() > 0) {
-          arenaChunkCacheRef.current.rebuildIfChanged(engine.decor, curLvl.season, curLvl.theme, isNight);
+          arenaChunkCacheRef.current.rebuildIfChanged(engine.decor, curLvl.season, curLvl.theme, false);
           arenaChunkCacheRef.current.render(ctx, { x: cam.x, y: cam.y, width: canvas.width, height: canvas.height, viewLeft, viewTop, viewRight, viewBottom });
           const dynamicDecor = arenaChunkCacheRef.current.getDynamicDecor();
           for (let i = 0; i < dynamicDecor.length; i++) {
@@ -7725,9 +7447,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (this.foodDefeatTimer >= 0.85 || distToPlayer > 600) {
               this.dead = true;
               if (distToPlayer < 750) {
-                engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
+                spawnSmokePuff(engineRef.current.smokePuffs, this.x, this.y - this.radius * 0.35, this.radius);
                 sound.smokePuff();
-                engineRef.current.texts.push(new DamageText(this.x, this.y - this.radius - 12, 'Puf! 💨', '#A8A29E'));
+                addCombatText(engineRef.current, this.x, this.y - this.radius - 12, 'Puf! 💨', '#A8A29E', false, 'statusEffects');
               }
               return;
             }
@@ -7758,7 +7480,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (this.fleeTimer >= 0.85 || distToPlayer > 600) {
             this.dead = true;
             if (distToPlayer < 750) {
-              engineRef.current.smokePuffs.push(new SmokePuff(this.x, this.y - this.radius * 0.35, this.radius));
+              spawnSmokePuff(engineRef.current.smokePuffs, this.x, this.y - this.radius * 0.35, this.radius);
               sound.smokePuff();
             }
             return;

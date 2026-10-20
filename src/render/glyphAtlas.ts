@@ -26,6 +26,7 @@ export interface DrawGlyphOptions {
   size?: number;
   color?: string;
   alpha?: number;
+  useStampCache?: boolean;
 }
 
 const SUPPORTED_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '!', '%', '.', ','];
@@ -87,11 +88,93 @@ function createAtlasCanvas(width: number, height: number): { canvas: any; ctx: a
   return { canvas, ctx };
 }
 
+export interface CachedWordStamp {
+  canvas: any;
+  width: number;
+  height: number;
+  baseline: number;
+}
+
+export class WordStampCache {
+  private stamps = new Map<string, CachedWordStamp>();
+  private readonly maxCapacity: number;
+
+  constructor(maxCapacity = 128) {
+    this.maxCapacity = maxCapacity;
+  }
+
+  public get(key: string): CachedWordStamp | undefined {
+    return this.stamps.get(key);
+  }
+
+  public getOrCreate(
+    text: string,
+    size: number,
+    color: string
+  ): CachedWordStamp {
+    const key = `${text}_${size}_${color.toUpperCase()}`;
+    const existing = this.stamps.get(key);
+    if (existing) {
+      return existing;
+    }
+
+    // Maintain max capacity (FIFO eviction)
+    if (this.stamps.size >= this.maxCapacity) {
+      const firstKey = this.stamps.keys().next().value;
+      if (firstKey !== undefined) {
+        this.stamps.delete(firstKey);
+      }
+    }
+
+    const strokeWidth = size >= 26 ? 4.0 : 3.0;
+    const padding = Math.ceil(strokeWidth * 2) + 6;
+
+    const { ctx: testCtx } = createAtlasCanvas(1, 1);
+    testCtx.font = `900 ${size}px Eczar, "Cinzel Decorative", serif`;
+    const metrics = testCtx.measureText ? testCtx.measureText(text) : { width: text.length * size * 0.7 };
+    const measuredWidth = Math.ceil(metrics.width || text.length * size * 0.7);
+
+    const stampWidth = measuredWidth + padding * 2;
+    const stampHeight = Math.ceil(size * 1.5) + padding * 2;
+    const baseline = Math.ceil(size * 1.1) + padding;
+
+    const { canvas, ctx } = createAtlasCanvas(stampWidth, stampHeight);
+    ctx.font = `900 ${size}px Eczar, "Cinzel Decorative", serif`;
+    ctx.strokeStyle = COLORS?.ink || '#1E1B18';
+    ctx.lineWidth = strokeWidth;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeText(text, padding, baseline);
+
+    ctx.fillStyle = color;
+    ctx.fillText(text, padding, baseline);
+
+    const stamp: CachedWordStamp = {
+      canvas,
+      width: stampWidth,
+      height: stampHeight,
+      baseline,
+    };
+
+    this.stamps.set(key, stamp);
+    return stamp;
+  }
+
+  public clear(): void {
+    this.stamps.clear();
+  }
+
+  public get size(): number {
+    return this.stamps.size;
+  }
+}
+
 export class GlyphAtlas {
   private canvas: any = null;
   private ctx: any = null;
   private glyphs: Map<string, CachedGlyph> = new Map();
   private initialized = false;
+  public wordStampCache: WordStampCache = new WordStampCache(128);
 
   private makeKey(char: string, size: number, color: string): string {
     return `${char}_${size}_${color.toUpperCase()}`;
@@ -205,6 +288,9 @@ export class GlyphAtlas {
       }
       const g = this.getGlyph(ch, size, color);
       if (!g) {
+        if (options?.useStampCache) {
+          return this.drawWordStamp(ctx, text, x, y, options);
+        }
         // Fallback: uncached character (e.g. arbitrary Czech words or unique status texts)
         return this.fallbackVectorDraw(ctx, text, x, y, size, options?.color ?? '#FFFFFF', alpha);
       }
@@ -242,6 +328,30 @@ export class GlyphAtlas {
       drawX += g.advanceWidth;
     }
 
+    ctx.restore();
+    return true;
+  }
+
+  public drawWordStamp(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    x: number,
+    y: number,
+    options?: DrawGlyphOptions
+  ): boolean {
+    const size = options?.size ?? 18;
+    const color = (options?.color ?? '#FFFFFF').toUpperCase();
+    const alpha = options?.alpha ?? 1.0;
+
+    const stamp = this.wordStampCache.getOrCreate(text, size, color);
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.drawImage(
+      stamp.canvas,
+      Math.round(x - stamp.width * 0.5),
+      Math.round(y - stamp.baseline)
+    );
     ctx.restore();
     return true;
   }
@@ -287,5 +397,8 @@ export function drawGlyphText(
   y: number,
   options?: DrawGlyphOptions
 ): boolean {
-  return getGlobalGlyphAtlas().draw(ctx, text, x, y, options);
+  return getGlobalGlyphAtlas().draw(ctx, text, x, y, {
+    useStampCache: true,
+    ...options,
+  });
 }

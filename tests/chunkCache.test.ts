@@ -109,4 +109,25 @@ describe('Chunk Bitmap Cache (Ticket #29)', () => {
     expect(changed2).toBe(true);
     expect(drawDecor).toHaveBeenCalledTimes(2);
   });
+
+  it('decouples time of day when timeOfDayDecoupled is enabled, preventing rebuild freezes', () => {
+    const drawDecor = vi.fn();
+    const decorList = [
+      { x: 100, y: 100, type: 'tree', scale: 1, draw: drawDecor } as any,
+    ];
+
+    const cache = new ChunkBitmapCache({ chunkSize: 512, timeOfDayDecoupled: true });
+    cache.build(decorList, 'winter', 'meadow', false);
+    expect(drawDecor).toHaveBeenCalledTimes(1);
+
+    // Day/night phase transition should NOT rebuild or cause GC allocation
+    const changedNight = cache.rebuildIfChanged(decorList, 'winter', 'meadow', true);
+    expect(changedNight).toBe(false);
+    expect(drawDecor).toHaveBeenCalledTimes(1);
+
+    // Return to day should NOT rebuild either
+    const changedDay = cache.rebuildIfChanged(decorList, 'winter', 'meadow', false);
+    expect(changedDay).toBe(false);
+    expect(drawDecor).toHaveBeenCalledTimes(1);
+  });
 });

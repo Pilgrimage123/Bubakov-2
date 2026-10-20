@@ -98,6 +98,16 @@ export function compactInPlace<T>(items: T[], keep: (item: T) => boolean, onRecy
   items.length = write;
 }
 
+export function boundArrayInPlace<T>(items: T[], maxCount: number): void {
+  if (items.length > maxCount) {
+    const excess = items.length - maxCount;
+    for (let i = 0; i < maxCount; i++) {
+      items[i] = items[i + excess];
+    }
+    items.length = maxCount;
+  }
+}
+
 export class DamageText {
   x: number;
   y: number;
@@ -2998,9 +3008,7 @@ export class GameEngine {
         p.life -= dt;
       }
       compactInPlace(this.state.particles, (p) => p.life > 0);
-      if (this.state.particles.length > MAX_PARTICLES) {
-        this.state.particles.splice(0, this.state.particles.length - MAX_PARTICLES);
-      }
+      boundArrayInPlace(this.state.particles, MAX_PARTICLES);
     }
 
     // Step RunDirector (Threat budget, tactical spawns, pacing valves, hazards, Bubacka dira)
