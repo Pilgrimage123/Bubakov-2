@@ -7,3 +7,4 @@ dist
 .aistudio/
 context.txt
 
+*_bundle.txt

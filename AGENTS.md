@@ -13,3 +13,8 @@ Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+
+### Project export & bundle
+
+Clean code bundle for performance analysis and audits. Excludes binaries, lockfiles, changelogs, dev modals, and generic unit tests, exporting to `Documents/cely_bubakov.txt` via `scripts/export-project-bundle.ps1`. See `docs/agents/project-bundle.md`.
+

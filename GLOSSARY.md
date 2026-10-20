@@ -69,7 +69,7 @@ Viditelný přívlastek a magická aura modifikující chování nebo vlastnosti
 _Avoid_: affix, mob prefix, monster modifier, prefix
 
 **Dvojče minibosse**:
-Trestná kopie oblastního minibosse povolaná Režisérem výpravy na nejvyšší dynamickou obtížnost při drtivé dominanci hráče.
+Trestná kopie oblastního minibosse povolaná Režisérem výpravy při drtivé dominanci a úspěchu lovce bez ohledu na základní nastavení obtížnosti.
 _Avoid_: twin miniboss, boss clone, dvojník
 
 **Vyčerpaný bubák**:
