@@ -294,7 +294,7 @@ export function GrandfatherShop({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: isMobile ? '1.8rem' : '2.2rem', lineHeight: 1 }}>🧺</span>
+            <GameIcon icon="basket" size={isMobile ? 28 : 34} />
             <div>
               <h2
                 style={{
@@ -330,9 +330,12 @@ export function GrandfatherShop({
               cursor: 'pointer',
               boxShadow: '2px 2px 0 #2A170A',
               transition: 'transform 0.1s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            ✕ ZAVŘÍT
+            <GameIcon icon="cancel" size={15} /> ZAVŘÍT
           </button>
         </div>
 
@@ -427,7 +430,7 @@ export function GrandfatherShop({
                   gap: 8,
                 }}
               >
-                <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>💡</span>
+                <GameIcon icon="idea" size={20} />
                 <div>
                   <strong>Čekací sleva:</strong> Čím déle dědeček čekal na rozcestí v lese, tím větší slevu na perníčky ti nabízí (nyní <strong>−{discount}%</strong>)!
                 </div>
@@ -472,7 +475,7 @@ export function GrandfatherShop({
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '1.4rem' }}>🏷️</span>
+                <GameIcon icon="scroll" size={22} />
                 <div>
                   <div style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 800 }}>ČEKACÍ SLEVA</div>
                   <strong style={{ fontSize: isMobile ? '1.1rem' : '1.25rem', color: '#166534' }}>
@@ -489,7 +492,7 @@ export function GrandfatherShop({
                   gridColumn: isMobile ? 'span 2' : 'auto',
                 }}
               >
-                <span style={{ fontSize: '1.4rem' }}>🍀</span>
+                <GameIcon icon="luck" size={22} />
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', color: '#1E3A8A', fontWeight: 800 }}>ŠTĚSTÍ LOVCE</div>
@@ -526,7 +529,7 @@ export function GrandfatherShop({
                   gap: 12,
                 }}
               >
-                <span style={{ fontSize: '3rem' }}>🧺</span>
+                <GameIcon icon="basket" size={48} />
                 <span>Všechno zboží z nůše bylo vykoupeno! Děkuji ti, poutníče!</span>
                 {onRefreshOffers && (
                   <button
@@ -544,7 +547,8 @@ export function GrandfatherShop({
                     }}
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                      <span>🧺 Zalovit v nůši znovu (</span>
+                      <GameIcon icon="basket" size={16} />
+                      <span>Zalovit v nůši znovu (</span>
                       <PernicekIcon size={16} />
                       <span>{rerollCost})</span>
                     </span>
@@ -584,7 +588,7 @@ export function GrandfatherShop({
                   let buttonLabel = 'KOUPIT';
 
                   if (weaponUpgrade) {
-                    levelBadge = '✨ Specializace projektilové zbraně';
+                    levelBadge = 'Specializace projektilové zbraně';
                     buttonLabel = 'VYLEPŠIT';
                   } else if (item?.isWeapon && item.weaponId) {
                     const canonicalId = toCanonicalWeaponId(item.weaponId);
@@ -603,24 +607,24 @@ export function GrandfatherShop({
                     const isAtCap = isWeaponAtCooldownCap(pw);
 
                     if (owned === 0) {
-                      levelBadge = '⚔️ Nová zbraň';
+                      levelBadge = 'Nová zbraň';
                       buttonLabel = 'ZÍSKAT';
                     } else if (isMaxed) {
-                      levelBadge = `⚔️ Úroveň: ${owned} / ${maxStacks} (MAX)`;
+                      levelBadge = `Úroveň: ${owned} / ${maxStacks} (MAX)`;
                       buttonLabel = 'VYČERPÁNO';
                     } else {
                       levelBadge = isMilestoneRank
-                        ? `🌟 Úroveň: ${owned} ➔ ${nextRank} (MILNÍK!)`
-                        : `⚔️ Úroveň: ${owned} / ${maxStacks}`;
+                        ? `Úroveň: ${owned} → ${nextRank} (MILNÍK!)`
+                        : `Úroveň: ${owned} / ${maxStacks}`;
                       displayName = `${item!.name} (Úroveň ${nextRank})`;
                       if (isMilestoneRank) {
                         displayDesc = `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`;
                       } else if (candidateUpgrade) {
                         displayDesc = `${candidateUpgrade.name}: ${candidateUpgrade.ui_text}`;
                         if (isAtCap) {
-                          displayDesc += ` • ⏱️ Strop kadence (-75 %) dosažen`;
+                          displayDesc += ` • Strop kadence (-75 %) dosažen`;
                         } else if (candidateUpgrade.stats.cooldown_reduction > 0 && isNearCap) {
-                          displayDesc += ` • ⏱️ Zbývá ${Math.round(headroom * 100)} % do stropu kadence (-75 %)`;
+                          displayDesc += ` • Zbývá ${Math.round(headroom * 100)} % do stropu kadence (-75 %)`;
                         }
                       } else {
                         displayDesc = rankDef?.passiveBonusDescription || `Vylepšení na úroveň ${nextRank}`;
@@ -629,14 +633,14 @@ export function GrandfatherShop({
                       buttonLabel = isMilestoneRank ? 'VYLEPŠIT MILNÍK' : 'VYLEPŠIT';
                     }
                   } else if (item?.isRareInstant) {
-                    levelBadge = '✨ Okamžitý zásah';
+                    levelBadge = 'Okamžitý zásah';
                     buttonLabel = 'POUŽÍT';
                     displayDesc = `${item!.description} (Ihned zavře nůši a spustí se na louce!)`;
                   } else if (item?.isAnanas) {
                     owned = purchasedIds.filter((id) => id === item!.id).length;
                     maxStacks = item!.maxStacks || 2;
                     isMaxed = owned >= maxStacks;
-                    levelBadge = isMaxed ? '🍍 Arcivzácné (MAX)' : '🍍 Arcivzácné (2,5×)';
+                    levelBadge = isMaxed ? 'Arcivzácné (MAX)' : 'Arcivzácné (2,5×)';
                     buttonLabel = isMaxed ? 'VYČERPÁNO' : 'KOUPIT';
                   } else {
                     owned = purchasedIds.filter((id) => id === item!.id).length;
@@ -722,7 +726,7 @@ export function GrandfatherShop({
                               flexShrink: 0,
                             }}
                           >
-                            <GameIcon icon={weaponUpgrade?.icon ?? item?.icon ?? '✨'} size={36} />
+                            <GameIcon icon={weaponUpgrade?.icon ?? item?.icon ?? 'sparkles'} size={36} />
                           </div>
 
                           <span
@@ -874,7 +878,9 @@ export function GrandfatherShop({
                   : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} perníčků)`
               }
             >
-              <span>🧺 ZAMÍCHAT NŮŠI</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <GameIcon icon="basket" size={18} /> ZAMÍCHAT NŮŠI
+              </span>
               <span
                 style={{
                   background: gingerbread >= rerollCost ? '#FDE68A' : '#D1D5DB',
@@ -909,9 +915,13 @@ export function GrandfatherShop({
               cursor: 'pointer',
               boxShadow: '3px 3px 0 var(--ink)',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
-            🚪 ZAVŘÍT NŮŠI
+            <GameIcon icon="cottage" size={18} /> ZAVŘÍT NŮŠI
           </button>
         </div>
       </div>

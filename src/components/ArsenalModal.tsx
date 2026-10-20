@@ -45,9 +45,15 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 						style: {
 							margin: "0 0 4px 0",
 							fontSize: "1.9rem",
-							color: "var(--ink)"
+							color: "var(--ink)",
+							display: "flex",
+							alignItems: "center",
+							gap: "10px"
 						},
-						children: "🗡️ Zbrojnice & Knihovna zbraní Bubákova"
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "sword", size: 28 }),
+							"Zbrojnice & Knihovna zbraní Bubákova"
+						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 })] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "tab-btn",
 						style: {
@@ -59,7 +65,10 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 							sound.coin();
 							onClose();
 						},
-						children: "✕"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "cross",
+							size: 16
+						})
 					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -79,10 +88,14 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 						style: {
 							fontWeight: 900,
 							fontSize: "0.95rem",
-							color: "#111111"
+							color: "#111111",
+							display: "flex",
+							alignItems: "center",
+							gap: "6px"
 						},
 						children: [
-							"📊 Stav zbrojnice: ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "chart", size: 18 }),
+							"Stav zbrojnice: ",
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 								style: {
 									color: "#111111",
@@ -124,14 +137,18 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 								className: `tab-btn ${filter === "unlocked" ? "active" : ""}`,
 								style: {
 									padding: "4px 10px",
-									fontSize: "0.85rem"
+									fontSize: "0.85rem",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "4px"
 								},
 								onClick: () => {
 									sound.coin();
 									setFilter("unlocked");
 								},
 								children: [
-									"✅ Odemčené (",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 15 }),
+									"Odemčené (",
 									unlockedCount,
 									")"
 								]
@@ -140,14 +157,18 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 								className: `tab-btn ${filter === "locked" ? "active" : ""}`,
 								style: {
 									padding: "4px 10px",
-									fontSize: "0.85rem"
+									fontSize: "0.85rem",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "4px"
 								},
 								onClick: () => {
 									sound.coin();
 									setFilter("locked");
 								},
 								children: [
-									"🔒 Uzamčené (",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 15 }),
+									"Uzamčené (",
 									totalCount - unlockedCount,
 									")"
 								]
@@ -186,7 +207,25 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: isUnlocked ? "char-card-unlocked-badge" : "char-card-locked-badge",
 									style: { maxWidth: "calc(100% - 20px)", textAlign: "center", whiteSpace: "normal", lineHeight: 1.2 },
-									children: isUnlocked ? "✅ Odemčeno" : prog.isQueued ? "🔒 V pořadí (0 %)" : `🔒 ${prog.percent} %`
+									children: isUnlocked ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 13 }),
+											"Odemčeno"
+										]
+									}) : prog.isQueued ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 13 }),
+											"V pořadí (0 %)"
+										]
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 13 }),
+											`${prog.percent} %`
+										]
+									})
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 									style: {
@@ -205,7 +244,7 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										flexShrink: 0
 									},
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
-										icon: prog.tier === 0 ? "❓" : prog.realIcon,
+										icon: prog.tier === 0 ? "question" : prog.realIcon,
 										size: prog.id === "buns" ? 44 : "2.2rem"
 									})
 								}),
@@ -245,9 +284,15 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 										fontSize: "0.75rem",
 										fontWeight: 800,
 										overflowWrap: "break-word",
-										wordBreak: "break-word"
+										wordBreak: "break-word",
+										display: "flex",
+										alignItems: "center",
+										gap: "5px"
 									},
-									children: ["⚡ ", prog.spoiledStatsHint]
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "lightning", size: 14 }),
+										prog.spoiledStatsHint
+									]
 								}),
 								!isUnlocked && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "hunter-progress-wrap",
@@ -301,12 +346,14 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 												className: "hunter-enemy-pill",
 												style: {
 													fontSize: "0.68rem",
-													padding: "1px 4px"
+													padding: "1px 4px",
+													display: "inline-flex",
+													alignItems: "center",
+													gap: "3px"
 												},
 												title: `${e.name}: ${e.count}`,
 												children: [
-													e.icon,
-													" ",
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: e.icon, size: 14 }),
 													e.count
 												]
 											}, e.id))
@@ -335,7 +382,25 @@ var ArsenalModal = ({ isOpen, onClose, meta, onInspectWeapon }) => {
 											sound.coin();
 											onInspectWeapon(prog);
 										},
-										children: isUnlocked ? "📜 Podrobnosti zbraně" : prog.isQueued ? `🔒 Čeká na: ${prog.requiredWeaponName}` : `🔍 Prozkoumat stopu (${prog.percent} %)`
+										children: isUnlocked ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											style: { display: "inline-flex", alignItems: "center", gap: "5px", justifyContent: "center" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "scroll", size: 15 }),
+												"Podrobnosti zbraně"
+											]
+										}) : prog.isQueued ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											style: { display: "inline-flex", alignItems: "center", gap: "5px", justifyContent: "center" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 14 }),
+												`Čeká na: ${prog.requiredWeaponName}`
+											]
+										}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											style: { display: "inline-flex", alignItems: "center", gap: "5px", justifyContent: "center" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "magnifier", size: 14 }),
+												`Prozkoumat stopu (${prog.percent} %)`
+											]
+										})
 									})
 								})
 							]

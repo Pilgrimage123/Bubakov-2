@@ -392,6 +392,7 @@ var WEAPONS = {
 					radius,
 					type: "nature",
 					visual: "herb_leaf",
+					herbVariant: i % 6,
 					pierce: stats.pierce,
 					knockbackMult: stats.knockbackMult,
 					life: 2

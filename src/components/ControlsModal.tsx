@@ -55,7 +55,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <GameIcon icon="game" size={28} /> OVLÁDÁNÍ A CÍL HRY
+            </h2>
             <LadaBotanicalFlourish height={18} />
           </div>
           <button
@@ -71,7 +73,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
             title="Zavřít okno"
           >
-            ✕
+            <GameIcon icon="cancel" size={16} />
           </button>
         </div>
 
@@ -93,7 +95,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               sound.coin();
             }}
           >
-            🕹️ Ovládání & Klávesnice
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <GameIcon icon="game" size={18} /> Ovládání & Klávesnice
+            </span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'objective' ? 'active' : ''}`}
@@ -102,7 +106,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               sound.coin();
             }}
           >
-            🎯 Cíl hry & Fáze noci
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <GameIcon icon="target" size={18} /> Cíl hry & Fáze noci
+            </span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'dedecek' ? 'active' : ''}`}
@@ -115,7 +121,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               sound.grandfatherCall();
             }}
           >
-            🧓 Čertův dědeček & Nůše
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <GameIcon icon="grandpa" size={18} /> Čertův dědeček & Nůše
+            </span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'weapons' ? 'active' : ''}`}
@@ -124,7 +132,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               sound.coin();
             }}
           >
-            ⚔️ Nové zbraně & Arzenál
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <GameIcon icon="weapons" size={18} /> Nové zbraně & Arzenál
+            </span>
           </button>
           <button
             className={`tab-btn ${activeTab === 'village' ? 'active' : ''}`}
@@ -133,7 +143,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               sound.coin();
             }}
           >
-            🏘️ Vylepšení v hospodě
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <GameIcon icon="village" size={18} /> Vylepšení v hospodě
+            </span>
           </button>
         </div>
 

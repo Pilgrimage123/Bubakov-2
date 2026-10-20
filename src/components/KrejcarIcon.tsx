@@ -112,60 +112,65 @@ var KrejcarIcon: React.FC<KrejcarIconProps> = ({ size = "1.15em", className = ""
 				ry: "3.5",
 				fill: "url(#kcIconShadow)"
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
-				cx: "18",
-				cy: "17",
-				r: "14",
-				fill: "url(#kcIconBevel)",
-				stroke: "#1C140D",
-				strokeWidth: "2.2"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
-				cx: "18",
-				cy: "17",
-				r: "11.2",
-				fill: "url(#kcIconFace)",
-				stroke: "#92400E",
-				strokeWidth: "1.2"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
-				cx: "18",
-				cy: "17",
-				r: "9.6",
-				fill: "none",
-				stroke: "#FDE68A",
-				strokeWidth: "0.9",
-				strokeDasharray: "1.2 1.6",
-				opacity: "0.9"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-				d: "M 9 13 C 11 9, 16 7, 21 8 C 17 8.5, 12 11, 10 15 Z",
-				fill: "#FFFFFF",
-				opacity: "0.55"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-				d: "M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5",
-				fill: "none",
-				stroke: "#FEF08A",
-				strokeWidth: "2.6",
-				strokeLinecap: "round",
-				strokeLinejoin: "round",
-				transform: "translate(0.6, 0.6)"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-				d: "M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5",
-				fill: "none",
-				stroke: "url(#kcIconLetter)",
-				strokeWidth: "2.5",
-				strokeLinecap: "round",
-				strokeLinejoin: "round"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
-				cx: "9.5",
-				cy: "10.5",
-				r: "1.2",
-				fill: "#FFFFFF",
-				opacity: "0.9"
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+				className: "lada-anim-float",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+						cx: "18",
+						cy: "17",
+						r: "14",
+						fill: "url(#kcIconBevel)",
+						stroke: "#1C140D",
+						strokeWidth: "2.2"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+						cx: "18",
+						cy: "17",
+						r: "11.2",
+						fill: "url(#kcIconFace)",
+						stroke: "#92400E",
+						strokeWidth: "1.2"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+						cx: "18",
+						cy: "17",
+						r: "9.6",
+						fill: "none",
+						stroke: "#FDE68A",
+						strokeWidth: "0.9",
+						strokeDasharray: "1.2 1.6",
+						opacity: "0.9"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 9 13 C 11 9, 16 7, 21 8 C 17 8.5, 12 11, 10 15 Z",
+						fill: "#FFFFFF",
+						opacity: "0.55"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5",
+						fill: "none",
+						stroke: "#FEF08A",
+						strokeWidth: "2.6",
+						strokeLinecap: "round",
+						strokeLinejoin: "round",
+						transform: "translate(0.6, 0.6)"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 14.5 10.5 L 14.5 24.5 M 14.5 17.5 L 22.5 10.5 M 17 15.5 L 23 24.5",
+						fill: "none",
+						stroke: "url(#kcIconLetter)",
+						strokeWidth: "2.5",
+						strokeLinecap: "round",
+						strokeLinejoin: "round"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+						cx: "9.5",
+						cy: "10.5",
+						r: "1.6",
+						fill: "#FFFFFF",
+						className: "lada-anim-glint"
+					})
+				]
 			})
 		]
 	});

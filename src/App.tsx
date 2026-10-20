@@ -195,11 +195,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#D9A036';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    ctx.fillStyle = '#FEF3C7';
-    ctx.font = '900 11px Eczar, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('⚡ 75 % ODHALENO', 90, 159);
+    drawGlyphText(ctx, '⚡ 75 % ODHALENO', 90, 159, 18, '#FEF3C7', 1, 0, 'center');
     ctx.restore();
   } else if (tier === 2) {
     // 50% - 74%: Sepia / monochrome charcoal sketch. Distinct shapes, hat, and props visible
@@ -215,11 +211,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#D9A036';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    ctx.fillStyle = '#FEF3C7';
-    ctx.font = '900 11px Eczar, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🔎 50 % ODHALENO', 90, 159);
+    drawGlyphText(ctx, '🔎 50 % ODHALENO', 90, 159, 18, '#FEF3C7', 1, 0, 'center');
     ctx.restore();
   } else if (tier === 1) {
     // 25% - 49%: Deep charcoal silhouette, rough outline visible
@@ -235,11 +227,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#8C5A35';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    ctx.fillStyle = '#F3E9D2';
-    ctx.font = '900 11px Eczar, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🔍 25 % ODHALENO', 90, 159);
+    drawGlyphText(ctx, '🔍 25 % ODHALENO', 90, 159, 18, '#F3E9D2', 1, 0, 'center');
     ctx.restore();
   } else {
     // 0% - 24%: Pitch-black silhouette shrouded in dense mystery fog with glowing question mark
@@ -263,9 +251,7 @@ function renderHunterPortrait(
     ctx.strokeStyle = '#5E3A21';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(25, 148, 130, 22);
-    ctx.fillStyle = '#D4CBBA';
-    ctx.font = '900 11px Eczar, serif';
-    ctx.fillText('🔒 ZAMČENO (0 %)', 90, 159);
+    drawGlyphText(ctx, '🔒 ZAMČENO (0 %)', 90, 159, 18, '#D4CBBA', 1, 0, 'center');
     ctx.restore();
   }
 }
@@ -614,7 +600,7 @@ class SmokePuff {
     // 3. Shadow / depth under-layer of the main cloud (slightly offset downward)
     ctx.save();
     ctx.translate(0, 4);
-    ctx.fillStyle = this.kind === 'plum-scent' ? '#7E22CE' : this.kind === 'fajfka' ? '#6B7280' : '#E8DEC8';
+    ctx.fillStyle = this.kind === 'plum-scent' ? '#7E22CE' : this.kind === 'fajfka' ? '#4D6353' : '#E8DEC8';
     ctx.beginPath();
     for (const lobe of this.lobes) {
       const lr = lobe.r * scale;
@@ -625,7 +611,7 @@ class SmokePuff {
     ctx.restore();
 
     // 4. Main puffy cloud body with authentic Josef Lada ink border
-    ctx.fillStyle = '#FFFDF7';
+    ctx.fillStyle = this.kind === 'fajfka' ? '#F4F8F4' : '#FFFDF7';
     ctx.strokeStyle = COLORS.ink;
     ctx.lineWidth = Math.max(2.5, this.radius * 0.09);
     ctx.lineJoin = 'round';
@@ -639,7 +625,7 @@ class SmokePuff {
     ctx.stroke();
 
     // 5. Highlight arcs on the tops of the lobes (whiter cream volume)
-    ctx.strokeStyle = this.kind === 'plum-scent' ? '#D8B4FE' : this.kind === 'fajfka' ? '#D4D4D8' : '#FFFFFF';
+    ctx.strokeStyle = this.kind === 'plum-scent' ? '#D8B4FE' : this.kind === 'fajfka' ? '#DCFCE7' : '#FFFFFF';
     ctx.lineWidth = Math.max(1.8, this.radius * 0.05);
     ctx.beginPath();
     for (const lobe of this.lobes) {
@@ -669,7 +655,7 @@ class SmokePuff {
       ctx.restore();
     }
 
-    // 7. Delicious pastry crumbs / sugar sparkles tumbling away
+    // 7. Delicious pastry crumbs or floating herbal petals/leaflets
     for (const crumb of this.crumbs) {
       ctx.save();
       ctx.translate(crumb.x, crumb.y);
@@ -682,6 +668,48 @@ class SmokePuff {
       ctx.fill();
       ctx.stroke();
       ctx.restore();
+    }
+
+    // 8. Fragrant herbal particles & smoking folk pipe for fajfka
+    if (this.kind === 'fajfka') {
+      const herbCount = 6;
+      for (let i = 0; i < herbCount; i++) {
+        const hpAngle = (i / herbCount) * Math.PI * 2 + this.time * 0.6;
+        const hpDist = this.radius * scale * (0.28 + (i % 3) * 0.2);
+        const hpx = Math.cos(hpAngle) * hpDist;
+        const hpy = Math.sin(hpAngle) * hpDist;
+        ctx.save();
+        ctx.translate(hpx, hpy);
+        ctx.rotate(hpAngle + this.time * 1.5);
+        if (i % 2 === 0) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.strokeStyle = COLORS.ink;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.2, 1.6, 0, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#F59E0B';
+          ctx.beginPath();
+          ctx.arc(-1.4, 0, 0.9, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#22C55E';
+          ctx.strokeStyle = COLORS.ink;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.4, 1.5, 0, 0, Math.PI * 2);
+          ctx.fill(); ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      if (progress < 0.45) {
+        ctx.save();
+        const pipeAlpha = Math.max(0, 1 - progress / 0.45);
+        ctx.globalAlpha = alpha * pipeAlpha;
+        Lada.drawFajfka(ctx, 0, -4, 0.85, Math.sin(this.time * 5) * 0.1, progress);
+        ctx.restore();
+      }
     }
 
     ctx.restore();
@@ -7008,11 +7036,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (p.visual === 'bun') {
             Lada.drawCzechBuchta(ctx, 0, 0, 1.15);
           } else if (p.visual === 'herb_leaf') {
-            Lada.setupPath(ctx, COLORS.green, COLORS.ink, 2.5);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 12, 6, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
+            Lada.drawHerbProjectile(ctx, 0, 0, hVariant, engine.uiTime, (p.radius ? p.radius / 14 : 1) * 1.15);
           } else if (p.visual === 'snowball' || p.visual === 'snowball_small') {
             Lada.drawSnowball(ctx, 0, 0, p.visual === 'snowball' ? 12 : 7);
           } else if (p.visual === 'kolac') {
@@ -10783,7 +10808,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       >
         <LadaCardCorners variant={isUnlocked ? 'default' : 'locked'} showBottomCorners={true} />
         <span className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}>
-          {isUnlocked ? '✅ Odemčeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+          {isUnlocked ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
+          ) : prog.isQueued ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="padlock" size={13} /> V pořadí (0 %)</span>
+          ) : (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="padlock" size={13} /> Zamčeno ({prog.percent} %)</span>
+          )}
         </span>
         <canvas ref={canvasRef} className="portrait-canvas" width={180} height={180} />
         <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
@@ -10801,11 +10832,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         {/* Weapons and Ability hints */}
         <div className="hunter-clue-box">
-          <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#111111' }}>
-            🗡️ {prog.spoiledWeaponHint}
+          <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#111111', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <GameIcon icon="sword" size={14} /> {prog.spoiledWeaponHint}
           </div>
-          <div style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '2px', color: '#111111' }}>
-            ⚡ {prog.spoiledAbilityHint}
+          <div style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '2px', color: '#111111', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <GameIcon icon="lightning" size={14} /> {prog.spoiledAbilityHint}
           </div>
         </div>
 
@@ -10826,14 +10857,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }}
           >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', marginBottom: '7px' }}>
-              <div><strong>❤️ Kuráž</strong><br />{hunterInfo.maxHp}</div>
-              <div><strong>🏃 Rychlost</strong><br />{hunterInfo.speed}</div>
-              <div><strong>🧲 Magnet</strong><br />{hunterInfo.pickupRadius} px</div>
-              <div><strong>🍀 Štěstí</strong><br />{hunterInfo.luck}</div>
+              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="heart" size={13} /> Kuráž</strong><br />{hunterInfo.maxHp}</div>
+              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="boots" size={13} /> Rychlost</strong><br />{hunterInfo.speed}</div>
+              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="horseshoe" size={13} /> Magnet</strong><br />{hunterInfo.pickupRadius} px</div>
+              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="clover" size={13} /> Štěstí</strong><br />{hunterInfo.luck}</div>
             </div>
-            <div><strong>🗡️ Zbraň:</strong> {hunterInfo.weapon}</div>
-            <div style={{ marginTop: '5px' }}><strong>🌿 Pasivní:</strong> {hunterInfo.passive}</div>
-            <div style={{ marginTop: '5px' }}><strong>⚡ Schopnost ({hunterInfo.cooldownSeconds} s):</strong> {hunterInfo.ability}</div>
+            <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="sword" size={13} /> Zbraň:</strong> {hunterInfo.weapon}</div>
+            <div style={{ marginTop: '5px' }}><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="leaf" size={13} /> Pasivní:</strong> {hunterInfo.passive}</div>
+            <div style={{ marginTop: '5px' }}><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="lightning" size={13} /> Schopnost ({hunterInfo.cooldownSeconds} s):</strong> {hunterInfo.ability}</div>
           </div>
         )}
 
@@ -10854,24 +10885,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
             <div className="hunter-progress-ticks">
               <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
-              <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`}>
-                {prog.percent >= 25 ? '✓' : '🔒'} 25%
+              <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                {prog.percent >= 25 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 25%
               </span>
-              <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`}>
-                {prog.percent >= 50 ? '✓' : '🔒'} 50%
+              <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                {prog.percent >= 50 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 50%
               </span>
-              <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`}>
-                {prog.percent >= 75 ? '✓' : '🔒'} 75%
+              <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                {prog.percent >= 75 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 75%
               </span>
-              <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`}>
-                {prog.percent >= 100 ? '✓' : '🔒'} 100%
+              <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                {prog.percent >= 100 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 100%
               </span>
             </div>
             {prog.enemiesBreakdown.length > 0 && (
               <div className="hunter-enemy-pills">
                 {prog.enemiesBreakdown.map((e) => (
-                  <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`}>
-                    {e.icon} {e.count}
+                  <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    <GameIcon icon={e.icon} size={13} /> {e.count}
                   </span>
                 ))}
               </div>
@@ -10884,17 +10915,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
                 className="lada-btn btn-small"
-                style={{ width: '100%', fontSize: '0.9rem' }}
+                style={{ width: '100%', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
                 onClick={(event) => {
                   event.stopPropagation();
                   sound.coin();
                   if (hunterInfo) setSelectedHunterInfo(hunterInfo);
                 }}
               >
-                ℹ️ Podrobné statistiky a schopnosti
+                <GameIcon icon="scroll" size={15} /> Podrobné statistiky a schopnosti
               </button>
-              <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                Vyrazit do noci ⚔️
+              <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                Vyrazit do noci <GameIcon icon="sword" size={16} />
               </button>
             </div>
           ) : (
@@ -10906,6 +10937,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 background: 'var(--wood-dark)',
                 color: 'var(--parchment)',
                 padding: '6px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 5,
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -10913,7 +10948,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 setSelectedHunterDetail(prog);
               }}
             >
-              {prog.isQueued ? `🔒 Čeká na: ${prog.requiredHunterName}` : `📜 Zobrazit výzvu (${prog.percent} %)`}
+              {prog.isQueued ? (
+                <>
+                  <GameIcon icon="padlock" size={14} /> Čeká na: {prog.requiredHunterName}
+                </>
+              ) : (
+                <>
+                  <GameIcon icon="scroll" size={14} /> Zobrazit výzvu ({prog.percent} %)
+                </>
+              )}
             </button>
           )}
         </div>
@@ -10981,7 +11024,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }}
                 />
                 <div className="bar-text">
-                  <span style={{ marginRight: '6px' }}>🦁</span>
+                  <span style={{ marginRight: '6px', display: 'inline-flex', verticalAlign: 'middle' }}><GameIcon icon="lion" size={16} /></span>
                   KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
                 </div>
               </div>
@@ -11000,14 +11043,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Pozastavit hru [P / Esc]"
                 aria-label="Pozastavit hru"
               >
-                ⏸️
+                <GameIcon icon="pause" size={16} />
               </button>
             </div>
 
             {/* Stats row with Day/Night clock indicator */}
             <div id="stats-row">
               <div className="stats-clock-block">
-                <span className="stats-clock-icon">{runStats.dayPhase.icon}</span>
+                <span className="stats-clock-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon={runStats.dayPhase.icon} size={22} /></span>
                 <div>
                   <div className="stats-clock-timer">{formatTimer(runStats.time)}</div>
                   <div className="stats-clock-phase">
@@ -11015,25 +11058,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   </div>
                 </div>
               </div>
-              <span className="hud-stat-divider">🌿</span>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
               <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Krejcary: {runStats.coins} <KrejcarIcon size={18} />
               </div>
-              <span className="hud-stat-divider">🌿</span>
-              <div id="souls-text" style={{ color: '#1E40AF' }}>🏺 Dušičky: {runStats.souls}</div>
-              <span className="hud-stat-divider">🌿</span>
-              <div id="kills-text" style={{ color: '#7F1D1D' }}>Zklidněno: {runStats.kills} 🥖</div>
-              <span className="hud-stat-divider">🌿</span>
-              <div id="chest-progress-text" style={{ color: '#78350F' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
-                🎁 Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <div id="souls-text" style={{ color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}><GameIcon icon="urn" size={16} /> Dušičky: {runStats.souls}</div>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <div id="kills-text" style={{ color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '5px' }}>Zklidněno: {runStats.kills} <GameIcon icon="bread" size={16} /></div>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <div id="chest-progress-text" style={{ color: '#78350F', display: 'flex', alignItems: 'center', gap: '5px' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
+                <GameIcon icon="chest" size={16} /> Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
             </div>
 
             {/* Boss Bar if boss spawned */}
             {runStats.bossHpPct !== null && (
               <div id="boss-bar-wrap">
-                <div className="boss-title-text">
-                  <span style={{ color: '#C53026' }}>👹</span> {runStats.bossTitle} <span style={{ color: '#C53026' }}>👹</span>
+                <div className="boss-title-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <GameIcon icon="devil" size={20} /> {runStats.bossTitle} <GameIcon icon="devil" size={20} />
                 </div>
                 <div id="boss-bar-container">
                   <div id="boss-hp-fill" style={{ width: `${runStats.bossHpPct}%` }} />
@@ -11046,7 +11089,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           {runStats.warningBanner &&
             isGameEffectEnabled('effectsEnabled') &&
             shouldShowWarningBanner(runStats.warningBanner, meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) && (
-              <div id="boss-warning-banner">{runStats.warningBanner}</div>
+              <div id="boss-warning-banner" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <GameIcon icon="warning" size={22} />
+                <span>{runStats.warningBanner.replace(/⚠️\s*/g, '')}</span>
+              </div>
           )}
 
           {/* Ultimate ability indicator button – skryto na dotykovém displeji a při aktivním dotykovém ovládání, kde bohatě stačí kruhové tlačítko */}
@@ -11061,9 +11107,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             >
               {runStats.ultCd <= 0
                 ? (engineRef.current.player?.type === 'wanderer'
-                    ? '🪵 POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)'
-                    : '⚡ SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)')
-                : `⚡ ${engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: ${Math.ceil(runStats.ultCd)} s`}
+                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="wood_log" size={18} /> POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>
+                    : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={18} /> SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>)
+                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
             </button>
           )}
         </div>
@@ -11097,7 +11143,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={toggleSound}
                 title="Zapnout / vypnout zvukové efekty"
               >
-                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={16} /> {soundEnabled ? 'Zvuk: Zap' : 'Zvuk: Vyp'}</span>
               </button>
               <button
                 className="sound-toggle-btn"
@@ -11105,7 +11151,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={toggleMusic}
                 title="Zapnout / vypnout vesnickou hudbu"
               >
-                <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
+                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={16} /> {musicEnabled ? 'Hudba: Zap' : 'Hudba: Vyp'}</span>
               </button>
             </div>
 
@@ -11161,9 +11207,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       />
                       <div className="level-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                         <span className={`level-badge ${isSelected ? 'badge-selected' : isCompleted ? 'badge-completed' : isUnlocked ? 'badge-unlocked' : 'badge-locked'}`} style={{ maxWidth: '100%', overflowWrap: 'break-word', whiteSpace: 'normal', lineHeight: 1.2 }}>
-                          {isSelected ? '⭐ Zvolená výprava' : isCompleted ? '✅ Pokořeno' : isUnlocked ? '🔓 Otevřeno' : prog.isQueued ? '🔒 V pořadí (0 %)' : `🔒 Zamčeno (${prog.percent} %)`}
+                          {isSelected ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="star" size={13} /> Zvolená výprava</span>
+                          ) : isCompleted ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="checkmark" size={13} /> Pokořeno</span>
+                          ) : isUnlocked ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="padlock_open" size={13} /> Otevřeno</span>
+                          ) : prog.isQueued ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="padlock" size={13} /> V pořadí (0 %)</span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="padlock" size={13} /> Zamčeno ({prog.percent} %)</span>
+                          )}
                         </span>
-                        <span className="level-theme-tag" style={{ overflowWrap: 'break-word' }}>{prog.spoiledIcon} {prog.spoiledBadge}</span>
+                        <span className="level-theme-tag" style={{ overflowWrap: 'break-word', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <GameIcon icon={prog.spoiledIcon} size={15} /> {prog.spoiledBadge}
+                        </span>
                       </div>
 
                       <div className="level-title" style={{ fontSize: '1.25rem', fontWeight: 900, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
@@ -11197,24 +11255,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                           </div>
                           <div className="hunter-progress-ticks">
                             <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
-                            <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`}>
-                              {prog.percent >= 25 ? '✓' : '🔒'} 25%
+                            <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                              {prog.percent >= 25 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 25%
                             </span>
-                            <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`}>
-                              {prog.percent >= 50 ? '✓' : '🔒'} 50%
+                            <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                              {prog.percent >= 50 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 50%
                             </span>
-                            <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`}>
-                              {prog.percent >= 75 ? '✓' : '🔒'} 75%
+                            <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                              {prog.percent >= 75 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 75%
                             </span>
-                            <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`}>
-                              {prog.percent >= 100 ? '✓' : '🔒'} 100%
+                            <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                              {prog.percent >= 100 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 100%
                             </span>
                           </div>
                           {prog.enemiesBreakdown.length > 0 && (
                             <div className="hunter-enemy-pills">
                               {prog.enemiesBreakdown.map((e) => (
-                                <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`}>
-                                  {e.icon} {e.count}
+                                <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                                  <GameIcon icon={e.icon} size={13} /> {e.count}
                                 </span>
                               ))}
                             </div>
@@ -11234,7 +11292,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                               setSelectedLevelDetail(prog);
                             }}
                           >
-                            📜 Prozkoumat stopy a milníky
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}><GameIcon icon="scroll" size={14} /> Prozkoumat stopy a milníky</span>
                           </button>
                         ) : (
                           <div style={{ display: 'flex', width: '100%', gap: '6px' }}>
@@ -11256,11 +11314,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                               }}
                               title={isSelected ? 'Pokračovat k výběru lovce' : 'Zvolit tuto výpravu a pokračovat'}
                             >
-                              {isSelected ? 'Pokračovat k lovci ➔' : 'Zvolit výpravu 🗺️'}
+                              {isSelected ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+                                  Pokračovat k lovci <GameIcon icon="arrow" size={14} />
+                                </span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+                                  <GameIcon icon="map" size={14} /> Zvolit výpravu
+                                </span>
+                              )}
                             </button>
                             <button
                               className="tab-btn"
-                              style={{ padding: '4px 10px', fontSize: '0.8rem', minWidth: 'auto' }}
+                              style={{ padding: '4px 10px', fontSize: '0.8rem', minWidth: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 sound.coin();
@@ -11268,7 +11334,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                               }}
                               title="Zobrazit kroniku a milníky této úrovně"
                             >
-                              📜
+                              <GameIcon icon="scroll" size={15} />
                             </button>
                           </div>
                         )}
@@ -11304,7 +11370,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.3rem' }}>🔥</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="flame" size={24} /></span>
                   <div>
                     <strong style={{ fontSize: '1.05rem', color: '#92400E' }}>
                       Dynamická obtížnost (Režisér výpravy)
@@ -11392,7 +11458,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   lineHeight: 1.35,
                 }}
               >
-                📜 <em>{getDifficultyPreset(meta.dynamicDifficulty ?? 3.0).subtitle}</em>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="scroll" size={15} /> <em>{getDifficultyPreset(meta.dynamicDifficulty ?? 3.0).subtitle}</em></span>
               </div>
             </div>
 
@@ -11404,14 +11470,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   Vybraná výprava pro nadcházející noc:
                 </div>
                 <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '1.7rem' }}>{currentLevel.icon}</span>
+                  <GameIcon icon={currentLevel.icon} size={32} />
                   <span>{currentLevel.name}</span>
                   <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
-                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : currentLevel.season === 'spring' ? '🌱 Jaro' : '🍂 Podzim'})
+                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})
                   </span>
                 </div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
-                  🌾 {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní noční nezbeda: ${currentLevel.finalBoss.name}`}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="wheat" size={16} /> {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní noční nezbeda: ${currentLevel.finalBoss.name}`}</span>
                 </div>
               </div>
 
@@ -11429,7 +11495,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setMenuScreen('hunter');
                 }}
               >
-                Pokračovat k výběru lovce ➔
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Pokračovat k výběru lovce <GameIcon icon="arrow" size={18} />
+                </span>
               </button>
             </div>
 
@@ -11441,7 +11509,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={() => setGameState('tavern')}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                  <GameIcon icon="village" size={18} /> Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
                 </span>
               </button>
               <button
@@ -11449,10 +11517,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="sword" size={16} /> Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                </span>
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11463,7 +11535,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
-                🎮 Ovládání hry
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11474,7 +11548,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
-                ⚙️ Nastavení a vývoj
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="gear" size={16} /> Nastavení a vývoj
+                </span>
               </button>
             </div>
           </div>
@@ -11521,11 +11597,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     Cíl výpravy:
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
-                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? '❄️ Zima' : '🍂 Podzim'})</span>
+                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
-                  Změnit 🗺️
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Změnit <GameIcon icon="map" size={14} /></span>
                 </span>
               </div>
 
@@ -11536,7 +11612,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   onClick={toggleSound}
                   title="Zapnout / vypnout zvukové efekty"
                 >
-                  <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk' : '🔇 Zvuk'}</span>
+                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} /> {soundEnabled ? 'Zvuk' : 'Zvuk'}</span>
                 </button>
                 <button
                   className="sound-toggle-btn"
@@ -11544,14 +11620,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   onClick={toggleMusic}
                   title="Zapnout / vypnout vesnickou hudbu"
                 >
-                  <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba' : '🔇 Hudba'}</span>
+                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} /> {musicEnabled ? 'Hudba' : 'Hudba'}</span>
                 </button>
               </div>
             </div>
 
             <div style={{ textAlign: 'center', margin: '4px 0 16px 0' }}>
               <LadaCartouche variant="green" size="md">
-                🏹 KROK 2 ZE 2: VÝBĚR LOVCE
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="bow" size={16} /> KROK 2 ZE 2: VÝBĚR LOVCE</span>
               </LadaCartouche>
               <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026' }}>
                 VYBERTE SI SVÉHO LOVCE
@@ -11573,7 +11649,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Poutník – připraven k výpravě"
               >
                 <LadaCardCorners variant="default" showBottomCorners={true} />
-                <span className="char-card-unlocked-badge">✅ Odemčeno</span>
+                <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
                 <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
                 <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
                 <div>
@@ -11583,12 +11659,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   Vysoká kuráž (200) a dobrá nálada. Osikový prut. Tulácký instinkt: +35 % k poškození všech zbraní. Schopnost: Pověstná sukovice.
                 </p>
                 <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem' }}>🗡️ Osikový prut (+35 % poškození)</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px' }}>🪵 Schopnost: Pověstná sukovice (21 s)</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon icon="cane" size={14} /> Osikový prut (+35 % poškození)</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon icon="wood_log" size={14} /> Schopnost: Pověstná sukovice (21 s)</div>
                 </div>
                 <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
                   <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                    Vyrazit do noci ⚔️
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do noci <GameIcon icon="sword" size={16} /></span>
                   </button>
                 </div>
               </div>
@@ -11623,7 +11699,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setMenuScreen('stage');
                 }}
               >
-                ⬅️ Zpět k výběru výpravy
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="arrow_left" size={14} /> Zpět k výběru výpravy</span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11631,7 +11707,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={() => setGameState('tavern')}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  🏘️ Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
+                  <GameIcon icon="village" size={18} /> Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
                 </span>
               </button>
               <button
@@ -11639,10 +11715,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="sword" size={16} /> Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                </span>
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11653,7 +11733,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
-                🎮 Ovládání hry
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11664,7 +11746,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
-                ⚙️ Nastavení a vývoj
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="gear" size={16} /> Nastavení a vývoj
+                </span>
               </button>
             </div>
           </div>
@@ -11675,7 +11759,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel" style={{ maxWidth: '820px' }}>
-            <h1>⏸️ HRA POZASTAVENA</h1>
+            <h1><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="pause" size={24} /> HRA POZASTAVENA</span></h1>
             <LadaBotanicalFlourish height={20} />
 
             {/* Top Primary Actions */}
@@ -11685,7 +11769,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 style={{ background: 'var(--leaf-green)', fontSize: '1.2rem', padding: '10px 32px' }}
                 onClick={togglePause}
               >
-                Pokračovat ve hře ⚔️
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Pokračovat ve hře <GameIcon icon="sword" size={16} /></span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11695,7 +11779,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setIsControlsOpen(true);
                 }}
               >
-                🎮 Ovládání hry
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="gamepad" size={16} /> Ovládání hry</span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11706,7 +11790,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Nastavení grafiky, osvětlení, audia a zobrazení"
               >
-                ⚙️ Nastavení výpravy
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="gear" size={16} /> Nastavení výpravy</span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -11714,18 +11798,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={quitToTavernFromPause}
                 title="Bezpečně ukončí výpravu a sečte všechny dosud získané krejcary a dušičky do hospody"
               >
-                Ukončit výpravu 🍺
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Ukončit výpravu <GameIcon icon="beer" size={16} /></span>
               </button>
             </div>
 
             {/* In-pause toggles */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap', margin: '6px 0 16px' }}>
               <div className="hud-level-badge" style={{ padding: '6px 14px', fontSize: '0.95rem' }}>
-                <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon}</span>
+                <span><GameIcon icon={GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.icon} size={18} /></span>
                 <span>{GAME_LEVELS[runStats.levelId !== undefined ? runStats.levelId : selectedLevelId]?.name}</span>
               </div>
               <div className="touch-toggle-btn" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 240, maxWidth: '100%', padding: '8px 12px', textAlign: 'left' }}>
-                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900 }}>📱 Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
+                <label htmlFor="mobile-accessibility-level" style={{ fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="mobile" size={16} /> Mobilní usnadnění: {mobileAccessibilityLevel}/10</label>
                 <input id="mobile-accessibility-level" type="range" min={1} max={10} step={1} value={mobileAccessibilityLevel}
                   onChange={(event) => updateMobileAccessibilityLevel(Number(event.target.value))}
                   aria-label="Úroveň mobilního usnadnění" style={{ width: '100%', accentColor: '#4D7C0F' }} />
@@ -11740,13 +11824,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </span>
               </div>
               <button className="touch-toggle-btn" onClick={toggleTouch} title="Přepnout dotykový joystick">
-                🕹️ Joystick: <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="joystick" size={16} /> Joystick:</span> <span className="touch-toggle-text">{touchEnabled ? 'Zap' : 'Vyp'}</span>
               </button>
               <button className="sound-toggle-btn" onClick={toggleSound} title="Přepnout zvukové efekty">
-                <span className="sound-btn-text">{soundEnabled ? '🔊 Zvuk: Zap' : '🔇 Zvuk: Vyp'}</span>
+                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} /> {soundEnabled ? 'Zvuk: Zap' : 'Zvuk: Vyp'}</span>
               </button>
               <button className="sound-toggle-btn" onClick={toggleMusic} title="Přepnout vesnickou hudbu">
-                <span className="sound-btn-text">{musicEnabled ? '🎵 Hudba: Zap' : '🔇 Hudba: Vyp'}</span>
+                <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} /> {musicEnabled ? 'Hudba: Zap' : 'Hudba: Vyp'}</span>
               </button>
               <button
                 className="touch-toggle-btn"
@@ -11757,7 +11841,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
               >
-                ⚡ Výkon: <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="lightning" size={14} /> Výkon:</span> <span className="touch-toggle-text">{meta.performanceMode ? 'Plynulý (60 FPS)' : 'Plný'}</span>
               </button>
               <button
                 className="touch-toggle-btn"
@@ -11768,7 +11852,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Zapnout / vypnout statistiky FPS a počtu nepřátel na obrazovce"
               >
-                📊 FPS: <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="chart" size={14} /> FPS:</span> <span className="touch-toggle-text">{meta.showPerfOverlay ? 'Zap' : 'Vyp'}</span>
               </button>
               <button
                 className="touch-toggle-btn"
@@ -11778,7 +11862,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Nastavit kategorie plovoucích textů v aréně"
               >
-                💬 Texty: <span className="touch-toggle-text">
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="chat" size={14} /> Texty:</span> <span className="touch-toggle-text">
                   {getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'full'
                     ? 'Plné'
                     : getCombatTextPreset(meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) === 'tactical'
@@ -11816,8 +11900,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111111' }}>
-                    {runStats.dayPhase.icon} {runStats.dayPhase.name}
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <GameIcon icon={runStats.dayPhase.icon} size={20} /> {runStats.dayPhase.name}
                   </span>
                   <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#78350F' }}>
                     Čas přežití: {formatTimer(runStats.time)}
@@ -11828,18 +11912,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <div style={{ borderTop: '2px dashed var(--ink)', margin: '10px 0', opacity: 0.3 }} />
 
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '0.95rem', fontWeight: 800, color: '#111111' }}>
-                <span>🦁 Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
-                <span>🗺️ Výprava: <strong>{runStats.levelTitle}</strong></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="lion" size={16} /> Kuráž: <strong>{Math.max(0, Math.ceil(engineRef.current.player?.hp || 0))}</strong> / {engineRef.current.player?.maxHp || 150}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="map" size={16} /> Výprava: <strong>{runStats.levelTitle}</strong></span>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><KrejcarIcon size={18} /> Krejcary: <strong>{runStats.coins}</strong></span>
-                <span>🏺 Dušičky: <strong>{runStats.souls}</strong></span>
-                <span>🌾 Chasníci: <strong>{runStats.chasniks}</strong></span>
-                <span>🥖 Zklidněno: <strong>{runStats.kills}</strong></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="urn" size={16} /> Dušičky: <strong>{runStats.souls}</strong></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="wheat" size={16} /> Chasníci: <strong>{runStats.chasniks}</strong></span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="bread" size={16} /> Zklidněno: <strong>{runStats.kills}</strong></span>
               </div>
             </div>
 
             {/* Current weapons inventory */}
             <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--ink)' }}>
-              🗡️ Nesený arzenál a výbava lovce:
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sword" size={18} /> Nesený arzenál a výbava lovce:</span>
             </h3>
 
             <div className="pause-weapons-grid">
@@ -11858,7 +11942,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 const isCane = w.id === 'cane';
                 const hasSoaked = isCane && engineRef.current.player?.hasSoakedCane;
                 const displayName = hasSoaked ? 'Mokrý prut' : wDef.name;
-                const displayIcon = hasSoaked ? '💧' : wDef.icon;
+                const displayIcon = hasSoaked ? 'water' : wDef.icon;
                 const isAtCap = weaponCooldownBonus >= COOLDOWN_REDUCTION_CAP - 0.001;
 
                 return (
@@ -11882,8 +11966,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '8px', fontSize: '0.86rem', fontWeight: 900, flexWrap: 'wrap' }}>
-                      <span style={{ color: '#111111' }}>💥 Zásah: ~{estDmg}</span>
-                      <span style={{ color: '#166534' }}>⏱️ Nabíjení: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (+${Math.round((1 / stats.cooldownMult - 1) * 100)} %)` : ''}</span>
+                      <span style={{ color: '#111111', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="impact" size={14} /> Zásah: ~{estDmg}</span>
+                      <span style={{ color: '#166534', display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="clock" size={14} /> Nabíjení: {effectiveCd} s{stats.cooldownMult < 0.999 ? ` (+${Math.round((1 / stats.cooldownMult - 1) * 100)} %)` : ''}</span>
                     </div>
                     <p style={{ margin: '2px 0 0 0', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.25, color: '#111111' }}>
                       {wDef.desc}
@@ -12004,7 +12088,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               return (
                 <div style={{ marginTop: '12px' }}>
                   <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: 'var(--ink)', fontSize: '1.05rem' }}>
-                    ✨ Získaná vylepšení a posílení lovce:
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sparkles" size={18} /> Získaná vylepšení a posílení lovce:</span>
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
                     {perks.map((p, idx) => (
@@ -12070,7 +12154,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             boxShadow: '4px 4px 0 rgba(0,0,0,.3)', cursor: 'pointer',
           }}
         >
-          🧺 OTEVŘÍT DĚDEČKOVU NŮŠI (E)
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI (E)</span>
         </button>
       )}
 
@@ -12149,18 +12233,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           <div className="panel slot-machine-cabinet" style={{ textAlign: 'center' }}>
             {/* Ornate slot machine header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '2rem' }}>🎰</span>
+              <GameIcon icon="chest" size={36} />
               <h1 style={{ color: '#FDE047', textShadow: '3px 3px 0 var(--ink)', margin: 0, fontSize: '2.2rem' }}>
                 MALOVANÁ TRUHLA!
               </h1>
-              <span style={{ fontSize: '2rem' }}>🎰</span>
+              <GameIcon icon="chest" size={36} />
             </div>
             <LadaBotanicalFlourish height={20} />
 
             <p style={{ fontWeight: 800, fontSize: '1.15rem', color: '#FEF3C7', marginTop: '6px', marginBottom: '4px' }}>
               {slotSpinning
-                ? '⚡ Válce venkovského automatu štěstěny se točí...'
-                : '✨ Velkolepá kořist! Zde jsou vaše venkovské poklady:'}
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> Válce venkovského automatu štěstěny se točí...</span>
+                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sparkles" size={16} /> Velkolepá kořist! Zde jsou vaše venkovské poklady:</span>}
             </p>
 
             {/* 3 Reel Housing */}
@@ -12184,14 +12268,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         textTransform: 'uppercase',
                       }}
                     >
-                      {isLocked ? `✨ Válec ${i + 1}` : `🎲 Válec ${i + 1}`}
+                      {isLocked ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="sparkles" size={13} /> Válec {i + 1}</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="dice" size={13} /> Válec {i + 1}</span>}
                     </div>
 
                     {/* Reel Window */}
                     <div className="slot-reel-window">
                       {!isLocked ? (
                         <div className="slot-spinning-strip">
-                          {['krejcar', 'czech_buchta', '💰', 'jitrnice', 'kynuty_kolac', '👢', 'osikovy_prut', '🕯️', '🪙', 'krejcar', 'czech_buchta', '💰', 'jitrnice', 'kynuty_kolac', '👢', 'osikovy_prut'].map((sym, sIdx) => (
+                          {['krejcar', 'czech_buchta', 'zlaty_dukat', 'jitrnice', 'kynuty_kolac', 'toulave_boty', 'osikovy_prut', 'candle', 'coin', 'krejcar', 'czech_buchta', 'zlaty_dukat', 'jitrnice', 'kynuty_kolac', 'toulave_boty', 'osikovy_prut'].map((sym, sIdx) => (
                             <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <GameIcon icon={sym} size={38} />
                             </div>
@@ -12276,7 +12360,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }}
                   onClick={skipSlotSpin}
                 >
-                  ⏩ Přeskočit točení <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>[Mezerník]</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Přeskočit točení</span> <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>[Mezerník]</span>
                 </button>
               ) : (
                 <button
@@ -12290,7 +12374,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }}
                   onClick={closeChestSequence}
                 >
-                  🎁 Vyzvednout poklad <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>[Mezerník]</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="chest" size={20} /> Vyzvednout poklad</span> <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>[Mezerník]</span>
                 </button>
               )}
             </div>
@@ -12303,7 +12387,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="tally-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '780px', margin: 'auto' }}>
             <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
-              {tallyCounters.isVictory ? '🏆 ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!' : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
+              {tallyCounters.isVictory ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><GameIcon icon="trophy" size={28} /> ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!</span> : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
             </h1>
             <LadaBotanicalFlourish height={22} />
             <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--wood-dark)', marginTop: '-4px', marginBottom: '16px' }}>
@@ -12327,7 +12411,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             {tallyCounters.chasniks > 0 && (
               <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
                 <span>Zachráněných chasníků:</span>
-                <span className="tally-number">{tallyCounters.chasniks} 🌾</span>
+                <span className="tally-number" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>{tallyCounters.chasniks} <GameIcon icon="wheat" size={16} /></span>
               </div>
             )}
             <div className="tally-row" style={{ opacity: 1, transform: 'none' }}>
@@ -12342,7 +12426,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     <>
                       <div className="return-bonus-orb" aria-live="polite">
                         <span className="return-bonus-slogan">{returnBonus.multiplier >= 4 ? 'NEBUDE SE OPAKOVAT!' : returnBonus.multiplier >= 2 ? 'POJĎ NA TO!' : 'ŠTĚSTÍ PŘEJE ODVÁŽNÝM!'}</span>
-                        <span className="return-bonus-emoji">{returnBonus.kind === 'damage' ? '⚔️' : returnBonus.kind === 'courage' ? '❤️' : '🪙'}</span>
+                        <span className="return-bonus-emoji"><GameIcon icon={returnBonus.kind === 'damage' ? 'sword' : returnBonus.kind === 'courage' ? 'heart' : 'krejcar'} size={28} /></span>
                         <strong>+{returnBonus.percent * returnBonus.multiplier}%</strong>
                         <span>{returnBonus.kind === 'damage' ? 'POŠKOZENÍ' : returnBonus.kind === 'courage' ? 'KURÁŽ' : 'KREJCARŮ'}{returnBonus.multiplier > 1 ? ` · ${returnBonus.multiplier}×` : ''}</span>
                       </div>
@@ -12353,9 +12437,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         pendingReturnBonusRef.current = returnBonus;
                         sound.coin();
                         startGame(lastHunterTypeRef.current, tallyCounters.levelId);
-                      }}>⚔️ Zpátky na plac</button>
+                      }}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sword" size={16} /> Zpátky na plac</span></button>
                     </>
-                  ) : <div className="return-bonus-expired">💨 Z PEKLA SMŮLA!! Bonus uletěl.</div>}
+                  ) : <div className="return-bonus-expired"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Z PEKLA SMŮLA!! Bonus uletěl.</span></div>}
                 </div>
               )}
             <div className="tally-actions-row" style={{ marginTop: '20px' }}>
@@ -12377,7 +12461,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     setGameState('menu');
                   }}
                 >
-                  Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) ⏩
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) <GameIcon icon="dash" size={16} /></span>
                 </button>
               )}
 
@@ -12396,7 +12480,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setGameState('menu');
                 }}
               >
-                🗺️ Zpět do nabídky výprav
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="map" size={18} /> Zpět do nabídky výprav</span>
               </button>
 
               <button
@@ -12413,7 +12497,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setGameState('tavern');
                 }}
               >
-                Vstoupit do hospody 🍺
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vstoupit do hospody <GameIcon icon="beer" size={18} /></span>
               </button>
             </div>
           </div>
@@ -12424,10 +12508,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
           <div className="panel" style={{ maxWidth: '1000px' }}>
-            <h1 style={{ color: '#C53026', margin: '4px 0' }}>HOSPODA U ČERNÉHO KOCOURA 🍻</h1>
+            <h1 style={{ color: '#C53026', margin: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>HOSPODA U ČERNÉHO KOCOURA <GameIcon icon="beer" size={32} /></h1>
             <LadaBotanicalFlourish height={20} />
             <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>
-              🎶 V koutě vyhrávají pekelné dudy a voní čerstvý chléb... 🎵
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><GameIcon icon="music_on" size={18} /> V koutě vyhrávají pekelné dudy a voní čerstvý chléb... <GameIcon icon="music_on" size={18} /></span>
             </p>
             <LadaCoverScene height={150} />
             <LadaFrieze repeatCount={18} height={20} />
@@ -12440,7 +12524,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   sound.coin();
                 }}
               >
-                🏘️ Naše vesnice Bubákov
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="village" size={18} /> Naše vesnice Bubákov
+                </span>
               </button>
               <button
                 className={`tab-btn ${activeTavernTab === 'trophies' ? 'active' : ''}`}
@@ -12449,7 +12535,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   sound.coin();
                 }}
               >
-                🏆 Síň slávy a Syslovské výzvy
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="trophy" size={18} /> Síň slávy a Syslovské výzvy
+                </span>
               </button>
             </div>
 
@@ -12490,13 +12578,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                             Postup: {prog.cur} / {prog.max}
                           </span>
                           {claimed ? (
-                            <span className="badge-claimed">✅ Splněno</span>
+                            <span className="badge-claimed" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Splněno</span>
                           ) : isMet ? (
                             <button className="btn-claim-trophy" onClick={() => claimTrophy(t.id)}>
                               Vyzvednout (+{t.reward})
                             </button>
                           ) : (
-                            <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.6 }}>⏳ Nesplněno</span>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.6, display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="clock" size={13} /> Nesplněno</span>
                           )}
                         </div>
                       </div>
@@ -12516,17 +12604,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setGameState('menu');
                 }}
               >
-                🗺️ Zpět do nabídky
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <GameIcon icon="map" size={16} /> Zpět do nabídky
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
                 style={{ background: '#E06D29', color: '#FFFFFF' }}
                 onClick={() => setIsArsenalOpen(true)}
               >
-                🗡️ Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <GameIcon icon="sword" size={16} /> Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
+                </span>
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                📖 Bestiář nočního venkova
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -12537,7 +12631,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
-                🎮 Ovládání hry
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                </span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -12548,7 +12644,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
               >
-                ⚙️ Nastavení a vývoj
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <GameIcon icon="gear" size={16} /> Nastavení a vývoj
+                </span>
               </button>
             </div>
           </div>

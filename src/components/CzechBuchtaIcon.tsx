@@ -154,14 +154,35 @@ var CzechBuchtaIcon: React.FC<CzechBuchtaIconProps> = ({ size = "1.2em", classNa
 				ry: "12",
 				fill: "url(#cbShadow)"
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-				d: "M 22 42 C 18 52, 22 66, 32 71 C 48 76, 80 73, 98 64 C 108 59, 110 46, 106 36 C 102 24, 88 18, 68 18 C 44 18, 28 26, 22 42 Z",
-				fill: "url(#cbCrumb)",
-				stroke: "#1E140C",
-				strokeWidth: "3.2",
-				strokeLinejoin: "round",
-				strokeLinecap: "round"
-			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+				className: "lada-anim-float",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 52 14 C 50 10, 54 6, 52 2",
+						fill: "none",
+						stroke: "#F3E9D2",
+						strokeWidth: "2.2",
+						strokeLinecap: "round",
+						opacity: "0.8",
+						className: "lada-anim-steam-1"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 68 15 C 70 11, 66 7, 68 3",
+						fill: "none",
+						stroke: "#F3E9D2",
+						strokeWidth: "2.0",
+						strokeLinecap: "round",
+						opacity: "0.8",
+						className: "lada-anim-steam-2"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M 22 42 C 18 52, 22 66, 32 71 C 48 76, 80 73, 98 64 C 108 59, 110 46, 106 36 C 102 24, 88 18, 68 18 C 44 18, 28 26, 22 42 Z",
+						fill: "url(#cbCrumb)",
+						stroke: "#1E140C",
+						strokeWidth: "3.2",
+						strokeLinejoin: "round",
+						strokeLinecap: "round"
+					}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
 				d: "M 28 36 C 32 23, 48 18, 70 18 C 90 18, 103 24, 106 35 C 108 45, 104 56, 96 61 C 84 66, 68 62, 52 56 C 40 52, 30 45, 28 36 Z",
 				fill: "url(#cbCrust)",
@@ -538,6 +559,8 @@ var CzechBuchtaIcon: React.FC<CzechBuchtaIconProps> = ({ size = "1.2em", classNa
 						cy: "36",
 						r: "0.9"
 					})
+				]
+			})
 				]
 			})
 		]

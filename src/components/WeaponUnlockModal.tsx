@@ -107,7 +107,7 @@ var ValecnicePreview = () => {
 					</div>
 					<div>
 						<div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-							<span>👵 Rázná Válečnice s bukovým válečkem</span>
+							<span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><GameIcon icon="granny" size={18} /> Rázná Válečnice s bukovým válečkem</span>
 							<span style={{ fontSize: '0.78rem', background: '#DC2626', color: '#FFF', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--ink)' }}>+40 % sprite</span>
 						</div>
 						<div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '3px', lineHeight: 1.35 }}>
@@ -128,10 +128,13 @@ var ValecnicePreview = () => {
 							color: '#FFFFFF',
 							boxShadow: '2px 2px 0 var(--ink)',
 							cursor: 'pointer',
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '6px',
 						}}
 						onClick={triggerWhack}
 					>
-						🪵 Bácnout válečkem!
+						<GameIcon icon="log" size={16} /> Bácnout válečkem!
 					</button>
 				</div>
 			</div>
@@ -149,39 +152,39 @@ var ValecnicePreview = () => {
 				}}
 			>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💥 Poškození</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="impact" size={12} /> Poškození</span>
 					<strong style={{ fontSize: '0.98rem', color: '#991B1B' }}>32 (fyzické)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⏱️ Kadence úderů</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="clock" size={12} /> Kadence úderů</span>
 					<strong style={{ fontSize: '0.98rem', color: '#1E293B' }}>0,75 s</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>💫 Omráčení (Stun)</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="star" size={12} /> Omráčení (Stun)</span>
 					<strong style={{ fontSize: '0.98rem', color: '#D97706' }}>1,2 s</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🌪️ Zpomalení (Zóna +15 %)</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="wind" size={12} /> Zpomalení (Zóna +15 %)</span>
 					<strong style={{ fontSize: '0.98rem', color: '#EA580C' }}>25 % (dle Vůle)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🛡️ Ignorace resistu</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="shield" size={12} /> Ignorace resistu</span>
 					<strong style={{ fontSize: '0.98rem', color: '#15803D' }}>20 %</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>📏 Dosah zásahu</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="compass" size={12} /> Dosah zásahu</span>
 					<strong style={{ fontSize: '0.98rem', color: '#0369A1' }}>58 px (+60 %)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>🔨 Odhození</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="impact" size={12} /> Odhození</span>
 					<strong style={{ fontSize: '0.98rem', color: '#B45309' }}>520 (důrazné)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>⭕ Poloměr hlídky</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="target" size={12} /> Poloměr hlídky</span>
 					<strong style={{ fontSize: '0.98rem', color: '#7C3AED' }}>115 px (kruh)</strong>
 				</div>
 				<div style={{ display: 'flex', flexDirection: 'column' }}>
-					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F' }}>👵 Měřítko postavy</span>
+					<span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="granny" size={12} /> Měřítko postavy</span>
 					<strong style={{ fontSize: '0.98rem', color: '#DC2626' }}>+40 % (scale 1,71)</strong>
 				</div>
 			</div>
@@ -329,11 +332,14 @@ var CaneWhipPreview = ({ soaked = false }: { soaked?: boolean }) => {
 							borderColor: 'var(--ink)',
 							color: '#FFFFFF',
 							boxShadow: '2px 2px 0 var(--ink)',
-							cursor: 'pointer'
+							cursor: 'pointer',
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '6px'
 						}}
 						onClick={triggerWhip}
 					>
-						🎋 Švihnout prutem!
+						<GameIcon icon="cane" size={16} /> Švihnout prutem!
 					</button>
 					<button
 						type="button"
@@ -345,11 +351,15 @@ var CaneWhipPreview = ({ soaked = false }: { soaked?: boolean }) => {
 							color: activeSoaked ? '#FFFFFF' : '#1E293B',
 							border: '1.5px solid var(--ink)',
 							borderRadius: '6px',
-							cursor: 'pointer'
+							cursor: 'pointer',
+							display: 'inline-flex',
+							alignItems: 'center',
+							gap: '5px'
 						}}
 						onClick={() => setActiveSoaked(!activeSoaked)}
 					>
-						{activeSoaked ? '💧 Mokrý prut (aktivní)' : '🪣 Namočit prut'}
+						<GameIcon icon={activeSoaked ? "water" : "basket"} size={13} />
+						{activeSoaked ? 'Mokrý prut (aktivní)' : 'Namočit prut'}
 					</button>
 				</div>
 			</div>
@@ -438,7 +448,7 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								filter: progress.tier === 0 ? "grayscale(1) brightness(0.4)" : progress.tier === 1 ? "contrast(150%) brightness(0.6)" : "none"
 							},
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
-								icon: progress.tier === 0 ? "❓" : progress.realIcon,
+								icon: progress.tier === 0 ? "question" : progress.realIcon,
 								size: progress.id === "buns" ? 52 : "2.4rem"
 							})
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
@@ -477,7 +487,10 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 							sound.coin();
 							onClose();
 						},
-						children: "✕"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "cross",
+							size: 16
+						})
 					})]
 				}),
 				progress.isQueued && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -492,8 +505,11 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 						gap: "12px"
 					},
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						style: { fontSize: "2rem" },
-						children: "🔒"
+						style: { display: "flex", alignItems: "center" },
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "padlock",
+							size: 32
+						})
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
@@ -516,14 +532,37 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								"."
 							]
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							style: {
 								fontSize: "0.8rem",
 								fontWeight: 800,
 								color: "#B45309",
-								marginTop: "4px"
+								marginTop: "4px",
+								display: "flex",
+								alignItems: "center",
+								gap: "4px",
+								flexWrap: "wrap"
 							},
-							children: "🔨 Pořadí kovářské dílny: Vidle ➔ Halapartna ➔ Cep ➔ Byliny ➔ Sněhová koule ➔ Koláč ➔ Brambor ➔ Včely ➔ Svěcená voda"
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "impact", size: 14 }),
+								" Pořadí kovářské dílny: Vidle ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Halapartna ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Cep ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Byliny ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Sněhová koule ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Koláč ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Brambor ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Včely ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Svěcená voda"
+							]
 						})
 					] })]
 				}),
@@ -599,9 +638,18 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 									fontSize: "0.82rem",
 									padding: "3px 8px",
 									borderRadius: "6px",
-									border: "1.5px solid var(--ink)"
+									border: "1.5px solid var(--ink)",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "4px"
 								},
-								children: progress.isUnlocked ? "✅ ODEMČENO" : progress.isQueued ? `🔒 ČEKÁ NA: ${progress.requiredWeaponName?.toUpperCase()}` : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`
+								children: progress.isUnlocked ? [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 12 }),
+									" ODEMČENO"
+								] : progress.isQueued ? [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 12 }),
+									` ČEKÁ NA: ${progress.requiredWeaponName?.toUpperCase()}`
+								] : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`
 							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -638,19 +686,35 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 25 ? "reached" : ""}`,
-									children: [progress.percent >= 25 ? "✓" : "🔒", " 25%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 25 ? "checkmark" : "padlock", size: 10 }),
+										" 25%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 50 ? "reached" : ""}`,
-									children: [progress.percent >= 50 ? "✓" : "🔒", " 50%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 50 ? "checkmark" : "padlock", size: 10 }),
+										" 50%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 75 ? "reached" : ""}`,
-									children: [progress.percent >= 75 ? "✓" : "🔒", " 75%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 75 ? "checkmark" : "padlock", size: 10 }),
+										" 75%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 100 ? "reached" : ""}`,
-									children: [progress.percent >= 100 ? "✓" : "🔒", " 100%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 100 ? "checkmark" : "padlock", size: 10 }),
+										" 100%"
+									]
 								})
 							]
 						}),
@@ -668,9 +732,9 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 								className: "hunter-enemy-pills",
 								children: progress.enemiesBreakdown.map((e) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									className: "hunter-enemy-pill",
-									style: { padding: "3px 7px" },
+									style: { padding: "3px 7px", display: "inline-flex", alignItems: "center", gap: "4px" },
 									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: e.icon }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: e.icon, size: 15 }),
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [e.name, ":"] }),
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
 											style: { color: "#111111" },
@@ -682,14 +746,20 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 						})
 					]
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h4", {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h4", {
 					style: {
 						margin: "12px 0 6px 0",
 						fontSize: "1.1rem",
 						color: "#2A170A",
-						fontWeight: 900
+						fontWeight: 900,
+						display: "flex",
+						alignItems: "center",
+						gap: "6px"
 					},
-					children: "🕵️ Postupné odhalování zbraně (25 %, 50 % a 75 %):"
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "magnifier", size: 18 }),
+						" Postupné odhalování zbraně (25 %, 50 % a 75 %):"
+					]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					style: {
@@ -721,10 +791,13 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 										fontSize: "0.88rem",
 										color: m.reached ? "#065F46" : "#2A170A",
 										minWidth: 0,
-										overflowWrap: "break-word"
+										overflowWrap: "break-word",
+										display: "inline-flex",
+										alignItems: "center",
+										gap: "5px"
 									},
 									children: [
-										m.reached ? "✅" : "🔒",
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: m.reached ? "checkmark" : "padlock", size: 13 }),
 										" ",
 										m.title
 									]
@@ -755,9 +828,16 @@ var WeaponUnlockModal = ({ progress, onClose }) => {
 									fontSize: "0.82rem",
 									fontWeight: 900,
 									color: "#2A170A",
-									marginTop: "2px"
+									marginTop: "2px",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "5px"
 								},
-								children: ["⚡ ", m.stats]
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "lightning", size: 14 }),
+									" ",
+									m.stats
+								]
 							})
 						]
 					}, m.pct))

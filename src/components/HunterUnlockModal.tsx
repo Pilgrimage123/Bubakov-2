@@ -5,6 +5,7 @@ import { sound } from '../audio';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 
 var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 	if (!progress) return null;
@@ -100,7 +101,10 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 							sound.coin();
 							onClose();
 						},
-						children: "✕"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "cross",
+							size: 16
+						})
 					})]
 				}),
 				progress.isQueued && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -115,8 +119,11 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 						gap: "12px"
 					},
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						style: { fontSize: "2rem" },
-						children: "🔒"
+						style: { display: "flex", alignItems: "center" },
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "padlock",
+							size: 32
+						})
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							style: {
@@ -139,14 +146,27 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 								"."
 							]
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							style: {
 								fontSize: "0.82rem",
 								fontWeight: 800,
 								color: "#B45309",
-								marginTop: "4px"
+								marginTop: "4px",
+								display: "flex",
+								alignItems: "center",
+								gap: "4px",
+								flexWrap: "wrap"
 							},
-							children: "📜 Pořadí odemykání: Poutník ➔ Pasáček ➔ Bába kořenářka ➔ Ponocný"
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "scroll", size: 14 }),
+								" Pořadí odemykání: Poutník ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Pasáček ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Bába kořenářka ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 11 }),
+								" Ponocný"
+							]
 						})
 					] })]
 				}),
@@ -180,9 +200,18 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 									fontSize: "0.85rem",
 									padding: "3px 8px",
 									borderRadius: "6px",
-									border: "1.5px solid var(--ink)"
+									border: "1.5px solid var(--ink)",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "4px"
 								},
-								children: progress.isUnlocked ? "✅ SPLNĚNO" : progress.isQueued ? `🔒 ČEKÁ NA: ${progress.requiredHunterName?.toUpperCase()}` : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`
+								children: progress.isUnlocked ? [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 12 }),
+									" SPLNĚNO"
+								] : progress.isQueued ? [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 12 }),
+									` ČEKÁ NA: ${progress.requiredHunterName?.toUpperCase()}`
+								] : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`
 							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -219,19 +248,35 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 25 ? "reached" : ""}`,
-									children: [progress.percent >= 25 ? "✓" : "🔒", " 25%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 25 ? "checkmark" : "padlock", size: 10 }),
+										" 25%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 50 ? "reached" : ""}`,
-									children: [progress.percent >= 50 ? "✓" : "🔒", " 50%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 50 ? "checkmark" : "padlock", size: 10 }),
+										" 50%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 75 ? "reached" : ""}`,
-									children: [progress.percent >= 75 ? "✓" : "🔒", " 75%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 75 ? "checkmark" : "padlock", size: 10 }),
+										" 75%"
+									]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 									className: `hunter-tick ${progress.percent >= 100 ? "reached" : ""}`,
-									children: [progress.percent >= 100 ? "✓" : "🔒", " 100%"]
+									style: { display: "inline-flex", alignItems: "center", gap: "2px" },
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: progress.percent >= 100 ? "checkmark" : "padlock", size: 10 }),
+										" 100%"
+									]
 								})
 							]
 						}),
@@ -263,14 +308,20 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 						})
 					]
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h4", {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h4", {
 					style: {
 						margin: "14px 0 8px 0",
 						fontSize: "1.15rem",
 						color: "#2A170A",
-						fontWeight: 900
+						fontWeight: 900,
+						display: "flex",
+						alignItems: "center",
+						gap: "6px"
 					},
-					children: "🕵️ Postupné odhalování identity (25 %, 50 % a 75 %):"
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "magnifier", size: 18 }),
+						" Postupné odhalování identity (25 %, 50 % a 75 %):"
+					]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					style: {
@@ -302,10 +353,13 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 										fontSize: "0.9rem",
 										color: m.reached ? "#065F46" : "#2A170A",
 										minWidth: 0,
-										overflowWrap: "break-word"
+										overflowWrap: "break-word",
+										display: "inline-flex",
+										alignItems: "center",
+										gap: "5px"
 									},
 									children: [
-										m.reached ? "✅" : "🔒",
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: m.reached ? "checkmark" : "padlock", size: 13 }),
 										" ",
 										m.title
 									]
@@ -336,9 +390,16 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 									fontSize: "0.82rem",
 									fontWeight: 900,
 									color: "#2A170A",
-									marginTop: "2px"
+									marginTop: "2px",
+									display: "inline-flex",
+									alignItems: "center",
+									gap: "5px"
 								},
-								children: ["💡 ", m.weapon]
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "idea", size: 14 }),
+									" ",
+									m.weapon
+								]
 							})
 						]
 					}, m.pct))
@@ -362,7 +423,13 @@ var HunterUnlockModal = ({ progress, onClose, onStartIfUnlocked }) => {
 							onClose();
 							onStartIfUnlocked(progress.id);
 						},
-						children: "Zvolit tohoto lovce a hrát ⚔️"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							style: { display: "inline-flex", alignItems: "center", gap: "6px" },
+							children: [
+								"Zvolit tohoto lovce a hrát",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "sword", size: 16 })
+							]
+						})
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "lada-btn",
 						style: { padding: "10px 20px" },

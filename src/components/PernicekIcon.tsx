@@ -60,7 +60,7 @@ export const PernicekIcon: React.FC<PernicekIconProps> = ({
         </linearGradient>
       </defs>
 
-      <g filter="url(#pIconShadow)">
+      <g filter="url(#pIconShadow)" className="lada-anim-float">
         {/* Korpus perníkového srdíčka */}
         <path
           d="M 18,9.5
@@ -116,8 +116,8 @@ export const PernicekIcon: React.FC<PernicekIconProps> = ({
           strokeWidth="1.2"
           strokeLinecap="round"
         />
-        {/* Drobná cukrová perlička ve středu kvítku */}
-        <circle cx="18" cy="18.2" r="0.9" fill="#FFFDF8" />
+        {/* Drobná cukrová perlička ve středu kvítku s třpytem */}
+        <circle cx="18" cy="18.2" r="1.1" fill="#FFFDF8" className="lada-anim-glint" />
 
         {/* Dvě drobné cukrové kapičky nahoře a dole pod kvítkem */}
         <circle cx="18" cy="14" r="0.7" fill="#FFFDF8" />

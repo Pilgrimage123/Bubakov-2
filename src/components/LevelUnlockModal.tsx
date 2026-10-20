@@ -3,6 +3,7 @@ import { sound } from '../audio';
 import { LEVEL_UNLOCKS } from '../data/levelUnlocks';
 import { GAME_LEVELS } from '../data/levels';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 import type { GameLevelId, LevelProgress } from '../types';
 
 export interface LevelUnlockModalProps {
@@ -130,7 +131,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             }}
             aria-label="Zavřít"
           >
-            ✕
+            <GameIcon icon="cross" size={16} />
           </button>
         </div>
 
@@ -148,7 +149,9 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
               gap: '12px',
             }}
           >
-            <div style={{ fontSize: '2rem' }}>🔒</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <GameIcon icon="padlock" size={32} />
+            </div>
             <div>
               <div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.05rem' }}>
                 Výprava do této úrovně je zatím uzamčena!
@@ -157,8 +160,8 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                 Nová úroveň se začne odemykat teprve poté, co prozkoumáte a pokoříte předchozí úroveň:{' '}
                 <strong>{progress.requiredLevelName}</strong>.
               </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#B45309', marginTop: '4px' }}>
-                📜 Cesta se odemyká postupně zdoláváním hlavních bossů předchozích výprav.
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#B45309', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <GameIcon icon="scroll" size={14} /> Cesta se odemyká postupně zdoláváním hlavních bossů předchozích výprav.
               </div>
             </div>
           </div>
@@ -206,19 +209,26 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
 
           {/* Hlavní boss preview box */}
           <div
-            className="level-boss-preview"
+            className="level-boss-pill"
             style={{
               marginTop: '12px',
               marginBottom: '10px',
               fontSize: '0.9rem',
               fontWeight: 800,
               padding: '6px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            {progress.spoiledBossHint ||
-              (lvl?.finalBoss
-                ? `👑 Hlavní boss: ${lvl.finalBoss.name} (${lvl.finalBoss.time} s)`
-                : '👑 Hlavní boss: ???')}
+            <GameIcon icon="crown" size={16} />
+            <span>
+              {progress.spoiledBossHint
+                ? progress.spoiledBossHint.replace(/👑\s*/g, '')
+                : (lvl?.finalBoss
+                  ? `Hlavní boss: ${lvl.finalBoss.name} (${lvl.finalBoss.time} s)`
+                  : 'Hlavní boss: ???')}
+            </span>
           </div>
 
           {/* Klíčová havěť a běsi */}
@@ -238,43 +248,43 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             <div className="level-enemies-preview" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
               {progress.isUnlocked || progress.tier === 4 ? (
                 lvl?.keyEnemies?.map((e) => (
-                  <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                    {e.icon} {e.name}
+                  <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <GameIcon icon={e.icon} size={15} /> {e.name}
                   </span>
                 ))
               ) : progress.tier === 3 ? (
                 <>
                   {lvl?.keyEnemies?.slice(0, 4).map((e) => (
-                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                      {e.icon} {e.name}
+                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <GameIcon icon={e.icon} size={15} /> {e.name}
                     </span>
                   ))}
-                  <span className="level-enemy-tag" style={{ opacity: 0.7 }}>❓ ???</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.7, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="question" size={13} /> ???</span>
                 </>
               ) : progress.tier === 2 ? (
                 <>
                   {lvl?.keyEnemies?.slice(0, 3).map((e) => (
-                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                      {e.icon} {e.name}
+                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <GameIcon icon={e.icon} size={15} /> {e.name}
                     </span>
                   ))}
-                  <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
-                  <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ ???</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.6, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="question" size={13} /> ???</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.6, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="question" size={13} /> ???</span>
                 </>
               ) : progress.tier === 1 ? (
                 <>
                   {lvl?.keyEnemies?.slice(0, 1).map((e) => (
-                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`}>
-                      {e.icon} {e.name}
+                    <span key={e.id} className="level-enemy-tag" title={`${e.name} – ${e.role}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <GameIcon icon={e.icon} size={15} /> {e.name}
                     </span>
                   ))}
-                  <span className="level-enemy-tag" style={{ opacity: 0.55 }}>🌫️ Zahaleno v mlze</span>
-                  <span className="level-enemy-tag" style={{ opacity: 0.55 }}>❓ ???</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.55, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="wind" size={13} /> Zahaleno v mlze</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.55, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="question" size={13} /> ???</span>
                 </>
               ) : (
                 <>
-                  <span className="level-enemy-tag" style={{ opacity: 0.6 }}>🔒 Neznámé bytosti</span>
-                  <span className="level-enemy-tag" style={{ opacity: 0.6 }}>❓ Skryto v mlze</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.6, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="padlock" size={13} /> Neznámé bytosti</span>
+                  <span className="level-enemy-tag" style={{ opacity: 0.6, display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="question" size={13} /> Skryto v mlze</span>
                 </>
               )}
             </div>
@@ -304,13 +314,22 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                 padding: '3px 8px',
                 borderRadius: '6px',
                 border: '1.5px solid var(--ink)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
               }}
             >
-              {progress.isUnlocked
-                ? '✅ OTEVŘENO'
-                : progress.isQueued
-                ? '🔒 ČEKÁ NA PŘEDCHOZÍ ÚROVEŇ'
-                : `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`}
+              {progress.isUnlocked ? (
+                <>
+                  <GameIcon icon="checkmark" size={12} /> OTEVŘENO
+                </>
+              ) : progress.isQueued ? (
+                <>
+                  <GameIcon icon="padlock" size={12} /> ČEKÁ NA PŘEDCHOZÍ ÚROVEŇ
+                </>
+              ) : (
+                `${progress.curCount} / ${progress.maxCount} (${progress.percent} %)`
+              )}
             </span>
           </div>
 
@@ -337,9 +356,15 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                 fontWeight: 800,
                 color: '#78350F',
                 marginBottom: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
             >
-              ⚡ <strong>Královská zkratka:</strong> {def.bossDefeatRequirement} odemkne tuto úroveň okamžitě na 100 %!
+              <GameIcon icon="lightning" size={14} />
+              <span>
+                <strong>Královská zkratka:</strong> {def.bossDefeatRequirement} odemkne tuto úroveň okamžitě na 100 %!
+              </span>
             </div>
           )}
 
@@ -355,17 +380,17 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
 
           <div className="hunter-progress-ticks" style={{ fontSize: '0.78rem', marginTop: '4px' }}>
             <span className={`hunter-tick ${progress.percent >= 0 ? 'reached' : ''}`}>0%</span>
-            <span className={`hunter-tick ${progress.percent >= 25 ? 'reached' : ''}`}>
-              {progress.percent >= 25 ? '✓' : '🔒'} 25%
+            <span className={`hunter-tick ${progress.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <GameIcon icon={progress.percent >= 25 ? 'checkmark' : 'padlock'} size={10} /> 25%
             </span>
-            <span className={`hunter-tick ${progress.percent >= 50 ? 'reached' : ''}`}>
-              {progress.percent >= 50 ? '✓' : '🔒'} 50%
+            <span className={`hunter-tick ${progress.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <GameIcon icon={progress.percent >= 50 ? 'checkmark' : 'padlock'} size={10} /> 50%
             </span>
-            <span className={`hunter-tick ${progress.percent >= 75 ? 'reached' : ''}`}>
-              {progress.percent >= 75 ? '✓' : '🔒'} 75%
+            <span className={`hunter-tick ${progress.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <GameIcon icon={progress.percent >= 75 ? 'checkmark' : 'padlock'} size={10} /> 75%
             </span>
-            <span className={`hunter-tick ${progress.percent >= 100 ? 'reached' : ''}`}>
-              {progress.percent >= 100 ? '✓' : '🔒'} 100%
+            <span className={`hunter-tick ${progress.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+              <GameIcon icon={progress.percent >= 100 ? 'checkmark' : 'padlock'} size={10} /> 100%
             </span>
           </div>
 
@@ -383,8 +408,8 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
               </div>
               <div className="hunter-enemy-pills">
                 {progress.enemiesBreakdown.map((e: any) => (
-                  <div key={e.id} className="hunter-enemy-pill" style={{ padding: '3px 8px' }}>
-                    <span>{e.icon}</span>
+                  <div key={e.id} className="hunter-enemy-pill" style={{ padding: '3px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <GameIcon icon={e.icon} size={15} />
                     <span>{e.name}:</span>
                     <strong style={{ color: '#111111' }}>{e.count}</strong>
                   </div>
@@ -403,9 +428,12 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             fontWeight: 900,
             fontFamily: "'Eczar', serif",
             letterSpacing: '0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}
         >
-          🗺️ Postupné odhalování tajemství krajiny (25 %, 50 % a 75 %):
+          <GameIcon icon="map" size={18} /> Postupné odhalování tajemství krajiny (25 %, 50 % a 75 %):
         </h4>
 
         <div
@@ -443,9 +471,12 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                     color: m.reached ? '#065F46' : '#2A170A',
                     minWidth: 0,
                     overflowWrap: 'break-word',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
                   }}
                 >
-                  {m.reached ? '✅' : '🔒'} {m.title}
+                  <GameIcon icon={m.reached ? 'checkmark' : 'padlock'} size={13} /> {m.title}
                 </strong>
                 <span
                   style={{
@@ -505,13 +536,16 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                 background: 'var(--leaf-green)',
                 color: '#FFFFFF',
                 padding: '10px 24px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
               onClick={() => {
                 onClose();
                 onSelectIfUnlocked(progress.id);
               }}
             >
-              Zvolit tuto úroveň a vyrazit 🗺️
+              Zvolit tuto úroveň a vyrazit <GameIcon icon="map" size={16} />
             </button>
           )}
           <button

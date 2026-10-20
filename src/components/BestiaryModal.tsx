@@ -9,6 +9,7 @@ import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 import { ENEMY_PREFIX_DEFS, EnemyPrefixType } from '../types';
 
 const PREFIX_KEYS: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny', 'vycerpany'];
@@ -49,43 +50,53 @@ const PREFIX_LORE: Record<EnemyPrefixType, { title: string; lore: string; advice
 var CATEGORIES = [
 	{
 		id: "all",
-		label: "Všechna strašidla"
+		label: "Všechna strašidla",
+		icon: "book"
 	},
 	{
 		id: "swarms",
-		label: "🐭 Šotci a havěť"
+		label: "Šotci a havěť",
+		icon: "rooster"
 	},
 	{
 		id: "undead",
-		label: "💀 Hroboví umrlci"
+		label: "Hroboví umrlci",
+		icon: "skull"
 	},
 	{
 		id: "shadows",
-		label: "👤 Noční stíny"
+		label: "Noční stíny",
+		icon: "candle"
 	},
 	{
 		id: "water",
-		label: "💧 Vodní cháska"
+		label: "Vodní cháska",
+		icon: "water"
 	},
 	{
 		id: "frost",
-		label: "❄️ Větrné a zimní"
+		label: "Větrné a zimní",
+		icon: "snowflake"
 	},
 	{
 		id: "fields",
-		label: "🌾 Polní a lesní"
+		label: "Polní a lesní",
+		icon: "wheat"
 	},
 	{
 		id: "demons",
-		label: "🔥 Pekelníci"
+		label: "Pekelníci",
+		icon: "fire"
 	},
 	{
 		id: "bosses",
-		label: "👑 Velcí bossové"
+		label: "Velcí bossové",
+		icon: "crown"
 	},
 	{
 		id: "prefixes",
-		label: "✨ Přívlastky"
+		label: "Přívlastky",
+		icon: "star"
 	}
 ];
 var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
@@ -223,9 +234,12 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 						justifyContent: "space-between",
 						alignItems: "center"
 					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						style: { margin: "0 0 2px 0" },
-						children: "📖 Bestiář noční české vesnice"
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h2", {
+						style: { margin: "0 0 2px 0", display: "flex", alignItems: "center", gap: "8px" },
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "book", size: 24 }),
+							" Bestiář noční české vesnice"
+						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LadaBotanicalFlourish, { height: 18 }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 						style: {
 							fontWeight: 700,
@@ -248,7 +262,7 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 							sound.coin();
 							onClose();
 						},
-						children: "✕"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "cross", size: 16 })
 					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -268,22 +282,51 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 						color: "#111111"
 					},
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["🔍 Spatřeno strašidel: ", /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-							discoveredCount,
-							" / ",
-							totalMonsters
-						] })] }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["🏆 Zcela probádáno (100 %): ", /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
-							fullyMasteredCount,
-							" / ",
-							totalMonsters
-						] })] }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "magnifier", size: 14 }),
+								" Spatřeno strašidel: ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
+									discoveredCount,
+									" / ",
+									totalMonsters
+								] })
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "trophy", size: 14 }),
+								" Zcela probádáno (100 %): ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", { children: [
+									fullyMasteredCount,
+									" / ",
+									totalMonsters
+								] })
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 							style: {
 								color: "#2A170A",
-								fontWeight: 900
+								fontWeight: 900,
+								display: "inline-flex",
+								alignItems: "center",
+								gap: "4px",
+								flexWrap: "wrap"
 							},
-							children: "📜 Úrovně odhalení: 0 % ➔ 25 % ➔ 50 % ➔ 75 % ➔ 100 %"
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "scroll", size: 14 }),
+								" Úrovně odhalení: 0 % ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 10 }),
+								" 25 % ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 10 }),
+								" 50 % ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 10 }),
+								" 75 % ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "arrow", size: 10 }),
+								" 100 %"
+							]
 						})
 					]
 				}),
@@ -308,7 +351,13 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 							setSelectedCategory(cat.id);
 							sound.coin();
 						},
-						children: cat.label
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							style: { display: "inline-flex", alignItems: "center", gap: "4px" },
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: cat.icon, size: 14 }),
+								cat.label
+							]
+						})
 					}, cat.id))
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -337,9 +386,12 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { fontWeight: 800, fontSize: "0.94rem", color: "#111111" }, children: pDef.name })
 											]
 										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-											style: { fontSize: "0.74rem", fontWeight: 700, color: "#78350F" },
-											children: "✨ Přívlastek"
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+											style: { fontSize: "0.74rem", fontWeight: 700, color: "#78350F", display: "inline-flex", alignItems: "center", gap: "3px" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "star", size: 11 }),
+												" Přívlastek"
+											]
 										})
 									]
 								}, pKey);

@@ -23,7 +23,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
   const wDef = WEAPONS[weaponId];
   const wTrans = getWeaponTranslation(weaponId, lang);
   const weaponName = wTrans?.name || wDef?.name || weaponId;
-  const weaponIcon = wDef?.icon || '🗡️';
+  const weaponIcon = wDef?.icon || 'weapons';
 
   const handleSelect = (choice: MilestoneChoice) => {
     // Folklore audio feedback
@@ -38,7 +38,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       const pct = Math.round((mods.baseDamageMult - 1) * 100);
       badges.push({
         label: t('milestone_modal.damage', lang, { val: pct }),
-        icon: '💥',
+        icon: 'impact',
         color: '#991B1B',
       });
     }
@@ -47,7 +47,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       const pct = Math.round((1 - mods.cooldownMult) * 100);
       badges.push({
         label: t('milestone_modal.cooldown', lang, { val: pct }),
-        icon: '⏱️',
+        icon: 'cuckoo',
         color: '#15803D',
       });
     }
@@ -56,7 +56,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       const pct = Math.round((mods.areaRadiusMult - 1) * 100);
       badges.push({
         label: t('milestone_modal.area', lang, { val: pct }),
-        icon: '🎯',
+        icon: 'target',
         color: '#1E40AF',
       });
     }
@@ -65,7 +65,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       const pct = Math.round((mods.knockbackMult - 1) * 100);
       badges.push({
         label: t('milestone_modal.knockback', lang, { val: pct }),
-        icon: '💨',
+        icon: 'wind',
         color: '#854D0E',
       });
     }
@@ -73,7 +73,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
     if (mods.projectileCountDelta && mods.projectileCountDelta > 0) {
       badges.push({
         label: t('milestone_modal.projectiles', lang, { val: mods.projectileCountDelta }),
-        icon: '🏹',
+        icon: 'bow',
         color: '#7E22CE',
       });
     }
@@ -81,7 +81,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
     if (mods.pierceDelta && mods.pierceDelta > 0) {
       badges.push({
         label: t('milestone_modal.pierce', lang, { val: mods.pierceDelta }),
-        icon: '🗡️',
+        icon: 'weapons',
         color: '#B45309',
       });
     }
@@ -90,7 +90,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       const pct = Math.round(mods.ignoreResist * 100);
       badges.push({
         label: t('milestone_modal.ignore_resist', lang, { val: pct }),
-        icon: '🛡️',
+        icon: 'shield',
         color: '#D97706',
       });
     }
@@ -98,7 +98,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
     if (mods.statusDurationSec && mods.statusDurationSec > 0) {
       badges.push({
         label: t('milestone_modal.status', lang, { val: mods.statusDurationSec }),
-        icon: '⏳',
+        icon: 'cuckoo',
         color: '#047857',
       });
     }
@@ -144,7 +144,9 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
         {/* Header Tag */}
         <div style={{ marginBottom: 12 }}>
           <LadaCartouche variant="ochre" size="lg">
-            ✨ {t('milestone_modal.title', lang)} ✨
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <GameIcon icon="star" size={18} /> {t('milestone_modal.title', lang)} <GameIcon icon="star" size={18} />
+            </span>
           </LadaCartouche>
         </div>
 
@@ -289,7 +291,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                             gap: 4,
                           }}
                         >
-                          <span>{badge.icon}</span>
+                          <GameIcon icon={badge.icon} size={15} />
                           <span>{badge.label}</span>
                         </span>
                       ))}

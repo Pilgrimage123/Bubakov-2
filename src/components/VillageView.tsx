@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { sound } from '../audio';
 import { Lada } from '../render/ladaRenderer';
 import { KrejcarIcon } from './KrejcarIcon';
+import { GameIcon } from './GameIcon';
 import {
   VILLAGE_BUILDINGS,
   getVillageTotalLevels,
@@ -82,7 +83,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
             <KrejcarIcon size={18} />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            🏺 Osvobozeno dušiček: <strong style={{ color: '#1E40AF' }}>{meta.totalSoulsSaved || 0}</strong>
+            <GameIcon icon="amphora" size={20} /> Osvobozeno dušiček: <strong style={{ color: '#1E40AF' }}>{meta.totalSoulsSaved || 0}</strong>
           </span>
         </h3>
 
@@ -130,7 +131,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
               }}
               title="Vrátí 100 % všech utracených krejcarů a vynuluje úrovně budov pro nové přerozdělení"
             >
-              🔄 Vrátit krejcary ({totalInvested} <KrejcarIcon size={15} />)
+              <GameIcon icon="refresh" size={16} /> Vrátit krejcary ({totalInvested} <KrejcarIcon size={15} />)
             </button>
           )}
         </div>
@@ -192,7 +193,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
                   overflowWrap: 'break-word',
                 }}
               >
-                🤝 Pomocníci: {b.helpers}
+                Pomocníci: {b.helpers}
               </div>
               <div
                 style={{

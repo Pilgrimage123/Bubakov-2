@@ -13597,6 +13597,508 @@ var Lada = {
 
 		ctx.restore();
 		ctx.restore();
+	},
+	drawHerbProjectile(ctx: any, x: number, y: number, variant: number = 0, time: number = 0, scale: number = 1) {
+		const v = Math.abs(Math.floor(variant)) % 6;
+		const flutter = Math.sin(time * 12 + x * 0.05 + y * 0.05) * 0.12;
+
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(flutter);
+		ctx.scale(scale, scale);
+
+		// 1. Swirling sky-blue breeze wake (Větrné linky a vánek dle předlohy)
+		ctx.save();
+		ctx.strokeStyle = "rgba(186, 230, 253, 0.75)";
+		ctx.lineWidth = 1.6;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.arc(0, 0, 16, Math.PI * 0.7, Math.PI * 1.6);
+		ctx.stroke();
+		ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+		ctx.lineWidth = 1.0;
+		ctx.beginPath();
+		ctx.arc(2, -1, 12, Math.PI * 0.8, Math.PI * 1.5);
+		ctx.stroke();
+		ctx.restore();
+
+		// 2. Specific Herb Variant (Předloha dle ilustrace)
+		if (v === 0) {
+			// VARIANT 0: HEŘMÁNEK (Chamomile Bouquet with golden centers & white petals)
+			this.setupPath(ctx, "transparent", "#15803D", 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-10, 8);
+			ctx.quadraticCurveTo(-4, 2, 4, -4);
+			ctx.moveTo(-6, 4);
+			ctx.quadraticCurveTo(0, 6, 8, 4);
+			ctx.moveTo(-3, 0);
+			ctx.quadraticCurveTo(-1, -6, -4, -10);
+			ctx.stroke();
+
+			ctx.strokeStyle = "#16A34A";
+			ctx.lineWidth = 1.2;
+			ctx.beginPath();
+			ctx.moveTo(-5, 5); ctx.lineTo(-8, 3);
+			ctx.moveTo(-2, 3); ctx.lineTo(-1, 0);
+			ctx.moveTo(1, 4); ctx.lineTo(3, 8);
+			ctx.stroke();
+
+			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.2);
+			const petals1 = 8;
+			for (let p = 0; p < petals1; p++) {
+				const pa = (p / petals1) * Math.PI * 2;
+				ctx.beginPath();
+				ctx.ellipse(4 + Math.cos(pa) * 4.5, -4 + Math.sin(pa) * 4.5, 3.2, 1.5, pa, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+			}
+			this.setupPath(ctx, "#F59E0B", COLORS.ink, 1.3);
+			ctx.beginPath();
+			ctx.arc(4, -4, 3.2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#FEF08A";
+			ctx.beginPath();
+			ctx.arc(3.2, -4.8, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+
+			for (let p = 0; p < 7; p++) {
+				const pa = (p / 7) * Math.PI * 2;
+				this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.1);
+				ctx.beginPath();
+				ctx.ellipse(8 + Math.cos(pa) * 3.5, 4 + Math.sin(pa) * 3.5, 2.5, 1.2, pa, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+			}
+			this.setupPath(ctx, "#F59E0B", COLORS.ink, 1.2);
+			ctx.beginPath();
+			ctx.arc(8, 4, 2.4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.0);
+			ctx.beginPath();
+			ctx.ellipse(-4, -10, 3.5, 2.5, 0.4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#F59E0B";
+			ctx.beginPath();
+			ctx.arc(-4, -10, 1.6, 0, Math.PI * 2);
+			ctx.fill();
+
+			const wakeWave = Math.sin(time * 8) * 2;
+			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 0.9);
+			ctx.beginPath();
+			ctx.ellipse(-14, 2 + wakeWave, 2.8, 1.3, -0.4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+		} else if (v === 1) {
+			// VARIANT 1: SVÁZANÁ ŠALVĚJ (Sage bundle tied with rustic twine)
+			const leafDefs = [
+				{ x: 3, y: -8, ang: -0.6, len: 12, w: 4.8 },
+				{ x: 7, y: -4, ang: -0.2, len: 14, w: 5.2 },
+				{ x: 8, y: 3, ang: 0.25, len: 13, w: 5.0 },
+				{ x: 4, y: 8, ang: 0.7, len: 11, w: 4.5 },
+				{ x: 5, y: -0.5, ang: 0.05, len: 15, w: 5.5 },
+			];
+
+			for (const lf of leafDefs) {
+				ctx.save();
+				ctx.translate(lf.x * 0.5, lf.y * 0.5);
+				ctx.rotate(lf.ang);
+				this.setupPath(ctx, "#658A63", COLORS.ink, 1.4);
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.quadraticCurveTo(-lf.w, lf.len * 0.4, 0, lf.len);
+				ctx.quadraticCurveTo(lf.w, lf.len * 0.4, 0, 0);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+
+				ctx.strokeStyle = "#A3C4A1";
+				ctx.lineWidth = 1.0;
+				ctx.beginPath();
+				ctx.moveTo(0, 1);
+				ctx.lineTo(0, lf.len * 0.85);
+				ctx.stroke();
+				ctx.restore();
+			}
+
+			ctx.strokeStyle = "#385E36";
+			ctx.lineWidth = 2.0;
+			ctx.beginPath();
+			ctx.moveTo(0, 0); ctx.lineTo(-8, -2);
+			ctx.moveTo(0, 2); ctx.lineTo(-9, 1);
+			ctx.moveTo(-1, 4); ctx.lineTo(-8, 5);
+			ctx.stroke();
+
+			this.setupPath(ctx, "#D97706", COLORS.ink, 1.2);
+			ctx.fillRect(-4, -1, 4.5, 6);
+			ctx.strokeRect(-4, -1, 4.5, 6);
+			ctx.strokeStyle = "#B45309";
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.moveTo(-3, 5); ctx.lineTo(-5, 9);
+			ctx.moveTo(-1.5, 5); ctx.lineTo(-1, 8.5);
+			ctx.stroke();
+
+			ctx.save();
+			ctx.translate(-14, 4);
+			ctx.rotate(-0.5);
+			this.setupPath(ctx, "#7E9F7C", COLORS.ink, 0.9);
+			ctx.beginPath();
+			ctx.ellipse(0, 0, 3.8, 1.8, 0, 0, Math.PI * 2);
+			ctx.fill(); ctx.stroke();
+			ctx.restore();
+
+		} else if (v === 2) {
+			// VARIANT 2: KVETOUCÍ MATEŘÍDOUŠKA (Flowering wild thyme with purple florets)
+			this.setupPath(ctx, "transparent", "#78350F", 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-9, 6);
+			ctx.quadraticCurveTo(-2, 1, 4, -4);
+			ctx.moveTo(-2, 2);
+			ctx.quadraticCurveTo(3, 4, 9, 3);
+			ctx.moveTo(1, -1);
+			ctx.quadraticCurveTo(0, -7, -2, -10);
+			ctx.stroke();
+
+			this.setupPath(ctx, "#22C55E", COLORS.ink, 0.9);
+			const thymeLeaves = [
+				{ x: -5, y: 5 }, { x: -3, y: 2 }, { x: 1, y: 3 }, { x: 5, y: 4 }, { x: 1, y: -4 }
+			];
+			for (const tl of thymeLeaves) {
+				ctx.beginPath();
+				ctx.ellipse(tl.x, tl.y, 2.0, 1.1, 0.4, 0, Math.PI * 2);
+				ctx.fill(); ctx.stroke();
+			}
+
+			const floretClusters = [
+				{ cx: 4, cy: -5, count: 6 },
+				{ cx: 9, cy: 3, count: 5 },
+				{ cx: -2, cy: -10, count: 4 },
+				{ cx: 1, cy: -1, count: 4 },
+			];
+
+			const purpleHues = ["#C084FC", "#A855F7", "#E879F9", "#DDD6FE"];
+			for (const fc of floretClusters) {
+				for (let f = 0; f < fc.count; f++) {
+					const fa = (f / fc.count) * Math.PI * 2 + f * 0.3;
+					const fdist = 1.2 + (f % 2) * 2.2;
+					const fx = fc.cx + Math.cos(fa) * fdist;
+					const fy = fc.cy + Math.sin(fa) * fdist;
+					this.setupPath(ctx, purpleHues[f % purpleHues.length], COLORS.ink, 0.9);
+					ctx.beginPath();
+					ctx.arc(fx, fy, 1.8, 0, Math.PI * 2);
+					ctx.fill();
+					ctx.stroke();
+				}
+			}
+
+			this.setupPath(ctx, "#C084FC", COLORS.ink, 0.8);
+			ctx.beginPath();
+			ctx.arc(-12, 1, 1.5, 0, Math.PI * 2);
+			ctx.fill(); ctx.stroke();
+			ctx.beginPath();
+			ctx.arc(-14, 6, 1.2, 0, Math.PI * 2);
+			ctx.fill(); ctx.stroke();
+
+		} else if (v === 3) {
+			// VARIANT 3: SVATOJÁNSKÁ TŘEZALKA (St. John's Wort with golden 5-pointed star flowers)
+			this.setupPath(ctx, "transparent", "#15803D", 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-10, 7);
+			ctx.quadraticCurveTo(-3, 1, 4, -4);
+			ctx.moveTo(-3, 3);
+			ctx.quadraticCurveTo(3, 4, 8, 5);
+			ctx.stroke();
+
+			this.setupPath(ctx, "#4ADE80", COLORS.ink, 1.0);
+			const trezalkaLeaves = [
+				{ x: -7, y: 5, a: -0.5 }, { x: -5, y: 7, a: 0.6 },
+				{ x: -1, y: 1, a: -0.6 }, { x: 0, y: 4, a: 0.5 },
+				{ x: 5, y: 4, a: 0.3 }
+			];
+			for (const tl of trezalkaLeaves) {
+				ctx.beginPath();
+				ctx.ellipse(tl.x, tl.y, 2.8, 1.4, tl.a, 0, Math.PI * 2);
+				ctx.fill(); ctx.stroke();
+			}
+
+			const flowerCenters = [
+				{ x: 5, y: -4, r: 6.5 },
+				{ x: 9, y: 5, r: 5.0 },
+				{ x: 0, y: -9, r: 4.5 }
+			];
+
+			for (const fc of flowerCenters) {
+				ctx.save();
+				ctx.translate(fc.x, fc.y);
+				for (let p = 0; p < 5; p++) {
+					const pa = (p / 5) * Math.PI * 2 - Math.PI / 2;
+					this.setupPath(ctx, "#FACC15", COLORS.ink, 1.1);
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.lineTo(Math.cos(pa - 0.25) * (fc.r * 0.6), Math.sin(pa - 0.25) * (fc.r * 0.6));
+					ctx.lineTo(Math.cos(pa) * fc.r, Math.sin(pa) * fc.r);
+					ctx.lineTo(Math.cos(pa + 0.25) * (fc.r * 0.6), Math.sin(pa + 0.25) * (fc.r * 0.6));
+					ctx.closePath();
+					ctx.fill();
+					ctx.stroke();
+				}
+				ctx.fillStyle = "#EA580C";
+				ctx.beginPath();
+				ctx.arc(0, 0, 1.6, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.restore();
+			}
+
+			this.setupPath(ctx, "#FACC15", COLORS.ink, 0.8);
+			ctx.beginPath();
+			ctx.ellipse(-13, 0, 2.5, 1.2, 0.3, 0, Math.PI * 2);
+			ctx.fill(); ctx.stroke();
+
+		} else if (v === 4) {
+			// VARIANT 4: SVĚŽÍ MÁTA / MEDUŇKA (Serrated fresh green mint leaves)
+			this.setupPath(ctx, "transparent", "#166534", 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-9, 5);
+			ctx.lineTo(0, 0);
+			ctx.stroke();
+
+			const mintLeaves = [
+				{ a: -0.8, s: 1.0 },
+				{ a: -0.2, s: 1.15 },
+				{ a: 0.5, s: 1.05 },
+				{ a: 1.1, s: 0.85 },
+			];
+
+			for (const ml of mintLeaves) {
+				ctx.save();
+				ctx.rotate(ml.a);
+				const mlLen = 12 * ml.s;
+				const mlW = 5.5 * ml.s;
+				this.setupPath(ctx, "#22C55E", COLORS.ink, 1.3);
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(-mlW * 0.6, mlLen * 0.25);
+				ctx.lineTo(-mlW * 0.5, mlLen * 0.35);
+				ctx.lineTo(-mlW * 0.9, mlLen * 0.6);
+				ctx.lineTo(-mlW * 0.6, mlLen * 0.7);
+				ctx.lineTo(0, mlLen);
+				ctx.lineTo(mlW * 0.6, mlLen * 0.7);
+				ctx.lineTo(mlW * 0.9, mlLen * 0.6);
+				ctx.lineTo(mlW * 0.5, mlLen * 0.35);
+				ctx.lineTo(mlW * 0.6, mlLen * 0.25);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+
+				ctx.strokeStyle = "#15803D";
+				ctx.lineWidth = 1.0;
+				ctx.beginPath();
+				ctx.moveTo(0, 0);
+				ctx.lineTo(0, mlLen * 0.85);
+				ctx.stroke();
+				ctx.restore();
+			}
+
+			ctx.fillStyle = "#86EFAC";
+			ctx.beginPath();
+			ctx.arc(2, -8, 1.2, 0, Math.PI * 2);
+			ctx.arc(8, -2, 1.0, 0, Math.PI * 2);
+			ctx.fill();
+
+		} else {
+			// VARIANT 5: SNÍTKA LESNÍHO TYMIÁNU (Woody thyme bundle tied with hemp)
+			this.setupPath(ctx, "transparent", "#78350F", 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-10, 0); ctx.lineTo(10, -5);
+			ctx.moveTo(-10, 0); ctx.lineTo(12, 0);
+			ctx.moveTo(-10, 0); ctx.lineTo(10, 5);
+			ctx.moveTo(-10, 0); ctx.lineTo(7, -8);
+			ctx.moveTo(-10, 0); ctx.lineTo(8, 8);
+			ctx.stroke();
+
+			this.setupPath(ctx, "#166534", COLORS.ink, 0.9);
+			for (let i = 0; i < 14; i++) {
+				const tx = -2 + (i % 6) * 2.3;
+				const ty = -7 + (i * 1.2) % 15;
+				ctx.beginPath();
+				ctx.ellipse(tx, ty, 2.2, 0.9, (i * 0.4), 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+			}
+
+			this.setupPath(ctx, "#D97706", COLORS.ink, 1.2);
+			ctx.beginPath();
+			ctx.ellipse(-4, 0, 3.0, 4.5, 0.1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.strokeStyle = "#92400E";
+			ctx.lineWidth = 1.2;
+			ctx.beginPath();
+			ctx.moveTo(-4, 3); ctx.lineTo(-6, 7);
+			ctx.moveTo(-3, 3); ctx.lineTo(-2, 6.5);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+	},
+	drawFajfka(ctx: any, x: number, y: number, scale: number = 1, angle: number = 0, puffProgress: number = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		if (angle !== 0) ctx.rotate(angle);
+		ctx.scale(scale, scale);
+
+		this.drawShadow(ctx, 4, 20, 18);
+
+		// 1. Curved dark horn stem & mouthpiece (Troubel a náústek)
+		this.setupPath(ctx, "#1E232A", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.moveTo(18, 5);
+		ctx.bezierCurveTo(24, -3, 30, -15, 41, -19);
+		ctx.lineTo(42, -16);
+		ctx.bezierCurveTo(32, -12, 26, 0, 22, 9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Stem highlight
+		ctx.strokeStyle = "#64748B";
+		ctx.lineWidth = 1.0;
+		ctx.beginPath();
+		ctx.moveTo(19, 4);
+		ctx.bezierCurveTo(25, -4, 31, -15, 40, -18);
+		ctx.stroke();
+
+		// Brass ferrule tip at mouthpiece
+		this.setupPath(ctx, "#F59E0B", COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.ellipse(42, -17.5, 2.0, 3.2, 0.4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Brass ring connecting stem to lower collar
+		this.setupPath(ctx, "#F59E0B", COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.ellipse(19, 6, 2.5, 4.0, -0.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Embossed silver mid collar with scallops
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.ellipse(14, 11, 3.5, 5.5, -0.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Wood / clay bowl & neck (Hlavička dýmky a krk dle předlohy)
+		this.setupPath(ctx, "#B46A36", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-16, -4);
+		ctx.quadraticCurveTo(-18, 14, -7, 23);
+		ctx.quadraticCurveTo(4, 25, 12, 16);
+		ctx.quadraticCurveTo(15, 12, 14, 9);
+		ctx.quadraticCurveTo(4, 11, -1, 3);
+		ctx.quadraticCurveTo(-4, -2, -5, -4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Wood highlight along the bowl belly
+		ctx.strokeStyle = "#FDBA74";
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(-14, -1);
+		ctx.quadraticCurveTo(-16, 12, -7, 20);
+		ctx.stroke();
+
+		// Delicate wood grain pores / specks
+		ctx.strokeStyle = "#431407";
+		ctx.lineWidth = 1.1;
+		ctx.beginPath();
+		ctx.moveTo(-13, 5); ctx.lineTo(-12.5, 8);
+		ctx.moveTo(-11, 13); ctx.lineTo(-10.5, 16);
+		ctx.moveTo(-5, 18); ctx.lineTo(-4, 20);
+		ctx.moveTo(3, 17); ctx.lineTo(4, 15);
+		ctx.moveTo(-6, 8); ctx.lineTo(-5.5, 11);
+		ctx.stroke();
+
+		// 4. Scalloped embossed silver rim band with rivets
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.moveTo(-17, -4);
+		ctx.lineTo(-4, -1);
+		ctx.lineTo(-3, 6);
+		ctx.quadraticCurveTo(-6, 8, -9, 6.5);
+		ctx.quadraticCurveTo(-12, 8, -15, 6.5);
+		ctx.quadraticCurveTo(-17, 7, -17.5, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Rivet studs on rim band
+		ctx.fillStyle = "#F1F5F9";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		for (const rx of [-14, -10, -6]) {
+			ctx.beginPath();
+			ctx.arc(rx, 1.5, 1.0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Leaf charm / hinge flap on side of bowl
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 1.2);
+		ctx.beginPath();
+		ctx.ellipse(-2.5, 3.5, 1.8, 3.2, 0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 5. Bowl interior & burning aromatic herbal embers
+		this.setupPath(ctx, "#E5D5B8", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(-10.5, -4, 6.5, 3.5, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Burning herb embers
+		ctx.fillStyle = "#451A03";
+		ctx.beginPath();
+		ctx.ellipse(-10.5, -4, 5.0, 2.5, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#F59E0B";
+		ctx.beginPath();
+		ctx.arc(-11.5, -4, 1.2, 0, Math.PI * 2);
+		ctx.arc(-9, -4.5, 0.9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#EA580C";
+		ctx.beginPath();
+		ctx.arc(-10, -3.2, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 6. Fragrant curling smoke wafting from the pipe
+		if (puffProgress >= 0) {
+			ctx.save();
+			ctx.strokeStyle = "rgba(241, 245, 249, 0.85)";
+			ctx.lineWidth = 1.8;
+			ctx.lineCap = "round";
+			ctx.beginPath();
+			ctx.moveTo(-10, -7);
+			ctx.bezierCurveTo(-12, -14, -8, -19, -11, -26);
+			ctx.stroke();
+			ctx.strokeStyle = "rgba(203, 213, 225, 0.6)";
+			ctx.lineWidth = 1.2;
+			ctx.beginPath();
+			ctx.moveTo(-8, -8);
+			ctx.bezierCurveTo(-6, -13, -10, -17, -7, -23);
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		ctx.restore();
 	}
 };
 for (const key of Object.keys(Lada)) {
