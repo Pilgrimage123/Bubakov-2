@@ -172,18 +172,6 @@ export function GrandfatherShop({
     }
   }, []);
 
-  // Keyboard shortcut (Escape to close)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
   // Handle Reroll action
   const handleReroll = useCallback(() => {
     if (gingerbread < rerollCost || !onRefreshOffers) return;
@@ -223,6 +211,37 @@ export function GrandfatherShop({
       }, 950);
     }
   }, [onPurchase]);
+
+  // Keyboard shortcuts (Escape to close, 1-4 to purchase, R to reroll)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const idx = parseInt(e.key, 10) - 1;
+        const offer = offers[idx];
+        if (offer && !purchasedIds.includes(offer.itemId)) {
+          const item = GRANDFATHER_ITEMS.find((it) => it.id === offer.itemId);
+          const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
+          const price = item ? getGrandfatherPrice(item, purchaseCount, luck, waitSeconds) : 999;
+          if (gingerbread >= price) {
+            e.preventDefault();
+            handlePurchase(offer.itemId);
+          }
+        }
+        return;
+      }
+      if ((e.key === 'r' || e.key === 'R') && onRefreshOffers && gingerbread >= rerollCost) {
+        e.preventDefault();
+        handleReroll();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, offers, purchasedIds, gingerbread, totalPurchases, purchasesThisEncounter, luck, waitSeconds, rerollCost, onRefreshOffers, handlePurchase, handleReroll]);
 
   // Handle Hover over item card ("Dědeček vytahuje věci z nůše / ukazuje na ně")
   const handleItemHover = useCallback((item: GrandfatherItemDef) => {
@@ -797,6 +816,7 @@ export function GrandfatherShop({
                         <button
                           disabled={!affordable}
                           onClick={() => handlePurchase(offer.itemId)}
+                          title={affordable ? `Koupit (Klávesa ${idx + 1})` : undefined}
                           style={{
                             minHeight: 42,
                             padding: isMobile ? '8px 14px' : '9px 18px',
@@ -815,9 +835,35 @@ export function GrandfatherShop({
                             boxShadow: affordable ? '2px 2px 0 var(--ink)' : 'none',
                             whiteSpace: 'nowrap',
                             transition: 'transform 0.1s ease',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
                           }}
                         >
-                          {isMaxed ? 'VYČERPÁNO' : fullCourage ? 'PLNÁ KURÁŽ' : affordable ? buttonLabel : 'MÁLO PERNÍKŮ'}
+                          {isMaxed ? (
+                            'VYČERPÁNO'
+                          ) : fullCourage ? (
+                            'PLNÁ KURÁŽ'
+                          ) : affordable ? (
+                            <>
+                              <span
+                                style={{
+                                  background: 'rgba(0, 0, 0, 0.18)',
+                                  border: '1px solid rgba(0, 0, 0, 0.25)',
+                                  padding: '1px 5px',
+                                  borderRadius: 4,
+                                  fontSize: '0.8rem',
+                                  fontFamily: 'var(--font-ui)',
+                                  lineHeight: 1,
+                                }}
+                              >
+                                [{idx + 1}]
+                              </span>
+                              <span>{buttonLabel}</span>
+                            </>
+                          ) : (
+                            'MÁLO PERNÍKŮ'
+                          )}
                         </button>
                       </div>
                     </div>
@@ -865,10 +911,23 @@ export function GrandfatherShop({
               }}
               title={
                 gingerbread >= rerollCost
-                  ? `Vytáhne z nůše další zboží (stojí ${rerollCost} perníčků)`
+                  ? `Vytáhne z nůše další zboží [Klávesa R] (stojí ${rerollCost} perníčků)`
                   : `Nedostatek perníčků na zamíchání (stojí ${rerollCost} 🍪)`
               }
             >
+              <span
+                style={{
+                  background: 'rgba(0, 0, 0, 0.1)',
+                  border: '1px solid rgba(0, 0, 0, 0.2)',
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-ui)',
+                  lineHeight: 1,
+                }}
+              >
+                [R]
+              </span>
               <span>🧺 ZAMÍCHAT NŮŠI</span>
               <span
                 style={{
@@ -891,19 +950,37 @@ export function GrandfatherShop({
             style={{
               flex: isMobile ? '1' : 'none',
               minHeight: 46,
-              padding: isMobile ? '10px 18px' : '12px 28px',
+              padding: isMobile ? '10px 16px' : '12px 26px',
               fontWeight: 900,
               fontSize: isMobile ? '0.88rem' : '1rem',
               border: '2.5px solid var(--ink)',
               borderRadius: 10,
-              background: '#DC2626',
-              color: '#FFF',
+              background: 'var(--wood-dark)',
+              color: 'var(--parchment)',
               cursor: 'pointer',
               boxShadow: '3px 3px 0 var(--ink)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
               whiteSpace: 'nowrap',
             }}
+            title="Zavřít obchod a pokračovat ve hře [Klávesa Escape]"
           >
-            🚪 ZAVŘÍT NŮŠI
+            <span
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                padding: '1px 6px',
+                borderRadius: 4,
+                fontSize: '0.82rem',
+                fontFamily: 'var(--font-ui)',
+                lineHeight: 1,
+              }}
+            >
+              [Esc]
+            </span>
+            <span>Rozloučit se s dědečkem ➔</span>
           </button>
         </div>
       </div>

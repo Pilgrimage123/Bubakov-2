@@ -1,3 +1,20 @@
+## 2026-10-20 — UI/UX modernizace, přístupnost (A11y), klávesová ergonomie a pročištění stylů
+
+- **Pročištění CSS a odstranění 1 984 řádků duplicit (`src/index.css`)**:
+  - Z `src/index.css` byla odstraněna masivní redundantní sekce stylů (bývalé řádky 2870–4814) vzniklá dřívějším sloučením větví, čímž se velikost souboru snížila ze 102 kB (4 834 řádků) na 62 kB (2 937 řádků).
+  - Zavedeny sémantické tokeny v `:root` pro typografii (`--font-display`, `--font-ui`), focus obrysy (`--focus-ring`) a standardní dotykové cíle (`--touch-target-min`).
+- **Klávesová ergonomie a hotkeys v boji i nákupu**:
+  - **Milníky zbraní (`WeaponMilestoneModal.tsx`)**: Volba milníků uprostřed bitvy podporuje bleskový výběr klávesami `1` a `2` včetně jasných vizuálních odznaků `[1]` a `[2]`.
+  - **Čertův dědeček (`GrandfatherShop.tsx`)**: Nákup položek z nůše podporuje klávesy `1`–`4`, přelosování nabídky klávesu `R` a opuštění krámku klávesu `Esc` s odpovídajícími štítky v uživatelském rozhraní.
+  - **Univerzální zavírání dialogů**: Všechny modály v `AppModals.tsx` (Bestiář, Zbrojnice, Ovládání, Nastavení, Kronika) lze spolehlivě zavírat stiskem klávesy `Escape` i kliknutím na ztmavené pozadí.
+- **Přístupnost (A11y, WCAG AA) a typografická čitelnost**:
+  - Zavedena globální podpora `:focus-visible` s kontrastním obrysem pro klávesovou navigaci (Tab) napříč všemi interaktivními prvky, kartami výprav a volbami postav.
+  - Zavedena tabulární typografie (`font-variant-numeric: tabular-nums`) na časomíru HUDu, počítadlo perníčků, krejcarů a statistické ukazatele, která brání vizuálnímu poskakování čísel při změnách hodnot.
+  - Opraven kontrast výchozího odznaku dynamické obtížnosti 3.00× (*Běžný nepokoj*) – tmavý inkoustový text dosahuje kontrastního poměru 6.59:1 (plně vyhovuje WCAG AA).
+  - Tlačítko pauzy v HUDu zvětšeno na 44×44 px pro spolehlivé dotykové ovládání na mobilních zařízeních a doplněna podpora `prefers-reduced-motion`.
+- **Herní kronika a návod k ovládání**:
+  - Aktualizována herní kronika `src/components/KronikaChanges.tsx` a rozšířen průvodce ovládáním `src/components/ControlsModal.tsx` o nové klávesové zkratky a ergonomické tipy.
+
 ## 2026-10-20 — Optimalizace simulační smyčky, bezalokační správa entit a modulární pipeline arény (ADR 0020)
 
 - **Správné pořadí simulační smyčky a dvoustupňový prostorový index (`SpatialHash`)**:

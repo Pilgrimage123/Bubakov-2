@@ -210,12 +210,14 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		className: "overlay",
 		style: { zIndex: 30 },
+		onClick: onClose,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "panel",
 			style: {
 				maxWidth: "960px",
 				width: "95%"
 			},
+			onClick: (e) => e.stopPropagation(),
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					style: {

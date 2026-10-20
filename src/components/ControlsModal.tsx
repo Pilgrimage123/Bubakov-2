@@ -23,7 +23,14 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="overlay" style={{ zIndex: 45 }}>
+    <div
+      className="overlay"
+      style={{ zIndex: 45 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ovládání a cíl hry"
+    >
       <div
         className="panel"
         style={{
@@ -34,6 +41,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem' }}>🎮 OVLÁDÁNÍ A CÍL HRY</h2>
         <LadaBotanicalFlourish height={18} />
@@ -181,6 +189,42 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Jakmile se v blízkosti zjeví potulný Čertův dědeček a zavolá <em>„Pssst! Perníčky!“</em>, přistupte k němu a stiskněte klávesu <strong>E</strong>,
                 nebo klepněte na tlačítko <strong>🧺 OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a můžete si za perníčky koupit nové zbraně, jejich vylepšení i mocné pasivní dary!
+                Přímo v nůši můžete bleskově nakupovat klávesami <strong>[1]</strong> až <strong>[4]</strong>, zamíchat nabídku klávesou <strong>[R]</strong> a nůši opustit klávesou <strong>[Esc]</strong>.
+              </p>
+            </div>
+
+            {/* MILESTONE KEYBOARD CONTROLS */}
+            <div
+              style={{
+                background: '#F0FDF4',
+                border: '3px solid #166534',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#166534' }}>
+                  ✨ Blesková volba milníků zbraní v boji
+                </span>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <span className="keycap keycap-accent">1</span>
+                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#166534' }}>a</span>
+                  <span className="keycap keycap-accent">2</span>
+                </div>
+              </div>
+              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
+                Při dosažení 3., 5. a 8. úrovně zbraně vyskočí výběr ze dvou unikátních větví vylepšení.
+                Nemusíte sundávat ruku z klávesnice (WASD) – stiskněte <strong>[1]</strong> pro první schopnost nebo <strong>[2]</strong> pro druhou schopnost a okamžitě pokračujete v boji!
               </p>
             </div>
 

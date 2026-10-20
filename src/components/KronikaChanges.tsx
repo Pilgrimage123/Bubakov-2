@@ -10,6 +10,21 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '20. října 2026',
+    title: 'UI/UX modernizace, přístupnost (A11y), klávesová ergonomie a pročištění stylů',
+    summary: 'Kompletní revize rozhraní a ergonomie dle standardů ui-ux-pro-max. Odstraněna dvoutisíciřádková duplikace v CSS, zavedeny focus indikátory a tabulární čísla, doplněno klávesové ovládání milníků i dědečkovy nůše z WASD a zvětšeny dotykové cíle pro mobilní hraní.',
+    items: [
+      '🧹 Odstranění 1 984 řádků duplicit v CSS: Z index.css byla vyčištěna zdvojená sekce vzniklá sloučením větví, čímž se styl zredukoval o 40 % a zpřehlednila se hierarchie pravidel.',
+      '⌨️ Klávesové ovládání milníků a nákupů bez myši: Volba milníku zbraně uprostřed boje reaguje na klávesy [1] a [2]. Čertův dědeček umožňuje nákup položek z nůše klávesami [1]–[4], přelosování klávesou [R] a odchod klávesou [Esc].',
+      '🚪 Univerzální zavírání oken klávesou Esc a klikem mimo okno: Bestiář, Zbrojnice, Ovládání i Nastavení spolehlivě reagují na klávesu Escape a kliknutí na tmavé pozadí dialogu.',
+      '👁️ Přístupnost a :focus-visible obrysy: Všechna interaktivní tlačítka, karty výprav a postavy získaly kontrastní focus ring pro bezchybné procházení hry pomocí klávesy Tab.',
+      '🔢 Čitelná tabulární typografie: Časomíra v HUDu, počítadlo perníčků, krejcarů a číselné hodnoty v rekapitulaci využívají neproporcionální číslice, které neposkakují při změně hodnot.',
+      '📱 Mobilní dotyková ergonomie: Tlačítko pauzy v HUDu bylo zvětšeno na 44×44 px pro jistý stisk a byla přidána podpora pro uživatele s preferencí omezeného pohybu (prefers-reduced-motion).',
+      '🎨 Splnění kontrastu WCAG AA: Odznak výchozí dynamické obtížnosti 3.00× přešel na tmavý inkoustový text s kontrastem 6.59:1.',
+      '🧪 Pro testery: vyzkoušejte rychlý výběr milníku klávesou 1/2 v boji, nákup u dědečka klávesami 1–4 a procházení menu tabulátorem.',
+    ],
+  },
+  {
+    date: '20. října 2026',
     title: 'Optimalizace simulační smyčky, bezalokační správa entit a modulární pipeline arény',
     summary: 'Kompletní revize simulační smyčky a vykreslovací architektury arény (ADR 0020). Opraveno pořadí prostorového indexu před útoky zbraní, bojové texty se slévají a recyklují v O(1) bufferu, kouřové obláčky a textové štítky s emoji šetří procesor a celá renderovací pipeline byla rozčleněna do čistých bezstavových modulů.',
     items: [

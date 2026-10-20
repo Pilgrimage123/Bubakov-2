@@ -10118,11 +10118,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </div>
                 {(() => {
                   const activePreset = getDifficultyPreset(meta.dynamicDifficulty ?? 3.0);
+                  const isLightBg = activePreset.value <= 3.0;
                   return (
                     <div
                       style={{
                         background: activePreset.color,
-                        color: '#FFFFFF',
+                        color: isLightBg ? 'var(--ink)' : '#FFFFFF',
                         padding: '4px 12px',
                         borderRadius: '6px',
                         fontWeight: 900,
