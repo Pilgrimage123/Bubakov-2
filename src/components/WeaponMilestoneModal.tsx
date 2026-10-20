@@ -31,6 +31,20 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
     onChoose(weaponId, choice.id);
   };
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '1' && choices[0]) {
+        e.preventDefault();
+        handleSelect(choices[0]);
+      } else if (e.key === '2' && choices[1]) {
+        e.preventDefault();
+        handleSelect(choices[1]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [choices, weaponId]);
+
   const formatStatModifiers = (mods: MilestoneChoice['statModifiers']) => {
     const badges: Array<{ label: string; icon: string; color: string }> = [];
 
@@ -317,9 +331,27 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                     textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                     marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
                   }}
+                  title={`Zvolit milník (Klávesa ${index + 1})`}
                 >
-                  {t('milestone_modal.choose_btn', lang)}
+                  <span
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.28)',
+                      border: '1px solid rgba(255, 255, 255, 0.4)',
+                      padding: '2px 7px',
+                      borderRadius: 4,
+                      fontSize: '0.85rem',
+                      fontFamily: 'var(--font-ui)',
+                      lineHeight: 1,
+                    }}
+                  >
+                    [{index + 1}]
+                  </span>
+                  <span>{t('milestone_modal.choose_btn', lang)}</span>
                 </button>
               </div>
             );

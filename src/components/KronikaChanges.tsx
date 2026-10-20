@@ -37,6 +37,21 @@ const KRONIKA: KronikaEntry[] = [
   },
   {
     date: '20. října 2026',
+    title: 'UI/UX modernizace, přístupnost (A11y), klávesová ergonomie a pročištění stylů',
+    summary: 'Kompletní revize rozhraní a ergonomie dle standardů ui-ux-pro-max. Odstraněna dvoutisíciřádková duplikace v CSS, zavedeny focus indikátory a tabulární čísla, doplněno klávesové ovládání milníků i dědečkovy nůše z WASD a zvětšeny dotykové cíle pro mobilní hraní.',
+    items: [
+      '🧹 Odstranění 1 984 řádků duplicit v CSS: Z index.css byla vyčištěna zdvojená sekce vzniklá sloučením větví, čímž se styl zredukoval o 40 % a zpřehlednila se hierarchie pravidel.',
+      '⌨️ Klávesové ovládání milníků a nákupů bez myši: Volba milníku zbraně uprostřed boje reaguje na klávesy [1] a [2]. Čertův dědeček umožňuje nákup položek z nůše klávesami [1]–[4], přelosování klávesou [R] a odchod klávesou [Esc].',
+      '🚪 Univerzální zavírání oken klávesou Esc a klikem mimo okno: Bestiář, Zbrojnice, Ovládání i Nastavení spolehlivě reagují na klávesu Escape a kliknutí na tmavé pozadí dialogu.',
+      '👁️ Přístupnost a :focus-visible obrysy: Všechna interaktivní tlačítka, karty výprav a postavy získaly kontrastní focus ring pro bezchybné procházení hry pomocí klávesy Tab.',
+      '🔢 Čitelná tabulární typografie: Časomíra v HUDu, počítadlo perníčků, krejcarů a číselné hodnoty v rekapitulaci využívají neproporcionální číslice, které neposkakují při změně hodnot.',
+      '📱 Mobilní dotyková ergonomie: Tlačítko pauzy v HUDu bylo zvětšeno na 44×44 px pro jistý stisk a byla přidána podpora pro uživatele s preferencí omezeného pohybu (prefers-reduced-motion).',
+      '🎨 Splnění kontrastu WCAG AA: Odznak výchozí dynamické obtížnosti 3.00× přešel na tmavý inkoustový text s kontrastem 6.59:1.',
+      '🧪 Pro testery: vyzkoušejte rychlý výběr milníku klávesou 1/2 v boji, nákup u dědečka klávesami 1–4 a procházení menu tabulátorem.',
+    ],
+  },
+  {
+    date: '20. října 2026',
     title: 'Výkonnostní optimalizace arény: 60 FPS zátěžový benchmark, rozpočty entit a Ghost rezervoár',
     summary: 'Kompletní implementace všech fází optimalizačního plánu pro udržení stabilních 60 FPS (p95 pod 16,7 ms). Zaveden deterministický zátěžový benchmark, modulární renderovací pipeline s izolovaným Y-bufferem, škrcení prostorových dotazů, centrální rozpočty částic a Ghost rezervoár zamezující zahlcení bojiště dropy bez ztráty jediné suroviny.',
     items: [

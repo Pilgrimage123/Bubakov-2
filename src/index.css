@@ -28,6 +28,15 @@
   --white: #FFFFFF;
   --dark-blue: #1E3A8A;
   --blue: #2563EB;
+
+  /* Typography tokens */
+  --font-display: 'Eczar', serif;
+  --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Focus & Accessibility tokens */
+  --focus-ring: 3px solid #2563EB;
+  --focus-ring-offset: 2px;
+  --touch-target-min: 44px;
 }
 
 * {
@@ -38,7 +47,46 @@
   scrollbar-width: thin;
 }
 
-/* Universal LadovskĂ˝ folk storybook scrollbar styling */
+/* Universal accessible focus indicators for keyboard navigation */
+:focus-visible {
+  outline: var(--focus-ring) !important;
+  outline-offset: var(--focus-ring-offset) !important;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+.lada-btn:focus-visible,
+.tab-btn:focus-visible,
+.char-card:focus-visible,
+.level-card:focus-visible,
+.hud-pause-btn:focus-visible,
+.touch-action-btn:focus-visible,
+.touch-toggle-btn:focus-visible,
+.hud-weapon-slot:focus-visible {
+  outline: 3px solid #2563EB !important;
+  outline-offset: 2px !important;
+}
+
+/* Legible tabular numbers for UI metrics, HUD counters, and timers */
+.stats-clock-timer,
+.tally-number,
+.bar-text,
+.hud-gingerbread-chip,
+.level-badge,
+.hunter-progress-header,
+.return-bonus-countdown strong,
+.hunter-enemy-pill,
+#coins-text,
+#souls-text,
+#kills-text,
+#chest-progress-text {
+  font-family: var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Universal Ladovský folk storybook scrollbar styling */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -600,14 +648,15 @@ body {
   background: #FAF5E8;
   border: 2.5px solid var(--ink);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   box-shadow: 2px 2px 0px var(--ink);
   transition: all 0.15s ease;
   pointer-events: auto;
@@ -2866,7 +2915,6 @@ body {
 }
 
 
-
 /* Feature: weapon HUD slots */
 #hud-weapons-bar {
   position: absolute;
@@ -2943,6 +2991,10 @@ body {
   box-shadow: 1px 1px 0 rgba(0,0,0,0.3);
 }
 
+#courage-container .bar-text {
+  color: var(--cream);
+}
+
 /* Timed post-run reward: responsive and reduced-motion aware. */
 .return-bonus-card { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; flex:1 1 240px; min-width:min(100%,230px); max-width:310px; padding:12px; text-align:center; }
 .return-bonus-orb { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; width:clamp(150px,24vw,205px); min-height:150px; padding:18px; box-sizing:border-box; border:4px solid #fff0a6; border-radius:50%; color:#422006; background:radial-gradient(circle at 35% 25%,#fff7c2 0%,#fbbf24 48%,#b45309 100%); box-shadow:0 0 0 3px #92400e,0 0 24px 8px rgb(251 191 36 / 50%); animation:return-bonus-pulse 1s ease-in-out infinite alternate; font-weight:1000; }
@@ -2955,7 +3007,23 @@ body {
 .return-to-field-btn { min-height:56px; width:100%; padding:12px 16px; background:#166534 !important; color:#fff7d6 !important; border:3px solid #fbbf24 !important; font-size:1.05rem !important; touch-action:manipulation; }
 .return-bonus-expired { color:#991b1b; font-weight:1000; padding:16px 8px; }
 @keyframes return-bonus-pulse { from { transform:scale(.97); filter:brightness(.96); } to { transform:scale(1.04); filter:brightness(1.1); } }
-@media (prefers-reduced-motion:reduce) { .return-bonus-orb { animation:none; } }
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .return-bonus-orb,
+  .slot-spinning-strip,
+  .slot-all-locked,
+  .basket-shaking,
+  .touch-action-btn.ready {
+    animation: none !important;
+  }
+}
 @media (max-width:560px) { .return-bonus-card { flex-basis:100%; max-width:100%; } .return-bonus-orb { width:170px; min-height:145px; } .tally-actions-row { gap:12px; } }
 
 /* ============================================================================
@@ -3194,4 +3262,3 @@ body {
     animation: none !important;
   }
 }
-

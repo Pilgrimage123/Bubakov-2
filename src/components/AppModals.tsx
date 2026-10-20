@@ -148,6 +148,87 @@ export const AppModals: React.FC<AppModalsProps> = ({
   unlockNotice,
   onDismissUnlockNotice,
 }) => {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (selectedWeaponDetail) {
+          e.preventDefault();
+          onCloseWeaponDetail();
+        } else if (selectedLevelDetail) {
+          e.preventDefault();
+          onCloseLevelDetail();
+        } else if (selectedHunterInfo) {
+          e.preventDefault();
+          onCloseHunterInfo();
+        } else if (selectedHunterDetail) {
+          e.preventDefault();
+          onCloseHunterDetail();
+        } else if (isResetModalOpen) {
+          e.preventDefault();
+          onCloseResetModal();
+        } else if (isAnimationTesterOpen) {
+          e.preventDefault();
+          onCloseAnimationTester();
+        } else if (isTestModeOpen) {
+          e.preventDefault();
+          onCloseTestMode();
+        } else if (isCombatTextModalOpen) {
+          e.preventDefault();
+          onCloseCombatTextModal();
+        } else if (isPlanOpen) {
+          e.preventDefault();
+          onClosePlan();
+        } else if (isArsenalOpen) {
+          e.preventDefault();
+          onCloseArsenal();
+        } else if (isBestiaryOpen) {
+          e.preventDefault();
+          onCloseBestiary();
+        } else if (isSettingsDevOpen) {
+          e.preventDefault();
+          onCloseSettingsDev();
+        } else if (isControlsOpen) {
+          e.preventDefault();
+          onCloseControls();
+        } else if (unlockNotice) {
+          e.preventDefault();
+          onDismissUnlockNotice();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    selectedWeaponDetail,
+    selectedLevelDetail,
+    selectedHunterInfo,
+    selectedHunterDetail,
+    isResetModalOpen,
+    isAnimationTesterOpen,
+    isTestModeOpen,
+    isCombatTextModalOpen,
+    isPlanOpen,
+    isArsenalOpen,
+    isBestiaryOpen,
+    isSettingsDevOpen,
+    isControlsOpen,
+    unlockNotice,
+    onCloseWeaponDetail,
+    onCloseLevelDetail,
+    onCloseHunterInfo,
+    onCloseHunterDetail,
+    onCloseResetModal,
+    onCloseAnimationTester,
+    onCloseTestMode,
+    onCloseCombatTextModal,
+    onClosePlan,
+    onCloseArsenal,
+    onCloseBestiary,
+    onCloseSettingsDev,
+    onCloseControls,
+    onDismissUnlockNotice,
+  ]);
+
   return (
     <>
       {/* CONTROLS & OBJECTIVE MODAL */}
