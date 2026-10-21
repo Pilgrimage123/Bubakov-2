@@ -5760,8 +5760,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               if (comp.throwCd <= 0) {
                 const living = player.getLivingEnemies();
-                if (living.length > 0) {
-                  const target = living[0];
+                const target = living.find((enemy: any) => isDirectTargetable(enemy, player));
+                if (target) {
                   const ang = Math.atan2(target.y - comp.y, target.x - comp.x);
                   player.spawnProjectile({
                     x: comp.x,
