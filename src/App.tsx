@@ -12,6 +12,8 @@ import { createInitialEngineState, type EngineState } from './game/engineState';
 import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
 import { getCachedHomingTarget } from './game/homing';
+import { isDirectTargetable } from './game/targeting';
+import { stepCrowForaging } from './game/crowForaging';
 import { tryEmitParticle, tryEmitParticleBurst, getParticleLimit } from './game/particles';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
@@ -6070,13 +6072,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Homing bees: vyhledání nejbližšího strašidla přes SpatialHash s přirozenou hmyzí vlnivou křivkou
             if (p.homing) {
+              if (p._target && !isDirectTargetable(p._target, engineRef.current.player)) {
+                p._target = null;
+                p._targetScanTimer = 0;
+              }
               const nearest = getCachedHomingTarget(p, dt, () => {
                 const nearbyTargets = enemySpatialHashRef.current.queryCircle(p.x, p.y, 380);
                 let candidate: any = null;
                 let nearestDistSq = Infinity;
                 for (let i = 0; i < nearbyTargets.length; i++) {
                   const target = nearbyTargets[i];
-                  if (target.isDefeated || target.dead) continue;
+                  if (target.isDefeated || target.dead || !isDirectTargetable(target, engineRef.current.player)) continue;
                   const dSq = distanceSq(p.x, p.y, target.x, target.y);
                   if (dSq < nearestDistSq) {
                     nearestDistSq = dSq;
@@ -8152,6 +8158,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       orbitRadius: 130 + Math.random() * 60,
       orbitDir: Math.random() < 0.5 ? 1 : -1,
       orbitAngle: Math.random() * Math.PI * 2,
+      crowForageTarget: null as any,
+      crowForageTimer: 0,
+      crowForageCooldown: 2 + Math.random() * 2,
+      isGroundedForLoot: false,
       zigZagTimer: 0,
       zigZagDir: Math.random() < 0.5 ? 1 : -1,
       chargeDirX: 0,
@@ -8569,11 +8579,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Stage 1: fast airborne crows weave around the hunter instead of hopping on the ground.
         if (this.id === 'vrana') {
-          const weave = Math.sin(this.animTime * 8 + (this.orbitAngle || 0)) * 0.48;
-          const flightAngle = dirToPlayer + weave;
-          const flightSpeed = spd * (distToPlayer > 170 ? 1.22 : 0.88);
-          this.vx = Math.cos(flightAngle) * flightSpeed;
-          this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 10) * 12;
+          const foraging = stepCrowForaging(this, engineRef.current?.drops || [], dt, spd);
+          if (foraging.active) {
+            this.vx = foraging.vx;
+            this.vy = foraging.vy;
+          } else {
+            const weave = Math.sin(this.animTime * 8 + (this.orbitAngle || 0)) * 0.48;
+            const flightAngle = dirToPlayer + weave;
+            const flightSpeed = spd * (distToPlayer > 170 ? 1.22 : 0.88);
+            this.vx = Math.cos(flightAngle) * flightSpeed;
+            this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 10) * 12;
+          }
         } else if (this.id === 'mrazovy_skritek') {
           this.vx = Math.cos(dirToPlayer) * spd * 0.82;
           this.vy = Math.sin(dirToPlayer) * spd * 0.82;
@@ -10860,7 +10876,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else {
           // Unified modern enemy renderer with computeEnemyKinematics, underlay ground VFX, single transform and overlay weapon VFX
           drawEnemyRenderer(
-            this.method,
+            this.id === 'vrana' && this.isGroundedForLoot ? 'drawStageCrowGround' : this.method,
             ctx,
             this.x,
             this.y,
