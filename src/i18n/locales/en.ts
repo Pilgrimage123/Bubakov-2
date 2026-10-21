@@ -844,4 +844,10 @@ export const en: Record<string, string> = {
   "trophy.claim": "Claim (+{reward})",
   "trophy.uncompleted": "⏳ Incomplete",
   "trophy.progress": "Progress: {cur} / {max}",
+  "bestiary.jezinka_mraziva.name": "Frost Jezinka",
+  "bestiary.jezinka_mraziva.title": "Ice witch of the thawing forest",
+  "bestiary.mrazivy_obr.name": "Frost Giant",
+  "bestiary.mrazivy_obr.title": "A four-times larger spirit of eternal winter",
+  "bestiary.tajici_snehulak.name": "Devious Melting Snowman",
+  "bestiary.tajici_snehulak.title": "A malicious slush heap carrying a broom",
 };

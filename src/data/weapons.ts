@@ -1,6 +1,7 @@
 import { sound } from '../audio';
 import type { WeaponId } from '../types';
 import { getRankedWeaponStats, type WeaponStats } from './weaponMilestones';
+import { isDirectTargetable } from '../game/targeting';
 
 function getDistSqTo(player: any, target: any): number {
   if (typeof player.distSqTo === 'function') return player.distSqTo(target);
@@ -127,14 +128,15 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const stats = getWeaponStats('kysela_okurka', level, w);
 			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(900) : player.getLivingEnemies();
-			if (!enemies.length) return false;
-			let target = enemies[0];
+			const targetableEnemies = enemies.filter((enemy: any) => isDirectTargetable(enemy, player));
+			if (!targetableEnemies.length) return false;
+			let target = targetableEnemies[0];
 			let minDistSq = getDistSqTo(player, target);
-			for (let i = 1; i < enemies.length; i++) {
-				const dSq = getDistSqTo(player, enemies[i]);
+			for (let i = 1; i < targetableEnemies.length; i++) {
+				const dSq = getDistSqTo(player, targetableEnemies[i]);
 				if (dSq < minDistSq) {
 					minDistSq = dSq;
-					target = enemies[i];
+					target = targetableEnemies[i];
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
@@ -173,16 +175,17 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const stats = getWeaponStats('povidlove_buchty', level, w);
 			const maxRange = 850 * stats.areaRadiusMult;
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(maxRange) : player.getLivingEnemies();
-			if (!enemies || enemies.length === 0) return false;
-			let target = enemies[0];
+			const targetableEnemies = (enemies || []).filter((enemy: any) => isDirectTargetable(enemy, player));
+			if (!targetableEnemies.length) return false;
+			let target = targetableEnemies[0];
 			const getBuchtyScore = (e: any) => {
 				const dx = e.x - player.x;
 				const dy = e.y - player.y;
 				return Math.sqrt(dx * dx + dy * dy) + (e.hunger ?? e.foodResist ?? 0) * 400;
 			};
 			let bestDist = getBuchtyScore(target);
-			for (let i = 1; i < enemies.length; i++) {
-				const e = enemies[i];
+			for (let i = 1; i < targetableEnemies.length; i++) {
+				const e = targetableEnemies[i];
 				const d = getBuchtyScore(e);
 				if (d < bestDist) {
 					bestDist = d;
@@ -415,14 +418,15 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('snehova_koule', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
-			if (!enemies || enemies.length === 0) return false;
-			let target = enemies[0];
+			const targetableEnemies = (enemies || []).filter((enemy: any) => isDirectTargetable(enemy, player));
+			if (!targetableEnemies.length) return false;
+			let target = targetableEnemies[0];
 			let minDistSq = getDistSqTo(player, target);
-			for (let i = 1; i < enemies.length; i++) {
-				const dSq = getDistSqTo(player, enemies[i]);
+			for (let i = 1; i < targetableEnemies.length; i++) {
+				const dSq = getDistSqTo(player, targetableEnemies[i]);
 				if (dSq < minDistSq) {
 					minDistSq = dSq;
-					target = enemies[i];
+					target = targetableEnemies[i];
 				}
 			}
 			const angle = Math.atan2(target.y - player.y, target.x - player.x);
@@ -464,14 +468,15 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('kynuty_kolac', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
-			if (!enemies || enemies.length === 0) return false;
+			const targetableEnemies = (enemies || []).filter((enemy: any) => isDirectTargetable(enemy, player));
+			if (!targetableEnemies.length) return false;
 			const count = Math.max(1, Math.round((1 + stats.projectileCount) * (stats.projectileCountMult || 1)));
 			const dmg = getWeaponDamage(player, 28) * stats.damageMult;
 			const bounces = 2 + Math.min(4, level - 1);
 			const snackDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 3;
 			const radius = Math.round(16 * stats.areaRadiusMult);
 			for (let i = 0; i < count; i++) {
-				const target = enemies[Math.floor(Math.random() * Math.min(6, enemies.length))];
+				const target = targetableEnemies[Math.floor(Math.random() * Math.min(6, targetableEnemies.length))];
 				const angle = Math.atan2(target.y - player.y, target.x - player.x) + (count > 1 ? (i - (count - 1) / 2) * 0.2 : 0);
 				player.spawnProjectile({
 					x: player.x,
@@ -663,7 +668,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			let minWindupDistSq = Infinity;
 			for (let i = 0; i < enemies.length; i++) {
 				const e = enemies[i];
-				if (e.isDefeated || e.dead) continue;
+				if (e.isDefeated || e.dead || !isDirectTargetable(e, player)) continue;
 				const dSq = getDistSqTo(player, e);
 				if (e.isAttacking || (e.windupTimer && e.windupTimer > 0) || e.aiState === 'windup') {
 					if (dSq < minWindupDistSq) {
@@ -676,7 +681,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 				let minCloseDistSq = Infinity;
 				for (let i = 0; i < enemies.length; i++) {
 					const e = enemies[i];
-					if (e.isDefeated || e.dead) continue;
+					if (e.isDefeated || e.dead || !isDirectTargetable(e, player)) continue;
 					const dSq = getDistSqTo(player, e);
 					if (dSq < minCloseDistSq) {
 						minCloseDistSq = dSq;
@@ -739,7 +744,8 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('splaseny_houser', level, w);
 			const enemies = typeof player.getNearbyEnemies === 'function' ? player.getNearbyEnemies(850 * stats.areaRadiusMult) : player.getLivingEnemies();
-			if (!enemies || enemies.length === 0) return false;
+			const targetableEnemies = (enemies || []).filter((enemy: any) => isDirectTargetable(enemy, player));
+			if (!targetableEnemies.length) return false;
 			const count = Math.max(1, 1 + Math.floor((level - 1) / 3) + stats.projectileCount);
 			const dmg = getWeaponDamage(player, 26) * stats.damageMult;
 			const radius = Math.round(16 * stats.areaRadiusMult);
@@ -747,7 +753,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const panicDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.2;
 
 			for (let i = 0; i < count; i++) {
-				const target = enemies[Math.floor(Math.random() * Math.min(5, enemies.length))];
+				const target = targetableEnemies[Math.floor(Math.random() * Math.min(5, targetableEnemies.length))];
 				const angle = Math.atan2(target.y - player.y, target.x - player.x) + (count > 1 ? (i - (count - 1) / 2) * 0.35 : 0);
 				player.spawnProjectile({
 					x: player.x,

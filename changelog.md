@@ -1,3 +1,29 @@
+## 2026-10-21 — Dokončení AI vrány a cílení Mrazivé jezinky
+
+- Vrána nyní vyhledává poblíž ležící mince a malé jídlo, přiletí k nim, přistane, chvíli zobá a kořist sebere.
+- Při sbírání kořisti se přepne na pozemní kresbu; po dokončení znovu vzlétne a chvíli další kořist nehledá.
+- Společné pravidlo přímého cílení: Mrazivou jezinku lze přímo zvolit jen do vzdálenosti 100 px od lovce; naváděné střely si neudrží vzdálený cíl po překročení limitu.
+- Zásahová kolize a plošné poškození jezinky zůstávají beze změny.
+- Přidány testy pro limit cílení, zachovanou zranitelnost a sbírání kořisti vránou.
+
+## 2026-10-21 — Mrazivá jezinka: poloviditelnost
+
+- Mrazivá jezinka se vykresluje v 60% velikosti (o 40 % menší) a s nižší průhledností.
+- Přímé automatické cílení na ni funguje pouze do vzdálenosti 100 px od lovce; zásahová kolize a plošné poškození zůstávají zachované.
+
+## 2026-10-21 — Opravy patch výpravy předjaří
+
+- Doplněny české a anglické překlady do bestiáře pro Mrazivou jezinku, Mrazivého obra a Zákeřného tajícího sněhuláka.
+- Obnoven meziboss Vodníček na první úrovni: testy úrovně 0 očekávají plnou konfiguraci bossů.
+
+## 2026-10-21 — Noví nepřátelé prvního stage
+
+- Přidána Mrazivá jezinka, Mrazivý obr a Zákeřný tající sněhulák včetně kreslení.
+- Rozšířeny spawn pooly první úrovně a seznam klíčových nepřátel.
+- Přidána samostatná pozemní kresba vrány pro plánovaný loot stav.
+- Přepnutí vrány do pozemního stavu a pravidlo 100 PC pro cílení jezinky ještě nejsou napojeny na herní AI/cílení.
+- Opraveno uzavření metody vykreslování, které blokovalo TypeScript parsování.
+
 ## 2026-10-21 — Kanonizace zbraňových výzev, obnova JSX komponent a robustní migrace (ADR 0026)
 
 - **Kompletní de-transpilace a obnova 7 React komponent**:
