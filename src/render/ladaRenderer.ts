@@ -6064,7 +6064,8 @@ var Lada = {
 	},
 	drawFrostJezinka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
 		const dir = vx < 0 ? -1 : 1, bob = Math.sin(time * 2.2) * 1.2;
-		ctx.save(); ctx.globalAlpha = 0.56 + Math.sin(time * 1.7) * 0.06; ctx.translate(x, y + bob); ctx.scale(dir, 1);
+		// Poloviditelná jezinka je o 40 % menší, ale zůstává zranitelná.
+		ctx.save(); ctx.globalAlpha = 0.5 + Math.sin(time * 1.7) * 0.05; ctx.translate(x, y + bob); ctx.scale(dir * 0.6, 0.6);
 		ctx.fillStyle = "rgba(147,197,253,0.22)"; ctx.strokeStyle = "#172554"; ctx.lineWidth = 2;
 		ctx.beginPath(); ctx.ellipse(0, 0, 20, 24, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 		ctx.fillStyle = "#BFDBFE"; ctx.beginPath(); ctx.moveTo(-12, -8); ctx.lineTo(-20, 20); ctx.quadraticCurveTo(0, 26, 20, 20); ctx.lineTo(12, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
