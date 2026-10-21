@@ -6097,6 +6097,7 @@ var Lada = {
 		ctx.strokeStyle = "#38BDF8"; ctx.lineWidth = 2; ctx.beginPath();ctx.moveTo(-12,-13);ctx.lineTo(-13,-7);ctx.moveTo(10,-2);ctx.lineTo(12,5);ctx.stroke();
 		ctx.restore();
 
+	},
 	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 16 : 8;
