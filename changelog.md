@@ -1,3 +1,8 @@
+## 2026-10-21 — Mrazivá jezinka: poloviditelnost
+
+- Mrazivá jezinka se vykresluje v 60% velikosti (o 40 % menší) a s nižší průhledností.
+- Naváděné střely ji během poloviditelného stavu nevybírají jako cíl; zásahy a zranitelnost zůstávají zachované.
+
 ## 2026-10-21 — Opravy patch výpravy předjaří
 
 - Doplněny české a anglické překlady do bestiáře pro Mrazivou jezinku, Mrazivého obra a Zákeřného tajícího sněhuláka.
