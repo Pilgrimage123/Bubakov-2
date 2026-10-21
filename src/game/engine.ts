@@ -15,6 +15,7 @@ import { type EngineState, type PendingMilestoneChoice, createInitialEngineState
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
 import { getCachedHomingTarget } from './homing';
+import { isDirectTargetable } from './targeting';
 import { tryEmitParticle, getParticleLimit } from './particles';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
@@ -2310,6 +2311,10 @@ export class GameEngine {
       const p = this.state.projectiles[i];
 
       if (p.homing && !p.isEnemy) {
+        if (p._target && !isDirectTargetable(p._target, this.state.player)) {
+          p._target = null;
+          p._targetScanTimer = 0;
+        }
         const nearest = getCachedHomingTarget(p, dt, () => {
           const enemies = this.spatialHash.queryCircle(p.x, p.y, 400);
           let candidate: any = null;
@@ -2317,7 +2322,7 @@ export class GameEngine {
           for (let ei = 0; ei < enemies.length; ei++) {
             const enemy = enemies[ei];
             // Poloviditelná Mrazivá jezinka nemůže být vybrána jako cíl naváděných střel.
-            if (enemy.isDefeated || enemy.dead || p.hitList?.includes(enemy) || enemy.id === 'jezinka_mraziva') continue;
+            if (enemy.isDefeated || enemy.dead || p.hitList?.includes(enemy) || !isDirectTargetable(enemy, this.state.player)) continue;
             const dsq = (enemy.x - p.x) ** 2 + (enemy.y - p.y) ** 2;
             if (dsq < nearestDistSq) {
               nearestDistSq = dsq;
