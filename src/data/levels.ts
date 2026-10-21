@@ -86,10 +86,10 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"bludicka"
 			],
 			midnight: [
+				"vodnicek",
 				"mrazovy_skritek",
-				"jezinka_mraziva",
-				"mrazivy_obr",
-				"tajici_snehulak"
+				"topivec",
+				"bludicka"
 			]
 		},
 		keyEnemies: [
