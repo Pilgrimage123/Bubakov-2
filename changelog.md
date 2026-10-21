@@ -1,3 +1,12 @@
+## 2026-10-21 — Bezpečná konsolidace a sloučení větví do hlavní větve (main)
+
+- **Konsolidace větví a bezpečnostní zálohy**:
+  - Vytvořeny samostatné záložní větve `backup/main-20261021`, `backup/feat-arena-rendering-pipeline`, `backup/feat-dynamic-lighting` a `backup/feat-unify-mechanics`.
+  - Do hlavní větve `main` bylo krok za krokem integrováno všech 5 jedinečných vylepšení z větve `feat/arena-rendering-pipeline` (ADR 0025 a reaktivní obtížnost Dvojčete minibosse, Smart SVG animace s procedurální kinematikou, uvolňování GPU VRAM a bezalokační restart, UI/UX modernizace, hotkeys a A11y přístupnost).
+  - Historické prototypové větve `feat/dynamic-lighting` a `feat/unify-mechanics` byly zkontrolovány a ponechány v záloze – veškerá jejich funkcionalita je již stabilně zakomponována v kánonu `main`.
+- **Kompletní audit a verifikace kvality**:
+  - Repozitář plně prochází všemi kontrolami `npm run check` (414 testů ve 39 sadách, TypeScript bez chyb, ESLint 0 varování a úspěšný produkční build).
+
 ## 2026-10-20 — Smart detailní SVG JavaScript animace (Babička a Barunka, Bezhlavý rytíř, Sněhulák, Tulák, Kostelník)
 
 - **Pět nových detailních SVG vektorových postav s procedurální JavaScriptovou kinematikou**:

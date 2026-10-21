@@ -10,6 +10,17 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '21. října 2026',
+    title: 'Bezpečná konsolidace a sloučení větví do hlavní větve (main)',
+    summary: 'Kompletní integrace a stabilizace všech lokálních větví do hlavní větve repozitáře za přísného dodržení bezpečnostních záloh. Sjednoceny herní mechaniky, A11y, animace i výkonnostní optimalizace.',
+    items: [
+      '🛡️ Bezpečnostní zálohy před sloučením: Vytvořeny netknuté záložní větve pro všechny větve v repozitáři před zahájením integračních kroků.',
+      '🌟 Integrace větve feat/arena-rendering-pipeline: Přenesech všech 5 unikátních vylepšení (ADR 0025 pro Dvojče minibosse, 5 Smart SVG animací, oprava degradace výkonu při restartu bez reloadu stránky, A11y přístupnost a hotkeys 1/2/R/Esc).',
+      '🔍 Prověrka historických větví: Větve feat/dynamic-lighting a feat/unify-mechanics byly zkontrolovány a ověřeny – jejich funkční kód je již plně přítomen v stabilní architektuře.',
+      '🧪 Stoprocentní testovací pokrytí: Všech 414 testů napříč 39 testovacími sadami prochází bez jediné chyby, produkční build zkompilován.',
+    ],
+  },
+  {
     date: '20. října 2026',
     title: 'Smart detailní SVG JavaScript animace (Babička, Barunka, Rytíř, Sněhulák, Tulák, Kostelník)',
     summary: 'Pět nových vysoce detailních vektorových SVG animací s procedurální JavaScriptovou kinematikou a interaktivním sledováním kurzoru. Vytvořeno podle originálních ilustrací z české pohádkové a ladovské tradice s plnou integrací do herního testeru animací i samostatného HTML přehrávače.',
