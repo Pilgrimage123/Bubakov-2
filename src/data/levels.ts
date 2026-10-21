@@ -41,6 +41,14 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			kills: 20,
 			multiplier: 4.5
 		},
+		midBoss: {
+			id: "vodnicek",
+			name: "💧 Jarní Vodníček",
+			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
+			time: 75,
+			kills: 60,
+			multiplier: 4.0
+		},
 		finalBoss: {
 			id: "morana",
 			name: "❄️ Morana — špatně vynesená smrtka",
