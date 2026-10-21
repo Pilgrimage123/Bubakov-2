@@ -1,3 +1,30 @@
+## 2026-10-21 — Radikální optimalizace výkonu: eliminace 60FPS skrytých průchodů, Frame-Level kešování a Adaptivní Governor
+
+- **Eliminace skrytých 60FPS průchodů polem `engine.enemies`**:
+  - `getFrostAuraHealingMultiplier`: Hodnota mrazivé aury se nyní prostorově přepočítává (`enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS)`) pouze v intervalu 0,25 s a ukládá přímo do hráče (`player._cachedFrostHealMult`). Všechna kontinuální i okamžitá léčení (kostel v úrovni 0, Babiččina kamna, Maska medvěda, dým z fajfky, bylinková zahrádka, pasivka Kořenářky, ananas a nůše) využívají tuto předpočítanou hodnotu bez celoplošných průchodů.
+  - Plošné ultimátky lovců (Poutník, Kostelník, Ponocný), scénické schopnosti (Pasáčkův dusot beranů, Kořenářčino bylinné sanctuarium, Babiččino vlídné slovo a pohoštění) i interakce Březnového tání (zvonice, pivní soudek, zjevení světce u kapličky, náhon mlýna, orba na poli, pivní louže, dřevěná káča) byly přesměrovány na bezalokační dotazy `queryCircleInto(..., terrainSpatialResultsRef.current)`.
+- **Frame-Level Caching & eliminace duplicit**:
+  - Výpočet `getCurrentDayPhase(engine.gameTime)` a `getPetrolejkaRadius(...)` probíhá jednou za snímek na jeho začátku; hodnoty se ukládají do `engine.currentPhase` a `engine.petrolejkaLight.radius` a jsou přímo čteny v `player.draw(ctx)` i renderovací smyčce.
+  - Časování vznášení bludiček (`will_o_wisp`) v `DecorItem.draw` nahrazeno `time * 3.33` namísto volání `performance.now() / 300`.
+  - Zbraně `Hromnička` a `Válečnice` se kešují do přímých referencí `player._hromnickaWeapon` a `player._valecniceWeapon` při změně arzenálu namísto opakovaného vyhledávání přes `.find()` a `.some()` v každém snímku.
+- **Ořezání geometrie v `SmokePuff` a brána pro `combatVfxEnabled`**:
+  - Pro plošné zóny `fajfka` a `plum-scent` se vůbec nealokují a neanimují drobečky pečiva (`crumbs`) ani tečky (`poofDots`), u nichž se navíc v `SmokePuff.draw` přeskočí celý cyklus, jakmile `progress >= 0.625`.
+  - Všechna volání generování částic v `App.tsx` zapojena na centrální pomocnou metodu `emitParticle` respektující stav `combatVfxEnabled` a dynamický strop částic.
+- **Explicitní `CombatTextCategory` & rychlá ochrana `parseInt`**:
+  - Zavedena tovární funkce `pushDamageText`, která kontroluje viditelnost kategorie před alokací `new DamageText`.
+  - `parseInt` v `DamageText` spouštěn pouze tehdy, když text začíná číslicí (`charCodeAt(0) >= 48 && charCodeAt(0) <= 57`).
+- **Automatická adaptivní degradace kvality (Adaptive Governor)**:
+  - Měření metriky `combatTextsMs` v reálném čase.
+  - Stupeň 1 (`smoothedMs > 18 ms` po 2 s): Omezení dočasných světel zbraní a snížení stropu částic z 300 na 100.
+  - Stupeň 2 (`smoothedMs > 22 ms` nebo `combatTextsMs > 2 ms`): Automatické přepnutí plovoucích textů na taktický režim.
+  - Stupeň 3 (`smoothedMs > 26 ms`): Zastropování `directorRef.current.maxLivingEnemies` na 45.
+  - Automatické plynulé zotavení po 3 sekundách pod 16 ms.
+- **Bezalokační správa polí**:
+  - Odstraněn řetězec `.filter().map().sort().slice(0, 8)` u Pivního tácku nahrazením přímým dotazem do SpatialHash.
+  - Reference `livingEnemiesRef`, `pendingMilestonesRef` a `grandfatherPurchaseIdsRef` modifikovány in-place (`.length = 0`, `.push()`, `.shift()`).
+- **Testovací pokrytí**:
+  - Přidán nový testovací soubor `tests/performanceGovernorAndPruning.test.ts` (6 nových testů, celkem 420 testů ve 40 sadách – vše 100% zelené).
+
 ## 2026-10-21 — Bezpečná konsolidace a sloučení větví do hlavní větve (main)
 
 - **Konsolidace větví a bezpečnostní zálohy**:

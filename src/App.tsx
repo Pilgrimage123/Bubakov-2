@@ -45,8 +45,11 @@ import {
   shouldDrawFloatingText,
   type EffectCategory,
   DEFAULT_COMBAT_TEXT_SETTINGS,
+  TACTICAL_COMBAT_TEXT_SETTINGS,
   setCombatTextSettings,
   getCombatTextPreset,
+  getSettingsForPreset,
+  type CombatTextPreset,
   shouldDrawCombatText,
   shouldShowWarningBanner,
   isCombatTextCategoryEnabled,
@@ -349,9 +352,11 @@ class DamageText {
     }
 
     this.category = category || (this.icon === 'gingerbread' ? 'lootResources' : inferCombatTextCategory(text));
-    const parsed = parseInt(this.text, 10);
-    if (!Number.isNaN(parsed) && String(parsed) === this.text) {
-      this.numericVal = parsed;
+    if (this.text && this.text.charCodeAt(0) >= 48 && this.text.charCodeAt(0) <= 57) {
+      const parsed = parseInt(this.text, 10);
+      if (!Number.isNaN(parsed) && String(parsed) === this.text) {
+        this.numericVal = parsed;
+      }
     }
   }
 
@@ -400,6 +405,56 @@ class DamageText {
       drawGlyphText(ctx, this.text, this.x, this.y, { size: this.size, color: this.color, alpha: this.life });
     }
   }
+}
+
+/**
+ * ADR 0016: Pre-allocation check for combat floating text.
+ * Prevents heap allocation completely if the category is disabled.
+ */
+function pushDamageText(
+  texts: DamageText[] | undefined,
+  x: number,
+  y: number,
+  text: string,
+  color?: string,
+  big = false,
+  category?: CombatTextCategory,
+  icon?: string
+): DamageText | null {
+  if (!texts) return null;
+  const resolvedCategory = category || (icon === 'gingerbread' || (typeof text === 'string' && text.includes('🍪')) ? 'lootResources' : inferCombatTextCategory(text));
+  if (!isCombatTextCategoryEnabled(resolvedCategory)) {
+    return null;
+  }
+  const item = new DamageText(x, y, text, color, big, resolvedCategory, icon);
+  texts.push(item);
+  return item;
+}
+
+/**
+ * Centrally controlled particle emission respecting combatVfxEnabled & dynamic governor ceiling.
+ */
+function emitParticle(
+  particles: any[] | undefined,
+  particleOrFactory: any | (() => any),
+  activeMax = MAX_PARTICLES
+): boolean {
+  if (!isGameEffectEnabled('combatVfxEnabled')) return false;
+  if (!particles || particles.length >= activeMax) return false;
+  const p = typeof particleOrFactory === 'function' ? particleOrFactory() : particleOrFactory;
+  particles.push(p);
+  return true;
+}
+
+function canEmitCombatParticle(particles?: any[], activeMax = MAX_PARTICLES): boolean {
+  if (!isGameEffectEnabled('combatVfxEnabled')) return false;
+  return (particles ? particles.length : 0) < activeMax;
+}
+
+function syncPlayerWeaponCache(player: any): void {
+  if (!player || !player.weapons) return;
+  player._hromnickaWeapon = player.weapons.find((w: any) => w.id === 'hromnicka') || null;
+  player._valecniceWeapon = player.weapons.find((w: any) => w.id === 'valecnice') || null;
 }
 
 // Nicely animated comic smoke puff in authentic Josef Lada fairy tale art style
@@ -494,35 +549,39 @@ class SmokePuff {
       });
     }
 
-    // Mini poof dot clusters shooting outward
+    // Mini poof dot clusters shooting outward - only for basic smoke bursts, omitted for long persistent clouds
     this.poofDots = [];
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const spd = 45 + Math.random() * 45;
-      this.poofDots.push({
-        x: Math.cos(ang) * (this.radius * 0.4),
-        y: Math.sin(ang) * (this.radius * 0.35),
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd * 0.7 - 15,
-        r: 4 + Math.random() * 4,
-      });
+    if (this.kind === 'smoke') {
+      for (let i = 0; i < 6; i++) {
+        const ang = (i / 6) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        const spd = 45 + Math.random() * 45;
+        this.poofDots.push({
+          x: Math.cos(ang) * (this.radius * 0.4),
+          y: Math.sin(ang) * (this.radius * 0.35),
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd * 0.7 - 15,
+          r: 4 + Math.random() * 4,
+        });
+      }
     }
 
-    // Pastry sugar / bread crumb flakes from the delicious food
+    // Pastry sugar / bread crumb flakes from the delicious food - omitted for persistent clouds
     this.crumbs = [];
-    const crumbColors = ['#D97706', '#F59E0B', '#FDE68A', '#FEF08A', '#FFFDF9'];
-    for (let i = 0; i < 8; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const spd = 30 + Math.random() * 60;
-      this.crumbs.push({
-        x: (Math.random() - 0.5) * 16,
-        y: (Math.random() - 0.5) * 16,
-        vx: Math.cos(ang) * spd,
-        vy: Math.sin(ang) * spd - 20,
-        size: 2 + Math.random() * 2.5,
-        color: crumbColors[Math.floor(Math.random() * crumbColors.length)],
-        rot: Math.random() * Math.PI * 2,
-      });
+    if (this.kind === 'smoke') {
+      const crumbColors = ['#D97706', '#F59E0B', '#FDE68A', '#FEF08A', '#FFFDF9'];
+      for (let i = 0; i < 8; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 30 + Math.random() * 60;
+        this.crumbs.push({
+          x: (Math.random() - 0.5) * 16,
+          y: (Math.random() - 0.5) * 16,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 20,
+          size: 2 + Math.random() * 2.5,
+          color: crumbColors[Math.floor(Math.random() * crumbColors.length)],
+          rot: Math.random() * Math.PI * 2,
+        });
+      }
     }
   }
 
@@ -545,18 +604,22 @@ class SmokePuff {
       wisp.rot += wisp.rotSpd * dt;
     }
 
-    for (const dot of this.poofDots) {
-      dot.x += dot.vx * dt;
-      dot.y += dot.vy * dt;
-      dot.vx *= 0.92;
-      dot.vy *= 0.94;
+    if (this.poofDots.length > 0) {
+      for (const dot of this.poofDots) {
+        dot.x += dot.vx * dt;
+        dot.y += dot.vy * dt;
+        dot.vx *= 0.92;
+        dot.vy *= 0.94;
+      }
     }
 
-    for (const crumb of this.crumbs) {
-      crumb.x += crumb.vx * dt;
-      crumb.y += crumb.vy * dt;
-      crumb.vy += 80 * dt;
-      crumb.vx *= 0.93;
+    if (this.crumbs.length > 0) {
+      for (const crumb of this.crumbs) {
+        crumb.x += crumb.vx * dt;
+        crumb.y += crumb.vy * dt;
+        crumb.vy += 80 * dt;
+        crumb.vx *= 0.93;
+      }
     }
   }
 
@@ -584,20 +647,22 @@ class SmokePuff {
     // Keep the plum-scent cloud translucent so combat remains visible.
     ctx.globalAlpha = alpha * (this.kind === 'plum-scent' ? 0.58 : 1);
 
-    // 1. Draw outer mini poof dots
-    for (const dot of this.poofDots) {
-      const dotAlpha = Math.max(0, 1 - progress * 1.6);
-      if (dotAlpha <= 0) continue;
-      ctx.save();
-      ctx.globalAlpha = alpha * dotAlpha;
-      ctx.fillStyle = this.kind === 'plum-scent' ? '#9D4EDD' : this.kind === 'fajfka' ? '#898994' : '#FFFDF7';
-      ctx.strokeStyle = this.kind === 'plum-scent' ? '#5B167D' : this.kind === 'fajfka' ? '#42424A' : COLORS.ink;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+    // 1. Draw outer mini poof dots (skip entirely once faded after progress >= 0.625)
+    if (this.poofDots.length > 0 && progress < 0.625) {
+      for (const dot of this.poofDots) {
+        const dotAlpha = Math.max(0, 1 - progress * 1.6);
+        if (dotAlpha <= 0) continue;
+        ctx.save();
+        ctx.globalAlpha = alpha * dotAlpha;
+        ctx.fillStyle = this.kind === 'plum-scent' ? '#9D4EDD' : this.kind === 'fajfka' ? '#898994' : '#FFFDF7';
+        ctx.strokeStyle = this.kind === 'plum-scent' ? '#5B167D' : this.kind === 'fajfka' ? '#42424A' : COLORS.ink;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // 2. Draw ground shadow of smoke cloud
@@ -671,18 +736,20 @@ class SmokePuff {
     }
 
     // 7. Delicious pastry crumbs or floating herbal petals/leaflets
-    for (const crumb of this.crumbs) {
-      ctx.save();
-      ctx.translate(crumb.x, crumb.y);
-      ctx.rotate(crumb.rot);
-      ctx.fillStyle = crumb.color;
-      ctx.strokeStyle = COLORS.ink;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(0, 0, crumb.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+    if (this.crumbs.length > 0) {
+      for (const crumb of this.crumbs) {
+        ctx.save();
+        ctx.translate(crumb.x, crumb.y);
+        ctx.rotate(crumb.rot);
+        ctx.fillStyle = crumb.color;
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, crumb.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // 8. Fragrant herbal particles & smoking folk pipe for fajfka
@@ -1057,7 +1124,7 @@ class DecorItem {
       ctx.lineTo(7, -24);
       ctx.stroke();
     } else if (this.type === 'will_o_wisp') {
-      const bob = Math.sin(performance.now() / 300 + this.x) * 8;
+      const bob = Math.sin(time * 3.33 + this.x) * 8;
       ctx.shadowColor = COLORS.water;
       ctx.shadowBlur = 15;
       ctx.fillStyle = 'rgba(217, 160, 54, 0.85)';
@@ -1545,7 +1612,7 @@ export default function App() {
   grandfatherOpenRef.current = gameState === 'grandfather';
 
 const applyBearMaskOverheal = (player: any, healing: number) => {
-    const frostHealingMultiplier = getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
+    const frostHealingMultiplier = player._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(player, enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS));
     const effectiveHeal = healing * (1 + (player.bearMaskHealBonus || 0)) * frostHealingMultiplier;
     const missingHp = Math.max(0, player.maxHp - player.hp);
     const overheal = Math.max(0, effectiveHeal - missingHp);
@@ -1591,7 +1658,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     if (effect.type === 'max_hp') {
       p.maxHp += effect.amount;
-      p.hp = Math.min(p.maxHp, p.hp + effect.amount * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
+      const fMult = p._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(p, enemySpatialHashRef.current.queryCircle(p.x, p.y, FROSTLING_AURA_RADIUS));
+      p.hp = Math.min(p.maxHp, p.hp + effect.amount * fMult);
       if (item.id === 'medvedi_mast') {
         p.kurazCount = (p.kurazCount || 0) + 1;
       }
@@ -1605,7 +1673,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.kavaCount = (p.kavaCount || 0) + 1;
     }
     if (effect.type === 'heal') {
-      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []);
+      const fMult = p._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(p, enemySpatialHashRef.current.queryCircle(p.x, p.y, FROSTLING_AURA_RADIUS));
+      const effectiveHeal = effect.amount * (1 + (p.bearMaskHealBonus || 0)) * fMult;
       const missingHp = Math.max(0, p.maxHp - p.hp);
       const overheal = Math.max(0, effectiveHeal - missingHp);
       p.hp = Math.min(p.maxHp, p.hp + effectiveHeal);
@@ -1620,7 +1689,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (effect.type === 'coins') {
       const reward = Math.max(0, Math.floor(effect.amount));
       engineRef.current.coins += reward;
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 55, `+${reward} krejcarů!`, COLORS.mustard, true));
+      pushDamageText(engineRef.current.texts, p.x, p.y - 55, `+${reward} krejcarů!`, COLORS.mustard, true, 'lootResources');
       sound.coin();
     }
     if (effect.type === 'weapon') {
@@ -1641,9 +1710,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else {
           const choices = getMilestoneChoices(canonicalId, existing.level);
           if (choices) {
-            const nextChoices = [...pendingMilestonesRef.current, { weaponId: canonicalId, rank: existing.level, choices }];
-            pendingMilestonesRef.current = nextChoices;
-            setPendingMilestones(nextChoices);
+            pendingMilestonesRef.current.push({ weaponId: canonicalId, rank: existing.level, choices });
+            setPendingMilestones([...pendingMilestonesRef.current]);
           }
         }
         existing._cachedStats = getRankedWeaponStats(canonicalId, existing.level, existing);
@@ -1658,18 +1726,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         };
         p.weapons.push(newW);
       }
+      syncPlayerWeaponCache(p);
     }
     if (effect.type === 'rare_instant') {
       applyRareItemEffect(engineRef.current, p, effect.rareItemId, {
         onSound: (name) => (sound as any)[name]?.(),
-        onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true)),
+        onDamageText: (opts) => pushDamageText(engineRef.current.texts, opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'lootResources'),
       });
     }
     if (effect.type === 'arcivzacny_ananas') {
+      const fMult = p._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(p, enemySpatialHashRef.current.queryCircle(p.x, p.y, FROSTLING_AURA_RADIUS));
       applyAnanasUpgrade(p, {
         onSound: (name) => (sound as any)[name]?.(),
-        onDamageText: (opts) => engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-      }, getFrostAuraHealingMultiplier(p, engineRef.current?.enemies || []));
+        onDamageText: (opts) => pushDamageText(engineRef.current.texts, opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'lootResources'),
+      }, fMult);
     }
     if (effect.type === 'holy_circle') {
       p.holyCircleStacks = Math.min(3, (p.holyCircleStacks || 0) + 1);
@@ -1722,18 +1792,33 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (w.cd > 0) w.cd /= 1.35;
           }
         }
-        eng.texts.push(new DamageText(p.x, p.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-        eng.texts.push(new DamageText(p.x, p.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
+        pushDamageText(eng.texts, p.x, p.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true, 'combatShouts');
+        pushDamageText(eng.texts, p.x, p.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true, 'combatShouts');
         sound.coin();
 
-        const sortedEnemies = (livingEnemiesRef.current || eng.enemies || [])
-          .filter((e: any) => !e.isDefeated && !e.dead)
-          .map((e: any) => ({ enemy: e, distSq: (e.x - p.x) ** 2 + (e.y - p.y) ** 2 }))
-          .sort((a, b) => a.distSq - b.distSq)
-          .slice(0, 8);
+        // 8 closest alive enemies via SpatialHash without 4 temporary array allocations
+        const nearby = enemySpatialHashRef.current.queryCircle(p.x, p.y, 400);
+        const sortedEnemies: any[] = [];
+        for (let i = 0; i < nearby.length; i++) {
+          const e = nearby[i];
+          if (!e.isDefeated && !e.dead) {
+            sortedEnemies.push(e);
+            if (sortedEnemies.length >= 8) break;
+          }
+        }
+        if (sortedEnemies.length === 0 && (livingEnemiesRef.current || eng.enemies)) {
+          const pool = livingEnemiesRef.current || eng.enemies;
+          for (let i = 0; i < pool.length; i++) {
+            const e = pool[i];
+            if (!e.isDefeated && !e.dead) {
+              sortedEnemies.push(e);
+              if (sortedEnemies.length >= 8) break;
+            }
+          }
+        }
 
         for (let i = 0; i < sortedEnemies.length; i++) {
-          const foe = sortedEnemies[i].enemy;
+          const foe = sortedEnemies[i];
           const ang = Math.random() * Math.PI * 2;
           const spd = 55 + Math.random() * 45;
           eng.drops.push({
@@ -1747,20 +1832,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             time: 0,
             dead: false,
           });
-          eng.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
-          if (eng.particles && eng.particles.length < MAX_PARTICLES - 5) {
-            for (let k = 0; k < 3; k++) {
-              const pAng = Math.random() * Math.PI * 2;
-              eng.particles.push({
-                x: foe.x,
-                y: foe.y,
-                vx: Math.cos(pAng) * 45,
-                vy: Math.sin(pAng) * 45 - 20,
-                life: 0.35,
-                color: '#F59E0B',
-                size: 3,
-              });
-            }
+          pushDamageText(eng.texts, foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false, 'lootResources');
+          for (let k = 0; k < 3; k++) {
+            const pAng = Math.random() * Math.PI * 2;
+            emitParticle(eng.particles, () => ({
+              x: foe.x,
+              y: foe.y,
+              vx: Math.cos(pAng) * 45,
+              vy: Math.sin(pAng) * 45 - 20,
+              life: 0.35,
+              color: '#F59E0B',
+              size: 3,
+            }), activeMaxParticlesRef.current);
           }
         }
       }
@@ -1835,12 +1918,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       weapon._cachedStats = undefined;
       eng.grandfather.purchasesThisEncounter += 1;
       eng.grandfather.totalPurchases = (eng.grandfather.totalPurchases || 0) + 1;
-      const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, weaponUpgrade.id];
-      grandfatherPurchaseIdsRef.current = newPurchasedIds;
-      setGrandfatherPurchaseIds(newPurchasedIds);
+      grandfatherPurchaseIdsRef.current.push(weaponUpgrade.id);
+      setGrandfatherPurchaseIds([...grandfatherPurchaseIdsRef.current]);
       sound.grandfatherPurchase();
-      eng.texts.push(new DamageText(p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true));
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, newPurchasedIds, p.weapons || [], 4);
+      pushDamageText(eng.texts, p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true, 'unlocksMilestones');
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4);
       setGrandfatherVersion((v) => v + 1);
       setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
       return true;
@@ -1856,25 +1938,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     eng.gingerbread -= price;
     eng.grandfather.purchasesThisEncounter += 1;
     eng.grandfather.totalPurchases = (eng.grandfather.totalPurchases || 0) + 1;
-    const newPurchasedIds = [...grandfatherPurchaseIdsRef.current, item.id];
-    grandfatherPurchaseIdsRef.current = newPurchasedIds;
+    grandfatherPurchaseIdsRef.current.push(item.id);
+    setGrandfatherPurchaseIds([...grandfatherPurchaseIdsRef.current]);
     const offer = eng.grandfather.offers.find((o) => o.itemId === item.id);
     applyGrandfatherItem(item, offer);
     sound.grandfatherPurchase();
     if (item.effect.type === 'coins') {
       setRunStats((state) => ({ ...state, coins: eng.coins, gingerbread: eng.gingerbread }));
     }
-    eng.texts.push(new DamageText(p.x, p.y - 70, item.isWeapon ? 'ZBRAŇ ZÍSKÁNA!' : 'PLÁCNUTO!', '#F59E0B', true));
+    pushDamageText(eng.texts, p.x, p.y - 70, item.isWeapon ? 'ZBRAŇ ZÍSKÁNA!' : 'PLÁCNUTO!', '#F59E0B', true, 'lootResources');
     if (eng.grandfather.purchasesThisEncounter % 3 === 0) {
-      eng.texts.push(new DamageText(p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true));
+      pushDamageText(eng.texts, p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true, 'combatShouts');
     }
 
     // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
     const ownedNow = item.isWeapon
       ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
-      : newPurchasedIds.filter((id) => id === item.id).length;
+      : grandfatherPurchaseIdsRef.current.filter((id) => id === item.id).length;
     if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, newPurchasedIds, p.weapons || [], 4);
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4);
     }
     setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
@@ -1987,6 +2069,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const primarySpatialResultsRef = useRef<any[]>([]);
   const terrainSpatialResultsRef = useRef<any[]>([]);
   const directorRef = useRef<RunDirector | null>(null);
+  const activeMaxParticlesRef = useRef<number>(MAX_PARTICLES);
+  const adaptiveGovernorRef = useRef({
+    tier: 0,
+    tier1Timer: 0,
+    recoveryTimer: 0,
+    originalCombatPreset: null as CombatTextPreset | null,
+  });
+  const lastCombatTextsMsRef = useRef<number>(0);
 
   const pushTransientLight = useCallback((light: DynamicLightSource) => {
     const eng = engineRef.current;
@@ -1995,7 +2085,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
     if (profile === 'performance') return;
 
-    const dayPhase = getCurrentDayPhase(eng.gameTime || 0);
+    const dayPhase = eng.currentPhase || getCurrentDayPhase(eng.gameTime || 0);
     const player = eng.player;
     const kurazRatio = player && player.maxHp > 0 ? player.hp / player.maxHp : 1;
     const isNightPhase =
@@ -2003,7 +2093,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       dayPhase.id === 'night' ||
       dayPhase.id === 'midnight' ||
       dayPhase.id === 'dawn';
-    if (!isNightPhase && kurazRatio >= 0.25) {
+
+    // Governor Tier >= 1 restricts transient lights to low-courage emergency illumination (saving composition fillrate)
+    if ((adaptiveGovernorRef.current.tier >= 1 || !isNightPhase) && kurazRatio >= 0.25) {
       return;
     }
 
@@ -2208,7 +2300,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 30) && thaw.bellCooldown <= 0) {
             e.preventDefault();
             thaw.bellCooldown = 90;
-            for (const enemy of eng.enemies) {
+            const nearby = enemySpatialHashRef.current.queryCircleInto(
+              MARCH_THAW_POIS.church.x,
+              MARCH_THAW_POIS.church.y,
+              1000 + 80,
+              terrainSpatialResultsRef.current
+            );
+            for (let i = 0; i < nearby.length; i++) {
+              const enemy = nearby[i];
               if (enemy.dead || enemy.isDefeated || enemy.isBoss || enemy.category === 'bosses') continue;
               const dx = enemy.x - MARCH_THAW_POIS.church.x;
               const dy = enemy.y - MARCH_THAW_POIS.church.y;
@@ -2217,7 +2316,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(enemy));
               enemy.takeDamage((enemy.hp + 1) * holyMult, 'holy', dx * 2.2 * holyPush, dy * 2.2 * holyPush);
             }
-            eng.texts.push(new DamageText(p.x, p.y - 52, '🔔 ZVONICE! SVATÝ OTŘES!', COLORS.mustard, true));
+            pushDamageText(eng.texts, p.x, p.y - 52, '🔔 ZVONICE! SVATÝ OTŘES!', COLORS.mustard, true, 'combatStates');
             sound.bell();
             return;
           }
@@ -2228,14 +2327,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const x = p.x + ((p.lastDx || 1) / direction) * 90;
             const y = p.y + ((p.lastDy || 0) / direction) * 90;
             thaw.beerPuddle = { x, y, time: 6 };
-            for (const enemy of eng.enemies) {
+            const nearby = enemySpatialHashRef.current.queryCircleInto(
+              x,
+              y,
+              170 + 80,
+              terrainSpatialResultsRef.current
+            );
+            for (let i = 0; i < nearby.length; i++) {
+              const enemy = nearby[i];
               const dx = enemy.x - x; const dy = enemy.y - y;
               if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 170 * 170) {
                 enemy.takeDamage(110 * (p.damageMultiplier || 1), 'physical', dx * 3, dy * 3);
                 enemy.stunTimer = Math.max(enemy.stunTimer || 0, 2.4);
               }
             }
-            eng.texts.push(new DamageText(x, y - 30, '🍺 HOSPODSKÁ RVAČKA!', '#F6D365', true));
+            pushDamageText(eng.texts, x, y - 30, '🍺 HOSPODSKÁ RVAČKA!', '#F6D365', true, 'combatStates');
             sound.hit();
             return;
           }
@@ -2752,16 +2858,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Draw blessed candle in hand if Hromnička is equipped
-        if (this.weapons && this.weapons.some((w: any) => w.id === 'hromnicka')) {
+        if (this._hromnickaWeapon) {
           const flip = this.lastDx >= 0 ? 1 : -1;
           Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, this.animTime || 0);
         }
 
         // Draw Petrolejka brass lantern in hand during low-visibility phases
-        const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
-        const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
-        const petrolejkaRadius = getPetrolejkaRadius(this.hp, this.maxHp, dayPhase.id, engineRef.current?.gameTime || 0);
+        const petrolejkaRadius = engineRef.current?.petrolejkaLight?.radius ?? 0;
         if (petrolejkaRadius > 0) {
+          const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
           const flip = this.lastDx >= 0 ? 1 : -1;
           Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
         }
@@ -2848,12 +2953,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       if (purchasedIds.length > 0) {
-        grandfatherPurchaseIdsRef.current = purchasedIds;
+        grandfatherPurchaseIdsRef.current.length = 0;
+        grandfatherPurchaseIdsRef.current.push(...purchasedIds);
         setGrandfatherPurchaseIds(purchasedIds);
         engine.grandfather.totalPurchases = purchasedIds.length;
       }
     } else {
-      grandfatherPurchaseIdsRef.current = [];
+      grandfatherPurchaseIdsRef.current.length = 0;
       setGrandfatherPurchaseIds([]);
     }
 
@@ -2903,8 +3009,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x - 460, player.y, 1.0));
     }
 
-    livingEnemiesRef.current = engineRef.current.enemies.slice();
+    livingEnemiesRef.current.length = 0;
+    for (let i = 0; i < engineRef.current.enemies.length; i++) {
+      const e = engineRef.current.enemies[i];
+      if (!e.dead && !e.isDefeated) {
+        livingEnemiesRef.current.push(e);
+      }
+    }
     enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
+    syncPlayerWeaponCache(player);
+    adaptiveGovernorRef.current.tier = 0;
+    adaptiveGovernorRef.current.tier1Timer = 0;
+    adaptiveGovernorRef.current.recoveryTimer = 0;
+    adaptiveGovernorRef.current.originalCombatPreset = null;
+    activeMaxParticlesRef.current = MAX_PARTICLES;
     const dynamicDiff = meta.dynamicDifficulty ?? 3.0;
     const perfProfile = meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced');
     const maxLivingEnemies = perfProfile === 'performance' ? 35 : perfProfile === 'balanced' ? 55 : 70;
@@ -2912,6 +3030,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
     gameEngineRef.current = new GameEngine(engine);
     enemySpatialHashRef.current = gameEngineRef.current.spatialHash;
+    adaptiveGovernorRef.current = {
+      tier: 0,
+      tier1Timer: 0,
+      recoveryTimer: 0,
+      originalCombatPreset: null,
+    };
+    activeMaxParticlesRef.current = MAX_PARTICLES;
+    lastCombatTextsMsRef.current = 0;
 
     setRunStats({
       time: 0,
@@ -3002,12 +3128,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         radius: 260,
         outerRadius: 600,
       };
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'POVĚSTNÁ SUKOVICE! 🪵', '#F59E0B', true));
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'POVĚSTNÁ SUKOVICE! 🪵', '#F59E0B', true, 'hunterDamage');
 
       const innerRadius = 260;
       const outerRadius = 600;
 
-      for (const e of engineRef.current.enemies) {
+      const targets = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, outerRadius + 60, terrainSpatialResultsRef.current);
+      for (let i = 0; i < targets.length; i++) {
+        const e = terrainSpatialResultsRef.current[i];
         if (e.isDefeated) continue;
         const dx = e.x - p.x;
         const dy = e.y - p.y;
@@ -3025,7 +3153,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const dmg = 185 * p.damageMultiplier * tulakMult;
             e.takeDamage(dmg, 'physical', nx * 850, ny * 850);
             e.poise = 0;
-            engineRef.current.texts.push(new DamageText(e.x, e.y - 40, 'PRÁSK! 🪵', '#FBBF24', false));
+            pushDamageText(engineRef.current.texts, e.x, e.y - 40, 'PRÁSK! 🪵', '#FBBF24', false, 'hunterDamage');
 
             // Vystrašení zblízka (pokud přežijí zásah)
             if (fearDuration > 0) {
@@ -3037,9 +3165,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (fearDuration > 0) {
               e.panicTimer = Math.max(e.panicTimer || 0, fearDuration);
               e.panicked = true;
-              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'DĚS! 😱', '#A7F3D0', false));
+              pushDamageText(engineRef.current.texts, e.x, e.y - 35, 'DĚS! 😱', '#A7F3D0', false, 'combatStates');
             } else {
-              engineRef.current.texts.push(new DamageText(e.x, e.y - 35, 'ODOLAL! 🛡️', '#E5E7EB', false));
+              pushDamageText(engineRef.current.texts, e.x, e.y - 35, 'ODOLAL! 🛡️', '#E5E7EB', false, 'combatStates');
             }
             // Zranění a odhození i ve větší vzdálenosti
             const outerDmg = 55 * p.damageMultiplier * tulakMult;
@@ -3048,7 +3176,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // Efektní třísky a prach u zasažených bubáků
           for (let pi = 0; pi < 5; pi++) {
-            engineRef.current.particles.push({
+            emitParticle(engineRef.current.particles, {
               x: e.x + (Math.random() - 0.5) * e.radius,
               y: e.y + (Math.random() - 0.5) * e.radius,
               vx: nx * 120 + (Math.random() - 0.5) * 60,
@@ -3056,7 +3184,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               life: 0.35 + Math.random() * 0.25,
               color: Math.random() < 0.5 ? '#8B5A2B' : '#D97706',
               size: 3 + Math.random() * 3,
-            });
+            }, activeMaxParticlesRef.current);
           }
         }
       }
@@ -3064,18 +3192,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Dusot stáda: pastýřská píšťalka a běsnění beranů (příběhová scénka se zastaveným časem)
       sound.shepherdFlock();
       engineRef.current.cutscene = { type: 'shepherd', t: 0, dur: 4.2, applyAt: 2.2, applied: false };
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'PASTÝŘSKÁ PÍŠŤALKA! 🐑', COLORS.mustard, true));
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'PASTÝŘSKÁ PÍŠŤALKA! 🐑', COLORS.mustard, true, 'hunterDamage');
     } else if (p.type === 'korenarka') {
       // Očistné kadidlo z devatera bylin: klokotání kotlíku a hojivý dým (příběhová scénka se zastaveným časem)
       sound.herbalIncense();
       engineRef.current.cutscene = { type: 'korenarka', t: 0, dur: 4.4, applyAt: 2.3, applied: false };
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'OČISTNÉ KADIDLO! 🌿', COLORS.green, true));
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'OČISTNÉ KADIDLO! 🌿', COLORS.green, true, 'healing');
     } else if (p.type === 'sexton') {
       // Farní požehnání: úder zvonu a sloup svatého světla očistí démony a nemrtvé
       sound.churchBell();
       engineRef.current.blessing = { x: p.x, y: p.y, t: 0, dur: 3.6 };
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'FARNÍ POŽEHNÁNÍ!', '#FDE047', true));
-      for (const e of engineRef.current.enemies) {
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'FARNÍ POŽEHNÁNÍ!', '#FDE047', true, 'hunterDamage');
+      const targets = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, 650 + 60, terrainSpatialResultsRef.current);
+      for (let i = 0; i < targets.length; i++) {
+        const e = terrainSpatialResultsRef.current[i];
         if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 650 + e.radius) continue;
         const unholy = isUnholyEnemy(e) || e.isBoss || e.category === 'bosses';
         const holyMult = getHolyDamageMultiplier(e);
@@ -3084,7 +3214,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           e.takeDamage(45 * p.damageMultiplier * holyMult, 'holy', (e.x - p.x) * 3 * holyPush, (e.y - p.y) * 3 * holyPush);
         } else if (e.isBoss || e.category === 'bosses') {
           e.takeDamage(e.maxHp * 0.25 * Math.min(1.5, holyMult), 'holy', 0, 0);
-          engineRef.current.texts.push(new DamageText(e.x, e.y - 50, 'SVATÁ ZKÁZA!', '#FDE047', true));
+          pushDamageText(engineRef.current.texts, e.x, e.y - 50, 'SVATÁ ZKÁZA!', '#FDE047', true, 'hunterDamage');
         } else {
           e.takeDamage((e.hp + 1) * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
         }
@@ -3093,12 +3223,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Chléb se solí a vlídné slovo: čas se zastaví a přehraje se scénka, její účinek nastane v jejím vrcholu
       sound.timeStop();
       engineRef.current.cutscene = { type: 'granny', t: 0, dur: GRANNY_CUTSCENE.duration, applyAt: GRANNY_CUTSCENE.applyAt, applied: false };
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'ČAS SE ZASTAVIL…', '#FDE047', true));
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'ČAS SE ZASTAVIL…', '#FDE047', true, 'combatStates');
     } else {
       // Night watchman horn & dog pack
       sound.horn();
-      engineRef.current.texts.push(new DamageText(p.x, p.y - 60, 'TÚÚ-DÚÚ! POPLACH!', COLORS.mustard, true));
-      for (const e of engineRef.current.enemies) {
+      pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'TÚÚ-DÚÚ! POPLACH!', COLORS.mustard, true, 'hunterDamage');
+      const targets = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, 900, terrainSpatialResultsRef.current);
+      for (let i = 0; i < targets.length; i++) {
+        const e = terrainSpatialResultsRef.current[i];
+        if (e.isDefeated) continue;
         e.panicTimer = 5.0 * (1 - (e.willpower || 0) * 0.7);
         e.panicked = true;
         e.takeDamage(110 * p.damageMultiplier, 'physical', (e.x - p.x) * 4, (e.y - p.y) * 4);
@@ -3112,7 +3245,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const p = eng.player;
     if (!p) return;
     sound.heavyHit();
-    eng.texts.push(new DamageText(p.x, p.y - 70, 'DUSOT STÁDA BERANŮ! 🐑', COLORS.mustard, true));
+    pushDamageText(eng.texts, p.x, p.y - 70, 'DUSOT STÁDA BERANŮ! 🐑', COLORS.mustard, true, 'hunterDamage');
 
     // Vytvoření běžícího stáda v herním světě
     const sheepList = [];
@@ -3140,11 +3273,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     };
 
     // Smetení nepřátel berany: masivní fyzické poškození a odhození
-    for (const e of eng.enemies) {
+    const sheepHitCount = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, 560 + 60, terrainSpatialResultsRef.current);
+    for (let i = 0; i < sheepHitCount.length; i++) {
+      const e = terrainSpatialResultsRef.current[i];
       if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 560) {
         e.takeDamage(140 * p.damageMultiplier, 'physical', (p.lastDx || 1) * 380, (Math.random() - 0.5) * 260);
         e.poise = 0;
-        eng.texts.push(new DamageText(e.x, e.y - 45, 'TRK! 💥', COLORS.mustard, false));
+        pushDamageText(eng.texts, e.x, e.y - 45, 'TRK! 💥', COLORS.mustard, false, 'hunterDamage');
       }
     }
   };
@@ -3159,7 +3294,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer, 1.8);
     sound.potion();
     sound.victory();
-    eng.texts.push(new DamageText(p.x, p.y - 70, '+55 Kuráž! DEVATERO BYLIN & OČISTNÉ KADIDLO 🌿', '#86EFAC', true));
+    pushDamageText(eng.texts, p.x, p.y - 70, '+55 Kuráž! DEVATERO BYLIN & OČISTNÉ KADIDLO 🌿', '#86EFAC', true, 'healing');
 
     // Vytvoření bylinného sanctuaria v herním světě
     eng.korenarkaSanctuary = {
@@ -3171,12 +3306,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     };
 
     // Plošné zasažení přírodou, nasáknutí a zpomalení všech bubáků
-    for (const e of eng.enemies) {
+    const incCount = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, 480 + 60, terrainSpatialResultsRef.current);
+    for (let i = 0; i < incCount.length; i++) {
+      const e = terrainSpatialResultsRef.current[i];
       if (!e.isDefeated && Math.hypot(e.x - p.x, e.y - p.y) <= 480) {
         e.takeDamage(120 * p.damageMultiplier, 'nature', (e.x - p.x) * 4.5, (e.y - p.y) * 4.5);
         e.soak();
         e.slowTimer = Math.max(e.slowTimer || 0, 4.5);
-        eng.texts.push(new DamageText(e.x, e.y - 45, 'OČIŠTĚNO! 🌿', '#4ADE80', false));
+        pushDamageText(eng.texts, e.x, e.y - 45, 'OČIŠTĚNO! 🌿', '#4ADE80', false, 'hunterDamage');
       }
     }
   };
@@ -3189,8 +3326,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const p = eng.player;
     if (!p) return;
     sound.kindChime();
-    eng.texts.push(new DamageText(p.x, p.y - 70, 'CHLÉB SE SOLÍ A VLÍDNÉ SLOVO! ❤', '#FDE047', true));
-    for (const e of eng.enemies) {
+    pushDamageText(eng.texts, p.x, p.y - 70, 'CHLÉB SE SOLÍ A VLÍDNÉ SLOVO! ❤', '#FDE047', true, 'hunterDamage');
+    const grannyCount = enemySpatialHashRef.current.queryCircleInto(p.x, p.y, 1100 + 60, terrainSpatialResultsRef.current);
+    for (let i = 0; i < grannyCount.length; i++) {
+      const e = terrainSpatialResultsRef.current[i];
       if (e.isDefeated || Math.hypot(e.x - p.x, e.y - p.y) > 1100) continue;
       const bossLike = e.isBoss || e.category === 'bosses';
 
@@ -3210,7 +3349,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else {
           // Boss nebo přeživší začne mlsat chléb a uklidní se (pokud nemá imunitu proti snacku)
           if (e.prefix === 'kamenny' || e.immuneToSnackStun) {
-            eng.texts.push(new DamageText(e.x, e.y - 45, 'ODRAŽENO! 🪨', '#A8A29E', true));
+            pushDamageText(eng.texts, e.x, e.y - 45, 'ODRAŽENO! 🪨', '#A8A29E', true, 'combatStates');
           } else {
             const addedSnack = 8.0 * Math.max(0.1, 1 - foodResist);
             e.snackTimer = (e.snackTimer || 0) + addedSnack;
@@ -3218,7 +3357,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (bossLike) {
               e.takeDamage(e.maxHp * 0.25 * Math.max(0.1, 1 - foodResist), 'food', 0, 0);
             }
-            eng.texts.push(new DamageText(e.x, e.y - 45, 'CHLÉB SE SOLÍ! 🍞', '#D97706', true));
+            pushDamageText(eng.texts, e.x, e.y - 45, 'CHLÉB SE SOLÍ! 🍞', '#D97706', true, 'hunterDamage');
             sound.snack();
           }
         }
@@ -3228,15 +3367,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const holyPush = Math.max(0.1, 1 - holyResist);
         if (!bossLike && Math.random() < 0.75) {
           e.takeDamage((e.hp + 1) * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
-          eng.texts.push(new DamageText(e.x, e.y - 45, 'SVATÉ SLOVO! ✨', '#FDE047', true));
+          pushDamageText(eng.texts, e.x, e.y - 45, 'SVATÉ SLOVO! ✨', '#FDE047', true, 'hunterDamage');
         } else {
           e.calmTimer = bossLike ? 10 : 8;
           if (bossLike) {
             e.takeDamage(e.maxHp * 0.25 * holyMult, 'holy', 0, 0);
-            eng.texts.push(new DamageText(e.x, e.y - 50, 'SVATÁ ZKÁZA! ✨', '#FDE047', true));
+            pushDamageText(eng.texts, e.x, e.y - 50, 'SVATÁ ZKÁZA! ✨', '#FDE047', true, 'hunterDamage');
           } else {
             e.takeDamage(45 * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
-            eng.texts.push(new DamageText(e.x, e.y - 45, 'POŽEHNÁNÍ ✨', '#FDE047', true));
+            pushDamageText(eng.texts, e.x, e.y - 45, 'POŽEHNÁNÍ ✨', '#FDE047', true, 'hunterDamage');
           }
         }
       }
@@ -3311,9 +3450,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 25;
+            const frostMult = pl._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(pl, enemySpatialHashRef.current.queryCircle(pl.x, pl.y, FROSTLING_AURA_RADIUS));
             pl.hp = Math.min(
               pl.maxHp,
-              pl.hp + 25 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+              pl.hp + 25 * frostMult
             );
           }
         },
@@ -3326,9 +3466,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.maxHp += 30;
+            const frostMult = pl._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(pl, enemySpatialHashRef.current.queryCircle(pl.x, pl.y, FROSTLING_AURA_RADIUS));
             pl.hp = Math.min(
               pl.maxHp,
-              pl.hp + 30 * getFrostAuraHealingMultiplier(pl, engineRef.current?.enemies || [])
+              pl.hp + 30 * frostMult
             );
             pl.kurazCount = (pl.kurazCount || 0) + 1;
           }
@@ -3641,6 +3782,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Storybook Illumination: update Petrolejka & dynamic light sources
             const dayPhase = getCurrentDayPhase(engine.gameTime);
+            engine.currentPhase = dayPhase;
             const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, engine.gameTime);
             let pLight = engine.petrolejkaLight;
             if (petrolejkaRadius > 0) {
@@ -3665,10 +3807,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Hromnička blessed candle light
-            const hasHromnicka = player.weapons && player.weapons.some((w: any) => w.id === 'hromnicka');
+            const hromWp = (player as any)._hromnickaWeapon;
             let hLight = engine.hromnickaLight;
-            if (hasHromnicka && player.hp > 0) {
-              const hromWp = player.weapons.find((w: any) => w.id === 'hromnicka');
+            if (hromWp && player.hp > 0) {
               const hReach = 110 + (hromWp?.level || 1) * 12;
               if (!hLight) {
                 hLight = {
@@ -3792,7 +3933,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             const newTime = engine.gameTime;
-            const currentPhase = getCurrentDayPhase(newTime);
+            const currentPhase = engine.currentPhase || getCurrentDayPhase(newTime);
 
             const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : currentSelectedLevelId] || GAME_LEVELS[0];
 
@@ -3801,7 +3942,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
-              engine.texts.push(new DamageText(player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true));
+              pushDamageText(engine.texts, player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true, 'bossAnnouncements');
               // All monsters panic and flee
               engine.enemies.forEach((e) => {
                 e.panicked = true;
@@ -3812,7 +3953,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             if (directorRef.current) {
               const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
-              directorRef.current.maxLivingEnemies = performanceProfile === 'performance' ? 35 : performanceProfile === 'balanced' ? 55 : 70;
+              let targetMaxLiving = performanceProfile === 'performance' ? 35 : performanceProfile === 'balanced' ? 55 : 70;
+              if (adaptiveGovernorRef.current.tier >= 3) {
+                targetMaxLiving = Math.min(targetMaxLiving, 45);
+              }
+              directorRef.current.maxLivingEnemies = targetMaxLiving;
               const directorAdapter = {
                 state: engine,
                 livingEnemies: livingEnemiesRef.current,
@@ -3824,7 +3969,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     else if (soundName === 'bell') sound.bell?.();
                   },
                   onDamageText: (opts: any) => {
-                    engineRef.current.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'bossAnnouncements'));
+                    pushDamageText(engineRef.current.texts, opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'bossAnnouncements');
                   },
                 },
                 spawnScatterDrop: (type: any, opts: any = {}) => {
@@ -5216,6 +5361,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
+            // Periodic spatial scan for frost aura healing multiplier (runs at 4 Hz instead of 60 Hz)
+            player._frostAuraScanTimer = (player._frostAuraScanTimer || 0) + dt;
+            if (player._frostAuraScanTimer >= 0.25 || player._cachedFrostHealMult === undefined) {
+              player._frostAuraScanTimer = 0;
+              player._cachedFrostHealMult = getFrostAuraHealingMultiplier(
+                player,
+                enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS)
+              );
+            }
+
             // Level 0 is a hand-composed, asymmetric map rather than a flat
             // decoration field.  These local rules intentionally run after
             // movement so every POI remains a readable, opt-in playstyle.
@@ -5231,7 +5386,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
               player.arenaArmorBonus = inChurch ? 0.20 : 0;
-              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
+              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt * (player._cachedFrostHealMult ?? 1));
 
               const inPond = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond);
               if (inPond) {
@@ -5241,7 +5396,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (thaw.floeExposure > 4.5) {
                   thaw.floeExposure = 0;
                   player.takeDamage(7, 'cold');
-                  engine.texts.push(new DamageText(player.x, player.y - 35, 'KRA PRASKÁ! ❄️', '#BDEAF7', true));
+                  pushDamageText(engine.texts, player.x, player.y - 35, 'KRA PRASKÁ! ❄️', '#BDEAF7', true, 'hunterDamage');
                 }
               } else {
                 thaw.floeExposure = Math.max(0, thaw.floeExposure - dt * 2);
@@ -5252,7 +5407,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (thaw.shrineCharge >= 2 && thaw.shrineCooldown <= 0) {
                   thaw.shrineCharge = 0;
                   thaw.shrineCooldown = 22;
-                  for (const enemy of engine.enemies) {
+                  const count = enemySpatialHashRef.current.queryCircleInto(
+                    MARCH_THAW_POIS.shrine.x,
+                    MARCH_THAW_POIS.shrine.y,
+                    520 + 60,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < count.length; i++) {
+                    const enemy = terrainSpatialResultsRef.current[i];
                     const dx = enemy.x - MARCH_THAW_POIS.shrine.x;
                     const dy = enemy.y - MARCH_THAW_POIS.shrine.y;
                     const dist = Math.hypot(dx, dy) || 1;
@@ -5263,7 +5425,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   }
                   engine.lightningFlash = Math.max(engine.lightningFlash, 0.35);
-                  engine.texts.push(new DamageText(MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 90, '✦ ZJEVENÍ SVĚTCE!', '#FEF08A', true));
+                  pushDamageText(engine.texts, MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 90, '✦ ZJEVENÍ SVĚTCE!', '#FEF08A', true, 'bossAnnouncements');
                   sound.bell();
                 }
               } else {
@@ -5359,7 +5521,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 } else if (dec.type === 'granny_stove') {
                   if (Math.hypot(player.x - dec.x, player.y - dec.y) < player.radius + dec.radius + 20) {
-                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * getFrostAuraHealingMultiplier(player, engine.enemies));
+                    player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * (player._cachedFrostHealMult ?? 1));
                   }
                 }
               }
@@ -5406,14 +5568,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (player.herbTimer >= 9) {
                 player.herbTimer = 0;
                 const hpBefore = player.hp;
-                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.18 * getFrostAuraHealingMultiplier(player, engine.enemies));
+                player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.18 * (player._cachedFrostHealMult ?? 1));
                 const actualHeal = Math.max(0, player.hp - hpBefore);
                 player.herbBoostTimer = 3;
                 player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 3);
                 player.pickupRadius = baseMagnetRadius * accessibilityMultiplier * 5;
-                engine.texts.push(new DamageText(player.x, player.y - 58, '🌿 BYLINNÝ ZÁBLESK! MAGNET ×5 · 3 s NEZRANITELNOST', COLORS.green, true));
+                pushDamageText(engine.texts, player.x, player.y - 58, '🌿 BYLINNÝ ZÁBLESK! MAGNET ×5 · 3 s NEZRANITELNOST', COLORS.green, true, 'healing');
                 if (actualHeal > 0) {
-                  engine.texts.push(new DamageText(player.x, player.y - 36, '+' + Math.round(actualHeal) + ' Kuráž', COLORS.green));
+                  pushDamageText(engine.texts, player.x, player.y - 36, '+' + Math.round(actualHeal) + ' Kuráž', COLORS.green, false, 'healing');
                 }
                 sound.potion();
               }
@@ -5426,7 +5588,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
         cloud.damagePerSecond = 9;
         engineRef.current.smokePuffs.push(cloud);
-        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * getFrostAuraHealingMultiplier(player, engineRef.current?.enemies || []);
+        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * (player._cachedFrostHealMult ?? 1);
         const missingHp = Math.max(0, player.maxHp - player.hp);
         const overheal = Math.max(0, requestedHeal - missingHp);
         player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
@@ -5453,15 +5615,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             applyBearMaskOverheal(player, heal.amount);
             if (heal.timer === 'regenTimer') player.regenTimer = 0;
             if (heal.timer === 'herbTimer') player.herbTimer = 0;
-            engine.texts.push(new DamageText(player.x, player.y - 40, '+' + heal.amount + ' 🌿', COLORS.green));
+            pushDamageText(engine.texts, player.x, player.y - 40, '+' + heal.amount + ' 🌿', COLORS.green, false, 'healing');
           }
         }
       } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
               player.regenTimer += dt;
               if (player.regenTimer >= 5) {
-                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 4 * getFrostAuraHealingMultiplier(player, engine.enemies));
+                player.hp = Math.min(player.maxHp, player.hp + player.regenLevel * 4 * (player._cachedFrostHealMult ?? 1));
                 player.regenTimer = 0;
-                engine.texts.push(new DamageText(player.x, player.y - 40, `+${player.regenLevel * 4} 🌿`, COLORS.green));
+                pushDamageText(engine.texts, player.x, player.y - 40, `+${player.regenLevel * 4} 🌿`, COLORS.green, false, 'healing');
               }
             }
             // Kořenářka's timed passive runs independently of the optional garden regeneration above.
@@ -5472,13 +5634,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (tavernLvl > 0 && kurazRatioNow <= 0.35) {
               if (!player._inZoufalaKurazState) {
                 player._inZoufalaKurazState = true;
-                engine.texts.push(new DamageText(player.x, player.y - 50, '🍺 ZOUFALÁ KURÁŽ!', '#F97316', true));
+                pushDamageText(engine.texts, player.x, player.y - 50, '🍺 ZOUFALÁ KURÁŽ!', '#F97316', true, 'combatShouts');
                 sound.levelUp();
               }
               player._zoufalaParticleTimer = (player._zoufalaParticleTimer || 0) + dt;
               if (player._zoufalaParticleTimer >= 0.25) {
                 player._zoufalaParticleTimer = 0;
-                engine.particles.push({
+                emitParticle(engine.particles, {
                   x: player.x + (Math.random() - 0.5) * 24,
                   y: player.y + (Math.random() - 0.5) * 24,
                   vx: (Math.random() - 0.5) * 40,
@@ -5486,7 +5648,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   life: 0.45,
                   color: '#EA580C',
                   size: 3.5,
-                });
+                }, activeMaxParticlesRef.current);
               }
             } else {
               player._inZoufalaKurazState = false;
@@ -5511,7 +5673,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Hromnička flickering light aura: continuous gentle outward push resisted by Fear resist (10 Hz spatial check, full-rate contact push)
-            const hromnickaWp = player.weapons.find((w: any) => w.id === 'hromnicka');
+            const hromnickaWp = (player as any)._hromnickaWeapon;
             if (hromnickaWp) {
               if (player.hromnickaPulseTimer > 0) player.hromnickaPulseTimer -= dt;
               const auraReach = 135 + hromnickaWp.level * 15;
@@ -5539,7 +5701,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Update persistent orbit angle and slow aura for Válečnice.
-            const valecniceWeapon = player.weapons.find((w: any) => w.id === 'valecnice');
+            const valecniceWeapon = (player as any)._valecniceWeapon;
             if (valecniceWeapon) {
               const stats = (valecniceWeapon as any)._cachedStats || ((valecniceWeapon as any)._cachedStats = getRankedWeaponStats('valecnice', valecniceWeapon.level, valecniceWeapon));
               const orbitRadius = 115 * stats.areaRadiusMult;
@@ -6569,13 +6731,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ) {
                   applyRareItemEffect(engine, player, d.type, {
                     onSound: (name) => (sound as any)[name]?.(),
-                    onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true)),
+                    onDamageText: (opts) => pushDamageText(engine.texts, opts.x, opts.y, opts.text, opts.color || '#F59E0B', true, 'lootResources'),
                   });
                 } else if (d.type === 'arcivzacny_ananas') {
+                  const fMult = player._cachedFrostHealMult ?? getFrostAuraHealingMultiplier(player, enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS));
                   applyAnanasUpgrade(player, {
                     onSound: (name) => (sound as any)[name]?.(),
-                    onDamageText: (opts) => engine.texts.push(new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true)),
-                  }, getFrostAuraHealingMultiplier(player, engine.enemies));
+                    onDamageText: (opts) => pushDamageText(engine.texts, opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'lootResources'),
+                  }, fMult);
                 }
               }
             }
@@ -6719,7 +6882,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
-        const phase = getCurrentDayPhase(engine.gameTime);
+        const phase = engine.currentPhase || getCurrentDayPhase(engine.gameTime);
 
         const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : (currentSelectedLevelId !== undefined ? currentSelectedLevelId : 0)] || GAME_LEVELS[0];
         const isWinter = curLvl.season === 'winter';
@@ -7059,7 +7222,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Draw Hromnička flickering holy light aura on ground under characters
-        const hromnickaWp = player ? player.weapons.find((w: any) => w.id === 'hromnicka') : null;
+        const hromnickaWp = player ? (player as any)._hromnickaWeapon : null;
         if (player && hromnickaWp) {
           const reach = 135 + hromnickaWp.level * 15;
           Lada.drawHromnickaAura(ctx, player.x, player.y, reach, engine.uiTime, player.hromnickaPulseTimer || 0);
@@ -7091,7 +7254,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        const valecniceWp = player ? player.weapons.find((w: any) => w.id === 'valecnice') : null;
+        const valecniceWp = player ? (player as any)._valecniceWeapon : null;
         if (player && valecniceWp) {
           const stats = getRankedWeaponStats('valecnice', valecniceWp.level, valecniceWp);
           const count = Math.max(1, 1 + stats.projectileCount);
@@ -7433,6 +7596,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Draw Damage Texts (batched font and ink outline)
+        const tStartCombatTexts = performance.now();
         if (isGameEffectEnabled('effectsEnabled') && engine.texts.length > 0) {
           ctx.font = '900 18px Eczar';
           ctx.lineWidth = 4;
@@ -7445,6 +7609,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
           ctx.globalAlpha = 1;
         }
+        lastCombatTextsMsRef.current = performance.now() - tStartCombatTexts;
 
         // Draw particles in a single batch without individual save/restore
         if (isGameEffectEnabled('combatVfxEnabled') && engine.particles && engine.particles.length > 0) {
@@ -7697,7 +7862,61 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        frameProfiler.end(performance.now());
+        const smoothedTimings = frameProfiler.end(performance.now());
+        if (currentGameState === 'playing') {
+          const gov = adaptiveGovernorRef.current;
+          const smoothedMs = smoothedTimings.total;
+          const combatMs = lastCombatTextsMsRef.current;
+
+          if (smoothedMs > 18) {
+            gov.tier1Timer += dt;
+            gov.recoveryTimer = 0;
+          } else if (smoothedMs < 16) {
+            gov.recoveryTimer += dt;
+            if (gov.recoveryTimer >= 3.0) {
+              if (gov.tier > 0) {
+                gov.tier--;
+                gov.recoveryTimer = 0;
+                if (gov.tier === 0) {
+                  gov.tier1Timer = 0;
+                  activeMaxParticlesRef.current = MAX_PARTICLES;
+                  if (gov.originalCombatPreset) {
+                    const preset = gov.originalCombatPreset === 'custom' ? 'full' : gov.originalCombatPreset;
+                    setCombatTextSettings(getSettingsForPreset(preset));
+                    gov.originalCombatPreset = null;
+                  }
+                } else if (gov.tier === 1) {
+                  if (gov.originalCombatPreset) {
+                    const preset = gov.originalCombatPreset === 'custom' ? 'full' : gov.originalCombatPreset;
+                    setCombatTextSettings(getSettingsForPreset(preset));
+                    gov.originalCombatPreset = null;
+                  }
+                }
+              }
+            }
+          } else {
+            gov.recoveryTimer = 0;
+          }
+
+          if (smoothedMs > 26 && gov.tier < 3) {
+            gov.tier = 3;
+            if (!gov.originalCombatPreset) {
+              gov.originalCombatPreset = getCombatTextPreset();
+            }
+            setCombatTextSettings(TACTICAL_COMBAT_TEXT_SETTINGS);
+            activeMaxParticlesRef.current = 100;
+          } else if ((smoothedMs > 22 || combatMs > 2.0) && gov.tier < 2) {
+            gov.tier = 2;
+            if (!gov.originalCombatPreset) {
+              gov.originalCombatPreset = getCombatTextPreset();
+            }
+            setCombatTextSettings(TACTICAL_COMBAT_TEXT_SETTINGS);
+            activeMaxParticlesRef.current = 100;
+          } else if (gov.tier1Timer >= 2.0 && gov.tier < 1) {
+            gov.tier = 1;
+            activeMaxParticlesRef.current = 100;
+          }
+        }
       }
 
       animId = requestAnimationFrame(loop);

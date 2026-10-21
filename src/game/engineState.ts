@@ -50,6 +50,7 @@ export interface EngineState {
   lightningStrike: { x: number; y: number; time: number } | null;
   nextBossMechanicAt: number;
   currentLang?: string;
+  currentPhase?: any;
   gameTime: number;
   kills: number;
   coins: number;
@@ -170,6 +171,7 @@ export function createInitialEngineState(): EngineState {
     lightningFlash: 0,
     lightningStrike: null,
     nextBossMechanicAt: 0,
+    currentPhase: null,
     gameTime: 0,
     kills: 0,
     coins: 0,

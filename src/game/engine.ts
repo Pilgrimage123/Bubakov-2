@@ -148,11 +148,13 @@ export class DamageText {
   }
 
   addAmount(amount: number): void {
-    const num = parseInt(this.text, 10);
-    if (!isNaN(num)) {
-      const suffix = this.text.replace(/^[0-9]+/, '');
-      this.text = `${num + amount}${suffix}`;
-      this.life = Math.min(1.0, this.life + 0.25);
+    if (this.text && this.text.charCodeAt(0) >= 48 && this.text.charCodeAt(0) <= 57) {
+      const num = parseInt(this.text, 10);
+      if (!isNaN(num)) {
+        const suffix = this.text.replace(/^[0-9]+/, '');
+        this.text = `${num + amount}${suffix}`;
+        this.life = Math.min(1.0, this.life + 0.25);
+      }
     }
   }
 
@@ -1656,14 +1658,28 @@ export class GameEngine {
     this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
 
     // Drop coins from up to 8 closest alive enemies
-    const sortedEnemies = (this.livingEnemies || this.state.enemies || [])
-      .filter((e: any) => !e.isDefeated && !e.dead)
-      .map((e: any) => ({ enemy: e, distSq: (e.x - player.x) ** 2 + (e.y - player.y) ** 2 }))
-      .sort((a, b) => a.distSq - b.distSq)
-      .slice(0, 8);
+    const nearby = this.spatialHash.queryCircle(player.x, player.y, 400);
+    const sortedEnemies: any[] = [];
+    for (let i = 0; i < nearby.length; i++) {
+      const e = nearby[i];
+      if (!e.isDefeated && !e.dead) {
+        sortedEnemies.push(e);
+        if (sortedEnemies.length >= 8) break;
+      }
+    }
+    if (sortedEnemies.length === 0 && (this.livingEnemies || this.state.enemies)) {
+      const pool = this.livingEnemies || this.state.enemies;
+      for (let i = 0; i < pool.length; i++) {
+        const e = pool[i];
+        if (!e.isDefeated && !e.dead) {
+          sortedEnemies.push(e);
+          if (sortedEnemies.length >= 8) break;
+        }
+      }
+    }
 
     for (let i = 0; i < sortedEnemies.length; i++) {
-      const foe = sortedEnemies[i].enemy;
+      const foe = sortedEnemies[i];
       this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75 });
       this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
       if (this.state.particles) {
