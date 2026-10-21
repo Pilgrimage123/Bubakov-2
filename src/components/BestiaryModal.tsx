@@ -437,19 +437,30 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 										style: {
 											fontSize: "0.78rem",
 											fontWeight: 900,
-											color: prog.tier === 4 ? "#065F46" : "#2A170A"
+											color: prog.tier === 4 ? "#065F46" : "#2A170A",
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
-										children: prog.tier === 4 ? "✅ 100 %" : prog.tier === 0 ? "🔒 0 %" : `${prog.percent} %`
+										children: prog.tier === 4 ? [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 12 }),
+											" 100 %"
+										] : prog.tier === 0 ? [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "padlock", size: 12 }),
+											" 0 %"
+										] : `${prog.percent} %`
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										style: {
 											fontSize: "0.74rem",
 											fontWeight: 700,
-											color: "#111111"
+											color: "#111111",
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "3px"
 										},
 										children: [
-											"💀 ",
-											k,
-											"×"
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "skull", size: 12 }),
+											`${k}×`
 										]
 									})]
 								})]
@@ -464,10 +475,13 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									children: [
 										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 											children: [
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 													className: "hunter-tier-stamp tier-stamp-4",
-													style: { fontSize: "0.8rem", marginBottom: "4px", display: "inline-block" },
-													children: "✨ FOLKLÓRNÍ PŘÍVLASTEK"
+													style: { fontSize: "0.8rem", marginBottom: "4px", display: "inline-flex", alignItems: "center", gap: "4px" },
+													children: [
+														/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "star", size: 13 }),
+														" FOLKLÓRNÍ PŘÍVLASTEK"
+													]
 												}),
 												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 													style: { margin: "2px 0 2px 0", fontSize: "1.85rem", color: "#2A170A" },
@@ -506,11 +520,14 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 									style: { display: "flex", flexWrap: "wrap", gap: "6px", margin: "10px 0" },
 									children: PREFIX_LORE[selectedPrefixId].traits.map((t, idx) =>
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 											key: idx,
 											className: "tag-badge",
-											style: { background: "#FEF3C7", color: "#92400E", fontWeight: 800 },
-											children: `⚡ ${t}`
+											style: { background: "#FEF3C7", color: "#92400E", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "lightning", size: 13 }),
+												t
+											]
 										})
 									)
 								}),
@@ -529,7 +546,8 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 										fontSize: "0.92rem"
 									},
 									children: [
-										"📜 „Z kroniky Ladova kraje: ",
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "scroll", size: 14, style: { marginRight: "4px", verticalAlign: "middle" } }),
+										"„Z kroniky Ladova kraje: ",
 										PREFIX_LORE[selectedPrefixId].lore,
 										"“"
 									]
@@ -538,7 +556,13 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									style: { borderTop: "2px dashed #bbb", paddingTop: "10px", marginTop: "10px", fontSize: "0.92rem" },
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { style: { color: "#166534" }, children: "🌿 Taktika a rady pro lovce: " }),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
+												style: { color: "#166534", display: "inline-flex", alignItems: "center", gap: "4px" },
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "clover", size: 14 }),
+													"Taktika a rady pro lovce: "
+												]
+											}),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: "#166534", fontWeight: 700 }, children: PREFIX_LORE[selectedPrefixId].advice })
 										]
 									})
@@ -587,9 +611,15 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 										padding: "3px 10px",
 										borderRadius: "6px",
 										border: "2px solid var(--ink)",
-										textAlign: "right"
+										textAlign: "right",
+										display: "inline-flex",
+										alignItems: "center",
+										gap: "5px"
 									},
-									children: enemyProg.isUnlocked ? "✅ ZCELA PROBÁDÁNO" : `VÝZKUM: ${enemyProg.kills} / ${enemyProg.maxKills} (${enemyProg.percent} %)`
+									children: enemyProg.isUnlocked ? [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "checkmark", size: 14 }),
+										" ZCELA PROBÁDÁNO"
+									] : `VÝZKUM: ${enemyProg.kills} / ${enemyProg.maxKills} (${enemyProg.percent} %)`
 								})]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -640,19 +670,31 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 											}),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 												className: `hunter-tick ${enemyProg.percent >= 25 ? "reached" : ""}`,
-												children: [enemyProg.percent >= 25 ? "✓" : "🔒", " 25%"]
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: enemyProg.percent >= 25 ? "checkmark" : "padlock", size: 11 }),
+													" 25%"
+												]
 											}),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 												className: `hunter-tick ${enemyProg.percent >= 50 ? "reached" : ""}`,
-												children: [enemyProg.percent >= 50 ? "✓" : "🔒", " 50%"]
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: enemyProg.percent >= 50 ? "checkmark" : "padlock", size: 11 }),
+													" 50%"
+												]
 											}),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 												className: `hunter-tick ${enemyProg.percent >= 75 ? "reached" : ""}`,
-												children: [enemyProg.percent >= 75 ? "✓" : "🔒", " 75%"]
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: enemyProg.percent >= 75 ? "checkmark" : "padlock", size: 11 }),
+													" 75%"
+												]
 											}),
 											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 												className: `hunter-tick ${enemyProg.percent >= 100 ? "reached" : ""}`,
-												children: [enemyProg.percent >= 100 ? "✓" : "🔒", " 100%"]
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: enemyProg.percent >= 100 ? "checkmark" : "padlock", size: 11 }),
+													" 100%"
+												]
 											})
 										]
 									})
@@ -667,19 +709,25 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge tag-neutral",
+										style: { display: "inline-flex", alignItems: "center", gap: "4px" },
 										children: [
-											"💀 Přemoženo: ",
-											enemyProg.kills,
-											"×"
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "skull", size: 13 }),
+											`Přemoženo: ${enemyProg.kills}×`
 										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge",
 										style: {
 											background: "#E2E8F0",
-											color: "var(--ink)"
+											color: "var(--ink)",
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
-										children: ["❤️ ", enemyProg.spoiledStats.hp]
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "heart", size: 13 }),
+											enemyProg.spoiledStats.hp
+										]
 									}),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge",
@@ -700,35 +748,51 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 										className: "tag-badge",
 										style: {
 											background: "#FEF9C3",
-											color: "#854D0E"
+											color: "#854D0E",
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
 										children: [
-											"🥐 Hlad: ",
-											Math.round((1 - (currentMonster.hunger ?? currentMonster.foodResist ?? 0)) * 100),
-											" %"
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "croissant", size: 14 }),
+											`Hlad: ${Math.round((1 - (currentMonster.hunger ?? currentMonster.foodResist ?? 0)) * 100)} %`
 										]
 									}),
 									enemyProg.tier >= 3 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge",
 										style: {
 											background: "#E0E7FF",
-											color: "var(--ink)"
+											color: "var(--ink)",
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
-										children: ["⚡ Rychlost: ", enemyProg.spoiledStats.speed]
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "lightning", size: 13 }),
+											`Rychlost: ${enemyProg.spoiledStats.speed}`
+										]
 									}),
 									enemyProg.tier >= 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 										className: "tag-badge",
 										style: {
 											background: currentMonster.attackCadence === "fast" ? "#ECFDF5" : currentMonster.attackCadence === "slow" ? "#FEF2F2" : "#EFF6FF",
 											color: currentMonster.attackCadence === "fast" ? "#065F46" : currentMonster.attackCadence === "slow" ? "#991B1B" : "#1E40AF",
-											fontWeight: 800
+											fontWeight: 800,
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
 										children: [
-											currentMonster.attackCadence === "fast"
-												? "⚡ Útok: Rychlý (0,6 s)"
-												: currentMonster.attackCadence === "slow"
-												? "🔨 Útok: Pomalý (1,8 s)"
-												: "⚔️ Útok: Normální (1,2 s)"
+											currentMonster.attackCadence === "fast" ? [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "lightning", size: 13 }),
+												"Útok: Rychlý (0,6 s)"
+											] : currentMonster.attackCadence === "slow" ? [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "hammer", size: 13 }),
+												"Útok: Pomalý (1,8 s)"
+											] : [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "sword", size: 13 }),
+												"Útok: Normální (1,2 s)"
+											]
 										]
 									}),
 									enemyProg.tier >= 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
@@ -736,9 +800,15 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 										style: {
 											background: "#FEE2E2",
 											color: "#991B1B",
-											fontWeight: 800
+											fontWeight: 800,
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "4px"
 										},
-										children: ["💥 Úder: ", currentMonster.damage]
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "impact", size: 13 }),
+											`Úder: ${currentMonster.damage}`
+										]
 									})
 								]
 							}),
@@ -761,7 +831,8 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									fontSize: "0.92rem"
 								},
 								children: [
-									"📜 „Z kroniky Ladova kraje: ",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "scroll", size: 14, style: { marginRight: "4px", verticalAlign: "middle" } }),
+									"„Z kroniky Ladova kraje: ",
 									enemyProg.tier >= 2 ? "Kdo chce přemoci tohoto tvora, musí znát jeho zvyky a nenechat se překvapit nočním přepadem." : "Kronikáři zatím shromažďují zkazky o tomto tajemném nočním úkazu.",
 									"“"
 								]
@@ -774,9 +845,12 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 									fontSize: "0.92rem"
 								},
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-										style: { color: "#166534" },
-										children: "🌿 Slabiny:"
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
+										style: { color: "#166534", display: "inline-flex", alignItems: "center", gap: "4px" },
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "clover", size: 14 }),
+											"Slabiny:"
+										]
 									}),
 									" ",
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
@@ -789,9 +863,12 @@ var BestiaryModal = ({ isOpen, onClose, bestiaryKills }) => {
 								] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 									style: { marginTop: "4px" },
 									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
-											style: { color: "#991b1b" },
-											children: "⚠️ Přednosti a záludnosti:"
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("strong", {
+											style: { color: "#991b1b", display: "inline-flex", alignItems: "center", gap: "4px" },
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "warning", size: 14 }),
+												"Přednosti a záludnosti:"
+											]
 										}),
 										" ",
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {

@@ -88,7 +88,7 @@ export const FajfkaIcon: React.FC<FajfkaIconProps> = ({
       {/* Ground shadow beneath pipe base */}
       <ellipse cx="44" cy="94" rx="34" ry="5.5" fill="url(#fajfkaShadow)" />
 
-      <g id="fajfka-art">
+      <g id="fajfka-art" className="lada-anim-float">
         {/* ========================================================
             1. CURVED DARK STEM & MOUTHPIECE (Troubel a náústek)
             Curving gracefully from metal collar (73, 56) to (115, 12)
@@ -325,30 +325,36 @@ export const FajfkaIcon: React.FC<FajfkaIconProps> = ({
         />
 
         {/* Glowing orange & yellow ember specks of burning thyme/sage */}
-        <circle cx="23" cy="38" r="1.4" fill="#F59E0B" />
-        <circle cx="27" cy="40" r="1.2" fill="#EA580C" />
-        <circle cx="29" cy="38" r="0.9" fill="#FEF08A" />
-        <circle cx="21" cy="40.5" r="0.8" fill="#F97316" />
+        <g className="lada-anim-flicker">
+          <circle cx="23" cy="38" r="1.4" fill="#F59E0B" />
+          <circle cx="27" cy="40" r="1.2" fill="#EA580C" />
+          <circle cx="29" cy="38" r="0.9" fill="#FEF08A" />
+          <circle cx="21" cy="40.5" r="0.8" fill="#F97316" />
+        </g>
 
         {/* Delicate curling herbal smoke plume wafting from bowl */}
-        <path
-          d="M 27 34
-             C 25 28, 30 22, 28 16
-             C 26 10, 31 6, 33 2"
-          fill="none"
-          stroke="rgba(226, 232, 240, 0.75)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 23 33
-             C 21 27, 24 23, 22 17
-             C 20 12, 24 8, 25 5"
-          fill="none"
-          stroke="rgba(203, 213, 225, 0.5)"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-        />
+        <g className="lada-anim-steam-1">
+          <path
+            d="M 27 34
+               C 25 28, 30 22, 28 16
+               C 26 10, 31 6, 33 2"
+            fill="none"
+            stroke="rgba(226, 232, 240, 0.75)"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </g>
+        <g className="lada-anim-steam-2">
+          <path
+            d="M 23 33
+               C 21 27, 24 23, 22 17
+               C 20 12, 24 8, 25 5"
+            fill="none"
+            stroke="rgba(203, 213, 225, 0.5)"
+            strokeWidth="1.2"
+            strokeLinecap="round"
+          />
+        </g>
       </g>
     </svg>
   );

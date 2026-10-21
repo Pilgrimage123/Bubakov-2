@@ -1931,3 +1931,364 @@ export const LadaSmokedHamIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
     </g>
   </svg>
 );
+
+/**
+ * Curious field mouse Rézinka (🐭 / mouse / rezinka)
+ */
+export const LadaMouseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Myška Rézinka" {...props}>
+    <g className="lada-anim-rock">
+      {/* Curled pinkish tail */}
+      <path d="M 6 25 C 4 23, 3 17, 7 14 C 9 12, 10 15, 8 18 C 7 20, 9 22, 12 23" fill="none" stroke="#DCA884" strokeWidth="2" strokeLinecap="round" />
+      {/* Body */}
+      <ellipse cx="19" cy="22" rx="9" ry="7" fill="#8C7355" stroke="#1A1612" strokeWidth="2.4" />
+      {/* Pale belly patch */}
+      <ellipse cx="21" cy="24" rx="5" ry="3.5" fill="#FAF5E8" />
+      {/* Left back ear */}
+      <circle cx="17" cy="11" r="4.2" fill="#8C7355" stroke="#1A1612" strokeWidth="2" />
+      <circle cx="17" cy="11" r="2.2" fill="#E8A598" />
+      {/* Head */}
+      <ellipse cx="24" cy="17" rx="6.5" ry="5.5" transform="rotate(10 24 17)" fill="#9C8365" stroke="#1A1612" strokeWidth="2.4" />
+      {/* Right front ear */}
+      <circle cx="23" cy="10" r="4.5" fill="#9C8365" stroke="#1A1612" strokeWidth="2.2" />
+      <circle cx="23" cy="10" r="2.4" fill="#E8A598" />
+      {/* Tiny black bead eye with shine */}
+      <circle cx="26" cy="15" r="1.6" fill="#1A1612" />
+      <circle cx="26.5" cy="14.5" r="0.6" fill="#FAF5E8" />
+      {/* Cute pink snout / nose */}
+      <circle cx="29.5" cy="19" r="1.5" fill="#E8A598" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Whiskers */}
+      <line x1="28" y1="18" x2="34" y2="16" stroke="#1A1612" strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="28" y1="19.5" x2="35" y2="20" stroke="#1A1612" strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="28" y1="21" x2="33" y2="23.5" stroke="#1A1612" strokeWidth="1.2" strokeLinecap="round" />
+      {/* Little paws holding crumb */}
+      <ellipse cx="24" cy="24" rx="2" ry="1.4" fill="#E8A598" stroke="#1A1612" strokeWidth="1.2" />
+      <circle cx="26" cy="24.5" r="1.2" fill="#D9A036" stroke="#1A1612" strokeWidth="0.8" />
+    </g>
+  </svg>
+);
+
+/**
+ * Heavy blacksmith forge hammer (🔨 / hammer / kladivo)
+ */
+export const LadaHammerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářské kladivo" {...props}>
+    <g className="lada-anim-rock">
+      {/* Wooden ash handle */}
+      <path
+        d="M 10 28 L 22 14"
+        stroke="#8C5A35"
+        strokeWidth="4.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M 10 28 L 22 14"
+        stroke="#D9A036"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      {/* Forged iron hammer head */}
+      <polygon
+        points="17,10 26,4 31,10 22,17"
+        fill="#374151"
+        stroke="#1A1612"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+      {/* Striking face */}
+      <line x1="26" y1="4" x2="31" y2="10" stroke="#9CA3AF" strokeWidth="2.2" strokeLinecap="round" />
+      {/* Eye rivet / wedge */}
+      <circle cx="22" cy="12" r="1.6" fill="#1A1612" />
+      <circle cx="22" cy="12" r="0.7" fill="#F3E9D2" />
+    </g>
+  </svg>
+);
+
+/**
+ * Three-tined forged blacksmith pitchfork (🔱 / pitchfork / vidle)
+ */
+export const LadaPitchforkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kované vidle" {...props}>
+    <g className="lada-anim-rock">
+      {/* Wooden handle */}
+      <line x1="8" y1="30" x2="20" y2="18" stroke="#8C5A35" strokeWidth="3.6" strokeLinecap="round" />
+      <line x1="8" y1="30" x2="20" y2="18" stroke="#D9A036" strokeWidth="2.0" strokeLinecap="round" />
+      {/* Iron socket */}
+      <ellipse cx="20" cy="18" rx="2.5" ry="3.5" transform="rotate(-45 20 18)" fill="#2A170A" stroke="#1A1612" strokeWidth="1.8" />
+      {/* Central prong */}
+      <path d="M 20 18 L 29 9" stroke="#1A1612" strokeWidth="2.8" strokeLinecap="round" />
+      <path d="M 20 18 L 29 9" stroke="#9CA3AF" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Left curved tine */}
+      <path d="M 18 19 C 19 14, 22 9, 26 4" fill="none" stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M 18 19 C 19 14, 22 9, 26 4" fill="none" stroke="#CBD5E1" strokeWidth="1.4" strokeLinecap="round" />
+      {/* Right curved tine */}
+      <path d="M 21 17 C 26 17, 31 19, 34 14" fill="none" stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M 21 17 C 26 17, 31 19, 34 14" fill="none" stroke="#CBD5E1" strokeWidth="1.4" strokeLinecap="round" />
+    </g>
+  </svg>
+);
+
+/**
+ * Threshing flail & golden wheat sheaf (🌾 / flail / cep / obili)
+ */
+export const LadaGrainFlailIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep a snop" {...props}>
+    <g className="lada-anim-rock">
+      {/* Golden wheat ear backdrop */}
+      <path d="M 12 32 Q 20 22 28 8" fill="none" stroke="#B45309" strokeWidth="2.4" strokeLinecap="round" />
+      {/* Wheat grains */}
+      <ellipse cx="27" cy="9" rx="3" ry="1.5" transform="rotate(-30 27 9)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
+      <ellipse cx="23" cy="12" rx="3" ry="1.5" transform="rotate(35 23 12)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.2" />
+      <ellipse cx="25" cy="15" rx="3" ry="1.5" transform="rotate(-25 25 15)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
+      <ellipse cx="20" cy="18" rx="3" ry="1.5" transform="rotate(30 20 18)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.2" />
+      <ellipse cx="22" cy="22" rx="3" ry="1.5" transform="rotate(-20 22 22)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Wooden flail staff */}
+      <line x1="6" y1="28" x2="16" y2="14" stroke="#1A1612" strokeWidth="3.8" strokeLinecap="round" />
+      <line x1="6" y1="28" x2="16" y2="14" stroke="#8C5A35" strokeWidth="2.2" strokeLinecap="round" />
+      {/* Swivel leather hinge */}
+      <circle cx="16" cy="14" r="2.2" fill="#2A170A" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Swinging threshing beater rod */}
+      <line x1="16" y1="14" x2="28" y2="19" stroke="#1A1612" strokeWidth="4.6" strokeLinecap="round" />
+      <line x1="16" y1="14" x2="28" y2="19" stroke="#D9A036" strokeWidth="2.8" strokeLinecap="round" />
+    </g>
+  </svg>
+);
+
+/**
+ * Busy bumblebee & honeybee swarm with straw skep (🐝 / bees / vcely / roj)
+ */
+export const LadaBeeSwarmIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Včelí roj" {...props}>
+    {/* Straw beehive skep */}
+    <path
+      d="M 10 30 C 9 20, 13 14, 18 14 C 23 14, 27 20, 26 30 Z"
+      fill="#D9A036"
+      stroke="#1A1612"
+      strokeWidth="2.4"
+      strokeLinejoin="round"
+    />
+    <path d="M 11 25 Q 18 27 25 25" fill="none" stroke="#8C5A35" strokeWidth="1.6" />
+    <path d="M 12 20 Q 18 22 24 20" fill="none" stroke="#8C5A35" strokeWidth="1.6" />
+    {/* Entrance flight hole */}
+    <ellipse cx="18" cy="27" rx="2.5" ry="1.8" fill="#1A1612" />
+    {/* Bee 1 (flying right) */}
+    <g className="lada-anim-float">
+      <ellipse cx="25" cy="10" rx="3.5" ry="2.2" transform="rotate(-15 25 10)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.4" />
+      <line x1="24" y1="8.5" x2="24" y2="11.5" stroke="#1A1612" strokeWidth="1.2" />
+      <line x1="26" y1="9" x2="26" y2="12" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Gossamer wings */}
+      <ellipse cx="24" cy="6" rx="2" ry="3" transform="rotate(20 24 6)" fill="#E0F2FE" opacity="0.85" stroke="#1A1612" strokeWidth="1" />
+    </g>
+    {/* Bee 2 (flying left) */}
+    <g className="lada-anim-rock">
+      <ellipse cx="9" cy="12" rx="3" ry="2" transform="rotate(20 9 12)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.4" />
+      <line x1="9" y1="10.5" x2="9" y2="13.5" stroke="#1A1612" strokeWidth="1.2" />
+      <ellipse cx="10" cy="8.5" rx="1.8" ry="2.6" transform="rotate(-20 10 8.5)" fill="#E0F2FE" opacity="0.85" stroke="#1A1612" strokeWidth="1" />
+    </g>
+  </svg>
+);
+
+/**
+ * Ceramic soup bowl of steaming village garlic broth (🥣 / soup / polevka / miska)
+ */
+export const LadaSoupBowlIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hliněná miska s polévkou" {...props}>
+    {/* Steam wisps */}
+    <path d="M 14 10 C 13 8, 15 6, 14 4" fill="none" stroke="#D1D5DB" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-float" />
+    <path d="M 18 11 C 17 8, 20 6, 19 3" fill="none" stroke="#E5E7EB" strokeWidth="2.0" strokeLinecap="round" className="lada-anim-float" />
+    <path d="M 23 10 C 22 8, 24 6, 23 4" fill="none" stroke="#D1D5DB" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-float" />
+    {/* Clay bowl body */}
+    <path
+      d="M 6 15 C 6 27, 13 31, 18 31 C 23 31, 30 27, 30 15 Z"
+      fill="#C27D38"
+      stroke="#1A1612"
+      strokeWidth="2.4"
+      strokeLinejoin="round"
+    />
+    {/* Bowl foot */}
+    <rect x="13" y="30" width="10" height="2.5" rx="1" fill="#8C4A1F" stroke="#1A1612" strokeWidth="1.8" />
+    {/* Rim ellipse */}
+    <ellipse cx="18" cy="15" rx="12" ry="4.5" fill="#8C4A1F" stroke="#1A1612" strokeWidth="2.4" />
+    {/* Steaming golden broth interior */}
+    <ellipse cx="18" cy="15" rx="10.5" ry="3.5" fill="#EAB308" stroke="#1A1612" strokeWidth="1.2" />
+    {/* Floating herbs & croutons */}
+    <circle cx="15" cy="14" r="1.2" fill="#15803D" />
+    <circle cx="21" cy="16" r="1" fill="#15803D" />
+    <rect x="17" y="14" width="2" height="2" fill="#78350F" />
+    {/* Folk painted glaze stripe */}
+    <path d="M 8 20 C 12 24, 24 24, 28 20" fill="none" stroke="#FEF08A" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * Shepherd's warm patched woollen coat (🧥 / coat / kabat / hubertus)
+ */
+export const LadaPatchedCoatIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Záplatovaný kabát" {...props}>
+    {/* Coat body */}
+    <path
+      d="M 12 8 L 6 15 L 10 18 L 10 32 L 26 32 L 26 18 L 30 15 L 24 8 Z"
+      fill="#475569"
+      stroke="#1A1612"
+      strokeWidth="2.4"
+      strokeLinejoin="round"
+    />
+    {/* Collar / lapels */}
+    <polygon points="12,8 18,17 14,8" fill="#1E293B" stroke="#1A1612" strokeWidth="1.6" />
+    <polygon points="24,8 18,17 22,8" fill="#1E293B" stroke="#1A1612" strokeWidth="1.6" />
+    {/* Front center seam */}
+    <line x1="18" y1="17" x2="18" y2="32" stroke="#1A1612" strokeWidth="2" />
+    {/* Bone horn buttons */}
+    <circle cx="16.5" cy="20" r="1.3" fill="#D9A036" stroke="#1A1612" strokeWidth="1" />
+    <circle cx="16.5" cy="24" r="1.3" fill="#D9A036" stroke="#1A1612" strokeWidth="1" />
+    <circle cx="16.5" cy="28" r="1.3" fill="#D9A036" stroke="#1A1612" strokeWidth="1" />
+    {/* Folk contrast patches */}
+    <rect x="11" y="24" width="4" height="4" rx="0.5" fill="#8C5A35" stroke="#1A1612" strokeWidth="1.4" />
+    <line x1="11" y1="23.5" x2="15" y2="23.5" stroke="#FEF3C7" strokeWidth="1" strokeDasharray="1 1" />
+    <line x1="11" y1="28.5" x2="15" y2="28.5" stroke="#FEF3C7" strokeWidth="1" strokeDasharray="1 1" />
+    <rect x="21" y="19" width="3.5" height="3.5" rx="0.5" fill="#166534" stroke="#1A1612" strokeWidth="1.4" />
+  </svg>
+);
+
+/**
+ * Consecrated chalk with folk blessings (🖍️ / chalk / krida / K+M+B)
+ */
+export const LadaHolyChalkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Posvěcená křída" {...props}>
+    {/* Tříkrálové křížky */}
+    <g stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round">
+      <line x1="8" y1="8" x2="8" y2="14" />
+      <line x1="5" y1="11" x2="11" y2="11" />
+      <line x1="28" y1="8" x2="28" y2="14" />
+      <line x1="25" y1="11" x2="31" y2="11" />
+    </g>
+    {/* Chalk stick at angle */}
+    <g transform="rotate(-35 18 20)">
+      <rect x="15" y="8" width="6" height="20" rx="1.5" fill="#FAF5E8" stroke="#1A1612" strokeWidth="2.4" />
+      {/* Chalk tip chamfer */}
+      <polygon points="15,8 18,4 21,8" fill="#FDE68A" stroke="#1A1612" strokeWidth="2" strokeLinejoin="round" />
+      {/* Shading stripe */}
+      <line x1="16.5" y1="9" x2="16.5" y2="26" stroke="#E2E8F0" strokeWidth="1.4" />
+    </g>
+    {/* Folk cross drawn on bottom */}
+    <g stroke="#1A1612" strokeWidth="2.2" strokeLinecap="round">
+      <line x1="18" y1="26" x2="18" y2="34" />
+      <line x1="14" y1="30" x2="22" y2="30" />
+    </g>
+  </svg>
+);
+
+/**
+ * Freshly dug horseradish root with green leaves (🫚 / horseradish / kren / koren)
+ */
+export const LadaHorseradishRootIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pikantní křen" {...props}>
+    {/* Green leafy tuft */}
+    <path d="M 12 10 Q 7 5 9 2 Q 13 4 14 9" fill="#15803D" stroke="#1A1612" strokeWidth="1.6" />
+    <path d="M 15 10 Q 15 2 18 1 Q 19 4 17 9" fill="#22C55E" stroke="#1A1612" strokeWidth="1.6" />
+    <path d="M 17 10 Q 23 5 21 2 Q 18 5 16 9" fill="#15803D" stroke="#1A1612" strokeWidth="1.6" />
+    {/* Root body tapering down */}
+    <path
+      d="M 12 9 C 14 8, 18 8, 20 9 C 21 16, 20 25, 17 33 C 15 25, 12 16, 12 9 Z"
+      fill="#F5EDE0"
+      stroke="#1A1612"
+      strokeWidth="2.4"
+      strokeLinejoin="round"
+    />
+    {/* Earthy rings and ridges */}
+    <path d="M 13 14 Q 16 16 19 14" fill="none" stroke="#A16207" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M 14 19 Q 16 21 18 19" fill="none" stroke="#A16207" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M 15 24 Q 16 26 18 24" fill="none" stroke="#A16207" strokeWidth="1.4" strokeLinecap="round" />
+    {/* Little side rootlet */}
+    <path d="M 19 22 Q 24 24 23 27" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M 13 18 Q 9 20 10 24" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * Traditional wooden Easter ratchet rattle (🪇 / rattle / rehtacka / klapacka)
+ */
+export const LadaRehtackaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Velikonoční řehtačka" {...props}>
+    {/* Wooden handle */}
+    <line x1="8" y1="32" x2="16" y2="20" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
+    <line x1="8" y1="32" x2="16" y2="20" stroke="#8C5A35" strokeWidth="2.4" strokeLinecap="round" />
+    {/* Cogwheel axle */}
+    <circle cx="16" cy="20" r="3" fill="#D9A036" stroke="#1A1612" strokeWidth="2" />
+    {/* Toothed gear cogwheel */}
+    <circle cx="16" cy="20" r="5" fill="none" stroke="#1A1612" strokeWidth="2.2" strokeDasharray="3 2" />
+    {/* Wooden rattle frame box */}
+    <polygon
+      points="16,20 28,12 32,18 20,26"
+      fill="#B45309"
+      stroke="#1A1612"
+      strokeWidth="2.4"
+      strokeLinejoin="round"
+    />
+    {/* Springy wooden reed / blade */}
+    <line x1="16" y1="20" x2="28" y2="12" stroke="#FEF3C7" strokeWidth="2.6" strokeLinecap="round" />
+    <line x1="16" y1="20" x2="28" y2="12" stroke="#1A1612" strokeWidth="1.2" strokeLinecap="round" />
+    {/* Sound click sparks */}
+    <path d="M 29 8 L 32 6" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+    <path d="M 33 13 L 36 12" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * Carved horn or bone coat button (🔘 / button / knoflik)
+ */
+export const LadaBoneButtonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kostěný knoflík" {...props}>
+    {/* Outer button disc */}
+    <circle cx="18" cy="18" r="14" fill="#E2D9C8" stroke="#1A1612" strokeWidth="2.6" />
+    {/* Recessed inner ring */}
+    <circle cx="18" cy="18" r="9.5" fill="#C5B8A5" stroke="#1A1612" strokeWidth="1.8" />
+    {/* Four button stitch holes */}
+    <circle cx="14" cy="14" r="1.6" fill="#1A1612" />
+    <circle cx="22" cy="14" r="1.6" fill="#1A1612" />
+    <circle cx="14" cy="22" r="1.6" fill="#1A1612" />
+    <circle cx="22" cy="22" r="1.6" fill="#1A1612" />
+    {/* Crossed thread sewing */}
+    <line x1="14" y1="14" x2="22" y2="22" stroke="#8C5A35" strokeWidth="1.6" strokeLinecap="round" />
+    <line x1="22" y1="14" x2="14" y2="22" stroke="#8C5A35" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+/**
+ * Folk girl Barunka with braided pigtails and red ribbon (👧 / barunka / devcatko)
+ */
+export const LadaBarunkaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Barunka s copy" {...props}>
+    <g className="lada-anim-float">
+      {/* Left braid */}
+      <path d="M 10 18 Q 6 23 8 28" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="8" cy="28" r="2" fill="#DC2626" />
+      {/* Right braid */}
+      <path d="M 26 18 Q 30 23 28 28" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="28" cy="28" r="2" fill="#DC2626" />
+      {/* Face oval */}
+      <ellipse cx="18" cy="19" rx="7.5" ry="8" fill="#FAF5E8" stroke="#1A1612" strokeWidth="2.2" />
+      {/* Hair cap */}
+      <path
+        d="M 10 17 C 10 10, 26 10, 26 17 C 23 14, 13 14, 10 17 Z"
+        fill="#78350F"
+        stroke="#1A1612"
+        strokeWidth="2"
+      />
+      {/* Rosy cheeks */}
+      <circle cx="14" cy="21" r="1.5" fill="#F87171" opacity="0.7" />
+      <circle cx="22" cy="21" r="1.5" fill="#F87171" opacity="0.7" />
+      {/* Kind bead eyes */}
+      <circle cx="15" cy="18" r="1.3" fill="#1A1612" />
+      <circle cx="21" cy="18" r="1.3" fill="#1A1612" />
+      {/* Smiling mouth */}
+      <path d="M 16 23 Q 18 25 20 23" fill="none" stroke="#DC2626" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Red hair ribbon on top */}
+      <polygon points="18,10 15,7 18,9 21,7" fill="#DC2626" stroke="#1A1612" strokeWidth="1.2" />
+    </g>
+  </svg>
+);
+
+
+
+

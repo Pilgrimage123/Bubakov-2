@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { GameIcon } from './GameIcon';
 
 interface TouchControlsProps {
   enabled: boolean;
@@ -161,10 +162,12 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
           e.preventDefault();
           onTriggerUltimate();
         }}
-        title="Speciální schopnost lovce (⚡)"
+        title="Speciální schopnost lovce"
         aria-label="Speciální schopnost lovce"
       >
-        <div className="touch-ult-icon">⚡</div>
+        <div className="touch-ult-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <GameIcon icon="lightning" size={28} />
+        </div>
         <div className="touch-ult-label">
           {isReady ? 'BLESK!' : `${Math.ceil(ultCooldown)} s`}
         </div>

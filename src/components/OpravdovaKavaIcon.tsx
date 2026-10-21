@@ -74,7 +74,8 @@ export const OpravdovaKavaIcon: React.FC<OpravdovaKavaIconProps> = ({
       {/* Ground shadow */}
       <ellipse cx="50" cy="88" rx="34" ry="7" fill="url(#kavaShadow)" />
 
-      {/* Saucer / podšálek */}
+      <g className="lada-anim-float">
+        {/* Saucer / podšálek */}
       <ellipse
         cx="48"
         cy="83"
@@ -192,39 +193,43 @@ export const OpravdovaKavaIcon: React.FC<OpravdovaKavaIconProps> = ({
       />
 
       {/* Steaming Curly Wisps (Ladovský kadeřavý kouř) */}
-      <path
-        d="M 41 33 C 37 26, 44 20, 39 12 C 37 9, 39 5, 43 4"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        opacity="0.88"
-      />
-      <path
-        d="M 41 33 C 37 26, 44 20, 39 12 C 37 9, 39 5, 43 4"
-        fill="none"
-        stroke="#1E140C"
-        strokeWidth="1"
-        strokeLinecap="round"
-        opacity="0.3"
-      />
+      <g className="lada-anim-steam-1">
+        <path
+          d="M 41 33 C 37 26, 44 20, 39 12 C 37 9, 39 5, 43 4"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          opacity="0.88"
+        />
+        <path
+          d="M 41 33 C 37 26, 44 20, 39 12 C 37 9, 39 5, 43 4"
+          fill="none"
+          stroke="#1E140C"
+          strokeWidth="1"
+          strokeLinecap="round"
+          opacity="0.3"
+        />
+      </g>
 
-      <path
-        d="M 52 32 C 57 24, 49 18, 55 10 C 58 6, 56 3, 52 2"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="4"
-        strokeLinecap="round"
-        opacity="0.9"
-      />
-      <path
-        d="M 52 32 C 57 24, 49 18, 55 10 C 58 6, 56 3, 52 2"
-        fill="none"
-        stroke="#1E140C"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        opacity="0.3"
-      />
+      <g className="lada-anim-steam-2">
+        <path
+          d="M 52 32 C 57 24, 49 18, 55 10 C 58 6, 56 3, 52 2"
+          fill="none"
+          stroke="#FFFFFF"
+          strokeWidth="4"
+          strokeLinecap="round"
+          opacity="0.9"
+        />
+        <path
+          d="M 52 32 C 57 24, 49 18, 55 10 C 58 6, 56 3, 52 2"
+          fill="none"
+          stroke="#1E140C"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.3"
+        />
+      </g>
 
       {/* Little Coffee Bean 1 on Saucer (left) */}
       <g transform="translate(18, 77) rotate(-22)">
@@ -271,6 +276,7 @@ export const OpravdovaKavaIcon: React.FC<OpravdovaKavaIconProps> = ({
           strokeWidth="1.4"
           strokeLinecap="round"
         />
+      </g>
       </g>
     </svg>
   );

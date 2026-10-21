@@ -68,7 +68,8 @@ export const KynutyKolacIcon: React.FC<KynutyKolacIconProps> = ({
 			{/* Ground Shadow */}
 			<ellipse cx="100" cy="106" rx="92" ry="86" fill="url(#kkShadow)" />
 
-			{/* Outer Baked Yeast Dough Crust */}
+			<g className="lada-anim-float">
+				{/* Outer Baked Yeast Dough Crust */}
 			<path
 				d="M 100 8 C 152 8, 192 48, 192 100 C 192 152, 152 192, 100 192 C 48 192, 8 152, 8 100 C 8 48, 48 8, 100 8 Z"
 				fill="url(#kkCrust)"
@@ -163,7 +164,7 @@ export const KynutyKolacIcon: React.FC<KynutyKolacIconProps> = ({
 			</g>
 
 			{/* Central Almond Flower Rosette (8 Blanched Almonds) */}
-			<g stroke="#1E150B" strokeWidth="1.3" strokeLinejoin="round">
+			<g className="lada-anim-glint" stroke="#1E150B" strokeWidth="1.3" strokeLinejoin="round">
 				{[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
 					<g key={angle} transform={`translate(100, 100) rotate(${angle})`}>
 						<path d="M 0 -7 C -4 -13, -3 -22, 0 -26 C 3 -22, 4 -13, 0 -7 Z" fill="url(#kkAlmond)" />
@@ -175,6 +176,7 @@ export const KynutyKolacIcon: React.FC<KynutyKolacIconProps> = ({
 			{/* Center Raisin / Core */}
 			<circle cx="100" cy="100" r="6" fill="#1C0A04" stroke="#1E150B" strokeWidth="1.8" />
 			<circle cx="98.5" cy="98.5" r="1.5" fill="#582613" />
+			</g>
 		</svg>
 	);
 };

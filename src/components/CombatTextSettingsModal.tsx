@@ -2,6 +2,7 @@ import React from 'react';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 import {
   COMBAT_TEXT_CATEGORIES,
   CombatTextCategory,
@@ -65,21 +66,21 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
         {/* Hlavička modalu */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: '0 0 2px 0', fontSize: '1.75rem', color: 'var(--ink)' }}>
-              💬 BOJOVÉ TEXTY A VAROVÁNÍ
+            <h2 style={{ margin: '0 0 2px 0', fontSize: '1.75rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <GameIcon icon="combat_text" size={26} /> BOJOVÉ TEXTY A VAROVÁNÍ
             </h2>
             <LadaBotanicalFlourish height={16} />
           </div>
           <button
             className="tab-btn"
-            style={{ padding: '6px 12px', fontSize: '1.15rem', minWidth: 'auto' }}
+            style={{ padding: '6px 12px', fontSize: '1.15rem', minWidth: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => {
               sound.coin();
               onClose();
             }}
             title="Zavřít okno"
           >
-            ✕
+            <GameIcon icon="cross" size={16} />
           </button>
         </div>
 
@@ -115,8 +116,8 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
               marginBottom: '10px',
             }}
           >
-            <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--ink)' }}>
-              ⚡ Rychlé předvolby:
+            <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="lightning" size={16} /> Rychlé předvolby:
             </span>
             <span
               style={{
@@ -136,10 +137,26 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 color: '#FFFFFF',
               }}
             >
-              {currentPreset === 'full' && '🎨 Plná atmosféra'}
-              {currentPreset === 'tactical' && '⚖️ Taktický režim'}
-              {currentPreset === 'performance' && '⚡ Čistý výkon'}
-              {currentPreset === 'custom' && '🛠️ Vlastní výběr'}
+              {currentPreset === 'full' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="palette" size={14} /> Plná atmosféra
+                </span>
+              )}
+              {currentPreset === 'tactical' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="scales" size={14} /> Taktický režim
+                </span>
+              )}
+              {currentPreset === 'performance' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="lightning" size={14} /> Čistý výkon
+                </span>
+              )}
+              {currentPreset === 'custom' && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="cog" size={14} /> Vlastní výběr
+                </span>
+              )}
             </span>
           </div>
 
@@ -150,11 +167,14 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 background: currentPreset === 'full' ? '#15803D' : 'var(--wood-light)',
                 color: '#FFFFFF',
                 fontWeight: 900,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
               onClick={() => handleApplyPreset('full')}
               title="Zapne všech 12 kategorií textů i varování pro plný zážitek"
             >
-              🎨 Plná atmosféra (vše ZAP)
+              <GameIcon icon="palette" size={16} /> Plná atmosféra (vše ZAP)
             </button>
 
             <button
@@ -163,11 +183,14 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 background: currentPreset === 'tactical' ? '#B45309' : 'var(--wood-light)',
                 color: '#FFFFFF',
                 fontWeight: 900,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
               onClick={() => handleApplyPreset('tactical')}
               title="Ponechá čísla, bojové stavy a varování bossů, vypne nápřahy, pokřiky a suroviny"
             >
-              ⚖️ Taktický režim (pouze fakta)
+              <GameIcon icon="scales" size={16} /> Taktický režim (pouze fakta)
             </button>
 
             <button
@@ -176,11 +199,14 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
                 background: currentPreset === 'performance' ? '#DC2626' : 'var(--wood-light)',
                 color: '#FFFFFF',
                 fontWeight: 900,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
               onClick={() => handleApplyPreset('performance')}
               title="Vypne všechny texty, varovné bannery i telegrafy v aréně pro maximální FPS"
             >
-              ⚡ Čistý výkon (vše VYP)
+              <GameIcon icon="lightning" size={16} /> Čistý výkon (vše VYP)
             </button>
           </div>
         </div>
@@ -278,13 +304,13 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
         <div style={{ marginTop: '14px', textAlign: 'center' }}>
           <button
             className="lada-btn"
-            style={{ padding: '8px 30px', fontSize: '1.05rem' }}
+            style={{ padding: '8px 30px', fontSize: '1.05rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             onClick={() => {
               sound.coin();
               onClose();
             }}
           >
-            Hotovo ⚔️
+            Hotovo <GameIcon icon="sword" size={16} />
           </button>
         </div>
       </div>

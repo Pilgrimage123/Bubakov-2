@@ -75,19 +75,22 @@ export const MedvediMastIcon: React.FC<MedvediMastIconProps> = ({
       {/* Ground Shadow */}
       <ellipse cx="48" cy="87" rx="34" ry="7.5" fill="url(#mastShadow)" />
 
-      {/* Wooden Spatula leaning against jar (behind) */}
-      <g transform="rotate(32 72 45)">
-        <path
-          d="M 69 18 C 73 14, 80 14, 83 18 C 86 23, 83 29, 78 30 L 73 78 C 72 81, 68 81, 67 78 Z"
-          fill="url(#mastWoodGrad)"
-          stroke="#1E140C"
-          strokeWidth="3.2"
-          strokeLinejoin="round"
-        />
-        {/* Dollop of shiny bear salve on spatula */}
-        <ellipse cx="76" cy="22" rx="4.5" ry="3.5" fill="url(#mastSalveGrad)" />
-        <ellipse cx="75" cy="21" rx="2" ry="1.2" fill="#FFFFFF" opacity="0.8" />
-      </g>
+      <g className="lada-anim-float">
+        {/* Wooden Spatula leaning against jar (behind) */}
+        <g transform="rotate(32 72 45)">
+          <path
+            d="M 69 18 C 73 14, 80 14, 83 18 C 86 23, 83 29, 78 30 L 73 78 C 72 81, 68 81, 67 78 Z"
+            fill="url(#mastWoodGrad)"
+            stroke="#1E140C"
+            strokeWidth="3.2"
+            strokeLinejoin="round"
+          />
+          {/* Dollop of shiny bear salve on spatula */}
+          <g className="lada-anim-glint">
+            <ellipse cx="76" cy="22" rx="4.5" ry="3.5" fill="url(#mastSalveGrad)" />
+            <ellipse cx="75" cy="21" rx="2" ry="1.2" fill="#FFFFFF" opacity="0.8" />
+          </g>
+        </g>
 
       {/* Ceramic Crock / Jar Body */}
       {/* Plump, rounded folk apothecary jar */}
@@ -286,6 +289,7 @@ export const MedvediMastIcon: React.FC<MedvediMastIconProps> = ({
         strokeWidth="1.6"
         strokeLinecap="round"
       />
+      </g>
     </svg>
   );
 };

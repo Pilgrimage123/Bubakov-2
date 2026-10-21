@@ -12124,7 +12124,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if ((pl.tulakDamageBonus || 0) > 0) {
                 perks.push({
-                  icon: '🧳',
+                  icon: 'bag',
                   name: `Tulácký instinkt`,
                   desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi damage multiplikátory`,
                   badge: `+${pl.tulakDamageBonus} %`,
@@ -12142,7 +12142,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 const healBonusPct = ((pl.bearMaskLevel || 1) - 1) * 20;
                 const dmgPct = 50 * (1 + ((pl.bearMaskLevel || 1) - 1) * 0.2);
                 perks.push({
-                  icon: '🐻',
+                  icon: 'bear',
                   name: `Maska medvěda`,
                   desc: `Přeléčení se mění v ${dmgPct.toFixed(0)} % zranění do okruhu 230 px${healBonusPct > 0 ? `; +${healBonusPct} % léčení i zranění masky` : ''}`,
                   badge: `Úr. ${pl.bearMaskLevel}`,
@@ -12150,7 +12150,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.regenLevel > 0) {
                 perks.push({
-                  icon: '🌿',
+                  icon: 'clover',
                   name: `Voňavé býlí (Bylinková zahrádka)`,
                   desc: `+${pl.regenLevel * 4} kuráže doplňováno každých 5 sekund`,
                   badge: `Úr. ${pl.regenLevel}`,
@@ -12158,7 +12158,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.speedCount > 0) {
                 perks.push({
-                  icon: '🥾',
+                  icon: 'boots',
                   name: `Sedmimílové krpce`,
                   desc: `+${pl.speedCount * 20} k rychlosti pohybu při obcházení strašidel`,
                   badge: `${pl.speedCount}×`,
@@ -12166,7 +12166,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.magnetCount > 0) {
                 perks.push({
-                  icon: '🪔',
+                  icon: 'lantern',
                   name: `Pytlácká petrolejka`,
                   desc: `+${pl.magnetCount * 30} k dosahu přitahování krejcarů a posilujících dobrot`,
                   badge: `${pl.magnetCount}×`,
@@ -12174,7 +12174,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if (pl.hasSoakedCane) {
                 perks.push({
-                  icon: '💧',
+                  icon: 'drop',
                   name: 'Mokrý prut',
                   desc: 'Údery osikového prutu zchladí a výrazně zpomalují zasažené bubáky',
                   badge: 'Aktivní',
@@ -12182,7 +12182,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if ((pl.stickyPlumJamStacks || 0) > 0) {
                 perks.push({
-                  icon: '🍯',
+                  icon: 'honey',
                   name: 'Bezedný krajáč povidel',
                   desc: `-${Math.round((pl.plumPoiseReduction || 0.20) * 100)} % odolnost bubáků vůči odhození a po zahnání tvoří zpomalující louži (-${Math.round((pl.plumSlowRatio || 0.35) * 100)} % rychlost)`,
                   badge: `${pl.stickyPlumJamStacks}×`,
@@ -12190,7 +12190,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if ((pl.goatBellStacks || 0) > 0) {
                 perks.push({
-                  icon: '🔔',
+                  icon: 'bell',
                   name: 'Zvonek ze zatoulané kozy',
                   desc: `Každé ${(pl.goatBellInterval || 4.0).toFixed(1)} s běhu zazvoní: vyruší nápřah strašidel a přitáhne perníčky i krejcary v okruhu ${pl.goatBellRadius || 180} px`,
                   badge: `${pl.goatBellStacks}×`,
@@ -12198,7 +12198,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               if ((pl.itchySocksStacks || 0) > 0) {
                 perks.push({
-                  icon: '🧦',
+                  icon: 'socks',
                   name: 'Babiččiny kousavé fusekle',
                   desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a +${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % nabíjení v pohybu`,
                   badge: `${pl.itchySocksStacks}×`,

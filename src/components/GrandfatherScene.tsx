@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { sound } from '../audio';
+import { GameIcon } from './GameIcon';
 
 interface GrandfatherSceneProps {
   mode?: 'desktop' | 'mobile';
@@ -1150,9 +1151,12 @@ export function GrandfatherScene({
           borderRadius: 6,
           border: '1px solid #B45309',
           pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
         }}
       >
-        🐭 Rézinka hlídá perníčky
+        <GameIcon icon="rezinka" size={14} /> Rézinka hlídá perníčky
       </div>
     </div>
   );

@@ -74,7 +74,8 @@ export const JitrniceIcon: React.FC<JitrniceIconProps> = ({
       {/* Shadow */}
       <ellipse cx="60" cy="74" rx="46" ry="10" fill="url(#jiShadow)" />
 
-      {/* Wooden skewers (špejle) */}
+      <g className="lada-anim-float">
+        {/* Wooden skewers (špejle) */}
       <line
         x1="12"
         y1="42"
@@ -262,6 +263,15 @@ export const JitrniceIcon: React.FC<JitrniceIconProps> = ({
         strokeLinecap="round"
         opacity="0.75"
       />
+      </g>
+
+      {/* Fresh hot steam wisps rising from freshly scalded jitrnice */}
+      <g className="lada-anim-steam-1" fill="none" stroke="#FFFDF7" strokeWidth="2.2" strokeLinecap="round" opacity="0.8">
+        <path d="M 46 19 C 43 14, 48 10, 45 5" />
+      </g>
+      <g className="lada-anim-steam-2" fill="none" stroke="#FFFDF7" strokeWidth="2.0" strokeLinecap="round" opacity="0.7">
+        <path d="M 68 18 C 72 13, 67 9, 71 4" />
+      </g>
     </svg>
   );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { KronikaChanges } from './KronikaChanges';
+import { GameIcon } from './GameIcon';
 
 type PlanModalProps = {
   isOpen: boolean;
@@ -25,7 +26,9 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
           flexDirection: 'column',
         }}
       >
-        <h2>📜 Kronika Bubákova</h2>
+        <h2 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <GameIcon icon="scroll" size={24} /> Kronika Bubákova
+        </h2>
         <LadaBotanicalFlourish height={18} />
         <p
           style={{

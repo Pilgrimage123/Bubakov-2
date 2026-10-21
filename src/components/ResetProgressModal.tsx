@@ -4,6 +4,7 @@ const import_jsx_runtime = jsxRuntime;
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 
 var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 	if (!isOpen) return null;
@@ -44,12 +45,9 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 						gap: "14px",
 						marginBottom: "12px"
 					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						style: {
-							fontSize: "2.5rem",
-							lineHeight: 1
-						},
-						children: "⚠️"
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+						icon: "warning",
+						size: 40
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						style: {
 							margin: 0,
@@ -117,7 +115,11 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 						marginBottom: "20px"
 					},
 					children: [
-						"🛑 ",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, {
+							icon: "warning",
+							size: 16,
+							style: { marginRight: 6, verticalAlign: "middle" }
+						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Upozornění:" }),
 						" Tuto akci nelze vzít zpět! Všechny uložené herní milníky budou nenávratně ztraceny."
 					]
@@ -129,32 +131,44 @@ var ResetProgressModal = ({ isOpen, onClose, onConfirmReset }) => {
 						justifyContent: "flex-end",
 						flexWrap: "wrap"
 					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 						className: "lada-btn btn-small",
 						style: {
 							background: "#4B5563",
 							color: "#FFFFFF",
 							border: "3px solid var(--ink)",
-							margin: 0
+							margin: 0,
+							display: "inline-flex",
+							alignItems: "center",
+							gap: "6px"
 						},
 						onClick: () => {
 							sound.coin();
 							onClose();
 						},
-						children: "❌ Zrušit (Ponechat postup)"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "cross", size: 16 }),
+							"Zrušit (Ponechat postup)"
+						]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 						className: "lada-btn btn-small",
 						style: {
 							background: "#DC2626",
 							color: "#FFFFFF",
 							border: "3px solid var(--ink)",
 							margin: 0,
-							fontWeight: 900
+							fontWeight: 900,
+							display: "inline-flex",
+							alignItems: "center",
+							gap: "6px"
 						},
 						onClick: () => {
 							onConfirmReset();
 						},
-						children: "🗑️ Ano, vymazat veškerý postup"
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(GameIcon, { icon: "trash", size: 16 }),
+							"Ano, vymazat veškerý postup"
+						]
 					})]
 				})
 			]

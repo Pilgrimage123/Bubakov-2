@@ -1,4 +1,5 @@
 import React from 'react';
+import { GameIcon } from './GameIcon';
 
 type KronikaEntry = {
   date: string;
@@ -517,12 +518,26 @@ export function KronikaChanges() {
             {entry.summary}
           </p>
 
-          <ul className="plan-items" style={{ color: '#000000' }}>
-            {entry.items.map((item) => (
-              <li key={item} style={{ color: '#000000' }}>
-                {item}
-              </li>
-            ))}
+          <ul className="plan-items" style={{ color: '#000000', listStyleType: 'none', paddingLeft: 0 }}>
+            {entry.items.map((item) => {
+              const match = item.match(/^([\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE0F}]+)\s*(.*)$/u);
+              if (match) {
+                const [, emoji, text] = match;
+                return (
+                  <li key={item} style={{ color: '#000000', display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ display: 'inline-flex', flexShrink: 0, marginTop: '2px' }}>
+                      <GameIcon icon={emoji} size={16} />
+                    </span>
+                    <span>{text}</span>
+                  </li>
+                );
+              }
+              return (
+                <li key={item} style={{ color: '#000000', marginBottom: '4px' }}>
+                  {item}
+                </li>
+              );
+            })}
           </ul>
         </article>
       ))}

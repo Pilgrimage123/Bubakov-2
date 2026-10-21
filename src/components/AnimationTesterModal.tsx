@@ -13,6 +13,7 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
+import { GameIcon } from './GameIcon';
 import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
 import { ENEMY_PREFIX_DEFS } from '../types';
 
@@ -40,7 +41,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Poutník',
     title: 'Vesnický tulák z Hrusic',
     desc: 'Výchozí hrdina s osikovým prutem, kloboukem a dýmkou. Ladovský krok s houpáním paží a obláčky kouře.',
-    icon: '🚶',
+    icon: 'wanderer',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale),
   },
   {
@@ -48,7 +49,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Pasáček',
     title: 'Hbitý chlapec z pastvin',
     desc: 'Lehkonožka s pastýřskou holí, plstěným kloboučkem a houpavým krokem. Bleskový krok po lukách.',
-    icon: '🌾',
+    icon: 'shepherd',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawShepherd(ctx, x, y, t, dx, dy, flee, scale),
   },
   {
@@ -56,7 +57,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Kořenářka',
     title: 'Bylinkářka z hlubokých hvozdů',
     desc: 'Moudrá žena v červeném šátku s nůší čerstvých bylin a květů. Důstojný krok lesní ranhojičky.',
-    icon: '🌿',
+    icon: 'herbs',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawKorenarka(ctx, x, y, t, dx, dy, flee, scale),
   },
   {
@@ -64,7 +65,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Ponocný',
     title: 'Noční strážce v suknici',
     desc: 'Obrněný strážce v temném plášti s kovanou halapartnou a hořící lucernou. Klapající krok noční hlídky.',
-    icon: '🏮',
+    icon: 'lantern',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWatchman(ctx, x, y, t, dx, dy, flee, scale),
   },
   {
@@ -72,7 +73,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Hrobník',
     title: 'Správce hřbitova a zvoník',
     desc: 'Vážný muž ve vysokém klobouku s mosazným zvoncem a svazkem hřbitovních klíčů. Rytmické houpání zvonce.',
-    icon: '🔔',
+    icon: 'bell',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawSexton(ctx, x, y, t, dx, dy, flee, scale),
   },
   {
@@ -80,7 +81,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Babička s Barunkou',
     title: 'Laskavá stařenka z Ratibořic',
     desc: 'Babička v modré kanafaskové sukni s nůší a holí. Doprovází ji Barunka se zapletenými copy.',
-    icon: '👵',
+    icon: 'granny',
     supportsBarunka: true,
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawGranny(ctx, x, y, t, dx, dy, flee, scale, true),
   },
@@ -89,7 +90,7 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Barunka',
     title: 'Děvčátko v lidovém kroji',
     desc: 'Samostatný náhled Barunky s vlajícími copy, modrou zástěrkou a červeným korálkem.',
-    icon: '👧',
+    icon: 'barunka',
     draw: (ctx, x, y, t, dx, _dy, _flee, scale) => Lada.drawBarunka(ctx, x, y, t, Math.abs(dx) > 0.1, scale * 1.2),
   },
   {
@@ -97,21 +98,21 @@ const HUNTERS_LIST: HunterDef[] = [
     name: 'Rázná hospodyně (Válečnice)',
     title: 'Společnice s bukovým válečkem',
     desc: 'Hospodyně v naškrobené zástěře s mohutným kuchyňským válečkem. Prudký švih a vzdušný vír.',
-    icon: '👩‍🍳',
+    icon: 'valecnice',
     draw: (ctx, x, y, t, dx, _dy, _flee, scale) => drawValecniceCompanion(ctx, x, y, dx < 0 ? Math.PI / 2 : -Math.PI / 2, 0, t, scale * 1.15, false),
   },
 ];
 
 const ENEMY_CATEGORIES = [
-  { id: 'all', label: 'Všechny potvůrky (49)' },
-  { id: 'swarms', label: '🐭 Havěť a skřítci' },
-  { id: 'undead', label: '💀 Hroboví umrlci' },
-  { id: 'shadows', label: '👤 Noční stíny a bubáci' },
-  { id: 'water', label: '💧 Vodní cháska' },
-  { id: 'frost', label: '❄️ Větrné a zimní' },
-  { id: 'fields', label: '🌾 Polní a zbojníci' },
-  { id: 'demons', label: '🔥 Pekelníci' },
-  { id: 'bosses', label: '👑 Velcí bossové' },
+  { id: 'all', icon: 'star', label: 'Všechny potvůrky (49)' },
+  { id: 'swarms', icon: 'mouse', label: 'Havěť a skřítci' },
+  { id: 'undead', icon: 'skull', label: 'Hroboví umrlci' },
+  { id: 'shadows', icon: 'ghost', label: 'Noční stíny a bubáci' },
+  { id: 'water', icon: 'drop', label: 'Vodní cháska' },
+  { id: 'frost', icon: 'snowflake', label: 'Větrné a zimní' },
+  { id: 'fields', icon: 'wheat', label: 'Polní a zbojníci' },
+  { id: 'demons', icon: 'fire', label: 'Pekelníci' },
+  { id: 'bosses', icon: 'crown', label: 'Velcí bossové' },
 ];
 
 export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalProps) {
@@ -601,7 +602,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
         >
           <div style={{ textAlign: 'left' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: isSmallMobile ? '6px' : '8px' }}>
-              <span style={{ fontSize: isSmallMobile ? '1.4rem' : isMobile ? '1.7rem' : '2.1rem' }}>🎬</span>
+              <GameIcon icon="theatre" size={isSmallMobile ? 24 : isMobile ? 28 : 34} />
               <h2
                 style={{
                   margin: 0,
@@ -641,10 +642,13 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               cursor: 'pointer',
               boxShadow: '2px 2px 0 var(--ink)',
               whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
             title="Zavřít tester animací"
           >
-            ✕ Zavřít
+            <GameIcon icon="cross" size={14} /> Zavřít
           </button>
         </div>
 
@@ -665,13 +669,17 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               fontWeight: 900,
               minWidth: 0,
               textAlign: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
             }}
             onClick={() => {
               sound.coin();
               setActiveTab('hunters');
             }}
           >
-            🏹 {isSmallMobile ? 'Lovci' : 'Lovci (8)'}
+            <GameIcon icon="bow" size={14} /> {isSmallMobile ? 'Lovci' : 'Lovci (8)'}
           </button>
 
           <button
@@ -682,13 +690,17 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               fontWeight: 900,
               minWidth: 0,
               textAlign: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
             }}
             onClick={() => {
               sound.coin();
               setActiveTab('enemies');
             }}
           >
-            👹 {isSmallMobile ? 'Strašidla' : 'Strašidla (49)'}
+            <GameIcon icon="devil" size={14} /> {isSmallMobile ? 'Strašidla' : 'Strašidla (49)'}
           </button>
 
           <button
@@ -699,13 +711,17 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               fontWeight: 900,
               minWidth: 0,
               textAlign: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
             }}
             onClick={() => {
               sound.coin();
               setActiveTab('grandfather');
             }}
           >
-            🧺 Dědeček
+            <GameIcon icon="basket" size={14} /> Dědeček
           </button>
 
           <button
@@ -716,13 +732,17 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               fontWeight: 900,
               minWidth: 0,
               textAlign: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
             }}
             onClick={() => {
               sound.coin();
               setActiveTab('all');
             }}
           >
-            🌐 {isSmallMobile ? 'Galerie' : 'Přehlídka'}
+            <GameIcon icon="star" size={14} /> {isSmallMobile ? 'Galerie' : 'Přehlídka'}
           </button>
         </div>
 
@@ -744,8 +764,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: isMobile ? '100%' : 'auto' }}>
-                <span style={{ fontWeight: 800, color: '#FEF3C7', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                  🔍 Hledat:
+                <span style={{ fontWeight: 800, color: '#FEF3C7', fontSize: '0.82rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <GameIcon icon="magnifier" size={13} /> Hledat:
                 </span>
                 <input
                   type="text"
@@ -769,10 +789,11 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                 <button
                   className="lada-btn btn-small"
-                  style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                  style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                   onClick={() => setIsPlaying(!isPlaying)}
                 >
-                  {isPlaying ? '⏸️ Pozastavit vše' : '▶️ Spustit vše'}
+                  <GameIcon icon={isPlaying ? 'pause' : 'play'} size={12} />
+                  {isPlaying ? 'Pozastavit vše' : 'Spustit vše'}
                 </button>
                 <span style={{ fontSize: '0.8rem', color: '#FDE047', fontWeight: 800 }}>
                   Čas: {animTime.toFixed(1)} s
@@ -784,7 +805,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             <div>
               <div style={{ textAlign: 'left', marginBottom: '4px' }}>
                 <LadaCartouche variant="green" size="sm">
-                  🏹 LOVCI A HRDINOVÉ ({HUNTERS_LIST.length})
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <GameIcon icon="bow" size={13} /> LOVCI A HRDINOVÉ ({HUNTERS_LIST.length})
+                  </span>
                 </LadaCartouche>
               </div>
               <div
@@ -816,7 +839,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       boxShadow: '2px 2px 0 var(--ink)',
                     }}
                   >
-                    <div style={{ fontSize: isSmallMobile ? '1.4rem' : '1.7rem' }}>{h.icon}</div>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: isSmallMobile ? '32px' : '40px' }}>
+                      <GameIcon icon={h.icon} size={isSmallMobile ? 24 : 30} />
+                    </div>
                     <div style={{ fontWeight: 900, fontSize: isSmallMobile ? '0.78rem' : '0.88rem', color: 'var(--ink)' }}>{h.name}</div>
                     <div style={{ fontSize: '0.68rem', color: '#78350F', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {h.title}
@@ -830,7 +855,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             <div>
               <div style={{ textAlign: 'left', marginBottom: '4px' }}>
                 <LadaCartouche variant="ochre" size="sm">
-                  🧺 DĚDEČEK KRAMÁŘ
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <GameIcon icon="basket" size={13} /> DĚDEČEK KRAMÁŘ
+                  </span>
                 </LadaCartouche>
               </div>
               <div
@@ -852,7 +879,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: isSmallMobile ? '8px' : '12px', textAlign: 'left', minWidth: 0 }}>
-                  <span style={{ fontSize: isSmallMobile ? '1.8rem' : '2.2rem' }}>🧺</span>
+                  <GameIcon icon="basket" size={isSmallMobile ? 26 : 32} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 900, fontSize: isSmallMobile ? '0.92rem' : '1.05rem', color: 'var(--ink)' }}>
                       Dědeček kramář & myška Rézinka
@@ -862,8 +889,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                     </div>
                   </div>
                 </div>
-                <button className="lada-btn btn-small" style={{ padding: '4px 10px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
-                  Otevřít ➔
+                <button className="lada-btn btn-small" style={{ padding: '4px 10px', fontSize: '0.78rem', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  Otevřít <GameIcon icon="arrow" size={12} />
                 </button>
               </div>
             </div>
@@ -872,7 +899,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             <div>
               <div style={{ textAlign: 'left', marginBottom: '4px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '6px' }}>
                 <LadaCartouche variant="red" size="sm">
-                  👹 STRAŠIDLA A POTVŮRKY ({enemiesList.length})
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <GameIcon icon="devil" size={13} /> STRAŠIDLA A POTVŮRKY ({enemiesList.length})
+                  </span>
                 </LadaCartouche>
 
                 <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', maxWidth: '100%' }}>
@@ -889,8 +918,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         border: '1.5px solid var(--ink)',
                         borderRadius: '4px',
                         cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
                       }}
                     >
+                      {cat.icon && <GameIcon icon={cat.icon} size={11} />}
                       {cat.label}
                     </button>
                   ))}
@@ -968,8 +1001,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               >
                 {activeTab === 'hunters' && (
                   <>
-                    <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left', borderBottom: '1px solid rgba(254, 243, 199, 0.2)', paddingBottom: '4px' }}>
-                      🏹 VÝBĚR LOVCE ({HUNTERS_LIST.length})
+                    <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left', borderBottom: '1px solid rgba(254, 243, 199, 0.2)', paddingBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <GameIcon icon="bow" size={13} /> VÝBĚR LOVCE ({HUNTERS_LIST.length})
                     </div>
                     {HUNTERS_LIST.map((h) => (
                       <div
@@ -992,7 +1025,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                           boxShadow: selectedHunterId === h.id ? '2px 2px 0 var(--ink)' : 'none',
                         }}
                       >
-                        <span style={{ fontSize: '1.3rem' }}>{h.icon}</span>
+                        <GameIcon icon={h.icon} size={22} />
                         <div>
                           <div style={{ fontWeight: 900, fontSize: '0.88rem' }}>{h.name}</div>
                           <div style={{ fontSize: '0.7rem', color: '#5C3A21', fontWeight: 700 }}>{h.title}</div>
@@ -1005,8 +1038,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                 {activeTab === 'enemies' && (
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '2px' }}>
-                      <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left' }}>
-                        👹 VÝBĚR STRAŠIDLA
+                      <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <GameIcon icon="devil" size={13} /> VÝBĚR STRAŠIDLA
                       </div>
                       <input
                         type="text"
@@ -1079,8 +1112,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
 
                 {activeTab === 'grandfather' && (
                   <>
-                    <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left', borderBottom: '1px solid rgba(254, 243, 199, 0.2)', paddingBottom: '4px' }}>
-                      🧺 DĚDEČKOVY REŽIMY
+                    <div style={{ fontWeight: 900, color: '#FEF3C7', fontSize: '0.86rem', textAlign: 'left', borderBottom: '1px solid rgba(254, 243, 199, 0.2)', paddingBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <GameIcon icon="basket" size={13} /> DĚDEČKOVY REŽIMY
                     </div>
                     <div
                       onClick={() => {
@@ -1097,7 +1130,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         textAlign: 'left',
                       }}
                     >
-                      <div style={{ fontWeight: 900, fontSize: '0.88rem' }}>🧺 Kramářská scéna (Nůše)</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <GameIcon icon="basket" size={14} /> Kramářská scéna (Nůše)
+                      </div>
                       <div style={{ fontSize: '0.7rem', color: '#5C3A21', fontWeight: 700 }}>
                         5 stavů, dýmka, lektvary a myška Rézinka
                       </div>
@@ -1118,7 +1153,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         textAlign: 'left',
                       }}
                     >
-                      <div style={{ fontWeight: 900, fontSize: '0.88rem' }}>🚶 Polní pochod (Sprite)</div>
+                      <div style={{ fontWeight: 900, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <GameIcon icon="walk" size={14} /> Polní pochod (Sprite)
+                      </div>
                       <div style={{ fontSize: '0.7rem', color: '#5C3A21', fontWeight: 700 }}>
                         Chůze s kulháním na kopyto a botu
                       </div>
@@ -1312,9 +1349,13 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             color: 'var(--ink)',
                             border: '2px solid var(--ink)',
                             borderRadius: '5px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '5px',
                           }}
                         >
-                          🧺 Kramářská dílna
+                          <GameIcon icon="basket" size={14} /> Kramářská dílna
                         </button>
                         <button
                           onClick={() => {
@@ -1329,9 +1370,13 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             color: 'var(--ink)',
                             border: '2px solid var(--ink)',
                             borderRadius: '5px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '5px',
                           }}
                         >
-                          🚶 Polní pochod
+                          <GameIcon icon="walk" size={14} /> Polní pochod
                         </button>
                       </div>
                     )}
@@ -1358,10 +1403,10 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             borderRadius: '4px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '3px',
+                            gap: '4px',
                           }}
                         >
-                          <span>{h.icon}</span>
+                          <GameIcon icon={h.icon} size={14} />
                           <span>{h.name}</span>
                         </button>
                       ))}
@@ -1402,10 +1447,27 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         border: '1.5px solid var(--ink)',
                         borderRadius: '4px',
                         cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
                       }}
                       title={bg === 'parchment' ? 'Pergamen' : bg === 'night' ? 'Noc' : bg === 'snow' ? 'Sníh' : 'Mřížka'}
                     >
-                      {bg === 'parchment' ? '📜 Papír' : bg === 'night' ? '🌙 Noc' : bg === 'snow' ? '❄️ Sníh' : '📐 Síť'}
+                      {bg === 'parchment' ? (
+                        <>
+                          <GameIcon icon="scroll" size={11} /> Papír
+                        </>
+                      ) : bg === 'night' ? (
+                        <>
+                          <GameIcon icon="moon" size={11} /> Noc
+                        </>
+                      ) : bg === 'snow' ? (
+                        <>
+                          <GameIcon icon="snowflake" size={11} /> Sníh
+                        </>
+                      ) : (
+                        'Síť'
+                      )}
                     </button>
                   ))}
                 </div>
@@ -1448,7 +1510,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                     }}
                     title="Otočit směr"
                   >
-                    ↔️ {facingDir === 1 ? 'Vpravo' : 'Vlevo'}
+                    {facingDir === 1 ? 'Vpravo' : 'Vlevo'}
                   </button>
 
                   <button
@@ -1462,10 +1524,13 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       border: '1.5px solid var(--ink)',
                       borderRadius: '4px',
                       cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     title="Zvuk"
                   >
-                    🔊
+                    <GameIcon icon="sound" size={13} />
                   </button>
                 </div>
               </div>
@@ -1510,9 +1575,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                         color: '#FDE047',
                         fontSize: '0.72rem',
                         fontWeight: 900,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                       }}
                     >
-                      🐭 Rézinka: {mousePetCount}×
+                      <GameIcon icon="mouse" size={13} /> Rézinka: {mousePetCount}×
                     </div>
                   </div>
                 ) : (
@@ -1548,16 +1616,25 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
                   }}
                 >
                   {activeTab === 'hunters' && (
-                    <>🏹 {currentHunter.name} — {hunterMoveState === 'idle' ? 'Klid' : hunterMoveState === 'walk' ? 'Pohyb' : 'Útěk'}</>
+                    <>
+                      <GameIcon icon="bow" size={12} /> {currentHunter.name} — {hunterMoveState === 'idle' ? 'Klid' : hunterMoveState === 'walk' ? 'Pohyb' : 'Útěk'}
+                    </>
                   )}
                   {activeTab === 'enemies' && (
-                    <>👹 {currentEnemy.name} ({currentEnemy.title})</>
+                    <>
+                      <GameIcon icon="devil" size={12} /> {currentEnemy.name} ({currentEnemy.title})
+                    </>
                   )}
                   {activeTab === 'grandfather' && (
-                    <>🧺 Dědeček — {grandfatherMode === 'scene' ? grandfatherSceneState : 'chůze'}</>
+                    <>
+                      <GameIcon icon="basket" size={12} /> Dědeček — {grandfatherMode === 'scene' ? grandfatherSceneState : 'chůze'}
+                    </>
                   )}
                 </div>
               </div>
@@ -1687,7 +1764,19 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             cursor: 'pointer',
                           }}
                         >
-                          {st === 'idle' ? '🛑 Klid' : st === 'walk' ? '🚶 Krok' : '😱 Útěk'}
+                          {st === 'idle' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <GameIcon icon="cancel" size={11} /> Klid
+                            </span>
+                          ) : st === 'walk' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <GameIcon icon="walk" size={11} /> Krok
+                            </span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <GameIcon icon="wind" size={11} /> Útěk
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1716,9 +1805,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             border: '1px solid var(--ink)',
                             borderRadius: '4px',
                             cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
                           }}
                         >
-                          🥖 Švih
+                          <GameIcon icon="valecnice" size={13} /> Švih
                         </button>
                       )}
 
@@ -1758,7 +1850,21 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                               cursor: 'pointer',
                             }}
                           >
-                            {act === 'cycle' ? '🔄 Cyklus' : act === 'idle' ? '🛑 Klid' : act === 'chase' ? '🏃 Běh' : act === 'windup' ? '⚔️ Nápřah' : act === 'strike' ? '💥 Úder' : act === 'panicked' ? '💧 Panika' : '⭐ Omráč.'}
+                            {act === 'cycle' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="refresh" size={11} /> Cyklus</span>
+                            ) : act === 'idle' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="cancel" size={11} /> Klid</span>
+                            ) : act === 'chase' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="boots" size={11} /> Běh</span>
+                            ) : act === 'windup' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="swords" size={11} /> Nápřah</span>
+                            ) : act === 'strike' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="sparkles" size={11} /> Úder</span>
+                            ) : act === 'panicked' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="drop" size={11} /> Panika</span>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="star" size={11} /> Omráč.</span>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1805,7 +1911,13 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                               cursor: 'pointer',
                             }}
                           >
-                            {cad === 'fast' ? '⚡ 0,6s' : cad === 'normal' ? '⚔️ 1,2s' : '🔨 1,8s'}
+                            {cad === 'fast' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="lightning" size={11} /> 0,6s</span>
+                            ) : cad === 'normal' ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="swords" size={11} /> 1,2s</span>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="hammer" size={11} /> 1,8s</span>
+                            )}
                           </button>
                         ))}
                       </div>
@@ -1844,7 +1956,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                           cursor: 'pointer',
                         }}
                       >
-                        ⚪ Běžný
+                        Běžný
                       </button>
                       {(['vichricovy', 'hromovy', 'kamenny', 'pekelny'] as const).map((pKey) => {
                         const pDef = ENEMY_PREFIX_DEFS[pKey];
@@ -1907,7 +2019,17 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                                 cursor: 'pointer',
                               }}
                             >
-                              {st === 'idle' ? '🍵 Bafání' : st === 'reaching' ? '🤲 Sahání' : st === 'pulling' ? '🎁 Zboží' : st === 'rerolling' ? '🌀 Hrabání' : '✨ Nákup'}
+                              {st === 'idle' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="pipe" size={12} /> Bafání</span>
+                              ) : st === 'reaching' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="basket" size={12} /> Sahání</span>
+                              ) : st === 'pulling' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="pernicek" size={12} /> Zboží</span>
+                              ) : st === 'rerolling' ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="refresh" size={12} /> Hrabání</span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="sparkles" size={12} /> Nákup</span>
+                              )}
                             </button>
                           ))}
                         </div>
@@ -1928,9 +2050,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             border: '1.5px solid var(--ink)',
                             borderRadius: '4px',
                             cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}
                         >
-                          🐭 Pohladit Rézinku
+                          <GameIcon icon="mouse" size={13} /> Pohladit Rézinku
                         </button>
                       </>
                     ) : (
@@ -1950,7 +2075,11 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                               cursor: 'pointer',
                             }}
                           >
-                            {grandfatherSpriteMoving ? '🚶 Chůze' : '🛑 Stání'}
+                            {grandfatherSpriteMoving ? (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="walk" size={12} /> Chůze</span>
+                            ) : (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}><GameIcon icon="cancel" size={12} /> Stání</span>
+                            )}
                           </button>
 
                           <button
@@ -1964,9 +2093,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                               border: '1.5px solid var(--ink)',
                               borderRadius: '3px',
                               cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
                             }}
                           >
-                            🌟 Aura
+                            <GameIcon icon="star" size={12} /> Aura
                           </button>
                         </div>
 
@@ -2009,7 +2141,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                     <div style={{ minWidth: 0 }}>
                       <strong style={{ fontSize: isSmallMobile ? '0.84rem' : '0.9rem' }}>{currentEnemy.name}</strong>: {currentEnemy.lore}
                       <div style={{ fontSize: '0.7rem', color: '#78350F', marginTop: '1px', fontWeight: 700 }}>
-                        🗡️ <strong>Slabost:</strong> {currentEnemy.weakness} | 🛡️ <strong>Síla:</strong> {currentEnemy.strength}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="sword" size={12} /> <strong>Slabost:</strong> {currentEnemy.weakness}</span> | <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="shield" size={12} /> <strong>Síla:</strong> {currentEnemy.strength}</span>
                       </div>
                       {selectedPrefix && (
                         <div style={{ fontSize: '0.74rem', color: '#92400E', marginTop: '2px', fontWeight: 900 }}>

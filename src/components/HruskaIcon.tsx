@@ -57,72 +57,78 @@ export const HruskaIcon: React.FC<HruskaIconProps> = ({
 			{/* Soft ground shadow */}
 			<ellipse cx="50" cy="90" rx="26" ry="7" fill="url(#hIconShadow)" />
 
-			{/* Stem */}
-			<path
-				d="M 49 32 C 48 24, 44 18, 41 13 C 44 12, 47 13, 49 15 C 52 20, 54 26, 53 32 Z"
-				fill="url(#hIconStem)"
-				stroke="#1E150B"
-				strokeWidth="1.8"
-				strokeLinejoin="round"
-			/>
+			<g className="lada-anim-float">
+				{/* Stem */}
+				<path
+					d="M 49 32 C 48 24, 44 18, 41 13 C 44 12, 47 13, 49 15 C 52 20, 54 26, 53 32 Z"
+					fill="url(#hIconStem)"
+					stroke="#1E150B"
+					strokeWidth="1.8"
+					strokeLinejoin="round"
+				/>
 
-			{/* Green leaf */}
-			<path
-				d="M 48 22 C 58 13, 72 16, 76 22 C 72 29, 58 31, 48 22 Z"
-				fill="url(#hIconLeaf)"
-				stroke="#1E150B"
-				strokeWidth="2.2"
-				strokeLinejoin="round"
-			/>
-			<path
-				d="M 48 22 Q 62 21 75 22"
-				fill="none"
-				stroke="#274606"
-				strokeWidth="1.6"
-				strokeLinecap="round"
-			/>
+				{/* Green leaf */}
+				<g className="lada-anim-rock">
+					<path
+						d="M 48 22 C 58 13, 72 16, 76 22 C 72 29, 58 31, 48 22 Z"
+						fill="url(#hIconLeaf)"
+						stroke="#1E150B"
+						strokeWidth="2.2"
+						strokeLinejoin="round"
+					/>
+					<path
+						d="M 48 22 Q 62 21 75 22"
+						fill="none"
+						stroke="#274606"
+						strokeWidth="1.6"
+						strokeLinecap="round"
+					/>
+				</g>
 
-			{/* Pear body */}
-			<path
-				d="M 50 30 C 42 30, 38 42, 36 50 C 30 58, 22 66, 22 75 C 22 84, 34 89, 50 89 C 66 89, 78 84, 78 75 C 78 66, 70 58, 64 50 C 62 42, 58 30, 50 30 Z"
-				fill="url(#hIconGrad)"
-				stroke="#1E150B"
-				strokeWidth="3.2"
-				strokeLinejoin="round"
-			/>
+				{/* Pear body */}
+				<path
+					d="M 50 30 C 42 30, 38 42, 36 50 C 30 58, 22 66, 22 75 C 22 84, 34 89, 50 89 C 66 89, 78 84, 78 75 C 78 66, 70 58, 64 50 C 62 42, 58 30, 50 30 Z"
+					fill="url(#hIconGrad)"
+					stroke="#1E150B"
+					strokeWidth="3.2"
+					strokeLinejoin="round"
+				/>
 
-			{/* Calyx */}
-			<ellipse cx="50" cy="88" rx="2.5" ry="1.2" fill="#3D1D08" stroke="#1E150B" strokeWidth="1" />
+				{/* Calyx */}
+				<ellipse cx="50" cy="88" rx="2.5" ry="1.2" fill="#3D1D08" stroke="#1E150B" strokeWidth="1" />
 
-			{/* Natural pear freckles */}
-			<g fill="#78350F" opacity="0.6">
-				<circle cx="58" cy="62" r="1.1" />
-				<circle cx="64" cy="69" r="1" />
-				<circle cx="54" cy="74" r="1.2" />
-				<circle cx="42" cy="78" r="0.9" />
-				<circle cx="68" cy="76" r="0.9" />
-				<circle cx="46" cy="58" r="0.8" />
-				<circle cx="38" cy="68" r="1.1" />
-				<circle cx="50" cy="46" r="0.7" />
+				{/* Natural pear freckles */}
+				<g fill="#78350F" opacity="0.6">
+					<circle cx="58" cy="62" r="1.1" />
+					<circle cx="64" cy="69" r="1" />
+					<circle cx="54" cy="74" r="1.2" />
+					<circle cx="42" cy="78" r="0.9" />
+					<circle cx="68" cy="76" r="0.9" />
+					<circle cx="46" cy="58" r="0.8" />
+					<circle cx="38" cy="68" r="1.1" />
+					<circle cx="50" cy="46" r="0.7" />
+				</g>
+
+				{/* Highlights */}
+				<path
+					d="M 33 55 C 28 62, 28 72, 34 78"
+					fill="none"
+					stroke="#FFFFFF"
+					strokeWidth="3.2"
+					strokeLinecap="round"
+					opacity="0.55"
+				/>
+				<path
+					d="M 40 40 C 38 46, 36 50, 36 53"
+					fill="none"
+					stroke="#FFFFFF"
+					strokeWidth="2"
+					strokeLinecap="round"
+					opacity="0.4"
+				/>
+				{/* Dew glint */}
+				<circle cx="33" cy="56" r="1.4" fill="#FFFFFF" className="lada-anim-glint" />
 			</g>
-
-			{/* Highlights */}
-			<path
-				d="M 33 55 C 28 62, 28 72, 34 78"
-				fill="none"
-				stroke="#FFFFFF"
-				strokeWidth="3.2"
-				strokeLinecap="round"
-				opacity="0.55"
-			/>
-			<path
-				d="M 40 40 C 38 46, 36 50, 36 53"
-				fill="none"
-				stroke="#FFFFFF"
-				strokeWidth="2"
-				strokeLinecap="round"
-				opacity="0.4"
-			/>
 		</svg>
 	);
 };

@@ -132,7 +132,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'sedmimile_krpce',
     name: 'Sedmimílové krpce',
-    icon: '🥾',
+    icon: 'boots',
     description: '+20 rychlost pohybu za každou úroveň.',
     maxLevel: 5,
     category: 'passive',
@@ -143,7 +143,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'pytlacka_lucerna',
     name: 'Pytlácká petrolejka',
-    icon: '🪔',
+    icon: 'lantern',
     description: '+30 dosahu sběru perníčků i krejcarů za každou úroveň.',
     maxLevel: 5,
     category: 'passive',
@@ -154,7 +154,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'zaplacovany_kabat',
     name: 'Záplatovaný kabát',
-    icon: '🧥',
+    icon: 'coat',
     description: '+25 maximální Kuráž za každou úroveň.',
     maxLevel: 5,
     category: 'passive',
@@ -165,7 +165,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'krajac_na_podmasli',
     name: 'Krajáč na podmáslí',
-    icon: '🥣',
+    icon: 'soup',
     description: '+0,6 regenerace Kuráže / s za každou úroveň.',
     maxLevel: 4,
     category: 'passive',
@@ -176,7 +176,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'podkova_pro_stesti',
     name: 'Podkova pro štěstí',
-    icon: '🍀',
+    icon: 'luck',
     description: '+10 ŠTĚSTÍ za úroveň (lepší kritiky a hodnotnější kořist).',
     maxLevel: 5,
     category: 'passive',
@@ -187,7 +187,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'bylinkova_fajfka',
     name: 'Bylinková fajfka',
-    icon: '🪈',
+    icon: 'pipe',
     description: '+1,2 regenerace Kuráže / s a vyfukuje Oblak bylinného dýmu, který zraňuje běsy a léčí lovce.',
     maxLevel: 3,
     category: 'passive',
@@ -231,7 +231,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'maska_medveda',
     name: 'Maska medvěda',
-    icon: '🐻',
+    icon: 'bear',
     description: 'Přeléčení (overheal) Kuráže se udělí jako 50 % zranění nepřátelům do vzdálenosti 230 px. Další vylepšování Masky: všechno léčení Kuráže a maskou udělené zranění větší o 20 %.',
     maxLevel: 4,
     category: 'passive',
@@ -242,7 +242,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'vesela_mysl',
     name: 'Veselá mysl a písnička',
-    icon: '🎵',
+    icon: 'music',
     description: '+3 Kuráž doplňováno každých 5 s (+0,6 reg/s za úroveň).',
     maxLevel: 5,
     category: 'passive',
@@ -266,7 +266,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'trikralova_krida',
     name: 'Posvěcená tříkrálová křída',
-    icon: '🖍️',
+    icon: 'chalk',
     description: 'Při zastavení nakreslí ochranný kruh: odrazí nemrtvé i čerty a sníží utržené zranění o 20 % za úroveň.',
     maxLevel: 3,
     category: 'folklore',
@@ -277,7 +277,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'strouhany_kren',
     name: 'Strouhaný křen v ubrousku',
-    icon: '🫚',
+    icon: 'horseradish',
     description: '-25 % odolnost bubáků vůči jídlu a +15 % poškození do mlsajících cílů za úroveň.',
     maxLevel: 4,
     category: 'folklore',
@@ -299,7 +299,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'ulezely_syrecek',
     name: 'Uleželý syreček v kapse',
-    icon: '🧀',
+    icon: 'cheese',
     description: 'Při nápřahu nepřítele v těsné blízkosti ho závan ze syrečku na 4 s vyčerpá (poloviční rychlost i útok).',
     maxLevel: 3,
     category: 'folklore',
@@ -310,7 +310,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'pivni_tacek',
     name: 'Pivní tácek s čárkami',
-    icon: '🍺',
+    icon: 'beer',
     description: 'Při pití piva, kořalky či cikorky vypadnou krejcary z 8 běsů a propůjčí +35 % rychlost nabíjení na 6 s.',
     maxLevel: 4,
     category: 'folklore',
@@ -321,7 +321,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'bezedny_krajac_povidel',
     name: 'Bezedný krajáč povidel',
-    icon: '🍯',
+    icon: 'honey',
     description: 'Bubákům zalepí paty (-20 % poise) a po zahnání zanechají zpomalující povidlovou louži.',
     maxLevel: 4,
     category: 'folklore',
@@ -332,7 +332,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'zvonek_zatoulane_kozy',
     name: 'Zvonek ze zatoulané kozy',
-    icon: '🔔',
+    icon: 'bell',
     description: 'Každé 4 s běhu cinkne: vyruší nápřah blízkých strašidel a přitáhne okolní perníčky i krejcary.',
     maxLevel: 4,
     category: 'folklore',
@@ -343,7 +343,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'babicciny_kousave_fusekle',
     name: 'Babiččiny kousavé fusekle',
-    icon: '🧦',
+    icon: 'sock',
     description: '+15 rychlost pohybu, plná imunita na led a mráz a v pohybu o 12 % rychlejší útoky.',
     maxLevel: 4,
     category: 'folklore',
@@ -354,7 +354,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'arcivzacny_ananas',
     name: 'Arcivzácný ananas',
-    icon: '🍍',
+    icon: 'pineapple',
     description: '+30 % max. Kuráž i rychlost, plně doplní Kuráž a daruje 10 s nezranitelnost.',
     maxLevel: 2,
     category: 'folklore',
@@ -367,7 +367,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'ponocny_horn',
     name: 'Trouba obecního ponocného',
-    icon: '📯',
+    icon: 'horn',
     description: 'Zastaví čas a zmrazí všechna strašidla i nepřátelské střely na 5 sekund.',
     maxLevel: 10,
     category: 'treasure',
@@ -378,7 +378,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'masopust_rattle',
     name: 'Masopustní řehtačka',
-    icon: '🪇',
+    icon: 'rattle',
     description: 'Smete řadová strašidla, bossům odebere 35 % zdraví a vytvoří rázový štít na 2 s.',
     maxLevel: 10,
     category: 'treasure',
@@ -389,7 +389,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'babicka_apron',
     name: 'Babiččina kropenatá zástěra',
-    icon: '🧺',
+    icon: 'basket',
     description: 'V mžiku přitáhne všechny perníčky i kořist z celé mapy a zhojí 15 Kuráže.',
     maxLevel: 10,
     category: 'treasure',
@@ -400,7 +400,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'slivovice_splash',
     name: 'Hlt slivovice z modrého džbánku',
-    icon: '🏺',
+    icon: 'jug',
     description: 'Vyčistí postihy, omráčí nepřátele v 180° oblouku na 4,5 s a zapálí střely modrým plamenem.',
     maxLevel: 10,
     category: 'treasure',
@@ -411,7 +411,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'svanda_bagpipes',
     name: 'Dudácká čertovská skočná',
-    icon: '🎶',
+    icon: 'music',
     description: 'Přinutí strašidla bít se mezi sebou na 6 s a zdvojnásobí vypadávající kořist.',
     maxLevel: 10,
     category: 'treasure',
@@ -422,7 +422,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'kominik_button',
     name: 'Kominický knoflík pro štěstí',
-    icon: '🔘',
+    icon: 'button',
     description: '7 s úplné nehmotnosti a zaručených maximálních kritických zásahů, sazemi oslepí nepřátele.',
     maxLevel: 10,
     category: 'treasure',
@@ -433,7 +433,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'kovarska_podkova',
     name: 'Kovářská podkova',
-    icon: '🧲',
+    icon: 'magnet',
     description: 'V mžiku přitáhne všechny perníčky, krejcary i dušičky a na 5 s zdvojnásobí Štěstí.',
     maxLevel: 10,
     category: 'treasure',
@@ -444,7 +444,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'hlineny_kohoutek',
     name: 'Hliněný kohoutek',
-    icon: '🐓',
+    icon: 'rooster',
     description: 'Ranní zakokrhání smete běžná strašidla, bossům udělí 650 svatého poškození a vystraší přeživší na 3 s.',
     maxLevel: 10,
     category: 'treasure',
@@ -622,7 +622,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'pitchfork_spread',
     name: 'Trojitý bodec',
-    icon: '🔱',
+    icon: 'pitchfork',
     description: '+100 % hrotů (širší vějíř), -25 % poškození.',
     maxLevel: 1,
     category: 'synergy',
@@ -633,7 +633,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   {
     id: 'pitchfork_pierce',
     name: 'Kalená ocel',
-    icon: '🔱',
+    icon: 'pitchfork',
     description: '+60 % poškození, +2 průraz, -12 % cooldown.',
     maxLevel: 1,
     category: 'synergy',
@@ -945,7 +945,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '2rem' }}>🧪</span>
+              <GameIcon icon="flask" size={32} />
               <h2
                 style={{
                   margin: 0,
@@ -985,10 +985,13 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               fontWeight: 900,
               cursor: 'pointer',
               boxShadow: '2px 2px 0 var(--ink)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title="Zavřít"
           >
-            ✕
+            <GameIcon icon="cross" size={16} />
           </button>
         </div>
 
@@ -1018,7 +1021,9 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               fontSize: '0.96rem',
             }}
           >
-            <span>👤 1. Hrdina:</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="hunter" size={16} /> 1. Hrdina:
+            </span>
             <strong>{HUNTER_UNLOCKS[selectedHero]?.realName || 'Poutník'}</strong>
           </button>
 
@@ -1037,7 +1042,9 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               fontSize: '0.96rem',
             }}
           >
-            <span>🗺️ 2. Úroveň:</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="map" size={16} /> 2. Úroveň:
+            </span>
             <strong>Úr. {selectedLevel} ({GAME_LEVELS[selectedLevel]?.shortTitle})</strong>
           </button>
 
@@ -1056,7 +1063,9 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               fontSize: '0.96rem',
             }}
           >
-            <span>🗡️ 3. Startovní zbraně:</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="sword" size={16} /> 3. Startovní zbraně:
+            </span>
             <strong>{selectedWeaponsList.length} vybráno</strong>
           </button>
 
@@ -1077,7 +1086,9 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               color: 'var(--ink)',
             }}
           >
-            <span>🧺 4. Dědečkova nůše (0-X):</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="knapsack" size={16} /> 4. Dědečkova nůše (0-X):
+            </span>
             <strong style={{ color: selectedGrandfatherList.length > 0 ? '#15803D' : '#991B1B' }}>
               {selectedGrandfatherList.length} aktivních
             </strong>
@@ -1115,11 +1126,14 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                     padding: '4px 10px',
                     background: '#15803D',
                     color: '#FFFFFF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
                   }}
                   onClick={() => applyHeroDefaultWeapons(selectedHero)}
                   title="Nastaví startovní zbraně podle zvoleného hrdiny"
                 >
-                  🎯 Nastavit výchozí zbraně hrdiny
+                  <GameIcon icon="target" size={14} /> Nastavit výchozí zbraně hrdiny
                 </button>
               </div>
               <div
@@ -1169,9 +1183,12 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                             padding: '2px 7px',
                             fontSize: '0.75rem',
                             fontWeight: 900,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}
                         >
-                          ✓ ZVOLENO
+                          <GameIcon icon="checkmark" size={12} /> ZVOLENO
                         </span>
                       )}
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1211,9 +1228,15 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                               flexWrap: 'wrap',
                             }}
                           >
-                            <span>🦁 {stats.hp} Kuráž</span>
-                            <span>👟 {stats.speed}</span>
-                            <span>🧲 {stats.pickup}</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <GameIcon icon="heart" size={14} /> {stats.hp} Kuráž
+                            </span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <GameIcon icon="boots" size={14} /> {stats.speed}
+                            </span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <GameIcon icon="magnet" size={14} /> {stats.pickup}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1228,7 +1251,9 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                           lineHeight: 1.3,
                         }}
                       >
-                        <div style={{ fontWeight: 900, color: '#B45309' }}>⚡ {stats.ability}</div>
+                        <div style={{ fontWeight: 900, color: '#B45309', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <GameIcon icon="lightning" size={14} /> {stats.ability}
+                        </div>
                         <div style={{ marginTop: '2px', color: '#374151' }}>{stats.role}</div>
                       </div>
                     </div>
@@ -1300,11 +1325,20 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                             padding: '2px 8px',
                             fontSize: '0.78rem',
                             fontWeight: 900,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}
                         >
-                          {isSelected ? '✓ ZVOLENO' : `Úroveň ${lvlId + 1}`}
+                          {isSelected ? (
+                            <>
+                              <GameIcon icon="checkmark" size={12} /> ZVOLENO
+                            </>
+                          ) : (
+                            `Úroveň ${lvlId + 1}`
+                          )}
                         </span>
-                        <span style={{ fontSize: '1.25rem' }}>{lvl.icon}</span>
+                        <GameIcon icon={lvl.icon} size={22} />
                       </div>
                       <h4 style={{ margin: '0 0 2px 0', fontSize: '1.18rem', fontWeight: 900, color: '#111111' }}>
                         {lvl.name}
@@ -1332,9 +1366,12 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                           fontSize: '0.8rem',
                           fontWeight: 800,
                           color: '#991B1B',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
                         }}
                       >
-                        👑 Velký boss: <strong>{lvl.finalBoss.name}</strong>
+                        <GameIcon icon="crown" size={14} /> Velký boss: <strong>{lvl.finalBoss.name}</strong>
                       </div>
                     </div>
                   );
@@ -1360,46 +1397,46 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   flexWrap: 'wrap',
                 }}
               >
-                <span style={{ fontWeight: 900, fontSize: '0.94rem', color: '#111111' }}>
-                  ⚡ Rychlé předvolby arzenálu:
+                <span style={{ fontWeight: 900, fontSize: '0.94rem', color: '#111111', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <GameIcon icon="lightning" size={15} /> Rychlé předvolby arzenálu:
                 </span>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button
                     className="lada-btn btn-small"
-                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#3D2210', color: '#FEF3C7' }}
+                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#3D2210', color: '#FEF3C7', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => applyHeroDefaultWeapons(selectedHero)}
                     title="Nastaví výchozí startovní zbraně podle vybraného hrdiny"
                   >
-                    🎯 Dle hrdiny
+                    <GameIcon icon="target" size={12} /> Dle hrdiny
                   </button>
                   <button
                     className="lada-btn btn-small"
-                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#2563EB', color: '#FFFFFF' }}
+                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#2563EB', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => applyAllWeaponsLevel(1)}
                   >
-                    ⚔️ Všechny (Úr. 1)
+                    <GameIcon icon="swords" size={12} /> Všechny (Úr. 1)
                   </button>
                   <button
                     className="lada-btn btn-small"
-                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#EA580C', color: '#FFFFFF' }}
+                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#EA580C', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => applyAllWeaponsLevel(5)}
                   >
-                    🔥 Všechny (Úr. 5 – MAX)
+                    <GameIcon icon="fire" size={12} /> Všechny (Úr. 5 – MAX)
                   </button>
                   <button
                     className="lada-btn btn-small"
-                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#7C3AED', color: '#FFFFFF' }}
+                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#7C3AED', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => applyAllWeaponsLevel(10)}
                   >
-                    👑 Božský arzenál (Úr. 10)
+                    <GameIcon icon="crown" size={12} /> Božský arzenál (Úr. 10)
                   </button>
                   <button
                     className="lada-btn btn-small"
-                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#6B7280', color: '#FFFFFF' }}
+                    style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#6B7280', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                     onClick={clearAllWeapons}
                     title="Vynuluje všechny zbraně na úroveň 0 (pro čistý výběr)"
                   >
-                    🧹 Vynulovat vše
+                    <GameIcon icon="broom" size={12} /> Vynulovat vše
                   </button>
                 </div>
               </div>
@@ -1590,9 +1627,15 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                           lineHeight: 1.25,
                         }}
                       >
-                        {cfg.level === 0
-                          ? '💤 Úroveň 0 – lovec s touto zbraní nezačíná'
-                          : `💥 Zásah: ~${estDmg} | ⏱️ Kadence: ${wDef.baseCd} s`}
+                        {cfg.level === 0 ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <GameIcon icon="sleep" size={12} /> Úroveň 0 – lovec s touto zbraní nezačíná
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <GameIcon icon="sparkles" size={12} /> Zásah: ~{estDmg} | <GameIcon icon="clock" size={12} /> Kadence: {wDef.baseCd} s
+                          </span>
+                        )}
                         {wDef.desc && (
                           <div
                             style={{
@@ -1640,7 +1683,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.4rem' }}>🧺</span>
+                    <GameIcon icon="knapsack" size={26} />
                     <div>
                       <strong style={{ fontSize: '1rem', color: '#111111' }}>
                         Upgrady a poklady z Dědečkovy nůše:
@@ -1653,35 +1696,35 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     <button
                       className="lada-btn btn-small"
-                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#0284C7', color: '#FFFFFF' }}
+                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#0284C7', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       onClick={() => setAllGrandfatherPreset('passives_1')}
                       title="Nastaví všechna pasivní a folklórní posílení na úroveň 1"
                     >
-                      ⚡ Pasivky (Úr. 1)
+                      <GameIcon icon="lightning" size={12} /> Pasivky (Úr. 1)
                     </button>
                     <button
                       className="lada-btn btn-small"
-                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#EA580C', color: '#FFFFFF' }}
+                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#EA580C', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       onClick={() => setAllGrandfatherPreset('passives_max')}
                       title="Nastaví všechna pasivní a folklórní posílení na jejich maximální úroveň"
                     >
-                      🔥 Pasivky (MAX)
+                      <GameIcon icon="fire" size={12} /> Pasivky (MAX)
                     </button>
                     <button
                       className="lada-btn btn-small"
-                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#7C3AED', color: '#FFFFFF' }}
+                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#7C3AED', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       onClick={() => setAllGrandfatherPreset('all_max')}
                       title="Nastaví naprosto všechna vylepšení, posvěcení i synergie na MAX!"
                     >
-                      👑 Plná nůše (Vše MAX)
+                      <GameIcon icon="crown" size={12} /> Plná nůše (Vše MAX)
                     </button>
                     <button
                       className="lada-btn btn-small"
-                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#6B7280', color: '#FFFFFF' }}
+                      style={{ margin: 0, padding: '4px 8px', fontSize: '0.78rem', background: '#6B7280', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       onClick={() => setAllGrandfatherPreset('clear')}
                       title="Vynuluje všechna vylepšení z nůše na úroveň 0"
                     >
-                      🧹 Vynulovat nůši (0)
+                      <GameIcon icon="broom" size={12} /> Vynulovat nůši (0)
                     </button>
                   </div>
                 </div>
@@ -1700,12 +1743,12 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                 >
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {[
-                      { key: 'all' as const, label: `🌟 Vše (${ALL_GRANDFATHER_UPGRADES.length})` },
-                      { key: 'passive' as const, label: '💪 Trvalá posílení' },
-                      { key: 'folklore' as const, label: '✨ Folklórní posvěcení' },
-                      { key: 'treasure' as const, label: '📯 Vzácné předměty' },
-                      { key: 'consumable' as const, label: '🍖 Svačiny & Krejcary' },
-                      { key: 'synergy' as const, label: '⚡ Synergie zbraní' },
+                      { key: 'all' as const, icon: 'star', label: `Vše (${ALL_GRANDFATHER_UPGRADES.length})` },
+                      { key: 'passive' as const, icon: 'muscle', label: 'Trvalá posílení' },
+                      { key: 'folklore' as const, icon: 'sparkles', label: 'Folklórní posvěcení' },
+                      { key: 'treasure' as const, icon: 'horn', label: 'Vzácné předměty' },
+                      { key: 'consumable' as const, icon: 'meat', label: 'Svačiny & Krejcary' },
+                      { key: 'synergy' as const, icon: 'lightning', label: 'Synergie zbraní' },
                     ].map((tab) => {
                       const isActive = grandfatherCategoryFilter === tab.key;
                       return (
@@ -1724,8 +1767,12 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                             fontSize: '0.76rem',
                             fontWeight: 900,
                             cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}
                         >
+                          <GameIcon icon={tab.icon} size={12} />
                           {tab.label}
                         </button>
                       );
@@ -1736,7 +1783,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                       type="text"
                       value={grandfatherSearchQuery}
                       onChange={(e) => setGrandfatherSearchQuery(e.target.value)}
-                      placeholder="🔍 Hledat v nůši (např. káva, pírko, křída, syreček...)"
+                      placeholder="Hledat v nůši (např. káva, pírko, křída, syreček...)"
                       style={{
                         width: '100%',
                         padding: '4px 8px',
@@ -1760,10 +1807,13 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                           fontSize: '0.76rem',
                           fontWeight: 900,
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                         title="Vymazat hledání"
                       >
-                        ✕
+                        <GameIcon icon="cross" size={11} />
                       </button>
                     )}
                   </div>
@@ -1975,7 +2025,15 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                             marginBottom: '2px',
                           }}
                         >
-                          {cfg.level === 0 ? '💤 Neaktivní (Úr. 0)' : `✨ Aktivní posílení: Úr. ${cfg.level} × (${item.statHint})`}
+                          {cfg.level === 0 ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <GameIcon icon="sleep" size={13} /> Neaktivní (Úr. 0)
+                            </span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <GameIcon icon="sparkles" size={13} /> Aktivní posílení: Úr. {cfg.level} × ({item.statHint})
+                            </span>
+                          )}
                         </div>
                         <div style={{ color: '#4B5563', fontSize: '0.73rem', lineHeight: 1.25 }}>
                           {item.description}
@@ -2066,13 +2124,16 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   fontWeight: 900,
                   boxShadow: '3px 3px 0 var(--ink)',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
                 onClick={() => {
                   sound.coin();
                   onOpenGrandfatherShop();
                 }}
               >
-                🧺 Otevřít nůši naživo
+                <GameIcon icon="knapsack" size={14} /> Otevřít nůši naživo
               </button>
             )}
             <button
@@ -2099,10 +2160,13 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                 fontWeight: 900,
                 cursor: selectedWeaponsList.length > 0 ? 'pointer' : 'not-allowed',
                 boxShadow: selectedWeaponsList.length > 0 ? '4px 4px 0 var(--ink)' : 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
               onClick={handleStart}
             >
-              ⚔️ Spustit testovací výpravu
+              <GameIcon icon="sword" size={14} /> Spustit testovací výpravu
             </button>
           </div>
         </div>

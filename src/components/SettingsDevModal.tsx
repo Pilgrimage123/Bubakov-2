@@ -2,6 +2,7 @@ import React from 'react';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { GameIcon } from './GameIcon';
 import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
 
 interface SettingsDevModalProps {
@@ -84,20 +85,20 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: '0 0 2px 0', fontSize: '1.8rem', color: 'var(--ink)' }}>
-              ⚙️ NASTAVENÍ A VÝVOJ
+            <h2 style={{ margin: '0 0 2px 0', fontSize: '1.8rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <GameIcon icon="cog" size={26} /> NASTAVENÍ A VÝVOJ
             </h2>
             <LadaBotanicalFlourish height={16} />
           </div>
           <button
             className="tab-btn"
-            style={{ padding: '6px 12px', fontSize: '1.15rem', minWidth: 'auto' }}
+            style={{ padding: '6px 12px', fontSize: '1.15rem', minWidth: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={() => {
               sound.coin();
               onClose();
             }}
           >
-            ✕
+            <GameIcon icon="cross" size={16} />
           </button>
         </div>
 
@@ -123,8 +124,8 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               textAlign: 'left',
             }}
           >
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)' }}>
-              🔊 Zvuk a hudba
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GameIcon icon="horn" size={18} /> Zvuk a hudba
             </h3>
             <p style={{ margin: '0 0 12px', fontSize: '0.88rem', fontWeight: 700, color: '#451A03' }}>
               Zapněte nebo vypněte zvukové efekty a vesnickou hudbu v pozadí.
@@ -136,13 +137,17 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   style={{
                     background: soundEffectsEnabled ? '#16A34A' : 'var(--wood-dark)',
                     color: '#FFFFFF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}
                   onClick={() => {
                     sound.coin();
                     onToggleSoundEffects(!soundEffectsEnabled);
                   }}
                 >
-                  {soundEffectsEnabled ? '🔊 Zvukové efekty: ZAP' : '🔇 Zvukové efekty: VYP'}
+                  <GameIcon icon={soundEffectsEnabled ? 'sound' : 'mute'} size={16} />
+                  {soundEffectsEnabled ? 'Zvukové efekty: ZAP' : 'Zvukové efekty: VYP'}
                 </button>
               )}
               {onToggleMusic && (
@@ -151,13 +156,17 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   style={{
                     background: musicEnabled ? '#16A34A' : 'var(--wood-dark)',
                     color: '#FFFFFF',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                   }}
                   onClick={() => {
                     sound.coin();
                     onToggleMusic(!musicEnabled);
                   }}
                 >
-                  {musicEnabled ? '🎵 Hudba v pozadí: ZAP' : '🔇 Hudba v pozadí: VYP'}
+                  <GameIcon icon={musicEnabled ? 'music' : 'mute'} size={16} />
+                  {musicEnabled ? 'Hudba v pozadí: ZAP' : 'Hudba v pozadí: VYP'}
                 </button>
               )}
             </div>
@@ -173,17 +182,23 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               textAlign: 'left',
             }}
           >
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)' }}>
-              ⚡ Zapnuté efekty a plynulost
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GameIcon icon="lightning" size={18} /> Zapnuté efekty a plynulost
             </h3>
             <p style={{ margin: '0 0 12px', fontSize: '0.88rem', fontWeight: 700, color: '#451A03' }}>
               Vyberte poměr mezi vizuálními efekty scény a snímkovou frekvencí (FPS).
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontWeight: 900, fontSize: '0.88rem', color: '#78350F', flexWrap: 'wrap' }}>
-              <span>🎨 Vizuální kvalita</span>
-              <span>⚖️ Vyvážený</span>
-              <span>⚡ Max FPS</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <GameIcon icon="palette" size={14} /> Vizuální kvalita
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <GameIcon icon="scales" size={14} /> Vyvážený
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <GameIcon icon="lightning" size={14} /> Max FPS
+              </span>
             </div>
 
             <input
@@ -203,7 +218,19 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
             />
 
             <div style={{ textAlign: 'center', fontSize: '1.05rem', fontWeight: 900, color: '#92400E', marginBottom: '4px' }}>
-              {performanceProfile === 'fidelity' ? '🎨 Vizuální kvalita (plné efekty)' : performanceProfile === 'performance' ? '⚡ Maximum FPS (plynulost)' : '⚖️ Vyvážený režim (doporučeno)'}
+              {performanceProfile === 'fidelity' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="palette" size={16} /> Vizuální kvalita (plné efekty)
+                </span>
+              ) : performanceProfile === 'performance' ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="lightning" size={16} /> Maximum FPS (plynulost)
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="scales" size={16} /> Vyvážený režim (doporučeno)
+                </span>
+              )}
             </div>
 
             <p style={{ margin: '4px 0 12px', fontSize: '0.84rem', fontWeight: 700, color: '#451A03', lineHeight: 1.35 }}>
@@ -273,7 +300,9 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   }}
                   title="Podrobné nastavení a vypínání 9 kategorií plovoucích textů v aréně"
                 >
-                  💬 Texty v boji...
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="combat_text" size={16} /> Texty v boji...
+                  </span>
                 </button>
               )}
             </div>
@@ -291,8 +320,8 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--ink)' }}>
-                  🔥 Dynamická obtížnost (Režisér výpravy)
+                <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="fire" size={18} /> Dynamická obtížnost (Režisér výpravy)
                 </h3>
                 {(() => {
                   const activePreset = getDifficultyPreset(dynamicDifficulty);
@@ -361,44 +390,44 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               textAlign: 'left',
             }}
           >
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.15rem', color: 'var(--ink)' }}>
-              🛠️ Vývojářská dílna
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.15rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GameIcon icon="hammer" size={16} /> Vývojářská dílna
             </h3>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#7C3AED', color: '#FFFFFF', fontWeight: 900 }}
+                style={{ background: '#7C3AED', color: '#FFFFFF', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 onClick={() => {
                   sound.coin();
                   onClose();
                   onOpenTestMode();
                 }}
               >
-                🧪 Testovací mód (Sandbox)
+                <GameIcon icon="potion" size={16} /> Testovací mód (Sandbox)
               </button>
 
               <button
                 className="lada-btn btn-small"
-                style={{ background: '#0284C7', color: '#FFFFFF', fontWeight: 900 }}
+                style={{ background: '#0284C7', color: '#FFFFFF', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 onClick={() => {
                   sound.coin();
                   onClose();
                   onOpenAnimationTester();
                 }}
               >
-                🎬 Tester animací
+                <GameIcon icon="theatre" size={16} /> Tester animací
               </button>
 
               <button
                 className="lada-btn btn-small"
-                style={{ background: 'var(--wood-light)', color: 'var(--parchment)' }}
+                style={{ background: 'var(--wood-light)', color: 'var(--parchment)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 onClick={() => {
                   sound.coin();
                   onClose();
                   onOpenPlan();
                 }}
               >
-                📜 Kronika verzí a plán
+                <GameIcon icon="scroll" size={16} /> Kronika verzí a plán
               </button>
             </div>
           </div>
@@ -413,22 +442,22 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               textAlign: 'left',
             }}
           >
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: '#991B1B' }}>
-              ⚠️ Správa postupu
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: '#991B1B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GameIcon icon="warning" size={16} /> Správa postupu
             </h3>
             <p style={{ margin: '0 0 10px 0', fontSize: '0.86rem', color: 'var(--ink)', fontWeight: 700 }}>
               Vymazání vrátí veškeré odemčené postavy, zbraně i vylepšení ve vsi do výchozího stavu.
             </p>
             <button
               className="lada-btn btn-small"
-              style={{ background: '#DC2626', color: '#FFFFFF', fontWeight: 900 }}
+              style={{ background: '#DC2626', color: '#FFFFFF', fontWeight: 900, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               onClick={() => {
                 sound.hit();
                 onClose();
                 onOpenResetProgress();
               }}
             >
-              🗑️ Vymazat veškerý postup
+              <GameIcon icon="trash" size={16} /> Vymazat veškerý postup
             </button>
           </div>
         </div>

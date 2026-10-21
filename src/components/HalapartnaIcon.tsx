@@ -89,7 +89,7 @@ export const HalapartnaIcon: React.FC<HalapartnaIconProps> = ({
       <ellipse cx="28" cy="108" rx="20" ry="4" fill="url(#halberdShadow)" />
 
       {/* Main Halberd Group: diagonal orientation from (26, 106) to (95, 12) */}
-      <g id="halberd-art">
+      <g id="halberd-art" className="lada-anim-rock">
         {/* ========================================================
             1. WOODEN SHAFT (Topůrko)
             ======================================================== */}
@@ -283,6 +283,8 @@ export const HalapartnaIcon: React.FC<HalapartnaIconProps> = ({
           <circle cx="95" cy="32" r="0.7" fill="#1E293B" />
           <circle cx="92" cy="46" r="0.6" fill="#1E293B" />
           <circle cx="64" cy="39" r="0.6" fill="#1E293B" />
+          {/* Spear tip glint */}
+          <circle cx="93.5" cy="14" r="1.6" fill="#FFFFFF" className="lada-anim-glint" />
         </g>
       </g>
     </svg>

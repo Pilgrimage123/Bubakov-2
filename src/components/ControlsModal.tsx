@@ -219,8 +219,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#B45309' }}>
-                  🧺 Otevření nůše Čertova dědečka (Nákup v terénu)
+                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#B45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="basket" size={20} /> Otevření nůše Čertova dědečka (Nákup v terénu)
                 </span>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <span className="keycap keycap-accent">E</span>
@@ -229,7 +229,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Jakmile se v blízkosti zjeví potulný Čertův dědeček a zavolá <em>„Pssst! Perníčky!“</em>, přistupte k němu a stiskněte klávesu <strong>E</strong>,
-                nebo klepněte na tlačítko <strong>🧺 OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a můžete si za perníčky koupit nové zbraně, jejich vylepšení i mocné pasivní dary!
+                nebo klepněte na tlačítko <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="basket" size={16} /> OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a můžete si za perníčky koupit nové zbraně, jejich vylepšení i mocné pasivní dary!
               </p>
             </div>
 
@@ -253,8 +253,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1E3A8A' }}>
-                  🏃 Pohyb hrdiny po venkovské krajině
+                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="boots" size={20} /> Pohyb hrdiny po venkovské krajině
                 </span>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <span className="keycap">W</span>
@@ -294,8 +294,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#B91C1C' }}>
-                  ⚡ Zvláštní hrdinská schopnost (Ultimátum)
+                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <GameIcon icon="lightning" size={20} /> Zvláštní hrdinská schopnost (Ultimátum)
                 </span>
                 <span className="keycap keycap-wide">Mezerník (Space)</span>
               </div>
@@ -343,8 +343,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#166534' }}>
-                🗡️ Automatický boj a zbraně (Survivors styl)
+              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="sword" size={20} /> Automatický boj a zbraně (Survivors styl)
               </span>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Všechny vaše zbraně (Válečnice, Česneková topinka, Kyselá okurka, Povidlové buchty, Osikový prut, Vidle, Svěcená voda...)
@@ -364,13 +364,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#6D28D9' }}>
-                📱 Dotykové ovládání (Mobily a tablety)
+              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="compass" size={20} /> Dotykové ovládání (Mobily a tablety)
               </span>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Na dotykových zařízeních se automaticky zobrazuje <strong>virtuální joystick</strong> v levém dolním rohu pro plynulý pohyb
-                a akční tlačítko pro spuštění schopnosti ⚡ vpravo dole. Pokud se přiblížíte k Čertovu dědečkovi, objeví se velké tlačítko pro otevření nůše.
-                Pauzu vyvoláte kdykoliv horním tlačítkem <strong>⏸️ Pauza</strong>.
+                a akční tlačítko pro spuštění schopnosti <GameIcon icon="lightning" size={14} style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0 2px' }} /> vpravo dole. Pokud se přiblížíte k Čertovu dědečkovi, objeví se velké tlačítko pro otevření nůše.
+                Pauzu vyvoláte kdykoliv horním tlačítkem <strong>Pauza</strong>.
               </p>
             </div>
           </div>
@@ -401,8 +401,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#78350F' }}>
-                🐓 Hlavní cíl: Přežít noc až do ranního kuropění (5 minut)!
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#78350F', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <GameIcon icon="rooster" size={24} /> Hlavní cíl: Přežít noc až do ranního kuropění (5 minut)!
               </h3>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.4 }}>
                 Každá noční výprava v Bubákově trvá přesně <strong>5 minut (300 sekund)</strong> reálného času.
@@ -422,8 +422,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#1E3A8A' }}>
-                ⏳ Fáze noci – jak se stupňuje nebezpečí a přichází temnota:
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="clock" size={20} /> Fáze noci – jak se stupňuje nebezpečí a přichází temnota:
               </h3>
               <div
                 style={{
@@ -440,7 +440,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     padding: '8px 10px',
                   }}
                 >
-                  <div style={{ fontWeight: 900, color: '#C2410C' }}>🌅 Podvečer (0:00 - 0:45)</div>
+                  <div style={{ fontWeight: 900, color: '#C2410C', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="rooster" size={16} /> Podvečer (0:00 - 0:45)
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
                     Začátek výpravy. Slabší strašidýlka (šotci, rarachové). Ideální čas na nasbírání prvních perníčků, krejcarů a první návštěvu Čertova dědečka (od 0:25)!
                   </div>
@@ -453,7 +455,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     padding: '8px 10px',
                   }}
                 >
-                  <div style={{ fontWeight: 900, color: '#7C2D12' }}>🌇 Soumrak (0:45 - 1:30)</div>
+                  <div style={{ fontWeight: 900, color: '#7C2D12', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="lantern" size={16} /> Soumrak (0:45 - 1:30)
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
                     Hustnoucí šero, přicházejí divoženky a kostlivci. Na zemi se objevují malované truhly a vyděšení chasníci čekající na záchranu.
                   </div>
@@ -466,7 +470,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     padding: '8px 10px',
                   }}
                 >
-                  <div style={{ fontWeight: 900, color: '#312E81' }}>🌑 Půlnoc (1:30 - 3:00)</div>
+                  <div style={{ fontWeight: 900, color: '#312E81', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="skull" size={16} /> Půlnoc (1:30 - 3:00)
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
                     Hustá temnota a noční můry. Kolem 2. minuty zaútočí první nebezpečný Mini-boss kraje s obřím perníčkem jako kořistí!
                   </div>
@@ -479,7 +485,9 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     padding: '8px 10px',
                   }}
                 >
-                  <div style={{ fontWeight: 900, color: '#991B1B' }}>👹 Černá hodinka & Boss (3:00 - 4:45)</div>
+                  <div style={{ fontWeight: 900, color: '#991B1B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="devil" size={16} /> Černá hodinka & Boss (3:00 - 4:45)
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
                     Přichází hlavní vládce úrovně s unikátními ataky (mlýnské kameny, balvany, plameny, bumerang hlavy). Dokončete své nákupy u Dědečka!
                   </div>
@@ -498,8 +506,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#2A170A' }}>
-                🧺 Co sbírat na venkovských loukách a cestách:
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#2A170A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="basket" size={20} /> Co sbírat na venkovských loukách a cestách:
               </h3>
               <div
                 style={{
@@ -542,7 +550,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1E3A8A', fontWeight: 900 }}>
-                    <span>✨</span>
+                    <GameIcon icon="star" size={18} />
                     <span>Zkušenostní jiskry:</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
@@ -552,7 +560,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#6D28D9', fontWeight: 900 }}>
-                    <span>🏺</span>
+                    <GameIcon icon="amphora" size={18} />
                     <span>Hrnce s dušičkami:</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
@@ -562,7 +570,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#991B1B', fontWeight: 900 }}>
-                    <span>📦</span>
+                    <GameIcon icon="crate" size={18} />
                     <span>Malované truhly:</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
@@ -600,7 +608,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '3.2rem', lineHeight: 1 }}>🧓</span>
+                <GameIcon icon="grandpa" size={54} />
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#78350F', fontWeight: 900 }}>
                     ČERTŮV DĚDEČEK A JEHO NŮŠE
@@ -623,8 +631,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#B45309' }}>
-                🧭 Jak funguje a jak se spouští Čertův dědeček?
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#B45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="compass" size={20} /> Jak funguje a jak se spouští Čertův dědeček?
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.4 }}>
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 12px' }}>
@@ -646,7 +654,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '8px 12px' }}>
                   <strong style={{ color: '#92400E' }}>3. Otevření nůše [Klávesa E / Kliknutí]:</strong>
                   <div>
-                    Přistupte k němu a stiskněte klávesu <strong>E</strong>, klikněte myší přímo na dědečka nebo na tlačítko <strong>🧺 OTEVŘÍT DĚDEČKOVU NŮŠI</strong>.
+                    Přistupte k němu a stiskněte klávesu <strong>E</strong>, klikněte myší přímo na dědečka nebo na tlačítko <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="basket" size={16} /> OTEVŘÍT DĚDEČKOVU NŮŠI</strong>.
                     Vstupem do obchodu se celá hra <strong>bezpečně pozastaví</strong>, takže máte neomezený čas na výběr a strategické plánování.
                   </div>
                 </div>
@@ -671,8 +679,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#166534' }}>
-                🎁 Co v dědečkově nůši najdete? (4 nabídky v každém setkání)
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="knapsack" size={20} /> Co v dědečkově nůši najdete? (4 nabídky v každém setkání)
               </h4>
               <p style={{ margin: '0 0 10px 0', fontSize: '0.92rem', fontWeight: 700, lineHeight: 1.4 }}>
                 Dědečkova nůše nahradila dřívější rušivé vyskakovací okno při postupu na novou úroveň. Nabízí ucelený a přehledný výběr:
@@ -680,7 +688,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '10px' }}>
                 <div style={{ background: '#FFFDF5', border: '2px solid #9A3412', borderRadius: 8, padding: '10px 12px' }}>
                   <div style={{ fontWeight: 900, color: '#9A3412', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>⚔️</span>
+                    <GameIcon icon="sword" size={18} />
                     <span>Garantované zbraně (1–2 v nůši):</span>
                   </div>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35 }}>
@@ -691,7 +699,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 
                 <div style={{ background: '#FFFDF5', border: '2px solid var(--ink)', borderRadius: 8, padding: '10px 12px' }}>
                   <div style={{ fontWeight: 900, color: '#1E3A8A', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>🎒</span>
+                    <GameIcon icon="knapsack" size={18} />
                     <span>Pasivní posílení a dary:</span>
                   </div>
                   <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35 }}>
@@ -714,24 +722,24 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#92400E' }}>
-                💡 Klíčové finty a synergie dědečkova obchodu:
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="spark" size={20} /> Klíčové finty a synergie dědečkova obchodu:
               </h4>
               <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.45, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <li>
-                  <strong>⏳ Čekací sleva (až −30 %):</strong> Čím déle dědeček čeká v terénu, tím levnější má své zboží! Za každou vteřinu jeho čekání klesá cena všech předmětů (až o celých 30 %).
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="clock" size={16} /> Čekací sleva (až −30 %):</strong> Čím déle dědeček čeká v terénu, tím levnější má své zboží! Za každou vteřinu jeho čekání klesá cena všech předmětů (až o celých 30 %).
                 </li>
                 <li>
-                  <strong>🍀 Vliv ŠTĚSTÍ (Luck):</strong> Vyšší hodnota štěstí lovce poskytuje další stálou slevu (až 20 %) a navíc přihrává do nůše vzácnější a silnější nabídky.
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="clover" size={16} /> Vliv ŠTĚSTÍ (Luck):</strong> Vyšší hodnota štěstí lovce poskytuje další stálou slevu (až 20 %) a navíc přihrává do nůše vzácnější a silnější nabídky.
                 </li>
                 <li>
-                  <strong>🎲 Přebalení nůše (Reroll):</strong> Nehodí se vám nabízené zboží? Tlačítkem <em>Přebalit nůši</em> můžete zboží vyměnit (začíná na 4 perníčcích, poté 8, 16...).
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="dice" size={16} /> Přebalení nůše (Reroll):</strong> Nehodí se vám nabízené zboží? Tlačítkem <em>Přebalit nůši</em> můžete zboží vyměnit (začíná na 4 perníčcích, poté 8, 16...).
                 </li>
                 <li>
-                  <strong>🌟 Cíl 12 nákupů v jedné výpravě:</strong> V horní části obchodu vidíte ukazatel nákupů. Pokud stihnete nakoupit alespoň 12 vylepšení, získáte obrovskou převahu nad půlnočními bossy!
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="star" size={16} /> Cíl 12 nákupů v jedné výpravě:</strong> V horní části obchodu vidíte ukazatel nákupů. Pokud stihnete nakoupit alespoň 12 vylepšení, získáte obrovskou převahu nad půlnočními bossy!
                 </li>
                 <li>
-                  <strong>⛪ Božská ochrana s Kaplí svaté vlny:</strong> Pokud máte v hospodě postavenou Kapli svaté vlny, při KAŽDÉM osvobození zbloudilé dušičky z hliněného hrnečku vyšlehne posvěcená rázová vlna (75 posvátného dmg za úroveň + odhoz v okruhu 350 px), která bezpečně rozmetá všechny dotírající bubáky kolem!
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="church" size={16} /> Božská ochrana s Kaplí svaté vlny:</strong> Pokud máte v hospodě postavenou Kapli svaté vlny, při KAŽDÉM osvobození zbloudilé dušičky z hliněného hrnečku vyšlehne posvěcená rázová vlna (75 posvátného dmg za úroveň + odhoz v okruhu 350 px), která bezpečně rozmetá všechny dotírající bubáky kolem!
                 </li>
               </ul>
             </div>
@@ -762,8 +770,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#78350F' }}>
-                ⚔️ Kompletní přehled vesnických zbraní & Nejnovější přírůstky
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="sword" size={20} /> Kompletní přehled vesnických zbraní & Nejnovější přírůstky
               </h3>
               <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700 }}>
                 Všechny zbraně útočí automaticky. Každou zbraň můžete v nůši Čertova dědečka vylepšit až na úroveň 8.
@@ -794,8 +802,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <GameIcon icon="valecnice" size={32} />
                     <strong style={{ fontSize: '1.05rem', color: '#9A3412' }}>Válečnice</strong>
                   </div>
-                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E' }}>
-                    ✨ NOVINKA
+                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <GameIcon icon="star" size={12} /> NOVINKA
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -818,8 +826,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <GameIcon icon="cesnekova_topinka" size={32} />
                     <strong style={{ fontSize: '1.05rem', color: '#9A3412' }}>Česneková topinka</strong>
                   </div>
-                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E' }}>
-                    ✨ NOVINKA
+                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <GameIcon icon="star" size={12} /> NOVINKA
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -842,8 +850,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <GameIcon icon="kysela_okurka" size={32} />
                     <strong style={{ fontSize: '1.05rem', color: '#9A3412' }}>Kyselá okurka</strong>
                   </div>
-                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E' }}>
-                    ✨ DEBUFF
+                  <span style={{ background: '#FEF08A', border: '1.5px solid #CA8A04', borderRadius: 4, padding: '2px 6px', fontSize: '0.75rem', fontWeight: 900, color: '#854D0E', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <GameIcon icon="star" size={12} /> DEBUFF
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -901,7 +909,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🔱" size={30} />
+                  <GameIcon icon="vidle" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Kovářské vidle</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -939,7 +947,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🌾" size={30} />
+                  <GameIcon icon="cep" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Dřevěný cep na obilí</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -958,7 +966,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🌿" size={30} />
+                  <GameIcon icon="devatery_kviti" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Devatery kvítí</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -977,7 +985,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="❄️" size={30} />
+                  <GameIcon icon="snowflake" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Sněhová koule</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1015,7 +1023,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🥔" size={30} />
+                  <GameIcon icon="potato" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Horký brambor z popela</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1034,7 +1042,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🐝" size={30} />
+                  <GameIcon icon="bees" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Včelí roj z úlu</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1053,7 +1061,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="🕯️" size={30} />
+                  <GameIcon icon="candle" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Hromnička</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1072,7 +1080,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <GameIcon icon="✨" size={30} />
+                  <GameIcon icon="star" size={30} />
                   <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Kropenka se svěcenou vodou</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
@@ -1107,8 +1115,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#78350F' }}>
-                🏘️ Hospoda U Černého kocoura – trvalý rozvoj vesnice Bubákov
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#78350F', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <GameIcon icon="cottage" size={24} /> Hospoda U Černého kocoura – trvalý rozvoj vesnice Bubákov
               </h3>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Žádný sesbíraný krejcar nepřijde nazmar! Po každé výpravě navštivte hospodu na návsi a investujte své úspory
@@ -1126,61 +1134,77 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#1E3A8A' }}>
-                ⚒️ Přehled obecních budov a jejich stálých bonusů:
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="hammer" size={20} /> Přehled obecních budov a jejich stálých bonusů:
               </h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '10px' }}>
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#C2410C', fontSize: '0.98rem' }}>🥖 Pekárna u rozpálené pece</div>
+                  <div style={{ fontWeight: 900, color: '#C2410C', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="bread" size={18} /> Pekárna u rozpálené pece
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Pekelný žár:</strong> +10 % k poškození všech zbraní lovce za každou úroveň pekárny.
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#166534', fontSize: '0.98rem' }}>🌾 Pšeničné lano a polní mez</div>
+                  <div style={{ fontWeight: 900, color: '#166534', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="cep" size={18} /> Pšeničné lano a polní mez
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Pozorná aura:</strong> +25 k dosahu magnetu pro sběr krejcarů a perníčků za každou úroveň.
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#1E3A8A', fontSize: '0.98rem' }}>💧 Vodní mlýn na náhonu</div>
+                  <div style={{ fontWeight: 900, color: '#1E3A8A', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="water" size={18} /> Vodní mlýn na náhonu
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Vodní proud:</strong> +15 k rychlosti chůze lovce za každou úroveň náhonu.
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#78350F', fontSize: '0.98rem' }}>🧱 Kamenné hradby a bašta</div>
+                  <div style={{ fontWeight: 900, color: '#78350F', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="wall" size={18} /> Kamenné hradby a bašta
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Kamenné zdi:</strong> +25 maximální kuráž a +5 % odolnost proti vylekání.
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#991B1B', fontSize: '0.98rem' }}>🛡️ Šenkýřův ochranný štít</div>
+                  <div style={{ fontWeight: 900, color: '#991B1B', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="shield" size={18} /> Šenkýřův ochranný štít
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Obrněná mysl:</strong> Na začátku výpravy získáte ochranný štít kuráže (40 + úroveň × 20 bodů kuráže).
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#4338CA', fontSize: '0.98rem' }}>🔔 Zvonice na návsi</div>
+                  <div style={{ fontWeight: 900, color: '#4338CA', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="bell" size={18} /> Zvonice na návsi
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Zrychlení ultimátu:</strong> +8 % k rychlosti odpočtu cooldownu speciální schopnosti lovce.
                   </div>
                 </div>
 
                 <div style={{ background: '#FFFDF5', border: '1.5px solid var(--ink)', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#B45309', fontSize: '0.98rem' }}>⚒️ Kovářská výheň</div>
+                  <div style={{ fontWeight: 900, color: '#B45309', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="hammer" size={18} /> Kovářská výheň
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Pevná výheň:</strong> +2 flat damage ke každému jednotlivému zásahu jakékoliv zbraně!
                   </div>
                 </div>
 
                 <div style={{ background: '#FEF3C7', border: '2px solid #D97706', borderRadius: 6, padding: '10px 12px' }}>
-                  <div style={{ fontWeight: 900, color: '#B45309', fontSize: '0.98rem' }}>⛪ Kaple svaté vlny</div>
+                  <div style={{ fontWeight: 900, color: '#B45309', fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon icon="church" size={18} /> Kaple svaté vlny
+                  </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '3px' }}>
                     <strong>Svatá vlna při osvobození dušičky:</strong> Kdykoliv rozbijete hrneček a osvobodíte zbloudilou dušičku, kaple vyšle posvěcenou tlakovou vlnu (75 posvátného dmg za úroveň + odhoz v okruhu 350 px) a trvale posiluje svaté zbraně (+8 % za úroveň)!
                   </div>
@@ -1199,25 +1223,29 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 boxShadow: '3px 3px 0 var(--ink)',
               }}
             >
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#166534' }}>
-                🧠 Zlaté rady pro přežití nejtemnější noci:
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <GameIcon icon="clover" size={20} /> Zlaté rady pro přežití nejtemnější noci:
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.35 }}>
-                <div>
-                  🔄 <strong>Nikdy nezůstávejte stát na místě:</strong> Pohybujte se v širokých elipsách kolem shluků bubáků. Zabráníte tím obklíčení rychlými šotky či divoženkami.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', marginTop: 2 }}><GameIcon icon="mill" size={16} /></span>
+                  <div><strong>Nikdy nezůstávejte stát na místě:</strong> Pohybujte se v širokých elipsách kolem shluků bubáků. Zabráníte tím obklíčení rychlými šotky či divoženkami.</div>
                 </div>
-                <div>
-                  🧄 <strong>Kombinujte zbraně na dálku i na blízko:</strong> Česneková topinka nebo Válečnice vytvoří ochranný kruh kolem lovce, zatímco Kyselá okurka nepřátele oslabí a buchty je donutí mlsat na dálku.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', marginTop: 2 }}><GameIcon icon="cesnekova_topinka" size={16} /></span>
+                  <div><strong>Kombinujte zbraně na dálku i na blízko:</strong> Česneková topinka nebo Válečnice vytvoří ochranný kruh kolem lovce, zatímco Kyselá okurka nepřátele oslabí a buchty je donutí mlsat na dálku.</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
                   <span style={{ display: 'inline-flex', marginTop: 2 }}><PernicekIcon size={16} /></span>
                   <div><strong>Sbírejte perníčky okamžitě:</strong> Každý perníček se počítá pro nákup v nůši Čertova dědečka. Čím dříve nakoupíte, tím snáze zdoláte půlnočního minibosse.</div>
                 </div>
-                <div>
-                  💥 <strong>Odveta lovce na blízko:</strong> Kdykoliv vás bubák zraní na blízko, automaticky ho odhodíte pryč a uštědříte mu zranění rovné 15 % vaší maximální Kuráže (odolnosti běžných monster zde nefungují, odolává pouze boss levelu)!
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', marginTop: 2 }}><GameIcon icon="impact" size={16} /></span>
+                  <div><strong>Odveta lovce na blízko:</strong> Kdykoliv vás bubák zraní na blízko, automaticky ho odhodíte pryč a uštědříte mu zranění rovné 15 % vaší maximální Kuráže (odolnosti běžných monster zde nefungují, odolává pouze boss levelu)!</div>
                 </div>
-                <div>
-                  ⏸️ <strong>Nebojte se využívat pauzu [P]:</strong> Když je na obrazovce příliš mnoho projektilů nebo strašidel, stiskněte <strong>P</strong>. Zjistíte, kolik vám zbývá kuráže, kde se nachází cíl a naplánujete další manévr.
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                  <span style={{ display: 'inline-flex', marginTop: 2 }}><GameIcon icon="clock" size={16} /></span>
+                  <div><strong>Nebojte se využívat pauzu [P]:</strong> Když je na obrazovce příliš mnoho projektilů nebo strašidel, stiskněte <strong>P</strong>. Zjistíte, kolik vám zbývá kuráže, kde se nachází cíl a naplánujete další manévr.</div>
                 </div>
               </div>
             </div>
@@ -1239,13 +1267,16 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               padding: '10px 32px',
               fontSize: '1.15rem',
               background: 'var(--blood-red)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
             onClick={() => {
               sound.coin();
               onClose();
             }}
           >
-            Rozumím a vím, jak na to! ⚔️
+            Rozumím a vím, jak na to! <GameIcon icon="sword" size={18} />
           </button>
         </div>
       </div>
