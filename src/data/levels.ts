@@ -41,14 +41,6 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			kills: 20,
 			multiplier: 4.5
 		},
-		midBoss: {
-			id: "vodnicek",
-			name: "💧 Jarní Vodníček",
-			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
-			time: 75,
-			kills: 60,
-			multiplier: 4.0
-		},
 		finalBoss: {
 			id: "morana",
 			name: "❄️ Morana — špatně vynesená smrtka",
@@ -61,35 +53,56 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			noon: [
 				"vrana",
 				"mrazovy_skritek",
+				"jezinka_mraziva",
 				"mysak",
-				"sotek"
+				"sotek",
+				"tajici_snehulak"
 			],
 			afternoon: [
 				"vrana",
 				"blatouch",
 				"sotek",
-				"rarach"
+				"rarach",
+				"jezinka_mraziva"
 			],
 			dusk: [
 				"blatouch",
-				"topivec",
-				"vodnicek",
+				"jezinka_mraziva",
+				"tajici_snehulak",
 				"rarach"
 			],
 			night: [
-				"topivec",
-				"vodnicek",
 				"mrazovy_skritek",
+				"tajici_snehulak",
+				"jezinka_mraziva",
 				"bludicka"
 			],
 			midnight: [
-				"vodnicek",
 				"mrazovy_skritek",
-				"topivec",
-				"bludicka"
+				"jezinka_mraziva",
+				"mrazivy_obr",
+				"tajici_snehulak"
 			]
 		},
 		keyEnemies: [
+			{
+				id: "jezinka_mraziva",
+				name: "Mrazivá jezinka",
+				icon: "🧙‍♀️",
+				role: "Pomalá, silná a poloprůhledná ledová lovkyně"
+			},
+			{
+				id: "tajici_snehulak",
+				name: "Zákeřný tající sněhulák",
+				icon: "⛄",
+				role: "Záludné útoky koštětem a tající tělo"
+			},
+			{
+				id: "mrazivy_obr",
+				name: "Mrazivý obr",
+				icon: "🧊",
+				role: "Obrovský a mimořádně silný nepřítel"
+			},
 			{
 				id: "vrana",
 				name: "Rychlá vrána",
@@ -108,12 +121,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				icon: "🌼",
 				role: "Jarní diblík"
 			},
-			{
-				id: "vodnicek",
-				name: "Vodníček",
-				icon: "💧",
-				role: "Obyvatel ker"
-			},
+
 			{
 				id: "morana",
 				name: "Morana, špatně vynesená smrtka",

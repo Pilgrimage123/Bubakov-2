@@ -6049,6 +6049,54 @@ var Lada = {
 		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
 		ctx.strokeStyle = "#171923"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-4, 10); ctx.moveTo(3, 5); ctx.lineTo(4, 10); ctx.stroke(); ctx.restore();
 	},
+	drawStageCrowGround(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		// Ground pose is available for the future crow loot-collection state.
+		const dir = vx < 0 ? -1 : 1;
+		ctx.save(); ctx.translate(x, y + Math.sin(time * 5) * 0.6); ctx.scale(dir, 1);
+		ctx.fillStyle = "#171923"; ctx.strokeStyle = "#090B12"; ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.ellipse(0, 0, 11, 7, 0.08, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.moveTo(-7, 0); ctx.quadraticCurveTo(-14, 2, -17, -1); ctx.lineTo(-9, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#F59E0B"; ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(17, -3); ctx.lineTo(10, -1); ctx.closePath(); ctx.fill();
+		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
+		ctx.strokeStyle = "#D6A33B"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 5); ctx.lineTo(-3, 9); ctx.moveTo(3, 5); ctx.lineTo(4, 9); ctx.stroke();
+		ctx.restore();
+	},
+	drawFrostJezinka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		const dir = vx < 0 ? -1 : 1, bob = Math.sin(time * 2.2) * 1.2;
+		ctx.save(); ctx.globalAlpha = 0.56 + Math.sin(time * 1.7) * 0.06; ctx.translate(x, y + bob); ctx.scale(dir, 1);
+		ctx.fillStyle = "rgba(147,197,253,0.22)"; ctx.strokeStyle = "#172554"; ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.ellipse(0, 0, 20, 24, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#BFDBFE"; ctx.beginPath(); ctx.moveTo(-12, -8); ctx.lineTo(-20, 20); ctx.quadraticCurveTo(0, 26, 20, 20); ctx.lineTo(12, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.strokeStyle = "#93C5FD"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-23, 9); ctx.moveTo(10, -2); ctx.lineTo(23, 9); ctx.stroke();
+		ctx.fillStyle = "#FDE7C3"; ctx.strokeStyle = "#1C1917"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, -15, 12, 14, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#F97316"; ctx.beginPath(); ctx.moveTo(-2, -14); ctx.lineTo(13, -11); ctx.lineTo(-1, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#A3E635"; ctx.beginPath(); ctx.arc(-5, -17, 2.2, 0, Math.PI * 2); ctx.arc(4, -17, 2.2, 0, Math.PI * 2); ctx.fill();
+		ctx.fillStyle = "#DBEAFE"; ctx.strokeStyle = "#1D4ED8"; ctx.beginPath(); ctx.moveTo(-15, -24); ctx.lineTo(-10, -35); ctx.lineTo(-4, -25); ctx.lineTo(2, -38); ctx.lineTo(8, -24); ctx.lineTo(14, -31); ctx.lineTo(15, -21); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.strokeStyle = "#7DD3FC"; ctx.lineWidth = 2; for (let i=0;i<4;i++){const dx=-13+i*8;ctx.beginPath();ctx.moveTo(dx,7);ctx.lineTo(dx+1,13);ctx.stroke();}
+		ctx.restore();
+	},
+	drawFrostGiant(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		ctx.save(); ctx.translate(x, y); ctx.scale(4, 4); ctx.translate(-x, -y);
+		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked); ctx.restore();
+	},
+	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		const dir = vx < 0 ? -1 : 1, melt = Math.sin(time * 2.5) * 1.5;
+		ctx.save(); ctx.translate(x, y + Math.sin(time * 3) * 1.2); ctx.scale(dir, 1);
+		ctx.fillStyle = "rgba(56,189,248,0.5)"; ctx.strokeStyle = "#1D4ED8"; ctx.lineWidth = 1.8;
+		ctx.beginPath(); ctx.ellipse(0, 10, 25 + melt, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#F8FAFC"; ctx.strokeStyle = "#334155"; ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.ellipse(0, -3, 18, 18 + melt, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.beginPath(); ctx.ellipse(0, -23, 13, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#F97316"; ctx.beginPath(); ctx.moveTo(3, -23); ctx.lineTo(19, -20); ctx.lineTo(3, -17); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "#111827"; ctx.beginPath(); ctx.arc(-4, -26, 2, 0, Math.PI * 2); ctx.arc(4, -26, 2, 0, Math.PI * 2); ctx.fill();
+		ctx.fillStyle = "#1F2937"; ctx.beginPath(); ctx.arc(-2, -8, 2.2, 0, Math.PI * 2); ctx.arc(0, -1, 2.2, 0, Math.PI * 2); ctx.arc(2, 6, 2.2, 0, Math.PI * 2); ctx.fill();
+		ctx.fillStyle = "#78716C"; ctx.beginPath(); ctx.moveTo(-13,-34);ctx.lineTo(-8,-48);ctx.lineTo(8,-46);ctx.lineTo(14,-33);ctx.closePath();ctx.fill();ctx.stroke();
+		ctx.strokeStyle = "#92400E"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(16,-2);ctx.lineTo(28,-38);ctx.stroke();
+		ctx.strokeStyle = "#A16207"; ctx.lineWidth = 2; for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(24+i*2,-36);ctx.lineTo(20+i*2,-45);ctx.stroke();}
+		ctx.strokeStyle = "#38BDF8"; ctx.lineWidth = 2; ctx.beginPath();ctx.moveTo(-12,-13);ctx.lineTo(-13,-7);ctx.moveTo(10,-2);ctx.lineTo(12,5);ctx.stroke();
+		ctx.restore();
+
 	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 16 : 8;

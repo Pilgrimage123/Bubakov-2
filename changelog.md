@@ -1,3 +1,10 @@
+## 2026-10-21 — Noví nepřátelé prvního stage
+
+- Přidána Mrazivá jezinka, Mrazivý obr a Zákeřný tající sněhulák včetně kreslení.
+- Rozšířeny spawn pooly první úrovně a seznam klíčových nepřátel.
+- Přidána samostatná pozemní kresba vrány pro plánovaný loot stav.
+- Přepnutí vrány do pozemního stavu a pravidlo 100 PC pro cílení jezinky ještě nejsou napojeny na herní AI/cílení.
+
 ## 2026-10-21 — Kanonizace zbraňových výzev, obnova JSX komponent a robustní migrace (ADR 0026)
 
 - **Kompletní de-transpilace a obnova 7 React komponent**:

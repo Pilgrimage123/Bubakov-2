@@ -130,6 +130,30 @@ const ENEMIES: Record<string, EnemyStats> = {
 		strength: "Velmi rychlý let a kličkování",
 		lore: "Vrána vyhnaná z hejna zimní smrtkou nalétává na lovce z nečekaných směrů.", danger: "★☆☆☆☆"
 	},
+	jezinka_mraziva: {
+		id: "jezinka_mraziva", name: "Mrazivá jezinka", title: "Ledová čarodějnice z tajícího lesa",
+		category: "frost", hp: 520, speed: 48, damage: 74, attackCadence: "slow", attackInterval: 1.8,
+		radius: 20, mass: 1.8, foodResist: 0.35, poiseResist: 0.45, willpower: 0.55, xp: 9, coinValue: 6,
+		method: "drawFrostJezinka", palette: "ice", weakness: "Oheň, horké brambory",
+		strength: "Silné údery, vysoká odolnost a poloprůhledné tělo; mimo 100 PC od lovce ji nelze přímo zvolit jako cíl",
+		lore: "Ledová jezinka s korunou z rampouchů. Pomalu se plíží závějemi a její drápy zanechávají na zemi jinovatku.", danger: "★★★★☆"
+	},
+	mrazivy_obr: {
+		id: "mrazivy_obr", name: "Mrazivý obr", title: "Čtyřnásobně mohutný duch věčné zimy",
+		category: "frost", hp: 1150, speed: 34, damage: 145, attackCadence: "slow", attackInterval: 1.8,
+		radius: 56, mass: 5.5, foodResist: 0.5, poiseResist: 0.8, willpower: 0.8, xp: 20, coinValue: 12,
+		method: "drawFrostGiant", palette: "ice", weakness: "Oheň, horké brambory, Hromnička",
+		strength: "Čtyřnásobná velikost mrazivého skřítka, obrovské zdraví a drtivé údery",
+		lore: "Starý mrazivý skřítek, který nabyl velikosti malé chalupy. Každý jeho krok rozpraská led a sníh.", danger: "★★★★★"
+	},
+	tajici_snehulak: {
+		id: "tajici_snehulak", name: "Zákeřný tající sněhulák", title: "Zlomyslná hromádka sněhu s koštětem",
+		category: "frost", hp: 360, speed: 76, damage: 62, attackCadence: "normal", attackInterval: 1.2,
+		radius: 24, mass: 1.7, foodResist: 0.2, poiseResist: 0.35, willpower: 0.3, xp: 7, coinValue: 5,
+		method: "drawMeltingSnowman", palette: "ice", weakness: "Oheň, horké jídlo",
+		strength: "Záludný výpad koštětem a mrazivý dotek; jeho tělo během boje viditelně taje",
+		lore: "Na první pohled rozbředlý sněhulák se opírá o koště a čeká, až se lovec přiblíží. Pak zaútočí.", danger: "★★★☆☆"
+	},
 	mrazovy_skritek: {
 		id: "mrazovy_skritek", name: "Mrazivý skřítek", title: "Drobný duch s širokou jinovatkovou aurou",
 		category: "frost", hp: 38, speed: 66, damage: 4, attackCadence: "slow", attackInterval: 1.8,
