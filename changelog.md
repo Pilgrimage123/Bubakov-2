@@ -4,6 +4,7 @@
 - Rozšířeny spawn pooly první úrovně a seznam klíčových nepřátel.
 - Přidána samostatná pozemní kresba vrány pro plánovaný loot stav.
 - Přepnutí vrány do pozemního stavu a pravidlo 100 PC pro cílení jezinky ještě nejsou napojeny na herní AI/cílení.
+- Opraveno uzavření metody vykreslování, které blokovalo TypeScript parsování.
 
 ## 2026-10-21 — Kanonizace zbraňových výzev, obnova JSX komponent a robustní migrace (ADR 0026)
 
