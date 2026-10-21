@@ -1,3 +1,8 @@
+## 2026-10-21 — Opravy patch výpravy předjaří
+
+- Doplněny české a anglické překlady do bestiáře pro Mrazivou jezinku, Mrazivého obra a Zákeřného tajícího sněhuláka.
+- Obnoven meziboss Vodníček na první úrovni: testy úrovně 0 očekávají plnou konfiguraci bossů.
+
 ## 2026-10-21 — Noví nepřátelé prvního stage
 
 - Přidána Mrazivá jezinka, Mrazivý obr a Zákeřný tající sněhulák včetně kreslení.
