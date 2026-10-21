@@ -2316,7 +2316,8 @@ export class GameEngine {
           let nearestDistSq = Infinity;
           for (let ei = 0; ei < enemies.length; ei++) {
             const enemy = enemies[ei];
-            if (enemy.isDefeated || enemy.dead || p.hitList?.includes(enemy)) continue;
+            // Poloviditelná Mrazivá jezinka nemůže být vybrána jako cíl naváděných střel.
+            if (enemy.isDefeated || enemy.dead || p.hitList?.includes(enemy) || enemy.id === 'jezinka_mraziva') continue;
             const dsq = (enemy.x - p.x) ** 2 + (enemy.y - p.y) ** 2;
             if (dsq < nearestDistSq) {
               nearestDistSq = dsq;
