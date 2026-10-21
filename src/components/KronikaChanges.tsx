@@ -11,6 +11,18 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '21. října 2026',
+    title: 'Kanonizace zbraňových výzev, obnova JSX komponent a čistota kódu (ADR 0026)',
+    summary: 'Kompletní de-transpilace a obnova 7 React komponent do čistého React 19 TSX, sjednocení identifikátorů zbraní na český snake_case dle ADR 0021, Proxy ochrana zbrojnice proti mutacím, bezpečná migrace uložených pozic a harmonizace textů lovců a bestiáře.',
+    items: [
+      '✨ Čisté React 19 JSX komponenty: Všech 7 komponent dříve poškozených transpilačními zbytky (KrejcarIcon, CzechBuchtaIcon, ResetProgressModal, ArsenalModal, HunterUnlockModal, BestiaryModal, WeaponUnlockModal) bylo zrekonstruováno do čistého a typově bezpečného TSX.',
+      '⚔️ Kanonizace zbraňových výzev: Všechny klíče v RAW_WEAPON_UNLOCKS byly sjednoceny na kanonický snake_case a doplněny plnohodnotné folklórní profily pro všechny zbraně od dědečka (Fajfka, Bič, Houser). Arzenál nabízí přesně 18 kanonických zbraní.',
+      '🛡️ Nemutující Proxy rozhraní: Moduly weapons.ts i weaponUnlocks.ts jsou zapouzdřeny v Proxy – Object.keys() striktně vrací 18 kanonických klíčů, zatímco staré aliasy fungují transparentně bez běhových mutací.',
+      '💾 Bezpečná migrace LocalStorage: V migration.ts opraveno ukládání statistik zbraní (weaponKillCounts) – nedochází ke ztrátě progresu při načtení starších uložených pozic.',
+      '📖 Harmonizace lovců a bestiáře: Pasáček a Kostelník mají v textech správně uvedené startovní zbraně a schopnosti, v českém bestiáři sjednocen Pekelný Čert dle glosáře.',
+    ],
+  },
+  {
+    date: '21. října 2026',
     title: 'Bezpečná konsolidace a sloučení větví do hlavní větve (main)',
     summary: 'Kompletní integrace a stabilizace všech lokálních větví do hlavní větve repozitáře za přísného dodržení bezpečnostních záloh. Sjednoceny herní mechaniky, A11y, animace i výkonnostní optimalizace.',
     items: [

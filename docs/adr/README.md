@@ -29,3 +29,4 @@ This directory records architectural decisions made for the project Bubákov.
 | [0023](0023-modularni-lokalizacni-architektura-a-registr-jazyku.md) | Modulární lokalizační architektura, registr jazyků a vrstvený fallback |
 | [0024](0024-fazovane-utocne-animace-a-kinematika-bubaku.md) | Fázované útočné animace a procedurální kinematika bubáků |
 | [0025](0025-odpoutani-dvojcete-minibosse-a-reaktivni-obtiznost.md) | Odpoutání Dvojčete minibosse a reaktivní dynamická obtížnost |
+| [0026](0026-kanonizace-zbranovych-vyzev-a-cistota-kodu.md) | Kanonizace zbraňových výzev, obnova JSX a čistota kódu |

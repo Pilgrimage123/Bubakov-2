@@ -1,3 +1,21 @@
+## 2026-10-21 — Kanonizace zbraňových výzev, obnova JSX komponent a robustní migrace (ADR 0026)
+
+- **Kompletní de-transpilace a obnova 7 React komponent**:
+  - `KrejcarIcon.tsx`, `CzechBuchtaIcon.tsx`, `ResetProgressModal.tsx`, `ArsenalModal.tsx`, `HunterUnlockModal.tsx`, `BestiaryModal.tsx` a `WeaponUnlockModal.tsx` byly očištěny od poškozených transpilačních zbytků (`import_jsx_runtime`, `import_react`) a přepsány do čistého, plně typovaného React 19 JSX/TSX.
+- **Kanonizace zbraňových výzev v `weaponUnlocks.ts` a Proxy ochrana**:
+  - Všechny klíče v `RAW_WEAPON_UNLOCKS` byly sjednoceny na kanonický český `snake_case` dle ADR 0021 (`kovarske_vidle`, `kovana_halapartna`, `dreveny_cep`, `devatero_kviti`, `snehova_koule`, `kynuty_kolac`, `horky_brambor`, `vceli_roj`, `svecena_kropenka`, `cesnekova_topinka`, `kysela_okurka`).
+  - Doplněny plnohodnotné folklórní profily pro 3 dědečkovy zbraně (`bylinkova_fajfka`, `formansky_bic`, `splaseny_houser`) – všech 18 kanonických zbraní ze zbrojnice má nyní kompletní záznam.
+  - Moduly `weapons.ts` i `weaponUnlocks.ts` využívají transparentní nemutující `Proxy`. Funkce `Object.keys()` vrací striktně 18 kanonických klíčů bez znečištění UI a eliminovaly se běhové mutace exportovaných objektů.
+- **Bezpečná migrace LocalStorage (`src/game/migration.ts`)**:
+  - Opravena migrace `weaponKillCounts` tak, aby zachovávala jak historické číselné hodnoty, tak vnořené kill breakdown objekty (`{ [enemyId]: count }`) a bezpečně mapovala staré klíče na kanonická ID.
+  - Výchozí nastavení odemčených zbraní v `App.tsx` převedeno na kanonické klíče (`povidlove_buchty`, `osikovy_prut`, `hromnicka`).
+- **Harmonizace textů lovců a bestiáře v lokalizacích**:
+  - Texty pro Pasáčka a Kostelníka v `cs.ts` a `en.ts` byly sladěny se skutečnou herní výbavou (Pasáček: Povidlové buchty a Dusot stáda; Kostelník: Svěcená kropenka a Farní požehnání).
+  - V českém bestiáři opraven název bosse na kanonické `Pekelný Čert` (v souladu s GLOSSARY a `enemies.ts`).
+- **Architektonický záznam ADR 0026 & testy**:
+  - Zaznamenáno v `docs/adr/0026-kanonizace-zbranovych-vyzev-a-cistota-kodu.md` a `docs/adr/README.md`.
+  - Vytvořena nová testovací sada `tests/weaponUnlocksAndCleanliness.test.ts` (8 nových testů, celkem 431 testů prochází 100% zeleně).
+
 ## 2026-10-21 — Autentické lidové ilustrace Josefa Lady: náhrada emoji, plynulé GPU animace a statický atlas pro 2D Canvas
 
 - **Kompletní náhrada Unicode emoji za lidové ilustrace Josefa Lady napříč React UI i 2D Canvasem**:

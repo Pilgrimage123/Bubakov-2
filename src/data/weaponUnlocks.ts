@@ -46,9 +46,9 @@ function getActiveUnlockingWeapon(meta: any) {
 	}
 	return null;
 }
-var WEAPON_UNLOCKS = {
-	buns: {
-		id: "buns",
+const RAW_WEAPON_UNLOCKS: Record<string, any> = {
+	povidlove_buchty: {
+		id: "povidlove_buchty",
 		realName: "Povidlové buchty",
 		realIcon: "czech_buchta",
 		realType: "food",
@@ -68,8 +68,8 @@ var WEAPON_UNLOCKS = {
 			clueTag: "✅ Výchozí zbraň"
 		}]
 	},
-	cane: {
-		id: "cane",
+	osikovy_prut: {
+		id: "osikovy_prut",
 		realName: "Osikový prut",
 		realIcon: "osikovy_prut",
 		realType: "physical",
@@ -110,8 +110,8 @@ var WEAPON_UNLOCKS = {
 			clueTag: "✅ Výchozí zbraň"
 		}]
 	},
-	pitchfork: {
-		id: "pitchfork",
+	kovarske_vidle: {
+		id: "kovarske_vidle",
 		realName: "Kovářské vidle",
 		realIcon: "🔱",
 		realType: "physical",
@@ -190,8 +190,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	halberd: {
-		id: "halberd",
+	kovana_halapartna: {
+		id: "kovana_halapartna",
 		realName: "Kovaná halapartna",
 		realIcon: "kovana_halapartna",
 		realType: "physical",
@@ -270,8 +270,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	flail: {
-		id: "flail",
+	dreveny_cep: {
+		id: "dreveny_cep",
 		realName: "Dřevěný cep na obilí",
 		realIcon: "🌾",
 		realType: "physical",
@@ -350,9 +350,9 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	herbs: {
-		id: "herbs",
-		realName: "Devatery kvítí",
+	devatero_kviti: {
+		id: "devatero_kviti",
+		realName: "Devatero kvítí",
 		realIcon: "🌿",
 		realType: "nature",
 		defaultUnlocked: false,
@@ -400,7 +400,7 @@ var WEAPON_UNLOCKS = {
 			{
 				minPercent: 25,
 				tierLevel: 1,
-				spoiledName: "D _ _ _ _ _ _ y   k _ _ _ í",
+				spoiledName: "D _ _ _ _ _ _ o   k _ _ _ í",
 				spoiledTitle: "Kouzelný věnec devíti bylin",
 				spoiledDesc: "Devatero svatojánských bylin svázaných do kruhového věnce. Při vymetání rotují kolem těla a odrážejí dotírající bubáky.",
 				spoiledStatsHint: "Nápověda: Kruhové vystřelování rotujících bylinných listů...",
@@ -409,16 +409,16 @@ var WEAPON_UNLOCKS = {
 			{
 				minPercent: 50,
 				tierLevel: 2,
-				spoiledName: "Devatery kv...tí",
+				spoiledName: "Devatero kv...tí",
 				spoiledTitle: "Kruhový štít z vonných listů",
-				spoiledDesc: "Devatery kvítí vytváří rotující vějíř 3 a více listů rozlétajících se ve všech směrech a zahánějících nečisté síly.",
+				spoiledDesc: "Devatero kvítí vytváří rotující vějíř 3 a více listů rozlétajících se ve všech směrech a zahánějících nečisté síly.",
 				spoiledStatsHint: "Základní síla zahnání: 15 • 3 střely ve všech směrech (360°)",
 				clueTag: "🔎 50 %: Znáš kruhový vír i přírodní sílu!"
 			},
 			{
 				minPercent: 75,
 				tierLevel: 3,
-				spoiledName: "Devatery kvítí (Téměř natrháno!)",
+				spoiledName: "Devatero kvítí (Téměř natrháno!)",
 				spoiledTitle: "Posvátný svatojánský věnec",
 				spoiledDesc: "Poslední kvítek třezalky byl přidán do věnce! Ještě několik zahnadých hastrmanů a bylinný kruh bude chránit tvé výpravy.",
 				spoiledStatsHint: "Start: 15 dmg, +4 dmg za úroveň, roste počet listů",
@@ -427,7 +427,7 @@ var WEAPON_UNLOCKS = {
 			{
 				minPercent: 100,
 				tierLevel: 4,
-				spoiledName: "Devatery kvítí",
+				spoiledName: "Devatero kvítí",
 				spoiledTitle: "Voňavý ochranný věnec z bylin",
 				spoiledDesc: "Voňavý ochranný věnec ze svatojánských bylin. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
 				spoiledStatsHint: "Síla zahnání: 15 • Všesměrový kruhový rozstřik listů",
@@ -435,8 +435,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	snowball: {
-		id: "snowball",
+	snehova_koule: {
+		id: "snehova_koule",
 		realName: "Sněhová koule",
 		realIcon: "❄️",
 		realType: "ice",
@@ -520,8 +520,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	kolac: {
-		id: "kolac",
+	kynuty_kolac: {
+		id: "kynuty_kolac",
 		realName: "Kynutý koláč",
 		realIcon: "kynuty_kolac",
 		realType: "food",
@@ -600,8 +600,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	potato: {
-		id: "potato",
+	horky_brambor: {
+		id: "horky_brambor",
 		realName: "Horký brambor z popela",
 		realIcon: "🥔",
 		realType: "fire",
@@ -680,8 +680,8 @@ var WEAPON_UNLOCKS = {
 			}
 		]
 	},
-	bees: {
-		id: "bees",
+	vceli_roj: {
+		id: "vceli_roj",
 		realName: "Včelí roj z úlu",
 		realIcon: "🐝",
 		realType: "nature",
@@ -778,20 +778,50 @@ var WEAPON_UNLOCKS = {
 			clueTag:"✅ Plně odemčeno ve zbrojnici!"
 		}]
 	},
-	"cesnekova-topinka": {
-		id:"cesnekova-topinka", realName:"Česneková topinka", realIcon:"cesnekova_topinka", realType:"garlic", defaultUnlocked:true,
-		challengeTitle:"Smradlavá obranná zóna", challengeShortDesc:"Česneková topinka je odemčena v arzenálu.",
-		challengeLongDesc:"Permanentní aura z česnekové topinky zraňuje nepřátele (5 dmg / 0,35 s), odhazuje je a zpomaluje o 15 %.",
-		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Česneková topinka",spoiledTitle:"Smradlavá aura",spoiledDesc:"Smradlavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.",spoiledStatsHint:"Aura • Dmg: 5 každých 0,35 s • Odhození 300 • Zpomalení 15 %",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+	cesnekova_topinka: {
+		id: "cesnekova_topinka",
+		realName: "Česneková topinka",
+		realIcon: "cesnekova_topinka",
+		realType: "garlic",
+		defaultUnlocked: true,
+		challengeTitle: "Smradlavá obranná zóna",
+		challengeShortDesc: "Česneková topinka je odemčena v arzenálu.",
+		challengeLongDesc: "Permanentní aura z česnekové topinky zraňuje nepřátele (5 dmg / 0,35 s), odhazuje je a zpomaluje o 15 %.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Česneková topinka",
+			spoiledTitle: "Smradlavá aura",
+			spoiledDesc: "Smradlavá aura z česnekové topinky. Zraňuje dotírající nepřátele v okruhu 110 px, odhazuje je a zpomaluje o 15 %.",
+			spoiledStatsHint: "Aura • Dmg: 5 každých 0,35 s • Odhození 300 • Zpomalení 15 %",
+			clueTag: "✅ Plně odemčeno ve zbrojnici!"
+		}]
 	},
-	"kysela-okurka": {
-		id:"kysela-okurka", realName:"Kyselá okurka", realIcon:"kysela_okurka", realType:"pickle", defaultUnlocked:true,
-		challengeTitle:"Nakládaný chaos", challengeShortDesc:"Kyselá okurka je odemčena v arzenálu.",
-		challengeLongDesc:"Střílí kyselé okurky, které skládají až tři stacky Přejedení a zvyšují zranitelnost cíle.",
-		targetEnemies:[], maxCount:0, milestones:[{minPercent:0,tierLevel:4,spoiledName:"Kyselá okurka",spoiledTitle:"Projektil s Přejedením",spoiledDesc:"Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.",spoiledStatsHint:"Projectile • stacky • Přejedení",clueTag:"✅ Plně odemčeno ve zbrojnici!"}]
+	kysela_okurka: {
+		id: "kysela_okurka",
+		realName: "Kyselá okurka",
+		realIcon: "kysela_okurka",
+		realType: "pickle",
+		defaultUnlocked: true,
+		challengeTitle: "Nakládaný chaos",
+		challengeShortDesc: "Kyselá okurka je odemčena v arzenálu.",
+		challengeLongDesc: "Střílí kyselé okurky, které skládají až tři stacky Přejedení a zvyšují zranitelnost cíle.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Kyselá okurka",
+			spoiledTitle: "Projektil s Přejedením",
+			spoiledDesc: "Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.",
+			spoiledStatsHint: "Projectile • stacky • Přejedení",
+			clueTag: "✅ Plně odemčeno ve zbrojnici!"
+		}]
 	},
-	holywater: {
-		id: "holywater",
+	svecena_kropenka: {
+		id: "svecena_kropenka",
 		realName: "Kropenka se svěcenou vodou",
 		realIcon: "✨",
 		realType: "holy",
@@ -879,8 +909,94 @@ var WEAPON_UNLOCKS = {
 				clueTag: "✅ Plně odemčeno ve zbrojnici!"
 			}
 		]
+	},
+	bylinkova_fajfka: {
+		id: "bylinkova_fajfka",
+		realName: "Bylinková fajfka",
+		realIcon: "bylinkova_fajfka",
+		realType: "aura",
+		defaultUnlocked: true,
+		challengeTitle: "Dědečkův voňavý bylinný dým",
+		challengeShortDesc: "Hliněná fajfka vyfukující léčivý a omamný oblak dýmu.",
+		challengeLongDesc: "Dědečkova oblíbená hliněná fajfka napěchovaná sušenými bylinkami z Hrusic. Vyfukuje oblak dýmu, který zraňuje běsy, zpomaluje jejich pohyb i útok a léčí lovce.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Bylinková fajfka",
+			spoiledTitle: "Dědečkova hliněná fajfka s bylinkami",
+			spoiledDesc: "Dědečkova fajfka vyfukuje uklidňující oblak dýmu (110 px). Zraňuje nepřátele, zpomaluje jejich krok a obnovuje Kuráž.",
+			spoiledStatsHint: "Aura • Dmg: 6 / 0,5 s • Léčení: +1,2 Kuráže / s • Zpomalení: 35 %",
+			clueTag: "✅ Výbava od dědečka"
+		}]
+	},
+	formansky_bic: {
+		id: "formansky_bic",
+		realName: "Formanský bič",
+		realIcon: "whip",
+		realType: "physical",
+		defaultUnlocked: true,
+		challengeTitle: "Práskající kožený bič hrusických formanů",
+		challengeShortDesc: "Prásknutí bičem přeruší nápřah bubáků, ignoruje úhyb a přitáhne kořist.",
+		challengeLongDesc: "Pravý pletený formanský bič z hovězí kůže. Rázné prásknutí protne vzduch, omráčí a přeruší nápřah bubáků v přímém směru a přitáhne odhozené předměty a krejcary.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Formanský bič",
+			spoiledTitle: "Pletený kožený bič",
+			spoiledDesc: "Práskající formanský bič ignoruje úhyb monster, ruší jejich nápřah a strhává kořist v dráze švihu blíže k lovci.",
+			spoiledStatsHint: "Poškození: 36 • Kadence: 0,9 s • Přerušení nápřahu • Přitahování kořisti",
+			clueTag: "✅ Výbava od dědečka"
+		}]
+	},
+	splaseny_houser: {
+		id: "splaseny_houser",
+		realName: "Splašený houser",
+		realIcon: "gander",
+		realType: "companion",
+		defaultUnlocked: true,
+		challengeTitle: "Bílý houser z hrusické návsi",
+		challengeShortDesc: "Rozlícený houser pronásleduje strašidla, štípe je do lýtek a vytřásá krejcary.",
+		challengeLongDesc: "Rozčilený bílý houser s nataženým krkem a hlasitým syčením. Neohroženě útočí na jakéhokoliv bubáka, štípe jej do lýtek, ruší jeho útok a vytřásá z něj krejcary.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Splašený houser",
+			spoiledTitle: "Bojový vesnický houser",
+			spoiledDesc: "Houser neúnavně doráží na strašidla na bojišti, uštědřuje štípance, přerušuje nepřátelský útok a občas z nepřátel vytřese krejcar navíc.",
+			spoiledStatsHint: "Společník • Rychlé štípání • Přerušení útoku • Kořist navíc",
+			clueTag: "✅ Výbava od dědečka"
+		}]
 	}
 };
+
+const WEAPON_UNLOCKS: Record<string, any> = new Proxy(RAW_WEAPON_UNLOCKS, {
+	get(target, prop: string | symbol) {
+		if (typeof prop === 'string') {
+			if (prop in target) return target[prop];
+			const canonical = WEAPON_LEGACY_ALIASES[prop];
+			if (canonical && canonical in target) return target[canonical];
+		}
+		return (target as any)[prop];
+	},
+	has(target, prop: string | symbol) {
+		if (typeof prop === 'string') {
+			return prop in target || (prop in WEAPON_LEGACY_ALIASES && WEAPON_LEGACY_ALIASES[prop] in target);
+		}
+		return prop in target;
+	},
+	ownKeys(target) {
+		return Reflect.ownKeys(target);
+	},
+	getOwnPropertyDescriptor(target, prop) {
+		return Reflect.getOwnPropertyDescriptor(target, prop);
+	}
+});
 
 const WEAPON_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
 
@@ -1038,12 +1154,6 @@ function getWeaponProgress(id: string, meta: any) {
 	const res = computeWeaponProgress(id, meta);
 	metaCache.set(id, res);
 	return res;
-}
-
-for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {
-	if ((WEAPON_UNLOCKS as any)[canonical] && !(WEAPON_UNLOCKS as any)[alias]) {
-		(WEAPON_UNLOCKS as any)[alias] = (WEAPON_UNLOCKS as any)[canonical];
-	}
 }
 
 export { LOCKED_WEAPONS_ORDER, getPreviousWeapon, isWeaponUnlocked, canWeaponUnlock, getActiveUnlockingWeapon, WEAPON_UNLOCKS, getWeaponProgress };

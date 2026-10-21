@@ -31,7 +31,14 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
   if (parsed.weaponKillCounts && typeof parsed.weaponKillCounts === 'object') {
     for (const [key, val] of Object.entries(parsed.weaponKillCounts)) {
       const canonical = toCanonicalWeaponId(key);
-      migratedWeaponKillCounts[canonical] = (migratedWeaponKillCounts[canonical] || 0) + (typeof val === 'number' ? val : 0);
+      if (typeof val === 'number') {
+        migratedWeaponKillCounts[canonical] = (typeof migratedWeaponKillCounts[canonical] === 'number' ? migratedWeaponKillCounts[canonical] : 0) + val;
+      } else if (val && typeof val === 'object') {
+        migratedWeaponKillCounts[canonical] = {
+          ...(typeof migratedWeaponKillCounts[canonical] === 'object' ? migratedWeaponKillCounts[canonical] : {}),
+          ...val
+        };
+      }
     }
   }
 

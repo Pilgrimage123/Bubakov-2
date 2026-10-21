@@ -46,7 +46,7 @@ export function getWeaponDamage(player: any, baseDamage: number) {
   return baseDamage * tulakMult * (player?.damageMultiplier || 1) * zoufalaMult;
 }
 
-var WEAPONS = {
+const CANONICAL_WEAPONS: Record<string, any> = {
 	valecnice: {
 		id: 'valecnice', name: 'Válečnice', type: 'valecnice', icon: 'valecnice', baseDmg: 32, baseCd: 0.75,
 		desc: 'Rázná venkovská paní s bukovým válečkem (+40 % velikost). Obíhá lovce ve velkém kruhu (115 px), má dosah 58 px, udílí 1,2s omráčení, důrazné odhození (520) a ignoruje 20 % odolností. V zóně o 15 % větší než orbit navíc zpomaluje nepřátele o 25 % (odolnost dle Vůle).',
@@ -798,10 +798,27 @@ export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	splaseny_houser: 'splaseny_houser',
 };
 
-for (const [alias, canonical] of Object.entries(WEAPON_LEGACY_ALIASES)) {
-	if ((WEAPONS as any)[canonical] && !(WEAPONS as any)[alias]) {
-		(WEAPONS as any)[alias] = (WEAPONS as any)[canonical];
+const WEAPONS: Record<string, any> = new Proxy(CANONICAL_WEAPONS, {
+	get(target, prop: string | symbol) {
+		if (typeof prop === 'string') {
+			if (prop in target) return target[prop];
+			const canonical = WEAPON_LEGACY_ALIASES[prop];
+			if (canonical && canonical in target) return target[canonical];
+		}
+		return (target as any)[prop];
+	},
+	has(target, prop: string | symbol) {
+		if (typeof prop === 'string') {
+			return prop in target || (prop in WEAPON_LEGACY_ALIASES && WEAPON_LEGACY_ALIASES[prop] in target);
+		}
+		return prop in target;
+	},
+	ownKeys(target) {
+		return Object.keys(target);
+	},
+	getOwnPropertyDescriptor(target, prop) {
+		return Object.getOwnPropertyDescriptor(target, prop);
 	}
-}
+});
 
 export { WEAPONS };

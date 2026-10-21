@@ -3085,7 +3085,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       villageStoryRead: {},
       highestSurviveTime: 0,
       unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { buns: true, cane: true, hromnicka: true },
+      unlockedWeapons: { povidlove_buchty: true, osikovy_prut: true, hromnicka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
       selectedLevel: 0,
@@ -10461,7 +10461,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (wDef && wDef.targetEnemies.some((e) => e.id === this.id)) {
               const prevWeaponCounts = nextMeta.weaponKillCounts || {};
               const curWeaponKills = {
-                ...(prevWeaponCounts[activeWeaponId] || (activeWeaponId === 'pitchfork' ? curMeta.bestiaryKills || {} : {})),
+                ...(prevWeaponCounts[activeWeaponId] || (activeWeaponId === 'kovarske_vidle' || activeWeaponId === 'pitchfork' ? curMeta.bestiaryKills || {} : {})),
               };
               curWeaponKills[this.id] = (curWeaponKills[this.id] || 0) + 1;
 
@@ -10474,7 +10474,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const nextWeaponProg = getWeaponProgress(activeWeaponId, nextMeta);
               if (nextWeaponProg.isUnlocked) {
                 const newlyUnlockedWeapons = {
-                  ...(curMeta.unlockedWeapons || { buns: true, cane: true }),
+                  ...(curMeta.unlockedWeapons || { povidlove_buchty: true, osikovy_prut: true, hromnicka: true }),
                   [activeWeaponId]: true,
                 };
                 nextMeta = { ...nextMeta, unlockedWeapons: newlyUnlockedWeapons };

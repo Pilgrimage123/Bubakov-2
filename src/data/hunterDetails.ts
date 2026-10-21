@@ -48,7 +48,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 180,
     pickupRadius: 26,
     luck: 85,
-    weapon: 'Devatery kvítí – bylinná zbraň, která automaticky odhání dotírající bubáky.',
+    weapon: 'Devatero kvítí – bylinná zbraň, která automaticky odhání dotírající bubáky.',
     passive: 'Bylinný záblesk jednou za 9 s vyléčí až 18 % maximální Kuráže (léčení nepřekročí maximum) a na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a udělí nezranitelnost. Základní dosah magnetu je trvale snížen o 75 % (přibližně 26 px před bonusy vesnice a usnadnění).',
     ability: 'Očistné kadidlo: obnoví až 55 Kuráže, přidá 30 bodů dočasného štítu a na 1,8 s poskytne nezranitelnost. V okruhu 480 px způsobí 120 přírodního poškození, nasákne a zpomalí bubáky na 4,5 s.',
     cooldownSeconds: 30,
