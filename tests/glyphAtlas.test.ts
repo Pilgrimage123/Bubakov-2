@@ -4,6 +4,9 @@ import {
   getGlobalGlyphAtlas,
   resetGlobalGlyphAtlas,
   drawGlyphText,
+  splitTextAndEmojis,
+  isSupportedCanvasEmoji,
+  SUPPORTED_CANVAS_EMOJIS,
 } from '../src/render/glyphAtlas';
 import { createMockCanvasContext } from './helpers/mockCanvas';
 
@@ -152,5 +155,63 @@ describe('Bitmap Glyph Cache for Combat Numbers (Ticket #32)', () => {
 
     resetGlobalGlyphAtlas();
     expect(getGlobalGlyphAtlas().wordStampCache.size).toBe(0);
+  });
+
+  it('splitTextAndEmojis properly segments plain text, emojis, and ZWJ sequences', () => {
+    const plain = splitTextAndEmojis('Živoucí hvozd');
+    expect(plain).toEqual([{ isEmoji: false, token: 'Živoucí hvozd' }]);
+
+    const mixed = splitTextAndEmojis('⚡ 75 % ODHALENO');
+    expect(mixed).toEqual([
+      { isEmoji: true, token: '⚡' },
+      { isEmoji: false, token: ' 75 % ODHALENO' },
+    ]);
+
+    const complex = splitTextAndEmojis('VÁLKA! ⚔️ A OHEŇ 🔥!');
+    expect(complex).toEqual([
+      { isEmoji: false, token: 'VÁLKA! ' },
+      { isEmoji: true, token: '⚔' },
+      { isEmoji: false, token: ' A OHEŇ ' },
+      { isEmoji: true, token: '🔥' },
+      { isEmoji: false, token: '!' },
+    ]);
+
+    const crowZWJ = splitTextAndEmojis('Hejno vran 🐦‍⬛ vánice');
+    expect(crowZWJ).toEqual([
+      { isEmoji: false, token: 'Hejno vran ' },
+      { isEmoji: true, token: '🐦‍⬛' },
+      { isEmoji: false, token: ' vánice' },
+    ]);
+  });
+
+  it('WordStampCache.getOrCreate draws static mini-icons and never calls strokeText or fillText with emoji', () => {
+    const cache = atlas.wordStampCache;
+    const stamp = cache.getOrCreate('⚡ 75 % ODHALENO', 18, '#FEF3C7');
+
+    expect(stamp).toBeDefined();
+    expect(stamp.width).toBeGreaterThan(0);
+    expect(stamp.height).toBeGreaterThan(0);
+
+    // Verify stamp context was not called with the raw emoji
+    const ctxCalls = (stamp.ctx.fillText as any)?.mock?.calls || [];
+    for (const call of ctxCalls) {
+      expect(call[0]).not.toContain('⚡');
+      expect(call[0]).toBe(' 75 % ODHALENO');
+    }
+  });
+
+  it('supports all required canvas emojis including newly added village symbols', () => {
+    const required = [
+      '⚙', '⚔', '🗡', '🧊', '💤', '🔱', '⛪', '☀', '🧺', '🌾',
+      '✒', '🪦', '💧', '🐸', '⛓', '🦷', '🎒', '🪓', '🎯', '🥐',
+      '🎁', '🏺', '🕊', '🍯', '🖍', '♫', '🎵', '🎶', '🔊', '📯',
+      '🔨', '🗿', '🌱', '🍂', '🍁', '🐦‍⬛', '🐦', '🦁', '🌙', '🔘',
+      '✦', '♥', '♦', '♠', '♣', '🌨', '🏔', '✝', '⚠', '🚨', '🍀', '🍖', '🔓'
+    ];
+
+    for (const emoji of required) {
+      expect(isSupportedCanvasEmoji(emoji)).toBe(true);
+      expect(SUPPORTED_CANVAS_EMOJIS).toContain(emoji);
+    }
   });
 });

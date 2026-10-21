@@ -81,7 +81,7 @@ export const OsikovyPrutIcon: React.FC<OsikovyPrutIconProps> = ({
       {/* Ground shadow beneath the stick */}
       <ellipse cx="60" cy="84" rx="48" ry="5" fill="url(#opGroundShadow)" />
 
-      <g id="osikovy-prut-group">
+      <g id="osikovy-prut-group" className="lada-anim-rock">
         {/* Core stem body - natural S-curve tapering from base (12.8, 80.2) to tip (110, 11) */}
         <path
           d="M 12.8 80.2
@@ -213,8 +213,8 @@ export const OsikovyPrutIcon: React.FC<OsikovyPrutIconProps> = ({
         </g>
 
         {/* Optional Soaked Cane (Mokrý prut) water droplets & dew shimmer */}
-        {soaked && (
-          <g id="water-droplets">
+        {soaked ? (
+          <g id="water-droplets" className="lada-anim-glint">
             <ellipse cx="38" cy="71" rx="1.8" ry="2.4" fill="url(#opWaterDrop)" />
             <circle cx="37.5" cy="70.2" r="0.6" fill="#FFFFFF" opacity="0.9" />
 
@@ -226,6 +226,10 @@ export const OsikovyPrutIcon: React.FC<OsikovyPrutIconProps> = ({
 
             <ellipse cx="109" cy="14" rx="1.2" ry="1.6" fill="url(#opWaterDrop)" />
             <circle cx="108.6" cy="13.5" r="0.4" fill="#FFFFFF" opacity="0.9" />
+          </g>
+        ) : (
+          <g className="lada-anim-glint">
+            <circle cx="108.5" cy="12" r="1.2" fill="#FEF08A" />
           </g>
         )}
       </g>

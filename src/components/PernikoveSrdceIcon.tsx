@@ -84,7 +84,7 @@ export const PernikoveSrdceIcon: React.FC<PernikoveSrdceIconProps> = ({
         </radialGradient>
       </defs>
 
-      <g filter="url(#psDropShadow)">
+      <g filter="url(#psDropShadow)" className="lada-anim-float">
         {/* HLAVNÍ PERNÍKOVÝ KORPUS SE ZVRÁSNĚNÝM OKRAJEM */}
         <path
           d="M 100,48
@@ -327,12 +327,14 @@ export const PernikoveSrdceIcon: React.FC<PernikoveSrdceIconProps> = ({
         />
 
         {/* Zářivá třpytivá hvězdička na rohu zrcadla */}
-        <path
-          d="M 82,82 L 84,86 L 88,88 L 84,90 L 82,94 L 80,90 L 76,88 L 80,86 Z"
-          fill="#FFFFFF"
-          opacity="0.9"
-        />
-        <circle cx="82" cy="88" r="1.2" fill="#FEF08A" />
+        <g className="lada-anim-glint">
+          <path
+            d="M 82,82 L 84,86 L 88,88 L 84,90 L 82,94 L 80,90 L 76,88 L 80,86 Z"
+            fill="#FFFFFF"
+            opacity="0.9"
+          />
+          <circle cx="82" cy="88" r="1.2" fill="#FEF08A" />
+        </g>
       </g>
     </svg>
   );

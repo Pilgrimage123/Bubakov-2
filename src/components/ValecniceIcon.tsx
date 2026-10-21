@@ -41,11 +41,15 @@ export const ValecniceIcon: React.FC<{ size?: string | number; className?: strin
       <circle cx="32" cy="32" r="27.5" fill="none" stroke="#D97706" strokeWidth="1" strokeDasharray="3 2" />
 
       {/* Motion / Whoosh lines for rolling pin strike */}
-      <path d="M12 14 C16 9 28 8 36 10" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" opacity="0.85" />
-      <path d="M15 19 C20 15 29 14 35 15" fill="none" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
+      <g className="lada-anim-dust">
+        <path d="M12 14 C16 9 28 8 36 10" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" opacity="0.85" />
+        <path d="M15 19 C20 15 29 14 35 15" fill="none" stroke="#FDE68A" strokeWidth="1.5" strokeLinecap="round" />
+      </g>
 
-      {/* Fluttering Scarf Knot Tails behind head */}
-      <path d="M42 20 C49 18 53 22 55 24 C52 26 47 25 44 23 Z" fill="#DC2626" stroke="#26150C" strokeWidth="1.5" />
+      {/* Animated Válečnice figure */}
+      <g className="lada-anim-rock">
+        {/* Fluttering Scarf Knot Tails behind head */}
+        <path d="M42 20 C49 18 53 22 55 24 C52 26 47 25 44 23 Z" fill="#DC2626" stroke="#26150C" strokeWidth="1.5" />
       <path d="M41 22 C48 24 53 27 54 31 C50 30 45 27 42 25 Z" fill="#B91C1C" stroke="#26150C" strokeWidth="1.5" />
 
       {/* Traditional Folk Red Skirt */}
@@ -145,6 +149,7 @@ export const ValecniceIcon: React.FC<{ size?: string | number; className?: strin
         {/* Top Handle */}
         <path d="M17 3 L17 8" stroke="#78350F" strokeWidth="3" strokeLinecap="round" />
         <circle cx="17" cy="3" r="1.8" fill="#B45309" stroke="#26150C" strokeWidth="1" />
+      </g>
       </g>
     </svg>
   );

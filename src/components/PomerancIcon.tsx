@@ -73,8 +73,10 @@ export const PomerancIcon: React.FC<PomerancIconProps> = ({
       {/* Spodní stín */}
       <ellipse cx="100" cy="172" rx="72" ry="20" fill="url(#pomShadow)" />
 
-      {/* Dřevitá stopka */}
-      <path
+      {/* Main animated fruit body */}
+      <g className="lada-anim-float">
+        {/* Dřevitá stopka */}
+        <path
         d="M 100 48 Q 98 28 88 18 Q 95 16 104 22 Q 106 32 103 48 Z"
         fill="url(#pomStem)"
         stroke="#1E150B"
@@ -175,18 +177,21 @@ export const PomerancIcon: React.FC<PomerancIconProps> = ({
         opacity="0.55"
       />
 
-      {/* Růžice u stopky (kališní lístky) */}
-      <path
-        d="M 96 46 Q 100 42 104 46 Q 108 50 102 52 Q 96 50 96 46 Z"
-        fill="#14532D"
-        stroke="#1E150B"
-        strokeWidth="2"
-      />
+        {/* Růžice u stopky (kališní lístky) */}
+        <path
+          d="M 96 46 Q 100 42 104 46 Q 108 50 102 52 Q 96 50 96 46 Z"
+          fill="#14532D"
+          stroke="#1E150B"
+          strokeWidth="2"
+        />
+      </g>
 
       {/* Zlaté záření vzácného orientálního ovoce */}
-      <circle cx="50" cy="58" r="3" fill="#FDE047" opacity="0.8" />
-      <circle cx="158" cy="74" r="2.5" fill="#FDE047" opacity="0.8" />
-      <circle cx="152" cy="148" r="2" fill="#FDE047" opacity="0.7" />
+      <g className="lada-anim-glint">
+        <circle cx="50" cy="58" r="3" fill="#FDE047" opacity="0.8" />
+        <circle cx="158" cy="74" r="2.5" fill="#FDE047" opacity="0.8" />
+        <circle cx="152" cy="148" r="2" fill="#FDE047" opacity="0.7" />
+      </g>
     </svg>
   );
 };

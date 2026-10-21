@@ -1,3 +1,20 @@
+## 2026-10-21 — Autentické lidové ilustrace Josefa Lady: náhrada emoji, plynulé GPU animace a statický atlas pro 2D Canvas
+
+- **Kompletní náhrada Unicode emoji za lidové ilustrace Josefa Lady napříč React UI i 2D Canvasem**:
+  - **React UI & Modaly**:
+    - Všechny dosud statické dedikované ikony (`KrvaveJelitoIcon`, `HunterConsumableIcon`, `OpravdovaKurazIcon`, `OsikovyPrutIcon`, `PekelnyPokladIcon`, `PernikoveSrdceIcon`, `PomerancIcon`, `ValecniceIcon`) byly doplněny o Two-Layer Motion Design (hlavní pohupování/kymácení těla + mikroanimace jako stoupající pára `ladaSteam`, záblesky jisker `ladaGlint`, pěnivý příboj a víření prachu).
+    - V `LadaCustomIcons.tsx` vytvořeno 12 nových animovaných ikon (`LadaBookIcon`, `LadaChestIcon`, `LadaSeedlingIcon`, `LadaAutumnLeafIcon`, `LadaTombstoneIcon`, `LadaDragonIcon`, `LadaCrowIcon`, `LadaLionIcon`, `LadaMoonIcon`, `LadaSleepIcon`, `LadaPauseIcon`, `LadaStatsLedgerIcon`) a rozšířena směrová hospodská šipka.
+    - `GameIcon.tsx` nově mapuje jak kanonická česká ID (včetně všech dědečkových dobrot a zbraní), tak surové emoji znaky na kreslené animované Lada SVG komponenty bez lagů (čisté CSS klíčové snímky `transform` a `opacity`).
+    - V `App.tsx` (`openChestSequence`, výstražné lišty) a `ControlsModal.tsx` nahrazeny surové řetězce a emoji za kanonické ikony `<GameIcon>`.
+  - **2D Canvas (`glyphAtlas.ts`, `DamageText`, portréty a aréna)**:
+    - **Striktní pravidlo**: Canvasové ikony nejsou animované a zachovávají 100% bezalokační snímkovou smyčku.
+    - **Oprava WordStampCache**: Vyřešena kritická chyba, kdy `WordStampCache.getOrCreate` volalo surový `fillText`, čímž se bojové texty s emoji rasterizovaly přes moderní systémový font OS. Zavedena graphemová segmentace přes `splitTextAndEmojis` (`Intl.Segmenter` s fallbackem). Textové úseky se renderují Eczar serifem, zatímco všechny emoji tokeny se do bitmapy razítka kreslí jako statické miniatury Josefa Lady (`drawStaticMiniIcon`).
+    - **Rozšíření atlasu o 40+ lidových symbolů**: Do `SUPPORTED_CANVAS_EMOJIS` a `drawStaticMiniIcon` doplněny miniatury pro všechny bojové a herní stavy: mlýnské kolo `⚙`, zkřížené meče `⚔`, dýka `🗡`, ledová kra `🧊`, chrápání `💤`, vidle `🔱`, kaplička `⛪`, slunce `☀`, nůše `🧺`, klas pšenice `🌾`, husí brk `✒`, náhrobek `🪦`, kapka `💧`, vodníkova žába `🐸`, řetězy `⛓`, zub `🦷`, ruksak `🎒`, sekyra `🪓`, terč `🎯`, rohlík `🥐`, dárek `🎁`, džbán `🏺`, holubice `🕊`, povidla/med `🍯`, křída `🖍`, nota `♫`/`🎵`/`🎶`, polnice/trouba `🔊`/`📯`, kladivo `🔨`, smírčí kámen `🗿`, sazenička `🌱`, podzimní listí `🍂`/`🍁`, vrána `🐦‍⬛`, český lev `🦁`, půlměsíc `🌙`, knoflík `🔘`, hvězda `✦`, karetní barvy `♥`/`♦`/`♠`/`♣`, vánice `🌨`, hora `🏔`, boží muka `✝`, výstraha `⚠`/`🚨`, čtyřlístek `🍀`, kýta `🍖` a otevřený zámek `🔓`.
+    - Ve `src/render/ladaRenderer.ts` nahrazeny přímé `fillText` za `drawGlyphText` a vyčištěny texty bublin.
+- **Testovací pokrytí & integrita projektu**:
+  - V `tests/glyphAtlas.test.ts` přidány testy pro graphemovou segmentaci, izolaci ZWJ sekvencí (`🐦‍⬛`), ověření všech 70+ canvasových emoji a verifikaci, že `WordStampCache` nikdy nevolá `fillText` na emoji tokeny.
+  - Všechny kontroly `npm run check` (TypeScript, ESLint, 423 unit testů ve 40 sadách i Vite production build) prošly 100% čistě bez regresí.
+
 ## 2026-10-21 — Radikální optimalizace výkonu: eliminace 60FPS skrytých průchodů, Frame-Level kešování a Adaptivní Governor
 
 - **Eliminace skrytých 60FPS průchodů polem `engine.enemies`**:

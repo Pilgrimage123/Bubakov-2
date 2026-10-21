@@ -83,10 +83,12 @@ export const KrvaveJelitoIcon: React.FC<KrvaveJelitoIconProps> = ({
       {/* Ground Shadow */}
       <ellipse cx="60" cy="74" rx="48" ry="11" fill="url(#jelitoShadow)" />
 
-      {/* Wooden skewers (špejle) through left and right ends */}
-      {/* Left skewer */}
-      <line
-        x1="11"
+      {/* Main animated body */}
+      <g className="lada-anim-float">
+        {/* Wooden skewers (špejle) through left and right ends */}
+        {/* Left skewer */}
+        <line
+          x1="11"
         y1="41"
         x2="27"
         y2="75"
@@ -286,6 +288,15 @@ export const KrvaveJelitoIcon: React.FC<KrvaveJelitoIconProps> = ({
         strokeLinecap="round"
         opacity="0.75"
       />
+      </g>
+
+      {/* Fresh hot steam wisps rising from freshly scalded jelito */}
+      <g className="lada-anim-steam-1" fill="none" stroke="#FFFDF7" strokeWidth="2.2" strokeLinecap="round" opacity="0.8">
+        <path d="M 46 18 C 43 13, 48 9, 45 4" />
+      </g>
+      <g className="lada-anim-steam-2" fill="none" stroke="#FFFDF7" strokeWidth="2.0" strokeLinecap="round" opacity="0.7">
+        <path d="M 68 17 C 72 12, 67 8, 71 3" />
+      </g>
     </svg>
   );
 };

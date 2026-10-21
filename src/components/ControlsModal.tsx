@@ -261,8 +261,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#166534' }}>
-                  ✨ Blesková volba milníků zbraní v boji
+                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <GameIcon icon="sparkles" size={20} /> Blesková volba milníků zbraní v boji
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <span className="keycap keycap-accent">1</span>

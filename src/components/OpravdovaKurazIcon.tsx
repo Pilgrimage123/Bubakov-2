@@ -81,8 +81,10 @@ export const OpravdovaKurazIcon: React.FC<OpravdovaKurazIconProps> = ({
 				transform="translate(1.5, 2.5)"
 			/>
 
-			{/* Forearm Flesh (Ruka vystupující z rukávu) */}
-			<path
+			{/* Main animated fist body */}
+			<g className="lada-anim-pulse">
+				{/* Forearm Flesh (Ruka vystupující z rukávu) */}
+				<path
 				d="M 34 52 C 39 44, 44 38, 48 30 L 57 26 C 66 32, 69 44, 63 56 C 57 65, 48 68, 38 68 Z"
 				fill="url(#kurazSkin)"
 			/>
@@ -279,6 +281,12 @@ export const OpravdovaKurazIcon: React.FC<OpravdovaKurazIconProps> = ({
 				strokeLinecap="round"
 				opacity="0.8"
 			/>
+			</g>
+
+			{/* Courage star glint */}
+			<g className="lada-anim-glint">
+				<circle cx="56" cy="18" r="1.8" fill="#FEF08A" />
+			</g>
 		</svg>
 	);
 };

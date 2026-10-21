@@ -113,6 +113,18 @@ import {
   LadaRehtackaIcon,
   LadaBoneButtonIcon,
   LadaBarunkaIcon,
+  LadaBookIcon,
+  LadaChestIcon,
+  LadaSeedlingIcon,
+  LadaAutumnLeafIcon,
+  LadaTombstoneIcon,
+  LadaDragonIcon,
+  LadaCrowIcon,
+  LadaLionIcon,
+  LadaMoonIcon,
+  LadaSleepIcon,
+  LadaPauseIcon,
+  LadaStatsLedgerIcon,
 } from './LadaCustomIcons';
 
 export interface GameIconProps {
@@ -223,25 +235,35 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
 
   // 2. Metaphorical Czech Village icons & Emoji Interceptions
   // Settings & Mills
-  if (key === '⚙' || key === 'settings' || key === 'mlyn' || key === 'mill' || key === 'gear') {
+  if (key === '⚙' || key === 'settings' || key === 'mlyn' || key === 'mill' || key === 'gear' || key === 'cog') {
     return <LadaSettingsCogIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Combat Texts, Scrolls, Chronicles
-  if (key === '💬' || key === '📜' || key === 'combat_text' || key === 'scroll' || key === 'speech' || key === 'chronicle') {
+  if (key === '💬' || key === '📜' || key === 'combat_text' || key === 'scroll' || key === 'speech' || key === 'chronicle' || key === 'chat') {
     return <LadaCombatTextIcon size={size} className={className} style={style} {...props} />;
   }
 
+  // Bestiary book & fairytale books
+  if (key === '📖' || key === 'book' || key === 'kniha' || key === 'bestiary' || key === 'bestiar') {
+    return <LadaBookIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Painted chest & rewards
+  if (key === '🎁' || key === 'chest' || key === 'truhla' || key === 'malovana_truhla' || key === 'poklad') {
+    return <LadaChestIcon size={size} className={className} style={style} {...props} />;
+  }
+
   // Padlocks & Security
-  if (key === '🔒' || key === 'lock' || key === 'locked') {
+  if (key === '🔒' || key === 'lock' || key === 'locked' || key === 'padlock') {
     return <LadaPadlockIcon size={size} className={className} style={style} {...props} />;
   }
-  if (key === '🔓' || key === 'unlocked' || key === 'unlock') {
+  if (key === '🔓' || key === 'unlocked' || key === 'unlock' || key === 'padlock_open') {
     return <LadaOpenPadlockIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Magnifiers & Reveal Tiers
-  if (key === '🔎' || key === '🔍' || key === 'magnifier' || key === 'reveal' || key === 'search') {
+  if (key === '🔎' || key === '🔍' || key === 'magnifier' || key === 'reveal' || key === 'search' || key === 'eye' || key === 'oko' || key === '👁') {
     return <LadaMagnifierIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -251,7 +273,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Toulavé boty & walking
-  if (key === '👢' || key === '🥾' || key === 'toulave_boty' || key === 'boots' || key === 'skorne' || key === 'walk' || key === '🚶' || key === 'chuze' || key === 'krok' || key === '🏃' || key === 'run' || key === 'beh') {
+  if (key === '👢' || key === '🥾' || key === 'toulave_boty' || key === 'sedmimile_krpce' || key === 'boots' || key === 'skorne' || key === 'walk' || key === '🚶' || key === 'chuze' || key === 'krok' || key === '🏃' || key === 'run' || key === 'beh') {
     return <LadaBootsIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -289,7 +311,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Forged horseshoe
-  if (key === '🧲' || key === 'horseshoe' || key === 'kovarska_podkova' || key === 'podkova' || key === 'magnet') {
+  if (key === '🧲' || key === 'horseshoe' || key === 'kovarska_podkova' || key === 'podkova' || key === 'podkova_pro_stesti' || key === 'magnet') {
     return <LadaHorseshoeIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -298,23 +320,73 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaCuckooClockIcon size={size} className={className} style={style} {...props} />;
   }
 
+  // Seedling & Spring
+  if (key === '🌱' || key === 'seedling' || key === 'sazenicka' || key === 'klicek' || key === 'predjari') {
+    return <LadaSeedlingIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Autumn leaf
+  if (key === '🍂' || key === '🍁' || key === 'autumn_leaf' || key === 'leaf' || key === 'list' || key === 'podzim') {
+    return <LadaAutumnLeafIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Tombstone & cemetery
+  if (key === '🪦' || key === '⚰' || key === 'tomb' || key === 'tombstone' || key === 'nahrobek' || key === 'hrbitov') {
+    return <LadaTombstoneIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Dragon
+  if (key === '🐉' || key === 'dragon' || key === 'drak' || key === 'trojhlavy_drak') {
+    return <LadaDragonIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Crow / Raven
+  if (key === '🐦‍⬛' || key === '🐦' || key === 'crow' || key === 'vrana' || key === 'havran' || key === 'hejno_vran') {
+    return <LadaCrowIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Lion
+  if (key === '🦁' || key === 'lion' || key === 'lev' || key === 'kralovstvi') {
+    return <LadaLionIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Moon
+  if (key === '🌙' || key === 'moon' || key === 'mesic' || key === 'noc') {
+    return <LadaMoonIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Sleep
+  if (key === '💤' || key === 'sleep' || key === 'spanek' || key === 'vycerpany') {
+    return <LadaSleepIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Pause
+  if (key === '⏸' || key === 'pause' || key === 'pauza') {
+    return <LadaPauseIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Stats ledger / Tavern tally
+  if (key === '📊' || key === 'stats' || key === 'chart' || key === 'statistika' || key === 'ucet') {
+    return <LadaStatsLedgerIcon size={size} className={className} style={style} {...props} />;
+  }
+
   // Shield & Defense
   if (key === '🛡' || key === 'shield' || key === 'stit' || key === 'defense') {
     return <LadaShieldIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Swords & Weapons
-  if (key === '🗡' || key === '⚔' || key === 'sword' || key === 'weapons' || key === 'weapons_mastery' || key === 'blade' || key === 'sabla') {
+  if (key === '🗡' || key === '⚔' || key === 'sword' || key === 'swords' || key === 'weapons' || key === 'weapons_mastery' || key === 'blade' || key === 'sabla') {
     return <LadaSwordIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Hearth fire
-  if (key === '🔥' || key === 'fire' || key === 'ohen' || key === 'plamen') {
+  if (key === '🔥' || key === 'fire' || key === 'flame' || key === 'ohen' || key === 'plamen') {
     return <LadaHearthFireIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Frost & Ice
-  if (key === '❄' || key === '🧊' || key === 'frost' || key === 'ice' || key === 'mraz' || key === 'vlocka') {
+  if (key === '❄' || key === '🧊' || key === 'frost' || key === 'ice' || key === 'snowflake' || key === 'mraz' || key === 'vlocka') {
     return <LadaSnowflakeIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -334,7 +406,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Birch log & sukovice
-  if (key === '🪵' || key === 'wood' || key === 'log' || key === 'povestna_sukovice' || key === 'sukovice') {
+  if (key === '🪵' || key === 'wood' || key === 'log' || key === 'wood_log' || key === 'povestna_sukovice' || key === 'sukovice') {
     return <LadaBirchLogIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -344,7 +416,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Rosemary & herbs
-  if (key === '🌿' || key === 'herb' || key === 'rosemary' || key === 'rozmaryn' || key === 'svate_kadidlo') {
+  if (key === '🌿' || key === 'herb' || key === 'rosemary' || key === 'rozmaryn' || key === 'devatery_kviti' || key === 'svate_kadidlo') {
     return <LadaRosemaryIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -382,7 +454,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Candle, lantern & light
-  if (key === '🕯' || key === '🪔' || key === 'candle' || key === 'svicka' || key === 'lantern' || key === 'petrolejka' || key === 'lucerna') {
+  if (key === '🕯' || key === '🪔' || key === 'candle' || key === 'svicka' || key === 'lantern' || key === 'petrolejka' || key === 'lucerna' || key === 'pytlacka_lucerna') {
     return <LadaCandleIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -414,8 +486,8 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaFiddleMusicIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Puppet toy / controller
-  if (key === '🎮' || key === '🕹' || key === 'game' || key === 'controller' || key === 'loutka') {
+  // Puppet toy / controller & mobile controls
+  if (key === '🎮' || key === '🕹' || key === 'game' || key === 'gamepad' || key === 'controller' || key === 'joystick' || key === 'mobile' || key === 'loutka') {
     return <LadaPuppetToyIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -430,7 +502,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Star glint & Sparkle
-  if (key === '✨' || key === '🌟' || key === '✦' || key === 'star' || key === 'sparkle' || key === 'hvezda') {
+  if (key === '✨' || key === '🌟' || key === '✦' || key === 'star' || key === 'sparkle' || key === 'sparkles' || key === 'spark' || key === 'hvezda') {
     return <LadaStarGlintIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -461,7 +533,7 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Čert / Devil
-  if (key === '👹' || key === 'devil' || key === 'cert') {
+  if (key === '👹' || key === '😈' || key === 'devil' || key === 'cert' || key === 'rarach') {
     return <LadaDevilIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -523,8 +595,8 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaWoolSockIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Dice
-  if (key === '🎲' || key === 'dice' || key === 'kostka') {
+  // Dice & numbers
+  if (key === '🎲' || key === 'dice' || key === 'kostka' || key === 'numbers' || key === '🔢') {
     return <LadaBoneDiceIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -534,18 +606,21 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Checkmark & status
-  if (key === '✅' || key === '✓' || key === 'check' || key === 'hotovo') {
+  if (key === '✅' || key === '✓' || key === 'check' || key === 'checkmark' || key === 'hotovo') {
     return <LadaCheckmarkIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Cancel / Cross
-  if (key === '❌' || key === '✕' || key === '🛑' || key === 'cancel' || key === 'zrusit' || key === 'cross') {
+  // Cancel / Cross / Forbidden
+  if (key === '❌' || key === '✕' || key === '🛑' || key === 'cancel' || key === 'zrusit' || key === 'cross' || key === 'forbidden' || key === '🚫') {
     return <LadaCrossCancelIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Tavern direction pointer
+  // Tavern direction pointer (left and right)
+  if (key === 'arrow_left' || key === '←') {
+    return <LadaTavernArrowIcon direction="left" size={size} className={className} style={style} {...props} />;
+  }
   if (key === '➔' || key === '→' || key === 'arrow' || key === 'sipka') {
-    return <LadaTavernArrowIcon size={size} className={className} style={style} {...props} />;
+    return <LadaTavernArrowIcon direction="right" size={size} className={className} style={style} {...props} />;
   }
 
   // Question mark
@@ -598,9 +673,17 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaBalanceScalesIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Painter's palette
-  if (key === '🎨' || key === 'palette' || key === 'art' || key === 'paleta') {
+  // Painter's palette & pictures
+  if (key === '🎨' || key === 'palette' || key === 'art' || key === 'paleta' || key === 'picture' || key === 'obraz' || key === '🖼') {
     return <LadaPainterPaletteIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Audio toggles & music
+  if (key === 'music_on' || key === 'musicEnabled') {
+    return <LadaFiddleMusicIcon size={size} className={className} style={style} {...props} />;
+  }
+  if (key === 'soundEnabled' || key === 'soundEffectsEnabled') {
+    return <LadaHornIcon muted={false} size={size} className={className} style={style} {...props} />;
   }
 
   // Slivovitz flask
@@ -638,8 +721,8 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaPitchforkIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Grain flail / cep
-  if (key === '🌾' || key === 'flail' || key === 'cep' || key === 'obili' || key === 'snop') {
+  // Grain flail / cep / wheat
+  if (key === '🌾' || key === 'flail' || key === 'cep' || key === 'wheat' || key === 'obili' || key === 'snop') {
     return <LadaGrainFlailIcon size={size} className={className} style={style} {...props} />;
   }
 
@@ -648,13 +731,13 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaBeeSwarmIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Steaming rustic soup bowl / garlic broth
-  if (key === '🥣' || key === 'soup' || key === 'polevka' || key === 'miska') {
+  // Steaming rustic soup bowl / garlic broth / podmáslí
+  if (key === '🥣' || key === 'soup' || key === 'polevka' || key === 'miska' || key === 'krajac_na_podmasli' || key === 'podmasli') {
     return <LadaSoupBowlIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Shepherd's patched coat / hubertus
-  if (key === '🧥' || key === 'coat' || key === 'kabat' || key === 'hubertus') {
+  if (key === '🧥' || key === 'coat' || key === 'kabat' || key === 'hubertus' || key === 'zaplacovany_kabat') {
     return <LadaPatchedCoatIcon size={size} className={className} style={style} {...props} />;
   }
 

@@ -4,6 +4,7 @@ import { COLORS } from '../constants';
 import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { drawGingerbreadHeartCanvas } from './pernicekCanvas';
+import { drawGlyphText } from './glyphAtlas';
 
 const ladaSpriteCache = new Map<string, HTMLCanvasElement>();
 
@@ -2116,12 +2117,7 @@ var Lada = {
 			const nAlpha = Math.max(0, 1 - ntime / 2.8);
 			ctx.save();
 			ctx.globalAlpha = vis * nAlpha;
-			ctx.fillStyle = "#FEF08A";
-			ctx.strokeStyle = COLORS.ink;
-			ctx.lineWidth = 2;
-			ctx.font = "900 18px Eczar, serif";
-			ctx.fillText("♫", nx, ny);
-			ctx.strokeText("♫", nx, ny);
+			drawGlyphText(ctx, "♫", nx, ny, { size: 18, color: "#FEF08A" });
 			ctx.restore();
 		}
 		const flockMove = ease((t - .4) / 1.7);
@@ -2769,7 +2765,7 @@ var Lada = {
 			ctx.restore();
 		};
 		bubble("Devatero bylin z hvozdu vyžene všechno zlé!", -30, -110, ease((t - .7) / .3) * ease((3.2 - t) / .3), -100, -70);
-		bubble("KLOK-KLOK! ✨ OČISTNÝ DÝM!", 50, -65, ease((t - 1.4) / .3) * ease((3.3 - t) / .3), kx, 20);
+		bubble("KLOK-KLOK! OČISTNÝ DÝM!", 50, -65, ease((t - 1.4) / .3) * ease((3.3 - t) / .3), kx, 20);
 		if (t2 > 0) {
 			const ax = kx;
 			const ay = 60;
@@ -2917,14 +2913,7 @@ var Lada = {
 			ctx.translate(sanctuary.x, sanctuary.y - 80);
 			ctx.scale(sc, sc);
 			ctx.globalAlpha = Math.min(1, (.9 - t) / .4);
-			ctx.font = "900 36px Eczar, serif";
-			ctx.textAlign = "center";
-			ctx.lineJoin = "round";
-			ctx.lineWidth = 7;
-			ctx.strokeStyle = COLORS.ink;
-			ctx.strokeText("OČISTNÉ KADIDLO! 🌿", 0, 0);
-			ctx.fillStyle = "#86EFAC";
-			ctx.fillText("OČISTNÉ KADIDLO! 🌿", 0, 0);
+			drawGlyphText(ctx, "OČISTNÉ KADIDLO! 🌿", 0, 0, { size: 26, color: "#86EFAC" });
 			ctx.restore();
 		}
 		ctx.restore();

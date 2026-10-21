@@ -3502,7 +3502,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {
         name: 'Toulavé boty (+25 Rychlost)',
         desc: 'Pohotovější krok při obcházení temných koutů',
-        icon: '👢',
+        icon: 'toulave_boty',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) pl.speed += 25;
@@ -3511,13 +3511,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {
         name: 'Zlatý dukát (+200 Krejcarů)',
         desc: 'Velkolepý poklad z kovářské truhly',
-        icon: '💰',
+        icon: 'zlaty_dukat',
         action: () => setRunStats((s) => ({ ...s, coins: s.coins + 200 })),
       },
       {
         name: 'Škvarková placka (Svačina na cestu)',
         desc: 'Poctivá křupavá placka se sádlem a škvarky pro okamžité doplnění kuráže (+50)',
-        icon: '🫓',
+        icon: 'skvarkova_placka',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) applyBearMaskOverheal(pl, 50);
@@ -11484,7 +11484,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             shouldShowWarningBanner(runStats.warningBanner, meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) && (
               <div id="boss-warning-banner" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 <GameIcon icon="warning" size={22} />
-                <span>{runStats.warningBanner.replace(/⚠️\s*/g, '')}</span>
+                <span>{runStats.warningBanner.replace(/^[^\p{L}\p{N}]+/u, '').trim()}</span>
               </div>
           )}
 
