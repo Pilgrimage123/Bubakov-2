@@ -1,3 +1,11 @@
+## 2026-10-21 — Dokončení AI vrány a cílení Mrazivé jezinky
+
+- Vrána nyní vyhledává poblíž ležící mince a malé jídlo, přiletí k nim, přistane, chvíli zobá a kořist sebere.
+- Při sbírání kořisti se přepne na pozemní kresbu; po dokončení znovu vzlétne a chvíli další kořist nehledá.
+- Společné pravidlo přímého cílení: Mrazivou jezinku lze přímo zvolit jen do vzdálenosti 100 px od lovce; naváděné střely si neudrží vzdálený cíl po překročení limitu.
+- Zásahová kolize a plošné poškození jezinky zůstávají beze změny.
+- Přidány testy pro limit cílení, zachovanou zranitelnost a sbírání kořisti vránou.
+
 ## 2026-10-21 — Mrazivá jezinka: poloviditelnost
 
 - Mrazivá jezinka se vykresluje v 60% velikosti (o 40 % menší) a s nižší průhledností.
