@@ -9,7 +9,7 @@
 ## 2026-10-21 — Mrazivá jezinka: poloviditelnost
 
 - Mrazivá jezinka se vykresluje v 60% velikosti (o 40 % menší) a s nižší průhledností.
-- Naváděné střely ji během poloviditelného stavu nevybírají jako cíl; zásahy a zranitelnost zůstávají zachované.
+- Přímé automatické cílení na ni funguje pouze do vzdálenosti 100 px od lovce; zásahová kolize a plošné poškození zůstávají zachované.
 
 ## 2026-10-21 — Opravy patch výpravy předjaří
 
