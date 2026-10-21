@@ -125,6 +125,13 @@ import {
   LadaSleepIcon,
   LadaPauseIcon,
   LadaStatsLedgerIcon,
+  LadaCastleRuinsIcon,
+  LadaGhostIcon,
+  LadaSnowmanIcon,
+  LadaVillageDogIcon,
+  LadaWatermanHatIcon,
+  LadaMeadowFlowerIcon,
+  LadaVillageSunIcon,
 } from './LadaCustomIcons';
 
 export interface GameIconProps {
@@ -390,6 +397,11 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaSnowflakeIcon size={size} className={className} style={style} {...props} />;
   }
 
+  // Ladovský snowman (Sněhulák)
+  if (key === '☃' || key === '☃️' || key === 'snowman' || key === 'snehulak') {
+    return <LadaSnowmanIcon size={size} className={className} style={style} {...props} />;
+  }
+
   // Lightning
   if (key === '⚡' || key === 'lightning' || key === 'blesk') {
     return <LadaLightningIcon size={size} className={className} style={style} {...props} />;
@@ -418,6 +430,11 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   // Rosemary & herbs
   if (key === '🌿' || key === 'herb' || key === 'rosemary' || key === 'rozmaryn' || key === 'devatery_kviti' || key === 'svate_kadidlo') {
     return <LadaRosemaryIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Meadow flower / Blatouch / Chamomile
+  if (key === '🌼' || key === 'flower' || key === 'kvet' || key === 'blatouch' || key === 'hermanek' || key === 'kopretina' || key === 'kviti') {
+    return <LadaMeadowFlowerIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Skull
@@ -474,16 +491,19 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   }
 
   // Horn (sound / mute / post horn)
-  if (key === '🔊' || key === '📯' || key === 'sound' || key === 'zvuk' || key === 'horn' || key === 'roh') {
+  if (key === '🔊' || key === '📯' || key === 'sound' || key === 'sound_on' || key === 'soundEnabled' || key === 'soundEffectsEnabled' || key === 'zvuk' || key === 'horn' || key === 'roh') {
     return <LadaHornIcon muted={false} size={size} className={className} style={style} {...props} />;
   }
-  if (key === '🔇' || key === 'mute' || key === 'ztlumit') {
+  if (key === '🔇' || key === 'mute' || key === 'sound_off' || key === 'soundDisabled' || key === 'ztlumit' || key === 'muted') {
     return <LadaHornIcon muted={true} size={size} className={className} style={style} {...props} />;
   }
 
   // Music & tavern notes
-  if (key === '🎵' || key === '🎶' || key === 'music' || key === 'hudba' || key === 'nota') {
-    return <LadaFiddleMusicIcon size={size} className={className} style={style} {...props} />;
+  if (key === '🎵' || key === '🎶' || key === 'music' || key === 'music_on' || key === 'musicEnabled' || key === 'hudba' || key === 'nota') {
+    return <LadaFiddleMusicIcon muted={false} size={size} className={className} style={style} {...props} />;
+  }
+  if (key === 'music_off' || key === 'musicDisabled') {
+    return <LadaFiddleMusicIcon muted={true} size={size} className={className} style={style} {...props} />;
   }
 
   // Puppet toy / controller & mobile controls
@@ -496,9 +516,24 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaCottageIcon size={size} className={className} style={style} {...props} />;
   }
 
+  // Ruined castle & ramparts (5th level - Ruined Castle / Zlenice)
+  if (key === '🏰' || key === 'castle' || key === 'hrad' || key === 'zricenina' || key === 'ruins' || key === 'zlenice') {
+    return <LadaCastleRuinsIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Folkloric spectral White Lady ghost (Bílá paní / Strašidlo)
+  if (key === '👻' || key === 'ghost' || key === 'duch' || key === 'bila_pani' || key === 'strasidlo' || key === 'bludicka') {
+    return <LadaGhostIcon size={size} className={className} style={style} {...props} />;
+  }
+
   // Church
   if (key === '⛪' || key === 'church' || key === 'kostel') {
     return <LadaChurchSpireIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Village noon sun / Polednice
+  if (key === '☀' || key === '☀️' || key === 'sun' || key === 'slunce' || key === 'polednice' || key === 'jasno') {
+    return <LadaVillageSunIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Star glint & Sparkle
@@ -537,6 +572,11 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaDevilIcon size={size} className={className} style={style} {...props} />;
   }
 
+  // Waterman's top hat / Vodnický cylinder
+  if (key === '🎩' || key === 'tophat' || key === 'cylinder' || key === 'klobouk' || key === 'vodnik_klobouk' || key === 'hastrman_klobouk') {
+    return <LadaWatermanHatIcon size={size} className={className} style={style} {...props} />;
+  }
+
   // Water wave
   if (key === '🌊' || key === '💧' || key === 'wave' || key === 'water' || key === 'drop' || key === 'kapka' || key === 'vlna') {
     return <LadaWaterWaveIcon size={size} className={className} style={style} {...props} />;
@@ -545,6 +585,11 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
   // Animal Paw print
   if (key === '🐾' || key === 'paw' || key === 'stopa') {
     return <LadaPawPrintIcon size={size} className={className} style={style} {...props} />;
+  }
+
+  // Village dog / Voříšek
+  if (key === '🐕' || key === '🐕‍🦺' || key === 'dog' || key === 'pes' || key === 'vorisek' || key === 'hafik') {
+    return <LadaVillageDogIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Goose
@@ -678,13 +723,6 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaPainterPaletteIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Audio toggles & music
-  if (key === 'music_on' || key === 'musicEnabled') {
-    return <LadaFiddleMusicIcon size={size} className={className} style={style} {...props} />;
-  }
-  if (key === 'soundEnabled' || key === 'soundEffectsEnabled') {
-    return <LadaHornIcon muted={false} size={size} className={className} style={style} {...props} />;
-  }
 
   // Slivovitz flask
   if (key === '🧪' || key === 'flask' || key === 'potion' || key === 'slivovice') {
@@ -797,4 +835,11 @@ export {
   MedvediMastIcon,
   OpravdovaKavaIcon,
   KrvaveJelitoIcon,
+  LadaCastleRuinsIcon,
+  LadaGhostIcon,
+  LadaSnowmanIcon,
+  LadaVillageDogIcon,
+  LadaWatermanHatIcon,
+  LadaMeadowFlowerIcon,
+  LadaVillageSunIcon,
 };

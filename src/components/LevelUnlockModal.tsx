@@ -89,7 +89,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             </span>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
-              <span style={{ fontSize: '2.2rem', lineHeight: 1 }}>{progress.spoiledIcon}</span>
+              <GameIcon icon={progress.spoiledIcon} size={36} />
               <h2
                 style={{
                   margin: 0,
@@ -381,16 +381,16 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
           <div className="hunter-progress-ticks" style={{ fontSize: '0.78rem', marginTop: '4px' }}>
             <span className={`hunter-tick ${progress.percent >= 0 ? 'reached' : ''}`}>0%</span>
             <span className={`hunter-tick ${progress.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-              <GameIcon icon={progress.percent >= 25 ? 'checkmark' : 'padlock'} size={10} /> 25%
+              {progress.percent >= 25 ? <GameIcon icon="checkmark" size={10} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 25%
             </span>
             <span className={`hunter-tick ${progress.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-              <GameIcon icon={progress.percent >= 50 ? 'checkmark' : 'padlock'} size={10} /> 50%
+              {progress.percent >= 50 ? <GameIcon icon="checkmark" size={10} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 50%
             </span>
             <span className={`hunter-tick ${progress.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-              <GameIcon icon={progress.percent >= 75 ? 'checkmark' : 'padlock'} size={10} /> 75%
+              {progress.percent >= 75 ? <GameIcon icon="checkmark" size={10} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 75%
             </span>
             <span className={`hunter-tick ${progress.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-              <GameIcon icon={progress.percent >= 100 ? 'checkmark' : 'padlock'} size={10} /> 100%
+              {progress.percent >= 100 ? <GameIcon icon="checkmark" size={10} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 100%
             </span>
           </div>
 

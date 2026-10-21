@@ -11580,12 +11580,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                           setSelectedLevelDetail(prog);
                           if (prog.isQueued) {
                             showUnlockNotice({
-                              title: `🔒 ${prog.spoiledName} je v pořadí!`,
+                              title: `${prog.spoiledName} je v pořadí!`,
                               desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${prog.requiredLevelName}).`,
                             });
                           } else {
                             showUnlockNotice({
-                              title: `🔒 ${prog.spoiledName} (${prog.percent} %)`,
+                              title: `${prog.spoiledName} (${prog.percent} %)`,
                               desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno. Klikněte pro podrobnosti výzvy!`,
                             });
                           }
@@ -11648,16 +11648,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                           <div className="hunter-progress-ticks">
                             <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
                             <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                              {prog.percent >= 25 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 25%
+                              {prog.percent >= 25 ? <GameIcon icon="checkmark" size={11} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 25%
                             </span>
                             <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                              {prog.percent >= 50 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 50%
+                              {prog.percent >= 50 ? <GameIcon icon="checkmark" size={11} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 50%
                             </span>
                             <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                              {prog.percent >= 75 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 75%
+                              {prog.percent >= 75 ? <GameIcon icon="checkmark" size={11} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 75%
                             </span>
                             <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                              {prog.percent >= 100 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 100%
+                              {prog.percent >= 100 ? <GameIcon icon="checkmark" size={11} /> : <span style={{ opacity: 0.5, fontSize: '9px' }}>○</span>} 100%
                             </span>
                           </div>
                           {prog.enemiesBreakdown.length > 0 && (

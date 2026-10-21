@@ -208,4 +208,12 @@ _Avoid_: pause menu, pauza, herní pauza, pause screen
 Závěrečná bilance výpravy shrnující zklidněná strašidla, osvobozené dušičky a krejcary, s možností pokračovat do dalšího kraje, vstoupit do hospody nebo se vrátit přímo do nabídky výprav.
 _Avoid_: tally screen, game over screen, victory screen, výsledková listina
 
+**Ladovské ikony**:
+Vektorové animované grafické prvky rozhraní kreslené v autentickém stylu Josefa Lady s výraznou tušovou konturou, teplými zemitými kvašovými tóny a jemnou mikroskopickou animací, nahrazující moderní a operační emoji.
+_Avoid_: emoji, moderní ikony, stock ikony, systémové ikony
+
+**Kovaný zámek**:
+Tradiční kovaný visací zámek symbolizující uzamčenou výpravu či dosud neprobádaný obsah, zobrazovaný jako autoritativní odznak v záhlaví karty výpravy bez vizuálního zdvojování v doprovodném textu či na dílčích milnících.
+_Avoid_: padlock emoji, duplicitní zámek, zámek u každého procenta
+
 

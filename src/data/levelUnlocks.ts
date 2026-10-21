@@ -55,9 +55,9 @@ function makeSequentialUnlock(id, targetEnemies) {
 		spoiledBossHint: percent >= 75 ? `👑 Hlavní boss: ${level.finalBoss.name}` : "👑 Hlavní boss: ???",
 		spoiledWeatherHint: percent >= 50 ? `Počasí: ${level.subtitle}` : "Počasí: neznámé",
 		spoiledEnemiesHint: percent >= 50 ? targetEnemies.map((enemy) => enemy.name).join(", ") : "Nepřátelé: skryto",
-		spoiledIcon: percent >= 50 ? level.icon : "🔒",
-		spoiledBadge: percent === 100 ? level.badge : `🔒 ${id + 1}. úroveň (${percent} %)`,
-		clueTag: percent === 100 ? "✅ Plně odemčeno!" : `🔒 ${percent} %: pokračuj v předchozí výpravě`
+		spoiledIcon: percent >= 50 ? level.icon : "map",
+		spoiledBadge: percent === 100 ? level.badge : `${id + 1}. úroveň (${percent} %)`,
+		clueTag: percent === 100 ? "✅ Plně odemčeno!" : `${percent} %: pokračuj v předchozí výpravě`
 	});
 	return {
 		id,
@@ -200,9 +200,9 @@ var LEVEL_UNLOCKS = {
 				spoiledBossHint: "👑 Hlavní boss: Zahalen v neproniknutelné temnotě (???)",
 				spoiledWeatherHint: "Počasí a atmosféra: Neznámo (zahalená mlhou)",
 				spoiledEnemiesHint: "Běsi a přízraky: Skryto v husté mlze (???)",
-				spoiledIcon: "🔒",
-				spoiledBadge: "🔒 3. Úroveň (0 %)",
-				clueTag: "🔒 0 %: Zcela utajeno – zažeň 25 % škůdců z 1. úrovně pro první stopu"
+				spoiledIcon: "map",
+				spoiledBadge: "3. Úroveň (0 %)",
+				clueTag: "0 %: Zcela utajeno – zažeň 25 % škůdců z 1. úrovně pro první stopu"
 			},
 			{
 				minPercent: 25,
@@ -323,9 +323,9 @@ var LEVEL_UNLOCKS = {
 				spoiledBossHint: "👑 Hlavní boss: Zahaleno v sněhové vánici (???)",
 				spoiledWeatherHint: "Počasí a nálada: Neznámo (vzdálený ledový opar)",
 				spoiledEnemiesHint: "Mrazivé běsy: Skryto pod hlubokým sněhem (???)",
-				spoiledIcon: "🔒",
-				spoiledBadge: "🔒 4. Úroveň (0 %)",
-				clueTag: "🔒 0 %: Zcela utajeno – zažeň 25 % běsů z hřbitova pro první stopu"
+				spoiledIcon: "map",
+				spoiledBadge: "4. Úroveň (0 %)",
+				clueTag: "0 %: Zcela utajeno – zažeň 25 % běsů z hřbitova pro první stopu"
 			},
 			{
 				minPercent: 25,
@@ -553,7 +553,7 @@ function computeLevelProgress(id: any, meta: any) {
 			spoiledEnemiesHint: m0.spoiledEnemiesHint,
 			spoiledIcon: m0.spoiledIcon,
 			spoiledBadge: m0.spoiledBadge,
-			clueTag: "🔒 Čeká na odemčení předchozí úrovně",
+			clueTag: "Čeká na odemčení předchozí úrovně",
 			enemiesBreakdown: def.targetEnemies.map((e) => ({
 				id: e.id,
 				name: e.name,
