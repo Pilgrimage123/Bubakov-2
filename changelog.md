@@ -2,7 +2,7 @@
 
 - Opravena konsolidace drobných mincí a perníčků v `SoADropManager`: příchozí drop se při konsolidaci správně spotřebuje.
 - Odstraněno dočasné pole pro kompatibilní indexy z herní hot path.
-- Doplněn regresní test běžné konsolidace i scénáře, kdy vybraný záznam leží na konci aktivního pole.
+- Doplněny regresní testy běžné konsolidace, zachování sousedních dropů a scénáře, kdy vybraný záznam leží na konci aktivního pole.
 
 ## 2026-10-22 — Sjednocení vykreslovací pipeline, atlas strašidel a zero-allocation herní cyklus (ADR 0029)
 
