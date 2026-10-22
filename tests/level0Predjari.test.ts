@@ -22,12 +22,21 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
     expect(lvl0.miniBoss.id).toBe('vrana');
+    expect(lvl0.miniBoss).toMatchObject({ id: 'vrana', time: 30, kills: 20, multiplier: 4.5 });
+    // The new circular flock is a separate encounter; it must not rewrite the existing miniboss.
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('morana');
     expect(lvl0.spawnPools.noon).toContain('vrana');
     expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
+    expect(lvl0.spawnPools.dusk).toContain('mrazivy_obr');
     expect(lvl0.spawnPools.noon).not.toContain('zaba');
-    expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'mrazovy_skritek', 'topivec', 'bludicka']);
+    const allStage1Spawns = Object.values(lvl0.spawnPools).flat();
+    for (const excluded of ['rarach', 'certik', 'sazovy_rarach', 'cert', 'topivec', 'vodnicek', 'hastrman']) {
+      expect(allStage1Spawns).not.toContain(excluded);
+    }
+    // Vodníček is retained only as the scheduled mid-boss, not a regular spawn.
+    expect(lvl0.midBoss.id).toBe('vodnicek');
+    expect(lvl0.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
   });
@@ -70,11 +79,13 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(csTrans.name).toBe('1. Předjaří v Hrusicích');
     expect(csTrans.shortTitle).toBe('Březnové tání');
     expect(csTrans.finalBoss.name).toContain('Morana');
+    expect(csTrans.miniBoss.name).toContain('mrazivých vran');
 
     const enTrans = getLevelTranslation(0, 'en');
     expect(enTrans.name).toBe('1. Early Spring in Hrusice');
     expect(enTrans.shortTitle).toBe('March Thaw');
     expect(enTrans.finalBoss.name).toContain('Morana');
+    expect(enTrans.miniBoss.name).toContain('Frost Crow Flock');
   });
 
   it('has exactly 3 unique folklore Rozmars', () => {

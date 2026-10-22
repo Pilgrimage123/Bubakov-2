@@ -5,6 +5,32 @@ import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES } from '../data/enemies';
 import { toCanonicalWeaponId } from './migration';
 
+const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
+  'rarach',
+  'krvavy_rarach',
+  'certik',
+  'cert',
+  'sazovy_rarach',
+  'drab',
+  'jiskrivec',
+  'ohnivy_muz',
+  'ohnivy_pes',
+  'plivnik',
+  'vodnicek',
+  'hastrman',
+  'topivec',
+  'kalny_hastrman',
+  'zaba',
+  'ropucha',
+]);
+
+function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): boolean {
+  const enemy = ENEMIES[enemyId];
+  if (!enemy || enemy.category === 'bosses') return false;
+  if (levelId !== 0) return true;
+  return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
+}
+
 export const HORDE_CLEARING_WEAPONS = new Set<string>([
   'hromnicka',
   'cesnekova_topinka',
@@ -683,6 +709,10 @@ export class RunDirector {
     }
   }
 
+  private getRegularSpawnFallbackId(): string {
+    return this.levelId === 0 ? 'mrazovy_skritek' : 'rarach';
+  }
+
   public getEliteVariantForId(baseId: string): string | null {
     const eliteMap: Record<string, string> = {
       // Swarms & imps -> Ohnivý rarášek / Sazový rarášek / Jiskřivec
@@ -743,7 +773,10 @@ export class RunDirector {
       ohnivy_muz: 'drab',
     };
     const elite = eliteMap[baseId];
-    return (elite && ENEMIES[elite]) ? elite : null;
+    if (!elite || !ENEMIES[elite]) return null;
+    // A level-0 enemy must never become a devil or waterman through elite conversion.
+    if (this.levelId === 0 && !isRegularSpawnAllowedForLevel(elite, 0)) return null;
+    return elite;
   }
 
   /**
@@ -773,14 +806,14 @@ export class RunDirector {
     const pool = this.getWeightedPool(engine);
 
     const leaderCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    let leaderId = leaderCandidate || pool[0] || 'rarach';
+    let leaderId = leaderCandidate || pool[0] || this.getRegularSpawnFallbackId();
     {
       const elite = this.getEliteVariantForId(leaderId);
       if (elite) leaderId = elite;
     }
 
     const minionCandidate = pool[pool.length - 1];
-    let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
+    let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || this.getRegularSpawnFallbackId();
     {
       const eliteMinion = this.getEliteVariantForId(minionId);
       if (eliteMinion) minionId = eliteMinion;
@@ -976,7 +1009,7 @@ export class RunDirector {
         const affordable = pool.filter((id) => this.getBubakThreatCost(id) <= remainingBudget);
         if (affordable.length === 0) break;
 
-        const mobId = affordable[Math.floor(Math.random() * affordable.length)] || 'rarach';
+        const mobId = affordable[Math.floor(Math.random() * affordable.length)] || this.getRegularSpawnFallbackId();
         spawnPlan.push(mobId);
         plannedCost += this.getBubakThreatCost(mobId);
       }
@@ -1050,7 +1083,7 @@ export class RunDirector {
   public spawnPrefixedEnemy(engine: any, player: any, gameTime: number, forcedPrefix?: EnemyPrefixType): any {
     const pool = this.getWeightedPool(engine);
     const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    const mobId = forcedPrefix ? (candidateId || pool[0] || 'rarach') : (pool[Math.floor(Math.random() * pool.length)] || 'rarach');
+    const mobId = forcedPrefix ? (candidateId || pool[0] || this.getRegularSpawnFallbackId()) : (pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId());
 
     const prefix = forcedPrefix || this.getThematicPrefix();
 
@@ -1069,14 +1102,14 @@ export class RunDirector {
   private spawnKlestoveSevreni(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    let heavyId = heavyCandidate || pool[0] || 'rarach';
+    let heavyId = heavyCandidate || pool[0] || this.getRegularSpawnFallbackId();
     // Deploy elite heavy variant only into heavy tactical encounters
     if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
       if (elite) heavyId = elite;
     }
     const fastCandidate = pool[pool.length - 1];
-    let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
+    let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || this.getRegularSpawnFallbackId();
     if (this.threatBudget >= 32) {
       const eliteFast = this.getEliteVariantForId(fastId);
       if (eliteFast) fastId = eliteFast;
@@ -1115,14 +1148,14 @@ export class RunDirector {
   private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    let heavyId = heavyCandidate || pool[0] || 'rarach';
+    let heavyId = heavyCandidate || pool[0] || this.getRegularSpawnFallbackId();
     // Deploy elite heavy variant only into heavy tactical encounters
     if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(heavyId);
       if (elite) heavyId = elite;
     }
     const fastCandidate = pool[pool.length - 1];
-    let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || 'rarach';
+    let fastId = (fastCandidate && ENEMIES[fastCandidate]) ? fastCandidate : pool[0] || this.getRegularSpawnFallbackId();
     if (this.threatBudget >= 32) {
       const eliteFast = this.getEliteVariantForId(fastId);
       if (eliteFast) fastId = eliteFast;
@@ -1160,14 +1193,14 @@ export class RunDirector {
   private spawnEscortSwarms(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
     const eliteCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    let eliteId = eliteCandidate || pool[0] || 'rarach';
+    let eliteId = eliteCandidate || pool[0] || this.getRegularSpawnFallbackId();
     // Deploy elite leader only into heavy tactical encounters
     if (this.threatBudget >= 26) {
       const elite = this.getEliteVariantForId(eliteId);
       if (elite) eliteId = elite;
     }
     const minionCandidate = pool[pool.length - 1];
-    let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || 'rarach';
+    let minionId = (minionCandidate && ENEMIES[minionCandidate]) ? minionCandidate : pool[0] || this.getRegularSpawnFallbackId();
     if (this.threatBudget >= 32) {
       const eliteMinion = this.getEliteVariantForId(minionId);
       if (eliteMinion) minionId = eliteMinion;
@@ -1201,7 +1234,7 @@ export class RunDirector {
   private spawnArchitects(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
     const archCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[1]);
-    const archId = archCandidate || pool[0] || 'rarach';
+    const archId = archCandidate || pool[0] || this.getRegularSpawnFallbackId();
 
     const angle = Math.random() * Math.PI * 2;
     for (let i = 0; i < 2; i++) {
@@ -1233,7 +1266,7 @@ export class RunDirector {
 
   private spawnAntiKiteInterception(engine: any, player: any, gameTime: number): void {
     const pool = this.getWeightedPool(engine);
-    const mobId = pool[Math.floor(Math.random() * pool.length)] || 'rarach';
+    const mobId = pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId();
 
     const pSpeed = Math.hypot(player.vx || 0, player.vy || 0);
     const pAngle = pSpeed > 10 ? Math.atan2(player.vy || 0, player.vx || 0) : Math.random() * Math.PI * 2;
@@ -1389,7 +1422,7 @@ export class RunDirector {
   private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
     const pool = this.getWeightedPool(engine);
     const bossCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    const bossId = bossCandidate || pool[0] || 'rarach';
+    const bossId = bossCandidate || pool[0] || this.getRegularSpawnFallbackId();
     const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '🧌 Procitlý noční hromotluk z díry');
     if (furious) {
       this.recordEnemySpawn(furious, engine.state.gameTime);
@@ -1404,31 +1437,31 @@ export class RunDirector {
     const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey])
       ? curLvl.spawnPools[phaseKey]
       : (curLvl?.spawnPools?.noon || []);
+    const isAllowed = (id: string) => isRegularSpawnAllowedForLevel(id, levelId);
 
-    // Never mix enemies from other phases into the current phase.
-    const eligible = [...new Set(phasePool)]
-      .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+    // Regular enemies must belong to the current phase; level 0 also excludes
+    // devils and watermen even when they appear in legacy archetype data.
+    const eligible = [...new Set(phasePool)].filter(isAllowed);
 
-    // Keep a valid fallback for incomplete level definitions.
+    // Keep a valid same-level fallback for incomplete level definitions.
     if (eligible.length === 0) {
-      const fallback = [...new Set(curLvl?.spawnPools?.noon || [])]
-        .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+      const fallback = [...new Set(curLvl?.spawnPools?.noon || [])].filter(isAllowed);
       if (fallback.length > 0) eligible.push(...fallback);
     }
     if (eligible.length === 0) {
-      const preferred = this.rozmar.preferredEnemyIds
-        .filter((id) => Boolean(ENEMIES[id]) && ENEMIES[id].category !== 'bosses');
+      const preferred = this.rozmar.preferredEnemyIds.filter(isAllowed);
       if (preferred.length > 0) eligible.push(...preferred);
     }
-    if (eligible.length === 0 && ENEMIES['rarach']) {
-      eligible.push('rarach');
+    if (eligible.length === 0) {
+      const fallbackId = levelId === 0 ? 'mrazovy_skritek' : 'rarach';
+      if (isAllowed(fallbackId)) eligible.push(fallbackId);
     }
 
-    // Elite variants are available on every difficulty. The slider controls
-    // pressure quantity/cadence, not access to enemy families or mechanics.
+    // Elite variants must be valid for this level too, not merely linked to a
+    // valid base enemy (e.g. mysak -> krvavy_rarach, blatouch -> kalny_hastrman).
     for (const baseId of [...eligible]) {
       const eliteId = this.getEliteVariantForId(baseId);
-      if (eliteId && ENEMIES[eliteId] && !eligible.includes(eliteId)) {
+      if (eliteId && isAllowed(eliteId) && !eligible.includes(eliteId)) {
         eligible.push(eliteId);
       }
     }

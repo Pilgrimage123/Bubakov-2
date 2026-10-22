@@ -1,3 +1,29 @@
+## 2026-10-22 — Kruhové hejno mrazivých vran s virtuálním vůdcem
+
+- Přidán samostatný systém až 150 běžných vran řízených jediným virtuálním vůdcem. Střídá přímý průlet arénou a smršťující se oběžnou dráhu; rozložení používá Vogelovu spirálu se zlatým úhlem, pomalou rotaci, sinusové vlnění a mávání křídel.
+- Pohyb hejna používá předalokované typed arrays a znovupoužitelné nepřátelské objekty; vrány se navzájem nevyhledávají ani fyzikálně neovlivňují. Přidány kruhové broadphase kontroly pro kontakt hráče, projektily a plošné zásahy.
+- Běžné vrány z nového hejna mají 60 % obvyklé bodové hodnoty (−40 %). Původní hejno vran jako miniboss zůstává beze změny; jeho konfiguraci chrání regresní test.
+- Přidány testy zlatého úhlu, plánování vln, obou pohybových režimů, broadphase a deaktivace vran bez posouvání poolu.
+
+## 2026-10-22 — Zákaz běžných spawnů čertů a vodníků v první úrovni
+
+- Režisér výpravy filtruje zakázané nepřátele také při výběru elit, při záložním výběru i v taktických formacích; např. myšák/šotek už se nemůže změnit na krvavého raráška a blatouch na kalného hastrmana.
+- Staré preferované cíle v archetypech první úrovně byly nahrazeny tematickými nepřáteli předjaří.
+- Přidán regresní test skutečného spawnovacího poolu pro všechny fáze i archetypy.
+
+## 2026-10-22 — Čistší bestiář první úrovně
+
+- Odstraněni čerti a vodníci z běžných spawnovacích fondů první úrovně; Vodníček zůstává pouze plánovaným mezibossem.
+- Nápověda k bestiáři první úrovně už Vodníčka neuvádí mezi běžnými nepřáteli.
+- Přidány regresní testy, které zakazují běžné spawny čertů a vodních bytostí na první úrovni.
+
+## 2026-10-22 — Sjednocení obsahu první úrovně
+
+- Sjednoceny české a anglické názvy i varování minibosse s reálným hejnem mrazivých vran.
+- Opraveny podtituly, nápověda k hlavnímu bossovi a popisy průzkumných milníků; finálním bossem je Morana a Vodníček zůstává mezibossem.
+- Mrazivý obr byl přidán do soumračného spawnovacího poolu první úrovně, aby mohl přirozeně vstoupit do běžného průběhu výpravy.
+- Regresní testy nyní ověřují spawn Mrazivého obra a názvy minibosse v češtině i angličtině.
+
 ## 2026-10-22 — Oprava ukazatele FPS, reálné měření prodlev snímků a automatizovaný Playwright benchmark v Chromiu
 
 - **Oprava falešného ukazatele FPS (`FrameProfiler` & `App.tsx`)**:
