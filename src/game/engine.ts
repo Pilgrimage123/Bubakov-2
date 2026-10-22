@@ -57,6 +57,9 @@ import {
   canSpawnRareBattleDrop,
   rollRareBattleDrop,
   getRareDropAnnouncement,
+  resolveDynamicDrop,
+  isHealingDrop,
+  SoADropManager,
   type DropSpawnOptions,
 } from './drops';
 import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
@@ -341,6 +344,7 @@ export class GameEngine {
   public spatialHash: SpatialHash<any>;
   public livingEnemies: any[];
   public director: RunDirector | null = null;
+  public readonly soaDropManager: SoADropManager = new SoADropManager();
   public callbacks?: GameEngineCallbacks;
   public enemyFactory?: (
     id: string,
@@ -822,10 +826,58 @@ export class GameEngine {
   }
 
   public spawnDrop(type: DropType, x: number, y: number, opts: DropSpawnOptions = {}): GameDrop {
+    let resolvedType = type;
+    let isHot = opts.isHot;
+    let expiration = opts.expiration;
+    let isMercyDrop = opts.isMercyDrop;
+
+    if (this.director && isHealingDrop(type)) {
+      const playerHp = this.state.player?.hp ?? 100;
+      const playerMaxHp = this.state.player?.maxHp ?? 100;
+      const resolution = resolveDynamicDrop(type, playerHp, playerMaxHp, {
+        value: opts.value,
+        size: opts.size,
+        vulnerabilityScore: this.director.vulnerabilityScore,
+        pacingPhase: this.director.dropPacingPhase,
+        mercyCooldownActive: this.director.mercyPityCooldown > 0,
+      });
+      resolvedType = resolution.type;
+      if (resolution.isHot) isHot = true;
+      if (resolution.expiration) expiration = resolution.expiration;
+      if (resolution.isMercyDrop) isMercyDrop = true;
+    }
+
+    const spawned = this.soaDropManager.spawn({
+      type: resolvedType,
+      x,
+      y,
+      vx: opts.vx,
+      vy: opts.vy,
+      value: opts.value,
+      radius: opts.radius,
+      size: opts.size,
+      isHot,
+      goldenRushTimer: opts.goldenRushTimer,
+      expiration,
+      isHeavyAnchor: opts.isHeavyAnchor,
+      isMercyDrop,
+      skipConsolidation: opts.skipConsolidation,
+      stressPhaseRefund: isHot,
+      text: opts.text,
+      textColor: opts.textColor,
+    });
+
+    if (spawned) {
+      if (!this.state.drops.includes(spawned)) {
+        this.state.drops.push(spawned);
+      }
+      return spawned;
+    }
+
     const pooled = this.dropPool.pop();
-    const drop = createDropInstance(type, x, y, opts, pooled);
-    this.state.drops.push(drop);
-    return drop;
+    const fallbackDrop = createDropInstance(resolvedType, x, y, { ...opts, isHot, expiration, isHeavyAnchor: opts.isHeavyAnchor, isMercyDrop }, pooled);
+    this.state.drops.push(fallbackDrop);
+    return fallbackDrop;
   }
 
   public createHeadlessEnemy(
@@ -1684,7 +1736,7 @@ export class GameEngine {
 
     for (let i = 0; i < sortedEnemies.length; i++) {
       const foe = sortedEnemies[i];
-      this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75 });
+      this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75, skipConsolidation: true });
       this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
       if (this.state.particles) {
         for (let k = 0; k < 3; k++) {
@@ -3003,12 +3055,25 @@ export class GameEngine {
               } else if (d.type === 'potion') {
                 this.callbacks?.onSound?.('potion');
                 const waterLevel = this.state.meta?.waterLevel || 0;
-                const potionHeal = 30 * (1 + waterLevel * 0.20);
+                let potionHeal = 30 * (1 + waterLevel * 0.20);
+                if (d.isMercyDrop) {
+                  const mercyCap = player.maxHp * 0.45;
+                  if (player.hp + potionHeal > mercyCap) {
+                    potionHeal = Math.max(0, mercyCap - player.hp);
+                  }
+                }
                 player.hp = Math.min(player.maxHp, player.hp + potionHeal);
                 player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
               } else if (d.type === 'bread' || d.type === 'pear') {
                 this.callbacks?.onSound?.('potion');
-                player.hp = Math.min(player.maxHp, player.hp + 15);
+                let foodHeal = 15;
+                if (d.isMercyDrop) {
+                  const mercyCap = player.maxHp * 0.45;
+                  if (player.hp + foodHeal > mercyCap) {
+                    foodHeal = Math.max(0, mercyCap - player.hp);
+                  }
+                }
+                player.hp = Math.min(player.maxHp, player.hp + foodHeal);
               } else if (d.type === 'soul') {
                 this.callbacks?.onSound?.('soul');
                 player.soulBuffTimer = 6.0;
@@ -3059,6 +3124,22 @@ export class GameEngine {
                     this.callbacks?.onDamageText?.(dt);
                   },
                 });
+              } else if (d.type === 'big_pouch') {
+                this.callbacks?.onSound?.('coin');
+                const pouchVal = d.value || 35;
+                this.state.coins += pouchVal;
+                this.state.texts.push(new DamageText(player.x, player.y - 75, `VELKÝ MĚŠEC! +${pouchVal} kr. 🪙`, '#F59E0B', true));
+              } else if (d.type === 'gingerbread_stash') {
+                this.callbacks?.onSound?.('gingerbreadPickup');
+                const stashVal = d.value || 25;
+                this.state.gingerbread += stashVal;
+                const mercyCap = player.maxHp * 0.45;
+                const healAmt = Math.max(0, Math.min(30, mercyCap - player.hp));
+                if (healAmt > 0) {
+                  player.hp += healAmt;
+                  this.state.texts.push(new DamageText(player.x, player.y - 50, `+${healAmt} Kuráž! 🧺`, '#F43F5E', true));
+                }
+                this.state.texts.push(new DamageText(player.x, player.y - 75, `KOŠÍK PERNÍKU! +${stashVal} 🧺`, '#D97706', true));
               }
             }
           }
@@ -3068,6 +3149,10 @@ export class GameEngine {
         if (this.dropPool.length < 100) this.dropPool.push(d);
       });
       performDropFusion(this.state.drops, undefined, 250);
+
+      if (player && this.soaDropManager.dropBank.totalValue >= 20 && this.state.drops.length < 35) {
+        this.soaDropManager.cashOutDropBank(player.x, player.y);
+      }
     }
 
     // Step texts

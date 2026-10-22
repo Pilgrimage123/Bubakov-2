@@ -124,6 +124,11 @@ _Avoid_: spawn delay, slot hoarding, držení slotů
 Pravidlo Režiséra výpravy, podle kterého se při vyčerpání efektivní kapacity bojiště tlak na hráče nezvyšuje prostým navyšováním počtu těl, nýbrž investicí rejdového rozpočtu do elitních variant, přívlastků a Ostřílených běsů.
 _Avoid_: mob spam, entity bloating, zahušťování nepřátel
 
+**Ukazatel ohrožení lovce**:
+Normalizovaný index (0,0 až 1,0) vyhodnocovaný Režisérem výpravy z Kuráže, nedávného zranění, připravenosti arzenálu a hustoty běsů pro dynamické řízení tempa a kořisti.
+_Avoid_: vulnerability score, threat index, stress score, V-skóre
+
+
 ## Světlo a atmosféra
 
 **Petrolejka**:
@@ -157,10 +162,27 @@ Základní běhová měna získávaná z poražených strašidel v průběhu vý
 _Avoid_: XP, expy, zkušenosti, drop body
 
 **Slévání perníčků**:
-Automatické spojování neposbíraných drobných perníčků ležících mimo zorné pole do větších bochánků, zabraňující zahlcení bojiště bez ztráty jejich hodnoty.
+Automatické slučování neposbíraných drobných perníčků na louce do větších bochánků s hodnotovým bonusem, zabraňující zahlcení bojiště.
 _Avoid_: drop fusion, XP merge, komprese dropů, fúze dropů
 
+**Pokladnice kořisti**:
+Paměťový rezervoár střádající hodnotu kořisti při zaplnění kapacity 40 volných předmětů na bojišti, vyplácený do konsolidovaných celků či těžkých kotev.
+_Avoid_: drop bank, rezervoár kořisti, loot bank
+
+**Těžké kotvy**:
+Rozměrné, gravitačně pomalé předměty na bojišti vyvolané Režisérem výpravy za horizontem obrazovky za účelem prolomení kempování a podnícení pohybu lovce.
+_Avoid_: heavy anchor drops, objective drops, map beacons
+
+**Košík perníku**:
+Záchranná těžká kotva vyvolaná v krizové fázi ohrožení za horizontem bojiště, navádějící obklíčeného lovce do bezpečnějšího koridoru.
+_Avoid_: gingerbread stash, perníková nůše, heal chest
+
+**Velký měšec krejcarů**:
+Těžká kotva bohatství vyvolaná výplatou z Pokladnice kořisti nebo při pasivitě lovce, jež se pomalu sune k lovci a po cestě pohlcuje drobné krejcary.
+_Avoid_: big coin pouch, pytel zlaťáků, money bag
+
 **Krejcar**:
+
 Trvalá měna získávaná z truhel a odměn po skončení výpravy, sloužící k trvalé výstavbě vesnických budov v hospodě U Černého kocoura.
 _Avoid_: mince, zlato, peníze, gold
 

@@ -20,7 +20,9 @@ export type DropType =
   | 'slivovice_splash'
   | 'svanda_bagpipes'
   | 'kominik_button'
-  | 'arcivzacny_ananas';
+  | 'arcivzacny_ananas'
+  | 'big_pouch'
+  | 'gingerbread_stash';
 
 export type RareItemType =
   | 'ponocny_horn'
@@ -47,6 +49,10 @@ export interface GameDrop {
   isHot?: boolean;
   goldenRushTimer?: number;
   rescued?: boolean;
+  magnetMobility?: number;
+  expiration?: number;
+  isHeavyAnchor?: boolean;
+  stressPhaseRefund?: boolean;
   text?: string;
   textColor?: string;
   [key: string]: any;

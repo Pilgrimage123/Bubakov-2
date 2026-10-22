@@ -59,8 +59,146 @@ export function renderDrops(
       Lada.drawKominikButton(ctx, d.x, d.y, d.time);
     } else if (d.type === 'arcivzacny_ananas') {
       Lada.drawAnanas(ctx, d.x, d.y, d.time);
+    } else if (d.type === 'big_pouch') {
+      drawBigPouch(ctx, d.x, d.y, d.time, d.value || 30);
+    } else if (d.type === 'gingerbread_stash') {
+      drawGingerbreadStash(ctx, d.x, d.y, d.time);
     }
   }
 
   return rendered;
+}
+
+/**
+ * Velký měšec krejcarů (Ladovský kožený měšec s mosaznou šňůrkou)
+ */
+function drawBigPouch(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, value: number): void {
+  const bob = Math.sin(time * 3.0) * 3;
+  ctx.save();
+  ctx.translate(x, y + bob);
+
+  // Soft shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, 16 - bob * 0.5, 18, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Leather Pouch Body (warm ochre/amber)
+  ctx.fillStyle = '#B45309';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(-14, -6);
+  ctx.bezierCurveTo(-22, 4, -18, 16, 0, 16);
+  ctx.bezierCurveTo(18, 16, 22, 4, 14, -6);
+  ctx.bezierCurveTo(10, -12, -10, -12, -14, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Crimped pouch top collar
+  ctx.fillStyle = '#92400E';
+  ctx.beginPath();
+  ctx.moveTo(-12, -6);
+  ctx.lineTo(-15, -14);
+  ctx.lineTo(-6, -11);
+  ctx.lineTo(0, -15);
+  ctx.lineTo(6, -11);
+  ctx.lineTo(15, -14);
+  ctx.lineTo(12, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Brass drawstring
+  ctx.strokeStyle = '#FCD34D';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.ellipse(0, -6, 11, 3, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Gold emblem in center
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 5, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#78350F';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('kr', 0, 5);
+
+  ctx.restore();
+}
+
+/**
+ * Košík perníku (Proutěný košík s perníčky a červenou stuhou)
+ */
+function drawGingerbreadStash(ctx: CanvasRenderingContext2D, x: number, y: number, time: number): void {
+  const bob = Math.sin(time * 2.8) * 3;
+  ctx.save();
+  ctx.translate(x, y + bob);
+
+  // Soft shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, 16 - bob * 0.5, 20, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Amber ambient glow
+  ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
+  ctx.shadowBlur = 10;
+
+  // Woven Wicker Basket Body
+  ctx.fillStyle = '#D97706';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.5;
+
+  ctx.beginPath();
+  ctx.moveTo(-16, -2);
+  ctx.lineTo(-12, 14);
+  ctx.lineTo(12, 14);
+  ctx.lineTo(16, -2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Wicker weave lines
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-14, 3); ctx.lineTo(14, 3);
+  ctx.moveTo(-13, 8); ctx.lineTo(13, 8);
+  ctx.moveTo(-5, -2); ctx.lineTo(-4, 14);
+  ctx.moveTo(5, -2); ctx.lineTo(4, 14);
+  ctx.stroke();
+
+  // Red Folk Ribbon / Rim
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(0, -3, 17, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Gingerbread hearts peeking out
+  ctx.fillStyle = '#854D0E';
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(-6, -8, 5, 0, Math.PI * 2);
+  ctx.arc(6, -8, 5, 0, Math.PI * 2);
+  ctx.arc(0, -11, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
 }

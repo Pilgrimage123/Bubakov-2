@@ -4,6 +4,13 @@ import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES } from '../data/enemies';
 import { toCanonicalWeaponId } from './migration';
+import {
+  computeVulnerabilityScore,
+  getDropPacingPhase,
+  CampingDetector,
+  sampleAnnulusPosition,
+  type DropPacingPhase,
+} from './directorDrops';
 
 const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
   'rarach',
@@ -190,6 +197,8 @@ export interface DirectorTelemetry {
   killVelocity: number;
   panicBrakeActive: boolean;
   punitiveTwinCooldown: number;
+  vulnerabilityScore?: number;
+  dropPacingPhase?: DropPacingPhase;
 }
 
 export interface DirectorConfig {
@@ -315,6 +324,13 @@ export class RunDirector {
   public punitiveTwinCooldown = 0;
   public timeSinceLastCrowWave = 0;
   public timeSinceLastSnowmanHorde = 0;
+
+  public vulnerabilityScore = 0.5;
+  public vulnerabilityTimer = 0;
+  public dropPacingPhase: DropPacingPhase = 'flow';
+  public campingDetector: CampingDetector = new CampingDetector();
+  public mercyPityCooldown = 0;
+  public heavyAnchorCooldown = 20.0;
 
   /**
    * Computes the authoritative effective living enemy count.
@@ -480,6 +496,23 @@ export class RunDirector {
     this.punitiveTwinCooldown = Math.max(0, this.punitiveTwinCooldown - dt);
     this.panicBrakeCooldown = Math.max(0, this.panicBrakeCooldown - dt);
     this.panicBrakeActiveTimer = Math.max(0, this.panicBrakeActiveTimer - dt);
+    this.mercyPityCooldown = Math.max(0, this.mercyPityCooldown - dt);
+    this.heavyAnchorCooldown = Math.max(0, this.heavyAnchorCooldown - dt);
+
+    // AI Director: Vulnerability Score (V) update at 0.5s cadence
+    this.vulnerabilityTimer += dt;
+    if (this.vulnerabilityTimer >= 0.5) {
+      this.vulnerabilityTimer = 0;
+      const density = this.computeLocalEnemyDensity(player, engine);
+      this.vulnerabilityScore = computeVulnerabilityScore(player, this.hpLossInWindow, density);
+      this.dropPacingPhase = getDropPacingPhase(this.vulnerabilityScore);
+    }
+
+    // Anti-camping detection & Heavy Anchor trigger
+    const isCamping = this.campingDetector.update(dt, player.x, player.y);
+    if (isCamping && this.heavyAnchorCooldown <= 0) {
+      this.triggerCampingHeavyAnchor(player, engine);
+    }
 
     // Track sudden burst damage for Panic Brake
     const maxHp = player.maxHp || 100;
@@ -616,6 +649,44 @@ export class RunDirector {
       type: this.rozmar.weatherOverride === 'snow' ? 'frost' : 'mud',
       slowFactor: 0.75, // -25% rychlost
     });
+  }
+
+  public computeLocalEnemyDensity(player: any, engine: any, radius = 450): number {
+    const enemies = engine.livingEnemies ?? engine.state?.enemies ?? [];
+    let count = 0;
+    const radiusSq = radius * radius;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (!e || e.dead || e.isDefeated) continue;
+      const dx = e.x - player.x;
+      const dy = e.y - player.y;
+      if (dx * dx + dy * dy <= radiusSq) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public triggerCampingHeavyAnchor(player: any, engine: any): void {
+    this.heavyAnchorCooldown = 25.0;
+    const screenW = engine.camera?.width ?? 1280;
+    const enemies = engine.livingEnemies ?? engine.state?.enemies ?? [];
+    const anchorType = this.dropPacingPhase === 'mercy'
+      ? 'gingerbread_stash'
+      : (Math.random() < 0.6 ? 'big_pouch' : 'chest');
+
+    const pos = sampleAnnulusPosition(player.x, player.y, screenW, enemies, anchorType);
+    if (typeof engine.spawnDrop === 'function') {
+      const val = anchorType === 'big_pouch' ? 35 : anchorType === 'gingerbread_stash' ? 25 : 1;
+      engine.spawnDrop(anchorType, pos.x, pos.y, {
+        value: val,
+        isHeavyAnchor: true,
+        isMercyDrop: anchorType === 'gingerbread_stash',
+      });
+      if (anchorType === 'gingerbread_stash') {
+        this.mercyPityCooldown = 15.0;
+      }
+    }
   }
 
   private updateAdaptivePressure(dominance: number, hpRatio: number, dt: number): void {
@@ -1638,6 +1709,8 @@ export class RunDirector {
       killVelocity: Math.round(this.getKillVelocity(3.0) * 10) / 10,
       panicBrakeActive: this.panicBrakeActiveTimer > 0,
       punitiveTwinCooldown: Math.max(0, Math.round(this.punitiveTwinCooldown * 10) / 10),
+      vulnerabilityScore: Math.round(this.vulnerabilityScore * 100) / 100,
+      dropPacingPhase: this.dropPacingPhase,
     };
   }
 }

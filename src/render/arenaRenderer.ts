@@ -18,6 +18,7 @@ import { renderDrops } from './renderDrops';
 import { renderParticles } from './renderParticles';
 import { renderProjectilesAndSlashes } from './renderProjectiles';
 import { renderEnemyTelegraphs } from './renderTelegraphs';
+import { OffScreenIndicatorController } from './offScreenIndicators';
 
 export interface CameraViewport {
   x: number;
@@ -144,6 +145,7 @@ function now(): number {
 export class ArenaRenderer {
   public preallocatedDrawables: any[] = new Array(MAX_DRAWABLE_CAPACITY);
   public drawableCount = 0;
+  public readonly indicatorController = new OffScreenIndicatorController();
 
   /**
    * Renders the depth-sorted dynamic entity layer using this instance's isolated buffer.
@@ -384,6 +386,14 @@ export class ArenaRenderer {
       }
       combatTextsMs = now() - tTextsStart;
     }
+
+    // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS)
+    const playerHp = engine?.player?.kuraz ?? engine?.player?.hp ?? 100;
+    const playerMaxHp = engine?.player?.maxKuraz ?? engine?.player?.maxHp ?? 100;
+    const hpPct = playerHp / (playerMaxHp || 1);
+    const dropsArray = engine?.drops ?? [];
+    this.indicatorController.update(dropsArray, camera, 0.016, hpPct);
+    this.indicatorController.render(ctx);
 
     const totalMs = now() - tStart;
 

@@ -2,6 +2,37 @@ import type { GameDrop, DropType } from '../types';
 import type { EngineState } from './engineState';
 import { GINGERBREAD_VALUES, type GingerbreadSize, getGingerbreadSize } from '../data/gingerbread';
 import { ENEMY_POINTS } from '../constants';
+import {
+  SoADropManager,
+  DropBank,
+  MAX_ACTIVE_DROPS,
+  HEAVY_ANCHOR_MAGNET_MOBILITY,
+  STANDARD_MAGNET_MOBILITY,
+  POUCH_SWEEP_RADIUS,
+  CONSOLIDATION_BONUS,
+} from './soaDropManager';
+import {
+  computeVulnerabilityScore,
+  getDropPacingPhase,
+  selectWeightedDropType,
+  CampingDetector,
+  sampleAnnulusPosition,
+} from './directorDrops';
+
+export {
+  SoADropManager,
+  DropBank,
+  MAX_ACTIVE_DROPS,
+  HEAVY_ANCHOR_MAGNET_MOBILITY,
+  STANDARD_MAGNET_MOBILITY,
+  POUCH_SWEEP_RADIUS,
+  CONSOLIDATION_BONUS,
+  computeVulnerabilityScore,
+  getDropPacingPhase,
+  selectWeightedDropType,
+  CampingDetector,
+  sampleAnnulusPosition,
+};
 
 export const MAX_DROPS_LIMIT = 250;
 export const SPECIAL_DROP_PITY_COOLDOWN = 45.0;
@@ -30,6 +61,9 @@ export interface DynamicDropResolution {
   text?: string;
   textColor?: string;
   radius?: number;
+  isHot?: boolean;
+  expiration?: number;
+  isMercyDrop?: boolean;
 }
 
 /**
@@ -52,8 +86,65 @@ export function resolveDynamicDrop(
     size?: string;
     radius?: number;
     forceDivert?: boolean;
+    isHot?: boolean;
+    vulnerabilityScore?: number;
+    pacingPhase?: 'stress' | 'flow' | 'mercy';
+    mercyCooldownActive?: boolean;
   } = {}
 ): DynamicDropResolution {
+  // When AI Director's Vulnerability Score V is supplied, modulate drops
+  if (typeof opts.vulnerabilityScore === 'number') {
+    const v = opts.vulnerabilityScore;
+    const phase = opts.pacingPhase ?? getDropPacingPhase(v);
+    const isHealing = isHealingDrop(intendedType);
+
+    if (isHealing) {
+      if (phase === 'stress' || currentHp >= maxHp * 0.95) {
+        // Stress phase: suppress healing by 80% (or 88% if full courage)
+        const suppressRate = currentHp >= maxHp * 0.95 ? 0.88 : 0.80;
+        if (Math.random() < suppressRate && !opts.forceDivert) {
+          const isVolatile = Math.random() < 0.50;
+          return {
+            type: 'gingerbread',
+            value: opts.value ?? GINGERBREAD_VALUES.large,
+            size: 'large',
+            isHot: isVolatile,
+            expiration: isVolatile ? 4.0 + Math.random() * 2.0 : undefined,
+            speed: opts.speed,
+            text: isVolatile ? 'Horký perník! 🔥' : '+6 Perníček!',
+            textColor: isVolatile ? '#EF4444' : '#B45309',
+          };
+        }
+      } else if (phase === 'mercy') {
+        return {
+          type: intendedType,
+          value: opts.value,
+          size: opts.size,
+          speed: opts.speed,
+          radius: opts.radius,
+          isMercyDrop: true,
+          text: opts.text,
+          textColor: opts.textColor,
+        };
+      }
+    } else if (intendedType === 'gingerbread' && phase === 'stress' && !opts.isHot) {
+      // 50% chance volatile offensive buff inside stress clusters
+      if (Math.random() < 0.50) {
+        return {
+          type: 'gingerbread',
+          value: opts.value,
+          size: opts.size,
+          speed: opts.speed,
+          radius: opts.radius,
+          isHot: true,
+          expiration: 4.0 + Math.random() * 2.0,
+          text: 'Horký perník! 🔥',
+          textColor: '#EF4444',
+        };
+      }
+    }
+  }
+
   const isFullCourage = currentHp >= maxHp * 0.95;
   const isHealing = isHealingDrop(intendedType);
 
@@ -301,6 +392,11 @@ export interface DropSpawnOptions {
   size?: 'small' | 'large' | 'giant' | string;
   isHot?: boolean;
   goldenRushTimer?: number;
+  magnetMobility?: number;
+  expiration?: number;
+  isHeavyAnchor?: boolean;
+  isMercyDrop?: boolean;
+  skipConsolidation?: boolean;
   text?: string;
   textColor?: string;
 }
@@ -322,7 +418,8 @@ export function createDropInstance(
 
   let radius = opts.radius;
   if (!radius) {
-    if (type === 'chest') radius = 25;
+    if (type === 'big_pouch' || type === 'gingerbread_stash') radius = 28;
+    else if (type === 'chest') radius = 25;
     else if (type === 'arcivzacny_ananas') radius = 22;
     else if (
       type === 'ponocny_horn' ||
@@ -359,6 +456,12 @@ export function createDropInstance(
   drop.isHot = opts.isHot || false;
   drop.goldenRushTimer = opts.goldenRushTimer || 0;
   drop.dead = false;
+  drop.magnetMobility = opts.magnetMobility !== undefined
+    ? opts.magnetMobility
+    : (opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash' || type === 'chest' ? HEAVY_ANCHOR_MAGNET_MOBILITY : 1.0);
+  drop.expiration = opts.expiration;
+  drop.isHeavyAnchor = opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash';
+  drop.isMercyDrop = opts.isMercyDrop;
   return drop;
 }
 
@@ -503,8 +606,12 @@ export function applyMagnetWave(
     if (fullScreen || dist <= radius) {
       const ang = Math.atan2(targetY - d.y, targetX - d.x);
       const impulseSpeed = fullScreen ? 850 : 620;
-      d.vx = Math.cos(ang) * impulseSpeed;
-      d.vy = Math.sin(ang) * impulseSpeed;
+      const mobility = d.magnetMobility !== undefined
+        ? d.magnetMobility
+        : (d.isHeavyAnchor || d.type === 'big_pouch' || d.type === 'gingerbread_stash' || d.type === 'chest' ? HEAVY_ANCHOR_MAGNET_MOBILITY : 1.0);
+      const effectiveSpeed = impulseSpeed * mobility;
+      d.vx = Math.cos(ang) * effectiveSpeed;
+      d.vy = Math.sin(ang) * effectiveSpeed;
       pulled++;
     }
   }
@@ -528,7 +635,7 @@ export function pullWhipLoot(
   const sin = Math.sin(angle);
   for (let i = 0; i < drops.length; i++) {
     const d = drops[i];
-    if (d.dead || (d.type !== 'coin' && d.type !== 'gingerbread')) continue;
+    if (d.dead || (d.type !== 'coin' && d.type !== 'gingerbread' && d.type !== 'big_pouch' && d.type !== 'gingerbread_stash' && d.type !== 'chest')) continue;
     const dx = d.x - originX;
     const dy = d.y - originY;
     const projAlong = dx * cos + dy * sin;
@@ -538,8 +645,12 @@ export function pullWhipLoot(
       const distToPlayer = Math.hypot(dx, dy);
       const angToPlayer = Math.atan2(originY - d.y, originX - d.x);
       const impulseSpeed = Math.max(680, Math.min(960, distToPlayer * 4.5));
-      d.vx = Math.cos(angToPlayer) * impulseSpeed;
-      d.vy = Math.sin(angToPlayer) * impulseSpeed;
+      const mobility = d.magnetMobility !== undefined
+        ? d.magnetMobility
+        : (d.isHeavyAnchor || d.type === 'big_pouch' || d.type === 'gingerbread_stash' || d.type === 'chest' ? HEAVY_ANCHOR_MAGNET_MOBILITY : 1.0);
+      const effectiveSpeed = impulseSpeed * mobility;
+      d.vx = Math.cos(angToPlayer) * effectiveSpeed;
+      d.vy = Math.sin(angToPlayer) * effectiveSpeed;
       pulled++;
     }
   }
