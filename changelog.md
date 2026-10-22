@@ -1,3 +1,8 @@
+## 2026-10-22 — Oprava CI testu kontaktního odstrčení
+
+- Aktualizováno očekávání v `tests/gameEngine.test.ts` podle nové délky omráčení 2,5× (základ 0,875 s); odstraněno zastaralé očekávání 0,35 s.
+- Oprava testu nemění herní logiku, pouze ověřuje novou dohodnutou hodnotu.
+
 ## 2026-10-22 — Prodloužení omráčení po kontaktním odstrčení
 
 - Prodlouženo omráčení bubáků po kontaktním odstrčení lovcem na 2,5násobek: základní délka se mění z 0,35 s na 0,875 s před započtením koeficientu maximální Kuráže. Cooldown protiútoku zůstává 1,2 s.
