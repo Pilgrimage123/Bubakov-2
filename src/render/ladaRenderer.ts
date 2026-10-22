@@ -6387,6 +6387,2334 @@ var Lada = {
 		}
 		ctx.restore();
 	},
+	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
+		const dir = vx < 0 ? -1 : 1;
+		const walkSpeed = panicked ? 16 : 8;
+		const bob = Math.sin(time * walkSpeed) * (panicked ? 3.5 : 2.0);
+		const legSwing = Math.sin(time * walkSpeed) * (panicked ? 10 : 6);
+		const shiver = Math.sin(time * 26) * 0.7;
+		const sniffleCycle = (time * 1.5) % 4;
+		const handkerchiefDab = sniffleCycle < 1.4 ? Math.sin((sniffleCycle / 1.4) * Math.PI) * 2.5 : 0;
+
+		// -----------------------------------------------------------------
+		// 1. FROST AURA (Jinovatková aura dle herního dosahu)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.translate(x, y);
+
+		const frostAuraPulse = Math.sin(time * 3.5) * 3.5;
+		// Soft double-concentric aura instead of GPU-stalling shadowBlur (ADR 0029)
+		ctx.fillStyle = "rgba(147, 229, 255, 0.22)";
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse + 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(125, 211, 252, 0.14)";
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.strokeStyle = "rgba(186, 230, 253, 0.65)";
+		ctx.lineWidth = 1.6;
+		ctx.setLineDash([6, 8]);
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS - 3 + frostAuraPulse, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.setLineDash([]);
+
+		const numCrystals = 6;
+		for (let c = 0; c < numCrystals; c++) {
+			const cAngle = (c / numCrystals) * Math.PI * 2 + time * 0.6;
+			const cDist = FROSTLING_AURA_RADIUS * 0.78 + Math.sin(time * 3 + c) * 4;
+			const cx = Math.cos(cAngle) * cDist;
+			const cy = Math.sin(cAngle) * cDist;
+			ctx.fillStyle = "rgba(224, 242, 254, 0.8)";
+			ctx.beginPath();
+			ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+
+		// -----------------------------------------------------------------
+		// 2. THE ZIMNÍ SKŘÍTEK CHARACTER BODY (Předloha dle ilustrace)
+		// -----------------------------------------------------------------
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.scale(dir * 1.15, 1.15);
+
+		this.drawShadow(ctx, 0, 16, 12);
+
+		// 2a. Boots & Legs (Teplé kožíškové botky se sněhem a záplatované kalhoty)
+		this.drawBentLimb(ctx, -5, 4, -legSwing - 3, 11, -legSwing - 3, 17, "#5B4433", 6);
+		this.setupPath(ctx, "#543C28", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 3, 17, 5.5, 3.8, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F8FAFC";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 3, 13.5, 4, 1.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.ellipse(-legSwing - 5, 16, 2.5, 1.4, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.drawBentLimb(ctx, 4, 4, legSwing + 3, 11, legSwing + 3, 17, "#5B4433", 6);
+		ctx.fillStyle = "#C2410C";
+		ctx.fillRect(legSwing + 1, 9, 3.5, 3);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(legSwing + 1, 9, 3.5, 3);
+
+		this.setupPath(ctx, "#543C28", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 4, 17, 6, 4, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F8FAFC";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 4, 13.5, 4, 1.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.ellipse(legSwing + 6.5, 16, 2.8, 1.5, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#E0F2FE";
+		ctx.strokeStyle = "#0891B2";
+		ctx.lineWidth = 0.8;
+		ctx.beginPath();
+		ctx.moveTo(legSwing + 2, 17);
+		ctx.lineTo(legSwing + 2.5, 21);
+		ctx.lineTo(legSwing + 3.2, 17);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2b. Coat with fleece hem & rope belt
+		this.setupPath(ctx, "#6E5540", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-11, -5);
+		ctx.quadraticCurveTo(-14, 2, -12, 8);
+		ctx.lineTo(12, 8);
+		ctx.quadraticCurveTo(14, 2, 11, -5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#F1F5F9", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-12, 7);
+		for (let s = -12; s <= 12; s += 3.5) {
+			ctx.quadraticCurveTo(s + 1.75, 10.5, s + 3.5, 7);
+		}
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#D97706";
+		ctx.fillRect(-7, 2, 3.5, 3.5);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(-7, 2, 3.5, 3.5);
+
+		ctx.strokeStyle = "#FDE68A";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-11, 2);
+		ctx.quadraticCurveTo(0, 3.5, 11, 2);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.stroke();
+		ctx.fillStyle = "#FDE68A";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1;
+		ctx.beginPath();
+		ctx.arc(1, 3.5, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(1, 4.5);
+		ctx.lineTo(2.5, 9);
+		ctx.moveTo(0.5, 4.5);
+		ctx.lineTo(-0.5, 8.5);
+		ctx.stroke();
+
+		// 2c. Knitted Red Scarf
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.ellipse(0, -6, 11.5, 4.5, 0.05, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		const scarfWave = Math.sin(time * walkSpeed * 0.7) * 2;
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(5, -4);
+		ctx.quadraticCurveTo(11, 0, 12 + scarfWave, 6);
+		ctx.lineTo(14 + scarfWave, 14);
+		ctx.lineTo(9 + scarfWave, 14);
+		ctx.quadraticCurveTo(8, 6, 2, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#991B1B";
+		ctx.lineWidth = 1.2;
+		for (let f = 9; f <= 14; f += 1.5) {
+			ctx.beginPath();
+			ctx.moveTo(f + scarfWave, 14);
+			ctx.lineTo(f + scarfWave, 16.5);
+			ctx.stroke();
+		}
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(8, 2, 0.9, 0, Math.PI * 2);
+		ctx.arc(11 + scarfWave, 8, 1.0, 0, Math.PI * 2);
+		ctx.arc(3, -6, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 2d. Head & Face
+		ctx.save();
+		ctx.translate(shiver, -13);
+
+		// Fluffy snowy beard
+		this.setupPath(ctx, "#F1F5F9", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-11, -3);
+		ctx.quadraticCurveTo(-14, 2, -10, 6);
+		ctx.quadraticCurveTo(-12, 10, -6, 11);
+		ctx.quadraticCurveTo(-2, 13, 2, 11);
+		ctx.quadraticCurveTo(8, 12, 11, 8);
+		ctx.quadraticCurveTo(14, 3, 11, -2);
+		ctx.quadraticCurveTo(7, -1, 3, 2);
+		ctx.quadraticCurveTo(-5, 2, -11, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "rgba(186, 230, 253, 0.5)";
+		ctx.beginPath();
+		ctx.arc(-5, 7, 3, 0, Math.PI * 2);
+		ctx.arc(2, 8, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Elf ear
+		this.setupPath(ctx, "#FED7AA", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-8, -4);
+		ctx.quadraticCurveTo(-15, -7, -17, -5);
+		ctx.quadraticCurveTo(-13, -2, -8, -1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FB7185";
+		ctx.beginPath();
+		ctx.ellipse(-12, -4, 2.5, 1.2, -0.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Face base
+		this.setupPath(ctx, "#FED7AA", COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.arc(0, -5, 8.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy cheeks
+		ctx.fillStyle = "rgba(244, 63, 94, 0.45)";
+		ctx.beginPath();
+		ctx.arc(-4, -3, 3, 0, Math.PI * 2);
+		ctx.arc(4, -3, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Cold red nose
+		this.setupPath(ctx, "#EF4444", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(2, -4, 3.4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+		ctx.beginPath();
+		ctx.arc(1.2, -5.2, 0.9, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Eyes
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.ellipse(-2.5, -6.5, 1.6, 2.0, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(-2.9, -7.2, 0.7, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.ellipse(4.2, -6.5, 1.5, 1.9, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(4.6, -7.2, 0.6, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Eyebrows
+		ctx.strokeStyle = "#475569";
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(-4.5, -9.5);
+		ctx.quadraticCurveTo(-2.5, -10.5, -0.5, -9);
+		ctx.moveTo(2.5, -9.5);
+		ctx.quadraticCurveTo(4.5, -10.5, 6.5, -9);
+		ctx.stroke();
+
+		// Handkerchief
+		ctx.save();
+		ctx.translate(6, -3 - handkerchiefDab);
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(-2, -3);
+		ctx.lineTo(4, -5);
+		ctx.lineTo(7, 2);
+		ctx.lineTo(2, 6);
+		ctx.lineTo(-3, 3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#3B82F6";
+		ctx.lineWidth = 1.1;
+		ctx.beginPath();
+		ctx.moveTo(3, -4);
+		ctx.lineTo(6, 1.5);
+		ctx.lineTo(1.5, 5);
+		ctx.stroke();
+
+		// Mitten
+		this.setupPath(ctx, "#4B6B82", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.arc(4, 1, 3.0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Floppy hat
+		this.setupPath(ctx, "#6E5540", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-13, -8);
+		ctx.quadraticCurveTo(-6, -11, 4, -9);
+		ctx.quadraticCurveTo(12, -8, 14, -6);
+		ctx.lineTo(11, -3);
+		ctx.quadraticCurveTo(0, -6, -11, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#5B4433", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-10, -9);
+		ctx.quadraticCurveTo(-14, -18, -9, -24);
+		ctx.quadraticCurveTo(-4, -28, 2, -22);
+		ctx.quadraticCurveTo(8, -17, 10, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#C2410C";
+		ctx.fillRect(-6, -19, 4, 3.5);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 0.8;
+		ctx.strokeRect(-6, -19, 4, 3.5);
+
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-11, -19);
+		ctx.quadraticCurveTo(-9, -26, -4, -26);
+		ctx.quadraticCurveTo(1, -26, 3, -20);
+		ctx.quadraticCurveTo(0, -21, -5, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FFFFFF";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.ellipse(-2, -9.5, 9, 2.2, 0.05, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		const icicleXs = [-10, -6, -2, 2, 7, 11];
+		const icicleLens = [5, 7, 4, 6, 8, 4.5];
+		for (let i = 0; i < icicleXs.length; i++) {
+			const ix = icicleXs[i];
+			const ilen = icicleLens[i] + Math.sin(time * 3 + i) * 0.5;
+			this.setupPath(ctx, "#E0F2FE", "#0891B2", 1.0);
+			ctx.beginPath();
+			ctx.moveTo(ix - 1.2, -6);
+			ctx.lineTo(ix, -6 + ilen);
+			ctx.lineTo(ix + 1.2, -6);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.strokeStyle = "#FFFFFF";
+			ctx.lineWidth = 0.6;
+			ctx.beginPath();
+			ctx.moveTo(ix - 0.4, -5);
+			ctx.lineTo(ix, -6 + ilen * 0.7);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+
+		// -----------------------------------------------------------------
+		// 3. MAGICAL FROST CROOK STAFF (Mrazivá berla s ledovým vírem)
+		// -----------------------------------------------------------------
+		ctx.save();
+		const staffSway = Math.sin(time * walkSpeed * 0.5) * 0.08;
+		ctx.translate(-15, -4);
+		ctx.rotate(staffSway);
+
+		this.setupPath(ctx, "#4B6B82", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(0, 3, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 4.5;
+		ctx.lineCap = "round";
+		ctx.beginPath();
+		ctx.moveTo(0, 20);
+		ctx.quadraticCurveTo(-1.5, 5, 0, -10);
+		ctx.quadraticCurveTo(1.5, -20, -2, -28);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C582B";
+		ctx.lineWidth = 2.8;
+		ctx.stroke();
+
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 4.5;
+		ctx.beginPath();
+		ctx.moveTo(-2, -28);
+		ctx.bezierCurveTo(-5, -34, 4, -40, 8, -34);
+		ctx.bezierCurveTo(10, -30, 8, -24, 3, -26);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C582B";
+		ctx.lineWidth = 2.8;
+		ctx.stroke();
+
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.3);
+		ctx.beginPath();
+		ctx.moveTo(-4, -32);
+		ctx.quadraticCurveTo(3, -41, 9, -35);
+		ctx.quadraticCurveTo(5, -36, -2, -31);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		const staffIcicles = [
+			{ x: -2, len: 6 },
+			{ x: 3, len: 8 },
+			{ x: 7, len: 5 }
+		];
+		for (const si of staffIcicles) {
+			this.setupPath(ctx, "#E0F2FE", "#0891B2", 0.9);
+			ctx.beginPath();
+			ctx.moveTo(si.x - 1, -29);
+			ctx.lineTo(si.x, -29 + si.len);
+			ctx.lineTo(si.x + 1, -29);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.save();
+		ctx.translate(3.5, -31);
+		const magicRot = time * 2.5;
+		const magicPulse = 1 + Math.sin(time * 5) * 0.15;
+		ctx.scale(magicPulse, magicPulse);
+
+		const staffGlow = ctx.createRadialGradient(0, 0, 1, 0, 0, 14);
+		staffGlow.addColorStop(0, "rgba(224, 242, 254, 0.95)");
+		staffGlow.addColorStop(0.4, "rgba(56, 189, 248, 0.65)");
+		staffGlow.addColorStop(1, "rgba(14, 165, 233, 0)");
+		ctx.fillStyle = staffGlow;
+		ctx.beginPath();
+		ctx.arc(0, 0, 14, 0, Math.PI * 2);
+		ctx.fill();
+
+		for (let sIdx = 0; sIdx < 2; sIdx++) {
+			ctx.save();
+			ctx.rotate(magicRot * (sIdx === 0 ? 1 : -1.2) + sIdx * 0.8);
+			const starRadius = 5.5 - sIdx * 1.5;
+			ctx.fillStyle = sIdx === 0 ? "#FFFFFF" : "#BAE6FD";
+			ctx.beginPath();
+			ctx.moveTo(0, -starRadius);
+			ctx.quadraticCurveTo(0.8, -0.8, starRadius, 0);
+			ctx.quadraticCurveTo(0.8, 0.8, 0, starRadius);
+			ctx.quadraticCurveTo(-0.8, 0.8, -starRadius, 0);
+			ctx.quadraticCurveTo(-0.8, -0.8, 0, -starRadius);
+			ctx.closePath();
+			ctx.fill();
+			ctx.restore();
+		}
+
+		for (let p = 0; p < 4; p++) {
+			const pAngle = (p / 4) * Math.PI * 2 + time * 3;
+			const pDist = 8 + Math.sin(time * 4 + p) * 3;
+			const px = Math.cos(pAngle) * pDist;
+			const py = Math.sin(pAngle) * pDist;
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.arc(px, py, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.restore();
+
+		ctx.restore();
+	},
+	drawBludicka(ctx, x, y, time, vx, panicked) {
+		const bob = Math.sin(time * (panicked ? 14 : 6)) * (panicked ? 8 : 6);
+		ctx.save();
+		ctx.translate(x, y + bob);
+		const glowColor = panicked ? "rgba(249, 115, 22, 0.35)" : "rgba(103, 232, 249, 0.35)";
+		const r = panicked ? 9 : 7;
+		// Soft halo without costly shadowBlur
+		ctx.fillStyle = glowColor;
+		ctx.beginPath();
+		ctx.arc(0, 0, r + 7, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = panicked ? "rgba(239, 68, 68, 0.95)" : "rgba(217, 160, 54, 0.9)";
+		ctx.beginPath();
+		ctx.arc(0, 0, r, 0, Math.PI * 2);
+		ctx.fill();
+		if (panicked) for (let i = 0; i < 3; i++) {
+			const pt = (time * 5 + i * .33) % 1;
+			ctx.fillStyle = "#FDE047";
+			ctx.beginPath();
+			ctx.arc(-12 - pt * 20, Math.sin(time * 10 + i) * 6, 2 - pt, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+	},
+	drawDrevorubec(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const walkSpeed = panicked ? 22 : 10;
+		const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * 1.3, 1.3);
+		if (panicked) {
+			ctx.rotate(.11);
+			this.drawRunDust(ctx, -8, 26, time);
+			this.drawPanicDrops(ctx, 4, -28, time);
+		}
+		if (panicked) {
+			const legPhase = time * 3.6;
+			const leg1 = this.getRunLegCycle(legPhase, -7, 6, 20);
+			const leg2 = this.getRunLegCycle(legPhase + .5, 7, 6, 20);
+			this.drawBentLimb(ctx, -7, 6, leg1.kx, leg1.ky, leg1.fx, leg1.fy, "#3E2723", 6);
+			this.drawBentLimb(ctx, 7, 6, leg2.kx, leg2.ky, leg2.fx, leg2.fy, "#3E2723", 6);
+		} else {
+			const legSwing = Math.sin(time * walkSpeed) * 11;
+			this.drawLimb(ctx, -7, 6, -legSwing, 23, "#3E2723", 6);
+			this.drawLimb(ctx, 7, 6, legSwing, 23, "#3E2723", 6);
+		}
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 16, 18, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, -20, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.woodDark;
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		if (panicked) {
+			ctx.moveTo(8, 8);
+			ctx.lineTo(-20, -24);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				// Cocked axe high behind head
+				ctx.moveTo(4, 10);
+				ctx.lineTo(-24, -30);
+			} else {
+				// Chopping downward forward into target
+				ctx.moveTo(6, 12);
+				ctx.lineTo(36, 16);
+			}
+		} else {
+			ctx.moveTo(12, 12);
+			ctx.lineTo(24, -26);
+		}
+		ctx.stroke();
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2);
+		ctx.beginPath();
+		if (panicked) {
+			ctx.moveTo(-18, -26);
+			ctx.lineTo(-30, -32);
+			ctx.lineTo(-30, -18);
+		} else if (attackInfo && attackInfo.isActive) {
+			if (attackInfo.isWindup) {
+				ctx.moveTo(-22, -32);
+				ctx.lineTo(-36, -36);
+				ctx.lineTo(-34, -22);
+			} else {
+				ctx.moveTo(34, 14);
+				ctx.lineTo(46, 8);
+				ctx.lineTo(46, 24);
+			}
+		} else {
+			ctx.moveTo(22, -28);
+			ctx.lineTo(34, -34);
+			ctx.lineTo(34, -20);
+		}
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		const glanceBack = panicked && Math.sin(time * 3.5) > .6;
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -4 : 4, -21, 2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawCertik(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.08;
+		const bounce = Math.abs(Math.sin(time * (panicked ? 24 : 14))) * (panicked ? 5 : 3.5);
+		const legSwing = Math.sin(time * (panicked ? 24 : 14)) * 10;
+		const tailWag = Math.sin(time * 18) * 12;
+
+		this.drawShadow(ctx, x, y, 18 * scale);
+		ctx.save();
+		ctx.translate(x, y - bounce);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawRunDust(ctx, -8, 20, time);
+			this.drawPanicDrops(ctx, 4, -24, time);
+		}
+
+		// Devil tail with spade barb
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-6, 4);
+		ctx.quadraticCurveTo(-18, 0 + tailWag, -22, -10 + tailWag);
+		ctx.stroke();
+		this.setupPath(ctx, '#DC2626', COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-22, -10 + tailWag);
+		ctx.lineTo(-28, -14 + tailWag);
+		ctx.lineTo(-25, -7 + tailWag);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Cloven-hoofed legs in striped red & black breeches
+		this.drawLimb(ctx, -5, 6, -5 - legSwing, 22, '#DC2626', 4);
+		this.drawLimb(ctx, 5, 6, 5 + legSwing, 22, '#DC2626', 4);
+		// Hooves
+		this.setupPath(ctx, '#18181B', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.rect(-7 - legSwing, 20, 5, 4);
+		ctx.rect(3 + legSwing, 20, 5, 4);
+		ctx.fill(); ctx.stroke();
+
+		// Soot-blackened imp body in leather smith apron
+		this.setupPath(ctx, '#27272A', COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 11, 13, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Smith apron
+		this.setupPath(ctx, '#78350F', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.rect(-6, -2, 12, 12);
+		ctx.fill(); ctx.stroke();
+
+		// Arms holding authentic blacksmith's hand bellows (kovářský měch)
+		const bellowsPump = Math.sin(time * 12) * 3;
+		this.drawBentLimb(ctx, -6, 0, -12, 4, -8, 12, '#27272A', 3.5);
+		this.drawBentLimb(ctx, 6, 0, 14, 2 + bellowsPump, 18, 10 + bellowsPump, '#27272A', 3.5);
+
+		// BLACKSMITH BELLOWS (kovářský měch)
+		ctx.save();
+		ctx.translate(14, 8 + bellowsPump * 0.5);
+		// Bellows wooden handles & ribbed chamber
+		this.setupPath(ctx, '#B45309', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-6, -4 - bellowsPump * 0.4);
+		ctx.lineTo(8, -1);
+		ctx.lineTo(8, 5);
+		ctx.lineTo(-6, 8 + bellowsPump * 0.4);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		// Wooden ribs
+		ctx.strokeStyle = '#78350F';
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.moveTo(-2, -2); ctx.lineTo(-2, 6);
+		ctx.moveTo(3, -1); ctx.lineTo(3, 5);
+		ctx.stroke();
+		// Brass nozzle (foukací hubice)
+		this.setupPath(ctx, '#F59E0B', COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.rect(8, 0, 7, 4);
+		ctx.fill(); ctx.stroke();
+
+		// Puffing soot clouds and bright fiery sparks from the nozzle
+		ctx.fillStyle = 'rgba(39, 39, 42, 0.7)';
+		for (let i = 0; i < 2; i++) {
+			const pt = (time * 5 + i * 0.5) % 1;
+			ctx.beginPath();
+			ctx.arc(17 + pt * 10, 2 - pt * 4, 1.5 + pt * 3, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.fillStyle = '#F97316';
+		const spT = (time * 8) % 1;
+		ctx.beginPath();
+		ctx.arc(18 + spT * 8, 1 - spT * 3, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Head with cute tuft of hair & ram horns
+		this.setupPath(ctx, '#27272A', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.arc(0, -11, 9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Amber curved ram horns
+		this.setupPath(ctx, '#D97706', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-4, -18);
+		ctx.quadraticCurveTo(-12, -26, -15, -19);
+		ctx.quadraticCurveTo(-10, -16, -6, -14);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(4, -18);
+		ctx.quadraticCurveTo(12, -26, 15, -19);
+		ctx.quadraticCurveTo(10, -16, 6, -14);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Black hair tuft
+		this.setupPath(ctx, COLORS.ink, COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(-2, -19); ctx.lineTo(0, -25); ctx.lineTo(2, -19); ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Mischievous glowing yellow eyes with sharp pupils
+		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+		ctx.fillStyle = '#FBBF24';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -4 : 2, -12, 2.6, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -3.5 : 2.5, -12, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Rosy soot cheek & impish devil grin
+		ctx.fillStyle = '#EF4444';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -2 : 5, -8, 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -2 : 3, -7, 3.5, 0.2, Math.PI * 0.85);
+		ctx.stroke();
+
+		ctx.restore();
+	},
+	drawOhnivyMuz(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.32;
+		const bob = Math.sin(time * 10) * 3.5;
+		const flameWave = Math.sin(time * 16) * 3;
+
+		this.drawShadow(ctx, x, y, 22 * scale);
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawRunDust(ctx, -8, 24, time);
+			this.drawPanicDrops(ctx, 4, -28, time);
+		}
+
+		// Burning charcoal legs with orange cracks
+		const legSwing = Math.sin(time * 12) * 9;
+		this.drawLimb(ctx, -6, 8, -6 - legSwing, 24, '#EA580C', 5);
+		this.drawLimb(ctx, 6, 8, 6 + legSwing, 24, '#EA580C', 5);
+
+		// Outer flame aura (layered in red, orange, and golden yellow)
+		this.setupPath(ctx, '#DC2626', COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(0, -22);
+		ctx.quadraticCurveTo(16, -12, 14, 6);
+		ctx.quadraticCurveTo(16, 20, 0, 22);
+		ctx.quadraticCurveTo(-16, 20, -14, 6);
+		ctx.quadraticCurveTo(-16, -12, 0, -22);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Inner blazing orange-yellow core with molten fissures
+		this.setupPath(ctx, '#F97316', '#7C2D12', 1.8);
+		ctx.beginPath();
+		ctx.ellipse(0, 3, 9, 13, 0, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		this.setupPath(ctx, '#FEF08A', 'transparent');
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 5, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Left arm & Right arm holding a blazing pine torch (smolná louč)
+		const armBob = Math.sin(time * 12) * 3;
+		this.drawBentLimb(ctx, -8, -2, -16, 6, -12, 14, '#EA580C', 4);
+		this.drawBentLimb(ctx, 8, -2, 16, 2 + armBob, 20, -8 + armBob, '#EA580C', 4);
+
+		// BLAZING PINE TORCH (smolná louč s plamenem)
+		ctx.save();
+		ctx.translate(18, -6 + armBob);
+		ctx.rotate(-0.35 + (panicked ? Math.sin(time * 20) * 0.3 : 0));
+		// Torch shaft
+		this.setupPath(ctx, '#451A03', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-3, -12, 6, 28);
+		ctx.fill(); ctx.stroke();
+		// Birch bark wrapping
+		ctx.strokeStyle = '#D4CEB8';
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(-3, -6); ctx.lineTo(3, -4);
+		ctx.moveTo(-3, 2); ctx.lineTo(3, 4);
+		ctx.stroke();
+		// Blazing flame top
+		this.setupPath(ctx, '#FBBF24', '#DC2626', 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-5, -12);
+		ctx.quadraticCurveTo(-8, -24, 0, -32 + Math.sin(time * 22) * 3);
+		ctx.quadraticCurveTo(8, -24, 5, -12);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		ctx.restore();
+
+		// Blazing fire head with flame hair
+		this.setupPath(ctx, '#EA580C', COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.arc(0, -14, 10, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Flickering fire crown hair
+		this.setupPath(ctx, '#FBBF24', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-6, -20);
+		ctx.lineTo(-10, -32 + flameWave);
+		ctx.lineTo(-2, -22);
+		ctx.lineTo(2, -36 - flameWave);
+		ctx.lineTo(6, -22);
+		ctx.lineTo(11, -30 + flameWave);
+		ctx.lineTo(7, -19);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Incandescent eyes glowing white-hot
+		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+		const ox = glanceBack ? -4 : 2;
+		ctx.fillStyle = "rgba(251, 191, 36, 0.40)";
+		ctx.beginPath();
+		ctx.arc(ox, -14, 4.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(ox, -14, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#7C2D12';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -3.5 : 2.5, -14, 1.1, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Dancing fire sparks around him
+		ctx.fillStyle = '#F59E0B';
+		for (let i = 0; i < 3; i++) {
+			const st = (time * 5 + i * 0.33) % 1;
+			const sx = -12 + (i * 12) + Math.sin(st * 6) * 4;
+			const sy = -14 - st * 22;
+			ctx.beginPath();
+			ctx.arc(sx, sy, Math.max(0.6, 2 * (1 - st)), 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		ctx.restore();
+	},
+	drawDrab(ctx, x, y, time, vx, panicked) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.45;
+		const bounce = Math.sin(time * (panicked ? 22 : 9)) * 3.5;
+		const legSwing = Math.sin(time * (panicked ? 22 : 11)) * 12;
+
+		this.drawShadow(ctx, x, y, 26 * scale);
+		ctx.save();
+		ctx.translate(x, y + bounce);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawRunDust(ctx, -10, 30, time);
+			this.drawPanicDrops(ctx, 4, -28, time);
+		}
+
+		// Dark iron chain tail with spikes
+		ctx.strokeStyle = "#27272A";
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.moveTo(-8, 4);
+		ctx.quadraticCurveTo(-22, 10, -28, -8);
+		ctx.stroke();
+
+		// Hoofed legs
+		this.drawLimb(ctx, -7, 8, -legSwing, 24, "#27272A", 6);
+		this.drawLimb(ctx, 7, 8, legSwing, 24, "#27272A", 6);
+		this.setupPath(ctx, "#71717A", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.rect(-10, 28 - legSwing * 0.2, 7, 4);
+		ctx.rect(4, 28 + legSwing * 0.2, 7, 4);
+		ctx.fill();
+		ctx.stroke();
+
+		// Torso in blackened iron-studded vest
+		this.setupPath(ctx, "#18181B", COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 18, 20, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Heavy iron chains wrapped diagonally across chest (Pekelné řetězy)
+		ctx.strokeStyle = "#94A3B8";
+		ctx.lineWidth = 3.2;
+		ctx.beginPath();
+		ctx.moveTo(-12, -10); ctx.lineTo(12, 10);
+		ctx.moveTo(12, -10); ctx.lineTo(-12, 10);
+		ctx.stroke();
+		ctx.fillStyle = "#E2E8F0";
+		[[-6, -5], [0, 0], [6, 5], [6, -5], [-6, 5]].forEach(([lx, ly]) => {
+			ctx.beginPath();
+			ctx.arc(lx, ly, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+		});
+
+		// Spiked Chain Whip / Karabáč in right arm
+		ctx.save();
+		const whipWave = Math.sin(time * (panicked ? 24 : 10)) * 0.3;
+		ctx.translate(14, -4);
+		ctx.rotate(whipWave + 0.3);
+		this.drawLimb(ctx, 0, 0, 8, 12, "#27272A", 5);
+		this.setupPath(ctx, "#78350F", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(6, 10, 4, 12);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#451A03";
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(8, 22);
+		ctx.quadraticCurveTo(18, 28, 24, 18);
+		ctx.stroke();
+		this.setupPath(ctx, "#94A3B8", COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.moveTo(24, 18); ctx.lineTo(28, 20); ctx.lineTo(26, 16); ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		ctx.restore();
+
+		// Head with warden's horned cap & burning yellow eyes
+		this.setupPath(ctx, "#27272A", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, -19, 13, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Horns
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-4, -29); ctx.quadraticCurveTo(-14, -42, -6, -45); ctx.lineTo(2, -29); ctx.closePath();
+		ctx.fill(); ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(4, -29); ctx.quadraticCurveTo(14, -42, 6, -45); ctx.lineTo(0, -29); ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Fierce yellow eyes
+		ctx.fillStyle = "#F59E0B";
+		ctx.beginPath();
+		ctx.arc(4, -20, 2.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#18181B";
+		ctx.beginPath();
+		ctx.arc(4.5, -20, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawZbojnik(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.35;
+		const swagger = Math.sin(time * (panicked ? 22 : 11)) * (panicked ? 4 : 2.5);
+		const legSwing = Math.sin(time * (panicked ? 22 : 11)) * 12;
+
+		this.drawShadow(ctx, x, y, 22 * scale);
+		ctx.save();
+		ctx.translate(x, y + swagger);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.1);
+			this.drawRunDust(ctx, -10, 26, time);
+			this.drawPanicDrops(ctx, 4, -28, time);
+		}
+
+		// Mountain wool breeches & boots
+		this.drawLimb(ctx, -6, 8, -6 - legSwing, 25, '#E5E7EB', 5.5);
+		this.drawLimb(ctx, 6, 8, 6 + legSwing, 25, '#E5E7EB', 5.5);
+		// Dark leather boots with brass studs
+		this.setupPath(ctx, '#451A03', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-8 - legSwing * 0.1, 23, 7, 5);
+		ctx.rect(2 + legSwing * 0.1, 23, 7, 5);
+		ctx.fill(); ctx.stroke();
+
+		// Torso in loose white linen shirt with RED EMBROIDERED VEST (lajblík)
+		this.setupPath(ctx, '#F3E9D2', COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 13, 15, 0, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Red waistcoat (červený lajblík)
+		this.setupPath(ctx, '#DC2626', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-12, -10);
+		ctx.lineTo(-4, 8);
+		ctx.lineTo(4, 8);
+		ctx.lineTo(12, -10);
+		ctx.lineTo(8, -12);
+		ctx.lineTo(0, -6);
+		ctx.lineTo(-8, -12);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Gold embroidery buttons on vest
+		ctx.fillStyle = '#F59E0B';
+		[[-2, -2], [2, -2], [-2, 3], [2, 3]].forEach(([bx, by]) => {
+			ctx.beginPath();
+			ctx.arc(bx, by, 1.4, 0, Math.PI * 2);
+			ctx.fill();
+		});
+
+		// WIDE LEATHER BRIGAND BELT (široký opasek s mosaznými přezkami)
+		this.setupPath(ctx, '#78350F', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-10, 6, 20, 8);
+		ctx.fill(); ctx.stroke();
+		// 3 brass buckles
+		ctx.strokeStyle = '#F59E0B';
+		ctx.lineWidth = 1.6;
+		[-6, 0, 6].forEach((bx) => {
+			ctx.strokeRect(bx - 2, 7, 4, 6);
+		});
+
+		// Arms wielding the VALAŠKA
+		const isAttacking = attackInfo && attackInfo.isActive;
+		ctx.save();
+		if (isAttacking) {
+			if (attackInfo.isWindup) {
+				// Raised high ready to chop
+				this.drawBentLimb(ctx, -8, -4, -16, -18, -12, -32, '#F3E9D2', 4);
+				this.drawBentLimb(ctx, 8, -4, 4, -18, 6, -30, '#F3E9D2', 4);
+				ctx.save();
+				ctx.translate(-12, -32);
+				ctx.rotate(-0.5);
+				// Valaška shaft & brass axehead
+				ctx.strokeStyle = '#B45309';
+				ctx.lineWidth = 3.2;
+				ctx.beginPath();
+				ctx.moveTo(0, 36); ctx.lineTo(0, -14);
+				ctx.stroke();
+				this.setupPath(ctx, '#CBD5E1', COLORS.ink, 2);
+				ctx.beginPath();
+				ctx.moveTo(-8, -14); ctx.lineTo(6, -14); ctx.lineTo(4, -8); ctx.lineTo(-6, -8); ctx.closePath();
+				ctx.fill(); ctx.stroke();
+				ctx.restore();
+			} else {
+				// Chopping down forward
+				this.drawBentLimb(ctx, -8, -4, 4, 2, 18, 8, '#F3E9D2', 4);
+				this.drawBentLimb(ctx, 8, -4, 14, 4, 24, 12, '#F3E9D2', 4);
+				ctx.save();
+				ctx.translate(24, 12);
+				ctx.rotate(0.4);
+				ctx.strokeStyle = '#B45309';
+				ctx.lineWidth = 3.2;
+				ctx.beginPath();
+				ctx.moveTo(-16, 20); ctx.lineTo(18, -18);
+				ctx.stroke();
+				this.setupPath(ctx, '#CBD5E1', COLORS.ink, 2);
+				ctx.beginPath();
+				ctx.moveTo(14, -18); ctx.lineTo(26, -14); ctx.lineTo(22, -8); ctx.lineTo(12, -12); ctx.closePath();
+				ctx.fill(); ctx.stroke();
+				ctx.restore();
+			}
+		} else {
+			// Walking holding valaška upright
+			this.drawBentLimb(ctx, -8, -4, -14, 6, -10, 14, '#F3E9D2', 4);
+			this.drawBentLimb(ctx, 8, -4, 14, 2, 14, 12, '#F3E9D2', 4);
+			ctx.save();
+			ctx.translate(14, 4);
+			ctx.strokeStyle = '#B45309';
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(0, 24); ctx.lineTo(0, -28);
+			ctx.stroke();
+			// Brass-sheathed axehead
+			this.setupPath(ctx, '#CBD5E1', COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(-2, -28); ctx.lineTo(10, -26); ctx.lineTo(8, -20); ctx.lineTo(-2, -22); ctx.closePath();
+			ctx.fill(); ctx.stroke();
+			// Brass collar
+			ctx.fillStyle = '#F59E0B';
+			ctx.fillRect(-2, -20, 5, 4);
+			ctx.restore();
+		}
+		ctx.restore();
+
+		// Head with fearless eyes, spirited black mustache
+		this.setupPath(ctx, COLORS.skin, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, -14, 10, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Black dashing mustache
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-5, -10);
+		ctx.quadraticCurveTo(0, -9, 5, -10);
+		ctx.quadraticCurveTo(8, -8, 10, -11);
+		ctx.stroke();
+
+		// Traditional black valašský klobouk with upturned brim
+		this.setupPath(ctx, '#1F2937', COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(0, -19, 18, 5, 0, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(-10, -19);
+		ctx.quadraticCurveTo(0, -30, 10, -19);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Shells / brass coins hat ribbon
+		ctx.strokeStyle = '#F59E0B';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-9, -20); ctx.lineTo(9, -20);
+		ctx.stroke();
+
+		// White falcon / hawk feather tilted proudly
+		this.setupPath(ctx, '#F9FAFB', COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(4, -21);
+		ctx.quadraticCurveTo(12, -32, 10, -42);
+		ctx.quadraticCurveTo(4, -30, 3, -21);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Keen fearless eyes
+		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+		ctx.fillStyle = '#18181B';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -4 : 3, -15, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawJiskrivec(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const jitter = Math.sin(time * 36) * (panicked ? 3 : 1.8);
+		const hop = Math.abs(Math.sin(time * 20)) * 4;
+
+		this.drawShadow(ctx, x, y, 16);
+		ctx.save();
+		ctx.translate(x + jitter, y - hop);
+		ctx.scale(dir, 1);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawRunDust(ctx, -6, 18, time);
+			this.drawPanicDrops(ctx, 4, -20, time);
+		}
+
+		// Nimble sparking little legs
+		const legSwing = Math.sin(time * 22) * 8;
+		this.drawLimb(ctx, -4, 6, -4 - legSwing, 18, '#F59E0B', 3);
+		this.drawLimb(ctx, 4, 6, 4 + legSwing, 18, '#F59E0B', 3);
+
+		// Radiant golden-yellow spark body
+		this.setupPath(ctx, '#FDE047', COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(0, 3, 10, 11, 0, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Stoker leather apron with burn holes
+		this.setupPath(ctx, '#78350F', COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.rect(-5, 0, 10, 10);
+		ctx.fill(); ctx.stroke();
+		// Singe mark
+		ctx.fillStyle = '#18181B';
+		ctx.beginPath();
+		ctx.arc(2, 6, 1.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Arms holding flint & steel (ocílka a pazourek)
+		const strikeWave = Math.sin(time * 24) * 3;
+		this.drawBentLimb(ctx, -6, 0, -12, strikeWave, -6, 8 + strikeWave, '#F59E0B', 3);
+		this.drawBentLimb(ctx, 6, 0, 12, -strikeWave, 6, 8 - strikeWave, '#F59E0B', 3);
+
+		// Black flint nodule in left hand
+		this.setupPath(ctx, '#18181B', '#475569', 1.4);
+		ctx.beginPath();
+		ctx.ellipse(-6, 8 + strikeWave, 3, 4, 0.4, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Curved iron strike-a-light (ocílka / křesadlo) in right hand
+		ctx.strokeStyle = '#64748B';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.arc(6, 8 - strikeWave, 4, -0.6, Math.PI * 1.2);
+		ctx.stroke();
+
+		// Radiant starburst head
+		this.setupPath(ctx, '#FEF08A', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.arc(0, -10, 8, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Bright gold eyes filled with sparks
+		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+		ctx.fillStyle = '#EA580C';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -3 : 3, -10, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? -2.5 : 3.5, -10, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// HALO OF 5 CRACKLING 4-POINTED SPARKS ORBITING
+		ctx.fillStyle = '#F59E0B';
+		for (let i = 0; i < 5; i++) {
+			const ang = (time * 6 + (i * Math.PI * 2) / 5) % (Math.PI * 2);
+			const dist = 14 + (i % 2) * 5;
+			const sx = Math.cos(ang) * dist;
+			const sy = -10 + Math.sin(ang) * (dist * 0.7);
+			ctx.save();
+			ctx.translate(sx, sy);
+			ctx.rotate(time * 8 + i);
+			ctx.fillStyle = i % 2 === 0 ? '#FBBF24' : '#EF4444';
+			ctx.beginPath();
+			ctx.moveTo(0, -3.5);
+			ctx.lineTo(1, -1);
+			ctx.lineTo(3.5, 0);
+			ctx.lineTo(1, 1);
+			ctx.lineTo(0, 3.5);
+			ctx.lineTo(-1, 1);
+			ctx.lineTo(-3.5, 0);
+			ctx.lineTo(-1, -1);
+			ctx.closePath();
+			ctx.fill();
+			ctx.restore();
+		}
+
+		ctx.restore();
+	},
+	drawOhnivyPes(ctx, x, y, time, vx, panicked, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const runSpeed = panicked ? 28 : 18;
+		const bob = Math.abs(Math.sin(time * runSpeed)) * 4.5;
+		const flameWave = Math.sin(time * 22) * 2;
+
+		this.drawShadow(ctx, x, y, 26);
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * 1.3, 1.3);
+
+		if (panicked) {
+			ctx.rotate(0.1);
+			this.drawRunDust(ctx, -14, 20, time);
+			this.drawPanicDrops(ctx, 10, -18, time);
+		}
+
+		// Fiery legs
+		const legSwing = Math.sin(time * runSpeed) * 15;
+		this.drawLimb(ctx, -9, 4, -legSwing, 18, '#DC2626', 4.5);
+		this.drawLimb(ctx, 9, 4, legSwing, 18, '#DC2626', 4.5);
+
+		// Scorched hot paws leaving glowing red marks
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.arc(-legSwing, 18, 3, 0, Math.PI * 2);
+		ctx.arc(legSwing, 18, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Rich fiery crimson/russet hound torso
+		this.setupPath(ctx, '#991B1B', COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 18, 12, -0.15, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// ROARING FLAME MANE along the spine
+		this.setupPath(ctx, '#F97316', '#DC2626', 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-12, -8);
+		ctx.lineTo(-14, -16 + flameWave);
+		ctx.lineTo(-7, -10);
+		ctx.lineTo(-5, -20 - flameWave);
+		ctx.lineTo(0, -11);
+		ctx.lineTo(4, -22 + flameWave);
+		ctx.lineTo(8, -12);
+		ctx.lineTo(12, -18 - flameWave);
+		ctx.lineTo(10, -7);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// FLAMING TORCH TAIL
+		ctx.strokeStyle = '#991B1B';
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.moveTo(-16, -2);
+		ctx.quadraticCurveTo(-26, -14, -22, -22);
+		ctx.stroke();
+		// Flaming tail tip
+		this.setupPath(ctx, '#FBBF24', '#DC2626', 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-22, -20);
+		ctx.quadraticCurveTo(-32, -26, -26, -34 + flameWave);
+		ctx.quadraticCurveTo(-18, -28, -22, -20);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Hound head with bared fiery jaws
+		this.setupPath(ctx, '#991B1B', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.ellipse(12, -6, 10, 7, 0.2, 0, Math.PI * 2);
+		ctx.fill(); ctx.stroke();
+
+		// Hound ears pinned back / upright
+		ctx.beginPath();
+		ctx.moveTo(panicked ? 4 : 8, -12);
+		ctx.lineTo(panicked ? 7 : 11, -21);
+		ctx.lineTo(15, -12);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Bared teeth with licking flames
+		this.setupPath(ctx, '#FEF08A', '#DC2626', 1.2);
+		ctx.beginPath();
+		ctx.moveTo(18, -4);
+		ctx.lineTo(24, -2);
+		ctx.lineTo(19, 0);
+		ctx.closePath();
+		ctx.fill(); ctx.stroke();
+
+		// Blazing sulfur-yellow eye with glowing aura
+		const glanceBack = panicked && Math.sin(time * 3.5) > 0.6;
+		const px = glanceBack ? 8 : 15;
+		ctx.fillStyle = "rgba(245, 158, 11, 0.40)";
+		ctx.beginPath();
+		ctx.arc(px, -8, 5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#FEF08A';
+		ctx.beginPath();
+		ctx.arc(px, -8, 2.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#7F1D1D';
+		ctx.beginPath();
+		ctx.arc(glanceBack ? 7.5 : 15.5, -8, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawMlynar(ctx, x, y, time, vx, panicked, isEnraged = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 2.4;
+		const walkSpeed = panicked ? 24 : isEnraged ? 14 : 9;
+		const bob = Math.abs(Math.sin(time * walkSpeed)) * (panicked ? 5 : 3.5);
+		const legSwing = Math.sin(time * walkSpeed) * (panicked ? 22 : 14);
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * scale, scale);
+		if (panicked) {
+			ctx.rotate(.12);
+			this.drawRunDust(ctx, -14, 38, time);
+			this.drawPanicDrops(ctx, 6, -34, time);
+		}
+		ctx.save();
+		ctx.strokeStyle = "#38BDF8";
+		ctx.lineWidth = 1.8;
+		ctx.fillStyle = "rgba(224, 242, 254, 0.45)";
+		ctx.beginPath();
+		ctx.ellipse(0, 36, 26 + Math.sin(time * 6) * 3, 9 + Math.cos(time * 6) * 2, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		for (let i = 0; i < 4; i++) {
+			const dropAng = time * 4 + i * Math.PI / 2;
+			const dropR = 24 + Math.sin(time * 7 + i) * 6;
+			ctx.fillStyle = "#E0F2FE";
+			ctx.beginPath();
+			ctx.arc(Math.cos(dropAng) * dropR, 36 + Math.sin(dropAng) * 4, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.save();
+		const wheelX = -18;
+		const wheelY = -6;
+		const wheelR = 30;
+		const wheelAngle = time * (panicked ? -4.5 : isEnraged ? 6 : 2.8);
+		if (isEnraged) {
+			ctx.fillStyle = "rgba(249, 115, 22, 0.28)";
+			ctx.beginPath();
+			ctx.arc(wheelX, wheelY, wheelR + 8, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.translate(wheelX, wheelY);
+		ctx.rotate(wheelAngle);
+		this.setupPath(ctx, "#543318", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, 0, wheelR, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = isEnraged ? "#451A03" : "#3B2312";
+		ctx.beginPath();
+		ctx.arc(0, 0, 24, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 3.5;
+		for (let i = 0; i < 8; i++) {
+			const spAng = i * Math.PI / 4;
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(Math.cos(spAng) * wheelR, Math.sin(spAng) * wheelR);
+			ctx.stroke();
+		}
+		for (let i = 0; i < 8; i++) {
+			const bAng = i * Math.PI / 4;
+			ctx.save();
+			ctx.rotate(bAng);
+			ctx.translate(28, 0);
+			this.setupPath(ctx, isEnraged ? "#9A3412" : "#78350F", COLORS.ink, 2);
+			ctx.fillRect(0, -4, 9, 8);
+			ctx.strokeRect(0, -4, 9, 8);
+			ctx.fillStyle = isEnraged ? "#FDBA74" : "#BAE6FD";
+			ctx.beginPath();
+			ctx.arc(10, 0, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.restore();
+		}
+		this.setupPath(ctx, isEnraged ? "#DC2626" : "#1F2937", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, 8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = isEnraged ? "#FEF08A" : "#9CA3AF";
+		for (let i = 0; i < 4; i++) {
+			const rAng = i * Math.PI / 2;
+			ctx.beginPath();
+			ctx.arc(Math.cos(rAng) * 4.5, Math.sin(rAng) * 4.5, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+		ctx.save();
+		this.setupPath(ctx, "#C8AB83", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(-14, 12, 11, 15, -.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(-16, -1);
+		ctx.lineTo(-11, -1);
+		ctx.stroke();
+		ctx.strokeStyle = "#451A03";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-14, 8);
+		ctx.lineTo(-14, 16);
+		ctx.moveTo(-17, 10);
+		ctx.lineTo(-11, 14);
+		ctx.moveTo(-11, 10);
+		ctx.lineTo(-17, 14);
+		ctx.stroke();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+		ctx.beginPath();
+		ctx.ellipse(-13, 14, 6, 7, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+		if (panicked) {
+			const legPhase = time * 3.4;
+			const leg1 = this.getRunLegCycle(legPhase, -7, 18, 20);
+			const leg2 = this.getRunLegCycle(legPhase + .5, 7, 18, 20);
+			this.drawBentLimb(ctx, -7, 18, leg1.kx, leg1.ky, leg1.fx, leg1.fy, "#2D1B0F", 9);
+			this.drawBentLimb(ctx, 7, 18, leg2.kx, leg2.ky, leg2.fx, leg2.fy, "#2D1B0F", 9);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.ellipse(leg1.fx, leg1.fy, 5, 3, 0, 0, Math.PI * 2);
+			ctx.ellipse(leg2.fx, leg2.fy, 5, 3, 0, 0, Math.PI * 2);
+			ctx.fill();
+		} else {
+			this.drawLimb(ctx, -7, 18, -8 - legSwing * .45, 36, "#2D1B0F", 9);
+			this.drawLimb(ctx, 7, 18, 8 + legSwing * .45, 36, "#2D1B0F", 9);
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.ellipse(-8 - legSwing * .45, 36, 5, 3, 0, 0, Math.PI * 2);
+			ctx.ellipse(8 + legSwing * .45, 36, 5, 3, 0, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		this.setupPath(ctx, "#5A3418", COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.ellipse(0, 10, 18, 19, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#3E5C38", COLORS.ink, 1.8);
+		ctx.fillRect(-14, 4, 8, 8);
+		ctx.strokeRect(-14, 4, 8, 8);
+		ctx.strokeStyle = "#FEF3C7";
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(-12, 6);
+		ctx.lineTo(-8, 10);
+		ctx.moveTo(-8, 6);
+		ctx.lineTo(-12, 10);
+		ctx.stroke();
+		this.setupPath(ctx, "#26160C", COLORS.ink, 2);
+		ctx.fillRect(-17, 14, 34, 6);
+		ctx.strokeRect(-17, 14, 34, 6);
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2);
+		ctx.fillRect(-5, 13, 10, 8);
+		ctx.strokeRect(-5, 13, 10, 8);
+		this.setupPath(ctx, "#F7F2EA", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-11, 7);
+		ctx.lineTo(11, 7);
+		ctx.lineTo(13, 27);
+		ctx.quadraticCurveTo(0, 31, -13, 27);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "rgba(120, 100, 80, 0.4)";
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(-4, 10);
+		ctx.lineTo(-6, 26);
+		ctx.moveTo(4, 10);
+		ctx.lineTo(5, 26);
+		ctx.stroke();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+		ctx.beginPath();
+		ctx.ellipse(0, 19, 8, 7, .2, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#E5B191", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, -11, 14, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "rgba(217, 70, 60, 0.55)";
+		ctx.beginPath();
+		ctx.arc(-7, -8, 4, 0, Math.PI * 2);
+		ctx.arc(7, -8, 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+		ctx.beginPath();
+		ctx.arc(0, -10, 3, 0, Math.PI * 2);
+		ctx.arc(-6, -6, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, -6);
+		ctx.quadraticCurveTo(-7, -9, -15, -4);
+		ctx.quadraticCurveTo(-9, -2, 0, -5);
+		ctx.quadraticCurveTo(9, -2, 15, -4);
+		ctx.quadraticCurveTo(7, -9, 0, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#D98967", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(0, -10, 3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		if (panicked) {
+			const glanceBack = Math.sin(time * 3.5) > .6;
+			ctx.fillStyle = "#FFFFFF";
+			ctx.beginPath();
+			ctx.arc(glanceBack ? -7 : -3, -13, 4, 0, Math.PI * 2);
+			ctx.arc(glanceBack ? 3 : 7, -13, 4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(glanceBack ? -8 : -2, -13, 1.8, 0, Math.PI * 2);
+			ctx.arc(glanceBack ? 2 : 8, -13, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+		} else if (isEnraged) {
+			ctx.fillStyle = "rgba(239, 68, 68, 0.40)";
+			ctx.beginPath();
+			ctx.arc(-5, -13, 5, 0, Math.PI * 2);
+			ctx.arc(5, -13, 5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#EF4444";
+			ctx.beginPath();
+			ctx.arc(-5, -13, 3, 0, Math.PI * 2);
+			ctx.arc(5, -13, 3, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#FEF08A";
+			ctx.beginPath();
+			ctx.arc(-4.5, -13, 1.3, 0, Math.PI * 2);
+			ctx.arc(5.5, -13, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+		} else {
+			ctx.fillStyle = "#D97706";
+			ctx.beginPath();
+			ctx.arc(-5, -13, 2.5, 0, Math.PI * 2);
+			ctx.arc(5, -13, 2.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-4.5, -13, 1.2, 0, Math.PI * 2);
+			ctx.arc(5.5, -13, 1.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.strokeStyle = "#FFFFFF";
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-8, -17);
+		ctx.lineTo(-2, -16);
+		ctx.moveTo(2, -16);
+		ctx.lineTo(8, -17);
+		ctx.stroke();
+		this.setupPath(ctx, "#F5F5F4", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-13, -19);
+		ctx.quadraticCurveTo(0, -25, 13, -19);
+		ctx.quadraticCurveTo(16, -34, 4, -36);
+		ctx.quadraticCurveTo(-8, -35, -13, -19);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		const capSway = Math.sin(time * walkSpeed) * 3;
+		ctx.beginPath();
+		ctx.moveTo(4, -36);
+		ctx.quadraticCurveTo(-14 + capSway, -38, -20 + capSway, -26);
+		ctx.lineWidth = 3;
+		ctx.stroke();
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(-21 + capSway, -25, 4.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		if (panicked) {
+			this.drawBentLimb(ctx, -10, 4, -18, -14, -10, -26, "#5A3418", 6);
+			this.setupPath(ctx, "#E5B191", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.arc(-10, -26, 4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+		ctx.save();
+		const shovelSway = Math.sin(time * walkSpeed * .8) * .15;
+		ctx.translate(14, 5);
+		ctx.rotate(shovelSway + .2);
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 4.5;
+		ctx.beginPath();
+		ctx.moveTo(-4, 24);
+		ctx.lineTo(12, -32);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(-5, 24);
+		ctx.lineTo(11, -32);
+		ctx.moveTo(-3, 24);
+		ctx.lineTo(13, -32);
+		ctx.stroke();
+		this.setupPath(ctx, "#D99B61", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(7, -32);
+		ctx.lineTo(21, -38);
+		ctx.lineTo(28, -24);
+		ctx.lineTo(14, -18);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#334155";
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(9, -28);
+		ctx.lineTo(25, -34);
+		ctx.stroke();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+		ctx.beginPath();
+		ctx.ellipse(19, -29, 6, 4, .5, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#E5B191", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(3, -5, 5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+		for (let i = 0; i < 3; i++) {
+			const flourX = Math.sin(time * 3 + i * 2) * 22;
+			const flourY = -10 + (time * 25 + i * 18) % 45 - 22;
+			ctx.fillStyle = "rgba(255, 255, 255, 0.65)";
+			ctx.beginPath();
+			ctx.arc(flourX, flourY, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+	},
+	drawMillstone(ctx, x, y, radius = 22, angle = 0) {
+		this.drawShadow(ctx, x, y, radius);
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		this.setupPath(ctx, "#9CA3AF", COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#6B7280";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(0, 0, radius * .62, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		for (let i = 0; i < 8; i++) {
+			const gAng = i * Math.PI / 4;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(gAng) * (radius * .4), Math.sin(gAng) * (radius * .4));
+			ctx.lineTo(Math.cos(gAng + .2) * (radius * .92), Math.sin(gAng + .2) * (radius * .92));
+			ctx.stroke();
+		}
+		const eyeSize = radius * .44;
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 2.5);
+		ctx.fillRect(-eyeSize / 2, -eyeSize / 2, eyeSize, eyeSize);
+		ctx.strokeRect(-eyeSize / 2, -eyeSize / 2, eyeSize, eyeSize);
+		ctx.fillStyle = "rgba(255, 255, 255, 0.45)";
+		ctx.beginPath();
+		ctx.arc(-radius * .35, -radius * .35, radius * .25, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawWaterWave(ctx, x, y, radius = 26, angle = 0, time = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		this.setupPath(ctx, "#0284C7", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius, -Math.PI * .45, Math.PI * .45, false);
+		ctx.quadraticCurveTo(-radius * .3, 0, 0, -radius * .85);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#FFFFFF";
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.arc(0, 0, radius + 1, -Math.PI * .4, Math.PI * .4, false);
+		ctx.stroke();
+		ctx.fillStyle = "#E0F2FE";
+		for (let i = 0; i < 5; i++) {
+			const sAng = -Math.PI * .35 + i * Math.PI * .7 / 4;
+			const sR = radius + 5 + Math.sin(time * 12 + i) * 3;
+			ctx.beginPath();
+			ctx.arc(Math.cos(sAng) * sR, Math.sin(sAng) * sR, 2.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+	},
+	drawRollingBoulder(ctx, x, y, radius = 24, angle = 0) {
+		this.drawShadow(ctx, x, y, radius);
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		this.setupPath(ctx, "#71717A", COLORS.ink, 3.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#27272A";
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-radius * .6, -radius * .2);
+		ctx.lineTo(0, radius * .3);
+		ctx.lineTo(radius * .7, -radius * .1);
+		ctx.moveTo(0, radius * .3);
+		ctx.lineTo(-radius * .2, radius * .7);
+		ctx.stroke();
+		ctx.fillStyle = "#15803D";
+		ctx.beginPath();
+		ctx.arc(-radius * .35, -radius * .35, radius * .3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+		ctx.beginPath();
+		ctx.arc(radius * .25, -radius * .35, radius * .25, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	},
+	drawHellSpark(ctx, x, y, radius = 10, time = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius + 6, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, 0, radius, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(0, 0, radius * .5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "#DC2626";
+		ctx.lineWidth = 2;
+		for (let i = 0; i < 4; i++) {
+			const fAng = time * 8 + i * Math.PI / 2;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(fAng) * radius * .8, Math.sin(fAng) * radius * .8);
+			ctx.lineTo(Math.cos(fAng) * (radius + 5), Math.sin(fAng) * (radius + 5));
+			ctx.stroke();
+		}
+		ctx.restore();
+	},
+	drawWoodShard(ctx, x, y, radius = 12, angle = 0) {
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		this.setupPath(ctx, "#78350F", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, radius * 1.3, radius * .7, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#15803D";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(-radius * .5, -radius * .5);
+		ctx.lineTo(-radius * .8, -radius * 1.1);
+		ctx.moveTo(radius * .2, -radius * .4);
+		ctx.lineTo(radius * .1, -radius * 1);
+		ctx.moveTo(radius * .4, radius * .4);
+		ctx.lineTo(radius * .7, radius * .9);
+		ctx.stroke();
+		ctx.restore();
+	},
+	drawBilaPani(ctx, x, y, time, vx, panicked) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.35;
+		const floatBob = Math.sin(time * 3.5) * 5;
+		const veilSway = Math.sin(time * 2.8) * 6;
+		const hemSway = Math.sin(time * 4) * 4;
+
+		// Soft ethereal lunar glow under ghost
+		ctx.save();
+		ctx.fillStyle = "rgba(224, 242, 254, 0.30)";
+		ctx.beginPath();
+		ctx.ellipse(x, y + 26, 20 * scale, 7 * scale, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(186, 230, 253, 0.15)";
+		ctx.beginPath();
+		ctx.ellipse(x, y + 26, 28 * scale, 11 * scale, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		ctx.save();
+		ctx.translate(x, y + floatBob);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawPanicDrops(ctx, 4, -32, time);
+		}
+
+		// 1. FLOWING WHITE VEIL (Vlající rouška z vysokého čepce)
+		this.setupPath(ctx, "rgba(248, 250, 252, 0.85)", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-4, -36);
+		ctx.quadraticCurveTo(-18 + veilSway, -20, -22 + veilSway, 8);
+		ctx.quadraticCurveTo(-14, -8, -6, -24);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. LONG FLOWING MEDIEVAL GOWN (Dlouhé bílé splývavé šaty)
+		const dressGrad = ctx.createLinearGradient(0, -20, 0, 28);
+		dressGrad.addColorStop(0, "#FFFFFF");
+		dressGrad.addColorStop(0.7, "#F8FAFC");
+		dressGrad.addColorStop(1, "rgba(224, 242, 254, 0.5)");
+		this.setupPath(ctx, dressGrad, COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-8, -14);
+		ctx.lineTo(-14, 24);
+		// Trailing ethereal hem ripples
+		ctx.quadraticCurveTo(-8 + hemSway, 28, 0, 25);
+		ctx.quadraticCurveTo(8 + hemSway, 28, 14, 24);
+		ctx.lineTo(8, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Dress folds
+		ctx.strokeStyle = "#CBD5E1";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-4, -8); ctx.lineTo(-6, 20);
+		ctx.moveTo(3, -8); ctx.lineTo(5, 20);
+		ctx.stroke();
+
+		// 3. CASTLE KEY RING AT WAIST (Hradní klíče u pasu)
+		ctx.save();
+		const keySwing = Math.sin(time * 3.5) * 0.25;
+		ctx.translate(8, 2);
+		ctx.rotate(keySwing);
+		ctx.strokeStyle = "#334155";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(0, 0, 4, 0, Math.PI * 2);
+		ctx.stroke();
+		this.setupPath(ctx, "#475569", COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.moveTo(-2, 4); ctx.lineTo(-2, 14); ctx.lineTo(1, 14); ctx.lineTo(1, 11); ctx.lineTo(-1, 11); ctx.lineTo(-1, 4);
+		ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#D97706", COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.moveTo(2, 4); ctx.lineTo(2, 16); ctx.lineTo(5, 16); ctx.lineTo(5, 13); ctx.lineTo(3, 13); ctx.lineTo(3, 4);
+		ctx.fill(); ctx.stroke();
+		ctx.restore();
+
+		// 4. ANGEL SLEEVES & ARMS (Dlouhé rukávy)
+		this.setupPath(ctx, "#F1F5F9", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-8, -12);
+		ctx.quadraticCurveTo(-14, -2, -8, 6);
+		ctx.quadraticCurveTo(0, 8, 4, -2);
+		ctx.lineTo(8, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Pale delicate hands
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(2, -2, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 5. PALE HEAD & MEDIEVAL HENNIN (Bledá tvář a vysoký čepec)
+		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-7, -26);
+		ctx.lineTo(0, -42);
+		ctx.lineTo(7, -26);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.arc(0, -22, 8.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#1E293B";
+		ctx.beginPath();
+		ctx.arc(-2.5, -22, 1.8, 0, Math.PI * 2);
+		ctx.arc(3.5, -22, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = "#38BDF8";
+		ctx.beginPath();
+		ctx.arc(3.5, -18, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = "rgba(244, 114, 182, 0.4)";
+		ctx.beginPath();
+		ctx.arc(-4, -20, 2, 0, Math.PI * 2);
+		ctx.arc(5, -20, 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawZbrojnos(ctx, x, y, time, vx, panicked) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.3;
+		const walkSpeed = panicked ? 22 : 9;
+		const bob = Math.abs(Math.sin(time * walkSpeed)) * 3;
+		const legSwing = Math.sin(time * walkSpeed) * 12;
+
+		this.drawShadow(ctx, x, y, 24 * scale);
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.12);
+			this.drawRunDust(ctx, -10, 26, time);
+			this.drawPanicDrops(ctx, 4, -30, time);
+		}
+
+		// 1. LEGS (Nohy v železných botách)
+		this.drawLimb(ctx, -6, 6, -legSwing * 0.8, 22, "#334155", 6);
+		this.drawLimb(ctx, 6, 6, legSwing * 0.8, 22, "#334155", 6);
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.rect(-10 - legSwing * 0.2, 20, 8, 4);
+		ctx.rect(2 + legSwing * 0.2, 20, 8, 4);
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. HALBERD / POLEAXE IN REAR HAND
+		ctx.save();
+		ctx.translate(-12, -8);
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.moveTo(-4, 24);
+		ctx.lineTo(16, -42);
+		ctx.stroke();
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(14, -42);
+		ctx.lineTo(26, -48);
+		ctx.lineTo(22, -34);
+		ctx.lineTo(12, -36);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(15, -42);
+		ctx.lineTo(20, -56);
+		ctx.lineTo(17, -42);
+		ctx.stroke();
+		ctx.restore();
+
+		// 3. TORSO (Prošívanice a kroužková košile s koženým kabátcem)
+		this.setupPath(ctx, "#475569", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.rect(-12, -10, 24, 18);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#78350F", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-10, 4, 20, 4);
+		ctx.fill();
+		ctx.stroke();
+
+		// 4. LARGE PAINTED BOHEMIAN KITE SHIELD (Těžký pavézový štít se znakem)
+		ctx.save();
+		const shieldBob = Math.sin(time * walkSpeed) * 2;
+		ctx.translate(6, -2 + shieldBob);
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-10, -18);
+		ctx.lineTo(14, -18);
+		ctx.lineTo(14, 2);
+		ctx.quadraticCurveTo(12, 18, 2, 26);
+		ctx.quadraticCurveTo(-8, 18, -10, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#F1F5F9";
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.moveTo(-8, -16);
+		ctx.lineTo(12, 18);
+		ctx.stroke();
+
+		ctx.fillStyle = "#E2E8F0";
+		[[-8, -16], [12, -16], [12, 0], [2, 22], [-8, 0]].forEach(([rx, ry]) => {
+			ctx.beginPath();
+			ctx.arc(rx, ry, 1.4, 0, Math.PI * 2);
+			ctx.fill();
+		});
+		ctx.restore();
+
+		// 5. HEAD & IRON KETTLE HAT HELMET (Hlava v železném klobouku / šalíři)
+		this.setupPath(ctx, "#E2E8F0", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, -18, 9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(-2, -18, 1.8, 0, Math.PI * 2);
+		ctx.arc(4, -18, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.setupPath(ctx, "#64748B", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, -22, 9, Math.PI, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.ellipse(0, -21, 15, 3.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
+	},
+	drawBezhlavyRytir(ctx, x, y, time, vx, panicked, isEnraged = false, attackInfo?: EnemyAttackInfo) {
+		const dir = vx < 0 ? -1 : 1;
+		const scale = 2.45;
+		const walkSpeed = panicked ? 24 : isEnraged ? 14 : 8.5;
+		const bob = Math.abs(Math.sin(time * walkSpeed)) * (panicked ? 5 : 3.5);
+		const legSwing = Math.sin(time * walkSpeed) * (panicked ? 18 : 12);
+		const capeFlutter = Math.sin(time * (isEnraged ? 10 : 5)) * 8;
+
+		this.drawShadow(ctx, x, y, 36 * scale);
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * scale, scale);
+
+		if (panicked) {
+			ctx.rotate(0.1);
+			this.drawRunDust(ctx, -14, 38, time);
+			this.drawPanicDrops(ctx, 4, -40, time);
+		}
+
+		if (isEnraged) {
+			ctx.save();
+			ctx.fillStyle = "rgba(56, 189, 248, 0.28)";
+			ctx.beginPath();
+			ctx.ellipse(0, 16, 26, 8, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "rgba(56, 189, 248, 0.14)";
+			ctx.beginPath();
+			ctx.ellipse(0, 16, 36, 12, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.restore();
+		}
+
+		// 1. BILLOWING TATTERED CAPE
+		ctx.save();
+		this.setupPath(ctx, isEnraged ? "#7F1D1D" : "#1E1B4B", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-10, -18);
+		ctx.quadraticCurveTo(-26 + capeFlutter * 0.5, 0, -32 + capeFlutter, 24);
+		ctx.lineTo(-24 + capeFlutter, 27);
+		ctx.lineTo(-18 + capeFlutter * 0.8, 20);
+		ctx.lineTo(-10 + capeFlutter * 0.6, 26);
+		ctx.quadraticCurveTo(-14, 6, -6, -16);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 2. ARMORED GREAVES & SABATONS
+		if (panicked) {
+			const legPhase = time * 3.6;
+			const leg1 = this.getRunLegCycle(legPhase, -7, 10, 22);
+			const leg2 = this.getRunLegCycle(legPhase + 0.5, 7, 10, 22);
+			this.drawBentLimb(ctx, -7, 10, leg1.kx, leg1.ky, leg1.fx, leg1.fy, "#334155", 7.5);
+			this.drawBentLimb(ctx, 7, 10, leg2.kx, leg2.ky, leg2.fx, leg2.fy, "#334155", 7.5);
+			this.setupPath(ctx, "#1E293B", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.rect(leg1.fx - 4, leg1.fy - 2, 9, 5);
+			ctx.rect(leg2.fx - 4, leg2.fy - 2, 9, 5);
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			this.drawLimb(ctx, -7, 10, -legSwing * 0.8, 28, "#334155", 7.5);
+			this.drawLimb(ctx, 7, 10, legSwing * 0.8, 28, "#334155", 7.5);
+			this.setupPath(ctx, "#1E293B", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.rect(-11 - legSwing * 0.2, 26, 9, 5);
+			ctx.rect(3 + legSwing * 0.2, 26, 9, 5);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 3. BLACKENED STEEL CUIRASS & HERALDIC TABARD
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 3.6);
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 16, 18, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, isEnraged ? "#DC2626" : "#2563EB", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-10, -14);
+		ctx.lineTo(-13, 14);
+		ctx.lineTo(13, 14);
+		ctx.lineTo(10, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#F8FAFC";
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(0, -8); ctx.lineTo(0, 8);
+		ctx.moveTo(-7, -2); ctx.lineTo(7, -2);
+		ctx.stroke();
+
+		this.setupPath(ctx, "#0F172A", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(-12, 10, 24, 5);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F59E0B";
+		ctx.fillRect(-2, 10, 4, 5);
+
+		this.setupPath(ctx, "#475569", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(-14, -14, 6, 7, -0.3, 0, Math.PI * 2);
+		ctx.ellipse(14, -14, 6, 7, 0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 4. SEVERED NECK COLLAR & SPECTRAL PHANTOM FLAME
+		this.setupPath(ctx, "#0F172A", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.ellipse(0, -18, 9, 4, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		const flameFlicker = Math.sin(time * 16) * 2;
+		const fGrad = ctx.createLinearGradient(0, -18, 0, -38);
+		fGrad.addColorStop(0, isEnraged ? "#DC2626" : "#38BDF8");
+		fGrad.addColorStop(0.6, isEnraged ? "#F97316" : "#0284C7");
+		fGrad.addColorStop(1, "rgba(56, 189, 248, 0)");
+		ctx.fillStyle = fGrad;
+		ctx.beginPath();
+		ctx.moveTo(-7, -18);
+		ctx.quadraticCurveTo(-10 + flameFlicker, -28, 0, -38 + Math.sin(time * 10) * 3);
+		ctx.quadraticCurveTo(10 + flameFlicker, -28, 7, -18);
+		ctx.closePath();
+		ctx.fill();
+
+		for (let i = 0; i < 3; i++) {
+			const sPhase = (time * 3 + i * 0.33) % 1;
+			ctx.fillStyle = isEnraged ? "#F87171" : "#BAE6FD";
+			ctx.beginPath();
+			ctx.arc(-4 + i * 4 + Math.sin(time * 8 + i) * 3, -22 - sPhase * 18, 1.6 * (1 - sPhase * 0.5), 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// 5. RIGHT ARM WIELDING HEAVY KNIGHTLY BROADSWORD
+		ctx.save();
+		const swordSway = Math.sin(time * walkSpeed * 0.8) * 0.15;
+		let swordRot = swordSway + 0.3;
+		if (attackInfo && attackInfo.isActive && !panicked) {
+			swordRot = attackInfo.isWindup ? (-0.85 + Math.sin(time * 30) * 0.08) : 1.25;
+		}
+		ctx.translate(14, -8);
+		ctx.rotate(swordRot);
+		this.drawBentLimb(ctx, 0, 0, 10, 6, 16, 2, "#334155", 6);
+		this.setupPath(ctx, "#B45309", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(14, -4, 4, 12);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.rect(11, -12, 10, 4);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(14, -12);
+		ctx.lineTo(14, -54);
+		ctx.lineTo(16, -60);
+		ctx.lineTo(18, -54);
+		ctx.lineTo(18, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#64748B";
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(16, -14);
+		ctx.lineTo(16, -50);
+		ctx.stroke();
+		ctx.restore();
+
+		// 6. LEFT ARM HOLDING SEVERED HEAD
+		ctx.save();
+		ctx.translate(-14, -6);
+		this.drawBentLimb(ctx, 0, 0, -8, 8, -2, 14, "#334155", 6.5);
+
+		// The Severed Head clutched under arm
+		ctx.save();
+		ctx.translate(-8, 6);
+		ctx.rotate(-0.15 + Math.sin(time * 3) * 0.05);
+
+		this.setupPath(ctx, "#475569", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.arc(0, 0, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(2, 0, 7, -Math.PI * 0.45, Math.PI * 0.45);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = isEnraged ? "#EF4444" : "#38BDF8";
+		ctx.beginPath();
+		ctx.arc(3, -2, 2.2, 0, Math.PI * 2);
+		ctx.arc(3, 3, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(3.5, -2, 0.9, 0, Math.PI * 2);
+		ctx.arc(3.5, 3, 0.9, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.setupPath(ctx, isEnraged ? "#DC2626" : "#F59E0B", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-10, -6);
+		ctx.quadraticCurveTo(-14, -14, -7, -16);
+		ctx.lineTo(-4, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
+		ctx.restore();
+
+		ctx.restore();
+	},
 	drawSnehulak(ctx, x, y, time, vx, panicked, isCharging = false) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = 1.45;
