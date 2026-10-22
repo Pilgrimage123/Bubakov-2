@@ -59,7 +59,11 @@ import {
   getRareDropAnnouncement,
   resolveDynamicDrop,
   isHealingDrop,
-  SoADropManager,
+  MAX_DROPS_LIMIT,
+  hasPendingDrops,
+  spawnDropWithLimit,
+  releasePendingDrops,
+  createPendingDropBank,
   type DropSpawnOptions,
 } from './drops';
 import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
@@ -368,7 +372,6 @@ export class GameEngine {
   public spatialHash: SpatialHash<any>;
   public livingEnemies: any[];
   public director: RunDirector | null = null;
-  public readonly soaDropManager: SoADropManager = new SoADropManager();
   public callbacks?: GameEngineCallbacks;
   public enemyFactory?: (
     id: string,
@@ -854,7 +857,7 @@ export class GameEngine {
     return enemy;
   }
 
-  public spawnDrop(type: DropType, x: number, y: number, opts: DropSpawnOptions = {}): GameDrop {
+  public spawnDrop(type: DropType, x: number, y: number, opts: DropSpawnOptions = {}): GameDrop | null {
     let resolvedType = type;
     let isHot = opts.isHot;
     let expiration = opts.expiration;
@@ -876,37 +879,31 @@ export class GameEngine {
       if (resolution.isMercyDrop) isMercyDrop = true;
     }
 
-    const spawned = this.soaDropManager.spawn({
-      type: resolvedType,
+    // The engine's state array is the single source of truth. Never fall back
+    // to constructing an unmanaged item when the 40-slot arena is full.
+    const pooled = this.dropPool.pop();
+    const drop = createDropInstance(
+      resolvedType,
       x,
       y,
-      vx: opts.vx,
-      vy: opts.vy,
-      value: opts.value,
-      radius: opts.radius,
-      size: opts.size,
-      isHot,
-      goldenRushTimer: opts.goldenRushTimer,
-      expiration,
-      isHeavyAnchor: opts.isHeavyAnchor,
-      isMercyDrop,
-      skipConsolidation: opts.skipConsolidation,
-      stressPhaseRefund: isHot,
-      text: opts.text,
-      textColor: opts.textColor,
-    });
+      {
+        ...opts,
+        isHot,
+        expiration,
+        isHeavyAnchor: opts.isHeavyAnchor,
+        isMercyDrop,
+      },
+      pooled,
+    );
+    const pendingBank = this.state.pendingDropBank
+      ?? (this.state.pendingDropBank = createPendingDropBank());
 
-    if (spawned) {
-      if (!this.state.drops.includes(spawned)) {
-        this.state.drops.push(spawned);
-      }
-      return spawned;
+    if (!spawnDropWithLimit(this.state.drops, drop, pendingBank)) {
+      if (this.dropPool.length < 100) this.dropPool.push(drop);
+      return null;
     }
 
-    const pooled = this.dropPool.pop();
-    const fallbackDrop = createDropInstance(resolvedType, x, y, { ...opts, isHot, expiration, isHeavyAnchor: opts.isHeavyAnchor, isMercyDrop }, pooled);
-    this.state.drops.push(fallbackDrop);
-    return fallbackDrop;
+    return drop;
   }
 
   public createHeadlessEnemy(
@@ -3185,14 +3182,16 @@ export class GameEngine {
           }
         }
       }
+      const fusionTarget = hasPendingDrops(this.state.pendingDropBank)
+        ? MAX_DROPS_LIMIT - 1
+        : MAX_DROPS_LIMIT;
+      performDropFusion(this.state.drops, undefined, fusionTarget);
       compactInPlace(this.state.drops, (d) => !d.dead, (d) => {
         if (this.dropPool.length < 100) this.dropPool.push(d);
       });
-      performDropFusion(this.state.drops, undefined, 250);
-
-      if (player && this.soaDropManager.dropBank.totalValue >= 20 && this.state.drops.length < 35) {
-        this.soaDropManager.cashOutDropBank(player.x, player.y);
-      }
+      const pendingBank = this.state.pendingDropBank
+        ?? (this.state.pendingDropBank = createPendingDropBank());
+      releasePendingDrops(this.state.drops, pendingBank);
     }
 
     // Step texts
