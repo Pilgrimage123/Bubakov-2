@@ -1,3 +1,10 @@
+## 2026-10-22 — Oprava konsolidace dropů bez dočasných alokací
+
+- Opravena konsolidace drobných mincí a perníčků v `SoADropManager`: příchozí drop je nyní správně spotřebován do konsolidované hodnoty místo chybného pokračování ve spawnu.
+- Odstraněna dočasná pole vytvořená přes `.filter()` / `.map()` / `.sort()` v hot path; indexy tří kompatibilních dropů se vybírají skalárně.
+- Opravené mazání přes swap-back nyní odstraní přesně vybrané položky bez závislosti na jejich pořadí v poli.
+- Aktualizován regresní test konsolidace: čtvrtý drop se nealokuje, počet aktivních dropů klesne ze tří na jeden a hodnota zachová 15% bonus.
+
 ## 2026-10-22 — Sjednocení vykreslovací pipeline, atlas strašidel a zero-allocation herní cyklus (ADR 0029)
 
 - **Architektonické sjednocení pipeline (`App.tsx`, `arenaRenderer.ts` & `renderWorldHazards.ts`)**:
