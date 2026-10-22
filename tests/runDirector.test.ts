@@ -605,6 +605,11 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
       'vodnicek', 'hastrman', 'topivec', 'kalny_hastrman', 'zaba', 'ropucha',
     ]);
 
+    // These legacy elite conversions were the hidden path that could break the rule.
+    expect(director.getEliteVariantForId('mysak')).toBeNull();
+    expect(director.getEliteVariantForId('sotek')).toBeNull();
+    expect(director.getEliteVariantForId('blatouch')).toBeNull();
+
     // Cover noon, afternoon, dusk, night, and midnight pools.
     for (const gameTime of [0, 60, 120, 180, 240]) {
       engine.state.gameTime = gameTime;
