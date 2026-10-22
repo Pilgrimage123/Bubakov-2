@@ -222,9 +222,8 @@ export class SoADropManager {
   }
 
   /**
-   * 2D Spatial Hash in-place consolidation check before spawning minor drop.
-   * If >= 2 compatible drops already exist in this 180px cell, consolidates them
-   * in-place with a +15% value bonus into Tier-2 / Tier-3, avoiding allocation.
+   * Consolidates three compatible minor drops in the same spatial cell.
+   * Returns true when the incoming drop is consumed by consolidation.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -235,48 +234,45 @@ export class SoADropManager {
     const cellY = Math.floor(y / SPATIAL_CELL_SIZE);
     const targetTypeIdx = DROP_TYPE_INDICES[type];
 
-    const matchingIndices: number[] = [];
+    let first = -1;
+    let second = -1;
+    let third = -1;
     for (let i = 0; i < this.count; i++) {
-      if (this.itemTypes[i] === targetTypeIdx) {
-        const cX = Math.floor(this.posX[i] / SPATIAL_CELL_SIZE);
-        const cY = Math.floor(this.posY[i] / SPATIAL_CELL_SIZE);
-        if (cX === cellX && cY === cellY) {
-          if (isMinorCoin && this.values[i] < 5) {
-            matchingIndices.push(i);
-          } else if (isMinorGb && this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0) {
-            matchingIndices.push(i);
-          }
-        }
+      if (this.itemTypes[i] !== targetTypeIdx) continue;
+      if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
+      if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
+
+      const compatible = isMinorCoin
+        ? this.values[i] < 5
+        : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
+      if (!compatible) continue;
+      if (first < 0) first = i;
+      else if (second < 0) second = i;
+      else {
+        third = i;
+        break;
       }
     }
+    if (third < 0) return false;
 
-    if (matchingIndices.length >= 3) {
-      // Consolidate the 3 compatible minor drops in cell into idx1 with +15% bonus
-      const idx1 = matchingIndices[0];
-      const idx2 = matchingIndices[1];
-      const idx3 = matchingIndices[2];
-      const accumulated = (this.values[idx1] + this.values[idx2] + this.values[idx3]) * CONSOLIDATION_BONUS;
-      const consolidatedValue = Math.round(accumulated);
+    const combined = Math.round(
+      (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
+    );
 
-      // Upgrade idx1 in-place
-      this.values[idx1] = consolidatedValue;
-      if (type === 'gingerbread') {
-        const isGiant = consolidatedValue >= GINGERBREAD_VALUES.giant;
-        this.radii[idx1] = isGiant ? 19 : 14;
-      } else {
-        this.radii[idx1] = 12;
-      }
-      this.syncFlyweight(idx1);
+    // Store the combined value in the retained record, then remove the selected
+    // companion entries in descending index order. The retained entry survives
+    // even when it is at the final active slot.
+    this.values[first] = combined;
+    this.radii[first] = type === 'gingerbread'
+      ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
+      : 12;
 
-      // Remove idx3 then idx2 via swap-back in descending index order
-      const higherIdx = Math.max(idx2, idx3);
-      const lowerIdx = Math.min(idx2, idx3);
-      this.removeAt(higherIdx);
-      this.removeAt(lowerIdx);
-      return false; // slots opened, incoming drop spawns cleanly
-    }
-
-    return false;
+    const highest = Math.max(second, third);
+    const lowest = Math.min(second, third);
+    this.removeAt(highest);
+    this.removeAt(lowest);
+    for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
+    return true;
   }
 
   /**

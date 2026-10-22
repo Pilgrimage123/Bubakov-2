@@ -71,7 +71,7 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
     expect(manager.flyweights[2].dead).toBe(true);
   });
 
-  it('performs in-place 2D spatial hash consolidation when >= 3 compatible drops exist in a 180px cell', () => {
+  it('consolidates three existing minor drops and consumes the incoming drop', () => {
     // Spawn 3 minor gingerbreads in the same 180px cell (cell 0, 0)
     manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
     manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
@@ -79,16 +79,54 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
 
     expect(manager.count).toBe(3);
 
-    // When the 4th compatible minor drop is spawned in that cell:
-    // It detects >= 3 existing drops in the cell, upgrades drop 0 in-place with +15% bonus,
-    // destroys drops 1 and 2, and allows the new drop to spawn cleanly.
-    manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
+    // The fourth drop is consumed by consolidation: three prior drops become
+    // one value-boosted drop rather than creating another entry.
+    const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
 
-    // 3 old drops consolidated into 1 upgraded drop + 1 new drop = 2 active drops!
-    expect(manager.count).toBe(2);
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(1);
     // (2 + 2 + 2) * 1.15 = 6.9 -> Math.round = 7
     expect(manager.values[0]).toBe(7);
     expect(manager.flyweights[0].size).toBe('large');
+  });
+
+  it('retains the merged drop and unrelated drop when the retained record is last', () => {
+    manager.spawn({ type: 'coin', x: 400, y: 400, value: 1 });
+    manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
+    manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
+    manager.spawn({ type: 'gingerbread', x: 60, y: 60, value: 2 });
+
+    const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
+
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(2);
+    const combinedIndex = manager.itemTypes[0] === 2 && manager.values[0] === 7 ? 0 : 1;
+    expect(manager.itemTypes[combinedIndex]).toBe(2);
+    expect(manager.values[combinedIndex]).toBe(7);
+    expect(manager.flyweights[combinedIndex].size).toBe('large');
+    expect(manager.itemTypes[1 - combinedIndex]).toBe(1);
+    expect(manager.values[1 - combinedIndex]).toBe(1);
+  });
+
+  it('keeps a retained merge value when matching drops are separated by unrelated drops', () => {
+    manager.spawn({ type: 'gingerbread', x: 10, y: 10, value: 2 });
+    manager.spawn({ type: 'coin', x: 800, y: 800, value: 1 });
+    manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
+    manager.spawn({ type: 'coin', x: 1000, y: 1000, value: 3 });
+    manager.spawn({ type: 'gingerbread', x: 30, y: 30, value: 2 });
+
+    const incoming = manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
+
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(3);
+    const combinedIndex = Array.from(manager.itemTypes.slice(0, manager.count)).findIndex((typeIndex, index) =>
+      typeIndex === 2 && manager.values[index] === 7
+    );
+    expect(combinedIndex).toBeGreaterThanOrEqual(0);
+    expect(manager.itemTypes[combinedIndex]).toBe(2);
+    expect(manager.values[combinedIndex]).toBe(7);
+    expect(Array.from(manager.values.slice(0, manager.count))).toContain(1);
+    expect(Array.from(manager.values.slice(0, manager.count))).toContain(3);
   });
 
   it('enforces branchless 5% magnet mobility for Heavy Anchors vs standard drops', () => {
