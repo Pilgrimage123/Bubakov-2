@@ -1,3 +1,11 @@
+## 2026-10-22 — Kompletní a kompaktní informační karty lovců
+
+- Každá odemčená karta nyní zobrazuje základní statistiky, skutečnou počáteční zbraň s hodnotami načítanými z registru, celý popis zbraně, pasivní schopnost i zvláštní schopnost včetně číselných účinků a cooldownu.
+- Poutník používá stejnou komponentu profilu jako ostatní lovci. Zamčené karty si zachovávají postupné odhalování identity.
+- Zmenšen portrét na odemčených kartách, sloučeny duplicitní nápovědy a zavedeno kompaktní zalamování bez vnitřního pevného výškového limitu; dlouhý text zůstává celý čitelný i na úzkých obrazovkách.
+- Podrobné okno uvádí stejné základní parametry zbraně přímo z herního registru, aby se popisy a čísla nemusely ručně duplikovat.
+- Upřesněny popisy schopností podle aktuální implementace: Pasáčkův následný dusot, Kořenářčino sanctuarium, dosah a panika Ponocného i úplné účinky Farního požehnání a Babiččiny schopnosti.
+
 ## 2026-10-22 — Čitelnost informačních karet lovců
 
 - Následná kontrola opravila rozsah CSS selektorů: styly pro responzivní karty jsou nyní na nejvyšší úrovni, takže pravidla pro titulky, progress a mobilní rozložení se aplikují na zamýšlené prvky.
