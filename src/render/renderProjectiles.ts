@@ -265,6 +265,120 @@ export function renderProjectilesAndSlashes(
         ctx.strokeStyle = '#EA580C';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+      } else if (s.style === 'flail' || s.weaponId === 'dreveny_cep') {
+        const life = s.maxLife || 0.36;
+        const progress = Math.max(0, Math.min(1, 1 - (s.life / life)));
+        const direction = s.swingDir || 1;
+        const swing = -1.18 + progress * Math.PI * 1.85 * direction;
+        const reach = s.reach || 112;
+        const shaftLength = Math.min(80, reach * 0.72);
+        const headLength = Math.min(32, reach * 0.29);
+        const headAngle = Math.sin(progress * Math.PI) * 0.95 - 0.22;
+
+        ctx.save();
+        ctx.rotate(s.angle - 0.48 + swing * 0.18);
+
+        // Sweeping hand-drawn trails emphasise the circular swing.
+        const trailAlpha = Math.max(0, 0.72 * (1 - progress * 0.82));
+        ctx.strokeStyle = `rgba(236, 190, 123, ${trailAlpha})`;
+        ctx.lineWidth = 7;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(0, 0, shaftLength * 0.80, -1.08, 0.58 + progress * 0.48);
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(35, 24, 16, ${trailAlpha * 0.72})`;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, shaftLength * 0.92, -1.04, 0.52 + progress * 0.48);
+        ctx.stroke();
+
+        // Long, hand-carved handle with thick dark outline and wood grain.
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(9, 4);
+        ctx.quadraticCurveTo(shaftLength * 0.43, -10, shaftLength, -2);
+        ctx.stroke();
+        ctx.strokeStyle = '#A66A32';
+        ctx.lineWidth = 5.6;
+        ctx.beginPath();
+        ctx.moveTo(9, 4);
+        ctx.quadraticCurveTo(shaftLength * 0.43, -10, shaftLength, -2);
+        ctx.stroke();
+        ctx.strokeStyle = '#E8BD79';
+        ctx.lineWidth = 1.15;
+        ctx.beginPath();
+        ctx.moveTo(15, 1);
+        ctx.quadraticCurveTo(shaftLength * 0.43, -7, shaftLength - 3, -1);
+        ctx.stroke();
+
+        // Dark leather wraps around the grip.
+        ctx.strokeStyle = '#3B2114';
+        ctx.lineWidth = 4.2;
+        for (let i = 0; i < 3; i++) {
+          const wx = 12 + i * 5;
+          ctx.beginPath();
+          ctx.moveTo(wx - 2, 1 - i);
+          ctx.lineTo(wx + 1, -5 - i);
+          ctx.stroke();
+        }
+
+        // Flexible loop and heavy wooden striker, pivoting at the head.
+        ctx.strokeStyle = '#2D1B12';
+        ctx.lineWidth = 4.2;
+        ctx.beginPath();
+        ctx.moveTo(shaftLength - 1, -2);
+        ctx.quadraticCurveTo(shaftLength + 10, -18 + headAngle * 4, shaftLength + 15, -5);
+        ctx.quadraticCurveTo(shaftLength + 20, 8 + headAngle * 3, shaftLength + 7, 5);
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(shaftLength + 12, 4);
+        ctx.rotate(headAngle);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 17;
+        ctx.beginPath();
+        ctx.moveTo(-headLength * 0.48, 0);
+        ctx.lineTo(headLength * 0.48, 0);
+        ctx.stroke();
+        ctx.strokeStyle = '#B97839';
+        ctx.lineWidth = 12;
+        ctx.beginPath();
+        ctx.moveTo(-headLength * 0.48, 0);
+        ctx.lineTo(headLength * 0.48, 0);
+        ctx.stroke();
+        ctx.strokeStyle = '#E9BD7A';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-headLength * 0.32, -1.5);
+        ctx.lineTo(headLength * 0.31, -1.5);
+        ctx.stroke();
+
+        // Twine binding at the striker joint.
+        ctx.strokeStyle = '#3B2114';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(-headLength * 0.42, -5);
+        ctx.lineTo(-headLength * 0.35, 5);
+        ctx.moveTo(-headLength * 0.27, -5);
+        ctx.lineTo(-headLength * 0.20, 5);
+        ctx.stroke();
+        ctx.restore();
+
+        if (progress > 0.43 && progress < 0.86) {
+          const spark = Math.sin((progress - 0.43) / 0.43 * Math.PI);
+          ctx.strokeStyle = `rgba(255, 238, 181, ${spark * 0.88})`;
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.moveTo(shaftLength + headLength * 0.55, -8);
+          ctx.lineTo(shaftLength + headLength * 0.78, -16);
+          ctx.moveTo(shaftLength + headLength * 0.75, -2);
+          ctx.lineTo(shaftLength + headLength * 0.98, -5);
+          ctx.stroke();
+        }
+        ctx.restore();
       } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
         Lada.drawOsikovyPrutSlash(ctx, s);
       } else {
