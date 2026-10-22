@@ -28,6 +28,12 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
     expect(lvl0.spawnPools.dusk).toContain('mrazivy_obr');
     expect(lvl0.spawnPools.noon).not.toContain('zaba');
+    const allStage1Spawns = Object.values(lvl0.spawnPools).flat();
+    for (const excluded of ['rarach', 'certik', 'sazovy_rarach', 'cert', 'topivec', 'vodnicek', 'hastrman']) {
+      expect(allStage1Spawns).not.toContain(excluded);
+    }
+    // Vodníček is retained only as the scheduled mid-boss, not a regular spawn.
+    expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'mrazovy_skritek', 'topivec', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
