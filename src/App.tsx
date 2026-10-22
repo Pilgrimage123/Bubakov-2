@@ -11,6 +11,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createInitialEngineState, type EngineState } from './game/engineState';
 import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
+import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeaderCrowWave';
 import { getCachedHomingTarget } from './game/homing';
 import { isDirectTargetable } from './game/targeting';
 import { stepCrowForaging } from './game/crowForaging';
@@ -2065,6 +2066,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
   // Game engine refs (persistent through renders)
   const engineRef = useRef<EngineState>(createInitialEngineState());
+  const crowWaveRef = useRef<VirtualLeaderCrowWave | null>(null);
+  if (!crowWaveRef.current) crowWaveRef.current = new VirtualLeaderCrowWave();
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
   const secondarySpatialResultsRef = useRef<any[]>([]);
@@ -2916,6 +2919,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
 
     engineRef.current = engine;
+
+    // Stage 1's flock uses a fixed preallocated pool; no crow objects are created in the frame loop.
+    crowWaveRef.current?.resetRun();
+    if (chosenLevelId === 0) {
+      crowWaveRef.current?.preparePool(createEnemyInstance);
+    }
 
     if (customGrandfatherUpgrades && Object.keys(customGrandfatherUpgrades).length > 0) {
       const purchasedIds: string[] = [];
@@ -8234,6 +8243,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       crowForageTimer: 0,
       crowForageCooldown: 2 + Math.random() * 2,
       isGroundedForLoot: false,
+      isVirtualCrowMember: false,
+      _crowWaveActive: false,
+      _crowWaveInEngine: false,
+      _crowWaveOwner: null as VirtualLeaderCrowWave | null,
+      crowWaveIndex: -1,
+      crowWavePointMultiplier: 1,
+      crowHeading: 0,
+      crowFlapScale: 1,
       zigZagTimer: 0,
       zigZagDir: Math.random() < 0.5 ? 1 : -1,
       chargeDirX: 0,
@@ -10256,7 +10273,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const rawPt = ENEMY_POINTS[this.id] ?? Math.max(12, Math.floor((this.maxHp || 40) * 0.38));
           // Natural organic variance (±15%) so points don't feel like rigid clockwork
           const variance = 0.85 + Math.random() * 0.30;
-          const pt = Math.max(6, Math.round(rawPt * variance));
+          // Only regular members of the virtual crow wave get 40% less score.
+          // The scheduled crow miniboss remains an ordinary, untagged enemy.
+          const pointMultiplier = this.isVirtualCrowMember && !this.isMiniboss && !this.isBoss
+            ? Math.max(0, Math.min(1, this.crowWavePointMultiplier ?? 1))
+            : 1;
+          const pt = Math.max(6, Math.round(rawPt * pointMultiplier * variance));
 
           const isWater = this.category === 'water';
           const isFields = this.category === 'fields';
@@ -10708,6 +10730,45 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       },
 
       draw(ctx: CanvasRenderingContext2D) {
+        // Virtual flock members use a tiny direct Canvas silhouette rather than
+        // the full enemy/VFX renderer. This path performs no per-frame allocations.
+        if (this.isVirtualCrowMember) {
+          ctx.save();
+          if (this.isDefeated) {
+            const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
+            ctx.globalAlpha = Math.max(0.08, 1 - fadeProgress * 0.92);
+          }
+          ctx.translate(this.x, this.y);
+          const heading = Number.isFinite(this.crowHeading)
+            ? this.crowHeading
+            : Math.atan2(this.vy || 0, this.vx || 1);
+          ctx.rotate(heading);
+          ctx.scale(1, Number.isFinite(this.crowFlapScale) ? this.crowFlapScale : 1);
+          ctx.fillStyle = '#171521';
+          ctx.strokeStyle = '#06060A';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(2, 3);
+          ctx.lineTo(-6, 5);
+          ctx.lineTo(-12, 1);
+          ctx.lineTo(-7, -2);
+          ctx.lineTo(1, -4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-3, 0);
+          ctx.lineTo(-10, -7);
+          ctx.lineTo(-5, -2);
+          ctx.moveTo(-3, 0);
+          ctx.lineTo(-8, 7);
+          ctx.lineTo(-4, 2);
+          ctx.stroke();
+          ctx.restore();
+          return;
+        }
+
         let didSaveAlpha = false;
         if (this.isDefeated) {
           const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
