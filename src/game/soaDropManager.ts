@@ -223,7 +223,7 @@ export class SoADropManager {
 
   /**
    * Consolidates three compatible minor drops in the same spatial cell.
-   * The incoming drop is consumed when three existing compatible drops merge.
+   * Returns true when the incoming drop is consumed by consolidation.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -241,6 +241,7 @@ export class SoADropManager {
       if (this.itemTypes[i] !== targetTypeIdx) continue;
       if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
       if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
+
       const compatible = isMinorCoin
         ? this.values[i] < 5
         : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
@@ -268,8 +269,8 @@ export class SoADropManager {
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
-    // Write the retained record before advancing the read cursor can cross its
-    // original slot. This is safe even when first is the last live element.
+    // Compact the array while preserving the selected record's scalar snapshot.
+    // `write` never exceeds `read`, so copying forward cannot overwrite unread data.
     const oldCount = this.count;
     let write = 0;
     for (let read = 0; read < oldCount; read++) {
