@@ -322,7 +322,7 @@
   <header>
     <div class="title-banner">
       <h1>✨ Smart detailní SVG JavaScript animace</h1>
-      <div class="subtitle">Babička a Barunka • Bezhlavý rytíř • Sněhulák • Tulák • Kostelník</div>
+      <div class="subtitle">Babička a Barunka • Bezhlavý rytíř • Tající sněhulák • Tulák • Kostelník • Pasáček</div>
     </div>
   </header>
 
@@ -338,13 +338,16 @@
           <span>⚔️🦁</span> Bezhlavý rytíř
         </button>
         <button class="char-btn" onclick="selectCharacter('snehulak')">
-          <span>⛄🧹</span> Sněhulák s koštětem
+          <span>⛄🧹</span> Tající sněhulák
         </button>
         <button class="char-btn" onclick="selectCharacter('tulak')">
           <span>🎒🦯</span> Tulák
         </button>
         <button class="char-btn" onclick="selectCharacter('kostelnik')">
           <span>🔔✝️</span> Kostelník
+        </button>
+        <button class="char-btn" onclick="selectCharacter('pasacek')">
+          <span>🪈👦</span> Pasáček
         </button>
       </div>
 
@@ -468,8 +471,8 @@
         desc: 'Strašlivý středověký rek v plátové zbroji s drátěnou košilí, roztrhaným rudým pláštěm a bílou varkočkou se slavným českým dvouocasým lvem. Pod paží třímá svou vlastní uťatou hlavu s přilbicí, rudým chocholem a planoucím hněvem v očích.'
       },
       snehulak: {
-        title: '⛄ Sněhulák s koštětem',
-        desc: 'Mračící se sněhulák kráčející na dvou nohách s březovým koštětem pevně v dlaních. Na hlavě má otlučený hrnec s čepicí čerstvého sněhu a jehličím, kolem krku pruhovanou vlněnou šálu s třásněmi, ostrý mrkvový nos a uhlíky plné zášti.'
+        title: '⛄ Tající sněhulák s koštětem',
+        desc: 'Mračící se tající sněhulák kráčející na dvou nohách s březovým koštětem pevně v dlaních. Na hlavě má otlučený zelený klobouk s chvojím a sněhovou čepicí, kolem krku pruhovanou vlněnou šálu s třásněmi, ostrý mrkvový nos, vyceněné zuby a ze všech záhybů mu stékají krůpěje vody do kaluží.'
       },
       tulak: {
         title: '🎒 Tulák s ranečkem a sukovicí',
@@ -477,14 +480,18 @@
       },
       kostelnik: {
         title: '🔔 Kostelník se svěcenou vodou',
-        desc: 'Přísný a důstojný kostelník v tmavozeleném církevním svrchníku, hnědé plstěné kloboukové fedoře a vestě se zlatým křížem na prsou. V jedné ruce nese těžký mosazný kotlík se svěcenou vodou a v druhé mocně máchá kropáčem zahánějícím nečisté síly.'
+        desc: 'Přísný a důstojný kostelník v hnědém církevním svrchníku, alpském kloboučku s červeným hřebíčkem a vyšívané květinové vestě se zlatým křížem a kapesními hodinkami. V ruce nese těžký mosazný kotlík se svěcenou vodou a máchá kropáčem zahánějícím nečisté síly.'
+      },
+      pasacek: {
+        title: '🪈 Pasáček s dřevěnou píšťalkou',
+        desc: 'Hbitý bosonohý chlapec z ladovských pastvin s rozcuchanými kaštanovými vlasy, orlím pírkem za uchem a pastýřskou píšťalkou. V modré vyšívané vestičce, červeném šátku a záplatovaných kalhotách radostně uhání loukou a vyhrává líbezné melodie.'
       }
     };
 
     function selectCharacter(id) {
       currentChar = id;
       document.querySelectorAll('.char-btn').forEach((b, idx) => {
-        const ids = ['babicka', 'rytir', 'snehulak', 'tulak', 'kostelnik'];
+        const ids = ['babicka', 'rytir', 'snehulak', 'tulak', 'kostelnik', 'pasacek'];
         b.classList.toggle('active', ids[idx] === id);
       });
       document.getElementById('charTitle').innerText = charInfo[id].title;
@@ -495,6 +502,7 @@
       else if (id === 'snehulak') { playBeep(330, 'square', 0.2); setTimeout(() => playBeep(260, 'square', 0.25), 120); }
       else if (id === 'tulak') { playBeep(440, 'triangle', 0.2); setTimeout(() => playBeep(554, 'triangle', 0.25), 100); }
       else if (id === 'kostelnik') { playBeep(392, 'sine', 0.3); setTimeout(() => playBeep(294, 'sine', 0.35), 150); }
+      else if (id === 'pasacek') { playBeep(659, 'triangle', 0.2); setTimeout(() => playBeep(784, 'triangle', 0.25), 100); }
 
       renderSvg();
     }
@@ -569,6 +577,8 @@
         container.innerHTML = getTulakSvgMarkup();
       } else if (currentChar === 'kostelnik') {
         container.innerHTML = getKostelnikSvgMarkup();
+      } else if (currentChar === 'pasacek') {
+        container.innerHTML = getPasacekSvgMarkup();
       }
       setZoom(zoom);
     }
@@ -717,6 +727,32 @@
         const aspG = document.getElementById('ko-aspergillum');
         if (aspG) aspG.setAttribute('transform', `translate(240, 175) rotate(${aspergillum})`);
         const faceG = document.getElementById('ko-face');
+        if (faceG) faceG.setAttribute('transform', `translate(${lookX}, ${lookY})`);
+      } else if (currentChar === 'pasacek') {
+        const runSpeed = isAction ? 12 : isWalking ? 9.5 : 2.5;
+        const runSin = Math.sin(t * runSpeed);
+        const bob = isWalking ? Math.abs(runSin) * 14 : isAction ? Math.abs(Math.sin(t * 14)) * 16 : Math.sin(t * 3) * 3;
+        const lean = isWalking ? 10 + runSin * 4 : isAction ? 5 : 2;
+        const bLeg = isWalking ? runSin * 34 : -8;
+        const fLeg = isWalking ? -runSin * 34 : 8;
+        const flute = isAction ? -45 + Math.sin(t * 12) * 6 : isWalking ? 15 + Math.cos(t * runSpeed) * 20 : isHovered ? mouseY * 15 : 0;
+        const scarf = Math.sin(t * (isWalking ? 16 : 4)) * (isWalking ? 15 : 4);
+        const lookX = isHovered ? mouseX * 6 : Math.sin(t * 1.8) * 2;
+        const lookY = isHovered ? mouseY * 5 : 0;
+
+        const rootG = document.getElementById('pa-root');
+        if (rootG) rootG.setAttribute('transform', `translate(225, 240) scale(${dir}, 1) translate(-225, -240)`);
+        const leanG = document.getElementById('pa-lean');
+        if (leanG) leanG.setAttribute('transform', `translate(0, ${bob}) rotate(${lean}, 210, 290)`);
+        const bLegG = document.getElementById('pa-b-leg');
+        if (bLegG) bLegG.setAttribute('transform', `translate(165, 275) rotate(${bLeg})`);
+        const fLegG = document.getElementById('pa-f-leg');
+        if (fLegG) fLegG.setAttribute('transform', `translate(215, 275) rotate(${fLeg})`);
+        const fluteG = document.getElementById('pa-flute-arm');
+        if (fluteG) fluteG.setAttribute('transform', `translate(240, 175) rotate(${flute})`);
+        const scarfG = document.getElementById('pa-scarf-wings');
+        if (scarfG) scarfG.setAttribute('transform', `rotate(${scarf})`);
+        const faceG = document.getElementById('pa-face');
         if (faceG) faceG.setAttribute('transform', `translate(${lookX}, ${lookY})`);
       }
     }
@@ -1180,6 +1216,167 @@
                 <path d="M -28,0 C -32,-35 -15,-48 0,-50 C 15,-48 30,-32 28,0 Z" fill="#3C2A1B" stroke="#1C1610" stroke-width="3.8"/>
                 <path d="M -46,0 C -20,-10 25,-10 48,0 C 54,4 48,10 38,10 C 15,6 -20,6 -40,10 Z" fill="#22170D" stroke="#1C1610" stroke-width="3.5"/>
               </g>
+            </g>
+          </g>
+        </g>
+      </svg>
+      `;
+    }
+
+    function getPasacekSvgMarkup() {
+      return `
+      <svg id="pasacek-svg" viewBox="0 0 450 480" width="${zoom}" height="${zoom}">
+        <defs>
+          <radialGradient id="pa-skin" cx="42%" cy="32%" r="68%">
+            <stop offset="0%" stop-color="#FFF4ED"/>
+            <stop offset="55%" stop-color="#FED7AA"/>
+            <stop offset="85%" stop-color="#FDBA74"/>
+            <stop offset="100%" stop-color="#FB923C"/>
+          </radialGradient>
+          <linearGradient id="pa-hair" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#854D0E"/>
+            <stop offset="40%" stop-color="#713F12"/>
+            <stop offset="100%" stop-color="#451A03"/>
+          </linearGradient>
+          <linearGradient id="pa-vest" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3B82F6"/>
+            <stop offset="40%" stop-color="#2563EB"/>
+            <stop offset="100%" stop-color="#1E3A8A"/>
+          </linearGradient>
+          <linearGradient id="pa-scarf" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#EF4444"/>
+            <stop offset="100%" stop-color="#B91C1C"/>
+          </linearGradient>
+          <linearGradient id="pa-pants" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#A16207"/>
+            <stop offset="60%" stop-color="#713F12"/>
+            <stop offset="100%" stop-color="#452B09"/>
+          </linearGradient>
+          <linearGradient id="pa-wood" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#D97706"/>
+            <stop offset="100%" stop-color="#78350F"/>
+          </linearGradient>
+        </defs>
+        <g id="pa-root">
+          <ellipse cx="220" cy="448" rx="92" ry="16" fill="#1E293B" opacity="0.22"/>
+          <g id="pa-lean">
+            <!-- Back Leg -->
+            <g id="pa-b-leg" transform="translate(165, 275)">
+              <path d="M -15,-5 C -25,35 -35,75 -42,110 C -48,128 -38,138 -20,135 C -5,132 10,120 12,95 C 15,65 15,30 12,-5 Z" fill="url(#pa-pants)" stroke="#1C1610" stroke-width="4"/>
+              <!-- Red patch on hip -->
+              <polygon points="-35,15 -15,17 -17,35 -37,33" fill="url(#pa-scarf)" stroke="#1C1610" stroke-width="1.8"/>
+              <!-- Blue patch on shin -->
+              <polygon points="-40,84 -22,84 -22,102 -40,102" fill="url(#pa-vest)" stroke="#1C1610" stroke-width="1.8"/>
+              <!-- Bare Leg & Bare Foot -->
+              <g transform="translate(-25, 122)">
+                <path d="M -10,0 C -15,18 -18,36 -24,52 C -28,62 -22,70 -12,68 C -4,65 0,55 2,40 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+                <g transform="translate(-18, 55)">
+                  <path d="M -6,-4 C -18,4 -28,15 -25,28 C -22,38 -8,42 12,38 C 24,34 32,24 28,15 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+                  <ellipse cx="28" cy="18" rx="4.5" ry="5.5" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="1.6"/>
+                  <ellipse cx="22" cy="22" rx="4" ry="5" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="1.4"/>
+                </g>
+              </g>
+            </g>
+
+            <!-- Front Leg -->
+            <g id="pa-f-leg" transform="translate(215, 275)">
+              <path d="M -12,-5 C -4,35 6,75 22,112 C 30,128 48,124 52,112 C 45,75 30,35 22,-5 Z" fill="url(#pa-pants)" stroke="#1C1610" stroke-width="4.2"/>
+              <!-- Red patch on thigh -->
+              <rect x="4" y="45" width="20" height="20" rx="2" fill="url(#pa-scarf)" stroke="#1C1610" stroke-width="1.8"/>
+              <!-- Front Bare Leg & Bare Foot -->
+              <g transform="translate(30, 114)">
+                <path d="M -5,0 C -2,18 2,36 10,55 C 16,66 28,66 32,54 C 28,36 18,18 10,0 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+                <g transform="translate(18, 52)">
+                  <path d="M -6,-4 C 2,6 12,18 35,22 C 55,25 72,18 78,8 C 72,-2 55,0 42,-4 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+                  <ellipse cx="76" cy="10" rx="5" ry="6" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="1.6"/>
+                  <ellipse cx="70" cy="15" rx="4.5" ry="5.5" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="1.4"/>
+                  <ellipse cx="63" cy="18" rx="4" ry="5" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="1.4"/>
+                </g>
+              </g>
+            </g>
+
+            <!-- Torso, Shirt & Folk Blue Vest -->
+            <g transform="translate(170, 150)">
+              <path d="M 18,15 C 22,-5 58,-5 62,15 C 70,55 74,95 70,125 C 48,134 28,134 10,125 Z" fill="#FFFDF5" stroke="#1C1610" stroke-width="3.8"/>
+              <path d="M 14,28 C 22,12 58,12 66,28 C 72,68 76,108 72,132 C 48,142 28,142 8,132 Z" fill="url(#pa-vest)" stroke="#1C1610" stroke-width="4"/>
+              <path d="M 14,28 C 22,14 36,14 40,28 L 40,136" stroke="#EF4444" stroke-width="3" fill="none"/>
+              <path d="M 66,28 C 58,14 44,14 40,28" stroke="#EF4444" stroke-width="3" fill="none"/>
+              <!-- Golden ball buttons -->
+              <circle cx="38" cy="45" r="3.2" fill="#FACC15" stroke="#1C1610" stroke-width="1.2"/>
+              <circle cx="38" cy="65" r="3.2" fill="#FACC15" stroke="#1C1610" stroke-width="1.2"/>
+              <circle cx="38" cy="85" r="3.2" fill="#FACC15" stroke="#1C1610" stroke-width="1.2"/>
+              <circle cx="38" cy="105" r="3.2" fill="#FACC15" stroke="#1C1610" stroke-width="1.2"/>
+              <!-- Belt -->
+              <rect x="10" y="128" width="60" height="9" rx="2" fill="#713F12" stroke="#1C1610" stroke-width="2.2"/>
+            </g>
+
+            <!-- Right Arm Pumping Fist -->
+            <g transform="translate(160, 175)">
+              <path d="M 5,0 C -15,15 -25,35 -35,55 C -25,62 -12,58 -5,52 Z" fill="#FFFDF5" stroke="#1C1610" stroke-width="3.5"/>
+              <path d="M -22,54 C -32,70 -38,85 -42,100 C -34,106 -24,102 -18,94 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+              <ellipse cx="-32" cy="102" rx="9" ry="8" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="2.8"/>
+            </g>
+
+            <!-- Left Arm Holding 6-Hole Flute -->
+            <g id="pa-flute-arm" transform="translate(240, 175)">
+              <path d="M 0,0 C 22,-18 42,-32 62,-46 C 70,-40 72,-28 65,-22 Z" fill="#FFFDF5" stroke="#1C1610" stroke-width="3.5"/>
+              <path d="M 64,-34 C 74,-48 84,-62 92,-78 C 100,-72 102,-60 95,-52 Z" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.5"/>
+              <g transform="translate(92, -68)">
+                <ellipse cx="0" cy="0" rx="9" ry="8" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="2.8"/>
+                <!-- Flute Tube -->
+                <g transform="rotate(-24)">
+                  <rect x="-5" y="-55" width="10" height="110" rx="4" fill="url(#pa-wood)" stroke="#1C1610" stroke-width="2.8"/>
+                  <circle cx="0" cy="-28" r="2.2" fill="#1C1610"/>
+                  <circle cx="0" cy="-14" r="2.2" fill="#1C1610"/>
+                  <circle cx="0" cy="0" r="2.2" fill="#1C1610"/>
+                  <circle cx="0" cy="14" r="2.2" fill="#1C1610"/>
+                  <circle cx="0" cy="28" r="2.2" fill="#1C1610"/>
+                  <circle cx="0" cy="42" r="2.2" fill="#1C1610"/>
+                </g>
+              </g>
+            </g>
+
+            <!-- Red Neckerchief with knot -->
+            <g transform="translate(205, 142)">
+              <circle cx="0" cy="0" r="6.5" fill="url(#pa-scarf)" stroke="#1C1610" stroke-width="2.6"/>
+              <g id="pa-scarf-wings">
+                <path d="M -4,-2 C -18,-6 -34,4 -38,18 C -32,24 -20,18 -8,6 Z" fill="url(#pa-scarf)" stroke="#1C1610" stroke-width="2.8"/>
+                <path d="M 4,-2 C 18,-8 36,-2 44,12 C 38,18 24,14 8,6 Z" fill="url(#pa-scarf)" stroke="#1C1610" stroke-width="2.8"/>
+              </g>
+            </g>
+
+            <!-- Head & Spiky Hair with Feather -->
+            <g transform="translate(210, 105)">
+              <!-- Feather behind ear -->
+              <g transform="translate(-28, -18) rotate(-35)">
+                <line x1="0" y1="0" x2="-45" y2="-25" stroke="#FFFFFF" stroke-width="2"/>
+                <path d="M 0,0 C -12,-8 -28,-18 -45,-25 C -40,-35 -24,-24 -10,-12 Z" fill="#451A03" stroke="#1C1610" stroke-width="2"/>
+                <line x1="-12" y1="-8" x2="-18" y2="-18" stroke="#1C1610" stroke-width="2"/>
+                <line x1="-24" y1="-14" x2="-30" y2="-24" stroke="#FFFFFF" stroke-width="2"/>
+              </g>
+              <!-- Head -->
+              <ellipse cx="0" cy="0" rx="28" ry="32" fill="url(#pa-skin)" stroke="#1C1610" stroke-width="3.8"/>
+              <ellipse cx="-16" cy="6" rx="8" ry="6" fill="#F87171" opacity="0.6"/>
+              <ellipse cx="16" cy="6" rx="8" ry="6" fill="#F87171" opacity="0.6"/>
+              <!-- Face -->
+              <g id="pa-face">
+                <path d="M -20,-12 Q -12,-20 -4,-14" stroke="#451A03" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+                <path d="M 6,-14 Q 14,-20 22,-12" stroke="#451A03" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+                <ellipse cx="-11" cy="-4" rx="6.5" ry="7.5" fill="#FFFFFF" stroke="#1C1610" stroke-width="2.4"/>
+                <circle cx="-10" cy="-3.5" r="4" fill="#1C1610"/>
+                <circle cx="-12" cy="-5" r="1.5" fill="#FFFFFF"/>
+                <ellipse cx="13" cy="-4" rx="6.5" ry="7.5" fill="#FFFFFF" stroke="#1C1610" stroke-width="2.4"/>
+                <circle cx="14" cy="-3.5" r="4" fill="#1C1610"/>
+                <circle cx="12" cy="-5" r="1.5" fill="#FFFFFF"/>
+                <path d="M -2,4 Q 2,8 6,4" stroke="#1C1610" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+                <path d="M -4,14 C -4,22 8,22 8,14 Z" fill="#881337" stroke="#1C1610" stroke-width="2.4"/>
+              </g>
+              <!-- Tousled Spiky Hair -->
+              <path d="M -30,-8 C -40,-20 -36,-35 -24,-40 C -18,-45 -8,-42 0,-44 C 12,-44 24,-42 32,-35 C 40,-25 36,-10 32,-2 Z" fill="url(#pa-hair)" stroke="#1C1610" stroke-width="3.8"/>
+              <polygon points="-22,-22 -16,-34 -12,-20" fill="url(#pa-hair)" stroke="#1C1610" stroke-width="2.2"/>
+              <polygon points="-10,-24 -4,-38 2,-22" fill="url(#pa-hair)" stroke="#1C1610" stroke-width="2.2"/>
+              <polygon points="4,-24 12,-38 16,-20" fill="url(#pa-hair)" stroke="#1C1610" stroke-width="2.2"/>
+              <polygon points="18,-20 26,-32 28,-16" fill="url(#pa-hair)" stroke="#1C1610" stroke-width="2.2"/>
             </g>
           </g>
         </g>

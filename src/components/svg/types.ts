@@ -1,6 +1,6 @@
 export type SmartCharacterState = 'idle' | 'walk' | 'action' | 'react';
 
-export type SmartCharacterId = 'babicka_barunka' | 'bezhlavy_rytir' | 'snehulak' | 'tulak' | 'kostelnik';
+export type SmartCharacterId = 'babicka_barunka' | 'bezhlavy_rytir' | 'snehulak' | 'tulak' | 'kostelnik' | 'pasacek';
 
 export interface SmartCharacterProps {
   /** Active animation state / action */

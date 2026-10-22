@@ -4,6 +4,7 @@ import { SmartBezhlavyRytirSvg } from './SmartBezhlavyRytirSvg';
 import { SmartSnehulakSvg } from './SmartSnehulakSvg';
 import { SmartTulakSvg } from './SmartTulakSvg';
 import { SmartKostelnikSvg } from './SmartKostelnikSvg';
+import { SmartPasacekSvg } from './SmartPasacekSvg';
 import type { SmartCharacterId, SmartCharacterState } from './types';
 import { sound } from '../../audio';
 
@@ -41,6 +42,9 @@ export const SmartSvgViewer: React.FC = () => {
       } else if (selectedChar === 'kostelnik') {
         sound.churchBell();
         setTimeout(() => sound.slivoviceSplash(), 160);
+      } else if (selectedChar === 'pasacek') {
+        sound.kominikButton();
+        setTimeout(() => sound.cheer(), 180);
       }
     } else if (newState === 'react') {
       if (selectedChar === 'babicka_barunka') {
@@ -53,6 +57,8 @@ export const SmartSvgViewer: React.FC = () => {
         sound.rooster();
       } else if (selectedChar === 'kostelnik') {
         sound.candlePulse();
+      } else if (selectedChar === 'pasacek') {
+        sound.kominikButton();
       }
     } else if (newState === 'walk') {
       if (selectedChar === 'snehulak') sound.bootSnowCrunch();
@@ -66,6 +72,7 @@ export const SmartSvgViewer: React.FC = () => {
     else if (id === 'snehulak') sound.freeze();
     else if (id === 'tulak') sound.sukoviceWhirl();
     else if (id === 'kostelnik') sound.churchBell();
+    else if (id === 'pasacek') sound.kominikButton();
   };
 
   // Export current SVG as clean string
@@ -135,6 +142,13 @@ export const SmartSvgViewer: React.FC = () => {
       sub: 'Hrusický kostelík & Svěcená voda',
       icon: '🔔✝️',
       desc: 'Přísný a důstojný kostelník v tmavozeleném církevním svrchníku, hnědé plstěné kloboukové fedoře a vestě se zlatým křížem na prsou. V jedné ruce nese těžký mosazný kotlík se svěcenou vodou a v druhé mocně máchá kropáčem zahánějícím nečisté síly.',
+    },
+    {
+      id: 'pasacek' as SmartCharacterId,
+      name: 'Pasáček',
+      sub: 'Hrusické pastviny & Dřevěná píšťalka',
+      icon: '🪈👦',
+      desc: 'Hbitý bosonohý chlapec z ladovských pastvin s rozcuchanými kaštanovými vlasy, orlím pírkem za uchem a pastýřskou píšťalkou. V modré vyšívané vestičce, červeném šátku a záplatovaných kalhotách radostně uhání loukou a vyhrává líbezné melodie.',
     },
   ];
 
@@ -275,6 +289,23 @@ export const SmartSvgViewer: React.FC = () => {
             />
           )}
 
+          {selectedChar === 'pasacek' && (
+            <SmartPasacekSvg
+              state={state}
+              speed={speed}
+              isPlaying={isPlaying}
+              direction={direction}
+              size={zoom}
+              interactive={true}
+              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
+              features={{
+                showParticles,
+                showShadow: true,
+                showOutline: true,
+              }}
+            />
+          )}
+
           {/* FLOATING ACTION PILL ON BOTTOM */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-amber-200/60 shadow-lg text-xs font-medium">
             <span className="text-slate-500">Kliknutím na postavu spustíte:</span>
@@ -287,7 +318,9 @@ export const SmartSvgViewer: React.FC = () => {
                 ? 'Vánici s koštětem'
                 : selectedChar === 'tulak'
                 ? 'Radostný poskok & sukovice'
-                : 'Kropení svěcenou vodou'}
+                : selectedChar === 'kostelnik'
+                ? 'Kropení svěcenou vodou'
+                : 'Hra na pastýřskou píšťalku'}
             </span>
           </div>
         </div>
