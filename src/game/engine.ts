@@ -1153,7 +1153,10 @@ export class GameEngine {
           if (self.state.plumPuddles && self.state.plumPuddles.length > 0) {
             for (let pi = 0; pi < self.state.plumPuddles.length; pi++) {
               const pud = self.state.plumPuddles[pi];
-              if (Math.hypot(this.x - pud.x, this.y - pud.y) <= pud.radius + this.radius) {
+              const maxR = pud.radius + this.radius;
+              const pdx = this.x - pud.x;
+              const pdy = this.y - pud.y;
+              if (Math.abs(pdx) <= maxR && Math.abs(pdy) <= maxR && pdx * pdx + pdy * pdy <= maxR * maxR) {
                 spd *= (1 - (pud.slowRatio || 0.35));
                 break;
               }
@@ -2471,15 +2474,20 @@ export class GameEngine {
       for (let j = 0; j < nearby.length; j++) {
         const e = nearby[j];
         if (e.isDefeated || e.dead) continue;
-        const dx = s.x - e.x;
-        const dy = s.y - e.y;
+        const dx = e.x - s.x;
+        const dy = e.y - s.y;
         const reach = s.reach + e.radius;
-        if (!s.hitList.includes(e) && distanceSq(s.x, s.y, e.x, e.y) <= reach * reach) {
-          const ang = Math.atan2(e.y - s.y, e.x - s.x);
-          let diff = Math.abs(ang - s.angle);
-          if (diff > Math.PI) diff = Math.PI * 2 - diff;
+        if (Math.abs(dx) <= reach && Math.abs(dy) <= reach && dx * dx + dy * dy <= reach * reach && !s.hitList.includes(e)) {
+          const isFullCircle = s.arc >= Math.PI * 2;
+          let inArc = isFullCircle;
+          if (!isFullCircle) {
+            const ang = Math.atan2(dy, dx);
+            let diff = Math.abs(ang - s.angle);
+            if (diff > Math.PI) diff = Math.PI * 2 - diff;
+            inArc = diff <= s.arc / 2;
+          }
 
-          if (diff <= s.arc / 2) {
+          if (inArc) {
             s.hitList.push(e);
             const isWhip = s.weaponId === 'formansky_bic' || s.style === 'whip';
             let kbForce = (isWhip ? 340 : 260) * (s.knockbackMult ?? 1);

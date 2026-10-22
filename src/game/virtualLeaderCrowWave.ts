@@ -33,6 +33,8 @@ interface CrowWaveEngine {
   gameTime: number;
   timeStopTimer?: number;
   enemies: any[];
+  director?: any;
+  state?: any;
 }
 
 interface CrowWavePlayer {
@@ -319,6 +321,13 @@ export class VirtualLeaderCrowWave {
     }
 
     if (!this.waveActive && gameTime >= this.nextWaveAt) {
+      const director = engine.director ?? engine.state?.director;
+      if (director && typeof director.getEffectiveLivingCount === 'function') {
+        const effectiveLiving = director.getEffectiveLivingCount(engine);
+        if (effectiveLiving + 3 > director.maxLivingEnemies) {
+          return false;
+        }
+      }
       this.startWave(engine, player, viewWidth, viewHeight);
       this.nextWaveAt = gameTime + this.interval;
       return true;

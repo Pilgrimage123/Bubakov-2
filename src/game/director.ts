@@ -307,6 +307,38 @@ export class RunDirector {
   public panicBrakeCooldown = 0;
   public panicBrakeActiveTimer = 0;
   public punitiveTwinCooldown = 0;
+  public timeSinceLastCrowWave = 0;
+
+  /**
+   * Computes the authoritative effective living enemy count.
+   * Standard enemies count 1:1.
+   * Virtual flock members (such as Stage 1 circular crow waves driven by a Virtual Leader)
+   * count collectively as exactly 3 entities toward capacity and pacing limits.
+   */
+  public getEffectiveLivingCount(engine: any): number {
+    const state = engine?.state ?? engine;
+    const enemies: any[] = engine?.livingEnemies ?? state?.enemies ?? [];
+    let standardCount = 0;
+    let hasActiveCrowWave = false;
+
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      if (!e || e.dead || e.isDefeated) continue;
+      if (e.isVirtualCrowMember) {
+        if (e._crowWaveActive) {
+          hasActiveCrowWave = true;
+        }
+      } else {
+        standardCount++;
+      }
+    }
+
+    if (!hasActiveCrowWave && (engine?.crowWave?.waveActive || state?.crowWave?.waveActive)) {
+      hasActiveCrowWave = true;
+    }
+
+    return standardCount + (hasActiveCrowWave ? 3 : 0);
+  }
 
   private recentKills: EnemyKillRecord[] = [];
   private spawnTimeByEnemy = new WeakMap<any, number>();
@@ -404,7 +436,19 @@ export class RunDirector {
 
     const gameTime = state.gameTime || 0;
     this.currentGameTime = gameTime;
-    const livingCount = engine.livingEnemies?.length ?? state.enemies?.length ?? 0;
+
+    const isCrowWaveActive = Boolean(
+      engine.crowWave?.waveActive ||
+      state.crowWave?.waveActive ||
+      (engine.livingEnemies ?? state.enemies ?? []).some((e: any) => e.isVirtualCrowMember && e._crowWaveActive && !e.dead && !e.isDefeated)
+    );
+    if (isCrowWaveActive) {
+      this.timeSinceLastCrowWave = 0;
+    } else {
+      this.timeSinceLastCrowWave += dt;
+    }
+
+    const livingCount = this.getEffectiveLivingCount(engine);
 
     // Tick cooldowns
     this.punitiveTwinCooldown = Math.max(0, this.punitiveTwinCooldown - dt);
@@ -800,6 +844,9 @@ export class RunDirector {
     const player = engine.state.player;
     if (!player) return;
 
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     // Up to 65 budget spent on high difficulty
     const maxSpend = this.dynamicDifficulty >= 4.0 ? 65 : this.dynamicDifficulty >= 3.0 ? 50 : 40;
     const budgetToSpend = Math.min(maxSpend, Math.max(25, this.threatBudget));
@@ -824,32 +871,41 @@ export class RunDirector {
     const angle1 = pAngle + Math.PI / 2 + (Math.random() * 0.4 - 0.2);
     const angle2 = angle1 + Math.PI;
 
+    let spawnedCount = 0;
     // Leader 1 (spawned strictly outside visible field)
-    const leaderPrefix1 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
-    const pos1 = this.getOffscreenPosition(player, angle1, engine, 180);
-    const leader1 = engine.spawnMonster(leaderId, pos1.x, pos1.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix1);
-    if (leader1) {
-      leader1.name = 'Přepadový strážmistr';
-      leader1.customBossTitle = 'Přepadový strážmistr';
-      leader1.speed *= 1.20;
-      leader1.drtivyBuffTimer = 3.5;
-      this.recordEnemySpawn(leader1, engine.state.gameTime);
+    if (spawnedCount < availableSlots) {
+      const leaderPrefix1 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
+      const pos1 = this.getOffscreenPosition(player, angle1, engine, 180);
+      const leader1 = engine.spawnMonster(leaderId, pos1.x, pos1.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix1);
+      if (leader1) {
+        leader1.name = 'Přepadový strážmistr';
+        leader1.customBossTitle = 'Přepadový strážmistr';
+        leader1.speed *= 1.20;
+        leader1.drtivyBuffTimer = 3.5;
+        this.recordEnemySpawn(leader1, engine.state.gameTime);
+        spawnedCount++;
+      }
     }
 
     // Leader 2 from opposite angle outside visible field
-    const leaderPrefix2 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
-    const pos2 = this.getOffscreenPosition(player, angle2, engine, 180);
-    const leader2 = engine.spawnMonster(leaderId, pos2.x, pos2.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix2);
-    if (leader2) {
-      leader2.name = 'Přepadový strážmistr';
-      leader2.customBossTitle = 'Přepadový strážmistr';
-      leader2.speed *= 1.20;
-      leader2.drtivyBuffTimer = 3.5;
-      this.recordEnemySpawn(leader2, engine.state.gameTime);
+    if (spawnedCount < availableSlots) {
+      const leaderPrefix2 = this.dynamicDifficulty >= 3.5 ? this.getThematicPrefix() : undefined;
+      const pos2 = this.getOffscreenPosition(player, angle2, engine, 180);
+      const leader2 = engine.spawnMonster(leaderId, pos2.x, pos2.y, 1.3, false, false, 'Přepadový strážmistr', leaderPrefix2);
+      if (leader2) {
+        leader2.name = 'Přepadový strážmistr';
+        leader2.customBossTitle = 'Přepadový strážmistr';
+        leader2.speed *= 1.20;
+        leader2.drtivyBuffTimer = 3.5;
+        this.recordEnemySpawn(leader2, engine.state.gameTime);
+        spawnedCount++;
+      }
     }
 
     // Flankers in an arc around both angles outside visible field
-    const minionCount = Math.min(this.dynamicDifficulty >= 4.0 ? 10 : this.dynamicDifficulty >= 3.0 ? 7 : 5, Math.max(4, Math.floor(budgetToSpend / 5)));
+    const remainingForMinions = Math.max(0, availableSlots - spawnedCount);
+    const targetMinionCount = Math.min(this.dynamicDifficulty >= 4.0 ? 10 : this.dynamicDifficulty >= 3.0 ? 7 : 5, Math.max(4, Math.floor(budgetToSpend / 5)));
+    const minionCount = Math.min(targetMinionCount, remainingForMinions);
     for (let i = 0; i < minionCount; i++) {
       const useAngle = (i % 2 === 0) ? angle1 : angle2;
       const offset = ((Math.floor(i / 2) + 1) * 0.20) * (i % 4 < 2 ? 1 : -1);
@@ -859,6 +915,7 @@ export class RunDirector {
         minion.speed *= 1.20;
         minion.drtivyBuffTimer = 3.5;
         this.recordEnemySpawn(minion, engine.state.gameTime);
+        spawnedCount++;
       }
     }
 
@@ -870,12 +927,16 @@ export class RunDirector {
     const enemies: any[] = engine.livingEnemies || [];
     if (enemies.length === 0) return;
 
-    const eligible = enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isOstryBes);
-    const pool = eligible.length > 0 ? eligible : enemies.filter((enemy: any) => !enemy.isBoss);
+    const eligible = enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isOstryBes && !enemy.isVirtualCrowMember);
+    const pool = eligible.length > 0 ? eligible : enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isVirtualCrowMember);
     const target = pool[Math.floor(Math.random() * pool.length)];
     if (!target || target.isBoss) return;
 
-    target.isOstryBes = true;
+    if (!target.isOstryBes) {
+      target.isOstryBes = true;
+    } else if (!target.prefix) {
+      target.prefix = this.getThematicPrefix();
+    }
     this.threatBudget = Math.max(0, this.threatBudget - 10);
     this.eliteBudgetCooldown = 1.0;
   }
@@ -887,7 +948,17 @@ export class RunDirector {
     livingCount: number,
     gameTime: number
   ): void {
-    if (livingCount >= this.maxLivingEnemies) return;
+    const isLevel0 = this.levelId === 0 || (engine.state?.activeLevelId ?? this.levelId) === 0;
+    const isCrowWaveActive = Boolean(
+      engine.crowWave?.waveActive ||
+      engine.state?.crowWave?.waveActive ||
+      (engine.livingEnemies ?? engine.state?.enemies ?? []).some((e: any) => e.isVirtualCrowMember && e._crowWaveActive && !e.dead && !e.isDefeated)
+    );
+    const reservesCrowSlots = isLevel0 && this.timeSinceLastCrowWave >= 18 && !isCrowWaveActive;
+    const crowReservedSlots = reservesCrowSlots ? 3 : 0;
+    const effectiveCapacityLimit = Math.max(0, this.maxLivingEnemies - crowReservedSlots);
+
+    if (livingCount >= effectiveCapacityLimit) return;
 
     // Dvojče Miniboss deployment:
     // Decoupled from difficulty slider (available on all presets >= 2.50x, strictly inactive on 2.00x).
@@ -980,6 +1051,14 @@ export class RunDirector {
       return;
     }
 
+    // Holding slots for heavy formations:
+    // When director has accumulated threat budget and formation cooldown is ready or nearly ready (<= 2.5s),
+    // save remaining slots for the heavy formation (which requires ~6 slots) instead of bleeding them on cheap trickles.
+    const isAccumulatingForFormation = this.threatBudget >= 12 && this.formationCooldown <= 2.5;
+    if (isAccumulatingForFormation && (effectiveCapacityLimit - livingCount) < 6) {
+      return;
+    }
+
     // Standard tactical squad / burst spawn if budget allows.
     // Every preset uses the same phase-appropriate pool, including eligible
     // elite variants; difficulty controls pressure quantity and cadence.
@@ -1000,7 +1079,7 @@ export class RunDirector {
         : this.dynamicDifficulty >= 2.8
         ? 4
         : 3;
-      const spawnLimit = Math.max(0, Math.min(maxCount, this.maxLivingEnemies - livingCount));
+      const spawnLimit = Math.max(0, Math.min(maxCount, effectiveCapacityLimit - livingCount));
       const spawnPlan: string[] = [];
       let plannedCost = 0;
 
@@ -1081,6 +1160,9 @@ export class RunDirector {
   }
 
   public spawnPrefixedEnemy(engine: any, player: any, gameTime: number, forcedPrefix?: EnemyPrefixType): any {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return null;
+
     const pool = this.getWeightedPool(engine);
     const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     const mobId = forcedPrefix ? (candidateId || pool[0] || this.getRegularSpawnFallbackId()) : (pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId());
@@ -1100,6 +1182,9 @@ export class RunDirector {
   }
 
   private spawnKlestoveSevreni(engine: any, player: any, gameTime: number): void {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     const pool = this.getWeightedPool(engine);
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let heavyId = heavyCandidate || pool[0] || this.getRegularSpawnFallbackId();
@@ -1120,25 +1205,30 @@ export class RunDirector {
     const baseAngle = pAngle + (Math.random() * 0.4 - 0.2);
     const oppositeAngle = baseAngle + Math.PI;
 
+    let spawnedCount = 0;
     // Side 1 outside visible field
     for (let i = -1; i <= 1; i++) {
+      if (spawnedCount >= availableSlots) break;
       const a = baseAngle + i * 0.18;
       const pos = this.getOffscreenPosition(player, a, engine, 170 + Math.abs(i) * 25);
       const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1, false, false, undefined, i === 0 ? leaderPrefix : undefined);
       if (e) {
         e.speed *= 1.1;
         this.recordEnemySpawn(e, gameTime);
+        spawnedCount++;
       }
     }
 
     // Side 2 outside visible field
     for (let i = -1; i <= 1; i++) {
+      if (spawnedCount >= availableSlots) break;
       const a = oppositeAngle + i * 0.18;
       const pos = this.getOffscreenPosition(player, a, engine, 170 + Math.abs(i) * 25);
       const e = engine.spawnMonster(i === 0 ? heavyId : fastId, pos.x, pos.y, 1.1);
       if (e) {
         e.speed *= 1.1;
         this.recordEnemySpawn(e, gameTime);
+        spawnedCount++;
       }
     }
 
@@ -1146,6 +1236,9 @@ export class RunDirector {
   }
 
   private spawnHammerAndAnvil(engine: any, player: any, gameTime: number): void {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     const pool = this.getWeightedPool(engine);
     const heavyCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let heavyId = heavyCandidate || pool[0] || this.getRegularSpawnFallbackId();
@@ -1165,25 +1258,30 @@ export class RunDirector {
     const pAngle = Math.atan2(player.vy || 0, player.vx || 0);
     const frontAngle = pAngle + (Math.random() * 0.4 - 0.2);
 
+    let spawnedCount = 0;
     // Frontal wall (anvil) outside visible field
     const wallCount = 4;
     for (let i = 0; i < wallCount; i++) {
+      if (spawnedCount >= availableSlots) break;
       const spreadAngle = frontAngle + ((i - (wallCount - 1) / 2) * 0.14);
       const pos = this.getOffscreenPosition(player, spreadAngle, engine, 180 + Math.abs(i - 1.5) * 20);
       const e = engine.spawnMonster(heavyId, pos.x, pos.y, 1.15, false, false, undefined, (i === 1 && leaderPrefix) ? leaderPrefix : undefined);
       if (e) {
         this.recordEnemySpawn(e, gameTime);
+        spawnedCount++;
       }
     }
 
     // Flankers (hammer) coming from sides outside visible field
     for (const sign of [-1, 1]) {
+      if (spawnedCount >= availableSlots) break;
       const fAngle = frontAngle + (Math.PI / 2) * sign;
       const pos = this.getOffscreenPosition(player, fAngle, engine, 170);
       const f = engine.spawnMonster(fastId, pos.x, pos.y, 1.0);
       if (f) {
         f.speed *= 1.15;
         this.recordEnemySpawn(f, gameTime);
+        spawnedCount++;
       }
     }
 
@@ -1191,6 +1289,9 @@ export class RunDirector {
   }
 
   private spawnEscortSwarms(engine: any, player: any, gameTime: number): void {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     const pool = this.getWeightedPool(engine);
     const eliteCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     let eliteId = eliteCandidate || pool[0] || this.getRegularSpawnFallbackId();
@@ -1210,14 +1311,19 @@ export class RunDirector {
     const angle = Math.random() * Math.PI * 2;
     const centerPos = this.getOffscreenPosition(player, angle, engine, 220);
 
-    const elite = engine.spawnMonster(eliteId, centerPos.x, centerPos.y, 1.35, false, false, 'Obrněný vůdce', leaderPrefix);
-    if (elite) {
-      elite.isEscortLeader = true;
-      this.recordEnemySpawn(elite, gameTime);
+    let spawnedCount = 0;
+    if (spawnedCount < availableSlots) {
+      const elite = engine.spawnMonster(eliteId, centerPos.x, centerPos.y, 1.35, false, false, 'Obrněný vůdce', leaderPrefix);
+      if (elite) {
+        elite.isEscortLeader = true;
+        this.recordEnemySpawn(elite, gameTime);
+        spawnedCount++;
+      }
     }
 
     // 4 orbit minions around the leader
     for (let i = 0; i < 4; i++) {
+      if (spawnedCount >= availableSlots) break;
       const ma = (i / 4) * Math.PI * 2;
       const mx = centerPos.x + Math.cos(ma) * 55;
       const my = centerPos.y + Math.sin(ma) * 55;
@@ -1225,6 +1331,7 @@ export class RunDirector {
       if (m) {
         m.isEscortMinion = true;
         this.recordEnemySpawn(m, gameTime);
+        spawnedCount++;
       }
     }
 
@@ -1232,18 +1339,24 @@ export class RunDirector {
   }
 
   private spawnArchitects(engine: any, player: any, gameTime: number): void {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     const pool = this.getWeightedPool(engine);
     const archCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[1]);
     const archId = archCandidate || pool[0] || this.getRegularSpawnFallbackId();
 
     const angle = Math.random() * Math.PI * 2;
+    let spawnedCount = 0;
     for (let i = 0; i < 2; i++) {
+      if (spawnedCount >= availableSlots) break;
       const a = angle + i * 0.35;
       const pos = this.getOffscreenPosition(player, a, engine, 180);
       const e = engine.spawnMonster(archId, pos.x, pos.y, 1.0);
       if (e) {
         e.isArchitect = true;
         this.recordEnemySpawn(e, gameTime);
+        spawnedCount++;
       }
     }
 
@@ -1265,19 +1378,25 @@ export class RunDirector {
   }
 
   private spawnAntiKiteInterception(engine: any, player: any, gameTime: number): void {
+    const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
+    if (availableSlots <= 0) return;
+
     const pool = this.getWeightedPool(engine);
     const mobId = pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId();
 
     const pSpeed = Math.hypot(player.vx || 0, player.vy || 0);
     const pAngle = pSpeed > 10 ? Math.atan2(player.vy || 0, player.vx || 0) : Math.random() * Math.PI * 2;
 
+    let spawnedCount = 0;
     // Spawn 2 enemies directly in lead path outside visible field
     for (let i = -1; i <= 1; i += 2) {
+      if (spawnedCount >= availableSlots) break;
       const leadAngle = pAngle + i * 0.20;
       const pos = this.getOffscreenPosition(player, leadAngle, engine, 180);
       const e = engine.spawnMonster(mobId, pos.x, pos.y, 1.05);
       if (e) {
         this.recordEnemySpawn(e, gameTime);
+        spawnedCount++;
       }
     }
 

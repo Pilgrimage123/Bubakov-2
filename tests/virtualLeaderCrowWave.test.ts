@@ -155,4 +155,23 @@ describe('VirtualLeaderCrowWave', () => {
     expect(wave.currentBehavior).toBe('contracting-orbit');
     expect(engine.enemies).toHaveLength(4);
   });
+
+  it('refuses to start when director effective living count would exceed maxLivingEnemies', () => {
+    const wave = new VirtualLeaderCrowWave({ count: 12, startAt: 42 });
+    const engine: any = createEngine(42);
+    wave.preparePool(factory);
+
+    engine.director = {
+      maxLivingEnemies: 35,
+      getEffectiveLivingCount: () => 33, // 33 + 3 = 36 > 35
+    };
+
+    expect(wave.update(0.016, engine, player, 1280, 720)).toBe(false);
+    expect(wave.waveActive).toBe(false);
+
+    // If capacity frees up (effective count <= 32)
+    engine.director.getEffectiveLivingCount = () => 32; // 32 + 3 = 35 <= 35
+    expect(wave.update(0.016, engine, player, 1280, 720)).toBe(true);
+    expect(wave.waveActive).toBe(true);
+  });
 });

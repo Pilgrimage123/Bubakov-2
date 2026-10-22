@@ -798,3 +798,141 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
   });
 });
 
+describe('Virtual Leader Crow Wave Capacity, Slot Reservation & Ceiling Enforcement', () => {
+  it('counts 150 virtual crow wave members collectively as exactly 3 entities', () => {
+    const director = new RunDirector(0, 42, { maxLivingEnemies: 35 });
+    const standardEnemies = [
+      { id: 'mrazik', dead: false, isDefeated: false },
+      { id: 'mrazik', dead: false, isDefeated: false },
+      { id: 'mrazik', dead: false, isDefeated: false },
+      { id: 'mrazik', dead: false, isDefeated: false },
+      { id: 'mrazik', dead: false, isDefeated: false },
+    ];
+    const crowMembers = Array.from({ length: 150 }, () => ({
+      id: 'vrana',
+      isVirtualCrowMember: true,
+      _crowWaveActive: true,
+      dead: false,
+      isDefeated: false,
+    }));
+
+    const mockEngine = {
+      livingEnemies: [...standardEnemies, ...crowMembers],
+      state: { enemies: [...standardEnemies, ...crowMembers] },
+    };
+
+    expect(director.getEffectiveLivingCount(mockEngine)).toBe(5 + 3); // 8
+  });
+
+  it('reserves 3 slots in Level 0 when timeSinceLastCrowWave >= 18 and no wave is active', () => {
+    const director = new RunDirector(0, 42, { maxLivingEnemies: 35 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 0, seed: 42, spawnInitialWave: false });
+    director.timeSinceLastCrowWave = 20;
+
+    // Fill engine to 32 standard mobs (35 - 3 = 32)
+    eng.livingEnemies = Array.from({ length: 32 }, (_, i) => ({
+      id: `skritek_${i}`,
+      hp: 50,
+      x: 0,
+      y: 0,
+    }));
+    director.threatBudget = 30;
+
+    const beforeCount = eng.livingEnemies.length;
+    // Step director - should not spawn because livingCount (32) >= effectiveCapacityLimit (32)
+    director.update(0.1, eng);
+    expect(eng.livingEnemies.length).toBe(beforeCount);
+  });
+
+  it('does not reserve crow slots outside Level 0', () => {
+    const director = new RunDirector(1, 42, { maxLivingEnemies: 35 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, spawnInitialWave: false });
+    director.timeSinceLastCrowWave = 25;
+
+    // 32 standard mobs
+    eng.livingEnemies = Array.from({ length: 32 }, (_, i) => ({
+      id: `rarach_${i}`,
+      hp: 50,
+      x: 0,
+      y: 0,
+    }));
+    director.threatBudget = 30;
+
+    // In Level 1, limit remains 35, so 32 < 35 allows spawns
+    director.update(0.1, eng);
+    expect(eng.livingEnemies.length).toBeGreaterThanOrEqual(32);
+  });
+
+  it('holds slots for heavy formations when accumulating budget and cooldown is close', () => {
+    const director = new RunDirector(1, 42, { maxLivingEnemies: 35 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, spawnInitialWave: false });
+
+    // 31 standard mobs out of 35 => remaining slots = 4 (< 6)
+    eng.livingEnemies = Array.from({ length: 31 }, (_, i) => ({
+      id: `rarach_${i}`,
+      hp: 50,
+      x: 0,
+      y: 0,
+    }));
+
+    director.threatBudget = 16;
+    (director as any).formationCooldown = 1.5; // close to ready (<= 2.5)
+
+    const before = eng.livingEnemies.length;
+    director.update(0.1, eng);
+    // Should hold slots and not bleed them on standard squads
+    expect(eng.livingEnemies.length).toBe(before);
+  });
+
+  it('formations clamp to availableSlots and never breach maxLivingEnemies', () => {
+    const director = new RunDirector(1, 42, { maxLivingEnemies: 35 });
+    const eng = new GameEngine();
+    eng.initRun({ levelId: 1, seed: 42, spawnInitialWave: false });
+
+    // 33 mobs out of 35 => availableSlots = 2
+    eng.livingEnemies = Array.from({ length: 33 }, (_, i) => ({
+      id: `rarach_${i}`,
+      hp: 50,
+      x: 0,
+      y: 0,
+    }));
+    director.threatBudget = 40;
+
+    (director as any).spawnHammerAndAnvil(eng, eng.state.player, 50);
+    expect(director.getEffectiveLivingCount(eng)).toBeLessThanOrEqual(35);
+
+    (director as any).spawnEscortSwarms(eng, eng.state.player, 50);
+    expect(director.getEffectiveLivingCount(eng)).toBeLessThanOrEqual(35);
+
+    (director as any).spawnKlestoveSevreni(eng, eng.state.player, 50);
+    expect(director.getEffectiveLivingCount(eng)).toBeLessThanOrEqual(35);
+
+    (director as any).spawnArchitects(eng, eng.state.player, 50);
+    expect(director.getEffectiveLivingCount(eng)).toBeLessThanOrEqual(35);
+
+    (director as any).spawnAntiKiteInterception(eng, eng.state.player, 50);
+    expect(director.getEffectiveLivingCount(eng)).toBeLessThanOrEqual(35);
+  });
+
+  it('spendExcessBudgetOnElite skips virtual crow wave members and targets valid mobs', () => {
+    const director = new RunDirector(0, 42, { maxLivingEnemies: 35 });
+    const standardMob = { id: 'mrazik', hp: 50, isBoss: false };
+    const crowMember = { id: 'vrana', isVirtualCrowMember: true, _crowWaveActive: true, isBoss: false };
+
+    const mockEngine = {
+      livingEnemies: [crowMember, standardMob],
+    };
+
+    director.threatBudget = 30;
+    (director as any).eliteBudgetCooldown = 0;
+    (director as any).spendExcessBudgetOnElite(mockEngine);
+
+    expect((crowMember as any).isOstryBes).toBeUndefined();
+    expect((standardMob as any).isOstryBes).toBe(true);
+  });
+});
+
+

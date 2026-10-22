@@ -13,6 +13,7 @@ import { createInitialEngineState, type EngineState } from './engineState';
 import { createDefaultMetaProgression } from './migration';
 import { renderArena, type CameraViewport, createReusableRenderMetrics } from '../render/arenaRenderer';
 import { FrameProfiler } from './frameProfiler';
+import { getMilestoneChoices } from '../data/weaponMilestones';
 
 export type PerformanceProfile = 'performance' | 'balanced' | 'fidelity';
 
@@ -66,7 +67,7 @@ export function calculatePercentile(values: number[], percentile: number): numbe
 /**
  * Creates a minimal headless canvas rendering context if none is provided.
  */
-function createFallbackBenchmarkContext(width: number, height: number): CanvasRenderingContext2D {
+export function createFallbackBenchmarkContext(width: number, height: number): CanvasRenderingContext2D {
   return {
     save: () => {},
     restore: () => {},
@@ -318,3 +319,237 @@ export function runDeterministicArenaStressBenchmark(
     },
   };
 }
+
+export interface WeaponStressBenchmarkOptions {
+  weaponId: string;
+  level?: number;
+  milestones?: string[];
+  profile?: PerformanceProfile;
+  frameCount?: number;
+  fixedDt?: number;
+  enemyCount?: number;
+  canvasWidth?: number;
+  canvasHeight?: number;
+  mockCtx?: CanvasRenderingContext2D;
+}
+
+export interface WeaponStressBenchmarkResult {
+  weaponId: string;
+  level: number;
+  profile: PerformanceProfile;
+  frameCount: number;
+  p50Ms: number;
+  p95Ms: number;
+  meanMs: number;
+  maxMs: number;
+  peakEntities: {
+    projectiles: number;
+    slashes: number;
+    particles: number;
+    texts: number;
+  };
+  totalSpawned: {
+    projectiles: number;
+    slashes: number;
+  };
+  phaseAverages: {
+    simulation: number;
+    render: number;
+  };
+}
+
+/**
+ * Runs a deterministic stress benchmark for a single weapon at a given level and milestones
+ * against an intense wave of enemies to isolate per-weapon performance budget impact.
+ */
+export function runDeterministicWeaponStressBenchmark(
+  options: WeaponStressBenchmarkOptions
+): WeaponStressBenchmarkResult {
+  const weaponId = options.weaponId;
+  const level = options.level ?? 8;
+  const profile = options.profile || 'balanced';
+  const frameCount = options.frameCount ?? 120;
+  const fixedDt = options.fixedDt ?? 1 / 60;
+  const width = options.canvasWidth ?? 1280;
+  const height = options.canvasHeight ?? 720;
+  const ctx = options.mockCtx ?? createFallbackBenchmarkContext(width, height);
+  const enemyCount = options.enemyCount ?? 50;
+
+  const milestones = options.milestones ?? [
+    getMilestoneChoices(weaponId, 3)?.[0]?.id,
+    getMilestoneChoices(weaponId, 5)?.[0]?.id,
+    getMilestoneChoices(weaponId, 8)?.[0]?.id,
+  ].filter(Boolean) as string[];
+
+  const meta = createDefaultMetaProgression();
+  meta.performanceProfile = profile;
+
+  const engineState: EngineState = createInitialEngineState();
+  engineState.meta = meta;
+
+  const engine = new GameEngine(engineState);
+  engine.initRun({
+    levelId: 1,
+    hunterType: 'wanderer',
+    meta,
+    customWeapons: [
+      {
+        id: weaponId,
+        level,
+        cd: 0,
+        milestones,
+        synergisticUpgrades: [],
+      },
+    ],
+    spawnInitialWave: false,
+  });
+
+  const player = engine.state.player;
+  player.x = 0;
+  player.y = 0;
+  player.hp = 999999;
+  player.maxHp = 999999;
+
+  for (let i = 0; i < enemyCount; i++) {
+    const angle = (i / enemyCount) * Math.PI * 2;
+    const dist = 50 + (i % 6) * 30;
+    const ex = player.x + Math.cos(angle) * dist;
+    const ey = player.y + Math.sin(angle) * dist;
+    const enemy = engine.spawnMonster(
+      i % 3 === 0 ? 'hejkal' : i % 2 === 0 ? 'hastrman' : 'rarach',
+      ex,
+      ey,
+      1.0
+    );
+    if (enemy) {
+      enemy.hp = 999999;
+      enemy.maxHp = 999999;
+    }
+  }
+
+  const origApply = engine.applyWeaponAction.bind(engine);
+  let peakProjectilesInEngine = 0;
+  let totalProjectilesSpawned = 0;
+  let peakSlashesInEngine = 0;
+  let totalSlashesSpawned = 0;
+
+  engine.applyWeaponAction = (action: any) => {
+    if (action.type === 'projectile') {
+      totalProjectilesSpawned++;
+    } else if (action.type === 'slash') {
+      totalSlashesSpawned++;
+    }
+    const res = origApply(action);
+    peakProjectilesInEngine = Math.max(peakProjectilesInEngine, engine.state.projectiles.length);
+    peakSlashesInEngine = Math.max(peakSlashesInEngine, engine.state.slashes.length);
+    return res;
+  };
+
+  const camera: CameraViewport = {
+    x: 0,
+    y: 0,
+    width,
+    height,
+    viewLeft: -width / 2,
+    viewTop: -height / 2,
+    viewRight: width / 2,
+    viewBottom: height / 2,
+  };
+
+  const profiler = new FrameProfiler();
+  const renderMetrics = createReusableRenderMetrics();
+  const frameTimesMs: number[] = [];
+
+  let maxProjSeen = 0;
+  let maxPartSeen = 0;
+  let maxTextsSeen = 0;
+
+  let simTimeTotal = 0;
+  let renderTimeTotal = 0;
+
+  // Warmup frames
+  for (let w = 0; w < 5; w++) {
+    engine.update(fixedDt);
+    renderArena(
+      ctx,
+      engine.state,
+      camera,
+      {
+        performanceProfile: profile,
+        combatVfxEnabled: profile !== 'performance',
+        lightingEnabled: profile !== 'performance',
+      },
+      renderMetrics
+    );
+  }
+
+  for (let frame = 0; frame < frameCount; frame++) {
+    const tStart = performance.now();
+    profiler.start(tStart);
+
+    // 1. Simulation Phase (weapon firing, entity updates, physics)
+    engine.update(fixedDt);
+    const tSimEnd = performance.now();
+    profiler.mark('backdrop', tSimEnd);
+
+    // 2. Render Phase
+    renderArena(
+      ctx,
+      engine.state,
+      camera,
+      {
+        performanceProfile: profile,
+        combatVfxEnabled: profile !== 'performance',
+        lightingEnabled: profile !== 'performance',
+      },
+      renderMetrics
+    );
+
+    const tRenderEnd = performance.now();
+    profiler.mark('overlays', tRenderEnd);
+    profiler.end(tRenderEnd);
+
+    const simDuration = tSimEnd - tStart;
+    const renderDuration = tRenderEnd - tSimEnd;
+    const frameDuration = tRenderEnd - tStart;
+
+    frameTimesMs.push(frameDuration);
+    simTimeTotal += simDuration;
+    renderTimeTotal += renderDuration;
+
+    maxProjSeen = Math.max(maxProjSeen, engine.state.projectiles.length);
+    maxPartSeen = Math.max(maxPartSeen, engine.state.particles.length);
+    maxTextsSeen = Math.max(maxTextsSeen, engine.state.texts.length);
+  }
+
+  const p50Ms = calculatePercentile(frameTimesMs, 0.5);
+  const p95Ms = calculatePercentile(frameTimesMs, 0.95);
+  const meanMs = frameTimesMs.reduce((a, b) => a + b, 0) / Math.max(1, frameTimesMs.length);
+  const maxMs = Math.max(...frameTimesMs, 0);
+
+  return {
+    weaponId,
+    level,
+    profile,
+    frameCount,
+    p50Ms,
+    p95Ms,
+    meanMs,
+    maxMs,
+    peakEntities: {
+      projectiles: Math.max(maxProjSeen, peakProjectilesInEngine),
+      slashes: Math.max(peakSlashesInEngine, engine.state.slashes?.length || 0),
+      particles: maxPartSeen,
+      texts: maxTextsSeen,
+    },
+    totalSpawned: {
+      projectiles: totalProjectilesSpawned,
+      slashes: totalSlashesSpawned,
+    },
+    phaseAverages: {
+      simulation: simTimeTotal / frameCount,
+      render: renderTimeTotal / frameCount,
+    },
+  };
+}
+

@@ -104,9 +104,25 @@ _Avoid_: smoke aura, poison cloud, AOE dým
 Masopustní maska a posvěcení z dědečkovy nůše, díky kterému veškeré přeléčení (overheal) Kuráže vyšlehne jako tlaková vlna zraňující okolní strašidla.
 _Avoid_: bear mask, overheal damage, masopustní maska
 
+**Snímkový rozpočet zbraně**:
+Přípustný limit výpočetního a vykreslovacího času na jeden snímek (typicky do 1,5 ms v profilu vyváženého výkonu), který smí vyčerpat obsluha střel, efektů a zásahů jediné zbraně při plném vylepšení.
+_Avoid_: weapon lag, FPS overhead, náročnost zbraně, weapon cost
+
 **Bojové plovoucí texty**:
 Vizuální textové ukazatele zranění, stavů, nápřahů a oznámení vznášející se nad entitami v bojové aréně, samostatně přepínatelné pro vyšší přehlednost a plynulost.
 _Avoid_: floating combat text, combat text, pop-up čísla, damage numbers
+
+**Efektivní kapacita bojiště**:
+Autoritativní kapacitní metrika Režiséra výpravy, v níž každé samostatné strašidlo představuje 1 jednotku skutečné výpočetní zátěže, zatímco Hejno vran řízené virtuálním vůdcem (Virtual Leader) se počítá souhrnně jako 3 jednotky kapacity, čímž zamezuje zahlcení výpočetního snímku i falešnému zablokování herního tempa.
+_Avoid_: počet monster, mob count, entity cap, váha nepřátel
+
+**Šetření slotů**:
+Taktické pozastavení náhodných jednotlivých spawnů Režisérem výpravy za účelem rezervace ucelené kapacity (3 sloty pro Hejno vran po 18 sekundách bez hejna v 1. úrovni či 5–6 slotů pro koordinované těžké formace).
+_Avoid_: spawn delay, slot hoarding, držení slotů
+
+**Kvalitativní vyrovnání obtížnosti**:
+Pravidlo Režiséra výpravy, podle kterého se při vyčerpání efektivní kapacity bojiště tlak na hráče nezvyšuje prostým navyšováním počtu těl, nýbrž investicí rejdového rozpočtu do elitních variant, přívlastků a Ostřílených běsů.
+_Avoid_: mob spam, entity bloating, zahušťování nepřátel
 
 ## Světlo a atmosféra
 
