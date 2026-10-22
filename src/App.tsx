@@ -10683,6 +10683,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     });
   };
 
+  // Shared compact dossier for every unlocked hunter. Weapon values come from the registry.
+  const renderHunterInfoCard = (hunterInfo: HunterDetail) => {
+    const weaponDef = WEAPONS[hunterInfo.weaponId];
+    if (!weaponDef) return null;
+    const baseInterval = Number(weaponDef.baseCd).toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    return (
+      <div className="hunter-card-info">
+        <div className="hunter-card-stats">
+          <div><strong><GameIcon icon="heart" size={13} /> Kuráž</strong><span>{hunterInfo.maxHp}</span></div>
+          <div><strong><GameIcon icon="boots" size={13} /> Rychlost</strong><span>{hunterInfo.speed}</span></div>
+          <div><strong><GameIcon icon="horseshoe" size={13} /> Magnet</strong><span>{hunterInfo.pickupRadius} px</span></div>
+          <div><strong><GameIcon icon="clover" size={13} /> Štěstí</strong><span>{hunterInfo.luck}</span></div>
+        </div>
+        <section className="hunter-card-detail-section">
+          <div className="hunter-card-detail-title"><GameIcon icon="sword" size={13} /> Výbava · {weaponDef.name}</div>
+          <div className="hunter-card-weapon-stats">
+            <span>Základní poškození: {weaponDef.baseDmg}</span>
+            <span>Interval: {baseInterval} s</span>
+            {weaponDef.speed ? <span>Rychlost střely: {weaponDef.speed}</span> : null}
+          </div>
+          <p className="hunter-card-detail-copy">{weaponDef.desc}</p>
+        </section>
+        <section className="hunter-card-detail-section">
+          <div className="hunter-card-detail-title"><GameIcon icon="leaf" size={13} /> Pasivní schopnost</div>
+          <p className="hunter-card-detail-copy">{hunterInfo.passive}</p>
+        </section>
+        <section className="hunter-card-detail-section">
+          <div className="hunter-card-detail-title"><GameIcon icon="lightning" size={13} /> Zvláštní schopnost · {hunterInfo.cooldownSeconds} s</div>
+          <p className="hunter-card-detail-copy">{hunterInfo.ability}</p>
+        </section>
+        <p className="hunter-card-footnote">Základní hodnoty bez bonusů vesnice, mobilního usnadnění, vylepšení zbraně a odolností nepřátel.</p>
+      </div>
+    );
+  };
+
   // Helper to render hunter card with progressive spoil
   const renderHunterSelectCard = (
     prog: HunterProgress,
@@ -10737,47 +10773,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </span>
         </div>
 
-        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.92rem', lineHeight: 1.45, color: '#111111', overflowWrap: 'anywhere' }}>
-          {prog.spoiledLore}
-        </p>
-
-        {/* Weapons and Ability hints */}
-        <div className="hunter-clue-box">
-          <div style={{ fontWeight: 900, fontSize: '0.88rem', lineHeight: 1.4, color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-            <GameIcon icon="sword" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledWeaponHint}</span>
-          </div>
-          <div style={{ fontWeight: 900, fontSize: '0.88rem', lineHeight: 1.4, marginTop: '5px', color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-            <GameIcon icon="lightning" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledAbilityHint}</span>
-          </div>
-        </div>
-
-        {isUnlocked && hunterInfo && (
-          <div
-            style={{
-              background: '#FFFBEB',
-              border: '2px solid #78350F',
-              borderRadius: '7px',
-              padding: '8px 10px',
-              marginTop: '7px',
-              color: '#1C1917',
-              textAlign: 'left',
-              minWidth: 0,
-              fontSize: '0.9rem',
-              lineHeight: 1.45,
-              overflowWrap: 'anywhere',
-            }}
-          >
-            <div className="hunter-card-stats">
-              <div><strong><GameIcon icon="heart" size={13} /> Kuráž</strong><span>{hunterInfo.maxHp}</span></div>
-              <div><strong><GameIcon icon="boots" size={13} /> Rychlost</strong><span>{hunterInfo.speed}</span></div>
-              <div><strong><GameIcon icon="horseshoe" size={13} /> Magnet</strong><span>{hunterInfo.pickupRadius} px</span></div>
-              <div><strong><GameIcon icon="clover" size={13} /> Štěstí</strong><span>{hunterInfo.luck}</span></div>
+        {!isUnlocked && (
+          <>
+            <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.9rem', lineHeight: 1.4, color: '#111111', overflowWrap: 'anywhere' }}>
+              {prog.spoiledLore}
+            </p>
+            <div className="hunter-clue-box">
+              <div style={{ fontWeight: 900, fontSize: '0.86rem', lineHeight: 1.35, color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
+                <GameIcon icon="sword" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledWeaponHint}</span>
+              </div>
+              <div style={{ fontWeight: 900, fontSize: '0.86rem', lineHeight: 1.35, marginTop: '5px', color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
+                <GameIcon icon="lightning" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledAbilityHint}</span>
+              </div>
             </div>
-            <div className="hunter-card-description"><strong><GameIcon icon="sword" size={13} /> Zbraň:</strong> <span>{hunterInfo.weapon}</span></div>
-            <div className="hunter-card-description"><strong><GameIcon icon="leaf" size={13} /> Pasivní:</strong> <span>{hunterInfo.passive}</span></div>
-            <div className="hunter-card-description"><strong><GameIcon icon="lightning" size={13} /> Schopnost ({hunterInfo.cooldownSeconds} s):</strong> <span>{hunterInfo.ability}</span></div>
-          </div>
+          </>
         )}
+
+        {isUnlocked && hunterInfo && renderHunterInfoCard(hunterInfo)}
 
         {/* Challenge progress bar for locked characters */}
         {!isUnlocked && (
@@ -11561,19 +11573,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 <LadaCardCorners variant="default" showBottomCorners={true} />
                 <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
-                <canvas ref={wandererRef} className="portrait-canvas" width={180} height={180} />
+                <canvas ref={wandererRef} className="portrait-canvas hunter-portrait-compact" width={180} height={180} />
                 <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
                 <div>
                   <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
                 </div>
-                <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.86rem', lineHeight: 1.3 }}>
-                  Vysoká kuráž (200) a dobrá nálada. Osikový prut. Tulácký instinkt: +35 % k poškození všech zbraní. Schopnost: Pověstná sukovice.
-                </p>
-                <div className="hunter-clue-box">
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon icon="cane" size={14} /> Osikový prut (+35 % poškození)</div>
-                  <div style={{ fontWeight: 800, fontSize: '0.78rem', marginTop: '2px', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon icon="wood_log" size={14} /> Schopnost: Pověstná sukovice (21 s)</div>
-                </div>
-                <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+                {renderHunterInfoCard(HUNTER_DETAILS.wanderer)}
+                <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    className="lada-btn btn-small"
+                    style={{ width: '100%', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      sound.coin();
+                      setSelectedHunterInfo(HUNTER_DETAILS.wanderer);
+                    }}
+                  >
+                    <GameIcon icon="scroll" size={14} /> Podrobné statistiky a schopnosti
+                  </button>
                   <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do noci <GameIcon icon="sword" size={16} /></span>
                   </button>
