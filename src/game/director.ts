@@ -230,6 +230,12 @@ export class RunDirector {
     }
 
     const state = engine?.state ?? engine;
+    const canvas = engine?.canvas ?? state?.canvas;
+    if (canvas && typeof canvas.width === 'number' && typeof canvas.height === 'number') {
+      viewW = Math.max(viewW, canvas.width);
+      viewH = Math.max(viewH, canvas.height);
+    }
+
     const camera = engine?.camera ?? state?.camera;
     let camX = player.x - viewW / 2;
     let camY = player.y - viewH / 2;

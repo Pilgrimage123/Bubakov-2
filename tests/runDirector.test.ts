@@ -935,4 +935,69 @@ describe('Virtual Leader Crow Wave Capacity, Slot Reservation & Ceiling Enforcem
   });
 });
 
+describe('RunDirector.getOffscreenPosition Field-of-View Safety', () => {
+  it('guarantees spawn coordinates are strictly outside camera viewport for all 360-degree angles', () => {
+    const player = { x: 500, y: 500 };
+    const width = 1920;
+    const height = 1080;
+    const camera = {
+      x: player.x - width / 2,
+      y: player.y - height / 2,
+    };
+    const mockEngine = {
+      camera,
+      canvas: { width, height },
+    };
+
+    const pad = 80;
+    const left = camera.x - pad;
+    const right = camera.x + width + pad;
+    const top = camera.y - pad;
+    const bottom = camera.y + height + pad;
+
+    for (let step = 0; step < 32; step++) {
+      const angle = (step / 32) * Math.PI * 2;
+      const pos = RunDirector.getOffscreenPosition(player, angle, mockEngine, 180);
+
+      // Must be outside the inner camera rect
+      const insideView =
+        pos.x >= camera.x &&
+        pos.x <= camera.x + width &&
+        pos.y >= camera.y &&
+        pos.y <= camera.y + height;
+      expect(insideView).toBe(false);
+
+      // Distance from player must be at least 750px
+      const dist = Math.hypot(pos.x - player.x, pos.y - player.y);
+      expect(dist).toBeGreaterThanOrEqual(750);
+    }
+  });
+
+  it('respects ultra-wide canvas dimensions (e.g. 2560x1440)', () => {
+    const player = { x: 1000, y: 1000 };
+    const width = 2560;
+    const height = 1440;
+    const camera = {
+      x: player.x - width / 2,
+      y: player.y - height / 2,
+    };
+    const mockEngine = {
+      camera,
+      canvas: { width, height },
+    };
+
+    for (let step = 0; step < 16; step++) {
+      const angle = (step / 16) * Math.PI * 2;
+      const pos = RunDirector.getOffscreenPosition(player, angle, mockEngine, 200);
+
+      const insideView =
+        pos.x >= camera.x &&
+        pos.x <= camera.x + width &&
+        pos.y >= camera.y &&
+        pos.y <= camera.y + height;
+      expect(insideView).toBe(false);
+    }
+  });
+});
+
 

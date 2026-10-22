@@ -14,6 +14,13 @@ import { createDefaultMetaProgression } from './migration';
 import { renderArena, type CameraViewport, createReusableRenderMetrics } from '../render/arenaRenderer';
 import { FrameProfiler } from './frameProfiler';
 import { getMilestoneChoices } from '../data/weaponMilestones';
+import {
+  drawEnemyRenderer,
+  Lada,
+  getEnemyAttackAnimationState,
+  drawEnemyAttackEffectsPre,
+  drawEnemyAttackEffectsPost,
+} from '../render/ladaRenderer';
 
 export type PerformanceProfile = 'performance' | 'balanced' | 'fidelity';
 
@@ -101,7 +108,22 @@ export function createFallbackBenchmarkContext(width: number, height: number): C
     fillStyle: '#000',
     strokeStyle: '#000',
     lineWidth: 1,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    miterLimit: 10,
+    shadowColor: 'transparent',
+    shadowBlur: 0,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    font: '10px sans-serif',
+    textAlign: 'start',
+    textBaseline: 'alphabetic',
     globalAlpha: 1,
+    globalCompositeOperation: 'source-over',
+    filter: 'none',
+    clip: () => {},
+    createPattern: () => null,
+    isPointInPath: () => false,
   } as unknown as CanvasRenderingContext2D;
 }
 
@@ -545,6 +567,257 @@ export function runDeterministicWeaponStressBenchmark(
     totalSpawned: {
       projectiles: totalProjectilesSpawned,
       slashes: totalSlashesSpawned,
+    },
+    phaseAverages: {
+      simulation: simTimeTotal / frameCount,
+      render: renderTimeTotal / frameCount,
+    },
+  };
+}
+
+/**
+ * Creates an authentic canvas drawing callback for benchmarked enemies,
+ * routing through Lada boss procedures or general drawEnemyRenderer.
+ */
+export function createBenchmarkEnemyDraw(enemy: any) {
+  return function (ctx: CanvasRenderingContext2D) {
+    if (enemy.dead || enemy.isDefeated) return;
+    if (enemy.isVirtualCrowMember) return;
+
+    Lada.drawShadow(ctx, enemy.x, enemy.y, enemy.radius);
+
+    const isSpecialBoss =
+      enemy.id === 'cert' ||
+      enemy.id === 'hejkal' ||
+      enemy.id === 'obr' ||
+      enemy.id === 'mlynar' ||
+      enemy.id === 'drak';
+
+    if (isSpecialBoss) {
+      const attackInfo = getEnemyAttackAnimationState(enemy, enemy.animTime || 0);
+      if (attackInfo.isActive) {
+        drawEnemyAttackEffectsPre(ctx, enemy, attackInfo);
+      }
+      const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : (enemy.vx || 0);
+      if (enemy.id === 'cert') {
+        Lada.drawCert(ctx, enemy.x, enemy.y, enemy.animTime || 0, renderFacingVx, false, enemy.isBoss, false, attackInfo);
+      } else if (enemy.id === 'hejkal') {
+        Lada.drawHejkal(ctx, enemy.x, enemy.y, enemy.animTime || 0, renderFacingVx, false, attackInfo);
+      } else if (enemy.id === 'obr') {
+        Lada.drawObr(ctx, enemy.x, enemy.y, enemy.animTime || 0, renderFacingVx, false, attackInfo);
+      } else if (enemy.id === 'mlynar') {
+        Lada.drawMlynar(ctx, enemy.x, enemy.y, enemy.animTime || 0, renderFacingVx, false, false);
+      } else if (enemy.id === 'drak') {
+        Lada.drawDrak(ctx, enemy.x, enemy.y, enemy.animTime || 0, renderFacingVx, false, false, { fire: 0, ice: 0, roar: 0 });
+      }
+      if (attackInfo.isActive) {
+        drawEnemyAttackEffectsPost(ctx, enemy, attackInfo);
+      }
+    } else {
+      drawEnemyRenderer(
+        enemy.method,
+        ctx,
+        enemy.x,
+        enemy.y,
+        enemy.animTime || 0,
+        enemy.vx || 0,
+        false,
+        enemy
+      );
+    }
+  };
+}
+
+export interface EnemyStressBenchmarkOptions {
+  enemyId: string;
+  profile?: PerformanceProfile;
+  frameCount?: number;
+  fixedDt?: number;
+  enemyCount?: number;
+  canvasWidth?: number;
+  canvasHeight?: number;
+  mockCtx?: CanvasRenderingContext2D;
+}
+
+export interface EnemyStressBenchmarkResult {
+  enemyId: string;
+  profile: PerformanceProfile;
+  frameCount: number;
+  enemyCount: number;
+  p50Ms: number;
+  p95Ms: number;
+  meanMs: number;
+  maxMs: number;
+  peakEntities: {
+    enemies: number;
+    projectiles: number;
+    particles: number;
+    texts: number;
+  };
+  phaseAverages: {
+    simulation: number;
+    render: number;
+  };
+}
+
+/**
+ * Runs a deterministic stress benchmark for a single enemy species against an unarmed,
+ * invincible hunter to measure simulation (AI, collision, attack nápřahy) and procedural
+ * Lada rendering overhead.
+ */
+export function runDeterministicEnemyStressBenchmark(
+  options: EnemyStressBenchmarkOptions
+): EnemyStressBenchmarkResult {
+  const enemyId = options.enemyId;
+  const profile = options.profile || 'balanced';
+  const frameCount = options.frameCount ?? 120;
+  const fixedDt = options.fixedDt ?? 1 / 60;
+  const width = options.canvasWidth ?? 1280;
+  const height = options.canvasHeight ?? 720;
+  const ctx = options.mockCtx ?? createFallbackBenchmarkContext(width, height);
+  const enemyCount = options.enemyCount ?? 40;
+
+  const meta = createDefaultMetaProgression();
+  meta.performanceProfile = profile;
+
+  const engineState: EngineState = createInitialEngineState();
+  engineState.meta = meta;
+
+  const engine = new GameEngine(engineState);
+  engine.initRun({
+    levelId: 1,
+    hunterType: 'wanderer',
+    meta,
+    customWeapons: [],
+    spawnInitialWave: false,
+  });
+
+  const player = engine.state.player;
+  player.x = 0;
+  player.y = 0;
+  player.hp = 9999999;
+  player.maxHp = 9999999;
+  player.weapons = [];
+
+  // Wire enemyFactory so all spawned enemies have real drawing attached
+  engine.enemyFactory = (id, x, y, mult, isBoss, isMiniboss, customTitle, prefix) => {
+    const enemy = engine.createHeadlessEnemy(id, x, y, mult, isBoss, isMiniboss, customTitle, prefix);
+    enemy.draw = createBenchmarkEnemyDraw(enemy);
+    return enemy;
+  };
+
+  // Spawn instances in concentric rings (80–220 px) in front of the active camera
+  for (let i = 0; i < enemyCount; i++) {
+    const ring = i % 4;
+    const dist = 80 + ring * 45;
+    const angle = (i / enemyCount) * Math.PI * 2 + ring * 0.4;
+    const ex = player.x + Math.cos(angle) * dist;
+    const ey = player.y + Math.sin(angle) * dist;
+    const enemy = engine.spawnMonster(enemyId, ex, ey, 1.0);
+    if (enemy) {
+      enemy.hp = 9999999;
+      enemy.maxHp = 9999999;
+    }
+  }
+
+  const camera: CameraViewport = {
+    x: 0,
+    y: 0,
+    width,
+    height,
+    viewLeft: -width / 2,
+    viewTop: -height / 2,
+    viewRight: width / 2,
+    viewBottom: height / 2,
+  };
+
+  const profiler = new FrameProfiler();
+  const renderMetrics = createReusableRenderMetrics();
+  const frameTimesMs: number[] = [];
+
+  let maxEnemiesSeen = 0;
+  let maxProjSeen = 0;
+  let maxPartSeen = 0;
+  let maxTextsSeen = 0;
+
+  let simTimeTotal = 0;
+  let renderTimeTotal = 0;
+
+  // 5 Warmup frames to eliminate cold-start/JIT variance
+  for (let w = 0; w < 5; w++) {
+    engine.update(fixedDt);
+    renderArena(
+      ctx,
+      engine.state,
+      camera,
+      {
+        performanceProfile: profile,
+        combatVfxEnabled: profile !== 'performance',
+        lightingEnabled: profile !== 'performance',
+      },
+      renderMetrics
+    );
+  }
+
+  for (let frame = 0; frame < frameCount; frame++) {
+    const tStart = performance.now();
+    profiler.start(tStart);
+
+    // 1. Simulation Phase (AI movement, pathfinding, nápřah, attack, spatial hash)
+    engine.update(fixedDt);
+    const tSimEnd = performance.now();
+    profiler.mark('backdrop', tSimEnd);
+
+    // 2. Render Phase (arenaRenderer, ladaRenderer, procedural curves, effects)
+    renderArena(
+      ctx,
+      engine.state,
+      camera,
+      {
+        performanceProfile: profile,
+        combatVfxEnabled: profile !== 'performance',
+        lightingEnabled: profile !== 'performance',
+      },
+      renderMetrics
+    );
+
+    const tRenderEnd = performance.now();
+    profiler.mark('overlays', tRenderEnd);
+    profiler.end(tRenderEnd);
+
+    const simDuration = tSimEnd - tStart;
+    const renderDuration = tRenderEnd - tSimEnd;
+    const frameDuration = tRenderEnd - tStart;
+
+    frameTimesMs.push(frameDuration);
+    simTimeTotal += simDuration;
+    renderTimeTotal += renderDuration;
+
+    maxEnemiesSeen = Math.max(maxEnemiesSeen, engine.state.enemies.length);
+    maxProjSeen = Math.max(maxProjSeen, engine.state.projectiles.length);
+    maxPartSeen = Math.max(maxPartSeen, engine.state.particles.length);
+    maxTextsSeen = Math.max(maxTextsSeen, engine.state.texts.length);
+  }
+
+  const p50Ms = calculatePercentile(frameTimesMs, 0.5);
+  const p95Ms = calculatePercentile(frameTimesMs, 0.95);
+  const meanMs = frameTimesMs.reduce((a, b) => a + b, 0) / Math.max(1, frameTimesMs.length);
+  const maxMs = Math.max(...frameTimesMs, 0);
+
+  return {
+    enemyId,
+    profile,
+    frameCount,
+    enemyCount,
+    p50Ms,
+    p95Ms,
+    meanMs,
+    maxMs,
+    peakEntities: {
+      enemies: maxEnemiesSeen,
+      projectiles: maxProjSeen,
+      particles: maxPartSeen,
+      texts: maxTextsSeen,
     },
     phaseAverages: {
       simulation: simTimeTotal / frameCount,

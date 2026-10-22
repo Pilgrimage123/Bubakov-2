@@ -4105,10 +4105,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!engine.miniBossSpawned && newTime >= curLvl.miniBoss.time) {
               engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
+              const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
               const miniBossEnemy = createEnemyInstance(
                 curLvl.miniBoss.id,
-                player.x + Math.cos(ang) * 550,
-                player.y + Math.sin(ang) * 550,
+                spawnPos.x,
+                spawnPos.y,
                 curLvl.miniBoss.multiplier,
                 false,
                 true,
@@ -4131,10 +4132,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!engine.midBossSpawned && (engine.miniBossSpawned || newTime >= curLvl.midBoss.time + 10) && newTime >= curLvl.midBoss.time) {
               engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
+              const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
               const midBossEnemy = createEnemyInstance(
                 curLvl.midBoss.id,
-                player.x + Math.cos(ang) * 560,
-                player.y + Math.sin(ang) * 560,
+                spawnPos.x,
+                spawnPos.y,
                 curLvl.midBoss.multiplier,
                 false,
                 true,
@@ -4157,10 +4159,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!engine.finalBossSpawned && (engine.midBossSpawned || newTime >= curLvl.finalBoss.time + 10) && newTime >= curLvl.finalBoss.time) {
               engine.finalBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
+              const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 200);
               const finalBossEnemy = createEnemyInstance(
                 curLvl.finalBoss.id,
-                player.x + Math.cos(ang) * 580,
-                player.y + Math.sin(ang) * 580,
+                spawnPos.x,
+                spawnPos.y,
                 curLvl.finalBoss.multiplier,
                 true
               );
@@ -5169,8 +5172,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!engine.chasnikSpawned && newTime >= 50) {
               engine.chasnikSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              const cx = player.x + Math.cos(ang) * 480;
-              const cy = player.y + Math.sin(ang) * 480;
+              const cPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
+              const cx = cPos.x;
+              const cy = cPos.y;
               engine.drops.push({
                 type: 'chasnik',
                 x: cx,
@@ -8663,9 +8667,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // Reposition stranded enemies that are far away back to active perimeter around player
         if (distToPlayer > 1350 && !this.isBoss && !this.isMiniboss) {
           const ang = Math.random() * Math.PI * 2;
-          const dist = 720 + Math.random() * 120;
-          this.x = player.x + Math.cos(ang) * dist;
-          this.y = player.y + Math.sin(ang) * dist;
+          const pos = RunDirector.getOffscreenPosition(player, ang, engineRef.current, 180);
+          this.x = pos.x;
+          this.y = pos.y;
           this.vx = 0;
           this.vy = 0;
           return;
@@ -11318,10 +11322,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const bossDef = !engineRef.current.miniBossSpawned ? curLvl.miniBoss : curLvl.midBoss;
     engineRef.current.miniBossSpawned = true;
     const ang = Math.random() * Math.PI * 2;
+    const pos = RunDirector.getOffscreenPosition(player, ang, engineRef.current, 180);
     const bossEnemy = createEnemyInstance(
       bossDef.id,
-      player.x + Math.cos(ang) * 440,
-      player.y + Math.sin(ang) * 440,
+      pos.x,
+      pos.y,
       bossDef.multiplier,
       false,
       true,
@@ -11353,10 +11358,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const mobId = mobPool[Math.floor(Math.random() * mobPool.length)] || 'rarach';
 
     const ang = Math.random() * Math.PI * 2;
+    const pos = RunDirector.getOffscreenPosition(player, ang, engineRef.current, 180);
     const enemy = createEnemyInstance(
       mobId,
-      player.x + Math.cos(ang) * 440,
-      player.y + Math.sin(ang) * 440,
+      pos.x,
+      pos.y,
       1.0,
       false,
       false,

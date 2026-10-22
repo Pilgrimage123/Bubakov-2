@@ -206,6 +206,11 @@ _Avoid_: duální commitování, nesourodý vývoj, neřízený push
 Architektonická hranice v `AppModals.tsx` sdružující veškerá dialogová a nastavovací okna odděleně od herního plátna a simulační smyčky v `App.tsx`, eliminující merge konflikty při souběžné editaci.
 _Avoid_: dialogový kontejner, modal wrapper, UI bundle
 
+**Zátěžový benchmark strašidel**:
+Deterministická měřicí zkouška simulace a procedurálního vykreslování jednotlivých druhů strašidel v izolovaném zátěžovém scénáři (40 instancí po 120 snímků), ověřující nepřekročení bezpečnostního časového rozpočtu snímku (p95 pod 16,7 ms).
+_Avoid_: mob benchmark, enemy perf test, test zátěže monster
+
+
 ## Rozhraní a navigace
 
 **Nabídka výprav**:

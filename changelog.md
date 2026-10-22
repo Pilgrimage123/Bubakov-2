@@ -1,3 +1,15 @@
+## 2026-10-22 — Odstranění nežádoucích spawnů monster v zorném poli hráče a zátěžový benchmark strašidel
+
+- **Odstranění spawnů uvnitř kamery (`App.tsx` & `RunDirector`)**:
+  - Přepojeno spawnování minibossů, midbossů a finálních bossů z pevných radiálních vzdáleností (550–580 px) na dynamickou metodu `RunDirector.getOffscreenPosition(player, ang, engine, 180-200)`, která garantuje umístění vně viditelné kamery i na širokoúhlých a 1440p+ obrazovkách.
+  - Událost „Chasník v nouzi“ v 50. sekundě a doprovodná vlna rarášků se nově zhmotňuje bezpečně za hranicí dohledu namísto náhlého zjevení před hráčem.
+  - Repozice zatoulaných monster (nad 1350 px od hráče) byla sjednocena pod `RunDirector.getOffscreenPosition()`, čímž se zamezilo náhodné teleportaci bubáků do zorného pole.
+  - V `RunDirector.getOffscreenPosition()` byla doplněna kontrola rozměrů canvasu z enginu pro přesné určení zorného pole v nestandardních viewpotech.
+  - Doplněna sada testů v `tests/runDirector.test.ts` ověřující, že `getOffscreenPosition()` ve všech 360 stupních i při rozlišení 2560×1440 umisťuje entity striktně mimo obdélník kamery.
+- **Zátěžový benchmark strašidel (`tests/enemyFpsBenchmark.test.ts` & `src/game/benchmark.ts`)**:
+  - Přidán deterministický zátěžový benchmark a profilace všech 58 kanonických strašidel v izolovaném scénáři (40 entit po 120 snímků) měřící čas simulace i procedurálního ladovského vykreslování s rankingem náročnosti.
+  - Zaveden termín *Zátěžový benchmark strašidel* do `GLOSSARY.md`.
+
 ## 2026-10-22 — Kruhové hejno mrazivých vran s virtuálním vůdcem
 
 - Přidán samostatný systém až 150 běžných vran řízených jediným virtuálním vůdcem. Střídá přímý průlet arénou a smršťující se oběžnou dráhu; rozložení používá Vogelovu spirálu se zlatým úhlem, pomalou rotaci, sinusové vlnění a mávání křídel.
