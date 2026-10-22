@@ -6456,7 +6456,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let nearestFoe: any = null;
               let nearestDist = 999999;
               for (const other of engine.enemies) {
-                if (other === e || other.dead || other.isDefeated) continue;
+                if (other === e || other.dead || other.isDefeated || other.isVirtualCrowMember) continue;
                 const d = Math.hypot(other.x - e.x, other.y - e.y);
                 if (d < nearestDist) {
                   nearestDist = d;
