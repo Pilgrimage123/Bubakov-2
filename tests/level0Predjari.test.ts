@@ -22,6 +22,8 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
     expect(lvl0.miniBoss.id).toBe('vrana');
+    expect(lvl0.miniBoss).toMatchObject({ id: 'vrana', time: 30, kills: 20, multiplier: 4.5 });
+    // The new circular flock is a separate encounter; it must not rewrite the existing miniboss.
     expect(lvl0.midBoss.id).toBe('vodnicek');
     expect(lvl0.finalBoss.id).toBe('morana');
     expect(lvl0.spawnPools.noon).toContain('vrana');
