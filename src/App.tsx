@@ -177,7 +177,7 @@ import {
 } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
-import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost, getWeaponUpgradeOffer } from './game/grandfatherRuntime';
+import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost, getGrandfatherInflatingPurchaseCount, getWeaponUpgradeOffer } from './game/grandfatherRuntime';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticUpgrades';
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
 
@@ -1877,7 +1877,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       eng.player?.luck || 100,
       grandfatherPurchaseIdsRef.current,
       eng.player?.weapons || [{ id: 'cane', level: 1 }],
-      4
+      4,
+      { playerHp: eng.player?.hp, playerMaxHp: eng.player?.maxHp }
     );
     setIsTestModeOpen(false);
     grandfatherOpenRef.current = true;
@@ -1913,7 +1914,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (!weapon || !upgradeDef) return false;
       weapon.synergisticUpgrades ??= [];
       if (weapon.synergisticUpgrades.some((id: string) => getSynergisticUpgrade(id)?.weaponId === weaponUpgrade.weaponId)) return false;
-      const purchasedCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
+      const purchasedCount = getGrandfatherInflatingPurchaseCount(grandfatherPurchaseIdsRef.current);
       const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
       const price = getGrandfatherPrice({
         id: weaponUpgrade.id, name: weaponUpgrade.name, icon: weaponUpgrade.icon,
@@ -1930,16 +1931,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       setGrandfatherPurchaseIds([...grandfatherPurchaseIdsRef.current]);
       sound.grandfatherPurchase();
       pushDamageText(eng.texts, p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true, 'unlocksMilestones');
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4);
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4, { playerHp: p.hp, playerMaxHp: p.maxHp });
       setGrandfatherVersion((v) => v + 1);
       setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
       return true;
     }
     if (!item) return false;
     // Healing consumables have no value at full Courage, so reject the purchase.
-    if (item.effect.type === 'heal' && p.hp >= p.maxHp && !(p.bearMaskLevel > 0)) return false;
+    if (item.effect.type === 'heal' && p.hp >= p.maxHp) return false;
     const waitSeconds = Math.max(0, eng.gameTime - eng.grandfather.waitStartedAt);
-    const purchaseCount = eng.grandfather.totalPurchases ?? grandfatherPurchaseIdsRef.current.length;
+    const purchaseCount = getGrandfatherInflatingPurchaseCount(grandfatherPurchaseIdsRef.current);
     const price = getGrandfatherPrice(item, purchaseCount, p.luck ?? 100, waitSeconds);
     if (eng.gingerbread < price) return false;
 
@@ -1964,7 +1965,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
       : grandfatherPurchaseIdsRef.current.filter((id) => id === item.id).length;
     if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4);
+      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4, { playerHp: p.hp, playerMaxHp: p.maxHp });
     }
     setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
@@ -1981,7 +1982,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     eng.gingerbread -= cost;
     eng.grandfather.rerollsThisEncounter = rerolls + 1;
-    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck ?? 100, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4);
+    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck ?? 100, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4, { playerHp: p?.hp, playerMaxHp: p?.maxHp });
     sound.coin();
     sound.grandfatherCall();
     if (p) {
@@ -4002,7 +4003,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 luck,
                 grandfatherPurchaseIds,
                 player?.weapons || [],
-                4
+                4,
+                { playerHp: player?.hp, playerMaxHp: player?.maxHp }
               );
               sound.grandfatherCall();
               engine.texts.push(new DamageText(player.x, player.y - 80, '„Pssst! Perníčky!“', '#F59E0B', true));
