@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   createSwarmDropReservoir,
+  createPendingDropBank,
   accumulateSwarmDrop,
   shouldReleaseSwarmReservoir,
   releaseSwarmReservoir,
@@ -36,7 +37,7 @@ describe('Ghost Rezervoár pro hejna a zachování ekonomiky (Plan Section 4 & G
     expect(shouldReleaseSwarmReservoir(reservoir, 5)).toBe(true);
 
     const targetDrops: GameDrop[] = [];
-    const releasedCount = releaseSwarmReservoir(reservoir, targetDrops);
+    const releasedCount = releaseSwarmReservoir(reservoir, targetDrops, createPendingDropBank());
 
     const totalGingerbreadAfter = targetDrops
       .filter((d) => d.type === 'gingerbread')
@@ -66,7 +67,7 @@ describe('Ghost Rezervoár pro hejna a zachování ekonomiky (Plan Section 4 & G
     expect(shouldReleaseSwarmReservoir(reservoir, 10)).toBe(true);
 
     const targetDrops: GameDrop[] = [];
-    releaseSwarmReservoir(reservoir, targetDrops);
+    releaseSwarmReservoir(reservoir, targetDrops, createPendingDropBank());
     expect(targetDrops.length).toBeGreaterThan(0);
   });
 });
