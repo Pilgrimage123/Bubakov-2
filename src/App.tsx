@@ -10695,7 +10695,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       <div
         key={prog.id}
         className={`char-card ${isUnlocked ? '' : 'char-card-locked'}`}
-        style={{ maxHeight: '720px', overflowY: 'auto', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'break-word' }}
+        style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
         onClick={() => {
           if (isUnlocked) {
             startGame(prog.id);
@@ -10737,17 +10737,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </span>
         </div>
 
-        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.84rem', lineHeight: 1.3, color: '#111111' }}>
+        <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.92rem', lineHeight: 1.45, color: '#111111', overflowWrap: 'anywhere' }}>
           {prog.spoiledLore}
         </p>
 
         {/* Weapons and Ability hints */}
         <div className="hunter-clue-box">
-          <div style={{ fontWeight: 900, fontSize: '0.8rem', color: '#111111', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <GameIcon icon="sword" size={14} /> {prog.spoiledWeaponHint}
+          <div style={{ fontWeight: 900, fontSize: '0.88rem', lineHeight: 1.4, color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
+            <GameIcon icon="sword" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledWeaponHint}</span>
           </div>
-          <div style={{ fontWeight: 900, fontSize: '0.8rem', marginTop: '2px', color: '#111111', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <GameIcon icon="lightning" size={14} /> {prog.spoiledAbilityHint}
+          <div style={{ fontWeight: 900, fontSize: '0.88rem', lineHeight: 1.4, marginTop: '5px', color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
+            <GameIcon icon="lightning" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledAbilityHint}</span>
           </div>
         </div>
 
@@ -10761,21 +10761,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               marginTop: '7px',
               color: '#1C1917',
               textAlign: 'left',
-              maxHeight: '158px',
-              overflowY: 'auto',
-              fontSize: '0.79rem',
-              lineHeight: 1.32,
+              minWidth: 0,
+              fontSize: '0.9rem',
+              lineHeight: 1.45,
+              overflowWrap: 'anywhere',
             }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '4px', marginBottom: '7px' }}>
-              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="heart" size={13} /> Kuráž</strong><br />{hunterInfo.maxHp}</div>
-              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="boots" size={13} /> Rychlost</strong><br />{hunterInfo.speed}</div>
-              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="horseshoe" size={13} /> Magnet</strong><br />{hunterInfo.pickupRadius} px</div>
-              <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="clover" size={13} /> Štěstí</strong><br />{hunterInfo.luck}</div>
+            <div className="hunter-card-stats">
+              <div><strong><GameIcon icon="heart" size={13} /> Kuráž</strong><span>{hunterInfo.maxHp}</span></div>
+              <div><strong><GameIcon icon="boots" size={13} /> Rychlost</strong><span>{hunterInfo.speed}</span></div>
+              <div><strong><GameIcon icon="horseshoe" size={13} /> Magnet</strong><span>{hunterInfo.pickupRadius} px</span></div>
+              <div><strong><GameIcon icon="clover" size={13} /> Štěstí</strong><span>{hunterInfo.luck}</span></div>
             </div>
-            <div><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="sword" size={13} /> Zbraň:</strong> {hunterInfo.weapon}</div>
-            <div style={{ marginTop: '5px' }}><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="leaf" size={13} /> Pasivní:</strong> {hunterInfo.passive}</div>
-            <div style={{ marginTop: '5px' }}><strong style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="lightning" size={13} /> Schopnost ({hunterInfo.cooldownSeconds} s):</strong> {hunterInfo.ability}</div>
+            <div className="hunter-card-description"><strong><GameIcon icon="sword" size={13} /> Zbraň:</strong> <span>{hunterInfo.weapon}</span></div>
+            <div className="hunter-card-description"><strong><GameIcon icon="leaf" size={13} /> Pasivní:</strong> <span>{hunterInfo.passive}</span></div>
+            <div className="hunter-card-description"><strong><GameIcon icon="lightning" size={13} /> Schopnost ({hunterInfo.cooldownSeconds} s):</strong> <span>{hunterInfo.ability}</span></div>
           </div>
         )}
 
@@ -11555,7 +11555,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               {/* Poutník - Výchozí odemčený lovec */}
               <div
                 className="char-card"
-                style={{ maxHeight: '720px', overflowY: 'auto', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'break-word' }}
+                style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
                 onClick={() => startGame('wanderer')}
                 title="Poutník – připraven k výpravě"
               >
