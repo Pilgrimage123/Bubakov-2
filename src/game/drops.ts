@@ -34,7 +34,7 @@ export {
   sampleAnnulusPosition,
 };
 
-export const MAX_DROPS_LIMIT = 40;
+export const MAX_DROPS_LIMIT = MAX_ACTIVE_DROPS;
 export const SPECIAL_DROP_PITY_COOLDOWN = 45.0;
 export const UNCOLLECTED_GINGERBREAD_PITY_THRESHOLD = 120;
 export const HOT_GINGERBREAD_DURATION = 3.0;
@@ -43,6 +43,221 @@ export const COMBO_PULSE_KILL_COUNT = 30;
 export const COMBO_PULSE_WINDOW_SECONDS = 1.2;
 export const COMBO_PULSE_RADIUS = 550;
 export const FAR_KILL_DISTANCE = 420;
+
+ 
+/** A compact, bounded-by-type waiting area for rewards when the arena is full. */
+export type PendingDropKey = DropType | 'hot_gingerbread';
+
+export interface PendingDropBucket {
+  /** Number of individual rewards waiting to be materialized. */
+  count: number;
+  /** Sum of explicit item values, used to preserve value while waiting. */
+  totalValue: number;
+  /** Whether at least one item in this bucket has an explicit value. */
+  hasValue: boolean;
+  /** Currency drops can be combined into one visible drop without losing value. */
+  mergeValues: boolean;
+  /** Stable ordering for items of equal priority. */
+  sequence: number;
+  /** One template per type keeps waiting memory bounded by the number of drop types. */
+  drop: GameDrop;
+}
+
+export interface PendingDropBank {
+  nextSequence: number;
+  byKey: Partial<Record<PendingDropKey, PendingDropBucket>>;
+}
+
+export function createPendingDropBank(): PendingDropBank {
+  return {
+    nextSequence: 0,
+    byKey: Object.create(null) as Partial<Record<PendingDropKey, PendingDropBucket>>,
+  };
+}
+
+function getPendingDropKey(drop: GameDrop): PendingDropKey {
+  return drop.type === 'gingerbread' && drop.isHot ? 'hot_gingerbread' : drop.type;
+}
+
+function isValueMergeableDrop(drop: GameDrop): boolean {
+  return drop.type === 'coin' || drop.type === 'gingerbread';
+}
+
+function getDefaultDropValue(drop: GameDrop): number {
+  if (typeof drop.value === 'number') return drop.value;
+  if (drop.type === 'coin') return 1;
+  if (drop.type === 'gingerbread') return 2;
+  return 0;
+}
+
+function normalizeQueuedGingerbread(drop: GameDrop): void {
+  if (drop.type !== 'gingerbread') return;
+  const value = drop.value ?? 2;
+  if (value >= GINGERBREAD_VALUES.giant) {
+    drop.size = 'giant';
+    drop.radius = 19;
+  } else if (value >= GINGERBREAD_VALUES.large) {
+    drop.size = 'large';
+    drop.radius = 14;
+  } else {
+    drop.size = 'small';
+    drop.radius = 10;
+  }
+}
+
+/**
+ * Number of visible/live drops, excluding dead entries that may be compacted later this frame.
+ */
+export function countActiveDrops(drops: GameDrop[]): number {
+  let count = 0;
+  for (let i = 0; i < drops.length; i++) {
+    if (drops[i] && !drops[i].dead) count++;
+  }
+  return count;
+}
+
+/**
+ * Adds a drop to the arena only while the global hard cap permits it.
+ * Overflow is stored in a fixed set of per-type buckets, never as one object per kill.
+ */
+export function spawnDropWithLimit(
+  drops: GameDrop[],
+  incoming: GameDrop,
+  pendingDropBank: PendingDropBank,
+): boolean {
+  if (countActiveDrops(drops) < MAX_DROPS_LIMIT) {
+    incoming.dead = false;
+    drops.push(incoming);
+    return true;
+  }
+
+  const key = getPendingDropKey(incoming);
+  const mergeValues = isValueMergeableDrop(incoming);
+  const incomingValue = getDefaultDropValue(incoming);
+  let bucket = pendingDropBank.byKey[key];
+
+  if (!bucket) {
+    const queuedDrop = { ...incoming, dead: false };
+    if (mergeValues) queuedDrop.value = incomingValue;
+    normalizeQueuedGingerbread(queuedDrop);
+    bucket = {
+      count: 1,
+      totalValue: incomingValue,
+      hasValue: mergeValues || typeof incoming.value === 'number',
+      mergeValues,
+      sequence: pendingDropBank.nextSequence++,
+      drop: queuedDrop,
+    };
+    pendingDropBank.byKey[key] = bucket;
+  } else if (mergeValues) {
+    bucket.totalValue += incomingValue;
+    bucket.count = 1;
+    bucket.drop = { ...incoming, dead: false, value: bucket.totalValue };
+    normalizeQueuedGingerbread(bucket.drop);
+  } else {
+    bucket.count++;
+    bucket.totalValue += incomingValue;
+    bucket.hasValue ||= typeof incoming.value === 'number';
+    // Keep the freshest position/metadata; value is redistributed across the
+    // count on release so the total explicit value is conserved.
+    bucket.drop = { ...incoming, dead: false };
+  }
+
+  // The caller's object is not in the arena; marking it dead prevents a later
+  // accidental render if a caller retains the reference.
+  incoming.dead = true;
+  return false;
+}
+
+function getPendingDropPriority(type: DropType): number {
+  if (type === 'chasnik') return 0;
+  if (
+    type === 'chest' ||
+    type === 'horseshoe' ||
+    type === 'rooster' ||
+    type === 'cuckoo_clock' ||
+    type === 'ponocny_horn' ||
+    type === 'masopust_rattle' ||
+    type === 'babicka_apron' ||
+    type === 'slivovice_splash' ||
+    type === 'svanda_bagpipes' ||
+    type === 'kominik_button' ||
+    type === 'arcivzacny_ananas'
+  ) return 1;
+  if (type === 'potion' || type === 'bread' || type === 'pear' || type === 'soul') return 2;
+  if (type === 'big_pouch' || type === 'gingerbread_stash') return 2;
+  if (type === 'gingerbread') return 3;
+  if (type === 'coin') return 4;
+  return 2;
+}
+
+export function hasPendingDrops(pendingDropBank: PendingDropBank | null | undefined): boolean {
+  if (!pendingDropBank) return false;
+  for (const key of Object.keys(pendingDropBank.byKey) as PendingDropKey[]) {
+    const bucket = pendingDropBank.byKey[key];
+    if (bucket && bucket.count > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * Refills any free arena slots from the compact pending bank, prioritizing
+ * rescue/rare rewards before ordinary currency.
+ */
+export function releasePendingDrops(
+  drops: GameDrop[],
+  pendingDropBank: PendingDropBank,
+): number {
+  let activeCount = countActiveDrops(drops);
+  let released = 0;
+
+  while (activeCount < MAX_DROPS_LIMIT) {
+    let selectedKey: PendingDropKey | undefined;
+    let selectedBucket: PendingDropBucket | undefined;
+    let selectedPriority = Number.POSITIVE_INFINITY;
+
+    for (const key of Object.keys(pendingDropBank.byKey) as PendingDropKey[]) {
+      const bucket = pendingDropBank.byKey[key];
+      if (!bucket || bucket.count <= 0) continue;
+      const priority = getPendingDropPriority(bucket.drop.type);
+      if (
+        !selectedBucket ||
+        priority < selectedPriority ||
+        (priority === selectedPriority && bucket.sequence < selectedBucket.sequence)
+      ) {
+        selectedKey = key;
+        selectedBucket = bucket;
+        selectedPriority = priority;
+      }
+    }
+
+    if (!selectedKey || !selectedBucket) break;
+
+    const bucket = selectedBucket;
+    const materialized = { ...bucket.drop, dead: false };
+    if (bucket.mergeValues) {
+      materialized.value = bucket.totalValue;
+      normalizeQueuedGingerbread(materialized);
+      delete pendingDropBank.byKey[selectedKey];
+    } else {
+      if (bucket.hasValue) {
+        const perDropValue = bucket.totalValue / bucket.count;
+        materialized.value = perDropValue;
+        bucket.totalValue -= perDropValue;
+      }
+      bucket.count--;
+      if (bucket.count <= 0) {
+        delete pendingDropBank.byKey[selectedKey];
+      }
+    }
+
+    drops.push(materialized);
+    activeCount++;
+    released++;
+  }
+
+  return released;
+}
 
 /** Healing drops stay on the map until the player can benefit from them. */
 export function isHealingDrop(type: DropType): boolean {
