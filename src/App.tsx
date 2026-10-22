@@ -10763,7 +10763,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="padlock" size={13} /> Zamčeno ({prog.percent} %)</span>
           )}
         </span>
-        <canvas ref={canvasRef} className="portrait-canvas" width={180} height={180} />
+        <canvas ref={canvasRef} className={`portrait-canvas ${isUnlocked ? 'hunter-portrait-compact' : ''}`} width={180} height={180} />
         <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
           {prog.spoiledName}
         </h3>
