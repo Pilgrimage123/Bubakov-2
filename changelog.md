@@ -1,3 +1,9 @@
+## 2026-10-22 — Sjednocení limitu slučování kořisti na 40
+
+- V `src/game/drops.ts` změněn výchozí limit `MAX_DROPS_LIMIT` z 250 na 40.
+- V `src/App.tsx` se slučování spouští při dosažení 40 položek (ne až nad 200) a explicitně používá limit 40.
+- Jde o změnu prahu slučování; sama o sobě nezaručuje globální hard cap 40, protože přímé cesty vytváření dropů mimo `SoADropManager` tím nejsou odstraněny.
+
 ## 2026-10-22 — Oprava CI testu kontaktního odstrčení
 
 - Aktualizováno očekávání v `tests/gameEngine.test.ts` podle nové délky omráčení 2,5× (základ 0,875 s); odstraněno zastaralé očekávání 0,35 s.
