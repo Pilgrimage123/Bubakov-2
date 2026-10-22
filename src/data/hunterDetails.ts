@@ -7,7 +7,7 @@ export interface HunterDetail {
   speed: number;
   pickupRadius: number;
   luck: number;
-  weapon: string;
+  weaponId: WeaponId;
   passive: string;
   ability: string;
   cooldownSeconds: number;
@@ -22,9 +22,9 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 165,
     pickupRadius: 75,
     luck: 100,
-    weapon: 'Osikový prut – automatické obloukové údery na blízké bubáky.',
-    passive: 'Tulácký instinkt: +35 % poškození všech zbraní.',
-    ability: 'Pověstná sukovice: otočka zasáhne blízké bubáky v okruhu 260 px za 185 poškození a silně je odhodí. Ve vnějším dosahu až 600 px způsobí 55 poškození; přeživší mohou být vystrašeni až na 4 s.',
+    weaponId: 'osikovy_prut',
+    passive: 'Tulácký instinkt: +35 % poškození všech zbraní. Bonus posiluje i Pověstnou sukovici.',
+    ability: 'Pověstná sukovice (21 s): do 260 px způsobí základních 185 fyzických poškození, silně odhodí bubáky a vynuluje jejich postoj. Ve vnější zóně do 600 px způsobí 55 fyzického poškození a odhodí je. Obě zóny vyvolají paniku až na 4 s; Vůle ji zkracuje. Poškození se dále násobí aktivními bonusy.'
     cooldownSeconds: 21,
     playstyle: 'Nejvyšší základní Kuráž a výrazné poškození; magnet na sběr je kratší, proto se vyplatí pohybovat se přes kořist.',
   },
@@ -35,9 +35,9 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 220,
     pickupRadius: 160,
     luck: 105,
-    weapon: 'Povidlové buchty – automaticky házená svačina zraňuje a může bubáky zaměstnat mlsáním.',
-    passive: 'Nejvyšší základní rychlost pohybu (220) a mimořádný magnet na krejcary, perníčky a další sbíratelné dobroty (160 px).',
-    ability: 'Dusot stáda: přivolá 22 běžících beranů. Zásah v dosahu přibližně 560 px způsobí 140 fyzického poškození a silné odhození. Scénka trvá přibližně 3,6 s.',
+    weaponId: 'povidlove_buchty',
+    passive: 'Samostatný časovaný bojový pasiv nemá. Jeho předností je rychlost 220 a základní magnet 160 px; obě hodnoty se mohou změnit bonusy.',
+    ability: 'Dusot stáda (30 s): vyběhne 22 beranů. Úvodní zásah do 560 px způsobí 140 fyzického poškození, silně odhodí a vynuluje postoj. Po dobu 3,6 s následuje každých 0,25 s dalších 35 fyzických poškození v dosahu 520 px. Čísla se násobí bonusy poškození.'
     cooldownSeconds: 30,
     playstyle: 'Rychlý sběrač s menší Kuráží. Udržuj pohyb a využívej široký dosah sběru.',
   },
@@ -46,11 +46,11 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     title: 'Moudrá ranhojička z lesní chaloupky',
     maxHp: 125,
     speed: 180,
-    pickupRadius: 26,
+    pickupRadius: 26.25,
     luck: 85,
-    weapon: 'Devatero kvítí – bylinná zbraň, která automaticky odhání dotírající bubáky.',
-    passive: 'Bylinný záblesk jednou za 9 s vyléčí až 18 % maximální Kuráže (léčení nepřekročí maximum) a na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a udělí nezranitelnost. Základní dosah magnetu je trvale snížen o 75 % (přibližně 26 px před bonusy vesnice a usnadnění).',
-    ability: 'Očistné kadidlo: obnoví až 55 Kuráže, přidá 30 bodů dočasného štítu a na 1,8 s poskytne nezranitelnost. V okruhu 480 px způsobí 120 přírodního poškození, nasákne a zpomalí bubáky na 4,5 s.',
+    weaponId: 'devatero_kviti',
+    passive: 'Bylinný záblesk každých 9 s obnoví až 18 % maximální Kuráže. Na 3 s také násobí magnet i rychlost přitahování kořisti hodnotou 5 a udělí 3 s nezranitelnosti. Základní magnet je snížen o 75 %: 26,25 px před dalšími bonusy.',
+    ability: 'Očistné kadidlo (30 s): obnoví až 55 Kuráže, přidá 30 štítu a dá 1,8 s nezranitelnosti. Výbuch do 480 px způsobí 120 přírodního poškození, nasákne a zpomalí bubáky na 4,5 s. Sanctuarium trvá 4,8 s; každých 0,75 s léčí až 6 Kuráže a způsobí 25 přírodního poškození do 420 px. Poškození podléhá bonusům a odolnostem.'
     cooldownSeconds: 30,
     playstyle: 'Léčivá a kontrolní postava. Sbírání kořisti je běžně krátkodosahové, ale každých 9 s získá bezpečné časové okno s pětinásobným magnetem a rychlostí přitahování.',
   },
@@ -61,9 +61,9 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 175,
     pickupRadius: 115,
     luck: 90,
-    weapon: 'Kovaná halapartna – automatické údery těžkou zbraní.',
-    passive: 'Svatá aura lucerny průběžně pálí blízká strašidla svatým poškozením (16 poškození za sekundu).',
-    ability: 'Noční roh a poplach: zatroubením způsobí 110 fyzického poškození a zažene nepřátele do paniky až na 5 s; odpor vůle může dobu paniky zkrátit.',
+    weaponId: 'kovana_halapartna',
+    passive: 'Aura lucerny zasahuje blízké bubáky v okruhu 85 px každých 0,25 s za 4 svaté poškození (základně 16 za sekundu). Svaté bonusy a odolnosti výsledek mění.',
+    ability: 'Noční roh a poplach (30 s): v okruhu 900 px způsobí 110 fyzického poškození a vyvolá paniku až na 5 s. Skutečné trvání se snižuje podle Vůle nepřítele. Poškození se násobí aktivními bonusy.'
     cooldownSeconds: 30,
     playstyle: 'Vyvážený strážce s průběžným poškozením z aury a plošným nouzovým poplachem.',
   },
@@ -74,9 +74,9 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 170,
     pickupRadius: 110,
     luck: 100,
-    weapon: 'Svěcená kropenka – svaté útoky účinné proti nemrtvým a pekelným nepřátelům.',
-    passive: 'Svěcená výzbroj těží z odlišných odolností nepřátel; svaté zásahy jsou zvláště účinné proti nemrtvým a démonům.',
-    ability: 'Farní požehnání: zasáhne oblast o poloměru 650 px. Běžní nemrtví a démoni dostanou silné svaté poškození; bossové utrpí zásah odpovídající 25 % maximální Kuráže.',
+    weaponId: 'svecena_kropenka',
+    passive: 'Nemá samostatný časovaný pasiv. Jeho počáteční kropenka působí svaté poškození, které je zvlášť účinné proti nemrtvým a pekelným nepřátelům.',
+    ability: 'Farní požehnání (35 s): zasáhne do 650 px. Běžným nečistým cílům způsobí téměř smrtící svaté poškození; bossům ubere 25 % maximální Kuráže (svatý násobič může účinek zvýšit až na 1,5×). Ostatní cíle dostanou 45 svatého poškození. Odolnosti ovlivní poškození i odhoz.'
     cooldownSeconds: 35,
     playstyle: 'Specialista na nemrtvé a démony, nejsilnější při velkých vlnách nebo proti bossům.',
   },
@@ -87,9 +87,9 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     speed: 165,
     pickupRadius: 125,
     luck: 120,
-    weapon: 'Kynutý koláč – automaticky házený koláč a jeho vylepšené varianty.',
-    passive: 'Laskavost a práce s jídlem: její schopnosti rozlišují, zda je na bubáka účinnější jídlo, nebo svaté působení.',
-    ability: 'Chléb se solí a vlídné slovo: zastaví čas pro scénku a poté každého zasaženého nepřítele ovlivní typem (Food/Holy), vůči kterému má menší odolnost. U běžných bubáků může vést k okamžitému zklidnění/odchodu; bossové mohou utrpět až 25 % maximální Kuráže.',
+    weaponId: 'kynuty_kolac',
+    passive: 'Nemá samostatný časovaný bojový pasiv. Má základní Štěstí 120; Kynutý koláč může zasažené bubáky přimět k mlsání a dočasně přerušit jejich útoky.',
+    ability: 'Chléb se solí a vlídné slovo (45 s): zastaví čas pro scénku a zasáhne do 1 100 px. Pro každého bubáka zvolí typ Food/Holy s nižší odolností. U běžných cílů má zvolený účinek 75% šanci na mimořádně silný zásah; jinak je zklidní až na 8 s. Bossům udělí zklidnění na 10 s a 25 % max. Kuráže, násobené příslušným odporem/účinkem. Kamenní a snack-imunní bubáci mohou odolat potravinové větvi.'
     cooldownSeconds: 45,
     playstyle: 'Pomalejší podpůrná postava se silnou kontrolou velké části bojiště.',
   },
