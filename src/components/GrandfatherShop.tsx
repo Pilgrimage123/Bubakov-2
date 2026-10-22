@@ -237,8 +237,17 @@ export function GrandfatherShop({
         const offer = visibleOffers[idx];
         if (offer && !purchasedIds.includes(offer.itemId)) {
           const item = GRANDFATHER_ITEMS.find((it) => it.id === offer.itemId);
+          const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
+          const pricedItem = item ?? (weaponUpgrade ? {
+            id: weaponUpgrade.id,
+            name: weaponUpgrade.name,
+            icon: weaponUpgrade.icon,
+            description: weaponUpgrade.description,
+            baseCost: weaponUpgrade.baseCost,
+            effect: { type: 'luck', amount: 0 },
+          } as GrandfatherItemDef : undefined);
           const purchaseCount = getGrandfatherInflatingPurchaseCount(purchasedIds);
-          const price = item ? getGrandfatherPrice(item, purchaseCount, luck, waitSeconds) : 999;
+          const price = pricedItem ? getGrandfatherPrice(pricedItem, purchaseCount, luck, waitSeconds) : 999;
           if (gingerbread >= price) {
             e.preventDefault();
             handlePurchase(offer.itemId);
