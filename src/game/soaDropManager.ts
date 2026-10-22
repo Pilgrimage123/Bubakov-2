@@ -261,18 +261,44 @@ export class SoADropManager {
     const combined = Math.round(
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
-    this.values[first] = combined;
-    this.radii[first] = type === 'gingerbread'
+
+    // A single forward compaction pass can overwrite the retained record when
+    // a companion has a lower index. Preserve the selected data in scalars
+    // before compacting, keeping this hot path allocation-free.
+    const keepX = this.posX[first];
+    const keepY = this.posY[first];
+    const keepVx = this.vx[first];
+    const keepVy = this.vy[first];
+    const keepRadius = type === 'gingerbread'
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
+    const keepExpiration = this.expirations[first];
+    const keepTime = this.times[first];
+    const keepGoldenRush = this.goldenRushTimers[first];
+    const keepMobility = this.magnetMobility[first];
+    const keepType = this.itemTypes[first];
+    const keepFlags = this.flags[first];
 
-    // Compact without moving the retained record until its new location is
-    // known. The first selected record may be at the end of the active array.
     const oldCount = this.count;
     let write = 0;
+    let retainedIndex = -1;
     for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
-      if (write !== read) {
+      if (read === first) {
+        retainedIndex = write;
+        this.posX[write] = keepX;
+        this.posY[write] = keepY;
+        this.vx[write] = keepVx;
+        this.vy[write] = keepVy;
+        this.values[write] = combined;
+        this.radii[write] = keepRadius;
+        this.expirations[write] = keepExpiration;
+        this.times[write] = keepTime;
+        this.goldenRushTimers[write] = keepGoldenRush;
+        this.magnetMobility[write] = keepMobility;
+        this.itemTypes[write] = keepType;
+        this.flags[write] = keepFlags;
+      } else if (write !== read) {
         this.posX[write] = this.posX[read];
         this.posY[write] = this.posY[read];
         this.vx[write] = this.vx[read];
@@ -292,7 +318,7 @@ export class SoADropManager {
     this.count = write;
     for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
-    return true;
+    return retainedIndex >= 0;
   }
 
   /**
