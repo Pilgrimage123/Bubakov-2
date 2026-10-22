@@ -139,7 +139,7 @@ describe('VirtualLeaderCrowWave', () => {
   });
 
   it('alternates from a sweep-through wave to a contracting orbit on the next scheduled wave', () => {
-    const wave = new VirtualLeaderCrowWave({ count: 4, startAt: 0, interval: 1 });
+    const wave = new VirtualLeaderCrowWave({ count: 4, startAt: 0, interval: 100 });
     const engine = createEngine(0);
     wave.preparePool(factory);
 
