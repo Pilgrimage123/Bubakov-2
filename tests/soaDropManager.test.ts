@@ -104,6 +104,8 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
     expect(manager.itemTypes[combinedIndex]).toBe(2);
     expect(manager.values[combinedIndex]).toBe(7);
     expect(manager.flyweights[combinedIndex].size).toBe('large');
+    expect(manager.itemTypes[1 - combinedIndex]).toBe(1);
+    expect(manager.values[1 - combinedIndex]).toBe(1);
   });
 
   it('enforces branchless 5% magnet mobility for Heavy Anchors vs standard drops', () => {
