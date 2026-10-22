@@ -3682,6 +3682,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     });
   };
 
+  // Auto-launch benchmark / performance test run if URL specifies ?benchmark=1 or ?perf_test=1
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('benchmark') || urlParams.has('perf_test')) {
+      const profile = (urlParams.get('profile') as any) || 'balanced';
+      metaRef.current.performanceProfile = profile;
+      metaRef.current.showPerfOverlay = true;
+      const hero = (urlParams.get('hero') as CharacterType) || 'wanderer';
+      const levelId = Number(urlParams.get('level') || 0) as GameLevelId;
+      startGame(
+        hero,
+        levelId,
+        [
+          { id: 'cane', level: 3 },
+          { id: 'halberd', level: 3 },
+          { id: 'bees', level: 3 },
+        ],
+        true
+      );
+    }
+  }, []);
+
   // Main canvas game loop
   useEffect(() => {
     let animId: number;
@@ -3689,8 +3711,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const showPerformanceOverlay = new URLSearchParams(window.location.search).has('perf');
+    const urlParams = new URLSearchParams(window.location.search);
+    const showPerformanceOverlay = urlParams.has('perf') || urlParams.has('benchmark');
+    const isBenchmarkMode = urlParams.has('benchmark') || urlParams.has('perf_test');
     const frameProfiler = new FrameProfiler();
+
+    if (typeof window !== 'undefined') {
+      (window as any).__BUBAKOV_PERF__ = {
+        profiler: frameProfiler,
+        getMetricsSummary: () => frameProfiler.getMetricsSummary(),
+        getEngineState: () => ({
+          enemies: engineRef.current.enemies.length,
+          projectiles: engineRef.current.projectiles.length,
+          particles: engineRef.current.particles.length,
+          drops: engineRef.current.drops.length,
+          texts: engineRef.current.texts.length,
+          gameState: gameStateRef.current,
+        }),
+      };
+    }
 
     const resize = () => {
       const isPerf = (metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance';
@@ -3702,7 +3741,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resize();
 
     const loop = (now: number) => {
-      frameProfiler.start(performance.now());
+      frameProfiler.start(now || performance.now());
       // Prevent a background-tab stall from creating a large simulation burst.
       const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
       engineRef.current.lastTime = now;
@@ -3713,6 +3752,38 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const currentMenuScreen = menuScreenRef.current;
     const currentSelectedLevelId = selectedLevelIdRef.current;
     engineRef.current.uiTime += dt;
+
+    // Autonomous stress bot for automated headless benchmark
+    if (isBenchmarkMode && currentGameState === 'playing' && engine.player) {
+      // Advance to Midnight to activate full dark kvaš lighting, vector shadow volumes & ambient tint
+      if (engine.gameTime < 240) {
+        engine.gameTime = 250;
+      }
+
+      // Populate realistic dense horde up to profile cap
+      const performanceProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
+      const targetEnemies = performanceProfile === 'performance' ? 35 : performanceProfile === 'balanced' ? 55 : 70;
+      while (engine.enemies.length < targetEnemies) {
+        const i = engine.enemies.length;
+        const ang = (i / targetEnemies) * Math.PI * 2;
+        const dist = 160 + (i % 6) * 55;
+        const mobId = i % 4 === 0 ? 'hejkal' : i % 3 === 0 ? 'hastrman' : i % 2 === 0 ? 'rarach' : 'cerny_pes';
+        const mob = createEnemyInstance(mobId, engine.player.x + Math.cos(ang) * dist, engine.player.y + Math.sin(ang) * dist, 1.0);
+        engine.enemies.push(mob);
+        directorRef.current?.recordEnemySpawn(mob, engine.gameTime);
+      }
+
+      const t = engine.uiTime;
+      engine.keys['KeyW'] = Math.sin(t * 1.5) > 0.2;
+      engine.keys['KeyS'] = Math.sin(t * 1.5) < -0.2;
+      engine.keys['KeyA'] = Math.cos(t * 1.5) > 0.2;
+      engine.keys['KeyD'] = Math.cos(t * 1.5) < -0.2;
+
+      // Ensure bot survives for full benchmark duration
+      if (engine.player.hp < engine.player.maxHp * 0.6) {
+        engine.player.hp = engine.player.maxHp;
+      }
+    }
 
       // Animate character portraits in hunter selection screen
       if (currentGameState === 'menu' && currentMenuScreen === 'hunter') {
@@ -7772,16 +7843,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.lineWidth = 1.5;
           ctx.strokeRect(12, 12, 318, 126);
           ctx.font = '700 13px monospace';
-          const currentFps = Math.round(1000 / Math.max(1, timings.total));
+          const currentFps = frameProfiler.fps;
           ctx.fillStyle = currentFps >= 50 ? '#4ADE80' : currentFps >= 30 ? '#FBBF24' : '#EF4444';
-          ctx.fillText(`${currentFps} FPS (${timings.total.toFixed(1)} ms)${(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance' ? ' [MAX FPS]' : (metaRef.current.performanceProfile || 'balanced') === 'fidelity' ? ' [GRAFIKA]' : ' [VYVÁŽENÝ]'}`, 22, 33);
+          ctx.fillText(`${currentFps} FPS (CPU: ${timings.total.toFixed(1)} ms)${(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced')) === 'performance' ? ' [MAX FPS]' : (metaRef.current.performanceProfile || 'balanced') === 'fidelity' ? ' [GRAFIKA]' : ' [VYVÁŽENÝ]'}`, 22, 33);
           ctx.fillStyle = '#E2E8F0';
           ctx.fillText(`Nepřátelé: ${engine.enemies.length} | Střely: ${engine.projectiles.length}`, 22, 51);
           ctx.fillText(`Částice: ${engine.particles.length} | Texty: ${engine.texts.length}`, 22, 69);
           ctx.fillText(`Sim: ${timings.simulation.toFixed(1)} | Pozadí: ${timings.backdrop.toFixed(1)} | Svět: ${timings.world.toFixed(1)} ms`, 22, 87);
           ctx.fillText(`Světla: ${timings.lighting.toFixed(1)} | Overlaye: ${timings.overlays.toFixed(1)} ms`, 22, 105);
+          ctx.font = '500 11px monospace';
           ctx.fillStyle = '#94A3B8';
-          ctx.fillText('Časy jsou klouzavý průměr dokončených snímků.', 22, 123);
+          ctx.fillText(`FPS = rAF (${frameProfiler.frameDelta.toFixed(0)} ms) | CPU = průměr fází`, 22, 123);
           ctx.restore();
         }
 

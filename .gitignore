@@ -6,5 +6,7 @@ dist
 .worktrees/
 .aistudio/
 context.txt
+test-results/
+playwright-report/
 
 *_bundle.txt

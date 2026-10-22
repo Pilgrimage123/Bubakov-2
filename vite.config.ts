@@ -26,6 +26,7 @@ export default defineConfig({
       '**/.worktrees/**',
       '**/.scratch/**',
       '**/.git/**',
+      '**/e2e/**',
     ],
   },
 });

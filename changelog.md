@@ -1,3 +1,20 @@
+## 2026-10-22 — Oprava ukazatele FPS, reálné měření prodlev snímků a automatizovaný Playwright benchmark v Chromiu
+
+- **Oprava falešného ukazatele FPS (`FrameProfiler` & `App.tsx`)**:
+  - Odstraněna zásadní koncepční chyba, kdy ukazatel počítal `1000 / CPU_work_time` a při záseku hry (kdy kód snímku proběhl rychle, ale prodleva mezi snímky byla stovek ms) falešně ukazoval ~60 FPS.
+  - `FrameProfiler` nově měří skutečnou periodu mezi voláními `requestAnimationFrame` (`timestamp - lastFrameTimestamp`), eviduje `frameDelta` a okamžitě reaguje na záseky (> 1,4× očekávané periody nastaví váhu 75 %).
+  - Ukazatel v HUDu jasně odděluje reálnou snímkovou frekvenci od čisté práce CPU: `${fps} FPS (CPU: ${timings.total} ms)`.
+  - Doplněna metoda `getMetricsSummary()` s bezalokačními ring buffery (`Float32Array(1200)`) pro výpočet $p50$, $p95$, minimálního FPS, průměrného FPS a počtu zahozených/zaseknutých snímků bez zatížení Garbage Collectoru.
+  - Pokryto sadou jednotkových a regresních testů v `tests/frameProfiler.test.ts`.
+- **Automatizovaný zátěžový benchmark v reálném Chromiu (`npm run test:perf`)**:
+  - Zavedena end-to-end výkonnostní pipeline přes Playwright (`playwright.config.ts`, `e2e/arenaBenchmark.spec.ts`) spouštějící moderní headless Chromium (`--headless=new`, `--enable-gpu`).
+  - Umožňuje bez nutnosti lidského hraní změřit skutečnou propustnost 2D Canvasu, kvašového nočního svícení a simulace ve vyváženém i grafickém profilu (`balanced` a `fidelity`).
+  - V aréně autonomní bot manévruje, střílí ze zbraní a čelí plné Půlnoční vlně monster, přičemž test reportuje detailní metriky doručení snímků a vytížení jednotlivých fází (simulace, vykreslení entit, světla).
+- **Konfigurace a skripty**:
+  - Do `package.json` přidán skript `"test:perf": "playwright test"`.
+  - V `vite.config.ts` vyloučena složka `e2e/` z běhu jednotkových testů Vitest.
+  - Do `.gitignore` přidány složky `test-results/` a `playwright-report/`.
+
 ## 2026-10-21 — Dokončení AI vrány a cílení Mrazivé jezinky
 
 - Vrána nyní vyhledává poblíž ležící mince a malé jídlo, přiletí k nim, přistane, chvíli zobá a kořist sebere.
