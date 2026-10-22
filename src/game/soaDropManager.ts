@@ -224,8 +224,8 @@ export class SoADropManager {
   /**
    * Consolidates three compatible minor drops in the same spatial cell.
    *
-   * Returns true when the incoming drop is consumed by consolidation. The
-   * selection uses scalar indices to avoid temporary arrays on the spawn path.
+   * Returns true when the incoming drop is consumed by consolidation. Scalar
+   * indices keep this hot path free from temporary matching arrays.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -256,22 +256,22 @@ export class SoADropManager {
         break;
       }
     }
+
     if (third < 0) return false;
 
-    const consolidatedValue = Math.round(
+    const combined = Math.round(
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
-    const firstOldCount = this.count;
-    this.values[first] = consolidatedValue;
+    this.values[first] = combined;
     this.radii[first] = type === 'gingerbread'
-      ? (consolidatedValue >= GINGERBREAD_VALUES.giant ? 19 : 14)
+      ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
-    // Compact away the two companion records in-place. Read/write traversal
-    // preserves the retained record even when one of the selected indices is
-    // the final active slot. No temporary arrays or swap-back ambiguity.
+    // Compact all records except the two selected companions. This keeps the
+    // retained record intact regardless of whether any selected index is last.
+    const oldCount = this.count;
     let write = 0;
-    for (let read = 0; read < firstOldCount; read++) {
+    for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
       if (write !== read) {
         this.posX[write] = this.posX[read];
@@ -289,8 +289,9 @@ export class SoADropManager {
       }
       write++;
     }
+
     this.count = write;
-    for (let i = this.count; i < firstOldCount; i++) this.flyweights[i].dead = true;
+    for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
     return true;
   }
