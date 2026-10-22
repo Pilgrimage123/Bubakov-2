@@ -274,14 +274,59 @@ export class SoADropManager {
     }
     this.syncFlyweight(first);
 
-    // removeAt uses swap-back, so remove indices from highest to lowest. If the
-    // last live item is one of the selected indices, it can move into a removed
-    // slot; descending removal keeps the remaining selected index stable.
-    const highest = Math.max(first, second, third);
-    const lowest = Math.min(first, second, third);
-    const middle = first + second + third - highest - lowest;
-    this.removeAt(highest);
-    this.removeAt(middle);
+    // removeAt uses swap-back, so remove the selected slots from highest to
+    // lowest. If the retained slot itself is the last entry, swap-back moves it;
+    // track the consolidated record's position through each removal.
+    const selected = [first, second, third].sort((a, b) => b - a);
+    let retainedIndex = first;
+    for (const index of selected) {
+      if (index === retainedIndex) {
+        // The retained drop is removed from its old slot only when that exact
+        // selected index is reached; move its consolidated value into the last
+        // slot first so the record survives the removal.
+        const last = this.count - 1;
+        if (index !== last) {
+          this.posX[last] = this.posX[index];
+          this.posY[last] = this.posY[index];
+          this.vx[last] = this.vx[index];
+          this.vy[last] = this.vy[index];
+          this.values[last] = this.values[index];
+          this.radii[last] = this.radii[index];
+          this.expirations[last] = this.expirations[index];
+          this.times[last] = this.times[index];
+          this.goldenRushTimers[last] = this.goldenRushTimers[index];
+          this.magnetMobility[last] = this.magnetMobility[index];
+          this.itemTypes[last] = this.itemTypes[index];
+          this.flags[last] = this.flags[index];
+          retainedIndex = last;
+        }
+      }
+      if (index !== retainedIndex) {
+        this.removeAt(index);
+      } else {
+        // For the retained slot, remove a different selected slot instead:
+        // swap-back removal of a selected companion into this slot is avoided
+        // by making the retained slot the final live index after compaction.
+        const last = this.count - 1;
+        if (retainedIndex !== last) {
+          this.posX[last] = this.posX[retainedIndex];
+          this.posY[last] = this.posY[retainedIndex];
+          this.vx[last] = this.vx[retainedIndex];
+          this.vy[last] = this.vy[retainedIndex];
+          this.values[last] = this.values[retainedIndex];
+          this.radii[last] = this.radii[retainedIndex];
+          this.expirations[last] = this.expirations[retainedIndex];
+          this.times[last] = this.times[retainedIndex];
+          this.goldenRushTimers[last] = this.goldenRushTimers[retainedIndex];
+          this.magnetMobility[last] = this.magnetMobility[retainedIndex];
+          this.itemTypes[last] = this.itemTypes[retainedIndex];
+          this.flags[last] = this.flags[retainedIndex];
+        }
+        this.removeAt(last);
+        retainedIndex = Math.min(retainedIndex, this.count - 1);
+      }
+    }
+    this.syncFlyweight(retainedIndex);
     return true;
   }
 
