@@ -1,3 +1,9 @@
+## 2026-10-22 — Zákaz běžných spawnů čertů a vodníků v první úrovni
+
+- Režisér výpravy filtruje zakázané nepřátele také při výběru elit, při záložním výběru i v taktických formacích; např. myšák/šotek už se nemůže změnit na krvavého raráška a blatouch na kalného hastrmana.
+- Staré preferované cíle v archetypech první úrovně byly nahrazeny tematickými nepřáteli předjaří.
+- Přidán regresní test skutečného spawnovacího poolu pro všechny fáze i archetypy.
+
 ## 2026-10-22 — Čistší bestiář první úrovně
 
 - Odstraněni čerti a vodníci z běžných spawnovacích fondů první úrovně; Vodníček zůstává pouze plánovaným mezibossem.
