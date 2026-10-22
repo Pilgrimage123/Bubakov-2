@@ -1,3 +1,9 @@
+## 2026-10-22 — Čistší bestiář první úrovně
+
+- Odstraněni čerti a vodníci z běžných spawnovacích fondů první úrovně; Vodníček zůstává pouze plánovaným mezibossem.
+- Nápověda k bestiáři první úrovně už Vodníčka neuvádí mezi běžnými nepřáteli.
+- Přidány regresní testy, které zakazují běžné spawny čertů a vodních bytostí na první úrovni.
+
 ## 2026-10-22 — Sjednocení obsahu první úrovně
 
 - Sjednoceny české a anglické názvy i varování minibosse s reálným hejnem mrazivých vran.
