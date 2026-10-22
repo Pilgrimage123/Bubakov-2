@@ -26,6 +26,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.finalBoss.id).toBe('morana');
     expect(lvl0.spawnPools.noon).toContain('vrana');
     expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
+    expect(lvl0.spawnPools.dusk).toContain('mrazivy_obr');
     expect(lvl0.spawnPools.noon).not.toContain('zaba');
     expect(lvl0.spawnPools.midnight).toEqual(['vodnicek', 'mrazovy_skritek', 'topivec', 'bludicka']);
     expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
@@ -70,11 +71,13 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(csTrans.name).toBe('1. Předjaří v Hrusicích');
     expect(csTrans.shortTitle).toBe('Březnové tání');
     expect(csTrans.finalBoss.name).toContain('Morana');
+    expect(csTrans.miniBoss.name).toContain('mrazivých vran');
 
     const enTrans = getLevelTranslation(0, 'en');
     expect(enTrans.name).toBe('1. Early Spring in Hrusice');
     expect(enTrans.shortTitle).toBe('March Thaw');
     expect(enTrans.finalBoss.name).toContain('Morana');
+    expect(enTrans.miniBoss.name).toContain('Frost Crow Flock');
   });
 
   it('has exactly 3 unique folklore Rozmars', () => {
