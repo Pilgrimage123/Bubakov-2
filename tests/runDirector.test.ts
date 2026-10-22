@@ -595,6 +595,36 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(lowDirector.getAllBubaksPool(engine)).toEqual(actualPool);
   });
 
+  it('keeps devils and watermen out of all regular Stage 1 pools, including elite upgrades', () => {
+    const engine = new GameEngine();
+    engine.initRun({ levelId: 0, dynamicDifficulty: 4.0, spawnInitialWave: false });
+    const director = engine.director!;
+    const forbidden = new Set([
+      'rarach', 'krvavy_rarach', 'certik', 'cert', 'sazovy_rarach', 'drab',
+      'jiskrivec', 'ohnivy_muz', 'ohnivy_pes', 'plivnik',
+      'vodnicek', 'hastrman', 'topivec', 'kalny_hastrman', 'zaba', 'ropucha',
+    ]);
+
+    // Cover noon, afternoon, dusk, night, and midnight pools.
+    for (const gameTime of [0, 30, 60, 120, 180]) {
+      engine.state.gameTime = gameTime;
+      const pool = director.getAllBubaksPool(engine);
+      expect(pool.length).toBeGreaterThan(0);
+      for (const enemyId of pool) {
+        expect(forbidden.has(enemyId), enemyId).toBe(false);
+        expect(ENEMIES[enemyId].category, enemyId).not.toBe('demons');
+      }
+    }
+
+    // Legacy archetypes must not reintroduce banned enemies if a phase pool is empty.
+    for (const rozmar of RUN_ROZMARY[0]) {
+      for (const enemyId of rozmar.preferredEnemyIds) {
+        expect(forbidden.has(enemyId), enemyId).toBe(false);
+        expect(ENEMIES[enemyId].category, enemyId).not.toBe('demons');
+      }
+    }
+  });
+
   it('keeps regular and elite threat costs distinct', () => {
     const director = new RunDirector(1, undefined, { dynamicDifficulty: 4.0 });
 
