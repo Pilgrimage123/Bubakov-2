@@ -1236,7 +1236,8 @@ export function shouldReleaseSwarmReservoir(reservoir: SwarmDropReservoir, thres
 
 export function releaseSwarmReservoir(
   reservoir: SwarmDropReservoir,
-  targetDropsArray: GameDrop[]
+  targetDropsArray: GameDrop[],
+  pendingDropBank: PendingDropBank,
 ): number {
   if (reservoir.gingerbread <= 0 && reservoir.coins <= 0) {
     reservoir.pendingKills = 0;
@@ -1248,49 +1249,57 @@ export function releaseSwarmReservoir(
   const lx = reservoir.lastX || 0;
   const ly = reservoir.lastY || 0;
 
-  // Release consolidated gingerbreads
+  // Release consolidated gingerbreads through the same hard-cap gate as every other source.
   let gbVal = reservoir.gingerbread;
   while (gbVal > 0) {
     if (gbVal >= GINGERBREAD_VALUES.giant) {
-      targetDropsArray.push(
+      spawnDropWithLimit(
+        targetDropsArray,
         createDropInstance('gingerbread', lx, ly, {
           value: GINGERBREAD_VALUES.giant,
           size: 'giant',
           radius: 18,
-        })
+        }),
+        pendingDropBank,
       );
       gbVal -= GINGERBREAD_VALUES.giant;
       releasedCount++;
     } else if (gbVal >= GINGERBREAD_VALUES.large) {
-      targetDropsArray.push(
+      spawnDropWithLimit(
+        targetDropsArray,
         createDropInstance('gingerbread', lx, ly, {
           value: GINGERBREAD_VALUES.large,
           size: 'large',
           radius: 14,
-        })
+        }),
+        pendingDropBank,
       );
       gbVal -= GINGERBREAD_VALUES.large;
       releasedCount++;
     } else {
-      targetDropsArray.push(
+      spawnDropWithLimit(
+        targetDropsArray,
         createDropInstance('gingerbread', lx, ly, {
           value: gbVal,
           size: 'small',
           radius: 10,
-        })
+        }),
+        pendingDropBank,
       );
       gbVal = 0;
       releasedCount++;
     }
   }
 
-  // Release consolidated coins
+  // Release consolidated coins through the same hard-cap gate as every other source.
   if (reservoir.coins > 0) {
-    targetDropsArray.push(
+    spawnDropWithLimit(
+      targetDropsArray,
       createDropInstance('coin', lx + 10, ly - 10, {
         value: reservoir.coins,
         speed: 60,
-      })
+      }),
+      pendingDropBank,
     );
     releasedCount++;
   }
@@ -1301,5 +1310,3 @@ export function releaseSwarmReservoir(
   reservoir.leaderSeen = false;
   return releasedCount;
 }
-
-
