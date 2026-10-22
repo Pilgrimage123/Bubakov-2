@@ -233,33 +233,34 @@ export class SoADropManager {
     const cellX = Math.floor(x / SPATIAL_CELL_SIZE);
     const cellY = Math.floor(y / SPATIAL_CELL_SIZE);
     const targetTypeIdx = DROP_TYPE_INDICES[type];
+
     let first = -1;
     let second = -1;
     let third = -1;
-
-    // Find three existing compatible records without creating a temporary array.
     for (let i = 0; i < this.count; i++) {
       if (this.itemTypes[i] !== targetTypeIdx) continue;
       if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
       if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
+
       const compatible = isMinorCoin
         ? this.values[i] < 5
         : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
       if (!compatible) continue;
       if (first < 0) first = i;
       else if (second < 0) second = i;
-      else { third = i; break; }
+      else {
+        third = i;
+        break;
+      }
     }
     if (third < 0) return false;
 
     const combined = Math.round(
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
-    const oldCount = this.count;
-    let write = 0;
 
-    // Compact selected records in one pass. When the retained record is read,
-    // write its combined value and saved fields directly to the compacted slot.
+    // Snapshot the retained record before compaction. The arrays are packed in
+    // place so the merge allocates no temporary index or record arrays.
     const keepX = this.posX[first];
     const keepY = this.posY[first];
     const keepVx = this.vx[first];
@@ -274,10 +275,15 @@ export class SoADropManager {
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
+    const oldCount = this.count;
+    let write = 0;
+    let retainedIndex = -1;
+
     for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
 
       if (read === first) {
+        retainedIndex = write;
         this.posX[write] = keepX;
         this.posY[write] = keepY;
         this.vx[write] = keepVx;
@@ -310,7 +316,7 @@ export class SoADropManager {
     this.count = write;
     for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
-    return true;
+    return retainedIndex >= 0;
   }
 
   /**
