@@ -46,7 +46,7 @@ export const FAR_KILL_DISTANCE = 420;
 
  
 /** A compact, bounded-by-type waiting area for rewards when the arena is full. */
-export type PendingDropKey = DropType | 'hot_gingerbread';
+export type PendingDropKey = string;
 
 export interface PendingDropBucket {
   /** Number of individual rewards waiting to be materialized. */
@@ -76,7 +76,17 @@ export function createPendingDropBank(): PendingDropBank {
 }
 
 function getPendingDropKey(drop: GameDrop): PendingDropKey {
-  return drop.type === 'gingerbread' && drop.isHot ? 'hot_gingerbread' : drop.type;
+  if (drop.type === 'gingerbread' && drop.isHot && !drop.isMercyDrop && !drop.isHeavyAnchor) {
+    return 'hot_gingerbread';
+  }
+
+  // Keep effect-changing variants separate, while still limiting buckets to a
+  // finite number of type/flag combinations rather than one record per drop.
+  const flags: string[] = [];
+  if (drop.isHot) flags.push('hot');
+  if (drop.isMercyDrop) flags.push('mercy');
+  if (drop.isHeavyAnchor) flags.push('heavy');
+  return flags.length > 0 ? `${flags.join('_')}_${drop.type}` : drop.type;
 }
 
 function isValueMergeableDrop(drop: GameDrop): boolean {
@@ -150,9 +160,19 @@ export function spawnDropWithLimit(
     };
     pendingDropBank.byKey[key] = bucket;
   } else if (mergeValues) {
+    const previousGoldenTimer = bucket.drop.goldenRushTimer ?? 0;
+    const previousExpiration = bucket.drop.expiration ?? -1;
     bucket.totalValue += incomingValue;
     bucket.count = 1;
     bucket.drop = { ...incoming, dead: false, value: bucket.totalValue };
+    if (incoming.isHot) {
+      bucket.drop.goldenRushTimer = Math.max(previousGoldenTimer, incoming.goldenRushTimer ?? 0);
+    }
+    if (incoming.expiration !== undefined) {
+      bucket.drop.expiration = previousExpiration < 0
+        ? incoming.expiration
+        : Math.max(previousExpiration, incoming.expiration);
+    }
     normalizeQueuedGingerbread(bucket.drop);
   } else {
     bucket.count++;
