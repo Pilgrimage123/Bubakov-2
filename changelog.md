@@ -4,6 +4,7 @@
 - Poutník používá stejnou komponentu profilu jako ostatní lovci. Zamčené karty si zachovávají postupné odhalování identity.
 - Zmenšen portrét na odemčených kartách, sloučeny duplicitní nápovědy a zavedeno kompaktní zalamování bez vnitřního pevného výškového limitu; dlouhý text zůstává celý čitelný i na úzkých obrazovkách.
 - Podrobné okno uvádí stejné základní parametry zbraně přímo z herního registru, aby se popisy a čísla nemusely ručně duplikovat.
+- Doplněny základní dosahy/úhly švihů, počet a letové parametry projektilů u šesti počátečních zbraní. Opravena chybná metadata Kropenky: engine skutečně uděluje 22 základního poškození na kapku, nikoli 30; oprava sjednocuje informační kartu i odhad ve zbrojnici s reálným útokem.
 - Upřesněny popisy schopností podle aktuální implementace: Pasáčkův následný dusot, Kořenářčino sanctuarium, dosah a panika Ponocného i úplné účinky Farního požehnání a Babiččiny schopnosti.
 
 ## 2026-10-22 — Čitelnost informačních karet lovců
