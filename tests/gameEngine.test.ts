@@ -355,7 +355,7 @@ describe('GameEngine Headless Simulation', () => {
         'physical',
         expectedForce,
         0,
-        expect.objectContaining({ stunDuration: 0.35 * (hunter.maxHp / 200) })
+        expect.objectContaining({ stunDuration: 0.875 * (hunter.maxHp / 200) })
       );
     });
   });
