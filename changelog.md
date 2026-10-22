@@ -1,3 +1,7 @@
+## 2026-10-22 — Prodloužení omráčení po kontaktním odstrčení
+
+- Prodlouženo omráčení bubáků po kontaktním odstrčení lovcem na 2,5násobek: základní délka se mění z 0,35 s na 0,875 s před započtením koeficientu maximální Kuráže. Cooldown protiútoku zůstává 1,2 s.
+
 ## 2026-10-22 — Oprava konsolidace dropů bez dočasných alokací
 
 - Opravena konsolidace drobných mincí a perníčků v `SoADropManager`: příchozí drop se při konsolidaci správně spotřebuje.
