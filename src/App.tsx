@@ -6529,7 +6529,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (isActiveVirtualCrow) {
               const reach = e.radius + player.radius;
               const touchingPlayer = distToPlayerSq < reach * reach;
-              e.crowContactCooldown = Math.max(0, (e.crowContactCooldown || 0) - dt);
               if (touchingPlayer) {
                 e.isAttacking = true;
                 e.inContact = true;
