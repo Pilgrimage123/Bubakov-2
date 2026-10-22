@@ -355,6 +355,7 @@ export class VirtualLeaderCrowWave {
       enemy._crowWaveActive = true;
       enemy.crowWaveIndex = i;
       enemy.crowWavePointMultiplier = CROW_WAVE_POINT_MULTIPLIER;
+      enemy.crowContactCooldown = this.phaseOffset[i] % 0.65;
       enemy.isSwarmMember = true;
       enemy.isSwarmLeader = i === 0;
       enemy.vx = this.sweepDirX * this.sweepSpeed;
