@@ -1,7 +1,7 @@
 import type { GameLevelId, MilestoneChoice, GameDrop, MetaProgression } from '../types';
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
-import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker, createSwarmDropReservoir, type SwarmDropReservoir } from './drops';
+import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker, createSwarmDropReservoir, type SwarmDropReservoir, createPendingDropBank, type PendingDropBank } from './drops';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -19,6 +19,8 @@ export interface EngineState {
   projectiles: any[];
   slashes: any[];
   drops: GameDrop[];
+  /** Compact overflow bank for rewards waiting for a slot under the 40-drop hard cap. */
+  pendingDropBank: PendingDropBank;
   decor: any[];
   particles: any[];
   texts: any[];
@@ -140,6 +142,7 @@ export function createInitialEngineState(): EngineState {
     projectiles: [],
     slashes: [],
     drops: [],
+    pendingDropBank: createPendingDropBank(),
     decor: [],
     particles: [],
     texts: [],
