@@ -1,3 +1,5 @@
+import type { WeaponId } from '../types';
+
 export type HunterDetailKey = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
 export interface HunterDetail {
