@@ -5,6 +5,7 @@ import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
 import { drawGingerbreadHeartCanvas } from './pernicekCanvas';
 import { drawGlyphText } from './glyphAtlas';
+import { getGlobalBakedBubakAtlas } from './bakedBubakAtlas';
 
 const ladaSpriteCache = new Map<string, HTMLCanvasElement>();
 
@@ -6125,13 +6126,15 @@ var Lada = {
 		ctx.translate(x, y);
 
 		const frostAuraPulse = Math.sin(time * 3.5) * 3.5;
-		ctx.shadowColor = "#93E5FF";
-		ctx.shadowBlur = 10;
-		ctx.fillStyle = "rgba(125, 211, 252, 0.12)";
+		// Soft double-concentric aura instead of GPU-stalling shadowBlur (ADR 0029)
+		ctx.fillStyle = "rgba(147, 229, 255, 0.22)";
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse + 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "rgba(125, 211, 252, 0.14)";
 		ctx.beginPath();
 		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.shadowBlur = 0;
 
 		ctx.strokeStyle = "rgba(186, 230, 253, 0.65)";
 		ctx.lineWidth = 1.6;
@@ -9740,14 +9743,19 @@ var Lada = {
 		ctx.restore();
 
 		if (isHot) {
-			// Horký perníček čerstvě z pece – zářivá aura
+			// Horký perníček čerstvě z pece – zářivá aura bez drahého shadowBlur (ADR 0029)
 			ctx.save();
-			ctx.shadowColor = '#F59E0B';
-			ctx.shadowBlur = 10;
-			ctx.strokeStyle = 'rgba(251, 191, 36, 0.55)';
-			ctx.lineWidth = 2.5;
+			const hotRadius = (size === 'giant' ? 22 : (size === 'large' ? 16 : 12));
+			ctx.strokeStyle = 'rgba(245, 158, 11, 0.32)';
+			ctx.lineWidth = 5.5;
 			ctx.beginPath();
-			ctx.arc(0, 0, (size === 'giant' ? 22 : (size === 'large' ? 16 : 12)), 0, Math.PI * 2);
+			ctx.arc(0, 0, hotRadius + 1, 0, Math.PI * 2);
+			ctx.stroke();
+
+			ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)';
+			ctx.lineWidth = 2.0;
+			ctx.beginPath();
+			ctx.arc(0, 0, hotRadius, 0, Math.PI * 2);
 			ctx.stroke();
 			ctx.restore();
 		}
@@ -15773,10 +15781,35 @@ function drawEnemyRenderer(
     ? enemy
     : getEnemyAttackAnimationState(enemy || {}, time);
 
-  if (extraArgs && extraArgs.length > 0) {
-    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
-  } else {
-    drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo);
+  const methodToMobId: Record<string, string> = {
+    drawRarach: 'rarach',
+    drawMysak: 'mysak',
+    drawBludicka: 'bludicka',
+    drawHejkal: 'hejkal',
+    drawDivozenka: 'divozenka',
+    drawCertik: 'certik',
+    drawSkeleton: 'skeleton',
+    drawStageCrow: 'vrana',
+    drawVrana: 'vrana',
+    drawZmrzlik: 'zmrzlik',
+    drawVodnicek: 'vodnicek',
+    drawSkodnik: 'skodnik',
+    drawTopivec: 'topivec',
+  };
+
+  const bakedMobId = methodToMobId[method];
+  const canUseAtlas = bakedMobId && !isAttacking && (!extraArgs || extraArgs.length === 0);
+  let drawnViaAtlas = false;
+  if (canUseAtlas) {
+    drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+  }
+
+  if (!drawnViaAtlas) {
+    if (extraArgs && extraArgs.length > 0) {
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
+    } else {
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo);
+    }
   }
 
   ctx.restore();

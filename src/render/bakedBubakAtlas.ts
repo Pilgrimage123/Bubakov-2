@@ -1,16 +1,28 @@
 /**
- * Sprite-Baking Pilot for Common Bubáks
+ * Sprite-Baking Atlas for Common Bubáks (Atlas běžných strašidel)
  *
- * Pre-renders key animation frames of high-frequency mobs (rarach, mysak, bludicka)
- * into offscreen bitmap canvases, enabling fast blitting via ctx.drawImage in
- * performance-constrained scenarios without losing authentic Josef Lada styling.
+ * Pre-renders key animation frames of high-frequency wave mobs into offscreen
+ * bitmap canvases, enabling fast blitting via ctx.drawImage in real gameplay
+ * without losing authentic Josef Lada styling.
  *
- * Plan: docs/plans/arena-performance-implementation-plan.md (Section 6)
+ * ADR 0017, ADR 0029
  */
 
 import { Lada } from './ladaRenderer';
 
-export type BakedBubakId = 'rarach' | 'mysak' | 'bludicka';
+export type BakedBubakId =
+  | 'rarach'
+  | 'mysak'
+  | 'bludicka'
+  | 'hejkal'
+  | 'divozenka'
+  | 'certik'
+  | 'skeleton'
+  | 'vrana'
+  | 'zmrzlik'
+  | 'vodnicek'
+  | 'skodnik'
+  | 'topivec';
 
 export interface BakedFrame {
   canvas: any;
@@ -21,46 +33,77 @@ export interface BakedFrame {
   originY: number;
 }
 
+interface MobConfig {
+  size: number;
+  drawFn: (ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) => void;
+}
+
 export class BakedBubakAtlas {
   private frames: Map<string, BakedFrame> = new Map();
   private initialized = false;
-  private readonly frameSteps = 4; // 4 discrete animation phases
+  private readonly frameSteps = 4; // Compatible with 4-phase pilot tests
 
   public init(): void {
     if (this.initialized) return;
 
-    const pilotMobs: BakedBubakId[] = ['rarach', 'mysak', 'bludicka'];
-    const canvasSize = 96;
-    const originX = 48;
-    const originY = 48;
+    const mobConfigs: Record<BakedBubakId, MobConfig> = {
+      rarach: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawRarach(c, x, y, t, v, p) },
+      mysak: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawMysak(c, x, y, t, v, p) },
+      bludicka: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawBludicka(c, x, y, t, v, p) },
+      hejkal: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawHejkal(c, x, y, t, v, p) },
+      divozenka: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawDivozenka(c, x, y, t, v, p) },
+      certik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawCertik(c, x, y, t, v, p) },
+      skeleton: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawSkeleton(c, x, y, t, v, p) },
+      vrana: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawStageCrow(c, x, y, t, v, p) },
+      zmrzlik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawZmrzlik(c, x, y, t, v, p) },
+      vodnicek: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawVodnicek(c, x, y, t, v, p) },
+      skodnik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawSkodnik(c, x, y, t, v, p) },
+      topivec: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawTopivec(c, x, y, t, v, p) },
+    };
 
-    for (const mobId of pilotMobs) {
-      for (let step = 0; step < this.frameSteps; step++) {
-        const animTime = (step / this.frameSteps) * 2;
-        const { canvas, ctx } = this.createFrameCanvas(canvasSize, canvasSize);
+    const mobIds = Object.keys(mobConfigs) as BakedBubakId[];
 
-        ctx.save();
-        ctx.translate(originX, originY);
+    for (let m = 0; m < mobIds.length; m++) {
+      const mobId = mobIds[m];
+      const cfg = mobConfigs[mobId];
+      const canvasSize = cfg.size;
+      const originX = canvasSize / 2;
+      const originY = canvasSize / 2;
 
-        if (mobId === 'rarach') {
-          Lada.drawRarach(ctx, 0, 0, animTime, 1, false);
-        } else if (mobId === 'mysak') {
-          Lada.drawMysak(ctx, 0, 0, animTime, 1, false);
-        } else if (mobId === 'bludicka') {
-          Lada.drawBludicka(ctx, 0, 0, animTime, 1, false);
+      // Pre-bake both normal and panicked states across discrete animation steps
+      for (const panicked of [false, true]) {
+        for (let step = 0; step < this.frameSteps; step++) {
+          const animTime = (step / this.frameSteps) * 2;
+          const { canvas, ctx } = this.createFrameCanvas(canvasSize, canvasSize);
+
+          ctx.save();
+          ctx.translate(originX, originY);
+          cfg.drawFn(ctx, 0, 0, animTime, 1, panicked);
+          ctx.restore();
+
+          // Standard key
+          const key = `${mobId}_${step}_${panicked ? 1 : 0}`;
+          this.frames.set(key, {
+            canvas,
+            ctx,
+            width: canvasSize,
+            height: canvasSize,
+            originX,
+            originY,
+          });
+
+          // Also set legacy key for backward compatibility with pilot tests
+          if (!panicked) {
+            this.frames.set(`${mobId}_${step}`, {
+              canvas,
+              ctx,
+              width: canvasSize,
+              height: canvasSize,
+              originX,
+              originY,
+            });
+          }
         }
-
-        ctx.restore();
-
-        const key = `${mobId}_${step}`;
-        this.frames.set(key, {
-          canvas,
-          ctx,
-          width: canvasSize,
-          height: canvasSize,
-          originX,
-          originY,
-        });
       }
     }
 
@@ -116,28 +159,37 @@ export class BakedBubakAtlas {
     return { canvas, ctx };
   }
 
-  public getFrame(mobId: BakedBubakId, animTime: number): BakedFrame | undefined {
+  public getFrame(mobId: string, animTime: number, panicked = false): BakedFrame | undefined {
     if (!this.initialized) this.init();
-    // Normalize animTime into one of 4 steps
     const step = Math.floor(Math.abs(animTime * 2) % this.frameSteps);
-    return this.frames.get(`${mobId}_${step}`);
+    return this.frames.get(`${mobId}_${step}_${panicked ? 1 : 0}`) || this.frames.get(`${mobId}_${step}`);
   }
 
   public draw(
     ctx: CanvasRenderingContext2D,
-    mobId: BakedBubakId,
+    mobId: string,
     x: number,
     y: number,
-    animTime: number
+    animTime: number,
+    vx = 1,
+    panicked = false
   ): boolean {
-    const frame = this.getFrame(mobId, animTime);
-    if (!frame) return false;
+    const frame = this.getFrame(mobId, animTime, panicked);
+    if (!frame || typeof ctx.drawImage !== 'function') return false;
 
-    ctx.drawImage(
-      frame.canvas,
-      Math.round(x - frame.originX),
-      Math.round(y - frame.originY)
-    );
+    if (vx < 0) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(frame.canvas, -frame.originX, -frame.originY);
+      ctx.restore();
+    } else {
+      ctx.drawImage(
+        frame.canvas,
+        Math.round(x - frame.originX),
+        Math.round(y - frame.originY)
+      );
+    }
     return true;
   }
 }
@@ -150,4 +202,8 @@ export function getGlobalBakedBubakAtlas(): BakedBubakAtlas {
     globalBakedBubakAtlas.init();
   }
   return globalBakedBubakAtlas;
+}
+
+export function resetGlobalBakedBubakAtlas(): void {
+  globalBakedBubakAtlas = null;
 }

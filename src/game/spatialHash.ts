@@ -8,7 +8,15 @@ export class SpatialHash<T extends { x: number; y: number }> {
   private readonly cellSize: number;
   private readonly cells: Map<number, T[]>;
   private readonly touchedCells: number[];
-  private readonly results: T[];
+
+  // Stack of preallocated scratch arrays for re-entrant / nested queries without allocations (ADR 0029)
+  public static readonly SCRATCH_CAPACITY = 8;
+  private readonly scratchStack: T[][] = Array.from(
+    { length: SpatialHash.SCRATCH_CAPACITY },
+    () => [],
+  );
+  private scratchDepth = 0;
+  private scratchPoolIndex = 0;
 
   constructor(cellSize: number = 180) {
     if (!Number.isFinite(cellSize) || cellSize <= 0) {
@@ -20,7 +28,6 @@ export class SpatialHash<T extends { x: number; y: number }> {
     this.cellSize = cellSize;
     this.cells = new Map();
     this.touchedCells = [];
-    this.results = [];
   }
 
   clear(): void {
@@ -30,7 +37,11 @@ export class SpatialHash<T extends { x: number; y: number }> {
       if (cell) cell.length = 0;
     }
     this.touchedCells.length = 0;
-    this.results.length = 0;
+    for (let i = 0; i < this.scratchStack.length; i++) {
+      this.scratchStack[i].length = 0;
+    }
+    this.scratchDepth = 0;
+    this.scratchPoolIndex = 0;
   }
 
   insert(entity: T): void {
@@ -59,10 +70,18 @@ export class SpatialHash<T extends { x: number; y: number }> {
     }
   }
 
+  /**
+   * Queries entities within a circle.
+   *
+   * Automatically cycles through preallocated scratch buffers so nested / re-entrant
+   * queries do not corrupt each other's active results (ADR 0029).
+   */
   queryCircle(x: number, y: number, radius: number): T[] {
-    this.results.length = 0;
-    this.collectCircle(x, y, radius, this.results);
-    return this.results;
+    const buffer = this.scratchStack[this.scratchPoolIndex];
+    this.scratchPoolIndex = (this.scratchPoolIndex + 1) % SpatialHash.SCRATCH_CAPACITY;
+    buffer.length = 0;
+    this.collectCircle(x, y, radius, buffer);
+    return buffer;
   }
 
   queryRadius(x: number, y: number, radius: number): T[] {
@@ -72,8 +91,7 @@ export class SpatialHash<T extends { x: number; y: number }> {
   /**
    * Fills a caller-owned array.
    *
-   * Use this when the result must survive another SpatialHash query.
-   * queryCircle() intentionally reuses an internal array to avoid allocations.
+   * Use this when the result must survive another SpatialHash query or persist across ticks.
    */
   queryCircleInto(
     x: number,
@@ -93,6 +111,36 @@ export class SpatialHash<T extends { x: number; y: number }> {
     out: T[],
   ): T[] {
     return this.queryCircleInto(x, y, radius, out);
+  }
+
+  /**
+   * Scoped zero-allocation query: automatically acquires and releases
+   * a depth-tracked scratch buffer from the scratch stack.
+   */
+  public withQuery(
+    x: number,
+    y: number,
+    radius: number,
+    fn: (results: readonly T[]) => void,
+  ): void {
+    let buffer: T[];
+    let usedStack = false;
+    if (this.scratchDepth < this.scratchStack.length) {
+      buffer = this.scratchStack[this.scratchDepth++];
+      usedStack = true;
+    } else {
+      buffer = [];
+    }
+    buffer.length = 0;
+    try {
+      this.collectCircle(x, y, radius, buffer);
+      fn(buffer);
+    } finally {
+      buffer.length = 0;
+      if (usedStack) {
+        this.scratchDepth--;
+      }
+    }
   }
 
   private collectCircle(
@@ -132,22 +180,22 @@ export class SpatialHash<T extends { x: number; y: number }> {
   }
 
   queryNearest(x: number, y: number, maxRadius: number, filter?: (e: T) => boolean): T | null {
-    const nearby = this.queryCircle(x, y, maxRadius);
-    if (nearby.length === 0) return null;
     let closest: T | null = null;
     let minDistSq = maxRadius * maxRadius;
-    const len = nearby.length;
-    for (let i = 0; i < len; i++) {
-      const e = nearby[i];
-      if (filter && !filter(e)) continue;
-      const dx = e.x - x;
-      const dy = e.y - y;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < minDistSq) {
-        minDistSq = distSq;
-        closest = e;
+    this.withQuery(x, y, maxRadius, (nearby) => {
+      const len = nearby.length;
+      for (let i = 0; i < len; i++) {
+        const e = nearby[i];
+        if (filter && !filter(e)) continue;
+        const dx = e.x - x;
+        const dy = e.y - y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < minDistSq) {
+          minDistSq = distSq;
+          closest = e;
+        }
       }
-    }
+    });
     return closest;
   }
 }

@@ -151,9 +151,11 @@ function drawGingerbreadStash(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.ellipse(0, 16 - bob * 0.5, 20, 8, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Amber ambient glow
-  ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
-  ctx.shadowBlur = 10;
+  // Amber ambient underlay glow stamp instead of shadowBlur (ADR 0029)
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 22, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   // Woven Wicker Basket Body
   ctx.fillStyle = '#D97706';
@@ -170,7 +172,6 @@ function drawGingerbreadStash(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.stroke();
 
   // Wicker weave lines
-  ctx.shadowBlur = 0;
   ctx.strokeStyle = '#78350F';
   ctx.lineWidth = 1.5;
   ctx.beginPath();

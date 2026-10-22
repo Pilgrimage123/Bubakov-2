@@ -174,9 +174,11 @@ export class OffScreenIndicatorController {
         label = 'TRUHLA';
       }
 
-      // Outer glow
-      ctx.shadowColor = badgeGlow;
-      ctx.shadowBlur = 12;
+      // Outer glow underlay stamp instead of shadowBlur (ADR 0029)
+      ctx.fillStyle = badgeGlow;
+      ctx.beginPath();
+      ctx.arc(-22, 0, 18, 0, Math.PI * 2);
+      ctx.fill();
 
       // Pointer Arrow (pointing right since rotate(angle) aligns right with direction)
       ctx.fillStyle = badgeColor;
@@ -196,7 +198,6 @@ export class OffScreenIndicatorController {
       ctx.stroke();
 
       // Rounded Badge behind arrow
-      ctx.shadowBlur = 0;
       ctx.fillStyle = '#261F1A';
       ctx.strokeStyle = badgeColor;
       ctx.lineWidth = 2;

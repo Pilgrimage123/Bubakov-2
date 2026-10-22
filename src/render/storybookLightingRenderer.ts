@@ -69,16 +69,62 @@ function getStipplePattern(mainCtx: CanvasRenderingContext2D): CanvasPattern | n
 
 export const LIGHT_DOWNSCALE_FACTOR = 0.5;
 
+export function getProfileLightFactor(profile?: string): number {
+  if (profile === 'performance') return 0.25;
+  if (profile === 'fidelity') return 0.5;
+  return 0.33; // Default balanced profile (ADR 0029)
+}
+
+const radialLightStamps = new Map<string, HTMLCanvasElement>();
+
 /**
- * Ensures the offscreen light composite canvas matches current screen dimensions at 0.5x resolution.
- * Achieves 75% fillrate reduction and soft gouache blending.
+ * Pre-rendered 128x128 soft radial light stamps (warm, fire, cold)
+ * eliminating per-frame createRadialGradient overhead (ADR 0029).
+ */
+export function getRadialLightStamp(colorKey: 'warm' | 'fire' | 'cold'): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+  let canvas = radialLightStamps.get(colorKey);
+  if (canvas) return canvas;
+
+  canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const sCtx = canvas.getContext('2d');
+  if (!sCtx) return null;
+
+  const grad = sCtx.createRadialGradient(64, 64, 58, 64, 64, 64);
+  if (colorKey === 'fire') {
+    grad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
+    grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+  } else if (colorKey === 'cold') {
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+    grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+  } else {
+    // warm lamp / petrolejka
+    grad.addColorStop(0, 'rgba(245, 158, 11, 0.45)');
+    grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+  }
+
+  sCtx.fillStyle = grad;
+  sCtx.beginPath();
+  sCtx.arc(64, 64, 64, 0, Math.PI * 2);
+  sCtx.fill();
+
+  radialLightStamps.set(colorKey, canvas);
+  return canvas;
+}
+
+/**
+ * Ensures the offscreen light composite canvas matches current screen dimensions at downscaled resolution.
+ * Achieves 75%-89% fillrate reduction and soft gouache blending.
  */
 export function getLightBuffer(
   width: number,
-  height: number
+  height: number,
+  factor: number = LIGHT_DOWNSCALE_FACTOR
 ): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null {
-  const scaledWidth = Math.ceil(width * LIGHT_DOWNSCALE_FACTOR);
-  const scaledHeight = Math.ceil(height * LIGHT_DOWNSCALE_FACTOR);
+  const scaledWidth = Math.ceil(width * factor);
+  const scaledHeight = Math.ceil(height * factor);
 
   if (typeof document === 'undefined') {
     if (!lightBufferCanvas) {
@@ -330,13 +376,23 @@ function renderSteppedGouacheHaloToBuffer(
   ctx.fill();
 
   // 4. Outer rim fade (92% - 100%)
-  const grad = ctx.createRadialGradient(cx, cy, haloR, cx, cy, radius);
-  grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`);
-  grad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fill();
+  const stamp = getRadialLightStamp(
+    rgb.r > 200 && rgb.g < 100 ? 'fire' : rgb.b > 200 && rgb.r < 100 ? 'cold' : 'warm'
+  );
+  if (stamp) {
+    ctx.save();
+    ctx.globalAlpha = (ctx.globalAlpha || 1.0) * intensity;
+    ctx.drawImage(stamp, cx - radius, cy - radius, radius * 2, radius * 2);
+    ctx.restore();
+  } else {
+    const grad = ctx.createRadialGradient(cx, cy, haloR, cx, cy, radius);
+    grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`);
+    grad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // 5. Stippled ink edge
   if (stipplePat && radius > 40) {
@@ -587,14 +643,15 @@ export function renderStorybookLightingComposite(
     return;
   }
 
-  const buf = getLightBuffer(screenWidth, screenHeight);
+  const lightFactor = getProfileLightFactor(quality);
+  const buf = getLightBuffer(screenWidth, screenHeight, lightFactor);
   if (!buf) return;
   const { canvas: lCanvas, ctx: lCtx } = buf;
-  // Clear offscreen light buffer and apply 0.5x downscaling transform
+  // Clear offscreen light buffer and apply downscaling transform (0.33x balanced / 0.25x performance)
   lCtx.save();
   lCtx.setTransform(1, 0, 0, 1, 0, 0);
   lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
-  lCtx.setTransform(LIGHT_DOWNSCALE_FACTOR, 0, 0, LIGHT_DOWNSCALE_FACTOR, 0, 0);
+  lCtx.setTransform(lightFactor, 0, 0, lightFactor, 0, 0);
 
   // -------------------------------------------------------------
   // 1. LIGHT PASS: Ambient fill
@@ -670,20 +727,20 @@ export function renderStorybookLightingComposite(
       continue;
     }
 
-    // Render individual light source with shadow volume cutouts downscaled by LIGHT_DOWNSCALE_FACTOR
+    // Render individual light source with shadow volume cutouts downscaled by lightFactor
     const lightSize = Math.ceil(reach * 2 + 10);
-    const scaledLightSize = Math.ceil(lightSize * LIGHT_DOWNSCALE_FACTOR);
+    const scaledLightSize = Math.ceil(lightSize * lightFactor);
     const sBuf = getSingleLightBuffer(scaledLightSize);
 
     if (sBuf) {
       const { canvas: sCanvas, ctx: sCtx } = sBuf;
       const halfSize = lightSize * 0.5;
 
-      // Clear scratch light canvas (downscaled: 75% fewer pixels)
+      // Clear scratch light canvas (downscaled)
       sCtx.clearRect(0, 0, scaledLightSize, scaledLightSize);
 
       sCtx.save();
-      sCtx.scale(LIGHT_DOWNSCALE_FACTOR, LIGHT_DOWNSCALE_FACTOR);
+      sCtx.scale(lightFactor, lightFactor);
 
       // Render stepped gouache halo into scratch buffer
       renderSteppedGouacheHaloToBuffer(

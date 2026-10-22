@@ -18,6 +18,7 @@ import { renderDrops } from './renderDrops';
 import { renderParticles } from './renderParticles';
 import { renderProjectilesAndSlashes } from './renderProjectiles';
 import { renderEnemyTelegraphs } from './renderTelegraphs';
+import { renderWorldHazardsAndEncounters } from './renderWorldHazards';
 import { OffScreenIndicatorController } from './offScreenIndicators';
 
 export interface CameraViewport {
@@ -43,6 +44,8 @@ export interface ArenaRenderOptions {
   chunkCache?: ChunkBitmapCache;
   curLvl?: any;
   dayPhase?: any;
+  snowmanHorde?: any;
+  afterEntitiesDrawn?: (entity: any) => void;
 }
 
 export interface ArenaPhaseTimings {
@@ -263,7 +266,32 @@ export class ArenaRenderer {
     ctx.fillRect(0, 0, width, height);
     const backdropMs = now() - tBackdropStart;
 
-    // 2. STATIC DECOR PASS (WITH OPTIONAL CHUNK BITMAP CACHE)
+    // 2. WORLD SPACE PASS (TRANSLATED BY CAMERA - ADR 0029)
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+
+    // 2a. Ambient tint and storm haze over world
+    const isWinter = curLvl.season === 'winter';
+    if (curLvl.theme === 'autumn_graveyard') {
+      ctx.fillStyle = phase.ambientTint !== 'transparent' ? 'rgba(32, 24, 45, 0.42)' : 'rgba(25, 20, 30, 0.22)';
+      ctx.fillRect(camera.x, camera.y, width, height);
+    } else if (!isWinter && phase.ambientTint !== 'transparent') {
+      ctx.fillStyle = phase.ambientTint;
+      ctx.fillRect(camera.x, camera.y, width, height);
+    } else if (isWinter) {
+      ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
+      ctx.fillRect(camera.x, camera.y, width, height);
+    }
+
+    if (engine.flourStormTimer && engine.flourStormTimer > 0) {
+      ctx.save();
+      const alpha = Math.min(0.35, engine.flourStormTimer * 0.08);
+      ctx.fillStyle = `rgba(255, 252, 240, ${alpha})`;
+      ctx.fillRect(camera.x, camera.y, width, height);
+      ctx.restore();
+    }
+
+    // 2b. STATIC DECOR PASS (WITH OPTIONAL CHUNK BITMAP CACHE)
     const tDecorStart = now();
     if (opts.chunkCache) {
       activeChunks = opts.chunkCache.render(ctx, camera);
@@ -300,6 +328,14 @@ export class ArenaRenderer {
     }
     const staticDecorMs = now() - tDecorStart;
 
+    // 2c. WORLD HAZARDS, ANOMALIES & ENCOUNTERS (ADR 0029)
+    renderWorldHazardsAndEncounters(ctx, engine, camera, {
+      warningIndicatorsEnabled: opts.warningIndicatorsEnabled,
+      statusIndicatorsEnabled: opts.statusIndicatorsEnabled,
+      combatVfxEnabled: opts.combatVfxEnabled,
+      snowmanHorde: opts.snowmanHorde || (engine as any).snowmanHorde,
+    });
+
     // 3. DROPS PASS
     const tDropsStart = now();
     if (engine.drops && engine.drops.length > 0) {
@@ -309,7 +345,10 @@ export class ArenaRenderer {
 
     // 4. DYNAMIC ENTITIES PASS (ZERO-ALLOCATION BUFFER)
     const tEntitiesStart = now();
-    renderedEntities = this.renderEntities(ctx, engine, camera, { combatVfxEnabled: opts.combatVfxEnabled });
+    renderedEntities = this.renderEntities(ctx, engine, camera, {
+      combatVfxEnabled: opts.combatVfxEnabled,
+      afterEntitiesDrawn: opts.afterEntitiesDrawn,
+    });
     const entitiesMs = now() - tEntitiesStart;
 
     // 5. ENEMY TELEGRAPHS PASS
@@ -341,7 +380,31 @@ export class ArenaRenderer {
     }
     const particlesMs = now() - tParticlesStart;
 
-    // 8. LIGHTING PASS
+    // 8. COMBAT FLOATING TEXTS PASS
+    let combatTextsMs = 0;
+    const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
+    if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
+      const tTextsStart = now();
+      for (let i = 0; i < engine.texts.length; i++) {
+        const txt = engine.texts[i];
+        if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
+          continue;
+        }
+        if (!shouldDrawCombatText(txt.category, txt.text)) {
+          continue;
+        }
+        if (typeof txt.draw === 'function') {
+          txt.draw(ctx);
+        } else if (txt.text) {
+          drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
+        }
+      }
+      combatTextsMs = now() - tTextsStart;
+    }
+
+    ctx.restore(); // END WORLD SPACE PASS (TRANSLATED BY CAMERA)
+
+    // 9. LIGHTING PASS (SCREEN SPACE)
     let lightingMs = 0;
     if (opts.lightingEnabled) {
       const tLightStart = now();
@@ -363,28 +426,6 @@ export class ArenaRenderer {
         );
       }
       lightingMs = now() - tLightStart;
-    }
-
-    // 9. COMBAT FLOATING TEXTS PASS
-    let combatTextsMs = 0;
-    const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
-    if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
-      const tTextsStart = now();
-      for (let i = 0; i < engine.texts.length; i++) {
-        const txt = engine.texts[i];
-        if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
-          continue;
-        }
-        if (!shouldDrawCombatText(txt.category, txt.text)) {
-          continue;
-        }
-        if (typeof txt.draw === 'function') {
-          txt.draw(ctx);
-        } else if (txt.text) {
-          drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
-        }
-      }
-      combatTextsMs = now() - tTextsStart;
     }
 
     // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS)

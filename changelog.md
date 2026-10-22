@@ -1,3 +1,26 @@
+## 2026-10-22 — Sjednocení vykreslovací pipeline, atlas strašidel a zero-allocation herní cyklus (ADR 0029)
+
+- **Architektonické sjednocení pipeline (`App.tsx`, `arenaRenderer.ts` & `renderWorldHazards.ts`)**:
+  - Eliminována duální vykreslovací pipeline: přes 800 řádků duplikovaného kreslení z `App.tsx` bylo přesunuto do dedikovaného modulu `renderWorldHazards.ts` a `renderArena()`.
+  - Celý svět (pozadí, terénní anomálie, Zrádný terén, louže sněhuláků, Bubácká díra, svěcený křídový kruh, Dědeček, společnice a aury zbraní) je nyní konzistentně zapouzdřen do světového průchodu pod transformací kamery `ctx.save() / translate(-camera.x, -camera.y) / restore()`.
+- **Eager Atlas Baking řadových strašidel (`bakedBubakAtlas.ts` & `ladaRenderer.ts`)**:
+  - Rozšířen offscreen atlas z 3 na všech 12 kanonických řadových strašidel (`rarach`, `mysak`, `bludicka`, `hejkal`, `divozenka`, `certik`, `skeleton`, `vrana`, `zmrzlik`, `vodnicek`, `skodnik`, `topivec`) pro normální i panikařící stavy.
+  - V `drawEnemyRenderer` jsou kráčející řadoví mobové blitováni jediným voláním `ctx.drawImage()`, což eliminuje 30–50 procedurálních křivkových příkazů na entitu za snímek při zachování 100% věrnosti ladovské estetiky. Útočné animace a bossové plynule přecházejí na plné procedurální kreslení.
+- **Odstranění `shadowBlur` & adaptivní kvašové noční svícení (`storybookLightingRenderer.ts`)**:
+  - Plně eliminován drahý `ctx.shadowBlur` z herních smyček (mrazivá aura, perníčky, ukazatele mimo obrazovku a dropy) a nahrazen vrstvenými koncentrickými výplněmi bez GPU flushe.
+  - Zavedeny předpečené 128×128 měkké radiální světelné textury (teplé, ohňové, chladné) eliminující per-frame konstrukci `createRadialGradient`.
+  - Škálování rozlišení světelného kompozitu adaptováno dle profilu: 0.33× pro Balanced (snížení fillrate o 89 %) a 0.25× pro Performance.
+- **Bezpečnost re-entrace SpatialHash & Zero-Allocation queries (`spatialHash.ts` & `engine.ts`)**:
+  - Vyřešen kritický hazard přepsání sdíleného bufferu při vnořených dotazech (např. řetězová reakce při smrti nepřítele v průběhu iterace plošného útoku biče nebo svěcené křídy).
+  - Implementován prealokovaný zásobník `scratchStack` (hloubka 8), rotující indexy bufferů a metody `withQuery(x, y, r, fn)` a `queryCircleInto(x, y, r, out)`.
+- **Bezalokační cyklus pro kosmetické efekty (`cosmeticRingPool.ts`, `engine.ts` & `glyphAtlas.ts`)**:
+  - Zaveden `CosmeticRingPool<T>` s pevnou kapacitou a automatickým přepisováním nejstarších záznamů při hromadných AoE zásazích.
+  - Plovoucí bojové texty (`DamageText`) získaly pooling, metodu `reset()` a prioritní vykreslování přes `drawGlyphText()` s nulovou alokací písem.
+  - V herním cyklu nahrazen `.splice(0, ...)` pro texty i částice posunem prvků v poli na místě a zkrácením délky pole.
+- **Zastropování fyzického rozlišení a DPI (`App.tsx`)**:
+  - V obsluze `resize()` zaveden strop fyzického bufferu plátna na 1920×1080 (zamezení 4K/Retina alokací přes 8 Mpx) a ošetřeno zbytečné přenastavování rozměrů plátna, které vynucovalo buffer reallocation v prohlížeči.
+  - Zajištěno přesné škálování souřadnic kurzoru a dotyku poměrem plátna.
+
 ## 2026-10-22 — Odstranění nežádoucích spawnů monster v zorném poli hráče a zátěžový benchmark strašidel
 
 - **Odstranění spawnů uvnitř kamery (`App.tsx` & `RunDirector`)**:

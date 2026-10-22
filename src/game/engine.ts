@@ -63,6 +63,8 @@ import {
   type DropSpawnOptions,
 } from './drops';
 import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
+import { drawGlyphText } from '../render/glyphAtlas';
+import { CosmeticRingPool } from './cosmeticRingPool';
 import type { GrandfatherItemDef } from '../data/grandfatherItems';
 import { RunDirector } from './director';
 import { getCurrentDayPhase } from '../constants';
@@ -106,17 +108,29 @@ export function compactInPlace<T>(items: T[], keep: (item: T) => boolean, onRecy
 }
 
 export class DamageText {
-  x: number;
-  y: number;
-  text: string;
-  color: string;
-  life: number;
-  size: number;
-  vy: number;
-  category: CombatTextCategory;
+  x: number = 0;
+  y: number = 0;
+  text: string = '';
+  color: string = '#FFFFFF';
+  life: number = 1.0;
+  size: number = 18;
+  vy: number = -45;
+  category: CombatTextCategory = 'enemyDamage';
   icon?: string;
 
   constructor(
+    x: number = 0,
+    y: number = 0,
+    text: string = '',
+    color = '#FFFFFF',
+    big = false,
+    category?: CombatTextCategory,
+    icon?: string
+  ) {
+    this.reset(x, y, text, color, big, category, icon);
+  }
+
+  reset(
     x: number,
     y: number,
     text: string,
@@ -124,7 +138,7 @@ export class DamageText {
     big = false,
     category?: CombatTextCategory,
     icon?: string
-  ) {
+  ): void {
     this.x = x + (Math.random() - 0.5) * 20;
     this.y = y + (Math.random() - 0.5) * 20;
     this.color = color;
@@ -140,6 +154,7 @@ export class DamageText {
       this.icon = 'gingerbread';
       this.text = text.replace(/🍪/g, '').replace(/\s{2,}/g, ' ').trim();
     } else {
+      this.icon = undefined;
       this.text = text;
     }
 
@@ -163,6 +178,15 @@ export class DamageText {
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
+    if (!this.icon && this.text && typeof drawGlyphText === 'function') {
+      const drawn = drawGlyphText(ctx, this.text, this.x, this.y, {
+        size: this.size,
+        color: this.color,
+        alpha: Math.max(0, this.life),
+      });
+      if (drawn) return;
+    }
+
     ctx.save();
     ctx.globalAlpha = Math.max(0, this.life);
     ctx.fillStyle = this.color;
@@ -359,6 +383,7 @@ export class GameEngine {
   private projectilePool: any[] = [];
   private slashPool: any[] = [];
   private dropPool: GameDrop[] = [];
+  private damageTextPool = new CosmeticRingPool<DamageText>(MAX_DAMAGE_TEXTS, () => new DamageText(0, 0, ''));
 
   constructor(
     initialStateOrOptions?: EngineState | RunInitOptions,
@@ -393,8 +418,11 @@ export class GameEngine {
   ): DamageText | null {
     const cat = category || inferCombatTextCategory(text);
     if (!isCombatTextCategoryEnabled(cat)) return null;
-    const dt = new DamageText(x, y, text, color, big, cat);
-    this.state.texts.push(dt);
+    const dt = this.damageTextPool.acquire();
+    dt.reset(x, y, text, color, big, cat);
+    if (!this.state.texts.includes(dt)) {
+      this.state.texts.push(dt);
+    }
     this.callbacks?.onDamageText?.(dt);
     return dt;
   }
@@ -451,6 +479,7 @@ export class GameEngine {
     this.state.meta = metaProg;
     this.spatialHash.clear();
     this.livingEnemies = [];
+    this.damageTextPool.clear();
 
     this.state.player = this.createPlayer(chosenHunter, metaProg, weapons);
 
@@ -2024,6 +2053,14 @@ export class GameEngine {
     return this.spatialHash.queryCircle(x, y, radius);
   }
 
+  public queryCircleInto(x: number, y: number, radius: number, out: any[]): any[] {
+    return this.spatialHash.queryCircleInto(x, y, radius, out);
+  }
+
+  public withQuery(x: number, y: number, radius: number, fn: (results: readonly any[]) => void): void {
+    this.spatialHash.withQuery(x, y, radius, fn);
+  }
+
   public queryNearest(x: number, y: number, maxRadius: number, filter?: (e: any) => boolean): any | null {
     return this.spatialHash.queryNearest(x, y, maxRadius, filter);
   }
@@ -2272,7 +2309,9 @@ export class GameEngine {
         hc._scanTimer = (hc._scanTimer || 0) + dt;
         if (hc._scanTimer >= 0.1 || !hc._cachedUnholy) {
           hc._scanTimer = 0;
-          hc._cachedUnholy = this.spatialHash.queryCircle(hc.x, hc.y, hc.radius + 60);
+          hc._unholyBuffer = hc._unholyBuffer || [];
+          this.spatialHash.queryCircleInto(hc.x, hc.y, hc.radius + 60, hc._unholyBuffer);
+          hc._cachedUnholy = hc._unholyBuffer;
         }
         const nearbyUnholy = hc._cachedUnholy;
         for (let ui = 0; ui < nearbyUnholy.length; ui++) {
@@ -2581,14 +2620,15 @@ export class GameEngine {
                   const fearResist = e.willpower || 0;
                   e.panicTimer = Math.max(e.panicTimer || 0, 2.0 * (1 - fearResist * 0.5));
                   e.panicked = true;
-                  const tipNear = this.spatialHash.queryCircle(e.x, e.y, 100);
-                  for (let ti = 0; ti < tipNear.length; ti++) {
-                    const te = tipNear[ti];
-                    if (!te.isDefeated && !te.dead) {
-                      te.panicTimer = Math.max(te.panicTimer || 0, 2.0 * (1 - (te.willpower || 0) * 0.5));
-                      te.panicked = true;
+                  this.spatialHash.withQuery(e.x, e.y, 100, (tipNear) => {
+                    for (let ti = 0; ti < tipNear.length; ti++) {
+                      const te = tipNear[ti];
+                      if (!te.isDefeated && !te.dead) {
+                        te.panicTimer = Math.max(te.panicTimer || 0, 2.0 * (1 - (te.willpower || 0) * 0.5));
+                        te.panicked = true;
+                      }
                     }
-                  }
+                  });
                 }
                 this.state.texts.push(new DamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true));
               }
@@ -3162,7 +3202,11 @@ export class GameEngine {
       }
       compactInPlace(this.state.texts, (t) => (t.life ?? 1) > 0);
       if (this.state.texts.length > MAX_DAMAGE_TEXTS) {
-        this.state.texts.splice(0, this.state.texts.length - MAX_DAMAGE_TEXTS);
+        const excess = this.state.texts.length - MAX_DAMAGE_TEXTS;
+        for (let i = 0; i < MAX_DAMAGE_TEXTS; i++) {
+          this.state.texts[i] = this.state.texts[i + excess];
+        }
+        this.state.texts.length = MAX_DAMAGE_TEXTS;
       }
     }
 
@@ -3185,7 +3229,11 @@ export class GameEngine {
       compactInPlace(this.state.particles, (p) => p.life > 0);
       const particleLimit = getParticleLimit(this.state.meta?.performanceProfile);
       if (this.state.particles.length > particleLimit) {
-        this.state.particles.splice(0, this.state.particles.length - particleLimit);
+        const excess = this.state.particles.length - particleLimit;
+        for (let i = 0; i < particleLimit; i++) {
+          this.state.particles[i] = this.state.particles[i + excess];
+        }
+        this.state.particles.length = particleLimit;
       }
     }
 

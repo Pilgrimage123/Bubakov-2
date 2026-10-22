@@ -29,6 +29,7 @@ function createMockCtx() {
     fillRect() {},
     stroke() {},
     fill() {},
+    drawImage() {},
     quadraticCurveTo() {},
     bezierCurveTo() {},
     fillText() {},
