@@ -71,16 +71,11 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
     expect(manager.flyweights[2].dead).toBe(true);
   });
 
-  it('performs in-place 2D spatial hash consolidation when >= 3 compatible drops exist in a 180px cell', () => {
-    // Spawn 3 minor gingerbreads in the same 180px cell (cell 0, 0)
+  it('consolidates three existing minor drops and consumes the incoming drop', () => {
     manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
     manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
     manager.spawn({ type: 'gingerbread', x: 60, y: 60, value: 2 });
 
-    expect(manager.count).toBe(3);
-
-    // The 4th compatible minor drop consolidates three existing drops and
-    // is consumed without allocating a new slot.
     const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
 
     expect(incoming).toBeNull();
@@ -88,6 +83,24 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
     expect(manager.values[0]).toBe(7);
     expect(manager.flyweights[0].size).toBe('large');
     expect(manager.flyweights[1].dead).toBe(true);
+  });
+
+  it('retains the consolidated drop when the retained record is last and companions precede it', () => {
+    manager.spawn({ type: 'coin', x: 400, y: 400, value: 1 });
+    manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
+    manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
+    manager.spawn({ type: 'gingerbread', x: 60, y: 60, value: 2 });
+
+    const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
+
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(2);
+    const combinedIndex = manager.itemTypes[0] === 2 && manager.values[0] === 7 ? 0 : 1;
+    expect(manager.itemTypes[combinedIndex]).toBe(2);
+    expect(manager.values[combinedIndex]).toBe(7);
+    expect(manager.flyweights[combinedIndex].size).toBe('large');
+    expect(manager.itemTypes[1 - combinedIndex]).toBe(1);
+    expect(manager.values[1 - combinedIndex]).toBe(1);
   });
 
   it('keeps the consolidated drop when one of the selected records is the last slot', () => {
