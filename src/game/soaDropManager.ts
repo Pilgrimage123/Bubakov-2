@@ -233,15 +233,15 @@ export class SoADropManager {
     const cellX = Math.floor(x / SPATIAL_CELL_SIZE);
     const cellY = Math.floor(y / SPATIAL_CELL_SIZE);
     const targetTypeIdx = DROP_TYPE_INDICES[type];
-
     let first = -1;
     let second = -1;
     let third = -1;
+
+    // Find three existing compatible records without creating a temporary array.
     for (let i = 0; i < this.count; i++) {
       if (this.itemTypes[i] !== targetTypeIdx) continue;
       if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
       if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
-
       const compatible = isMinorCoin
         ? this.values[i] < 5
         : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
@@ -255,6 +255,11 @@ export class SoADropManager {
     const combined = Math.round(
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
+    const oldCount = this.count;
+    let write = 0;
+
+    // Compact selected records in one pass. When the retained record is read,
+    // write its combined value and saved fields directly to the compacted slot.
     const keepX = this.posX[first];
     const keepY = this.posY[first];
     const keepVx = this.vx[first];
@@ -269,12 +274,9 @@ export class SoADropManager {
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
-    // Compact the array while preserving the selected record's scalar snapshot.
-    // `write` never exceeds `read`, so copying forward cannot overwrite unread data.
-    const oldCount = this.count;
-    let write = 0;
     for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
+
       if (read === first) {
         this.posX[write] = keepX;
         this.posY[write] = keepY;
