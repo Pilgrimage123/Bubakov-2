@@ -6710,9 +6710,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
           enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
-          // Slévání perníčků (Drop Fusion) každých 1.5 s nebo při nahromadění > 200 kusů
+          // Slévání kořisti každých 1,5 s nebo při dosažení limitu 40 položek
           engine.dropFusionTimer = (engine.dropFusionTimer || 0) + dt;
-          if (engine.dropFusionTimer >= 1.5 || engine.drops.length > 200) {
+          if (engine.dropFusionTimer >= 1.5 || engine.drops.length >= 40) {
             engine.dropFusionTimer = 0;
             const viewBounds = {
               left: engine.camera.x - 120,
@@ -6720,7 +6720,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               right: engine.camera.x + canvas.width + 120,
               bottom: engine.camera.y + canvas.height + 160,
             };
-            performDropFusion(engine.drops, viewBounds, 200);
+            performDropFusion(engine.drops, viewBounds, 40);
             compactInPlace(engine.drops, (d) => !d.dead);
           }
 
