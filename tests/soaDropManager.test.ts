@@ -85,6 +85,22 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
     expect(manager.flyweights[1].dead).toBe(true);
   });
 
+  it('preserves drops before and after the consolidated records', () => {
+    manager.spawn({ type: 'coin', x: 400, y: 400, value: 1 });
+    manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
+    manager.spawn({ type: 'coin', x: 800, y: 800, value: 3 });
+    manager.spawn({ type: 'gingerbread', x: 40, y: 40, value: 2 });
+    manager.spawn({ type: 'gingerbread', x: 60, y: 60, value: 2 });
+
+    const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
+
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(3);
+    expect(Array.from(manager.values.slice(0, manager.count))).toContain(7);
+    expect(Array.from(manager.values.slice(0, manager.count))).toContain(1);
+    expect(Array.from(manager.values.slice(0, manager.count))).toContain(3);
+  });
+
   it('retains the consolidated drop when the retained record is last and companions precede it', () => {
     manager.spawn({ type: 'coin', x: 400, y: 400, value: 1 });
     manager.spawn({ type: 'gingerbread', x: 20, y: 20, value: 2 });
