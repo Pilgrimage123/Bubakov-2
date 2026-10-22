@@ -918,6 +918,10 @@ export class GameEngine {
   ): any {
     let resolvedId = id;
     let stats: EnemyStats = ENEMIES[resolvedId];
+    // The registry key is "snehulak"; the horde uses this canonical runtime ID.
+    if (!stats && resolvedId === 'tajici_snehulak') {
+      stats = ENEMIES.snehulak;
+    }
     if (!stats) {
       console.warn(`[Bubakov] Unknown enemy id: "${id}" in createHeadlessEnemy, resolving safe fallback`);
       const fallbackMap: Record<string, string> = {
@@ -1864,6 +1868,7 @@ export class GameEngine {
           angle: s.angle ?? 0,
           dmg: s.dmg ?? 20,
           type: s.type || 'physical',
+          visualOnly: !!s.visualOnly,
           dead: false,
         });
       } else {
@@ -1880,6 +1885,7 @@ export class GameEngine {
           angle: s.angle ?? 0,
           dmg: s.dmg ?? 20,
           type: s.type || 'physical',
+          visualOnly: !!s.visualOnly,
           hitList: s.hitList ? [...s.hitList] : [],
           dead: false,
         };
@@ -2557,6 +2563,7 @@ export class GameEngine {
       s.time = (s.time || 0) + dt;
       s.life -= dt;
       if (s.life <= 0) s.dead = true;
+      if (s.visualOnly) continue;
 
       const nearby = this.spatialHash.queryCircle(s.x, s.y, s.reach + 72);
       for (let j = 0; j < nearby.length; j++) {
