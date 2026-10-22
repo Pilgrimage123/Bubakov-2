@@ -3182,15 +3182,22 @@ export class GameEngine {
           }
         }
       }
-      const fusionTarget = hasPendingDrops(this.state.pendingDropBank)
-        ? MAX_DROPS_LIMIT - 1
-        : MAX_DROPS_LIMIT;
-      performDropFusion(this.state.drops, undefined, fusionTarget);
+      const pendingBank = this.state.pendingDropBank
+        ?? (this.state.pendingDropBank = createPendingDropBank());
+      this.state.dropFusionTimer = (this.state.dropFusionTimer || 0) + dt;
+      if (
+        this.state.dropFusionTimer >= 1.5 ||
+        this.state.drops.length > MAX_DROPS_LIMIT
+      ) {
+        this.state.dropFusionTimer = 0;
+        const fusionTarget = hasPendingDrops(pendingBank)
+          ? MAX_DROPS_LIMIT - 1
+          : MAX_DROPS_LIMIT;
+        performDropFusion(this.state.drops, undefined, fusionTarget);
+      }
       compactInPlace(this.state.drops, (d) => !d.dead, (d) => {
         if (this.dropPool.length < 100) this.dropPool.push(d);
       });
-      const pendingBank = this.state.pendingDropBank
-        ?? (this.state.pendingDropBank = createPendingDropBank());
       releasePendingDrops(this.state.drops, pendingBank);
     }
 
