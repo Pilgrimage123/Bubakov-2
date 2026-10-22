@@ -6437,7 +6437,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (currentGameState === 'playing' && player && virtualCrowWave) {
             const spawnedCrowWave = virtualCrowWave.update(dt, engine, player, canvas.width, canvas.height);
             if (spawnedCrowWave) {
-              engine.texts.push(new DamageText(player.x, player.y - 64, '🐦‍⬛ HEJNO VRAN SE SROČUJE!', '#1F2937', true, 'directorWarningBanners'));
+              engine.texts.push(new DamageText(player.x, player.y - 64, '🐦‍⬛ HEJNO VRAN PŘILÉTÁ!', '#1F2937', true, 'directorWarningBanners'));
             }
             crowWavePlayerInBounds = virtualCrowWave.isWithinBounds(
               player.x, player.y, (player.radius || 20) + CROW_WAVE_HIT_RADIUS
@@ -6446,11 +6446,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // Update Enemies
           for (const e of engine.enemies) {
-            if (engine.timeStopTimer > 0) {
+            if (engine.timeStopTimer > 0 || e.dead) {
               continue;
             }
 
-            if (e.brawlTimer && e.brawlTimer > 0) {
+            // Virtual flock members never use the optional friendly-fire brawl AI.
+            if (!e.isVirtualCrowMember && e.brawlTimer && e.brawlTimer > 0) {
               e.brawlTimer = Math.max(0, e.brawlTimer - dt);
               let nearestFoe: any = null;
               let nearestDist = 999999;
