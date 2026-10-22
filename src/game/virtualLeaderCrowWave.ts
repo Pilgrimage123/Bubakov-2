@@ -147,6 +147,8 @@ export class VirtualLeaderCrowWave {
       enemy.dead = true;
       enemy.isDefeated = true;
       enemy.isVirtualCrowMember = true;
+      enemy._crowWaveOwner = this;
+      enemy._crowWaveInEngine = false;
       enemy._crowWaveActive = false;
     }
 
@@ -348,6 +350,8 @@ export class VirtualLeaderCrowWave {
       enemy.isMiniboss = false;
       enemy.panicked = false;
       enemy.isVirtualCrowMember = true;
+      enemy._crowWaveOwner = this;
+      enemy._crowWaveInEngine = false;
       enemy._crowWaveActive = true;
       enemy.crowWaveIndex = i;
       enemy.crowWavePointMultiplier = CROW_WAVE_POINT_MULTIPLIER;
@@ -370,8 +374,20 @@ export class VirtualLeaderCrowWave {
       this.previousY[i] = enemy.y;
       this.active[i] = 1;
 
-      // The pool object is reused if it is still present; don't duplicate it.
-      if (!engine.enemies.includes(enemy)) engine.enemies.push(enemy);
+    }
+
+    // Membership is discovered with one O(E) pass, then we insert missing
+    // pooled objects in O(N). Avoid Array.includes() per crow (O(N × E)).
+    for (let i = 0; i < engine.enemies.length; i++) {
+      const existing = engine.enemies[i];
+      if (existing._crowWaveOwner === this) existing._crowWaveInEngine = true;
+    }
+    for (let i = 0; i < this.count; i++) {
+      const enemy = this.crows[i];
+      if (!enemy._crowWaveInEngine) {
+        engine.enemies.push(enemy);
+        enemy._crowWaveInEngine = true;
+      }
     }
 
     this.waveNumber++;
