@@ -243,6 +243,44 @@ export class VirtualLeaderCrowWave {
 
         const oldX = this.x[i];
         const oldY = this.y[i];
+
+        // Tick transient combat state in-place. This replaces the regular enemy
+        // updater's Object.entries() allocation while retaining normal hit/slow timers.
+        enemy.crowContactCooldown = Math.max(0, (enemy.crowContactCooldown || 0) - dt);
+        if ((enemy.hitFlashTimer || 0) > 0) enemy.hitFlashTimer = Math.max(0, enemy.hitFlashTimer - dt);
+        if ((enemy.contactTimer || 0) > 0) enemy.contactTimer = Math.max(0, enemy.contactTimer - dt);
+        if ((enemy.stunTimer || 0) > 0) enemy.stunTimer = Math.max(0, enemy.stunTimer - dt);
+        if ((enemy.snackTimer || 0) > 0) enemy.snackTimer = Math.max(0, enemy.snackTimer - dt);
+        if ((enemy.garlicSlowTimer || 0) > 0) enemy.garlicSlowTimer = Math.max(0, enemy.garlicSlowTimer - dt);
+        if ((enemy.vycerpanyTimer || 0) > 0) enemy.vycerpanyTimer = Math.max(0, enemy.vycerpanyTimer - dt);
+        if ((enemy.fajfkaSlowTimer || 0) > 0) {
+          enemy.fajfkaSlowTimer = Math.max(0, enemy.fajfkaSlowTimer - dt);
+          if (enemy.fajfkaSlowTimer <= 0) {
+            enemy.fajfkaMoveSlowFactor = 1;
+            enemy.fajfkaAttackSlowFactor = 1;
+          }
+        }
+        if ((enemy.soakedTimer || 0) > 0) {
+          enemy.soakedTimer = Math.max(0, enemy.soakedTimer - dt);
+          if (enemy.soakedTimer <= 0) enemy.soaked = false;
+        }
+        if ((enemy.chillTimer || 0) > 0) {
+          enemy.chillTimer = Math.max(0, enemy.chillTimer - dt);
+          if (enemy.chillTimer <= 0) enemy.chilled = false;
+        }
+        if ((enemy.silhouetteInvertTimer || 0) > 0) enemy.silhouetteInvertTimer = Math.max(0, enemy.silhouetteInvertTimer - dt);
+        const effects = enemy.statusEffects;
+        if (effects) {
+          for (const effectId in effects) {
+            if (!Object.prototype.hasOwnProperty.call(effects, effectId)) continue;
+            const effect = effects[effectId];
+            if (effect && typeof effect.remaining === 'number') {
+              effect.remaining -= dt;
+              if (effect.remaining <= 0) delete effects[effectId];
+            }
+          }
+        }
+
         const offsetX = this.baseOffsetX[i];
         const offsetY = this.baseOffsetY[i];
         const rotatedX = offsetX * cosRotation - offsetY * sinRotation;
