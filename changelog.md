@@ -1,3 +1,10 @@
+## 2026-10-22 — Čitelnost informačních karet lovců
+
+- Upraveny karty výběru lovce: popisy, indicie zbraní/schopností a průběh výzvy se bezpečně zalamují i při úzkém viewportu.
+- Statistiky lovce používají pružnou dvousloupcovou mřížku místo čtyř úzkých sloupců; informace o zbrani, pasivu a zvláštní schopnosti už nejsou stlačené do pevně vysokého rolovacího boxu.
+- Zlepšena velikost písma, řádkování a rozvržení popisů; na mobilu se zmenší okraje karty a portrét zůstává přiměřený dostupné šířce.
+- Opravy se týkají pouze prezentace UI; herní statistiky, schopnosti a postup odemykání zůstávají beze změny.
+
 ## 2026-10-22 — Globální hard cap 40 předmětů v aréně
 
 - Všechny produkční cesty vytváření kořisti (App.tsx, GameEngine a rezervoár hejn) nyní procházejí spawnDropWithLimit; při zaplnění už nevznikají neřízené náhradní dropy.
