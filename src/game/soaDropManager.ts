@@ -224,9 +224,8 @@ export class SoADropManager {
   /**
    * Consolidates three compatible minor drops in the same spatial cell.
    *
-   * Returns true when consolidation consumed the incoming drop. The caller can
-   * then skip allocating/spawning that drop; false means normal spawn proceeds.
-   * The method intentionally uses scalar indices rather than temporary arrays.
+   * Returns true when the incoming drop should be consumed. Scalar indices are
+   * used to avoid allocating a temporary matching-index array in the hot path.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -240,16 +239,15 @@ export class SoADropManager {
     let first = -1;
     let second = -1;
     let third = -1;
-
     for (let i = 0; i < this.count; i++) {
       if (this.itemTypes[i] !== targetTypeIdx) continue;
       if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
       if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
 
-      const isCompatible = isMinorCoin
+      const compatible = isMinorCoin
         ? this.values[i] < 5
         : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
-      if (!isCompatible) continue;
+      if (!compatible) continue;
 
       if (first < 0) first = i;
       else if (second < 0) second = i;
@@ -258,75 +256,45 @@ export class SoADropManager {
         break;
       }
     }
-
     if (third < 0) return false;
 
-    // Preserve value and apply the documented consolidation bonus.
+    // Reuse the first selected record for the combined value and preserve the
+    // documented +15% bonus. The incoming fourth drop is consumed by spawn().
     const accumulated = (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS;
     const consolidatedValue = Math.round(accumulated);
     this.values[first] = consolidatedValue;
+    this.radii[first] = type === 'gingerbread'
+      ? (consolidatedValue >= GINGERBREAD_VALUES.giant ? 19 : 14)
+      : 12;
 
-    if (type === 'gingerbread') {
-      const isGiant = consolidatedValue >= GINGERBREAD_VALUES.giant;
-      this.radii[first] = isGiant ? 19 : 14;
-    } else {
-      this.radii[first] = 12;
+    // Compact all records except the retained one in a single stable pass.
+    // This avoids swap-back index invalidation when the retained record was the
+    // final element or one of the selected companion indices.
+    let write = 0;
+    const oldCount = this.count;
+    for (let read = 0; read < oldCount; read++) {
+      if (read === second || read === third) continue;
+      if (write !== read) {
+        this.posX[write] = this.posX[read];
+        this.posY[write] = this.posY[read];
+        this.vx[write] = this.vx[read];
+        this.vy[write] = this.vy[read];
+        this.values[write] = this.values[read];
+        this.radii[write] = this.radii[read];
+        this.expirations[write] = this.expirations[read];
+        this.times[write] = this.times[read];
+        this.goldenRushTimers[write] = this.goldenRushTimers[read];
+        this.magnetMobility[write] = this.magnetMobility[read];
+        this.itemTypes[write] = this.itemTypes[read];
+        this.flags[write] = this.flags[read];
+      }
+      write++;
     }
-    this.syncFlyweight(first);
+    this.count = write;
+    for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
 
-    // removeAt uses swap-back, so remove the selected slots from highest to
-    // lowest. If the retained slot itself is the last entry, swap-back moves it;
-    // track the consolidated record's position through each removal.
-    const selected = [first, second, third].sort((a, b) => b - a);
-    let retainedIndex = first;
-    for (const index of selected) {
-      if (index === retainedIndex) {
-        // The retained drop is removed from its old slot only when that exact
-        // selected index is reached; move its consolidated value into the last
-        // slot first so the record survives the removal.
-        const last = this.count - 1;
-        if (index !== last) {
-          this.posX[last] = this.posX[index];
-          this.posY[last] = this.posY[index];
-          this.vx[last] = this.vx[index];
-          this.vy[last] = this.vy[index];
-          this.values[last] = this.values[index];
-          this.radii[last] = this.radii[index];
-          this.expirations[last] = this.expirations[index];
-          this.times[last] = this.times[index];
-          this.goldenRushTimers[last] = this.goldenRushTimers[index];
-          this.magnetMobility[last] = this.magnetMobility[index];
-          this.itemTypes[last] = this.itemTypes[index];
-          this.flags[last] = this.flags[index];
-          retainedIndex = last;
-        }
-      }
-      if (index !== retainedIndex) {
-        this.removeAt(index);
-      } else {
-        // For the retained slot, remove a different selected slot instead:
-        // swap-back removal of a selected companion into this slot is avoided
-        // by making the retained slot the final live index after compaction.
-        const last = this.count - 1;
-        if (retainedIndex !== last) {
-          this.posX[last] = this.posX[retainedIndex];
-          this.posY[last] = this.posY[retainedIndex];
-          this.vx[last] = this.vx[retainedIndex];
-          this.vy[last] = this.vy[retainedIndex];
-          this.values[last] = this.values[retainedIndex];
-          this.radii[last] = this.radii[retainedIndex];
-          this.expirations[last] = this.expirations[retainedIndex];
-          this.times[last] = this.times[retainedIndex];
-          this.goldenRushTimers[last] = this.goldenRushTimers[retainedIndex];
-          this.magnetMobility[last] = this.magnetMobility[retainedIndex];
-          this.itemTypes[last] = this.itemTypes[retainedIndex];
-          this.flags[last] = this.flags[retainedIndex];
-        }
-        this.removeAt(last);
-        retainedIndex = Math.min(retainedIndex, this.count - 1);
-      }
-    }
-    this.syncFlyweight(retainedIndex);
+    // Flyweight identity must follow the compacted SoA record, not its old slot.
+    for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
     return true;
   }
 
