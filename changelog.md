@@ -1,7 +1,7 @@
 ## 2026-10-22 — Globální hard cap 40 předmětů v aréně
 
 - Všechny produkční cesty vytváření kořisti (App.tsx, GameEngine a rezervoár hejn) nyní procházejí spawnDropWithLimit; při zaplnění už nevznikají neřízené náhradní dropy.
-- Přidán kompaktní čekající rezervoár s pevně omezeným počtem bucketů podle typu a účinkových variant. Krejcary a perníčky se agregují se zachováním hodnoty; horké a běžné perníčky zůstávají oddělené a léčivé/ kotvicí varianty si uchovávají svá metadata; speciální odměny zachovávají svůj typ.
+- Přidán kompaktní čekající rezervoár s pevně omezeným počtem bucketů podle typu a účinkových variant. Krejcary a perníčky se agregují se zachováním hodnoty; horké a běžné perníčky zůstávají oddělené a léčivé a těžké kotvicí varianty si uchovávají svá metadata; speciální odměny zachovávají svůj typ.
 - Po sebrání nebo sloučení kořisti se volná místa doplňují z čekajícího rezervoáru, vždy nejvýše do 40 živých dropů.
 - Slévání v hlavní herní smyčce i v GameEngine zachovává interval 1,5 s; pokud čekají odměny, slučování se pokusí uvolnit místo pod limitem.
 - Přidán tests/dropHardCap.test.ts a upraven test rezervoáru hejn pro ověření limitu a zachování hodnot čekajících odměn.
