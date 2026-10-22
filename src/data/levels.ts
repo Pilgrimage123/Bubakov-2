@@ -42,8 +42,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 4.5
 		},
 		midBoss: {
-			id: "vodnicek",
-			name: "💧 Jarní Vodníček",
+			id: 			name: "💧 Jarní Vodníček",
 			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
 			time: 75,
 			kills: 60,
@@ -70,15 +69,13 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"vrana",
 				"blatouch",
 				"sotek",
-				"rarach",
-				"jezinka_mraziva"
+								"jezinka_mraziva"
 			],
 			dusk: [
 				"blatouch",
 				"jezinka_mraziva",
 				"tajici_snehulak",
-				"rarach",
-				"mrazivy_obr"
+								"mrazivy_obr"
 			],
 			night: [
 				"mrazovy_skritek",
@@ -87,10 +84,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"bludicka"
 			],
 			midnight: [
-				"vodnicek",
-				"mrazovy_skritek",
-				"topivec",
-				"bludicka"
+								"mrazovy_skritek",
+								"bludicka"
 			]
 		},
 		keyEnemies: [
