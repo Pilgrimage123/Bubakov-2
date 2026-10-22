@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   getGrandfatherPrice,
   isGrandfatherPriceExempt,
   getGrandfatherRerollCost,
   getWaitDiscount,
   createGrandfatherRuntime,
+  getGrandfatherInflatingPurchaseCount,
+  chooseGrandfatherOffers,
   GRANDFATHER_INFLATION_RATE,
 } from '../src/game/grandfatherRuntime';
 import { GRANDFATHER_ITEMS, getGrandfatherItem } from '../src/data/grandfatherItems';
@@ -82,6 +84,34 @@ describe('Dědečkův obchod ekonomika (Grandfather Shop Economy)', () => {
     // With 100 luck (6% discount) and 40 seconds wait (10% discount):
     // 35 * 2 * 0.94 * 0.90 = 59.22 -> 59
     expect(getGrandfatherPrice(item, 2, 100, 40)).toBe(59);
+  });
+
+  it('does not let currency payouts or exempt one-shot purchases inflate later upgrades', () => {
+    const regularUpgrade = getGrandfatherItem('sedmimile_krpce')!;
+    const coinPayout = getGrandfatherItem('pekeln_poklad_zlaty')!;
+    const rareInstant = getGrandfatherItem('masopust_rattle')!;
+    const purchases = ['pekeln_poklad_zlaty', 'masopust_rattle'];
+
+    expect(getGrandfatherInflatingPurchaseCount(purchases)).toBe(0);
+    expect(getGrandfatherPrice(regularUpgrade, getGrandfatherInflatingPurchaseCount(purchases), 0, 0)).toBe(regularUpgrade.baseCost);
+    expect(getGrandfatherInflatingPurchaseCount(['sedmimile_krpce', 'pekeln_poklad_zlaty'])).toBe(1);
+    expect(getGrandfatherInflatingPurchaseCount(['weapon_upgrade:kysela_okurka:upgrade_x'])).toBe(1);
+    expect(isGrandfatherPriceExempt(coinPayout)).toBe(true);
+    expect(isGrandfatherPriceExempt(rareInstant)).toBe(true);
+  });
+
+  it('never offers Courage-refill items when Courage is full', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.25);
+    try {
+      const offers = chooseGrandfatherOffers(1000, 100, [], [], 4, { playerHp: 100, playerMaxHp: 100 });
+      expect(offers.length).toBeGreaterThan(0);
+      expect(offers.every((offer) => {
+        const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
+        return item?.effect.type !== 'heal';
+      })).toBe(true);
+    } finally {
+      randomSpy.mockRestore();
+    }
   });
 
   it('does not inflate healing consumables or direct-currency treasures', () => {

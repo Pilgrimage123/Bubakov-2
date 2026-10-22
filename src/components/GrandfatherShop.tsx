@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
-import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, getWeaponUpgradeOffer, type GrandfatherOffer } from '../game/grandfatherRuntime';
+import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, getGrandfatherInflatingPurchaseCount, getWeaponUpgradeOffer, type GrandfatherOffer } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { PernicekIcon } from './PernicekIcon';
 import { GrandfatherScene } from './GrandfatherScene';
@@ -112,7 +112,7 @@ function getItemQuote(item: GrandfatherItemDef): string {
   if (item.id === 'kovarska_podkova') return '„Poctivá podkova z panské kovárny! Všechny perníčky, krejcary a dušičky z celé louky se k tobě v mžiku sletí!“';
   if (item.id === 'hlineny_kohoutek') return '„Malovaný hliněný kohoutek! Jakmile zakokrhá na ranní rozbřesk, noční havěť se rozprchne a bossové dostanou pořádnou ránu!“';
   if (item.id === 'vyrezavane_kukacky') return '„Vyřezávané kukačky ze Šumavy! Když zakukají, čas se na čtyři vteřiny úplně zastaví!“';
-  if (item.id === 'arcivzacny_ananas') return '„Arcivzácný ananas z císařské zahrady! Zázračné ovoce, které se vidí jednou za sto let — dá ti královskou sílu a nezranitelnost!“';
+  if (item.id === 'arcivzacny_ananas') return '„Vzácný ovocný klenot z dálného Žaponska si může dovolit jen pravý pan baron!“';
   if (item.id === 'wp_whip') return '„Formanský bič! Poctivá kožená práce s jasanovým bičištěm — práskni a žádný zbojník ani bubák se ti nenapřáhne!“';
   if (item.id === 'trikralova_krida') return '„Posvěcená tříkrálová křída od svatého Jiří! Napiš na zem K+M+B a žádný čert ani umrlec přes práh nepřejde!“';
   if (item.id === 'strouhany_kren') return '„Čerstvě strouhaný křen z mé zahrádky v ubrousku! Protáhne dutiny tak, že i kostlivci začnou slzet a mlsat!“';
@@ -140,6 +140,10 @@ export function GrandfatherShop({
   onClose,
 }: Props) {
   const discount = Math.round(getWaitDiscount(waitSeconds) * 100);
+  const visibleOffers = offers.filter((offer) => {
+    const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
+    return !(item?.effect.type === 'heal' && playerHp >= playerMaxHp);
+  });
 
   // Shop animation states
   const [sceneState, setSceneState] = useState<'idle' | 'reaching' | 'pulling' | 'rerolling' | 'purchasing'>('idle');
@@ -198,10 +202,17 @@ export function GrandfatherShop({
   // Handle Item Purchase action
   const handlePurchase = useCallback((itemId: string) => {
     const item = GRANDFATHER_ITEMS.find((it) => it.id === itemId);
-    if (!item) return;
+    const weaponUpgrade = getWeaponUpgradeOffer(itemId);
+    if (!item && !weaponUpgrade) return;
 
     const success = onPurchase(itemId);
     if (success) {
+      if (item && (item.isRareInstant || item.effect.type === 'coins')) {
+        // onPurchase applies the gameplay effect synchronously before closing the shop.
+        onClose();
+        return;
+      }
+
       setJustPurchasedId(itemId);
       setSceneState('purchasing');
       setQuote(PURCHASE_QUOTES[Math.floor(Math.random() * PURCHASE_QUOTES.length)]);
@@ -211,7 +222,7 @@ export function GrandfatherShop({
         setSceneState('idle');
       }, 950);
     }
-  }, [onPurchase]);
+  }, [onPurchase, onClose]);
 
   // Keyboard shortcuts (Escape to close, 1-4 to purchase, R to reroll)
   useEffect(() => {
@@ -223,11 +234,20 @@ export function GrandfatherShop({
       }
       if (['1', '2', '3', '4'].includes(e.key)) {
         const idx = parseInt(e.key, 10) - 1;
-        const offer = offers[idx];
+        const offer = visibleOffers[idx];
         if (offer && !purchasedIds.includes(offer.itemId)) {
           const item = GRANDFATHER_ITEMS.find((it) => it.id === offer.itemId);
-          const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
-          const price = item ? getGrandfatherPrice(item, purchaseCount, luck, waitSeconds) : 999;
+          const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
+          const pricedItem = item ?? (weaponUpgrade ? {
+            id: weaponUpgrade.id,
+            name: weaponUpgrade.name,
+            icon: weaponUpgrade.icon,
+            description: weaponUpgrade.description,
+            baseCost: weaponUpgrade.baseCost,
+            effect: { type: 'luck', amount: 0 },
+          } as GrandfatherItemDef : undefined);
+          const purchaseCount = getGrandfatherInflatingPurchaseCount(purchasedIds);
+          const price = pricedItem ? getGrandfatherPrice(pricedItem, purchaseCount, luck, waitSeconds) : 999;
           if (gingerbread >= price) {
             e.preventDefault();
             handlePurchase(offer.itemId);
@@ -242,7 +262,7 @@ export function GrandfatherShop({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, offers, purchasedIds, gingerbread, totalPurchases, purchasesThisEncounter, luck, waitSeconds, rerollCost, onRefreshOffers, handlePurchase, handleReroll]);
+  }, [onClose, visibleOffers, purchasedIds, gingerbread, luck, waitSeconds, rerollCost, onRefreshOffers, handlePurchase, handleReroll]);
 
   // Handle Hover over item card ("Dědeček vytahuje věci z nůše / ukazuje na ně")
   const handleItemHover = useCallback((item: GrandfatherItemDef) => {
@@ -530,7 +550,7 @@ export function GrandfatherShop({
             </div>
 
             {/* Wares Grid (Pulled items from the basket) */}
-            {(!offers || offers.length === 0) ? (
+            {visibleOffers.length === 0 ? (
               <div
                 style={{
                   padding: '36px 16px',
@@ -584,12 +604,12 @@ export function GrandfatherShop({
                   alignContent: 'start',
                 }}
               >
-                {offers.map((offer, idx) => {
+                {visibleOffers.map((offer, idx) => {
                   const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
                   const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
                   if (!item && !weaponUpgrade) return null;
 
-                  const purchaseCount = totalPurchases !== undefined ? totalPurchases : (purchasedIds?.length ?? purchasesThisEncounter);
+                  const purchaseCount = getGrandfatherInflatingPurchaseCount(purchasedIds);
                   const price = getGrandfatherPrice(
                     weaponUpgrade
                       ? { id: weaponUpgrade.id, name: weaponUpgrade.name, icon: weaponUpgrade.icon, description: weaponUpgrade.description, baseCost: weaponUpgrade.baseCost, effect: { type: 'luck', amount: 0 } } as GrandfatherItemDef

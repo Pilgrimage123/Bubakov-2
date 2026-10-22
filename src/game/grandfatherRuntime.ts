@@ -58,9 +58,23 @@ export function getWaitDiscount(waitSeconds: number, maxDiscount = 0.30): number
 
 export const GRANDFATHER_INFLATION_RATE = 0.50;
 
-/** Healing consumables and direct-currency treasures keep their base price. */
+/** Healing consumables and direct-currency treasures keep their base price and never increase future prices. */
 export function isGrandfatherPriceExempt(item: GrandfatherItemDef): boolean {
   return item.effect.type === 'heal' || item.effect.type === 'coins' || !!item.isRareInstant;
+}
+
+/**
+ * Counts only purchases that increase the price of later permanent upgrades.
+ * Coin payouts and other price-exempt one-shot purchases are ignored. Dynamic
+ * weapon-specialization purchases have no static item definition, so they count.
+ */
+export function getGrandfatherInflatingPurchaseCount(purchasedIds: string[]): number {
+  let count = 0;
+  for (const id of purchasedIds) {
+    const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === id);
+    if (/^weapon_upgrade:/.test(id) || (item && !isGrandfatherPriceExempt(item))) count++;
+  }
+  return count;
 }
 
 export function getGrandfatherPrice(
@@ -82,8 +96,13 @@ export function chooseGrandfatherOffers(
   purchasedIds: string[],
   playerWeapons: any[] = [],
   count = 4,
+  playerState: { playerHp?: number; playerMaxHp?: number } = {},
 ): GrandfatherOffer[] {
+  const isFullCourage = playerState.playerHp !== undefined
+    && playerState.playerMaxHp !== undefined
+    && playerState.playerHp >= playerState.playerMaxHp;
   const isAvailable = (item: GrandfatherItemDef) => {
+    if (isFullCourage && item.effect.type === 'heal') return false;
     if (item.isWeapon && item.weaponId) {
       const pw = playerWeapons.find((w: any) => w.id === item.weaponId);
       return (pw ? pw.level : 0) < (item.maxStacks ?? 8);
