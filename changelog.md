@@ -1,3 +1,11 @@
+## 2026-10-22 — Oprava Dědečkova obchodu
+
+- Cenovou přirážku zvyšují pouze nákupy běžných upgradů; poklady vyplácející krejcary a cenově osvobozené jednorázové předměty nezvyšují budoucí ceny.
+- Jednorázové okamžité poklady a výplaty v krejcarech zavřou nůši až po provedení účinku; Arcivzácný ananas zůstává výjimkou, protože doplňuje Kuráž.
+- Při plné Kuráži se léčivé předměty do nabídky vůbec nezařazují; stejná podmínka chrání i samotný nákupní handler.
+- Arcivzácný ananas dostal požadovanou hlášku Dědečka o ovocném klenotu z dálného Žaponska a pravém panu baronovi.
+- Doplněny regresní testy inflace po nákupu krejcarových pokladů a filtru nabídky při plné Kuráži.
+
 ## 2026-10-22 — Kompletní a kompaktní informační karty lovců
 
 - Každá odemčená karta nyní zobrazuje základní statistiky, skutečnou počáteční zbraň s hodnotami načítanými z registru, celý popis zbraně, pasivní schopnost i zvláštní schopnost včetně číselných účinků a cooldownu.
