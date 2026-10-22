@@ -2749,10 +2749,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (impact.type === 'holy') {
           pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
         }
+        // Broadphase rejects the whole virtual flock before per-crow AOE collision tests.
+        const crowWaveImpactMayHit = crowWaveRef.current?.isWithinBounds(
+          impact.x, impact.y, impact.radius + CROW_WAVE_HIT_RADIUS
+        ) ?? false;
         const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
           if (e.isDefeated) continue;
+          if (e.isVirtualCrowMember && !crowWaveImpactMayHit) continue;
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
           if (dx*dx+dy*dy <= reach*reach) {
             e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
@@ -6187,9 +6192,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
+            // One squared-distance check against the virtual leader can reject this
+            // projectile before it tests the individual crows in the spatial query.
+            const crowWaveProjectileMayHit = crowWaveRef.current?.isWithinBounds(
+              p.x, p.y, (p.radius || 0) + CROW_WAVE_HIT_RADIUS
+            ) ?? false;
             const nearby=enemySpatialHashRef.current.queryCircle(p.x,p.y,p.radius+72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
+              if (e.isVirtualCrowMember && !crowWaveProjectileMayHit) continue;
               const dx=p.x-e.x, dy=p.y-e.y, reach=p.radius+e.radius;
               if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach*reach) {
                 p.hitList.push(e);
@@ -6419,6 +6430,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
           compactInPlace(engine.slashes, (s) => !s.dead);
 
+          // Update the circular Stage 1 flock once, then let the existing spatial-hash
+          // rebuild below index the freshly computed crow positions for the next frame.
+          let crowWavePlayerInBounds = false;
+          const virtualCrowWave = crowWaveRef.current;
+          if (currentGameState === 'playing' && player && virtualCrowWave) {
+            const spawnedCrowWave = virtualCrowWave.update(dt, engine, player, canvas.width, canvas.height);
+            if (spawnedCrowWave) {
+              engine.texts.push(new DamageText(player.x, player.y - 64, '🐦‍⬛ HEJNO VRAN SE SROČUJE!', '#1F2937', true, 'directorWarningBanners'));
+            }
+            crowWavePlayerInBounds = virtualCrowWave.isWithinBounds(
+              player.x, player.y, (player.radius || 20) + CROW_WAVE_HIT_RADIUS
+            );
+          }
+
           // Update Enemies
           for (const e of engine.enemies) {
             if (engine.timeStopTimer > 0) {
@@ -6459,13 +6484,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            e.update(dt, player);
+            const isActiveVirtualCrow = e.isVirtualCrowMember === true && e._crowWaveActive === true;
+            // The virtual leader already computed this bird's motion. Skip homing AI,
+            // status-map iteration and enemy-to-enemy behavior for active flock members.
+            if (!isActiveVirtualCrow || e.isDefeated || e.dead) {
+              e.update(dt, player);
+            }
 
             if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
               e.isAttacking = false;
               e.windupTimer = 0;
               e.strikeTimer = 0;
               e.inContact = false;
+              continue;
+            }
+
+            // This flock-level broadphase avoids distance and attack checks for each
+            // crow while the hunter is outside the leader's enclosing bounding circle.
+            if (isActiveVirtualCrow && !crowWavePlayerInBounds) {
+              e.isAttacking = false;
+              e.inContact = false;
+              e.windupTimer = 0;
+              e.strikeTimer = 0;
               continue;
             }
 
@@ -6477,14 +6517,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             const cadence: EnemyAttackCadence = e.attackCadence || 'normal';
             const strikeDuration = cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42;
-            const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+            const playerDx = e.x - player.x;
+            const playerDy = e.y - player.y;
+            const distToPlayerSq = playerDx * playerDx + playerDy * playerDy;
+            const distToPlayer = isActiveVirtualCrow ? 0 : Math.hypot(playerDx, playerDy);
             const attackRange = typeof e.attackRange === 'number' ? e.attackRange : (e.radius + 25);
             const totalInterval = e.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
             const attackSlowFactor = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
             const attackDelay = (typeof e.attackDelay === 'number' && e.attackDelay > 0
               ? e.attackDelay
               : Math.max(0.2, totalInterval - strikeDuration)) / attackSlowFactor;
-            const isColliding = distToPlayer < e.radius + player.radius;
+            const contactReach = e.radius + player.radius;
+            const isColliding = isActiveVirtualCrow
+              ? distToPlayerSq < contactReach * contactReach
+              : distToPlayer < contactReach;
+            const inAttackRange = isActiveVirtualCrow
+              ? distToPlayerSq <= attackRange * attackRange
+              : distToPlayer <= attackRange;
 
             // Speciální výpad Čerta s vidlemi
             if (isColliding && currentGameState === 'playing' && e.id === 'cert' && e.aiState === 'charge') {
@@ -6507,7 +6556,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // Enemy is currently playing out the active strike & recovery animation
               e.isAttacking = true;
               e.inContact = true;
-            } else if (distToPlayer <= attackRange) {
+            } else if (inAttackRange) {
               e.isAttacking = true;
               e.inContact = true;
               e.contactLeaveTimer = 0;
@@ -6519,9 +6568,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // Jakmile se nepřítel v těsné blízkosti lovce začne napřahovat k útoku (windupTimer),
               // závan ze syrečku mu podlomí kolena a přepne ho na 4 sekundy do stavu Vyčerpaný (vycerpany – poloviční rychlost pohybu i útoku).
               const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
+              const withinCloseReach = isActiveVirtualCrow
+                ? distToPlayerSq <= closeReach * closeReach
+                : distToPlayer <= closeReach;
               if (
                 (player.syrecekStacks || 0) > 0 &&
-                distToPlayer <= closeReach &&
+                withinCloseReach &&
                 (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
               ) {
                 e.vycerpanyTimer = 4.0;
