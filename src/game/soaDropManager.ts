@@ -267,31 +267,40 @@ export class SoADropManager {
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
-    // Compact all records except the two selected companions. This keeps the
-    // retained record intact regardless of whether any selected index is last.
+    // Swap-back removes the two selected companions. Removing the larger index
+    // first keeps the smaller index valid. If first gets overwritten by the
+    // former last entry, move that retained consolidated record to the last slot
+    // before removal; it will then be outside both removal targets.
     const oldCount = this.count;
-    let write = 0;
-    for (let read = 0; read < oldCount; read++) {
-      if (read === second || read === third) continue;
-      if (write !== read) {
-        this.posX[write] = this.posX[read];
-        this.posY[write] = this.posY[read];
-        this.vx[write] = this.vx[read];
-        this.vy[write] = this.vy[read];
-        this.values[write] = this.values[read];
-        this.radii[write] = this.radii[read];
-        this.expirations[write] = this.expirations[read];
-        this.times[write] = this.times[read];
-        this.goldenRushTimers[write] = this.goldenRushTimers[read];
-        this.magnetMobility[write] = this.magnetMobility[read];
-        this.itemTypes[write] = this.itemTypes[read];
-        this.flags[write] = this.flags[read];
-      }
-      write++;
+    const retainedLast = first === oldCount - 1;
+    if (retainedLast) {
+      // The retained record already occupies the last slot and is safe.
+    } else if (second === oldCount - 1 || third === oldCount - 1) {
+      // The final slot is a companion that will be removed. Copy the retained
+      // record to it, then redirect the retained index to the final slot.
+      const last = oldCount - 1;
+      this.posX[last] = this.posX[first];
+      this.posY[last] = this.posY[first];
+      this.vx[last] = this.vx[first];
+      this.vy[last] = this.vy[first];
+      this.values[last] = this.values[first];
+      this.radii[last] = this.radii[first];
+      this.expirations[last] = this.expirations[first];
+      this.times[last] = this.times[first];
+      this.goldenRushTimers[last] = this.goldenRushTimers[first];
+      this.magnetMobility[last] = this.magnetMobility[first];
+      this.itemTypes[last] = this.itemTypes[first];
+      this.flags[last] = this.flags[first];
+      // Remove the original retained slot as a companion to the last slot.
+      if (second === last) second = first;
+      else third = first;
+      first = last;
     }
 
-    this.count = write;
-    for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
+    const highest = Math.max(second, third);
+    const lowest = Math.min(second, third);
+    this.removeAt(highest);
+    this.removeAt(lowest);
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
     return true;
   }
