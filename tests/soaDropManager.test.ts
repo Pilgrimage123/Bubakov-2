@@ -79,16 +79,16 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
 
     expect(manager.count).toBe(3);
 
-    // When the 4th compatible minor drop is spawned in that cell:
-    // It detects >= 3 existing drops in the cell, upgrades drop 0 in-place with +15% bonus,
-    // destroys drops 1 and 2, and allows the new drop to spawn cleanly.
-    manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
+    // The 4th compatible minor drop consolidates three existing drops and is
+    // consumed into that value, avoiding an extra allocation/slot.
+    const incoming = manager.spawn({ type: 'gingerbread', x: 80, y: 80, value: 2 });
 
-    // 3 old drops consolidated into 1 upgraded drop + 1 new drop = 2 active drops!
-    expect(manager.count).toBe(2);
+    expect(incoming).toBeNull();
+    expect(manager.count).toBe(1);
     // (2 + 2 + 2) * 1.15 = 6.9 -> Math.round = 7
     expect(manager.values[0]).toBe(7);
     expect(manager.flyweights[0].size).toBe('large');
+    expect(manager.flyweights[1].dead).toBe(true);
   });
 
   it('enforces branchless 5% magnet mobility for Heavy Anchors vs standard drops', () => {
