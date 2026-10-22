@@ -169,7 +169,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		baseDmg: 22,
 		baseCd: 1.25,
 		speed: 460,
-		desc: "Zlatavé kynuté buchty plněné povidly. Po zásahu vytvoří fialový oblak vůně o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního poškození buchty za sekundu (odolnost dle Hladu).",
+		desc: "Zlatavé kynuté buchty plněné povidly. Na 1. úrovni se automaticky vrhají na vybraný cíl do 850 px rychlostí 460 px/s. Po zásahu vytvoří fialový oblak vůně o poloměru 140 px na 3,5 s; oblak způsobuje 20 % původního poškození buchty za sekundu (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('povidlove_buchty', level, w);
@@ -230,7 +230,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		icon: "osikovy_prut",
 		baseDmg: 28,
 		baseCd: .65,
-		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý široký sečný oblouk razantně odhání dotěrné skřítky a zloděje. S kapkou rybniční vody získáte Mokrý prut.",
+		desc: "Ohebný osikový prut s pupeny uříznutý v osikovém háji. Rychlý široký sečný oblouk razantně odhání dotěrné skřítky a zloděje; na 1. úrovni má dosah 115 px a úhel 2 rad. S kapkou rybniční vody získáte Mokrý prut.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('osikovy_prut', level, w);
@@ -308,7 +308,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		icon: "kovana_halapartna",
 		baseDmg: 32,
 		baseCd: 1.25,
-		desc: "Těžká zbraň ponocných a panských drábů. Široký rázný švih, který spolehlivě zažene i celé houfy kostlivců.",
+		desc: "Těžká zbraň ponocných a panských drábů. Široký rázný švih, který spolehlivě zažene i celé houfy kostlivců; na 1. úrovni dosáhne 160 px a má úhel 1,85 rad.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('kovana_halapartna', level, w);
@@ -376,7 +376,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		baseDmg: 15,
 		baseCd: 1.1,
 		speed: 350,
-		desc: "Devatero kvítí vystřeluje pět bylin v počátečním věnci, který zahání dotírající nečisté síly.",
+		desc: "Devatero kvítí vystřeluje na 1. úrovni pět bylin v počátečním věnci, který zahání dotírající nečisté síly. Byliny letí rychlostí 350 px/s, mají poloměr zásahu 14 px a ve vzduchu vydrží 2 s.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('devatero_kviti', level, w);
@@ -463,7 +463,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		baseDmg: 28,
 		baseCd: 1.4,
 		speed: 380,
-		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Odrazí se k dalšímu bubákovi a přiměje ho na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
+		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Na 1. úrovni letí rychlostí 380 px/s a odrazí se ještě ke dvěma bubákům. Zásah přiměje cíl na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu)."
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('kynuty_kolac', level, w);
@@ -598,9 +598,9 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		name: "Kropenka se svěcenou vodou",
 		type: "holy",
 		icon: "✨",
-		baseDmg: 30,
+		baseDmg: 22,
 		baseCd: 1.5,
-		desc: "Svěcená voda z kapličky svatého Jiří. Kropí široký vějíř kapek a spolehlivě zklidní noční bubáky. Nemrtví a pekelníci mají proti ní silně sníženou odolnost a utrží až dvojnásobné poškození.",
+		desc: "Svěcená voda z kapličky svatého Jiří. Na 1. úrovni vyšle pět kapek ve vějíři; letí rychlostí 420–460 px/s, mají poloměr 11 px a životnost 1,4 s. Nemrtví a pekelníci mají proti ní silně sníženou odolnost a utrží až dvojnásobné poškození.",
 		fire: (player, level) => {
 			const angle = Math.atan2(player.lastDy, player.lastDx);
 			const w = player._firingWeapon;
