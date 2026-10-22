@@ -3,6 +3,7 @@
 - Sjednoceny české a anglické názvy i varování minibosse s reálným hejnem mrazivých vran.
 - Opraveny podtituly, nápověda k hlavnímu bossovi a popisy průzkumných milníků; finálním bossem je Morana a Vodníček zůstává mezibossem.
 - Mrazivý obr byl přidán do soumračného spawnovacího poolu první úrovně, aby mohl přirozeně vstoupit do běžného průběhu výpravy.
+- Regresní testy nyní ověřují spawn Mrazivého obra a názvy minibosse v češtině i angličtině.
 
 ## 2026-10-22 — Oprava ukazatele FPS, reálné měření prodlev snímků a automatizovaný Playwright benchmark v Chromiu
 
