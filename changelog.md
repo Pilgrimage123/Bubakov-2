@@ -1,9 +1,8 @@
 ## 2026-10-22 — Oprava konsolidace dropů bez dočasných alokací
 
-- Opravena konsolidace drobných mincí a perníčků v `SoADropManager`: příchozí drop se při konsolidaci správně spotřebuje a nepřidává duplicitní drop.
-- Z hot path odstraněno dočasné pole kompatibilních indexů; hledání používá tři skalární indexy.
-- Opraveno pročištění SoA polí, aby zůstal konsolidovaný drop i v případě, že některý vybraný záznam leží na konci aktivního pole.
-- Doplněn regresní test pro hraniční případ se swap/kompakcí a aktualizován test běžné konsolidace.
+- Opravena konsolidace drobných mincí a perníčků v `SoADropManager`: příchozí drop se při konsolidaci správně spotřebuje.
+- Odstraněno dočasné pole pro kompatibilní indexy z herní hot path.
+- Doplněn regresní test běžné konsolidace i scénáře, kdy vybraný záznam leží na konci aktivního pole.
 
 ## 2026-10-22 — Sjednocení vykreslovací pipeline, atlas strašidel a zero-allocation herní cyklus (ADR 0029)
 
