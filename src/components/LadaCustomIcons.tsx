@@ -2036,24 +2036,26 @@ export const LadaPitchforkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
  * Threshing flail & golden wheat sheaf (🌾 / flail / cep / obili)
  */
 export const LadaGrainFlailIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep a snop" {...props}>
-    <g className="lada-anim-rock">
-      {/* Golden wheat ear backdrop */}
-      <path d="M 12 32 Q 20 22 28 8" fill="none" stroke="#B45309" strokeWidth="2.4" strokeLinecap="round" />
-      {/* Wheat grains */}
-      <ellipse cx="27" cy="9" rx="3" ry="1.5" transform="rotate(-30 27 9)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
-      <ellipse cx="23" cy="12" rx="3" ry="1.5" transform="rotate(35 23 12)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.2" />
-      <ellipse cx="25" cy="15" rx="3" ry="1.5" transform="rotate(-25 25 15)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
-      <ellipse cx="20" cy="18" rx="3" ry="1.5" transform="rotate(30 20 18)" fill="#FBBF24" stroke="#1A1612" strokeWidth="1.2" />
-      <ellipse cx="22" cy="22" rx="3" ry="1.5" transform="rotate(-20 22 22)" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.2" />
-      {/* Wooden flail staff */}
-      <line x1="6" y1="28" x2="16" y2="14" stroke="#1A1612" strokeWidth="3.8" strokeLinecap="round" />
-      <line x1="6" y1="28" x2="16" y2="14" stroke="#8C5A35" strokeWidth="2.2" strokeLinecap="round" />
-      {/* Swivel leather hinge */}
-      <circle cx="16" cy="14" r="2.2" fill="#2A170A" stroke="#1A1612" strokeWidth="1.2" />
-      {/* Swinging threshing beater rod */}
-      <line x1="16" y1="14" x2="28" y2="19" stroke="#1A1612" strokeWidth="4.6" strokeLinecap="round" />
-      <line x1="16" y1="14" x2="28" y2="19" stroke="#D9A036" strokeWidth="2.8" strokeLinecap="round" />
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep na obilí" {...props}>
+    <g className="lada-anim-rock" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      {/* Main crooked handle in warm, hand-carved wood. */}
+      <path d="M 5 32 Q 10 26 14.5 19 Q 18 13.5 21 8" stroke="#1A1612" strokeWidth="5.1" />
+      <path d="M 5 32 Q 10 26 14.5 19 Q 18 13.5 21 8" stroke="#A66A32" strokeWidth="3.2" />
+      <path d="M 6 30 Q 11 25 15 19 Q 18.4 13.8 20 9.5" stroke="#E8BD79" strokeWidth="0.9" />
+      <path d="M 8 27 l 3 -3 M 12 21 l 3 -3 M 15.8 16.2 l 2 -2" stroke="#5B3418" strokeWidth="0.8" />
+      <ellipse cx="12.4" cy="22.4" rx="1.5" ry="0.9" transform="rotate(-52 12.4 22.4)" stroke="#4A2B18" strokeWidth="0.8" />
+      {/* Grip and pivot end wrapped in dark leather strips. */}
+      <path d="M 4.8 31.6 l 3.8 -2.4 M 6.2 33.1 l 3.8 -2.4 M 18.8 10 l 3.6 1.8 M 19.7 8.2 l 3.6 1.8 M 20.6 6.5 l 3.6 1.8" stroke="#3B2114" strokeWidth="2.1" />
+      <circle cx="22.4" cy="8.2" r="2.2" fill="#6F421F" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Flexible loop joins the loose wooden striker. */}
+      <path d="M 22.8 7.7 C 27 2.8 31 5.4 29.2 9.2 C 28.6 10.5 26.7 11.5 25 12.1" stroke="#2A170A" strokeWidth="2.3" />
+      <path d="M 23.3 7.7 C 26.7 4.4 29.3 5.8 28 8.7" stroke="#B97839" strokeWidth="0.9" />
+      {/* Heavy cylindrical beater with highlights and wood grain. */}
+      <path d="M 24.5 12.4 Q 27.8 10.6 30 13.2 L 34 24.5 Q 34.5 27.1 32.1 28.4 Q 29.5 29.2 28.2 26.7 L 23 16 Q 22.1 13.8 24.5 12.4 Z" fill="#B97839" stroke="#1A1612" strokeWidth="1.7" />
+      <path d="M 25.1 14.1 Q 28.1 13.1 29.5 15.8 L 32.6 24.3 Q 33 26 31.8 26.8" stroke="#E8BD79" strokeWidth="1.3" />
+      <path d="M 26 18 l 2.8 2.5 M 28.2 23 l 2.1 1.2" stroke="#6F421F" strokeWidth="0.9" />
+      <path d="M 23.5 14.7 l 3.1 -1.4 M 24.5 16.5 l 3.1 -1.5 M 25.4 18.3 l 3.2 -1.5" stroke="#3B2114" strokeWidth="1.8" />
+      <path d="M 30.9 28.2 l 2 -1.2" stroke="#5B3418" strokeWidth="1" />
     </g>
   </svg>
 );
