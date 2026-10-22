@@ -1,5 +1,7 @@
 ## 2026-10-22 — Čitelnost informačních karet lovců
 
+- Následná kontrola opravila rozsah CSS selektorů: styly pro responzivní karty jsou nyní na nejvyšší úrovni, takže pravidla pro titulky, progress a mobilní rozložení se aplikují na zamýšlené prvky.
+
 - Upraveny karty výběru lovce: popisy, indicie zbraní/schopností a průběh výzvy se bezpečně zalamují i při úzkém viewportu.
 - Statistiky lovce používají pružnou dvousloupcovou mřížku místo čtyř úzkých sloupců; informace o zbrani, pasivu a zvláštní schopnosti už nejsou stlačené do pevně vysokého rolovacího boxu.
 - Zlepšena velikost písma, řádkování a rozvržení popisů; na mobilu se zmenší okraje karty a portrét zůstává přiměřený dostupné šířce.
