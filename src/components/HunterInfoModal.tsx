@@ -3,6 +3,7 @@ import type { HunterDetail } from '../data/hunterDetails';
 import { sound } from '../audio';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { GameIcon } from './GameIcon';
+import { WEAPONS } from '../data/weapons';
 
 interface HunterInfoModalProps {
   hunter: HunterDetail | null;
@@ -20,6 +21,7 @@ const detailSection: React.CSSProperties = {
 
 export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClose }) => {
   if (!hunter) return null;
+  const starterWeapon = WEAPONS[hunter.weaponId];
 
   return (
     <div className="overlay" style={{ zIndex: 55 }} onClick={onClose}>
@@ -69,10 +71,20 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
             </p>
           </section>
           <section style={detailSection}>
-            <h3 style={{ margin: '0 0 6px', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <GameIcon icon="sword" size={18} /> Počáteční zbraň
+            <h3 style={{ margin: '0 0 6px', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px', overflowWrap: 'anywhere' }}>
+              <GameIcon icon="sword" size={18} /> Počáteční výbava · {starterWeapon?.name || hunter.weaponId}
             </h3>
-            <p style={{ margin: 0, lineHeight: 1.45 }}>{hunter.weapon}</p>
+            {starterWeapon && (
+              <>
+                <div className="hunter-modal-weapon-stats">
+                  <span>Základní poškození: <strong>{starterWeapon.baseDmg}</strong></span>
+                  <span>Interval: <strong>{Number(starterWeapon.baseCd).toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} s</strong></span>
+                  {starterWeapon.speed ? <span>Rychlost střely: <strong>{starterWeapon.speed}</strong></span> : null}
+                </div>
+                <p style={{ margin: '7px 0 0', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{starterWeapon.desc}</p>
+              </>
+            )}
+            <p style={{ margin: '7px 0 0', fontSize: '0.8rem', lineHeight: 1.35 }}>Jde o základní hodnoty zbraně na 1. úrovni, před vylepšeními, bonusy lovce a odolnostmi nepřátel.</p>
           </section>
           <section style={detailSection}>
             <h3 style={{ margin: '0 0 6px', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px' }}>
