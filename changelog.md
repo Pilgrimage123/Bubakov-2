@@ -1,3 +1,10 @@
+## 2026-10-22 — Kruhové hejno mrazivých vran s virtuálním vůdcem
+
+- Přidán samostatný systém až 150 běžných vran řízených jediným virtuálním vůdcem. Střídá přímý průlet arénou a smršťující se oběžnou dráhu; rozložení používá Vogelovu spirálu se zlatým úhlem, pomalou rotaci, sinusové vlnění a mávání křídel.
+- Pohyb hejna používá předalokované typed arrays a znovupoužitelné nepřátelské objekty; vrány se navzájem nevyhledávají ani fyzikálně neovlivňují. Přidány kruhové broadphase kontroly pro kontakt hráče, projektily a plošné zásahy.
+- Běžné vrány z nového hejna mají 60 % obvyklé bodové hodnoty (−40 %). Původní hejno vran jako miniboss zůstává beze změny; jeho konfiguraci chrání regresní test.
+- Přidány testy zlatého úhlu, plánování vln, obou pohybových režimů, broadphase a deaktivace vran bez posouvání poolu.
+
 ## 2026-10-22 — Zákaz běžných spawnů čertů a vodníků v první úrovni
 
 - Režisér výpravy filtruje zakázané nepřátele také při výběru elit, při záložním výběru i v taktických formacích; např. myšák/šotek už se nemůže změnit na krvavého raráška a blatouch na kalného hastrmana.
