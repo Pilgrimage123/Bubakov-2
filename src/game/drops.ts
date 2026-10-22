@@ -34,7 +34,7 @@ export {
   sampleAnnulusPosition,
 };
 
-export const MAX_DROPS_LIMIT = 250;
+export const MAX_DROPS_LIMIT = 40;
 export const SPECIAL_DROP_PITY_COOLDOWN = 45.0;
 export const UNCOLLECTED_GINGERBREAD_PITY_THRESHOLD = 120;
 export const HOT_GINGERBREAD_DURATION = 3.0;
