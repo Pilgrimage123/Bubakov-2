@@ -224,8 +224,8 @@ export class SoADropManager {
   /**
    * Consolidates three compatible minor drops in the same spatial cell.
    *
-   * Returns true when the incoming drop should be consumed. Scalar indices are
-   * used to avoid allocating a temporary matching-index array in the hot path.
+   * Returns true when the incoming drop is consumed by consolidation. The
+   * selection uses scalar indices to avoid temporary arrays on the spawn path.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -258,21 +258,20 @@ export class SoADropManager {
     }
     if (third < 0) return false;
 
-    // Reuse the first selected record for the combined value and preserve the
-    // documented +15% bonus. The incoming fourth drop is consumed by spawn().
-    const accumulated = (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS;
-    const consolidatedValue = Math.round(accumulated);
+    const consolidatedValue = Math.round(
+      (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
+    );
+    const firstOldCount = this.count;
     this.values[first] = consolidatedValue;
     this.radii[first] = type === 'gingerbread'
       ? (consolidatedValue >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
-    // Compact all records except the retained one in a single stable pass.
-    // This avoids swap-back index invalidation when the retained record was the
-    // final element or one of the selected companion indices.
+    // Compact away the two companion records in-place. Read/write traversal
+    // preserves the retained record even when one of the selected indices is
+    // the final active slot. No temporary arrays or swap-back ambiguity.
     let write = 0;
-    const oldCount = this.count;
-    for (let read = 0; read < oldCount; read++) {
+    for (let read = 0; read < firstOldCount; read++) {
       if (read === second || read === third) continue;
       if (write !== read) {
         this.posX[write] = this.posX[read];
@@ -291,9 +290,7 @@ export class SoADropManager {
       write++;
     }
     this.count = write;
-    for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
-
-    // Flyweight identity must follow the compacted SoA record, not its old slot.
+    for (let i = this.count; i < firstOldCount; i++) this.flyweights[i].dead = true;
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
     return true;
   }
