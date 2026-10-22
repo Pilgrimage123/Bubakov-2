@@ -223,9 +223,7 @@ export class SoADropManager {
 
   /**
    * Consolidates three compatible minor drops in the same spatial cell.
-   *
-   * Returns true when the incoming drop is consumed by consolidation. This
-   * routine avoids temporary matching arrays in the drop-spawn hot path.
+   * The incoming drop is consumed when three existing compatible drops merge.
    */
   public tryConsolidateInCell(type: DropType, x: number, y: number, value: number): boolean {
     const isMinorCoin = type === 'coin' && value < 5;
@@ -243,18 +241,13 @@ export class SoADropManager {
       if (this.itemTypes[i] !== targetTypeIdx) continue;
       if (Math.floor(this.posX[i] / SPATIAL_CELL_SIZE) !== cellX) continue;
       if (Math.floor(this.posY[i] / SPATIAL_CELL_SIZE) !== cellY) continue;
-
       const compatible = isMinorCoin
         ? this.values[i] < 5
         : this.values[i] < GINGERBREAD_VALUES.large && (this.flags[i] & FLAG_IS_HOT) === 0;
       if (!compatible) continue;
-
       if (first < 0) first = i;
       else if (second < 0) second = i;
-      else {
-        third = i;
-        break;
-      }
+      else { third = i; break; }
     }
     if (third < 0) return false;
 
@@ -262,30 +255,27 @@ export class SoADropManager {
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
 
-    // A single forward compaction pass can overwrite the retained record when
-    // a companion has a lower index. Preserve the selected data in scalars
-    // before compacting, keeping this hot path allocation-free.
+    // Save the retained record before in-place compaction. This prevents lower
+    // companion indices from overwriting its data, including when it is last.
     const keepX = this.posX[first];
     const keepY = this.posY[first];
     const keepVx = this.vx[first];
     const keepVy = this.vy[first];
-    const keepRadius = type === 'gingerbread'
-      ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
-      : 12;
     const keepExpiration = this.expirations[first];
     const keepTime = this.times[first];
     const keepGoldenRush = this.goldenRushTimers[first];
     const keepMobility = this.magnetMobility[first];
     const keepType = this.itemTypes[first];
     const keepFlags = this.flags[first];
+    const keepRadius = type === 'gingerbread'
+      ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
+      : 12;
 
     const oldCount = this.count;
     let write = 0;
-    let retainedIndex = -1;
     for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
-      if (read === first) {
-        retainedIndex = write;
+      if (write === first) {
         this.posX[write] = keepX;
         this.posY[write] = keepY;
         this.vx[write] = keepVx;
@@ -318,7 +308,7 @@ export class SoADropManager {
     this.count = write;
     for (let i = this.count; i < oldCount; i++) this.flyweights[i].dead = true;
     for (let i = 0; i < this.count; i++) this.syncFlyweight(i);
-    return retainedIndex >= 0;
+    return true;
   }
 
   /**
