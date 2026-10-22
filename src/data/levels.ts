@@ -6,13 +6,13 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		id: 0,
 		name: "1. Předjaří v Hrusicích",
 		shortTitle: "Březnové tání",
-		subtitle: "Březnové kry tajícího ledu, probuzení žab a čáp letící přes moře",
+		subtitle: "Březnové tání, mrazivé vrány a přízraky posledního zimního chladu",
 		theme: "spring_river",
 		season: "spring",
 		icon: "🌱",
 		badge: "1. Úroveň",
 		description: "Březnové tání proměnilo Hrusice v živou mapu: nahoře se orá, na návsi je rušno, rybník praská a mlýn žene řeku. Příroda se probouzí a s ní i vyhladovělá havěť.",
-		lore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole a odežeňte vodníky z tajících ker.",
+		lore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole, přežijte nálety mrazivých vran a zažeňte přízraky posledního zimního chladu.",
 		unlockRequirementText: "Výchozí začátečnická úroveň – ideální pro první krůčky",
 		skyColor: "#D6EAF8",
 		nightSkyColor: "#1B2A38",
@@ -77,7 +77,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"blatouch",
 				"jezinka_mraziva",
 				"tajici_snehulak",
-				"rarach"
+				"rarach",
+				"mrazivy_obr"
 			],
 			night: [
 				"mrazovy_skritek",
