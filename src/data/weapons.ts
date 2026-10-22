@@ -352,6 +352,19 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const targetY = player.y + Math.sin(angle) * dist;
 			const radius = (65 + level * 10) * stats.areaRadiusMult;
 			const dmg = getWeaponDamage(player, 45) * stats.damageMult;
+			player.spawnMeleeSlash({
+				x: player.x,
+				y: player.y,
+				angle,
+				reach: dist + radius * 0.55,
+				arc: Math.PI * 1.75,
+				life: 0.36,
+				maxLife: 0.36,
+				type: "physical",
+				style: "flail",
+				weaponId: "dreveny_cep",
+				visualOnly: true,
+			});
 			player.spawnAreaImpact({
 				x: targetX,
 				y: targetY,
