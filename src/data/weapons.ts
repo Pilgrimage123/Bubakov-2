@@ -463,7 +463,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		baseDmg: 28,
 		baseCd: 1.4,
 		speed: 380,
-		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Na 1. úrovni letí rychlostí 380 px/s a odrazí se ještě ke dvěma bubákům. Zásah přiměje cíl na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu)."
+		desc: "Tradiční slavnostní kynutý koláč s jemným tvarohem, povidlovým dekorem a věncem mandlí. Na 1. úrovni letí rychlostí 380 px/s a odrazí se ještě ke dvěma bubákům. Zásah přiměje cíl na 4 s mlsat bez útočení a odhození s poznámkou „Ňam, ňam“. Vícero zásahů sčítá čas (odolnost dle Hladu).",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('kynuty_kolac', level, w);
