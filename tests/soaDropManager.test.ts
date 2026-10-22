@@ -112,11 +112,10 @@ describe('SoADropManager (Struct-of-Arrays High-Performance Drop System)', () =>
 
     expect(incoming).toBeNull();
     expect(manager.count).toBe(3);
-    const combinedIndex = manager.itemTypes[0] === 2 && manager.values[0] === 7
-      ? 0
-      : manager.itemTypes[1] === 2 && manager.values[1] === 7
-        ? 1
-        : 2;
+    const combinedIndex = Array.from(manager.itemTypes.slice(0, manager.count)).findIndex((typeIndex, index) =>
+      typeIndex === 2 && manager.values[index] === 7
+    );
+    expect(combinedIndex).toBeGreaterThanOrEqual(0);
     expect(manager.itemTypes[combinedIndex]).toBe(2);
     expect(manager.values[combinedIndex]).toBe(7);
     expect(Array.from(manager.values.slice(0, manager.count))).toContain(1);
