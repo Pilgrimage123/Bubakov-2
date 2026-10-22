@@ -276,8 +276,6 @@ body {
   flex-wrap: wrap;
 }
 
-.char-card {
-  background-color: var(--parchment);
 /* Hunter selection cards: avoid clipped copy and keep labels readable at narrow widths. */
 .char-card > h3,
 .char-card > p,
@@ -382,6 +380,9 @@ body {
     font-size: 0.9rem;
   }
 }
+
+.char-card {
+  background-color: var(--parchment);
 
   border: 4px solid var(--ink);
   border-radius: 12px;
