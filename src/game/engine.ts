@@ -721,7 +721,7 @@ export class GameEngine {
         const courageScale = Math.max(0.25, (this.maxHp || 200) / 200);
         const counterDmg = Math.max(1, Math.round((this.maxHp || 0) * 0.30));
         const pushForce = 1080 * courageScale;
-        const stunDuration = 0.35 * courageScale;
+        const stunDuration = 0.875 * courageScale;
         const kbx = nx * pushForce;
         const kby = ny * pushForce;
 
