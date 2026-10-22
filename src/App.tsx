@@ -6523,6 +6523,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const distToPlayerSq = playerDx * playerDx + playerDy * playerDy;
             const distToPlayer = isActiveVirtualCrow ? 0 : Math.hypot(playerDx, playerDy);
             const attackRange = typeof e.attackRange === 'number' ? e.attackRange : (e.radius + 25);
+
+            // Flock crows damage only on actual player contact, using squared
+            // distance and an individual staggered cooldown (no targeting AI).
+            if (isActiveVirtualCrow) {
+              const reach = e.radius + player.radius;
+              const touchingPlayer = distToPlayerSq < reach * reach;
+              e.crowContactCooldown = Math.max(0, (e.crowContactCooldown || 0) - dt);
+              if (touchingPlayer) {
+                e.isAttacking = true;
+                e.inContact = true;
+                e.contactLeaveTimer = 0;
+                if (e.crowContactCooldown <= 0 && currentGameState === 'playing') {
+                  e.crowContactCooldown = 0.65;
+                  const damageMult = typeof e.getDamageDealtMultiplier === 'function'
+                    ? e.getDamageDealtMultiplier()
+                    : 1;
+                  player.takeDamage(e.damage * damageMult, 'physical', e, true);
+                  sound.hit();
+                }
+              } else {
+                e.isAttacking = false;
+                e.inContact = false;
+              }
+              continue;
+            }
+
             const totalInterval = e.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
             const attackSlowFactor = (e.fajfkaSlowTimer || 0) > 0 ? Math.max(0.1, e.fajfkaAttackSlowFactor || 0.65) : 1;
             const attackDelay = (typeof e.attackDelay === 'number' && e.attackDelay > 0
@@ -8304,6 +8330,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       crowWavePointMultiplier: 1,
       crowHeading: 0,
       crowFlapScale: 1,
+      crowContactCooldown: 0,
       zigZagTimer: 0,
       zigZagDir: Math.random() < 0.5 ? 1 : -1,
       chargeDirX: 0,
