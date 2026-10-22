@@ -606,7 +606,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     ]);
 
     // Cover noon, afternoon, dusk, night, and midnight pools.
-    for (const gameTime of [0, 30, 60, 120, 180]) {
+    for (const gameTime of [0, 60, 120, 180, 240]) {
       engine.state.gameTime = gameTime;
       const pool = director.getAllBubaksPool(engine);
       expect(pool.length).toBeGreaterThan(0);
