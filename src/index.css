@@ -278,6 +278,111 @@ body {
 
 .char-card {
   background-color: var(--parchment);
+/* Hunter selection cards: avoid clipped copy and keep labels readable at narrow widths. */
+.char-card > h3,
+.char-card > p,
+.char-card .hunter-clue-box,
+.char-card .hunter-progress-wrap,
+.char-card .hunter-card-info {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.char-card .hunter-clue-box {
+  text-align: left;
+  line-height: 1.4;
+}
+
+.char-card .hunter-progress-header {
+  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  line-height: 1.35;
+}
+
+.char-card .hunter-progress-header > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.char-card .hunter-progress-ticks {
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+}
+
+.hunter-card-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hunter-card-stats > div {
+  min-width: 0;
+  background: #FEF3C7;
+  border: 1px solid #D6B98C;
+  border-radius: 5px;
+  padding: 6px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+
+.hunter-card-stats strong,
+.hunter-card-description strong {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.hunter-card-stats span,
+.hunter-card-description span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.hunter-card-description {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 6px;
+  margin-top: 7px;
+  line-height: 1.45;
+}
+
+@media (max-width: 480px) {
+  .char-card {
+    padding: 12px 10px;
+  }
+
+  .char-card-unlocked-badge,
+  .char-card-locked-badge {
+    top: 6px;
+    right: 6px;
+    font-size: 0.68rem;
+    max-width: calc(100% - 12px);
+  }
+
+  .char-card .portrait-canvas {
+    max-width: min(180px, 78%);
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .hunter-card-stats {
+    gap: 5px;
+  }
+
+  .char-card .hunter-clue-box,
+  .char-card .hunter-card-info {
+    font-size: 0.9rem;
+  }
+}
+
   border: 4px solid var(--ink);
   border-radius: 12px;
   padding: 16px;
