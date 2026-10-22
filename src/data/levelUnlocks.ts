@@ -107,7 +107,7 @@ var LEVEL_UNLOCKS = {
 			spoiledLore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole, přežijte nálety mrazivých vran a zažeňte přízraky posledního zimního chladu.",
 			spoiledBossHint: "👑 Hlavní boss: Morana — špatně vynesená smrtka (120 s)",
 			spoiledWeatherHint: "Počasí: Tání ker a jarní tůně",
-			spoiledEnemiesHint: "Mrazivá vrána, Mrazivá jezinka, Zákeřný tající sněhulák, Mrazivý obr, Mrazivý skřítek, Blatouchový skřítek, Vodníček",
+			spoiledEnemiesHint: "Mrazivá vrána, Mrazivá jezinka, Zákeřný tající sněhulák, Mrazivý obr, Mrazivý skřítek, Blatouchový skřítek",
 			spoiledIcon: "🌱",
 			spoiledBadge: "1. Úroveň",
 			clueTag: "✅ Připraveno k výpravě"
