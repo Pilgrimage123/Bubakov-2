@@ -254,9 +254,6 @@ export class SoADropManager {
     const combined = Math.round(
       (this.values[first] + this.values[second] + this.values[third]) * CONSOLIDATION_BONUS
     );
-
-    // Save the retained record before in-place compaction. This prevents lower
-    // companion indices from overwriting its data, including when it is last.
     const keepX = this.posX[first];
     const keepY = this.posY[first];
     const keepVx = this.vx[first];
@@ -271,11 +268,13 @@ export class SoADropManager {
       ? (combined >= GINGERBREAD_VALUES.giant ? 19 : 14)
       : 12;
 
+    // Write the retained record before advancing the read cursor can cross its
+    // original slot. This is safe even when first is the last live element.
     const oldCount = this.count;
     let write = 0;
     for (let read = 0; read < oldCount; read++) {
       if (read === second || read === third) continue;
-      if (write === first) {
+      if (read === first) {
         this.posX[write] = keepX;
         this.posY[write] = keepY;
         this.vx[write] = keepVx;
