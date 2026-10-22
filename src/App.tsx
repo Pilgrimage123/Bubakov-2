@@ -151,6 +151,10 @@ import type { PendingMilestoneChoice } from './game/engineState';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
 import {
   canCollectDrop,
+  MAX_DROPS_LIMIT,
+  hasPendingDrops,
+  spawnDropWithLimit,
+  releasePendingDrops,
   performDropFusion,
   applyRareItemEffect,
   applyAnanasUpgrade,
@@ -1825,7 +1829,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const foe = sortedEnemies[i];
           const ang = Math.random() * Math.PI * 2;
           const spd = 55 + Math.random() * 45;
-          eng.drops.push({
+          spawnDropWithLimit(eng.drops, {
             type: 'coin',
             value: 1,
             x: foe.x,
@@ -1835,7 +1839,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             radius: 10,
             time: 0,
             dead: false,
-          });
+          }, eng.pendingDropBank);
           pushDamageText(eng.texts, foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false, 'lootResources');
           for (let k = 0; k < 3; k++) {
             const pAng = Math.random() * Math.PI * 2;
@@ -4085,7 +4089,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const angle = opts.angle ?? Math.random() * Math.PI * 2;
                   const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
                   const radius = opts.radius ?? (type === 'chest' ? 25 : opts.size === 'giant' ? 19 : opts.size === 'large' ? 14 : 10);
-                  engine.drops.push({
+                  spawnDropWithLimit(engine.drops, {
                     type,
                     value: opts.value,
                     size: opts.size,
@@ -4095,7 +4099,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     vy: opts.vy ?? Math.sin(angle) * burstSpeed,
                     radius,
                     time: Math.random() * 6.28,
-                  });
+                  }, engine.pendingDropBank);
                   if (opts.text) {
                     engine.texts.push(new DamageText(opts.x, opts.y - 45, opts.text, opts.textColor || COLORS.mustard, true, 'bossAnnouncements'));
                   }
@@ -5197,14 +5201,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const cPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
               const cx = cPos.x;
               const cy = cPos.y;
-              engine.drops.push({
+              spawnDropWithLimit(engine.drops, {
                 type: 'chasnik',
                 x: cx,
                 y: cy,
                 radius: 26,
                 time: 0,
                 rescued: false,
-              });
+              }, engine.pendingDropBank);
               // Spawn wave of rarachs harassing him
               for (let i = 0; i < 5; i++) {
                 engine.enemies.push(createEnemyInstance('rarach', cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 60, 1));
@@ -6292,7 +6296,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     e.kby = (e.kby || 0) + Math.sin(pAng) * 140;
                   }
                   if (p.coinStealChance && Math.random() < p.coinStealChance) {
-                    engine.drops.push({
+                    spawnDropWithLimit(engine.drops, {
                       type: 'coin',
                       value: 1,
                       x: e.x,
@@ -6302,7 +6306,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       radius: 10,
                       time: 0,
                       dead: false,
-                    });
+                    }, engine.pendingDropBank);
                     engine.texts.push(new DamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false));
                     sound.coin();
                   }
@@ -6710,9 +6714,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
           enemySpatialHashRef.current.rebuild(livingEnemiesRef.current);
 
-          // Slévání kořisti každých 1,5 s nebo při dosažení limitu 40 položek
+          // Slévání kořisti každých 1,5 s; při čekajících odměnách uvolní místo pod limitem 40.
           engine.dropFusionTimer = (engine.dropFusionTimer || 0) + dt;
-          if (engine.dropFusionTimer >= 1.5 || engine.drops.length >= 40) {
+          if (engine.dropFusionTimer >= 1.5 || engine.drops.length > MAX_DROPS_LIMIT) {
             engine.dropFusionTimer = 0;
             const viewBounds = {
               left: engine.camera.x - 120,
@@ -6720,8 +6724,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               right: engine.camera.x + canvas.width + 120,
               bottom: engine.camera.y + canvas.height + 160,
             };
-            performDropFusion(engine.drops, viewBounds, 40);
+            const fusionTarget = hasPendingDrops(engine.pendingDropBank)
+              ? MAX_DROPS_LIMIT - 1
+              : MAX_DROPS_LIMIT;
+            performDropFusion(engine.drops, viewBounds, fusionTarget);
             compactInPlace(engine.drops, (d) => !d.dead);
+            releasePendingDrops(engine.drops, engine.pendingDropBank);
           }
 
           // Update Drops
@@ -6955,6 +6963,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
           }
           compactInPlace(engine.drops, (d) => !d.dead);
+          // Pickups and other removals free slots for any queued rewards.
+          releasePendingDrops(engine.drops, engine.pendingDropBank);
 
           // Update texts
           for (const txt of engine.texts) txt.update(dt);
@@ -9603,10 +9613,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 y: this.y + Math.sin(angle) * 8,
               }, !!this.isSwarmLeader);
               if (shouldReleaseSwarmReservoir(eng.swarmReservoir)) {
-                releaseSwarmReservoir(eng.swarmReservoir, eng.drops);
+                releaseSwarmReservoir(eng.swarmReservoir, eng.drops, eng.pendingDropBank);
               }
             } else {
-              eng.drops.push({
+              spawnDropWithLimit(eng.drops, {
                 type: finalType,
                 value: finalValue,
                 size: finalSize,
@@ -9618,7 +9628,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 time: Math.random() * 6.28,
                 isHot: opts.isHot || false,
                 goldenRushTimer: opts.goldenRushTimer || 0,
-              });
+              }, eng.pendingDropBank);
             }
             if (finalText) {
               eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true, finalType === 'gingerbread' ? 'lootResources' : undefined, finalType === 'gingerbread' ? 'gingerbread' : undefined));
