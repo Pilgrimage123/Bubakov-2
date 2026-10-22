@@ -124,6 +124,15 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(GAME_LEVELS[0].spawnPools.afternoon).not.toContain('zaba');
   });
 
+  it('configures tajici_snehulak as Tající sněhulák with 40-member horde mechanics', async () => {
+    const { ENEMIES } = await import('../src/data/enemies');
+    expect(ENEMIES.tajici_snehulak).toBeDefined();
+    expect(ENEMIES.tajici_snehulak.name).toBe('Tající sněhulák');
+    expect(ENEMIES.tajici_snehulak.name).not.toContain('Zákeřný');
+    expect(ENEMIES.tajici_snehulak.strength).toContain('40');
+    expect(GAME_LEVELS[0].keyEnemies.find((e) => e.id === 'tajici_snehulak')?.name).toBe('Tající sněhulák');
+  });
+
   it('scales the stage 1 crow miniboss reasonably for tutorial difficulty', () => {
     const engine = new GameEngine();
     engine.initRun({

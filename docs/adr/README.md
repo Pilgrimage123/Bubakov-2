@@ -30,3 +30,5 @@ This directory records architectural decisions made for the project Bubákov.
 | [0024](0024-fazovane-utocne-animace-a-kinematika-bubaku.md) | Fázované útočné animace a procedurální kinematika bubáků |
 | [0025](0025-odpoutani-dvojcete-minibosse-a-reaktivni-obtiznost.md) | Odpoutání Dvojčete minibosse a reaktivní dynamická obtížnost |
 | [0026](0026-kanonizace-zbranovych-vyzev-a-cistota-kodu.md) | Kanonizace zbraňových výzev, obnova JSX a čistota kódu |
+| [0027](0027-virtual-leader-kapacita-a-rezervace-formaci.md) | Virtual Leader, Efektivní kapacita bojiště a šetření slotů pro formace |
+| [0028](0028-tajici-snehulaci-virtual-leader-horda-a-louze.md) | Tající sněhuláci: Horda s Virtuálním vůdcem, slotovými posuny a loužemi |

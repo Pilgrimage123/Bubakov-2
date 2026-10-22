@@ -147,12 +147,12 @@ const ENEMIES: Record<string, EnemyStats> = {
 		lore: "Starý mrazivý skřítek, který nabyl velikosti malé chalupy. Každý jeho krok rozpraská led a sníh.", danger: "★★★★★"
 	},
 	tajici_snehulak: {
-		id: "tajici_snehulak", name: "Zákeřný tající sněhulák", title: "Zlomyslná hromádka sněhu s koštětem",
-		category: "frost", hp: 360, speed: 76, damage: 62, attackCadence: "normal", attackInterval: 1.2,
-		radius: 24, mass: 1.7, foodResist: 0.2, poiseResist: 0.35, willpower: 0.3, xp: 7, coinValue: 5,
+		id: "tajici_snehulak", name: "Tající sněhulák", title: "Tající hromádka sněhu s koštětem",
+		category: "frost", hp: 190, speed: 52, damage: 24, attackCadence: "normal", attackInterval: 1.2,
+		radius: 20, mass: 1.3, foodResist: 0.15, poiseResist: 0.25, willpower: 0.2, xp: 2, coinValue: 2,
 		method: "drawMeltingSnowman", palette: "ice", weakness: "Oheň, horké jídlo",
-		strength: "Záludný výpad koštětem a mrazivý dotek; jeho tělo během boje viditelně taje",
-		lore: "Na první pohled rozbředlý sněhulák se opírá o koště a čeká, až se lovec přiblíží. Pak zaútočí.", danger: "★★★☆☆"
+		strength: "Horda 40 tajících sněhuláků, zanechává zpomalující vodní louže",
+		lore: "Rozbředlí sněhuláci z tajících březnových závějí. Pomalu se šourají k lovci, teplem tají a na zemi zanechávají kaluže ledové vody.", danger: "★★☆☆☆"
 	},
 	mrazovy_skritek: {
 		id: "mrazovy_skritek", name: "Mrazivý skřítek", title: "Drobný duch s širokou jinovatkovou aurou",

@@ -126,6 +126,7 @@ var ENEMY_POINTS = {
 	bila_pani: 185,
 	zbrojnos: 290,
 	snehulak: 220,
+	tajici_snehulak: 49,
 	nocni_mura: 110,
 	ohnivy_pes: 175,
 	mlynar: 5500,

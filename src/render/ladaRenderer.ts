@@ -6081,9 +6081,20 @@ var Lada = {
 		ctx.save(); ctx.translate(x, y); ctx.scale(4, 4); ctx.translate(-x, -y);
 		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked); ctx.restore();
 	},
-	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-		const dir = vx < 0 ? -1 : 1, melt = Math.sin(time * 2.5) * 1.5;
-		ctx.save(); ctx.translate(x, y + Math.sin(time * 3) * 1.2); ctx.scale(dir, 1);
+	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const enemy = (infoOrEnemy && typeof infoOrEnemy.hp === 'number')
+			? infoOrEnemy
+			: (maybeEnemy && typeof maybeEnemy.hp === 'number')
+			? maybeEnemy
+			: null;
+		const hpRatio = (enemy && typeof enemy.hp === 'number' && typeof enemy.maxHp === 'number' && enemy.maxHp > 0)
+			? Math.max(0.12, Math.min(1.0, enemy.hp / enemy.maxHp))
+			: (typeof enemy?.meltHpRatio === 'number' ? enemy.meltHpRatio : 1.0);
+		const squashX = (enemy?.meltSquashX ?? (1 + (1 - hpRatio) * 0.28)) * (enemy?.wobbleScaleX ?? 1);
+		const squashY = (enemy?.meltSquashY ?? (0.5 + 0.5 * hpRatio)) * (enemy?.wobbleScaleY ?? 1);
+		const melt = Math.sin(time * 2.5) * 1.5;
+		ctx.save(); ctx.translate(x, y + Math.sin(time * 3) * 1.2); ctx.scale(dir * squashX, squashY);
 		ctx.fillStyle = "rgba(56,189,248,0.5)"; ctx.strokeStyle = "#1D4ED8"; ctx.lineWidth = 1.8;
 		ctx.beginPath(); ctx.ellipse(0, 10, 25 + melt, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 		ctx.fillStyle = "#F8FAFC"; ctx.strokeStyle = "#334155"; ctx.lineWidth = 2;
@@ -6097,7 +6108,6 @@ var Lada = {
 		ctx.strokeStyle = "#A16207"; ctx.lineWidth = 2; for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(24+i*2,-36);ctx.lineTo(20+i*2,-45);ctx.stroke();}
 		ctx.strokeStyle = "#38BDF8"; ctx.lineWidth = 2; ctx.beginPath();ctx.moveTo(-12,-13);ctx.lineTo(-13,-7);ctx.moveTo(10,-2);ctx.lineTo(12,5);ctx.stroke();
 		ctx.restore();
-
 	},
 	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
 		const dir = vx < 0 ? -1 : 1;

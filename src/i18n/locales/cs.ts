@@ -848,6 +848,6 @@ export const cs: Record<string, string> = {
   "bestiary.jezinka_mraziva.title": "Ledová čarodějnice z tajícího lesa",
   "bestiary.mrazivy_obr.name": "Mrazivý obr",
   "bestiary.mrazivy_obr.title": "Čtyřnásobně mohutný duch věčné zimy",
-  "bestiary.tajici_snehulak.name": "Zákeřný tající sněhulák",
-  "bestiary.tajici_snehulak.title": "Zlomyslná hromádka sněhu s koštětem",
+  "bestiary.tajici_snehulak.name": "Tající sněhulák",
+  "bestiary.tajici_snehulak.title": "Tající hromádka sněhu s koštětem",
 };

@@ -26,7 +26,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       weatherOverride: 'ice_drift',
       threatMultiplier: 1.05,
       anomalyWindow: [50, 75],
-      preferredEnemyIds: ['vrana', 'mrazovy_skritek'],
+      preferredEnemyIds: ['tajici_snehulak', 'vrana', 'mrazovy_skritek'],
       formationBias: 'balanced',
     },
     {

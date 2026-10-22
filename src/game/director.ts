@@ -314,6 +314,7 @@ export class RunDirector {
   public panicBrakeActiveTimer = 0;
   public punitiveTwinCooldown = 0;
   public timeSinceLastCrowWave = 0;
+  public timeSinceLastSnowmanHorde = 0;
 
   /**
    * Computes the authoritative effective living enemy count.
@@ -326,6 +327,7 @@ export class RunDirector {
     const enemies: any[] = engine?.livingEnemies ?? state?.enemies ?? [];
     let standardCount = 0;
     let hasActiveCrowWave = false;
+    let hasActiveSnowmanHorde = false;
 
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
@@ -333,6 +335,10 @@ export class RunDirector {
       if (e.isVirtualCrowMember) {
         if (e._crowWaveActive) {
           hasActiveCrowWave = true;
+        }
+      } else if (e.isVirtualSnowmanMember) {
+        if (e._snowmanHordeActive) {
+          hasActiveSnowmanHorde = true;
         }
       } else {
         standardCount++;
@@ -342,8 +348,11 @@ export class RunDirector {
     if (!hasActiveCrowWave && (engine?.crowWave?.waveActive || state?.crowWave?.waveActive)) {
       hasActiveCrowWave = true;
     }
+    if (!hasActiveSnowmanHorde && (engine?.snowmanHorde?.waveActive || state?.snowmanHorde?.waveActive)) {
+      hasActiveSnowmanHorde = true;
+    }
 
-    return standardCount + (hasActiveCrowWave ? 3 : 0);
+    return standardCount + (hasActiveCrowWave ? 3 : 0) + (hasActiveSnowmanHorde ? 4 : 0);
   }
 
   private recentKills: EnemyKillRecord[] = [];
@@ -452,6 +461,17 @@ export class RunDirector {
       this.timeSinceLastCrowWave = 0;
     } else {
       this.timeSinceLastCrowWave += dt;
+    }
+
+    const isSnowmanHordeActive = Boolean(
+      engine.snowmanHorde?.waveActive ||
+      state.snowmanHorde?.waveActive ||
+      (engine.livingEnemies ?? state.enemies ?? []).some((e: any) => e.isVirtualSnowmanMember && e._snowmanHordeActive && !e.dead && !e.isDefeated)
+    );
+    if (isSnowmanHordeActive) {
+      this.timeSinceLastSnowmanHorde = 0;
+    } else {
+      this.timeSinceLastSnowmanHorde += dt;
     }
 
     const livingCount = this.getEffectiveLivingCount(engine);
@@ -960,9 +980,16 @@ export class RunDirector {
       engine.state?.crowWave?.waveActive ||
       (engine.livingEnemies ?? engine.state?.enemies ?? []).some((e: any) => e.isVirtualCrowMember && e._crowWaveActive && !e.dead && !e.isDefeated)
     );
+    const isSnowmanHordeActive = Boolean(
+      engine.snowmanHorde?.waveActive ||
+      engine.state?.snowmanHorde?.waveActive ||
+      (engine.livingEnemies ?? engine.state?.enemies ?? []).some((e: any) => e.isVirtualSnowmanMember && e._snowmanHordeActive && !e.dead && !e.isDefeated)
+    );
     const reservesCrowSlots = isLevel0 && this.timeSinceLastCrowWave >= 18 && !isCrowWaveActive;
+    const reservesSnowmanSlots = isLevel0 && this.timeSinceLastSnowmanHorde >= 18 && !isSnowmanHordeActive;
     const crowReservedSlots = reservesCrowSlots ? 3 : 0;
-    const effectiveCapacityLimit = Math.max(0, this.maxLivingEnemies - crowReservedSlots);
+    const snowmanReservedSlots = reservesSnowmanSlots ? 4 : 0;
+    const effectiveCapacityLimit = Math.max(0, this.maxLivingEnemies - crowReservedSlots - snowmanReservedSlots);
 
     if (livingCount >= effectiveCapacityLimit) return;
 

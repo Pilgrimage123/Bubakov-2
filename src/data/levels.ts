@@ -70,7 +70,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"vrana",
 				"blatouch",
 				"sotek",
-				"jezinka_mraziva"
+				"jezinka_mraziva",
+				"tajici_snehulak"
 			],
 			dusk: [
 				"blatouch",
@@ -98,9 +99,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			},
 			{
 				id: "tajici_snehulak",
-				name: "Zákeřný tající sněhulák",
+				name: "Tající sněhulák",
 				icon: "⛄",
-				role: "Záludné útoky koštětem a tající tělo"
+				role: "Horda 40 tajících sněhuláků zanechávajících louže"
 			},
 			{
 				id: "mrazivy_obr",

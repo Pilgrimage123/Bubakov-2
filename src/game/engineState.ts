@@ -128,6 +128,8 @@ export interface EngineState {
   };
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
+  crowWave?: any;
+  snowmanHorde?: any;
 }
 
 export function createInitialEngineState(): EngineState {

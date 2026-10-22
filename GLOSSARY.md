@@ -237,4 +237,8 @@ _Avoid_: emoji, moderní ikony, stock ikony, systémové ikony
 Tradiční kovaný visací zámek symbolizující uzamčenou výpravu či dosud neprobádaný obsah, zobrazovaný jako autoritativní odznak v záhlaví karty výpravy bez vizuálního zdvojování v doprovodném textu či na dílčích milnících.
 _Avoid_: padlock emoji, duplicitní zámek, zámek u každého procenta
 
+**Tající sněhuláci**:
+Horda 40 tajících sněhuláků v 1. úrovni (Předjaří) řízená jedním neviditelným Virtuálním vůdcem (Virtual Leader) se slotovými posuny a časově krájenou separací (4 sněhuláci za snímek). Sněhuláci postupně tají (ztráta Kuráže za sekundu), vizuálně se zplošťují a po zániku se rozpustí do 4sekundové ledové vodní louže zpomalující lovce o 25 % s periodickým zraněním.
+_Avoid_: zákeřný sněhulák, zlomyslný sněhulák, generic mob wave
+
 

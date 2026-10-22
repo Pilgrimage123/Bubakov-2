@@ -12,6 +12,7 @@ import { createInitialEngineState, type EngineState } from './game/engineState';
 import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
 import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeaderCrowWave';
+import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virtualLeaderSnowmanHorde';
 import { getCachedHomingTarget } from './game/homing';
 import { isDirectTargetable } from './game/targeting';
 import { stepCrowForaging } from './game/crowForaging';
@@ -2068,6 +2069,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const engineRef = useRef<EngineState>(createInitialEngineState());
   const crowWaveRef = useRef<VirtualLeaderCrowWave | null>(null);
   if (!crowWaveRef.current) crowWaveRef.current = new VirtualLeaderCrowWave();
+  const snowmanHordeRef = useRef<VirtualLeaderSnowmanHorde | null>(null);
+  if (!snowmanHordeRef.current) snowmanHordeRef.current = new VirtualLeaderSnowmanHorde();
   const enemySpatialHashRef = useRef(new SpatialHash<any>(180));
   const livingEnemiesRef = useRef<any[]>([]);
   const secondarySpatialResultsRef = useRef<any[]>([]);
@@ -2588,6 +2591,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       herbBoostTimer: 0,
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
+      meltingPuddleSlowTimer: 0,
       slowTimer: 0,
       hasSoakedCane: false,
       hromnickaPulseTimer: 0,
@@ -2749,15 +2753,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (impact.type === 'holy') {
           pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
         }
-        // Broadphase rejects the whole virtual flock before per-crow AOE collision tests.
+        // Broadphase rejects the whole virtual flock or snowman horde before per-entity AOE collision tests.
         const crowWaveImpactMayHit = crowWaveRef.current?.isWithinBounds(
           impact.x, impact.y, impact.radius + CROW_WAVE_HIT_RADIUS
+        ) ?? false;
+        const snowmanHordeImpactMayHit = snowmanHordeRef.current?.isWithinBounds(
+          impact.x, impact.y, impact.radius + SNOWMAN_HORDE_HIT_RADIUS
         ) ?? false;
         const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
           if (e.isDefeated) continue;
           if (e.isVirtualCrowMember && !crowWaveImpactMayHit) continue;
+          if (e.isVirtualSnowmanMember && !snowmanHordeImpactMayHit) continue;
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
           if (dx*dx+dy*dy <= reach*reach) {
             e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
@@ -2923,12 +2931,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       engine.camera.y = player.y - canvas.height / 2;
     }
 
+    engine.crowWave = crowWaveRef.current;
+    engine.snowmanHorde = snowmanHordeRef.current;
     engineRef.current = engine;
 
-    // Stage 1's flock uses a fixed preallocated pool; no crow objects are created in the frame loop.
+    // Stage 1's flock & snowman horde use fixed preallocated pools; no enemy objects are created in the frame loop.
     crowWaveRef.current?.resetRun();
+    snowmanHordeRef.current?.resetRun();
     if (chosenLevelId === 0) {
       crowWaveRef.current?.preparePool(createEnemyInstance);
+      snowmanHordeRef.current?.preparePool(createEnemyInstance);
     }
 
     if (customGrandfatherUpgrades && Object.keys(customGrandfatherUpgrades).length > 0) {
@@ -5275,6 +5287,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 (player.gingerbreadSpeedTimer > 0 ? 1.15 : 1) *
                 (player.waterSoakedTimer > 0 ? 0.75 : 1) *
                 (player.slowTimer > 0 ? 0.65 : 1) *
+                ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1) *
                 hazardSpeedMult *
                 ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
               const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
@@ -5644,6 +5657,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
+            if (player.meltingPuddleSlowTimer > 0) player.meltingPuddleSlowTimer -= dt;
             if (player.slowTimer > 0) player.slowTimer -= dt;
             if (player.ultCd > 0) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
             if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
@@ -6197,14 +6211,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // One squared-distance check against the virtual leader can reject this
-            // projectile before it tests the individual crows in the spatial query.
+            // projectile before it tests the individual crows or snowmen in the spatial query.
             const crowWaveProjectileMayHit = crowWaveRef.current?.isWithinBounds(
               p.x, p.y, (p.radius || 0) + CROW_WAVE_HIT_RADIUS
+            ) ?? false;
+            const snowmanHordeProjectileMayHit = snowmanHordeRef.current?.isWithinBounds(
+              p.x, p.y, (p.radius || 0) + SNOWMAN_HORDE_HIT_RADIUS
             ) ?? false;
             const nearby=enemySpatialHashRef.current.queryCircle(p.x,p.y,p.radius+72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
               if (e.isVirtualCrowMember && !crowWaveProjectileMayHit) continue;
+              if (e.isVirtualSnowmanMember && !snowmanHordeProjectileMayHit) continue;
               const dx=p.x-e.x, dy=p.y-e.y, reach=p.radius+e.radius;
               if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach*reach) {
                 p.hitList.push(e);
@@ -6448,19 +6466,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             );
           }
 
+          const virtualSnowmanHorde = snowmanHordeRef.current;
+          if (currentGameState === 'playing' && player && virtualSnowmanHorde) {
+            const spawnedSnowmanHorde = virtualSnowmanHorde.update(dt, engine, player, canvas.width, canvas.height);
+            if (spawnedSnowmanHorde) {
+              engine.texts.push(new DamageText(player.x, player.y - 64, '⛄ HORDA TAJÍCÍCH SNĚHULÁKŮ SE BLÍŽÍ!', '#38BDF8', true, 'directorWarningBanners'));
+              sound.splash();
+            }
+          }
+
           // Update Enemies
           for (const e of engine.enemies) {
             if (engine.timeStopTimer > 0 || e.dead) {
               continue;
             }
 
-            // Virtual flock members never use the optional friendly-fire brawl AI.
-            if (!e.isVirtualCrowMember && e.brawlTimer && e.brawlTimer > 0) {
+            // Virtual flock and snowman horde members never use the optional friendly-fire brawl AI.
+            if (!e.isVirtualCrowMember && !e.isVirtualSnowmanMember && e.brawlTimer && e.brawlTimer > 0) {
               e.brawlTimer = Math.max(0, e.brawlTimer - dt);
               let nearestFoe: any = null;
               let nearestDist = 999999;
               for (const other of engine.enemies) {
-                if (other === e || other.dead || other.isDefeated || other.isVirtualCrowMember) continue;
+                if (other === e || other.dead || other.isDefeated || other.isVirtualCrowMember || other.isVirtualSnowmanMember) continue;
                 const d = Math.hypot(other.x - e.x, other.y - e.y);
                 if (d < nearestDist) {
                   nearestDist = d;
@@ -6490,6 +6517,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             const isActiveVirtualCrow = e.isVirtualCrowMember === true && e._crowWaveActive === true;
+            const isActiveVirtualSnowman = e.isVirtualSnowmanMember === true && e._snowmanHordeActive === true;
+            if (isActiveVirtualSnowman) {
+              // The virtual leader already computed this snowman's motion, steering blend,
+              // leash detach, time-sliced separation, melting HP decay, and contact damage.
+              continue;
+            }
             // The virtual leader already computed this bird's motion. Skip homing AI,
             // status-map iteration and enemy-to-enemy behavior for active flock members.
             if (!isActiveVirtualCrow || e.isDefeated || e.dead) {
@@ -7217,6 +7250,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
             ctx.restore();
           }
+        }
+
+        // Draw Melting Snowmen water puddles
+        if (snowmanHordeRef.current) {
+          snowmanHordeRef.current.renderPuddles(ctx, viewLeft, viewTop, viewRight, viewBottom, engine.uiTime);
         }
 
         // Draw Bubácká díra (anomálie Režiséra výpravy)
@@ -8334,6 +8372,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       crowHeading: 0,
       crowFlapScale: 1,
       crowContactCooldown: 0,
+      isVirtualSnowmanMember: false,
+      _snowmanHordeActive: false,
+      _snowmanHordeInEngine: false,
+      _snowmanHordeOwner: null as VirtualLeaderSnowmanHorde | null,
+      snowmanHordeIndex: -1,
+      snowmanPointMultiplier: 1,
+      snowmanContactCooldown: 0,
+      meltHpRatio: 1.0,
+      meltSquashX: 1.0,
+      meltSquashY: 1.0,
+      wobbleScaleX: 1.0,
+      wobbleScaleY: 1.0,
       zigZagTimer: 0,
       zigZagDir: Math.random() < 0.5 ? 1 : -1,
       chargeDirX: 0,
@@ -10360,6 +10410,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           // The scheduled crow miniboss remains an ordinary, untagged enemy.
           const pointMultiplier = this.isVirtualCrowMember && !this.isMiniboss && !this.isBoss
             ? Math.max(0, Math.min(1, this.crowWavePointMultiplier ?? 1))
+            : this.isVirtualSnowmanMember && !this.isMiniboss && !this.isBoss
+            ? Math.max(0, Math.min(1, this.snowmanPointMultiplier ?? 0.35))
             : 1;
           const pt = Math.max(6, Math.round(rawPt * pointMultiplier * variance));
 
