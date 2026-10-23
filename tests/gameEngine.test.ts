@@ -335,6 +335,25 @@ describe('GameEngine Headless Simulation', () => {
       expect(hunter.invulnerabilityTimer).toBeCloseTo(0.2, 5);
     });
 
+    it('sets the shepherd base courage to half of its previous value', () => {
+      const shepherd = engine.createPlayer('shepherd');
+      expect(shepherd.maxHp).toBe(55);
+      expect(shepherd.hp).toBe(55);
+    });
+
+    it('gives the shepherd a 35 percent dodge chance', () => {
+      const shepherd = engine.createPlayer('shepherd');
+      expect(shepherd.dodgeChance).toBe(0.35);
+    });
+
+    it('doubles the shepherd melee-hit invulnerability window only', () => {
+      engine.initRun({ levelId: 1, hunterType: 'shepherd', spawnInitialWave: false });
+      const shepherd = engine.state.player;
+      const enemy = engine.spawnMonster('rarach', shepherd.x + 100, shepherd.y);
+      shepherd.takeDamage(10, 'physical', enemy, true);
+      expect(shepherd.invulnerabilityTimer).toBeCloseTo(0.6, 5);
+    });
+
     it('scales repulse damage, knockback and stun with max courage', () => {
       const hunter = engine.state.player;
       const enemy = engine.spawnMonster('rarach', 100, 0);

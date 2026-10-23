@@ -511,7 +511,7 @@ export class GameEngine {
       type === 'wanderer'
         ? 200
         : type === 'shepherd'
-        ? 110
+        ? 55
         : type === 'korenarka'
         ? 125
         : type === 'sexton'
@@ -634,6 +634,7 @@ export class GameEngine {
       guaranteedCritTimer: 0,
       facingAngle: 0,
       dodgeCooldown: 0,
+      dodgeChance: type === 'shepherd' ? 0.35 : 0,
       tavernShieldLevel: meta?.tavernShieldLevel || 0,
       tempShield: 0,
       herbTimer: 0,
@@ -741,6 +742,10 @@ export class GameEngine {
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (this.hp <= 0) return;
         if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
+        if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
+          self.state.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates'));
+          return;
+        }
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates'));
@@ -765,7 +770,8 @@ export class GameEngine {
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
         // Grant brief invulnerability only if this hit actually removes courage.
         if (this.hp < hpBeforeDamage) {
-          this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.3);
+          const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
+          this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
         }
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);

@@ -2494,7 +2494,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resetGlobalGlyphAtlas();
 
     const baseMaxHp =
-      type === 'wanderer' ? 200 : type === 'shepherd' ? 110 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
+      type === 'wanderer' ? 200 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
     const baseSpeed =
       type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
     const basePickup =
@@ -2590,6 +2590,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       guaranteedCritTimer: 0,
       facingAngle: 0,
       dodgeCooldown: 0,
+      dodgeChance: type === 'shepherd' ? 0.35 : 0,
       tavernShieldLevel: meta.tavernShieldLevel || 0,
       tempShield: 0,
       herbTimer: 0,
@@ -2663,6 +2664,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (gameStateRef.current !== 'playing' || this.hp <= 0) return;
         if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
+        if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', COLORS.mustard, true));
+          return;
+        }
         if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - ((meta.windLevel || 0) * 10));
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', COLORS.mustard, true));
@@ -2683,7 +2688,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.tempShield -= absorbed;
           remainingDmg -= absorbed;
         }
+        const hpBeforeDamage = this.hp;
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
+        if (this.hp < hpBeforeDamage) {
+          const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
+          this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
+        }
         sound.hit();
         if (absorbed > 0 && remainingDmg <= 0) {
           engineRef.current.texts.push(

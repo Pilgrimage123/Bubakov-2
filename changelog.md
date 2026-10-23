@@ -1,3 +1,10 @@
+## 2026-10-23 — Úprava Pasáčka: Kuráž, úhyb a nezranitelnost
+
+- Základní maximální Kuráž Pasáčka snížena ze 110 na 55 v herním enginu i v UI inicializaci běhu.
+- Přidána 35% šance Pasáčka zcela se vyhnout přicházejícímu zásahu; při úspěchu se zobrazí hláška „ÚHYB!“.
+- Po zásahu zblízka získává Pasáček 0,6 s nezranitelnosti místo běžných 0,3 s; ostatní lovci si ponechávají původní délku.
+- Aktualizovány informace na kartě lovce a doplněny regresní testy.
+
 ## 2026-10-23 — Sjednocení názvu bonusu „Nabíjení“
 
 - Ve všech kontrolovaných hráčských popisech vylepšení používáme jednotně výraz „nabíjení“ bez doplňků typu „rychlost nabíjení“ nebo „rychlost útoku“.
