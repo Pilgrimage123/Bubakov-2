@@ -1,3 +1,14 @@
+## 2026-10-23 — Stabilizace regresního testu úhybu Pasáčka
+
+- Test ověřující nezranitelnost po zásahu nyní řídí výsledek náhodného úhybu, aby nepadal náhodně při 35% šanci Pasáčka.
+- Herní mechanika úhybu zůstává beze změny.
+
+## 2026-10-23 — Úprava Tuláka: Kuráž a Štěstí
+
+- Základní maximální Kuráž Tuláka zvýšena z 200 na 230 (+15 %) v herním enginu i v produkční inicializaci hry.
+- Základní ŠTĚSTÍ Tuláka sníženo ze 100 na 70; upravena také informační karta lovce.
+- Aktualizovány regresní testy bonusu zdi a nových statistik: Tulák začíná s plnou Kuráží 276 při bonusu zdi 2 a průměr základního ŠTĚSTÍ lovců je po změně 95; test Božích muk ověřuje Tulákových 81 bodů při úrovni 3.
+
 ## 2026-10-23 — Úprava Pasáčka: Kuráž, úhyb a nezranitelnost
 
 - Základní maximální Kuráž Pasáčka snížena ze 110 na 55 v herním enginu i v UI inicializaci běhu.

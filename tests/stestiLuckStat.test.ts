@@ -7,7 +7,7 @@ import { getGrandfatherItem } from '../src/data/grandfatherItems';
 import type { CharacterType, MetaProgression } from '../src/types';
 
 describe('Stat Štěstí (Luck Stat Architecture - ADR 0013)', () => {
-  it('assigns balanced base Štěstí to all hunters with an exact average of 100', () => {
+  it('assigns configured base Štěstí to all hunters with an average of 95', () => {
     const engine = new GameEngine();
     const hunters: CharacterType[] = ['wanderer', 'shepherd', 'korenarka', 'watchman', 'sexton', 'granny'];
 
@@ -17,16 +17,16 @@ describe('Stat Štěstí (Luck Stat Architecture - ADR 0013)', () => {
     });
 
     // Individual base values
-    expect(engine.createPlayer('wanderer').luck).toBe(100);
+    expect(engine.createPlayer('wanderer').luck).toBe(70);
     expect(engine.createPlayer('granny').luck).toBe(120);
     expect(engine.createPlayer('shepherd').luck).toBe(105);
     expect(engine.createPlayer('sexton').luck).toBe(100);
     expect(engine.createPlayer('watchman').luck).toBe(90);
     expect(engine.createPlayer('korenarka').luck).toBe(85);
 
-    // Exact mathematical average of 100
+    // Average reflects the intentional reduction of Tulák's base Štěstí to 70.
     const sum = luckValues.reduce((acc, val) => acc + val, 0);
-    expect(sum / hunters.length).toBe(100);
+    expect(sum / hunters.length).toBe(95);
 
     // Verified in HUNTER_DETAILS roster as well
     for (const h of hunters) {
@@ -41,8 +41,8 @@ describe('Stat Štěstí (Luck Stat Architecture - ADR 0013)', () => {
     };
 
     const wanderer = engine.createPlayer('wanderer', metaWithBoziMuka as MetaProgression);
-    // Base 100 + 3 * 5 = 115
-    expect(wanderer.luck).toBe(115);
+    // Base 70 + round(70 * 15%) = 81
+    expect(wanderer.luck).toBe(81);
 
     const granny = engine.createPlayer('granny', metaWithBoziMuka as MetaProgression);
     // Base 120 * (1 + 3 * 0.05) = 138 (archetype preservation)

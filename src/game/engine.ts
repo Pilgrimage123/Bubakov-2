@@ -509,7 +509,7 @@ export class GameEngine {
   ): any {
     const baseMaxHp =
       type === 'wanderer'
-        ? 200
+        ? 230
         : type === 'shepherd'
         ? 55
         : type === 'korenarka'
@@ -590,7 +590,7 @@ export class GameEngine {
         : type === 'shepherd'
         ? 105
         : type === 'wanderer'
-        ? 100
+        ? 70
         : type === 'sexton'
         ? 100
         : type === 'watchman'
