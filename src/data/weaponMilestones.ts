@@ -791,7 +791,7 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
       ? 'Základní síla zbraně.'
       : choices
         ? 'Milník: vyber jednu ze dvou specializací.'
-        : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
+        : '+12 % zranění, +8 % rychlost nabíjení, +6 % dosah.',
   flatDamageBonus: 0,
   cooldownReductionBonus: Math.max(0, (rank - 1) * 0.08),
   areaBonus: Math.max(0, (rank - 1) * 0.06),
@@ -866,7 +866,7 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         isMilestone: false,
         passiveBonusDescription: upgrade
           ? `${upgrade.name}: ${upgrade.ui_text}`
-          : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
+          : '+12 % zranění, +8 % rychlost nabíjení, +6 % dosah.',
         flatDamageBonus: cumulativeDamage,
         cooldownReductionBonus: cumulativeCooldown,
         areaBonus: cumulativeArea,
