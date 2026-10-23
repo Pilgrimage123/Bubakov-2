@@ -4,6 +4,7 @@
 - Přidána schopnost Jízda na žernovu: 9 sekund nezranitelnosti, dvojnásobná rychlost, 30sekundový základní cooldown, drcení slabších bubáků, blokace monster nad limitem HP a jiskrová aura Vůle v okruhu 85 px.
 - Limit blokujících nepřátel i obě složky poškození rostou o 20 % za každý započítaný trvalý upgrade z Dědečkova obchodu; ostatní zbraně se během jízdy pozastaví.
 - Doplněna animace valícího se žernovu, kladívka, křemenných úlomků a dočasných placatých siluet a regresní testy nových pravidel.
+- Opraveny typové návaznosti vykreslování a prostorového dotazu; počet kandidátů se nyní bere z výsledného pole spatial hash.
 
 ## 2026-10-23 — Stabilizace regresního testu úhybu Pasáčka
 

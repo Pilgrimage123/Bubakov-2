@@ -2891,7 +2891,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
         if (this.type === 'krajanek') {
-          Lada.drawKrajanekFlats(ctx, this.krajanekFlats || [], engineRef.current?.uiTime || 0);
+          Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
           if ((this.krajanekRideTimer || 0) > 0) {
             Lada.drawKrajanekRide(ctx, this.x, this.y, engineRef.current?.uiTime || this.animTime || 0, this.lastDx, this.lastDy, 1);
           } else {
@@ -5423,9 +5423,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             if (player.type === 'krajanek') {
               const rideActive = player.krajanekRideTimer > 0;
-              const candidateCount = rideActive
-                ? enemySpatialHashRef.current.queryCircleInto(player.x, player.y, 260, terrainSpatialResultsRef.current)
-                : 0;
+              if (rideActive) {
+                enemySpatialHashRef.current.queryCircleInto(player.x, player.y, 260, terrainSpatialResultsRef.current);
+              }
+              const candidateCount = rideActive ? terrainSpatialResultsRef.current.length : 0;
               const sparkBeat = stepKrajanekRide(player, dt, terrainSpatialResultsRef.current, candidateCount);
               if (sparkBeat && engine.particles.length < activeMaxParticlesRef.current) {
                 const colors = ['#FDE047', '#FFF7C2', '#F59E0B', '#D1D5DB'];
