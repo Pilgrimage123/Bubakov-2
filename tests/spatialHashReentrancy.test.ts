@@ -105,6 +105,27 @@ describe('SpatialHash Re-entrancy & Scratch Stack Safety (ADR 0029)', () => {
     expect(closest?.id).toBe('near');
   });
 
+  it('does not corrupt active queryCircle buffer when withQuery or queryNearest is called inside the loop', () => {
+    const sh = new SpatialHash<TestEntity>(100);
+    sh.insert({ id: 'outer_1', x: 10, y: 10 });
+    sh.insert({ id: 'outer_2', x: 20, y: 20 });
+    sh.insert({ id: 'target_far', x: 400, y: 400 });
+
+    const outer = sh.queryCircle(15, 15, 50);
+    expect(outer).toHaveLength(2);
+
+    const visited: string[] = [];
+    for (let i = 0; i < outer.length; i++) {
+      visited.push(outer[i].id);
+      const nearest = sh.queryNearest(400, 400, 80);
+      expect(nearest?.id).toBe('target_far');
+      // Outer buffer must remain intact after nested withQuery / queryNearest
+      expect(outer).toHaveLength(2);
+    }
+
+    expect(visited).toEqual(['outer_1', 'outer_2']);
+  });
+
   it('integrates safely with GameEngine spatial query helpers', () => {
     const state = createInitialEngineState();
     state.meta = createDefaultMetaProgression();

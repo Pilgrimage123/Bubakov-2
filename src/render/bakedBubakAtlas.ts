@@ -42,7 +42,7 @@ interface MobConfig {
 export class BakedBubakAtlas {
   private frames: Map<string, BakedFrame> = new Map();
   private initialized = false;
-  private readonly frameSteps = 4; // Compatible with 4-phase pilot tests
+  private readonly frameSteps = 12; // 12 evenly spaced walk-cycle phases (~23 FPS playback, zero aliasing)
 
   public init(): void {
     if (this.initialized) return;
@@ -72,10 +72,11 @@ export class BakedBubakAtlas {
       const originX = canvasSize / 2;
       const originY = canvasSize / 2;
 
-      // Pre-bake both normal and panicked states across discrete animation steps
+      // Pre-bake both normal and panicked states across discrete animation steps of a full walk cycle
       for (const panicked of [false, true]) {
+        const cyclePeriod = (Math.PI * 2) / (panicked ? 20 : 12);
         for (let step = 0; step < this.frameSteps; step++) {
-          const animTime = (step / this.frameSteps) * 2;
+          const animTime = (step / this.frameSteps) * cyclePeriod;
           const { canvas, ctx } = this.createFrameCanvas(canvasSize, canvasSize);
 
           ctx.save();
@@ -163,7 +164,8 @@ export class BakedBubakAtlas {
 
   public getFrame(mobId: string, animTime: number, panicked = false): BakedFrame | undefined {
     if (!this.initialized) this.init();
-    const step = Math.floor(Math.abs(animTime * 2) % this.frameSteps);
+    const cyclePeriod = (Math.PI * 2) / (panicked ? 20 : 12);
+    const step = Math.floor(((Math.abs(animTime) / cyclePeriod) * this.frameSteps) % this.frameSteps);
     return this.frames.get(`${mobId}_${step}_${panicked ? 1 : 0}`) || this.frames.get(`${mobId}_${step}`);
   }
 

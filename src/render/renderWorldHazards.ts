@@ -20,6 +20,8 @@ export interface WorldHazardsRenderOptions {
   statusIndicatorsEnabled?: boolean;
   combatVfxEnabled?: boolean;
   snowmanHorde?: any;
+  isPaused?: boolean;
+  deferCombatVfxToOverlayPass?: boolean;
 }
 
 export function renderWorldHazardsAndEncounters(
@@ -346,7 +348,13 @@ export function renderWorldHazardsAndEncounters(
         const x = player.x + Math.cos(a) * orbitRadius;
         const y = player.y + Math.sin(a) * orbitRadius;
 
-        if (Math.random() < 0.14 && engine.particles) {
+        if (
+          !options?.isPaused &&
+          options?.combatVfxEnabled !== false &&
+          Math.random() < 0.14 &&
+          engine.particles &&
+          engine.particles.length < 120
+        ) {
           const dustAngle = a + Math.PI / 2 + (Math.random() - 0.5) * 0.4;
           engine.particles.push({
             x: x - Math.cos(dustAngle) * 10,
@@ -364,51 +372,11 @@ export function renderWorldHazardsAndEncounters(
     }
   }
 
-  // 9. Active Folklore Battle Items & Hero FX
+  // 9. Ground-level Hero & Battle Item FX (Footprints & Herbal Sanctuary Circle)
   if (options?.combatVfxEnabled !== false) {
-    // Lightning strike
-    if (engine.lightningStrike) {
-      const ls = engine.lightningStrike;
-      ctx.save();
-      ctx.strokeStyle = '#FEF08A';
-      ctx.shadowColor = '#60A5FA';
-      ctx.shadowBlur = 22;
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      let curX = ls.x + (Math.random() - 0.5) * 40;
-      let curY = camera.y - 120;
-      ctx.moveTo(curX, curY);
-      const steps = 7;
-      for (let s = 1; s <= steps; s++) {
-        const targetY = (camera.y - 120) + (ls.y - (camera.y - 120)) * (s / steps);
-        const targetX = s === steps ? ls.x : ls.x + (Math.random() - 0.5) * 55;
-        ctx.lineTo(targetX, targetY);
-      }
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
-      ctx.beginPath();
-      ctx.arc(ls.x, ls.y, 65, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Farní požehnání: zvon a sloup svatého světla
-    if (engine.blessing) {
-      Lada.drawBlessingFx(ctx, engine.blessing.x, engine.blessing.y, engine.blessing.t, engine.blessing.dur);
-    }
-    // In-world pastevecké stádo a částicové efekty Pasáčka
-    if (engine.shepherdStampede && player) {
-      Lada.drawShepherdStampedeFx(ctx, engine.shepherdStampede, 0.016, player.x, player.y);
-    }
-    // In-world bylinné sanctuarium a očistné kadidlo Kořenářky
+    // In-world bylinné sanctuarium a očistné kadidlo Kořenářky (ground circle)
     if (engine.korenarkaSanctuary && player) {
       Lada.drawKorenarkaSanctuaryFx(ctx, engine.korenarkaSanctuary, 0.016, player.x, player.y);
-    }
-
-    // Pověstná sukovice
-    if (engine.sukovice && player) {
-      Lada.drawSukoviceFx(ctx, engine.sukovice, player.x, player.y);
     }
     // Kominické stopy sazí
     if (engine.sootFootprints && engine.sootFootprints.length > 0) {
@@ -419,13 +387,73 @@ export function renderWorldHazardsAndEncounters(
         }
       }
     }
-    // Hlt slivovice
-    if (engine.slivoviceVapor) {
-      Lada.drawSlivoviceVapor(ctx, engine.slivoviceVapor.x, engine.slivoviceVapor.y, engine.slivoviceVapor.dirAngle, engine.slivoviceVapor.life);
+  }
+
+  if (!options?.deferCombatVfxToOverlayPass) {
+    renderWorldCombatVfx(ctx, engine, camera, options);
+  }
+}
+
+/**
+ * Renders over-entity world combat VFX (lightning strikes, blessing bell, stampede,
+ * spinning sukovice, slivovice vapor, masopust shockwave shield).
+ */
+export function renderWorldCombatVfx(
+  ctx: CanvasRenderingContext2D,
+  engine: any,
+  camera: CameraViewport,
+  options?: WorldHazardsRenderOptions
+): void {
+  if (options?.combatVfxEnabled === false) return;
+  const player = engine.player;
+  const uiTime = engine.uiTime || 0;
+
+  // Lightning strike (rendered without GPU-stalling shadowBlur)
+  if (engine.lightningStrike) {
+    const ls = engine.lightningStrike;
+    ctx.save();
+    ctx.beginPath();
+    let curX = ls.x + (Math.random() - 0.5) * 40;
+    const curY = camera.y - 120;
+    ctx.moveTo(curX, curY);
+    const steps = 7;
+    for (let s = 1; s <= steps; s++) {
+      const targetY = (camera.y - 120) + (ls.y - (camera.y - 120)) * (s / steps);
+      const targetX = s === steps ? ls.x : ls.x + (Math.random() - 0.5) * 55;
+      ctx.lineTo(targetX, targetY);
     }
-    // Masopustní řehtačka
-    if (engine.masopustShockwaveTimer > 0 && player) {
-      Lada.drawMasopustShockwave(ctx, player.x, player.y, 140, uiTime);
-    }
+    ctx.strokeStyle = 'rgba(96, 165, 250, 0.45)';
+    ctx.lineWidth = 14;
+    ctx.stroke();
+    ctx.strokeStyle = '#FEF08A';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
+    ctx.beginPath();
+    ctx.arc(ls.x, ls.y, 65, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Farní požehnání: zvon a sloup svatého světla
+  if (engine.blessing) {
+    Lada.drawBlessingFx(ctx, engine.blessing.x, engine.blessing.y, engine.blessing.t, engine.blessing.dur);
+  }
+  // In-world pastevecké stádo a částicové efekty Pasáčka
+  if (engine.shepherdStampede && player) {
+    Lada.drawShepherdStampedeFx(ctx, engine.shepherdStampede, 0.016, player.x, player.y);
+  }
+  // Pověstná sukovice
+  if (engine.sukovice && player) {
+    Lada.drawSukoviceFx(ctx, engine.sukovice, player.x, player.y);
+  }
+  // Hlt slivovice
+  if (engine.slivoviceVapor) {
+    Lada.drawSlivoviceVapor(ctx, engine.slivoviceVapor.x, engine.slivoviceVapor.y, engine.slivoviceVapor.dirAngle, engine.slivoviceVapor.life);
+  }
+  // Masopustní řehtačka
+  if (engine.masopustShockwaveTimer > 0 && player) {
+    Lada.drawMasopustShockwave(ctx, player.x, player.y, 140, uiTime);
   }
 }

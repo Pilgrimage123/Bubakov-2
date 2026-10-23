@@ -91,4 +91,34 @@ describe('Enemy Atlas Baking & Pipeline Integration (ADR 0029)', () => {
 
     spyDrawRarach.mockRestore();
   });
+
+  it('falls back to procedural drawing during attack recovery phase (recoveryTimer > 0)', () => {
+    const spyDrawRarach = vi.spyOn(Lada, 'drawRarach');
+
+    const enemy = {
+      id: 'mob_1',
+      x: 100,
+      y: 100,
+      radius: 20,
+      isAttacking: false,
+      windupTimer: 0,
+      strikeTimer: 0,
+      recoveryTimer: 0.15,
+    };
+
+    drawEnemyRenderer('drawRarach', ctx, 100, 100, 1.0, 1, false, enemy);
+    expect(spyDrawRarach).toHaveBeenCalled();
+
+    spyDrawRarach.mockRestore();
+  });
+
+  it('advances across multiple distinct walk-cycle frames within a 0.5s stride window', () => {
+    const seenCanvases = new Set<any>();
+    for (let i = 0; i < 12; i++) {
+      const frame = atlas.getFrame('mysak', i * 0.04, false);
+      expect(frame).toBeDefined();
+      seenCanvases.add(frame?.canvas);
+    }
+    expect(seenCanvases.size).toBeGreaterThanOrEqual(8);
+  });
 });

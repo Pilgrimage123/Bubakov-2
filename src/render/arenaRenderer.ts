@@ -18,7 +18,7 @@ import { renderDrops } from './renderDrops';
 import { renderParticles } from './renderParticles';
 import { renderProjectilesAndSlashes } from './renderProjectiles';
 import { renderEnemyTelegraphs } from './renderTelegraphs';
-import { renderWorldHazardsAndEncounters } from './renderWorldHazards';
+import { renderWorldHazardsAndEncounters, renderWorldCombatVfx } from './renderWorldHazards';
 import { OffScreenIndicatorController } from './offScreenIndicators';
 
 export interface CameraViewport {
@@ -45,6 +45,7 @@ export interface ArenaRenderOptions {
   curLvl?: any;
   dayPhase?: any;
   snowmanHorde?: any;
+  isPaused?: boolean;
   afterEntitiesDrawn?: (entity: any) => void;
 }
 
@@ -170,7 +171,15 @@ export class ArenaRenderer {
     if (engine.enemies && engine.enemies.length > 0) {
       for (let i = 0; i < engine.enemies.length; i++) {
         const enemy = engine.enemies[i];
-        if (enemy.isDefeated || enemy.dead) continue;
+        if (!enemy || enemy.dead) continue;
+        // Skip defeated enemies only if they have no active flee / food-defeat fade animation
+        if (
+          enemy.isDefeated &&
+          typeof enemy.fleeTimer !== 'number' &&
+          typeof enemy.foodDefeatTimer !== 'number'
+        ) {
+          continue;
+        }
         const radius = enemy.radius || 20;
         if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom) && this.drawableCount < MAX_DRAWABLE_CAPACITY) {
           this.preallocatedDrawables[this.drawableCount++] = enemy;
@@ -258,11 +267,22 @@ export class ArenaRenderer {
     const tBackdropStart = now();
     const curLvl = opts.curLvl || (engine as any).curLvl || { season: 'winter', theme: 'meadow' };
     const phase = opts.dayPhase || (engine as any).dayPhase || { id: 'noon' };
-    const kurazRatio = engine.player && engine.player.maxKuraz > 0
-      ? Math.max(0, engine.player.kuraz / engine.player.maxKuraz)
+    const playerHp = engine?.player?.kuraz ?? engine?.player?.hp ?? 100;
+    const playerMaxHp = engine?.player?.maxKuraz ?? engine?.player?.maxHp ?? 100;
+    const kurazRatio = engine.player && playerMaxHp > 0
+      ? Math.max(0, Math.min(1, playerHp / playerMaxHp))
       : 1;
+    const isWinter = curLvl.season === 'winter';
 
-    ctx.fillStyle = getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+    if (isWinter) {
+      ctx.fillStyle = getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+    } else if (curLvl.theme === 'autumn_graveyard') {
+      ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
+    } else if (curLvl.theme === 'spring_river') {
+      ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#D6EAF8' : (phase.id === 'dusk' ? '#9AA9BB' : '#1B2A38');
+    } else {
+      ctx.fillStyle = phase.skyColor || getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+    }
     ctx.fillRect(0, 0, width, height);
     const backdropMs = now() - tBackdropStart;
 
@@ -271,7 +291,6 @@ export class ArenaRenderer {
     ctx.translate(-camera.x, -camera.y);
 
     // 2a. Ambient tint and storm haze over world
-    const isWinter = curLvl.season === 'winter';
     if (curLvl.theme === 'autumn_graveyard') {
       ctx.fillStyle = phase.ambientTint !== 'transparent' ? 'rgba(32, 24, 45, 0.42)' : 'rgba(25, 20, 30, 0.22)';
       ctx.fillRect(camera.x, camera.y, width, height);
@@ -334,6 +353,8 @@ export class ArenaRenderer {
       statusIndicatorsEnabled: opts.statusIndicatorsEnabled,
       combatVfxEnabled: opts.combatVfxEnabled,
       snowmanHorde: opts.snowmanHorde || (engine as any).snowmanHorde,
+      isPaused: opts.isPaused,
+      deferCombatVfxToOverlayPass: true,
     });
 
     // 3. DROPS PASS
@@ -385,6 +406,10 @@ export class ArenaRenderer {
     const isCombatTextsActive = opts.combatTextsEnabled ?? opts.damageNumbersEnabled ?? true;
     if (isCombatTextsActive && engine.texts && engine.texts.length > 0) {
       const tTextsStart = now();
+      ctx.font = '900 18px Eczar, serif';
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#2D1609';
+      ctx.lineJoin = 'round';
       for (let i = 0; i < engine.texts.length; i++) {
         const txt = engine.texts[i];
         if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -399,8 +424,15 @@ export class ArenaRenderer {
           drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
         }
       }
+      ctx.globalAlpha = 1;
       combatTextsMs = now() - tTextsStart;
     }
+
+    // 8b. OVER-ENTITY WORLD COMBAT VFX PASS (Lightning bolt, Blessing bell, Stampede, Sukovice, Slivovice, Masopust shield)
+    renderWorldCombatVfx(ctx, engine, camera, {
+      combatVfxEnabled: opts.combatVfxEnabled,
+      isPaused: opts.isPaused,
+    });
 
     ctx.restore(); // END WORLD SPACE PASS (TRANSLATED BY CAMERA)
 
@@ -409,13 +441,13 @@ export class ArenaRenderer {
     if (opts.lightingEnabled) {
       const tLightStart = now();
       const isNight = ['dusk', 'night', 'midnight', 'dawn'].includes(phase.id);
-      if (isNight && engine.lightSources && engine.lightSources.length > 0) {
+      if ((isNight && engine.lightSources && engine.lightSources.length > 0) || kurazRatio < 0.25) {
         renderStorybookLightingComposite(
           ctx,
           width,
           height,
           { x: camera.x, y: camera.y },
-          engine.lightSources,
+          engine.lightSources || [],
           phase.id,
           kurazRatio,
           curLvl.season === 'winter',
@@ -429,8 +461,6 @@ export class ArenaRenderer {
     }
 
     // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS)
-    const playerHp = engine?.player?.kuraz ?? engine?.player?.hp ?? 100;
-    const playerMaxHp = engine?.player?.maxKuraz ?? engine?.player?.maxHp ?? 100;
     const hpPct = playerHp / (playerMaxHp || 1);
     const dropsArray = engine?.drops ?? [];
     this.indicatorController.update(dropsArray, camera, 0.016, hpPct);

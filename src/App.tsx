@@ -94,7 +94,12 @@ import {
 } from './render/ladaRenderer';
 import { drawGlyphText, resetGlobalGlyphAtlas } from './render/glyphAtlas';
 import { ChunkBitmapCache } from './render/chunkCache';
-import { renderArena, type CameraViewport } from './render/arenaRenderer';
+import {
+  renderArena,
+  createReusableRenderMetrics,
+  type CameraViewport,
+  type ArenaRenderMetrics,
+} from './render/arenaRenderer';
 import {
   getPetrolejkaRadius,
   isPositionIlluminated,
@@ -394,9 +399,11 @@ class DamageText {
       ctx.save();
       ctx.globalAlpha = Math.max(0, this.life);
       ctx.fillStyle = this.color;
-      if (this.size !== 18) {
-        ctx.font = `900 ${this.size}px Eczar`;
-      }
+      ctx.font = `900 ${this.size}px Eczar, serif`;
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = COLORS.ink;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
 
       const text = this.text;
       const textW = text ? ctx.measureText(text).width : 0;
@@ -2096,6 +2103,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     originalCombatPreset: null as CombatTextPreset | null,
   });
   const lastCombatTextsMsRef = useRef<number>(0);
+  const arenaMetricsRef = useRef<ArenaRenderMetrics>(createReusableRenderMetrics());
 
   const pushTransientLight = useCallback((light: DynamicLightSource) => {
     const eng = engineRef.current;
@@ -3093,6 +3101,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const perfProfile = meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced');
     const maxLivingEnemies = perfProfile === 'performance' ? 35 : perfProfile === 'balanced' ? 55 : 70;
     directorRef.current = new RunDirector(chosenLevelId, undefined, { dynamicDifficulty: dynamicDiff, maxLivingEnemies });
+    engineRef.current.activeHazards = directorRef.current.hazards;
+    engineRef.current.bubackaDira = null;
     engineRef.current.enemies.forEach((e) => directorRef.current?.recordEnemySpawn(e, 0));
     gameEngineRef.current = new GameEngine(engine);
     enemySpatialHashRef.current = gameEngineRef.current.spatialHash;
@@ -3808,8 +3818,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const scale = isPerf ? 0.75 : 1.0;
       const maxPhysicalWidth = 1920;
       const maxPhysicalHeight = 1080;
-      const nextWidth = Math.min(Math.round(window.innerWidth * scale), maxPhysicalWidth);
-      const nextHeight = Math.min(Math.round(window.innerHeight * scale), maxPhysicalHeight);
+      const rawW = Math.max(1, window.innerWidth * scale);
+      const rawH = Math.max(1, window.innerHeight * scale);
+      const capRatio = Math.min(1, maxPhysicalWidth / rawW, maxPhysicalHeight / rawH);
+      const nextWidth = Math.max(1, Math.round(rawW * capRatio));
+      const nextHeight = Math.max(1, Math.round(rawH * capRatio));
 
       if (canvas.width !== nextWidth) {
         canvas.width = nextWidth;
@@ -4163,6 +4176,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 },
               };
               directorRef.current.step(dt, directorAdapter);
+              engine.activeHazards = directorRef.current.hazards;
+              engine.bubackaDira = directorRef.current.bubackaDira;
               if (directorRef.current.telegraphMessage && runStatsRef.current.warningBanner !== directorRef.current.telegraphMessage) {
                 runStatsRef.current.warningBanner = directorRef.current.telegraphMessage;
                 setRunStats((s) => ({ ...s, warningBanner: directorRef.current!.telegraphMessage || '' }));
@@ -6815,6 +6830,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           // Update Drops
           for (const d of engine.drops) {
             d.time += dt;
+            if (d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0) {
+              d.goldenRushTimer -= dt;
+              if (d.goldenRushTimer <= 0) {
+                d.isHot = false;
+              }
+            }
+            if (typeof d.expiration === 'number') {
+              d.expiration -= dt;
+              if (d.expiration <= 0) {
+                d.dead = true;
+                continue;
+              }
+            }
             if (d.vx || d.vy) {
               d.x += d.vx * dt;
               d.y += d.vy * dt;
@@ -6834,7 +6862,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             } else if (dist < player.pickupRadius && currentGameState === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
               const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
-              const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * dt;
+              const mobility = d.magnetMobility !== undefined ? d.magnetMobility : 1.0;
+              const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * mobility * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
@@ -6862,8 +6891,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     engine.texts.push(new DamageText(player.x, player.y - 40, `+${val} kr. (Groš)`, '#E2E8F0'));
                   }
                 } else if (d.type === 'gingerbread') {
+                  const isHotActive = !!(d.isHot && (!d.goldenRushTimer || d.goldenRushTimer > 0));
                   const ovenLvl = metaRef.current.ovenLevel || 0;
-                  const rawVal = d.value || 1;
+                  const rawVal = (d.value || 1) * (isHotActive ? 2 : 1);
                   const bonusVal = rawVal * (1 + ovenLvl * 0.10);
                   const whole = Math.floor(bonusVal);
                   engine.gingerbreadFraction = (engine.gingerbreadFraction || 0) + (bonusVal - whole);
@@ -6951,14 +6981,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 } else if (d.type === 'potion') {
                   sound.potion();
                   const waterLevel = metaRef.current.waterLevel || 0;
-                  const potionHeal = 30 * (1 + waterLevel * 0.20);
+                  let potionHeal = 30 * (1 + waterLevel * 0.20);
+                  if (d.isMercyDrop) {
+                    const mercyCap = player.maxHp * 0.45;
+                    if (player.hp + potionHeal > mercyCap) {
+                      potionHeal = Math.max(0, mercyCap - player.hp);
+                    }
+                  }
                   applyBearMaskOverheal(player, potionHeal);
                   player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
                   engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
-                  applyBearMaskOverheal(player, 15);
-                  engine.texts.push(new DamageText(player.x, player.y - 40, '+15 Kuráž 🍐', '#84CC16'));
+                  let foodHeal = 15;
+                  if (d.isMercyDrop) {
+                    const mercyCap = player.maxHp * 0.45;
+                    if (player.hp + foodHeal > mercyCap) {
+                      foodHeal = Math.max(0, mercyCap - player.hp);
+                    }
+                  }
+                  applyBearMaskOverheal(player, foodHeal);
+                  engine.texts.push(new DamageText(player.x, player.y - 40, `+${Math.round(foodHeal)} Kuráž 🍐`, '#84CC16'));
                 } else if (d.type === 'soul') {
                   sound.soul();
                   player.soulBuffTimer = 6.0;
@@ -7038,6 +7081,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     onSound: (name) => (sound as any)[name]?.(),
                     onDamageText: (opts) => pushDamageText(engine.texts, opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'lootResources'),
                   }, fMult);
+                } else if (d.type === 'big_pouch') {
+                  sound.coin();
+                  const pouchVal = d.value || 35;
+                  engine.coins += pouchVal;
+                  pushDamageText(engine.texts, player.x, player.y - 75, `VELKÝ MĚŠEC! +${pouchVal} kr. 🪙`, '#F59E0B', true, 'lootResources');
+                } else if (d.type === 'gingerbread_stash') {
+                  sound.gingerbreadPickup();
+                  const stashVal = d.value || 25;
+                  engine.gingerbread += stashVal;
+                  const mercyCap = player.maxHp * 0.45;
+                  const healAmt = Math.max(0, Math.min(30, mercyCap - player.hp));
+                  if (healAmt > 0) {
+                    applyBearMaskOverheal(player, healAmt);
+                    pushDamageText(engine.texts, player.x, player.y - 50, `+${Math.round(healAmt)} Kuráž! 🧺`, '#F43F5E', true, 'lootResources');
+                  }
+                  pushDamageText(engine.texts, player.x, player.y - 75, `KOŠÍK PERNÍKU! +${stashVal} 🧺`, '#D97706', true, 'lootResources', 'gingerbread');
                 }
               }
             }
@@ -7211,7 +7270,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         frameProfiler.mark('world', performance.now());
 
-        renderArena(ctx, engine, camera, {
+        const arenaMetrics = renderArena(ctx, engine, camera, {
           performanceProfile: currentProfile,
           combatVfxEnabled: isGameEffectEnabled('combatVfxEnabled'),
           combatTextsEnabled: isGameEffectEnabled('effectsEnabled'),
@@ -7222,9 +7281,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           curLvl,
           dayPhase: phase,
           snowmanHorde: snowmanHordeRef.current,
-        });
+          isPaused: currentGameState !== 'playing',
+        }, arenaMetricsRef.current);
 
+        lastCombatTextsMsRef.current = arenaMetrics.timings.combatTextsMs;
         frameProfiler.mark('overlays', performance.now());
+        // Partition renderArena's measured sub-passes into FrameProfiler's backdrop / world / lighting buckets
+        frameProfiler.current.backdrop += arenaMetrics.timings.backdropMs;
+        frameProfiler.current.lighting += arenaMetrics.timings.lightingMs;
+        frameProfiler.current.world = Math.max(
+          0,
+          frameProfiler.current.world - arenaMetrics.timings.backdropMs - arenaMetrics.timings.lightingMs
+        );
 
         // Mrazivý zimní okraj z Trouby obecního ponocného
         if (isGameEffectEnabled('combatVfxEnabled') && engine.ponocnyFrostTimer > 0) {
@@ -11868,6 +11936,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   sound.coin();
                   const nextPerf = (meta.performanceProfile || (meta.performanceMode ? 'performance' : 'balanced')) !== 'performance';
                   saveMeta({ ...meta, performanceMode: nextPerf, performanceProfile: nextPerf ? 'performance' : 'balanced' });
+                  window.dispatchEvent(new Event('resize'));
                 }}
                 title="Plynulý režim: optimalizuje strop nepřátel a částic pro stálých 60 FPS"
               >

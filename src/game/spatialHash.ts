@@ -9,9 +9,13 @@ export class SpatialHash<T extends { x: number; y: number }> {
   private readonly cells: Map<number, T[]>;
   private readonly touchedCells: number[];
 
-  // Stack of preallocated scratch arrays for re-entrant / nested queries without allocations (ADR 0029)
+  // Preallocated scratch arrays for re-entrant / nested queries without allocations (ADR 0029)
   public static readonly SCRATCH_CAPACITY = 8;
   private readonly scratchStack: T[][] = Array.from(
+    { length: SpatialHash.SCRATCH_CAPACITY },
+    () => [],
+  );
+  private readonly scopedStack: T[][] = Array.from(
     { length: SpatialHash.SCRATCH_CAPACITY },
     () => [],
   );
@@ -39,6 +43,9 @@ export class SpatialHash<T extends { x: number; y: number }> {
     this.touchedCells.length = 0;
     for (let i = 0; i < this.scratchStack.length; i++) {
       this.scratchStack[i].length = 0;
+    }
+    for (let i = 0; i < this.scopedStack.length; i++) {
+      this.scopedStack[i].length = 0;
     }
     this.scratchDepth = 0;
     this.scratchPoolIndex = 0;
@@ -125,8 +132,8 @@ export class SpatialHash<T extends { x: number; y: number }> {
   ): void {
     let buffer: T[];
     let usedStack = false;
-    if (this.scratchDepth < this.scratchStack.length) {
-      buffer = this.scratchStack[this.scratchDepth++];
+    if (this.scratchDepth < this.scopedStack.length) {
+      buffer = this.scopedStack[this.scratchDepth++];
       usedStack = true;
     } else {
       buffer = [];

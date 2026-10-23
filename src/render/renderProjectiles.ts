@@ -36,11 +36,8 @@ export function renderProjectilesAndSlashes(
       if (p.visual === 'bun') {
         Lada.drawCzechBuchta(ctx, 0, 0, 1.15);
       } else if (p.visual === 'herb_leaf') {
-        Lada.setupPath(ctx, COLORS.green, COLORS.ink, 2.5);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 12, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
+        Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 1.15);
       } else if (p.visual === 'snowball' || p.visual === 'snowball_small') {
         Lada.drawSnowball(ctx, 0, 0, p.visual === 'snowball' ? 12 : 7);
       } else if (p.visual === 'kolac') {
@@ -379,10 +376,12 @@ export function renderProjectilesAndSlashes(
           ctx.stroke();
         }
         ctx.restore();
+      } else if (s.style === 'halberd' || s.weaponId === 'kovana_halapartna') {
+        Lada.drawHalapartnaSlash(ctx, s);
       } else if (s.style === 'cane' || ((!s.style || s.style === 'arc') && s.weaponId !== 'halberd')) {
         Lada.drawOsikovyPrutSlash(ctx, s);
       } else {
-        Lada.setupPath(ctx, 'transparent', s.style === 'halberd' ? '#94A3B8' : COLORS.white, 8);
+        Lada.setupPath(ctx, 'transparent', COLORS.white, 8);
         ctx.beginPath();
         ctx.arc(0, 0, s.reach * 0.8, s.angle - s.arc / 2, s.angle + s.arc / 2);
         ctx.stroke();

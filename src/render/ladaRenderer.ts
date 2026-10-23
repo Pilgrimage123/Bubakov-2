@@ -16132,7 +16132,7 @@ function drawEnemyRenderer(
   };
 
   const bakedMobId = methodToMobId[method];
-  const canUseAtlas = bakedMobId && !isAttacking && (!extraArgs || extraArgs.length === 0);
+  const canUseAtlas = bakedMobId && !isAttacking && !(recoveryTimer > 0) && (!extraArgs || extraArgs.length === 0);
   let drawnViaAtlas = false;
   if (canUseAtlas) {
     drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);

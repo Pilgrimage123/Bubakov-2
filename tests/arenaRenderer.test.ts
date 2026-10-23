@@ -7,6 +7,7 @@ import {
   type CameraViewport,
   type ArenaRenderOptions,
 } from '../src/render/arenaRenderer';
+import { Lada } from '../src/render/ladaRenderer';
 import { createInitialEngineState } from '../src/game/engineState';
 import type { EngineState } from '../src/game/engineState';
 import { createMockCanvasContext } from './helpers/mockCanvas';
@@ -155,5 +156,57 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     expect(metrics.timings.dropsMs).toBeDefined();
     expect(metrics.timings.projectilesMs).toBeDefined();
     expect(metrics.timings.particlesMs).toBeDefined();
+  });
+
+  it('continues rendering defeated enemies during their flee / food-defeat fade animation until dead', () => {
+    const drawFleeing = vi.fn();
+    const drawDead = vi.fn();
+
+    engine.enemies = [
+      { id: 'fleeing', x: 0, y: 0, radius: 20, isDefeated: true, dead: false, fleeTimer: 0.3, draw: drawFleeing } as any,
+      { id: 'dead', x: 10, y: 10, radius: 20, isDefeated: true, dead: true, fleeTimer: 0.85, draw: drawDead } as any,
+    ];
+
+    const metrics = renderArena(ctx, engine, camera);
+    expect(drawFleeing).toHaveBeenCalledTimes(1);
+    expect(drawDead).not.toHaveBeenCalled();
+    expect(metrics.renderedEntities).toBe(1);
+  });
+
+  it('renders herb_leaf projectiles and kovana_halapartna slashes with dedicated Lada procedures', () => {
+    const spyHerb = vi.spyOn(Lada, 'drawHerbProjectile');
+    const spyHalberd = vi.spyOn(Lada, 'drawHalapartnaSlash');
+
+    engine.projectiles = [
+      { x: 0, y: 0, radius: 14, angle: 0.5, visual: 'herb_leaf', herbVariant: 2, dead: false },
+    ];
+    engine.slashes = [
+      { x: 0, y: 0, reach: 90, angle: 0, arc: 1.2, style: 'halberd', weaponId: 'kovana_halapartna', dead: false },
+    ];
+
+    renderArena(ctx, engine, camera);
+
+    expect(spyHerb).toHaveBeenCalledTimes(1);
+    expect(spyHalberd).toHaveBeenCalledTimes(1);
+
+    spyHerb.mockRestore();
+    spyHalberd.mockRestore();
+  });
+
+  it('draws ground footprints before entities and over-entity combat VFX (sukovice) after entities', () => {
+    const order: string[] = [];
+    const spyFootprint = vi.spyOn(Lada, 'drawSootFootprint').mockImplementation(() => order.push('footprint'));
+    const spySukovice = vi.spyOn(Lada, 'drawSukoviceFx').mockImplementation(() => order.push('sukovice'));
+
+    engine.player = { x: 0, y: 0, hp: 100, maxHp: 100, weapons: [], draw: () => order.push('player') } as any;
+    (engine as any).sootFootprints = [{ x: 0, y: 0, angle: 0 }];
+    (engine as any).sukovice = { t: 0.2, dur: 1.0 };
+
+    renderArena(ctx, engine, camera);
+
+    expect(order).toEqual(['footprint', 'player', 'sukovice']);
+
+    spyFootprint.mockRestore();
+    spySukovice.mockRestore();
   });
 });
