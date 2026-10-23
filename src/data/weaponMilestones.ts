@@ -361,7 +361,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_flurry: {
     id: 'melee_flurry',
     name: 'Svižná ruka',
-    ui_text: '+40 % rychlost nabíjení',
+    ui_text: '+40 % nabíjení',
     category: 'melee',
     stats: {
       area_bonus: 0.00,
@@ -394,7 +394,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_frenzy: {
     id: 'melee_frenzy',
     name: 'Zběsilé sekání',
-    ui_text: '+80 % rychlost nabíjení, -25 % velikost švihu',
+    ui_text: '+80 % nabíjení, -25 % velikost švihu',
     category: 'melee',
     stats: {
       area_bonus: -0.25,
@@ -478,7 +478,7 @@ export const AURA_NORMAL_UPGRADES: Record<string, AuraNormalUpgradeDef> = {
   aura_pulse: {
     id: 'aura_pulse',
     name: 'Vysoká frekvence',
-    ui_text: '+40 % rychlost nabíjení pulzů',
+    ui_text: '+40 % nabíjení pulzů',
     category: 'aura',
     stats: {
       area_bonus: 0.00,
@@ -564,7 +564,7 @@ export const PROJECTILE_NORMAL_UPGRADES: Record<string, ProjectileNormalUpgradeD
   cd_hyper: {
     id: 'cd_hyper',
     name: 'Rychlopalný mechanismus',
-    ui_text: '+40 % rychlost nabíjení',
+    ui_text: '+40 % nabíjení',
     category: 'projectile',
     stats: {
       cooldown_reduction: 0.30,
@@ -791,7 +791,7 @@ const makeRank = (rank: number, choices?: [MilestoneChoice, MilestoneChoice]): W
       ? 'Základní síla zbraně.'
       : choices
         ? 'Milník: vyber jednu ze dvou specializací.'
-        : '+12 % zranění, +8 % rychlost nabíjení, +6 % dosah.',
+        : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
   flatDamageBonus: 0,
   cooldownReductionBonus: Math.max(0, (rank - 1) * 0.08),
   areaBonus: Math.max(0, (rank - 1) * 0.06),
@@ -866,7 +866,7 @@ function createWeaponRanks(id: WeaponId): WeaponRankDef[] {
         isMilestone: false,
         passiveBonusDescription: upgrade
           ? `${upgrade.name}: ${upgrade.ui_text}`
-          : '+12 % zranění, +8 % rychlost nabíjení, +6 % dosah.',
+          : '+12 % zranění, +8 % nabíjení, +6 % dosah.',
         flatDamageBonus: cumulativeDamage,
         cooldownReductionBonus: cumulativeCooldown,
         areaBonus: cumulativeArea,
