@@ -42,7 +42,7 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
     const enemy = engine.createHeadlessEnemy('tajici_snehulak', 10, 20);
 
     expect(enemy.id).toBe('tajici_snehulak');
-    expect(enemy.hp).toBe(190);
+    expect(enemy.hp).toBe(280);
     expect(enemy.method).toBe('drawMeltingSnowman');
     expect(typeof (Lada as any).drawMeltingSnowman).toBe('function');
   });
