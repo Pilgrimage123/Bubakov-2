@@ -1,3 +1,8 @@
+## 2026-10-23 — Úprava doby tání tajícího sněhuláka
+
+- Zdraví tajícího sněhuláka zvýšeno ze 190 na 280 HP, takže při samovolném úbytku 8 HP/s roztaje za 35 sekund.
+- Bodová/odměnová hodnota zůstává beze změny: XP 2 a 2 krejcary.
+
 ## 2026-10-22 — Tající sněhulák a útok dřevěného cepu
 
 - Doplněn samostatný ladovský Canvas sprite tajícího sněhuláka: rozbředlé tělo s kapkami a louží, červená pruhovaná šála, šišatý zelený klobouk, mrkvový nos, uhelný úsměv a koště.
