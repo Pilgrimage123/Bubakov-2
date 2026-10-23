@@ -40,7 +40,7 @@ describe('Krajánek — Jízda na žernovu', () => {
     expect(getKrajanekUpgradeScale(1)).toBeCloseTo(1.2);
     expect(getKrajanekUpgradeScale(3)).toBeCloseTo(1.6);
     expect(getKrajanekBlockingHp(0)).toBe(KRAJANEK_BASE_BLOCK_HP);
-    expect(getKrajanekBlockingHp(2)).toBeCloseTo(640);
+    expect(getKrajanekBlockingHp(2)).toBeCloseTo(560);
   });
 
   it('flattens small enemies, damages heavy blockers, and sparks monsters outside the path', () => {
