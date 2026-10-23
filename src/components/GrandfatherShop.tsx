@@ -89,7 +89,7 @@ function getItemQuote(item: GrandfatherItemDef): string {
     return '„Poctivé krvavé jelito ze zabijačky! Síla a zranění jak ze žuly!“';
   }
   if (item.id === 'opravdova_kava') {
-    return '„Opravdová zrnková káva od zámořských kupců! Zbraně ti budou nabíjet jedna báseň!“';
+    return '„Opravdová zrnková káva od zámořských kupců! S touhle kávou budou všechny zbraně útočit o poznání rychleji!“';
   }
   if (item.id === 'medvedi_mast') {
     return '„Hojivá medvědí mast! Zacelí každý šrám a kousnutí od nočních můr!“';
