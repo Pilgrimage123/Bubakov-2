@@ -1,3 +1,8 @@
+## 2026-10-23 — Oprava zbývajícího obecného popisu nabíjení
+
+- Opraven také výchozí popis úrovní zbraní, který stále uváděl „+8 % nabíjení“; nyní jasně říká „+8 % rychlost nabíjení“.
+- Tato oprava pokrývá i zbraně bez vlastního popisu úrovně. Herní hodnoty se nemění.
+
 ## 2026-10-23 — Sjednocení popisů rychlosti nabíjení zbraní
 
 - Opraveny texty běžných vylepšení zbraní: místo nejednoznačného „+X % nabíjení“ nyní výslovně uvádějí „+X % rychlost nabíjení“.
