@@ -1,3 +1,8 @@
+## 2026-10-23 — Zpřesnění popisu Opravdové kávy
+
+- V Dědečkově nůši se bonus Opravdové kávy nyní popisuje jako „+15 % rychlost útoku všech zbraní“, aby se nepletl s prodloužením nabíjení.
+- Upravena také Dědečkova hláška při najetí na kávu. Herní efekt ani hodnoty se nemění.
+
 ## 2026-10-23 — Oprava zbývajícího obecného popisu nabíjení
 
 - Opraven také výchozí popis úrovní zbraní, který stále uváděl „+8 % nabíjení“; nyní jasně říká „+8 % rychlost nabíjení“.
