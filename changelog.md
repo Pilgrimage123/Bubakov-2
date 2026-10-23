@@ -1,3 +1,12 @@
+## 2026-10-23 — Nový výchozí lovec Krajánek a Jízda na žernovu
+
+- Přidán Krajánek jako první odemčený lovec; výběr i vykreslení používají nové transparentní SVG podle dodaného obrázku. Poutník a dosavadní odemykací řada zůstávají zachované.
+- Přidána schopnost Jízda na žernovu: 9 sekund nezranitelnosti, dvojnásobná rychlost, 30sekundový základní cooldown, drcení slabších bubáků, blokace monster nad limitem HP a jiskrová aura Vůle v okruhu 85 px.
+- Limit blokujících nepřátel i obě složky poškození rostou o 20 % za každý započítaný trvalý upgrade z Dědečkova obchodu; ostatní zbraně se během jízdy pozastaví.
+- Doplněna animace valícího se žernovu, kladívka, křemenných úlomků a dočasných placatých siluet a regresní testy nových pravidel.
+- Opraveny typové návaznosti vykreslování a prostorového dotazu; počet kandidátů se nyní bere z výsledného pole spatial hash.
+- Upřesněno regresní očekávání limitu po dvou nákupech: 400 × 1,4 = 560 HP.
+
 ## 2026-10-23 — Stabilizace regresního testu úhybu Pasáčka
 
 - Test ověřující nezranitelnost po zásahu nyní řídí výsledek náhodného úhybu, aby nepadal náhodně při 35% šanci Pasáčka.

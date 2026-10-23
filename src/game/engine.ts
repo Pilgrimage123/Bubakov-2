@@ -66,6 +66,12 @@ import {
   createPendingDropBank,
   type DropSpawnOptions,
 } from './drops';
+import {
+  getKrajanekBlockingHp,
+  KRAJANEK_ABILITY_COOLDOWN,
+  KRAJANEK_RIDE_SPEED_MULTIPLIER,
+  stepKrajanekRide,
+} from './krajanekAbility';
 import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
 import { drawGlyphText } from '../render/glyphAtlas';
 import { CosmeticRingPool } from './cosmeticRingPool';
@@ -508,7 +514,9 @@ export class GameEngine {
     customWeapons?: any[]
   ): any {
     const baseMaxHp =
-      type === 'wanderer'
+      type === 'krajanek'
+        ? 135
+        : type === 'wanderer'
         ? 230
         : type === 'shepherd'
         ? 55
@@ -521,7 +529,9 @@ export class GameEngine {
         : 140;
 
     const baseSpeed =
-      type === 'wanderer'
+      type === 'krajanek'
+        ? 180
+        : type === 'wanderer'
         ? 165
         : type === 'shepherd'
         ? 220
@@ -534,7 +544,9 @@ export class GameEngine {
         : 175;
 
     const basePickup =
-      type === 'wanderer'
+      type === 'krajanek'
+        ? 115
+        : type === 'wanderer'
         ? 75
         : type === 'shepherd'
         ? 160
@@ -561,6 +573,8 @@ export class GameEngine {
               ensureWeaponMilestones(mapped);
               return mapped;
             })
+        : type === 'krajanek'
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'wanderer'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'shepherd'
@@ -644,8 +658,12 @@ export class GameEngine {
       hasSoakedCane: false,
       hromnickaPulseTimer: 0,
       hromnickaPulseRadius: 0,
+      krajanekRideTimer: 0,
+      krajanekRideTickTimer: 0,
+      krajanekUpgradeCount: 0,
+      krajanekFlats: [] as Array<{ x: number; y: number; angle: number; scale: number; life: number }>,
       ultCd: 0,
-      ultMaxCd: type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
+      ultMaxCd: type === 'krajanek' ? KRAJANEK_ABILITY_COOLDOWN : type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
@@ -741,7 +759,11 @@ export class GameEngine {
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (this.hp <= 0) return;
-        if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
+        if (
+          this.invulnerabilityTimer > 0 ||
+          (this.intangibleTimer && this.intangibleTimer > 0) ||
+          (this.type === 'krajanek' && (this.krajanekRideTimer || 0) > 0)
+        ) return;
         if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates'));
           return;
@@ -2198,7 +2220,10 @@ export class GameEngine {
           (player.waterSoakedTimer > 0 ? 0.75 : 1) *
           (player.slowTimer > 0 ? 0.65 : 1) *
           (player.hazardSlowTimer > 0 ? (player.hazardSlowFactor || 0.7) : 1);
-        const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
+        const effectiveSpeed =
+          BASE_PLAYER_SPEED *
+          buffMultiplier *
+          (player.type === 'krajanek' && player.krajanekRideTimer > 0 ? KRAJANEK_RIDE_SPEED_MULTIPLIER : 1);
         moveVx = (mx / len) * effectiveSpeed;
         moveVy = (my / len) * effectiveSpeed;
         player.lastDx = mx;
@@ -2221,6 +2246,15 @@ export class GameEngine {
         const dy = player.y - e.y;
         const dist = Math.hypot(dx, dy);
         const collisionReach = player.radius + e.radius;
+
+        if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
+          const blocksRide = (e.maxHp ?? e.hp ?? 0) > getKrajanekBlockingHp(player.krajanekUpgradeCount || 0);
+          if (blocksRide && dist < collisionReach && moveVx * -dx + moveVy * -dy > 0) {
+            moveVx = 0;
+            moveVy = 0;
+          }
+          continue;
+        }
 
         if (dist < collisionReach) {
           // Odstrčení reaguje na dotyk, aniž by čekalo na zásah nepřítele.
@@ -2253,6 +2287,13 @@ export class GameEngine {
 
       player.x += (moveVx + pushX) * dt;
       player.y += (moveVy + pushY) * dt;
+
+      if (player.type === 'krajanek') {
+        const candidates = player.krajanekRideTimer > 0
+          ? this.spatialHash.queryCircle(player.x, player.y, 260)
+          : this.state.enemies;
+        stepKrajanekRide(player, dt, candidates);
+      }
 
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
       if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
@@ -2369,6 +2410,7 @@ export class GameEngine {
       if (player.weapons) {
         for (let i = 0; i < player.weapons.length; i++) {
           const w = player.weapons[i];
+          if (player.type === 'krajanek' && player.krajanekRideTimer > 0) continue;
           w.cd -= dt;
           if (w.cd <= 0) {
             const wDef = WEAPONS[w.id];

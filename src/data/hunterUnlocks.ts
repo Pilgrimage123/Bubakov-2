@@ -1,6 +1,7 @@
 export type { HunterProgress } from '../types';
 
 var HUNTER_ORDER = [
+	"krajanek",
 	"wanderer",
 	"shepherd",
 	"korenarka",
@@ -14,11 +15,11 @@ function getPreviousHunter(type) {
 	return HUNTER_ORDER[idx - 1];
 }
 function isHunterUnlocked(type, meta) {
-	if (type === "wanderer") return true;
+	if (type === "wanderer" || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
 	return !!meta.unlockedHunters?.[type];
 }
 function canHunterUnlock(type, meta) {
-	if (type === "wanderer") return true;
+	if (type === "wanderer" || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
 	const prev = getPreviousHunter(type);
 	return !prev || isHunterUnlocked(prev, meta);
 }
@@ -33,6 +34,27 @@ function getActiveUnlockingHunter(meta) {
 	return null;
 }
 var HUNTER_UNLOCKS = {
+	krajanek: {
+		id: "krajanek",
+		realName: "Krajánek",
+		realTitle: "Veselý pocestný s puntíkovanou mošnou",
+		defaultUnlocked: true,
+		challengeTitle: "🪨 Krajánek, který roztočí žernov",
+		challengeShortDesc: "Odemčen od začátku výpravy.",
+		challengeLongDesc: "Krajánek putuje od vsi ke vsi s holí, mošnou a železným kladívkem. Jeho zvláštní schopnost Jízda na žernovu z něj na 9 sekund udělá nezranitelného drtiče bubáků.",
+		targetEnemies: [],
+		maxCount: 0,
+		milestones: [{
+			minPercent: 0,
+			tierLevel: 4,
+			spoiledName: "Krajánek",
+			spoiledTitle: "Veselý krajánek s puntíkovanou mošnou",
+			spoiledLore: "Připraven vyrazit hned od prvního dne.",
+			spoiledWeaponHint: "Výbava: Osikový prut a červený uzlíček.",
+			spoiledAbilityHint: "Jízda na žernovu (9 s nezranitelnosti a dvojnásobné rychlosti; cooldown 30 s).",
+			clueTag: "✅ Připraven k cestě"
+		}]
+	},
 	wanderer: {
 		id: "wanderer",
 		realName: "Poutník",
