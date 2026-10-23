@@ -311,7 +311,6 @@ body {
   font-size: 0.76rem;
 }
 
-
 .char-card .hunter-portrait-compact {
   width: 118px;
   height: 118px;
@@ -339,73 +338,6 @@ body {
   gap: 7px;
 }
 
-.hunter-card-info .hunter-card-stats {
-  margin: 0;
-  gap: 4px;
-}
-
-.hunter-card-info .hunter-card-stats > div {
-  padding: 4px 6px;
-  gap: 2px;
-}
-
-.hunter-card-info .hunter-card-stats strong {
-  font-size: 0.74rem;
-}
-
-.hunter-card-info .hunter-card-stats span {
-  font-size: 0.86rem;
-  font-weight: 900;
-}
-
-.hunter-card-detail-section {
-  min-width: 0;
-  padding-top: 6px;
-  border-top: 1px solid #D6B98C;
-}
-
-.hunter-card-detail-title {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  font-size: 0.81rem;
-  font-weight: 900;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.hunter-card-weapon-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 8px;
-  margin-top: 4px;
-  font-size: 0.73rem;
-  font-weight: 800;
-  color: #78350F;
-}
-
-.hunter-card-weapon-stats span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.hunter-card-detail-copy {
-  margin: 4px 0 0;
-  font-size: 0.78rem;
-  line-height: 1.38;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-.hunter-card-footnote {
-  margin: 0;
-  color: #57534E;
-  font-size: 0.68rem;
-  line-height: 1.3;
-  font-weight: 600;
-}
-
 .hunter-modal-weapon-stats {
   display: flex;
   flex-wrap: wrap;
@@ -431,55 +363,10 @@ body {
     height: 108px;
   }
 
-  .hunter-card-detail-copy {
-    font-size: 0.77rem;
-  }
-
   .hunter-modal-weapon-stats {
     flex-direction: column;
     gap: 3px;
   }
-}
-
-.hunter-card-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.hunter-card-stats > div {
-  min-width: 0;
-  background: #FEF3C7;
-  border: 1px solid #D6B98C;
-  border-radius: 5px;
-  padding: 6px 7px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  overflow-wrap: anywhere;
-}
-
-.hunter-card-stats strong,
-.hunter-card-description strong {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.hunter-card-stats span,
-.hunter-card-description span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.hunter-card-description {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 4px 6px;
-  margin-top: 7px;
-  line-height: 1.45;
 }
 
 @media (max-width: 480px) {
@@ -499,10 +386,6 @@ body {
     max-width: min(180px, 78%);
     height: auto;
     aspect-ratio: 1;
-  }
-
-  .hunter-card-stats {
-    gap: 5px;
   }
 
   .char-card .hunter-clue-box,
@@ -3150,7 +3033,6 @@ body {
   animation: grandfatherBasketShake 0.45s ease-in-out infinite;
 }
 
-
 /* Feature: weapon HUD slots */
 #hud-weapons-bar {
   position: absolute;
@@ -3498,3 +3380,41 @@ body {
     animation: none !important;
   }
 }
+
+/* Compact Hunter Card: role, headline stats and gear names only (details live in the Hunter Dossier modal). */
+.hunter-card-role {
+  font-weight: 900;
+  font-size: 0.82rem;
+  color: #78350F;
+  text-align: center;
+}
+
+.hunter-card-statrow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.hunter-card-statrow > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: #FEF3C7;
+  border: 1px solid #D6B98C;
+  border-radius: 5px;
+  padding: 3px 2px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  min-width: 0;
+}
+
+.hunter-card-gear {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+

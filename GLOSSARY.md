@@ -264,3 +264,11 @@ Horda 40 tajících sněhuláků v 1. úrovni (Předjaří) řízená jedním ne
 _Avoid_: zákeřný sněhulák, zlomyslný sněhulák, generic mob wave
 
 
+**Karta lovce**:
+Kompaktní dlaždice ve výběru lovce, která hráči stačí k rychlé volbě: portrét, jméno, role, základní vlastnosti a stav odemčení. Podrobnosti nenese, ty patří do Spisu lovce.
+_Avoid_: profil lovce, info karta, dossier karta
+
+**Spis lovce**:
+Podrobné okno s plnými vlastnostmi, výbavou, pasivní a zvláštní schopností jednoho lovce, otevírané z Karty lovce.
+_Avoid_: profil, detail lovce, statistiky lovce
+

@@ -90,7 +90,7 @@ export interface AppModalsProps {
   onInspectWeapon: (prog: any) => void;
 
   // Unlock toast notice
-  unlockNotice: { title: string; desc: string } | null;
+  unlockNotice: { title: string; desc: string; icon?: string } | null;
   onDismissUnlockNotice: () => void;
 }
 
@@ -359,19 +359,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
         isCombatTextCategoryEnabled('unlocksMilestones', meta.combatTextSettings) && (
         <div className="unlock-toast-banner" onClick={onDismissUnlockNotice}>
           <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            {unlockNotice.title.includes('🔒') ? (
-              <>
-                <GameIcon icon="padlock" size={20} />
-                <span>{unlockNotice.title.replace(/🔒\s*/g, '')}</span>
-              </>
-            ) : unlockNotice.title.includes('🎉') ? (
-              <>
-                <GameIcon icon="celebration" size={20} />
-                <span>{unlockNotice.title.replace(/🎉\s*/g, '')}</span>
-              </>
-            ) : (
-              unlockNotice.title
-            )}
+            {unlockNotice.icon && <GameIcon icon={unlockNotice.icon} size={20} />}
+            <span>{unlockNotice.title}</span>
           </div>
           <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>
             {unlockNotice.desc}

@@ -1476,7 +1476,7 @@ export default function App() {
   const [selectedWeaponDetail, setSelectedWeaponDetail] = useState<WeaponProgress | null>(null);
   const [selectedLevelDetail, setSelectedLevelDetail] = useState<LevelProgress | null>(null);
   const [isArsenalOpen, setIsArsenalOpen] = useState(false);
-  const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string } | null>(null);
+  const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string; icon?: string } | null>(null);
 
   // Progressive unlock calculations for all 4 hunters
   const wandererProg = useMemo(() => getHunterProgress('wanderer', meta), [meta]);
@@ -2067,7 +2067,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const victoryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const unlockNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const showUnlockNotice = useCallback((notice: { title: string; desc: string } | null, durationMs = 4500) => {
+  const showUnlockNotice = useCallback((notice: { title: string; desc: string; icon?: string } | null, durationMs = 4500) => {
     if (unlockNoticeTimeoutRef.current) {
       clearTimeout(unlockNoticeTimeoutRef.current);
       unlockNoticeTimeoutRef.current = null;
@@ -2232,12 +2232,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
       showUnlockNotice({
-        title: `🎉 ${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
+        icon: 'celebration',
+        title: `${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
       }, 6000);
     } else if (lvlId >= 6) {
       showUnlockNotice({
-        title: `👑 VŠECHNY ÚROVNĚ DOKONČENY!`,
+        icon: 'crown',
+        title: `VŠECHNY ÚROVNĚ DOKONČENY!`,
         desc: `Čertův mlýn, bezhlavý rytíř i drak padli! Celý Bubákov oslavuje vaše legendární hrdinství!`,
       }, 6000);
     }
@@ -2472,12 +2474,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         setSelectedLevelDetail(levelProg);
         if (levelProg.isQueued) {
           showUnlockNotice({
-            title: `🔒 ${levelProg.spoiledName} je v pořadí!`,
+            icon: 'padlock',
+            title: `${levelProg.spoiledName} je v pořadí!`,
             desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
           }, 4500);
         } else {
           showUnlockNotice({
-            title: `🔒 ${levelProg.spoiledName} je uzamčena!`,
+            icon: 'padlock',
+            title: `${levelProg.spoiledName} je uzamčena!`,
             desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
           }, 4500);
         }
@@ -2490,12 +2494,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         setSelectedHunterDetail(hunterProg);
         if (hunterProg.isQueued) {
           showUnlockNotice({
-            title: `🔒 ${hunterProg.spoiledName} je v pořadí!`,
+            icon: 'padlock',
+            title: `${hunterProg.spoiledName} je v pořadí!`,
             desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
           }, 4500);
         } else {
           showUnlockNotice({
-            title: `🔒 ${hunterProg.spoiledName} je uzamčen!`,
+            icon: 'padlock',
+            title: `${hunterProg.spoiledName} je uzamčen!`,
             desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
           }, 4500);
         }
@@ -3214,7 +3220,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     sound.hit();
     setIsResetModalOpen(false);
     showUnlockNotice({
-      title: '🧹 Postup byl úspěšně vymazán',
+      icon: 'broom',
+      title: 'Postup byl úspěšně vymazán',
       desc: 'Veškerý postup, odemykatelní lovci, úrovně, zbraně i upgrady vesnice byly vráceny na nulu a uzamčeny.',
     }, 5000);
   };
@@ -10125,7 +10132,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.cheer();
             engineRef.current.texts.push(new DamageText(this.x, this.y - 75, `🎉 ${announceName.toUpperCase()} ODEMČEN!`, COLORS.mustard, true, 'unlocksMilestones'));
             showUnlockNotice({
-              title: `🎉 Odemčen nový lovec: ${announceName}!`,
+              icon: 'celebration',
+              title: `Odemčen nový lovec: ${announceName}!`,
               desc: `Nyní si ho můžete vybrat v hlavní nabídce pro novou výpravu.`,
             }, 5000);
           }
@@ -10165,7 +10173,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.cheer();
             engineRef.current.texts.push(new DamageText(this.x, this.y - 85, `🎉 ZBRAŇ: ${announceWeaponName.toUpperCase()}`, COLORS.mustard, true, 'unlocksMilestones'));
             showUnlockNotice({
-              title: `🎉 Odemčena nová zbraň: ${announceWeaponName}!`,
+              icon: 'celebration',
+              title: `Odemčena nová zbraň: ${announceWeaponName}!`,
               desc: 'Tato zbraň se trvale přidala do výběru vylepšení při postupu na novou úroveň!',
             }, 5000);
           }
@@ -10205,7 +10214,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.cheer();
             engineRef.current.texts.push(new DamageText(this.x, this.y - 95, `🎉 ${announceLevelName.toUpperCase()} ODEMČENA!`, COLORS.mustard, true, 'unlocksMilestones'));
             showUnlockNotice({
-              title: `🎉 Odemčena nová výprava: ${announceLevelName}!`,
+              icon: 'celebration',
+              title: `Odemčena nová výprava: ${announceLevelName}!`,
               desc: 'Tato úroveň je nyní otevřena v hlavní nabídce pro novou výpravu!',
             }, 5500);
           }
@@ -10883,38 +10893,67 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     });
   };
 
-  // Shared compact dossier for every unlocked hunter. Weapon values come from the registry.
+  // Compact Hunter Card body: role, headline stats and gear names. Full numbers and ability text live in the Hunter Dossier modal.
   const renderHunterInfoCard = (hunterInfo: HunterDetail) => {
     const weaponDef = WEAPONS[hunterInfo.weaponId];
     if (!weaponDef) return null;
-    const baseInterval = Number(weaponDef.baseCd).toLocaleString('cs-CZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return (
       <div className="hunter-card-info">
-        <div className="hunter-card-stats">
-          <div><strong><GameIcon icon="heart" size={13} /> Kuráž</strong><span>{hunterInfo.maxHp}</span></div>
-          <div><strong><GameIcon icon="boots" size={13} /> Rychlost</strong><span>{hunterInfo.speed}</span></div>
-          <div><strong><GameIcon icon="horseshoe" size={13} /> Magnet</strong><span>{hunterInfo.pickupRadius} px</span></div>
-          <div><strong><GameIcon icon="clover" size={13} /> Štěstí</strong><span>{hunterInfo.luck}</span></div>
+        <div className="hunter-card-role">{hunterInfo.role}</div>
+        <div className="hunter-card-statrow">
+          <span title="Kuráž"><GameIcon icon="heart" size={14} /> {hunterInfo.maxHp}</span>
+          <span title="Rychlost"><GameIcon icon="boots" size={14} /> {hunterInfo.speed}</span>
+          <span title="Magnet"><GameIcon icon="horseshoe" size={14} /> {hunterInfo.pickupRadius}</span>
+          <span title="Štěstí"><GameIcon icon="clover" size={14} /> {hunterInfo.luck}</span>
         </div>
-        <section className="hunter-card-detail-section">
-          <div className="hunter-card-detail-title"><GameIcon icon="sword" size={13} /> Výbava · {weaponDef.name}</div>
-          <div className="hunter-card-weapon-stats">
-            <span>Základní poškození: {weaponDef.baseDmg}</span>
-            <span>Interval: {baseInterval} s</span>
-            {weaponDef.speed ? <span>Rychlost střely: {weaponDef.speed}</span> : null}
-          </div>
-          <p className="hunter-card-detail-copy">{weaponDef.desc}</p>
-        </section>
-        <section className="hunter-card-detail-section">
-          <div className="hunter-card-detail-title"><GameIcon icon="leaf" size={13} /> Pasivní schopnost</div>
-          <p className="hunter-card-detail-copy">{hunterInfo.passive}</p>
-        </section>
-        <section className="hunter-card-detail-section">
-          <div className="hunter-card-detail-title"><GameIcon icon="lightning" size={13} /> Zvláštní schopnost · {hunterInfo.cooldownSeconds} s</div>
-          <p className="hunter-card-detail-copy">{hunterInfo.ability}</p>
-        </section>
-        <p className="hunter-card-footnote">Základní hodnoty bez bonusů vesnice, mobilního usnadnění, vylepšení zbraně a odolností nepřátel.</p>
+        <div className="hunter-card-gear" title="Počáteční výbava">
+          <GameIcon icon="sword" size={13} /> <span>{weaponDef.name}</span>
+        </div>
+        <div className="hunter-card-gear" title={`Zvláštní schopnost · ${hunterInfo.cooldownSeconds} s`}>
+          <GameIcon icon="lightning" size={13} /> <span>{hunterInfo.abilityName}</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Single Hunter Card for every unlocked hunter (starters included). Clicking the card starts the run.
+  const renderUnlockedHunterCard = (
+    id: HunterDetailKey,
+    name: string,
+    portrait: React.ReactNode
+  ) => {
+    const hunterInfo = HUNTER_DETAILS[id];
+    return (
+      <div
+        key={id}
+        className="char-card"
+        style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
+        onClick={() => startGame(id)}
+        title={`Zvolit lovce: ${name}`}
+      >
+        <LadaCardCorners variant="default" showBottomCorners={true} />
+        <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <GameIcon icon="checkmark" size={13} /> Odemčeno
+        </span>
+        {portrait}
+        <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+          {name}
+        </h3>
+        {renderHunterInfoCard(hunterInfo)}
+        <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
+          <button
+            className="lada-btn btn-small"
+            style={{ width: '100%', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
+            onClick={(event) => {
+              event.stopPropagation();
+              sound.coin();
+              setSelectedHunterInfo(hunterInfo);
+            }}
+          >
+            <GameIcon icon="scroll" size={15} /> Spis lovce
+          </button>
+        </div>
       </div>
     );
   };
@@ -10924,46 +10963,40 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     prog: HunterProgress,
     canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
   ) => {
-    const isUnlocked = prog.isUnlocked;
-    const hunterInfo = isUnlocked ? HUNTER_DETAILS[prog.id as HunterDetailKey] : null;
+    const portrait = <canvas ref={canvasRef} className="portrait-canvas hunter-portrait-compact" width={180} height={180} />;
+    if (prog.isUnlocked) {
+      return renderUnlockedHunterCard(prog.id as HunterDetailKey, prog.spoiledName, portrait);
+    }
 
     return (
       <div
         key={prog.id}
-        className={`char-card ${isUnlocked ? '' : 'char-card-locked'}`}
+        className="char-card char-card-locked"
         style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
         onClick={() => {
-          if (isUnlocked) {
-            startGame(prog.id);
+          sound.hit();
+          setSelectedHunterDetail(prog);
+          if (prog.isQueued) {
+            showUnlockNotice({
+              icon: 'padlock',
+              title: `${prog.spoiledName} je v pořadí!`,
+              desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prog.requiredHunterName}).`,
+            }, 4500);
           } else {
-            sound.hit();
-            setSelectedHunterDetail(prog);
-            if (prog.isQueued) {
-              showUnlockNotice({
-                title: `🔒 ${prog.spoiledName} je v pořadí!`,
-                desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prog.requiredHunterName}).`,
-              }, 4500);
-            } else {
-              showUnlockNotice({
-                title: `🔒 ${prog.spoiledName} je uzamčen!`,
-                desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno.`,
-              }, 4500);
-            }
+            showUnlockNotice({
+              icon: 'padlock',
+              title: `${prog.spoiledName} je uzamčen!`,
+              desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno.`,
+            }, 4500);
           }
         }}
-        title={isUnlocked ? `Zvolit lovce: ${HUNTER_UNLOCKS[prog.id].realName}` : 'Klikněte pro podrobnosti výzvy'}
+        title="Klikněte pro podrobnosti výzvy"
       >
-        <LadaCardCorners variant={isUnlocked ? 'default' : 'locked'} showBottomCorners={true} />
-        <span className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}>
-          {isUnlocked ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
-          ) : prog.isQueued ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="padlock" size={13} /> V pořadí (0 %)</span>
-          ) : (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="padlock" size={13} /> Zamčeno ({prog.percent} %)</span>
-          )}
+        <LadaCardCorners variant="locked" showBottomCorners={true} />
+        <span className="char-card-locked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <GameIcon icon="padlock" size={13} /> {prog.isQueued ? 'V pořadí' : 'Zamčeno'}
         </span>
-        <canvas ref={canvasRef} className={`portrait-canvas ${isUnlocked ? 'hunter-portrait-compact' : ''}`} width={180} height={180} />
+        {portrait}
         <h3 style={{ fontSize: '1.42rem', margin: '4px 0 2px 0', minHeight: '36px', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
           {prog.spoiledName}
         </h3>
@@ -10973,115 +11006,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           </span>
         </div>
 
-        {!isUnlocked && (
-          <>
-            <p style={{ fontWeight: 700, margin: '4px 0', fontSize: '0.9rem', lineHeight: 1.4, color: '#111111', overflowWrap: 'anywhere' }}>
-              {prog.spoiledLore}
-            </p>
-            <div className="hunter-clue-box">
-              <div style={{ fontWeight: 900, fontSize: '0.86rem', lineHeight: 1.35, color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-                <GameIcon icon="sword" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledWeaponHint}</span>
-              </div>
-              <div style={{ fontWeight: 900, fontSize: '0.86rem', lineHeight: 1.35, marginTop: '5px', color: '#111111', display: 'flex', alignItems: 'flex-start', gap: 6, minWidth: 0 }}>
-                <GameIcon icon="lightning" size={14} /> <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{prog.spoiledAbilityHint}</span>
-              </div>
-            </div>
-          </>
-        )}
-
-        {isUnlocked && hunterInfo && renderHunterInfoCard(hunterInfo)}
-
-        {/* Challenge progress bar for locked characters */}
-        {!isUnlocked && (
-          <div className="hunter-progress-wrap">
-            <div className="hunter-progress-header">
-              <span>{prog.isQueued ? `Čeká na: ${prog.requiredHunterName}` : 'Výzva k odemčení:'}</span>
-              <span>
-                {prog.curCount} / {prog.maxCount} ({prog.percent} %)
-              </span>
-            </div>
-            <div className="hunter-progress-bar-outer">
-              <div
-                className="hunter-progress-bar-fill"
-                style={{ width: `${prog.percent}%` }}
-              />
-            </div>
-            <div className="hunter-progress-ticks">
-              <span className={`hunter-tick ${prog.percent >= 0 ? 'reached' : ''}`}>0%</span>
-              <span className={`hunter-tick ${prog.percent >= 25 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                {prog.percent >= 25 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 25%
-              </span>
-              <span className={`hunter-tick ${prog.percent >= 50 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                {prog.percent >= 50 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 50%
-              </span>
-              <span className={`hunter-tick ${prog.percent >= 75 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                {prog.percent >= 75 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 75%
-              </span>
-              <span className={`hunter-tick ${prog.percent >= 100 ? 'reached' : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
-                {prog.percent >= 100 ? <GameIcon icon="checkmark" size={11} /> : <GameIcon icon="padlock" size={11} />} 100%
-              </span>
-            </div>
-            {prog.enemiesBreakdown.length > 0 && (
-              <div className="hunter-enemy-pills">
-                {prog.enemiesBreakdown.map((e) => (
-                  <span key={e.id} className="hunter-enemy-pill" title={`${e.name}: ${e.count} zahnáno`} style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <GameIcon icon={e.icon} size={13} /> {e.count}
-                  </span>
-                ))}
-              </div>
-            )}
+        <div className="hunter-progress-wrap">
+          <div className="hunter-progress-header">
+            <span>{prog.isQueued ? `Čeká na: ${prog.requiredHunterName}` : 'Výzva k odemčení:'}</span>
+            <span>
+              {prog.curCount} / {prog.maxCount} ({prog.percent} %)
+            </span>
           </div>
-        )}
+          <div className="hunter-progress-bar-outer">
+            <div
+              className="hunter-progress-bar-fill"
+              style={{ width: `${prog.percent}%` }}
+            />
+          </div>
+        </div>
 
         <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
-          {isUnlocked ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <button
-                className="lada-btn btn-small"
-                style={{ width: '100%', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  sound.coin();
-                  if (hunterInfo) setSelectedHunterInfo(hunterInfo);
-                }}
-              >
-                <GameIcon icon="scroll" size={15} /> Podrobné statistiky a schopnosti
-              </button>
-              <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                Vyrazit do noci <GameIcon icon="sword" size={16} />
-              </button>
-            </div>
-          ) : (
-            <button
-              className="lada-btn btn-small"
-              style={{
-                width: '100%',
-                fontSize: '0.84rem',
-                background: 'var(--wood-dark)',
-                color: 'var(--parchment)',
-                padding: '6px 8px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 5,
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                sound.coin();
-                setSelectedHunterDetail(prog);
-              }}
-            >
-              {prog.isQueued ? (
-                <>
-                  <GameIcon icon="padlock" size={14} /> Čeká na: {prog.requiredHunterName}
-                </>
-              ) : (
-                <>
-                  <GameIcon icon="scroll" size={14} /> Zobrazit výzvu ({prog.percent} %)
-                </>
-              )}
-            </button>
-          )}
+          <button
+            className="lada-btn btn-small"
+            style={{
+              width: '100%',
+              fontSize: '0.9rem',
+              background: 'var(--wood-dark)',
+              color: 'var(--parchment)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 5,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              sound.coin();
+              setSelectedHunterDetail(prog);
+            }}
+          >
+            <GameIcon icon="scroll" size={15} /> Zobrazit výzvu
+          </button>
         </div>
       </div>
     );
@@ -11764,60 +11724,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             {/* Character Selection Grid with animated canvas portraits */}
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
-              {/* Poutník - Výchozí odemčený lovec */}
-              <div
-                className="char-card"
-                style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
-                onClick={() => startGame('krajanek')}
-                title="Krajánek – odemčený výchozí lovec"
-              >
-                <LadaCardCorners variant="default" showBottomCorners={true} />
-                <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
-                <img src="/images/krajanek.svg" alt="Krajánek s červenou puntíkovanou mošnou" width={180} height={180} className="portrait-canvas hunter-portrait-compact" style={{ width: '180px', height: '180px', objectFit: 'contain', display: 'block', alignSelf: 'center' }} />
-                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Krajánek</h3>
-                <div><span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span></div>
-                {renderHunterInfoCard(HUNTER_DETAILS.krajanek)}
-                <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }} onClick={(event) => { event.stopPropagation(); sound.coin(); setSelectedHunterInfo(HUNTER_DETAILS.krajanek); }}>
-                    <GameIcon icon="scroll" size={14} /> Podrobné statistiky a schopnosti
-                  </button>
-                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do noci <GameIcon icon="sword" size={16} /></span>
-                  </button>
-                </div>
-              </div>
-
-              <div
-                className="char-card"
-                style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
-                onClick={() => startGame('wanderer')}
-                title="Poutník – připraven k výpravě"
-              >
-                <LadaCardCorners variant="default" showBottomCorners={true} />
-                <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
+              {/* Krajánek a Poutník - výchozí lovci sdílejí stejnou kartu jako ostatní */}
+              {renderUnlockedHunterCard(
+                'krajanek',
+                'Krajánek',
+                <img src="/images/krajanek.svg" alt="Krajánek s červenou puntíkovanou mošnou" width={180} height={180} className="portrait-canvas hunter-portrait-compact" style={{ objectFit: 'contain', display: 'block', alignSelf: 'center' }} />
+              )}
+              {renderUnlockedHunterCard(
+                'wanderer',
+                'Poutník',
                 <canvas ref={wandererRef} className="portrait-canvas hunter-portrait-compact" width={180} height={180} />
-                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Poutník</h3>
-                <div>
-                  <span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span>
-                </div>
-                {renderHunterInfoCard(HUNTER_DETAILS.wanderer)}
-                <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <button
-                    className="lada-btn btn-small"
-                    style={{ width: '100%', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      sound.coin();
-                      setSelectedHunterInfo(HUNTER_DETAILS.wanderer);
-                    }}
-                  >
-                    <GameIcon icon="scroll" size={14} /> Podrobné statistiky a schopnosti
-                  </button>
-                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do noci <GameIcon icon="sword" size={16} /></span>
-                  </button>
-                </div>
-              </div>
+              )}
 
               {/* Pasáček (Progressive unlock) */}
               {renderHunterSelectCard(shepherdProg, shepherdRef)}

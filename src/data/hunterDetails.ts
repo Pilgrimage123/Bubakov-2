@@ -5,6 +5,10 @@ export type HunterDetailKey = 'krajanek' | 'wanderer' | 'shepherd' | 'korenarka'
 export interface HunterDetail {
   name: string;
   title: string;
+  /** One-line role shown on the Hunter Card. */
+  role: string;
+  /** Short ability name shown on the Hunter Card (full text lives in ability). */
+  abilityName: string;
   maxHp: number;
   speed: number;
   pickupRadius: number;
@@ -20,6 +24,8 @@ export interface HunterDetail {
 
 export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
   krajanek: {
+    role: 'Vyvážený průzkumník',
+    abilityName: 'Jízda na Černovu',
     name: 'Krajánek',
     title: 'Veselý pocestný s puntíkovanou mošnou',
     maxHp: 135,
@@ -34,6 +40,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Vyvážený průzkumník s krátkou, ale mimořádně silnou jízdou přes bojiště.',
   },
   wanderer: {
+    role: 'Silný bojovník zblízka',
+    abilityName: 'Povětrná sukovice',
     name: 'Poutník (Tulák)',
     title: 'Vesnický poutník z Hrusic',
     maxHp: 230,
@@ -48,6 +56,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Nejvyšší základní Kuráž a výrazné poškození; magnet na sběr je kratší, proto se vyplatí pohybovat se přes kořist.',
   },
   shepherd: {
+    role: 'Rychlý sběrač, úhybný',
+    abilityName: 'Dusot stáda',
     name: 'Pasáček',
     title: 'Hbitý chlapec z pastvin',
     maxHp: 55,
@@ -62,6 +72,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Velmi rychlý sběrač s poloviční Kuráží, 35% šancí na úhyb a delším oknem nezranitelnosti po zásahu zblízka. Udržuj pohyb a využívej široký dosah sběru.',
   },
   korenarka: {
+    role: 'Léčitelka a kontrola',
+    abilityName: 'Očistné kadidlo',
     name: 'Bába kořenářka',
     title: 'Moudrá ranhojička z lesní chaloupky',
     maxHp: 125,
@@ -76,6 +88,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Léčivá a kontrolní postava. Sbírání kořisti je běžně krátkodosahové, ale každých 9 s získá bezpečné časové okno s pětinásobným magnetem a rychlostí přitahování.',
   },
   watchman: {
+    role: 'Strážce s aurou',
+    abilityName: 'Noční roh a poplach',
     name: 'Ponocný',
     title: 'Legendární strážce noci s Voříškem',
     maxHp: 140,
@@ -90,6 +104,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Vyvážený strážce s průběžným poškozením z aury a plošným nouzovým poplachem.',
   },
   sexton: {
+    role: 'Lovec nemrtvých a bossů',
+    abilityName: 'Farní požehnání',
     name: 'Pobožný kostelník',
     title: 'Zvoník a správce farního kostela',
     maxHp: 135,
@@ -104,6 +120,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     playstyle: 'Specialista na nemrtvé a démony, nejsilnější při velkých vlnách nebo proti bossům.',
   },
   granny: {
+    role: 'Podpora a kontrola času',
+    abilityName: 'Chléb se solí a vládné slovo',
     name: 'Babička a Barunka',
     title: 'Vlídná babička z Ratibořic a její vnučka',
     maxHp: 130,
