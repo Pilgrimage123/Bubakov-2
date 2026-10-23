@@ -2494,7 +2494,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resetGlobalGlyphAtlas();
 
     const baseMaxHp =
-      type === 'wanderer' ? 200 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
+      type === 'wanderer' ? 230 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
     const baseSpeed =
       type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
     const basePickup =
@@ -2542,7 +2542,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         : type === 'shepherd'
         ? 105
         : type === 'wanderer'
-        ? 100
+        ? 70
         : type === 'sexton'
         ? 100
         : type === 'watchman'

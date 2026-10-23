@@ -1,3 +1,9 @@
+## 2026-10-23 — Úprava Tuláka: Kuráž a Štěstí
+
+- Základní maximální Kuráž Tuláka zvýšena z 200 na 230 (+15 %) v herním enginu i v produkční inicializaci hry.
+- Základní ŠTĚSTÍ Tuláka sníženo ze 100 na 70; upravena také informační karta lovce.
+- Aktualizován regresní test bonusu zdi a přidán test základní Kuráže i ŠTĚSTÍ Tuláka.
+
 ## 2026-10-23 — Úprava Pasáčka: Kuráž, úhyb a nezranitelnost
 
 - Základní maximální Kuráž Pasáčka snížena ze 110 na 55 v herním enginu i v UI inicializaci běhu.

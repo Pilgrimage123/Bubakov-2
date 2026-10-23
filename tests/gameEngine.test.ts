@@ -37,8 +37,8 @@ describe('GameEngine Headless Simulation', () => {
       expect(engine.state.activeLevelId).toBe(1);
       expect(engine.state.player).toBeDefined();
       expect(engine.state.player.type).toBe('wanderer');
-      // Wanderer base 200 hp + wallBonus (2 * 20) = 240 hp
-      expect(engine.state.player.maxHp).toBe(240);
+      // Wanderer base 230 hp + 20% wall bonus (46) = 276 hp
+      expect(engine.state.player.maxHp).toBe(276);
       expect(engine.state.player.hp).toBe(240);
       expect(engine.state.player.weapons.length).toBeGreaterThan(0);
       expect(engine.state.player.weapons[0].id).toBe('osikovy_prut');
@@ -55,6 +55,15 @@ describe('GameEngine Headless Simulation', () => {
       expect(engine.state.player.type).toBe('shepherd');
       expect(engine.state.player.weapons[0].id).toBe('povidlove_buchty');
       expect(engine.state.enemies.length).toBe(0);
+    });
+  });
+
+  describe('Hunter base stats', () => {
+    it('sets Tulák base courage to 230 and luck to 70', () => {
+      const wanderer = engine.createPlayer('wanderer');
+      expect(wanderer.maxHp).toBe(230);
+      expect(wanderer.hp).toBe(230);
+      expect(wanderer.luck).toBe(70);
     });
   });
 

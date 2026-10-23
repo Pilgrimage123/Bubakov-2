@@ -22,10 +22,10 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
   wanderer: {
     name: 'Poutník (Tulák)',
     title: 'Vesnický poutník z Hrusic',
-    maxHp: 200,
+    maxHp: 230,
     speed: 165,
     pickupRadius: 75,
-    luck: 100,
+    luck: 70,
     weaponId: 'osikovy_prut',
     weapon: 'Osikový prut – rychlý široký sečný oblouk.',
     passive: 'Tulácký instinkt: +35 % poškození všech zbraní. Bonus posiluje i Pověstnou sukovici.',
