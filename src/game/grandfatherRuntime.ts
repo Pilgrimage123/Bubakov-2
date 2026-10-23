@@ -1,6 +1,7 @@
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from '../data/synergisticUpgrades';
 import { rollRandomWeaponUpgrade, getWeaponRankDef } from '../data/weaponMilestones';
+import { toCanonicalWeaponId } from './migration';
 
 export interface GrandfatherOffer {
   itemId: string;
@@ -104,7 +105,8 @@ export function chooseGrandfatherOffers(
   const isAvailable = (item: GrandfatherItemDef) => {
     if (isFullCourage && item.effect.type === 'heal') return false;
     if (item.isWeapon && item.weaponId) {
-      const pw = playerWeapons.find((w: any) => w.id === item.weaponId);
+      const targetCanonicalId = toCanonicalWeaponId(item.weaponId);
+      const pw = playerWeapons.find((w: any) => toCanonicalWeaponId(w.id) === targetCanonicalId);
       return (pw ? pw.level : 0) < (item.maxStacks ?? 8);
     }
     return purchasedIds.filter((id) => id === item.id).length < (item.maxStacks ?? Number.POSITIVE_INFINITY);
@@ -119,11 +121,12 @@ export function chooseGrandfatherOffers(
   const makeOffer = (item: GrandfatherItemDef): GrandfatherOffer => {
     let candidateUpgradeId: string | undefined;
     if (item.isWeapon && item.weaponId) {
-      const pw = playerWeapons.find((w: any) => w.id === item.weaponId);
+      const targetCanonicalId = toCanonicalWeaponId(item.weaponId);
+      const pw = playerWeapons.find((w: any) => toCanonicalWeaponId(w.id) === targetCanonicalId);
       const nextLvl = (pw ? pw.level : 0) + 1;
       const isMilestone = nextLvl === 3 || nextLvl === 5 || nextLvl === 8;
       if (!isMilestone && nextLvl > 1) {
-        candidateUpgradeId = rollRandomWeaponUpgrade(item.weaponId, pw)?.id || getWeaponRankDef(item.weaponId, nextLvl)?.normalUpgradeId;
+        candidateUpgradeId = rollRandomWeaponUpgrade(targetCanonicalId, pw)?.id || getWeaponRankDef(targetCanonicalId, nextLvl)?.normalUpgradeId;
       }
     }
     return { itemId: item.id, offeredAt: now, candidateUpgradeId };
@@ -145,7 +148,10 @@ export function chooseGrandfatherOffers(
   if (targetWeaponCount > 0) {
     const pool = [...availableWeapons];
     while (selected.filter((offer) => availableWeapons.some((weapon) => weapon.id === offer.itemId)).length < targetWeaponCount && pool.length > 0) {
-      const weights = pool.map((item) => playerWeapons.some((weapon: any) => weapon.id === item.weaponId) ? 3 : 1);
+      const weights = pool.map((item) => {
+        const targetCanonicalId = item.weaponId ? toCanonicalWeaponId(item.weaponId) : '';
+        return playerWeapons.some((weapon: any) => toCanonicalWeaponId(weapon.id) === targetCanonicalId) ? 3 : 1;
+      });
       const totalWeight = weights.reduce((sum, value) => sum + value, 0);
       let roll = Math.random() * totalWeight;
       let chosenIdx = 0;

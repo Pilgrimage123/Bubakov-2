@@ -122,4 +122,63 @@ describe('Dědečkův obchod ekonomika (Grandfather Shop Economy)', () => {
     expect(getGrandfatherPrice(cikorka, 0, 0, 0)).toBe(getGrandfatherPrice(cikorka, 10, 0, 0));
     expect(getGrandfatherPrice(poklad, 0, 0, 0)).toBe(getGrandfatherPrice(poklad, 10, 0, 0));
   });
+
+  it('normalizes legacy and canonical weapon IDs (e.g. cane vs osikovy_prut) when filtering maxed weapons and rolling upgrades', () => {
+    // Player has legacy weapon IDs at max level 8 while GRANDFATHER_ITEMS uses canonical IDs,
+    // OR player has canonical weapon IDs while legacy aliases are passed.
+    const maxedLegacyWeapons = [
+      { id: 'cane', level: 8 },
+      { id: 'buns', level: 8 },
+      { id: 'pitchfork', level: 8 },
+      { id: 'halberd', level: 8 },
+      { id: 'herbs', level: 8 },
+    ];
+    for (let i = 0; i < 30; i++) {
+      const offers = chooseGrandfatherOffers(200, 100, [], maxedLegacyWeapons, 4);
+      const offeredIds = offers.map((o) => o.itemId);
+      expect(offeredIds).not.toContain('wp_cane');
+      expect(offeredIds).not.toContain('wp_buns');
+      expect(offeredIds).not.toContain('wp_pitchfork');
+      expect(offeredIds).not.toContain('wp_halberd');
+      expect(offeredIds).not.toContain('wp_herbs');
+    }
+
+    // When a weapon is stored under a legacy alias ('cane') at level 1 (nextLvl = 2, non-milestone),
+    // makeOffer must recognize it as level 1 and populate candidateUpgradeId
+    const level1Weapons = [{ id: 'cane', level: 1, normalUpgrades: [] }];
+    let sawCaneWithCandidate = false;
+    for (let i = 0; i < 60; i++) {
+      const offers = chooseGrandfatherOffers(200, 100, [], level1Weapons, 4);
+      const caneOffer = offers.find((o) => o.itemId === 'wp_cane');
+      if (caneOffer) {
+        expect(caneOffer.candidateUpgradeId).toBeDefined();
+        sawCaneWithCandidate = true;
+      }
+    }
+    expect(sawCaneWithCandidate).toBe(true);
+  });
+
+  it('prevents infinite or corrupt modal state transitions when collecting boss treasure and chests', () => {
+    // Verify that App.tsx synchronously guards openChestSequence, closeChestSequence,
+    // includes 'milestone' in the canvas render state check, and uses grandfatherPurchaseIdsRef.current in loop()
+    const fs = require('fs');
+    const path = require('path');
+    const appSource = fs.readFileSync(path.resolve(__dirname, '../src/App.tsx'), 'utf-8');
+
+    // 1. loop() must pass grandfatherPurchaseIdsRef.current (not stale closure grandfatherPurchaseIds) to chooseGrandfatherOffers
+    expect(appSource).not.toMatch(/chooseGrandfatherOffers\(\s*engine\.gingerbread,\s*luck,\s*grandfatherPurchaseIds,/);
+    expect(appSource).toMatch(/chooseGrandfatherOffers\(\s*engine\.gingerbread,\s*luck,\s*grandfatherPurchaseIdsRef\.current,/);
+
+    // 2. Render loop condition must include currentGameState === 'milestone' so canvas doesn't clear to black
+    expect(appSource).toContain("currentGameState === 'milestone'");
+
+    // 3. openChestSequence must guard against being called when gameStateRef.current !== 'playing' and set gameStateRef.current = 'chest' synchronously
+    expect(appSource).toMatch(/const openChestSequence = \(\) => \{\s*if \(gameStateRef\.current !== 'playing'\) return;\s*gameStateRef\.current = 'chest';/);
+
+    // 4. closeChestSequence must guard against duplicate invocations when gameStateRef.current !== 'chest'
+    expect(appSource).toMatch(/if \(gameStateRef\.current !== 'chest'\) return;/);
+
+    // 5. loop() must be protected by try / finally so requestAnimationFrame(loop) is never lost on a single-frame error
+    expect(appSource).toMatch(/finally\s*\{\s*animId = requestAnimationFrame\(loop\);/);
+  });
 });

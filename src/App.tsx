@@ -1516,7 +1516,15 @@ export default function App() {
   gameStateRef.current = gameState;
   menuScreenRef.current = menuScreen;
   selectedLevelIdRef.current = selectedLevelId;
-  pendingMilestonesRef.current = pendingMilestones;
+  useEffect(() => {
+    if (gameState === 'milestone' && pendingMilestones.length === 0 && pendingMilestonesRef.current.length === 0) {
+      const nextState = engineRef.current.levelVictoryTriggered && victoryTimeoutRef.current === null
+        ? 'tally'
+        : (engineRef.current.player ? 'playing' : 'menu');
+      gameStateRef.current = nextState;
+      setGameState(nextState);
+    }
+  }, [gameState, pendingMilestones.length]);
   const [activeTavernTab, setActiveTavernTab] = useState<'crafts' | 'trophies'>('crafts');
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
@@ -1873,8 +1881,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
   const openGrandfatherShop = useCallback(() => {
     const eng = engineRef.current;
-    if (!eng.grandfather.active) return;
+    if (!eng.grandfather.active || gameStateRef.current !== 'playing') return;
     grandfatherOpenRef.current = true;
+    gameStateRef.current = 'grandfather';
     setGameState('grandfather');
   }, []);
 
@@ -1895,6 +1904,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     );
     setIsTestModeOpen(false);
     grandfatherOpenRef.current = true;
+    gameStateRef.current = 'grandfather';
     setGameState('grandfather');
   }, []);
 
@@ -1906,8 +1916,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     grandfatherOpenRef.current = false;
     setGameState((prev) => {
       if (prev === 'grandfather') {
-        if (pendingMilestonesRef.current.length > 0) return 'milestone';
-        return engineRef.current.player ? 'playing' : 'menu';
+        if (pendingMilestonesRef.current.length > 0) {
+          gameStateRef.current = 'milestone';
+          return 'milestone';
+        }
+        const nextState = eng.levelVictoryTriggered && victoryTimeoutRef.current === null
+          ? 'tally'
+          : (eng.player ? 'playing' : 'menu');
+        gameStateRef.current = nextState;
+        eng.lastTime = performance.now();
+        return nextState;
       }
       return prev;
     });
@@ -1975,7 +1993,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
     const ownedNow = item.isWeapon
-      ? (p.weapons?.find((w: any) => w.id === item.weaponId)?.level || 0)
+      ? (p.weapons?.find((w: any) => toCanonicalWeaponId(w.id) === toCanonicalWeaponId(item.weaponId || ''))?.level || 0)
       : grandfatherPurchaseIdsRef.current.filter((id) => id === item.id).length;
     if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
       eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4, { playerHp: p.hp, playerMaxHp: p.maxHp });
@@ -2235,8 +2253,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       clearTimeout(victoryTimeoutRef.current);
       victoryTimeoutRef.current = null;
     }
-    victoryTimeoutRef.current = setTimeout(() => {
+    const finalizeVictoryTally = () => {
+      // Wait for active chest, grandfather shop, or weapon milestone modal to finish before switching to tally
+      if (
+        gameStateRef.current === 'chest' ||
+        gameStateRef.current === 'grandfather' ||
+        gameStateRef.current === 'milestone'
+      ) {
+        victoryTimeoutRef.current = setTimeout(finalizeVictoryTally, 250);
+        return;
+      }
       victoryTimeoutRef.current = null;
+      slotTimersRef.current.forEach(clearTimeout);
+      slotTimersRef.current = [];
+      if (slotSoundIntervalRef.current) {
+        clearInterval(slotSoundIntervalRef.current);
+        slotSoundIntervalRef.current = null;
+      }
       setTallyCounters({
         kills: engineRef.current.kills,
         coins: Math.floor(engineRef.current.coins * (activeRunBonusRef.current?.kind === 'coins' ? 1 + activeRunBonusRef.current.percent * activeRunBonusRef.current.multiplier / 100 : 1)),
@@ -2251,8 +2284,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         ...metaRef.current,
         highestSurviveTime: updatedHighest,
       });
+      gameStateRef.current = 'tally';
       setGameState('tally');
-    }, 3500);
+    };
+    victoryTimeoutRef.current = setTimeout(finalizeVictoryTally, 3500);
   };
 
   const toggleSound = () => {
@@ -3476,6 +3511,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       clearInterval(slotSoundIntervalRef.current);
       slotSoundIntervalRef.current = null;
     }
+    slotSpinningRef.current = false;
     setSlotStoppedCount(3);
     setSlotSpinning(false);
     sound.slotStop();
@@ -3484,20 +3520,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   skipSlotSpinRef.current = skipSlotSpin;
 
   const closeChestSequence = useCallback(() => {
+    if (gameStateRef.current !== 'chest') return;
     slotTimersRef.current.forEach(clearTimeout);
     slotTimersRef.current = [];
     if (slotSoundIntervalRef.current) {
       clearInterval(slotSoundIntervalRef.current);
       slotSoundIntervalRef.current = null;
     }
+    slotSpinningRef.current = false;
     setSlotSpinning(false);
     setSlotStoppedCount(0);
     chestRewards.forEach((r) => r.action());
+    setChestRewards([]);
     sound.coin();
     if (pendingMilestonesRef.current.length > 0) {
+      gameStateRef.current = 'milestone';
       setGameState('milestone');
     } else {
-      setGameState('playing');
+      const nextState = engineRef.current.levelVictoryTriggered && victoryTimeoutRef.current === null
+        ? 'tally'
+        : 'playing';
+      gameStateRef.current = nextState;
+      setGameState(nextState);
     }
     engineRef.current.lastTime = performance.now();
   }, [chestRewards]);
@@ -3505,6 +3549,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
   // Open Painted Chest sequence with authentic slot machine effect
   const openChestSequence = () => {
+    if (gameStateRef.current !== 'playing') return;
+    gameStateRef.current = 'chest';
     sound.chest();
     setGameState('chest');
 
@@ -3630,8 +3676,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             icon: wDef.icon,
             action: () => {
               pw.id = canonicalId;
+              if (pw.level >= 8) return;
               pw.level += 1;
-              if (candidateUpgrade) {
+              if (candidateUpgrade && !(pw.level === 3 || pw.level === 5 || pw.level === 8)) {
                 if (!pw.normalUpgrades) pw.normalUpgrades = [];
                 pw.normalUpgrades.push(candidateUpgrade.id);
               }
@@ -3642,7 +3689,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const nextChoices = [...pendingMilestonesRef.current, { weaponId: canonicalId, rank: pw.level, choices }];
                   pendingMilestonesRef.current = nextChoices;
                   setPendingMilestones(nextChoices);
-                  setGameState('milestone');
                 }
               }
             },
@@ -3664,6 +3710,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     setChestRewards(selected);
     setSlotStoppedCount(0);
+    slotSpinningRef.current = true;
     setSlotSpinning(true);
 
     // Clear previous timers
@@ -3693,6 +3740,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     // Reel 3 locks at 2450ms -> finishes spin
     const t3 = setTimeout(() => {
+      slotSpinningRef.current = false;
       setSlotStoppedCount(3);
       setSlotSpinning(false);
       if (slotSoundIntervalRef.current) {
@@ -3835,10 +3883,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resize();
 
     const loop = (now: number) => {
-      frameProfiler.start(now || performance.now());
-      // Prevent a background-tab stall from creating a large simulation burst.
-      const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
-      engineRef.current.lastTime = now;
+      try {
+        frameProfiler.start(now || performance.now());
+        // Prevent a background-tab stall from creating a large simulation burst.
+        const dt = Math.min(0.05, Math.max(0, (now - engineRef.current.lastTime) / 1000));
+        engineRef.current.lastTime = now;
     // HUD is React-owned; gameplay entities stay Canvas/engine-owned.
     // Boss HP is sampled here instead of calling setState from takeDamage().
     const engine = engineRef.current;
@@ -4054,7 +4103,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.grandfather.offers = chooseGrandfatherOffers(
                 engine.gingerbread,
                 luck,
-                grandfatherPurchaseIds,
+                grandfatherPurchaseIdsRef.current,
                 player?.weapons || [],
                 4,
                 { playerHp: player?.hp, playerMaxHp: player?.maxHp }
@@ -6860,7 +6909,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 d.dead = true;
                 triggerRescueChasnik(d.x, d.y);
               }
-            } else if (dist < player.pickupRadius && currentGameState === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
+            } else if (dist < player.pickupRadius && currentGameState === 'playing' && gameStateRef.current === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
               const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
               const mobility = d.magnetMobility !== undefined ? d.magnetMobility : 1.0;
               const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * mobility * dt;
@@ -7238,7 +7287,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       frameProfiler.mark('backdrop', performance.now());
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused' || currentGameState === 'grandfather') {
+      if (currentGameState === 'playing' || currentGameState === 'fleeing' || currentGameState === 'chest' || currentGameState === 'paused' || currentGameState === 'grandfather' || currentGameState === 'milestone') {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
@@ -7505,8 +7554,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
       }
-
-      animId = requestAnimationFrame(loop);
+      } catch (err) {
+        console.error('Error in game loop:', err);
+      } finally {
+        animId = requestAnimationFrame(loop);
+      }
     };
 
     animId = requestAnimationFrame(loop);
@@ -12323,7 +12375,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             pendingMilestonesRef.current = remaining;
             setPendingMilestones(remaining);
             if (remaining.length === 0) {
-              setGameState('playing');
+              const nextState = engineRef.current.levelVictoryTriggered && victoryTimeoutRef.current === null
+                ? 'tally'
+                : 'playing';
+              gameStateRef.current = nextState;
+              setGameState(nextState);
               engineRef.current.lastTime = performance.now();
             }
           }}
