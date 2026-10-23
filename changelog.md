@@ -1,3 +1,7 @@
+## 2026-10-23 — Oprava CI testu tajícího sněhuláka
+
+- Aktualizováno očekávání zdraví v regresním testu z 190 na 280 HP podle požadované 35sekundové doby tání; herní logika se nemění.
+
 ## 2026-10-23 — Úprava doby tání tajícího sněhuláka
 
 - Zdraví tajícího sněhuláka zvýšeno ze 190 na 280 HP, takže při samovolném úbytku 8 HP/s roztaje za 35 sekund.
