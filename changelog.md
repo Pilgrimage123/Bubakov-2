@@ -1,3 +1,8 @@
+## 2026-10-23 — Sjednocení popisů rychlosti nabíjení zbraní
+
+- Opraveny texty běžných vylepšení zbraní: místo nejednoznačného „+X % nabíjení“ nyní výslovně uvádějí „+X % rychlost nabíjení“.
+- Úprava mění pouze hráčsky zobrazované popisy; mechanika cooldownu a hodnoty bonusů zůstávají beze změny.
+
 ## 2026-10-23 — Oprava CI testu tajícího sněhuláka
 
 - Aktualizováno očekávání zdraví v regresním testu z 190 na 280 HP podle požadované 35sekundové doby tání; herní logika se nemění.
