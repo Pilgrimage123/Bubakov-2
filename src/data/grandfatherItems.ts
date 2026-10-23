@@ -50,7 +50,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
 
   // --- Předchozí level up pasivní upgrady a posílení ---
   { id: 'krvave_jelito', name: 'Krvavé jelito', icon: 'krvave_jelito', description: '+15 % trvalé zranění všech úderů a zbraní', baseCost: 50, maxStacks: 5, luckWeight: 1.0, effect: { type: 'damage_multiplier', amount: 0.15 } },
-  { id: 'opravdova_kava', name: 'Opravdová káva', icon: 'opravdova_kava', description: '+15 % nabíjení všech zbraní', baseCost: 50, maxStacks: 5, luckWeight: 0.9, effect: { type: 'cooldown', amount: 0.15 } },
+  { id: 'opravdova_kava', name: 'Opravdová káva', icon: 'opravdova_kava', description: '+15 % rychlost útoku všech zbraní', baseCost: 50, maxStacks: 5, luckWeight: 0.9, effect: { type: 'cooldown', amount: 0.15 } },
   { id: 'medvedi_mast', name: 'Medvědí mast', icon: 'medvedi_mast', description: '+30 maximální Kuráž i okamžité zhojení', baseCost: 45, maxStacks: 5, luckWeight: 0.95, effect: { type: 'max_hp', amount: 30 } },
   {
     id: 'maska_medveda',
