@@ -209,4 +209,49 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     spyFootprint.mockRestore();
     spySukovice.mockRestore();
   });
+
+  it('always renders smokePuffs (plum-scent, fajfka, smoke) underneath hunter and enemies even when puff.y > entity.y', () => {
+    const order: string[] = [];
+
+    engine.player = { x: 0, y: -50, hp: 100, maxHp: 100, weapons: [], draw: () => order.push('player') } as any;
+    engine.enemies = [
+      { id: 'bubak', x: 10, y: 0, radius: 20, isDefeated: false, dead: false, draw: () => order.push('enemy') } as any,
+    ];
+    engine.smokePuffs = [
+      { x: 0, y: 120, radius: 140, kind: 'plum-scent', dead: false, draw: () => order.push('plum-scent') } as any,
+      { x: 0, y: 80, radius: 110, kind: 'fajfka', dead: false, draw: () => order.push('fajfka') } as any,
+    ];
+
+    renderArena(ctx, engine, camera);
+
+    expect(order).toEqual(['plum-scent', 'fajfka', 'player', 'enemy']);
+  });
+
+  it('renders overlapping mrazovy_skritek frost auras on the ground layer before entities with overlap attenuation', () => {
+    const order: string[] = [];
+    const spyFrostAura = vi.spyOn(Lada, 'drawFrostlingAura').mockImplementation((_ctx, _x, _y, _t, overlapCount) => {
+      order.push(`frost-aura:${overlapCount}`);
+    });
+
+    engine.player = { x: 0, y: -30, hp: 100, maxHp: 100, weapons: [], draw: () => order.push('player') } as any;
+    engine.enemies = [
+      { id: 'mrazovy_skritek', method: 'drawFrostling', x: 0, y: 10, radius: 14, isDefeated: false, dead: false, draw: () => order.push('frostling-1') } as any,
+      { id: 'mrazovy_skritek', method: 'drawFrostling', x: 25, y: 20, radius: 14, isDefeated: false, dead: false, draw: () => order.push('frostling-2') } as any,
+      { id: 'mrazovy_skritek', method: 'drawFrostling', x: -15, y: 30, radius: 14, isDefeated: false, dead: false, draw: () => order.push('frostling-3') } as any,
+    ];
+
+    renderArena(ctx, engine, camera);
+
+    expect(order).toEqual([
+      'frost-aura:3',
+      'frost-aura:3',
+      'frost-aura:3',
+      'player',
+      'frostling-1',
+      'frostling-2',
+      'frostling-3',
+    ]);
+
+    spyFrostAura.mockRestore();
+  });
 });

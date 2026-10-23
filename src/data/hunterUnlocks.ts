@@ -62,7 +62,7 @@ var HUNTER_UNLOCKS = {
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovský hrdina",
 		challengeShortDesc: "Připraven k cestě od samého počátku.",
-		challengeLongDesc: "Poutník s osikovým prutem a tuláckým instinktem (+35 % poškození) je odemčen ihned.",
+		challengeLongDesc: "Poutník s bylinkovou fajfkou a tuláckým instinktem (+35 % poškození) je odemčen ihned.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
@@ -70,8 +70,8 @@ var HUNTER_UNLOCKS = {
 			tierLevel: 4,
 			spoiledName: "Poutník (Tulák)",
 			spoiledTitle: "Vesnický poutník z Hrusic",
-			spoiledLore: "Vysoká kuráž (200) a dobrá nálada (+35 % poškození zbraní). Osikový prut. Schopnost: Pověstná sukovice (-30 % cooldown).",
-			spoiledWeaponHint: "Osikový prut (+35 % poškození)",
+			spoiledLore: "Vysoká kuráž (230) a dobrá nálada (+35 % poškození zbraní). Bylinková fajfka. Schopnost: Pověstná sukovice (-30 % cooldown).",
+			spoiledWeaponHint: "Bylinková fajfka (+35 % poškození)",
 			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zažene a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
 			clueTag: "✅ Připraven k boji"
 		}]

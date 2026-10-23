@@ -48,6 +48,11 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(ENEMIES.morana).toMatchObject({
       category: 'bosses',
       method: 'drawMorana',
+      radius: 65,
+    });
+    expect(ENEMIES.mrazivy_obr).toMatchObject({
+      category: 'frost',
+      method: 'drawFrostGiant',
       radius: 34,
     });
     expect(ENEMIES.morana.strength).toContain('Mrazivé větrné salvy');

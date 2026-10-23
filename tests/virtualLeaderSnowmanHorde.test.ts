@@ -350,6 +350,38 @@ describe('VirtualLeaderSnowmanHorde', () => {
     expect(damageTaken).toBe(6);
   });
 
+  it('keeps Krajánek on millstone immune to puddle slow, puddle damage, and contact attacks', () => {
+    const horde = new VirtualLeaderSnowmanHorde({
+      startAt: 0,
+      puddleTickInterval: 0.5,
+      puddleTickDamage: 3,
+    });
+    horde.preparePool(factory);
+
+    horde.spawnPuddle(0, 0);
+
+    let damageTaken = 0;
+    const krajanekPlayer = {
+      type: 'krajanek',
+      x: 0,
+      y: 0,
+      radius: 20,
+      krajanekRideTimer: 5.0,
+      meltingPuddleSlowTimer: 0.15,
+      takeDamage: (dmg: number) => {
+        damageTaken += dmg;
+      },
+    };
+    const engine = createEngine(0);
+    horde.startWave(engine, krajanekPlayer, 1280, 720, 10);
+
+    engine.gameTime = 0.1;
+    horde.update(0.1, engine, krajanekPlayer, 1280, 720);
+
+    expect(krajanekPlayer.meltingPuddleSlowTimer).toBe(0);
+    expect(damageTaken).toBe(0);
+  });
+
   it('simultaneously melting all 40 snowmen recycles puddle slots without crashing or throwing', () => {
     const horde = new VirtualLeaderSnowmanHorde();
     horde.preparePool(factory);
@@ -370,6 +402,46 @@ describe('VirtualLeaderSnowmanHorde', () => {
 
     expect(horde.active.every((a) => a === 0)).toBe(true);
     expect(horde.puddleActive.every((pa) => pa === 1)).toBe(true);
+  });
+
+  it('killing all 40 snowmen on top of the player spawns puddles whose floating texts safely implement update(dt) and expire', () => {
+    const horde = new VirtualLeaderSnowmanHorde();
+    horde.preparePool(factory);
+
+    let damageTaken = 0;
+    const player = {
+      x: 150,
+      y: 150,
+      radius: 20,
+      takeDamage: (dmg: number) => {
+        damageTaken += dmg;
+      },
+    };
+    const engine = { ...createEngine(0), texts: [] as any[] };
+    horde.startWave(engine, player, 1280, 720, 200);
+
+    // Move all 40 snowmen onto the player and kill them simultaneously
+    for (let i = 0; i < 40; i++) {
+      horde.x[i] = player.x + (i % 5) * 2;
+      horde.y[i] = player.y + Math.floor(i / 5) * 2;
+      horde.snowmen[i].hp = 0;
+      horde.snowmen[i].isDefeated = true;
+    }
+
+    horde.update(0.016, engine, player, 1280, 720);
+
+    expect(damageTaken).toBe(3);
+    expect(engine.texts.length).toBe(1);
+    expect(typeof engine.texts[0].update).toBe('function');
+
+    // Simulating the main game loop text update must not throw and must expire the text
+    expect(() => {
+      for (const txt of engine.texts) {
+        txt.update(0.7);
+      }
+    }).not.toThrow();
+
+    expect(engine.texts[0].life).toBeLessThanOrEqual(0);
   });
 
   it('reduces snowman point value by 30% (multiplier 0.35 and base points 49)', async () => {

@@ -1024,8 +1024,8 @@ export class RunDirector {
     const enemies: any[] = engine.livingEnemies || [];
     if (enemies.length === 0) return;
 
-    const eligible = enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isOstryBes && !enemy.isVirtualCrowMember);
-    const pool = eligible.length > 0 ? eligible : enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isVirtualCrowMember);
+    const eligible = enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isOstryBes && !enemy.isVirtualCrowMember && !enemy.isVirtualSnowmanMember);
+    const pool = eligible.length > 0 ? eligible : enemies.filter((enemy: any) => !enemy.isBoss && !enemy.isVirtualCrowMember && !enemy.isVirtualSnowmanMember);
     const target = pool[Math.floor(Math.random() * pool.length)];
     if (!target || target.isBoss) return;
 

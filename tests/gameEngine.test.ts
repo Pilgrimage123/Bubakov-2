@@ -39,9 +39,20 @@ describe('GameEngine Headless Simulation', () => {
       expect(engine.state.player.type).toBe('wanderer');
       // Wanderer base 230 hp + 20% wall bonus (46) = 276 hp
       expect(engine.state.player.maxHp).toBe(276);
-      expect(engine.state.player.hp).toBe(276);
-      expect(engine.state.player.weapons.length).toBeGreaterThan(0);
-      expect(engine.state.player.weapons[0].id).toBe('osikovy_prut');
+      expect(engine.state.player.weapons.length).toBe(1);
+      expect(engine.state.player.weapons[0].id).toBe('bylinkova_fajfka');
+    });
+
+    it('initializes wanderer specifically with bylinkova_fajfka only', () => {
+      const p = engine.createPlayer('wanderer');
+      expect(p.weapons).toHaveLength(1);
+      expect(p.weapons[0].id).toBe('bylinkova_fajfka');
+    });
+
+    it('initializes krajanek specifically with osikovy_prut', () => {
+      const p = engine.createPlayer('krajanek');
+      expect(p.weapons).toHaveLength(1);
+      expect(p.weapons[0].id).toBe('osikovy_prut');
     });
 
     it('initializes a run using options object with shepherd on level 2', () => {

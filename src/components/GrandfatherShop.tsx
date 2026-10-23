@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GRANDFATHER_ITEMS, type GrandfatherItemDef } from '../data/grandfatherItems';
-import { getGrandfatherPrice, getWaitDiscount, isGrandfatherPriceExempt, getGrandfatherInflatingPurchaseCount, getWeaponUpgradeOffer, type GrandfatherOffer } from '../game/grandfatherRuntime';
+import {
+  getGrandfatherPrice,
+  getWaitDiscount,
+  isGrandfatherPriceExempt,
+  getGrandfatherInflatingPurchaseCount,
+  getWeaponUpgradeOffer,
+  replaceCourageOffersIfNeeded,
+  type GrandfatherOffer,
+} from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
 import { PernicekIcon } from './PernicekIcon';
 import { GrandfatherScene } from './GrandfatherScene';
@@ -140,10 +148,15 @@ export function GrandfatherShop({
   onClose,
 }: Props) {
   const discount = Math.round(getWaitDiscount(waitSeconds) * 100);
-  const visibleOffers = offers.filter((offer) => {
-    const item = GRANDFATHER_ITEMS.find((candidate) => candidate.id === offer.itemId);
-    return !(item?.effect.type === 'heal' && playerHp >= playerMaxHp);
-  });
+  const visibleOffers = replaceCourageOffersIfNeeded(
+    offers,
+    gingerbread,
+    luck,
+    purchasedIds,
+    playerWeapons,
+    { playerHp, playerMaxHp },
+    4,
+  );
 
   // Shop animation states
   const [sceneState, setSceneState] = useState<'idle' | 'reaching' | 'pulling' | 'rerolling' | 'purchasing'>('idle');

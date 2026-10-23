@@ -198,6 +198,7 @@ export class VirtualLeaderSnowmanHorde {
       enemy.dead = true;
       enemy.isDefeated = true;
       enemy.isVirtualSnowmanMember = true;
+      enemy.isSwarmMember = true;
       enemy._snowmanHordeOwner = this;
       enemy._snowmanHordeInEngine = false;
       enemy._snowmanHordeActive = false;
@@ -322,6 +323,7 @@ export class VirtualLeaderSnowmanHorde {
       enemy.isMiniboss = false;
       enemy.panicked = false;
       enemy.isVirtualSnowmanMember = true;
+      enemy.isSwarmMember = true;
       enemy._snowmanHordeOwner = this;
       enemy._snowmanHordeInEngine = false;
       enemy._snowmanHordeActive = true;
@@ -545,12 +547,13 @@ export class VirtualLeaderSnowmanHorde {
         enemy.animTime = this.waveAge;
 
         // Contact attack damage check
+        const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
         const contactRadius = enemy.radius + player.radius;
         if (distToPlayer < contactRadius) {
           enemy.snowmanContactCooldown = Math.max(0, (enemy.snowmanContactCooldown || 0) - dt);
           if (enemy.snowmanContactCooldown <= 0) {
             enemy.snowmanContactCooldown = 1.0;
-            if (typeof player.takeDamage === 'function') {
+            if (!isKrajanekRiding && typeof player.takeDamage === 'function') {
               player.takeDamage(enemy.damage || 24, 'frost', enemy, true);
             }
           }
@@ -593,29 +596,40 @@ export class VirtualLeaderSnowmanHorde {
     }
 
     // 5. Player Debuff & DoT when standing in puddles
+    const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
     if (playerOverlapsPuddle) {
-      // 25% movement speed reduction (does NOT stack multiplicatively across puddles)
-      player.meltingPuddleSlowTimer = 0.15;
+      if (isKrajanekRiding) {
+        player.meltingPuddleSlowTimer = 0;
+      } else {
+        // 25% movement speed reduction (does NOT stack multiplicatively across puddles)
+        player.meltingPuddleSlowTimer = 0.15;
 
-      // Periodic low tick damage at 0.5s interval
-      this.playerPuddleDamageTimer -= dt;
-      if (this.playerPuddleDamageTimer <= 0) {
-        this.playerPuddleDamageTimer = this.puddleTickInterval;
-        if (typeof player.takeDamage === 'function') {
-          player.takeDamage(this.puddleTickDamage, 'cold', null, true);
-        }
-        if (Array.isArray(engine.texts)) {
-          engine.texts.push({
-            x: player.x,
-            y: player.y - 35,
-            text: 'STUDENÁ LOUŽE! -3 💧',
-            color: '#38BDF8',
-            size: 14,
-            life: 0.65,
-            maxLife: 0.65,
-            isDamage: true,
-            dead: false,
-          });
+        // Periodic low tick damage at 0.5s interval
+        this.playerPuddleDamageTimer -= dt;
+        if (this.playerPuddleDamageTimer <= 0) {
+          this.playerPuddleDamageTimer = this.puddleTickInterval;
+          if (typeof player.takeDamage === 'function') {
+            player.takeDamage(this.puddleTickDamage, 'cold', null, true);
+          }
+          if (Array.isArray(engine.texts)) {
+            engine.texts.push({
+              x: player.x,
+              y: player.y - 35,
+              vy: -45,
+              text: 'STUDENÁ LOUŽE! -3 💧',
+              color: '#38BDF8',
+              size: 14,
+              life: 0.65,
+              maxLife: 0.65,
+              isDamage: true,
+              dead: false,
+              category: 'hunterDamage',
+              update(stepDt: number) {
+                this.y += (this.vy ?? -45) * stepDt;
+                this.life -= stepDt;
+              },
+            });
+          }
         }
       }
     } else {
@@ -690,20 +704,20 @@ export class VirtualLeaderSnowmanHorde {
 
       ctx.save();
       ctx.translate(px, py);
-      ctx.globalAlpha = 0.72 * alpha;
+      ctx.globalAlpha = 0.52 * alpha;
 
       // Puddle body
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
-      ctx.strokeStyle = '#0284C7';
-      ctx.lineWidth = 2.2;
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.26)';
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.7)';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.ellipse(0, 0, r, r * 0.62, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
       // Concentric ripples
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.42)';
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       const ripple = ((Math.sin(uiTime * 3.5 + p * 1.3) + 1) * 0.5) * (r * 0.68);
       ctx.ellipse(0, 0, ripple + 3, (ripple + 3) * 0.62, 0, 0, Math.PI * 2);
@@ -712,7 +726,7 @@ export class VirtualLeaderSnowmanHorde {
       // Melting icy center
       const slushAlpha = alpha * Math.max(0, (this.puddleLife[p] - 1.0) / 3.0);
       if (slushAlpha > 0.05) {
-        ctx.fillStyle = `rgba(240, 249, 255, ${slushAlpha * 0.7})`;
+        ctx.fillStyle = `rgba(240, 249, 255, ${slushAlpha * 0.35})`;
         ctx.beginPath();
         ctx.ellipse(0, 0, r * 0.38, r * 0.22, 0, 0, Math.PI * 2);
         ctx.fill();

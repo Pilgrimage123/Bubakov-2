@@ -1,3 +1,10 @@
+## 2026-10-23 — Změna výchozí zbraně Tuláka: Bylinková fajfka místo prutu
+
+- Tulák (Poutník) nově začíná výpravu pouze s Bylinkovou fajfkou místo Osikového prutu.
+- Aktualizována inicializace výbavy v herním enginu (`createPlayer`) i v herním rozhraní (`App.tsx`).
+- Aktualizována karta lovce, popis odemčení v `hunterUnlocks.ts` a české i anglické lokalizační řetězce.
+- Doplněna Bylinková fajfka do výchozí sady odemčených zbraní a přidány regresní testy.
+
 ## 2026-10-23 — Nový výchozí lovec Krajánek a Jízda na žernovu
 
 - Přidán Krajánek jako první odemčený lovec; výběr i vykreslení používají nové transparentní SVG podle dodaného obrázku. Poutník a dosavadní odemykací řada zůstávají zachované.

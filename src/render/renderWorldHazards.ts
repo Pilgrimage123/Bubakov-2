@@ -109,9 +109,9 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
         ctx.fill();
       } else if (h.type === 'frost') {
-        ctx.fillStyle = 'rgba(186, 230, 253, 0.55)';
-        ctx.strokeStyle = '#0284C7';
-        ctx.lineWidth = 2;
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.22)';
+        ctx.strokeStyle = 'rgba(2, 132, 199, 0.65)';
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         ctx.fill();

@@ -102,7 +102,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     bestiaryKills: {},
     highestSurviveTime: 0,
     unlockedHunters: { krajanek: true, wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-    unlockedWeapons: { osikovy_prut: true, povidlove_buchty: true, hromnicka: true },
+    unlockedWeapons: { osikovy_prut: true, povidlove_buchty: true, hromnicka: true, bylinkova_fajfka: true },
     hunterKillCounts: {},
     weaponKillCounts: {},
     selectedLevel: 0,

@@ -187,6 +187,81 @@ export function chooseGrandfatherOffers(
   return selected.sort(() => Math.random() - 0.5);
 }
 
+/**
+ * When Hunter does not need Courage replenishment (playerHp >= playerMaxHp),
+ * Grandfather offers something else instead of leaving an empty space in his basket.
+ * Any healing items are replaced with alternative available offers from his basket, guaranteeing `count` offers.
+ */
+export function replaceCourageOffersIfNeeded(
+  offers: GrandfatherOffer[],
+  gingerbread: number,
+  luck: number,
+  purchasedIds: string[],
+  playerWeapons: any[] = [],
+  playerState: { playerHp?: number; playerMaxHp?: number } = {},
+  count = 4,
+): GrandfatherOffer[] {
+  const isFullCourage = playerState.playerHp !== undefined
+    && playerState.playerMaxHp !== undefined
+    && playerState.playerHp >= playerState.playerMaxHp;
+
+  if (!isFullCourage) return offers;
+
+  const hasHealOffer = offers.some((offer) => {
+    const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
+    return item?.effect.type === 'heal';
+  });
+
+  if (!hasHealOffer && offers.length >= count) return offers;
+
+  // Keep all non-healing offers
+  const filtered = offers.filter((offer) => {
+    const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
+    return item?.effect.type !== 'heal';
+  });
+
+  if (filtered.length >= count) return filtered.slice(0, count);
+
+  const selectedIds = new Set(filtered.map((o) => o.itemId));
+  const isAvailable = (item: GrandfatherItemDef) => {
+    if (item.effect.type === 'heal') return false;
+    if (selectedIds.has(item.id)) return false;
+    if (item.isWeapon && item.weaponId) {
+      const targetCanonicalId = toCanonicalWeaponId(item.weaponId);
+      const pw = playerWeapons.find((w: any) => toCanonicalWeaponId(w.id) === targetCanonicalId);
+      return (pw ? pw.level : 0) < (item.maxStacks ?? 8);
+    }
+    return purchasedIds.filter((id) => id === item.id).length < (item.maxStacks ?? Number.POSITIVE_INFINITY);
+  };
+
+  const pool = GRANDFATHER_ITEMS.filter(isAvailable);
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const now = performance.now();
+
+  const makeOffer = (item: GrandfatherItemDef): GrandfatherOffer => {
+    let candidateUpgradeId: string | undefined;
+    if (item.isWeapon && item.weaponId) {
+      const targetCanonicalId = toCanonicalWeaponId(item.weaponId);
+      const pw = playerWeapons.find((w: any) => toCanonicalWeaponId(w.id) === targetCanonicalId);
+      const nextLvl = (pw ? pw.level : 0) + 1;
+      const isMilestone = nextLvl === 3 || nextLvl === 5 || nextLvl === 8;
+      if (!isMilestone && nextLvl > 1) {
+        candidateUpgradeId = rollRandomWeaponUpgrade(targetCanonicalId, pw)?.id || getWeaponRankDef(targetCanonicalId, nextLvl)?.normalUpgradeId;
+      }
+    }
+    return { itemId: item.id, offeredAt: now, candidateUpgradeId };
+  };
+
+  const result: GrandfatherOffer[] = [...filtered];
+  for (const item of shuffled) {
+    if (result.length >= count) break;
+    result.push(makeOffer(item));
+  }
+
+  return result;
+}
+
+
 export interface WeaponUpgradeOfferDef {
   id: string;
   weaponId: string;

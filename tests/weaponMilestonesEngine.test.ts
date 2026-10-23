@@ -9,7 +9,7 @@ describe('Weapon Milestones GameEngine Seam', () => {
     engine = new GameEngine();
     engine.initRun({
       levelId: 1,
-      hunterType: 'wanderer',
+      hunterType: 'krajanek',
       spawnInitialWave: false,
     });
   });
@@ -74,14 +74,14 @@ describe('Weapon Milestones GameEngine Seam', () => {
     it('produces distinct stats when choosing burst branch vs crowd branch', () => {
       // Instance A chooses crowd
       const engineCrowd = new GameEngine();
-      engineCrowd.initRun({ levelId: 1, hunterType: 'wanderer', spawnInitialWave: false });
+      engineCrowd.initRun({ levelId: 1, hunterType: 'krajanek', spawnInitialWave: false });
       engineCrowd.upgradeWeapon('osikovy_prut');
       engineCrowd.upgradeWeapon('osikovy_prut');
       const statsCrowd = engineCrowd.chooseWeaponMilestone('osikovy_prut', 'cane_crowd_3');
 
       // Instance B chooses burst
       const engineBurst = new GameEngine();
-      engineBurst.initRun({ levelId: 1, hunterType: 'wanderer', spawnInitialWave: false });
+      engineBurst.initRun({ levelId: 1, hunterType: 'krajanek', spawnInitialWave: false });
       engineBurst.upgradeWeapon('osikovy_prut');
       engineBurst.upgradeWeapon('osikovy_prut');
       const statsBurst = engineBurst.chooseWeaponMilestone('osikovy_prut', 'cane_burst_3');
@@ -247,6 +247,27 @@ describe('Weapon Milestones GameEngine Seam', () => {
 
       // Level 3 (base 2) + crowd milestone (+1) = 3 projectiles spawned!
       expect(shepherdEngine.state.projectiles.length).toBe(3);
+    });
+
+    it('wanderer starts strictly with only bylinkova_fajfka and upgrades through milestones', () => {
+      const wandererEngine = new GameEngine();
+      wandererEngine.initRun({
+        levelId: 1,
+        hunterType: 'wanderer',
+        spawnInitialWave: false,
+      });
+
+      expect(wandererEngine.state.player.weapons).toHaveLength(1);
+      expect(wandererEngine.state.player.weapons[0].id).toBe('bylinkova_fajfka');
+
+      // Upgrade fajfka from rank 1 to 2
+      wandererEngine.upgradeWeapon('bylinkova_fajfka');
+      expect(wandererEngine.state.player.weapons[0].level).toBe(2);
+
+      // Upgrade fajfka from rank 2 to 3 triggers milestone
+      const res = wandererEngine.upgradeWeapon('bylinkova_fajfka');
+      expect(res.weapon.level).toBe(3);
+      expect(wandererEngine.state.pendingMilestone?.weaponId).toBe('bylinkova_fajfka');
     });
   });
 });

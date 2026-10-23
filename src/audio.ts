@@ -250,6 +250,36 @@ var SoundManager = class {
 		this.playTone(140, "triangle", .18, .3);
 		setTimeout(() => this.playTone(90, "sawtooth", .22, .25), 40);
 	}
+	zernovSlam() {
+		// Deep resonant bass rumble and heavy stone ground impact
+		this.playTone(65, "triangle", 0.45, 0.42, 0.001);
+		setTimeout(() => this.playTone(45, "sawtooth", 0.38, 0.35, 0.001), 30);
+		setTimeout(() => this.playTone(85, "sine", 0.28, 0.22, 0.001), 70);
+	}
+	zernovHammer() {
+		// Sharp metallic oškrt clang on hard granite
+		this.playTone(1180, "triangle", 0.06, 0.24, 0.005);
+		setTimeout(() => this.playTone(620, "sine", 0.12, 0.28, 0.001), 15);
+		setTimeout(() => this.playTone(140, "sawtooth", 0.08, 0.15, 0.01), 25);
+	}
+	zernovDrift() {
+		// Gravel skid, tearing mud and quartz friction
+		this.playTone(180, "sawtooth", 0.12, 0.22, 0.01);
+		setTimeout(() => this.playTone(135, "sawtooth", 0.14, 0.24, 0.01), 35);
+		setTimeout(() => this.playTone(95, "triangle", 0.16, 0.18, 0.005), 70);
+	}
+	zernovBounce() {
+		// Pinball ricochet: loud ringing metallic clatter bouncing under angle
+		this.playTone(120, "sawtooth", 0.24, 0.40, 0.001);
+		setTimeout(() => this.playTone(340, "triangle", 0.18, 0.32, 0.001), 25);
+		setTimeout(() => this.playTone(560, "sine", 0.22, 0.26, 0.001), 60);
+	}
+	zernovCrack() {
+		// Fracturing stone crunch on elite boogeymen and frost jezinkas
+		this.playTone(260, "sawtooth", 0.12, 0.36, 0.001);
+		setTimeout(() => this.playTone(150, "triangle", 0.16, 0.30, 0.001), 30);
+		setTimeout(() => this.playTone(85, "sawtooth", 0.20, 0.25, 0.001), 60);
+	}
 	valecWhack() {
 		this.playTone(220, "triangle", 0.08, 0.35);
 		setTimeout(() => this.playTone(110, "sawtooth", 0.16, 0.32), 20);

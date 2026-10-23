@@ -13,9 +13,13 @@ import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
 import {
   getKrajanekBlockingHp,
+  getKrajanekMomentumMultiplier,
+  getKrajanekStoneRadius,
+  computeKrajanekSteering,
+  stepKrajanekRide,
+  stepKrajanekCoastingStones,
   KRAJANEK_RIDE_DURATION,
   KRAJANEK_RIDE_SPEED_MULTIPLIER,
-  stepKrajanekRide,
 } from './game/krajanekAbility';
 import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeaderCrowWave';
 import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virtualLeaderSnowmanHorde';
@@ -187,8 +191,15 @@ import {
   EMERGENCY_HEALTH_RATIO,
 } from './game/drops';
 import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
+import {
+  chooseGrandfatherOffers,
+  getGrandfatherPrice,
+  getGrandfatherRerollCost,
+  getGrandfatherInflatingPurchaseCount,
+  getWeaponUpgradeOffer,
+  replaceCourageOffersIfNeeded,
+} from './game/grandfatherRuntime';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
-import { chooseGrandfatherOffers, getGrandfatherPrice, getGrandfatherRerollCost, getGrandfatherInflatingPurchaseCount, getWeaponUpgradeOffer } from './game/grandfatherRuntime';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticUpgrades';
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
 
@@ -665,8 +676,14 @@ class SmokePuff {
 
     ctx.save();
     ctx.translate(this.x, this.y);
-    // Keep the plum-scent cloud translucent so combat remains visible.
-    ctx.globalAlpha = alpha * (this.kind === 'plum-scent' ? 0.58 : 1);
+    // Keep plum-scent, fajfka herbal smoke, and defeat poofs translucent so hunter & monsters remain clearly legible.
+    const baseOpacity =
+      this.kind === 'plum-scent'
+        ? 0.34
+        : this.kind === 'fajfka'
+        ? 0.38
+        : 0.62;
+    ctx.globalAlpha = alpha * baseOpacity;
 
     // 1. Draw outer mini poof dots (skip entirely once faded after progress >= 0.625)
     if (this.poofDots.length > 0 && progress < 0.625) {
@@ -674,10 +691,10 @@ class SmokePuff {
         const dotAlpha = Math.max(0, 1 - progress * 1.6);
         if (dotAlpha <= 0) continue;
         ctx.save();
-        ctx.globalAlpha = alpha * dotAlpha;
+        ctx.globalAlpha = alpha * dotAlpha * baseOpacity;
         ctx.fillStyle = this.kind === 'plum-scent' ? '#9D4EDD' : this.kind === 'fajfka' ? '#898994' : '#FFFDF7';
         ctx.strokeStyle = this.kind === 'plum-scent' ? '#5B167D' : this.kind === 'fajfka' ? '#42424A' : COLORS.ink;
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 1.6;
         ctx.beginPath();
         ctx.arc(dot.x, dot.y, dot.r * (1 + progress * 0.4), 0, Math.PI * 2);
         ctx.fill();
@@ -687,11 +704,11 @@ class SmokePuff {
     }
 
     // 2. Draw ground shadow of smoke cloud
-    const shadowAlpha = alpha * Math.max(0, 0.4 - progress * 0.4);
+    const shadowAlpha = alpha * Math.max(0, 0.25 - progress * 0.25);
     if (shadowAlpha > 0.01) {
       ctx.save();
       ctx.globalAlpha = shadowAlpha;
-      ctx.fillStyle = 'rgba(25, 20, 15, 0.35)';
+      ctx.fillStyle = 'rgba(25, 20, 15, 0.28)';
       ctx.beginPath();
       ctx.ellipse(0, this.radius * 0.5, this.radius * 0.9 * scale, this.radius * 0.4 * scale, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -701,7 +718,12 @@ class SmokePuff {
     // 3. Shadow / depth under-layer of the main cloud (slightly offset downward)
     ctx.save();
     ctx.translate(0, 4);
-    ctx.fillStyle = this.kind === 'plum-scent' ? '#7E22CE' : this.kind === 'fajfka' ? '#4D6353' : '#E8DEC8';
+    ctx.fillStyle =
+      this.kind === 'plum-scent'
+        ? 'rgba(126, 34, 206, 0.42)'
+        : this.kind === 'fajfka'
+        ? 'rgba(77, 99, 83, 0.42)'
+        : 'rgba(232, 222, 200, 0.55)';
     ctx.beginPath();
     for (const lobe of this.lobes) {
       const lr = lobe.r * scale;
@@ -711,10 +733,15 @@ class SmokePuff {
     ctx.fill();
     ctx.restore();
 
-    // 4. Main puffy cloud body with authentic Josef Lada ink border
-    ctx.fillStyle = this.kind === 'fajfka' ? '#F4F8F4' : '#FFFDF7';
+    // 4. Main puffy cloud body with refined Josef Lada ink border
+    ctx.fillStyle =
+      this.kind === 'plum-scent'
+        ? 'rgba(243, 232, 255, 0.58)'
+        : this.kind === 'fajfka'
+        ? 'rgba(240, 253, 244, 0.58)'
+        : 'rgba(255, 253, 247, 0.72)';
     ctx.strokeStyle = COLORS.ink;
-    ctx.lineWidth = Math.max(2.5, this.radius * 0.09);
+    ctx.lineWidth = Math.min(3.4, Math.max(1.8, this.radius * 0.04));
     ctx.lineJoin = 'round';
     ctx.beginPath();
     for (const lobe of this.lobes) {
@@ -727,7 +754,7 @@ class SmokePuff {
 
     // 5. Highlight arcs on the tops of the lobes (whiter cream volume)
     ctx.strokeStyle = this.kind === 'plum-scent' ? '#D8B4FE' : this.kind === 'fajfka' ? '#DCFCE7' : '#FFFFFF';
-    ctx.lineWidth = Math.max(1.8, this.radius * 0.05);
+    ctx.lineWidth = Math.min(2.6, Math.max(1.4, this.radius * 0.03));
     ctx.beginPath();
     for (const lobe of this.lobes) {
       const lr = lobe.r * scale * 0.72;
@@ -742,7 +769,7 @@ class SmokePuff {
       ctx.rotate(wisp.rot);
       ctx.scale(wisp.scale, wisp.scale);
       ctx.strokeStyle = COLORS.ink;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 1.8;
       ctx.lineCap = 'round';
       ctx.beginPath();
       for (let a = 0; a < Math.PI * 2.4; a += 0.2) {
@@ -1453,13 +1480,36 @@ export default function App() {
   };
   syncGameEffectSettings(meta);
 
-  const saveMeta = (updated: MetaProgression) => {
-    metaRef.current = updated;
+  const lastMetaPersistTimeRef = useRef<number>(0);
+  const pendingMetaPersistRef = useRef<boolean>(false);
+
+  const flushPendingMeta = () => {
+    if (!pendingMetaPersistRef.current) return;
+    pendingMetaPersistRef.current = false;
+    lastMetaPersistTimeRef.current = performance.now();
+    const updated = metaRef.current;
     syncGameEffectSettings(updated);
     setMeta(updated);
     try {
       localStorage.setItem('bubakov_meta', JSON.stringify(updated));
     } catch {}
+  };
+
+  const saveMeta = (updated: MetaProgression, immediate = false) => {
+    metaRef.current = updated;
+    const isPlaying = gameStateRef.current === 'playing';
+    const now = performance.now();
+    if (immediate || !isPlaying || now - lastMetaPersistTimeRef.current > 1500) {
+      pendingMetaPersistRef.current = false;
+      lastMetaPersistTimeRef.current = now;
+      syncGameEffectSettings(updated);
+      setMeta(updated);
+      try {
+        localStorage.setItem('bubakov_meta', JSON.stringify(updated));
+      } catch {}
+    } else {
+      pendingMetaPersistRef.current = true;
+    }
   };
 
   // Selected level state - Level 0 (Předjaří) default for new players
@@ -1894,13 +1944,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     eng.grandfather.y = eng.player?.y || 0;
     eng.grandfather.waitStartedAt = eng.gameTime - 180;
     eng.gingerbread = Math.max(eng.gingerbread, 350);
-    eng.grandfather.offers = chooseGrandfatherOffers(
+    eng.grandfather.offers = replaceCourageOffersIfNeeded(
+      chooseGrandfatherOffers(
+        eng.gingerbread,
+        eng.player?.luck || 100,
+        grandfatherPurchaseIdsRef.current,
+        eng.player?.weapons || [{ id: 'cane', level: 1 }],
+        4,
+        { playerHp: eng.player?.hp, playerMaxHp: eng.player?.maxHp }
+      ),
       eng.gingerbread,
       eng.player?.luck || 100,
       grandfatherPurchaseIdsRef.current,
       eng.player?.weapons || [{ id: 'cane', level: 1 }],
-      4,
-      { playerHp: eng.player?.hp, playerMaxHp: eng.player?.maxHp }
+      { playerHp: eng.player?.hp, playerMaxHp: eng.player?.maxHp },
+      4
     );
     setIsTestModeOpen(false);
     grandfatherOpenRef.current = true;
@@ -2571,7 +2629,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         : type === 'krajanek'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'wanderer'
-        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
+        ? [{ id: 'bylinkova_fajfka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
         ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'korenarka'
@@ -2877,15 +2935,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
           }
         }
-        engineRef.current.particles.push({
-          x: this.x,
-          y: this.y,
-          vx: 0,
-          vy: 0,
-          life: 0.35,
-          color: '#FEF08A',
-          size: reach * 0.3,
-        });
+        for (let i = 0; i < 6; i++) {
+          const sparkAng = (i / 6) * Math.PI * 2;
+          const sparkDist = reach * 0.45;
+          engineRef.current.particles.push({
+            x: this.x + Math.cos(sparkAng) * sparkDist,
+            y: this.y + Math.sin(sparkAng) * sparkDist,
+            vx: Math.cos(sparkAng) * 45,
+            vy: Math.sin(sparkAng) * 45,
+            life: 0.3,
+            color: '#FEF08A',
+            size: 3.2,
+          });
+        }
       },
 
       spawnFajfkaCloud(radius: number, dmg: number, duration: number, stats?: any) {
@@ -2927,9 +2989,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         if (this.type === 'watchman') {
           ctx.save();
-          const grad = ctx.createRadialGradient(this.x, this.y, 8, this.x, this.y, 85);
-          grad.addColorStop(0, 'rgba(255, 220, 120, 0.3)');
-          grad.addColorStop(0.7, 'rgba(255, 180, 50, 0.12)');
+          const grad = ctx.createRadialGradient(this.x, this.y, 12, this.x, this.y, 85);
+          grad.addColorStop(0, 'rgba(255, 220, 120, 0.16)');
+          grad.addColorStop(0.7, 'rgba(255, 180, 50, 0.06)');
           grad.addColorStop(1, 'rgba(255, 180, 50, 0)');
           ctx.fillStyle = grad;
           ctx.beginPath();
@@ -2941,8 +3003,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
         if (this.type === 'krajanek') {
           Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
+          Lada.drawKrajanekFurrows?.(ctx, this.krajanekFurrows || engineRef.current?.krajanekFurrows || []);
+          if (engineRef.current?.krajanekCoastingStones && engineRef.current.krajanekCoastingStones.length > 0) {
+            for (let i = 0; i < engineRef.current.krajanekCoastingStones.length; i++) {
+              Lada.drawCoastingZernov?.(ctx, engineRef.current.krajanekCoastingStones[i], engineRef.current?.uiTime || 0);
+            }
+          }
           if ((this.krajanekRideTimer || 0) > 0) {
-            Lada.drawKrajanekRide(ctx, this.x, this.y, engineRef.current?.uiTime || this.animTime || 0, this.lastDx, this.lastDy, 1);
+            const colossusScale = 1 + (this.krajanekColossusStacks || 0) * 0.05;
+            Lada.drawKrajanekRide(
+              ctx,
+              this.x,
+              this.y,
+              engineRef.current?.uiTime || this.animTime || 0,
+              this.lastDx,
+              this.lastDy,
+              1,
+              this.krajanekTilt || 0,
+              Boolean(this.krajanekIsDrifting),
+              colossusScale,
+            );
           } else {
             Lada.drawKrajanek(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
           }
@@ -3202,7 +3282,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       villageStoryRead: {},
       highestSurviveTime: 0,
       unlockedHunters: { krajanek: true, wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { povidlove_buchty: true, osikovy_prut: true, hromnicka: true },
+      unlockedWeapons: { povidlove_buchty: true, osikovy_prut: true, hromnicka: true, bylinkova_fajfka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
       selectedLevel: 0,
@@ -4107,13 +4187,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.grandfather.vx = 0;
               engine.grandfather.vy = 0;
               engine.grandfather.facingDir = player.x >= engine.grandfather.x ? 1 : -1;
-              engine.grandfather.offers = chooseGrandfatherOffers(
+              engine.grandfather.offers = replaceCourageOffersIfNeeded(
+                chooseGrandfatherOffers(
+                  engine.gingerbread,
+                  luck,
+                  grandfatherPurchaseIdsRef.current,
+                  player?.weapons || [],
+                  4,
+                  { playerHp: player?.hp, playerMaxHp: player?.maxHp }
+                ),
                 engine.gingerbread,
                 luck,
                 grandfatherPurchaseIdsRef.current,
                 player?.weapons || [],
-                4,
-                { playerHp: player?.hp, playerMaxHp: player?.maxHp }
+                { playerHp: player?.hp, playerMaxHp: player?.maxHp },
+                4
               );
               sound.grandfatherCall();
               engine.texts.push(new DamageText(player.x, player.y - 80, '„Pssst! Perníčky!“', '#F59E0B', true));
@@ -4329,7 +4417,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 moranaBoss.enraged = true;
                 moranaBoss.speed = 82;
                 sound.roar();
-                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 78, '❄️ SMRTÍCÍ MRAZ!', '#BAE6FD', true));
+                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 110, '❄️ SMRTÍCÍ MRAZ!', '#BAE6FD', true));
                 setRunStats((s) => ({ ...s, warningBanner: '❄️ MORANA SE ROZHNĚVALA! PŘICHÁZÍ SNĚŽNÁ VÁNICE!' }));
                 setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
                 for (let i = 0; i < 28; i++) {
@@ -4392,7 +4480,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (moranaBoss.moranaBlizzardTimer <= 0) {
                 moranaBoss.moranaBlizzardTimer = isPhase2 ? 8 : 12;
                 sound.roar();
-                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 52, '🌨️ VÁNICE!', '#E0F2FE', true));
+                engine.texts.push(new DamageText(moranaBoss.x, moranaBoss.y - 95, '🌨️ VÁNICE!', '#E0F2FE', true));
                 const count = isPhase2 ? 12 : 8;
                 for (let i = 0; i < count; i++) {
                   const angle = (i / count) * Math.PI * 2;
@@ -5396,31 +5484,60 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             let moveVx = 0;
             let moveVy = 0;
 
-            if (mx !== 0 || my !== 0) {
-              const len = Math.hypot(mx, my);
-              let hazardSpeedMult = 1;
-              if (directorRef.current && directorRef.current.hazards.length > 0) {
-                for (const h of directorRef.current.hazards) {
-                  const distH = Math.hypot(player.x - h.x, player.y - h.y);
-                  if (distH <= h.radius) {
-                    if (h.type === 'mud' || h.type === 'frost') {
-                      hazardSpeedMult = Math.min(hazardSpeedMult, h.slowFactor || 0.6);
-                    }
+            let hazardSpeedMult = 1;
+            if (directorRef.current && directorRef.current.hazards.length > 0) {
+              for (const h of directorRef.current.hazards) {
+                const distH = Math.hypot(player.x - h.x, player.y - h.y);
+                if (distH <= h.radius) {
+                  if (h.type === 'mud' || h.type === 'frost') {
+                    hazardSpeedMult = Math.min(hazardSpeedMult, h.slowFactor || 0.6);
                   }
                 }
               }
-              const buffMultiplier =
-                (player.soulBuffTimer > 0 ? 1.25 : 1) *
-                (player.gingerbreadSpeedTimer > 0 ? 1.15 : 1) *
-                (player.waterSoakedTimer > 0 ? 0.75 : 1) *
-                (player.slowTimer > 0 ? 0.65 : 1) *
-                ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1) *
-                hazardSpeedMult *
-                ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
-              const effectiveSpeed =
-                BASE_PLAYER_SPEED *
-                buffMultiplier *
-                (player.type === 'krajanek' && player.krajanekRideTimer > 0 ? KRAJANEK_RIDE_SPEED_MULTIPLIER : 1);
+            }
+            const buffMultiplier =
+              (player.soulBuffTimer > 0 ? 1.25 : 1) *
+              (player.gingerbreadSpeedTimer > 0 ? 1.15 : 1) *
+              (player.waterSoakedTimer > 0 ? 0.75 : 1) *
+              (player.slowTimer > 0 ? 0.65 : 1) *
+              ((player.type === 'krajanek' && player.krajanekRideTimer > 0) ? 1 : ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1)) *
+              hazardSpeedMult *
+              ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
+
+            const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
+
+            if (isKrajanekRiding) {
+              const steer = computeKrajanekSteering(player, mx, my, dt, {
+                onSound: (name: string) => (sound as any)[name]?.(),
+                onDriftSpray: (p: any, angle: number, sign: number) => {
+                  if (engine.particles.length < activeMaxParticlesRef.current) {
+                    const sprayAngle = angle - sign * (Math.PI / 2);
+                    for (let k = 0; k < 6 && engine.particles.length < activeMaxParticlesRef.current; k++) {
+                      const spread = sprayAngle + (Math.random() - 0.5) * 0.8;
+                      const spd = 120 + Math.random() * 140;
+                      engine.particles.push({
+                        x: p.x + Math.cos(spread) * 20,
+                        y: p.y + Math.sin(spread) * 20,
+                        vx: Math.cos(spread) * spd,
+                        vy: Math.sin(spread) * spd - 30,
+                        life: 0.35 + Math.random() * 0.25,
+                        color: k % 2 === 0 ? '#E2E8F0' : '#452A1C',
+                        size: 2.5 + Math.random() * 2.5,
+                      });
+                    }
+                  }
+                },
+              });
+              const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier * getKrajanekMomentumMultiplier(player);
+              player.krajanekCurrentSpeed = effectiveSpeed;
+              moveVx = steer.vxRatio * effectiveSpeed;
+              moveVy = steer.vyRatio * effectiveSpeed;
+              player.lastDx = steer.vxRatio;
+              player.lastDy = steer.vyRatio;
+              player.animTime += dt;
+            } else if (mx !== 0 || my !== 0) {
+              const len = Math.hypot(mx, my);
+              const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
               moveVx = (mx / len) * effectiveSpeed;
               moveVy = (my / len) * effectiveSpeed;
               player.lastDx = mx;
@@ -5435,24 +5552,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             let pushY = 0;
             let totalResistance = 0;
 
-            const crowdNearby = enemySpatialHashRef.current.queryRadius(player.x, player.y, player.radius + 35);
+            const crowdNearby = enemySpatialHashRef.current.queryRadius(
+              player.x,
+              player.y,
+              isKrajanekRiding ? (getKrajanekStoneRadius(player) + 20) : (player.radius + 35)
+            );
             for (let i = 0; i < crowdNearby.length; i++) {
               const e = crowdNearby[i];
               if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0) continue;
+
+              if (isKrajanekRiding) {
+                // Valivý lis: Mobs do not push or drag down the runaway millstone!
+                continue;
+              }
 
               const dx = player.x - e.x;
               const dy = player.y - e.y;
               const dist = Math.hypot(dx, dy);
               const collisionReach = player.radius + e.radius;
-
-              if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
-                const blocksRide = (e.maxHp ?? e.hp ?? 0) > getKrajanekBlockingHp(player.krajanekUpgradeCount || 0);
-                if (blocksRide && dist < collisionReach && moveVx * -dx + moveVy * -dy > 0) {
-                  moveVx = 0;
-                  moveVy = 0;
-                }
-                continue;
-              }
 
               if (dist < collisionReach) {
                 const overlap = collisionReach - dist;
@@ -5473,10 +5590,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Aplikace odporu davu na hráčův vstup
-            const crowdSpeedMultiplier = Math.max(
-              MIN_SPEED_RATIO,
-              1 / (1 + totalResistance * DRAG_COEFFICIENT)
-            );
+            const crowdSpeedMultiplier = isKrajanekRiding
+              ? 1
+              : Math.max(MIN_SPEED_RATIO, 1 / (1 + totalResistance * DRAG_COEFFICIENT));
             moveVx *= crowdSpeedMultiplier;
             moveVy *= crowdSpeedMultiplier;
 
@@ -5495,10 +5611,58 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (player.type === 'krajanek') {
               const rideActive = player.krajanekRideTimer > 0;
               if (rideActive) {
-                enemySpatialHashRef.current.queryCircleInto(player.x, player.y, 260, terrainSpatialResultsRef.current);
+                enemySpatialHashRef.current.queryCircleInto(player.x, player.y, 280, terrainSpatialResultsRef.current);
               }
               const candidateCount = rideActive ? terrainSpatialResultsRef.current.length : 0;
-              const sparkBeat = stepKrajanekRide(player, dt, terrainSpatialResultsRef.current, candidateCount);
+              const callbacks = {
+                onSound: (name: string) => (sound as any)[name]?.(),
+                onDamageText: (opts: any) => pushDamageText(engine.texts, opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'hunterDamage'),
+                onCameraShake: (time: number, intensity: number) => {
+                  engine.cameraTremorTimer = Math.max(engine.cameraTremorTimer || 0, time);
+                  engine.cameraTremorIntensity = intensity;
+                },
+                onHitstop: (time: number) => {
+                  engine.hitstopTimer = Math.max(engine.hitstopTimer || 0, time);
+                },
+                onFrostBurst: (x: number, y: number) => {
+                  const frostColors = ['#A5F3FC', '#38BDF8', '#E0F2FE', '#FFFFFF'];
+                  for (let k = 0; k < 12 && engine.particles.length < activeMaxParticlesRef.current; k++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const spd = 80 + Math.random() * 160;
+                    engine.particles.push({
+                      x,
+                      y,
+                      vx: Math.cos(a) * spd,
+                      vy: Math.sin(a) * spd - 20,
+                      life: 0.4 + Math.random() * 0.3,
+                      color: frostColors[k % frostColors.length],
+                      size: 3 + Math.random() * 3,
+                    });
+                  }
+                },
+                onPinballSparks: (x: number, y: number) => {
+                  const sparkColors = ['#FDE047', '#FEF08A', '#F59E0B', '#FFFFFF'];
+                  for (let k = 0; k < 22 && engine.particles.length < activeMaxParticlesRef.current; k++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const spd = 120 + Math.random() * 220;
+                    engine.particles.push({
+                      x,
+                      y,
+                      vx: Math.cos(a) * spd,
+                      vy: Math.sin(a) * spd,
+                      life: 0.35 + Math.random() * 0.3,
+                      color: sparkColors[k % sparkColors.length],
+                      size: 2.5 + Math.random() * 3,
+                    });
+                  }
+                },
+                onSpawnCoastingStone: (stone: any) => {
+                  if (!engine.krajanekCoastingStones) engine.krajanekCoastingStones = [];
+                  engine.krajanekCoastingStones.push(stone);
+                },
+                engine,
+              };
+              const sparkBeat = stepKrajanekRide(player, dt, terrainSpatialResultsRef.current, candidateCount, callbacks);
               if (sparkBeat && engine.particles.length < activeMaxParticlesRef.current) {
                 const colors = ['#FDE047', '#FFF7C2', '#F59E0B', '#D1D5DB'];
                 for (let i = 0; i < 8 && engine.particles.length < activeMaxParticlesRef.current; i++) {
@@ -5515,6 +5679,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   });
                 }
               }
+            }
+
+            // Step coasting runaway millstones (Phase 4 unguided projectile)
+            if (engine.krajanekCoastingStones && engine.krajanekCoastingStones.length > 0) {
+              const coastCallbacks = {
+                onSound: (name: string) => (sound as any)[name]?.(),
+                onDamageText: (opts: any) => pushDamageText(engine.texts, opts.x, opts.y, opts.text, opts.color || '#FDE047', true, 'hunterDamage'),
+                onCameraShake: (time: number, intensity: number) => {
+                  engine.cameraTremorTimer = Math.max(engine.cameraTremorTimer || 0, time);
+                  engine.cameraTremorIntensity = intensity;
+                },
+              };
+              stepKrajanekCoastingStones(engine.krajanekCoastingStones, dt, engine.enemies, coastCallbacks);
             }
 
             if (moveVx !== 0 || moveVy !== 0) {
@@ -5821,7 +5998,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
-            if (player.meltingPuddleSlowTimer > 0) player.meltingPuddleSlowTimer -= dt;
+            if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
+              player.meltingPuddleSlowTimer = 0;
+              player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, player.krajanekRideTimer);
+            } else if (player.meltingPuddleSlowTimer > 0) {
+              player.meltingPuddleSlowTimer -= dt;
+            }
             if (player.slowTimer > 0) player.slowTimer -= dt;
             if (player.ultCd > 0) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
             if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
@@ -6074,6 +6256,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const hudSyncInterval = isPerfProfile ? 0.25 : HUD_SYNC_INTERVAL_SECONDS;
             if (engine.lastStatsSync >= hudSyncInterval) {
               engine.lastStatsSync = 0;
+              if (pendingMetaPersistRef.current && performance.now() - lastMetaPersistTimeRef.current > 1500) {
+                flushPendingMeta();
+              }
 
               // Boss bar je řízený přímo živým bossem, takže reaguje i na běžné zásahy.
               // Dříve se aktualizoval hlavně při spawn/death událostech a během boje mohl zamrznout.
@@ -7045,7 +7230,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   }
                   applyBearMaskOverheal(player, potionHeal);
-                  player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
+                  player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0));
                   engine.texts.push(new DamageText(player.x, player.y - 45, `+${Math.round(potionHeal)} Kuráž (Jitrnice)`, COLORS.green, true));
                 } else if (d.type === 'bread' || d.type === 'pear') {
                   sound.potion();
@@ -7162,7 +7347,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           releasePendingDrops(engine.drops, engine.pendingDropBank);
 
           // Update texts
-          for (const txt of engine.texts) txt.update(dt);
+          for (const txt of engine.texts) {
+            if (typeof txt.update === 'function') {
+              txt.update(dt);
+            } else {
+              txt.y += (txt.vy ?? -45) * dt;
+              txt.life = (txt.life ?? 0) - dt;
+            }
+          }
           compactInPlace(engine.texts, (t) => t.life > 0);
           if (engine.texts.length > MAX_DAMAGE_TEXTS) {
             engine.texts.splice(0, engine.texts.length - MAX_DAMAGE_TEXTS);
@@ -7311,15 +7503,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           arenaChunkCacheRef.current.rebuildIfChanged(engine.decor, curLvl.season, curLvl.theme, isNight);
         }
 
+        const tremor = (engine.cameraTremorTimer > 0)
+          ? (engine.cameraTremorIntensity || 10) * Math.min(1, engine.cameraTremorTimer / 0.25)
+          : 0;
+        const shakeX = tremor > 0 ? (Math.random() - 0.5) * tremor : 0;
+        const shakeY = tremor > 0 ? (Math.random() - 0.5) * tremor : 0;
+
         const camera: CameraViewport = {
-          x: cam.x,
-          y: cam.y,
+          x: cam.x + shakeX,
+          y: cam.y + shakeY,
           width: canvas.width,
           height: canvas.height,
-          viewLeft: cam.x - 120,
-          viewTop: cam.y - 160,
-          viewRight: cam.x + canvas.width + 120,
-          viewBottom: cam.y + canvas.height + 160,
+          viewLeft: cam.x + shakeX - 120,
+          viewTop: cam.y + shakeY - 160,
+          viewRight: cam.x + shakeX + canvas.width + 120,
+          viewBottom: cam.y + shakeY + canvas.height + 160,
         };
 
         const currentProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
@@ -7472,7 +7670,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         } else if (curLvl.weatherEffect === 'ice_drift') {
           const t = engine.uiTime;
-          Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 3);
+          ctx.save();
+          ctx.globalAlpha = 0.25;
+          Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 2.2);
           for (let i = 0; i < 15; i++) {
             const sx = ((i * 220 + t * 35) % (canvas.width + 400)) - 200;
             const sy = ((i * 87 + Math.sin(t * 0.2 + i) * 12) % (canvas.height + 300)) - 150;
@@ -7495,7 +7695,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.fill();
             ctx.stroke();
 
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1.6;
             ctx.beginPath();
             ctx.moveTo(-10, -5);
             ctx.lineTo(10, 5);
@@ -7503,6 +7703,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             ctx.restore();
           }
+          ctx.restore();
         }
 
         const smoothedTimings = frameProfiler.end(performance.now());
@@ -9603,7 +9804,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (this.prefix === 'hromovy' && player && player.hp > 0 && finalDmg > 0) {
           const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
           const now = engineRef.current?.gameTime ?? 0;
-          if (distToPlayer <= 200 && (player.invulnerabilityTimer || 0) <= 0 && (!(this as any)._lastThornsTime || now - (this as any)._lastThornsTime >= 0.25)) {
+          const isKrajanekInvulnerable = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
+          if (distToPlayer <= 200 && (player.invulnerabilityTimer || 0) <= 0 && !isKrajanekInvulnerable && (!(this as any)._lastThornsTime || now - (this as any)._lastThornsTime >= 0.25)) {
             (this as any)._lastThornsTime = now;
             const maxReflect = Math.max(1, Math.round((player.maxHp || 100) * 0.25));
             const rawReflect = Math.max(1, Math.round(finalDmg * 0.5));
@@ -9810,7 +10012,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               finalType === 'bread' ? 10 :
               (finalValue && finalValue >= 15 ? 12 : finalValue && finalValue >= 5 ? 10 : 8)
             );
-            const isSwarm = this.category === 'swarms' || this.isSwarmMember;
+            const isSwarm = this.category === 'swarms' || this.isSwarmMember || this.isVirtualSnowmanMember || this.isVirtualCrowMember;
             if (isSwarm && !this.isMiniboss && !this.isBoss && (finalType === 'gingerbread' || finalType === 'coin')) {
               if (!eng.swarmReservoir) eng.swarmReservoir = createSwarmDropReservoir();
               accumulateSwarmDrop(eng.swarmReservoir, {
@@ -9837,7 +10039,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 goldenRushTimer: opts.goldenRushTimer || 0,
               }, eng.pendingDropBank);
             }
-            if (finalText) {
+            if (finalText && !isSwarm) {
               eng.texts.push(new DamageText(this.x, this.y - 45, finalText, finalTextColor || COLORS.mustard, true, finalType === 'gingerbread' ? 'lootResources' : undefined, finalType === 'gingerbread' ? 'gingerbread' : undefined));
             }
           };
@@ -10159,7 +10361,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const nextWeaponProg = getWeaponProgress(activeWeaponId, nextMeta);
               if (nextWeaponProg.isUnlocked) {
                 const newlyUnlockedWeapons = {
-                  ...(curMeta.unlockedWeapons || { povidlove_buchty: true, osikovy_prut: true, hromnicka: true }),
+                  ...(curMeta.unlockedWeapons || { povidlove_buchty: true, osikovy_prut: true, hromnicka: true, bylinkova_fajfka: true }),
                   [activeWeaponId]: true,
                 };
                 nextMeta = { ...nextMeta, unlockedWeapons: newlyUnlockedWeapons };
@@ -10220,7 +10422,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }, 5500);
           }
 
-          saveMeta(nextMeta);
+          saveMeta(nextMeta, Boolean(announceName || announceWeaponName || announceLevelName));
 
           engineRef.current.kills += 1;
 
@@ -10598,28 +10800,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         if (isGameEffectEnabled('statusIndicatorsEnabled') && this.soaked && !this.isDefeated) {
-          ctx.fillStyle = 'rgba(58, 118, 168, 0.4)';
+          ctx.save();
+          ctx.fillStyle = 'rgba(58, 118, 168, 0.14)';
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
           ctx.fill();
+          ctx.stroke();
+          ctx.restore();
         }
         if (isGameEffectEnabled('statusIndicatorsEnabled') && this.chilled && !this.isDefeated) {
-          ctx.fillStyle = 'rgba(196, 225, 246, 0.45)';
+          ctx.save();
+          ctx.fillStyle = 'rgba(196, 225, 246, 0.16)';
+          ctx.strokeStyle = 'rgba(186, 230, 253, 0.78)';
+          ctx.lineWidth = 2.2;
+          ctx.setLineDash([4, 4]);
           ctx.beginPath();
           ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
           ctx.fill();
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
         }
         const pickleStatus = this.statusEffects?.pickle_sickness;
         if (isGameEffectEnabled('statusIndicatorsEnabled') && pickleStatus && !this.isDefeated) {
-          const pulse = 0.28 + Math.sin(this.animTime * 7) * 0.08;
+          const pulse = 0.12 + Math.sin(this.animTime * 7) * 0.04;
           ctx.save();
-          ctx.globalCompositeOperation = 'source-atop';
           ctx.fillStyle = 'rgba(101, 163, 13, ' + pulse + ')';
-          ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = 'rgba(132, 204, 22, 0.65)';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius + 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
           ctx.restore();
           ctx.save();
           ctx.fillStyle = '#A3E635';
-          ctx.globalAlpha = 0.8;
+          ctx.globalAlpha = 0.85;
           for(let i=0;i<pickleStatus.stacks;i++){
             const a=this.animTime*2+i*Math.PI*2/3;
             ctx.beginPath();ctx.arc(this.x+Math.cos(a)*(this.radius+8),this.y-this.radius-4+Math.sin(a)*4,2.5,0,Math.PI*2);ctx.fill();

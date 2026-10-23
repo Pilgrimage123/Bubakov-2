@@ -2,6 +2,7 @@ import type { GameLevelId, MilestoneChoice, GameDrop, MetaProgression } from '..
 import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandfatherRuntime';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
 import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker, createSwarmDropReservoir, type SwarmDropReservoir, createPendingDropBank, type PendingDropBank } from './drops';
+import type { KrajanekCoastingStone, KrajanekFurrow } from './krajanekAbility';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -110,6 +111,10 @@ export interface EngineState {
   slivoviceVapor: { x: number; y: number; dirAngle: number; life: number } | null;
   sootFootprints: Array<{ x: number; y: number; life: number; angle: number }>;
   cameraTremorTimer: number;
+  cameraTremorIntensity?: number;
+  hitstopTimer?: number;
+  krajanekCoastingStones?: KrajanekCoastingStone[];
+  krajanekFurrows?: KrajanekFurrow[];
   lightSources: DynamicLightSource[];
   petrolejkaLight?: DynamicLightSource | null;
   hromnickaLight?: DynamicLightSource | null;
@@ -235,6 +240,10 @@ export function createInitialEngineState(): EngineState {
     slivoviceVapor: null,
     sootFootprints: [],
     cameraTremorTimer: 0,
+    cameraTremorIntensity: 10,
+    hitstopTimer: 0,
+    krajanekCoastingStones: [],
+    krajanekFurrows: [],
     lightSources: [],
     petrolejkaLight: null,
     hromnickaLight: null,

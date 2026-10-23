@@ -68,9 +68,14 @@ import {
 } from './drops';
 import {
   getKrajanekBlockingHp,
-  KRAJANEK_ABILITY_COOLDOWN,
-  KRAJANEK_RIDE_SPEED_MULTIPLIER,
+  getKrajanekMomentumMultiplier,
+  getKrajanekStoneRadius,
+  computeKrajanekSteering,
   stepKrajanekRide,
+  stepKrajanekCoastingStones,
+  KRAJANEK_ABILITY_COOLDOWN,
+  KRAJANEK_RIDE_DURATION,
+  KRAJANEK_RIDE_SPEED_MULTIPLIER,
 } from './krajanekAbility';
 import { drawGingerbreadHeartCanvas } from '../render/pernicekCanvas';
 import { drawGlyphText } from '../render/glyphAtlas';
@@ -313,10 +318,10 @@ export class SmokePuff {
     const progress = Math.min(1, this.time / this.duration);
     const alpha = Math.max(0, 1 - Math.pow(progress, 1.8));
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = alpha * 0.6;
     ctx.fillStyle = '#FFFFFF';
     ctx.strokeStyle = '#2D1609';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.0;
     for (const l of this.lobes) {
       ctx.beginPath();
       ctx.arc(this.x + l.ox, this.y + l.oy, l.r, 0, Math.PI * 2);
@@ -576,7 +581,7 @@ export class GameEngine {
         : type === 'krajanek'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'wanderer'
-        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
+        ? [{ id: 'bylinkova_fajfka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'shepherd'
         ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : type === 'korenarka'
@@ -2209,21 +2214,33 @@ export class GameEngine {
       let moveVx = 0;
       let moveVy = 0;
 
-      if (mx !== 0 || my !== 0) {
+      if (player.hazardSlowTimer > 0) {
+        player.hazardSlowTimer -= dt;
+      }
+      const buffMultiplier =
+        (player.soulBuffTimer > 0 ? 1.25 : 1) *
+        (player.gingerbreadSpeedTimer > 0 ? (1 + (player.gingerbreadSpeedBonus || 0.15)) : 1) *
+        (player.waterSoakedTimer > 0 ? 0.75 : 1) *
+        (player.slowTimer > 0 ? 0.65 : 1) *
+        ((player.type === 'krajanek' && player.krajanekRideTimer > 0) ? 1 : ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1)) *
+        (player.hazardSlowTimer > 0 ? (player.hazardSlowFactor || 0.7) : 1);
+
+      const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
+
+      if (isKrajanekRiding) {
+        const steer = computeKrajanekSteering(player, mx, my, dt, {
+          onSound: (s: string) => this.callbacks?.onSound?.(s),
+        });
+        const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier * getKrajanekMomentumMultiplier(player);
+        player.krajanekCurrentSpeed = effectiveSpeed;
+        moveVx = steer.vxRatio * effectiveSpeed;
+        moveVy = steer.vyRatio * effectiveSpeed;
+        player.lastDx = steer.vxRatio;
+        player.lastDy = steer.vyRatio;
+        player.animTime += dt;
+      } else if (mx !== 0 || my !== 0) {
         const len = Math.hypot(mx, my);
-        if (player.hazardSlowTimer > 0) {
-          player.hazardSlowTimer -= dt;
-        }
-        const buffMultiplier =
-          (player.soulBuffTimer > 0 ? 1.25 : 1) *
-          (player.gingerbreadSpeedTimer > 0 ? (1 + (player.gingerbreadSpeedBonus || 0.15)) : 1) *
-          (player.waterSoakedTimer > 0 ? 0.75 : 1) *
-          (player.slowTimer > 0 ? 0.65 : 1) *
-          (player.hazardSlowTimer > 0 ? (player.hazardSlowFactor || 0.7) : 1);
-        const effectiveSpeed =
-          BASE_PLAYER_SPEED *
-          buffMultiplier *
-          (player.type === 'krajanek' && player.krajanekRideTimer > 0 ? KRAJANEK_RIDE_SPEED_MULTIPLIER : 1);
+        const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
         moveVx = (mx / len) * effectiveSpeed;
         moveVy = (my / len) * effectiveSpeed;
         player.lastDx = mx;
@@ -2237,24 +2254,21 @@ export class GameEngine {
       let pushY = 0;
       let totalResistance = 0;
 
-      const crowdNearby = this.spatialHash.queryRadius(player.x, player.y, player.radius + 35);
+      const crowdRadius = isKrajanekRiding ? (getKrajanekStoneRadius(player) + 20) : (player.radius + 35);
+      const crowdNearby = this.spatialHash.queryRadius(player.x, player.y, crowdRadius);
       for (let i = 0; i < crowdNearby.length; i++) {
         const e = crowdNearby[i];
         if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0) continue;
+
+        if (isKrajanekRiding) {
+          // Valivý lis: Mobs do not push or drag down the runaway millstone!
+          continue;
+        }
 
         const dx = player.x - e.x;
         const dy = player.y - e.y;
         const dist = Math.hypot(dx, dy);
         const collisionReach = player.radius + e.radius;
-
-        if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
-          const blocksRide = (e.maxHp ?? e.hp ?? 0) > getKrajanekBlockingHp(player.krajanekUpgradeCount || 0);
-          if (blocksRide && dist < collisionReach && moveVx * -dx + moveVy * -dy > 0) {
-            moveVx = 0;
-            moveVy = 0;
-          }
-          continue;
-        }
 
         if (dist < collisionReach) {
           // Odstrčení reaguje na dotyk, aniž by čekalo na zásah nepřítele.
@@ -2274,7 +2288,9 @@ export class GameEngine {
         }
       }
 
-      const crowdSpeedMultiplier = Math.max(MIN_SPEED_RATIO, 1 / (1 + totalResistance * DRAG_COEFFICIENT));
+      const crowdSpeedMultiplier = isKrajanekRiding
+        ? 1
+        : Math.max(MIN_SPEED_RATIO, 1 / (1 + totalResistance * DRAG_COEFFICIENT));
       moveVx *= crowdSpeedMultiplier;
       moveVy *= crowdSpeedMultiplier;
 
@@ -2290,9 +2306,45 @@ export class GameEngine {
 
       if (player.type === 'krajanek') {
         const candidates = player.krajanekRideTimer > 0
-          ? this.spatialHash.queryCircle(player.x, player.y, 260)
+          ? this.spatialHash.queryCircle(player.x, player.y, 280)
           : this.state.enemies;
-        stepKrajanekRide(player, dt, candidates);
+        const callbacks = {
+          onSound: (s: string) => this.callbacks?.onSound?.(s),
+          onDamageText: (opts: any) => {
+            const dtText = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
+            this.state.texts.push(dtText);
+            this.callbacks?.onDamageText?.(dtText);
+          },
+          onCameraShake: (time: number, intensity: number) => {
+            this.state.cameraTremorTimer = Math.max(this.state.cameraTremorTimer || 0, time);
+            this.state.cameraTremorIntensity = intensity;
+          },
+          onHitstop: (time: number) => {
+            this.state.hitstopTimer = Math.max(this.state.hitstopTimer || 0, time);
+          },
+          onSpawnCoastingStone: (stone: any) => {
+            if (!this.state.krajanekCoastingStones) this.state.krajanekCoastingStones = [];
+            this.state.krajanekCoastingStones.push(stone);
+          },
+          engine: this.state,
+        };
+        stepKrajanekRide(player, dt, candidates, undefined, callbacks);
+      }
+
+      if (this.state.krajanekCoastingStones && this.state.krajanekCoastingStones.length > 0) {
+        const coastCallbacks = {
+          onSound: (s: string) => this.callbacks?.onSound?.(s),
+          onDamageText: (opts: any) => {
+            const dtText = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
+            this.state.texts.push(dtText);
+            this.callbacks?.onDamageText?.(dtText);
+          },
+          onCameraShake: (time: number, intensity: number) => {
+            this.state.cameraTremorTimer = Math.max(this.state.cameraTremorTimer || 0, time);
+            this.state.cameraTremorIntensity = intensity;
+          },
+        };
+        stepKrajanekCoastingStones(this.state.krajanekCoastingStones, dt, this.state.enemies, coastCallbacks);
       }
 
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
@@ -3155,7 +3207,7 @@ export class GameEngine {
                   }
                 }
                 player.hp = Math.min(player.maxHp, player.hp + potionHeal);
-                player.invulnerabilityTimer = Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0);
+                player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, Math.min(5, waterLevel > 0 ? 1 + waterLevel * 0.5 : 0));
               } else if (d.type === 'bread' || d.type === 'pear') {
                 this.callbacks?.onSound?.('potion');
                 let foodHeal = 15;
@@ -3259,7 +3311,13 @@ export class GameEngine {
     // Step texts
     if (this.state.texts) {
       for (let i = 0; i < this.state.texts.length; i++) {
-        this.state.texts[i].update?.(dt);
+        const txt = this.state.texts[i];
+        if (typeof txt.update === 'function') {
+          txt.update(dt);
+        } else {
+          txt.y += (txt.vy ?? -45) * dt;
+          txt.life = (txt.life ?? 0) - dt;
+        }
       }
       compactInPlace(this.state.texts, (t) => (t.life ?? 1) > 0);
       if (this.state.texts.length > MAX_DAMAGE_TEXTS) {

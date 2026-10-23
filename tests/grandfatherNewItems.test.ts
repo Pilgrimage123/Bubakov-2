@@ -476,6 +476,7 @@ describe('New Grandfather Items Integration', () => {
       player.hp = 50;
       player.ultCd = 10.0;
       player.pickupRadius = 150;
+      player.weapons = [];
 
       // Spawn giant gingerbread
       state.drops.push({

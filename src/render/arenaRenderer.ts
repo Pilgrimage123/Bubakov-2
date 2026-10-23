@@ -20,6 +20,8 @@ import { renderProjectilesAndSlashes } from './renderProjectiles';
 import { renderEnemyTelegraphs } from './renderTelegraphs';
 import { renderWorldHazardsAndEncounters, renderWorldCombatVfx } from './renderWorldHazards';
 import { OffScreenIndicatorController } from './offScreenIndicators';
+import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
+import { Lada } from './ladaRenderer';
 
 export interface CameraViewport {
   x: number;
@@ -190,10 +192,43 @@ export class ArenaRenderer {
     if (options?.combatVfxEnabled !== false && engine.smokePuffs && engine.smokePuffs.length > 0) {
       for (let i = 0; i < engine.smokePuffs.length; i++) {
         const puff = engine.smokePuffs[i];
+        if (!puff || puff.dead) continue;
         const radius = (puff.radius || 15) * 2;
-        if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom) && this.drawableCount < MAX_DRAWABLE_CAPACITY) {
-          this.preallocatedDrawables[this.drawableCount++] = puff;
+        if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom)) {
+          if (typeof puff.draw === 'function') {
+            puff.draw(ctx);
+            renderedEntities++;
+          }
+          if (options?.afterEntitiesDrawn) {
+            options.afterEntitiesDrawn(puff);
+          }
         }
+      }
+    }
+
+    // Render mrazovy_skritek frost auras on the ground layer before characters with overlap attenuation
+    if (options?.combatVfxEnabled !== false) {
+      const overlapRadiusSq = (FROSTLING_AURA_RADIUS * 1.15) * (FROSTLING_AURA_RADIUS * 1.15);
+      for (let i = 0; i < this.drawableCount; i++) {
+        const d = this.preallocatedDrawables[i];
+        if (!d || (d.id !== 'mrazovy_skritek' && d.method !== 'drawFrostling') || d.id === 'mrazivy_obr' || d.isDefeated) {
+          continue;
+        }
+        let overlapCount = 1;
+        for (let j = 0; j < this.drawableCount; j++) {
+          if (i === j) continue;
+          const other = this.preallocatedDrawables[j];
+          if (!other || (other.id !== 'mrazovy_skritek' && other.method !== 'drawFrostling') || other.id === 'mrazivy_obr' || other.isDefeated) {
+            continue;
+          }
+          const dx = d.x - other.x;
+          const dy = d.y - other.y;
+          if (dx * dx + dy * dy <= overlapRadiusSq) {
+            overlapCount++;
+          }
+        }
+        Lada.drawFrostlingAura(ctx, d.x, d.y, d.animTime || 0, overlapCount);
+        d._auraDrawnInGroundPass = true;
       }
     }
 
@@ -223,6 +258,10 @@ export class ArenaRenderer {
       }
     } finally {
       for (let i = 0; i < this.drawableCount; i++) {
+        const d = this.preallocatedDrawables[i];
+        if (d && d._auraDrawnInGroundPass) {
+          d._auraDrawnInGroundPass = false;
+        }
         this.preallocatedDrawables[i] = null;
       }
       this.drawableCount = 0;
@@ -304,7 +343,7 @@ export class ArenaRenderer {
 
     if (engine.flourStormTimer && engine.flourStormTimer > 0) {
       ctx.save();
-      const alpha = Math.min(0.35, engine.flourStormTimer * 0.08);
+      const alpha = Math.min(0.16, engine.flourStormTimer * 0.05);
       ctx.fillStyle = `rgba(255, 252, 240, ${alpha})`;
       ctx.fillRect(camera.x, camera.y, width, height);
       ctx.restore();

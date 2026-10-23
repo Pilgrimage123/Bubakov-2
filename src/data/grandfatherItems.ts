@@ -8,6 +8,7 @@ export type GrandfatherEffect =
   | { type: 'luck'; amount: number }
   | { type: 'regen'; amount: number }
   | { type: 'cooldown'; amount: number }
+  | { type: 'nabijeni'; amount: number }
   | { type: 'heal'; amount: number }
   | { type: 'coins'; amount: number }
   | { type: 'weapon'; weaponId: string }

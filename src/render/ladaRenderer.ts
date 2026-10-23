@@ -195,20 +195,218 @@ var Lada = {
 			ctx.strokeStyle = "#C2A078"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(0, 5, 21 * flat.scale, 7 * flat.scale, 0, .1, Math.PI - .1); ctx.stroke(); ctx.restore();
 		}
 	},
-	drawKrajanekRide(ctx, x, y, time, dx, dy, scale = 1) {
-		const phase = time * 5.5; const spin = time * 3.7; ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-		ctx.fillStyle = "rgba(29,23,18,.26)"; ctx.beginPath(); ctx.ellipse(0, 24, 61, 19, 0, 0, Math.PI * 2); ctx.fill();
-		ctx.save(); ctx.translate(0, 2 + Math.sin(phase) * 2); ctx.rotate(spin); this.setupPath(ctx, "#A9A9A1", COLORS.ink, 4); ctx.beginPath(); ctx.arc(0, 0, 47, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.strokeStyle = "#777A77"; ctx.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 10, Math.sin(a) * 10); ctx.lineTo(Math.cos(a) * (39 - i % 3 * 4), Math.sin(a) * (39 - i % 3 * 4)); ctx.stroke(); }
-		ctx.fillStyle = "#D4D1C5"; for (let i = 0; i < 15; i++) { const a = i * 2.399; const rr = 12 + (i % 5) * 6; ctx.beginPath(); ctx.ellipse(Math.cos(a) * rr, Math.sin(a) * rr, 2.3, 1.4, a, 0, Math.PI * 2); ctx.fill(); } ctx.restore();
-		this.setupPath(ctx, "#B77C3C", COLORS.ink, 3); ctx.beginPath(); ctx.ellipse(0, 2, 15, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#5C3822"; ctx.beginPath(); ctx.ellipse(0, 2, 5.5, 5, 0, 0, Math.PI * 2); ctx.fill();
-		this.drawKrajanek(ctx, 0, -39, time, dx, dy, false, .78);
-		ctx.save(); ctx.translate(26, -77); ctx.rotate(-.95 + Math.sin(phase) * .78); this.setupPath(ctx, "#A36A37", COLORS.ink, 2.6); ctx.beginPath(); ctx.moveTo(-1, 7); ctx.lineTo(3, -28); ctx.stroke(); this.setupPath(ctx, "#777A78", COLORS.ink, 3); ctx.beginPath(); ctx.roundRect(-8, -36, 22, 12, 3); ctx.fill(); ctx.stroke(); ctx.restore();
-		if (Math.abs(Math.sin(phase * .5)) > .28) {
-			ctx.strokeStyle = "#FFD22F"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
-			for (let i = 0; i < 7; i++) { const a = i * Math.PI * 2 / 7 + time * .9; const inner = 43 + i % 3 * 3; const outer = inner + 8 + i % 2 * 5; ctx.beginPath(); ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner); ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer); ctx.stroke(); }
-			ctx.fillStyle = "#E5E7EB"; for (let i = 0; i < 5; i++) { const a = i * 2.4 + time; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 54, Math.sin(a) * 54); ctx.lineTo(Math.cos(a + .2) * 61, Math.sin(a + .2) * 61); ctx.lineTo(Math.cos(a + .4) * 55, Math.sin(a + .4) * 55); ctx.closePath(); ctx.fill(); }
+	drawKrajanekFurrows(ctx, furrows) {
+		if (!furrows || !furrows.length) return;
+		for (let i = 0; i < furrows.length; i++) {
+			const f = furrows[i];
+			ctx.save();
+			ctx.translate(f.x, f.y);
+			ctx.rotate(f.angle || 0);
+			const alpha = Math.min(0.75, (f.life / (f.maxLife || 5)) * 0.75);
+			ctx.globalAlpha = alpha;
+			// Deep mud rut trench
+			ctx.fillStyle = "#331E14";
+			ctx.beginPath();
+			ctx.ellipse(0, 0, (f.width || 38) * 0.55, 7, 0, 0, Math.PI * 2);
+			ctx.fill();
+			// Churned soil inner groove
+			ctx.fillStyle = "#1E120B";
+			ctx.beginPath();
+			ctx.ellipse(0, 1, (f.width || 38) * 0.4, 3.8, 0, 0, Math.PI * 2);
+			ctx.fill();
+			// Scattered clods of plowed field mud
+			ctx.fillStyle = "#4A2F21";
+			for (let k = 0; k < 3; k++) {
+				const offX = (k - 1) * ((f.width || 38) * 0.35);
+				ctx.beginPath();
+				ctx.ellipse(offX, -5, 3.5, 2.2, 0.2, 0, Math.PI * 2);
+				ctx.ellipse(offX + 4, 5, 3, 2, -0.3, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.restore();
 		}
+	},
+	drawCoastingZernov(ctx, stone, time) {
+		const spin = time * 7.5;
+		const r = stone.radius || 48;
+		const colossusScale = (stone.radius || 48) / 48;
+		ctx.save();
+		ctx.translate(stone.x, stone.y);
+		ctx.scale(colossusScale, colossusScale);
+
+		// Ground shadow
+		ctx.fillStyle = "rgba(29,23,18,.35)";
+		ctx.beginPath();
+		ctx.ellipse(0, 24, r * 1.25, 20, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Rolling upright stone
+		ctx.save();
+		ctx.translate(0, 2);
+		ctx.rotate(spin);
+		this.setupPath(ctx, "#B0AEA5", COLORS.ink, 4);
+		ctx.beginPath();
+		ctx.arc(0, 0, 47, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Chiseled radial grooves
+		ctx.strokeStyle = "#6B6E6A";
+		ctx.lineWidth = 2.4;
+		for (let i = 0; i < 14; i++) {
+			const a = (i * Math.PI) / 7;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * 9, Math.sin(a) * 9);
+			ctx.lineTo(Math.cos(a) * 40, Math.sin(a) * 40);
+			ctx.stroke();
+		}
+		// Center hub
+		this.setupPath(ctx, "#8C5E35", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, 0, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Speed lines and sparks behind runaway boulder
+		ctx.strokeStyle = "#FDE047";
+		ctx.lineWidth = 2;
+		for (let k = 0; k < 4; k++) {
+			const a = Math.PI + (k - 1.5) * 0.4;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * (r * 0.9), Math.sin(a) * (r * 0.9));
+			ctx.lineTo(Math.cos(a) * (r * 1.45), Math.sin(a) * (r * 1.45));
+			ctx.stroke();
+		}
+		ctx.restore();
+	},
+	drawKrajanekRide(ctx, x, y, time, dx, dy, scale = 1, tilt = 0, isDrifting = false, colossusScale = 1) {
+		const phase = time * (isDrifting ? 7.5 : 5.5);
+		const spin = time * 3.7;
+		const finalScale = scale * (colossusScale || 1);
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(finalScale, finalScale);
+
+		// Jízda po hraně: tilt/lean banking
+		if (tilt !== 0) {
+			ctx.rotate(tilt * 0.22);
+		}
+
+		// Ground shadow
+		ctx.fillStyle = "rgba(29,23,18,.26)";
+		ctx.beginPath();
+		ctx.ellipse(0, 24, 61, 19, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Spinning millstone wheel
+		ctx.save();
+		ctx.translate(0, 2 + Math.sin(phase) * 2);
+		ctx.rotate(spin);
+		this.setupPath(ctx, "#A9A9A1", COLORS.ink, 4);
+		ctx.beginPath();
+		ctx.arc(0, 0, 47, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#777A77";
+		ctx.lineWidth = 2;
+		for (let i = 0; i < 12; i++) {
+			const a = (i * Math.PI) / 6;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(a) * 10, Math.sin(a) * 10);
+			ctx.lineTo(Math.cos(a) * (39 - (i % 3) * 4), Math.sin(a) * (39 - (i % 3) * 4));
+			ctx.stroke();
+		}
+		ctx.fillStyle = "#D4D1C5";
+		for (let i = 0; i < 15; i++) {
+			const a = i * 2.399;
+			const rr = 12 + (i % 5) * 6;
+			ctx.beginPath();
+			ctx.ellipse(Math.cos(a) * rr, Math.sin(a) * rr, 2.3, 1.4, a, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+
+		// Wooden axle eye
+		this.setupPath(ctx, "#B77C3C", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 15, 11, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#5C3822";
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 5.5, 5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Krajánek balancing on top of the wheel (pedaling furiously with legs)
+		this.drawKrajanek(ctx, 0, -39, time * (isDrifting ? 1.6 : 1.3), dx, dy, false, 0.78);
+
+		// Krajánek's iron oškrt hammer swinging in hand
+		ctx.save();
+		ctx.translate(26, -77);
+		ctx.rotate(-0.95 + Math.sin(phase) * 0.78);
+		this.setupPath(ctx, "#A36A37", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-1, 7);
+		ctx.lineTo(3, -28);
+		ctx.stroke();
+		this.setupPath(ctx, "#777A78", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.roundRect(-8, -36, 22, 12, 3);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Spark burst at rim
+		if (Math.abs(Math.sin(phase * 0.5)) > 0.28) {
+			ctx.strokeStyle = "#FFD22F";
+			ctx.lineWidth = 2.2;
+			ctx.lineCap = "round";
+			for (let i = 0; i < 7; i++) {
+				const a = (i * Math.PI * 2) / 7 + time * 0.9;
+				const inner = 43 + (i % 3) * 3;
+				const outer = inner + 8 + (i % 2) * 5;
+				ctx.beginPath();
+				ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner);
+				ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer);
+				ctx.stroke();
+			}
+			ctx.fillStyle = "#E5E7EB";
+			for (let i = 0; i < 5; i++) {
+				const a = i * 2.4 + time;
+				ctx.beginPath();
+				ctx.moveTo(Math.cos(a) * 54, Math.sin(a) * 54);
+				ctx.lineTo(Math.cos(a + 0.2) * 61, Math.sin(a + 0.2) * 61);
+				ctx.lineTo(Math.cos(a + 0.4) * 55, Math.sin(a + 0.4) * 55);
+				ctx.closePath();
+				ctx.fill();
+			}
+		}
+
+		// Štěrkový smyk: extra friction quartz chips and mud spray on outer edge
+		if (isDrifting) {
+			ctx.save();
+			const spraySide = (tilt || 1) > 0 ? -1 : 1;
+			ctx.fillStyle = "#E2E8F0";
+			for (let k = 0; k < 6; k++) {
+				const a = Math.PI * 0.5 + spraySide * (0.6 + k * 0.15);
+				const dist = 48 + k * 6;
+				ctx.beginPath();
+				ctx.arc(Math.cos(a) * dist, Math.sin(a) * dist + 12, 2.2, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.fillStyle = "#5C3822";
+			for (let k = 0; k < 5; k++) {
+				const a = Math.PI * 0.5 + spraySide * (0.4 + k * 0.2);
+				const dist = 46 + k * 7;
+				ctx.beginPath();
+				ctx.arc(Math.cos(a) * dist, Math.sin(a) * dist + 16, 3, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.restore();
+		}
+
 		ctx.restore();
 	},
 	drawWanderer(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
@@ -1266,8 +1464,8 @@ var Lada = {
 		ctx.save();
 		const glowR = Math.max(30, R * Math.min(1, t / .5));
 		const gg = ctx.createRadialGradient(x, y, 20, x, y, glowR);
-		gg.addColorStop(0, `rgba(255, 250, 215, ${.55 * fade})`);
-		gg.addColorStop(.7, `rgba(255, 236, 160, ${.22 * fade})`);
+		gg.addColorStop(0, `rgba(255, 250, 215, ${.28 * fade})`);
+		gg.addColorStop(.7, `rgba(255, 236, 160, ${.12 * fade})`);
 		gg.addColorStop(1, "rgba(255, 236, 160, 0)");
 		ctx.fillStyle = gg;
 		ctx.beginPath();
@@ -1283,13 +1481,13 @@ var Lada = {
 		if (pw > 1) {
 			const pg = ctx.createLinearGradient(x - pw, 0, x + pw, 0);
 			pg.addColorStop(0, "rgba(255, 240, 170, 0)");
-			pg.addColorStop(.25, "rgba(255, 244, 190, 0.55)");
-			pg.addColorStop(.5, "rgba(255, 255, 240, 0.95)");
-			pg.addColorStop(.75, "rgba(255, 244, 190, 0.55)");
+			pg.addColorStop(.25, "rgba(255, 244, 190, 0.28)");
+			pg.addColorStop(.5, "rgba(255, 255, 240, 0.48)");
+			pg.addColorStop(.75, "rgba(255, 244, 190, 0.28)");
 			pg.addColorStop(1, "rgba(255, 240, 170, 0)");
 			ctx.fillStyle = pg;
 			ctx.fillRect(x - pw, topY, pw * 2, botY - topY);
-			ctx.fillStyle = `rgba(255, 255, 255, ${.9 * shrink})`;
+			ctx.fillStyle = `rgba(255, 255, 255, ${.42 * shrink})`;
 			ctx.fillRect(x - pw * .22, topY, pw * .44, botY - topY);
 		}
 		const pulses = [
@@ -2907,15 +3105,15 @@ var Lada = {
 		ctx.save();
 		const curR = R * (1 + Math.sin(t * 8) * .04);
 		const bgGlow = ctx.createRadialGradient(sanctuary.x, sanctuary.y, 20, sanctuary.x, sanctuary.y, curR);
-		bgGlow.addColorStop(0, `rgba(167, 243, 208, ${.45 * fade})`);
-		bgGlow.addColorStop(.7, `rgba(74, 222, 128, ${.2 * fade})`);
+		bgGlow.addColorStop(0, `rgba(167, 243, 208, ${.24 * fade})`);
+		bgGlow.addColorStop(.7, `rgba(74, 222, 128, ${.11 * fade})`);
 		bgGlow.addColorStop(1, "rgba(74, 222, 128, 0)");
 		ctx.fillStyle = bgGlow;
 		ctx.beginPath();
 		ctx.arc(sanctuary.x, sanctuary.y, curR, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.strokeStyle = `rgba(34, 197, 94, ${.7 * fade})`;
-		ctx.lineWidth = 4;
+		ctx.strokeStyle = `rgba(34, 197, 94, ${.65 * fade})`;
+		ctx.lineWidth = 3.5;
 		ctx.beginPath();
 		ctx.arc(sanctuary.x, sanctuary.y, curR * .95, 0, Math.PI * 2);
 		ctx.stroke();
@@ -2943,10 +3141,10 @@ var Lada = {
 			const spx = sanctuary.x + Math.cos(spAng) * spDist;
 			const spy = sanctuary.y + Math.sin(spAng) * spDist * .75;
 			const spr = 14 + spDist / R * 26;
-			const spAl = Math.max(0, 1 - spDist / R) * .55 * fade;
+			const spAl = Math.max(0, 1 - spDist / R) * .28 * fade;
 			ctx.save();
 			ctx.globalAlpha = spAl;
-			ctx.fillStyle = i % 2 === 0 ? "rgba(74, 222, 128, 0.75)" : "rgba(253, 224, 71, 0.7)";
+			ctx.fillStyle = i % 2 === 0 ? "rgba(74, 222, 128, 0.65)" : "rgba(253, 224, 71, 0.6)";
 			ctx.beginPath();
 			ctx.arc(spx, spy, spr, 0, Math.PI * 2);
 			ctx.fill();
@@ -3513,12 +3711,13 @@ var Lada = {
 	},
 	drawMorana(ctx, x, y, time, vx, panicked, attackInfo) {
 		const dir = vx < 0 ? -1 : 1;
+		const scale = 1.9;
 		const bob = Math.sin(time * (panicked ? 16 : 7)) * (panicked ? 5 : 2);
 		const sway = Math.sin(time * 3.2) * (panicked ? 12 : 7);
 		const gust = Math.sin(time * 8) * 7;
 		ctx.save();
 		ctx.translate(x, y - bob);
-		ctx.scale(dir, 1);
+		ctx.scale(dir * scale, scale);
 
 		// Straw legs and tied ankles.
 		this.drawLimb(ctx, -8, 15, -12, 34, '#8B6B36', 7);
@@ -3699,8 +3898,8 @@ var Lada = {
 
 		// Pale blue wind spirals and sparkling snow around the effigy.
 		ctx.save();
-		ctx.strokeStyle = 'rgba(191, 219, 254, 0.8)';
-		ctx.lineWidth = 2.4;
+		ctx.strokeStyle = 'rgba(191, 219, 254, 0.52)';
+		ctx.lineWidth = 1.8;
 		for (let i = 0; i < 3; i++) {
 			const radius = 28 + i * 7;
 			const start = time * (panicked ? 2.8 : 1.6) + i * 2.1;
@@ -6135,8 +6334,8 @@ var Lada = {
 		ctx.restore();
 	},
 	drawFrostGiant(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-		ctx.save(); ctx.translate(x, y); ctx.scale(4, 4); ctx.translate(-x, -y);
-		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked); ctx.restore();
+		ctx.save(); ctx.translate(x, y); ctx.scale(2.4, 2.4); ctx.translate(-x, -y);
+		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked, true); ctx.restore();
 	},
 	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
 		// Custom Lada-style sprite matched to the supplied melting snowman illustration.
@@ -6443,7 +6642,47 @@ var Lada = {
 		}
 		ctx.restore();
 	},
-	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
+	drawFrostlingAura(ctx: any, x: number, y: number, time: number, overlapCount = 1) {
+		ctx.save();
+		ctx.translate(x, y);
+
+		const safeOverlap = Math.max(1, overlapCount);
+		const fillAtten = 1 / Math.max(1, safeOverlap * 0.9);
+		const ringAtten = 1 / Math.max(1, Math.sqrt(safeOverlap));
+
+		const frostAuraPulse = Math.sin(time * 3.5) * 3.5;
+		// Soft translucent double-concentric aura with overlap attenuation so packs at night never white out
+		ctx.fillStyle = `rgba(147, 229, 255, ${(0.045 * fillAtten).toFixed(3)})`;
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse + 4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = `rgba(125, 211, 252, ${(0.028 * fillAtten).toFixed(3)})`;
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.strokeStyle = `rgba(186, 230, 253, ${(0.36 * ringAtten).toFixed(3)})`;
+		ctx.lineWidth = 1.3;
+		ctx.setLineDash([6, 8]);
+		ctx.beginPath();
+		ctx.arc(0, 0, FROSTLING_AURA_RADIUS - 3 + frostAuraPulse, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.setLineDash([]);
+
+		const numCrystals = 6;
+		ctx.fillStyle = `rgba(224, 242, 254, ${(0.5 * ringAtten).toFixed(3)})`;
+		for (let c = 0; c < numCrystals; c++) {
+			const cAngle = (c / numCrystals) * Math.PI * 2 + time * 0.6;
+			const cDist = FROSTLING_AURA_RADIUS * 0.78 + Math.sin(time * 3 + c) * 4;
+			const cx = Math.cos(cAngle) * cDist;
+			const cy = Math.sin(cAngle) * cDist;
+			ctx.beginPath();
+			ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		ctx.restore();
+	},
+	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean, skipAura = false) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 16 : 8;
 		const bob = Math.sin(time * walkSpeed) * (panicked ? 3.5 : 2.0);
@@ -6455,40 +6694,9 @@ var Lada = {
 		// -----------------------------------------------------------------
 		// 1. FROST AURA (Jinovatková aura dle herního dosahu)
 		// -----------------------------------------------------------------
-		ctx.save();
-		ctx.translate(x, y);
-
-		const frostAuraPulse = Math.sin(time * 3.5) * 3.5;
-		// Soft double-concentric aura instead of GPU-stalling shadowBlur (ADR 0029)
-		ctx.fillStyle = "rgba(147, 229, 255, 0.22)";
-		ctx.beginPath();
-		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse + 4, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "rgba(125, 211, 252, 0.14)";
-		ctx.beginPath();
-		ctx.arc(0, 0, FROSTLING_AURA_RADIUS + frostAuraPulse, 0, Math.PI * 2);
-		ctx.fill();
-
-		ctx.strokeStyle = "rgba(186, 230, 253, 0.65)";
-		ctx.lineWidth = 1.6;
-		ctx.setLineDash([6, 8]);
-		ctx.beginPath();
-		ctx.arc(0, 0, FROSTLING_AURA_RADIUS - 3 + frostAuraPulse, 0, Math.PI * 2);
-		ctx.stroke();
-		ctx.setLineDash([]);
-
-		const numCrystals = 6;
-		for (let c = 0; c < numCrystals; c++) {
-			const cAngle = (c / numCrystals) * Math.PI * 2 + time * 0.6;
-			const cDist = FROSTLING_AURA_RADIUS * 0.78 + Math.sin(time * 3 + c) * 4;
-			const cx = Math.cos(cAngle) * cDist;
-			const cy = Math.sin(cAngle) * cDist;
-			ctx.fillStyle = "rgba(224, 242, 254, 0.8)";
-			ctx.beginPath();
-			ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
-			ctx.fill();
+		if (!skipAura) {
+			this.drawFrostlingAura(ctx, x, y, time, 1);
 		}
-		ctx.restore();
 
 		// -----------------------------------------------------------------
 		// 2. THE ZIMNÍ SKŘÍTEK CHARACTER BODY (Předloha dle ilustrace)
@@ -12064,11 +12272,11 @@ var Lada = {
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.rotate(dirAngle);
-		ctx.globalAlpha = Math.min(0.65, life * 0.7);
+		ctx.globalAlpha = Math.min(0.42, life * 0.48);
 
 		const vaporGrad = ctx.createRadialGradient(40, 0, 10, 80, 0, 95);
-		vaporGrad.addColorStop(0, "rgba(59, 130, 246, 0.45)");
-		vaporGrad.addColorStop(0.6, "rgba(147, 51, 234, 0.3)");
+		vaporGrad.addColorStop(0, "rgba(59, 130, 246, 0.35)");
+		vaporGrad.addColorStop(0.6, "rgba(147, 51, 234, 0.22)");
 		vaporGrad.addColorStop(1, "rgba(59, 130, 246, 0)");
 
 		ctx.fillStyle = vaporGrad;
@@ -12079,8 +12287,8 @@ var Lada = {
 		ctx.fill();
 
 		// Flickering blue flames in the spirit vapor
-		ctx.strokeStyle = "rgba(96, 165, 250, 0.75)";
-		ctx.lineWidth = 2.4;
+		ctx.strokeStyle = "rgba(96, 165, 250, 0.65)";
+		ctx.lineWidth = 2.0;
 		for (let i = -3; i <= 3; i++) {
 			const fa = (i / 4) * (Math.PI / 2.5);
 			const dist = 50 + Math.abs(i) * 15;
@@ -13136,17 +13344,17 @@ var Lada = {
 		ctx.save();
 		const flicker = Math.sin(time * 12) * 3.5 + Math.sin(time * 23) * 2;
 		const r = Math.max(30, reach + flicker);
-		const grad = ctx.createRadialGradient(x, y, 10, x, y, r);
-		grad.addColorStop(0, "rgba(254, 240, 138, 0.30)");
-		grad.addColorStop(.45, "rgba(251, 191, 36, 0.16)");
-		grad.addColorStop(.82, "rgba(217, 119, 6, 0.06)");
+		const grad = ctx.createRadialGradient(x, y, 16, x, y, r);
+		grad.addColorStop(0, "rgba(254, 240, 138, 0.16)");
+		grad.addColorStop(.45, "rgba(251, 191, 36, 0.09)");
+		grad.addColorStop(.82, "rgba(217, 119, 6, 0.04)");
 		grad.addColorStop(1, "rgba(217, 119, 6, 0)");
 		ctx.fillStyle = grad;
 		ctx.beginPath();
 		ctx.arc(x, y, r, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.save();
-		ctx.strokeStyle = "rgba(245, 158, 11, 0.38)";
+		ctx.strokeStyle = "rgba(245, 158, 11, 0.34)";
 		ctx.lineWidth = 1.6;
 		ctx.setLineDash([5, 5]);
 		ctx.beginPath();
@@ -13155,22 +13363,27 @@ var Lada = {
 		ctx.restore();
 		if (pulseTimer > 0) {
 			const progress = 1 - pulseTimer / .4;
-			const waveR = reach * (.3 + progress * .7);
-			const alpha = Math.max(0, (1 - progress) * .75);
+			const waveR = reach * (.32 + progress * .68);
+			const alpha = Math.max(0, (1 - progress) * .6);
 			ctx.save();
 			ctx.strokeStyle = `rgba(254, 240, 138, ${alpha})`;
-			ctx.lineWidth = 4 * (1 - progress * .5);
+			ctx.lineWidth = 3.2 * (1 - progress * .5);
 			ctx.beginPath();
 			ctx.arc(x, y, waveR, 0, Math.PI * 2);
 			ctx.stroke();
-			ctx.strokeStyle = `rgba(253, 224, 71, ${Math.max(0, (1 - progress) * .5)})`;
-			ctx.lineWidth = 2.5;
-			const bLen = reach * .8;
+			ctx.strokeStyle = `rgba(253, 224, 71, ${Math.max(0, (1 - progress) * .38)})`;
+			ctx.lineWidth = 2.0;
+			const bInner = reach * .38;
+			const bOuter = reach * .82;
 			ctx.beginPath();
-			ctx.moveTo(x - bLen, y);
-			ctx.lineTo(x + bLen, y);
-			ctx.moveTo(x, y - bLen);
-			ctx.lineTo(x, y + bLen);
+			ctx.moveTo(x - bOuter, y);
+			ctx.lineTo(x - bInner, y);
+			ctx.moveTo(x + bInner, y);
+			ctx.lineTo(x + bOuter, y);
+			ctx.moveTo(x, y - bOuter);
+			ctx.lineTo(x, y - bInner);
+			ctx.moveTo(x, y + bInner);
+			ctx.lineTo(x, y + bOuter);
 			ctx.stroke();
 			ctx.restore();
 		}
@@ -16139,7 +16352,9 @@ function drawEnemyRenderer(
   }
 
   if (!drawnViaAtlas) {
-    if (extraArgs && extraArgs.length > 0) {
+    if (method === 'drawFrostling' && enemy?._auraDrawnInGroundPass) {
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, true);
+    } else if (extraArgs && extraArgs.length > 0) {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
     } else {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo);
@@ -16704,8 +16919,8 @@ export function drawPrefixAura(
 
     // Ground wind swirl ellipse
     const grad = ctx.createRadialGradient(x, y + radius * 0.4, radius * 0.2, x, y + radius * 0.4, effR);
-    grad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
-    grad.addColorStop(0.7, 'rgba(186, 230, 253, 0.20)');
+    grad.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+    grad.addColorStop(0.7, 'rgba(186, 230, 253, 0.12)');
     grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -16713,8 +16928,8 @@ export function drawPrefixAura(
     ctx.fill();
 
     // 3 spinning wind gusts / swirls around the mob
-    ctx.strokeStyle = 'rgba(125, 211, 252, 0.75)';
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.65)';
+    ctx.lineWidth = 2.0;
     ctx.lineCap = 'round';
     for (let i = 0; i < 3; i++) {
       const startAng = time * 4.2 + (i * Math.PI * 2) / 3;
@@ -16724,7 +16939,7 @@ export function drawPrefixAura(
     }
 
     // Outer breezy dash ring
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.50)';
     ctx.lineWidth = 1.6;
     ctx.setLineDash([6, 8]);
     ctx.beginPath();
@@ -16738,8 +16953,8 @@ export function drawPrefixAura(
     const effR = auraR + pulse;
 
     const grad = ctx.createRadialGradient(x, y, radius * 0.2, x, y, effR);
-    grad.addColorStop(0, 'rgba(253, 224, 71, 0.40)');
-    grad.addColorStop(0.7, 'rgba(96, 165, 250, 0.22)');
+    grad.addColorStop(0, 'rgba(253, 224, 71, 0.24)');
+    grad.addColorStop(0.7, 'rgba(96, 165, 250, 0.14)');
     grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -16771,7 +16986,7 @@ export function drawPrefixAura(
     }
 
     // Concentric electric ring
-    ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)';
+    ctx.strokeStyle = 'rgba(96, 165, 250, 0.55)';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.arc(x, y, effR * 0.9, 0, Math.PI * 2);
@@ -16782,8 +16997,8 @@ export function drawPrefixAura(
     const effR = auraR + Math.sin(time * 2.5) * 2;
 
     const grad = ctx.createRadialGradient(x, y + radius * 0.5, radius * 0.2, x, y + radius * 0.5, effR);
-    grad.addColorStop(0, 'rgba(120, 53, 15, 0.40)');
-    grad.addColorStop(0.7, 'rgba(168, 162, 158, 0.25)');
+    grad.addColorStop(0, 'rgba(120, 53, 15, 0.25)');
+    grad.addColorStop(0.7, 'rgba(168, 162, 158, 0.15)');
     grad.addColorStop(1, 'rgba(120, 53, 15, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -16792,7 +17007,7 @@ export function drawPrefixAura(
 
     // Stone crust fissure lines
     ctx.strokeStyle = '#44403C';
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     for (let i = 0; i < 5; i++) {
       const ang = (i * Math.PI * 2) / 5 + 0.2;
@@ -16826,8 +17041,8 @@ export function drawPrefixAura(
     const effR = auraR + pulse;
 
     const grad = ctx.createRadialGradient(x, y + radius * 0.3, radius * 0.2, x, y + radius * 0.3, effR);
-    grad.addColorStop(0, 'rgba(239, 68, 68, 0.45)');
-    grad.addColorStop(0.6, 'rgba(249, 115, 22, 0.28)');
+    grad.addColorStop(0, 'rgba(239, 68, 68, 0.26)');
+    grad.addColorStop(0.6, 'rgba(249, 115, 22, 0.16)');
     grad.addColorStop(1, 'rgba(239, 68, 68, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -16850,7 +17065,7 @@ export function drawPrefixAura(
     }
 
     // Outer flame ember ring
-    ctx.strokeStyle = 'rgba(249, 115, 22, 0.65)';
+    ctx.strokeStyle = 'rgba(249, 115, 22, 0.55)';
     ctx.lineWidth = 2.0;
     ctx.setLineDash([4, 6]);
     ctx.beginPath();
@@ -16863,8 +17078,8 @@ export function drawPrefixAura(
     const effR = auraR + pulse;
 
     const grad = ctx.createRadialGradient(x + Math.sin(time * 3.2) * 4, y + radius * 0.45, radius * 0.1, x, y + radius * 0.45, effR);
-    grad.addColorStop(0, 'rgba(120, 113, 108, 0.40)');
-    grad.addColorStop(0.65, 'rgba(168, 162, 158, 0.18)');
+    grad.addColorStop(0, 'rgba(120, 113, 108, 0.24)');
+    grad.addColorStop(0.65, 'rgba(168, 162, 158, 0.12)');
     grad.addColorStop(1, 'rgba(120, 113, 108, 0)');
     ctx.fillStyle = grad;
     ctx.beginPath();

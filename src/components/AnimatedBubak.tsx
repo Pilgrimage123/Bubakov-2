@@ -46,7 +46,6 @@ export const BUBAK_FRAME_NAMES = [
 ];
 
 export const BUBAK_POSES: BubakFramePose[] = [
-  // Snímek 1: Základní postoj z knihy
   {
     headX: 0,
     headY: 0,
@@ -69,7 +68,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 1,
     skirtRot: 0,
   },
-  // Snímek 2: Příprava k bafnutí (přikrčení, pohled doleva, nápřah)
   {
     headX: -2.5,
     headY: 2,
@@ -92,7 +90,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 0.98,
     skirtRot: 2.5,
   },
-  // Snímek 3: Velké BAF! (obří tlama, vyvalené oči, rozpažené rukávy)
   {
     headX: 0,
     headY: 3.5,
@@ -115,7 +112,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 1.02,
     skirtRot: 0,
   },
-  // Snímek 4: Záchvěv děsu (chvění paží a zubů, pohled doprava)
   {
     headX: 2.5,
     headY: -1,
@@ -138,7 +134,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 1,
     skirtRot: -2.5,
   },
-  // Snímek 5: Cvaknutí zuby (zaklapnutí čelistí se zuby do sebe jako zip)
   {
     headX: 1,
     headY: -3,
@@ -161,7 +156,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 1,
     skirtRot: 0,
   },
-  // Snímek 6: Šibalský úšklebek (pokřivený úsměv, houpavé rukávy)
   {
     headX: -1,
     headY: -1,
@@ -184,7 +178,6 @@ export const BUBAK_POSES: BubakFramePose[] = [
     torsoScaleY: 1,
     skirtRot: 1.5,
   },
-  // Snímek 7: Plynulý návrat (nadechnutí a návrat do výchozí polohy)
   {
     headX: 0,
     headY: 0,
@@ -211,11 +204,7 @@ export const BUBAK_POSES: BubakFramePose[] = [
 
 /**
  * Animated Bubák (Strašák) from the classic Josef Lada book cover "Bubáci a hastrmani".
- *
- * Meticulously modeled on the original Josef Lada cover art with extra detail:
- * - Extremely smooth, slow theatrical animation (540ms cadence, 440ms easing)
- * - Persistent stable torso with green seam and stitches (zero popping lines)
- * - Coordinated mobile movements of hands, head, eyes, and mouth across 7 frames
+ * Smooth 60 FPS continuous procedural kinematics with zero jerky frame jumps.
  */
 export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
   className = '',
@@ -227,29 +216,46 @@ export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
   showBadge = false,
   onFrameChange,
 }) => {
-  const [currentFrame, setCurrentFrame] = useState<number>(0);
-  const [isScaring, setIsScaring] = useState<boolean>(false);
+  const [animTime, setAnimTime] = useState<number>(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const scareTimeoutRef = useRef<number | null>(null);
+  const animTimeRef = useRef<number>(0);
+  const scareStartRef = useRef<number>(-100);
+  const hoverMixRef = useRef<number>(0);
+  const lastReportedFrameRef = useRef<number>(0);
 
-  // Animation cycle: slow & stately (~540ms default)
   useEffect(() => {
-    if (!autoPlay || isScaring) return;
+    if (!autoPlay) return;
 
-    const currentDelay = isHovered ? Math.max(380, frameRateMs * 0.8) : frameRateMs;
+    let rafId: number;
+    let lastNow = performance.now();
+    const speedScale = 540 / Math.max(200, frameRateMs);
 
-    const interval = window.setInterval(() => {
-      setCurrentFrame((prev) => {
-        const next = (prev + 1) % 7;
-        if (onFrameChange) onFrameChange(next);
-        return next;
-      });
-    }, currentDelay);
+    const tick = (now: number) => {
+      const dt = Math.min((now - lastNow) / 1000, 0.05);
+      lastNow = now;
 
-    return () => window.clearInterval(interval);
-  }, [autoPlay, frameRateMs, isHovered, isScaring, onFrameChange]);
+      animTimeRef.current += dt * speedScale;
+      const t = animTimeRef.current;
 
-  // Click interaction: jumps straight to the big scare (Frame 2) and plays sound
+      const targetHover = isHovered ? 1 : 0;
+      hoverMixRef.current += (targetHover - hoverMixRef.current) * (1 - Math.exp(-dt * 7));
+
+      if (onFrameChange) {
+        const approxFrame = Math.floor((t * 1.5) % 7);
+        if (approxFrame !== lastReportedFrameRef.current) {
+          lastReportedFrameRef.current = approxFrame;
+          onFrameChange(approxFrame);
+        }
+      }
+
+      setAnimTime(t);
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [autoPlay, frameRateMs, isHovered, onFrameChange]);
+
   const handleClick = (e: React.MouseEvent) => {
     if (!interactive) return;
     e.stopPropagation();
@@ -258,26 +264,70 @@ export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
       sound.caneWhip();
     } catch {}
 
-    setIsScaring(true);
-    setCurrentFrame(2); // The big "BAF!" roar
-
-    if (scareTimeoutRef.current) {
-      window.clearTimeout(scareTimeoutRef.current);
-    }
-
-    scareTimeoutRef.current = window.setTimeout(() => {
-      setCurrentFrame(3);
-      scareTimeoutRef.current = window.setTimeout(() => {
-        setCurrentFrame(4);
-        scareTimeoutRef.current = window.setTimeout(() => {
-          setIsScaring(false);
-          setCurrentFrame(0);
-        }, 520);
-      }, 480);
-    }, 620);
+    scareStartRef.current = animTimeRef.current;
   };
 
-  const pose = BUBAK_POSES[currentFrame] || BUBAK_POSES[0];
+  const t = animTime;
+  const bHover = hoverMixRef.current;
+  const scareElapsed = t - scareStartRef.current;
+  const isScaringActive = scareElapsed >= 0 && scareElapsed < 1.65;
+  const scareEnv = isScaringActive
+    ? Math.sin(Math.min(1, scareElapsed / 0.28) * (Math.PI / 2)) *
+      Math.pow(Math.max(0, 1 - Math.max(0, scareElapsed - 0.28) / 1.37), 1.6)
+    : 0;
+  const scareChompWave = isScaringActive && scareElapsed > 0.55
+    ? Math.sin((scareElapsed - 0.55) * 14) * Math.exp(-(scareElapsed - 0.55) * 2.5)
+    : 0;
+
+  const bPhase = t * (1.5 + bHover * 0.35);
+  const bSlow = t * 0.85;
+
+  const rootScale = 1 + bHover * 0.025 + scareEnv * 0.065;
+  const rootLiftY = -bHover * 1 - scareEnv * 3;
+
+  const torsoX = Math.sin(bPhase) * 1.4 - scareEnv * 0.5;
+  const torsoY = Math.sin(bPhase * 2) * 0.9 - scareEnv * 1.8;
+  const torsoRot = Math.sin(bPhase) * 2.2 + Math.sin(t * 18) * scareEnv * 2.5;
+  const torsoScaleX = 1 + Math.sin(bPhase * 2) * 0.018 + scareEnv * 0.045;
+  const torsoScaleY = 1 - Math.sin(bPhase * 2) * 0.014 + scareEnv * 0.025;
+  const skirtRot = Math.sin(bPhase - 0.55) * 3.2 + Math.sin(t * 14) * scareEnv * 3.0;
+
+  const leftArmAngle =
+    Math.sin(bPhase - 0.2) * 11 +
+    Math.cos(bSlow * 1.7) * 4 -
+    bHover * 5 -
+    scareEnv * 22 +
+    Math.sin(t * 20) * scareEnv * 6;
+  const rightArmAngle =
+    Math.sin(bPhase + 0.3) * 11 -
+    Math.cos(bSlow * 1.7) * 4 +
+    bHover * 5 +
+    scareEnv * 22 -
+    Math.sin(t * 20) * scareEnv * 6;
+
+  const leftCuffFlutter = Math.sin(t * 4.2) * 4 + Math.sin(t * 24) * scareEnv * 8;
+  const rightCuffFlutter = Math.cos(t * 4.5) * 4 - Math.sin(t * 24) * scareEnv * 8;
+
+  const headX = Math.sin(bPhase + 0.2) * 2.0;
+  const headY = Math.cos(bPhase * 2) * 1.2 - scareEnv * 2.2;
+  const headRot = Math.sin(bPhase - 0.15) * 5.2 + Math.sin(t * 22) * scareEnv * 4.5;
+  const headScale = 1 + Math.max(0, Math.sin(bPhase)) * 0.03 + scareEnv * 0.08;
+
+  const pupilDx = Math.sin(bSlow * 1.4) * 2.3 * (1 - scareEnv * 0.7);
+  const pupilDy = Math.cos(bSlow * 1.1) * 1.1 * (1 - scareEnv * 0.7);
+  const eyeSquintL = 0.94 + Math.sin(bPhase + 0.8) * 0.08 + scareEnv * 0.18;
+  const eyeScaleR = 0.97 + Math.cos(bPhase) * 0.06 + scareEnv * 0.16;
+  const browDy = Math.cos(bPhase) * 1.1 - scareEnv * 2.0;
+
+  const idleMouthWave = 0.72 + Math.sin(bPhase) * 0.32 + Math.cos(bPhase * 2) * 0.15;
+  const mouthOpen = Math.max(
+    0.16,
+    Math.min(1.48, idleMouthWave + scareEnv * 0.65 + scareChompWave * 0.45)
+  );
+  const mouthScaleX = 0.96 + (mouthOpen - 0.7) * 0.22 + scareEnv * 0.12;
+  const mouthRot = Math.sin(bPhase * 0.7) * 2.2;
+
+  const currentFrameIdx = Math.floor((t * 1.5) % 7);
 
   return (
     <div
@@ -295,19 +345,6 @@ export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
       <svg
         viewBox="0 0 170 195"
         className="w-full h-full overflow-visible"
-        style={{
-          transform: isScaring
-            ? 'scale(1.08) translateY(-4px)'
-            : isHovered
-            ? 'scale(1.03) translateY(-1px)'
-            : 'scale(1)',
-          transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          filter: isScaring
-            ? 'drop-shadow(0 6px 12px rgba(197, 48, 38, 0.4))'
-            : isHovered
-            ? 'drop-shadow(0 4px 8px rgba(28, 22, 16, 0.3))'
-            : 'drop-shadow(0 2px 4px rgba(28, 22, 16, 0.2))',
-        }}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
@@ -344,260 +381,187 @@ export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
           </radialGradient>
         </defs>
 
-        {/* 1. Grounded Wooden Pole */}
-        <g id="bubak-anim-stake">
-          <rect
-            x="79.5"
-            y="136"
-            width="9"
-            height="56"
-            fill="#783E24"
-            stroke="#1C1610"
-            strokeWidth="2.8"
-            rx="1.5"
-          />
-          <line x1="82.5" y1="140" x2="82.5" y2="190" stroke="#9A5632" strokeWidth="1.6" />
-          <line x1="85.5" y1="142" x2="85.5" y2="186" stroke="#522712" strokeWidth="1.2" />
-          <ellipse cx="83.5" cy="164" rx="2" ry="3.2" fill="#3D1A0B" stroke="#1C1610" strokeWidth="1" />
-        </g>
-
-        {/* 2. Lower Shredded Frond Skirt */}
-        <g
-          id="bubak-anim-skirt"
-          style={{
-            transformOrigin: '84px 126px',
-            transform: `rotate(${pose.skirtRot}deg)`,
-            transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          }}
-        >
-          <path
-            d="M 54,124 Q 40,140 32,154 Q 44,148 56,134 Q 68,158 84,164 Q 100,158 112,134 Q 124,148 136,154 Q 128,140 114,124 Z"
-            fill="url(#bubak-anim-frond-texture)"
-            stroke="#1C1610"
-            strokeWidth="3.2"
-            strokeLinejoin="round"
-          />
-          <path d="M 84,130 L 84,160 M 70,128 L 52,148 M 98,128 L 116,148" stroke="#3D4B2A" strokeWidth="2" strokeLinecap="round" fill="none" />
-        </g>
-
-        {/* 3. Left Arm */}
-        <g
-          id="bubak-anim-left-arm"
-          style={{
-            transformOrigin: '68px 74px',
-            transform: `rotate(${pose.leftArmAngle}deg)`,
-            transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          }}
-        >
-          <polygon
-            points="68,76 34,58 14,38 28,32 54,48 74,68"
-            fill="url(#bubak-anim-burlap-dots)"
-            stroke="#1C1610"
-            strokeWidth="3.2"
-            strokeLinejoin="round"
-          />
-          <path d="M 46,58 C 38,54 30,48 24,42" stroke="#1C1610" strokeWidth="2" fill="none" />
-          <path d="M 56,66 C 48,60 40,54 34,48" stroke="#8A5C2C" strokeWidth="1.5" fill="none" />
-          <polygon
-            points="28,32 18,22 14,34 6,28 10,42 2,44 14,52 22,46"
-            fill="#946332"
-            stroke="#1C1610"
-            strokeWidth="2.8"
-            strokeLinejoin="round"
-          />
-          <line x1="14" y1="36" x2="22" y2="40" stroke="#FAF5E8" strokeWidth="1.4" />
-          <line x1="8" y1="32" x2="16" y2="34" stroke="#D9A036" strokeWidth="1.4" />
-          <line x1="10" y1="46" x2="18" y2="48" stroke="#D9A036" strokeWidth="1.4" />
-        </g>
-
-        {/* 4. Right Arm */}
-        <g
-          id="bubak-anim-right-arm"
-          style={{
-            transformOrigin: '100px 74px',
-            transform: `rotate(${pose.rightArmAngle}deg)`,
-            transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          }}
-        >
-          <polygon
-            points="100,76 134,58 154,38 140,32 114,48 94,68"
-            fill="url(#bubak-anim-burlap-dots)"
-            stroke="#1C1610"
-            strokeWidth="3.2"
-            strokeLinejoin="round"
-          />
-          <path d="M 122,58 C 130,54 138,48 144,42" stroke="#1C1610" strokeWidth="2" fill="none" />
-          <path d="M 112,66 C 120,60 128,54 134,48" stroke="#8A5C2C" strokeWidth="1.5" fill="none" />
-          <polygon
-            points="140,32 150,22 154,34 162,28 158,42 166,44 154,52 146,46"
-            fill="#946332"
-            stroke="#1C1610"
-            strokeWidth="2.8"
-            strokeLinejoin="round"
-          />
-          <line x1="154" y1="36" x2="146" y2="40" stroke="#FAF5E8" strokeWidth="1.4" />
-          <line x1="160" y1="32" x2="152" y2="34" stroke="#D9A036" strokeWidth="1.4" />
-          <line x1="158" y1="46" x2="150" y2="48" stroke="#D9A036" strokeWidth="1.4" />
-        </g>
-
-        {/* 5. Persistent Stable Torso (NO POPPING STRIPES!) */}
-        <g
-          id="bubak-anim-torso"
-          style={{
-            transformOrigin: '84px 98px',
-            transform: `translate(${pose.torsoX}px, ${pose.torsoY}px) scale(${pose.torsoScaleX}, ${pose.torsoScaleY})`,
-            transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          }}
-        >
-          <ellipse
-            cx="84"
-            cy="98"
-            rx="24.5"
-            ry="29.5"
-            fill="url(#bubak-anim-burlap-dots)"
-            stroke="#1C1610"
-            strokeWidth="3.4"
-          />
-          <path d="M 84,69 L 84,127" stroke="#486935" strokeWidth="5.5" strokeLinecap="round" />
-          <path d="M 84,69 L 84,127" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
-          {[76, 86, 96, 106, 116, 123].map((y) => (
-            <line key={`anim-seam-stitch-${y}`} x1="81" y1={y} x2="87" y2={y} stroke="#1C1610" strokeWidth="1.8" />
-          ))}
-          {/* Smooth, persistent organic fold wrinkles */}
-          <path d="M 65,88 C 72,92 78,92 82,90" stroke="#1C1610" strokeWidth="2.2" fill="none" />
-          <path d="M 86,90 C 92,92 98,92 103,88" stroke="#1C1610" strokeWidth="2.2" fill="none" />
-          <path d="M 66,108 C 73,112 78,112 82,110" stroke="#1C1610" strokeWidth="2.2" fill="none" />
-          <path d="M 86,110 C 92,112 97,112 102,108" stroke="#1C1610" strokeWidth="2.2" fill="none" />
-          <path d="M 62,96 C 63,102 64,108 67,114" stroke="#8A5C2C" strokeWidth="1.4" fill="none" />
-          <path d="M 106,96 C 105,102 104,108 101,114" stroke="#8A5C2C" strokeWidth="1.4" fill="none" />
-
-          {/* Patches */}
-          <g transform="translate(98, 86)">
-            <ellipse cx="0" cy="0" rx="5" ry="7" fill="#382C1E" stroke="#1C1610" strokeWidth="2" />
-            <circle cx="0" cy="0" r="1.5" fill="#886036" />
-            <line x1="-3" y1="-5" x2="-3" y2="-7" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="3" y1="-5" x2="3" y2="-7" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="-3" y1="5" x2="-3" y2="7" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="3" y1="5" x2="3" y2="7" stroke="#FAF5E8" strokeWidth="1" />
-          </g>
-          <g transform="translate(71, 110)">
-            <ellipse cx="0" cy="0" rx="4.5" ry="6" fill="#2E2419" stroke="#1C1610" strokeWidth="2" />
-            <circle cx="0" cy="0" r="1.2" fill="#886036" />
-            <line x1="-2.5" y1="-4" x2="-2.5" y2="-6" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="2.5" y1="-4" x2="2.5" y2="-6" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="-2.5" y1="4" x2="-2.5" y2="6" stroke="#FAF5E8" strokeWidth="1" />
-            <line x1="2.5" y1="4" x2="2.5" y2="6" stroke="#FAF5E8" strokeWidth="1" />
-          </g>
-        </g>
-
-        {/* 6. Burlap Sack Head */}
-        <g
-          id="bubak-anim-head"
-          style={{
-            transformOrigin: '84px 68px',
-            transform: `translate(${pose.headX}px, ${pose.headY}px) rotate(${pose.headRot}deg) scale(${pose.headScale})`,
-            transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-          }}
-        >
-          <g transform="translate(84, 42)">
-            <ellipse
-              cx="0"
-              cy="0"
-              rx="20.5"
-              ry="25.5"
-              fill="url(#bubak-anim-burlap-dots)"
+        <g transform={`translate(84, ${100 + rootLiftY}) scale(${rootScale}) translate(-84, -100)`}>
+          {/* 1. Grounded Wooden Pole */}
+          <g id="bubak-anim-stake">
+            <rect
+              x="79.5"
+              y="132"
+              width="9"
+              height="60"
+              fill="#783E24"
               stroke="#1C1610"
-              strokeWidth="3.4"
+              strokeWidth="2.8"
+              rx="1.5"
             />
-            <line x1="0" y1="-25" x2="0" y2="-32" stroke="#D9A036" strokeWidth="2.4" strokeLinecap="round" />
-            <line x1="-4" y1="-24" x2="-9" y2="-30" stroke="#D9A036" strokeWidth="2.2" strokeLinecap="round" />
-            <line x1="4" y1="-24" x2="9" y2="-30" stroke="#D9A036" strokeWidth="2.2" strokeLinecap="round" />
-            <path d="M -16,-6 C -12,-8 -8,-8 -6,-6" stroke="#1C1610" strokeWidth="1.8" fill="none" />
-            <path d="M 6,-6 C 8,-8 12,-8 16,-6" stroke="#1C1610" strokeWidth="1.8" fill="none" />
+            <line x1="82.5" y1="136" x2="82.5" y2="190" stroke="#9A5632" strokeWidth="1.6" />
+            <line x1="85.5" y1="138" x2="85.5" y2="186" stroke="#522712" strokeWidth="1.2" />
+            <ellipse cx="83.5" cy="164" rx="2" ry="3.2" fill="#3D1A0B" stroke="#1C1610" strokeWidth="1" />
+          </g>
 
-            {/* Brow Furrow Ticks */}
-            <g
-              style={{
-                transform: `translateY(${pose.browDy}px)`,
-                transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-              }}
-            >
-              <line x1="-3" y1="-17" x2="-2" y2="-12" stroke="#1C1610" strokeWidth="2.6" strokeLinecap="round" />
-              <line x1="2" y1="-17" x2="3" y2="-12" stroke="#1C1610" strokeWidth="2.6" strokeLinecap="round" />
+          {/* 2. Articulated Upper Body */}
+          <g transform={`translate(${torsoX}, ${torsoY}) rotate(${torsoRot}, 84, 124)`}>
+            {/* Lower Shredded Frond Skirt */}
+            <g id="bubak-anim-skirt" transform={`rotate(${skirtRot}, 84, 126)`}>
+              <path
+                d="M 54,124 Q 40,140 32,154 Q 44,148 56,134 Q 68,158 84,164 Q 100,158 112,134 Q 124,148 136,154 Q 128,140 114,124 Z"
+                fill="url(#bubak-anim-frond-texture)"
+                stroke="#1C1610"
+                strokeWidth="3.2"
+                strokeLinejoin="round"
+              />
+              <path d="M 84,130 L 84,160 M 70,128 L 52,148 M 98,128 L 116,148" stroke="#3D4B2A" strokeWidth="2" strokeLinecap="round" fill="none" />
             </g>
 
-            {/* Left Eye */}
-            <g
-              style={{
-                transform: `translate(-8px, -8px) scaleY(${pose.eyeSquintLeft})`,
-                transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-              }}
-            >
-              <circle cx="0" cy="0" r="6.5" fill="#FAF6ED" stroke="#1C1610" strokeWidth="2.6" />
-              <g
-                style={{
-                  transform: `translate(${pose.pupilDx}px, ${pose.pupilDy}px)`,
-                  transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-                }}
-              >
-                <circle cx="0.5" cy="0" r="3" fill="#1C1610" />
-                <circle cx="-0.5" cy="-1" r="1" fill="#FFFFFF" />
+            {/* Left Arm */}
+            <g id="bubak-anim-left-arm" transform={`rotate(${leftArmAngle}, 68, 74)`}>
+              <polygon
+                points="68,76 34,58 14,38 28,32 54,48 74,68"
+                fill="url(#bubak-anim-burlap-dots)"
+                stroke="#1C1610"
+                strokeWidth="3.2"
+                strokeLinejoin="round"
+              />
+              <path d="M 46,58 C 38,54 30,48 24,42" stroke="#1C1610" strokeWidth="2" fill="none" />
+              <path d="M 56,66 C 48,60 40,54 34,48" stroke="#8A5C2C" strokeWidth="1.5" fill="none" />
+              <g transform={`rotate(${leftCuffFlutter}, 24, 38)`}>
+                <polygon
+                  points="28,32 18,22 14,34 6,28 10,42 2,44 14,52 22,46"
+                  fill="#946332"
+                  stroke="#1C1610"
+                  strokeWidth="2.8"
+                  strokeLinejoin="round"
+                />
+                <line x1="14" y1="36" x2="22" y2="40" stroke="#FAF5E8" strokeWidth="1.4" />
+                <line x1="8" y1="32" x2="16" y2="34" stroke="#D9A036" strokeWidth="1.4" />
+                <line x1="10" y1="46" x2="18" y2="48" stroke="#D9A036" strokeWidth="1.4" />
               </g>
             </g>
 
-            {/* Right Eye */}
-            <g
-              style={{
-                transform: `translate(8px, -8px) scale(${pose.eyeScaleRight})`,
-                transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-              }}
-            >
-              <circle cx="0" cy="0" r="6.5" fill="#FAF6ED" stroke="#1C1610" strokeWidth="2.6" />
-              <g
-                style={{
-                  transform: `translate(${pose.pupilDx}px, ${pose.pupilDy}px)`,
-                  transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-                }}
-              >
-                <circle cx="0.5" cy="0" r="3" fill="#1C1610" />
-                <circle cx="-0.5" cy="-1" r="1" fill="#FFFFFF" />
+            {/* Right Arm */}
+            <g id="bubak-anim-right-arm" transform={`rotate(${rightArmAngle}, 100, 74)`}>
+              <polygon
+                points="100,76 134,58 154,38 140,32 114,48 94,68"
+                fill="url(#bubak-anim-burlap-dots)"
+                stroke="#1C1610"
+                strokeWidth="3.2"
+                strokeLinejoin="round"
+              />
+              <path d="M 122,58 C 130,54 138,48 144,42" stroke="#1C1610" strokeWidth="2" fill="none" />
+              <path d="M 112,66 C 120,60 128,54 134,48" stroke="#8A5C2C" strokeWidth="1.5" fill="none" />
+              <g transform={`rotate(${rightCuffFlutter}, 144, 38)`}>
+                <polygon
+                  points="140,32 150,22 154,34 162,28 158,42 166,44 154,52 146,46"
+                  fill="#946332"
+                  stroke="#1C1610"
+                  strokeWidth="2.8"
+                  strokeLinejoin="round"
+                />
+                <line x1="154" y1="36" x2="146" y2="40" stroke="#FAF5E8" strokeWidth="1.4" />
+                <line x1="160" y1="32" x2="152" y2="34" stroke="#D9A036" strokeWidth="1.4" />
+                <line x1="158" y1="46" x2="150" y2="48" stroke="#D9A036" strokeWidth="1.4" />
               </g>
             </g>
 
-            {/* Snout / Button Nose with two nostrils */}
-            <ellipse cx="0" cy="1" rx="3.6" ry="3.2" fill="#A06E3B" stroke="#1C1610" strokeWidth="2.2" />
-            <circle cx="-1.2" cy="1.2" r="0.8" fill="#1C1610" />
-            <circle cx="1.2" cy="1.2" r="0.8" fill="#1C1610" />
-
-            {/* Mouth */}
+            {/* Persistent Stable Torso */}
             <g
-              style={{
-                transformOrigin: '0px 11px',
-                transform: `scale(${pose.mouthScaleX}, ${pose.mouthScaleY}) rotate(${pose.mouthRot}deg)`,
-                transition: 'transform 440ms cubic-bezier(0.35, 0, 0.25, 1)',
-              }}
+              id="bubak-anim-torso"
+              transform={`translate(84, 98) scale(${torsoScaleX}, ${torsoScaleY}) translate(-84, -98)`}
             >
-              {pose.mouthType === 'chomp' ? (
-                <g id="anim-mouth-chomp">
-                  <path d="M -11,9 Q 0,11 11,9 Q 0,7 -11,9 Z" fill="#6E0F0C" />
-                  <polygon
-                    points="-11,6 -9,12 -7,6 -5,12 -3,6 -1,12 1,6 3,12 5,6 7,12 9,6 11,12 11,7 -11,7"
-                    fill="#FAF6ED"
-                    stroke="#1C1610"
-                    strokeWidth="1.3"
-                    strokeLinejoin="round"
-                  />
-                  <polygon
-                    points="-11,13 -9,7 -7,13 -5,7 -3,13 -1,7 1,13 3,7 5,13 7,7 9,13 11,7 11,12 -11,12"
-                    fill="#FAF6ED"
-                    stroke="#1C1610"
-                    strokeWidth="1.3"
-                    strokeLinejoin="round"
-                  />
-                  <path d="M -12,9 Q 0,10 12,9" stroke="#1C1610" strokeWidth="2.4" fill="none" />
+              <ellipse
+                cx="84"
+                cy="98"
+                rx="24.5"
+                ry="29.5"
+                fill="url(#bubak-anim-burlap-dots)"
+                stroke="#1C1610"
+                strokeWidth="3.4"
+              />
+              <path d="M 84,69 L 84,127" stroke="#486935" strokeWidth="5.5" strokeLinecap="round" />
+              <path d="M 84,69 L 84,127" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
+              {[76, 86, 96, 106, 116, 123].map((y) => (
+                <line key={`anim-seam-stitch-${y}`} x1="81" y1={y} x2="87" y2={y} stroke="#1C1610" strokeWidth="1.8" />
+              ))}
+              <path d="M 65,88 C 72,92 78,92 82,90" stroke="#1C1610" strokeWidth="2.2" fill="none" />
+              <path d="M 86,90 C 92,92 98,92 103,88" stroke="#1C1610" strokeWidth="2.2" fill="none" />
+              <path d="M 66,108 C 73,112 78,112 82,110" stroke="#1C1610" strokeWidth="2.2" fill="none" />
+              <path d="M 86,110 C 92,112 97,112 102,108" stroke="#1C1610" strokeWidth="2.2" fill="none" />
+              <path d="M 62,96 C 63,102 64,108 67,114" stroke="#8A5C2C" strokeWidth="1.4" fill="none" />
+              <path d="M 106,96 C 105,102 104,108 101,114" stroke="#8A5C2C" strokeWidth="1.4" fill="none" />
+
+              {/* Patches */}
+              <g transform="translate(98, 86)">
+                <ellipse cx="0" cy="0" rx="5" ry="7" fill="#382C1E" stroke="#1C1610" strokeWidth="2" />
+                <circle cx="0" cy="0" r="1.5" fill="#886036" />
+                <line x1="-3" y1="-5" x2="-3" y2="-7" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="3" y1="-5" x2="3" y2="-7" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="-3" y1="5" x2="-3" y2="7" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="3" y1="5" x2="3" y2="7" stroke="#FAF5E8" strokeWidth="1" />
+              </g>
+              <g transform="translate(71, 110)">
+                <ellipse cx="0" cy="0" rx="4.5" ry="6" fill="#2E2419" stroke="#1C1610" strokeWidth="2" />
+                <circle cx="0" cy="0" r="1.2" fill="#886036" />
+                <line x1="-2.5" y1="-4" x2="-2.5" y2="-6" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="2.5" y1="-4" x2="2.5" y2="-6" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="-2.5" y1="4" x2="-2.5" y2="6" stroke="#FAF5E8" strokeWidth="1" />
+                <line x1="2.5" y1="4" x2="2.5" y2="6" stroke="#FAF5E8" strokeWidth="1" />
+              </g>
+            </g>
+
+            {/* Burlap Sack Head */}
+            <g
+              id="bubak-anim-head"
+              transform={`translate(${headX}, ${headY}) rotate(${headRot}, 84, 68) translate(84, 68) scale(${headScale}) translate(-84, -68)`}
+            >
+              <g transform="translate(84, 42)">
+                <ellipse
+                  cx="0"
+                  cy="0"
+                  rx="20.5"
+                  ry="25.5"
+                  fill="url(#bubak-anim-burlap-dots)"
+                  stroke="#1C1610"
+                  strokeWidth="3.4"
+                />
+                <line x1="0" y1="-25" x2="0" y2="-32" stroke="#D9A036" strokeWidth="2.4" strokeLinecap="round" />
+                <line x1="-4" y1="-24" x2="-9" y2="-30" stroke="#D9A036" strokeWidth="2.2" strokeLinecap="round" />
+                <line x1="4" y1="-24" x2="9" y2="-30" stroke="#D9A036" strokeWidth="2.2" strokeLinecap="round" />
+                <path d="M -16,-6 C -12,-8 -8,-8 -6,-6" stroke="#1C1610" strokeWidth="1.8" fill="none" />
+                <path d="M 6,-6 C 8,-8 12,-8 16,-6" stroke="#1C1610" strokeWidth="1.8" fill="none" />
+
+                {/* Brow Furrow Ticks */}
+                <g transform={`translate(0, ${browDy})`}>
+                  <line x1="-3" y1="-17" x2="-2" y2="-12" stroke="#1C1610" strokeWidth="2.6" strokeLinecap="round" />
+                  <line x1="2" y1="-17" x2="3" y2="-12" stroke="#1C1610" strokeWidth="2.6" strokeLinecap="round" />
                 </g>
-              ) : (
-                <g id="anim-mouth-open">
+
+                {/* Left Eye */}
+                <g transform={`translate(-8, -8) scale(1, ${eyeSquintL})`}>
+                  <circle cx="0" cy="0" r="6.5" fill="#FAF6ED" stroke="#1C1610" strokeWidth="2.6" />
+                  <g transform={`translate(${pupilDx}, ${pupilDy})`}>
+                    <circle cx="0.5" cy="0" r="3" fill="#1C1610" />
+                    <circle cx="-0.5" cy="-1" r="1" fill="#FFFFFF" />
+                  </g>
+                </g>
+
+                {/* Right Eye */}
+                <g transform={`translate(8, -8) scale(${eyeScaleR})`}>
+                  <circle cx="0" cy="0" r="6.5" fill="#FAF6ED" stroke="#1C1610" strokeWidth="2.6" />
+                  <g transform={`translate(${pupilDx}, ${pupilDy})`}>
+                    <circle cx="0.5" cy="0" r="3" fill="#1C1610" />
+                    <circle cx="-0.5" cy="-1" r="1" fill="#FFFFFF" />
+                  </g>
+                </g>
+
+                {/* Snout / Button Nose with two nostrils */}
+                <ellipse cx="0" cy="1" rx="3.6" ry="3.2" fill="#A06E3B" stroke="#1C1610" strokeWidth="2.2" />
+                <circle cx="-1.2" cy="1.2" r="0.8" fill="#1C1610" />
+                <circle cx="1.2" cy="1.2" r="0.8" fill="#1C1610" />
+
+                {/* Continuous Unified Mouth */}
+                <g
+                  transform={`translate(0, 11) rotate(${mouthRot}) scale(${mouthScaleX}, ${mouthOpen}) translate(0, -11)`}
+                >
                   <path
                     d="M -12,7 C -12,3 12,3 12,7 C 13,20 -13,20 -12,7 Z"
                     fill="url(#bubak-anim-mouth-depth)"
@@ -620,16 +584,15 @@ export const AnimatedBubak: React.FC<AnimatedBubakProps> = ({
                     strokeLinejoin="round"
                   />
                 </g>
-              )}
+              </g>
             </g>
           </g>
         </g>
       </svg>
 
-      {/* Frame Badge */}
       {showBadge && (
-        <div className="absolute -bottom-2 bg-amber-950/85 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-600/50 shadow-sm pointer-events-none tracking-wider">
-          SNÍMEK {currentFrame + 1}/7 • {BUBAK_FRAME_NAMES[currentFrame]}
+        <div className="absolute -bottom-2 bg-amber-950/85 text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-600/50 shadow-sm pointer-events-none tracking-wider">
+          {BUBAK_FRAME_NAMES[currentFrameIdx]}
         </div>
       )}
     </div>

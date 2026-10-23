@@ -141,7 +141,7 @@ const ENEMIES: Record<string, EnemyStats> = {
 	mrazivy_obr: {
 		id: "mrazivy_obr", name: "Mrazivý obr", title: "Čtyřnásobně mohutný duch věčné zimy",
 		category: "frost", hp: 1150, speed: 34, damage: 145, attackCadence: "slow", attackInterval: 1.8,
-		radius: 56, mass: 5.5, foodResist: 0.5, poiseResist: 0.8, willpower: 0.8, xp: 20, coinValue: 12,
+		radius: 34, mass: 5.5, foodResist: 0.5, poiseResist: 0.8, willpower: 0.8, xp: 20, coinValue: 12,
 		method: "drawFrostGiant", palette: "ice", weakness: "Oheň, horké brambory, Hromnička",
 		strength: "Čtyřnásobná velikost mrazivého skřítka, obrovské zdraví a drtivé údery",
 		lore: "Starý mrazivý skřítek, který nabyl velikosti malé chalupy. Každý jeho krok rozpraská led a sníh.", danger: "★★★★★"
@@ -634,7 +634,7 @@ const ENEMIES: Record<string, EnemyStats> = {
 		damage: 54,
 		attackCadence: "slow",
 		attackInterval: 1.8,
-		radius: 34,
+		radius: 65,
 		mass: 2.1,
 		foodResist: .25,
 		poiseResist: .75,
