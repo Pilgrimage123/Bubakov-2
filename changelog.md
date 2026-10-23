@@ -1,3 +1,8 @@
+## 2026-10-23 — Stabilizace regresního testu úhybu Pasáčka
+
+- Test ověřující nezranitelnost po zásahu nyní řídí výsledek náhodného úhybu, aby nepadal náhodně při 35% šanci Pasáčka.
+- Herní mechanika úhybu zůstává beze změny.
+
 ## 2026-10-23 — Úprava Tuláka: Kuráž a Štěstí
 
 - Základní maximální Kuráž Tuláka zvýšena z 200 na 230 (+15 %) v herním enginu i v produkční inicializaci hry.

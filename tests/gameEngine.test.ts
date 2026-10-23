@@ -359,8 +359,13 @@ describe('GameEngine Headless Simulation', () => {
       engine.initRun({ levelId: 1, hunterType: 'shepherd', spawnInitialWave: false });
       const shepherd = engine.state.player;
       const enemy = engine.spawnMonster('rarach', shepherd.x + 100, shepherd.y);
-      shepherd.takeDamage(10, 'physical', enemy, true);
-      expect(shepherd.invulnerabilityTimer).toBeCloseTo(0.6, 5);
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(1);
+      try {
+        shepherd.takeDamage(10, 'physical', enemy, true);
+        expect(shepherd.invulnerabilityTimer).toBeCloseTo(0.6, 5);
+      } finally {
+        randomSpy.mockRestore();
+      }
     });
 
     it('scales repulse damage, knockback and stun with max courage', () => {
