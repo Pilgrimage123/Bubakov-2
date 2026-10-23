@@ -6083,31 +6083,308 @@ var Lada = {
 		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked); ctx.restore();
 	},
 	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
+		// Custom Lada-style sprite matched to the supplied melting snowman illustration.
 		const dir = vx < 0 ? -1 : 1;
 		const enemy = (infoOrEnemy && typeof infoOrEnemy.hp === 'number')
 			? infoOrEnemy
 			: (maybeEnemy && typeof maybeEnemy.hp === 'number')
 			? maybeEnemy
 			: null;
-		const hpRatio = (enemy && typeof enemy.hp === 'number' && typeof enemy.maxHp === 'number' && enemy.maxHp > 0)
-			? Math.max(0.12, Math.min(1.0, enemy.hp / enemy.maxHp))
-			: (typeof enemy?.meltHpRatio === 'number' ? enemy.meltHpRatio : 1.0);
-		const squashX = (enemy?.meltSquashX ?? (1 + (1 - hpRatio) * 0.28)) * (enemy?.wobbleScaleX ?? 1);
-		const squashY = (enemy?.meltSquashY ?? (0.5 + 0.5 * hpRatio)) * (enemy?.wobbleScaleY ?? 1);
-		const melt = Math.sin(time * 2.5) * 1.5;
-		ctx.save(); ctx.translate(x, y + Math.sin(time * 3) * 1.2); ctx.scale(dir * squashX, squashY);
-		ctx.fillStyle = "rgba(56,189,248,0.5)"; ctx.strokeStyle = "#1D4ED8"; ctx.lineWidth = 1.8;
-		ctx.beginPath(); ctx.ellipse(0, 10, 25 + melt, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#F8FAFC"; ctx.strokeStyle = "#334155"; ctx.lineWidth = 2;
-		ctx.beginPath(); ctx.ellipse(0, -3, 18, 18 + melt, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.ellipse(0, -23, 13, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#F97316"; ctx.beginPath(); ctx.moveTo(3, -23); ctx.lineTo(19, -20); ctx.lineTo(3, -17); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#111827"; ctx.beginPath(); ctx.arc(-4, -26, 2, 0, Math.PI * 2); ctx.arc(4, -26, 2, 0, Math.PI * 2); ctx.fill();
-		ctx.fillStyle = "#1F2937"; ctx.beginPath(); ctx.arc(-2, -8, 2.2, 0, Math.PI * 2); ctx.arc(0, -1, 2.2, 0, Math.PI * 2); ctx.arc(2, 6, 2.2, 0, Math.PI * 2); ctx.fill();
-		ctx.fillStyle = "#78716C"; ctx.beginPath(); ctx.moveTo(-13,-34);ctx.lineTo(-8,-48);ctx.lineTo(8,-46);ctx.lineTo(14,-33);ctx.closePath();ctx.fill();ctx.stroke();
-		ctx.strokeStyle = "#92400E"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(16,-2);ctx.lineTo(28,-38);ctx.stroke();
-		ctx.strokeStyle = "#A16207"; ctx.lineWidth = 2; for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(24+i*2,-36);ctx.lineTo(20+i*2,-45);ctx.stroke();}
-		ctx.strokeStyle = "#38BDF8"; ctx.lineWidth = 2; ctx.beginPath();ctx.moveTo(-12,-13);ctx.lineTo(-13,-7);ctx.moveTo(10,-2);ctx.lineTo(12,5);ctx.stroke();
+		const hpRatio = enemy && typeof enemy.maxHp === 'number' && enemy.maxHp > 0
+			? Math.max(0.12, Math.min(1, enemy.hp / enemy.maxHp))
+			: (typeof enemy?.meltHpRatio === 'number' ? enemy.meltHpRatio : 1);
+		const squashX = (enemy?.meltSquashX ?? (1 + (1 - hpRatio) * 0.18)) * (enemy?.wobbleScaleX ?? 1);
+		const squashY = (enemy?.meltSquashY ?? (0.88 + 0.12 * hpRatio)) * (enemy?.wobbleScaleY ?? 1);
+		const walk = Math.sin(time * (panicked ? 17 : 7));
+		const bob = Math.abs(walk) * (panicked ? 3.5 : 1.8);
+		const scarfWave = Math.sin(time * (panicked ? 22 : 5.5)) * (panicked ? 10 : 5);
+		const broomSwing = Math.sin(time * (panicked ? 19 : 7)) * (panicked ? 0.48 : 0.24);
+		const attack = !!(infoOrEnemy && (
+			infoOrEnemy.isStrike || infoOrEnemy.hasSlashArc || infoOrEnemy.hasShockwave ||
+			infoOrEnemy.phase === 3 || infoOrEnemy.phase === 4
+		));
+		const meltPulse = (Math.sin(time * 3.2) + 1) * 0.5;
+
+		this.drawShadow(ctx, x, y + 2, 31);
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * squashX, squashY);
+
+		// Thin icy puddle and water ripples underneath the melted lower body.
+		ctx.save();
+		ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+		ctx.strokeStyle = '#1678A6';
+		ctx.lineWidth = 1.7;
+		ctx.beginPath();
+		ctx.ellipse(0, 22, 29 + meltPulse * 2.8, 5.8 + meltPulse, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = 'rgba(224, 242, 254, 0.9)';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.ellipse(-3, 22, 15 + meltPulse * 3, 2.2, 0, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.restore();
+
+		// Trailing, red striped scarf with a rough, wet fringe.
+		ctx.save();
+		ctx.translate(-10, -31);
+		ctx.rotate(-0.1 + scarfWave * 0.012);
+		this.setupPath(ctx, '#C62828', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(4, -2);
+		ctx.quadraticCurveTo(-12, -13, -35, -9 + scarfWave * 0.22);
+		ctx.lineTo(-29, 3);
+		ctx.quadraticCurveTo(-15, 0, 3, 5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#F97316';
+		ctx.lineWidth = 3.4;
+		ctx.beginPath();
+		ctx.moveTo(-5, -5); ctx.lineTo(-11, 2);
+		ctx.moveTo(-16, -7); ctx.lineTo(-22, 1);
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.6;
+		for (let i = 0; i < 5; i++) {
+			const fringeX = -30 + i * 4.2;
+			ctx.beginPath();
+			ctx.moveTo(fringeX, 0);
+			ctx.lineTo(fringeX - 2, 6 + (i % 2) * 2);
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		// A lumpy, sagging body of slushy snow.
+		this.setupPath(ctx, '#D9EFFB', COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-26, 17);
+		ctx.bezierCurveTo(-34, 14, -32, 4, -25, 0);
+		ctx.bezierCurveTo(-24, -10, -11, -14, -2, -8);
+		ctx.bezierCurveTo(9, -17, 23, -9, 22, 2);
+		ctx.bezierCurveTo(32, 4, 32, 15, 23, 18);
+		ctx.bezierCurveTo(13, 22, 8, 18, 2, 21);
+		ctx.bezierCurveTo(-7, 23, -13, 19, -20, 21);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#FFFFFF';
+		ctx.lineWidth = 5;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		ctx.moveTo(-22, 2); ctx.quadraticCurveTo(-12, -7, -4, -3);
+		ctx.moveTo(5, -7); ctx.quadraticCurveTo(17, -10, 21, 1);
+		ctx.moveTo(-18, 12); ctx.quadraticCurveTo(-8, 15, -3, 12);
+		ctx.stroke();
+		ctx.strokeStyle = '#9BD5F4';
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.moveTo(-25, 7); ctx.quadraticCurveTo(-19, 13, -22, 18);
+		ctx.moveTo(19, 8); ctx.quadraticCurveTo(23, 12, 21, 17);
+		ctx.stroke();
+
+		// Melting arms, rounded drips and tiny twig fingers.
+		ctx.save();
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		this.setupPath(ctx, '#EAF7FD', COLORS.ink, 4.2);
+		ctx.beginPath();
+		ctx.moveTo(-10, -17);
+		ctx.quadraticCurveTo(-18, -24, -22, -35);
+		ctx.quadraticCurveTo(-28, -41, -30, -32);
+		ctx.lineTo(-33, -21);
+		ctx.moveTo(17, -14);
+		ctx.quadraticCurveTo(25, -20, 26, -31);
+		ctx.quadraticCurveTo(32, -37, 35, -28);
+		ctx.lineTo(34, -14);
+		ctx.stroke();
+		ctx.strokeStyle = '#4A2B18';
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(-30, -21); ctx.lineTo(-35, -26);
+		ctx.moveTo(-30, -21); ctx.lineTo(-35, -19);
+		ctx.moveTo(34, -14); ctx.lineTo(39, -18);
+		ctx.moveTo(34, -14); ctx.lineTo(39, -11);
+		ctx.stroke();
+		ctx.restore();
+
+		// Three dark, uneven coal buttons down the slushy torso.
+		ctx.fillStyle = '#252B2C';
+		ctx.strokeStyle = '#111827';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.arc(1, 1, 3.1, 0, Math.PI * 2);
+		ctx.arc(5, 8, 3.3, 0, Math.PI * 2);
+		ctx.arc(2, 15, 3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#5B6260';
+		ctx.beginPath();
+		ctx.arc(0, 0.1, 0.8, 0, Math.PI * 2);
+		ctx.arc(4, 7.2, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Large head, narrowed angry eyes and a wicked grin.
+		this.setupPath(ctx, '#F7FCFF', COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(-15, -31);
+		ctx.bezierCurveTo(-20, -44, -11, -57, 1, -56);
+		ctx.bezierCurveTo(13, -58, 22, -47, 20, -36);
+		ctx.bezierCurveTo(19, -28, 10, -24, 1, -26);
+		ctx.bezierCurveTo(-7, -24, -13, -26, -15, -31);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 3;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		ctx.moveTo(-11, -43); ctx.lineTo(-3, -40);
+		ctx.moveTo(5, -40); ctx.lineTo(14, -45);
+		ctx.stroke();
+		ctx.fillStyle = '#111827';
+		ctx.beginPath();
+		ctx.arc(-7, -41, 2.8, 0, Math.PI * 2);
+		ctx.arc(9, -42, 3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(-7.8, -42, 0.8, 0, Math.PI * 2);
+		ctx.arc(8.2, -43, 0.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Segmented orange carrot nose.
+		this.setupPath(ctx, '#F97316', COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(1, -37);
+		ctx.quadraticCurveTo(12, -40, 27, -33);
+		ctx.lineTo(10, -29);
+		ctx.lineTo(2, -32);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#9A3412';
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(8, -36); ctx.lineTo(9, -32);
+		ctx.moveTo(14, -35); ctx.lineTo(15, -31);
+		ctx.moveTo(20, -34); ctx.lineTo(21, -32);
+		ctx.stroke();
+		ctx.fillStyle = '#1B1714';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.7;
+		ctx.beginPath();
+		ctx.moveTo(-8, -31);
+		ctx.quadraticCurveTo(0, -25, 11, -31);
+		ctx.lineTo(7, -24);
+		ctx.quadraticCurveTo(-1, -21, -6, -26);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#FFF1C7';
+		ctx.beginPath();
+		ctx.moveTo(-5, -29); ctx.lineTo(-2, -28); ctx.lineTo(-3, -25);
+		ctx.moveTo(0, -27); ctx.lineTo(3, -28); ctx.lineTo(3, -24);
+		ctx.moveTo(5, -29); ctx.lineTo(7, -30); ctx.lineTo(6, -26);
+		ctx.fill();
+
+		// Battered moss-green hat with a ragged cap of fresh snow and rusty patch.
+		ctx.save();
+		ctx.translate(0, -53);
+		ctx.rotate(-0.1 + Math.sin(time * 2.8) * 0.035);
+		this.setupPath(ctx, '#3F5140', COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-17, 2);
+		ctx.lineTo(-13, -13);
+		ctx.quadraticCurveTo(-5, -20, 7, -16);
+		ctx.lineTo(15, -9);
+		ctx.lineTo(17, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#65765B';
+		ctx.lineWidth = 2.3;
+		ctx.beginPath();
+		ctx.moveTo(-10, -10); ctx.lineTo(8, -13);
+		ctx.moveTo(-7, -3); ctx.lineTo(12, -6);
+		ctx.stroke();
+		this.setupPath(ctx, '#B45309', COLORS.ink, 1.5);
+		ctx.beginPath();
+		ctx.moveTo(-11, -12); ctx.lineTo(-5, -17); ctx.lineTo(0, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, '#F8FCFF', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-19, -12);
+		ctx.quadraticCurveTo(-17, -23, -6, -20);
+		ctx.quadraticCurveTo(1, -25, 8, -18);
+		ctx.quadraticCurveTo(17, -22, 18, -12);
+		ctx.quadraticCurveTo(13, -8, 6, -11);
+		ctx.quadraticCurveTo(-2, -8, -9, -11);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Long broom with a fan of straw, wrapped with dark twine; it sweeps on attack.
+		ctx.save();
+		ctx.translate(19, -7);
+		ctx.rotate(broomSwing + (attack ? -0.72 : panicked ? -0.38 : 0.12));
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 5.8;
+		ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(10, -44); ctx.stroke();
+		ctx.strokeStyle = '#A66A32';
+		ctx.lineWidth = 3.6;
+		ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(10, -44); ctx.stroke();
+		ctx.strokeStyle = '#E5B76B';
+		ctx.lineWidth = 1;
+		ctx.beginPath(); ctx.moveTo(1, 7); ctx.lineTo(9, -39); ctx.stroke();
+		this.setupPath(ctx, '#C98524', COLORS.ink, 1.9);
+		ctx.beginPath();
+		ctx.moveTo(7, -42); ctx.lineTo(-1, -58); ctx.lineTo(4, -54);
+		ctx.lineTo(5, -66); ctx.lineTo(10, -55); ctx.lineTo(15, -66);
+		ctx.lineTo(14, -54); ctx.lineTo(23, -60); ctx.lineTo(18, -47);
+		ctx.lineTo(13, -42); ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = '#5B3418';
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(6, -48); ctx.lineTo(17, -48);
+		ctx.moveTo(7, -45); ctx.lineTo(16, -45);
+		ctx.stroke();
+		ctx.restore();
+
+		// Animated water droplets run off the hat brim, cheeks, arms and melted hem.
+		ctx.fillStyle = '#7DD3FC';
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.2;
+		for (let i = 0; i < 5; i++) {
+			const phase = (time * (1.15 + i * 0.14) + i * 0.23) % 1;
+			const dropX = [-15, -7, 9, 20, 29][i];
+			const anchorY = [-18, -6, -17, -9, -13][i];
+			const dropY = anchorY + phase * (7 + 5 * meltPulse);
+			const radius = 1.1 + (1 - phase) * 1.35;
+			ctx.beginPath();
+			ctx.moveTo(dropX, dropY - radius);
+			ctx.quadraticCurveTo(dropX + radius * 1.5, dropY, dropX, dropY + radius * 1.8);
+			ctx.quadraticCurveTo(dropX - radius * 1.2, dropY, dropX, dropY - radius);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+		if (panicked) {
+			ctx.strokeStyle = '#38BDF8';
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.moveTo(-28, -18); ctx.lineTo(-35, -23);
+			ctx.moveTo(-30, -11); ctx.lineTo(-39, -12);
+			ctx.stroke();
+		}
 		ctx.restore();
 	},
 	drawFrostling(ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) {
@@ -15792,6 +16069,7 @@ function drawEnemyRenderer(
     drawStageCrow: 'vrana',
     drawVrana: 'vrana',
     drawZmrzlik: 'zmrzlik',
+    drawMeltingSnowman: 'tajici_snehulak',
     drawVodnicek: 'vodnicek',
     drawSkodnik: 'skodnik',
     drawTopivec: 'topivec',

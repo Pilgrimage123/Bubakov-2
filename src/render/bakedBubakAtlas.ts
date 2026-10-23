@@ -20,6 +20,7 @@ export type BakedBubakId =
   | 'skeleton'
   | 'vrana'
   | 'zmrzlik'
+  | 'tajici_snehulak'
   | 'vodnicek'
   | 'skodnik'
   | 'topivec';
@@ -56,6 +57,7 @@ export class BakedBubakAtlas {
       skeleton: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawSkeleton(c, x, y, t, v, p) },
       vrana: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawStageCrow(c, x, y, t, v, p) },
       zmrzlik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawZmrzlik(c, x, y, t, v, p) },
+      tajici_snehulak: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawMeltingSnowman(c, x, y, t, v, p) },
       vodnicek: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawVodnicek(c, x, y, t, v, p) },
       skodnik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawSkodnik(c, x, y, t, v, p) },
       topivec: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawTopivec(c, x, y, t, v, p) },

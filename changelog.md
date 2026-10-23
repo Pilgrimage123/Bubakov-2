@@ -1,3 +1,12 @@
+## 2026-10-22 — Tající sněhulák a útok dřevěného cepu
+
+- Doplněn samostatný ladovský Canvas sprite tajícího sněhuláka: rozbředlé tělo s kapkami a louží, červená pruhovaná šála, šišatý zelený klobouk, mrkvový nos, uhelný úsměv a koště.
+- Sněhulák používá předpočítané animační snímky v renderovacím atlasu, aby kreslení čtyřicetičlenné hordy zůstalo levné.
+- Opravena vazba ID hordy: instance `tajici_snehulak` nyní načítá správné statistiky místo nouzového Raráška.
+- Ikona cepu nyní zobrazuje dřevěnou násadu, kožené omotávky, závěsné poutko a těžký dřevěný biják podle dodané předlohy.
+- Úder cepem doplněn o rotující švih, kreslené pohybové oblouky a jiskru při průchodu úderu; původní bodové poškození a odhození zůstávají zachované.
+- Vizuální švih je nekolizní, aby nepřidával druhou dávku poškození. Přidán regresní test pro renderování švihu a registr tajícího sněhuláka.
+
 ## 2026-10-22 — Oprava Dědečkova obchodu
 
 - Cenovou přirážku zvyšují pouze nákupy běžných upgradů; poklady vyplácející krejcary a cenově osvobozené jednorázové předměty nezvyšují budoucí ceny.
