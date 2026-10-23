@@ -1,3 +1,8 @@
+## 2026-10-23 — Úprava Tuláka: pasivní bonus neposiluje speciální schopnost
+
+- Pasivní schopnost Tuláka (Tulácký instinkt: +35 % poškození všech zbraní) již neposkytuje bonus k poškození jeho speciální schopnosti Pověstná sukovice.
+- Upraven výpočet poškození Pověstné sukovice v `App.tsx` i popis pasivní schopnosti na kartě lovce v `hunterDetails.ts`.
+
 ## 2026-10-23 — Změna výchozí zbraně Tuláka: Bylinková fajfka místo prutu
 
 - Tulák (Poutník) nově začíná výpravu pouze s Bylinkovou fajfkou místo Osikového prutu.

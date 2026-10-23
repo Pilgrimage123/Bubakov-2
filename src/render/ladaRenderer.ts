@@ -6318,19 +6318,510 @@ var Lada = {
 		ctx.strokeStyle = "#D6A33B"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 5); ctx.lineTo(-3, 9); ctx.moveTo(3, 5); ctx.lineTo(4, 9); ctx.stroke();
 		ctx.restore();
 	},
-	drawFrostJezinka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-		const dir = vx < 0 ? -1 : 1, bob = Math.sin(time * 2.2) * 1.2;
-		// Poloviditelná jezinka je o 40 % menší, ale zůstává zranitelná.
-		ctx.save(); ctx.globalAlpha = 0.5 + Math.sin(time * 1.7) * 0.05; ctx.translate(x, y + bob); ctx.scale(dir * 0.6, 0.6);
-		ctx.fillStyle = "rgba(147,197,253,0.22)"; ctx.strokeStyle = "#172554"; ctx.lineWidth = 2;
-		ctx.beginPath(); ctx.ellipse(0, 0, 20, 24, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#BFDBFE"; ctx.beginPath(); ctx.moveTo(-12, -8); ctx.lineTo(-20, 20); ctx.quadraticCurveTo(0, 26, 20, 20); ctx.lineTo(12, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.strokeStyle = "#93C5FD"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-23, 9); ctx.moveTo(10, -2); ctx.lineTo(23, 9); ctx.stroke();
-		ctx.fillStyle = "#FDE7C3"; ctx.strokeStyle = "#1C1917"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, -15, 12, 14, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#F97316"; ctx.beginPath(); ctx.moveTo(-2, -14); ctx.lineTo(13, -11); ctx.lineTo(-1, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#A3E635"; ctx.beginPath(); ctx.arc(-5, -17, 2.2, 0, Math.PI * 2); ctx.arc(4, -17, 2.2, 0, Math.PI * 2); ctx.fill();
-		ctx.fillStyle = "#DBEAFE"; ctx.strokeStyle = "#1D4ED8"; ctx.beginPath(); ctx.moveTo(-15, -24); ctx.lineTo(-10, -35); ctx.lineTo(-4, -25); ctx.lineTo(2, -38); ctx.lineTo(8, -24); ctx.lineTo(14, -31); ctx.lineTo(15, -21); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.strokeStyle = "#7DD3FC"; ctx.lineWidth = 2; for (let i=0;i<4;i++){const dx=-13+i*8;ctx.beginPath();ctx.moveTo(dx,7);ctx.lineTo(dx+1,13);ctx.stroke();}
+	drawFrostJezinka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const enemy = (infoOrEnemy && (typeof infoOrEnemy.hp === 'number' || infoOrEnemy.id === 'jezinka_mraziva'))
+			? infoOrEnemy
+			: (maybeEnemy && (typeof maybeEnemy.hp === 'number' || maybeEnemy.id === 'jezinka_mraziva'))
+			? maybeEnemy
+			: null;
+		const isSemiVisible = enemy
+			? (typeof enemy.semiVisible === 'boolean' ? enemy.semiVisible : typeof enemy.isSemiVisible === 'boolean' ? enemy.isSemiVisible : true)
+			: true;
+		const attack = !!(infoOrEnemy && (
+			infoOrEnemy.isStrike || infoOrEnemy.hasSlashArc || infoOrEnemy.hasShockwave ||
+			infoOrEnemy.phase === 3 || infoOrEnemy.phase === 4
+		));
+		const walkRate = panicked ? 15 : 5.2;
+		const stride = Math.sin(time * walkRate);
+		const bob = Math.abs(stride) * (panicked ? 3.2 : 1.6);
+		const clawSway = Math.sin(time * (panicked ? 18 : 6.4)) * (panicked ? 6 : 3.2) + (attack ? 7 : 0);
+		const hairWave = Math.sin(time * (panicked ? 16 : 4.2)) * (panicked ? 7 : 3.8);
+		const dripPulse = (Math.sin(time * 3.1) + 1) * 0.5;
+		// 70% larger than the previous 0.6 scale (0.6 * 1.7 = 1.02) on a full-proportioned witch frame
+		const scale = 0.6 * 1.7;
+
+		ctx.save();
+		ctx.globalAlpha = isSemiVisible ? 0.62 + Math.sin(time * 2.1) * 0.06 : 0.96;
+		ctx.translate(x, y - bob);
+		ctx.scale(dir * scale, scale);
+
+		// 1. Ground frost aura & shadow under clawed feet
+		ctx.save();
+		ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+		ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.ellipse(2, 33, 30 + dripPulse * 2.5, 6.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 2. Flowing wet straw-blonde/white hair locks behind back & shoulders
+		this.setupPath(ctx, '#E7DFC6', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-8, -28);
+		ctx.bezierCurveTo(-24, -30, -35 - hairWave * 0.6, -20, -40 - hairWave, -8);
+		ctx.quadraticCurveTo(-30 - hairWave * 0.5, -10, -24, -14);
+		ctx.bezierCurveTo(-33 - hairWave * 0.7, -4, -38 - hairWave, 8, -32 - hairWave * 0.6, 18);
+		ctx.quadraticCurveTo(-24, 9, -18, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Lower trailing hair strands behind skirt
+		this.setupPath(ctx, '#D6CEB4', COLORS.ink, 1.9);
+		ctx.beginPath();
+		ctx.moveTo(-14, -6);
+		ctx.bezierCurveTo(-26, 4, -32 - hairWave * 0.5, 16, -26 - hairWave * 0.8, 26);
+		ctx.quadraticCurveTo(-19, 18, -12, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Trailing back leg & 5-clawed hag foot
+		const backFootX = -10 - stride * 5;
+		const backFootY = 27 + Math.max(0, -stride) * 2;
+		this.setupPath(ctx, '#F2BE86', COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-4, 5);
+		ctx.quadraticCurveTo(-13, 14, backFootX - 2, backFootY - 4);
+		ctx.lineTo(backFootX - 8, backFootY + 1);
+		ctx.lineTo(backFootX + 10, backFootY + 4);
+		ctx.lineTo(backFootX + 5, backFootY - 3);
+		ctx.quadraticCurveTo(-4, 13, 3, 5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Back foot dark talons
+		this.setupPath(ctx, '#1E293B', COLORS.ink, 1.4);
+		for (let c = 0; c < 4; c++) {
+			const cx = backFootX + 3 + c * 2.6;
+			const cy = backFootY + 1.5 + c * 0.5;
+			ctx.beginPath();
+			ctx.moveTo(cx, cy);
+			ctx.lineTo(cx + 4.5, cy + 2.8);
+			ctx.lineTo(cx + 1.2, cy + 3.2);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 4. Outstretched reaching arm (front-right in direction of travel) with tattered icicle sleeve
+		ctx.save();
+		ctx.translate(10, -14);
+		ctx.rotate((attack ? -0.28 : 0.06) + stride * 0.08);
+		// Hanging jagged icicle sleeve drape under outstretched arm
+		this.setupPath(ctx, '#93C5FD', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(0, 2);
+		ctx.lineTo(2, 22);
+		ctx.lineTo(6, 13);
+		ctx.lineTo(9, 27);
+		ctx.lineTo(13, 14);
+		ctx.lineTo(17, 23);
+		ctx.lineTo(20, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Bony forearm & wrist
+		this.setupPath(ctx, '#F6C992', COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-2, -3);
+		ctx.quadraticCurveTo(10, -8, 22 + clawSway * 0.4, -10);
+		ctx.lineTo(24 + clawSway * 0.4, -4);
+		ctx.quadraticCurveTo(11, -2, 0, 3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Splayed gnarled fingers & curved black witch talons
+		const handX = 24 + clawSway * 0.4;
+		const handY = -7;
+		const fingerOffsets = [
+			{ fx: 6, fy: -8, tx: 12, ty: -11 },
+			{ fx: 9, fy: -3, tx: 16, ty: -4 },
+			{ fx: 8, fy: 2, tx: 15, ty: 4 },
+			{ fx: 4, fy: 6, tx: 9, ty: 11 },
+			{ fx: -2, fy: 5, tx: 1, ty: 11 },
+		];
+		for (let f = 0; f < fingerOffsets.length; f++) {
+			const fo = fingerOffsets[f];
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 4.2;
+			ctx.beginPath();
+			ctx.moveTo(handX, handY);
+			ctx.lineTo(handX + fo.fx, handY + fo.fy);
+			ctx.stroke();
+			ctx.strokeStyle = '#F6C992';
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(handX, handY);
+			ctx.lineTo(handX + fo.fx, handY + fo.fy);
+			ctx.stroke();
+			this.setupPath(ctx, '#0F172A', COLORS.ink, 1.3);
+			ctx.beginPath();
+			ctx.moveTo(handX + fo.fx, handY + fo.fy - 1.2);
+			ctx.quadraticCurveTo(handX + fo.tx, handY + fo.ty - 1, handX + fo.tx + 1.5, handY + fo.ty + 1.5);
+			ctx.lineTo(handX + fo.fx - 0.8, handY + fo.fy + 1.4);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		// 5. Tattered frost-encrusted blue gown & jagged icicle skirt
+		this.setupPath(ctx, '#60A5FA', COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-12, -20);
+		ctx.quadraticCurveTo(-18, -4, -15, 8);
+		ctx.lineTo(-26, 26);
+		ctx.lineTo(-19, 20);
+		ctx.lineTo(-15, 29);
+		ctx.lineTo(-8, 17);
+		// High jagged skirt slit revealing the stalking front leg
+		ctx.lineTo(0, 4);
+		ctx.lineTo(8, 15);
+		ctx.lineTo(12, 27);
+		ctx.lineTo(17, 19);
+		ctx.lineTo(24, 30);
+		ctx.lineTo(27, 18);
+		ctx.quadraticCurveTo(18, 4, 11, -6);
+		ctx.quadraticCurveTo(14, -15, 8, -22);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Deep glacial folds and white snow-crust highlights on gown
+		ctx.strokeStyle = '#1E3A8A';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-9, -12); ctx.lineTo(-16, 18);
+		ctx.moveTo(4, -10); ctx.lineTo(14, 17);
+		ctx.stroke();
+
+		this.setupPath(ctx, '#EFF6FF', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-14, 7);
+		ctx.lineTo(-9, 15);
+		ctx.lineTo(-5, 8);
+		ctx.lineTo(1, 13);
+		ctx.lineTo(5, 6);
+		ctx.lineTo(11, 14);
+		ctx.lineTo(15, 7);
+		ctx.quadraticCurveTo(2, 1, -14, 7);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 6. Sinewy bent front leg & large foreground 5-clawed foot stepping out of skirt slit
+		const frontFootX = 8 + stride * 6;
+		const frontFootY = 31 + Math.max(0, stride) * 2;
+		this.setupPath(ctx, '#FAD29E', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-2, 4);
+		// Raised bony knee
+		ctx.quadraticCurveTo(11, 6, 13, 13);
+		// Sinewy shin down to ankle
+		ctx.quadraticCurveTo(9, 22, frontFootX + 2, frontFootY - 4);
+		// Splayed foreground foot
+		ctx.lineTo(frontFootX + 16, frontFootY + 2);
+		ctx.lineTo(frontFootX - 3, frontFootY + 5);
+		ctx.lineTo(frontFootX - 5, frontFootY - 2);
+		ctx.quadraticCurveTo(3, 19, 4, 13);
+		ctx.quadraticCurveTo(0, 10, -4, 7);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy bony knee highlight & shin tendon line
+		ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
+		ctx.beginPath();
+		ctx.arc(10, 11, 3.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = '#D97706';
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(8, 14);
+		ctx.lineTo(frontFootX + 1, frontFootY - 2);
+		ctx.stroke();
+
+		// 5 sharp curved black talons on the foreground foot
+		this.setupPath(ctx, '#0F172A', COLORS.ink, 1.5);
+		for (let c = 0; c < 5; c++) {
+			const tx = frontFootX - 1 + c * 3.6;
+			const ty = frontFootY + 3.5 - c * 0.3;
+			ctx.beginPath();
+			ctx.moveTo(tx, ty - 1.5);
+			ctx.quadraticCurveTo(tx + 4.5, ty + 1, tx + 5.2, ty + 4.2);
+			ctx.lineTo(tx - 0.8, ty + 2.2);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 7. Frosted shoulder cap & rear/side crooked claw hand with tattered sleeve
+		this.setupPath(ctx, '#F8FAFC', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-14, -22);
+		ctx.quadraticCurveTo(-4, -26, 8, -21);
+		ctx.lineTo(5, -11);
+		ctx.lineTo(1, -17);
+		ctx.lineTo(-3, -9);
+		ctx.lineTo(-8, -16);
+		ctx.lineTo(-13, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Side crooked arm & ragged icy cuff
+		ctx.save();
+		ctx.translate(-10, -14);
+		ctx.rotate(-0.12 - stride * 0.08 + (attack ? 0.25 : 0));
+		this.setupPath(ctx, '#BFDBFE', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-4, 0);
+		ctx.lineTo(-18, 10);
+		ctx.lineTo(-22, 26);
+		ctx.lineTo(-15, 17);
+		ctx.lineTo(-12, 28);
+		ctx.lineTo(-7, 15);
+		ctx.lineTo(-2, 8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, '#F6C992', COLORS.ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(0, -3);
+		ctx.lineTo(-14, 4);
+		ctx.lineTo(-10, 12);
+		ctx.lineTo(2, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Side hand claws
+		this.setupPath(ctx, '#0F172A', COLORS.ink, 1.3);
+		for (let k = 0; k < 4; k++) {
+			const cx = -14 + k * 2.8;
+			const cy = 9 + (k % 2) * 2;
+			ctx.beginPath();
+			ctx.moveTo(cx, cy);
+			ctx.lineTo(cx - 3.5, cy + 6.5);
+			ctx.lineTo(cx + 1.4, cy + 4.5);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		// 8. Hunched Witch Head, Long Pointed Ear, Hooked Red Nose, Wicked Yellow-Toothed Grin & Green Eyes
+		ctx.save();
+		ctx.translate(3, -30);
+
+		// Long pointed elfin/witch ear jutting back-upward
+		this.setupPath(ctx, '#FDBA74', COLORS.ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(-7, -3);
+		ctx.quadraticCurveTo(-20, -14, -27, -18);
+		ctx.quadraticCurveTo(-22, -5, -9, 3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#EF4444';
+		ctx.beginPath();
+		ctx.moveTo(-16, -10);
+		ctx.lineTo(-25, -16);
+		ctx.lineTo(-19, -6);
+		ctx.closePath();
+		ctx.fill();
+
+		// Witch head & gaunt cheek/chin silhouette
+		this.setupPath(ctx, '#FCD39B', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-11, -11);
+		ctx.quadraticCurveTo(0, -17, 12, -10);
+		ctx.quadraticCurveTo(16, -1, 12, 8);
+		// Pointed witch chin jutting down
+		ctx.quadraticCurveTo(9, 16, 3, 16);
+		ctx.quadraticCurveTo(-4, 15, -9, 8);
+		ctx.quadraticCurveTo(-14, 0, -11, -11);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy-red cheek flush
+		ctx.fillStyle = 'rgba(239, 68, 68, 0.42)';
+		ctx.beginPath();
+		ctx.arc(-3, 2, 4.2, 0, Math.PI * 2);
+		ctx.arc(9, 1, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Wide cackling open grin with dark crimson mouth interior & crooked yellow teeth
+		this.setupPath(ctx, '#450A0A', COLORS.ink, 2.0);
+		ctx.beginPath();
+		ctx.moveTo(-4, 4);
+		ctx.quadraticCurveTo(4, 2, 10, 4);
+		ctx.quadraticCurveTo(9, 13, 2, 13);
+		ctx.quadraticCurveTo(-4, 11, -4, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Crooked yellow witch teeth (top & bottom rows)
+		this.setupPath(ctx, '#FACC15', COLORS.ink, 1.1);
+		for (let t = 0; t < 4; t++) {
+			const tx = -2.2 + t * 2.8;
+			ctx.beginPath();
+			ctx.moveTo(tx, 4);
+			ctx.lineTo(tx + 1.2, 7.6);
+			ctx.lineTo(tx + 2.3, 4);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.moveTo(tx + 0.3, 12);
+			ctx.lineTo(tx + 1.3, 8.8);
+			ctx.lineTo(tx + 2.3, 12);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Glowing lime-green eyes with pinpoint black pupils
+		this.setupPath(ctx, '#ECFCCB', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(-2, -4, 4.2, 3.6, -0.12, 0, Math.PI * 2);
+		ctx.ellipse(7.5, -4.2, 3.8, 3.4, 0.12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = '#84CC16';
+		ctx.beginPath();
+		ctx.arc(-1.8, -4, 2.5, 0, Math.PI * 2);
+		ctx.arc(7.5, -4.2, 2.3, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = '#090D16';
+		ctx.beginPath();
+		ctx.arc(-1.5, -4, 1.1, 0, Math.PI * 2);
+		ctx.arc(7.8, -4.2, 1.1, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(-2.3, -4.8, 0.7, 0, Math.PI * 2);
+		ctx.arc(7.0, -5.0, 0.7, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Fierce scowling dark eyebrows
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.6;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		ctx.moveTo(-7, -8.5);
+		ctx.lineTo(1, -6.2);
+		ctx.moveTo(4, -6.2);
+		ctx.lineTo(12, -9.2);
+		ctx.stroke();
+
+		// Prominent hooked, bulbous reddish-orange witch nose curving down
+		this.setupPath(ctx, '#EA580C', COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(2, -5);
+		ctx.bezierCurveTo(12, -5, 19, 1, 15, 7);
+		ctx.quadraticCurveTo(11, 9, 8, 4);
+		ctx.quadraticCurveTo(4, 2, 1, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#FDBA74';
+		ctx.beginPath();
+		ctx.ellipse(9, -1, 3.2, 1.4, 0.35, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Wet blonde-white hair strands framing the face
+		this.setupPath(ctx, '#FEF3C7', COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-11, -10);
+		ctx.quadraticCurveTo(-18, 2, -14, 18);
+		ctx.quadraticCurveTo(-10, 8, -9, -4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 9. Tall Multi-Peaked Crown of Icicles & Snow (Koruna z rampouchů)
+		this.setupPath(ctx, '#DBEAFE', COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-18, -9);
+		ctx.lineTo(-15, -22);
+		ctx.lineTo(-10, -16);
+		ctx.lineTo(-7, -30);
+		ctx.lineTo(-3, -20);
+		// Central tall glacial spire
+		ctx.lineTo(1, -37);
+		ctx.lineTo(6, -21);
+		ctx.lineTo(10, -31);
+		ctx.lineTo(13, -17);
+		ctx.lineTo(17, -23);
+		ctx.lineTo(19, -9);
+		// Brow brim with hanging icicle teeth
+		ctx.lineTo(15, -3);
+		ctx.lineTo(12, -9);
+		ctx.lineTo(8, -2);
+		ctx.lineTo(4, -9);
+		ctx.lineTo(0, -3);
+		ctx.lineTo(-5, -10);
+		ctx.lineTo(-9, -2);
+		ctx.lineTo(-13, -9);
+		ctx.lineTo(-16, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Inner crystalline blue facets & snow highlights on crown
+		ctx.fillStyle = '#60A5FA';
+		ctx.beginPath();
+		ctx.moveTo(-6, -12);
+		ctx.lineTo(1, -33);
+		ctx.lineTo(4, -13);
+		ctx.closePath();
+		ctx.fill();
+		ctx.fillStyle = '#FFFFFF';
+		ctx.beginPath();
+		ctx.moveTo(-2, -13);
+		ctx.lineTo(1, -34);
+		ctx.lineTo(2, -13);
+		ctx.closePath();
+		ctx.fill();
+
+		ctx.restore(); // end head group
+
+		// 10. Animated melting water droplets falling from crown, claws, hair & icicle hems
+		this.setupPath(ctx, '#38BDF8', COLORS.ink, 1.2);
+		const dropAnchors = [
+			{ x: -13, y: -28 },
+			{ x: 18, y: -29 },
+			{ x: 31 + clawSway * 0.4, y: -12 },
+			{ x: 36 + clawSway * 0.4, y: -8 },
+			{ x: -24, y: 12 },
+			{ x: 19, y: 14 },
+		];
+		for (let i = 0; i < dropAnchors.length; i++) {
+			const phase = (time * (1.35 + i * 0.16) + i * 0.27) % 1;
+			const dx = dropAnchors[i].x;
+			const dy = dropAnchors[i].y + phase * 11;
+			const r = 1.4 + (1 - phase) * 1.3;
+			ctx.beginPath();
+			ctx.moveTo(dx, dy - r * 1.4);
+			ctx.quadraticCurveTo(dx + r * 1.3, dy + r * 0.4, dx, dy + r * 1.6);
+			ctx.quadraticCurveTo(dx - r * 1.3, dy + r * 0.4, dx, dy - r * 1.4);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
 		ctx.restore();
 	},
 	drawFrostGiant(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
@@ -16357,7 +16848,7 @@ function drawEnemyRenderer(
     } else if (extraArgs && extraArgs.length > 0) {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
     } else {
-      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo, enemy);
     }
   }
 

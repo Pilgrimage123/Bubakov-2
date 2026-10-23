@@ -15,7 +15,7 @@ import { type EngineState, type PendingMilestoneChoice, createInitialEngineState
 import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
 import { getCachedHomingTarget } from './homing';
-import { isDirectTargetable } from './targeting';
+import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './targeting';
 import { tryEmitParticle, getParticleLimit } from './particles';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
@@ -1127,6 +1127,7 @@ export class GameEngine {
       contactTimer: 0,
       contactLeaveTimer: 0,
       animTime: 0,
+      semiVisible: resolvedId === 'jezinka_mraziva',
 
       interruptAttack() {
         this.isAttacking = false;
@@ -1372,15 +1373,21 @@ export class GameEngine {
           finalDamage *= holyMult;
         }
         finalDamage += (self.state.meta?.forgeLevel || 0) * 2;
+        let isCriticalHit = Boolean(options?.isCrit || options?.isCritical);
         if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
+          isCriticalHit = true;
           finalDamage = Math.round(finalDamage * 2.2);
           self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
         } else if (self.state.player) {
           const critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
           if (Math.random() < critChance) {
+            isCriticalHit = true;
             finalDamage = Math.round(finalDamage * 1.65);
             self.state.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
           }
+        }
+        if (!isCriticalHit && isJezinkaSemiVisible(this)) {
+          finalDamage *= JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER;
         }
         this.hp = Math.max(0, this.hp - finalDamage);
         this.hitFlashTimer = 0.12;

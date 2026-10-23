@@ -133,9 +133,9 @@ const ENEMIES: Record<string, EnemyStats> = {
 	jezinka_mraziva: {
 		id: "jezinka_mraziva", name: "Mrazivá jezinka", title: "Ledová čarodějnice z tajícího lesa",
 		category: "frost", hp: 520, speed: 48, damage: 74, attackCadence: "slow", attackInterval: 1.8,
-		radius: 20, mass: 1.8, foodResist: 0.35, poiseResist: 0.45, willpower: 0.55, xp: 9, coinValue: 6,
+		radius: 34, mass: 1.8, foodResist: 0.35, poiseResist: 0.45, willpower: 0.55, xp: 9, coinValue: 6,
 		method: "drawFrostJezinka", palette: "ice", weakness: "Oheň, horké brambory",
-		strength: "Silné údery, vysoká odolnost a poloprůhledné tělo; mimo 100 PC od lovce ji nelze přímo zvolit jako cíl",
+		strength: "Silné údery, vysoká odolnost a poloprůhledné tělo; mimo 100 PC od lovce ji nelze přímo zvolit jako cíl a v poloviditelnosti dostává jen poloviční poškození z nekritických zásahů",
 		lore: "Ledová jezinka s korunou z rampouchů. Pomalu se plíží závějemi a její drápy zanechávají na zemi jinovatku.", danger: "★★★★☆"
 	},
 	mrazivy_obr: {

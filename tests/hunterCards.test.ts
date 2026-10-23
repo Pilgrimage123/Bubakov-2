@@ -6,4 +6,9 @@ describe('Hunter Card data', () => {
     expect(hunter.role.trim().length).toBeGreaterThan(0);
     expect(hunter.abilityName.trim().length).toBeGreaterThan(0);
   });
+
+  it('Tulák passive applies +35 % damage to weapons and does not grant a bonus to his special ability', () => {
+    expect(HUNTER_DETAILS.wanderer.passive).toBe('Tulácký instinkt: +35 % poškození všech zbraní.');
+    expect(HUNTER_DETAILS.wanderer.passive).not.toContain('Pověstnou sukovici');
+  });
 });

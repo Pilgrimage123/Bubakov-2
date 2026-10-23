@@ -24,7 +24,7 @@ import {
 import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeaderCrowWave';
 import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virtualLeaderSnowmanHorde';
 import { getCachedHomingTarget } from './game/homing';
-import { isDirectTargetable } from './game/targeting';
+import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './game/targeting';
 import { stepCrowForaging } from './game/crowForaging';
 import { tryEmitParticle, tryEmitParticleBurst, getParticleLimit } from './game/particles';
 import { SpatialHash } from './game/spatialHash';
@@ -3351,11 +3351,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const ny = dist > 0.001 ? dy / dist : 0;
           const fearResist = Math.min(1, Math.max(0, e.willpower || 0));
           const fearDuration = 4.0 * (1 - fearResist);
-          const tulakMult = 1 + ((p.tulakDamageBonus || 0) / 100);
 
           if (dist <= innerRadius + e.radius) {
             // Blízký drtivý zásah sukovicí: silné zranění a masivní odhození bubáků kolem
-            const dmg = 185 * p.damageMultiplier * tulakMult;
+            const dmg = 185 * p.damageMultiplier;
             e.takeDamage(dmg, 'physical', nx * 850, ny * 850);
             e.poise = 0;
             pushDamageText(engineRef.current.texts, e.x, e.y - 40, 'PRÁSK! 🪵', '#FBBF24', false, 'hunterDamage');
@@ -3375,7 +3374,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               pushDamageText(engineRef.current.texts, e.x, e.y - 35, 'ODOLAL! 🛡️', '#E5E7EB', false, 'combatStates');
             }
             // Zranění a odhození i ve větší vzdálenosti
-            const outerDmg = 55 * p.damageMultiplier * tulakMult;
+            const outerDmg = 55 * p.damageMultiplier;
             e.takeDamage(outerDmg, 'physical', nx * 320, ny * 320);
           }
 
@@ -7973,6 +7972,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       contactTimer: 0,
       contactLeaveTimer: 0,
       animTime: Math.random() * 10,
+      semiVisible: resolvedId === 'jezinka_mraziva',
 
       hasShadowDefense: false,
       shadowVulnerabilityTimer: 0,
@@ -9724,7 +9724,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         this.y += (this.vy + this.kby) * dt;
       },
 
-      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean }) {
+      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean; isCrit?: boolean; isCritical?: boolean }) {
         if (this.isDefeated) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (pokud útok neignoruje úhyb např. Formanský bič)
@@ -9782,7 +9782,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
+        let isCriticalHit = Boolean(options?.isCrit || options?.isCritical);
         if (player && player.guaranteedCritTimer > 0) {
+          isCriticalHit = true;
           finalDmg = Math.round(finalDmg * 2.2);
           if (finalDmg >= 1) {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
@@ -9790,11 +9792,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else if (player) {
           const critChance = Math.max(0, player.luck ?? 0) * 0.001;
           if (Math.random() < critChance) {
+            isCriticalHit = true;
             finalDmg = Math.round(finalDmg * 1.65);
             if (finalDmg >= 1) {
               engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
             }
           }
+        }
+
+        if (!isCriticalHit && isJezinkaSemiVisible(this)) {
+          finalDmg *= JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER;
         }
 
         this.hp -= finalDmg;

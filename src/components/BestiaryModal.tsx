@@ -137,9 +137,11 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
           ? -5
           : m.id === 'drak'
           ? 12
+          : m.id === 'jezinka_mraziva'
+          ? 10
           : 0;
       const extraArgs = m.id === 'cert' ? [true] : m.id === 'drak' ? [false, false] : [];
-      const enemyToRender = tier >= 2 ? m : { ...m, palette: undefined };
+      const enemyToRender = tier >= 2 ? { ...m, semiVisible: false } : { ...m, palette: undefined, semiVisible: false };
 
       drawEnemyRenderer(m.method, ctx, cx, cy + extraY, elapsed, 0, false, enemyToRender, extraArgs);
       animId = requestAnimationFrame(render);

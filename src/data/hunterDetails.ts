@@ -50,7 +50,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     luck: 70,
     weaponId: 'bylinkova_fajfka',
     weapon: 'Bylinková fajfka – vonný oblak bylinného dýmu zraňuje běsy a léčí lovce.',
-    passive: 'Tulácký instinkt: +35 % poškození všech zbraní. Bonus posiluje i Pověstnou sukovici.',
+    passive: 'Tulácký instinkt: +35 % poškození všech zbraní.',
     ability: 'Pověstná sukovice (21 s): do 260 px způsobí základních 185 fyzických poškození, silně odhodí bubáky a vynuluje jejich postoj. Ve vnější zóně do 600 px způsobí 55 fyzického poškození a odhodí je. Obě zóny vyvolají paniku až na 4 s; Vůle ji zkracuje. Poškození se dále násobí aktivními bonusy.',
     cooldownSeconds: 21,
     playstyle: 'Nejvyšší základní Kuráž a výrazné poškození; magnet na sběr je kratší, proto se vyplatí pohybovat se přes kořist.',
