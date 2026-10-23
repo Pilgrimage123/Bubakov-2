@@ -361,7 +361,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_flurry: {
     id: 'melee_flurry',
     name: 'Svižná ruka',
-    ui_text: '+40 % nabíjení',
+    ui_text: '+40 % rychlost nabíjení',
     category: 'melee',
     stats: {
       area_bonus: 0.00,
@@ -394,7 +394,7 @@ export const MELEE_NORMAL_UPGRADES: Record<string, MeleeNormalUpgradeDef> = {
   melee_frenzy: {
     id: 'melee_frenzy',
     name: 'Zběsilé sekání',
-    ui_text: '+80 % nabíjení, -25 % velikost švihu',
+    ui_text: '+80 % rychlost nabíjení, -25 % velikost švihu',
     category: 'melee',
     stats: {
       area_bonus: -0.25,
@@ -478,7 +478,7 @@ export const AURA_NORMAL_UPGRADES: Record<string, AuraNormalUpgradeDef> = {
   aura_pulse: {
     id: 'aura_pulse',
     name: 'Vysoká frekvence',
-    ui_text: '+40 % nabíjení pulzů',
+    ui_text: '+40 % rychlost nabíjení pulzů',
     category: 'aura',
     stats: {
       area_bonus: 0.00,
@@ -564,7 +564,7 @@ export const PROJECTILE_NORMAL_UPGRADES: Record<string, ProjectileNormalUpgradeD
   cd_hyper: {
     id: 'cd_hyper',
     name: 'Rychlopalný mechanismus',
-    ui_text: '+40 % nabíjení',
+    ui_text: '+40 % rychlost nabíjení',
     category: 'projectile',
     stats: {
       cooldown_reduction: 0.30,
