@@ -155,6 +155,62 @@ var Lada = {
 		}
 		ctx.restore();
 	},
+	drawKrajanek(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
+		const dir = dx < 0 ? -1 : 1;
+		const moving = (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) && !fleeing;
+		const bob = moving ? Math.abs(Math.sin(time * 13)) * 3.5 : Math.sin(time * 2.2);
+		const leg = moving ? Math.sin(time * 13) * 10 : 0;
+		ctx.save(); ctx.translate(x, y - bob); ctx.scale(scale * dir, scale);
+		if (fleeing) { ctx.rotate(Math.PI / 2); ctx.translate(0, -15); }
+		this.setupPath(ctx, "#E9B82E", COLORS.ink, 3);
+		ctx.beginPath(); ctx.moveTo(-15, 2); ctx.quadraticCurveTo(-23, 18, -16 - leg * .25, 27); ctx.lineTo(-3, 28); ctx.lineTo(1, 13); ctx.quadraticCurveTo(9, 22, 14 + leg * .25, 28); ctx.lineTo(25, 27); ctx.quadraticCurveTo(28, 12, 14, 1); ctx.closePath(); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#B98167", COLORS.ink, 2); ctx.beginPath(); ctx.roundRect(-18, 13, 13, 12, 2); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#F7F5E9", COLORS.ink, 2); ctx.beginPath(); ctx.rect(-15, 26, 11, 18); ctx.rect(13, 26, 11, 18); ctx.fill(); ctx.stroke();
+		ctx.strokeStyle = "#56A6D7"; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(-15 + i * 3, 28); ctx.lineTo(-19 + i * 3, 43); ctx.moveTo(14 + i * 3, 28); ctx.lineTo(17 + i * 3, 43); ctx.stroke(); }
+		this.setupPath(ctx, "#3B3129", COLORS.ink, 3); ctx.beginPath(); ctx.roundRect(-29, 42, 22, 10, 4); ctx.roundRect(12, 42, 22, 10, 4); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#F8F5EA", COLORS.ink, 3); ctx.beginPath(); ctx.ellipse(0, -7, 23, 22, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(-21, -8, 9, 12, -.5, 0, Math.PI * 2); ctx.ellipse(20, -7, 9, 12, .5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#155DAD", COLORS.ink, 3); ctx.beginPath(); ctx.moveTo(-15, -24); ctx.lineTo(-20, 5); ctx.quadraticCurveTo(-9, 8, -6, 3); ctx.lineTo(0, -14); ctx.lineTo(7, 3); ctx.quadraticCurveTo(14, 9, 21, 4); ctx.lineTo(14, -24); ctx.closePath(); ctx.fill(); ctx.stroke();
+		for (let i = 0; i < 3; i++) { this.setupPath(ctx, "#FFD43B", COLORS.ink, 1.4); ctx.beginPath(); ctx.arc(-11, -13 + i * 9, 2.7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(12, -13 + i * 9, 2.7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+		this.setupPath(ctx, "#D91E24", COLORS.ink, 2.5); ctx.beginPath(); ctx.moveTo(-13, -20); ctx.quadraticCurveTo(0, -13, 15, -20); ctx.lineTo(11, -10); ctx.quadraticCurveTo(0, -3, -10, -11); ctx.closePath(); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#C98B49", COLORS.ink, 2.5); ctx.beginPath(); ctx.moveTo(16, -29); ctx.quadraticCurveTo(26, -35, 31, -21); ctx.lineTo(28, -6); ctx.quadraticCurveTo(23, -1, 15, -8); ctx.closePath(); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#9A612F", COLORS.ink, 3); ctx.beginPath(); ctx.moveTo(26, 10); ctx.lineTo(35, -32); ctx.quadraticCurveTo(38, -39, 43, -34); ctx.stroke();
+		this.setupPath(ctx, "#F4B17C", COLORS.ink, 2.5); ctx.beginPath(); ctx.ellipse(0, -34, 18, 19, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#9A5728", COLORS.ink, 2.3); ctx.beginPath(); ctx.arc(-1, -35, 18, 3.3, 6.0); ctx.quadraticCurveTo(11, -44, 17, -34); ctx.quadraticCurveTo(10, -47, 7, -43); ctx.quadraticCurveTo(-8, -50, -17, -38); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.fillStyle = "rgba(238,74,66,0.5)"; ctx.beginPath(); ctx.ellipse(-11, -32, 4, 3, 0, 0, Math.PI * 2); ctx.ellipse(10, -32, 4, 3, 0, 0, Math.PI * 2); ctx.fill();
+		ctx.fillStyle = COLORS.ink; ctx.beginPath(); ctx.ellipse(-5, -38, 2, 3, 0, 0, Math.PI * 2); ctx.ellipse(6, -38, 2, 3, 0, 0, Math.PI * 2); ctx.fill();
+		this.setupPath(ctx, "#C94735", COLORS.ink, 1.6); ctx.beginPath(); ctx.ellipse(0, -29, 4, 3, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#6A9C47", COLORS.ink, 3); ctx.beginPath(); ctx.moveTo(-20, -41); ctx.quadraticCurveTo(-30, -58, -16, -67); ctx.quadraticCurveTo(0, -75, 17, -61); ctx.quadraticCurveTo(25, -54, 25, -43); ctx.closePath(); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#3D6C91", COLORS.ink, 2.5); ctx.beginPath(); ctx.moveTo(-23, -45); ctx.quadraticCurveTo(0, -40, 27, -45); ctx.lineTo(22, -51); ctx.quadraticCurveTo(0, -46, -20, -52); ctx.closePath(); ctx.fill(); ctx.stroke();
+		this.setupPath(ctx, "#EAF7F8", COLORS.ink, 2); ctx.beginPath(); ctx.moveTo(3, -56); ctx.quadraticCurveTo(-8, -73, -1, -90); ctx.quadraticCurveTo(12, -83, 11, -62); ctx.closePath(); ctx.fill(); ctx.stroke();
+		ctx.strokeStyle = "#315D2B"; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(12, -49); ctx.lineTo(24, -78); ctx.moveTo(17, -62); ctx.lineTo(29, -70); ctx.stroke();
+		ctx.fillStyle = "#B66CD2"; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.ellipse(22 + i * 2.3, -65 - i * 2.2, 2.3, 4, -.7, 0, Math.PI * 2); ctx.fill(); }
+		ctx.restore();
+	},
+	drawKrajanekFlats(ctx, flats) {
+		if (!flats || !flats.length) return;
+		for (let i = 0; i < flats.length; i++) {
+			const flat = flats[i]; ctx.save(); ctx.translate(flat.x, flat.y); ctx.rotate(flat.angle || 0); ctx.globalAlpha = Math.min(.72, flat.life / 2.5);
+			ctx.fillStyle = "#4A3129"; ctx.beginPath(); ctx.ellipse(0, 4, 18 * flat.scale, 5.5 * flat.scale, 0, 0, Math.PI * 2); ctx.fill();
+			ctx.fillStyle = "#2E2927"; ctx.beginPath(); ctx.ellipse(-1, 0, 10 * flat.scale, 3.7 * flat.scale, -.08, 0, Math.PI * 2); ctx.ellipse(10 * flat.scale, -1, 4 * flat.scale, 3.2 * flat.scale, .15, 0, Math.PI * 2); ctx.fill();
+			ctx.strokeStyle = "#C2A078"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(0, 5, 21 * flat.scale, 7 * flat.scale, 0, .1, Math.PI - .1); ctx.stroke(); ctx.restore();
+		}
+	},
+	drawKrajanekRide(ctx, x, y, time, dx, dy, scale = 1) {
+		const phase = time * 5.5; const spin = time * 3.7; ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+		ctx.fillStyle = "rgba(29,23,18,.26)"; ctx.beginPath(); ctx.ellipse(0, 24, 61, 19, 0, 0, Math.PI * 2); ctx.fill();
+		ctx.save(); ctx.translate(0, 2 + Math.sin(phase) * 2); ctx.rotate(spin); this.setupPath(ctx, "#A9A9A1", COLORS.ink, 4); ctx.beginPath(); ctx.arc(0, 0, 47, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+		ctx.strokeStyle = "#777A77"; ctx.lineWidth = 2; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 10, Math.sin(a) * 10); ctx.lineTo(Math.cos(a) * (39 - i % 3 * 4), Math.sin(a) * (39 - i % 3 * 4)); ctx.stroke(); }
+		ctx.fillStyle = "#D4D1C5"; for (let i = 0; i < 15; i++) { const a = i * 2.399; const rr = 12 + (i % 5) * 6; ctx.beginPath(); ctx.ellipse(Math.cos(a) * rr, Math.sin(a) * rr, 2.3, 1.4, a, 0, Math.PI * 2); ctx.fill(); } ctx.restore();
+		this.setupPath(ctx, "#B77C3C", COLORS.ink, 3); ctx.beginPath(); ctx.ellipse(0, 2, 15, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.fillStyle = "#5C3822"; ctx.beginPath(); ctx.ellipse(0, 2, 5.5, 5, 0, 0, Math.PI * 2); ctx.fill();
+		this.drawKrajanek(ctx, 0, -39, time, dx, dy, false, .78);
+		ctx.save(); ctx.translate(26, -77); ctx.rotate(-.95 + Math.sin(phase) * .78); this.setupPath(ctx, "#A36A37", COLORS.ink, 2.6); ctx.beginPath(); ctx.moveTo(-1, 7); ctx.lineTo(3, -28); ctx.stroke(); this.setupPath(ctx, "#777A78", COLORS.ink, 3); ctx.beginPath(); ctx.roundRect(-8, -36, 22, 12, 3); ctx.fill(); ctx.stroke(); ctx.restore();
+		if (Math.abs(Math.sin(phase * .5)) > .28) {
+			ctx.strokeStyle = "#FFD22F"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+			for (let i = 0; i < 7; i++) { const a = i * Math.PI * 2 / 7 + time * .9; const inner = 43 + i % 3 * 3; const outer = inner + 8 + i % 2 * 5; ctx.beginPath(); ctx.moveTo(Math.cos(a) * inner, Math.sin(a) * inner); ctx.lineTo(Math.cos(a) * outer, Math.sin(a) * outer); ctx.stroke(); }
+			ctx.fillStyle = "#E5E7EB"; for (let i = 0; i < 5; i++) { const a = i * 2.4 + time; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 54, Math.sin(a) * 54); ctx.lineTo(Math.cos(a + .2) * 61, Math.sin(a + .2) * 61); ctx.lineTo(Math.cos(a + .4) * 55, Math.sin(a + .4) * 55); ctx.closePath(); ctx.fill(); }
+		}
+		ctx.restore();
+	},
 	drawWanderer(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
 		const dir = dx < 0 ? -1 : 1;
 		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1) && !fleeing;

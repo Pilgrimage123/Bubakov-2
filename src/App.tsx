@@ -11,6 +11,12 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createInitialEngineState, type EngineState } from './game/engineState';
 import { FrameProfiler } from './game/frameProfiler';
 import { GameEngine } from './game/engine';
+import {
+  getKrajanekBlockingHp,
+  KRAJANEK_RIDE_DURATION,
+  KRAJANEK_RIDE_SPEED_MULTIPLIER,
+  stepKrajanekRide,
+} from './game/krajanekAbility';
 import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeaderCrowWave';
 import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virtualLeaderSnowmanHorde';
 import { getCachedHomingTarget } from './game/homing';
@@ -2494,11 +2500,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     resetGlobalGlyphAtlas();
 
     const baseMaxHp =
-      type === 'wanderer' ? 230 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
+      type === 'krajanek' ? 135 : type === 'wanderer' ? 230 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
     const baseSpeed =
-      type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
+      type === 'krajanek' ? 180 : type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
     const basePickup =
-      type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
+      type === 'krajanek' ? 115 : type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
 
     const initialWeapons =
       customWeapons && customWeapons.filter((w) => w.level > 0).length > 0
@@ -2513,6 +2519,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ensureWeaponMilestones(mapped);
             return mapped;
           })
+        : type === 'krajanek'
+        ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'wanderer'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : type === 'shepherd'
@@ -2586,6 +2594,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       regenLevel: meta.regenLevel || 0,
       regenTimer: 0,
       invulnerabilityTimer: 0,
+      krajanekRideTimer: 0,
+      krajanekRideTickTimer: 0,
+      krajanekUpgradeCount: 0,
+      krajanekFlats: [] as Array<{ x: number; y: number; angle: number; scale: number; life: number }>,
       intangibleTimer: 0,
       guaranteedCritTimer: 0,
       facingAngle: 0,
@@ -2603,7 +2615,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       hromnickaPulseTimer: 0,
       hromnickaPulseRadius: 0,
       ultCd: 0,
-      ultMaxCd: type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
+      ultMaxCd: type === 'krajanek' ? 30 : type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
@@ -2663,7 +2675,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Take damage from mob contact or hazard attacks
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
         if (gameStateRef.current !== 'playing' || this.hp <= 0) return;
-        if (this.invulnerabilityTimer > 0 || (this.intangibleTimer && this.intangibleTimer > 0)) return;
+        if (
+          this.invulnerabilityTimer > 0 ||
+          (this.intangibleTimer && this.intangibleTimer > 0) ||
+          (this.type === 'krajanek' && (this.krajanekRideTimer || 0) > 0)
+        ) return;
         if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', COLORS.mustard, true));
           return;
@@ -2874,7 +2890,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
-        if (this.type === 'wanderer') {
+        if (this.type === 'krajanek') {
+          Lada.drawKrajanekFlats(ctx, this.krajanekFlats || [], engineRef.current?.uiTime || 0);
+          if ((this.krajanekRideTimer || 0) > 0) {
+            Lada.drawKrajanekRide(ctx, this.x, this.y, engineRef.current?.uiTime || this.animTime || 0, this.lastDx, this.lastDy, 1);
+          } else {
+            Lada.drawKrajanek(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          }
+        } else if (this.type === 'wanderer') {
           Lada.drawWanderer(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
         } else if (this.type === 'shepherd') {
           Lada.drawShepherd(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
@@ -3127,7 +3150,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       bestiaryKills: {},
       villageStoryRead: {},
       highestSurviveTime: 0,
-      unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
+      unlockedHunters: { krajanek: true, wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
       unlockedWeapons: { povidlove_buchty: true, osikovy_prut: true, hromnicka: true },
       hunterKillCounts: {},
       weaponKillCounts: {},
@@ -3159,7 +3182,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     p.ultCd = p.ultMaxCd * (p.cooldownMultiplier || 1);
     sound.slash();
 
-    if (p.type === 'wanderer') {
+    if (p.type === 'krajanek') {
+      p.krajanekUpgradeCount = getGrandfatherInflatingPurchaseCount(grandfatherPurchaseIdsRef.current);
+      p.krajanekRideTimer = KRAJANEK_RIDE_DURATION;
+      p.krajanekRideTickTimer = 0;
+      p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, KRAJANEK_RIDE_DURATION);
+      sound.heavyHit();
+      pushDamageText(engineRef.current.texts, p.x, p.y - 70, 'JÍZDA NA ŽERNOVU! 🪨', '#FDE047', true, 'hunterDamage');
+    } else if (p.type === 'wanderer') {
       // Pověstná sukovice: zatočí kolem sebe sukovitou holí a zraní a odhodí hodně bubáky kolem,
       // a nepřátelé ve větší vzdálenosti kolem jsou po 4s vystrašení a rychle utíkají pryč (resistable with fear)
       sound.sukoviceWhirl();
@@ -5316,7 +5346,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1) *
                 hazardSpeedMult *
                 ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
-              const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
+              const effectiveSpeed =
+                BASE_PLAYER_SPEED *
+                buffMultiplier *
+                (player.type === 'krajanek' && player.krajanekRideTimer > 0 ? KRAJANEK_RIDE_SPEED_MULTIPLIER : 1);
               moveVx = (mx / len) * effectiveSpeed;
               moveVy = (my / len) * effectiveSpeed;
               player.lastDx = mx;
@@ -5340,6 +5373,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const dy = player.y - e.y;
               const dist = Math.hypot(dx, dy);
               const collisionReach = player.radius + e.radius;
+
+              if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
+                const blocksRide = (e.maxHp ?? e.hp ?? 0) > getKrajanekBlockingHp(player.krajanekUpgradeCount || 0);
+                if (blocksRide && dist < collisionReach && moveVx * -dx + moveVy * -dy > 0) {
+                  moveVx = 0;
+                  moveVy = 0;
+                }
+                continue;
+              }
 
               if (dist < collisionReach) {
                 const overlap = collisionReach - dist;
@@ -5378,6 +5420,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Výsledný posun hráče
             player.x += (moveVx + pushX) * dt;
             player.y += (moveVy + pushY) * dt;
+
+            if (player.type === 'krajanek') {
+              const rideActive = player.krajanekRideTimer > 0;
+              const candidateCount = rideActive
+                ? enemySpatialHashRef.current.queryCircleInto(player.x, player.y, 260, terrainSpatialResultsRef.current)
+                : 0;
+              const sparkBeat = stepKrajanekRide(player, dt, terrainSpatialResultsRef.current, candidateCount);
+              if (sparkBeat && engine.particles.length < activeMaxParticlesRef.current) {
+                const colors = ['#FDE047', '#FFF7C2', '#F59E0B', '#D1D5DB'];
+                for (let i = 0; i < 8 && engine.particles.length < activeMaxParticlesRef.current; i++) {
+                  const angle = Math.random() * Math.PI * 2;
+                  const speed = 90 + Math.random() * 150;
+                  engine.particles.push({
+                    x: player.x + Math.cos(angle) * 16,
+                    y: player.y + Math.sin(angle) * 16,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 24,
+                    life: 0.2 + Math.random() * 0.2,
+                    color: colors[i % colors.length],
+                    size: 2 + Math.random() * 2.5,
+                  });
+                }
+              }
+            }
 
             if (moveVx !== 0 || moveVy !== 0) {
               player.facingAngle = Math.atan2(moveVy, moveVx);
@@ -5849,6 +5915,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Fire weapons
             for (const w of player.weapons) {
+              if (player.type === 'krajanek' && player.krajanekRideTimer > 0) continue;
               w.cd -= dt;
               if (w.cd <= 0) {
                 const wDef = WEAPONS[w.id];
@@ -11044,7 +11111,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ? (engineRef.current.player?.type === 'wanderer'
                     ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="wood_log" size={18} /> POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>
                     : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={18} /> SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>)
-                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
+                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'krajanek' ? 'Jízda na žernovu' : engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
             </button>
           )}
         </div>
@@ -11577,6 +11644,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             {/* Character Selection Grid with animated canvas portraits */}
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
               {/* Poutník - Výchozí odemčený lovec */}
+              <div
+                className="char-card"
+                style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
+                onClick={() => startGame('krajanek')}
+                title="Krajánek – odemčený výchozí lovec"
+              >
+                <LadaCardCorners variant="default" showBottomCorners={true} />
+                <span className="char-card-unlocked-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="checkmark" size={13} /> Odemčeno</span>
+                <img src="/images/krajanek.svg" alt="Krajánek s červenou puntíkovanou mošnou" width={180} height={180} className="portrait-canvas hunter-portrait-compact" style={{ width: '180px', height: '180px', objectFit: 'contain', display: 'block', alignSelf: 'center' }} />
+                <h3 style={{ fontSize: '1.6rem', margin: '4px 0 2px 0' }}>Krajánek</h3>
+                <div><span className="hunter-tier-stamp tier-stamp-4">Výchozí vesnický lovec</span></div>
+                {renderHunterInfoCard(HUNTER_DETAILS.krajanek)}
+                <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }} onClick={(event) => { event.stopPropagation(); sound.coin(); setSelectedHunterInfo(HUNTER_DETAILS.krajanek); }}>
+                    <GameIcon icon="scroll" size={14} /> Podrobné statistiky a schopnosti
+                  </button>
+                  <button className="lada-btn btn-small" style={{ width: '100%', fontSize: '0.95rem' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do noci <GameIcon icon="sword" size={16} /></span>
+                  </button>
+                </div>
+              </div>
+
               <div
                 className="char-card"
                 style={{ minHeight: 0, minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', overflowWrap: 'anywhere' }}
