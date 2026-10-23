@@ -1,6 +1,6 @@
 export type Season = 'autumn' | 'winter' | string;
 export type GameLevelId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type CharacterType = 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
+export type CharacterType = 'krajanek' | 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
 
 export type DropType =
   | 'coin'

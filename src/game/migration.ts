@@ -46,6 +46,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
 
   return {
     ...parsed,
+    unlockedHunters: { ...(parsed.unlockedHunters || {}), krajanek: true, wanderer: true },
     performanceProfile: parsed.performanceProfile === 'fidelity' || parsed.performanceProfile === 'balanced' || parsed.performanceProfile === 'performance'
       ? parsed.performanceProfile
       : parsed.performanceMode ? 'performance' : 'balanced',
@@ -100,7 +101,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     trophiesClaimed: {},
     bestiaryKills: {},
     highestSurviveTime: 0,
-    unlockedHunters: { wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
+    unlockedHunters: { krajanek: true, wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
     unlockedWeapons: { osikovy_prut: true, povidlove_buchty: true, hromnicka: true },
     hunterKillCounts: {},
     weaponKillCounts: {},
