@@ -148,7 +148,7 @@ const ENEMIES: Record<string, EnemyStats> = {
 	},
 	tajici_snehulak: {
 		id: "tajici_snehulak", name: "Tající sněhulák", title: "Tající hromádka sněhu s koštětem",
-		category: "frost", hp: 190, speed: 52, damage: 24, attackCadence: "normal", attackInterval: 1.2,
+		category: "frost", hp: 280, speed: 52, damage: 24, attackCadence: "normal", attackInterval: 1.2,
 		radius: 20, mass: 1.3, foodResist: 0.15, poiseResist: 0.25, willpower: 0.2, xp: 2, coinValue: 2,
 		method: "drawMeltingSnowman", palette: "ice", weakness: "Oheň, horké jídlo",
 		strength: "Horda 40 tajících sněhuláků, zanechává zpomalující vodní louže",
