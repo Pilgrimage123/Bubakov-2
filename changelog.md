@@ -1,3 +1,8 @@
+## 2026-10-23 — Sjednocení názvu bonusu „Nabíjení“
+
+- Ve všech kontrolovaných hráčských popisech vylepšení používáme jednotně výraz „nabíjení“ bez doplňků typu „rychlost nabíjení“ nebo „rychlost útoku“.
+- Sjednocen popis Opravdové kávy i dočasného bonusu z pivního tácku; mechanické hodnoty se nemění.
+
 ## 2026-10-23 — Zpřesnění popisu Opravdové kávy
 
 - V Dědečkově nůši se bonus Opravdové kávy nyní popisuje jako „+15 % rychlost útoku všech zbraní“, aby se nepletl s prodloužením nabíjení.
