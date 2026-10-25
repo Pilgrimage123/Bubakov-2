@@ -12,7 +12,7 @@ export const SNOWMAN_HORDE_WOBBLE_RADIUS = 10;
 export const SNOWMAN_HORDE_POINT_MULTIPLIER = 0.35;
 export const SNOWMAN_HORDE_HIT_RADIUS = 20;
 export const SNOWMAN_HORDE_LEADER_SPEED = 40;
-export const SNOWMAN_HORDE_MELT_DPS = 8.0;
+export const SNOWMAN_HORDE_MELT_DPS = 12.0;
 export const SNOWMAN_HORDE_MAX_LEASH_SQ = 320 * 320; // 102400
 export const SNOWMAN_PUDDLE_DURATION = 4.0;
 export const SNOWMAN_PUDDLE_FADE_START = 1.0;
@@ -544,7 +544,7 @@ export class VirtualLeaderSnowmanHorde {
         enemy.y = nextY;
         enemy.vx = stepVx;
         enemy.vy = stepVy;
-        enemy.animTime = this.waveAge;
+        enemy.animTime = this.waveAge + this.phaseOffset[i];
 
         // Contact attack damage check
         const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;

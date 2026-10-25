@@ -96,7 +96,8 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
   const monsterList = Object.values(ENEMIES).filter(
     (m) => selectedCategory === 'all' || m.category === selectedCategory
   );
-  const currentMonster = ENEMIES[selectedId] || monsterList[0] || ENEMIES.rarach;
+  const selectedMonsterInList = monsterList.find((m) => m.id === selectedId);
+  const currentMonster = selectedMonsterInList || monsterList[0] || ENEMIES.rarach;
   const currentKills = bestiaryKills[currentMonster.id] || 0;
   const enemyProg = getEnemyProgress(currentMonster.id, currentKills);
 
@@ -255,6 +256,12 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
               }}
               onClick={() => {
                 setSelectedCategory(cat.id);
+                if (cat.id !== 'prefixes') {
+                  const list = Object.values(ENEMIES).filter((m) => cat.id === 'all' || m.category === cat.id);
+                  if (list.length > 0 && !list.some((m) => m.id === selectedId)) {
+                    setSelectedId(list[0].id);
+                  }
+                }
                 sound.coin();
               }}
             >

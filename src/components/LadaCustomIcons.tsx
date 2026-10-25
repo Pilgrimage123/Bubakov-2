@@ -1179,31 +1179,53 @@ export const LadaRoastedPotatoIcon: React.FC<LadaIconProps> = ({ size = '1.2em',
 );
 
 /**
- * Village grandmother in polka-dot kerchief (👵 / granny)
+ * Village grandmother in white kerchief with blue floral motifs (👵 / granny / babicka)
  */
 export const LadaGrannyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
   <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Babička v šátku" {...props}>
     <g className="lada-anim-float">
-      {/* Red folk kerchief with tied knot */}
+      {/* Dark brown fringed shawl on shoulders */}
       <path
-        d="M 9 20 C 7 11, 29 11, 27 20 C 27 28, 22 31, 18 31 C 14 31, 9 28, 9 20 Z"
-        fill="#C83E31"
+        d="M 6 33 C 7 27, 12 25, 18 25 C 24 25, 29 27, 30 33 Z"
+        fill="#4E3629"
+        stroke="#1A1612"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
+      {/* White folk kerchief with tied knot under chin */}
+      <path
+        d="M 8 19 C 6 9, 30 9, 28 19 C 28 27, 23 30, 18 30 C 13 30, 8 27, 8 19 Z"
+        fill="#F4F1EA"
         stroke="#1A1612"
         strokeWidth="2.4"
         strokeLinejoin="round"
       />
-      {/* White face oval */}
-      <ellipse cx="18" cy="19" rx="6.5" ry="7" fill="#FAF5E8" stroke="#1A1612" strokeWidth="1.8" />
-      {/* Smiling eyes and kind smile */}
-      <path d="M 14 17 C 15 15, 17 15, 17 17" fill="none" stroke="#1A1612" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 19 17 C 20 15, 22 15, 22 17" fill="none" stroke="#1A1612" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M 16 22 C 17 24, 19 24, 20 22" fill="none" stroke="#C83E31" strokeWidth="1.6" strokeLinecap="round" />
-      {/* Polka dots on kerchief */}
-      <circle cx="10" cy="15" r="1" fill="#FFFDF6" />
-      <circle cx="26" cy="15" r="1" fill="#FFFDF6" />
-      <circle cx="18" cy="10" r="1.1" fill="#FFFDF6" />
-      <circle cx="12" cy="27" r="1" fill="#FFFDF6" />
-      <circle cx="24" cy="27" r="1" fill="#FFFDF6" />
+      {/* Kerchief knot & ends under chin */}
+      <path
+        d="M 14 28 L 11 33 L 16 32 L 18 29 L 20 32 L 25 33 L 22 28 Z"
+        fill="#F4F1EA"
+        stroke="#1A1612"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      {/* Warm kind face oval */}
+      <ellipse cx="18" cy="19.5" rx="6.5" ry="6.8" fill="#F5C396" stroke="#1A1612" strokeWidth="1.8" />
+      {/* Silver parted hair at forehead */}
+      <path d="M 12 16 C 14 13, 17 13, 18 15 C 19 13, 22 13, 24 16" fill="none" stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" />
+      {/* Smiling eyes, rosy cheeks and kind smile */}
+      <circle cx="15.2" cy="18.5" r="1.2" fill="#1A1612" />
+      <circle cx="20.8" cy="18.5" r="1.2" fill="#1A1612" />
+      <circle cx="13.8" cy="21" r="1.8" fill="#E05A47" opacity="0.55" />
+      <circle cx="22.2" cy="21" r="1.8" fill="#E05A47" opacity="0.55" />
+      <path d="M 15.5 22.5 C 17 24.2, 19 24.2, 20.5 22.5" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Blue & red floral motifs on white kerchief */}
+      <circle cx="10.5" cy="14.5" r="1.4" fill="#2B6CB0" />
+      <circle cx="25.5" cy="14.5" r="1.4" fill="#2B6CB0" />
+      <circle cx="18" cy="10.5" r="1.5" fill="#2B6CB0" />
+      <circle cx="14" cy="11.5" r="1.1" fill="#D9463E" />
+      <circle cx="22" cy="11.5" r="1.1" fill="#D9463E" />
+      <circle cx="10.5" cy="22" r="1.3" fill="#2B6CB0" />
+      <circle cx="25.5" cy="22" r="1.3" fill="#2B6CB0" />
     </g>
   </svg>
 );
@@ -2261,36 +2283,39 @@ export const LadaBoneButtonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
 );
 
 /**
- * Folk girl Barunka with braided pigtails and red ribbon (👧 / barunka / devcatko)
+ * Little granddaughter Barunka with red bow on braid & wildflower bouquet (👧 / barunka / devcatko)
  */
 export const LadaBarunkaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Barunka s copy" {...props}>
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vnučka Barunka s kytičkou" {...props}>
     <g className="lada-anim-float">
-      {/* Left braid */}
-      <path d="M 10 18 Q 6 23 8 28" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
-      <circle cx="8" cy="28" r="2" fill="#DC2626" />
-      {/* Right braid */}
-      <path d="M 26 18 Q 30 23 28 28" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
-      <circle cx="28" cy="28" r="2" fill="#DC2626" />
-      {/* Face oval */}
-      <ellipse cx="18" cy="19" rx="7.5" ry="8" fill="#FAF5E8" stroke="#1A1612" strokeWidth="2.2" />
-      {/* Hair cap */}
+      {/* Red bodice & white puffed sleeves */}
+      <circle cx="10" cy="29" r="3.2" fill="#F4F1EA" stroke="#1A1612" strokeWidth="1.8" />
+      <circle cx="26" cy="29" r="3.2" fill="#F4F1EA" stroke="#1A1612" strokeWidth="1.8" />
+      <path d="M 12 25 L 24 25 L 25 33 L 11 33 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="2" strokeLinejoin="round" />
+      {/* Side braid & bright red ribbon bow */}
+      <path d="M 11 18 Q 7 22 8 27" fill="none" stroke="#7C4D2B" strokeWidth="3.2" strokeLinecap="round" />
+      <polygon points="8,26 4,24 5,29 8,27 11,29 12,24" fill="#D9463E" stroke="#1A1612" strokeWidth="1.4" strokeLinejoin="round" />
+      {/* Sweet child face */}
+      <circle cx="18" cy="17.5" r="7" fill="#F5C396" stroke="#1A1612" strokeWidth="2.1" />
+      {/* Parted chestnut-brown hair */}
       <path
-        d="M 10 17 C 10 10, 26 10, 26 17 C 23 14, 13 14, 10 17 Z"
-        fill="#78350F"
+        d="M 10.8 17 C 10.5 11, 14.5 9, 18 10.5 C 21.5 9, 25.5 11, 25.2 17 C 22.5 14, 19.5 13, 18 14.5 C 16.5 13, 13.5 14, 10.8 17 Z"
+        fill="#7C4D2B"
         stroke="#1A1612"
         strokeWidth="2"
+        strokeLinejoin="round"
       />
-      {/* Rosy cheeks */}
-      <circle cx="14" cy="21" r="1.5" fill="#F87171" opacity="0.7" />
-      <circle cx="22" cy="21" r="1.5" fill="#F87171" opacity="0.7" />
-      {/* Kind bead eyes */}
-      <circle cx="15" cy="18" r="1.3" fill="#1A1612" />
-      <circle cx="21" cy="18" r="1.3" fill="#1A1612" />
-      {/* Smiling mouth */}
-      <path d="M 16 23 Q 18 25 20 23" fill="none" stroke="#DC2626" strokeWidth="1.6" strokeLinecap="round" />
-      {/* Red hair ribbon on top */}
-      <polygon points="18,10 15,7 18,9 21,7" fill="#DC2626" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Eyes, rosy cheeks & smile */}
+      <circle cx="15.5" cy="17.5" r="1.2" fill="#1A1612" />
+      <circle cx="20.5" cy="17.5" r="1.2" fill="#1A1612" />
+      <circle cx="13.8" cy="19.8" r="1.6" fill="#E05A47" opacity="0.55" />
+      <circle cx="22.2" cy="19.8" r="1.6" fill="#E05A47" opacity="0.55" />
+      <path d="M 16 21 Q 18 22.5 20 21" fill="none" stroke="#1A1612" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Wildflower bouquet in front */}
+      <circle cx="18" cy="30" r="4" fill="#3A7D2C" stroke="#1A1612" strokeWidth="1.5" />
+      <circle cx="16.2" cy="29" r="1.8" fill="#E63946" stroke="#1A1612" strokeWidth="1" />
+      <circle cx="19.8" cy="29.2" r="1.7" fill="#FBBF24" stroke="#1A1612" strokeWidth="1" />
+      <circle cx="18" cy="27.2" r="1.6" fill="#3B82F6" stroke="#1A1612" strokeWidth="1" />
     </g>
   </svg>
 );
@@ -2856,6 +2881,125 @@ export const LadaVillageSunIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       <circle cx="18" cy="18" r="5" fill="#F59E0B" stroke="#1A1612" strokeWidth="1.5" />
       {/* Sun glint spark */}
       <circle cx="16" cy="16" r="1.3" fill="#FFFDF0" className="lada-anim-glint" />
+    </g>
+  </svg>
+);
+
+/**
+ * Barefoot Shepherd boy with feather in hair, red neckerchief, blue vest & wooden flute (pasacek / shepherd)
+ */
+export const LadaPasacekIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pasáček s píšťalkou a pírkem" {...props}>
+    <g className="lada-anim-float">
+      {/* Blue vest shoulders & red neckerchief */}
+      <path
+        d="M 7 33 C 8 27, 12 25, 18 25 C 24 25, 28 27, 29 33 Z"
+        fill="#1D5BA6"
+        stroke="#1A1612"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
+      <circle cx="13" cy="30" r="1.2" fill="#F59E0B" />
+      <circle cx="23" cy="30" r="1.2" fill="#F59E0B" />
+      {/* Red neckerchief */}
+      <path
+        d="M 11 25 C 14 28, 22 28, 25 25 L 21 31 L 18 28 L 15 31 Z"
+        fill="#D9463E"
+        stroke="#1A1612"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      {/* Long barred feather behind ear */}
+      <path
+        d="M 11 14 C 7 8, 6 3, 9 2 C 12 4, 13 9, 13 14 Z"
+        fill="#D6C7B2"
+        stroke="#1A1612"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="8.8" cy="5.5" r="1.5" fill="#6B4423" />
+      <line x1="11.5" y1="13" x2="8.8" y2="4" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Cheerful boy face */}
+      <circle cx="18" cy="18.5" r="7.5" fill="#F5C396" stroke="#1A1612" strokeWidth="2.2" />
+      {/* Tousled chestnut-brown hair */}
+      <path
+        d="M 10 17 C 9 11, 13 8, 16 9 L 17 6.5 L 20 9 L 23 7.5 L 24 10 C 26 11, 27 14, 25.5 17 C 23 13.5, 14 13.5, 10 17 Z"
+        fill="#7C4D2B"
+        stroke="#1A1612"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Bright eyes, rosy cheeks & smile */}
+      <circle cx="15.5" cy="18" r="1.3" fill="#1A1612" />
+      <circle cx="20.8" cy="18" r="1.3" fill="#1A1612" />
+      <circle cx="13.8" cy="20.5" r="1.7" fill="#E05A47" opacity="0.6" />
+      <circle cx="22.2" cy="20.5" r="1.7" fill="#E05A47" opacity="0.6" />
+      <path d="M 16 21.8 Q 18.2 23.5 20.5 21.8" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Wooden shepherd's flute (píšťalka) held diagonally */}
+      <path
+        d="M 22 22 L 32 15 L 33.5 17.2 L 23.5 24 Z"
+        fill="#D4A359"
+        stroke="#1A1612"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <circle cx="26.5" cy="20.2" r="0.7" fill="#1A1612" />
+      <circle cx="29" cy="18.5" r="0.7" fill="#1A1612" />
+    </g>
+  </svg>
+);
+
+/**
+ * Devout Sexton / Churchwarden in brown fedora hat with golden cross & holy water sprinkler (kostelnik / sexton)
+ */
+export const LadaKostelnikIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pobožný kostelník s kropáčem" {...props}>
+    <g className="lada-anim-float">
+      {/* Olive-brown coat & dark waistcoat shoulders */}
+      <path
+        d="M 6 34 C 7 27, 11 25, 17 25 C 23 25, 27 27, 28 34 Z"
+        fill="#7C5A3F"
+        stroke="#1A1612"
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
+      {/* Golden cross on chest */}
+      <line x1="17" y1="26" x2="17" y2="33" stroke="#F59E0B" strokeWidth="2.2" strokeLinecap="round" />
+      <line x1="14.5" y1="28.5" x2="19.5" y2="28.5" stroke="#F59E0B" strokeWidth="2.2" strokeLinecap="round" />
+      {/* Grey hair tufts at sides */}
+      <circle cx="9.5" cy="19" r="2.6" fill="#9CA3AF" stroke="#1A1612" strokeWidth="1.6" />
+      <circle cx="24.5" cy="19" r="2.6" fill="#9CA3AF" stroke="#1A1612" strokeWidth="1.6" />
+      {/* Stern face */}
+      <circle cx="17" cy="19" r="7.2" fill="#F5C396" stroke="#1A1612" strokeWidth="2.2" />
+      {/* Stern eyes & eyebrows */}
+      <circle cx="14.5" cy="17.5" r="1.2" fill="#1A1612" />
+      <circle cx="19.5" cy="17.5" r="1.2" fill="#1A1612" />
+      <line x1="12.5" y1="15.5" x2="16" y2="16" stroke="#4B5563" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="18" y1="16" x2="21.5" y2="15.5" stroke="#4B5563" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Prominent bulbous red nose & thick grey mustache */}
+      <circle cx="17" cy="19.8" r="2.1" fill="#E06D53" stroke="#1A1612" strokeWidth="1.4" />
+      <path
+        d="M 11.5 22.5 Q 17 20 22.5 22.5 Q 19.5 24.5 17 22.8 Q 14.5 24.5 11.5 22.5 Z"
+        fill="#9CA3AF"
+        stroke="#1A1612"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      {/* Brown felt fedora hat with dark band */}
+      <path
+        d="M 10 12 L 11.5 5.5 Q 14.5 4.5 17 6 Q 19.5 4.5 22.5 5.5 L 24 12 Z"
+        fill="#7C5836"
+        stroke="#1A1612"
+        strokeWidth="2.1"
+        strokeLinejoin="round"
+      />
+      <rect x="10.5" y="9.5" width="13" height="2.4" fill="#3E2723" stroke="#1A1612" strokeWidth="1.4" />
+      <ellipse cx="17" cy="12.2" rx="10.5" ry="2.5" fill="#7C5836" stroke="#1A1612" strokeWidth="2.1" />
+      {/* Raised straw sprinkler brush (kropáč) & blue holy water droplets */}
+      <line x1="27" y1="26" x2="30" y2="17" stroke="#8C5A35" strokeWidth="2.4" strokeLinecap="round" />
+      <polygon points="28,17 27,11 33,12 31.5,18" fill="#EAB308" stroke="#1A1612" strokeWidth="1.6" strokeLinejoin="round" />
+      <circle cx="29" cy="7.5" r="1.4" fill="#38BDF8" stroke="#1A1612" strokeWidth="1" className="lada-anim-glint" />
+      <circle cx="33.5" cy="9.5" r="1.3" fill="#38BDF8" stroke="#1A1612" strokeWidth="1" />
     </g>
   </svg>
 );

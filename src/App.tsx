@@ -18,6 +18,7 @@ import {
   computeKrajanekSteering,
   stepKrajanekRide,
   stepKrajanekCoastingStones,
+  isPlayerAbilityActive,
   KRAJANEK_RIDE_DURATION,
   KRAJANEK_RIDE_SPEED_MULTIPLIER,
 } from './game/krajanekAbility';
@@ -1424,6 +1425,16 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
   return decor;
 }
 
+// Authentic Josef Lada folk symbols for the painted chest slot machine reels
+export const SLOT_REEL_BASE_SYMBOLS: string[][] = [
+  ['krejcar', 'czech_buchta', 'zlaty_dukat', 'jitrnice', 'kynuty_kolac', 'toulave_boty', 'osikovy_prut', 'candle', 'coin'],
+  ['jitrnice', 'osikovy_prut', 'coin', 'czech_buchta', 'kynuty_kolac', 'krejcar', 'candle', 'zlaty_dukat', 'toulave_boty'],
+  ['toulave_boty', 'candle', 'krejcar', 'jitrnice', 'zlaty_dukat', 'osikovy_prut', 'czech_buchta', 'coin', 'kynuty_kolac'],
+];
+
+// Doubled seamlessly for infinite CSS translateY(-50%) loops with zero jitter or jumps
+export const SLOT_REEL_STRIPS: string[][] = SLOT_REEL_BASE_SYMBOLS.map((base) => [...base, ...base]);
+
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -1461,6 +1472,7 @@ export default function App() {
       dynamicLightingEnabled: source.dynamicLightingEnabled !== false,
       combatVfxEnabled: source.combatVfxEnabled !== false,
       warningIndicatorsEnabled: source.warningIndicatorsEnabled !== false,
+      windupTelegraphCirclesEnabled: Boolean(source.windupTelegraphCirclesEnabled),
       enemyDescriptorsEnabled: source.enemyDescriptorsEnabled !== false,
       attackDescriptorsEnabled: source.attackDescriptorsEnabled !== false,
       statusIndicatorsEnabled: source.statusIndicatorsEnabled !== false,
@@ -1831,7 +1843,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     if (effect.type === 'gingerbread_heart') {
       p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
-      p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
+      p.gingerbreadHeartCdMult = (1 + ((p.poutoveSrdceStacks || 1) - 1) * 0.35) * (effect.cdReductionMult || 1);
     }
     if (effect.type === 'ulezely_syrecek' || item.id === 'ulezely_syrecek') {
       p.syrecekStacks = Math.min(3, (p.syrecekStacks || 0) + 1);
@@ -1862,17 +1874,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.movingCooldownBonus = Math.min(0.48, (p.movingCooldownBonus || 0) + movingCd);
       p.iceImmunity = true;
     }
+    if (effect.type === 'kominicka_supina' || item.id === 'kominicka_supina') {
+      const luckBonus = 'luckBonus' in effect ? effect.luckBonus : 8;
+      p.luck = (p.luck || 100) + luckBonus;
+      p.kominickaSupinaStacks = Math.min(3, (p.kominickaSupinaStacks || 0) + 1);
+    }
+    if (effect.type === 'jetelovy_ctyrlistek' || item.id === 'jetelovy_ctyrlistek') {
+      p.jetelovyCtyrlistekStacks = Math.min(3, (p.jetelovyCtyrlistekStacks || 0) + 1);
+    }
+    if (effect.type === 'cinovy_strelecky_terc' || item.id === 'cinovy_strelecky_terc') {
+      p.cinovyTercStacks = Math.min(4, (p.cinovyTercStacks || 0) + 1);
+    }
+    if (effect.type === 'vrbova_pistalka' || item.id === 'vrbova_pistalka') {
+      const dodgeBonus = 'dodgeBonus' in effect ? effect.dodgeBonus : 0.06;
+      p.vrbovaPistalkaStacks = Math.min(3, (p.vrbovaPistalkaStacks || 0) + 1);
+      p.dodgeChance = Math.min(0.60, (p.dodgeChance || 0) + dodgeBonus);
+    }
+    if (effect.type === 'lojem_mazane_krpce' || item.id === 'lojem_mazane_krpce') {
+      const dodgeBonus = 'dodgeBonus' in effect ? effect.dodgeBonus : 0.05;
+      p.lojemMazaneKrpceStacks = Math.min(3, (p.lojemMazaneKrpceStacks || 0) + 1);
+      p.dodgeChance = Math.min(0.60, (p.dodgeChance || 0) + dodgeBonus);
+    }
+    if (effect.type !== 'heal' && effect.type !== 'coins' && effect.type !== 'rare_instant' && !item.isRareInstant) {
+      p.krajanekUpgradeCount = (p.krajanekUpgradeCount || 0) + 1;
+    }
     if (item.id === 'zejdlik_piva' || item.id === 'panak_koralky' || item.id === 'tepla_cikorka') {
       if ((p.pivniTacekStacks || 0) > 0) {
         const eng = engineRef.current;
-        p.pivniTacekTimer = 6;
+        const stacks = Math.max(1, p.pivniTacekStacks || 1);
+        const cdBoost = 1.35 + (stacks - 1) * 0.15;
+        p.pivniTacekTimer = 6 + (stacks - 1) * 1.5;
         if (p.weapons) {
           for (const w of p.weapons) {
-            if (w.cd > 0) w.cd /= 1.35;
+            if (w.cd > 0) w.cd /= cdBoost;
           }
         }
+        const pctLabel = Math.round((cdBoost - 1) * 100);
         pushDamageText(eng.texts, p.x, p.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true, 'combatShouts');
-        pushDamageText(eng.texts, p.x, p.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true, 'combatShouts');
+        pushDamageText(eng.texts, p.x, p.y - 55, `ROZOHNĚNÍ: +${pctLabel} % RYCHLEJŠÍ NABÍJENÍ! ⚡`, '#38BDF8', true, 'combatShouts');
         sound.coin();
 
         // 8 closest alive enemies via SpatialHash without 4 temporary array allocations
@@ -1896,8 +1935,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
+        const brawlDuration = 3.5 + (stacks - 1) * 1.0;
         for (let i = 0; i < sortedEnemies.length; i++) {
           const foe = sortedEnemies[i];
+          foe.brawlTimer = Math.max(foe.brawlTimer || 0, brawlDuration);
           const ang = Math.random() * Math.PI * 2;
           const spd = 55 + Math.random() * 45;
           spawnDropWithLimit(eng.drops, {
@@ -2475,7 +2516,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
       }
 
-      if (gameState === 'chest') {
+      if (gameState === 'chest' || gameStateRef.current === 'chest') {
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
           if (slotSpinningRef.current) {
@@ -2787,8 +2828,56 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           (this.intangibleTimer && this.intangibleTimer > 0) ||
           (this.type === 'krajanek' && (this.krajanekRideTimer || 0) > 0)
         ) return;
-        if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
-          engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', COLORS.mustard, true));
+        const effectiveDodgeChance = Math.min(
+          0.60,
+          typeof this.dodgeChance === 'number' ? this.dodgeChance : (this.type === 'shepherd' ? 0.35 : 0)
+        );
+        if (effectiveDodgeChance > 0 && Math.random() < effectiveDodgeChance) {
+          engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', COLORS.mustard, true, 'combatStates'));
+          sound.slash();
+
+          // Vrbová píšťalka z pastviny
+          if ((this.vrbovaPistalkaStacks || 0) > 0) {
+            const pistalkaStacks = this.vrbovaPistalkaStacks || 1;
+            this.ultCd = Math.max(0, (this.ultCd || 0) - (2.0 + (pistalkaStacks - 1) * 0.75));
+            this.pistalkaSpeedTimer = 3.0 + (pistalkaStacks - 1) * 0.5;
+            const shockRadius = 160 + (pistalkaStacks - 1) * 25;
+            const shockDmg = Math.round(45 + (pistalkaStacks - 1) * 20 + (this.speed || 180) * 0.4);
+            const shockFoes = enemySpatialHashRef.current.queryRadius(this.x, this.y, shockRadius);
+            for (let i = 0; i < shockFoes.length; i++) {
+              const foe = shockFoes[i];
+              if (foe.isDefeated || foe.dead) continue;
+              const fdx = foe.x - this.x;
+              const fdy = foe.y - this.y;
+              const fdist = Math.hypot(fdx, fdy) || 1;
+              const kx = (fdx / fdist) * 260;
+              const ky = (fdy / fdist) * 260;
+              foe.takeDamage(shockDmg, 'physical', kx, ky);
+            }
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 55, 'HVIZD! 🪈', '#38BDF8', true));
+          }
+
+          // Vodnický klobouk s pentlí
+          if ((this.lojemMazaneKrpceStacks || 0) > 0) {
+            const kloboukStacks = this.lojemMazaneKrpceStacks || 1;
+            this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.55 + (kloboukStacks - 1) * 0.15);
+            this.hp = Math.min(this.maxHp, this.hp + 4 * kloboukStacks);
+            const puddleX = attacker ? attacker.x : this.x;
+            const puddleY = attacker ? attacker.y : this.y;
+            const slowRatio = Math.min(0.60, 0.40 + (kloboukStacks - 1) * 0.10);
+            if (!engineRef.current.plumPuddles) engineRef.current.plumPuddles = [];
+            if (engineRef.current.plumPuddles.length >= 24) engineRef.current.plumPuddles.shift();
+            engineRef.current.plumPuddles.push({
+              x: puddleX,
+              y: puddleY,
+              radius: 44 + (kloboukStacks - 1) * 8,
+              life: 6.5,
+              maxLife: 6.5,
+              slowRatio,
+            });
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 50, 'SMEKNUTO! 🎩', '#10B981', true));
+          }
+
           return;
         }
         if ((meta.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
@@ -2816,6 +2905,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (this.hp < hpBeforeDamage) {
           const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
           this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
+          this.hurtTimer = Math.max(this.hurtTimer || 0, 0.42);
         }
         sound.hit();
         if (absorbed > 0 && remainingDmg <= 0) {
@@ -2840,6 +2930,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           sound.hit();
           setGameState('fleeing');
           engineRef.current.fleeTimer = 3.0;
+          const fleeDirX = attacker ? (this.x - attacker.x) : (this.lastDx < 0 ? -1 : 1);
+          const fleeDirY = attacker ? (this.y - attacker.y) : -0.25;
+          const fleeLen = Math.hypot(fleeDirX, fleeDirY) || 1;
+          this.fleeVx = (fleeDirX / fleeLen) * 235;
+          this.fleeVy = (fleeDirY / fleeLen) * 235;
+          this.lastDx = this.fleeVx >= 0 ? 1.8 : -1.8;
+          this.lastDy = this.fleeVy >= 0 ? 0.5 : -0.5;
           engineRef.current.enemies.forEach((m) => {
             m.panicked = true;
             m.vx = -m.vx * 3;
@@ -3001,6 +3098,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
+        const isHurt = !isFleeing && (this.hurtTimer ?? 0) > 0;
+        const isSprinting =
+          !isFleeing &&
+          (Math.abs(this.lastDx) > 0.1 || Math.abs(this.lastDy) > 0.1) &&
+          ((this.gingerbreadSpeedTimer ?? 0) > 0 ||
+            (this.soulBuffTimer ?? 0) > 0 ||
+            (this.pistalkaSpeedTimer ?? 0) > 0 ||
+            (this.speedMultiplier ?? 1) > 1.28);
+        const animT = this.animTime || engineRef.current?.uiTime || 0;
+        const drawDx = isSprinting
+          ? this.lastDx >= 0
+            ? Math.max(1.6, this.lastDx * 1.6)
+            : Math.min(-1.6, this.lastDx * 1.6)
+          : this.lastDx;
+        const drawDy = isSprinting ? this.lastDy * 1.6 : this.lastDy;
+
         if (this.type === 'krajanek') {
           Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
           Lada.drawKrajanekFurrows?.(ctx, this.krajanekFurrows || engineRef.current?.krajanekFurrows || []);
@@ -3024,22 +3137,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               colossusScale,
             );
           } else {
-            Lada.drawKrajanek(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+            Lada.drawKrajanek(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
           }
         } else if (this.type === 'wanderer') {
-          Lada.drawWanderer(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
         } else if (this.type === 'shepherd') {
-          Lada.drawShepherd(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'korenarka') {
-          Lada.drawKorenarka(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawKorenarka(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
         } else if (this.type === 'watchman') {
-          Lada.drawWatchman(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawWatchman(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
         } else if (this.type === 'sexton') {
-          Lada.drawSexton(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'granny') {
-          Lada.drawGranny(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
         } else {
-          Lada.drawWanderer(ctx, this.x, this.y, this.animTime, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
         }
 
         // Draw blessed candle in hand if Hromnička is equipped
@@ -3691,14 +3804,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         },
       },
       {
-        name: 'Opravdová káva (-10 % Cooldown)',
-        desc: 'Čerstvě pražená horká černá káva zkrátí dobu přípravy všech zbraní',
+        name: 'Opravdová káva (+15 % Nabíjení)',
+        desc: 'Čerstvě pražená horká černá káva zrychlí nabíjení všech zbraní (+15 %)',
         icon: 'opravdova_kava',
         action: () => {
           const pl = engineRef.current.player;
           if (pl) {
             pl.kavaCount = (pl.kavaCount || 0) + 1;
-            pl.cooldownBonus = (pl.cooldownBonus || 0) + 0.1111111111;
+            pl.cooldownBonus = (pl.cooldownBonus || 0) + 0.15;
           }
         },
       },
@@ -3794,17 +3907,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       });
     }
 
-    setChestRewards(selected);
-    setSlotStoppedCount(0);
-    slotSpinningRef.current = true;
-    setSlotSpinning(true);
-
-    // Clear previous timers
+    // Clear previous timers & intervals first
     slotTimersRef.current.forEach(clearTimeout);
     slotTimersRef.current = [];
     if (slotSoundIntervalRef.current) {
       clearInterval(slotSoundIntervalRef.current);
+      slotSoundIntervalRef.current = null;
     }
+
+    setChestRewards(selected);
+    setSlotStoppedCount(0);
+    slotSpinningRef.current = true;
+    setSlotSpinning(true);
 
     // Audio ticking sound while reels spin
     slotSoundIntervalRef.current = setInterval(() => {
@@ -4332,17 +4446,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.miniBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
-              const miniBossEnemy = createEnemyInstance(
-                curLvl.miniBoss.id,
-                spawnPos.x,
-                spawnPos.y,
-                curLvl.miniBoss.multiplier,
-                false,
-                true,
-                curLvl.miniBoss.name
-              );
-              engine.enemies.push(miniBossEnemy);
-              directorRef.current?.recordEnemySpawn(miniBossEnemy, newTime);
+              if (curLvl.miniBoss.id === 'vrana') {
+                const crowCount = 9;
+                for (let i = 0; i < crowCount; i++) {
+                  const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+                  const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
+                  const cx = spawnPos.x + Math.cos(flockAngle) * dist;
+                  const cy = spawnPos.y + Math.sin(flockAngle) * dist;
+                  const crowTitle = i === 0 ? curLvl.miniBoss.name : undefined;
+                  const crowEnemy = createEnemyInstance(
+                    curLvl.miniBoss.id,
+                    cx,
+                    cy,
+                    curLvl.miniBoss.multiplier,
+                    false,
+                    true,
+                    crowTitle
+                  );
+                  (crowEnemy as any).isMinibossFlockMember = true;
+                  (crowEnemy as any).flockIndex = i;
+                  (crowEnemy as any).flockTotal = crowCount;
+                  engine.enemies.push(crowEnemy);
+                  directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
+                }
+              } else {
+                const miniBossEnemy = createEnemyInstance(
+                  curLvl.miniBoss.id,
+                  spawnPos.x,
+                  spawnPos.y,
+                  curLvl.miniBoss.multiplier,
+                  false,
+                  true,
+                  curLvl.miniBoss.name
+                );
+                engine.enemies.push(miniBossEnemy);
+                directorRef.current?.recordEnemySpawn(miniBossEnemy, newTime);
+              }
               engine.texts.push(new DamageText(player.x, player.y - 50, `👑 ${curLvl.miniBoss.name}`, COLORS.mustard, true));
               setRunStats((s) => ({
                 ...s,
@@ -5409,9 +5548,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 time: 0,
                 rescued: false,
               }, engine.pendingDropBank);
-              // Spawn wave of rarachs harassing him
+              // Spawn wave of sprites harassing him (frost sprites in Stage 1, rarachs in later stages)
+              const chasnikHarasserId = (engine.activeLevelId ?? 0) === 0 ? 'mrazovy_skritek' : 'rarach';
               for (let i = 0; i < 5; i++) {
-                engine.enemies.push(createEnemyInstance('rarach', cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 60, 1));
+                engine.enemies.push(createEnemyInstance(chasnikHarasserId, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 60, 1));
               }
               engine.texts.push(new DamageText(player.x, player.y - 50, 'CHASNÍK V NOUZI!', COLORS.mustard, true));
               sound.hit();
@@ -5488,7 +5628,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               for (const h of directorRef.current.hazards) {
                 const distH = Math.hypot(player.x - h.x, player.y - h.y);
                 if (distH <= h.radius) {
-                  if (h.type === 'mud' || h.type === 'frost') {
+                  if (h.type === 'mud' || (h.type === 'frost' && !player.iceImmunity)) {
                     hazardSpeedMult = Math.min(hazardSpeedMult, h.slowFactor || 0.6);
                   }
                 }
@@ -5496,17 +5636,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
             const buffMultiplier =
               (player.soulBuffTimer > 0 ? 1.25 : 1) *
-              (player.gingerbreadSpeedTimer > 0 ? 1.15 : 1) *
+              (player.gingerbreadSpeedTimer > 0 ? (1 + (player.gingerbreadSpeedBonus || 0.15)) : 1) *
+              ((player.pistalkaSpeedTimer || 0) > 0 ? 1.25 : 1) *
               (player.waterSoakedTimer > 0 ? 0.75 : 1) *
-              (player.slowTimer > 0 ? 0.65 : 1) *
-              ((player.type === 'krajanek' && player.krajanekRideTimer > 0) ? 1 : ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1)) *
+              ((player.slowTimer > 0 && !player.iceImmunity) ? 0.65 : 1) *
+              ((player.type === 'krajanek' && player.krajanekRideTimer > 0) || player.iceImmunity ? 1 : ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1)) *
               hazardSpeedMult *
               ((engine.activeLevelId === 0 && isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond)) ? 1.15 : 1);
 
             const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;
 
             if (isKrajanekRiding) {
+              const isTouchActive = touchMoveRef.current.active || touchEnabled || isTouchScreen;
               const steer = computeKrajanekSteering(player, mx, my, dt, {
+                isTouchInput: isTouchActive,
                 onSound: (name: string) => (sound as any)[name]?.(),
                 onDriftSpray: (p: any, angle: number, sign: number) => {
                   if (engine.particles.length < activeMaxParticlesRef.current) {
@@ -5698,7 +5841,40 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             const isMoving = Math.hypot(moveVx, moveVy) > 10;
+            if ((player.goatBellStacks || 0) > 0 && isMoving) {
+              player.goatBellTimer = (player.goatBellTimer || player.goatBellInterval || 4.0) - dt;
+              if (player.goatBellTimer <= 0) {
+                player.goatBellTimer = player.goatBellInterval || 4.0;
+                const rad = player.goatBellRadius || 180;
+                sound.bell();
+                engine.texts.push(new DamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true));
+                const nearbyFoes = enemySpatialHashRef.current.queryCircle(player.x, player.y, rad);
+                for (let bi = 0; bi < nearbyFoes.length; bi++) {
+                  const foe = nearbyFoes[bi];
+                  if (foe.isDefeated || foe.dead) continue;
+                  if (typeof foe.interruptAttack === 'function') foe.interruptAttack();
+                  foe.isAttacking = false;
+                  foe.windupTimer = 0;
+                  foe.strikeTimer = 0;
+                  if (foe.aiState === 'windup') foe.aiState = 'idle';
+                  engine.texts.push(new DamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false));
+                }
+                if (engine.drops) {
+                  for (let di = 0; di < engine.drops.length; di++) {
+                    const d = engine.drops[di];
+                    if (d.dead || d.rescued) continue;
+                    const dist = Math.hypot(d.x - player.x, d.y - player.y);
+                    if (dist <= rad + 100) {
+                      const ang = Math.atan2(player.y - d.y, player.x - d.x);
+                      d.vx = Math.cos(ang) * 380;
+                      d.vy = Math.sin(ang) * 380;
+                    }
+                  }
+                }
+              }
+            }
             if (player.holyCircleStacks && player.holyCircleStacks > 0) {
+              const hcRadius = 120 + Math.max(0, (player.holyCircleStacks || 1) - 1) * 20;
               if (!isMoving) {
                 player.stillTimer = (player.stillTimer || 0) + dt;
                 if (player.stillTimer >= 0.6) {
@@ -5706,13 +5882,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     engine.holyCircle = {
                       x: player.x,
                       y: player.y,
-                      radius: 120,
+                      radius: hcRadius,
                       life: 1.5,
                       active: true,
                     };
                   } else {
                     engine.holyCircle.x = player.x;
                     engine.holyCircle.y = player.y;
+                    engine.holyCircle.radius = hcRadius;
                     engine.holyCircle.life = 1.5;
                     engine.holyCircle.active = true;
                   }
@@ -5759,7 +5936,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   if (foe._holyCircleTick <= 0) {
                     foe._holyCircleTick = 0.4;
                     const holyDmgMult = getHolyDamageMultiplier(foe);
-                    const dmg = 24 * holyDmgMult * (player.damageMultiplier || 1);
+                    const baseHolyDmg = 24 + Math.max(0, (player.holyCircleStacks || 1) - 1) * 12;
+                    const dmg = baseHolyDmg * holyDmgMult * (player.damageMultiplier || 1);
                     foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
                     engine.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
                   }
@@ -5996,17 +6174,31 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
             if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
+            if ((player.pistalkaSpeedTimer || 0) > 0) player.pistalkaSpeedTimer = Math.max(0, player.pistalkaSpeedTimer - dt);
+            if ((player.zPeklaStestiTimer || 0) > 0) player.zPeklaStestiTimer = Math.max(0, player.zPeklaStestiTimer - dt);
             if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
             if (player.type === 'krajanek' && player.krajanekRideTimer > 0) {
               player.meltingPuddleSlowTimer = 0;
               player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, player.krajanekRideTimer);
             } else if (player.meltingPuddleSlowTimer > 0) {
-              player.meltingPuddleSlowTimer -= dt;
+              player.meltingPuddleSlowTimer = player.iceImmunity ? 0 : player.meltingPuddleSlowTimer - dt;
             }
-            if (player.slowTimer > 0) player.slowTimer -= dt;
-            if (player.ultCd > 0) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
+            if (player.slowTimer > 0) {
+              player.slowTimer = player.iceImmunity ? 0 : player.slowTimer - dt;
+            }
+            if (player.ultCd > 0 && !isPlayerAbilityActive(player, engineRef.current)) player.ultCd -= dt * (1 + ((metaRef.current.bellLevel || 0) * 0.08));
             if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer -= dt;
+            if ((player.hurtTimer || 0) > 0) player.hurtTimer = Math.max(0, player.hurtTimer - dt);
             if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
+
+            if (engine.plumPuddles && engine.plumPuddles.length > 0) {
+              for (let pi = engine.plumPuddles.length - 1; pi >= 0; pi--) {
+                engine.plumPuddles[pi].life -= dt;
+                if (engine.plumPuddles[pi].life <= 0) {
+                  engine.plumPuddles.splice(pi, 1);
+                }
+              }
+            }
 
             if (player.type === 'korenarka') {
               player.herbBoostTimer = Math.max(0, (player.herbBoostTimer || 0) - dt);
@@ -6179,15 +6371,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   (player as any)._firingWeapon = null;
                   const rankDef = getWeaponRankDef(w.id, w.level);
                   const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
+                  const movingBonus = isMoving ? (player.movingCooldownBonus || 0) : 0;
+                  const ctyrlistekBonus = (player.jetelovyCtyrlistekStacks || 0) > 0 && (player.luck || 100) > 100
+                    ? (player.luck - 100) * 0.0015 * player.jetelovyCtyrlistekStacks
+                    : 0;
                   const playerCooldownBonus = typeof player.cooldownBonus === 'number'
-                    ? Math.max(0, player.cooldownBonus)
-                    : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9);
+                    ? Math.max(0, player.cooldownBonus + movingBonus + ctyrlistekBonus)
+                    : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9 + movingBonus + ctyrlistekBonus);
                   const baseCd = wDef.baseCd;
                   const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
                   const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
                   let localCd = formulaCd * stats.cooldownMult;
                   if ((player.pivniTacekTimer || 0) > 0) {
-                    localCd = localCd / 1.35;
+                    const cdBoost = 1.35 + Math.max(0, (player.pivniTacekStacks || 1) - 1) * 0.15;
+                    localCd = localCd / cdBoost;
                   }
 
                   w.cd = fired ? localCd : 0.1;
@@ -6266,22 +6463,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   !e.isDefeated &&
                   (e.isBoss || e.isMiniboss || e.category === 'bosses')
               );
-              const nextBossHpPct = activeBoss
-                ? Math.max(
+              let nextBossHpPct: number | null = null;
+              let nextBossTitle = '';
+              if (activeBoss) {
+                if (activeBoss.isMinibossFlockMember) {
+                  const flockMembers = engine.enemies.filter(
+                    (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead
+                  );
+                  const totalFlockHp = flockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
+                  const totalFlockMaxHp = (activeBoss.flockTotal || 9) * (activeBoss.maxHp || 168);
+                  nextBossHpPct = Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100));
+                  nextBossTitle = '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran';
+                } else {
+                  nextBossHpPct = Math.max(
                     0,
                     Math.min(
                       100,
                       (Math.max(0, activeBoss.hp) / Math.max(1, activeBoss.maxHp)) * 100
                     )
-                  )
-                : null;
-              const nextBossTitle = activeBoss
-                ? activeBoss.customBossTitle
-                  ? `👑 ${activeBoss.customBossTitle}`
-                  : activeBoss.isMiniboss
-                    ? `👑 MINIBOSS: ${activeBoss.name}`
-                    : activeBoss.name
-                : '';
+                  );
+                  nextBossTitle = activeBoss.customBossTitle
+                    ? `👑 ${activeBoss.customBossTitle}`
+                    : activeBoss.isMiniboss
+                      ? `👑 MINIBOSS: ${activeBoss.name}`
+                      : activeBoss.name;
+                }
+              }
 
               const prevStats = runStatsRef.current;
               const nextChestProgress = Math.floor(engine.pointsChest);
@@ -6320,6 +6527,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
           } else if (currentGameState === 'fleeing') {
             engine.fleeTimer -= dt;
+            player.animTime = (player.animTime || 0) + dt * 1.6;
+            const fleeVx = typeof player.fleeVx === 'number' ? player.fleeVx : (player.lastDx < 0 ? -220 : 220);
+            const fleeVy = typeof player.fleeVy === 'number' ? player.fleeVy : -45;
+            player.x += fleeVx * dt;
+            player.y += fleeVy * dt;
+            player.lastDx = fleeVx < 0 ? -1.8 : 1.8;
+            player.lastDy = fleeVy < 0 ? -0.5 : 0.5;
             if (engine.fleeTimer <= 0) {
               // Transition to tally screen
               setTallyCounters({
@@ -6939,6 +7153,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const attackDelay = (typeof e.attackDelay === 'number' && e.attackDelay > 0
               ? e.attackDelay
               : Math.max(0.2, totalInterval - strikeDuration)) / attackSlowFactor;
+            e.attackDelay = attackDelay;
             const contactReach = e.radius + player.radius;
             const isColliding = isActiveVirtualCrow
               ? distToPlayerSq < contactReach * contactReach
@@ -6966,7 +7181,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Telegrafovaný nápřah a útok monster (Windup -> Strike -> Recovery)
             if ((e.strikeTimer || 0) > 0) {
               // Enemy is currently playing out the active strike & recovery animation
-              e.isAttacking = true;
+              e.isAttacking = false;
               e.inContact = true;
             } else if (inAttackRange) {
               e.isAttacking = true;
@@ -7019,6 +7234,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 e.strikeTimer = strikeDuration;
                 e.strikeMaxTimer = strikeDuration;
                 e.windupTimer = 0;
+                e.isAttacking = false;
                 if (currentGameState === 'playing') {
                   const mult = typeof e.getDamageDealtMultiplier === 'function' ? e.getDamageDealtMultiplier() : 1;
                   const contactDamage = e.damage * mult;
@@ -7815,16 +8031,29 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         lavy_rarach: 'sazovy_rarach',
         pekelny_pes: 'ohnivy_pes',
       };
-      resolvedId = fallbackMap[id] || ((engineRef.current?.activeLevelId ?? 1) === 2 ? 'skeleton' : 'rarach');
+      resolvedId =
+        fallbackMap[id] ||
+        ((engineRef.current?.activeLevelId ?? 0) === 0
+          ? 'mrazovy_skritek'
+          : (engineRef.current?.activeLevelId ?? 1) === 2
+          ? 'skeleton'
+          : 'rarach');
       stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
     const isLevel0 = (engineRef.current?.activeLevelId ?? 0) === 0;
+    if (isLevel0 && prefix === 'pekelny') {
+      prefix = undefined;
+    }
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+      if (resolvedId === 'vrana') {
+        finalHp = Math.round(stats.hp * 6);
+      } else {
+        finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+      }
     }
-    const renderScale = isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
-    const radius = isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 3.0 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
+    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 3) : isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
     const hunger = isMiniboss
@@ -7833,13 +8062,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : (stats.willpower || 0);
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
+    const baseDamage = (resolvedId === 'vrana' && isMiniboss)
+      ? Math.round(stats.damage * 6)
+      : isMiniboss
+      ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35))
+      : stats.damage;
     let enemyDamage = baseDamage;
     const coinValue = isMiniboss ? Math.max(25, (stats.coinValue || 1) * 6) : (stats.coinValue || 1);
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
     const isLevel1 = (engineRef.current?.activeLevelId ?? 1) === 1;
-    let enemySpeed = isMiniboss ? Math.max(stats.speed * 0.95, 68) : stats.speed;
+    const rawMinibossSpeed = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.speed * 0.7) : stats.speed;
+    let enemySpeed = isMiniboss ? Math.max(rawMinibossSpeed * 0.95, 68) : rawMinibossSpeed;
     if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
     }
@@ -8060,6 +8294,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if ((this.vycerpanyTimer || 0) > 0) {
           this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
         }
+        if (this.id === 'tajici_snehulak' && !this.isVirtualSnowmanMember && !this.isDefeated && !this.dead) {
+          const ratio = Math.max(0, Math.min(1, this.hp / Math.max(1, this.maxHp || 280)));
+          this.meltHpRatio = ratio;
+          this.meltSquashX = 1.0 + (1.0 - ratio) * 0.25;
+          this.meltSquashY = 0.65 + ratio * 0.35;
+          const s = Math.sin((this.animTime || 0) * 3.2);
+          this.wobbleScaleX = 1.0 + 0.08 * s;
+          this.wobbleScaleY = 1.0 - 0.08 * s;
+        }
         const distToPlayer = Math.hypot(player.x - this.x, player.y - this.y);
 
         if (this.isDefeated) {
@@ -8189,7 +8432,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         this.kbx *= 0.9;
         this.kby *= 0.9;
-        this.animTime += dt;
+        const animRate =
+          this.aiState === 'charge' || this.aiState === 'lunge' || this.aiState === 'hop_leap'
+            ? 1.45
+            : this.chilled
+            ? 0.55
+            : this.soaked || (this.vycerpanyTimer || 0) > 0 || this.prefix === 'vycerpany'
+            ? 0.65
+            : (this.calmTimer || 0) > 0
+            ? 0.5
+            : 1.0;
+        this.animTime += dt * animRate;
 
         if (this.panicTimer > 0) {
           this.panicTimer = Math.max(0, this.panicTimer - dt);
@@ -8229,6 +8482,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
         if ((this.vycerpanyTimer || 0) > 0) {
           spd *= 0.50;
+        }
+        if (engineRef.current.plumPuddles && engineRef.current.plumPuddles.length > 0) {
+          for (let pi = 0; pi < engineRef.current.plumPuddles.length; pi++) {
+            const pud = engineRef.current.plumPuddles[pi];
+            const maxR = (pud.radius || 44) + this.radius;
+            const pdx = this.x - pud.x;
+            const pdy = this.y - pud.y;
+            if (Math.abs(pdx) <= maxR && Math.abs(pdy) <= maxR && pdx * pdx + pdy * pdy <= maxR * maxR) {
+              spd *= (1 - (pud.slowRatio || 0.35));
+              break;
+            }
+          }
         }
 
         // ----------------------------------------------------
@@ -8431,6 +8696,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         // ----------------------------------------------------
         // SPECIALIZED ENEMY AI BEHAVIORS
         // ----------------------------------------------------
+        const prevAiState = this.aiState;
         this.aiTimer -= dt;
         this.specialCd -= dt;
 
@@ -9720,6 +9986,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
+        if (this.aiState === 'windup') {
+          if (prevAiState !== 'windup') {
+            this.aiWindupDuration = Math.max(0.15, this.aiTimer || 0.45);
+            if (!Number.isFinite(this.chargeDirX)) {
+              this.chargeDirX = dirToPlayer;
+            }
+          }
+          this.attackAngle = Number.isFinite(this.chargeDirX) ? this.chargeDirX : dirToPlayer;
+        } else if (prevAiState === 'windup' && this.aiState === 'idle') {
+          const strikeDur = this.attackCadence === 'slow' ? 0.45 : this.attackCadence === 'fast' ? 0.22 : 0.32;
+          this.strikeTimer = strikeDur;
+          this.strikeMaxTimer = strikeDur;
+          this.attackAngle = Number.isFinite(this.chargeDirX) ? this.chargeDirX : dirToPlayer;
+        }
+
+        if (Math.abs(this.vx) > 0.1) {
+          this.lastDx = this.vx;
+        }
+
         this.x += (this.vx + this.kbx) * dt;
         this.y += (this.vy + this.kby) * dt;
       },
@@ -9790,13 +10075,101 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
           }
         } else if (player) {
-          const critChance = Math.max(0, player.luck ?? 0) * 0.001;
+          let critChance = Math.max(0, player.luck ?? 0) * 0.001;
+          if ((player.zPeklaStestiTimer || 0) > 0) {
+            critChance += 0.10;
+          }
+          if ((player.cinovyTercStacks || 0) > 0 && this.hp >= (this.maxHp || 0)) {
+            critChance *= 2.0 + (player.cinovyTercStacks - 1) * 0.5;
+          }
           if (Math.random() < critChance) {
             isCriticalHit = true;
-            finalDmg = Math.round(finalDmg * 1.65);
+            const supinaBonus = (player.kominickaSupinaStacks || 0) * 0.25;
+            finalDmg = Math.round(finalDmg * (1.65 + supinaBonus));
             if (finalDmg >= 1) {
               engineRef.current.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
             }
+          }
+        }
+
+        if (isCriticalHit && player) {
+          const now = engineRef.current?.gameTime ?? 0;
+
+          // 1. Kominická šupina z kapra
+          if ((player.kominickaSupinaStacks || 0) > 0 && now - (player._lastSupinaTime || 0) >= 0.8) {
+            player._lastSupinaTime = now;
+            const rollChance = Math.min(1.0, Math.max(0, player.luck || 100) * 0.0008 * player.kominickaSupinaStacks);
+            if (Math.random() < rollChance) {
+              const eng = engineRef.current;
+              let closestDrop: any = null;
+              let closestDistSq = 350 * 350;
+              if (eng.drops) {
+                for (let di = 0; di < eng.drops.length; di++) {
+                  const d = eng.drops[di];
+                  if (d.type === 'gingerbread' && !d.dead) {
+                    const distSq = (d.x - this.x) * (d.x - this.x) + (d.y - this.y) * (d.y - this.y);
+                    if (distSq < closestDistSq) {
+                      closestDistSq = distSq;
+                      closestDrop = d;
+                    }
+                  }
+                }
+              }
+              if (closestDrop) {
+                if (!closestDrop.size || closestDrop.size === 'small') {
+                  closestDrop.size = 'large';
+                  closestDrop.value = (closestDrop.value || 1) * 3;
+                } else if (closestDrop.size === 'large') {
+                  closestDrop.size = 'giant';
+                  closestDrop.value = (closestDrop.value || 3) * 3;
+                } else {
+                  closestDrop.size = 'stash';
+                  closestDrop.value = (closestDrop.value || 9) * 2;
+                }
+                sound.bell();
+                eng.texts.push(new DamageText(closestDrop.x, closestDrop.y - 25, 'POVÝŠENO! 🐟', '#FBBF24', true));
+              } else {
+                const ang = Math.random() * Math.PI * 2;
+                spawnDropWithLimit(eng.drops, {
+                  type: 'coin',
+                  value: 2,
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 65,
+                  vy: Math.sin(ang) * 65,
+                  radius: 10,
+                  time: 0,
+                  dead: false,
+                }, eng.pendingDropBank);
+                sound.coin();
+                eng.texts.push(new DamageText(this.x, this.y - 35, 'ŠUPINA DALA KREJCAR! 🐟', '#FDE047', true));
+              }
+            }
+          }
+
+          // 2. Jetelový čtyřlístek z mezí
+          if ((player.jetelovyCtyrlistekStacks || 0) > 0 && now - (player._lastCtyrlistekTime || 0) >= 0.5) {
+            player._lastCtyrlistekTime = now;
+            player.zPeklaStestiTimer = 2.5;
+            player.ultCd = Math.max(0, (player.ultCd || 0) - 0.25 * player.jetelovyCtyrlistekStacks);
+            engineRef.current.texts.push(new DamageText(player.x, player.y - 40, 'Z PEKLA ŠTĚSTÍ! 🍀', '#10B981', true));
+          }
+
+          // 3. Cínový střelecký terč ze střelnice
+          if ((player.cinovyTercStacks || 0) > 0 && now - (player._lastTercTime || 0) >= 0.2) {
+            player._lastTercTime = now;
+            const tercStacks = player.cinovyTercStacks || 1;
+            const tercRadius = 95 + (tercStacks - 1) * 20;
+            const splashRatio = 0.35 + (tercStacks - 1) * 0.15;
+            const splashDmg = Math.max(1, Math.round(finalDmg * splashRatio));
+            const splashNearby = enemySpatialHashRef.current.queryRadius(this.x, this.y, tercRadius);
+            for (let si = 0; si < splashNearby.length; si++) {
+              const foe = splashNearby[si];
+              if (foe === this || foe.isDefeated || foe.dead) continue;
+              foe.takeDamage(splashDmg, 'area', 0, 0);
+              if (typeof foe.interruptAttack === 'function') foe.interruptAttack();
+            }
+            engineRef.current.texts.push(new DamageText(this.x, this.y - 30, 'POUŤOVÝ TŘESK! 🎯', '#F59E0B', false));
           }
         }
 
@@ -9918,7 +10291,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this.kby = kby * 0.15;
         } else if (type !== 'food') {
           const ignore = Math.min(0.85, Math.max(0, options?.ignoreResist || 0));
-          const effectivePoise = (this.poiseResist || 0) * (1 - ignore);
+          const poiseRed = player?.plumPoiseReduction || 0;
+          const effectivePoise = Math.max(0, (this.poiseResist || 0) - poiseRed) * (1 - ignore);
           const effectiveKbResist = Math.min(1, Math.max(0, (this.knockbackResistance ?? 0) * (1 - ignore)));
           const poiseFactor = Math.max(0.1, 1 - effectivePoise);
           const resistanceFactor = Math.max(0.1, 1 - effectiveKbResist);
@@ -9958,6 +10332,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (this.hp <= 0 && !this.isDefeated) {
           this.isDefeated = true;
           this.cleanupLight();
+          if ((player?.stickyPlumJamStacks || 0) > 0) {
+            const engPud = engineRef.current;
+            if (!engPud.plumPuddles) engPud.plumPuddles = [];
+            if (engPud.plumPuddles.length >= 24) engPud.plumPuddles.shift();
+            engPud.plumPuddles.push({
+              x: this.x,
+              y: this.y,
+              radius: 44,
+              life: 6.5,
+              maxLife: 6.5,
+              slowRatio: player.plumSlowRatio || 0.35,
+            });
+            engPud.texts.push(new DamageText(this.x, this.y - 25, 'POVIDLÍ! 🍯', '#A855F7', false));
+          }
+          if (this.id === 'tajici_snehulak' && !this.isVirtualSnowmanMember) {
+            snowmanHordeRef.current?.spawnPuddle(this.x, this.y);
+          }
           if (directorRef.current) {
             directorRef.current.recordEnemyDeath(this, engineRef.current.gameTime);
           }
@@ -10071,10 +10462,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const isShadows = this.category === 'shadows';
           const isSwarms = this.category === 'swarms';
           const isBoss = this.category === 'bosses' || this.isBoss || this.isMiniboss || (this.maxHp || 0) >= 1000;
+          const isFlockMember = Boolean(this.isMinibossFlockMember);
+          const remainingFlock = isFlockMember
+            ? (eng.enemies || []).filter(
+                (e: any) => e !== this && e.isMinibossFlockMember && !e.isDefeated && !e.dead
+              ).length
+            : 0;
+          const isFlockDefeated = isFlockMember && remainingFlock === 0;
 
           // Dědečkovy perníčky: každý zahnáný nepřítel dá odměnu podle své herní hodnoty.
           // ADR 0006: Overkill poškození (> 200 % max Kuráže) komprimuje dropy do vyšších řádů (Velké za 6 a Obří za 20).
-          let gingerbreadSize = getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
+          // Horde-like bosses (Hejno mrazivých vran) members drop normal gingerbread per their individual point value.
+          let gingerbreadSize = isFlockMember
+            ? getGingerbreadSize(false, false, rawPt)
+            : getGingerbreadSize(isBoss, this.isMiniboss, rawPt);
           if (this.overkill) {
             if (gingerbreadSize === 'small') gingerbreadSize = 'large';
             else if (gingerbreadSize === 'large') gingerbreadSize = 'giant';
@@ -10119,7 +10520,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
 
           // ADR 0006: Záchranný systém (Emergency Bias): Při poklesu Kuráže pod 25 % vystřelí elita záchrannou jitrnici
-          if (player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO && (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650)) {
+          const isEligibleForEmergencyBias = isFlockMember
+            ? isFlockDefeated
+            : (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650);
+          if (player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO && isEligibleForEmergencyBias) {
             const rescueAngle = Math.random() * Math.PI * 2;
             spawnScatterDrop('potion', {
               speed: 130,
@@ -10138,7 +10542,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             eng.drops,
             eng.gameTime,
             0.016,
-            isBoss || this.isMiniboss
+            isFlockMember ? isFlockDefeated : (isBoss || this.isMiniboss)
           );
           if (folkloreItem) {
             const ann = getRareDropAnnouncement(folkloreItem);
@@ -10151,7 +10555,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
 
           // Vzácné folklórní pomocné předměty (2 až 4 za výpravu)
-          if (canSpawnRareBattleDrop(eng.rareDropTracker, eng.gameTime, isBoss || this.isMiniboss)) {
+          if (canSpawnRareBattleDrop(eng.rareDropTracker, eng.gameTime, isFlockMember ? isFlockDefeated : (isBoss || this.isMiniboss))) {
             const rareType = rollRareBattleDrop(eng.rareDropTracker, eng.gameTime);
             const ann = getRareDropAnnouncement(rareType);
             spawnScatterDrop(rareType, {
@@ -10163,8 +10567,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
 
           // Thematic category affinities & multipliers
-          const chestMult = isBoss ? 3.0 : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
-          const potionMult = isWater ? 1.6 : isFields ? 1.3 : isBoss ? 2.0 : 1.0;
+          // Horde-like bosses like Hejno mrazivých vran count as only one boss for the sake of treasure.
+          const flockTotal = isFlockMember ? (this.flockTotal || 9) : 1;
+          const chestMult = isBoss ? (3.0 / flockTotal) : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
+          const potionMult = isWater ? 1.6 : isFields ? 1.3 : isBoss ? (2.0 / flockTotal) : 1.0;
           const breadMult = isFields ? 2.0 : isFrost ? 1.5 : isSwarms ? 1.2 : 0.9;
           const soulMult = isWater ? 2.5 : isShadows ? 2.0 : isUndead ? 1.4 : 0.5;
 
@@ -10172,27 +10578,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           eng.pointsPotion += Math.round(pt * potionMult);
           eng.pointsBread += Math.round(pt * breadMult);
           if (isWater || isShadows || isUndead || isBoss || this.defeatedByFood) {
-            eng.pointsSoul += Math.round(pt * soulMult);
+            eng.pointsSoul += Math.round(pt * (isFlockMember ? soulMult / flockTotal : soulMult));
           }
 
-          // 1. Miniboss & Boss celebration loot cascade
-          if (this.isMiniboss) {
-            sound.chest();
-            spawnScatterDrop('chest', { speed: 85, text: '🎁 POKLAD MINIBOSSE!', textColor: COLORS.mustard });
-            spawnScatterDrop('potion', { speed: 95, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 80, text: 'Šťavnatá hruška! +15 Kuráž', textColor: '#84CC16' });
-            spawnScatterDrop('soul', { speed: 105, text: 'Mocná dušička! 🏺', textColor: '#38BDF8' });
-            // Bohatá perníková nadílka od minibosse (3 obří perníčky)
-            for (let g = 0; g < 3; g++) {
-              spawnScatterDrop('gingerbread', {
-                value: GINGERBREAD_VALUES.giant,
-                radius: 19,
-                speed: 65 + Math.random() * 65,
-                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 3} (Dar minibosse)` : undefined,
-                textColor: '#F59E0B',
-                size: 'giant',
-              });
+          // 1. Miniboss & Boss treasure drop (no additional loot cascade; extra items drop strictly according to point value)
+          // Horde-like bosses (Hejno mrazivých vran) count as only one boss for the sake of treasure.
+          const shouldDropTreasure = this.isMiniboss
+            ? (!isFlockMember || (isFlockDefeated && !eng.flockTreasureDropped))
+            : Boolean(this.isBoss);
+
+          if (shouldDropTreasure) {
+            if (isFlockMember) {
+              eng.flockTreasureDropped = true;
             }
+            sound.chest();
+            const treasureText = this.isBoss ? '👑 POKLAD VLÁDCE BUBÁKŮ!' : '🎁 POKLAD MINIBOSSE!';
+            spawnScatterDrop('chest', { speed: 85, text: treasureText, textColor: COLORS.mustard });
             for (let i = 0; i < 24; i++) {
               eng.particles.push({
                 x: this.x,
@@ -10204,24 +10605,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 size: 5,
               });
             }
-            eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD MINIBOSSE!', COLORS.mustard, true));
-          } else if (isBoss) {
-            sound.chest();
-            spawnScatterDrop('potion', { speed: 110, text: 'ZABIJAČKOVÁ JITRNICE! +30 Kuráž', textColor: COLORS.green });
-            spawnScatterDrop('bread', { speed: 90, text: 'ŠŤAVNATÁ HRUŠKA! +15 Kuráž', textColor: '#84CC16' });
-            spawnScatterDrop('soul', { speed: 120, text: 'DUŠIČKA OSVOBOZENA!', textColor: '#38BDF8' });
-            // Královská kupa perníčků od hlavního bosse (6 obřích perníčků)
-            for (let g = 0; g < 6; g++) {
-              spawnScatterDrop('gingerbread', {
-                value: GINGERBREAD_VALUES.giant,
-                radius: 19,
-                speed: 75 + Math.random() * 75,
-                text: g === 0 ? `+${GINGERBREAD_VALUES.giant * 6} (Kupa vládce bubáků)` : undefined,
-                textColor: '#F59E0B',
-                size: 'giant',
-              });
-            }
-            eng.texts.push(new DamageText(this.x, this.y - 70, '👑 POKLAD VLÁDCE BUBÁKŮ!', COLORS.mustard, true));
+            eng.texts.push(new DamageText(this.x, this.y - 70, treasureText, COLORS.mustard, true));
           }
 
           // 2. Food pacification extra flavor & peaceful rewards
@@ -10283,11 +10667,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           // 4. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
           const chestThreshold = DROP_THRESHOLDS.chest;
           if (eng.pointsChest >= chestThreshold) {
-            eng.pointsChest -= chestThreshold;
-            spawnScatterDrop('chest', { speed: 45, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
-            spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
-            spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
-            sound.chest();
+            const activeChests = (eng.drops || []).filter((d: any) => !d.dead && d.type === 'chest').length;
+            if (activeChests < 2) {
+              eng.pointsChest -= chestThreshold;
+              spawnScatterDrop('chest', { speed: 65, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
+              spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
+              spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
+              sound.chest();
+            }
           }
           if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
             eng.pointsPotion -= DROP_THRESHOLDS.potion;
@@ -10440,27 +10827,42 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               (e) => (e.isBoss || e.isMiniboss) && !e.isDefeated && e !== this
             );
             if (remainingBoss) {
-              setRunStats((s) => ({
-                ...s,
-                bossHpPct: Math.max(0, Math.min(100, (remainingBoss.hp / remainingBoss.maxHp) * 100)),
-                bossTitle: remainingBoss.customBossTitle
-                  ? `👑 ${remainingBoss.customBossTitle}`
-                  : (remainingBoss.isMiniboss ? `👑 MINIBOSS: ${remainingBoss.name}` : remainingBoss.name),
-              }));
+              if (remainingBoss.isMinibossFlockMember) {
+                const flockMembers = engineRef.current.enemies.filter(
+                  (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead && e !== this
+                );
+                const totalFlockHp = flockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
+                const totalFlockMaxHp = (remainingBoss.flockTotal || 9) * (remainingBoss.maxHp || 168);
+                setRunStats((s) => ({
+                  ...s,
+                  bossHpPct: Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100)),
+                  bossTitle: '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran',
+                }));
+              } else {
+                setRunStats((s) => ({
+                  ...s,
+                  bossHpPct: Math.max(0, Math.min(100, (remainingBoss.hp / remainingBoss.maxHp) * 100)),
+                  bossTitle: remainingBoss.customBossTitle
+                    ? `👑 ${remainingBoss.customBossTitle}`
+                    : (remainingBoss.isMiniboss ? `👑 MINIBOSS: ${remainingBoss.name}` : remainingBoss.name),
+                }));
+              }
             } else {
               setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
             }
 
-            sound.victory();
-            sound.cheer();
-            const defeatName = this.customBossTitle || stats.name;
-            engineRef.current.texts.push(
-              new DamageText(this.x, this.y - 60, `👑 ${defeatName.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true)
-            );
-            if (this.isMiniboss) {
+            if (!isFlockMember || isFlockDefeated) {
+              sound.victory();
+              sound.cheer();
+              const defeatName = this.customBossTitle || (isFlockMember ? 'Hejno mrazivých vran' : stats.name);
               engineRef.current.texts.push(
-                new DamageText(this.x, this.y - 95, '+25 KREJCARŮ! 💰', '#FDE047', true)
+                new DamageText(this.x, this.y - 60, `👑 ${defeatName.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true)
               );
+              if (this.isMiniboss) {
+                engineRef.current.texts.push(
+                  new DamageText(this.x, this.y - 95, '+25 KREJCARŮ! 💰', '#FDE047', true)
+                );
+              }
             }
             // Check if final boss of this level
             const curLvlId = engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : 0;
@@ -10765,7 +11167,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ctx.translate(-this.x, -this.y);
           }
 
-          const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : this.vx;
+          const idleFacingVx = Math.abs(this.vx) > 0.01 ? this.vx : (this.lastDx || 1);
+          const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : idleFacingVx;
 
           if (this.id === 'cert') {
             const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
@@ -10997,7 +11400,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Attack charging / windup telegraph while in attack range
-        if (isGameEffectEnabled('warningIndicatorsEnabled') && ((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated && (this.strikeTimer || 0) <= 0) {
+        if (isGameEffectEnabled('windupTelegraphCirclesEnabled') && isGameEffectEnabled('warningIndicatorsEnabled') && ((this.windupTimer || 0) > 0 || (this.inContact && (this.contactTimer || 0) > 0)) && !this.isDefeated && (this.strikeTimer || 0) <= 0) {
           ctx.save();
           const totalInterval = this.attackDelay || this.attackInterval || (this.attackCadence === 'fast' ? 0.6 : this.attackCadence === 'slow' ? 1.8 : 1.2);
           const currentTimer = this.windupTimer || (totalInterval - (this.contactTimer || 0));
@@ -11428,6 +11831,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <TouchControls
           enabled={touchEnabled}
           active={touchMoveRef.current.active}
+          isRideActive={engineRef.current.player?.type === 'krajanek' && (engineRef.current.player?.krajanekRideTimer || 0) > 0}
+          hunterType={engineRef.current.player?.type}
           onMove={(x, y, intensity) => {
             touchMoveRef.current = { x, y, active: true, intensity };
           }}
@@ -11474,6 +11879,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const isUnlocked = prog?.isUnlocked ?? false;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
+                    (lvlId === 0 && (meta.bestiaryKills?.morana || 0) >= 1) ||
                     (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
                     (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||
@@ -11905,7 +12311,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     Cíl výpravy:
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
-                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
+                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
@@ -12151,6 +12557,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 className="touch-toggle-btn"
                 onClick={() => {
                   sound.coin();
+                  const nextShow = !meta.windupTelegraphCirclesEnabled;
+                  saveMeta({ ...meta, windupTelegraphCirclesEnabled: nextShow });
+                }}
+                title="Zapnout / vypnout kruhy nápřahu kolem útočících nepřátel"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="target" size={14} /> Kruhy nápřahu:</span> <span className="touch-toggle-text">{meta.windupTelegraphCirclesEnabled ? 'Zap' : 'Vyp'}</span>
+              </button>
+              <button
+                className="touch-toggle-btn"
+                onClick={() => {
+                  sound.coin();
                   setIsCombatTextModalOpen(true);
                 }}
                 title="Nastavit kategorie plovoucích textů v aréně"
@@ -12354,7 +12771,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if ((pl.stickyPlumJamStacks || 0) > 0) {
                 perks.push({
                   icon: 'honey',
-                  name: 'Bezedný krajáč povidel',
+                  name: 'Krajáč povidel',
                   desc: `-${Math.round((pl.plumPoiseReduction || 0.20) * 100)} % odolnost bubáků vůči odhození a po zahnání tvoří zpomalující louži (-${Math.round((pl.plumSlowRatio || 0.35) * 100)} % rychlost)`,
                   badge: `${pl.stickyPlumJamStacks}×`,
                 });
@@ -12362,7 +12779,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if ((pl.goatBellStacks || 0) > 0) {
                 perks.push({
                   icon: 'bell',
-                  name: 'Zvonek ze zatoulané kozy',
+                  name: 'Kozí zvonek',
                   desc: `Každé ${(pl.goatBellInterval || 4.0).toFixed(1)} s běhu zazvoní: vyruší nápřah strašidel a přitáhne perníčky i krejcary v okruhu ${pl.goatBellRadius || 180} px`,
                   badge: `${pl.goatBellStacks}×`,
                 });
@@ -12370,7 +12787,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if ((pl.itchySocksStacks || 0) > 0) {
                 perks.push({
                   icon: 'socks',
-                  name: 'Babiččiny kousavé fusekle',
+                  name: 'Kousavé fusekle',
                   desc: `+${pl.itchySocksStacks * 15} rychlost, imunita na mráz/led a +${Math.round((pl.movingCooldownBonus || 0.12) * 100)} % nabíjení v pohybu`,
                   badge: `${pl.itchySocksStacks}×`,
                 });
@@ -12551,9 +12968,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </p>
 
             {/* 3 Reel Housing */}
-            <div className={`slot-reel-housing ${!slotSpinning && slotStoppedCount >= 3 ? 'slot-all-locked' : ''}`}>
+            <div
+              className={`slot-reel-housing ${!slotSpinning && slotStoppedCount >= 3 ? 'slot-all-locked' : ''}`}
+              onClick={() => {
+                if (slotSpinningRef.current) {
+                  skipSlotSpin();
+                }
+              }}
+              style={{ cursor: slotSpinning ? 'pointer' : 'default' }}
+              title={slotSpinning ? 'Klikněte pro přeskočení točení' : undefined}
+            >
               {chestRewards.map((reward, i) => {
                 const isLocked = i < slotStoppedCount;
+                const reelSymbols = SLOT_REEL_STRIPS[i] || SLOT_REEL_STRIPS[0];
                 return (
                   <div
                     key={i}
@@ -12577,8 +13004,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     {/* Reel Window */}
                     <div className="slot-reel-window">
                       {!isLocked ? (
-                        <div className="slot-spinning-strip">
-                          {['krejcar', 'czech_buchta', 'zlaty_dukat', 'jitrnice', 'kynuty_kolac', 'toulave_boty', 'osikovy_prut', 'candle', 'coin', 'krejcar', 'czech_buchta', 'zlaty_dukat', 'jitrnice', 'kynuty_kolac', 'toulave_boty', 'osikovy_prut'].map((sym, sIdx) => (
+                        <div className={`slot-spinning-strip slot-reel-strip-${i}`}>
+                          {reelSymbols.map((sym, sIdx) => (
                             <div key={sIdx} style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <GameIcon icon={sym} size={38} />
                             </div>
@@ -12764,7 +13191,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     setGameState('menu');
                   }}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do další úrovně ({tallyCounters.levelId + 1}. úroveň) <GameIcon icon="dash" size={16} /></span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>Vyrazit do další úrovně ({tallyCounters.levelId + 2}. úroveň) <GameIcon icon="dash" size={16} /></span>
                 </button>
               )}
 

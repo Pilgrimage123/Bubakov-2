@@ -26,6 +26,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
   migratedUnlockedWeapons['osikovy_prut'] = true;
   migratedUnlockedWeapons['povidlove_buchty'] = true;
   migratedUnlockedWeapons['hromnicka'] = true;
+  migratedUnlockedWeapons['bylinkova_fajfka'] = true;
 
   const migratedWeaponKillCounts: Record<string, any> = {};
   if (parsed.weaponKillCounts && typeof parsed.weaponKillCounts === 'object') {
@@ -52,6 +53,7 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
       : parsed.performanceMode ? 'performance' : 'balanced',
     performanceMode: parsed.performanceProfile ? parsed.performanceProfile === 'performance' : !!parsed.performanceMode,
     dynamicLightingEnabled: parsed.dynamicLightingEnabled !== undefined ? Boolean(parsed.dynamicLightingEnabled) : true,
+    windupTelegraphCirclesEnabled: parsed.windupTelegraphCirclesEnabled !== undefined ? Boolean(parsed.windupTelegraphCirclesEnabled) : false,
     currentLang: validLang,
     selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
       ? parsed.selectedLevel
@@ -82,6 +84,7 @@ export function createDefaultMetaProgression(): MetaProgression {
     performanceProfile: 'balanced',
     performanceMode: false,
     dynamicLightingEnabled: true,
+    windupTelegraphCirclesEnabled: false,
     currentLang: 'cs',
     regenLevel: 0,
     ovenLevel: 0,

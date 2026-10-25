@@ -209,7 +209,8 @@ export function sampleAnnulusPosition(
   screenW: number,
   enemies: readonly any[],
   objectiveType: 'big_pouch' | 'gingerbread_stash' | 'chest',
-  arenaBounds = { minX: -2200, maxX: 2200, minY: -2200, maxY: 2200 }
+  arenaBounds = { minX: -2200, maxX: 2200, minY: -2200, maxY: 2200 },
+  existingDrops: readonly any[] = []
 ): { x: number; y: number; score: number } {
   const minRadius = screenW * 1.5;
   const maxRadius = screenW * 2.5;
@@ -244,6 +245,19 @@ export function sampleAnnulusPosition(
       score = dist - density * 500;
     } else {
       score = dist + density * 500;
+    }
+
+    // Proximity penalty against stacking treasures/anchors in the same spot
+    if (existingDrops) {
+      for (let j = 0; j < existingDrops.length; j++) {
+        const d = existingDrops[j];
+        if (!d || d.dead) continue;
+        const ddx = d.x - candX;
+        const ddy = d.y - candY;
+        if (ddx * ddx + ddy * ddy <= 300 * 300) {
+          score -= 50000;
+        }
+      }
     }
 
     if (score > bestScore) {

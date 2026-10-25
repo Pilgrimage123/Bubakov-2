@@ -15,6 +15,7 @@ import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
 import { GameIcon } from './GameIcon';
 import { SmartSvgViewer } from './svg/SmartSvgViewer';
+import { Battlefield } from './gpu-animation/Battlefield';
 import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
 import { ENEMY_PREFIX_DEFS } from '../types';
 
@@ -23,7 +24,7 @@ interface AnimationTesterModalProps {
   onClose: () => void;
 }
 
-type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather' | 'smart_svg';
+type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather' | 'smart_svg' | 'gpu_walk';
 type CanvasBg = 'parchment' | 'night' | 'snow' | 'grid';
 
 interface HunterDef {
@@ -32,7 +33,7 @@ interface HunterDef {
   title: string;
   desc: string;
   icon: string;
-  draw: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number) => void;
+  draw: (ctx: CanvasRenderingContext2D, x: number, y: number, t: number, dx: number, dy: number, flee: boolean, scale: number, hurt?: boolean) => void;
   supportsBarunka?: boolean;
 }
 
@@ -49,9 +50,9 @@ const HUNTERS_LIST: HunterDef[] = [
     id: 'shepherd',
     name: 'Pasáček',
     title: 'Hbitý chlapec z pastvin',
-    desc: 'Lehkonožka s pastýřskou holí, plstěným kloboučkem a houpavým krokem. Bleskový krok po lukách.',
+    desc: 'Bosý chlapec s pírkem za uchem, dřevěnou píšťalkou, modrou kordulkou se zlatými knoflíky a záplatovanými kalhotami.',
     icon: 'shepherd',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawShepherd(ctx, x, y, t, dx, dy, flee, scale),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawShepherd(ctx, x, y, t, dx, dy, flee, scale, hurt),
   },
   {
     id: 'korenarka',
@@ -71,28 +72,29 @@ const HUNTERS_LIST: HunterDef[] = [
   },
   {
     id: 'sexton',
-    name: 'Hrobník',
-    title: 'Správce hřbitova a zvoník',
-    desc: 'Vážný muž ve vysokém klobouku s mosazným zvoncem a svazkem hřbitovních klíčů. Rytmické houpání zvonce.',
-    icon: 'bell',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawSexton(ctx, x, y, t, dx, dy, flee, scale),
+    name: 'Pobožný kostelník',
+    title: 'Zvoník a správce farního kostela',
+    desc: 'Vážný kostelník v hnědém klobouku a kabátě se zlatým křížem na hrudi, mosaznou kropenkou a slaměným kropáčem.',
+    icon: 'kostelnik',
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawSexton(ctx, x, y, t, dx, dy, flee, scale, hurt),
   },
   {
     id: 'granny',
     name: 'Babička s Barunkou',
     title: 'Laskavá stařenka z Ratibořic',
-    desc: 'Babička v modré kanafaskové sukni s nůší a holí. Doprovází ji Barunka se zapletenými copy.',
+    desc: 'Babička v bílém květovaném šátku, vlňáku a pruhované zástěře s pechem chleba a bylinkami. Doprovází ji Barunka.',
     icon: 'granny',
     supportsBarunka: true,
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawGranny(ctx, x, y, t, dx, dy, flee, scale, true),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawGranny(ctx, x, y, t, dx, dy, flee, scale, true, hurt),
   },
   {
     id: 'barunka',
     name: 'Barunka',
-    title: 'Děvčátko v lidovém kroji',
-    desc: 'Samostatný náhled Barunky s vlajícími copy, modrou zástěrkou a červeným korálkem.',
+    title: 'Vnučka v lidovém kroji',
+    desc: 'Samostatný náhled Barunky se zapleteným copem s červenou mašlí, červenou šněrovačkou a kytičkou lučního kvítí.',
     icon: 'barunka',
-    draw: (ctx, x, y, t, dx, _dy, _flee, scale) => Lada.drawBarunka(ctx, x, y, t, Math.abs(dx) > 0.1, scale * 1.2),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) =>
+      Lada.drawBarunka(ctx, x, y, t, Math.abs(dx) > 0.1 || flee, scale * 1.2, flee, hurt, Math.hypot(dx, dy) > 1.25, dx < 0 ? -1 : 1),
   },
   {
     id: 'valecnice',
@@ -149,7 +151,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
   const [animTime, setAnimTime] = useState<number>(0);
 
   // Hunter-specific animation state
-  const [hunterMoveState, setHunterMoveState] = useState<'idle' | 'walk' | 'flee'>('walk');
+  const [hunterMoveState, setHunterMoveState] = useState<'idle' | 'walk' | 'sprint' | 'hit' | 'flee'>('walk');
   const [grannyWithBarunka, setGrannyWithBarunka] = useState<boolean>(true);
   const [valecniceStrike, setValecniceStrike] = useState<boolean>(false);
 
@@ -299,17 +301,19 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
 
           if (activeTab === 'hunters') {
             const h = currentHunter;
-            const isMoving = hunterMoveState === 'walk';
+            const isWalking = hunterMoveState === 'walk';
+            const isSprinting = hunterMoveState === 'sprint';
+            const isHurt = hunterMoveState === 'hit';
             const isFleeing = hunterMoveState === 'flee';
-            const dx = isMoving ? 1 * dir : isFleeing ? -1 * dir : 0;
-            const dy = isMoving ? 0.2 : 0;
+            const dx = isSprinting ? 1.8 * dir : isWalking ? 1 * dir : isFleeing ? 1.8 * dir : dir * 0.01;
+            const dy = isSprinting ? 0.5 : isWalking ? 0.2 : isFleeing ? 0.4 : 0;
 
             if (h.id === 'granny') {
-              Lada.drawGranny(ctx, cx, cy, t, dx, dy, isFleeing, zoomScale, grannyWithBarunka);
+              Lada.drawGranny(ctx, cx, cy, t, dx, dy, isFleeing, zoomScale, grannyWithBarunka, isHurt);
             } else if (h.id === 'valecnice') {
               drawValecniceCompanion(ctx, cx, cy, dir < 0 ? Math.PI / 2 : -Math.PI / 2, 0, t, zoomScale * 1.15, valecniceStrike);
             } else {
-              h.draw(ctx, cx, cy, t, dx, dy, isFleeing, zoomScale);
+              h.draw(ctx, cx, cy, t, dx, dy, isFleeing, zoomScale, isHurt);
             }
 
             if (showHitbox) {
@@ -343,11 +347,11 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               vx = 0;
             } else if (enemyAction === 'windup') {
               isAttacking = true;
-              windupTimer = delay * 0.65;
+              windupTimer = ((t * 0.85) % 1) * delay;
             } else if (enemyAction === 'strike') {
-              isAttacking = true;
+              isAttacking = false;
               windupTimer = 0;
-              strikeTimer = recov * 0.5;
+              strikeTimer = Math.max(0.005, recov * (1 - ((t * 1.8) % 1)));
             } else if (enemyAction === 'cycle') {
               const cycleDuration = 3.6;
               const ct = t % cycleDuration;
@@ -357,7 +361,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                 isAttacking = true;
                 windupTimer = ct - 1.4;
               } else if (ct < 1.4 + delay + recov) {
-                strikeTimer = ct - (1.4 + delay);
+                isAttacking = false;
+                strikeTimer = Math.max(0.005, recov - (ct - (1.4 + delay)));
               } else {
                 vx = 0;
               }
@@ -657,7 +662,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: isSmallMobile ? 'repeat(2, 1fr)' : isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)',
             gap: isSmallMobile ? '3px' : isMobile ? '4px' : '8px',
             marginBottom: isSmallMobile ? '8px' : '10px',
           }}
@@ -764,6 +769,26 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             }}
           >
             <GameIcon icon="star" size={14} /> Smart SVG
+          </button>
+
+          <button
+            className={`tab-btn ${activeTab === 'gpu_walk' ? 'active' : ''}`}
+            style={{
+              fontSize: isSmallMobile ? '0.74rem' : isMobile ? '0.82rem' : '0.94rem',
+              padding: isSmallMobile ? '5px 4px' : '7px 10px',
+              fontWeight: 900,
+              minWidth: 0,
+              textAlign: 'center',
+              background: activeTab === 'gpu_walk' ? '#D97706' : undefined,
+              color: activeTab === 'gpu_walk' ? '#FFFFFF' : undefined,
+              boxShadow: activeTab === 'gpu_walk' ? '0 2px 8px rgba(217, 119, 6, 0.4)' : undefined,
+            }}
+            onClick={() => {
+              sound.coin();
+              setActiveTab('gpu_walk');
+            }}
+          >
+            <GameIcon icon="walk" size={14} /> GPU Chůze
           </button>
         </div>
 
@@ -1001,8 +1026,15 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
           </div>
         )}
 
+        {/* Tab 6: Procedural GPU Walk Engine Showcase (<Battlefield />) */}
+        {activeTab === 'gpu_walk' && (
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '4px' : '8px' }}>
+            <Battlefield />
+          </div>
+        )}
+
         {/* Tab 2, 3, 4: Detailed Inspection View */}
-        {activeTab !== 'all' && activeTab !== 'smart_svg' && (
+        {activeTab !== 'all' && activeTab !== 'smart_svg' && activeTab !== 'gpu_walk' && (
           <div
             style={{
               display: 'flex',
@@ -1651,7 +1683,16 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                 >
                   {activeTab === 'hunters' && (
                     <>
-                      <GameIcon icon="bow" size={12} /> {currentHunter.name} — {hunterMoveState === 'idle' ? 'Klid' : hunterMoveState === 'walk' ? 'Pohyb' : 'Útěk'}
+                      <GameIcon icon="bow" size={12} /> {currentHunter.name} —{' '}
+                      {hunterMoveState === 'idle'
+                        ? 'Klid'
+                        : hunterMoveState === 'walk'
+                        ? 'Chůze'
+                        : hunterMoveState === 'sprint'
+                        ? 'Sprint'
+                        : hunterMoveState === 'hit'
+                        ? 'Zásah vyděšením'
+                        : 'Útěk bez kuráže'}
                     </>
                   )}
                   {activeTab === 'enemies' && (
@@ -1773,14 +1814,18 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       gap: '4px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: isSmallMobile ? '0.72rem' : '0.78rem', fontWeight: 800, color: '#FEF3C7' }}>
-                        Pohyb:
+                        Stav:
                       </span>
-                      {(['idle', 'walk', 'flee'] as const).map((st) => (
+                      {(['idle', 'walk', 'sprint', 'hit', 'flee'] as const).map((st) => (
                         <button
                           key={st}
-                          onClick={() => setHunterMoveState(st)}
+                          onClick={() => {
+                            if (st === 'hit' || st === 'flee') sound.hit();
+                            else sound.coin();
+                            setHunterMoveState(st);
+                          }}
                           style={{
                             padding: '3px 7px',
                             fontSize: isSmallMobile ? '0.72rem' : '0.76rem',
@@ -1798,7 +1843,15 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                             </span>
                           ) : st === 'walk' ? (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                              <GameIcon icon="walk" size={11} /> Krok
+                              <GameIcon icon="walk" size={11} /> Chůze
+                            </span>
+                          ) : st === 'sprint' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <GameIcon icon="boots" size={11} /> Sprint
+                            </span>
+                          ) : st === 'hit' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <GameIcon icon="lightning" size={11} /> Vyděšení
                             </span>
                           ) : (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>

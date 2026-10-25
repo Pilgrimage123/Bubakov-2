@@ -513,84 +513,377 @@ var Lada = {
 		this.drawLimb(ctx, 10, -5, 15 + legSwing * .6, 15, COLORS.woodLight, 10);
 		ctx.restore();
 	},
-	drawShepherd(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
+	drawShepherd(ctx, x, y, time, dx, dy, fleeing = false, scale = 1, hurt = false) {
 		const dir = dx < 0 ? -1 : 1;
-		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1) && !fleeing;
-		const bob = isMoving ? Math.abs(Math.sin(time * 20)) * 5 : Math.sin(time * 3) * 1;
-		const legSwing = isMoving ? Math.sin(time * 20) * 18 : 0;
+		const speedMag = Math.hypot(dx, dy);
+		const isSprinting = !fleeing && !hurt && speedMag > 1.25;
+		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1 || fleeing) && !hurt;
+		const strideFreq = fleeing ? 26 : isSprinting ? 24 : 18;
+		const strideAmp = fleeing ? 22 : isSprinting ? 20 : 15;
+		const bob = hurt
+			? 5 + Math.abs(Math.sin(time * 28)) * 3
+			: fleeing
+			? Math.abs(Math.sin(time * strideFreq)) * 8
+			: isSprinting
+			? Math.abs(Math.sin(time * strideFreq)) * 7
+			: isMoving
+			? Math.abs(Math.sin(time * strideFreq)) * 5.2
+			: Math.sin(time * 3.2) * 1.2;
+		const legSwing = hurt
+			? -9
+			: isMoving
+			? Math.sin(time * strideFreq) * strideAmp
+			: 0;
+		const armSwing = hurt
+			? -14
+			: fleeing
+			? Math.sin(time * strideFreq) * 16
+			: isSprinting
+			? Math.sin(time * strideFreq) * 14
+			: isMoving
+			? Math.sin(time * strideFreq) * 10
+			: Math.sin(time * 2.8) * 2;
 		const breathing = Math.sin(time * 4) * 1;
+		const torsoLean = hurt
+			? -.22 + Math.sin(time * 34) * .05
+			: fleeing
+			? .22 + Math.sin(time * strideFreq) * .05
+			: isSprinting
+			? .15 + Math.sin(time * strideFreq) * .03
+			: isMoving
+			? .05
+			: 0;
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.scale(scale * dir, scale);
-		if (fleeing) {
-			ctx.rotate(Math.PI / 2);
-			ctx.translate(0, -15);
+
+		// --- 0. SPRINT / FLEE DUST PUFFS BEHIND BARE FEET ---
+		if (isSprinting || fleeing) {
+			const dustPhase = (time * (fleeing ? 12 : 9)) % 1;
+			const dustPhase2 = (time * (fleeing ? 12 : 9) + .5) % 1;
+			ctx.fillStyle = "rgba(214, 199, 178, 0.58)";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.arc(-14 - dustPhase * 18, 26 - dustPhase * 7, (1 - dustPhase) * 6 + 1.5, 0, Math.PI * 2);
+			ctx.arc(-10 - dustPhase2 * 16, 28 - dustPhase2 * 5, (1 - dustPhase2) * 5 + 1.2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
 		}
-		this.drawLimb(ctx, -4, 5, -legSwing, 28, COLORS.white, 7);
-		this.drawLimb(ctx, 4, 5, legSwing, 28, COLORS.white, 7);
-		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2);
+
+		// --- 1. BACK LEG (Patched olive-khaki trousers + bare foot) ---
+		const backFootX = hurt ? -12 : -4 - legSwing;
+		const backFootY = hurt ? 25 : 27 - Math.max(0, -legSwing * (fleeing || isSprinting ? .38 : .25));
+		this.setupPath(ctx, "#F0AD92", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.ellipse(-legSwing + 2, 28, 6, 4, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.beginPath();
-		ctx.ellipse(legSwing + 2, 28, 6, 4, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.translate(0, -bob);
-		ctx.translate(0, breathing);
-		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 4);
-		const crookTilt = isMoving ? Math.sin(time * 20) * .2 : Math.sin(time * 2) * .1;
-		ctx.save();
-		ctx.translate(-15, 5);
-		ctx.rotate(crookTilt);
-		ctx.beginPath();
-		ctx.moveTo(0, 20);
-		ctx.lineTo(0, -30);
-		ctx.stroke();
-		ctx.beginPath();
-		ctx.arc(5, -30, 5, Math.PI, 0);
-		ctx.stroke();
-		ctx.restore();
-		this.drawLimb(ctx, -8, -5, -15, 5, COLORS.white, 6);
-		this.setupPath(ctx, COLORS.white);
-		ctx.beginPath();
-		ctx.moveTo(-12, -10);
-		ctx.lineTo(-16, 18);
-		ctx.lineTo(16, 18);
-		ctx.lineTo(12, -10);
+		ctx.moveTo(-4 - legSwing * .7, 21);
+		ctx.lineTo(backFootX - 2, backFootY + 2);
+		ctx.quadraticCurveTo(backFootX + 5, backFootY + 4, backFootX + 8, backFootY + 1);
+		ctx.quadraticCurveTo(backFootX + 8, backFootY - 2, backFootX + 1, backFootY - 2);
+		ctx.lineTo(-1 - legSwing * .7, 21);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.mustard);
+		this.setupPath(ctx, "#8A7747", COLORS.ink, 2.5);
 		ctx.beginPath();
-		ctx.arc(0, 2, 14, 0, Math.PI * 2);
+		ctx.moveTo(-9, 6);
+		ctx.lineTo(-10 - legSwing * .75, 22);
+		ctx.lineTo(-7 - legSwing * .75, 20);
+		ctx.lineTo(-4 - legSwing * .75, 23);
+		ctx.lineTo(-1 - legSwing * .75, 20);
+		ctx.lineTo(2 - legSwing * .75, 22);
+		ctx.lineTo(2, 6);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.skin);
+
+		// --- 2. FRONT LEG (Patched olive-khaki trousers with red & blue patches + bare foot) ---
+		const frontFootX = hurt ? 11 : 5 + legSwing;
+		const frontFootY = hurt ? 24 : 27 - Math.max(0, legSwing * (fleeing || isSprinting ? .38 : .25));
+		this.setupPath(ctx, "#F0AD92", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.arc(0, -18, 12, 0, Math.PI * 2);
+		ctx.moveTo(3 + legSwing * .7, 21);
+		ctx.lineTo(frontFootX - 2, frontFootY + 2);
+		ctx.quadraticCurveTo(frontFootX + 6, frontFootY + 4, frontFootX + 9, frontFootY + 1);
+		ctx.quadraticCurveTo(frontFootX + 9, frontFootY - 2, frontFootX + 2, frontFootY - 2);
+		ctx.lineTo(6 + legSwing * .7, 21);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = "rgba(209, 52, 43, 0.3)";
+		this.setupPath(ctx, "#9A8652", COLORS.ink, 2.5);
 		ctx.beginPath();
-		ctx.arc(4, -15, 3, 0, Math.PI * 2);
+		ctx.moveTo(-2, 6);
+		ctx.lineTo(-2 + legSwing * .75, 22);
+		ctx.lineTo(1 + legSwing * .75, 20);
+		ctx.lineTo(4 + legSwing * .75, 23);
+		ctx.lineTo(7 + legSwing * .75, 20);
+		ctx.lineTo(10 + legSwing * .75, 22);
+		ctx.lineTo(10, 6);
+		ctx.closePath();
 		ctx.fill();
-		this.setupPath(ctx, COLORS.mustard);
+		ctx.stroke();
+		this.setupPath(ctx, "#D9463E", COLORS.ink, 1.8);
+		ctx.fillRect(1 + legSwing * .25, 9, 6, 5.5);
+		ctx.strokeRect(1 + legSwing * .25, 9, 6, 5.5);
+		this.setupPath(ctx, "#2B6CB0", COLORS.ink, 1.6);
+		ctx.fillRect(2 + legSwing * .55, 16, 5, 4.5);
+		ctx.strokeRect(2 + legSwing * .55, 16, 5, 4.5);
+
+		ctx.translate(0, -bob + breathing);
+		ctx.rotate(torsoLean);
+
+		// --- 3. BACK ARM (Swinging behind body or thrown up in panic/recoil) ---
+		const backArmX = fleeing
+			? -15 + Math.sin(time * 28) * 6
+			: hurt
+			? -16
+			: -11 - armSwing * .6;
+		const backArmY = fleeing
+			? -19 + Math.cos(time * 28) * 5
+			: hurt
+			? -14
+			: 5 + armSwing * .3;
+		this.drawLimb(ctx, -7, -6, backArmX, backArmY, "#F0AD92", 5);
+		this.setupPath(ctx, "#F8F6EE", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.arc(0, -22, 13, Math.PI, 0);
-		ctx.quadraticCurveTo(-18, -8, -10, -18);
-		ctx.quadraticCurveTo(18, -8, 10, -20);
+		ctx.moveTo(-6, -9);
+		ctx.lineTo(-13 - (fleeing || hurt ? 2 : armSwing * .3), fleeing || hurt ? -10 : -1);
+		ctx.lineTo(-8 - (fleeing || hurt ? 2 : armSwing * .3), fleeing || hurt ? -5 : 3);
+		ctx.lineTo(-3, -4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// --- 4. TORSO: White linen shirt + Royal-blue vest (kordulka) with gold buttons & red trim ---
+		this.setupPath(ctx, "#F8F6EE", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-11, -10);
+		ctx.lineTo(-12, 8);
+		ctx.lineTo(12, 8);
+		ctx.lineTo(11, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#1D5BA6", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-11, -10);
+		ctx.lineTo(-12, 7);
+		ctx.lineTo(-2, 8);
+		ctx.lineTo(-1, -4);
+		ctx.lineTo(2, -4);
+		ctx.lineTo(3, 8);
+		ctx.lineTo(12, 7);
+		ctx.lineTo(11, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#D9463E";
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(-2, -8);
+		ctx.lineTo(-2, 7);
+		ctx.moveTo(3, -8);
+		ctx.lineTo(3, 7);
+		ctx.stroke();
+
+		ctx.fillStyle = "#F59E0B";
+		for (let i = 0; i < 3; i++) {
+			const by = -5 + i * 4.5;
+			ctx.beginPath();
+			ctx.arc(-5.5, by, 1.5, 0, Math.PI * 2);
+			ctx.arc(6.5, by, 1.5, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// --- 5. RED NECKERCHIEF (Červený šátek u krku - billows strongly in sprint/flee) ---
+		const scarfWave = Math.sin(time * (fleeing ? 28 : isSprinting ? 24 : isMoving ? 18 : 4)) * (fleeing ? 6 : isSprinting ? 4.5 : 2.5);
+		const scarfStream = fleeing || isSprinting ? -6 : hurt ? 3 : 0;
+		this.setupPath(ctx, "#D9463E", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-7, -10);
+		ctx.quadraticCurveTo(-16 + scarfStream, -12 + scarfWave, -19 + scarfStream * 1.4, -6 + scarfWave);
+		ctx.lineTo(-14 + scarfStream, -3 + scarfWave);
+		ctx.quadraticCurveTo(-11, -7, -6, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(-8, -11);
+		ctx.quadraticCurveTo(0, -6, 9, -11);
+		ctx.lineTo(7, -6);
+		ctx.quadraticCurveTo(0, -3, -7, -7);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// --- 6. FRONT ARM HOLDING WOODEN FLUTE (Píšťalka) ---
+		const fluteLift = fleeing
+			? -9 + Math.sin(time * 28) * 5
+			: hurt
+			? -7 + Math.sin(time * 32) * 3
+			: isSprinting
+			? Math.sin(time * 24) * 5
+			: Math.sin(time * (isMoving ? 14 : 3.5)) * 2;
+		this.setupPath(ctx, "#F8F6EE", COLORS.ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(5, -8);
+		ctx.lineTo(13, -3 + fluteLift * .4);
+		ctx.lineTo(10, 2 + fluteLift * .4);
+		ctx.lineTo(3, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.drawLimb(ctx, 11, -1 + fluteLift * .4, 18, -10 + fluteLift, "#F0AD92", 4.8);
+		ctx.save();
+		ctx.translate(18, -11 + fluteLift);
+		ctx.rotate(fleeing ? -.95 + Math.sin(time * 28) * .25 : hurt ? -1.1 : -.45);
+		this.setupPath(ctx, "#D4A359", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-2, -11);
+		ctx.lineTo(2.2, -11);
+		ctx.lineTo(1.6, 8);
+		ctx.lineTo(-1.6, 8);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
 		ctx.fillStyle = COLORS.ink;
 		ctx.beginPath();
-		ctx.arc(6, -20, 2.5, 0, Math.PI * 2);
+		ctx.arc(0, -6, .9, 0, Math.PI * 2);
+		ctx.arc(0, -2.5, .9, 0, Math.PI * 2);
+		ctx.arc(0, 1, .9, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.fillStyle = COLORS.white;
+		ctx.restore();
+
+		// --- 7. HEAD, TOUSLED BROWN HAIR & FEATHER BEHIND EAR ---
+		const headJoltY = hurt ? -2.5 : fleeing ? -1.5 : 0;
+		ctx.translate(0, headJoltY);
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2.6);
 		ctx.beginPath();
-		ctx.arc(6.5, -21, 1, 0, Math.PI * 2);
+		ctx.arc(0, -19, 11.5, 0, Math.PI * 2);
 		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "rgba(224, 90, 71, 0.55)";
+		ctx.beginPath();
+		ctx.arc(3.5, -16.5, 3.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		if (fleeing || hurt) {
+			// Terrified / startled wide eyes & open gasping/screaming mouth
+			this.setupPath(ctx, COLORS.white, COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.arc(2.5, -20.2, 3.1, 0, Math.PI * 2);
+			ctx.arc(7.8, -20.2, 3.0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(2.8, -20.2, 1.1, 0, Math.PI * 2);
+			ctx.arc(8.1, -20.2, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+			// Raised panicked eyebrows
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.moveTo(-.2, -24);
+			ctx.lineTo(4.2, -25.2);
+			ctx.moveTo(5.8, -25.2);
+			ctx.lineTo(10.2, -23.8);
+			ctx.stroke();
+			// Open screaming / gasping mouth
+			this.setupPath(ctx, "#7F1D1D", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.ellipse(5.2, -14.2, fleeing ? 3.2 : 2.5, fleeing ? 3.8 : 2.9, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.arc(4.5, -15.5, 3.2, .15, Math.PI * .78);
+			ctx.stroke();
+
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(2.5, -20, 1.8, 0, Math.PI * 2);
+			ctx.arc(7.5, -20, 1.7, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = COLORS.white;
+			ctx.beginPath();
+			ctx.arc(3, -20.6, .7, 0, Math.PI * 2);
+			ctx.arc(8, -20.6, .6, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Feather behind ear (jolts upright when startled or fleeing)
+		const featherJolt = hurt ? -4 : fleeing ? -2.5 : 0;
+		ctx.save();
+		ctx.translate(-3, -25 + featherJolt);
+		ctx.rotate(hurt ? -.12 : fleeing ? -.82 + Math.sin(time * 28) * .18 : -.48 + Math.sin(time * (isSprinting ? 16 : 6)) * (isSprinting ? .14 : .06));
+		this.setupPath(ctx, "#D6C7B2", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(-5, -10, -2, -19);
+		ctx.quadraticCurveTo(4, -11, 2, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#6B4423";
+		ctx.beginPath();
+		ctx.arc(-1.2, -15, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(0, 1);
+		ctx.lineTo(-1.8, -17);
+		ctx.stroke();
+		ctx.restore();
+
+		// Tousled brown hair (bristles up on hurt/flee)
+		const hairPop = hurt ? -2.5 : fleeing ? -1.5 : 0;
+		this.setupPath(ctx, "#7C4D2B", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-11, -17);
+		ctx.quadraticCurveTo(-14, -25 + hairPop, -8, -29 + hairPop);
+		ctx.lineTo(-10, -32 + hairPop * 1.4);
+		ctx.lineTo(-4, -30 + hairPop);
+		ctx.lineTo(-2, -33 + hairPop * 1.5);
+		ctx.lineTo(3, -30 + hairPop);
+		ctx.quadraticCurveTo(10, -29 + hairPop, 11, -23);
+		ctx.quadraticCurveTo(6, -26, 1, -24);
+		ctx.quadraticCurveTo(-5, -24, -8, -17);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// --- 8. STARTLE SPARKS & FLYING SWEAT DROPS FOR HURT / FLEE ---
+		if (hurt || fleeing) {
+			const sweatWave = (time * 10) % 1;
+			this.setupPath(ctx, "#38BDF8", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(-13 - sweatWave * 8, -24 - sweatWave * 5, 2.3, 0, Math.PI * 2);
+			ctx.arc(-16 - sweatWave * 5, -16 + sweatWave * 4, 1.9, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+		if (hurt) {
+			this.setupPath(ctx, "#FDE047", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.moveTo(-2, -39);
+			ctx.lineTo(0, -47);
+			ctx.lineTo(2, -39);
+			ctx.closePath();
+			ctx.moveTo(7, -37);
+			ctx.lineTo(12, -44);
+			ctx.lineTo(10, -36);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
 		ctx.restore();
 	},
 	drawKorenarka(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
@@ -1127,334 +1420,946 @@ var Lada = {
 		ctx.stroke();
 		ctx.restore();
 	},
-	drawSexton(ctx, x, y, time, dx, dy, fleeing = false, scale = 1) {
+	drawSexton(ctx, x, y, time, dx, dy, fleeing = false, scale = 1, hurt = false) {
 		const dir = dx < 0 ? -1 : 1;
-		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1) && !fleeing;
-		const bob = isMoving ? Math.abs(Math.sin(time * 14)) * 4 : Math.sin(time * 2.2) * 1;
-		const legSwing = isMoving ? Math.sin(time * 14) * 13 : 0;
-		const headBob = Math.sin(time * 3) * 1.2;
-		const bellSwing = Math.sin(time * (isMoving ? 14 : 2.6)) * (isMoving ? .55 : .18);
-		const keySway = Math.sin(time * (isMoving ? 14 : 2)) * 2;
+		const speedMag = Math.hypot(dx, dy);
+		const isSprinting = !fleeing && !hurt && speedMag > 1.25;
+		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1 || fleeing) && !hurt;
+		const strideFreq = fleeing ? 23 : isSprinting ? 20 : 14;
+		const strideAmp = fleeing ? 19 : isSprinting ? 17 : 12;
+		const bob = hurt
+			? 5 + Math.abs(Math.sin(time * 28)) * 2.8
+			: fleeing
+			? Math.abs(Math.sin(time * strideFreq)) * 6.8
+			: isSprinting
+			? Math.abs(Math.sin(time * strideFreq)) * 5.8
+			: isMoving
+			? Math.abs(Math.sin(time * strideFreq)) * 4
+			: Math.sin(time * 2.2) * 1;
+		const legSwing = hurt
+			? -8
+			: isMoving
+			? Math.sin(time * strideFreq) * strideAmp
+			: 0;
+		const headBob = hurt
+			? -2.5
+			: fleeing
+			? Math.sin(time * strideFreq) * 2
+			: Math.sin(time * 3) * 1.1;
+		const sprinkleWave = Math.sin(time * (fleeing ? 26 : isSprinting ? 20 : isMoving ? 12 : 3.5));
+		const bucketSwing = hurt
+			? -.65 + Math.sin(time * 30) * .15
+			: fleeing
+			? -.75 + Math.sin(time * 24) * .45
+			: Math.sin(time * (isSprinting ? 20 : isMoving ? 14 : 2.4)) * (isSprinting ? .48 : isMoving ? .28 : .1);
+		const torsoLean = hurt
+			? -.2 + Math.sin(time * 32) * .05
+			: fleeing
+			? .2 + Math.sin(time * strideFreq) * .05
+			: isSprinting
+			? .13 + Math.sin(time * strideFreq) * .03
+			: isMoving
+			? .04
+			: 0;
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.scale(scale * dir, scale);
-		if (fleeing) {
-			ctx.rotate(Math.PI / 2);
-			ctx.translate(0, -20);
+
+		// --- 0. SPRINT / FLEE DUST PUFFS BEHIND SHOES ---
+		if (isSprinting || fleeing) {
+			const dustPhase = (time * (fleeing ? 11 : 8.5)) % 1;
+			const dustPhase2 = (time * (fleeing ? 11 : 8.5) + .5) % 1;
+			ctx.fillStyle = "rgba(214, 199, 178, 0.56)";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.arc(-15 - dustPhase * 18, 28 - dustPhase * 6, (1 - dustPhase) * 6 + 1.5, 0, Math.PI * 2);
+			ctx.arc(-10 - dustPhase2 * 15, 29 - dustPhase2 * 5, (1 - dustPhase2) * 5 + 1.2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
 		}
-		this.drawLimb(ctx, -5, 10, -legSwing - 2, 30, "#1C1A1A", 9);
-		this.drawLimb(ctx, 5, 10, legSwing + 2, 30, "#1C1A1A", 9);
-		ctx.translate(0, -bob);
-		this.setupPath(ctx, "#2A2624", COLORS.ink, 3.5);
+
+		// --- 1. LEGS & BLACK SHOES (Dark brown trousers #5C4636 + black shoes) ---
+		const leftFootX = hurt ? -10 : -legSwing - 2;
+		const rightFootX = hurt ? 9 : legSwing + 2;
+		const leftFootY = hurt ? 27 : 29 - Math.max(0, -legSwing * (fleeing || isSprinting ? .3 : .15));
+		const rightFootY = hurt ? 27 : 29 - Math.max(0, legSwing * (fleeing || isSprinting ? .3 : .15));
+		this.drawLimb(ctx, -5, 10, leftFootX, leftFootY, "#5C4636", 8.5);
+		this.drawLimb(ctx, 5, 10, rightFootX, rightFootY, "#5C4636", 8.5);
+		this.setupPath(ctx, "#262423", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.moveTo(-17, -4);
-		ctx.quadraticCurveTo(-26, 16, -22, 28);
-		ctx.lineTo(22, 28);
-		ctx.quadraticCurveTo(26, 16, 17, -4);
+		ctx.ellipse(leftFootX + 1, leftFootY + 1, 6.5, 3.6, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.ellipse(rightFootX + 1, rightFootY + 1, 6.5, 3.6, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.translate(0, -bob);
+		ctx.rotate(torsoLean);
+
+		// --- 2. BACK ARM & GOLDEN HOLY WATER BUCKET (Kropenka s křížkem) ---
+		ctx.save();
+		ctx.translate(-16, fleeing || hurt ? -1 : 4);
+		ctx.rotate(bucketSwing);
+		this.drawLimb(ctx, 3, -8, -2, 3, "#6E4E36", 7);
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(-2, 4, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.arc(-2, 9, 6.5, Math.PI, 0);
+		ctx.stroke();
+		this.setupPath(ctx, "#D9A036", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-9, 9);
+		ctx.lineTo(5, 9);
+		ctx.lineTo(3.5, 22);
+		ctx.lineTo(-7.5, 22);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.white, COLORS.ink, 2);
+		this.setupPath(ctx, "#38BDF8", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(-2, 9, 7, 2.3, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Holy water sloshing out of the bucket during sprint, hurt, or flee
+		if (isSprinting || hurt || fleeing) {
+			ctx.beginPath();
+			ctx.arc(-7, 4 - Math.abs(sprinkleWave) * 4, 2.1, 0, Math.PI * 2);
+			ctx.arc(3, 3 - Math.abs(sprinkleWave) * 5, 1.9, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-2, 12.5);
+		ctx.lineTo(-2, 19.5);
+		ctx.moveTo(-5, 15.5);
+		ctx.lineTo(1, 15.5);
+		ctx.stroke();
+		ctx.restore();
+
+		// --- 3. OLIVE-BROWN FROCK COAT & DARK WAISTCOAT (coat tails flare on sprint/flee) ---
+		const coatFlare = fleeing ? 5 : isSprinting ? 3.5 : 0;
+		this.setupPath(ctx, "#7C5A3F", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.moveTo(-16, -6);
+		ctx.quadraticCurveTo(-24 - coatFlare, 14, -20 - coatFlare, 25);
+		ctx.lineTo(20 + coatFlare * .4, 25);
+		ctx.quadraticCurveTo(24, 14, 16, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#3E2E23", COLORS.ink, 2.4);
 		ctx.beginPath();
 		ctx.moveTo(-9, -6);
-		ctx.lineTo(0, 8);
+		ctx.lineTo(-8, 17);
+		ctx.lineTo(8, 17);
 		ctx.lineTo(9, -6);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = COLORS.mustard;
+
+		this.setupPath(ctx, "#F5F2EB", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-7, -8);
+		ctx.lineTo(0, -1);
+		ctx.lineTo(7, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#D9A036";
 		for (let i = 0; i < 3; i++) {
 			ctx.beginPath();
-			ctx.arc(0, 13 + i * 5, 1.8, 0, Math.PI * 2);
+			ctx.arc(-11, 4 + i * 6, 1.7, 0, Math.PI * 2);
+			ctx.arc(11, 4 + i * 6, 1.7, 0, Math.PI * 2);
 			ctx.fill();
 		}
+
+		// --- 4. PROMINENT GOLDEN CROSS ON CHEST (Zlatý křížek na krku - swings when running/fleeing) ---
+		const crossSwing = (fleeing || isSprinting) ? sprinkleWave * 2.5 : hurt ? -2 : 0;
 		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 3.5;
+		ctx.lineWidth = 4.2;
 		ctx.beginPath();
-		ctx.arc(-13 + keySway * .3, 15, 4, 0, Math.PI * 2);
+		ctx.moveTo(0, 0);
+		ctx.lineTo(crossSwing, 12);
+		ctx.moveTo(-4.5 + crossSwing * .4, 4);
+		ctx.lineTo(4.5 + crossSwing * .4, 4);
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.mustard;
-		ctx.lineWidth = 1.6;
+		ctx.strokeStyle = "#F59E0B";
+		ctx.lineWidth = 2.4;
 		ctx.beginPath();
-		ctx.arc(-13 + keySway * .3, 15, 4, 0, Math.PI * 2);
+		ctx.moveTo(0, 0);
+		ctx.lineTo(crossSwing, 12);
+		ctx.moveTo(-4.5 + crossSwing * .4, 4);
+		ctx.lineTo(4.5 + crossSwing * .4, 4);
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.mustard, COLORS.ink, 1.5);
-		ctx.fillRect(-16 + keySway, 19, 3, 9);
-		ctx.strokeRect(-16 + keySway, 19, 3, 9);
-		ctx.fillRect(-11 + keySway, 19, 3, 7);
-		ctx.strokeRect(-11 + keySway, 19, 3, 7);
+
+		// --- 5. FRONT RAISED ARM & STRAW SPRINKLER BRUSH (Kropáč se svěcenou vodou) ---
 		ctx.save();
-		ctx.translate(19, 2);
-		ctx.rotate(bellSwing);
-		ctx.strokeStyle = COLORS.woodDark;
-		ctx.lineWidth = 4;
+		ctx.translate(14, fleeing || hurt ? -8 : -4);
+		ctx.rotate(
+			fleeing
+				? -.85 + sprinkleWave * .42
+				: hurt
+				? -.92 + Math.sin(time * 32) * .18
+				: isSprinting
+				? -.52 + sprinkleWave * .34
+				: -.35 + sprinkleWave * .22
+		);
+		this.drawLimb(ctx, -2, 2, 7, -7, "#7C5A3F", 7);
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2);
 		ctx.beginPath();
-		ctx.moveTo(0, -4);
-		ctx.lineTo(0, 5);
+		ctx.arc(8, -8, 3.5, 0, Math.PI * 2);
+		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, COLORS.mustard, COLORS.ink, 2.5);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 4.5;
 		ctx.beginPath();
-		ctx.moveTo(-9, 21);
-		ctx.quadraticCurveTo(-9, 6, 0, 4);
-		ctx.quadraticCurveTo(9, 6, 9, 21);
+		ctx.moveTo(6, -5);
+		ctx.lineTo(13, -17);
+		ctx.stroke();
+		ctx.strokeStyle = "#8C5A35";
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(6, -5);
+		ctx.lineTo(13, -17);
+		ctx.stroke();
+		this.setupPath(ctx, "#EAB308", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(11, -16);
+		ctx.lineTo(9, -27);
+		ctx.lineTo(14, -29);
+		ctx.lineTo(19, -28);
+		ctx.lineTo(22, -23);
+		ctx.lineTo(15, -15);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = COLORS.ink;
+		this.setupPath(ctx, "#D97706", COLORS.ink, 1.6);
+		ctx.fillRect(10.5, -18, 5.5, 3);
+		ctx.strokeRect(10.5, -18, 5.5, 3);
+		this.setupPath(ctx, "#38BDF8", COLORS.ink, 1.4);
+		const dropOffset = (sprinkleWave + 1) * (fleeing || isSprinting ? 3.8 : 2.5);
 		ctx.beginPath();
-		ctx.arc(-bellSwing * 6, 23, 2.6, 0, Math.PI * 2);
+		ctx.arc(6 - dropOffset * .4, -31 - dropOffset, 2.2, 0, Math.PI * 2);
+		ctx.arc(16 + dropOffset * .3, -34 - dropOffset, 2.4, 0, Math.PI * 2);
+		ctx.arc(25 + dropOffset, -28 - dropOffset * .5, 2, 0, Math.PI * 2);
+		ctx.arc(26 + dropOffset * .8, -19, 1.8, 0, Math.PI * 2);
 		ctx.fill();
+		ctx.stroke();
 		ctx.restore();
+
+		// --- 6. HEAD, GREY HAIR, RED BULBOUS NOSE, GREY MUSTACHE & BROWN FEDORA HAT ---
 		ctx.translate(0, headBob);
-		this.setupPath(ctx, COLORS.skin);
+		this.setupPath(ctx, "#9CA3AF", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.arc(0, -20, 13, 0, Math.PI * 2);
+		ctx.arc(-11, -18, 4.5, 0, Math.PI * 2);
+		ctx.arc(11, -18, 4.5, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#B9B4A6", COLORS.ink, 1.8);
+
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2.8);
 		ctx.beginPath();
-		ctx.moveTo(-9, -15);
-		ctx.quadraticCurveTo(0, -9, 9, -15);
-		ctx.quadraticCurveTo(0, -13, -9, -15);
+		ctx.arc(0, -19, 12.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		if (fleeing || hurt) {
+			// Wide startled / terrified eyes
+			this.setupPath(ctx, COLORS.white, COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.arc(-4, -21, 3.1, 0, Math.PI * 2);
+			ctx.arc(5, -21, 3.1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-3.8, -21, 1.1, 0, Math.PI * 2);
+			ctx.arc(5.2, -21, 1.1, 0, Math.PI * 2);
+			ctx.fill();
+			// High arched startled eyebrows
+			ctx.strokeStyle = "#4B5563";
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.moveTo(-8.5, -25.2);
+			ctx.lineTo(-1.5, -26.8);
+			ctx.moveTo(2, -26.8);
+			ctx.lineTo(9, -25.2);
+			ctx.stroke();
+			// Open gasping / screaming mouth under the mustache
+			this.setupPath(ctx, "#7F1D1D", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.ellipse(.5, -10.2, fleeing ? 3.6 : 2.8, fleeing ? 3.8 : 2.9, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-4, -21, 1.7, 0, Math.PI * 2);
+			ctx.arc(5, -21, 1.7, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "#4B5563";
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.moveTo(-8, -24);
+			ctx.lineTo(-1.5, -23);
+			ctx.moveTo(2, -23);
+			ctx.lineTo(8.5, -24);
+			ctx.stroke();
+		}
+
+		this.setupPath(ctx, "#E06D53", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(1, -17.5, 3.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Grey mustache (bristles upward when startled or fleeing)
+		const mustacheJolt = (fleeing || hurt) ? -1.8 : 0;
+		this.setupPath(ctx, "#9CA3AF", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-9.5, -12.5 + mustacheJolt);
+		ctx.quadraticCurveTo(0, -16.5 + mustacheJolt, 10, -12.5 + mustacheJolt);
+		ctx.quadraticCurveTo(5, -9.5 + mustacheJolt, 0, -12 + mustacheJolt);
+		ctx.quadraticCurveTo(-5, -9.5 + mustacheJolt, -9.5, -12.5 + mustacheJolt);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = COLORS.ink;
-		ctx.beginPath();
-		ctx.arc(-4, -22, 1.6, 0, Math.PI * 2);
-		ctx.arc(5, -22, 1.6, 0, Math.PI * 2);
-		ctx.fill();
-		this.setupPath(ctx, "#1F1B1A", COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.ellipse(0, -29, 20, 5.5, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.beginPath();
-		ctx.moveTo(-11, -29);
-		ctx.lineTo(-9, -43);
-		ctx.lineTo(9, -43);
-		ctx.lineTo(11, -29);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = COLORS.mustard;
-		ctx.fillRect(-10, -34, 20, 3);
-		ctx.restore();
-	},
-	drawBarunka(ctx, x, y, time, moving, scale = 1) {
-		const bob = moving ? Math.abs(Math.sin(time * 15)) * 3 : Math.sin(time * 2.6) * 1;
-		const leg = moving ? Math.sin(time * 15) * 9 : 0;
-		const braid = Math.sin(time * (moving ? 15 : 2.2)) * (moving ? 5 : 1.5);
+
+		// Brown fedora hat (pops up off the head when startled or fleeing!)
+		const hatPopY = hurt ? -6 - Math.abs(Math.sin(time * 28)) * 2.5 : fleeing ? -3.5 - Math.abs(Math.sin(time * 24)) * 2 : 0;
+		const hatTilt = hurt ? -.16 : fleeing ? -.12 + Math.sin(time * 24) * .08 : 0;
 		ctx.save();
-		ctx.translate(x, y);
-		ctx.scale(scale, scale);
-		this.drawLimb(ctx, -3, 8, -leg - 1, 22, COLORS.white, 6);
-		this.drawLimb(ctx, 3, 8, leg + 1, 22, COLORS.white, 6);
-		ctx.translate(0, -bob);
-		this.setupPath(ctx, "#3A5A8C", COLORS.ink, 3);
+		ctx.translate(0, hatPopY);
+		ctx.rotate(hatTilt);
+		this.setupPath(ctx, "#7C5836", COLORS.ink, 2.8);
 		ctx.beginPath();
-		ctx.moveTo(-11, -2);
-		ctx.quadraticCurveTo(-17, 10, -13, 18);
-		ctx.lineTo(13, 18);
-		ctx.quadraticCurveTo(17, 10, 11, -2);
+		ctx.ellipse(0, -28, 19, 4.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(-12, -28);
+		ctx.lineTo(-9.5, -40);
+		ctx.quadraticCurveTo(-4, -42, 0, -39.5);
+		ctx.quadraticCurveTo(4, -42, 9.5, -40);
+		ctx.lineTo(12, -28);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#F8F4E8", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.moveTo(-6, 0);
-		ctx.lineTo(6, 0);
-		ctx.lineTo(9, 18);
-		ctx.lineTo(-9, 18);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		this.setupPath(ctx, COLORS.parchment, COLORS.ink, 2.5);
-		ctx.fillRect(-8, -9, 16, 10);
-		ctx.strokeRect(-8, -9, 16, 10);
-		this.setupPath(ctx, COLORS.red, COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.moveTo(-9, -9);
-		ctx.lineTo(9, -9);
-		ctx.lineTo(0, 4);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = COLORS.woodDark;
-		ctx.lineWidth = 4;
-		ctx.beginPath();
-		ctx.moveTo(-8, -15);
-		ctx.quadraticCurveTo(-13 - braid, -8, -11 - braid, 0);
-		ctx.moveTo(8, -15);
-		ctx.quadraticCurveTo(13 + braid, -8, 11 + braid, 0);
-		ctx.stroke();
-		ctx.fillStyle = COLORS.red;
-		ctx.beginPath();
-		ctx.arc(-11 - braid, 1, 2.6, 0, Math.PI * 2);
-		ctx.arc(11 + braid, 1, 2.6, 0, Math.PI * 2);
-		ctx.fill();
-		this.setupPath(ctx, COLORS.skin, COLORS.ink, 2.5);
-		ctx.beginPath();
-		ctx.arc(0, -16, 9, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		this.setupPath(ctx, "#7A4B22", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.arc(0, -18, 9.3, Math.PI * 1.05, Math.PI * 1.95);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = COLORS.ink;
-		ctx.beginPath();
-		ctx.arc(-3, -15, 1.3, 0, Math.PI * 2);
-		ctx.arc(3, -15, 1.3, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "rgba(232, 106, 146, 0.55)";
-		ctx.beginPath();
-		ctx.arc(-6, -12, 2, 0, Math.PI * 2);
-		ctx.arc(6, -12, 2, 0, Math.PI * 2);
-		ctx.fill();
+		this.setupPath(ctx, "#3E2723", COLORS.ink, 2);
+		ctx.fillRect(-11, -32, 22, 3.8);
+		ctx.strokeRect(-11, -32, 22, 3.8);
+		ctx.restore();
+
+		// --- 7. STARTLE SPARKS & FLYING SWEAT DROPS FOR HURT / FLEE ---
+		if (hurt || fleeing) {
+			const sweatWave = (time * 10) % 1;
+			this.setupPath(ctx, "#38BDF8", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(-15 - sweatWave * 8, -23 - sweatWave * 5, 2.3, 0, Math.PI * 2);
+			ctx.arc(-18 - sweatWave * 5, -15 + sweatWave * 4, 1.9, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+		if (hurt) {
+			this.setupPath(ctx, "#FDE047", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.moveTo(-3, -46);
+			ctx.lineTo(0, -54);
+			ctx.lineTo(3, -46);
+			ctx.closePath();
+			ctx.moveTo(8, -44);
+			ctx.lineTo(13, -51);
+			ctx.lineTo(11, -43);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
 		ctx.restore();
 	},
-	drawGranny(ctx, x, y, time, dx, dy, fleeing = false, scale = 1, withBarunka = true) {
-		const dir = dx < 0 ? -1 : 1;
-		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1) && !fleeing;
-		if (withBarunka && !fleeing) this.drawBarunka(ctx, x - 34 * dir * scale, y + 9 * scale, time + .7, isMoving, scale * .85);
-		const bob = isMoving ? Math.abs(Math.sin(time * 11)) * 3 : Math.sin(time * 2.2) * 1;
-		const legSwing = isMoving ? Math.sin(time * 11) * 10 : 0;
-		const headBob = Math.sin(time * 2.6) * 1;
+	drawBarunka(ctx, x, y, time, moving, scale = 1, fleeing = false, hurt = false, sprinting = false, dir = 1) {
+		const isMoving = (moving || fleeing || sprinting) && !hurt;
+		const strideFreq = fleeing ? 25 : sprinting ? 21 : 15;
+		const strideAmp = fleeing ? 13 : sprinting ? 11.5 : 8.5;
+		const bob = hurt
+			? 4 + Math.abs(Math.sin(time * 28)) * 2.5
+			: fleeing
+			? Math.abs(Math.sin(time * strideFreq)) * 5.8
+			: sprinting
+			? Math.abs(Math.sin(time * strideFreq)) * 4.6
+			: isMoving
+			? Math.abs(Math.sin(time * strideFreq)) * 3
+			: Math.sin(time * 2.6) * 1;
+		const leg = hurt ? -6 : isMoving ? Math.sin(time * strideFreq) * strideAmp : 0;
+		const braid = Math.sin(time * (fleeing ? 26 : sprinting ? 21 : isMoving ? 15 : 2.2)) * (fleeing ? 8 : sprinting ? 6.5 : isMoving ? 4 : 1.5);
+		const torsoLean = hurt
+			? -.2 + Math.sin(time * 32) * .05
+			: fleeing
+			? .2 + Math.sin(time * strideFreq) * .05
+			: sprinting
+			? .13
+			: isMoving
+			? .04
+			: 0;
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.scale(scale * dir, scale);
-		if (fleeing) {
-			ctx.rotate(Math.PI / 2);
-			ctx.translate(0, -20);
+
+		// --- 0. SPRINT / FLEE DUST PUFFS BEHIND BOOTS ---
+		if (sprinting || fleeing) {
+			const dustPhase = (time * (fleeing ? 12 : 9)) % 1;
+			ctx.fillStyle = "rgba(214, 199, 178, 0.54)";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.arc(-11 - dustPhase * 14, 21 - dustPhase * 5, (1 - dustPhase) * 4.5 + 1.2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
 		}
-		this.drawLimb(ctx, -5, 10, -legSwing - 2, 30, "#4A3A2E", 8);
-		this.drawLimb(ctx, 5, 10, legSwing + 2, 30, "#4A3A2E", 8);
+
+		// --- 1. LEGS & BROWN LACED BOOTS ---
+		const leftFootX = hurt ? -7 : -leg - 1;
+		const rightFootX = hurt ? 7 : leg + 1;
+		const leftFootY = hurt ? 19.5 : 21 - Math.max(0, -leg * (fleeing || sprinting ? .28 : .14));
+		const rightFootY = hurt ? 19.5 : 21 - Math.max(0, leg * (fleeing || sprinting ? .28 : .14));
+		this.drawLimb(ctx, -3.5, 8, leftFootX, leftFootY, "#F4F1EA", 5.5);
+		this.drawLimb(ctx, 3.5, 8, rightFootX, rightFootY, "#F4F1EA", 5.5);
+		this.setupPath(ctx, "#7C4D2B", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(leftFootX, leftFootY + 1.5, 4.8, 2.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.ellipse(rightFootX, rightFootY + 1.5, 4.8, 2.8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
 		ctx.translate(0, -bob);
-		this.setupPath(ctx, "#3F5E85", COLORS.ink, 3.5);
+		ctx.rotate(torsoLean);
+
+		// --- 2. DARK BLUE SKIRT WITH FOLK FLORAL BORDER & WHITE APRON ---
+		const skirtFlare = fleeing ? 3.5 : sprinting ? 2.5 : 0;
+		this.setupPath(ctx, "#1E3A5F", COLORS.ink, 2.8);
 		ctx.beginPath();
-		ctx.moveTo(-16, -4);
-		ctx.quadraticCurveTo(-29, 14, -25, 28);
-		ctx.lineTo(25, 28);
-		ctx.quadraticCurveTo(29, 14, 16, -4);
+		ctx.moveTo(-10, -2);
+		ctx.quadraticCurveTo(-17 - skirtFlare, 10, -14 - skirtFlare, 18.5);
+		ctx.lineTo(14 + skirtFlare * .5, 18.5);
+		ctx.quadraticCurveTo(17, 10, 10, -2);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#F8F4E8", COLORS.ink, 2.5);
+		ctx.fillStyle = "#E63946";
 		ctx.beginPath();
-		ctx.moveTo(-10, 2);
-		ctx.lineTo(10, 2);
-		ctx.lineTo(15, 28);
-		ctx.lineTo(-15, 28);
+		ctx.arc(-9, 15.5, 1.6, 0, Math.PI * 2);
+		ctx.arc(0, 16, 1.6, 0, Math.PI * 2);
+		ctx.arc(9, 15.5, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#FBBF24";
+		ctx.beginPath();
+		ctx.arc(-4.5, 15.8, 1.3, 0, Math.PI * 2);
+		ctx.arc(4.5, 15.8, 1.3, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.setupPath(ctx, "#F4F1EA", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-6.5, -1);
+		ctx.lineTo(6.5, -1);
+		ctx.lineTo(9.5, 14);
+		ctx.lineTo(-9.5, 14);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.red;
-		ctx.lineWidth = 1.6;
-		ctx.strokeRect(-6, 14, 12, 8);
-		ctx.strokeStyle = COLORS.woodDark;
-		ctx.lineWidth = 4;
+
+		// --- 3. WHITE PUFFED-SLEEVE BLOUSE & RED BODICE (Červená kordulka) ---
+		this.setupPath(ctx, "#F4F1EA", COLORS.ink, 2.2);
 		ctx.beginPath();
-		ctx.moveTo(19 + legSwing * .25, 28);
-		ctx.lineTo(22, 0);
-		ctx.stroke();
-		const basketX = -22 - legSwing * .3;
-		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.5);
-		ctx.fillRect(basketX - 9, 7, 18, 11);
-		ctx.strokeRect(basketX - 9, 7, 18, 11);
-		this.setupPath(ctx, "#C98A3B", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(basketX, 6, 9, 5, 0, 0, Math.PI * 2);
+		ctx.arc(-9.5, -5, 4.2, 0, Math.PI * 2);
+		ctx.arc(9.5, -5, 4.2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.ink;
+
+		this.setupPath(ctx, "#C83E31", COLORS.ink, 2.4);
+		ctx.fillRect(-7.5, -9.5, 15, 9);
+		ctx.strokeRect(-7.5, -9.5, 15, 9);
+		ctx.strokeStyle = "#F59E0B";
 		ctx.lineWidth = 1.4;
 		ctx.beginPath();
-		ctx.moveTo(basketX - 4, 3);
-		ctx.lineTo(basketX - 1, 8);
-		ctx.moveTo(basketX + 1, 3);
-		ctx.lineTo(basketX + 4, 8);
+		ctx.moveTo(-3, -8);
+		ctx.lineTo(3, -5);
+		ctx.moveTo(3, -8);
+		ctx.lineTo(-3, -5);
+		ctx.moveTo(-3, -4);
+		ctx.lineTo(3, -1.5);
 		ctx.stroke();
-		ctx.translate(0, headBob);
-		this.setupPath(ctx, "#F8F9FA", COLORS.ink, 3);
+
+		// --- 4. WILDFLOWER BOUQUET HELD IN HANDS (Kytička lučního kvítí - jolts up in hurt/flee) ---
+		const bouquetLiftY = fleeing ? -7 + Math.sin(time * 26) * 3 : hurt ? -6 : sprinting ? Math.sin(time * 21) * 2.5 : 0;
+		ctx.save();
+		ctx.translate(0, bouquetLiftY);
+		this.setupPath(ctx, "#3A7D2C", COLORS.ink, 1.8);
 		ctx.beginPath();
-		ctx.arc(0, -20, 15, Math.PI * .6, Math.PI * 1.85);
-		ctx.quadraticCurveTo(9, -34, 13, -22);
-		ctx.quadraticCurveTo(15, -13, 6, -7);
-		ctx.quadraticCurveTo(-3, -5, -9, -9);
-		ctx.closePath();
+		ctx.arc(0, -1, 5.2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#F8F9FA", COLORS.ink, 2.5);
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 1.8);
 		ctx.beginPath();
-		ctx.moveTo(3, -7);
-		ctx.lineTo(8, -2);
-		ctx.lineTo(1, 2);
-		ctx.lineTo(-2, -6);
-		ctx.closePath();
+		ctx.arc(-2.5, 2, 2.4, 0, Math.PI * 2);
+		ctx.arc(2.5, 2, 2.4, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = COLORS.red;
-		[
-			[-9, -26],
-			[-3, -31],
-			[-9, -18],
-			[-4, -24],
-			[-9, -11],
-			[3, -33],
-			[7, -29],
-			[4, -1]
-		].forEach(([px, py]) => {
-			ctx.beginPath();
-			ctx.arc(px, py, 1.7, 0, Math.PI * 2);
-			ctx.fill();
-		});
-		this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+		this.setupPath(ctx, "#E63946", COLORS.ink, 1.5);
 		ctx.beginPath();
-		ctx.ellipse(3, -19, 10, 11.5, .08, 0, Math.PI * 2);
+		ctx.arc(-2.5, -2.5, 2.6, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#C8C4BD", COLORS.ink, 1.8);
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 1.5);
 		ctx.beginPath();
-		ctx.arc(2, -24, 7.5, Math.PI * 1.05, Math.PI * 1.85);
-		ctx.stroke();
-		ctx.fillStyle = COLORS.ink;
-		ctx.beginPath();
-		ctx.arc(1.5, -20, 1.6, 0, Math.PI * 2);
-		ctx.arc(7.5, -20, 1.6, 0, Math.PI * 2);
+		ctx.arc(2.5, -2.8, 2.4, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.fillStyle = COLORS.white;
-		ctx.beginPath();
-		ctx.arc(2.1, -20.6, .7, 0, Math.PI * 2);
-		ctx.arc(8.1, -20.6, .7, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.strokeStyle = "#8C6F54";
-		ctx.lineWidth = 1.2;
-		ctx.beginPath();
-		ctx.moveTo(9.5, -20);
-		ctx.lineTo(12, -21);
-		ctx.moveTo(9.5, -19);
-		ctx.lineTo(11.5, -18);
 		ctx.stroke();
+		this.setupPath(ctx, "#3B82F6", COLORS.ink, 1.4);
+		ctx.beginPath();
+		ctx.arc(0, -4.8, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// --- 5. HEAD, BRAID WITH RED BOW (Copánek s červenou mašlí - flies out in sprint/flee) ---
+		const braidLiftY = (fleeing || sprinting) ? -5 : hurt ? -4 : 1;
 		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 5;
+		ctx.beginPath();
+		ctx.moveTo(-7, -14);
+		ctx.quadraticCurveTo(-13 - braid, -8 + braidLiftY * .5, -11 - braid, braidLiftY);
+		ctx.stroke();
+		ctx.strokeStyle = "#7C4D2B";
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-7, -14);
+		ctx.quadraticCurveTo(-13 - braid, -8 + braidLiftY * .5, -11 - braid, braidLiftY);
+		ctx.stroke();
+		this.setupPath(ctx, "#D9463E", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-11 - braid, braidLiftY - 1);
+		ctx.lineTo(-15 - braid, braidLiftY - 3.5);
+		ctx.lineTo(-14 - braid, braidLiftY + 1.5);
+		ctx.closePath();
+		ctx.moveTo(-11 - braid, braidLiftY - 1);
+		ctx.lineTo(-7 - braid, braidLiftY - 3.5);
+		ctx.lineTo(-8 - braid, braidLiftY + 1.5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, -16.5, 9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#7C4D2B", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.arc(0, -18, 9.4, Math.PI * .95, Math.PI * 2.05);
+		ctx.quadraticCurveTo(4, -20, 0, -22);
+		ctx.quadraticCurveTo(-4, -20, -9.2, -17);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "rgba(230, 90, 90, 0.5)";
+		ctx.beginPath();
+		ctx.arc(-5.5, -13.5, 2.1, 0, Math.PI * 2);
+		ctx.arc(5.5, -13.5, 2.1, 0, Math.PI * 2);
+		ctx.fill();
+
+		if (fleeing || hurt) {
+			this.setupPath(ctx, COLORS.white, COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(-3, -16.2, 2.3, 0, Math.PI * 2);
+			ctx.arc(3, -16.2, 2.3, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-2.8, -16.2, .85, 0, Math.PI * 2);
+			ctx.arc(3.2, -16.2, .85, 0, Math.PI * 2);
+			ctx.fill();
+			this.setupPath(ctx, "#7F1D1D", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.ellipse(0, -12.3, fleeing ? 2.4 : 1.9, fleeing ? 2.8 : 2.1, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(-3, -16, 1.4, 0, Math.PI * 2);
+			ctx.arc(3, -16, 1.4, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.arc(0, -13.5, 2.6, .15, Math.PI * .85);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+	},
+	drawGranny(ctx, x, y, time, dx, dy, fleeing = false, scale = 1, withBarunka = true, hurt = false) {
+		const dir = dx < 0 ? -1 : 1;
+		const speedMag = Math.hypot(dx, dy);
+		const isSprinting = !fleeing && !hurt && speedMag > 1.25;
+		const isMoving = (Math.abs(dx) > .1 || Math.abs(dy) > .1 || fleeing) && !hurt;
+		if (withBarunka) {
+			this.drawBarunka(
+				ctx,
+				x - 34 * dir * scale,
+				y + 9 * scale,
+				time + .7,
+				isMoving,
+				scale * .85,
+				fleeing,
+				hurt,
+				isSprinting,
+				dir
+			);
+		}
+		const strideFreq = fleeing ? 22 : isSprinting ? 18 : 11;
+		const strideAmp = fleeing ? 16 : isSprinting ? 14 : 10;
+		const bob = hurt
+			? 4.5 + Math.abs(Math.sin(time * 28)) * 2.5
+			: fleeing
+			? Math.abs(Math.sin(time * strideFreq)) * 6.2
+			: isSprinting
+			? Math.abs(Math.sin(time * strideFreq)) * 4.8
+			: isMoving
+			? Math.abs(Math.sin(time * strideFreq)) * 3
+			: Math.sin(time * 2.2) * 1;
+		const legSwing = hurt
+			? -7
+			: isMoving
+			? Math.sin(time * strideFreq) * strideAmp
+			: 0;
+		const headBob = hurt
+			? -2.5
+			: fleeing
+			? Math.sin(time * strideFreq) * 1.8
+			: Math.sin(time * 2.6) * 1;
+		const torsoLean = hurt
+			? -.2 + Math.sin(time * 32) * .05
+			: fleeing
+			? .2 + Math.sin(time * strideFreq) * .05
+			: isSprinting
+			? .13 + Math.sin(time * strideFreq) * .03
+			: isMoving
+			? .04
+			: 0;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(scale * dir, scale);
+
+		// --- 0. SPRINT / FLEE DUST PUFFS BEHIND SHOES ---
+		if (isSprinting || fleeing) {
+			const dustPhase = (time * (fleeing ? 11 : 8.5)) % 1;
+			const dustPhase2 = (time * (fleeing ? 11 : 8.5) + .5) % 1;
+			ctx.fillStyle = "rgba(214, 199, 178, 0.56)";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.arc(-16 - dustPhase * 18, 28 - dustPhase * 6, (1 - dustPhase) * 6 + 1.5, 0, Math.PI * 2);
+			ctx.arc(-11 - dustPhase2 * 15, 29 - dustPhase2 * 5, (1 - dustPhase2) * 5 + 1.2, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// --- 1. LEGS & BLACK SHOES ---
+		const leftFootX = hurt ? -9 : -legSwing - 2;
+		const rightFootX = hurt ? 9 : legSwing + 2;
+		const leftFootY = hurt ? 27.5 : 30 - Math.max(0, -legSwing * (fleeing || isSprinting ? .28 : .14));
+		const rightFootY = hurt ? 27.5 : 30 - Math.max(0, legSwing * (fleeing || isSprinting ? .28 : .14));
+		this.drawLimb(ctx, -5, 10, leftFootX, leftFootY, "#1F1D1B", 8);
+		this.drawLimb(ctx, 5, 10, rightFootX, rightFootY, "#1F1D1B", 8);
+
+		ctx.translate(0, -bob);
+		ctx.rotate(torsoLean);
+
+		// --- 2. BROWN PLEATED SKIRT (#8C583A - flares out during sprint/flee) ---
+		const skirtFlare = fleeing ? 4.5 : isSprinting ? 3 : 0;
+		this.setupPath(ctx, "#8C583A", COLORS.ink, 3.2);
+		ctx.beginPath();
+		ctx.moveTo(-16, -3);
+		ctx.quadraticCurveTo(-29 - skirtFlare, 14, -25 - skirtFlare, 28);
+		ctx.lineTo(25 + skirtFlare * .4, 28);
+		ctx.quadraticCurveTo(29, 14, 16, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#5E3A24";
 		ctx.lineWidth = 1.6;
 		ctx.beginPath();
-		ctx.moveTo(6, -21);
-		ctx.lineTo(9.5, -18);
-		ctx.lineTo(7, -17);
+		ctx.moveTo(-15, 6);
+		ctx.lineTo(-19 - skirtFlare * .5, 27);
+		ctx.moveTo(15, 6);
+		ctx.lineTo(19, 27);
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.8;
+
+		// --- 3. STRIPED BLUE FOLK APRON (#3B6E8C) ---
+		this.setupPath(ctx, "#3B6E8C", COLORS.ink, 2.6);
 		ctx.beginPath();
-		ctx.arc(4.5, -14, 4.2, .15, Math.PI * .85);
-		ctx.stroke();
-		ctx.fillStyle = "rgba(230, 90, 90, 0.52)";
-		ctx.beginPath();
-		ctx.arc(1, -15, 2.8, 0, Math.PI * 2);
-		ctx.arc(9, -15, 2.8, 0, Math.PI * 2);
+		ctx.moveTo(-11, 0);
+		ctx.lineTo(11, 0);
+		ctx.lineTo(16, 27);
+		ctx.lineTo(-16, 27);
+		ctx.closePath();
 		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#7CC0E8";
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.moveTo(-9, 2);
+		ctx.lineTo(-12, 26);
+		ctx.moveTo(-3, 2);
+		ctx.lineTo(-4, 26);
+		ctx.moveTo(3, 2);
+		ctx.lineTo(4, 26);
+		ctx.moveTo(9, 2);
+		ctx.lineTo(12, 26);
+		ctx.stroke();
+
+		// --- 4. RUST-RED BODICE & DARK BROWN FRINGED SHAWL ---
+		this.setupPath(ctx, "#B83B2A", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-13, -10);
+		ctx.lineTo(-12, 2);
+		ctx.lineTo(12, 2);
+		ctx.lineTo(13, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#4E3629", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(-15, -9);
+		ctx.quadraticCurveTo(0, -13, 15, -9);
+		ctx.quadraticCurveTo(17, -1, 11, 1);
+		ctx.lineTo(2, -4);
+		ctx.lineTo(-2, -4);
+		ctx.lineTo(-11, 1);
+		ctx.quadraticCurveTo(-17, -1, -15, -9);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// --- 5. GATHERED APRON POUCH WITH BREAD LOAF, CHECKERED NAPKIN & HERBS ---
+		const pouchY = 7 + (fleeing || isSprinting ? Math.sin(time * strideFreq) * 2.2 : hurt ? -2.5 : Math.sin(time * 4) * .6);
+		this.setupPath(ctx, "#E63946", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-11, pouchY - 2);
+		ctx.lineTo(-15, pouchY + 4);
+		ctx.lineTo(-6, pouchY + 5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#4D7C0F", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(8, pouchY - 2, 4.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FBBF24";
+		ctx.beginPath();
+		ctx.arc(9.5, pouchY - 3, 1.5, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#C87D3B", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(-1, pouchY - 2, 7.5, 4.5, -.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 1.3;
+		ctx.beginPath();
+		ctx.moveTo(-4, pouchY - 4);
+		ctx.lineTo(-2, pouchY - 1);
+		ctx.moveTo(0, pouchY - 4.5);
+		ctx.lineTo(2, pouchY - 1);
+		ctx.stroke();
+		this.setupPath(ctx, "#4A7C9B", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-12, pouchY);
+		ctx.quadraticCurveTo(-14, pouchY + 11, 0, pouchY + 11);
+		ctx.quadraticCurveTo(13, pouchY + 11, 11, pouchY);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(10, pouchY + 1, 3.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// --- 6. WOODEN WALKING STICK IN HAND (Dřevěná hůl - lifted and waving in hurt/flee!) ---
+		ctx.save();
+		const stickX = -19 - legSwing * .2;
+		const stickLiftY = fleeing ? -10 + Math.sin(time * 24) * 4 : hurt ? -8 : isSprinting ? -3 + Math.sin(time * 18) * 2.5 : 0;
+		const stickRot = fleeing ? -.55 + Math.sin(time * 24) * .25 : hurt ? -.45 : isSprinting ? -.18 : 0;
+		ctx.translate(stickX + 2.5, 1 + stickLiftY);
+		ctx.rotate(stickRot);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 5;
+		ctx.beginPath();
+		ctx.moveTo(-2.5, 28);
+		ctx.lineTo(.5, -5);
+		ctx.stroke();
+		ctx.strokeStyle = "#7C4D2B";
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-2.5, 28);
+		ctx.lineTo(.5, -5);
+		ctx.stroke();
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, 0, 3.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// --- 7. HEAD & WHITE KERCHIEF WITH BLUE FLORAL MOTIFS (Bílý šátek s modrými kvítky) ---
+		ctx.translate(0, headBob);
+		this.setupPath(ctx, "#F4F1EA", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.arc(0, -20, 14.5, Math.PI * .55, Math.PI * 1.9);
+		ctx.quadraticCurveTo(10, -33, 13, -21);
+		ctx.quadraticCurveTo(14, -12, 6, -7);
+		ctx.quadraticCurveTo(-2, -5, -9, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		const knotWave = (fleeing || isSprinting) ? Math.sin(time * 22) * 2.5 : hurt ? -2 : 0;
+		this.setupPath(ctx, "#F4F1EA", COLORS.ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(1, -7);
+		ctx.lineTo(7, -2 + knotWave);
+		ctx.lineTo(1, 2 + knotWave);
+		ctx.lineTo(-3, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#2B6CB0";
+		ctx.beginPath();
+		ctx.arc(-9, -25, 1.9, 0, Math.PI * 2);
+		ctx.arc(-4, -30, 1.9, 0, Math.PI * 2);
+		ctx.arc(-9, -17, 1.9, 0, Math.PI * 2);
+		ctx.arc(3, -32, 1.8, 0, Math.PI * 2);
+		ctx.arc(-7, -11, 1.7, 0, Math.PI * 2);
+		ctx.arc(3, -2, 1.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#D9463E";
+		ctx.beginPath();
+		ctx.arc(-5, -22, 1.3, 0, Math.PI * 2);
+		ctx.arc(0, -29, 1.3, 0, Math.PI * 2);
+		ctx.fill();
+
+		this.setupPath(ctx, "#F5C396", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(2.5, -19, 9.5, 11, .06, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#D1CEC7", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(2, -24, 7.2, Math.PI * 1.05, Math.PI * 1.85);
+		ctx.stroke();
+
+		ctx.fillStyle = "rgba(230, 90, 90, 0.5)";
+		ctx.beginPath();
+		ctx.arc(.5, -15.5, 2.6, 0, Math.PI * 2);
+		ctx.arc(8.5, -15.5, 2.6, 0, Math.PI * 2);
+		ctx.fill();
+
+		if (fleeing || hurt) {
+			// Wide startled / terrified eyes
+			this.setupPath(ctx, COLORS.white, COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.arc(1, -20.2, 2.7, 0, Math.PI * 2);
+			ctx.arc(7, -20.2, 2.7, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(1.3, -20.2, .95, 0, Math.PI * 2);
+			ctx.arc(7.3, -20.2, .95, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.moveTo(5.5, -20.5);
+			ctx.lineTo(8.5, -17.5);
+			ctx.lineTo(6, -16.8);
+			ctx.stroke();
+			// Open gasping / screaming mouth
+			this.setupPath(ctx, "#7F1D1D", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.ellipse(4.5, -13.2, fleeing ? 3.0 : 2.3, fleeing ? 3.4 : 2.6, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			ctx.fillStyle = COLORS.ink;
+			ctx.beginPath();
+			ctx.arc(1, -20, 1.6, 0, Math.PI * 2);
+			ctx.arc(7, -20, 1.6, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = COLORS.white;
+			ctx.beginPath();
+			ctx.arc(1.5, -20.5, .6, 0, Math.PI * 2);
+			ctx.arc(7.5, -20.5, .6, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.moveTo(5.5, -20.5);
+			ctx.lineTo(8.5, -17.5);
+			ctx.lineTo(6, -16.8);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.arc(4, -14, 3.8, .15, Math.PI * .85);
+			ctx.stroke();
+		}
+
+		// --- 8. STARTLE SPARKS & FLYING SWEAT DROPS FOR HURT / FLEE ---
+		if (hurt || fleeing) {
+			const sweatWave = (time * 10) % 1;
+			this.setupPath(ctx, "#38BDF8", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(-15 - sweatWave * 8, -23 - sweatWave * 5, 2.2, 0, Math.PI * 2);
+			ctx.arc(-18 - sweatWave * 5, -15 + sweatWave * 4, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+		if (hurt) {
+			this.setupPath(ctx, "#FDE047", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.moveTo(-2, -39);
+			ctx.lineTo(0, -47);
+			ctx.lineTo(2, -39);
+			ctx.closePath();
+			ctx.moveTo(7, -37);
+			ctx.lineTo(12, -44);
+			ctx.lineTo(10, -36);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
 		ctx.restore();
 	},
 	drawBlessingFx(ctx, x, y, t, duration) {
@@ -9470,13 +10375,18 @@ var Lada = {
 
 		ctx.restore();
 	},
-	drawSnehulak(ctx, x, y, time, vx, panicked, isCharging = false) {
+	drawSnehulak(ctx, x, y, time, vx, panicked, isCharging = false, attackInfo?: EnemyAttackInfo) {
 		const dir = vx < 0 ? -1 : 1;
 		const scale = 1.45;
 		const walkSpeed = panicked ? 24 : isCharging ? 28 : 10;
 		const rollAngle = isCharging ? time * (dir * 9) : Math.sin(time * walkSpeed) * 0.12;
 		const bob = isCharging ? Math.abs(Math.sin(time * 20)) * 4 : Math.abs(Math.sin(time * walkSpeed)) * 4;
-		const broomSwing = Math.sin(time * (panicked ? 26 : 10)) * (panicked ? 24 : 14);
+		let broomSwing = Math.sin(time * (panicked ? 26 : 10)) * (panicked ? 24 : 14);
+		if (attackInfo?.isActive && !isCharging) {
+			broomSwing = attackInfo.isStrike
+				? 42 * (1 - attackInfo.strikeProgress * 0.5)
+				: -28 * attackInfo.windupProgress;
+		}
 
 		this.drawShadow(ctx, x, y, 32 * scale);
 		ctx.save();
@@ -15202,21 +16112,43 @@ for (const key of Object.keys(Lada)) {
 
 export function getEnemyAttackAnimationState(enemy: any, time: number): EnemyAttackInfo {
   const cadence: EnemyAttackCadence = enemy.attackCadence || 'normal';
-  const windupTimer = enemy.windupTimer || 0;
-  const strikeTimer = enemy.strikeTimer || 0;
+  const strikeTimer =
+    typeof enemy.strikeTimer === 'number' && enemy.strikeTimer > 0
+      ? enemy.strikeTimer
+      : typeof enemy.recoveryTimer === 'number' && enemy.recoveryTimer > 0
+      ? enemy.recoveryTimer
+      : 0;
+  const isAiWindup = enemy.aiState === 'windup' && strikeTimer <= 0;
+  const aiWindupDur = enemy.aiWindupDuration || 0.45;
+  const windupTimer =
+    (enemy.windupTimer || 0) > 0
+      ? enemy.windupTimer
+      : isAiWindup
+      ? Math.max(0.01, aiWindupDur - (typeof enemy.aiTimer === 'number' ? enemy.aiTimer : aiWindupDur * 0.5))
+      : 0;
   
   // Total interval and timing split
   const totalInterval = enemy.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-  const strikeMax = enemy.strikeMaxTimer || (cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42);
-  const attackDelay = enemy.attackDelay || Math.max(0.2, totalInterval - strikeMax);
+  const strikeMax = enemy.strikeMaxTimer || enemy.recoveryDuration || (cadence === 'slow' ? 0.65 : cadence === 'fast' ? 0.22 : 0.42);
+  const attackDelay = isAiWindup && !(enemy.windupTimer > 0)
+    ? aiWindupDur
+    : (enemy.attackDelay || Math.max(0.2, totalInterval - strikeMax));
 
   const isStrike = strikeTimer > 0;
   const isWindup = !isStrike && windupTimer > 0;
   const isActive = (isStrike || isWindup || Boolean(enemy.isAttacking)) && !enemy.isDefeated && !enemy.dead;
 
+  const fallbackDir =
+    typeof enemy.vx === 'number' && Math.abs(enemy.vx) > 0.01
+      ? (enemy.vx < 0 ? Math.PI : 0)
+      : typeof enemy.lastDx === 'number' && enemy.lastDx < 0
+      ? Math.PI
+      : 0;
   const attackAngle = typeof enemy.attackAngle === 'number'
     ? enemy.attackAngle
-    : (typeof enemy.vx === 'number' && enemy.vx < 0 ? Math.PI : 0);
+    : typeof enemy.chargeDirX === 'number' && (isAiWindup || enemy.aiState === 'charge')
+    ? enemy.chargeDirX
+    : fallbackDir;
   const facingDir = Math.cos(attackAngle) >= 0 ? 1 : -1;
 
   if (!isActive) {
@@ -16737,18 +17669,27 @@ function drawEnemyRenderer(
 
   const radius = enemy?.radius || 24;
   const cadence: EnemyAttackCadence = enemy?.attackCadence || enemy?.cadence || 'normal';
-  const isAttacking =
-    !!enemy?.isAttacking ||
-    !!enemy?.isWindup ||
-    enemy?.aiState === 'windup' ||
-    ((enemy?.windupTimer || 0) > 0 && (enemy?.strikeTimer || 0) <= 0);
-  const windupTimer = enemy?.windupTimer || 0;
   const recoveryTimer =
-    typeof enemy?.recoveryTimer === 'number'
+    typeof enemy?.recoveryTimer === 'number' && enemy.recoveryTimer > 0
       ? enemy.recoveryTimer
-      : typeof enemy?.strikeTimer === 'number'
+      : typeof enemy?.strikeTimer === 'number' && enemy.strikeTimer > 0
       ? enemy.strikeTimer
       : 0;
+  const isAiWindup = enemy?.aiState === 'windup' && recoveryTimer <= 0;
+  const aiWindupDuration = enemy?.aiWindupDuration || 0.45;
+  const windupTimer =
+    (enemy?.windupTimer || 0) > 0
+      ? enemy.windupTimer
+      : isAiWindup
+      ? Math.max(0.01, aiWindupDuration - (typeof enemy?.aiTimer === 'number' ? enemy.aiTimer : aiWindupDuration * 0.5))
+      : 0;
+  // When recoveryTimer > 0 and windupTimer <= 0, the enemy is in the strike/recovery phase, not windup
+  const isAttacking =
+    recoveryTimer <= 0 &&
+    (!!enemy?.isAttacking ||
+      !!enemy?.isWindup ||
+      isAiWindup ||
+      windupTimer > 0);
   const recoveryDuration =
     typeof enemy?.recoveryDuration === 'number'
       ? enemy.recoveryDuration
@@ -16756,19 +17697,35 @@ function drawEnemyRenderer(
       ? enemy.strikeMaxTimer
       : CADENCE_RECOVERY_DURATIONS[cadence] ?? 0.2;
   const attackDelay =
-    typeof enemy?.attackDelay === 'number'
+    isAiWindup && !(enemy?.windupTimer > 0)
+      ? aiWindupDuration
+      : typeof enemy?.attackDelay === 'number'
       ? enemy.attackDelay
       : CADENCE_ATTACK_DELAYS[cadence] ?? 1.2;
 
-  const facingDir =
-    (isAttacking || recoveryTimer > 0) && typeof enemy?.attackAngle === 'number'
-      ? (Math.cos(enemy.attackAngle) < 0 ? -1 : 1)
-      : (vx < 0 ? -1 : 1);
-  const effectiveVx = (isAttacking || recoveryTimer > 0) ? (facingDir < 0 ? -1 : 1) : vx;
-
-  const attackAngle =
+  const rawAttackAngle =
     typeof enemy?.attackAngle === 'number'
       ? enemy.attackAngle
+      : (isAiWindup || enemy?.aiState === 'charge') && typeof enemy?.chargeDirX === 'number'
+      ? enemy.chargeDirX
+      : undefined;
+
+  const fallbackFacing =
+    Math.abs(vx) > 0.01
+      ? (vx < 0 ? -1 : 1)
+      : typeof enemy?.lastDx === 'number' && Math.abs(enemy.lastDx) > 0.01
+      ? (enemy.lastDx < 0 ? -1 : 1)
+      : (vx < 0 ? -1 : 1);
+
+  const facingDir =
+    (isAttacking || recoveryTimer > 0) && typeof rawAttackAngle === 'number'
+      ? (Math.cos(rawAttackAngle) < 0 ? -1 : 1)
+      : fallbackFacing;
+  const effectiveVx = (isAttacking || recoveryTimer > 0 || Math.abs(vx) <= 0.01) ? (facingDir < 0 ? -1 : 1) : vx;
+
+  const attackAngle =
+    typeof rawAttackAngle === 'number'
+      ? rawAttackAngle
       : facingDir < 0
       ? Math.PI
       : 0;
@@ -16839,7 +17796,21 @@ function drawEnemyRenderer(
   const canUseAtlas = bakedMobId && !isAttacking && !(recoveryTimer > 0) && (!extraArgs || extraArgs.length === 0);
   let drawnViaAtlas = false;
   if (canUseAtlas) {
-    drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+    const hasMeltTransform =
+      bakedMobId === 'tajici_snehulak' &&
+      (typeof enemy?.meltSquashX === 'number' || typeof enemy?.wobbleScaleX === 'number');
+    if (hasMeltTransform) {
+      const mSx = (enemy?.meltSquashX ?? 1) * (enemy?.wobbleScaleX ?? 1);
+      const mSy = (enemy?.meltSquashY ?? 1) * (enemy?.wobbleScaleY ?? 1);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(mSx, mSy);
+      ctx.translate(-x, -y);
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+      ctx.restore();
+    } else {
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+    }
   }
 
   if (!drawnViaAtlas) {
@@ -16847,6 +17818,24 @@ function drawEnemyRenderer(
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, true);
     } else if (extraArgs && extraArgs.length > 0) {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, ...extraArgs);
+    } else if (method === 'drawSnehulak') {
+      const isCharging = Boolean(enemy?.aiState === 'charge' || enemy?.isCharging);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isCharging, attackInfo);
+    } else if (method === 'drawBezhlavyRytir') {
+      const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, attackInfo);
+    } else if (method === 'drawMlynar') {
+      const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged || (enemy?.hp && enemy?.maxHp && enemy.hp <= enemy.maxHp * 0.5));
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged);
+    } else if (method === 'drawCert') {
+      const isBoss = Boolean(enemy?.isBoss);
+      const isCharging = Boolean(enemy?.aiState === 'charge' || enemy?.isCharging);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isBoss, isCharging, attackInfo);
+    } else if (method === 'drawDrak') {
+      const isEnraged = Boolean(enemy?.enraged || enemy?.isEnraged);
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, isEnraged, enemy?.headAttacks);
+    } else if (method === 'drawFrostling') {
+      drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, false);
     } else {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo, enemy);
     }
@@ -16870,7 +17859,13 @@ export function drawEnemyWarningSign(
   enemy: Enemy,
   cameraOffset: { x: number; y: number } = { x: 0, y: 0 }
 ) {
-  if (!enemy.windupTimer || enemy.windupTimer <= 0 || !enemy.attackDelay) return;
+  const cadence: EnemyAttackCadence = (enemy as any).attackCadence || 'normal';
+  const effectiveDelay =
+    enemy.attackDelay ||
+    (enemy as any).attackInterval ||
+    CADENCE_ATTACK_DELAYS[cadence] ||
+    1.2;
+  if (!enemy.windupTimer || enemy.windupTimer <= 0 || !effectiveDelay) return;
   if ((enemy.strikeTimer || 0) > 0) return;
 
   const offX = cameraOffset ? cameraOffset.x : 0;
@@ -16878,7 +17873,7 @@ export function drawEnemyWarningSign(
   const screenX = enemy.x - offX;
   const screenY = enemy.y - offY - enemy.radius - 14;
 
-  const progress = Math.min(1, enemy.windupTimer / enemy.attackDelay);
+  const progress = Math.min(1, enemy.windupTimer / effectiveDelay);
   const scale = 1 + progress * 0.35 + (progress > 0.8 ? Math.sin(Date.now() * 0.03) * 0.15 : 0);
 
   ctx.save();

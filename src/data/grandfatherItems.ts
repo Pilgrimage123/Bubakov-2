@@ -24,7 +24,12 @@ export type GrandfatherEffect =
   // --- Nové efekty dědečkovy nůše ---
   | { type: 'sticky_plum_jam'; slowRatio: number; poiseReduction: number }
   | { type: 'goat_bell'; intervalSec: number; radius: number }
-  | { type: 'itchy_socks'; speedBonus: number; movingCooldownBonus: number };
+  | { type: 'itchy_socks'; speedBonus: number; movingCooldownBonus: number }
+  | { type: 'kominicka_supina'; luckBonus: number; critDmgMultBonus: number }
+  | { type: 'jetelovy_ctyrlistek' }
+  | { type: 'cinovy_strelecky_terc' }
+  | { type: 'vrbova_pistalka'; dodgeBonus: number }
+  | { type: 'lojem_mazane_krpce'; dodgeBonus: number };
 
 export interface GrandfatherItemDef {
   id: string;
@@ -45,8 +50,8 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   // --- Původní stálé dobroty dědečkovy nůše ---
   { id: 'sedmimile_krpce', name: 'Sedmimílové krpce', icon: '🥾', description: '+20 rychlost pohybu', baseCost: 35, maxStacks: 5, luckWeight: 1, effect: { type: 'speed', amount: 20 } },
   { id: 'pytlacka_lucerna', name: 'Pytlácká petrolejka', icon: '🪔', description: '+30 dosahu sběru', baseCost: 35, maxStacks: 5, luckWeight: 1.1, effect: { type: 'pickup_radius', amount: 30 } },
-  { id: 'zaplacovany_kabat', name: 'Záplatovaný kabát', icon: '🧥', description: '+25 maximální Kuráž', baseCost: 45, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
-  { id: 'krajac_na_podmasli', name: 'Krajáč na podmáslí', icon: '🥣', description: '+0,6 regenerace / s', baseCost: 50, maxStacks: 4, luckWeight: 0.8, effect: { type: 'regen', amount: 0.6 } },
+  { id: 'zaplacovany_kabat', name: 'Záplatovaný kabát', icon: '🧥', description: '+25 maximální Kuráž i okamžité zhojení', baseCost: 35, maxStacks: 5, luckWeight: 0.9, effect: { type: 'max_hp', amount: 25 } },
+  { id: 'krajac_na_podmasli', name: 'Krajáč na podmáslí', icon: '🥣', description: '+0,6 regenerace / s', baseCost: 40, maxStacks: 4, luckWeight: 0.8, effect: { type: 'regen', amount: 0.6 } },
   { id: 'podkova_pro_stesti', name: 'Podkova pro štěstí', icon: '🍀', description: '+10 ŠTĚSTÍ', baseCost: 50, maxStacks: 5, luckWeight: 0.8, effect: { type: 'luck', amount: 10 } },
 
   // --- Předchozí level up pasivní upgrady a posílení ---
@@ -63,7 +68,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
     luckWeight: 0.85,
     effect: { type: 'bear_mask' },
   },
-  { id: 'vesela_mysl', name: 'Veselá mysl a písnička', icon: '🎵', description: '+3 Kuráž doplňováno každých 5 s (+0,6 reg/s)', baseCost: 45, maxStacks: 5, luckWeight: 0.85, effect: { type: 'regen', amount: 0.6 } },
+  { id: 'vesela_mysl', name: 'Tahací harmonika', icon: '🪗', description: '+3 Kuráž doplňováno každých 5 s (+0,6 reg/s)', baseCost: 45, maxStacks: 5, luckWeight: 0.85, effect: { type: 'regen', amount: 0.6 } },
   { id: 'tepla_cikorka', name: 'Teplá cikorka', icon: 'tepla_cikorka', description: '+30 okamžité doplnění Kuráže', baseCost: 20, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 30 } },
   { id: 'zejdlik_piva', name: 'Žejdlík piva', icon: 'zejdlik_piva', description: '+40 okamžité doplnění Kuráže', baseCost: 25, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 40 } },
   { id: 'panak_koralky', name: 'Panák kořalky', icon: 'panak_koralky', description: '+55 okamžité doplnění Kuráže', baseCost: 30, maxStacks: 10, luckWeight: 1.1, effect: { type: 'heal', amount: 55 } },
@@ -73,7 +78,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   // --- Nové pasivní posvěcení a dobroty ---
   {
     id: 'trikralova_krida',
-    name: 'Posvěcená tříkrálová křída',
+    name: 'Tříkrálová křída',
     icon: '🖍️',
     description: 'Při zastavení nakreslí ochranný kruh: odrazí nemrtvé i čerty a sníží utržené zranění o 20 %.',
     baseCost: 50,
@@ -83,7 +88,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'strouhany_kren',
-    name: 'Strouhaný křen v ubrousku',
+    name: 'Strouhaný křen',
     icon: '🫚',
     description: '-25 % odolnost bubáků vůči jídlu (platí i na kostlivce) a +15 % poškození do mlsajících cílů.',
     baseCost: 45,
@@ -93,7 +98,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'poutove_srdce',
-    name: 'Pouťové perníkové srdce',
+    name: 'Perníkové srdce',
     icon: 'poutove_srdce',
     description: 'Sebrané perníčky okamžitě dobíjejí schopnost (+0,2 s / +0,6 s / +2 s k nabití); obří perníčky navíc zhojí 8 Kuráže.',
     baseCost: 50,
@@ -103,7 +108,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'ulezely_syrecek',
-    name: 'Uleželý syreček v kapse',
+    name: 'Uleželý syreček',
     icon: '🧀',
     description: 'Při nápřahu nepřítele v těsné blízkosti ho závan ze syrečku na 4 s vyčerpá (poloviční rychlost pohybu i útoku).',
     baseCost: 40,
@@ -113,7 +118,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'pivni_tacek',
-    name: 'Pivní tácek s čárkami',
+    name: 'Pivní tácek',
     icon: '🍺',
     description: 'Při nákupu Piva, Kořalky či Cikorky z 8 nejbližších strašidel vypadnou krejcary a na 6 s propůjčí +35 % nabíjení všech zbraní.',
     baseCost: 35,
@@ -123,7 +128,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'bezedny_krajac_povidel',
-    name: 'Bezedný krajáč povidel',
+    name: 'Krajáč povidel',
     icon: '🍯',
     description: 'Zasaženým bubákům zalepí paty (-20 % odolnost vůči odhození) a po zahnání zanechají zpomalující povidlovou louži.',
     baseCost: 45,
@@ -133,7 +138,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'zvonek_zatoulane_kozy',
-    name: 'Zvonek ze zatoulané kozy',
+    name: 'Kozí zvonek',
     icon: '🔔',
     description: 'Při chůzi vesele cinká. Každé 4 s běhu vyruší nápřah blízkých strašidel a přitáhne okolní perníčky a krejcary.',
     baseCost: 40,
@@ -143,7 +148,7 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   },
   {
     id: 'babicciny_kousave_fusekle',
-    name: 'Babiččiny kousavé fusekle',
+    name: 'Kousavé fusekle',
     icon: '🧦',
     description: 'Poctivá ovčí vlna zahřeje v mrazu (+15 rychlost, imunita na led) a tak kouše, že v pohybu zrychluje útoky o 12 %.',
     baseCost: 50,
@@ -151,11 +156,61 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
     luckWeight: 0.85,
     effect: { type: 'itchy_socks', speedBonus: 15, movingCooldownBonus: 0.12 },
   },
+  {
+    id: 'kominicka_supina',
+    name: 'Kominická šupina',
+    icon: '🐟',
+    description: '+8 ŠTĚSTÍ a +0,25× k násobiči kritického poškození. Při kritickém zásahu vyšle šupinu pro štěstí (povýší perníček nebo vytřese krejcar).',
+    baseCost: 45,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'kominicka_supina', luckBonus: 8, critDmgMultBonus: 0.25 },
+  },
+  {
+    id: 'jetelovy_ctyrlistek',
+    name: 'Jetelový čtyřlístek',
+    icon: '🌱',
+    description: 'Převádí 15 % Štěstí nad 100 na zrychlení nabíjení zbraní. Kritické rány dají na 2,5 s +10 % šanci na crit a zkrátí odpočet schopnosti.',
+    baseCost: 50,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'jetelovy_ctyrlistek' },
+  },
+  {
+    id: 'cinovy_strelecky_terc',
+    name: 'Cínový terč',
+    icon: '🎯',
+    description: '2× vyšší šance na kritický zásah do plnozdravých bubáků. Kritické rány vyvolají pouťový třesk (35 % plošného poškození v okruhu 95 px).',
+    baseCost: 50,
+    maxStacks: 4,
+    luckWeight: 0.85,
+    effect: { type: 'cinovy_strelecky_terc' },
+  },
+  {
+    id: 'vrbova_pistalka',
+    name: 'Vrbová píšťalka',
+    icon: '🪈',
+    description: '+6 % šance na úhyb. Při úhybu odpálí hvízdavou rázovou vlnu, zkrátí odpočet schopnosti o 2,0 s a dá +25 % rychlosti pohybu.',
+    baseCost: 45,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'vrbova_pistalka', dodgeBonus: 0.06 },
+  },
+  {
+    id: 'lojem_mazane_krpce',
+    name: 'Vodnický klobouk',
+    icon: '🎩',
+    description: '+5 % šance na úhyb a delší nezranitelnost. Při úhybu zanechá kluzkou louži z klobouku (40% zpomalení) a obnoví 4 Kuráže.',
+    baseCost: 45,
+    maxStacks: 3,
+    luckWeight: 0.85,
+    effect: { type: 'lojem_mazane_krpce', dodgeBonus: 0.05 },
+  },
 
   // --- Pekelné poklady: nákup se okamžitě promění v krejcary ---
   { id: 'pekeln_poklad_drobny', name: 'Pekelný měšec', icon: 'pekeln_poklad_drobny', description: 'Dědeček ti hned vyplatí 40 krejcarů.', baseCost: 8, maxStacks: 99, luckWeight: 1.0, effect: { type: 'coins', amount: 40 } },
   { id: 'pekeln_poklad_stribrny', name: 'Pekelný stříbrňák', icon: 'pekeln_poklad_stribrny', description: 'Dědeček ti hned vyplatí 100 krejcarů.', baseCost: 18, maxStacks: 99, luckWeight: 0.75, effect: { type: 'coins', amount: 100 } },
-  { id: 'pekeln_poklad_zlaty', name: 'Pekelný tolar z pekla', icon: 'pekeln_poklad_zlaty', description: 'Dědeček ti hned vyplatí 250 krejcarů.', baseCost: 40, maxStacks: 99, luckWeight: 0.45, effect: { type: 'coins', amount: 250 } },
+  { id: 'pekeln_poklad_zlaty', name: 'Pekelný tolar', icon: 'pekeln_poklad_zlaty', description: 'Dědeček ti hned vyplatí 250 krejcarů.', baseCost: 40, maxStacks: 99, luckWeight: 0.45, effect: { type: 'coins', amount: 250 } },
 
   // --- Zbraně (vždy garantována alespoň jedna v nůši) ---
   {
@@ -193,19 +248,19 @@ export const GRANDFATHER_ITEMS: GrandfatherItemDef[] = [
   { id: 'wp_herbs', name: 'Devatery kvítí', icon: '🌿', description: 'Voňavý ochranný věnec bylin v kruhu zahání nečisté síly.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'devatero_kviti', effect: { type: 'weapon', weaponId: 'devatero_kviti' } },
   { id: 'wp_snowball', name: 'Sněhová koule', icon: '❄️', description: 'Tuhá ledová koule ze sněhu, chlad zpomalí každé strašidlo.', baseCost: 45, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'snehova_koule', effect: { type: 'weapon', weaponId: 'snehova_koule' } },
   { id: 'wp_kolac', name: 'Kynutý koláč', icon: 'kynuty_kolac', description: 'Tradiční koláč se odráží mezi bubáky a přiměje je mlsat.', baseCost: 50, maxStacks: 8, luckWeight: 0.95, isWeapon: true, weaponId: 'kynuty_kolac', effect: { type: 'weapon', weaponId: 'kynuty_kolac' } },
-  { id: 'wp_potato', name: 'Horký brambor z popela', icon: '🥔', description: 'Brambor z popela popálí bubáky a zanechá kouřící ohnisko.', baseCost: 50, maxStacks: 8, luckWeight: 0.95, isWeapon: true, weaponId: 'horky_brambor', effect: { type: 'weapon', weaponId: 'horky_brambor' } },
+  { id: 'wp_potato', name: 'Horký brambor', icon: '🥔', description: 'Brambor z popela popálí bubáky a zanechá kouřící ohnisko.', baseCost: 50, maxStacks: 8, luckWeight: 0.95, isWeapon: true, weaponId: 'horky_brambor', effect: { type: 'weapon', weaponId: 'horky_brambor' } },
   { id: 'wp_bees', name: 'Včelí roj z úlu', icon: '🐝', description: 'Bzučící včely samy vyhledávají nejbližší strašidla.', baseCost: 50, maxStacks: 8, luckWeight: 1.0, isWeapon: true, weaponId: 'vceli_roj', effect: { type: 'weapon', weaponId: 'vceli_roj' } },
   { id: 'wp_hromnicka', name: 'Hromnička', icon: '🕯️', description: 'Posvěcená svíce pulzuje posvátným zraněním a odpuzuje bubáky.', baseCost: 50, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'hromnicka', effect: { type: 'weapon', weaponId: 'hromnicka' } },
-  { id: 'wp_holywater', name: 'Kropenka se svěcenou vodou', icon: '✨', description: 'Svěcená voda z kapličky kropí široký vějíř posvátných kapek.', baseCost: 55, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'svecena_kropenka', effect: { type: 'weapon', weaponId: 'svecena_kropenka' } },
+  { id: 'wp_holywater', name: 'Svěcená kropenka', icon: '✨', description: 'Svěcená voda z kapličky kropí široký vějíř posvátných kapek.', baseCost: 55, maxStacks: 8, luckWeight: 0.9, isWeapon: true, weaponId: 'svecena_kropenka', effect: { type: 'weapon', weaponId: 'svecena_kropenka' } },
   { id: 'wp_fajfka', name: 'Bylinková fajfka', icon: 'bylinkova_fajfka', description: 'Dědečkova hliněná fajfka s vonnými bylinkami. Oblak dýmu zraňuje a zpomaluje běsy a léčí lovce.', baseCost: 55, maxStacks: 8, luckWeight: 0.85, isWeapon: true, weaponId: 'bylinkova_fajfka', effect: { type: 'weapon', weaponId: 'bylinkova_fajfka' } },
 
   // --- Vzácné poklady a okamžité pomocné předměty (The Classic Trinity & Instant Utility) ---
-  { id: 'ponocny_horn', name: 'Trouba obecního ponocného', icon: '📯', description: 'Zastaví čas na 5 sekund a mohutným zatroubením odhodí okolní strašidla.', baseCost: 24, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'ponocny_horn' } },
+  { id: 'ponocny_horn', name: 'Ponocného trouba', icon: '📯', description: 'Zastaví čas na 5 sekund a mohutným zatroubením odhodí okolní strašidla.', baseCost: 24, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'ponocny_horn' } },
   { id: 'masopust_rattle', name: 'Masopustní řehtačka', icon: '🪇', description: 'Smete řadová strašidla, bossům vezme 35 % zdraví a vytvoří rázový štít na 2 s.', baseCost: 25, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'masopust_rattle' } },
-  { id: 'babicka_apron', name: 'Babiččina kropenatá zástěra', icon: '🧺', description: 'V mžiku přitáhne všechny perníčky i kořist z celé mapy a zhojí 15 Kuráže.', baseCost: 20, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'babicka_apron' } },
-  { id: 'slivovice_splash', name: 'Hlt slivovice z modrého džbánku', icon: '🏺', description: 'Vyčistí postihy, omráčí nepřátele v 180° oblouku na 4,5 s a zapálí střely modrým plamenem.', baseCost: 20, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'slivovice_splash' } },
-  { id: 'svanda_bagpipes', name: 'Dudácká čertovská skočná', icon: '🎶', description: 'Přinutí strašidla bít se mezi sebou na 6 s a zdvojnásobí kořist.', baseCost: 25, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'svanda_bagpipes' } },
-  { id: 'kominik_button', name: 'Kominický knoflík pro štěstí', icon: '🔘', description: '7 s nehmotnosti a zaručených maximálních kritických zásahů, sazemi oslepí nepřátele.', baseCost: 22, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'kominik_button' } },
+  { id: 'babicka_apron', name: 'Babiččina zástěra', icon: '🧺', description: 'V mžiku přitáhne všechny perníčky i kořist z celé mapy a zhojí 15 Kuráže.', baseCost: 20, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'babicka_apron' } },
+  { id: 'slivovice_splash', name: 'Hlt slivovice', icon: '🏺', description: 'Vyčistí postihy, omráčí nepřátele v 180° oblouku na 4,5 s a zapálí střely modrým plamenem.', baseCost: 20, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'slivovice_splash' } },
+  { id: 'svanda_bagpipes', name: 'Švandovy dudy', icon: '🎶', description: 'Přinutí strašidla bít se mezi sebou na 6 s a zdvojnásobí kořist.', baseCost: 25, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'svanda_bagpipes' } },
+  { id: 'kominik_button', name: 'Kominický knoflík', icon: '🔘', description: '7 s nehmotnosti a zaručených maximálních kritických zásahů, sazemi oslepí nepřátele.', baseCost: 22, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'kominik_button' } },
   { id: 'kovarska_podkova', name: 'Kovářská podkova', icon: '🧲', description: 'V mžiku přitáhne všechny perníčky, krejcary i dušičky a na 5 s zdvojnásobí Štěstí.', baseCost: 18, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'horseshoe' } },
   { id: 'hlineny_kohoutek', name: 'Hliněný kohoutek', icon: '🐓', description: 'Ranní zakokrhání smete běžná strašidla, bossům udělí 650 svatého poškození a vystraší přeživší na 3 s.', baseCost: 22, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'rooster' } },
   { id: 'vyrezavane_kukacky', name: 'Vyřezávané kukačky', icon: '⏰', description: 'Zastaví čas na 4 sekundy a popožene krok lovce (+40 rychlost pohybu).', baseCost: 20, maxStacks: 99, luckWeight: 0.35, isRareInstant: true, effect: { type: 'rare_instant', rareItemId: 'cuckoo_clock' } },
@@ -222,5 +277,6 @@ for (let i = 0; i < GRANDFATHER_ITEMS.length; i++) {
 
 export function getGrandfatherItem(id: string): GrandfatherItemDef | undefined {
   if (id === 'bylinkova_fajfka') return GRANDFATHER_ITEMS_MAP['wp_fajfka'] || GRANDFATHER_ITEMS_MAP[id];
+  if (id === 'vodnicky_klobouk') return GRANDFATHER_ITEMS_MAP['lojem_mazane_krpce'];
   return GRANDFATHER_ITEMS_MAP[id];
 }

@@ -196,6 +196,7 @@ export interface MetaProgression {
   dynamicLightingEnabled?: boolean;
   combatVfxEnabled?: boolean;
   warningIndicatorsEnabled?: boolean;
+  windupTelegraphCirclesEnabled?: boolean;
   enemyDescriptorsEnabled?: boolean;
   attackDescriptorsEnabled?: boolean;
   statusIndicatorsEnabled?: boolean;

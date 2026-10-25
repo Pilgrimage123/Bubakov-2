@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Lada, drawEnemyRenderer, computeEnemyKinematics } from '../src/render/ladaRenderer';
+import { Lada, drawEnemyRenderer, computeEnemyKinematics, getEnemyAttackAnimationState, drawEnemyWarningSign } from '../src/render/ladaRenderer';
 import { ENEMIES } from '../src/data/enemies';
 
 function createMockCtx() {
@@ -417,6 +417,94 @@ describe('Enemy Procedural Kinematics & Rendering System', () => {
         expect(mock.getDepth()).toBe(0);
         expect(mock.getMinDepth()).toBeGreaterThanOrEqual(0);
       }
+    });
+
+    it('correctly computes active windup state and left-facing direction for specialized AI windup (aiState="windup")', () => {
+      const specialEnemy = {
+        id: 'hejkal',
+        attackCadence: 'slow' as const,
+        aiState: 'windup',
+        aiTimer: 0.15,
+        aiWindupDuration: 0.5,
+        chargeDirX: Math.PI, // targeting player to the left
+        vx: 0,
+        vy: 0,
+      };
+
+      const state = getEnemyAttackAnimationState(specialEnemy, 1.0);
+      expect(state.isActive).toBe(true);
+      expect(state.isWindup).toBe(true);
+      expect(state.facingDir).toBe(-1);
+      expect(state.windupProgress).toBeCloseTo(0.7, 2);
+    });
+
+    it('prioritizes strike/recovery lunge over windup when strikeTimer > 0 even if isAttacking flag is still true', () => {
+      const translations: Array<[number, number]> = [];
+      const customMock = createMockCtx();
+      customMock.ctx.translate = ((dx: number, dy: number) => {
+        translations.push([dx, dy]);
+      }) as any;
+
+      drawEnemyRenderer('drawCertik', customMock.ctx, 100, 100, 1.0, 0, false, {
+        id: 'certik',
+        attackCadence: 'normal',
+        isAttacking: true, // even if caller left isAttacking=true during strikeTimer
+        windupTimer: 0,
+        strikeTimer: 0.38,
+        strikeMaxTimer: 0.42,
+        attackAngle: 0,
+        radius: 20,
+      });
+
+      // Second translate after translate(x,y) is the kinematic lunge + shake
+      expect(translations.length).toBeGreaterThanOrEqual(2);
+      expect(translations[1][0]).toBeGreaterThanOrEqual(20); // 24px forward strike lunge
+      expect(customMock.getDepth()).toBe(0);
+    });
+
+    it('renders drawEnemyWarningSign even when enemy.attackDelay is omitted by falling back to attackInterval/cadence', () => {
+      let filledTexts = 0;
+      const customMock = createMockCtx();
+      customMock.ctx.fillText = (() => {
+        filledTexts++;
+      }) as any;
+
+      drawEnemyWarningSign(customMock.ctx, {
+        x: 150,
+        y: 150,
+        radius: 22,
+        windupTimer: 0.6,
+        attackInterval: 1.2,
+      } as any);
+
+      expect(filledTexts).toBe(1);
+      expect(customMock.getDepth()).toBe(0);
+    });
+
+    it('defaults windupTelegraphCirclesEnabled to false (hidden) and allows toggling on in settings', async () => {
+      const {
+        DEFAULT_GAME_EFFECT_SETTINGS,
+        setGameEffectSettings,
+        isGameEffectEnabled,
+      } = await import('../src/game/effectSettings');
+      const {
+        createDefaultMetaProgression,
+        migrateMetaProgression,
+      } = await import('../src/game/migration');
+
+      expect(DEFAULT_GAME_EFFECT_SETTINGS.windupTelegraphCirclesEnabled).toBe(false);
+      expect(createDefaultMetaProgression().windupTelegraphCirclesEnabled).toBe(false);
+      expect(migrateMetaProgression({}).windupTelegraphCirclesEnabled).toBe(false);
+      expect(migrateMetaProgression({ windupTelegraphCirclesEnabled: true }).windupTelegraphCirclesEnabled).toBe(true);
+
+      setGameEffectSettings({ ...DEFAULT_GAME_EFFECT_SETTINGS });
+      expect(isGameEffectEnabled('windupTelegraphCirclesEnabled')).toBe(false);
+
+      setGameEffectSettings({ windupTelegraphCirclesEnabled: true });
+      expect(isGameEffectEnabled('windupTelegraphCirclesEnabled')).toBe(true);
+
+      // Reset to defaults
+      setGameEffectSettings({ ...DEFAULT_GAME_EFFECT_SETTINGS });
     });
   });
 });

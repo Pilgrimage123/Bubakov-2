@@ -21,7 +21,7 @@ describe('Animation Tester Data & Rendering Capabilities', () => {
     }
   });
 
-  it('provides all 6 core hunters with functional Lada renderers', () => {
+  it('provides all core hunters with functional Lada renderers and executes them cleanly', () => {
     expect(typeof Lada.drawWanderer).toBe('function');
     expect(typeof Lada.drawShepherd).toBe('function');
     expect(typeof Lada.drawKorenarka).toBe('function');
@@ -29,6 +29,33 @@ describe('Animation Tester Data & Rendering Capabilities', () => {
     expect(typeof Lada.drawSexton).toBe('function');
     expect(typeof Lada.drawGranny).toBe('function');
     expect(typeof Lada.drawBarunka).toBe('function');
+
+    const noop = () => {};
+    const mockCtx = new Proxy(
+      { fillStyle: '', strokeStyle: '', lineWidth: 1, lineCap: 'round', lineJoin: 'round' },
+      { get: (target, prop) => (prop in target ? (target as any)[prop] : noop) }
+    ) as unknown as CanvasRenderingContext2D;
+
+    // Walk, Sprint, Hurt (startled hit), and Fleeing (0 courage) for Shepherd, Sexton, Barunka, and Granny
+    expect(() => Lada.drawShepherd(mockCtx, 100, 100, 1.5, 1, 0, false, 1, false)).not.toThrow();
+    expect(() => Lada.drawShepherd(mockCtx, 100, 100, 1.5, 1.8, 0.5, false, 1, false)).not.toThrow();
+    expect(() => Lada.drawShepherd(mockCtx, 100, 100, 1.5, 0, 0, false, 1, true)).not.toThrow();
+    expect(() => Lada.drawShepherd(mockCtx, 100, 100, 1.5, 1.8, 0, true, 1, false)).not.toThrow();
+
+    expect(() => Lada.drawSexton(mockCtx, 100, 100, 1.5, 1, 0, false, 1, false)).not.toThrow();
+    expect(() => Lada.drawSexton(mockCtx, 100, 100, 1.5, 1.8, 0.5, false, 1, false)).not.toThrow();
+    expect(() => Lada.drawSexton(mockCtx, 100, 100, 1.5, 0, 0, false, 1, true)).not.toThrow();
+    expect(() => Lada.drawSexton(mockCtx, 100, 100, 1.5, 1.8, 0, true, 1, false)).not.toThrow();
+
+    expect(() => Lada.drawBarunka(mockCtx, 100, 100, 1.5, true, 1, false, false, false, 1)).not.toThrow();
+    expect(() => Lada.drawBarunka(mockCtx, 100, 100, 1.5, true, 1, false, false, true, 1)).not.toThrow();
+    expect(() => Lada.drawBarunka(mockCtx, 100, 100, 1.5, false, 1, false, true, false, 1)).not.toThrow();
+    expect(() => Lada.drawBarunka(mockCtx, 100, 100, 1.5, true, 1, true, false, false, -1)).not.toThrow();
+
+    expect(() => Lada.drawGranny(mockCtx, 100, 100, 1.5, 1, 0, false, 1, true, false)).not.toThrow();
+    expect(() => Lada.drawGranny(mockCtx, 100, 100, 1.5, 1.8, 0.5, false, 1, true, false)).not.toThrow();
+    expect(() => Lada.drawGranny(mockCtx, 100, 100, 1.5, 0, 0, false, 1, true, true)).not.toThrow();
+    expect(() => Lada.drawGranny(mockCtx, 100, 100, 1.5, 1.8, 0, true, 1, true, false)).not.toThrow();
   });
 
   it('provides Grandfather walking sprite renderer with limp kinematics', () => {

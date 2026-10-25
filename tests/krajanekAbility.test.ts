@@ -16,6 +16,7 @@ import {
   computeKrajanekSteering,
   stepKrajanekRide,
   stepKrajanekCoastingStones,
+  isPlayerAbilityActive,
 } from '../src/game/krajanekAbility';
 
 function createEnemy(x: number, y: number, maxHp: number, radius = 10) {
@@ -35,8 +36,8 @@ function createEnemy(x: number, y: number, maxHp: number, radius = 10) {
 }
 
 describe('Krajánek — Jízda na žernovu', () => {
-  it('uses a 9-second ride, a 30-second cooldown, and double movement speed', () => {
-    expect(KRAJANEK_RIDE_DURATION).toBe(9);
+  it('uses a 14-second ride, a 30-second cooldown, and double movement speed', () => {
+    expect(KRAJANEK_RIDE_DURATION).toBe(14);
     expect(KRAJANEK_ABILITY_COOLDOWN).toBe(30);
     expect(KRAJANEK_RIDE_SPEED_MULTIPLIER).toBe(2);
   });
@@ -155,17 +156,17 @@ describe('Krajánek — Jízda na žernovu', () => {
     it('accurately ramps speed across the 4 momentum phases', () => {
       const player: any = {
         type: 'krajanek',
-        krajanekRideTimer: 8.9, // elapsed = 0.1s -> Phase 1
+        krajanekRideTimer: 13.9, // elapsed = 0.1s -> Phase 1
         krajanekColossusStacks: 0,
       };
       expect(getKrajanekMomentumMultiplier(player)).toBe(1.0);
 
       // Phase 2: midpoint (elapsed = 0.75s, progress = 0.5)
-      player.krajanekRideTimer = 8.25;
+      player.krajanekRideTimer = 13.25;
       expect(getKrajanekMomentumMultiplier(player)).toBeCloseTo(1.65, 2);
 
       // Phase 3: full speed (elapsed = 2.0s)
-      player.krajanekRideTimer = 7.0;
+      player.krajanekRideTimer = 12.0;
       expect(getKrajanekMomentumMultiplier(player)).toBe(2.0);
 
       // Rozjetý kolos stacks (+5% each)
@@ -205,8 +206,20 @@ describe('Krajánek — Jízda na žernovu', () => {
       expect(soundCalls).toContain('zernovDrift');
       expect(driftSprayed).toBe(true);
       expect(steer.tilt).toBeGreaterThan(0);
-      // Turn rate cap in Phase 3 is 3.2 rad/s, so after 0.05s angle turns at most 0.16 rad
-      expect(player.krajanekHeadingAngle).toBeCloseTo(0.16, 2);
+      // Turn rate cap in Phase 3 is 4.8 rad/s base, so after 0.05s angle turns at most 0.24 rad
+      expect(player.krajanekHeadingAngle).toBeCloseTo(0.24, 2);
+    });
+
+    it('grants enhanced turn rate maneuverability (7.2 rad/s) for touch controls', () => {
+      const touchPlayer: any = {
+        type: 'krajanek',
+        krajanekRideTimer: 7.0,
+        krajanekHeadingAngle: 0,
+        isTouchInput: true,
+      };
+      computeKrajanekSteering(touchPlayer, 0, 1, 0.05, { isTouchInput: true });
+      // Touch turn rate in Phase 3 is 7.2 rad/s, so after 0.05s angle turns 0.36 rad
+      expect(touchPlayer.krajanekHeadingAngle).toBeCloseTo(0.36, 2);
     });
 
     it('doubles steering capability during oškrt turn rate boost', () => {
@@ -424,4 +437,18 @@ describe('Krajánek — Jízda na žernovu', () => {
       expect(texts.some(t => t.text.includes('PLÁCNUTÍ ŽERNOVU'))).toBe(true);
     });
   });
+
+  describe('Cooldown Pause during Active Abilities', () => {
+    it('detects active ability state correctly via isPlayerAbilityActive', () => {
+      const krajanekPlayer = { type: 'krajanek', krajanekRideTimer: 5.0 };
+      expect(isPlayerAbilityActive(krajanekPlayer)).toBe(true);
+
+      const finishedPlayer = { type: 'krajanek', krajanekRideTimer: 0 };
+      expect(isPlayerAbilityActive(finishedPlayer)).toBe(false);
+
+      const cutsceneState = { cutscene: { type: 'granny' } };
+      expect(isPlayerAbilityActive({ type: 'granny' }, cutsceneState)).toBe(true);
+    });
+  });
 });
+

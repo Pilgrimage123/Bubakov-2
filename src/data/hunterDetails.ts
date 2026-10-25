@@ -25,7 +25,7 @@ export interface HunterDetail {
 export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
   krajanek: {
     role: 'Vyvážený průzkumník',
-    abilityName: 'Jízda na Černovu',
+    abilityName: 'Jízda na žernovu',
     name: 'Krajánek',
     title: 'Veselý pocestný s puntíkovanou mošnou',
     maxHp: 135,
@@ -35,7 +35,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     weaponId: 'osikovy_prut',
     weapon: 'Osikový prut – spolehlivá hůl na cestu.',
     passive: 'Vyrovnaný pocestný: žádné zvláštní pasivní bonusy, všechny základní vlastnosti jsou blízko průměru ostatních lovců.',
-    ability: 'Jízda na žernovu (30 s): po dobu 9 s je Krajánek nezranitelný a pohybuje se dvojnásobnou rychlostí. Přejížděné běžné bubáky zplacatí; cíle s více než 400 maximálními HP (limit roste o 20 % za každý započítaný nákup v Dědečkově obchodě) průjezd zablokují a dostávají 180 fyzického poškození každých 0,5 s. Údery kladívkem vysílají do okolí jiskry: aura 85 px způsobuje 75 poškození Vůlí každých 0,5 s. Poškození obou částí i limit HP se násobí 1 + 0,2 za každý trvalý upgrade koupený v Dědečkově obchodě. Během jízdy se ostatní zbraně pozastaví.',
+    ability: 'Jízda na žernovu (30 s): po dobu 14 s je Krajánek nezranitelný a pohybuje se dvojnásobnou rychlostí. Přejížděné běžné bubáky zplacatí; cíle s více než 400 maximálními HP (limit roste o 20 % za každý započítaný nákup v Dědečkově obchodě) průjezd zablokují a dostávají 180 fyzického poškození každých 0,5 s. Údery kladívkem vysílají do okolí jiskry: aura 85 px způsobuje 75 poškození Vůlí každých 0,5 s. Poškození obou částí i limit HP se násobí 1 + 0,2 za každý trvalý upgrade koupený v Dědečkově obchodě. Během jízdy se ostatní zbraně pozastaví.',
     cooldownSeconds: 30,
     playstyle: 'Vyvážený průzkumník s krátkou, ale mimořádně silnou jízdou přes bojiště.',
   },

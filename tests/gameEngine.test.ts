@@ -137,6 +137,16 @@ describe('GameEngine Headless Simulation', () => {
       expect(engine.state.player.invulnerabilityTimer).toBeCloseTo(1.5, 4);
       expect(engine.state.player.waterSoakedTimer).toBeCloseTo(1.0, 4);
     });
+
+    it('does NOT decrement ability cooldown while Krajánek ride is active', () => {
+      engine.state.player.type = 'krajanek';
+      engine.state.player.krajanekRideTimer = 5.0;
+      engine.state.player.ultCd = 30.0;
+
+      engine.update(0.5);
+
+      expect(engine.state.player.ultCd).toBe(30.0);
+    });
   });
 
   describe('Spatial Hashing and Entity Registration', () => {

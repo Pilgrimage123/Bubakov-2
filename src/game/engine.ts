@@ -73,6 +73,7 @@ import {
   computeKrajanekSteering,
   stepKrajanekRide,
   stepKrajanekCoastingStones,
+  isPlayerAbilityActive,
   KRAJANEK_ABILITY_COOLDOWN,
   KRAJANEK_RIDE_DURATION,
   KRAJANEK_RIDE_SPEED_MULTIPLIER,
@@ -769,8 +770,44 @@ export class GameEngine {
           (this.intangibleTimer && this.intangibleTimer > 0) ||
           (this.type === 'krajanek' && (this.krajanekRideTimer || 0) > 0)
         ) return;
-        if (this.type === 'shepherd' && Math.random() < (this.dodgeChance ?? 0.35)) {
+        const effectiveDodgeChance = Math.min(0.60, typeof this.dodgeChance === 'number' ? this.dodgeChance : (this.type === 'shepherd' ? 0.35 : 0));
+        if (effectiveDodgeChance > 0 && Math.random() < effectiveDodgeChance) {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates'));
+          self.callbacks?.onSound?.('swish');
+
+          // Vrbová píšťalka z pastviny
+          if ((this.vrbovaPistalkaStacks || 0) > 0) {
+            const pistalkaStacks = this.vrbovaPistalkaStacks || 1;
+            this.ultCd = Math.max(0, (this.ultCd || 0) - (2.0 + (pistalkaStacks - 1) * 0.75));
+            this.pistalkaSpeedTimer = 3.0 + (pistalkaStacks - 1) * 0.5;
+            const shockRadius = 160 + (pistalkaStacks - 1) * 25;
+            const shockDmg = Math.round(45 + (pistalkaStacks - 1) * 20 + (this.speed || 180) * 0.4);
+            const shockFoes = self.spatialHash.queryRadius(this.x, this.y, shockRadius);
+            for (let i = 0; i < shockFoes.length; i++) {
+              const foe = shockFoes[i];
+              if (foe.isDefeated || foe.dead) continue;
+              const fdx = foe.x - this.x;
+              const fdy = foe.y - this.y;
+              const fdist = Math.hypot(fdx, fdy) || 1;
+              const kx = (fdx / fdist) * 260;
+              const ky = (fdy / fdist) * 260;
+              foe.takeDamage(shockDmg, 'physical', kx, ky);
+            }
+            self.state.texts.push(new DamageText(this.x, this.y - 55, 'HVIZD! 🪈', '#38BDF8', true));
+          }
+
+          // Vodnický klobouk s pentlí
+          if ((this.lojemMazaneKrpceStacks || 0) > 0) {
+            const kloboukStacks = this.lojemMazaneKrpceStacks || 1;
+            this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, 0.55 + (kloboukStacks - 1) * 0.15);
+            this.hp = Math.min(this.maxHp, this.hp + 4 * kloboukStacks);
+            const puddleX = attacker ? attacker.x : this.x;
+            const puddleY = attacker ? attacker.y : this.y;
+            const slowRatio = Math.min(0.60, 0.40 + (kloboukStacks - 1) * 0.10);
+            self.spawnPlumPuddle(puddleX, puddleY, slowRatio);
+            self.state.texts.push(new DamageText(this.x, this.y - 50, 'SMEKNUTO! 🎩', '#10B981', true));
+          }
+
           return;
         }
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
@@ -799,6 +836,7 @@ export class GameEngine {
         if (this.hp < hpBeforeDamage) {
           const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
           this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
+          this.hurtTimer = Math.max(this.hurtTimer || 0, 0.42);
         }
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
@@ -877,6 +915,34 @@ export class GameEngine {
     customBossTitle?: string,
     prefix?: EnemyPrefixType
   ): any {
+    if (id === 'vrana' && isMiniboss) {
+      const crowCount = 9;
+      let leaderCrow: any = null;
+      for (let i = 0; i < crowCount; i++) {
+        const angle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+        const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
+        const cx = x + Math.cos(angle) * dist;
+        const cy = y + Math.sin(angle) * dist;
+        const crowTitle = i === 0 ? (customBossTitle || '🐦‍⬛ Hejno mrazivých vran') : undefined;
+        const enemy = this.enemyFactory
+          ? this.enemyFactory(id, cx, cy, multiplier, isBoss, true, crowTitle, prefix)
+          : this.createHeadlessEnemy(id, cx, cy, multiplier, isBoss, true, crowTitle, prefix);
+
+        enemy.isMinibossFlockMember = true;
+        enemy.flockIndex = i;
+        enemy.flockTotal = crowCount;
+
+        this.state.enemies.push(enemy);
+        if (!enemy.isDefeated && !enemy.dead) {
+          this.livingEnemies.push(enemy);
+          this.spatialHash.insert(enemy);
+          this.director?.recordEnemySpawn(enemy, this.state.gameTime);
+        }
+        if (i === 0) leaderCrow = enemy;
+      }
+      return leaderCrow;
+    }
+
     const enemy = this.enemyFactory
       ? this.enemyFactory(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix)
       : this.createHeadlessEnemy(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
@@ -979,17 +1045,31 @@ export class GameEngine {
         lavy_rarach: 'sazovy_rarach',
         pekelny_pes: 'ohnivy_pes',
       };
-      resolvedId = fallbackMap[id] || (this.state.activeLevelId === 2 ? 'skeleton' : 'rarach');
+      resolvedId =
+        fallbackMap[id] ||
+        ((this.state.activeLevelId ?? 0) === 0
+          ? 'mrazovy_skritek'
+          : this.state.activeLevelId === 2
+          ? 'skeleton'
+          : 'rarach');
       stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
 
     const isLevel0 = (this.state.activeLevelId ?? 0) === 0;
+    if (isLevel0 && prefix === 'pekelny') {
+      prefix = undefined;
+    }
+
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
-      finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+      if (resolvedId === 'vrana') {
+        finalHp = Math.round(stats.hp * 6); // 28 * 6 = 168 (6x stronger HP)
+      } else {
+        finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+      }
     }
-    const renderScale = isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
-    const radius = isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 3.0 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
+    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 3) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
     const hunger = isMiniboss
@@ -1000,8 +1080,14 @@ export class GameEngine {
     const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = isMiniboss ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35)) : stats.damage;
-    let enemySpeed = stats.speed;
+    const baseDamage = (resolvedId === 'vrana' && isMiniboss)
+      ? Math.round(stats.damage * 6) // 8 * 6 = 48 (6x stronger damage)
+      : isMiniboss
+      ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35))
+      : stats.damage;
+    let enemySpeed = (resolvedId === 'vrana' && isMiniboss)
+      ? Math.round(stats.speed * 0.7) // 188 * 0.7 = 132 (30% slower)
+      : stats.speed;
     let enemyDamage = baseDamage;
     let dodgeChance = 0;
     let prefixDamageReduction = 0;
@@ -1128,6 +1214,11 @@ export class GameEngine {
       contactLeaveTimer: 0,
       animTime: 0,
       semiVisible: resolvedId === 'jezinka_mraziva',
+      meltHpRatio: 1.0,
+      meltSquashX: 1.0,
+      meltSquashY: 1.0,
+      wobbleScaleX: 1.0,
+      wobbleScaleY: 1.0,
 
       interruptAttack() {
         this.isAttacking = false;
@@ -1142,6 +1233,20 @@ export class GameEngine {
         for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
+        }
+
+        if (!this.isDefeated && !this.dead) {
+          this.animTime = (this.animTime || 0) + dt;
+        }
+
+        if (this.id === 'tajici_snehulak' && !this.isVirtualSnowmanMember && !this.isDefeated && !this.dead) {
+          const ratio = Math.max(0, Math.min(1, this.hp / Math.max(1, this.maxHp || 280)));
+          this.meltHpRatio = ratio;
+          this.meltSquashX = 1.0 + (1.0 - ratio) * 0.25;
+          this.meltSquashY = 0.65 + ratio * 0.35;
+          const s = Math.sin(this.animTime * 3.2);
+          this.wobbleScaleX = 1.0 + 0.08 * s;
+          this.wobbleScaleY = 1.0 - 0.08 * s;
         }
 
         if (this.isDefeated) {
@@ -1379,13 +1484,67 @@ export class GameEngine {
           finalDamage = Math.round(finalDamage * 2.2);
           self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
         } else if (self.state.player) {
-          const critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
+          let critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
+          if ((self.state.player.zPeklaStestiTimer || 0) > 0) {
+            critChance += 0.10;
+          }
+          if ((self.state.player.cinovyTercStacks || 0) > 0 && this.hp >= (this.maxHp || 0)) {
+            critChance *= 2.0 + (self.state.player.cinovyTercStacks - 1) * 0.5;
+          }
           if (Math.random() < critChance) {
             isCriticalHit = true;
-            finalDamage = Math.round(finalDamage * 1.65);
+            const supinaBonus = (self.state.player.kominickaSupinaStacks || 0) * 0.25;
+            const critMult = 1.65 + supinaBonus;
+            finalDamage = Math.round(finalDamage * critMult);
             self.state.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
           }
         }
+
+        if (isCriticalHit && self.state.player) {
+          const now = self.state.gameTime;
+          const p = self.state.player;
+
+          // 1. Kominická šupina z kapra
+          if ((p.kominickaSupinaStacks || 0) > 0) {
+            if (now - (p._lastSupinaTime || 0) >= 0.8) {
+              p._lastSupinaTime = now;
+              const rollChance = Math.min(1.0, Math.max(0, p.luck || 100) * 0.0008 * p.kominickaSupinaStacks);
+              if (Math.random() < rollChance) {
+                self.triggerSupinaLuckyHarvest(this.x, this.y);
+              }
+            }
+          }
+
+          // 2. Jetelový čtyřlístek z mezí
+          if ((p.jetelovyCtyrlistekStacks || 0) > 0) {
+            if (now - (p._lastCtyrlistekTime || 0) >= 0.5) {
+              p._lastCtyrlistekTime = now;
+              p.zPeklaStestiTimer = 2.5;
+              p.ultCd = Math.max(0, (p.ultCd || 0) - 0.25 * p.jetelovyCtyrlistekStacks);
+              self.state.texts.push(new DamageText(p.x, p.y - 40, 'Z PEKLA ŠTĚSTÍ! 🍀', '#10B981', true));
+            }
+          }
+
+          // 3. Cínový střelecký terč ze střelnice
+          if ((p.cinovyTercStacks || 0) > 0) {
+            if (now - (p._lastTercTime || 0) >= 0.2) {
+              p._lastTercTime = now;
+              const tercStacks = p.cinovyTercStacks || 1;
+              const tercRadius = 95 + (tercStacks - 1) * 20;
+              const splashRatio = 0.35 + (tercStacks - 1) * 0.15;
+              const splashDmg = Math.max(1, Math.round(finalDamage * splashRatio));
+              const splashNearby = self.spatialHash.queryRadius(this.x, this.y, tercRadius);
+              for (let i = 0; i < splashNearby.length; i++) {
+                const foe = splashNearby[i];
+                if (foe === this || foe.isDefeated || foe.dead) continue;
+                foe.takeDamage(splashDmg, 'area', 0, 0);
+                if (typeof foe.interruptAttack === 'function') foe.interruptAttack();
+              }
+              self.state.texts.push(new DamageText(this.x, this.y - 30, 'POUŤOVÝ TŘESK! 🎯', '#F59E0B', false));
+            }
+          }
+        }
+
         if (!isCriticalHit && isJezinkaSemiVisible(this)) {
           finalDamage *= JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER;
         }
@@ -1684,7 +1843,7 @@ export class GameEngine {
     }
     if (effect.type === 'gingerbread_heart') {
       p.poutoveSrdceStacks = Math.min(4, (p.poutoveSrdceStacks || 0) + 1);
-      p.gingerbreadHeartCdMult = (p.gingerbreadHeartCdMult || 1) * effect.cdReductionMult;
+      p.gingerbreadHeartCdMult = (1 + ((p.poutoveSrdceStacks || 1) - 1) * 0.35) * (effect.cdReductionMult || 1);
     }
     if (effect.type === 'ulezely_syrecek' || item.id === 'ulezely_syrecek') {
       p.syrecekStacks = Math.min(3, (p.syrecekStacks || 0) + 1);
@@ -1715,10 +1874,68 @@ export class GameEngine {
       p.movingCooldownBonus = Math.min(0.48, (p.movingCooldownBonus || 0) + movingCd);
       p.iceImmunity = true;
     }
+    if (effect.type === 'kominicka_supina' || item.id === 'kominicka_supina') {
+      const luckBonus = 'luckBonus' in effect ? effect.luckBonus : 8;
+      p.luck = (p.luck || 100) + luckBonus;
+      p.kominickaSupinaStacks = Math.min(3, (p.kominickaSupinaStacks || 0) + 1);
+    }
+    if (effect.type === 'jetelovy_ctyrlistek' || item.id === 'jetelovy_ctyrlistek') {
+      p.jetelovyCtyrlistekStacks = Math.min(3, (p.jetelovyCtyrlistekStacks || 0) + 1);
+    }
+    if (effect.type === 'cinovy_strelecky_terc' || item.id === 'cinovy_strelecky_terc') {
+      p.cinovyTercStacks = Math.min(4, (p.cinovyTercStacks || 0) + 1);
+    }
+    if (effect.type === 'vrbova_pistalka' || item.id === 'vrbova_pistalka') {
+      const dodgeBonus = 'dodgeBonus' in effect ? effect.dodgeBonus : 0.06;
+      p.vrbovaPistalkaStacks = Math.min(3, (p.vrbovaPistalkaStacks || 0) + 1);
+      p.dodgeChance = Math.min(0.60, (p.dodgeChance || 0) + dodgeBonus);
+    }
+    if (effect.type === 'lojem_mazane_krpce' || item.id === 'lojem_mazane_krpce') {
+      const dodgeBonus = 'dodgeBonus' in effect ? effect.dodgeBonus : 0.05;
+      p.lojemMazaneKrpceStacks = Math.min(3, (p.lojemMazaneKrpceStacks || 0) + 1);
+      p.dodgeChance = Math.min(0.60, (p.dodgeChance || 0) + dodgeBonus);
+    }
     if (item.id === 'zejdlik_piva' || item.id === 'panak_koralky' || item.id === 'tepla_cikorka') {
       if ((p.pivniTacekStacks || 0) > 0) {
         this.triggerPivniTacekEffect(p);
       }
+    }
+  }
+
+  public triggerSupinaLuckyHarvest(x: number, y: number): void {
+    let closestDrop: GameDrop | null = null;
+    let closestDistSq = 350 * 350;
+
+    if (this.state.drops) {
+      for (let i = 0; i < this.state.drops.length; i++) {
+        const d = this.state.drops[i];
+        if (d.type === 'gingerbread' && !d.dead) {
+          const distSq = (d.x - x) * (d.x - x) + (d.y - y) * (d.y - y);
+          if (distSq < closestDistSq) {
+            closestDistSq = distSq;
+            closestDrop = d;
+          }
+        }
+      }
+    }
+
+    if (closestDrop) {
+      if (!closestDrop.size || closestDrop.size === 'small') {
+        closestDrop.size = 'large';
+        closestDrop.value = (closestDrop.value || 1) * 3;
+      } else if (closestDrop.size === 'large') {
+        closestDrop.size = 'giant';
+        closestDrop.value = (closestDrop.value || 3) * 3;
+      } else {
+        closestDrop.size = 'stash';
+        closestDrop.value = (closestDrop.value || 9) * 2;
+      }
+      this.callbacks?.onSound?.('bell');
+      this.state.texts.push(new DamageText(closestDrop.x, closestDrop.y - 25, 'POVÝŠENO! 🐟', '#FBBF24', true));
+    } else {
+      this.spawnDrop('coin', x, y, { value: 2, speed: 65 });
+      this.callbacks?.onSound?.('coin');
+      this.state.texts.push(new DamageText(x, y - 35, 'ŠUPINA DALA KREJCAR! 🐟', '#FDE047', true));
     }
   }
 
@@ -1773,15 +1990,18 @@ export class GameEngine {
   }
 
   public triggerPivniTacekEffect(player: any): void {
-    player.pivniTacekTimer = 6;
+    const stacks = Math.max(1, player.pivniTacekStacks || 1);
+    const cdBoost = 1.35 + (stacks - 1) * 0.15;
+    player.pivniTacekTimer = 6 + (stacks - 1) * 1.5;
     if (player.weapons) {
       for (let i = 0; i < player.weapons.length; i++) {
         const w = player.weapons[i];
-        if (w.cd > 0) w.cd /= 1.35;
+        if (w.cd > 0) w.cd /= cdBoost;
       }
     }
+    const pctLabel = Math.round((cdBoost - 1) * 100);
     this.state.texts.push(new DamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-    this.state.texts.push(new DamageText(player.x, player.y - 55, 'ROZOHNĚNÍ: +35 % RYCHLEJŠÍ NABÍJENÍ! ⚡', '#38BDF8', true));
+    this.state.texts.push(new DamageText(player.x, player.y - 55, `ROZOHNĚNÍ: +${pctLabel} % RYCHLEJŠÍ NABÍJENÍ! ⚡`, '#38BDF8', true));
 
     // Drop coins from up to 8 closest alive enemies
     const nearby = this.spatialHash.queryCircle(player.x, player.y, 400);
@@ -1804,8 +2024,10 @@ export class GameEngine {
       }
     }
 
+    const brawlDuration = 3.5 + (stacks - 1) * 1.0;
     for (let i = 0; i < sortedEnemies.length; i++) {
       const foe = sortedEnemies[i];
+      foe.brawlTimer = Math.max(foe.brawlTimer || 0, brawlDuration);
       this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75, skipConsolidation: true });
       this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
       if (this.state.particles) {
@@ -2227,6 +2449,7 @@ export class GameEngine {
       const buffMultiplier =
         (player.soulBuffTimer > 0 ? 1.25 : 1) *
         (player.gingerbreadSpeedTimer > 0 ? (1 + (player.gingerbreadSpeedBonus || 0.15)) : 1) *
+        (player.pistalkaSpeedTimer > 0 ? 1.25 : 1) *
         (player.waterSoakedTimer > 0 ? 0.75 : 1) *
         (player.slowTimer > 0 ? 0.65 : 1) *
         ((player.type === 'krajanek' && player.krajanekRideTimer > 0) ? 1 : ((player.meltingPuddleSlowTimer || 0) > 0 ? 0.75 : 1)) *
@@ -2356,6 +2579,8 @@ export class GameEngine {
 
       if (player.soulBuffTimer > 0) player.soulBuffTimer -= dt;
       if (player.gingerbreadSpeedTimer > 0) player.gingerbreadSpeedTimer -= dt;
+      if (player.pistalkaSpeedTimer > 0) player.pistalkaSpeedTimer -= dt;
+      if (player.zPeklaStestiTimer > 0) player.zPeklaStestiTimer -= dt;
       if (player.waterSoakedTimer > 0) player.waterSoakedTimer -= dt;
       if (player.slowTimer > 0) {
         if (player.iceImmunity) {
@@ -2364,7 +2589,9 @@ export class GameEngine {
           player.slowTimer -= dt;
         }
       }
-      if (player.ultCd > 0) player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
+      if (player.ultCd > 0 && !isPlayerAbilityActive(player, this.state)) {
+        player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
+      }
       if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
       if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
@@ -2381,6 +2608,7 @@ export class GameEngine {
 
       // Holy Chalk Circle (Posvěcená tříkrálová křída)
       if (player.holyCircleStacks > 0) {
+        const hcRadius = 120 + Math.max(0, (player.holyCircleStacks || 1) - 1) * 20;
         if (mx === 0 && my === 0) {
           player.stillTimer = (player.stillTimer || 0) + dt;
           if (player.stillTimer >= 0.6) {
@@ -2388,7 +2616,7 @@ export class GameEngine {
               this.state.holyCircle = {
                 x: player.x,
                 y: player.y,
-                radius: 120,
+                radius: hcRadius,
                 life: 1.5,
                 active: true,
               };
@@ -2397,6 +2625,7 @@ export class GameEngine {
             } else {
               this.state.holyCircle.x = player.x;
               this.state.holyCircle.y = player.y;
+              this.state.holyCircle.radius = hcRadius;
               this.state.holyCircle.life = 1.5;
               this.state.holyCircle.active = true;
             }
@@ -2445,7 +2674,8 @@ export class GameEngine {
             if (foe._holyCircleTick <= 0) {
               foe._holyCircleTick = 0.4;
               const holyDmgMult = getHolyDamageMultiplier(foe);
-              const dmg = 24 * holyDmgMult * (player.damageMultiplier || 1);
+              const baseHolyDmg = 24 + Math.max(0, (player.holyCircleStacks || 1) - 1) * 12;
+              const dmg = baseHolyDmg * holyDmgMult * (player.damageMultiplier || 1);
               foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
               this.state.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
             }
@@ -2481,16 +2711,20 @@ export class GameEngine {
               const rankDef = getWeaponRankDef(w.id, w.level);
               const weaponCooldownBonus = getWeaponActiveCooldownBonus(w, rankDef);
               const movingBonus = isMoving ? (player.movingCooldownBonus || 0) : 0;
+              const ctyrlistekBonus = (player.jetelovyCtyrlistekStacks || 0) > 0 && (player.luck || 100) > 100
+                ? (player.luck - 100) * 0.0015 * player.jetelovyCtyrlistekStacks
+                : 0;
               const playerCooldownBonus =
                 typeof player.cooldownBonus === 'number'
-                  ? Math.max(0, player.cooldownBonus + movingBonus)
-                  : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9 + movingBonus);
+                  ? Math.max(0, player.cooldownBonus + movingBonus + ctyrlistekBonus)
+                  : Math.max(0, ((player.cooldownMultiplier || 1) - 1) / 0.9 + movingBonus + ctyrlistekBonus);
               const baseCd = wDef.baseCd;
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
               const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
               let localCd = formulaCd * stats.cooldownMult;
               if ((player.pivniTacekTimer || 0) > 0) {
-                localCd = localCd / 1.35;
+                const cdBoost = 1.35 + Math.max(0, (player.pivniTacekStacks || 1) - 1) * 0.15;
+                localCd = localCd / cdBoost;
               }
 
               w.cd = fired ? localCd : 0.1;
@@ -2920,14 +3154,15 @@ export class GameEngine {
       // Uleželý syreček v kapse:
       // Jakmile se nepřítel v těsné blízkosti lovce začne napřahovat k útoku (windupTimer),
       // závan ze syrečku mu podlomí kolena a přepne ho na 4 sekundy do stavu Vyčerpaný (vycerpany – poloviční rychlost pohybu i útoku).
-      const closeReach = Math.max(attackRange, 85 + (((player.syrecekStacks || 1) - 1) * 15));
+      const syrecekStacks = player.syrecekStacks || 1;
+      const closeReach = Math.max(attackRange, 85 + ((syrecekStacks - 1) * 25));
       if (
         (player.syrecekStacks || 0) > 0 &&
         e.isAttacking &&
         distToPlayer <= closeReach &&
         (!e.vycerpanyTimer || e.vycerpanyTimer <= 0)
       ) {
-        e.vycerpanyTimer = 4.0;
+        e.vycerpanyTimer = 4.0 + (syrecekStacks - 1) * 1.5;
         if (typeof e.interruptAttack === 'function') {
           e.interruptAttack();
         } else {

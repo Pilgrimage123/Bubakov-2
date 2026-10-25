@@ -29,6 +29,7 @@ const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
   'kalny_hastrman',
   'zaba',
   'ropucha',
+  'polednice',
 ]);
 
 function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): boolean {
@@ -671,11 +672,24 @@ export class RunDirector {
     this.heavyAnchorCooldown = 25.0;
     const screenW = engine.camera?.width ?? 1280;
     const enemies = engine.livingEnemies ?? engine.state?.enemies ?? [];
+    const drops = engine.drops ?? engine.state?.drops ?? [];
+
+    // Guard: Prevent spawning too many heavy anchors or chests!
+    // If an uncollected heavy anchor or chest is already waiting in the field, defer spawning.
+    const activeAnchorsCount = drops.filter(
+      (d: any) => !d.dead && (d.isHeavyAnchor || d.type === 'chest' || d.type === 'big_pouch' || d.type === 'gingerbread_stash')
+    ).length;
+    if (activeAnchorsCount >= 1) {
+      this.heavyAnchorCooldown = 15.0;
+      return;
+    }
+
+    const hasActiveChest = drops.some((d: any) => !d.dead && d.type === 'chest');
     const anchorType = this.dropPacingPhase === 'mercy'
       ? 'gingerbread_stash'
-      : (Math.random() < 0.6 ? 'big_pouch' : 'chest');
+      : (hasActiveChest || Math.random() < 0.6 ? 'big_pouch' : 'chest');
 
-    const pos = sampleAnnulusPosition(player.x, player.y, screenW, enemies, anchorType);
+    const pos = sampleAnnulusPosition(player.x, player.y, screenW, enemies, anchorType, undefined, drops);
     if (typeof engine.spawnDrop === 'function') {
       const val = anchorType === 'big_pouch' ? 35 : anchorType === 'gingerbread_stash' ? 25 : 1;
       engine.spawnDrop(anchorType, pos.x, pos.y, {
@@ -1238,12 +1252,15 @@ export class RunDirector {
    * Every prefix retains at least 15% probability.
    */
   public getThematicPrefix(): EnemyPrefixType {
-    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 1;
+    const isLevel0 = this.levelId === 0;
+    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 3;
     const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId >= 4;
     const isNightCemetery = this.levelId === 2 || this.rozmar.formationBias === 'architects';
 
     let weights: Record<EnemyPrefixType, number>;
-    if (isWinter) {
+    if (isLevel0) {
+      weights = { vichricovy: 40, kamenny: 35, hromovy: 25, pekelny: 0, vycerpany: 0 };
+    } else if (isWinter) {
       weights = { vichricovy: 35, kamenny: 35, pekelny: 15, hromovy: 15, vycerpany: 0 };
     } else if (isCrimson) {
       weights = { pekelny: 40, hromovy: 30, kamenny: 15, vichricovy: 15, vycerpany: 0 };
@@ -1271,7 +1288,10 @@ export class RunDirector {
     const candidateId = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
     const mobId = forcedPrefix ? (candidateId || pool[0] || this.getRegularSpawnFallbackId()) : (pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId());
 
-    const prefix = forcedPrefix || this.getThematicPrefix();
+    let prefix = forcedPrefix || this.getThematicPrefix();
+    if (this.levelId === 0 && prefix === 'pekelny') {
+      prefix = 'vichricovy';
+    }
 
     const angle = Math.random() * Math.PI * 2;
     const pos = this.getOffscreenPosition(player, angle, engine, 170);

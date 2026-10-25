@@ -152,6 +152,31 @@ export function renderWorldHazardsAndEncounters(
     snowmanHorde.renderPuddles(ctx, viewLeft, viewTop, viewRight, viewBottom, uiTime);
   }
 
+  // 3b. Povidlové a kloboukové zpomalující louže (plumPuddles)
+  if (engine.plumPuddles && engine.plumPuddles.length > 0) {
+    for (let i = 0; i < engine.plumPuddles.length; i++) {
+      const pud = engine.plumPuddles[i];
+      const rad = pud.radius || 44;
+      if (!isInView(pud.x, pud.y, rad + 16, camera)) continue;
+      ctx.save();
+      ctx.translate(pud.x, pud.y);
+      const fadeAlpha = Math.min(1, (pud.life ?? 1) / 1.2);
+      ctx.globalAlpha = 0.78 * fadeAlpha;
+      ctx.fillStyle = '#4C1D95';
+      ctx.strokeStyle = '#2E1065';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rad, rad * 0.68, 0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#7C3AED';
+      ctx.beginPath();
+      ctx.ellipse(-rad * 0.22, -rad * 0.12, rad * 0.28, rad * 0.16, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // 4. Bubácká díra (anomálie Režiséra výpravy)
   const dira = engine.bubackaDira;
   if (dira && !dira.isCompleted && !dira.isFailed && isInView(dira.x, dira.y, (dira.radius || 40) + 30, camera)) {

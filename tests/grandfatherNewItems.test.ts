@@ -224,7 +224,7 @@ describe('New Grandfather Items Integration', () => {
     it('has valid definition in GRANDFATHER_ITEMS', () => {
       const krida = GRANDFATHER_ITEMS.find((it) => it.id === 'trikralova_krida');
       expect(krida).toBeDefined();
-      expect(krida?.name).toBe('Posvěcená tříkrálová křída');
+      expect(krida?.name).toBe('Tříkrálová křída');
       expect(krida?.icon).toBe('🖍️');
       expect(krida?.baseCost).toBe(50);
       expect(krida?.maxStacks).toBe(3);
@@ -314,7 +314,7 @@ describe('New Grandfather Items Integration', () => {
     it('has valid definition in GRANDFATHER_ITEMS', () => {
       const kren = GRANDFATHER_ITEMS.find((it) => it.id === 'strouhany_kren');
       expect(kren).toBeDefined();
-      expect(kren?.name).toBe('Strouhaný křen v ubrousku');
+      expect(kren?.name).toBe('Strouhaný křen');
       expect(kren?.icon).toBe('🫚');
       expect(kren?.baseCost).toBe(45);
       expect(kren?.maxStacks).toBe(4);
@@ -393,7 +393,7 @@ describe('New Grandfather Items Integration', () => {
     it('has valid definition in GRANDFATHER_ITEMS', () => {
       const srdce = GRANDFATHER_ITEMS.find((it) => it.id === 'poutove_srdce');
       expect(srdce).toBeDefined();
-      expect(srdce?.name).toBe('Pouťové perníkové srdce');
+      expect(srdce?.name).toBe('Perníkové srdce');
       expect(srdce?.icon).toBe('poutove_srdce');
       expect(srdce?.baseCost).toBe(50);
       expect(srdce?.maxStacks).toBe(4);
@@ -504,7 +504,7 @@ describe('New Grandfather Items Integration', () => {
     it('has valid definition in GRANDFATHER_ITEMS', () => {
       const syrecek = GRANDFATHER_ITEMS.find((it) => it.id === 'ulezely_syrecek');
       expect(syrecek).toBeDefined();
-      expect(syrecek?.name).toBe('Uleželý syreček v kapse');
+      expect(syrecek?.name).toBe('Uleželý syreček');
       expect(syrecek?.icon).toBe('🧀');
       expect(syrecek?.baseCost).toBe(40);
       expect(syrecek?.maxStacks).toBe(3);
@@ -591,7 +591,7 @@ describe('New Grandfather Items Integration', () => {
     it('has valid definition in GRANDFATHER_ITEMS', () => {
       const tacek = GRANDFATHER_ITEMS.find((it) => it.id === 'pivni_tacek');
       expect(tacek).toBeDefined();
-      expect(tacek?.name).toBe('Pivní tácek s čárkami');
+      expect(tacek?.name).toBe('Pivní tácek');
       expect(tacek?.icon).toBe('🍺');
       expect(tacek?.baseCost).toBe(35);
       expect(tacek?.maxStacks).toBe(4);

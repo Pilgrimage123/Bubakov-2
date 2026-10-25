@@ -1,4 +1,4 @@
-export const KRAJANEK_RIDE_DURATION = 9;
+export const KRAJANEK_RIDE_DURATION = 14;
 export const KRAJANEK_ABILITY_COOLDOWN = 30;
 export const KRAJANEK_RIDE_SPEED_MULTIPLIER = 2;
 export const KRAJANEK_RIDE_TICK_SECONDS = 0.5;
@@ -60,7 +60,7 @@ export function normalizeAngle(angle: number): number {
  * Calculates current dynamic ride speed multiplier based on the 4-phase momentum curve:
  * Phase 1 (0.0 - 0.3s): 1.0 (unpack & shockwave impact)
  * Phase 2 (0.3 - 1.2s): Smooth acceleration from +30% (1.30) to +100% (2.0)
- * Phase 3 (1.2 - 9.0s): Full 2.0x speed (+5% per stack of Rozjetý kolos)
+ * Phase 3 (1.2 - 14.0s): Full 2.0x speed (+5% per stack of Rozjetý kolos)
  * Oškrt impulse: +25% burst for 0.15s
  * Gravel drift: -30% speed penalty (drops to 70%) while drifting
  */
@@ -102,7 +102,8 @@ export function getKrajanekMomentumMultiplier(player: any): number {
 
 /**
  * Calculates steering with Turn Rate Cap, gravel drifting (>60 deg input change),
- * and oškrt turn rate boosting.
+ * and oškrt turn rate boosting. Touch displays receive higher maneuverability (7.2+ rad/s)
+ * and smooth touch joystick assistance for effortless control.
  */
 export function computeKrajanekSteering(
   player: any,
@@ -116,10 +117,17 @@ export function computeKrajanekSteering(
     ? player.krajanekHeadingAngle
     : Math.atan2(player.lastDy || 0, player.lastDx || 1);
 
+  const isTouch = Boolean(
+    callbacks?.isTouchInput ||
+    player?.isTouchInput ||
+    player?.isTouchDevice ||
+    (typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0))
+  );
+
   // Turn rate cap based on phase:
-  // Phase 2 (Heavy rollout): agile turning (~9.0 rad/s) to choose an escape corridor
-  // Phase 3 (Wild inertia): stiffer turning (~3.2 rad/s)
-  let turnRate = elapsed < 1.2 ? 9.0 : 3.2;
+  // Phase 2 (Heavy rollout): agile turning (~9.0–11.0 rad/s)
+  // Phase 3 (Rolling press): 4.8 rad/s base, boosted to 7.2 rad/s on touchscreen for effortless steering
+  let turnRate = isTouch ? (elapsed < 1.2 ? 11.0 : 7.2) : (elapsed < 1.2 ? 9.0 : 4.8);
 
   // Chisel hammer correction: doubles turn rate for 0.10s after hammer strike
   if ((player.krajanekTurnBoostTimer || 0) > 0) {
@@ -134,8 +142,9 @@ export function computeKrajanekSteering(
     const targetAngle = Math.atan2(inputDy, inputDx);
     const diff = normalizeAngle(targetAngle - currentAngle);
 
-    // Drift mechanic: change of direction > 60 degrees (Math.PI / 3) triggers Gravel Drift
-    if (Math.abs(diff) > Math.PI / 3) {
+    // Drift mechanic: change of direction > threshold (Math.PI / 3 or PI * 0.42 on touch) triggers Gravel Drift
+    const driftThreshold = isTouch ? Math.PI * 0.42 : Math.PI / 3;
+    if (Math.abs(diff) > driftThreshold) {
       isDrifting = true;
       player.krajanekIsDrifting = true;
       player.krajanekDriftTimer = 0.22;
@@ -581,3 +590,42 @@ export function stepKrajanekCoastingStones(
     }
   }
 }
+
+/**
+ * Helper to check whether any hunter ultimate or active ability state is currently active.
+ * Ability cooldowns must NOT tick down while an ability is active.
+ */
+export function isPlayerAbilityActive(player: any, engineOrState?: any): boolean {
+  if (!player) return false;
+
+  // Krajánek — Jízda na žernovu
+  if (player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0) {
+    return true;
+  }
+
+  // Active cutscene (e.g. Babička time stop, Pastýř stampede, Kořenářka incense)
+  const state = engineOrState?.state || engineOrState;
+  if (state?.cutscene || engineOrState?.cutscene) {
+    return true;
+  }
+
+  // Sexton / Kostelník — Farní požehnání
+  const blessing = state?.blessing || engineOrState?.blessing;
+  if (blessing && typeof blessing.t === 'number' && typeof blessing.dur === 'number' && blessing.t < blessing.dur) {
+    return true;
+  }
+
+  // Wanderer / Toulavý hrdina — Pověstná sukovice
+  const sukovice = state?.sukovice || engineOrState?.sukovice;
+  if (sukovice && typeof sukovice.t === 'number' && typeof sukovice.dur === 'number' && sukovice.t < sukovice.dur) {
+    return true;
+  }
+
+  // Time stop active
+  if ((state?.timeStopTimer || 0) > 0 || (engineOrState?.timeStopTimer || 0) > 0) {
+    return true;
+  }
+
+  return false;
+}
+

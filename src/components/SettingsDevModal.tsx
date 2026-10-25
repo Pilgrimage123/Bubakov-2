@@ -16,6 +16,8 @@ interface SettingsDevModalProps {
   onToggleShowPerfOverlay: (enabled: boolean) => void;
   dynamicLightingEnabled?: boolean;
   onToggleDynamicLighting?: (enabled: boolean) => void;
+  windupTelegraphCirclesEnabled?: boolean;
+  onToggleWindupTelegraphCircles?: (enabled: boolean) => void;
   dynamicDifficulty?: number;
   onChangeDynamicDifficulty?: (diff: number) => void;
   soundEffectsEnabled?: boolean;
@@ -40,6 +42,8 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
   onToggleShowPerfOverlay,
   dynamicLightingEnabled = true,
   onToggleDynamicLighting,
+  windupTelegraphCirclesEnabled = false,
+  onToggleWindupTelegraphCircles,
   dynamicDifficulty = 3.0,
   onChangeDynamicDifficulty,
   soundEffectsEnabled = true,
@@ -283,6 +287,23 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   }}
                 >
                   Dynamické osvětlení: {dynamicLightingEnabled ? 'ZAP' : 'VYP'}
+                </button>
+              )}
+
+              {onToggleWindupTelegraphCircles && (
+                <button
+                  className="lada-btn btn-small"
+                  style={{
+                    background: windupTelegraphCirclesEnabled ? '#16A34A' : 'var(--wood-dark)',
+                    color: '#FFFFFF',
+                  }}
+                  onClick={() => {
+                    sound.coin();
+                    onToggleWindupTelegraphCircles(!windupTelegraphCirclesEnabled);
+                  }}
+                  title="Zobrazovat barevné kruhy nápřahu kolem nepřátel chystajících se k útoku (výchozí: VYP)"
+                >
+                  Kruhy nápřahu nepřátel: {windupTelegraphCirclesEnabled ? 'ZAP' : 'VYP'}
                 </button>
               )}
 

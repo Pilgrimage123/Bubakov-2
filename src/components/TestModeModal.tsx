@@ -241,8 +241,8 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'vesela_mysl',
-    name: 'Veselá mysl a písnička',
-    icon: 'music',
+    name: 'Tahací harmonika',
+    icon: '🪗',
     description: '+3 Kuráž doplňováno každých 5 s (+0,6 reg/s za úroveň).',
     maxLevel: 5,
     category: 'passive',
@@ -265,7 +265,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   // --- 2. Folklórní posvěcení & mechaniky (Folklore Blessings) ---
   {
     id: 'trikralova_krida',
-    name: 'Posvěcená tříkrálová křída',
+    name: 'Tříkrálová křída',
     icon: 'chalk',
     description: 'Při zastavení nakreslí ochranný kruh: odrazí nemrtvé i čerty a sníží utržené zranění o 20 % za úroveň.',
     maxLevel: 3,
@@ -276,7 +276,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'strouhany_kren',
-    name: 'Strouhaný křen v ubrousku',
+    name: 'Strouhaný křen',
     icon: 'horseradish',
     description: '-25 % odolnost bubáků vůči jídlu a +15 % poškození do mlsajících cílů za úroveň.',
     maxLevel: 4,
@@ -287,7 +287,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'poutove_srdce',
-    name: 'Pouťové perníkové srdce',
+    name: 'Perníkové srdce',
     icon: 'poutove_srdce',
     description: 'Sebrané perníčky okamžitě dobíjejí schopnost (+0,2 s / +0,6 s / +2 s k nabití) a obří perníčky navíc zhojí 8 Kuráže.',
     maxLevel: 4,
@@ -298,7 +298,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'ulezely_syrecek',
-    name: 'Uleželý syreček v kapse',
+    name: 'Uleželý syreček',
     icon: 'cheese',
     description: 'Při nápřahu nepřítele v těsné blízkosti ho závan ze syrečku na 4 s vyčerpá (poloviční rychlost i útok).',
     maxLevel: 3,
@@ -309,7 +309,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'pivni_tacek',
-    name: 'Pivní tácek s čárkami',
+    name: 'Pivní tácek',
     icon: 'beer',
     description: 'Při pití piva, kořalky či cikorky vypadnou krejcary z 8 běsů a propůjčí +35 % rychlost nabíjení na 6 s.',
     maxLevel: 4,
@@ -320,7 +320,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'bezedny_krajac_povidel',
-    name: 'Bezedný krajáč povidel',
+    name: 'Krajáč povidel',
     icon: 'honey',
     description: 'Bubákům zalepí paty (-20 % poise) a po zahnání zanechají zpomalující povidlovou louži.',
     maxLevel: 4,
@@ -331,7 +331,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'zvonek_zatoulane_kozy',
-    name: 'Zvonek ze zatoulané kozy',
+    name: 'Kozí zvonek',
     icon: 'bell',
     description: 'Každé 4 s běhu cinkne: vyruší nápřah blízkých strašidel a přitáhne okolní perníčky i krejcary.',
     maxLevel: 4,
@@ -342,7 +342,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'babicciny_kousave_fusekle',
-    name: 'Babiččiny kousavé fusekle',
+    name: 'Kousavé fusekle',
     icon: 'sock',
     description: '+15 rychlost pohybu, plná imunita na led a mráz a v pohybu o 12 % rychlejší útoky.',
     maxLevel: 4,
@@ -350,6 +350,61 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
     categoryLabel: 'Mrazuvzdornost',
     categoryColor: '#0284C7',
     statHint: '+15 spd, ledová imunita, +12 % kadence',
+  },
+  {
+    id: 'kominicka_supina',
+    name: 'Kominická šupina',
+    icon: 'fish',
+    description: '+8 ŠTĚSTÍ a +0,25× k násobiči kritického poškození. Při kritickém zásahu povýší perníček nebo vytřese krejcar.',
+    maxLevel: 3,
+    category: 'folklore',
+    categoryLabel: 'Štěstí & Crit',
+    categoryColor: '#EAB308',
+    statHint: '+8 Štěstí, +0,25× crit dmg, povýšení kořisti',
+  },
+  {
+    id: 'jetelovy_ctyrlistek',
+    name: 'Jetelový čtyřlístek',
+    icon: 'clover',
+    description: 'Převádí 15 % Štěstí nad 100 na zrychlení nabíjení. Crit dává +10 % šanci na crit a zkrátí odpočet schopnosti.',
+    maxLevel: 3,
+    category: 'folklore',
+    categoryLabel: 'Čtyřlístek',
+    categoryColor: '#16A34A',
+    statHint: 'Štěstí na nabíjení & řetězový crit',
+  },
+  {
+    id: 'cinovy_strelecky_terc',
+    name: 'Cínový terč',
+    icon: 'target',
+    description: '2× vyšší šance na crit do plnozdravých bubáků. Crit vyvolá pouťový třesk (35 % plošného dmg).',
+    maxLevel: 4,
+    category: 'folklore',
+    categoryLabel: 'Pouťový střelec',
+    categoryColor: '#DC2626',
+    statHint: '2× crit na plné HP & pouťový třesk',
+  },
+  {
+    id: 'vrbova_pistalka',
+    name: 'Vrbová píšťalka',
+    icon: 'whistle',
+    description: '+6 % šance na úhyb. Úhyb odpálí rázovou vlnu, zkrátí odpočet schopnosti o 2,0 s a dá +25 % rychlosti.',
+    maxLevel: 3,
+    category: 'folklore',
+    categoryLabel: 'Úhyb & Píšťalka',
+    categoryColor: '#0284C7',
+    statHint: '+6 % úhyb, rázová vlna, -2s ult Cd',
+  },
+  {
+    id: 'lojem_mazane_krpce',
+    name: 'Vodnický klobouk',
+    icon: '🎩',
+    description: '+5 % šance na úhyb a delší nezranitelnost. Při úhybu zanechá kluzkou louži z klobouku (40% zpomalení) a zhojí 4 Kuráže.',
+    maxLevel: 3,
+    category: 'folklore',
+    categoryLabel: 'Vodnický klobouk',
+    categoryColor: '#10B981',
+    statHint: '+5 % úhyb, +4 Kuráž & louže při úhybu',
   },
   {
     id: 'arcivzacny_ananas',
@@ -366,7 +421,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   // --- 3. Vzácné předměty & okamžité poklady (Instant Utility & Treasures) ---
   {
     id: 'ponocny_horn',
-    name: 'Trouba obecního ponocného',
+    name: 'Ponocného trouba',
     icon: 'horn',
     description: 'Zastaví čas a zmrazí všechna strašidla i nepřátelské střely na 5 sekund.',
     maxLevel: 10,
@@ -388,7 +443,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'babicka_apron',
-    name: 'Babiččina kropenatá zástěra',
+    name: 'Babiččina zástěra',
     icon: 'basket',
     description: 'V mžiku přitáhne všechny perníčky i kořist z celé mapy a zhojí 15 Kuráže.',
     maxLevel: 10,
@@ -399,7 +454,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'slivovice_splash',
-    name: 'Hlt slivovice z modrého džbánku',
+    name: 'Hlt slivovice',
     icon: 'jug',
     description: 'Vyčistí postihy, omráčí nepřátele v 180° oblouku na 4,5 s a zapálí střely modrým plamenem.',
     maxLevel: 10,
@@ -410,7 +465,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'svanda_bagpipes',
-    name: 'Dudácká čertovská skočná',
+    name: 'Švandovy dudy',
     icon: 'music',
     description: 'Přinutí strašidla bít se mezi sebou na 6 s a zdvojnásobí vypadávající kořist.',
     maxLevel: 10,
@@ -421,7 +476,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'kominik_button',
-    name: 'Kominický knoflík pro štěstí',
+    name: 'Kominický knoflík',
     icon: 'button',
     description: '7 s úplné nehmotnosti a zaručených maximálních kritických zásahů, sazemi oslepí nepřátele.',
     maxLevel: 10,
@@ -520,7 +575,7 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
   },
   {
     id: 'pekeln_poklad_zlaty',
-    name: 'Pekelný tolar z pekla',
+    name: 'Pekelný tolar',
     icon: 'pekeln_poklad_zlaty',
     description: 'Dědeček ti hned vyplatí 250 krejcarů do měšce.',
     maxLevel: 10,

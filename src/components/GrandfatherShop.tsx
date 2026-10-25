@@ -127,6 +127,15 @@ function getItemQuote(item: GrandfatherItemDef): string {
   if (item.id === 'poutove_srdce') return '„Malované perníkové srdce z pouti! Babičce jsem ho kdysi koupil za mlada — mlsni si a hned máš víc elánu a sil!“';
   if (item.id === 'ulezely_syrecek') return '„Poctivě uzrálý tvarůžek zapomenutý v kapse u vesty! Voní tak důrazně, že i otrlý kostlivec raději přejde na druhý břeh rybníka!“';
   if (item.id === 'pivni_tacek') return '„Umaštěný tácek z hospody U Černého kocoura! Šenkýř tam připsal o pět čárek víc, než jsi vypil — a tenhle účet teď zaplatí bubáci!“';
+  if (item.id === 'lojem_mazane_krpce' || item.id === 'vodnicky_klobouk') return '„Vodnický klobouk s pentlí! Smekni při úhybu a bubáci uklouznou v rybniční louži!“';
+  if (item.id === 'vrbova_pistalka') return '„Vrbová píšťalka vyřezaná zjara na pastvině! Jakmile zahvízdáš při úhybu, vichr bubáky smete!“';
+  if (item.id === 'kominicka_supina') return '„Zlatavá šupina z vánočního kapra od samotného kominíka! Přinese ti štěstí i bohatou kořist!“';
+  if (item.id === 'jetelovy_ctyrlistek') return '„Čtyřlístek utržený o svatojánské rosách na mezi! S ním ti půjde každá rána od ruky!“';
+  if (item.id === 'cinovy_strelecky_terc') return '„Cínový terč z posvícenské střelnice! Trefíš-li bubáka zplna, ozve se pouťový třesk!“';
+  if (item.id === 'zvonek_zatoulane_kozy') return '„Mosazný zvonek ze zatoulané kozy! Cinká tak vesele, že strašidla zapomenou na útok!“';
+  if (item.id === 'babicciny_kousave_fusekle') return '„Babiččiny vlněné fusekle! Koušou sice do lýtek, ale žádný mráz ani led tě nezastaví!“';
+  if (item.id === 'bezedny_krajac_povidel') return '„Bezedný krajáč hustých švestkových povidel! Zalepí bubákům paty, že se ani nehnou!“';
+  if (item.id === 'vesela_mysl') return '„Stará tahací harmonika! Zahraj kousek od podlahy a hned se ti vrátí kuráž do žil!“';
   return `„${item.name}! Vzácná věc, z mé nůše putuje přímo k tobě!“`;
 }
 

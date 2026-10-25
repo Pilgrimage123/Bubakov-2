@@ -135,6 +135,15 @@ export function spawnDropWithLimit(
   incoming: GameDrop,
   pendingDropBank: PendingDropBank,
 ): boolean {
+  if (incoming.type === 'chest') {
+    const activeChests = drops.filter((d) => !d.dead && d.type === 'chest').length;
+    const pendingChests = pendingDropBank.byKey['chest']?.count || 0;
+    if (activeChests + pendingChests >= 2) {
+      incoming.dead = true;
+      return false;
+    }
+  }
+
   if (countActiveDrops(drops) < MAX_DROPS_LIMIT) {
     incoming.dead = false;
     drops.push(incoming);
@@ -268,6 +277,12 @@ export function releasePendingDrops(
       bucket.count--;
       if (bucket.count <= 0) {
         delete pendingDropBank.byKey[selectedKey];
+      } else {
+        // Disperse subsequent drops from the same bucket so they don't land at identical coordinates
+        const scatterAngle = (bucket.count * 2.39996) + Math.random() * 0.4;
+        const scatterRadius = 24 + (bucket.count % 3) * 10;
+        materialized.x += Math.cos(scatterAngle) * scatterRadius;
+        materialized.y += Math.sin(scatterAngle) * scatterRadius;
       }
     }
 

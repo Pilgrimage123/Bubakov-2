@@ -77,27 +77,113 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
   };
 
   const isWalking = state === 'walk';
+  const isSprinting = state === 'sprint';
   const isAction = state === 'action';
   const isReact = state === 'react';
+  const isFleeing = state === 'flee';
+  const isMoving = isWalking || isSprinting || isFleeing;
 
   // Kinematic parameters
-  const walkSpeed = isWalking ? 6.5 : 2.2;
+  const walkSpeed = isFleeing ? 17.5 : isSprinting ? 13.5 : isWalking ? 7.5 : isReact ? 22 : 2.2;
   const walkSin = Math.sin(t * walkSpeed);
   const walkCos = Math.cos(t * walkSpeed);
 
-  // Babička walking stride and cane tap
-  const grannyBobY = isWalking ? Math.abs(walkSin) * 6 : Math.sin(t * 2.2) * 2;
-  const grannySway = isWalking ? walkCos * 2 : 0;
-  const caneTapAngle = isWalking ? Math.sin(t * walkSpeed) * 8 : Math.sin(t * 1.5) * 1.5;
+  // Babička walking / sprinting / startled / fleeing stride and cane motion
+  const grannyBobY = isFleeing
+    ? -Math.abs(walkSin) * 16
+    : isSprinting
+    ? -Math.abs(walkSin) * 12
+    : isWalking
+    ? -Math.abs(walkSin) * 7
+    : isReact
+    ? -Math.abs(Math.sin(t * 14)) * 12 - 5
+    : Math.sin(t * 2.2) * 2;
+  const grannySway = isFleeing
+    ? 14 + walkSin * 4.5
+    : isSprinting
+    ? 10 + walkSin * 3.5
+    : isWalking
+    ? 4 + walkCos * 2.5
+    : isReact
+    ? -13 + Math.sin(t * 26) * 4
+    : 0;
+  const caneTapAngle = isFleeing
+    ? -58 + Math.sin(t * 22) * 28
+    : isReact
+    ? -38 + Math.sin(t * 26) * 14
+    : isSprinting
+    ? Math.sin(t * walkSpeed) * 22
+    : isWalking
+    ? Math.sin(t * walkSpeed) * 12
+    : Math.sin(t * 1.5) * 1.5;
 
-  // Barunka skipping and braid bounce
-  const barunkaBobY = isWalking ? Math.abs(Math.sin(t * walkSpeed * 1.2)) * 8 : Math.sin(t * 2.5 + 0.5) * 2.5;
-  const braidWave = Math.sin(t * (isWalking ? 12 : 2.8)) * (isWalking ? 14 : 4);
-  const bouquetLift = isAction ? -15 + Math.sin(t * 8) * 6 : 0;
+  // Articulated foot stride for Babička's shoes
+  const grannyStrideAmp = isFleeing ? 24 : isSprinting ? 18 : isWalking ? 11 : isReact ? 8 : 0;
+  const grannyLeftShoeX = -28 + walkSin * grannyStrideAmp;
+  const grannyLeftShoeY = 36 - Math.max(0, walkCos) * (grannyStrideAmp * 0.55);
+  const grannyLeftShoeRot = walkSin * (isFleeing ? 26 : isSprinting ? 20 : isWalking ? 12 : 0);
+  const grannyRightShoeX = 28 - walkSin * grannyStrideAmp;
+  const grannyRightShoeY = 36 - Math.max(0, -walkCos) * (grannyStrideAmp * 0.55);
+  const grannyRightShoeRot = -walkSin * (isFleeing ? 26 : isSprinting ? 20 : isWalking ? 12 : 0);
+
+  // Barunka skipping / sprinting / startled / fleeing and braid bounce
+  const barunkaSin = Math.sin(t * walkSpeed * 1.15 + 0.4);
+  const barunkaCos = Math.cos(t * walkSpeed * 1.15 + 0.4);
+  const barunkaBobY = isFleeing
+    ? -Math.abs(barunkaSin) * 19
+    : isSprinting
+    ? -Math.abs(barunkaSin) * 14
+    : isWalking
+    ? -Math.abs(barunkaSin) * 9
+    : isReact
+    ? -Math.abs(Math.sin(t * 15)) * 14 - 6
+    : Math.sin(t * 2.5 + 0.5) * 2.5;
+  const barunkaSway = isFleeing
+    ? 16 + barunkaSin * 5
+    : isSprinting
+    ? 12 + barunkaSin * 4
+    : isWalking
+    ? 5 + barunkaCos * 2.5
+    : isReact
+    ? -15 + Math.cos(t * 26) * 4.5
+    : 0;
+  const braidWave = isFleeing
+    ? -36 + Math.sin(t * 24) * 22
+    : isSprinting
+    ? -24 + Math.sin(t * 18) * 18
+    : isReact
+    ? 22 + Math.sin(t * 28) * 14
+    : Math.sin(t * (isWalking ? 12 : 2.8)) * (isWalking ? 14 : 4);
+  const bouquetLift = isFleeing
+    ? -28 + Math.sin(t * 22) * 14
+    : isReact
+    ? -18 + Math.sin(t * 26) * 8
+    : isAction
+    ? -15 + Math.sin(t * 8) * 6
+    : isMoving
+    ? Math.sin(t * walkSpeed) * 5
+    : 0;
+
+  // Articulated boot stride for Barunka
+  const barunkaStrideAmp = isFleeing ? 22 : isSprinting ? 17 : isWalking ? 11 : isReact ? 7 : 0;
+  const barunkaLeftBootX = -15 + barunkaSin * barunkaStrideAmp;
+  const barunkaLeftBootY = -Math.max(0, barunkaCos) * (barunkaStrideAmp * 0.65);
+  const barunkaLeftBootRot = barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : isWalking ? 14 : isReact ? -12 : 0);
+  const barunkaRightBootX = 15 - barunkaSin * barunkaStrideAmp;
+  const barunkaRightBootY = -Math.max(0, -barunkaCos) * (barunkaStrideAmp * 0.65);
+  const barunkaRightBootRot = -barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : isWalking ? 14 : isReact ? -12 : 0);
 
   // Eye gaze tracking
-  const gazeX = pointer.isHovered ? pointer.x * 4 : Math.sin(t * 1.2) * 1.2;
-  const gazeY = pointer.isHovered ? pointer.y * 3.5 : 0;
+  const gazeX = isReact ? -2 + Math.sin(t * 28) * 1.2 : isFleeing ? 2.5 : pointer.isHovered ? pointer.x * 4 : Math.sin(t * 1.2) * 1.2;
+  const gazeY = isReact ? -2 : isFleeing ? -1 : pointer.isHovered ? pointer.y * 3.5 : 0;
+
+  // Sweat droplets for react (startled by bubák) and flee (zero courage)
+  const sweatDrops = [
+    { x: 125 - ((t * 105) % 38), y: 80 + ((t * 80) % 36), r: 4.0 },
+    { x: 215 + ((t * 100 + 14) % 38), y: 75 + ((t * 85 + 10) % 36), r: 3.6 },
+    { x: 305 - ((t * 110 + 10) % 34), y: 150 + ((t * 78 + 15) % 34), r: 3.5 },
+    { x: 375 + ((t * 115 + 22) % 36), y: 145 + ((t * 82 + 20) % 34), r: 3.5 },
+  ];
 
   // Holy bread aura & floating flower petals
   const holyAuraScale = isAction ? 1 + Math.sin(t * 10) * 0.15 : 0;
@@ -223,11 +309,23 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
           id="babicka"
           transform={`translate(0, ${grannyBobY}) rotate(${grannySway}, 180, 260)`}
         >
-          {/* 1. BROWN PEASANT SKIRT (BOTTOM HEM & SHOES) */}
+          {/* 1. BROWN PEASANT SKIRT (BOTTOM HEM & ARTICULATED SHOES) */}
           <g transform="translate(170, 400)">
-            {/* Shoes peeking out */}
-            <ellipse cx="-28" cy="36" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
-            <ellipse cx="28" cy="36" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
+            {/* Articulated Shoes stepping with stride */}
+            <g
+              id="granny-left-shoe"
+              transform={`translate(${grannyLeftShoeX}, ${grannyLeftShoeY}) rotate(${grannyLeftShoeRot})`}
+            >
+              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
+              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+            </g>
+            <g
+              id="granny-right-shoe"
+              transform={`translate(${grannyRightShoeX}, ${grannyRightShoeY}) rotate(${grannyRightShoeRot})`}
+            >
+              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
+              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+            </g>
 
             {/* Pleated dark brown skirt hem */}
             <path
@@ -237,12 +335,12 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth="3.5"
               strokeLinejoin="round"
             />
-            {/* Vertical skirt pleats */}
-            <line x1="-50" y1="5" x2="-52" y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="-25" y1="8" x2="-26" y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="0" y1="10" x2="0" y2="39" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="25" y1="8" x2="26" y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="50" y1="5" x2="52" y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
+            {/* Vertical skirt pleats swaying with stride */}
+            <line x1="-50" y1="5" x2={-52 + walkSin * 4} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="-25" y1="8" x2={-26 + walkSin * 4} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="0" y1="10" x2={walkSin * 4} y2="39" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="25" y1="8" x2={26 + walkSin * 4} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="50" y1="5" x2={52 + walkSin * 4} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
           </g>
 
           {/* 2. WOODEN WALKING CANE IN RIGHT HAND */}
@@ -393,8 +491,16 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <path d="M -5,-3 Q 0,-6 5,-3" stroke="#1C1610" strokeWidth="2" fill="none" />
             </g>
 
-            {/* Left hand resting affectionately on apron */}
-            <g transform="translate(48, 70)">
+            {/* Left hand resting affectionately on apron (or raised in startle/flee) */}
+            <g
+              transform={
+                isFleeing
+                  ? `translate(64, ${18 + Math.sin(t * 22) * 12})`
+                  : isReact
+                  ? `translate(58, 34)`
+                  : 'translate(48, 70)'
+              }
+            >
               <ellipse cx="0" cy="0" rx="10" ry="8" fill="url(#grannySkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
               <line x1="-3" y1="-4" x2="-3" y2="4" stroke="#1C1610" strokeWidth="1.8" />
               <line x1="2" y1="-4" x2="2" y2="4" stroke="#1C1610" strokeWidth="1.8" />
@@ -418,8 +524,8 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <path d="M 38,-20 Q 42,-35 34,-50 M 38,-35 L 44,-38 M 36,-32 L 30,-34" fill="none" />
             </g>
 
-            {/* Tied Knot under Chin */}
-            <g transform="translate(0, 26)">
+            {/* Tied Knot under Chin (fluttering when sprinting/fleeing/reacting) */}
+            <g transform={`translate(0, 26) rotate(${isMoving || isReact ? Math.sin(t * 20) * 14 : 0})`}>
               <ellipse cx="0" cy="0" rx="7" ry="5" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2.5" />
               <path d="M -6,2 L -14,14 L -4,12 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2" />
               <path d="M 6,2 L 14,14 L 4,12 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2" />
@@ -441,16 +547,34 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth="2.5"
             />
 
-            {/* Gentle Eyes, Wrinkles & Rosy Cheeks */}
+            {/* Gentle Eyes, Wrinkles & Rosy Cheeks (or Startled / Terrified Expression) */}
             <g transform={`translate(${gazeX}, ${gazeY})`}>
-              {/* Kind Eyebrows */}
-              <path d="M -18,-24 Q -12,-30 -4,-25" stroke="#78716C" strokeWidth="2.8" strokeLinecap="round" fill="none" />
-              <path d="M 4,-25 Q 12,-30 18,-24" stroke="#78716C" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+              {/* Kind Eyebrows (raised high in startle/flee) */}
+              <path
+                d={isReact || isFleeing ? 'M -19,-28 Q -12,-35 -4,-29' : 'M -18,-24 Q -12,-30 -4,-25'}
+                stroke="#78716C"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path
+                d={isReact || isFleeing ? 'M 4,-29 Q 12,-35 19,-28' : 'M 4,-25 Q 12,-30 18,-24'}
+                stroke="#78716C"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+                fill="none"
+              />
 
-              {/* Sparkling Kind Dark Eyes */}
-              <circle cx="-10" cy="-18" r="3.2" fill="#1C1610" />
+              {/* Sparkling Kind Dark Eyes (or Wide Startled Eyes) */}
+              {(isReact || isFleeing) && (
+                <>
+                  <circle cx="-10" cy="-18" r="5.5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
+                  <circle cx="10" cy="-18" r="5.5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
+                </>
+              )}
+              <circle cx="-10" cy="-18" r={isReact || isFleeing ? 2.2 : 3.2} fill="#1C1610" />
               <circle cx="-11" cy="-19" r="1.1" fill="#FFFFFF" />
-              <circle cx="10" cy="-18" r="3.2" fill="#1C1610" />
+              <circle cx="10" cy="-18" r={isReact || isFleeing ? 2.2 : 3.2} fill="#1C1610" />
               <circle cx="9" cy="-19" r="1.1" fill="#FFFFFF" />
 
               {/* Gentle Crows Feet / Smile Wrinkles */}
@@ -464,9 +588,17 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <circle cx="-16" cy="-10" r="5.5" fill="#FB7185" opacity="0.45" />
               <circle cx="16" cy="-10" r="5.5" fill="#FB7185" opacity="0.45" />
 
-              {/* Warm Benevolent Smile */}
-              <path d="M -10,-2 Q 0,8 10,-2" stroke="#1C1610" strokeWidth="3" strokeLinecap="round" fill="none" />
-              <path d="M -11,-3 L -13,-1 M 11,-3 L 13,-1" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
+              {/* Mouth: Warm Benevolent Smile vs Startled Gasp vs Terrified Scream */}
+              {isFleeing ? (
+                <ellipse cx="0" cy="-1" rx="7" ry="6.5" fill="#7F1D1D" stroke="#1C1610" strokeWidth="2.5" />
+              ) : isReact ? (
+                <ellipse cx="0" cy="-1" rx="5.2" ry="5.5" fill="#7F1D1D" stroke="#1C1610" strokeWidth="2.5" />
+              ) : (
+                <>
+                  <path d="M -10,-2 Q 0,8 10,-2" stroke="#1C1610" strokeWidth="3" strokeLinecap="round" fill="none" />
+                  <path d="M -11,-3 L -13,-1 M 11,-3 L 13,-1" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
+                </>
+              )}
             </g>
           </g>
         </g>
@@ -477,18 +609,24 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
         {showCompanion && (
           <g
             id="barunka"
-            transform={`translate(0, ${barunkaBobY})`}
+            transform={`translate(0, ${barunkaBobY}) rotate(${barunkaSway}, 340, 320)`}
           >
-            {/* 1. BROWN LEATHER LACE-UP BOOTS */}
+            {/* 1. BROWN LEATHER LACE-UP BOOTS (Articulated Stride) */}
             <g transform="translate(340, 405)">
               {/* Left Boot */}
-              <g transform="translate(-15, 0)">
+              <g
+                id="barunka-left-boot"
+                transform={`translate(${barunkaLeftBootX}, ${barunkaLeftBootY}) rotate(${barunkaLeftBootRot})`}
+              >
                 <path d="M -7,0 L 7,0 L 8,26 L 16,30 L 14,35 L -7,35 Z" fill="#854D0E" stroke="#1C1610" strokeWidth="3" strokeLinejoin="round" />
                 <line x1="-2" y1="8" x2="4" y2="8" stroke="#1C1610" strokeWidth="1.8" />
                 <line x1="-2" y1="16" x2="4" y2="16" stroke="#1C1610" strokeWidth="1.8" />
               </g>
               {/* Right Boot */}
-              <g transform="translate(15, 0)">
+              <g
+                id="barunka-right-boot"
+                transform={`translate(${barunkaRightBootX}, ${barunkaRightBootY}) rotate(${barunkaRightBootRot})`}
+              >
                 <path d="M -7,0 L 7,0 L 7,35 L -14,35 L -16,30 L -8,26 Z" fill="#854D0E" stroke="#1C1610" strokeWidth="3" strokeLinejoin="round" />
                 <line x1="-4" y1="8" x2="2" y2="8" stroke="#1C1610" strokeWidth="1.8" />
                 <line x1="-4" y1="16" x2="2" y2="16" stroke="#1C1610" strokeWidth="1.8" />
@@ -615,16 +753,34 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 strokeWidth="2.5"
               />
 
-              {/* Cute Eyes, Rosy Cheeks & Sweet Smile */}
+              {/* Cute Eyes, Rosy Cheeks & Sweet Smile (or Startled / Terrified Face) */}
               <g transform={`translate(${gazeX * 1.2}, ${gazeY * 1.2})`}>
                 {/* Thin Eyebrows */}
-                <path d="M -14,-9 Q -9,-14 -4,-10" stroke="#381D07" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-                <path d="M 4,-10 Q 9,-14 14,-9" stroke="#381D07" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                <path
+                  d={isReact || isFleeing ? 'M -15,-12 Q -9,-18 -4,-13' : 'M -14,-9 Q -9,-14 -4,-10'}
+                  stroke="#381D07"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+                <path
+                  d={isReact || isFleeing ? 'M 4,-13 Q 9,-18 15,-12' : 'M 4,-10 Q 9,-14 14,-9'}
+                  stroke="#381D07"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  fill="none"
+                />
 
-                {/* Big Sparkling Dark Eyes */}
-                <circle cx="-8" cy="-4" r="3.2" fill="#1C1610" />
+                {/* Big Sparkling Dark Eyes (or Wide Startled Eyes) */}
+                {(isReact || isFleeing) && (
+                  <>
+                    <circle cx="-8" cy="-4" r="5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="1.8" />
+                    <circle cx="8" cy="-4" r="5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="1.8" />
+                  </>
+                )}
+                <circle cx="-8" cy="-4" r={isReact || isFleeing ? 2 : 3.2} fill="#1C1610" />
                 <circle cx="-9" cy="-5" r="1.1" fill="#FFFFFF" />
-                <circle cx="8" cy="-4" r="3.2" fill="#1C1610" />
+                <circle cx="8" cy="-4" r={isReact || isFleeing ? 2 : 3.2} fill="#1C1610" />
                 <circle cx="7" cy="-5" r="1.1" fill="#FFFFFF" />
 
                 {/* Button Nose */}
@@ -634,10 +790,83 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 <circle cx="-13" cy="3" r="5" fill="#FB7185" opacity="0.55" />
                 <circle cx="13" cy="3" r="5" fill="#FB7185" opacity="0.55" />
 
-                {/* Sweet Childish Smile */}
-                <path d="M -7,6 Q 0,13 7,6" stroke="#1C1610" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+                {/* Sweet Childish Smile vs Startled Gasp vs Terrified Scream */}
+                {isFleeing ? (
+                  <ellipse cx="0" cy="9" rx="6" ry="5.5" fill="#881337" stroke="#1C1610" strokeWidth="2.2" />
+                ) : isReact ? (
+                  <ellipse cx="0" cy="8" rx="4.5" ry="5" fill="#881337" stroke="#1C1610" strokeWidth="2.2" />
+                ) : (
+                  <path d="M -7,6 Q 0,13 7,6" stroke="#1C1610" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+                )}
               </g>
             </g>
+          </g>
+        )}
+
+        {/* SPRINT & FLEE DUST PUFFS BEHIND BABIČKA & BARUNKA */}
+        {(isSprinting || isFleeing) && showParticles && (
+          <g id="granny-sprint-dust">
+            {[0, 1, 2].map((i) => {
+              const phase = (t * (isFleeing ? 4.2 : 3.0) + i * 0.33) % 1;
+              const dx = 105 - phase * 55 - i * 10;
+              const dy = 442 - Math.sin(phase * Math.PI) * 14 - i * 3;
+              const rad = (1 - phase * 0.5) * (isFleeing ? 13 : 9);
+              return (
+                <g key={`gr-dust-${i}`}>
+                  <circle
+                    cx={dx}
+                    cy={dy}
+                    r={rad}
+                    fill="#E7E5E4"
+                    stroke="#1C1610"
+                    strokeWidth="2"
+                    opacity={Math.max(0.15, 0.72 * (1 - phase))}
+                  />
+                  {showCompanion && (
+                    <circle
+                      cx={dx + 190}
+                      cy={dy - 2}
+                      r={rad * 0.85}
+                      fill="#E7E5E4"
+                      stroke="#1C1610"
+                      strokeWidth="1.8"
+                      opacity={Math.max(0.15, 0.72 * (1 - phase))}
+                    />
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        )}
+
+        {/* STARTLE SPARKS & SWEAT DROPS FOR REACT (HIT BY BUBÁK) & FLEE (ZERO COURAGE) */}
+        {(isReact || isFleeing) && showParticles && (
+          <g id="granny-panic-vfx">
+            {sweatDrops.map((d, idx) => (
+              <path
+                key={`gr-sweat-${idx}`}
+                d={`M ${d.x},${d.y - d.r * 1.8} C ${d.x - d.r},${d.y} ${d.x - d.r},${d.y + d.r} ${d.x},${d.y + d.r} C ${d.x + d.r},${d.y + d.r} ${d.x + d.r},${d.y} ${d.x},${d.y - d.r * 1.8} Z`}
+                fill="#38BDF8"
+                stroke="#1C1610"
+                strokeWidth="1.5"
+              />
+            ))}
+            {isReact && (
+              <>
+                <g id="granny-startle-sparks" transform={`translate(170, ${18 - Math.abs(Math.sin(t * 20)) * 7})`}>
+                  <line x1="-22" y1="-4" x2="-34" y2="-16" stroke="#EF4444" strokeWidth="3.8" strokeLinecap="round" />
+                  <line x1="0" y1="-8" x2="0" y2="-24" stroke="#FACC15" strokeWidth="4.2" strokeLinecap="round" />
+                  <line x1="22" y1="-4" x2="34" y2="-16" stroke="#EF4444" strokeWidth="3.8" strokeLinecap="round" />
+                </g>
+                {showCompanion && (
+                  <g id="barunka-startle-sparks" transform={`translate(340, ${135 - Math.abs(Math.sin(t * 20)) * 7})`}>
+                    <line x1="-18" y1="-3" x2="-28" y2="-14" stroke="#EF4444" strokeWidth="3.4" strokeLinecap="round" />
+                    <line x1="0" y1="-6" x2="0" y2="-20" stroke="#FACC15" strokeWidth="3.8" strokeLinecap="round" />
+                    <line x1="18" y1="-3" x2="28" y2="-14" stroke="#EF4444" strokeWidth="3.4" strokeLinecap="round" />
+                  </g>
+                )}
+              </>
+            )}
           </g>
         )}
       </g>

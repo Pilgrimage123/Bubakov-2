@@ -148,18 +148,58 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
 
     const crowMiniBoss = engine.spawnMonster('vrana', 100, 100, 4.5, false, true, '🐦‍⬛ Hejno mrazivých vran');
     expect(crowMiniBoss.isMiniboss).toBe(true);
-    // Beginner tutorial miniboss should be balanced (~220 HP), not 1400 HP
-    expect(crowMiniBoss.hp).toBeLessThan(500);
-    expect(crowMiniBoss.hp).toBeGreaterThanOrEqual(100);
+    expect(crowMiniBoss.isMinibossFlockMember).toBe(true);
+    expect(crowMiniBoss.flockTotal).toBe(9);
+    expect(engine.state.enemies.filter((e) => e.isMinibossFlockMember)).toHaveLength(9);
+    // Beginner tutorial miniboss should be balanced (~168 HP per giant crow), not 1400 HP
+    expect(crowMiniBoss.hp).toBe(168);
+    expect(crowMiniBoss.renderScale).toBe(3.0);
+
+    const vodnicekMidBoss = engine.spawnMonster('vodnicek', 150, 150, GAME_LEVELS[0].midBoss.multiplier, false, true, '💧 Jarní Vodníček');
+    expect(vodnicekMidBoss.isMiniboss).toBe(true);
+    expect(vodnicekMidBoss.hp).toBeGreaterThanOrEqual(220);
+    expect(vodnicekMidBoss.hp).toBeLessThan(441);
   });
 
-  it('includes level0_completed trophy and verifies completion against meta', async () => {
+  it('never leaks Polednice or devils into Stage 1 regular pools across any day phase', async () => {
+    const { RunDirector } = await import('../src/game/director');
+    const director = new RunDirector(0, 42);
+    const phaseTimes = [0, 35, 70, 105, 145]; // noon, afternoon, dusk, night, midnight
+    for (const gameTime of phaseTimes) {
+      const pool = (director as any).getAllBubaksPool({ activeLevelId: 0, gameTime });
+      expect(pool).not.toContain('polednice');
+      expect(pool).not.toContain('rarach');
+      expect(pool).not.toContain('krvavy_rarach');
+      expect(pool).not.toContain('kalny_hastrman');
+      expect(pool).not.toContain('vodnicek');
+    }
+  });
+
+  it('updates standalone tajici_snehulak melt squash and wobble scales during update', () => {
+    const engine = new GameEngine();
+    const state = engine.initRun({
+      levelId: 0,
+      hunterType: 'wanderer',
+      spawnInitialWave: false,
+    });
+    const snowman = engine.spawnMonster('tajici_snehulak', 200, 0);
+    expect(snowman.meltHpRatio).toBe(1.0);
+    snowman.hp = snowman.maxHp * 0.5;
+    snowman.update(0.25, state.player);
+    expect(snowman.meltHpRatio).toBeCloseTo(0.5, 3);
+    expect(snowman.meltSquashX).toBeGreaterThan(1.0);
+    expect(snowman.meltSquashY).toBeLessThan(1.0);
+    expect(snowman.wobbleScaleX).not.toBe(1.0);
+  });
+
+  it('includes level0_completed trophy and verifies completion against meta or Morana kill', async () => {
     const { TROPHIES } = await import('../src/data/trophies');
     const trophy = TROPHIES.find((t) => t.id === 'level0_completed');
     expect(trophy).toBeDefined();
     expect(trophy?.reward).toBeGreaterThan(0);
-    expect(trophy?.isMet({ completedLevels: { 0: true } })).toBe(true);
-    expect(trophy?.isMet({ completedLevels: {} })).toBe(false);
+    expect(trophy?.isMet({ completedLevels: { 0: true } } as any)).toBe(true);
+    expect(trophy?.isMet({ completedLevels: {}, bestiaryKills: { morana: 1 } } as any)).toBe(true);
+    expect(trophy?.isMet({ completedLevels: {}, bestiaryKills: {} } as any)).toBe(false);
   });
 
   it('seeds storybook lighting and occluders from march landmarks', async () => {

@@ -41,7 +41,7 @@ describe('Sandbox Grandfather Upgrades (0-X)', () => {
     }
   });
 
-  it('includes key folklore items such as Posvěcená tříkrálová křída, Uleželý syreček, and Arcivzácný ananas', () => {
+  it('includes key folklore items such as Tříkrálová křída, Uleželý syreček, and Arcivzácný ananas', () => {
     const krida = ALL_GRANDFATHER_UPGRADES.find((u) => u.id === 'trikralova_krida');
     expect(krida).toBeDefined();
     expect(krida?.maxLevel).toBe(3);

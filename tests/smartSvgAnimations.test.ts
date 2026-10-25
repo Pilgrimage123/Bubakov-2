@@ -21,12 +21,14 @@ describe('Smart SVG JavaScript Animations', () => {
     expect(typeof SmartSvgViewer).toBe('function');
   });
 
-  it('supports the required Smart animation states', () => {
-    const states: SmartCharacterState[] = ['idle', 'walk', 'action', 'react'];
+  it('supports the required Smart animation states including sprint, react (scare hit), and flee (courage exhausted)', () => {
+    const states: SmartCharacterState[] = ['idle', 'walk', 'sprint', 'action', 'react', 'flee'];
     expect(states).toContain('idle');
     expect(states).toContain('walk');
+    expect(states).toContain('sprint');
     expect(states).toContain('action');
     expect(states).toContain('react');
+    expect(states).toContain('flee');
   });
 
   it('defines all 6 folklore characters', () => {

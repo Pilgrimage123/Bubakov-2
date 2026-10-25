@@ -47,7 +47,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
 			time: 75,
 			kills: 60,
-			multiplier: 4.0
+			multiplier: 1.6
 		},
 		finalBoss: {
 			id: "morana",

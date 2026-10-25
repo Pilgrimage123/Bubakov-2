@@ -228,9 +228,9 @@ var TROPHIES = [
 		title: "🌱 První krůčky v předjaří",
 		desc: "Dokonči úvodní výpravu: zažeň Moranu, špatně vynesenou smrtku, nebo přežij noc v Předjaří.",
 		reward: 80,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]),
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.morana || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[0] ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.morana || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},

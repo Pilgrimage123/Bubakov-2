@@ -41,7 +41,7 @@ var HUNTER_UNLOCKS = {
 		defaultUnlocked: true,
 		challengeTitle: "🪨 Krajánek, který roztočí žernov",
 		challengeShortDesc: "Odemčen od začátku výpravy.",
-		challengeLongDesc: "Krajánek putuje od vsi ke vsi s holí, mošnou a železným kladívkem. Jeho zvláštní schopnost Jízda na žernovu z něj na 9 sekund udělá nezranitelného drtiče bubáků.",
+		challengeLongDesc: "Krajánek putuje od vsi ke vsi s holí, mošnou a železným kladívkem. Jeho zvláštní schopnost Jízda na žernovu z něj na 14 sekund udělá nezranitelného drtiče bubáků.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
@@ -51,7 +51,7 @@ var HUNTER_UNLOCKS = {
 			spoiledTitle: "Veselý krajánek s puntíkovanou mošnou",
 			spoiledLore: "Připraven vyrazit hned od prvního dne.",
 			spoiledWeaponHint: "Výbava: Osikový prut a červený uzlíček.",
-			spoiledAbilityHint: "Jízda na žernovu (9 s nezranitelnosti a dvojnásobné rychlosti; cooldown 30 s).",
+			spoiledAbilityHint: "Jízda na žernovu (14 s nezranitelnosti a dvojnásobné rychlosti; cooldown 30 s).",
 			clueTag: "✅ Připraven k cestě"
 		}]
 	},
@@ -123,7 +123,7 @@ var HUNTER_UNLOCKS = {
 				tierLevel: 1,
 				spoiledName: "P _ _ _ _ _ k",
 				spoiledTitle: "Rychlonožka z obecních lad",
-				spoiledLore: "Z luk je o poledni slyšet pískání na vrbovou píšťalku. Podle stop v trávě jde o mladého hocha s plstěným kloboučkem, co běhá rychleji než zajíc.",
+				spoiledLore: "Z luk je o poledni slyšet pískání na vrbovou píšťalku. Podle bosých stop v trávě jde o mladého hocha s pírkem za uchem, co běhá rychleji než zajíc.",
 				spoiledWeaponHint: "Nápověda: Pečené buchty a toulavé nohy...",
 				spoiledAbilityHint: "Nápověda: Zvuk pasteveckých zvonců...",
 				clueTag: "🔍 25 %: První stopa! Odhalena silueta a původ z luk"
@@ -414,28 +414,28 @@ var HUNTER_UNLOCKS = {
 				minPercent: 25,
 				tierLevel: 1,
 				spoiledName: "K _ _ _ _ _ _ _ k",
-				spoiledTitle: "Správce farního kostela s klíči",
-				spoiledLore: "Slyšíš cinkot klíčů a hluboký hlas farního zvonu. Ten, kdo ho rozhoupává, se nebojí ani hrobů.",
+				spoiledTitle: "Správce farního kostela s kropenkou",
+				spoiledLore: "Slyšíš šplouchání svěcené vody a hluboký hlas farního zvonu. Ten, kdo ho rozhoupává, nosí na hrudi zlatý kříž a nebojí se ani hrobů.",
 				spoiledWeaponHint: "Nápověda: Svěcená voda a kropenka...",
 				spoiledAbilityHint: "Nápověda: Úder zvonu a sloup svatého světla...",
-				clueTag: "🔍 25 %: Slyšíš klíče a zvon! Zažeň další nemrtvé"
+				clueTag: "🔍 25 %: Slyšíš zvon a vidíš zlatý kříž! Zažeň další nemrtvé"
 			},
 			{
 				minPercent: 50,
 				tierLevel: 2,
 				spoiledName: "K o s _ _ _ n í k",
-				spoiledTitle: "Zbožný muž se zvonem a kropenkou",
-				spoiledLore: "Zbožný muž v černém kabátě! Svěcená voda z jeho kropenky pálí čerty a umrlce dvojnásobně a jeho zvon rozezní celou náves.",
+				spoiledTitle: "Zbožný muž s kropenkou a kropáčem",
+				spoiledLore: "Zbožný muž v hnědém klobouku a kabátě se zlatým křížem! Svěcená voda z jeho mosazné kropenky pálí čerty a umrlce dvojnásobně a jeho zvon rozezní celou náves.",
 				spoiledWeaponHint: "Zbraň: Kropenka se svěcenou vodou (dvojnásobný účinek na strašidla)",
 				spoiledAbilityHint: "Schopnost: Farní požehnání (zvon a sloup světla)",
-				clueTag: "🔎 50 %: Znáš zvon, klíče i svěcenou vodu!"
+				clueTag: "🔎 50 %: Znáš zvon, kropáč i svěcenou vodu!"
 			},
 			{
 				minPercent: 75,
 				tierLevel: 3,
 				spoiledName: "K o s t e _ n í k",
-				spoiledTitle: "Poctivý kostelník s klíči od kostela",
-				spoiledLore: "Kostelník už nahoře ve zvonici uvazuje provaz! Ještě pár zahnaných umrlců a rozezní farní zvon přímo v aréně!",
+				spoiledTitle: "Poctivý kostelník s mosaznou kropenkou",
+				spoiledLore: "Kostelník už nahoře ve zvonici uvazuje provaz a chystá slaměný kropáč! Ještě pár zahnaných umrlců a rozezní farní zvon přímo v aréně!",
 				spoiledWeaponHint: "Start: Kropenka se svěcenou vodou",
 				spoiledAbilityHint: "⚡ Speciál: Farní požehnání (očistí nemrtvé a démony v okruhu 650 px, 25 % max. kuráže bossů)",
 				clueTag: "⚡ 75 %: Zvon se už rozhoupává! Poslední nemrtví tě dělí od odemčení!"

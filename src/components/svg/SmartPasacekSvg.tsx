@@ -81,36 +81,108 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
   };
 
   const isWalking = state === 'walk';
+  const isSprinting = state === 'sprint';
   const isAction = state === 'action';
   const isReact = state === 'react';
+  const isFleeing = state === 'flee';
+  const isMoving = isWalking || isSprinting || isFleeing;
 
   // Kinematic parameters
-  const runSpeed = isAction ? 12 : isWalking ? 9.5 : 2.5;
+  const runSpeed = isFleeing ? 18.5 : isSprinting ? 14.5 : isAction ? 12 : isWalking ? 9.5 : isReact ? 22 : 2.5;
   const runSin = Math.sin(t * runSpeed);
   const runCos = Math.cos(t * runSpeed);
 
-  // High-spirited barefoot running stride
-  const backLegAngle = isWalking ? runSin * 34 : isAction ? -25 + Math.sin(t * 14) * 8 : isReact ? -15 : -8;
-  const frontLegAngle = isWalking ? -runSin * 34 : isAction ? 25 + Math.sin(t * 14 + Math.PI) * 8 : isReact ? 15 : 8;
+  // High-spirited barefoot running / sprinting / fleeing stride
+  const backLegAngle = isFleeing
+    ? runSin * 52
+    : isSprinting
+    ? runSin * 46
+    : isWalking
+    ? runSin * 34
+    : isAction
+    ? -25 + Math.sin(t * 14) * 8
+    : isReact
+    ? -24 + Math.sin(t * 22) * 7
+    : -8;
+  const frontLegAngle = isFleeing
+    ? -runSin * 52
+    : isSprinting
+    ? -runSin * 46
+    : isWalking
+    ? -runSin * 34
+    : isAction
+    ? 25 + Math.sin(t * 14 + Math.PI) * 8
+    : isReact
+    ? 30 + Math.cos(t * 22) * 8
+    : 8;
 
-  // Energetic bouncy bobbing and forward sprint lean
-  const bobY = isWalking ? Math.abs(runSin) * 14 : isAction ? Math.abs(Math.sin(t * 14)) * 16 : Math.sin(t * 3) * 3;
-  const leanAngle = isWalking ? 10 + runSin * 4 : isAction ? 5 + Math.sin(t * 10) * 3 : isReact ? -8 : 2;
+  // Energetic bouncy bobbing, startle recoil jolt, and sprint/flee forward lean
+  const bobY = isFleeing
+    ? -Math.abs(runSin) * 20
+    : isSprinting
+    ? -Math.abs(runSin) * 16
+    : isWalking
+    ? -Math.abs(runSin) * 11
+    : isAction
+    ? -Math.abs(Math.sin(t * 14)) * 14
+    : isReact
+    ? -Math.abs(Math.sin(t * 14)) * 14 - 6
+    : Math.sin(t * 3) * 3;
+  const leanAngle = isFleeing
+    ? 18 + runSin * 6
+    : isSprinting
+    ? 15 + runSin * 4.5
+    : isWalking
+    ? 9 + runSin * 3.5
+    : isAction
+    ? 5 + Math.sin(t * 10) * 3
+    : isReact
+    ? -16 + Math.sin(t * 26) * 4.5
+    : 2;
 
-  // Arm swings
-  const rightArmAngle = isWalking ? -runCos * 28 : isAction ? -15 : -6;
-  // Flute hand: raised high, or brought to mouth in action state!
-  const fluteArmAngle = isAction
+  // Arm swings (normal pump vs startled recoil vs frantic overhead flailing in flee)
+  const rightArmAngle = isFleeing
+    ? -118 + Math.sin(t * 20) * 30
+    : isSprinting
+    ? -runCos * 42
+    : isWalking
+    ? -runCos * 28
+    : isReact
+    ? 52 + Math.sin(t * 24) * 14
+    : isAction
+    ? -15
+    : -6;
+  // Flute hand: raised high, brought to mouth in action, jolted back in react, or flailing in flee
+  const fluteArmAngle = isFleeing
+    ? -68 + Math.cos(t * 20) * 28
+    : isReact
+    ? -54 + Math.cos(t * 24) * 14
+    : isAction
     ? -45 + Math.sin(t * 12) * 6
+    : isSprinting
+    ? 22 + runCos * 32
     : isWalking
     ? 15 + runCos * 20
     : pointer.isHovered
     ? pointer.y * 15
     : Math.sin(t * 2) * 5;
 
-  // Fluttering neckerchief ends and spiky hair sway
-  const scarfFlutter = Math.sin(t * (isWalking ? 16 : 4)) * (isWalking ? 15 : 4);
-  const featherSway = Math.sin(t * (isWalking ? 14 : 3)) * (isWalking ? 8 : 3);
+  // Fluttering neckerchief ends and spiky hair / feather sway
+  const scarfFlutter = isFleeing
+    ? -25 + Math.sin(t * 26) * 24
+    : isSprinting
+    ? -18 + Math.sin(t * 20) * 20
+    : isReact
+    ? 18 + Math.sin(t * 28) * 14
+    : Math.sin(t * (isWalking ? 16 : 4)) * (isWalking ? 15 : 4);
+  const featherSway = isFleeing
+    ? -18 + Math.sin(t * 24) * 16
+    : isReact
+    ? 24 + Math.sin(t * 28) * 12
+    : isSprinting
+    ? -12 + Math.sin(t * 18) * 12
+    : Math.sin(t * (isWalking ? 14 : 3)) * (isWalking ? 8 : 3);
+  const hairJoltY = isReact ? -5 - Math.abs(Math.sin(t * 24)) * 4 : isFleeing ? -3 : 0;
 
   // Musical notes emitting when playing flute in action state
   const musicNotes = [
@@ -119,9 +191,16 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
     { x: 320 + Math.sin(t * 9 + 3) * 22, y: 150 - ((t * 95 + 80) % 120), char: '♬', op: 0.75, scale: 1.1 },
   ];
 
+  // Sweat droplets & startle marks for react (hit by bubák) and flee (zero courage)
+  const sweatDrops = [
+    { x: 165 - ((t * 110) % 45), y: 78 + ((t * 85) % 40), r: 4.2 },
+    { x: 248 + ((t * 105 + 15) % 45), y: 72 + ((t * 90 + 10) % 45), r: 3.8 },
+    { x: 155 - ((t * 125 + 25) % 50), y: 95 + ((t * 75 + 20) % 40), r: 3.5 },
+  ];
+
   // Head and curious eyes tracking
-  const lookX = pointer.isHovered ? pointer.x * 6 : Math.sin(t * 1.8) * 2;
-  const lookY = pointer.isHovered ? pointer.y * 5 : 0;
+  const lookX = isReact ? -2 + Math.sin(t * 30) * 1.5 : isFleeing ? 3 : pointer.isHovered ? pointer.x * 6 : Math.sin(t * 1.8) * 2;
+  const lookY = isReact ? -2 : isFleeing ? -1 : pointer.isHovered ? pointer.y * 5 : 0;
 
   return (
     <svg
@@ -558,23 +637,61 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
             <ellipse cx="-16" cy="6" rx="8" ry="6" fill="#F87171" opacity="0.65" />
             <ellipse cx="16" cy="6" rx="8" ry="6" fill="#F87171" opacity="0.65" />
 
-            {/* Big Expressive Boyish Face (Curious Dark Eyes, Cute Nose, Wonderstruck Open Mouth) */}
+            {/* Big Expressive Boyish Face (Curious Dark Eyes, Cute Nose, Wonderstruck / Startled / Terrified Mouth) */}
             <g id="pa-face" transform={`translate(${lookX}, ${lookY})`}>
-              {/* Eyebrows (Arched & curious) */}
-              <path d="M -20,-12 Q -12,-20 -4,-14" stroke="#451A03" strokeWidth="3.6" strokeLinecap="round" fill="none" />
-              <path d="M 6,-14 Q 14,-20 22,-12" stroke="#451A03" strokeWidth="3.6" strokeLinecap="round" fill="none" />
+              {/* Eyebrows (Arched & curious, or shot high in startle/terror) */}
+              <path
+                d={isReact || isFleeing ? 'M -22,-18 Q -12,-28 -4,-19' : 'M -20,-12 Q -12,-20 -4,-14'}
+                stroke="#451A03"
+                strokeWidth="3.6"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path
+                d={isReact || isFleeing ? 'M 6,-19 Q 14,-28 24,-18' : 'M 6,-14 Q 14,-20 22,-12'}
+                stroke="#451A03"
+                strokeWidth="3.6"
+                strokeLinecap="round"
+                fill="none"
+              />
 
-              {/* Large Wonderstruck Eyes */}
+              {/* Large Wonderstruck / Startled / Terrified Eyes */}
               <g transform="translate(-11, -4)">
-                <ellipse cx="0" cy="0" rx="6.5" ry="7.5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.6" />
+                <ellipse
+                  cx="0"
+                  cy="0"
+                  rx={isReact || isFleeing ? 8 : 6.5}
+                  ry={isReact || isFleeing ? 9.2 : 7.5}
+                  fill="#FFFFFF"
+                  stroke="#1C1610"
+                  strokeWidth="2.6"
+                />
                 {/* Pupil */}
-                <circle cx={pointer.isHovered ? pointer.x * 2.2 : 1} cy={pointer.isHovered ? pointer.y * 1.8 : 0.5} r="4" fill="#1C1610" />
+                <circle
+                  cx={pointer.isHovered ? pointer.x * 2.2 : isReact ? -1 : 1}
+                  cy={pointer.isHovered ? pointer.y * 1.8 : 0.5}
+                  r={isReact || isFleeing ? 2.2 : 4}
+                  fill="#1C1610"
+                />
                 <circle cx="-1" cy="-2" r="1.5" fill="#FFFFFF" />
               </g>
               <g transform="translate(13, -4)">
-                <ellipse cx="0" cy="0" rx="6.5" ry="7.5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.6" />
+                <ellipse
+                  cx="0"
+                  cy="0"
+                  rx={isReact || isFleeing ? 8 : 6.5}
+                  ry={isReact || isFleeing ? 9.2 : 7.5}
+                  fill="#FFFFFF"
+                  stroke="#1C1610"
+                  strokeWidth="2.6"
+                />
                 {/* Pupil */}
-                <circle cx={pointer.isHovered ? pointer.x * 2.2 : 1} cy={pointer.isHovered ? pointer.y * 1.8 : 0.5} r="4" fill="#1C1610" />
+                <circle
+                  cx={pointer.isHovered ? pointer.x * 2.2 : isReact ? -1 : 1}
+                  cy={pointer.isHovered ? pointer.y * 1.8 : 0.5}
+                  r={isReact || isFleeing ? 2.2 : 4}
+                  fill="#1C1610"
+                />
                 <circle cx="-1" cy="-2" r="1.5" fill="#FFFFFF" />
               </g>
 
@@ -582,18 +699,33 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
               <path d="M -2,4 Q 2,8 6,4" stroke="#1C1610" strokeWidth="3" strokeLinecap="round" fill="none" />
               <circle cx="2" cy="3" r="3.2" fill="#F97316" opacity="0.6" />
 
-              {/* Wonderstruck / Startled Open Mouth */}
-              <path
-                d="M -4,14 C -4,22 8,22 8,14 Z"
-                fill="#881337"
-                stroke="#1C1610"
-                strokeWidth="2.6"
-              />
-              <path d="M -2,14 Q 2,16 6,14" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
+              {/* Mouth: Screaming in Flee, Gasping O in React, or Cheerful Open Mouth */}
+              {isFleeing ? (
+                <g id="pa-mouth-flee">
+                  <ellipse cx="2" cy="18" rx="8.5" ry="9.5" fill="#881337" stroke="#1C1610" strokeWidth="2.8" />
+                  <path d="M -4,12 Q 2,15 8,12" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" />
+                  <ellipse cx="2" cy="23" rx="5" ry="3.5" fill="#FB7185" />
+                </g>
+              ) : isReact ? (
+                <g id="pa-mouth-react">
+                  <ellipse cx="2" cy="17" rx="6.8" ry="8" fill="#881337" stroke="#1C1610" strokeWidth="2.8" />
+                  <circle cx="2" cy="14" r="2" fill="#FFFFFF" />
+                </g>
+              ) : (
+                <>
+                  <path
+                    d="M -4,14 C -4,22 8,22 8,14 Z"
+                    fill="#881337"
+                    stroke="#1C1610"
+                    strokeWidth="2.6"
+                  />
+                  <path d="M -2,14 Q 2,16 6,14" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" />
+                </>
+              )}
             </g>
 
             {/* WILD, MESSY, TOUSLED BROWN SPIKY HAIR (Josef Lada / Fairy Tale boy hair) */}
-            <g id="pa-hair">
+            <g id="pa-hair" transform={`translate(0, ${hairJoltY})`}>
               {/* Back Hair Tufts */}
               <path
                 d="M -30,-8 C -40,-20 -36,-35 -24,-40 C -18,-45 -8,-42 0,-44 C 12,-44 24,-42 32,-35 C 40,-25 36,-10 32,-2 Z"
@@ -615,6 +747,52 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
             </g>
           </g>
         </g>
+
+        {/* SPRINT & FLEE DUST PUFFS BEHIND BARE FEET */}
+        {(isSprinting || isFleeing) && showParticles && (
+          <g id="pa-sprint-dust">
+            {[0, 1, 2].map((i) => {
+              const phase = (t * (isFleeing ? 4.5 : 3.2) + i * 0.33) % 1;
+              const dx = 125 - phase * 65 - i * 12;
+              const dy = 438 - Math.sin(phase * Math.PI) * 18 - i * 4;
+              const rad = (1 - phase * 0.5) * (isFleeing ? 14 : 10);
+              return (
+                <circle
+                  key={`pa-dust-${i}`}
+                  cx={dx}
+                  cy={dy}
+                  r={rad}
+                  fill="#E7E5E4"
+                  stroke="#1C1610"
+                  strokeWidth="2"
+                  opacity={Math.max(0.15, 0.75 * (1 - phase))}
+                />
+              );
+            })}
+          </g>
+        )}
+
+        {/* STARTLE MARKS & SWEAT DROPS FOR REACT (HIT BY BUBÁK) & FLEE (ZERO COURAGE) */}
+        {(isReact || isFleeing) && showParticles && (
+          <g id="pa-panic-vfx">
+            {sweatDrops.map((d, idx) => (
+              <path
+                key={`pa-sweat-${idx}`}
+                d={`M ${d.x},${d.y - d.r * 1.8} C ${d.x - d.r},${d.y} ${d.x - d.r},${d.y + d.r} ${d.x},${d.y + d.r} C ${d.x + d.r},${d.y + d.r} ${d.x + d.r},${d.y} ${d.x},${d.y - d.r * 1.8} Z`}
+                fill="#38BDF8"
+                stroke="#1C1610"
+                strokeWidth="1.6"
+              />
+            ))}
+            {isReact && (
+              <g id="pa-startle-sparks" transform={`translate(210, ${38 - Math.abs(Math.sin(t * 20)) * 8})`}>
+                <line x1="-22" y1="-4" x2="-34" y2="-18" stroke="#EF4444" strokeWidth="4" strokeLinecap="round" />
+                <line x1="0" y1="-8" x2="0" y2="-26" stroke="#FACC15" strokeWidth="4.5" strokeLinecap="round" />
+                <line x1="22" y1="-4" x2="34" y2="-18" stroke="#EF4444" strokeWidth="4" strokeLinecap="round" />
+              </g>
+            )}
+          </g>
+        )}
 
         {/* MUSICAL NOTES EMITTING IN ACTION (FLUTE PLAY) STATE */}
         {isAction && showParticles && (

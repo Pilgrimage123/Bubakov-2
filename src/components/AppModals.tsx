@@ -261,6 +261,10 @@ export const AppModals: React.FC<AppModalsProps> = ({
         onToggleDynamicLighting={(enabled) => {
           saveMeta({ ...meta, dynamicLightingEnabled: enabled });
         }}
+        windupTelegraphCirclesEnabled={Boolean(meta.windupTelegraphCirclesEnabled)}
+        onToggleWindupTelegraphCircles={(enabled) => {
+          saveMeta({ ...meta, windupTelegraphCirclesEnabled: enabled });
+        }}
         dynamicDifficulty={meta.dynamicDifficulty ?? 3.0}
         onChangeDynamicDifficulty={(diff) => {
           saveMeta({ ...meta, dynamicDifficulty: diff });

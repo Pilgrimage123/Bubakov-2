@@ -8,6 +8,7 @@ export type EffectCategory =
   | 'dynamicLightingEnabled'
   | 'combatVfxEnabled'
   | 'warningIndicatorsEnabled'
+  | 'windupTelegraphCirclesEnabled'
   | 'enemyDescriptorsEnabled'
   | 'attackDescriptorsEnabled'
   | 'statusIndicatorsEnabled'
@@ -22,6 +23,7 @@ export const DEFAULT_GAME_EFFECT_SETTINGS: GameEffectSettings = {
   dynamicLightingEnabled: true,
   combatVfxEnabled: true,
   warningIndicatorsEnabled: true,
+  windupTelegraphCirclesEnabled: false,
   enemyDescriptorsEnabled: true,
   attackDescriptorsEnabled: true,
   statusIndicatorsEnabled: true,
@@ -44,6 +46,9 @@ export function isGameEffectEnabled(category: EffectCategory): boolean {
   if (!currentSettings.effectsEnabled) return false;
   if (category === 'warningIndicatorsEnabled') {
     return currentSettings.warningIndicatorsEnabled && isCombatTextCategoryEnabled('visualTelegraphCues');
+  }
+  if (category === 'windupTelegraphCirclesEnabled') {
+    return Boolean(currentSettings.windupTelegraphCirclesEnabled) && currentSettings.warningIndicatorsEnabled && isCombatTextCategoryEnabled('visualTelegraphCues');
   }
   if (category === 'unlockNotificationsEnabled') {
     return currentSettings.unlockNotificationsEnabled && isCombatTextCategoryEnabled('unlocksMilestones');

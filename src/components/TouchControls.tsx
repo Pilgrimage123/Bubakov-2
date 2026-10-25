@@ -4,6 +4,8 @@ import { GameIcon } from './GameIcon';
 interface TouchControlsProps {
   enabled: boolean;
   active?: boolean;
+  isRideActive?: boolean;
+  hunterType?: string;
   onMove: (x: number, y: number, intensity: number) => void;
   onStop: () => void;
   onTriggerUltimate: () => void;
@@ -12,6 +14,8 @@ interface TouchControlsProps {
 
 export const TouchControls: React.FC<TouchControlsProps> = ({
   enabled,
+  isRideActive,
+  hunterType,
   onMove,
   onStop,
   onTriggerUltimate,
@@ -137,12 +141,13 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   if (!enabled) return null;
 
   const isReady = ultCooldown <= 0;
+  const isKrajanek = hunterType === 'krajanek';
 
   return (
-    <div className="touch-controls-container" aria-label="Dotykové ovládání">
+    <div className={`touch-controls-container ${isRideActive ? 'krajanek-ride-active' : ''}`} aria-label="Dotykové ovládání">
       {/* Joystick Zone */}
       <div ref={zoneRef} className="joystick-touch-zone" aria-hidden="true">
-        <div ref={baseRef} className="joystick-base">
+        <div ref={baseRef} className={`joystick-base ${isRideActive ? 'ride-glow' : ''}`}>
           <span className="joystick-mark joy-mark-n">▲</span>
           <span className="joystick-mark joy-mark-s">▼</span>
           <span className="joystick-mark joy-mark-w">◀</span>
@@ -156,20 +161,24 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
       {/* Special Ability Button (bottom right) */}
       <button
         type="button"
-        className={`touch-action-btn ${isReady ? 'ready' : 'recharging'}`}
+        className={`touch-action-btn ${isRideActive ? 'active-ride' : isReady ? 'ready' : 'recharging'}`}
         onClick={onTriggerUltimate}
         onTouchStart={(e) => {
           e.preventDefault();
           onTriggerUltimate();
         }}
-        title="Speciální schopnost lovce"
-        aria-label="Speciální schopnost lovce"
+        title={isKrajanek ? 'Jízda na žernovu' : 'Speciální schopnost lovce'}
+        aria-label={isKrajanek ? 'Jízda na žernovu' : 'Speciální schopnost lovce'}
       >
         <div className="touch-ult-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <GameIcon icon="lightning" size={28} />
         </div>
         <div className="touch-ult-label">
-          {isReady ? 'BLESK!' : `${Math.ceil(ultCooldown)} s`}
+          {isRideActive
+            ? 'JÍZDA NA ŽERNOVU!'
+            : isReady
+            ? (isKrajanek ? 'JÍZDA NA ŽERNOVU!' : 'BLESK!')
+            : `${Math.ceil(ultCooldown)} s`}
         </div>
       </button>
     </div>

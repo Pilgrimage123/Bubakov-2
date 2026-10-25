@@ -87,6 +87,7 @@ describe('Weapon and Cleanliness Canonization (ADR 0026)', () => {
     expect(migrated.unlockedWeapons['kovarske_vidle']).toBe(true);
     expect(migrated.unlockedWeapons['povidlove_buchty']).toBe(true);
     expect(migrated.unlockedWeapons['osikovy_prut']).toBe(true);
+    expect(migrated.unlockedWeapons['bylinkova_fajfka']).toBe(true);
 
     // Breakdown object preserved under canonical key
     expect(migrated.weaponKillCounts?.['kovarske_vidle']).toEqual({ skeleton: 25, umrlec: 10 });

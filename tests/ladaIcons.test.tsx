@@ -10,6 +10,10 @@ import {
   LadaWatermanHatIcon,
   LadaMeadowFlowerIcon,
   LadaVillageSunIcon,
+  LadaPasacekIcon,
+  LadaKostelnikIcon,
+  LadaGrannyIcon,
+  LadaBarunkaIcon,
 } from '../src/components/GameIcon';
 import { LEVEL_UNLOCKS } from '../src/data/levelUnlocks';
 
@@ -76,6 +80,26 @@ describe('Ladovské ikony a oprava zvukových / duplicitních ikon', () => {
     expect(sunHtml).toContain('lada-anim-pulse');
   });
 
+  it('vykresluje nové SVG ikony lovců: Pasáček, Pobožný kostelník, Babička a Barunka', () => {
+    const shepherdHtml = renderToStaticMarkup(<GameIcon icon="shepherd" size={24} />);
+    expect(shepherdHtml).toContain('aria-label="Pasáček s píšťalkou a pírkem"');
+
+    const pasacekHtml = renderToStaticMarkup(<GameIcon icon="pasacek" size={24} />);
+    expect(pasacekHtml).toContain('aria-label="Pasáček s píšťalkou a pírkem"');
+
+    const sextonHtml = renderToStaticMarkup(<GameIcon icon="sexton" size={24} />);
+    expect(sextonHtml).toContain('aria-label="Pobožný kostelník s kropáčem"');
+
+    const kostelnikHtml = renderToStaticMarkup(<GameIcon icon="kostelnik" size={24} />);
+    expect(kostelnikHtml).toContain('aria-label="Pobožný kostelník s kropáčem"');
+
+    const grannyHtml = renderToStaticMarkup(<GameIcon icon="granny" size={24} />);
+    expect(grannyHtml).toContain('aria-label="Babička v šátku"');
+
+    const barunkaHtml = renderToStaticMarkup(<GameIcon icon="barunka" size={24} />);
+    expect(barunkaHtml).toContain('aria-label="Vnučka Barunka s kytičkou"');
+  });
+
   it('exportuje všechny nové komponenty ikon samostatně', () => {
     expect(typeof LadaCastleRuinsIcon).toBe('function');
     expect(typeof LadaGhostIcon).toBe('function');
@@ -84,6 +108,10 @@ describe('Ladovské ikony a oprava zvukových / duplicitních ikon', () => {
     expect(typeof LadaWatermanHatIcon).toBe('function');
     expect(typeof LadaMeadowFlowerIcon).toBe('function');
     expect(typeof LadaVillageSunIcon).toBe('function');
+    expect(typeof LadaPasacekIcon).toBe('function');
+    expect(typeof LadaKostelnikIcon).toBe('function');
+    expect(typeof LadaGrannyIcon).toBe('function');
+    expect(typeof LadaBarunkaIcon).toBe('function');
   });
 
   it('neobsahuje duplicitní zámky 🔒 v textových řetězcích spoiledBadge a clueTag', () => {
@@ -95,3 +123,4 @@ describe('Ladovské ikony a oprava zvukových / duplicitních ikon', () => {
     });
   });
 });
+

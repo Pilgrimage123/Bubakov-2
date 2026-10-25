@@ -81,13 +81,13 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({ isOpen, 
           </div>
           <ul style={{ margin: 0, paddingLeft: '22px', fontSize: '0.94rem', fontWeight: 700, lineHeight: 1.55 }}>
             <li>
-              <strong>Uzamčení hrdinů:</strong> Pasáček, Bába kořenářka, Ponocný, Pobožný kostelník i Babička budou znovu uzamčeni (postup 0 %). Zůstane pouze výchozí Poutník.
+              <strong>Uzamčení hrdinů:</strong> Poutník, Pasáček, Bába kořenářka, Ponocný, Pobožný kostelník i Babička budou znovu uzamčeni (postup 0 %). Zůstane pouze výchozí Krajánek.
             </li>
             <li>
               <strong>Uzamčení úrovní 2 až 6:</strong> Les u rybníka, Zimní Hrusice, Čertův mlýn, Zřícenina hradu i Dračí sluj se uzamknou. Bude přístupná pouze 1. úroveň.
             </li>
             <li>
-              <strong>Uzamčení 9 zbraní:</strong> Vidle, halapartna, cep, byliny, koule, koláč, brambor, včely i svěcená voda budou zamčeny. Zůstanou jen výchozí buchty, prut a hromnička.
+              <strong>Uzamčení zbraní:</strong> Uzamčené zbraně se vrátí do stavu před odemčením. Zůstanou přístupné pouze výchozí zbraně.
             </li>
             <li>
               <strong>Vynulování vesnice &amp; hospody:</strong> Všech 13 obecních budov (výheň, mlýn, strašák, hradby, pekárna, kaple atd.) se vrátí na úroveň 0.

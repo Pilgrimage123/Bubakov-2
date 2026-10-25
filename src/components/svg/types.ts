@@ -1,4 +1,4 @@
-export type SmartCharacterState = 'idle' | 'walk' | 'action' | 'react';
+export type SmartCharacterState = 'idle' | 'walk' | 'sprint' | 'action' | 'react' | 'flee';
 
 export type SmartCharacterId = 'babicka_barunka' | 'bezhlavy_rytir' | 'snehulak' | 'tulak' | 'kostelnik' | 'pasacek';
 

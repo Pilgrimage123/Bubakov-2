@@ -132,6 +132,8 @@ import {
   LadaWatermanHatIcon,
   LadaMeadowFlowerIcon,
   LadaVillageSunIcon,
+  LadaPasacekIcon,
+  LadaKostelnikIcon,
 } from './LadaCustomIcons';
 
 export interface GameIconProps {
@@ -1564,15 +1566,24 @@ export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', classN
     return <LadaPineappleIcon size={size} className={className} style={style} {...props} />;
   }
 
-  // Grandmother & Grandfather & Barunka
-  if (key === '👵' || key === 'granny' || key === 'babicka') {
+  // Grandmother & Grandfather & Barunka & Hunters (Pasáček, Kostelník, Poutník)
+  if (key === '👵' || key === 'granny' || key === 'babicka' || key === 'babicka_barunka') {
     return <LadaGrannyIcon size={size} className={className} style={style} {...props} />;
   }
   if (key === '🧓' || key === 'grandpa' || key === 'dedecek') {
     return <LadaGrandpaIcon size={size} className={className} style={style} {...props} />;
   }
-  if (key === '👧' || key === 'barunka' || key === 'girl' || key === 'devce' || key === 'divka') {
+  if (key === '👧' || key === 'barunka' || key === 'girl' || key === 'devce' || key === 'divka' || key === 'devcatko') {
     return <LadaBarunkaIcon size={size} className={className} style={style} {...props} />;
+  }
+  if (key === 'pasacek' || key === 'shepherd') {
+    return <LadaPasacekIcon size={size} className={className} style={style} {...props} />;
+  }
+  if (key === 'kostelnik' || key === 'sexton') {
+    return <LadaKostelnikIcon size={size} className={className} style={style} {...props} />;
+  }
+  if (key === 'wanderer' || key === 'tulak' || key === 'poutnik' || key === 'krajanek') {
+    return <OsikovyPrutIcon size={size} className={className} style={style} {...props} />;
   }
 
   // Čert / Devil
@@ -1834,4 +1845,8 @@ export {
   LadaWatermanHatIcon,
   LadaMeadowFlowerIcon,
   LadaVillageSunIcon,
+  LadaPasacekIcon,
+  LadaKostelnikIcon,
+  LadaGrannyIcon,
+  LadaBarunkaIcon,
 };

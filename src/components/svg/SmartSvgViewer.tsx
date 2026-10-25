@@ -47,6 +47,7 @@ export const SmartSvgViewer: React.FC = () => {
         setTimeout(() => sound.cheer(), 180);
       }
     } else if (newState === 'react') {
+      sound.hit();
       if (selectedChar === 'babicka_barunka') {
         sound.grandmothersApron();
       } else if (selectedChar === 'bezhlavy_rytir') {
@@ -60,6 +61,11 @@ export const SmartSvgViewer: React.FC = () => {
       } else if (selectedChar === 'pasacek') {
         sound.kominikButton();
       }
+    } else if (newState === 'flee') {
+      sound.hit();
+      setTimeout(() => sound.bootSnowCrunch(), 120);
+    } else if (newState === 'sprint') {
+      sound.bootSnowCrunch();
     } else if (newState === 'walk') {
       if (selectedChar === 'snehulak') sound.bootSnowCrunch();
     }
@@ -405,8 +411,10 @@ export const SmartSvgViewer: React.FC = () => {
             {[
               { id: 'idle' as SmartCharacterState, label: 'Klid (Idle)', icon: '🌿' },
               { id: 'walk' as SmartCharacterState, label: 'Krok & Chůze', icon: '🚶' },
+              { id: 'sprint' as SmartCharacterState, label: 'Rychlý sprint', icon: '🏃' },
               { id: 'action' as SmartCharacterState, label: 'Zvláštní akce', icon: '⚡' },
-              { id: 'react' as SmartCharacterState, label: 'Reakce & Pozor', icon: '😲' },
+              { id: 'react' as SmartCharacterState, label: 'Vyděšení bubákem', icon: '😱' },
+              { id: 'flee' as SmartCharacterState, label: 'Útěk bez kuráže', icon: '💨' },
             ].map((st) => {
               const active = state === st.id;
               return (

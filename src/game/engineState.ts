@@ -29,6 +29,7 @@ export interface EngineState {
   camera: { x: number; y: number };
   keys: Record<string, boolean>;
   miniBossSpawned: boolean;
+  flockTreasureDropped?: boolean;
   midBossSpawned: boolean;
   finalBossSpawned: boolean;
   levelVictoryTriggered: boolean;
@@ -158,6 +159,7 @@ export function createInitialEngineState(): EngineState {
     },
     keys: {},
     miniBossSpawned: false,
+    flockTreasureDropped: false,
     midBossSpawned: false,
     finalBossSpawned: false,
     levelVictoryTriggered: false,

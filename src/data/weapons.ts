@@ -513,7 +513,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 	},
 	horky_brambor: {
 		id: "horky_brambor",
-		name: "Horký brambor z popela",
+		name: "Horký brambor",
 		type: "fire",
 		icon: "🥔",
 		baseDmg: 22,
@@ -608,7 +608,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 	},
 	svecena_kropenka: {
 		id: "svecena_kropenka",
-		name: "Kropenka se svěcenou vodou",
+		name: "Svěcená kropenka",
 		type: "holy",
 		icon: "✨",
 		baseDmg: 22,

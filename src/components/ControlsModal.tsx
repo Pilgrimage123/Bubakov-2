@@ -1067,7 +1067,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <GameIcon icon="potato" size={30} />
-                  <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Horký brambor z popela</strong>
+                  <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Horký brambor</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
                   Brambor vytažený ze žhavého popela popálí bubáky a zanechá kouřící ohnisko, které zraňuje každého, kdo jím projde.
@@ -1124,7 +1124,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                   <GameIcon icon="star" size={30} />
-                  <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Kropenka se svěcenou vodou</strong>
+                  <strong style={{ fontSize: '1.05rem', color: '#78350F' }}>Svěcená kropenka</strong>
                 </div>
                 <p style={{ margin: '4px 0 0 0', fontSize: '0.86rem', fontWeight: 700, lineHeight: 1.35, color: '#1F2937' }}>
                   Svěcená voda z farní kapličky kropí široký vějíř posvátných kapek. Nemrtví a pekelníci proti ní mají slabý odpor a utrží až 2× větší poškození!
