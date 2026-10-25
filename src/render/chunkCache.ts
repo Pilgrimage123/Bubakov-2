@@ -9,6 +9,11 @@
  */
 
 import type { CameraViewport } from './arenaRenderer';
+import {
+  MARCH_WORLD_BOUNDS,
+  getMarchSvgSheetRevision,
+  getOrBuildMarchSvgSheet,
+} from './marchThawSvgLandscape';
 
 export interface ChunkBounds {
   minX: number;
@@ -83,6 +88,7 @@ export class ChunkBitmapCache {
   private lastSeason: string | null = null;
   private lastTheme: string | null = null;
   private lastIsNight: boolean | null = null;
+  private lastSvgRevision = -1;
 
   constructor(options?: ChunkCacheOptions) {
     this.chunkSize = options?.chunkSize || 512;
@@ -101,13 +107,22 @@ export class ChunkBitmapCache {
   public isDynamicItem(item: any): boolean {
     if (!item) return false;
     if (item.isDynamic) return true;
-    if (item.type === 'kaca') return true;
-    if (typeof item.vx === 'number' || typeof item.vy === 'number') return true;
+    if (item.type === 'kaca' || item.type === 'ice_floe') return true;
+    if (
+      item.type === 'march_pond' ||
+      item.type === 'march_mill' ||
+      item.type === 'march_fields' ||
+      item.type === 'march_shrine'
+    ) {
+      return true;
+    }
+    if (typeof item.vx === 'number' && item.vx !== 0) return true;
+    if (typeof item.vy === 'number' && item.vy !== 0) return true;
     return false;
   }
 
   /**
-   * Rebuilds the chunk bitmap cache only if the season, theme, or night state has changed.
+   * Rebuilds the chunk bitmap cache only if the season, theme, night state, or SVG sheet revision has changed.
    * Returns true if rebuilt, false if cached state is still valid.
    */
   public rebuildIfChanged(
@@ -117,11 +132,13 @@ export class ChunkBitmapCache {
     isNight = false
   ): boolean {
     const effectiveNight = this.timeOfDayDecoupled ? false : isNight;
+    const currentSvgRev = getMarchSvgSheetRevision();
     if (
       this.chunks.size > 0 &&
       this.lastSeason === season &&
       this.lastTheme === theme &&
-      this.lastIsNight === effectiveNight
+      this.lastIsNight === effectiveNight &&
+      this.lastSvgRevision === currentSvgRev
     ) {
       return false;
     }
@@ -146,6 +163,7 @@ export class ChunkBitmapCache {
     this.lastSeason = null;
     this.lastTheme = null;
     this.lastIsNight = null;
+    this.lastSvgRevision = -1;
   }
 
   /**
@@ -161,11 +179,29 @@ export class ChunkBitmapCache {
     this.lastSeason = season;
     this.lastTheme = theme;
     this.lastIsNight = isNight;
+    this.lastSvgRevision = getMarchSvgSheetRevision();
 
     if (!decorList || decorList.length === 0) return;
 
+    const hasMarchLandscape = decorList.some(
+      (item) => item && typeof item.type === 'string' && item.type === 'march_banner'
+    );
+
     // Group static items by chunk
     const chunkBuckets = new Map<string, { cx: number; cy: number; items: any[] }>();
+
+    if (hasMarchLandscape) {
+      const minCx = Math.floor(MARCH_WORLD_BOUNDS.minX / this.chunkSize);
+      const maxCx = Math.floor((MARCH_WORLD_BOUNDS.maxX - 1) / this.chunkSize);
+      const minCy = Math.floor(MARCH_WORLD_BOUNDS.minY / this.chunkSize);
+      const maxCy = Math.floor((MARCH_WORLD_BOUNDS.maxY - 1) / this.chunkSize);
+      for (let cx = minCx; cx <= maxCx; cx++) {
+        for (let cy = minCy; cy <= maxCy; cy++) {
+          const key = `${cx},${cy}`;
+          chunkBuckets.set(key, { cx, cy, items: [] });
+        }
+      }
+    }
 
     for (let i = 0; i < decorList.length; i++) {
       const item = decorList[i];
@@ -186,6 +222,8 @@ export class ChunkBitmapCache {
       bucket.items.push(item);
     }
 
+    const marchSheet = hasMarchLandscape ? getOrBuildMarchSvgSheet(isNight) : null;
+
     // Render each chunk bucket into an offscreen canvas once
     chunkBuckets.forEach((bucket, key) => {
       const { cx, cy, items } = bucket;
@@ -194,6 +232,16 @@ export class ChunkBitmapCache {
       ctx.save();
       // Translate chunk origin so coordinates (item.x, item.y) map correctly into the chunk canvas
       ctx.translate(-cx * this.chunkSize, -cy * this.chunkSize);
+
+      if (marchSheet && marchSheet.canvas) {
+        ctx.drawImage(
+          marchSheet.canvas,
+          MARCH_WORLD_BOUNDS.minX,
+          MARCH_WORLD_BOUNDS.minY,
+          MARCH_WORLD_BOUNDS.width,
+          MARCH_WORLD_BOUNDS.height
+        );
+      }
 
       for (let j = 0; j < items.length; j++) {
         const item = items[j];

@@ -11,7 +11,15 @@
 import { COLORS } from '../constants';
 import { Lada, drawValecniceCompanion } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
-import { MARCH_THAW_POIS, isInsideMarchPoi } from '../data/marchThawArena';
+import {
+  MARCH_THAW_POIS,
+  getActiveMarchForestZone,
+  isInsideMarchPoi,
+} from '../data/marchThawArena';
+import {
+  drawMarianApparition,
+  getMarianApparitionVisualState,
+} from './marchThawSvgLandscape';
 import { getRankedWeaponStats } from '../data/weaponMilestones';
 import { isGameEffectEnabled } from '../game/effectSettings';
 
@@ -34,7 +42,7 @@ export function renderWorldHazardsAndEncounters(
   const player = engine.player;
   const uiTime = engine.uiTime || 0;
 
-  // 1. Level 0: March Thaw Arena (Beer puddle & POI hints)
+  // 1. Level 0: March Thaw Arena (Beer puddle, Kaplička Marian Apparition & POI hints)
   if (engine.activeLevelId === 0 && engine.marchThaw) {
     const thaw = engine.marchThaw;
     if (thaw.beerPuddle && isInView(thaw.beerPuddle.x, thaw.beerPuddle.y, 60, camera)) {
@@ -58,23 +66,58 @@ export function renderWorldHazardsAndEncounters(
       ctx.restore();
     }
 
+    // Brief Marian Apparition at Kaplička: appears small, grows larger while scattering bubáci, then vanishes
+    const shrinePoi = MARCH_THAW_POIS.shrine;
+    const appTimer = thaw.apparitionTimer || 0;
+    const marianVisual = getMarianApparitionVisualState(appTimer, thaw.shrineCharge || 0);
+    if (marianVisual.visible && isInView(shrinePoi.x, shrinePoi.y - 120, 580, camera)) {
+      ctx.save();
+      ctx.translate(shrinePoi.x, shrinePoi.y);
+
+      if (appTimer > 0) {
+        // Expanding golden Marian grace rings scaled by the growing apparition
+        for (let rIdx = 0; rIdx < 2; rIdx++) {
+          const waveFrac = ((uiTime * 0.95 + rIdx * 0.5) % 1);
+          const waveRadius = 45 + waveFrac * marianVisual.auraRadius;
+          ctx.strokeStyle = `rgba(250, 204, 21, ${(1 - waveFrac) * 0.65 * marianVisual.alpha})`;
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.arc(0, -40, waveRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      drawMarianApparition(ctx, uiTime, marianVisual, false);
+      ctx.restore();
+    }
+
     if (player) {
-      const nearby = Object.values(MARCH_THAW_POIS).find((poi) => isInsideMarchPoi(player.x, player.y, poi, 30));
+      const nearbyPoi = Object.values(MARCH_THAW_POIS).find((poi) =>
+        isInsideMarchPoi(player.x, player.y, poi, 30)
+      );
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? MARCH_THAW_POIS.forest : undefined);
       if (nearby) {
         let detail = nearby.hint;
-        if (nearby.id === 'church' && thaw.bellCooldown > 0) detail = `Zvonice se rozezní za ${Math.ceil(thaw.bellCooldown)} s`;
-        if (nearby.id === 'tavern' && thaw.kegCooldown > 0) detail = `Soudek dovalí za ${Math.ceil(thaw.kegCooldown)} s`;
-        if (nearby.id === 'shrine' && thaw.shrineCooldown > 0) detail = `Světlo svatyně sílí za ${Math.ceil(thaw.shrineCooldown)} s`;
+        if (nearby.id === 'church' && thaw.bellCooldown > 0) detail = `Zvonice se rozezní za ${Math.ceil(thaw.bellCooldown)} s (+20 % zbroj a léčení)`;
+        if (nearby.id === 'tavern' && thaw.kegCooldown > 0) detail = `Soudek dovalí za ${Math.ceil(thaw.kegCooldown)} s (+18 % útok)`;
+        if (nearby.id === 'shrine') {
+          if ((thaw.apparitionTimer || 0) > 0) {
+            detail = `✦ Zjevení Panny Marie s Ježíškem rozhání bubáky (${Math.ceil(thaw.apparitionTimer)} s)!`;
+          } else if (thaw.shrineCooldown > 0) {
+            detail = `Kaplička: Panna Maria se znovu zjeví za ${Math.ceil(thaw.shrineCooldown)} s (+20 % kadence)`;
+          }
+        }
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
         ctx.strokeStyle = COLORS.ink;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.roundRect(player.x - 134, player.y - 88, 268, 31, 8);
+        ctx.roundRect(player.x - 165, player.y - 88, 330, 31, 8);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#472A16';
-        ctx.font = '900 13px Eczar, Georgia, serif';
+        ctx.font = '900 12.5px Eczar, Georgia, serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(detail, player.x, player.y - 72);

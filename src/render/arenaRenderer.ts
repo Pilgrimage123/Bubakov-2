@@ -359,7 +359,12 @@ export class ArenaRenderer {
         for (let i = 0; i < dynamicDecor.length; i++) {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
-          const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
+          const decorExtent =
+            dec.type === 'march_mill'
+              ? 2600 * scale
+              : dec.type && dec.type.startsWith('march_')
+              ? 450 * scale
+              : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
             continue;
           }
@@ -374,7 +379,12 @@ export class ArenaRenderer {
       for (let i = 0; i < engine.decor.length; i++) {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
-        const decorExtent = (dec.type && dec.type.startsWith('march_')) ? 270 * scale : 100 * scale;
+        const decorExtent =
+          dec.type === 'march_mill'
+            ? 2600 * scale
+            : dec.type && dec.type.startsWith('march_')
+            ? 450 * scale
+            : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
           continue;
         }

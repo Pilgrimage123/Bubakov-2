@@ -105,6 +105,14 @@ import {
   inferCombatTextCategory,
   isCombatTextCategoryEnabled,
 } from './combatTextSettings';
+import {
+  MARCH_THAW_POIS,
+  getMarchIceFloeState,
+  getMarchWaterAndFloeEffect,
+  isAquaticEnemy,
+  isInsideMarchPoi,
+  resolveMarchThawObstacles,
+} from '../data/marchThawArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -3226,9 +3234,15 @@ export class GameEngine {
         const d = this.state.decor[i];
         if (d.animTime !== undefined) d.animTime += dt;
 
-        if (d.vx || d.vy) {
-          d.x += d.vx * dt;
-          d.y += d.vy * dt;
+        if (d.type === 'ice_floe' && this.state.activeLevelId === 0) {
+          const floeState = getMarchIceFloeState(d.floeIndex ?? i, this.state.gameTime || 0);
+          d.x = floeState.x;
+          d.y = floeState.y;
+          d.vx = floeState.vx;
+          d.vy = floeState.vy;
+        } else if (d.vx || d.vy) {
+          d.x += (d.vx || 0) * dt;
+          d.y += (d.vy || 0) * dt;
           // Apply drag to káča
           if (d.type === 'kaca') {
             const drag = Math.max(0, 1 - 2.5 * dt);
@@ -3237,13 +3251,34 @@ export class GameEngine {
             if (Math.abs(d.vx) < 5) d.vx = 0;
             if (Math.abs(d.vy) < 5) d.vy = 0;
           }
-          // Wrap around approx bounds for ice floes
+          // Constrain any standalone ice_floe to pond bounds instead of drifting across dry land
           if (d.type === 'ice_floe') {
-            if (d.x > 1800) d.x = -1800;
-            if (d.x < -1800) d.x = 1800;
-            if (d.y > 1800) d.y = -1800;
-            if (d.y < -1800) d.y = 1800;
+            const floeState = getMarchIceFloeState(d.floeIndex ?? i, this.state.gameTime || 0);
+            d.x = floeState.x;
+            d.y = floeState.y;
+            d.vx = floeState.vx;
+            d.vy = floeState.vy;
           }
+        }
+
+        if (d.type === 'ice_floe') {
+          // Floating ice floes carry units standing on them rather than blocking like solid walls
+          if (player && player.hp > 0) {
+            const dist = Math.hypot(player.x - d.x, player.y - d.y);
+            if (dist < (player.radius || 18) + (d.radius || 32)) {
+              player.x += (d.vx || 0) * dt;
+              player.y += (d.vy || 0) * dt;
+            }
+          }
+          for (let j = 0; j < this.livingEnemies.length; j++) {
+            const e = this.livingEnemies[j];
+            const edist = Math.hypot(e.x - d.x, e.y - d.y);
+            if (edist < (e.radius || 15) + (d.radius || 32)) {
+              e.x += (d.vx || 0) * dt;
+              e.y += (d.vy || 0) * dt;
+            }
+          }
+          continue;
         }
 
         if (d.isObstacle) {
@@ -3261,9 +3296,6 @@ export class GameEngine {
               }
               if (d.type === 'granny_stove' && Math.random() < 0.05) {
                 player.hp = Math.min(player.maxHp || 100, player.hp + 2);
-              }
-              if (d.type === 'ice_floe') {
-                player.x += d.vx * dt;
               }
               if (d.type === 'kaca' && dist < reach - 2) {
                 // Player kicks the top!
@@ -3299,12 +3331,110 @@ export class GameEngine {
                 d.vx = (edx / edist) * -150;
                 d.vy = (edy / edist) * -150;
               }
-              if (d.type === 'ice_floe') {
-                e.x += d.vx * dt; // Carried by ice
+            }
+          }
+        }
+      }
+    }
+
+    // Stage 1 ("BŘEZEN"): Enforce impassable cottages/terrain, hard arena border, river/pond ice floes & Kaplička Marian Apparition
+    if (this.state.activeLevelId === 0) {
+      const thaw = this.state.marchThaw;
+      if (thaw) {
+        thaw.shrineCooldown = Math.max(0, (thaw.shrineCooldown || 0) - dt);
+      }
+      if (player && player.hp > 0) {
+        const floeEffect = getMarchWaterAndFloeEffect(player.x, player.y, this.state.gameTime || 0);
+        if (floeEffect.onFloe || floeEffect.inOpenWater) {
+          player.x += floeEffect.carryVx * dt;
+          player.y += floeEffect.carryVy * dt;
+        }
+        resolveMarchThawObstacles(player, false);
+
+        if (thaw) {
+          const inShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine);
+          const playerNearShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine, 315);
+          const bubakNearShrine =
+            playerNearShrine &&
+            this.livingEnemies.some(
+              (foe) =>
+                !foe.dead &&
+                !foe.isDefeated &&
+                Math.hypot(foe.x - MARCH_THAW_POIS.shrine.x, foe.y - MARCH_THAW_POIS.shrine.y) < 250
+            );
+          if (inShrine || bubakNearShrine) {
+            thaw.shrineCharge = (thaw.shrineCharge || 0) + dt * (inShrine && bubakNearShrine ? 1.35 : 1);
+            if (thaw.shrineCharge >= 1.6 && thaw.shrineCooldown <= 0) {
+              thaw.shrineCharge = 0;
+              thaw.shrineCooldown = 20;
+              thaw.apparitionTimer = 4.2;
+              thaw.apparitionPulseTimer = 0;
+              player.hp = Math.min(player.maxHp, player.hp + 18);
+              for (let j = 0; j < this.livingEnemies.length; j++) {
+                const foe = this.livingEnemies[j];
+                const dx = foe.x - MARCH_THAW_POIS.shrine.x;
+                const dy = foe.y - MARCH_THAW_POIS.shrine.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                if (dist < 560 + (foe.radius || 0)) {
+                  foe.takeDamage(145 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 540, (dy / dist) * 540);
+                  foe.panicked = true;
+                  foe.panicTimer = Math.max(foe.panicTimer || 0, 5.0);
+                }
+              }
+              this.state.texts.push(
+                new DamageText(
+                  MARCH_THAW_POIS.shrine.x,
+                  MARCH_THAW_POIS.shrine.y - 110,
+                  '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!',
+                  '#FEF08A',
+                  true,
+                  'bossAnnouncements'
+                )
+              );
+              this.callbacks?.onSound?.('bell');
+            }
+          } else {
+            thaw.shrineCharge = Math.max(0, (thaw.shrineCharge || 0) - dt * 1.5);
+          }
+
+          if ((thaw.apparitionTimer || 0) > 0) {
+            thaw.apparitionTimer = Math.max(0, thaw.apparitionTimer - dt);
+            thaw.apparitionPulseTimer = (thaw.apparitionPulseTimer || 0) + dt;
+            if (thaw.apparitionPulseTimer >= 0.45) {
+              thaw.apparitionPulseTimer = 0;
+              const growFrac = Math.min(1, Math.max(0.25, (4.2 - thaw.apparitionTimer) / 3.2));
+              const activeReach = 220 + 340 * growFrac;
+              for (let j = 0; j < this.livingEnemies.length; j++) {
+                const foe = this.livingEnemies[j];
+                if (foe.dead || foe.isDefeated) continue;
+                const dx = foe.x - MARCH_THAW_POIS.shrine.x;
+                const dy = foe.y - MARCH_THAW_POIS.shrine.y;
+                const dist = Math.hypot(dx, dy) || 1;
+                if (dist < activeReach + (foe.radius || 0)) {
+                  foe.takeDamage(28 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 320, (dy / dist) * 320);
+                  foe.panicked = true;
+                  foe.panicTimer = Math.max(foe.panicTimer || 0, 3.2);
+                }
               }
             }
           }
         }
+      }
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean(e.isFlying || e.id === 'vrana');
+        if (!isFlying) {
+          const eWater = getMarchWaterAndFloeEffect(e.x, e.y, this.state.gameTime || 0);
+          if (eWater.onFloe) {
+            e.x += eWater.carryVx * dt;
+            e.y += eWater.carryVy * dt;
+          } else if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+            e.x += eWater.carryVx * dt;
+            e.y += eWater.carryVy * dt;
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+          }
+        }
+        resolveMarchThawObstacles(e, isFlying);
       }
     }
 

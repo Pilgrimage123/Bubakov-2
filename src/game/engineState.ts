@@ -127,6 +127,8 @@ export interface EngineState {
     bellCooldown: number;
     shrineCharge: number;
     shrineCooldown: number;
+    apparitionTimer: number;
+    apparitionPulseTimer: number;
     kegCooldown: number;
     floeExposure: number;
     beerPuddle: { x: number; y: number; time: number } | null;
@@ -256,6 +258,8 @@ export function createInitialEngineState(): EngineState {
       bellCooldown: 0,
       shrineCharge: 0,
       shrineCooldown: 0,
+      apparitionTimer: 0,
+      apparitionPulseTimer: 0,
       kegCooldown: 0,
       floeExposure: 0,
       beerPuddle: null,

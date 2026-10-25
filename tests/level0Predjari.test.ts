@@ -214,4 +214,184 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     // Church, village, shrine, mill, forest should produce occluders
     expect(occluders.length).toBeGreaterThanOrEqual(5);
   });
+
+  it('builds complete Stage 1 BŘEZEN panoramic SVG landscape with KAPLIČKA while keeping Marian apparition separate from static map', async () => {
+    const {
+      buildMarchThawLandscapeSvg,
+      buildMarianApparitionSvg,
+      getMarianApparitionVisualState,
+    } = await import('../src/render/marchThawSvgLandscape');
+    const svg = buildMarchThawLandscapeSvg(false);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('BŘEZEN');
+    expect(svg).toContain('POLE');
+    expect(svg).toContain('KOSTEL');
+    expect(svg).toContain('HOSPODA');
+    expect(svg).toContain('VESNICE');
+    expect(svg).toContain('ŠKOLA');
+    expect(svg).toContain('RYBNÍK');
+    expect(svg).toContain('MLÝN');
+    expect(svg).toContain('KAPLIČKA');
+    expect(svg).not.toContain('marian-apparition');
+    expect(svg).toContain('LES');
+
+    const marianSvg = buildMarianApparitionSvg();
+    expect(marianSvg).toContain('<svg');
+    expect(marianSvg).toContain('id="marian-apparition"');
+    expect(marianSvg).toContain('#0284C7'); // Royal blue folk-art mantle
+    expect(marianSvg).toContain('#FACC15'); // Golden crown, trim & stars
+
+    // Idle state: Maria is NOT visible above the Kaplička
+    const idleState = getMarianApparitionVisualState(0, 0);
+    expect(idleState.visible).toBe(false);
+    expect(idleState.scale).toBe(0);
+
+    // Just appeared (start of 4.2s apparition) -> small, then gradually grows larger, then vanishes
+    const startState = getMarianApparitionVisualState(4.15, 0, 4.2);
+    const midState = getMarianApparitionVisualState(2.6, 0, 4.2);
+    const peakState = getMarianApparitionVisualState(1.1, 0, 4.2);
+    const fadingState = getMarianApparitionVisualState(0.25, 0, 4.2);
+
+    expect(startState.visible).toBe(true);
+    expect(startState.scale).toBeLessThan(0.25);
+    expect(midState.scale).toBeGreaterThan(startState.scale);
+    expect(peakState.scale).toBeGreaterThan(midState.scale);
+    expect(fadingState.alpha).toBeLessThan(peakState.alpha);
+  });
+
+  it('triggers the apparition of Panna Maria s Ježíškem at Kaplička, scatters nearby bubáci, and then vanishes', () => {
+    const engine = new GameEngine();
+    const state = engine.initRun({
+      levelId: 0,
+      hunterType: 'wanderer',
+      spawnInitialWave: false,
+    });
+
+    expect(MARCH_THAW_POIS.shrine.title).toBe('Kaplička');
+    expect(MARCH_THAW_POIS.shrine.hint).toContain('Panny Marie s Ježíškem');
+
+    // Place player inside Kaplička radius and a tough enemy nearby
+    state.player.x = MARCH_THAW_POIS.shrine.x + 45;
+    state.player.y = MARCH_THAW_POIS.shrine.y + 10;
+    const foe = engine.spawnMonster('mrazivy_obr', MARCH_THAW_POIS.shrine.x + 140, MARCH_THAW_POIS.shrine.y, 2.0);
+    const initialHp = foe.hp;
+
+    // Step 1.8s at Kaplička to charge and trigger the Marian apparition
+    for (let i = 0; i < 18; i++) {
+      engine.update(0.1);
+    }
+
+    expect(state.marchThaw.apparitionTimer).toBeGreaterThan(0);
+    expect(foe.hp).toBeLessThan(initialHp);
+    expect(foe.panicked).toBe(true);
+    expect(state.texts.some((t: any) => String(t.text).includes('PANNY MARIE'))).toBe(true);
+
+    // Step another 4.5s and verify the apparition disappears again
+    for (let i = 0; i < 45; i++) {
+      engine.update(0.1);
+    }
+    expect(state.marchThaw.apparitionTimer).toBe(0);
+  });
+
+  it('enforces impassable cottages (chalupy) and terrain obstacles while keeping flying crows unhindered', async () => {
+    const { MARCH_THAW_OBSTACLES, resolveMarchThawObstacles } = await import('../src/data/marchThawArena');
+    const hospoda = MARCH_THAW_OBSTACLES.find((o) => o.id === 'hospoda_main')!;
+    expect(hospoda).toBeDefined();
+
+    // Ground entity inside a cottage is pushed outside the impassable footprint
+    const walker = { x: hospoda.x + 10, y: hospoda.y + 5, radius: 18 };
+    const pushed = resolveMarchThawObstacles(walker, false);
+    expect(pushed).toBe(true);
+    const outsideX = Math.abs(walker.x - hospoda.x) >= (hospoda.halfW ?? 0) + walker.radius - 0.01;
+    const outsideY = Math.abs(walker.y - hospoda.y) >= (hospoda.halfH ?? 0) + walker.radius - 0.01;
+    expect(outsideX || outsideY).toBe(true);
+
+    // Flying entity (e.g. crow) is not blocked by ground cottage walls
+    const crow = { x: hospoda.x, y: hospoda.y, radius: 14 };
+    expect(resolveMarchThawObstacles(crow, true)).toBe(false);
+    expect(crow.x).toBe(hospoda.x);
+  });
+
+  it('keeps ice floes strictly inside the pond or stream and carries units standing on them', async () => {
+    const {
+      MARCH_ICE_FLOE_SPECS,
+      getMarchIceFloeState,
+      getMarchWaterAndFloeEffect,
+      isPointInMarchPondWater,
+      isPointInMarchStreamWater,
+      isPointOnMarchBridge,
+    } = await import('../src/data/marchThawArena');
+
+    for (const sampleTime of [0, 3.5, 11.2, 27.8, 64.0]) {
+      for (let i = 0; i < MARCH_ICE_FLOE_SPECS.length; i++) {
+        const floe = getMarchIceFloeState(i, sampleTime);
+        if (floe.zone === 'pond') {
+          expect(isPointInMarchPondWater(floe.x, floe.y, 8)).toBe(true);
+        } else {
+          const onBridgeOrStream =
+            isPointOnMarchBridge(floe.x, floe.y) || isPointInMarchStreamWater(floe.x, floe.y).inStream;
+          expect(onBridgeOrStream).toBe(true);
+        }
+      }
+    }
+
+    // Standing on a pond ice floe carries the player and grants sliding speed bonus without freezing water penalty
+    const pondFloe0 = getMarchIceFloeState(0, 5.0);
+    const effectOnFloe = getMarchWaterAndFloeEffect(pondFloe0.x, pondFloe0.y, 5.0);
+    expect(effectOnFloe.onFloe).toBe(true);
+    expect(effectOnFloe.inOpenWater).toBe(false);
+    expect(effectOnFloe.speedMultiplier).toBeGreaterThan(1.0);
+    expect(Math.hypot(effectOnFloe.carryVx, effectOnFloe.carryVy)).toBeGreaterThan(0);
+  });
+
+  it('clamps entities inside the +25% outer arena border, flows the river to the arena edges with heavy slow, and supports all 4 forests and 9 named POIs', async () => {
+    const {
+      MARCH_ARENA_BOUNDS,
+      MARCH_FOREST_ZONES,
+      MARCH_STREAM_WAYPOINTS,
+      MARCH_THAW_POIS,
+      clampToMarchArenaBounds,
+      getMarchWaterAndFloeEffect,
+      isAquaticEnemy,
+      pickMarchForestSpawnPoint,
+    } = await import('../src/data/marchThawArena');
+
+    // 1. +25% scaled hard outer arena bounds
+    expect(MARCH_ARENA_BOUNDS.maxX).toBe(1920);
+    expect(MARCH_ARENA_BOUNDS.minY).toBe(-1675);
+    const runaway = { x: 2500, y: -2200, radius: 20 };
+    expect(clampToMarchArenaBounds(runaway)).toBe(true);
+    expect(runaway.x).toBe(MARCH_ARENA_BOUNDS.maxX - 20);
+    expect(runaway.y).toBe(MARCH_ARENA_BOUNDS.minY + 20);
+
+    // 2. River flows all the way from northern edge to southern edge and strongly slows open-water wading
+    expect(MARCH_STREAM_WAYPOINTS[0].y).toBeLessThanOrEqual(MARCH_ARENA_BOUNDS.minY);
+    expect(MARCH_STREAM_WAYPOINTS[MARCH_STREAM_WAYPOINTS.length - 1].y).toBeGreaterThanOrEqual(MARCH_ARENA_BOUNDS.maxY);
+
+    // Find a point in the river off any floe at t = 0
+    const riverMid = MARCH_STREAM_WAYPOINTS[3];
+    const riverEffect = getMarchWaterAndFloeEffect(riverMid.x, riverMid.y, 0.37);
+    if (!riverEffect.onFloe) {
+      expect(riverEffect.inOpenWater).toBe(true);
+      expect(riverEffect.speedMultiplier).toBeLessThanOrEqual(0.32);
+    }
+
+    expect(isAquaticEnemy({ id: 'vodnicek', category: 'water' })).toBe(true);
+    expect(isAquaticEnemy({ id: 'mrazovy_skritek', category: 'frost' })).toBe(false);
+
+    // 3. All 4 larger forests can spawn enemies
+    expect(MARCH_FOREST_ZONES).toHaveLength(4);
+    const spawnedForests = new Set<string>();
+    for (let s = 0; s < 8; s++) {
+      const sp = pickMarchForestSpawnPoint(0, 0, s);
+      spawnedForests.add(sp.forest.id);
+    }
+    expect(spawnedForests.size).toBeGreaterThanOrEqual(2);
+
+    // 4. All 9 named locations exist with hints
+    expect(Object.keys(MARCH_THAW_POIS)).toEqual(
+      expect.arrayContaining(['fields', 'church', 'tavern', 'village', 'school', 'pond', 'mill', 'forest', 'shrine'])
+    );
+  });
 });
+

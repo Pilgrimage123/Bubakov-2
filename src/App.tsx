@@ -202,7 +202,18 @@ import {
 } from './game/grandfatherRuntime';
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticUpgrades';
-import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from './data/marchThawArena';
+import {
+  MARCH_THAW_DECOR,
+  MARCH_THAW_POIS,
+  clampToMarchArenaBounds,
+  getActiveMarchForestZone,
+  getMarchWaterAndFloeEffect,
+  isAquaticEnemy,
+  isInsideMarchPoi,
+  pickMarchForestSpawnPoint,
+  resolveMarchThawObstacles,
+} from './data/marchThawArena';
+import { drawMarchThawDynamicLandmark } from './render/marchThawSvgLandscape';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 // Locked portraits (tier < 4) are pre-rendered statically once per tier change to eliminate 60 FPS menu draw overhead.
@@ -847,123 +858,8 @@ class SmokePuff {
   }
 }
 
-function drawMarchRibbon(ctx: CanvasRenderingContext2D, text: string, y: number, width = 118): void {
-  ctx.save();
-  ctx.fillStyle = '#F6DCAB';
-  ctx.strokeStyle = COLORS.ink;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(-width / 2 - 16, y + 2); ctx.lineTo(-width / 2, y - 10);
-  ctx.lineTo(width / 2, y - 10); ctx.lineTo(width / 2 + 16, y + 2);
-  ctx.lineTo(width / 2, y + 15); ctx.lineTo(-width / 2, y + 15); ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle = COLORS.ink;
-  ctx.font = '900 14px Eczar, Georgia, serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text, 0, y + 3);
-  ctx.restore();
-}
-
-function drawMarchPerson(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, dress = '#B45335'): void {
-  ctx.save();
-  ctx.translate(x, y); ctx.scale(scale, scale);
-  ctx.fillStyle = '#F1C7A1'; ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 1.8;
-  ctx.beginPath(); ctx.arc(0, -15, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = dress;
-  ctx.beginPath(); ctx.moveTo(-7, 7); ctx.lineTo(-4, -10); ctx.lineTo(4, -10); ctx.lineTo(8, 7); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.strokeStyle = COLORS.ink; ctx.beginPath(); ctx.moveTo(-3, 7); ctx.lineTo(-5, 13); ctx.moveTo(3, 7); ctx.lineTo(5, 13); ctx.stroke();
-  ctx.restore();
-}
-
-function drawMarchCottage(ctx: CanvasRenderingContext2D, x: number, y: number, scale = 1, stork = false): void {
-  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
-  Lada.setupPath(ctx, '#A65A3C', COLORS.ink, 2.8);
-  ctx.fillRect(-32, -26, 64, 35); ctx.strokeRect(-32, -26, 64, 35);
-  ctx.strokeStyle = '#6B341D'; ctx.lineWidth = 1.4;
-  for (let yy = -18; yy < 8; yy += 8) { ctx.beginPath(); ctx.moveTo(-30, yy); ctx.lineTo(30, yy); ctx.stroke(); }
-  Lada.setupPath(ctx, '#75351F', COLORS.ink, 3);
-  ctx.beginPath(); ctx.moveTo(-40, -24); ctx.lineTo(0, -53); ctx.lineTo(40, -24); ctx.closePath(); ctx.fill(); ctx.stroke();
-  Lada.setupPath(ctx, '#F7E6B8', COLORS.ink, 1.8); ctx.fillRect(-7, -14, 14, 14); ctx.strokeRect(-7, -14, 14, 14);
-  if (stork) {
-    ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(4, -59, 16, 5, 0, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#F8FAFC'; ctx.beginPath(); ctx.ellipse(2, -66, 6, 10, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#E05C3C'; ctx.beginPath(); ctx.moveTo(5, -57); ctx.lineTo(8, -47); ctx.moveTo(0, -57); ctx.lineTo(-2, -47); ctx.stroke();
-  }
-  ctx.restore();
-}
-
 function drawMarchThawLandmark(ctx: CanvasRenderingContext2D, type: string, time: number, isNight: boolean): void {
-  const ink = COLORS.ink;
-  if (type === 'march_banner') {
-    ctx.fillStyle = '#F5D8A5'; ctx.strokeStyle = ink; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(-112, -25); ctx.quadraticCurveTo(0, -48, 112, -25); ctx.lineTo(96, 30); ctx.quadraticCurveTo(0, 16, -96, 30); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '900 36px Eczar, Georgia, serif'; ctx.fillText('BŘEZEN', 0, -3);
-    return;
-  }
-
-  if (type === 'march_fields') {
-    Lada.setupPath(ctx, '#BFA76B', ink, 3); ctx.beginPath(); ctx.ellipse(0, 0, 178, 102, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#715235'; ctx.lineWidth = 2;
-    for (let i = -5; i <= 5; i++) { ctx.beginPath(); ctx.moveTo(-145, i * 15 - 28); ctx.quadraticCurveTo(0, i * 19, 145, i * 15 + 28); ctx.stroke(); }
-    // two draft horses, ploughman and a moving cloud of crows
-    for (const x of [-38, 0]) { ctx.fillStyle = x < 0 ? '#804A2A' : '#E9E2D2'; ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(x, -20, 20, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x + 15, -29, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-    ctx.strokeStyle = ink; ctx.beginPath(); ctx.moveTo(22, -15); ctx.lineTo(70, 5); ctx.lineTo(98, 5); ctx.stroke();
-    drawMarchPerson(ctx, 55, 2, 0.7, '#496A4B');
-    ctx.fillStyle = ink; for (let i = 0; i < 10; i++) { const x = 42 + ((i * 31 + time * 36) % 155) - 78; const y = -64 + (i % 4) * 9; ctx.beginPath(); ctx.moveTo(x - 5, y); ctx.lineTo(x, y - 3); ctx.lineTo(x + 5, y); ctx.lineTo(x, y + 2); ctx.closePath(); ctx.fill(); }
-    drawMarchRibbon(ctx, 'HORNÍ POLE', -132, 130); return;
-  }
-
-  if (type === 'march_church') {
-    Lada.setupPath(ctx, '#D9D0B8', ink, 3); ctx.beginPath(); ctx.ellipse(0, 12, 132, 60, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = '#7A6A55'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, 12, 114, 47, 0, 0, Math.PI * 2); ctx.stroke();
-    Lada.setupPath(ctx, '#F5E8C8', ink, 3); ctx.fillRect(-32, -49, 66, 57); ctx.strokeRect(-32, -49, 66, 57);
-    Lada.setupPath(ctx, '#E46A47', ink, 3); ctx.beginPath(); ctx.moveTo(-44, -49); ctx.lineTo(1, -79); ctx.lineTo(46, -49); ctx.closePath(); ctx.fill(); ctx.stroke();
-    Lada.setupPath(ctx, '#EEE5CC', ink, 3); ctx.fillRect(22, -96, 26, 104); ctx.strokeRect(22, -96, 26, 104);
-    ctx.fillStyle = '#343038'; ctx.beginPath(); ctx.arc(35, -76, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#4B2D25'; ctx.beginPath(); ctx.moveTo(17, -96); ctx.lineTo(35, -130); ctx.lineTo(53, -96); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.strokeStyle = ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(35, -130); ctx.lineTo(35, -144); ctx.moveTo(29, -138); ctx.lineTo(41, -138); ctx.stroke();
-    for (let i = -2; i <= 2; i++) { ctx.fillStyle = '#8D8A7C'; ctx.beginPath(); ctx.roundRect(i * 23 - 8, 6 + (i & 1) * 10, 13, 20, 3); ctx.fill(); ctx.stroke(); }
-    drawMarchRibbon(ctx, 'KOSTEL', -170, 96); return;
-  }
-
-  if (type === 'march_village') {
-    drawMarchCottage(ctx, -66, 12, 0.82, true); drawMarchCottage(ctx, 8, -14, 1, false); drawMarchCottage(ctx, 82, 14, 0.82, false);
-    // tavern sign and little everyday-life tableau
-    ctx.fillStyle = '#F7E0A6'; ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.fillRect(4, -61, 39, 17); ctx.strokeRect(4, -61, 39, 17); ctx.fillStyle = ink; ctx.font = '900 9px Eczar, serif'; ctx.textAlign = 'center'; ctx.fillText('HOSPODA', 23, -49);
-    drawMarchPerson(ctx, -15, 28, 0.66, '#844B38'); drawMarchPerson(ctx, 20, 30, 0.66, '#4A6B92'); drawMarchPerson(ctx, 47, 25, 0.55, '#746055');
-    ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-105, 34); ctx.lineTo(-91, -28); ctx.moveTo(-108, -3); ctx.lineTo(-82, -3); ctx.moveTo(-103, 18); ctx.lineTo(-84, 18); ctx.stroke();
-    drawMarchPerson(ctx, -98, 34, 0.52, '#4C6C47');
-    drawMarchRibbon(ctx, 'HOSPODA A NÁVES', -94, 156); return;
-  }
-
-  if (type === 'march_pond') {
-    Lada.setupPath(ctx, '#90C9D8', ink, 3); ctx.beginPath(); ctx.ellipse(0, 0, 152, 84, -0.08, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#EFF9FB'; ctx.strokeStyle = ink; ctx.lineWidth = 1.7; for (let i = 0; i < 6; i++) { const x = -70 + i * 29; const y = -16 + (i % 3) * 22; ctx.beginPath(); ctx.moveTo(x - 12, y); ctx.lineTo(x - 4, y - 7); ctx.lineTo(x + 13, y - 3); ctx.lineTo(x + 10, y + 7); ctx.lineTo(x - 9, y + 8); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-    // weeping willows, catkins and first flowers
-    for (const x of [-112, -82]) { ctx.strokeStyle = '#69462D'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, 42); ctx.lineTo(x + 2, -58); ctx.stroke(); ctx.strokeStyle = '#8BAA4B'; ctx.lineWidth = 3; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(x + i * 5, -48); ctx.quadraticCurveTo(x + i * 12, -18, x + i * 7, 20); ctx.stroke(); } }
-    ctx.fillStyle = '#F6DE50'; for (let i = 0; i < 7; i++) { ctx.beginPath(); ctx.arc(75 + (i % 3) * 12, 48 + Math.floor(i / 3) * 10, 4, 0, Math.PI * 2); ctx.fill(); }
-    drawMarchPerson(ctx, -125, 67, 0.55, '#6A8552'); drawMarchPerson(ctx, -94, 73, 0.5, '#9B5A41');
-    drawMarchRibbon(ctx, 'RYBNÍK', -116, 105); return;
-  }
-
-  if (type === 'march_mill') {
-    ctx.strokeStyle = '#76B5CE'; ctx.lineWidth = 30; ctx.beginPath(); ctx.moveTo(-150, 38); ctx.quadraticCurveTo(-25, -8, 150, 42); ctx.stroke(); ctx.strokeStyle = ink; ctx.lineWidth = 2; ctx.stroke();
-    drawMarchCottage(ctx, -18, -17, 1.15, false);
-    ctx.save(); ctx.translate(47, 6); ctx.rotate(time * 0.55); ctx.strokeStyle = ink; ctx.fillStyle = '#A66E40'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, 34, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.fillRect(4, -6, 29, 12); } ctx.fillStyle = '#F0C57A'; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
-    for (let i = 0; i < 5; i++) { const x = 82 + (i % 3) * 24; const y = 52 + Math.floor(i / 3) * 22; ctx.fillStyle = '#F4F1E5'; ctx.strokeStyle = ink; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.ellipse(x, y, 12, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x + 11, y - 4, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
-    drawMarchPerson(ctx, 130, 68, 0.72, '#526C46'); drawMarchRibbon(ctx, 'MLÝN A ŘEKA', -95, 134); return;
-  }
-
-  if (type === 'march_forest') {
-    for (let i = 0; i < 13; i++) { const x = -145 + (i % 7) * 48; const y = -10 + Math.floor(i / 7) * 46 + (i % 2) * 9; const s = 0.75 + (i % 3) * 0.13; ctx.save(); ctx.translate(x, y); ctx.scale(s, s); Lada.setupPath(ctx, '#365D3A', ink, 2.5); ctx.beginPath(); ctx.moveTo(0, -72); ctx.lineTo(-28, 10); ctx.lineTo(28, 10); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#69462D'; ctx.fillRect(-4, 8, 8, 18); ctx.restore(); }
-    drawMarchRibbon(ctx, 'HUSTÝ LES', -105, 116); return;
-  }
-
-  if (type === 'march_shrine') {
-    if (isNight) { const glow = 56 + Math.sin(time * 3) * 8; const grad = ctx.createRadialGradient(0, -50, 6, 0, -50, glow); grad.addColorStop(0, 'rgba(255,245,170,.55)'); grad.addColorStop(1, 'rgba(255,245,170,0)'); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, -50, glow, 0, Math.PI * 2); ctx.fill(); }
-    drawBoziMukaDecor(ctx, 0, 0, 1.25, time, isNight); drawMarchRibbon(ctx, 'BOŽÍ MUKA', -115, 122);
-  }
+  drawMarchThawDynamicLandmark(ctx, type, time, isNight);
 }
 
 // Environmental decor item (tombstone, cross, tree, snowman, cottage)
@@ -978,6 +874,7 @@ class DecorItem {
   vx: number;
   vy: number;
   animTime: number;
+  floeIndex?: number;
 
   constructor(x: number, y: number, type: string, scale = 1, flip = 1) {
     this.x = x;
@@ -996,9 +893,8 @@ class DecorItem {
       this.isObstacle = true;
       this.radius = 25;
     } else if (type === 'ice_floe') {
-      this.isObstacle = true;
-      this.radius = 30;
-      this.vx = 10 + Math.random() * 10;
+      this.isObstacle = false;
+      this.radius = 32;
     } else if (type === 'granny_stove') {
       this.isObstacle = true;
       this.radius = 35;
@@ -1333,10 +1229,8 @@ class DecorItem {
 function seedArenaDecor(level: GameLevelDef): DecorItem[] {
   if (level.id === 0 && level.arena?.id === 'breznove_tani') {
     const items: DecorItem[] = MARCH_THAW_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale));
-    items.push(new DecorItem(MARCH_THAW_POIS.tavern.x + 85, MARCH_THAW_POIS.tavern.y - 45, 'granny_stove', 1));
-    items.push(new DecorItem(MARCH_THAW_POIS.tavern.x - 40, MARCH_THAW_POIS.tavern.y + 65, 'kaca', 1));
-    items.push(new DecorItem(MARCH_THAW_POIS.pond.x + 60, MARCH_THAW_POIS.pond.y + 20, 'ice_floe', 1));
-    items.push(new DecorItem(MARCH_THAW_POIS.pond.x - 70, MARCH_THAW_POIS.pond.y - 30, 'ice_floe', 1));
+    items.push(new DecorItem(MARCH_THAW_POIS.tavern.x - 105, MARCH_THAW_POIS.tavern.y - 45, 'granny_stove', 1));
+    items.push(new DecorItem(MARCH_THAW_POIS.village.x - 45, MARCH_THAW_POIS.village.y + 35, 'kaca', 1));
     return items;
   }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
@@ -5997,7 +5891,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // decoration field.  These local rules intentionally run after
             // movement so every POI remains a readable, opt-in playstyle.
             if (engine.activeLevelId === 0) {
-              const thaw = engine.marchThaw;
+              const thaw = engine.marchThaw as any;
               thaw.bellCooldown = Math.max(0, thaw.bellCooldown - dt);
               thaw.shrineCooldown = Math.max(0, thaw.shrineCooldown - dt);
               thaw.kegCooldown = Math.max(0, thaw.kegCooldown - dt);
@@ -6007,32 +5901,120 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (shouldTickTerrainHazards) thaw.terrainHazardTimer = 0;
 
               const inChurch = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.church);
-              player.arenaArmorBonus = inChurch ? 0.20 : 0;
-              if (inChurch) player.hp = Math.min(player.maxHp, player.hp + 1.8 * dt * (player._cachedFrostHealMult ?? 1));
+              const activeForestZone = getActiveMarchForestZone(player.x, player.y);
+              const inForest = Boolean(activeForestZone);
+              const inTavern = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.tavern);
+              const inVillage = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.village);
+              const inSchool = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.school);
+              const inShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine);
+              const inFields = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.fields);
+              const inMill = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.mill);
 
-              const inPond = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.pond);
-              if (inPond) {
+              // 1. KOSTEL & LES: Armor & regeneration bonuses
+              player.arenaArmorBonus = (inChurch ? 0.20 : 0) + (inForest ? 0.15 : 0);
+              if (inChurch) {
+                player.hp = Math.min(player.maxHp, player.hp + 2.2 * dt * (player._cachedFrostHealMult ?? 1));
+              }
+
+              // 2. HOSPODA & LES: Tactical damage aura (Hospodská kuráž +18 %, Lesní krytí +15 %)
+              const baseDmgMult = (player as any)._baseMarchDmgMult ?? ((player as any)._baseMarchDmgMult = player.damageMultiplier || 1);
+              player.damageMultiplier = baseDmgMult * (1 + (inTavern ? 0.18 : 0) + (inForest ? 0.15 : 0));
+
+              // 3. VESNICE: Čapí štěstí (+16 % movement speed & 2x faster Ultimate ability cooldown)
+              if (inVillage) {
+                player.x += moveVx * 0.16 * dt;
+                player.y += moveVy * 0.16 * dt;
+                if (player.ultCd > 0) {
+                  player.ultCd = Math.max(0, player.ultCd - dt);
+                }
+              }
+
+              // 4. ŠKOLA & BOŽÍ MUKA: Faster weapon cooldowns (+20 % cadence) & Školní rákoska pulse
+              if ((inSchool || inShrine) && player.weapons) {
+                for (let wi = 0; wi < player.weapons.length; wi++) {
+                  const w = player.weapons[wi];
+                  if (w && w.cd > 0) {
+                    w.cd = Math.max(0, w.cd - dt * 0.22);
+                  }
+                }
+              }
+              if (inSchool) {
+                thaw.schoolPulseTimer = (thaw.schoolPulseTimer || 0) + dt;
+                if (thaw.schoolPulseTimer >= 5.5) {
+                  thaw.schoolPulseTimer = 0;
+                  const nearSchoolFoes = enemySpatialHashRef.current.queryCircleInto(
+                    MARCH_THAW_POIS.school.x,
+                    MARCH_THAW_POIS.school.y,
+                    260,
+                    terrainSpatialResultsRef.current,
+                  );
+                  let hitCount = 0;
+                  for (let i = 0; i < nearSchoolFoes.length; i++) {
+                    const enemy = nearSchoolFoes[i];
+                    if (!enemy.dead && !enemy.isDefeated && Math.hypot(enemy.x - player.x, enemy.y - player.y) < 250) {
+                      enemy.takeDamage(42 * (player.damageMultiplier || 1), 'physical', 90, 0);
+                      enemy.slowTimer = Math.max(enemy.slowTimer || 0, 2.5);
+                      hitCount++;
+                    }
+                  }
+                  if (hitCount > 0) {
+                    pushDamageText(engine.texts, MARCH_THAW_POIS.school.x, MARCH_THAW_POIS.school.y - 60, '📏 ŠKOLNÍ RÁKOSKA!', '#FDE047', true, 'combatStates');
+                  }
+                }
+              }
+
+              // 5. RYBNÍK A ŘEKA: Smart Ice Floes vs. Deep River/Pond Water
+              // - On ice floe (onFloe): carried smoothly + 20% sliding speed boost & protected from freezing water.
+              // - In open water off the floes (inOpenWater): VERY STRONG SLOW (-72% in river, -68% in pond) + current drag & cold exposure.
+              const waterFloe = getMarchWaterAndFloeEffect(player.x, player.y, engine.uiTime);
+              if (waterFloe.onFloe) {
+                thaw.floeExposure = Math.max(0, thaw.floeExposure - dt * 2.5);
+                player.x += (waterFloe.carryVx + moveVx * 0.20) * dt;
+                player.y += (waterFloe.carryVy + moveVy * 0.20) * dt;
+              } else if (waterFloe.inOpenWater) {
                 thaw.floeExposure += dt;
-                player.x += (22 + Math.sin(engine.uiTime * 1.7) * 9) * dt;
-                player.y += Math.cos(engine.uiTime * 1.15) * 7 * dt;
-                if (thaw.floeExposure > 4.5) {
+                const slowDrag = 1 - waterFloe.speedMultiplier; // 0.72 in river, 0.68 in pond
+                player.x += (waterFloe.carryVx - moveVx * slowDrag) * dt;
+                player.y += (waterFloe.carryVy - moveVy * slowDrag) * dt;
+                if (thaw.floeExposure > 4.0) {
                   thaw.floeExposure = 0;
                   player.takeDamage(7, 'cold');
-                  pushDamageText(engine.texts, player.x, player.y - 35, 'KRA PRASKÁ! ❄️', '#BDEAF7', true, 'hunterDamage');
+                  pushDamageText(engine.texts, player.x, player.y - 35, 'LEDOVÁ VODA! ❄️', '#BDEAF7', true, 'hunterDamage');
                 }
               } else {
                 thaw.floeExposure = Math.max(0, thaw.floeExposure - dt * 2);
               }
 
-              if (isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine)) {
-                thaw.shrineCharge += dt;
-                if (thaw.shrineCharge >= 2 && thaw.shrineCooldown <= 0) {
+              // 6. KAPLIČKA: Zjevení Panny Marie s Ježíškem (brief 4.2s apparition: starts small, grows larger while scattering bubáci, then vanishes)
+              const playerNearShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine, 315);
+              let bubakNearShrine = false;
+              if (playerNearShrine && thaw.shrineCooldown <= 0) {
+                const nearShrineFoes = enemySpatialHashRef.current.queryCircleInto(
+                  MARCH_THAW_POIS.shrine.x,
+                  MARCH_THAW_POIS.shrine.y,
+                  250,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let si = 0; si < nearShrineFoes.length; si++) {
+                  const sf = nearShrineFoes[si];
+                  if (!sf.dead && !sf.isDefeated) {
+                    bubakNearShrine = true;
+                    break;
+                  }
+                }
+              }
+              if (inShrine || bubakNearShrine) {
+                thaw.shrineCharge += dt * (inShrine && bubakNearShrine ? 1.35 : 1);
+                if (thaw.shrineCharge >= 1.6 && thaw.shrineCooldown <= 0) {
                   thaw.shrineCharge = 0;
-                  thaw.shrineCooldown = 22;
+                  thaw.shrineCooldown = 20;
+                  thaw.apparitionTimer = 4.2;
+                  thaw.apparitionPulseTimer = 0;
+                  player.hp = Math.min(player.maxHp, player.hp + 18 * (player._cachedFrostHealMult ?? 1));
                   const count = enemySpatialHashRef.current.queryCircleInto(
                     MARCH_THAW_POIS.shrine.x,
                     MARCH_THAW_POIS.shrine.y,
-                    520 + 60,
+                    580,
                     terrainSpatialResultsRef.current,
                   );
                   for (let i = 0; i < count.length; i++) {
@@ -6040,26 +6022,85 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     const dx = enemy.x - MARCH_THAW_POIS.shrine.x;
                     const dy = enemy.y - MARCH_THAW_POIS.shrine.y;
                     const dist = Math.hypot(dx, dy) || 1;
-                    if (!enemy.dead && !enemy.isDefeated && dist < 520 + (enemy.radius || 0)) {
-                      enemy.takeDamage(135 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520);
+                    if (!enemy.dead && !enemy.isDefeated && dist < 560 + (enemy.radius || 0)) {
+                      enemy.takeDamage(145 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 540, (dy / dist) * 540);
                       enemy.panicked = true;
-                      enemy.panicTimer = Math.max(enemy.panicTimer || 0, 4.5);
+                      enemy.panicTimer = Math.max(enemy.panicTimer || 0, 5.0);
                     }
                   }
                   engine.lightningFlash = Math.max(engine.lightningFlash, 0.35);
-                  pushDamageText(engine.texts, MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 90, '✦ ZJEVENÍ SVĚTCE!', '#FEF08A', true, 'bossAnnouncements');
+                  pushDamageText(engine.texts, MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 110, '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!', '#FEF08A', true, 'bossAnnouncements');
                   sound.bell();
                 }
               } else {
                 thaw.shrineCharge = Math.max(0, thaw.shrineCharge - dt * 1.5);
               }
 
-              // The mill's flume is a rewarding environmental trap, while the
-              // field's moving plough lane is dangerous to both sides.
-              const inMill = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.mill, -30);
-              if (inMill) player.y += 45 * dt;
-              const ploughY = MARCH_THAW_POIS.fields.y + Math.sin(engine.uiTime * 0.62) * 54;
-              const playerInPlough = Math.abs(player.y - ploughY) < 34 && Math.abs(player.x - MARCH_THAW_POIS.fields.x) < 150;
+              if ((thaw.apparitionTimer || 0) > 0) {
+                thaw.apparitionTimer = Math.max(0, thaw.apparitionTimer - dt);
+                thaw.apparitionPulseTimer = (thaw.apparitionPulseTimer || 0) + dt;
+                if (thaw.apparitionPulseTimer >= 0.45) {
+                  thaw.apparitionPulseTimer = 0;
+                  const growFrac = Math.min(1, Math.max(0.25, (4.2 - thaw.apparitionTimer) / 3.2));
+                  const activeReach = 220 + 340 * growFrac;
+                  const nearApparition = enemySpatialHashRef.current.queryCircleInto(
+                    MARCH_THAW_POIS.shrine.x,
+                    MARCH_THAW_POIS.shrine.y,
+                    activeReach + 30,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < nearApparition.length; i++) {
+                    const enemy = nearApparition[i];
+                    if (enemy.dead || enemy.isDefeated) continue;
+                    const dx = enemy.x - MARCH_THAW_POIS.shrine.x;
+                    const dy = enemy.y - MARCH_THAW_POIS.shrine.y;
+                    const dist = Math.hypot(dx, dy) || 1;
+                    if (dist < activeReach + (enemy.radius || 0)) {
+                      enemy.takeDamage(28 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 320, (dy / dist) * 320);
+                      enemy.panicked = true;
+                      enemy.panicTimer = Math.max(enemy.panicTimer || 0, 3.2);
+                    }
+                  }
+                }
+              }
+
+              // 7. HORNÍ POLE & MLÝN: Furrow speed + Golden Seed + Plough hazard + Millwheel & Flour cloud
+              if (inFields) {
+                player.x += moveVx * 0.15 * dt;
+                player.y += moveVy * 0.15 * dt;
+                thaw.fieldSeedTimer = (thaw.fieldSeedTimer || 0) + dt;
+                if (thaw.fieldSeedTimer >= 6.5) {
+                  thaw.fieldSeedTimer = 0;
+                  player.hp = Math.min(player.maxHp, player.hp + 3 * (player._cachedFrostHealMult ?? 1));
+                  pushDamageText(engine.texts, player.x, player.y - 42, '🌾 ZLATÉ ZRNÍ! +3 Kuráž', '#FACC15', false, 'healing');
+                }
+              }
+              if (inMill) {
+                if (isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.mill, -40)) {
+                  player.y += 45 * dt;
+                }
+                thaw.millFlourTimer = (thaw.millFlourTimer || 0) + dt;
+                if (thaw.millFlourTimer >= 6.0) {
+                  thaw.millFlourTimer = 0;
+                  const nearMillFoes = enemySpatialHashRef.current.queryCircleInto(
+                    MARCH_THAW_POIS.mill.x,
+                    MARCH_THAW_POIS.mill.y,
+                    260,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < nearMillFoes.length; i++) {
+                    const enemy = nearMillFoes[i];
+                    if (!enemy.dead && !enemy.isDefeated) {
+                      enemy.stunTimer = Math.max(enemy.stunTimer || 0, 1.4);
+                    }
+                  }
+                  player.hp = Math.min(player.maxHp, player.hp + 2 * (player._cachedFrostHealMult ?? 1));
+                  pushDamageText(engine.texts, MARCH_THAW_POIS.mill.x, MARCH_THAW_POIS.mill.y - 55, '💨 MOUČNÝ PRACH!', '#F8FAFC', false, 'combatStates');
+                }
+              }
+
+              const ploughY = MARCH_THAW_POIS.fields.y + Math.sin(engine.uiTime * 0.62) * 68;
+              const playerInPlough = Math.abs(player.y - ploughY) < 38 && Math.abs(player.x - MARCH_THAW_POIS.fields.x) < 185;
               if (playerInPlough) {
                 player.ploughHitCooldown = Math.max(0, (player.ploughHitCooldown || 0) - dt);
                 if (player.ploughHitCooldown <= 0) {
@@ -6078,36 +6119,79 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 for (let i = 0; i < nearMill.length; i++) {
                   const enemy = nearMill[i];
                   if (!enemy.dead && !enemy.isDefeated && isInsideMarchPoi(enemy.x, enemy.y, MARCH_THAW_POIS.mill, -35)) {
-                    enemy.takeDamage(46 * terrainHazardDt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35, { allowFractionalDamage: true });
+                    enemy.takeDamage(52 * terrainHazardDt, 'physical', (enemy.x - MARCH_THAW_POIS.mill.x) * 2, 35, { allowFractionalDamage: true });
                   }
                 }
 
                 const nearPlough = enemySpatialHashRef.current.queryCircleInto(
                   MARCH_THAW_POIS.fields.x,
                   ploughY,
-                  170,
+                  210,
                   terrainSpatialResultsRef.current,
                 );
                 for (let i = 0; i < nearPlough.length; i++) {
                   const enemy = nearPlough[i];
-                  if (!enemy.dead && !enemy.isDefeated && Math.abs(enemy.y - ploughY) < 28 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 165) {
+                  if (!enemy.dead && !enemy.isDefeated && Math.abs(enemy.y - ploughY) < 34 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 200) {
                     enemy.takeDamage(32 * terrainHazardDt, 'physical', 210, 15, { allowFractionalDamage: true });
+                  }
+                }
+
+                // Non-aquatic enemies wading in the freezing pond take cold damage
+                const nearPond = enemySpatialHashRef.current.queryCircleInto(
+                  MARCH_THAW_POIS.pond.x,
+                  MARCH_THAW_POIS.pond.y,
+                  MARCH_THAW_POIS.pond.radius,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let i = 0; i < nearPond.length; i++) {
+                  const enemy = nearPond[i];
+                  if (!enemy.dead && !enemy.isDefeated && !enemy.isFlying && enemy.id !== 'vrana' && !isAquaticEnemy(enemy)) {
+                    const eff = getMarchWaterAndFloeEffect(enemy.x, enemy.y, engine.uiTime);
+                    if (eff.inOpenWater && eff.waterZone === 'pond') {
+                      enemy.takeDamage(8 * terrainHazardDt, 'cold', 0, 0, { allowFractionalDamage: true });
+                    }
                   }
                 }
               }
 
-              // Hustý les: "Pozor na přepady z houštin"
-              if (isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.forest)) {
-                thaw.forestAmbushCooldown = (thaw.forestAmbushCooldown !== undefined ? thaw.forestAmbushCooldown : 10) - dt;
+              // 8. HUSTÝ LES (All 4 larger forests can spawn enemies + bush ambushes when player enters any forest)
+              if (activeForestZone) {
+                thaw.forestAmbushCooldown = (thaw.forestAmbushCooldown !== undefined ? thaw.forestAmbushCooldown : 8) - dt;
                 if (thaw.forestAmbushCooldown <= 0) {
-                  thaw.forestAmbushCooldown = 18;
+                  thaw.forestAmbushCooldown = 16;
                   const ang1 = Math.random() * Math.PI * 2;
                   const ang2 = ang1 + Math.PI * 0.7;
-                  engine.enemies.push(createEnemyInstance('mysak', player.x + Math.cos(ang1) * 240, player.y + Math.sin(ang1) * 240, 0.75));
-                  engine.enemies.push(createEnemyInstance('sotek', player.x + Math.cos(ang2) * 240, player.y + Math.sin(ang2) * 240, 0.75));
+                  const sx1 = player.x + Math.cos(ang1) * 240;
+                  const sy1 = player.y + Math.sin(ang1) * 240;
+                  const sx2 = player.x + Math.cos(ang2) * 240;
+                  const sy2 = player.y + Math.sin(ang2) * 240;
+                  const e1 = createEnemyInstance('mysak', sx1, sy1, 0.75);
+                  const e2 = createEnemyInstance('sotek', sx2, sy2, 0.75);
+                  clampToMarchArenaBounds(e1);
+                  clampToMarchArenaBounds(e2);
+                  engine.enemies.push(e1, e2);
                   engine.texts.push(new DamageText(player.x, player.y - 35, 'PŘEPAD Z HOUŠTIN! 🌲🐾', '#84CC16', true, 'directorWarningBanners'));
                 }
               }
+
+              // Periodic hunting packs emerging from all 4 larger forests throughout Stage 1
+              thaw.forestPackTimer = (thaw.forestPackTimer !== undefined ? thaw.forestPackTimer : 11) - dt;
+              if (thaw.forestPackTimer <= 0 && engine.enemies.length < 48) {
+                thaw.forestPackTimer = 14;
+                thaw.forestSpawnSeed = (thaw.forestSpawnSeed || 0) + 1;
+                const spawnPt = pickMarchForestSpawnPoint(player.x, player.y, thaw.forestSpawnSeed);
+                const forestPool = ['mrazovy_skritek', 'vrana', 'mysak', 'sotek'];
+                const pick1 = forestPool[thaw.forestSpawnSeed % forestPool.length];
+                const pick2 = forestPool[(thaw.forestSpawnSeed + 1) % forestPool.length];
+                const fe1 = createEnemyInstance(pick1, spawnPt.x - 24, spawnPt.y - 18, 0.8);
+                const fe2 = createEnemyInstance(pick2, spawnPt.x + 24, spawnPt.y + 18, 0.8);
+                clampToMarchArenaBounds(fe1);
+                clampToMarchArenaBounds(fe2);
+                engine.enemies.push(fe1, fe2);
+              }
+
+              // Impassable cottages (chalupy), church walls, school, millhouse, dense forest & outer arena border
+              resolveMarchThawObstacles(player, false);
 
               // Interaktivní vesnické objekty: Babiččina kamna a dřevěná Káča
               for (const dec of engine.decor) {
@@ -6125,6 +6209,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   dec.y += (dec.vy || 0) * dt;
                   dec.vx = (dec.vx || 0) * Math.max(0, 1 - 2.5 * dt);
                   dec.vy = (dec.vy || 0) * Math.max(0, 1 - 2.5 * dt);
+                  clampToMarchArenaBounds(dec);
                   if (Math.hypot(dec.vx, dec.vy) > 40) {
                     const nearbyEnemies = enemySpatialHashRef.current.queryCircleInto(
                       dec.x,
@@ -6142,7 +6227,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   }
                 } else if (dec.type === 'granny_stove') {
-                  if (Math.hypot(player.x - dec.x, player.y - dec.y) < player.radius + dec.radius + 20) {
+                  const dx = player.x - dec.x;
+                  const dy = player.y - dec.y;
+                  const dist = Math.hypot(dx, dy);
+                  const reach = player.radius + dec.radius;
+                  if (dist < reach && dist > 0.001) {
+                    const overlap = reach - dist;
+                    player.x += (dx / dist) * overlap;
+                    player.y += (dy / dist) * overlap;
+                  }
+                  if (dist < reach + 20) {
                     player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * (player._cachedFrostHealMult ?? 1));
                   }
                 }
@@ -6162,7 +6256,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     const enemy = nearbyEnemies[i];
                     const dx = enemy.x - thaw.beerPuddle.x; const dy = enemy.y - thaw.beerPuddle.y;
                     if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 100 * 100) {
-                      // Slightly overlaps the 0.25 s cadence so the puddle reads as continuous.
                       enemy.stunTimer = Math.max(enemy.stunTimer || 0, 0.28);
                     }
                   }
@@ -7089,7 +7182,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // The virtual leader already computed this bird's motion. Skip homing AI,
             // status-map iteration and enemy-to-enemy behavior for active flock members.
             if (!isActiveVirtualCrow || e.isDefeated || e.dead) {
+              const prevEx = e.x;
+              const prevEy = e.y;
               e.update(dt, player);
+              if (engine.activeLevelId === 0 && !e.isDefeated && !e.dead) {
+                const isFlyingEnemy = Boolean(e.isFlying || e.id === 'vrana' || isActiveVirtualCrow);
+                if (!isFlyingEnemy) {
+                  const enemyWater = getMarchWaterAndFloeEffect(e.x, e.y, engine.uiTime);
+                  if (enemyWater.onFloe) {
+                    e.x += enemyWater.carryVx * dt;
+                    e.y += enemyWater.carryVy * dt;
+                  } else if (enemyWater.inOpenWater && !isAquaticEnemy(e)) {
+                    // Very strong river/pond slow (72% slow in river, 68% in pond) for non-flying, non-water enemies
+                    e.x = prevEx + (e.x - prevEx) * enemyWater.speedMultiplier + enemyWater.carryVx * dt;
+                    e.y = prevEy + (e.y - prevEy) * enemyWater.speedMultiplier + enemyWater.carryVy * dt;
+                  }
+                  resolveMarchThawObstacles(e, false);
+                } else {
+                  clampToMarchArenaBounds(e);
+                }
+              }
             }
 
             if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
@@ -7883,42 +7995,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               ctx.drawImage(fogCanvas, sx - 120, sy - 120);
             }
           }
-        } else if (curLvl.weatherEffect === 'ice_drift') {
-          const t = engine.uiTime;
-          ctx.save();
-          ctx.globalAlpha = 0.25;
-          Lada.setupPath(ctx, '#FFFFFF', COLORS.ink, 2.2);
-          for (let i = 0; i < 15; i++) {
-            const sx = ((i * 220 + t * 35) % (canvas.width + 400)) - 200;
-            const sy = ((i * 87 + Math.sin(t * 0.2 + i) * 12) % (canvas.height + 300)) - 150;
-            const rot = Math.sin(t * 0.15 + i) * 0.15;
-
-            ctx.save();
-            ctx.translate(sx, sy);
-            ctx.rotate(rot);
-
-            ctx.beginPath();
-            ctx.moveTo(-35, -5);
-            ctx.lineTo(-5, -20);
-            ctx.lineTo(25, -10);
-            ctx.lineTo(40, 5);
-            ctx.lineTo(10, 20);
-            ctx.lineTo(-20, 15);
-            ctx.closePath();
-
-            ctx.fillStyle = (i % 2 === 0) ? '#FFFFFF' : '#E9F1F7';
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.lineWidth = 1.6;
-            ctx.beginPath();
-            ctx.moveTo(-10, -5);
-            ctx.lineTo(10, 5);
-            ctx.stroke();
-
-            ctx.restore();
-          }
-          ctx.restore();
         }
 
         const smoothedTimings = frameProfiler.end(performance.now());
