@@ -924,6 +924,7 @@ export class GameEngine {
     prefix?: EnemyPrefixType
   ): any {
     if (id === 'vrana' && isMiniboss) {
+      this.state.flockTreasureDropped = false;
       const crowCount = 9;
       let leaderCrow: any = null;
       for (let i = 0; i < crowCount; i++) {
@@ -1076,8 +1077,8 @@ export class GameEngine {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 3.0 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
-    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 3) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? (1 / 9) : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
+    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.max(3, Math.round(stats.radius / 9)) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
     const hunger = isMiniboss

@@ -1,3 +1,25 @@
+## 2026-10-25 — Nové detailní Smart SVG sprity: Krajánek, Tulák a Bezhlavý rytíř (Enemy Boss)
+
+- **SmartKrajanekSvg**: Vytvořen zbrusu nový vysoce detailní interaktivní vektorový sprite Krajánka (mlynářský tovaryš a pocestný v pomoučeném šatu, klobouku s obilným klasem, červenou puntíkovanou mošnou na holi a kamenickým kladívkem).
+  - Plná sada animací inspirovaná Babičkou a Barunkou: `idle` (dýchání, sledování kurzoru očima, pohupování mošny), `walk` (rytmický krok s artikulací bot a skákáním mošny), `sprint` (dynamický náběh v předklonu s oblaky mouky), `action` (Jízda na žernovu s rotujícím žulovým mlýnským kamenem, mlynářským rýhováním a třecími jiskrami), `react` (vyděšený zásek s kapkami potu a moučným prachem) a `flee` (komický úprk se zvednutýma rukama).
+- **SmartTulakSvg**: Přepracován do detailního ladovského stylu vesnického poutníka z Hrusic:
+  - Baterovaný zelený klobouk s jeřabinami, bujný bílý vous, bylinková fajfka s procedurálním stoupajícím vonným dýmem, sukovitá dubová hůl (sukovice) a záplatovaný kabát s dřevěnou čutorou na provázku.
+  - Kompletní animace: `idle`, `walk`, `sprint`, `action` (Pověstná sukovice – 360° větrná vichřice s vířícím podzimním listím a rázovou vlnou), `react` a `flee`.
+- **SmartBezhlavyRytirSvg**: Menaced gothic folklore ENEMY BOSS (velký boss ze Zlenic / Karlštejna):
+  - Černěná gotická plátová zbroj s ostny a nýty, varkočka s heraldickým dvouocasým českým lvem, rozevlátý krvavý plášť a obouruční zlenický runový popravčí meč.
+  - Krvavý krční pahýl s plamennými jiskrami a useknutá přilbice nesená v levé obrněné paži se zářícíma očima sledujícíma kurzor myši, otevíracím hledím a hromovým řevem.
+  - Plná animace bosse: `idle`, `walk`, `sprint` (děsivý útočný náběh s mečem vpřed), `action` (Půlnoční stětí & řev – ohromný sek runovým mečem se světelnou rázovou vlnou), `react` (odražení úderu se zábleskem) a `flee` (přízračné stažení do stínů).
+- Zapojeno do `SmartSvgViewer.tsx`, indexu SVG komponent, náhledového testeru `AnimationTesterModal.tsx` a integračních testů v `tests/smartSvgAnimations.test.ts`.
+
+## 2026-10-25 — Nová Smart SVG vektorová animace: Čertův dědeček otevírající nůši
+
+- Vytvořena nová vysoce detailní interaktivní vektorová komponenta `SmartDedecekNuseSvg` podle dodané grafické předlohy: mohutné vroubkované beraní rohy, bafající dřevěná fajfka s procedurálním dýmem, záplatovaný kramářský kabátec s křížkovými stehy, beránčí lemy, kopyta a huňatý čertí ocas.
+- Obrovská proutěná nůše s koženými řemeny, mosaznými přezkami a otevřeným víkem obsahuje kompletní kramářský repertoár: zářící lektvary v baňkách s korkem, sušenou levanduli a třezalku, plátěné ranečky, lidovou červenou stuhu s výšivkou, vyřezávanou truhličku, legendární Arzivzácný ananas, jablka a zeleninu.
+- Zahrnuta zvědavá společnice myšička Rézinka s jemnou animací čenichání a oušek, reagující na pohlazení myší i stav obchodu.
+- Zavedena plná kinematika stavů (`idle`, `walk`, `sprint`, `action` – Kramářský zázrak, `react` – polekání, `flee` – zavírání nůše) s interaktivním sledováním kurzoru.
+- Ocas byl přesunut přímo pod záplatovaný kabátec k bedrům a spojen s trupem, přičemž jeho špička s huňatou chocholkou byla opatřena kloubovou animací pro plynulé a pomalé míhání zleva doprava.
+- Zapojeno do Dědečkova obchodu (`GrandfatherScene.tsx`), herního prohlížeče animací (`SmartSvgViewer.tsx`, `AnimationTesterModal.tsx`) i integračních testů (`tests/smartSvgAnimations.test.ts`).
+
 ## 2026-10-23 — Úprava Tuláka: pasivní bonus neposiluje speciální schopnost
 
 - Pasivní schopnost Tuláka (Tulácký instinkt: +35 % poškození všech zbraní) již neposkytuje bonus k poškození jeho speciální schopnosti Pověstná sukovice.

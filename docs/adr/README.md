@@ -32,5 +32,5 @@ This directory records architectural decisions made for the project Bubákov.
 | [0026](0026-kanonizace-zbranovych-vyzev-a-cistota-kodu.md) | Kanonizace zbraňových výzev, obnova JSX a čistota kódu |
 | [0027](0027-virtual-leader-kapacita-a-rezervace-formaci.md) | Virtual Leader, Efektivní kapacita bojiště a šetření slotů pro formace |
 | [0028](0028-tajici-snehulaci-virtual-leader-horda-a-louze.md) | Tající sněhuláci: Horda s Virtuálním vůdcem, slotovými posuny a loužemi |
-| [0028b](0028-vysokovykonny-soa-drop-manazer-a-reziser-vypravy.md) | Vysokovýkonný SoA drop manažer a Režisér výpravy |
+| [0028b](0028b-vysokovykonny-soa-drop-manazer-a-reziser-vypravy.md) | Vysokovýkonný SoA drop manažer a Režisér výpravy |
 | [0029](0029-sjednoceni-renderovaci-pipeline-atlas-strasidel-a-zero-alloc-cyklus.md) | Sjednocení renderovací pipeline, bitmapový atlas běžných strašidel a bezalokační cyklus |

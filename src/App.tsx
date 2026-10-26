@@ -4320,6 +4320,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   customBossTitle?: string,
                   prefix?: EnemyPrefixType
                 ) => {
+                  if (mobId === 'vrana' && isMiniboss) {
+                    (engine as any).flockTreasureDropped = false;
+                    const crowCount = 9;
+                    let leaderCrow: any = null;
+                    for (let i = 0; i < crowCount; i++) {
+                      const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+                      const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
+                      const cx = x + Math.cos(flockAngle) * dist;
+                      const cy = y + Math.sin(flockAngle) * dist;
+                      const crowTitle = i === 0 ? (customBossTitle || '🐦‍⬛ Hejno mrazivých vran') : undefined;
+                      const crowEnemy = createEnemyInstance(mobId, cx, cy, multiplier, isBoss, true, crowTitle, prefix);
+                      (crowEnemy as any).isMinibossFlockMember = true;
+                      (crowEnemy as any).flockIndex = i;
+                      (crowEnemy as any).flockTotal = crowCount;
+                      engine.enemies.push(crowEnemy);
+                      directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
+                      if (i === 0) leaderCrow = crowEnemy;
+                    }
+                    return leaderCrow;
+                  }
                   const newMob = createEnemyInstance(mobId, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
                   engine.enemies.push(newMob);
                   directorRef.current?.recordEnemySpawn(newMob, newTime);
@@ -4341,6 +4361,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.random() * Math.PI * 2;
               const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
               if (curLvl.miniBoss.id === 'vrana') {
+                (engine as any).flockTreasureDropped = false;
                 const crowCount = 9;
                 for (let i = 0; i < crowCount; i++) {
                   const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
@@ -8128,8 +8149,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 3.0 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
-    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 3) : isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.15 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
+    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
     const hunger = isMiniboss
@@ -8783,16 +8804,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Stage 1: fast airborne crows weave around the hunter instead of hopping on the ground.
         if (this.id === 'vrana') {
-          const foraging = stepCrowForaging(this, engineRef.current?.drops || [], dt, spd);
-          if (foraging.active) {
-            this.vx = foraging.vx;
-            this.vy = foraging.vy;
-          } else {
-            const weave = Math.sin(this.animTime * 8 + (this.orbitAngle || 0)) * 0.48;
-            const flightAngle = dirToPlayer + weave;
-            const flightSpeed = spd * (distToPlayer > 170 ? 1.22 : 0.88);
+          if (this.isMinibossFlockMember) {
+            this.isGroundedForLoot = false;
+            const flockIdx = typeof this.flockIndex === 'number' ? this.flockIndex : 0;
+            const flockTot = typeof this.flockTotal === 'number' && this.flockTotal > 0 ? this.flockTotal : 9;
+            const phaseOffset = (flockIdx / flockTot) * Math.PI * 2;
+            const swirlRadius = distToPlayer > 110 ? 38 : 16;
+            const targetX = player.x + Math.cos(this.animTime * 2.8 + phaseOffset) * swirlRadius;
+            const targetY = player.y + Math.sin(this.animTime * 2.8 + phaseOffset) * swirlRadius;
+            const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
+            const weave = Math.sin(this.animTime * 7.5 + phaseOffset) * 0.34;
+            const flightAngle = angleToTarget + weave;
+            const flightSpeed = spd * (distToPlayer > 170 ? 1.24 : 0.94);
             this.vx = Math.cos(flightAngle) * flightSpeed;
-            this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 10) * 12;
+            this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 9 + phaseOffset) * 10;
+          } else {
+            const foraging = stepCrowForaging(this, engineRef.current?.drops || [], dt, spd);
+            if (foraging.active) {
+              this.vx = foraging.vx;
+              this.vy = foraging.vy;
+            } else {
+              const weave = Math.sin(this.animTime * 8 + (this.orbitAngle || 0)) * 0.48;
+              const flightAngle = dirToPlayer + weave;
+              const flightSpeed = spd * (distToPlayer > 170 ? 1.22 : 0.88);
+              this.vx = Math.cos(flightAngle) * flightSpeed;
+              this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 10) * 12;
+            }
           }
         } else if (this.id === 'mrazovy_skritek') {
           this.vx = Math.cos(dirToPlayer) * spd * 0.82;
@@ -10935,6 +10972,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 new DamageText(this.x, this.y - 60, `👑 ${defeatName.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true)
               );
               if (this.isMiniboss) {
+                engineRef.current.coins = (engineRef.current.coins || 0) + 25;
                 engineRef.current.texts.push(
                   new DamageText(this.x, this.y - 95, '+25 KREJCARŮ! 💰', '#FDE047', true)
                 );
@@ -11213,16 +11251,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
+        const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
+        const isSpecialBoss = this.id === 'cert' || this.id === 'hejkal' || this.id === 'obr' || this.id === 'mlynar' || this.id === 'drak';
         const scale = this.renderScale || 1.0;
-        if (scale !== 1.0) {
+        if (isSpecialBoss && scale !== 1.0) {
           ctx.save();
           ctx.translate(this.x, this.y);
           ctx.scale(scale, scale);
           ctx.translate(-this.x, -this.y);
         }
-
-        const isFleeing = this.panicked || (this.isDefeated && !this.defeatedByFood);
-        const isSpecialBoss = this.id === 'cert' || this.id === 'hejkal' || this.id === 'obr' || this.id === 'mlynar' || this.id === 'drak';
 
         if (isSpecialBoss) {
           // Get smart detailed attack animation state according to enemy attack speed & cadence
@@ -11339,13 +11376,33 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        if (scale !== 1.0) {
+        if (isSpecialBoss && scale !== 1.0) {
           ctx.restore();
         }
 
         // Miniboss Overhead Crown Badge & Distinct Health Bar
-        if (this.isMiniboss && !this.isDefeated) {
+        const isPrimaryMinibossDisplay =
+          this.isMiniboss &&
+          !this.isDefeated &&
+          (!this.isMinibossFlockMember ||
+            engineRef.current?.enemies?.find(
+              (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead
+            ) === this);
+
+        if (isPrimaryMinibossDisplay) {
           ctx.save();
+          const activeFlockMembers = this.isMinibossFlockMember
+            ? (engineRef.current?.enemies?.filter(
+                (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead
+              ) || [this])
+            : [this];
+          const displayHp = this.isMinibossFlockMember
+            ? activeFlockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0)
+            : this.hp;
+          const displayMaxHp = this.isMinibossFlockMember
+            ? (this.flockTotal || 9) * (this.maxHp || 168)
+            : this.maxHp;
+
           const barWidth = Math.max(88, this.radius * 2.2);
           const barHeight = 8;
           const barX = this.x - barWidth / 2;
@@ -11353,44 +11410,44 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // 1. Miniboss Title / Crown Badge (optional descriptor)
           if (isGameEffectEnabled('enemyDescriptorsEnabled')) {
-          const badgeTitle = this.customBossTitle || stats.name;
-          ctx.font = '900 12px "Eczar", serif';
-          const titleText = `👑 ${badgeTitle.toUpperCase()}`;
-          const titleWidth = ctx.measureText(titleText).width;
-          const badgeW = titleWidth + 16;
-          const badgeH = 18;
-          const badgeX = this.x - badgeW / 2;
-          const badgeY = barY - badgeH - 3;
+            const badgeTitle = this.customBossTitle || (this.isMinibossFlockMember ? '🐦‍⬛ Hejno mrazivých vran' : stats.name);
+            ctx.font = '900 12px "Eczar", serif';
+            const titleText = `👑 ${badgeTitle.toUpperCase()}`;
+            const titleWidth = ctx.measureText(titleText).width;
+            const badgeW = titleWidth + 16;
+            const badgeH = 18;
+            const badgeX = this.x - badgeW / 2;
+            const badgeY = barY - badgeH - 3;
 
-          // Badge Cartouche
-          ctx.fillStyle = '#FEF3C7';
-          ctx.strokeStyle = '#1C1917';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          if (typeof (ctx as any).roundRect === 'function') {
-            (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, 5);
-          } else {
-            ctx.rect(badgeX, badgeY, badgeW, badgeH);
-          }
-          ctx.fill();
-          ctx.stroke();
+            // Badge Cartouche
+            ctx.fillStyle = '#FEF3C7';
+            ctx.strokeStyle = '#1C1917';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (typeof (ctx as any).roundRect === 'function') {
+              (ctx as any).roundRect(badgeX, badgeY, badgeW, badgeH, 5);
+            } else {
+              ctx.rect(badgeX, badgeY, badgeW, badgeH);
+            }
+            ctx.fill();
+            ctx.stroke();
 
-          // Gold border accent
-          ctx.strokeStyle = '#D97706';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          if (typeof (ctx as any).roundRect === 'function') {
-            (ctx as any).roundRect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3, 3);
-          } else {
-            ctx.rect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3);
-          }
-          ctx.stroke();
+            // Gold border accent
+            ctx.strokeStyle = '#D97706';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            if (typeof (ctx as any).roundRect === 'function') {
+              (ctx as any).roundRect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3, 3);
+            } else {
+              ctx.rect(badgeX + 1.5, badgeY + 1.5, badgeW - 3, badgeH - 3);
+            }
+            ctx.stroke();
 
-          // Badge text
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#78350F';
-          ctx.fillText(titleText, this.x, badgeY + badgeH / 2);
+            // Badge text
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#78350F';
+            ctx.fillText(titleText, this.x, badgeY + badgeH / 2);
           }
 
           // 2. Health Bar Background
@@ -11398,7 +11455,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.fillRect(barX, barY, barWidth, barHeight);
 
           // Health Bar Fill
-          const hpPct = Math.max(0, Math.min(1, this.hp / this.maxHp));
+          const hpPct = Math.max(0, Math.min(1, displayHp / Math.max(1, displayMaxHp)));
           const fillW = Math.max(0, barWidth * hpPct);
           if (fillW > 0) {
             const barGrad = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
@@ -11420,7 +11477,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.textBaseline = 'middle';
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = 2.5;
-          const hpText = `${Math.ceil(this.hp)} / ${this.maxHp} Kuráž`;
+          const hpText = this.isMinibossFlockMember
+            ? `${Math.ceil(displayHp)} / ${displayMaxHp} (${activeFlockMembers.length}/${this.flockTotal || 9})`
+            : `${Math.ceil(displayHp)} / ${displayMaxHp} Kuráž`;
           ctx.strokeText(hpText, this.x, barY + barHeight / 2);
           ctx.fillStyle = '#FFFFFF';
           ctx.fillText(hpText, this.x, barY + barHeight / 2);
@@ -11521,16 +11580,43 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     engineRef.current.miniBossSpawned = true;
     const ang = Math.random() * Math.PI * 2;
     const pos = RunDirector.getOffscreenPosition(player, ang, engineRef.current, 180);
-    const bossEnemy = createEnemyInstance(
-      bossDef.id,
-      pos.x,
-      pos.y,
-      bossDef.multiplier,
-      false,
-      true,
-      bossDef.name
-    );
-    engineRef.current.enemies.push(bossEnemy);
+    if (bossDef.id === 'vrana') {
+      (engineRef.current as any).flockTreasureDropped = false;
+      const crowCount = 9;
+      for (let i = 0; i < crowCount; i++) {
+        const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+        const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
+        const cx = pos.x + Math.cos(flockAngle) * dist;
+        const cy = pos.y + Math.sin(flockAngle) * dist;
+        const crowTitle = i === 0 ? bossDef.name : undefined;
+        const crowEnemy = createEnemyInstance(
+          bossDef.id,
+          cx,
+          cy,
+          bossDef.multiplier,
+          false,
+          true,
+          crowTitle
+        );
+        (crowEnemy as any).isMinibossFlockMember = true;
+        (crowEnemy as any).flockIndex = i;
+        (crowEnemy as any).flockTotal = crowCount;
+        engineRef.current.enemies.push(crowEnemy);
+        directorRef.current?.recordEnemySpawn(crowEnemy, engineRef.current.gameTime);
+      }
+    } else {
+      const bossEnemy = createEnemyInstance(
+        bossDef.id,
+        pos.x,
+        pos.y,
+        bossDef.multiplier,
+        false,
+        true,
+        bossDef.name
+      );
+      engineRef.current.enemies.push(bossEnemy);
+      directorRef.current?.recordEnemySpawn(bossEnemy, engineRef.current.gameTime);
+    }
     engineRef.current.texts.push(new DamageText(player.x, player.y - 50, `👑 ${bossDef.name}`, COLORS.mustard, true));
     setRunStats((s) => ({
       ...s,

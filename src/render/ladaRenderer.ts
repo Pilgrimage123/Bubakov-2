@@ -7200,7 +7200,7 @@ var Lada = {
 	drawStageCrow(ctx, x, y, time, vx, panicked) {
 		const flap = Math.sin(time * (panicked ? 19 : 13)) * 8;
 		const bob = Math.sin(time * 7) * 2, dir = vx < 0 ? -1 : 1;
-		ctx.save(); ctx.translate(x, y + bob); ctx.scale(dir, 1);
+		ctx.save(); ctx.translate(x, y + bob); ctx.scale(dir * 1.7, 1.7);
 		ctx.fillStyle = "#171923"; ctx.strokeStyle = "#090B12"; ctx.lineWidth = 2;
 		ctx.beginPath(); ctx.ellipse(0, 0, 10, 7, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 		ctx.beginPath(); ctx.moveTo(-3, 0); ctx.quadraticCurveTo(-17, -flap, -21, -5); ctx.quadraticCurveTo(-12, 1, -4, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -13852,788 +13852,833 @@ var Lada = {
 		ctx.translate(x, y);
 		ctx.scale(scale * dir, scale);
 
-		// 1. Limp & gait mechanics
+		// 1. Limp & gait mechanics (Asymmetrical stomp on front cloven hoof + rolling step on rear laced boot)
 		const walkFreq = isMoving ? 8.2 : 2.4;
 		const phase = time * walkFreq;
-		// Asymmetrical limp: sharp stomp on the cloven hoof (right), softer rolling step on the boot (left)
-		const hoofStomp = isMoving ? Math.max(0, Math.sin(phase)) : 0;
-		const bootStep = isMoving ? Math.max(0, -Math.sin(phase)) : 0;
-		const limpBob = isMoving ? (hoofStomp * 6.5 - bootStep * 3.2) : Math.sin(time * 2.2) * 1.8;
-		const limpTilt = isMoving ? Math.sin(phase) * 0.12 : Math.sin(time * 1.8) * 0.035;
-		const hoofSwing = isMoving ? Math.sin(phase) * 15 : 0;
-		const bootSwing = isMoving ? -Math.sin(phase) * 18 : 0;
+		const sinPhase = Math.sin(phase);
+		const cosPhase = Math.cos(phase);
+		const hoofStomp = isMoving ? Math.max(0, sinPhase) : 0;
+		const bootStep = isMoving ? Math.max(0, -sinPhase) : 0;
+		const limpBob = isMoving ? (hoofStomp * 5.8 - bootStep * 2.8) : Math.sin(time * 2.2) * 1.6;
+		const limpTilt = isMoving ? 0.08 + sinPhase * 0.06 : 0.04 + Math.sin(time * 1.9) * 0.025;
+		const hoofSwing = isMoving ? sinPhase * 13 : 0;
+		const bootSwing = isMoving ? -sinPhase * 15 : 0;
+
+		const ink = "#1E1108";
 
 		// 2. Ground shadow with limp squash
-		const shadowRx = 32 + (isMoving ? hoofStomp * 4 : 0);
+		const shadowRx = 36 + (isMoving ? hoofStomp * 5 : 0);
 		const shadowRy = 11 + (isMoving ? hoofStomp * 2 : 0);
-		ctx.fillStyle = "rgba(24, 14, 8, 0.28)";
+		ctx.fillStyle = "rgba(24, 14, 8, 0.32)";
 		ctx.beginPath();
-		ctx.ellipse(0, 35, shadowRx, shadowRy, 0, 0, Math.PI * 2);
+		ctx.ellipse(0, 36, shadowRx, shadowRy, 0, 0, Math.PI * 2);
 		ctx.fill();
 
 		// Footstep dust puffs when the heavy hoof hits ground during walk
-		if (isMoving && hoofStomp > 0.75) {
-			this.drawRunDust(ctx, 10, 36, time);
+		if (isMoving && hoofStomp > 0.72) {
+			this.drawRunDust(ctx, 14, 36, time);
 		}
 
-		// Subtle golden warm aura when idle or interacting
+		// Subtle golden warm aura when interacting
 		if (isInteracting) {
-			ctx.fillStyle = "rgba(245, 158, 11, 0.12)";
+			ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
 			ctx.beginPath();
-			ctx.arc(0, 0, 58 + Math.sin(time * 3) * 3, 0, Math.PI * 2);
+			ctx.arc(0, -2, 60 + Math.sin(time * 3.2) * 3.5, 0, Math.PI * 2);
 			ctx.fill();
 		}
 
-		// 3. Tail: Sinuous devil tail with black bushy tuft
-		const tailPhase = time * 3.4;
-		const tailSwing = Math.sin(tailPhase) * 12 + (isMoving ? Math.sin(phase) * 7 : 0);
-		const tailStartX = -16;
-		const tailStartY = 14 + limpBob * 0.5;
-		const tailMidX = -38 + Math.cos(tailPhase) * 4;
-		const tailMidY = 18 + tailSwing * 0.6;
-		const tailTipX = -48 + Math.sin(tailPhase) * 6;
-		const tailTipY = -2 + tailSwing;
+		// 3. Unbroken, Continuous S-Curve Devil Tail (Bez zlomeného ocasu!)
+		const tailPhase = time * (isMoving ? 4.8 : 2.1);
+		const tailWave1 = Math.sin(tailPhase);
+		const tailWave2 = Math.cos(tailPhase - 0.6);
+		const tailRootX = -20;
+		const tailRootY = 12 + limpBob * 0.7;
+		const tailCtrl1X = -42 - tailWave2 * 3;
+		const tailCtrl1Y = 16 + limpBob * 0.5;
+		const tailCtrl2X = -52 - tailWave1 * 4;
+		const tailCtrl2Y = 30;
+		const tailEndX = -42 - tailWave1 * 5;
+		const tailEndY = 40 + Math.sin(tailPhase * 2) * 2;
 
 		ctx.save();
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 6;
-		ctx.lineCap = "round";
+		// Single continuous tapering Bézier shape for the tail stem
+		const tailGrad = ctx.createLinearGradient(tailRootX, tailRootY, tailEndX, tailEndY);
+		tailGrad.addColorStop(0, "#FB923C");
+		tailGrad.addColorStop(0.45, "#EA580C");
+		tailGrad.addColorStop(1, "#991B1B");
+		this.setupPath(ctx, tailGrad, ink, 2.2);
 		ctx.beginPath();
-		ctx.moveTo(tailStartX, tailStartY);
-		ctx.quadraticCurveTo(tailMidX, tailMidY, tailTipX, tailTipY);
-		ctx.stroke();
-
-		ctx.strokeStyle = "#DC2626";
-		ctx.lineWidth = 3.8;
-		ctx.beginPath();
-		ctx.moveTo(tailStartX, tailStartY);
-		ctx.quadraticCurveTo(tailMidX, tailMidY, tailTipX, tailTipY);
-		ctx.stroke();
-
-		// Bushy tuft at tip of tail
-		ctx.fillStyle = "#1C1917";
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.6;
-		ctx.beginPath();
-		ctx.ellipse(tailTipX, tailTipY, 9, 6, Math.PI / 4 + tailSwing * 0.05, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		// Tufts
-		for (let ti = 0; ti < 4; ti++) {
-			const ta = (ti / 4) * Math.PI - 0.4;
-			ctx.beginPath();
-			ctx.moveTo(tailTipX, tailTipY);
-			ctx.lineTo(tailTipX - Math.cos(ta) * 9, tailTipY - Math.sin(ta) * 9);
-			ctx.stroke();
-		}
-		ctx.restore();
-
-		// 4. Back Wicker Basket ("Kramářská nůše plná pokladů")
-		ctx.save();
-		const basketSway = -limpTilt * 22 + Math.sin(time * 2.6) * 1.5;
-		const bx = -22;
-		const by = -14 + limpBob;
-		ctx.translate(bx, by);
-		ctx.rotate(basketSway * 0.035);
-
-		// Straps over back
-		this.setupPath(ctx, "#451A03", COLORS.ink, 3);
-		ctx.strokeRect(-18, -32, 38, 48);
-
-		// Basket Body (woven wicker)
-		const bGrad = ctx.createLinearGradient(-22, -32, 22, 32);
-		bGrad.addColorStop(0, "#D97706");
-		bGrad.addColorStop(0.5, "#B45309");
-		bGrad.addColorStop(1, "#78350F");
-		this.setupPath(ctx, bGrad, COLORS.ink, 3.5);
-		ctx.beginPath();
-		ctx.moveTo(-20, -32);
-		ctx.lineTo(24, -34);
-		ctx.quadraticCurveTo(28, 2, 18, 30);
-		ctx.lineTo(-14, 28);
-		ctx.quadraticCurveTo(-24, 2, -20, -32);
+		ctx.moveTo(tailRootX, tailRootY - 3);
+		ctx.bezierCurveTo(tailCtrl1X, tailCtrl1Y - 3, tailCtrl2X, tailCtrl2Y - 2, tailEndX, tailEndY);
+		ctx.lineTo(tailEndX + 3.5, tailEndY + 1);
+		ctx.bezierCurveTo(tailCtrl2X + 4.5, tailCtrl2Y + 1, tailCtrl1X + 4, tailCtrl1Y + 2, tailRootX, tailRootY + 3);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
 
-		// Wicker cross-hatch weaving texture
-		ctx.strokeStyle = "rgba(92, 40, 10, 0.65)";
-		ctx.lineWidth = 1.6;
-		for (let row = -24; row < 24; row += 7) {
+		// Lush flame-shaped dark mahogany & crimson tail brush flowing seamlessly from the stem
+		const tuftTipX = tailEndX + 4 - tailWave1 * 4;
+		const tuftTipY = tailEndY + 16;
+		this.setupPath(ctx, "#271003", ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(tailEndX - 1, tailEndY - 1);
+		ctx.bezierCurveTo(tailEndX - 10, tailEndY + 5, tuftTipX - 11, tuftTipY - 6, tuftTipX, tuftTipY);
+		ctx.bezierCurveTo(tuftTipX + 9, tuftTipY - 4, tailEndX + 12, tailEndY + 6, tailEndX + 4, tailEndY - 1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Warm crimson & orange inner hair locks on tail tuft
+		ctx.fillStyle = "#991B1B";
+		ctx.beginPath();
+		ctx.moveTo(tailEndX, tailEndY);
+		ctx.bezierCurveTo(tailEndX - 5, tailEndY + 5, tuftTipX - 5, tuftTipY - 6, tuftTipX, tuftTipY - 3);
+		ctx.bezierCurveTo(tuftTipX + 5, tuftTipY - 6, tailEndX + 6, tailEndY + 5, tailEndX + 2, tailEndY);
+		ctx.closePath();
+		ctx.fill();
+		ctx.restore();
+
+		// 4. Giant Woven Wicker Basket on His Back ("Kramářská nůše na zádech")
+		ctx.save();
+		const basketSway = -limpTilt * 10 + Math.sin(time * 2.6) * 0.04;
+		const bx = -16;
+		const by = -12 + limpBob;
+		ctx.translate(bx, by);
+		ctx.rotate(-0.36 + basketSway);
+
+		// Overflowing Wares at the Top of the Nůše:
+		// A. Upper wooden crate boards
+		this.setupPath(ctx, "#B45309", ink, 2);
+		ctx.fillRect(-18, -56, 16, 14);
+		ctx.strokeRect(-18, -56, 16, 14);
+		this.setupPath(ctx, "#92400E", ink, 2);
+		ctx.fillRect(4, -54, 15, 13);
+		ctx.strokeRect(4, -54, 15, 13);
+
+		// B. Carved Wooden Treasure Chest (Dřevěná truhlička s madlem)
+		this.setupPath(ctx, "#78350F", ink, 2.2);
+		ctx.fillRect(-12, -48, 26, 16);
+		ctx.strokeRect(-12, -48, 26, 16);
+		ctx.fillStyle = "#3B1505";
+		ctx.fillRect(-12, -48, 4, 16);
+		ctx.fillRect(10, -48, 4, 16);
+		// Brass swing handle on chest
+		ctx.strokeStyle = "#FACC15";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(1, -41, 4.5, 0, Math.PI);
+		ctx.stroke();
+		// Red leather strap over left of chest
+		this.setupPath(ctx, "#B91C1C", ink, 1.6);
+		ctx.fillRect(11, -50, 4.5, 18);
+		ctx.strokeRect(11, -50, 4.5, 18);
+
+		// C. Golden Wheat Sheaf & Dried Herbs sticking out
+		ctx.strokeStyle = "#D97706";
+		ctx.lineWidth = 1.8;
+		for (let wi = 0; wi < 3; wi++) {
+			ctx.beginPath();
+			ctx.moveTo(-14, -36);
+			ctx.lineTo(-24 - wi * 2, -46 + wi * 3);
+			ctx.stroke();
+			ctx.fillStyle = "#FACC15";
+			ctx.beginPath();
+			ctx.arc(-25 - wi * 2, -46 + wi * 3, 2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		// Herbs near neck
+		ctx.strokeStyle = "#15803D";
+		ctx.beginPath();
+		ctx.moveTo(14, -36);
+		ctx.lineTo(22, -48);
+		ctx.stroke();
+		ctx.fillStyle = "#EAB308";
+		ctx.beginPath();
+		ctx.arc(22, -48, 2.5, 0, Math.PI * 2);
+		ctx.arc(19, -45, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// D. Tied Linen Sacks & Stoneware Jug
+		this.setupPath(ctx, "#D6C7B2", ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(-13, -35, 9, 8, -0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#78350F", ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(14, -34, 7.5, 6.5, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// E. Rolled Red Embroidered Folk Cloth / Carpet (Červený vyšívaný pás)
+		this.setupPath(ctx, "#B91C1C", ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(0, -34, 12, 8.5, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// White & gold folk embroidery lines
+		ctx.strokeStyle = "#FEF08A";
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(-6, -40);
+		ctx.lineTo(4, -27);
+		ctx.moveTo(0, -41);
+		ctx.lineTo(8, -28);
+		ctx.stroke();
+
+		// Main Wicker Basket Body (Tělo pletené nůše)
+		const bGrad = ctx.createLinearGradient(-22, -28, 22, 28);
+		bGrad.addColorStop(0, "#78350F");
+		bGrad.addColorStop(0.35, "#D97706");
+		bGrad.addColorStop(0.7, "#B45309");
+		bGrad.addColorStop(1, "#451A03");
+		this.setupPath(ctx, bGrad, ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-21, -28);
+		ctx.lineTo(21, -28);
+		ctx.quadraticCurveTo(23, 0, 16, 26);
+		ctx.lineTo(-16, 26);
+		ctx.quadraticCurveTo(-23, 0, -21, -28);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Wicker basketry cross-hatch weave
+		ctx.strokeStyle = "rgba(59, 21, 5, 0.75)";
+		ctx.lineWidth = 1.5;
+		for (let row = -20; row <= 20; row += 6.5) {
 			ctx.beginPath();
 			ctx.moveTo(-18, row);
-			ctx.lineTo(22, row);
+			ctx.lineTo(18, row);
 			ctx.stroke();
 		}
-		for (let col = -14; col < 20; col += 7) {
+		for (let col = -12; col <= 14; col += 6.5) {
 			ctx.beginPath();
-			ctx.moveTo(col, -30);
-			ctx.lineTo(col - 3, 26);
+			ctx.moveTo(col, -26);
+			ctx.lineTo(col * 0.85, 24);
 			ctx.stroke();
 		}
 
-		// Braided basket top rim
-		this.setupPath(ctx, "#92400E", COLORS.ink, 2.8);
+		// Thick braided top wicker rim
+		this.setupPath(ctx, "#D97706", ink, 2.4);
 		ctx.beginPath();
-		ctx.ellipse(2, -33, 23, 7, 0, 0, Math.PI * 2);
+		ctx.roundRect(-23, -31, 46, 6.5, 3);
 		ctx.fill();
 		ctx.stroke();
 
-		// Wares inside the basket:
-		// A. Malovaná dřevěná truhlička (painted chest)
-		this.setupPath(ctx, "#78350F", COLORS.ink, 2.5);
-		ctx.fillRect(-14, -54, 22, 22);
-		ctx.strokeRect(-14, -54, 22, 22);
-		// Iron corner brackets and lock
-		ctx.fillStyle = "#292524";
-		ctx.fillRect(-15, -55, 5, 5);
-		ctx.fillRect(4, -55, 5, 5);
-		ctx.fillStyle = "#F59E0B";
-		ctx.fillRect(-4, -46, 5, 6);
-		// Painted red folk flower on chest
-		ctx.fillStyle = "#DC2626";
+		// F. Lively Moving Mouse Rézinka peeking out of the backpack nůše!
+		const mouseHop = Math.sin(time * 5.2) * 1.8;
+		const mouseScurry = Math.cos(time * 3.4) * 1.6;
+		const mx = -11 + mouseScurry;
+		const my = -33 + mouseHop;
+		// Pink curling mouse tail out the back of the nůše
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 3.2;
 		ctx.beginPath();
-		ctx.arc(-2, -49, 2.6, 0, Math.PI * 2);
-		ctx.fill();
-
-		// B. Svinutý koberec / peřinka (rolled striped blanket)
-		this.setupPath(ctx, "#DC2626", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(12, -45, 9, 13, 0.35, 0, Math.PI * 2);
-		ctx.fill();
+		ctx.moveTo(mx - 6, my + 5);
+		ctx.quadraticCurveTo(mx - 15, my + 8 + mouseHop, mx - 13, my + 16);
 		ctx.stroke();
-		// Gold folk stripes on blanket
-		ctx.strokeStyle = "#FBBF24";
-		ctx.lineWidth = 2.2;
+		ctx.strokeStyle = "#FDA4AF";
+		ctx.lineWidth = 1.8;
 		ctx.beginPath();
-		ctx.arc(11, -45, 6, -1.2, 1.2);
+		ctx.moveTo(mx - 6, my + 5);
+		ctx.quadraticCurveTo(mx - 15, my + 8 + mouseHop, mx - 13, my + 16);
 		ctx.stroke();
+		// Round mouse ears with pink insides
+		this.setupPath(ctx, "#78716C", ink, 1.5);
 		ctx.beginPath();
-		ctx.arc(13, -45, 6, -1.2, 1.2);
-		ctx.stroke();
-
-		// C. Pytel se semínky / kořením (burlap grain sack)
-		this.setupPath(ctx, "#D6C7A1", COLORS.ink, 2.2);
-		ctx.beginPath();
-		ctx.ellipse(-2, -38, 11, 8, -0.2, 0, Math.PI * 2);
+		ctx.arc(mx - 4, my - 4, 3.2, 0, Math.PI * 2);
+		ctx.arc(mx + 3.5, my - 4, 3.2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		ctx.strokeStyle = "#78350F";
-		ctx.lineWidth = 1.5;
-		ctx.beginPath();
-		ctx.moveTo(-4, -44);
-		ctx.lineTo(0, -44);
-		ctx.stroke();
-
-		// D. Malá zvědavá myška (cute field mouse peeking out)
-		const mouseTwitch = Math.sin(time * 6.5) > 0.82 ? 1.8 : 0;
-		ctx.fillStyle = "#78716C";
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.5;
-		ctx.beginPath();
-		ctx.ellipse(-8, -43 + mouseTwitch * 0.3, 5, 4.2, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		// Ears
 		ctx.fillStyle = "#FDA4AF";
 		ctx.beginPath();
-		ctx.arc(-11, -47 + mouseTwitch, 2.4, 0, Math.PI * 2);
-		ctx.arc(-6, -47 - mouseTwitch, 2.4, 0, Math.PI * 2);
+		ctx.arc(mx - 4, my - 4, 1.9, 0, Math.PI * 2);
+		ctx.arc(mx + 3.5, my - 4, 1.9, 0, Math.PI * 2);
+		ctx.fill();
+		// Mouse head
+		this.setupPath(ctx, "#A8A29E", ink, 1.6);
+		ctx.beginPath();
+		ctx.ellipse(mx, my, 4.8, 4.2, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		// Eyes & Nose
-		ctx.fillStyle = "#111";
+		// Glossy eyes & pink nose
+		ctx.fillStyle = "#1C1917";
 		ctx.beginPath();
-		ctx.arc(-9, -43, 1, 0, Math.PI * 2);
+		ctx.arc(mx - 1.6, my - 0.5, 1.1, 0, Math.PI * 2);
+		ctx.arc(mx + 1.8, my - 0.5, 1.1, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.fillStyle = "#F43F5E";
 		ctx.beginPath();
-		ctx.arc(-11.5, -42, 1, 0, Math.PI * 2);
+		ctx.arc(mx + 0.2, my + 1.4, 1.1, 0, Math.PI * 2);
 		ctx.fill();
+		// Little pink paws gripping the braided wicker rim
+		this.setupPath(ctx, "#FDA4AF", ink, 1.2);
+		ctx.beginPath();
+		ctx.arc(mx - 2.5, my + 3.8, 1.6, 0, Math.PI * 2);
+		ctx.arc(mx + 2.5, my + 3.8, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
 
-		// E. Plechová konvička (tin mug / can dangling from basket)
+		// G. Swaying Copper Bell-Lantern (Měděná lucerna / zvonec)
 		ctx.save();
-		const canSway = Math.sin(time * (isMoving ? 8.2 : 2.5) + 1.2) * 0.25;
-		ctx.translate(22, 12);
-		ctx.rotate(canSway);
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.4;
+		const lanternSway = Math.sin(time * (isMoving ? 8.2 : 2.6) + 0.5) * 0.24;
+		ctx.translate(-11, -18);
+		ctx.rotate(0.28 + lanternSway);
+		this.setupPath(ctx, "#F59E0B", ink, 1.8);
 		ctx.beginPath();
-		ctx.moveTo(0, -8);
-		ctx.lineTo(0, 0);
+		ctx.moveTo(-4, 0);
+		ctx.lineTo(4, 0);
+		ctx.lineTo(6.5, 15);
+		ctx.lineTo(-6.5, 15);
+		ctx.closePath();
+		ctx.fill();
 		ctx.stroke();
-		this.setupPath(ctx, "#94A3B8", COLORS.ink, 1.8);
-		ctx.fillRect(-3, 0, 7, 10);
-		ctx.strokeRect(-3, 0, 7, 10);
-		// Handle
-		ctx.beginPath();
-		ctx.arc(4, 5, 3, -Math.PI / 2, Math.PI / 2);
-		ctx.stroke();
+		ctx.fillStyle = "#FEF08A";
+		ctx.fillRect(-2, 3, 2, 9);
 		ctx.restore();
 
-		// F. Plechová svítící lucerna (lantern hanging on side of basket)
+		// H. Swaying Tin Milk Can (Plechová konvička / bandaska na provaze)
 		ctx.save();
-		const lanternSway = Math.sin(time * (isMoving ? 8.2 : 2.5) + 0.5) * 0.28;
-		ctx.translate(-19, 6);
-		ctx.rotate(lanternSway);
-		// Chain / cord
-		ctx.strokeStyle = "#475569";
-		ctx.lineWidth = 1.6;
-		ctx.beginPath();
-		ctx.moveTo(0, -10);
-		ctx.lineTo(0, 0);
-		ctx.stroke();
-		// Lantern cap
-		this.setupPath(ctx, "#334155", COLORS.ink, 1.8);
-		ctx.beginPath();
-		ctx.moveTo(-5, 0);
-		ctx.lineTo(5, 0);
-		ctx.lineTo(0, -4);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		// Glass with warm candlelight
-		this.setupPath(ctx, "#FEF08A", COLORS.ink, 1.8);
-		ctx.fillRect(-4, 0, 8, 11);
-		ctx.strokeRect(-4, 0, 8, 11);
-		// Flame inside
-		ctx.fillStyle = "#F59E0B";
-		ctx.beginPath();
-		ctx.ellipse(0, 6, 2, 3.5, 0, 0, Math.PI * 2);
-		ctx.fill();
-		// Candle glow
-		ctx.fillStyle = "rgba(253, 224, 71, 0.25)";
-		ctx.beginPath();
-		ctx.arc(0, 6, 12 + Math.sin(time * 8) * 2, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.restore();
-
-		ctx.restore(); // End Basket
-
-		// 5. Legs & Asymmetrical Feet (Hoof vs Boot)
-		// Right leg: The Cloven Hoof (Kopyto)
-		ctx.save();
-		const hx = 6 + hoofSwing;
-		const hy = 24 + limpBob * 0.3;
-		// Red breeches upper leg
-		this.drawBentLimb(ctx, 4, 12 + limpBob, 6 + hoofSwing * 0.4, 22, hx, hy, "#991B1B", 9);
-		// Shaggy fetlock fur (dark reddish-black wool above hoof)
-		this.setupPath(ctx, "#2A1810", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(hx, hy + 2, 8, 5, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		// Red fur tufts around ankle
-		ctx.fillStyle = "#7F1D1D";
-		ctx.beginPath();
-		ctx.arc(hx - 4, hy + 1, 3, 0, Math.PI * 2);
-		ctx.arc(hx + 4, hy + 1, 3, 0, Math.PI * 2);
-		ctx.fill();
-		// Heavy Cloven Hoof (Dark horn with central cleft)
-		const hoofGroundY = 34;
-		this.setupPath(ctx, "#1C1410", COLORS.ink, 2.6);
-		ctx.beginPath();
-		ctx.moveTo(hx - 8, hy + 4);
-		ctx.quadraticCurveTo(hx - 9, hoofGroundY, hx - 5, hoofGroundY);
-		ctx.lineTo(hx - 1, hoofGroundY);
-		ctx.lineTo(hx - 1, hy + 7);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.beginPath();
-		ctx.moveTo(hx + 1, hy + 7);
-		ctx.lineTo(hx + 1, hoofGroundY);
-		ctx.lineTo(hx + 7, hoofGroundY);
-		ctx.quadraticCurveTo(hx + 9, hoofGroundY, hx + 8, hy + 4);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		// Horn highlight gleam
-		ctx.fillStyle = "rgba(180, 140, 110, 0.45)";
-		ctx.fillRect(hx - 7, hy + 6, 2.5, 4);
-		ctx.fillRect(hx + 4, hy + 6, 2.5, 4);
-		ctx.restore();
-
-		// Left leg: The Laced Peddler's Leather Boot (Bota / Krpec)
-		ctx.save();
-		const bxLeg = -8 + bootSwing;
-		const byLeg = 24 + limpBob * 0.3;
-		// Red breeches
-		this.drawBentLimb(ctx, -6, 12 + limpBob, -8 + bootSwing * 0.4, 22, bxLeg, byLeg, "#991B1B", 8);
-		// Laced Leather Boot
-		const bootGroundY = 34;
-		this.setupPath(ctx, "#5C3A21", COLORS.ink, 2.4);
-		ctx.beginPath();
-		ctx.moveTo(bxLeg - 6, byLeg);
-		ctx.lineTo(bxLeg - 7, bootGroundY);
-		ctx.lineTo(bxLeg + 9, bootGroundY);
-		ctx.quadraticCurveTo(bxLeg + 10, bootGroundY - 4, bxLeg + 5, byLeg + 4);
-		ctx.lineTo(bxLeg + 4, byLeg);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		// Thick dark sole
-		ctx.fillStyle = "#261810";
-		ctx.fillRect(bxLeg - 7.5, bootGroundY - 2.5, 17, 3);
-		// Laces on boot
+		const canSway = Math.cos(time * (isMoving ? 8.2 : 2.5) + 1.1) * 0.26;
+		ctx.translate(-22, -6);
+		ctx.rotate(0.32 + canSway);
+		// Rope loop
 		ctx.strokeStyle = "#D97706";
-		ctx.lineWidth = 1.4;
+		ctx.lineWidth = 2.2;
 		ctx.beginPath();
-		ctx.moveTo(bxLeg - 4, byLeg + 2);
-		ctx.lineTo(bxLeg + 2, byLeg + 5);
-		ctx.moveTo(bxLeg + 2, byLeg + 2);
-		ctx.lineTo(bxLeg - 4, byLeg + 5);
-		ctx.moveTo(bxLeg - 3, byLeg + 6);
-		ctx.lineTo(bxLeg + 3, byLeg + 8);
+		ctx.moveTo(0, -6);
+		ctx.lineTo(0, 2);
 		ctx.stroke();
-		// Brass buckle
-		ctx.fillStyle = "#F59E0B";
-		ctx.fillRect(bxLeg - 6, byLeg + 4, 3, 3);
+		// Tin body
+		this.setupPath(ctx, "#94A3B8", ink, 1.8);
+		ctx.beginPath();
+		ctx.roundRect(-5, 2, 10, 14, 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#475569";
+		ctx.fillRect(-3.5, -1, 7, 3.5);
 		ctx.restore();
 
-		// 6. Torso & Patchwork Sheepskin Coat (Kožich)
+		ctx.restore(); // End Backpack Nůše
+
+		// 5. Legs & Asymmetrical Footwear (Rear Laced Boot + Front Cloven Hoof)
+		// Rear Leg: Heavy Laced Peddler's Leather Boot (Šněrovací kožená škorně)
+		ctx.save();
+		const bxLeg = -10 + bootSwing;
+		const byLeg = 22 + limpBob * 0.3;
+		const bootGroundY = 35;
+		// Boot shaft
+		this.setupPath(ctx, "#451A03", ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-16, 10 + limpBob);
+		ctx.lineTo(bxLeg - 6, byLeg + 2);
+		ctx.lineTo(bxLeg + 6, byLeg + 2);
+		ctx.lineTo(-4, 10 + limpBob);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Rounded leather boot foot & sole
+		this.setupPath(ctx, "#78350F", ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(bxLeg - 7, byLeg);
+		ctx.lineTo(bxLeg - 9, bootGroundY);
+		ctx.lineTo(bxLeg + 13, bootGroundY);
+		ctx.quadraticCurveTo(bxLeg + 15, bootGroundY - 7, bxLeg + 6, byLeg + 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Dark sole
+		ctx.fillStyle = "#271003";
+		ctx.fillRect(bxLeg - 9, bootGroundY - 3, 22, 3);
+		// Golden leather laces & straps across boot
+		ctx.strokeStyle = "#D97706";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(bxLeg - 6, byLeg - 2);
+		ctx.lineTo(bxLeg + 5, byLeg);
+		ctx.moveTo(bxLeg - 6, byLeg + 2);
+		ctx.lineTo(bxLeg + 5, byLeg + 4);
+		ctx.moveTo(bxLeg - 2, byLeg + 4);
+		ctx.lineTo(bxLeg + 8, byLeg + 8);
+		ctx.stroke();
+		ctx.restore();
+
+		// Front Dominant Leg: Puffed Crimson Breeches, Coiled Wrappings, Shaggy Fur & Massive Cloven Hoof
+		ctx.save();
+		const hx = 10 + hoofSwing;
+		const hy = 21 + limpBob * 0.3;
+		// Puffed crimson-red breeches
+		this.setupPath(ctx, "#DC2626", ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(hx - 2, hy - 7, 10, 7.5, -0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Dark-brown coiled leg wrappings (ovinky)
+		this.setupPath(ctx, "#3B2314", ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(hx, hy - 1, 8.5, 3.8, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Flared shaggy crimson-red & dark mahogany fur skirt above hoof
+		this.setupPath(ctx, "#991B1B", ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(hx - 10, hy + 1);
+		ctx.lineTo(hx + 10, hy + 1);
+		ctx.lineTo(hx + 13, hy + 7);
+		ctx.lineTo(hx + 6, hy + 5);
+		ctx.lineTo(hx + 2, hy + 8);
+		ctx.lineTo(hx - 3, hy + 5);
+		ctx.lineTo(hx - 8, hy + 8);
+		ctx.lineTo(hx - 13, hy + 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Massive Sculpted Bronze-Brown Cloven Hoof (Rozeklané kopyto)
+		const hoofGroundY = 35;
+		const hoofGrad = ctx.createLinearGradient(hx - 10, hy + 4, hx + 12, hoofGroundY);
+		hoofGrad.addColorStop(0, "#A16207");
+		hoofGrad.addColorStop(0.5, "#78350F");
+		hoofGrad.addColorStop(1, "#271003");
+		this.setupPath(ctx, hoofGrad, ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(hx - 9, hy + 5);
+		ctx.lineTo(hx + 9, hy + 5);
+		ctx.quadraticCurveTo(hx + 14, hy + 10, hx + 15, hoofGroundY);
+		ctx.lineTo(hx + 4, hoofGroundY);
+		ctx.lineTo(hx + 3, hy + 9);
+		ctx.lineTo(hx + 1, hy + 9);
+		ctx.lineTo(hx - 1, hoofGroundY);
+		ctx.lineTo(hx - 11, hoofGroundY);
+		ctx.quadraticCurveTo(hx - 12, hy + 10, hx - 9, hy + 5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Hoof highlight
+		ctx.strokeStyle = "#D97706";
+		ctx.lineWidth = 1.5;
+		ctx.beginPath();
+		ctx.moveTo(hx + 6, hy + 7);
+		ctx.lineTo(hx + 10, hoofGroundY - 2);
+		ctx.stroke();
+		ctx.restore();
+
+		// 6. Torso, Patchwork Sheepskin Coat (Záplatovaný kožich s beránkem) & Hip Satchel
 		ctx.save();
 		ctx.translate(0, limpBob);
 		ctx.rotate(limpTilt);
 
-		// Main coat shape (stout, round belly)
-		const coatGrad = ctx.createLinearGradient(-24, -20, 24, 20);
-		coatGrad.addColorStop(0, "#8C5E37");
-		coatGrad.addColorStop(1, "#5E3A21");
-		this.setupPath(ctx, coatGrad, COLORS.ink, 3.8);
+		// Main earthy brown sheepskin coat
+		const coatGrad = ctx.createLinearGradient(-24, -22, 22, 20);
+		coatGrad.addColorStop(0, "#92400E");
+		coatGrad.addColorStop(0.55, "#78350F");
+		coatGrad.addColorStop(1, "#451A03");
+		this.setupPath(ctx, coatGrad, ink, 3.2);
 		ctx.beginPath();
-		ctx.moveTo(-18, -18);
-		ctx.quadraticCurveTo(-26, 0, -22, 18);
-		ctx.lineTo(20, 18);
-		ctx.quadraticCurveTo(24, 0, 16, -18);
+		ctx.moveTo(-20, -20);
+		ctx.quadraticCurveTo(-28, 2, -24, 19);
+		ctx.lineTo(18, 19);
+		ctx.quadraticCurveTo(22, 0, 14, -20);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
 
-		// Colorful patches on the coat:
-		// Patch 1: Folk crimson red patch with crosses (back sleeve/shoulder)
-		this.setupPath(ctx, "#B91C1C", COLORS.ink, 1.8);
-		ctx.fillRect(-17, -4, 11, 10);
-		ctx.strokeRect(-17, -4, 11, 10);
-		ctx.strokeStyle = "#1C1917";
-		ctx.lineWidth = 1.2;
+		// Colorful sewn folk patches with cross-stitches:
+		// Crimson red patch
+		this.setupPath(ctx, "#DC2626", ink, 1.8);
+		ctx.fillRect(-16, -8, 11, 9);
+		ctx.strokeRect(-16, -8, 11, 9);
+		// Teal-green patch
+		this.setupPath(ctx, "#0D9488", ink, 1.8);
+		ctx.fillRect(-20, 1, 10, 8);
+		ctx.strokeRect(-20, 1, 10, 8);
+		// Mustard ochre patch
+		this.setupPath(ctx, "#D97706", ink, 1.8);
+		ctx.fillRect(-10, 5, 11, 9);
+		ctx.strokeRect(-10, 5, 11, 9);
+		// Olive green patch
+		this.setupPath(ctx, "#4D7C0F", ink, 1.8);
+		ctx.fillRect(4, 3, 10, 9);
+		ctx.strokeRect(4, 3, 10, 9);
+		// Yellow cross-stitch marks
+		ctx.strokeStyle = "#FEF08A";
+		ctx.lineWidth = 1.3;
 		ctx.beginPath();
-		ctx.moveTo(-15, -2); ctx.lineTo(-13, 0); ctx.moveTo(-13, -2); ctx.lineTo(-15, 0);
-		ctx.moveTo(-10, 2); ctx.lineTo(-8, 4); ctx.moveTo(-8, 2); ctx.lineTo(-10, 4);
+		ctx.moveTo(-14, -6); ctx.lineTo(-12, -4); ctx.moveTo(-12, -6); ctx.lineTo(-14, -4);
+		ctx.moveTo(-8, 7); ctx.lineTo(-6, 9); ctx.moveTo(-6, 7); ctx.lineTo(-8, 9);
+		ctx.moveTo(6, 5); ctx.lineTo(8, 7); ctx.moveTo(8, 5); ctx.lineTo(6, 7);
 		ctx.stroke();
 
-		// Patch 2: Forest olive green patch (front lower)
-		this.setupPath(ctx, "#4D7C0F", COLORS.ink, 1.8);
-		ctx.fillRect(6, 4, 10, 9);
-		ctx.strokeRect(6, 4, 10, 9);
-		ctx.strokeStyle = "#FBBF24";
-		ctx.lineWidth = 1.1;
+		// Golden-Ochre Curly Lambskin Trim (Žlutohnědý beránek — NOT Santa white!)
+		this.setupPath(ctx, "#FACC15", ink, 2.5);
 		ctx.beginPath();
-		ctx.moveTo(8, 6); ctx.lineTo(10, 8); ctx.moveTo(10, 6); ctx.lineTo(8, 8);
-		ctx.stroke();
-
-		// Patch 3: Amber ochre patch
-		this.setupPath(ctx, "#D97706", COLORS.ink, 1.8);
-		ctx.fillRect(-6, 6, 9, 8);
-		ctx.strokeRect(-6, 6, 9, 8);
-
-		// Fluffy sheepskin shearling trim around bottom hem
-		this.setupPath(ctx, "#FAF7EE", COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.moveTo(-24, 18);
-		for (let hx = -24; hx <= 20; hx += 7) {
-			ctx.quadraticCurveTo(hx + 3.5, 23, hx + 7, 18);
+		ctx.moveTo(-25, 18);
+		for (let hx = -25; hx <= 17; hx += 7) {
+			ctx.quadraticCurveTo(hx + 3.5, 23.5, hx + 7, 18);
 		}
-		ctx.quadraticCurveTo(24, 18, 20, 15);
-		ctx.lineTo(-24, 15);
+		ctx.lineTo(18, 14);
+		ctx.lineTo(-24, 14);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		// Sheep wool curl details
-		ctx.strokeStyle = "#D1C7B7";
-		ctx.lineWidth = 1.2;
-		for (let ci = -18; ci < 18; ci += 8) {
+		// Golden lambskin wool stipple dots
+		ctx.fillStyle = "#78350F";
+		for (let di = -20; di <= 14; di += 7) {
 			ctx.beginPath();
-			ctx.arc(ci, 18, 2.5, 0, Math.PI);
+			ctx.arc(di, 17, 1.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Heavy Leather Shoulder Strap holding the Nůše
+		this.setupPath(ctx, "#78350F", ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-8, -20);
+		ctx.quadraticCurveTo(4, -4, 0, 14);
+		ctx.lineTo(6, 14);
+		ctx.quadraticCurveTo(10, -4, -2, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Square Buckled Leather Hip Satchel (Kožená brašna s přezkou)
+		this.setupPath(ctx, "#78350F", ink, 2.2);
+		ctx.beginPath();
+		ctx.roundRect(-8, 4, 15, 15, 2.5);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#92400E", ink, 1.8);
+		ctx.beginPath();
+		ctx.roundRect(-8, 4, 15, 7, 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FACC15";
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 1.4;
+		ctx.fillRect(-2, 9, 4, 4);
+		ctx.strokeRect(-2, 9, 4, 4);
+
+		// Left Arm & Patched Sleeve with Golden Lambskin Cuff & Taloned Hand
+		ctx.save();
+		const strapArmWave = Math.sin(time * (isMoving ? 8.2 : 2.4)) * 0.12;
+		ctx.translate(-6, -6);
+		ctx.rotate(strapArmWave);
+		this.setupPath(ctx, "#78350F", ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(2, 2, 10, 7, 0.25, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Red patch on sleeve
+		this.setupPath(ctx, "#DC2626", ink, 1.5);
+		ctx.fillRect(-3, -2, 6, 5);
+		ctx.strokeRect(-3, -2, 6, 5);
+		// Golden lambskin cuff
+		this.setupPath(ctx, "#FACC15", ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(10, 4, 3.8, 5.8, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Clawed red-orange devil hand with curved black talons
+		this.setupPath(ctx, "#EA580C", ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(15, 5, 5, 4, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#1C1917";
+		for (let ci = 0; ci < 3; ci++) {
+			ctx.beginPath();
+			ctx.moveTo(18, 2 + ci * 2.6);
+			ctx.lineTo(22.5, 4 + ci * 2.8);
+			ctx.lineTo(18, 4.5 + ci * 2.6);
+			ctx.closePath();
+			ctx.fill();
+		}
+		ctx.restore();
+
+		ctx.restore(); // End Torso
+
+		// 7. Head, Ribbed Ram Horns, Golden Lambskin Cap, Spectacles, Crooked Grin, Beard & Pipe
+		ctx.save();
+		const headBob = Math.sin(time * (isMoving ? 14 : 2.4)) * 1.5;
+		ctx.translate(8, -24 + limpBob + headBob);
+		ctx.rotate(limpTilt * 0.35);
+
+		// Long, Wild, Wiry, Wavy Cream-Parchment Beard (Dlouhý vlnitý plavý vous)
+		const beardSway = Math.sin(time * 3.4) * 2.2;
+		this.setupPath(ctx, "#E7DEC8", ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-14, -2);
+		ctx.quadraticCurveTo(-20, 14, -12 + beardSway * 0.5, 28);
+		ctx.quadraticCurveTo(-2 + beardSway, 38, 8 + beardSway, 34);
+		ctx.quadraticCurveTo(18 + beardSway * 0.6, 22, 15, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Wavy individual hair locks inside beard
+		ctx.strokeStyle = "#786858";
+		ctx.lineWidth = 1.5;
+		for (let bxOff of [-7, -1, 5, 10]) {
+			ctx.beginPath();
+			ctx.moveTo(bxOff, 4);
+			ctx.quadraticCurveTo(bxOff - 3 + beardSway * 0.4, 15, bxOff + 2 + beardSway * 0.7, 24);
+			ctx.quadraticCurveTo(bxOff + 5 + beardSway, 30, bxOff + 1 + beardSway, 34);
 			ctx.stroke();
 		}
 
-		// Diagonal leather satchel strap across chest
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 6;
-		ctx.beginPath();
-		ctx.moveTo(-14, -18);
-		ctx.lineTo(16, 12);
-		ctx.stroke();
-		ctx.strokeStyle = "#451A03";
-		ctx.lineWidth = 3.6;
-		ctx.beginPath();
-		ctx.moveTo(-14, -18);
-		ctx.lineTo(16, 12);
-		ctx.stroke();
-		// Brass satchel buckle
-		ctx.fillStyle = "#F59E0B";
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.6;
-		ctx.fillRect(2, -2, 6, 6);
-		ctx.strokeRect(2, -2, 6, 6);
+		// Pointed Red Devil Ears jutting out on both sides
+		for (let earSide of [-1, 1]) {
+			this.setupPath(ctx, "#EA580C", ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(earSide * 13, -7);
+			ctx.lineTo(earSide * 25, -16);
+			ctx.lineTo(earSide * 15, -1);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#7C2D12";
+			ctx.beginPath();
+			ctx.moveTo(earSide * 14, -6);
+			ctx.lineTo(earSide * 21, -13);
+			ctx.lineTo(earSide * 15, -2);
+			ctx.closePath();
+			ctx.fill();
+		}
 
-		// Leather hip satchel (brašna)
-		this.setupPath(ctx, "#5C3317", COLORS.ink, 2.2);
+		// Golden-Ochre Curly Lambskin Cap (Beranice)
+		this.setupPath(ctx, "#92400E", ink, 2.5);
 		ctx.beginPath();
-		ctx.roundRect(10, 6, 14, 14, 3);
+		ctx.arc(0, -13, 16, Math.PI, 0);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
+		this.setupPath(ctx, "#FACC15", ink, 2.6);
 		ctx.beginPath();
-		ctx.roundRect(11, 7, 12, 7, 2);
-		ctx.stroke();
-		ctx.fillStyle = "#F59E0B";
-		ctx.fillRect(15, 11, 3, 4);
-
-		// Back arm resting on basket strap
-		ctx.save();
-		this.drawBentLimb(ctx, -14, -10, -22, -2, -12, 4, "#784D2B", 10);
-		// Fluffy cuff
-		this.setupPath(ctx, "#FAF7EE", COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(-14, 2, 5, 3.5, 0.4, 0, Math.PI * 2);
+		ctx.ellipse(0, -12, 18.5, 6, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-		// Red clawed hand holding strap
-		this.setupPath(ctx, "#D34538", COLORS.ink, 1.8);
-		ctx.beginPath();
-		ctx.arc(-11, 4, 3.8, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		// Claws
-		ctx.fillStyle = "#111";
-		ctx.beginPath();
-		ctx.arc(-10, 7, 1.2, 0, Math.PI * 2);
-		ctx.arc(-8, 5, 1.2, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.restore();
-		ctx.restore(); // End Torso
+		ctx.fillStyle = "#78350F";
+		for (let bi = -12; bi <= 12; bi += 6) {
+			ctx.beginPath();
+			ctx.arc(bi, -12, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+		}
 
-		// 7. Head, Face, Beard, Horns & Hat
-		ctx.save();
-		const headBob = Math.sin(time * (isMoving ? 14 : 2.4)) * 1.6;
-		ctx.translate(2, -28 + headBob);
-		ctx.rotate(limpTilt * 0.4);
-
-		// Big curved ram/devil horns (behind ears/hat)
+		// Massive Curving Ribbed Ram Horns (Mohutné vroubkované rohy)
 		ctx.save();
 		for (let hornSide of [-1, 1]) {
 			ctx.save();
 			ctx.scale(hornSide, 1);
-			// Horn curve
-			const hGrad = ctx.createLinearGradient(8, -12, 28, -38);
-			hGrad.addColorStop(0, "#451A03");
-			hGrad.addColorStop(0.6, "#2E180E");
-			hGrad.addColorStop(1, "#180C07");
-			this.setupPath(ctx, hGrad, COLORS.ink, 3.4);
+			const hGrad = ctx.createLinearGradient(6, -14, 30, -36);
+			hGrad.addColorStop(0, "#F59E0B");
+			hGrad.addColorStop(0.45, "#B45309");
+			hGrad.addColorStop(1, "#3B1505");
+			this.setupPath(ctx, hGrad, ink, 2.8);
 			ctx.beginPath();
-			ctx.moveTo(8, -12);
-			ctx.bezierCurveTo(22, -22, 34, -18, 30, -38);
-			ctx.bezierCurveTo(20, -32, 14, -22, 4, -14);
+			ctx.moveTo(5, -14);
+			ctx.bezierCurveTo(16, -28, 34, -26, 32, -10);
+			ctx.bezierCurveTo(30, -2, 22, -4, 24, -11);
+			ctx.bezierCurveTo(25, -16, 16, -18, 10, -10);
 			ctx.closePath();
 			ctx.fill();
 			ctx.stroke();
-			// Ridges along the horn
-			ctx.strokeStyle = "#8D5B32";
-			ctx.lineWidth = 1.8;
-			for (let ri = 0; ri < 5; ri++) {
-				const rt = 0.2 + ri * 0.15;
+			// Horn rings
+			ctx.strokeStyle = "#271003";
+			ctx.lineWidth = 1.6;
+			for (let ri = 0; ri < 4; ri++) {
+				const rx = 9 + ri * 5;
+				const ry = -16 - (ri < 2 ? ri * 3 : (3 - ri) * 2);
 				ctx.beginPath();
-				const rx1 = 8 + rt * 18;
-				const ry1 = -13 - rt * 18;
-				ctx.moveTo(rx1, ry1);
-				ctx.lineTo(rx1 - 4, ry1 + 3);
+				ctx.moveTo(rx, ry - 3);
+				ctx.lineTo(rx - 2, ry + 3);
 				ctx.stroke();
 			}
 			ctx.restore();
 		}
 		ctx.restore();
 
-		// Devil Head base (red skin)
-		this.setupPath(ctx, "#D34538", COLORS.ink, 3.2);
+		// Terracotta-Coral Devil Face Base
+		const faceGrad = ctx.createLinearGradient(-14, -14, 14, 10);
+		faceGrad.addColorStop(0, "#FB923C");
+		faceGrad.addColorStop(0.5, "#EA580C");
+		faceGrad.addColorStop(1, "#C2410C");
+		this.setupPath(ctx, faceGrad, ink, 2.6);
 		ctx.beginPath();
-		ctx.ellipse(0, -6, 17, 15, 0, 0, Math.PI * 2);
+		ctx.ellipse(0, -4, 15.5, 13.5, 0, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
 
-		// Pointed devil ears
-		for (let earSide of [-1, 1]) {
-			this.setupPath(ctx, "#D34538", COLORS.ink, 2);
-			ctx.beginPath();
-			ctx.moveTo(earSide * 14, -8);
-			ctx.lineTo(earSide * 25, -16);
-			ctx.lineTo(earSide * 16, -2);
-			ctx.closePath();
-			ctx.fill();
-			ctx.stroke();
-			// Inner ear pink
-			ctx.fillStyle = "#F87171";
-			ctx.beginPath();
-			ctx.moveTo(earSide * 15, -7);
-			ctx.lineTo(earSide * 21, -13);
-			ctx.lineTo(earSide * 16, -3);
-			ctx.closePath();
-			ctx.fill();
-		}
-
-		// Beranice (fur cap) crown
-		this.setupPath(ctx, "#4A2E1B", COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.arc(0, -14, 18, Math.PI, 0);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-
-		// Fluffy sheepskin hat brim across forehead
-		this.setupPath(ctx, "#FAF7EE", COLORS.ink, 2.8);
-		ctx.beginPath();
-		ctx.ellipse(0, -13, 20, 6, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		// Fluffy curls on hat brim
-		ctx.strokeStyle = "#CFC4AF";
-		ctx.lineWidth = 1.4;
-		for (let bi = -14; bi < 16; bi += 6) {
-			ctx.beginPath();
-			ctx.arc(bi, -13, 2.2, 0, Math.PI);
-			ctx.stroke();
-		}
-
-		// Expressive large cartoon eyes
+		// Expressive Wide Bulging Eyes with Reddish-Brown Irises
 		for (let eyeSide of [-1, 1]) {
-			const eyeX = eyeSide * 7.5;
-			const eyeY = -7;
-			// White of eye
-			this.setupPath(ctx, "#FFFDF7", COLORS.ink, 2);
+			const eyeX = eyeSide * 6.5 + 1.5;
+			const eyeY = -6;
+			this.setupPath(ctx, "#FFFBEB", ink, 1.8);
 			ctx.beginPath();
-			ctx.arc(eyeX, eyeY, 5.5, 0, Math.PI * 2);
+			ctx.arc(eyeX, eyeY, 5, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
-			// Pupil looking slightly toward camera/viewer
-			ctx.fillStyle = "#111111";
+			// Reddish-brown iris & dark pupil
+			ctx.fillStyle = "#991B1B";
 			ctx.beginPath();
 			ctx.arc(eyeX + 0.8, eyeY, 3, 0, Math.PI * 2);
 			ctx.fill();
-			// Specular sparkle
+			ctx.fillStyle = "#1C1917";
+			ctx.beginPath();
+			ctx.arc(eyeX + 0.9, eyeY, 1.8, 0, Math.PI * 2);
+			ctx.fill();
 			ctx.fillStyle = "#FFFFFF";
 			ctx.beginPath();
-			ctx.arc(eyeX + 1.8, eyeY - 1.2, 1.2, 0, Math.PI * 2);
+			ctx.arc(eyeX + 1.6, eyeY - 1.2, 1, 0, Math.PI * 2);
 			ctx.fill();
 
-			// Bushy white eyebrow
-			ctx.fillStyle = "#F5F3ED";
-			ctx.strokeStyle = COLORS.ink;
-			ctx.lineWidth = 1.4;
+			// Arched dark eyebrow
+			ctx.strokeStyle = "#450A0A";
+			ctx.lineWidth = 2.2;
 			ctx.beginPath();
-			ctx.ellipse(eyeX, eyeY - 6.5, 5, 2.2, eyeSide * 0.15, 0, Math.PI * 2);
-			ctx.fill();
+			ctx.arc(eyeX, eyeY - 2, 5.5, Math.PI + 0.4, -0.4);
 			ctx.stroke();
-
-			// Wire spectacles (round golden rims)
-			ctx.strokeStyle = "#D97706";
-			ctx.lineWidth = 1.8;
-			ctx.beginPath();
-			ctx.arc(eyeX, eyeY, 6.8, 0, Math.PI * 2);
-			ctx.stroke();
-			// Lens glint
-			ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-			ctx.beginPath();
-			ctx.arc(eyeX - 1.5, eyeY - 2, 2.5, 0, Math.PI * 2);
-			ctx.fill();
 		}
-		// Spectacles bridge over nose
-		ctx.strokeStyle = "#D97706";
-		ctx.lineWidth = 2;
-		ctx.beginPath();
-		ctx.arc(0, -7, 4, Math.PI, 0);
-		ctx.stroke();
 
-		// Long bulbous red nose
-		this.setupPath(ctx, "#E53935", COLORS.ink, 2.4);
+		// Mischievous Grin with Bared Crooked Yellowed Teeth (Vyceněné křivé zuby!)
+		this.setupPath(ctx, "#3B0707", ink, 2);
 		ctx.beginPath();
-		ctx.ellipse(0, -3, 5.5, 7.5, 0, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = "#FF8A80";
-		ctx.beginPath();
-		ctx.arc(1.5, -4.5, 2, 0, Math.PI * 2);
-		ctx.fill();
-
-		// Flowing, thick curly white-silver beard and mustache
-		const beardSway = Math.sin(time * 3.6) * 3;
-		this.setupPath(ctx, "#F5F3ED", COLORS.ink, 3.4);
-		ctx.beginPath();
-		ctx.moveTo(-16, -2);
-		// Mustache lobes
-		ctx.quadraticCurveTo(-10, 4, 0, 2);
-		ctx.quadraticCurveTo(10, 4, 16, -2);
-		// Cascading flowing beard lobes
-		ctx.quadraticCurveTo(24, 14, 18 + beardSway, 28);
-		ctx.quadraticCurveTo(8 + beardSway * 0.8, 38, 0 + beardSway * 0.5, 36);
-		ctx.quadraticCurveTo(-10, 36, -18, 26);
-		ctx.quadraticCurveTo(-24, 12, -16, -2);
+		ctx.moveTo(-8, 2);
+		ctx.quadraticCurveTo(2, 5, 11, 1);
+		ctx.quadraticCurveTo(9, 10, 1, 10);
+		ctx.quadraticCurveTo(-6, 10, -8, 2);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
+		// Crooked yellowed teeth inside the grin
+		this.setupPath(ctx, "#FDE047", ink, 1.1);
+		ctx.fillRect(-5, 2.5, 3, 3.5);
+		ctx.strokeRect(-5, 2.5, 3, 3.5);
+		this.setupPath(ctx, "#FEF9C3", ink, 1.1);
+		ctx.fillRect(-1.5, 3, 3.2, 4);
+		ctx.strokeRect(-1.5, 3, 3.2, 4);
+		this.setupPath(ctx, "#FDE047", ink, 1.1);
+		ctx.fillRect(2.2, 2.5, 3, 3.5);
+		ctx.strokeRect(2.2, 2.5, 3, 3.5);
+		this.setupPath(ctx, "#EAB308", ink, 1.1);
+		ctx.fillRect(5.6, 2, 2.8, 3);
+		ctx.strokeRect(5.6, 2, 2.8, 3);
 
-		// Inner layered curl lines on beard
-		ctx.strokeStyle = "#D1D5DB";
-		ctx.lineWidth = 1.8;
-		for (let bCurl of [-8, 0, 8]) {
+		// Round Wire-Rimmed Spectacles (Brýle) & Long Hooked Red Nose
+		for (let specSide of [-1, 1]) {
+			const sx = specSide * 6.5 + 1.5;
+			const sy = -3.5;
+			ctx.strokeStyle = "#271003";
+			ctx.lineWidth = 2.2;
 			ctx.beginPath();
-			ctx.arc(bCurl + beardSway * 0.3, 14, 5, 0.2, Math.PI - 0.2);
+			ctx.ellipse(sx, sy, 5.2, 4.2, 0.1, 0, Math.PI * 2);
 			ctx.stroke();
+			ctx.strokeStyle = "#F59E0B";
+			ctx.lineWidth = 1.1;
 			ctx.beginPath();
-			ctx.arc(bCurl * 0.6 + beardSway * 0.4, 24, 5.5, 0.2, Math.PI - 0.2);
+			ctx.ellipse(sx, sy, 5.2, 4.2, 0.1, 0, Math.PI * 2);
 			ctx.stroke();
 		}
-
-		// 8. The Smoking Pipe (Dýmka / Fajfka) & Puffing Smoke!
-		const pipeBob = Math.sin(time * 2.8) * 0.8;
-		const pipeStemX = 6;
-		const pipeStemY = 3;
-		const bowlX = 22;
-		const bowlY = 0 + pipeBob;
-
-		// Wooden curved pipe stem
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 4.2;
+		// Long Hooked Red Nose drooping between the spectacles
+		this.setupPath(ctx, "#EF4444", ink, 2.2);
 		ctx.beginPath();
-		ctx.moveTo(pipeStemX, pipeStemY);
-		ctx.quadraticCurveTo(12, 10, bowlX - 2, bowlY + 4);
-		ctx.stroke();
-
-		ctx.strokeStyle = "#5C2E14";
-		ctx.lineWidth = 2.6;
-		ctx.beginPath();
-		ctx.moveTo(pipeStemX, pipeStemY);
-		ctx.quadraticCurveTo(12, 10, bowlX - 2, bowlY + 4);
-		ctx.stroke();
-
-		// Briar Pipe Bowl
-		this.setupPath(ctx, "#451A03", COLORS.ink, 2.2);
-		ctx.beginPath();
-		ctx.ellipse(bowlX, bowlY, 5.5, 7.5, 0.15, 0, Math.PI * 2);
+		ctx.moveTo(1, -6);
+		ctx.quadraticCurveTo(9, -4, 8, 4);
+		ctx.quadraticCurveTo(5, 8, 0, 4);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		// Brass band
-		ctx.fillStyle = "#F59E0B";
-		ctx.fillRect(bowlX - 4, bowlY + 2, 7, 2);
+		ctx.fillStyle = "#FCA5A5";
+		ctx.beginPath();
+		ctx.arc(5, 1, 1.6, 0, Math.PI * 2);
+		ctx.fill();
 
-		// Glowing Ember inside pipe bowl with rhythmic puffing cycle!
-		// Puff cycle: 0 -> 0.9s: draw puff (ember flares!), 0.9 -> 2.8s: smoke billows!
+		// 8. Carved Briar Smoking Pipe (Fajfka) & Billowing Smoke!
+		const pipeBob = Math.sin(time * 2.8) * 0.8;
+		const bowlX = 21;
+		const bowlY = 3 + pipeBob;
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.moveTo(8, 5);
+		ctx.quadraticCurveTo(14, 11, bowlX - 2, bowlY + 4);
+		ctx.stroke();
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(8, 5);
+		ctx.quadraticCurveTo(14, 11, bowlX - 2, bowlY + 4);
+		ctx.stroke();
+
+		this.setupPath(ctx, "#B45309", ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(bowlX, bowlY, 5.2, 7, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Glowing ember inside pipe bowl
 		const puffCycle = (time * 0.9) % 2.8;
 		const isDrawing = puffCycle < 0.9;
-		const emberGlow = isDrawing ? (1 + Math.sin(time * 16) * 0.25) : 0.6;
-
+		const emberGlow = isDrawing ? (1 + Math.sin(time * 16) * 0.25) : 0.65;
 		ctx.fillStyle = isDrawing ? "#F97316" : "#DC2626";
 		ctx.beginPath();
-		ctx.ellipse(bowlX, bowlY - 5, 3.8 * emberGlow, 2.4, 0, 0, Math.PI * 2);
+		ctx.ellipse(bowlX, bowlY - 5, 3.6 * emberGlow, 2.2, 0, 0, Math.PI * 2);
 		ctx.fill();
-		if (isDrawing) {
-			ctx.fillStyle = "#FEF08A";
-			ctx.beginPath();
-			ctx.arc(bowlX, bowlY - 5, 1.8, 0, Math.PI * 2);
-			ctx.fill();
-		}
 
-		// Animated Billowing Smoke Puffs ("puffing the pipe", "smoking")
+		// Billowing Smoke Puffs
 		ctx.save();
 		const puffBaseTime = time * 1.5;
 		for (let pi = 0; pi < 5; pi++) {
 			const pAge = (puffBaseTime + pi * 0.55) % 2.4;
 			if (pAge > 0.05) {
 				const pFrac = pAge / 2.4;
-				const pRad = 3.5 + pFrac * 11;
-				const pAlpha = Math.max(0, 0.72 - pFrac * 0.75);
-				const px = bowlX + pFrac * 18 + Math.sin(pAge * 3.5 + pi) * 6;
-				const py = bowlY - 8 - pFrac * 36 - Math.pow(pFrac, 1.4) * 12;
+				const pRad = 3.2 + pFrac * 10;
+				const pAlpha = Math.max(0, 0.7 - pFrac * 0.72);
+				const px = bowlX + pFrac * 16 + Math.sin(pAge * 3.5 + pi) * 5;
+				const py = bowlY - 8 - pFrac * 34 - Math.pow(pFrac, 1.4) * 10;
 
-				ctx.fillStyle = `rgba(241, 245, 249, ${pAlpha})`;
-				ctx.strokeStyle = `rgba(148, 163, 184, ${pAlpha * 0.8})`;
+				ctx.fillStyle = `rgba(255, 251, 235, ${pAlpha})`;
+				ctx.strokeStyle = `rgba(120, 113, 108, ${pAlpha * 0.75})`;
 				ctx.lineWidth = 1.2;
 				ctx.beginPath();
 				ctx.arc(px, py, pRad, 0, Math.PI * 2);
 				ctx.fill();
 				ctx.stroke();
-
-				// Soft secondary puff lobe for authentic cloud volume
-				if (pFrac > 0.3) {
-					ctx.beginPath();
-					ctx.arc(px + pRad * 0.5, py - pRad * 0.2, pRad * 0.65, 0, Math.PI * 2);
-					ctx.fill();
-				}
 			}
 		}
 		ctx.restore();
 
 		ctx.restore(); // End Head
 
-		// 9. Front Arm: Gesticulating towards Camera / Player ("gesticulating towards camera")
+		// 9. Right Front Clawed Arm (Emerging in front with Golden Lambskin Cuff & Curved Dark Talons)
 		ctx.save();
 		ctx.translate(0, limpBob);
 		ctx.rotate(limpTilt);
+		const gestLift = Math.sin(time * 3.0) * 4 + (isInteracting ? -8 : -2);
+		const wristX = 20;
+		const wristY = 4 + gestLift;
 
-		const gestLift = Math.sin(time * 3.0) * 6 + (isInteracting ? -12 : -3);
-		const gestWave = Math.sin(time * 3.4) * 0.22 + (isInteracting ? 0.38 : 0.18);
-		const shoulderX = 14;
-		const shoulderY = -12;
-		const elbowX = 26;
-		const elbowY = -2 + gestLift * 0.5;
-		const wristX = 30;
-		const wristY = 8 + gestLift;
-
-		// Patchwork sleeve
-		this.drawBentLimb(ctx, shoulderX, shoulderY, elbowX, elbowY, wristX, wristY, "#784D2B", 11);
-		// Fluffy sheepskin sleeve cuff
-		this.setupPath(ctx, "#FAF7EE", COLORS.ink, 2.4);
+		// Golden-ochre curly lambskin cuff
+		this.setupPath(ctx, "#FACC15", ink, 2.2);
 		ctx.beginPath();
-		ctx.ellipse(wristX, wristY, 6, 4.5, gestWave, 0, Math.PI * 2);
+		ctx.ellipse(wristX - 2, wristY, 4.5, 6, -0.2, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
 
-		// Red demon hand reached forward towards viewer in perspective
-		ctx.save();
-		ctx.translate(wristX, wristY);
-		ctx.rotate(gestWave);
-
-		this.setupPath(ctx, "#D34538", COLORS.ink, 2.2);
+		// Clawed Red-Orange Devil Hand with Curved Black Talons
+		this.setupPath(ctx, "#EA580C", ink, 2.2);
 		ctx.beginPath();
-		ctx.ellipse(3, 4, 6.5, 5, 0, 0, Math.PI * 2);
+		ctx.ellipse(wristX + 4, wristY + 1, 6, 4.5, 0.15, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-
-		// 4 Articulated fingers curling and beckoning rhythmically
-		ctx.fillStyle = "#D34538";
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.6;
+		ctx.fillStyle = "#1C1917";
 		for (let fi = 0; fi < 4; fi++) {
-			const fAngle = 0.2 + fi * 0.38;
-			const curlWave = Math.sin(time * 3.8 + fi * 0.45) * 2.5;
-			const fx1 = 5 + Math.cos(fAngle) * 5;
-			const fy1 = 4 + Math.sin(fAngle) * 5;
-			const fx2 = fx1 + Math.cos(fAngle) * (5 + curlWave);
-			const fy2 = fy1 + Math.sin(fAngle) * (5 + curlWave);
-
+			const fy = wristY - 2 + fi * 2.5;
 			ctx.beginPath();
-			ctx.moveTo(fx1, fy1);
-			ctx.lineTo(fx2, fy2);
-			ctx.stroke();
-
-			// Black claws on fingertips
-			ctx.fillStyle = "#18181B";
-			ctx.beginPath();
-			ctx.arc(fx2, fy2, 1.4, 0, Math.PI * 2);
+			ctx.moveTo(wristX + 8, fy);
+			ctx.lineTo(wristX + 14, fy + 2.5);
+			ctx.lineTo(wristX + 8, fy + 2.2);
+			ctx.closePath();
 			ctx.fill();
 		}
 		ctx.restore();
-
-		ctx.restore(); // End Front Arm
 
 		ctx.restore(); // End Grandfather
 	},
@@ -17760,7 +17805,9 @@ function drawEnemyRenderer(
   ctx.translate(x, y);
   ctx.translate(k.lungeX + k.shakeX, k.lungeY + k.shakeY + staggerY);
   ctx.rotate(k.leanAngle + staggerAngle);
-  ctx.scale(k.scaleX, k.scaleY);
+  const rawRenderScale = typeof enemy?.renderScale === 'number' ? enemy.renderScale : 1.0;
+  const renderScale = enemy?.isMinibossFlockMember && rawRenderScale < 0.5 ? 1.15 : rawRenderScale;
+  ctx.scale(k.scaleX * renderScale, k.scaleY * renderScale);
   ctx.translate(-x, -y);
 
   const palette = enemy?.palette;

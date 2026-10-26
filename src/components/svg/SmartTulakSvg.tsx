@@ -3,15 +3,17 @@ import type { SmartCharacterProps, MousePointerState } from './types';
 
 /**
  * SmartTulakSvg - Interactive smart vector SVG animation
- * Inspired by classic Czech folklore illustration of the joyful laughing Wanderer / Vagabond (Tulák)
+ * Inspired by classic Czech folklore illustration of the joyful laughing Wanderer / Vagabond of Hrusice (Tulák / Poutník) by Josef Lada
  * Features:
- * - Broad happy laughing expression with bushy white beard, red nose, and rosy cheeks
- * - Battered pointed felt hat with green band & sprig
- * - Patched tattered green coat with multi-colored stitched patches
- * - Heavy knobby wooden walking staff (sukovitá sukovice)
- * - Patched travel knapsack over shoulder & wooden canteen
- * - Patched trousers with rope belt & bandaged shins
- * - Jaunty walking stride kinematics and interactive cursor tracking
+ * - Broad jovial laughing expression with bushy white beard, rosy cheeks, and red nose
+ * - Battered pointed felt hat with forest sprig of rowanberries & leaves
+ * - Clay herbal pipe (Bylinková fajfka) puffing animated aromatic herbal smoke rings
+ * - Heavy knobby wooden walking staff (sukovitá sukovice) with carved knots & bark
+ * - Weathered tattered wool coat with colorful stitched folk patches & wooden toggles
+ * - Traveler's knapsack (torna) & hanging wooden canteen (čutora)
+ * - Articulated hobnail boots with stride kinematics matching Babička & Barunka
+ * - Action: "Pověstná sukovice" 360° whirlwind strike with autumn leaves & shockwave
+ * - Complete animation set: idle, walk, sprint, action, react, flee with interactive pointer tracking
  */
 export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
   state = 'idle',
@@ -19,7 +21,7 @@ export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
   speed = 1,
   isPlaying = true,
   direction = 1,
-  size = 400,
+  size = 420,
   interactive = true,
   className = '',
   style = {},
@@ -30,6 +32,7 @@ export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
     showParticles = true,
     showShadow = true,
     showOutline = true,
+    showSmoke = true,
   } = features;
 
   const [localTime, setLocalTime] = useState<number>(0);
@@ -70,7 +73,11 @@ export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
     const rect = svgRef.current.getBoundingClientRect();
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-    setPointer({ x: Math.max(-1, Math.min(1, nx * direction)), y: Math.max(-1, Math.min(1, ny)), isHovered: true });
+    setPointer({
+      x: Math.max(-1, Math.min(1, nx * direction)),
+      y: Math.max(-1, Math.min(1, ny)),
+      isHovered: true,
+    });
   };
 
   const handlePointerLeave = () => {
@@ -78,50 +85,112 @@ export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
   };
 
   const isWalking = state === 'walk';
+  const isSprinting = state === 'sprint';
   const isAction = state === 'action';
   const isReact = state === 'react';
+  const isFleeing = state === 'flee';
+  const isMoving = isWalking || isSprinting || isFleeing;
 
-  // Kinematics
-  const walkSpeed = isAction ? 12 : isWalking ? 9 : 2.5;
+  // Kinematic parameters
+  const walkSpeed = isFleeing ? 18 : isSprinting ? 14 : isWalking ? 8 : isReact ? 24 : 2.5;
   const walkSin = Math.sin(t * walkSpeed);
   const walkCos = Math.cos(t * walkSpeed);
 
-  // High-stepping jaunty stride
-  const backLegAngle = isWalking ? walkSin * 28 : isAction ? -15 + Math.sin(t * 14) * 12 : -8;
-  const frontLegAngle = isWalking ? -walkSin * 30 : isAction ? 24 + Math.cos(t * 14) * 12 : 12;
+  // Body bobbing and lean
+  const bobY = isAction
+    ? -Math.abs(Math.sin(t * 12)) * 8 - 4
+    : isFleeing
+    ? -Math.abs(walkSin) * 16
+    : isSprinting
+    ? -Math.abs(walkSin) * 12
+    : isWalking
+    ? -Math.abs(walkSin) * 8
+    : isReact
+    ? -Math.abs(Math.sin(t * 16)) * 12 - 5
+    : Math.sin(t * 2.2) * 2.6;
 
-  // Body bobbing and joyful bounce
-  const bobY = isWalking ? Math.abs(walkSin) * 12 : isAction ? Math.abs(Math.sin(t * 12)) * 16 : Math.sin(t * 3.5) * 3;
-  const torsoLean = isWalking ? 6 + walkSin * 4 : isAction ? -8 + Math.sin(t * 12) * 8 : 4;
+  const torsoLean = isAction
+    ? -10 + Math.sin(t * 12) * 8
+    : isFleeing
+    ? 15 + walkSin * 4.5
+    : isSprinting
+    ? 12 + walkSin * 3.5
+    : isWalking
+    ? 6 + walkCos * 2.5
+    : isReact
+    ? -14 + Math.sin(t * 26) * 4
+    : 3 + Math.sin(t * 1.5) * 1.5;
+
+  // Stride kinematics for boots (legs ONLY swing when actively moving)
+  const strideAmp = isMoving ? (isFleeing ? 28 : isSprinting ? 22 : 14) : 0;
+  const bootSwingRot = isMoving ? (isFleeing ? 32 : isSprinting ? 24 : 15) : 0;
+  const leftBootX = isMoving ? -26 + walkSin * strideAmp : -26;
+  const leftBootY = isMoving ? 32 - Math.max(0, walkCos) * (strideAmp * 0.65) : 32;
+  const leftBootRot = isMoving ? walkSin * bootSwingRot : 0;
+
+  const rightBootX = isMoving ? 26 - walkSin * strideAmp : 26;
+  const rightBootY = isMoving ? 32 - Math.max(0, -walkCos) * (strideAmp * 0.65) : 32;
+  const rightBootRot = isMoving ? -walkSin * bootSwingRot : 0;
 
   // Sukovice staff swing
   const staffAngle = isAction
-    ? -28 + Math.sin(t * 14) * 35
+    ? -40 + Math.sin(t * 16) * 65
+    : isReact
+    ? -35 + Math.sin(t * 26) * 20
+    : isFleeing
+    ? 30 + Math.sin(t * 20) * 25
+    : isSprinting
+    ? -25 + Math.sin(t * 14) * 18
     : isWalking
-    ? -8 + walkCos * 14
+    ? -8 + Math.sin(t * 8) * 18
+    : -4 + Math.sin(t * 2) * 4;
+
+  // Knapsack & Canteen swing
+  const knapsackBounce = Math.sin(t * (isMoving ? walkSpeed * 1.4 : 3)) * (isMoving ? 7 : 2);
+  const canteenSway = Math.sin(t * (isMoving ? walkSpeed * 1.2 : 2.5)) * (isMoving ? 22 : 8);
+
+  // Gaze & eye tracking
+  const gazeX = isReact
+    ? -2.5 + Math.sin(t * 28) * 1.2
+    : isFleeing
+    ? 3.0
     : pointer.isHovered
-    ? pointer.y * 12
-    : Math.sin(t * 2) * 3;
+    ? pointer.x * 4
+    : Math.sin(t * 1.2) * 1.2;
 
-  // Sack and beard dynamics
-  const sackBounce = Math.sin(t * (isWalking ? 18 : 3.5)) * (isWalking ? 8 : 2);
-  const beardWave = Math.sin(t * (isWalking ? 14 : 3)) * (isWalking ? 6 : 2.5);
+  const gazeY = isReact
+    ? -2
+    : isFleeing
+    ? -1.2
+    : pointer.isHovered
+    ? pointer.y * 3.5
+    : 0;
 
-  // Gaze tracking
-  const lookX = pointer.isHovered ? pointer.x * 6 : Math.sin(t * 1.5) * 2;
-  const lookY = pointer.isHovered ? pointer.y * 4 : 0;
+  // Animated pipe smoke rings
+  const smokePuffs = [
+    { x: 285 + ((t * 40) % 60), y: 140 - ((t * 50) % 90), r: 8 + ((t * 15) % 18), op: Math.max(0, 0.7 - ((t * 0.6) % 0.7)) },
+    { x: 295 + ((t * 45 + 25) % 65), y: 130 - ((t * 55 + 30) % 95), r: 10 + ((t * 18 + 5) % 20), op: Math.max(0, 0.65 - ((t * 0.55 + 0.3) % 0.65)) },
+    { x: 305 + ((t * 50 + 50) % 70), y: 120 - ((t * 60 + 60) % 100), r: 12 + ((t * 20 + 10) % 22), op: Math.max(0, 0.6 - ((t * 0.5 + 0.5) % 0.6)) },
+  ];
 
-  // Musical joy notes during action
-  const joyNotes = [
-    { x: 340 + Math.sin(t * 4 + 1) * 20, y: 110 + ((t * 45) % 90), note: '♪', size: 18 },
-    { x: 365 + Math.cos(t * 3.5 + 2) * 25, y: 90 + ((t * 50 + 30) % 90), note: '♫', size: 22 },
-    { x: 320 + Math.sin(t * 4.2 + 3) * 18, y: 130 + ((t * 40 + 60) % 90), note: '♩', size: 16 },
+  // Swirling autumn leaves for "Pověstná sukovice" whirlwind
+  const autumnLeaves = [
+    { x: 240 + Math.sin(t * 8 + 0) * 110, y: 260 + Math.cos(t * 8 + 0) * 55, r: 8, col: '#D97706', rot: t * 300 },
+    { x: 240 + Math.sin(t * 8 + 1.8) * 125, y: 250 + Math.cos(t * 8 + 1.8) * 65, r: 10, col: '#B45309', rot: t * 360 + 45 },
+    { x: 240 + Math.sin(t * 8 + 3.6) * 115, y: 270 + Math.cos(t * 8 + 3.6) * 60, r: 9, col: '#DC2626', rot: t * 400 + 90 },
+    { x: 240 + Math.sin(t * 8 + 5.2) * 130, y: 255 + Math.cos(t * 8 + 5.2) * 70, r: 7.5, col: '#F59E0B', rot: t * 320 + 135 },
+  ];
+
+  // Panic / Hit Sweat Drops
+  const sweatDrops = [
+    { x: 210 - ((t * 95) % 28), y: 110 + ((t * 75) % 30), r: 3.5 },
+    { x: 275 + ((t * 90 + 15) % 28), y: 105 + ((t * 80 + 12) % 30), r: 3.2 },
   ];
 
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 460 480"
+      viewBox="0 0 480 480"
       width={size}
       height={size}
       className={`smart-tulak-svg select-none cursor-pointer ${className}`}
@@ -130,423 +199,490 @@ export const SmartTulakSvg: React.FC<SmartCharacterProps> = ({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       role="img"
-      aria-label="Smart animovaný veselý Tulák s ranečkem a sukovicí"
+      aria-label="Smart animovaný Tulák z Hrusic s dýmkou a sukovicí"
     >
       <defs>
-        {/* Warm Flesh Gradient */}
-        <radialGradient id="tulakSkin" cx="42%" cy="32%" r="68%">
+        {/* Warm Weathered Skin Tone */}
+        <radialGradient id="tulakSkinGrad" cx="45%" cy="35%" r="65%">
           <stop offset="0%" stopColor="#FFF2E8" />
           <stop offset="60%" stopColor="#FED7AA" />
           <stop offset="100%" stopColor="#FDBA74" />
         </radialGradient>
 
-        {/* Tattered Green Coat */}
-        <linearGradient id="tulakCoat" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#60764D" />
-          <stop offset="50%" stopColor="#465837" />
-          <stop offset="100%" stopColor="#2E3C24" />
+        {/* Patched Wool Coat Green */}
+        <linearGradient id="tulakCoatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#3F6212" />
+          <stop offset="45%" stopColor="#4D7C0F" />
+          <stop offset="85%" stopColor="#365314" />
+          <stop offset="100%" stopColor="#1A2E05" />
         </linearGradient>
 
-        {/* Gnarly Wood Sukovice Staff */}
-        <linearGradient id="sukoviceWood" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#C98B50" />
-          <stop offset="40%" stopColor="#A46835" />
-          <stop offset="70%" stopColor="#7E4A1E" />
-          <stop offset="100%" stopColor="#532C0D" />
+        {/* Battered Felt Hat Forest Green */}
+        <linearGradient id="tulakHatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2E4A10" />
+          <stop offset="60%" stopColor="#3F6212" />
+          <stop offset="100%" stopColor="#1A2E05" />
         </linearGradient>
 
-        {/* Patched Sack Linen */}
-        <radialGradient id="sackGrad" cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#FFFDF7" />
-          <stop offset="60%" stopColor="#EADBC0" />
-          <stop offset="100%" stopColor="#CBB594" />
-        </radialGradient>
+        {/* Gnarled Oak Sukovice Staff */}
+        <linearGradient id="sukoviceBarkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#9A3412" />
+          <stop offset="45%" stopColor="#B45309" />
+          <stop offset="80%" stopColor="#78350F" />
+          <stop offset="100%" stopColor="#451A03" />
+        </linearGradient>
 
         {/* Trousers Brown */}
-        <linearGradient id="pantsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#9B663A" />
-          <stop offset="60%" stopColor="#784B22" />
-          <stop offset="100%" stopColor="#4A2B0E" />
+        <linearGradient id="tulakPantsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#78350F" />
+          <stop offset="50%" stopColor="#92400E" />
+          <stop offset="100%" stopColor="#5B2105" />
         </linearGradient>
 
-        {/* Hat Felt */}
-        <linearGradient id="hatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7C6044" />
-          <stop offset="60%" stopColor="#59422C" />
-          <stop offset="100%" stopColor="#3A2818" />
-        </linearGradient>
-
-        {/* Canteen Flask */}
-        <radialGradient id="canteenGrad" cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#B45309" />
-          <stop offset="70%" stopColor="#78350F" />
-          <stop offset="100%" stopColor="#451A03" />
-        </radialGradient>
+        {/* Whirlwind Dust Filter */}
+        <filter id="tulakWhirlGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
 
-      <g
-        transform={`translate(225, 240) scale(${direction}, 1) translate(-225, -240)`}
-      >
+      <g transform={`translate(240, 240) scale(${direction}, 1) translate(-240, -240)`}>
         {/* GROUND SHADOW */}
         {showShadow && (
-          <ellipse
-            cx={210}
-            cy={440}
-            rx={98 + (isWalking ? Math.sin(t * walkSpeed) * 8 : 0)}
-            ry={17}
-            fill="#1E293B"
-            opacity="0.24"
-          />
+          <g opacity="0.3">
+            <ellipse cx={240} cy={445} rx={80} ry={16} fill="#1E293B" />
+          </g>
         )}
 
-        {/* JOYFUL MUSICAL NOTES (ACTION / LAUGHTER) */}
-        {showParticles && isAction && (
-          <g className="joy-notes" fill="#D97706" opacity="0.85">
-            {joyNotes.map((n, i) => (
-              <text key={i} x={n.x} y={n.y} fontSize={n.size} fontWeight="bold" fontFamily="serif">
-                {n.note}
-              </text>
+        {/* WHIRLWIND EFFECT (ACTION MODE - POVĚSTNÁ SUKOVICE) */}
+        {isAction && (
+          <g id="tulak-whirlwind" transform="translate(240, 270)">
+            {/* Swirling Shockwave Rings */}
+            <ellipse
+              cx="0"
+              cy="20"
+              rx="135"
+              ry="45"
+              fill="none"
+              stroke="#FBBF24"
+              strokeWidth="4"
+              strokeDasharray="25 15"
+              opacity="0.85"
+              filter="url(#tulakWhirlGlow)"
+              transform={`rotate(${(t * 400) % 360})`}
+            />
+            <ellipse
+              cx="0"
+              cy="20"
+              rx="160"
+              ry="55"
+              fill="none"
+              stroke="#EA580C"
+              strokeWidth="3"
+              strokeDasharray="30 20"
+              opacity="0.65"
+              transform={`rotate(${-(t * 320) % 360})`}
+            />
+
+            {/* Autumn Leaves swirling */}
+            {autumnLeaves.map((leaf, idx) => (
+              <g
+                key={`leaf-${idx}`}
+                transform={`translate(${leaf.x - 240}, ${leaf.y - 270}) rotate(${leaf.rot})`}
+              >
+                <path
+                  d="M 0,-12 C 8,-8 10,6 0,12 C -10,6 -8,-8 0,-12 Z"
+                  fill={leaf.col}
+                  stroke="#1C1610"
+                  strokeWidth="1.5"
+                />
+                <line x1="0" y1="-10" x2="0" y2="10" stroke="#78350F" strokeWidth="1" />
+              </g>
             ))}
           </g>
         )}
 
-        {/* ROOT CONTAINER WITH JAUNTY BOB AND LEAN */}
-        <g transform={`translate(0, ${bobY}) rotate(${torsoLean}, 210, 290)`}>
-
-          {/* 1. TRAVEL KNAPSACK (SLUNG OVER SHOULDER BEHIND BACK) */}
-          <g transform={`translate(100, 220) rotate(${sackBounce})`}>
-            {/* Round bulky linen sack */}
-            <path
-              d="M 0,0 C -35,-25 -65,-5 -72,35 C -78,75 -45,105 -10,110 C 25,115 50,85 45,45 C 40,15 25,-15 0,0 Z"
-              fill="url(#sackGrad)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-            {/* Tied cloth knot & neck on sack */}
-            <path
-              d="M 5,5 C 15,-10 28,-18 36,-12 C 40,-4 32,8 20,12 Z"
-              fill="url(#sackGrad)"
-              stroke="#1C1610"
-              strokeWidth="3.2"
-            />
-            {/* Shoulder carrying strap */}
-            <path
-              d="M 12,8 Q 55,50 78,82"
-              stroke="#92400E"
-              strokeWidth="5"
-              fill="none"
-              strokeLinecap="round"
-            />
-            {/* Stitched patches on sack */}
-            {/* Brown square patch */}
-            <rect x="-48" y="42" width="28" height="24" rx="2" fill="#854D0E" stroke="#1C1610" strokeWidth="2.5" transform="rotate(-8 -34 54)" />
-            <path d="M -46,40 L -46,68 M -22,40 L -22,68 M -50,44 L -20,44 M -50,64 L -20,64" stroke="#1C1610" strokeWidth="1.5" strokeDasharray="3 3" />
-
-            {/* Blue patch */}
-            <rect x="-65" y="65" width="22" height="20" rx="2" fill="#2563EB" stroke="#1C1610" strokeWidth="2.5" transform="rotate(12 -54 75)" />
+        {/* HERBAL PIPE SMOKE PUFFS */}
+        {showSmoke && showParticles && (
+          <g className="smoke-puffs">
+            {smokePuffs.map((puff, idx) => (
+              <circle
+                key={`smoke-${idx}`}
+                cx={puff.x}
+                cy={puff.y}
+                r={puff.r}
+                fill="#E2E8F0"
+                stroke="#94A3B8"
+                strokeWidth="1.2"
+                opacity={puff.op}
+              />
+            ))}
           </g>
+        )}
 
-          {/* 2. BACK LEG (JAUNTY STRIDE) */}
-          <g transform={`translate(170, 280) rotate(${backLegAngle})`}>
-            {/* Patched brown trousers leg */}
-            <path
-              d="M -14,0 C -22,35 -26,65 -32,95 C -25,108 -10,105 10,95 C 16,65 15,35 12,0 Z"
-              fill="url(#pantsGrad)"
-              stroke="#1C1610"
-              strokeWidth="4"
-              strokeLinejoin="round"
-            />
-            {/* Tattered jagged hem */}
-            <path d="M -32,95 L -26,108 L -18,98 L -10,109 L -2,98 L 8,108 L 10,95" stroke="#1C1610" strokeWidth="3" fill="none" />
-
-            {/* Bandaged shin (White cloth rags wrapped around leg) */}
-            <g transform="translate(-14, 98)">
-              <rect x="-8" y="0" width="22" height="30" rx="3" fill="#F8FAFC" stroke="#1C1610" strokeWidth="3" />
-              <line x1="-8" y1="8" x2="14" y2="10" stroke="#CBD5E1" strokeWidth="2.2" />
-              <line x1="-8" y1="16" x2="14" y2="18" stroke="#CBD5E1" strokeWidth="2.2" />
-              <line x1="-8" y1="24" x2="14" y2="26" stroke="#CBD5E1" strokeWidth="2.2" />
-            </g>
-
-            {/* Sturdy Brown Worn Boot with Sole & Heel */}
-            <g transform="translate(-16, 126)">
+        {/* SWEAT DROPS (REACT & FLEE) */}
+        {showParticles && (isReact || isFleeing) && (
+          <g className="sweat-drops">
+            {sweatDrops.map((d, idx) => (
               <path
-                d="M -10,0 C -15,10 -25,18 -32,22 C -28,32 5,34 32,28 C 36,18 28,6 18,0 Z"
-                fill="#583318"
+                key={idx}
+                d={`M ${d.x},${d.y} Q ${d.x + 3},${d.y + 4} ${d.x},${d.y + 7} Q ${d.x - 3},${d.y + 4} ${d.x},${d.y} Z`}
+                fill="#60A5FA"
+                stroke="#1E40AF"
+                strokeWidth="1.2"
+              />
+            ))}
+          </g>
+        )}
+
+        {/* ======================================================== */}
+        {/* TULÁK ROOT WITH KINEMATICS                              */}
+        {/* ======================================================== */}
+        <g id="tulak-body" transform={`translate(0, ${bobY}) rotate(${torsoLean}, 240, 290)`}>
+          {/* 1. ARTICULATED HOBNAIL BOOTS */}
+          <g id="tulak-boots" transform="translate(240, 395)">
+            {/* Left Boot */}
+            <g
+              id="tulak-left-boot"
+              transform={`translate(${leftBootX}, ${leftBootY}) rotate(${leftBootRot})`}
+            >
+              <path
+                d="M -16,-16 L -8,-16 L 8,8 L 22,8 C 28,8 30,15 25,20 C 16,24 -18,24 -22,18 C -24,12 -20,-8 -16,-16 Z"
+                fill="#451A03"
                 stroke="#1C1610"
-                strokeWidth="4"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
                 strokeLinejoin="round"
               />
-              {/* Boot Heel & Tread */}
-              <rect x="-28" y="22" width="16" height="7" fill="#2E1B0E" stroke="#1C1610" strokeWidth="2.5" />
-              {/* Laces */}
-              <line x1="-8" y1="4" x2="6" y2="8" stroke="#FDE047" strokeWidth="2.5" strokeLinecap="round" />
-              <line x1="-6" y1="10" x2="8" y2="14" stroke="#FDE047" strokeWidth="2.5" strokeLinecap="round" />
-            </g>
-          </g>
-
-          {/* 3. FRONT LEG (STEPPING FORWARD WITH EXAGGERATED PRANCE) */}
-          <g transform={`translate(220, 275) rotate(${frontLegAngle})`}>
-            {/* Patched trouser leg */}
-            <path
-              d="M -12,0 C -6,35 0,70 15,100 C 26,108 42,102 45,88 C 36,60 22,30 16,0 Z"
-              fill="url(#pantsGrad)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-            {/* Jagged hem cuts */}
-            <path d="M 12,98 L 18,110 L 26,100 L 34,112 L 40,102 L 46,95" stroke="#1C1610" strokeWidth="3" fill="none" />
-
-            {/* Stitched Blue Heart/Oval Patch on front thigh */}
-            <g transform="translate(14, 52) rotate(15)">
-              <ellipse cx="0" cy="0" rx="11" ry="8" fill="#2563EB" stroke="#1C1610" strokeWidth="2.2" />
-              <path d="M -8,0 L 8,0 M 0,-6 L 0,6" stroke="#1C1610" strokeWidth="1.5" strokeDasharray="2 2" />
+              {/* Boot Leather Straps & Hobnails */}
+              <line x1="-6" y1="-4" x2="6" y2="4" stroke="#78350F" strokeWidth="2.5" />
+              <line x1="-10" y1="4" x2="2" y2="12" stroke="#78350F" strokeWidth="2.5" />
+              <circle cx="16" cy="18" r="1.8" fill="#FACC15" />
+              <circle cx="0" cy="19" r="1.8" fill="#FACC15" />
+              <circle cx="-14" cy="17" r="1.8" fill="#FACC15" />
             </g>
 
-            {/* Bandaged shin */}
-            <g transform="translate(24, 98) rotate(10)">
-              <rect x="-8" y="0" width="22" height="30" rx="3" fill="#F8FAFC" stroke="#1C1610" strokeWidth="3" />
-              <line x1="-8" y1="8" x2="14" y2="10" stroke="#CBD5E1" strokeWidth="2.2" />
-              <line x1="-8" y1="16" x2="14" y2="18" stroke="#CBD5E1" strokeWidth="2.2" />
-              <line x1="-8" y1="24" x2="14" y2="26" stroke="#CBD5E1" strokeWidth="2.2" />
-            </g>
-
-            {/* Front Brown Boot Raised / Pointed */}
-            <g transform="translate(28, 126) rotate(12)">
+            {/* Right Boot */}
+            <g
+              id="tulak-right-boot"
+              transform={`translate(${rightBootX}, ${rightBootY}) rotate(${rightBootRot})`}
+            >
               <path
-                d="M -10,0 C -5,12 8,24 35,28 C 45,28 52,22 48,12 C 40,4 25,0 12,-2 Z"
-                fill="#583318"
+                d="M -16,-16 L -8,-16 L 8,8 L 22,8 C 28,8 30,15 25,20 C 16,24 -18,24 -22,18 C -24,12 -20,-8 -16,-16 Z"
+                fill="#451A03"
                 stroke="#1C1610"
-                strokeWidth="4"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
                 strokeLinejoin="round"
               />
-              {/* Distinctive boot sole with hobnails */}
-              <path d="M -8,15 Q 15,26 44,22" stroke="#1C1610" strokeWidth="3" fill="none" />
-              <circle cx="2" cy="18" r="1.8" fill="#1C1610" />
-              <circle cx="15" cy="20" r="1.8" fill="#1C1610" />
-              <circle cx="28" cy="19" r="1.8" fill="#1C1610" />
-              {/* Laces */}
-              <line x1="2" y1="4" x2="12" y2="8" stroke="#FDE047" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="-6" y1="-4" x2="6" y2="4" stroke="#78350F" strokeWidth="2.5" />
+              <line x1="-10" y1="4" x2="2" y2="12" stroke="#78350F" strokeWidth="2.5" />
+              <circle cx="16" cy="18" r="1.8" fill="#FACC15" />
+              <circle cx="0" cy="19" r="1.8" fill="#FACC15" />
+              <circle cx="-14" cy="17" r="1.8" fill="#FACC15" />
             </g>
           </g>
 
-          {/* 4. TATTERED GREEN COAT & WHITE LINEN SHIRT */}
-          <g id="tulak-torso" transform="translate(180, 160)">
-            {/* White/Cream Peasant Shirt */}
+          {/* 2. TRAVELER'S KNAPSACK (TORNA) - DRAWN BEHIND COAT */}
+          <g id="tulak-torna" transform={`translate(170, 240) translate(0, ${knapsackBounce})`}>
+            {/* Bulging Canvas Knapsack */}
             <path
-              d="M -12,0 L -18,65 L 42,65 L 36,0 C 22,12 5,12 -12,0 Z"
-              fill="#FFFDF5"
+              d="M -30,-30 C -45,0 -40,40 -20,55 C 0,65 25,50 30,30 C 35,5 25,-25 0,-35 Z"
+              fill="#A16207"
+              stroke="#1C1610"
+              strokeWidth={showOutline ? '4.5' : '3.5'}
+              strokeLinejoin="round"
+            />
+            {/* Leather Buckle Straps */}
+            <path d="M -15,-30 L -12,45" stroke="#451A03" strokeWidth="3.5" />
+            <path d="M 12,-28 L 15,40" stroke="#451A03" strokeWidth="3.5" />
+            <rect x="-18" y="0" width="8" height="7" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+            <rect x="10" y="-2" width="8" height="7" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+            {/* Bedroll Tied to Top */}
+            <path
+              d="M -35,-32 C -25,-44 15,-44 32,-30 L 26,-20 C 12,-30 -20,-30 -30,-22 Z"
+              fill="#365314"
+              stroke="#1C1610"
+              strokeWidth="3"
+            />
+          </g>
+
+          {/* 3. PATCHED TROUSERS */}
+          <g id="tulak-trousers" transform="translate(240, 320)">
+            <path
+              d="M -42,-8 C -48,35 -48,72 -34,88 C -22,90 -16,75 -6,45 C 4,75 10,90 22,88 C 36,72 36,35 30,-8 Z"
+              fill="url(#tulakPantsGrad)"
+              stroke="#1C1610"
+              strokeWidth={showOutline ? '4.5' : '3.5'}
+              strokeLinejoin="round"
+            />
+            {/* Shin Puttees / Bandages */}
+            <path d="M -36,55 C -25,52 -18,60 -12,56" stroke="#FEF3C7" strokeWidth="3" fill="none" />
+            <path d="M -34,68 C -24,65 -18,72 -14,69" stroke="#FEF3C7" strokeWidth="3" fill="none" />
+            <path d="M 12,56 C 20,52 28,60 36,55" stroke="#FEF3C7" strokeWidth="3" fill="none" />
+            <path d="M 14,69 C 22,65 28,72 34,68" stroke="#FEF3C7" strokeWidth="3" fill="none" />
+          </g>
+
+          {/* 4. WEATHERED PATCHED WOOL COAT */}
+          <g id="tulak-coat" transform="translate(240, 245)">
+            {/* Main Coat Body & Flared Tails */}
+            <path
+              d="M -54,-45 C -58,35 -64,95 -48,115 C -22,125 22,125 48,115 C 64,95 58,35 54,-45 C 32,-36 -32,-36 -54,-45 Z"
+              fill="url(#tulakCoatGrad)"
+              stroke="#1C1610"
+              strokeWidth={showOutline ? '5' : '4'}
+              strokeLinejoin="round"
+            />
+
+            {/* Coat Opening & Lapels */}
+            <path d="M 0,-40 L 0,118" stroke="#1A2E05" strokeWidth="3.5" />
+            <path d="M -34,-44 L 0,-8 L -18,-42 Z" fill="#65A30D" stroke="#1C1610" strokeWidth="2.5" />
+            <path d="M 34,-44 L 0,-8 L 18,-42 Z" fill="#65A30D" stroke="#1C1610" strokeWidth="2.5" />
+
+            {/* Colorful Folk Patches (Signature Josef Lada Vagabond Look) */}
+            {/* Red Checkered Patch */}
+            <g transform="translate(-32, 45) rotate(6)">
+              <rect x="-12" y="-10" width="24" height="20" rx="3" fill="#DC2626" stroke="#1C1610" strokeWidth="2.2" />
+              <line x1="-9" y1="-7" x2="9" y2="7" stroke="#FEF08A" strokeWidth="1.5" />
+              <line x1="9" y1="-7" x2="-9" y2="7" stroke="#FEF08A" strokeWidth="1.5" />
+              <rect x="-12" y="-10" width="24" height="20" rx="3" fill="none" stroke="#FEF3C7" strokeWidth="1.2" strokeDasharray="3 2" />
+            </g>
+            {/* Ochre Patch */}
+            <g transform="translate(28, 65) rotate(-8)">
+              <rect x="-10" y="-12" width="20" height="24" rx="2" fill="#D97706" stroke="#1C1610" strokeWidth="2.2" />
+              <line x1="-8" y1="-10" x2="-8" y2="10" stroke="#1C1610" strokeWidth="1.2" strokeDasharray="2 2" />
+              <line x1="8" y1="-10" x2="8" y2="10" stroke="#1C1610" strokeWidth="1.2" strokeDasharray="2 2" />
+            </g>
+            {/* Blue Patch */}
+            <g transform="translate(-18, 92) rotate(-4)">
+              <rect x="-8" y="-7" width="16" height="14" rx="2" fill="#2563EB" stroke="#1C1610" strokeWidth="2" />
+            </g>
+
+            {/* Rope Belt Around Waist with Knot */}
+            <g transform="translate(0, 14)">
+              <ellipse cx="0" cy="0" rx="52" ry="9" fill="none" stroke="#D97706" strokeWidth="5.5" />
+              <ellipse cx="0" cy="0" rx="52" ry="9" fill="none" stroke="#FEF08A" strokeWidth="3" strokeDasharray="6 4" />
+              {/* Belt Knot */}
+              <circle cx="22" cy="3" r="6" fill="#B45309" stroke="#1C1610" strokeWidth="2" />
+              <path d="M 22,6 C 26,16 28,26 30,34" stroke="#B45309" strokeWidth="4" strokeLinecap="round" />
+            </g>
+
+            {/* Wooden Water Canteen (Čutora na provázku) */}
+            <g transform={`translate(38, 20) rotate(${canteenSway})`}>
+              {/* String */}
+              <line x1="0" y1="0" x2="0" y2="28" stroke="#78350F" strokeWidth="2" />
+              {/* Round Wooden Canteen */}
+              <circle cx="0" cy="38" r="14" fill="#92400E" stroke="#1C1610" strokeWidth="2.8" />
+              <circle cx="0" cy="38" r="8" fill="#B45309" stroke="#78350F" strokeWidth="1.5" />
+              {/* Cork Stopper */}
+              <rect x="-3" y="21" width="6" height="5" fill="#D97706" stroke="#1C1610" strokeWidth="1.5" />
+            </g>
+
+            {/* Big Wooden Horn Buttons */}
+            {[-22, -2, 28].map((by) => (
+              <g key={by} transform={`translate(-6, ${by})`}>
+                <ellipse cx="0" cy="0" rx="5" ry="4" fill="#D97706" stroke="#1C1610" strokeWidth="2" />
+                <line x1="-3" y1="0" x2="3" y2="0" stroke="#1C1610" strokeWidth="1.5" />
+              </g>
+            ))}
+          </g>
+
+          {/* 5. HEAVY KNOBBY SUKOVICE WALKING STAFF */}
+          <g id="tulak-sukovice-arm" transform={`translate(285, 235) rotate(${staffAngle})`}>
+            {/* Arm with Green Coat Sleeve */}
+            <path
+              d="M -10,-10 C 6,10 18,25 24,45 C 30,42 32,32 28,24 C 20,12 8,-2 -10,-10 Z"
+              fill="url(#tulakCoatGrad)"
               stroke="#1C1610"
               strokeWidth="3.5"
             />
-            {/* Shirt button placket & chest opening */}
-            <line x1="12" y1="4" x2="12" y2="65" stroke="#1C1610" strokeWidth="2.2" />
-            <circle cx="12" cy="22" r="2.2" fill="#78350F" />
-            <circle cx="12" cy="40" r="2.2" fill="#78350F" />
+            {/* Clenched Weathered Hand */}
+            <circle cx="26" cy="42" r="10" fill="url(#tulakSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
 
-            {/* Rope belt (Provaz) tied around waist with dangling ends */}
-            <g transform="translate(-16, 62)">
-              <rect x="0" y="0" width="62" height="7" rx="3" fill="#D97706" stroke="#1C1610" strokeWidth="2.2" />
-              <path d="M 32,7 C 35,18 42,28 40,38 M 30,7 C 26,18 24,28 28,36" stroke="#B45309" strokeWidth="3" strokeLinecap="round" fill="none" />
-            </g>
-
-            {/* Ragged Tattered Green Coat */}
-            <path
-              d="M -35,5 C -45,45 -55,95 -35,125 C -15,115 -5,130 15,118 C 35,130 45,115 65,122 C 72,95 65,45 52,5 C 32,-4 -15,-4 -35,5 Z"
-              fill="url(#tulakCoat)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-            {/* Tattered Coat Tail Cuts & Fringes */}
-            <path
-              d="M -35,125 L -28,138 L -18,126 L -8,140 L 4,124 L 16,138 L 28,125 L 40,138 L 52,122 L 65,122"
-              stroke="#1C1610"
-              strokeWidth="3.2"
-              fill="none"
-            />
-
-            {/* MULTI-COLORED PATCHES ON COAT */}
-            {/* Brown shoulder patch */}
-            <rect x="-38" y="32" width="18" height="18" rx="2" fill="#854D0E" stroke="#1C1610" strokeWidth="2.2" transform="rotate(-12 -29 41)" />
-            {/* Purple patch */}
-            <rect x="25" y="82" width="16" height="15" rx="2" fill="#7E22CE" stroke="#1C1610" strokeWidth="2" transform="rotate(10 33 89)" />
-            {/* Pale ochre patch */}
-            <rect x="-18" y="95" width="15" height="14" rx="2" fill="#D97706" stroke="#1C1610" strokeWidth="2" transform="rotate(-6 -10 102)" />
-
-            {/* WOODEN CANTEEN / FLASK (ČUTORA) HANGING AT RIGHT HIP */}
-            <g transform="translate(-32, 75)">
-              <line x1="8" y1="-20" x2="-2" y2="0" stroke="#78350F" strokeWidth="2.5" />
-              {/* Flask body */}
-              <ellipse cx="-4" cy="12" rx="12" ry="15" fill="url(#canteenGrad)" stroke="#1C1610" strokeWidth="3" />
-              {/* Wooden spout & stopper */}
-              <rect x="-7" y="-2" width="6" height="6" rx="1" fill="#CA8A04" stroke="#1C1610" strokeWidth="1.8" />
-            </g>
-          </g>
-
-          {/* 5. MASSIVE KNOBBY WOODEN WALKING STAFF (SUKOVITÁ SUKOVICE) */}
-          <g transform={`translate(285, 230) rotate(${staffAngle})`}>
-            {/* Big gnarly knobby branch staff */}
-            <path
-              d="M -12,-160 C -18,-115 -2,-80 -14,-35 C -6,10 -16,65 -8,120 C -4,165 -10,210 -8,255 L 4,255 C 6,210 0,165 6,120 C 0,65 14,10 6,-35 C 16,-80 2,-115 12,-160 Z"
-              fill="url(#sukoviceWood)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-
-            {/* DISTINCTIVE PROMINENT WOODEN KNOBS & BURLS (SUKY) */}
-            {/* Top gnarly branch crown */}
-            <g transform="translate(0, -160)">
-              <circle cx="-16" cy="-8" r="9" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3" />
-              <circle cx="-16" cy="-8" r="4" fill="#532C0D" stroke="#1C1610" strokeWidth="1.8" />
-              <circle cx="15" cy="-14" r="8" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3" />
-              <circle cx="15" cy="-14" r="3.5" fill="#532C0D" stroke="#1C1610" strokeWidth="1.8" />
-            </g>
-
-            {/* Upper Knob */}
-            <circle cx="-14" cy="-85" r="11" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3" />
-            <circle cx="-14" cy="-85" r="5" fill="#532C0D" stroke="#1C1610" strokeWidth="2" />
-
-            {/* Middle Knob */}
-            <circle cx="12" cy="-25" r="12" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3.2" />
-            <circle cx="12" cy="-25" r="5.5" fill="#532C0D" stroke="#1C1610" strokeWidth="2" />
-
-            {/* Lower Knobs */}
-            <circle cx="-10" cy="45" r="10" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3" />
-            <circle cx="-10" cy="45" r="4.5" fill="#532C0D" stroke="#1C1610" strokeWidth="1.8" />
-            <circle cx="10" cy="110" r="9" fill="url(#sukoviceWood)" stroke="#1C1610" strokeWidth="3" />
-
-            {/* Wood Grain Lines */}
-            <path d="M -4,-120 Q 2,-70 -3,-20 M 3,-20 Q -2,35 2,90" stroke="#532C0D" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-          </g>
-
-          {/* 6. LEFT ARM FIRMLY GRASPING THE SUKOVICE */}
-          <g transform="translate(235, 185)">
-            {/* Green coat sleeve */}
-            <path
-              d="M 0,0 C 18,5 40,15 54,32 C 60,42 55,54 44,52 C 30,46 15,30 0,22 Z"
-              fill="url(#tulakCoat)"
-              stroke="#1C1610"
-              strokeWidth="3.8"
-            />
-            {/* Peasant hand clenched tightly around staff */}
-            <g transform="translate(54, 38)">
-              <ellipse cx="0" cy="0" rx="11" ry="9" fill="url(#tulakSkin)" stroke="#1C1610" strokeWidth="3" />
-              {/* Fingers clenched */}
-              <line x1="-8" y1="-6" x2="-8" y2="4" stroke="#1C1610" strokeWidth="2.5" strokeLinecap="round" />
-              <line x1="-2" y1="-8" x2="-2" y2="6" stroke="#1C1610" strokeWidth="2.5" strokeLinecap="round" />
-              <line x1="4" y1="-7" x2="4" y2="6" stroke="#1C1610" strokeWidth="2.5" strokeLinecap="round" />
-            </g>
-          </g>
-
-          {/* 7. RIGHT ARM HOLDING SACK STRAP */}
-          <g transform="translate(170, 185)">
-            <ellipse cx="14" cy="15" rx="9" ry="8" fill="url(#tulakSkin)" stroke="#1C1610" strokeWidth="2.8" />
-            <path d="M 8,10 Q 15,16 22,12" stroke="#1C1610" strokeWidth="2" fill="none" />
-          </g>
-
-          {/* 8. TULÁK'S JOYFUL LAUGHING HEAD & BUSHY BEARD */}
-          <g id="tulak-head" transform={`translate(210, 130)`}>
-            {/* VOLUMINOUS WILD WHITE-GREY BEARD & HAIR */}
-            <g transform={`rotate(${beardWave})`}>
-              {/* Beard main mass */}
+            {/* The Massive Oak Sukovice Staff */}
+            <g transform="translate(24, 0)">
+              {/* Main Gnarled Staff Body */}
               <path
-                d="M -35,-5 C -45,25 -25,65 0,72 C 28,78 65,65 72,25 C 68,-5 45,-15 35,-15 C 20,5 -5,5 -20,-5 Z"
-                fill="#F1F5F9"
+                d="M -6,-95 C -4,-40 -7,40 -5,175 C -1,177 4,177 6,175 C 8,40 5,-40 7,-95 C 4,-98 -3,-98 -6,-95 Z"
+                fill="url(#sukoviceBarkGrad)"
                 stroke="#1C1610"
-                strokeWidth={showOutline ? "4.5" : "3.5"}
+                strokeWidth={showOutline ? '4.5' : '3.5'}
                 strokeLinejoin="round"
               />
-              {/* Spiky hair tufts on beard */}
+
+              {/* Carved Knots (Suky) */}
+              <ellipse cx="-5" cy="-55" rx="5" ry="7" fill="#451A03" stroke="#1C1610" strokeWidth="2" />
+              <ellipse cx="5" cy="15" rx="5" ry="8" fill="#451A03" stroke="#1C1610" strokeWidth="2" />
+              <ellipse cx="-4" cy="95" rx="4" ry="6" fill="#451A03" stroke="#1C1610" strokeWidth="2" />
+
+              {/* Bark Growth Rings */}
+              <path d="M -5,-15 C 0,-18 3,-18 6,-15" fill="none" stroke="#78350F" strokeWidth="2" />
+              <path d="M -5,55 C 0,52 3,52 6,55" fill="none" stroke="#78350F" strokeWidth="2" />
+              <path d="M -5,135 C 0,132 3,132 6,135" fill="none" stroke="#78350F" strokeWidth="2" />
+
+              {/* Iron Ferrule at Bottom Tip */}
+              <path d="M -5,165 L -4,178 L 4,178 L 5,165 Z" fill="#64748B" stroke="#1C1610" strokeWidth="2" />
+            </g>
+          </g>
+
+          {/* 6. HEAD, JOVIAL FACE, BUSHY BEARD & HERBAL PIPE */}
+          <g id="tulak-head" transform="translate(240, 155)">
+            {/* Neck */}
+            <rect x="-16" y="25" width="32" height="24" fill="url(#tulakSkinGrad)" stroke="#1C1610" strokeWidth="3" />
+
+            {/* Cheerful Head Base */}
+            <ellipse
+              cx="0"
+              cy="8"
+              rx="36"
+              ry="38"
+              fill="url(#tulakSkinGrad)"
+              stroke="#1C1610"
+              strokeWidth={showOutline ? '4.5' : '3.5'}
+            />
+
+            {/* Rosy Round Cheeks */}
+            <circle cx="-22" cy="14" r="11" fill="#F87171" opacity="0.55" />
+            <circle cx="22" cy="14" r="11" fill="#F87171" opacity="0.55" />
+
+            {/* Jovial Red Bulbous Nose */}
+            <circle cx="0" cy="10" r="11" fill="#EF4444" stroke="#1C1610" strokeWidth="3" />
+            <circle cx="-3" cy="7" r="3.5" fill="#FED7AA" />
+
+            {/* Friendly Round Ears */}
+            <ellipse cx="-36" cy="10" rx="7" ry="12" fill="url(#tulakSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
+            <ellipse cx="36" cy="10" rx="7" ry="12" fill="url(#tulakSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
+
+            {/* Sparkling Merry Eyes with Pupil Tracking */}
+            <g transform="translate(-15, -4)">
+              <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
+              <circle cx={gazeX} cy={gazeY} r="4.2" fill="#3B82F6" />
+              <circle cx={gazeX} cy={gazeY} r="2.2" fill="#0F172A" />
+              <circle cx={gazeX - 1.5} cy={gazeY - 1.5} r="1.5" fill="#FFFFFF" />
+            </g>
+            <g transform="translate(15, -4)">
+              <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
+              <circle cx={gazeX} cy={gazeY} r="4.2" fill="#3B82F6" />
+              <circle cx={gazeX} cy={gazeY} r="2.2" fill="#0F172A" />
+              <circle cx={gazeX - 1.5} cy={gazeY - 1.5} r="1.5" fill="#FFFFFF" />
+            </g>
+
+            {/* Bushy Curly White Eyebrows */}
+            <g transform="translate(-16, -15)">
               <path
-                d="M -25,45 L -35,58 L -18,56 M -8,65 L -12,78 L 2,68 M 15,70 L 22,82 L 28,68 M 42,60 L 55,68 L 48,52 M 62,35 L 75,42 L 65,25"
+                d="M -14,4 C -10,-8 6,-8 10,4 C 6,2 -10,2 -14,4 Z"
+                fill="#F8FAFC"
                 stroke="#1C1610"
-                strokeWidth="2.8"
+                strokeWidth="2.5"
+              />
+            </g>
+            <g transform="translate(16, -15)">
+              <path
+                d="M -10,4 C -6,-8 10,-8 14,4 C 10,2 -6,2 -10,4 Z"
+                fill="#F8FAFC"
+                stroke="#1C1610"
+                strokeWidth="2.5"
+              />
+            </g>
+
+            {/* MERRY LAUGHING MOUTH WITH GLEAMING TOOTH */}
+            {isReact || isFleeing ? (
+              <ellipse cx="0" cy="24" rx="11" ry="14" fill="#7F1D1D" stroke="#1C1610" strokeWidth="3" />
+            ) : isAction ? (
+              <g transform="translate(0, 24)">
+                <path d="M -18,-4 C -12,18 12,18 18,-4 Z" fill="#991B1B" stroke="#1C1610" strokeWidth="3.2" />
+                <rect x="-6" y="-3" width="12" height="6" fill="#FFFFFF" stroke="#1C1610" strokeWidth="1.5" />
+              </g>
+            ) : (
+              <g transform="translate(0, 22)">
+                <path d="M -20,-2 C -12,16 12,16 20,-2 Z" fill="#991B1B" stroke="#1C1610" strokeWidth="3.2" />
+                <rect x="-5" y="-1" width="10" height="5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="1.5" />
+              </g>
+            )}
+
+            {/* LUSH CURLY WHITE FOLK BEARD & MUSTACHE */}
+            <g id="tulak-beard" transform="translate(0, 18)">
+              {/* Full Flowing Beard */}
+              <path
+                d="M -34,4 C -48,35 -30,68 0,74 C 30,68 48,35 34,4 C 28,15 15,18 0,18 C -15,18 -28,15 -34,4 Z"
+                fill="#F8FAFC"
+                stroke="#1C1610"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
                 strokeLinejoin="round"
+              />
+              {/* Curly Beard Strands */}
+              <path d="M -16,28 C -22,46 -8,60 0,68" fill="none" stroke="#E2E8F0" strokeWidth="3" />
+              <path d="M 16,28 C 22,46 8,60 0,68" fill="none" stroke="#E2E8F0" strokeWidth="3" />
+              <path d="M -8,25 C -12,40 -2,52 0,58" fill="none" stroke="#E2E8F0" strokeWidth="2.5" />
+
+              {/* Bushy Mustache */}
+              <g transform="translate(0, -4)">
+                <path
+                  d="M -26,8 C -14,-4 -2,0 0,4 C 2,0 14,-4 26,8 C 14,14 2,8 0,8 C -2,8 -14,14 -26,8 Z"
+                  fill="#FFFFFF"
+                  stroke="#1C1610"
+                  strokeWidth="3.2"
+                />
+              </g>
+            </g>
+
+            {/* CLAY HERBAL PIPE (BYLINKOVÁ FAJFKA) */}
+            <g id="herbal-pipe" transform="translate(18, 16) rotate(14)">
+              {/* Curved Stem */}
+              <path
+                d="M 0,0 C 12,2 26,-4 38,-10"
                 fill="none"
+                stroke="#B45309"
+                strokeWidth="4.5"
+                strokeLinecap="round"
               />
-              {/* Silver hair strands */}
-              <path d="M -15,15 Q -10,45 0,55 M 10,18 Q 20,45 32,50" stroke="#CBD5E1" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              {/* Clay Pipe Bowl */}
+              <g transform="translate(38, -10)">
+                <path
+                  d="M -6,-16 L 6,-16 C 8,-4 8,6 0,8 C -8,6 -8,-4 -6,-16 Z"
+                  fill="#78350F"
+                  stroke="#1C1610"
+                  strokeWidth="2.5"
+                />
+                {/* Glowing Tobacco / Herbs */}
+                <ellipse cx="0" cy="-16" rx="5.5" ry="2.5" fill="#DC2626" />
+                <ellipse cx="0" cy="-16" rx="3.5" ry="1.5" fill="#F97316" />
+                {/* Brass Lid / Chain */}
+                <ellipse cx="0" cy="-18" rx="6" ry="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.2" />
+              </g>
             </g>
 
-            {/* Jolly Round Flesh Face */}
-            <ellipse cx="10" cy="-14" rx="28" ry="24" fill="url(#tulakSkin)" stroke="#1C1610" strokeWidth="3.2" />
-
-            {/* Ear */}
-            <ellipse cx="-20" cy="-12" rx="7" ry="10" fill="url(#tulakSkin)" stroke="#1C1610" strokeWidth="2.5" />
-
-            {/* INTERACTIVE LAUGHING FACE FEATURES */}
-            <g transform={`translate(${lookX}, ${lookY})`}>
-              {/* Joyful Crinkled Laughing Eyes (Smiling Arcs ^^) */}
-              <path d="M -4,-20 Q 3,-28 10,-20" stroke="#1C1610" strokeWidth="3.8" strokeLinecap="round" fill="none" />
-              <path d="M 16,-20 Q 23,-28 30,-20" stroke="#1C1610" strokeWidth="3.8" strokeLinecap="round" fill="none" />
-              {/* Laugh lines around eyes */}
-              <line x1="-6" y1="-22" x2="-10" y2="-24" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
-              <line x1="32" y1="-22" x2="36" y2="-24" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
-
-              {/* BIG BULBOUS RED VAGABOND NOSE */}
-              <ellipse cx="25" cy="-16" rx="9.5" ry="8.5" fill="#EF4444" stroke="#1C1610" strokeWidth="2.8" />
-              <circle cx="27" cy="-18" r="2.2" fill="#FCA5A5" />
-
-              {/* Warm Rosy Cheeks */}
-              <circle cx="-2" cy="-10" r="7.5" fill="#FB7185" opacity="0.55" />
-              <circle cx="34" cy="-8" r="7.5" fill="#FB7185" opacity="0.55" />
-
-              {/* HUGE WIDE OPEN LAUGHING MOUTH (:D) */}
-              <path
-                d="M 5,2 C 10,-4 32,-4 38,2 C 40,24 5,24 5,2 Z"
-                fill="#18181B"
-                stroke="#1C1610"
-                strokeWidth="3.2"
-                strokeLinejoin="round"
-              />
-              {/* Pink Tongue Showing in laughter */}
-              <path
-                d="M 14,14 C 18,8 26,8 30,14 C 28,22 16,22 14,14 Z"
-                fill="#F43F5E"
-              />
-              {/* White Upper Teeth */}
-              <rect x="12" y="1" width="18" height="5" rx="1.5" fill="#FFFFFF" />
-            </g>
-
-            {/* BATTERED POINTED FELT HAT WITH GREEN BAND & SPRIG */}
-            <g transform="translate(0, -32) rotate(-8)">
-              {/* Sprig / pine needles in hatband */}
-              <line x1="32" y1="-12" x2="52" y2="-32" stroke="#15803D" strokeWidth="3" strokeLinecap="round" />
-              <line x1="35" y1="-8" x2="55" y2="-22" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" />
-
-              {/* Conical Battered Crown */}
-              <path
-                d="M -26,0 C -35,-35 -30,-65 -8,-75 C 5,-80 20,-65 24,-40 C 28,-15 35,0 35,0 Z"
-                fill="url(#hatGrad)"
-                stroke="#1C1610"
-                strokeWidth="4"
-                strokeLinejoin="round"
-              />
-              {/* Hat crown crease & dent */}
-              <path d="M -15,-48 Q 2,-42 12,-52" stroke="#2B1A0E" strokeWidth="2.5" fill="none" />
-
+            {/* 7. BATTERED POINTED FELT HAT WITH ROWANBERRY SPRIG */}
+            <g id="tulak-hat" transform="translate(0, -20)">
               {/* Curled Hat Brim */}
+              <ellipse cx="0" cy="0" rx="46" ry="14" fill="#1A2E05" stroke="#1C1610" strokeWidth="4" />
+              <rect x="-42" y="-8" width="84" height="14" fill="#2E4A10" />
+
+              {/* Tall Pointed Crumpled Crown */}
               <path
-                d="M -42,2 C -20,-8 30,-8 52,2 C 58,4 55,12 45,12 C 20,8 -20,8 -38,12 C -46,12 -46,4 -42,2 Z"
-                fill="#59422C"
+                d="M -42,-4 C -45,-38 -15,-68 18,-64 C 44,-60 48,-35 42,-4 Z"
+                fill="url(#tulakHatGrad)"
                 stroke="#1C1610"
-                strokeWidth="3.8"
+                strokeWidth={showOutline ? '4.8' : '3.8'}
                 strokeLinejoin="round"
               />
 
-              {/* Green Forest Hatband */}
-              <path
-                d="M -24,-2 C -5,-8 18,-8 33,-2 L 34,5 C 18,-1 -5,-1 -25,5 Z"
-                fill="#166534"
-                stroke="#1C1610"
-                strokeWidth="2"
-              />
+              {/* Red Hat Ribbon Band */}
+              <path d="M -42,-2 C -20,6 20,6 42,-2 L 41,4 C 20,11 -20,11 -41,4 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2.5" />
+
+              {/* Rowanberry Sprig (Jeřabiny s lístky) */}
+              <g transform="translate(-24, -10) rotate(-18)">
+                {/* Leaf */}
+                <path d="M 0,0 C -8,-14 4,-24 8,-12 C 10,-6 6,0 0,0 Z" fill="#65A30D" stroke="#1C1610" strokeWidth="1.5" />
+                <path d="M 6,-6 C 14,-18 24,-12 18,-2 Z" fill="#4D7C0F" stroke="#1C1610" strokeWidth="1.5" />
+                {/* Red Rowanberries */}
+                <circle cx="2" cy="-4" r="3.5" fill="#EF4444" stroke="#1C1610" strokeWidth="1.2" />
+                <circle cx="-4" cy="-8" r="3.2" fill="#DC2626" stroke="#1C1610" strokeWidth="1.2" />
+                <circle cx="7" cy="-9" r="3.0" fill="#B91C1C" stroke="#1C1610" strokeWidth="1.2" />
+              </g>
             </g>
           </g>
-
         </g>
       </g>
     </svg>

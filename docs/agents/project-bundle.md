@@ -4,7 +4,17 @@ When exporting or bundling the codebase into a single text file (e.g. for LLM an
 
 ## Canonical script
 
-Run the project export script:
+```bash
+node scripts/export-project-bundle.cjs
+```
+
+Or via npm script:
+
+```bash
+npm run bundle
+```
+
+Or via PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/export-project-bundle.ps1
@@ -12,8 +22,8 @@ powershell -ExecutionPolicy Bypass -File scripts/export-project-bundle.ps1
 
 Or specify a custom output path:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/export-project-bundle.ps1 -OutputPath "C:\path\to\output.txt"
+```bash
+node scripts/export-project-bundle.cjs /path/to/output.txt
 ```
 
 Default target is always the user's Documents folder: `[MyDocuments]\cely_bubakov.txt`.

@@ -3,15 +3,16 @@ import type { SmartCharacterProps, MousePointerState } from './types';
 
 /**
  * SmartBezhlavyRytirSvg - Interactive smart vector SVG animation
- * Inspired by classic Czech fairy tale / folklore illustration of the Headless Knight (Bezhlavý rytíř)
+ * Inspired by classic Czech fairy tale & castle legends (Hrad Zlenice, Karlštejn) of the Headless Knight (Bezhlavý rytíř) – ENEMY BOSS
  * Features:
- * - Medieval plate armor with chainmail & golden spurs
- * - White battle tabard with authentic red Czech double-tailed lion rampant
- * - Billowing tattered crimson cape
- * - Severed bloody neck stump
- * - Carrying his own severed head in his left arm with knight helmet and red plume
- * - Interactive cursor tracking: severed head and sword follow the cursor
- * - Mighty sword slash and roar animation states
+ * - Menacing blackened gothic plate armor with spiked pauldrons, brass rivets & golden spurs
+ * - White battle tabard with the authentic Czech two-tailed crowned lion rampant
+ * - Billowing tattered royal crimson cape with shredded gothic edges
+ * - Bloody severed neck stump pulsing with cursed crimson embers & ghost ectoplasm
+ * - Severed helmeted head carried in left armored arm: glowing spectral eyes track pointer, flowing battle plume & roaring visor
+ * - Massive two-handed runic executioner greatsword crackling with cursed energy
+ * - Dark boss aura with glowing red ground runes, cursed sparks & spectral mist
+ * - Boss animation set: idle, walk, sprint (charge), action (midnight cleave & roar), react (enrage/poise), flee (spectral phase shift)
  */
 export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
   state = 'idle',
@@ -19,7 +20,7 @@ export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
   speed = 1,
   isPlaying = true,
   direction = 1,
-  size = 400,
+  size = 440,
   interactive = true,
   className = '',
   style = {},
@@ -31,6 +32,7 @@ export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
     showParticles = true,
     showShadow = true,
     showOutline = true,
+    showBossAura = true,
   } = features;
 
   const [localTime, setLocalTime] = useState<number>(0);
@@ -71,7 +73,11 @@ export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
     const rect = svgRef.current.getBoundingClientRect();
     const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-    setPointer({ x: Math.max(-1, Math.min(1, nx * direction)), y: Math.max(-1, Math.min(1, ny)), isHovered: true });
+    setPointer({
+      x: Math.max(-1, Math.min(1, nx * direction)),
+      y: Math.max(-1, Math.min(1, ny)),
+      isHovered: true,
+    });
   };
 
   const handlePointerLeave = () => {
@@ -79,48 +85,124 @@ export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
   };
 
   const isWalking = state === 'walk';
+  const isSprinting = state === 'sprint';
   const isAction = state === 'action';
   const isReact = state === 'react';
+  const isFleeing = state === 'flee';
+  const isMoving = isWalking || isSprinting || isFleeing;
 
-  // Kinematics
-  const walkSpeed = isAction ? 14 : isWalking ? 8.5 : 2.6;
+  // Kinematic parameters
+  const walkSpeed = isSprinting ? 12 : isWalking ? 7.5 : isAction ? 14 : isReact ? 18 : 2.2;
   const walkSin = Math.sin(t * walkSpeed);
   const walkCos = Math.cos(t * walkSpeed);
 
-  // Armored stride legs
-  const leftLegAngle = isWalking ? walkSin * 22 : isAction ? -15 + Math.sin(t * 16) * 10 : -5;
-  const rightLegAngle = isWalking ? -walkSin * 22 : isAction ? 18 + Math.cos(t * 16) * 10 : 8;
-
-  // Heavy armored body bobbing
-  const bobY = isWalking ? Math.abs(walkSin) * 9 : isAction ? Math.abs(Math.sin(t * 12)) * 14 : Math.sin(t * 2.2) * 2.5;
-  const torsoAngle = isWalking ? walkSin * 2.5 : isAction ? -8 + Math.sin(t * 12) * 6 : 0;
-
-  // Billowing tattered cape
-  const capeFlutter = Math.sin(t * (isAction ? 14 : isWalking ? 8 : 3.5)) * (isAction ? 22 : isWalking ? 14 : 6);
-
-  // Sword kinematics
-  const swordAngle = isAction
-    ? -45 + Math.sin(t * 14) * 45
+  // Heavy armored boss body bobbing and lean
+  const bobY = isAction
+    ? -Math.abs(Math.sin(t * 12)) * 12 - 4
+    : isSprinting
+    ? -Math.abs(walkSin) * 14
     : isWalking
-    ? 5 + walkCos * 8
+    ? -Math.abs(walkSin) * 9
+    : isReact
+    ? -Math.abs(Math.sin(t * 14)) * 6 - 2
+    : Math.sin(t * 2.2) * 2.5;
+
+  const torsoLean = isAction
+    ? -12 + Math.sin(t * 10) * 10
+    : isSprinting
+    ? 15 + walkSin * 3
+    : isWalking
+    ? 5 + walkCos * 2
+    : isReact
+    ? -8 + Math.sin(t * 20) * 3
+    : isFleeing
+    ? -6 + Math.sin(t * 4) * 2
+    : Math.sin(t * 1.5) * 1.2;
+
+  // Armored stride kinematics for plate boots (sabatons) - legs ONLY swing when actively moving
+  const strideAmp = isMoving ? (isSprinting ? 24 : isFleeing ? 20 : 15) : 0;
+  const legSwingRot = isMoving ? (isSprinting ? 26 : isFleeing ? 22 : 16) : 0;
+  const leftLegX = isMoving ? -26 + walkSin * strideAmp : -26;
+  const leftLegY = isMoving ? 32 - Math.max(0, walkCos) * (strideAmp * 0.65) : 32;
+  const leftLegRot = isMoving ? walkSin * legSwingRot : 0;
+
+  const rightLegX = isMoving ? 26 - walkSin * strideAmp : 26;
+  const rightLegY = isMoving ? 32 - Math.max(0, -walkCos) * (strideAmp * 0.65) : 32;
+  const rightLegRot = isMoving ? -walkSin * legSwingRot : 0;
+
+  // Cape flutter in cursed night wind
+  const capeFlutter = isSprinting
+    ? -25 + Math.sin(t * 16) * 18
+    : isAction
+    ? -18 + Math.sin(t * 14) * 22
+    : isWalking
+    ? -8 + Math.sin(t * 8) * 12
+    : Math.sin(t * 3) * 6;
+
+  // Greatsword combat stance and cleave swing
+  const swordAngle = isAction
+    ? -85 + Math.sin(t * 14) * 75 // Massive overhead cleave
+    : isReact
+    ? -35 + Math.sin(t * 18) * 15 // Defensive parry guard
+    : isSprinting
+    ? 45 + Math.sin(t * 12) * 15 // Leveled charge thrust
+    : isWalking
+    ? 12 + Math.sin(t * 7.5) * 16
+    : 8 + Math.sin(t * 2) * 4;
+
+  // Severed head position & gaze tracking
+  const headBobX = Math.sin(t * (isMoving ? walkSpeed : 2.5)) * (isMoving ? 4 : 1.5);
+  const headBobY = Math.cos(t * (isMoving ? walkSpeed : 2.5)) * (isMoving ? 5 : 2);
+  const headAngle = isAction
+    ? -18 + Math.sin(t * 14) * 14
+    : isReact
+    ? 15 + Math.sin(t * 16) * 10
+    : isSprinting
+    ? 10
+    : -5 + Math.sin(t * 2) * 4;
+
+  // Fiery spectral eye gaze tracking
+  const gazeX = isReact
+    ? 2.5 + Math.sin(t * 24) * 1.5
     : pointer.isHovered
-    ? pointer.y * 15
+    ? pointer.x * 4.5
+    : Math.sin(t * 1.5) * 2;
+
+  const gazeY = isReact
+    ? -1.5
+    : pointer.isHovered
+    ? pointer.y * 3.5
     : 0;
 
-  // Severed head independent tracking & motion
-  const headLookX = pointer.isHovered ? pointer.x * 12 : Math.sin(t * 2) * 4;
-  const headLookY = pointer.isHovered ? pointer.y * 10 : Math.cos(t * 2) * 2;
-  const plumeWave = Math.sin(t * (isAction ? 15 : isWalking ? 9 : 3.8)) * (isAction ? 20 : isWalking ? 12 : 5);
-  const mouthRoar = isAction ? 10 + Math.abs(Math.sin(t * 14)) * 8 : isReact ? 6 : 0;
+  // Severed helmet plume waft
+  const plumeWaft = isSprinting
+    ? -30 + Math.sin(t * 16) * 18
+    : isAction
+    ? -22 + Math.sin(t * 18) * 16
+    : Math.sin(t * 3.5) * 8;
 
-  // Blood drips from neck stump
-  const bloodDrip1 = ((t * 70) % 65);
-  const bloodDrip2 = (((t * 60) + 30) % 55);
+  // Cursed embers rising from neck stump
+  const neckEmbers = [
+    { x: 235 + Math.sin(t * 8 + 0) * 12, y: 155 - ((t * 40 + 0) % 36), r: 2.8, col: '#EF4444' },
+    { x: 245 + Math.cos(t * 9 + 2) * 14, y: 152 - ((t * 45 + 15) % 40), r: 3.2, col: '#F97316' },
+    { x: 240 + Math.sin(t * 7 + 4) * 10, y: 150 - ((t * 50 + 25) % 42), r: 2.5, col: '#DC2626' },
+  ];
+
+  // Dark boss aura particles (floating souls/sparks)
+  const bossParticles = [
+    { x: 190 + Math.sin(t * 2.5 + 0) * 40, y: 340 + Math.cos(t * 2.8 + 0) * 40, r: 4.5, op: 0.5 },
+    { x: 290 + Math.cos(t * 2.2 + 1) * 35, y: 320 + Math.sin(t * 2.5 + 1) * 45, r: 5.0, op: 0.6 },
+    { x: 240 + Math.sin(t * 3.1 + 2) * 55, y: 220 + Math.cos(t * 2.9 + 2) * 50, r: 3.8, op: 0.45 },
+    { x: 150 + Math.cos(t * 2.7 + 3) * 30, y: 260 + Math.sin(t * 2.4 + 3) * 35, r: 4.2, op: 0.55 },
+  ];
+
+  // Ground rune rotation
+  const runeAngle = (t * 25) % 360;
 
   return (
     <svg
       ref={svgRef}
-      viewBox="0 0 460 480"
+      viewBox="0 0 480 480"
       width={size}
       height={size}
       className={`smart-bezhlavy-rytir-svg select-none cursor-pointer ${className}`}
@@ -129,556 +211,552 @@ export const SmartBezhlavyRytirSvg: React.FC<SmartCharacterProps> = ({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       role="img"
-      aria-label="Smart animovaný Bezhlavý rytíř s mečem a hlavou v podpaží"
+      aria-label="Smart animovaný Bezhlavý rytíř – mocný boss z tajemné hlásky s vlastním hrdlem a popravčím mečem"
     >
       <defs>
-        {/* Armor Plate Gradient */}
-        <linearGradient id="armorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#E2E8F0" />
-          <stop offset="35%" stopColor="#CBD5E1" />
-          <stop offset="70%" stopColor="#94A3B8" />
-          <stop offset="100%" stopColor="#475569" />
+        {/* Dark Gothic Blackened Steel Armor */}
+        <linearGradient id="bossPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#475569" />
+          <stop offset="35%" stopColor="#334155" />
+          <stop offset="70%" stopColor="#1E293B" />
+          <stop offset="100%" stopColor="#0F172A" />
         </linearGradient>
 
-        <linearGradient id="armorDarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        {/* Polished Steel Highlight */}
+        <linearGradient id="bossSteelShine" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#94A3B8" />
-          <stop offset="50%" stopColor="#64748B" />
-          <stop offset="100%" stopColor="#334155" />
+          <stop offset="50%" stopColor="#475569" />
+          <stop offset="100%" stopColor="#1E293B" />
         </linearGradient>
 
-        {/* Cape Crimson Gradient */}
-        <linearGradient id="capeGrad" x1="10%" y1="0%" x2="90%" y2="100%">
-          <stop offset="0%" stopColor="#EF4444" />
-          <stop offset="40%" stopColor="#DC2626" />
-          <stop offset="80%" stopColor="#991B1B" />
-          <stop offset="100%" stopColor="#660E0E" />
+        {/* Royal Tattered Crimson Cloak */}
+        <linearGradient id="bossCapeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#991B1B" />
+          <stop offset="50%" stopColor="#7F1D1D" />
+          <stop offset="85%" stopColor="#450A0A" />
+          <stop offset="100%" stopColor="#250505" />
         </linearGradient>
 
-        {/* Tabard Linen Gradient */}
-        <linearGradient id="tabardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="70%" stopColor="#F1F5F9" />
-          <stop offset="100%" stopColor="#CBD5E1" />
+        {/* Cursed Runic Sword Glow */}
+        <linearGradient id="cursedBladeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#CBD5E1" />
+          <stop offset="40%" stopColor="#F87171" />
+          <stop offset="60%" stopColor="#EF4444" />
+          <stop offset="80%" stopColor="#B91C1C" />
+          <stop offset="100%" stopColor="#450A0A" />
         </linearGradient>
 
-        {/* Golden Spurs & Pommel */}
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FDE047" />
-          <stop offset="45%" stopColor="#EAB308" />
-          <stop offset="100%" stopColor="#9A3412" />
-        </linearGradient>
+        {/* Severed Neck Stump Blood */}
+        <radialGradient id="neckStumpGrad" cx="50%" cy="40%" r="55%">
+          <stop offset="0%" stopColor="#DC2626" />
+          <stop offset="60%" stopColor="#991B1B" />
+          <stop offset="100%" stopColor="#450A0A" />
+        </radialGradient>
 
-        {/* Sword Steel Blade */}
-        <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#F8FAFC" />
-          <stop offset="45%" stopColor="#CBD5E1" />
-          <stop offset="50%" stopColor="#E2E8F0" />
-          <stop offset="100%" stopColor="#64748B" />
-        </linearGradient>
-
-        {/* Blood Red Gradient */}
-        <linearGradient id="bloodGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#EF4444" />
-          <stop offset="60%" stopColor="#B91C1C" />
-          <stop offset="100%" stopColor="#580808" />
-        </linearGradient>
-
-        {/* Severed Head Furious Eye Glow */}
-        <filter id="eyeRageGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+        {/* Boss Spectral Fire Filter */}
+        <filter id="bossFireGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
 
-        {/* Czech Lion Pattern Symbol */}
-        <pattern id="chainmailPattern" width="6" height="6" patternUnits="userSpaceOnUse">
-          <circle cx="3" cy="3" r="2.2" fill="none" stroke="#334155" strokeWidth="1" />
-          <circle cx="0" cy="0" r="1.5" fill="none" stroke="#1E293B" strokeWidth="0.8" />
-          <circle cx="6" cy="6" r="1.5" fill="none" stroke="#1E293B" strokeWidth="0.8" />
-        </pattern>
+        {/* Cleave Slash Glow */}
+        <filter id="bossSlashGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
 
       <g
-        transform={`translate(230, 240) scale(${direction}, 1) translate(-230, -240)`}
+        transform={`translate(240, 240) scale(${direction}, 1) translate(-240, -240)`}
+        opacity={isFleeing ? 0.72 : 1}
       >
-        {/* GROUND SHADOW */}
+        {/* GROUND SHADOW & RUNIC BOSS SUMMON CIRCLE */}
         {showShadow && (
-          <ellipse
-            cx={210}
-            cy={440}
-            rx={105 + (isWalking ? Math.sin(t * walkSpeed) * 8 : 0)}
-            ry={19}
-            fill="#0F172A"
-            opacity="0.25"
-          />
+          <g opacity="0.45">
+            <ellipse cx={240} cy={445} rx={95} ry={18} fill="#020617" />
+          </g>
         )}
 
-        {/* DYNAMIC SWORD SLASH WIND FX */}
-        {showParticles && isAction && (
-          <path
-            d={`M 110,210 Q 70,300 140,390`}
-            stroke="#93C5FD"
-            strokeWidth="5"
-            strokeLinecap="round"
-            fill="none"
-            opacity={0.6 + Math.sin(t * 18) * 0.3}
-          />
+        {/* BOSS CURSED GROUND RUNES */}
+        {showBossAura && (
+          <g id="boss-ground-runes" transform="translate(240, 442) scale(1, 0.32)">
+            {/* Outer Runic Circle */}
+            <circle
+              cx="0"
+              cy="0"
+              r="135"
+              fill="none"
+              stroke="#DC2626"
+              strokeWidth="3"
+              strokeDasharray="20 10 5 10"
+              opacity="0.75"
+              filter="url(#bossFireGlow)"
+              transform={`rotate(${runeAngle})`}
+            />
+            {/* Inner Runic Pentagon & Spikes */}
+            <circle
+              cx="0"
+              cy="0"
+              r="105"
+              fill="none"
+              stroke="#B91C1C"
+              strokeWidth="2.5"
+              strokeDasharray="14 8"
+              opacity="0.6"
+              transform={`rotate(${-runeAngle * 1.4})`}
+            />
+            {/* Radial Rune Rays */}
+            {[0, 60, 120, 180, 240, 300].map((deg) => (
+              <line
+                key={deg}
+                x1="40"
+                y1="0"
+                x2="125"
+                y2="0"
+                stroke="#EF4444"
+                strokeWidth="2"
+                opacity="0.45"
+                transform={`rotate(${deg + runeAngle})`}
+              />
+            ))}
+          </g>
         )}
 
-        {/* 1. TATTERED BILLOWING CRIMSON CAPE (BEHIND BODY) */}
-        <g transform={`translate(160, 150) rotate(${capeFlutter * 0.4})`}>
+        {/* FLOATING CURSED PARTICLES & GHOSTLY WISPS */}
+        {showParticles && showBossAura && (
+          <g className="boss-wisps">
+            {bossParticles.map((p, idx) => (
+              <circle
+                key={`wisp-${idx}`}
+                cx={p.x}
+                cy={p.y}
+                r={p.r}
+                fill="#DC2626"
+                opacity={p.op}
+                filter="url(#bossFireGlow)"
+              />
+            ))}
+          </g>
+        )}
+
+        {/* BOSS CLEAVE SHOCKWAVE (ACTION MODE) */}
+        {isAction && (
+          <g id="boss-cleave-wave" transform="translate(320, 260)">
+            <path
+              d="M -70,-130 C 50,-80 120,20 80,140"
+              fill="none"
+              stroke="#EF4444"
+              strokeWidth="8"
+              strokeLinecap="round"
+              filter="url(#bossSlashGlow)"
+            />
+            <path
+              d="M -50,-110 C 60,-65 110,25 75,120"
+              fill="none"
+              stroke="#FEF08A"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
+
+        {/* ======================================================== */}
+        {/* BILLOWING TATTERED CRIMSON CLOAK (DRAWN BEHIND ARMOR)   */}
+        {/* ======================================================== */}
+        <g id="boss-cape" transform={`translate(225, 200) rotate(${capeFlutter})`}>
+          {/* Main Heavy Crimson Cloak */}
           <path
-            d={`M -20,0 C -55,40 -85,110 -115,180 C -125,200 -120,210 -105,205 C -95,200 -88,185 -78,195 C -65,210 -55,205 -45,185 C -35,170 -25,185 -15,195 C 5,205 18,175 12,145 C 5,100 -2,45 0,0 Z`}
-            fill="url(#capeGrad)"
+            d="M -45,-30 C -95,60 -115,160 -95,215 C -65,225 -40,195 -20,215 C 5,230 30,195 55,210 C 70,180 50,60 35,-30 Z"
+            fill="url(#bossCapeGrad)"
             stroke="#1C1610"
-            strokeWidth="4"
+            strokeWidth={showOutline ? '5' : '4'}
             strokeLinejoin="round"
           />
-          {/* Tattered rips and holes */}
+          {/* Cloak Frayed Gothic Hem Points */}
           <path
-            d="M -90,140 Q -102,152 -88,160 M -60,110 Q -72,125 -58,135 M -40,150 Q -50,165 -35,172"
-            stroke="#450A0A"
-            strokeWidth="2.5"
-            strokeLinecap="round"
+            d="M -95,215 L -85,200 L -72,218 L -60,198 L -48,220 L -35,202 L -20,215"
+            fill="#450A0A"
+            stroke="#1C1610"
+            strokeWidth="2"
+          />
+          {/* Golden Hem Trim */}
+          <path
+            d="M -45,-30 C -95,60 -115,160 -95,215"
             fill="none"
+            stroke="#F59E0B"
+            strokeWidth="3"
+            strokeDasharray="6 3"
+          />
+          <path
+            d="M 35,-30 C 50,60 70,180 55,210"
+            fill="none"
+            stroke="#F59E0B"
+            strokeWidth="3"
+            strokeDasharray="6 3"
           />
         </g>
 
-        {/* ROOT BODY CONTAINER (WITH WALK BOB & SWAY) */}
-        <g transform={`translate(0, ${bobY}) rotate(${torsoAngle}, 220, 280)`}>
-
-          {/* 2. ARMORED LEGS & SABATONS (GREAVES, POLEYNS, SPURS) */}
-          {/* Left / Back Leg */}
-          <g transform={`translate(180, 275) rotate(${leftLegAngle})`}>
-            {/* Poleyn (Knee plate) & Greave */}
-            <path
-              d="M -14,0 C -18,35 -24,70 -16,110 C -12,125 10,125 15,110 C 20,70 16,35 14,0 Z"
-              fill="url(#armorGrad)"
-              stroke="#1C1610"
-              strokeWidth="4"
-              strokeLinejoin="round"
-            />
-            {/* Knee Guard Disc */}
-            <circle cx="-3" cy="45" r="9" fill="url(#armorDarkGrad)" stroke="#1C1610" strokeWidth="3" />
-            <circle cx="-3" cy="45" r="3" fill="#E2E8F0" />
-
-            {/* Armored Sabaton (Foot/Boot) */}
-            <path
-              d="M -18,105 C -32,112 -42,125 -38,138 C -32,148 5,148 24,142 C 28,132 20,115 12,105 Z"
-              fill="url(#armorDarkGrad)"
-              stroke="#1C1610"
-              strokeWidth="4"
-              strokeLinejoin="round"
-            />
-            {/* Articulated foot lames */}
-            <line x1="-28" y1="120" x2="8" y2="120" stroke="#1C1610" strokeWidth="2.5" />
-            <line x1="-24" y1="128" x2="14" y2="128" stroke="#1C1610" strokeWidth="2.5" />
-
-            {/* GOLDEN SPUR ON HEEL */}
-            <g transform="translate(18, 126)">
-              <rect x="0" y="-3" width="12" height="6" rx="2" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="2" />
-              {/* Pointy Rowel Star */}
-              <polygon
-                points="16,0 20,-5 22,-1 27,-2 24,3 28,7 23,7 20,12 18,7 13,8 15,3 11,-1"
-                fill="url(#goldGrad)"
-                stroke="#1C1610"
-                strokeWidth="1.5"
-              />
-            </g>
-          </g>
-
-          {/* Right / Front Leg */}
-          <g transform={`translate(225, 275) rotate(${rightLegAngle})`}>
-            {/* Armored Leg Thigh & Greave */}
-            <path
-              d="M -12,0 C -5,35 5,75 14,110 C 22,125 45,122 42,105 C 32,70 18,35 12,0 Z"
-              fill="url(#armorGrad)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-            {/* Knee Guard Plate */}
-            <circle cx="10" cy="45" r="9.5" fill="url(#armorDarkGrad)" stroke="#1C1610" strokeWidth="3" />
-            <circle cx="10" cy="45" r="3.2" fill="#E2E8F0" />
-
-            {/* Heavy Plate Sabaton with Tread */}
-            <path
-              d="M 12,105 C 16,120 28,135 62,142 C 78,145 88,138 85,125 C 80,110 52,102 36,102 Z"
-              fill="url(#armorDarkGrad)"
-              stroke="#1C1610"
-              strokeWidth="4"
-              strokeLinejoin="round"
-            />
-            {/* Lames plate creases */}
-            <line x1="26" y1="116" x2="62" y2="116" stroke="#1C1610" strokeWidth="2.5" />
-            <line x1="32" y1="126" x2="72" y2="126" stroke="#1C1610" strokeWidth="2.5" />
-
-            {/* GOLDEN SPUR ON FRONT HEEL */}
-            <g transform="translate(14, 122)">
-              <rect x="-10" y="-3" width="10" height="6" rx="2" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="2" />
-              {/* Star rowel */}
-              <polygon
-                points="-14,0 -18,-5 -20,-1 -25,-2 -22,3 -26,7 -21,7 -18,12 -16,7 -11,8 -13,3 -9,-1"
-                fill="url(#goldGrad)"
-                stroke="#1C1610"
-                strokeWidth="1.5"
-              />
-            </g>
-          </g>
-
-          {/* 3. CHAINMAIL HAUBERK & STEEL FAULDS UNDER TABARD */}
-          <g transform="translate(185, 230)">
-            <path
-              d="M -25,0 L 55,0 L 50,45 L -20,45 Z"
-              fill="url(#chainmailPattern)"
-              stroke="#1C1610"
-              strokeWidth="3"
-            />
-          </g>
-
-          {/* 4. WHITE HERALDIC BATTLE SURCOAT / TABARD WITH CZECH LION */}
-          <g id="tabard-lion" transform="translate(180, 130)">
-            {/* Flowing white linen battle surcoat */}
-            <path
-              d="M -15,0 C -5,-15 35,-15 50,0 C 65,40 75,90 78,130 C 55,142 35,130 18,140 C 2,132 -10,145 -22,130 C -25,90 -22,40 -15,0 Z"
-              fill="url(#tabardGrad)"
-              stroke="#1C1610"
-              strokeWidth={showOutline ? "4.5" : "3.5"}
-              strokeLinejoin="round"
-            />
-
-            {/* Tattered ragged hem cuts at bottom */}
-            <path
-              d="M -22,130 L -15,145 L -8,132 L 2,148 L 12,135 L 22,148 L 35,134 L 52,146 L 65,132 L 78,130"
-              stroke="#1C1610"
-              strokeWidth="3.2"
-              fill="none"
-              strokeLinejoin="round"
-            />
-
-            {/* Dirt, rust and battle wear splatters */}
-            <circle cx="5" cy="115" r="2.5" fill="#854D0E" opacity="0.6" />
-            <circle cx="45" cy="105" r="3.5" fill="#854D0E" opacity="0.6" />
-            <circle cx="25" cy="122" r="2.2" fill="#854D0E" opacity="0.6" />
-
-            {/* REGAL CZECH DOUBLE-TAILED RED LION RAMPANT (ČESKÝ LEV) */}
-            <g id="czech-lion" transform="translate(8, 38)">
-              {/* Lion Body and Powerful Chest */}
+        {/* ======================================================== */}
+        {/* BOSS ROOT BODY (ARMOR & KINEMATICS)                      */}
+        {/* ======================================================== */}
+        <g id="boss-body" transform={`translate(0, ${bobY}) rotate(${torsoLean}, 240, 280)`}>
+          {/* 1. ARTICULATED GOTHIC PLATE GREAVES & SABATONS */}
+          <g id="boss-legs" transform="translate(240, 395)">
+            {/* Left Armored Boot */}
+            <g
+              id="boss-left-leg"
+              transform={`translate(${leftLegX}, ${leftLegY}) rotate(${leftLegRot})`}
+            >
+              {/* Thigh Poleyn & Shin Greave */}
               <path
-                d="M 8,0 C 14,-6 24,-6 28,-1 C 26,4 20,6 22,12 C 28,15 32,24 28,32 C 24,38 18,40 10,38 C 5,36 0,28 2,20 C 4,14 4,6 8,0 Z"
-                fill="#DC2626"
+                d="M -16,-28 L 8,-28 L 12,10 L -12,10 Z"
+                fill="url(#bossPlateGrad)"
                 stroke="#1C1610"
-                strokeWidth="2"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
               />
-              {/* Crown on Lion Head */}
-              <polygon points="12,-10 16,-6 20,-11 24,-6 28,-10 26,-4 14,-4" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="1.2" />
+              {/* Spiked Knee Poleyn */}
+              <circle cx="-2" cy="-14" r="8" fill="#475569" stroke="#1C1610" strokeWidth="2.5" />
+              <path d="M 6,-14 L 14,-14 L 6,-10 Z" fill="#64748B" stroke="#1C1610" strokeWidth="1.5" />
 
-              {/* Lion Roaring Snout & Jaws */}
-              <path d="M 24,-2 L 32,-4 L 30,2 L 35,4 L 28,6" fill="#DC2626" stroke="#1C1610" strokeWidth="1.5" />
-              {/* Red Eye */}
-              <circle cx="22" cy="-2" r="1.5" fill="#FEF08A" />
-
-              {/* Forepaws Rampant with Claws */}
-              {/* Upper Paw */}
-              <path d="M 22,8 L 36,4 L 38,7 L 34,9 L 40,11 L 32,13" fill="#DC2626" stroke="#1C1610" strokeWidth="1.5" />
-              {/* Lower Paw */}
-              <path d="M 20,18 L 32,22 L 34,25 L 30,26 L 36,29 L 26,30" fill="#DC2626" stroke="#1C1610" strokeWidth="1.5" />
-
-              {/* Hind Leg with Claws */}
-              <path d="M 10,36 L 16,48 L 22,46 L 18,42 L 24,42 L 14,35" fill="#DC2626" stroke="#1C1610" strokeWidth="1.5" />
-
-              {/* Signature TWO TAILS (Dvouocasý lev) curving majestically */}
-              {/* Upper Forked Tail */}
+              {/* Pointed Gothic Sabaton Boot */}
               <path
-                d="M 4,32 C -8,30 -14,18 -10,8 C -8,2 -2,4 -4,8 C -8,14 -4,22 4,24 Z"
-                fill="#DC2626"
+                d="M -16,8 L 10,8 L 26,16 C 30,18 28,24 22,24 C 8,24 -16,24 -22,18 C -24,14 -20,8 -16,8 Z"
+                fill="url(#bossSteelShine)"
                 stroke="#1C1610"
-                strokeWidth="1.8"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
+                strokeLinejoin="round"
               />
-              {/* Lower Forked Tail */}
-              <path
-                d="M 6,36 C -6,40 -16,46 -12,56 C -10,62 -4,60 -6,54 C -8,48 0,44 6,40 Z"
-                fill="#DC2626"
-                stroke="#1C1610"
-                strokeWidth="1.8"
-              />
-              {/* Tuft flames on tails */}
-              <polygon points="-12,6 -18,2 -14,10" fill="#DC2626" stroke="#1C1610" strokeWidth="1" />
-              <polygon points="-14,58 -20,62 -14,52" fill="#DC2626" stroke="#1C1610" strokeWidth="1" />
+              {/* Golden Heraldic Spur on Heel */}
+              <g transform="translate(-20, 16)">
+                <line x1="0" y1="0" x2="-10" y2="0" stroke="#F59E0B" strokeWidth="2.5" />
+                <polygon points="-10,-5 -15,0 -10,5 -5,0" fill="#FACC15" stroke="#1C1610" strokeWidth="1.2" />
+              </g>
             </g>
 
-            {/* Sturdy Leather Swordbelt with Brass Buckle */}
-            <g transform="translate(-18, 78)">
-              <rect x="0" y="0" width="88" height="12" rx="3" fill="#78350F" stroke="#1C1610" strokeWidth="3" />
-              {/* Golden Brass Belt Buckle */}
-              <rect x="36" y="-3" width="16" height="18" rx="2" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="2.5" />
-              <rect x="40" y="1" width="8" height="10" rx="1" fill="#78350F" />
-              <line x1="39" y1="6" x2="48" y2="6" stroke="#FEF08A" strokeWidth="2.5" />
+            {/* Right Armored Boot */}
+            <g
+              id="boss-right-leg"
+              transform={`translate(${rightLegX}, ${rightLegY}) rotate(${rightLegRot})`}
+            >
+              <path
+                d="M -16,-28 L 8,-28 L 12,10 L -12,10 Z"
+                fill="url(#bossPlateGrad)"
+                stroke="#1C1610"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
+              />
+              <circle cx="-2" cy="-14" r="8" fill="#475569" stroke="#1C1610" strokeWidth="2.5" />
+              <path d="M 6,-14 L 14,-14 L 6,-10 Z" fill="#64748B" stroke="#1C1610" strokeWidth="1.5" />
 
-              {/* Parrying Dagger Sheath at left hip */}
-              <g transform="translate(62, 8) rotate(32)">
-                <path d="M 0,0 L 8,0 L 5,38 L 2,38 Z" fill="#451A03" stroke="#1C1610" strokeWidth="2.5" />
-                <path d="M -3,0 L 11,0 L 11,-4 L -3,-4 Z" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="1.8" />
-                <circle cx="4" cy="-10" r="3" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="1.5" />
+              <path
+                d="M -16,8 L 10,8 L 26,16 C 30,18 28,24 22,24 C 8,24 -16,24 -22,18 C -24,14 -20,8 -16,8 Z"
+                fill="url(#bossSteelShine)"
+                stroke="#1C1610"
+                strokeWidth={showOutline ? '4.5' : '3.5'}
+                strokeLinejoin="round"
+              />
+              <g transform="translate(-20, 16)">
+                <line x1="0" y1="0" x2="-10" y2="0" stroke="#F59E0B" strokeWidth="2.5" />
+                <polygon points="-10,-5 -15,0 -10,5 -5,0" fill="#FACC15" stroke="#1C1610" strokeWidth="1.2" />
               </g>
             </g>
           </g>
 
-          {/* 5. SEVERED NECK STUMP (COLLAR & DRIPPING BLOOD) */}
-          <g transform="translate(202, 120)">
-            {/* Gorget Collar Plate */}
+          {/* 2. ARMORED TORSO & CZECH TWO-TAILED LION TABARD */}
+          <g id="boss-torso" transform="translate(240, 240)">
+            {/* Chainmail Hauberk Skirt */}
             <path
-              d="M -16,4 C -12,-8 12,-8 18,4 C 10,8 -10,8 -16,4 Z"
-              fill="url(#armorDarkGrad)"
+              d="M -42,45 C -44,80 44,80 42,45 Z"
+              fill="#334155"
               stroke="#1C1610"
               strokeWidth="3.5"
             />
-            {/* Severed Flesh & Vertebra Stump */}
-            <ellipse cx="1" cy="-2" rx="12" ry="6" fill="#7F1D1D" stroke="#1C1610" strokeWidth="2.5" />
-            <ellipse cx="1" cy="-2" rx="5" ry="3" fill="#F87171" />
-            {/* White bone cervical vertebra center */}
-            <circle cx="1" cy="-2" r="2.2" fill="#FEF2F2" stroke="#1C1610" strokeWidth="1.2" />
+            {/* Chainmail Ring Pattern */}
+            <line x1="-35" y1="58" x2="35" y2="58" stroke="#64748B" strokeWidth="2" strokeDasharray="3 3" />
+            <line x1="-30" y1="68" x2="30" y2="68" stroke="#64748B" strokeWidth="2" strokeDasharray="3 3" />
 
-            {/* Fresh Dripping Blood Droplets */}
+            {/* Gothic Steel Breastplate Cuirass */}
             <path
-              d={`M -6,4 C -6,14 -8,${16 + bloodDrip1} -4,${16 + bloodDrip1} C 0,${16 + bloodDrip1} -2,14 -2,4 Z`}
-              fill="url(#bloodGrad)"
-            />
-            <path
-              d={`M 4,4 C 4,12 2,${14 + bloodDrip2} 6,${14 + bloodDrip2} C 10,${14 + bloodDrip2} 8,12 8,4 Z`}
-              fill="url(#bloodGrad)"
-            />
-          </g>
-
-          {/* 6. RIGHT ARM WITH BROADSWORD */}
-          <g transform={`translate(160, 150) rotate(${swordAngle})`}>
-            {/* Segmented Steel Pauldron (Shoulder) */}
-            <path
-              d="M -15,-10 C 15,-18 28,-10 26,12 C 22,25 0,28 -12,20 Z"
-              fill="url(#armorGrad)"
+              d="M -50,-45 C -54,10 -48,45 -36,52 C -18,58 18,58 36,52 C 48,45 54,10 50,-45 C 28,-36 -28,-36 -50,-45 Z"
+              fill="url(#bossPlateGrad)"
               stroke="#1C1610"
-              strokeWidth="3.8"
-            />
-            {/* Pauldron rivets */}
-            <circle cx="18" cy="-2" r="2" fill="#1C1610" />
-            <circle cx="20" cy="10" r="2" fill="#1C1610" />
-
-            {/* Arm Vambrace & Gauntlet */}
-            <path
-              d="M -8,15 L -25,75 L -10,85 L 5,22 Z"
-              fill="url(#armorDarkGrad)"
-              stroke="#1C1610"
-              strokeWidth="3.5"
+              strokeWidth={showOutline ? '5' : '4'}
+              strokeLinejoin="round"
             />
 
-            {/* Steel Gauntlet Grip on Sword */}
-            <circle cx="-18" cy="80" r="10" fill="url(#armorGrad)" stroke="#1C1610" strokeWidth="3" />
-
-            {/* MIGHTY STEEL BROADSWORD */}
-            <g transform="translate(-18, 80) rotate(-18)">
-              {/* Golden Round Pommel */}
-              <circle cx="0" cy="-28" r="7.5" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="2.5" />
-              <circle cx="0" cy="-28" r="2.5" fill="#FEF08A" />
-
-              {/* Wire-wrapped Leather Hilt Grip */}
-              <rect x="-4" y="-22" width="8" height="24" rx="2" fill="#451A03" stroke="#1C1610" strokeWidth="2.5" />
-              <line x1="-3" y1="-16" x2="3" y2="-15" stroke="#EAB308" strokeWidth="1.5" />
-              <line x1="-3" y1="-10" x2="3" y2="-9" stroke="#EAB308" strokeWidth="1.5" />
-              <line x1="-3" y1="-4" x2="3" y2="-3" stroke="#EAB308" strokeWidth="1.5" />
-
-              {/* Solid Steel Crossguard */}
-              <path
-                d="M -34,0 L 34,0 C 38,0 38,7 34,7 L -34,7 C -38,7 -38,0 -34,0 Z"
-                fill="url(#armorGrad)"
-                stroke="#1C1610"
-                strokeWidth="3"
-              />
-              <circle cx="-32" cy="3.5" r="3" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="1.5" />
-              <circle cx="32" cy="3.5" r="3" fill="url(#goldGrad)" stroke="#1C1610" strokeWidth="1.5" />
-
-              {/* Long Battle-Worn Steel Blade */}
-              <path
-                d="M -11,7 L -8,180 L 0,205 L 8,180 L 11,7 Z"
-                fill="url(#bladeGrad)"
-                stroke="#1C1610"
-                strokeWidth="4"
-                strokeLinejoin="round"
-              />
-              {/* Blade Center Fuller Grooves */}
-              <line x1="0" y1="10" x2="0" y2="175" stroke="#334155" strokeWidth="2.5" />
-              {/* Battle notches and blood stains on blade */}
-              <polygon points="10,50 6,55 10,60" fill="#64748B" stroke="#1C1610" strokeWidth="1.5" />
-              <polygon points="-10,110 -6,115 -10,120" fill="#64748B" stroke="#1C1610" strokeWidth="1.5" />
-              <path d="M -5,95 Q 3,115 -2,130" stroke="#991B1B" strokeWidth="3" fill="none" opacity="0.8" />
-            </g>
-          </g>
-
-          {/* 7. LEFT ARM CARRYING THE SEVERED HEAD */}
-          <g transform="translate(245, 145)">
-            {/* Shoulder Pauldron */}
+            {/* WHITE HERALDIC SURCOAT / TABARD OVER CHEST */}
             <path
-              d="M -5,-12 C 25,-16 38,-4 36,18 C 30,30 10,32 0,22 Z"
-              fill="url(#armorGrad)"
-              stroke="#1C1610"
-              strokeWidth="3.8"
-            />
-
-            {/* Arm bent firmly around the severed head */}
-            <path
-              d="M 12,18 C 30,35 48,65 52,95 C 42,108 20,105 12,98 C 6,80 18,50 8,30 Z"
-              fill="url(#armorDarkGrad)"
-              stroke="#1C1610"
-              strokeWidth="3.8"
-            />
-            {/* Gauntlet fingers clamped around helmet base */}
-            <path
-              d="M 40,88 C 48,82 58,85 58,95 C 56,105 45,108 38,102 Z"
-              fill="url(#armorGrad)"
+              d="M -32,-42 C -34,15 -28,45 -22,50 C -10,54 10,54 22,50 C 28,45 34,15 32,-42 Z"
+              fill="#F8FAFC"
               stroke="#1C1610"
               strokeWidth="3"
             />
-          </g>
 
-          {/* 8. THE SEVERED HEAD (HELD UNDER LEFT ARM) */}
-          <g transform={`translate(295, 205)`}>
-            {/* TALL RED FEATHERED PLUME (CHOCHOL) WAVING ATOP HELMET */}
-            <g transform={`translate(-12, -75) rotate(${plumeWave})`}>
+            {/* CZECH TWO-TAILED LION RAMPANT (Český dvouocasý lev se zlatou korunou) */}
+            <g transform="translate(0, 4) scale(0.72)">
+              {/* Lion Body Silhouette */}
               <path
-                d="M 0,0 C 8,-35 25,-70 58,-95 C 52,-70 35,-45 22,-25 C 38,-45 52,-55 68,-65 C 55,-40 38,-20 18,5 Z"
-                fill="url(#capeGrad)"
-                stroke="#1C1610"
-                strokeWidth="3.8"
-                strokeLinejoin="round"
+                d="M -8,-24 C -2,-26 6,-24 8,-20 C 14,-12 10,0 8,8 C 12,14 16,18 20,24 C 18,26 12,24 8,18 C 4,22 0,26 -6,24 C -12,20 -10,12 -8,6 C -12,0 -16,-12 -8,-24 Z"
+                fill="#DC2626"
+                stroke="#991B1B"
+                strokeWidth="1.5"
               />
-              {/* Plume feather vane details */}
+              {/* Lion's Forepaws with Golden Claws */}
+              <path d="M 8,-14 L 18,-20 L 16,-10 Z" fill="#DC2626" />
+              <path d="M 6,-4 L 18,-2 L 14,4 Z" fill="#DC2626" />
+              <circle cx="18" cy="-20" r="1.5" fill="#FACC15" />
+              <circle cx="18" cy="-2" r="1.5" fill="#FACC15" />
+
+              {/* Iconic Double Forked Tails (Dva ocasy s chomáči) */}
               <path
-                d="M 15,-30 Q 35,-42 45,-55 M 10,-15 Q 28,-24 40,-32"
-                stroke="#7F1D1D"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+                d="M -8,12 C -18,6 -24,-4 -18,-14 C -14,-18 -10,-10 -14,-4 C -12,2 -8,6 -4,8"
+                fill="none"
+                stroke="#DC2626"
+                strokeWidth="3"
               />
+              <path
+                d="M -8,14 C -22,12 -28,24 -24,34 C -18,36 -16,28 -20,24 C -18,18 -10,16 -4,14"
+                fill="none"
+                stroke="#DC2626"
+                strokeWidth="3"
+              />
+              {/* Golden Crown on Lion's Head */}
+              <polygon points="2,-28 5,-23 8,-28 11,-23 14,-28 12,-20 4,-20" fill="#FACC15" stroke="#B45309" strokeWidth="0.8" />
             </g>
 
-            {/* STEEL KNIGHT HELMET (BASSET/SALLET) */}
+            {/* Massive Spiked Pauldrons (Ramenní pláty s hroty) */}
+            <g transform="translate(-48, -40)">
+              <ellipse cx="0" cy="0" rx="16" ry="14" fill="url(#bossSteelShine)" stroke="#1C1610" strokeWidth="3" />
+              {/* Shoulder Spike */}
+              <polygon points="-8,-4 -22,-14 -4,-12" fill="#64748B" stroke="#1C1610" strokeWidth="2" />
+              <circle cx="0" cy="0" r="2.5" fill="#F59E0B" />
+            </g>
+            <g transform="translate(48, -40)">
+              <ellipse cx="0" cy="0" rx="16" ry="14" fill="url(#bossSteelShine)" stroke="#1C1610" strokeWidth="3" />
+              <polygon points="8,-4 22,-14 4,-12" fill="#64748B" stroke="#1C1610" strokeWidth="2" />
+              <circle cx="0" cy="0" r="2.5" fill="#F59E0B" />
+            </g>
+          </g>
+
+          {/* 3. BLOODY SEVERED NECK STUMP (Krvavý pahýl krku) */}
+          <g id="boss-neck-stump" transform="translate(240, 185)">
+            {/* Dark Bloody Gorget Base */}
             <path
-              d="M -32,-35 C -30,-72 10,-78 35,-65 C 50,-55 52,-25 45,-5 C 40,8 15,10 -15,8 C -30,5 -34,-15 -32,-35 Z"
-              fill="url(#armorGrad)"
+              d="M -22,-10 C -12,-16 12,-16 22,-10 L 24,0 C 12,6 -12,6 -24,0 Z"
+              fill="url(#bossPlateGrad)"
+              stroke="#1C1610"
+              strokeWidth="3.5"
+            />
+            {/* The Severed Flesh & Blood Basin */}
+            <ellipse cx="0" cy="-8" rx="20" ry="9" fill="url(#neckStumpGrad)" stroke="#1C1610" strokeWidth="3" />
+            {/* Exposed Spinal Bone Ring */}
+            <ellipse cx="0" cy="-8" rx="6" ry="3.5" fill="#F8FAFC" stroke="#7F1D1D" strokeWidth="1.8" />
+
+            {/* Blood Dripping Down the Breastplate */}
+            <path d="M -12,-3 C -10,12 -12,24 -11,32" stroke="#991B1B" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            <path d="M 8,-3 C 10,15 9,28 11,36" stroke="#991B1B" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+
+            {/* Glowing Ethereal Crimson Embers */}
+            {showParticles &&
+              neckEmbers.map((emb, idx) => (
+                <circle
+                  key={`ember-${idx}`}
+                  cx={emb.x - 240}
+                  cy={emb.y - 185}
+                  r={emb.r}
+                  fill={emb.col}
+                  filter="url(#bossFireGlow)"
+                />
+              ))}
+          </g>
+
+          {/* 4. COLOSSAL TWO-HANDED EXECUTIONER GREATSWORD (Right Arm) */}
+          <g id="boss-sword-arm" transform={`translate(295, 205) rotate(${swordAngle})`}>
+            {/* Armored Forearm & Spiked Vambrace */}
+            <path
+              d="M -10,-10 L 12,5 L 24,30 L 8,34 Z"
+              fill="url(#bossPlateGrad)"
+              stroke="#1C1610"
+              strokeWidth="3.5"
+            />
+            {/* Armored Steel Gauntlet */}
+            <circle cx="22" cy="30" r="11" fill="url(#bossSteelShine)" stroke="#1C1610" strokeWidth="3" />
+
+            {/* THE GREATSWORD (Obouruční zlenický meč) */}
+            <g transform="translate(22, 28)">
+              {/* Sword Hilt & Skull Pommel */}
+              <line x1="0" y1="28" x2="0" y2="-20" stroke="#78350F" strokeWidth="5.5" />
+              <line x1="0" y1="28" x2="0" y2="-20" stroke="#FACC15" strokeWidth="2.5" strokeDasharray="3 3" />
+              {/* Skull Pommel */}
+              <circle cx="0" cy="30" r="6" fill="#CBD5E1" stroke="#1C1610" strokeWidth="2" />
+
+              {/* Cruciform Crossguard with Spikes */}
+              <path
+                d="M -30,-20 L 30,-20 L 34,-25 L 30,-30 L -30,-30 L -34,-25 Z"
+                fill="url(#bossSteelShine)"
+                stroke="#1C1610"
+                strokeWidth="3"
+              />
+              <circle cx="0" cy="-25" r="4.5" fill="#EF4444" stroke="#1C1610" strokeWidth="1.5" />
+
+              {/* Colossal Blade (190px long!) with Blood Groove */}
+              <path
+                d="M -14,-30 L 14,-30 L 10,-210 L 0,-235 L -10,-210 Z"
+                fill="url(#cursedBladeGrad)"
+                stroke="#1C1610"
+                strokeWidth={showOutline ? '4.8' : '3.8'}
+                strokeLinejoin="round"
+              />
+              {/* Central Fuller / Blood Groove */}
+              <line x1="0" y1="-30" x2="0" y2="-200" stroke="#7F1D1D" strokeWidth="3" />
+
+              {/* Ancient Carved Runes Glowing Crimson on Blade */}
+              {[-60, -95, -130, -165].map((ry, idx) => (
+                <g key={idx} transform={`translate(0, ${ry})`}>
+                  <path
+                    d="M -4,-6 L 4,6 M -4,6 L 4,-6 M 0,-8 L 0,8"
+                    stroke="#FEF08A"
+                    strokeWidth="1.8"
+                    filter="url(#bossFireGlow)"
+                  />
+                </g>
+              ))}
+            </g>
+          </g>
+
+          {/* 5. SEVERED HEAD CARRIED IN LEFT ARM (With Visor, Plume & Tracking Eyes) */}
+          <g
+            id="boss-severed-head-group"
+            transform={`translate(${160 + headBobX}, ${205 + headBobY}) rotate(${headAngle})`}
+          >
+            {/* Armored Left Gauntlet Cradling the Severed Head */}
+            <path
+              d="M 55,20 C 35,45 10,48 -15,40 C -18,34 -12,28 -5,30 C 15,36 35,32 45,10 Z"
+              fill="url(#bossPlateGrad)"
               stroke="#1C1610"
               strokeWidth="4"
-              strokeLinejoin="round"
             />
-            {/* Helmet brow ridge with rivets */}
-            <path
-              d="M -30,-32 Q 5,-42 42,-22"
-              stroke="#1C1610"
-              strokeWidth="3.5"
-              fill="none"
-            />
-            <circle cx="-18" cy="-35" r="2.2" fill="#1C1610" />
-            <circle cx="2" cy="-35" r="2.2" fill="#1C1610" />
-            <circle cx="22" cy="-30" r="2.2" fill="#1C1610" />
+            {/* Armored Finger Claws Wrapping Around Helmet */}
+            <circle cx="-10" cy="30" r="5" fill="#94A3B8" stroke="#1C1610" strokeWidth="2" />
+            <circle cx="2" cy="34" r="5" fill="#94A3B8" stroke="#1C1610" strokeWidth="2" />
+            <circle cx="16" cy="32" r="5" fill="#94A3B8" stroke="#1C1610" strokeWidth="2" />
 
-            {/* Severed Neck Rim with Blood at base of head */}
-            <path
-              d="M -18,12 C -8,22 18,22 26,12 C 20,26 -10,26 -18,12 Z"
-              fill="url(#bloodGrad)"
-              stroke="#1C1610"
-              strokeWidth="2.5"
-            />
-
-            {/* FURIOUS FACE & WILD BEARD */}
-            {/* Wild Brown Beard & Moustache */}
-            <path
-              d="M -22,-10 C -30,8 -24,24 -10,34 C 4,42 22,38 32,25 C 38,12 36,-2 32,-12 C 24,0 12,5 -2,5 C -12,5 -18,-2 -22,-10 Z"
-              fill="#451A03"
-              stroke="#1C1610"
-              strokeWidth="3.5"
-              strokeLinejoin="round"
-            />
-
-            {/* Face Skin Area */}
-            <path
-              d="M -22,-28 C -18,-35 22,-35 32,-20 C 35,-5 32,5 24,10 C 14,14 -12,14 -20,6 C -24,-2 -24,-18 -22,-28 Z"
-              fill="#FED7AA"
-              stroke="#1C1610"
-              strokeWidth="2.8"
-            />
-
-            {/* EYES & BROWS (INTERACTIVE CURSOR TRACKING) */}
-            <g transform={`translate(${headLookX}, ${headLookY})`}>
-              {/* Heavy Bushy Furrowed Eyebrows */}
+            {/* SEVERED HELMET (Gothic Great Helm / Sallet) */}
+            <g id="knight-helm" transform="translate(0, -5)">
+              {/* Helmet Dome */}
               <path
-                d="M -16,-24 Q -6,-28 2,-20"
-                stroke="#2A0800"
-                strokeWidth="4.5"
-                strokeLinecap="round"
-                fill="none"
-              />
-              <path
-                d="M 8,-21 Q 18,-27 28,-18"
-                stroke="#2A0800"
-                strokeWidth="4.5"
-                strokeLinecap="round"
-                fill="none"
-              />
-
-              {/* Furious Bulging Sclera with Red Blood Vessels */}
-              <circle cx="-6" cy="-16" r="6" fill="#FFF1F2" stroke="#1C1610" strokeWidth="2" />
-              <circle cx="18" cy="-14" r="6.5" fill="#FFF1F2" stroke="#1C1610" strokeWidth="2" />
-
-              {/* Fiery Red Glowing Irises & Pupils */}
-              <circle
-                cx="-5"
-                cy="-16"
-                r={isAction ? 3.8 : 3}
-                fill={showHeadGlow && (isAction || pointer.isHovered) ? "#EF4444" : "#991B1B"}
-                filter={showHeadGlow ? "url(#eyeRageGlow)" : undefined}
-              />
-              <circle cx="-5" cy="-16" r="1.5" fill="#18181B" />
-              <circle cx="-6" cy="-17" r="0.8" fill="#FFFFFF" />
-
-              <circle
-                cx="19"
-                cy="-14"
-                r={isAction ? 4 : 3.2}
-                fill={showHeadGlow && (isAction || pointer.isHovered) ? "#EF4444" : "#991B1B"}
-                filter={showHeadGlow ? "url(#eyeRageGlow)" : undefined}
-              />
-              <circle cx="19" cy="-14" r="1.6" fill="#18181B" />
-              <circle cx="18" cy="-15" r="0.8" fill="#FFFFFF" />
-
-              {/* Large Bulbous Warrior Nose */}
-              <path
-                d="M 3,-20 Q 8,-12 10,-8 Q 4,-6 0,-8"
-                fill="#FDBA74"
+                d="M -32,-30 C -36,-72 36,-72 32,-30 C 30,15 24,35 0,38 C -24,35 -30,15 -32,-30 Z"
+                fill="url(#bossPlateGrad)"
                 stroke="#1C1610"
-                strokeWidth="2.5"
+                strokeWidth={showOutline ? '5' : '4'}
                 strokeLinejoin="round"
               />
-            </g>
 
-            {/* SNARLING MOUTH WITH TEETH & ROAR ACTION */}
-            <g transform="translate(6, 2)">
-              {/* Mouth Cavity */}
+              {/* Gothic Helmet Crest Ridge */}
               <path
-                d={`M -12,-2 Q 2,${-5 - mouthRoar * 0.3} 16,-2 Q 14,${6 + mouthRoar} -10,${6 + mouthRoar} Z`}
-                fill="#18181B"
-                stroke="#1C1610"
-                strokeWidth="2.5"
-              />
-              {/* Bared Sharp Teeth */}
-              <path
-                d="M -8,-2 L -6,2 L -4,-2 L -2,2 L 0,-2 L 2,2 L 4,-2 L 6,2 L 8,-2 L 10,2 L 12,-2"
-                stroke="#FFFFFF"
-                strokeWidth="2.2"
+                d="M 0,-72 L 0,38"
+                stroke="#94A3B8"
+                strokeWidth="3.5"
                 strokeLinecap="round"
-                fill="none"
               />
+
+              {/* MENACING HORIZONTAL EYE VISOR SLIT */}
+              <g transform="translate(0, -18)">
+                {/* Dark Visor Inset */}
+                <path
+                  d="M -26,-4 L 26,-4 C 28,6 20,10 0,11 C -20,10 -28,6 -26,-4 Z"
+                  fill="#020617"
+                  stroke="#1C1610"
+                  strokeWidth="3"
+                />
+
+                {/* PIERCING FIERY RED SPECTRAL EYES (Track pointer) */}
+                {showHeadGlow && (
+                  <g className="boss-spectral-eyes" filter="url(#bossFireGlow)">
+                    {/* Left Eye */}
+                    <ellipse
+                      cx={-11 + gazeX}
+                      cy={2 + gazeY}
+                      rx="5"
+                      ry="2.8"
+                      fill="#EF4444"
+                    />
+                    <circle cx={-11 + gazeX} cy={2 + gazeY} r="1.5" fill="#FFFBEB" />
+
+                    {/* Right Eye */}
+                    <ellipse
+                      cx={11 + gazeX}
+                      cy={2 + gazeY}
+                      rx="5"
+                      ry="2.8"
+                      fill="#EF4444"
+                    />
+                    <circle cx={11 + gazeX} cy={2 + gazeY} r="1.5" fill="#FFFBEB" />
+                  </g>
+                )}
+              </g>
+
+              {/* BREATHING HOLES / MENACING SKULL GRILLE */}
+              <g transform="translate(0, 8)">
+                {[-14, -7, 0, 7, 14].map((hx) => (
+                  <circle key={hx} cx={hx} cy="0" r="1.8" fill="#020617" />
+                ))}
+                {[-10, -3, 4, 11].map((hx) => (
+                  <circle key={hx} cx={hx} cy="6" r="1.8" fill="#020617" />
+                ))}
+              </g>
+
+              {/* ARTICULATED VISOR / JAW FOR BOSS ROAR */}
+              {isAction && (
+                <g id="boss-roar-jaw" transform="translate(0, 18)">
+                  <path
+                    d="M -20,-2 C -12,14 12,14 20,-2 Z"
+                    fill="#450A0A"
+                    stroke="#1C1610"
+                    strokeWidth="2.8"
+                  />
+                  {/* Jagged teeth inside visor */}
+                  <polygon points="-12,0 -9,6 -6,0 -3,6 0,0 3,6 6,0 9,6 12,0" fill="#F8FAFC" />
+                  {/* Sonic Roar Shockwave Rings */}
+                  <ellipse
+                    cx="0"
+                    cy="8"
+                    rx="35"
+                    ry="18"
+                    fill="none"
+                    stroke="#EF4444"
+                    strokeWidth="3"
+                    strokeDasharray="10 6"
+                    filter="url(#bossFireGlow)"
+                  />
+                </g>
+              )}
+
+              {/* FLOWING CRIMSON BATTLE PLUME (Chochol na přilbě) */}
+              <g id="helmet-plume" transform={`translate(0, -68) rotate(${plumeWaft})`}>
+                {/* Plume Socket */}
+                <rect x="-5" y="0" width="10" height="7" rx="2" fill="#F59E0B" stroke="#1C1610" strokeWidth="2" />
+                {/* Long Billowing Feather Plume */}
+                <path
+                  d="M 0,0 C -25,-25 -45,-15 -65,15 C -45,5 -20,8 0,0 Z"
+                  fill="#DC2626"
+                  stroke="#1C1610"
+                  strokeWidth="3"
+                />
+                <path
+                  d="M 0,0 C 15,-30 45,-25 60,8 C 40,-4 18,2 0,0 Z"
+                  fill="#991B1B"
+                  stroke="#1C1610"
+                  strokeWidth="2.5"
+                />
+              </g>
             </g>
           </g>
-
         </g>
       </g>
     </svg>

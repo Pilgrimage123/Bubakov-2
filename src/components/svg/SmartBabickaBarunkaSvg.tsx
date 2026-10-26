@@ -117,14 +117,14 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
     ? Math.sin(t * walkSpeed) * 12
     : Math.sin(t * 1.5) * 1.5;
 
-  // Articulated foot stride for Babička's shoes
-  const grannyStrideAmp = isFleeing ? 24 : isSprinting ? 18 : isWalking ? 11 : isReact ? 8 : 0;
-  const grannyLeftShoeX = -28 + walkSin * grannyStrideAmp;
-  const grannyLeftShoeY = 36 - Math.max(0, walkCos) * (grannyStrideAmp * 0.55);
-  const grannyLeftShoeRot = walkSin * (isFleeing ? 26 : isSprinting ? 20 : isWalking ? 12 : 0);
-  const grannyRightShoeX = 28 - walkSin * grannyStrideAmp;
-  const grannyRightShoeY = 36 - Math.max(0, -walkCos) * (grannyStrideAmp * 0.55);
-  const grannyRightShoeRot = -walkSin * (isFleeing ? 26 : isSprinting ? 20 : isWalking ? 12 : 0);
+  // Articulated foot stride for Babička's shoes (only moves when actually moving!)
+  const grannyStrideAmp = isMoving ? (isFleeing ? 24 : isSprinting ? 18 : 11) : 0;
+  const grannyLeftShoeX = -28 + (isMoving ? walkSin * grannyStrideAmp : 0);
+  const grannyLeftShoeY = 36 - (isMoving ? Math.max(0, walkCos) * (grannyStrideAmp * 0.55) : 0);
+  const grannyLeftShoeRot = isMoving ? walkSin * (isFleeing ? 26 : isSprinting ? 20 : 12) : 0;
+  const grannyRightShoeX = 28 - (isMoving ? walkSin * grannyStrideAmp : 0);
+  const grannyRightShoeY = 36 - (isMoving ? Math.max(0, -walkCos) * (grannyStrideAmp * 0.55) : 0);
+  const grannyRightShoeRot = isMoving ? -walkSin * (isFleeing ? 26 : isSprinting ? 20 : 12) : 0;
 
   // Barunka skipping / sprinting / startled / fleeing and braid bounce
   const barunkaSin = Math.sin(t * walkSpeed * 1.15 + 0.4);
@@ -164,14 +164,14 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
     ? Math.sin(t * walkSpeed) * 5
     : 0;
 
-  // Articulated boot stride for Barunka
-  const barunkaStrideAmp = isFleeing ? 22 : isSprinting ? 17 : isWalking ? 11 : isReact ? 7 : 0;
-  const barunkaLeftBootX = -15 + barunkaSin * barunkaStrideAmp;
-  const barunkaLeftBootY = -Math.max(0, barunkaCos) * (barunkaStrideAmp * 0.65);
-  const barunkaLeftBootRot = barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : isWalking ? 14 : isReact ? -12 : 0);
-  const barunkaRightBootX = 15 - barunkaSin * barunkaStrideAmp;
-  const barunkaRightBootY = -Math.max(0, -barunkaCos) * (barunkaStrideAmp * 0.65);
-  const barunkaRightBootRot = -barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : isWalking ? 14 : isReact ? -12 : 0);
+  // Articulated boot stride for Barunka (only moves when actually moving!)
+  const barunkaStrideAmp = isMoving ? (isFleeing ? 22 : isSprinting ? 17 : 11) : 0;
+  const barunkaLeftBootX = -15 + (isMoving ? barunkaSin * barunkaStrideAmp : 0);
+  const barunkaLeftBootY = -(isMoving ? Math.max(0, barunkaCos) * (barunkaStrideAmp * 0.65) : 0);
+  const barunkaLeftBootRot = isMoving ? barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : 14) : 0;
+  const barunkaRightBootX = 15 - (isMoving ? barunkaSin * barunkaStrideAmp : 0);
+  const barunkaRightBootY = -(isMoving ? Math.max(0, -barunkaCos) * (barunkaStrideAmp * 0.65) : 0);
+  const barunkaRightBootRot = isMoving ? -barunkaSin * (isFleeing ? 30 : isSprinting ? 22 : 14) : 0;
 
   // Eye gaze tracking
   const gazeX = isReact ? -2 + Math.sin(t * 28) * 1.2 : isFleeing ? 2.5 : pointer.isHovered ? pointer.x * 4 : Math.sin(t * 1.2) * 1.2;
@@ -335,12 +335,12 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth="3.5"
               strokeLinejoin="round"
             />
-            {/* Vertical skirt pleats swaying with stride */}
-            <line x1="-50" y1="5" x2={-52 + walkSin * 4} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="-25" y1="8" x2={-26 + walkSin * 4} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="0" y1="10" x2={walkSin * 4} y2="39" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="25" y1="8" x2={26 + walkSin * 4} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
-            <line x1="50" y1="5" x2={52 + walkSin * 4} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
+            {/* Vertical skirt pleats swaying with stride (only when moving) */}
+            <line x1="-50" y1="5" x2={-52 + (isMoving ? walkSin * 4 : 0)} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="-25" y1="8" x2={-26 + (isMoving ? walkSin * 4 : 0)} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="0" y1="10" x2={isMoving ? walkSin * 4 : 0} y2="39" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="25" y1="8" x2={26 + (isMoving ? walkSin * 4 : 0)} y2="38" stroke="#2B1A0E" strokeWidth="2.5" />
+            <line x1="50" y1="5" x2={52 + (isMoving ? walkSin * 4 : 0)} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
           </g>
 
           {/* 2. WOODEN WALKING CANE IN RIGHT HAND */}

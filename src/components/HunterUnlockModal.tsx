@@ -3,6 +3,7 @@ import { sound } from '../audio';
 import { HUNTER_UNLOCKS, type HunterProgress } from '../data/hunterUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { GameIcon } from './GameIcon';
+import { SmartSpriteRenderer, hasSmartSvgSprite } from './svg';
 
 export interface HunterUnlockModalProps {
   progress: HunterProgress | null;
@@ -17,6 +18,17 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
 }) => {
   if (!progress) return null;
   const def = HUNTER_UNLOCKS[progress.id];
+  const hasSmartSvg = hasSmartSvgSprite(progress.id);
+  const tierFilter =
+    progress.isUnlocked || progress.tier >= 4
+      ? 'none'
+      : progress.tier === 3
+      ? 'sepia(0.25) saturate(0.85)'
+      : progress.tier === 2
+      ? 'grayscale(0.65) contrast(1.1) brightness(0.85)'
+      : progress.tier === 1
+      ? 'grayscale(1) brightness(0.45) contrast(1.2)'
+      : 'brightness(0.12) contrast(1.4)';
   const milestonesList = [
     {
       pct: 25,
@@ -66,8 +78,32 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+          {hasSmartSvg && (
+            <div
+              style={{
+                width: '96px',
+                height: '96px',
+                flexShrink: 0,
+                background: '#FFFDF7',
+                border: '2px solid #78350F',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                filter: tierFilter,
+              }}
+            >
+              <SmartSpriteRenderer
+                spriteId={progress.id}
+                state={progress.isUnlocked ? 'action' : 'idle'}
+                size={90}
+                interactive={progress.isUnlocked}
+              />
+            </div>
+          )}
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
             <span
               className={`hunter-tier-stamp tier-stamp-${progress.tier}`}
               style={{ fontSize: '0.85rem' }}

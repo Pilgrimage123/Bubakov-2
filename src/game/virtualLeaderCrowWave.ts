@@ -14,7 +14,7 @@ export const CROW_WAVE_POINT_MULTIPLIER = 0.6;
 export const CROW_WAVE_FLOCK_RADIUS = 230;
 export const CROW_WAVE_WOBBLE_RADIUS = 18;
 export const CROW_WAVE_GOLDEN_ANGLE = 2.399963229728653;
-export const CROW_WAVE_HIT_RADIUS = 13;
+export const CROW_WAVE_HIT_RADIUS = 22;
 
 export interface CrowWaveEnemyFactory {
   (

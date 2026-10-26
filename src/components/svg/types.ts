@@ -1,6 +1,16 @@
 export type SmartCharacterState = 'idle' | 'walk' | 'sprint' | 'action' | 'react' | 'flee';
+export type SmartSvgState = SmartCharacterState;
 
-export type SmartCharacterId = 'babicka_barunka' | 'bezhlavy_rytir' | 'snehulak' | 'tulak' | 'kostelnik' | 'pasacek';
+export type SmartCharacterId =
+  | 'babicka_barunka'
+  | 'bezhlavy_rytir'
+  | 'snehulak'
+  | 'tulak'
+  | 'krajanek'
+  | 'kostelnik'
+  | 'pasacek'
+  | 'dedecek_nuse'
+  | 'dedecek_arena';
 
 export interface SmartCharacterProps {
   /** Active animation state / action */
@@ -27,11 +37,16 @@ export interface SmartCharacterProps {
   features?: {
     showCompanion?: boolean;      // Barunka for Babicka
     showHeadGlow?: boolean;       // Severed head fire/glow for Knight
-    showParticles?: boolean;      // Magic petals, blood drops, or snow flurries
+    showParticles?: boolean;      // Magic petals, blood drops, flour or snow flurries
     showShadow?: boolean;         // Folk ground shadow
     showOutline?: boolean;        // High contrast Lada ink outline
+    showMillstone?: boolean;      // Giant carved millstone for Krajanek
+    showSmoke?: boolean;          // Herbal pipe smoke for Tulak
+    showBossAura?: boolean;       // Spectral cursed aura for Bezhlavy rytir boss
   };
 }
+
+export type SmartSvgProps = SmartCharacterProps;
 
 export interface MousePointerState {
   x: number; // -1 to 1 normalized relative to character center

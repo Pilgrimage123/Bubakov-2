@@ -87,34 +87,27 @@ export const SmartKostelnikSvg: React.FC<SmartCharacterProps> = ({
   const isAction = state === 'action';
   const isReact = state === 'react';
   const isFleeing = state === 'flee';
+  const isMoving = isWalking || isSprinting || isFleeing;
 
   // Kinematics
   const walkSpeed = isFleeing ? 17.5 : isSprinting ? 13.5 : isAction ? 11 : isWalking ? 7.8 : isReact ? 20 : 2.4;
   const walkSin = Math.sin(t * walkSpeed);
   const walkCos = Math.cos(t * walkSpeed);
 
-  // Stern marching / sprinting / startled / panicked fleeing stride
-  const backLegAngle = isFleeing
-    ? walkSin * 48
-    : isSprinting
-    ? walkSin * 38
-    : isWalking
-    ? walkSin * 26
+  // Stern marching / sprinting / startled / panicked fleeing stride (legs ONLY swing when actively moving)
+  const backLegAngle = isMoving
+    ? walkSin * (isFleeing ? 48 : isSprinting ? 38 : 26)
     : isAction
     ? -14
     : isReact
-    ? -20 + Math.sin(t * 22) * 6
+    ? -18
     : -6;
-  const frontLegAngle = isFleeing
-    ? -walkSin * 48
-    : isSprinting
-    ? -walkSin * 38
-    : isWalking
-    ? -walkSin * 26
+  const frontLegAngle = isMoving
+    ? -walkSin * (isFleeing ? 48 : isSprinting ? 38 : 26)
     : isAction
     ? 18
     : isReact
-    ? 26 + Math.cos(t * 22) * 7
+    ? 22
     : 8;
 
   // Stately bobbing, startle recoil jolt & coat sway

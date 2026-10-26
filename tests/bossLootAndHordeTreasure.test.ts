@@ -4,7 +4,7 @@ import { GAME_LEVELS } from '../src/data/levels';
 import { DROP_THRESHOLDS } from '../src/constants';
 
 describe('Boss Loot and Horde-like Boss Treasure', () => {
-  it('spawns 9 flock members for stage 1 crow miniboss with isMinibossFlockMember set', () => {
+  it('spawns 1 flock member for stage 1 crow miniboss with isMinibossFlockMember set', () => {
     const engine = new GameEngine();
     engine.initRun({
       levelId: 0,
@@ -36,7 +36,7 @@ describe('Boss Loot and Horde-like Boss Treasure', () => {
     const singleCrowChestPoints = Math.round(crowPt * crowChestMult);
     const totalFlockChestPoints = singleCrowChestPoints * flockTotal;
 
-    // Total points from all 9 crows should equal 1 single boss with ~63 base points
+    // Total points from all crows should equal 1 single boss with ~63 base points
     const expectedSingleBossPoints = Math.round(crowPt * baseBossChestMult);
     expect(Math.abs(totalFlockChestPoints - expectedSingleBossPoints)).toBeLessThanOrEqual(flockTotal);
   });

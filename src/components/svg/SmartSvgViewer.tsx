@@ -3,13 +3,16 @@ import { SmartBabickaBarunkaSvg } from './SmartBabickaBarunkaSvg';
 import { SmartBezhlavyRytirSvg } from './SmartBezhlavyRytirSvg';
 import { SmartSnehulakSvg } from './SmartSnehulakSvg';
 import { SmartTulakSvg } from './SmartTulakSvg';
+import { SmartKrajanekSvg } from './SmartKrajanekSvg';
 import { SmartKostelnikSvg } from './SmartKostelnikSvg';
 import { SmartPasacekSvg } from './SmartPasacekSvg';
+import { SmartDedecekNuseSvg } from './SmartDedecekNuseSvg';
+import { SmartDedecekArenaSvg } from './SmartDedecekArenaSvg';
 import type { SmartCharacterId, SmartCharacterState } from './types';
 import { sound } from '../../audio';
 
 export const SmartSvgViewer: React.FC = () => {
-  const [selectedChar, setSelectedChar] = useState<SmartCharacterId>('babicka_barunka');
+  const [selectedChar, setSelectedChar] = useState<SmartCharacterId>('krajanek');
   const [state, setState] = useState<SmartCharacterState>('walk');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [speed, setSpeed] = useState<number>(1);
@@ -18,6 +21,9 @@ export const SmartSvgViewer: React.FC = () => {
   const [zoom, setZoom] = useState<number>(380);
   const [showCompanion, setShowCompanion] = useState<boolean>(true);
   const [showHeadGlow, setShowHeadGlow] = useState<boolean>(true);
+  const [showBossAura, setShowBossAura] = useState<boolean>(true);
+  const [showMillstone, setShowMillstone] = useState<boolean>(true);
+  const [showSmoke, setShowSmoke] = useState<boolean>(true);
   const [showParticles, setShowParticles] = useState<boolean>(true);
   const [copiedNotice, setCopiedNotice] = useState<boolean>(false);
 
@@ -27,12 +33,16 @@ export const SmartSvgViewer: React.FC = () => {
   const handleStateChange = (newState: SmartCharacterState) => {
     setState(newState);
     if (newState === 'action') {
-      if (selectedChar === 'babicka_barunka') {
+      if (selectedChar === 'krajanek') {
+        sound.zernovHammer();
+        setTimeout(() => sound.zernovSlam(), 140);
+      } else if (selectedChar === 'babicka_barunka') {
         sound.kindChime();
         setTimeout(() => sound.timeStop(), 150);
       } else if (selectedChar === 'bezhlavy_rytir') {
-        sound.roar();
-        setTimeout(() => sound.slash(), 180);
+        sound.boss();
+        setTimeout(() => sound.roar(), 120);
+        setTimeout(() => sound.slash(), 240);
       } else if (selectedChar === 'snehulak') {
         sound.freeze();
         setTimeout(() => sound.bootSnowCrunch(), 120);
@@ -45,6 +55,9 @@ export const SmartSvgViewer: React.FC = () => {
       } else if (selectedChar === 'pasacek') {
         sound.kominikButton();
         setTimeout(() => sound.cheer(), 180);
+      } else if (selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') {
+        sound.grandfatherOpen();
+        setTimeout(() => sound.mouseSqueak(), 160);
       }
     } else if (newState === 'react') {
       sound.hit();
@@ -56,10 +69,15 @@ export const SmartSvgViewer: React.FC = () => {
         sound.caneWhip();
       } else if (selectedChar === 'tulak') {
         sound.rooster();
+      } else if (selectedChar === 'krajanek') {
+        sound.hit();
       } else if (selectedChar === 'kostelnik') {
         sound.candlePulse();
       } else if (selectedChar === 'pasacek') {
         sound.kominikButton();
+      } else if (selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') {
+        sound.hit();
+        sound.mouseSqueak();
       }
     } else if (newState === 'flee') {
       sound.hit();
@@ -73,12 +91,14 @@ export const SmartSvgViewer: React.FC = () => {
 
   const handleCharacterSelect = (id: SmartCharacterId) => {
     setSelectedChar(id);
-    if (id === 'babicka_barunka') sound.kindChime();
+    if (id === 'krajanek') sound.zernovHammer();
+    else if (id === 'babicka_barunka') sound.kindChime();
     else if (id === 'bezhlavy_rytir') sound.boss();
     else if (id === 'snehulak') sound.freeze();
     else if (id === 'tulak') sound.sukoviceWhirl();
     else if (id === 'kostelnik') sound.churchBell();
     else if (id === 'pasacek') sound.kominikButton();
+    else if (id === 'dedecek_nuse' || id === 'dedecek_arena') sound.grandfatherCall();
   };
 
   // Export current SVG as clean string
@@ -115,6 +135,27 @@ export const SmartSvgViewer: React.FC = () => {
 
   const characters = [
     {
+      id: 'krajanek' as SmartCharacterId,
+      name: 'Krajánek',
+      sub: 'Hrusický mlýn & Jízda na žernovu',
+      icon: '🌾🪨',
+      desc: 'Veselý mlynářský tovaryš a pocestný v pomoučeném šatě, klobouku s obilným klasem, červenou puntíkovanou mošnou na holi a kamenickým kladívkem. Při akci "Jízda na žernovu" naskočí na rotující žulový mlýnský kámen s jiskrami a mračny mouky.',
+    },
+    {
+      id: 'tulak' as SmartCharacterId,
+      name: 'Tulák (Poutník)',
+      sub: 'Hrusické cesty & Pověstná sukovice',
+      icon: '🎒🦯',
+      desc: 'Rozesmátý tulák v záplatovaném zeleném kabátě s ranečkem na zádech, bylinkovou fajfkou s bafajícím vonným dýmem a mohutnou sukovitou dubovou holí. Bělovousý veselý poutník s červeným nosem a čutorou u pasu, který při akci roztočí ničivou větrnou vichřici s podzimním listím.',
+    },
+    {
+      id: 'bezhlavy_rytir' as SmartCharacterId,
+      name: 'Bezhlavý rytíř (BOSS)',
+      sub: 'Hrad Zlenice & Královský dvouocasý lev',
+      icon: '⚔️👑',
+      desc: 'Strašlivý velký BOSS v černěné gotické plátové zbroji s erbem českého dvouocasého lva, vlajícím krvavě rudým pláštěm a obouručním runovým popravčím mečem. V náručí svírá svou vlastní useknutou přilbici s planoucíma očima a při půlnočním seku rozpoutá děsivý válečný řev a rudé blesky.',
+    },
+    {
       id: 'babicka_barunka' as SmartCharacterId,
       name: 'Babička a Barunka',
       sub: 'Ratibořické údolí & Božena Němcová',
@@ -122,25 +163,11 @@ export const SmartSvgViewer: React.FC = () => {
       desc: 'Laskavá stařenka v bílém vyšívaném šátku, vlněném plédu a modré pruhované zástěře s velikou kapsou plnou čerstvého chleba, kostkovaného ubrousku a bylinek. Doprovází ji Barunka se zapleteným copem, červenou mašlí a pestrou kyticí lučního kvítí.',
     },
     {
-      id: 'bezhlavy_rytir' as SmartCharacterId,
-      name: 'Bezhlavý rytíř',
-      sub: 'Zámecká zřícenina & Český heraldický lev',
-      icon: '⚔️🛡️',
-      desc: 'Strašlivý středověký rek v plátové zbroji s drátěnou košilí, roztrhaným rudým pláštěm a bílou varkočkou se slavným českým dvouocasým lvem. Pod paží třímá svou vlastní uťatou hlavu s přilbicí, rudým chocholem a planoucím hněvem v očích.',
-    },
-    {
       id: 'snehulak' as SmartCharacterId,
       name: 'Sněhulák s koštětem',
       sub: 'Zimní Hrusice & Josef Lada',
       icon: '⛄🧹',
       desc: 'Mračící se sněhulák kráčející na dvou nohách s březovým koštětem pevně v dlaních. Na hlavě má otlučený hrnec s čepicí čerstvého sněhu a jehličím, kolem krku pruhovanou vlněnou šálu s třásněmi, ostrý mrkvový nos a uhlíky plné zášti.',
-    },
-    {
-      id: 'tulak' as SmartCharacterId,
-      name: 'Tulák',
-      sub: 'Hrusické cesty & Veselá mysl',
-      icon: '🎒🦯',
-      desc: 'Rozesmátý tulák v záplatovaném zeleném kabátě s ranečkem na zádech a mohutnou sukovitou holí. Bělovousý veselý poutník s červeným nosem, rozepnutou košilí, ovázanými lýtky a čutorou u pasu, který radostně vykračuje světem.',
     },
     {
       id: 'kostelnik' as SmartCharacterId,
@@ -155,6 +182,20 @@ export const SmartSvgViewer: React.FC = () => {
       sub: 'Hrusické pastviny & Dřevěná píšťalka',
       icon: '🪈👦',
       desc: 'Hbitý bosonohý chlapec z ladovských pastvin s rozcuchanými kaštanovými vlasy, orlím pírkem za uchem a pastýřskou píšťalkou. V modré vyšívané vestičce, červeném šátku a záplatovaných kalhotách radostně uhání loukou a vyhrává líbezné melodie.',
+    },
+    {
+      id: 'dedecek_nuse' as SmartCharacterId,
+      name: 'Čertův dědeček s nůší',
+      sub: 'Dědečkův krámek & Otevřená nůše',
+      icon: '👹🧺',
+      desc: 'Rozverný čertovský kramář s mohutnými vroubkovanými rohy, záplatovaným kabátcem, bafající fajfkou a kopyty. V obrovské otevřené pletené nůši s koženými řemeny nabízí vzácné lektvary, sušené bylinky, vyřezávanou truhličku, zlatý ananas i pohybující se myšičku Rézinku.',
+    },
+    {
+      id: 'dedecek_arena' as SmartCharacterId,
+      name: 'Dědeček v aréně',
+      sub: 'Polní pochod & Nůše na zádech',
+      icon: '👹🎒',
+      desc: 'Kráčející čertovský handlíř s nůší na zádech, kulatými drátěnými brýlemi, vyceněnými křivými zuby, bafající fajfkou a plynulým čertovským ocasem. Jednou nohou dupe rozeklaným kopytem s ovinkami, druhou našlapuje ve šněrovací škorni a z nůše mu vykukuje myška Rézinka, měděná lucerna a plechová bandaska.',
     },
   ];
 
@@ -208,8 +249,8 @@ export const SmartSvgViewer: React.FC = () => {
           </div>
 
           {/* ACTIVE CHARACTER SVG */}
-          {selectedChar === 'babicka_barunka' && (
-            <SmartBabickaBarunkaSvg
+          {selectedChar === 'krajanek' && (
+            <SmartKrajanekSvg
               state={state}
               speed={speed}
               isPlaying={isPlaying}
@@ -218,7 +259,25 @@ export const SmartSvgViewer: React.FC = () => {
               interactive={true}
               onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
               features={{
-                showCompanion,
+                showMillstone,
+                showParticles,
+                showShadow: true,
+                showOutline: true,
+              }}
+            />
+          )}
+
+          {selectedChar === 'tulak' && (
+            <SmartTulakSvg
+              state={state}
+              speed={speed}
+              isPlaying={isPlaying}
+              direction={direction}
+              size={zoom}
+              interactive={true}
+              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
+              features={{
+                showSmoke,
                 showParticles,
                 showShadow: true,
                 showOutline: true,
@@ -237,6 +296,25 @@ export const SmartSvgViewer: React.FC = () => {
               onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
               features={{
                 showHeadGlow,
+                showBossAura,
+                showParticles,
+                showShadow: true,
+                showOutline: true,
+              }}
+            />
+          )}
+
+          {selectedChar === 'babicka_barunka' && (
+            <SmartBabickaBarunkaSvg
+              state={state}
+              speed={speed}
+              isPlaying={isPlaying}
+              direction={direction}
+              size={zoom}
+              interactive={true}
+              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
+              features={{
+                showCompanion,
                 showParticles,
                 showShadow: true,
                 showOutline: true,
@@ -246,23 +324,6 @@ export const SmartSvgViewer: React.FC = () => {
 
           {selectedChar === 'snehulak' && (
             <SmartSnehulakSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'tulak' && (
-            <SmartTulakSvg
               state={state}
               speed={speed}
               isPlaying={isPlaying}
@@ -312,21 +373,61 @@ export const SmartSvgViewer: React.FC = () => {
             />
           )}
 
+          {selectedChar === 'dedecek_nuse' && (
+            <SmartDedecekNuseSvg
+              state={state}
+              speed={speed}
+              isPlaying={isPlaying}
+              direction={direction}
+              size={zoom + 40}
+              interactive={true}
+              onClick={() => handleStateChange(state === 'action' ? 'idle' : 'action')}
+              features={{
+                showCompanion,
+                showParticles,
+                showShadow: true,
+                showOutline: true,
+              }}
+            />
+          )}
+
+          {selectedChar === 'dedecek_arena' && (
+            <SmartDedecekArenaSvg
+              state={state}
+              speed={speed}
+              isPlaying={isPlaying}
+              direction={direction}
+              size={zoom + 40}
+              interactive={true}
+              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
+              features={{
+                showCompanion,
+                showParticles,
+                showShadow: true,
+                showOutline: true,
+              }}
+            />
+          )}
+
           {/* FLOATING ACTION PILL ON BOTTOM */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-amber-200/60 shadow-lg text-xs font-medium">
             <span className="text-slate-500">Kliknutím na postavu spustíte:</span>
             <span className="text-amber-700 font-bold uppercase tracking-wider">
-              {selectedChar === 'babicka_barunka'
-                ? 'Laskavý zázrak'
+              {selectedChar === 'krajanek'
+                ? 'Jízda na žernovu & jiskry'
+                : selectedChar === 'tulak'
+                ? 'Pověstná sukovice & vichřice'
                 : selectedChar === 'bezhlavy_rytir'
-                ? 'Válečný řev & sek'
+                ? 'Půlnoční stětí & řev (BOSS)'
+                : selectedChar === 'babicka_barunka'
+                ? 'Laskavý zázrak'
                 : selectedChar === 'snehulak'
                 ? 'Vánici s koštětem'
-                : selectedChar === 'tulak'
-                ? 'Radostný poskok & sukovice'
                 : selectedChar === 'kostelnik'
                 ? 'Kropení svěcenou vodou'
-                : 'Hra na pastýřskou píšťalku'}
+                : selectedChar === 'pasacek'
+                ? 'Hra na pastýřskou píšťalku'
+                : 'Otevření nůše & Kramářský zázrak'}
             </span>
           </div>
         </div>
@@ -411,10 +512,10 @@ export const SmartSvgViewer: React.FC = () => {
             {[
               { id: 'idle' as SmartCharacterState, label: 'Klid (Idle)', icon: '🌿' },
               { id: 'walk' as SmartCharacterState, label: 'Krok & Chůze', icon: '🚶' },
-              { id: 'sprint' as SmartCharacterState, label: 'Rychlý sprint', icon: '🏃' },
-              { id: 'action' as SmartCharacterState, label: 'Zvláštní akce', icon: '⚡' },
-              { id: 'react' as SmartCharacterState, label: 'Vyděšení bubákem', icon: '😱' },
-              { id: 'flee' as SmartCharacterState, label: 'Útěk bez kuráže', icon: '💨' },
+              { id: 'sprint' as SmartCharacterState, label: 'Rychlý sprint / náběh', icon: '🏃' },
+              { id: 'action' as SmartCharacterState, label: 'Bojová akce / úder', icon: '⚡' },
+              { id: 'react' as SmartCharacterState, label: 'Zásah / Vyděšení', icon: '💥' },
+              { id: 'flee' as SmartCharacterState, label: 'Útěk / Úhyb', icon: '💨' },
             ].map((st) => {
               const active = state === st.id;
               return (
@@ -487,6 +588,53 @@ export const SmartSvgViewer: React.FC = () => {
             <span>⚙️</span> Speciální vrstvy a detaily
           </h4>
 
+          {selectedChar === 'krajanek' && (
+            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showMillstone}
+                onChange={(e) => setShowMillstone(e.target.checked)}
+                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
+              />
+              <span>Zobrazit obří žulový žernov (mlýnský kámen)</span>
+            </label>
+          )}
+
+          {selectedChar === 'tulak' && (
+            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showSmoke}
+                onChange={(e) => setShowSmoke(e.target.checked)}
+                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
+              />
+              <span>Bafající vonný kouř z bylinkové fajfky</span>
+            </label>
+          )}
+
+          {selectedChar === 'bezhlavy_rytir' && (
+            <>
+              <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showHeadGlow}
+                  onChange={(e) => setShowHeadGlow(e.target.checked)}
+                  className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
+                />
+                <span>Planoucí zrak v očích useknuté hlavy</span>
+              </label>
+              <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showBossAura}
+                  onChange={(e) => setShowBossAura(e.target.checked)}
+                  className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
+                />
+                <span>Prokletá pekelná aura a runy na zemi</span>
+              </label>
+            </>
+          )}
+
           {selectedChar === 'babicka_barunka' && (
             <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
               <input
@@ -499,15 +647,15 @@ export const SmartSvgViewer: React.FC = () => {
             </label>
           )}
 
-          {selectedChar === 'bezhlavy_rytir' && (
+          {(selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') && (
             <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
               <input
                 type="checkbox"
-                checked={showHeadGlow}
-                onChange={(e) => setShowHeadGlow(e.target.checked)}
+                checked={showCompanion}
+                onChange={(e) => setShowCompanion(e.target.checked)}
                 className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
               />
-              <span>Planoucí hněv v očích useknuté hlavy</span>
+              <span>Zobrazit pohybující se myšku Rézinku v nůši</span>
             </label>
           )}
 
@@ -518,7 +666,7 @@ export const SmartSvgViewer: React.FC = () => {
               onChange={(e) => setShowParticles(e.target.checked)}
               className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
             />
-            <span>Dynamické částice (okvětní lístky / sníh / zásek)</span>
+            <span>Dynamické částice (jiskry / mouka / kouř / sníh)</span>
           </label>
         </div>
       </div>

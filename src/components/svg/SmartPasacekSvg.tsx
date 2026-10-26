@@ -92,28 +92,20 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
   const runSin = Math.sin(t * runSpeed);
   const runCos = Math.cos(t * runSpeed);
 
-  // High-spirited barefoot running / sprinting / fleeing stride
-  const backLegAngle = isFleeing
-    ? runSin * 52
-    : isSprinting
-    ? runSin * 46
-    : isWalking
-    ? runSin * 34
+  // High-spirited barefoot running / sprinting / fleeing stride (legs ONLY swing when actively moving)
+  const backLegAngle = isMoving
+    ? runSin * (isFleeing ? 52 : isSprinting ? 46 : 34)
     : isAction
-    ? -25 + Math.sin(t * 14) * 8
+    ? -16
     : isReact
-    ? -24 + Math.sin(t * 22) * 7
+    ? -20
     : -8;
-  const frontLegAngle = isFleeing
-    ? -runSin * 52
-    : isSprinting
-    ? -runSin * 46
-    : isWalking
-    ? -runSin * 34
+  const frontLegAngle = isMoving
+    ? -runSin * (isFleeing ? 52 : isSprinting ? 46 : 34)
     : isAction
-    ? 25 + Math.sin(t * 14 + Math.PI) * 8
+    ? 16
     : isReact
-    ? 30 + Math.cos(t * 22) * 8
+    ? 22
     : 8;
 
   // Energetic bouncy bobbing, startle recoil jolt, and sprint/flee forward lean
@@ -800,15 +792,15 @@ export const SmartPasacekSvg: React.FC<SmartCharacterProps> = ({
             {musicNotes.map((note, idx) => (
               <text
                 key={`pa-note-${idx}`}
-                x={note.x}
-                y={note.y}
+                x={0}
+                y={0}
                 fill="#CA8A04"
                 stroke="#1C1610"
                 strokeWidth="1.2"
                 fontSize="24"
                 fontWeight="900"
                 opacity={note.op}
-                transform={`scale(${note.scale})`}
+                transform={`translate(${note.x.toFixed(2)}, ${note.y.toFixed(2)}) scale(${note.scale})`}
                 style={{ userSelect: 'none', filter: 'drop-shadow(0 2px 4px rgba(234, 179, 8, 0.4))' }}
               >
                 {note.char}

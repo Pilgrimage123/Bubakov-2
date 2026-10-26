@@ -1234,32 +1234,42 @@ export const LadaGrannyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
  * Wise grandfather in sheepskin cap (🧓 / grandpa / dedecek)
  */
 export const LadaGrandpaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dědeček v beranici" {...props}>
+  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dědeček s nůší" {...props}>
     {/* Pipe smoke wisp */}
-    <path d="M 27 22 C 28 19, 26 16, 28 14" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-1" />
+    <path d="M 29 22 C 30 19, 28 16, 30 13" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-1" />
     <g className="lada-anim-float">
-      {/* Sheepskin fur cap (beranice) */}
+      {/* Ribbed ram horns */}
+      <path d="M 11 13 C 6 10, 4 6, 7 4 C 9 3, 11 6, 13 11" fill="#3B2314" stroke="#1A1612" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M 25 13 C 30 10, 32 6, 29 4 C 27 3, 25 6, 23 11" fill="#3B2314" stroke="#1A1612" strokeWidth="1.6" strokeLinejoin="round" />
+      {/* Sheepskin fur cap (žlutohnědá beranice) */}
       <path
-        d="M 9 16 C 9 9, 27 9, 27 16 L 28 19 L 8 19 Z"
-        fill="#5E3A21"
+        d="M 10 15 C 10 8, 26 8, 26 15 Z"
+        fill="#6B3E26"
         stroke="#1A1612"
-        strokeWidth="2.4"
+        strokeWidth="2"
         strokeLinejoin="round"
       />
-      {/* Face */}
-      <ellipse cx="18" cy="20" rx="6.5" ry="6.5" fill="#FAF5E8" stroke="#1A1612" strokeWidth="1.8" />
-      <circle cx="15" cy="18" r="1" fill="#1A1612" />
-      <circle cx="21" cy="18" r="1" fill="#1A1612" />
-      {/* Grey bushy beard */}
+      <rect x="8.5" y="13.5" width="19" height="4.2" rx="2.1" fill="#D99B52" stroke="#1A1612" strokeWidth="1.6" />
+      {/* Terracotta-coral devilish face */}
+      <ellipse cx="18" cy="20.5" rx="6.5" ry="6" fill="#D85C3A" stroke="#1A1612" strokeWidth="1.8" />
+      {/* Wild bushy beard */}
       <path
-        d="M 12 21 C 12 28, 15 32, 18 32 C 21 32, 24 28, 24 21 Z"
-        fill="#E8DCC2"
+        d="M 11 21 C 10 28, 14 33, 18 33 C 22 33, 26 28, 25 21 Z"
+        fill="#E8D8B8"
         stroke="#1A1612"
         strokeWidth="1.8"
       />
-      {/* Wooden clay pipe */}
-      <line x1="20" y1="23" x2="26" y2="24" stroke="#8C5A35" strokeWidth="2" strokeLinecap="round" />
-      <rect x="25" y="21" width="3" height="4" rx="0.5" fill="#8C5A35" stroke="#1A1612" strokeWidth="1.2" />
+      {/* Crooked toothy grin */}
+      <path d="M 14.5 23.2 Q 18 25.2 21.5 23.2" fill="#2A0808" stroke="#1A1612" strokeWidth="1.2" />
+      <rect x="16" y="23.2" width="1.6" height="1.5" fill="#F2D16B" />
+      <rect x="18.4" y="23.2" width="1.6" height="1.5" fill="#E6B84D" />
+      {/* Round spectacles & red nose */}
+      <circle cx="15.2" cy="19.2" r="2.1" fill="#A8D8EA" fillOpacity="0.45" stroke="#1A1612" strokeWidth="1.3" />
+      <circle cx="20.8" cy="19.2" r="2.1" fill="#A8D8EA" fillOpacity="0.45" stroke="#1A1612" strokeWidth="1.3" />
+      <circle cx="18" cy="20.6" r="1.6" fill="#C83228" stroke="#1A1612" strokeWidth="1.1" />
+      {/* Wooden briar pipe */}
+      <line x1="20.5" y1="24" x2="27" y2="25" stroke="#5C2C16" strokeWidth="2" strokeLinecap="round" />
+      <rect x="26" y="22" width="3.2" height="4.2" rx="0.7" fill="#7A3A1E" stroke="#1A1612" strokeWidth="1.2" />
     </g>
   </svg>
 );
