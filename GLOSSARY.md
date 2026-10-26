@@ -240,6 +240,14 @@ _Avoid_: dialogový kontejner, modal wrapper, UI bundle
 Deterministická měřicí zkouška simulace a procedurálního vykreslování jednotlivých druhů strašidel v izolovaném zátěžovém scénáři (40 instancí po 120 snímků), ověřující nepřekročení bezpečnostního časového rozpočtu snímku (p95 pod 16,7 ms).
 _Avoid_: mob benchmark, enemy perf test, test zátěže monster
 
+**Procedurální kresba lovce**:
+Čistá vektorová kresba hrdiny štětcem na herní 2D plátno v ladovském tušovém a kvašovém stylu, určená pro plynulý běh bojové arény bez paměťových alokací.
+_Avoid_: sprite, lovecký sprite, spritový list, rastrový sprite
+
+**Smart SVG postava**:
+Interaktivní vektorová reprezentace hrdiny reagující na pohyb a akce hráče, určená výhradně pro nabídky, karty výběru a dialogová okna mimo bojové plátno.
+_Avoid_: herní sprite, canvasový sprite, DOM sprite v aréně
+
 **Distribuce a rozdělení bundlu**:
 Modulární strategie sestavení herního klienta ve Vite, která vyčleňuje knihovny, Smart SVG sprity a ladovské kreslicí rutiny do samostatných chunků a vývojářská okna načítá asynchronně přes `React.lazy()`, čímž zamezuje stahování nepotřebného kódu a drží primární herní bundle pod limitem prohlížeče.
 _Avoid_: monolitický bundle, single-file bundle, obří bundle

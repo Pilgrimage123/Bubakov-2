@@ -1,3 +1,13 @@
+## 2026-10-26 — Kanonizace pojmů procedurální kresby lovců a Smart SVG postav
+
+- **Kanonizace v GLOSSARY.md**:
+  - Zaveden autoritativní pojem **Procedurální kresba lovce** pro čistou vektorovou kresbu hrdiny štětcem na herní 2D plátno (`CanvasRenderingContext2D`) v ladovském tušovém a kvašovém stylu (bezalokační 60 FPS smyčka v aréně).
+  - Zaveden autoritativní pojem **Smart SVG postava** pro interaktivní vektorové komponenty reagující na pohyb myši a události UI, určené výhradně pro nabídky, výběr hrdiny a dialogová okna.
+  - V doménovém modelu výslovně zakázán pojem *sprite / lovecký sprite* pro hratelné postavy lovců.
+- **Audit implementace lovců v aréně a UI náhledech**:
+  - Ověřena kompletní a bezchybná implementace všech 7 hratelných lovců v herní aréně (`krajanek`, `tulak`, `pasacek`, `korenarka`, `ponocny`, `kostelnik`, `babicka`) včetně speciálních schopností (Krajánkova jízda na žernovu s brázdami a jiskrami).
+  - Potvrzeno architektonické rozdělení dle ADR 0030: aréna běží na bezalokačním 2D Canvasu, zatímco výběrové a informační modály využívají dedikovaný náhledový komponent `LadaHunterCanvasPreview`.
+
 ## 2026-10-26 — Vizuální a animační přepracování letících vran podle předlohy
 
 - **Detailní ladovský sprite letící vrány (`Lada.drawStageCrow` a `Lada.drawStageCrowGround`)**:

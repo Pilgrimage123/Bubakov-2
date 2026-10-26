@@ -10,6 +10,17 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '26. října 2026',
+    title: 'Kanonizace procedurální kresby lovců a Smart SVG postav v glosáři',
+    summary: 'Zavedení autoritativních doménových pojmů pro kresbu lovců na herní plátno a interaktivní vektorové postavy v UI, audit kompletní implementace 7 lovců v aréně a potvrzení architektonického rozdělení dle ADR 0030.',
+    items: [
+      '🎨 Procedurální kresba lovce: Zaveden kanonický pojem v GLOSSARY.md pro procedurální tušové a kvašové vykreslování hrdinů na 2D Canvasu (60 FPS, zero allocation). Výslovně zakázáno označení sprite.',
+      '✨ Smart SVG postava: Zaveden kanonický pojem pro interaktivní DOM SVG komponenty lovců vyhrazené pro UI modály, karty výběru a informační spisy.',
+      '⚔️ Prověrka 7 lovců v aréně: Všech 7 hratelných postav (Krajánek, Tulák, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička a Barunka) je plně zapojeno v bojovém renderovacím cyklu včetně unikátních mechanik.',
+      '🖼️ Canvasové náhledy v UI: Informační a odemykací modály používají LadaHunterCanvasPreview pro živou animaci postav přímo v kartách.',
+    ],
+  },
+  {
     date: '21. října 2026',
     title: 'Kanonizace zbraňových výzev, obnova JSX komponent a čistota kódu (ADR 0026)',
     summary: 'Kompletní de-transpilace a obnova 7 React komponent do čistého React 19 TSX, sjednocení identifikátorů zbraní na český snake_case dle ADR 0021, Proxy ochrana zbrojnice proti mutacím, bezpečná migrace uložených pozic a harmonizace textů lovců a bestiáře.',
