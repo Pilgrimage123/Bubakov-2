@@ -162,6 +162,7 @@ import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
+import { SmartSpriteRenderer, hasSmartSvgSprite } from './components/svg';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
@@ -8144,12 +8145,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
       if (resolvedId === 'vrana') {
-        finalHp = Math.round(stats.hp * 6);
+        finalHp = 38; // 38 Kuráže na vránu = ~342 Kuráže celkem pro vyvážené 9členné hejno
       } else {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.15 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
     const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
@@ -8160,7 +8161,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = (resolvedId === 'vrana' && isMiniboss)
-      ? Math.round(stats.damage * 6)
+      ? 8 // férové poškození 8 na vránu (souhrnně ~24 dmg při zásahu několika vran)
       : isMiniboss
       ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35))
       : stats.damage;
@@ -8169,8 +8170,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const xp = isMiniboss ? Math.max(20, (stats.xp || 1) * 5) : stats.xp;
 
     const isLevel1 = (engineRef.current?.activeLevelId ?? 1) === 1;
-    const rawMinibossSpeed = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.speed * 0.7) : stats.speed;
-    let enemySpeed = isMiniboss ? Math.max(rawMinibossSpeed * 0.95, 68) : rawMinibossSpeed;
+    const rawMinibossSpeed = (resolvedId === 'vrana' && isMiniboss) ? 260 : stats.speed;
+    let enemySpeed = (resolvedId === 'vrana' && isMiniboss) ? 260 : (isMiniboss ? Math.max(rawMinibossSpeed * 0.95, 68) : rawMinibossSpeed);
     if (resolvedId === 'polednice' && isLevel1) {
       enemySpeed = Math.round(enemySpeed * 0.85);
     }
@@ -11071,6 +11072,55 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           return;
         }
 
+        // Miniboss flock members use the enlarged flying crow silhouette matching the large flock
+        if (this.isMinibossFlockMember) {
+          ctx.save();
+          if (this.isDefeated) {
+            const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
+            ctx.globalAlpha = Math.max(0.08, 1 - fadeProgress * 0.92);
+          }
+          ctx.translate(this.x, this.y);
+          const heading = Math.atan2(this.vy || 0, this.vx || 1);
+          ctx.rotate(heading);
+          const flapSpeed = 16;
+          const flapPhase = (typeof this.flockIndex === 'number' ? this.flockIndex : 0) * 1.4;
+          const flapScale = 0.72 + Math.sin((this.animTime || 0) * flapSpeed + flapPhase) * 0.38;
+          const baseScale = 2.4 * (this.renderScale || 1.2);
+          ctx.scale(baseScale, baseScale * flapScale);
+          ctx.fillStyle = '#171521';
+          ctx.strokeStyle = '#06060A';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(2, 3);
+          ctx.lineTo(-6, 5);
+          ctx.lineTo(-12, 1);
+          ctx.lineTo(-7, -2);
+          ctx.lineTo(1, -4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-3, 0);
+          ctx.lineTo(-10, -7);
+          ctx.lineTo(-5, -2);
+          ctx.moveTo(-3, 0);
+          ctx.lineTo(-8, 7);
+          ctx.lineTo(-4, 2);
+          ctx.stroke();
+          // Frosty wingtip highlights
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(-7, -5);
+          ctx.lineTo(-10, -7);
+          ctx.moveTo(-6, 5);
+          ctx.lineTo(-8, 7);
+          ctx.stroke();
+          ctx.restore();
+          return;
+        }
+
         let didSaveAlpha = false;
         if (this.isDefeated) {
           const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
@@ -11711,9 +11761,34 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const renderUnlockedHunterCard = (
     id: HunterDetailKey,
     name: string,
-    portrait: React.ReactNode
+    fallbackPortrait?: React.ReactNode
   ) => {
     const hunterInfo = HUNTER_DETAILS[id];
+    const portrait = hasSmartSvgSprite(id) ? (
+      <div
+        className="portrait-canvas hunter-portrait-compact"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          background: 'radial-gradient(ellipse at bottom, #FDF3DB 0%, #F5E6CA 80%, #E7D7B6 100%)',
+          border: '2px solid var(--ink)',
+          borderRadius: '8px',
+          alignSelf: 'center',
+        }}
+        title={`Interaktivní náhled: ${name}`}
+      >
+        <SmartSpriteRenderer
+          spriteId={id}
+          state="walk"
+          size={160}
+          interactive={true}
+        />
+      </div>
+    ) : (
+      fallbackPortrait
+    );
     return (
       <div
         key={id}
@@ -12518,16 +12593,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             {/* Character Selection Grid with animated canvas portraits */}
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
               {/* Krajánek a Poutník - výchozí lovci sdílejí stejnou kartu jako ostatní */}
-              {renderUnlockedHunterCard(
-                'krajanek',
-                'Krajánek',
-                <img src="/images/krajanek.svg" alt="Krajánek s červenou puntíkovanou mošnou" width={180} height={180} className="portrait-canvas hunter-portrait-compact" style={{ objectFit: 'contain', display: 'block', alignSelf: 'center' }} />
-              )}
-              {renderUnlockedHunterCard(
-                'wanderer',
-                'Poutník',
-                <canvas ref={wandererRef} className="portrait-canvas hunter-portrait-compact" width={180} height={180} />
-              )}
+              {renderUnlockedHunterCard('krajanek', 'Krajánek')}
+              {renderUnlockedHunterCard('wanderer', 'Poutník')}
 
               {/* Pasáček (Progressive unlock) */}
               {renderHunterSelectCard(shepherdProg, shepherdRef)}

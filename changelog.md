@@ -1,3 +1,18 @@
+## 2026-10-26 — Miniboss Hejno mrazivých vran a organická integrace Smart SVG spritů
+
+- **Miniboss Hejno mrazivých vran (1. úroveň)**:
+  - Miniboss vrány byl vizuálně a kinematicky sjednocen s letovým spritem velkého hejna (`VirtualLeaderCrowWave`): tělo se dynamicky natáčí podél vektoru letu (`heading = atan2(vy, vx)`), křídla plynule mávají v individuálních fázích a letky mají mrazivý azurový lem namísto starého profilového spritu cupitající vrány s nohama.
+  - Hejno tvoří přesně 9 rychle letících vran s dravou rychlostí náletu 260 px/s (odstraněn paradox zpomalení na 125 px/s).
+  - Vybalancováno poškození na 8 dmg na vránu (odstraněn 432 dmg instant-kill) a Kuráž na 38 HP na vránu (~342 Kuráže na celé hejno namísto 1512 HP).
+  - Opravena chyba v `engine.ts`, kde byl `renderScale` chybně nastaven na `1 / 9`; sjednoceno na `1.2` (poloměr 15 px) a aktualizovány testy v `tests/level0Predjari.test.ts`.
+- **Organická integrace 9 Smart SVG spritů do stávajících komponent**:
+  - Na obrazovce výběru lovců (`char-select-grid` v `App.tsx`) nahrazen statický `<img>` tag Krajánka a statické canvasy živými interaktivními postavami `SmartSpriteRenderer` pro všechny odemčené lovce se Smart SVG (Krajánek, Poutník/Tulák, Pasáček, Kostelník, Babička s Barunkou).
+  - Pro lovce bez Smart SVG (Kořenářka, Ponocný) i pro zamčené náhledy s postupným odhalováním je plně zachován stávající canvasový fallback.
+  - V modálu ovládání a nápovědy (`ControlsModal.tsx`) nahrazena drobná ikona Čertova dědečka plnohodnotnou interaktivní scénou `SmartDedecekNuseSvg`.
+- **Doménová dokumentace a architektura**:
+  - Do `GLOSSARY.md` zapsány kanonické termíny **Hejno mrazivých vran (Miniboss)** a **Smart SVG sprity**.
+  - Založeno architektonické rozhodnutí `docs/adr/0030-hejno-mrazivych-vran-a-smart-svg-integrace.md` a aktualizován `docs/adr/README.md`.
+
 ## 2026-10-25 — Nové detailní Smart SVG sprity: Krajánek, Tulák a Bezhlavý rytíř (Enemy Boss)
 
 - **SmartKrajanekSvg**: Vytvořen zbrusu nový vysoce detailní interaktivní vektorový sprite Krajánka (mlynářský tovaryš a pocestný v pomoučeném šatu, klobouku s obilným klasem, červenou puntíkovanou mošnou na holi a kamenickým kladívkem).

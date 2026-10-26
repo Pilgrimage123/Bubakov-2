@@ -34,3 +34,4 @@ This directory records architectural decisions made for the project Bubákov.
 | [0028](0028-tajici-snehulaci-virtual-leader-horda-a-louze.md) | Tající sněhuláci: Horda s Virtuálním vůdcem, slotovými posuny a loužemi |
 | [0028b](0028b-vysokovykonny-soa-drop-manazer-a-reziser-vypravy.md) | Vysokovýkonný SoA drop manažer a Režisér výpravy |
 | [0029](0029-sjednoceni-renderovaci-pipeline-atlas-strasidel-a-zero-alloc-cyklus.md) | Sjednocení renderovací pipeline, bitmapový atlas běžných strašidel a bezalokační cyklus |
+| [0030](0030-hejno-mrazivych-vran-a-smart-svg-integrace.md) | Hejno mrazivých vran (Miniboss) a integrace Smart SVG spritů |

@@ -128,6 +128,14 @@ _Avoid_: mob spam, entity bloating, zahušťování nepřátel
 Normalizovaný index (0,0 až 1,0) vyhodnocovaný Režisérem výpravy z Kuráže, nedávného zranění, připravenosti arzenálu a hustoty běsů pro dynamické řízení tempa a kořisti.
 _Avoid_: vulnerability score, threat index, stress score, V-skóre
 
+**Hejno mrazivých vran (Miniboss)**:
+Skupinový oblastní miniboss v 1. úrovni (Březnové tání) tvořený kompaktní letovou formací 9 dravých vran se sdíleným ukazatelem Kuráže, vysokou rychlostí náletů (260 px/s) a dynamickým úbytkem těl při postupném zraňování; po porážce celého hejna zanechává malovanou truhlu s odměnou.
+_Avoid_: vrana boss, obří vrána, crow swarm boss
+
+**Smart SVG sprity**:
+Vektorové komponenty vybraných folklórních postav (9 kanonických zástupců: Krajánek, Tulák, Bezhlavý rytíř, Sněhulák, Babička s Barunkou, Kostelník, Pasáček, Dědeček s nůší a Dědeček v aréně) s vícefázovými kinematickými animacemi (chůze, nápřah, úprk, reakce) a interaktivním sledováním kurzoru, plně integrované do uživatelského rozhraní, výběru lovců, modálů a kramářské scény bez zatížení zero-allocation canvasové bojové arény.
+_Avoid_: SVG avatary, vektorové ikony, animované obrázky
+
 
 ## Světlo a atmosféra
 

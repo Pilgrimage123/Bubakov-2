@@ -5,6 +5,7 @@ import { PernicekIcon } from './PernicekIcon';
 import { HruskaIcon } from './HruskaIcon';
 import { GameIcon } from './GameIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { SmartSpriteRenderer } from './svg';
 interface ControlsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -651,8 +652,10 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                <GameIcon icon="grandpa" size={54} />
-                <div>
+                <div style={{ width: '105px', height: '105px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: '#FFFDF7', border: '2px solid #78350F', borderRadius: '10px' }} title="Čertův dědeček s otevřenou nůší">
+                  <SmartSpriteRenderer spriteId="dedecek_nuse" size={100} state="action" interactive={true} />
+                </div>
+                <div style={{ flex: '1 1 240px' }}>
                   <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#78350F', fontWeight: 900 }}>
                     ČERTŮV DĚDEČEK A JEHO NŮŠE
                   </h3>

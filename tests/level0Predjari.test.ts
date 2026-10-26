@@ -151,9 +151,9 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(crowMiniBoss.isMinibossFlockMember).toBe(true);
     expect(crowMiniBoss.flockTotal).toBe(9);
     expect(engine.state.enemies.filter((e) => e.isMinibossFlockMember)).toHaveLength(9);
-    // Beginner tutorial miniboss should be balanced (~168 HP per crow), not 1400 HP
-    expect(crowMiniBoss.hp).toBe(168);
-    expect(crowMiniBoss.renderScale).toBeCloseTo(1 / 9);
+    // Beginner tutorial miniboss should be balanced (38 HP per crow = ~342 HP total), not 1400 HP
+    expect(crowMiniBoss.hp).toBe(38);
+    expect(crowMiniBoss.renderScale).toBeCloseTo(1.2);
 
     const vodnicekMidBoss = engine.spawnMonster('vodnicek', 150, 150, GAME_LEVELS[0].midBoss.multiplier, false, true, '💧 Jarní Vodníček');
     expect(vodnicekMidBoss.isMiniboss).toBe(true);

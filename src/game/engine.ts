@@ -1072,13 +1072,13 @@ export class GameEngine {
     let finalHp = Math.round(stats.hp * (multiplier || 1));
     if (isMiniboss) {
       if (resolvedId === 'vrana') {
-        finalHp = Math.round(stats.hp * 6); // 28 * 6 = 168 (6x stronger HP)
+        finalHp = 38; // 38 Kuráže na vránu = ~342 Kuráže celkem pro vyvážené 9členné hejno
       } else {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? (1 / 9) : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
-    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.max(3, Math.round(stats.radius / 9)) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
+    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
     const hunger = isMiniboss
@@ -1090,12 +1090,12 @@ export class GameEngine {
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = (resolvedId === 'vrana' && isMiniboss)
-      ? Math.round(stats.damage * 6) // 8 * 6 = 48 (6x stronger damage)
+      ? 8 // férové poškození 8 na vránu (souhrnně ~24 dmg při zásahu několika vran)
       : isMiniboss
       ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35))
       : stats.damage;
     let enemySpeed = (resolvedId === 'vrana' && isMiniboss)
-      ? Math.round(stats.speed * 0.7) // 188 * 0.7 = 132 (30% slower)
+      ? 260 // rychlý let hejna vran namísto cupitání
       : stats.speed;
     let enemyDamage = baseDamage;
     let dodgeChance = 0;
