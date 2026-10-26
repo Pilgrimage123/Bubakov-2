@@ -18,6 +18,7 @@ export type BakedBubakId =
   | 'divozenka'
   | 'certik'
   | 'skeleton'
+  | 'kostlivec'
   | 'vrana'
   | 'zmrzlik'
   | 'tajici_snehulak'
@@ -55,6 +56,7 @@ export class BakedBubakAtlas {
       divozenka: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawDivozenka(c, x, y, t, v, p) },
       certik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawCertik(c, x, y, t, v, p) },
       skeleton: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawSkeleton(c, x, y, t, v, p) },
+      kostlivec: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawSkeleton(c, x, y, t, v, p) },
       vrana: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawStageCrow(c, x, y, t, v, p) },
       zmrzlik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawZmrzlik(c, x, y, t, v, p) },
       tajici_snehulak: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawMeltingSnowman(c, x, y, t, v, p) },
@@ -164,9 +166,15 @@ export class BakedBubakAtlas {
 
   public getFrame(mobId: string, animTime: number, panicked = false): BakedFrame | undefined {
     if (!this.initialized) this.init();
+    const resolvedId = mobId === 'skeleton' ? 'kostlivec' : mobId;
     const cyclePeriod = (Math.PI * 2) / (panicked ? 20 : 12);
     const step = Math.floor(((Math.abs(animTime) / cyclePeriod) * this.frameSteps) % this.frameSteps);
-    return this.frames.get(`${mobId}_${step}_${panicked ? 1 : 0}`) || this.frames.get(`${mobId}_${step}`);
+    return (
+      this.frames.get(`${resolvedId}_${step}_${panicked ? 1 : 0}`) ||
+      this.frames.get(`${resolvedId}_${step}`) ||
+      this.frames.get(`${mobId}_${step}_${panicked ? 1 : 0}`) ||
+      this.frames.get(`${mobId}_${step}`)
+    );
   }
 
   public draw(

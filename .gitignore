@@ -10,3 +10,5 @@ test-results/
 playwright-report/
 
 *_bundle.txt
+public/assets/
+

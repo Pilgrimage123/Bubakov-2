@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { applyAnanasUpgrade } from './drops';
+import { applyAnanasUpgrade } from '../src/game/drops';
 import {
   FROSTLING_AURA_RADIUS,
   getFrostAuraHealingMultiplier,
   type FrostAuraEnemy,
-} from './frostAura';
+} from '../src/game/frostAura';
 
 const frostling = (x: number, y = 0, overrides: Partial<FrostAuraEnemy> = {}): FrostAuraEnemy => ({
   id: 'mrazovy_skritek',

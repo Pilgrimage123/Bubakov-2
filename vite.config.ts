@@ -19,7 +19,37 @@ export default defineConfig({
     hmr: false,
   },
   build: {
-    chunkSizeWarningLimit: 1600,
+    chunkSizeWarningLimit: 1400,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('motion')) {
+              return 'vendor-motion';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-lucide';
+            }
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            return 'vendor-libs';
+          }
+          if (id.includes('src/components/svg/')) {
+            return 'smart-svg';
+          }
+          if (id.includes('src/render/ladaRenderer')) {
+            return 'lada-renderer';
+          }
+          if (id.includes('src/components/LadaCustomIcons')) {
+            return 'lada-icons';
+          }
+          if (id.includes('src/render/marchThawSvgLandscape')) {
+            return 'march-thaw-landscape';
+          }
+        },
+      },
+    },
   },
   test: {
     exclude: [

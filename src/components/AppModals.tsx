@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import type { MetaProgression } from '../types';
 import { GameIcon } from './GameIcon';
 import { ControlsModal } from './ControlsModal';
-import { SettingsDevModal } from './SettingsDevModal';
-import { CombatTextSettingsModal } from './CombatTextSettingsModal';
-import { TestModeModal } from './TestModeModal';
-import { AnimationTesterModal } from './AnimationTesterModal';
-import { ResetProgressModal } from './ResetProgressModal';
-import { BestiaryModal } from './BestiaryModal';
-import { PlanModal } from './PlanModal';
+
+const SettingsDevModal = lazy(() => import('./SettingsDevModal').then(m => ({ default: m.SettingsDevModal })));
+const CombatTextSettingsModal = lazy(() => import('./CombatTextSettingsModal').then(m => ({ default: m.CombatTextSettingsModal })));
+const TestModeModal = lazy(() => import('./TestModeModal').then(m => ({ default: m.TestModeModal })));
+const AnimationTesterModal = lazy(() => import('./AnimationTesterModal').then(m => ({ default: m.AnimationTesterModal })));
+const ResetProgressModal = lazy(() => import('./ResetProgressModal').then(m => ({ default: m.ResetProgressModal })));
+const BestiaryModal = lazy(() => import('./BestiaryModal').then(m => ({ default: m.BestiaryModal })));
+const PlanModal = lazy(() => import('./PlanModal').then(m => ({ default: m.PlanModal })));
+const ArsenalModal = lazy(() => import('./ArsenalModal').then(m => ({ default: m.ArsenalModal })));
+
 import { HunterUnlockModal } from './HunterUnlockModal';
 import { HunterInfoModal } from './HunterInfoModal';
 import { LevelUnlockModal } from './LevelUnlockModal';
-import { ArsenalModal } from './ArsenalModal';
 import { WeaponUnlockModal } from './WeaponUnlockModal';
 import {
   DEFAULT_COMBAT_TEXT_SETTINGS,
@@ -237,7 +239,8 @@ export const AppModals: React.FC<AppModalsProps> = ({
         onClose={onCloseControls}
       />
 
-      {/* SETTINGS & DEV MODAL */}
+      <Suspense fallback={null}>
+        {/* SETTINGS & DEV MODAL */}
       <SettingsDevModal
         isOpen={isSettingsDevOpen}
         onClose={onCloseSettingsDev}
@@ -356,6 +359,7 @@ export const AppModals: React.FC<AppModalsProps> = ({
         progress={selectedWeaponDetail}
         onClose={onCloseWeaponDetail}
       />
+      </Suspense>
 
       {/* UNLOCK TOAST BANNER */}
       {unlockNotice &&

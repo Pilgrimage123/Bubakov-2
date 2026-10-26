@@ -70,6 +70,8 @@ export const ENEMY_ARCHETYPE_MAP: Record<
 
   // --- 4. BĚŽNÍ PĚŠÁCI, BUBÁCI, KOSTLIVCI A VENKOVANÉ (Runner archetype - balanced wobble) ---
   bubak: { archetype: 'runner', duration: '0.52s', wobble: '12deg', squashX: 1.16, squashY: 0.86, baseScale: 1.10, accentColor: '#78350F' },
+  kostlivec: { archetype: 'runner', duration: '0.48s', wobble: '9deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#F5F5F4' },
+  kostlivec_kosa: { archetype: 'runner', duration: '0.50s', wobble: '10deg', squashX: 1.15, squashY: 0.87, baseScale: 1.05, accentColor: '#E7E5E4' },
   skeleton: { archetype: 'runner', duration: '0.48s', wobble: '9deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#F5F5F4' },
   skeleton_scythe: { archetype: 'runner', duration: '0.50s', wobble: '10deg', squashX: 1.15, squashY: 0.87, baseScale: 1.05, accentColor: '#E7E5E4' },
   krvavy_kostlivec: { archetype: 'runner', duration: '0.46s', wobble: '11deg', squashX: 1.15, squashY: 0.87, baseScale: 1.05, accentColor: '#B91C1C' },
@@ -111,12 +113,6 @@ const bakedDataUriCache = new Map<string, string>();
 export function getEnemySpriteDataUri(enemyId: string): string {
   if (bakedDataUriCache.has(enemyId)) {
     return bakedDataUriCache.get(enemyId)!;
-  }
-
-  // 1. Check if public static asset exists
-  if (enemyId === 'tajici_snehulak' && BAKED_SPRITES.snowman) {
-    bakedDataUriCache.set(enemyId, BAKED_SPRITES.snowman);
-    return BAKED_SPRITES.snowman;
   }
 
   // 2. Offscreen Canvas Baking via Lada Renderer

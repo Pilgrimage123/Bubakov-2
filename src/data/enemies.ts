@@ -228,8 +228,8 @@ const ENEMIES: Record<string, EnemyStats> = {
 		lore: "Žije pod prkny v podkroví stodoly. Kde se objeví jeden, tam za okamžik píská celý tucet.",
 		danger: "★☆☆☆☆"
 	},
-	skeleton: {
-		id: "skeleton",
+	kostlivec: {
+		id: "kostlivec",
 		name: "Kostlivec ze svatého Jiří",
 		title: "Umrlec s kamennou sekerou",
 		category: "undead",
@@ -250,8 +250,8 @@ const ENEMIES: Record<string, EnemyStats> = {
 		lore: "Noční nezbeda s chrastícími žebry. V noci straší kolem starého kamenného kostelíka a potřebuje srovnat cepem.",
 		danger: "★★☆☆☆"
 	},
-	skeleton_scythe: {
-		id: "skeleton_scythe",
+	kostlivec_kosa: {
+		id: "kostlivec_kosa",
 		name: "Kostlivec s rezavou kosou",
 		title: "Noční sekáč obilí",
 		category: "undead",
@@ -1264,5 +1264,9 @@ const UNHOLY_IDS = new Set<string>([
 for (const enemy of Object.values(ENEMIES)) {
 	(enemy as any).isUnholy = enemy.category === "undead" || enemy.category === "demons" || UNHOLY_IDS.has(enemy.id);
 }
+
+// Non-enumerable legacy aliases for backward compatibility (preserves 58 canonical enemy count)
+Object.defineProperty(ENEMIES, 'skeleton', { value: ENEMIES.kostlivec, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(ENEMIES, 'skeleton_scythe', { value: ENEMIES.kostlivec_kosa, enumerable: false, configurable: true, writable: true });
 
 export { ENEMIES };

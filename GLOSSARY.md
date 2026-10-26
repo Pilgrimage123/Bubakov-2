@@ -240,6 +240,10 @@ _Avoid_: dialogový kontejner, modal wrapper, UI bundle
 Deterministická měřicí zkouška simulace a procedurálního vykreslování jednotlivých druhů strašidel v izolovaném zátěžovém scénáři (40 instancí po 120 snímků), ověřující nepřekročení bezpečnostního časového rozpočtu snímku (p95 pod 16,7 ms).
 _Avoid_: mob benchmark, enemy perf test, test zátěže monster
 
+**Distribuce a rozdělení bundlu**:
+Modulární strategie sestavení herního klienta ve Vite, která vyčleňuje knihovny, Smart SVG sprity a ladovské kreslicí rutiny do samostatných chunků a vývojářská okna načítá asynchronně přes `React.lazy()`, čímž zamezuje stahování nepotřebného kódu a drží primární herní bundle pod limitem prohlížeče.
+_Avoid_: monolitický bundle, single-file bundle, obří bundle
+
 
 ## Rozhraní a navigace
 

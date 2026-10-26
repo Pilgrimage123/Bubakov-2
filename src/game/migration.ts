@@ -8,6 +8,29 @@ export function toCanonicalWeaponId(id: string): WeaponId {
   return WEAPON_LEGACY_ALIASES[id] || (id as WeaponId);
 }
 
+export const HUNTER_LEGACY_ALIASES: Record<string, string> = {
+  wanderer: 'tulak',
+  poutnik: 'tulak',
+  shepherd: 'pasacek',
+  watchman: 'ponocny',
+  sexton: 'kostelnik',
+  granny: 'babicka',
+};
+
+export function toCanonicalHunterId(id: string): string {
+  return HUNTER_LEGACY_ALIASES[id] || id;
+}
+
+export const ENEMY_LEGACY_ALIASES: Record<string, string> = {
+  skeleton: 'kostlivec',
+  skeleton_scythe: 'kostlivec_kosa',
+  kostlivec_koste: 'kostlivec_kosa',
+};
+
+export function toCanonicalEnemyId(id: string): string {
+  return ENEMY_LEGACY_ALIASES[id] || id;
+}
+
 export function migrateMetaProgression(parsed: any): MetaProgression {
   if (!parsed || typeof parsed !== 'object') {
     return createDefaultMetaProgression();
@@ -28,6 +51,21 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
   migratedUnlockedWeapons['hromnicka'] = true;
   migratedUnlockedWeapons['bylinkova_fajfka'] = true;
 
+  const migratedUnlockedHunters: Record<string, boolean> = {
+    krajanek: true,
+    tulak: true,
+    wanderer: true,
+  };
+  if (parsed.unlockedHunters && typeof parsed.unlockedHunters === 'object') {
+    for (const [key, val] of Object.entries(parsed.unlockedHunters)) {
+      if (val) {
+        const canonical = toCanonicalHunterId(key);
+        migratedUnlockedHunters[canonical] = true;
+        migratedUnlockedHunters[key] = true;
+      }
+    }
+  }
+
   const migratedWeaponKillCounts: Record<string, any> = {};
   if (parsed.weaponKillCounts && typeof parsed.weaponKillCounts === 'object') {
     for (const [key, val] of Object.entries(parsed.weaponKillCounts)) {
@@ -37,8 +75,21 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
       } else if (val && typeof val === 'object') {
         migratedWeaponKillCounts[canonical] = {
           ...(typeof migratedWeaponKillCounts[canonical] === 'object' ? migratedWeaponKillCounts[canonical] : {}),
-          ...val
+          ...val,
         };
+      }
+    }
+  }
+
+  const migratedBestiaryKills: Record<string, number> = {};
+  if (parsed.bestiaryKills && typeof parsed.bestiaryKills === 'object') {
+    for (const [key, val] of Object.entries(parsed.bestiaryKills)) {
+      if (typeof val === 'number') {
+        const canonical = toCanonicalEnemyId(key);
+        migratedBestiaryKills[canonical] = (migratedBestiaryKills[canonical] || 0) + val;
+        if (canonical !== key) {
+          migratedBestiaryKills[key] = migratedBestiaryKills[canonical];
+        }
       }
     }
   }
@@ -47,7 +98,8 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
 
   return {
     ...parsed,
-    unlockedHunters: { ...(parsed.unlockedHunters || {}), krajanek: true, wanderer: true },
+    unlockedHunters: migratedUnlockedHunters,
+    bestiaryKills: migratedBestiaryKills,
     performanceProfile: parsed.performanceProfile === 'fidelity' || parsed.performanceProfile === 'balanced' || parsed.performanceProfile === 'performance'
       ? parsed.performanceProfile
       : parsed.performanceMode ? 'performance' : 'balanced',

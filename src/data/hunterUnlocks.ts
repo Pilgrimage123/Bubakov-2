@@ -1,5 +1,18 @@
 export type { HunterProgress } from '../types';
 
+export const HUNTER_ALIASES: Record<string, string> = {
+	wanderer: 'tulak',
+	poutnik: 'tulak',
+	shepherd: 'pasacek',
+	watchman: 'ponocny',
+	sexton: 'kostelnik',
+	granny: 'babicka',
+};
+
+export function toCanonicalHunterId(id: string): string {
+	return HUNTER_ALIASES[id] || id;
+}
+
 var HUNTER_ORDER = [
 	"krajanek",
 	"wanderer",
@@ -9,21 +22,25 @@ var HUNTER_ORDER = [
 	"sexton",
 	"granny"
 ];
-function getPreviousHunter(type) {
-	const idx = HUNTER_ORDER.indexOf(type);
+function getPreviousHunter(type: any) {
+	const canonical = toCanonicalHunterId(type);
+	let idx = HUNTER_ORDER.indexOf(canonical);
+	if (idx === -1) idx = HUNTER_ORDER.indexOf(type);
 	if (idx <= 0) return null;
 	return HUNTER_ORDER[idx - 1];
 }
-function isHunterUnlocked(type, meta) {
-	if (type === "wanderer" || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
-	return !!meta.unlockedHunters?.[type];
+function isHunterUnlocked(type: any, meta: any) {
+	const canonical = toCanonicalHunterId(type);
+	if (canonical === "wanderer" || canonical === "tulak" || HUNTER_UNLOCKS[canonical]?.defaultUnlocked || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
+	return !!meta.unlockedHunters?.[canonical] || !!meta.unlockedHunters?.[type];
 }
-function canHunterUnlock(type, meta) {
-	if (type === "wanderer" || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
-	const prev = getPreviousHunter(type);
+function canHunterUnlock(type: any, meta: any) {
+	const canonical = toCanonicalHunterId(type);
+	if (canonical === "wanderer" || canonical === "tulak" || HUNTER_UNLOCKS[canonical]?.defaultUnlocked || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
+	const prev = getPreviousHunter(canonical);
 	return !prev || isHunterUnlocked(prev, meta);
 }
-function getActiveUnlockingHunter(meta) {
+function getActiveUnlockingHunter(meta: any) {
 	for (let i = 0; i < HUNTER_ORDER.length; i++) {
 		const id = HUNTER_ORDER[i];
 		if (!isHunterUnlocked(id, meta)) {
@@ -553,13 +570,19 @@ var HUNTER_UNLOCKS = {
 	}
 };
 
+(HUNTER_UNLOCKS as any).tulak = HUNTER_UNLOCKS.wanderer;
+(HUNTER_UNLOCKS as any).pasacek = HUNTER_UNLOCKS.shepherd;
+(HUNTER_UNLOCKS as any).ponocny = HUNTER_UNLOCKS.watchman;
+(HUNTER_UNLOCKS as any).kostelnik = HUNTER_UNLOCKS.sexton;
+(HUNTER_UNLOCKS as any).babicka = HUNTER_UNLOCKS.granny;
+
 const HUNTER_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
 
 /**
 * Calculates current unlock progress and spoil details for a hunter based on meta-progression
 */
 function computeHunterProgress(type: any, meta: any) {
-	const def = HUNTER_UNLOCKS[type];
+	const def = HUNTER_UNLOCKS[type] || HUNTER_UNLOCKS[toCanonicalHunterId(type)];
 	if (!def) return {
 		id: type,
 		isUnlocked: true,
@@ -649,7 +672,7 @@ function computeHunterProgress(type: any, meta: any) {
 			}))
 		};
 	}
-	const hunterKills = meta.hunterKillCounts?.[type] || (type === "shepherd" ? meta.bestiaryKills || {} : {});
+	const hunterKills = meta.hunterKillCounts?.[type] || meta.hunterKillCounts?.[toCanonicalHunterId(type)] || (type === "shepherd" || type === "pasacek" ? meta.bestiaryKills || {} : {});
 	let curCount = 0;
 	const enemiesBreakdown = def.targetEnemies.map((e) => {
 		const cnt = hunterKills[e.id] || 0;

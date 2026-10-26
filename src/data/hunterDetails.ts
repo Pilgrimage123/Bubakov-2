@@ -1,6 +1,6 @@
-import type { WeaponId } from '../types';
+import type { CanonicalHunterId, LegacyHunterId, WeaponId } from '../types';
 
-export type HunterDetailKey = 'krajanek' | 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
+export type HunterDetailKey = CanonicalHunterId | LegacyHunterId;
 
 export interface HunterDetail {
   name: string;
@@ -39,7 +39,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 30,
     playstyle: 'Vyvážený průzkumník s krátkou, ale mimořádně silnou jízdou přes bojiště.',
   },
-  wanderer: {
+  tulak: {
     role: 'Silný bojovník zblízka',
     abilityName: 'Povětrná sukovice',
     name: 'Poutník (Tulák)',
@@ -55,7 +55,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 21,
     playstyle: 'Nejvyšší základní Kuráž a výrazné poškození; magnet na sběr je kratší, proto se vyplatí pohybovat se přes kořist.',
   },
-  shepherd: {
+  pasacek: {
     role: 'Rychlý sběrač, úhybný',
     abilityName: 'Dusot stáda',
     name: 'Pasáček',
@@ -87,7 +87,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 30,
     playstyle: 'Léčivá a kontrolní postava. Sbírání kořisti je běžně krátkodosahové, ale každých 9 s získá bezpečné časové okno s pětinásobným magnetem a rychlostí přitahování.',
   },
-  watchman: {
+  ponocny: {
     role: 'Strážce s aurou',
     abilityName: 'Noční roh a poplach',
     name: 'Ponocný',
@@ -103,7 +103,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 30,
     playstyle: 'Vyvážený strážce s průběžným poškozením z aury a plošným nouzovým poplachem.',
   },
-  sexton: {
+  kostelnik: {
     role: 'Lovec nemrtvých a bossů',
     abilityName: 'Farní požehnání',
     name: 'Pobožný kostelník',
@@ -119,7 +119,7 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 35,
     playstyle: 'Specialista na nemrtvé a démony, nejsilnější při velkých vlnách nebo proti bossům.',
   },
-  granny: {
+  babicka: {
     role: 'Podpora a kontrola času',
     abilityName: 'Chléb se solí a vládné slovo',
     name: 'Babička a Barunka',
@@ -135,4 +135,19 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 45,
     playstyle: 'Pomalejší podpůrná postava se silnou kontrolou velké části bojiště.',
   },
+  // Legacy aliases for backward compatibility
+  wanderer: null as any,
+  poutnik: null as any,
+  shepherd: null as any,
+  watchman: null as any,
+  sexton: null as any,
+  granny: null as any,
 };
+
+HUNTER_DETAILS.wanderer = HUNTER_DETAILS.tulak;
+HUNTER_DETAILS.poutnik = HUNTER_DETAILS.tulak;
+HUNTER_DETAILS.shepherd = HUNTER_DETAILS.pasacek;
+HUNTER_DETAILS.watchman = HUNTER_DETAILS.ponocny;
+HUNTER_DETAILS.sexton = HUNTER_DETAILS.kostelnik;
+HUNTER_DETAILS.granny = HUNTER_DETAILS.babicka;
+

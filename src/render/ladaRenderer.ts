@@ -17147,7 +17147,7 @@ function drawOverlayVfx(
   }
 
   // Kostlivec s kosou: Scythe over skull
-  else if (enemyId === 'skeleton_scythe' || method === 'drawSkeletonScythe') {
+  else if (enemyId === 'kostlivec_kosa' || enemyId === 'skeleton_scythe' || method === 'drawSkeletonScythe') {
     ctx.save();
     ctx.translate(charX, charY);
     ctx.scale(facingDir, 1);
@@ -17384,7 +17384,7 @@ function drawThematicEnemyDetails(
   }
 
   // 3. ČERVENÝ KOSTLIVEC (Blood-red heraldic battle surcoat, executioner broad axe & iron skull circlet)
-  else if (enemyId === 'krvavy_kostlivec' || (palette === 'crimson' && (enemyId === 'skeleton' || enemy?.method === 'drawSkeleton'))) {
+  else if (enemyId === 'krvavy_kostlivec' || (palette === 'crimson' && (enemyId === 'kostlivec' || enemyId === 'skeleton' || enemy?.method === 'drawSkeleton'))) {
     // Tattered blood-red heraldic tabard/surcoat over ribs
     Lada.setupPath(ctx, '#B91C1C', COLORS.ink, 2.2);
     ctx.beginPath();

@@ -46,6 +46,7 @@ import {
   getUndeadTolarChance,
   getChurchWaveDamage,
 } from '../data/village';
+import { toCanonicalHunterId, toCanonicalEnemyId } from './migration';
 import {
   performDropFusion,
   applyMagnetWave,
@@ -527,48 +528,49 @@ export class GameEngine {
     meta?: MetaProgression,
     customWeapons?: any[]
   ): any {
+    const cType = toCanonicalHunterId(type);
     const baseMaxHp =
-      type === 'krajanek'
+      cType === 'krajanek'
         ? 135
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? 230
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? 55
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? 125
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? 135
-        : type === 'granny'
+        : cType === 'babicka'
         ? 130
         : 140;
 
     const baseSpeed =
-      type === 'krajanek'
+      cType === 'krajanek'
         ? 180
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? 165
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? 220
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? 180
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? 170
-        : type === 'granny'
+        : cType === 'babicka'
         ? 165
         : 175;
 
     const basePickup =
-      type === 'krajanek'
+      cType === 'krajanek'
         ? 115
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? 75
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? 160
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? 105
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? 110
-        : type === 'granny'
+        : cType === 'babicka'
         ? 125
         : 115;
 
@@ -587,17 +589,17 @@ export class GameEngine {
               ensureWeaponMilestones(mapped);
               return mapped;
             })
-        : type === 'krajanek'
+        : cType === 'krajanek'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? [{ id: 'bylinkova_fajfka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
-        : type === 'granny'
+        : cType === 'babicka'
         ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }]
         : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [], synergisticUpgrades: [] }];
 
@@ -608,22 +610,22 @@ export class GameEngine {
 
     const wallBonusHp = Math.round(baseMaxHp * getWallHpMultiplier(meta?.wallLevel || 0));
     const millBonusSpeed = Math.round(baseSpeed * getMillSpeedMultiplier(meta?.millLevel || 0));
-    const rawBasePickup = type === 'korenarka' ? 26 : basePickup;
+    const rawBasePickup = cType === 'korenarka' ? 26 : basePickup;
     const scarecrowBonusPickup = Math.round(rawBasePickup * getScarecrowPickupMultiplier(meta?.scarecrowLevel || 0));
     const wallDmgRed = getWallDamageReduction(meta?.wallLevel || 0);
 
     const baseLuck =
-      type === 'granny'
+      cType === 'babicka'
         ? 120
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? 105
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? 70
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? 100
-        : type === 'watchman'
+        : cType === 'ponocny'
         ? 90
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? 85
         : 100;
     const boziMukaBonusLuck = Math.round(baseLuck * getBoziMukaLuckMultiplier(meta?.boziMukaLevel || 0));
@@ -645,7 +647,7 @@ export class GameEngine {
       damageMultiplier: 1,
       churchLevel: meta?.churchLevel || 0,
       holyDamageMultiplier: 1 + Math.max(0, meta?.churchLevel || 0) * 0.08,
-      tulakDamageBonus: type === 'wanderer' ? 35 : 0,
+      tulakDamageBonus: cType === 'tulak' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
       kavaCount: 0,
@@ -662,7 +664,7 @@ export class GameEngine {
       guaranteedCritTimer: 0,
       facingAngle: 0,
       dodgeCooldown: 0,
-      dodgeChance: type === 'shepherd' ? 0.35 : 0,
+      dodgeChance: cType === 'pasacek' ? 0.35 : 0,
       tavernShieldLevel: meta?.tavernShieldLevel || 0,
       tempShield: 0,
       herbTimer: 0,
@@ -677,7 +679,7 @@ export class GameEngine {
       krajanekUpgradeCount: 0,
       krajanekFlats: [] as Array<{ x: number; y: number; angle: number; scale: number; life: number }>,
       ultCd: 0,
-      ultMaxCd: type === 'krajanek' ? KRAJANEK_ABILITY_COOLDOWN : type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
+      ultMaxCd: cType === 'krajanek' ? KRAJANEK_ABILITY_COOLDOWN : cType === 'tulak' ? 21 : cType === 'babicka' ? 45 : cType === 'kostelnik' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
@@ -778,7 +780,7 @@ export class GameEngine {
           (this.intangibleTimer && this.intangibleTimer > 0) ||
           (this.type === 'krajanek' && (this.krajanekRideTimer || 0) > 0)
         ) return;
-        const effectiveDodgeChance = Math.min(0.60, typeof this.dodgeChance === 'number' ? this.dodgeChance : (this.type === 'shepherd' ? 0.35 : 0));
+        const effectiveDodgeChance = Math.min(0.60, typeof this.dodgeChance === 'number' ? this.dodgeChance : ((this.type === 'pasacek' || this.type === 'shepherd') ? 0.35 : 0));
         if (effectiveDodgeChance > 0 && Math.random() < effectiveDodgeChance) {
           self.state.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates'));
           self.callbacks?.onSound?.('swish');
@@ -842,7 +844,7 @@ export class GameEngine {
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
         // Grant brief invulnerability only if this hit actually removes courage.
         if (this.hp < hpBeforeDamage) {
-          const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
+          const hitInvulnerability = isMelee && (this.type === 'pasacek' || this.type === 'shepherd') ? 0.6 : 0.3;
           this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
           this.hurtTimer = Math.max(this.hurtTimer || 0, 0.42);
         }
@@ -1034,8 +1036,9 @@ export class GameEngine {
       console.warn(`[Bubakov] Unknown enemy id: "${id}" in createHeadlessEnemy, resolving safe fallback`);
       const fallbackMap: Record<string, string> = {
         kostlivec_obr: 'umrlec',
-        kostlivec: 'skeleton',
-        kostlivec_koste: 'skeleton_scythe',
+        skeleton: 'kostlivec',
+        skeleton_scythe: 'kostlivec_kosa',
+        kostlivec_koste: 'kostlivec_kosa',
         smrtka_minion: 'krvavy_kostlivec',
         rampouch: 'severak',
         sanice: 'vanicka',
@@ -1812,8 +1815,7 @@ export class GameEngine {
       if (item.id === 'krvave_jelito') p.jelitoCount = (p.jelitoCount || 0) + 1;
     }
     if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
-      p.fajfkaLevel = Math.min(3, (p.fajfkaLevel || 0) + 1);
-      p.regenLevel = (p.regenLevel || 0) + 1.2;
+      this.upgradeWeapon('bylinkova_fajfka');
     }
     if (effect.type === 'bear_mask' || item.id === 'maska_medveda') {
       p.bearMaskLevel = Math.min(4, (p.bearMaskLevel || 0) + 1);

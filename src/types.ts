@@ -1,6 +1,24 @@
 export type Season = 'autumn' | 'winter' | string;
 export type GameLevelId = 0 | 1 | 2 | 3 | 4 | 5 | 6;
-export type CharacterType = 'krajanek' | 'wanderer' | 'shepherd' | 'korenarka' | 'watchman' | 'sexton' | 'granny';
+
+export type CanonicalHunterId =
+  | 'krajanek'
+  | 'tulak'
+  | 'pasacek'
+  | 'korenarka'
+  | 'ponocny'
+  | 'kostelnik'
+  | 'babicka';
+
+export type LegacyHunterId =
+  | 'wanderer'
+  | 'poutnik'
+  | 'shepherd'
+  | 'watchman'
+  | 'sexton'
+  | 'granny';
+
+export type CharacterType = CanonicalHunterId | LegacyHunterId;
 
 export type DropType =
   | 'coin'

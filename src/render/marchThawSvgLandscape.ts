@@ -97,8 +97,7 @@ function svgFolkDaisy(x: number, y: number, scale = 1, rot = 0): string {
 }
 
 /**
- * Inner SVG group for the folk-art apparition of Panna Maria s Ježíškem
- * based on `/public/assets/aistudio/image_d9d60fc7.png`.
+ * Inner SVG group for the folk-art apparition of Panna Maria s Ježíškem.
  * Centered at (0, 0) within a (-220..220 x -275..275) coordinate space.
  */
 export function svgMarianApparitionGroup(): string {

@@ -881,7 +881,9 @@ export class RunDirector {
 
       // Undead & skeletons -> Červený kostlivec / Zbrojnoš
       skeleton: 'krvavy_kostlivec',
+      kostlivec: 'krvavy_kostlivec',
       skeleton_scythe: 'krvavy_kostlivec',
+      kostlivec_kosa: 'krvavy_kostlivec',
       umrlec: 'krvavy_kostlivec',
       pisar: 'krvavy_kostlivec',
       hrobnik: 'zbrojnos',

@@ -192,7 +192,7 @@ import {
   HOT_GINGERBREAD_DURATION,
   EMERGENCY_HEALTH_RATIO,
 } from './game/drops';
-import { toCanonicalWeaponId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
+import { toCanonicalWeaponId, toCanonicalHunterId, toCanonicalEnemyId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import {
   chooseGrandfatherOffers,
   getGrandfatherPrice,
@@ -1634,9 +1634,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
     if (effect.type === 'fajfka' || item.id === 'bylinkova_fajfka') {
-      p.fajfkaLevel = Math.min(3, (p.fajfkaLevel || 0) + 1);
-      p.fajfkaCooldown = 0;
-      p.regenLevel = (p.regenLevel || 0) + 1.2;
+      const existing = (p.weapons || []).find((w: any) => w.id === 'bylinkova_fajfka');
+      if (existing) {
+        existing.level = Math.min(8, existing.level + 1);
+      } else {
+        (p.weapons as any[]).push({
+          id: 'bylinkova_fajfka',
+          level: 1,
+          cd: 0,
+          mastery: createWeaponMasteryState(),
+          milestones: [],
+          synergisticUpgrades: [],
+        });
+      }
     }
     if (effect.type === 'bear_mask' || item.id === 'maska_medveda') {
       p.bearMaskLevel = Math.min(4, (p.bearMaskLevel || 0) + 1);
@@ -2542,12 +2552,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     resetGlobalGlyphAtlas();
 
+    const cType = toCanonicalHunterId(type);
     const baseMaxHp =
-      type === 'krajanek' ? 135 : type === 'wanderer' ? 230 : type === 'shepherd' ? 55 : type === 'korenarka' ? 125 : type === 'sexton' ? 135 : type === 'granny' ? 130 : 140;
+      cType === 'krajanek' ? 135 : cType === 'tulak' ? 230 : cType === 'pasacek' ? 55 : cType === 'korenarka' ? 125 : cType === 'kostelnik' ? 135 : cType === 'babicka' ? 130 : 140;
     const baseSpeed =
-      type === 'krajanek' ? 180 : type === 'wanderer' ? 165 : type === 'shepherd' ? 220 : type === 'korenarka' ? 180 : type === 'sexton' ? 170 : type === 'granny' ? 165 : 175;
+      cType === 'krajanek' ? 180 : cType === 'tulak' ? 165 : cType === 'pasacek' ? 220 : cType === 'korenarka' ? 180 : cType === 'kostelnik' ? 170 : cType === 'babicka' ? 165 : 175;
     const basePickup =
-      type === 'krajanek' ? 115 : type === 'wanderer' ? 75 : type === 'shepherd' ? 160 : type === 'korenarka' ? 105 : type === 'sexton' ? 110 : type === 'granny' ? 125 : 115;
+      cType === 'krajanek' ? 115 : cType === 'tulak' ? 75 : cType === 'pasacek' ? 160 : cType === 'korenarka' ? 105 : cType === 'kostelnik' ? 110 : cType === 'babicka' ? 125 : 115;
 
     const initialWeapons =
       customWeapons && customWeapons.filter((w) => w.level > 0).length > 0
@@ -2562,17 +2573,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ensureWeaponMilestones(mapped);
             return mapped;
           })
-        : type === 'krajanek'
+        : cType === 'krajanek'
         ? [{ id: 'osikovy_prut', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? [{ id: 'bylinkova_fajfka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? [{ id: 'povidlove_buchty', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? [{ id: 'devatero_kviti', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? [{ id: 'svecena_kropenka', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
-        : type === 'granny'
+        : cType === 'babicka'
         ? [{ id: 'kynuty_kolac', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }]
         : [{ id: 'kovana_halapartna', level: 1, cd: 0, mastery: createWeaponMasteryState(), milestones: [] }];
 
@@ -2583,22 +2594,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     const wallBonusHp = Math.round(baseMaxHp * getWallHpMultiplier(meta.wallLevel || 0));
     const millBonusSpeed = Math.round(baseSpeed * getMillSpeedMultiplier(meta.millLevel || 0));
-    const rawBasePickup = basePickup * (type === 'korenarka' ? 0.25 : 1);
+    const rawBasePickup = basePickup * (cType === 'korenarka' ? 0.25 : 1);
     const scarecrowBonusPickup = Math.round(rawBasePickup * getScarecrowPickupMultiplier(meta.scarecrowLevel || 0));
     const wallDmgRed = getWallDamageReduction(meta.wallLevel || 0);
 
     const baseLuck =
-      type === 'granny'
+      cType === 'babicka'
         ? 120
-        : type === 'shepherd'
+        : cType === 'pasacek'
         ? 105
-        : type === 'wanderer'
+        : cType === 'tulak'
         ? 70
-        : type === 'sexton'
+        : cType === 'kostelnik'
         ? 100
-        : type === 'watchman'
+        : cType === 'ponocny'
         ? 90
-        : type === 'korenarka'
+        : cType === 'korenarka'
         ? 85
         : 100;
     const boziMukaBonusLuck = Math.round(baseLuck * getBoziMukaLuckMultiplier(meta.boziMukaLevel || 0));
@@ -2621,7 +2632,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       damageMultiplier: 1,
       churchLevel: meta.churchLevel || 0,
       holyDamageMultiplier: 1 + Math.max(0, meta.churchLevel || 0) * 0.08,
-      tulakDamageBonus: type === 'wanderer' ? 35 : 0,
+      tulakDamageBonus: cType === 'tulak' ? 35 : 0,
       cooldownMultiplier: 1,
       cooldownBonus: 0,
       kavaCount: 0,
@@ -2645,7 +2656,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       guaranteedCritTimer: 0,
       facingAngle: 0,
       dodgeCooldown: 0,
-      dodgeChance: type === 'shepherd' ? 0.35 : 0,
+      dodgeChance: cType === 'pasacek' ? 0.35 : 0,
       tavernShieldLevel: meta.tavernShieldLevel || 0,
       tempShield: 0,
       herbTimer: 0,
@@ -2658,7 +2669,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       hromnickaPulseTimer: 0,
       hromnickaPulseRadius: 0,
       ultCd: 0,
-      ultMaxCd: type === 'krajanek' ? 30 : type === 'wanderer' ? 21 : type === 'granny' ? 45 : type === 'sexton' ? 35 : 30,
+      ultMaxCd: cType === 'krajanek' ? 30 : cType === 'tulak' ? 21 : cType === 'babicka' ? 45 : cType === 'kostelnik' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
       animTime: 0,
@@ -2725,7 +2736,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         ) return;
         const effectiveDodgeChance = Math.min(
           0.60,
-          typeof this.dodgeChance === 'number' ? this.dodgeChance : (this.type === 'shepherd' ? 0.35 : 0)
+          typeof this.dodgeChance === 'number' ? this.dodgeChance : ((this.type === 'pasacek' || this.type === 'shepherd') ? 0.35 : 0)
         );
         if (effectiveDodgeChance > 0 && Math.random() < effectiveDodgeChance) {
           engineRef.current.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', COLORS.mustard, true, 'combatStates'));
@@ -2798,7 +2809,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const hpBeforeDamage = this.hp;
         if (remainingDmg > 0) this.hp = Math.max(0, this.hp - remainingDmg);
         if (this.hp < hpBeforeDamage) {
-          const hitInvulnerability = isMelee && this.type === 'shepherd' ? 0.6 : 0.3;
+          const hitInvulnerability = isMelee && (this.type === 'pasacek' || this.type === 'shepherd') ? 0.6 : 0.3;
           this.invulnerabilityTimer = Math.max(this.invulnerabilityTimer || 0, hitInvulnerability);
           this.hurtTimer = Math.max(this.hurtTimer || 0, 0.42);
         }
@@ -2979,7 +2990,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           ctx.restore();
         }
 
-        if (this.type === 'watchman') {
+        if (this.type === 'ponocny' || this.type === 'watchman') {
           ctx.save();
           const grad = ctx.createRadialGradient(this.x, this.y, 12, this.x, this.y, 85);
           grad.addColorStop(0, 'rgba(255, 220, 120, 0.16)');
@@ -3034,17 +3045,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           } else {
             Lada.drawKrajanek(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
           }
-        } else if (this.type === 'wanderer') {
+        } else if (this.type === 'tulak' || this.type === 'wanderer') {
           Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
-        } else if (this.type === 'shepherd') {
+        } else if (this.type === 'pasacek' || this.type === 'shepherd') {
           Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'korenarka') {
           Lada.drawKorenarka(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
-        } else if (this.type === 'watchman') {
+        } else if (this.type === 'ponocny' || this.type === 'watchman') {
           Lada.drawWatchman(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
-        } else if (this.type === 'sexton') {
+        } else if (this.type === 'kostelnik' || this.type === 'sexton') {
           Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
-        } else if (this.type === 'granny') {
+        } else if (this.type === 'babicka' || this.type === 'granny') {
           Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
         } else {
           Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
@@ -3329,7 +3340,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, KRAJANEK_RIDE_DURATION);
       sound.heavyHit();
       pushDamageText(engineRef.current.texts, p.x, p.y - 70, 'JÍZDA NA ŽERNOVU! 🪨', '#FDE047', true, 'hunterDamage');
-    } else if (p.type === 'wanderer') {
+    } else if (p.type === 'tulak' || p.type === 'wanderer') {
       // Pověstná sukovice: zatočí kolem sebe sukovitou holí a zraní a odhodí hodně bubáky kolem,
       // a nepřátelé ve větší vzdálenosti kolem jsou po 4s vystrašení a rychle utíkají pryč (resistable with fear)
       sound.sukoviceWhirl();
@@ -3400,7 +3411,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
       }
-    } else if (p.type === 'shepherd') {
+    } else if (p.type === 'pasacek' || p.type === 'shepherd') {
       // Dusot stáda: pastýřská píšťalka a běsnění beranů (příběhová scénka se zastaveným časem)
       sound.shepherdFlock();
       engineRef.current.cutscene = { type: 'shepherd', t: 0, dur: 4.2, applyAt: 2.2, applied: false };
@@ -3410,7 +3421,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       sound.herbalIncense();
       engineRef.current.cutscene = { type: 'korenarka', t: 0, dur: 4.4, applyAt: 2.3, applied: false };
       pushDamageText(engineRef.current.texts, p.x, p.y - 60, 'OČISTNÉ KADIDLO! 🌿', COLORS.green, true, 'healing');
-    } else if (p.type === 'sexton') {
+    } else if (p.type === 'kostelnik' || p.type === 'sexton') {
       // Farní požehnání: úder zvonu a sloup svatého světla očistí démony a nemrtvé
       sound.churchBell();
       engineRef.current.blessing = { x: p.x, y: p.y, t: 0, dur: 3.6 };
@@ -3431,7 +3442,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           e.takeDamage((e.hp + 1) * holyMult, 'holy', (e.x - p.x) * 2 * holyPush, (e.y - p.y) * 2 * holyPush);
         }
       }
-    } else if (p.type === 'granny') {
+    } else if (p.type === 'babicka' || p.type === 'granny') {
       // Chléb se solí a vlídné slovo: čas se zastaví a přehraje se scénka, její účinek nastane v jejím vrcholu
       sound.timeStop();
       engineRef.current.cutscene = { type: 'granny', t: 0, dur: GRANNY_CUTSCENE.duration, applyAt: GRANNY_CUTSCENE.applyAt, applied: false };
@@ -6339,25 +6350,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Player regeneration (+2 Kuráže per 5s per level from Bylinková zahrádka)
-            if ((player as any).fajfkaCooldown > 0) (player as any).fajfkaCooldown = Math.max(0, (player as any).fajfkaCooldown - dt);
-      if ((player as any).fajfkaLevel > 0 && (player as any).fajfkaCooldown <= 0) {
-        const upgraded = (player as any).fajfkaLevel >= 2;
-        const cloud = new SmokePuff(player.x, player.y, 110 * (upgraded ? 1.3 : 1), 'fajfka', 4) as any;
-        cloud.damagePerSecond = 9;
-        engineRef.current.smokePuffs.push(cloud);
-        const requestedHeal = player.maxHp * (upgraded ? 0.12 : 0.08) * (1 + ((player as any).bearMaskHealBonus || 0)) * (player._cachedFrostHealMult ?? 1);
-        const missingHp = Math.max(0, player.maxHp - player.hp);
-        const overheal = Math.max(0, requestedHeal - missingHp);
-        player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
-        if ((player as any).bearMaskLevel > 0 && overheal > 0) {
-          const maskDamage = overheal * 0.5 * (1 + ((player as any).bearMaskLevel - 1) * 0.2) * (player.damageMultiplier || 1);
-          for (const enemy of enemySpatialHashRef.current.queryCircle(player.x, player.y, 290)) {
-            if (enemy.isDefeated || enemy.dead) continue;
-            if (Math.hypot(enemy.x - player.x, enemy.y - player.y) <= 230 + (enemy.radius || 0)) enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
-          }
-        }
-        (player as any).fajfkaCooldown = 3.5;
-      }
       if ((player as any).bearMaskLevel > 0) {
         const mask = player as any;
         const heals: Array<{ amount: number; timer?: string }> = [];
@@ -6586,7 +6578,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead
                   );
                   const totalFlockHp = flockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
-                  const totalFlockMaxHp = (activeBoss.flockTotal || 9) * (activeBoss.maxHp || 168);
+                  const totalFlockMaxHp = (activeBoss.flockTotal || 9) * (activeBoss.maxHp || 38);
                   nextBossHpPct = Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100));
                   nextBossTitle = '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran';
                 } else {
@@ -8109,8 +8101,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       console.warn(`[Bubakov] Unknown enemy id: "${id}", resolving safe fallback`);
       const fallbackMap: Record<string, string> = {
         kostlivec_obr: 'umrlec',
-        kostlivec: 'skeleton',
-        kostlivec_koste: 'skeleton_scythe',
+        skeleton: 'kostlivec',
+        skeleton_scythe: 'kostlivec_kosa',
+        kostlivec_koste: 'kostlivec_kosa',
         smrtka_minion: 'krvavy_kostlivec',
         rampouch: 'severak',
         sanice: 'vanicka',
@@ -8963,8 +8956,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // 5. KOSTLIVEC ZE SVATÉHO JIŘÍ / KRVAVÝ KOSTLIVEC (skeleton / krvavy_kostlivec)
-        else if (this.id === 'skeleton' || this.id === 'krvavy_kostlivec') {
+        // 5. KOSTLIVEC ZE SVATÉHO JIŘÍ / KRVAVÝ KOSTLIVEC (kostlivec / skeleton / krvavy_kostlivec)
+        else if (this.id === 'kostlivec' || this.id === 'skeleton' || this.id === 'krvavy_kostlivec') {
           if (this.aiState === 'windup') {
             this.vx = 0;
             this.vy = 0;
@@ -8994,8 +8987,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // 6. KOSTLIVEC S KOSOU (skeleton_scythe) - Seknutí kosou & vlnový oblouk
-        else if (this.id === 'skeleton_scythe') {
+        // 6. KOSTLIVEC S KOSOU (kostlivec_kosa / skeleton_scythe) - Seknutí kosou & vlnový oblouk
+        else if (this.id === 'kostlivec_kosa' || this.id === 'skeleton_scythe') {
           const isLvl1 = (engineRef.current.activeLevelId ?? 1) === 1;
           if (this.aiState === 'windup') {
             this.vx = 0;
@@ -10946,7 +10939,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead && e !== this
                 );
                 const totalFlockHp = flockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
-                const totalFlockMaxHp = (remainingBoss.flockTotal || 9) * (remainingBoss.maxHp || 168);
+                const totalFlockMaxHp = (remainingBoss.flockTotal || 9) * (remainingBoss.maxHp || 38);
                 setRunStats((s) => ({
                   ...s,
                   bossHpPct: Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100)),
@@ -11450,7 +11443,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             ? activeFlockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0)
             : this.hp;
           const displayMaxHp = this.isMinibossFlockMember
-            ? (this.flockTotal || 9) * (this.maxHp || 168)
+            ? (this.flockTotal || 9) * (this.maxHp || 38)
             : this.maxHp;
 
           const barWidth = Math.max(88, this.radius * 2.2);
@@ -12054,10 +12047,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }}
             >
               {runStats.ultCd <= 0
-                ? (engineRef.current.player?.type === 'wanderer'
+                ? (engineRef.current.player?.type === 'tulak' || engineRef.current.player?.type === 'wanderer'
                     ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="wood_log" size={18} /> POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>
                     : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={18} /> SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>)
-                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'krajanek' ? 'Jízda na žernovu' : engineRef.current.player?.type === 'wanderer' ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
+                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'krajanek' ? 'Jízda na žernovu' : (engineRef.current.player?.type === 'tulak' || engineRef.current.player?.type === 'wanderer') ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
             </button>
           )}
         </div>

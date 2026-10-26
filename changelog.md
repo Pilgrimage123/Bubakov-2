@@ -1,3 +1,25 @@
+## 2026-10-26 — Sjednocení identifikátorů lovců a strašidel, optimalizace bundlu a vyčištění repozitáře
+
+- **Kanonizace identifikátorů lovců na český `snake_case`**:
+  - Sjednoceny identifikátory všech lovců na doménový český standard (`tulak`, `pasacek`, `ponocny`, `kostelnik`, `babicka`, `krajanek`, `korenarka`).
+  - Zachována plná zpětná kompatibilita a obousměrná migrace (`toCanonicalHunterId`) pro načítání uložených pozic a odemčených lovců v LocalStorage.
+- **Harmonizace identifikátorů strašidel (`kostlivec` a `kostlivec_kosa`)**:
+  - Dvě historicky anglická strašidla (`skeleton` a `skeleton_scythe`) byla kanonizována na `kostlivec` (*Kostlivec ze svatého Jiří*) a `kostlivec_kosa` (*Kostlivec s rezavou kosou*).
+  - Přidána obousměrná normalizace v `migration.ts` a `fallbackMap`, s neenumerovatelnými aliasy v `ENEMIES`, čímž zůstává zachován kánon 58 strašidel pro výkonnostní benchmarky.
+- **Odstranění zátěžových rastrů z externího prototypování a ochrana složky `public`**:
+  - Z `public/assets/aistudio/` odstraněno všech 13 nepoužívaných velkých rastrových souborů (úspora přes 24 MB v repozitáři i v produkčním buildu).
+  - V `AGENTS.md` a v `.gitignore` zavedeno pravidlo zakazující ukládat rastrové prototypy z AI Studia do `public/assets/`.
+- **Optimalizace distribuce a Code-Splitting ve Vite**:
+  - Zavedena konfigurace `manualChunks` pro knihovny (`vendor-react`), Smart SVG komponenty (`smart-svg`), ladovský renderer (`lada-renderer`), ikony (`lada-icons`) a mapu krajiny (`march-thaw-landscape`).
+  - V `AppModals.tsx` převedeny vývojářské a encyklopedické dialogy na asynchronní `React.lazy()` s ochranou `<Suspense>`.
+  - Velikost hlavního herního JS bundlu klesla z 2,48 MB na 1,21 MB (338 kB gzip), sestavení probíhá zcela bez varování.
+- **Oprava chyb a zbytků v herní logice**:
+  - Opraveny záložní výpočty Kuráže u minibosse Hejno mrazivých vran na 38 HP na vránu.
+  - Odstraněn zastaralý duplicitní časovač pasivní fajfky `fajfkaLevel` v simulační smyčce.
+  - Test `frostAura.test.ts` přesunut na své místo do `tests/`, smazán mrtvý komponent `AnimatedBubak.tsx`, vyčištěny soubory `bun.lock` a `arena_performance_bundle.txt`.
+- **Architektura a dokumentace**:
+  - Zaznamenáno architektonické rozhodnutí `docs/adr/0031-sjednoceni-identifikatoru-lovcu-a-strasidel-a-optimalizace-distribuce.md` a aktualizován `GLOSSARY.md`.
+
 ## 2026-10-26 — Miniboss Hejno mrazivých vran a organická integrace Smart SVG spritů
 
 - **Miniboss Hejno mrazivých vran (1. úroveň)**:

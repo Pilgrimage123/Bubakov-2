@@ -154,8 +154,4 @@ export const BAKED_SPRITES = {
   slime: `data:image/svg+xml;utf8,${encodeURIComponent(SLIME_SVG)}`,
   bug: `data:image/svg+xml;utf8,${encodeURIComponent(BUG_SVG)}`,
   golem: `data:image/svg+xml;utf8,${encodeURIComponent(GOLEM_SVG)}`,
-  // In-game assets references for fallback or comparison
-  snowman: '/assets/aistudio/taj_c__sn_hul_k_6fc5b3e2.png',
-  kostelnik: '/assets/aistudio/kosteln_k_348e0adb.png',
-  pasacek: '/assets/aistudio/pas__ek_b67a8267.png',
 };
