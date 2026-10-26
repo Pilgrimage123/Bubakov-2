@@ -1079,7 +1079,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
               <GameIcon icon="hunter" size={16} /> 1. Hrdina:
             </span>
-            <strong>{HUNTER_UNLOCKS[selectedHero]?.realName || 'Poutník'}</strong>
+            <strong>{HUNTER_UNLOCKS[selectedHero]?.realName || 'Tulák'}</strong>
           </button>
 
           {/* TAB 2: LEVEL */}

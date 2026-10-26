@@ -1420,18 +1420,41 @@ export function drawMarchThawDynamicLandmark(
     ctx.stroke();
     ctx.restore();
 
-    ctx.fillStyle = ink;
     for (let i = 0; i < 9; i++) {
       const cx = -135 + ((i * 46 + time * 38) % 300);
       const cy = -55 + Math.sin(time * 2.4 + i) * 18 + (i % 3) * 15;
-      const wing = Math.sin(time * 7 + i * 1.3) * 5;
-      ctx.beginPath();
-      ctx.moveTo(cx - 8, cy - wing);
-      ctx.lineTo(cx, cy);
-      ctx.lineTo(cx + 8, cy - wing);
+      const wing = Math.sin(time * 9 + i * 1.3) * 5.5;
+      ctx.save();
+      ctx.translate(cx, cy);
+      // Fanned tail & body
+      ctx.fillStyle = '#232B3A';
       ctx.strokeStyle = ink;
-      ctx.lineWidth = 2.4;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-9, 3);
+      ctx.lineTo(-4, 0);
+      ctx.ellipse(0, 0, 5.5, 3.2, -0.1, 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
+      // Flapping spread wings
+      ctx.beginPath();
+      ctx.moveTo(-2, -1);
+      ctx.quadraticCurveTo(-7, -6 - wing, -11, -4 - wing);
+      ctx.quadraticCurveTo(-6, 0, -1, 1);
+      ctx.moveTo(1, -1);
+      ctx.quadraticCurveTo(6, -6 - wing * 0.85, 10, -4 - wing * 0.85);
+      ctx.quadraticCurveTo(5, 0, 2, 1);
+      ctx.fill();
+      ctx.stroke();
+      // Hooked golden beak
+      ctx.fillStyle = '#F5A623';
+      ctx.beginPath();
+      ctx.moveTo(4.5, -1.5);
+      ctx.lineTo(8.5, 0.5);
+      ctx.lineTo(4.5, 1.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
     return;
   }

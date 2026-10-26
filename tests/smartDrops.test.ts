@@ -9,6 +9,8 @@ import {
   resolveDynamicDrop,
   MAX_DROPS_LIMIT,
   HOT_GINGERBREAD_DURATION,
+  FOOD_DROP_EXPIRATION,
+  isHealingDrop,
 } from '../src/game/drops';
 import { GameEngine } from '../src/game/engine';
 import { createInitialEngineState } from '../src/game/engineState';
@@ -32,6 +34,13 @@ describe('Smart Drops System (Chytrý drop systém)', () => {
       expect(canCollectDrop('coin', 100, 100)).toBe(true);
       expect(canCollectDrop('gingerbread', 100, 100)).toBe(true);
       expect(canCollectDrop('soul', 100, 100)).toBe(true);
+    });
+
+    it('allows healing drops at full Courage if player has Bear Mask for overheal damage', () => {
+      const bearPlayer = { bearMaskLevel: 1 };
+      expect(canCollectDrop('potion', 100, 100, bearPlayer)).toBe(true);
+      expect(canCollectDrop('bread', 100, 100, bearPlayer)).toBe(true);
+      expect(canCollectDrop('pear', 100, 100, bearPlayer)).toBe(true);
     });
   });
 
@@ -332,6 +341,65 @@ describe('Smart Drops System (Chytrý drop systém)', () => {
       // Over 70% should be converted away from healing items when Courage is full
       expect(convertedCount).toBeGreaterThan(140);
       expect(healingCount).toBeLessThan(60);
+    });
+
+    it('assigns FOOD_DROP_EXPIRATION (25s) to healing drops by default', () => {
+      const drop = createDropInstance('bread', 0, 0);
+      expect(drop.expiration).toBe(FOOD_DROP_EXPIRATION);
+      expect(drop.expiration).toBe(25.0);
+
+      const potion = createDropInstance('potion', 0, 0);
+      expect(potion.expiration).toBe(25.0);
+
+      const pear = createDropInstance('pear', 0, 0);
+      expect(pear.expiration).toBe(25.0);
+
+      // Coins do not expire by default
+      const coin = createDropInstance('coin', 0, 0);
+      expect(coin.expiration).toBeUndefined();
+    });
+
+    it('expires unconsumed food drops in GameEngine so they are not stuck on the meadow indefinitely', () => {
+      const engine = new GameEngine();
+      engine.initRun({ levelId: 1, hunterType: 'wanderer', spawnInitialWave: false });
+      const foodDrop = createDropInstance('bread', 100, 100, { expiration: 0.1 });
+      engine.state.drops = [foodDrop];
+
+      expect(engine.state.drops[0].dead).toBe(false);
+      engine.update(0.15);
+      expect(foodDrop.dead).toBe(true);
+      expect(engine.state.drops.length).toBe(0);
+    });
+
+    it('fuses or prunes excess off-screen unconsumed food drops in performDropFusion', () => {
+      const bounds = { left: 0, top: 0, right: 800, bottom: 600 };
+      const offScreenFood1 = createDropInstance('bread', -500, -500);
+      const offScreenFood2 = createDropInstance('pear', -520, -520);
+      const onScreenCoin = createDropInstance('coin', 400, 300);
+      const drops = [onScreenCoin, offScreenFood1, offScreenFood2];
+
+      // Limit 1 forces fusion
+      const fused = performDropFusion(drops, bounds, 1);
+      expect(fused).toBeGreaterThan(0);
+      expect(offScreenFood1.dead).toBe(true);
+      expect(offScreenFood2.dead).toBe(true);
+      expect(onScreenCoin.dead).toBe(false);
+      const aliveStashes = drops.filter((d) => !d.dead && d.type === 'gingerbread_stash');
+      expect(aliveStashes.length).toBe(1);
+    });
+
+    it('suppresses mercy healing drops and diverts them when mercyCooldownActive is true', () => {
+      let divertedCount = 0;
+      for (let i = 0; i < 50; i++) {
+        const res = resolveDynamicDrop('potion', 20, 100, {
+          pacingPhase: 'mercy',
+          mercyCooldownActive: true,
+        });
+        if (res.type !== 'potion') {
+          divertedCount++;
+        }
+      }
+      expect(divertedCount).toBeGreaterThan(30);
     });
   });
 });

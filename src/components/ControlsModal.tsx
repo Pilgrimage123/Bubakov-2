@@ -356,7 +356,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <li>
-                  <strong>Poutník (Tulák):</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (rychlé nabíjení 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
+                  <strong>Tulák:</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (rychlé nabíjení 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
                 </li>
                 <li>
                   <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, nabíjení 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.

@@ -3,7 +3,7 @@ import { sound } from '../audio';
 import { HUNTER_UNLOCKS, type HunterProgress } from '../data/hunterUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { GameIcon } from './GameIcon';
-import { SmartSpriteRenderer, hasSmartSvgSprite } from './svg';
+import { LadaHunterCanvasPreview } from './LadaHunterCanvasPreview';
 
 export interface HunterUnlockModalProps {
   progress: HunterProgress | null;
@@ -18,7 +18,6 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
 }) => {
   if (!progress) return null;
   const def = HUNTER_UNLOCKS[progress.id];
-  const hasSmartSvg = hasSmartSvgSprite(progress.id);
   const tierFilter =
     progress.isUnlocked || progress.tier >= 4
       ? 'none'
@@ -79,30 +78,9 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-          {hasSmartSvg && (
-            <div
-              style={{
-                width: '96px',
-                height: '96px',
-                flexShrink: 0,
-                background: '#FFFDF7',
-                border: '2px solid #78350F',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                filter: tierFilter,
-              }}
-            >
-              <SmartSpriteRenderer
-                spriteId={progress.id}
-                state={progress.isUnlocked ? 'action' : 'idle'}
-                size={90}
-                interactive={progress.isUnlocked}
-              />
-            </div>
-          )}
+          <div style={{ flexShrink: 0 }}>
+            <LadaHunterCanvasPreview hunterId={progress.id} size={96} filter={tierFilter} />
+          </div>
           <div style={{ flex: '1 1 auto', minWidth: 0 }}>
             <span
               className={`hunter-tier-stamp tier-stamp-${progress.tier}`}
@@ -172,7 +150,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                   flexWrap: 'wrap',
                 }}
               >
-                <GameIcon icon="scroll" size={14} /> Pořadí odemykání: Poutník{' '}
+                <GameIcon icon="scroll" size={14} /> Pořadí odemykání: Tulák{' '}
                 <GameIcon icon="arrow" size={11} /> Pasáček{' '}
                 <GameIcon icon="arrow" size={11} /> Bába kořenářka{' '}
                 <GameIcon icon="arrow" size={11} /> Ponocný

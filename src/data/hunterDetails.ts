@@ -42,8 +42,8 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
   tulak: {
     role: 'Silný bojovník zblízka',
     abilityName: 'Povětrná sukovice',
-    name: 'Poutník (Tulák)',
-    title: 'Vesnický poutník z Hrusic',
+    name: 'Tulák',
+    title: 'Vesnický tulák z Hrusic',
     maxHp: 230,
     speed: 165,
     pickupRadius: 75,
@@ -135,19 +135,12 @@ export const HUNTER_DETAILS: Record<HunterDetailKey, HunterDetail> = {
     cooldownSeconds: 45,
     playstyle: 'Pomalejší podpůrná postava se silnou kontrolou velké části bojiště.',
   },
-  // Legacy aliases for backward compatibility
-  wanderer: null as any,
-  poutnik: null as any,
-  shepherd: null as any,
-  watchman: null as any,
-  sexton: null as any,
-  granny: null as any,
-};
+} as Record<HunterDetailKey, HunterDetail>;
 
-HUNTER_DETAILS.wanderer = HUNTER_DETAILS.tulak;
-HUNTER_DETAILS.poutnik = HUNTER_DETAILS.tulak;
-HUNTER_DETAILS.shepherd = HUNTER_DETAILS.pasacek;
-HUNTER_DETAILS.watchman = HUNTER_DETAILS.ponocny;
-HUNTER_DETAILS.sexton = HUNTER_DETAILS.kostelnik;
-HUNTER_DETAILS.granny = HUNTER_DETAILS.babicka;
+Object.defineProperty(HUNTER_DETAILS, 'wanderer', { value: HUNTER_DETAILS.tulak, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_DETAILS, 'poutnik', { value: HUNTER_DETAILS.tulak, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_DETAILS, 'shepherd', { value: HUNTER_DETAILS.pasacek, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_DETAILS, 'watchman', { value: HUNTER_DETAILS.ponocny, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_DETAILS, 'sexton', { value: HUNTER_DETAILS.kostelnik, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_DETAILS, 'granny', { value: HUNTER_DETAILS.babicka, enumerable: false, configurable: true, writable: true });
 

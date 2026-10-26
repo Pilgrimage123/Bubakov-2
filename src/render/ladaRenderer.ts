@@ -7198,29 +7198,525 @@ var Lada = {
 		ctx.restore();
 	},
 	drawStageCrow(ctx, x, y, time, vx, panicked) {
-		const flap = Math.sin(time * (panicked ? 19 : 13)) * 8;
-		const bob = Math.sin(time * 7) * 2, dir = vx < 0 ? -1 : 1;
-		ctx.save(); ctx.translate(x, y + bob); ctx.scale(dir * 1.7, 1.7);
-		ctx.fillStyle = "#171923"; ctx.strokeStyle = "#090B12"; ctx.lineWidth = 2;
-		ctx.beginPath(); ctx.ellipse(0, 0, 10, 7, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.moveTo(-3, 0); ctx.quadraticCurveTo(-17, -flap, -21, -5); ctx.quadraticCurveTo(-12, 1, -4, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.moveTo(2, 1); ctx.quadraticCurveTo(15, flap, 19, -3); ctx.quadraticCurveTo(11, 5, 4, 5); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#F59E0B"; ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(17, -3); ctx.lineTo(10, -1); ctx.closePath(); ctx.fill();
-		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
-		ctx.strokeStyle = "#171923"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-4, 10); ctx.moveTo(3, 5); ctx.lineTo(4, 10); ctx.stroke(); ctx.restore();
+		const dir = vx < 0 ? -1 : 1;
+		const flapRate = panicked ? 20 : 12;
+		const phase = time * flapRate;
+		const flapSin = Math.sin(phase);
+		const flapCos = Math.cos(phase);
+		const wingAngle = flapSin * 0.42;
+		const wingScaleY = 1 - Math.max(0, flapSin) * 0.14;
+		const bob = -flapSin * 2.5;
+		const tailTilt = flapCos * 0.09;
+		const clawFlex = Math.sin(phase - 0.5) * 0.12;
+		const jawOpen = 0.88 + Math.sin(phase * 0.5) * 0.12;
+
+		const ink = "#090B12";
+		const plumage = "#232B3A";
+		const plumageDark = "#1A212E";
+		const beakYellow = "#F5A623";
+		const mouthDark = "#2A1014";
+		const tongueRed = "#E53E3E";
+		const eyeWhite = "#FDF8E1";
+		const talonDark = "#18202C";
+
+		ctx.save();
+		ctx.translate(x, y + bob);
+		ctx.scale(dir * 1.05, 1.05);
+		ctx.lineJoin = "round";
+		ctx.lineCap = "round";
+
+		// 1. FAR / RIGHT WING (extending up-right with 4 splayed primaries & scalloped secondaries)
+		ctx.save();
+		ctx.translate(6, -4);
+		ctx.rotate(-wingAngle * 0.88);
+		ctx.scale(1, wingScaleY);
+		this.setupPath(ctx, plumageDark, ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, -1);
+		ctx.quadraticCurveTo(10, -12, 18, -22);
+		ctx.quadraticCurveTo(25, -31, 31, -36); // Primary 1 tip
+		ctx.quadraticCurveTo(28, -26, 21, -18);
+		ctx.quadraticCurveTo(29, -23, 35, -26); // Primary 2 tip
+		ctx.quadraticCurveTo(32, -18, 22, -12);
+		ctx.quadraticCurveTo(29, -14, 33, -15); // Primary 3 tip
+		ctx.quadraticCurveTo(29, -9, 20, -6);
+		ctx.quadraticCurveTo(25, -5, 28, -4);   // Primary 4 tip
+		ctx.quadraticCurveTo(23, 0, 16, 0);
+		// Scalloped secondaries along trailing edge
+		ctx.quadraticCurveTo(19, 5, 15, 7);
+		ctx.quadraticCurveTo(11, 6, 10, 3);
+		ctx.quadraticCurveTo(12, 8, 8, 10);
+		ctx.quadraticCurveTo(5, 9, 4, 5);
+		ctx.quadraticCurveTo(4, 9, 0, 9);
+		ctx.lineTo(-2, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Inner covert scallop line on far wing
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.moveTo(19, -15);
+		ctx.quadraticCurveTo(18, -9, 13, -7);
+		ctx.quadraticCurveTo(14, -2, 8, -1);
+		ctx.quadraticCurveTo(8, 3, 3, 3);
+		ctx.stroke();
+		ctx.restore();
+
+		// 2. FANNED 4-FEATHER TAIL (projecting down-left behind body)
+		ctx.save();
+		ctx.translate(-9, 7);
+		ctx.rotate(tailTilt);
+		this.setupPath(ctx, plumageDark, ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, -2);
+		ctx.lineTo(-19, 6);
+		ctx.quadraticCurveTo(-22, 10, -17, 12);
+		ctx.lineTo(-9, 9);
+		ctx.lineTo(-15, 16);
+		ctx.quadraticCurveTo(-16, 20, -11, 19);
+		ctx.lineTo(-5, 13);
+		ctx.lineTo(-8, 20);
+		ctx.quadraticCurveTo(-7, 24, -3, 21);
+		ctx.lineTo(-1, 14);
+		ctx.lineTo(-1, 20);
+		ctx.quadraticCurveTo(3, 22, 4, 17);
+		ctx.lineTo(4, 5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 3. PLUMP SWOOPING TORSO & SHAGGY FEATHERED THIGHS ("kalhotky")
+		this.setupPath(ctx, plumage, ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-10, -2);
+		ctx.quadraticCurveTo(-14, 5, -10, 12);
+		// Left feathered thigh tuft
+		ctx.lineTo(-9, 16);
+		ctx.lineTo(-6, 14);
+		ctx.lineTo(-4, 17);
+		ctx.lineTo(-1, 12);
+		// Rounded belly & right feathered thigh tuft
+		ctx.quadraticCurveTo(2, 14, 4, 17);
+		ctx.lineTo(6, 15);
+		ctx.lineTo(8, 18);
+		ctx.lineTo(10, 11);
+		ctx.quadraticCurveTo(12, 4, 7, -3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Breast contour crease
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 1.9;
+		ctx.beginPath();
+		ctx.moveTo(-3, 4);
+		ctx.quadraticCurveTo(1, 10, 6, 8);
+		ctx.stroke();
+
+		// 4. OUTSTRETCHED YELLOW SCALY LEGS & CURVED DARK TALONS
+		const drawCrowLeg = (hipX: number, hipY: number, ankleX: number, ankleY: number, rotOffset: number) => {
+			ctx.save();
+			ctx.translate(hipX, hipY);
+			ctx.rotate(clawFlex + rotOffset);
+			const dx = ankleX - hipX;
+			const dy = ankleY - hipY;
+
+			// Scaly yellow tarsus shank
+			this.setupPath(ctx, beakYellow, ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(-1.8, -1);
+			ctx.lineTo(dx - 1, dy + 1.5);
+			ctx.lineTo(dx + 2, dy - 1.5);
+			ctx.lineTo(1.8, -1.5);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// Scale stripes on shank
+			ctx.strokeStyle = ink;
+			ctx.lineWidth = 1.3;
+			ctx.beginPath();
+			ctx.moveTo(dx * 0.35 - 1.2, dy * 0.35 + 1);
+			ctx.lineTo(dx * 0.35 + 1.4, dy * 0.35 - 1.2);
+			ctx.moveTo(dx * 0.68 - 1.2, dy * 0.68 + 1);
+			ctx.lineTo(dx * 0.68 + 1.4, dy * 0.68 - 1.2);
+			ctx.stroke();
+
+			// 3 Grasping Toes (upper, middle long, lower opposing)
+			this.setupPath(ctx, beakYellow, ink, 2.0);
+			ctx.beginPath();
+			// Upper toe
+			ctx.moveTo(dx, dy - 1);
+			ctx.quadraticCurveTo(dx + 3, dy - 5, dx + 6.5, dy - 3.5);
+			ctx.quadraticCurveTo(dx + 4, dy - 1.5, dx + 1.5, dy);
+			// Middle long toe
+			ctx.quadraticCurveTo(dx + 6, dy - 1.5, dx + 9.5, dy + 1);
+			ctx.quadraticCurveTo(dx + 5.5, dy + 1.8, dx + 1, dy + 2);
+			// Lower opposing toe
+			ctx.quadraticCurveTo(dx - 0.5, dy + 5.5, dx + 1.5, dy + 8.5);
+			ctx.quadraticCurveTo(dx - 2.5, dy + 6, dx - 1.5, dy + 1);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// 3 Sharp Curved Dark-Slate Talons
+			this.setupPath(ctx, talonDark, ink, 1.6);
+			// Talon 1 (upper)
+			ctx.beginPath();
+			ctx.moveTo(dx + 6, dy - 4);
+			ctx.quadraticCurveTo(dx + 8.5, dy - 3, dx + 8, dy - 0.5);
+			ctx.quadraticCurveTo(dx + 6.2, dy - 1.8, dx + 5.2, dy - 2.2);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Talon 2 (middle)
+			ctx.beginPath();
+			ctx.moveTo(dx + 9, dy + 0.2);
+			ctx.quadraticCurveTo(dx + 11.8, dy + 2.2, dx + 10.2, dy + 5.2);
+			ctx.quadraticCurveTo(dx + 8.5, dy + 3, dx + 7.8, dy + 1.8);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Talon 3 (lower)
+			ctx.beginPath();
+			ctx.moveTo(dx + 1.2, dy + 7.8);
+			ctx.quadraticCurveTo(dx + 3.8, dy + 9.2, dx + 4.2, dy + 10.5);
+			ctx.quadraticCurveTo(dx + 0.5, dy + 10.2, dx - 0.6, dy + 7.5);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			ctx.restore();
+		};
+
+		// Left leg & Right leg reaching forward
+		drawCrowLeg(-5, 14, 2, 23, 0);
+		drawCrowLeg(6, 14, 14, 21, -0.08);
+
+		// 5. NEAR / LEFT WING (broad sweeping wing with 5 splayed primaries & inner covert line)
+		ctx.save();
+		ctx.translate(-6, -3);
+		ctx.rotate(wingAngle);
+		ctx.scale(1, wingScaleY);
+		this.setupPath(ctx, plumage, ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(1, -2);
+		ctx.quadraticCurveTo(-10, -10, -18, -21);
+		ctx.quadraticCurveTo(-26, -32, -33, -38); // Primary 1 (top longest)
+		ctx.quadraticCurveTo(-31, -27, -23, -19);
+		ctx.quadraticCurveTo(-32, -23, -39, -27); // Primary 2
+		ctx.quadraticCurveTo(-36, -18, -25, -13);
+		ctx.quadraticCurveTo(-34, -15, -40, -16); // Primary 3
+		ctx.quadraticCurveTo(-36, -9, -25, -7);
+		ctx.quadraticCurveTo(-32, -6, -36, -5);   // Primary 4
+		ctx.quadraticCurveTo(-31, 0, -22, -1);
+		ctx.quadraticCurveTo(-27, 3, -29, 5);     // Primary 5
+		ctx.quadraticCurveTo(-24, 7, -18, 3);
+		// Scalloped secondary feathers along lower edge
+		ctx.quadraticCurveTo(-21, 9, -16, 10);
+		ctx.quadraticCurveTo(-13, 9, -12, 4);
+		ctx.quadraticCurveTo(-14, 10, -9, 11);
+		ctx.quadraticCurveTo(-6, 9, -6, 5);
+		ctx.quadraticCurveTo(-6, 9, -2, 8);
+		ctx.lineTo(2, 3);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Inner scalloped covert feather line across near wing
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 2.1;
+		ctx.beginPath();
+		ctx.moveTo(-21, -15);
+		ctx.quadraticCurveTo(-21, -9, -15, -8);
+		ctx.quadraticCurveTo(-17, -3, -11, -2);
+		ctx.quadraticCurveTo(-12, 3, -5, 2);
+		ctx.stroke();
+		ctx.restore();
+
+		// 6. RUFFLED HEAD & SPIKY 3-TUFT CROWN CREST
+		this.setupPath(ctx, plumage, ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(-6, -2);
+		// Left cheek tufts
+		ctx.lineTo(-9, -4);
+		ctx.lineTo(-6, -6);
+		ctx.lineTo(-9, -9);
+		ctx.quadraticCurveTo(-6, -14, -1, -15);
+		// 3 Spiky crown crest tufts pointing up-left
+		ctx.lineTo(-5, -18);
+		ctx.quadraticCurveTo(-1, -19, 3, -17);
+		ctx.lineTo(-1, -21);
+		ctx.quadraticCurveTo(4, -21, 7, -16);
+		ctx.lineTo(6, -20);
+		ctx.quadraticCurveTo(9, -17, 10, -13);
+		// Forehead & right cheek
+		ctx.quadraticCurveTo(14, -10, 12, -4);
+		ctx.lineTo(4, 2);
+		ctx.lineTo(1, 0);
+		ctx.lineTo(0, 2);
+		ctx.quadraticCurveTo(-4, 1, -6, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 7. WIDE-OPEN HOOKED GOLDEN BEAK WITH RED TONGUE
+		// Open mouth dark interior & lower jaw
+		this.setupPath(ctx, beakYellow, ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(1, -4);
+		ctx.quadraticCurveTo(4, 3, 9, 10 * jawOpen);
+		ctx.lineTo(11, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Dark mouth cavity
+		this.setupPath(ctx, mouthDark, ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(3, -3);
+		ctx.lineTo(8.5, 7.5 * jawOpen);
+		ctx.lineTo(10, 1);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Bright red tongue inside open beak
+		this.setupPath(ctx, tongueRed, ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(4.2, -0.5);
+		ctx.quadraticCurveTo(7, 1, 8.2, 6.2 * jawOpen);
+		ctx.lineTo(9.2, 1.5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Upper hooked golden mandible
+		this.setupPath(ctx, beakYellow, ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(1, -5);
+		ctx.quadraticCurveTo(4, -7, 8, -5);
+		ctx.quadraticCurveTo(15, -2, 17, 6); // Sharp downward hook tip
+		ctx.quadraticCurveTo(12, 1, 5, -2);
+		ctx.quadraticCurveTo(2, -4, 1, -5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Nostril slit on upper beak
+		ctx.fillStyle = ink;
+		ctx.beginPath();
+		ctx.ellipse(9.5, -2.2, 1.3, 0.7, 0.45, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 8. FIERCE SCOWLING ANGRY EYES & V-BROW RIDGE
+		// Near (left) eye & Far (right) eye
+		this.setupPath(ctx, eyeWhite, ink, 2.0);
+		ctx.beginPath();
+		ctx.ellipse(5, -8, 3.2, 4.0, -0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.ellipse(10.8, -7.2, 2.2, 3.1, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Dark focused pupils
+		ctx.fillStyle = ink;
+		ctx.beginPath();
+		ctx.ellipse(6.0, -7.5, 1.4, 2.0, 0, 0, Math.PI * 2);
+		ctx.ellipse(10.4, -6.8, 1.1, 1.6, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Sharp V-shaped angry scowling brow ridge cutting over the eyes
+		ctx.fillStyle = plumage;
+		ctx.strokeStyle = ink;
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(1.2, -12.2);
+		ctx.quadraticCurveTo(5.5, -9.5, 8.6, -5.8);
+		ctx.quadraticCurveTo(10.8, -8.5, 13.2, -10.2);
+		ctx.lineTo(11.5, -13);
+		ctx.lineTo(3, -13.5);
+		ctx.closePath();
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(1.2, -12.2);
+		ctx.quadraticCurveTo(5.5, -9.5, 8.6, -5.8);
+		ctx.quadraticCurveTo(10.8, -8.5, 13.2, -10.2);
+		ctx.stroke();
+
+		ctx.restore();
+	},
+	drawCrowLootBundle(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number) {
+		const dir = vx < 0 ? -1 : 1;
+		const swing = Math.sin(time * 16) * 0.16;
+		const ink = "#090B12";
+		ctx.save();
+		ctx.translate(x + dir * 7, y + 22);
+		ctx.scale(dir, 1);
+		ctx.rotate(swing);
+
+		// Tied knot ears at top (grasped by talons)
+		this.setupPath(ctx, "#DC2626", ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-2, 0);
+		ctx.quadraticCurveTo(-9, -8, -4, -10);
+		ctx.lineTo(0, -3);
+		ctx.lineTo(5, -10);
+		ctx.quadraticCurveTo(9, -7, 3, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Plump folk kerchief bundle ("uzlíček")
+		this.setupPath(ctx, "#EF4444", ink, 2.5);
+		ctx.beginPath();
+		ctx.ellipse(0, 9, 12.5, 10.5, 0.08, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Cream folk polka-dots on the bundle
+		ctx.fillStyle = "#FEF3C7";
+		ctx.beginPath();
+		ctx.arc(-4.5, 6.5, 2.2, 0, Math.PI * 2);
+		ctx.arc(4.2, 5.8, 2.0, 0, Math.PI * 2);
+		ctx.arc(-1.2, 12.8, 2.3, 0, Math.PI * 2);
+		ctx.arc(5.5, 12.2, 1.9, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Golden coin & gingerbread corner peeking out of the knot seam
+		this.setupPath(ctx, "#FACC15", ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(2.5, 1.2, 3.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
 	},
 	drawStageCrowGround(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean) {
-		// Ground pose is available for the future crow loot-collection state.
+		// Ground pose when the crow lands to peck at loot (stepCrowForaging), matching the reference crow character.
 		const dir = vx < 0 ? -1 : 1;
-		ctx.save(); ctx.translate(x, y + Math.sin(time * 5) * 0.6); ctx.scale(dir, 1);
-		ctx.fillStyle = "#171923"; ctx.strokeStyle = "#090B12"; ctx.lineWidth = 2;
-		ctx.beginPath(); ctx.ellipse(0, 0, 11, 7, 0.08, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.moveTo(-7, 0); ctx.quadraticCurveTo(-14, 2, -17, -1); ctx.lineTo(-9, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
-		ctx.beginPath(); ctx.arc(7, -5, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-		ctx.fillStyle = "#F59E0B"; ctx.beginPath(); ctx.moveTo(10, -5); ctx.lineTo(17, -3); ctx.lineTo(10, -1); ctx.closePath(); ctx.fill();
-		ctx.fillStyle = "#F8FAFC"; ctx.beginPath(); ctx.arc(8, -6, 1.5, 0, Math.PI * 2); ctx.fill();
-		ctx.strokeStyle = "#D6A33B"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 5); ctx.lineTo(-3, 9); ctx.moveTo(3, 5); ctx.lineTo(4, 9); ctx.stroke();
+		const peck = Math.sin(time * (panicked ? 18 : 12)) * 0.22;
+		const hop = Math.abs(Math.sin(time * 8)) * 1.5;
+		const ink = "#090B12";
+		const plumage = "#232B3A";
+		const plumageDark = "#1A212E";
+		const beakYellow = "#F5A623";
+		const tongueRed = "#E53E3E";
+		const eyeWhite = "#FDF8E1";
+		const talonDark = "#18202C";
+
+		ctx.save();
+		ctx.translate(x, y - hop);
+		ctx.scale(dir * 1.05, 1.05);
+		ctx.lineJoin = "round";
+		ctx.lineCap = "round";
+
+		// 1. Fanned 4-feather tail
+		this.setupPath(ctx, plumageDark, ink, 2.3);
+		ctx.beginPath();
+		ctx.moveTo(-8, 1);
+		ctx.lineTo(-24, -3);
+		ctx.quadraticCurveTo(-26, 1, -21, 3);
+		ctx.lineTo(-14, 3);
+		ctx.lineTo(-22, 6);
+		ctx.quadraticCurveTo(-22, 10, -17, 9);
+		ctx.lineTo(-7, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Yellow scaly legs & talons standing on ground
+		this.setupPath(ctx, beakYellow, ink, 2.1);
+		ctx.beginPath();
+		ctx.moveTo(-3, 8);
+		ctx.lineTo(-2, 16);
+		ctx.moveTo(3, 8);
+		ctx.lineTo(5, 16);
+		ctx.stroke();
+		this.setupPath(ctx, talonDark, ink, 1.6);
+		ctx.beginPath();
+		ctx.moveTo(-5, 16);
+		ctx.lineTo(2, 16);
+		ctx.moveTo(2, 16);
+		ctx.lineTo(9, 16);
+		ctx.stroke();
+
+		// 3. Plump body & feathered thighs
+		ctx.save();
+		ctx.rotate(peck);
+		this.setupPath(ctx, plumage, ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(0, 2, 12, 8, 0.12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Folded wing with splayed primary tips & covert scallops
+		this.setupPath(ctx, plumageDark, ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-4, -3);
+		ctx.quadraticCurveTo(-12, -2, -17, 3);
+		ctx.lineTo(-12, 4);
+		ctx.lineTo(-15, 7);
+		ctx.quadraticCurveTo(-6, 8, 2, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Head with 3 spiky crown tufts
+		this.setupPath(ctx, plumage, ink, 2.4);
+		ctx.beginPath();
+		ctx.arc(9, -5, 6.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(4, -10);
+		ctx.lineTo(2, -15);
+		ctx.lineTo(7, -11);
+		ctx.lineTo(6, -16);
+		ctx.lineTo(10, -11);
+		ctx.fill();
+		ctx.stroke();
+
+		// Open hooked yellow beak & red tongue
+		this.setupPath(ctx, beakYellow, ink, 2.1);
+		ctx.beginPath();
+		ctx.moveTo(13, -6);
+		ctx.quadraticCurveTo(20, -5, 22, 0);
+		ctx.lineTo(14, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, tongueRed, ink, 1.4);
+		ctx.beginPath();
+		ctx.moveTo(13, -2);
+		ctx.lineTo(18, 2);
+		ctx.lineTo(13, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Angry scowling eye
+		this.setupPath(ctx, eyeWhite, ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(10.5, -6, 2.4, 3.0, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = ink;
+		ctx.beginPath();
+		ctx.arc(11.2, -5.8, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(7.5, -8.5);
+		ctx.lineTo(13.5, -6.5);
+		ctx.stroke();
+		ctx.restore();
+
 		ctx.restore();
 	},
 	drawFrostJezinka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
@@ -17840,6 +18336,10 @@ function drawEnemyRenderer(
   };
 
   const bakedMobId = methodToMobId[method];
+  const effectiveAnimTime =
+    bakedMobId === 'vrana' && typeof (enemy?.flockIndex ?? enemy?.crowWaveIndex) === 'number'
+      ? time + ((enemy?.flockIndex ?? enemy?.crowWaveIndex) as number) * 0.17
+      : time;
   const canUseAtlas = bakedMobId && !isAttacking && !(recoveryTimer > 0) && (!extraArgs || extraArgs.length === 0);
   let drawnViaAtlas = false;
   if (canUseAtlas) {
@@ -17853,10 +18353,10 @@ function drawEnemyRenderer(
       ctx.translate(x, y);
       ctx.scale(mSx, mSy);
       ctx.translate(-x, -y);
-      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, effectiveAnimTime, effectiveVx, panicked);
       ctx.restore();
     } else {
-      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, time, effectiveVx, panicked);
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, effectiveAnimTime, effectiveVx, panicked);
     }
   }
 
@@ -17886,6 +18386,10 @@ function drawEnemyRenderer(
     } else {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo, enemy);
     }
+  }
+
+  if (enemy?.isCarryingLootBundle && typeof (Lada as any).drawCrowLootBundle === 'function') {
+    (Lada as any).drawCrowLootBundle(ctx, x, y, effectiveAnimTime, effectiveVx);
   }
 
   ctx.restore();

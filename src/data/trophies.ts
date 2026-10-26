@@ -7,6 +7,9 @@ export function getTotalBestiaryKills(meta: any): number {
 	if (!kills) return 0;
 	let total = 0;
 	for (const k in kills) {
+		if (k === 'skeleton' && kills['kostlivec'] !== undefined) continue;
+		if (k === 'skeleton_scythe' && kills['kostlivec_kosa'] !== undefined) continue;
+		if (k === 'kostlivec_koste' && kills['kostlivec_kosa'] !== undefined) continue;
 		total += Number(kills[k]) || 0;
 	}
 	return total;
@@ -184,7 +187,14 @@ var TROPHIES = [
 				sexton: false,
 				granny: false
 			};
-			return Boolean(uh.wanderer && uh.shepherd && uh.korenarka && uh.watchman && uh.sexton && uh.granny);
+			return Boolean(
+				(uh.wanderer || uh.tulak) &&
+				(uh.shepherd || uh.pasacek) &&
+				uh.korenarka &&
+				(uh.watchman || uh.ponocny) &&
+				(uh.sexton || uh.kostelnik) &&
+				(uh.granny || uh.babicka)
+			);
 		},
 		getProgress: (meta) => {
 			const uh = meta.unlockedHunters || {
@@ -196,7 +206,13 @@ var TROPHIES = [
 				granny: false
 			};
 			return {
-				cur: (uh.wanderer ? 1 : 0) + (uh.shepherd ? 1 : 0) + (uh.korenarka ? 1 : 0) + (uh.watchman ? 1 : 0) + (uh.sexton ? 1 : 0) + (uh.granny ? 1 : 0),
+				cur:
+					((uh.wanderer || uh.tulak) ? 1 : 0) +
+					((uh.shepherd || uh.pasacek) ? 1 : 0) +
+					(uh.korenarka ? 1 : 0) +
+					((uh.watchman || uh.ponocny) ? 1 : 0) +
+					((uh.sexton || uh.kostelnik) ? 1 : 0) +
+					((uh.granny || uh.babicka) ? 1 : 0),
 				max: 6
 			};
 		}

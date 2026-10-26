@@ -16,6 +16,7 @@ import { SpatialHash } from './spatialHash';
 import { distanceSq, isInView } from './perf';
 import { getCachedHomingTarget } from './homing';
 import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './targeting';
+import { stepCrowForaging, restoreStolenBundleDrops } from './crowForaging';
 import { tryEmitParticle, getParticleLimit } from './particles';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
@@ -60,6 +61,8 @@ import {
   getRareDropAnnouncement,
   resolveDynamicDrop,
   isHealingDrop,
+  canCollectDrop,
+  FOOD_DROP_EXPIRATION,
   MAX_DROPS_LIMIT,
   hasPendingDrops,
   spawnDropWithLimit,
@@ -972,21 +975,36 @@ export class GameEngine {
     let isHot = opts.isHot;
     let expiration = opts.expiration;
     let isMercyDrop = opts.isMercyDrop;
+    let value = opts.value;
+    let size = opts.size;
+    let radius = opts.radius;
+    let speed = opts.speed;
 
-    if (this.director && isHealingDrop(type)) {
+    if (this.director && (isHealingDrop(type) || (type === 'gingerbread' && this.director.dropPacingPhase === 'stress'))) {
       const playerHp = this.state.player?.hp ?? 100;
       const playerMaxHp = this.state.player?.maxHp ?? 100;
       const resolution = resolveDynamicDrop(type, playerHp, playerMaxHp, {
         value: opts.value,
         size: opts.size,
+        radius: opts.radius,
+        speed: opts.speed,
         vulnerabilityScore: this.director.vulnerabilityScore,
         pacingPhase: this.director.dropPacingPhase,
         mercyCooldownActive: this.director.mercyPityCooldown > 0,
+        expiration: opts.expiration,
       });
       resolvedType = resolution.type;
-      if (resolution.isHot) isHot = true;
-      if (resolution.expiration) expiration = resolution.expiration;
-      if (resolution.isMercyDrop) isMercyDrop = true;
+      if (resolution.value !== undefined) value = resolution.value;
+      if (resolution.size !== undefined) size = resolution.size as any;
+      if (resolution.radius !== undefined) radius = resolution.radius;
+      if (resolution.speed !== undefined) speed = resolution.speed;
+      if (resolution.isHot !== undefined) isHot = resolution.isHot;
+      if (resolution.expiration !== undefined) expiration = resolution.expiration;
+      if (resolution.isMercyDrop !== undefined) isMercyDrop = resolution.isMercyDrop;
+    }
+
+    if (isHealingDrop(resolvedType) && expiration === undefined) {
+      expiration = FOOD_DROP_EXPIRATION;
     }
 
     // The engine's state array is the single source of truth. Never fall back
@@ -998,6 +1016,10 @@ export class GameEngine {
       y,
       {
         ...opts,
+        value,
+        size,
+        radius,
+        speed,
         isHot,
         expiration,
         isHeavyAnchor: opts.isHeavyAnchor,
@@ -1080,7 +1102,7 @@ export class GameEngine {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
     const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
@@ -1183,6 +1205,17 @@ export class GameEngine {
       willpower,
       coinValue,
       xp,
+      isFlying: Boolean(stats.isFlying || resolvedId === 'vrana'),
+      isGroundedForLoot: false,
+      isCarryingLootBundle: false,
+      carryingLootBundle: [] as any[],
+      crowForageTarget: null as any,
+      crowForageTimer: 0,
+      crowForageCooldown: 0,
+      crowEscapeTimer: 0,
+      escapeDirX: 0,
+      escapeDirY: 0,
+      escapedWithLoot: false,
       category: stats.category,
       method: stats.method,
       palette: stats.palette,
@@ -1383,7 +1416,11 @@ export class GameEngine {
           if (this.garlicSlowTimer > 0) spd *= 0.75;
           if (this.panicked) spd *= 1.35;
           if ((this.vycerpanyTimer || 0) > 0) spd *= 0.50;
-          if (self.state.plumPuddles && self.state.plumPuddles.length > 0) {
+          if (
+            !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
+            self.state.plumPuddles &&
+            self.state.plumPuddles.length > 0
+          ) {
             for (let pi = 0; pi < self.state.plumPuddles.length; pi++) {
               const pud = self.state.plumPuddles[pi];
               const maxR = pud.radius + this.radius;
@@ -1396,9 +1433,32 @@ export class GameEngine {
             }
           }
 
-          const moveDir = this.panicked ? dir + Math.PI : dir;
-          this.vx = Math.cos(moveDir) * spd;
-          this.vy = Math.sin(moveDir) * spd;
+          if (this.id === 'vrana' && !this.isMinibossFlockMember && !this.isVirtualCrowMember && !this.panicked) {
+            if (!self.state.dynamicDropLedger) {
+              self.state.dynamicDropLedger = { stolenCoins: 0, stolenGingerbread: 0, stolenHeals: 0, stolenItemsCount: 0 };
+            }
+            const foraging = stepCrowForaging(this, self.state.drops || [], dt, spd, {
+              player,
+              pendingDropBank: self.state.pendingDropBank,
+              swarmReservoir: self.state.swarmReservoir,
+              dynamicDropLedger: self.state.dynamicDropLedger,
+            });
+            if (foraging.escaped) {
+              return;
+            }
+            if (foraging.active) {
+              this.vx = foraging.vx;
+              this.vy = foraging.vy;
+            } else {
+              const moveDir = this.panicked ? dir + Math.PI : dir;
+              this.vx = Math.cos(moveDir) * spd;
+              this.vy = Math.sin(moveDir) * spd;
+            }
+          } else {
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
+          }
         }
 
         const previousX = this.x;
@@ -1608,6 +1668,9 @@ export class GameEngine {
         if (this.hp <= 0) {
           this.hp = 0;
           this.isDefeated = true;
+          if (this.isCarryingLootBundle && Array.isArray(this.carryingLootBundle) && this.carryingLootBundle.length > 0) {
+            restoreStolenBundleDrops(this, self.state.drops, self.state.pendingDropBank);
+          }
           self.state.kills += 1;
           if ((self.state.player?.stickyPlumJamStacks || 0) > 0) {
             self.spawnPlumPuddle(this.x, this.y, self.state.player.plumSlowRatio || 0.35);
@@ -2256,7 +2319,8 @@ export class GameEngine {
       if (!player) return null;
       const radius = action.radius ?? 110;
       const dmg = action.dmg ?? 9;
-      const healRatio = 0.08 * (action.stats?.damageMult ? Math.min(2.0, action.stats.damageMult) : 1);
+      const totalDmgMult = dmg > 0 ? (dmg / 9) : ((player.damageMultiplier || 1) * (action.stats?.damageMult ?? 1));
+      const healRatio = 0.08 * totalDmgMult;
       const requestedHeal = player.maxHp * healRatio * (1 + ((player as any).bearMaskHealBonus || 0));
       player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
 
@@ -3425,7 +3489,7 @@ export class GameEngine {
       }
       for (let j = 0; j < this.livingEnemies.length; j++) {
         const e = this.livingEnemies[j];
-        const isFlying = Boolean(e.isFlying || e.id === 'vrana');
+        const isFlying = Boolean((e.isFlying || e.id === 'vrana') && !e.isGroundedForLoot);
         if (!isFlying) {
           const eWater = getMarchWaterAndFloeEffect(e.x, e.y, this.state.gameTime || 0);
           if (eWater.onFloe) {
@@ -3452,6 +3516,13 @@ export class GameEngine {
             d.isHot = false;
           }
         }
+        if (typeof d.expiration === 'number') {
+          d.expiration -= dt;
+          if (d.expiration <= 0) {
+            d.dead = true;
+            continue;
+          }
+        }
         if (d.vx || d.vy) {
           d.x += d.vx * dt;
           d.y += d.vy * dt;
@@ -3462,7 +3533,7 @@ export class GameEngine {
 
         if (player && player.hp > 0) {
           const dist = Math.hypot(d.x - player.x, d.y - player.y);
-          if (dist < player.pickupRadius) {
+          if (dist < player.pickupRadius && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
             const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;

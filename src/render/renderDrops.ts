@@ -25,6 +25,10 @@ export function renderDrops(
     if (!isInView(d.x, d.y, radius, camera)) continue;
 
     rendered++;
+    const isExpiring = typeof d.expiration === 'number' && d.expiration > 0 && d.expiration <= 5.0;
+    if (isExpiring && Math.floor(d.expiration * 6) % 2 === 0) {
+      ctx.globalAlpha = 0.35;
+    }
     if (d.type === 'coin') {
       Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
     } else if (d.type === 'gingerbread') {
@@ -63,6 +67,9 @@ export function renderDrops(
       drawBigPouch(ctx, d.x, d.y, d.time, d.value || 30);
     } else if (d.type === 'gingerbread_stash') {
       drawGingerbreadStash(ctx, d.x, d.y, d.time);
+    }
+    if (isExpiring) {
+      ctx.globalAlpha = 1.0;
     }
   }
 

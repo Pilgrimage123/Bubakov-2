@@ -7,6 +7,8 @@ import { SmartSnehulakSvg } from './SmartSnehulakSvg';
 import { SmartBabickaBarunkaSvg } from './SmartBabickaBarunkaSvg';
 import { SmartKostelnikSvg } from './SmartKostelnikSvg';
 import { SmartPasacekSvg } from './SmartPasacekSvg';
+import { SmartKorenarkaSvg } from './SmartKorenarkaSvg';
+import { SmartPonocnySvg } from './SmartPonocnySvg';
 import { SmartDedecekNuseSvg } from './SmartDedecekNuseSvg';
 import { SmartDedecekArenaSvg } from './SmartDedecekArenaSvg';
 
@@ -18,6 +20,8 @@ export * from './SmartSnehulakSvg';
 export * from './SmartBabickaBarunkaSvg';
 export * from './SmartKostelnikSvg';
 export * from './SmartPasacekSvg';
+export * from './SmartKorenarkaSvg';
+export * from './SmartPonocnySvg';
 export * from './SmartDedecekNuseSvg';
 export * from './SmartDedecekArenaSvg';
 export * from './SmartSvgViewer';
@@ -31,10 +35,16 @@ export const SMART_SVG_REGISTRY: Record<string, React.FC<SmartSvgProps>> = {
   krajanek: SmartKrajanekSvg,
   wanderer: SmartTulakSvg,
   tulak: SmartTulakSvg,
+  poutnik: SmartTulakSvg,
   shepherd: SmartPasacekSvg,
   pasacek: SmartPasacekSvg,
+  korenarka: SmartKorenarkaSvg,
+  baba_korenarka: SmartKorenarkaSvg,
+  watchman: SmartPonocnySvg,
+  ponocny: SmartPonocnySvg,
   sexton: SmartKostelnikSvg,
   kostelnik: SmartKostelnikSvg,
+  pobozny_kostelnik: SmartKostelnikSvg,
   granny: SmartBabickaBarunkaSvg,
   babicka: SmartBabickaBarunkaSvg,
   babicka_barunka: SmartBabickaBarunkaSvg,

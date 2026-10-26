@@ -81,7 +81,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({ isOpen, 
           </div>
           <ul style={{ margin: 0, paddingLeft: '22px', fontSize: '0.94rem', fontWeight: 700, lineHeight: 1.55 }}>
             <li>
-              <strong>Uzamčení hrdinů:</strong> Poutník, Pasáček, Bába kořenářka, Ponocný, Pobožný kostelník i Babička budou znovu uzamčeni (postup 0 %). Zůstane pouze výchozí Krajánek.
+              <strong>Uzamčení hrdinů:</strong> Tulák, Pasáček, Bába kořenářka, Ponocný, Pobožný kostelník i Babička budou znovu uzamčeni (postup 0 %). Zůstane pouze výchozí Krajánek.
             </li>
             <li>
               <strong>Uzamčení úrovní 2 až 6:</strong> Les u rybníka, Zimní Hrusice, Čertův mlýn, Zřícenina hradu i Dračí sluj se uzamknou. Bude přístupná pouze 1. úroveň.

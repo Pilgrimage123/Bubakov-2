@@ -7,6 +7,11 @@ export const HEAVY_ANCHOR_MAGNET_MOBILITY = 0.05; // 5% magnet pull speed
 export const STANDARD_MAGNET_MOBILITY = 1.0;
 export const POUCH_SWEEP_RADIUS = 60; // 60px (~1.5m)
 export const CONSOLIDATION_BONUS = 1.15; // +15% value bonus
+export const FOOD_DROP_EXPIRATION = 25.0; // Fresh food stays for 25s before decaying
+
+export function isHealingDrop(type: DropType): boolean {
+  return type === 'potion' || type === 'bread' || type === 'pear';
+}
 
 export const DROP_TYPE_INDICES: Record<DropType, number> = {
   coin: 1,
@@ -298,7 +303,9 @@ export class SoADropManager {
     this.vy[i] = params.vy ?? 0;
     this.values[i] = val;
     this.times[i] = Math.random() * 6.28;
-    this.expirations[i] = params.expiration ?? -1;
+    this.expirations[i] = params.expiration !== undefined
+      ? params.expiration
+      : (isHealingDrop(params.type) ? FOOD_DROP_EXPIRATION : -1);
     this.goldenRushTimers[i] = params.goldenRushTimer ?? 0;
 
     let mobility = params.isHeavyAnchor || params.type === 'big_pouch' || params.type === 'gingerbread_stash' || params.type === 'chest'
@@ -482,31 +489,37 @@ export class SoADropManager {
 
       // 4. Player magnet pulling & pickup (Distance-Squared queries)
       if (playerAlive) {
-        const dx = px - this.posX[i];
-        const dy = py - this.posY[i];
-        const distSq = dx * dx + dy * dy;
+        const typeIdx = this.itemTypes[i];
+        const itemType = INDEX_TO_DROP_TYPE[typeIdx] || 'coin';
+        const canCollect = !isHealingDrop(itemType) || (player.hp < player.maxHp) || ((player.bearMaskLevel || 0) > 0);
 
-        // Magnet range
-        if (distSq < pickupRadSq) {
-          const dist = Math.sqrt(distSq) || 1;
-          const baseSpeed = Math.max(520, (pickupRad - dist) * 7.5 + 380);
-          // Branchless 5% speed clamp
-          const effectiveSpeed = baseSpeed * this.magnetMobility[i] * dt;
-          this.posX[i] += (dx / dist) * effectiveSpeed;
-          this.posY[i] += (dy / dist) * effectiveSpeed;
+        if (canCollect) {
+          const dx = px - this.posX[i];
+          const dy = py - this.posY[i];
+          const distSq = dx * dx + dy * dy;
 
-          // Recalculate distance after pull
-          const newDx = px - this.posX[i];
-          const newDy = py - this.posY[i];
-          const newDistSq = newDx * newDx + newDy * newDy;
-          const collectDist = playerBodyRad + this.radii[i];
+          // Magnet range
+          if (distSq < pickupRadSq) {
+            const dist = Math.sqrt(distSq) || 1;
+            const baseSpeed = Math.max(520, (pickupRad - dist) * 7.5 + 380);
+            // Branchless 5% speed clamp
+            const effectiveSpeed = baseSpeed * this.magnetMobility[i] * dt;
+            this.posX[i] += (dx / dist) * effectiveSpeed;
+            this.posY[i] += (dy / dist) * effectiveSpeed;
 
-          if (newDistSq < collectDist * collectDist) {
-            this.syncFlyweight(i);
-            const drop = this.flyweights[i];
-            callbacks?.onPickup?.(drop, i);
-            this.removeAt(i);
-            continue;
+            // Recalculate distance after pull
+            const newDx = px - this.posX[i];
+            const newDy = py - this.posY[i];
+            const newDistSq = newDx * newDx + newDy * newDy;
+            const collectDist = playerBodyRad + this.radii[i];
+
+            if (newDistSq < collectDist * collectDist) {
+              this.syncFlyweight(i);
+              const drop = this.flyweights[i];
+              callbacks?.onPickup?.(drop, i);
+              this.removeAt(i);
+              continue;
+            }
           }
         }
       }

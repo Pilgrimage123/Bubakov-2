@@ -146,9 +146,15 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
       spawnInitialWave: false,
     });
 
+    const regularCrow = engine.spawnMonster('vrana', 80, 80);
+    expect(regularCrow.isMiniboss).toBe(false);
+    expect(regularCrow.isFlying).toBe(true);
+    expect(regularCrow.renderScale).toBeCloseTo(0.34);
+
     const crowMiniBoss = engine.spawnMonster('vrana', 100, 100, 4.5, false, true, '🐦‍⬛ Hejno mrazivých vran');
     expect(crowMiniBoss.isMiniboss).toBe(true);
     expect(crowMiniBoss.isMinibossFlockMember).toBe(true);
+    expect(crowMiniBoss.isFlying).toBe(true);
     expect(crowMiniBoss.flockTotal).toBe(9);
     expect(engine.state.enemies.filter((e) => e.isMinibossFlockMember)).toHaveLength(9);
     // Beginner tutorial miniboss should be balanced (38 HP per crow = ~342 HP total), not 1400 HP

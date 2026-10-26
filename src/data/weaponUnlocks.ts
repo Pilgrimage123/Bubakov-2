@@ -1099,10 +1099,16 @@ function computeWeaponProgress(id: string, meta: any) {
 			}))
 		};
 	}
+	const enemyAliasMap: Record<string, string> = {
+		skeleton: "kostlivec",
+		kostlivec: "skeleton",
+		skeleton_scythe: "kostlivec_kosa",
+		kostlivec_kosa: "skeleton_scythe",
+	};
 	const weaponKills = meta.weaponKillCounts?.[canonical] || meta.weaponKillCounts?.[id] || (canonical === "kovarske_vidle" ? meta.bestiaryKills || {} : {});
 	let curCount = 0;
 	const enemiesBreakdown = def.targetEnemies.map((e: any) => {
-		const cnt = weaponKills[e.id] || 0;
+		const cnt = weaponKills[e.id] || (enemyAliasMap[e.id] ? weaponKills[enemyAliasMap[e.id]] : 0) || 0;
 		curCount += cnt;
 		return {
 			id: e.id,

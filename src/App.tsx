@@ -26,7 +26,7 @@ import { VirtualLeaderCrowWave, CROW_WAVE_HIT_RADIUS } from './game/virtualLeade
 import { VirtualLeaderSnowmanHorde, SNOWMAN_HORDE_HIT_RADIUS } from './game/virtualLeaderSnowmanHorde';
 import { getCachedHomingTarget } from './game/homing';
 import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './game/targeting';
-import { stepCrowForaging } from './game/crowForaging';
+import { stepCrowForaging, restoreStolenBundleDrops } from './game/crowForaging';
 import { tryEmitParticle, tryEmitParticleBurst, getParticleLimit } from './game/particles';
 import { SpatialHash } from './game/spatialHash';
 import { distanceSq, isInView } from './game/perf';
@@ -97,6 +97,7 @@ import {
   drawPrefixAura,
   drawGingerbreadHeartCanvas,
 } from './render/ladaRenderer';
+import { getGlobalBakedBubakAtlas } from './render/bakedBubakAtlas';
 import { drawGlyphText, resetGlobalGlyphAtlas } from './render/glyphAtlas';
 import { ChunkBitmapCache } from './render/chunkCache';
 import {
@@ -191,6 +192,7 @@ import {
   FAR_KILL_DISTANCE,
   HOT_GINGERBREAD_DURATION,
   EMERGENCY_HEALTH_RATIO,
+  FOOD_DROP_EXPIRATION,
 } from './game/drops';
 import { toCanonicalWeaponId, toCanonicalHunterId, toCanonicalEnemyId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import {
@@ -1334,6 +1336,7 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Character preview canvases
+  const krajanekRef = useRef<HTMLCanvasElement | null>(null);
   const wandererRef = useRef<HTMLCanvasElement | null>(null);
   const shepherdRef = useRef<HTMLCanvasElement | null>(null);
   const korenarkaRef = useRef<HTMLCanvasElement | null>(null);
@@ -1435,7 +1438,8 @@ export default function App() {
   const [isArsenalOpen, setIsArsenalOpen] = useState(false);
   const [unlockNotice, setUnlockNotice] = useState<{ title: string; desc: string; icon?: string } | null>(null);
 
-  // Progressive unlock calculations for all 4 hunters
+  // Progressive unlock calculations for all hunters
+  const krajanekProg = useMemo(() => getHunterProgress('krajanek', meta), [meta]);
   const wandererProg = useMemo(() => getHunterProgress('wanderer', meta), [meta]);
   const shepherdProg = useMemo(() => getHunterProgress('shepherd', meta), [meta]);
   const korenarkaProg = useMemo(() => getHunterProgress('korenarka', meta), [meta]);
@@ -2957,7 +2961,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const cloud = new SmokePuff(this.x, this.y, radius, 'fajfka', duration) as any;
         cloud.damagePerSecond = dmg;
         engineRef.current.smokePuffs.push(cloud);
-        const healRatio = 0.08 * (stats?.damageMult ? Math.min(2.0, stats.damageMult) : 1);
+        const totalDmgMult = dmg > 0 ? (dmg / 9) : ((this.damageMultiplier || 1) * (stats?.damageMult ?? 1));
+        const healRatio = 0.08 * totalDmgMult;
         const requestedHeal = this.maxHp * healRatio * (1 + ((this as any).bearMaskHealBonus || 0));
         const missingHp = Math.max(0, this.maxHp - this.hp);
         const overheal = Math.max(0, requestedHeal - missingHp);
@@ -4038,6 +4043,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (currentGameState === 'menu' && currentMenuScreen === 'hunter') {
         const t = engineRef.current.uiTime;
         const curMeta = metaRef.current;
+        const krProg = getHunterProgress('krajanek', curMeta);
         const wProg = getHunterProgress('wanderer', curMeta);
         const sProg = getHunterProgress('shepherd', curMeta);
         const kProg = getHunterProgress('korenarka', curMeta);
@@ -4045,6 +4051,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const xProg = getHunterProgress('sexton', curMeta);
         const gProg = getHunterProgress('granny', curMeta);
 
+        renderHunterPortrait(krajanekRef.current, Lada.drawKrajanek.bind(Lada), krProg.tier, t);
         renderHunterPortrait(wandererRef.current, Lada.drawWanderer.bind(Lada), wProg.tier, t);
         renderHunterPortrait(shepherdRef.current, Lada.drawShepherd.bind(Lada), sProg.tier, t);
         renderHunterPortrait(korenarkaRef.current, Lada.drawKorenarka.bind(Lada), kProg.tier, t);
@@ -6164,7 +6171,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 );
                 for (let i = 0; i < nearPlough.length; i++) {
                   const enemy = nearPlough[i];
-                  if (!enemy.dead && !enemy.isDefeated && Math.abs(enemy.y - ploughY) < 34 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 200) {
+                  const isAirborne = Boolean((enemy.isFlying || enemy.id === 'vrana') && !enemy.isGroundedForLoot);
+                  if (!enemy.dead && !enemy.isDefeated && !isAirborne && Math.abs(enemy.y - ploughY) < 34 && Math.abs(enemy.x - MARCH_THAW_POIS.fields.x) < 200) {
                     enemy.takeDamage(32 * terrainHazardDt, 'physical', 210, 15, { allowFractionalDamage: true });
                   }
                 }
@@ -6404,7 +6412,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Night Watchman passive holy aura (throttled to 4 ticks/sec instead of 60 ticks/sec to prevent damage text flood)
-            if (player.type === 'watchman') {
+            if (player.type === 'ponocny' || player.type === 'watchman') {
               player.watchmanAuraTimer = (player.watchmanAuraTimer || 0) - dt;
               if (player.watchmanAuraTimer <= 0) {
                 player.watchmanAuraTimer = 0.25;
@@ -7200,7 +7208,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const prevEy = e.y;
               e.update(dt, player);
               if (engine.activeLevelId === 0 && !e.isDefeated && !e.dead) {
-                const isFlyingEnemy = Boolean(e.isFlying || e.id === 'vrana' || isActiveVirtualCrow);
+                const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || isActiveVirtualCrow) && !e.isGroundedForLoot);
                 if (!isFlyingEnemy) {
                   const enemyWater = getMarchWaterAndFloeEffect(e.x, e.y, engine.uiTime);
                   if (enemyWater.onFloe) {
@@ -7218,7 +7226,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            if (e.isDefeated || e.dead || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
+            if (e.isDefeated || e.dead || e.isCarryingLootBundle || (e.snackTimer || 0) > 0 || !player || player.hp <= 0) {
               e.isAttacking = false;
               e.windupTimer = 0;
               e.strikeTimer = 0;
@@ -7442,7 +7450,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 d.dead = true;
                 triggerRescueChasnik(d.x, d.y);
               }
-            } else if (dist < player.pickupRadius && currentGameState === 'playing' && gameStateRef.current === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp)) {
+            } else if (dist < player.pickupRadius && currentGameState === 'playing' && gameStateRef.current === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
               const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
               const mobility = d.magnetMobility !== undefined ? d.magnetMobility : 1.0;
               const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * mobility * dt;
@@ -8143,7 +8151,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
+    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
     const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : (isBoss ? stats.radius * 1.3 : stats.radius);
     let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : (stats.poiseResist || 0);
     const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : (stats.foodResist || 0);
@@ -8263,6 +8271,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       willpower,
       coinValue,
       xp,
+      isFlying: Boolean(stats.isFlying || resolvedId === 'vrana'),
       category: stats.category,
       method: stats.method,
       palette: stats.palette,
@@ -8328,6 +8337,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       crowForageTimer: 0,
       crowForageCooldown: 2 + Math.random() * 2,
       isGroundedForLoot: false,
+      isCarryingLootBundle: false,
+      carryingLootBundle: [] as any[],
+      crowEscapeTimer: 0,
+      escapeDirX: 0,
+      escapeDirY: 0,
+      escapedWithLoot: false,
       isVirtualCrowMember: false,
       _crowWaveActive: false,
       _crowWaveInEngine: false,
@@ -8574,7 +8589,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if ((this.vycerpanyTimer || 0) > 0) {
           spd *= 0.50;
         }
-        if (engineRef.current.plumPuddles && engineRef.current.plumPuddles.length > 0) {
+        if (
+          !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
+          engineRef.current.plumPuddles &&
+          engineRef.current.plumPuddles.length > 0
+        ) {
           for (let pi = 0; pi < engineRef.current.plumPuddles.length; pi++) {
             const pud = engineRef.current.plumPuddles[pi];
             const maxR = (pud.radius || 44) + this.radius;
@@ -8711,7 +8730,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Reposition stranded enemies that are far away back to active perimeter around player
-        if (distToPlayer > 1350 && !this.isBoss && !this.isMiniboss) {
+        if (distToPlayer > 1350 && !this.isBoss && !this.isMiniboss && !this.isCarryingLootBundle) {
           const ang = Math.random() * Math.PI * 2;
           const pos = RunDirector.getOffscreenPosition(player, ang, engineRef.current, 180);
           this.x = pos.x;
@@ -8722,7 +8741,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         // Streamlined update for distant off-screen enemies: direct pursuit towards hero
-        if (distToPlayer > 850 && !this.isBoss && !this.isMiniboss) {
+        if (distToPlayer > 850 && !this.isBoss && !this.isMiniboss && !this.isCarryingLootBundle) {
           this.vx = Math.cos(dirToPlayer) * spd;
           this.vy = Math.sin(dirToPlayer) * spd;
           this.x += (this.vx + this.kbx) * dt;
@@ -8813,7 +8832,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             this.vx = Math.cos(flightAngle) * flightSpeed;
             this.vy = Math.sin(flightAngle) * flightSpeed + Math.sin(this.animTime * 9 + phaseOffset) * 10;
           } else {
-            const foraging = stepCrowForaging(this, engineRef.current?.drops || [], dt, spd);
+            const eng = engineRef.current;
+            if (eng && !eng.dynamicDropLedger) {
+              eng.dynamicDropLedger = { stolenCoins: 0, stolenGingerbread: 0, stolenHeals: 0, stolenItemsCount: 0 };
+            }
+            const foraging = stepCrowForaging(this, eng?.drops || [], dt, spd, {
+              player,
+              camera: eng?.camera,
+              viewWidth: canvasRef.current?.width,
+              viewHeight: canvasRef.current?.height,
+              pendingDropBank: eng?.pendingDropBank,
+              swarmReservoir: eng?.swarmReservoir,
+              dynamicDropLedger: eng?.dynamicDropLedger,
+              onBundlePacked: (crow, items) => {
+                if (eng?.texts) {
+                  eng.texts.push(new DamageText(crow.x, crow.y - 28, `UZLÍČEK! (${items.length}×) 🐦‍⬛🎒`, '#EF4444', true, 'lootResources'));
+                }
+              },
+              onEscape: (crow, summary) => {
+                if (eng?.texts && player) {
+                  eng.texts.push(new DamageText(player.x, player.y - 58, `VRÁNA ULÉTLA S KOŘISTÍ! (-${summary.totalItems}) 🐦‍⬛💨`, '#DC2626', true, 'lootResources'));
+                }
+              },
+            });
+            if (foraging.escaped) {
+              return;
+            }
             if (foraging.active) {
               this.vx = foraging.vx;
               this.vy = foraging.vy;
@@ -10470,11 +10514,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             engineRef.current.texts.push(new DamageText(this.x, this.y - 32, 'Zahnán! 💨', COLORS.mustard, true, 'combatStates'));
           }
           const eng = engineRef.current;
+          if (this.isCarryingLootBundle && Array.isArray(this.carryingLootBundle) && this.carryingLootBundle.length > 0) {
+            restoreStolenBundleDrops(this, eng.drops, eng.pendingDropBank);
+            eng.texts.push(new DamageText(this.x, this.y - 44, 'UZLÍČEK ZACHRÁNĚN! 🎒✨', '#22C55E', true, 'lootResources'));
+          }
 
           // Helper to spawn drops with natural radial spray and velocity
           const spawnScatterDrop = (
             dropType: DropType,
-            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string; isHot?: boolean; goldenRushTimer?: number } = {}
+            opts: { value?: number; radius?: number; speed?: number; angle?: number; text?: string; textColor?: string; size?: string; isHot?: boolean; goldenRushTimer?: number; expiration?: number; isMercyDrop?: boolean } = {}
           ) => {
             let finalType = dropType;
             let finalValue = opts.value;
@@ -10483,6 +10531,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             let finalText = opts.text;
             let finalTextColor = opts.textColor;
             let finalRadius = opts.radius;
+            let finalExpiration = opts.expiration;
+            let finalIsHot = opts.isHot || false;
+            let finalGoldenRushTimer = opts.goldenRushTimer || 0;
+            let finalIsMercyDrop = opts.isMercyDrop;
 
             // ADR 0006: Context-aware dynamic drop resolution for healing items at full Courage
             if (isHealingDrop(dropType) && player) {
@@ -10496,14 +10548,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 speed: opts.speed,
                 size: opts.size,
                 radius: opts.radius,
+                vulnerabilityScore: directorRef.current?.vulnerabilityScore,
+                pacingPhase: directorRef.current?.dropPacingPhase,
+                mercyCooldownActive: directorRef.current ? directorRef.current.mercyPityCooldown > 0 : false,
+                expiration: opts.expiration,
               });
               finalType = res.type;
-              finalValue = res.value;
-              finalSize = res.size;
-              finalSpeed = res.speed;
-              finalText = res.text;
-              finalTextColor = res.textColor;
-              finalRadius = res.radius;
+              if (res.value !== undefined) finalValue = res.value;
+              if (res.size !== undefined) finalSize = res.size;
+              if (res.speed !== undefined) finalSpeed = res.speed;
+              if (res.text !== undefined) finalText = res.text;
+              if (res.textColor !== undefined) finalTextColor = res.textColor;
+              if (res.radius !== undefined) finalRadius = res.radius;
+              if (res.expiration !== undefined) finalExpiration = res.expiration;
+              if (res.isHot !== undefined) {
+                finalIsHot = res.isHot;
+                if (res.isHot) finalGoldenRushTimer = res.expiration || HOT_GINGERBREAD_DURATION;
+              }
+              if (res.isMercyDrop !== undefined) finalIsMercyDrop = res.isMercyDrop;
+            }
+
+            if (isHealingDrop(finalType) && finalExpiration === undefined) {
+              finalExpiration = FOOD_DROP_EXPIRATION;
             }
 
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
@@ -10540,8 +10606,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 vy: Math.sin(angle) * burstSpeed,
                 radius,
                 time: Math.random() * 6.28,
-                isHot: opts.isHot || false,
-                goldenRushTimer: opts.goldenRushTimer || 0,
+                isHot: finalIsHot,
+                goldenRushTimer: finalGoldenRushTimer,
+                expiration: finalExpiration,
+                isMercyDrop: finalIsMercyDrop,
               }, eng.pendingDropBank);
             }
             if (finalText && !isSwarm) {
@@ -10797,7 +10865,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
 // Bestiary tracking & progressive sequential hunter unlocks
           const curMeta = metaRef.current;
-          const updatedKills = { ...curMeta.bestiaryKills, [this.id]: (curMeta.bestiaryKills[this.id] || 0) + 1 };
+          const canonicalEnemyId = toCanonicalEnemyId(this.id);
+          const prevKillCount = Math.max(curMeta.bestiaryKills[canonicalEnemyId] || 0, curMeta.bestiaryKills[this.id] || 0);
+          const updatedKills = {
+            ...curMeta.bestiaryKills,
+            [canonicalEnemyId]: prevKillCount + 1,
+            [this.id]: prevKillCount + 1,
+          };
           let nextMeta: MetaProgression = { ...curMeta, bestiaryKills: updatedKills };
 
           // 1. Sequential Hunter Progression: only active hunter collects kills!
@@ -10805,12 +10879,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           let announceName = '';
           if (activeHunterId) {
             const hDef = HUNTER_UNLOCKS[activeHunterId];
-            if (hDef && hDef.targetEnemies.some((e) => e.id === this.id)) {
+            const matchedHunterTarget = hDef?.targetEnemies.find((e) => toCanonicalEnemyId(e.id) === canonicalEnemyId);
+            if (hDef && matchedHunterTarget) {
               const prevHunterCounts = curMeta.hunterKillCounts || {};
               const curHunterKills = {
-                ...(prevHunterCounts[activeHunterId] || (activeHunterId === 'shepherd' ? curMeta.bestiaryKills || {} : {})),
+                ...(prevHunterCounts[activeHunterId] || (activeHunterId === 'shepherd' || activeHunterId === 'pasacek' ? curMeta.bestiaryKills || {} : {})),
               };
-              curHunterKills[this.id] = (curHunterKills[this.id] || 0) + 1;
+              const nextTargetCount = Math.max(
+                curHunterKills[matchedHunterTarget.id] || 0,
+                curHunterKills[canonicalEnemyId] || 0,
+                curHunterKills[this.id] || 0
+              ) + 1;
+              curHunterKills[matchedHunterTarget.id] = nextTargetCount;
+              curHunterKills[canonicalEnemyId] = nextTargetCount;
+              curHunterKills[this.id] = nextTargetCount;
 
               const nextHunterCounts = {
                 ...prevHunterCounts,
@@ -10846,12 +10928,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           let announceWeaponName = '';
           if (activeWeaponId) {
             const wDef = WEAPON_UNLOCKS[activeWeaponId];
-            if (wDef && wDef.targetEnemies.some((e) => e.id === this.id)) {
+            const matchedWeaponTarget = wDef?.targetEnemies.find((e) => toCanonicalEnemyId(e.id) === canonicalEnemyId);
+            if (wDef && matchedWeaponTarget) {
               const prevWeaponCounts = nextMeta.weaponKillCounts || {};
               const curWeaponKills = {
                 ...(prevWeaponCounts[activeWeaponId] || (activeWeaponId === 'kovarske_vidle' || activeWeaponId === 'pitchfork' ? curMeta.bestiaryKills || {} : {})),
               };
-              curWeaponKills[this.id] = (curWeaponKills[this.id] || 0) + 1;
+              const nextWTargetCount = Math.max(
+                curWeaponKills[matchedWeaponTarget.id] || 0,
+                curWeaponKills[canonicalEnemyId] || 0,
+                curWeaponKills[this.id] || 0
+              ) + 1;
+              curWeaponKills[matchedWeaponTarget.id] = nextWTargetCount;
+              curWeaponKills[canonicalEnemyId] = nextWTargetCount;
+              curWeaponKills[this.id] = nextWTargetCount;
 
               const nextWeaponCounts = {
                 ...prevWeaponCounts,
@@ -10887,12 +10977,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           let announceLevelName = '';
           if (activeLevelId) {
             const lDef = LEVEL_UNLOCKS[activeLevelId];
-            if (lDef && lDef.targetEnemies.some((e) => e.id === this.id)) {
+            const matchedLevelTarget = lDef?.targetEnemies.find((e) => toCanonicalEnemyId(e.id) === canonicalEnemyId);
+            if (lDef && matchedLevelTarget) {
               const prevLevelCounts = nextMeta.levelKillCounts || {};
               const curLevelKills = {
                 ...(prevLevelCounts[activeLevelId] || {}),
               };
-              curLevelKills[this.id] = (curLevelKills[this.id] || 0) + 1;
+              const nextLTargetCount = Math.max(
+                curLevelKills[matchedLevelTarget.id] || 0,
+                curLevelKills[canonicalEnemyId] || 0,
+                curLevelKills[this.id] || 0
+              ) + 1;
+              curLevelKills[matchedLevelTarget.id] = nextLTargetCount;
+              curLevelKills[canonicalEnemyId] = nextLTargetCount;
+              curLevelKills[this.id] = nextLTargetCount;
 
               const nextLevelCounts = {
                 ...prevLevelCounts,
@@ -11026,90 +11124,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       },
 
       draw(ctx: CanvasRenderingContext2D) {
-        // Virtual flock members use a tiny direct Canvas silhouette rather than
-        // the full enemy/VFX renderer. This path performs no per-frame allocations.
+        // Virtual flock members blit the pre-baked 12-frame Ladovská flying crow
+        // from BakedBubakAtlas with zero per-frame path rasterization or allocations.
         if (this.isVirtualCrowMember) {
           ctx.save();
           if (this.isDefeated) {
             const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
             ctx.globalAlpha = Math.max(0.08, 1 - fadeProgress * 0.92);
           }
+          const vx = this.vx || (Number.isFinite(this.crowHeading) ? Math.cos(this.crowHeading) : 1);
+          const vy = this.vy || (Number.isFinite(this.crowHeading) ? Math.sin(this.crowHeading) : 0);
+          const dir = vx < 0 ? -1 : 1;
+          const pitch = Math.max(-0.42, Math.min(0.42, Math.atan2(vy, Math.abs(vx) || 1) * 0.42)) * dir;
+          const phaseTime = (this.animTime || 0) + (this.crowWaveIndex || 0) * 0.13;
+          const flapScale = Number.isFinite(this.crowFlapScale) ? this.crowFlapScale : 1;
+          const waveScale = this.renderScale || 0.34;
           ctx.translate(this.x, this.y);
-          const heading = Number.isFinite(this.crowHeading)
-            ? this.crowHeading
-            : Math.atan2(this.vy || 0, this.vx || 1);
-          ctx.rotate(heading);
-          ctx.scale(1, Number.isFinite(this.crowFlapScale) ? this.crowFlapScale : 1);
-          ctx.fillStyle = '#171521';
-          ctx.strokeStyle = '#06060A';
-          ctx.lineWidth = 1.1;
-          ctx.beginPath();
-          ctx.moveTo(10, 0);
-          ctx.lineTo(2, 3);
-          ctx.lineTo(-6, 5);
-          ctx.lineTo(-12, 1);
-          ctx.lineTo(-7, -2);
-          ctx.lineTo(1, -4);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-3, 0);
-          ctx.lineTo(-10, -7);
-          ctx.lineTo(-5, -2);
-          ctx.moveTo(-3, 0);
-          ctx.lineTo(-8, 7);
-          ctx.lineTo(-4, 2);
-          ctx.stroke();
-          ctx.restore();
-          return;
-        }
-
-        // Miniboss flock members use the enlarged flying crow silhouette matching the large flock
-        if (this.isMinibossFlockMember) {
-          ctx.save();
-          if (this.isDefeated) {
-            const fadeProgress = Math.min(1, Math.max(0, (this.fleeTimer || this.foodDefeatTimer || 0) / 0.85));
-            ctx.globalAlpha = Math.max(0.08, 1 - fadeProgress * 0.92);
+          ctx.rotate(pitch);
+          ctx.scale(dir * waveScale, waveScale * (0.9 + (flapScale - 0.78) * 0.45));
+          const frame = getGlobalBakedBubakAtlas().getFrame('vrana', phaseTime, Boolean(this.panicked));
+          if (frame && typeof ctx.drawImage === 'function') {
+            ctx.drawImage(frame.canvas, -frame.originX, -frame.originY);
+          } else {
+            Lada.drawStageCrow(ctx, 0, 0, phaseTime, 1, Boolean(this.panicked));
           }
-          ctx.translate(this.x, this.y);
-          const heading = Math.atan2(this.vy || 0, this.vx || 1);
-          ctx.rotate(heading);
-          const flapSpeed = 16;
-          const flapPhase = (typeof this.flockIndex === 'number' ? this.flockIndex : 0) * 1.4;
-          const flapScale = 0.72 + Math.sin((this.animTime || 0) * flapSpeed + flapPhase) * 0.38;
-          const baseScale = 2.4 * (this.renderScale || 1.2);
-          ctx.scale(baseScale, baseScale * flapScale);
-          ctx.fillStyle = '#171521';
-          ctx.strokeStyle = '#06060A';
-          ctx.lineWidth = 1.1;
-          ctx.beginPath();
-          ctx.moveTo(10, 0);
-          ctx.lineTo(2, 3);
-          ctx.lineTo(-6, 5);
-          ctx.lineTo(-12, 1);
-          ctx.lineTo(-7, -2);
-          ctx.lineTo(1, -4);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(-3, 0);
-          ctx.lineTo(-10, -7);
-          ctx.lineTo(-5, -2);
-          ctx.moveTo(-3, 0);
-          ctx.lineTo(-8, 7);
-          ctx.lineTo(-4, 2);
-          ctx.stroke();
-          // Frosty wingtip highlights
-          ctx.strokeStyle = '#38BDF8';
-          ctx.lineWidth = 0.7;
-          ctx.beginPath();
-          ctx.moveTo(-7, -5);
-          ctx.lineTo(-10, -7);
-          ctx.moveTo(-6, 5);
-          ctx.lineTo(-8, 7);
-          ctx.stroke();
           ctx.restore();
           return;
         }
@@ -11122,7 +11160,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           didSaveAlpha = true;
         }
 
-        Lada.drawShadow(ctx, this.x, this.y, this.radius);
+        const shadowRadius = this.id === 'vrana' && !this.isMiniboss
+          ? this.radius * (this.renderScale || 0.34)
+          : this.radius;
+        Lada.drawShadow(ctx, this.x, this.y, shadowRadius);
 
         // Animovaná tematická svítící aura pro bubáky se speciálními prefixy i stav Vyčerpaný
         if (isGameEffectEnabled('combatVfxEnabled') && !this.isDefeated) {
@@ -11754,34 +11795,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const renderUnlockedHunterCard = (
     id: HunterDetailKey,
     name: string,
-    fallbackPortrait?: React.ReactNode
+    portrait?: React.ReactNode
   ) => {
     const hunterInfo = HUNTER_DETAILS[id];
-    const portrait = hasSmartSvgSprite(id) ? (
-      <div
-        className="portrait-canvas hunter-portrait-compact"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          background: 'radial-gradient(ellipse at bottom, #FDF3DB 0%, #F5E6CA 80%, #E7D7B6 100%)',
-          border: '2px solid var(--ink)',
-          borderRadius: '8px',
-          alignSelf: 'center',
-        }}
-        title={`Interaktivní náhled: ${name}`}
-      >
-        <SmartSpriteRenderer
-          spriteId={id}
-          state="walk"
-          size={160}
-          interactive={true}
-        />
-      </div>
-    ) : (
-      fallbackPortrait
-    );
     return (
       <div
         key={id}
@@ -12585,9 +12601,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             {/* Character Selection Grid with animated canvas portraits */}
             <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
-              {/* Krajánek a Poutník - výchozí lovci sdílejí stejnou kartu jako ostatní */}
-              {renderUnlockedHunterCard('krajanek', 'Krajánek')}
-              {renderUnlockedHunterCard('wanderer', 'Poutník')}
+              {/* Krajánek a Tulák */}
+              {renderHunterSelectCard(krajanekProg, krajanekRef)}
+              {renderHunterSelectCard(wandererProg, wandererRef)}
 
               {/* Pasáček (Progressive unlock) */}
               {renderHunterSelectCard(shepherdProg, shepherdRef)}
@@ -12825,10 +12841,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#111111' }}>
-                    Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Poutník'}
+                    Lovec: {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realName || 'Tulák'}
                   </span>
                   <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#451A03', marginTop: '2px' }}>
-                    {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický poutník'}
+                    {HUNTER_UNLOCKS[engineRef.current.player?.type as CharacterType || 'wanderer']?.realTitle || 'Vesnický tulák'}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

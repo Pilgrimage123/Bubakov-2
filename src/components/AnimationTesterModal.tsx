@@ -48,7 +48,7 @@ const HUNTERS_LIST: HunterDef[] = [
   },
   {
     id: 'wanderer',
-    name: 'Poutník (Tulák)',
+    name: 'Tulák',
     title: 'Vesnický tulák z Hrusic',
     desc: 'Výchozí hrdina s osikovým prutem, kloboukem a dýmkou. Ladovský krok s houpáním paží a obláčky kouře.',
     icon: 'wanderer',

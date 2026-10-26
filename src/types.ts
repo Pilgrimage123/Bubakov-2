@@ -457,6 +457,7 @@ export interface Enemy {
   isDefeated?: boolean;
   dead?: boolean;
   isUnholy?: boolean;
+  isFlying?: boolean;
   attackCadence?: EnemyAttackCadence;
   attackInterval?: number;
   snackTimer?: number;
@@ -487,6 +488,7 @@ export interface EnemyStats {
   title: string;
   category: string;
   isUnholy?: boolean;
+  isFlying?: boolean;
   hp: number;
   speed: number;
   damage: number;

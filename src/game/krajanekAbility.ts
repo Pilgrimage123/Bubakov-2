@@ -184,6 +184,22 @@ export function computeKrajanekSteering(
 }
 
 /**
+ * Returns true when an enemy is currently airborne (e.g. flying crows that have
+ * not landed on the ground to forage). The millstone rolls underneath airborne
+ * enemies without crushing or bouncing off them, while Oškrt sparks still hit them.
+ */
+export function isAirborneFlyingEnemy(enemy: any): boolean {
+  if (!enemy) return false;
+  return Boolean(
+    (enemy.isFlying ||
+      enemy.id === 'vrana' ||
+      enemy.isVirtualCrowMember ||
+      enemy.isMinibossFlockMember) &&
+      !enemy.isGroundedForLoot,
+  );
+}
+
+/**
  * Advances Krajánek's ride and handles all 4 momentum phases:
  * Phase 1: Unpack & initial ground slam shockwave
  * Phase 2: Heavy rollout acceleration with high maneuverability
@@ -250,10 +266,10 @@ export function stepKrajanekRide(
     callbacks.onCameraShake?.(0.45, 14);
     callbacks.onSound?.('zernovSlam');
 
-    // Primary shockwave pushes surrounding enemies to clear rollout runway
+    // Primary shockwave pushes surrounding ground enemies to clear rollout runway
     for (let i = 0; i < count; i++) {
       const enemy = nearby[i];
-      if (!enemy || enemy.isDefeated || enemy.dead) continue;
+      if (!enemy || enemy.isDefeated || enemy.dead || isAirborneFlyingEnemy(enemy)) continue;
       const dx = enemy.x - player.x;
       const dy = enemy.y - player.y;
       const dist = Math.hypot(dx, dy) || 1;
@@ -291,10 +307,10 @@ export function stepKrajanekRide(
     }
   }
 
-  // 3. Weight-based collision physics:
+  // 3. Weight-based collision physics (millstone rolls underneath airborne flying enemies):
   for (let i = 0; i < count; i++) {
     const enemy = nearby[i];
-    if (!enemy || enemy.isDefeated || enemy.dead) continue;
+    if (!enemy || enemy.isDefeated || enemy.dead || isAirborneFlyingEnemy(enemy)) continue;
 
     enemy.krajanekRideHitCooldown = Math.max(
       0,
@@ -452,7 +468,7 @@ export function stepKrajanekRide(
     callbacks?.onCameraShake?.(0.08, 6);
     callbacks?.onSound?.('zernovHammer');
 
-    // Sparks reach monsters outside the stone's direct path
+    // Sparks reach ground monsters outside the stone's direct path AND airborne flying enemies (even directly above the stone)
     for (let i = 0; i < count; i++) {
       const enemy = nearby[i];
       if (!enemy || enemy.isDefeated || enemy.dead) continue;
@@ -462,7 +478,8 @@ export function stepKrajanekRide(
       const distance = Math.hypot(dx, dy);
       const enemyRadius = Math.max(0, enemy.radius || 0);
       const touchingStone = distance <= radius + enemyRadius;
-      if (touchingStone || distance > KRAJANEK_SPARK_RADIUS + enemyRadius) continue;
+      const isFlying = isAirborneFlyingEnemy(enemy);
+      if ((!isFlying && touchingStone) || distance > KRAJANEK_SPARK_RADIUS + enemyRadius) continue;
       if (Number(enemy.maxHp ?? enemy.hp ?? 0) > blockHp) continue;
       if (typeof enemy.takeDamage === 'function') {
         enemy.takeDamage(KRAJANEK_SPARK_DAMAGE * damageScale, 'willpower', 0, 0, {
@@ -548,10 +565,10 @@ export function stepKrajanekCoastingStones(
     stone.y += stone.vy * dt;
     stone.life -= dt;
 
-    // Crush enemies in path
+    // Crush ground enemies in path (rolls underneath airborne flying crows)
     for (let j = 0; j < enemies.length; j++) {
       const e = enemies[j];
-      if (!e || e.isDefeated || e.dead) continue;
+      if (!e || e.isDefeated || e.dead || isAirborneFlyingEnemy(e)) continue;
       const dx = e.x - stone.x;
       const dy = e.y - stone.y;
       const dist = Math.hypot(dx, dy);
@@ -566,11 +583,11 @@ export function stepKrajanekCoastingStones(
       callbacks?.onSound?.('zernovSlam');
       callbacks?.onCameraShake?.(0.45, 14);
 
-      // Massive AOE crush around landing site
+      // Massive AOE crush around landing site (ground enemies only)
       const slamRadius = 110;
       for (let j = 0; j < enemies.length; j++) {
         const e = enemies[j];
-        if (!e || e.isDefeated || e.dead) continue;
+        if (!e || e.isDefeated || e.dead || isAirborneFlyingEnemy(e)) continue;
         const dx = e.x - stone.x;
         const dy = e.y - stone.y;
         const dist = Math.hypot(dx, dy);

@@ -10,6 +10,8 @@ import {
   STANDARD_MAGNET_MOBILITY,
   POUCH_SWEEP_RADIUS,
   CONSOLIDATION_BONUS,
+  FOOD_DROP_EXPIRATION,
+  isHealingDrop,
 } from './soaDropManager';
 import {
   computeVulnerabilityScore,
@@ -27,6 +29,8 @@ export {
   STANDARD_MAGNET_MOBILITY,
   POUCH_SWEEP_RADIUS,
   CONSOLIDATION_BONUS,
+  FOOD_DROP_EXPIRATION,
+  isHealingDrop,
   computeVulnerabilityScore,
   getDropPacingPhase,
   selectWeightedDropType,
@@ -294,13 +298,11 @@ export function releasePendingDrops(
   return released;
 }
 
-/** Healing drops stay on the map until the player can benefit from them. */
-export function isHealingDrop(type: DropType): boolean {
-  return type === 'potion' || type === 'bread' || type === 'pear';
-}
-
-export function canCollectDrop(type: DropType, currentHp: number, maxHp: number): boolean {
-  return !isHealingDrop(type) || currentHp < maxHp;
+export function canCollectDrop(type: DropType, currentHp: number, maxHp: number, player?: any): boolean {
+  if (!isHealingDrop(type)) return true;
+  if (currentHp < maxHp) return true;
+  if (player && (player.bearMaskLevel || 0) > 0) return true;
+  return false;
 }
 
 export interface DynamicDropResolution {
@@ -340,65 +342,32 @@ export function resolveDynamicDrop(
     vulnerabilityScore?: number;
     pacingPhase?: 'stress' | 'flow' | 'mercy';
     mercyCooldownActive?: boolean;
+    expiration?: number;
   } = {}
 ): DynamicDropResolution {
-  // When AI Director's Vulnerability Score V is supplied, modulate drops
-  if (typeof opts.vulnerabilityScore === 'number') {
-    const v = opts.vulnerabilityScore;
-    const phase = opts.pacingPhase ?? getDropPacingPhase(v);
-    const isHealing = isHealingDrop(intendedType);
+  const isHealing = isHealingDrop(intendedType);
+  const phase = opts.pacingPhase ?? (typeof opts.vulnerabilityScore === 'number' ? getDropPacingPhase(opts.vulnerabilityScore) : undefined);
+  const isFullCourage = currentHp >= maxHp * 0.95;
 
-    if (isHealing) {
-      if (phase === 'stress' || currentHp >= maxHp * 0.95) {
-        // Stress phase: suppress healing by 80% (or 88% if full courage)
-        const suppressRate = currentHp >= maxHp * 0.95 ? 0.88 : 0.80;
-        if (Math.random() < suppressRate && !opts.forceDivert) {
-          const isVolatile = Math.random() < 0.50;
-          return {
-            type: 'gingerbread',
-            value: opts.value ?? GINGERBREAD_VALUES.large,
-            size: 'large',
-            isHot: isVolatile,
-            expiration: isVolatile ? 4.0 + Math.random() * 2.0 : undefined,
-            speed: opts.speed,
-            text: isVolatile ? 'Horký perník! 🔥' : '+6 Perníček!',
-            textColor: isVolatile ? '#EF4444' : '#B45309',
-          };
-        }
-      } else if (phase === 'mercy') {
-        return {
-          type: intendedType,
-          value: opts.value,
-          size: opts.size,
-          speed: opts.speed,
-          radius: opts.radius,
-          isMercyDrop: true,
-          text: opts.text,
-          textColor: opts.textColor,
-        };
-      }
-    } else if (intendedType === 'gingerbread' && phase === 'stress' && !opts.isHot) {
-      // 50% chance volatile offensive buff inside stress clusters
-      if (Math.random() < 0.50) {
-        return {
-          type: 'gingerbread',
-          value: opts.value,
-          size: opts.size,
-          speed: opts.speed,
-          radius: opts.radius,
-          isHot: true,
-          expiration: 4.0 + Math.random() * 2.0,
-          text: 'Horký perník! 🔥',
-          textColor: '#EF4444',
-        };
-      }
+  // 1. Stress Phase: Volatile offensive buff for regular gingerbread drops
+  if (intendedType === 'gingerbread' && phase === 'stress' && !opts.isHot) {
+    if (Math.random() < 0.50) {
+      return {
+        type: 'gingerbread',
+        value: opts.value,
+        size: opts.size,
+        speed: opts.speed,
+        radius: opts.radius,
+        isHot: true,
+        expiration: 4.0 + Math.random() * 2.0,
+        text: 'Horký perník! 🔥',
+        textColor: '#EF4444',
+      };
     }
   }
 
-  const isFullCourage = currentHp >= maxHp * 0.95;
-  const isHealing = isHealingDrop(intendedType);
-
-  if (!isHealing || !isFullCourage) {
+  // If not a healing drop, return intended drop intact
+  if (!isHealing) {
     return {
       type: intendedType,
       value: opts.value,
@@ -407,23 +376,58 @@ export function resolveDynamicDrop(
       radius: opts.radius,
       text: opts.text,
       textColor: opts.textColor,
+      isHot: opts.isHot,
+      expiration: opts.expiration,
     };
   }
 
-  // Lovec má plnou Kuráž! 88% šance vyměnit zbytečné léčení za cennější kořist.
+  // 2. Healing drop resolution:
+  // Determine if healing drop should be suppressed and diverted:
+  // - Full Courage (>= 95%): 88% suppression (ADR 0006)
+  // - Stress Phase: 80% suppression (ADR 0028b)
+  // - Mercy Cooldown Active (ADR 0028b 15s protection): 85% suppression to prevent heal spam
+  const shouldDivert = opts.forceDivert || (
+    isFullCourage
+      ? Math.random() < 0.88
+      : phase === 'stress'
+      ? Math.random() < 0.80
+      : opts.mercyCooldownActive
+      ? Math.random() < 0.85
+      : false
+  );
+
+  // If NOT diverted, spawn the healing drop with proper freshness expiration
+  if (!shouldDivert) {
+    const isMercy = phase === 'mercy' && !opts.mercyCooldownActive && currentHp < maxHp * 0.45;
+    return {
+      type: intendedType,
+      value: opts.value,
+      size: opts.size,
+      speed: opts.speed,
+      radius: opts.radius,
+      isMercyDrop: isMercy,
+      expiration: opts.expiration ?? FOOD_DROP_EXPIRATION,
+      text: opts.text,
+      textColor: opts.textColor,
+    };
+  }
+
+  // 3. Healing was diverted: Replace with valuable non-food reward!
+  // In stress phase, 50% chance for volatile offensive gingerbread
+  if (phase === 'stress' && Math.random() < 0.50) {
+    return {
+      type: 'gingerbread',
+      value: opts.value ?? GINGERBREAD_VALUES.large,
+      size: 'large',
+      isHot: true,
+      expiration: 4.0 + Math.random() * 2.0,
+      speed: opts.speed,
+      text: 'Horký perník! 🔥',
+      textColor: '#EF4444',
+    };
+  }
+
   const roll = Math.random();
-  if (roll < 0.12 && !opts.forceDivert) {
-    // 12% šance ponechat léčení na zemi pro budoucí nouzi
-    return {
-      type: intendedType,
-      value: opts.value,
-      size: opts.size,
-      speed: opts.speed,
-      radius: opts.radius,
-      text: opts.text,
-      textColor: opts.textColor,
-    };
-  }
 
   if (opts.isBoss || opts.isMiniboss) {
     if (roll < 0.48) {
@@ -709,7 +713,9 @@ export function createDropInstance(
   drop.magnetMobility = opts.magnetMobility !== undefined
     ? opts.magnetMobility
     : (opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash' || type === 'chest' ? HEAVY_ANCHOR_MAGNET_MOBILITY : 1.0);
-  drop.expiration = opts.expiration;
+  drop.expiration = opts.expiration !== undefined
+    ? opts.expiration
+    : (isHealingDrop(type) ? FOOD_DROP_EXPIRATION : undefined);
   drop.isHeavyAnchor = opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash';
   drop.isMercyDrop = opts.isMercyDrop;
   return drop;
@@ -833,6 +839,43 @@ export function performDropFusion(
     });
     drops.push(fusedCoin);
     aliveCount++;
+  }
+
+  // 4. Slévání a konsolidace nezkonzumovaného jídla mimo obrazovku
+  // Pokud je aréna přeplněná a mimo obrazovku leží nezkonzumované jídlo (chléb, hrušky, jitrnice),
+  // sloučí se do záchranného košíku perníku (gingerbread_stash) nebo se uvolní nejstarší kusy,
+  // aby jídlo neblokovalo strop kořisti pro krejcary a perníčky.
+  const unconsumedFood: GameDrop[] = [];
+  for (let i = 0; i < drops.length; i++) {
+    const d = drops[i];
+    if (!d.dead && isHealingDrop(d.type) && isOffScreen(d)) {
+      unconsumedFood.push(d);
+    }
+  }
+
+  while (unconsumedFood.length >= 2 && aliveCount > maxLimit) {
+    const f1 = unconsumedFood.pop()!;
+    const f2 = unconsumedFood.pop()!;
+    f1.dead = true;
+    f2.dead = true;
+    aliveCount -= 2;
+    fusedCount += 1;
+
+    const fusedStash = createDropInstance('gingerbread_stash', f1.x, f1.y, {
+      value: 25,
+      speed: 0,
+      isHeavyAnchor: true,
+      isMercyDrop: true,
+    });
+    drops.push(fusedStash);
+    aliveCount++;
+  }
+
+  while (unconsumedFood.length >= 1 && aliveCount > maxLimit) {
+    const f = unconsumedFood.pop()!;
+    f.dead = true;
+    aliveCount--;
+    fusedCount++;
   }
 
   return fusedCount;

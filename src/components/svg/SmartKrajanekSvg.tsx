@@ -230,26 +230,27 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
           <stop offset="100%" stopColor="#FDBA74" />
         </radialGradient>
 
-        {/* Dusty Miller Cap Felt */}
+        {/* Alpine Green Felt Hat */}
         <linearGradient id="krajanekCapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#78716C" />
-          <stop offset="50%" stopColor="#57534E" />
-          <stop offset="100%" stopColor="#44403C" />
+          <stop offset="0%" stopColor="#3F7A35" />
+          <stop offset="50%" stopColor="#2D5A27" />
+          <stop offset="100%" stopColor="#1B3817" />
         </linearGradient>
 
-        {/* Brown Corduroy Vest */}
+        {/* Royal Blue Folk Vest (Kordulka) with piping */}
         <linearGradient id="krajanekVestGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#92400E" />
-          <stop offset="40%" stopColor="#B45309" />
-          <stop offset="80%" stopColor="#78350F" />
-          <stop offset="100%" stopColor="#5B2105" />
+          <stop offset="0%" stopColor="#1D4ED8" />
+          <stop offset="40%" stopColor="#2563EB" />
+          <stop offset="80%" stopColor="#1E40AF" />
+          <stop offset="100%" stopColor="#172554" />
         </linearGradient>
 
-        {/* Peasant Trousers */}
+        {/* Golden-Yellow Peasant Breeches */}
         <linearGradient id="krajanekPantsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="50%" stopColor="#2563EB" />
-          <stop offset="100%" stopColor="#1D4ED8" />
+          <stop offset="0%" stopColor="#FDE047" />
+          <stop offset="40%" stopColor="#FACC15" />
+          <stop offset="80%" stopColor="#EAB308" />
+          <stop offset="100%" stopColor="#CA8A04" />
         </linearGradient>
 
         {/* Granite Millstone Texture */}
@@ -268,6 +269,12 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
           <circle cx="14" cy="0" r="2.8" fill="#FFFFFF" />
           <circle cx="0" cy="14" r="2.8" fill="#FFFFFF" />
           <circle cx="14" cy="14" r="2.8" fill="#FFFFFF" />
+        </pattern>
+
+        {/* Blue and White Striped Stockings Pattern */}
+        <pattern id="krajanekStripedSocks" width="8" height="8" patternUnits="userSpaceOnUse">
+          <rect width="4" height="8" fill="#FFFFFF" />
+          <rect x="4" width="4" height="8" fill="#2563EB" />
         </pattern>
 
         {/* Golden Wheat Spikelet */}
@@ -415,41 +422,60 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
         )}
 
         {/* ======================================================== */}
-        {/* KRAJÁNEK - ROOT TRANSFORMED WITH BOB AND SWAY           */}
+        {/* KRAJÁNEK ROOT WITH KINEMATICS                           */}
         {/* ======================================================== */}
-        <g id="krajanek-body" transform={`translate(0, ${bobY}) rotate(${bodyLean}, 240, 300)`}>
-          {/* 1. ARTICULATED FEET / BOOTS (UNDER SKIRT/PANTS) */}
+        <g id="krajanek-body" transform={isAction ? 'translate(0, 0)' : `translate(0, ${bobY}) rotate(${bodyLean}, 240, 290)`}>
+          {/* 1. ARTICULATED FEET & STRIPED STOCKINGS & BUCKLED SHOES */}
           {!isAction && (
             <g id="krajanek-shoes" transform="translate(240, 395)">
-              {/* Left Boot */}
+              {/* Left Leg: Blue-White Striped Stocking & Shoe */}
               <g
                 id="krajanek-left-boot"
                 transform={`translate(${leftShoeX}, ${leftShoeY}) rotate(${leftShoeRot})`}
               >
+                {/* Striped Stocking */}
                 <path
-                  d="M -14,-14 L -6,-14 L 6,10 L 18,10 C 24,10 26,16 22,20 C 14,24 -16,24 -20,20 C -22,16 -18,-6 -14,-14 Z"
-                  fill="#78350F"
+                  d="M -10,-24 L 10,-24 L 8,4 L -8,4 Z"
+                  fill="url(#krajanekStripedSocks)"
                   stroke="#1C1610"
-                  strokeWidth={showOutline ? '4' : '3'}
+                  strokeWidth="2.5"
+                />
+                {/* Black Leather Shoe with Heel & Brass Buckle */}
+                <path
+                  d="M -16,-2 L -8,-2 L 6,10 L 22,10 C 28,10 30,16 26,21 C 18,25 -16,25 -22,21 C -24,16 -20,-2 -16,-2 Z"
+                  fill="#1E293B"
+                  stroke="#1C1610"
+                  strokeWidth={showOutline ? '4.5' : '3.5'}
                   strokeLinejoin="round"
                 />
+                {/* Thick Sole */}
+                <path d="M -22,21 C -16,25 18,25 26,21 L 24,25 C 16,28 -16,28 -22,25 Z" fill="#0F172A" stroke="#1C1610" strokeWidth="2" />
                 {/* Boot Brass Buckle */}
-                <rect x="0" y="8" width="9" height="7" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+                <rect x="2" y="8" width="10" height="8" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.6" />
+                <rect x="5" y="10" width="4" height="4" fill="#0F172A" />
               </g>
 
-              {/* Right Boot */}
+              {/* Right Leg: Blue-White Striped Stocking & Shoe */}
               <g
                 id="krajanek-right-boot"
                 transform={`translate(${rightShoeX}, ${rightShoeY}) rotate(${rightShoeRot})`}
               >
                 <path
-                  d="M -14,-14 L -6,-14 L 6,10 L 18,10 C 24,10 26,16 22,20 C 14,24 -16,24 -20,20 C -22,16 -18,-6 -14,-14 Z"
-                  fill="#78350F"
+                  d="M -10,-24 L 10,-24 L 8,4 L -8,4 Z"
+                  fill="url(#krajanekStripedSocks)"
                   stroke="#1C1610"
-                  strokeWidth={showOutline ? '4' : '3'}
+                  strokeWidth="2.5"
+                />
+                <path
+                  d="M -16,-2 L -8,-2 L 6,10 L 22,10 C 28,10 30,16 26,21 C 18,25 -16,25 -22,21 C -24,16 -20,-2 -16,-2 Z"
+                  fill="#1E293B"
+                  stroke="#1C1610"
+                  strokeWidth={showOutline ? '4.5' : '3.5'}
                   strokeLinejoin="round"
                 />
-                <rect x="0" y="8" width="9" height="7" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+                <path d="M -22,21 C -16,25 18,25 26,21 L 24,25 C 16,28 -16,28 -22,25 Z" fill="#0F172A" stroke="#1C1610" strokeWidth="2" />
+                <rect x="2" y="8" width="10" height="8" rx="2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.6" />
+                <rect x="5" y="10" width="4" height="4" fill="#0F172A" />
               </g>
             </g>
           )}
@@ -459,16 +485,28 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
             <g id="krajanek-action-feet" transform="translate(240, 390)">
               <g transform="translate(-32, 10) rotate(-12)">
                 <path
-                  d="M -12,-12 L 8,6 L 20,6 C 26,6 28,12 24,16 C 14,20 -14,20 -18,16 Z"
-                  fill="#78350F"
+                  d="M -10,-22 L 10,-22 L 8,2 L -8,2 Z"
+                  fill="url(#krajanekStripedSocks)"
+                  stroke="#1C1610"
+                  strokeWidth="2.5"
+                />
+                <path
+                  d="M -14,-4 L 8,6 L 22,6 C 28,6 30,14 26,18 C 16,22 -14,22 -20,18 Z"
+                  fill="#1E293B"
                   stroke="#1C1610"
                   strokeWidth="3.5"
                 />
               </g>
               <g transform="translate(34, 12) rotate(16)">
                 <path
-                  d="M -12,-12 L 8,6 L 20,6 C 26,6 28,12 24,16 C 14,20 -14,20 -18,16 Z"
-                  fill="#78350F"
+                  d="M -10,-22 L 10,-22 L 8,2 L -8,2 Z"
+                  fill="url(#krajanekStripedSocks)"
+                  stroke="#1C1610"
+                  strokeWidth="2.5"
+                />
+                <path
+                  d="M -14,-4 L 8,6 L 22,6 C 28,6 30,14 26,18 C 16,22 -14,22 -20,18 Z"
+                  fill="#1E293B"
                   stroke="#1C1610"
                   strokeWidth="3.5"
                 />
@@ -476,28 +514,33 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
             </g>
           )}
 
-          {/* 2. BLUE PEASANT PANTS WITH KNEE PATCHES */}
+          {/* 2. GOLDEN YELLOW PEASANT BREECHES WITH KNEE PATCH */}
           <g id="krajanek-trousers" transform="translate(240, 320)">
             <path
-              d="M -38,-10 C -42,30 -44,70 -30,85 C -20,86 -14,75 -6,45 C 2,75 8,86 18,85 C 32,70 30,30 26,-10 Z"
+              d="M -40,-12 C -46,30 -48,68 -32,84 C -22,86 -14,75 -6,45 C 2,75 8,86 18,84 C 34,68 32,30 28,-12 Z"
               fill="url(#krajanekPantsGrad)"
               stroke="#1C1610"
-              strokeWidth={showOutline ? '4.5' : '3.5'}
+              strokeWidth={showOutline ? '4.8' : '3.8'}
               strokeLinejoin="round"
             />
-            {/* Knee Patch (Czech folklore craft aesthetic) */}
-            <g transform="translate(-24, 45) rotate(-8)">
-              <rect x="-8" y="-8" width="16" height="15" rx="3" fill="#D97706" stroke="#1C1610" strokeWidth="2" />
-              <line x1="-6" y1="-8" x2="-6" y2="7" stroke="#FEF3C7" strokeWidth="1.2" strokeDasharray="2 2" />
-              <line x1="6" y1="-8" x2="6" y2="7" stroke="#FEF3C7" strokeWidth="1.2" strokeDasharray="2 2" />
+            {/* Gathers at knees */}
+            <path d="M -38,72 C -32,76 -24,76 -18,72" fill="none" stroke="#CA8A04" strokeWidth="2.5" />
+            <path d="M 6,72 C 12,76 20,76 26,72" fill="none" stroke="#CA8A04" strokeWidth="2.5" />
+            {/* Stitched Brown Knee Patch on Right Thigh */}
+            <g transform="translate(-24, 38) rotate(-6)">
+              <rect x="-9" y="-9" width="18" height="18" rx="2" fill="#92400E" stroke="#1C1610" strokeWidth="2.2" />
+              <line x1="-7" y1="-7" x2="-7" y2="7" stroke="#FEF08A" strokeWidth="1.5" strokeDasharray="3 2" />
+              <line x1="7" y1="-7" x2="7" y2="7" stroke="#FEF08A" strokeWidth="1.5" strokeDasharray="3 2" />
+              <line x1="-7" y1="-7" x2="7" y2="-7" stroke="#FEF08A" strokeWidth="1.5" strokeDasharray="3 2" />
+              <line x1="-7" y1="7" x2="7" y2="7" stroke="#FEF08A" strokeWidth="1.5" strokeDasharray="3 2" />
             </g>
             {/* White flour dusting on thigh */}
-            <ellipse cx="14" cy="40" rx="10" ry="16" fill="#FFFFFF" opacity="0.45" />
+            <ellipse cx="14" cy="40" rx="9" ry="14" fill="#FFFFFF" opacity="0.4" />
           </g>
 
-          {/* 3. SHOULDER STICK & POLKA-DOT BINDLE (uzlík na holi) */}
+          {/* 3. SHOULDER STICK & RED POLKA-DOT BINDLE (uzlík na holi) */}
           <g id="shoulder-stick-group" transform={`translate(240, 205) rotate(${bindleAngle})`}>
-            {/* Wooden Branch Stick */}
+            {/* Carved Wooden Branch Stick */}
             <path
               d="M -115,22 C -60,0 60,-15 110,-28"
               fill="none"
@@ -508,91 +551,103 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
             <path
               d="M -115,22 C -60,0 60,-15 110,-28"
               fill="none"
-              stroke="#B45309"
+              stroke="#D97706"
               strokeWidth="4"
               strokeLinecap="round"
             />
 
-            {/* Red & White Polka-Dot Bindle (Ranec / Mošna) */}
+            {/* Red & White Polka-Dot Bindle (Ranec na holi dle předlohy) */}
             <g transform={`translate(-85, 30) translate(0, ${bindleSagY})`}>
-              {/* Knot on Stick */}
+              {/* Tied knot ears on stick */}
               <ellipse cx="0" cy="-14" rx="10" ry="8" fill="#B91C1C" stroke="#1C1610" strokeWidth="3" />
-              <path d="M -8,-16 C -14,-26 -4,-28 0,-18 C 4,-28 14,-26 8,-16 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2.5" />
+              <path d="M -8,-16 C -15,-28 -4,-30 0,-18 C 4,-30 15,-28 8,-16 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2.5" />
 
-              {/* Main Swollen Pouch */}
+              {/* Main Swollen Polka-Dot Pouch */}
               <ellipse
                 cx="0"
                 cy="18"
-                rx="34"
-                ry="30"
+                rx="35"
+                ry="32"
                 fill="url(#krajanekPolkaDot)"
                 stroke="#1C1610"
-                strokeWidth={showOutline ? '4.5' : '3.5'}
+                strokeWidth={showOutline ? '4.8' : '3.8'}
               />
 
-              {/* Wooden Spoon & Loaf Crust Sticking Out of Bindle */}
-              <g transform="translate(-14, -8) rotate(-24)">
-                {/* Spoon Handle */}
-                <rect x="-2" y="-22" width="4" height="22" rx="2" fill="#D97706" stroke="#1C1610" strokeWidth="1.5" />
-                <ellipse cx="0" cy="-24" rx="6" ry="8" fill="#F59E0B" stroke="#1C1610" strokeWidth="1.5" />
-              </g>
-              <g transform="translate(15, -4) rotate(20)">
-                {/* Bread Crust */}
-                <path d="M 0,-14 C 8,-18 16,-12 18,-4 C 12,-2 4,2 0,-14 Z" fill="#92400E" stroke="#1C1610" strokeWidth="2" />
-              </g>
-
-              {/* Bindle Fabric Crease Lines */}
+              {/* Bindle fabric crease lines */}
               <path d="M -18,12 C -8,28 12,28 22,14" fill="none" stroke="#991B1B" strokeWidth="3" />
               <path d="M -12,3 C -4,15 10,16 16,5" fill="none" stroke="#991B1B" strokeWidth="2.5" />
             </g>
           </g>
 
-          {/* 4. LINEN SHIRT & CORDUROY VEST */}
-          <g id="krajanek-torso" transform="translate(240, 260)">
-            {/* White Peasant Linen Shirt Sleeves */}
+          {/* 4. PEASANT LINEN SHIRT & ROYAL BLUE FOLK VEST WITH BRASS BUTTONS */}
+          <g id="krajanek-torso" transform="translate(240, 255)">
+            {/* Puffy White Peasant Linen Shirt Sleeves */}
             <path
-              d="M -56,-30 C -75,0 -70,30 -58,40 C -50,42 -42,30 -44,12 L -42,-18 Z"
-              fill="#F8FAFC"
+              d="M -56,-32 C -78,0 -74,32 -60,42 C -52,44 -44,32 -46,14 L -44,-20 Z"
+              fill="#FFFFFF"
               stroke="#1C1610"
-              strokeWidth="3.5"
+              strokeWidth="3.6"
             />
             <path
-              d="M 44,-18 L 42,12 C 40,30 48,42 56,40 C 68,30 73,0 54,-30 Z"
-              fill="#F8FAFC"
+              d="M 44,-20 L 44,14 C 42,32 50,44 58,42 C 72,32 76,0 54,-32 Z"
+              fill="#FFFFFF"
               stroke="#1C1610"
-              strokeWidth="3.5"
+              strokeWidth="3.6"
             />
+            {/* Sleeve Crease Lines */}
+            <path d="M -64,15 Q -54,20 -48,15" stroke="#CBD5E1" strokeWidth="2" fill="none" />
+            <path d="M 48,15 Q 54,20 64,15" stroke="#CBD5E1" strokeWidth="2" fill="none" />
 
-            {/* Vest Body */}
+            {/* Royal Blue Folk Vest (Kordulka) Body */}
             <path
-              d="M -44,-32 C -46,20 -44,55 -38,62 C -18,66 18,66 38,62 C 44,55 46,20 44,-32 C 24,-24 -24,-24 -44,-32 Z"
+              d="M -44,-32 C -46,20 -44,58 -38,65 C -18,70 18,70 38,65 C 44,58 46,20 44,-32 C 24,-24 -24,-24 -44,-32 Z"
               fill="url(#krajanekVestGrad)"
               stroke="#1C1610"
-              strokeWidth={showOutline ? '4.5' : '3.5'}
+              strokeWidth={showOutline ? '4.8' : '3.8'}
               strokeLinejoin="round"
             />
 
-            {/* Open Linen Collar / Lapels */}
-            <path d="M -30,-30 L 0,8 L -16,-30 Z" fill="#F1F5F9" stroke="#1C1610" strokeWidth="2.8" />
-            <path d="M 30,-30 L 0,8 L 16,-30 Z" fill="#F1F5F9" stroke="#1C1610" strokeWidth="2.8" />
+            {/* Green and Gold Trim Piping on Vest */}
+            <path
+              d="M -40,-30 C -42,18 -40,54 -34,60 C -16,64 16,64 34,60 C 40,54 42,18 40,-30"
+              fill="none"
+              stroke="#16A34A"
+              strokeWidth="2.5"
+            />
 
-            {/* Red & White Spotted Neckerchief Knot */}
-            <g transform="translate(0, -22)">
-              <ellipse cx="0" cy="0" rx="9" ry="7" fill="#DC2626" stroke="#1C1610" strokeWidth="2.5" />
-              <circle cx="-3" cy="-1" r="1.8" fill="#FFFFFF" />
-              <circle cx="3" cy="1" r="1.8" fill="#FFFFFF" />
-              {/* Neckerchief Tails */}
-              <path d="M -4,5 L -10,18 L -1,14 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2" />
-              <path d="M 4,5 L 10,18 L 1,14 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2" />
-            </g>
+            {/* Open Linen Shirt Center */}
+            <path d="M -18,-30 L 0,25 L 18,-30 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2.5" />
+            <line x1="0" y1="-20" x2="0" y2="25" stroke="#CBD5E1" strokeWidth="2" />
 
-            {/* Brass Horn Buttons on Vest */}
-            {[0, 18, 36].map((by) => (
-              <circle key={by} cx="0" cy={by} r="4.5" fill="#FACC15" stroke="#1C1610" strokeWidth="2" />
+            {/* Two Rows of Golden Brass Ball Buttons (Signature 6 buttons) */}
+            {[-12, 6, 24].map((by) => (
+              <g key={by}>
+                {/* Left Row */}
+                <circle cx="-16" cy={by} r="4.5" fill="#FDE047" stroke="#1C1610" strokeWidth="1.8" />
+                <circle cx="-17" cy={by - 1} r="1.5" fill="#FFFFFF" />
+                {/* Right Row */}
+                <circle cx="16" cy={by} r="4.5" fill="#FDE047" stroke="#1C1610" strokeWidth="1.8" />
+                <circle cx="15" cy={by - 1} r="1.5" fill="#FFFFFF" />
+              </g>
             ))}
 
-            {/* White Flour Smudge on Vest */}
-            <ellipse cx="-20" cy="22" rx="12" ry="8" fill="#FFFFFF" opacity="0.4" />
+            {/* RED & WHITE POLKA-DOT NECKERCHIEF (KRAJÁNKŮV ČERVENÝ ŠÁTEK S BÍLÝMI PUNTÍKY) */}
+            <g transform="translate(0, -26)">
+              {/* Scarf draped collar */}
+              <path
+                d="M -26,-6 C -14,14 14,14 26,-6 C 18,-10 -18,-10 -26,-6 Z"
+                fill="url(#krajanekPolkaDot)"
+                stroke="#1C1610"
+                strokeWidth="2.8"
+              />
+              {/* Tied Neckerchief Knot and Flapping Ends */}
+              <ellipse cx="0" cy="4" rx="7" ry="5.5" fill="#DC2626" stroke="#1C1610" strokeWidth="2.2" />
+              <circle cx="0" cy="4" r="2" fill="#FFFFFF" />
+              <path d="M -4,7 C -10,18 -16,24 -12,28 C -6,26 -2,16 -2,8 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2" />
+              <circle cx="-8" cy="18" r="1.8" fill="#FFFFFF" />
+              <path d="M 4,7 C 10,18 16,24 12,28 C 6,26 2,16 2,8 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2" />
+              <circle cx="8" cy="18" r="1.8" fill="#FFFFFF" />
+            </g>
           </g>
 
           {/* 5. STONECRAFT HAMMER IN HAND (kamenické kladívko / pemrlice) */}
@@ -621,7 +676,6 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
 
             {/* Forged Iron Pick / Millstone Dressing Head */}
             <g transform="translate(22, 14)">
-              {/* Double-headed pick */}
               <path
                 d="M -22,-6 L 22,-6 L 26,0 L 22,6 L -22,6 L -26,0 Z"
                 fill="url(#ironHammerGrad)"
@@ -632,125 +686,134 @@ export const SmartKrajanekSvg: React.FC<SmartCharacterProps> = ({
             </g>
           </g>
 
-          {/* 6. HEAD, EXPRESSION & FLOUR-DUSTED CAP */}
-          <g id="krajanek-head" transform={`translate(240, 165)`}>
+          {/* 6. HEAD, CHEERFUL WINKING EXPRESSION, CURLY HAIR & GREEN FELT HAT */}
+          <g id="krajanek-head" transform="translate(240, 160)">
             {/* Neck */}
             <rect x="-14" y="32" width="28" height="24" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="3" />
 
-            {/* Cheerful Round Face */}
+            {/* Curly Brown Hair Background */}
+            <g transform="translate(0, -6)">
+              <circle cx="-32" cy="10" r="14" fill="#78350F" stroke="#1C1610" strokeWidth="2.5" />
+              <circle cx="32" cy="10" r="14" fill="#78350F" stroke="#1C1610" strokeWidth="2.5" />
+              <circle cx="-28" cy="22" r="11" fill="#78350F" stroke="#1C1610" strokeWidth="2.5" />
+              <circle cx="28" cy="22" r="11" fill="#78350F" stroke="#1C1610" strokeWidth="2.5" />
+            </g>
+
+            {/* Round Jovial Head Base */}
             <ellipse
               cx="0"
               cy="12"
-              rx="34"
-              ry="38"
+              rx="35"
+              ry="37"
               fill="url(#krajanekSkinGrad)"
               stroke="#1C1610"
-              strokeWidth={showOutline ? '4.5' : '3.5'}
+              strokeWidth={showOutline ? '4.8' : '3.8'}
             />
 
-            {/* Rosy Cheeks */}
-            <circle cx="-20" cy="18" r="9" fill="#F87171" opacity="0.45" />
-            <circle cx="20" cy="18" r="9" fill="#F87171" opacity="0.45" />
+            {/* Rosy Round Cheeks */}
+            <circle cx="-20" cy="16" r="12" fill="#F87171" opacity="0.6" />
+            <circle cx="20" cy="16" r="12" fill="#F87171" opacity="0.6" />
 
-            {/* White Flour Dusting on Cheeks */}
-            <ellipse cx="-16" cy="12" rx="7" ry="5" fill="#FFFFFF" opacity="0.5" />
-            <ellipse cx="18" cy="14" rx="6" ry="4" fill="#FFFFFF" opacity="0.5" />
+            {/* Bulbous Red Nose */}
+            <circle cx="0" cy="13" r="9.5" fill="#EF4444" stroke="#1C1610" strokeWidth="3" />
+            <circle cx="-3" cy="10" r="3.2" fill="#FED7AA" />
 
-            {/* Rounded Nose with cute highlight */}
-            <circle cx="0" cy="14" r="8.5" fill="#FB923C" stroke="#1C1610" strokeWidth="2.8" />
-            <circle cx="-2" cy="12" r="3" fill="#FED7AA" />
+            {/* Round Ears */}
+            <ellipse cx="-35" cy="12" rx="7" ry="11" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
+            <ellipse cx="35" cy="12" rx="7" ry="11" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
 
-            {/* Friendly Ears with Earlobes */}
-            <g transform="translate(-34, 12)">
-              <ellipse cx="0" cy="0" rx="6" ry="11" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
-              <path d="M 0,-4 C 3,-2 3,2 0,4" fill="none" stroke="#EA580C" strokeWidth="2" />
-            </g>
-            <g transform="translate(34, 12)">
-              <ellipse cx="0" cy="0" rx="6" ry="11" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
-              <path d="M 0,-4 C -3,-2 -3,2 0,4" fill="none" stroke="#EA580C" strokeWidth="2" />
-            </g>
-
-            {/* Big Friendly Eyes with Pupil Tracking */}
-            <g transform="translate(-14, 0)">
-              <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
-              <circle cx={gazeX} cy={gazeY} r="4.2" fill="#451A03" />
-              <circle cx={gazeX - 1.5} cy={gazeY - 1.5} r="1.5" fill="#FFFFFF" />
-            </g>
-            <g transform="translate(14, 0)">
-              <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
-              <circle cx={gazeX} cy={gazeY} r="4.2" fill="#451A03" />
-              <circle cx={gazeX - 1.5} cy={gazeY - 1.5} r="1.5" fill="#FFFFFF" />
-            </g>
+            {/* EYES: CHARMING WINK (Right eye winking shut playfully in a happy arch, Left eye wide open and laughing) */}
+            {isReact || isFleeing ? (
+              // Startled open eyes
+              <>
+                <g transform="translate(-14, 0)">
+                  <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
+                  <circle cx={gazeX} cy={gazeY} r="3.5" fill="#451A03" />
+                </g>
+                <g transform="translate(14, 0)">
+                  <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
+                  <circle cx={gazeX} cy={gazeY} r="3.5" fill="#451A03" />
+                </g>
+              </>
+            ) : (
+              // Signature Josef Lada Winking Expression from Image 3
+              <>
+                {/* Left eye winking shut in a joyful curved line */}
+                <g transform="translate(-15, 0)">
+                  <path d="M -8,4 Q 0,-6 8,4" fill="none" stroke="#1C1610" strokeWidth="3.8" strokeLinecap="round" />
+                  <line x1="-5" y1="2" x2="-8" y2="6" stroke="#1C1610" strokeWidth="2.2" strokeLinecap="round" />
+                  <line x1="5" y1="2" x2="8" y2="6" stroke="#1C1610" strokeWidth="2.2" strokeLinecap="round" />
+                </g>
+                {/* Right eye wide open, merry and sparkling */}
+                <g transform="translate(15, 0)">
+                  <ellipse cx="0" cy="0" rx="8" ry="9" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2.8" />
+                  <circle cx={gazeX} cy={gazeY} r="4.5" fill="#451A03" />
+                  <circle cx={gazeX - 1.5} cy={gazeY - 1.5} r="1.8" fill="#FFFFFF" />
+                </g>
+              </>
+            )}
 
             {/* Cheerful Eyebrows */}
-            <path
-              d={isReact ? "M -22,-14 C -16,-18 -8,-14 -6,-10" : "M -22,-10 C -16,-16 -8,-14 -6,-10"}
-              fill="none"
-              stroke="#78350F"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-            />
-            <path
-              d={isReact ? "M 6,-10 C 8,-14 16,-18 22,-14" : "M 6,-10 C 8,-14 16,-16 22,-10"}
-              fill="none"
-              stroke="#78350F"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-            />
+            <path d="M -22,-10 Q -15,-17 -7,-11" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
+            <path d="M 7,-11 Q 15,-17 22,-10" fill="none" stroke="#78350F" strokeWidth="3.2" strokeLinecap="round" />
 
-            {/* Jovial Smile / Expression */}
+            {/* BROAD JOYFUL LAUGHING MOUTH WITH TONGUE & WHITE TEETH */}
             {isReact || isFleeing ? (
-              /* Startled / Panic Open Mouth */
-              <ellipse cx="0" cy="28" rx="10" ry="12" fill="#7F1D1D" stroke="#1C1610" strokeWidth="3" />
-            ) : isAction ? (
-              /* Determined Battle Shout */
-              <g transform="translate(0, 26)">
-                <path d="M -16,-4 C -10,14 10,14 16,-4 Z" fill="#991B1B" stroke="#1C1610" strokeWidth="3" />
-                <path d="M -12,-3 C -6,2 6,2 12,-3" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
-              </g>
+              <ellipse cx="0" cy="27" rx="10" ry="12" fill="#7F1D1D" stroke="#1C1610" strokeWidth="3" />
             ) : (
-              /* Broad Warm Folk Smile */
               <g transform="translate(0, 24)">
-                <path d="M -18,-2 C -10,12 10,12 18,-2" fill="none" stroke="#1C1610" strokeWidth="3.8" strokeLinecap="round" />
-                {/* Dimples */}
-                <path d="M -20,-4 C -22,-2 -20,2 -18,2" fill="none" stroke="#1C1610" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M 20,-4 C 22,-2 20,2 18,2" fill="none" stroke="#1C1610" strokeWidth="2.2" strokeLinecap="round" />
+                {/* Deep open mouth */}
+                <path d="M -18,-2 C -12,20 12,20 18,-2 Z" fill="#881337" stroke="#1C1610" strokeWidth="3.2" />
+                {/* White upper teeth */}
+                <path d="M -13,0 Q 0,4 13,0" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" strokeLinecap="round" />
+                {/* Pink tongue */}
+                <path d="M -8,11 Q 0,4 8,11 C 6,17 -6,17 -8,11 Z" fill="#F43F5E" />
               </g>
             )}
 
-            {/* 7. FLOPPY PEAKED MILLER'S CAP WITH WHEAT EAR */}
-            <g id="krajanek-cap" transform="translate(0, -22)">
-              {/* Dark Cap Brim */}
-              <ellipse cx="0" cy="0" rx="42" ry="12" fill="#292524" stroke="#1C1610" strokeWidth="3.8" />
-              <rect x="-38" y="-7" width="76" height="12" fill="#44403C" />
+            {/* Hand Tipping Hat (as shown in reference image) */}
+            <g transform="translate(-36, -18) rotate(-15)">
+              {/* Linen sleeve */}
+              <path d="M 0,22 Q -8,10 -2,0 L 10,4 Q 8,18 2,24 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2.8" />
+              {/* Cheerful hand tipping hat brim */}
+              <circle cx="6" cy="-2" r="7" fill="url(#krajanekSkinGrad)" stroke="#1C1610" strokeWidth="2.4" />
+              <path d="M 2,-6 Q 8,-8 12,-4" stroke="#1C1610" strokeWidth="2" fill="none" />
+            </g>
 
-              {/* Crumpled Crown of the Cap */}
+            {/* 7. ALPINE GREEN PEAKED FELT HAT WITH PLUME & HEATHER */}
+            <g id="krajanek-cap" transform="translate(0, -22)">
+              {/* Curled Hat Brim */}
+              <ellipse cx="0" cy="0" rx="46" ry="14" fill="#1B3817" stroke="#1C1610" strokeWidth="4" />
+              <rect x="-42" y="-7" width="84" height="14" fill="#2D5A27" />
+
+              {/* Peaked Crown of Alpine Green Hat */}
               <path
-                d="M -38,-4 C -44,-36 -20,-56 8,-54 C 36,-52 46,-32 38,-4 Z"
+                d="M -42,-4 C -45,-38 -15,-66 12,-62 C 40,-58 48,-35 42,-4 Z"
                 fill="url(#krajanekCapGrad)"
                 stroke="#1C1610"
-                strokeWidth={showOutline ? '4.5' : '3.5'}
+                strokeWidth={showOutline ? '4.8' : '3.8'}
                 strokeLinejoin="round"
               />
 
-              {/* White Flour Dusting on Cap Peak */}
-              <ellipse cx="-8" cy="-42" rx="18" ry="10" fill="#FFFFFF" opacity="0.45" />
+              {/* Dark Green Ribbon Band */}
+              <path d="M -42,-2 C -20,5 20,5 42,-2 L 41,3 C 20,10 -20,10 -41,3 Z" fill="#14532D" stroke="#1C1610" strokeWidth="2.5" />
 
-              {/* Red Ribbon Band */}
-              <path d="M -38,-2 C -20,4 20,4 38,-2 L 37,3 C 20,9 -20,9 -37,3 Z" fill="#DC2626" stroke="#1C1610" strokeWidth="2.2" />
+              {/* WHITE AND CYAN FEATHER PLUME (PÉRO ZA KLOBOUKEM) */}
+              <g transform="translate(4, -12) rotate(14)">
+                {/* Blue feather back */}
+                <path d="M 0,0 C -6,-28 14,-56 18,-65 C 10,-48 4,-24 0,0 Z" fill="#38BDF8" stroke="#1C1610" strokeWidth="1.8" />
+                {/* White feather front */}
+                <path d="M -2,0 C -12,-32 4,-62 14,-72 C 8,-50 -2,-26 -2,0 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2" />
+                <line x1="-2" y1="0" x2="12" y2="-70" stroke="#0284C7" strokeWidth="1.5" />
+              </g>
 
-              {/* GOLDEN EAR OF WHEAT (Klas pšenice / ječmene) */}
-              <g transform={`translate(-28, -6) rotate(${wheatWave})`}>
-                {/* Wheat Stem */}
-                <path d="M 0,0 C -6,-22 -14,-45 -22,-68" fill="none" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" />
-                {/* Wheat Grains / Spikelets */}
-                {[-15, -28, -42, -55, -66].map((gy, idx) => (
-                  <g key={idx} transform={`translate(${gy * 0.3}, ${gy})`}>
-                    <ellipse cx="-4" cy="0" rx="3.5" ry="6" transform="rotate(-35)" fill="url(#wheatSpikeGrad)" stroke="#78350F" strokeWidth="1.2" />
-                    <ellipse cx="4" cy="0" rx="3.5" ry="6" transform="rotate(35)" fill="url(#wheatSpikeGrad)" stroke="#78350F" strokeWidth="1.2" />
-                    {/* Awn / Beard Hair */}
-                    <line x1="-5" y1="-3" x2="-14" y2="-12" stroke="#B45309" strokeWidth="1.2" />
-                    <line x1="5" y1="-3" x2="14" y2="-12" stroke="#B45309" strokeWidth="1.2" />
+              {/* PURPLE HEATHER / LAVENDER SPRIG (Snítka vřesu za kloboukem) */}
+              <g transform="translate(14, -8) rotate(22)">
+                <line x1="0" y1="0" x2="6" y2="-45" stroke="#166534" strokeWidth="2" />
+                {[-12, -22, -32, -42].map((fy) => (
+                  <g key={fy}>
+                    <circle cx="3" cy={fy} r="2.8" fill="#A855F7" stroke="#581C87" strokeWidth="1" />
+                    <circle cx="8" cy={fy - 3} r="2.5" fill="#C084FC" stroke="#581C87" strokeWidth="1" />
                   </g>
                 ))}
               </g>

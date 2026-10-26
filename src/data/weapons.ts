@@ -648,7 +648,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		icon: 'bylinkova_fajfka',
 		baseDmg: 9,
 		baseCd: 3.5,
-		desc: 'Dědečkova hliněná fajfka s vonnými bylinkami. Vypouští oblak dýmu (110 px), který zraňuje nepřátele, zpomaluje jejich pohyb i útok o 35 % a léčí lovce.',
+		desc: 'Dědečkova hliněná fajfka s vonnými bylinkami. Vypouští oblak dýmu (110 px), který zraňuje nepřátele, zpomaluje jejich pohyb i útok o 35 % a léčí lovce. Všechna vylepšení zranění úměrně zvyšují i obnovu kuráže.',
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getRankedWeaponStats('bylinkova_fajfka', level, w);

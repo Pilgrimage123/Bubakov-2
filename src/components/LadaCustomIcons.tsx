@@ -2519,25 +2519,86 @@ export const LadaDragonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
  * Winter flock crow / raven (🐦‍⬛ / crow / vrana)
  */
 export const LadaCrowIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mrazivá vrána" {...props}>
-    <g className="lada-anim-rock">
-      {/* Crow perched branch */}
-      <line x1="5" y1="28" x2="31" y2="28" stroke="#5E3A21" strokeWidth="3" strokeLinecap="round" />
-      <line x1="14" y1="26" x2="14" y2="28" stroke="#1A1612" strokeWidth="2" />
-      <line x1="19" y1="26" x2="19" y2="28" stroke="#1A1612" strokeWidth="2" />
-      {/* Tail feathers */}
-      <polygon points="10,24 6,31 13,27" fill="#0F172A" stroke="#1A1612" strokeWidth="2" strokeLinejoin="round" />
-      {/* Plump bird body */}
-      <ellipse cx="17" cy="21" rx="8" ry="6.5" fill="#1E293B" stroke="#1A1612" strokeWidth="2.4" />
-      {/* Folded wing with ink plumage */}
-      <path d="M 12 18 C 14 16 21 17 21 23 C 18 25 13 24 12 18 Z" fill="#0F172A" stroke="#1A1612" strokeWidth="1.8" />
-      {/* Crow head */}
-      <circle cx="23" cy="14" r="5" fill="#1E293B" stroke="#1A1612" strokeWidth="2.2" />
-      {/* Sharp yellow beak */}
-      <polygon points="27,12 34,15 27,17" fill="#D9A036" stroke="#1A1612" strokeWidth="1.8" strokeLinejoin="round" />
-      {/* Shiny crow bead eye */}
-      <circle cx="23" cy="13" r="1.3" fill="#FEF08A" />
-      <circle cx="23" cy="13" r="0.7" fill="#1A1612" className="lada-anim-glint" />
+  <svg viewBox="0 0 44 44" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mrazivá vrána" {...props}>
+    <g className="lada-anim-float">
+      {/* Far / Right Wing with splayed primary feathers */}
+      <path
+        d="M 24 18 Q 30 10 38 4 Q 36 11 31 15 Q 37 12 41 10 Q 38 16 32 18 Q 37 18 39 19 Q 35 23 28 22 Q 29 26 26 26 L 22 22 Z"
+        fill="#1A212E"
+        stroke="#090B12"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Fanned 4-feather tail */}
+      <path
+        d="M 16 25 L 7 29 Q 6 32 9 32 L 13 30 L 10 35 Q 10 37 13 36 L 15 32 L 14 37 Q 16 39 18 36 L 20 27 Z"
+        fill="#1A212E"
+        stroke="#090B12"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      {/* Swooping torso & shaggy feathered thighs */}
+      <path
+        d="M 15 19 Q 13 24 15 29 L 16 32 L 18 30 L 21 31 L 23 32 L 25 27 Q 26 22 23 18 Z"
+        fill="#232B3A"
+        stroke="#090B12"
+        strokeWidth="2.1"
+        strokeLinejoin="round"
+      />
+      {/* Outstretched yellow scaly legs & dark talons */}
+      <path
+        d="M 18 31 L 21 38 M 21 38 L 25 37 M 21 38 L 26 40 M 21 38 L 21 42 M 23 31 L 28 36 M 28 36 L 32 35 M 28 36 L 33 38 M 28 36 L 28 40"
+        fill="none"
+        stroke="#F5A623"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Near / Left Wing with 4 splayed primaries & inner covert line */}
+      <path
+        d="M 18 19 Q 11 11 4 3 Q 6 11 11 15 Q 5 12 2 9 Q 4 16 10 18 Q 5 18 3 18 Q 6 22 12 22 Q 9 25 11 27 Q 15 27 19 22 Z"
+        fill="#232B3A"
+        stroke="#090B12"
+        strokeWidth="2.1"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 9 13 Q 10 17 13 18 Q 12 21 16 21"
+        fill="none"
+        stroke="#090B12"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      {/* Ruffled head & 3 spiky crown crest tufts */}
+      <path
+        d="M 17 19 L 15 17 L 17 15 Q 18 12 21 11 L 19 8 L 23 10 L 22 7 L 26 10 L 26 8 Q 29 11 29 15 Q 31 17 29 21 L 23 22 Z"
+        fill="#232B3A"
+        stroke="#090B12"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Open hooked golden-yellow beak & red tongue */}
+      <path
+        d="M 22 18 L 27 28 L 29 21 Z"
+        fill="#2A1014"
+        stroke="#F5A623"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="M 24 20 L 26.8 25.5 L 27.6 21 Z" fill="#E53E3E" />
+      <path
+        d="M 22 17 Q 26 16 30 19 Q 33 22 33 26 Q 29 22 23 19 Z"
+        fill="#F5A623"
+        stroke="#090B12"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      {/* Fierce scowling cream eyes & V-brow */}
+      <ellipse cx="24.5" cy="15.5" rx="2.1" ry="2.6" fill="#FDF8E1" stroke="#090B12" strokeWidth="1.4" />
+      <ellipse cx="28.2" cy="16" rx="1.5" ry="2" fill="#FDF8E1" stroke="#090B12" strokeWidth="1.3" />
+      <circle cx="25" cy="15.8" r="0.9" fill="#090B12" />
+      <circle cx="28" cy="16.2" r="0.7" fill="#090B12" />
+      <path d="M 22 13 L 26.8 16.5 L 30 14" fill="none" stroke="#090B12" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </g>
   </svg>
 );

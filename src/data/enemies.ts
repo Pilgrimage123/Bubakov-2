@@ -126,8 +126,9 @@ const ENEMIES: Record<string, EnemyStats> = {
 		id: "vrana", name: "Mrazivá vrána", title: "Rychlý černý letec z předjarní vánice",
 		category: "frost", hp: 28, speed: 188, damage: 8, attackCadence: "fast", attackInterval: 0.6,
 		radius: 22, mass: 0.65, foodResist: 0, poiseResist: 0, willpower: 0, xp: 1, coinValue: 1,
+		isFlying: true,
 		method: "drawStageCrow", weakness: "Povidlové buchty, horké jídlo",
-		strength: "Velmi rychlý let a kličkování",
+		strength: "Velmi rychlý let, ignoruje vodní terén a mlýnský kámen, krade hromádky kořisti v uzlíčku",
 		lore: "Vrána vyhnaná z hejna zimní smrtkou nalétává na lovce z nečekaných směrů.", danger: "★☆☆☆☆"
 	},
 	jezinka_mraziva: {

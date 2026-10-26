@@ -563,10 +563,16 @@ function computeLevelProgress(id: any, meta: any) {
 			bossDefeated: false
 		};
 	}
+	const enemyAliasMap: Record<string, string> = {
+		skeleton: "kostlivec",
+		kostlivec: "skeleton",
+		skeleton_scythe: "kostlivec_kosa",
+		kostlivec_kosa: "skeleton_scythe",
+	};
 	const levelKills = meta.levelKillCounts?.[id] || meta.bestiaryKills || {};
 	let curCount = 0;
 	const enemiesBreakdown = def.targetEnemies.map((e) => {
-		const cnt = levelKills[e.id] || 0;
+		const cnt = levelKills[e.id] || (enemyAliasMap[e.id] ? levelKills[enemyAliasMap[e.id]] : 0) || 0;
 		curCount += cnt;
 		return {
 			id: e.id,

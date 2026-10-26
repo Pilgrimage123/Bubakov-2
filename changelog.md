@@ -1,3 +1,12 @@
+## 2026-10-26 — Vizuální a animační přepracování letících vran podle předlohy
+
+- **Detailní ladovský sprite letící vrány (`Lada.drawStageCrow` a `Lada.drawStageCrowGround`)**:
+  - Kompletně přepracována vektorová kresba letící vrány v `src/render/ladaRenderer.ts` podle dodané ilustrace: dravá vrána v 3/4 profilu s široce rozepjatými křídly, 5 prstovitými ručními letkami (`primaries`), obloukovými loketními letkami (`secondaries`), vnitřní řadou krovek, vějířovitým 4perým ocasem, opeřenými stehny, rozčepýřenou chocholkou na temeni, zamračeným obočím, dokořán otevřeným zahnutým žlutým zobákem s červeným jazykem a nataženými žlutými šupinatými pařáty s tmavými zahnutými drápy.
+  - Sladěna i pozemní klovací varianta (`drawStageCrowGround`), vektorová ikona `LadaCrowIcon` v `src/components/LadaCustomIcons.tsx` a kroužící polní vrány v `src/render/marchThawSvgLandscape.ts`.
+- **Bezalokační integrace přes `BakedBubakAtlas` pro hejna i minibosse**:
+  - Zvětšen offscreen rámec `vrana` v `BakedBubakAtlas` na 112×112 px pro plné rozpětí křídel bez ořezu.
+  - Všech 150 vran v `VirtualLeaderCrowWave` (`isVirtualCrowMember`) i 9členný miniboss *Hejno mrazivých vran* (`isMinibossFlockMember`) nyní vykreslují předpečené snímky z atlasu s individuálním fázovým posunem mávání křídel a náklonem podle vektoru letu.
+
 ## 2026-10-26 — Sjednocení identifikátorů lovců a strašidel, optimalizace bundlu a vyčištění repozitáře
 
 - **Kanonizace identifikátorů lovců na český `snake_case`**:

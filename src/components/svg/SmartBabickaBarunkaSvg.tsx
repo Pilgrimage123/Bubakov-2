@@ -3,13 +3,19 @@ import type { SmartCharacterProps, MousePointerState } from './types';
 
 /**
  * SmartBabickaBarunkaSvg - Interactive smart vector SVG animation
- * Inspired by classic Czech fairy tale / folklore illustration of Babička a Barunka (from Božena Němcová & Josef Lada)
+ * Faithfully inspired by classic Czech fairy tale & folklore illustrations of Babička a Barunka by Josef Lada
  * Features:
- * - Babička in white embroidered kerchief, black fringe shawl, rust vest, striped blue apron with kangaroo pouch holding fresh bread, checkered napkin & herbs, and wooden walking cane
- * - Barunka beside her with brown braid, red bow, puffed blouse, red bodice, embroidered apron, and bouquet of meadow flowers
- * - Walking kinematics with synchronized cane tapping and braid bounce
- * - "Laskavý zázrak" action with glowing bread, floating flower petals, and divine golden aura
- * - Interactive pointer tracking for gentle gaze
+ * - Babička in white kerchief with authentic blue four-leaf clover border embroidery, black woolen shawl with rich fringe tassels
+ * - Rust-orange buttoned vest, sturdy hazel walking cane in right hand
+ * - Gathered royal blue vertically striped apron with kangaroo pocket holding golden bread loaf, checkered napkin & herbs
+ * - Babička's left hand lovingly reaching into the apron pouch
+ * - Dark brown pleated peasant skirt and dark sturdy shoes
+ * - Barunka beside her with brown platted side-braid & fluttering red bow
+ * - Puffed white blouse, red folk bodice, crisp white apron over dark blue skirt with white floral dots
+ * - Holding in both hands a lush meadow bouquet of blue cornflowers, white daisies & yellow buttercups
+ * - Tan-brown lace-up ankle boots with stride kinematics
+ * - Miracle action "Laskavý zázrak" with golden glow & drifting flower petals
+ * - Equal sizing: baseline y=435, head height ~351px matching Tulák & Krajánek
  */
 export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
   state = 'idle',
@@ -117,7 +123,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
     ? Math.sin(t * walkSpeed) * 12
     : Math.sin(t * 1.5) * 1.5;
 
-  // Articulated foot stride for Babička's shoes (only moves when actually moving!)
+  // Articulated foot stride for Babička's shoes (only moves when actively moving)
   const grannyStrideAmp = isMoving ? (isFleeing ? 24 : isSprinting ? 18 : 11) : 0;
   const grannyLeftShoeX = -28 + (isMoving ? walkSin * grannyStrideAmp : 0);
   const grannyLeftShoeY = 36 - (isMoving ? Math.max(0, walkCos) * (grannyStrideAmp * 0.55) : 0);
@@ -164,7 +170,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
     ? Math.sin(t * walkSpeed) * 5
     : 0;
 
-  // Articulated boot stride for Barunka (only moves when actually moving!)
+  // Articulated boot stride for Barunka (only moves when actively moving)
   const barunkaStrideAmp = isMoving ? (isFleeing ? 22 : isSprinting ? 17 : 11) : 0;
   const barunkaLeftBootX = -15 + (isMoving ? barunkaSin * barunkaStrideAmp : 0);
   const barunkaLeftBootY = -(isMoving ? Math.max(0, barunkaCos) * (barunkaStrideAmp * 0.65) : 0);
@@ -218,35 +224,33 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
 
         <radialGradient id="barunkaSkinGrad" cx="42%" cy="32%" r="68%">
           <stop offset="0%" stopColor="#FFF5ED" />
-          <stop offset="65%" stopColor="#FEE4D6" />
-          <stop offset="100%" stopColor="#F9C6B0" />
+          <stop offset="60%" stopColor="#FDE2D0" />
+          <stop offset="100%" stopColor="#F8BA9A" />
         </radialGradient>
 
-        {/* Shawl Wool Gradient */}
+        {/* Fringed Black Woolen Shawl */}
         <linearGradient id="shawlGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#3F332A" />
-          <stop offset="60%" stopColor="#2A201A" />
-          <stop offset="100%" stopColor="#1B1410" />
+          <stop offset="0%" stopColor="#3F3935" />
+          <stop offset="50%" stopColor="#2E2824" />
+          <stop offset="100%" stopColor="#1B1613" />
         </linearGradient>
 
-        {/* Blue Striped Apron Gradient */}
-        <linearGradient id="apronBlueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        {/* Royal Blue Peasant Apron */}
+        <linearGradient id="apronBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#2563EB" />
-          <stop offset="25%" stopColor="#1D4ED8" />
-          <stop offset="50%" stopColor="#2563EB" />
-          <stop offset="75%" stopColor="#1D4ED8" />
-          <stop offset="100%" stopColor="#1E40AF" />
+          <stop offset="50%" stopColor="#1D4ED8" />
+          <stop offset="100%" stopColor="#1E3A8A" />
         </linearGradient>
 
-        {/* Bread Crust Golden Gradient */}
-        <radialGradient id="breadCrustGrad" cx="35%" cy="30%" r="70%">
+        {/* Crusty Bohemian Country Bread */}
+        <radialGradient id="breadCrustGrad" cx="40%" cy="35%" r="60%">
           <stop offset="0%" stopColor="#FDE68A" />
           <stop offset="40%" stopColor="#D97706" />
           <stop offset="85%" stopColor="#92400E" />
-          <stop offset="100%" stopColor="#582103" />
+          <stop offset="100%" stopColor="#5C2508" />
         </radialGradient>
 
-        {/* Holy Bread Miracle Glow */}
+        {/* Miracle Glow Filter */}
         <filter id="holyGlow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
           <feMerge>
@@ -280,7 +284,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
             {/* Granny Shadow */}
             <ellipse cx={170} cy={445} rx={85} ry={16} fill="#1E293B" />
             {/* Barunka Shadow */}
-            {showCompanion && <ellipse cx={330} cy={445} rx={50} ry={13} fill="#1E293B" />}
+            {showCompanion && <ellipse cx={340} cy={445} rx={50} ry={13} fill="#1E293B" />}
           </g>
         )}
 
@@ -316,21 +320,21 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               id="granny-left-shoe"
               transform={`translate(${grannyLeftShoeX}, ${grannyLeftShoeY}) rotate(${grannyLeftShoeRot})`}
             >
-              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
-              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3B2219" stroke="#1C1610" strokeWidth="3" />
+              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#C2410C" stroke="#1C1610" strokeWidth="1.5" />
             </g>
             <g
               id="granny-right-shoe"
               transform={`translate(${grannyRightShoeX}, ${grannyRightShoeY}) rotate(${grannyRightShoeRot})`}
             >
-              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3E2719" stroke="#1C1610" strokeWidth="3" />
-              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#FACC15" stroke="#1C1610" strokeWidth="1.5" />
+              <ellipse cx="0" cy="0" rx="20" ry="11" fill="#3B2219" stroke="#1C1610" strokeWidth="3" />
+              <ellipse cx="4" cy="-2" rx="6" ry="3.5" fill="#C2410C" stroke="#1C1610" strokeWidth="1.5" />
             </g>
 
-            {/* Pleated dark brown skirt hem */}
+            {/* Pleated dark brown skirt hem matching Image 1 */}
             <path
               d="M -75,0 C -50,15 50,15 75,0 L 78,32 C 50,42 -50,42 -78,32 Z"
-              fill="#4A3423"
+              fill="#422C1D"
               stroke="#1C1610"
               strokeWidth="3.5"
               strokeLinejoin="round"
@@ -343,9 +347,9 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
             <line x1="50" y1="5" x2={52 + (isMoving ? walkSin * 4 : 0)} y2="35" stroke="#2B1A0E" strokeWidth="2.5" />
           </g>
 
-          {/* 2. WOODEN WALKING CANE IN RIGHT HAND */}
+          {/* 2. WOODEN WALKING CANE IN RIGHT HAND (matching Image 1) */}
           <g transform={`translate(82, 175) rotate(${caneTapAngle})`}>
-            {/* Long sturdy wooden staff */}
+            {/* Long sturdy straight wooden cane */}
             <rect
               x="-5"
               y="0"
@@ -362,7 +366,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
             <line x1="-3" y1="190" x2="3" y2="192" stroke="#451A03" strokeWidth="2" />
           </g>
 
-          {/* 3. BIG BLUE STRIPED APRON WITH SIGNATURE KANGAROO POUCH */}
+          {/* 3. BIG BLUE STRIPED APRON WITH SIGNATURE KANGAROO POUCH (matching Image 1) */}
           <g id="granny-apron" transform="translate(170, 220)">
             {/* Full Blue Pleated Apron */}
             <path
@@ -382,28 +386,32 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 y2="195"
                 stroke="#1E3A8A"
                 strokeWidth="4"
-                opacity="0.75"
+                opacity="0.8"
               />
             ))}
 
-            {/* SIGNATURE GATHERED POUCH / POCKET IN FRONT */}
+            {/* SIGNATURE GATHERED POUCH / POCKET IN FRONT (KANGAROO POCKET) */}
             <g transform="translate(0, 48)">
-              {/* Pocket Shadow & Outline */}
+              {/* Pocket Body & Outline */}
               <path
                 d="M -48,-10 C -56,50 -48,95 0,98 C 48,95 56,50 48,-10 C 25,-4 -25,-4 -48,-10 Z"
-                fill="#1D4ED8"
+                fill="#2563EB"
                 stroke="#1C1610"
                 strokeWidth="3.8"
                 strokeLinejoin="round"
               />
-              {/* Pocket gathered folds */}
-              <path
-                d="M -30,95 Q -25,50 -28,5 M 0,98 Q 0,55 0,6 M 30,95 Q 25,50 28,5"
-                stroke="#1E3A8A"
-                strokeWidth="3"
-                strokeLinecap="round"
-                fill="none"
-              />
+              {/* Pocket vertical stripes */}
+              {[-32, -16, 0, 16, 32].map((px) => (
+                <line
+                  key={px}
+                  x1={px}
+                  y1="5"
+                  x2={px * 1.1}
+                  y2="92"
+                  stroke="#1D4ED8"
+                  strokeWidth="3"
+                />
+              ))}
 
               {/* CONTENTS OF THE POUCH: BREAD, CHECKERED CLOTH, HERBS */}
               {/* Red & White Checkered Cloth Peeking Out */}
@@ -414,12 +422,12 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 strokeWidth="2.5"
               />
 
-              {/* Fresh Herbal Sprigs & Wildflowers */}
+              {/* Fresh Herbal Sprigs & Wildflowers peeking out */}
               <g transform="translate(18, -12)">
                 <path d="M 0,0 Q 8,-22 18,-28 M 4,-12 Q 18,-18 25,-12 M -2,-6 Q 10,-32 4,-38" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="18" cy="-28" r="3" fill="#FACC15" stroke="#1C1610" strokeWidth="1.2" />
-                <circle cx="25" cy="-12" r="3" fill="#60A5FA" stroke="#1C1610" strokeWidth="1.2" />
-                <circle cx="4" cy="-38" r="3" fill="#F43F5E" stroke="#1C1610" strokeWidth="1.2" />
+                <circle cx="18" cy="-28" r="3.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.2" />
+                <circle cx="25" cy="-12" r="3.2" fill="#60A5FA" stroke="#1C1610" strokeWidth="1.2" />
+                <circle cx="4" cy="-38" r="3.2" fill="#FDE047" stroke="#1C1610" strokeWidth="1.2" />
               </g>
 
               {/* CRUSTY GOLDEN BREAD LOAF (PECEN CHLEBA) */}
@@ -441,14 +449,21 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 {/* Flour dusting and baker's crust cut slits */}
                 <path d="M -10,-4 Q 0,-2 10,-4 M -8,3 Q 0,5 8,3" stroke="#FEF3C7" strokeWidth="2" strokeLinecap="round" />
               </g>
+
+              {/* BABIČKA'S LEFT HAND REACHING DOWN INTO THE POUCH (matching Image 1) */}
+              <g transform="translate(32, -6)">
+                <ellipse cx="0" cy="0" rx="9" ry="8" fill="url(#grannySkinGrad)" stroke="#1C1610" strokeWidth="2.5" />
+                <line x1="-3" y1="-3" x2="-3" y2="4" stroke="#1C1610" strokeWidth="1.8" />
+                <line x1="2" y1="-3" x2="2" y2="4" stroke="#1C1610" strokeWidth="1.8" />
+              </g>
             </g>
           </g>
 
-          {/* 4. RUST-RED BODICE / VEST WITH BUTTONS */}
+          {/* 4. RUST-ORANGE BODICE / VEST WITH BUTTONS (matching Image 1) */}
           <g id="granny-bodice" transform="translate(170, 150)">
             <path
               d="M -35,0 C -42,35 -48,70 -42,75 C -15,80 15,80 42,75 C 48,70 42,35 35,0 Z"
-              fill="#B91C1C"
+              fill="#C2410C"
               stroke="#1C1610"
               strokeWidth="3.5"
               strokeLinejoin="round"
@@ -456,12 +471,12 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
             {/* Center closure row */}
             <line x1="0" y1="0" x2="0" y2="76" stroke="#1C1610" strokeWidth="2.5" />
             {/* Dark rustic buttons */}
-            {[14, 28, 42, 56, 68].map((btnY) => (
+            {[12, 24, 36, 48, 60, 70].map((btnY) => (
               <circle key={btnY} cx="0" cy={btnY} r="3" fill="#18181B" stroke="#1C1610" strokeWidth="1.5" />
             ))}
           </g>
 
-          {/* 5. BLACK WOOLEN SHAWL WITH FRINGE TASSELS */}
+          {/* 5. BLACK WOOLEN SHAWL WITH FRINGE TASSELS (matching Image 1) */}
           <g id="granny-shawl" transform="translate(170, 125)">
             {/* Shawl draped across shoulders */}
             <path
@@ -471,16 +486,16 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth={showOutline ? "4.5" : "3.5"}
               strokeLinejoin="round"
             />
-            {/* Shawl Fringe Tassels along the hem */}
-            {[-68, -55, -42, -30, -18, -6, 6, 18, 30, 42, 55, 68].map((tasselX, idx) => (
+            {/* Shawl Fringe Tassels along the entire hem and sleeves */}
+            {[-70, -58, -46, -34, -22, -10, 2, 14, 26, 38, 50, 62, 72].map((tasselX, idx) => (
               <line
                 key={idx}
                 x1={tasselX}
-                y1={idx < 2 || idx > 9 ? 142 : 98 + Math.abs(tasselX) * 0.4}
+                y1={idx < 2 || idx > 10 ? 142 : 98 + Math.abs(tasselX) * 0.4}
                 x2={tasselX * 1.05}
-                y2={idx < 2 || idx > 9 ? 158 : 115 + Math.abs(tasselX) * 0.4}
-                stroke="#1C1610"
-                strokeWidth="2.5"
+                y2={idx < 2 || idx > 10 ? 162 : 118 + Math.abs(tasselX) * 0.4}
+                stroke="#18181B"
+                strokeWidth="2.8"
                 strokeLinecap="round"
               />
             ))}
@@ -490,26 +505,11 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <ellipse cx="0" cy="0" rx="9" ry="7" fill="url(#grannySkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
               <path d="M -5,-3 Q 0,-6 5,-3" stroke="#1C1610" strokeWidth="2" fill="none" />
             </g>
-
-            {/* Left hand resting affectionately on apron (or raised in startle/flee) */}
-            <g
-              transform={
-                isFleeing
-                  ? `translate(64, ${18 + Math.sin(t * 22) * 12})`
-                  : isReact
-                  ? `translate(58, 34)`
-                  : 'translate(48, 70)'
-              }
-            >
-              <ellipse cx="0" cy="0" rx="10" ry="8" fill="url(#grannySkinGrad)" stroke="#1C1610" strokeWidth="2.8" />
-              <line x1="-3" y1="-4" x2="-3" y2="4" stroke="#1C1610" strokeWidth="1.8" />
-              <line x1="2" y1="-4" x2="2" y2="4" stroke="#1C1610" strokeWidth="1.8" />
-            </g>
           </g>
 
           {/* 6. BABIČKA'S HEAD, KERCHIEF & KIND SMILING FACE */}
           <g id="granny-head" transform="translate(170, 115)">
-            {/* White Kerchief (Šátek) tied under chin with floral embroidery */}
+            {/* White Kerchief (Šátek) tied under chin */}
             <path
               d="M -44,-8 C -48,-48 -35,-80 0,-84 C 35,-80 48,-48 44,-8 C 30,22 12,28 0,30 C -12,28 -30,22 -44,-8 Z"
               fill="#FFFFFF"
@@ -518,13 +518,25 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeLinejoin="round"
             />
 
-            {/* Blue floral embroidery sprigs around kerchief rim */}
-            <g className="kerchief-embroidery" stroke="#2563EB" strokeWidth="2" strokeLinecap="round">
-              <path d="M -38,-20 Q -42,-35 -34,-50 M -38,-35 L -44,-38 M -36,-32 L -30,-34" fill="none" />
-              <path d="M 38,-20 Q 42,-35 34,-50 M 38,-35 L 44,-38 M 36,-32 L 30,-34" fill="none" />
+            {/* Blue clover embroidery pattern along kerchief fold and perimeter (matching Image 1) */}
+            <g className="kerchief-clover-embroidery" fill="#1D4ED8" stroke="#1E40AF" strokeWidth="0.8">
+              {/* Left rim clovers */}
+              <circle cx="-38" cy="-18" r="2.2" />
+              <circle cx="-42" cy="-32" r="2.2" />
+              <circle cx="-40" cy="-48" r="2.2" />
+              <circle cx="-30" cy="-62" r="2.2" />
+              <circle cx="-16" cy="-74" r="2.2" />
+              {/* Right rim clovers */}
+              <circle cx="38" cy="-18" r="2.2" />
+              <circle cx="42" cy="-32" r="2.2" />
+              <circle cx="40" cy="-48" r="2.2" />
+              <circle cx="30" cy="-62" r="2.2" />
+              <circle cx="16" cy="-74" r="2.2" />
+              {/* Top center clover */}
+              <circle cx="0" cy="-78" r="2.5" />
             </g>
 
-            {/* Tied Knot under Chin (fluttering when sprinting/fleeing/reacting) */}
+            {/* Tied Knot under Chin */}
             <g transform={`translate(0, 26) rotate(${isMoving || isReact ? Math.sin(t * 20) * 14 : 0})`}>
               <ellipse cx="0" cy="0" rx="7" ry="5" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2.5" />
               <path d="M -6,2 L -14,14 L -4,12 Z" fill="#F8FAFC" stroke="#1C1610" strokeWidth="2" />
@@ -539,7 +551,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth="3.2"
             />
 
-            {/* White Hair peeking out symmetrically */}
+            {/* White Hair peeking out neatly parted in middle */}
             <path
               d="M -24,-32 C -18,-42 0,-38 0,-38 C 0,-38 18,-42 24,-32 C 16,-34 -16,-34 -24,-32 Z"
               fill="#E2E8F0"
@@ -547,9 +559,9 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               strokeWidth="2.5"
             />
 
-            {/* Gentle Eyes, Wrinkles & Rosy Cheeks (or Startled / Terrified Expression) */}
+            {/* Gentle Eyes, Wrinkles & Rosy Cheeks */}
             <g transform={`translate(${gazeX}, ${gazeY})`}>
-              {/* Kind Eyebrows (raised high in startle/flee) */}
+              {/* Kind Eyebrows */}
               <path
                 d={isReact || isFleeing ? 'M -19,-28 Q -12,-35 -4,-29' : 'M -18,-24 Q -12,-30 -4,-25'}
                 stroke="#78716C"
@@ -565,7 +577,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 fill="none"
               />
 
-              {/* Sparkling Kind Dark Eyes (or Wide Startled Eyes) */}
+              {/* Sparkling Kind Dark Eyes */}
               {(isReact || isFleeing) && (
                 <>
                   <circle cx="-10" cy="-18" r="5.5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
@@ -588,7 +600,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <circle cx="-16" cy="-10" r="5.5" fill="#FB7185" opacity="0.45" />
               <circle cx="16" cy="-10" r="5.5" fill="#FB7185" opacity="0.45" />
 
-              {/* Mouth: Warm Benevolent Smile vs Startled Gasp vs Terrified Scream */}
+              {/* Mouth: Warm Benevolent Smile */}
               {isFleeing ? (
                 <ellipse cx="0" cy="-1" rx="7" ry="6.5" fill="#7F1D1D" stroke="#1C1610" strokeWidth="2.5" />
               ) : isReact ? (
@@ -618,6 +630,9 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 id="barunka-left-boot"
                 transform={`translate(${barunkaLeftBootX}, ${barunkaLeftBootY}) rotate(${barunkaLeftBootRot})`}
               >
+                {/* White stocking */}
+                <rect x="-6" y="-12" width="12" height="14" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
+                {/* Boot */}
                 <path d="M -7,0 L 7,0 L 8,26 L 16,30 L 14,35 L -7,35 Z" fill="#854D0E" stroke="#1C1610" strokeWidth="3" strokeLinejoin="round" />
                 <line x1="-2" y1="8" x2="4" y2="8" stroke="#1C1610" strokeWidth="1.8" />
                 <line x1="-2" y1="16" x2="4" y2="16" stroke="#1C1610" strokeWidth="1.8" />
@@ -627,27 +642,31 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 id="barunka-right-boot"
                 transform={`translate(${barunkaRightBootX}, ${barunkaRightBootY}) rotate(${barunkaRightBootRot})`}
               >
+                <rect x="-6" y="-12" width="12" height="14" fill="#FFFFFF" stroke="#1C1610" strokeWidth="2" />
                 <path d="M -7,0 L 7,0 L 7,35 L -14,35 L -16,30 L -8,26 Z" fill="#854D0E" stroke="#1C1610" strokeWidth="3" strokeLinejoin="round" />
                 <line x1="-4" y1="8" x2="2" y2="8" stroke="#1C1610" strokeWidth="1.8" />
                 <line x1="-4" y1="16" x2="2" y2="16" stroke="#1C1610" strokeWidth="1.8" />
               </g>
             </g>
 
-            {/* 2. DARK BLUE FOLK SKIRT WITH EMBROIDERED HEM */}
+            {/* 2. DARK BLUE FOLK SKIRT WITH EMBROIDERED HEM (matching Image 1) */}
             <g id="barunka-skirt" transform="translate(340, 290)">
               <path
                 d="M -32,0 C -45,45 -54,85 -48,115 C -25,124 25,124 48,115 C 54,85 45,45 32,0 Z"
-                fill="#1E3A8A"
+                fill="#1D4ED8"
                 stroke="#1C1610"
                 strokeWidth={showOutline ? "4" : "3"}
                 strokeLinejoin="round"
               />
-              {/* White folk dots along bottom rim */}
-              {[-36, -24, -12, 0, 12, 24, 36].map((dx, i) => (
-                <circle key={i} cx={dx} cy="106" r="2.2" fill="#FFFFFF" />
+              {/* White folk dots along bottom rim (matching Image 1) */}
+              {[-38, -26, -14, 0, 14, 26, 38].map((dx, i) => (
+                <g key={i} transform={`translate(${dx}, 108)`}>
+                  <circle cx="0" cy="0" r="2.2" fill="#FFFFFF" />
+                  <circle cx="0" cy="-4" r="1.2" fill="#FFFFFF" />
+                </g>
               ))}
 
-              {/* CRISP WHITE APRON WITH SCALLOPED HEM */}
+              {/* CRISP WHITE APRON OVER SKIRT */}
               <path
                 d="M -22,0 C -26,35 -30,75 -24,98 C -12,102 12,102 24,98 C 30,75 26,35 22,0 Z"
                 fill="#FFFFFF"
@@ -655,15 +674,11 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 strokeWidth="3.2"
                 strokeLinejoin="round"
               />
-              {/* Blue folk cross stitches on apron */}
-              {[-14, 0, 14].map((dx, i) => (
-                <text key={i} x={dx} y="94" fontSize="10" fill="#2563EB" textAnchor="middle" fontWeight="bold">✤</text>
-              ))}
             </g>
 
-            {/* 3. WHITE BLOUSE & RED FOLK BODICE (KORDULKA) */}
+            {/* 3. WHITE BLOUSE & RED FOLK BODICE (matching Image 1) */}
             <g id="barunka-torso" transform="translate(340, 230)">
-              {/* White Puffed Sleeves */}
+              {/* White Puffed Sleeves with frilled cuffs */}
               <ellipse cx="-28" cy="18" rx="14" ry="12" fill="#FFFFFF" stroke="#1C1610" strokeWidth="3" />
               <ellipse cx="28" cy="18" rx="14" ry="12" fill="#FFFFFF" stroke="#1C1610" strokeWidth="3" />
 
@@ -679,7 +694,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <path d="M -16,0 Q 0,10 16,0" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
             </g>
 
-            {/* 4. LONG BRAIDED HAIR WITH BRIGHT RED RIBBON BOW */}
+            {/* 4. LONG BRAIDED HAIR WITH BRIGHT RED RIBBON BOW (matching Image 1) */}
             <g id="barunka-braid" transform={`translate(366, 210) rotate(${braidWave})`}>
               {/* Platted Braid Structure */}
               <path
@@ -703,7 +718,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               </g>
             </g>
 
-            {/* 5. WILDFLOWER MEADOW BOUQUET (HELD IN BOTH HANDS) */}
+            {/* 5. WILDFLOWER MEADOW BOUQUET (HELD IN BOTH HANDS - matching Image 1) */}
             <g id="barunka-bouquet" transform={`translate(338, 255) translate(0, ${bouquetLift})`}>
               {/* Green Stems gathered together */}
               <path d="M -8,18 L -3,35 M 0,18 L 0,36 M 8,18 L 3,35" stroke="#15803D" strokeWidth="3" strokeLinecap="round" />
@@ -712,7 +727,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <ellipse cx="-15" cy="24" rx="6" ry="5" fill="url(#barunkaSkinGrad)" stroke="#1C1610" strokeWidth="2" />
               <ellipse cx="15" cy="24" rx="6" ry="5" fill="url(#barunkaSkinGrad)" stroke="#1C1610" strokeWidth="2" />
 
-              {/* Rich Lush Meadow Flowers: Cornflowers, Daisies, Buttercups */}
+              {/* Rich Meadow Flowers: Cornflowers, Daisies, Buttercups matching Image 1 */}
               {/* Blue Cornflowers (Chrpy) */}
               <g transform="translate(-12, 0)">
                 <polygon points="0,-12 4,-4 10,-8 5,0 12,4 4,5 6,12 0,6 -6,12 -4,5 -12,4 -5,0 -10,-8 -4,-4" fill="#2563EB" stroke="#1C1610" strokeWidth="1.5" />
@@ -721,6 +736,9 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               <g transform="translate(14, -8)">
                 <polygon points="0,-10 3,-3 8,-6 4,0 10,3 3,4 5,10 0,5 -5,10 -3,4 -10,3 -4,0 -8,-6 -3,-3" fill="#3B82F6" stroke="#1C1610" strokeWidth="1.5" />
                 <circle cx="0" cy="0" r="2.5" fill="#1D4ED8" />
+              </g>
+              <g transform="translate(6, 6)">
+                <polygon points="0,-8 2,-2 7,-4 3,0 8,3 2,3 4,7 0,4 -4,7 -2,3 -8,3 -3,0 -7,-4 -2,-2" fill="#2563EB" stroke="#1C1610" strokeWidth="1.2" />
               </g>
 
               {/* White Daisies (Kopretiny) with golden center */}
@@ -734,7 +752,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
               {/* Yellow Buttercups (Pryskyřníky) */}
               <circle cx="-6" cy="-14" r="5" fill="#FDE047" stroke="#1C1610" strokeWidth="1.5" />
               <circle cx="-6" cy="-14" r="2" fill="#EAB308" />
-              <circle cx="8" cy="8" r="4.5" fill="#FDE047" stroke="#1C1610" strokeWidth="1.5" />
+              <circle cx="-14" cy="8" r="4.5" fill="#FDE047" stroke="#1C1610" strokeWidth="1.5" />
             </g>
 
             {/* 6. BARUNKA'S SWEET SMILING HEAD */}
@@ -753,7 +771,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 strokeWidth="2.5"
               />
 
-              {/* Cute Eyes, Rosy Cheeks & Sweet Smile (or Startled / Terrified Face) */}
+              {/* Cute Eyes, Rosy Cheeks & Sweet Smile */}
               <g transform={`translate(${gazeX * 1.2}, ${gazeY * 1.2})`}>
                 {/* Thin Eyebrows */}
                 <path
@@ -771,7 +789,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                   fill="none"
                 />
 
-                {/* Big Sparkling Dark Eyes (or Wide Startled Eyes) */}
+                {/* Big Sparkling Dark Eyes */}
                 {(isReact || isFleeing) && (
                   <>
                     <circle cx="-8" cy="-4" r="5" fill="#FFFFFF" stroke="#1C1610" strokeWidth="1.8" />
@@ -790,7 +808,7 @@ export const SmartBabickaBarunkaSvg: React.FC<SmartCharacterProps> = ({
                 <circle cx="-13" cy="3" r="5" fill="#FB7185" opacity="0.55" />
                 <circle cx="13" cy="3" r="5" fill="#FB7185" opacity="0.55" />
 
-                {/* Sweet Childish Smile vs Startled Gasp vs Terrified Scream */}
+                {/* Sweet Childish Smile */}
                 {isFleeing ? (
                   <ellipse cx="0" cy="9" rx="6" ry="5.5" fill="#881337" stroke="#1C1610" strokeWidth="2.2" />
                 ) : isReact ? (

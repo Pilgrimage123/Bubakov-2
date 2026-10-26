@@ -13,6 +13,34 @@ export function toCanonicalHunterId(id: string): string {
 	return HUNTER_ALIASES[id] || id;
 }
 
+export const HUNTER_LEGACY_BY_CANONICAL: Record<string, string> = {
+	tulak: 'wanderer',
+	pasacek: 'shepherd',
+	ponocny: 'watchman',
+	kostelnik: 'sexton',
+	babicka: 'granny',
+};
+
+export function toLegacyHunterId(id: string): string {
+	const canonical = toCanonicalHunterId(id);
+	return HUNTER_LEGACY_BY_CANONICAL[canonical] || id;
+}
+
+export const ENEMY_ALIASES: Record<string, string> = {
+	skeleton: 'kostlivec',
+	kostlivec: 'skeleton',
+	skeleton_scythe: 'kostlivec_kosa',
+	kostlivec_kosa: 'skeleton_scythe',
+};
+
+function getEnemyKillCount(killsMap: Record<string, number> | undefined, enemyId: string): number {
+	if (!killsMap) return 0;
+	if (typeof killsMap[enemyId] === 'number') return killsMap[enemyId];
+	const alias = ENEMY_ALIASES[enemyId];
+	if (alias && typeof killsMap[alias] === 'number') return killsMap[alias];
+	return 0;
+}
+
 var HUNTER_ORDER = [
 	"krajanek",
 	"wanderer",
@@ -24,20 +52,23 @@ var HUNTER_ORDER = [
 ];
 function getPreviousHunter(type: any) {
 	const canonical = toCanonicalHunterId(type);
-	let idx = HUNTER_ORDER.indexOf(canonical);
-	if (idx === -1) idx = HUNTER_ORDER.indexOf(type);
+	const legacy = toLegacyHunterId(type);
+	let idx = HUNTER_ORDER.indexOf(type);
+	if (idx === -1) idx = HUNTER_ORDER.indexOf(canonical);
+	if (idx === -1) idx = HUNTER_ORDER.indexOf(legacy);
 	if (idx <= 0) return null;
 	return HUNTER_ORDER[idx - 1];
 }
 function isHunterUnlocked(type: any, meta: any) {
 	const canonical = toCanonicalHunterId(type);
+	const legacy = toLegacyHunterId(type);
 	if (canonical === "wanderer" || canonical === "tulak" || HUNTER_UNLOCKS[canonical]?.defaultUnlocked || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
-	return !!meta.unlockedHunters?.[canonical] || !!meta.unlockedHunters?.[type];
+	return !!meta?.unlockedHunters?.[canonical] || !!meta?.unlockedHunters?.[legacy] || !!meta?.unlockedHunters?.[type];
 }
 function canHunterUnlock(type: any, meta: any) {
 	const canonical = toCanonicalHunterId(type);
 	if (canonical === "wanderer" || canonical === "tulak" || HUNTER_UNLOCKS[canonical]?.defaultUnlocked || HUNTER_UNLOCKS[type]?.defaultUnlocked) return true;
-	const prev = getPreviousHunter(canonical);
+	const prev = getPreviousHunter(type);
 	return !prev || isHunterUnlocked(prev, meta);
 }
 function getActiveUnlockingHunter(meta: any) {
@@ -74,19 +105,19 @@ var HUNTER_UNLOCKS = {
 	},
 	wanderer: {
 		id: "wanderer",
-		realName: "Poutník",
-		realTitle: "Vesnický poutník z Hrusic",
+		realName: "Tulák",
+		realTitle: "Vesnický tulák z Hrusic",
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí venkovský hrdina",
 		challengeShortDesc: "Připraven k cestě od samého počátku.",
-		challengeLongDesc: "Poutník s bylinkovou fajfkou a tuláckým instinktem (+35 % poškození) je odemčen ihned.",
+		challengeLongDesc: "Tulák s bylinkovou fajfkou a tuláckým instinktem (+35 % poškození) je odemčen ihned.",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
 			minPercent: 0,
 			tierLevel: 4,
-			spoiledName: "Poutník (Tulák)",
-			spoiledTitle: "Vesnický poutník z Hrusic",
+			spoiledName: "Tulák",
+			spoiledTitle: "Vesnický tulák z Hrusic",
 			spoiledLore: "Vysoká kuráž (230) a dobrá nálada (+35 % poškození zbraní). Bylinková fajfka. Schopnost: Pověstná sukovice (-30 % cooldown).",
 			spoiledWeaponHint: "Bylinková fajfka (+35 % poškození)",
 			spoiledAbilityHint: "Pověstná sukovice (otočka sukovitou holí zažene a silně odhodí okolní bubáky, vzdálenější vyděsí na 4 s – cooldown 21 s)",
@@ -570,11 +601,11 @@ var HUNTER_UNLOCKS = {
 	}
 };
 
-(HUNTER_UNLOCKS as any).tulak = HUNTER_UNLOCKS.wanderer;
-(HUNTER_UNLOCKS as any).pasacek = HUNTER_UNLOCKS.shepherd;
-(HUNTER_UNLOCKS as any).ponocny = HUNTER_UNLOCKS.watchman;
-(HUNTER_UNLOCKS as any).kostelnik = HUNTER_UNLOCKS.sexton;
-(HUNTER_UNLOCKS as any).babicka = HUNTER_UNLOCKS.granny;
+Object.defineProperty(HUNTER_UNLOCKS, 'tulak', { value: HUNTER_UNLOCKS.wanderer, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_UNLOCKS, 'pasacek', { value: HUNTER_UNLOCKS.shepherd, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_UNLOCKS, 'ponocny', { value: HUNTER_UNLOCKS.watchman, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_UNLOCKS, 'kostelnik', { value: HUNTER_UNLOCKS.sexton, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(HUNTER_UNLOCKS, 'babicka', { value: HUNTER_UNLOCKS.granny, enumerable: false, configurable: true, writable: true });
 
 const HUNTER_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
 
@@ -582,7 +613,9 @@ const HUNTER_PROGRESS_CACHE = new WeakMap<object, Map<string, any>>();
 * Calculates current unlock progress and spoil details for a hunter based on meta-progression
 */
 function computeHunterProgress(type: any, meta: any) {
-	const def = HUNTER_UNLOCKS[type] || HUNTER_UNLOCKS[toCanonicalHunterId(type)];
+	const canonical = toCanonicalHunterId(type);
+	const legacy = toLegacyHunterId(type);
+	const def = HUNTER_UNLOCKS[type] || HUNTER_UNLOCKS[canonical] || HUNTER_UNLOCKS[legacy];
 	if (!def) return {
 		id: type,
 		isUnlocked: true,
@@ -622,6 +655,7 @@ function computeHunterProgress(type: any, meta: any) {
 	}
 	if (isHunterUnlocked(type, meta)) {
 		const lastMilestone = def.milestones[def.milestones.length - 1] || def.milestones[0];
+		const rawKills = meta?.hunterKillCounts?.[type] || meta?.hunterKillCounts?.[canonical] || meta?.hunterKillCounts?.[legacy];
 		return {
 			id: type,
 			isUnlocked: true,
@@ -641,7 +675,7 @@ function computeHunterProgress(type: any, meta: any) {
 				id: e.id,
 				name: e.name,
 				icon: e.icon,
-				count: meta.hunterKillCounts?.[type]?.[e.id] ?? def.maxCount
+				count: rawKills ? (getEnemyKillCount(rawKills, e.id) || def.maxCount) : def.maxCount
 			}))
 		};
 	}
@@ -653,7 +687,7 @@ function computeHunterProgress(type: any, meta: any) {
 			isUnlocked: false,
 			canUnlock: false,
 			isQueued: true,
-			requiredHunterName: "Předchozí lovec",
+			requiredHunterName: HUNTER_UNLOCKS[prevId]?.realName || "Předchozí lovec",
 			curCount: 0,
 			maxCount: def.maxCount,
 			percent: 0,
@@ -672,10 +706,10 @@ function computeHunterProgress(type: any, meta: any) {
 			}))
 		};
 	}
-	const hunterKills = meta.hunterKillCounts?.[type] || meta.hunterKillCounts?.[toCanonicalHunterId(type)] || (type === "shepherd" || type === "pasacek" ? meta.bestiaryKills || {} : {});
+	const hunterKills = meta?.hunterKillCounts?.[type] || meta?.hunterKillCounts?.[canonical] || meta?.hunterKillCounts?.[legacy] || (canonical === "pasacek" ? meta?.bestiaryKills || {} : {});
 	let curCount = 0;
 	const enemiesBreakdown = def.targetEnemies.map((e) => {
-		const cnt = hunterKills[e.id] || 0;
+		const cnt = getEnemyKillCount(hunterKills, e.id);
 		curCount += cnt;
 		return {
 			id: e.id,

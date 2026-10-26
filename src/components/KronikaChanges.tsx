@@ -270,11 +270,11 @@ const KRONIKA: KronikaEntry[] = [
   },
   {
     date: '8. října 2026',
-    title: 'Poutník: 200 Kuráže, +35 % poškození, sjednocení pojmu Kuráž a revize všech hrdinů',
-    summary: 'Poutník (Tulák) vstupuje do boje s navýšenou Kuráží (200), procentuálním bonusem poškození +35 % a čistým startem s Osikovým prutem. Herní terminologie byla plošně sjednocena na pojem Kuráž namísto HP a popisy všech šesti lovců byly detailně zrevidovány podle jejich reálných schopností.',
+    title: 'Tulák: 200 Kuráže, +35 % poškození, sjednocení pojmu Kuráž a revize všech hrdinů',
+    summary: 'Tulák vstupuje do boje s navýšenou Kuráží (200), procentuálním bonusem poškození +35 % a čistým startem s Osikovým prutem. Herní terminologie byla plošně sjednocena na pojem Kuráž namísto HP a popisy všech šesti lovců byly detailně zrevidovány podle jejich reálných schopností.',
     items: [
-      '🦁 Poutník začíná s 200 Kuráže: Výchozí hodnota Kuráže byla navýšena ze 150 na 200, což lovci poskytuje solidní základ pro delší výpravy do nočních blat.',
-      '🗡️ Startovní výzbroj bez Buchet: Poutník začíná pouze se svou ikonickou zbraní Osikový prut. Povidlové buchty zůstávají v nůši Dědečka a ve výbavě Pasáčka.',
+      '🦁 Tulák začíná s 200 Kuráže: Výchozí hodnota Kuráže byla navýšena ze 150 na 200, což lovci poskytuje solidní základ pro delší výpravy do nočních blat.',
+      '🗡️ Startovní výzbroj bez Buchet: Tulák začíná pouze se svou ikonickou zbraní Osikový prut. Povidlové buchty zůstávají v nůši Dědečka a ve výbavě Pasáčka.',
       '💥 Tulácký instinkt dává +35 % poškození: Původní flat bonus (+30) byl změněn na plnohodnotný procentuální násobitel +35 % (×1,35) pro všechny zbraně i schopnost Pověstná sukovice.',
       '🛡️ Herní pojem Kuráž namísto HP: V celé hře, na HUDu, v plovoucích textech uzdravení (+55 Kuráž, +35 Kuráž, +6 Kuráž), na lištách minibossů i v Bestiáři byl plošně zaveden pojem Kuráž.',
       '📜 Detailní revize popisků všech 6 lovců: Popisy schopností v kartách postav, odemykání, Sandboxu i v nápovědě ovládání byly kompletně sjednoceny s reálnými herními parametry a cooldowny.',

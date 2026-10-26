@@ -121,4 +121,22 @@ describe('Enemy Atlas Baking & Pipeline Integration (ADR 0029)', () => {
     }
     expect(seenCanvases.size).toBeGreaterThanOrEqual(8);
   });
+
+  it('bakes 112x112 flying crow (vrana) frames and applies individual phase offsets to flock members', () => {
+    const crowFrame0 = atlas.getFrame('vrana', 0, false);
+    expect(crowFrame0).toBeDefined();
+    expect(crowFrame0?.width).toBe(112);
+    expect(crowFrame0?.height).toBe(112);
+
+    const flockCrowA = { id: 'vrana', flockIndex: 0, isMinibossFlockMember: true };
+    const flockCrowB = { id: 'vrana', flockIndex: 2, isMinibossFlockMember: true };
+
+    drawEnemyRenderer('drawStageCrow', ctx, 100, 100, 0.1, 1, false, flockCrowA);
+    drawEnemyRenderer('drawStageCrow', ctx, 140, 100, 0.1, 1, false, flockCrowB);
+
+    const calls = (ctx.drawImage as any).mock.calls;
+    expect(calls.length).toBe(2);
+    // Different flock indices should sample different wing-flap frames at the same game time
+    expect(calls[0][0]).not.toBe(calls[1][0]);
+  });
 });

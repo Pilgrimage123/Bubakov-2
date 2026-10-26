@@ -95,6 +95,12 @@ export interface EngineState {
   uncollectedGingerbreadValue: number;
   coinFraction?: number;
   gingerbreadFraction?: number;
+  dynamicDropLedger?: {
+    stolenCoins?: number;
+    stolenGingerbread?: number;
+    stolenHeals?: number;
+    stolenItemsCount?: number;
+  };
   director?: any;
   activeRozmar?: any;
   activeHazards?: any[];

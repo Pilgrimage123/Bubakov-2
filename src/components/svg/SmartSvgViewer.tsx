@@ -143,7 +143,7 @@ export const SmartSvgViewer: React.FC = () => {
     },
     {
       id: 'tulak' as SmartCharacterId,
-      name: 'Tulák (Poutník)',
+      name: 'Tulák',
       sub: 'Hrusické cesty & Pověstná sukovice',
       icon: '🎒🦯',
       desc: 'Rozesmátý tulák v záplatovaném zeleném kabátě s ranečkem na zádech, bylinkovou fajfkou s bafajícím vonným dýmem a mohutnou sukovitou dubovou holí. Bělovousý veselý poutník s červeným nosem a čutorou u pasu, který při akci roztočí ničivou větrnou vichřici s podzimním listím.',
