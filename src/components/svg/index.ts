@@ -1,66 +1,26 @@
 import React from 'react';
 import type { SmartSvgProps } from './types';
-import { SmartKrajanekSvg } from './SmartKrajanekSvg';
-import { SmartTulakSvg } from './SmartTulakSvg';
-import { SmartBezhlavyRytirSvg } from './SmartBezhlavyRytirSvg';
-import { SmartSnehulakSvg } from './SmartSnehulakSvg';
-import { SmartBabickaBarunkaSvg } from './SmartBabickaBarunkaSvg';
-import { SmartKostelnikSvg } from './SmartKostelnikSvg';
-import { SmartPasacekSvg } from './SmartPasacekSvg';
-import { SmartKorenarkaSvg } from './SmartKorenarkaSvg';
-import { SmartPonocnySvg } from './SmartPonocnySvg';
 import { SmartDedecekNuseSvg } from './SmartDedecekNuseSvg';
 import { SmartDedecekArenaSvg } from './SmartDedecekArenaSvg';
 
 export * from './types';
-export * from './SmartKrajanekSvg';
-export * from './SmartTulakSvg';
-export * from './SmartBezhlavyRytirSvg';
-export * from './SmartSnehulakSvg';
-export * from './SmartBabickaBarunkaSvg';
-export * from './SmartKostelnikSvg';
-export * from './SmartPasacekSvg';
-export * from './SmartKorenarkaSvg';
-export * from './SmartPonocnySvg';
 export * from './SmartDedecekNuseSvg';
 export * from './SmartDedecekArenaSvg';
 export * from './SmartSvgViewer';
 
 /**
- * Canonical registry mapping Hunter, Enemy, and NPC IDs across the game
- * to their interactive Smart SVG vector components.
+ * Canonical registry mapping characters to interactive Smart SVG vector components.
+ * Per project specification, all character SVGs were liquidated except Čertův dědeček.
  */
 export const SMART_SVG_REGISTRY: Record<string, React.FC<SmartSvgProps>> = {
-  // Hunters
-  krajanek: SmartKrajanekSvg,
-  wanderer: SmartTulakSvg,
-  tulak: SmartTulakSvg,
-  poutnik: SmartTulakSvg,
-  shepherd: SmartPasacekSvg,
-  pasacek: SmartPasacekSvg,
-  korenarka: SmartKorenarkaSvg,
-  baba_korenarka: SmartKorenarkaSvg,
-  watchman: SmartPonocnySvg,
-  ponocny: SmartPonocnySvg,
-  sexton: SmartKostelnikSvg,
-  kostelnik: SmartKostelnikSvg,
-  pobozny_kostelnik: SmartKostelnikSvg,
-  granny: SmartBabickaBarunkaSvg,
-  babicka: SmartBabickaBarunkaSvg,
-  babicka_barunka: SmartBabickaBarunkaSvg,
-
-  // Enemies & Minibosses
-  bezhlavy_rytir: SmartBezhlavyRytirSvg,
-  snehulak: SmartSnehulakSvg,
-  tajici_snehulak: SmartSnehulakSvg,
-
-  // Grandfather NPCs
+  // Čertův dědeček (Grandfather)
   dedecek_nuse: SmartDedecekNuseSvg,
   grandfather_nuse: SmartDedecekNuseSvg,
   grandfather_shop: SmartDedecekNuseSvg,
   dedecek_arena: SmartDedecekArenaSvg,
   grandfather_arena: SmartDedecekArenaSvg,
   grandfather: SmartDedecekArenaSvg,
+  certuv_dedecek: SmartDedecekNuseSvg,
 };
 
 export function hasSmartSvgSprite(id?: string | null): boolean {

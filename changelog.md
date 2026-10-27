@@ -1,3 +1,20 @@
+## 2026-10-27 — Vlna 2 optimalizací arény: Rozšířený atlas strašidel, razítkový kvašový atlas a dávkové částice
+
+- **Rozšíření `BakedBubakAtlas` na 44 archetypů se zrcadlením a lenivým pečením**:
+  - Rozšířen `BakedBubakAtlas` (`src/render/bakedBubakAtlas.ts`) a převodní mapa `METHOD_TO_MOB_ID` (`src/render/ladaRenderer.ts`) ze 14 původních zkušebních strašidel na **44 běžných archetypů vln** (včetně `kostlivec_kosa`, `hromotluk`, `stodolnik`, `mrazivy_obr`, `hastrman`, `bila_pani`, `klekanice`, `drab` a dalších).
+  - Implementováno **lenivé pečení na vyžádání** (`ensureMobBaked`) při prvním spawnu nebo vykreslení konkrétního druhu strašidla v dané úrovni, což zajišťuje okamžitý start arény a pevně ohraničuje paměťové nároky offscreen canvasů pouze na aktivní monstra v daném levelu.
+  - Do `BakedFrame` přidán předpečený zrcadlený canvas (`flippedCanvas`), díky čemuž vykreslování vlevo pohybujících se monster (`vx < 0`) probíhá přímým `ctx.drawImage` bez per-entity režijních volání `ctx.save()`, `ctx.translate()`, `ctx.scale(-1, 1)` a `ctx.restore()`.
+- **Razítkový kvašový atlas pro střely, drops a bezalokační páteře**:
+  - Rozšířen generátor kešovaných spritů `getCachedLadaSprite` v `src/render/ladaRenderer.ts` s plnou podporou pro prohlížečové i headless benchmarkové prostředí.
+  - Zavedeno předpečené razítkování pro všechny 3 nominace **Perníčků** (`small`, `large`, `giant` v běžné i horké variantě), **Dušičkový hrníček** (`drawSoulJar`), všech 6 variant **Bylinkového věnce** (`drawHerbProjectile`) a létající střely (`potato`, `ink_bottle`, `dirt_clod`, `mud_ball`, `head_projectile`) v `src/render/renderProjectiles.ts`.
+  - V `drawOsikovyPrutSlash` nahrazeno alokování polí a objektů bodů na každý švih prealokovanými modulovými spine pufry (`_osikovySpineMain`, `_osikovySpineGhost0`, `_osikovySpineGhost1`), čímž byly zcela odstraněny GC pauzy při hromadných švihách Osikového prutu Rank 8.
+- **Dávkové vykreslování bojových částic podle barvy a 4 úrovní alfy**:
+  - Refaktorováno `renderParticles` (`src/render/renderParticles.ts`) na bezalokační dvouprůchodové dávkování: v 1. průchodu se částice roztřídí do stálých typed-array pufru podle barvy a 4 kvantovaných úrovní průhlednosti (`0.25`, `0.50`, `0.75`, `1.00`).
+  - V 2. průchodu se celá skupina částic stejné barvy a alfy vykreslí jediným složeným kvašovým tvarem (`ctx.beginPath()` + násobné `moveTo`/`arc` + jediný `fill()`), čímž klesl počet grafických volání při 200+ částicích na plátně až 20násobně.
+- **Dopad na výkon a profilování**:
+  - Všeobecné zátěžové benchmarky pro 58 strašidel v `tests/enemyFpsBenchmark.test.ts` zaznamenaly téměř dvojnásobné zrychlení vykreslovací smyčky (celkový čas profilu klesl z 4 839 ms na 2 556 ms).
+  - Všechna sestavení (`npm run build`, `compile_applet`), linter (`lint_applet`) i kompletní testovací sada (63 testovacích souborů, 614 testů) procházejí se 100% úspěšností.
+
 ## 2026-10-26 — Kanonizace pojmů procedurální kresby lovců a Smart SVG postav
 
 - **Kanonizace v GLOSSARY.md**:

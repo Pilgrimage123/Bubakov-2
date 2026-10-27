@@ -7,7 +7,6 @@ import { KrejcarIcon } from './KrejcarIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { GameIcon } from './GameIcon';
 import { ENEMY_PREFIX_DEFS, EnemyPrefixType } from '../types';
-import { SmartSpriteRenderer, hasSmartSvgSprite, type SmartSvgState } from './svg';
 
 export const PREFIX_KEYS: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny', 'vycerpany'];
 
@@ -92,7 +91,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedId, setSelectedId] = useState<string>('rarach');
   const [selectedPrefixId, setSelectedPrefixId] = useState<EnemyPrefixType>('vichricovy');
-  const [smartSvgState, setSmartSvgState] = useState<SmartSvgState>('walk');
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const monsterList = Object.values(ENEMIES).filter(
@@ -540,74 +538,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                   <div className="bestiary-canvas-wrap">
                     <canvas ref={previewCanvasRef} width={180} height={180} className="bestiary-canvas" />
                   </div>
-                  {hasSmartSvgSprite(selectedId) && (
-                    <div
-                      style={{
-                        background: '#FFFDF7',
-                        border: '2px solid #78350F',
-                        borderRadius: '10px',
-                        padding: '8px 10px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#78350F' }}>
-                        ✨ SMART SVG VEKTOR (sleduje kurzor)
-                      </div>
-                      <div
-                        style={{
-                          width: '148px',
-                          height: '148px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
-                          filter: enemyProg.tier === 0 ? 'brightness(0) opacity(0.82)' : enemyProg.tier === 1 ? 'grayscale(1) contrast(1.2) brightness(0.55)' : 'none',
-                        }}
-                      >
-                        <SmartSpriteRenderer
-                          spriteId={selectedId}
-                          state={smartSvgState}
-                          size={142}
-                          interactive={enemyProg.tier >= 2}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        {(
-                          [
-                            { id: 'idle', label: 'Klid' },
-                            { id: 'walk', label: 'Chůze' },
-                            { id: 'sprint', label: 'Úprk' },
-                            { id: 'action', label: 'Útok' },
-                            { id: 'react', label: 'Zásah' },
-                          ] as Array<{ id: SmartSvgState; label: string }>
-                        ).map((st) => (
-                          <button
-                            key={st.id}
-                            type="button"
-                            onClick={() => {
-                              sound.coin();
-                              setSmartSvgState(st.id);
-                            }}
-                            style={{
-                              padding: '2px 7px',
-                              fontSize: '0.7rem',
-                              fontWeight: 800,
-                              borderRadius: '5px',
-                              border: '1px solid #78350F',
-                              background: smartSvgState === st.id ? '#78350F' : '#FEF3C7',
-                              color: smartSvgState === st.id ? '#FFFBEB' : '#2A170A',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {st.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="hunter-progress-wrap" style={{ margin: '10px 0 14px 0' }}>

@@ -32,13 +32,22 @@ describe('Enemy Atlas Baking & Pipeline Integration (ADR 0029)', () => {
     }
   });
 
-  it('draws with horizontal flip when moving left (vx < 0)', () => {
+  it('draws with pre-flipped left-facing canvas when moving left (vx < 0) without per-frame save/scale/restore overhead', () => {
+    const frame = atlas.getFrame('rarach', 0.2, false);
+    expect(frame).toBeDefined();
+    expect(frame?.flippedCanvas).toBeDefined();
+    expect(frame?.flippedCanvas).not.toBe(frame?.canvas);
+
     const drawn = atlas.draw(ctx, 'rarach', 100, 150, 0.2, -1, false);
     expect(drawn).toBe(true);
-    expect(ctx.save).toHaveBeenCalled();
-    expect(ctx.scale).toHaveBeenCalledWith(-1, 1);
-    expect(ctx.drawImage).toHaveBeenCalled();
-    expect(ctx.restore).toHaveBeenCalled();
+    expect(ctx.save).not.toHaveBeenCalled();
+    expect(ctx.scale).not.toHaveBeenCalled();
+    expect(ctx.drawImage).toHaveBeenCalledWith(
+      frame?.flippedCanvas,
+      100 - (frame?.originX ?? 48),
+      150 - (frame?.originY ?? 48)
+    );
+    expect(ctx.restore).not.toHaveBeenCalled();
   });
 
   it('draws without transform overhead when moving right (vx >= 0)', () => {
@@ -48,8 +57,8 @@ describe('Enemy Atlas Baking & Pipeline Integration (ADR 0029)', () => {
   });
 
   it('integrates into drawEnemyRenderer: walking mobs use atlas, skipping procedural vector commands', () => {
-    // Ensure atlas is initialized before attaching spy so baking passes are not counted
-    getGlobalBakedBubakAtlas().init();
+    // Ensure rarach is lazily baked before attaching spy so baking passes are not counted
+    getGlobalBakedBubakAtlas().ensureMobBaked('rarach');
     const spyDrawRarach = vi.spyOn(Lada, 'drawRarach');
 
     const enemy = {

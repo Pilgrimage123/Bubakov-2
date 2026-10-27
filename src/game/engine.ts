@@ -694,6 +694,8 @@ export class GameEngine {
       _valecnicePulse: false,
       _garlicPulse: false,
       _caneSwingAlt: false,
+      stillTimer: 0,
+      flailStanceTimer: 0,
 
       distTo(e: any) {
         return Math.hypot(e.x - this.x, e.y - this.y);
@@ -1275,7 +1277,9 @@ export class GameEngine {
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
         if (this.vycerpanyTimer > 0) this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
-        for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
+        for (const statusType in this.statusEffects) {
+          const effect = this.statusEffects[statusType];
+          if (!effect) continue;
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
         }
@@ -1550,26 +1554,36 @@ export class GameEngine {
           finalDamage *= holyMult;
         }
         finalDamage += (self.state.meta?.forgeLevel || 0) * 2;
+        const critChanceBonus = options?.critChanceBonus || 0;
+        const customCritDamageMult = options?.critDamageMult || 0;
+        const critKnockbackMult = options?.critKnockbackMult || 1;
         let isCriticalHit = Boolean(options?.isCrit || options?.isCritical);
         if (self.state.player && self.state.player.guaranteedCritTimer > 0) {
           isCriticalHit = true;
-          finalDamage = Math.round(finalDamage * 2.2);
+          const supinaBonus = (self.state.player.kominickaSupinaStacks || 0) * 0.25;
+          const critMult = Math.max(2.2, customCritDamageMult) + supinaBonus;
+          finalDamage = Math.round(finalDamage * critMult);
           self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
         } else if (self.state.player) {
-          let critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001;
+          let critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001 + critChanceBonus;
           if ((self.state.player.zPeklaStestiTimer || 0) > 0) {
             critChance += 0.10;
           }
           if ((self.state.player.cinovyTercStacks || 0) > 0 && this.hp >= (this.maxHp || 0)) {
             critChance *= 2.0 + (self.state.player.cinovyTercStacks - 1) * 0.5;
           }
-          if (Math.random() < critChance) {
+          if (isCriticalHit || Math.random() < critChance) {
             isCriticalHit = true;
             const supinaBonus = (self.state.player.kominickaSupinaStacks || 0) * 0.25;
-            const critMult = 1.65 + supinaBonus;
+            const baseCritMult = customCritDamageMult > 0 ? customCritDamageMult : 1.65;
+            const critMult = baseCritMult + supinaBonus;
             finalDamage = Math.round(finalDamage * critMult);
-            self.state.texts.push(new DamageText(this.x, this.y - 48, 'ŠŤASTNÝ ZÁSAH! 🎯', '#FBBF24', true));
+            const critText = options?.source === 'dreveny_cep' ? 'KRITICKÝ MLAT! 💥' : 'ŠŤASTNÝ ZÁSAH! 🎯';
+            self.state.texts.push(new DamageText(this.x, this.y - 48, critText, '#FBBF24', true));
           }
+        } else if (isCriticalHit) {
+          const baseCritMult = customCritDamageMult > 0 ? customCritDamageMult : 1.65;
+          finalDamage = Math.round(finalDamage * baseCritMult);
         }
 
         if (isCriticalHit && self.state.player) {
@@ -1648,15 +1662,24 @@ export class GameEngine {
         }
 
         if (kbx !== 0 || kby !== 0) {
+          const effectiveCritKbMult = isCriticalHit ? Math.max(1, critKnockbackMult) : 1;
+          const finalKbx = kbx * effectiveCritKbMult;
+          const finalKby = kby * effectiveCritKbMult;
           if (this.prefix === 'kamenny') {
-            this.kbx += kbx * 0.15;
-            this.kby += kby * 0.15;
+            const stoneFactor = isCriticalHit && effectiveCritKbMult > 1 ? 0.30 : 0.15;
+            this.kbx += finalKbx * stoneFactor;
+            this.kby += finalKby * stoneFactor;
           } else {
-            const poiseRed = self.state.player?.plumPoiseReduction || 0;
+            const critPoisePierce = isCriticalHit && effectiveCritKbMult > 1 ? 0.35 : 0;
+            const poiseRed = (self.state.player?.plumPoiseReduction || 0) + critPoisePierce;
             const poise = Math.max(0, (this.poiseResist || 0) - poiseRed);
-            const kbFactor = Math.max(0.1, 1 - poise);
-            this.kbx += kbx * kbFactor;
-            this.kby += kby * kbFactor;
+            const kbFactor = Math.max(0.15, 1 - poise);
+            this.kbx += finalKbx * kbFactor;
+            this.kby += finalKby * kbFactor;
+            if (isCriticalHit && effectiveCritKbMult > 1.5 && options?.source === 'dreveny_cep') {
+              const stunResist = this.willpower || 0;
+              this.stunTimer = Math.max(this.stunTimer || 0, 0.45 * (1 - stunResist));
+            }
             this.interruptAttack();
           }
         }
@@ -2243,6 +2266,27 @@ export class GameEngine {
         this.pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
       }
       const nearby = this.spatialHash.queryCircle(impact.x, impact.y, radius + 60);
+      const originX = impact.originX ?? this.state.player?.x ?? impact.x;
+      const originY = impact.originY ?? this.state.player?.y ?? impact.y;
+      const baseKb = impact.baseKnockback ?? 360;
+      const kbMult = impact.knockbackMult ?? 1;
+      const hasDamageOptions =
+        Boolean(impact.stunDuration) ||
+        Boolean(impact.critChanceBonus) ||
+        Boolean(impact.critDamageMult) ||
+        Boolean(impact.critKnockbackMult) ||
+        Boolean(impact.ignoreResist) ||
+        Boolean(impact.weaponId);
+      const damageOptions = hasDamageOptions
+        ? {
+            ...(impact.stunDuration ? { stunDuration: impact.stunDuration } : {}),
+            ...(impact.critChanceBonus ? { critChanceBonus: impact.critChanceBonus } : {}),
+            ...(impact.critDamageMult ? { critDamageMult: impact.critDamageMult } : {}),
+            ...(impact.critKnockbackMult ? { critKnockbackMult: impact.critKnockbackMult } : {}),
+            ...(impact.ignoreResist ? { ignoreResist: impact.ignoreResist } : {}),
+            ...(impact.weaponId ? { source: impact.weaponId } : {}),
+          }
+        : undefined;
 
       for (let i = 0; i < nearby.length; i++) {
         const e = nearby[i];
@@ -2251,13 +2295,22 @@ export class GameEngine {
         const dy = e.y - impact.y;
         const reach = radius + (e.radius || 15);
         if (dx * dx + dy * dy <= reach * reach) {
-          const kbMult = impact.knockbackMult ?? 1;
+          let kdx = e.x - originX;
+          let kdy = e.y - originY;
+          let kdist = Math.hypot(kdx, kdy);
+          if (kdist < 0.001) {
+            kdx = impact.x - originX;
+            kdy = impact.y - originY;
+            kdist = Math.hypot(kdx, kdy);
+          }
+          const nx = kdist > 0.001 ? kdx / kdist : 1;
+          const ny = kdist > 0.001 ? kdy / kdist : 0;
           e.takeDamage(
             dmg,
             impactType,
-            dx * 4 * kbMult,
-            dy * 4 * kbMult,
-            impact.stunDuration ? { stunDuration: impact.stunDuration } : undefined
+            nx * baseKb * kbMult,
+            ny * baseKb * kbMult,
+            damageOptions
           );
         }
       }
@@ -2673,6 +2726,11 @@ export class GameEngine {
 
       // Goat Bell (Zvonek ze zatoulané kozy)
       const isMoving = Math.hypot(moveVx, moveVy) > 15 || mx !== 0 || my !== 0;
+      if (!isMoving) {
+        player.flailStanceTimer = Math.min(2.4, (player.flailStanceTimer || 0) + dt);
+      } else {
+        player.flailStanceTimer = Math.max(0, (player.flailStanceTimer || 0) - dt * 1.1);
+      }
       if (player.goatBellStacks > 0 && isMoving) {
         player.goatBellTimer = (player.goatBellTimer || player.goatBellInterval || 4.0) - dt;
         if (player.goatBellTimer <= 0) {
@@ -2797,6 +2855,13 @@ export class GameEngine {
               const formulaCd = getEffectiveWeaponCooldown(baseCd, playerCooldownBonus, weaponCooldownBonus);
               const stats = (w as any)._cachedStats || ((w as any)._cachedStats = getRankedWeaponStats(w.id, w.level, w));
               let localCd = formulaCd * stats.cooldownMult;
+              if (w.id === 'dreveny_cep') {
+                const stanceSec = Math.max(player.flailStanceTimer || 0, player.stillTimer || 0);
+                const stanceRatio = Math.max(0, Math.min(1, stanceSec / 1.2));
+                if (stanceRatio > 0) {
+                  localCd = localCd / (1 + 0.22 * stanceRatio);
+                }
+              }
               if ((player.pivniTacekTimer || 0) > 0) {
                 const cdBoost = 1.35 + Math.max(0, (player.pivniTacekStacks || 1) - 1) * 0.15;
                 localCd = localCd / cdBoost;
@@ -3591,15 +3656,20 @@ export class GameEngine {
                   for (let sp = 0; sp < sparkCount; sp++) {
                     const ang = Math.random() * Math.PI * 2;
                     const speed = (fullyRecharged ? 85 : 50) + Math.random() * 40;
-                    this.state.particles.push({
-                      x: player.x + (Math.random() - 0.5) * 16,
-                      y: player.y + (Math.random() - 0.5) * 16,
-                      vx: Math.cos(ang) * speed,
-                      vy: Math.sin(ang) * speed - 15,
-                      life: fullyRecharged ? 0.45 : 0.32,
-                      color: mirrorColors[sp % mirrorColors.length],
-                      size: fullyRecharged ? 3.8 : 2.5,
-                    });
+                    const color = mirrorColors[sp % mirrorColors.length];
+                    tryEmitParticle(
+                      this.state.particles,
+                      () => ({
+                        x: player.x + (Math.random() - 0.5) * 16,
+                        y: player.y + (Math.random() - 0.5) * 16,
+                        vx: Math.cos(ang) * speed,
+                        vy: Math.sin(ang) * speed - 15,
+                        life: fullyRecharged ? 0.45 : 0.32,
+                        color,
+                        size: fullyRecharged ? 3.8 : 2.5,
+                      }),
+                      this.state.meta?.performanceProfile
+                    );
                   }
 
                   if (fullyRecharged) {

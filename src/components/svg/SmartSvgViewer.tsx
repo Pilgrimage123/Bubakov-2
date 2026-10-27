@@ -1,673 +1,452 @@
 import React, { useState, useRef } from 'react';
-import { SmartBabickaBarunkaSvg } from './SmartBabickaBarunkaSvg';
-import { SmartBezhlavyRytirSvg } from './SmartBezhlavyRytirSvg';
-import { SmartSnehulakSvg } from './SmartSnehulakSvg';
-import { SmartTulakSvg } from './SmartTulakSvg';
-import { SmartKrajanekSvg } from './SmartKrajanekSvg';
-import { SmartKostelnikSvg } from './SmartKostelnikSvg';
-import { SmartPasacekSvg } from './SmartPasacekSvg';
 import { SmartDedecekNuseSvg } from './SmartDedecekNuseSvg';
 import { SmartDedecekArenaSvg } from './SmartDedecekArenaSvg';
 import type { SmartCharacterId, SmartCharacterState } from './types';
 import { sound } from '../../audio';
 
 export const SmartSvgViewer: React.FC = () => {
-  const [selectedChar, setSelectedChar] = useState<SmartCharacterId>('krajanek');
+  const [selectedChar, setSelectedChar] = useState<SmartCharacterId>('dedecek_nuse');
   const [state, setState] = useState<SmartCharacterState>('walk');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [speed, setSpeed] = useState<number>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [bgType, setBgType] = useState<'parchment' | 'night' | 'snow' | 'grid'>('parchment');
   const [zoom, setZoom] = useState<number>(380);
-  const [showCompanion, setShowCompanion] = useState<boolean>(true);
+
+  // Dědeček unique feature toggles
   const [showHeadGlow, setShowHeadGlow] = useState<boolean>(true);
-  const [showBossAura, setShowBossAura] = useState<boolean>(true);
-  const [showMillstone, setShowMillstone] = useState<boolean>(true);
-  const [showSmoke, setShowSmoke] = useState<boolean>(true);
+  const [showCompanion, setShowCompanion] = useState<boolean>(true);
   const [showParticles, setShowParticles] = useState<boolean>(true);
-  const [copiedNotice, setCopiedNotice] = useState<boolean>(false);
+  const [showSmoke, setShowSmoke] = useState<boolean>(true);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Play corresponding sound effect when triggering actions or switching characters
-  const handleStateChange = (newState: SmartCharacterState) => {
-    setState(newState);
-    if (newState === 'action') {
-      if (selectedChar === 'krajanek') {
-        sound.zernovHammer();
-        setTimeout(() => sound.zernovSlam(), 140);
-      } else if (selectedChar === 'babicka_barunka') {
-        sound.kindChime();
-        setTimeout(() => sound.timeStop(), 150);
-      } else if (selectedChar === 'bezhlavy_rytir') {
-        sound.boss();
-        setTimeout(() => sound.roar(), 120);
-        setTimeout(() => sound.slash(), 240);
-      } else if (selectedChar === 'snehulak') {
-        sound.freeze();
-        setTimeout(() => sound.bootSnowCrunch(), 120);
-      } else if (selectedChar === 'tulak') {
-        sound.cheer();
-        setTimeout(() => sound.sukoviceWhirl(), 150);
-      } else if (selectedChar === 'kostelnik') {
-        sound.churchBell();
-        setTimeout(() => sound.slivoviceSplash(), 160);
-      } else if (selectedChar === 'pasacek') {
-        sound.kominikButton();
-        setTimeout(() => sound.cheer(), 180);
-      } else if (selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') {
-        sound.grandfatherOpen();
-        setTimeout(() => sound.mouseSqueak(), 160);
-      }
-    } else if (newState === 'react') {
-      sound.hit();
-      if (selectedChar === 'babicka_barunka') {
-        sound.grandmothersApron();
-      } else if (selectedChar === 'bezhlavy_rytir') {
-        sound.heavyHit();
-      } else if (selectedChar === 'snehulak') {
-        sound.caneWhip();
-      } else if (selectedChar === 'tulak') {
-        sound.rooster();
-      } else if (selectedChar === 'krajanek') {
-        sound.hit();
-      } else if (selectedChar === 'kostelnik') {
-        sound.candlePulse();
-      } else if (selectedChar === 'pasacek') {
-        sound.kominikButton();
-      } else if (selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') {
-        sound.hit();
-        sound.mouseSqueak();
-      }
-    } else if (newState === 'flee') {
-      sound.hit();
-      setTimeout(() => sound.bootSnowCrunch(), 120);
-    } else if (newState === 'sprint') {
-      sound.bootSnowCrunch();
-    } else if (newState === 'walk') {
-      if (selectedChar === 'snehulak') sound.bootSnowCrunch();
-    }
-  };
-
-  const handleCharacterSelect = (id: SmartCharacterId) => {
+  const handleCharSelect = (id: SmartCharacterId) => {
     setSelectedChar(id);
-    if (id === 'krajanek') sound.zernovHammer();
-    else if (id === 'babicka_barunka') sound.kindChime();
-    else if (id === 'bezhlavy_rytir') sound.boss();
-    else if (id === 'snehulak') sound.freeze();
-    else if (id === 'tulak') sound.sukoviceWhirl();
-    else if (id === 'kostelnik') sound.churchBell();
-    else if (id === 'pasacek') sound.kominikButton();
-    else if (id === 'dedecek_nuse' || id === 'dedecek_arena') sound.grandfatherCall();
+    sound.playTone(660, 'sine', 0.05, 0.08);
   };
 
-  // Export current SVG as clean string
-  const handleCopySvg = () => {
-    if (!containerRef.current) return;
-    const svgElem = containerRef.current.querySelector('svg');
-    if (!svgElem) return;
-
-    const serializer = new XMLSerializer();
-    const source = serializer.serializeToString(svgElem);
-    navigator.clipboard.writeText(source).then(() => {
-      setCopiedNotice(true);
-      setTimeout(() => setCopiedNotice(false), 2200);
-    });
+  const handleStateSelect = (s: SmartCharacterState) => {
+    setState(s);
+    sound.playTone(660, 'sine', 0.05, 0.08);
   };
 
-  const handleDownloadSvg = () => {
+  const handleExportSvg = () => {
     if (!containerRef.current) return;
-    const svgElem = containerRef.current.querySelector('svg');
-    if (!svgElem) return;
+    const svgEl = containerRef.current.querySelector('svg');
+    if (!svgEl) return;
 
     const serializer = new XMLSerializer();
-    const source = serializer.serializeToString(svgElem);
-    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const svgString = serializer.serializeToString(svgEl);
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${selectedChar}_smart_animation.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedChar}_${state}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    sound.coin();
   };
 
-  const characters = [
-    {
-      id: 'krajanek' as SmartCharacterId,
-      name: 'Krajánek',
-      sub: 'Hrusický mlýn & Jízda na žernovu',
-      icon: '🌾🪨',
-      desc: 'Veselý mlynářský tovaryš a pocestný v pomoučeném šatě, klobouku s obilným klasem, červenou puntíkovanou mošnou na holi a kamenickým kladívkem. Při akci "Jízda na žernovu" naskočí na rotující žulový mlýnský kámen s jiskrami a mračny mouky.',
+  const bgStyles = {
+    parchment: { background: '#F4E8D1', border: '3px solid #8B4513' },
+    night: { background: '#0F172A', border: '3px solid #334155' },
+    snow: { background: '#E2E8F0', border: '3px solid #94A3B8' },
+    grid: {
+      backgroundColor: '#FAFAF9',
+      backgroundImage: 'linear-gradient(#E2E8F0 1px, transparent 1px), linear-gradient(90deg, #E2E8F0 1px, transparent 1px)',
+      backgroundSize: '20px 20px',
+      border: '3px solid #CBD5E1',
     },
-    {
-      id: 'tulak' as SmartCharacterId,
-      name: 'Tulák',
-      sub: 'Hrusické cesty & Pověstná sukovice',
-      icon: '🎒🦯',
-      desc: 'Rozesmátý tulák v záplatovaném zeleném kabátě s ranečkem na zádech, bylinkovou fajfkou s bafajícím vonným dýmem a mohutnou sukovitou dubovou holí. Bělovousý veselý poutník s červeným nosem a čutorou u pasu, který při akci roztočí ničivou větrnou vichřici s podzimním listím.',
-    },
-    {
-      id: 'bezhlavy_rytir' as SmartCharacterId,
-      name: 'Bezhlavý rytíř (BOSS)',
-      sub: 'Hrad Zlenice & Královský dvouocasý lev',
-      icon: '⚔️👑',
-      desc: 'Strašlivý velký BOSS v černěné gotické plátové zbroji s erbem českého dvouocasého lva, vlajícím krvavě rudým pláštěm a obouručním runovým popravčím mečem. V náručí svírá svou vlastní useknutou přilbici s planoucíma očima a při půlnočním seku rozpoutá děsivý válečný řev a rudé blesky.',
-    },
-    {
-      id: 'babicka_barunka' as SmartCharacterId,
-      name: 'Babička a Barunka',
-      sub: 'Ratibořické údolí & Božena Němcová',
-      icon: '👵👧',
-      desc: 'Laskavá stařenka v bílém vyšívaném šátku, vlněném plédu a modré pruhované zástěře s velikou kapsou plnou čerstvého chleba, kostkovaného ubrousku a bylinek. Doprovází ji Barunka se zapleteným copem, červenou mašlí a pestrou kyticí lučního kvítí.',
-    },
-    {
-      id: 'snehulak' as SmartCharacterId,
-      name: 'Sněhulák s koštětem',
-      sub: 'Zimní Hrusice & Josef Lada',
-      icon: '⛄🧹',
-      desc: 'Mračící se sněhulák kráčející na dvou nohách s březovým koštětem pevně v dlaních. Na hlavě má otlučený hrnec s čepicí čerstvého sněhu a jehličím, kolem krku pruhovanou vlněnou šálu s třásněmi, ostrý mrkvový nos a uhlíky plné zášti.',
-    },
-    {
-      id: 'kostelnik' as SmartCharacterId,
-      name: 'Kostelník',
-      sub: 'Hrusický kostelík & Svěcená voda',
-      icon: '🔔✝️',
-      desc: 'Přísný a důstojný kostelník v tmavozeleném církevním svrchníku, hnědé plstěné kloboukové fedoře a vestě se zlatým křížem na prsou. V jedné ruce nese těžký mosazný kotlík se svěcenou vodou a v druhé mocně máchá kropáčem zahánějícím nečisté síly.',
-    },
-    {
-      id: 'pasacek' as SmartCharacterId,
-      name: 'Pasáček',
-      sub: 'Hrusické pastviny & Dřevěná píšťalka',
-      icon: '🪈👦',
-      desc: 'Hbitý bosonohý chlapec z ladovských pastvin s rozcuchanými kaštanovými vlasy, orlím pírkem za uchem a pastýřskou píšťalkou. V modré vyšívané vestičce, červeném šátku a záplatovaných kalhotách radostně uhání loukou a vyhrává líbezné melodie.',
-    },
+  };
+
+  const CHAR_DEFS = [
     {
       id: 'dedecek_nuse' as SmartCharacterId,
-      name: 'Čertův dědeček s nůší',
-      sub: 'Dědečkův krámek & Otevřená nůše',
-      icon: '👹🧺',
-      desc: 'Rozverný čertovský kramář s mohutnými vroubkovanými rohy, záplatovaným kabátcem, bafající fajfkou a kopyty. V obrovské otevřené pletené nůši s koženými řemeny nabízí vzácné lektvary, sušené bylinky, vyřezávanou truhličku, zlatý ananas i pohybující se myšičku Rézinku.',
+      name: 'Čertův dědeček (Nůše & Obchod)',
+      role: 'Obchodník / Legenda',
+      color: '#C53026',
+      desc: 'Autentický Josef Lada styl — nůše plná dukátů a pekelných artefaktů, fajfka, beraní rohy a huňatý kožich.',
     },
     {
       id: 'dedecek_arena' as SmartCharacterId,
-      name: 'Dědeček v aréně',
-      sub: 'Polní pochod & Nůše na zádech',
-      icon: '👹🎒',
-      desc: 'Kráčející čertovský handlíř s nůší na zádech, kulatými drátěnými brýlemi, vyceněnými křivými zuby, bafající fajfkou a plynulým čertovským ocasem. Jednou nohou dupe rozeklaným kopytem s ovinkami, druhou našlapuje ve šněrovací škorni a z nůše mu vykukuje myška Rézinka, měděná lucerna a plechová bandaska.',
+      name: 'Čertův dědeček (Aréna)',
+      role: 'Pekelný spojenec',
+      color: '#DC2626',
+      desc: 'Bojová varianta v aréně — plamenná hůl, pekelný plášť, ohnivé stopy a podpora lovců.',
     },
   ];
 
-  const currentChar = characters.find((c) => c.id === selectedChar) || characters[0];
-
-  // Background style
-  const bgStyles = {
-    parchment: 'bg-[#FAF4E4] border-[#D9CAA5]',
-    night: 'bg-[#0F172A] border-[#334155]',
-    snow: 'bg-[#F0F9FF] border-[#BAE6FD]',
-    grid: 'bg-[radial-gradient(#CBD5E1_1px,transparent_1px)] [background-size:16px_16px] bg-[#FFFFFF] border-slate-300',
-  }[bgType];
+  const features = {
+    showHeadGlow,
+    showCompanion,
+    showParticles,
+    showSmoke,
+    showShadow: true,
+    showOutline: true,
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-full max-w-7xl mx-auto p-2 sm:p-4">
-      {/* LEFT COLUMN: INTERACTIVE STAGE & CANVAS */}
-      <div className="flex-1 flex flex-col items-center">
-        {/* CHARACTER SELECTION TABS */}
-        <div className="flex flex-wrap justify-center gap-2 mb-4 w-full">
-          {characters.map((c) => {
-            const active = selectedChar === c.id;
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Header with info */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #FAF5E8 0%, #F5E8D0 100%)',
+          border: '2px solid #8B4513',
+          borderRadius: 8,
+          padding: '12px 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
+        <div>
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: "'Crimson Pro', serif",
+              fontSize: 20,
+              color: '#451A03',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            🔥 Smart SVG Studio: Čertův dědeček
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                background: '#C53026',
+                color: '#FAF5E8',
+                padding: '2px 8px',
+                borderRadius: 12,
+              }}
+            >
+              Jediná vektorová Smart SVG postava
+            </span>
+          </h3>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#78350F' }}>
+            Všichni ostatní lovci a nepřátelé jsou vykreslováni procedurálním 2D Canvasem. Zde je interaktivní vektorové studio pro Čertova dědečka.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleExportSvg}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 6,
+              border: '2px solid #8B4513',
+              background: '#C53026',
+              color: '#FAF5E8',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+            }}
+          >
+            💾 Exportovat čisté SVG
+          </button>
+        </div>
+      </div>
+
+      {/* Main Area: Character Picker + Stage + Controls */}
+      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 280px', gap: 16 }}>
+        {/* Left Column: Character Selection */}
+        <div
+          style={{
+            background: '#FAF5E8',
+            border: '2px solid #8B4513',
+            borderRadius: 8,
+            padding: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#451A03', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            Varianty postavy
+          </div>
+          {CHAR_DEFS.map((char) => {
+            const isSel = selectedChar === char.id;
             return (
               <button
-                key={c.id}
-                onClick={() => handleCharacterSelect(c.id)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm ${
-                  active
-                    ? 'bg-amber-600 text-white ring-4 ring-amber-300 shadow-md scale-102'
-                    : 'bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200'
-                }`}
+                key={char.id}
+                onClick={() => handleCharSelect(char.id)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '10px 12px',
+                  borderRadius: 6,
+                  border: isSel ? '2px solid #C53026' : '1px solid #D6C7B2',
+                  background: isSel ? '#F5E8D0' : '#FFFFFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: isSel ? '0 2px 6px rgba(197, 48, 38, 0.2)' : 'none',
+                }}
               >
-                <span className="text-xl">{c.icon}</span>
-                <div className="text-left">
-                  <div className="text-sm leading-tight">{c.name}</div>
-                  <div className={`text-[10px] ${active ? 'text-amber-100' : 'text-amber-700/80'}`}>{c.sub}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: isSel ? '#991B1B' : '#1C1917' }}>
+                    {char.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: char.color,
+                      border: `1px solid ${char.color}`,
+                      borderRadius: 4,
+                      padding: '1px 5px',
+                    }}
+                  >
+                    {char.role}
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: '#78350F', marginTop: 4, lineHeight: 1.3 }}>
+                  {char.desc}
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* INTERACTIVE STAGE */}
-        <div
-          ref={containerRef}
-          className={`relative w-full rounded-2xl border-2 flex items-center justify-center min-h-[460px] sm:min-h-[520px] transition-colors shadow-inner overflow-hidden ${bgStyles}`}
-        >
-          {/* Subtle Stage Lighting & Overlay */}
-          <div className="absolute top-3 left-4 text-xs font-semibold px-2.5 py-1 rounded-full bg-black/10 text-slate-700 backdrop-blur-sm pointer-events-none flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Smart SVG • Interaktivní kurzor
+        {/* Center Column: SVG Stage */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div
+            ref={containerRef}
+            style={{
+              ...bgStyles[bgType],
+              borderRadius: 8,
+              minHeight: 440,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.1)',
+            }}
+          >
+            {selectedChar === 'dedecek_nuse' ? (
+              <SmartDedecekNuseSvg
+                state={state}
+                isPlaying={isPlaying}
+                speed={speed}
+                direction={direction}
+                size={zoom}
+                features={features}
+              />
+            ) : (
+              <SmartDedecekArenaSvg
+                state={state}
+                isPlaying={isPlaying}
+                speed={speed}
+                direction={direction}
+                size={zoom}
+                features={features}
+              />
+            )}
           </div>
 
-          {/* ACTIVE CHARACTER SVG */}
-          {selectedChar === 'krajanek' && (
-            <SmartKrajanekSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showMillstone,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'tulak' && (
-            <SmartTulakSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showSmoke,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'bezhlavy_rytir' && (
-            <SmartBezhlavyRytirSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showHeadGlow,
-                showBossAura,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'babicka_barunka' && (
-            <SmartBabickaBarunkaSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showCompanion,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'snehulak' && (
-            <SmartSnehulakSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'kostelnik' && (
-            <SmartKostelnikSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'pasacek' && (
-            <SmartPasacekSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'dedecek_nuse' && (
-            <SmartDedecekNuseSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom + 40}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'idle' : 'action')}
-              features={{
-                showCompanion,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {selectedChar === 'dedecek_arena' && (
-            <SmartDedecekArenaSvg
-              state={state}
-              speed={speed}
-              isPlaying={isPlaying}
-              direction={direction}
-              size={zoom + 40}
-              interactive={true}
-              onClick={() => handleStateChange(state === 'action' ? 'walk' : 'action')}
-              features={{
-                showCompanion,
-                showParticles,
-                showShadow: true,
-                showOutline: true,
-              }}
-            />
-          )}
-
-          {/* FLOATING ACTION PILL ON BOTTOM */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-amber-200/60 shadow-lg text-xs font-medium">
-            <span className="text-slate-500">Kliknutím na postavu spustíte:</span>
-            <span className="text-amber-700 font-bold uppercase tracking-wider">
-              {selectedChar === 'krajanek'
-                ? 'Jízda na žernovu & jiskry'
-                : selectedChar === 'tulak'
-                ? 'Pověstná sukovice & vichřice'
-                : selectedChar === 'bezhlavy_rytir'
-                ? 'Půlnoční stětí & řev (BOSS)'
-                : selectedChar === 'babicka_barunka'
-                ? 'Laskavý zázrak'
-                : selectedChar === 'snehulak'
-                ? 'Vánici s koštětem'
-                : selectedChar === 'kostelnik'
-                ? 'Kropení svěcenou vodou'
-                : selectedChar === 'pasacek'
-                ? 'Hra na pastýřskou píšťalku'
-                : 'Otevření nůše & Kramářský zázrak'}
-            </span>
+          {/* Quick Animation State Buttons */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 8,
+              background: '#FAF5E8',
+              border: '2px solid #8B4513',
+              borderRadius: 8,
+              padding: '8px 12px',
+            }}
+          >
+            {(['idle', 'walk', 'sprint', 'action', 'react', 'flee'] as SmartCharacterState[]).map(
+              (s) => {
+                const active = state === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => handleStateSelect(s)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 4,
+                      border: active ? '2px solid #C53026' : '1px solid #D6C7B2',
+                      background: active ? '#C53026' : '#FFFFFF',
+                      color: active ? '#FAF5E8' : '#451A03',
+                      fontWeight: active ? 700 : 500,
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              }
+            )}
           </div>
         </div>
 
-        {/* BOTTOM QUICK TIMELINE BAR */}
-        <div className="flex flex-wrap items-center justify-between gap-3 w-full mt-4 bg-amber-50/80 p-3 rounded-xl border border-amber-200/80">
-          {/* Play/Pause & Direction */}
-          <div className="flex items-center gap-2">
+        {/* Right Column: Controls */}
+        <div
+          style={{
+            background: '#FAF5E8',
+            border: '2px solid #8B4513',
+            borderRadius: 8,
+            padding: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#451A03', textTransform: 'uppercase' }}>
+            Ovládání přehrávání
+          </div>
+
+          {/* Play / Pause / Direction */}
+          <div style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+              style={{
+                flex: 1,
+                padding: '6px 0',
+                borderRadius: 4,
+                border: '1px solid #8B4513',
+                background: isPlaying ? '#F5E8D0' : '#DC2626',
+                color: isPlaying ? '#451A03' : '#FFFFFF',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
             >
-              {isPlaying ? '⏸ Pozastavit' : '▶ Spustit'}
+              {isPlaying ? '⏸ Pauza' : '▶ Spustit'}
             </button>
             <button
-              onClick={() => setDirection((prev) => (prev === 1 ? -1 : 1))}
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs font-semibold transition-all"
-              title="Otočit směr chůze"
+              onClick={() => setDirection((d) => (d === 1 ? -1 : 1))}
+              style={{
+                flex: 1,
+                padding: '6px 0',
+                borderRadius: 4,
+                border: '1px solid #8B4513',
+                background: '#FAF5E8',
+                color: '#451A03',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
             >
-              ⇄ Otočit ({direction === 1 ? 'Vpravo' : 'Vlevo'})
+              ↔ Otočit ({direction === 1 ? 'Vpravo' : 'Vlevo'})
             </button>
           </div>
 
-          {/* Speed Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-amber-900">Rychlost:</span>
-            {[0.5, 1, 1.5, 2].map((s) => (
-              <button
-                key={s}
-                onClick={() => setSpeed(s)}
-                className={`px-2 py-1 rounded text-xs font-bold transition-all ${
-                  speed === s
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-white hover:bg-amber-200 text-amber-950 border border-amber-300'
-                }`}
-              >
-                {s}x
-              </button>
-            ))}
-          </div>
-
-          {/* Export Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleCopySvg}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
-            >
-              {copiedNotice ? '✓ Zkopírováno!' : '📋 Zkopírovat SVG'}
-            </button>
-            <button
-              onClick={handleDownloadSvg}
-              className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all"
-            >
-              💾 Stáhnout SVG
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: CONTROLS, ACTIONS & FOLKLORE DETAILS */}
-      <div className="w-full lg:w-96 flex flex-col gap-4">
-        {/* CHARACTER CARD INFO */}
-        <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl p-2 bg-amber-100 rounded-xl">{currentChar.icon}</span>
-            <div>
-              <h3 className="font-extrabold text-amber-950 text-lg leading-tight">{currentChar.name}</h3>
-              <p className="text-xs font-semibold text-amber-700">{currentChar.sub}</p>
-            </div>
-          </div>
-          <p className="text-xs text-amber-900/90 mt-3 leading-relaxed border-t border-amber-200/60 pt-2.5">
-            {currentChar.desc}
-          </p>
-        </div>
-
-        {/* STATE / ACTION SELECTOR */}
-        <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-sm">
-          <h4 className="font-bold text-amber-950 text-sm mb-3 flex items-center gap-2">
-            <span>🎭</span> Stav a akce animace
-          </h4>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { id: 'idle' as SmartCharacterState, label: 'Klid (Idle)', icon: '🌿' },
-              { id: 'walk' as SmartCharacterState, label: 'Krok & Chůze', icon: '🚶' },
-              { id: 'sprint' as SmartCharacterState, label: 'Rychlý sprint / náběh', icon: '🏃' },
-              { id: 'action' as SmartCharacterState, label: 'Bojová akce / úder', icon: '⚡' },
-              { id: 'react' as SmartCharacterState, label: 'Zásah / Vyděšení', icon: '💥' },
-              { id: 'flee' as SmartCharacterState, label: 'Útěk / Úhyb', icon: '💨' },
-            ].map((st) => {
-              const active = state === st.id;
-              return (
-                <button
-                  key={st.id}
-                  onClick={() => handleStateChange(st.id)}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
-                    active
-                      ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-300'
-                      : 'bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200'
-                  }`}
-                >
-                  <span className="text-base">{st.icon}</span>
-                  <span>{st.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* STAGE SETTINGS (BACKGROUND & ZOOM) */}
-        <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
-          <h4 className="font-bold text-amber-950 text-sm flex items-center gap-2">
-            <span>🎨</span> Pozadí a měřítko
-          </h4>
-
-          {/* Background pills */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {[
-              { id: 'parchment' as const, label: '📜 Papír' },
-              { id: 'night' as const, label: '🌌 Noc' },
-              { id: 'snow' as const, label: '❄️ Sníh' },
-              { id: 'grid' as const, label: '🏁 Mřížka' },
-            ].map((b) => (
-              <button
-                key={b.id}
-                onClick={() => setBgType(b.id)}
-                className={`py-1.5 px-2 rounded-lg text-xs font-semibold text-center transition-all ${
-                  bgType === b.id
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200'
-                }`}
-              >
-                {b.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Zoom Slider */}
-          <div className="flex flex-col gap-1 mt-1">
-            <div className="flex justify-between text-xs font-bold text-amber-900">
-              <span>Velikost SVG</span>
-              <span>{zoom}px</span>
+          {/* Speed slider */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#451A03' }}>
+              <span>Rychlost:</span>
+              <b>{speed.toFixed(1)}×</b>
             </div>
             <input
               type="range"
-              min="280"
-              max="520"
-              step="10"
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="accent-amber-600 cursor-pointer w-full"
+              min="0.2"
+              max="2.5"
+              step="0.1"
+              value={speed}
+              onChange={(e) => setSpeed(parseFloat(e.target.value))}
+              style={{ width: '100%', accentColor: '#C53026' }}
             />
           </div>
-        </div>
 
-        {/* CHARACTER SPECIFIC FEATURE TOGGLES */}
-        <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-sm flex flex-col gap-2.5">
-          <h4 className="font-bold text-amber-950 text-sm flex items-center gap-2">
-            <span>⚙️</span> Speciální vrstvy a detaily
-          </h4>
+          {/* Zoom slider */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#451A03' }}>
+              <span>Měřítko (px):</span>
+              <b>{zoom}px</b>
+            </div>
+            <input
+              type="range"
+              min="200"
+              max="600"
+              step="20"
+              value={zoom}
+              onChange={(e) => setZoom(parseInt(e.target.value, 10))}
+              style={{ width: '100%', accentColor: '#C53026' }}
+            />
+          </div>
 
-          {selectedChar === 'krajanek' && (
-            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showMillstone}
-                onChange={(e) => setShowMillstone(e.target.checked)}
-                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
-              />
-              <span>Zobrazit obří žulový žernov (mlýnský kámen)</span>
-            </label>
-          )}
+          {/* Background switcher */}
+          <div>
+            <div style={{ fontSize: 12, color: '#451A03', marginBottom: 4 }}>Pozadí plátna:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+              {(['parchment', 'night', 'snow', 'grid'] as const).map((bg) => (
+                <button
+                  key={bg}
+                  onClick={() => setBgType(bg)}
+                  style={{
+                    padding: '4px 0',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    border: bgType === bg ? '2px solid #C53026' : '1px solid #D6C7B2',
+                    background: bgType === bg ? '#F5E8D0' : '#FFFFFF',
+                    color: '#451A03',
+                    cursor: 'pointer',
+                    fontWeight: bgType === bg ? 700 : 500,
+                  }}
+                >
+                  {bg === 'parchment' ? '📜 Pergamen' : bg === 'night' ? '🌙 Noc' : bg === 'snow' ? '❄ Sníh' : '📐 Mřížka'}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {selectedChar === 'tulak' && (
-            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showSmoke}
-                onChange={(e) => setShowSmoke(e.target.checked)}
-                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
-              />
-              <span>Bafající vonný kouř z bylinkové fajfky</span>
-            </label>
-          )}
-
-          {selectedChar === 'bezhlavy_rytir' && (
-            <>
-              <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+          {/* Specific toggles for Čertův dědeček */}
+          <div style={{ borderTop: '1px solid #D6C7B2', paddingTop: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#451A03', marginBottom: 6 }}>
+              Vizuální vrstvy Dědečka:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label style={{ fontSize: 11, color: '#451A03', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={showHeadGlow}
                   onChange={(e) => setShowHeadGlow(e.target.checked)}
-                  className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
                 />
-                <span>Planoucí zrak v očích useknuté hlavy</span>
+                Rohy a pekelná aura
               </label>
-              <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
+              <label style={{ fontSize: 11, color: '#451A03', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={showBossAura}
-                  onChange={(e) => setShowBossAura(e.target.checked)}
-                  className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
+                  checked={showCompanion}
+                  onChange={(e) => setShowCompanion(e.target.checked)}
                 />
-                <span>Prokletá pekelná aura a runy na zemi</span>
+                Myška Rézinka v nůši
               </label>
-            </>
-          )}
-
-          {selectedChar === 'babicka_barunka' && (
-            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showCompanion}
-                onChange={(e) => setShowCompanion(e.target.checked)}
-                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
-              />
-              <span>Zobrazit vnučku Barunku s kytičkou</span>
-            </label>
-          )}
-
-          {(selectedChar === 'dedecek_nuse' || selectedChar === 'dedecek_arena') && (
-            <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showCompanion}
-                onChange={(e) => setShowCompanion(e.target.checked)}
-                className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
-              />
-              <span>Zobrazit pohybující se myšku Rézinku v nůši</span>
-            </label>
-          )}
-
-          <label className="flex items-center gap-2.5 text-xs font-semibold text-amber-950 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showParticles}
-              onChange={(e) => setShowParticles(e.target.checked)}
-              className="rounded accent-amber-600 w-4 h-4 cursor-pointer"
-            />
-            <span>Dynamické částice (jiskry / mouka / kouř / sníh)</span>
-          </label>
+              <label style={{ fontSize: 11, color: '#451A03', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={showParticles}
+                  onChange={(e) => setShowParticles(e.target.checked)}
+                />
+                Zlaté dukáty & jiskry
+              </label>
+              <label style={{ fontSize: 11, color: '#451A03', display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={showSmoke}
+                  onChange={(e) => setShowSmoke(e.target.checked)}
+                />
+                Kouř z fajfky
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>

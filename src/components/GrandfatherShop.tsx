@@ -22,6 +22,7 @@ import {
   isWeaponAtCooldownCap,
   isWeaponNearCooldownCap,
 } from '../data/weaponMilestones';
+import { gamepadManager, MENU_STICK_THRESHOLD, MENU_STICK_RELEASE } from '../game/gamepad';
 
 interface Props {
   gingerbread: number;
@@ -213,12 +214,18 @@ export function GrandfatherShop({
     }, 850);
   }, [gingerbread, rerollCost, onRefreshOffers]);
 
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [activeDevice, setActiveDevice] = useState<'keyboard' | 'gamepad'>(gamepadManager.activeDevice);
+  const selectedIndexRef = React.useRef(0);
+  selectedIndexRef.current = selectedIndex;
+
   // Handle Item Purchase action
   const handlePurchase = useCallback((itemId: string) => {
     const item = GRANDFATHER_ITEMS.find((it) => it.id === itemId);
     const weaponUpgrade = getWeaponUpgradeOffer(itemId);
     if (!item && !weaponUpgrade) return;
 
+    gamepadManager.consumeActionsAndLockBleed();
     const success = onPurchase(itemId);
     if (success) {
       if (item && (item.isRareInstant || item.effect.type === 'coins')) {
@@ -238,35 +245,88 @@ export function GrandfatherShop({
     }
   }, [onPurchase, onClose]);
 
-  // Keyboard shortcuts (Escape to close, 1-4 to purchase, R to reroll)
+  const tryPurchaseOfferAtIndex = useCallback((idx: number) => {
+    const offer = visibleOffers[idx];
+    if (!offer || purchasedIds.includes(offer.itemId)) return;
+    const item = GRANDFATHER_ITEMS.find((it) => it.id === offer.itemId);
+    const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
+    const pricedItem = item ?? (weaponUpgrade ? {
+      id: weaponUpgrade.id,
+      name: weaponUpgrade.name,
+      icon: weaponUpgrade.icon,
+      description: weaponUpgrade.description,
+      baseCost: weaponUpgrade.baseCost,
+      effect: { type: 'luck', amount: 0 },
+    } as GrandfatherItemDef : undefined);
+    const purchaseCount = getGrandfatherInflatingPurchaseCount(purchasedIds);
+    const price = pricedItem ? getGrandfatherPrice(pricedItem, purchaseCount, luck, waitSeconds) : 999;
+    const fullCourage = item?.effect.type === 'heal' && playerHp >= playerMaxHp;
+    if (gingerbread >= price && !fullCourage) {
+      handlePurchase(offer.itemId);
+    }
+  }, [visibleOffers, purchasedIds, luck, waitSeconds, playerHp, playerMaxHp, gingerbread, handlePurchase]);
+
+  // Keyboard & Gamepad navigation (D-Pad, Left Stick, Arrows/WASD, A/Enter/Space to confirm, Y/R to reroll, B/Esc to close)
   useEffect(() => {
+    let requireReleaseBeforeConfirm = true;
+    const unlockTimer = window.setTimeout(() => {
+      requireReleaseBeforeConfirm = false;
+    }, 150);
+
+    const moveSelection = (delta: number) => {
+      const count = Math.max(1, visibleOffers.length);
+      sound.coin();
+      setSelectedIndex((prev) => {
+        const next = (prev + delta + count) % count;
+        const nextOffer = visibleOffers[next];
+        if (nextOffer) {
+          setHoveredOfferId(nextOffer.itemId);
+        }
+        return next;
+      });
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      gamepadManager.notifyKeyboardActivity();
+      setActiveDevice('keyboard');
+
       if (e.key === 'Escape') {
         e.preventDefault();
+        gamepadManager.consumeActionsAndLockBleed();
         onClose();
+        return;
+      }
+      if (e.key === 'ArrowLeft' || e.code === 'KeyA') {
+        e.preventDefault();
+        moveSelection(-1);
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.code === 'KeyD') {
+        e.preventDefault();
+        moveSelection(1);
+        return;
+      }
+      if (e.key === 'ArrowUp' || e.code === 'KeyW') {
+        e.preventDefault();
+        moveSelection(visibleOffers.length > 2 ? -2 : -1);
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.code === 'KeyS') {
+        e.preventDefault();
+        moveSelection(visibleOffers.length > 2 ? 2 : 1);
+        return;
+      }
+      if ((e.key === 'Enter' || e.code === 'Space') && !requireReleaseBeforeConfirm) {
+        e.preventDefault();
+        tryPurchaseOfferAtIndex(selectedIndexRef.current);
         return;
       }
       if (['1', '2', '3', '4'].includes(e.key)) {
         const idx = parseInt(e.key, 10) - 1;
-        const offer = visibleOffers[idx];
-        if (offer && !purchasedIds.includes(offer.itemId)) {
-          const item = GRANDFATHER_ITEMS.find((it) => it.id === offer.itemId);
-          const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
-          const pricedItem = item ?? (weaponUpgrade ? {
-            id: weaponUpgrade.id,
-            name: weaponUpgrade.name,
-            icon: weaponUpgrade.icon,
-            description: weaponUpgrade.description,
-            baseCost: weaponUpgrade.baseCost,
-            effect: { type: 'luck', amount: 0 },
-          } as GrandfatherItemDef : undefined);
-          const purchaseCount = getGrandfatherInflatingPurchaseCount(purchasedIds);
-          const price = pricedItem ? getGrandfatherPrice(pricedItem, purchaseCount, luck, waitSeconds) : 999;
-          if (gingerbread >= price) {
-            e.preventDefault();
-            handlePurchase(offer.itemId);
-          }
-        }
+        setSelectedIndex(idx);
+        e.preventDefault();
+        tryPurchaseOfferAtIndex(idx);
         return;
       }
       if ((e.key === 'r' || e.key === 'R') && onRefreshOffers && gingerbread >= rerollCost) {
@@ -274,9 +334,109 @@ export function GrandfatherShop({
         handleReroll();
       }
     };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.code === 'Space') {
+        requireReleaseBeforeConfirm = false;
+      }
+    };
+
+    // Gamepad polling with edge detection (justPressed)
+    let rafId = 0;
+    let prevA = true;
+    let prevB = true;
+    let prevY = true;
+    let prevStart = true;
+    let prevUp = true;
+    let prevDown = true;
+    let prevLeft = true;
+    let prevRight = true;
+    let stickLatchedX = 0;
+    let stickLatchedY = 0;
+
+    const pollShopGamepad = () => {
+      const gp = gamepadManager.getActiveGamepad();
+      if (gp) {
+        const btnA = Boolean(gp.buttons[0]?.pressed);
+        const btnB = Boolean(gp.buttons[1]?.pressed);
+        const btnY = Boolean(gp.buttons[3]?.pressed);
+        const btnStart = Boolean(gp.buttons[9]?.pressed);
+        const dUp = Boolean(gp.buttons[12]?.pressed);
+        const dDown = Boolean(gp.buttons[13]?.pressed);
+        const dLeft = Boolean(gp.buttons[14]?.pressed);
+        const dRight = Boolean(gp.buttons[15]?.pressed);
+
+        const axX = gp.axes?.[0] ?? 0;
+        const axY = gp.axes?.[1] ?? 0;
+
+        let stickLeft = false;
+        let stickRight = false;
+        let stickUp = false;
+        let stickDown = false;
+
+        if (axX < -MENU_STICK_THRESHOLD) {
+          if (stickLatchedX !== -1) { stickLeft = true; stickLatchedX = -1; }
+        } else if (axX > MENU_STICK_THRESHOLD) {
+          if (stickLatchedX !== 1) { stickRight = true; stickLatchedX = 1; }
+        } else if (Math.abs(axX) < MENU_STICK_RELEASE) {
+          stickLatchedX = 0;
+        }
+
+        if (axY < -MENU_STICK_THRESHOLD) {
+          if (stickLatchedY !== -1) { stickUp = true; stickLatchedY = -1; }
+        } else if (axY > MENU_STICK_THRESHOLD) {
+          if (stickLatchedY !== 1) { stickDown = true; stickLatchedY = 1; }
+        } else if (Math.abs(axY) < MENU_STICK_RELEASE) {
+          stickLatchedY = 0;
+        }
+
+        const leftJust = (dLeft && !prevLeft) || stickLeft;
+        const rightJust = (dRight && !prevRight) || stickRight;
+        const upJust = (dUp && !prevUp) || stickUp;
+        const downJust = (dDown && !prevDown) || stickDown;
+        const aJust = btnA && !prevA;
+        const bJust = btnB && !prevB;
+        const yJust = btnY && !prevY;
+        const startJust = btnStart && !prevStart;
+
+        prevA = btnA;
+        prevB = btnB;
+        prevY = btnY;
+        prevStart = btnStart;
+        prevUp = dUp;
+        prevDown = dDown;
+        prevLeft = dLeft;
+        prevRight = dRight;
+
+        if (leftJust || rightJust || upJust || downJust || aJust || bJust || yJust || startJust) {
+          gamepadManager.activeDevice = 'gamepad';
+          setActiveDevice('gamepad');
+        }
+
+        if (bJust || startJust) {
+          gamepadManager.consumeActionsAndLockBleed();
+          onClose();
+          return;
+        }
+        if (leftJust) moveSelection(-1);
+        else if (rightJust) moveSelection(1);
+        else if (upJust) moveSelection(visibleOffers.length > 2 ? -2 : -1);
+        else if (downJust) moveSelection(visibleOffers.length > 2 ? 2 : 1);
+        else if (aJust) tryPurchaseOfferAtIndex(selectedIndexRef.current);
+        else if (yJust && onRefreshOffers && gingerbread >= rerollCost) handleReroll();
+      }
+      rafId = requestAnimationFrame(pollShopGamepad);
+    };
+    rafId = requestAnimationFrame(pollShopGamepad);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, visibleOffers, purchasedIds, gingerbread, luck, waitSeconds, rerollCost, onRefreshOffers, handlePurchase, handleReroll]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.clearTimeout(unlockTimer);
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [onClose, visibleOffers, gingerbread, rerollCost, onRefreshOffers, handleReroll, tryPurchaseOfferAtIndex]);
 
   // Handle Hover over item card ("Dědeček vytahuje věci z nůše / ukazuje na ně")
   const handleOfferHover = useCallback((offer: GrandfatherOffer) => {
@@ -728,16 +888,23 @@ export function GrandfatherShop({
 
                   const fullCourage = item?.effect.type === 'heal' && playerHp >= playerMaxHp;
                   const affordable = gingerbread >= price && !isMaxed && !fullCourage;
-                  const isHighlighted = hoveredOfferId === offer.itemId;
+                  const isSelectedCard = selectedIndex === idx;
+                  const isHighlighted = hoveredOfferId === offer.itemId || isSelectedCard;
                   const isPurchasedNow = justPurchasedId === offer.itemId;
 
                   return (
                     <div
                       key={`offer-slot-${idx}`}
                       className="item-pulled-from-basket"
-                      onMouseEnter={() => handleOfferHover(offer)}
+                      onMouseEnter={() => {
+                        setSelectedIndex(idx);
+                        handleOfferHover(offer);
+                      }}
                       onMouseLeave={handleOfferLeave}
-                      onTouchStart={() => handleOfferHover(offer)}
+                      onTouchStart={() => {
+                        setSelectedIndex(idx);
+                        handleOfferHover(offer);
+                      }}
                       style={{
                         animationDelay: `${idx * 0.08}s`,
                         border: item?.isAnanas
@@ -925,7 +1092,13 @@ export function GrandfatherShop({
                                   lineHeight: 1,
                                 }}
                               >
-                                [{idx + 1}]
+                                {activeDevice === 'gamepad'
+                                  ? isSelectedCard
+                                    ? '[A]'
+                                    : '[D-Pad]'
+                                  : isSelectedCard
+                                    ? `[${idx + 1} / Enter]`
+                                    : `[${idx + 1}]`}
                               </span>
                               <span>{buttonLabel}</span>
                             </>
@@ -994,7 +1167,7 @@ export function GrandfatherShop({
                   lineHeight: 1,
                 }}
               >
-                [R]
+                {activeDevice === 'gamepad' ? '[Y]' : '[R]'}
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <GameIcon icon="basket" size={18} /> ZAMÍCHAT NŮŠI
@@ -1019,7 +1192,10 @@ export function GrandfatherShop({
           )}
 
           <button
-            onClick={onClose}
+            onClick={() => {
+              gamepadManager.consumeActionsAndLockBleed();
+              onClose();
+            }}
             style={{
               flex: isMobile ? '1' : 'none',
               minHeight: 46,
@@ -1038,7 +1214,7 @@ export function GrandfatherShop({
               gap: 8,
               whiteSpace: 'nowrap',
             }}
-            title="Zavřít obchod a pokračovat ve hře [Klávesa Escape]"
+            title="Zavřít obchod a pokračovat ve hře [Klávesa Escape / Gamepad B]"
           >
             <span
               style={{
@@ -1051,7 +1227,7 @@ export function GrandfatherShop({
                 lineHeight: 1,
               }}
             >
-              [Esc]
+              {activeDevice === 'gamepad' ? '[B]' : '[Esc]'}
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <GameIcon icon="cottage" size={18} /> ZAVŘÍT NŮŠI

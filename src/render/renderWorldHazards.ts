@@ -22,6 +22,10 @@ import {
 } from './marchThawSvgLandscape';
 import { getRankedWeaponStats } from '../data/weaponMilestones';
 import { isGameEffectEnabled } from '../game/effectSettings';
+import { tryEmitParticle } from '../game/particles';
+import { gamepadManager } from '../game/gamepad';
+
+const MARCH_POI_LIST = Object.values(MARCH_THAW_POIS);
 
 export interface WorldHazardsRenderOptions {
   warningIndicatorsEnabled?: boolean;
@@ -92,35 +96,72 @@ export function renderWorldHazardsAndEncounters(
     }
 
     if (player) {
-      const nearbyPoi = Object.values(MARCH_THAW_POIS).find((poi) =>
-        isInsideMarchPoi(player.x, player.y, poi, 30)
-      );
+      let nearbyPoi: (typeof MARCH_POI_LIST)[number] | undefined;
+      for (let i = 0; i < MARCH_POI_LIST.length; i++) {
+        if (isInsideMarchPoi(player.x, player.y, MARCH_POI_LIST[i], 30)) {
+          nearbyPoi = MARCH_POI_LIST[i];
+          break;
+        }
+      }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? MARCH_THAW_POIS.forest : undefined);
       if (nearby) {
+        const isGp = gamepadManager.activeDevice === 'gamepad';
+        const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
         let detail = nearby.hint;
-        if (nearby.id === 'church' && thaw.bellCooldown > 0) detail = `Zvonice se rozezní za ${Math.ceil(thaw.bellCooldown)} s (+20 % zbroj a léčení)`;
-        if (nearby.id === 'tavern' && thaw.kegCooldown > 0) detail = `Soudek dovalí za ${Math.ceil(thaw.kegCooldown)} s (+18 % útok)`;
+        let canInteractPoi = false;
+        if (nearby.id === 'church') {
+          if (thaw.bellCooldown > 0) {
+            detail = `Zvonice se rozezní za ${Math.ceil(thaw.bellCooldown)} s (+20 % zbroj a léčení)`;
+          } else {
+            detail = `${interactHint}: Kostelní zvonice (Svatý otřes)`;
+            canInteractPoi = true;
+          }
+        }
+        if (nearby.id === 'tavern') {
+          if (thaw.kegCooldown > 0) {
+            detail = `Soudek dovalí za ${Math.ceil(thaw.kegCooldown)} s (+18 % útok)`;
+          } else {
+            detail = `${interactHint}: Hospodský soudek (+18 % útok)`;
+            canInteractPoi = true;
+          }
+        }
         if (nearby.id === 'shrine') {
           if ((thaw.apparitionTimer || 0) > 0) {
             detail = `✦ Zjevení Panny Marie s Ježíškem rozhání bubáky (${Math.ceil(thaw.apparitionTimer)} s)!`;
           } else if (thaw.shrineCooldown > 0) {
             detail = `Kaplička: Panna Maria se znovu zjeví za ${Math.ceil(thaw.shrineCooldown)} s (+20 % kadence)`;
+          } else {
+            detail = `${interactHint}: Kaplička — Zjevení Panny Marie`;
+            canInteractPoi = true;
           }
         }
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.fillStyle = canInteractPoi ? 'rgba(254, 243, 199, .96)' : 'rgba(255, 248, 222, .94)';
         ctx.strokeStyle = COLORS.ink;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = canInteractPoi ? 2.5 : 2;
         ctx.beginPath();
-        ctx.roundRect(player.x - 165, player.y - 88, 330, 31, 8);
+        ctx.roundRect(player.x - 175, player.y - 88, 350, 31, 8);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = '#472A16';
+        ctx.fillStyle = canInteractPoi ? '#5B2118' : '#472A16';
         ctx.font = '900 12.5px Eczar, Georgia, serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(detail, player.x, player.y - 72);
+
+        if (canInteractPoi && isInView(nearby.x, nearby.y, 140, camera)) {
+          ctx.fillStyle = '#FEF08A';
+          ctx.strokeStyle = '#1C1917';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(nearby.x - 86, nearby.y - 98, 172, 26, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#78350F';
+          ctx.font = '900 12.5px Eczar, serif';
+          ctx.fillText(interactHint, nearby.x, nearby.y - 85);
+        }
         ctx.restore();
       }
     }
@@ -316,18 +357,20 @@ export function renderWorldHazardsAndEncounters(
     );
 
     if (isInteracting) {
+      const isGp = gamepadManager.activeDevice === 'gamepad';
+      const promptText = isGp ? '[X] / [E] Aktivovat nůši' : '[E] / [X] Aktivovat nůši';
       ctx.save();
       ctx.fillStyle = '#FFF7DF';
       ctx.strokeStyle = '#2D1609';
       ctx.lineWidth = 2;
-      ctx.font = '900 15px Eczar, serif';
+      ctx.font = '900 14.5px Eczar, serif';
       ctx.textAlign = 'center';
       ctx.beginPath();
-      ctx.roundRect(g.x - 110, g.y - 92, 220, 32, 10);
+      ctx.roundRect(g.x - 116, g.y - 92, 232, 32, 10);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = '#5B2118';
-      ctx.fillText('DĚDEČEK — nůše [E / klik]', g.x, g.y - 71);
+      ctx.fillText(promptText, g.x, g.y - 71);
       ctx.restore();
     }
   }
@@ -347,7 +390,10 @@ export function renderWorldHazardsAndEncounters(
     }
 
     // Česneková topinka garlic stink aura
-    const garlicWp = player.weapons?.find((w: any) => w.id === 'cesnekova-topinka');
+    const garlicWp =
+      (player as any)._garlicWeapon !== undefined
+        ? (player as any)._garlicWeapon
+        : player.weapons?.find((w: any) => w.id === 'cesnekova-topinka' || w.id === 'cesnekova_topinka');
     if (garlicWp) {
       const auraRadius = 110 * ((garlicWp.level || 1) >= 2 ? 1.2 : 1) * ((garlicWp.level || 1) >= 5 ? 1.15 : 1);
       ctx.save();
@@ -424,15 +470,19 @@ export function renderWorldHazardsAndEncounters(
           engine.particles.length < 120
         ) {
           const dustAngle = a + Math.PI / 2 + (Math.random() - 0.5) * 0.4;
-          engine.particles.push({
-            x: x - Math.cos(dustAngle) * 10,
-            y: y - Math.sin(dustAngle) * 10 + 16,
-            vx: -Math.cos(dustAngle) * 22 + (Math.random() - 0.5) * 12,
-            vy: -Math.random() * 12,
-            life: 0.28,
-            color: '#E2D5BC',
-            size: 3,
-          });
+          tryEmitParticle(
+            engine.particles,
+            () => ({
+              x: x - Math.cos(dustAngle) * 10,
+              y: y - Math.sin(dustAngle) * 10 + 16,
+              vx: -Math.cos(dustAngle) * 22 + (Math.random() - 0.5) * 12,
+              vy: -Math.random() * 12,
+              life: 0.28,
+              color: '#E2D5BC',
+              size: 3,
+            }),
+            engine.meta?.performanceProfile
+          );
         }
 
         drawValecniceCompanion(ctx, x, y, a, i, uiTime, 1.71, player._valecnicePulse);

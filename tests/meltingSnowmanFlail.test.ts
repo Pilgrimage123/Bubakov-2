@@ -72,4 +72,94 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
 
     expect(result.renderedSlashes).toBe(1);
   });
+
+  it('grants dreveny_cep high critical damage, high critical knockback, and stationary stance bonuses', () => {
+    const engine = new GameEngine();
+    engine.initRun({ selectedHunter: 'ponocny' });
+    const player = engine.state.player;
+    player.x = 500;
+    player.y = 500;
+
+    // Equip dreveny_cep at level 1
+    engine.upgradeWeapon('dreveny_cep');
+    const flailWeapon = player.weapons.find((w: any) => w.id === 'dreveny_cep');
+    expect(flailWeapon).toBeDefined();
+
+    // Stand still for 1.5s to build full Mlatcův postoj (flailStanceTimer)
+    engine.state.keys = {};
+    for (let i = 0; i < 15; i++) {
+      // Prevent auto-fire during stance buildup so we can inspect the exact shot
+      flailWeapon.cd = 10;
+      engine.update(0.1);
+    }
+    expect(player.flailStanceTimer).toBeGreaterThanOrEqual(1.2);
+
+    // Place an enemy behind the hunter (at x = 440, y = 500) while hunter last faced +X
+    player.lastDx = 1;
+    player.lastDy = 0;
+    const enemy = engine.spawnMonster('drevorubec', 440, 500);
+    enemy.hp = 500;
+    enemy.maxHp = 500;
+    const initialHp = enemy.hp;
+
+    // Force 100% crit via high luck to verify critical damage & critical knockback against non-crit
+    player.luck = 1000;
+    player._firingWeapon = flailWeapon;
+    let capturedImpact: any = null;
+    const origSpawnArea = player.spawnAreaImpact.bind(player);
+    player.spawnAreaImpact = (impact: any) => {
+      capturedImpact = impact;
+      return origSpawnArea(impact);
+    };
+
+    flailWeapon.cd = 0;
+    engine.update(0.05);
+
+    expect(capturedImpact).not.toBeNull();
+    // Auto-targeted the enemy behind the hunter (x < 500) instead of blindly hitting +X
+    expect(capturedImpact.x).toBeLessThan(player.x);
+    expect(capturedImpact.stanceRatio).toBeCloseTo(1, 2);
+    expect(capturedImpact.critChanceBonus).toBeCloseTo(0.40, 2);
+    expect(capturedImpact.critDamageMult).toBeCloseTo(3.0, 2);
+    expect(capturedImpact.critKnockbackMult).toBeCloseTo(2.8, 2);
+
+    // Enemy took massive critical damage and was knocked AWAY from the hunter (negative kbx)
+    expect(enemy.hp).toBeLessThanOrEqual(initialHp - 115);
+    expect(enemy.kbx).toBeLessThan(-400);
+    // Stationary stance also shortened weapon cooldown below baseCd (1.35s)
+    expect(flailWeapon.cd).toBeLessThan(1.15);
+  });
+
+  it('scales critical knockback and critical damage in enemy.takeDamage when crit options are provided', () => {
+    const engine = new GameEngine();
+    engine.initRun({ selectedHunter: 'tulak' });
+
+    const normalTarget = engine.spawnMonster('hromotluk', 300, 300);
+    const critTarget = engine.spawnMonster('hromotluk', 300, 400);
+    normalTarget.hp = 2000;
+    normalTarget.maxHp = 2000;
+    critTarget.hp = 2000;
+    critTarget.maxHp = 2000;
+
+    engine.state.player.luck = 0;
+    normalTarget.takeDamage(50, 'physical', 300, 0, {
+      critChanceBonus: 0,
+      critDamageMult: 3.0,
+      critKnockbackMult: 2.8,
+      source: 'dreveny_cep',
+    });
+
+    critTarget.takeDamage(50, 'physical', 300, 0, {
+      isCrit: true,
+      critDamageMult: 3.0,
+      critKnockbackMult: 2.8,
+      source: 'dreveny_cep',
+    });
+
+    const normalDmgDealt = 2000 - normalTarget.hp;
+    const critDmgDealt = 2000 - critTarget.hp;
+    expect(critDmgDealt).toBeGreaterThanOrEqual(normalDmgDealt * 2.8);
+    expect(critTarget.kbx).toBeGreaterThan(normalTarget.kbx * 2.8);
+  });
 });
+

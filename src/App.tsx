@@ -163,9 +163,10 @@ import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
-import { SmartSpriteRenderer, hasSmartSvgSprite } from './components/svg';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
+import { gamepadManager, type InputDeviceMode } from './game/gamepad';
+import { isInteractiveArenaDrop } from './render/renderDrops';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
 import {
   canCollectDrop,
@@ -502,6 +503,8 @@ function syncPlayerWeaponCache(player: any): void {
   if (!player || !player.weapons) return;
   player._hromnickaWeapon = player.weapons.find((w: any) => w.id === 'hromnicka') || null;
   player._valecniceWeapon = player.weapons.find((w: any) => w.id === 'valecnice') || null;
+  player._garlicWeapon =
+    player.weapons.find((w: any) => w.id === 'cesnekova-topinka' || w.id === 'cesnekova_topinka') || null;
 }
 
 // Nicely animated comic smoke puff in authentic Josef Lada fairy tale art style
@@ -1073,13 +1076,14 @@ class DecorItem {
       ctx.stroke();
     } else if (this.type === 'will_o_wisp') {
       const bob = Math.sin(time * 3.33 + this.x) * 8;
-      ctx.shadowColor = COLORS.water;
-      ctx.shadowBlur = 15;
+      ctx.fillStyle = 'rgba(74, 124, 89, 0.28)';
+      ctx.beginPath();
+      ctx.arc(0, -25 + bob, 11, 0, Math.PI * 2);
+      ctx.fill();
       ctx.fillStyle = 'rgba(217, 160, 54, 0.85)';
       ctx.beginPath();
       ctx.arc(0, -25 + bob, 5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowBlur = 0;
     } else if (this.type === 'cottage') {
       // Daylight cast ink shadow behind cottage
       if (!isNight) {
@@ -2353,10 +2357,235 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     sound.coin();
   };
 
-  // Keyboard handlers
+  // Fullscreen state & toggle (key F)
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? Boolean(document.fullscreenElement) : false
+  );
+
+  const toggleFullscreen = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    try {
+      if (!document.fullscreenElement) {
+        const req = document.documentElement.requestFullscreen?.();
+        if (req && typeof req.catch === 'function') {
+          req.catch(() => {});
+        }
+      } else {
+        const exit = document.exitFullscreen?.();
+        if (exit && typeof exit.catch === 'function') {
+          exit.catch(() => {});
+        }
+      }
+    } catch {
+      // Ignore fullscreen restriction errors in embedded iframes
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  // Gamepad & Active Input Device UI Indicator state
+  const [gamepadUiState, setGamepadUiState] = useState<{
+    connected: boolean;
+    activeDevice: InputDeviceMode;
+    name: string;
+  }>({
+    connected: false,
+    activeDevice: 'keyboard',
+    name: '',
+  });
+  const gamepadUiStateRef = useRef(gamepadUiState);
+  gamepadUiStateRef.current = gamepadUiState;
+
+  useEffect(() => {
+    const syncGamepadStatus = () => {
+      const gp = gamepadManager.getActiveGamepad();
+      const connected = Boolean(gp);
+      const name = gp ? gp.id || 'Gamepad' : '';
+      const nextDevice: InputDeviceMode = connected ? 'gamepad' : 'keyboard';
+      gamepadManager.gamepadConnected = connected;
+      gamepadManager.gamepadName = name;
+      if (connected) gamepadManager.activeDevice = 'gamepad';
+      setGamepadUiState({
+        connected,
+        activeDevice: nextDevice,
+        name,
+      });
+    };
+    window.addEventListener('gamepadconnected', syncGamepadStatus);
+    window.addEventListener('gamepaddisconnected', syncGamepadStatus);
+    return () => {
+      window.removeEventListener('gamepadconnected', syncGamepadStatus);
+      window.removeEventListener('gamepaddisconnected', syncGamepadStatus);
+    };
+  }, []);
+
+  // Unified Arena Interaction (Key E or Gamepad X [buttons[2]])
+  const triggerArenaInteract = useCallback(() => {
+    if (gameStateRef.current !== 'playing') return false;
+    const eng = engineRef.current;
+    const p = eng.player;
+    if (!p) return false;
+
+    // 1. Čertův dědeček v dosahu
+    if (eng.grandfather.active && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 220) {
+      gamepadManager.consumeActionsAndLockBleed(eng.keys);
+      openGrandfatherShop();
+      return true;
+    }
+
+    // 2. Level 0 Interaktivní objekty (Kostelní zvonice, Hospodský soudek, Kaplička / Oltář)
+    if (eng.activeLevelId === 0) {
+      const thaw = eng.marchThaw;
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 30) && thaw.bellCooldown <= 0) {
+        thaw.bellCooldown = 90;
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          MARCH_THAW_POIS.church.x,
+          MARCH_THAW_POIS.church.y,
+          1000 + 80,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (enemy.dead || enemy.isDefeated || enemy.isBoss || enemy.category === 'bosses') continue;
+          const dx = enemy.x - MARCH_THAW_POIS.church.x;
+          const dy = enemy.y - MARCH_THAW_POIS.church.y;
+          if (dx * dx + dy * dy > 1000 * 1000) continue;
+          const holyMult = getHolyDamageMultiplier(enemy);
+          const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(enemy));
+          enemy.takeDamage((enemy.hp + 1) * holyMult, 'holy', dx * 2.2 * holyPush, dy * 2.2 * holyPush);
+        }
+        pushDamageText(eng.texts, p.x, p.y - 52, '🔔 ZVONICE! SVATÝ OTŘES!', COLORS.mustard, true, 'combatStates');
+        sound.bell();
+        return true;
+      }
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 30) && thaw.kegCooldown <= 0) {
+        thaw.kegCooldown = 16;
+        const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
+        const x = p.x + ((p.lastDx || 1) / direction) * 90;
+        const y = p.y + ((p.lastDy || 0) / direction) * 90;
+        thaw.beerPuddle = { x, y, time: 6 };
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          x,
+          y,
+          170 + 80,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          const dx = enemy.x - x;
+          const dy = enemy.y - y;
+          if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 170 * 170) {
+            enemy.takeDamage(110 * (p.damageMultiplier || 1), 'physical', dx * 3, dy * 3);
+            enemy.stunTimer = Math.max(enemy.stunTimer || 0, 2.4);
+          }
+        }
+        pushDamageText(eng.texts, x, y - 30, '🍺 HOSPODSKÁ RVAČKA!', '#F6D365', true, 'combatStates');
+        sound.hit();
+        return true;
+      }
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.shrine, 35) && thaw.shrineCooldown <= 0 && (thaw.apparitionTimer || 0) <= 0) {
+        thaw.shrineCharge = 0;
+        thaw.shrineCooldown = 20;
+        thaw.apparitionTimer = 4.2;
+        thaw.apparitionPulseTimer = 0;
+        p.hp = Math.min(p.maxHp, p.hp + 18 * (p._cachedFrostHealMult ?? 1));
+        const count = enemySpatialHashRef.current.queryCircleInto(
+          MARCH_THAW_POIS.shrine.x,
+          MARCH_THAW_POIS.shrine.y,
+          580,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < count.length; i++) {
+          const enemy = terrainSpatialResultsRef.current[i];
+          const dx = enemy.x - MARCH_THAW_POIS.shrine.x;
+          const dy = enemy.y - MARCH_THAW_POIS.shrine.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (!enemy.dead && !enemy.isDefeated && dist < 560 + (enemy.radius || 0)) {
+            enemy.takeDamage(145 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 540, (dy / dist) * 540);
+            enemy.panicked = true;
+            enemy.panicTimer = Math.max(enemy.panicTimer || 0, 5.0);
+          }
+        }
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.35);
+        pushDamageText(eng.texts, MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 110, '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!', '#FEF08A', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+    }
+
+    // 3. Interaktivní předmět / Truhla / Chasník v dosahu (~165 px)
+    if (eng.drops && eng.drops.length > 0) {
+      let nearestDrop: any = null;
+      let nearestDistSq = 165 * 165;
+      for (let i = 0; i < eng.drops.length; i++) {
+        const d = eng.drops[i];
+        if (!d || d.dead || !isInteractiveArenaDrop(d.type)) continue;
+        const dx = d.x - p.x;
+        const dy = d.y - p.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq <= nearestDistSq) {
+          nearestDistSq = distSq;
+          nearestDrop = d;
+        }
+      }
+      if (nearestDrop) {
+        // Přitáhne objekt přímo k hráči pro okamžitou aktivaci v herní smyčce
+        nearestDrop.x = p.x;
+        nearestDrop.y = p.y;
+        if (nearestDrop.type === 'chest') {
+          gamepadManager.consumeActionsAndLockBleed(eng.keys);
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }, [openGrandfatherShop]);
+
+  const triggerArenaInteractRef = useRef(triggerArenaInteract);
+  triggerArenaInteractRef.current = triggerArenaInteract;
+  const togglePauseRef = useRef(togglePause);
+  togglePauseRef.current = togglePause;
+  const toggleFullscreenRef = useRef(toggleFullscreen);
+  toggleFullscreenRef.current = toggleFullscreen;
+
+  // Keyboard handlers (with e.repeat edge-detection guard & input bleed protection)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore keyboard shortcuts if typing in an input field
+      const targetTag = (e.target as HTMLElement | null)?.tagName;
+      if (targetTag === 'INPUT' || targetTag === 'TEXTAREA' || targetTag === 'SELECT') {
+        return;
+      }
+
+      const wasAlreadyPressed = Boolean(engineRef.current.keys[e.code]);
       engineRef.current.keys[e.code] = true;
+      gamepadManager.notifyKeyboardActivity();
+      if (gamepadUiStateRef.current.activeDevice !== 'keyboard') {
+        setGamepadUiState((prev) => ({ ...prev, activeDevice: 'keyboard' }));
+      }
+
+      // Edge detection: ignore auto-repeat keydown events while held
+      if (e.repeat || wasAlreadyPressed) {
+        if (e.code === 'Space' && gameStateRef.current === 'playing') {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Fullscreen toggle on [F]
+      if (e.code === 'KeyF' || e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+
       if (e.code === 'Space' && gameStateRef.current === 'playing') {
         e.preventDefault();
         const cs = engineRef.current.cutscene;
@@ -2379,71 +2608,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         return;
       }
 
-      if (gameState === 'grandfather') {
-        if (isEscKey || e.code === 'Enter') {
-          e.preventDefault();
-          closeGrandfatherShop();
-          return;
-        }
-      }
-
       if (gameState === 'playing' && (e.code === 'KeyE' || e.key === 'e' || e.key === 'E')) {
-        const eng = engineRef.current;
-        const p = eng.player;
-        if (eng.activeLevelId === 0 && p) {
-          const thaw = eng.marchThaw;
-          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 30) && thaw.bellCooldown <= 0) {
-            e.preventDefault();
-            thaw.bellCooldown = 90;
-            const nearby = enemySpatialHashRef.current.queryCircleInto(
-              MARCH_THAW_POIS.church.x,
-              MARCH_THAW_POIS.church.y,
-              1000 + 80,
-              terrainSpatialResultsRef.current
-            );
-            for (let i = 0; i < nearby.length; i++) {
-              const enemy = nearby[i];
-              if (enemy.dead || enemy.isDefeated || enemy.isBoss || enemy.category === 'bosses') continue;
-              const dx = enemy.x - MARCH_THAW_POIS.church.x;
-              const dy = enemy.y - MARCH_THAW_POIS.church.y;
-              if (dx * dx + dy * dy > 1000 * 1000) continue;
-              const holyMult = getHolyDamageMultiplier(enemy);
-              const holyPush = Math.max(0.1, 1 - getEnemyHolyResistance(enemy));
-              enemy.takeDamage((enemy.hp + 1) * holyMult, 'holy', dx * 2.2 * holyPush, dy * 2.2 * holyPush);
-            }
-            pushDamageText(eng.texts, p.x, p.y - 52, '🔔 ZVONICE! SVATÝ OTŘES!', COLORS.mustard, true, 'combatStates');
-            sound.bell();
-            return;
-          }
-          if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 30) && thaw.kegCooldown <= 0) {
-            e.preventDefault();
-            thaw.kegCooldown = 16;
-            const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
-            const x = p.x + ((p.lastDx || 1) / direction) * 90;
-            const y = p.y + ((p.lastDy || 0) / direction) * 90;
-            thaw.beerPuddle = { x, y, time: 6 };
-            const nearby = enemySpatialHashRef.current.queryCircleInto(
-              x,
-              y,
-              170 + 80,
-              terrainSpatialResultsRef.current
-            );
-            for (let i = 0; i < nearby.length; i++) {
-              const enemy = nearby[i];
-              const dx = enemy.x - x; const dy = enemy.y - y;
-              if (!enemy.dead && !enemy.isDefeated && dx * dx + dy * dy < 170 * 170) {
-                enemy.takeDamage(110 * (p.damageMultiplier || 1), 'physical', dx * 3, dy * 3);
-                enemy.stunTimer = Math.max(enemy.stunTimer || 0, 2.4);
-              }
-            }
-            pushDamageText(eng.texts, x, y - 30, '🍺 HOSPODSKÁ RVAČKA!', '#F6D365', true, 'combatStates');
-            sound.hit();
-            return;
-          }
-        }
-        if (eng.grandfather.active && p && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 220) {
+        if (triggerArenaInteract()) {
           e.preventDefault();
-          openGrandfatherShop();
           return;
         }
       }
@@ -2451,6 +2618,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (gameState === 'chest' || gameStateRef.current === 'chest') {
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
+          gamepadManager.consumeActionsAndLockBleed(engineRef.current.keys);
           if (slotSpinningRef.current) {
             skipSlotSpinRef.current();
           } else {
@@ -2466,6 +2634,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           setIsControlsOpen(false);
           return;
         }
+        gamepadManager.consumeActionsAndLockBleed(engineRef.current.keys);
         togglePause();
       }
     };
@@ -2484,7 +2653,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [gameState, togglePause, isControlsOpen]);
+  }, [gameState, togglePause, isControlsOpen, toggleFullscreen, triggerArenaInteract]);
 
   // Start new run
   const startGame = (
@@ -3033,20 +3202,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
         const isHurt = !isFleeing && (this.hurtTimer ?? 0) > 0;
+        const isPlayerMoving = Math.abs(this.vx || 0) > 0.1 || Math.abs(this.vy || 0) > 0.1;
         const isSprinting =
           !isFleeing &&
-          (Math.abs(this.lastDx) > 0.1 || Math.abs(this.lastDy) > 0.1) &&
+          isPlayerMoving &&
           ((this.gingerbreadSpeedTimer ?? 0) > 0 ||
             (this.soulBuffTimer ?? 0) > 0 ||
             (this.pistalkaSpeedTimer ?? 0) > 0 ||
             (this.speedMultiplier ?? 1) > 1.28);
         const animT = this.animTime || engineRef.current?.uiTime || 0;
-        const drawDx = isSprinting
-          ? this.lastDx >= 0
-            ? Math.max(1.6, this.lastDx * 1.6)
-            : Math.min(-1.6, this.lastDx * 1.6)
-          : this.lastDx;
-        const drawDy = isSprinting ? this.lastDy * 1.6 : this.lastDy;
+        const facingSign = (this.lastDx ?? 1) >= 0 ? 1 : -1;
+        const drawDx = isPlayerMoving
+          ? (isSprinting
+              ? facingSign * Math.max(1.6, Math.abs(this.lastDx) * 1.6)
+              : this.lastDx)
+          : facingSign * 0.001;
+        const drawDy = isPlayerMoving ? (isSprinting ? this.lastDy * 1.6 : this.lastDy) : 0;
 
         if (this.type === 'krajanek') {
           Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
@@ -3063,26 +3234,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               this.x,
               this.y,
               engineRef.current?.uiTime || this.animTime || 0,
-              this.lastDx,
-              this.lastDy,
+              drawDx,
+              drawDy,
               1,
               this.krajanekTilt || 0,
               Boolean(this.krajanekIsDrifting),
               colossusScale,
             );
           } else {
-            Lada.drawKrajanek(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
+            Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
           }
         } else if (this.type === 'tulak' || this.type === 'wanderer') {
           const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
           const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
-          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1, isWhirling, sukoviceT);
+          Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
         } else if (this.type === 'pasacek' || this.type === 'shepherd') {
           Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'korenarka') {
-          Lada.drawKorenarka(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawKorenarka(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
         } else if (this.type === 'ponocny' || this.type === 'watchman') {
-          Lada.drawWatchman(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
+          Lada.drawWatchman(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
         } else if (this.type === 'kostelnik' || this.type === 'sexton') {
           Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'babicka' || this.type === 'granny') {
@@ -3090,7 +3261,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else {
           const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
           const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
-          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1, isWhirling, sukoviceT);
+          Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
         }
 
         // Draw blessed candle in hand if Hromnička is equipped
@@ -3493,6 +3664,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
   };
+  const triggerUltimateRef = useRef(triggerUltimate);
+  triggerUltimateRef.current = triggerUltimate;
 
   // Účinek Pasáčkova dusotu stáda
   const applyShepherdStampede = () => {
@@ -4034,6 +4207,58 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const currentSelectedLevelId = selectedLevelIdRef.current;
     engineRef.current.uiTime += dt;
 
+    // Poll HTML5 Gamepad API (Array.from(navigator.getGamepads()).find(gp => gp && gp.connected)) + unified keyboard state
+    const gpInput = gamepadManager.poll(engine.keys, currentGameState, touchMoveRef.current);
+    if (
+      gpInput.gamepadConnected !== gamepadUiStateRef.current.connected ||
+      gpInput.activeDevice !== gamepadUiStateRef.current.activeDevice ||
+      gpInput.gamepadName !== gamepadUiStateRef.current.name
+    ) {
+      setGamepadUiState({
+        connected: gpInput.gamepadConnected,
+        activeDevice: gpInput.activeDevice,
+        name: gpInput.gamepadName,
+      });
+    }
+
+    // Handle Gamepad edge-triggered (justPressed) actions per gameState
+    if (gpInput.activeDevice === 'gamepad') {
+      if (currentGameState === 'playing') {
+        if (gpInput.pauseJustPressed) {
+          gamepadManager.consumeActionsAndLockBleed(engine.keys);
+          togglePauseRef.current();
+        } else if (gpInput.abilityJustPressed) {
+          const cs = engine.cutscene;
+          if (cs) {
+            if (!cs.applied) cs.t = Math.max(cs.t, cs.applyAt);
+            else cs.t = cs.dur;
+          } else {
+            triggerUltimateRef.current();
+          }
+        } else if (gpInput.interactJustPressed) {
+          triggerArenaInteractRef.current();
+        } else if (gpInput.confirmJustPressed && engine.cutscene) {
+          const cs = engine.cutscene;
+          if (!cs.applied) cs.t = Math.max(cs.t, cs.applyAt);
+          else cs.t = cs.dur;
+        }
+      } else if (currentGameState === 'paused') {
+        if (gpInput.pauseJustPressed || gpInput.cancelJustPressed || gpInput.confirmJustPressed) {
+          gamepadManager.consumeActionsAndLockBleed(engine.keys);
+          togglePauseRef.current();
+        }
+      } else if (currentGameState === 'chest') {
+        if (gpInput.confirmJustPressed) {
+          gamepadManager.consumeActionsAndLockBleed(engine.keys);
+          if (slotSpinningRef.current) {
+            skipSlotSpinRef.current();
+          } else {
+            closeChestSequenceRef.current();
+          }
+        }
+      }
+    }
+
     // Autonomous stress bot for automated headless benchmark
     if (isBenchmarkMode && currentGameState === 'playing' && engine.player) {
       // Advance to Midnight to activate full dark kvaš lighting, vector shadow volumes & ambient tint
@@ -4505,8 +4730,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4500);
             }
 
+            // SINGLE-PASS ACTIVE BOSS LOOKUP (avoids scanning engine.enemies 7x every frame)
+            let moranaBoss: any = null;
+            let cert: any = null;
+            let hejkal: any = null;
+            let obr: any = null;
+            let mlynar: any = null;
+            let rytir: any = null;
+            let drak: any = null;
+            for (let bIdx = 0, bLen = engine.enemies.length; bIdx < bLen; bIdx++) {
+              const e = engine.enemies[bIdx];
+              if (!e || e.isDefeated) continue;
+              const eid = e.id;
+              if (eid === 'morana' && !moranaBoss && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned))) moranaBoss = e;
+              else if (eid === 'cert' && !cert) cert = e;
+              else if (eid === 'hejkal' && !hejkal) hejkal = e;
+              else if (eid === 'obr' && !obr) obr = e;
+              else if (eid === 'mlynar' && !mlynar) mlynar = e;
+              else if (eid === 'bezhlavy_rytir' && !rytir) rytir = e;
+              else if (eid === 'drak' && !drak) drak = e;
+            }
+
             // MORANA BOSS DYNAMIC MECHANICS (LEVEL 0 - MRAZIVÝ DECH A SNĚŽNÁ VÁNICE)
-            const moranaBoss = engine.enemies.find((e) => e.id === 'morana' && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned)) && !e.isDefeated);
             if (moranaBoss && curLvl.id === 0) {
               const isPhase2 = moranaBoss.hp <= moranaBoss.maxHp * 0.5;
               moranaBoss.moranaWindTimer = (moranaBoss.moranaWindTimer !== undefined ? moranaBoss.moranaWindTimer : 4.5) - dt;
@@ -4607,7 +4852,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 1)
-            const cert = engine.enemies.find((e) => e.id === 'cert' && !e.isDefeated);
             if (cert && (cert.isBoss || engine.finalBossSpawned || curLvl.id === 1)) {
               if (cert) {
                 const isPhase2 = cert.hp <= cert.maxHp * 0.5;
@@ -4778,7 +5022,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // PŮLNOČNÍ HEJKAL BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
-            const hejkal = engine.enemies.find((e) => e.id === 'hejkal' && !e.isDefeated);
             if (hejkal && (hejkal.isBoss || engine.finalBossSpawned || curLvl.id === 2)) {
               if (hejkal) {
                 const isPhase2 = hejkal.hp <= hejkal.maxHp * 0.5;
@@ -4874,7 +5117,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 3)
-            const obr = engine.enemies.find((e) => e.id === 'obr' && !e.isDefeated);
             if (obr && (obr.isBoss || engine.finalBossSpawned || curLvl.id === 3)) {
               if (obr) {
                 const isPhase2 = obr.hp <= obr.maxHp * 0.5;
@@ -4962,7 +5204,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
-            const mlynar = engine.enemies.find((e) => e.id === 'mlynar' && !e.isDefeated);
             if (mlynar && (mlynar.isBoss || engine.finalBossSpawned || curLvl.id === 4)) {
               if (mlynar) {
                 const isPhase2 = mlynar.hp <= mlynar.maxHp * 0.5;
@@ -5093,7 +5334,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // BEZHLAVÝ RYTÍŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
-            const rytir = engine.enemies.find((e) => e.id === 'bezhlavy_rytir' && !e.isDefeated);
             if (rytir && (rytir.isBoss || engine.finalBossSpawned || curLvl.id === 5)) {
               if (rytir) {
                 const isPhase2 = rytir.hp <= rytir.maxHp * 0.5;
@@ -5180,7 +5420,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // TŘÍHLAVÝ DRAK BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 6)
-            const drak = engine.enemies.find((e) => e.id === 'drak' && !e.isDefeated);
             if (drak && (drak.isBoss || engine.finalBossSpawned || curLvl.id === 6)) {
               if (drak) {
                 const isPhase2 = drak.hp <= drak.maxHp * 0.5;
@@ -5561,19 +5800,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Původní duplicitní vlnový generátor byl deaktivován, aby chránil plynulých 60 FPS
             // a udržoval počet aktivních monster do stropu 70 (45 v Performance Mode).
 
-            // Player movement
-            let mx = 0;
-            let my = 0;
-            const keys = engine.keys;
-            if (keys.KeyW || keys.ArrowUp) my -= 1;
-            if (keys.KeyS || keys.ArrowDown) my += 1;
-            if (keys.KeyA || keys.ArrowLeft) mx -= 1;
-            if (keys.KeyD || keys.ArrowRight) mx += 1;
-
-            if (touchMoveRef.current.active) {
-              mx += touchMoveRef.current.x;
-              my += touchMoveRef.current.y;
-            }
+            // Player movement (combined Keyboard WASD/Arrows + Gamepad Left Stick [deadzone 0.15] + D-Pad [12..15] + Touch, normalized)
+            const mx = gpInput.moveX;
+            const my = gpInput.moveY;
 
             const BASE_PLAYER_SPEED = player.speed || 220;
             const MIN_SPEED_RATIO = 0.2;
@@ -5640,11 +5869,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               player.animTime += dt;
             } else if (mx !== 0 || my !== 0) {
               const len = Math.hypot(mx, my);
+              const normScale = len > 1 ? 1 / len : 1;
               const effectiveSpeed = BASE_PLAYER_SPEED * buffMultiplier;
-              moveVx = (mx / len) * effectiveSpeed;
-              moveVy = (my / len) * effectiveSpeed;
-              player.lastDx = mx;
-              player.lastDy = my;
+              moveVx = mx * normScale * effectiveSpeed;
+              moveVy = my * normScale * effectiveSpeed;
+              player.lastDx = mx * normScale;
+              player.lastDy = my * normScale;
               player.animTime += dt;
             } else {
               player.animTime = 0;
@@ -8409,18 +8639,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Pekelný: Stopa žhavých uhlíků a plamínků
         if (this.hasFireTrail && !this.dead && !this.isDefeated && Math.random() < 0.28) {
-          engineRef.current?.particles?.push({
-            x: this.x + (Math.random() - 0.5) * (this.radius * 0.8),
-            y: this.y + this.radius * 0.4 + (Math.random() - 0.5) * 6,
-            vx: (Math.random() - 0.5) * 20,
-            vy: -15 - Math.random() * 25,
-            life: 0.35,
-            color: Math.random() < 0.5 ? '#F97316' : '#EF4444',
-            size: 3.5,
-          });
+          emitParticle(
+            engineRef.current?.particles,
+            {
+              x: this.x + (Math.random() - 0.5) * (this.radius * 0.8),
+              y: this.y + this.radius * 0.4 + (Math.random() - 0.5) * 6,
+              vx: (Math.random() - 0.5) * 20,
+              vy: -15 - Math.random() * 25,
+              life: 0.35,
+              color: Math.random() < 0.5 ? '#F97316' : '#EF4444',
+              size: 3.5,
+            },
+            activeMaxParticlesRef.current
+          );
         }
 
-        for (const [statusType, effect] of Object.entries(this.statusEffects) as [string, any][]) {
+        for (const statusType in this.statusEffects) {
+          const effect = this.statusEffects[statusType];
+          if (!effect) continue;
           effect.remaining -= dt;
           if (effect.remaining <= 0) delete this.statusEffects[statusType];
         }
@@ -8447,15 +8683,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // In the last 0.25s before disappearing, spawn gentle little anticipatory smoke / steam puffs (only if on screen)
             if (this.foodDefeatTimer >= 0.55 && Math.random() < 0.35 && distToPlayer < 650) {
               const ang = Math.random() * Math.PI * 2;
-              engineRef.current.particles.push({
-                x: this.x + Math.cos(ang) * (this.radius * 0.4),
-                y: this.y - this.radius * 0.35 + Math.sin(ang) * (this.radius * 0.25),
-                vx: (Math.random() - 0.5) * 15,
-                vy: -30 - Math.random() * 20,
-                life: 0.35,
-                color: '#FFFDF7',
-                size: 3.5,
-              });
+              emitParticle(
+                engineRef.current.particles,
+                {
+                  x: this.x + Math.cos(ang) * (this.radius * 0.4),
+                  y: this.y - this.radius * 0.35 + Math.sin(ang) * (this.radius * 0.25),
+                  vx: (Math.random() - 0.5) * 15,
+                  vy: -30 - Math.random() * 20,
+                  life: 0.35,
+                  color: '#FFFDF7',
+                  size: 3.5,
+                },
+                activeMaxParticlesRef.current
+              );
             }
 
             // Enemies defeated by food disappear after 0.85s or once off-screen
@@ -11124,13 +11364,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       },
       getStatusEffect(type: string) { return this.statusEffects[type]; },
       getDamageTakenMultiplier() {
-        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.damageTakenMultiplier ?? 1), 1);
+        let m = 1;
+        for (const k in this.statusEffects) {
+          const e = this.statusEffects[k];
+          if (e && e.damageTakenMultiplier !== undefined) m *= e.damageTakenMultiplier;
+        }
+        return m;
       },
       getDamageDealtMultiplier() {
-        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.damageDealtMultiplier ?? 1), 1);
+        let m = 1;
+        for (const k in this.statusEffects) {
+          const e = this.statusEffects[k];
+          if (e && e.damageDealtMultiplier !== undefined) m *= e.damageDealtMultiplier;
+        }
+        return m;
       },
       getMovementSpeedMultiplier() {
-        return Object.values(this.statusEffects).reduce((m: number, e: any) => m * (e.movementSpeedMultiplier ?? 1), 1);
+        let m = 1;
+        for (const k in this.statusEffects) {
+          const e = this.statusEffects[k];
+          if (e && e.movementSpeedMultiplier !== undefined) m *= e.movementSpeedMultiplier;
+        }
+        return m;
       },
 
       soak() {
@@ -12024,7 +12279,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <button
                 className="hud-pause-btn"
                 onClick={togglePause}
-                title="Pozastavit hru [P / Esc]"
+                title={gamepadUiState.activeDevice === 'gamepad' ? 'Pozastavit hru [Start]' : 'Pozastavit hru [P / Esc]'}
                 aria-label="Pozastavit hru"
               >
                 <GameIcon icon="pause" size={16} />
@@ -12079,23 +12334,122 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </div>
           )}
 
-          {/* Ultimate ability indicator button – skryto na dotykovém displeji a při aktivním dotykovém ovládání, kde bohatě stačí kruhové tlačítko */}
-          {!touchEnabled && (
-            <button
-              id="ult-indicator"
-              onClick={triggerUltimate}
-              style={{
-                backgroundColor: runStats.ultCd <= 0 ? 'var(--blood-red)' : 'var(--wood-light)',
-                transform: runStats.ultCd <= 0 ? 'translateX(-50%) scale(1.05)' : 'translateX(-50%) scale(1)',
-              }}
-            >
-              {runStats.ultCd <= 0
-                ? (engineRef.current.player?.type === 'tulak' || engineRef.current.player?.type === 'wanderer'
-                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="wood_log" size={18} /> POVĚSTNÁ SUKOVICE: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>
-                    : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={18} /> SPECIÁLNÍ SCHOPNOST: PŘIPRAVENA! (MEZERNÍK / KLIK)</span>)
-                : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="lightning" size={16} /> {engineRef.current.player?.type === 'krajanek' ? 'Jízda na žernovu' : (engineRef.current.player?.type === 'tulak' || engineRef.current.player?.type === 'wanderer') ? 'Pověstná sukovice' : 'Speciální schopnost'}: {Math.ceil(runStats.ultCd)} s</span>}
-            </button>
-          )}
+          {/* Ultimate ability indicator button with cooldown countdown & visual readiness indicator */}
+          {!touchEnabled && (() => {
+            const p = engineRef.current.player;
+            const pType = p?.type;
+            const totalMaxCd = Math.max(1, (p?.ultMaxCd || 25) * (p?.cooldownMultiplier || 1));
+            const isReady = runStats.ultCd <= 0;
+            const readinessPct = isReady ? 100 : Math.max(0, Math.min(100, (1 - runStats.ultCd / totalMaxCd) * 100));
+            const abilityIcon =
+              pType === 'tulak' || pType === 'wanderer'
+                ? 'wood_log'
+                : pType === 'krajanek'
+                  ? 'mill'
+                  : pType === 'pasacek' || pType === 'shepherd'
+                    ? 'sheep'
+                    : pType === 'korenarka'
+                      ? 'herbs'
+                      : pType === 'kostelnik' || pType === 'sexton'
+                        ? 'bell'
+                        : pType === 'babicka' || pType === 'granny'
+                          ? 'bread'
+                          : 'lightning';
+            const abilityName =
+              pType === 'krajanek'
+                ? 'Jízda na žernovu'
+                : pType === 'tulak' || pType === 'wanderer'
+                  ? 'Pověstná sukovice'
+                  : pType === 'pasacek' || pType === 'shepherd'
+                    ? 'Pastýřská píšťalka'
+                    : pType === 'korenarka'
+                      ? 'Očistné kadidlo'
+                      : pType === 'kostelnik' || pType === 'sexton'
+                        ? 'Farní požehnání'
+                        : pType === 'babicka' || pType === 'granny'
+                          ? 'Vlídné slovo'
+                          : 'Speciální schopnost';
+            const keyHint = gamepadUiState.activeDevice === 'gamepad' ? '[RB / B]' : '[MEZERNÍK]';
+
+            return (
+              <button
+                id="ult-indicator"
+                onClick={triggerUltimate}
+                style={{
+                  backgroundColor: isReady ? 'var(--blood-red)' : '#3E2723',
+                  transform: isReady ? 'translateX(-50%) scale(1.04)' : 'translateX(-50%) scale(1)',
+                  overflow: 'hidden',
+                  padding: '8px 18px 11px',
+                  minWidth: '290px',
+                }}
+                title={`${abilityName} — ${isReady ? 'Připravena!' : `Nabíjí se (${Math.ceil(runStats.ultCd)} s)`} ${keyHint}`}
+              >
+                {/* Visual readiness fill bar at bottom of button */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    bottom: 0,
+                    height: '5px',
+                    width: `${readinessPct}%`,
+                    background: isReady ? '#FDE047' : '#F59E0B',
+                    transition: 'width 0.15s linear',
+                  }}
+                />
+                {isReady ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        background: '#FEF08A',
+                        border: '1.5px solid #1C1610',
+                      }}
+                    >
+                      <GameIcon icon={abilityIcon} size={16} />
+                    </span>
+                    <span>{abilityName.toUpperCase()}: PŘIPRAVENA!</span>
+                    <span
+                      style={{
+                        background: 'rgba(0,0,0,0.28)',
+                        border: '1px solid rgba(255,255,255,0.45)',
+                        borderRadius: 5,
+                        padding: '1px 6px',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      {keyHint}
+                    </span>
+                  </span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.14)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                      }}
+                    >
+                      <GameIcon icon={abilityIcon} size={14} />
+                    </span>
+                    <span>
+                      {abilityName}: <strong>{Math.ceil(runStats.ultCd)} s</strong> ({Math.round(readinessPct)} %)
+                    </span>
+                    <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>{keyHint}</span>
+                  </span>
+                )}
+              </button>
+            );
+          })()}
         </div>
       )}
 
@@ -13121,7 +13475,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {gameState === 'playing' && engineRef.current.grandfather.active && engineRef.current.player &&
         Math.hypot(engineRef.current.grandfather.x - engineRef.current.player.x, engineRef.current.grandfather.y - engineRef.current.player.y) < 220 && (
         <button
-          onClick={openGrandfatherShop}
+          onClick={() => {
+            gamepadManager.consumeActionsAndLockBleed(engineRef.current.keys);
+            openGrandfatherShop();
+          }}
           style={{
             position: 'fixed', left: '50%', bottom: '17%', transform: 'translateX(-50%)',
             zIndex: 40, padding: '12px 24px', border: '3px solid var(--ink)', borderRadius: 12,
@@ -13129,7 +13486,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             boxShadow: '4px 4px 0 rgba(0,0,0,.3)', cursor: 'pointer',
           }}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI (E)</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI ({gamepadUiState.activeDevice === 'gamepad' ? '[X] / [E]' : '[E] / [X]'})
+          </span>
         </button>
       )}
 
@@ -13353,9 +13712,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     background: 'var(--mustard)',
                     color: 'var(--ink)',
                   }}
-                  onClick={skipSlotSpin}
+                  onClick={() => {
+                    gamepadManager.consumeActionsAndLockBleed(engineRef.current.keys);
+                    skipSlotSpin();
+                  }}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Přeskočit točení</span> <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>[Mezerník]</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Přeskočit točení</span>{' '}
+                  <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
                 </button>
               ) : (
                 <button
@@ -13367,9 +13730,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     color: '#FEF3C7',
                     animation: 'popIn 0.3s ease-out',
                   }}
-                  onClick={closeChestSequence}
+                  onClick={() => {
+                    gamepadManager.consumeActionsAndLockBleed(engineRef.current.keys);
+                    closeChestSequence();
+                  }}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="chest" size={20} /> Vyzvednout poklad</span> <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>[Mezerník]</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="chest" size={20} /> Vyzvednout poklad</span>{' '}
+                  <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
                 </button>
               )}
             </div>
@@ -13704,6 +14071,94 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         unlockNotice={unlockNotice}
         onDismissUnlockNotice={() => setUnlockNotice(null)}
       />
+
+      {/* CORNER GAMEPAD & FULLSCREEN INDICATOR */}
+      <div
+        id="gamepad-corner-indicator"
+        style={{
+          position: 'fixed',
+          bottom: 10,
+          right: 12,
+          zIndex: 90,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          pointerEvents: 'auto',
+        }}
+      >
+        {/* Connected Gamepad & Active Input Mode Indicator */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 10px',
+            borderRadius: 8,
+            background: gamepadUiState.connected ? 'rgba(254, 243, 199, 0.94)' : 'rgba(250, 246, 237, 0.84)',
+            border: '2px solid #1C1610',
+            boxShadow: '2px 2px 0 rgba(28, 22, 16, 0.65)',
+            fontSize: '0.76rem',
+            fontWeight: 900,
+            color: '#2D1609',
+          }}
+          title={
+            gamepadUiState.connected
+              ? `Připojen gamepad: ${gamepadUiState.name} • Aktivní vstup: ${gamepadUiState.activeDevice === 'gamepad' ? 'Gamepad' : 'Klávesnice'}`
+              : 'Ovládání klávesnicí (připojte USB/Bluetooth gamepad a stiskněte libovolné tlačítko)'
+          }
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: gamepadUiState.connected ? '#16A34A' : '#9CA3AF',
+              border: '1px solid #1C1610',
+              display: 'inline-block',
+            }}
+          />
+          <GameIcon icon="gamepad" size={15} />
+          <span>
+            {gamepadUiState.connected
+              ? gamepadUiState.activeDevice === 'gamepad'
+                ? 'Gamepad aktivní'
+                : 'Gamepad (Klávesnice)'
+              : 'Klávesnice'}
+          </span>
+        </div>
+
+        {/* Fullscreen Toggle Button [F] */}
+        <button
+          onClick={toggleFullscreen}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 9px',
+            borderRadius: 8,
+            background: isFullscreen ? '#FDE68A' : 'rgba(250, 246, 237, 0.9)',
+            border: '2px solid #1C1610',
+            boxShadow: '2px 2px 0 rgba(28, 22, 16, 0.65)',
+            fontSize: '0.76rem',
+            fontWeight: 900,
+            color: '#2D1609',
+            cursor: 'pointer',
+          }}
+          title="Přepnout celou obrazovku (Klávesa F)"
+        >
+          <span>{isFullscreen ? 'Okno' : 'Celá obrazovka'}</span>
+          <span
+            style={{
+              background: 'rgba(0,0,0,0.14)',
+              borderRadius: 4,
+              padding: '0 4px',
+              fontSize: '0.7rem',
+            }}
+          >
+            [F]
+          </span>
+        </button>
+      </div>
     </>
   );
 }

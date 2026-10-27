@@ -171,6 +171,44 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               paddingRight: '6px',
             }}
           >
+            {/* GAMEPAD & FULLSCREEN */}
+            <div
+              style={{
+                background: '#EFF6FF',
+                border: '3px solid #1D4ED8',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                color: '#111111',
+                boxShadow: '3px 3px 0 var(--ink)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#1E40AF', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <GameIcon icon="gamepad" size={20} /> Plná podpora Gamepadu & Celá obrazovka
+                </span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span className="keycap keycap-accent">Gamepad</span>
+                  <span className="keycap">F (Fullscreen)</span>
+                </div>
+              </div>
+              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.4 }}>
+                Hra automaticky rozpozná připojený ovladač (Xbox, PlayStation, Switch Pro) a dynamicky přizpůsobí nápovědy tlačítek v rozhraní:
+                <br />• <strong>Pohyb:</strong> Levá analogová páčka (s mrtvou zónou 0.15) nebo <strong>D-Pad</strong> (kombinovaný s <strong>WASD / šipkami</strong>).
+                <br />• <strong>Zvláštní schopnost:</strong> Tlačítko <strong>[RB]</strong> nebo <strong>[B]</strong> na gamepadu / <strong>[Mezerník]</strong> na klávesnici.
+                <br />• <strong>Interakce s okolím (Nůše, Truhla, Zvonice, Oltář, Soudek):</strong> Tlačítko <strong>[X]</strong> na gamepadu / <strong>[E]</strong> na klávesnici.
+                <br />• <strong>Výběr vylepšení v menu:</strong> <strong>D-Pad / Levá páčka / A-D / Šipky</strong> přepíná karty, <strong>[A]</strong> nebo <strong>[Enter / Mezerník]</strong> potvrdí výběr.
+                <br />• <strong>Pauza a Celá obrazovka:</strong> <strong>[Start]</strong> / <strong>[Esc / P]</strong> přepíná pauzu, klávesa <strong>[F]</strong> přepíná režim celé obrazovky (Fullscreen).
+              </p>
+            </div>
+
             {/* PAUSE */}
             <div
               style={{
@@ -198,12 +236,14 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   <span className="keycap keycap-accent">P</span>
                   <span style={{ alignSelf: 'center', fontWeight: 900, color: '#78350F' }}>nebo</span>
                   <span className="keycap">Esc</span>
+                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#78350F' }}>/</span>
+                  <span className="keycap">Start</span>
                 </div>
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Stisknutím klávesy <strong>P</strong> (nebo <strong>Esc</strong>) okamžitě <strong>pozastavíte celou hru</strong>.
+                Stisknutím klávesy <strong>P</strong>, <strong>Esc</strong> nebo tlačítka <strong>Start</strong> na gamepadu okamžitě <strong>pozastavíte celou hru</strong>.
                 Při pauze si můžete v klidu prohlédnout svůj arzenál, úroveň zbraní, zbývající kuráž a získané krejcary,
-                nebo výpravu bezpečně ukončit a odnést kořist do hospody. Opětovným stiskem <strong>P</strong> se vrátíte přímo do boje!
+                nebo výpravu bezpečně ukončit a odnést kořist do hospody. Opětovným stiskem se vrátíte přímo do boje!
               </p>
             </div>
 

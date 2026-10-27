@@ -61,26 +61,52 @@ export interface NormalVector3D {
   z: number;
 }
 
+const EMPTY_SEGMENTS: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+
 /**
- * Computes boundary line segments for an occluder.
+ * Computes boundary line segments for an occluder (cached to avoid per-ray allocations).
  */
 export function computeOccluderSegments(occluder: LightOccluder): Array<{ x1: number; y1: number; x2: number; y2: number }> {
   if (occluder.segments && occluder.segments.length > 0) {
     return occluder.segments;
   }
+  const occ = occluder as any;
   if (occluder.width && occluder.height) {
+    if (
+      occ._cachedSegments &&
+      occ._cachedX === occluder.x &&
+      occ._cachedY === occluder.y &&
+      occ._cachedW === occluder.width &&
+      occ._cachedH === occluder.height
+    ) {
+      return occ._cachedSegments;
+    }
     const hw = occluder.width * 0.5;
     const hh = occluder.height * 0.5;
     const x = occluder.x;
     const y = occluder.y;
-    return [
+    const segs = [
       { x1: x - hw, y1: y - hh, x2: x + hw, y2: y - hh },
       { x1: x + hw, y1: y - hh, x2: x + hw, y2: y + hh },
       { x1: x + hw, y1: y + hh, x2: x - hw, y2: y + hh },
       { x1: x - hw, y1: y + hh, x2: x - hw, y2: y - hh },
     ];
+    occ._cachedX = x;
+    occ._cachedY = y;
+    occ._cachedW = occluder.width;
+    occ._cachedH = occluder.height;
+    occ._cachedSegments = segs;
+    return segs;
   }
   if (occluder.radius && occluder.radius > 0) {
+    if (
+      occ._cachedSegments &&
+      occ._cachedX === occluder.x &&
+      occ._cachedY === occluder.y &&
+      occ._cachedR === occluder.radius
+    ) {
+      return occ._cachedSegments;
+    }
     const r = occluder.radius;
     const segments: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
     const count = 8;
@@ -94,9 +120,13 @@ export function computeOccluderSegments(occluder: LightOccluder): Array<{ x1: nu
         y2: occluder.y + Math.sin(a2) * r,
       });
     }
+    occ._cachedX = occluder.x;
+    occ._cachedY = occluder.y;
+    occ._cachedR = r;
+    occ._cachedSegments = segments;
     return segments;
   }
-  return [];
+  return EMPTY_SEGMENTS;
 }
 
 /**
@@ -338,10 +368,10 @@ export function getShadowDefenseMultipliers(enemy: any): { speedMult: number; da
 }
 
 /**
- * Updates dynamic light source lifespans and purges expired temporary emitters.
+ * Updates dynamic light source lifespans and purges expired temporary emitters in-place.
  */
 export function updateLightSources(sources: DynamicLightSource[], dt: number): DynamicLightSource[] {
-  const result: DynamicLightSource[] = [];
+  let write = 0;
   for (let i = 0; i < sources.length; i++) {
     const src = sources[i];
     if (typeof src.duration === 'number') {
@@ -353,10 +383,13 @@ export function updateLightSources(sources: DynamicLightSource[], dt: number): D
         src.intensity = Math.max(0, Math.min(1, src.duration / src.maxDuration));
       }
     }
-    result.push(src);
+    sources[write++] = src;
   }
-  return result;
+  sources.length = write;
+  return sources;
 }
+
+const _bludickaLightBuffer: DynamicLightSource[] = [];
 
 /**
  * Evaluates Bludička močálová aura:
@@ -367,10 +400,21 @@ export function evaluateBludickaAura(
   lightSources: DynamicLightSource[],
   player: any
 ): void {
-  const bludickaLights = lightSources.filter((ls) => ls.type === 'bludicka');
-  if (bludickaLights.length === 0 || !player) {
+  _bludickaLightBuffer.length = 0;
+  if (player && lightSources.length > 0) {
+    for (let i = 0; i < lightSources.length; i++) {
+      const ls = lightSources[i];
+      if (ls.type === 'bludicka') {
+        _bludickaLightBuffer.push(ls);
+      }
+    }
+  }
+
+  if (_bludickaLightBuffer.length === 0 || !player) {
     for (let i = 0; i < livingEnemies.length; i++) {
-      livingEnemies[i].bludickaAttracted = false;
+      if (livingEnemies[i].bludickaAttracted) {
+        livingEnemies[i].bludickaAttracted = false;
+      }
     }
     return;
   }
@@ -379,13 +423,13 @@ export function evaluateBludickaAura(
     const e = livingEnemies[i];
     if (e.id === 'bludicka' || e.isDefeated || e.dead) continue;
     if (e.category !== 'undead' && e.category !== 'swarms') {
-      e.bludickaAttracted = false;
+      if (e.bludickaAttracted) e.bludickaAttracted = false;
       continue;
     }
 
     let inAura = false;
-    for (let j = 0; j < bludickaLights.length; j++) {
-      const bLight = bludickaLights[j];
+    for (let j = 0; j < _bludickaLightBuffer.length; j++) {
+      const bLight = _bludickaLightBuffer[j];
       const dx = e.x - bLight.x;
       const dy = e.y - bLight.y;
       if (dx * dx + dy * dy <= bLight.radius * bLight.radius) {

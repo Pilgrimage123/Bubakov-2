@@ -696,6 +696,28 @@ export const ALL_GRANDFATHER_UPGRADES: SandboxGrandfatherUpgradeItem[] = [
     categoryColor: '#4B5563',
     statHint: '+60 % dmg, +2 průraz, -12 % CD',
   },
+  {
+    id: 'flail_threshing_stance',
+    name: 'Pevný postoj na mlatu',
+    icon: 'flail',
+    description: '+45 % kritické poškození, +40 % kritický odhoz, +12 % šance na kritický zásah, +25 % základní poškození i odhoz.',
+    maxLevel: 1,
+    category: 'synergy',
+    categoryLabel: 'Dřevěný cep',
+    categoryColor: '#854D0E',
+    statHint: '+45 % krit dmg, +40 % krit odhoz',
+  },
+  {
+    id: 'flail_barn_sweep',
+    name: 'Výprask ve stodole',
+    icon: 'flail',
+    description: '+30 % poloměr rázové vlny, -13 % cooldown, +25 % kritický odhoz.',
+    maxLevel: 1,
+    category: 'synergy',
+    categoryLabel: 'Dřevěný cep',
+    categoryColor: '#854D0E',
+    statHint: '+30 % poloměr, +25 % krit odhoz',
+  },
 ];
 
 export interface TestModeModalProps {

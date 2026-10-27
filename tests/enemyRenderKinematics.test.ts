@@ -25,6 +25,7 @@ function createMockCtx() {
     arcTo() {},
     ellipse() {},
     rect() {},
+    roundRect() {},
     strokeRect() {},
     fillRect() {},
     stroke() {},

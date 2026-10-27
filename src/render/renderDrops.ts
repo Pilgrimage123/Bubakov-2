@@ -9,20 +9,56 @@
 
 import { Lada } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
+import { gamepadManager } from '../game/gamepad';
+
+const INTERACTIVE_DROP_TYPES = new Set([
+  'chest',
+  'chasnik',
+  'horseshoe',
+  'rooster',
+  'cuckoo_clock',
+  'ponocny_horn',
+  'masopust_rattle',
+  'babicka_apron',
+  'slivovice_splash',
+  'svanda_bagpipes',
+  'kominik_button',
+  'arcivzacny_ananas',
+  'big_pouch',
+  'gingerbread_stash',
+]);
+
+export function isInteractiveArenaDrop(type: string): boolean {
+  return INTERACTIVE_DROP_TYPES.has(type);
+}
 
 export function renderDrops(
   ctx: CanvasRenderingContext2D,
   drops: any[],
-  camera: CameraViewport
+  camera: CameraViewport,
+  player?: { x: number; y: number } | null
 ): number {
   if (!drops || drops.length === 0) return 0;
 
   let rendered = 0;
+  let nearestInteractDrop: any = null;
+  let nearestInteractDistSq = 165 * 165;
+
   for (let i = 0; i < drops.length; i++) {
     const d = drops[i];
     if (!d || d.dead) continue;
     const radius = (d.radius || 14) + 24;
     if (!isInView(d.x, d.y, radius, camera)) continue;
+
+    if (player && isInteractiveArenaDrop(d.type)) {
+      const dx = d.x - player.x;
+      const dy = d.y - player.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq <= nearestInteractDistSq) {
+        nearestInteractDistSq = distSq;
+        nearestInteractDrop = d;
+      }
+    }
 
     rendered++;
     const isExpiring = typeof d.expiration === 'number' && d.expiration > 0 && d.expiration <= 5.0;
@@ -71,6 +107,34 @@ export function renderDrops(
     if (isExpiring) {
       ctx.globalAlpha = 1.0;
     }
+  }
+
+  if (nearestInteractDrop) {
+    const isGp = gamepadManager.activeDevice === 'gamepad';
+    const label =
+      nearestInteractDrop.type === 'chest'
+        ? isGp
+          ? '[X] / [E] Otevřít truhlu'
+          : '[E] / [X] Otevřít truhlu'
+        : isGp
+          ? '[X] / [E] Aktivovat'
+          : '[E] / [X] Aktivovat';
+    const boxW = nearestInteractDrop.type === 'chest' ? 168 : 144;
+    const py = nearestInteractDrop.y - 38;
+    ctx.save();
+    ctx.fillStyle = '#FFF7DF';
+    ctx.strokeStyle = '#1C1610';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(nearestInteractDrop.x - boxW / 2, py - 14, boxW, 25, 7);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#5B2118';
+    ctx.font = '900 12px Eczar, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, nearestInteractDrop.x, py - 1);
+    ctx.restore();
   }
 
   return rendered;

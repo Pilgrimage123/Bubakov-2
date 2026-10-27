@@ -8,7 +8,7 @@
  */
 
 import { COLORS } from '../constants';
-import { Lada } from './ladaRenderer';
+import { Lada, getCachedLadaSprite } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
 
 export function renderProjectilesAndSlashes(
@@ -29,6 +29,17 @@ export function renderProjectilesAndSlashes(
       if (!isInView(p.x, p.y, p.radius || 12, camera)) continue;
 
       renderedProjectiles++;
+
+      // Fast path for radially symmetric cached projectiles (no outer save/translate/rotate needed)
+      if (p.visual === 'snowball' || p.visual === 'snowball_small') {
+        Lada.drawSnowball(ctx, p.x, p.y, p.visual === 'snowball' ? 12 : 7);
+        continue;
+      }
+      if (p.visual === 'holy_droplet') {
+        Lada.drawHolyDroplet(ctx, p.x, p.y);
+        continue;
+      }
+
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.angle || 0);
@@ -38,63 +49,124 @@ export function renderProjectilesAndSlashes(
       } else if (p.visual === 'herb_leaf') {
         const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
         Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 1.15);
-      } else if (p.visual === 'snowball' || p.visual === 'snowball_small') {
-        Lada.drawSnowball(ctx, 0, 0, p.visual === 'snowball' ? 12 : 7);
       } else if (p.visual === 'kolac') {
         Lada.drawKynutyKolac(ctx, 0, 0, 1.25, 0);
       } else if (p.visual === 'pickle') {
         const rot = Math.sin(uiTime * 8 + p.x * 0.01) * 0.08;
         Lada.drawPickle(ctx, 0, 0, rot);
       } else if (p.visual === 'potato') {
-        Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        const sprite = getCachedLadaSprite('potato_proj', 32, 24, (sCtx, cx, cy) => {
+          Lada.setupPath(sCtx, '#78350F', COLORS.ink, 2.5);
+          sCtx.beginPath();
+          sCtx.ellipse(cx, cy, 12, 8, 0, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.stroke();
+        });
+        if (sprite && typeof ctx.drawImage === 'function') {
+          ctx.drawImage(sprite, -16, -12);
+        } else {
+          Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
       } else if (p.visual === 'bee') {
         Lada.drawBee(ctx, 0, 0);
-      } else if (p.visual === 'holy_droplet') {
-        Lada.drawHolyDroplet(ctx, 0, 0);
       } else if (p.visual === 'millstone') {
         Lada.drawMillstone(ctx, 0, 0, p.radius || 20, p.rotation || 0);
       } else if (p.visual === 'water_wave') {
         Lada.drawWaterWave(ctx, 0, 0, p.radius || 26, 0, uiTime);
       } else if (p.visual === 'ink_bottle') {
-        Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.5);
-        ctx.beginPath();
-        ctx.rect(-8, -10, 16, 20);
-        ctx.fill();
-        ctx.stroke();
-        Lada.setupPath(ctx, '#D9A036', COLORS.ink, 2);
-        ctx.fillRect(-4, -15, 8, 5);
-        ctx.strokeRect(-4, -15, 8, 5);
-        ctx.fillStyle = '#F3E9D2';
-        ctx.fillRect(-5, -5, 10, 10);
-        ctx.fillStyle = '#0F172A';
-        ctx.beginPath();
-        ctx.arc(0, 0, 3, 0, Math.PI * 2);
-        ctx.fill();
+        const sprite = getCachedLadaSprite('ink_bottle_proj', 24, 34, (sCtx, cx, cy) => {
+          sCtx.save();
+          sCtx.translate(cx, cy + 2);
+          Lada.setupPath(sCtx, '#1E293B', COLORS.ink, 2.5);
+          sCtx.beginPath();
+          sCtx.rect(-8, -10, 16, 20);
+          sCtx.fill();
+          sCtx.stroke();
+          Lada.setupPath(sCtx, '#D9A036', COLORS.ink, 2);
+          sCtx.fillRect(-4, -15, 8, 5);
+          sCtx.strokeRect(-4, -15, 8, 5);
+          sCtx.fillStyle = '#F3E9D2';
+          sCtx.fillRect(-5, -5, 10, 10);
+          sCtx.fillStyle = '#0F172A';
+          sCtx.beginPath();
+          sCtx.arc(0, 0, 3, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.restore();
+        });
+        if (sprite && typeof ctx.drawImage === 'function') {
+          ctx.drawImage(sprite, -12, -19);
+        } else {
+          Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.5);
+          ctx.beginPath();
+          ctx.rect(-8, -10, 16, 20);
+          ctx.fill();
+          ctx.stroke();
+          Lada.setupPath(ctx, '#D9A036', COLORS.ink, 2);
+          ctx.fillRect(-4, -15, 8, 5);
+          ctx.strokeRect(-4, -15, 8, 5);
+          ctx.fillStyle = '#F3E9D2';
+          ctx.fillRect(-5, -5, 10, 10);
+          ctx.fillStyle = '#0F172A';
+          ctx.beginPath();
+          ctx.arc(0, 0, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else if (p.visual === 'dirt_clod') {
-        Lada.setupPath(ctx, '#5C4033', COLORS.ink, 2.5);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 12, 10, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#3D2210';
-        ctx.beginPath();
-        ctx.arc(-4, -2, 2.5, 0, Math.PI * 2);
-        ctx.arc(3, 3, 2, 0, Math.PI * 2);
-        ctx.fill();
+        const sprite = getCachedLadaSprite('dirt_clod_proj', 32, 28, (sCtx, cx, cy) => {
+          Lada.setupPath(sCtx, '#5C4033', COLORS.ink, 2.5);
+          sCtx.beginPath();
+          sCtx.ellipse(cx, cy, 12, 10, 0, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.stroke();
+          sCtx.fillStyle = '#3D2210';
+          sCtx.beginPath();
+          sCtx.arc(cx - 4, cy - 2, 2.5, 0, Math.PI * 2);
+          sCtx.arc(cx + 3, cy + 3, 2, 0, Math.PI * 2);
+          sCtx.fill();
+        });
+        if (sprite && typeof ctx.drawImage === 'function') {
+          ctx.drawImage(sprite, -16, -14);
+        } else {
+          Lada.setupPath(ctx, '#5C4033', COLORS.ink, 2.5);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 12, 10, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#3D2210';
+          ctx.beginPath();
+          ctx.arc(-4, -2, 2.5, 0, Math.PI * 2);
+          ctx.arc(3, 3, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else if (p.visual === 'mud_ball') {
-        Lada.setupPath(ctx, '#365314', COLORS.ink, 2);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 11, 9, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#65A30D';
-        ctx.beginPath();
-        ctx.arc(-2, -1, 3.5, 0, Math.PI * 2);
-        ctx.fill();
+        const sprite = getCachedLadaSprite('mud_ball_proj', 30, 26, (sCtx, cx, cy) => {
+          Lada.setupPath(sCtx, '#365314', COLORS.ink, 2);
+          sCtx.beginPath();
+          sCtx.ellipse(cx, cy, 11, 9, 0, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.stroke();
+          sCtx.fillStyle = '#65A30D';
+          sCtx.beginPath();
+          sCtx.arc(cx - 2, cy - 1, 3.5, 0, Math.PI * 2);
+          sCtx.fill();
+        });
+        if (sprite && typeof ctx.drawImage === 'function') {
+          ctx.drawImage(sprite, -15, -13);
+        } else {
+          Lada.setupPath(ctx, '#365314', COLORS.ink, 2);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 11, 9, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#65A30D';
+          ctx.beginPath();
+          ctx.arc(-2, -1, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
       } else if (p.visual === 'scythe_wave') {
         ctx.save();
         ctx.fillStyle = 'rgba(241, 245, 249, 0.9)';
@@ -175,16 +247,30 @@ export function renderProjectilesAndSlashes(
         ctx.stroke();
         ctx.restore();
       } else if (p.visual === 'head_projectile') {
-        ctx.save();
-        Lada.setupPath(ctx, '#475569', COLORS.ink, 3);
-        ctx.beginPath();
-        ctx.arc(0, 0, 16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.fillStyle = '#FDE047';
-        ctx.fillRect(-8, -3, 16, 5);
-        ctx.strokeRect(-8, -3, 16, 5);
-        ctx.restore();
+        const sprite = getCachedLadaSprite('head_proj', 40, 40, (sCtx, cx, cy) => {
+          Lada.setupPath(sCtx, '#475569', COLORS.ink, 3);
+          sCtx.beginPath();
+          sCtx.arc(cx, cy, 16, 0, Math.PI * 2);
+          sCtx.fill();
+          sCtx.stroke();
+          sCtx.fillStyle = '#FDE047';
+          sCtx.fillRect(cx - 8, cy - 3, 16, 5);
+          sCtx.strokeRect(cx - 8, cy - 3, 16, 5);
+        });
+        if (sprite && typeof ctx.drawImage === 'function') {
+          ctx.drawImage(sprite, -20, -20);
+        } else {
+          ctx.save();
+          Lada.setupPath(ctx, '#475569', COLORS.ink, 3);
+          ctx.beginPath();
+          ctx.arc(0, 0, 16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#FDE047';
+          ctx.fillRect(-8, -3, 16, 5);
+          ctx.strokeRect(-8, -3, 16, 5);
+          ctx.restore();
+        }
       } else if (p.visual === 'boulder') {
         Lada.drawRollingBoulder(ctx, 0, 0, p.radius || 22, p.angle || 0);
       } else if (p.visual === 'hell_spark') {

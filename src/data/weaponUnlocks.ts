@@ -326,17 +326,17 @@ const RAW_WEAPON_UNLOCKS: Record<string, any> = {
 				tierLevel: 2,
 				spoiledName: "Dřevěný cep... (Rázová vlna)",
 				spoiledTitle: "Drtivý dopadový kolos",
-				spoiledDesc: "Dřevěný cep přináší pořádný výprask! Dopad na zem zasáhne okruh o poloměru 65 a uštědří pořádnou ránu 45.",
-				spoiledStatsHint: "Základní poškození: 45 • Plošný dopad: rádius 65",
-				clueTag: "🔎 50 %: Znáš plošný dopad i rázovou vlnu cepu!"
+				spoiledDesc: "Dřevěný cep přináší pořádný výprask! Dopad na zem zasáhne okruh o poloměru 65, v pevném postoji míří na nejbližší hrozbu a uděluje drtivé kritické rány.",
+				spoiledStatsHint: "Základní poškození: 45 • Kritické poškození až 3× • Kritický odhoz až 2,8×",
+				clueTag: "🔎 50 %: Znáš plošný dopad i kritickou sílu cepu!"
 			},
 			{
 				minPercent: 75,
 				tierLevel: 3,
 				spoiledName: "Dřevěný cep na obilí (Téměř okován!)",
 				spoiledTitle: "Sedlákova nejtvrdší pěst",
-				spoiledDesc: "Kožený řemínek je pevně promazaný a kovářské hřeby zatlučené! Už jen pár zahnadých stodolních bubáků do plného odemčení.",
-				spoiledStatsHint: "Start: 45 dmg, +10 dmg za úroveň, plošný výbuch BUM!",
+				spoiledDesc: "Kožený řemínek je pevně promazaný a kovářské hřeby zatlučené! V pevném postoji na mlatu dává cep mimořádnou šanci na kritický zásah i odhození.",
+				spoiledStatsHint: "Start: 45 dmg, až +40 % šance na krit v postoji, kritický odhoz BUM!",
 				clueTag: "⚡ 75 %: Řemen drží pevně! Zbývá pár stínů!"
 			},
 			{
@@ -344,8 +344,8 @@ const RAW_WEAPON_UNLOCKS: Record<string, any> = {
 				tierLevel: 4,
 				spoiledName: "Dřevěný cep na obilí",
 				spoiledTitle: "Okovaný venkovský cep na obilí",
-				spoiledDesc: "Okovaný venkovský cep na mlácení žita. Drtivý dopad do země vyvolá rázovou vlnu a odhodí těžké nepřátele.",
-				spoiledStatsHint: "Poškození: 45 • Plošný dopad a rázová vlna",
+				spoiledDesc: "Okovaný venkovský cep s drtivým kritickým poškozením (až 3×) i kritickým odhozením (až 2,8×). V pevném postoji na místě si mlatec sám zaměří nejbližší hrozbu, získá až +28 % šanci na kritický zásah, větší otřes půdy a rychlejší nápřah.",
+				spoiledStatsHint: "Poškození: 45 • Krit. poškození až 3× • Krit. odhoz až 2,8× • Postoj mlatce",
 				clueTag: "✅ Plně odemčeno ve zbrojnici!"
 			}
 		]

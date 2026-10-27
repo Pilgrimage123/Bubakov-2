@@ -341,17 +341,57 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		type: "physical",
 		icon: "🌾",
 		baseDmg: 45,
-		baseCd: 1.5,
-		desc: "Okovaný venkovský cep na mlácení žita. Drtivý dopad do země vyvolá rázovou vlnu a odhodí těžké nepřátele.",
+		baseCd: 1.35,
+		desc: "Okovaný venkovský cep s drtivým kritickým poškozením (až 3×) i kritickým odhozením (až 2,8×). V pevném postoji na místě si mlatec sám zaměří nejbližší hrozbu, získá až +28 % šanci na kritický zásah, větší otřes půdy a rychlejší nápřah.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('dreveny_cep', level, w);
-			const angle = Math.atan2(player.lastDy, player.lastDx);
-			const dist = (90 + level * 10) * stats.areaRadiusMult;
+			const rawStanceSec = Math.max(player.flailStanceTimer ?? 0, player.stillTimer ?? 0);
+			const stanceRatio = Math.max(0, Math.min(1, rawStanceSec / 1.2));
+
+			const maxDist = (90 + level * 10) * stats.areaRadiusMult;
+			const radius = (65 + level * 10) * stats.areaRadiusMult * (1 + 0.15 * stanceRatio);
+
+			let angle = Math.atan2(player.lastDy || 0, player.lastDx || 1);
+			let dist = maxDist;
+
+			if (typeof player.getNearbyEnemies === 'function') {
+				const candidates = player.getNearbyEnemies(maxDist + radius + 40);
+				let bestTarget: any = null;
+				let bestScore = Infinity;
+				for (let i = 0; i < candidates.length; i++) {
+					const e = candidates[i];
+					if (!e || e.isDefeated || e.dead || !isDirectTargetable(e, player)) continue;
+					const dSq = getDistSqTo(player, e);
+					const score = e.isAttacking || (e.windupTimer || 0) > 0 ? dSq * 0.55 : dSq;
+					if (score < bestScore) {
+						bestScore = score;
+						bestTarget = e;
+					}
+				}
+				if (bestTarget) {
+					const dx = bestTarget.x - player.x;
+					const dy = bestTarget.y - player.y;
+					angle = Math.atan2(dy, dx);
+					const targetDist = Math.hypot(dx, dy);
+					dist = Math.min(maxDist, Math.max(36, targetDist));
+				}
+			}
+
 			const targetX = player.x + Math.cos(angle) * dist;
 			const targetY = player.y + Math.sin(angle) * dist;
-			const radius = (65 + level * 10) * stats.areaRadiusMult;
-			const dmg = getWeaponDamage(player, 45) * stats.damageMult;
+			const dmg = getWeaponDamage(player, 45) * stats.damageMult * (1 + 0.20 * stanceRatio);
+			const knockbackMult = stats.knockbackMult * (1 + 0.30 * stanceRatio);
+			const critChanceBonus = 0.12 + 0.28 * stanceRatio + (stats.critChanceBonus || 0);
+			const critDamageMult = (2.45 + 0.55 * stanceRatio) * (stats.critDamageMult || 1);
+			const critKnockbackMult = (2.15 + 0.65 * stanceRatio) * (stats.critKnockbackMult || 1);
+			const ignoreResist = Math.min(0.75, Math.max(stats.ignoreResist || 0, 0.20 + 0.15 * stanceRatio));
+			const stunDuration = stats.statusDurationSec > 0
+				? stats.statusDurationSec
+				: stanceRatio >= 0.75
+				? 0.35
+				: 0;
+
 			player.spawnMeleeSlash({
 				x: player.x,
 				y: player.y,
@@ -368,10 +408,18 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			player.spawnAreaImpact({
 				x: targetX,
 				y: targetY,
+				originX: player.x,
+				originY: player.y,
 				radius,
 				dmg,
-				knockbackMult: stats.knockbackMult,
-				stunDuration: stats.statusDurationSec,
+				knockbackMult,
+				baseKnockback: 420,
+				critChanceBonus,
+				critDamageMult,
+				critKnockbackMult,
+				ignoreResist,
+				stanceRatio,
+				stunDuration,
 				type: "physical",
 				visual: "flail_smash",
 				duration: .3,

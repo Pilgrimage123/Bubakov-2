@@ -409,7 +409,7 @@ export class ArenaRenderer {
     // 3. DROPS PASS
     const tDropsStart = now();
     if (engine.drops && engine.drops.length > 0) {
-      renderedDrops = renderDrops(ctx, engine.drops, camera);
+      renderedDrops = renderDrops(ctx, engine.drops, camera, engine.player);
     }
     const dropsMs = now() - tDropsStart;
 

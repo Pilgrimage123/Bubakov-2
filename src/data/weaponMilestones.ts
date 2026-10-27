@@ -23,6 +23,9 @@ export interface WeaponStats {
   specialMechanicFlag?: string;
   cooldownReduction?: number;
   ignoreResist?: number;
+  critChanceBonus?: number;
+  critDamageMult?: number;
+  critKnockbackMult?: number;
 }
 
 export type WeaponMilestonesSet = Set<WeaponId> & {
@@ -181,16 +184,16 @@ const MILESTONES: Partial<Record<WeaponId, Record<3 | 5 | 8, [MilestoneChoice, M
   },
   dreveny_cep: {
     3: [
-      makeChoice('flail_crowd_3', 'Rázová vlna', 'Dopad cepu do hlíny zvedne širší prachovou rázovou vlnu a odhodí bubáky.', 'shockwave', 'heavy_hit', { areaRadiusMult: 1.20, knockbackMult: 1.25 }),
-      makeChoice('flail_burst_3', 'Těžké okování', 'Okované tělo cepu zasadí drtivou pecku a zkrátí nápřah.', 'iron_band', 'heavy_hit', { baseDamageMult: 1.22, cooldownMult: 0.95 }),
+      makeChoice('flail_crowd_3', 'Rázová vlna', 'Dopad cepu do hlíny zvedne širší prachovou rázovou vlnu, přidá +5 % šanci na kritický mlat a zvýší kritický odhoz (+25 %).', 'shockwave', 'heavy_hit', { areaRadiusMult: 1.20, knockbackMult: 1.25, critChanceBonus: 0.05, critKnockbackMult: 1.25 }),
+      makeChoice('flail_burst_3', 'Těžké okování', 'Okované tělo cepu přidá +8 % šanci na kritický zásah, znásobí kritické poškození (+20 %) a zkrátí nápřah.', 'iron_band', 'heavy_hit', { baseDamageMult: 1.22, cooldownMult: 0.95, critChanceBonus: 0.08, critDamageMult: 1.20 }),
     ],
     5: [
-      makeChoice('flail_crowd_5', 'Mlatcovo dupnutí', 'Otřes země zasáhne ještě větší plochu a zviklá útočící příšery.', 'ground_thud', 'heavy_hit', { areaRadiusMult: 1.25, knockbackMult: 1.35, statusDurationSec: 1.0 }),
-      makeChoice('flail_burst_5', 'Kalený řetěz', 'Pevnější řetěz umožní mlatci švihat s vyšší razancí a svižnějším nabíjením.', 'forged_chain', 'heavy_hit', { baseDamageMult: 1.26, cooldownMult: 0.93 }),
+      makeChoice('flail_crowd_5', 'Mlatcovo dupnutí', 'Otřes mlatu zasáhne ještě větší plochu, omráčí bubáky na 1 s a kritickou ranou je odmrští dál (+30 % krit. odhoz).', 'ground_thud', 'heavy_hit', { areaRadiusMult: 1.25, knockbackMult: 1.35, statusDurationSec: 1.0, critKnockbackMult: 1.30 }),
+      makeChoice('flail_burst_5', 'Kalený řetěz', 'Pevnější řetěz ignoruje 25 % odolností, přidá +8 % šanci na kritický mlat a zvýší kritické poškození (+25 %).', 'forged_chain', 'heavy_hit', { baseDamageMult: 1.26, cooldownMult: 0.93, ignoreResist: 0.25, critChanceBonus: 0.08, critDamageMult: 1.25 }),
     ],
     8: [
-      makeChoice('flail_crowd_8', 'Hromové mlatobí', 'Zemětřesný dopad rozmetá celý zástup bubáků na obrovskou vzdálenost.', 'earthquake', 'heavy_hit', { areaRadiusMult: 1.32, knockbackMult: 1.50, cooldownMult: 0.92 }),
-      makeChoice('flail_burst_8', 'Žitný drtič', 'Monstrózní úder rozdrtí i ty nejodolnější noční obludy jediným zásahem.', 'rye_crusher', 'heavy_hit', { baseDamageMult: 1.35, cooldownMult: 0.88 }),
+      makeChoice('flail_crowd_8', 'Hromové mlatobí', 'Zemětřesný dopad v postoji mlatce rozmetá celý zástup bubáků s masivním kritickým odhozem (+40 %) a +10 % šancí na krit.', 'earthquake', 'heavy_hit', { areaRadiusMult: 1.32, knockbackMult: 1.50, cooldownMult: 0.92, critChanceBonus: 0.10, critKnockbackMult: 1.40 }),
+      makeChoice('flail_burst_8', 'Žitný drtič', 'Monstrózní kritický úder (+35 % krit. poškození, +25 % krit. odhoz, +12 % šance na krit) ignoruje 40 % odolností a drtí obludy.', 'rye_crusher', 'heavy_hit', { baseDamageMult: 1.35, cooldownMult: 0.88, ignoreResist: 0.40, critChanceBonus: 0.12, critDamageMult: 1.35, critKnockbackMult: 1.25 }),
     ],
   },
   devatero_kviti: {
@@ -1030,6 +1033,9 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
     statusDurationSec: 0,
     cooldownReduction: effectiveCooldownReduction,
     ignoreResist: 0,
+    critChanceBonus: 0,
+    critDamageMult: 1,
+    critKnockbackMult: 1,
   };
   if (!canonical) return stats;
 
@@ -1060,6 +1066,15 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
     if (mods.ignoreResist !== undefined) {
       stats.ignoreResist = Math.max(stats.ignoreResist || 0, mods.ignoreResist);
     }
+    if (mods.critChanceBonus !== undefined) {
+      stats.critChanceBonus = (stats.critChanceBonus || 0) + mods.critChanceBonus;
+    }
+    if (mods.critDamageMult !== undefined) {
+      stats.critDamageMult = (stats.critDamageMult || 1) * mods.critDamageMult;
+    }
+    if (mods.critKnockbackMult !== undefined) {
+      stats.critKnockbackMult = (stats.critKnockbackMult || 1) * mods.critKnockbackMult;
+    }
   }
 
   if (Array.isArray(w?.synergisticUpgrades)) {
@@ -1076,6 +1091,18 @@ export function getRankedWeaponStats(id: string, level: number, w?: any): Weapon
       stats.knockbackMult *= mods.knockbackMult ?? 1;
       if (mods.statusDurationSec !== undefined) {
         stats.statusDurationSec = Math.max(stats.statusDurationSec, mods.statusDurationSec);
+      }
+      if (mods.ignoreResist !== undefined) {
+        stats.ignoreResist = Math.max(stats.ignoreResist || 0, mods.ignoreResist);
+      }
+      if (mods.critChanceBonus !== undefined) {
+        stats.critChanceBonus = (stats.critChanceBonus || 0) + mods.critChanceBonus;
+      }
+      if (mods.critDamageMult !== undefined) {
+        stats.critDamageMult = (stats.critDamageMult || 1) * mods.critDamageMult;
+      }
+      if (mods.critKnockbackMult !== undefined) {
+        stats.critKnockbackMult = (stats.critKnockbackMult || 1) * mods.critKnockbackMult;
       }
     }
   }

@@ -113,6 +113,9 @@ export interface MilestoneChoice {
     statusDurationSec?: number;
     specialMechanicFlag?: string;
     ignoreResist?: number;
+    critChanceBonus?: number;
+    critDamageMult?: number;
+    critKnockbackMult?: number;
   };
 }
 
@@ -167,6 +170,10 @@ export interface SynergisticUpgradeDef {
     projectileCountMult?: number;
     knockbackMult?: number;
     statusDurationSec?: number;
+    ignoreResist?: number;
+    critChanceBonus?: number;
+    critDamageMult?: number;
+    critKnockbackMult?: number;
   };
 }
 

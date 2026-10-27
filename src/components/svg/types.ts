@@ -2,13 +2,6 @@ export type SmartCharacterState = 'idle' | 'walk' | 'sprint' | 'action' | 'react
 export type SmartSvgState = SmartCharacterState;
 
 export type SmartCharacterId =
-  | 'babicka_barunka'
-  | 'bezhlavy_rytir'
-  | 'snehulak'
-  | 'tulak'
-  | 'krajanek'
-  | 'kostelnik'
-  | 'pasacek'
   | 'dedecek_nuse'
   | 'dedecek_arena';
 
@@ -35,14 +28,14 @@ export interface SmartCharacterProps {
   onClick?: () => void;
   /** Feature toggles */
   features?: {
-    showCompanion?: boolean;      // Barunka for Babicka
-    showHeadGlow?: boolean;       // Severed head fire/glow for Knight
-    showParticles?: boolean;      // Magic petals, blood drops, flour or snow flurries
+    showCompanion?: boolean;      // Mouse Rézinka in wicker basket
+    showHeadGlow?: boolean;       // Horns / brimstone glow
+    showParticles?: boolean;      // Gold sparks / pipe smoke
     showShadow?: boolean;         // Folk ground shadow
     showOutline?: boolean;        // High contrast Lada ink outline
-    showMillstone?: boolean;      // Giant carved millstone for Krajanek
-    showSmoke?: boolean;          // Herbal pipe smoke for Tulak
-    showBossAura?: boolean;       // Spectral cursed aura for Bezhlavy rytir boss
+    showMillstone?: boolean;
+    showSmoke?: boolean;          // Herbal pipe smoke
+    showBossAura?: boolean;
   };
 }
 
