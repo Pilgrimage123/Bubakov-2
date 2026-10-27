@@ -126,33 +126,6 @@ export const SYNERGISTIC_UPGRADES: Record<string, SynergisticUpgradeDef> = {
     },
   },
 
-  // Dřevěný cep na obilí
-  flail_threshing_stance: {
-    id: 'flail_threshing_stance',
-    weaponId: 'dreveny_cep',
-    name: 'Pevný postoj na mlatu',
-    description: '+45 % kritické poškození, +40 % kritický odhoz, +12 % šance na kritický zásah, +25 % základní poškození i odhoz.',
-    archetype: 'heavy',
-    statModifiers: {
-      baseDamageMult: 1.25,
-      knockbackMult: 1.25,
-      critChanceBonus: 0.12,
-      critDamageMult: 1.45,
-      critKnockbackMult: 1.40,
-    },
-  },
-  flail_barn_sweep: {
-    id: 'flail_barn_sweep',
-    weaponId: 'dreveny_cep',
-    name: 'Výprask ve stodole',
-    description: '+30 % poloměr rázové vlny, +15 % nabíjení, +25 % kritický odhoz.',
-    archetype: 'burst',
-    statModifiers: {
-      areaRadiusMult: 1.30,
-      cooldownMult: 0.87,
-      critKnockbackMult: 1.25,
-    },
-  },
 };
 
 

@@ -59,7 +59,7 @@ export const cs: Record<string, string> = {
   "weapon.kovana_halapartna.name": "Kovaná halapartna",
   "weapon.kovana_halapartna.desc": "Těžká zbraň ponocných a panských drábů. Široký rázný švih, který spolehlivě zažene i celé houfy kostlivců.",
   "weapon.dreveny_cep.name": "Dřevěný cep na obilí",
-  "weapon.dreveny_cep.desc": "Okovaný venkovský cep s drtivým kritickým poškozením (až 3×) i kritickým odhozením (až 2,8×). V pevném postoji na místě si mlatec sám zaměří nejbližší hrozbu, získá až +28 % šanci na kritický zásah, větší otřes půdy a rychlejší nápřah.",
+  "weapon.dreveny_cep.desc": "Těžký okovaný cep pro obranu místa. Po 1,5 s v pevném postoji zaměří nejbližší hrozbu, získá +15 % šanci na kritický zásah, silnější otřes půdy a svižnější nápřah. Kritický mlat má až 2,5× poškození a 2,2× odhoz.",
   "weapon.devatero_kviti.name": "Devatery kvítí",
   "weapon.devatero_kviti.desc": "Voňavý ochranný věnec z bylin natrhaných o svatojánské noci. Šíří se v kruhu, čistí vzduch a zahání dotírající nečisté síly.",
   "weapon.snehova_koule.name": "Sněhová koule",

@@ -73,7 +73,38 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
     expect(result.renderedSlashes).toBe(1);
   });
 
-  it('grants dreveny_cep high critical damage, high critical knockback, and stationary stance bonuses', () => {
+  it('only auto-targets after the stance is built and loses the stance on movement', () => {
+    const engine = new GameEngine();
+    engine.initRun({ selectedHunter: 'ponocny' });
+    const player = engine.state.player;
+    player.x = 500;
+    player.y = 500;
+    player.lastDx = 1;
+    player.lastDy = 0;
+    engine.upgradeWeapon('dreveny_cep');
+    const flailWeapon = player.weapons.find((w: any) => w.id === 'dreveny_cep');
+    engine.spawnMonster('drevorubec', 440, 500);
+
+    let capturedImpact: any = null;
+    const origSpawnArea = player.spawnAreaImpact.bind(player);
+    player.spawnAreaImpact = (impact: any) => {
+      capturedImpact = impact;
+      return origSpawnArea(impact);
+    };
+
+    engine.state.keys = {};
+    flailWeapon.cd = 0;
+    engine.update(0.05);
+    expect(capturedImpact.x).toBeGreaterThan(player.x);
+
+    flailWeapon.cd = 10;
+    player.flailStanceTimer = 1.5;
+    engine.state.keys = { KeyD: true };
+    engine.update(0.05);
+    expect(player.flailStanceTimer).toBe(0);
+  });
+
+  it('grants dreveny_cep its stationary stance bonuses', () => {
     const engine = new GameEngine();
     engine.initRun({ selectedHunter: 'ponocny' });
     const player = engine.state.player;
@@ -92,7 +123,7 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
       flailWeapon.cd = 10;
       engine.update(0.1);
     }
-    expect(player.flailStanceTimer).toBeGreaterThanOrEqual(1.2);
+    expect(player.flailStanceTimer).toBeGreaterThanOrEqual(1.5);
 
     // Place an enemy behind the hunter (at x = 440, y = 500) while hunter last faced +X
     player.lastDx = 1;
@@ -119,15 +150,16 @@ describe('melting snowman sprite and wooden flail combat VFX', () => {
     // Auto-targeted the enemy behind the hunter (x < 500) instead of blindly hitting +X
     expect(capturedImpact.x).toBeLessThan(player.x);
     expect(capturedImpact.stanceRatio).toBeCloseTo(1, 2);
-    expect(capturedImpact.critChanceBonus).toBeCloseTo(0.40, 2);
-    expect(capturedImpact.critDamageMult).toBeCloseTo(3.0, 2);
-    expect(capturedImpact.critKnockbackMult).toBeCloseTo(2.8, 2);
+    expect(capturedImpact.critChanceBonus).toBeCloseTo(0.20, 2);
+    expect(capturedImpact.critDamageMult).toBeCloseTo(2.5, 2);
+    expect(capturedImpact.critKnockbackMult).toBeCloseTo(2.2, 2);
 
-    // Enemy took massive critical damage and was knocked AWAY from the hunter (negative kbx)
-    expect(enemy.hp).toBeLessThanOrEqual(initialHp - 115);
+    // Enemy took a critical hit and was knocked AWAY from the hunter (negative kbx).
+    // Drevorubec's physical resistance remains part of this integration check.
+    expect(enemy.hp).toBeLessThanOrEqual(initialHp - 40);
     expect(enemy.kbx).toBeLessThan(-400);
-    // Stationary stance also shortened weapon cooldown below baseCd (1.35s)
-    expect(flailWeapon.cd).toBeLessThan(1.15);
+    // Stationary stance also shortened weapon cooldown below baseCd (1.45s)
+    expect(flailWeapon.cd).toBeLessThan(1.35);
   });
 
   it('scales critical knockback and critical damage in enemy.takeDamage when crit options are provided', () => {

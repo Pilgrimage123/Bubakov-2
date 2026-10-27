@@ -2729,7 +2729,9 @@ export class GameEngine {
       if (!isMoving) {
         player.flailStanceTimer = Math.min(2.4, (player.flailStanceTimer || 0) + dt);
       } else {
-        player.flailStanceTimer = Math.max(0, (player.flailStanceTimer || 0) - dt * 1.1);
+        // A threshing stance must be rebuilt after moving; otherwise the Cep keeps
+        // most of its stationary payoff while kiting.
+        player.flailStanceTimer = 0;
       }
       if (player.goatBellStacks > 0 && isMoving) {
         player.goatBellTimer = (player.goatBellTimer || player.goatBellInterval || 4.0) - dt;
@@ -2857,9 +2859,9 @@ export class GameEngine {
               let localCd = formulaCd * stats.cooldownMult;
               if (w.id === 'dreveny_cep') {
                 const stanceSec = Math.max(player.flailStanceTimer || 0, player.stillTimer || 0);
-                const stanceRatio = Math.max(0, Math.min(1, stanceSec / 1.2));
+                const stanceRatio = Math.max(0, Math.min(1, stanceSec / 1.5));
                 if (stanceRatio > 0) {
-                  localCd = localCd / (1 + 0.22 * stanceRatio);
+                  localCd = localCd / (1 + 0.12 * stanceRatio);
                 }
               }
               if ((player.pivniTacekTimer || 0) > 0) {

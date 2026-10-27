@@ -59,7 +59,7 @@ export const en: Record<string, string> = {
   "weapon.kovana_halapartna.name": "Forged Halberd",
   "weapon.kovana_halapartna.desc": "Heavy weapon of night watchmen and bailiffs. Wide forceful cleave that fends off hordes of skeletons.",
   "weapon.dreveny_cep.name": "Wooden Grain Flail",
-  "weapon.dreveny_cep.desc": "Iron-banded flail with devastating critical damage (up to 3x) and critical knockback (up to 2.8x). When standing firm in threshing stance, the hunter auto-targets the nearest threat, gaining up to +28% crit chance, wider tremors, and faster swings.",
+  "weapon.dreveny_cep.desc": "A heavy iron-banded flail for holding ground. After 1.5 seconds in a firm stance, it targets the nearest threat, gains +15% crit chance, a stronger shockwave, and faster swings. Critical smashes deal up to 2.5x damage and 2.2x knockback.",
   "weapon.devatero_kviti.name": "Nine Herb Wreath",
   "weapon.devatero_kviti.desc": "Fragrant protective wreath picked on St. John's Eve. Radiates outward, purifying the air and dispelling unclean spirits.",
   "weapon.snehova_koule.name": "Snowball",

@@ -340,22 +340,23 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 		name: "Dřevěný cep na obilí",
 		type: "physical",
 		icon: "🌾",
-		baseDmg: 45,
-		baseCd: 1.35,
-		desc: "Okovaný venkovský cep s drtivým kritickým poškozením (až 3×) i kritickým odhozením (až 2,8×). V pevném postoji na místě si mlatec sám zaměří nejbližší hrozbu, získá až +28 % šanci na kritický zásah, větší otřes půdy a rychlejší nápřah.",
+		baseDmg: 40,
+		baseCd: 1.45,
+		desc: "Těžký okovaný cep pro obranu místa. Po 1,5 s v pevném postoji zaměří nejbližší hrozbu, získá +15 % šanci na kritický zásah, silnější otřes půdy a svižnější nápřah. Kritický mlat má až 2,5× poškození a 2,2× odhoz.",
 		fire: (player, level) => {
 			const w = player._firingWeapon;
 			const stats = getWeaponStats('dreveny_cep', level, w);
 			const rawStanceSec = Math.max(player.flailStanceTimer ?? 0, player.stillTimer ?? 0);
-			const stanceRatio = Math.max(0, Math.min(1, rawStanceSec / 1.2));
+			const stanceRatio = Math.max(0, Math.min(1, rawStanceSec / 1.5));
 
 			const maxDist = (90 + level * 10) * stats.areaRadiusMult;
-			const radius = (65 + level * 10) * stats.areaRadiusMult * (1 + 0.15 * stanceRatio);
+			const radius = (65 + level * 10) * stats.areaRadiusMult * (1 + 0.10 * stanceRatio);
 
 			let angle = Math.atan2(player.lastDy || 0, player.lastDx || 1);
 			let dist = maxDist;
 
-			if (typeof player.getNearbyEnemies === 'function') {
+			// The stance deliberately trades mobility for omnidirectional targeting.
+			if (stanceRatio >= 0.75 && typeof player.getNearbyEnemies === 'function') {
 				const candidates = player.getNearbyEnemies(maxDist + radius + 40);
 				let bestTarget: any = null;
 				let bestScore = Infinity;
@@ -380,17 +381,13 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 
 			const targetX = player.x + Math.cos(angle) * dist;
 			const targetY = player.y + Math.sin(angle) * dist;
-			const dmg = getWeaponDamage(player, 45) * stats.damageMult * (1 + 0.20 * stanceRatio);
-			const knockbackMult = stats.knockbackMult * (1 + 0.30 * stanceRatio);
-			const critChanceBonus = 0.12 + 0.28 * stanceRatio + (stats.critChanceBonus || 0);
-			const critDamageMult = (2.45 + 0.55 * stanceRatio) * (stats.critDamageMult || 1);
-			const critKnockbackMult = (2.15 + 0.65 * stanceRatio) * (stats.critKnockbackMult || 1);
-			const ignoreResist = Math.min(0.75, Math.max(stats.ignoreResist || 0, 0.20 + 0.15 * stanceRatio));
-			const stunDuration = stats.statusDurationSec > 0
-				? stats.statusDurationSec
-				: stanceRatio >= 0.75
-				? 0.35
-				: 0;
+			const dmg = getWeaponDamage(player, 40) * stats.damageMult * (1 + 0.10 * stanceRatio);
+			const knockbackMult = stats.knockbackMult * (1 + 0.20 * stanceRatio);
+			const critChanceBonus = 0.05 + 0.15 * stanceRatio + (stats.critChanceBonus || 0);
+			const critDamageMult = (2.10 + 0.40 * stanceRatio) * (stats.critDamageMult || 1);
+			const critKnockbackMult = (1.70 + 0.50 * stanceRatio) * (stats.critKnockbackMult || 1);
+			const ignoreResist = stats.ignoreResist || 0;
+			const stunDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 0;
 
 			player.spawnMeleeSlash({
 				x: player.x,
