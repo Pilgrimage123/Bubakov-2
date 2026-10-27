@@ -940,15 +940,15 @@ var Lada = {
 			ctx.arc(6, -29, 3, 0.2, Math.PI - 0.2);
 			ctx.stroke();
 
-			// Billowing bushy white beard framing the jaw and flaring in whirlwind
+			// Compact white beard: it keeps his merry silhouette readable while spinning.
 			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 2.6);
 			ctx.beginPath();
 			ctx.moveTo(-16, -22);
-			ctx.quadraticCurveTo(-32, -18, -36, -8);
-			ctx.quadraticCurveTo(-26, 0, -12, -4);
-			ctx.lineTo(12, -4);
-			ctx.quadraticCurveTo(26, 0, 36, -8);
-			ctx.quadraticCurveTo(32, -18, 16, -22);
+			ctx.quadraticCurveTo(-25, -18, -24, -10);
+			ctx.quadraticCurveTo(-18, -4, -10, -7);
+			ctx.lineTo(10, -7);
+			ctx.quadraticCurveTo(18, -4, 24, -10);
+			ctx.quadraticCurveTo(25, -18, 16, -22);
 			ctx.quadraticCurveTo(0, -20, -16, -22);
 			ctx.closePath();
 			ctx.fill();
@@ -1005,7 +1005,7 @@ var Lada = {
 			ctx.arc(22 + Math.cos(time * 10) * 6, -38, 5, 0, Math.PI * 2);
 			ctx.fill();
 
-			// 6. Battered Olive Hat with curved brim & feather
+			// 6. Battered olive hat with a warm woven band — deliberately no feather.
 			this.setupPath(ctx, "#756C38", COLORS.ink, 2.8);
 			ctx.beginPath();
 			ctx.ellipse(0, -36, 26, 7.5, 0.1, 0, Math.PI * 2);
@@ -1023,6 +1023,11 @@ var Lada = {
 			ctx.beginPath();
 			ctx.moveTo(-14, -38);
 			ctx.quadraticCurveTo(0, -35, 14, -38);
+			ctx.stroke();
+			this.setupPath(ctx, "#D97706", COLORS.ink, 1.4);
+			ctx.beginPath();
+			ctx.roundRect(-3.5, -39, 7, 3.2, 1.1);
+			ctx.fill();
 			ctx.stroke();
 
 			// 7. Whirling Mighty Gnarled Oak Sukovice
@@ -1376,27 +1381,27 @@ var Lada = {
 		ctx.moveTo(9.5, -31); ctx.lineTo(12, -32.5);
 		ctx.stroke();
 
-		// 8. SPLENDID CURLY WHITE BEARD FRAMING JAW & CHIN (Drawn around the jaw)
+		// 8. SHORT CURLY WHITE BEARD — a compact jawline frame, not a long Santa beard.
 		this.setupPath(ctx, "#FFFFFF", COLORS.ink, 2.8);
 		ctx.beginPath();
 		ctx.moveTo(-16, -24);
-		ctx.quadraticCurveTo(-26, -16, -24, -2);
-		ctx.quadraticCurveTo(-22, 12, -8, 14);
-		ctx.quadraticCurveTo(0, 15, 8, 14);
-		ctx.quadraticCurveTo(22, 12, 24, -2);
-		ctx.quadraticCurveTo(26, -16, 16, -24);
+		ctx.quadraticCurveTo(-24, -17, -21, -7);
+		ctx.quadraticCurveTo(-16, 1, -8, 2);
+		ctx.quadraticCurveTo(0, 5, 8, 2);
+		ctx.quadraticCurveTo(16, 1, 21, -7);
+		ctx.quadraticCurveTo(24, -17, 16, -24);
 		ctx.quadraticCurveTo(0, -21, -16, -24);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
 
-		// Delicate grey curl lines inside beard
+		// Delicate grey curl lines inside the trimmed beard
 		ctx.strokeStyle = "#E2E8F0";
 		ctx.lineWidth = 1.6;
 		ctx.beginPath();
-		ctx.arc(-6, -2, 5, 0.4, 2.2);
-		ctx.arc(6, -2, 5, 0.8, 2.6);
-		ctx.arc(0, 6, 4.5, 0.4, 2.6);
+		ctx.arc(-6, -8, 4, 0.4, 2.2);
+		ctx.arc(6, -8, 4, 0.8, 2.6);
+		ctx.arc(0, -2, 3.6, 0.4, 2.6);
 		ctx.stroke();
 
 		// Bright cherry red bulbous nose
@@ -1489,7 +1494,7 @@ var Lada = {
 		drawSmokePuff(puff3Phase, 4.2);
 		ctx.restore();
 
-		// 10. BATTERED OLIVE FELT HAT WITH FEATHER & SPRIG (Odrbaný klobouk s pérem)
+		// 10. BATTERED OLIVE FELT HAT WITH A COLOURFUL WOVEN BAND (no feather)
 		this.setupPath(ctx, "#756C38", COLORS.ink, 2.8);
 		// Floppy creased brim
 		ctx.beginPath();
@@ -1519,19 +1524,10 @@ var Lada = {
 		ctx.quadraticCurveTo(0, -36, 14, -39);
 		ctx.stroke();
 
-		// Feather and dry sprig tucked into hatband
-		ctx.strokeStyle = "#8C6239";
-		ctx.lineWidth = 1.8;
+		// Bright patch in the hatband adds colour without the former feather silhouette.
+		this.setupPath(ctx, "#D97706", COLORS.ink, 1.4);
 		ctx.beginPath();
-		ctx.moveTo(-10, -40);
-		ctx.lineTo(-20, -62);
-		ctx.stroke();
-		this.setupPath(ctx, "#FEF08A", COLORS.ink, 1.4);
-		ctx.beginPath();
-		ctx.moveTo(-8, -41);
-		ctx.quadraticCurveTo(-15, -52, -14, -64);
-		ctx.quadraticCurveTo(-6, -56, -6, -42);
-		ctx.closePath();
+		ctx.roundRect(-3.5, -40, 7, 3.4, 1.1);
 		ctx.fill();
 		ctx.stroke();
 

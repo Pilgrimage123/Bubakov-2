@@ -58,7 +58,7 @@ const HUNTERS_LIST: HunterDef[] = [
     id: 'wanderer',
     name: 'Tulák',
     title: 'Vesnický tulák z Hrusic',
-    desc: 'Rozverný tulák v mechově zeleném záplatovaném kabátě, bílém rozcuchaném vousem, červeným nosem, plnou mošnou, soudkem na opasku a sukovitou větvitou holí.',
+    desc: 'Rozverný tulák v mechově zeleném záplatovaném kabátě, krátkým bílým vousem, fajfkou, červeným nosem, plnou mošnou, soudkem na opasku a sukovitou větvitou holí.',
     icon: 'wanderer',
     draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale),
   },
