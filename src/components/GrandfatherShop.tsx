@@ -6,7 +6,6 @@ import {
   isGrandfatherPriceExempt,
   getGrandfatherInflatingPurchaseCount,
   getWeaponUpgradeOffer,
-  replaceCourageOffersIfNeeded,
   type GrandfatherOffer,
 } from '../game/grandfatherRuntime';
 import { GameIcon } from './GameIcon';
@@ -157,19 +156,12 @@ export function GrandfatherShop({
   onClose,
 }: Props) {
   const discount = Math.round(getWaitDiscount(waitSeconds) * 100);
-  const visibleOffers = replaceCourageOffersIfNeeded(
-    offers,
-    gingerbread,
-    luck,
-    purchasedIds,
-    playerWeapons,
-    { playerHp, playerMaxHp },
-    4,
-  );
+  const visibleOffers = offers;
 
   // Shop animation states
   const [sceneState, setSceneState] = useState<'idle' | 'reaching' | 'pulling' | 'rerolling' | 'purchasing'>('idle');
   const [activeItem, setActiveItem] = useState<GrandfatherItemDef | null>(null);
+  const [hoveredOfferId, setHoveredOfferId] = useState<string | null>(null);
   const [quote, setQuote] = useState<string>(() => WELCOME_QUOTES[Math.floor(Math.random() * WELCOME_QUOTES.length)]);
   const [pullAnimationKey, setPullAnimationKey] = useState<number>(0);
   const [justPurchasedId, setJustPurchasedId] = useState<string | null>(null);
@@ -287,13 +279,30 @@ export function GrandfatherShop({
   }, [onClose, visibleOffers, purchasedIds, gingerbread, luck, waitSeconds, rerollCost, onRefreshOffers, handlePurchase, handleReroll]);
 
   // Handle Hover over item card ("Dědeček vytahuje věci z nůše / ukazuje na ně")
-  const handleItemHover = useCallback((item: GrandfatherItemDef) => {
-    setActiveItem(item);
-    setSceneState('pulling');
-    setQuote(getItemQuote(item));
+  const handleOfferHover = useCallback((offer: GrandfatherOffer) => {
+    setHoveredOfferId(offer.itemId);
+    const weaponUpgrade = getWeaponUpgradeOffer(offer.itemId);
+    const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
+    if (weaponUpgrade) {
+      setActiveItem({
+        id: weaponUpgrade.id,
+        name: weaponUpgrade.name,
+        icon: weaponUpgrade.icon,
+        description: weaponUpgrade.description,
+        baseCost: weaponUpgrade.baseCost,
+        effect: { type: 'luck', amount: 0 },
+      } as GrandfatherItemDef);
+      setSceneState('pulling');
+      setQuote(`„${weaponUpgrade.name}! Vzácná specializace pro tvou zbraň, přímo z hloubi nůše!“`);
+    } else if (item) {
+      setActiveItem(item);
+      setSceneState('pulling');
+      setQuote(getItemQuote(item));
+    }
   }, []);
 
-  const handleItemLeave = useCallback(() => {
+  const handleOfferLeave = useCallback(() => {
+    setHoveredOfferId(null);
     setActiveItem(null);
     setSceneState('idle');
   }, []);
@@ -649,8 +658,12 @@ export function GrandfatherShop({
                   let buttonLabel = 'KOUPIT';
 
                   if (weaponUpgrade) {
-                    levelBadge = 'Specializace projektilové zbraně';
-                    buttonLabel = 'VYLEPŠIT';
+                    const isPurchased = purchasedIds.includes(weaponUpgrade.id);
+                    owned = isPurchased ? 1 : 0;
+                    maxStacks = 1;
+                    isMaxed = isPurchased;
+                    levelBadge = isMaxed ? 'Specializace získána' : 'Specializace projektilové zbraně';
+                    buttonLabel = isMaxed ? 'VYČERPÁNO' : 'VYLEPŠIT';
                   } else if (item?.isWeapon && item.weaponId) {
                     const canonicalId = toCanonicalWeaponId(item.weaponId);
                     const pw = playerWeapons?.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
@@ -715,25 +728,27 @@ export function GrandfatherShop({
 
                   const fullCourage = item?.effect.type === 'heal' && playerHp >= playerMaxHp;
                   const affordable = gingerbread >= price && !isMaxed && !fullCourage;
-                  const isHighlighted = activeItem?.id === item?.id || (!!weaponUpgrade && activeItem === null);
+                  const isHighlighted = hoveredOfferId === offer.itemId;
                   const isPurchasedNow = justPurchasedId === offer.itemId;
 
                   return (
                     <div
-                      key={`${offer.itemId}-${idx}`}
+                      key={`offer-slot-${idx}`}
                       className="item-pulled-from-basket"
-                      onMouseEnter={() => item && handleItemHover(item)}
-                      onMouseLeave={handleItemLeave}
-                      onTouchStart={() => item && handleItemHover(item)}
+                      onMouseEnter={() => handleOfferHover(offer)}
+                      onMouseLeave={handleOfferLeave}
+                      onTouchStart={() => handleOfferHover(offer)}
                       style={{
                         animationDelay: `${idx * 0.08}s`,
                         border: item?.isAnanas
-                          ? isHighlighted ? '3px solid #EAB308' : '2.5px solid #CA8A04'
+                          ? isHighlighted ? '2.5px solid #EAB308' : '2.5px solid #CA8A04'
                           : item?.isRareInstant
-                          ? isHighlighted ? '3px solid #38BDF8' : '2.5px solid #0284C7'
+                          ? isHighlighted ? '2.5px solid #38BDF8' : '2.5px solid #0284C7'
                           : item?.isWeapon
-                          ? isHighlighted ? '3px solid #DC2626' : '2.5px solid #9A3412'
-                          : isHighlighted ? '2.5px solid #D97706' : '2px solid var(--ink)',
+                          ? isHighlighted ? '2.5px solid #DC2626' : '2.5px solid #9A3412'
+                          : weaponUpgrade
+                          ? isHighlighted ? '2.5px solid #F59E0B' : '2.5px solid #B45309'
+                          : isHighlighted ? '2.5px solid #D97706' : '2.5px solid var(--ink)',
                         borderRadius: 14,
                         padding: isMobile ? '10px 12px' : '12px 14px',
                         background: isPurchasedNow
@@ -757,13 +772,15 @@ export function GrandfatherShop({
                             : '0 0 14px rgba(245, 158, 11, 0.45), 3px 3px 0 var(--ink)'
                           : item?.isWeapon
                             ? '3px 3px 0 rgba(154, 52, 18, 0.4)'
+                            : weaponUpgrade
+                            ? '3px 3px 0 rgba(180, 83, 9, 0.4)'
                             : '3px 3px 0 rgba(0,0,0,0.25)',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
                         position: 'relative',
-                        transition: 'transform 0.16s ease, box-shadow 0.16s ease',
-                        transform: isHighlighted ? 'translateY(-2px)' : 'none',
+                        transition: 'transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, background-color 0.16s ease',
+                        transform: isHighlighted ? 'translateY(-2px)' : 'translateY(0)',
                         minWidth: 0,
                         maxWidth: '100%',
                         boxSizing: 'border-box',

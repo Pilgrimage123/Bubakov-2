@@ -205,27 +205,19 @@ export function replaceCourageOffersIfNeeded(
     && playerState.playerMaxHp !== undefined
     && playerState.playerHp >= playerState.playerMaxHp;
 
-  if (!isFullCourage) return offers;
+  if (!isFullCourage || !offers || offers.length === 0) return offers;
 
   const hasHealOffer = offers.some((offer) => {
     const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
     return item?.effect.type === 'heal';
   });
 
-  if (!hasHealOffer && offers.length >= count) return offers;
+  if (!hasHealOffer) return offers;
 
-  // Keep all non-healing offers
-  const filtered = offers.filter((offer) => {
-    const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
-    return item?.effect.type !== 'heal';
-  });
-
-  if (filtered.length >= count) return filtered.slice(0, count);
-
-  const selectedIds = new Set(filtered.map((o) => o.itemId));
+  const existingIds = new Set(offers.map((o) => o.itemId));
   const isAvailable = (item: GrandfatherItemDef) => {
     if (item.effect.type === 'heal') return false;
-    if (selectedIds.has(item.id)) return false;
+    if (existingIds.has(item.id)) return false;
     if (item.isWeapon && item.weaponId) {
       const targetCanonicalId = toCanonicalWeaponId(item.weaponId);
       const pw = playerWeapons.find((w: any) => toCanonicalWeaponId(w.id) === targetCanonicalId);
@@ -252,13 +244,16 @@ export function replaceCourageOffersIfNeeded(
     return { itemId: item.id, offeredAt: now, candidateUpgradeId };
   };
 
-  const result: GrandfatherOffer[] = [...filtered];
-  for (const item of shuffled) {
-    if (result.length >= count) break;
-    result.push(makeOffer(item));
-  }
-
-  return result;
+  let poolIdx = 0;
+  return offers.map((offer) => {
+    const item = GRANDFATHER_ITEMS.find((c) => c.id === offer.itemId);
+    if (item?.effect.type === 'heal' && poolIdx < shuffled.length) {
+      const replacement = shuffled[poolIdx++];
+      existingIds.add(replacement.id);
+      return makeOffer(replacement);
+    }
+    return offer;
+  });
 }
 
 

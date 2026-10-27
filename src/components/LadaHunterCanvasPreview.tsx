@@ -63,6 +63,10 @@ export const LadaHunterCanvasPreview: React.FC<LadaHunterCanvasPreviewProps> = (
       const id = hunterId.toLowerCase();
       if (id === 'krajanek') {
         Lada.drawKrajanek(ctx, cx, cy, time, 0, 0, false, scale);
+      } else if (id === 'krajanek_ride') {
+        Lada.drawKrajanekRide(ctx, cx, cy, time, 1, 0, scale, 0.15, true, 1.05);
+      } else if (id === 'wanderer_whirl') {
+        Lada.drawWanderer(ctx, cx, cy, time, 0, 0, false, scale, true, (time * 0.9) % 1);
       } else if (id === 'wanderer' || id === 'tulak' || id === 'poutnik') {
         Lada.drawWanderer(ctx, cx, cy, time, 0, 0, false, scale);
       } else if (id === 'shepherd' || id === 'pasacek') {

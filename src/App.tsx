@@ -1882,6 +1882,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const openGrandfatherShop = useCallback(() => {
     const eng = engineRef.current;
     if (!eng.grandfather.active || gameStateRef.current !== 'playing') return;
+    const p = eng.player;
+    if (p && eng.grandfather.offers && eng.grandfather.offers.length > 0) {
+      eng.grandfather.offers = replaceCourageOffersIfNeeded(
+        eng.grandfather.offers,
+        eng.gingerbread,
+        p.luck ?? 100,
+        grandfatherPurchaseIdsRef.current,
+        p.weapons || [],
+        { playerHp: p.hp, playerMaxHp: p.maxHp },
+        4
+      );
+    }
     grandfatherOpenRef.current = true;
     gameStateRef.current = 'grandfather';
     setGameState('grandfather');
@@ -1970,7 +1982,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       setGrandfatherPurchaseIds([...grandfatherPurchaseIdsRef.current]);
       sound.grandfatherPurchase();
       pushDamageText(eng.texts, p.x, p.y - 70, `${weaponUpgrade.name.toUpperCase()}!`, '#F59E0B', true, 'unlocksMilestones');
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4, { playerHp: p.hp, playerMaxHp: p.maxHp });
       setGrandfatherVersion((v) => v + 1);
       setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
       return true;
@@ -1990,6 +2001,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     setGrandfatherPurchaseIds([...grandfatherPurchaseIdsRef.current]);
     const offer = eng.grandfather.offers.find((o) => o.itemId === item.id);
     applyGrandfatherItem(item, offer);
+    if (item.isWeapon && item.weaponId && offer) {
+      const canonicalId = toCanonicalWeaponId(item.weaponId);
+      const pw = p.weapons?.find((w: any) => toCanonicalWeaponId(w.id) === canonicalId);
+      const nextLvl = (pw ? pw.level : 0) + 1;
+      const isMilestone = nextLvl === 3 || nextLvl === 5 || nextLvl === 8;
+      if (!isMilestone && nextLvl <= 8) {
+        offer.candidateUpgradeId = rollRandomWeaponUpgrade(canonicalId, pw)?.id || getWeaponRankDef(canonicalId, nextLvl)?.normalUpgradeId;
+      } else {
+        offer.candidateUpgradeId = undefined;
+      }
+    }
     sound.grandfatherPurchase();
     if (item.effect.type === 'coins') {
       setRunStats((state) => ({ ...state, coins: eng.coins, gingerbread: eng.gingerbread }));
@@ -1999,13 +2021,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       pushDamageText(eng.texts, p.x, p.y - 105, '„Tenhle byl stejně moc okoralý.“', '#78350F', true, 'combatShouts');
     }
 
-    // Pokud předmět dosáhl maxima zásob, obměníme nabídku pro přístup k dalším vylepšením
-    const ownedNow = item.isWeapon
-      ? (p.weapons?.find((w: any) => toCanonicalWeaponId(w.id) === toCanonicalWeaponId(item.weaponId || ''))?.level || 0)
-      : grandfatherPurchaseIdsRef.current.filter((id) => id === item.id).length;
-    if (item.maxStacks !== undefined && ownedNow >= item.maxStacks) {
-      eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p.luck ?? 100, grandfatherPurchaseIdsRef.current, p.weapons || [], 4, { playerHp: p.hp, playerMaxHp: p.maxHp });
-    }
     setGrandfatherVersion((v) => v + 1);
     setRunStats((state) => ({ ...state, gingerbread: eng.gingerbread }));
     return true;
@@ -2021,7 +2036,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     eng.gingerbread -= cost;
     eng.grandfather.rerollsThisEncounter = rerolls + 1;
-    eng.grandfather.offers = chooseGrandfatherOffers(eng.gingerbread, p?.luck ?? 100, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4, { playerHp: p?.hp, playerMaxHp: p?.maxHp });
+    eng.grandfather.offers = replaceCourageOffersIfNeeded(
+      chooseGrandfatherOffers(eng.gingerbread, p?.luck ?? 100, grandfatherPurchaseIdsRef.current, p?.weapons || [], 4, { playerHp: p?.hp, playerMaxHp: p?.maxHp }),
+      eng.gingerbread,
+      p?.luck ?? 100,
+      grandfatherPurchaseIdsRef.current,
+      p?.weapons || [],
+      { playerHp: p?.hp, playerMaxHp: p?.maxHp },
+      4
+    );
     sound.coin();
     sound.grandfatherCall();
     if (p) {
@@ -3051,7 +3074,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             Lada.drawKrajanek(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
           }
         } else if (this.type === 'tulak' || this.type === 'wanderer') {
-          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
+          const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+          const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
+          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1, isWhirling, sukoviceT);
         } else if (this.type === 'pasacek' || this.type === 'shepherd') {
           Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'korenarka') {
@@ -3063,7 +3088,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else if (this.type === 'babicka' || this.type === 'granny') {
           Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
         } else {
-          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1);
+          const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+          const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
+          Lada.drawWanderer(ctx, this.x, this.y, animT, this.lastDx, this.lastDy, isFleeing, 1, isWhirling, sukoviceT);
         }
 
         // Draw blessed candle in hand if Hromnička is equipped
