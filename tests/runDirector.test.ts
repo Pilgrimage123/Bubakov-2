@@ -334,7 +334,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
       const expectedBase = (ENEMIES[c.id]?.speed || 40) * prefixMult;
       expect(c.speed).toBeGreaterThan(expectedBase);
       const expectedPoise = c.prefix === 'kamenny'
-        ? Math.min(0.95, (ENEMIES[c.id]?.poiseResist || 0) + 0.60)
+        ? Math.min(0.98, (ENEMIES[c.id]?.poiseResist || 0) + 0.60)
         : (ENEMIES[c.id]?.poiseResist || 0);
       expect(c.poiseResist).toBe(expectedPoise);
       expect(c.drtivyBuffTimer).toBe(3.5);
@@ -570,7 +570,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     engine.initRun({ levelId: 1, dynamicDifficulty: 4.0, spawnInitialWave: false });
     const director = engine.director!;
     const levelDef = GAME_LEVELS[engine.state.activeLevelId];
-    const phaseKey = getCurrentDayPhase(engine.state.gameTime || 0).id;
+    const phaseKey = getCurrentDayPhase(engine.state.gameTime || 0, engine.state.activeLevelId).id;
     const phasePool = levelDef.spawnPools?.[phaseKey] ?? levelDef.spawnPools?.noon ?? [];
 
     const expectedPool = new Set(

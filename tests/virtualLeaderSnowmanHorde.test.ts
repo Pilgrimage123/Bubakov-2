@@ -450,20 +450,18 @@ describe('VirtualLeaderSnowmanHorde', () => {
     expect(ENEMY_POINTS.tajici_snehulak).toBe(49);
   });
 
-  it('ensures regular game and director do not avoid spawning melting snowmen in Stage 1', async () => {
+  it('ensures regular game and director do not avoid spawning melting snowmen in Stage 2 (Noční mrazy)', async () => {
     const { GAME_LEVELS } = await import('../src/data/levels');
     const { RUN_ROZMARY } = await import('../src/data/runArchetypes');
-    const lvl0 = GAME_LEVELS[0];
+    const lvl1 = GAME_LEVELS[1];
 
-    // tajici_snehulak is included across primary daylight and evening phases
-    expect(lvl0.spawnPools.noon).toContain('tajici_snehulak');
-    expect(lvl0.spawnPools.afternoon).toContain('tajici_snehulak');
-    expect(lvl0.spawnPools.dusk).toContain('tajici_snehulak');
-    expect(lvl0.spawnPools.night).toContain('tajici_snehulak');
+    // tajici_snehulak is included across primary evening and night phases in Stage 2
+    expect(lvl1.spawnPools.dusk).toContain('tajici_snehulak');
+    expect(lvl1.spawnPools.night).toContain('tajici_snehulak');
 
-    // Preferred in the central spring thaw archetype
-    const taniKer = RUN_ROZMARY[0].find((r) => r.id === 'tani_ker');
-    expect(taniKer).toBeDefined();
-    expect(taniKer?.preferredEnemyIds).toContain('tajici_snehulak');
+    // Preferred in the freezing spring night archetype
+    const chlad = RUN_ROZMARY[1].find((r) => r.id === 'breznovy_chlad');
+    expect(chlad).toBeDefined();
+    expect(chlad?.preferredEnemyIds).toContain('tajici_snehulak');
   });
 });

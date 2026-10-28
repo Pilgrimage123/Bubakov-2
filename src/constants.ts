@@ -81,7 +81,19 @@ var DAY_PHASES = [
 		icon: "🐓"
 	}
 ];
-function getCurrentDayPhase(seconds) {
+function getCurrentDayPhase(seconds: number, levelId?: number) {
+	if (levelId === 0) {
+		// 1. úroveň (Denní tání, 5 minut / 300 s): pouze světlé fáze (Poledne 0–150 s, Odpoledne 150 s+)
+		if (seconds < 150) return DAY_PHASES[0];
+		return DAY_PHASES[1];
+	}
+	if (levelId === 1) {
+		// 2. úroveň (Noční mrazy, 5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
+		if (seconds < 100) return DAY_PHASES[2];
+		if (seconds < 200) return DAY_PHASES[3];
+		if (seconds < 300) return DAY_PHASES[4];
+		return DAY_PHASES[5];
+	}
 	for (let i = DAY_PHASES.length - 1; i >= 0; i--) if (seconds >= DAY_PHASES[i].timeRange[0]) return DAY_PHASES[i];
 	return DAY_PHASES[0];
 }

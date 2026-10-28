@@ -894,27 +894,32 @@ export class GameEngine {
     } else if (levelId === 1) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        this.spawnMonster('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
+        this.spawnMonster('mrazovy_skritek', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
       }
     } else if (levelId === 2) {
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        this.spawnMonster('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75);
+      }
+    } else if (levelId === 3) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.5;
         this.spawnMonster('skeleton', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 0.9);
       }
       this.spawnMonster('cerny_pes', player.x + 480, player.y - 100, 0.9);
-    } else if (levelId === 3) {
+    } else if (levelId === 4) {
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2;
         this.spawnMonster('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0);
       }
       this.spawnMonster('vanicka', player.x - 440, player.y - 180, 1.0);
-    } else if (levelId === 4) {
+    } else if (levelId === 5) {
       this.spawnMonster('zbojnik', player.x + 460, player.y, 1.0);
       this.spawnMonster('jiskrivec', player.x - 460, player.y, 1.0);
-    } else if (levelId === 5) {
+    } else if (levelId === 6) {
       this.spawnMonster('zbrojnos', player.x + 460, player.y + 100, 1.0);
       this.spawnMonster('bila_pani', player.x - 460, player.y - 100, 1.0);
-    } else if (levelId === 6) {
+    } else if (levelId === 7) {
       this.spawnMonster('snehulak', player.x + 460, player.y, 1.0);
       this.spawnMonster('nocni_mura', player.x - 460, player.y, 1.0);
     }
@@ -930,7 +935,7 @@ export class GameEngine {
     customBossTitle?: string,
     prefix?: EnemyPrefixType
   ): any {
-    if (id === 'vrana' && isMiniboss) {
+    if (id === 'vrana' && (isMiniboss || isBoss)) {
       this.state.flockTreasureDropped = false;
       const crowCount = 9;
       let leaderCrow: any = null;
@@ -940,9 +945,10 @@ export class GameEngine {
         const cx = x + Math.cos(angle) * dist;
         const cy = y + Math.sin(angle) * dist;
         const crowTitle = i === 0 ? (customBossTitle || '🐦‍⬛ Hejno mrazivých vran') : undefined;
+        const isLeaderBoss = isBoss && i === 0;
         const enemy = this.enemyFactory
-          ? this.enemyFactory(id, cx, cy, multiplier, isBoss, true, crowTitle, prefix)
-          : this.createHeadlessEnemy(id, cx, cy, multiplier, isBoss, true, crowTitle, prefix);
+          ? this.enemyFactory(id, cx, cy, multiplier, isLeaderBoss, isMiniboss || isBoss, crowTitle, prefix)
+          : this.createHeadlessEnemy(id, cx, cy, multiplier, isLeaderBoss, isMiniboss || isBoss, crowTitle, prefix);
 
         enemy.isMinibossFlockMember = true;
         enemy.flockIndex = i;
@@ -1097,32 +1103,33 @@ export class GameEngine {
     }
 
     let finalHp = Math.round(stats.hp * (multiplier || 1));
-    if (isMiniboss) {
+    const isCrowBossOrMiniboss = resolvedId === 'vrana' && (isMiniboss || isBoss);
+    if (isMiniboss || isBoss) {
       if (resolvedId === 'vrana') {
-        finalHp = 38; // 38 Kuráže na vránu = ~342 Kuráže celkem pro vyvážené 9členné hejno
-      } else {
+        finalHp = isBoss ? 55 : 38; // 55 Kuráže na vránu jako finální boss = ~495 celkem, 38 pro miniboss
+      } else if (isMiniboss) {
         finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
       }
     }
-    const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
-    const radius = (resolvedId === 'vrana' && isMiniboss) ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
-    let poiseResist = isMiniboss ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
-    const foodResist = isMiniboss ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
-    const hunger = isMiniboss
+    const renderScale = isCrowBossOrMiniboss ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
+    const radius = isCrowBossOrMiniboss ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
+    let poiseResist = (isMiniboss || isBoss) ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
+    const foodResist = (isMiniboss || isBoss) ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
+    const hunger = (isMiniboss || isBoss)
       ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : stats.foodResist || 0) + 0.45)
       : stats.hunger !== undefined
       ? stats.hunger
       : stats.foodResist || 0;
-    const willpower = isMiniboss ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
+    const willpower = (isMiniboss || isBoss) ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
-    const baseDamage = (resolvedId === 'vrana' && isMiniboss)
-      ? 8 // férové poškození 8 na vránu (souhrnně ~24 dmg při zásahu několika vran)
+    const baseDamage = isCrowBossOrMiniboss
+      ? (isBoss ? 10 : 8)
       : isMiniboss
       ? Math.round(stats.damage * (isLevel0 ? 1.05 : 1.35))
       : stats.damage;
-    let enemySpeed = (resolvedId === 'vrana' && isMiniboss)
-      ? 260 // rychlý let hejna vran namísto cupitání
+    let enemySpeed = isCrowBossOrMiniboss
+      ? 260
       : stats.speed;
     let enemyDamage = baseDamage;
     let dodgeChance = 0;
@@ -2473,7 +2480,7 @@ export class GameEngine {
       if (this.state.lightningStrike.time <= 0) this.state.lightningStrike = null;
     }
 
-    const dayPhase = getCurrentDayPhase(this.state.gameTime);
+    const dayPhase = getCurrentDayPhase(this.state.gameTime, this.state.activeLevelId);
     if (player && player.hp > 0) {
       const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, this.state.gameTime);
       let pLight = this.state.petrolejkaLight;

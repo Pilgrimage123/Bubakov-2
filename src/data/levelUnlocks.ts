@@ -8,30 +8,33 @@ var LEVEL_ORDER = [
 	3,
 	4,
 	5,
-	6
+	6,
+	7
 ];
-function getPreviousLevel(id) {
+function getPreviousLevel(id: number) {
 	const idx = LEVEL_ORDER.indexOf(id);
 	if (idx <= 0) return null;
 	return LEVEL_ORDER[idx - 1];
 }
-function isLevelFullyUnlocked(id, meta) {
-	if (id === 0 || id === 1) return true;
-	if ((meta.highestLevelUnlocked || 1) >= id) return true;
-	if (meta.completedLevels && meta.completedLevels[id]) return true;
-	if (id === 2 && ((meta.bestiaryKills?.cert || 0) >= 1 || !!meta.completedLevels?.[1])) return true;
-	if (id === 3 && ((meta.bestiaryKills?.hejkal || 0) >= 1 || !!meta.completedLevels?.[2])) return true;
-	if (id === 4 && ((meta.bestiaryKills?.obr || 0) >= 1 || !!meta.completedLevels?.[3])) return true;
-	if (id === 5 && ((meta.bestiaryKills?.mlynar || 0) >= 1 || !!meta.completedLevels?.[4])) return true;
-	if (id === 6 && ((meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta.completedLevels?.[5])) return true;
+function isLevelFullyUnlocked(id: number, meta: any) {
+	if (id === 0) return true;
+	if ((meta?.highestLevelUnlocked || 0) >= id) return true;
+	if (meta?.completedLevels && meta.completedLevels[id]) return true;
+	if (id === 1 && ((meta?.bestiaryKills?.vrana || 0) >= 1 || !!meta?.completedLevels?.[0])) return true;
+	if (id === 2 && ((meta?.bestiaryKills?.morana || 0) >= 1 || !!meta?.completedLevels?.[1])) return true;
+	if (id === 3 && ((meta?.bestiaryKills?.cert || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
+	if (id === 4 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
+	if (id === 5 && ((meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
+	if (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
+	if (id === 7 && ((meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
 	return false;
 }
-function canLevelUnlock(id, meta) {
-	if (id === 0 || id === 1) return true;
+function canLevelUnlock(id: number, meta: any) {
+	if (id === 0) return true;
 	const prev = getPreviousLevel(id);
-	return !prev || isLevelFullyUnlocked(prev, meta);
+	return prev === null || isLevelFullyUnlocked(prev, meta);
 }
-function getActiveUnlockingLevel(meta) {
+function getActiveUnlockingLevel(meta: any) {
 	for (let i = 0; i < LEVEL_ORDER.length; i++) {
 		const id = LEVEL_ORDER[i];
 		if (!isLevelFullyUnlocked(id, meta)) {
@@ -41,22 +44,22 @@ function getActiveUnlockingLevel(meta) {
 	}
 	return null;
 }
-function makeSequentialUnlock(id, targetEnemies) {
-	const level = GAME_LEVELS[id];
-	const previous = GAME_LEVELS[id - 1];
-	const locked = (percent, tierLevel) => ({
+function makeSequentialUnlock(id: number, targetEnemies: any[]) {
+	const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+	const previous = GAME_LEVELS[(id - 1) as keyof typeof GAME_LEVELS];
+	const locked = (percent: number, tierLevel: number) => ({
 		minPercent: percent,
 		tierLevel,
 		spoiledName: percent === 100 ? level.name : `${id + 1}. ??? [ZAMČENÁ VÝPRAVA]`,
 		spoiledShortTitle: percent === 100 ? level.shortTitle : "Neznámá končina",
 		spoiledSubtitle: percent >= 50 ? level.subtitle : "Zatím jen útržky pověstí a vzdálené výkřiky",
-		spoiledDesc: percent >= 50 ? level.description : `Cesta se odhalí po průzkumu ${previous.shortTitle}.`,
-		spoiledLore: percent >= 75 ? level.lore : "Kronikář zatím sbírá jen kusé zprávy.",
+		spoiledDesc: percent >= 50 ? level.description : `Cesta se odhalí po průzkumu oblasti ${previous.shortTitle}.`,
+		spoiledLore: percent >= 75 ? (level.lore || "") : "Kronikář zatím sbírá jen kusé zprávy.",
 		spoiledBossHint: percent >= 75 ? `👑 Hlavní boss: ${level.finalBoss.name}` : "👑 Hlavní boss: ???",
 		spoiledWeatherHint: percent >= 50 ? `Počasí: ${level.subtitle}` : "Počasí: neznámé",
 		spoiledEnemiesHint: percent >= 50 ? targetEnemies.map((enemy) => enemy.name).join(", ") : "Nepřátelé: skryto",
-		spoiledIcon: percent >= 50 ? level.icon : "map",
-		spoiledBadge: percent === 100 ? level.badge : `${id + 1}. úroveň (${percent} %)`,
+		spoiledIcon: percent >= 50 ? (level.icon || "map") : "map",
+		spoiledBadge: percent === 100 ? (level.badge || `${id + 1}. Úroveň`) : `${id + 1}. úroveň (${percent} %)`,
 		clueTag: percent === 100 ? "✅ Plně odemčeno!" : `${percent} %: pokračuj v předchozí výpravě`
 	});
 	return {
@@ -82,363 +85,77 @@ function makeSequentialUnlock(id, targetEnemies) {
 		]
 	};
 }
-var LEVEL_UNLOCKS = {
+
+var LEVEL_UNLOCKS: Record<number, any> = {
 	0: {
 		id: 0,
-		realName: "1. Předjaří v Hrusicích",
-		realShortTitle: "Březnové tání",
-		realSubtitle: "Březnové tání, mrazivé vrány a přízraky posledního zimního chladu",
+		realName: "1. Předjaří v Hrusicích – Denní tání",
+		realShortTitle: "Denní tání",
+		realSubtitle: "Březnové slunce, tající kry a probouzející se havěť",
 		realIcon: "🌱",
 		realBadge: "1. Úroveň",
 		defaultUnlocked: true,
 		challengeTitle: "Výchozí začátečnická výprava",
 		challengeShortDesc: "Klidný úvod do hry – seznámení s pohybem, zbraněmi a jarní havětí.",
-		challengeLongDesc: "Pomozte sedlákům připravit pole po zimě, odrazte hejno mrazivých vran a postavte se přízrakům posledního zimního chladu!",
+		challengeLongDesc: "Pomozte sedlákům připravit pole po zimě a zažeňte hejno mrazivých vran!",
 		bossDefeatRequirement: "Žádné – výchozí úroveň",
 		targetEnemies: [],
 		maxCount: 0,
 		milestones: [{
 			minPercent: 0,
 			tierLevel: 4,
-			spoiledName: "1. Předjaří v Hrusicích",
-			spoiledShortTitle: "Březnové tání",
-			spoiledSubtitle: "Březnové tání, mrazivé vrány a přízraky posledního zimního chladu",
+			spoiledName: "1. Předjaří v Hrusicích – Denní tání",
+			spoiledShortTitle: "Denní tání",
+			spoiledSubtitle: "Březnové slunce, tající kry a probouzející se havěť",
 			spoiledDesc: "Sníh pomalu taje a řeka je plná březnových ker tajícího ledu. Příroda se probouzí a s ní i vyhladovělá havěť.",
-			spoiledLore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole, přežijte nálety mrazivých vran a zažeňte přízraky posledního zimního chladu.",
-			spoiledBossHint: "👑 Hlavní boss: Morana — špatně vynesená smrtka (120 s)",
-			spoiledWeatherHint: "Počasí: Tání ker a jarní tůně",
-			spoiledEnemiesHint: "Mrazivá vrána, Mrazivá jezinka, Zákeřný tající sněhulák, Mrazivý obr, Mrazivý skřítek, Blatouchový skřítek",
+			spoiledLore: "Březen, za kamna vlezem – ale za dne už hřeje jarní slunko! Pomozte sedlákům připravit pole a vykažte z kraje hejno mrazivých vran.",
+			spoiledBossHint: "👑 Hlavní boss: Hejno mrazivých vran (120 s)",
+			spoiledWeatherHint: "Počasí: Tání ker a jarní slunce",
+			spoiledEnemiesHint: "Hejno mrazivých vran, Jarní Vodníček, Mrazivý skřítek, Blatouchový skřítek, Myšák",
 			spoiledIcon: "🌱",
 			spoiledBadge: "1. Úroveň",
 			clueTag: "✅ Připraveno k výpravě"
 		}]
 	},
-	1: {
-		id: 1,
-		realName: "2. Náves a rybník Brčálník",
-		realShortTitle: "Náves a rybník",
-		realSubtitle: "Zlatavý podzim, skotačivá havěť a rybniční rejdy",
-		realIcon: "🍂",
-		realBadge: "2. Úroveň",
-		defaultUnlocked: true,
-		challengeTitle: "Výchozí venkovská výprava",
-		challengeShortDesc: "Přístupná pro každého odvážného poutníka od samého počátku.",
-		challengeLongDesc: "Projděte se po hrusické návsi a kolem rybníka Brčálníku. Naučte se čelit raráškům, hastrmanům a Pekelnému Čertovi!",
-		bossDefeatRequirement: "Žádné – výchozí úroveň",
-		targetEnemies: [],
-		maxCount: 0,
-		milestones: [{
-			minPercent: 0,
-			tierLevel: 4,
-			spoiledName: "2. Náves a rybník Brčálník",
-			spoiledShortTitle: "Náves a rybník",
-			spoiledSubtitle: "Zlatavý podzim, skotačivá havěť a rybniční rejdy",
-			spoiledDesc: "Slunce ozařuje hrusické doškové střechy. Na mezích šmejdí rarášci a z rybníka Brčálníku vylézají nenechaví vodníci.",
-			spoiledLore: "Klidné venkovské odpoledne narušily divoké rejdy. Zažeňte polní a rybniční potvory a vykažte z hospodské návsi samotného Pekelného Čerta!",
-			spoiledBossHint: "👑 Hlavní boss: Pekelný Čert s vidlemi (150 s)",
-			spoiledWeatherHint: "Počasí: Zlatavé podzimní listí a slunce",
-			spoiledEnemiesHint: "Rarášek, Rybniční žabka, Vodníček, Polednice, Hastrman",
-			spoiledIcon: "🍂",
-			spoiledBadge: "2. Úroveň",
-			clueTag: "✅ Připraveno k výpravě"
-		}]
-	},
-	2: {
-		id: 2,
-		realName: "3. Starý hřbitov a Hrusický hvozd",
-		realShortTitle: "Hřbitov a hvozd",
-		realSubtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
-		realIcon: "🪦",
-		realBadge: "3. Úroveň",
-		defaultUnlocked: false,
-		challengeTitle: "🪦 Průzkum stezky za hřbitovní zeď",
-		challengeShortDesc: "Zažeň 60 potvor z návsi a rybníka NEBO poraž Pekelného Čerta ve 2. úrovni.",
-		challengeLongDesc: "Za vsí se rozkládá staré pohřebiště s márnicí a hluboký hvozd, kam se nikdo neodváží. Zažeňte 60 polních a vodních potvor ve 2. úrovni, nebo rovnou skolte Pekelného Čerta, a stará kovaná brána se vám otevře!",
-		bossDefeatRequirement: "Porazit Pekelného Čerta ve 2. úrovni",
-		targetEnemies: [
-			{
-				id: "rarach",
-				name: "Rarášek",
-				icon: "👺"
-			},
-			{
-				id: "zaba",
-				name: "Rybniční žabka",
-				icon: "🐸"
-			},
-			{
-				id: "vodnicek",
-				name: "Mladý vodníček",
-				icon: "💧"
-			},
-			{
-				id: "polednice",
-				name: "Polednice se srpem",
-				icon: "☀️"
-			},
-			{
-				id: "hastrman",
-				name: "Hastrman z Brčálníku",
-				icon: "🎩"
-			},
-			{
-				id: "cert",
-				name: "Pekelný Čert s vidlemi",
-				icon: "👹"
-			}
-		],
-		maxCount: 60,
-		milestones: [
-			{
-				minPercent: 0,
-				tierLevel: 0,
-				spoiledName: "3. ??? [ZAMČENÁ ÚROVEŇ]",
-				spoiledShortTitle: "??? [Neznámá končina]",
-				spoiledSubtitle: "Hustá mlha, neprostupné stíny a neznámí bubáci za vsí",
-				spoiledDesc: "Za vesnickou zdí leží temný hvozd a opuštěná místa, o kterých staří lidé mluví jen šeptem. Cesta je zatím zavátá mlhou a hlídána pekelnou mocí.",
-				spoiledLore: "Nikdo se zatím neodvážil překročit hranici vsi. Obyvatelé jen varují před podivnými zvuky linoucími se z noční dálky za márnicí.",
-				spoiledBossHint: "👑 Hlavní boss: Zahalen v neproniknutelné temnotě (???)",
-				spoiledWeatherHint: "Počasí a atmosféra: Neznámo (zahalená mlhou)",
-				spoiledEnemiesHint: "Běsi a přízraky: Skryto v husté mlze (???)",
-				spoiledIcon: "map",
-				spoiledBadge: "3. Úroveň (0 %)",
-				clueTag: "0 %: Zcela utajeno – zažeň 25 % škůdců z 1. úrovně pro první stopu"
-			},
-			{
-				minPercent: 25,
-				tierLevel: 1,
-				spoiledName: "3. S _ _ _ ý   h _ _ _ _ _ v",
-				spoiledShortTitle: "S...ý hřb...ov",
-				spoiledSubtitle: "Sychravá mlha, opuštěné kříže a chladné hroby",
-				spoiledDesc: "V mlze se rýsují staré kamenné náhrobky a rozpadlá hřbitovní zeď. Poutníci z dálky hlásí klepání kostí a táhlé noční zvonění z márnice.",
-				spoiledLore: "Z mlhy vystupují první náhrobní kameny a staré duby. Mezi hroby se prý za soumraku prochází postava se zvoncem a kostlivci vstávají ze spánku.",
-				spoiledBossHint: "👑 Hlavní boss: P _ _ _ _ _ _ í   H _ _ _ _ l",
-				spoiledWeatherHint: "Počasí: Sychravá hřbitovní mlha a podzimní šero",
-				spoiledEnemiesHint: "💀 Odhaleni: Kostlivci a noční stíny",
-				spoiledIcon: "🌫️",
-				spoiledBadge: "🔍 3. Úroveň (25 %)",
-				clueTag: "🔍 25 %: První stopa! Odhalena mlha, hřbitovní zeď a kostlivci"
-			},
-			{
-				minPercent: 50,
-				tierLevel: 2,
-				spoiledName: "3. S t a r ý   h ř b _ _ _ v",
-				spoiledShortTitle: "Tajemný hvozd",
-				spoiledSubtitle: "Náhrobky, řinčení řetězů, Večerní přízraky a Pekelný dráb",
-				spoiledDesc: "Cesta za hřbitovní zeď je zřetelná! V hvozdu obchází Klekánice se zvoncem a Pekelný dráb s karabáčem. Ze země lezou umrlci a z lesa vyjí černí psi.",
-				spoiledLore: "Už víte, co vás za hřbitovní zdí čeká – sychravé podzimní šero, kde svěcená voda a osikový prut budou mít plné ruce práce proti nočním umrlcům.",
-				spoiledBossHint: "👑 Hlavní boss: P ů l n o č n í   H _ _ _ a l",
-				spoiledWeatherHint: "Počasí: Hustá podzimní mlha a chladný vítr v korunách",
-				spoiledEnemiesHint: "💀 Kostlivec, Černý pes, Klekánice a Pekelný dráb",
-				spoiledIcon: "⚰️",
-				spoiledBadge: "🔎 3. Úroveň (50 %)",
-				clueTag: "🔎 50 %: Znáš náhrobky, Klekánici, Pekelného drába i počasí!"
-			},
-			{
-				minPercent: 75,
-				tierLevel: 3,
-				spoiledName: "3. S t a r ý   h ř b i t o v   a   h _ _ _ d",
-				spoiledShortTitle: "Starý hřbitov & hvozd",
-				spoiledSubtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
-				spoiledDesc: "Brána starého hřbitova skřípe v pantech! Už zbývá jen málo, aby se cesta do Hrusického hvozdu otevřela dokořán. Připravte se na Hejkalovo volání!",
-				spoiledLore: "Všechny stopy jsou složeny! Půlnoční Hejkal už vyhlíží odvážlivce z korun prastarých dubů. Zažeňte poslední potvory nebo poražte Pekelného Čerta!",
-				spoiledBossHint: "👑 Hlavní boss: 🌲 P ů l n o č n í   H e j k a l",
-				spoiledWeatherHint: "Počasí: Plíživá mlha a noční temnota mezi staletými duby",
-				spoiledEnemiesHint: "💀 Kostlivec, Černý pes, Bubák ze stodoly, Klekánice, Hejkal",
-				spoiledIcon: "🪦",
-				spoiledBadge: "⚡ 3. Úroveň (75 %)",
-				clueTag: "⚡ 75 %: Téměř odemčeno! Zbývá už jen krůček k otevření hřbitova!"
-			},
-			{
-				minPercent: 100,
-				tierLevel: 4,
-				spoiledName: "3. Starý hřbitov a Hrusický hvozd",
-				spoiledShortTitle: "Hřbitov a hvozd",
-				spoiledSubtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
-				spoiledDesc: "Za vesnickou zdí šumí staré duby a hřbitovní kříže pohlcuje chladná podzimní mlha. Ze země vystupují umrlci a z lesa hejká prastarý běs.",
-				spoiledLore: "V hlubokém hvozdu za márnicí se ztratil nejeden chasník. Připravte své osikové pruty a postavte se nočním kostlivcům i obávanému Hejkalovi!",
-				spoiledBossHint: "👑 Hlavní boss: 🌲 Půlnoční Hejkal z hvozdů",
-				spoiledWeatherHint: "Počasí: Sychravá podzimní mlha",
-				spoiledEnemiesHint: "Kostlivec, Černý pes, Bubák, Klekánice, Hejkal",
-				spoiledIcon: "🪦",
-				spoiledBadge: "3. Úroveň",
-				clueTag: "✅ Plně odemčeno!"
-			}
-		]
-	},
-	3: {
-		id: 3,
-		realName: "4. Ladovská zima na Melechově",
-		realShortTitle: "Ladovská zima",
-		realSubtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
-		realIcon: "❄️",
-		realBadge: "4. Úroveň",
-		defaultUnlocked: false,
-		challengeTitle: "❄️ Cesta do zasněžených hor na Melechov",
-		challengeShortDesc: "Zažeň 60 hřbitovních monster NEBO poraž Půlnočního Hejkala ve 3. úrovni.",
-		challengeLongDesc: "Vysoko na kopcích za hvozdem vládne mráz, vánice a hluboké závěje. Zažeňte 60 hřbitovních umrlců a stínů ve 3. úrovni, nebo skolte obávaného Hejkala, a horská stezka se vám uvolní!",
-		bossDefeatRequirement: "Porazit Půlnočního Hejkala ve 3. úrovni",
-		targetEnemies: [
-			{
-				id: "skeleton",
-				name: "Kostlivec",
-				icon: "💀"
-			},
-			{
-				id: "cerny_pes",
-				name: "Černý pes",
-				icon: "🐕"
-			},
-			{
-				id: "bubak",
-				name: "Bubák ze stodoly",
-				icon: "👻"
-			},
-			{
-				id: "klekanice",
-				name: "Večerní Klekánice",
-				icon: "🔔"
-			},
-			{
-				id: "drab",
-				name: "Pekelný dráb",
-				icon: "⛓️"
-			},
-			{
-				id: "hejkal",
-				name: "Půlnoční Hejkal",
-				icon: "🌲"
-			}
-		],
-		maxCount: 60,
-		milestones: [
-			{
-				minPercent: 0,
-				tierLevel: 0,
-				spoiledName: "4. ??? [ZAMČENÁ ÚROVEŇ]",
-				spoiledShortTitle: "??? [Daleké končiny]",
-				spoiledSubtitle: "Tajemné závěje, ledový vichr a spící titán pod horou",
-				spoiledDesc: "Vysoko na kopcích za hvozdem vládne třeskutý mráz a ticho. O této nejnáročnější pouti kolují legendy o obrovi, který spí pod sněhem a ledem.",
-				spoiledLore: "Tato úroveň je zatím uzamčena a čeká na pokoření předchozí úrovně. Nejprve musíte otevřít a zvládnout 3. úroveň!",
-				spoiledBossHint: "👑 Hlavní boss: Zahaleno v sněhové vánici (???)",
-				spoiledWeatherHint: "Počasí a nálada: Neznámo (vzdálený ledový opar)",
-				spoiledEnemiesHint: "Mrazivé běsy: Skryto pod hlubokým sněhem (???)",
-				spoiledIcon: "map",
-				spoiledBadge: "4. Úroveň (0 %)",
-				clueTag: "0 %: Zcela utajeno – zažeň 25 % běsů z hřbitova pro první stopu"
-			},
-			{
-				minPercent: 25,
-				tierLevel: 1,
-				spoiledName: "4. L _ _ _ _ _ _ á   z _ _ a",
-				spoiledShortTitle: "L...ská zima",
-				spoiledSubtitle: "Sněhové závěje, třeskutý mráz a vánice",
-				spoiledDesc: "Z dálky se ozývá vytí větru v komínech a padají první sněhové vločky. Na doškových střechách rostou rampouchy a ze sněhu vykukují první sněhuláci.",
-				spoiledLore: "První stopa odhaluje mrazivou zimu! Mráz zalézá za nehty a vánice skučí v korunách zasněžených stromů pod horou.",
-				spoiledBossHint: "👑 Hlavní boss: S _ _ _ _ í   o _ r",
-				spoiledWeatherHint: "Počasí: Hustá sněhová vánice a padající vločky",
-				spoiledEnemiesHint: "🧊 Odhaleni: Rampouchoví Zmrzlíci a divoká Meluzína",
-				spoiledIcon: "🌨️",
-				spoiledBadge: "🔍 4. Úroveň (25 %)",
-				clueTag: "🔍 25 %: První vločky! Odhalena mrazivá zima a sněhové závěje"
-			},
-			{
-				minPercent: 50,
-				tierLevel: 2,
-				spoiledName: "4. L a d o v _ _ á   z i m a",
-				spoiledShortTitle: "Zasněžené vrchy",
-				spoiledSubtitle: "Rampouchy, Ohnivý rarach a Větrná Meluzína",
-				spoiledDesc: "Cesta na zasněžený vrch je zasypaná sněhem! Vánici ovládá Meluzína, z vyhřátých pecí vyskakují ohniví raraši a ze země se zvedá kamenný obr.",
-				spoiledLore: "Bílé závěje přikryly chalupy. Proti mrazu budete potřebovat horké pečené brambory a ohnivou sílu kovářských zbraní!",
-				spoiledBossHint: "👑 Hlavní boss: S k a l n í   o _ _",
-				spoiledWeatherHint: "Počasí: Třeskutý mráz (-15 °C) a skučí vichřice",
-				spoiledEnemiesHint: "🧊 Zmrzlík, Meluzína, Ohnivý rarach a Hromotluk",
-				spoiledIcon: "☃️",
-				spoiledBadge: "🔎 4. Úroveň (50 %)",
-				clueTag: "🔎 50 %: Znáš zasněžený vrch, Meluzínu, Ohnivého raracha i mráz!"
-			},
-			{
-				minPercent: 75,
-				tierLevel: 3,
-				spoiledName: "4. L a d o v s k á   z i m a   n a   M _ _ _ _ _ _ v ě",
-				spoiledShortTitle: "Ladovská zima",
-				spoiledSubtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
-				spoiledDesc: "Závěje na horském vrchu se rozestupují! Vánice sílí a pod horou se probouzí obrovský kamenný titán. Už chybí jen krok k vrcholné výpravě!",
-				spoiledLore: "Vrcholná 4. úroveň Bubákova je téměř odhalena! Získejte poslední zářezy ve hvozdě nebo poražte Půlnočního Hejkala.",
-				spoiledBossHint: "👑 Hlavní boss: 🗿 S k a l n í   o b r",
-				spoiledWeatherHint: "Počasí: Hrstě sněhu, bílá tma a ledový vítr",
-				spoiledEnemiesHint: "🧊 Zmrzlík z okapu, Meluzína, Ohnivý rarach, Hromotluk, Skalní obr",
-				spoiledIcon: "❄️",
-				spoiledBadge: "⚡ 4. Úroveň (75 %)",
-				clueTag: "⚡ 75 %: Téměř odemčeno! Obří titán už dupe ve sněhu!"
-			},
-			{
-				minPercent: 100,
-				tierLevel: 4,
-				spoiledName: "4. Ladovská zima na Melechově",
-				spoiledShortTitle: "Ladovská zima",
-				spoiledSubtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
-				spoiledDesc: "Bílé závěje přikryly chalupy, z okapů visí rampouchy a vánice skučí v komínech. Pod vrcholem Melechova se probouzí kamenný obr!",
-				spoiledLore: "Pravá Ladovská zima v plné síle! Mráz svírá pole a pekelný žár ohnivého muže taje rampouchy. Čelte větru i lavinám skalního titána!",
-				spoiledBossHint: "👑 Hlavní boss: 🗿 Skalní obr ze Sázavy",
-				spoiledWeatherHint: "Počasí: Třeskutý mráz a vánice",
-				spoiledEnemiesHint: "Zmrzlík, Meluzína, Ohnivý rarach, Hromotluk, Skalní obr",
-				spoiledIcon: "❄️",
-				spoiledBadge: "4. Úroveň",
-				clueTag: "✅ Plně odemčeno!"
-			}
-		]
-	},
+	1: makeSequentialUnlock(1, [
+		{ id: "vrana", name: "Hejno mrazivých vran", icon: "🐦‍⬛" },
+		{ id: "vodnicek", name: "Jarní Vodníček", icon: "💧" },
+		{ id: "blatouch", name: "Blatouchový skřítek", icon: "🌼" }
+	]),
+	2: makeSequentialUnlock(2, [
+		{ id: "morana", name: "Morana — špatně vynesená smrtka", icon: "❄️" },
+		{ id: "mrazivy_obr", name: "Mrazivý obr", icon: "🧊" },
+		{ id: "tajici_snehulak", name: "Tající sněhulák", icon: "⛄" },
+		{ id: "jezinka_mraziva", name: "Mrazivá jezinka", icon: "🧙‍♀️" }
+	]),
+	3: makeSequentialUnlock(3, [
+		{ id: "cert", name: "Pekelný Čert s vidlemi", icon: "👹" },
+		{ id: "hastrman", name: "Hastrman z Brčálníku", icon: "🎩" },
+		{ id: "polednice", name: "Polednice se srpem", icon: "☀️" },
+		{ id: "rarach", name: "Rarášek", icon: "👺" },
+		{ id: "zaba", name: "Rybniční žabka", icon: "🐸" }
+	]),
 	4: makeSequentialUnlock(4, [
-		{
-			id: "zbojnik",
-			name: "Zbojník",
-			icon: "🗡️"
-		},
-		{
-			id: "jiskrivec",
-			name: "Jiskřivec",
-			icon: "✨"
-		},
-		{
-			id: "mlynar",
-			name: "Mlynář",
-			icon: "🌊"
-		}
+		{ id: "hejkal", name: "Půlnoční Hejkal", icon: "🌲" },
+		{ id: "drab", name: "Pekelný dráb", icon: "⛓️" },
+		{ id: "klekanice", name: "Večerní Klekánice", icon: "🔔" },
+		{ id: "cerny_pes", name: "Černý pes", icon: "🐕" },
+		{ id: "skeleton", name: "Kostlivec", icon: "💀" }
 	]),
 	5: makeSequentialUnlock(5, [
-		{
-			id: "bila_pani",
-			name: "Bílá paní",
-			icon: "👻"
-		},
-		{
-			id: "zbrojnos",
-			name: "Zbrojnoš",
-			icon: "🛡️"
-		},
-		{
-			id: "bezhlavy_rytir",
-			name: "Bezhlavý rytíř",
-			icon: "🗡️"
-		}
+		{ id: "obr", name: "Skalní obr ze Sázavy", icon: "🗿" },
+		{ id: "meluzina", name: "Meluzína", icon: "💨" },
+		{ id: "zmrzlik", name: "Zmrzlík", icon: "🧊" }
 	]),
 	6: makeSequentialUnlock(6, [
-		{
-			id: "snehulak",
-			name: "Sněhulák",
-			icon: "☃️"
-		},
-		{
-			id: "nocni_mura",
-			name: "Noční můra",
-			icon: "🌑"
-		},
-		{
-			id: "drak",
-			name: "Drak",
-			icon: "🐉"
-		}
+		{ id: "mlynar", name: "Prokletý Mlynář", icon: "🌊" },
+		{ id: "zbojnik", name: "Zbojník", icon: "🗡️" },
+		{ id: "jiskrivec", name: "Jiskřivec", icon: "✨" }
+	]),
+	7: makeSequentialUnlock(7, [
+		{ id: "bezhlavy_rytir", name: "Bezhlavý rytíř", icon: "🗡️" },
+		{ id: "zbrojnos", name: "Zbrojnoš", icon: "🛡️" },
+		{ id: "bila_pani", name: "Bílá paní", icon: "👻" }
 	])
 };
 
@@ -449,7 +166,7 @@ const LEVEL_PROGRESS_CACHE = new WeakMap<object, Map<any, any>>();
 */
 function computeLevelProgress(id: any, meta: any) {
 	const def = LEVEL_UNLOCKS[id];
-	const lvlOriginal = GAME_LEVELS[id];
+	const lvlOriginal = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
 	if (!def || !lvlOriginal) return {
 		id,
 		isUnlocked: true,
@@ -521,24 +238,25 @@ function computeLevelProgress(id: any, meta: any) {
 			spoiledIcon: def.realIcon,
 			spoiledBadge: def.realBadge,
 			clueTag: "✅ Plně odemčeno!",
-			enemiesBreakdown: def.targetEnemies.map((e) => ({
+			enemiesBreakdown: def.targetEnemies.map((e: any) => ({
 				id: e.id,
 				name: e.name,
 				icon: e.icon,
-				count: meta.levelKillCounts?.[id]?.[e.id] ?? meta.bestiaryKills?.[e.id] ?? def.maxCount
+				count: meta?.levelKillCounts?.[id]?.[e.id] ?? meta?.bestiaryKills?.[e.id] ?? def.maxCount
 			})),
 			bossDefeated: true
 		};
 	}
 	const prevId = getPreviousLevel(id);
-	if (!canLevelUnlock(id, meta) && prevId) {
+	if (!canLevelUnlock(id, meta) && prevId !== null) {
 		const m0 = def.milestones[0];
+		const prevLvl = GAME_LEVELS[prevId as keyof typeof GAME_LEVELS];
 		return {
 			id,
 			isUnlocked: false,
 			canUnlock: false,
 			isQueued: true,
-			requiredLevelName: "Předchozí úroveň",
+			requiredLevelName: prevLvl ? prevLvl.shortTitle : "Předchozí úroveň",
 			curCount: 0,
 			maxCount: def.maxCount,
 			percent: 0,
@@ -554,7 +272,7 @@ function computeLevelProgress(id: any, meta: any) {
 			spoiledIcon: m0.spoiledIcon,
 			spoiledBadge: m0.spoiledBadge,
 			clueTag: "Čeká na odemčení předchozí úrovně",
-			enemiesBreakdown: def.targetEnemies.map((e) => ({
+			enemiesBreakdown: def.targetEnemies.map((e: any) => ({
 				id: e.id,
 				name: e.name,
 				icon: e.icon,
@@ -569,9 +287,9 @@ function computeLevelProgress(id: any, meta: any) {
 		skeleton_scythe: "kostlivec_kosa",
 		kostlivec_kosa: "skeleton_scythe",
 	};
-	const levelKills = meta.levelKillCounts?.[id] || meta.bestiaryKills || {};
+	const levelKills = meta?.levelKillCounts?.[id] || meta?.bestiaryKills || {};
 	let curCount = 0;
-	const enemiesBreakdown = def.targetEnemies.map((e) => {
+	const enemiesBreakdown = def.targetEnemies.map((e: any) => {
 		const cnt = levelKills[e.id] || (enemyAliasMap[e.id] ? levelKills[enemyAliasMap[e.id]] : 0) || 0;
 		curCount += cnt;
 		return {
@@ -581,8 +299,8 @@ function computeLevelProgress(id: any, meta: any) {
 			count: cnt
 		};
 	});
-	const bossId = id === 1 ? "morana" : id === 2 ? "cert" : id === 3 ? "hejkal" : id === 4 ? "obr" : id === 5 ? "mlynar" : id === 6 ? "bezhlavy_rytir" : "";
-	const bossDefeated = bossId ? (meta.bestiaryKills?.[bossId] || 0) >= 1 || !!meta.completedLevels?.[id - 1] : false;
+	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "obr" : id === 6 ? "mlynar" : id === 7 ? "bezhlavy_rytir" : "";
+	const bossDefeated = bossId ? (meta?.bestiaryKills?.[bossId] || 0) >= 1 || !!meta?.completedLevels?.[id - 1] : false;
 	let percent = 0;
 	if (bossDefeated) {
 		curCount = def.maxCount;
@@ -595,7 +313,7 @@ function computeLevelProgress(id: any, meta: any) {
 	else if (percent >= 50) tier = 2;
 	else if (percent >= 25) tier = 1;
 	else tier = 0;
-	const milestone = def.milestones.find((m) => m.tierLevel === tier) || def.milestones[0];
+	const milestone = def.milestones.find((m: any) => m.tierLevel === tier) || def.milestones[0];
 	return {
 		id,
 		isUnlocked,

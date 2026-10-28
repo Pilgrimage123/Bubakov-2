@@ -25,8 +25,8 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       description: 'Záplava tajících ker přináší chlad. Jarní havěť je agresivnější.',
       weatherOverride: 'ice_drift',
       threatMultiplier: 1.05,
-      anomalyWindow: [50, 75],
-      preferredEnemyIds: ['tajici_snehulak', 'vrana', 'mrazovy_skritek'],
+      anomalyWindow: [130, 165],
+      preferredEnemyIds: ['blatouch', 'vrana', 'mrazovy_skritek'],
       formationBias: 'balanced',
     },
     {
@@ -38,28 +38,69 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       description: 'Slunce prohřívá břehy potoka. Z mechu vylézají blatouchoví skřítci a šotci.',
       weatherOverride: 'ice_drift',
       threatMultiplier: 0.95,
-      anomalyWindow: [40, 65],
-      preferredEnemyIds: ['blatouch', 'sotek'],
+      anomalyWindow: [120, 155],
+      preferredEnemyIds: ['blatouch', 'sotek', 'mysak'],
       formationBias: 'swarms',
     },
     {
-      id: 'breznovy_chlad',
+      id: 'slunne_meze',
       levelId: 0,
-      name: 'Březnový Chlad',
-      subtitle: 'Ranní mrazík a rákosový opar',
-      icon: '🌱',
-      description: 'Chladný jarní vánek zvedá opar nad řekou. Hladové myši a zlomyslní šotci šmejdí po polích.',
+      name: 'Slunné Meze',
+      subtitle: 'Jarní slunce rozehřívá pole',
+      icon: '☀️',
+      description: 'Pod hřejivým sluncem se probouzí polní havěť a mrazivé vrány krouží nad oraništěm.',
       weatherOverride: 'ice_drift',
       threatMultiplier: 1.0,
-      anomalyWindow: [60, 85],
-      preferredEnemyIds: ['mysak', 'sotek'],
+      anomalyWindow: [140, 175],
+      preferredEnemyIds: ['vrana', 'blatouch', 'sotek'],
       formationBias: 'pincer',
     },
   ],
   1: [
     {
-      id: 'rybnicni_zaplava',
+      id: 'breznovy_chlad',
       levelId: 1,
+      name: 'Březnový Chlad',
+      subtitle: 'Ranní mrazík a rákosový opar',
+      icon: '🌱',
+      description: 'Chladný jarní vánek zvedá opar nad řekou. Hladové myši a zlomyslní šotci šmejdí po polích.',
+      weatherOverride: 'snow',
+      threatMultiplier: 1.05,
+      anomalyWindow: [130, 165],
+      preferredEnemyIds: ['tajici_snehulak', 'mrazovy_skritek', 'jezinka_mraziva'],
+      formationBias: 'swarms',
+    },
+    {
+      id: 'mraziva_vanice',
+      levelId: 1,
+      name: 'Mrazivá Vánice',
+      subtitle: 'Ledový vítr a Moranin dech',
+      icon: '🌨️',
+      description: 'Zimní vichr přináší sněhovou vánici a ze tmy vystupuje obří ledový kolos.',
+      weatherOverride: 'snow',
+      threatMultiplier: 1.15,
+      anomalyWindow: [140, 175],
+      preferredEnemyIds: ['mrazivy_obr', 'tajici_snehulak', 'bludicka'],
+      formationBias: 'hammer_anvil',
+    },
+    {
+      id: 'jezincina_noc',
+      levelId: 1,
+      name: 'Jezinčina Noc',
+      subtitle: 'Tiché kroky v nočním lese',
+      icon: '🧙‍♀️',
+      description: 'Mrazivé jezinky a bludičky ovládly noční končiny u řeky.',
+      weatherOverride: 'snow',
+      threatMultiplier: 1.1,
+      anomalyWindow: [120, 155],
+      preferredEnemyIds: ['jezinka_mraziva', 'bludicka', 'mrazovy_skritek'],
+      formationBias: 'pincer',
+    },
+  ],
+  2: [
+    {
+      id: 'rybnicni_zaplava',
+      levelId: 2,
       name: 'Rybniční záplava',
       subtitle: 'Kalné louže, rákosí a mokrý rej vodníků',
       icon: '💧',
@@ -72,7 +113,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'mlzne_dusicky',
-      levelId: 1,
+      levelId: 2,
       name: 'Mlžné dušičky',
       subtitle: 'Hustá podzimní mlha a tiché kradmé kroky',
       icon: '🌫️',
@@ -84,7 +125,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'splasene_pole',
-      levelId: 1,
+      levelId: 2,
       name: 'Splašené pole',
       subtitle: 'Divoký úprk rarášků a pichlavého strniště',
       icon: '🌾',
@@ -95,10 +136,10 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       formationBias: 'hammer_anvil',
     },
   ],
-  2: [
+  3: [
     {
       id: 'umrlci_chlad',
-      levelId: 2,
+      levelId: 3,
       name: 'Umrlčí chlad',
       subtitle: 'Těžké žulové náhrobky a neprostupné stěny',
       icon: '🪦',
@@ -110,7 +151,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'hrobove_ticho',
-      levelId: 2,
+      levelId: 3,
       name: 'Hrobové ticho',
       subtitle: 'Klid před bouří a zuřivý úder černých psů',
       icon: '🐕‍🦺',
@@ -122,7 +163,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'svatokradez',
-      levelId: 2,
+      levelId: 3,
       name: 'Svatokrádež',
       subtitle: 'Neklidné duše vyrušené z věčného spánku',
       icon: '🕯️',
@@ -133,10 +174,10 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       formationBias: 'architects',
     },
   ],
-  3: [
+  4: [
     {
       id: 'vanice_ze_strani',
-      levelId: 3,
+      levelId: 4,
       name: 'Vánice ze strání',
       subtitle: 'Štiplavý mráz a závěje z Hrusických kopců',
       icon: '❄️',
@@ -149,7 +190,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'zledovadela_naves',
-      levelId: 3,
+      levelId: 4,
       name: 'Zledovatělá náves',
       subtitle: 'Kluzká cesta a nekontrolovatelné saně',
       icon: '🛷',
@@ -161,7 +202,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'zimni_spanek',
-      levelId: 3,
+      levelId: 4,
       name: 'Zimní spánek',
       subtitle: 'Probuzení medvědi v chumelenici',
       icon: '🐻',
@@ -172,10 +213,10 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       formationBias: 'escort',
     },
   ],
-  4: [
+  5: [
     {
       id: 'zbohnicky_prepad',
-      levelId: 4,
+      levelId: 5,
       name: 'Zbojnický přepad',
       subtitle: 'Ostré valašky a léčka ve skalní soutěsce',
       icon: '🪓',
@@ -187,7 +228,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'zhava_vyhen',
-      levelId: 4,
+      levelId: 5,
       name: 'Žhavá výheň',
       subtitle: 'Prskající okuje a ohnivé brázdy z hamru',
       icon: '🔥',
@@ -199,7 +240,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'skalni_zriceni',
-      levelId: 4,
+      levelId: 5,
       name: 'Skalní zřícení',
       subtitle: 'Kamenní permoníci s drtivým nápřahem',
       icon: '⛏️',
@@ -210,10 +251,10 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       formationBias: 'escort',
     },
   ],
-  5: [
+  6: [
     {
       id: 'bila_pani_v_pruvanu',
-      levelId: 5,
+      levelId: 6,
       name: 'Bílá paní v průvanu',
       subtitle: 'Přízračné kvílení a chladné závoje na hradbách',
       icon: '👻',
@@ -225,7 +266,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'rytirska_ztec',
-      levelId: 5,
+      levelId: 6,
       name: 'Rytířská zteč',
       subtitle: 'Ocelová falanga a dunění brnění',
       icon: '🛡️',
@@ -237,7 +278,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'zkaza_cimburi',
-      levelId: 5,
+      levelId: 6,
       name: 'Zkáza cimbuří',
       subtitle: 'Kamenné chrliče a předsazené pasti na ochozu',
       icon: '🏰',
@@ -248,10 +289,10 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
       formationBias: 'architects',
     },
   ],
-  6: [
+  7: [
     {
       id: 'draci_dech',
-      levelId: 6,
+      levelId: 7,
       name: 'Dračí dech',
       subtitle: 'Sopečný dým, síra a pukliny v zemi',
       icon: '🌋',
@@ -263,7 +304,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'nocni_mury_ze_sluje',
-      levelId: 6,
+      levelId: 7,
       name: 'Noční můry ze sluje',
       subtitle: 'Zákeřné kleště z hlubin hory',
       icon: '🐉',
@@ -275,7 +316,7 @@ export const RUN_ROZMARY: Record<GameLevelId, RunRozmarDef[]> = {
     },
     {
       id: 'cerna_hodinka',
-      levelId: 6,
+      levelId: 7,
       name: 'Černá hodinka',
       subtitle: 'Nejhlubší tma a drtivé eskorty prastarých sil',
       icon: '🌑',

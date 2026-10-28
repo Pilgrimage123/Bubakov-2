@@ -35,7 +35,7 @@ const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
 function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): boolean {
   const enemy = ENEMIES[enemyId];
   if (!enemy || enemy.category === 'bosses') return false;
-  if (levelId !== 0) return true;
+  if (levelId !== 0 && levelId !== 1) return true;
   return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
 }
 
@@ -1678,7 +1678,7 @@ export class RunDirector {
     const state = engine.state ?? engine;
     const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
     const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
-    const phaseKey = getCurrentDayPhase(state.gameTime || 0).id;
+    const phaseKey = getCurrentDayPhase(state.gameTime || 0, levelId).id;
     const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey])
       ? curLvl.spawnPools[phaseKey]
       : (curLvl?.spawnPools?.noon || []);
@@ -1698,7 +1698,7 @@ export class RunDirector {
       if (preferred.length > 0) eligible.push(...preferred);
     }
     if (eligible.length === 0) {
-      const fallbackId = levelId === 0 ? 'mrazovy_skritek' : 'rarach';
+      const fallbackId = (levelId === 0 || levelId === 1) ? 'mrazovy_skritek' : 'rarach';
       if (isAllowed(fallbackId)) eligible.push(fallbackId);
     }
 

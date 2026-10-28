@@ -128,9 +128,9 @@ _Avoid_: mob spam, entity bloating, zahušťování nepřátel
 Normalizovaný index (0,0 až 1,0) vyhodnocovaný Režisérem výpravy z Kuráže, nedávného zranění, připravenosti arzenálu a hustoty běsů pro dynamické řízení tempa a kořisti.
 _Avoid_: vulnerability score, threat index, stress score, V-skóre
 
-**Hejno mrazivých vran (Miniboss)**:
-Skupinový oblastní miniboss v 1. úrovni (Březnové tání) tvořený kompaktní letovou formací 9 dravých vran se sdíleným ukazatelem Kuráže, vysokou rychlostí náletů (260 px/s) a dynamickým úbytkem těl při postupném zraňování; po porážce celého hejna zanechává malovanou truhlu s odměnou.
-_Avoid_: vrana boss, obří vrána, crow swarm boss
+**Hejno mrazivých vran**:
+Vrcholný skupinový boss 1. úrovně (Denní tání) tvořený kompaktní letovou formací 9 dravých vran se sdíleným ukazatelem Kuráže, vysokou rychlostí náletů (260 px/s) a dynamickým úbytkem těl při postupném zraňování; po porážce celého hejna zanechává malovanou truhlu a pečetí vítězství denní výpravy.
+_Avoid_: vrana miniboss, obří vrána, crow swarm boss
 
 **Smart SVG sprity**:
 Původní přechodné DOM vektorové komponenty postav, kompletně nahrazené procedurálními ladovskými rutinami na HTML5 plátně (Canvas 2D) v bojové aréně i ve všech rozhraních.
@@ -201,6 +201,18 @@ _Avoid_: level-up nabídka, obchodník, shopkeeper
 **Výprava**:
 Jednotlivý herní běh hráče zvolenou krajinou za účelem přežití, záchrany dušiček a poražení místního bosse.
 _Avoid_: run, zápas, kolo, match
+
+**Kraj**:
+Jednotlivá zeměpisná oblast a úroveň venkovského světa (např. Předjaří v Hrusicích, Náves a rybník Brčálník), nabízená k průzkumu v Nabídce výprav.
+_Avoid_: stage, level, mapa, herní zóna
+
+**Denní výprava**:
+Výprava odehrávající se za jasného denního svitu s otevřeným rozhledem a přehlednějším chováním polní havěti.
+_Avoid_: day run, day stage, denní stage, denní level
+
+**Noční výprava**:
+Výprava zahalená tmou, chladem a stíny, kde se objevují nebezpečnější noční běsi, přízraky a přísnější bojové podmínky.
+_Avoid_: night run, night stage, noční stage, noční level
 
 **Vesnice**:
 Místní zázemí a hospoda U Černého kocoura, kde hráč za nastřádané krejcary investuje do trvalých obecních vylepšení (Kovářská výheň, Kaple svaté vlny, Šenkýřova kuráž a dalších 10 budov).

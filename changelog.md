@@ -1,3 +1,24 @@
+## 2026-10-28 — Rozdělení Předjaří na den a noc, osmidílná kampaň a 5minutové trvání (ADR 0035)
+
+- **Rozdělení úvodního kraje Předjaří na dvě samostatné výpravy**:
+  - *1. úroveň: Předjaří v Hrusicích – Denní tání* (ID 0) — prosluněný den, tající meze, pučící blatouchy a jarní tání řeky.
+  - *2. úroveň: Předjaří v Hrusicích – Noční mrazy* (ID 1) — mrazivá noc, praskající ledové kry, pochod tajících sněhuláků a třeskutý chlad.
+- **Hierarchie bossů a nové zakončení 1. úrovně**:
+  - V Denním tání (ID 0) se *Hejno mrazivých vran* stalo finálním bossem (kroužící 9členná formace vran s vůdcem v čele). Miniboss: *Blatouchový skřítek*, Midboss: *Jarní Vodníček*.
+  - V Nočních mrazech (ID 1) vystupuje jako finální boss *Morana — špatně vynesená smrtka* s větrnými mrazivými salvami. Miniboss: *Horda tajících sněhuláků*, Midboss: *Mrazivý obr*.
+- **Přečíslování celého světa na čistou osmidílnou řadu (ID 0 až 7, v UI 1 až 8)**:
+  - Přepracováno pořadí úrovní, odemykání a trofeje na 8 lineárních kapitol: 1. Denní tání, 2. Noční mrazy, 3. Náves a rybník Brčálník, 4. Starý hřbitov a Hrusický hvozd, 5. Ladovská zima na Melechově, 6. Staré hamry a Čertův mlýn, 7. Pustá Hláska a Zlenické podhradí, 8. Dračí sluj pod Melechovskou skálou.
+- **Chytré prodloužení trvání obou úrovní na 5 minut (dohromady 10 minut)**:
+  - Doba trvání 1. i 2. úrovně prodloužena na 300 sekund (5 minut), celkem 10 minut za obě výpravy Předjaří.
+  - *Fáze dne v Denním tání (300 s)*: 0–150 s Pravé poledne, 150–300 s Odpoledne; Miniboss v čase 85 s, Midboss v čase 185 s, Finální boss v čase 300 s.
+  - *Fáze dne v Nočních mrazech (300 s)*: 0–100 s Soumrak & Klekání, 100–200 s Hluboká noc, 200–300 s Půlnoční hodina, 300 s+ Kuropění; Miniboss v čase 85 s, Midboss v čase 185 s, Finální boss v čase 300 s.
+  - *Rozložení anomálií*: Anomální okna Bubácké díry přemístěna do středu běhu (120–175 s).
+  - *Tematické přežití*: Oznámení přežití v Denním tání odlišeno pro denní výpravu (večerní klekání) a noční výpravu (kuropění).
+- **Doménová dokumentace a testy**:
+  - Zaznamenáno v `docs/adr/0035-rozdeleni-predjari-na-den-a-noc.md` a `docs/adr/README.md`.
+  - Do `GLOSSARY.md` doplněny pojmy *Denní výprava*, *Noční výprava*, *Kraj*.
+  - Aktualizována a rozšířena testovací sada v `tests/level0Predjari.test.ts`, `tests/runDirector.test.ts`, `tests/gameEngineLighting.test.ts` a `tests/virtualLeaderSnowmanHorde.test.ts`. Všech 64 testovacích sad (621 testů) i produkční build procházejí se 100% úspěšností.
+
 ## 2026-10-28 — Harmonizace měřítka arény, entit, projektilů a lidové perspektivy (ADR 0034)
 
 - **Kotva měřítka k postavě lovce a hierarchie entit**:

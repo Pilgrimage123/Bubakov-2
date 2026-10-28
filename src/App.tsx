@@ -1429,7 +1429,7 @@ export default function App() {
   // Selected level state - Level 0 (Předjaří) default for new players
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 6 ? s : 0) as GameLevelId;
+    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 7 ? s : 0) as GameLevelId;
   });
 
   const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0] || GAME_LEVELS[1];
@@ -1454,7 +1454,7 @@ export default function App() {
   const levelProgress = useMemo(
     () =>
       Object.fromEntries(
-        ([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+        ([0, 1, 2, 3, 4, 5, 6, 7] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
       ) as Record<GameLevelId, LevelProgress>,
     [meta]
   );
@@ -2165,7 +2165,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     const profile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
     if (profile === 'performance') return;
 
-    const dayPhase = eng.currentPhase || getCurrentDayPhase(eng.gameTime || 0);
+    const dayPhase = eng.currentPhase || getCurrentDayPhase(eng.gameTime || 0, eng.activeLevelId);
     const player = eng.player;
     const kurazRatio = player && player.maxHp > 0 ? player.hp / player.maxHp : 1;
     const isNightPhase =
@@ -2241,7 +2241,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     const curMeta = metaRef.current;
     const nextLvlId = (lvlId + 1) as GameLevelId;
-    const canUnlockNext = nextLvlId <= 6;
+    const canUnlockNext = nextLvlId <= 7;
     const nextHighest = canUnlockNext
       ? Math.max(curMeta.highestLevelUnlocked || 1, nextLvlId)
       : (curMeta.highestLevelUnlocked || 1);
@@ -2262,7 +2262,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       levelWon: true,
       warningBanner: reason === 'boss'
         ? `🏆 ${GAME_LEVELS[lvlId].finalBoss.name} POKOŘEN – VÍTĚZSTVÍ!`
-        : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!',
+        : (lvlId === 0 ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN V PŘEDJAŘÍ – VÍTĚZSTVÍ!' : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!'),
     }));
 
     if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
@@ -2271,7 +2271,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         title: `${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
       }, 6000);
-    } else if (lvlId >= 6) {
+    } else if (lvlId >= 7) {
       showUnlockNotice({
         icon: 'crown',
         title: `VŠECHNY ÚROVNĚ DOKONČENY!`,
@@ -3388,41 +3388,47 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     // Thematic opening wave right from second 0 tailored for smooth learning curve
     if (chosenLevelId === 0) {
-      // Level 0: Předjaří – 2 rybniční žabky ve vzdálenosti na seznámení s pohybem a první zásah
+      // Level 0: Předjaří (Denní tání) – 2 vrány
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
         engineRef.current.enemies.push(createEnemyInstance('vrana', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7));
       }
     } else if (chosenLevelId === 1) {
-      // Level 1: Mírný a vlídný začátek – jen 2 rarášci ve vzdálenosti na seznámení s pohybem a první zásah
+      // Level 1: Předjaří (Noční mrazy) – 2 mrazoví skřítci
+      for (let i = 0; i < 2; i++) {
+        const ang = (i / 2) * Math.PI * 2 + 0.3;
+        engineRef.current.enemies.push(createEnemyInstance('mrazovy_skritek', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
+      }
+    } else if (chosenLevelId === 2) {
+      // Level 2: Náves a rybník – 2 rarášci
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
         engineRef.current.enemies.push(createEnemyInstance('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
       }
-    } else if (chosenLevelId === 2) {
-      // Level 2: Hřbitov – 2 kostlivci a černý pes
+    } else if (chosenLevelId === 3) {
+      // Level 3: Hřbitov – 2 kostlivci a černý pes
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.5;
         engineRef.current.enemies.push(createEnemyInstance('skeleton', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 0.9));
       }
       engineRef.current.enemies.push(createEnemyInstance('cerny_pes', player.x + 480, player.y - 100, 0.9));
-    } else if (chosenLevelId === 3) {
-      // Level 3: Ladovská zima – rampouchoví diblíci
+    } else if (chosenLevelId === 4) {
+      // Level 4: Ladovská zima – rampouchoví diblíci
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2;
         engineRef.current.enemies.push(createEnemyInstance('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0));
       }
       engineRef.current.enemies.push(createEnemyInstance('vanicka', player.x - 440, player.y - 180, 1.0));
-    } else if (chosenLevelId === 4) {
-      // Level 4: Hamry – lapka a jiskřivec
+    } else if (chosenLevelId === 5) {
+      // Level 5: Hamry – lapka a jiskřivec
       engineRef.current.enemies.push(createEnemyInstance('zbojnik', player.x + 460, player.y, 1.0));
       engineRef.current.enemies.push(createEnemyInstance('jiskrivec', player.x - 460, player.y, 1.0));
-    } else if (chosenLevelId === 5) {
-      // Level 5: Hláska – zbrojnoš a bílá paní
+    } else if (chosenLevelId === 6) {
+      // Level 6: Hláska – zbrojnoš a bílá paní
       engineRef.current.enemies.push(createEnemyInstance('zbrojnos', player.x + 460, player.y + 100, 1.0));
       engineRef.current.enemies.push(createEnemyInstance('bila_pani', player.x - 460, player.y - 100, 1.0));
-    } else if (chosenLevelId === 6) {
-      // Level 6: Dračí sluj – ledový sněhulák a noční můra
+    } else if (chosenLevelId === 7) {
+      // Level 7: Dračí sluj – ledový sněhulák a noční můra
       engineRef.current.enemies.push(createEnemyInstance('snehulak', player.x + 460, player.y, 1.0));
       engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x - 460, player.y, 1.0));
     }
@@ -4363,7 +4369,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Storybook Illumination: update Petrolejka & dynamic light sources
-            const dayPhase = getCurrentDayPhase(engine.gameTime);
+            const dayPhase = getCurrentDayPhase(engine.gameTime, engine.activeLevelId);
             engine.currentPhase = dayPhase;
             const petrolejkaRadius = getPetrolejkaRadius(player.hp, player.maxHp, dayPhase.id, engine.gameTime);
             let pLight = engine.petrolejkaLight;
@@ -4524,16 +4530,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             const newTime = engine.gameTime;
-            const currentPhase = engine.currentPhase || getCurrentDayPhase(newTime);
-
             const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : currentSelectedLevelId] || GAME_LEVELS[0];
+            const currentPhase = engine.currentPhase || getCurrentDayPhase(newTime, curLvl.id);
 
             // Check dawn victory
             if (newTime >= DAWN_TIME_SECONDS && !engine.dawnVictoryTriggered) {
               engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
-              pushDamageText(engine.texts, player.x, player.y - 70, 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!', COLORS.mustard, true, 'bossAnnouncements');
+              const isDayLevel = (engine.activeLevelId ?? 0) === 0;
+              const announcement = isDayLevel ? 'ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN!' : 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!';
+              pushDamageText(engine.texts, player.x, player.y - 70, announcement, COLORS.mustard, true, 'bossAnnouncements');
               // All monsters panic and flee
               engine.enemies.forEach((e) => {
                 e.panicked = true;
@@ -4712,15 +4719,41 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.finalBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 200);
-              const finalBossEnemy = createEnemyInstance(
-                curLvl.finalBoss.id,
-                spawnPos.x,
-                spawnPos.y,
-                curLvl.finalBoss.multiplier,
-                true
-              );
-              engine.enemies.push(finalBossEnemy);
-              directorRef.current?.recordEnemySpawn(finalBossEnemy, newTime);
+              if (curLvl.finalBoss.id === 'vrana') {
+                (engine as any).flockTreasureDropped = false;
+                const crowCount = 9;
+                for (let i = 0; i < crowCount; i++) {
+                  const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
+                  const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
+                  const cx = spawnPos.x + Math.cos(flockAngle) * dist;
+                  const cy = spawnPos.y + Math.sin(flockAngle) * dist;
+                  const crowTitle = i === 0 ? curLvl.finalBoss.name : undefined;
+                  const crowEnemy = createEnemyInstance(
+                    curLvl.finalBoss.id,
+                    cx,
+                    cy,
+                    curLvl.finalBoss.multiplier,
+                    i === 0,
+                    true,
+                    crowTitle
+                  );
+                  (crowEnemy as any).isMinibossFlockMember = true;
+                  (crowEnemy as any).flockIndex = i;
+                  (crowEnemy as any).flockTotal = crowCount;
+                  engine.enemies.push(crowEnemy);
+                  directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
+                }
+              } else {
+                const finalBossEnemy = createEnemyInstance(
+                  curLvl.finalBoss.id,
+                  spawnPos.x,
+                  spawnPos.y,
+                  curLvl.finalBoss.multiplier,
+                  true
+                );
+                engine.enemies.push(finalBossEnemy);
+                directorRef.current?.recordEnemySpawn(finalBossEnemy, newTime);
+              }
               sound.roar();
               setRunStats((s) => ({
                 ...s,
@@ -4743,7 +4776,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const e = engine.enemies[bIdx];
               if (!e || e.isDefeated) continue;
               const eid = e.id;
-              if (eid === 'morana' && !moranaBoss && (e.isBoss || (engine.activeLevelId === 0 && engine.finalBossSpawned))) moranaBoss = e;
+              if (eid === 'morana' && !moranaBoss && (e.isBoss || (engine.activeLevelId === 1 && engine.finalBossSpawned))) moranaBoss = e;
               else if (eid === 'cert' && !cert) cert = e;
               else if (eid === 'hejkal' && !hejkal) hejkal = e;
               else if (eid === 'obr' && !obr) obr = e;
@@ -4752,8 +4785,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               else if (eid === 'drak' && !drak) drak = e;
             }
 
-            // MORANA BOSS DYNAMIC MECHANICS (LEVEL 0 - MRAZIVÝ DECH A SNĚŽNÁ VÁNICE)
-            if (moranaBoss && curLvl.id === 0) {
+            // MORANA BOSS DYNAMIC MECHANICS (LEVEL 1 - MRAZIVÝ DECH A SNĚŽNÁ VÁNICE)
+            if (moranaBoss && curLvl.id === 1) {
               const isPhase2 = moranaBoss.hp <= moranaBoss.maxHp * 0.5;
               moranaBoss.moranaWindTimer = (moranaBoss.moranaWindTimer !== undefined ? moranaBoss.moranaWindTimer : 4.5) - dt;
               moranaBoss.moranaBlizzardTimer = (moranaBoss.moranaBlizzardTimer !== undefined ? moranaBoss.moranaBlizzardTimer : 10.5) - dt;
@@ -4852,8 +4885,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 1)
-            if (cert && (cert.isBoss || engine.finalBossSpawned || curLvl.id === 1)) {
+            // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
+            if (cert && (cert.isBoss || engine.finalBossSpawned || curLvl.id === 2)) {
               if (cert) {
                 const isPhase2 = cert.hp <= cert.maxHp * 0.5;
 
@@ -5022,8 +5055,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // PŮLNOČNÍ HEJKAL BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
-            if (hejkal && (hejkal.isBoss || engine.finalBossSpawned || curLvl.id === 2)) {
+            // PŮLNOČNÍ HEJKAL BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 3)
+            if (hejkal && (hejkal.isBoss || engine.finalBossSpawned || curLvl.id === 3)) {
               if (hejkal) {
                 const isPhase2 = hejkal.hp <= hejkal.maxHp * 0.5;
 
@@ -5117,8 +5150,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 3)
-            if (obr && (obr.isBoss || engine.finalBossSpawned || curLvl.id === 3)) {
+            // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
+            if (obr && (obr.isBoss || engine.finalBossSpawned || curLvl.id === 4)) {
               if (obr) {
                 const isPhase2 = obr.hp <= obr.maxHp * 0.5;
 
@@ -5204,8 +5237,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
-            if (mlynar && (mlynar.isBoss || engine.finalBossSpawned || curLvl.id === 4)) {
+            // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
+            if (mlynar && (mlynar.isBoss || engine.finalBossSpawned || curLvl.id === 5)) {
               if (mlynar) {
                 const isPhase2 = mlynar.hp <= mlynar.maxHp * 0.5;
 
@@ -5334,8 +5367,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // BEZHLAVÝ RYTÍŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
-            if (rytir && (rytir.isBoss || engine.finalBossSpawned || curLvl.id === 5)) {
+            // BEZHLAVÝ RYTÍŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 6)
+            if (rytir && (rytir.isBoss || engine.finalBossSpawned || curLvl.id === 6)) {
               if (rytir) {
                 const isPhase2 = rytir.hp <= rytir.maxHp * 0.5;
 
@@ -5420,8 +5453,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // TŘÍHLAVÝ DRAK BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 6)
-            if (drak && (drak.isBoss || engine.finalBossSpawned || curLvl.id === 6)) {
+            // TŘÍHLAVÝ DRAK BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 7)
+            if (drak && (drak.isBoss || engine.finalBossSpawned || curLvl.id === 7)) {
               if (drak) {
                 const isPhase2 = drak.hp <= drak.maxHp * 0.5;
                 const distToP = Math.hypot(player.x - drak.x, player.y - drak.y);
@@ -8100,9 +8133,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const engine = engineRef.current;
         const player = engine.player;
         const cam = engine.camera;
-        const phase = engine.currentPhase || getCurrentDayPhase(engine.gameTime);
-
         const curLvl = GAME_LEVELS[engine.activeLevelId !== undefined ? engine.activeLevelId : (currentSelectedLevelId !== undefined ? currentSelectedLevelId : 0)] || GAME_LEVELS[0];
+        const phase = engine.currentPhase || getCurrentDayPhase(engine.gameTime, curLvl.id);
         const isWinter = curLvl.season === 'winter';
 
         const kurazRatio = player ? Math.max(0, Math.min(1, player.hp / Math.max(1, player.maxHp))) : 1;
@@ -9049,7 +9081,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           this._lightCheckTimer = (this._lightCheckTimer ?? 0) - dt;
           if (this._lightCheckTimer <= 0) {
             this._lightCheckTimer = 0.10 + (Math.abs(Math.sin(this.animTime)) * 0.05);
-            const dayPhase = getCurrentDayPhase(engineRef.current?.gameTime || 0);
+            const dayPhase = engineRef.current?.currentPhase || getCurrentDayPhase(engineRef.current?.gameTime || 0, engineRef.current?.activeLevelId);
             this._isLit = isPositionIlluminated(
               this.x,
               this.y,
@@ -12507,22 +12539,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             <BubakovCoverTitle />
 
-            {/* 7 PROGRESSIVE GAME LEVELS SELECTOR */}
+            {/* 8 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
-                {([0, 1, 2, 3, 4, 5, 6] as GameLevelId[]).map((lvlId) => {
+                {([0, 1, 2, 3, 4, 5, 6, 7] as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
                   const isUnlocked = prog?.isUnlocked ?? false;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
-                    (lvlId === 0 && (meta.bestiaryKills?.morana || 0) >= 1) ||
-                    (lvlId === 1 && (meta.bestiaryKills?.cert || 0) >= 1) ||
-                    (lvlId === 2 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
-                    (lvlId === 3 && (meta.bestiaryKills?.obr || 0) >= 1) ||
-                    (lvlId === 4 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
-                    (lvlId === 5 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
-                    (lvlId === 6 && (meta.bestiaryKills?.drak || 0) >= 1);
+                    (lvlId === 0 && (meta.bestiaryKills?.vrana || 0) >= 1) ||
+                    (lvlId === 1 && (meta.bestiaryKills?.morana || 0) >= 1) ||
+                    (lvlId === 2 && (meta.bestiaryKills?.cert || 0) >= 1) ||
+                    (lvlId === 3 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
+                    (lvlId === 4 && (meta.bestiaryKills?.obr || 0) >= 1) ||
+                    (lvlId === 5 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
+                    (lvlId === 6 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
+                    (lvlId === 7 && (meta.bestiaryKills?.drak || 0) >= 1);
 
                   return (
                     <div
@@ -13815,7 +13848,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </div>
               )}
             <div className="tally-actions-row" style={{ marginTop: '20px' }}>
-              {tallyCounters.isVictory && tallyCounters.levelId < 6 && (
+              {tallyCounters.isVictory && tallyCounters.levelId < 7 && (
                 <button
                   className="lada-btn"
                   style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}

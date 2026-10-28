@@ -4,31 +4,32 @@ import { LEVEL_UNLOCKS, getLevelProgress } from '../src/data/levelUnlocks';
 import { RUN_ROZMARY, selectRunRozmar } from '../src/data/runArchetypes';
 import { GameEngine } from '../src/game/engine';
 import { getLevelTranslation } from '../src/i18n';
+import { getCurrentDayPhase } from '../src/constants';
 import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from '../src/data/marchThawArena';
 
 describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
-  it('numbers player-facing game stages from 1 through 7 without changing internal IDs', () => {
+  it('numbers player-facing game stages from 1 through 8 without changing internal IDs', () => {
     expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
-      .toEqual([1, 2, 3, 4, 5, 6, 7]);
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(GAME_LEVELS[0].id).toBe(0);
-    expect(GAME_LEVELS[6].id).toBe(6);
+    expect(GAME_LEVELS[7].id).toBe(7);
   });
 
-  it('defines valid Level 0 structure with correct theme and bosses', () => {
+  it('defines valid Level 0 structure (Denní tání) with correct theme and bosses', () => {
     const lvl0 = GAME_LEVELS[0];
     expect(lvl0).toBeDefined();
     expect(lvl0.id).toBe(0);
-    expect(lvl0.name).toBe('1. Předjaří v Hrusicích');
+    expect(lvl0.name).toBe('1. Předjaří v Hrusicích – Denní tání');
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
-    expect(lvl0.miniBoss.id).toBe('vrana');
-    expect(lvl0.miniBoss).toMatchObject({ id: 'vrana', time: 30, kills: 20, multiplier: 4.5 });
-    // The new circular flock is a separate encounter; it must not rewrite the existing miniboss.
+    expect(lvl0.miniBoss.id).toBe('blatouch');
+    expect(lvl0.miniBoss).toMatchObject({ id: 'blatouch', time: 85, kills: 45, multiplier: 3.5 });
     expect(lvl0.midBoss.id).toBe('vodnicek');
-    expect(lvl0.finalBoss.id).toBe('morana');
-    expect(lvl0.spawnPools.noon).toContain('vrana');
+    expect(lvl0.midBoss).toMatchObject({ id: 'vodnicek', time: 185, kills: 120, multiplier: 1.6 });
+    expect(lvl0.finalBoss.id).toBe('vrana');
+    expect(lvl0.finalBoss).toMatchObject({ id: 'vrana', time: 300, kills: 220, multiplier: 1.1 });
+    expect(lvl0.spawnPools.noon).toContain('blatouch');
     expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
-    expect(lvl0.spawnPools.dusk).toContain('mrazivy_obr');
     expect(lvl0.spawnPools.noon).not.toContain('zaba');
     const allStage1Spawns = Object.values(lvl0.spawnPools).flat();
     for (const excluded of ['rarach', 'certik', 'sazovy_rarach', 'cert', 'topivec', 'vodnicek', 'hastrman']) {
@@ -36,15 +37,32 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     }
     // Vodníček is retained only as the scheduled mid-boss, not a regular spawn.
     expect(lvl0.midBoss.id).toBe('vodnicek');
-    expect(lvl0.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka']);
-    expect(lvl0.spawnPools.midnight).not.toContain(lvl0.finalBoss.id);
     expect(lvl0.arena).toMatchObject({ id: 'breznove_tani', layout: 'asymmetric_poi' });
   });
 
-  it('defines Morana as the first stage boss with ranged frost-wind attacks', async () => {
+  it('defines valid Level 1 structure (Noční mrazy) with Morana final boss and 5-minute pacing', () => {
+    const lvl1 = GAME_LEVELS[1];
+    expect(lvl1).toBeDefined();
+    expect(lvl1.id).toBe(1);
+    expect(lvl1.name).toBe('2. Předjaří v Hrusicích – Noční mrazy');
+    expect(lvl1.theme).toBe('spring_river');
+    expect(lvl1.season).toBe('spring');
+    expect(lvl1.miniBoss.id).toBe('tajici_snehulak');
+    expect(lvl1.miniBoss).toMatchObject({ id: 'tajici_snehulak', time: 85, kills: 50, multiplier: 3.0 });
+    expect(lvl1.midBoss.id).toBe('mrazivy_obr');
+    expect(lvl1.midBoss).toMatchObject({ id: 'mrazivy_obr', time: 185, kills: 130, multiplier: 1.6 });
+    expect(lvl1.finalBoss.id).toBe('morana');
+    expect(lvl1.finalBoss).toMatchObject({ id: 'morana', time: 300, kills: 240, multiplier: 1.05 });
+    expect(lvl1.spawnPools.dusk).toContain('tajici_snehulak');
+    expect(lvl1.spawnPools.night).toContain('mrazivy_obr');
+    expect(lvl1.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka', 'jezinka_mraziva']);
+    expect(lvl1.spawnPools.midnight).not.toContain(lvl1.finalBoss.id);
+  });
+
+  it('defines Morana as the second stage boss with ranged frost-wind attacks', async () => {
     const { ENEMIES } = await import('../src/data/enemies');
-    expect(GAME_LEVELS[0].finalBoss.id).toBe('morana');
-    expect(GAME_LEVELS[0].bossMechanic.label).toContain('Moran');
+    expect(GAME_LEVELS[1].finalBoss.id).toBe('morana');
+    expect(GAME_LEVELS[1].bossMechanic.label).toContain('Moran');
     expect(ENEMIES.morana).toMatchObject({
       category: 'bosses',
       method: 'drawMorana',
@@ -75,22 +93,56 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
 
     const prog = getLevelProgress(0, {});
     expect(prog.isUnlocked).toBe(true);
-    expect(prog.spoiledName).toBe('1. Předjaří v Hrusicích');
+    expect(prog.spoiledName).toBe('1. Předjaří v Hrusicích – Denní tání');
     expect(prog.tier).toBe(4);
+
+    const prog1Locked = getLevelProgress(1, {});
+    expect(prog1Locked.isUnlocked).toBe(false);
+    const prog1Unlocked = getLevelProgress(1, { completedLevels: { 0: true } });
+    expect(prog1Unlocked.isUnlocked).toBe(true);
   });
 
   it('has localized names in Czech and English', () => {
     const csTrans = getLevelTranslation(0, 'cs');
-    expect(csTrans.name).toBe('1. Předjaří v Hrusicích');
-    expect(csTrans.shortTitle).toBe('Březnové tání');
-    expect(csTrans.finalBoss.name).toContain('Morana');
-    expect(csTrans.miniBoss.name).toContain('mrazivých vran');
+    expect(csTrans.name).toBe('1. Předjaří v Hrusicích – Denní tání');
+    expect(csTrans.shortTitle).toBe('Denní tání');
+    expect(csTrans.finalBoss.name).toContain('vran');
+    expect(csTrans.miniBoss.name).toContain('skřítek');
 
     const enTrans = getLevelTranslation(0, 'en');
-    expect(enTrans.name).toBe('1. Early Spring in Hrusice');
-    expect(enTrans.shortTitle).toBe('March Thaw');
-    expect(enTrans.finalBoss.name).toContain('Morana');
-    expect(enTrans.miniBoss.name).toContain('Frost Crow Flock');
+    expect(enTrans.name).toBe('1. Early Spring in Hrusice – Day Thaw');
+    expect(enTrans.shortTitle).toBe('Day Thaw');
+    expect(enTrans.finalBoss.name).toContain('Crows');
+    expect(enTrans.miniBoss.name).toContain('Sprite');
+
+    const csTrans1 = getLevelTranslation(1, 'cs');
+    expect(csTrans1.name).toBe('2. Předjaří v Hrusicích – Noční mrazy');
+    expect(csTrans1.shortTitle).toBe('Noční mrazy');
+    expect(csTrans1.finalBoss.name).toContain('Morana');
+    expect(csTrans1.miniBoss.name).toContain('sněhuláků');
+
+    const enTrans1 = getLevelTranslation(1, 'en');
+    expect(enTrans1.name).toBe('2. Early Spring in Hrusice – Night Frosts');
+    expect(enTrans1.shortTitle).toBe('Night Frosts');
+    expect(enTrans1.finalBoss.name).toContain('Morana');
+    expect(enTrans1.miniBoss.name).toContain('Snowmen');
+  });
+
+  it('stretches day/night phases smartly across the 5-minute (300 s) duration', () => {
+    // Level 0 (Denní tání): Poledne 0–150 s, Odpoledne 150–300 s
+    expect(getCurrentDayPhase(0, 0).id).toBe('noon');
+    expect(getCurrentDayPhase(149, 0).id).toBe('noon');
+    expect(getCurrentDayPhase(150, 0).id).toBe('afternoon');
+    expect(getCurrentDayPhase(299, 0).id).toBe('afternoon');
+
+    // Level 1 (Noční mrazy): Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+
+    expect(getCurrentDayPhase(0, 1).id).toBe('dusk');
+    expect(getCurrentDayPhase(99, 1).id).toBe('dusk');
+    expect(getCurrentDayPhase(100, 1).id).toBe('night');
+    expect(getCurrentDayPhase(199, 1).id).toBe('night');
+    expect(getCurrentDayPhase(200, 1).id).toBe('midnight');
+    expect(getCurrentDayPhase(299, 1).id).toBe('midnight');
+    expect(getCurrentDayPhase(300, 1).id).toBe('dawn');
   });
 
   it('has exactly 3 unique folklore Rozmars', () => {
@@ -135,7 +187,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(ENEMIES.tajici_snehulak.name).toBe('Tající sněhulák');
     expect(ENEMIES.tajici_snehulak.name).not.toContain('Zákeřný');
     expect(ENEMIES.tajici_snehulak.strength).toContain('40');
-    expect(GAME_LEVELS[0].keyEnemies.find((e) => e.id === 'tajici_snehulak')?.name).toBe('Tající sněhulák');
+    expect(GAME_LEVELS[1].keyEnemies.find((e) => e.id === 'tajici_snehulak')?.name).toBe('Tající sněhulák');
   });
 
   it('scales the stage 1 crow miniboss reasonably for tutorial difficulty', () => {
@@ -198,14 +250,20 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(snowman.wobbleScaleX).not.toBe(1.0);
   });
 
-  it('includes level0_completed trophy and verifies completion against meta or Morana kill', async () => {
+  it('includes level0_completed and level1_completed trophies', async () => {
     const { TROPHIES } = await import('../src/data/trophies');
     const trophy = TROPHIES.find((t) => t.id === 'level0_completed');
     expect(trophy).toBeDefined();
     expect(trophy?.reward).toBeGreaterThan(0);
     expect(trophy?.isMet({ completedLevels: { 0: true } } as any)).toBe(true);
-    expect(trophy?.isMet({ completedLevels: {}, bestiaryKills: { morana: 1 } } as any)).toBe(true);
+    expect(trophy?.isMet({ completedLevels: {}, bestiaryKills: { vrana: 1 } } as any)).toBe(true);
     expect(trophy?.isMet({ completedLevels: {}, bestiaryKills: {} } as any)).toBe(false);
+
+    const trophy1 = TROPHIES.find((t) => t.id === 'level1_completed');
+    expect(trophy1).toBeDefined();
+    expect(trophy1?.reward).toBeGreaterThan(0);
+    expect(trophy1?.isMet({ completedLevels: { 1: true } } as any)).toBe(true);
+    expect(trophy1?.isMet({ completedLevels: {}, bestiaryKills: { morana: 1 } } as any)).toBe(true);
   });
 
   it('seeds storybook lighting and occluders from march landmarks', async () => {

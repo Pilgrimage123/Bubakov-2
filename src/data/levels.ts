@@ -4,18 +4,18 @@ export type { GameLevelDef } from '../types';
 var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	0: {
 		id: 0,
-		name: "1. Předjaří v Hrusicích",
-		shortTitle: "Březnové tání",
-		subtitle: "Březnové tání, mrazivé vrány a přízraky posledního zimního chladu",
+		name: "1. Předjaří v Hrusicích – Denní tání",
+		shortTitle: "Denní tání",
+		subtitle: "Březnové slunce, tající kry a probouzející se havěť",
 		theme: "spring_river",
 		season: "spring",
 		icon: "🌱",
 		badge: "1. Úroveň",
-		description: "Březnové tání proměnilo Hrusice v živou mapu: nahoře se orá, na návsi je rušno, rybník praská a mlýn žene řeku. Příroda se probouzí a s ní i vyhladovělá havěť.",
-		lore: "Březen, za kamna vlezem – ale venku už voní jaro! Pomozte sedlákům připravit pole, přežijte nálety mrazivých vran a zažeňte přízraky posledního zimního chladu.",
+		description: "Březnové tání probouzí Hrusice do slunného dne: nahoře se orá, na návsi je rušno a rybník praská. Zažeňte dotírající havěť a hejno mrazivých vran!",
+		lore: "Březen, za kamna vlezem – ale za dne už hřeje jarní slunko! Pomozte sedlákům připravit pole, odežeňte skřítky od tajících vod a vykažte z kraje hejno mrazivých vran.",
 		unlockRequirementText: "Výchozí začátečnická úroveň – ideální pro první krůčky",
 		skyColor: "#D6EAF8",
-		nightSkyColor: "#1B2A38",
+		nightSkyColor: "#D6EAF8",
 		groundColor: "#D0D3D4",
 		ambientTint: "rgba(244, 208, 63, 0.05)",
 		weatherEffect: "ice_drift",
@@ -34,60 +34,142 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			poiOrder: ["fields", "church", "tavern", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
-			id: "vrana",
-			name: "🐦‍⬛ Hejno mrazivých vran",
-			warning: "🐦‍⬛ POZOR: Z VÁNICE SE ŘÍTÍ HEJNO MRAZIVÝCH VRAN!",
-			time: 30,
-			kills: 20,
-			multiplier: 4.5
+			id: "blatouch",
+			name: "🌼 Blatouchový skřítek",
+			warning: "🌼 POZOR: Z ROZVODNĚNÉ MEZE VYBÍHÁ BLATOUCHOVÝ SKŘÍTEK!",
+			time: 85,
+			kills: 45,
+			multiplier: 3.5
 		},
 		midBoss: {
 			id: "vodnicek",
 			name: "💧 Jarní Vodníček",
 			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
-			time: 75,
-			kills: 60,
+			time: 185,
+			kills: 120,
+			multiplier: 1.6
+		},
+		finalBoss: {
+			id: "vrana",
+			name: "🐦‍⬛ Hejno mrazivých vran",
+			warning: "🐦‍⬛ NEBE ZTEMNĚLO! NAD POLEMI KROUŽÍ HEJNO MRAZIVÝCH VRAN! 🐦‍⬛",
+			time: 300,
+			kills: 220,
+			multiplier: 1.1
+		},
+		spawnPools: {
+			noon: [
+				"mrazovy_skritek",
+				"mysak",
+				"sotek",
+				"blatouch"
+			],
+			afternoon: [
+				"blatouch",
+				"sotek",
+				"jezinka_mraziva",
+				"mysak"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "blatouch",
+				name: "Blatouchový skřítek",
+				icon: "🌼",
+				role: "Rychlý jarní skřítek z mokřin a mezí"
+			},
+			{
+				id: "vodnicek",
+				name: "Jarní Vodníček",
+				icon: "💧",
+				role: "Zákeřný vodní tvor číhající v tajícím rybníku"
+			},
+			{
+				id: "vrana",
+				name: "Hejno mrazivých vran",
+				icon: "🐦‍⬛",
+				role: "Rychlá kroužící formace vran bránící jarnímu tání"
+			}
+		],
+		bossMechanic: {
+			label: "🐦‍⬛ Vzdušný nálet",
+			description: "Hejno mrazivých vran krouží v sevřené formaci vysokou rychlostí a podniká střemhlavé útoky na lovce.",
+			cadenceSeconds: 5
+		}
+	},
+	1: {
+		id: 1,
+		name: "2. Předjaří v Hrusicích – Noční mrazy",
+		shortTitle: "Noční mrazy",
+		subtitle: "Mrazivá noc, tající sněhuláci a ledový dech Morany",
+		theme: "spring_river",
+		season: "spring",
+		icon: "❄️",
+		badge: "2. Úroveň",
+		description: "Se západem slunce udeřil do Hrusic krutý mráz. Závěje ožívají tajícími sněhuláky a z mrazivé mlhy přichází samotná Morana.",
+		lore: "Noc v předjaří bývá zrádná – sotva sníh roztaje, mráz zpevní zemi v kámen. Zažeňte noční běsy a pošlete Moranu tam, kam patří!",
+		unlockRequirementText: "Odemkne se pokořením Hejna mrazivých vran v 1. úrovni",
+		skyColor: "#283446",
+		nightSkyColor: "#171D28",
+		groundColor: "#BAC3C9",
+		ambientTint: "rgba(30, 45, 75, 0.4)",
+		weatherEffect: "snow",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"ice_floe",
+			"granny_stove",
+			"kaca"
+		],
+		arena: {
+			id: "breznove_tani",
+			name: "Březnové tání",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "tajici_snehulak",
+			name: "⛄ Horda tajících sněhuláků",
+			warning: "⛄ POZOR: ZE ZÁVĚJÍ SE VALÍ HORDA TAJÍCÍCH SNĚHULÁKŮ!",
+			time: 85,
+			kills: 50,
+			multiplier: 3.0
+		},
+		midBoss: {
+			id: "mrazivy_obr",
+			name: "❄️ Mrazivý obr",
+			warning: "❄️ POZOR: ZE ZAMRZLÝCH POLÍ VYSTUPUJE MRAZIVÝ OBR!",
+			time: 185,
+			kills: 130,
 			multiplier: 1.6
 		},
 		finalBoss: {
 			id: "morana",
 			name: "❄️ Morana — špatně vynesená smrtka",
 			warning: "❄️ ZIMU NELZE VYNÉST! MORANA SE VRACÍ Z MRÁZŮ! ❄️",
-			time: 120,
-			kills: 100,
+			time: 300,
+			kills: 240,
 			multiplier: 1.05
 		},
 		spawnPools: {
-			noon: [
-				"vrana",
-				"mrazovy_skritek",
-				"jezinka_mraziva",
-				"mysak",
-				"sotek",
-				"tajici_snehulak"
-			],
-			afternoon: [
-				"vrana",
-				"blatouch",
-				"sotek",
-				"jezinka_mraziva",
-				"tajici_snehulak"
-			],
 			dusk: [
-				"blatouch",
-				"jezinka_mraziva",
+				"mrazovy_skritek",
 				"tajici_snehulak",
-				"mrazivy_obr"
+				"jezinka_mraziva",
+				"blatouch"
 			],
 			night: [
 				"mrazovy_skritek",
 				"tajici_snehulak",
 				"jezinka_mraziva",
-				"bludicka"
+				"bludicka",
+				"mrazivy_obr"
 			],
 			midnight: [
 				"mrazovy_skritek",
-				"bludicka"
+				"bludicka",
+				"jezinka_mraziva"
 			]
 		},
 		keyEnemies: [
@@ -106,53 +188,34 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			{
 				id: "mrazivy_obr",
 				name: "Mrazivý obr",
-				icon: "🧊",
-				role: "Obrovský a mimořádně silný nepřítel"
+				icon: "❄️",
+				role: "Obrovský ledový kolos z mrazivých polí"
 			},
-			{
-				id: "vrana",
-				name: "Rychlá vrána",
-				icon: "🐦‍⬛",
-				role: "Létající náletník"
-			},
-			{
-				id: "mrazovy_skritek",
-				name: "Mrazivý skřítek",
-				icon: "🧊",
-				role: "Široká mrazivá aura"
-			},
-			{
-				id: "blatouch",
-				name: "Blatouchový skřítek",
-				icon: "🌼",
-				role: "Jarní diblík"
-			},
-
 			{
 				id: "morana",
 				name: "Morana, špatně vynesená smrtka",
 				icon: "❄️",
-				role: "Hlavní boss"
+				role: "Vrcholný boss kraje"
 			}
 		],
 		bossMechanic: {
-			label: "Mrazivý dech Morany",
+			label: "❄️ Moraniny větrné čepele",
 			description: "Morana z dálky žene na lovce větrné čepele plné ledu. Při polovině zdraví přivolá vánici a vypouští hustší salvy.",
 			cadenceSeconds: 6
 		}
 	},
-	1: {
-		id: 1,
-		name: "2. Náves a rybník Brčálník",
+	2: {
+		id: 2,
+		name: "3. Náves a rybník Brčálník",
 		shortTitle: "Náves a rybník",
 		subtitle: "Zlatavý podzim, skotačivá havěť a rybniční rejdy",
 		theme: "autumn_village",
 		season: "autumn",
 		icon: "🍂",
-		badge: "2. Úroveň",
+		badge: "3. Úroveň",
 		description: "Slunce ozařuje hrusické doškové střechy. Na mezích šmejdí rarášci a z rybníka Brčálníku vylézají nenechaví vodníci.",
 		lore: "Klidné venkovské odpoledne narušily divoké rejdy. Zažeňte polní a rybniční potvory a vykažte z hospodské náse samotného Pekelného Čerta!",
-		unlockRequirementText: "Výchozí úroveň – otevřena pro každého poutníka",
+		unlockRequirementText: "Odemkne se po poražení Morany ve 2. úrovni",
 		skyColor: "#F7EDD5",
 		nightSkyColor: "#282F3D",
 		groundColor: "#F4ECE1",
@@ -262,18 +325,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			cadenceSeconds: 12
 		}
 	},
-	2: {
-		id: 2,
-		name: "3. Starý hřbitov a Hrusický hvozd",
+	3: {
+		id: 3,
+		name: "4. Starý hřbitov a Hrusický hvozd",
 		shortTitle: "Hřbitov a hvozd",
 		subtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
 		theme: "autumn_graveyard",
 		season: "autumn",
 		icon: "🪦",
-		badge: "3. Úroveň",
+		badge: "4. Úroveň",
 		description: "Za vesnickou zdí šumí staré duby a hřbitovní kříže pohlcuje chladná podzimní mlha. Ze země vystupují umrlci a z lesa hejká prastarý běs.",
 		lore: "V hlubokém hvozdu za márnicí se ztratil nejeden chasník. Připravte své osikové pruty a postavte se nočním kostlivcům i obávanému Hejkalovi!",
-		unlockRequirementText: "Odemkne se po poražení Pekelného Čerta v 2. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Pekelného Čerta ve 3. úrovni",
 		skyColor: "#6B584E",
 		nightSkyColor: "#1A1822",
 		groundColor: "#36382E",
@@ -384,18 +447,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			cadenceSeconds: 12
 		}
 	},
-	3: {
-		id: 3,
-		name: "4. Ladovská zima na Melechově",
+	4: {
+		id: 4,
+		name: "5. Ladovská zima na Melechově",
 		shortTitle: "Ladovská zima",
 		subtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
 		theme: "winter_frost",
 		season: "winter",
 		icon: "❄️",
-		badge: "4. Úroveň",
+		badge: "5. Úroveň",
 		description: "Bílé závěje přikryly chalupy, z okapů visí rampouchy a vánice skučí v komínech. Pod vrcholem Melechova se probouzí kamenný obr!",
 		lore: "Pravá Ladovská zima v plné síle! Mráz svírá pole a pekelný žár ohnivého muže taje rampouchy. Čelte větru i lavinám skalního titána!",
-		unlockRequirementText: "Odemkne se po poražení Půlnočního Hejkala ve 3. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Půlnočního Hejkala ve 4. úrovni",
 		skyColor: "#D8E8F5",
 		nightSkyColor: "#152238",
 		groundColor: "#EAF2F8",
@@ -505,18 +568,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			cadenceSeconds: 11
 		}
 	},
-	4: {
-		id: 4,
-		name: "5. Staré hamry a Čertův mlýn",
+	5: {
+		id: 5,
+		name: "6. Staré hamry a Čertův mlýn",
 		shortTitle: "Hamry a Čertův mlýn",
 		subtitle: "Žhavé výhně, moučný prach a zrádná povodeň",
 		theme: "mill_forge",
 		season: "autumn",
 		icon: "⚙️",
-		badge: "5. Úroveň",
+		badge: "6. Úroveň",
 		description: "Pod zčernalými hamry se otáčí prokletý mlýn. Jiskry létají z kovadlin a mlynářova voda bere vše, co jí stojí v cestě.",
 		lore: "Zastavte zbojníky, jiskřivce a mlynářovy služebníky dřív, než se Čertův mlýn roztočí naplno.",
-		unlockRequirementText: "Odemkne se po poražení Skalního obra ve 4. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Skalního obra v 5. úrovni",
 		skyColor: "#8B5E3C",
 		nightSkyColor: "#21150F",
 		groundColor: "#514237",
@@ -615,18 +678,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			cadenceSeconds: 14
 		}
 	},
-	5: {
-		id: 5,
-		name: "6. Pustá Hláska a Zlenické podhradí",
+	6: {
+		id: 6,
+		name: "7. Pustá Hláska a Zlenické podhradí",
 		shortTitle: "Hláska a podhradí",
 		subtitle: "Bílé paní, zbrojnoši a bezhlavý jezdec",
 		theme: "ruined_castle",
 		season: "autumn",
 		icon: "🏰",
-		badge: "6. Úroveň",
+		badge: "7. Úroveň",
 		description: "Rozbitými zdmi podhradí táhne ledový vítr. Přízraky hlídají cestu k věži, kde čeká rytíř bez hlavy.",
 		lore: "Přelstěte hradní stráž a vyhněte se odražené hlavě, která se vrací k pánovi jako střela.",
-		unlockRequirementText: "Odemkne se po poražení Prokletého Mlynáře ve 5. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Prokletého Mlynáře v 6. úrovni",
 		skyColor: "#77808C",
 		nightSkyColor: "#121520",
 		groundColor: "#55545B",
@@ -720,18 +783,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			cadenceSeconds: 12
 		}
 	},
-	6: {
-		id: 6,
-		name: "7. Dračí sluj pod Melechovskou skálou",
+	7: {
+		id: 7,
+		name: "8. Dračí sluj pod Melechovskou skálou",
 		shortTitle: "Dračí sluj",
 		subtitle: "Rampouchy, noční můry a líný tříhlavý drak",
 		theme: "dragon_cave",
 		season: "winter",
 		icon: "🐉",
-		badge: "7. Úroveň",
+		badge: "8. Úroveň",
 		description: "V nejhlubší sluji pod skálou se střídá ledový dech s ohněm. Každý krok může spustit rampouch.",
 		lore: "Poslední výprava vede k tříhlavému drakovi: jedna hlava spí, druhá chrlí oheň a třetí hlídá kořist.",
-		unlockRequirementText: "Odemkne se po poražení Bezhlavého rytíře v 6. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Bezhlavého rytíře v 7. úrovni",
 		skyColor: "#334155",
 		nightSkyColor: "#080B15",
 		groundColor: "#25313D",

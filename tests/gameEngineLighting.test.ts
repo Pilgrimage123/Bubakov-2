@@ -9,7 +9,7 @@ describe('GameEngine Storybook Lighting Integration', () => {
   beforeEach(() => {
     engine = new GameEngine();
     engine.initRun({
-      levelId: 1,
+      levelId: 2,
       hunterType: 'wanderer',
       spawnInitialWave: false,
     });

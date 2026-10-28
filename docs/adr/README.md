@@ -39,3 +39,4 @@ This directory records architectural decisions made for the project Bubákov.
 | [0032](0032-zivotnost-nezkonzumovaneho-jidla-a-dynamicka-korelace-dropu.md) | Životnost nezkonzumovaného jídla a korekce dynamických dropů |
 | [0033](0033-likvidace-smart-svg-a-sjednoceni-na-canvas.md) | Likvidace Smart SVG komponent a sjednocení vizuálu postav na Canvas 2D |
 | [0034](0034-harmonizace-meritka-areny-entit-a-lidove-perspektivy.md) | Harmonizace měřítka arény, entit, projektilů a lidové perspektivy |
+| [0035](0035-rozdeleni-predjari-na-den-a-noc.md) | Rozdělení Předjaří na denní a noční výpravu a přečíslování krajů |

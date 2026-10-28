@@ -241,45 +241,56 @@ var TROPHIES = [
 	},
 	{
 		id: "level0_completed",
-		title: "🌱 První krůčky v předjaří",
-		desc: "Dokonči úvodní výpravu: zažeň Moranu, špatně vynesenou smrtku, nebo přežij noc v Předjaří.",
+		title: "🌱 Denní tání v Předjaří",
+		desc: "Dokonči 1. úroveň: zažeň Hejno mrazivých vran za jasného denního svitu.",
 		reward: 80,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.morana || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.vrana || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.morana || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[0]) || (meta.bestiaryKills?.vrana || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level1_completed",
-		title: "🍂 Osvoboditel návsi a rybníka",
-		desc: "Dokonči 1. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.",
-		reward: 120,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[1]) || (meta.bestiaryKills.cert || 0) >= 1,
+		title: "❄️ Noční mrazy v Předjaří",
+		desc: "Dokonči 2. úroveň: zažeň Moranu, špatně vynesenou smrtku, a přežij mrazivou noc.",
+		reward: 100,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[1]) || (meta.bestiaryKills?.morana || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[1] || (meta.bestiaryKills.cert || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[1]) || (meta.bestiaryKills?.morana || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level2_completed",
-		title: "🪦 Pokořitel hvozdů a hřbitova",
-		desc: "Dokonči 2. úroveň: přemož mocného vládce hvozdů a očisti starobylý hřbitov od nočních stínů.",
-		reward: 180,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills.hejkal || 0) >= 1,
+		title: "🍂 Osvoboditel návsi a rybníka",
+		desc: "Dokonči 3. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.",
+		reward: 120,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.cert || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[2] || (meta.bestiaryKills.hejkal || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.cert || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level3_completed",
-		title: "❄️ Vládce Ladovské zimy",
-		desc: "Dokonči 3. úroveň: sraz na kolena obřího titána a osvoboď celý zasněžený kraj!",
-		reward: 250,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills.obr || 0) >= 1,
+		title: "🪦 Pokořitel hvozdů a hřbitova",
+		desc: "Dokonči 4. úroveň: přemož mocného vládce hvozdů a očisti starobylý hřbitov od nočních stínů.",
+		reward: 180,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.hejkal || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[3] || (meta.bestiaryKills.obr || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.hejkal || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level4_completed",
+		title: "❄️ Vládce Ladovské zimy",
+		desc: "Dokonči 5. úroveň: sraz na kolena obřího titána a osvoboď celý zasněžený kraj!",
+		reward: 250,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.obr || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.obr || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
@@ -317,35 +328,35 @@ var TROPHIES = [
 		})
 	},
 	{
-		id: "level4_completed",
-		title: "⚙️ Osvoboditel starých hamrů",
-		desc: "Dokonči 4. úroveň: pokoř Prokletého Mlynáře nebo přežij vřavu u hamrů.",
-		reward: 220,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills.mlynar || 0) >= 1,
-		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[4] || (meta.bestiaryKills.mlynar || 0) >= 1 ? 1 : 0,
-			max: 1
-		})
-	},
-	{
 		id: "level5_completed",
-		title: "🏰 Pán pusté hlásky",
-		desc: "Dokonči 5. úroveň: překonej Bezhlavého rytíře a hradní zlenické přízraky.",
-		reward: 260,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1,
+		title: "⚙️ Osvoboditel starých hamrů",
+		desc: "Dokonči 6. úroveň: pokoř Prokletého Mlynáře nebo přežij vřavu u hamrů.",
+		reward: 220,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.mlynar || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[5] || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.mlynar || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level6_completed",
-		title: "👑 Drakobijec z Melechova",
-		desc: "Dokonči 6. úroveň: zvládni dračí sluj a dosáhni legendárního triumfu!",
-		reward: 350,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.drak || 0) >= 1,
+		title: "🏰 Pán pusté hlásky",
+		desc: "Dokonči 7. úroveň: překonej Bezhlavého rytíře a hradní zlenické přízraky.",
+		reward: 260,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: meta.completedLevels && meta.completedLevels[6] || (meta.bestiaryKills.drak || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level7_completed",
+		title: "👑 Drakobijec z Melechova",
+		desc: "Dokonči 8. úroveň: zvládni dračí sluj a dosáhni legendárního triumfu!",
+		reward: 350,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.drak || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.drak || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	}
