@@ -213,6 +213,7 @@ import {
 import { GRANDFATHER_ITEMS, getGrandfatherItem, type GrandfatherItemDef } from './data/grandfatherItems';
 import { SYNERGISTIC_UPGRADES, getSynergisticUpgrade } from './data/synergisticUpgrades';
 import {
+  MARCH_MARIAN_APPARITION_COOLDOWN,
   MARCH_THAW_DECOR,
   MARCH_THAW_POIS,
   clampToMarchArenaBounds,
@@ -2516,7 +2517,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
       if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.shrine, 35) && thaw.shrineCooldown <= 0 && (thaw.apparitionTimer || 0) <= 0) {
         thaw.shrineCharge = 0;
-        thaw.shrineCooldown = 20;
+        thaw.shrineCooldown = MARCH_MARIAN_APPARITION_COOLDOWN;
         thaw.apparitionTimer = 4.2;
         thaw.apparitionPulseTimer = 0;
         p.hp = Math.min(p.maxHp, p.hp + 18 * (p._cachedFrostHealMult ?? 1));
@@ -6342,9 +6343,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
 
               // 6. KAPLIČKA: Zjevení Panny Marie s Ježíškem (brief 4.2s apparition: starts small, grows larger while scattering bubáci, then vanishes)
-              const playerNearShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine, 315);
               let bubakNearShrine = false;
-              if (playerNearShrine && thaw.shrineCooldown <= 0) {
+              if (inShrine && thaw.shrineCooldown <= 0) {
                 const nearShrineFoes = enemySpatialHashRef.current.queryCircleInto(
                   MARCH_THAW_POIS.shrine.x,
                   MARCH_THAW_POIS.shrine.y,
@@ -6359,11 +6359,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 }
               }
-              if (inShrine || bubakNearShrine) {
-                thaw.shrineCharge += dt * (inShrine && bubakNearShrine ? 1.35 : 1);
+              if (inShrine && bubakNearShrine) {
+                thaw.shrineCharge += dt * 1.35;
                 if (thaw.shrineCharge >= 1.6 && thaw.shrineCooldown <= 0) {
                   thaw.shrineCharge = 0;
-                  thaw.shrineCooldown = 20;
+                  thaw.shrineCooldown = MARCH_MARIAN_APPARITION_COOLDOWN;
                   thaw.apparitionTimer = 4.2;
                   thaw.apparitionPulseTimer = 0;
                   player.hp = Math.min(player.maxHp, player.hp + 18 * (player._cachedFrostHealMult ?? 1));

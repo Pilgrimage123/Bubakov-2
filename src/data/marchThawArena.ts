@@ -140,6 +140,10 @@ export const MARCH_THAW_DECOR = [
 
 export const MARCH_THAW_POIS_LIST: MarchThawPoi[] = Object.values(MARCH_THAW_POIS);
 
+// The apparition is a meaningful sanctuary event, not a map-wide automatic attack.
+// Its cooldown is shared by manual activation and the guarded automatic trigger.
+export const MARCH_MARIAN_APPARITION_COOLDOWN = 30;
+
 export function isInsideMarchPoi(x: number, y: number, poi: MarchThawPoi, padding = 0): boolean {
   const dx = x - poi.x;
   const dy = y - poi.y;

@@ -1476,3 +1476,9 @@
 - Test kaple porovnává stejného nepřítele s nulovou a druhou úrovní kaple, aby izoloval přesný bonus +16 % i při nepřátelské svaté odolnosti.
 - Upraven test pasivního svatého bonusu tak, aby přesně porovnával úroveň 0 a 2 a ověřoval násobek 1,16.
 - Hráčská runtime data nyní nesou násobič svatého poškození Kaple svaté vlny (1 + 0,08 × úroveň); přidán cílený test úrovní 0/1/2.
+## 2026-10-28 — Zklidnění zjevení u kapličky
+
+- Automatické zjevení Panny Marie se nyní nabíjí pouze tehdy, když hráč stojí přímo v oblasti kapličky a poblíž kapličky je živý bubák; vzdálený hráč tak událost nespustí.
+- Obnova zjevení sjednocena pro automatickou i ruční aktivaci a prodloužena z 20 na 30 sekund.
+- Doplněn test, který ověřuje, že se zjevení nespustí hráči mimo kapličku. Cílené testy (23) a TypeScript kontrola prošly.
+

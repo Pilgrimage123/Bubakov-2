@@ -5,7 +5,12 @@ import { RUN_ROZMARY, selectRunRozmar } from '../src/data/runArchetypes';
 import { GameEngine } from '../src/game/engine';
 import { getLevelTranslation } from '../src/i18n';
 import { getCurrentDayPhase } from '../src/constants';
-import { MARCH_THAW_DECOR, MARCH_THAW_POIS, isInsideMarchPoi } from '../src/data/marchThawArena';
+import {
+  MARCH_MARIAN_APPARITION_COOLDOWN,
+  MARCH_THAW_DECOR,
+  MARCH_THAW_POIS,
+  isInsideMarchPoi,
+} from '../src/data/marchThawArena';
 
 describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('numbers player-facing game stages from 1 through 8 without changing internal IDs', () => {
@@ -346,6 +351,8 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     }
 
     expect(state.marchThaw.apparitionTimer).toBeGreaterThan(0);
+    expect(state.marchThaw.shrineCooldown).toBeGreaterThan(MARCH_MARIAN_APPARITION_COOLDOWN - 2);
+    expect(state.marchThaw.shrineCooldown).toBeLessThanOrEqual(MARCH_MARIAN_APPARITION_COOLDOWN);
     expect(foe.hp).toBeLessThan(initialHp);
     expect(foe.panicked).toBe(true);
     expect(state.texts.some((t: any) => String(t.text).includes('PANNY MARIE'))).toBe(true);
@@ -355,6 +362,19 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
       engine.update(0.1);
     }
     expect(state.marchThaw.apparitionTimer).toBe(0);
+  });
+
+  it('does not trigger the Marian apparition when the player is outside the Kaplička area', () => {
+    const engine = new GameEngine();
+    const state = engine.initRun({ levelId: 0, hunterType: 'wanderer', spawnInitialWave: false });
+    state.player.x = MARCH_THAW_POIS.shrine.x + MARCH_THAW_POIS.shrine.radius + 100;
+    state.player.y = MARCH_THAW_POIS.shrine.y;
+    engine.spawnMonster('mrazivy_obr', MARCH_THAW_POIS.shrine.x + 140, MARCH_THAW_POIS.shrine.y, 2.0);
+
+    for (let i = 0; i < 20; i++) engine.update(0.1);
+
+    expect(state.marchThaw.apparitionTimer).toBe(0);
+    expect(state.marchThaw.shrineCharge).toBe(0);
   });
 
   it('enforces impassable cottages (chalupy) and terrain obstacles while keeping flying crows unhindered', async () => {

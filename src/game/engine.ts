@@ -113,6 +113,7 @@ import {
   isCombatTextCategoryEnabled,
 } from './combatTextSettings';
 import {
+  MARCH_MARIAN_APPARITION_COOLDOWN,
   MARCH_THAW_POIS,
   getMarchIceFloeState,
   getMarchWaterAndFloeEffect,
@@ -3520,20 +3521,19 @@ export class GameEngine {
 
         if (thaw) {
           const inShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine);
-          const playerNearShrine = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.shrine, 315);
           const bubakNearShrine =
-            playerNearShrine &&
+            inShrine &&
             this.livingEnemies.some(
               (foe) =>
                 !foe.dead &&
                 !foe.isDefeated &&
                 Math.hypot(foe.x - MARCH_THAW_POIS.shrine.x, foe.y - MARCH_THAW_POIS.shrine.y) < 250
             );
-          if (inShrine || bubakNearShrine) {
-            thaw.shrineCharge = (thaw.shrineCharge || 0) + dt * (inShrine && bubakNearShrine ? 1.35 : 1);
+          if (inShrine && bubakNearShrine) {
+            thaw.shrineCharge = (thaw.shrineCharge || 0) + dt * 1.35;
             if (thaw.shrineCharge >= 1.6 && thaw.shrineCooldown <= 0) {
               thaw.shrineCharge = 0;
-              thaw.shrineCooldown = 20;
+              thaw.shrineCooldown = MARCH_MARIAN_APPARITION_COOLDOWN;
               thaw.apparitionTimer = 4.2;
               thaw.apparitionPulseTimer = 0;
               player.hp = Math.min(player.maxHp, player.hp + 18);
