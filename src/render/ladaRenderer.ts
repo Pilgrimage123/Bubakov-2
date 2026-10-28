@@ -218,7 +218,7 @@ var Lada = {
 			ctx.translate(0, -15);
 		}
 
-		// 1. OVER-SHOULDER HAZEL STICK & RED POLKA-DOT BUNDLE (Raneček na holi dle předlohy)
+		// 1. OVER-SHOULDER HAZEL STICK & BRIGHT BROWN-YELLOW SACK (Jasně hnědo-žlutý pytel)
 		if (!isRiding) {
 			ctx.save();
 			// Hazel stick held across shoulder
@@ -235,26 +235,33 @@ var Lada = {
 			ctx.lineTo(-28, -27);
 			ctx.stroke();
 
-			// Bright red bundle with tied knot and white polka dots
+			// Bright brown-yellow sack with tied knot and polka dots / highlights
 			const bundleBob = moving ? Math.sin(time * 13 + 0.6) * 3 : Math.sin(time * 2.2) * 1.5;
 			ctx.translate(-28, -27 + bundleBob);
-			// Tied fabric knot over stick
-			this.setupPath(ctx, "#DC2626", COLORS.ink, 2);
+			// Tied knot over stick (warm amber brown)
+			this.setupPath(ctx, "#D97706", COLORS.ink, 2);
 			ctx.beginPath();
 			ctx.ellipse(-1, -7, 4.5, 3.5, 0.4, 0, Math.PI * 2);
 			ctx.ellipse(3, -6, 4, 3, -0.3, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
 
-			// Main round fabric pouch
-			this.setupPath(ctx, "#DC2626", COLORS.ink, 2.5);
+			// Main round bright yellow-brown sack body (jasně hnědo-žlutý pytel)
+			this.setupPath(ctx, "#EAB308", COLORS.ink, 2.5);
 			ctx.beginPath();
 			ctx.ellipse(0, 3, 13, 14, -0.15, 0, Math.PI * 2);
 			ctx.fill();
 			ctx.stroke();
 
-			// Crisp white polka dots on bundle
-			ctx.fillStyle = "#FFFFFF";
+			// Warm amber shadow curve on sack
+			ctx.strokeStyle = "#B45309";
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.arc(0, 3, 10.5, 0.8, 2.8);
+			ctx.stroke();
+
+			// Bright cream & golden polka dots / patches on sack
+			ctx.fillStyle = "#FEF3C7";
 			const dots = [
 				[-5, -4], [3, -5], [-7, 2], [1, 2], [7, 1], [-3, 8], [4, 8], [-1, -1]
 			];
@@ -476,21 +483,18 @@ var Lada = {
 		ctx.fill();
 		ctx.stroke();
 
-		// Cheerful winking / smiling eyes
-		ctx.fillStyle = COLORS.ink;
+		// Cheerful laughing eyes (se smějícíma se očima - curved upward crescent arcs with crow's feet)
 		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.8;
-		// Friendly twinkling right eye
+		ctx.lineWidth = 2.4;
 		ctx.beginPath();
-		ctx.arc(6, -34, 1.9, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "#FFFFFF";
+		ctx.arc(-6, -34, 3, 0.2, Math.PI - 0.2);
+		ctx.arc(6, -34, 3, 0.2, Math.PI - 0.2);
+		ctx.stroke();
+		// Crow's feet wrinkles for extra jovial laughter
+		ctx.lineWidth = 1.2;
 		ctx.beginPath();
-		ctx.arc(6.5, -34.5, 0.65, 0, Math.PI * 2);
-		ctx.fill();
-		// Playful winking left eye arc
-		ctx.beginPath();
-		ctx.arc(-5.5, -34, 2.8, 0.2, Math.PI - 0.2);
+		ctx.moveTo(-9.5, -34); ctx.lineTo(-12, -35.5);
+		ctx.moveTo(9.5, -34); ctx.lineTo(12, -35.5);
 		ctx.stroke();
 
 		// Open happy laughing mouth with white teeth & pink tongue
@@ -506,7 +510,7 @@ var Lada = {
 		ctx.arc(0, -20.5, 2.8, 0, Math.PI);
 		ctx.fill();
 
-		// 8. GREEN FOLK HAT WITH FEATHER & HEATHER BLOSSOMS (Klobouk s perem a vřesem)
+		// 8. GREEN FOLK HAT WITH FEATHER, HEATHER BLOSSOMS & HOLE IN HAT (Klobouk s dírou)
 		this.setupPath(ctx, "#3F6E32", COLORS.ink, 2.8);
 		// Hat brim with upturned back
 		ctx.beginPath();
@@ -516,6 +520,21 @@ var Lada = {
 		ctx.quadraticCurveTo(23, -48, 22, -39);
 		ctx.closePath();
 		ctx.fill();
+		ctx.stroke();
+
+		// Visible hole in hat crown showing curly brown hair and frayed stitches (díra v klobouku)
+		this.setupPath(ctx, "#7C4522", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(-4, -58, 6, 4.2, -0.3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Frayed yellow thread stitches around hat hole
+		ctx.strokeStyle = "#FEF08A";
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(-10, -58); ctx.lineTo(-7, -56);
+		ctx.moveTo(1, -61); ctx.lineTo(-1, -58);
+		ctx.moveTo(-2, -54); ctx.lineTo(-4, -52);
 		ctx.stroke();
 
 		// Hat band (Teal/blue ribbon)
@@ -1075,18 +1094,24 @@ var Lada = {
 		// NORMAL STRIDE / STANDING POSE (Matching reference image)
 		// -------------------------------------------------------------
 
-		// 1. SLUNG KNAPSACK / BUNDLE (Pestře záplatovaný ranec na zádech)
+		// 1. SLUNG KNAPSACK / BUNDLE (Jasně hnědo-žlutý pytel na zádech)
 		ctx.save();
 		const sackBob = moving ? Math.sin(time * 13 + 0.5) * 2.5 : Math.sin(time * 2.2) * 1.2;
 		ctx.translate(-24, -2 + sackBob);
-		// White/beige canvas sack
-		this.setupPath(ctx, "#F5F5F0", COLORS.ink, 2.8);
+		// Bright yellow-brown canvas sack (jasně hnědo-žlutý pytel)
+		this.setupPath(ctx, "#EAB308", COLORS.ink, 2.8);
 		ctx.beginPath();
 		ctx.ellipse(0, 0, 16.5, 21, -0.28, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
+		// Warm amber shadow curve on sack
+		ctx.strokeStyle = "#B45309";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.arc(0, 0, 13.5, 0.8, 2.8);
+		ctx.stroke();
 		// Tied rope top knot with bunching folds
-		this.setupPath(ctx, "#F59E0B", COLORS.ink, 2);
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2);
 		ctx.beginPath();
 		ctx.ellipse(5, -19, 5.5, 4.5, 0.4, 0, Math.PI * 2);
 		ctx.fill();
@@ -1515,6 +1540,20 @@ var Lada = {
 		ctx.quadraticCurveTo(16, -46, 14, -37);
 		ctx.closePath();
 		ctx.fill();
+		ctx.stroke();
+
+		// Visible hole in hat crown showing brown curly hair & frayed stitches (díra v klobouku)
+		this.setupPath(ctx, "#7C4522", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(-2, -50, 5.5, 3.8, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Frayed thread stitches around hat hole
+		ctx.strokeStyle = "#FDE047";
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.moveTo(-7, -50); ctx.lineTo(-5, -48);
+		ctx.moveTo(3, -51); ctx.lineTo(1, -49);
 		ctx.stroke();
 
 		// Dark green hatband
