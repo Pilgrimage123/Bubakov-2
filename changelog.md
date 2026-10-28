@@ -59,8 +59,24 @@
   - V `GLOSSARY.md` termín *Smart SVG sprity* označen za historický a nahrazen autoritativním termínem *Procedurální kresba kramáře*.
   - Zaznamenáno a zaevidováno architektonické rozhodnutí v `docs/adr/0033-likvidace-smart-svg-a-sjednoceni-na-canvas.md` a `docs/adr/README.md`.
 
-## 2026-10-27 — Vlna 2 optimalizací arény: Rozšířený atlas strašidel, razítkový kvašový atlas a dávkové částice
+## 2026-10-27 — Vlna 2 optimalizací arény: Atlas strašidel, bezalokační dávkování a plná podpora gamepadu
 
+- **Plná nativní podpora gamepadu (`src/game/gamepad.ts`)**:
+  - Implementována automatická detekce připojených ovladačů (Xbox, PlayStation DualShock/DualSense, Nintendo Switch Pro) přes nativní Gamepad API.
+  - Plynulý analogový pohyb levou páčkou (s přesně nastavenou mrtvou zónou 0.15) i D-Padem s okamžitým prolínáním s klávesnicí (WASD / šipky).
+  - Použití zvláštní schopnosti lovce na pravém horním bumperu `[RB]` nebo tlačítku `[B]`.
+  - Interakce s Čertovým dědečkem, malovanými truhlami, oltářem, zvonicí i pípou na tlačítku `[X]`.
+  - Intuitivní navigace v nabídce nákupů v dědečkově nůši i ve zbraňových milnících pomocí D-Padu / analogové páčky a potvrzení volby tlačítkem `[A]`.
+  - Pozastavení výpravy a odpočinek tlačítkem `[Start]`.
+  - Rozhraní hry (HUD, akční nápovědy, nákupní dialogy) dynamicky přepíná mezi klávesovými a gamepadovými ikonami podle toho, kterým zařízením hráč zrovna hne.
+- **Rebalance dřevěného cepu a zbraní (`src/data/weapons.ts`, `weaponUnlocks.ts`)**:
+  - Dřevěný cep na obilí a Tepaný cep prošly vyvážením poškození, dosahu a rázové vlny pro spolehlivé rozrážení hord běžných strašidel i tajících sněhuláků.
+  - Doplněna a rozšířena testovací sada v `tests/meltingSnowmanFlail.test.ts`.
+- **Optimalizace nabídky u Čertova dědečka (`src/game/grandfatherRuntime.ts`)**:
+  - Zvýšení běhového výkonu a stability: dynamická náhrada položek při nedostatku Kuráže byla přesunuta přímo do okamžiku otevření nůše (`openShop`), čímž se eliminovaly zbytečné výpočty během bojové simulace.
+- **Vizuální doladění grafiky na Canvas 2D (`src/render/ladaRenderer.ts`)**:
+  - Ranec přes rameno získal teplý žlutohnědý odstín s ladovským stínováním pro vizuální soulad s lidovými ilustracemi.
+  - Zpřesněn a zjemněn barevný portrét Tuláka na plátně v náhledech i animátoru.
 - **Rozšíření `BakedBubakAtlas` na 44 archetypů se zrcadlením a lenivým pečením**:
   - Rozšířen `BakedBubakAtlas` (`src/render/bakedBubakAtlas.ts`) a převodní mapa `METHOD_TO_MOB_ID` (`src/render/ladaRenderer.ts`) ze 14 původních zkušebních strašidel na **44 běžných archetypů vln** (včetně `kostlivec_kosa`, `hromotluk`, `stodolnik`, `mrazivy_obr`, `hastrman`, `bila_pani`, `klekanice`, `drab` a dalších).
   - Implementováno **lenivé pečení na vyžádání** (`ensureMobBaked`) při prvním spawnu nebo vykreslení konkrétního druhu strašidla v dané úrovni, což zajišťuje okamžitý start arény a pevně ohraničuje paměťové nároky offscreen canvasů pouze na aktivní monstra v daném levelu.
@@ -131,6 +147,17 @@
 - **Doménová dokumentace a architektura**:
   - Do `GLOSSARY.md` zapsány kanonické termíny **Hejno mrazivých vran (Miniboss)** a **Smart SVG sprity**.
   - Založeno architektonické rozhodnutí `docs/adr/0030-hejno-mrazivych-vran-a-smart-svg-integrace.md` a aktualizován `docs/adr/README.md`.
+
+## 2026-10-25 — Rozšíření arény Předjaří, plovoucí ledové kry a malované truhly jako výherní automat
+
+- **Rozšíření arény Březnového tání a body zájmu (POI)**:
+  - Plocha mapy Předjaří byla rozšířena o 25 % (2000×1500 px) s jasně definovanými hranicemi bojiště a novými pamětihodnostmi: Hostinec u Tater, Kaplička sv. Prokopa, Stará zvonice a Říční tůň.
+  - Implementována dynamická mechanika plovoucích ledových ker na tající řece Sázavě (`renderWorldHazards.ts`), včetně vlivu na pohyb entit a kolize.
+  - Vytvořena nová krajinná kresba v `marchThawSvgLandscape.ts` a optimalizováno cachování chunků.
+- **Malované truhly s mechanikou výherního automatu (Slot Machine)**:
+  - Malované truhly získaly interaktivní lidový miniautomat se 3 točícími se válci (`chestSlotMachine.ts`).
+  - Válce nesou tradiční venkovské symboly: Perníček, Jitrnice, Podkova pro štěstí, Krejcar a Malovaná truhla s autentickými výherními kombinacemi a štědrou nadílkou zbraní, perníčků i zlaťáků.
+  - Zavedena nová testovací sada v `tests/chestSlotMachine.test.ts` a `tests/treasureSpawnBugFix.test.ts`.
 
 ## 2026-10-25 — Nové detailní Smart SVG sprity: Krajánek, Tulák a Bezhlavý rytíř (Enemy Boss)
 

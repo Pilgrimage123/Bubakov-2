@@ -11,6 +11,28 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '28. října 2026',
+    title: 'Rozdělení Předjaří na den a noc, osmidílná kampaň a 5minutové trvání (ADR 0035)',
+    summary: 'Úvodní kraj Předjaří v Hrusicích byl rozdělen na dvě plnohodnotné samostatné výpravy – prosluněné Denní tání a třeskuté Noční mrazy. Obě výpravy trvají plných 5 minut a kampaň Bubákova byla sjednocena do osmidílné řady kapitol.',
+    items: [
+      '☀️ Denní tání (1. úroveň, ID 0): Prosluněná denní výprava mezi tajícími mezemi a pučícími blatouchy. Cílem je vydržet až do večerního klekání a v čase 300 s zahnat finálního bosse Hejno mrazivých vran.',
+      '❄️ Noční mrazy (2. úroveň, ID 1): Noční výprava na praskajících krách podél Sázavy s pochodem tajících sněhuláků, Mrazivým obrem a finální Moranou — špatně vynesenou smrtkou.',
+      '🗺️ Čistá osmidílná kampaň: Celý svět Bubákova je nově uspořádán do 8 lineárních kapitol (1. Denní tání, 2. Noční mrazy, 3. Náves a rybník Brčálník, 4. Starý hřbitov a hvozd, 5. Zima na Melechově, 6. Staré hamry a mlýn, 7. Pustá Hláska, 8. Dračí sluj).',
+      '⏱️ Pětiminutové trvání (300 s): Obě úvodní výpravy byly strategicky prodlouženy na 5 minut (dohromady 10 minut), s fázemi dne/noci, anomálním oknem Bubácké díry (120–175 s) a trojím odstupňováním bossů (Miniboss 85 s, Midboss 185 s, Finální boss 300 s).',
+      '🔔 Tematické zakončení: Denní výprava slaví vítězství při večerním klekání zvonu, zatímco noční výpravy končí při ranním kuropění kohouta.',
+    ],
+  },
+  {
+    date: '28. října 2026',
+    title: 'Likvidace Smart SVG komponent, přechod Čertova dědečka na Canvas 2D a pročištění mrtvého kódu (ADR 0033)',
+    summary: 'Kompletní odstranění DOM SVG subsystému a sjednocení veškerého vykreslování postav i kramáře na bezalokační 2D Canvas pipeline pro absolutní plynulost a eliminaci zátěže DOMu.',
+    items: [
+      '🎨 Sjednocení na 2D Canvas: Celá hra od herní arény až po dialogová okna a výběr postav běží na jednotném procedurálním štětci LadaRenderer bez DOM SVG režií.',
+      '🧙 Kramářský Canvas preview: Čertův dědeček s nůší a myškou Rézinkou v obchodě i v nápovědě ovládání přešel na lehkou canvasovou komponentu LadaGrandfatherCanvasPreview.',
+      '🧹 Odstranění složky src/components/svg/: Smazán zastaralý kód, vyčištěny konfigurační chunky Vite a odstraněny nepoužívané relikty externího prototypování.',
+    ],
+  },
+  {
+    date: '28. října 2026',
     title: 'Harmonizace měřítka arény, entit, projektilů a lidové perspektivy (ADR 0034)',
     summary: 'Kompletní sladění poměrů velikostí mezi postavami lovců, vesnickou architekturou, bojovými projektily a kamerou pro autentický pohádkový ráz a férovou rogue-lite hratelnost.',
     items: [
@@ -22,6 +44,29 @@ const KRONIKA: KronikaEntry[] = [
     ],
   },
   {
+    date: '27. října 2026',
+    title: 'Vlna 2 optimalizací arény: Atlas strašidel, bezalokační dávkování a plná podpora gamepadu',
+    summary: 'Zavedení nativní podpory ovladačů Xbox, PlayStation a Switch, rozšíření offscreen atlasu strašidel na 44 archetypů, dávkové vykreslování částic s 20× méně draw calls a rebalance cepu.',
+    items: [
+      '🎮 Plná podpora gamepadu: Automatické rozpoznání ovladačů s analogovým pohybem (mrtvá zóna 0.15), D-Padem, ultimátem na [RB]/[B], nákupem na [X], navigací v kartách a pauzou [Start].',
+      '👹 BakedBubakAtlas pro 44 archetypů: Předpečené zrcadlené canvasy (flippedCanvas) a lenivé pečení monster na vyžádání garantují okamžitý start arény a bleskové vykreslování bez transformací.',
+      '✨ Dávkové částice a razítkový kvašový atlas: Dvouprůchodové slučování částic dle barvy a alfy snížilo počet draw calls až dvacetinásobně. Předpečené razítkování perníčků, dušiček i projektilů.',
+      '🌾 Rebalance Dřevěného a Tepaného cepu: Zpřesněny hodnoty zranění, dosahu a rázové vlny pro účinné rozmetání hord strašidel a tajících sněhuláků.',
+      '🧺 Optimalizace nůše Čertova dědečka: Generování nabídky a náhrada položek při nedostatku Kuráže přesunuta přímo do otevření obchodu.',
+    ],
+  },
+  {
+    date: '26. října 2026',
+    title: 'Miniboss Hejno mrazivých vran, nová kresba letících vran a sjednocení identifikátorů (ADR 0031)',
+    summary: 'Miniboss 9 dravých vran s mrazivým lemem a dynamickým náklonem křídel, nová autentická ladovská kresba vrány a sjednocení identifikátorů všech lovců i monster na český snake_case.',
+    items: [
+      '🦅 Miniboss Hejno mrazivých vran: Devítičlenná letová formace s rychlostí náletu 260 px/s, dynamickým naklápěním těla do směru letu a mrazivým azurovým lemem letek.',
+      '🎨 Autentická ladovská kresba vrány: Přepracovaná vektorová kresba letící i klovající vrány s 5 ručními letkami, vějířovitým ocasem, opeřenými stehny a rozčepýřenou chocholkou.',
+      '🏷️ Kanonizace na český snake_case: Sjednoceny identifikátory všech lovců (krajanek, tulak, pasacek, korenarka, ponocny, kostelnik, babicka) i monster (kostlivec, kostlivec_kosa) s obousměrnou migrací pozic.',
+      '🧹 Odstranění těžkých prototypových rastrů: Z repozitáře a distribuce vyčištěno 24 MB nepotřebných externích rastrů a zavedena guardrail pravidla pro složku public.',
+    ],
+  },
+  {
     date: '26. října 2026',
     title: 'Kanonizace procedurální kresby lovců a Smart SVG postav v glosáři',
     summary: 'Zavedení autoritativních doménových pojmů pro kresbu lovců na herní plátno a interaktivní vektorové postavy v UI, audit kompletní implementace 7 lovců v aréně a potvrzení architektonického rozdělení dle ADR 0030.',
@@ -30,6 +75,27 @@ const KRONIKA: KronikaEntry[] = [
       '✨ Smart SVG postava: Zaveden kanonický pojem pro interaktivní DOM SVG komponenty lovců vyhrazené pro UI modály, karty výběru a informační spisy.',
       '⚔️ Prověrka 7 lovců v aréně: Všech 7 hratelných postav (Krajánek, Tulák, Pasáček, Bába kořenářka, Ponocný, Kostelník, Babička a Barunka) je plně zapojeno v bojovém renderovacím cyklu včetně unikátních mechanik.',
       '🖼️ Canvasové náhledy v UI: Informační a odemykací modály používají LadaHunterCanvasPreview pro živou animaci postav přímo v kartách.',
+    ],
+  },
+  {
+    date: '25. října 2026',
+    title: 'Rozšíření arény Předjaří, plovoucí ledové kry a malované truhly jako výherní automat',
+    summary: 'Zvětšení mapy Předjaří o 25 %, body zájmu s pamětihodnostmi, plovoucí ledové kry na řece Sázavě a lidový venkovský výherní automat v malovaných truhlách.',
+    items: [
+      '🗺️ Rozšíření arény Předjaří o 25 %: Mapa zvětšena na 2000×1500 px s pevnými hranicemi bojiště a novými dominantami (Hostinec u Tater, Kaplička sv. Prokopa, Stará zvonice, Říční tůň).',
+      '🧊 Plovoucí ledové kry na Sázavě: Dynamická environmentální tělesa reagující na proud řeky ovlivňující manévrování hrdiny a monster.',
+      '🎰 Malované truhly s venkovským výherním automatem: Otevření truhly spouští lidový slot machine se třemi točícími se válci (perníček, jitrnice, podkova, krejcar, truhlička) se štědrými výhrami.',
+    ],
+  },
+  {
+    date: '23. října 2026',
+    title: 'Nový hratelný lovec Krajánek, Jízda na žernovu a vyvážení hrdinů',
+    summary: 'Příchod mlynářského tovaryše Krajánka s nezranitelnou Jízdou na žernovu, vyvážení Tuláka i Pasáčka a zavedení hordy tajících sněhuláků.',
+    items: [
+      '🥖 Nový lovec Krajánek: Mlynářský tovaryš a vesnický pocestný s pomoučeným kabátcem, puntíkovanou mošnou na holi a kamenickým kladívkem.',
+      '🪨 Schopnost Jízda na žernovu: 9 sekund nezranitelnosti, dvojnásobná rychlost běhu, drcení slabších bubáků a jiskrová aura Vůle v okruhu 85 px s rotujícím žulovým mlýnským kamenem.',
+      '⚖️ Vyvážení Tuláka a Pasáčka: Tulák získal +15 % základní Kuráže (230) a výchozí Bylinkovou fajfku; Pasáček přešel na 55 Kuráže s novou 35% šancí na ÚHYB a 0,6 s nezranitelností.',
+      '⛄ Horda tajících sněhuláků: Nové ladovské monstrum se samovolným táním, řízené Virtuálním vůdcem a zanechávající 4sekundové kluzké ledové louže.',
     ],
   },
   {

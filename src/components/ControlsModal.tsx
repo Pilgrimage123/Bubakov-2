@@ -396,10 +396,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 }}
               >
                 <li>
-                  <strong>Tulák:</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (rychlé nabíjení 21 s). Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní, výchozí Kuráž 200.
+                  <strong>Krajánek:</strong> <em>Jízda na žernovu</em> – naskočí na rotující žulový mlýnský kámen (žernov). Získá 9 s nezranitelnosti, dvojnásobnou rychlost, drtí slabší bubáky pod limitem HP a kolem sebe šíří jiskrovou auru Vůle v okruhu 85 px (nabíjení 30 s). Během jízdy jsou ostatní zbraně pozastaveny.
                 </li>
                 <li>
-                  <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, nabíjení 30 s). Vysoká rychlost (220) a obří dosah sběru krejcarů.
+                  <strong>Tulák:</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní a silně odhodí okolní bubáky a nepřátele ve větší vzdálenosti vystraší na 4 s (rychlé nabíjení 21 s). Výchozí Kuráž 230, Štěstí 70, startovní zbraň Bylinková fajfka. Pasivní bonus Tulácký instinkt: +35 % k poškození všech zbraní (neposiluje ultimátum).
+                </li>
+                <li>
+                  <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození a silné odhození, nabíjení 30 s). Vysoká rychlost (220) a obří dosah magnetu pro sběr krejcarů. Výchozí Kuráž 55, avšak disponuje 35% šancí na ÚHYB před jakýmkoliv zásahem a prodlouženou 0,6 s nezranitelností po zásahu!
                 </li>
                 <li>
                   <strong>Bába kořenářka:</strong> <em>Očistné kadidlo z devatera bylin</em> – vyvolá bylinné sanctuarium (+55 kuráže, +30 dočasný štít, 1,8 s nezranitelnost) a nasákne a zpomalí okolní nepřátele na 4,5 s (120 nature poškození, nabíjení 30 s). Pasivní bylinný záblesk každých 9 s: léčí o 18 % maximální Kuráže, na 3 s zvýší dosah magnetu i rychlost přitahování dropů na pětinásobek a poskytne nezranitelnost. Základní dosah magnetu je snížen o 75 %.
@@ -486,16 +489,16 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               }}
             >
               <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#78350F', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <GameIcon icon="rooster" size={24} /> Hlavní cíl: Přežít noc až do ranního kuropění (5 minut)!
+                <GameIcon icon="rooster" size={24} /> Hlavní cíl: Přežít výpravu (5 minut) do večerního klekání či kuropění!
               </h3>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.4 }}>
-                Každá noční výprava v Bubákově trvá přesně <strong>5 minut (300 sekund)</strong> reálného času.
-                Pokud vydržíte naživu, v 300. sekundě třikrát hlasitě <strong>zakokrhá vesnický kohout</strong>.
-                S prvním ranním paprskem všechna strašidla ztratí svou moc, propadnou panice a rozutečou se! Úroveň je tím slavnostně vyhrána.
+                Každá výprava v Bubákově trvá přesně <strong>5 minut (300 sekund)</strong> reálného času.
+                Kampaň vás provede <strong>8 rozmanitými kraji</strong> – od prosluněného denního tání v Hrusicích přes třeskuté noční mrazy až po tajemnou Dračí sluj.
+                Vydržíte-li naživu plných 300 sekund a porazíte finálního bosse, rozezní se <strong>večerní klekání zvonu</strong> (při denní výpravě) nebo třikrát hlasitě <strong>zakokrhá vesnický kohout</strong> (při noční výpravě)! Strašidla ztratí svou moc a úroveň je slavně vyhrána.
               </p>
             </div>
 
-            {/* NIGHT PHASES */}
+            {/* EXPEDITION PROGRESSION & PHASES */}
             <div
               style={{
                 background: 'var(--parchment)',
@@ -507,7 +510,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               }}
             >
               <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <GameIcon icon="clock" size={20} /> Fáze noci – jak se stupňuje nebezpečí a přichází temnota:
+                <GameIcon icon="clock" size={20} /> Fázování výpravy (300 sekund) – Denní tání i Noční mrazy:
               </h3>
               <div
                 style={{
@@ -525,10 +528,10 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   <div style={{ fontWeight: 900, color: '#C2410C', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <GameIcon icon="rooster" size={16} /> Podvečer (0:00 - 0:45)
+                    <GameIcon icon="rooster" size={16} /> Úvod & Miniboss (0:00 - 1:40)
                   </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                    Začátek výpravy. Slabší strašidýlka (šotci, rarachové). Ideální čas na nasbírání prvních perníčků, krejcarů a první návštěvu Čertova dědečka (od 0:25)!
+                    Začátek výpravy. Slabší strašidýlka (šotci, rarachové, drobné vrány). V <strong>0:25</strong> se zjevuje Čertův dědeček a v čase <strong>1:25 (85 s)</strong> útočí Miniboss (Blatouchový skřítek v tání / Horda tajících sněhuláků v noci)!
                   </div>
                 </div>
                 <div
@@ -540,10 +543,10 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   <div style={{ fontWeight: 900, color: '#7C2D12', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <GameIcon icon="lantern" size={16} /> Soumrak (0:45 - 1:30)
+                    <GameIcon icon="lantern" size={16} /> Anomálie & Bubácká díra (2:00 - 2:55)
                   </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                    Hustnoucí šero, přicházejí divoženky a kostlivci. Na zemi se objevují malované truhly a vyděšení chasníci čekající na záchranu.
+                    V čase 120–175 s se otevírá anomální okno Bubácké díry. Zvýšený tlak roje, na zemi se objevují malované truhly a vyděšení chasníci volající o pomoc.
                   </div>
                 </div>
                 <div
@@ -555,10 +558,10 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   <div style={{ fontWeight: 900, color: '#312E81', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <GameIcon icon="skull" size={16} /> Půlnoc (1:30 - 3:00)
+                    <GameIcon icon="skull" size={16} /> Zlom výpravy & Midboss (3:05 / 185 s)
                   </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                    Hustá temnota a noční můry. Kolem 2. minuty zaútočí první nebezpečný Mini-boss kraje s obřím perníčkem jako kořistí!
+                    V čase 185 s nastupuje mocný Midboss kraje (Jarní Vodníček v Denním tání / Mrazivý obr v Nočních mrazech) s obří perníčkovou odměnou pro další nákupy.
                   </div>
                 </div>
                 <div
@@ -570,12 +573,28 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   <div style={{ fontWeight: 900, color: '#991B1B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <GameIcon icon="devil" size={16} /> Černá hodinka & Boss (3:00 - 4:45)
+                    <GameIcon icon="devil" size={16} /> Finální Boss kraje (5:00 / 300 s)
                   </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                    Přichází hlavní vládce úrovně s unikátními ataky (mlýnské kameny, balvany, plameny, bumerang hlavy). Dokončete své nákupy u Dědečka!
+                    V 300. sekundě přilétá kroužící <strong>Hejno mrazivých vran</strong> (v 1. úrovni) nebo <strong>Morana se smrtícími salvami větru</strong> (ve 2. úrovni). Jejich porážkou vyhráváte celou kapitolu!
                   </div>
                 </div>
+              </div>
+
+              {/* 8-LEVEL CAMPAIGN OVERVIEW */}
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '8px 12px',
+                  background: '#FFFDF5',
+                  border: '1.5px solid var(--ink)',
+                  borderRadius: '6px',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  lineHeight: 1.45,
+                }}
+              >
+                <strong style={{ color: '#1E3A8A' }}>Osmidílná cesta Bubákovem:</strong> 1. Denní tání ➔ 2. Noční mrazy ➔ 3. Náves a rybník Brčálník ➔ 4. Starý hřbitov a Hrusický hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska a Zlenické podhradí ➔ 8. Dračí sluj pod Melechovskou skálou.
               </div>
             </div>
 
@@ -658,7 +677,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <span>Malované truhly:</span>
                   </div>
                   <div style={{ marginTop: '3px', fontSize: '0.84rem' }}>
-                    Venkovský ladovský výherní automat (slot machine) se štědrou nadílkou zbraní a krejcarů.
+                    Interaktivní venkovský výherní automat (slot machine). Při otevření se roztočí 3 válce s ladovskými symboly (perníček, jitrnice, podkova, krejcar, truhla) a podle shody vyplatí krejcary, perníčky nebo novou zbraň!
                   </div>
                 </div>
               </div>
