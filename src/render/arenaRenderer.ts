@@ -15,7 +15,7 @@ import { shouldDrawCombatText } from '../game/effectSettings';
 import { ChunkBitmapCache } from './chunkCache';
 import { drawGlyphText } from './glyphAtlas';
 import { renderDrops } from './renderDrops';
-import { renderParticles } from './renderParticles';
+import { renderParticles, ParticleBatchRenderer } from './renderParticles';
 import { renderProjectilesAndSlashes, type ProjectileRenderMetrics } from './renderProjectiles';
 import { renderEnemyTelegraphs, type TelegraphRenderOptions } from './renderTelegraphs';
 import {
@@ -176,6 +176,7 @@ export class ArenaRenderer {
   public drawableCount = 0;
   public culledEntities = 0;
   public readonly indicatorController = new OffScreenIndicatorController();
+  private readonly particleRenderer = new ParticleBatchRenderer();
   private readonly projectileMetrics: ProjectileRenderMetrics = {
     renderedProjectiles: 0,
     renderedSlashes: 0,
@@ -185,7 +186,7 @@ export class ArenaRenderer {
   private readonly worldHazardOptions: WorldHazardsRenderOptions = {};
   private readonly worldCombatVfxOptions: WorldHazardsRenderOptions = {};
 
-  private ensureDrawableCapacity(required: number): void {
+  public ensureDrawableCapacity(required: number): void {
     if (required <= this.drawableCapacity) return;
     let nextCapacity = this.drawableCapacity;
     while (nextCapacity < required) {
@@ -197,8 +198,10 @@ export class ArenaRenderer {
     this.drawableCapacity = nextCapacity;
   }
 
-  private addDrawable(drawable: any): void {
-    this.ensureDrawableCapacity(this.drawableCount + 1);
+  public addDrawable(drawable: any): void {
+    if (this.drawableCount >= this.drawableCapacity) {
+      this.ensureDrawableCapacity(this.drawableCount + 1);
+    }
     this.preallocatedDrawables[this.drawableCount++] = drawable;
   }
 
@@ -216,9 +219,13 @@ export class ArenaRenderer {
     this.drawableCount = 0;
     this.culledEntities = 0;
 
+    // Grow buffer before the render loop based on visible candidate capacity requirements
+    const maxCandidateEntities = (engine.player ? 1 : 0) + (engine.enemies ? engine.enemies.length : 0);
+    this.ensureDrawableCapacity(maxCandidateEntities);
+
     if (engine.player) {
       if (isInView(engine.player.x, engine.player.y, engine.player.radius || 24, viewLeft, viewTop, viewRight, viewBottom)) {
-        this.addDrawable(engine.player);
+        this.preallocatedDrawables[this.drawableCount++] = engine.player;
       }
     }
 
@@ -235,8 +242,11 @@ export class ArenaRenderer {
           continue;
         }
         const radius = enemy.radius || 20;
-        if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom)) this.addDrawable(enemy);
-        else this.culledEntities++;
+        if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom)) {
+          this.preallocatedDrawables[this.drawableCount++] = enemy;
+        } else {
+          this.culledEntities++;
+        }
       }
     }
 
@@ -346,6 +356,7 @@ export class ArenaRenderer {
     let renderedDecor = 0;
     let activeChunks = 0;
     let renderedProjectiles = 0;
+    let renderedSlashes = 0;
     let renderedDrops = 0;
     let renderedParticles = 0;
 
@@ -484,7 +495,7 @@ export class ArenaRenderer {
     this.projectileMetrics.renderedProjectiles = 0;
     this.projectileMetrics.renderedSlashes = 0;
     if (combatVfxEnabled && ((engine.projectiles && engine.projectiles.length > 0) || (engine.slashes && engine.slashes.length > 0))) {
-      const projResult = renderProjectilesAndSlashes(
+      renderProjectilesAndSlashes(
         ctx,
         engine.projectiles || EMPTY_RENDER_ITEMS,
         engine.slashes || EMPTY_RENDER_ITEMS,
@@ -492,14 +503,15 @@ export class ArenaRenderer {
         engine.uiTime || 0,
         this.projectileMetrics
       );
-      renderedProjectiles = projResult.renderedProjectiles;
+      renderedProjectiles = this.projectileMetrics.renderedProjectiles;
+      renderedSlashes = this.projectileMetrics.renderedSlashes;
     }
     const projectilesMs = now() - tProjStart;
 
     // 7. PARTICLES PASS
     const tParticlesStart = now();
     if (combatVfxEnabled && engine.particles && engine.particles.length > 0) {
-      renderedParticles = renderParticles(ctx, engine.particles, camera);
+      renderedParticles = this.particleRenderer.render(ctx, engine.particles, camera);
     }
     const particlesMs = now() - tParticlesStart;
 
@@ -574,7 +586,7 @@ export class ArenaRenderer {
       outMetrics.renderedDecor = renderedDecor;
       outMetrics.activeChunks = activeChunks;
       outMetrics.renderedProjectiles = renderedProjectiles;
-      outMetrics.renderedSlashes = this.projectileMetrics.renderedSlashes;
+      outMetrics.renderedSlashes = renderedSlashes;
       outMetrics.drawableCapacity = this.drawableCapacity;
       outMetrics.culledEntities = this.culledEntities;
       outMetrics.renderedDrops = renderedDrops;
@@ -597,7 +609,7 @@ export class ArenaRenderer {
       renderedDecor,
       activeChunks,
       renderedProjectiles,
-      renderedSlashes: this.projectileMetrics.renderedSlashes,
+      renderedSlashes,
       drawableCapacity: this.drawableCapacity,
       culledEntities: this.culledEntities,
       renderedDrops,

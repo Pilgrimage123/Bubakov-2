@@ -254,4 +254,49 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
 
     spyFrostAura.mockRestore();
   });
+
+  it('resets projectile and slashes metrics when projectile pass is skipped on subsequent frames', () => {
+    const renderer = new ArenaRenderer();
+    engine.slashes = [
+      { x: 0, y: 0, reach: 90, angle: 0, arc: 1.2, style: 'halberd', weaponId: 'kovana_halapartna', dead: false },
+    ];
+
+    const metrics1 = renderer.renderArena(ctx, engine, camera);
+    expect(metrics1.renderedSlashes).toBe(1);
+
+    // Frame 2: combatVfxEnabled is false (skipped projectile pass)
+    const metrics2 = renderer.renderArena(ctx, engine, camera, { combatVfxEnabled: false });
+    expect(metrics2.renderedSlashes).toBe(0);
+    expect(metrics2.renderedProjectiles).toBe(0);
+
+    // Frame 3: slashes and projectiles are empty (skipped projectile pass)
+    engine.slashes = [];
+    engine.projectiles = [];
+    const metrics3 = renderer.renderArena(ctx, engine, camera);
+    expect(metrics3.renderedSlashes).toBe(0);
+    expect(metrics3.renderedProjectiles).toBe(0);
+  });
+
+  it('grows drawable buffer before entity loop based on candidate requirements', () => {
+    const renderer = new ArenaRenderer();
+    expect(renderer.drawableCapacity).toBe(2048);
+
+    // Provide 2500 enemies
+    engine.enemies = [];
+    for (let i = 0; i < 2500; i++) {
+      engine.enemies.push({
+        id: `mob_${i}`,
+        x: 0,
+        y: 0,
+        radius: 10,
+        isDefeated: false,
+        dead: false,
+        draw: () => {},
+      } as any);
+    }
+
+    renderer.renderEntities(ctx, engine, camera);
+    // Capacity grew upfront before the loop
+    expect(renderer.drawableCapacity).toBeGreaterThanOrEqual(2501);
+  });
 });

@@ -1,3 +1,20 @@
+## 2026-10-28 — Zpřesnění výkonnostní pipeline arény a důsledné poolování
+
+- **Optimalizace sběru vykreslitelných entit a nulové alokace v cyklu**:
+  - Vyrovnávací paměť `preallocatedDrawables` v `ArenaRenderer` se nyní rozšiřuje před začátkem iterační smyčky na základě horního odhadu viditelných entit, čímž se zcela zamezilo zásekům při realokaci a kopírování pole uprostřed snímku.
+  - V `renderEntities` se nevytváří žádné uzávěry (closures) a vkládání do bufferu probíhá přímo indexovaným zápisem bez kontrol kapacity na každou entitu.
+- **Konzistence a reset metrik projektilů a seků**:
+  - `renderedSlashes` i `renderedProjectiles` se nyní spolehlivě nulují před přeskočeným průchodem projektilů i na vstupu do `renderProjectilesAndSlashes`, takže při přeskočení nebo vypnutí VFX nehlásí počet z předchozího snímku.
+- **Instanční a plně dávkový renderer částic (`ParticleBatchRenderer`)**:
+  - Globální 32-barevná cache nahrazena instančně izolovanou třídou `ParticleBatchRenderer` s vlastním poolem kbelíků.
+  - Dynamické barvy napříč úrovněmi a denními fázemi se alokují do instančního poolu a všechny částice se skládají do složených cest (compound paths); žádné částice již nepadají do samostatných neoptimalizovaných `arc` a `fill` volání.
+- **Důsledné nasazení poolů pro bojové texty a částice**:
+  - Zaveden `CosmeticRingPool` pro `DamageText` v `App.tsx` a nahrazeno všech více než 130 přímých volání `new DamageText` v `App.tsx` a `engine.ts` voláním `pushDamageText` / `emitDamageText`.
+  - Odstraněny přímé zápisy `particles.push` v produkční smyčce `App.tsx` a `drops.ts` ve prospěch profilově řízených funkcí `emitParticle` a `tryEmitParticle`.
+- **Zpřesnění doménové a plánovací dokumentace**:
+  - V `docs/plans/arena-performance-implementation-plan.md` a souvisejících specifikacích zpřesněna formulace: syntetické benchmarky potvrzují CPU rozpočet (p95 < 16,7 ms), zatímco 60 FPS v reálném prohlížeči zůstává otevřeným cílem k manuálnímu ověření na reálném HW.
+  - Dokumentován model ohraničených ring poolů a předalokovaných bufferů namísto absolutních nerealistických tvrzení o nulových alokacích v celé aplikaci.
+
 ## 2026-10-28 — Další optimalizace vykreslování arény
 
 - **Omezení alokací v hlavní smyčce arény**:

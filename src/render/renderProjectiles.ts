@@ -24,6 +24,10 @@ export function renderProjectilesAndSlashes(
   uiTime = 0,
   outMetrics?: ProjectileRenderMetrics
 ): ProjectileRenderMetrics {
+  if (outMetrics) {
+    outMetrics.renderedProjectiles = 0;
+    outMetrics.renderedSlashes = 0;
+  }
   let renderedProjectiles = 0;
   let renderedSlashes = 0;
 

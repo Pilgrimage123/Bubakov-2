@@ -454,17 +454,30 @@ export class GameEngine {
     text: string,
     color = '#FFFFFF',
     big = false,
-    category?: CombatTextCategory
+    category?: CombatTextCategory,
+    icon?: string
   ): DamageText | null {
-    const cat = category || inferCombatTextCategory(text);
+    const cat = category || (icon === 'gingerbread' ? 'lootResources' : inferCombatTextCategory(text));
     if (!isCombatTextCategoryEnabled(cat)) return null;
     const dt = this.damageTextPool.acquire();
-    dt.reset(x, y, text, color, big, cat);
+    dt.reset(x, y, text, color, big, cat, icon);
     if (!this.state.texts.includes(dt)) {
       this.state.texts.push(dt);
     }
     this.callbacks?.onDamageText?.(dt);
     return dt;
+  }
+
+  public emitDamageText(
+    x: number,
+    y: number,
+    text: string,
+    color = '#FFFFFF',
+    big = false,
+    category?: CombatTextCategory,
+    icon?: string
+  ): DamageText | null {
+    return this.addDamageText(x, y, text, color, big, category, icon);
   }
 
   public initRun(
@@ -788,7 +801,7 @@ export class GameEngine {
         });
 
         self.callbacks?.onSound?.('heavyHit');
-        self.state.texts.push(new DamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true, 'combatStates'));
+        self.emitDamageText(attacker.x, attacker.y - 48, 'ODSTRČENÍ! 💨', '#F59E0B', true, 'combatStates');
       },
 
       takeDamage(amount: number, type = 'physical', attacker?: any, isMelee?: boolean) {
@@ -800,7 +813,7 @@ export class GameEngine {
         ) return;
         const effectiveDodgeChance = Math.min(0.60, typeof this.dodgeChance === 'number' ? this.dodgeChance : ((this.type === 'pasacek' || this.type === 'shepherd') ? 0.35 : 0));
         if (effectiveDodgeChance > 0 && Math.random() < effectiveDodgeChance) {
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates'));
+          self.emitDamageText(this.x, this.y - 35, 'ÚHYB! 💨', '#F59E0B', true, 'combatStates');
           self.callbacks?.onSound?.('swish');
 
           // Vrbová píšťalka z pastviny
@@ -821,7 +834,7 @@ export class GameEngine {
               const ky = (fdy / fdist) * 260;
               foe.takeDamage(shockDmg, 'physical', kx, ky);
             }
-            self.state.texts.push(new DamageText(this.x, this.y - 55, 'HVIZD! 🪈', '#38BDF8', true));
+            self.emitDamageText(this.x, this.y - 55, 'HVIZD! 🪈', '#38BDF8', true);
           }
 
           // Vodnický klobouk s pentlí
@@ -833,14 +846,14 @@ export class GameEngine {
             const puddleY = attacker ? attacker.y : this.y;
             const slowRatio = Math.min(0.60, 0.40 + (kloboukStacks - 1) * 0.10);
             self.spawnPlumPuddle(puddleX, puddleY, slowRatio);
-            self.state.texts.push(new DamageText(this.x, this.y - 50, 'SMEKNUTO! 🎩', '#10B981', true));
+            self.emitDamageText(this.x, this.y - 50, 'SMEKNUTO! 🎩', '#10B981', true);
           }
 
           return;
         }
         if ((meta?.windLevel || 0) > 0 && this.dodgeCooldown <= 0) {
           this.dodgeCooldown = Math.max(10, 60 - (meta?.windLevel || 0) * 10);
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates'));
+          self.emitDamageText(this.x, this.y - 35, 'DODGE!', '#F59E0B', true, 'combatStates');
           return;
         }
         let totalDamageReduction = this.damageReduction;
@@ -870,9 +883,9 @@ export class GameEngine {
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
 
         if (absorbed > 0 && remainingDmg <= 0) {
-          self.state.texts.push(new DamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true));
+          self.emitDamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true);
         } else {
-          self.state.texts.push(new DamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444'));
+          self.emitDamageText(this.x, this.y - 35, `-${Math.ceil(remainingDmg)}`, '#EF4444');
         }
 
         if (this.hp <= 0) {
@@ -1540,7 +1553,7 @@ export class GameEngine {
         if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
           const dodge = typeof this.dodgeChance === 'number' ? this.dodgeChance : 0.50;
           if (Math.random() < dodge) {
-            self.state.texts.push(new DamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true));
+            self.emitDamageText(this.x, this.y - 25, 'MINUL! 💨', '#38BDF8', true);
             return;
           }
         }
@@ -1596,7 +1609,7 @@ export class GameEngine {
           const supinaBonus = (self.state.player.kominickaSupinaStacks || 0) * 0.25;
           const critMult = Math.max(2.2, customCritDamageMult) + supinaBonus;
           finalDamage = Math.round(finalDamage * critMult);
-          self.state.texts.push(new DamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true));
+          self.emitDamageText(this.x, this.y - 48, 'KRITICKÝ ZÁSAH! ✨', '#FDE047', true);
         } else if (self.state.player) {
           let critChance = Math.max(0, self.state.player.luck ?? 0) * 0.001 + critChanceBonus;
           if ((self.state.player.zPeklaStestiTimer || 0) > 0) {
@@ -1612,7 +1625,7 @@ export class GameEngine {
             const critMult = baseCritMult + supinaBonus;
             finalDamage = Math.round(finalDamage * critMult);
             const critText = options?.source === 'dreveny_cep' ? 'KRITICKÝ MLAT! 💥' : 'ŠŤASTNÝ ZÁSAH! 🎯';
-            self.state.texts.push(new DamageText(this.x, this.y - 48, critText, '#FBBF24', true));
+            self.emitDamageText(this.x, this.y - 48, critText, '#FBBF24', true);
           }
         } else if (isCriticalHit) {
           const baseCritMult = customCritDamageMult > 0 ? customCritDamageMult : 1.65;
@@ -1640,7 +1653,7 @@ export class GameEngine {
               p._lastCtyrlistekTime = now;
               p.zPeklaStestiTimer = 2.5;
               p.ultCd = Math.max(0, (p.ultCd || 0) - 0.25 * p.jetelovyCtyrlistekStacks);
-              self.state.texts.push(new DamageText(p.x, p.y - 40, 'Z PEKLA ŠTĚSTÍ! 🍀', '#10B981', true));
+              self.emitDamageText(p.x, p.y - 40, 'Z PEKLA ŠTĚSTÍ! 🍀', '#10B981', true);
             }
           }
 
@@ -1659,7 +1672,7 @@ export class GameEngine {
                 foe.takeDamage(splashDmg, 'area', 0, 0);
                 if (typeof foe.interruptAttack === 'function') foe.interruptAttack();
               }
-              self.state.texts.push(new DamageText(this.x, this.y - 30, 'POUŤOVÝ TŘESK! 🎯', '#F59E0B', false));
+              self.emitDamageText(this.x, this.y - 30, 'POUŤOVÝ TŘESK! 🎯', '#F59E0B', false);
             }
           }
         }
@@ -1690,7 +1703,7 @@ export class GameEngine {
             } else {
               self.state.player.hp = Math.max(0, self.state.player.hp - reflect);
             }
-            self.state.texts.push(new DamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflect} ⚡`, '#FDE047', true));
+            self.emitDamageText(this.x, this.y - 45, `BLESKOVÝ ODRAZ! -${reflect} ⚡`, '#FDE047', true);
           }
         }
 
@@ -2061,11 +2074,11 @@ export class GameEngine {
         closestDrop.value = (closestDrop.value || 9) * 2;
       }
       this.callbacks?.onSound?.('bell');
-      this.state.texts.push(new DamageText(closestDrop.x, closestDrop.y - 25, 'POVÝŠENO! 🐟', '#FBBF24', true));
+      this.emitDamageText(closestDrop.x, closestDrop.y - 25, 'POVÝŠENO! 🐟', '#FBBF24', true);
     } else {
       this.spawnDrop('coin', x, y, { value: 2, speed: 65 });
       this.callbacks?.onSound?.('coin');
-      this.state.texts.push(new DamageText(x, y - 35, 'ŠUPINA DALA KREJCAR! 🐟', '#FDE047', true));
+      this.emitDamageText(x, y - 35, 'ŠUPINA DALA KREJCAR! 🐟', '#FDE047', true);
     }
   }
 
@@ -2082,13 +2095,13 @@ export class GameEngine {
       maxLife: 6.5,
       slowRatio,
     });
-    this.state.texts.push(new DamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false));
+    this.emitDamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false);
   }
 
   public triggerGoatBell(player: any): void {
     const rad = player.goatBellRadius || 180;
     this.callbacks?.onSound?.('bell');
-    this.state.texts.push(new DamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true));
+    this.emitDamageText(player.x, player.y - 45, 'CINK! 🔔', '#FDE047', true);
 
     // Interrupt nearby enemy windups
     const nearby = this.spatialHash.queryCircle(player.x, player.y, rad);
@@ -2100,7 +2113,7 @@ export class GameEngine {
       foe.windupTimer = 0;
       foe.strikeTimer = 0;
       if (foe.aiState === 'windup') foe.aiState = 'idle';
-      this.state.texts.push(new DamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false));
+      this.emitDamageText(foe.x, foe.y - 25, 'VYRUŠENÍ! 🔔', '#F8FAFC', false);
     }
 
     // Pull drops in radius towards player
@@ -2130,8 +2143,8 @@ export class GameEngine {
       }
     }
     const pctLabel = Math.round((cdBoost - 1) * 100);
-    this.state.texts.push(new DamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true));
-    this.state.texts.push(new DamageText(player.x, player.y - 55, `ROZOHNĚNÍ: +${pctLabel} % RYCHLEJŠÍ NABÍJENÍ! ⚡`, '#38BDF8', true));
+    this.emitDamageText(player.x, player.y - 85, '„TENHLE ÚČET ZAPLATÍ BUBÁCI! 🍺“', '#F59E0B', true);
+    this.emitDamageText(player.x, player.y - 55, `ROZOHNĚNÍ: +${pctLabel} % RYCHLEJŠÍ NABÍJENÍ! ⚡`, '#38BDF8', true);
 
     // Drop coins from up to 8 closest alive enemies
     const nearby = this.spatialHash.queryCircle(player.x, player.y, 400);
@@ -2159,7 +2172,7 @@ export class GameEngine {
       const foe = sortedEnemies[i];
       foe.brawlTimer = Math.max(foe.brawlTimer || 0, brawlDuration);
       this.spawnDrop('coin', foe.x, foe.y, { value: 1, speed: 75, skipConsolidation: true });
-      this.state.texts.push(new DamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false));
+      this.emitDamageText(foe.x, foe.y - 25, '+1 🪙', '#FBBF24', false);
       if (this.state.particles) {
         for (let k = 0; k < 3; k++) {
           const ang = Math.random() * Math.PI * 2;
@@ -2347,7 +2360,7 @@ export class GameEngine {
           );
         }
       }
-      this.state.texts.push(new DamageText(impact.x, impact.y - 20, 'BUM!', '#F59E0B', true));
+      this.emitDamageText(impact.x, impact.y - 20, 'BUM!', '#F59E0B', true);
       return impact;
     }
 
@@ -2384,7 +2397,7 @@ export class GameEngine {
             stunDuration ? { stunDuration } : undefined
           );
           if (isUnholyEnemy(e)) {
-            this.state.texts.push(new DamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', '#F59E0B', true));
+            this.emitDamageText(e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', '#F59E0B', true);
           }
         }
       }
@@ -2702,9 +2715,7 @@ export class GameEngine {
         const callbacks = {
           onSound: (s: string) => this.callbacks?.onSound?.(s),
           onDamageText: (opts: any) => {
-            const dtText = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
-            this.state.texts.push(dtText);
-            this.callbacks?.onDamageText?.(dtText);
+            this.emitDamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
           },
           onCameraShake: (time: number, intensity: number) => {
             this.state.cameraTremorTimer = Math.max(this.state.cameraTremorTimer || 0, time);
@@ -2726,9 +2737,7 @@ export class GameEngine {
         const coastCallbacks = {
           onSound: (s: string) => this.callbacks?.onSound?.(s),
           onDamageText: (opts: any) => {
-            const dtText = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
-            this.state.texts.push(dtText);
-            this.callbacks?.onDamageText?.(dtText);
+            this.emitDamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
           },
           onCameraShake: (time: number, intensity: number) => {
             this.state.cameraTremorTimer = Math.max(this.state.cameraTremorTimer || 0, time);
@@ -2789,7 +2798,7 @@ export class GameEngine {
                 active: true,
               };
               this.callbacks?.onSound?.('bell');
-              this.state.texts.push(new DamageText(player.x, player.y - 40, 'K + M + B 🖍️', '#FDE047', true));
+              this.emitDamageText(player.x, player.y - 40, 'K + M + B 🖍️', '#FDE047', true);
             } else {
               this.state.holyCircle.x = player.x;
               this.state.holyCircle.y = player.y;
@@ -2845,7 +2854,7 @@ export class GameEngine {
               const baseHolyDmg = 24 + Math.max(0, (player.holyCircleStacks || 1) - 1) * 12;
               const dmg = baseHolyDmg * holyDmgMult * (player.damageMultiplier || 1);
               foe.takeDamage(dmg, 'holy', nx * 180 * holyPush, ny * 180 * holyPush);
-              this.state.texts.push(new DamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false));
+              this.emitDamageText(foe.x, foe.y - 30, 'POSVÁTNÝ ODRAZ! ✝️', '#FDE047', false);
             }
           }
         }
@@ -2997,7 +3006,7 @@ export class GameEngine {
           const hungerResist = Math.max(0, baseHunger * (1 - red));
           const resist = p.type === 'food' ? hungerResist : 0;
           if (resist >= 0.95) {
-            this.state.texts.push(new DamageText(e.x, e.y - 20, 'IMUNNÍ', '#0F172A'));
+            this.emitDamageText(e.x, e.y - 20, 'IMUNNÍ', '#0F172A');
           } else {
             let dmg = p.dmg * (1 - resist);
             if (p.type === 'food') {
@@ -3025,7 +3034,7 @@ export class GameEngine {
               e.windupTimer = 0;
               e.strikeTimer = 0;
               if (e.aiState === 'windup') e.aiState = 'idle';
-              this.state.texts.push(new DamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false));
+              this.emitDamageText(e.x, e.y - 25, 'ŠTÍP! 🪿', '#F8FAFC', false);
             }
             if (p.panicDuration && !e.isBoss) {
               e.panicked = true;
@@ -3036,7 +3045,7 @@ export class GameEngine {
             }
             if (p.coinStealChance && Math.random() < p.coinStealChance) {
               this.spawnDrop('coin', e.x, e.y, { value: 1, speed: 60 });
-              this.state.texts.push(new DamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false));
+              this.emitDamageText(e.x, e.y - 35, '+1 🪙', '#FBBF24', false);
             }
             if (p.bounces && p.bounces > 0) {
               p.bounces--;
@@ -3151,7 +3160,7 @@ export class GameEngine {
                     }
                   });
                 }
-                this.state.texts.push(new DamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true));
+                this.emitDamageText(e.x, e.y - 28, 'PRÁSK! 🪢', '#FDE047', true);
               }
 
               if (s.soaked || milestones.includes('whip_wet_strap_5')) {
@@ -3345,7 +3354,7 @@ export class GameEngine {
           e.isAttacking = false;
           e.windupTimer = 0;
         }
-        this.state.texts.push(new DamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true));
+        this.emitDamageText(e.x, e.y - 30, 'VYČERPÁN! 🧀', '#A3E635', true);
         if (this.state.particles) {
           for (let pIdx = 0; pIdx < 4; pIdx++) {
             const ang = Math.random() * Math.PI * 2;
@@ -3548,15 +3557,13 @@ export class GameEngine {
                   foe.panicTimer = Math.max(foe.panicTimer || 0, 5.0);
                 }
               }
-              this.state.texts.push(
-                new DamageText(
-                  MARCH_THAW_POIS.shrine.x,
-                  MARCH_THAW_POIS.shrine.y - 110,
-                  '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!',
-                  '#FEF08A',
-                  true,
-                  'bossAnnouncements'
-                )
+              this.emitDamageText(
+                MARCH_THAW_POIS.shrine.x,
+                MARCH_THAW_POIS.shrine.y - 110,
+                '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!',
+                '#FEF08A',
+                true,
+                'bossAnnouncements'
               );
               this.callbacks?.onSound?.('bell');
             }
@@ -3716,7 +3723,7 @@ export class GameEngine {
                   }
 
                   if (fullyRecharged) {
-                    this.state.texts.push(new DamageText(player.x, player.y - 68, '🪞 ZRCÁTKO: NABITO!', '#F8FAFC', true));
+                    this.emitDamageText(player.x, player.y - 68, '🪞 ZRCÁTKO: NABITO!', '#F8FAFC', true);
                   }
 
                   if (size === 'large') {
@@ -3725,7 +3732,7 @@ export class GameEngine {
                   } else if (size === 'giant') {
                     const heal = 8 * player.poutoveSrdceStacks;
                     player.hp = Math.min(player.maxHp, player.hp + heal);
-                    this.state.texts.push(new DamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true));
+                    this.emitDamageText(player.x, player.y - 45, `+${heal} Kuráž! 💝`, '#F43F5E', true);
                     const nearbyEnemies = this.spatialHash.queryCircle(player.x, player.y, 110);
                     for (let ci = 0; ci < nearbyEnemies.length; ci++) {
                       const foe = nearbyEnemies[ci];
@@ -3796,7 +3803,7 @@ export class GameEngine {
                     }
                   }
                   this.callbacks?.onSound?.('bell');
-                  this.state.texts.push(new DamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true));
+                  this.emitDamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true);
                 }
               } else if (d.type === 'chest') {
                 this.callbacks?.onOpenChest?.();
@@ -3813,25 +3820,21 @@ export class GameEngine {
                 applyRareItemEffect(this.state, player, d.type, {
                   onSound: (s) => this.callbacks?.onSound?.(s),
                   onDamageText: (opts) => {
-                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true);
-                    this.state.texts.push(dt);
-                    this.callbacks?.onDamageText?.(dt);
+                    this.emitDamageText(opts.x, opts.y, opts.text, opts.color || '#F59E0B', true);
                   },
                 });
               } else if (d.type === 'arcivzacny_ananas') {
                 applyAnanasUpgrade(player, {
                   onSound: (s) => this.callbacks?.onSound?.(s),
                   onDamageText: (opts) => {
-                    const dt = new DamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
-                    this.state.texts.push(dt);
-                    this.callbacks?.onDamageText?.(dt);
+                    this.emitDamageText(opts.x, opts.y, opts.text, opts.color || '#FDE047', true);
                   },
                 });
               } else if (d.type === 'big_pouch') {
                 this.callbacks?.onSound?.('coin');
                 const pouchVal = d.value || 35;
                 this.state.coins += pouchVal;
-                this.state.texts.push(new DamageText(player.x, player.y - 75, `VELKÝ MĚŠEC! +${pouchVal} kr. 🪙`, '#F59E0B', true));
+                this.emitDamageText(player.x, player.y - 75, `VELKÝ MĚŠEC! +${pouchVal} kr. 🪙`, '#F59E0B', true);
               } else if (d.type === 'gingerbread_stash') {
                 this.callbacks?.onSound?.('gingerbreadPickup');
                 const stashVal = d.value || 25;
@@ -3840,9 +3843,9 @@ export class GameEngine {
                 const healAmt = Math.max(0, Math.min(30, mercyCap - player.hp));
                 if (healAmt > 0) {
                   player.hp += healAmt;
-                  this.state.texts.push(new DamageText(player.x, player.y - 50, `+${healAmt} Kuráž! 🧺`, '#F43F5E', true));
+                  this.emitDamageText(player.x, player.y - 50, `+${healAmt} Kuráž! 🧺`, '#F43F5E', true);
                 }
-                this.state.texts.push(new DamageText(player.x, player.y - 75, `KOŠÍK PERNÍKU! +${stashVal} 🧺`, '#D97706', true));
+                this.emitDamageText(player.x, player.y - 75, `KOŠÍK PERNÍKU! +${stashVal} 🧺`, '#D97706', true);
               }
             }
           }

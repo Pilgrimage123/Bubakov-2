@@ -1,5 +1,6 @@
 import type { GameDrop, DropType } from '../types';
 import type { EngineState } from './engineState';
+import { tryEmitParticle } from './particles';
 import { GINGERBREAD_VALUES, type GingerbreadSize, getGingerbreadSize } from '../data/gingerbread';
 import { ENEMY_POINTS } from '../constants';
 import {
@@ -1286,15 +1287,19 @@ export function applyRareItemEffect(
     if (engineState.particles) {
       for (let i = 0; i < 28; i++) {
         const ang = (i / 28) * Math.PI * 2;
-        engineState.particles.push({
-          x: player.x + Math.cos(ang) * 45,
-          y: player.y + Math.sin(ang) * 45,
-          vx: Math.cos(ang) * 220,
-          vy: Math.sin(ang) * 220,
-          life: 1.2,
-          color: i % 2 === 0 ? '#E0F2FE' : '#38BDF8',
-          size: 4,
-        });
+        tryEmitParticle(
+          engineState.particles,
+          () => ({
+            x: player.x + Math.cos(ang) * 45,
+            y: player.y + Math.sin(ang) * 45,
+            vx: Math.cos(ang) * 220,
+            vy: Math.sin(ang) * 220,
+            life: 1.2,
+            color: i % 2 === 0 ? '#E0F2FE' : '#38BDF8',
+            size: 4,
+          }),
+          engineState.meta?.performanceProfile
+        );
       }
     }
     callbacks?.onDamageText?.({
@@ -1326,15 +1331,19 @@ export function applyRareItemEffect(
             for (let p = 0; p < 8; p++) {
               const pAng = Math.random() * Math.PI * 2;
               const spd = 60 + Math.random() * 120;
-              engineState.particles.push({
-                x: foe.x,
-                y: foe.y,
-                vx: Math.cos(pAng) * spd,
-                vy: Math.sin(pAng) * spd,
-                life: 0.65,
-                color: confettiColors[p % confettiColors.length],
-                size: p % 3 === 0 ? 4 : 2.5,
-              });
+              tryEmitParticle(
+                engineState.particles,
+                () => ({
+                  x: foe.x,
+                  y: foe.y,
+                  vx: Math.cos(pAng) * spd,
+                  vy: Math.sin(pAng) * spd,
+                  life: 0.65,
+                  color: confettiColors[p % confettiColors.length],
+                  size: p % 3 === 0 ? 4 : 2.5,
+                }),
+                engineState.meta?.performanceProfile
+              );
             }
           }
         }
@@ -1354,15 +1363,19 @@ export function applyRareItemEffect(
       for (let i = 0; i < 22; i++) {
         const ang = Math.random() * Math.PI * 2;
         const dist = 70 + Math.random() * 180;
-        engineState.particles.push({
-          x: player.x + Math.cos(ang) * dist,
-          y: player.y + Math.sin(ang) * dist,
-          vx: -Math.cos(ang) * 280,
-          vy: -Math.sin(ang) * 280,
-          life: 0.75,
-          color: i % 2 === 0 ? '#60A5FA' : '#DBEAFE',
-          size: 3.5,
-        });
+        tryEmitParticle(
+          engineState.particles,
+          () => ({
+            x: player.x + Math.cos(ang) * dist,
+            y: player.y + Math.sin(ang) * dist,
+            vx: -Math.cos(ang) * 280,
+            vy: -Math.sin(ang) * 280,
+            life: 0.75,
+            color: i % 2 === 0 ? '#60A5FA' : '#DBEAFE',
+            size: 3.5,
+          }),
+          engineState.meta?.performanceProfile
+        );
       }
     }
     callbacks?.onDamageText?.({
@@ -1449,15 +1462,19 @@ export function applyRareItemEffect(
       for (let i = 0; i < 22; i++) {
         const ang = Math.random() * Math.PI * 2;
         const spd = 30 + Math.random() * 85;
-        engineState.particles.push({
-          x: player.x,
-          y: player.y,
-          vx: Math.cos(ang) * spd,
-          vy: Math.sin(ang) * spd,
-          life: 1.0,
-          color: '#1C1917',
-          size: 4,
-        });
+        tryEmitParticle(
+          engineState.particles,
+          () => ({
+            x: player.x,
+            y: player.y,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd,
+            life: 1.0,
+            color: '#1C1917',
+            size: 4,
+          }),
+          engineState.meta?.performanceProfile
+        );
       }
     }
     callbacks?.onDamageText?.({

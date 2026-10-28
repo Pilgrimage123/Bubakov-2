@@ -58,4 +58,33 @@ describe('Particle Budget Management (Plan Section 4)', () => {
     expect(emitted).toBe(limit);
     expect(particles.length).toBe(limit);
   });
+
+  it('ParticleBatchRenderer isolates bucket pools across instances and handles >32 colors with batching', async () => {
+    const { ParticleBatchRenderer } = await import('../src/render/renderParticles');
+    const { createMockCanvasContext } = await import('./helpers/mockCanvas');
+    const ctx = createMockCanvasContext();
+    const camera = { x: 0, y: 0, width: 800, height: 600, viewLeft: -400, viewTop: -300, viewRight: 400, viewBottom: 300 };
+
+    const rendererA = new ParticleBatchRenderer(16);
+    const rendererB = new ParticleBatchRenderer(16);
+
+    // Create 40 distinct colors
+    const particles = [];
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        x: 0,
+        y: 0,
+        life: 0.8,
+        size: 3,
+        color: `#${i.toString(16).padStart(6, '0')}`,
+      });
+    }
+
+    const renderedCount = rendererA.render(ctx, particles, camera);
+    expect(renderedCount).toBe(40);
+    // rendererA grew its pool to at least 40 buckets
+    expect(rendererA.poolCapacity).toBeGreaterThanOrEqual(40);
+    // rendererB was completely untouched (instance isolation)
+    expect(rendererB.poolCapacity).toBe(16);
+  });
 });

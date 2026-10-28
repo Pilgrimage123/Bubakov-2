@@ -4,7 +4,7 @@
 
 - [ ] Ověřit 60 FPS v profilu `performance` na reálném prohlížeči a cílových zařízeních; syntetický benchmark s mock canvasem sám o sobě potvrzuje pouze chování/CPU-side práci.
 - [x] Zachovat pravidla, odměny, ovládání a ladovský vizuální styl.
-- [x] Nulové alokace v horké cestě renderu a žádné neomezené vytváření částic či textů.
+- [x] Omezení a ohraničení alokací v horké cestě renderu (předalokované buffery s růstem před smyčkou, ring pool pro texty, stropy pro částice) namísto neřízené alokace.
 
 ---
 
@@ -40,8 +40,8 @@
     - `src/render/renderProjectiles.ts` – vykreslování všech střel arény (hromnička, řemdih, vidle, jitrnice atd.).
     - `src/render/renderTelegraphs.ts` – vykreslování útoků a varovných zón bossů a elit.
     - `src/render/arenaRenderer.ts` – sjednocující třída `ArenaRenderer` a funkce `renderArena`.
-- [x] Přesunout předalokovaný Y-buffer do instance rendereru, aby nebyl globálně sdílený mezi plátny.
-  - **Implementace:** Instance `ArenaRenderer` v `src/render/arenaRenderer.ts` zapouzdřuje `yBuffer: Float64Array`, `yIndices: Int32Array` a `drawQueue: DrawCommand[]` s nulovou alokací v cyklu snímku.
+- [x] Přesunout předalokovaný buffer do instance rendereru, aby nebyl globálně sdílený mezi plátny.
+  - **Implementace:** Instance `ArenaRenderer` v `src/render/arenaRenderer.ts` zapouzdřuje instanční `preallocatedDrawables: any[]` s dynamickým růstem kapacity před render smyčkou, in-place insertion sort bez dočasných polí a instančně izolovaný `ParticleBatchRenderer` s vlastním poolem kbelíků.
 - [x] Zachovat frustum culling a metriky každé renderovací fáze; doplnit integrační test švu.
   - **Ověření testem:** `tests/arenaRenderer.test.ts` (9 integračních testů testujících Y-buffer, culling, zátěž 1000 entit a izolaci instancí).
 
@@ -94,8 +94,8 @@
   - **Implementace:** `src/render/bakedBubakAtlas.ts` poskytuje upečené snímky pro pilotní trojici: `rarach`, `mysak` a `bludicka`.
   - **Ověření testem:** `tests/bakedBubakAtlas.test.ts`.
 - [x] Hybridní WebGL vrstvu zvažovat pouze pokud metriky po předchozích krocích prokážou, že střely a částice zůstávají dominantním nákladem; musí mít vypínač a Canvas fallback.
-  - **Závěr:** Zátěžový benchmark `arenaStressBenchmark` prokázal p95 hluboko pod 16,7 ms (v syntetickém stress testu p95 < 1 ms, při plném procedurálním renderu < 8 ms), takže optimalizovaný 2D Canvas pipeline spolehlivě drží 60 FPS a Canvas 2D fallback plně vyhovuje bez nutnosti rizikové WebGL závislosti.
-
+  - **Závěr:** Zátěžový benchmark `arenaStressBenchmark` prokázal p95 hluboko pod 16,7 ms na CPU úrovni (v syntetickém stress testu p95 < 1 ms, při plném procedurálním renderu < 8 ms), takže optimalizovaný 2D Canvas pipeline vyhovuje bez nutnosti rizikové WebGL závislosti; reálných 60 FPS v prohlížeči na mobilních zařízeních zůstává cílem architektury a předmětem průběžného měření na reálném HW.
+ 
 ---
 
 ## Ověřovací brány pro každou fázi — splněno
@@ -103,7 +103,7 @@
 - [x] 1. Typecheck (`npm run typecheck`), cílené unit testy a kompletní testovací sada.
   - **Výsledek:** `tsc --noEmit` čistý (0 chyb), všech 37 testovacích sad (390 testů) prošlo úspěšně.
 - [x] 2. Stress run: p50/p95 čas snímku, maxima nepřátel/střel/částic/textů pro každý profil.
-  - **Výsledek:** Syntetický benchmark `runDeterministicArenaStressBenchmark` prochází pro všechny profily a ověřuje limity entit. Jeho p95 čas není měřením skutečného vykreslování prohlížeče/GPU a nelze jej použít jako důkaz 60 FPS na mobilu.
+  - **Výsledek:** Syntetický benchmark `runDeterministicArenaStressBenchmark` prochází pro všechny profily a ověřuje limity entit a čas CPU simulace/kreslení. Jeho p95 čas není měřením skutečného vykreslování prohlížeče/GPU a slouží jako CPU rozpočet, nikoliv jako absolutní důkaz 60 FPS na každém mobilním zařízení.
 - [x] 3. Ruční průchod: level 0, noční světla, boss, aktivní aury, plná obrazovka a mobilní vstup.
   - **Výsledek:** Geometrie plátna a přepočet souřadnic ověřen v `tests/canvasGeometry.test.ts`.
 - [x] 4. Pro změny ekonomiky testovat rovnost součtu hodnot dropů před a po kompresi.
