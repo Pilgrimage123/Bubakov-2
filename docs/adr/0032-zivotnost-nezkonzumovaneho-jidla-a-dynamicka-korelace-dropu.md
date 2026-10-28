@@ -23,5 +23,15 @@ Dále v logice dynamických dropů docházelo k nekonzistencím:
    - Při plné Kuráži (≥ 95 %) dochází k 88% odklonu léčení na toláry, perníky, dušičky či podkovy bez duplicitních náhodných hodů.
    - Všechny parametry transformace (`value`, `size`, `speed`, `expiration`, `isHot`, `isMercyDrop`) jsou striktně předávány do entitního rozvržení.
 
-4. **Podpora pro Medvědí mast (Overheal)**:
-   - Pokud lovec disponuje Medvědí mastí (`player.bearMaskLevel > 0`), `canCollectDrop` umožňuje sebrání jídla i při plné Kuráži za účelem vyvolání tlakové vlny přeléčení.
+4. **Podpora pro Medvědí mast / Masku medvěda (`bearMaskLevel > 0`)**:
+   - Pokud lovec disponuje Maskou medvěda (`player.bearMaskLevel > 0`), `canCollectDrop` umožňuje sebrání jídla i při plné Kuráži za účelem vyvolání tlakové vlny přeléčení.
+   - `resolveDynamicDrop` i `selectWeightedDropType` při aktivní Masce medvěda snižují potlačení jídla při plné Kuráži a ve fázi `stress` z 88 % na 40 %, aby měl lovec stálý přísun munice pro výbuchy přeléčení.
+
+5. **Kanonická expirace a strop pro Hrníčky s dušičkami (`SOUL_DROP_EXPIRATION = 16.0 s`, `MAX_ACTIVE_SOUL_DROPS = 2`)**:
+   - Hrníčky s dušičkami (`soul`) mají životnost 16 sekund (s blikáním posledních 4 sekund) a v aréně mohou ležet nejvýše 2 současně.
+   - Další dušičky se při naplnění stropu nebo aktivním buffu *Dušičkový rej* (`soulBuffActive`) dynamicky odklánějí na krejcary, perníčky nebo jídlo.
+
+6. **Sjednocený prioritní směrovač bonusových dropů a těžké kotvy v `PendingDropBank`**:
+   - Každý poražený či zasycený bubák dává vždy základní odměnu (perníček + hod na Štěstí) a **nejvýše 1 sekundární bonusový předmět** (1. Truhla bosse/minibosse či bodového prahu -> 2. Záchranná jitrnice při Kuráži `< 25 %` s aktivací `mercyPityCooldown = 15 s` -> 3. Jeden připravený bodový práh `potion`/`bread`/`soul` -> 4. Vážený výběr Režiséra `selectWeightedDropType` podle skóre $V$ a kategorie bubáka).
+   - `big_pouch` v aréně gravitačně přitahuje a pohlcuje okolní mince v okruhu `60 px`.
+   - `PendingDropBank` při nashromáždění `>= 30` mincí nebo `>= 28` perníčků automaticky vyplácí převis jako *Velký měšec krejcarů* (`big_pouch`) a *Košík perníku* (`gingerbread_stash`) s konsolidačním bonusem `+15 %`, a vypršelé *Horké perníčky* vracejí 50 % své základní hodnoty do `PendingDropBank`.

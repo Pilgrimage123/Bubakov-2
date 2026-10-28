@@ -63,11 +63,14 @@ import {
   isHealingDrop,
   canCollectDrop,
   FOOD_DROP_EXPIRATION,
+  SOUL_DROP_EXPIRATION,
   MAX_DROPS_LIMIT,
   hasPendingDrops,
   spawnDropWithLimit,
   releasePendingDrops,
   createPendingDropBank,
+  sweepCoinsIntoBigPouches,
+  refundExpiredHotGingerbread,
   type DropSpawnOptions,
 } from './drops';
 import {
@@ -988,7 +991,12 @@ export class GameEngine {
     let radius = opts.radius;
     let speed = opts.speed;
 
-    if (this.director && (isHealingDrop(type) || (type === 'gingerbread' && this.director.dropPacingPhase === 'stress'))) {
+    if (
+      this.director &&
+      (isHealingDrop(type) ||
+        type === 'soul' ||
+        (type === 'gingerbread' && this.director.dropPacingPhase === 'stress'))
+    ) {
       const playerHp = this.state.player?.hp ?? 100;
       const playerMaxHp = this.state.player?.maxHp ?? 100;
       const resolution = resolveDynamicDrop(type, playerHp, playerMaxHp, {
@@ -1000,6 +1008,9 @@ export class GameEngine {
         pacingPhase: this.director.dropPacingPhase,
         mercyCooldownActive: this.director.mercyPityCooldown > 0,
         expiration: opts.expiration,
+        activeDrops: this.state.drops,
+        soulBuffActive: (this.state.player?.soulBuffTimer || 0) > 0,
+        bearMaskLevel: this.state.player?.bearMaskLevel || 0,
       });
       resolvedType = resolution.type;
       if (resolution.value !== undefined) value = resolution.value;
@@ -1009,10 +1020,15 @@ export class GameEngine {
       if (resolution.isHot !== undefined) isHot = resolution.isHot;
       if (resolution.expiration !== undefined) expiration = resolution.expiration;
       if (resolution.isMercyDrop !== undefined) isMercyDrop = resolution.isMercyDrop;
+      if (isMercyDrop && isHealingDrop(resolvedType)) {
+        this.director.mercyPityCooldown = 15.0;
+      }
     }
 
     if (isHealingDrop(resolvedType) && expiration === undefined) {
       expiration = FOOD_DROP_EXPIRATION;
+    } else if (resolvedType === 'soul' && expiration === undefined) {
+      expiration = SOUL_DROP_EXPIRATION;
     }
 
     // The engine's state array is the single source of truth. Never fall back
@@ -1298,11 +1314,11 @@ export class GameEngine {
         if (this.id === 'tajici_snehulak' && !this.isVirtualSnowmanMember && !this.isDefeated && !this.dead) {
           const ratio = Math.max(0, Math.min(1, this.hp / Math.max(1, this.maxHp || 280)));
           this.meltHpRatio = ratio;
-          this.meltSquashX = 1.0 + (1.0 - ratio) * 0.25;
-          this.meltSquashY = 0.65 + ratio * 0.35;
+          this.meltSquashX = 1.0 + (1.0 - ratio) * 0.08;
+          this.meltSquashY = 0.88 + ratio * 0.12;
           const s = Math.sin(this.animTime * 3.2);
-          this.wobbleScaleX = 1.0 + 0.08 * s;
-          this.wobbleScaleY = 1.0 - 0.08 * s;
+          this.wobbleScaleX = 1.0 + 0.03 * s;
+          this.wobbleScaleY = 1.0 - 0.03 * s;
         }
 
         if (this.isDefeated) {
@@ -2876,6 +2892,7 @@ export class GameEngine {
                 localCd = localCd / cdBoost;
               }
 
+              (w as any).lastMaxCd = localCd;
               w.cd = fired ? localCd : 0.1;
             }
           }
@@ -3581,8 +3598,10 @@ export class GameEngine {
 
     // Step drops
     if (this.state.drops) {
+      sweepCoinsIntoBigPouches(this.state.drops, dt);
       for (let i = 0; i < this.state.drops.length; i++) {
         const d = this.state.drops[i];
+        if (d.dead) continue;
         d.time = (d.time || 0) + dt;
         if (d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0) {
           d.goldenRushTimer -= dt;
@@ -3593,6 +3612,12 @@ export class GameEngine {
         if (typeof d.expiration === 'number') {
           d.expiration -= dt;
           if (d.expiration <= 0) {
+            if (d.type === 'gingerbread' && d.isHot) {
+              if (!this.state.pendingDropBank) {
+                this.state.pendingDropBank = createPendingDropBank();
+              }
+              refundExpiredHotGingerbread(d, this.state.pendingDropBank);
+            }
             d.dead = true;
             continue;
           }

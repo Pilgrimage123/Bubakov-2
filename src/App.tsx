@@ -183,6 +183,10 @@ import {
   rollRareBattleDrop,
   getRareDropAnnouncement,
   resolveDynamicDrop,
+  selectWeightedDropType,
+  countActiveSoulDrops,
+  sweepCoinsIntoBigPouches,
+  refundExpiredHotGingerbread,
   isHealingDrop,
   createFolkloreDropTracker,
   evaluateFolkloreDrop,
@@ -194,6 +198,7 @@ import {
   HOT_GINGERBREAD_DURATION,
   EMERGENCY_HEALTH_RATIO,
   FOOD_DROP_EXPIRATION,
+  SOUL_DROP_EXPIRATION,
 } from './game/drops';
 import { toCanonicalWeaponId, toCanonicalHunterId, toCanonicalEnemyId, migrateMetaProgression, createDefaultMetaProgression } from './game/migration';
 import {
@@ -6793,6 +6798,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     localCd = localCd / cdBoost;
                   }
 
+                  (w as any).lastMaxCd = localCd;
                   w.cd = fired ? localCd : 0.1;
                 }
               }
@@ -7712,7 +7718,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
 
           // Update Drops
+          sweepCoinsIntoBigPouches(engine.drops, dt);
           for (const d of engine.drops) {
+            if (d.dead) continue;
             d.time += dt;
             if (d.isHot && d.goldenRushTimer && d.goldenRushTimer > 0) {
               d.goldenRushTimer -= dt;
@@ -7723,6 +7731,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (typeof d.expiration === 'number') {
               d.expiration -= dt;
               if (d.expiration <= 0) {
+                if (d.type === 'gingerbread' && d.isHot) {
+                  refundExpiredHotGingerbread(d, engine.pendingDropBank);
+                }
                 d.dead = true;
                 continue;
               }
@@ -10845,8 +10856,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             let finalGoldenRushTimer = opts.goldenRushTimer || 0;
             let finalIsMercyDrop = opts.isMercyDrop;
 
-            // ADR 0006: Context-aware dynamic drop resolution for healing items at full Courage
-            if (isHealingDrop(dropType) && player) {
+            // ADR 0006, 0028b, 0032 & Dynamic Soul Throttling: Context-aware dynamic drop resolution
+            if (
+              (isHealingDrop(dropType) ||
+                dropType === 'soul' ||
+                (dropType === 'gingerbread' && directorRef.current?.dropPacingPhase === 'stress')) &&
+              player
+            ) {
               const res = resolveDynamicDrop(dropType, player.hp, player.maxHp, {
                 isBoss,
                 isMiniboss: this.isMiniboss,
@@ -10861,6 +10877,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 pacingPhase: directorRef.current?.dropPacingPhase,
                 mercyCooldownActive: directorRef.current ? directorRef.current.mercyPityCooldown > 0 : false,
                 expiration: opts.expiration,
+                activeDrops: eng.drops,
+                soulBuffActive: (player.soulBuffTimer || 0) > 0,
+                bearMaskLevel: player.bearMaskLevel || 0,
               });
               finalType = res.type;
               if (res.value !== undefined) finalValue = res.value;
@@ -10875,10 +10894,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (res.isHot) finalGoldenRushTimer = res.expiration || HOT_GINGERBREAD_DURATION;
               }
               if (res.isMercyDrop !== undefined) finalIsMercyDrop = res.isMercyDrop;
+              if (finalIsMercyDrop && isHealingDrop(finalType) && directorRef.current) {
+                directorRef.current.mercyPityCooldown = 15.0;
+              }
             }
 
             if (isHealingDrop(finalType) && finalExpiration === undefined) {
               finalExpiration = FOOD_DROP_EXPIRATION;
+            } else if (finalType === 'soul' && finalExpiration === undefined) {
+              finalExpiration = SOUL_DROP_EXPIRATION;
             }
 
             const angle = opts.angle ?? Math.random() * Math.PI * 2;
@@ -11003,20 +11027,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             });
           }
 
-          // ADR 0006: Záchranný systém (Emergency Bias): Při poklesu Kuráže pod 25 % vystřelí elita záchrannou jitrnici
-          const isEligibleForEmergencyBias = isFlockMember
-            ? isFlockDefeated
-            : (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650);
-          if (player && player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO && isEligibleForEmergencyBias) {
-            const rescueAngle = Math.random() * Math.PI * 2;
-            spawnScatterDrop('potion', {
-              speed: 130,
-              angle: rescueAngle,
-              text: 'ZÁCHRANNÁ JITRNICE! 🍖🚨',
-              textColor: COLORS.green,
-            });
-          }
-
           // Folklórní mocné předměty s Pity Timerem (ADR 0006: Podkova při > 120 perníčcích, Kohoutek, Kukačky)
           if (!eng.folkloreDropTracker) {
             eng.folkloreDropTracker = createFolkloreDropTracker();
@@ -11050,13 +11060,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             sound.bell();
           }
 
-          // Thematic category affinities & multipliers
+          // Garantovaný perníček za zasycení jídlem
+          if (this.defeatedByFood) {
+            spawnScatterDrop('gingerbread', {
+              value: GINGERBREAD_VALUES.large,
+              radius: 14,
+              speed: 55 + Math.random() * 45,
+              size: 'large',
+            });
+          }
+
+          // Thematic category affinities & multipliers for threshold counters
           // Horde-like bosses like Hejno mrazivých vran count as only one boss for the sake of treasure.
           const flockTotal = isFlockMember ? (this.flockTotal || 9) : 1;
           const chestMult = isBoss ? (3.0 / flockTotal) : isDemons ? 1.4 : isUndead ? 1.25 : 1.0;
           const potionMult = isWater ? 1.6 : isFields ? 1.3 : isBoss ? (2.0 / flockTotal) : 1.0;
           const breadMult = isFields ? 2.0 : isFrost ? 1.5 : isSwarms ? 1.2 : 0.9;
-          const soulMult = isWater ? 2.5 : isShadows ? 2.0 : isUndead ? 1.4 : 0.5;
+          const soulMult = isWater ? 1.35 : isShadows ? 1.2 : isUndead ? 1.0 : 0.4;
 
           eng.pointsChest += Math.round(pt * chestMult);
           eng.pointsPotion += Math.round(pt * potionMult);
@@ -11065,11 +11085,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             eng.pointsSoul += Math.round(pt * (isFlockMember ? soulMult / flockTotal : soulMult));
           }
 
-          // 1. Miniboss & Boss treasure drop (no additional loot cascade; extra items drop strictly according to point value)
-          // Horde-like bosses (Hejno mrazivých vran) count as only one boss for the sake of treasure.
+          // Unified Bonus Drop Router: At most 1 secondary bonus drop per defeated enemy
+          // Priority: 1. Boss/Miniboss or Threshold Chest -> 2. Emergency Rescue Jitrnice -> 3. Single Ready Point Threshold -> 4. Weighted Director Drop (V)
           const shouldDropTreasure = this.isMiniboss
             ? (!isFlockMember || (isFlockDefeated && !eng.flockTreasureDropped))
             : Boolean(this.isBoss);
+          const chestThreshold = DROP_THRESHOLDS.chest;
+          const activeChests = (eng.drops || []).filter((d: any) => !d.dead && d.type === 'chest').length;
+          const isEligibleForEmergencyBias = isFlockMember
+            ? isFlockDefeated
+            : (this.isMiniboss || isBoss || (this.maxHp || 0) >= 650);
+          const mercyCooldownReady = !directorRef.current || directorRef.current.mercyPityCooldown <= 0;
 
           if (shouldDropTreasure) {
             if (isFlockMember) {
@@ -11090,87 +11116,143 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               });
             }
             eng.texts.push(new DamageText(this.x, this.y - 70, treasureText, COLORS.mustard, true));
-          }
-
-          // 2. Food pacification extra flavor & peaceful rewards
-          if (this.defeatedByFood) {
-            spawnScatterDrop('gingerbread', {
-              value: GINGERBREAD_VALUES.large,
-              radius: 14,
-              speed: 55 + Math.random() * 45,
-              size: 'large',
+          } else if (eng.pointsChest >= chestThreshold && activeChests < 2) {
+            eng.pointsChest -= chestThreshold;
+            spawnScatterDrop('chest', { speed: 65, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
+            spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
+            sound.chest();
+          } else if (
+            player &&
+            player.hp < player.maxHp * EMERGENCY_HEALTH_RATIO &&
+            isEligibleForEmergencyBias &&
+            mercyCooldownReady
+          ) {
+            // ADR 0006 & ADR 0028b: Záchranná jitrnice při Kuráži < 25 % vystřelená na taktickou vzdálenost 220-300 px s 15s mercy cooldownem
+            const rescueAngle = Math.random() * Math.PI * 2;
+            if (directorRef.current) {
+              directorRef.current.mercyPityCooldown = 15.0;
+            }
+            spawnScatterDrop('potion', {
+              speed: 230 + Math.random() * 60,
+              angle: rescueAngle,
+              text: 'ZÁCHRANNÁ JITRNICE! 🍖🚨',
+              textColor: COLORS.green,
+              isMercyDrop: true,
             });
-            if (Math.random() < 0.28) {
-              spawnScatterDrop('bread', { speed: 65, text: 'Sladká hruška 🍐', textColor: '#84CC16' });
-            }
-            if (Math.random() < 0.16 || isWater) {
-              spawnScatterDrop('soul', { speed: 85, text: 'Vděčná dušička 🕊️', textColor: '#38BDF8' });
-            }
-          }
+          } else {
+            // 3. Single Ready Point Threshold Drop (unspent ready thresholds stay in bank for next enemy)
+            const potionReady = eng.pointsPotion >= DROP_THRESHOLDS.potion;
+            const breadReady = eng.pointsBread >= DROP_THRESHOLDS.bread;
+            const soulReady = eng.pointsSoul >= DROP_THRESHOLDS.soul;
 
-          // 3. Direct surprise / lucky drops (instant chance on kill, scaled by theme)
-          if (!isBoss) {
-            // Surprise bread / snack
-            const breadChance = isFields ? 0.08 : isFrost ? 0.06 : 0.035;
-            if (Math.random() < breadChance) {
-              spawnScatterDrop('bread', { speed: 65 });
-            }
+            if (potionReady || breadReady || soulReady) {
+              const needsHealing =
+                directorRef.current?.dropPacingPhase === 'mercy' ||
+                (player && player.hp < player.maxHp * 0.65);
+              let chosenThreshold: 'potion' | 'bread' | 'soul' | null = null;
 
-            // Surprise jitrnice balm
-            const potionChance = isWater ? 0.045 : ((this.maxHp || 0) >= 120 ? 0.035 : 0.015);
-            if (Math.random() < potionChance) {
-              spawnScatterDrop('potion', { speed: 75, text: 'Čerstvá jitrnice!', textColor: COLORS.green });
-            }
-
-            // Surprise soul jar
-            const soulChance = isWater ? 0.07 : isShadows ? 0.05 : isUndead ? 0.03 : 0.01;
-            if (Math.random() < soulChance) {
-              spawnScatterDrop('soul', { speed: 85, text: 'Zbloudilá dušička!', textColor: '#38BDF8' });
-            }
-
-            // Surprise coin burst from enemy pouch
-            const undeadLvl = metaRef.current.undeadLevel || 0;
-            const tolarBonus = getUndeadTolarChance(undeadLvl);
-            const coinBonusChance = (isUndead ? 0.32 : isDemons ? 0.30 : 0.18) + tolarBonus;
-            if (Math.random() < coinBonusChance) {
-              const rollDenom = Math.random();
-              let coinVal = 1;
-              let coinTxt: string | undefined = undefined;
-              if (rollDenom < (0.08 + tolarBonus) || (isDemons && rollDenom < 0.16)) {
-                coinVal = 15 + Math.floor(Math.random() * 10);
-                coinTxt = 'Zlatý tolar!';
-              } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
-                coinVal = 5 + Math.floor(Math.random() * 5);
+              if (needsHealing) {
+                if (potionReady) chosenThreshold = 'potion';
+                else if (breadReady) chosenThreshold = 'bread';
+                else if (soulReady) chosenThreshold = 'soul';
               } else {
-                coinVal = 1 + Math.floor(Math.random() * 2);
+                const candidates: Array<{ type: 'potion' | 'bread' | 'soul'; ratio: number }> = [];
+                if (potionReady) candidates.push({ type: 'potion', ratio: eng.pointsPotion / DROP_THRESHOLDS.potion });
+                if (breadReady) candidates.push({ type: 'bread', ratio: eng.pointsBread / DROP_THRESHOLDS.bread });
+                if (soulReady) candidates.push({ type: 'soul', ratio: eng.pointsSoul / DROP_THRESHOLDS.soul });
+                candidates.sort((a, b) => b.ratio - a.ratio);
+                chosenThreshold = candidates[0]?.type ?? null;
               }
-              spawnScatterDrop('coin', { value: coinVal, speed: 70 + Math.random() * 50, text: coinTxt });
-            }
-          }
 
-          // 4. Guaranteed threshold drops with dynamic scatter & multi-coin breakdown
-          const chestThreshold = DROP_THRESHOLDS.chest;
-          if (eng.pointsChest >= chestThreshold) {
-            const activeChests = (eng.drops || []).filter((d: any) => !d.dead && d.type === 'chest').length;
-            if (activeChests < 2) {
-              eng.pointsChest -= chestThreshold;
-              spawnScatterDrop('chest', { speed: 65, text: `POKLAD (${chestThreshold} BODŮ)!`, textColor: COLORS.mustard });
-              spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
-              spawnScatterDrop('gingerbread', { value: GINGERBREAD_VALUES.giant, radius: 19, speed: 65, size: 'giant' });
-              sound.chest();
+              if (chosenThreshold === 'potion') {
+                eng.pointsPotion -= DROP_THRESHOLDS.potion;
+                spawnScatterDrop('potion', { speed: 60 });
+              } else if (chosenThreshold === 'bread') {
+                eng.pointsBread -= DROP_THRESHOLDS.bread;
+                spawnScatterDrop('bread', { speed: 60 });
+              } else if (chosenThreshold === 'soul') {
+                eng.pointsSoul -= DROP_THRESHOLDS.soul;
+                spawnScatterDrop('soul', { speed: 70 });
+              }
+            } else if (!isBoss) {
+              // 4. Unified Director Weighted Surprise / Pacification Drop (ADR 0028b)
+              const undeadLvl = metaRef.current.undeadLevel || 0;
+              const tolarBonus = getUndeadTolarChance(undeadLvl);
+              const baseSurpriseChance = this.defeatedByFood
+                ? 0.38
+                : (isUndead ? 0.24 : isDemons ? 0.22 : isWater || isFields ? 0.20 : 0.15) + tolarBonus * 0.5;
+
+              if (Math.random() < baseSurpriseChance) {
+                const vScore = directorRef.current?.vulnerabilityScore ?? 0.5;
+                const phase = directorRef.current?.dropPacingPhase ?? 'flow';
+                const mercyCdActive = directorRef.current ? directorRef.current.mercyPityCooldown > 0 : false;
+                const activeSouls = countActiveSoulDrops(eng.drops);
+                const soulBuffActive = (player?.soulBuffTimer || 0) > 0;
+
+                const selectedDrop = selectWeightedDropType(
+                  vScore,
+                  phase,
+                  mercyCdActive,
+                  activeSouls,
+                  soulBuffActive,
+                  {
+                    category: this.category,
+                    defeatedByFood: this.defeatedByFood,
+                    bearMaskLevel: player?.bearMaskLevel || 0,
+                  }
+                );
+
+                if (selectedDrop.type === 'coin') {
+                  const rollDenom = Math.random();
+                  let coinVal = 1;
+                  let coinTxt: string | undefined = undefined;
+                  if (rollDenom < (0.08 + tolarBonus) || (isDemons && rollDenom < 0.16)) {
+                    coinVal = 15 + Math.floor(Math.random() * 10);
+                    coinTxt = 'Zlatý tolar!';
+                  } else if (rollDenom < 0.38 || (isUndead && rollDenom < 0.55)) {
+                    coinVal = 5 + Math.floor(Math.random() * 5);
+                  } else {
+                    coinVal = 1 + Math.floor(Math.random() * 2);
+                  }
+                  spawnScatterDrop('coin', { value: coinVal, speed: 70 + Math.random() * 50, text: coinTxt });
+                } else if (selectedDrop.type === 'potion') {
+                  spawnScatterDrop('potion', {
+                    speed: 75,
+                    text: 'Čerstvá jitrnice!',
+                    textColor: COLORS.green,
+                    isMercyDrop: selectedDrop.isMercyDrop,
+                  });
+                } else if (selectedDrop.type === 'bread' || selectedDrop.type === 'pear') {
+                  spawnScatterDrop('bread', {
+                    speed: 65,
+                    text: this.defeatedByFood ? 'Sladká hruška 🍐' : undefined,
+                    textColor: this.defeatedByFood ? '#84CC16' : undefined,
+                    isMercyDrop: selectedDrop.isMercyDrop,
+                  });
+                } else if (selectedDrop.type === 'soul') {
+                  spawnScatterDrop('soul', {
+                    speed: 85,
+                    text: this.defeatedByFood ? 'Vděčná dušička 🕊️' : 'Zbloudilá dušička!',
+                    textColor: '#38BDF8',
+                    expiration: selectedDrop.expiration,
+                  });
+                } else if (selectedDrop.type === 'gingerbread') {
+                  const isHot = Boolean(selectedDrop.isHot || phase === 'stress');
+                  const hotExp = selectedDrop.expiration ?? (isHot ? HOT_GINGERBREAD_DURATION : undefined);
+                  spawnScatterDrop('gingerbread', {
+                    value: GINGERBREAD_VALUES.large,
+                    radius: 14,
+                    speed: 65 + Math.random() * 45,
+                    size: 'large',
+                    isHot,
+                    goldenRushTimer: isHot ? (hotExp || HOT_GINGERBREAD_DURATION) : 0,
+                    expiration: hotExp,
+                    text: isHot ? `+${GINGERBREAD_VALUES.large} 🔥 HORKÝ PERNÍK (2×)` : undefined,
+                    textColor: isHot ? '#F97316' : undefined,
+                  });
+                }
+              }
             }
-          }
-          if (eng.pointsPotion >= DROP_THRESHOLDS.potion) {
-            eng.pointsPotion -= DROP_THRESHOLDS.potion;
-            spawnScatterDrop('potion', { speed: 60 });
-          }
-          if (eng.pointsBread >= DROP_THRESHOLDS.bread) {
-            eng.pointsBread -= DROP_THRESHOLDS.bread;
-            spawnScatterDrop('bread', { speed: 60 });
-          }
-          if (eng.pointsSoul >= DROP_THRESHOLDS.soul) {
-            eng.pointsSoul -= DROP_THRESHOLDS.soul;
-            spawnScatterDrop('soul', { speed: 70 });
           }
 // Bestiary tracking & progressive sequential hunter unlocks
           const curMeta = metaRef.current;

@@ -10,6 +10,16 @@ import {
   MAX_DROPS_LIMIT,
   HOT_GINGERBREAD_DURATION,
   FOOD_DROP_EXPIRATION,
+  SOUL_DROP_EXPIRATION,
+  MAX_ACTIVE_SOUL_DROPS,
+  countActiveSoulDrops,
+  spawnDropWithLimit,
+  createPendingDropBank,
+  releasePendingDrops,
+  sweepCoinsIntoBigPouches,
+  refundExpiredHotGingerbread,
+  computeVulnerabilityScore,
+  selectWeightedDropType,
   isHealingDrop,
 } from '../src/game/drops';
 import { GameEngine } from '../src/game/engine';
@@ -401,6 +411,195 @@ describe('Smart Drops System (Chytrý drop systém)', () => {
       }
       expect(divertedCount).toBeGreaterThan(30);
     });
+
+    it('assigns SOUL_DROP_EXPIRATION (16s) to soul jars by default so they do not stay in the arena forever', () => {
+      const soulDrop = createDropInstance('soul', 50, 50);
+      expect(soulDrop.expiration).toBe(SOUL_DROP_EXPIRATION);
+      expect(soulDrop.expiration).toBe(16.0);
+
+      const resolvedSoul = resolveDynamicDrop('soul', 80, 100, { activeSoulsCount: 0, soulBuffActive: false });
+      expect(resolvedSoul.type).toBe('soul');
+      expect(resolvedSoul.expiration).toBe(SOUL_DROP_EXPIRATION);
+    });
+
+    it('diverts excess soul jars into useful rewards when the arena already has MAX_ACTIVE_SOUL_DROPS or active soul buff', () => {
+      const existingSouls = [
+        createDropInstance('soul', 100, 100),
+        createDropInstance('soul', 200, 200),
+      ];
+      expect(countActiveSoulDrops(existingSouls)).toBe(MAX_ACTIVE_SOUL_DROPS);
+
+      // When arena is saturated with 2 soul jars, 100% of new soul drops are diverted
+      for (let i = 0; i < 30; i++) {
+        const res = resolveDynamicDrop('soul', 90, 100, {
+          activeDrops: existingSouls,
+        });
+        expect(res.type).not.toBe('soul');
+        expect(['coin', 'gingerbread', 'bread']).toContain(res.type);
+      }
+
+      // Diverted healing drops also never turn into soul jars when soul jars are already present
+      for (let i = 0; i < 50; i++) {
+        const res = resolveDynamicDrop('potion', 100, 100, {
+          forceDivert: true,
+          activeDrops: existingSouls,
+        });
+        expect(res.type).not.toBe('soul');
+      }
+    });
+
+    it('caps active soul jars in spawnDropWithLimit and converts overflow into coins', () => {
+      const drops: GameDrop[] = [];
+      const bank = createPendingDropBank();
+
+      spawnDropWithLimit(drops, createDropInstance('soul', 10, 10), bank);
+      spawnDropWithLimit(drops, createDropInstance('soul', 20, 20), bank);
+      expect(countActiveSoulDrops(drops)).toBe(2);
+
+      // Third soul drop is automatically converted to a 6-krejcar coin
+      const third = createDropInstance('soul', 30, 30);
+      spawnDropWithLimit(drops, third, bank);
+      expect(countActiveSoulDrops(drops)).toBe(2);
+      expect(third.type).toBe('coin');
+      expect(third.value).toBe(6);
+    });
+
+    it('fuses off-screen uncollected soul jars into a gold coin in performDropFusion when over limit', () => {
+      const bounds = { left: 0, top: 0, right: 800, bottom: 600 };
+      const offScreenSoul1 = createDropInstance('soul', -400, -400);
+      const offScreenSoul2 = createDropInstance('soul', -450, -450);
+      const onScreenCoin = createDropInstance('coin', 400, 300, { value: 5 });
+      const drops = [onScreenCoin, offScreenSoul1, offScreenSoul2];
+
+      const fused = performDropFusion(drops, bounds, 1);
+      expect(fused).toBeGreaterThan(0);
+      expect(offScreenSoul1.dead).toBe(true);
+      expect(offScreenSoul2.dead).toBe(true);
+      const fusedCoins = drops.filter((d) => !d.dead && d.type === 'coin' && d.value === 16);
+      expect(fusedCoins.length).toBe(1);
+    });
+
+    it('preserves ~60% of healing drops at full Courage when hunter has Bear Mask (bearMaskLevel > 0)', () => {
+      let healingCount = 0;
+      const totalRolls = 200;
+
+      for (let i = 0; i < totalRolls; i++) {
+        const resolved = resolveDynamicDrop('potion', 100, 100, {
+          bearMaskLevel: 2,
+          pacingPhase: 'stress',
+          vulnerabilityScore: 0.1,
+        });
+        if (resolved.type === 'potion') {
+          healingCount++;
+        }
+      }
+
+      // With Bear Mask, only 40% is diverted (~60% kept as healing), compared to 88% diverted without Bear Mask
+      expect(healingCount).toBeGreaterThan(85);
+    });
+
+    it('computes Vulnerability Score V accurately from real weapon cooldowns (w.cd / lastMaxCd) and ultimate readiness', () => {
+      const readyPlayer = {
+        hp: 100,
+        maxHp: 100,
+        x: 0,
+        y: 0,
+        weapons: [
+          { id: ' prak', cd: 0, lastMaxCd: 1.0 },
+          { id: 'bic', cd: 0, lastMaxCd: 1.2 },
+        ],
+        ultCd: 0,
+        ultMaxCd: 20,
+      };
+      const exhaustingPlayer = {
+        hp: 100,
+        maxHp: 100,
+        x: 0,
+        y: 0,
+        weapons: [
+          { id: 'prak', cd: 1.0, lastMaxCd: 1.0 },
+          { id: 'bic', cd: 1.2, lastMaxCd: 1.2 },
+        ],
+        ultCd: 20,
+        ultMaxCd: 20,
+      };
+
+      const vReady = computeVulnerabilityScore(readyPlayer, 0, 0);
+      const vExhausted = computeVulnerabilityScore(exhaustingPlayer, 0, 0);
+
+      // Exhausted weapons + ultimate on cooldown adds +0.15 (w3_resource = 0.15) to V
+      expect(vExhausted).toBeCloseTo(vReady + 0.15, 2);
+    });
+
+    it('sweeps nearby coins within 60px into an active big_pouch', () => {
+      const pouch = createDropInstance('big_pouch', 100, 100, { value: 30, radius: 16 });
+      const nearCoin = createDropInstance('coin', 120, 100, { value: 5, radius: 8 });
+      const farCoin = createDropInstance('coin', 300, 300, { value: 4, radius: 8 });
+      const drops = [pouch, nearCoin, farCoin];
+
+      // Step several frames so nearCoin is pulled into pouch and absorbed
+      for (let i = 0; i < 10; i++) {
+        sweepCoinsIntoBigPouches(drops, 0.05);
+      }
+
+      expect(nearCoin.dead).toBe(true);
+      expect(pouch.value).toBe(35);
+      expect(farCoin.dead).toBe(false);
+    });
+
+    it('refunds 50% of expired hot gingerbread value into PendingDropBank', () => {
+      const bank = createPendingDropBank();
+      const hotDrop = createDropInstance('gingerbread', 200, 200, {
+        value: 10,
+        isHot: true,
+        expiration: 0,
+      });
+
+      const refunded = refundExpiredHotGingerbread(hotDrop, bank);
+      expect(refunded).toBe(5);
+      expect(bank.byKey.gingerbread?.totalValue).toBe(5);
+    });
+
+    it('cashes out PendingDropBank as big_pouch (>= 30 coins) and gingerbread_stash (>= 28 gingerbread) with +15% consolidation bonus', () => {
+      const drops: GameDrop[] = [];
+      const bank = createPendingDropBank();
+      // Fill arena to 40 first so queued drops go into PendingDropBank
+      for (let i = 0; i < MAX_DROPS_LIMIT; i++) {
+        drops.push(createDropInstance('bread', i * 10, 0));
+      }
+      spawnDropWithLimit(drops, createDropInstance('coin', 150, 250, { value: 40 }), bank);
+      spawnDropWithLimit(drops, createDropInstance('gingerbread', 160, 260, { value: 30 }), bank);
+
+      // Clear two slots in the arena and release from PendingDropBank
+      drops[0].dead = true;
+      drops[1].dead = true;
+      releasePendingDrops(drops, bank);
+
+      const pouch = drops.find((d) => !d.dead && d.type === 'big_pouch');
+      const stash = drops.find((d) => !d.dead && d.type === 'gingerbread_stash');
+
+      expect(pouch).toBeDefined();
+      expect(pouch?.value).toBe(Math.round(40 * 1.15)); // 46
+      expect(stash).toBeDefined();
+      expect(stash?.value).toBe(Math.round(30 * 1.15)); // 35
+      expect(bank.byKey.coin).toBeUndefined();
+      expect(bank.byKey.gingerbread).toBeUndefined();
+    });
+
+    it('biases selectWeightedDropType toward enemy category affinities and Bear Mask', () => {
+      let soulOrFoodFromWater = 0;
+      for (let i = 0; i < 150; i++) {
+        const picked = selectWeightedDropType(0.55, 'flow', false, 0, false, {
+          category: 'water',
+          defeatedByFood: true,
+        });
+        if (picked.type === 'soul' || picked.type === 'potion' || picked.type === 'bread' || picked.type === 'pear') {
+          soulOrFoodFromWater++;
+        }
+      }
+      expect(soulOrFoodFromWater).toBeGreaterThan(35);
+    });
   });
 });
+
 

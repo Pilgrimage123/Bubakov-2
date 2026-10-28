@@ -11,6 +11,8 @@ import {
   POUCH_SWEEP_RADIUS,
   CONSOLIDATION_BONUS,
   FOOD_DROP_EXPIRATION,
+  SOUL_DROP_EXPIRATION,
+  MAX_ACTIVE_SOUL_DROPS,
   isHealingDrop,
 } from './soaDropManager';
 import {
@@ -30,6 +32,8 @@ export {
   POUCH_SWEEP_RADIUS,
   CONSOLIDATION_BONUS,
   FOOD_DROP_EXPIRATION,
+  SOUL_DROP_EXPIRATION,
+  MAX_ACTIVE_SOUL_DROPS,
   isHealingDrop,
   computeVulnerabilityScore,
   getDropPacingPhase,
@@ -47,6 +51,8 @@ export const COMBO_PULSE_KILL_COUNT = 30;
 export const COMBO_PULSE_WINDOW_SECONDS = 1.2;
 export const COMBO_PULSE_RADIUS = 550;
 export const FAR_KILL_DISTANCE = 420;
+export const PENDING_POUCH_CASHOUT_THRESHOLD = 30;
+export const PENDING_STASH_CASHOUT_THRESHOLD = 28;
 
  
 /** A compact, bounded-by-type waiting area for rewards when the arena is full. */
@@ -131,6 +137,17 @@ export function countActiveDrops(drops: GameDrop[]): number {
 }
 
 /**
+ * Number of active soul jars (hrníček s dušičkou) currently in the arena.
+ */
+export function countActiveSoulDrops(drops: GameDrop[]): number {
+  let count = 0;
+  for (let i = 0; i < drops.length; i++) {
+    if (drops[i] && !drops[i].dead && drops[i].type === 'soul') count++;
+  }
+  return count;
+}
+
+/**
  * Adds a drop to the arena only while the global hard cap permits it.
  * Overflow is stored in a fixed set of per-type buckets, never as one object per kill.
  */
@@ -145,6 +162,21 @@ export function spawnDropWithLimit(
     if (activeChests + pendingChests >= 2) {
       incoming.dead = true;
       return false;
+    }
+  }
+
+  if (incoming.type === 'soul') {
+    if (incoming.expiration === undefined) {
+      incoming.expiration = SOUL_DROP_EXPIRATION;
+    }
+    const activeSouls = countActiveSoulDrops(drops);
+    const pendingSouls = pendingDropBank.byKey['soul']?.count || 0;
+    if (activeSouls >= MAX_ACTIVE_SOUL_DROPS || (activeSouls + pendingSouls >= MAX_ACTIVE_SOUL_DROPS && countActiveDrops(drops) >= MAX_DROPS_LIMIT)) {
+      // Convert excess soul jar into a 6-krejcar coin reward so soul jars never flood the arena or pending bank
+      incoming.type = 'coin';
+      incoming.value = 6;
+      incoming.radius = 10;
+      incoming.expiration = undefined;
     }
   }
 
@@ -270,7 +302,31 @@ export function releasePendingDrops(
     const materialized = { ...bucket.drop, dead: false };
     if (bucket.mergeValues) {
       materialized.value = bucket.totalValue;
-      normalizeQueuedGingerbread(materialized);
+      if (
+        selectedKey === 'coin' &&
+        bucket.totalValue >= PENDING_POUCH_CASHOUT_THRESHOLD &&
+        !drops.some((d) => !d.dead && d.type === 'big_pouch')
+      ) {
+        materialized.type = 'big_pouch';
+        materialized.value = Math.round(bucket.totalValue * CONSOLIDATION_BONUS);
+        materialized.radius = 28;
+        materialized.isHeavyAnchor = true;
+        materialized.magnetMobility = HEAVY_ANCHOR_MAGNET_MOBILITY;
+        materialized.expiration = undefined;
+      } else if (
+        selectedKey === 'gingerbread' &&
+        bucket.totalValue >= PENDING_STASH_CASHOUT_THRESHOLD &&
+        !drops.some((d) => !d.dead && d.type === 'gingerbread_stash')
+      ) {
+        materialized.type = 'gingerbread_stash';
+        materialized.value = Math.round(bucket.totalValue * CONSOLIDATION_BONUS);
+        materialized.radius = 28;
+        materialized.isHeavyAnchor = true;
+        materialized.magnetMobility = HEAVY_ANCHOR_MAGNET_MOBILITY;
+        materialized.expiration = undefined;
+      } else {
+        normalizeQueuedGingerbread(materialized);
+      }
       delete pendingDropBank.byKey[selectedKey];
     } else {
       if (bucket.hasValue) {
@@ -288,6 +344,10 @@ export function releasePendingDrops(
         materialized.x += Math.cos(scatterAngle) * scatterRadius;
         materialized.y += Math.sin(scatterAngle) * scatterRadius;
       }
+    }
+
+    if (materialized.type === 'soul' && materialized.expiration === undefined) {
+      materialized.expiration = SOUL_DROP_EXPIRATION;
     }
 
     drops.push(materialized);
@@ -319,9 +379,11 @@ export interface DynamicDropResolution {
 }
 
 /**
- * Dynamický drop systém: Pokud má lovec plnou Kuráž (nebo téměř plnou >= 95%),
- * šance na padnutí léčivých předmětů se dramaticky sníží (o 85-90%)
- * a místo nich padají užitečnější předměty: krejcary, perníčky, dušičky nebo podkovy.
+ * Dynamický drop systém:
+ * - Pokud má lovec plnou Kuráž (nebo téměř plnou >= 95%), šance na padnutí léčivých předmětů
+ *   se dramaticky sníží (o 85-90%) a místo nich padají užitečnější předměty (krejcary, perníčky, vzácné předměty).
+ * - Zároveň inteligentně hlídá počet hrníčků s dušičkami (`soul`) v aréně a aktivní buff dušičky,
+ *   aby se v aréně nehromadily přebytečné hrníčky s dušičkami.
  */
 export function resolveDynamicDrop(
   intendedType: DropType,
@@ -343,11 +405,20 @@ export function resolveDynamicDrop(
     pacingPhase?: 'stress' | 'flow' | 'mercy';
     mercyCooldownActive?: boolean;
     expiration?: number;
+    activeDrops?: GameDrop[];
+    activeSoulsCount?: number;
+    soulBuffActive?: boolean;
+    soulBuffTimer?: number;
+    bearMaskLevel?: number;
   } = {}
 ): DynamicDropResolution {
   const isHealing = isHealingDrop(intendedType);
   const phase = opts.pacingPhase ?? (typeof opts.vulnerabilityScore === 'number' ? getDropPacingPhase(opts.vulnerabilityScore) : undefined);
   const isFullCourage = currentHp >= maxHp * 0.95;
+  const activeSouls = opts.activeSoulsCount ?? (opts.activeDrops ? countActiveSoulDrops(opts.activeDrops) : 0);
+  const hasSoulBuff = Boolean(opts.soulBuffActive || (typeof opts.soulBuffTimer === 'number' && opts.soulBuffTimer > 0));
+  const soulSaturated = activeSouls >= MAX_ACTIVE_SOUL_DROPS || (activeSouls >= 1 && hasSoulBuff);
+  const hasBearMask = (opts.bearMaskLevel || 0) > 0;
 
   // 1. Stress Phase: Volatile offensive buff for regular gingerbread drops
   if (intendedType === 'gingerbread' && phase === 'stress' && !opts.isHot) {
@@ -364,6 +435,83 @@ export function resolveDynamicDrop(
         textColor: '#EF4444',
       };
     }
+  }
+
+  // 1b. Smart Soul Jar (hrníček s dušičkou) resolution:
+  // Prevent soul jar clutter by diverting excess soul drops when the arena already has soul jars
+  // or when the hunter already has an active soul buff.
+  if (intendedType === 'soul') {
+    const shouldDivertSoul = opts.forceDivert || (
+      soulSaturated
+        ? true
+        : hasSoulBuff
+        ? Math.random() < 0.75
+        : activeSouls >= 1
+        ? Math.random() < 0.55
+        : false
+    );
+
+    if (!shouldDivertSoul) {
+      return {
+        type: 'soul',
+        value: opts.value,
+        size: opts.size,
+        speed: opts.speed,
+        radius: opts.radius ?? 14,
+        text: opts.text,
+        textColor: opts.textColor,
+        expiration: opts.expiration ?? SOUL_DROP_EXPIRATION,
+      };
+    }
+
+    // Soul drop was diverted: convert to a context-appropriate reward!
+    if ((phase === 'mercy' || currentHp < maxHp * 0.55) && !opts.mercyCooldownActive && Math.random() < 0.45) {
+      const isMercy = phase === 'mercy' && currentHp < maxHp * 0.45;
+      return {
+        type: 'bread',
+        radius: 10,
+        speed: opts.speed ?? 65,
+        isMercyDrop: isMercy,
+        expiration: FOOD_DROP_EXPIRATION,
+        text: 'Čerstvý pecen! 🍞',
+        textColor: '#84CC16',
+      };
+    }
+
+    if (phase === 'stress' && Math.random() < 0.50) {
+      return {
+        type: 'gingerbread',
+        value: GINGERBREAD_VALUES.large,
+        size: 'large',
+        radius: 14,
+        isHot: true,
+        expiration: 4.0 + Math.random() * 2.0,
+        speed: opts.speed ?? 75,
+        text: 'Horký perník! 🔥',
+        textColor: '#EF4444',
+      };
+    }
+
+    if (Math.random() < 0.58) {
+      const coinVal = opts.isBoss || opts.isMiniboss ? 20 : 8;
+      return {
+        type: 'coin',
+        value: coinVal,
+        speed: opts.speed ?? 75,
+        text: `+${coinVal} kr. do měšce! 🪙`,
+        textColor: '#FCD34D',
+      };
+    }
+
+    return {
+      type: 'gingerbread',
+      value: GINGERBREAD_VALUES.large,
+      size: 'large',
+      radius: 14,
+      speed: opts.speed ?? 65,
+      text: '+6 Perníček!',
+      textColor: '#B45309',
+    };
   }
 
   // If not a healing drop, return intended drop intact
@@ -383,14 +531,16 @@ export function resolveDynamicDrop(
 
   // 2. Healing drop resolution:
   // Determine if healing drop should be suppressed and diverted:
-  // - Full Courage (>= 95%): 88% suppression (ADR 0006)
-  // - Stress Phase: 80% suppression (ADR 0028b)
+  // - Full Courage (>= 95%): 88% suppression (ADR 0006), or only 40% if hunter has Bear Mask (offensive overheal ammo)
+  // - Stress Phase: 80% suppression (ADR 0028b), or only 40% if hunter has Bear Mask
   // - Mercy Cooldown Active (ADR 0028b 15s protection): 85% suppression to prevent heal spam
+  const fullCourageSuppressChance = hasBearMask ? 0.40 : 0.88;
+  const stressSuppressChance = hasBearMask ? 0.40 : 0.80;
   const shouldDivert = opts.forceDivert || (
     isFullCourage
-      ? Math.random() < 0.88
+      ? Math.random() < fullCourageSuppressChance
       : phase === 'stress'
-      ? Math.random() < 0.80
+      ? Math.random() < stressSuppressChance
       : opts.mercyCooldownActive
       ? Math.random() < 0.85
       : false
@@ -428,9 +578,10 @@ export function resolveDynamicDrop(
   }
 
   const roll = Math.random();
+  const canSpawnSoulFromDivert = !soulSaturated && !hasSoulBuff && activeSouls === 0;
 
   if (opts.isBoss || opts.isMiniboss) {
-    if (roll < 0.48) {
+    if (roll < 0.54) {
       return {
         type: 'coin',
         value: 30,
@@ -438,7 +589,7 @@ export function resolveDynamicDrop(
         text: 'Zlatý tolar! +30 kr. 🪙',
         textColor: '#F59E0B',
       };
-    } else if (roll < 0.82) {
+    } else if (roll < 0.92 || !canSpawnSoulFromDivert) {
       return {
         type: 'gingerbread',
         value: GINGERBREAD_VALUES.giant,
@@ -453,14 +604,15 @@ export function resolveDynamicDrop(
         type: 'soul',
         radius: 14,
         speed: opts.speed ?? 95,
+        expiration: SOUL_DROP_EXPIRATION,
         text: 'Vděčná dušička! 🕊️',
         textColor: '#38BDF8',
       };
     }
   }
 
-  if (roll < 0.52) {
-    const coinVal = roll < 0.22 ? 10 : 5;
+  if (roll < 0.58) {
+    const coinVal = roll < 0.25 ? 10 : 5;
     return {
       type: 'coin',
       value: coinVal,
@@ -468,7 +620,7 @@ export function resolveDynamicDrop(
       text: `+${coinVal} kr. do měšce! 🪙`,
       textColor: '#FCD34D',
     };
-  } else if (roll < 0.82) {
+  } else if (roll < 0.90 || (roll < 0.94 && !canSpawnSoulFromDivert)) {
     return {
       type: 'gingerbread',
       value: GINGERBREAD_VALUES.large,
@@ -478,11 +630,12 @@ export function resolveDynamicDrop(
       text: '+6 Perníček!',
       textColor: '#B45309',
     };
-  } else if (roll < 0.94) {
+  } else if (roll < 0.94 && canSpawnSoulFromDivert) {
     return {
       type: 'soul',
       radius: 14,
       speed: opts.speed ?? 80,
+      expiration: SOUL_DROP_EXPIRATION,
       text: 'Zbloudilá dušička! 🕊️',
       textColor: '#38BDF8',
     };
@@ -715,7 +868,7 @@ export function createDropInstance(
     : (opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash' || type === 'chest' ? HEAVY_ANCHOR_MAGNET_MOBILITY : 1.0);
   drop.expiration = opts.expiration !== undefined
     ? opts.expiration
-    : (isHealingDrop(type) ? FOOD_DROP_EXPIRATION : undefined);
+    : (isHealingDrop(type) ? FOOD_DROP_EXPIRATION : type === 'soul' ? SOUL_DROP_EXPIRATION : undefined);
   drop.isHeavyAnchor = opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash';
   drop.isMercyDrop = opts.isMercyDrop;
   return drop;
@@ -878,7 +1031,129 @@ export function performDropFusion(
     fusedCount++;
   }
 
+  // 5. Slévání a uvolnění nevyzvednutých hrníčků s dušičkami (soul) mimo obrazovku
+  // Pokud je aréna přeplněná a leží v ní nevyzvednuté hrníčky s dušičkami,
+  // sloučí se dvojice do zlatého tolaru (16 kr.) nebo se uvolní nejstarší kusy,
+  // aby hrníčky nezůstávaly v aréně příliš dlouho a neblokovaly strop kořisti.
+  const uncollectedSouls: GameDrop[] = [];
+  for (let i = 0; i < drops.length; i++) {
+    const d = drops[i];
+    if (!d.dead && d.type === 'soul' && isOffScreen(d)) {
+      uncollectedSouls.push(d);
+    }
+  }
+
+  while (uncollectedSouls.length >= 2 && aliveCount > maxLimit) {
+    const s1 = uncollectedSouls.pop()!;
+    const s2 = uncollectedSouls.pop()!;
+    s1.dead = true;
+    s2.dead = true;
+    aliveCount -= 2;
+    fusedCount += 1;
+
+    const fusedCoin = createDropInstance('coin', s1.x, s1.y, {
+      value: 16,
+      radius: 12,
+      speed: 0,
+    });
+    drops.push(fusedCoin);
+    aliveCount++;
+  }
+
+  while (uncollectedSouls.length >= 1 && aliveCount > maxLimit) {
+    const s = uncollectedSouls.pop()!;
+    s.dead = true;
+    aliveCount--;
+    fusedCount++;
+  }
+
   return fusedCount;
+}
+
+/**
+ * Gravitační zametání drobných krejcarů Velkým měšcem (ADR 0028b):
+ * Každý aktivní Velký měšec krejcarů (`big_pouch`) v okruhu POUCH_SWEEP_RADIUS (60 px)
+ * pohlcuje drobné mince (hodnota < 15) a v širším okruhu (120 px) si je k sobě přitahuje.
+ */
+export function sweepCoinsIntoBigPouches(drops: GameDrop[], dt = 0.016): number {
+  let absorbedCount = 0;
+  const sweepRadSq = POUCH_SWEEP_RADIUS * POUCH_SWEEP_RADIUS;
+  const pullRadSq = (POUCH_SWEEP_RADIUS * 2) * (POUCH_SWEEP_RADIUS * 2);
+
+  for (let i = 0; i < drops.length; i++) {
+    const pouch = drops[i];
+    if (!pouch || pouch.dead || pouch.type !== 'big_pouch') continue;
+
+    for (let j = 0; j < drops.length; j++) {
+      if (i === j) continue;
+      const coin = drops[j];
+      if (!coin || coin.dead || coin.type !== 'coin' || (coin.value || 1) >= 15) continue;
+
+      const dx = pouch.x - coin.x;
+      const dy = pouch.y - coin.y;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq <= sweepRadSq) {
+        pouch.value = (pouch.value || 35) + (coin.value || 1);
+        coin.dead = true;
+        absorbedCount++;
+      } else if (distSq <= pullRadSq && dt > 0) {
+        const dist = Math.sqrt(distSq) || 1;
+        const pullSpeed = 240 * dt;
+        coin.x += (dx / dist) * pullSpeed;
+        coin.y += (dy / dist) * pullSpeed;
+      }
+    }
+  }
+
+  return absorbedCount;
+}
+
+/**
+ * Vratka 50 % hodnoty z vypršeného Horkého perníčku do Pokladnice kořisti (ADR 0028b):
+ * Když v bojovém tlaku Horký perník vychladne/vyprší bez sebrání, polovina jeho hodnoty
+ * se neztratí, ale uloží se do čekající banky perníčků.
+ */
+export function refundExpiredHotGingerbread(
+  drop: GameDrop,
+  pendingDropBank: PendingDropBank | null | undefined
+): number {
+  if (!drop || !pendingDropBank || drop.type !== 'gingerbread' || !drop.isHot) return 0;
+  const refundValue = Math.max(1, Math.floor((drop.value || 2) * 0.5));
+  const key: PendingDropKey = 'gingerbread';
+  const existing = pendingDropBank.byKey[key];
+
+  if (!existing) {
+    const queuedDrop = createDropInstance('gingerbread', drop.x, drop.y, {
+      value: refundValue,
+      size: refundValue >= GINGERBREAD_VALUES.large ? 'large' : 'small',
+      speed: 0,
+      isHot: false,
+    });
+    normalizeQueuedGingerbread(queuedDrop);
+    pendingDropBank.byKey[key] = {
+      count: 1,
+      totalValue: refundValue,
+      hasValue: true,
+      mergeValues: true,
+      sequence: pendingDropBank.nextSequence++,
+      drop: queuedDrop,
+    };
+  } else {
+    existing.totalValue += refundValue;
+    existing.count = 1;
+    existing.drop = {
+      ...existing.drop,
+      x: drop.x,
+      y: drop.y,
+      value: existing.totalValue,
+      isHot: false,
+      dead: false,
+    };
+    normalizeQueuedGingerbread(existing.drop);
+  }
+
+  return refundValue;
 }
 
 /**
@@ -928,7 +1203,7 @@ export function pullWhipLoot(
   const sin = Math.sin(angle);
   for (let i = 0; i < drops.length; i++) {
     const d = drops[i];
-    if (d.dead || (d.type !== 'coin' && d.type !== 'gingerbread' && d.type !== 'big_pouch' && d.type !== 'gingerbread_stash' && d.type !== 'chest')) continue;
+    if (d.dead || (d.type !== 'coin' && d.type !== 'gingerbread' && d.type !== 'soul' && d.type !== 'big_pouch' && d.type !== 'gingerbread_stash' && d.type !== 'chest')) continue;
     const dx = d.x - originX;
     const dy = d.y - originY;
     const projAlong = dx * cos + dy * sin;

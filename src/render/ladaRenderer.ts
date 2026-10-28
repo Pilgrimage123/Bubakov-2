@@ -10158,7 +10158,9 @@ var Lada = {
 		this.drawFrostling(ctx, x, y, time * 0.45, vx, panicked, true); ctx.restore();
 	},
 	drawMeltingSnowman(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, infoOrEnemy?: any, maybeEnemy?: any) {
-		// Custom Lada-style sprite matched to the supplied melting snowman illustration.
+		// Authentic Ladovské / comic watercolor procedural 2D Canvas illustration for Tající sněhulák.
+		// Maps the 1000x1050 virtual illustration coordinate space (pivot 520, 680) into upright game proportions
+		// (Sx = 0.072, Sy = 0.094 -> ~88px tall, ~62px wide) so the snowman stands tall and menacing without looking flattened.
 		const dir = vx < 0 ? -1 : 1;
 		const enemy = (infoOrEnemy && typeof infoOrEnemy.hp === 'number')
 			? infoOrEnemy
@@ -10166,326 +10168,1271 @@ var Lada = {
 			? maybeEnemy
 			: null;
 		const hpRatio = enemy && typeof enemy.maxHp === 'number' && enemy.maxHp > 0
-			? Math.max(0.12, Math.min(1, enemy.hp / enemy.maxHp))
-			: (typeof enemy?.meltHpRatio === 'number' ? enemy.meltHpRatio : 1);
-		const squashX = (enemy?.meltSquashX ?? (1 + (1 - hpRatio) * 0.18)) * (enemy?.wobbleScaleX ?? 1);
-		const squashY = (enemy?.meltSquashY ?? (0.88 + 0.12 * hpRatio)) * (enemy?.wobbleScaleY ?? 1);
-		const walk = Math.sin(time * (panicked ? 17 : 7));
-		const bob = Math.abs(walk) * (panicked ? 3.5 : 1.8);
-		const scarfWave = Math.sin(time * (panicked ? 22 : 5.5)) * (panicked ? 10 : 5);
-		const broomSwing = Math.sin(time * (panicked ? 19 : 7)) * (panicked ? 0.48 : 0.24);
+			? Math.max(0.25, Math.min(1, enemy.hp / enemy.maxHp))
+			: (typeof enemy?.meltHpRatio === 'number' ? Math.max(0.25, enemy.meltHpRatio) : 1);
+		const rawSquashX = enemy?.meltSquashX ?? (1 + (1 - hpRatio) * 0.08);
+		const rawSquashY = enemy?.meltSquashY ?? (0.90 + 0.10 * hpRatio);
+		const squashX = Math.min(1.08, 1 + (rawSquashX - 1) * 0.35) * (1 + ((enemy?.wobbleScaleX ?? 1) - 1) * 0.35);
+		const squashY = Math.max(0.88, 1 - (1 - rawSquashY) * 0.35) * (1 + ((enemy?.wobbleScaleY ?? 1) - 1) * 0.35);
+
+		// Harmonized frequency with BakedBubakAtlas (12 normal, 20 panicked) for seamless 12-step walk baking
+		const freq = panicked ? 20 : 12;
+		const phase = time * freq;
+		const stride = Math.sin(phase);
+		const strideCos = Math.cos(phase);
+		// Double-frequency vertical bounce (2 steps per full left-right stride cycle) + lateral waddle sway
+		const stepBounce = Math.abs(stride);
+		const bob = stepBounce * (panicked ? 5.2 : 3.4);
+		const waddleSwayX = stride * (panicked ? 28 : 18);
+		const tilt = stride * (panicked ? 0.11 : 0.068);
+		const headBobAngle = strideCos * (panicked ? 0.075 : 0.045);
+		const hatWobble = Math.sin(phase - 0.6) * (panicked ? 0.095 : 0.055);
+		const scarfWave = Math.sin(phase - 0.4) * (panicked ? 3.2 : 2.0);
 		const attack = !!(infoOrEnemy && (
 			infoOrEnemy.isStrike || infoOrEnemy.hasSlashArc || infoOrEnemy.hasShockwave ||
 			infoOrEnemy.phase === 3 || infoOrEnemy.phase === 4
 		));
-		const meltPulse = (Math.sin(time * 3.2) + 1) * 0.5;
+		const windup = !!(infoOrEnemy && (infoOrEnemy.isWindup || infoOrEnemy.phase === 1 || infoOrEnemy.phase === 2));
+		const broomSwing = attack
+			? 0.68
+			: windup
+			? -0.42
+			: stride * (panicked ? 0.34 : 0.22);
+		const ripplePhase = (Math.sin(phase) + 1) * 0.5;
 
-		this.drawShadow(ctx, x, y + 2, 31);
+		// Articulated leg stride parameters (front right leg vs trailing back left leg move in opposition)
+		const backStepX = -stride * (panicked ? 62 : 46);
+		const backLiftY = Math.max(0, -strideCos) * (panicked ? 42 : 30);
+		const backLegAngle = -stride * (panicked ? 0.22 : 0.16);
+
+		const frontFootDx = stride * (panicked ? 64 : 48);
+		const frontFootDy = -Math.max(0, strideCos) * (panicked ? 46 : 34);
+		const frontKneeDx = frontFootDx * 0.55;
+		const frontKneeDy = frontFootDy * 0.65 - Math.max(0, strideCos) * 14;
+
+		this.drawShadow(ctx, x, y + 22, 24);
+
 		ctx.save();
-		ctx.translate(x, y - bob);
+		ctx.translate(x, y);
 		ctx.scale(dir * squashX, squashY);
 
-		// Thin icy puddle and water ripples underneath the melted lower body.
+		// Upright aspect ratio calibration (Sx = 0.072, Sy = 0.094, pivot = 520, 680)
+		const Sx = 0.072;
+		const Sy = 0.094;
+		const S = Sy;
+		ctx.scale(Sx, Sy);
+		ctx.translate(-520, -680);
+
+		const setInk = (w = 5.5, color = COLORS.ink) => {
+			ctx.strokeStyle = color;
+			ctx.lineWidth = w;
+			ctx.lineCap = 'round';
+			ctx.lineJoin = 'round';
+		};
+
+		const drawTick = (x1: number, y1: number, x2: number, y2: number, w = 2.8) => {
+			ctx.beginPath();
+			ctx.lineWidth = w;
+			ctx.strokeStyle = COLORS.ink;
+			ctx.moveTo(x1, y1);
+			ctx.quadraticCurveTo((x1 + x2) * 0.5 + 1.5, (y1 + y2) * 0.5 - 1.5, x2, y2);
+			ctx.stroke();
+		};
+
+		const drawSmallPuddleDrop = (px: number, py: number, rx: number, ry: number) => {
+			ctx.beginPath();
+			ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
+			ctx.fillStyle = '#7ec2e8';
+			ctx.fill();
+			setInk(3.4);
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.ellipse(px - rx * 0.2, py - ry * 0.15, rx * 0.45, ry * 0.35, 0, 0, Math.PI * 2);
+			ctx.fillStyle = '#e6f6ff';
+			ctx.fill();
+		};
+
+		const drawWaterDroplet = (dx: number, dy: number, dScale = 1, angle = 0) => {
+			ctx.save();
+			ctx.translate(dx, dy);
+			ctx.rotate(angle);
+			ctx.scale(dScale, dScale);
+
+			ctx.beginPath();
+			ctx.moveTo(0, -22);
+			ctx.bezierCurveTo(4, -10, 12, 2, 11, 12);
+			ctx.bezierCurveTo(10, 20, 5, 24, 0, 24);
+			ctx.bezierCurveTo(-5, 24, -10, 20, -11, 12);
+			ctx.bezierCurveTo(-12, 2, -4, -10, 0, -22);
+			ctx.closePath();
+
+			const grad = ctx.createLinearGradient(-8, -10, 8, 22);
+			grad.addColorStop(0, '#bfe6fc');
+			grad.addColorStop(0.55, '#6eb9e8');
+			grad.addColorStop(1, '#3b8ec4');
+			ctx.fillStyle = grad;
+			ctx.fill();
+			setInk(4.0 / Math.max(0.65, dScale));
+			ctx.stroke();
+
+			ctx.beginPath();
+			ctx.ellipse(-3.2, 8, 2.5, 7.5, -0.1, 0, Math.PI * 2);
+			ctx.fillStyle = '#ffffff';
+			ctx.fill();
+			ctx.restore();
+		};
+
+		// ============================================================================
+		// LAYER 1: SHALLOW WATER PUDDLES UNDER FEET (TRACKING STEPPING FEET)
+		// ============================================================================
 		ctx.save();
-		ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
-		ctx.strokeStyle = '#1678A6';
-		ctx.lineWidth = 1.7;
+		const leftPuddleShift = backStepX * 0.55;
+		ctx.save();
+		ctx.translate(leftPuddleShift, 0);
+		// Left puddle (under trailing back foot)
 		ctx.beginPath();
-		ctx.ellipse(0, 22, 29 + meltPulse * 2.8, 5.8 + meltPulse, 0, 0, Math.PI * 2);
+		ctx.moveTo(60, 898);
+		ctx.bezierCurveTo(2, 898, 2, 919, 48, 922);
+		ctx.bezierCurveTo(85, 924, 92, 944, 150, 944);
+		ctx.bezierCurveTo(210, 944, 240, 938, 268, 942);
+		ctx.bezierCurveTo(285, 946, 262, 962, 310, 964);
+		ctx.bezierCurveTo(368, 966, 392, 956, 378, 947);
+		ctx.bezierCurveTo(362, 940, 442, 938, 438, 925);
+		ctx.bezierCurveTo(435, 912, 365, 912, 345, 912);
+		ctx.lineTo(60, 898);
+		ctx.closePath();
+
+		const leftPuddleGrad = ctx.createLinearGradient(50, 895, 380, 965);
+		leftPuddleGrad.addColorStop(0, '#72bce6');
+		leftPuddleGrad.addColorStop(0.5, '#9ed6f5');
+		leftPuddleGrad.addColorStop(1, '#68b3e0');
+		ctx.fillStyle = leftPuddleGrad;
 		ctx.fill();
+		setInk(4.4);
 		ctx.stroke();
-		ctx.strokeStyle = 'rgba(224, 242, 254, 0.9)';
-		ctx.lineWidth = 1.2;
+
+		ctx.fillStyle = '#ffffff';
 		ctx.beginPath();
-		ctx.ellipse(-3, 22, 15 + meltPulse * 3, 2.2, 0, 0, Math.PI * 2);
+		ctx.ellipse(175, 932, 42, 4.5, 0, 0, Math.PI * 2);
+		ctx.ellipse(325, 954, 28, 3.5, 0, 0, Math.PI * 2);
+		ctx.ellipse(380, 927, 32, 4, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		setInk(2.5);
+		ctx.beginPath();
+		ctx.moveTo(125, 932);
+		ctx.quadraticCurveTo(175, 936, 225, 931);
+		ctx.moveTo(295, 954);
+		ctx.quadraticCurveTo(330, 958, 358, 953);
+		ctx.stroke();
+
+		drawSmallPuddleDrop(92, 939, 13, 4.5);
+		drawSmallPuddleDrop(170, 956, 14, 4.5);
+		drawSmallPuddleDrop(370, 889, 11, 5);
+		drawSmallPuddleDrop(396, 902, 12, 4);
+
+		const r2 = (ripplePhase + 0.5) % 1;
+		ctx.strokeStyle = '#2d82b9';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.ellipse(412, 926, 6 + r2 * 20, 1.5 + r2 * 4, 0, 0, Math.PI * 2);
 		ctx.stroke();
 		ctx.restore();
 
-		// Trailing back tail of the red striped scarf blowing behind the body
+		// Right puddle (under extended front foot)
+		const rightPuddleShift = frontFootDx * 0.55;
 		ctx.save();
-		ctx.translate(-10, -31);
-		ctx.rotate(-0.1 + scarfWave * 0.012);
-		this.setupPath(ctx, '#C62828', COLORS.ink, 2.6);
+		ctx.translate(rightPuddleShift, 0);
 		ctx.beginPath();
-		ctx.moveTo(-12, -4);
-		ctx.quadraticCurveTo(-22, -10, -35, -9 + scarfWave * 0.22);
-		ctx.lineTo(-29, 3);
-		ctx.quadraticCurveTo(-18, 0, -10, 2);
+		ctx.moveTo(640, 938);
+		ctx.bezierCurveTo(548, 940, 545, 962, 608, 964);
+		ctx.bezierCurveTo(645, 965, 622, 978, 692, 979);
+		ctx.bezierCurveTo(758, 980, 775, 968, 825, 972);
+		ctx.bezierCurveTo(885, 976, 935, 970, 928, 959);
+		ctx.bezierCurveTo(920, 948, 845, 950, 818, 943);
+		ctx.bezierCurveTo(800, 938, 765, 938, 740, 938);
 		ctx.closePath();
+
+		const rightPuddleGrad = ctx.createLinearGradient(560, 938, 920, 978);
+		rightPuddleGrad.addColorStop(0, '#6bb7e3');
+		rightPuddleGrad.addColorStop(0.5, '#a8dcf7');
+		rightPuddleGrad.addColorStop(1, '#71bce8');
+		ctx.fillStyle = rightPuddleGrad;
 		ctx.fill();
+		setInk(4.4);
 		ctx.stroke();
-		ctx.strokeStyle = '#F97316';
-		ctx.lineWidth = 3.4;
+
+		ctx.fillStyle = '#ffffff';
 		ctx.beginPath();
-		ctx.moveTo(-16, -7); ctx.lineTo(-22, 1);
+		ctx.ellipse(620, 954, 34, 4.5, 0, 0, Math.PI * 2);
+		ctx.ellipse(835, 961, 48, 4.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		drawSmallPuddleDrop(618, 924, 13, 5);
+		drawSmallPuddleDrop(785, 933, 12, 4.2);
+		drawSmallPuddleDrop(922, 939, 10, 3.8);
+
+		// Expanding ripple rings on right puddle
+		ctx.strokeStyle = '#2d82b9';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.ellipse(880, 960, 8 + ripplePhase * 24, 2 + ripplePhase * 5, 0, 0, Math.PI * 2);
 		ctx.stroke();
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.6;
-		for (let i = 0; i < 4; i++) {
-			const fringeX = -32 + i * 4.2;
+		ctx.restore();
+		ctx.restore();
+
+		// ============================================================================
+		// STRIDING & WADDLING CHARACTER BODY TRANSFORM (JEMNÉ KOLÉBÁNÍ)
+		// ============================================================================
+		ctx.save();
+		ctx.translate(500 + waddleSwayX, 820 - (bob / S));
+		ctx.rotate(tilt);
+		ctx.translate(-500, -820);
+
+		// ============================================================================
+		// LAYER 2: TRAILING BACK LEG (LEFT LEG) - ARTICULATED HIP & FOOT SWING
+		// ============================================================================
+		ctx.save();
+		ctx.translate(410, 660);
+		ctx.rotate(backLegAngle);
+		ctx.translate(-410 + backStepX * 0.55, -660 - backLiftY);
+
+		const traceBackLeg = () => {
 			ctx.beginPath();
-			ctx.moveTo(fringeX, 0);
-			ctx.lineTo(fringeX - 2, 6 + (i % 2) * 2);
+			ctx.moveTo(355, 650);
+			ctx.bezierCurveTo(322, 668, 315, 705, 290, 718);
+			ctx.bezierCurveTo(265, 728, 250, 725, 225, 745);
+			ctx.bezierCurveTo(205, 760, 195, 765, 172, 782);
+			ctx.bezierCurveTo(150, 798, 140, 800, 122, 822);
+			ctx.bezierCurveTo(105, 842, 88, 842, 74, 868);
+			ctx.bezierCurveTo(50, 878, 48, 902, 72, 906);
+			ctx.bezierCurveTo(105, 912, 128, 898, 158, 906);
+			ctx.bezierCurveTo(190, 914, 215, 926, 252, 922);
+			ctx.bezierCurveTo(288, 918, 325, 922, 348, 914);
+			ctx.bezierCurveTo(368, 906, 362, 882, 345, 878);
+			ctx.bezierCurveTo(348, 858, 322, 848, 292, 854);
+			ctx.bezierCurveTo(262, 860, 240, 858, 224, 854);
+			ctx.bezierCurveTo(255, 835, 298, 818, 338, 795);
+			ctx.bezierCurveTo(365, 780, 385, 768, 398, 772);
+			ctx.bezierCurveTo(406, 776, 404, 812, 412, 814);
+			ctx.bezierCurveTo(420, 814, 418, 774, 424, 756);
+			ctx.bezierCurveTo(445, 730, 462, 695, 470, 665);
+			ctx.closePath();
+		};
+
+		const legGrad = ctx.createLinearGradient(120, 680, 380, 915);
+		legGrad.addColorStop(0, '#ffffff');
+		legGrad.addColorStop(0.5, '#d6effc');
+		legGrad.addColorStop(0.85, '#8ac6eb');
+		legGrad.addColorStop(1, '#5cacde');
+		ctx.fillStyle = legGrad;
+		traceBackLeg();
+		ctx.fill();
+
+		// Thigh overhang shadow wash inside back leg contour
+		ctx.fillStyle = 'rgba(82, 160, 214, 0.45)';
+		ctx.beginPath();
+		ctx.ellipse(370, 715, 58, 36, -0.35, 0, Math.PI * 2);
+		ctx.fill();
+
+		traceBackLeg();
+		setInk(6.0);
+		ctx.stroke();
+
+		setInk(3.4);
+		ctx.beginPath();
+		ctx.moveTo(224, 854);
+		ctx.quadraticCurveTo(192, 856, 175, 845);
+		ctx.stroke();
+
+		drawTick(280, 755, 268, 766);
+		drawTick(212, 795, 198, 804);
+		drawTick(152, 838, 140, 846);
+		drawTick(288, 886, 298, 892);
+		drawTick(375, 742, 362, 752);
+		ctx.restore();
+
+		// ============================================================================
+		// LAYER 3: BACK ARM (LEFT ARM) & RUSTIC BROOM
+		// ============================================================================
+		ctx.save();
+		ctx.translate(650, 480);
+		ctx.rotate(broomSwing);
+		ctx.translate(-650, -480);
+
+		// 3A: Back Arm reaching out to hold broom
+		const traceBackArm = () => {
+			ctx.beginPath();
+			ctx.moveTo(615, 438);
+			ctx.bezierCurveTo(652, 434, 678, 444, 712, 440);
+			ctx.bezierCurveTo(728, 412, 762, 392, 798, 396);
+			ctx.bezierCurveTo(815, 400, 818, 422, 795, 434);
+			ctx.lineTo(758, 520);
+			ctx.bezierCurveTo(742, 540, 722, 548, 710, 560);
+			ctx.bezierCurveTo(706, 575, 708, 598, 700, 598);
+			ctx.bezierCurveTo(692, 598, 694, 570, 686, 558);
+			ctx.bezierCurveTo(665, 552, 650, 535, 622, 525);
+			ctx.closePath();
+		};
+
+		const armGrad = ctx.createLinearGradient(620, 410, 740, 585);
+		armGrad.addColorStop(0, '#ffffff');
+		armGrad.addColorStop(0.55, '#cceafa');
+		armGrad.addColorStop(1, '#68b2e0');
+		ctx.fillStyle = armGrad;
+		traceBackArm();
+		ctx.fill();
+		setInk(5.8);
+		ctx.stroke();
+
+		setInk(3.8);
+		ctx.beginPath();
+		ctx.moveTo(732, 442);
+		ctx.quadraticCurveTo(755, 418, 788, 425);
+		ctx.stroke();
+
+		// 3B: Rustic Wooden Broomstick
+		ctx.beginPath();
+		ctx.moveTo(828, 240);
+		ctx.lineTo(855, 248);
+		ctx.lineTo(718, 742);
+		ctx.bezierCurveTo(708, 750, 690, 744, 690, 732);
+		ctx.closePath();
+
+		const woodGrad = ctx.createLinearGradient(750, 480, 785, 490);
+		woodGrad.addColorStop(0, '#d99646');
+		woodGrad.addColorStop(0.5, '#b36d22');
+		woodGrad.addColorStop(1, '#78420c');
+		ctx.fillStyle = woodGrad;
+		ctx.fill();
+		setInk(5.4);
+		ctx.stroke();
+
+		setInk(2.4, '#241405');
+		ctx.beginPath();
+		ctx.moveTo(838, 265); ctx.lineTo(800, 400);
+		ctx.moveTo(845, 290); ctx.lineTo(812, 405);
+		ctx.moveTo(768, 515); ctx.lineTo(704, 735);
+		ctx.moveTo(776, 522); ctx.lineTo(735, 668);
+		ctx.stroke();
+
+		// 3C: Broom Straw Bristle Bundle & Twine Tie
+		ctx.beginPath();
+		ctx.moveTo(808, 210);
+		ctx.lineTo(793, 248);
+		ctx.lineTo(806, 245);
+		ctx.lineTo(802, 262);
+		ctx.lineTo(816, 255);
+		ctx.lineTo(815, 272);
+		ctx.lineTo(829, 258);
+		ctx.lineTo(852, 265);
+		ctx.lineTo(855, 298);
+		ctx.lineTo(866, 278);
+		ctx.lineTo(875, 286);
+		ctx.lineTo(884, 252);
+		ctx.lineTo(892, 228);
+		ctx.closePath();
+		ctx.fillStyle = '#b8701f';
+		ctx.fill();
+		setInk(4.6);
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(812, 196);
+		ctx.lineTo(798, 124);
+		ctx.lineTo(810, 140);
+		ctx.lineTo(800, 82);
+		ctx.lineTo(814, 106);
+		ctx.lineTo(812, 45);
+		ctx.lineTo(822, 68);
+		ctx.lineTo(822, 26);
+		ctx.lineTo(834, 62);
+		ctx.lineTo(848, 12);
+		ctx.lineTo(854, 48);
+		ctx.lineTo(868, 12);
+		ctx.lineTo(868, 58);
+		ctx.lineTo(895, 18);
+		ctx.lineTo(886, 65);
+		ctx.lineTo(912, 12);
+		ctx.lineTo(902, 68);
+		ctx.lineTo(926, 36);
+		ctx.lineTo(918, 75);
+		ctx.lineTo(948, 32);
+		ctx.lineTo(936, 78);
+		ctx.lineTo(968, 55);
+		ctx.lineTo(952, 92);
+		ctx.lineTo(988, 56);
+		ctx.lineTo(964, 108);
+		ctx.lineTo(990, 82);
+		ctx.lineTo(968, 124);
+		ctx.lineTo(992, 118);
+		ctx.lineTo(958, 154);
+		ctx.lineTo(978, 155);
+		ctx.lineTo(938, 185);
+		ctx.lineTo(955, 188);
+		ctx.lineTo(896, 215);
+		ctx.closePath();
+
+		const strawGrad = ctx.createLinearGradient(810, 40, 965, 200);
+		strawGrad.addColorStop(0, '#f0a646');
+		strawGrad.addColorStop(0.45, '#d48224');
+		strawGrad.addColorStop(0.8, '#a85c10');
+		strawGrad.addColorStop(1, '#733b06');
+		ctx.fillStyle = strawGrad;
+		ctx.fill();
+		setInk(4.6);
+		ctx.stroke();
+
+		setInk(2.6, '#140c02');
+		ctx.beginPath();
+		ctx.moveTo(822, 192); ctx.lineTo(816, 75);
+		ctx.moveTo(830, 194); ctx.lineTo(835, 58);
+		ctx.moveTo(840, 196); ctx.lineTo(855, 45);
+		ctx.moveTo(848, 198); ctx.lineTo(878, 52);
+		ctx.moveTo(858, 200); ctx.lineTo(902, 58);
+		ctx.moveTo(866, 202); ctx.lineTo(926, 68);
+		ctx.moveTo(874, 205); ctx.lineTo(948, 88);
+		ctx.moveTo(882, 208); ctx.lineTo(960, 118);
+		ctx.moveTo(888, 210); ctx.lineTo(942, 158);
+		ctx.stroke();
+
+		for (let i = 0; i < 3; i++) {
+			const offset = i * 10;
+			ctx.beginPath();
+			ctx.moveTo(812 - i * 2, 190 + offset);
+			ctx.quadraticCurveTo(858, 195 + offset, 898 - i * 2, 220 + offset);
+			ctx.quadraticCurveTo(896 - i * 2, 230 + offset, 890 - i * 2, 228 + offset);
+			ctx.quadraticCurveTo(852, 205 + offset, 808 - i * 2, 200 + offset);
+			ctx.closePath();
+			ctx.fillStyle = i % 2 === 0 ? '#e3b56b' : '#c48f41';
+			ctx.fill();
+			setInk(3.8);
 			ctx.stroke();
 		}
-		ctx.restore();
 
-		// A lumpy, sagging body of slushy snow.
-		this.setupPath(ctx, '#D9EFFB', COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.moveTo(-26, 17);
-		ctx.bezierCurveTo(-34, 14, -32, 4, -25, 0);
-		ctx.bezierCurveTo(-24, -10, -11, -14, -2, -8);
-		ctx.bezierCurveTo(9, -17, 23, -9, 22, 2);
-		ctx.bezierCurveTo(32, 4, 32, 15, 23, 18);
-		ctx.bezierCurveTo(13, 22, 8, 18, 2, 21);
-		ctx.bezierCurveTo(-7, 23, -13, 19, -20, 21);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = '#FFFFFF';
-		ctx.lineWidth = 5;
-		ctx.lineCap = 'round';
-		ctx.beginPath();
-		ctx.moveTo(-22, 2); ctx.quadraticCurveTo(-12, -7, -4, -3);
-		ctx.moveTo(5, -7); ctx.quadraticCurveTo(17, -10, 21, 1);
-		ctx.moveTo(-18, 12); ctx.quadraticCurveTo(-8, 15, -3, 12);
-		ctx.stroke();
-		ctx.strokeStyle = '#9BD5F4';
-		ctx.lineWidth = 1.4;
-		ctx.beginPath();
-		ctx.moveTo(-25, 7); ctx.quadraticCurveTo(-19, 13, -22, 18);
-		ctx.moveTo(19, 8); ctx.quadraticCurveTo(23, 12, 21, 17);
-		ctx.stroke();
-
-		// Melting arms, rounded drips and tiny twig fingers.
-		ctx.save();
-		ctx.lineCap = 'round';
-		ctx.lineJoin = 'round';
-		this.setupPath(ctx, '#EAF7FD', COLORS.ink, 4.2);
-		ctx.beginPath();
-		ctx.moveTo(-10, -17);
-		ctx.quadraticCurveTo(-18, -24, -22, -35);
-		ctx.quadraticCurveTo(-28, -41, -30, -32);
-		ctx.lineTo(-33, -21);
-		ctx.moveTo(17, -14);
-		ctx.quadraticCurveTo(25, -20, 26, -31);
-		ctx.quadraticCurveTo(32, -37, 35, -28);
-		ctx.lineTo(34, -14);
-		ctx.stroke();
-		ctx.strokeStyle = '#4A2B18';
-		ctx.lineWidth = 2.5;
-		ctx.beginPath();
-		ctx.moveTo(-30, -21); ctx.lineTo(-35, -26);
-		ctx.moveTo(-30, -21); ctx.lineTo(-35, -19);
-		ctx.moveTo(34, -14); ctx.lineTo(39, -18);
-		ctx.moveTo(34, -14); ctx.lineTo(39, -11);
-		ctx.stroke();
-		ctx.restore();
-
-		// Three dark, uneven coal buttons down the slushy torso.
-		ctx.fillStyle = '#252B2C';
-		ctx.strokeStyle = '#111827';
-		ctx.lineWidth = 1.8;
-		ctx.beginPath();
-		ctx.arc(1, 1, 3.1, 0, Math.PI * 2);
-		ctx.arc(5, 8, 3.3, 0, Math.PI * 2);
-		ctx.arc(2, 15, 3, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = '#5B6260';
-		ctx.beginPath();
-		ctx.arc(0, 0.1, 0.8, 0, Math.PI * 2);
-		ctx.arc(4, 7.2, 0.8, 0, Math.PI * 2);
-		ctx.fill();
-
-		// Large head, narrowed angry eyes and a wicked grin.
-		this.setupPath(ctx, '#F7FCFF', COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.moveTo(-15, -31);
-		ctx.bezierCurveTo(-20, -44, -11, -57, 1, -56);
-		ctx.bezierCurveTo(13, -58, 22, -47, 20, -36);
-		ctx.bezierCurveTo(19, -28, 10, -24, 1, -26);
-		ctx.bezierCurveTo(-7, -24, -13, -26, -15, -31);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 3;
-		ctx.lineCap = 'round';
-		ctx.beginPath();
-		ctx.moveTo(-11, -43); ctx.lineTo(-3, -40);
-		ctx.moveTo(5, -40); ctx.lineTo(14, -45);
-		ctx.stroke();
-		ctx.fillStyle = '#111827';
-		ctx.beginPath();
-		ctx.arc(-7, -41, 2.8, 0, Math.PI * 2);
-		ctx.arc(9, -42, 3, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = '#FFFFFF';
-		ctx.beginPath();
-		ctx.arc(-7.8, -42, 0.8, 0, Math.PI * 2);
-		ctx.arc(8.2, -43, 0.8, 0, Math.PI * 2);
-		ctx.fill();
-
-		// Segmented orange carrot nose.
-		this.setupPath(ctx, '#F97316', COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.moveTo(1, -37);
-		ctx.quadraticCurveTo(12, -40, 27, -33);
-		ctx.lineTo(10, -29);
-		ctx.lineTo(2, -32);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = '#9A3412';
-		ctx.lineWidth = 1.3;
-		ctx.beginPath();
-		ctx.moveTo(8, -36); ctx.lineTo(9, -32);
-		ctx.moveTo(14, -35); ctx.lineTo(15, -31);
-		ctx.moveTo(20, -34); ctx.lineTo(21, -32);
-		ctx.stroke();
-		ctx.fillStyle = '#1B1714';
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.7;
-		ctx.beginPath();
-		ctx.moveTo(-8, -31);
-		ctx.quadraticCurveTo(0, -25, 11, -31);
-		ctx.lineTo(7, -24);
-		ctx.quadraticCurveTo(-1, -21, -6, -26);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = '#FFF1C7';
-		ctx.beginPath();
-		ctx.moveTo(-5, -29); ctx.lineTo(-2, -28); ctx.lineTo(-3, -25);
-		ctx.moveTo(0, -27); ctx.lineTo(3, -28); ctx.lineTo(3, -24);
-		ctx.moveTo(5, -29); ctx.lineTo(7, -30); ctx.lineTo(6, -26);
-		ctx.fill();
-
-		// Front wrap of red-striped scarf around the neck (drawn over neck junction)
-		ctx.save();
-		this.setupPath(ctx, '#C62828', COLORS.ink, 2.5);
-		ctx.beginPath();
-		ctx.moveTo(-16, -26);
-		ctx.quadraticCurveTo(0, -21, 16, -26);
-		ctx.quadraticCurveTo(18, -19, 14, -18);
-		ctx.quadraticCurveTo(0, -14, -14, -18);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		// Yellowish-orange scarf stripes
-		ctx.strokeStyle = '#F97316';
-		ctx.lineWidth = 2.4;
-		ctx.beginPath();
-		ctx.moveTo(-7, -24); ctx.lineTo(-7, -17);
-		ctx.moveTo(3, -23); ctx.lineTo(3, -16);
-		ctx.stroke();
-		// Scarf knot
-		this.setupPath(ctx, '#B71C1C', COLORS.ink, 2);
-		ctx.beginPath();
-		ctx.ellipse(-9, -21, 4.5, 5, 0.2, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.stroke();
-		ctx.restore();
-
-		// Battered moss-green hat with a ragged cap of fresh snow and rusty patch.
-		ctx.save();
-		ctx.translate(0, -53);
-		ctx.rotate(-0.1 + Math.sin(time * 2.8) * 0.035);
-		this.setupPath(ctx, '#3F5140', COLORS.ink, 2.8);
-		ctx.beginPath();
-		ctx.moveTo(-17, 2);
-		ctx.lineTo(-13, -13);
-		ctx.quadraticCurveTo(-5, -20, 7, -16);
-		ctx.lineTo(15, -9);
-		ctx.lineTo(17, 2);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = '#65765B';
-		ctx.lineWidth = 2.3;
-		ctx.beginPath();
-		ctx.moveTo(-10, -10); ctx.lineTo(8, -13);
-		ctx.moveTo(-7, -3); ctx.lineTo(12, -6);
-		ctx.stroke();
-		this.setupPath(ctx, '#B45309', COLORS.ink, 1.5);
-		ctx.beginPath();
-		ctx.moveTo(-11, -12); ctx.lineTo(-5, -17); ctx.lineTo(0, -12);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		this.setupPath(ctx, '#F8FCFF', COLORS.ink, 2.2);
-		ctx.beginPath();
-		ctx.moveTo(-19, -12);
-		ctx.quadraticCurveTo(-17, -23, -6, -20);
-		ctx.quadraticCurveTo(1, -25, 8, -18);
-		ctx.quadraticCurveTo(17, -22, 18, -12);
-		ctx.quadraticCurveTo(13, -8, 6, -11);
-		ctx.quadraticCurveTo(-2, -8, -9, -11);
-		ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.restore();
-
-		// Long broom with a fan of straw, wrapped with dark twine; it sweeps on attack.
-		ctx.save();
-		ctx.translate(19, -7);
-		ctx.rotate(broomSwing + (attack ? -0.72 : panicked ? -0.38 : 0.12));
-		ctx.lineCap = 'round';
-		ctx.lineJoin = 'round';
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 5.8;
-		ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(10, -44); ctx.stroke();
-		ctx.strokeStyle = '#A66A32';
-		ctx.lineWidth = 3.6;
-		ctx.beginPath(); ctx.moveTo(0, 13); ctx.lineTo(10, -44); ctx.stroke();
-		ctx.strokeStyle = '#E5B76B';
-		ctx.lineWidth = 1;
-		ctx.beginPath(); ctx.moveTo(1, 7); ctx.lineTo(9, -39); ctx.stroke();
-		this.setupPath(ctx, '#C98524', COLORS.ink, 1.9);
-		ctx.beginPath();
-		ctx.moveTo(7, -42); ctx.lineTo(-1, -58); ctx.lineTo(4, -54);
-		ctx.lineTo(5, -66); ctx.lineTo(10, -55); ctx.lineTo(15, -66);
-		ctx.lineTo(14, -54); ctx.lineTo(23, -60); ctx.lineTo(18, -47);
-		ctx.lineTo(13, -42); ctx.closePath();
-		ctx.fill();
-		ctx.stroke();
-		ctx.strokeStyle = '#5B3418';
-		ctx.lineWidth = 2.5;
-		ctx.beginPath();
-		ctx.moveTo(6, -48); ctx.lineTo(17, -48);
-		ctx.moveTo(7, -45); ctx.lineTo(16, -45);
-		ctx.stroke();
-		ctx.restore();
-
-		// Animated water droplets run off the hat brim, cheeks, arms and melted hem.
-		ctx.fillStyle = '#7DD3FC';
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = 1.2;
-		for (let i = 0; i < 5; i++) {
-			const phase = (time * (1.15 + i * 0.14) + i * 0.23) % 1;
-			const dropX = [-15, -7, 9, 20, 29][i];
-			const anchorY = [-18, -6, -17, -9, -13][i];
-			const dropY = anchorY + phase * (7 + 5 * meltPulse);
-			const radius = 1.1 + (1 - phase) * 1.35;
+		// 3D: Snowy Fingers Wrapping Around Front of Broomstick
+		const traceFrontFingers = () => {
 			ctx.beginPath();
-			ctx.moveTo(dropX, dropY - radius);
-			ctx.quadraticCurveTo(dropX + radius * 1.5, dropY, dropX, dropY + radius * 1.8);
-			ctx.quadraticCurveTo(dropX - radius * 1.2, dropY, dropX, dropY - radius);
+			ctx.moveTo(810, 402);
+			ctx.bezierCurveTo(848, 398, 862, 438, 855, 468);
+			ctx.bezierCurveTo(848, 495, 835, 502, 832, 518);
+			ctx.bezierCurveTo(830, 535, 832, 550, 822, 550);
+			ctx.bezierCurveTo(812, 550, 814, 522, 810, 512);
+			ctx.bezierCurveTo(790, 518, 765, 510, 764, 492);
+			ctx.bezierCurveTo(752, 485, 756, 464, 772, 458);
+			ctx.bezierCurveTo(762, 444, 772, 422, 796, 424);
+			ctx.bezierCurveTo(806, 425, 812, 412, 810, 402);
+			ctx.closePath();
+		};
+
+		const handGrad = ctx.createLinearGradient(760, 405, 845, 545);
+		handGrad.addColorStop(0, '#ffffff');
+		handGrad.addColorStop(0.6, '#cbeafa');
+		handGrad.addColorStop(1, '#68b2e0');
+		ctx.fillStyle = handGrad;
+		traceFrontFingers();
+		ctx.fill();
+		setInk(5.4);
+		ctx.stroke();
+
+		setInk(3.6);
+		ctx.beginPath();
+		ctx.moveTo(772, 458); ctx.quadraticCurveTo(795, 462, 812, 454);
+		ctx.moveTo(766, 490); ctx.quadraticCurveTo(788, 494, 806, 484);
+		ctx.stroke();
+		ctx.restore();
+
+		// ============================================================================
+		// LAYER 4: MAIN TORSO, COAL BUTTONS & ARTICULATED FRONT LEG (RIGHT LEG)
+		// ============================================================================
+		ctx.save();
+
+		const traceTorsoAndFrontLeg = () => {
+			ctx.beginPath();
+			ctx.moveTo(395, 290);
+			ctx.bezierCurveTo(335, 315, 298, 362, 285, 392);
+			ctx.bezierCurveTo(262, 408, 252, 432, 265, 455);
+			ctx.bezierCurveTo(242, 475, 238, 498, 245, 518);
+			ctx.bezierCurveTo(218, 535, 185, 558, 192, 588);
+			ctx.bezierCurveTo(195, 604, 208, 608, 210, 622);
+			// Leftmost rear hip hanging snow drip #1
+			ctx.bezierCurveTo(205, 642, 205, 668, 214, 668);
+			ctx.bezierCurveTo(223, 668, 222, 636, 228, 626);
+			// Rear hip hanging snow drip #2
+			ctx.bezierCurveTo(238, 626, 242, 648, 250, 648);
+			ctx.bezierCurveTo(258, 648, 262, 624, 275, 628);
+			// Lower hip / buttock curve with hanging snow flap
+			ctx.bezierCurveTo(290, 638, 308, 635, 322, 650);
+			ctx.bezierCurveTo(332, 668, 338, 706, 360, 706);
+			ctx.bezierCurveTo(382, 706, 385, 675, 395, 668);
+			// Underside of extended right thigh
+			ctx.bezierCurveTo(428, 675, 462 + frontKneeDx * 0.25, 688 + frontKneeDy * 0.25, 492 + frontKneeDx * 0.45, 708 + frontKneeDy * 0.45);
+			// Hanging thigh icicle drip
+			ctx.bezierCurveTo(498 + frontKneeDx * 0.45, 718 + frontKneeDy * 0.45, 496 + frontKneeDx * 0.45, 742 + frontKneeDy * 0.45, 504 + frontKneeDx * 0.45, 742 + frontKneeDy * 0.45);
+			ctx.bezierCurveTo(512 + frontKneeDx * 0.45, 742 + frontKneeDy * 0.45, 510 + frontKneeDx * 0.45, 718 + frontKneeDy * 0.45, 518 + frontKneeDx * 0.5, 715 + frontKneeDy * 0.5);
+			// Underside of knee and calf sloping down-right
+			ctx.bezierCurveTo(548 + frontKneeDx * 0.7, 738 + frontKneeDy * 0.7, 562 + frontKneeDx * 0.85, 772 + frontKneeDy * 0.85, 578 + frontKneeDx, 808 + frontKneeDy);
+			// Hanging calf drip
+			ctx.bezierCurveTo(580 + frontKneeDx, 822 + frontKneeDy, 578 + frontKneeDx, 838 + frontKneeDy, 586 + frontKneeDx, 838 + frontKneeDy);
+			ctx.bezierCurveTo(594 + frontKneeDx, 838 + frontKneeDy, 594 + frontKneeDx, 818 + frontKneeDy, 604 + frontFootDx * 0.7, 820 + frontFootDy * 0.7);
+			// Back of ankle curving down into right puddle heel
+			ctx.bezierCurveTo(622 + frontFootDx * 0.85, 838 + frontFootDy * 0.85, 625 + frontFootDx * 0.92, 868 + frontFootDy * 0.92, 652 + frontFootDx, 892 + frontFootDy);
+			ctx.bezierCurveTo(662 + frontFootDx, 912 + frontFootDy, 632 + frontFootDx, 938 + frontFootDy, 655 + frontFootDx, 950 + frontFootDy);
+			// Bottom of heel resting in right puddle
+			ctx.bezierCurveTo(682 + frontFootDx, 962 + frontFootDy, 725 + frontFootDx, 962 + frontFootDy, 752 + frontFootDx, 948 + frontFootDy);
+			ctx.bezierCurveTo(768 + frontFootDx, 938 + frontFootDy, 765 + frontFootDx, 915 + frontFootDy, 795 + frontFootDx, 902 + frontFootDy);
+			// Underside of raised front foot sloping up-right
+			ctx.bezierCurveTo(828 + frontFootDx, 888 + frontFootDy, 855 + frontFootDx, 862 + frontFootDy, 872 + frontFootDx, 862 + frontFootDy);
+			// Hanging drip at tip of raised toe
+			ctx.bezierCurveTo(876 + frontFootDx, 868 + frontFootDy, 874 + frontFootDx, 884 + frontFootDy, 882 + frontFootDx, 884 + frontFootDy);
+			ctx.bezierCurveTo(890 + frontFootDx, 884 + frontFootDy, 888 + frontFootDx, 855 + frontFootDy, 892 + frontFootDx, 842 + frontFootDy);
+			// Big upturned rounded toe of front snow foot
+			ctx.bezierCurveTo(912 + frontFootDx, 810 + frontFootDy, 902 + frontFootDx, 755 + frontFootDy, 862 + frontFootDx, 752 + frontFootDy);
+			ctx.bezierCurveTo(825 + frontFootDx, 750 + frontFootDy, 795 + frontFootDx, 778 + frontFootDy, 760 + frontFootDx, 798 + frontFootDy);
+			ctx.bezierCurveTo(735 + frontFootDx * 0.9, 812 + frontFootDy * 0.9, 722 + frontFootDx * 0.85, 822 + frontFootDy * 0.85, 710 + frontFootDx * 0.8, 818 + frontFootDy * 0.8);
+			// Top of shin / knee / thigh rising up-left
+			ctx.bezierCurveTo(695 + frontKneeDx * 0.9, 785 + frontKneeDy * 0.9, 678 + frontKneeDx * 0.65, 755 + frontKneeDy * 0.65, 652 + frontKneeDx * 0.4, 722 + frontKneeDy * 0.4);
+			ctx.bezierCurveTo(648 + frontKneeDx * 0.2, 690 + frontKneeDy * 0.2, 625, 665, 592, 642);
+			// Belly lower overhang above thigh
+			ctx.bezierCurveTo(612, 625, 618, 595, 608, 572);
+			// Rounded chest / belly curving up toward scarf
+			ctx.bezierCurveTo(628, 542, 638, 495, 622, 445);
+			ctx.bezierCurveTo(615, 415, 595, 395, 575, 385);
+			ctx.closePath();
+		};
+
+		const bodyGrad = ctx.createLinearGradient(580, 350, 260, 760);
+		bodyGrad.addColorStop(0, '#ffffff');
+		bodyGrad.addColorStop(0.45, '#e3f4fc');
+		bodyGrad.addColorStop(0.8, '#90c9ec');
+		bodyGrad.addColorStop(1, '#5aa8db');
+		ctx.fillStyle = bodyGrad;
+		traceTorsoAndFrontLeg();
+		ctx.fill();
+
+		// Watercolor shadow wash under the foreground right arm and lower belly
+		ctx.fillStyle = 'rgba(95, 175, 226, 0.42)';
+		ctx.beginPath();
+		ctx.moveTo(355, 495);
+		ctx.bezierCurveTo(410, 565, 520, 535, 595, 435);
+		ctx.lineTo(612, 575);
+		ctx.bezierCurveTo(535, 625, 420, 605, 345, 550);
+		ctx.closePath();
+		ctx.fill();
+
+		// Watercolor shadow wash along sole/heel of upturned front foot
+		ctx.fillStyle = 'rgba(75, 155, 212, 0.48)';
+		ctx.beginPath();
+		ctx.moveTo(652 + frontFootDx, 892 + frontFootDy);
+		ctx.bezierCurveTo(682 + frontFootDx, 956 + frontFootDy, 745 + frontFootDx, 952 + frontFootDy, 795 + frontFootDx, 902 + frontFootDy);
+		ctx.bezierCurveTo(835 + frontFootDx, 882 + frontFootDy, 868 + frontFootDx, 855 + frontFootDy, 885 + frontFootDx, 835 + frontFootDy);
+		ctx.bezierCurveTo(835 + frontFootDx, 835 + frontFootDy, 755 + frontFootDx, 875 + frontFootDy, 652 + frontFootDx, 892 + frontFootDy);
+		ctx.closePath();
+		ctx.fill();
+
+		traceTorsoAndFrontLeg();
+		setInk(6.0);
+		ctx.stroke();
+
+		// Internal hip/thigh fold and overhang lines (moving dynamically with leg stride)
+		setInk(4.6);
+		ctx.beginPath();
+		ctx.moveTo(468, 562);
+		ctx.bezierCurveTo(518, 568, 560 + frontKneeDx * 0.15, 602 + frontKneeDy * 0.15, 592 + frontKneeDx * 0.2, 642 + frontKneeDy * 0.2);
+		ctx.moveTo(335, 595);
+		ctx.bezierCurveTo(342, 632, 368, 668, 398, 668);
+		ctx.moveTo(710 + frontFootDx * 0.8, 818 + frontFootDy * 0.8);
+		ctx.quadraticCurveTo(688 + frontFootDx * 0.7, 830 + frontFootDy * 0.7, 674 + frontFootDx * 0.7, 824 + frontFootDy * 0.7);
+		ctx.stroke();
+
+		// Three dark coal buttons on chest
+		const buttons = [
+			{ bx: 602, by: 476, rx: 19, ry: 18, rot: -0.2 },
+			{ bx: 580, by: 536, rx: 19, ry: 17.5, rot: -0.25 },
+			{ bx: 545, by: 582, rx: 19.5, ry: 18, rot: -0.15 },
+		];
+		for (let i = 0; i < buttons.length; i++) {
+			const b = buttons[i];
+			ctx.save();
+			ctx.translate(b.bx, b.by);
+			ctx.rotate(b.rot);
+			ctx.beginPath();
+			ctx.moveTo(-b.rx, -3);
+			ctx.bezierCurveTo(-b.rx, -b.ry, b.rx * 0.8, -b.ry, b.rx, -2);
+			ctx.bezierCurveTo(b.rx * 1.05, b.ry * 0.9, -b.rx * 0.7, b.ry * 1.05, -b.rx, -3);
+			ctx.closePath();
+
+			const coalGrad = ctx.createRadialGradient(-5, -5, 2, 0, 0, b.rx);
+			coalGrad.addColorStop(0, '#5a6266');
+			coalGrad.addColorStop(0.55, '#2b3033');
+			coalGrad.addColorStop(1, '#121416');
+			ctx.fillStyle = coalGrad;
+			ctx.fill();
+			setInk(4.4);
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		// Organic ink contour ticks across torso, hip, thigh, and foot
+		drawTick(298, 445, 286, 458);
+		drawTick(272, 525, 260, 538);
+		drawTick(315, 512, 305, 526);
+		drawTick(242, 578, 232, 592);
+		drawTick(302, 575, 292, 590);
+		drawTick(395, 592, 385, 608);
+		drawTick(445, 622, 434, 636);
+		drawTick(522 + frontKneeDx * 0.3, 655 + frontKneeDy * 0.3, 512 + frontKneeDx * 0.3, 668 + frontKneeDy * 0.3);
+		drawTick(608 + frontKneeDx * 0.6, 718 + frontKneeDy * 0.6, 616 + frontKneeDx * 0.6, 732 + frontKneeDy * 0.6);
+		drawTick(638 + frontKneeDx * 0.8, 765 + frontKneeDy * 0.8, 646 + frontKneeDx * 0.8, 778 + frontKneeDy * 0.8);
+		drawTick(815 + frontFootDx, 790 + frontFootDy, 802 + frontFootDx, 802 + frontFootDy);
+		drawTick(855 + frontFootDx, 782 + frontFootDy, 842 + frontFootDx, 795 + frontFootDy);
+		drawTick(762 + frontFootDx, 848 + frontFootDy, 748 + frontFootDx, 860 + frontFootDy);
+		ctx.restore();
+
+		// ============================================================================
+		// LAYER 5: FOREGROUND RIGHT ARM (COUNTER-SWINGING ACROSS CHEST)
+		// ============================================================================
+		ctx.save();
+		ctx.translate(415, 340);
+		ctx.rotate(-stride * (panicked ? 0.22 : 0.14) + (attack ? 0.24 : 0));
+		ctx.translate(-415, -340);
+
+		const traceRightArm = () => {
+			ctx.beginPath();
+			ctx.moveTo(395, 292);
+			ctx.bezierCurveTo(352, 315, 342, 378, 360, 428);
+			ctx.bezierCurveTo(342, 458, 345, 502, 375, 508);
+			ctx.bezierCurveTo(385, 525, 412, 528, 428, 518);
+			// Prominent hanging snow icicle drip under elbow
+			ctx.bezierCurveTo(434, 532, 432, 576, 443, 576);
+			ctx.bezierCurveTo(454, 576, 452, 525, 458, 505);
+			// Underside of forearm reaching up-right with a second smaller drip
+			ctx.bezierCurveTo(478, 498, 495, 482, 506, 468);
+			ctx.bezierCurveTo(510, 482, 508, 495, 516, 495);
+			ctx.bezierCurveTo(524, 495, 524, 468, 532, 455);
+			// Curled snowy fist / paw fingers on chest
+			ctx.bezierCurveTo(548, 442, 558, 432, 558, 448);
+			ctx.bezierCurveTo(558, 462, 578, 462, 585, 442);
+			ctx.bezierCurveTo(598, 448, 608, 425, 598, 398);
+			ctx.bezierCurveTo(588, 372, 555, 360, 522, 372);
+			ctx.bezierCurveTo(492, 382, 472, 405, 442, 412);
+			ctx.bezierCurveTo(475, 375, 475, 325, 438, 296);
+			ctx.closePath();
+		};
+
+		const fgArmGrad = ctx.createLinearGradient(420, 310, 480, 560);
+		fgArmGrad.addColorStop(0, '#ffffff');
+		fgArmGrad.addColorStop(0.55, '#d8f0fc');
+		fgArmGrad.addColorStop(1, '#68b2e0');
+		ctx.fillStyle = fgArmGrad;
+		traceRightArm();
+		ctx.fill();
+		setInk(5.8);
+		ctx.stroke();
+
+		setInk(4.2);
+		ctx.beginPath();
+		ctx.moveTo(415, 420); ctx.quadraticCurveTo(432, 416, 448, 410);
+		ctx.moveTo(558, 436); ctx.quadraticCurveTo(568, 414, 554, 402);
+		ctx.moveTo(582, 442); ctx.quadraticCurveTo(588, 418, 574, 402);
+		ctx.stroke();
+
+		drawTick(392, 345, 384, 358);
+		drawTick(382, 468, 374, 480);
+		drawTick(482, 435, 472, 446);
+		ctx.restore();
+
+		// ============================================================================
+		// LAYER 6: RED & DARK-BROWN STRIPED SCARF (FLOWING LEFT + NECK WRAP)
+		// ============================================================================
+		ctx.save();
+		// 6A: Inner/Back Scarf Tail Peeking Behind Shoulder
+		ctx.beginPath();
+		ctx.moveTo(412, 248);
+		ctx.bezierCurveTo(345, 258, 302, 315, 296, 364);
+		ctx.bezierCurveTo(325, 325, 368, 292, 415, 288);
+		ctx.closePath();
+		ctx.fillStyle = '#b82512';
+		ctx.fill();
+		setInk(4.8);
+		ctx.stroke();
+
+		// 6B: Main Flowing Scarf Tail Blowing Left
+		ctx.save();
+		ctx.translate(400, 250);
+		ctx.rotate(scarfWave * 0.065);
+		ctx.translate(-400, -250);
+
+		const tassels = [
+			[172, 300, 108, 314, 112, 326, 178, 315],
+			[178, 315, 116, 338, 122, 350, 186, 328],
+			[186, 328, 130, 358, 138, 368, 195, 340],
+			[195, 340, 142, 378, 152, 388, 204, 352],
+			[204, 352, 154, 398, 164, 408, 212, 364],
+			[212, 364, 168, 416, 178, 426, 222, 376],
+			[222, 376, 178, 438, 188, 446, 232, 386],
+			[232, 386, 194, 452, 205, 458, 242, 396],
+			[242, 396, 214, 458, 226, 460, 252, 402],
+		];
+		for (let i = 0; i < tassels.length; i++) {
+			const [x1, y1, tx1, ty1, tx2, ty2, x2, y2] = tassels[i];
+			ctx.beginPath();
+			ctx.moveTo(x1, y1);
+			ctx.quadraticCurveTo((x1 + tx1) * 0.5, (y1 + ty1) * 0.5 - 3, tx1, ty1);
+			ctx.quadraticCurveTo(tx1 - 4, (ty1 + ty2) * 0.5, tx2, ty2);
+			ctx.quadraticCurveTo((x2 + tx2) * 0.5, (y2 + ty2) * 0.5, x2, y2);
+			ctx.closePath();
+			ctx.fillStyle = '#cf2f19';
+			ctx.fill();
+			setInk(3.8);
+			ctx.stroke();
+		}
+
+		const traceScarfTail = () => {
+			ctx.beginPath();
+			ctx.moveTo(405, 246);
+			ctx.bezierCurveTo(335, 222, 248, 248, 168, 302);
+			ctx.lineTo(250, 402);
+			ctx.bezierCurveTo(288, 342, 345, 282, 402, 268);
+			ctx.closePath();
+		};
+
+		const scarfGrad = ctx.createLinearGradient(170, 250, 400, 390);
+		scarfGrad.addColorStop(0, '#e33b22');
+		scarfGrad.addColorStop(0.6, '#c72a14');
+		scarfGrad.addColorStop(1, '#9e1c0b');
+		ctx.fillStyle = scarfGrad;
+		traceScarfTail();
+		ctx.fill();
+
+		// Dark-brown transverse stripes fitted inside scarf tail
+		ctx.fillStyle = '#4f221d';
+		const tailStripes = [
+			[184, 288, 202, 276, 269, 363, 254, 381],
+			[218, 266, 240, 255, 301, 332, 283, 348],
+			[260, 247, 285, 239, 338, 301, 317, 317],
+			[310, 236, 336, 234, 374, 278, 353, 290],
+		];
+		for (let i = 0; i < tailStripes.length; i++) {
+			const [ax, ay, bx, by, cx, cy, dx, dy] = tailStripes[i];
+			ctx.beginPath();
+			ctx.moveTo(ax, ay);
+			ctx.lineTo(bx, by);
+			ctx.lineTo(cx, cy);
+			ctx.lineTo(dx, dy);
 			ctx.closePath();
 			ctx.fill();
-			ctx.stroke();
 		}
-		if (panicked) {
-			ctx.strokeStyle = '#38BDF8';
-			ctx.lineWidth = 1.8;
-			ctx.beginPath();
-			ctx.moveTo(-28, -18); ctx.lineTo(-35, -23);
-			ctx.moveTo(-30, -11); ctx.lineTo(-39, -12);
-			ctx.stroke();
-		}
+
+		traceScarfTail();
+		setInk(5.4);
+		ctx.stroke();
+
+		setInk(2.0, 'rgba(20, 10, 10, 0.45)');
+		ctx.beginPath();
+		ctx.moveTo(185, 322);
+		ctx.bezierCurveTo(255, 272, 325, 248, 395, 254);
+		ctx.moveTo(208, 350);
+		ctx.bezierCurveTo(272, 296, 338, 264, 398, 262);
+		ctx.stroke();
 		ctx.restore();
+
+		// 6C: Thick Folded Scarf Wrapped Around Neck
+		const traceNeckScarf = () => {
+			ctx.beginPath();
+			ctx.moveTo(388, 288);
+			ctx.bezierCurveTo(395, 252, 422, 235, 452, 242);
+			ctx.bezierCurveTo(475, 248, 492, 288, 528, 328);
+			ctx.bezierCurveTo(568, 368, 628, 382, 682, 364);
+			ctx.bezierCurveTo(698, 368, 696, 392, 678, 402);
+			ctx.bezierCurveTo(692, 412, 688, 438, 658, 442);
+			ctx.bezierCurveTo(622, 445, 598, 432, 588, 418);
+			ctx.bezierCurveTo(568, 368, 520, 368, 488, 392);
+			ctx.bezierCurveTo(472, 352, 435, 305, 388, 288);
+			ctx.closePath();
+		};
+
+		const neckGrad = ctx.createLinearGradient(390, 245, 690, 440);
+		neckGrad.addColorStop(0, '#e33b22');
+		neckGrad.addColorStop(0.55, '#c92912');
+		neckGrad.addColorStop(1, '#961908');
+		ctx.fillStyle = neckGrad;
+		traceNeckScarf();
+		ctx.fill();
+
+		// Dark brown stripes fitted inside neck wrap
+		ctx.fillStyle = '#4a1f1a';
+		const neckStripes = [
+			[408, 244, 434, 240, 416, 302, 394, 291],
+			[464, 258, 486, 276, 456, 336, 438, 318],
+			[510, 310, 532, 328, 497, 382, 480, 364],
+			[618, 372, 642, 374, 628, 438, 606, 432],
+		];
+		for (let i = 0; i < neckStripes.length; i++) {
+			const [ax, ay, bx, by, cx, cy, dx, dy] = neckStripes[i];
+			ctx.beginPath();
+			ctx.moveTo(ax, ay);
+			ctx.lineTo(bx, by);
+			ctx.lineTo(cx, cy);
+			ctx.lineTo(dx, dy);
+			ctx.closePath();
+			ctx.fill();
+		}
+
+		traceNeckScarf();
+		setInk(5.4);
+		ctx.stroke();
+
+		setInk(4.2);
+		ctx.beginPath();
+		ctx.moveTo(448, 268);
+		ctx.bezierCurveTo(482, 315, 525, 355, 588, 388);
+		ctx.moveTo(598, 398);
+		ctx.bezierCurveTo(632, 412, 660, 408, 678, 402);
+		ctx.stroke();
+		ctx.restore();
+
+		// ============================================================================
+		// LAYER 7: HEAD, GLARING EYES, TOOTHY GRIN & CARROT NOSE (WITH HEAD SWAY)
+		// ============================================================================
+		ctx.save();
+		ctx.translate(585, 320);
+		ctx.rotate(headBobAngle);
+		ctx.translate(-585, -320);
+
+		const traceHeadBase = () => {
+			ctx.beginPath();
+			ctx.moveTo(462, 248);
+			ctx.bezierCurveTo(468, 212, 495, 192, 535, 188);
+			ctx.lineTo(725, 252);
+			ctx.bezierCurveTo(745, 275, 742, 312, 725, 328);
+			ctx.bezierCurveTo(705, 345, 695, 372, 665, 374);
+			ctx.bezierCurveTo(662, 386, 662, 398, 654, 398);
+			ctx.bezierCurveTo(646, 398, 648, 380, 640, 375);
+			ctx.bezierCurveTo(585, 375, 535, 352, 502, 315);
+			ctx.bezierCurveTo(482, 290, 465, 268, 462, 248);
+			ctx.closePath();
+		};
+
+		const headGrad = ctx.createLinearGradient(470, 190, 680, 385);
+		headGrad.addColorStop(0, '#99cff0');
+		headGrad.addColorStop(0.32, '#f5fbff');
+		headGrad.addColorStop(0.75, '#cceafa');
+		headGrad.addColorStop(1, '#68b2e0');
+		ctx.fillStyle = headGrad;
+		traceHeadBase();
+		ctx.fill();
+		setInk(5.6);
+		ctx.stroke();
+
+		setInk(3.8);
+		ctx.beginPath();
+		ctx.moveTo(498, 278);
+		ctx.quadraticCurveTo(488, 305, 495, 326);
+		ctx.moveTo(548, 252);
+		ctx.bezierCurveTo(524, 250, 514, 272, 518, 288);
+		ctx.stroke();
+		drawTick(495, 238, 488, 248);
+		drawTick(548, 215, 542, 228);
+
+		// 7B: Sinister Wide Clenched Toothy Grin
+		const traceMouth = () => {
+			ctx.beginPath();
+			ctx.moveTo(542, 258);
+			ctx.bezierCurveTo(568, 275, 598, 312, 658, 336);
+			ctx.lineTo(672, 344);
+			ctx.bezierCurveTo(628, 360, 568, 358, 548, 328);
+			ctx.bezierCurveTo(535, 308, 535, 278, 542, 258);
+			ctx.closePath();
+		};
+
+		const teethGrad = ctx.createLinearGradient(540, 260, 665, 355);
+		teethGrad.addColorStop(0, '#e8d396');
+		teethGrad.addColorStop(0.35, '#fcf7de');
+		teethGrad.addColorStop(0.75, '#f5ecc4');
+		teethGrad.addColorStop(1, '#cfba78');
+		ctx.fillStyle = teethGrad;
+		traceMouth();
+		ctx.fill();
+
+		// Clenched teeth grid lines fitted inside mouth
+		setInk(4.0);
+		ctx.beginPath();
+		ctx.moveTo(538, 282);
+		ctx.bezierCurveTo(562, 312, 598, 334, 665, 342);
+		ctx.moveTo(564, 275); ctx.lineTo(552, 296);
+		ctx.moveTo(585, 292); ctx.lineTo(572, 315);
+		ctx.moveTo(610, 312); ctx.lineTo(598, 330);
+		ctx.moveTo(634, 325); ctx.lineTo(626, 338);
+		ctx.moveTo(556, 300); ctx.lineTo(546, 322);
+		ctx.moveTo(576, 318); ctx.lineTo(566, 344);
+		ctx.moveTo(604, 332); ctx.lineTo(596, 352);
+		ctx.moveTo(630, 338); ctx.lineTo(626, 354);
+		ctx.stroke();
+
+		traceMouth();
+		setInk(5.2);
+		ctx.stroke();
+
+		// 7C: Glaring Bloodshot Eyes & Angry Furrowed Brow
+		ctx.beginPath();
+		ctx.moveTo(596, 232);
+		ctx.bezierCurveTo(622, 235, 646, 255, 654, 272);
+		ctx.bezierCurveTo(642, 290, 610, 290, 595, 272);
+		ctx.bezierCurveTo(586, 260, 588, 242, 596, 232);
+		ctx.closePath();
+		const eyeGrad1 = ctx.createRadialGradient(618, 254, 4, 620, 264, 34);
+		eyeGrad1.addColorStop(0, '#ffffff');
+		eyeGrad1.addColorStop(0.55, '#fce8e8');
+		eyeGrad1.addColorStop(1, '#e07b7b');
+		ctx.fillStyle = eyeGrad1;
+		ctx.fill();
+		setInk(4.8);
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.arc(608, 255, 9.5, 0, Math.PI * 2);
+		ctx.fillStyle = COLORS.ink;
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(605, 252, 3.2, 0, Math.PI * 2);
+		ctx.fillStyle = '#ffffff';
+		ctx.fill();
+
+		// Right Eye glaring over carrot nose
+		ctx.beginPath();
+		ctx.moveTo(674, 282);
+		ctx.bezierCurveTo(692, 274, 712, 264, 720, 264);
+		ctx.bezierCurveTo(724, 282, 714, 306, 694, 308);
+		ctx.bezierCurveTo(678, 308, 672, 294, 674, 282);
+		ctx.closePath();
+		const eyeGrad2 = ctx.createRadialGradient(696, 280, 3, 696, 288, 26);
+		eyeGrad2.addColorStop(0, '#ffffff');
+		eyeGrad2.addColorStop(0.55, '#fae1e1');
+		eyeGrad2.addColorStop(1, '#de7676');
+		ctx.fillStyle = eyeGrad2;
+		ctx.fill();
+		setInk(4.8);
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.arc(688, 279, 8, 0, Math.PI * 2);
+		ctx.fillStyle = COLORS.ink;
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(686, 276, 2.6, 0, Math.PI * 2);
+		ctx.fillStyle = '#ffffff';
+		ctx.fill();
+
+		// Heavy Angry Furrowed Brow Ridge & Under-Eye Wrinkle Bags
+		setInk(5.8);
+		ctx.beginPath();
+		ctx.moveTo(588, 224);
+		ctx.bezierCurveTo(618, 218, 646, 248, 668, 282);
+		ctx.bezierCurveTo(688, 276, 708, 260, 725, 255);
+		ctx.stroke();
+
+		setInk(3.5);
+		ctx.beginPath();
+		ctx.moveTo(662, 252); ctx.lineTo(656, 268);
+		ctx.moveTo(675, 256); ctx.lineTo(668, 272);
+		ctx.moveTo(585, 268);
+		ctx.bezierCurveTo(596, 294, 626, 298, 646, 288);
+		ctx.stroke();
+
+		// 7D: Segmented Orange Carrot Nose
+		const traceCarrotNose = () => {
+			ctx.beginPath();
+			ctx.moveTo(658, 292);
+			ctx.bezierCurveTo(695, 305, 738, 332, 772, 362);
+			ctx.bezierCurveTo(784, 372, 778, 386, 764, 380);
+			ctx.bezierCurveTo(725, 362, 682, 344, 642, 326);
+			ctx.bezierCurveTo(632, 316, 640, 292, 658, 292);
+			ctx.closePath();
+		};
+
+		const carrotGrad = ctx.createLinearGradient(655, 295, 755, 375);
+		carrotGrad.addColorStop(0, '#ff8826');
+		carrotGrad.addColorStop(0.5, '#f25c11');
+		carrotGrad.addColorStop(1, '#b83604');
+		ctx.fillStyle = carrotGrad;
+		traceCarrotNose();
+		ctx.fill();
+
+		ctx.strokeStyle = '#ffae52';
+		ctx.lineWidth = 4.5;
+		ctx.beginPath();
+		ctx.moveTo(658, 300);
+		ctx.quadraticCurveTo(715, 326, 764, 364);
+		ctx.stroke();
+
+		traceCarrotNose();
+		setInk(5.2);
+		ctx.stroke();
+
+		setInk(3.2);
+		ctx.beginPath();
+		ctx.moveTo(668, 298); ctx.quadraticCurveTo(658, 310, 656, 322);
+		ctx.moveTo(688, 308); ctx.quadraticCurveTo(676, 322, 676, 338);
+		ctx.moveTo(712, 322); ctx.quadraticCurveTo(702, 334, 702, 348);
+		ctx.moveTo(735, 336); ctx.quadraticCurveTo(726, 348, 725, 360);
+		ctx.moveTo(754, 350); ctx.quadraticCurveTo(748, 358, 746, 368);
+		ctx.stroke();
+
+		// ============================================================================
+		// LAYER 8: BATTERED SLUMPED TOP HAT, PATCHES, TWIG & MELTING SNOW CAP
+		// ============================================================================
+		ctx.save();
+		ctx.translate(600, 195);
+		ctx.rotate(hatWobble);
+		ctx.translate(-600, -195);
+
+		// 8A: Small Brown Twig Sticking Out Back-Left of Hat
+		ctx.beginPath();
+		ctx.moveTo(525, 145);
+		ctx.lineTo(492, 108);
+		ctx.lineTo(445, 128);
+		ctx.lineTo(482, 102);
+		ctx.lineTo(440, 96);
+		ctx.lineTo(480, 95);
+		ctx.lineTo(452, 74);
+		ctx.lineTo(486, 88);
+		ctx.lineTo(472, 58);
+		ctx.lineTo(495, 84);
+		ctx.lineTo(488, 55);
+		ctx.lineTo(504, 88);
+		ctx.lineTo(504, 68);
+		ctx.lineTo(510, 98);
+		ctx.lineTo(535, 134);
+		ctx.closePath();
+		ctx.fillStyle = '#c47b2b';
+		ctx.fill();
+		setInk(3.8);
+		ctx.stroke();
+
+		// 8B: Dark Under-Brim Recesses (Left & Right)
+		ctx.beginPath();
+		ctx.moveTo(422, 174);
+		ctx.quadraticCurveTo(465, 165, 505, 185);
+		ctx.quadraticCurveTo(465, 208, 422, 194);
+		ctx.closePath();
+		ctx.fillStyle = '#2e3329';
+		ctx.fill();
+		setInk(4.6);
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(725, 250);
+		ctx.quadraticCurveTo(765, 258, 792, 278);
+		ctx.quadraticCurveTo(760, 294, 730, 275);
+		ctx.closePath();
+		ctx.fillStyle = '#2e3329';
+		ctx.fill();
+		ctx.stroke();
+
+		// 8C: Slumped Olive-Grey Hat Crown & Wavy Brim
+		const traceHatBody = () => {
+			ctx.beginPath();
+			ctx.moveTo(424, 158);
+			ctx.bezierCurveTo(452, 148, 478, 156, 502, 156);
+			ctx.bezierCurveTo(518, 132, 535, 108, 552, 74);
+			ctx.lineTo(678, 62);
+			ctx.bezierCurveTo(712, 72, 742, 85, 756, 102);
+			ctx.bezierCurveTo(758, 128, 738, 148, 742, 178);
+			ctx.bezierCurveTo(744, 198, 738, 212, 735, 224);
+			ctx.bezierCurveTo(765, 244, 798, 260, 796, 276);
+			ctx.bezierCurveTo(792, 288, 768, 282, 742, 265);
+			ctx.bezierCurveTo(682, 222, 622, 198, 545, 188);
+			ctx.bezierCurveTo(498, 182, 455, 175, 424, 175);
+			ctx.closePath();
+		};
+
+		const hatGrad = ctx.createLinearGradient(440, 65, 765, 265);
+		hatGrad.addColorStop(0, '#787d67');
+		hatGrad.addColorStop(0.45, '#636954');
+		hatGrad.addColorStop(0.75, '#7d7359');
+		hatGrad.addColorStop(1, '#4c5240');
+		ctx.fillStyle = hatGrad;
+		traceHatBody();
+		ctx.fill();
+		setInk(5.6);
+		ctx.stroke();
+
+		// Hat Crown Horizontal Folds & Brim Crease Lines
+		setInk(3.8);
+		ctx.beginPath();
+		ctx.moveTo(502, 156);
+		ctx.bezierCurveTo(585, 152, 668, 176, 735, 224);
+		ctx.moveTo(588, 138);
+		ctx.bezierCurveTo(645, 136, 698, 152, 738, 182);
+		ctx.moveTo(615, 118);
+		ctx.bezierCurveTo(665, 118, 705, 128, 742, 146);
+		ctx.stroke();
+
+		// 8D: Stitched Rust-Brown Patches on Hat
+		ctx.beginPath();
+		ctx.moveTo(558, 78);
+		ctx.lineTo(598, 86);
+		ctx.lineTo(608, 112);
+		ctx.lineTo(598, 138);
+		ctx.lineTo(565, 142);
+		ctx.lineTo(555, 150);
+		ctx.lineTo(528, 144);
+		ctx.closePath();
+		const patchGrad = ctx.createLinearGradient(530, 80, 605, 148);
+		patchGrad.addColorStop(0, '#c77a40');
+		patchGrad.addColorStop(1, '#8f4e1e');
+		ctx.fillStyle = patchGrad;
+		ctx.fill();
+		setInk(3.8);
+		ctx.stroke();
+
+		setInk(2.6);
+		const leftStitches = [
+			[552, 86, 565, 92], [575, 80, 578, 92], [592, 92, 604, 90],
+			[598, 108, 612, 108], [594, 124, 608, 128], [582, 134, 585, 146],
+			[564, 136, 566, 148], [538, 122, 550, 128], [545, 102, 558, 108],
+		];
+		ctx.beginPath();
+		for (let i = 0; i < leftStitches.length; i++) {
+			const [x1, y1, x2, y2] = leftStitches[i];
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+		}
+		ctx.stroke();
+
+		// Right Side Patch
+		ctx.beginPath();
+		ctx.moveTo(706, 126);
+		ctx.lineTo(738, 142);
+		ctx.lineTo(736, 194);
+		ctx.lineTo(712, 184);
+		ctx.lineTo(698, 158);
+		ctx.closePath();
+		ctx.fillStyle = '#bd7138';
+		ctx.fill();
+		setInk(3.6);
+		ctx.stroke();
+
+		setInk(2.5);
+		const rightStitches = [
+			[700, 136, 712, 138], [692, 152, 706, 154],
+			[698, 168, 710, 166], [712, 178, 716, 190],
+			[724, 130, 720, 142],
+		];
+		ctx.beginPath();
+		for (let i = 0; i < rightStitches.length; i++) {
+			const [x1, y1, x2, y2] = rightStitches[i];
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+		}
+		ctx.stroke();
+
+		// 8E: Melting Snow Cap & Brim Icicle Drips on Hat
+		ctx.beginPath();
+		ctx.moveTo(552, 68);
+		ctx.bezierCurveTo(538, 55, 558, 35, 584, 34);
+		ctx.bezierCurveTo(605, 22, 632, 32, 642, 48);
+		ctx.bezierCurveTo(662, 48, 682, 56, 678, 68);
+		ctx.bezierCurveTo(668, 76, 646, 68, 636, 76);
+		ctx.bezierCurveTo(632, 88, 634, 112, 626, 112);
+		ctx.bezierCurveTo(618, 112, 620, 82, 612, 75);
+		ctx.bezierCurveTo(598, 72, 588, 58, 574, 65);
+		ctx.bezierCurveTo(564, 70, 558, 72, 552, 68);
+		ctx.closePath();
+		const capGrad = ctx.createLinearGradient(550, 28, 665, 110);
+		capGrad.addColorStop(0, '#ffffff');
+		capGrad.addColorStop(0.65, '#d2ecfc');
+		capGrad.addColorStop(1, '#7fc2e8');
+		ctx.fillStyle = capGrad;
+		ctx.fill();
+		setInk(4.8);
+		ctx.stroke();
+
+		// Snow Drip on Upper Right Corner of Hat Crown
+		ctx.beginPath();
+		ctx.moveTo(738, 86);
+		ctx.bezierCurveTo(762, 88, 774, 106, 765, 128);
+		ctx.bezierCurveTo(762, 142, 764, 158, 756, 158);
+		ctx.bezierCurveTo(748, 158, 750, 128, 752, 114);
+		ctx.bezierCurveTo(752, 102, 745, 95, 738, 86);
+		ctx.closePath();
+		ctx.fillStyle = '#9cd4f5';
+		ctx.fill();
+		setInk(4.2);
+		ctx.stroke();
+
+		// Snow Drips Hanging from Left Brim Tip
+		ctx.beginPath();
+		ctx.moveTo(436, 154);
+		ctx.bezierCurveTo(412, 156, 408, 178, 414, 198);
+		ctx.bezierCurveTo(414, 214, 412, 228, 420, 228);
+		ctx.bezierCurveTo(428, 228, 426, 198, 426, 182);
+		ctx.closePath();
+		ctx.fillStyle = '#9cd4f5';
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(466, 180);
+		ctx.bezierCurveTo(464, 198, 460, 232, 468, 232);
+		ctx.bezierCurveTo(476, 232, 475, 198, 476, 182);
+		ctx.closePath();
+		ctx.fillStyle = '#9cd4f5';
+		ctx.fill();
+		ctx.stroke();
+
+		// Snow Drip Hanging from Right Brim Tip
+		ctx.beginPath();
+		ctx.moveTo(766, 280);
+		ctx.bezierCurveTo(766, 298, 764, 322, 772, 322);
+		ctx.bezierCurveTo(780, 322, 778, 296, 778, 282);
+		ctx.closePath();
+		ctx.fillStyle = '#9cd4f5';
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore(); // end hat transform
+		ctx.restore(); // end head transform
+
+		// ============================================================================
+		// LAYER 9: FALLING WATER DROPLETS (WITH LEG-TRACKING DRIPS)
+		// ============================================================================
+		const droplets = [
+			{ dx: 110, dy: 374, scale: 0.72, pOffset: 0.1, travel: 34 },
+			{ dx: 174, dy: 458, scale: 0.76, pOffset: 0.45, travel: 36 },
+			{ dx: 196, dy: 492, scale: 0.68, pOffset: 0.78, travel: 38 },
+			{ dx: 220, dy: 696, scale: 0.75, pOffset: 0.25, travel: 40 },
+			{ dx: 262, dy: 706, scale: 0.72, pOffset: 0.62, travel: 40 },
+			{ dx: 412 + backStepX * 0.4, dy: 842 - backLiftY * 0.4, scale: 0.82, pOffset: 0.15, travel: 36 },
+			{ dx: 504 + frontKneeDx * 0.45, dy: 772 + frontKneeDy * 0.45, scale: 0.85, pOffset: 0.52, travel: 40 },
+			{ dx: 586 + frontKneeDx, dy: 868 + frontKneeDy, scale: 0.68, pOffset: 0.88, travel: 32 },
+			{ dx: 882 + frontFootDx, dy: 908 + frontFootDy, scale: 0.82, pOffset: 0.33, travel: 28 },
+			{ dx: 642, dy: 606, scale: 0.82, pOffset: 0.70, travel: 38 },
+			{ dx: 814, dy: 576, scale: 0.82, pOffset: 0.40, travel: 40 },
+			{ dx: 726, dy: 375, scale: 0.76, pOffset: 0.60, travel: 28 },
+		];
+		const normPhase = ((phase / (Math.PI * 2)) % 1 + 1) % 1;
+		for (let i = 0; i < droplets.length; i++) {
+			const d = droplets[i];
+			const cyc = (normPhase + d.pOffset) % 1;
+			const dropY = d.dy + cyc * cyc * d.travel;
+			let dScale = d.scale;
+			if (cyc > 0.88) {
+				dScale *= Math.max(0.15, 1 - (cyc - 0.88) / 0.12);
+			}
+			drawWaterDroplet(d.dx, dropY, dScale, 0);
+		}
+
+		if (panicked) {
+			setInk(4.2, '#38BDF8');
+			ctx.beginPath();
+			ctx.moveTo(380, 145); ctx.lineTo(335, 118);
+			ctx.moveTo(365, 185); ctx.lineTo(315, 175);
+			ctx.stroke();
+		}
+
+		ctx.restore(); // end striding body transform
+		ctx.restore(); // end entity space transform
 	},
 	drawFrostlingAura(ctx: any, x: number, y: number, time: number, overlapCount = 1) {
 		ctx.save();
@@ -20461,10 +21408,14 @@ function drawEnemyRenderer(
       bakedMobId === 'tajici_snehulak' &&
       (typeof enemy?.meltSquashX === 'number' || typeof enemy?.wobbleScaleX === 'number');
     if (hasMeltTransform) {
-      const mSx = (enemy?.meltSquashX ?? 1) * (enemy?.wobbleScaleX ?? 1);
-      const mSy = (enemy?.meltSquashY ?? 1) * (enemy?.wobbleScaleY ?? 1);
+      const rawSx = enemy?.meltSquashX ?? 1;
+      const rawSy = enemy?.meltSquashY ?? 1;
+      const wobX = enemy?.wobbleScaleX ?? 1;
+      const wobY = enemy?.wobbleScaleY ?? 1;
+      const mSx = Math.min(1.08, 1 + (rawSx - 1) * 0.35) * (1 + (wobX - 1) * 0.35);
+      const mSy = Math.max(0.88, 1 - (1 - rawSy) * 0.35) * (1 + (wobY - 1) * 0.35);
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(x, y + 18 * (1 - mSy));
       ctx.scale(mSx, mSy);
       ctx.translate(-x, -y);
       drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, effectiveAnimTime, effectiveVx, panicked);

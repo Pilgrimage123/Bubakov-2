@@ -155,7 +155,7 @@ var DROP_THRESHOLDS = {
 	chest: 29400,
 	potion: 450,
 	bread: 250,
-	soul: 120,
+	soul: 260,
 	coin: 20
 };
 var GRANNY_CUTSCENE = {

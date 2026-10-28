@@ -31,8 +31,25 @@ export const CANDIDATE_ITEM_PROFILES: CandidateItemProfile[] = [
   { type: 'potion', baseWeight: 10, stressAffinity: 0.0, mercyAffinity: 4.0, scarcityMultiplier: 1.0, isHealing: true },
   { type: 'bread', baseWeight: 10, stressAffinity: 0.0, mercyAffinity: 3.0, scarcityMultiplier: 1.0, isHealing: true },
   { type: 'pear', baseWeight: 10, stressAffinity: 0.0, mercyAffinity: 3.0, scarcityMultiplier: 1.0, isHealing: true },
-  { type: 'soul', baseWeight: 6, stressAffinity: 0.2, mercyAffinity: 0.8, scarcityMultiplier: 1.2 },
+  { type: 'soul', baseWeight: 3, stressAffinity: 0.15, mercyAffinity: 0.5, scarcityMultiplier: 1.0 },
 ];
+
+const DEFAULT_WEAPON_BASE_COOLDOWNS: Record<string, number> = {
+  povidlove_buchty: 1.4,
+  osikovy_prut: 1.05,
+  hromnicka: 2.2,
+  bylinkova_fajfka: 1.8,
+  kovarske_vidle: 1.35,
+  svecena_kropenka: 1.6,
+  dreveny_cep: 1.5,
+  formansky_bic: 1.3,
+  kynuty_kolac: 1.9,
+  devatero_kviti: 1.55,
+  kovana_halapartna: 1.45,
+  cesnekova_topinka: 1.7,
+  snehova_koule: 1.15,
+  valecnice: 1.6,
+};
 
 /**
  * Evaluates the normalized Player Vulnerability Score (V) between 0.0 (dominating) and 1.0 (critical danger).
@@ -53,17 +70,27 @@ export function computeVulnerabilityScore(
 
   const dmgRatio = Math.max(0, Math.min(1, recentDamageInWindow / maxHp));
 
-  // ResourcePct: average weapon recharge readiness
-  let resourcePct = 1.0;
+  // ResourcePct: average weapon recharge readiness (reads real w.cd as well as w.cooldownTimer) + ultimate readiness
+  let weaponReadyPct = 1.0;
   if (Array.isArray(player.weapons) && player.weapons.length > 0) {
     let sumReady = 0;
     for (let i = 0; i < player.weapons.length; i++) {
       const w = player.weapons[i];
-      const cd = w?.cooldownTimer ?? 0;
-      const baseCd = w?.baseCooldown ?? 1;
-      sumReady += Math.max(0, Math.min(1, 1.0 - cd / (baseCd || 1)));
+      const cd = Math.max(0, w?.cd ?? w?.cooldownTimer ?? 0);
+      const rawId = typeof w?.id === 'string' ? w.id : '';
+      const baseCd = Math.max(
+        0.1,
+        w?.baseCooldown ?? w?.localCd ?? w?.lastMaxCd ?? DEFAULT_WEAPON_BASE_COOLDOWNS[rawId] ?? 1.2
+      );
+      sumReady += Math.max(0, Math.min(1, 1.0 - cd / baseCd));
     }
-    resourcePct = sumReady / player.weapons.length;
+    weaponReadyPct = sumReady / player.weapons.length;
+  }
+
+  let resourcePct = weaponReadyPct;
+  if (typeof player.ultCd === 'number' && typeof player.ultMaxCd === 'number' && player.ultMaxCd > 0) {
+    const ultReadyPct = Math.max(0, Math.min(1, 1.0 - player.ultCd / player.ultMaxCd));
+    resourcePct = weaponReadyPct * 0.8 + ultReadyPct * 0.2;
   }
   const resourceDeficit = 1.0 - resourcePct;
 
@@ -87,29 +114,62 @@ export function getDropPacingPhase(v: number): DropPacingPhase {
   return 'mercy';
 }
 
+export interface WeightedDropContext {
+  category?: string;
+  defeatedByFood?: boolean;
+  bearMaskLevel?: number;
+}
+
 /**
- * Weights candidate item drops based on Vulnerability Score (V) and pacing phase.
+ * Weights candidate item drops based on Vulnerability Score (V), pacing phase, active soul saturation,
+ * and thematic enemy category affinity.
  */
 export function selectWeightedDropType(
   v: number,
   phase: DropPacingPhase,
-  mercyCooldownActive: boolean
+  mercyCooldownActive: boolean,
+  activeSoulsCount = 0,
+  soulBuffActive = false,
+  context?: WeightedDropContext
 ): { type: DropType; isHot?: boolean; expiration?: number; isMercyDrop?: boolean } {
   let totalWeight = 0;
   const weights: number[] = [];
+  const category = context?.category;
+  const defeatedByFood = Boolean(context?.defeatedByFood);
+  const hasBearMask = (context?.bearMaskLevel || 0) > 0;
 
   for (let i = 0; i < CANDIDATE_ITEM_PROFILES.length; i++) {
     const p = CANDIDATE_ITEM_PROFILES[i];
     let w = p.baseWeight * (1 + p.stressAffinity * Math.pow(1 - v, 2) + p.mercyAffinity * Math.pow(v, 3)) * p.scarcityMultiplier;
 
-    // Stress phase: suppress passive health drops by 80%
+    // Thematic category & food-pacification affinities
+    if (p.type === 'coin' && (category === 'undead' || category === 'demons')) {
+      w *= 1.45;
+    } else if ((p.type === 'bread' || p.type === 'pear') && (category === 'fields' || category === 'frost' || defeatedByFood)) {
+      w *= defeatedByFood ? 1.8 : 1.4;
+    } else if (p.type === 'potion' && category === 'water') {
+      w *= 1.45;
+    } else if (p.type === 'soul' && (category === 'water' || category === 'shadows' || category === 'undead' || defeatedByFood)) {
+      w *= 1.35;
+    }
+
+    // Stress phase: suppress passive health drops by 80% (only 40% if hunter has Bear Mask for offensive overheal)
     if (phase === 'stress' && p.isHealing) {
-      w *= 0.20;
+      w *= hasBearMask ? 0.60 : 0.20;
     }
 
     // Mercy cooldown active: prevent heal spam
     if (mercyCooldownActive && p.isHealing) {
       w *= 0.15;
+    }
+
+    // Throttle soul jar selection if soul jars are already waiting in the arena or buff is active
+    if (p.type === 'soul') {
+      if (activeSoulsCount >= 2 || (activeSoulsCount >= 1 && soulBuffActive)) {
+        w = 0;
+      } else if (activeSoulsCount >= 1 || soulBuffActive) {
+        w *= 0.25;
+      }
     }
 
     weights.push(w);
@@ -144,6 +204,13 @@ export function selectWeightedDropType(
     return {
       type: selected.type,
       isMercyDrop: true,
+    };
+  }
+
+  if (selected.type === 'soul') {
+    return {
+      type: 'soul',
+      expiration: 16.0,
     };
   }
 

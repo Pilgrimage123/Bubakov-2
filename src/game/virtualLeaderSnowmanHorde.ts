@@ -464,20 +464,19 @@ export class VirtualLeaderSnowmanHorde {
           continue;
         }
 
-        // Visual shrink / squash as HP ratio approaches 0
+        // Visual shrink / squash as HP ratio approaches 0 (subtle so snowman never looks overly flattened)
         const hpRatio = Math.max(0.12, Math.min(1.0, enemy.hp / enemy.maxHp));
         enemy.meltHpRatio = hpRatio;
-        // Spreads slightly wider and squashes downward as it melts
-        enemy.meltSquashX = 1 + (1 - hpRatio) * 0.28;
-        enemy.meltSquashY = 0.5 + 0.5 * hpRatio;
+        enemy.meltSquashX = 1 + (1 - hpRatio) * 0.08;
+        enemy.meltSquashY = 0.88 + 0.12 * hpRatio;
 
         // Sine-wave wobble for shambling melting snowman
         const phase = this.phaseOffset[i];
         const wSpeed = this.wobbleSpeed[i];
         const wobbleX = Math.sin(this.waveAge * wSpeed + phase) * this.wobbleRadius;
         const wobbleY = Math.cos(this.waveAge * wSpeed * 1.3 + phase) * (this.wobbleRadius * 0.7);
-        enemy.wobbleScaleX = 1 + Math.sin(this.waveAge * wSpeed + phase) * 0.08;
-        enemy.wobbleScaleY = 1 - Math.sin(this.waveAge * wSpeed + phase) * 0.08;
+        enemy.wobbleScaleX = 1 + Math.sin(this.waveAge * wSpeed + phase) * 0.03;
+        enemy.wobbleScaleY = 1 - Math.sin(this.waveAge * wSpeed + phase) * 0.03;
 
         // Breakaway leash check once every 30 frames
         if ((this.frameCount + i) % 30 === 0 && this.detached[i] === 0) {

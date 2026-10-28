@@ -8,6 +8,8 @@ export const STANDARD_MAGNET_MOBILITY = 1.0;
 export const POUCH_SWEEP_RADIUS = 60; // 60px (~1.5m)
 export const CONSOLIDATION_BONUS = 1.15; // +15% value bonus
 export const FOOD_DROP_EXPIRATION = 25.0; // Fresh food stays for 25s before decaying
+export const SOUL_DROP_EXPIRATION = 16.0; // Uncollected soul jars release their spirit after 16s
+export const MAX_ACTIVE_SOUL_DROPS = 2; // Cap simultaneous active soul jars in the arena
 
 export function isHealingDrop(type: DropType): boolean {
   return type === 'potion' || type === 'bread' || type === 'pear';
@@ -305,7 +307,7 @@ export class SoADropManager {
     this.times[i] = Math.random() * 6.28;
     this.expirations[i] = params.expiration !== undefined
       ? params.expiration
-      : (isHealingDrop(params.type) ? FOOD_DROP_EXPIRATION : -1);
+      : (isHealingDrop(params.type) ? FOOD_DROP_EXPIRATION : params.type === 'soul' ? SOUL_DROP_EXPIRATION : -1);
     this.goldenRushTimers[i] = params.goldenRushTimer ?? 0;
 
     let mobility = params.isHeavyAnchor || params.type === 'big_pouch' || params.type === 'gingerbread_stash' || params.type === 'chest'
