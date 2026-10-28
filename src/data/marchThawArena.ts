@@ -66,31 +66,31 @@ export const MARCH_THAW_POIS: Record<MarchThawPoiId, MarchThawPoi> = {
     title: 'Kostel na vrchu',
     x: -800,
     y: -650,
-    radius: 240,
+    radius: 320,
     hint: 'KOSTEL: Zvonice [E] — svatý otřes + léčení a +20 % zbroj',
   },
   tavern: {
     id: 'tavern',
     title: 'Hospoda',
-    x: 345,
-    y: -120,
-    radius: 195,
+    x: 440,
+    y: -75,
+    radius: 260,
     hint: 'HOSPODA: Pivní soudek [E] omráčí dav + kuráž (+18 % útok)',
   },
   village: {
     id: 'village',
     title: 'Vesnice a náves',
-    x: 55,
-    y: -125,
-    radius: 210,
+    x: 50,
+    y: -75,
+    radius: 360,
     hint: 'VESNICE: Čapí štěstí (+16 % pohyb a 2× rychlejší ultimátka)',
   },
   school: {
     id: 'school',
     title: 'Škola',
-    x: 138,
-    y: 388,
-    radius: 175,
+    x: 125,
+    y: 550,
+    radius: 240,
     hint: 'ŠKOLA: Školní rákoska zpomaluje bubáky + rychlejší útoky (+20 %)',
   },
   pond: {
@@ -255,40 +255,41 @@ export interface MarchObstacle {
   radius?: number;
   halfW?: number;
   halfH?: number;
+  cornerRadius?: number;
 }
 
 export const MARCH_THAW_OBSTACLES: readonly MarchObstacle[] = [
-  // --- VESNICE A HOSPODA (Cottages / Chalupy around central village, scaled 1.25x) ---
-  { id: 'chalupa_nw', kind: 'chalupa', shape: 'box', x: -169, y: -294, halfW: 64, halfH: 42 },
-  { id: 'stork_pole', kind: 'prop', shape: 'circle', x: -44, y: -262, radius: 22 },
-  { id: 'chalupa_n', kind: 'chalupa', shape: 'box', x: 94, y: -319, halfW: 68, halfH: 44 },
-  { id: 'chalupa_ne', kind: 'chalupa', shape: 'box', x: 319, y: -288, halfW: 66, halfH: 43 },
+  // --- VESNICE A HOSPODA (Cottages / Chalupy around central village - ADR 0034) ---
+  { id: 'chalupa_nw', kind: 'chalupa', shape: 'box', x: -350, y: -362, halfW: 125, halfH: 70, cornerRadius: 18 },
+  { id: 'stork_pole', kind: 'prop', shape: 'circle', x: -88, y: -375, radius: 28 },
+  { id: 'chalupa_n', kind: 'chalupa', shape: 'box', x: 100, y: -412, halfW: 130, halfH: 72, cornerRadius: 18 },
+  { id: 'chalupa_ne', kind: 'chalupa', shape: 'box', x: 475, y: -375, halfW: 125, halfH: 70, cornerRadius: 18 },
   // HOSPODA (Main Tavern building on the eastern side of the village green)
-  { id: 'hospoda_main', kind: 'chalupa', shape: 'box', x: 356, y: -119, halfW: 82, halfH: 50 },
+  { id: 'hospoda_main', kind: 'chalupa', shape: 'box', x: 462, y: -75, halfW: 155, halfH: 82, cornerRadius: 20 },
   // Western village roubenka
-  { id: 'chalupa_w', kind: 'chalupa', shape: 'box', x: -206, y: -94, halfW: 62, halfH: 42 },
+  { id: 'chalupa_w', kind: 'chalupa', shape: 'box', x: -375, y: -75, halfW: 120, halfH: 68, cornerRadius: 18 },
   // Lower-left village cottage
-  { id: 'chalupa_sw', kind: 'chalupa', shape: 'box', x: -94, y: 94, halfW: 64, halfH: 42 },
+  { id: 'chalupa_sw', kind: 'chalupa', shape: 'box', x: -275, y: 200, halfW: 125, halfH: 70, cornerRadius: 18 },
   // Lower-right village cottage
-  { id: 'chalupa_se', kind: 'chalupa', shape: 'box', x: 269, y: 81, halfW: 66, halfH: 43 },
+  { id: 'chalupa_se', kind: 'chalupa', shape: 'box', x: 400, y: 200, halfW: 125, halfH: 70, cornerRadius: 18 },
 
   // --- ŠKOLA (Schoolhouse south of the village green) ---
-  { id: 'skola_main', kind: 'school', shape: 'box', x: 138, y: 388, halfW: 80, halfH: 48 },
+  { id: 'skola_main', kind: 'school', shape: 'box', x: 125, y: 550, halfW: 150, halfH: 78, cornerRadius: 20 },
 
   // --- KOSTEL NA VRCHU (Church nave + northern/lateral churchyard wall; southern gate is open for [E] bell) ---
-  { id: 'kostel_nave', kind: 'church', shape: 'box', x: -800, y: -706, halfW: 72, halfH: 46 },
-  { id: 'kostel_tower', kind: 'church', shape: 'circle', x: -731, y: -731, radius: 34 },
-  { id: 'kostel_wall_nw', kind: 'wall', shape: 'circle', x: -931, y: -700, radius: 32 },
-  { id: 'kostel_wall_ne', kind: 'wall', shape: 'circle', x: -669, y: -700, radius: 32 },
+  { id: 'kostel_nave', kind: 'church', shape: 'box', x: -800, y: -710, halfW: 130, halfH: 75, cornerRadius: 20 },
+  { id: 'kostel_tower', kind: 'church', shape: 'circle', x: -710, y: -750, radius: 52 },
+  { id: 'kostel_wall_nw', kind: 'wall', shape: 'circle', x: -970, y: -710, radius: 45 },
+  { id: 'kostel_wall_ne', kind: 'wall', shape: 'circle', x: -630, y: -710, radius: 45 },
 
   // --- KAPLIČKA (Wayside village chapel at the crossroads) ---
-  { id: 'kaplicka_main', kind: 'shrine', shape: 'circle', x: -675, y: -38, radius: 34 },
+  { id: 'kaplicka_main', kind: 'shrine', shape: 'circle', x: -675, y: -38, radius: 42 },
 
   // --- MLÝN (Watermill house; the adjacent flume/wheel zone stays accessible as a hazard) ---
-  { id: 'mlyn_house', kind: 'mill', shape: 'box', x: 531, y: 706, halfW: 74, halfH: 46 },
+  { id: 'mlyn_house', kind: 'mill', shape: 'box', x: 531, y: 706, halfW: 135, halfH: 78, cornerRadius: 20 },
 
   // --- HORNÍ POLE (Large straw haystack on the left edge of the fields) ---
-  { id: 'field_haystack', kind: 'prop', shape: 'circle', x: -288, y: -1075, radius: 52 },
+  { id: 'field_haystack', kind: 'prop', shape: 'circle', x: -288, y: -1075, radius: 64 },
 
   // --- HUSTÝ LES (Impassable dense forest timberline clusters in the 4 corners) ---
   { id: 'forest_nw_1', kind: 'forest', shape: 'circle', x: -1620, y: -1240, radius: 190 },
@@ -334,16 +335,20 @@ export function resolveMarchThawObstacles(
     } else {
       const hw = obs.halfW ?? 45;
       const hh = obs.halfH ?? 32;
-      const clampedX = Math.max(obs.x - hw, Math.min(obs.x + hw, entity.x));
-      const clampedY = Math.max(obs.y - hh, Math.min(obs.y + hh, entity.y));
+      const cr = Math.min(obs.cornerRadius ?? 16, Math.min(hw, hh) * 0.5);
+      const coreW = hw - cr;
+      const coreH = hh - cr;
+      const clampedX = Math.max(obs.x - coreW, Math.min(obs.x + coreW, entity.x));
+      const clampedY = Math.max(obs.y - coreH, Math.min(obs.y + coreH, entity.y));
       const dx = entity.x - clampedX;
       const dy = entity.y - clampedY;
+      const reach = r + cr;
       const distSq = dx * dx + dy * dy;
 
-      if (distSq < r * r) {
+      if (distSq < reach * reach) {
         if (distSq > 0.0001) {
           const dist = Math.sqrt(distSq);
-          const overlap = r - dist;
+          const overlap = reach - dist;
           entity.x += (dx / dist) * overlap;
           entity.y += (dy / dist) * overlap;
         } else {

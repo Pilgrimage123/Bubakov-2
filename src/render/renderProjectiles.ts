@@ -45,14 +45,17 @@ export function renderProjectilesAndSlashes(
       ctx.rotate(p.angle || 0);
 
       if (p.visual === 'bun') {
-        Lada.drawCzechBuchta(ctx, 0, 0, 1.15);
+        // ADR 0034: Harmonized projectile scale (28x26 px) to match collision radius 13
+        Lada.drawCzechBuchta(ctx, 0, 0, 0.58);
       } else if (p.visual === 'herb_leaf') {
         const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
-        Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 1.15);
+        Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 0.85);
       } else if (p.visual === 'kolac') {
-        Lada.drawKynutyKolac(ctx, 0, 0, 1.25, 0);
+        // ADR 0034: Harmonized projectile scale (29x29 px) to match collision radius 12
+        Lada.drawKynutyKolac(ctx, 0, 0, 0.60, 0);
       } else if (p.visual === 'pickle') {
         const rot = Math.sin(uiTime * 8 + p.x * 0.01) * 0.08;
+        ctx.scale(0.85, 0.85);
         Lada.drawPickle(ctx, 0, 0, rot);
       } else if (p.visual === 'potato') {
         const sprite = getCachedLadaSprite('potato_proj', 32, 24, (sCtx, cx, cy) => {

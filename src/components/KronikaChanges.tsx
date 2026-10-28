@@ -10,6 +10,18 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '28. října 2026',
+    title: 'Harmonizace měřítka arény, entit, projektilů a lidové perspektivy (ADR 0034)',
+    summary: 'Kompletní sladění poměrů velikostí mezi postavami lovců, vesnickou architekturou, bojovými projektily a kamerou pro autentický pohádkový ráz a férovou rogue-lite hratelnost.',
+    items: [
+      '🏡 Zvětšení vesnické architektury: Roubenky zvětšeny na 250–260 px, hospoda na 312 px a škola na 300 px pro dokonalý soulad s dospělou postavou lovce (75–80 px).',
+      '🌾 Rozvolnění návesních uliček: Středy chalup rozestoupeny pro zachování širokých průchozích uliček (130–250 px), které zamezují zasekávání při úprku i vlnách bossů.',
+      '🛡️ Zaoblené základové půdorysy: Budovy získaly zaoblení rohů základových zdí pro hladký a plynulý skluz lovce podél stěn bez narážení do ostrých hran.',
+      '🍞 Harmonizované vrhací pochutiny: Povidlová buchta a kynutý koláč zmenšeny z 60 px na přirozených 28–29 px pro přesné lícování s kolizním zásahem i rukama hrdiny.',
+      '📹 Nativní kamera 1:1 a adaptivní zoom: Plné Full HD 1080p zobrazení drží nativní měřítko, zatímco na kompaktních displejích (< 768 px) se zapojuje jemné adaptivní odzoomování.',
+    ],
+  },
+  {
     date: '26. října 2026',
     title: 'Kanonizace procedurální kresby lovců a Smart SVG postav v glosáři',
     summary: 'Zavedení autoritativních doménových pojmů pro kresbu lovců na herní plátno a interaktivní vektorové postavy v UI, audit kompletní implementace 7 lovců v aréně a potvrzení architektonického rozdělení dle ADR 0030.',

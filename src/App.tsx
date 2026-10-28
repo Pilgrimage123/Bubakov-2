@@ -3316,8 +3316,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     const canvas = canvasRef.current;
     if (canvas) {
-      engine.camera.x = player.x - canvas.width / 2;
-      engine.camera.y = player.y - canvas.height / 2;
+      const camZoom = canvas.height < 768 ? Math.max(0.75, Math.min(1.0, canvas.height / 850)) : 1.0;
+      engine.camera.x = player.x - (canvas.width / camZoom) / 2;
+      engine.camera.y = player.y - (canvas.height / camZoom) / 2;
     }
 
     engine.crowWave = crowWaveRef.current;
@@ -6803,9 +6804,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // Camera follow
-            engine.camera.x += (player.x - canvas.width / 2 - engine.camera.x) * 0.1;
-            engine.camera.y += (player.y - canvas.height / 2 - engine.camera.y) * 0.1;
+            // Camera follow (ADR 0034)
+            const camZoom = canvas.height < 768 ? Math.max(0.75, Math.min(1.0, canvas.height / 850)) : 1.0;
+            const targetCamX = player.x - (canvas.width / camZoom) / 2;
+            const targetCamY = player.y - (canvas.height / camZoom) / 2;
+            engine.camera.x += (targetCamX - engine.camera.x) * 0.1;
+            engine.camera.y += (targetCamY - engine.camera.y) * 0.1;
 
             // Sync run stats
             runStatsRef.current.time = newTime;
@@ -8115,15 +8119,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const shakeX = tremor > 0 ? (Math.random() - 0.5) * tremor : 0;
         const shakeY = tremor > 0 ? (Math.random() - 0.5) * tremor : 0;
 
+        // ADR 0034: Native 1.0 scale on 900p+ screens; adaptive zoom on compact displays (< 768px)
+        const camZoom = canvas.height < 768 ? Math.max(0.75, Math.min(1.0, canvas.height / 850)) : 1.0;
+        const effectiveW = canvas.width / camZoom;
+        const effectiveH = canvas.height / camZoom;
+
         const camera: CameraViewport = {
           x: cam.x + shakeX,
           y: cam.y + shakeY,
-          width: canvas.width,
-          height: canvas.height,
+          width: effectiveW,
+          height: effectiveH,
           viewLeft: cam.x + shakeX - 120,
           viewTop: cam.y + shakeY - 160,
-          viewRight: cam.x + shakeX + canvas.width + 120,
-          viewBottom: cam.y + shakeY + canvas.height + 160,
+          viewRight: cam.x + shakeX + effectiveW + 120,
+          viewBottom: cam.y + shakeY + effectiveH + 160,
+          zoom: camZoom,
         };
 
         const currentProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');

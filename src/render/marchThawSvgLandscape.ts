@@ -328,7 +328,7 @@ export function buildMarianApparitionSvg(): string {
   </svg>`;
 }
 
-function svgSpruceTree(x: number, y: number, scale = 1, snow = false): string {
+function svgSpruceTree(x: number, y: number, scale = 1.65, snow = false): string {
   return `
     <g transform="translate(${x}, ${y}) scale(${scale})">
       <ellipse cx="0" cy="12" rx="18" ry="6" fill="rgba(25,20,15,0.18)"/>
@@ -360,9 +360,10 @@ function svgCottage(
     isNight?: boolean;
   } = {}
 ): string {
-  const w = opts.w ?? 96;
-  const h = opts.h ?? 54;
-  const roofH = opts.roofH ?? 44;
+  // ADR 0034: Harmonized cottage scale (~240-280px in world space)
+  const w = opts.w ?? 200;
+  const h = opts.h ?? 110;
+  const roofH = opts.roofH ?? 88;
   const wallColor = opts.wallColor ?? (opts.timbered ? '#8C5230' : '#F5EAD0');
   const roofColor = opts.roofColor ?? '#B84A32';
   const gableColor = opts.gableColor ?? '#D9A55B';
@@ -372,14 +373,19 @@ function svgCottage(
 
   let logs = '';
   if (opts.timbered) {
-    for (let ly = -hh + 9; ly < hh; ly += 9) {
-      logs += `<line x1="${-hw + 3}" y1="${ly}" x2="${hw - 3}" y2="${ly}" stroke="#5A3118" stroke-width="1.8"/>`;
+    for (let ly = -hh + 14; ly < hh; ly += 14) {
+      logs += `<line x1="${-hw + 4}" y1="${ly}" x2="${hw - 4}" y2="${ly}" stroke="#5A3118" stroke-width="2.6"/>`;
     }
   }
 
+  const doorW = Math.round(w * 0.16);
+  const doorH = Math.round(h * 0.52);
+  const winW = Math.round(w * 0.17);
+  const winH = Math.round(h * 0.3);
+
   const storkSvg = opts.storkOnChimney
     ? `
-      <g transform="translate(${hw * 0.45}, ${-hh - roofH - 8})">
+      <g transform="translate(${hw * 0.45}, ${-hh - roofH - 12}) scale(1.4)">
         <ellipse cx="0" cy="4" rx="16" ry="5" fill="#7C5836" stroke="#23170F" stroke-width="2"/>
         <path d="M -2 2 L -4 -8 M 3 2 L 5 -8" stroke="#D95338" stroke-width="2"/>
         <ellipse cx="0" cy="-12" rx="8" ry="5" fill="#FFFFFF" stroke="#23170F" stroke-width="1.8"/>
@@ -393,22 +399,22 @@ function svgCottage(
 
   return `
     <g transform="translate(${x}, ${y})">
-      <ellipse cx="4" cy="${hh + 4}" rx="${hw + 10}" ry="14" fill="rgba(28,19,12,0.2)"/>
-      <rect x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="2" fill="${wallColor}" stroke="#23170F" stroke-width="3"/>
+      <ellipse cx="4" cy="${hh + 6}" rx="${hw + 16}" ry="24" fill="rgba(28,19,12,0.2)"/>
+      <rect x="${-hw}" y="${-hh}" width="${w}" height="${h}" rx="3" fill="${wallColor}" stroke="#23170F" stroke-width="3.8"/>
       ${logs}
-      <rect x="-9" y="${hh - 30}" width="18" height="30" rx="2" fill="#5C341B" stroke="#23170F" stroke-width="2.2"/>
-      <circle cx="5" cy="${hh - 14}" r="1.8" fill="#F6D365"/>
-      <rect x="${-hw + 12}" y="${-hh + 12}" width="18" height="16" rx="1.5" fill="${winFill}" stroke="#23170F" stroke-width="2.2"/>
-      <line x1="${-hw + 21}" y1="${-hh + 12}" x2="${-hw + 21}" y2="${-hh + 28}" stroke="#23170F" stroke-width="1.6"/>
-      <line x1="${-hw + 12}" y1="${-hh + 20}" x2="${-hw + 30}" y2="${-hh + 20}" stroke="#23170F" stroke-width="1.6"/>
-      <rect x="${hw - 30}" y="${-hh + 12}" width="18" height="16" rx="1.5" fill="${winFill}" stroke="#23170F" stroke-width="2.2"/>
-      <line x1="${hw - 21}" y1="${-hh + 12}" x2="${hw - 21}" y2="${-hh + 28}" stroke="#23170F" stroke-width="1.6"/>
-      <line x1="${hw - 30}" y1="${-hh + 20}" x2="${hw - 12}" y2="${-hh + 20}" stroke="#23170F" stroke-width="1.6"/>
-      <rect x="${hw * 0.35}" y="${-hh - roofH + 4}" width="14" height="24" fill="#E6D7B8" stroke="#23170F" stroke-width="2.2"/>
-      <path d="M ${-hw - 10} ${-hh + 2} L ${-hw * 0.45} ${-hh - roofH} L ${hw * 0.55} ${-hh - roofH} L ${hw + 10} ${-hh + 2} Z" fill="${roofColor}" stroke="#23170F" stroke-width="3" stroke-linejoin="round"/>
-      <path d="M ${-hw - 6} ${-hh + 2} L ${-hw * 0.45} ${-hh - roofH} L ${-hw * 0.02} ${-hh + 2} Z" fill="${gableColor}" stroke="#23170F" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="${-doorW / 2}" y="${hh - doorH}" width="${doorW}" height="${doorH}" rx="3" fill="#5C341B" stroke="#23170F" stroke-width="2.6"/>
+      <circle cx="${doorW / 2 - 4}" cy="${hh - doorH / 2}" r="2.8" fill="#F6D365"/>
+      <rect x="${-hw + 20}" y="${-hh + 20}" width="${winW}" height="${winH}" rx="2" fill="${winFill}" stroke="#23170F" stroke-width="2.6"/>
+      <line x1="${-hw + 20 + winW / 2}" y1="${-hh + 20}" x2="${-hw + 20 + winW / 2}" y2="${-hh + 20 + winH}" stroke="#23170F" stroke-width="2"/>
+      <line x1="${-hw + 20}" y1="${-hh + 20 + winH / 2}" x2="${-hw + 20 + winW}" y2="${-hh + 20 + winH / 2}" stroke="#23170F" stroke-width="2"/>
+      <rect x="${hw - 20 - winW}" y="${-hh + 20}" width="${winW}" height="${winH}" rx="2" fill="${winFill}" stroke="#23170F" stroke-width="2.6"/>
+      <line x1="${hw - 20 - winW / 2}" y1="${-hh + 20}" x2="${hw - 20 - winW / 2}" y2="${-hh + 20 + winH}" stroke="#23170F" stroke-width="2"/>
+      <line x1="${hw - 20 - winW}" y1="${-hh + 20 + winH / 2}" x2="${hw - 20}" y2="${-hh + 20 + winH / 2}" stroke="#23170F" stroke-width="2"/>
+      <rect x="${hw * 0.35}" y="${-hh - roofH + 6}" width="${Math.round(w * 0.12)}" height="${Math.round(roofH * 0.5)}" fill="#E6D7B8" stroke="#23170F" stroke-width="2.6"/>
+      <path d="M ${-hw - 16} ${-hh + 3} L ${-hw * 0.45} ${-hh - roofH} L ${hw * 0.55} ${-hh - roofH} L ${hw + 16} ${-hh + 3} Z" fill="${roofColor}" stroke="#23170F" stroke-width="3.8" stroke-linejoin="round"/>
+      <path d="M ${-hw - 10} ${-hh + 3} L ${-hw * 0.45} ${-hh - roofH} L ${-hw * 0.02} ${-hh + 3} Z" fill="${gableColor}" stroke="#23170F" stroke-width="3" stroke-linejoin="round"/>
       ${storkSvg}
-      ${opts.label ? svgRibbon(0, -hh - roofH - 24, opts.label, Math.max(96, opts.label.length * 14 + 28), 15) : ''}
+      ${opts.label ? svgRibbon(0, -hh - roofH - 30, opts.label, Math.max(120, opts.label.length * 16 + 32), 18) : ''}
     </g>
   `;
 }
@@ -419,8 +425,9 @@ function svgVillager(
   coatColor = '#B44C32',
   pantsColor = '#3E5672',
   hatColor = '#3B281E',
-  scale = 1
+  scale = 1.6
 ): string {
+  // ADR 0034: Sjednocení stafáže na pozadí (~76px v herním světě) s výškou hratelného lovce
   return `
     <g transform="translate(${x}, ${y}) scale(${scale})">
       <ellipse cx="0" cy="14" rx="8" ry="3.5" fill="rgba(25,18,12,0.22)"/>
@@ -432,9 +439,9 @@ function svgVillager(
   `;
 }
 
-function svgSheep(x: number, y: number, flip = 1): string {
+function svgSheep(x: number, y: number, flip = 1, scale = 1.4): string {
   return `
-    <g transform="translate(${x}, ${y}) scale(${flip}, 1)">
+    <g transform="translate(${x}, ${y}) scale(${flip * scale}, ${scale})">
       <ellipse cx="0" cy="9" rx="13" ry="4" fill="rgba(28,20,12,0.18)"/>
       <path d="M -7 3 L -7 10 M -2 4 L -2 10 M 4 4 L 4 10 M 8 3 L 8 10" stroke="#23170F" stroke-width="2.2" stroke-linecap="round"/>
       <path d="M -12 0 C -14 -7 -6 -12 0 -10 C 6 -12 14 -7 12 0 C 14 5 6 7 0 6 C -6 7 -14 5 -12 0 Z" fill="#F8F5EC" stroke="#23170F" stroke-width="2"/>
@@ -444,7 +451,7 @@ function svgSheep(x: number, y: number, flip = 1): string {
   `;
 }
 
-function svgBoar(x: number, y: number, flip = 1, scale = 1): string {
+function svgBoar(x: number, y: number, flip = 1, scale = 1.4): string {
   return `
     <g transform="translate(${x}, ${y}) scale(${flip * scale}, ${scale})">
       <ellipse cx="0" cy="10" rx="18" ry="5" fill="rgba(25,18,12,0.22)"/>
@@ -456,7 +463,7 @@ function svgBoar(x: number, y: number, flip = 1, scale = 1): string {
   `;
 }
 
-function svgWillowTree(x: number, y: number, scale = 1): string {
+function svgWillowTree(x: number, y: number, scale = 1.6): string {
   return `
     <g transform="translate(${x}, ${y}) scale(${scale})">
       <ellipse cx="0" cy="18" rx="22" ry="7" fill="rgba(28,20,12,0.2)"/>
@@ -742,33 +749,33 @@ export function buildMarchThawLandscapeSvg(isNight = false): string {
         ${svgRibbon(0, -152, 'KAPLIČKA', 142, 16)}
       </g>
 
-      <!-- 9. VESNICE, HOSPODA & ŠKOLA -->
+      <!-- 9. VESNICE, HOSPODA & ŠKOLA (ADR 0034: Harmonizované rozměry a prostorné uličky) -->
       <g id="march-village">
         <!-- Stork nest on tall pole with two villagers & ladder -->
-        <g transform="translate(-35, -210)">
-          <ellipse cx="0" cy="18" rx="20" ry="7" fill="rgba(28,20,12,0.2)"/>
-          <line x1="0" y1="18" x2="0" y2="-92" stroke="#6E4427" stroke-width="7" stroke-linecap="round"/>
-          <line x1="0" y1="18" x2="0" y2="-92" stroke="#23170F" stroke-width="2"/>
-          <ellipse cx="0" cy="-94" rx="24" ry="9" fill="#7C5836" stroke="#23170F" stroke-width="2.6"/>
-          <line x1="-26" y1="20" x2="-6" y2="-82" stroke="#8C5A36" stroke-width="3"/>
-          <line x1="-16" y1="22" x2="4" y2="-80" stroke="#8C5A36" stroke-width="3"/>
-          <path d="M -24 6 L -14 8 M -21 -12 L -11 -10 M -17 -30 L -7 -28 M -14 -48 L -4 -46 M -10 -66 L 0 -64" stroke="#5C3A21" stroke-width="2.4"/>
-          ${svgVillager(-11, -36, '#B84A32', '#3E5672', '#2D221B', 0.9)}
-          ${svgVillager(-28, 22, '#4E6B48', '#3E5672', '#2D221B', 0.95)}
+        <g transform="translate(-70, -300)">
+          <ellipse cx="0" cy="18" rx="28" ry="10" fill="rgba(28,20,12,0.2)"/>
+          <line x1="0" y1="18" x2="0" y2="-120" stroke="#6E4427" stroke-width="9" stroke-linecap="round"/>
+          <line x1="0" y1="18" x2="0" y2="-120" stroke="#23170F" stroke-width="2.6"/>
+          <ellipse cx="0" cy="-122" rx="32" ry="12" fill="#7C5836" stroke="#23170F" stroke-width="3"/>
+          <line x1="-34" y1="20" x2="-8" y2="-106" stroke="#8C5A36" stroke-width="3.6"/>
+          <line x1="-22" y1="22" x2="4" y2="-104" stroke="#8C5A36" stroke-width="3.6"/>
+          <path d="M -30 6 L -18 8 M -26 -16 L -14 -14 M -22 -38 L -10 -36 M -18 -60 L -6 -58 M -14 -82 L -2 -80" stroke="#5C3A21" stroke-width="2.8"/>
+          ${svgVillager(-16, -46, '#B84A32', '#3E5672', '#2D221B', 1.5)}
+          ${svgVillager(-36, 26, '#4E6B48', '#3E5672', '#2D221B', 1.55)}
         </g>
 
-        ${svgCottage(-135, -235, { w: 96, h: 52, timbered: true, roofColor: '#9E3D26', isNight })}
-        ${svgCottage(75, -255, { w: 104, h: 56, timbered: false, roofColor: '#C84B31', storkOnChimney: true, isNight })}
-        ${svgCottage(255, -230, { w: 98, h: 54, timbered: true, roofColor: '#7C4728', isNight })}
-        ${svgCottage(-165, -75, { w: 92, h: 52, timbered: true, roofColor: '#8C3B2B', isNight })}
-        ${svgCottage(-75, 75, { w: 96, h: 52, timbered: false, roofColor: '#B84A32', isNight })}
-        ${svgCottage(215, 65, { w: 100, h: 54, timbered: true, roofColor: '#9E472A', isNight })}
+        ${svgCottage(-280, -290, { w: 200, h: 110, roofH: 90, timbered: true, roofColor: '#9E3D26', isNight })}
+        ${svgCottage(80, -330, { w: 210, h: 115, roofH: 92, timbered: false, roofColor: '#C84B31', storkOnChimney: true, isNight })}
+        ${svgCottage(380, -300, { w: 200, h: 110, roofH: 90, timbered: true, roofColor: '#7C4728', isNight })}
+        ${svgCottage(-300, -60, { w: 190, h: 110, roofH: 88, timbered: true, roofColor: '#8C3B2B', isNight })}
+        ${svgCottage(-220, 160, { w: 200, h: 110, roofH: 90, timbered: false, roofColor: '#B84A32', isNight })}
+        ${svgCottage(320, 160, { w: 200, h: 110, roofH: 90, timbered: true, roofColor: '#9E472A', isNight })}
 
         <!-- Main HOSPODA building -->
-        ${svgCottage(285, -95, {
-          w: 126,
-          h: 64,
-          roofH: 52,
+        ${svgCottage(370, -60, {
+          w: 250,
+          h: 130,
+          roofH: 100,
           timbered: false,
           wallColor: '#F8EED8',
           roofColor: '#C84B31',
@@ -776,29 +783,29 @@ export function buildMarchThawLandscapeSvg(isNight = false): string {
           label: 'HOSPODA',
           isNight,
         })}
-        <g transform="translate(175, -65)">
-          <rect x="-26" y="-8" width="52" height="16" rx="2" fill="#9C6B3E" stroke="#23170F" stroke-width="2.4"/>
-          <ellipse cx="38" cy="2" rx="12" ry="15" fill="#7C4D2B" stroke="#23170F" stroke-width="2.4"/>
-          ${svgVillager(-16, -16, '#B84A32', '#3B4D5E', '#2D221B', 0.9)}
-          ${svgVillager(14, -16, '#4A6B82', '#3B4D5E', '#2D221B', 0.9)}
+        <g transform="translate(230, -50)">
+          <rect x="-36" y="-12" width="72" height="24" rx="3" fill="#9C6B3E" stroke="#23170F" stroke-width="3"/>
+          <ellipse cx="48" cy="3" rx="16" ry="20" fill="#7C4D2B" stroke="#23170F" stroke-width="3"/>
+          ${svgVillager(-20, -18, '#B84A32', '#3B4D5E', '#2D221B', 1.5)}
+          ${svgVillager(18, -18, '#4A6B82', '#3B4D5E', '#2D221B', 1.5)}
         </g>
 
         <!-- Village green (náves) circle of celebrating villagers & children -->
-        <g transform="translate(55, -95)">
-          ${svgVillager(-34, -12, '#C84B31', '#3E5672', '#2D221B', 0.9)}
-          ${svgVillager(-12, -26, '#4E7048', '#3E5672', '#8C3B2B', 0.88)}
-          ${svgVillager(16, -24, '#D98B26', '#3E5672', '#2D221B', 0.9)}
-          ${svgVillager(36, -6, '#4A6B82', '#3E5672', '#2D221B', 0.88)}
-          ${svgVillager(14, 18, '#B84A32', '#3E5672', '#2D221B', 0.85)}
-          ${svgVillager(-18, 16, '#6E4B78', '#3E5672', '#2D221B', 0.85)}
+        <g transform="translate(40, -60)">
+          ${svgVillager(-45, -16, '#C84B31', '#3E5672', '#2D221B', 1.5)}
+          ${svgVillager(-16, -34, '#4E7048', '#3E5672', '#8C3B2B', 1.45)}
+          ${svgVillager(22, -32, '#D98B26', '#3E5672', '#2D221B', 1.5)}
+          ${svgVillager(48, -8, '#4A6B82', '#3E5672', '#2D221B', 1.48)}
+          ${svgVillager(18, 24, '#B84A32', '#3E5672', '#2D221B', 1.45)}
+          ${svgVillager(-24, 22, '#6E4B78', '#3E5672', '#2D221B', 1.45)}
         </g>
-        ${svgRibbon(45, -155, 'VESNICE', 132, 18)}
+        ${svgRibbon(40, -185, 'VESNICE', 142, 20)}
 
         <!-- ŠKOLA (Schoolhouse south of the village green) -->
-        ${svgCottage(110, 310, {
-          w: 122,
-          h: 62,
-          roofH: 48,
+        ${svgCottage(100, 440, {
+          w: 240,
+          h: 125,
+          roofH: 95,
           timbered: false,
           wallColor: '#F7EFE0',
           roofColor: '#B8432E',
@@ -806,21 +813,23 @@ export function buildMarchThawLandscapeSvg(isNight = false): string {
           label: 'ŠKOLA',
           isNight,
         })}
-        ${svgVillager(28, 345, '#4A6B82', '#3B4D5E', '#8C3B2B', 0.82)}
-        ${svgVillager(48, 352, '#C84B31', '#3B4D5E', '#2D221B', 0.8)}
+        ${svgVillager(35, 485, '#4A6B82', '#3B4D5E', '#8C3B2B', 1.45)}
+        ${svgVillager(62, 495, '#C84B31', '#3B4D5E', '#2D221B', 1.42)}
       </g>
 
       <!-- 10. MLÝN A PASTVINA (Watermill by the river + shepherd, dog & flock of sheep) -->
       <g id="march-mill">
         ${svgCottage(425, 565, {
-          w: 112,
-          h: 62,
-          roofH: 48,
+          w: 215,
+          h: 125,
+          roofH: 95,
           timbered: true,
           wallColor: '#8C5230',
           roofColor: '#7C3F23',
           gableColor: '#D9A55B',
           label: 'MLÝN',
+          isNight,
+        })}
           isNight,
         })}
         <g transform="translate(760, 650)">

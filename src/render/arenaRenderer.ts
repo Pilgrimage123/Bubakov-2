@@ -32,6 +32,7 @@ export interface CameraViewport {
   viewTop: number;
   viewRight: number;
   viewBottom: number;
+  zoom?: number;
 }
 
 export interface ArenaRenderOptions {
@@ -325,8 +326,11 @@ export class ArenaRenderer {
     ctx.fillRect(0, 0, width, height);
     const backdropMs = now() - tBackdropStart;
 
-    // 2. WORLD SPACE PASS (TRANSLATED BY CAMERA - ADR 0029)
+    // 2. WORLD SPACE PASS (TRANSLATED BY CAMERA - ADR 0029, ADR 0034)
     ctx.save();
+    if (camera.zoom && camera.zoom !== 1) {
+      ctx.scale(camera.zoom, camera.zoom);
+    }
     ctx.translate(-camera.x, -camera.y);
 
     // 2a. Ambient tint and storm haze over world

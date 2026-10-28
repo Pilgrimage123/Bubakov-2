@@ -1,3 +1,26 @@
+## 2026-10-28 — Harmonizace měřítka arény, entit, projektilů a lidové perspektivy (ADR 0034)
+
+- **Kotva měřítka k postavě lovce a hierarchie entit**:
+  - Dospělý lovec (výška 75–80 px, kolizní rádius 20) je autoritativním etalonem měřítka pro zachování plného detailu Ladovských obličejů, fousek, čepic, dýmu z fajfky a procedurálních animací.
+  - Zavedena kanonická 4-stupňová hierarchie velikostí entit v aréně: Drobná havěť a roje (35–45 px, rádius 12–15), Lidé a řadoví běsi (70–85 px, rádius 18–22), Těžká strašidla a drábi (100–120 px, rádius 26–34) a Obludní bossové a legendy (150–200 px, rádius 42–60).
+- **Zvětšení a rozvolnění vesnické zástavby v Březnovém tání**:
+  - Roubenky zvětšeny na 200–210 px v základním prostoru (250–262 px v herním světě), Hospoda na 250 px (312 px ve světě) a Škola na 240 px (300 px ve světě).
+  - Stafáž na pozadí (oráči, tanečníci na návsi, pasáček) zvětšena ze 38 px na 70–76 px, čímž její výška plně odpovídá postavě hratelného lovce.
+  - Středy stavení byly rozvolněny pro zachování prostorných návesních uliček s průchozí šířkou 130–250 px, zamezující vzniku pastí při boji s rojem i velkými bossy.
+- **Zaoblené kolizní půdorysy staveb a plynulý skluz podél rohů**:
+  - V `MarchObstacle` zavedena vlastnost `cornerRadius` (18–20 px).
+  - V `resolveMarchThawObstacles` implementováno plynulé zaoblení kolizního jádra – postavy a běsi při diagonálním kontaktu s rohem stavení hladce kloužou podél stěny bez zasekávání.
+  - Půdorysy základen POI v `MARCH_THAW_POIS` aktualizovány na odpovídající velikost arény.
+- **Harmonizace projektilů a pochutin**:
+  - Vrhací pochutiny (povidlová buchta, kynutý koláč, nakládaná okurka) byly v `renderProjectiles.ts` zmenšeny z naddimenzovaných 60 px na přirozených 28–29 px, odpovídajících koliznímu rádiusu (12–14 px) i dlaním lovce.
+- **Nativní kamera 1:1 a adaptivní zorné pole**:
+  - V `CameraViewport` a renderovací smyčce zavedena podpora pro parametr `zoom`.
+  - Na obrazovkách s výškou od 900 px platí nativní pixel-perfect měřítko 1:1; na kompaktních displejích (< 768 px) se aplikuje adaptivní zoom (0.75×–0.85×) pro zachování strategického přehledu.
+- **Doménová dokumentace a testy**:
+  - V `GLOSSARY.md` vytvořena sekce *Aréna a měřítko* (*Kotva měřítka*, *Hierarchie velikostí entit*, *Harmonizovaný projektil*, *Základový půdorys stavby*).
+  - Zaznamenáno architektonické rozhodnutí v `docs/adr/0034-harmonizace-meritka-areny-entit-a-lidove-perspektivy.md` a indexu `docs/adr/README.md`.
+  - Vytvořen nový testovací soubor `tests/scaleHarmonization.test.ts` (6 testů) ověřující rozměry překážek, uličky, skluz rohů, SVG proporce a zoom kamery. Všech 64 testovacích sad (619 testů) prochází se 100% úspěšností.
+
 ## 2026-10-28 — Likvidace Smart SVG komponent, přechod Čertova dědečka na Canvas 2D a pročištění mrtvého kódu
 
 - **Kompletní odstranění Smart SVG subsystému (`src/components/svg/`)**:

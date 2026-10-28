@@ -248,6 +248,26 @@ _Avoid_: sprite, lovecký sprite, spritový list, rastrový sprite
 Interaktivní procedurální tušová a kvašová kresba Čertova dědečka s nůší a myškou Rézinkou na 2D plátně v kramářském krámku i dialogových oknech, nahrazující původní těžké Smart SVG komponenty.
 _Avoid_: SVG dědeček, DOM postava dědečka, kramářský sprite
 
+
+## Aréna a měřítko
+
+**Kotva měřítka**:
+Výška dospělé postavy lovce (75–80 bodů, kolizní rádius 20), jež slouží jako základní etalon pro odvození proporcí veškerých bytostí, staveb, střel i kořisti na bojišti.
+_Avoid_: scale factor, unit scale, pixel grid, měřítkový násobitel
+
+**Hierarchie velikostí entit**:
+Kanonické čtyřstupňové členění bytostí na bojišti (drobná havěť, lidé a řadoví běsi, těžká strašidla a drábi, obludní bossové a legendy) garantující vyvážený poměr mezi čitelností nápřahů a ladovskými proporcemi.
+_Avoid_: entity tiers, size classes, mob scaling
+
+**Harmonizovaný projektil**:
+Vrhací pochutina či střela, jejíž vykreslovaný rozměr (24–32 bodů) odpovídá jejímu reálnému koliznímu dosahu a přirozenému poměru k rukám lovce.
+_Avoid_: projectile hitbox, bullet size, sprite scale
+
+**Základový půdorys stavby**:
+Přízemní kolizní stopa vesnických stavení a stromů omezená na jejich základnu a spodní stěny, jež umožňuje postavám přirozeně procházet v zákrytu za převislou šindelovou střechou či korunou stromu.
+_Avoid_: building hitbox, obstacle box, neviditelná zeď
+
+
 **Distribuce a rozdělení bundlu**:
 Modulární strategie sestavení herního klienta ve Vite, která vyčleňuje knihovny a ladovské kreslicí rutiny do samostatných chunků a vývojářská okna načítá asynchronně přes `React.lazy()`, čímž zamezuje stahování nepotřebného kódu a drží primární herní bundle pod limitem prohlížeče.
 _Avoid_: monolitický bundle, single-file bundle, obří bundle
