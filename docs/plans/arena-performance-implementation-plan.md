@@ -2,7 +2,7 @@
 
 ## Cíl a měřítka úspěchu
 
-- [x] V profilu `performance` udržet 60 FPS při zátěžovém scénáři; p95 snímku pod 16,7 ms.
+- [ ] Ověřit 60 FPS v profilu `performance` na reálném prohlížeči a cílových zařízeních; syntetický benchmark s mock canvasem sám o sobě potvrzuje pouze chování/CPU-side práci.
 - [x] Zachovat pravidla, odměny, ovládání a ladovský vizuální styl.
 - [x] Nulové alokace v horké cestě renderu a žádné neomezené vytváření částic či textů.
 
@@ -103,7 +103,7 @@
 - [x] 1. Typecheck (`npm run typecheck`), cílené unit testy a kompletní testovací sada.
   - **Výsledek:** `tsc --noEmit` čistý (0 chyb), všech 37 testovacích sad (390 testů) prošlo úspěšně.
 - [x] 2. Stress run: p50/p95 čas snímku, maxima nepřátel/střel/částic/textů pro každý profil.
-  - **Výsledek:** `runDeterministicArenaStressBenchmark` v `tests/arenaStressBenchmark.test.ts` prošel pro profily `performance`, `balanced` i `fidelity` s p95 < 16,7 ms a nepřekročením rozpočtů entit.
+  - **Výsledek:** Syntetický benchmark `runDeterministicArenaStressBenchmark` prochází pro všechny profily a ověřuje limity entit. Jeho p95 čas není měřením skutečného vykreslování prohlížeče/GPU a nelze jej použít jako důkaz 60 FPS na mobilu.
 - [x] 3. Ruční průchod: level 0, noční světla, boss, aktivní aury, plná obrazovka a mobilní vstup.
   - **Výsledek:** Geometrie plátna a přepočet souřadnic ověřen v `tests/canvasGeometry.test.ts`.
 - [x] 4. Pro změny ekonomiky testovat rovnost součtu hodnot dropů před a po kompresi.

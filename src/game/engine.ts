@@ -124,6 +124,15 @@ import {
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
 
+const keepLiveParticle = (particle: any): boolean => particle.life > 0;
+const keepLiveText = (text: any): boolean => (text.life ?? 1) > 0;
+const keepLiveSmokePuff = (puff: any): boolean => !puff.dead;
+const keepLivePlumPuddle = (puddle: any): boolean => !puddle.dead;
+const keepLiveProjectile = (projectile: any): boolean => !projectile.dead;
+const keepLiveSlash = (slash: any): boolean => !slash.dead;
+const keepLiveEnemy = (enemy: any): boolean => !enemy.dead;
+const keepLiveDrop = (drop: any): boolean => !drop.dead;
+
 export function compactInPlace<T>(items: T[], keep: (item: T) => boolean, onRecycle?: (item: T) => void): void {
   let write = 0;
   for (let read = 0; read < items.length; read++) {
@@ -2907,7 +2916,7 @@ export class GameEngine {
         pud.life -= dt;
         if (pud.life <= 0) pud.dead = true;
       }
-      compactInPlace(this.state.plumPuddles, (p: any) => !p.dead);
+      compactInPlace(this.state.plumPuddles, keepLivePlumPuddle);
     }
 
     // Step projectiles
@@ -3056,7 +3065,7 @@ export class GameEngine {
         }
       }
     }
-    compactInPlace(this.state.projectiles, (p) => !p.dead, (p) => {
+    compactInPlace(this.state.projectiles, keepLiveProjectile, (p) => {
       if (this.projectilePool.length < 200) this.projectilePool.push(p);
     });
 
@@ -3162,7 +3171,7 @@ export class GameEngine {
         }
       }
     }
-    compactInPlace(this.state.slashes, (s) => !s.dead, (s) => {
+    compactInPlace(this.state.slashes, keepLiveSlash, (s) => {
       if (this.slashPool.length < 50) this.slashPool.push(s);
     });
 
@@ -3372,7 +3381,7 @@ export class GameEngine {
         }
       }
     }
-    compactInPlace(this.state.enemies, (e) => !e.dead);
+    compactInPlace(this.state.enemies, keepLiveEnemy);
     }
 
     // Rebuild spatial hash with active living enemies
@@ -3852,7 +3861,7 @@ export class GameEngine {
           : MAX_DROPS_LIMIT;
         performDropFusion(this.state.drops, undefined, fusionTarget);
       }
-      compactInPlace(this.state.drops, (d) => !d.dead, (d) => {
+      compactInPlace(this.state.drops, keepLiveDrop, (d) => {
         if (this.dropPool.length < 100) this.dropPool.push(d);
       });
       releasePendingDrops(this.state.drops, pendingBank);
@@ -3869,7 +3878,7 @@ export class GameEngine {
           txt.life = (txt.life ?? 0) - dt;
         }
       }
-      compactInPlace(this.state.texts, (t) => (t.life ?? 1) > 0);
+      compactInPlace(this.state.texts, keepLiveText);
       if (this.state.texts.length > MAX_DAMAGE_TEXTS) {
         const excess = this.state.texts.length - MAX_DAMAGE_TEXTS;
         for (let i = 0; i < MAX_DAMAGE_TEXTS; i++) {
@@ -3884,7 +3893,7 @@ export class GameEngine {
       for (let i = 0; i < this.state.smokePuffs.length; i++) {
         this.state.smokePuffs[i].update?.(dt);
       }
-      compactInPlace(this.state.smokePuffs, (p) => !p.dead);
+      compactInPlace(this.state.smokePuffs, keepLiveSmokePuff);
     }
 
     // Step particles
@@ -3895,7 +3904,7 @@ export class GameEngine {
         p.y += (p.vy || 0) * dt;
         p.life -= dt;
       }
-      compactInPlace(this.state.particles, (p) => p.life > 0);
+      compactInPlace(this.state.particles, keepLiveParticle);
       const particleLimit = getParticleLimit(this.state.meta?.performanceProfile);
       if (this.state.particles.length > particleLimit) {
         const excess = this.state.particles.length - particleLimit;

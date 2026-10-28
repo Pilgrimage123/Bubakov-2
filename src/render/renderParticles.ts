@@ -11,6 +11,7 @@ import { COLORS } from '../constants';
 import { isInView, type CameraViewport } from './arenaRenderer';
 
 const INITIAL_BUCKET_CAPACITY = 512;
+const MAX_COLOR_BUCKETS = 32;
 
 interface ParticleColorBucket {
   color: string;
@@ -20,7 +21,8 @@ interface ParticleColorBucket {
 }
 
 const colorBuckets = new Map<string, ParticleColorBucket>();
-const activeBuckets: ParticleColorBucket[] = [];
+const activeBuckets: ParticleColorBucket[] = new Array(MAX_COLOR_BUCKETS);
+let activeBucketCount = 0;
 
 function getOrCreateColorBucket(color: string): ParticleColorBucket {
   let bucket = colorBuckets.get(color);
@@ -61,10 +63,21 @@ export function renderParticles(
     const tier = rawAlpha <= 0.3125 ? 0 : rawAlpha <= 0.625 ? 1 : rawAlpha <= 0.875 ? 2 : 3;
     const color = p.color || COLORS.white;
 
-    const bucket = getOrCreateColorBucket(color);
+    let bucket = colorBuckets.get(color);
+    if (!bucket && colorBuckets.size < MAX_COLOR_BUCKETS) bucket = getOrCreateColorBucket(color);
+    if (!bucket) {
+      // Keep pathological/custom color use from growing the cache without bound.
+      // Overflow particles retain their own color and alpha, but skip batching.
+      ctx.globalAlpha = rawAlpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
     if (!bucket.active) {
       bucket.active = true;
-      activeBuckets.push(bucket);
+      activeBuckets[activeBucketCount++] = bucket;
     }
 
     const idx = bucket.counts[tier];
@@ -86,7 +99,7 @@ export function renderParticles(
   if (rendered === 0) return 0;
 
   // Pass 2: Compound path draw per (color, alphaTier) bucket
-  for (let b = 0; b < activeBuckets.length; b++) {
+  for (let b = 0; b < activeBucketCount; b++) {
     const bucket = activeBuckets[b];
     ctx.fillStyle = bucket.color;
 
@@ -109,10 +122,10 @@ export function renderParticles(
       bucket.counts[t] = 0;
     }
 
+    activeBuckets[b] = undefined as unknown as ParticleColorBucket;
     bucket.active = false;
   }
-
-  activeBuckets.length = 0;
+  activeBucketCount = 0;
   ctx.globalAlpha = 1.0;
 
   return rendered;

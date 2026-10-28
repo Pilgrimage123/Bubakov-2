@@ -14,8 +14,8 @@
  */
 
 import { COLORS } from '../constants';
-import type { DynamicLightSource, ShadowZone, LightOccluder, ShadowPolygon } from '../game/storybookLighting';
-import { computeShadowVolume, computeSurfaceReliefHighlight } from '../game/storybookLighting';
+import type { DynamicLightSource, ShadowZone, LightOccluder } from '../game/storybookLighting';
+import { computeOccluderSegments, computeSurfaceReliefHighlight } from '../game/storybookLighting';
 
 let lightBufferCanvas: HTMLCanvasElement | null = null;
 let lightBufferCtx: CanvasRenderingContext2D | null = null;
@@ -258,81 +258,48 @@ export function getStorybookSnowColor(dayPhaseId: string, kurazRatio: number): s
 }
 
 /**
- * Returns RGB tuple for ambient lightmap color according to day phase.
+ * Returns the cached ambient color for the current day phase.
  */
 function getAmbientLightmapRgb(
   dayPhaseId: string,
   kurazRatio: number,
   isWinter = true
-): { r: number; g: number; b: number; hex: string } {
+): string {
   if (dayPhaseId === 'noon' || dayPhaseId === 'afternoon') {
     if (kurazRatio < 0.25) {
       // Glaring winter haze
-      return { r: 235, g: 232, b: 220, hex: '#EBE8DC' };
+      return '#EBE8DC';
     }
-    return { r: 255, g: 255, b: 255, hex: '#FFFFFF' };
+    return '#FFFFFF';
   }
 
   if (dayPhaseId === 'dusk') {
-    const scale = kurazRatio < 0.25 ? 0.8 : 1.0;
-    return {
-      r: Math.round(112 * scale),
-      g: Math.round(98 * scale),
-      b: Math.round(142 * scale),
-      hex: '#70628E',
-    };
+    return '#70628E';
   }
 
   if (dayPhaseId === 'night') {
-    const scale = kurazRatio < 0.25 ? 0.75 : 1.0;
     if (isWinter) {
-      return {
-        r: Math.round(52 * scale),
-        g: Math.round(62 * scale),
-        b: Math.round(98 * scale),
-        hex: '#343E62',
-      };
+      return '#343E62';
     }
-    return {
-      r: Math.round(58 * scale),
-      g: Math.round(54 * scale),
-      b: Math.round(82 * scale),
-      hex: '#3A3652',
-    };
+    return '#3A3652';
   }
 
   if (dayPhaseId === 'midnight') {
-    const scale = kurazRatio < 0.25 ? 0.7 : 1.0;
-    return {
-      r: Math.round(28 * scale),
-      g: Math.round(34 * scale),
-      b: Math.round(65 * scale),
-      hex: '#1C2241',
-    };
+    return '#1C2241';
   }
 
   // Dawn
-  const scale = kurazRatio < 0.25 ? 0.85 : 1.0;
-  return {
-    r: Math.round(212 * scale),
-    g: Math.round(175 * scale),
-    b: Math.round(168 * scale),
-    hex: '#D4AFA8',
-  };
+  return '#D4AFA8';
 }
 
 /**
  * Parses hex color or returns fallback RGB.
  */
-function parseHexToRgb(color: string): { r: number; g: number; b: number } {
+function parseHexToRgb(color: string): number {
   if (color.startsWith('#') && color.length === 7) {
-    return {
-      r: parseInt(color.slice(1, 3), 16),
-      g: parseInt(color.slice(3, 5), 16),
-      b: parseInt(color.slice(5, 7), 16),
-    };
+    return Number.parseInt(color.slice(1), 16);
   }
-  return { r: 254, g: 240, b: 138 }; // Default warm butter
+  return 0xFEF08A; // Default warm butter
 }
 
 /**
@@ -351,6 +318,9 @@ function renderSteppedGouacheHaloToBuffer(
   if (radius <= 0 || intensity <= 0) return;
 
   const rgb = parseHexToRgb(baseColor);
+  const red = (rgb >> 16) & 0xFF;
+  const green = (rgb >> 8) & 0xFF;
+  const blue = rgb & 0xFF;
   const coreR = radius * 0.38;
   const midR = radius * 0.70;
   const haloR = radius * 0.92;
@@ -358,26 +328,26 @@ function renderSteppedGouacheHaloToBuffer(
   ctx.save();
 
   // 1. Core Band (brightest inner gouache pool: 0% - 38%)
-  ctx.fillStyle = `rgba(${Math.min(255, rgb.r + 30)}, ${Math.min(255, rgb.g + 30)}, ${Math.min(255, rgb.b + 30)}, ${0.98 * intensity})`;
+  ctx.fillStyle = `rgba(${Math.min(255, red + 30)}, ${Math.min(255, green + 30)}, ${Math.min(255, blue + 30)}, ${0.98 * intensity})`;
   ctx.beginPath();
   ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
   ctx.fill();
 
   // 2. Midtone Band (warm gouache tone: 38% - 70%)
-  ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.75 * intensity})`;
+  ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${0.75 * intensity})`;
   ctx.beginPath();
   ctx.arc(cx, cy, midR, 0, Math.PI * 2);
   ctx.fill();
 
   // 3. Halo Periphery Band (soft stepped transition: 70% - 92%)
-  ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`;
+  ctx.fillStyle = `rgba(${red}, ${green}, ${blue}, ${0.45 * intensity})`;
   ctx.beginPath();
   ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
   ctx.fill();
 
   // 4. Outer rim fade (92% - 100%)
   const stamp = getRadialLightStamp(
-    rgb.r > 200 && rgb.g < 100 ? 'fire' : rgb.b > 200 && rgb.r < 100 ? 'cold' : 'warm'
+    red > 200 && green < 100 ? 'fire' : blue > 200 && red < 100 ? 'cold' : 'warm'
   );
   if (stamp) {
     ctx.save();
@@ -386,8 +356,8 @@ function renderSteppedGouacheHaloToBuffer(
     ctx.restore();
   } else {
     const grad = ctx.createRadialGradient(cx, cy, haloR, cx, cy, radius);
-    grad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${0.45 * intensity})`);
-    grad.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+    grad.addColorStop(0, `rgba(${red}, ${green}, ${blue}, ${0.45 * intensity})`);
+    grad.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -405,6 +375,66 @@ function renderSteppedGouacheHaloToBuffer(
   }
 
   ctx.restore();
+}
+
+function isOccluderInLightRange(lightX: number, lightY: number, reach: number, occ: LightOccluder): boolean {
+  const occRadius = occ.radius || (occ.width ? Math.max(occ.width, occ.height || 0) * 0.75 : 40);
+  const dx = occ.x - lightX;
+  const dy = occ.y - lightY;
+  const maxDistance = reach + occRadius;
+  return dx * dx + dy * dy <= maxDistance * maxDistance;
+}
+
+/**
+ * Cuts shadow volumes straight into the light scratch buffer.  The simulation
+ * helper returns friendly polygon objects for tests and gameplay queries, but
+ * constructing those objects in the render loop would reintroduce GC pressure.
+ */
+function cutShadowVolumesIntoLightBuffer(
+  ctx: CanvasRenderingContext2D,
+  lightX: number,
+  lightY: number,
+  lightRadius: number,
+  occ: LightOccluder,
+  halfSize: number
+): void {
+  const segments = computeOccluderSegments(occ);
+  const extrudeDistance = Math.max(lightRadius * 2.2, 500);
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    const nx = -(seg.y2 - seg.y1);
+    const ny = seg.x2 - seg.x1;
+    const midX = (seg.x1 + seg.x2) * 0.5 - lightX;
+    const midY = (seg.y1 + seg.y2) * 0.5 - lightY;
+    if (nx * midX + ny * midY > 0) continue;
+
+    const d1x = seg.x1 - lightX;
+    const d1y = seg.y1 - lightY;
+    const d1Length = Math.hypot(d1x, d1y) || 1;
+    const d2x = seg.x2 - lightX;
+    const d2y = seg.y2 - lightY;
+    const d2Length = Math.hypot(d2x, d2y) || 1;
+
+    ctx.beginPath();
+    ctx.moveTo(seg.x1 - lightX + halfSize, seg.y1 - lightY + halfSize);
+    ctx.lineTo(seg.x2 - lightX + halfSize, seg.y2 - lightY + halfSize);
+    ctx.lineTo(seg.x2 + (d2x / d2Length) * extrudeDistance - lightX + halfSize, seg.y2 + (d2y / d2Length) * extrudeDistance - lightY + halfSize);
+    ctx.lineTo(seg.x1 + (d1x / d1Length) * extrudeDistance - lightX + halfSize, seg.y1 + (d1y / d1Length) * extrudeDistance - lightY + halfSize);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Keep the light from being composited into a solid cottage/tree itself.
+  const occX = occ.x - lightX + halfSize;
+  const occY = occ.y - lightY + halfSize;
+  if (occ.width && occ.height) {
+    ctx.fillRect(occX - occ.width * 0.5, occY - occ.height * 0.5, occ.width, occ.height);
+  } else if (occ.radius) {
+    ctx.beginPath();
+    ctx.arc(occX, occY, occ.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /**
@@ -656,8 +686,7 @@ export function renderStorybookLightingComposite(
   // -------------------------------------------------------------
   // 1. LIGHT PASS: Ambient fill
   // -------------------------------------------------------------
-  const ambient = getAmbientLightmapRgb(dayPhaseId, kurazRatio, isWinter);
-  lCtx.fillStyle = ambient.hex;
+  lCtx.fillStyle = getAmbientLightmapRgb(dayPhaseId, kurazRatio, isWinter);
   lCtx.fillRect(0, 0, screenWidth, screenHeight);
 
   // Daytime cast shadows on daylight lightmap
@@ -699,18 +728,17 @@ export function renderStorybookLightingComposite(
     // Fidelity keeps all shadows. Balanced bounds expensive shadow-volume work;
     // performance keeps light halos but skips dynamic occlusion shadows.
     const castShadows = quality === 'fidelity' || (quality === 'balanced' && i < 12);
-    const nearbyOccluders: LightOccluder[] = [];
+    let hasNearbyOccluder = false;
     if (castShadows && occluders.length > 0) {
       for (let j = 0; j < occluders.length; j++) {
-        const occ = occluders[j];
-        const occRad = occ.radius || (occ.width ? Math.max(occ.width, occ.height || 0) * 0.75 : 40);
-        if (Math.hypot(occ.x - src.x, occ.y - src.y) <= reach + occRad) {
-          nearbyOccluders.push(occ);
+        if (isOccluderInLightRange(src.x, src.y, reach, occluders[j])) {
+          hasNearbyOccluder = true;
+          break;
         }
       }
     }
 
-    if (nearbyOccluders.length === 0) {
+    if (!hasNearbyOccluder) {
       // Direct rendering into 0.5x lightmap without clearRect and scratch buffer copying!
       lCtx.save();
       lCtx.globalCompositeOperation = 'lighter';
@@ -758,33 +786,10 @@ export function renderStorybookLightingComposite(
       sCtx.globalCompositeOperation = 'destination-out';
       sCtx.fillStyle = '#000000';
 
-      for (let j = 0; j < nearbyOccluders.length; j++) {
-        const occ = nearbyOccluders[j];
-        const shadowVols = computeShadowVolume(src.x, src.y, reach, occ);
-
-        for (let k = 0; k < shadowVols.length; k++) {
-          const poly = shadowVols[k];
-          sCtx.beginPath();
-          // Transform world coordinates to scratch buffer relative coordinates
-          sCtx.moveTo(poly.p1.x - src.x + halfSize, poly.p1.y - src.y + halfSize);
-          sCtx.lineTo(poly.p2.x - src.x + halfSize, poly.p2.y - src.y + halfSize);
-          sCtx.lineTo(poly.e2.x - src.x + halfSize, poly.e2.y - src.y + halfSize);
-          sCtx.lineTo(poly.e1.x - src.x + halfSize, poly.e1.y - src.y + halfSize);
-          sCtx.closePath();
-          sCtx.fill();
-        }
-
-        // Also mask out the occluder interior so light doesn't shine inside the solid house
-        if (occ.width && occ.height) {
-          const ox = occ.x - src.x + halfSize;
-          const oy = occ.y - src.y + halfSize;
-          sCtx.fillRect(ox - occ.width * 0.5, oy - occ.height * 0.5, occ.width, occ.height);
-        } else if (occ.radius) {
-          const ox = occ.x - src.x + halfSize;
-          const oy = occ.y - src.y + halfSize;
-          sCtx.beginPath();
-          sCtx.arc(ox, oy, occ.radius, 0, Math.PI * 2);
-          sCtx.fill();
+      for (let j = 0; j < occluders.length; j++) {
+        const occ = occluders[j];
+        if (isOccluderInLightRange(src.x, src.y, reach, occ)) {
+          cutShadowVolumesIntoLightBuffer(sCtx, src.x, src.y, reach, occ, halfSize);
         }
       }
       sCtx.restore();

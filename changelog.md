@@ -1,3 +1,18 @@
+## 2026-10-28 — Další optimalizace vykreslování arény
+
+- **Omezení alokací v hlavní smyčce arény**:
+  - Opakovaně používané renderovací volby, metriky, predikáty pro úklid entit a prázdné seznamy se nyní sdílejí místo vytváření nových objektů při každém snímku.
+  - Sběr vykreslitelných objektů používá znovupoužitelnou dynamicky rostoucí vyrovnávací paměť; její kapacita roste jen při potřebě.
+  - Bojové texty respektují limit ještě před vytvořením objektu a údaje o snímku předávají indikátorům skutečný časový krok.
+- **Efektivnější světelné stíny a projektily**:
+  - Masky stínů vykreslují polygony přímo ze segmentů bez mezilehlých polí polygonů a objektů.
+  - Vykreslovač projektilů může zapisovat metriky do znovupoužitelného výstupního objektu; počty projektilů a seků i údaje o ořezu se pro každý snímek resetují a měří.
+- **Omezená cache barev částic**:
+  - Cache barev má pevný limit; částice nad limitem se vykreslí přímo se svou barvou, takže počet různých barev nezpůsobí neomezený růst cache.
+- **Dokumentace a ověření**:
+  - Aktualizován plán implementace optimalizací arény v `docs/plans/arena-performance-implementation-plan.md`.
+  - Cílené testy arény, částic, enginu a zátěžového benchmarku: 51 testů v 5 souborech prošlo; prošly také TypeScript kontrola a lint. Výsledky testů samy o sobě nepředstavují důkaz FPS v reálném prohlížeči.
+
 ## 2026-10-28 — Rozdělení Předjaří na den a noc, osmidílná kampaň a 5minutové trvání (ADR 0035)
 
 - **Rozdělení úvodního kraje Předjaří na dvě samostatné výpravy**:

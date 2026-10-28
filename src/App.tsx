@@ -104,6 +104,7 @@ import {
   renderArena,
   createReusableRenderMetrics,
   type CameraViewport,
+  type ArenaRenderOptions,
   type ArenaRenderMetrics,
 } from './render/arenaRenderer';
 import {
@@ -326,6 +327,13 @@ function renderHunterPortrait(
 }
 
 /** Allocation-free cleanup for frequently mutated entity arrays. */
+const keepLiveParticle = (particle: any): boolean => particle.life > 0;
+const keepLiveText = (text: any): boolean => text.life > 0;
+const keepLiveSmokePuff = (puff: any): boolean => !puff.dead;
+const keepLiveDrop = (drop: any): boolean => !drop.dead;
+const keepLiveProjectile = (projectile: any): boolean => !projectile.dead;
+const keepLiveSlash = (slash: any): boolean => !slash.dead;
+const keepLiveEnemy = (enemy: any): boolean => !enemy.dead;
 function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
   let write = 0;
   for (let read = 0; read < items.length; read++) {
@@ -474,7 +482,7 @@ function pushDamageText(
   category?: CombatTextCategory,
   icon?: string
 ): DamageText | null {
-  if (!texts) return null;
+  if (!texts || texts.length >= MAX_DAMAGE_TEXTS) return null;
   const resolvedCategory = category || (icon === 'gingerbread' || (typeof text === 'string' && text.includes('🍪')) ? 'lootResources' : inferCombatTextCategory(text));
   if (!isCombatTextCategoryEnabled(resolvedCategory)) {
     return null;
@@ -2162,6 +2170,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   });
   const lastCombatTextsMsRef = useRef<number>(0);
   const arenaMetricsRef = useRef<ArenaRenderMetrics>(createReusableRenderMetrics());
+  const arenaCameraRef = useRef<CameraViewport>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    viewLeft: 0,
+    viewTop: 0,
+    viewRight: 0,
+    viewBottom: 0,
+    zoom: 1,
+  });
+  const arenaRenderOptionsRef = useRef<ArenaRenderOptions>({});
 
   const pushTransientLight = useCallback((light: DynamicLightSource) => {
     const eng = engineRef.current;
@@ -7307,7 +7327,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
           }
-          compactInPlace(engine.projectiles, (p) => !p.dead);
+          compactInPlace(engine.projectiles, keepLiveProjectile);
 
           // Update Melee Slashes
           for (const s of engine.slashes) {
@@ -7428,7 +7448,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
           }
-          compactInPlace(engine.slashes, (s) => !s.dead);
+          compactInPlace(engine.slashes, keepLiveSlash);
 
           // Update the circular Stage 1 flock once, then let the existing spatial-hash
           // rebuild below index the freshly computed crow positions for the next frame.
@@ -7687,7 +7707,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
           }
-          compactInPlace(engine.enemies, (e) => !e.dead);
+          compactInPlace(engine.enemies, keepLiveEnemy);
 
           // Rebuild the spatial hash AFTER enemy movement.
           // Collision systems later in this frame must see current enemy positions.
@@ -7713,7 +7733,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               ? MAX_DROPS_LIMIT - 1
               : MAX_DROPS_LIMIT;
             performDropFusion(engine.drops, viewBounds, fusionTarget);
-            compactInPlace(engine.drops, (d) => !d.dead);
+            compactInPlace(engine.drops, keepLiveDrop);
             releasePendingDrops(engine.drops, engine.pendingDropBank);
           }
 
@@ -7996,7 +8016,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
           }
-          compactInPlace(engine.drops, (d) => !d.dead);
+          compactInPlace(engine.drops, keepLiveDrop);
           // Pickups and other removals free slots for any queued rewards.
           releasePendingDrops(engine.drops, engine.pendingDropBank);
 
@@ -8009,7 +8029,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               txt.life = (txt.life ?? 0) - dt;
             }
           }
-          compactInPlace(engine.texts, (t) => t.life > 0);
+          compactInPlace(engine.texts, keepLiveText);
           if (engine.texts.length > MAX_DAMAGE_TEXTS) {
             engine.texts.splice(0, engine.texts.length - MAX_DAMAGE_TEXTS);
           }
@@ -8041,7 +8061,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }
               }
             }
-            compactInPlace(engine.smokePuffs, (p) => !p.dead);
+            compactInPlace(engine.smokePuffs, keepLiveSmokePuff);
           }
 
           // Update particles
@@ -8051,7 +8071,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               p.y += (p.vy || 0) * dt;
               p.life -= dt;
             }
-            compactInPlace(engine.particles, (p) => p.life > 0);
+            compactInPlace(engine.particles, keepLiveParticle);
             const particleLimit = getParticleLimit(metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced'));
             if (engine.particles.length > particleLimit) {
               engine.particles.splice(0, engine.particles.length - particleLimit);
@@ -8167,35 +8187,35 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const effectiveW = canvas.width / camZoom;
         const effectiveH = canvas.height / camZoom;
 
-        const camera: CameraViewport = {
-          x: cam.x + shakeX,
-          y: cam.y + shakeY,
-          width: effectiveW,
-          height: effectiveH,
-          viewLeft: cam.x + shakeX - 120,
-          viewTop: cam.y + shakeY - 160,
-          viewRight: cam.x + shakeX + effectiveW + 120,
-          viewBottom: cam.y + shakeY + effectiveH + 160,
-          zoom: camZoom,
-        };
+        const camera = arenaCameraRef.current;
+        camera.x = cam.x + shakeX;
+        camera.y = cam.y + shakeY;
+        camera.width = effectiveW;
+        camera.height = effectiveH;
+        camera.viewLeft = camera.x - 120;
+        camera.viewTop = camera.y - 160;
+        camera.viewRight = camera.x + effectiveW + 120;
+        camera.viewBottom = camera.y + effectiveH + 160;
+        camera.zoom = camZoom;
 
         const currentProfile = metaRef.current.performanceProfile || (metaRef.current.performanceMode ? 'performance' : 'balanced');
 
         frameProfiler.mark('world', performance.now());
 
-        const arenaMetrics = renderArena(ctx, engine, camera, {
-          performanceProfile: currentProfile,
-          combatVfxEnabled: isGameEffectEnabled('combatVfxEnabled'),
-          combatTextsEnabled: isGameEffectEnabled('effectsEnabled'),
-          lightingEnabled: isGameEffectEnabled('dynamicLightingEnabled'),
-          warningIndicatorsEnabled: isGameEffectEnabled('warningIndicatorsEnabled'),
-          statusIndicatorsEnabled: isGameEffectEnabled('statusIndicatorsEnabled'),
-          chunkCache: arenaChunkCacheRef.current ?? undefined,
-          curLvl,
-          dayPhase: phase,
-          snowmanHorde: snowmanHordeRef.current,
-          isPaused: currentGameState !== 'playing',
-        }, arenaMetricsRef.current);
+        const arenaOptions = arenaRenderOptionsRef.current;
+        arenaOptions.performanceProfile = currentProfile;
+        arenaOptions.combatVfxEnabled = isGameEffectEnabled('combatVfxEnabled');
+        arenaOptions.combatTextsEnabled = isGameEffectEnabled('effectsEnabled');
+        arenaOptions.lightingEnabled = isGameEffectEnabled('dynamicLightingEnabled');
+        arenaOptions.warningIndicatorsEnabled = isGameEffectEnabled('warningIndicatorsEnabled');
+        arenaOptions.statusIndicatorsEnabled = isGameEffectEnabled('statusIndicatorsEnabled');
+        arenaOptions.chunkCache = arenaChunkCacheRef.current ?? undefined;
+        arenaOptions.curLvl = curLvl;
+        arenaOptions.dayPhase = phase;
+        arenaOptions.snowmanHorde = snowmanHordeRef.current;
+        arenaOptions.isPaused = currentGameState !== 'playing';
+        arenaOptions.deltaTimeSeconds = frameProfiler.frameDelta / 1000;
+        const arenaMetrics = renderArena(ctx, engine, camera, arenaOptions, arenaMetricsRef.current);
 
         lastCombatTextsMsRef.current = arenaMetrics.timings.combatTextsMs;
         frameProfiler.mark('overlays', performance.now());

@@ -11,13 +11,19 @@ import { COLORS } from '../constants';
 import { Lada, getCachedLadaSprite } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
 
+export interface ProjectileRenderMetrics {
+  renderedProjectiles: number;
+  renderedSlashes: number;
+}
+
 export function renderProjectilesAndSlashes(
   ctx: CanvasRenderingContext2D,
   projectiles: any[],
   slashes: any[],
   camera: CameraViewport,
-  uiTime = 0
-): { renderedProjectiles: number; renderedSlashes: number } {
+  uiTime = 0,
+  outMetrics?: ProjectileRenderMetrics
+): ProjectileRenderMetrics {
   let renderedProjectiles = 0;
   let renderedSlashes = 0;
 
@@ -478,6 +484,12 @@ export function renderProjectilesAndSlashes(
 
       ctx.restore();
     }
+  }
+
+  if (outMetrics) {
+    outMetrics.renderedProjectiles = renderedProjectiles;
+    outMetrics.renderedSlashes = renderedSlashes;
+    return outMetrics;
   }
 
   return { renderedProjectiles, renderedSlashes };
