@@ -14,7 +14,6 @@ import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
 import { GameIcon } from './GameIcon';
-import { SmartSvgViewer, SmartSpriteRenderer, hasSmartSvgSprite, type SmartSvgState } from './svg';
 import { Battlefield } from './gpu-animation/Battlefield';
 import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
 import { ENEMY_PREFIX_DEFS } from '../types';
@@ -24,7 +23,7 @@ interface AnimationTesterModalProps {
   onClose: () => void;
 }
 
-type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather' | 'smart_svg' | 'gpu_walk';
+type TesterTab = 'all' | 'hunters' | 'enemies' | 'grandfather' | 'gpu_walk';
 type CanvasBg = 'parchment' | 'night' | 'snow' | 'grid';
 
 interface HunterDef {
@@ -193,45 +192,6 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
   const [grandfatherSpriteMoving, setGrandfatherSpriteMoving] = useState<boolean>(true);
   const [grandfatherInteracting, setGrandfatherInteracting] = useState<boolean>(true);
   const [mousePetCount, setMousePetCount] = useState<number>(0);
-  const [showSmartSvgOverlay, setShowSmartSvgOverlay] = useState<boolean>(true);
-
-  const activeSmartSvgId =
-    activeTab === 'hunters'
-      ? (hasSmartSvgSprite(selectedHunterId) ? selectedHunterId : null)
-      : activeTab === 'enemies'
-      ? (hasSmartSvgSprite(selectedEnemyId) ? selectedEnemyId : null)
-      : activeTab === 'grandfather' && grandfatherMode === 'sprite'
-      ? 'dedecek_arena'
-      : null;
-
-  const activeSmartSvgState: SmartSvgState =
-    activeTab === 'hunters'
-      ? hunterMoveState === 'idle'
-        ? 'idle'
-        : hunterMoveState === 'walk'
-        ? 'walk'
-        : hunterMoveState === 'sprint'
-        ? 'sprint'
-        : hunterMoveState === 'flee'
-        ? 'flee'
-        : 'react'
-      : activeTab === 'enemies'
-      ? enemyAction === 'idle'
-        ? 'idle'
-        : enemyAction === 'chase'
-        ? 'walk'
-        : enemyAction === 'windup' || enemyAction === 'strike'
-        ? 'action'
-        : enemyAction === 'panicked'
-        ? 'flee'
-        : enemyAction === 'stunned'
-        ? 'react'
-        : 'walk'
-      : grandfatherInteracting
-      ? 'action'
-      : grandfatherSpriteMoving
-      ? 'walk'
-      : 'idle';
 
   // Refs for animation loop
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -814,25 +774,6 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             <GameIcon icon="star" size={14} /> {isSmallMobile ? 'Galerie' : 'Přehlídka'}
           </button>
 
-          <button
-            className={`tab-btn ${activeTab === 'smart_svg' ? 'active' : ''}`}
-            style={{
-              fontSize: isSmallMobile ? '0.74rem' : isMobile ? '0.82rem' : '0.94rem',
-              padding: isSmallMobile ? '5px 4px' : '7px 10px',
-              fontWeight: 900,
-              minWidth: 0,
-              textAlign: 'center',
-              background: activeTab === 'smart_svg' ? '#C53026' : undefined,
-              color: activeTab === 'smart_svg' ? '#FFFFFF' : undefined,
-              boxShadow: activeTab === 'smart_svg' ? '0 2px 8px rgba(197, 48, 38, 0.4)' : undefined,
-            }}
-            onClick={() => {
-              sound.kindChime();
-              setActiveTab('smart_svg');
-            }}
-          >
-            <GameIcon icon="star" size={14} /> Smart SVG
-          </button>
 
           <button
             className={`tab-btn ${activeTab === 'gpu_walk' ? 'active' : ''}`}
@@ -1082,14 +1023,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
           </div>
         )}
 
-        {/* Tab 5: Smart SVG Interactive Showcase */}
-        {activeTab === 'smart_svg' && (
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '4px' : '8px' }}>
-            <SmartSvgViewer />
-          </div>
-        )}
-
-        {/* Tab 6: Procedural GPU Walk Engine Showcase (<Battlefield />) */}
+        {/* Tab 5: Procedural GPU Walk Engine Showcase (<Battlefield />) */}
         {activeTab === 'gpu_walk' && (
           <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: isMobile ? '4px' : '8px' }}>
             <Battlefield />
@@ -1097,7 +1031,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
         )}
 
         {/* Tab 2, 3, 4: Detailed Inspection View */}
-        {activeTab !== 'all' && activeTab !== 'smart_svg' && activeTab !== 'gpu_walk' && (
+        {activeTab !== 'all' && activeTab !== 'gpu_walk' && (
           <div
             style={{
               display: 'flex',
@@ -1655,24 +1589,6 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                   >
                     <GameIcon icon="sound" size={13} />
                   </button>
-                  {activeSmartSvgId && (
-                    <button
-                      onClick={() => setShowSmartSvgOverlay((v) => !v)}
-                      style={{
-                        padding: '2px 7px',
-                        fontSize: isSmallMobile ? '0.68rem' : '0.72rem',
-                        fontWeight: 900,
-                        background: showSmartSvgOverlay ? '#FDE047' : '#FAF5E8',
-                        color: 'var(--ink)',
-                        border: '1.5px solid var(--ink)',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                      title="Zobrazit/skrýt synchronizovaný Smart SVG vektor vedle Canvasu"
-                    >
-                      ✨ Smart SVG: {showSmartSvgOverlay ? 'ZAP' : 'VYP'}
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -1731,55 +1647,12 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
                       width={560}
                       height={380}
                       style={{
-                        width: activeSmartSvgId && showSmartSvgOverlay && !isSmallMobile ? '58%' : '100%',
+                        width: '100%',
                         height: '100%',
                         objectFit: 'contain',
                         display: 'block',
                       }}
                     />
-                    {activeSmartSvgId && showSmartSvgOverlay && !isSmallMobile && (
-                      <div
-                        style={{
-                          width: '42%',
-                          height: '92%',
-                          marginRight: '8px',
-                          background: canvasBg === 'night' ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 253, 245, 0.96)',
-                          border: '2px solid var(--ink)',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 6,
-                            background: '#78350F',
-                            color: '#FEF3C7',
-                            fontSize: '0.66rem',
-                            fontWeight: 900,
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                          }}
-                        >
-                          ✨ SMART SVG
-                        </div>
-                        <SmartSpriteRenderer
-                          spriteId={activeSmartSvgId}
-                          state={activeSmartSvgState}
-                          direction={facingDir}
-                          isPlaying={isPlaying}
-                          speed={playbackSpeed}
-                          size={isMobile ? 165 : 220}
-                          interactive={true}
-                        />
-                      </div>
-                    )}
                   </div>
                 )}
 

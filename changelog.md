@@ -1,3 +1,20 @@
+## 2026-10-28 — Likvidace Smart SVG komponent, přechod Čertova dědečka na Canvas 2D a pročištění mrtvého kódu
+
+- **Kompletní odstranění Smart SVG subsystému (`src/components/svg/`)**:
+  - Smazán celý adresář `src/components/svg/` včetně zbývajících komponent Čertova dědečka (`SmartDedecekNuseSvg`, `SmartDedecekArenaSvg`), interaktivního prohlížeče `SmartSvgViewer` a registru `SMART_SVG_REGISTRY`.
+  - Hra nyní používá jednotný bezalokační 2D Canvas stack pro veškeré postavy a animace.
+- **Převod Čertova dědečka na Canvas 2D (`LadaGrandfatherCanvasPreview`)**:
+  - Vytvořena lehká komponenta `LadaGrandfatherCanvasPreview` napojená přímo na procedurální kvašovou a tušovou kreslicí rutinu `Lada.drawGrandfather` v `src/render/ladaRenderer.ts`.
+  - Scéna kramářského obchodu `GrandfatherScene.tsx` i dialog nápovědy ovládání `ControlsModal.tsx` nyní vykreslují dědečka s nůší a myškou Rézinkou na nativním plátně bez jakékoliv zátěže DOM stromu.
+- **Pročištění mrtvého kódu a reliktů**:
+  - V `AnimationTesterModal.tsx` odstraněna záložka `smart_svg`, importy `SmartSvgViewer` i dormantní přepínače a duplicitní renderovací panely.
+  - V `vite.config.ts` odstraněno vyhrazené pravidlo pro chunk `'smart-svg'`.
+  - Odstraněn dočasný skript `tmp/check_fix.py`.
+  - Zastaralý unit test `tests/smartSvgAnimations.test.ts` nahrazen novým testem stability `tests/grandfatherScene.test.tsx`.
+- **Aktualizace GLOSSARY.md a nový ADR 0033**:
+  - V `GLOSSARY.md` termín *Smart SVG sprity* označen za historický a nahrazen autoritativním termínem *Procedurální kresba kramáře*.
+  - Zaznamenáno a zaevidováno architektonické rozhodnutí v `docs/adr/0033-likvidace-smart-svg-a-sjednoceni-na-canvas.md` a `docs/adr/README.md`.
+
 ## 2026-10-27 — Vlna 2 optimalizací arény: Rozšířený atlas strašidel, razítkový kvašový atlas a dávkové částice
 
 - **Rozšíření `BakedBubakAtlas` na 44 archetypů se zrcadlením a lenivým pečením**:

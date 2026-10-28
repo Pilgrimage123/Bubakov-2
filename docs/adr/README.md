@@ -37,3 +37,4 @@ This directory records architectural decisions made for the project Bubákov.
 | [0030](0030-hejno-mrazivych-vran-a-smart-svg-integrace.md) | Hejno mrazivých vran (Miniboss) a integrace Smart SVG spritů |
 | [0031](0031-sjednoceni-identifikatoru-lovcu-a-strasidel-a-optimalizace-distribuce.md) | Sjednocení identifikátorů lovců a strašidel, vyčištění distribučního bundlu a ochrana složky public |
 | [0032](0032-zivotnost-nezkonzumovaneho-jidla-a-dynamicka-korelace-dropu.md) | Životnost nezkonzumovaného jídla a korekce dynamických dropů |
+| [0033](0033-likvidace-smart-svg-a-sjednoceni-na-canvas.md) | Likvidace Smart SVG komponent a sjednocení vizuálu postav na Canvas 2D |

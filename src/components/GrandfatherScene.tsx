@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 import { sound } from '../audio';
 import { GameIcon } from './GameIcon';
-import { SmartDedecekNuseSvg } from './svg/SmartDedecekNuseSvg';
-import type { SmartCharacterState } from './svg/types';
+import { LadaGrandfatherCanvasPreview } from './LadaGrandfatherCanvasPreview';
 
 interface GrandfatherSceneProps {
   mode?: 'desktop' | 'mobile';
@@ -14,7 +13,7 @@ interface GrandfatherSceneProps {
 
 /**
  * GrandfatherScene - The atmospheric animated stage in Dědeček's shop.
- * Renders the authentic Smart SVG vector illustration of Čertův Dědeček
+ * Renders the authentic Ladovská Canvas 2D illustration of Čertův Dědeček
  * opening his giant woven wicker basket (nůše), with interactive cursor tracking,
  * sound effects, and the cheerful companion mouse Rézinka!
  */
@@ -27,16 +26,6 @@ export function GrandfatherScene({
 }: GrandfatherSceneProps) {
   const isMobile = mode === 'mobile';
 
-  // Map the shop's interaction state to the Smart SVG kinematic state
-  const svgState: SmartCharacterState =
-    state === 'rerolling'
-      ? 'sprint'
-      : state === 'purchasing' || state === 'pulling'
-      ? 'action'
-      : state === 'reaching'
-      ? 'walk'
-      : 'idle';
-
   const handleSceneClick = useCallback(() => {
     try {
       sound.mouseSqueak();
@@ -45,6 +34,13 @@ export function GrandfatherScene({
     }
     if (onMousePet) onMousePet();
   }, [onMousePet]);
+
+  const isInteracting =
+    state === 'reaching' ||
+    state === 'pulling' ||
+    state === 'purchasing' ||
+    state === 'rerolling';
+  const isMoving = state === 'reaching';
 
   return (
     <div
@@ -60,19 +56,16 @@ export function GrandfatherScene({
         padding: isMobile ? '4px' : '8px',
         boxShadow: 'inset 0 0 16px rgba(69, 26, 3, 0.18), 3px 3px 0 rgba(0,0,0,0.25)',
         overflow: 'hidden',
+        cursor: 'pointer',
       }}
+      onClick={handleSceneClick}
     >
-      <SmartDedecekNuseSvg
-        state={svgState}
-        size={isMobile ? 320 : 370}
-        interactive={true}
-        onClick={handleSceneClick}
-        features={{
-          showCompanion: true,
-          showParticles: true,
-          showShadow: true,
-          showOutline: true,
-        }}
+      <LadaGrandfatherCanvasPreview
+        width={isMobile ? 320 : 380}
+        height={isMobile ? 280 : 330}
+        scale={isMobile ? 2.0 : 2.35}
+        isInteracting={isInteracting}
+        isMoving={isMoving}
       />
 
       {/* Floating prompt tooltip */}
@@ -99,6 +92,31 @@ export function GrandfatherScene({
       >
         <GameIcon icon="rezinka" size={14} /> Rézinka hlídá perníčky
       </div>
+
+      {activeItemName && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 12,
+            background: 'rgba(30, 17, 8, 0.85)',
+            border: '2px solid #F59E0B',
+            borderRadius: 8,
+            padding: '4px 10px',
+            color: '#FEF3C7',
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+        >
+          {activeItemIcon && <GameIcon icon={activeItemIcon} size={16} />}
+          <span>{activeItemName}</span>
+        </div>
+      )}
     </div>
   );
 }

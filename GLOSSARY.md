@@ -133,8 +133,8 @@ Skupinový oblastní miniboss v 1. úrovni (Březnové tání) tvořený kompakt
 _Avoid_: vrana boss, obří vrána, crow swarm boss
 
 **Smart SVG sprity**:
-Vektorové komponenty vybraných folklórních postav (9 kanonických zástupců: Krajánek, Tulák, Bezhlavý rytíř, Sněhulák, Babička s Barunkou, Kostelník, Pasáček, Dědeček s nůší a Dědeček v aréně) s vícefázovými kinematickými animacemi (chůze, nápřah, úprk, reakce) a interaktivním sledováním kurzoru, plně integrované do uživatelského rozhraní, výběru lovců, modálů a kramářské scény bez zatížení zero-allocation canvasové bojové arény.
-_Avoid_: SVG avatary, vektorové ikony, animované obrázky
+Původní přechodné DOM vektorové komponenty postav, kompletně nahrazené procedurálními ladovskými rutinami na HTML5 plátně (Canvas 2D) v bojové aréně i ve všech rozhraních.
+_Avoid_: SVG avatary, vektorové ikony postav, DOM postavy v aréně
 
 
 ## Světlo a atmosféra
@@ -244,12 +244,12 @@ _Avoid_: mob benchmark, enemy perf test, test zátěže monster
 Čistá vektorová kresba hrdiny štětcem na herní 2D plátno v ladovském tušovém a kvašovém stylu, určená pro plynulý běh bojové arény bez paměťových alokací.
 _Avoid_: sprite, lovecký sprite, spritový list, rastrový sprite
 
-**Smart SVG postava**:
-Interaktivní vektorová reprezentace hrdiny reagující na pohyb a akce hráče, určená výhradně pro nabídky, karty výběru a dialogová okna mimo bojové plátno.
-_Avoid_: herní sprite, canvasový sprite, DOM sprite v aréně
+**Procedurální kresba kramáře**:
+Interaktivní procedurální tušová a kvašová kresba Čertova dědečka s nůší a myškou Rézinkou na 2D plátně v kramářském krámku i dialogových oknech, nahrazující původní těžké Smart SVG komponenty.
+_Avoid_: SVG dědeček, DOM postava dědečka, kramářský sprite
 
 **Distribuce a rozdělení bundlu**:
-Modulární strategie sestavení herního klienta ve Vite, která vyčleňuje knihovny, Smart SVG sprity a ladovské kreslicí rutiny do samostatných chunků a vývojářská okna načítá asynchronně přes `React.lazy()`, čímž zamezuje stahování nepotřebného kódu a drží primární herní bundle pod limitem prohlížeče.
+Modulární strategie sestavení herního klienta ve Vite, která vyčleňuje knihovny a ladovské kreslicí rutiny do samostatných chunků a vývojářská okna načítá asynchronně přes `React.lazy()`, čímž zamezuje stahování nepotřebného kódu a drží primární herní bundle pod limitem prohlížeče.
 _Avoid_: monolitický bundle, single-file bundle, obří bundle
 
 

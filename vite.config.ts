@@ -35,9 +35,6 @@ export default defineConfig({
             }
             return 'vendor-libs';
           }
-          if (id.includes('src/components/svg/')) {
-            return 'smart-svg';
-          }
           if (id.includes('src/render/ladaRenderer')) {
             return 'lada-renderer';
           }
