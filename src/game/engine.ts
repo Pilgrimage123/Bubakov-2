@@ -113,13 +113,18 @@ import {
   isCombatTextCategoryEnabled,
 } from './combatTextSettings';
 import {
+  MARCH_ARENA_BOUNDS,
   MARCH_MARIAN_APPARITION_COOLDOWN,
   MARCH_THAW_POIS,
-  getMarchIceFloeState,
+  clampToMarchArenaBounds,
+  collideCircleWithObstacles,
+   getMarchIceFloeState,
   getMarchWaterAndFloeEffect,
+  hasTerrainLineOfSight,
   isAquaticEnemy,
   isInsideMarchPoi,
   resolveMarchThawObstacles,
+  sanitizeArenaSpawnPoint,
 } from '../data/marchThawArena';
 
 export const MAX_PARTICLES = 300;
@@ -713,6 +718,8 @@ export class GameEngine {
       lastDy: 0,
       animTime: 0,
       valecniceAngle: 0,
+      valecniceOrbitDir: 1,
+      _valecniceBounceCd: 0,
       valecniceHitTimer: 0,
       garlicAuraTimer: 0,
       _valecniceSlowRadius: 0,
@@ -722,6 +729,8 @@ export class GameEngine {
       _caneSwingAlt: false,
       stillTimer: 0,
       flailStanceTimer: 0,
+      activeLevelId: this.state.activeLevelId ?? 0,
+      decor: this.state.decor,
 
       distTo(e: any) {
         return Math.hypot(e.x - this.x, e.y - this.y);
@@ -961,6 +970,11 @@ export class GameEngine {
     customBossTitle?: string,
     prefix?: EnemyPrefixType
   ): any {
+    const levelId = this.state.activeLevelId ?? 0;
+    const safeBase = sanitizeArenaSpawnPoint(x, y, isBoss || isMiniboss ? 32 : 22, levelId, this.state.decor, 48);
+    x = safeBase.x;
+    y = safeBase.y;
+
     if (id === 'vrana' && (isMiniboss || isBoss)) {
       this.state.flockTreasureDropped = false;
       const crowCount = 9;
@@ -968,8 +982,16 @@ export class GameEngine {
       for (let i = 0; i < crowCount; i++) {
         const angle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
         const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
-        const cx = x + Math.cos(angle) * dist;
-        const cy = y + Math.sin(angle) * dist;
+        const crowPos = sanitizeArenaSpawnPoint(
+          x + Math.cos(angle) * dist,
+          y + Math.sin(angle) * dist,
+          18,
+          levelId,
+          this.state.decor,
+          36
+        );
+        const cx = crowPos.x;
+        const cy = crowPos.y;
         const crowTitle = i === 0 ? (customBossTitle || '🐦‍⬛ Hejno mrazivých vran') : undefined;
         const isLeaderBoss = isBoss && i === 0;
         const enemy = this.enemyFactory
@@ -1053,6 +1075,17 @@ export class GameEngine {
     } else if (resolvedType === 'soul' && expiration === undefined) {
       expiration = SOUL_DROP_EXPIRATION;
     }
+
+    const safeDropPos = sanitizeArenaSpawnPoint(
+      x,
+      y,
+      radius || 14,
+      this.state.activeLevelId ?? 0,
+      this.state.decor,
+      36
+    );
+    x = safeDropPos.x;
+    y = safeDropPos.y;
 
     // The engine's state array is the single source of truth. Never fall back
     // to constructing an unmanaged item when the 40-slot arena is full.
@@ -2334,6 +2367,8 @@ export class GameEngine {
           }
         : undefined;
 
+      const levelId = this.state.activeLevelId ?? 0;
+      const decor = this.state.decor;
       for (let i = 0; i < nearby.length; i++) {
         const e = nearby[i];
         if (e.isDefeated || e.dead) continue;
@@ -2341,6 +2376,7 @@ export class GameEngine {
         const dy = e.y - impact.y;
         const reach = radius + (e.radius || 15);
         if (dx * dx + dy * dy <= reach * reach) {
+          if (!hasTerrainLineOfSight(impact.x, impact.y, e.x, e.y, levelId, decor)) continue;
           let kdx = e.x - originX;
           let kdy = e.y - originY;
           let kdist = Math.hypot(kdx, kdy);
@@ -2376,6 +2412,8 @@ export class GameEngine {
       player.hromnickaPulseTimer = 0.35;
       player.hromnickaPulseRadius = reach;
 
+      const levelId = this.state.activeLevelId ?? 0;
+      const decor = this.state.decor;
       const nearby = this.spatialHash.queryCircle(player.x, player.y, reach + 50);
       for (let i = 0; i < nearby.length; i++) {
         const e = nearby[i];
@@ -2385,6 +2423,7 @@ export class GameEngine {
         const distSq = dx * dx + dy * dy;
         const maxReach = reach + (e.radius || 15);
         if (distSq <= maxReach * maxReach) {
+          if (!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, levelId, decor)) continue;
           const dist = Math.sqrt(distSq) || 1;
           const holyPush = getHolyPushMultiplier(e);
           const kbForce = (120 + level * 10) * holyPush * knockbackMult;
@@ -2423,12 +2462,15 @@ export class GameEngine {
       const requestedHeal = player.maxHp * healRatio * (1 + ((player as any).bearMaskHealBonus || 0));
       player.hp = Math.min(player.maxHp, player.hp + requestedHeal);
 
+      const levelId = this.state.activeLevelId ?? 0;
+      const decor = this.state.decor;
       const nearby = this.spatialHash.queryCircle(player.x, player.y, radius + 50);
       for (let i = 0; i < nearby.length; i++) {
         const e = nearby[i];
         if (e.isDefeated || e.dead) continue;
         const dist = Math.hypot(e.x - player.x, e.y - player.y);
         if (dist <= radius + (e.radius || 15)) {
+          if (!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, levelId, decor)) continue;
           e.fajfkaSlowTimer = Math.max(e.fajfkaSlowTimer || 0, 0.30);
           e.takeDamage(dmg, 'nature', 0, 0, { allowFractionalDamage: true });
         }
@@ -2600,6 +2642,8 @@ export class GameEngine {
     this.state.lightSources = updateLightSources(this.state.lightSources, dt);
 
     if (player && player.hp > 0) {
+      player.activeLevelId = this.state.activeLevelId ?? 0;
+      player.decor = this.state.decor;
       let mx = 0;
       let my = 0;
       const keys = this.state.keys;
@@ -2837,6 +2881,7 @@ export class GameEngine {
           const dist = Math.hypot(dx, dy);
           const reach = hc.radius + (foe.radius || 15);
           if (dist < reach) {
+            if (!hasTerrainLineOfSight(hc.x, hc.y, foe.x, foe.y, this.state.activeLevelId ?? 0, this.state.decor)) continue;
             const nx = dist > 0.001 ? dx / dist : 1;
             const ny = dist > 0.001 ? dy / dist : 0;
             const holyPush = getHolyPushMultiplier(foe);
@@ -2870,6 +2915,42 @@ export class GameEngine {
 
       if (player.pivniTacekTimer > 0) {
         player.pivniTacekTimer = Math.max(0, player.pivniTacekTimer - dt);
+      }
+
+      // Update Válečnice orbit and obstacle bounce reversal
+      const valecniceWp = player.weapons?.find((w: any) => w.id === 'valecnice');
+      if (valecniceWp) {
+        const stats = (valecniceWp as any)._cachedStats || ((valecniceWp as any)._cachedStats = getRankedWeaponStats('valecnice', valecniceWp.level, valecniceWp));
+        const orbitRadius = 115 * stats.areaRadiusMult;
+        player._valecniceSlowRadius = orbitRadius * 1.15;
+        const orbitSpeed = valecniceWp.level >= 3 ? 2.5 : 2.2;
+        if (typeof player.valecniceOrbitDir !== 'number' || player.valecniceOrbitDir === 0) {
+          player.valecniceOrbitDir = 1;
+        }
+        if ((player._valecniceBounceCd || 0) > 0) {
+          player._valecniceBounceCd = Math.max(0, player._valecniceBounceCd - dt);
+        }
+        player.valecniceAngle = ((player.valecniceAngle || 0) + dt * orbitSpeed * player.valecniceOrbitDir + Math.PI * 4) % (Math.PI * 2);
+
+        if ((player._valecniceBounceCd || 0) <= 0) {
+          const count = Math.max(1, 1 + stats.projectileCount);
+          const levelId = this.state.activeLevelId ?? 0;
+          for (let vi = 0; vi < count; vi++) {
+            const ang = player.valecniceAngle + (vi * Math.PI * 2) / count;
+            const ox = player.x + Math.cos(ang) * orbitRadius;
+            const oy = player.y + Math.sin(ang) * orbitRadius;
+            const hit = collideCircleWithObstacles(ox, oy, 20, levelId, this.state.decor);
+            if (hit.hit) {
+              player.valecniceOrbitDir *= -1;
+              player._valecniceBounceCd = 0.22;
+              player.valecniceAngle = ((player.valecniceAngle || 0) + dt * orbitSpeed * player.valecniceOrbitDir * 2 + Math.PI * 4) % (Math.PI * 2);
+              this.callbacks?.onSound?.('hit');
+              break;
+            }
+          }
+        }
+      } else {
+        player._valecniceSlowRadius = 0;
       }
 
       // Auto-fire weapons
@@ -2976,6 +3057,49 @@ export class GameEngine {
       if (p.life <= 0) {
         p.dead = true;
         continue;
+      }
+
+      // Solid obstacle collision (cottages, church, walls, dense forest; water never blocks projectiles).
+      // High-flying projectiles (Včelí roj) fly over obstacles.
+      const isHighFlyingProj = p.visual === 'bee' || p.weaponId === 'vceli_roj' || p.weaponId === 'vceli-roj' || p.isPuddle || p.isFissureTelegraph;
+      if (!isHighFlyingProj) {
+        const obsHit = collideCircleWithObstacles(
+          p.x,
+          p.y,
+          Math.max(6, (p.radius || 10) * 0.75),
+          this.state.activeLevelId ?? 0,
+          this.state.decor
+        );
+        if (obsHit.hit) {
+          p.x = obsHit.x;
+          p.y = obsHit.y;
+          const isBouncingProj =
+            (typeof p.bounces === 'number' && p.bounces > 0) ||
+            p.visual === 'kolac' ||
+            p.visual === 'gander' ||
+            p.weaponId === 'kynuty_kolac' ||
+            p.weaponId === 'poutovy_kolac' ||
+            p.weaponId === 'splaseny_houser' ||
+            p.weaponId === 'houser';
+          if (isBouncingProj) {
+            const dot = p.vx * obsHit.nx + p.vy * obsHit.ny;
+            if (dot < 0) {
+              p.vx -= 2 * dot * obsHit.nx;
+              p.vy -= 2 * dot * obsHit.ny;
+            } else {
+              p.vx = -p.vx;
+              p.vy = -p.vy;
+            }
+            p.angle = Math.atan2(p.vy, p.vx);
+            if (typeof p.bounces === 'number' && p.bounces > 0) {
+              p.bounces--;
+            }
+            this.callbacks?.onSound?.('hit');
+          } else {
+            p.dead = true;
+            continue;
+          }
+        }
       }
 
       if (p.isEnemy) {
@@ -3109,6 +3233,7 @@ export class GameEngine {
           }
 
           if (inArc) {
+            if (!hasTerrainLineOfSight(s.x, s.y, e.x, e.y, this.state.activeLevelId ?? 0, this.state.decor)) continue;
             s.hitList.push(e);
             const isWhip = s.weaponId === 'formansky_bic' || s.style === 'whip';
             let kbForce = (isWhip ? 340 : 260) * (s.knockbackMult ?? 1);
@@ -3644,6 +3769,7 @@ export class GameEngine {
           const drag = Math.max(0, 1 - 7.5 * dt);
           d.vx *= drag;
           d.vy *= drag;
+          clampToMarchArenaBounds(d, 32);
         }
 
         if (player && player.hp > 0) {

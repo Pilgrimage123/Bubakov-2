@@ -19,6 +19,7 @@
 
 import {
   MARCH_ARENA_BOUNDS,
+  MARCH_FOREST_ZONES,
   MARCH_ICE_FLOE_SPECS,
   MARCH_POND_REGION,
   MARCH_STREAM_WAYPOINTS,
@@ -830,8 +831,6 @@ export function buildMarchThawLandscapeSvg(isNight = false): string {
           label: 'MLÝN',
           isNight,
         })}
-          isNight,
-        })}
         <g transform="translate(760, 650)">
           ${svgSheep(-75, -15, 1)}
           ${svgSheep(-35, 10, 1)}
@@ -1523,3 +1522,319 @@ export function drawPolygonIceFloe(
   ctx.closePath();
   ctx.fill();
 }
+
+interface MarchCottageRoofVisualSpec {
+  baseX: number;
+  baseY: number;
+  w: number;
+  h: number;
+  roofH: number;
+  roofColor: string;
+  gableColor: string;
+  storkOnChimney?: boolean;
+}
+
+const MARCH_COTTAGE_ROOF_SPECS: Record<string, MarchCottageRoofVisualSpec> = {
+  chalupa_nw: { baseX: -280, baseY: -290, w: 200, h: 110, roofH: 90, roofColor: '#9E3D26', gableColor: '#D9A55B' },
+  chalupa_n: { baseX: 80, baseY: -330, w: 210, h: 115, roofH: 92, roofColor: '#C84B31', gableColor: '#D9A55B', storkOnChimney: true },
+  chalupa_ne: { baseX: 380, baseY: -300, w: 200, h: 110, roofH: 90, roofColor: '#7C4728', gableColor: '#D9A55B' },
+  chalupa_w: { baseX: -300, baseY: -60, w: 190, h: 110, roofH: 88, roofColor: '#8C3B2B', gableColor: '#D9A55B' },
+  chalupa_sw: { baseX: -220, baseY: 160, w: 200, h: 110, roofH: 90, roofColor: '#B84A32', gableColor: '#D9A55B' },
+  chalupa_se: { baseX: 320, baseY: 160, w: 200, h: 110, roofH: 90, roofColor: '#9E472A', gableColor: '#D9A55B' },
+  hospoda_main: { baseX: 370, baseY: -60, w: 250, h: 130, roofH: 100, roofColor: '#C84B31', gableColor: '#E2B464' },
+  skola_main: { baseX: 100, baseY: 440, w: 240, h: 125, roofH: 95, roofColor: '#B8432E', gableColor: '#DFB66C' },
+  mlyn_house: { baseX: 425, baseY: 565, w: 215, h: 125, roofH: 95, roofColor: '#7C3F23', gableColor: '#D9A55B' },
+};
+
+/**
+ * Draws the roof portion of a Stage 1 ("BŘEZEN") building or procedural decor cottage/church
+ * in world coordinates so entities walking behind a cottage roof are naturally occluded by the roof.
+ */
+export function drawMarchRoofOverlay(
+  ctx: CanvasRenderingContext2D,
+  zoneId: string,
+  decorItem?: any
+): void {
+  const ink = '#23170F';
+  if (zoneId === 'kostel' || zoneId === 'church-building') {
+    ctx.save();
+    ctx.scale(1.25, 1.25);
+    ctx.translate(-640, -520);
+
+    // Church nave roof triangle
+    ctx.fillStyle = '#C84B31';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-66, -78);
+    ctx.lineTo(-8, -122);
+    ctx.lineTo(50, -78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Bell tower upper portion & spire
+    ctx.fillStyle = '#F9F1DC';
+    ctx.beginPath();
+    ctx.rect(32, -142, 42, 66);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2B2623';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(53, -112, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#4A2E23';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(24, -142);
+    ctx.lineTo(53, -196);
+    ctx.lineTo(82, -142);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#D99B26';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(53, -196);
+    ctx.lineTo(53, -218);
+    ctx.moveTo(44, -208);
+    ctx.lineTo(62, -208);
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  const spec = MARCH_COTTAGE_ROOF_SPECS[zoneId];
+  if (spec) {
+    const hw = spec.w / 2;
+    const hh = spec.h / 2;
+    const roofH = spec.roofH;
+
+    ctx.save();
+    ctx.scale(1.25, 1.25);
+    ctx.translate(spec.baseX, spec.baseY);
+    ctx.strokeStyle = ink;
+    ctx.lineJoin = 'round';
+
+    // Chimney
+    ctx.fillStyle = '#E6D7B8';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.rect(hw * 0.35, -hh - roofH + 6, Math.round(spec.w * 0.12), Math.round(roofH * 0.5));
+    ctx.fill();
+    ctx.stroke();
+
+    // Main shingled roof trapezoid
+    ctx.fillStyle = spec.roofColor;
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    ctx.moveTo(-hw - 16, -hh + 3);
+    ctx.lineTo(-hw * 0.45, -hh - roofH);
+    ctx.lineTo(hw * 0.55, -hh - roofH);
+    ctx.lineTo(hw + 16, -hh + 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Wooden folk gable
+    ctx.fillStyle = spec.gableColor;
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.moveTo(-hw - 10, -hh + 3);
+    ctx.lineTo(-hw * 0.45, -hh - roofH);
+    ctx.lineTo(-hw * 0.02, -hh + 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    if (spec.storkOnChimney) {
+      ctx.save();
+      ctx.translate(hw * 0.45, -hh - roofH - 12);
+      ctx.scale(1.4, 1.4);
+      ctx.fillStyle = '#7C5836';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 4, 16, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, -12, 8, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.restore();
+    return;
+  }
+
+  // Fallback for procedural chalupa / church decor on later stages
+  if (decorItem) {
+    const s = decorItem.scale || 1;
+    ctx.save();
+    ctx.translate(decorItem.x, decorItem.y);
+    ctx.scale(s, s);
+    ctx.strokeStyle = ink;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3.5;
+    if (decorItem.type === 'church') {
+      ctx.fillStyle = '#A8422B';
+      ctx.beginPath();
+      ctx.moveTo(-78, -28);
+      ctx.lineTo(0, -128);
+      ctx.lineTo(78, -28);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#8C3B2B';
+      ctx.beginPath();
+      ctx.moveTo(-64, -22);
+      ctx.lineTo(-22, -74);
+      ctx.lineTo(28, -74);
+      ctx.lineTo(64, -22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+const CANOPY_SPRUCE_OFFSETS: ReadonlyArray<{ dx: number; dy: number; sc: number }> = [
+  { dx: 0, dy: -65, sc: 1.22 },
+  { dx: -115, dy: -20, sc: 1.12 },
+  { dx: 118, dy: -28, sc: 1.15 },
+  { dx: -68, dy: 55, sc: 1.08 },
+  { dx: 74, dy: 48, sc: 1.1 },
+  { dx: -165, dy: -85, sc: 1.04 },
+  { dx: 162, dy: -90, sc: 1.06 },
+];
+
+/**
+ * Draws tall Stage 1 forest spruce crowns and the village stork-nest pole in world coordinates
+ * whenever the Stage 1 sun passes behind them, creating authentic 3D world-space occlusion over the sun.
+ */
+export function drawMarchForestCanopySunOccluders(
+  ctx: CanvasRenderingContext2D,
+  worldSunX: number,
+  worldSunY: number,
+  worldSunRadius: number
+): void {
+  const ink = '#23170F';
+
+  // 1. Tall conifer crowns in the 4 forest zones
+  for (let z = 0; z < MARCH_FOREST_ZONES.length; z++) {
+    const fz = MARCH_FOREST_ZONES[z];
+    const distZone = Math.hypot(worldSunX - fz.x, worldSunY - fz.y);
+    if (distZone > fz.radius + worldSunRadius + 90) continue;
+
+    for (let t = 0; t < CANOPY_SPRUCE_OFFSETS.length; t++) {
+      const off = CANOPY_SPRUCE_OFFSETS[t];
+      const tx = fz.x + off.dx;
+      const ty = fz.y + off.dy;
+      if (Math.hypot(worldSunX - tx, worldSunY - (ty - 45)) > worldSunRadius + 95) {
+        continue;
+      }
+
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.scale(off.sc, off.sc);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // Three tiered Ladovské spruce boughs with sunlit golden rim and melting snow caps
+      const tiers = [
+        { topY: -108, botY: -54, hw: 34 },
+        { topY: -78, botY: -22, hw: 46 },
+        { topY: -46, botY: 12, hw: 58 },
+      ];
+
+      for (let k = tiers.length - 1; k >= 0; k--) {
+        const tr = tiers[k];
+        ctx.fillStyle = '#2B583A';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 3.4;
+        ctx.beginPath();
+        ctx.moveTo(0, tr.topY);
+        ctx.lineTo(-tr.hw, tr.botY);
+        ctx.quadraticCurveTo(0, tr.botY + 10, tr.hw, tr.botY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Patch of white spring snow on the upper bough
+        ctx.fillStyle = '#FAF6ED';
+        ctx.beginPath();
+        ctx.moveTo(0, tr.topY + 2);
+        ctx.lineTo(-tr.hw * 0.56, (tr.topY + tr.botY) * 0.52);
+        ctx.quadraticCurveTo(0, (tr.topY + tr.botY) * 0.58, tr.hw * 0.56, (tr.topY + tr.botY) * 0.52);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Warm golden rim-light where the sun shines from behind the spruce crown
+        ctx.strokeStyle = 'rgba(254, 240, 138, 0.75)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(-tr.hw * 0.85, tr.botY - 4);
+        ctx.lineTo(0, tr.topY - 2);
+        ctx.lineTo(tr.hw * 0.85, tr.botY - 4);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+  }
+
+  // 2. Tall Village Green Stork Nest on Pole (world x = 35, y = -112)
+  const poleX = 35;
+  const poleTopY = -148;
+  if (Math.hypot(worldSunX - poleX, worldSunY - poleTopY) <= worldSunRadius + 75) {
+    ctx.save();
+    ctx.translate(poleX, poleTopY);
+    ctx.strokeStyle = ink;
+    ctx.lineJoin = 'round';
+
+    // Tall wooden pole upper section
+    ctx.fillStyle = '#6E4726';
+    ctx.lineWidth = 2.8;
+    ctx.fillRect(-5, 0, 10, 78);
+    if (typeof ctx.strokeRect === 'function') {
+      ctx.strokeRect(-5, 0, 10, 78);
+    }
+
+    // Woven twig stork nest
+    ctx.fillStyle = '#7C5836';
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 26, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Standing white stork silhouette
+    ctx.fillStyle = '#FFFFFF';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.ellipse(0, -18, 12, 7.5, -0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(10, -30, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+

@@ -3,6 +3,8 @@
  * Each active skřítek within aura range reduces received healing by 20 percentage
  * points; the penalty stacks additively and is capped at 100%.
  */
+import { hasTerrainLineOfSight } from '../data/marchThawArena';
+
 export const FROSTLING_AURA_BASE_RADIUS = 78;
 export const FROSTLING_AURA_RANGE_MULTIPLIER = 1.55;
 export const FROSTLING_AURA_RADIUS = FROSTLING_AURA_BASE_RADIUS * FROSTLING_AURA_RANGE_MULTIPLIER;
@@ -22,7 +24,9 @@ export interface FrostAuraTarget {
 
 export function getFrostAuraHealingMultiplier(
   target: FrostAuraTarget,
-  enemies: readonly FrostAuraEnemy[]
+  enemies: readonly FrostAuraEnemy[],
+  activeLevelId = 0,
+  decor?: any[],
 ): number {
   let nearbyFrostlings = 0;
   const radiusSq = FROSTLING_AURA_RADIUS * FROSTLING_AURA_RADIUS;
@@ -31,8 +35,13 @@ export function getFrostAuraHealingMultiplier(
     if (enemy.id !== 'mrazovy_skritek' || enemy.dead || enemy.isDefeated) continue;
     const dx = target.x - enemy.x;
     const dy = target.y - enemy.y;
-    if (dx * dx + dy * dy <= radiusSq) nearbyFrostlings += 1;
+    if (dx * dx + dy * dy <= radiusSq) {
+      if (hasTerrainLineOfSight(enemy.x, enemy.y, target.x, target.y, activeLevelId, decor)) {
+        nearbyFrostlings += 1;
+      }
+    }
   }
 
   return Math.max(0, 1 - nearbyFrostlings * 0.2);
 }
+

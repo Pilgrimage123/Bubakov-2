@@ -6,8 +6,11 @@
  * Members never seek, collide with, or inspect other members: motion is O(N)
  * deterministic math around the leader, with no per-frame object/array creation.
  */
+import { MARCH_ARENA_BOUNDS } from '../data/marchThawArena';
+
 export type CrowWaveBehavior = 'sweep-through' | 'contracting-orbit';
 export type CrowWaveBehaviorMode = CrowWaveBehavior | 'alternating';
+
 
 export const CROW_WAVE_COUNT = 150;
 export const CROW_WAVE_POINT_MULTIPLIER = 0.6;
@@ -293,8 +296,10 @@ export class VirtualLeaderCrowWave {
         // Cheap Lissajous wobble layered on top of the rotating Vogel spiral.
         const wobbleX = Math.cos(time * speed + phase) * this.wobbleRadius;
         const wobbleY = Math.sin(time * speed * 1.3 + phase) * this.wobbleRadius;
-        const nextX = this.leaderX + rotatedX + wobbleX;
-        const nextY = this.leaderY + rotatedY + wobbleY;
+        const rawX = this.leaderX + rotatedX + wobbleX;
+        const rawY = this.leaderY + rotatedY + wobbleY;
+        const nextX = Math.max(MARCH_ARENA_BOUNDS.minX + 20, Math.min(MARCH_ARENA_BOUNDS.maxX - 20, rawX));
+        const nextY = Math.max(MARCH_ARENA_BOUNDS.minY + 20, Math.min(MARCH_ARENA_BOUNDS.maxY - 20, rawY));
 
         this.previousX[i] = oldX;
         this.previousY[i] = oldY;
@@ -307,6 +312,7 @@ export class VirtualLeaderCrowWave {
         enemy.crowHeading = Math.atan2(enemy.vy, enemy.vx);
         enemy.crowFlapScale = 0.78 + Math.sin(time * this.flapSpeed[i] + phase) * 0.22;
         enemy.animTime = time;
+
       }
 
       if (this.activeCount <= 0) {
@@ -364,13 +370,35 @@ export class VirtualLeaderCrowWave {
     this.currentBehavior = this.resolveBehavior();
 
     // The radius encloses the viewport's half-diagonal plus the whole flock,
-    // so the leader and every attached crow begin outside the visible camera.
+    // so the leader and every attached crow begin outside the visible camera
+    // while staying inside MARCH_ARENA_BOUNDS.
     this.spawnRadius = Math.hypot(viewWidth, viewHeight) * 0.5 + this.flockRadius + 100;
-    const startAngle = Math.random() * Math.PI * 2;
+    let startAngle = Math.random() * Math.PI * 2;
+    const margin = this.flockRadius + 25;
+    for (let step = 0; step < 12; step++) {
+      const testAngle = startAngle + (step * Math.PI * 2) / 12;
+      const tx = player.x + Math.cos(testAngle) * this.spawnRadius;
+      const ty = player.y + Math.sin(testAngle) * this.spawnRadius;
+      if (
+        tx >= MARCH_ARENA_BOUNDS.minX + margin &&
+        tx <= MARCH_ARENA_BOUNDS.maxX - margin &&
+        ty >= MARCH_ARENA_BOUNDS.minY + margin &&
+        ty <= MARCH_ARENA_BOUNDS.maxY - margin
+      ) {
+        startAngle = testAngle;
+        break;
+      }
+    }
     this.orbitAngle = startAngle;
     this.orbitRadius = this.spawnRadius;
-    this.leaderX = player.x + Math.cos(startAngle) * this.spawnRadius;
-    this.leaderY = player.y + Math.sin(startAngle) * this.spawnRadius;
+    this.leaderX = Math.max(
+      MARCH_ARENA_BOUNDS.minX + margin,
+      Math.min(MARCH_ARENA_BOUNDS.maxX - margin, player.x + Math.cos(startAngle) * this.spawnRadius),
+    );
+    this.leaderY = Math.max(
+      MARCH_ARENA_BOUNDS.minY + margin,
+      Math.min(MARCH_ARENA_BOUNDS.maxY - margin, player.y + Math.sin(startAngle) * this.spawnRadius),
+    );
 
     const dxToPlayer = player.x - this.leaderX;
     const dyToPlayer = player.y - this.leaderY;
@@ -388,8 +416,15 @@ export class VirtualLeaderCrowWave {
       }
       Object.assign(enemy, template);
       enemy.statusEffects = {};
-      enemy.x = this.leaderX + this.baseOffsetX[i];
-      enemy.y = this.leaderY + this.baseOffsetY[i];
+      enemy.x = Math.max(
+        MARCH_ARENA_BOUNDS.minX + 20,
+        Math.min(MARCH_ARENA_BOUNDS.maxX - 20, this.leaderX + this.baseOffsetX[i]),
+      );
+      enemy.y = Math.max(
+        MARCH_ARENA_BOUNDS.minY + 20,
+        Math.min(MARCH_ARENA_BOUNDS.maxY - 20, this.leaderY + this.baseOffsetY[i]),
+      );
+
       enemy.hp = enemy.maxHp;
       enemy.dead = false;
       enemy.isDefeated = false;

@@ -212,13 +212,16 @@ export function pickMarchForestSpawnPoint(
  * Clamps any entity (hunter, enemy, or movable prop) strictly inside the drawn Stage 1 arena border.
  * Returns true if the entity was clamped against the outer boundary.
  */
-export function clampToMarchArenaBounds(entity: {
-  x: number;
-  y: number;
-  radius?: number;
-}): boolean {
+export function clampToMarchArenaBounds(
+  entity: {
+    x: number;
+    y: number;
+    radius?: number;
+  },
+  margin?: number,
+): boolean {
   if (!entity) return false;
-  const r = entity.radius ?? 18;
+  const r = margin ?? entity.radius ?? 18;
   const minX = MARCH_ARENA_BOUNDS.minX + r;
   const maxX = MARCH_ARENA_BOUNDS.maxX - r;
   const minY = MARCH_ARENA_BOUNDS.minY + r;
@@ -281,8 +284,8 @@ export const MARCH_THAW_OBSTACLES: readonly MarchObstacle[] = [
   { id: 'skola_main', kind: 'school', shape: 'box', x: 125, y: 550, halfW: 150, halfH: 78, cornerRadius: 20 },
 
   // --- KOSTEL NA VRCHU (Church nave + northern/lateral churchyard wall; southern gate is open for [E] bell) ---
-  { id: 'kostel_nave', kind: 'church', shape: 'box', x: -800, y: -710, halfW: 130, halfH: 75, cornerRadius: 20 },
-  { id: 'kostel_tower', kind: 'church', shape: 'circle', x: -710, y: -750, radius: 52 },
+  { id: 'kostel_nave', kind: 'church', shape: 'box', x: -800, y: -700, halfW: 120, halfH: 48, cornerRadius: 16 },
+  { id: 'kostel_tower', kind: 'church', shape: 'circle', x: -710, y: -725, radius: 42 },
   { id: 'kostel_wall_nw', kind: 'wall', shape: 'circle', x: -970, y: -710, radius: 45 },
   { id: 'kostel_wall_ne', kind: 'wall', shape: 'circle', x: -630, y: -710, radius: 45 },
 
@@ -757,3 +760,468 @@ export function getMarchWaterAndFloeEffect(
     speedMultiplier: 1.0,
   };
 }
+
+export interface ObstacleCollisionResult {
+  hit: boolean;
+  nx: number;
+  ny: number;
+  x: number;
+  y: number;
+  pushX: number;
+  pushY: number;
+  obstacleId?: string;
+}
+
+const NON_BLOCKING_DECOR_TYPES = new Set([
+  'pond',
+  'stream',
+  'ice_floe',
+  'flower',
+  'grass',
+  'pebble',
+  'mud',
+  'reed',
+  'lily',
+  'bridge',
+]);
+
+export function isSolidDecorObstacle(dec: any): boolean {
+  if (!dec || !dec.isObstacle) return false;
+  if (NON_BLOCKING_DECOR_TYPES.has(dec.type)) return false;
+  return true;
+}
+
+/**
+ * Tests a circle (projectile, orbiting companion, or entity) against solid impassable
+ * obstacles (cottages, church, school, mill, stone walls, dense forests, haystacks,
+ * and solid procedural decor obstacles; NEVER water/pond/stream).
+ * Returns surface normal (nx, ny) and pushed-out position (x/y and pushX/pushY) on hit.
+ */
+export function collideCircleWithObstacles(
+  x: number,
+  y: number,
+  radius: number,
+  activeLevelId = 0,
+  decor?: any[],
+): ObstacleCollisionResult {
+  const r = Math.max(2, radius || 8);
+
+  if (activeLevelId === 0) {
+    for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
+      const obs = MARCH_THAW_OBSTACLES[i];
+      if (obs.shape === 'box') {
+        const hw = obs.halfW || 40;
+        const hh = obs.halfH || 40;
+        const minX = obs.x - hw;
+        const maxX = obs.x + hw;
+        const minY = obs.y - hh;
+        const maxY = obs.y + hh;
+        const cx = Math.max(minX, Math.min(maxX, x));
+        const cy = Math.max(minY, Math.min(maxY, y));
+        const dx = x - cx;
+        const dy = y - cy;
+        const distSq = dx * dx + dy * dy;
+
+        if (distSq < r * r) {
+          if (dx !== 0 || dy !== 0) {
+            const dist = Math.sqrt(distSq) || 1;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const px = cx + nx * (r + 1.5);
+            const py = cy + ny * (r + 1.5);
+            return {
+              hit: true,
+              nx,
+              ny,
+              x: px,
+              y: py,
+              pushX: px,
+              pushY: py,
+              obstacleId: obs.id,
+            };
+          } else {
+            // Center is inside the rectangle: find nearest edge
+            const dLeft = x - minX;
+            const dRight = maxX - x;
+            const dTop = y - minY;
+            const dBottom = maxY - y;
+            const minEdge = Math.min(dLeft, dRight, dTop, dBottom);
+            if (minEdge === dLeft) {
+              const px = minX - r - 1.5;
+              return { hit: true, nx: -1, ny: 0, x: px, y, pushX: px, pushY: y, obstacleId: obs.id };
+            } else if (minEdge === dRight) {
+              const px = maxX + r + 1.5;
+              return { hit: true, nx: 1, ny: 0, x: px, y, pushX: px, pushY: y, obstacleId: obs.id };
+            } else if (minEdge === dTop) {
+              const py = minY - r - 1.5;
+              return { hit: true, nx: 0, ny: -1, x, y: py, pushX: x, pushY: py, obstacleId: obs.id };
+            } else {
+              const py = maxY + r + 1.5;
+              return { hit: true, nx: 0, ny: 1, x, y: py, pushX: x, pushY: py, obstacleId: obs.id };
+            }
+          }
+        }
+      } else {
+        const or = obs.radius || 30;
+        const reach = or + r;
+        const dx = x - obs.x;
+        const dy = y - obs.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < reach * reach) {
+          const dist = Math.sqrt(distSq) || 1;
+          const nx = dist > 0.001 ? dx / dist : 1;
+          const ny = dist > 0.001 ? dy / dist : 0;
+          const px = obs.x + nx * (reach + 1.5);
+          const py = obs.y + ny * (reach + 1.5);
+          return {
+            hit: true,
+            nx,
+            ny,
+            x: px,
+            y: py,
+            pushX: px,
+            pushY: py,
+            obstacleId: obs.id,
+          };
+        }
+      }
+    }
+  }
+
+  if (decor && decor.length > 0) {
+    for (let i = 0; i < decor.length; i++) {
+      const dec = decor[i];
+      if (!isSolidDecorObstacle(dec)) continue;
+      const dr = Math.max(10, dec.radius || 24);
+      const reach = dr + r;
+      const dx = x - dec.x;
+      const dy = y - dec.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < reach * reach) {
+        const dist = Math.sqrt(distSq) || 1;
+        const nx = dist > 0.001 ? dx / dist : 1;
+        const ny = dist > 0.001 ? dy / dist : 0;
+        const px = dec.x + nx * (reach + 1.5);
+        const py = dec.y + ny * (reach + 1.5);
+        return {
+          hit: true,
+          nx,
+          ny,
+          x: px,
+          y: py,
+          pushX: px,
+          pushY: py,
+          obstacleId: dec.type || 'decor',
+        };
+      }
+    }
+  }
+
+  return { hit: false, nx: 0, ny: 0, x, y, pushX: x, pushY: y };
+}
+
+function segmentIntersectsRect(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+): boolean {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  let t0 = 0;
+  let t1 = 1;
+
+  const p = [-dx, dx, -dy, dy];
+  const q = [x1 - minX, maxX - x1, y1 - minY, maxY - y1];
+
+  for (let i = 0; i < 4; i++) {
+    const pi = p[i];
+    const qi = q[i];
+    if (Math.abs(pi) < 1e-8) {
+      if (qi < 0) return false;
+    } else {
+      const t = qi / pi;
+      if (pi < 0) {
+        if (t > t1) return false;
+        if (t > t0) t0 = t;
+      } else {
+        if (t < t0) return false;
+        if (t < t1) t1 = t;
+      }
+    }
+  }
+  return t0 <= t1;
+}
+
+function segmentIntersectsCircle(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  cx: number,
+  cy: number,
+  r: number,
+): boolean {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq < 1e-6) {
+    const ex = x1 - cx;
+    const ey = y1 - cy;
+    return ex * ex + ey * ey < r * r;
+  }
+  let t = ((cx - x1) * dx + (cy - y1) * dy) / lenSq;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const px = x1 + t * dx - cx;
+  const py = y1 + t * dy - cy;
+  return px * px + py * py < r * r;
+}
+
+/**
+ * Checks if a line of sight between (x1, y1) and (x2, y2) is unobstructed by
+ * solid buildings, walls, and dense forests (water/rivers/ponds never block LoS).
+ */
+export function hasTerrainLineOfSight(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  activeLevelId = 0,
+  decor?: any[],
+): boolean {
+  if (activeLevelId === 0) {
+    for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
+      const obs = MARCH_THAW_OBSTACLES[i];
+      if (obs.shape === 'box') {
+        const hw = Math.max(8, (obs.halfW || 40) - 4);
+        const hh = Math.max(8, (obs.halfH || 40) - 4);
+        if (
+          segmentIntersectsRect(
+            x1,
+            y1,
+            x2,
+            y2,
+            obs.x - hw,
+            obs.y - hh,
+            obs.x + hw,
+            obs.y + hh,
+          )
+        ) {
+          return false;
+        }
+      } else {
+        const r = Math.max(8, (obs.radius || 30) - 4);
+        if (segmentIntersectsCircle(x1, y1, x2, y2, obs.x, obs.y, r)) {
+          return false;
+        }
+      }
+    }
+  }
+
+  if (decor && decor.length > 0) {
+    for (let i = 0; i < decor.length; i++) {
+      const dec = decor[i];
+      if (!isSolidDecorObstacle(dec)) continue;
+      const r = Math.max(8, (dec.radius || 24) - 4);
+      if (segmentIntersectsCircle(x1, y1, x2, y2, dec.x, dec.y, r)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Walkable roof occlusion zones behind cottages, tavern, school, mill, and church in Stage 1.
+ * Coordinates are in world space (already scaled by 1.25x to match MARCH_THAW_OBSTACLES).
+ */
+export interface MarchRoofZone {
+  id: string;
+  /** World center X of the building */
+  cx: number;
+  /** World center Y of the building foundation */
+  cy: number;
+  /** Unscaled cottage width in SVG landscape space */
+  svgW: number;
+  /** Unscaled cottage wall height in SVG landscape space */
+  svgH: number;
+  /** Unscaled cottage roof height in SVG landscape space */
+  svgRoofH: number;
+  /** World bounding box of the roof canopy where walking entities are occluded */
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+const SVG_SCALE = 1.25;
+
+function makeCottageRoofZone(
+  id: string,
+  svgX: number,
+  svgY: number,
+  svgW: number,
+  svgH: number,
+  svgRoofH: number,
+): MarchRoofZone {
+  const cx = svgX * SVG_SCALE;
+  const cy = svgY * SVG_SCALE;
+  const hw = (svgW / 2) * SVG_SCALE;
+  const hh = (svgH / 2) * SVG_SCALE;
+  const rH = svgRoofH * SVG_SCALE;
+  return {
+    id,
+    cx,
+    cy,
+    svgW,
+    svgH,
+    svgRoofH,
+    minX: cx - hw - 18,
+    maxX: cx + hw + 18,
+    // Roof ridge is at cy - hh - rH; eaves are at cy - hh + 4.
+    // Entities whose feet are in [cy - hh - rH - 8, cy - hh + 24] have their body behind the roof!
+    minY: cy - hh - rH - 8,
+    maxY: cy - hh + 24,
+  };
+}
+
+export const MARCH_THAW_ROOF_ZONES: MarchRoofZone[] = [
+  makeCottageRoofZone('chalupa_nw', -280, -290, 200, 110, 90),
+  makeCottageRoofZone('chalupa_n', 80, -330, 210, 115, 92),
+  makeCottageRoofZone('chalupa_ne', 380, -300, 200, 110, 90),
+  makeCottageRoofZone('chalupa_w', -300, -60, 190, 110, 88),
+  makeCottageRoofZone('chalupa_sw', -220, 160, 200, 110, 90),
+  makeCottageRoofZone('chalupa_se', 320, 160, 200, 110, 90),
+  makeCottageRoofZone('hospoda_main', 370, -60, 250, 130, 100),
+  makeCottageRoofZone('skola_main', 100, 440, 240, 125, 95),
+  makeCottageRoofZone('mlyn_house', 425, 565, 215, 125, 95),
+  // St. Peter & Paul Church nave & tower spire roof zone
+  {
+    id: 'kostel',
+    cx: -800,
+    cy: -650,
+    svgW: 160,
+    svgH: 90,
+    svgRoofH: 95,
+    minX: -885,
+    maxX: -695,
+    minY: -895,
+    maxY: -715,
+  },
+];
+
+/**
+ * Returns the roof occlusion zone if an entity at (x, y) is walking behind a building roof
+ * and should be occluded by the roof with a semi-transparent silhouette, or null otherwise.
+ */
+export function isEntityBehindMarchRoof(
+  x: number,
+  y: number,
+  activeLevelId = 0,
+  decor?: any[],
+  radius = 18,
+): MarchRoofZone | null {
+  if (activeLevelId === 0) {
+    for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
+      const z = MARCH_THAW_ROOF_ZONES[i];
+      if (
+        x + radius * 0.5 >= z.minX &&
+        x - radius * 0.5 <= z.maxX &&
+        y >= z.minY &&
+        y <= z.maxY
+      ) {
+        return z;
+      }
+    }
+  }
+
+  if (decor && decor.length > 0) {
+    for (let i = 0; i < decor.length; i++) {
+      const dec = decor[i];
+      if (!dec || (dec.type !== 'chalupa' && dec.type !== 'church')) continue;
+      const sc = dec.scale || 1;
+      const roofHalfW = (dec.type === 'church' ? 68 : 56) * sc;
+      const roofTopOffset = (dec.type === 'church' ? 115 : 88) * sc;
+      const roofBottomOffset = (dec.type === 'church' ? 18 : 14) * sc;
+      if (
+        Math.abs(x - dec.x) <= roofHalfW &&
+        y >= dec.y - roofTopOffset &&
+        y <= dec.y - roofBottomOffset
+      ) {
+        return {
+          id: `decor-roof-${i}`,
+          cx: dec.x,
+          cy: dec.y,
+          svgW: 112 * sc,
+          svgH: 56 * sc,
+          svgRoofH: 74 * sc,
+          minX: dec.x - roofHalfW,
+          maxX: dec.x + roofHalfW,
+          minY: dec.y - roofTopOffset,
+          maxY: dec.y - roofBottomOffset,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Ensures any spawned entity (bubák, miniboss, boss, treasure, Chasník, Dědeček, Bubácká díra)
+ * is strictly inside MARCH_ARENA_BOUNDS and pushed outside any solid obstacle.
+ */
+export function sanitizeArenaSpawnPoint(
+  x: number,
+  y: number,
+  radius = 24,
+  activeLevelId = 0,
+  decor?: any[],
+  margin = 48,
+): { x: number; y: number } {
+  const safeMargin = Math.max(24, margin) + Math.max(8, radius);
+  const minX = MARCH_ARENA_BOUNDS.minX + safeMargin;
+  const maxX = MARCH_ARENA_BOUNDS.maxX - safeMargin;
+  const minY = MARCH_ARENA_BOUNDS.minY + safeMargin;
+  const maxY = MARCH_ARENA_BOUNDS.maxY - safeMargin;
+
+  const dummy = {
+    x: Math.max(minX, Math.min(maxX, x)),
+    y: Math.max(minY, Math.min(maxY, y)),
+    radius: Math.max(14, radius),
+  };
+
+  for (let pass = 0; pass < 3; pass++) {
+    if (activeLevelId === 0) {
+      resolveMarchThawObstacles(dummy, false);
+    }
+    if (decor && decor.length > 0) {
+      for (let i = 0; i < decor.length; i++) {
+        const dec = decor[i];
+        if (!isSolidDecorObstacle(dec)) continue;
+        const reach = (dec.radius || 24) + dummy.radius + 4;
+        const dx = dummy.x - dec.x;
+        const dy = dummy.y - dec.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < reach * reach) {
+          const dist = Math.sqrt(distSq) || 1;
+          const nx = dist > 0.001 ? dx / dist : 1;
+          const ny = dist > 0.001 ? dy / dist : 0;
+          dummy.x = dec.x + nx * reach;
+          dummy.y = dec.y + ny * reach;
+        }
+      }
+    }
+    dummy.x = Math.max(minX, Math.min(maxX, dummy.x));
+    dummy.y = Math.max(minY, Math.min(maxY, dummy.y));
+  }
+
+  return { x: dummy.x, y: dummy.y };
+}
+

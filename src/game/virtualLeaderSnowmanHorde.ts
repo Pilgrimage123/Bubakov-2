@@ -5,8 +5,15 @@
  * and lightweight squared-distance hazard checks.
  */
 
+import {
+  MARCH_ARENA_BOUNDS,
+  resolveMarchThawObstacles,
+  sanitizeArenaSpawnPoint,
+} from '../data/marchThawArena';
+
 export const SNOWMAN_HORDE_COUNT = 40;
 export const SNOWMAN_PUDDLE_POOL_COUNT = 40;
+
 export const SNOWMAN_HORDE_RADIUS = 160;
 export const SNOWMAN_HORDE_WOBBLE_RADIUS = 10;
 export const SNOWMAN_HORDE_POINT_MULTIPLIER = 0.35;
@@ -295,9 +302,30 @@ export class VirtualLeaderSnowmanHorde {
     this.activeCount = this.count;
 
     const spawnRadius = spawnDistance ?? (Math.hypot(viewWidth, viewHeight) * 0.5 + this.hordeRadius + 60);
-    const startAngle = Math.random() * Math.PI * 2;
-    this.leaderX = player.x + Math.cos(startAngle) * spawnRadius;
-    this.leaderY = player.y + Math.sin(startAngle) * spawnRadius;
+    let startAngle = Math.random() * Math.PI * 2;
+    const margin = this.hordeRadius + 30;
+    for (let step = 0; step < 12; step++) {
+      const testAngle = startAngle + (step * Math.PI * 2) / 12;
+      const tx = player.x + Math.cos(testAngle) * spawnRadius;
+      const ty = player.y + Math.sin(testAngle) * spawnRadius;
+      if (
+        tx >= MARCH_ARENA_BOUNDS.minX + margin &&
+        tx <= MARCH_ARENA_BOUNDS.maxX - margin &&
+        ty >= MARCH_ARENA_BOUNDS.minY + margin &&
+        ty <= MARCH_ARENA_BOUNDS.maxY - margin
+      ) {
+        startAngle = testAngle;
+        break;
+      }
+    }
+    this.leaderX = Math.max(
+      MARCH_ARENA_BOUNDS.minX + margin,
+      Math.min(MARCH_ARENA_BOUNDS.maxX - margin, player.x + Math.cos(startAngle) * spawnRadius),
+    );
+    this.leaderY = Math.max(
+      MARCH_ARENA_BOUNDS.minY + margin,
+      Math.min(MARCH_ARENA_BOUNDS.maxY - margin, player.y + Math.sin(startAngle) * spawnRadius),
+    );
 
     const dxToPlayer = player.x - this.leaderX;
     const dyToPlayer = player.y - this.leaderY;
@@ -314,8 +342,17 @@ export class VirtualLeaderSnowmanHorde {
       }
       Object.assign(enemy, template);
       enemy.statusEffects = {};
-      enemy.x = this.leaderX + this.baseOffsetX[i];
-      enemy.y = this.leaderY + this.baseOffsetY[i];
+      const sanitizedPos = sanitizeArenaSpawnPoint(
+        this.leaderX + this.baseOffsetX[i],
+        this.leaderY + this.baseOffsetY[i],
+        enemy.radius || 20,
+        engine.activeLevelId ?? 0,
+        undefined,
+        36,
+      );
+      enemy.x = sanitizedPos.x;
+      enemy.y = sanitizedPos.y;
+
       enemy.hp = enemy.maxHp;
       enemy.dead = false;
       enemy.isDefeated = false;
@@ -378,7 +415,7 @@ export class VirtualLeaderSnowmanHorde {
   ): boolean {
     if (
       !this.poolPrepared ||
-      engine.activeLevelId !== 0 ||
+      (engine.activeLevelId !== 0 && engine.activeLevelId !== 1) ||
       !player ||
       dt <= 0 ||
       (engine.timeStopTimer || 0) > 0
@@ -535,15 +572,17 @@ export class VirtualLeaderSnowmanHorde {
         const nextX = oldX + stepVx * dt;
         const nextY = oldY + stepVy * dt;
 
-        this.previousX[i] = oldX;
-        this.previousY[i] = oldY;
-        this.x[i] = nextX;
-        this.y[i] = nextY;
         enemy.x = nextX;
         enemy.y = nextY;
+        resolveMarchThawObstacles(enemy, false);
+        this.previousX[i] = oldX;
+        this.previousY[i] = oldY;
+        this.x[i] = enemy.x;
+        this.y[i] = enemy.y;
         enemy.vx = stepVx;
         enemy.vy = stepVy;
         enemy.animTime = this.waveAge + this.phaseOffset[i];
+
 
         // Contact attack damage check
         const isKrajanekRiding = player.type === 'krajanek' && (player.krajanekRideTimer || 0) > 0;

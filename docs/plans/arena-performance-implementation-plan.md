@@ -101,7 +101,7 @@
 ## Ověřovací brány pro každou fázi — splněno
 
 - [x] 1. Typecheck (`npm run typecheck`), cílené unit testy a kompletní testovací sada.
-  - **Výsledek:** `tsc --noEmit` čistý (0 chyb), všech 37 testovacích sad (390 testů) prošlo úspěšně.
+  - **Výsledek:** `tsc --noEmit` čistý (0 chyb), všech 64 testovacích sad (635 testů) prošlo úspěšně.
 - [x] 2. Stress run: p50/p95 čas snímku, maxima nepřátel/střel/částic/textů pro každý profil.
   - **Výsledek:** Syntetický benchmark `runDeterministicArenaStressBenchmark` prochází pro všechny profily a ověřuje limity entit a čas CPU simulace/kreslení. Jeho p95 čas není měřením skutečného vykreslování prohlížeče/GPU a slouží jako CPU rozpočet, nikoliv jako absolutní důkaz 60 FPS na každém mobilním zařízení.
 - [x] 3. Ruční průchod: level 0, noční světla, boss, aktivní aury, plná obrazovka a mobilní vstup.

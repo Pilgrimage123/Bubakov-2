@@ -889,6 +889,6 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		}
 	}
 };
-function isLevelUnlocked(levelId, meta) { return (meta?.highestLevelUnlocked || 1) >= levelId; }
+function isLevelUnlocked(levelId, meta) { return (meta?.highestLevelUnlocked ?? 0) >= levelId; }
 
 export { GAME_LEVELS, isLevelUnlocked };

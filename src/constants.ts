@@ -1,5 +1,3 @@
-import React from 'react';
-
 var COLORS = {
 	parchment: "#F3E9D2",
 	parchmentDark: "#E2D5BA",
@@ -149,7 +147,15 @@ var ENEMY_POINTS = {
 	sazovy_rarach: 68,
 	ropucha: 82,
 	krvavy_kostlivec: 130,
-	obrneny_zbojnik: 240
+	obrneny_zbojnik: 240,
+	vrana: 22,
+	mrazovy_skritek: 26,
+	jezinka_mraziva: 68,
+	mrazivy_obr: 115,
+	morana: 950,
+	krvavy_rarach: 62,
+	kalny_hastrman: 105,
+	cerny_vlkodlak: 110
 };
 var DROP_THRESHOLDS = {
 	chest: 29400,

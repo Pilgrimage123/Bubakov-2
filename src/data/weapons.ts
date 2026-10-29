@@ -2,6 +2,8 @@ import { sound } from '../audio';
 import type { WeaponId } from '../types';
 import { getRankedWeaponStats, type WeaponStats } from './weaponMilestones';
 import { isDirectTargetable } from '../game/targeting';
+import { hasTerrainLineOfSight } from './marchThawArena';
+
 
 function getDistSqTo(player: any, target: any): number {
   if (typeof player.distSqTo === 'function') return player.distSqTo(target);
@@ -64,6 +66,8 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const stunDuration = stats.statusDurationSec > 0 ? stats.statusDurationSec : 1.2;
 			const reachBase = 58 * stats.areaRadiusMult;
 			const enemies = player.getNearbyEnemies(orbitRadius + reachBase + 50);
+			const activeLevelId = player.activeLevelId ?? 0;
+			const decor = player.decor;
 			let hitAny = false;
 			for (let i = 0; i < count; i++) {
 				const a = angleBase + i * Math.PI * 2 / count;
@@ -74,6 +78,12 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 					const dx = e.x - ox, dy = e.y - oy, reach = reachBase + e.radius;
 					const distSq = dx * dx + dy * dy;
 					if (distSq <= reach * reach) {
+						if (
+							!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, activeLevelId, decor) ||
+							!hasTerrainLineOfSight(ox, oy, e.x, e.y, activeLevelId, decor)
+						) {
+							continue;
+						}
 						const invDist = distSq > 0 ? 1 / Math.sqrt(distSq) : 1;
 						e.takeDamage(dmg, 'physical', dx * invDist * kbForce, dy * invDist * kbForce, {
 							ignoreResist: 0.20,
@@ -106,11 +116,14 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			const dmg = getWeaponDamage(player, 5) * stats.damageMult;
 			const kbForce = 300 * stats.knockbackMult;
 			const enemies = player.getNearbyEnemies(radius + 60);
+			const activeLevelId = player.activeLevelId ?? 0;
+			const decor = player.decor;
 			for (const e of enemies) {
 				if (e.isDefeated) continue;
 				const dx = e.x - player.x, dy = e.y - player.y, reach = radius + e.radius;
 				const distSq = dx * dx + dy * dy;
 				if (distSq <= reach * reach) {
+					if (!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, activeLevelId, decor)) continue;
 					const invDist = distSq > 0 ? 1 / Math.sqrt(distSq) : 1;
 					e.takeDamage(dmg, 'physical', dx * invDist * kbForce, dy * invDist * kbForce);
 					if (typeof player.triggerWeaponMastery === 'function') player.triggerWeaponMastery('cesnekova_topinka', e, 'hit');
@@ -120,6 +133,7 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 			return true;
 		}
 	},
+
 	kysela_okurka: {
 		id: 'kysela_okurka', name: 'Kyselá okurka', type: 'pickle', icon: 'kysela_okurka', baseDmg: 20, baseCd: 1.15, speed: 420,
 		desc: 'Střílí kyselé okurky. Kdo se jich přejí, zezelená, zeslábne a začne dostávat větší rány.',

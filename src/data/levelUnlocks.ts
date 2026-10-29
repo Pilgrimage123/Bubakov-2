@@ -109,7 +109,7 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 			spoiledSubtitle: "Březnové slunce, tající kry a probouzející se havěť",
 			spoiledDesc: "Sníh pomalu taje a řeka je plná březnových ker tajícího ledu. Příroda se probouzí a s ní i vyhladovělá havěť.",
 			spoiledLore: "Březen, za kamna vlezem – ale za dne už hřeje jarní slunko! Pomozte sedlákům připravit pole a vykažte z kraje hejno mrazivých vran.",
-			spoiledBossHint: "👑 Hlavní boss: Hejno mrazivých vran (120 s)",
+			spoiledBossHint: "👑 Hlavní boss: Hejno mrazivých vran (300 s)",
 			spoiledWeatherHint: "Počasí: Tání ker a jarní slunce",
 			spoiledEnemiesHint: "Hejno mrazivých vran, Jarní Vodníček, Mrazivý skřítek, Blatouchový skřítek, Myšák",
 			spoiledIcon: "🌱",

@@ -109,6 +109,13 @@ import {
   type ArenaRenderMetrics,
 } from './render/arenaRenderer';
 import {
+  createDefaultSunOverlayConfig,
+  createReusableSunFrameState,
+  type SunOverlayConfig,
+  type SunComputedFrameState,
+} from './render/sunForegroundRenderer';
+import { SunDebugHudPanel, type SunDebugLiveTelemetry } from './components/SunDebugHudPanel';
+import {
   getPetrolejkaRadius,
   isPositionIlluminated,
   evaluateShadowDefense,
@@ -218,12 +225,15 @@ import {
   MARCH_THAW_DECOR,
   MARCH_THAW_POIS,
   clampToMarchArenaBounds,
+  collideCircleWithObstacles,
   getActiveMarchForestZone,
   getMarchWaterAndFloeEffect,
+  hasTerrainLineOfSight,
   isAquaticEnemy,
   isInsideMarchPoi,
   pickMarchForestSpawnPoint,
   resolveMarchThawObstacles,
+  sanitizeArenaSpawnPoint,
 } from './data/marchThawArena';
 import { drawMarchThawDynamicLandmark } from './render/marchThawSvgLandscape';
 
@@ -2206,6 +2216,36 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     zoom: 1,
   });
   const arenaRenderOptionsRef = useRef<ArenaRenderOptions>({});
+  const sunOverlayConfigRef = useRef<SunOverlayConfig>(createDefaultSunOverlayConfig());
+  const sunFrameStateRef = useRef<SunComputedFrameState>(createReusableSunFrameState());
+  const latestFpsRef = useRef<number>(60);
+  const isUrlPerfOverlay = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.has('perf') || params.has('benchmark');
+  }, []);
+
+  const getSunDebugTelemetry = useCallback((): SunDebugLiveTelemetry => {
+    const eng = engineRef.current;
+    return {
+      fps: latestFpsRef.current,
+      projectileCount: eng.projectiles ? eng.projectiles.length : 0,
+      enemyCount: eng.enemies ? eng.enemies.length : 0,
+      gameTimeSeconds: eng.gameTime || 0,
+    };
+  }, []);
+
+  const handleToggleSunStressTest = useCallback((enabled: boolean) => {
+    const eng = engineRef.current;
+    sunOverlayConfigRef.current.stressTestActive = enabled;
+    if (!enabled && eng.projectiles) {
+      for (let i = 0; i < eng.projectiles.length; i++) {
+        if ((eng.projectiles[i] as any).isSunStressProjectile) {
+          eng.projectiles[i].dead = true;
+        }
+      }
+    }
+  }, []);
 
   const pushTransientLight = useCallback((light: DynamicLightSource) => {
     const eng = engineRef.current;
@@ -2919,6 +2959,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       lastDy: 0,
       animTime: 0,
       valecniceAngle: 0,
+      valecniceOrbitDir: 1,
+      _valecniceBounceCd: 0,
       valecniceHitTimer: 0,
       garlicAuraTimer: 0,
       _valecniceSlowRadius: 0,
@@ -3133,6 +3175,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (impact.type === 'holy') {
           pushTransientLight(createHolyCathedralLight(impact.x, impact.y));
         }
+        const levelId = engineRef.current.activeLevelId ?? 0;
+        const decor = engineRef.current.decor;
         // Broadphase rejects the whole virtual flock or snowman horde before per-entity AOE collision tests.
         const crowWaveImpactMayHit = crowWaveRef.current?.isWithinBounds(
           impact.x, impact.y, impact.radius + CROW_WAVE_HIT_RADIUS
@@ -3148,6 +3192,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (e.isVirtualSnowmanMember && !snowmanHordeImpactMayHit) continue;
           const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
           if (dx*dx+dy*dy <= reach*reach) {
+            if (!hasTerrainLineOfSight(impact.x, impact.y, e.x, e.y, levelId, decor)) continue;
             e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
             if (!impact.noMasteryProc && impact.weaponId) this.triggerWeaponMastery(impact.weaponId, e, 'hit');
           }
@@ -3158,6 +3203,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         this.hromnickaPulseTimer = 0.35;
         this.hromnickaPulseRadius = reach;
         pushTransientLight(createHolyCathedralLight(this.x, this.y));
+        const levelId = engineRef.current.activeLevelId ?? 0;
+        const decor = engineRef.current.decor;
         const nearby = enemySpatialHashRef.current.queryCircle(this.x, this.y, reach + 50);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
@@ -3167,6 +3214,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const distSq = dx * dx + dy * dy;
           const maxReach = reach + e.radius;
           if (distSq <= maxReach * maxReach) {
+            if (!hasTerrainLineOfSight(this.x, this.y, e.x, e.y, levelId, decor)) continue;
             const dist = Math.sqrt(distSq) || 1;
             const holyPush = getHolyPushMultiplier(e);
             const kbForce = (120 + level * 10) * holyPush;
@@ -3203,10 +3251,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const overheal = Math.max(0, requestedHeal - missingHp);
         this.hp = Math.min(this.maxHp, this.hp + requestedHeal);
         if ((this as any).bearMaskLevel > 0 && overheal > 0) {
+          const levelId = engineRef.current.activeLevelId ?? 0;
+          const decor = engineRef.current.decor;
           const maskDamage = overheal * 0.5 * (1 + ((this as any).bearMaskLevel - 1) * 0.2) * (this.damageMultiplier || 1);
           for (const enemy of enemySpatialHashRef.current.queryCircle(this.x, this.y, 290)) {
             if (enemy.isDefeated || enemy.dead) continue;
             if (Math.hypot(enemy.x - this.x, enemy.y - this.y) <= 230 + (enemy.radius || 0)) {
+              if (!hasTerrainLineOfSight(this.x, this.y, enemy.x, enemy.y, levelId, decor)) continue;
               enemy.takeDamage(maskDamage, 'mask', 0, 0, { allowFractionalDamage: true });
             }
           }
@@ -3347,6 +3398,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     // are specific to the selected level/run. This keeps simulation defaults
     // in one place and prevents startGame() from drifting from engineState.ts.
     const engine = createInitialEngineState();
+    (player as any).activeLevelId = chosenLevelId;
+    (player as any).decor = decor;
     engine.player = player;
     engine.decor = decor;
     engine.activeLevelId = chosenLevelId;
@@ -3373,6 +3426,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     snowmanHordeRef.current?.resetRun();
     if (chosenLevelId === 0) {
       crowWaveRef.current?.preparePool(createEnemyInstance);
+    }
+    if (chosenLevelId === 0 || chosenLevelId === 1) {
       snowmanHordeRef.current?.preparePool(createEnemyInstance);
     }
 
@@ -4501,11 +4556,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.gameTime >= 25
             ) {
               const angle = Math.random() * Math.PI * 2;
-              // Dědeček se zjevuje v příjemné blízkosti (220–280 px), nespawnuje se příliš daleko
+              // Dědeček se zjevuje v příjemné blízkosti (220–280 px), nespawnuje se příliš daleko ani za hranicí mapy či ve zdi
               const distance = 220 + Math.random() * 60;
+              const safeGrandfatherPos = sanitizeArenaSpawnPoint(
+                player.x + Math.cos(angle) * distance,
+                player.y + Math.sin(angle) * distance,
+                26,
+                engine.activeLevelId ?? 0,
+                engine.decor,
+                60
+              );
               engine.grandfather.active = true;
-              engine.grandfather.x = player.x + Math.cos(angle) * distance;
-              engine.grandfather.y = player.y + Math.sin(angle) * distance;
+              engine.grandfather.x = safeGrandfatherPos.x;
+              engine.grandfather.y = safeGrandfatherPos.y;
               engine.grandfather.spawnedAt = engine.gameTime;
               engine.grandfather.waitStartedAt = engine.gameTime;
               engine.grandfather.purchasesThisEncounter = 0;
@@ -4544,8 +4607,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // Pokud se hráč vzdálí extrémně daleko (> 1400 px), dědeček se bezpečně přemístí blíž za ním
               if (grandfatherDistance > 1400) {
                 const ang = Math.random() * Math.PI * 2;
-                engine.grandfather.x = player.x + Math.cos(ang) * 280;
-                engine.grandfather.y = player.y + Math.sin(ang) * 280;
+                const safeReloc = sanitizeArenaSpawnPoint(
+                  player.x + Math.cos(ang) * 280,
+                  player.y + Math.sin(ang) * 280,
+                  26,
+                  engine.activeLevelId ?? 0,
+                  engine.decor,
+                  60
+                );
+                engine.grandfather.x = safeReloc.x;
+                engine.grandfather.y = safeReloc.y;
                 engine.grandfather.vx = 0;
                 engine.grandfather.vy = 0;
                 engine.grandfather.isMoving = false;
@@ -4617,19 +4688,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const angle = opts.angle ?? Math.random() * Math.PI * 2;
                   const burstSpeed = opts.speed ?? (55 + Math.random() * 85);
                   const radius = opts.radius ?? (type === 'chest' ? 25 : opts.size === 'giant' ? 19 : opts.size === 'large' ? 14 : 10);
+                  const safeDropPos = sanitizeArenaSpawnPoint(
+                    opts.x ?? player.x,
+                    opts.y ?? player.y,
+                    radius,
+                    engine.activeLevelId ?? 0,
+                    engine.decor,
+                    48
+                  );
                   spawnDropWithLimit(engine.drops, {
                     type,
                     value: opts.value,
                     size: opts.size,
-                    x: opts.x,
-                    y: opts.y,
+                    x: safeDropPos.x,
+                    y: safeDropPos.y,
                     vx: opts.vx ?? Math.cos(angle) * burstSpeed,
                     vy: opts.vy ?? Math.sin(angle) * burstSpeed,
                     radius,
                     time: Math.random() * 6.28,
                   }, engine.pendingDropBank);
                   if (opts.text) {
-                    pushDamageText(engine.texts, opts.x, opts.y - 45, opts.text, opts.textColor || COLORS.mustard, true, 'bossAnnouncements');
+                    pushDamageText(engine.texts, safeDropPos.x, safeDropPos.y - 45, opts.text, opts.textColor || COLORS.mustard, true, 'bossAnnouncements');
                   }
                 },
                 spawnMonster: (
@@ -4642,6 +4721,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   customBossTitle?: string,
                   prefix?: EnemyPrefixType
                 ) => {
+                  const safeSpawn = sanitizeArenaSpawnPoint(
+                    x,
+                    y,
+                    isBoss || isMiniboss ? 32 : 22,
+                    engine.activeLevelId ?? 0,
+                    engine.decor,
+                    48
+                  );
+                  x = safeSpawn.x;
+                  y = safeSpawn.y;
                   if (mobId === 'vrana' && isMiniboss) {
                     (engine as any).flockTreasureDropped = false;
                     const crowCount = 9;
@@ -4649,8 +4738,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     for (let i = 0; i < crowCount; i++) {
                       const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
                       const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
-                      const cx = x + Math.cos(flockAngle) * dist;
-                      const cy = y + Math.sin(flockAngle) * dist;
+                      const crowPos = sanitizeArenaSpawnPoint(
+                        x + Math.cos(flockAngle) * dist,
+                        y + Math.sin(flockAngle) * dist,
+                        18,
+                        engine.activeLevelId ?? 0,
+                        engine.decor,
+                        36
+                      );
+                      const cx = crowPos.x;
+                      const cy = crowPos.y;
                       const crowTitle = i === 0 ? (customBossTitle || '🐦‍⬛ Hejno mrazivých vran') : undefined;
                       const crowEnemy = createEnemyInstance(mobId, cx, cy, multiplier, isBoss, true, crowTitle, prefix);
                       (crowEnemy as any).isMinibossFlockMember = true;
@@ -4688,13 +4785,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 for (let i = 0; i < crowCount; i++) {
                   const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
                   const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
-                  const cx = spawnPos.x + Math.cos(flockAngle) * dist;
-                  const cy = spawnPos.y + Math.sin(flockAngle) * dist;
+                  const crowPos = sanitizeArenaSpawnPoint(
+                    spawnPos.x + Math.cos(flockAngle) * dist,
+                    spawnPos.y + Math.sin(flockAngle) * dist,
+                    18,
+                    engine.activeLevelId ?? 0,
+                    engine.decor,
+                    36
+                  );
                   const crowTitle = i === 0 ? curLvl.miniBoss.name : undefined;
                   const crowEnemy = createEnemyInstance(
                     curLvl.miniBoss.id,
-                    cx,
-                    cy,
+                    crowPos.x,
+                    crowPos.y,
                     curLvl.miniBoss.multiplier,
                     false,
                     true,
@@ -4707,10 +4810,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
                 }
               } else {
-                const miniBossEnemy = createEnemyInstance(
-                  curLvl.miniBoss.id,
+                const safeMiniPos = sanitizeArenaSpawnPoint(
                   spawnPos.x,
                   spawnPos.y,
+                  24,
+                  engine.activeLevelId ?? 0,
+                  engine.decor,
+                  40
+                );
+                const miniBossEnemy = createEnemyInstance(
+                  curLvl.miniBoss.id,
+                  safeMiniPos.x,
+                  safeMiniPos.y,
                   curLvl.miniBoss.multiplier,
                   false,
                   true,
@@ -4735,10 +4846,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.midBossSpawned = true;
               const ang = Math.random() * Math.PI * 2;
               const spawnPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
-              const midBossEnemy = createEnemyInstance(
-                curLvl.midBoss.id,
+              const safeMidPos = sanitizeArenaSpawnPoint(
                 spawnPos.x,
                 spawnPos.y,
+                26,
+                engine.activeLevelId ?? 0,
+                engine.decor,
+                40
+              );
+              const midBossEnemy = createEnemyInstance(
+                curLvl.midBoss.id,
+                safeMidPos.x,
+                safeMidPos.y,
                 curLvl.midBoss.multiplier,
                 false,
                 true,
@@ -4768,13 +4887,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 for (let i = 0; i < crowCount; i++) {
                   const flockAngle = (i / crowCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.2;
                   const dist = i === 0 ? 0 : 35 + (i % 3) * 15;
-                  const cx = spawnPos.x + Math.cos(flockAngle) * dist;
-                  const cy = spawnPos.y + Math.sin(flockAngle) * dist;
+                  const crowPos = sanitizeArenaSpawnPoint(
+                    spawnPos.x + Math.cos(flockAngle) * dist,
+                    spawnPos.y + Math.sin(flockAngle) * dist,
+                    18,
+                    engine.activeLevelId ?? 0,
+                    engine.decor,
+                    36
+                  );
                   const crowTitle = i === 0 ? curLvl.finalBoss.name : undefined;
                   const crowEnemy = createEnemyInstance(
                     curLvl.finalBoss.id,
-                    cx,
-                    cy,
+                    crowPos.x,
+                    crowPos.y,
                     curLvl.finalBoss.multiplier,
                     i === 0,
                     true,
@@ -4787,10 +4912,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
                 }
               } else {
-                const finalBossEnemy = createEnemyInstance(
-                  curLvl.finalBoss.id,
+                const safeBossPos = sanitizeArenaSpawnPoint(
                   spawnPos.x,
                   spawnPos.y,
+                  30,
+                  engine.activeLevelId ?? 0,
+                  engine.decor,
+                  45
+                );
+                const finalBossEnemy = createEnemyInstance(
+                  curLvl.finalBoss.id,
+                  safeBossPos.x,
+                  safeBossPos.y,
                   curLvl.finalBoss.multiplier,
                   true
                 );
@@ -5814,7 +5947,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!engine.chasnikSpawned && newTime >= 50) {
               engine.chasnikSpawned = true;
               const ang = Math.random() * Math.PI * 2;
-              const cPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
+              const rawPos = RunDirector.getOffscreenPosition(player, ang, engine, 180);
+              const cPos = sanitizeArenaSpawnPoint(rawPos.x, rawPos.y, 28, engine.activeLevelId ?? 0, engine.decor, 60);
               const cx = cPos.x;
               const cy = cPos.y;
               spawnDropWithLimit(engine.drops, {
@@ -5828,7 +5962,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // Spawn wave of sprites harassing him (frost sprites in Stage 1, rarachs in later stages)
               const chasnikHarasserId = (engine.activeLevelId ?? 0) === 0 ? 'mrazovy_skritek' : 'rarach';
               for (let i = 0; i < 5; i++) {
-                engine.enemies.push(createEnemyInstance(chasnikHarasserId, cx + (Math.random() - 0.5) * 60, cy + (Math.random() - 0.5) * 60, 1));
+                const hPos = sanitizeArenaSpawnPoint(
+                  cx + (Math.random() - 0.5) * 60,
+                  cy + (Math.random() - 0.5) * 60,
+                  18,
+                  engine.activeLevelId ?? 0,
+                  engine.decor,
+                  40
+                );
+                engine.enemies.push(createEnemyInstance(chasnikHarasserId, hPos.x, hPos.y, 1));
               }
               pushDamageText(engine.texts, player.x, player.y - 50, 'CHASNÍK V NOUZI!', COLORS.mustard, true);
               sound.hit();
@@ -6190,6 +6332,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 const dist = Math.hypot(dx, dy);
                 const reach = hc.radius + (foe.radius || 15);
                 if (dist < reach) {
+                  if (!hasTerrainLineOfSight(hc.x, hc.y, foe.x, foe.y, engine.activeLevelId ?? 0, engine.decor)) continue;
                   const nx = dist > 0.001 ? dx / dist : 1;
                   const ny = dist > 0.001 ? dy / dist : 0;
                   const holyPush = getHolyPushMultiplier(foe);
@@ -6252,12 +6395,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Periodic spatial scan for frost aura healing multiplier (runs at 4 Hz instead of 60 Hz)
+            (player as any).activeLevelId = engine.activeLevelId ?? 0;
+            (player as any).decor = engine.decor;
             player._frostAuraScanTimer = (player._frostAuraScanTimer || 0) + dt;
             if (player._frostAuraScanTimer >= 0.25 || player._cachedFrostHealMult === undefined) {
               player._frostAuraScanTimer = 0;
               player._cachedFrostHealMult = getFrostAuraHealingMultiplier(
                 player,
-                enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS)
+                enemySpatialHashRef.current.queryCircle(player.x, player.y, FROSTLING_AURA_RADIUS),
+                engine.activeLevelId ?? 0,
+                engine.decor
               );
             }
 
@@ -6535,14 +6682,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   thaw.forestAmbushCooldown = 16;
                   const ang1 = Math.random() * Math.PI * 2;
                   const ang2 = ang1 + Math.PI * 0.7;
-                  const sx1 = player.x + Math.cos(ang1) * 240;
-                  const sy1 = player.y + Math.sin(ang1) * 240;
-                  const sx2 = player.x + Math.cos(ang2) * 240;
-                  const sy2 = player.y + Math.sin(ang2) * 240;
-                  const e1 = createEnemyInstance('mysak', sx1, sy1, 0.75);
-                  const e2 = createEnemyInstance('sotek', sx2, sy2, 0.75);
-                  clampToMarchArenaBounds(e1);
-                  clampToMarchArenaBounds(e2);
+                  const p1 = sanitizeArenaSpawnPoint(player.x + Math.cos(ang1) * 240, player.y + Math.sin(ang1) * 240, 20, 0, engine.decor, 48);
+                  const p2 = sanitizeArenaSpawnPoint(player.x + Math.cos(ang2) * 240, player.y + Math.sin(ang2) * 240, 20, 0, engine.decor, 48);
+                  const e1 = createEnemyInstance('mysak', p1.x, p1.y, 0.75);
+                  const e2 = createEnemyInstance('sotek', p2.x, p2.y, 0.75);
                   engine.enemies.push(e1, e2);
                   pushDamageText(engine.texts, player.x, player.y - 35, 'PŘEPAD Z HOUŠTIN! 🌲🐾', '#84CC16', true, 'directorWarningBanners');
                 }
@@ -6557,10 +6700,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 const forestPool = ['mrazovy_skritek', 'vrana', 'mysak', 'sotek'];
                 const pick1 = forestPool[thaw.forestSpawnSeed % forestPool.length];
                 const pick2 = forestPool[(thaw.forestSpawnSeed + 1) % forestPool.length];
-                const fe1 = createEnemyInstance(pick1, spawnPt.x - 24, spawnPt.y - 18, 0.8);
-                const fe2 = createEnemyInstance(pick2, spawnPt.x + 24, spawnPt.y + 18, 0.8);
-                clampToMarchArenaBounds(fe1);
-                clampToMarchArenaBounds(fe2);
+                const fp1 = sanitizeArenaSpawnPoint(spawnPt.x - 24, spawnPt.y - 18, 20, 0, engine.decor, 48);
+                const fp2 = sanitizeArenaSpawnPoint(spawnPt.x + 24, spawnPt.y + 18, 20, 0, engine.decor, 48);
+                const fe1 = createEnemyInstance(pick1, fp1.x, fp1.y, 0.8);
+                const fe2 = createEnemyInstance(pick2, fp2.x, fp2.y, 0.8);
                 engine.enemies.push(fe1, fe2);
               }
 
@@ -6755,6 +6898,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   if (e.isDefeated) continue;
                   const dx = player.x - e.x, dy = player.y - e.y, reach = 85 + e.radius;
                   if (dx * dx + dy * dy < reach * reach) {
+                    if (!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, engine.activeLevelId ?? 0, engine.decor)) continue;
                     const holyMult = getHolyDamageMultiplier(e);
                     e.takeDamage(4 * player.damageMultiplier * holyMult, 'holy', 0, 0);
                   }
@@ -6778,6 +6922,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (e.isDefeated) continue;
                 const dx = e.x - player.x, dy = e.y - player.y, distSq = dx * dx + dy * dy, reach = auraReach + e.radius;
                 if (distSq < reach * reach && distSq > 0.000001) {
+                  if (!hasTerrainLineOfSight(player.x, player.y, e.x, e.y, engine.activeLevelId ?? 0, engine.decor)) continue;
                   const dist = Math.sqrt(distSq);
                   const dirX = (e.x - player.x) / dist;
                   const dirY = (e.y - player.y) / dist;
@@ -6790,14 +6935,50 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // Update persistent orbit angle and slow aura for Válečnice.
+            // Update persistent orbit angle, obstacle bounce reversal, and slow aura for Válečnice.
             const valecniceWeapon = (player as any)._valecniceWeapon;
             if (valecniceWeapon) {
               const stats = (valecniceWeapon as any)._cachedStats || ((valecniceWeapon as any)._cachedStats = getRankedWeaponStats('valecnice', valecniceWeapon.level, valecniceWeapon));
               const orbitRadius = 115 * stats.areaRadiusMult;
               player._valecniceSlowRadius = orbitRadius * 1.15;
               const orbitSpeed = valecniceWeapon.level >= 3 ? 2.5 : 2.2;
-              player.valecniceAngle = (player.valecniceAngle + dt * orbitSpeed) % (Math.PI * 2);
+              if (typeof (player as any).valecniceOrbitDir !== 'number' || (player as any).valecniceOrbitDir === 0) {
+                (player as any).valecniceOrbitDir = 1;
+              }
+              if (((player as any)._valecniceBounceCd || 0) > 0) {
+                (player as any)._valecniceBounceCd = Math.max(0, (player as any)._valecniceBounceCd - dt);
+              }
+              player.valecniceAngle = ((player.valecniceAngle || 0) + dt * orbitSpeed * (player as any).valecniceOrbitDir + Math.PI * 4) % (Math.PI * 2);
+
+              if (((player as any)._valecniceBounceCd || 0) <= 0) {
+                const count = Math.max(1, 1 + stats.projectileCount);
+                const levelId = engine.activeLevelId ?? 0;
+                for (let vi = 0; vi < count; vi++) {
+                  const ang = player.valecniceAngle + (vi * Math.PI * 2) / count;
+                  const ox = player.x + Math.cos(ang) * orbitRadius;
+                  const oy = player.y + Math.sin(ang) * orbitRadius;
+                  const hit = collideCircleWithObstacles(ox, oy, 20, levelId, engine.decor);
+                  if (hit.hit) {
+                    (player as any).valecniceOrbitDir *= -1;
+                    (player as any)._valecniceBounceCd = 0.22;
+                    player.valecniceAngle = ((player.valecniceAngle || 0) + dt * orbitSpeed * (player as any).valecniceOrbitDir * 2 + Math.PI * 4) % (Math.PI * 2);
+                    sound.hit();
+                    for (let sp = 0; sp < 4; sp++) {
+                      const sAng = Math.random() * Math.PI * 2;
+                      emitParticle(engine.particles, () => ({
+                        x: hit.x,
+                        y: hit.y,
+                        vx: Math.cos(sAng) * 70,
+                        vy: Math.sin(sAng) * 70 - 15,
+                        life: 0.28,
+                        color: sp % 2 === 0 ? '#D97706' : '#FEF08A',
+                        size: 3,
+                      }));
+                    }
+                    break;
+                  }
+                }
+              }
             } else {
               player._valecniceSlowRadius = 0;
             }
@@ -7006,6 +7187,55 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
           }
 
+          // Maintain bullet-heaven readability stress-test projectiles & enemies when enabled in Stage 1
+          if (sunOverlayConfigRef.current.stressTestActive && (engine.activeLevelId ?? 0) === 0 && player) {
+            const targetStressProjectiles = 320;
+            const stressVisuals = ['hell_spark', 'dragon_frostball', 'dragon_fireball', 'icicle', 'mud_ball', 'kolac'];
+            let SpawnBudget = 32;
+            while (engine.projectiles.length < targetStressProjectiles && SpawnBudget > 0) {
+              SpawnBudget--;
+              const idx = engine.projectiles.length;
+              const angle = (idx * 0.61803398875 * Math.PI * 2 + engine.uiTime * 0.9) % (Math.PI * 2);
+              const speed = 155 + (idx % 7) * 28;
+              const spawnSpanX = Math.max(640, canvas.width * 0.48);
+              const spawnSpanY = Math.max(420, canvas.height * 0.44);
+              const offsetX = Math.cos(idx * 1.7 + engine.uiTime) * spawnSpanX;
+              const offsetY = Math.sin(idx * 2.3 + engine.uiTime * 0.7) * spawnSpanY - canvas.height * 0.14;
+              engine.projectiles.push({
+                x: player.x + offsetX,
+                y: player.y + offsetY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                angle,
+                speed,
+                dmg: 0,
+                radius: 10 + (idx % 3) * 2,
+                type: 'fire',
+                visual: stressVisuals[idx % stressVisuals.length],
+                life: 2.6 + (idx % 5) * 0.45,
+                maxLife: 4.5,
+                isEnemy: true,
+                isSunStressProjectile: true,
+                dead: false,
+              } as any);
+            }
+            const targetStressEnemies = 28;
+            const stage1Mobs = ['blatouch', 'mrazovy_skritek', 'sotek', 'mysak'];
+            while (engine.enemies.length < targetStressEnemies) {
+              const eIdx = engine.enemies.length;
+              const eAng = (eIdx / targetStressEnemies) * Math.PI * 2;
+              const eDist = 190 + (eIdx % 4) * 55;
+              const mobId = stage1Mobs[eIdx % stage1Mobs.length];
+              const mob = createEnemyInstance(
+                mobId,
+                player.x + Math.cos(eAng) * eDist,
+                player.y + Math.sin(eAng) * eDist,
+                1.0
+              );
+              engine.enemies.push(mob);
+            }
+          }
+
           // Update Projectiles
           for (const p of engine.projectiles) {
             p.x += p.vx * dt;
@@ -7017,6 +7247,83 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (p.life <= 0) {
               p.dead = true;
               continue;
+            }
+
+            // Stress-test readability projectiles stream freely without terrain/damage overhead
+            if ((p as any).isSunStressProjectile) {
+              continue;
+            }
+
+            // Solid obstacle collision (cottages, church, walls, dense forest; water never blocks projectiles).
+            // High-flying projectiles (Včelí roj) fly over obstacles.
+            const isHighFlyingProj =
+              p.visual === 'bee' ||
+              p.weaponId === 'vceli_roj' ||
+              p.weaponId === 'vceli-roj' ||
+              p.isPuddle ||
+              p.isFissureTelegraph;
+            if (!isHighFlyingProj) {
+              const obsHit = collideCircleWithObstacles(
+                p.x,
+                p.y,
+                Math.max(6, (p.radius || 10) * 0.75),
+                engine.activeLevelId ?? 0,
+                engine.decor
+              );
+              if (obsHit.hit) {
+                p.x = obsHit.x;
+                p.y = obsHit.y;
+                const isBouncingProj =
+                  (typeof p.bounces === 'number' && p.bounces > 0) ||
+                  p.visual === 'kolac' ||
+                  p.visual === 'gander' ||
+                  p.weaponId === 'kynuty_kolac' ||
+                  p.weaponId === 'poutovy_kolac' ||
+                  p.weaponId === 'splaseny_houser' ||
+                  p.weaponId === 'houser';
+                if (isBouncingProj) {
+                  const dot = p.vx * obsHit.nx + p.vy * obsHit.ny;
+                  if (dot < 0) {
+                    p.vx -= 2 * dot * obsHit.nx;
+                    p.vy -= 2 * dot * obsHit.ny;
+                  } else {
+                    p.vx = -p.vx;
+                    p.vy = -p.vy;
+                  }
+                  p.angle = Math.atan2(p.vy, p.vx);
+                  if (typeof p.bounces === 'number' && p.bounces > 0) {
+                    p.bounces--;
+                  }
+                  sound.hit();
+                  for (let k = 0; k < 4; k++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    emitParticle(engine.particles, () => ({
+                      x: p.x,
+                      y: p.y,
+                      vx: Math.cos(ang) * 65,
+                      vy: Math.sin(ang) * 65 - 15,
+                      life: 0.28,
+                      color: p.visual === 'gander' ? '#F8FAFC' : '#F59E0B',
+                      size: 3,
+                    }));
+                  }
+                } else {
+                  p.dead = true;
+                  for (let k = 0; k < 4; k++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    emitParticle(engine.particles, () => ({
+                      x: p.x,
+                      y: p.y,
+                      vx: Math.cos(ang) * 55,
+                      vy: Math.sin(ang) * 55 - 10,
+                      life: 0.25,
+                      color: '#D6D3D1',
+                      size: 2.8,
+                    }));
+                  }
+                  continue;
+                }
+              }
             }
 
             // Hazard projectiles fired by bosses (Mlynář rolling millstone, water flood wave, Bezhlavý rytíř head)
@@ -7358,7 +7665,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             for (const e of nearby) {
               if (e.isDefeated) continue;
               const dx = s.x - e.x, dy = s.y - e.y, reach = s.reach + e.radius;
-              if (!s.hitList.includes(e) && distanceSq(s.x, s.y, e.x, e.y) <= reach * reach) {
+              if (
+                !s.hitList.includes(e) &&
+                distanceSq(s.x, s.y, e.x, e.y) <= reach * reach &&
+                hasTerrainLineOfSight(s.x, s.y, e.x, e.y, engine.activeLevelId ?? 0, engine.decor)
+              ) {
                 const ang = Math.atan2(e.y - s.y, e.x - s.x);
                 let diff = Math.abs(ang - s.angle);
                 if (diff > Math.PI) diff = Math.PI * 2 - diff;
@@ -7783,6 +8094,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               d.vy *= drag;
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
+              clampToMarchArenaBounds(d, 32);
             }
             const dist = Math.hypot(d.x - player.x, d.y - player.y);
 
@@ -8063,6 +8375,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const targets = enemySpatialHashRef.current.queryCircle(puff.x, puff.y, puff.radius + 60);
                   for (const enemy of targets) {
                     if (enemy.isDefeated || enemy.dead || Math.hypot(enemy.x - puff.x, enemy.y - puff.y) > puff.radius + (enemy.radius || 0)) continue;
+                    if (!hasTerrainLineOfSight(puff.x, puff.y, enemy.x, enemy.y, engine.activeLevelId ?? 0, engine.decor)) continue;
                     if (puff.kind === 'plum-scent') {
                       enemy.takeDamage((puff.damagePerSecond || 0) * tick, 'food', 0, 0, { allowFractionalDamage: true });
                     } else {
@@ -8232,6 +8545,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         arenaOptions.snowmanHorde = snowmanHordeRef.current;
         arenaOptions.isPaused = currentGameState !== 'playing';
         arenaOptions.deltaTimeSeconds = frameProfiler.frameDelta / 1000;
+        arenaOptions.sunOverlayConfig = sunOverlayConfigRef.current;
+        arenaOptions.sunFrameState = sunFrameStateRef.current;
+        latestFpsRef.current = frameProfiler.fps;
         const arenaMetrics = renderArena(ctx, engine, camera, arenaOptions, arenaMetricsRef.current);
 
         lastCombatTextsMsRef.current = arenaMetrics.timings.combatTextsMs;
@@ -11397,7 +11713,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           // 3. Sequential Level Progression: track kills towards revealing / unlocking the next level!
           const activeLevelId = getActiveUnlockingLevel(nextMeta);
           let announceLevelName = '';
-          if (activeLevelId) {
+          if (activeLevelId !== null) {
             const lDef = LEVEL_UNLOCKS[activeLevelId];
             const matchedLevelTarget = lDef?.targetEnemies.find((e) => toCanonicalEnemyId(e.id) === canonicalEnemyId);
             if (lDef && matchedLevelTarget) {
@@ -12603,6 +12919,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           })()}
         </div>
       )}
+
+      {/* STAGE 1 FOREGROUND SUN DEVELOPER & STRESS-TEST HUD (VISIBLE WITH FPS OVERLAY) */}
+      {gameState === 'playing' &&
+        (engineRef.current.activeLevelId ?? selectedLevelId) === 0 &&
+        (isUrlPerfOverlay || Boolean(meta.showPerfOverlay)) && (
+          <SunDebugHudPanel
+            configRef={sunOverlayConfigRef}
+            sunStateRef={sunFrameStateRef}
+            getTelemetry={getSunDebugTelemetry}
+            onToggleStressTest={handleToggleSunStressTest}
+          />
+        )}
 
       {/* TOUCH CONTROLS */}
       {gameState === 'playing' && (

@@ -26,6 +26,22 @@ import {
 import { OffScreenIndicatorController } from './offScreenIndicators';
 import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { Lada } from './ladaRenderer';
+import {
+  MARCH_THAW_ROOF_ZONES,
+  isEntityBehindMarchRoof,
+  type MarchRoofZone,
+} from '../data/marchThawArena';
+import {
+  drawMarchForestCanopySunOccluders,
+  drawMarchRoofOverlay,
+} from './marchThawSvgLandscape';
+import {
+  renderSunForegroundOverlay,
+  createDefaultSunOverlayConfig,
+  createReusableSunFrameState,
+  type SunOverlayConfig,
+  type SunComputedFrameState,
+} from './sunForegroundRenderer';
 
 export interface CameraViewport {
   x: number;
@@ -55,6 +71,8 @@ export interface ArenaRenderOptions {
   isPaused?: boolean;
   deltaTimeSeconds?: number;
   afterEntitiesDrawn?: (entity: any) => void;
+  sunOverlayConfig?: SunOverlayConfig;
+  sunFrameState?: SunComputedFrameState;
 }
 
 export interface ArenaPhaseTimings {
@@ -185,6 +203,8 @@ export class ArenaRenderer {
   private readonly telegraphOptions: TelegraphRenderOptions = {};
   private readonly worldHazardOptions: WorldHazardsRenderOptions = {};
   private readonly worldCombatVfxOptions: WorldHazardsRenderOptions = {};
+  private readonly defaultSunConfig: SunOverlayConfig = createDefaultSunOverlayConfig();
+  private readonly defaultSunState: SunComputedFrameState = createReusableSunFrameState();
 
   public ensureDrawableCapacity(required: number): void {
     if (required <= this.drawableCapacity) return;
@@ -480,6 +500,46 @@ export class ArenaRenderer {
     this.entityPassOptions.combatVfxEnabled = combatVfxEnabled;
     this.entityPassOptions.afterEntitiesDrawn = options?.afterEntitiesDrawn;
     renderedEntities = this.renderEntities(ctx, engine, camera, this.entityPassOptions);
+
+    // 4a. STAGE 1 MULTI-PLANE 3D SUN & SKY PARALLAX PASS
+    // Rendered before roof/canopy occlusion, projectiles, particles, floating texts, and high combat VFX
+    // so tall world landmarks, foreground clouds, bullets, and combat UI naturally occlude the sun in 3D space.
+    const isStageOneDaylight =
+      (curLvl && curLvl.id === 0) ||
+      (engine.activeLevelId === 0 && (!curLvl || curLvl.id === undefined || curLvl.id === 0));
+    const screenW = camera.zoom && camera.zoom !== 1 ? Math.round(width * camera.zoom) : width;
+    const screenH = camera.zoom && camera.zoom !== 1 ? Math.round(height * camera.zoom) : height;
+    const sunConfig = options?.sunOverlayConfig || this.defaultSunConfig;
+    const sunState = options?.sunFrameState || this.defaultSunState;
+
+    if (isStageOneDaylight) {
+      ctx.save();
+      ctx.translate(camera.x, camera.y);
+      if (camera.zoom && camera.zoom !== 1) {
+        ctx.scale(1 / camera.zoom, 1 / camera.zoom);
+      }
+      renderSunForegroundOverlay(
+        ctx,
+        screenW,
+        screenH,
+        camera.x,
+        camera.y,
+        engine.gameTime || 0,
+        engine.uiTime || 0,
+        sunConfig,
+        sunState,
+        'sky_disc'
+      );
+      ctx.restore();
+    }
+
+    // 4b. ROOF, CHURCH SPIRE & FOREST CANOPY OCCLUSION PASS (chalupy, hospoda, škola, mlýn, kostel, lesy)
+    this.renderRoofOcclusionPass(
+      ctx,
+      engine,
+      camera,
+      isStageOneDaylight ? sunState : undefined
+    );
     const entitiesMs = now() - tEntitiesStart;
 
     // 5. ENEMY TELEGRAPHS PASS
@@ -572,6 +632,26 @@ export class ArenaRenderer {
       lightingMs = now() - tLightStart;
     }
 
+    // 9b. STAGE 1 CAMERA-LENS SUNLIGHT WASH & 1.8x PARALLAX LENS FLARES PASS (SCREEN SPACE)
+    if (isStageOneDaylight) {
+      const tSunStart = now();
+      renderSunForegroundOverlay(
+        ctx,
+        screenW,
+        screenH,
+        camera.x,
+        camera.y,
+        engine.gameTime || 0,
+        engine.uiTime || 0,
+        sunConfig,
+        sunState,
+        'lens_only'
+      );
+      if (lightingEnabled) {
+        lightingMs += now() - tSunStart;
+      }
+    }
+
     // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS)
     const hpPct = playerHp / (playerMaxHp || 1);
     const dropsArray = engine?.drops ?? [];
@@ -627,6 +707,129 @@ export class ArenaRenderer {
         totalMs,
       },
     };
+  }
+
+  private occludedEntitiesScratch: any[] = [];
+  private occludedDropsScratch: any[] = [];
+  private activeRoofZonesScratch: MarchRoofZone[] = [];
+
+  /**
+   * When the player, NPCs, enemies, drops, or the Stage 1 Sun pass behind a cottage roof,
+   * church spire, or tall forest spruce canopy, draws those roofs/spires/tree crowns over them
+   * and renders a subtle 32%-opacity silhouette of occluded characters on top of the roof.
+   */
+  private renderRoofOcclusionPass(
+    ctx: CanvasRenderingContext2D,
+    engine: EngineState,
+    camera: CameraViewport,
+    sunState?: SunComputedFrameState
+  ): void {
+    const levelId = engine.activeLevelId ?? 0;
+    const decor = engine.decor;
+    const { viewLeft, viewTop, viewRight, viewBottom } = camera;
+
+    const occludedEntities = this.occludedEntitiesScratch;
+    const occludedDrops = this.occludedDropsScratch;
+    const activeRoofZones = this.activeRoofZonesScratch;
+    occludedEntities.length = 0;
+    occludedDrops.length = 0;
+    activeRoofZones.length = 0;
+
+    const registerZone = (zone: MarchRoofZone) => {
+      for (let i = 0; i < activeRoofZones.length; i++) {
+        if (activeRoofZones[i].id === zone.id) return;
+      }
+      activeRoofZones.push(zone);
+    };
+
+    // If Stage 1 Sun overlaps any village roof, church bell tower, or forest spruce canopy in world space,
+    // register those roofs & draw tall canopies so they physically occlude the sun in 3D space!
+    if (sunState && levelId === 0) {
+      const zoom = camera.zoom && camera.zoom !== 1 ? camera.zoom : 1;
+      const worldSunX = camera.x + sunState.x / zoom;
+      const worldSunY = camera.y + sunState.y / zoom;
+      const worldSunR = (sunState.renderSizePx * 0.5) / zoom;
+
+      for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
+        const z = MARCH_THAW_ROOF_ZONES[i];
+        if (
+          worldSunX + worldSunR >= z.minX - 28 &&
+          worldSunX - worldSunR <= z.maxX + 28 &&
+          worldSunY + worldSunR >= z.minY - 56 &&
+          worldSunY - worldSunR <= z.maxY + 28
+        ) {
+          registerZone(z);
+        }
+      }
+
+      drawMarchForestCanopySunOccluders(ctx, worldSunX, worldSunY, worldSunR);
+    }
+
+    const checkEntity = (ent: any) => {
+      if (!ent || ent.dead || ent.isDefeated || typeof ent.draw !== 'function') return;
+      if (!isInView(ent.x, ent.y, (ent.radius || 24) + 60, viewLeft, viewTop, viewRight, viewBottom)) return;
+      const zone = isEntityBehindMarchRoof(ent.x, ent.y, levelId, decor);
+      if (zone) {
+        registerZone(zone);
+        occludedEntities.push(ent);
+      }
+    };
+
+    checkEntity(engine.player);
+    checkEntity(engine.grandfather);
+    checkEntity(engine.companion);
+
+    if (engine.enemies) {
+      for (let i = 0; i < engine.enemies.length; i++) {
+        checkEntity(engine.enemies[i]);
+      }
+    }
+
+    if (engine.drops) {
+      for (let i = 0; i < engine.drops.length; i++) {
+        const d = engine.drops[i];
+        if (!d || d.collected) continue;
+        if (!isInView(d.x, d.y, 40, viewLeft, viewTop, viewRight, viewBottom)) continue;
+        const zone = isEntityBehindMarchRoof(d.x, d.y, levelId, decor);
+        if (zone) {
+          registerZone(zone);
+          occludedDrops.push(d);
+        }
+      }
+    }
+
+    if (activeRoofZones.length === 0) return;
+
+    // 1. Draw the roof overlay for every occupied roof zone so the roof covers the sun and characters behind it
+    for (let i = 0; i < activeRoofZones.length; i++) {
+      const zone = activeRoofZones[i];
+      let matchingDecor: any = undefined;
+      if (zone.id.startsWith('decor-roof-') && decor) {
+        const idx = Number(zone.id.slice('decor-roof-'.length));
+        if (!Number.isNaN(idx) && decor[idx]) {
+          matchingDecor = decor[idx];
+        }
+      }
+      drawMarchRoofOverlay(ctx, zone.id, matchingDecor);
+    }
+
+    // 2. Draw subtle semi-transparent silhouette of occluded drops & entities on top of the roof
+    if (occludedDrops.length > 0 || occludedEntities.length > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.32;
+      if (occludedDrops.length > 0) {
+        renderDrops(ctx, occludedDrops, camera, engine.player);
+      }
+      for (let i = 0; i < occludedEntities.length; i++) {
+        const ent = occludedEntities[i];
+        ent.draw(ctx);
+      }
+      ctx.restore();
+    }
+
+    occludedEntities.length = 0;
+    occludedDrops.length = 0;
+    activeRoofZones.length = 0;
   }
 }
 

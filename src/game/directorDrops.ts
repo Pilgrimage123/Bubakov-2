@@ -1,4 +1,5 @@
 import type { DropType } from '../types';
+import { MARCH_ARENA_BOUNDS, sanitizeArenaSpawnPoint } from '../data/marchThawArena';
 
 export interface VulnerabilityWeights {
   w1_courage: number;
@@ -270,18 +271,34 @@ export class CampingDetector {
  * - Krejcary Pouch & Chest: DistanceFromPlayer + EnemyDensity (lure through danger)
  * - Gingerbread Košík: DistanceFromPlayer - EnemyDensity (guide to open escape corridor)
  */
+export const DEFAULT_TREASURE_ARENA_BOUNDS = {
+  minX: MARCH_ARENA_BOUNDS.minX + 65,
+  maxX: MARCH_ARENA_BOUNDS.maxX - 65,
+  minY: MARCH_ARENA_BOUNDS.minY + 65,
+  maxY: MARCH_ARENA_BOUNDS.maxY - 65,
+};
+
 export function sampleAnnulusPosition(
   playerX: number,
   playerY: number,
   screenW: number,
   enemies: readonly any[],
   objectiveType: 'big_pouch' | 'gingerbread_stash' | 'chest',
-  arenaBounds = { minX: -2200, maxX: 2200, minY: -2200, maxY: 2200 },
-  existingDrops: readonly any[] = []
+  arenaBounds = DEFAULT_TREASURE_ARENA_BOUNDS,
+  existingDrops: readonly any[] = [],
+  activeLevelId = 0,
+  decor?: any[],
 ): { x: number; y: number; score: number } {
   const minRadius = screenW * 1.5;
   const maxRadius = screenW * 2.5;
   const ringRadius = (minRadius + maxRadius) * 0.5;
+
+  const safeBounds = {
+    minX: Math.max(DEFAULT_TREASURE_ARENA_BOUNDS.minX, arenaBounds.minX),
+    maxX: Math.min(DEFAULT_TREASURE_ARENA_BOUNDS.maxX, arenaBounds.maxX),
+    minY: Math.max(DEFAULT_TREASURE_ARENA_BOUNDS.minY, arenaBounds.minY),
+    maxY: Math.min(DEFAULT_TREASURE_ARENA_BOUNDS.maxY, arenaBounds.maxY),
+  };
 
   let bestX = playerX + ringRadius;
   let bestY = playerY;
@@ -289,8 +306,13 @@ export function sampleAnnulusPosition(
 
   for (let k = 0; k < 8; k++) {
     const angle = (k * Math.PI * 2) / 8;
-    const candX = Math.max(arenaBounds.minX, Math.min(arenaBounds.maxX, playerX + Math.cos(angle) * ringRadius));
-    const candY = Math.max(arenaBounds.minY, Math.min(arenaBounds.maxY, playerY + Math.sin(angle) * ringRadius));
+    const unclampedX = playerX + Math.cos(angle) * ringRadius;
+    const unclampedY = playerY + Math.sin(angle) * ringRadius;
+    const rawX = Math.max(safeBounds.minX, Math.min(safeBounds.maxX, unclampedX));
+    const rawY = Math.max(safeBounds.minY, Math.min(safeBounds.maxY, unclampedY));
+    const sanitized = sanitizeArenaSpawnPoint(rawX, rawY, 26, activeLevelId, decor, 55);
+    const candX = Math.max(safeBounds.minX, Math.min(safeBounds.maxX, sanitized.x));
+    const candY = Math.max(safeBounds.minY, Math.min(safeBounds.maxY, sanitized.y));
 
     const dist = Math.hypot(candX - playerX, candY - playerY);
 
@@ -301,7 +323,9 @@ export function sampleAnnulusPosition(
         if (e.dead || e.isDefeated) continue;
         const edx = e.x - candX;
         const edy = e.y - candY;
-        if (edx * edx + edy * edy <= 350 * 350) {
+        const udx = e.x - unclampedX;
+        const udy = e.y - unclampedY;
+        if (edx * edx + edy * edy <= 350 * 350 || udx * udx + udy * udy <= 350 * 350) {
           density++;
         }
       }
@@ -334,5 +358,11 @@ export function sampleAnnulusPosition(
     }
   }
 
-  return { x: bestX, y: bestY, score: bestScore };
+  const finalSanitized = sanitizeArenaSpawnPoint(bestX, bestY, 26, activeLevelId, decor, 55);
+  return {
+    x: Math.max(safeBounds.minX, Math.min(safeBounds.maxX, finalSanitized.x)),
+    y: Math.max(safeBounds.minY, Math.min(safeBounds.maxY, finalSanitized.y)),
+    score: bestScore,
+  };
 }
+

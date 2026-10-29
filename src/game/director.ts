@@ -11,6 +11,8 @@ import {
   sampleAnnulusPosition,
   type DropPacingPhase,
 } from './directorDrops';
+import { MARCH_ARENA_BOUNDS, sanitizeArenaSpawnPoint } from '../data/marchThawArena';
+
 
 const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
   'rarach',
@@ -258,38 +260,66 @@ export class RunDirector {
     const halfW = viewW / 2 + extraMargin;
     const halfH = viewH / 2 + extraMargin;
 
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
+    const computeForAngle = (ang: number) => {
+      const c = Math.cos(ang);
+      const s = Math.sin(ang);
+      const dx = Math.abs(c) > 0.0001 ? halfW / Math.abs(c) : 99999;
+      const dy = Math.abs(s) > 0.0001 ? halfH / Math.abs(s) : 99999;
+      const edgeDist = Math.min(dx, dy);
+      const dist = Math.max(edgeDist, 750) + Math.random() * 80;
+      let candX = player.x + c * dist;
+      let candY = player.y + s * dist;
 
-    const dx = Math.abs(cos) > 0.0001 ? halfW / Math.abs(cos) : 99999;
-    const dy = Math.abs(sin) > 0.0001 ? halfH / Math.abs(sin) : 99999;
-    const edgeDist = Math.min(dx, dy);
+      const pad = 80;
+      const left = camX - pad;
+      const right = camX + viewW + pad;
+      const top = camY - pad;
+      const bottom = camY + viewH + pad;
 
-    // Guaranteed minimum radial distance of 750px regardless of screen size
-    const dist = Math.max(edgeDist, 750) + Math.random() * 80;
-    let sx = player.x + cos * dist;
-    let sy = player.y + sin * dist;
+      if (candX >= left && candX <= right && candY >= top && candY <= bottom) {
+        const push = Math.max(
+          Math.abs(right - player.x),
+          Math.abs(left - player.x),
+          Math.abs(bottom - player.y),
+          Math.abs(top - player.y)
+        ) + extraMargin;
+        candX = player.x + c * push;
+        candY = player.y + s * push;
+      }
+      return { x: candX, y: candY };
+    };
 
-    // Strict boundary enforcement: verify (sx, sy) is outside [camX - pad, camY - pad, camX + viewW + pad, camY + viewH + pad]
-    const pad = 80;
-    const left = camX - pad;
-    const right = camX + viewW + pad;
-    const top = camY - pad;
-    const bottom = camY + viewH + pad;
+    const margin = 52;
+    const minX = MARCH_ARENA_BOUNDS.minX + margin;
+    const maxX = MARCH_ARENA_BOUNDS.maxX - margin;
+    const minY = MARCH_ARENA_BOUNDS.minY + margin;
+    const maxY = MARCH_ARENA_BOUNDS.maxY - margin;
 
-    if (sx >= left && sx <= right && sy >= top && sy <= bottom) {
-      const push = Math.max(
-        Math.abs(right - player.x),
-        Math.abs(left - player.x),
-        Math.abs(bottom - player.y),
-        Math.abs(top - player.y)
-      ) + extraMargin;
-      sx = player.x + cos * push;
-      sy = player.y + sin * push;
+    const isInsideBounds = (pt: { x: number; y: number }) =>
+      pt.x >= minX && pt.x <= maxX && pt.y >= minY && pt.y <= maxY;
+
+    let chosen = computeForAngle(angle);
+    if (!isInsideBounds(chosen)) {
+      // Player is near an arena edge: search alternate angles toward the arena interior
+      // that remain strictly offscreen and within MARCH_ARENA_BOUNDS.
+      const centerAngle = Math.atan2(-player.y, -player.x);
+      for (let step = 1; step <= 12; step++) {
+        const sign = step % 2 === 0 ? 1 : -1;
+        const delta = Math.ceil(step / 2) * (Math.PI / 6);
+        const testAngle = step <= 8 ? angle + sign * delta : centerAngle + (step - 10) * 0.35;
+        const candidate = computeForAngle(testAngle);
+        if (isInsideBounds(candidate)) {
+          chosen = candidate;
+          break;
+        }
+      }
     }
 
-    return { x: sx, y: sy };
+    const activeLevelId = state?.activeLevelId ?? 0;
+    const decor = state?.decor;
+    return sanitizeArenaSpawnPoint(chosen.x, chosen.y, 24, activeLevelId, decor, 48);
   }
+
 
   public getOffscreenPosition(
     player: { x: number; y: number },
@@ -638,12 +668,13 @@ export class RunDirector {
   private triggerZradnyTeren(player: any, angle: number): void {
     if (this.hazards.length >= 8) return;
     const dist = 250;
-    const hx = player.x + Math.cos(angle) * dist;
-    const hy = player.y + Math.sin(angle) * dist;
+    const rawX = player.x + Math.cos(angle) * dist;
+    const rawY = player.y + Math.sin(angle) * dist;
+    const sanitized = sanitizeArenaSpawnPoint(rawX, rawY, 70, this.levelId, undefined, 75);
     this.hazards.push({
       id: `hazard_zradny_${Date.now()}_${Math.random()}`,
-      x: hx,
-      y: hy,
+      x: sanitized.x,
+      y: sanitized.y,
       radius: 70,
       duration: 4.0,
       maxDuration: 4.0,
@@ -651,6 +682,7 @@ export class RunDirector {
       slowFactor: 0.75, // -25% rychlost
     });
   }
+
 
   public computeLocalEnemyDensity(player: any, engine: any, radius = 450): number {
     const enemies = engine.livingEnemies ?? engine.state?.enemies ?? [];
@@ -689,7 +721,19 @@ export class RunDirector {
       ? 'gingerbread_stash'
       : (hasActiveChest || Math.random() < 0.6 ? 'big_pouch' : 'chest');
 
-    const pos = sampleAnnulusPosition(player.x, player.y, screenW, enemies, anchorType, undefined, drops);
+    const state = engine.state ?? engine;
+    const activeLevelId = state?.activeLevelId ?? this.levelId;
+    const pos = sampleAnnulusPosition(
+      player.x,
+      player.y,
+      screenW,
+      enemies,
+      anchorType,
+      undefined,
+      drops,
+      activeLevelId,
+      state?.decor,
+    );
     if (typeof engine.spawnDrop === 'function') {
       const val = anchorType === 'big_pouch' ? 35 : anchorType === 'gingerbread_stash' ? 25 : 1;
       engine.spawnDrop(anchorType, pos.x, pos.y, {
@@ -702,6 +746,7 @@ export class RunDirector {
       }
     }
   }
+
 
   private updateAdaptivePressure(dominance: number, hpRatio: number, dt: number): void {
     const normDiff = Math.max(0, Math.min(1, (this.dynamicDifficulty - 2.0) / 3.0));
@@ -1448,12 +1493,15 @@ export class RunDirector {
     }
 
     // 4 orbit minions around the leader
+    const state = engine.state ?? engine;
+    const activeLevelId = state?.activeLevelId ?? this.levelId;
     for (let i = 0; i < 4; i++) {
       if (spawnedCount >= availableSlots) break;
       const ma = (i / 4) * Math.PI * 2;
-      const mx = centerPos.x + Math.cos(ma) * 55;
-      const my = centerPos.y + Math.sin(ma) * 55;
-      const m = engine.spawnMonster(minionId, mx, my, 0.9);
+      const rawMx = centerPos.x + Math.cos(ma) * 55;
+      const rawMy = centerPos.y + Math.sin(ma) * 55;
+      const mPos = sanitizeArenaSpawnPoint(rawMx, rawMy, 22, activeLevelId, state?.decor, 48);
+      const m = engine.spawnMonster(minionId, mPos.x, mPos.y, 0.9);
       if (m) {
         m.isEscortMinion = true;
         this.recordEnemySpawn(m, gameTime);
@@ -1488,10 +1536,19 @@ export class RunDirector {
 
     // Place an organic hazard on the ground
     if (this.hazards.length < 6) {
+      const state = engine.state ?? engine;
+      const hPos = sanitizeArenaSpawnPoint(
+        player.x + (Math.random() * 200 - 100),
+        player.y + (Math.random() * 200 - 100),
+        65,
+        state?.activeLevelId ?? this.levelId,
+        state?.decor,
+        70,
+      );
       this.hazards.push({
         id: `hazard_${Date.now()}_${Math.random()}`,
-        x: player.x + (Math.random() * 200 - 100),
-        y: player.y + (Math.random() * 200 - 100),
+        x: hPos.x,
+        y: hPos.y,
         radius: 65,
         duration: 4.5,
         maxDuration: 4.5,
@@ -1502,6 +1559,7 @@ export class RunDirector {
 
     this.threatBudget = Math.max(0, this.threatBudget - 16);
   }
+
 
   private spawnAntiKiteInterception(engine: any, player: any, gameTime: number): void {
     const availableSlots = Math.max(0, this.maxLivingEnemies - this.getEffectiveLivingCount(engine));
@@ -1593,9 +1651,18 @@ export class RunDirector {
       if (gameTime >= startSec && gameTime <= endSec && !activeBossPresent) {
         const ang = Math.random() * Math.PI * 2;
         const dist = 360 + Math.random() * 80;
+        const state = engine.state ?? engine;
+        const diraPos = sanitizeArenaSpawnPoint(
+          player.x + Math.cos(ang) * dist,
+          player.y + Math.sin(ang) * dist,
+          95,
+          state?.activeLevelId ?? this.levelId,
+          state?.decor,
+          90,
+        );
         this.bubackaDira = {
-          x: player.x + Math.cos(ang) * dist,
-          y: player.y + Math.sin(ang) * dist,
+          x: diraPos.x,
+          y: diraPos.y,
           radius: 130,
           timeRemaining: 15.0,
           holdTimeRemaining: 4.0,
@@ -1608,6 +1675,7 @@ export class RunDirector {
         this.triggerTelegraph('🌑 Země puká: Objevila se Bubácká díra! Udrž rituál pro poklad!', 3.5, engine);
       }
     }
+
 
     if (!this.bubackaDira || this.bubackaDira.isCompleted || this.bubackaDira.isFailed) return;
 

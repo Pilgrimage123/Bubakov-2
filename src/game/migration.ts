@@ -107,15 +107,16 @@ export function migrateMetaProgression(parsed: any): MetaProgression {
     dynamicLightingEnabled: parsed.dynamicLightingEnabled !== undefined ? Boolean(parsed.dynamicLightingEnabled) : true,
     windupTelegraphCirclesEnabled: parsed.windupTelegraphCirclesEnabled !== undefined ? Boolean(parsed.windupTelegraphCirclesEnabled) : false,
     currentLang: validLang,
-    selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 6
+    selectedLevel: typeof parsed.selectedLevel === 'number' && Number.isInteger(parsed.selectedLevel) && parsed.selectedLevel >= 0 && parsed.selectedLevel <= 7
       ? parsed.selectedLevel
       : 0,
     highestLevelUnlocked: parsed.highestLevelUnlocked || (
-      (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 6 :
-      (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 5 :
-      (parsed.bestiaryKills?.obr || 0) >= 1 ? 4 :
-      (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 3 :
-      (parsed.bestiaryKills?.cert || 0) >= 1 ? 2 : 1
+      (parsed.bestiaryKills?.bezhlavy_rytir || 0) >= 1 ? 7 :
+      (parsed.bestiaryKills?.mlynar || 0) >= 1 ? 6 :
+      (parsed.bestiaryKills?.obr || 0) >= 1 ? 5 :
+      (parsed.bestiaryKills?.hejkal || 0) >= 1 ? 4 :
+      (parsed.bestiaryKills?.cert || 0) >= 1 ? 3 :
+      (parsed.bestiaryKills?.morana || 0) >= 1 ? 2 : 1
     ),
     completedLevels: parsed.completedLevels || {},
     dynamicDifficulty: typeof parsed.dynamicDifficulty === 'number'
