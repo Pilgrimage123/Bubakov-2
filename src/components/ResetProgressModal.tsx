@@ -1,6 +1,8 @@
 import React from 'react';
 import { sound } from '../audio';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 
 export interface ResetProgressModalProps {
@@ -44,6 +46,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({ isOpen, 
           position: 'relative',
         }}
       >
+        <LadaCardCorners variant="callout" />
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
           <GameIcon icon="warning" size={40} />
           <div>
@@ -54,9 +57,15 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({ isOpen, 
                 fontSize: '1.85rem',
                 letterSpacing: '1px',
                 textShadow: '2px 2px 0px var(--ink)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
               }}
             >
-              VYMAZAT VEŠKERÝ POSTUP?
+              <LadaFolkFlower variant="poppy" size={20} spin />
+              <span>VYMAZAT VEŠKERÝ POSTUP?</span>
+              <LadaFolkFlower variant="carmine" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={16} />
             <p style={{ margin: '4px 0 0 0', fontWeight: 800, fontSize: '0.96rem', color: '#FEF3C7' }}>

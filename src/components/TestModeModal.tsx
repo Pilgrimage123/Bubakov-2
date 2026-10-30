@@ -6,6 +6,8 @@ import { Lada } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 
 export const HUNTER_KEYS = [
   'wanderer',
@@ -989,6 +991,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
           position: 'relative',
         }}
       >
+        <LadaCardCorners variant="callout" />
         {/* MODAL HEADER */}
         <div
           style={{
@@ -999,7 +1002,8 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="flask" size={32} />
               <h2
                 style={{
@@ -1012,6 +1016,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
               >
                 TESTOVACÍ MÓD (SANDBOX)
               </h2>
+              <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </div>
             <LadaBotanicalFlourish height={16} />
             <p

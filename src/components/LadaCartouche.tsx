@@ -20,12 +20,18 @@ const CARTOUCHE_ANIM_STYLES = `
     50% { transform: rotate(6deg) scale(1.07); }
   }
   .lada-cartouche-flower-l {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCartoucheFlowerSpin 10s linear infinite;
   }
   .lada-cartouche-flower-r {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCartoucheFlowerSpin 10s linear infinite reverse;
   }
   .lada-cartouche-leaf {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCartoucheLeafBreath 2.8s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {

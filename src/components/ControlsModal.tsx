@@ -69,7 +69,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="game" size={28} /> JAK HRÁT, OVLÁDÁNÍ A CÍL HRY
-              <LadaFolkFlower variant="poppy" size={20} spin />
+              <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />
           </div>

@@ -618,6 +618,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
               >
                 <LadaFolkFlower variant="buttercup" size={18} spin />
                 <span>{progress.spoiledName}</span>
+                <LadaFolkFlower variant="poppy" size={18} spin="reverse" />
               </h2>
               <div style={{ fontWeight: 900, color: '#3D2210', fontSize: '0.98rem' }}>
                 {progress.spoiledTitle}

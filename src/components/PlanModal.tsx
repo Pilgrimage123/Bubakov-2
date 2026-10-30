@@ -1,6 +1,7 @@
 import React from 'react';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { KronikaChanges } from './KronikaChanges';
 import { GameIcon } from './GameIcon';
 
@@ -24,10 +25,14 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
+          position: 'relative',
         }}
       >
+        <LadaCardCorners variant="callout" />
         <h2 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <LadaFolkFlower variant="buttercup" size={20} spin />
           <GameIcon icon="scroll" size={24} /> Kronika Bubákova
+          <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
         </h2>
         <LadaBotanicalFlourish height={18} />
         <p

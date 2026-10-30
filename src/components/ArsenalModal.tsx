@@ -63,7 +63,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
               <LadaFolkFlower variant="buttercup" size={22} spin />
               <GameIcon icon="sword" size={28} />
               Zbrojnice &amp; Knihovna zbraní Bubákova
-              <LadaFolkFlower variant="poppy" size={22} spin />
+              <LadaFolkFlower variant="poppy" size={22} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />
           </div>

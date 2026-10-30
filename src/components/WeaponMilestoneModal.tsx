@@ -3,6 +3,8 @@ import { sound } from '../audio';
 import { GameIcon } from './GameIcon';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaCartouche } from './LadaCartouche';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { WEAPONS } from '../data/weapons';
 import { t, getWeaponTranslation, type SupportedLang } from '../i18n';
 import type { PendingMilestoneChoice } from '../game/engineState';
@@ -320,6 +322,7 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
             flexWrap: 'wrap',
           }}
         >
+          <LadaFolkFlower variant="buttercup" size={20} spin />
           <GameIcon icon={weaponIcon} size={32} />
           <span>{weaponName}</span>
           <span
@@ -335,7 +338,9 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
           >
             {t('milestone_modal.rank_badge', lang, { rank })}
           </span>
+          <LadaFolkFlower variant="carmine" size={20} spin="reverse" />
         </h2>
+        <LadaBotanicalFlourish height={16} />
 
         <p
           style={{

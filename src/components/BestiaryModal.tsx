@@ -172,7 +172,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
             <h2 style={{ margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="book" size={24} /> Bestiář noční české vesnice
-              <LadaFolkFlower variant="cornflower" size={20} spin />
+              <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />
             <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem' }}>

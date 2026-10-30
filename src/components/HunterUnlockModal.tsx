@@ -105,6 +105,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
             >
               <LadaFolkFlower variant="buttercup" size={20} spin />
               <span>{progress.spoiledName}</span>
+              <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
             <div style={{ fontWeight: 900, color: '#3D2210', fontSize: '1.05rem' }}>
               {progress.spoiledTitle}

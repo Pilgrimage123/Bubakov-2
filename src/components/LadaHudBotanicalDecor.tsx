@@ -35,12 +35,18 @@ const HUD_BOTANICAL_STYLES = `
     animation: ladaHudVineRight 3.5s ease-in-out infinite 0.45s;
   }
   .lada-hud-blossom {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaHudBlossomSpin 9.5s linear infinite;
   }
   .lada-hud-blossom-rev {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaHudBlossomSpin 10.5s linear infinite reverse;
   }
   .lada-hud-bloom {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaHudBlossomBloom 3.2s ease-in-out infinite;
   }
   .lada-hud-leaf {
@@ -65,7 +71,7 @@ export type LadaFolkFlowerVariant = 'buttercup' | 'poppy' | 'cornflower' | 'carm
 export interface LadaFolkFlowerProps {
   variant?: LadaFolkFlowerVariant;
   size?: number;
-  spin?: boolean;
+  spin?: boolean | 'reverse';
   withLeaves?: boolean;
   className?: string;
   style?: React.CSSProperties;
@@ -156,7 +162,7 @@ export const LadaFolkFlower: React.FC<LadaFolkFlowerProps> = ({
               />
             </g>
           )}
-          <g className={spin ? 'lada-hud-blossom' : 'lada-hud-bloom'}>
+          <g className={spin === 'reverse' ? 'lada-hud-blossom-rev' : spin ? 'lada-hud-blossom' : 'lada-hud-bloom'}>
             {[0, 72, 144, 216, 288].map((angle) => (
               <path
                 key={angle}

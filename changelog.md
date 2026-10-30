@@ -1,3 +1,58 @@
+## 2026-10-30 — Ladovské animované květy a botanické dekorace v menu, HUDu a modálech
+
+- **Plynulá animace květů a doplňků po vzoru titulního plátna (`LadaHudBotanicalDecor.tsx`, `LadaBotanicalFlourish.tsx`, `LadaCardCorners.tsx`, `LadaCartouche.tsx`, `LadaFrieze.tsx`)**:
+  - Důsledné ukotvení transformací: Doplněno pravidlo `transform-box: fill-box; transform-origin: center;` u všech rotačních a kvetoucích tříd SVG dekorací (`.lada-hud-blossom`, `.lada-hud-blossom-rev`, `.lada-hud-bloom`, `.lada-fl-bud`, `.lada-fl-center`, `.lada-corner-flower-*`, `.lada-corner-rose-*`, `.lada-cartouche-flower-*`, `.lada-frieze-flower`). Tím se zajistila dokonalá souosá rotace a jemné pulzování měřítka kolem středu kvítku bez excentrického trhání na všech prohlížečích.
+  - Zrcadlová protisměrná rotace: Komponenta `LadaFolkFlower` rozšířena o parametr `spin?: boolean | 'reverse'`, který umožňuje protisměrnou rotaci párových květů lemujících nadpisy (levý květ se točí po směru, pravý v protisměru).
+  - Plná podpora přístupnosti: Zachována a ověřena deaktivace animací pro uživatele s `@media (prefers-reduced-motion: reduce)`.
+  - Nulová režie pro React cyklus: Animace jsou řízeny výhradně hardwarově akcelerovanými CSS `@keyframes` na GPU kompozitoru, aniž by spouštěly re-rendery Reactu či zatěžovaly CPU.
+- **Doplnění pestrých lidových květů a dekorací napříč hrou (`App.tsx`, modály v `src/components/`)**:
+  - **In-game HUD**:
+    - Doplněna celá pětice ladovských barev květinových oddělovačů na liště statistik: blatouch žlutý (`#FACC15`), vlčí mák (`#E6392B`), modrá chrpa (`#38BDF8`), karmínová růže (`#E11D48`) a bílá kopretina (`#FFFDF7`).
+    - Zrcadlové točení mákových květů u Boss Baru a připravené schopnosti lovce (ultimátky).
+  - **Hlavní nabídka a výběr výpravy / lovce (`App.tsx`)**:
+    - Karta dynamické obtížnosti (Režisér výpravy) a souhrnný pruh vybrané výpravy získaly oboustranné ladovské květinové lemování.
+    - Tlačítko přechodu k lovci doplněno o zrcadlově točící se blatouchové růžice.
+    - Karta cíle výpravy na obrazovce lovce doplněna o blatouchový kvítek; monumentální nadpis `VYBERTE SI SVÉHO LOVCE` orámován točícím se blatouchem a mákem.
+  - **Pauza a vyhodnocení výpravy (`App.tsx`)**:
+    - Nadpisy *Nesený arzenál a výbava lovce* i *Získaná vylepšení a posílení lovce* v pauze ozdobeny animovanými kvítky.
+    - Květy u obrazovky porážky (*Kuráž vyprchala*) nyní plynule točí a dýchají; před akční tlačítka doplněn vlys `LadaBotanicalFlourish`.
+  - **Dědečkův obchod a Vesnice (`GrandfatherShop.tsx`, `VillageView.tsx`)**:
+    - Nadpis `DĚDEČKOVA OTEVŘENÁ NŮŠE` orámován animovaným blatouchem a vlčím mákem a doplněn o botanický úponek.
+    - Panel *Hospodská pokladna* ve vesnici orámován točícím se blatouchem a chrpou.
+  - **Milníky zbraní a odemykací / konfigurační modály**:
+    - V `WeaponMilestoneModal.tsx` doplněny točící se květy a úponek k názvu vylepšované zbraně.
+    - Všechny dosud jednostranné květy v `HunterUnlockModal`, `LevelUnlockModal` a `WeaponUnlockModal` vyváženy zrcadlovým květem na pravé straně.
+    - Modály `SettingsDevModal`, `CombatTextSettingsModal`, `ResetProgressModal`, `PlanModal`, `TestModeModal` a `AnimationTesterModal` získaly ladovské rohové výplně `LadaCardCorners` i kvetoucí lemování nadpisů.
+- **Nová testovací sada botanických dekorací (`tests/botanicalDecorations.test.tsx`)**:
+  - Vytvořeno 8 nových integračních testů pokrývajících renderování všech 5 ladovských palet, chování `spin`, `spin="reverse"` a `bloom`, přítomnost lístků i pravidla `transform-box: fill-box` a `@media (prefers-reduced-motion)`.
+
+## 2026-10-30 — Zvýšení výkonu herní arény a eliminace per-frame alokací v simulační a renderovací smyčce
+
+- **Optimalizace simulace vody a plovoucích ker 1. úrovně (`src/data/marchThawArena.ts`)**:
+  - Vyhodnocení vlivu vody a ledových ker (`getMarchWaterAndFloeEffect`) v 1. úrovni volané každý snímek pro hráče i všechny pozemní nepřátele nyní využívá časově indexovanou mezipaměť stavů ker (`ensureMarchIceFloesForTime`) a předpočítané trigonometrické tabulky rotací. Všech 17 ker se tak vyhodnocuje nanejvýš jednou za časový krok místo opakovaného výpočtu splinů a trigonometrie `17 × N`-krát za snímek.
+  - Doplněn rychlý AABB broadphase filtr pro koridory rybníka a toku řeky (`isPointInMarchPondWater`, `isPointInMarchStreamWater`), díky čemuž jednotky pohybující se po souši okamžitě opouštějí kontrolu vody a ker bez alokací a bez iterace segmentů toku.
+- **Rychlá detekce kolizí s překážkami, LoS a okluze střech (`src/data/marchThawArena.ts`, `src/render/arenaRenderer.ts`)**:
+  - Algoritmus ořezu úseček obdélníkem (`segmentIntersectsRect`) byl rozbalen na přímé skalární porovnání bez vytváření 4-prvkových polí pro Liang-Barsky, doplněn o rychlé AABB vyloučení před dělením.
+  - Všechny testy kolizí (`collideCircleWithObstacles`, `resolveMarchThawObstacles`, `hasTerrainLineOfSight`) i zón střech (`isEntityBehindMarchRoof`) dostaly časné AABB vyřazování a pracují s filtrovanou mezipamětí pevných překážek a budov přes `WeakMap`, takže se neprocházejí stovky dekorací (květiny, tráva, louže).
+  - V `ArenaRenderer` byly funkce `registerRoofZone` a `checkRoofEntity` vytaženy do metod třídy, čímž se eliminovalo vytváření vnitřních uzávěrů (closures) v každém snímku.
+  - Zaveden rychlý broadphase test `hasRoofsInView`: pokud se v zorném poli kamery nenachází žádná roubenka, hospoda, škola, mlýn ani kostel, celá fáze okluze střech okamžitě skončí v $O(1)$ bez testování desítek nepřátel a stovek ležících dropů.
+- **Rychlý průchod střel a projektilů (`src/render/renderProjectiles.ts`, `src/render/ladaRenderer.ts`)**:
+  - Projektily s vlastním polohováním či sprite cache (`bun`, `kolac`, `bee`, `gander`, `potato`) byly vyvedeny do rychlé cesty před obecným transformačním blokem. Tím se odstranily redundantní dvojité volání `ctx.save()` a `ctx.restore()` i duplicitní `ctx.translate()` pro každou střelu na scéně.
+  - Odstraněna zbytečná vnitřní dvojice `save()` / `restore()` u stínu v `drawGander` a přímé vykreslování `potato` do canvasu. U zbraně *Splašený houser* došlo k poklesu p95 z 1.535 ms na 0.564 ms (zrychlení o 63 %).
+- **Optimalizace a bezalokační průchod bojových plovoucích textů a glyfů (`src/render/glyphAtlas.ts`, `src/render/arenaRenderer.ts`)**:
+  - Odstraněno nákladné nastavování `ctx.font = '900 18px Eczar, serif'` a stylu tuše před smyčkou textů v `ArenaRenderer`, které v prohlížeči vyvolávalo CSS font parsing i v případech, kdy se texty sázejí z bitmapového atlasu glyfů.
+  - Odstraněna alokace objektu parametrů pro každý jednotlivý plovoucí text; zaveden znovupoužitelný instanční scratch buffer pro možnosti vykreslení.
+  - V `GlyphAtlas.draw` nahrazeno `Array.from(text)` přímou indexovou iterací pro běžné číselné a ASCII řetězce (s kontrolou zástupných párů pro emoji), zavedeno instanční pole `glyphsScratch` a statický `spaceGlyph` zabraňující alokacím dočasných polí a objektů při sazbě čísel poškození.
+- **Odstranění zbytečných per-frame alokací a zrychlení AI (`src/App.tsx`, `src/game/engine.ts`, `src/game/virtualLeaderSnowmanHorde.ts`, `src/render/offScreenIndicators.ts`)**:
+  - Odstraněna per-frame alokace pole `heals` při regeneraci s medvědí maskou (`bearMaskLevel > 0`) v `App.tsx`.
+  - Hledání nejbližšího cíle pro šarvátku nepřátel (`brawlTimer`) v `App.tsx` i `engine.ts` nyní využívá prostorový hash (`SpatialHash.queryCircle`) a čtvercové vzdálenosti namísto lineárního průchodu celého pole nepřátel s `Math.hypot`.
+  - Poškozující text louže v hordě sněhuláků (`VirtualLeaderSnowmanHorde`) používá sdílenou funkci `stepPuddleDamageText` namísto vkládání nové funkce `update` pro každý textový objekt.
+  - Vytlačování nepřátel z překážek (`d.isObstacle`) a unašení ledovými krami (`d.type === 'ice_floe'`) v herním enginu převedeno z $O(K \times N)$ kontroly všech nepřátel na lokální prostorové dotazy přes `SpatialHash.queryRadius`.
+  - Detekce přitahování kořisti k lovci nyní kontroluje čtvercové vzdálenosti `distSq < pr * pr` a eliminuje volání `Math.hypot` a odmocnin pro dropy mimo magnetický dosah.
+  - `OffScreenIndicatorController` nyní nejprve provádí časný AABB test viditelnosti bez trigonometrie a využívá znovupoužitelný scratch objekt namísto alokace objektu pro každý těžký drop.
+- **Optimalizace světelné pipeline pohádkového svícení (`src/game/storybookLighting.ts`)**:
+  - `isRayBlockedByOccluders` a `computeSurfaceReliefHighlight` optimalizovány na broad-phase kontrolu pomocí čtverců vzdáleností před voláním `Math.hypot` a odmocnin.
+
 ## 2026-10-30 — Průvodce „Jak hrát“ (Bullet Heaven po česku), interakce s krajinou a synchronizace herních nápověd
 
 - **Tematické představení žánru „Bullet Heaven po česku“ (`ControlsModal.tsx`, `App.tsx`)**:

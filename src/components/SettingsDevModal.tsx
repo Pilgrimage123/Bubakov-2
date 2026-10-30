@@ -2,6 +2,7 @@ import React from 'react';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
 
@@ -90,7 +91,9 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: '0 0 2px 0', fontSize: '1.8rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="cog" size={26} /> NASTAVENÍ A VÝVOJ
+              <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={16} />
           </div>

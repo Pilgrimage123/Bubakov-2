@@ -22242,12 +22242,10 @@ export function drawGander(
   const neckStretch = Math.sin(time * 18) * 2;
 
   // Shadow under gander
-  ctx.save();
   ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
   ctx.beginPath();
   ctx.ellipse(0, 8, 16, 5, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.restore();
 
   // Trailing webbed orange feet
   ctx.fillStyle = '#EA580C';

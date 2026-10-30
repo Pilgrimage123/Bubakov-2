@@ -2,6 +2,7 @@ import React from 'react';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import {
   COMBAT_TEXT_CATEGORIES,
@@ -67,7 +68,9 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: '0 0 2px 0', fontSize: '1.75rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="combat_text" size={26} /> BOJOVÉ TEXTY A VAROVÁNÍ
+              <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={16} />
           </div>

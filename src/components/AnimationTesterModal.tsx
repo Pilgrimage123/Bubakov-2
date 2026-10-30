@@ -13,6 +13,7 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCartouche } from './LadaCartouche';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { Battlefield } from './gpu-animation/Battlefield';
 import type { EnemyAttackCadence, EnemyPrefixType } from '../types';
@@ -630,7 +631,8 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
           }}
         >
           <div style={{ textAlign: 'left' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: isSmallMobile ? '6px' : '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: isSmallMobile ? '6px' : '8px', flexWrap: 'wrap' }}>
+              <LadaFolkFlower variant="buttercup" size={isSmallMobile ? 18 : 22} spin />
               <GameIcon icon="theatre" size={isSmallMobile ? 24 : isMobile ? 28 : 34} />
               <h2
                 style={{
@@ -644,6 +646,7 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
               >
                 TESTER ANIMACÍ
               </h2>
+              <LadaFolkFlower variant="poppy" size={isSmallMobile ? 18 : 22} spin="reverse" />
             </div>
             {!isSmallMobile && (
               <>

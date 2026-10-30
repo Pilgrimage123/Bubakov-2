@@ -109,6 +109,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
               >
                 {progress.spoiledName}
               </h2>
+              <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </div>
 
             <div

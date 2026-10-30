@@ -28,6 +28,11 @@ import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { Lada } from './ladaRenderer';
 import {
   isEntityBehindMarchRoof,
+  hasRoofsInView,
+  ROOF_UNION_MIN_X,
+  ROOF_UNION_MAX_X,
+  ROOF_UNION_MIN_Y,
+  ROOF_UNION_MAX_Y,
   type MarchRoofZone,
 } from '../data/marchThawArena';
 import {
@@ -204,6 +209,12 @@ export class ArenaRenderer {
   private readonly worldCombatVfxOptions: WorldHazardsRenderOptions = {};
   private readonly defaultSunConfig: SunOverlayConfig = createDefaultSunOverlayConfig();
   private readonly defaultSunState: SunComputedFrameState = createReusableSunFrameState();
+  private readonly frostlingsScratch: any[] = [];
+  private readonly glyphOptionsScratch: { size: number; color?: string; alpha?: number } = {
+    size: 18,
+    color: '#FFFFFF',
+    alpha: 1,
+  };
 
   public ensureDrawableCapacity(required: number): void {
     if (required <= this.drawableCapacity) return;
@@ -242,8 +253,16 @@ export class ArenaRenderer {
     const maxCandidateEntities = (engine.player ? 1 : 0) + (engine.enemies ? engine.enemies.length : 0);
     this.ensureDrawableCapacity(maxCandidateEntities);
 
+    let visibleFrostlingCount = 0;
+
     if (engine.player) {
-      if (isInView(engine.player.x, engine.player.y, engine.player.radius || 24, viewLeft, viewTop, viewRight, viewBottom)) {
+      const pr = engine.player.radius || 24;
+      if (
+        engine.player.x + pr >= viewLeft &&
+        engine.player.x - pr <= viewRight &&
+        engine.player.y + pr >= viewTop &&
+        engine.player.y - pr <= viewBottom
+      ) {
         this.preallocatedDrawables[this.drawableCount++] = engine.player;
       }
     }
@@ -261,7 +280,19 @@ export class ArenaRenderer {
           continue;
         }
         const radius = enemy.radius || 20;
-        if (isInView(enemy.x, enemy.y, radius, viewLeft, viewTop, viewRight, viewBottom)) {
+        if (
+          enemy.x + radius >= viewLeft &&
+          enemy.x - radius <= viewRight &&
+          enemy.y + radius >= viewTop &&
+          enemy.y - radius <= viewBottom
+        ) {
+          if (
+            (enemy.id === 'mrazovy_skritek' || enemy.method === 'drawFrostling') &&
+            enemy.id !== 'mrazivy_obr' &&
+            !enemy.isDefeated
+          ) {
+            visibleFrostlingCount++;
+          }
           this.preallocatedDrawables[this.drawableCount++] = enemy;
         } else {
           this.culledEntities++;
@@ -274,7 +305,12 @@ export class ArenaRenderer {
         const puff = engine.smokePuffs[i];
         if (!puff || puff.dead) continue;
         const radius = (puff.radius || 15) * 2;
-        if (isInView(puff.x, puff.y, radius, viewLeft, viewTop, viewRight, viewBottom)) {
+        if (
+          puff.x + radius >= viewLeft &&
+          puff.x - radius <= viewRight &&
+          puff.y + radius >= viewTop &&
+          puff.y - radius <= viewBottom
+        ) {
           if (typeof puff.draw === 'function') {
             puff.draw(ctx);
             renderedEntities++;
@@ -286,21 +322,30 @@ export class ArenaRenderer {
       }
     }
 
-    // Render mrazovy_skritek frost auras on the ground layer before characters with overlap attenuation
-    if (options?.combatVfxEnabled !== false) {
+    // Render mrazovy_skritek frost auras on the ground layer before characters with overlap attenuation.
+    // Early exits in O(1) if no visible frostlings are on screen; compares only frostlings with each other.
+    if (options?.combatVfxEnabled !== false && visibleFrostlingCount > 0) {
       const overlapRadiusSq = (FROSTLING_AURA_RADIUS * 1.15) * (FROSTLING_AURA_RADIUS * 1.15);
+      const frostlings = this.frostlingsScratch;
+      frostlings.length = 0;
       for (let i = 0; i < this.drawableCount; i++) {
         const d = this.preallocatedDrawables[i];
-        if (!d || (d.id !== 'mrazovy_skritek' && d.method !== 'drawFrostling') || d.id === 'mrazivy_obr' || d.isDefeated) {
-          continue;
+        if (
+          d &&
+          (d.id === 'mrazovy_skritek' || d.method === 'drawFrostling') &&
+          d.id !== 'mrazivy_obr' &&
+          !d.isDefeated
+        ) {
+          frostlings.push(d);
         }
+      }
+
+      for (let i = 0; i < frostlings.length; i++) {
+        const d = frostlings[i];
         let overlapCount = 1;
-        for (let j = 0; j < this.drawableCount; j++) {
+        for (let j = 0; j < frostlings.length; j++) {
           if (i === j) continue;
-          const other = this.preallocatedDrawables[j];
-          if (!other || (other.id !== 'mrazovy_skritek' && other.method !== 'drawFrostling') || other.id === 'mrazivy_obr' || other.isDefeated) {
-            continue;
-          }
+          const other = frostlings[j];
           const dx = d.x - other.x;
           const dy = d.y - other.y;
           if (dx * dx + dy * dy <= overlapRadiusSq) {
@@ -310,6 +355,7 @@ export class ArenaRenderer {
         Lada.drawFrostlingAura(ctx, d.x, d.y, d.animTime || 0, overlapCount);
         d._auraDrawnInGroundPass = true;
       }
+      frostlings.length = 0;
     }
 
     // Depth sort (insertion sort optimal for nearly sorted arrays)
@@ -537,17 +583,20 @@ export class ArenaRenderer {
     }
     const particlesMs = now() - tParticlesStart;
 
-    // 8. COMBAT FLOATING TEXTS PASS
+    // 8. COMBAT FLOATING TEXTS PASS (ZERO-ALLOCATION GLYPH PASS)
     let combatTextsMs = 0;
     if (combatTextsEnabled && engine.texts && engine.texts.length > 0) {
       const tTextsStart = now();
-      ctx.font = '900 18px Eczar, serif';
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#2D1609';
-      ctx.lineJoin = 'round';
+      const glyphOpts = this.glyphOptionsScratch;
       for (let i = 0; i < engine.texts.length; i++) {
         const txt = engine.texts[i];
-        if (!isInView(txt.x, txt.y, txt.size || 18, viewLeft, viewTop, viewRight, viewBottom)) {
+        const sz = txt.size || 18;
+        if (
+          txt.x + sz < viewLeft ||
+          txt.x - sz > viewRight ||
+          txt.y + sz < viewTop ||
+          txt.y - sz > viewBottom
+        ) {
           continue;
         }
         if (!shouldDrawCombatText(txt.category, txt.text)) {
@@ -556,7 +605,10 @@ export class ArenaRenderer {
         if (typeof txt.draw === 'function') {
           txt.draw(ctx);
         } else if (txt.text) {
-          drawGlyphText(ctx, txt.text, txt.x, txt.y, { size: txt.size || 18, color: txt.color, alpha: txt.life });
+          glyphOpts.size = sz;
+          glyphOpts.color = txt.color;
+          glyphOpts.alpha = txt.life;
+          drawGlyphText(ctx, txt.text, txt.x, txt.y, glyphOpts);
         }
       }
       ctx.globalAlpha = 1;
@@ -702,7 +754,8 @@ export class ArenaRenderer {
     viewBottom: number
   ): void {
     if (!ent || ent.dead || ent.isDefeated || typeof ent.draw !== 'function') return;
-    if (!isInView(ent.x, ent.y, (ent.radius || 24) + 60, viewLeft, viewTop, viewRight, viewBottom)) return;
+    const r = (ent.radius || 24) + 60;
+    if (ent.x + r < viewLeft || ent.x - r > viewRight || ent.y + r < viewTop || ent.y - r > viewBottom) return;
     const zone = isEntityBehindMarchRoof(ent.x, ent.y, levelId, decor);
     if (zone) {
       this.registerRoofZone(zone);
@@ -722,6 +775,12 @@ export class ArenaRenderer {
     const levelId = engine.activeLevelId ?? 0;
     const decor = engine.decor;
     const { viewLeft, viewTop, viewRight, viewBottom } = camera;
+
+    // Fast-exit: If no cottage, tavern, church, or decor roofs intersect the camera frustum,
+    // skip the entire occlusion test over all drops and entities in O(1).
+    if (!hasRoofsInView(levelId, decor, viewLeft, viewTop, viewRight, viewBottom)) {
+      return;
+    }
 
     const occludedEntities = this.occludedEntitiesScratch;
     const occludedDrops = this.occludedDropsScratch;
@@ -743,8 +802,8 @@ export class ArenaRenderer {
     if (engine.drops) {
       for (let i = 0; i < engine.drops.length; i++) {
         const d = engine.drops[i];
-        if (!d || d.collected) continue;
-        if (!isInView(d.x, d.y, 40, viewLeft, viewTop, viewRight, viewBottom)) continue;
+        if (!d || d.collected || d.dead) continue;
+        if (d.x + 40 < viewLeft || d.x - 40 > viewRight || d.y + 40 < viewTop || d.y - 40 > viewBottom) continue;
         const zone = isEntityBehindMarchRoof(d.x, d.y, levelId, decor);
         if (zone) {
           this.registerRoofZone(zone);

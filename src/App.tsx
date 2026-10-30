@@ -12892,7 +12892,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 Krejcary: {runStats.coins} <KrejcarIcon size={18} />
               </div>
               <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="poppy" size={15} />
+                <LadaFolkFlower variant="poppy" size={15} spin="reverse" />
               </span>
               <div id="souls-text" style={{ color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}><GameIcon icon="urn" size={16} /> Dušičky: {runStats.souls}</div>
               <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
@@ -12900,11 +12900,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </span>
               <div id="kills-text" style={{ color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '5px' }}>Zklidněno: {runStats.kills} <GameIcon icon="bread" size={16} /></div>
               <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <LadaFolkFlower variant="carmine" size={15} />
+                <LadaFolkFlower variant="carmine" size={15} spin="reverse" />
               </span>
               <div id="chest-progress-text" style={{ color: '#78350F', display: 'flex', alignItems: 'center', gap: '5px' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
                 <GameIcon icon="chest" size={16} /> Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <LadaFolkFlower variant="daisy" size={15} spin />
+              </span>
             </div>
 
             {/* Boss Bar if boss spawned */}
@@ -12913,7 +12916,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <div className="boss-title-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <LadaFolkFlower variant="poppy" size={18} spin />
                   <GameIcon icon="devil" size={20} /> {runStats.bossTitle} <GameIcon icon="devil" size={20} />
-                  <LadaFolkFlower variant="poppy" size={18} spin />
+                  <LadaFolkFlower variant="poppy" size={18} spin="reverse" />
                 </div>
                 <div id="boss-bar-container">
                   <div id="boss-hp-fill" style={{ width: `${runStats.bossHpPct}%` }} />
@@ -13023,7 +13026,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     >
                       {keyHint}
                     </span>
-                    <LadaFolkFlower variant="buttercup" size={16} spin />
+                    <LadaFolkFlower variant="buttercup" size={16} spin="reverse" />
                   </span>
                 ) : (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
@@ -13424,8 +13427,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   <span style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="flame" size={24} /></span>
                   <div>
                     <strong style={{ fontSize: '1.05rem', color: '#92400E', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <span>Dynamická obtížnost (Režisér výpravy)</span>
                       <LadaFolkFlower variant="buttercup" size={16} spin />
+                      <span>Dynamická obtížnost (Režisér výpravy)</span>
+                      <LadaFolkFlower variant="carmine" size={16} spin="reverse" />
                     </strong>
                     <div style={{ fontSize: '0.82rem', color: '#451A03', fontWeight: 700 }}>
                       Agresivita a tempo vln Režiséra výpravy během noci
@@ -13523,11 +13527,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   Vybraná výprava pro nadcházející noc:
                 </div>
                 <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0', flexWrap: 'wrap' }}>
+                  <LadaFolkFlower variant="poppy" size={18} spin />
                   <GameIcon icon={currentLevel.icon} size={32} />
                   <span>{currentLevel.name}</span>
                   <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
                     ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})
                   </span>
+                  <LadaFolkFlower variant="cornflower" size={18} spin="reverse" />
                 </div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="wheat" size={16} /> {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní noční nezbeda: ${currentLevel.finalBoss.name}`}</span>
@@ -13551,6 +13557,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <LadaFolkFlower variant="buttercup" size={18} spin />
                   Pokračovat k výběru lovce <GameIcon icon="arrow" size={18} />
+                  <LadaFolkFlower variant="buttercup" size={18} spin="reverse" />
                 </span>
               </button>
             </div>
@@ -13650,8 +13657,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 <span style={{ fontSize: '1.5rem' }}>{currentLevel.icon}</span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
-                    Cíl výpravy:
+                  <div style={{ fontSize: '0.74rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <LadaFolkFlower variant="buttercup" size={13} spin />
+                    <span>Cíl výpravy:</span>
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
                     {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
@@ -13686,8 +13694,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <LadaCartouche variant="green" size="md">
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="bow" size={16} /> KROK 2 ZE 2: VÝBĚR LOVCE</span>
               </LadaCartouche>
-              <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026' }}>
-                VYBERTE SI SVÉHO LOVCE
+              <h1 style={{ fontSize: '2.4rem', margin: '8px 0 2px 0', color: '#C53026', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <LadaFolkFlower variant="buttercup" size={24} spin />
+                <span>VYBERTE SI SVÉHO LOVCE</span>
+                <LadaFolkFlower variant="poppy" size={24} spin="reverse" />
               </h1>
               <LadaBotanicalFlourish height={20} />
               <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: 'var(--wood-dark)' }}>
@@ -13977,7 +13987,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             {/* Current weapons inventory */}
             <h3 style={{ margin: '14px 0 8px 0', textAlign: 'left', color: 'var(--ink)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sword" size={18} /> Nesený arzenál a výbava lovce:</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <LadaFolkFlower variant="poppy" size={16} spin />
+                <GameIcon icon="sword" size={18} /> Nesený arzenál a výbava lovce:
+                <LadaFolkFlower variant="buttercup" size={16} spin="reverse" />
+              </span>
             </h3>
 
             <div className="pause-weapons-grid">
@@ -14142,7 +14156,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               return (
                 <div style={{ marginTop: '12px' }}>
                   <h3 style={{ margin: '12px 0 8px 0', textAlign: 'left', color: 'var(--ink)', fontSize: '1.05rem' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="sparkles" size={18} /> Získaná vylepšení a posílení lovce:</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <LadaFolkFlower variant="buttercup" size={16} spin />
+                      <GameIcon icon="sparkles" size={18} /> Získaná vylepšení a posílení lovce:
+                      <LadaFolkFlower variant="cornflower" size={16} spin="reverse" />
+                    </span>
                   </h3>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px' }}>
                     {perks.map((p, idx) => (
@@ -14309,7 +14327,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 MALOVANÁ TRUHLA!
               </h1>
               <GameIcon icon="chest" size={36} />
-              <LadaFolkFlower variant="poppy" size={24} spin />
+              <LadaFolkFlower variant="poppy" size={24} spin="reverse" />
             </div>
             <LadaBotanicalFlourish height={20} />
 
@@ -14482,13 +14500,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                   <LadaFolkFlower variant="buttercup" size={24} spin />
                   <GameIcon icon="trophy" size={28} /> ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!
-                  <LadaFolkFlower variant="poppy" size={24} spin />
+                  <LadaFolkFlower variant="poppy" size={24} spin="reverse" />
                 </span>
               ) : (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-                  <LadaFolkFlower variant="cornflower" size={22} />
+                  <LadaFolkFlower variant="cornflower" size={22} spin />
                   KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!
-                  <LadaFolkFlower variant="carmine" size={22} />
+                  <LadaFolkFlower variant="carmine" size={22} spin="reverse" />
                 </span>
               )}
             </h1>
@@ -14546,7 +14564,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   ) : <div className="return-bonus-expired"><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Z PEKLA SMŮLA!! Bonus uletěl.</span></div>}
                 </div>
               )}
-            <div className="tally-actions-row" style={{ marginTop: '20px' }}>
+            <LadaBotanicalFlourish height={18} className="my-2" />
+            <div className="tally-actions-row" style={{ marginTop: '16px' }}>
               {tallyCounters.isVictory && tallyCounters.levelId < 7 && (
                 <button
                   className="lada-btn"
@@ -14616,7 +14635,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <h1 style={{ color: '#C53026', margin: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <LadaFolkFlower variant="buttercup" size={24} spin />
               HOSPODA U ČERNÉHO KOCOURA <GameIcon icon="beer" size={32} />
-              <LadaFolkFlower variant="poppy" size={24} spin />
+              <LadaFolkFlower variant="poppy" size={24} spin="reverse" />
             </h1>
             <LadaBotanicalFlourish height={20} />
             <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>

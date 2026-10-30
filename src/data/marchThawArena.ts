@@ -1269,16 +1269,56 @@ export const MARCH_THAW_ROOF_ZONES: MarchRoofZone[] = [
   },
 ];
 
-let ROOF_UNION_MIN_X = Infinity;
-let ROOF_UNION_MAX_X = -Infinity;
-let ROOF_UNION_MIN_Y = Infinity;
-let ROOF_UNION_MAX_Y = -Infinity;
+export let ROOF_UNION_MIN_X = Infinity;
+export let ROOF_UNION_MAX_X = -Infinity;
+export let ROOF_UNION_MIN_Y = Infinity;
+export let ROOF_UNION_MAX_Y = -Infinity;
 for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
   const z = MARCH_THAW_ROOF_ZONES[i];
   if (z.minX < ROOF_UNION_MIN_X) ROOF_UNION_MIN_X = z.minX;
   if (z.maxX > ROOF_UNION_MAX_X) ROOF_UNION_MAX_X = z.maxX;
   if (z.minY < ROOF_UNION_MIN_Y) ROOF_UNION_MIN_Y = z.minY;
   if (z.maxY > ROOF_UNION_MAX_Y) ROOF_UNION_MAX_Y = z.maxY;
+}
+
+/**
+ * Fast viewport intersection check: determines if any March Thaw or decor building roofs
+ * overlap the visible camera view, allowing the roof occlusion pass to early-exit in O(1).
+ */
+export function hasRoofsInView(
+  activeLevelId = 0,
+  decor: any[] | undefined,
+  viewLeft: number,
+  viewTop: number,
+  viewRight: number,
+  viewBottom: number
+): boolean {
+  if (
+    activeLevelId === 0 &&
+    viewRight >= ROOF_UNION_MIN_X &&
+    viewLeft <= ROOF_UNION_MAX_X &&
+    viewBottom >= ROOF_UNION_MIN_Y &&
+    viewTop <= ROOF_UNION_MAX_Y
+  ) {
+    return true;
+  }
+  if (decor && decor.length > 0) {
+    const roofItems = getFilteredDecorCache(decor).roofItems;
+    for (let i = 0; i < roofItems.length; i++) {
+      const dec = roofItems[i].dec;
+      const sc = dec.scale || 1;
+      const r = 120 * sc;
+      if (
+        dec.x + r >= viewLeft &&
+        dec.x - r <= viewRight &&
+        dec.y + r >= viewTop &&
+        dec.y - r <= viewBottom
+      ) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /**

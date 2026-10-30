@@ -342,4 +342,48 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     expect(textIdx).toBeGreaterThan(playerIdx);
     expect(firstSunIdx).toBeGreaterThan(textIdx);
   });
+
+  it('early-exits roof occlusion pass when camera is completely outside any roof zones', () => {
+    engine.activeLevelId = 0;
+    // Camera is way off to the east (x = 8000, 8000)
+    const farCamera: CameraViewport = {
+      x: 8000,
+      y: 8000,
+      width: 1280,
+      height: 720,
+      viewLeft: 7360,
+      viewTop: 7640,
+      viewRight: 8640,
+      viewBottom: 8360,
+    };
+
+    const drawFn = vi.fn();
+    engine.enemies = [
+      { id: 'far_foe', x: 8000, y: 8000, radius: 20, isDefeated: false, dead: false, draw: drawFn } as any,
+    ];
+
+    const renderer = new ArenaRenderer();
+    const roofSpy = vi.spyOn(renderer as any, 'checkRoofEntity');
+
+    renderer.renderArena(ctx, engine, farCamera);
+
+    // Fast-exit invariant: checkRoofEntity should not even be called when no roofs are in camera frustum
+    expect(roofSpy).not.toHaveBeenCalled();
+    expect(drawFn).toHaveBeenCalledTimes(1);
+    roofSpy.mockRestore();
+  });
+
+  it('skips frostling aura ground pass in O(1) when no frostlings are present on screen', () => {
+    engine.enemies = [
+      { id: 'regular_mob', x: 0, y: 0, radius: 20, isDefeated: false, dead: false, draw: () => {} } as any,
+      { id: 'second_mob', x: 50, y: 50, radius: 20, isDefeated: false, dead: false, draw: () => {} } as any,
+    ];
+
+    const auraSpy = vi.spyOn(Lada, 'drawFrostlingAura');
+
+    renderArena(ctx, engine, camera);
+
+    expect(auraSpy).not.toHaveBeenCalled();
+    auraSpy.mockRestore();
+  });
 });

@@ -48,9 +48,13 @@ const FLOURISH_ANIM_STYLES = `
     animation: ladaFlourishLeafPulse 2.9s ease-in-out infinite 0.7s;
   }
   .lada-fl-bud {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaFlourishBudSpin 9s linear infinite;
   }
   .lada-fl-center {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaFlourishCenterFlower 3.8s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {

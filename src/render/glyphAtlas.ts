@@ -1849,6 +1849,17 @@ export class GlyphAtlas {
   private glyphs: Map<string, CachedGlyph> = new Map();
   private initialized = false;
   public wordStampCache: WordStampCache = new WordStampCache(128);
+  private readonly glyphsScratch: CachedGlyph[] = [];
+  private static readonly spaceGlyph: CachedGlyph = {
+    char: ' ',
+    size: 18,
+    color: '',
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    advanceWidth: 7,
+  };
 
   private makeKey(char: string, size: number, color: string): string {
     const norm = normalizeEmojiToken(char);
@@ -1986,35 +1997,55 @@ export class GlyphAtlas {
     const color = (options?.color ?? '#FFFFFF').toUpperCase();
     const alpha = options?.alpha ?? 1.0;
 
-    // Tokenize text into characters while respecting Unicode surrogate pairs and emoji sequences
-    const rawTokens = Array.from(text);
-    const glyphsToDraw: CachedGlyph[] = [];
+    const glyphsToDraw = this.glyphsScratch;
+    glyphsToDraw.length = 0;
     let hasUncachedChar = false;
 
-    for (let i = 0; i < rawTokens.length; i++) {
-      const token = rawTokens[i];
-      if (token === '\uFE0F') continue; // Skip variation selector
-
-      if (token === ' ') {
-        glyphsToDraw.push({
-          char: ' ',
-          size,
-          color,
-          x: 0,
-          y: 0,
-          width: 0,
-          height: 0,
-          advanceWidth: Math.ceil(size * 0.4),
-        });
-        continue;
-      }
-
-      const g = this.getGlyph(token, size, color);
-      if (!g) {
-        hasUncachedChar = true;
+    // Check if string contains any high/low surrogate pairs (e.g. multi-byte emoji sequences)
+    let hasSurrogates = false;
+    const textLen = text.length;
+    for (let i = 0; i < textLen; i++) {
+      const code = text.charCodeAt(i);
+      if (code >= 0xd800 && code <= 0xdfff) {
+        hasSurrogates = true;
         break;
       }
-      glyphsToDraw.push(g);
+    }
+
+    GlyphAtlas.spaceGlyph.advanceWidth = Math.ceil(size * 0.4);
+
+    if (hasSurrogates) {
+      const rawTokens = Array.from(text);
+      for (let i = 0; i < rawTokens.length; i++) {
+        const token = rawTokens[i];
+        if (token === '\uFE0F') continue; // Skip variation selector
+
+        if (token === ' ') {
+          glyphsToDraw.push(GlyphAtlas.spaceGlyph);
+          continue;
+        }
+
+        const g = this.getGlyph(token, size, color);
+        if (!g) {
+          hasUncachedChar = true;
+          break;
+        }
+        glyphsToDraw.push(g);
+      }
+    } else {
+      for (let i = 0; i < textLen; i++) {
+        const char = text[i];
+        if (char === ' ') {
+          glyphsToDraw.push(GlyphAtlas.spaceGlyph);
+          continue;
+        }
+        const g = this.getGlyph(char, size, color);
+        if (!g) {
+          hasUncachedChar = true;
+          break;
+        }
+        glyphsToDraw.push(g);
+      }
     }
 
     if (hasUncachedChar) {
@@ -2174,6 +2205,10 @@ export function getGlobalGlyphAtlas(): GlyphAtlas {
   return globalGlyphAtlas;
 }
 
+const defaultDrawGlyphOptions: DrawGlyphOptions = {
+  useStampCache: true,
+};
+
 export function drawGlyphText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -2181,8 +2216,11 @@ export function drawGlyphText(
   y: number,
   options?: DrawGlyphOptions
 ): boolean {
-  return getGlobalGlyphAtlas().draw(ctx, text, x, y, {
-    useStampCache: true,
-    ...options,
-  });
+  if (options) {
+    if (options.useStampCache === undefined) {
+      options.useStampCache = true;
+    }
+    return getGlobalGlyphAtlas().draw(ctx, text, x, y, options);
+  }
+  return getGlobalGlyphAtlas().draw(ctx, text, x, y, defaultDrawGlyphOptions);
 }

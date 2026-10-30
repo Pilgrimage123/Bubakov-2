@@ -3589,8 +3589,10 @@ export class GameEngine {
               player.y += (d.vy || 0) * dt;
             }
           }
-          for (let j = 0; j < this.livingEnemies.length; j++) {
-            const e = this.livingEnemies[j];
+          const floeReach = (d.radius || 32) + 25;
+          const nearbyOnFloe = this.spatialHash.queryRadius(d.x, d.y, floeReach);
+          for (let j = 0; j < nearbyOnFloe.length; j++) {
+            const e = nearbyOnFloe[j];
             const edist = Math.hypot(e.x - d.x, e.y - d.y);
             if (edist < (e.radius || 15) + (d.radius || 32)) {
               e.x += (d.vx || 0) * dt;
@@ -3623,14 +3625,18 @@ export class GameEngine {
               }
             }
           }
-          // Push enemies
-          for (let j = 0; j < this.livingEnemies.length; j++) {
-            const e = this.livingEnemies[j];
+          // Push enemies (spatial hash lookup avoids O(decor * enemies) quadratic bottleneck)
+          const obstRadius = d.radius + 35;
+          const nearbyEnemies = this.spatialHash.queryRadius(d.x, d.y, obstRadius);
+          for (let j = 0; j < nearbyEnemies.length; j++) {
+            const e = nearbyEnemies[j];
             const edx = e.x - d.x;
             const edy = e.y - d.y;
-            const edist = Math.hypot(edx, edy);
             const ereach = (e.radius || 15) + d.radius;
-            if (edist < ereach) {
+            if (edx >= ereach || edx <= -ereach || edy >= ereach || edy <= -ereach) continue;
+            const edistSq = edx * edx + edy * edy;
+            if (edistSq < ereach * ereach) {
+              const edist = Math.sqrt(edistSq);
               const eoverlap = ereach - edist;
               if (edist > 0.001) {
                 e.x += (edx / edist) * eoverlap;
@@ -3794,8 +3800,12 @@ export class GameEngine {
         }
 
         if (player && player.hp > 0) {
-          const dist = Math.hypot(d.x - player.x, d.y - player.y);
-          if (dist < player.pickupRadius && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
+          const dx = d.x - player.x;
+          const dy = d.y - player.y;
+          const pr = player.pickupRadius;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < pr * pr && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
+            const dist = Math.sqrt(distSq);
             const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;

@@ -11,6 +11,7 @@ import {
 } from '../data/village';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import type { MetaProgression } from '../types';
 
 export interface VillageViewProps {
@@ -79,8 +80,10 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            Hospodská pokladna: <strong style={{ color: '#78350F' }}>{meta.krejcary}</strong> krejcarů{' '}
+            <LadaFolkFlower variant="buttercup" size={18} spin />
+            <span>Hospodská pokladna:</span> <strong style={{ color: '#78350F' }}>{meta.krejcary}</strong> krejcarů{' '}
             <KrejcarIcon size={18} />
+            <LadaFolkFlower variant="cornflower" size={18} spin="reverse" />
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <GameIcon icon="amphora" size={20} /> Osvobozeno dušiček: <strong style={{ color: '#1E40AF' }}>{meta.totalSoulsSaved || 0}</strong>

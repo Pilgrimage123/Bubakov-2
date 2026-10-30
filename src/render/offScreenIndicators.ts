@@ -37,6 +37,14 @@ export class OffScreenIndicatorController {
     }
   }
 
+  private static readonly scratchProj = {
+    screenX: 0,
+    screenY: 0,
+    angle: 0,
+    isOffScreen: false,
+    distance: 0,
+  };
+
   /**
    * Projects a world position onto an elliptical viewport border clamp.
    */
@@ -44,7 +52,8 @@ export class OffScreenIndicatorController {
     worldX: number,
     worldY: number,
     camera: CameraViewport,
-    margin = OffScreenIndicatorController.MARGIN
+    margin = OffScreenIndicatorController.MARGIN,
+    out: { screenX: number; screenY: number; angle: number; isOffScreen: boolean; distance: number } = OffScreenIndicatorController.scratchProj
   ): { screenX: number; screenY: number; angle: number; isOffScreen: boolean; distance: number } {
     const viewW = camera.width;
     const viewH = camera.height;
@@ -72,16 +81,13 @@ export class OffScreenIndicatorController {
     const denom = Math.sqrt((b * cos) * (b * cos) + (a * sin) * (a * sin)) || 1;
     const r = (a * b) / denom;
 
-    const screenX = viewW * 0.5 + cos * r;
-    const screenY = viewH * 0.5 + sin * r;
+    out.screenX = viewW * 0.5 + cos * r;
+    out.screenY = viewH * 0.5 + sin * r;
+    out.angle = angle;
+    out.isOffScreen = isOffScreen;
+    out.distance = dist;
 
-    return {
-      screenX,
-      screenY,
-      angle,
-      isOffScreen,
-      distance: dist,
-    };
+    return out;
   }
 
   /**
@@ -99,6 +105,11 @@ export class OffScreenIndicatorController {
     }
     if (!drops || drops.length === 0) return 0;
 
+    const camX = camera.x;
+    const camY = camera.y;
+    const camW = camera.width;
+    const camH = camera.height;
+
     let activeCount = 0;
     for (let i = 0; i < drops.length; i++) {
       const d = drops[i];
@@ -111,10 +122,15 @@ export class OffScreenIndicatorController {
 
       if (!isAnchor) continue;
 
-      const proj = OffScreenIndicatorController.projectToViewportEllipse(d.x, d.y, camera);
-      if (!proj.isOffScreen) continue;
+      // Fast-exit if drop is already inside the visible camera viewport
+      if (d.x >= camX && d.x <= camX + camW && d.y >= camY && d.y <= camY + camH) {
+        continue;
+      }
 
       if (activeCount >= OffScreenIndicatorController.MAX_INDICATORS) break;
+
+      const proj = OffScreenIndicatorController.projectToViewportEllipse(d.x, d.y, camera);
+      if (!proj.isOffScreen) continue;
 
       const ind = this.pool[activeCount];
       ind.active = true;

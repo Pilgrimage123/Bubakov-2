@@ -14,6 +14,7 @@ import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
+import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { toCanonicalWeaponId } from '../game/migration';
 import {
   getWeaponRankDef,
@@ -536,13 +537,20 @@ export function GrandfatherShop({
                   color: '#FEF3C7',
                   textShadow: '2px 2px 0 #2A170A',
                   lineHeight: 1.15,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
                 }}
               >
-                DĚDEČKOVA OTEVŘENÁ NŮŠE
+                <LadaFolkFlower variant="buttercup" size={isMobile ? 18 : 22} spin />
+                <span>DĚDEČKOVA OTEVŘENÁ NŮŠE</span>
+                <LadaFolkFlower variant="poppy" size={isMobile ? 18 : 22} spin="reverse" />
               </h2>
               <span style={{ fontSize: isMobile ? '0.78rem' : '0.88rem', color: '#FDE68A', fontWeight: 600 }}>
                 Kramářské poklady, lektvary a vylepšení pro statečné lovce
               </span>
+              <LadaBotanicalFlourish height={14} className="mt-1" />
             </div>
           </div>
 

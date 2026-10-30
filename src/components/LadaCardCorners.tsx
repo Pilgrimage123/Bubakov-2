@@ -26,18 +26,28 @@ const CORNER_ANIM_STYLES = `
     50% { transform: rotate(5deg) scale(1.05); }
   }
   .lada-corner-flower-tl {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCornerBloomTL 3.8s ease-in-out infinite;
   }
   .lada-corner-flower-tr {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCornerBloomTR 3.8s ease-in-out infinite 0.6s;
   }
   .lada-corner-rose-bl {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCornerRoseSpin 11s linear infinite;
   }
   .lada-corner-rose-br {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCornerRoseSpin 11s linear infinite reverse;
   }
   .lada-corner-leaf {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaCornerLeafSway 2.9s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {

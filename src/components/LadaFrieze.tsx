@@ -30,6 +30,8 @@ const FRIEZE_ANIM_STYLES = `
     animation: ladaFriezeRipple 2.4s ease-in-out infinite;
   }
   .lada-frieze-flower {
+    transform-box: fill-box;
+    transform-origin: center;
     animation: ladaFriezeFlowerBloom 3s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) {

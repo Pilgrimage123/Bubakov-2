@@ -45,7 +45,7 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
             <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#2A170A', overflowWrap: 'break-word', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
               <span>{hunter.name}</span>
-              <LadaFolkFlower variant="cornflower" size={20} spin />
+              <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <div style={{ fontWeight: 800, color: '#78350F', overflowWrap: 'break-word' }}>{hunter.title}</div>
           </div>

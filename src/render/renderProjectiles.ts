@@ -40,7 +40,7 @@ export function renderProjectilesAndSlashes(
 
       renderedProjectiles++;
 
-      // Fast path for radially symmetric cached projectiles (no outer save/translate/rotate needed)
+      // Fast path for radially symmetric or self-positioning projectiles (no outer save/translate/rotate needed)
       if (p.visual === 'snowball' || p.visual === 'snowball_small') {
         Lada.drawSnowball(ctx, p.x, p.y, p.visual === 'snowball' ? 12 : 7);
         continue;
@@ -49,25 +49,25 @@ export function renderProjectilesAndSlashes(
         Lada.drawHolyDroplet(ctx, p.x, p.y);
         continue;
       }
-
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(p.angle || 0);
-
       if (p.visual === 'bun') {
         // ADR 0034: Harmonized projectile scale (28x26 px) to match collision radius 13
-        Lada.drawCzechBuchta(ctx, 0, 0, 0.58);
-      } else if (p.visual === 'herb_leaf') {
-        const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
-        Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 0.85);
-      } else if (p.visual === 'kolac') {
+        Lada.drawCzechBuchta(ctx, p.x, p.y, 0.58, p.angle || 0);
+        continue;
+      }
+      if (p.visual === 'kolac') {
         // ADR 0034: Harmonized projectile scale (29x29 px) to match collision radius 12
-        Lada.drawKynutyKolac(ctx, 0, 0, 0.60, 0);
-      } else if (p.visual === 'pickle') {
-        const rot = Math.sin(uiTime * 8 + p.x * 0.01) * 0.08;
-        ctx.scale(0.85, 0.85);
-        Lada.drawPickle(ctx, 0, 0, rot);
-      } else if (p.visual === 'potato') {
+        Lada.drawKynutyKolac(ctx, p.x, p.y, 0.60, 0);
+        continue;
+      }
+      if (p.visual === 'bee') {
+        Lada.drawBee(ctx, p.x, p.y, p.angle || 0);
+        continue;
+      }
+      if (p.visual === 'gander') {
+        (Lada as any).drawGander?.(ctx, p.x, p.y, p.radius || 16, p.angle || 0, uiTime);
+        continue;
+      }
+      if (p.visual === 'potato') {
         const sprite = getCachedLadaSprite('potato_proj', 32, 24, (sCtx, cx, cy) => {
           Lada.setupPath(sCtx, '#78350F', COLORS.ink, 2.5);
           sCtx.beginPath();
@@ -76,16 +76,28 @@ export function renderProjectilesAndSlashes(
           sCtx.stroke();
         });
         if (sprite && typeof ctx.drawImage === 'function') {
-          ctx.drawImage(sprite, -16, -12);
+          ctx.drawImage(sprite, p.x - 16, p.y - 12);
         } else {
           Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.5);
           ctx.beginPath();
-          ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+          ctx.ellipse(p.x, p.y, 12, 8, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.stroke();
         }
-      } else if (p.visual === 'bee') {
-        Lada.drawBee(ctx, 0, 0);
+        continue;
+      }
+
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle || 0);
+
+      if (p.visual === 'herb_leaf') {
+        const hVariant = typeof p.herbVariant === 'number' ? p.herbVariant : Math.abs(Math.round((p.angle || 0) * 3)) % 6;
+        Lada.drawHerbProjectile(ctx, 0, 0, hVariant, uiTime, (p.radius ? p.radius / 14 : 1) * 0.85);
+      } else if (p.visual === 'pickle') {
+        const rot = Math.sin(uiTime * 8 + p.x * 0.01) * 0.08;
+        ctx.scale(0.85, 0.85);
+        Lada.drawPickle(ctx, 0, 0, rot);
       } else if (p.visual === 'millstone') {
         Lada.drawMillstone(ctx, 0, 0, p.radius || 20, p.rotation || 0);
       } else if (p.visual === 'water_wave') {
@@ -298,8 +310,6 @@ export function renderProjectilesAndSlashes(
         Lada.drawDragonFrostball(ctx, 0, 0, p.radius || 16, uiTime);
       } else if (p.visual === 'dragon_wind') {
         Lada.drawDragonWind(ctx, 0, 0, p.radius || 22, p.angle || 0, uiTime);
-      } else if (p.visual === 'gander') {
-        (Lada as any).drawGander?.(ctx, 0, 0, p.radius || 16, 0, uiTime);
       } else {
         Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
         ctx.beginPath();
