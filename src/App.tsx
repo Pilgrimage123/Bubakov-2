@@ -6868,20 +6868,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // Player regeneration (+2 Kuráže per 5s per level from Bylinková zahrádka)
       if ((player as any).bearMaskLevel > 0) {
-        const mask = player as any;
-        const heals: Array<{ amount: number; timer?: string }> = [];
         if (player.regenLevel > 0 && player.hp < player.maxHp) {
           player.regenTimer += dt;
           if (player.regenTimer >= 5) {
-            heals.push({ amount: player.regenLevel * 4, timer: 'regenTimer' });
-          }
-        }
-        if (heals.length > 0) {
-          for (const heal of heals) {
-            applyBearMaskOverheal(player, heal.amount);
-            if (heal.timer === 'regenTimer') player.regenTimer = 0;
-            if (heal.timer === 'herbTimer') player.herbTimer = 0;
-            pushDamageText(engine.texts, player.x, player.y - 40, '+' + heal.amount + ' 🌿', COLORS.green, false, 'healing');
+            const healAmount = player.regenLevel * 4;
+            applyBearMaskOverheal(player, healAmount);
+            player.regenTimer = 0;
+            pushDamageText(engine.texts, player.x, player.y - 40, '+' + healAmount + ' 🌿', COLORS.green, false, 'healing');
           }
         }
       } else if (player.regenLevel > 0 && player.hp < player.maxHp) {
@@ -7852,16 +7845,34 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!e.isVirtualCrowMember && !e.isVirtualSnowmanMember && e.brawlTimer && e.brawlTimer > 0) {
               e.brawlTimer = Math.max(0, e.brawlTimer - dt);
               let nearestFoe: any = null;
-              let nearestDist = 999999;
-              for (const other of engine.enemies) {
+              let nearestDistSq = Infinity;
+              const nearbyFoes = enemySpatialHashRef.current.queryCircle(e.x, e.y, 420);
+              for (let bi = 0; bi < nearbyFoes.length; bi++) {
+                const other = nearbyFoes[bi];
                 if (other === e || other.dead || other.isDefeated || other.isVirtualCrowMember || other.isVirtualSnowmanMember) continue;
-                const d = Math.hypot(other.x - e.x, other.y - e.y);
-                if (d < nearestDist) {
-                  nearestDist = d;
+                const bdx = other.x - e.x;
+                const bdy = other.y - e.y;
+                const dSq = bdx * bdx + bdy * bdy;
+                if (dSq < nearestDistSq) {
+                  nearestDistSq = dSq;
                   nearestFoe = other;
                 }
               }
+              if (!nearestFoe) {
+                for (let bi = 0; bi < engine.enemies.length; bi++) {
+                  const other = engine.enemies[bi];
+                  if (other === e || other.dead || other.isDefeated || other.isVirtualCrowMember || other.isVirtualSnowmanMember) continue;
+                  const bdx = other.x - e.x;
+                  const bdy = other.y - e.y;
+                  const dSq = bdx * bdx + bdy * bdy;
+                  if (dSq < nearestDistSq) {
+                    nearestDistSq = dSq;
+                    nearestFoe = other;
+                  }
+                }
+              }
               if (nearestFoe) {
+                const nearestDist = Math.sqrt(nearestDistSq);
                 const brawlAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
                 e.vx = Math.cos(brawlAng) * (e.speed || 100) * 1.15;
                 e.vy = Math.sin(brawlAng) * (e.speed || 100) * 1.15;

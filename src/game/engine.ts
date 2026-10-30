@@ -3339,17 +3339,34 @@ export class GameEngine {
         if (e.brawlTimer && e.brawlTimer > 0) {
           e.brawlTimer = Math.max(0, e.brawlTimer - dt);
           let nearestFoe: any = null;
-          let nearestDist = 999999;
-          for (let k = 0; k < this.state.enemies.length; k++) {
-            const other = this.state.enemies[k];
+          let nearestDistSq = Infinity;
+          const nearbyFoes = this.spatialHash.queryCircle(e.x, e.y, 420);
+          for (let k = 0; k < nearbyFoes.length; k++) {
+            const other = nearbyFoes[k];
             if (other === e || other.dead || other.isDefeated) continue;
-            const d = Math.hypot(other.x - e.x, other.y - e.y);
-            if (d < nearestDist) {
-              nearestDist = d;
+            const bdx = other.x - e.x;
+            const bdy = other.y - e.y;
+            const dSq = bdx * bdx + bdy * bdy;
+            if (dSq < nearestDistSq) {
+              nearestDistSq = dSq;
               nearestFoe = other;
             }
           }
+          if (!nearestFoe) {
+            for (let k = 0; k < this.state.enemies.length; k++) {
+              const other = this.state.enemies[k];
+              if (other === e || other.dead || other.isDefeated) continue;
+              const bdx = other.x - e.x;
+              const bdy = other.y - e.y;
+              const dSq = bdx * bdx + bdy * bdy;
+              if (dSq < nearestDistSq) {
+                nearestDistSq = dSq;
+                nearestFoe = other;
+              }
+            }
+          }
           if (nearestFoe) {
+            const nearestDist = Math.sqrt(nearestDistSq);
             const bAng = Math.atan2(nearestFoe.y - e.y, nearestFoe.x - e.x);
             e.x += Math.cos(bAng) * (e.speed || 100) * 1.15 * dt;
             e.y += Math.sin(bAng) * (e.speed || 100) * 1.15 * dt;

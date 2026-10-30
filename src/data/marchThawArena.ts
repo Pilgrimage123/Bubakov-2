@@ -326,9 +326,11 @@ export function resolveMarchThawObstacles(
     const obs = MARCH_THAW_OBSTACLES[i];
     if (obs.shape === 'circle') {
       const obsR = obs.radius ?? 30;
-      const dx = entity.x - obs.x;
-      const dy = entity.y - obs.y;
       const reach = r + obsR;
+      const dx = entity.x - obs.x;
+      if (dx >= reach || dx <= -reach) continue;
+      const dy = entity.y - obs.y;
+      if (dy >= reach || dy <= -reach) continue;
       const distSq = dx * dx + dy * dy;
       if (distSq < reach * reach) {
         const dist = Math.sqrt(distSq);
@@ -342,6 +344,14 @@ export function resolveMarchThawObstacles(
     } else {
       const hw = obs.halfW ?? 45;
       const hh = obs.halfH ?? 32;
+      if (
+        entity.x - obs.x >= hw + r ||
+        obs.x - entity.x >= hw + r ||
+        entity.y - obs.y >= hh + r ||
+        obs.y - entity.y >= hh + r
+      ) {
+        continue;
+      }
       const cr = Math.min(obs.cornerRadius ?? 16, Math.min(hw, hh) * 0.5);
       const coreW = hw - cr;
       const coreH = hh - cr;
@@ -526,34 +536,36 @@ export function sampleMarchStreamPath(u: number): {
   };
 }
 
-/**
- * Computes the exact position and velocity of a Stage 1 ice floe at time `time` (seconds).
- * Guarantees that every ice floe stays strictly inside the pond or river channel.
- */
-export function getMarchIceFloeState(index: number, time: number): MarchIceFloeState {
-  const spec =
-    MARCH_ICE_FLOE_SPECS[
-      ((index % MARCH_ICE_FLOE_SPECS.length) + MARCH_ICE_FLOE_SPECS.length) %
-        MARCH_ICE_FLOE_SPECS.length
-    ];
+const POND_COS_TILT = Math.cos(MARCH_POND_REGION.angle);
+const POND_SIN_TILT = Math.sin(MARCH_POND_REGION.angle);
+const POND_COS_NEG_TILT = Math.cos(-MARCH_POND_REGION.angle);
+const POND_SIN_NEG_TILT = Math.sin(-MARCH_POND_REGION.angle);
+
+let _cachedFloeTime = Number.NaN;
+const _cachedFloeStates: MarchIceFloeState[] = new Array(MARCH_ICE_FLOE_SPECS.length);
+const _cachedFloeCosNeg: Float64Array = new Float64Array(MARCH_ICE_FLOE_SPECS.length);
+const _cachedFloeSinNeg: Float64Array = new Float64Array(MARCH_ICE_FLOE_SPECS.length);
+
+function computeMarchIceFloeStateAt(specIndex: number, time: number): MarchIceFloeState {
+  const spec = MARCH_ICE_FLOE_SPECS[specIndex];
 
   if (spec.zone === 'pond') {
     const theta = spec.phaseOffset + time * spec.angularSpeed;
-    const cosTilt = Math.cos(MARCH_POND_REGION.angle);
-    const sinTilt = Math.sin(MARCH_POND_REGION.angle);
+    const cosTheta = Math.cos(theta);
+    const sinTheta = Math.sin(theta);
 
     const orbitRx = (MARCH_POND_REGION.rx - spec.rx - 16) * spec.orbitRadiusFactor;
     const orbitRy = (MARCH_POND_REGION.ry - spec.ry - 14) * spec.orbitRadiusFactor;
 
-    const lx = Math.cos(theta) * orbitRx;
-    const ly = Math.sin(theta) * orbitRy;
-    const dlx = -Math.sin(theta) * orbitRx * spec.angularSpeed;
-    const dly = Math.cos(theta) * orbitRy * spec.angularSpeed;
+    const lx = cosTheta * orbitRx;
+    const ly = sinTheta * orbitRy;
+    const dlx = -sinTheta * orbitRx * spec.angularSpeed;
+    const dly = cosTheta * orbitRy * spec.angularSpeed;
 
-    const x = MARCH_POND_REGION.x + lx * cosTilt - ly * sinTilt;
-    const y = MARCH_THAW_POIS.pond.y + lx * sinTilt + ly * cosTilt;
-    const vx = dlx * cosTilt - dly * sinTilt;
-    const vy = dlx * sinTilt + dly * cosTilt;
+    const x = MARCH_POND_REGION.x + lx * POND_COS_TILT - ly * POND_SIN_TILT;
+    const y = MARCH_THAW_POIS.pond.y + lx * POND_SIN_TILT + ly * POND_COS_TILT;
+    const vx = dlx * POND_COS_TILT - dly * POND_SIN_TILT;
+    const vy = dlx * POND_SIN_TILT + dly * POND_COS_TILT;
     const angle = Math.sin(time * 0.6 + spec.id) * 0.14 + MARCH_POND_REGION.angle;
 
     return {
@@ -590,15 +602,37 @@ export function getMarchIceFloeState(index: number, time: number): MarchIceFloeS
   };
 }
 
+function ensureMarchIceFloesForTime(time: number): void {
+  if (_cachedFloeTime === time) return;
+  _cachedFloeTime = time;
+  for (let i = 0; i < MARCH_ICE_FLOE_SPECS.length; i++) {
+    const state = computeMarchIceFloeStateAt(i, time);
+    _cachedFloeStates[i] = state;
+    _cachedFloeCosNeg[i] = Math.cos(-state.angle);
+    _cachedFloeSinNeg[i] = Math.sin(-state.angle);
+  }
+}
+
+/**
+ * Computes the exact position and velocity of a Stage 1 ice floe at time `time` (seconds).
+ * Guarantees that every ice floe stays strictly inside the pond or river channel.
+ */
+export function getMarchIceFloeState(index: number, time: number): MarchIceFloeState {
+  ensureMarchIceFloesForTime(time);
+  const len = MARCH_ICE_FLOE_SPECS.length;
+  const normalizedIdx = ((index % len) + len) % len;
+  return _cachedFloeStates[normalizedIdx];
+}
+
 export function isPointInMarchPondWater(x: number, y: number, margin = 0): boolean {
-  const dx = x - MARCH_POND_REGION.x;
-  const dy = y - MARCH_POND_REGION.y;
-  const cosA = Math.cos(-MARCH_POND_REGION.angle);
-  const sinA = Math.sin(-MARCH_POND_REGION.angle);
-  const lx = dx * cosA - dy * sinA;
-  const ly = dx * sinA + dy * cosA;
   const rx = Math.max(10, MARCH_POND_REGION.rx + margin);
+  const dx = x - MARCH_POND_REGION.x;
+  if (dx > rx || dx < -rx) return false;
+  const dy = y - MARCH_POND_REGION.y;
+  if (dy > rx || dy < -rx) return false;
   const ry = Math.max(10, MARCH_POND_REGION.ry + margin);
+  const lx = dx * POND_COS_NEG_TILT - dy * POND_SIN_NEG_TILT;
+  const ly = dx * POND_SIN_NEG_TILT + dy * POND_COS_NEG_TILT;
   return (lx * lx) / (rx * rx) + (ly * ly) / (ry * ry) <= 1;
 }
 
@@ -609,18 +643,25 @@ export function isPointOnMarchBridge(x: number, y: number): boolean {
   );
 }
 
+const STREAM_NONE_RESULT = { inStream: false, vx: 0, vy: 0 } as const;
+
 export function isPointInMarchStreamWater(x: number, y: number): {
   inStream: boolean;
   vx: number;
   vy: number;
 } {
+  if (x < 530 || x > 1070 || y < -1820 || y > 1820) {
+    return STREAM_NONE_RESULT;
+  }
   if (isPointOnMarchBridge(x, y)) {
-    return { inStream: false, vx: 0, vy: 0 };
+    return STREAM_NONE_RESULT;
   }
   const pts = MARCH_STREAM_WAYPOINTS;
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i];
     const b = pts[i + 1];
+    const maxHalfW = (a.width >= b.width ? a.width : b.width) * 0.5;
+    if (y < a.y - maxHalfW || y > b.y + maxHalfW) continue;
     const abx = b.x - a.x;
     const aby = b.y - a.y;
     const lenSq = abx * abx + aby * aby || 1;
@@ -638,7 +679,7 @@ export function isPointInMarchStreamWater(x: number, y: number): {
       };
     }
   }
-  return { inStream: false, vx: 0, vy: 0 };
+  return STREAM_NONE_RESULT;
 }
 
 /**
@@ -670,6 +711,28 @@ export interface MarchWaterAndFloeEffect {
   speedMultiplier: number;
 }
 
+const DRY_LAND_EFFECT: MarchWaterAndFloeEffect = {
+  onBridge: false,
+  onFloe: false,
+  floeId: null,
+  inOpenWater: false,
+  waterZone: null,
+  carryVx: 0,
+  carryVy: 0,
+  speedMultiplier: 1.0,
+};
+
+const BRIDGE_EFFECT: MarchWaterAndFloeEffect = {
+  onBridge: true,
+  onFloe: false,
+  floeId: null,
+  inOpenWater: false,
+  waterZone: null,
+  carryVx: 0,
+  carryVy: 0,
+  speedMultiplier: 1.0,
+};
+
 /**
  * Evaluates how Stage 1 water and floating ice floes affect a unit at (x, y).
  * - Standing on an ice floe carries the unit with the floe, grants +20% sliding speed,
@@ -682,30 +745,35 @@ export function getMarchWaterAndFloeEffect(
   y: number,
   time: number
 ): MarchWaterAndFloeEffect {
-  if (isPointOnMarchBridge(x, y)) {
-    return {
-      onBridge: true,
-      onFloe: false,
-      floeId: null,
-      inOpenWater: false,
-      waterZone: null,
-      carryVx: 0,
-      carryVy: 0,
-      speedMultiplier: 1.0,
-    };
+  const nearPond = x >= -1040 && x <= -410 && y >= 410 && y <= 820;
+  const nearStream = x >= 530 && x <= 1070 && y >= -1820 && y <= 1820;
+
+  if (!nearPond && !nearStream) {
+    return DRY_LAND_EFFECT;
   }
 
-  // First check if the unit is standing on any of the 17 floating ice floes
-  for (let i = 0; i < MARCH_ICE_FLOE_SPECS.length; i++) {
-    const floe = getMarchIceFloeState(i, time);
+  if (nearStream && isPointOnMarchBridge(x, y)) {
+    return BRIDGE_EFFECT;
+  }
+
+  ensureMarchIceFloesForTime(time);
+
+  // Check only the floe subset (0..6 for pond, 7..16 for stream) matching the unit's corridor
+  const startIdx = nearPond ? 0 : 7;
+  const endIdx = nearStream ? MARCH_ICE_FLOE_SPECS.length : 7;
+
+  for (let i = startIdx; i < endIdx; i++) {
+    const floe = _cachedFloeStates[i];
+    const rx = floe.rx + 14;
     const dx = x - floe.x;
+    if (dx > rx || dx < -rx) continue;
     const dy = y - floe.y;
-    const cosA = Math.cos(-floe.angle);
-    const sinA = Math.sin(-floe.angle);
+    if (dy > rx || dy < -rx) continue;
+    const ry = floe.ry + 12;
+    const cosA = _cachedFloeCosNeg[i];
+    const sinA = _cachedFloeSinNeg[i];
     const lx = dx * cosA - dy * sinA;
     const ly = dx * sinA + dy * cosA;
-    const rx = floe.rx + 14;
-    const ry = floe.ry + 12;
     if ((lx * lx) / (rx * rx) + (ly * ly) / (ry * ry) <= 1) {
       return {
         onBridge: false,
@@ -721,7 +789,7 @@ export function getMarchWaterAndFloeEffect(
   }
 
   // Wading in open pond water off the ice floes: strong 68% slow
-  if (isPointInMarchPondWater(x, y, -6)) {
+  if (nearPond && isPointInMarchPondWater(x, y, -6)) {
     return {
       onBridge: false,
       onFloe: false,
@@ -735,30 +803,23 @@ export function getMarchWaterAndFloeEffect(
   }
 
   // Wading in the river off the ice floes & bridge: VERY STRONG 72% slow (speedMultiplier = 0.28)
-  const streamCheck = isPointInMarchStreamWater(x, y);
-  if (streamCheck.inStream) {
-    return {
-      onBridge: false,
-      onFloe: false,
-      floeId: null,
-      inOpenWater: true,
-      waterZone: 'stream',
-      carryVx: streamCheck.vx,
-      carryVy: streamCheck.vy,
-      speedMultiplier: 0.28,
-    };
+  if (nearStream) {
+    const streamCheck = isPointInMarchStreamWater(x, y);
+    if (streamCheck.inStream) {
+      return {
+        onBridge: false,
+        onFloe: false,
+        floeId: null,
+        inOpenWater: true,
+        waterZone: 'stream',
+        carryVx: streamCheck.vx,
+        carryVy: streamCheck.vy,
+        speedMultiplier: 0.28,
+      };
+    }
   }
 
-  return {
-    onBridge: false,
-    onFloe: false,
-    floeId: null,
-    inOpenWater: false,
-    waterZone: null,
-    carryVx: 0,
-    carryVy: 0,
-    speedMultiplier: 1.0,
-  };
+  return DRY_LAND_EFFECT;
 }
 
 export interface ObstacleCollisionResult {
@@ -791,6 +852,54 @@ export function isSolidDecorObstacle(dec: any): boolean {
   return true;
 }
 
+interface FilteredDecorCacheEntry {
+  length: number;
+  firstItem: any;
+  lastItem: any;
+  solidObstacles: any[];
+  roofItems: Array<{ dec: any; index: number }>;
+}
+
+const _decorFilterCache = new WeakMap<any[], FilteredDecorCacheEntry>();
+
+function getFilteredDecorCache(decor: any[]): FilteredDecorCacheEntry {
+  const len = decor.length;
+  const first = len > 0 ? decor[0] : undefined;
+  const last = len > 0 ? decor[len - 1] : undefined;
+  let entry = _decorFilterCache.get(decor);
+  if (
+    entry &&
+    entry.length === len &&
+    entry.firstItem === first &&
+    entry.lastItem === last
+  ) {
+    return entry;
+  }
+
+  const solidObstacles: any[] = [];
+  const roofItems: Array<{ dec: any; index: number }> = [];
+  for (let i = 0; i < len; i++) {
+    const dec = decor[i];
+    if (!dec) continue;
+    if (isSolidDecorObstacle(dec)) {
+      solidObstacles.push(dec);
+    }
+    if (dec.type === 'chalupa' || dec.type === 'church') {
+      roofItems.push({ dec, index: i });
+    }
+  }
+
+  entry = {
+    length: len,
+    firstItem: first,
+    lastItem: last,
+    solidObstacles,
+    roofItems,
+  };
+  _decorFilterCache.set(decor, entry);
+  return entry;
+}
+
 /**
  * Tests a circle (projectile, orbiting companion, or entity) against solid impassable
  * obstacles (cottages, church, school, mill, stone walls, dense forests, haystacks,
@@ -812,6 +921,14 @@ export function collideCircleWithObstacles(
       if (obs.shape === 'box') {
         const hw = obs.halfW || 40;
         const hh = obs.halfH || 40;
+        if (
+          x - obs.x >= hw + r ||
+          obs.x - x >= hw + r ||
+          y - obs.y >= hh + r ||
+          obs.y - y >= hh + r
+        ) {
+          continue;
+        }
         const minX = obs.x - hw;
         const maxX = obs.x + hw;
         const minY = obs.y - hh;
@@ -865,7 +982,9 @@ export function collideCircleWithObstacles(
         const or = obs.radius || 30;
         const reach = or + r;
         const dx = x - obs.x;
+        if (dx >= reach || dx <= -reach) continue;
         const dy = y - obs.y;
+        if (dy >= reach || dy <= -reach) continue;
         const distSq = dx * dx + dy * dy;
         if (distSq < reach * reach) {
           const dist = Math.sqrt(distSq) || 1;
@@ -889,13 +1008,15 @@ export function collideCircleWithObstacles(
   }
 
   if (decor && decor.length > 0) {
-    for (let i = 0; i < decor.length; i++) {
-      const dec = decor[i];
-      if (!isSolidDecorObstacle(dec)) continue;
+    const solidDecor = getFilteredDecorCache(decor).solidObstacles;
+    for (let i = 0; i < solidDecor.length; i++) {
+      const dec = solidDecor[i];
       const dr = Math.max(10, dec.radius || 24);
       const reach = dr + r;
       const dx = x - dec.x;
+      if (dx >= reach || dx <= -reach) continue;
       const dy = y - dec.y;
+      if (dy >= reach || dy <= -reach) continue;
       const distSq = dx * dx + dy * dy;
       if (distSq < reach * reach) {
         const dist = Math.sqrt(distSq) || 1;
@@ -930,30 +1051,54 @@ function segmentIntersectsRect(
   maxX: number,
   maxY: number,
 ): boolean {
+  // Fast AABB reject before Liang-Barsky division
+  if (
+    (x1 < minX && x2 < minX) ||
+    (x1 > maxX && x2 > maxX) ||
+    (y1 < minY && y2 < minY) ||
+    (y1 > maxY && y2 > maxY)
+  ) {
+    return false;
+  }
+
   const dx = x2 - x1;
   const dy = y2 - y1;
   let t0 = 0;
   let t1 = 1;
 
-  const p = [-dx, dx, -dy, dy];
-  const q = [x1 - minX, maxX - x1, y1 - minY, maxY - y1];
-
-  for (let i = 0; i < 4; i++) {
-    const pi = p[i];
-    const qi = q[i];
-    if (Math.abs(pi) < 1e-8) {
-      if (qi < 0) return false;
-    } else {
-      const t = qi / pi;
-      if (pi < 0) {
-        if (t > t1) return false;
-        if (t > t0) t0 = t;
-      } else {
-        if (t < t0) return false;
-        if (t < t1) t1 = t;
-      }
+  // Unrolled Liang-Barsky 4-edge check (zero array allocations)
+  if (Math.abs(dx) < 1e-8) {
+    if (x1 < minX || x1 > maxX) return false;
+  } else {
+    const invDx = 1 / dx;
+    let tNear = (minX - x1) * invDx;
+    let tFar = (maxX - x1) * invDx;
+    if (tNear > tFar) {
+      const tmp = tNear;
+      tNear = tFar;
+      tFar = tmp;
     }
+    if (tNear > t0) t0 = tNear;
+    if (tFar < t1) t1 = tFar;
+    if (t0 > t1) return false;
   }
+
+  if (Math.abs(dy) < 1e-8) {
+    if (y1 < minY || y1 > maxY) return false;
+  } else {
+    const invDy = 1 / dy;
+    let tNear = (minY - y1) * invDy;
+    let tFar = (maxY - y1) * invDy;
+    if (tNear > tFar) {
+      const tmp = tNear;
+      tNear = tFar;
+      tFar = tmp;
+    }
+    if (tNear > t0) t0 = tNear;
+    if (tFar < t1) t1 = tFar;
+    if (t0 > t1) return false;
+  }
+
   return t0 <= t1;
 }
 
@@ -966,6 +1111,14 @@ function segmentIntersectsCircle(
   cy: number,
   r: number,
 ): boolean {
+  if (
+    (x1 <= cx - r && x2 <= cx - r) ||
+    (x1 >= cx + r && x2 >= cx + r) ||
+    (y1 <= cy - r && y2 <= cy - r) ||
+    (y1 >= cy + r && y2 >= cy + r)
+  ) {
+    return false;
+  }
   const dx = x2 - x1;
   const dy = y2 - y1;
   const lenSq = dx * dx + dy * dy;
@@ -1024,9 +1177,9 @@ export function hasTerrainLineOfSight(
   }
 
   if (decor && decor.length > 0) {
-    for (let i = 0; i < decor.length; i++) {
-      const dec = decor[i];
-      if (!isSolidDecorObstacle(dec)) continue;
+    const solidDecor = getFilteredDecorCache(decor).solidObstacles;
+    for (let i = 0; i < solidDecor.length; i++) {
+      const dec = solidDecor[i];
       const r = Math.max(8, (dec.radius || 24) - 4);
       if (segmentIntersectsCircle(x1, y1, x2, y2, dec.x, dec.y, r)) {
         return false;
@@ -1116,6 +1269,18 @@ export const MARCH_THAW_ROOF_ZONES: MarchRoofZone[] = [
   },
 ];
 
+let ROOF_UNION_MIN_X = Infinity;
+let ROOF_UNION_MAX_X = -Infinity;
+let ROOF_UNION_MIN_Y = Infinity;
+let ROOF_UNION_MAX_Y = -Infinity;
+for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
+  const z = MARCH_THAW_ROOF_ZONES[i];
+  if (z.minX < ROOF_UNION_MIN_X) ROOF_UNION_MIN_X = z.minX;
+  if (z.maxX > ROOF_UNION_MAX_X) ROOF_UNION_MAX_X = z.maxX;
+  if (z.minY < ROOF_UNION_MIN_Y) ROOF_UNION_MIN_Y = z.minY;
+  if (z.maxY > ROOF_UNION_MAX_Y) ROOF_UNION_MAX_Y = z.maxY;
+}
+
 /**
  * Returns the roof occlusion zone if an entity at (x, y) is walking behind a building roof
  * and should be occluded by the roof with a semi-transparent silhouette, or null otherwise.
@@ -1128,23 +1293,31 @@ export function isEntityBehindMarchRoof(
   radius = 18,
 ): MarchRoofZone | null {
   if (activeLevelId === 0) {
-    for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
-      const z = MARCH_THAW_ROOF_ZONES[i];
-      if (
-        x + radius * 0.5 >= z.minX &&
-        x - radius * 0.5 <= z.maxX &&
-        y >= z.minY &&
-        y <= z.maxY
-      ) {
-        return z;
+    const halfR = radius * 0.5;
+    if (
+      y >= ROOF_UNION_MIN_Y &&
+      y <= ROOF_UNION_MAX_Y &&
+      x + halfR >= ROOF_UNION_MIN_X &&
+      x - halfR <= ROOF_UNION_MAX_X
+    ) {
+      for (let i = 0; i < MARCH_THAW_ROOF_ZONES.length; i++) {
+        const z = MARCH_THAW_ROOF_ZONES[i];
+        if (
+          x + halfR >= z.minX &&
+          x - halfR <= z.maxX &&
+          y >= z.minY &&
+          y <= z.maxY
+        ) {
+          return z;
+        }
       }
     }
   }
 
   if (decor && decor.length > 0) {
-    for (let i = 0; i < decor.length; i++) {
-      const dec = decor[i];
-      if (!dec || (dec.type !== 'chalupa' && dec.type !== 'church')) continue;
+    const roofItems = getFilteredDecorCache(decor).roofItems;
+    for (let i = 0; i < roofItems.length; i++) {
+      const { dec, index } = roofItems[i];
       const sc = dec.scale || 1;
       const roofHalfW = (dec.type === 'church' ? 68 : 56) * sc;
       const roofTopOffset = (dec.type === 'church' ? 115 : 88) * sc;
@@ -1155,7 +1328,7 @@ export function isEntityBehindMarchRoof(
         y <= dec.y - roofBottomOffset
       ) {
         return {
-          id: `decor-roof-${i}`,
+          id: `decor-roof-${index}`,
           cx: dec.x,
           cy: dec.y,
           svgW: 112 * sc,
@@ -1197,17 +1370,20 @@ export function sanitizeArenaSpawnPoint(
     radius: Math.max(14, radius),
   };
 
+  const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
+
   for (let pass = 0; pass < 3; pass++) {
     if (activeLevelId === 0) {
       resolveMarchThawObstacles(dummy, false);
     }
-    if (decor && decor.length > 0) {
-      for (let i = 0; i < decor.length; i++) {
-        const dec = decor[i];
-        if (!isSolidDecorObstacle(dec)) continue;
+    if (solidDecor && solidDecor.length > 0) {
+      for (let i = 0; i < solidDecor.length; i++) {
+        const dec = solidDecor[i];
         const reach = (dec.radius || 24) + dummy.radius + 4;
         const dx = dummy.x - dec.x;
+        if (dx >= reach || dx <= -reach) continue;
         const dy = dummy.y - dec.y;
+        if (dy >= reach || dy <= -reach) continue;
         const distSq = dx * dx + dy * dy;
         if (distSq < reach * reach) {
           const dist = Math.sqrt(distSq) || 1;

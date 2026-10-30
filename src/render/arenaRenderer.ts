@@ -684,6 +684,32 @@ export class ArenaRenderer {
   private occludedDropsScratch: any[] = [];
   private activeRoofZonesScratch: MarchRoofZone[] = [];
 
+  private registerRoofZone(zone: MarchRoofZone): void {
+    const activeRoofZones = this.activeRoofZonesScratch;
+    for (let i = 0; i < activeRoofZones.length; i++) {
+      if (activeRoofZones[i].id === zone.id) return;
+    }
+    activeRoofZones.push(zone);
+  }
+
+  private checkRoofEntity(
+    ent: any,
+    levelId: number,
+    decor: any[] | undefined,
+    viewLeft: number,
+    viewTop: number,
+    viewRight: number,
+    viewBottom: number
+  ): void {
+    if (!ent || ent.dead || ent.isDefeated || typeof ent.draw !== 'function') return;
+    if (!isInView(ent.x, ent.y, (ent.radius || 24) + 60, viewLeft, viewTop, viewRight, viewBottom)) return;
+    const zone = isEntityBehindMarchRoof(ent.x, ent.y, levelId, decor);
+    if (zone) {
+      this.registerRoofZone(zone);
+      this.occludedEntitiesScratch.push(ent);
+    }
+  }
+
   /**
    * When the player, NPCs, enemies, or drops pass behind a cottage roof or church spire,
    * draws those roofs over them and renders a subtle 32%-opacity silhouette of occluded characters.
@@ -704,30 +730,13 @@ export class ArenaRenderer {
     occludedDrops.length = 0;
     activeRoofZones.length = 0;
 
-    const registerZone = (zone: MarchRoofZone) => {
-      for (let i = 0; i < activeRoofZones.length; i++) {
-        if (activeRoofZones[i].id === zone.id) return;
-      }
-      activeRoofZones.push(zone);
-    };
-
-    const checkEntity = (ent: any) => {
-      if (!ent || ent.dead || ent.isDefeated || typeof ent.draw !== 'function') return;
-      if (!isInView(ent.x, ent.y, (ent.radius || 24) + 60, viewLeft, viewTop, viewRight, viewBottom)) return;
-      const zone = isEntityBehindMarchRoof(ent.x, ent.y, levelId, decor);
-      if (zone) {
-        registerZone(zone);
-        occludedEntities.push(ent);
-      }
-    };
-
-    checkEntity(engine.player);
-    checkEntity(engine.grandfather);
-    checkEntity(engine.companion);
+    this.checkRoofEntity(engine.player, levelId, decor, viewLeft, viewTop, viewRight, viewBottom);
+    this.checkRoofEntity(engine.grandfather, levelId, decor, viewLeft, viewTop, viewRight, viewBottom);
+    this.checkRoofEntity(engine.companion, levelId, decor, viewLeft, viewTop, viewRight, viewBottom);
 
     if (engine.enemies) {
       for (let i = 0; i < engine.enemies.length; i++) {
-        checkEntity(engine.enemies[i]);
+        this.checkRoofEntity(engine.enemies[i], levelId, decor, viewLeft, viewTop, viewRight, viewBottom);
       }
     }
 
@@ -738,7 +747,7 @@ export class ArenaRenderer {
         if (!isInView(d.x, d.y, 40, viewLeft, viewTop, viewRight, viewBottom)) continue;
         const zone = isEntityBehindMarchRoof(d.x, d.y, levelId, decor);
         if (zone) {
-          registerZone(zone);
+          this.registerRoofZone(zone);
           occludedDrops.push(d);
         }
       }

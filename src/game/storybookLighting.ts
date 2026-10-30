@@ -212,13 +212,17 @@ export function isRayBlockedByOccluders(
 ): boolean {
   if (!occluders || occluders.length === 0) return false;
 
+  const midX = (x1 + x2) * 0.5;
+  const midY = (y1 + y2) * 0.5;
+  const halfRay = Math.hypot(x2 - x1, y2 - y1) * 0.5;
+
   for (let i = 0; i < occluders.length; i++) {
     const occ = occluders[i];
     const occRad = occ.radius || (occ.width ? Math.max(occ.width, occ.height || 0) * 0.75 : 40);
-    const midX = (x1 + x2) * 0.5;
-    const midY = (y1 + y2) * 0.5;
-    const halfRay = Math.hypot(x2 - x1, y2 - y1) * 0.5;
-    if (Math.hypot(occ.x - midX, occ.y - midY) > halfRay + occRad) {
+    const dx = occ.x - midX;
+    const dy = occ.y - midY;
+    const maxDist = halfRay + occRad;
+    if (dx * dx + dy * dy > maxDist * maxDist) {
       continue;
     }
 
@@ -638,18 +642,19 @@ export function computeSurfaceReliefHighlight(
 
     const dx = src.x - surfaceX;
     const dy = src.y - surfaceY;
-    const dist = Math.hypot(dx, dy);
+    const maxDist = reach + surfaceRadius;
+    const distSq = dx * dx + dy * dy;
 
-    if (dist < reach + surfaceRadius) {
-      const zL = 35;
-      const dist3D = Math.hypot(dx, dy, zL);
-      const att = Math.max(0, 1 - dist3D / (reach + surfaceRadius));
+    if (distSq < maxDist * maxDist) {
+      const dist3D = Math.sqrt(distSq + 1225); // zL = 35 -> 35 * 35 = 1225
+      const att = Math.max(0, 1 - dist3D / maxDist);
       const weight = att * (src.intensity ?? 1);
 
       if (weight > 0.04) {
+        const dist = Math.sqrt(distSq) || 1;
         totalWeight += weight;
-        weightedDirX += (dx / (dist || 1)) * weight;
-        weightedDirY += (dy / (dist || 1)) * weight;
+        weightedDirX += (dx / dist) * weight;
+        weightedDirY += (dy / dist) * weight;
         if (weight > maxIntensity) {
           maxIntensity = weight;
           dominantColor = src.color || '#FEF08A';

@@ -662,10 +662,7 @@ export class VirtualLeaderSnowmanHorde {
               isDamage: true,
               dead: false,
               category: 'hunterDamage',
-              update(stepDt: number) {
-                this.y += (this.vy ?? -45) * stepDt;
-                this.life -= stepDt;
-              },
+              update: stepPuddleDamageText,
             });
           }
         }
@@ -788,4 +785,9 @@ export class VirtualLeaderSnowmanHorde {
     this.activeCount = 0;
     this.waveActive = false;
   }
+}
+
+function stepPuddleDamageText(this: any, stepDt: number): void {
+  this.y += (this.vy ?? -45) * stepDt;
+  this.life -= stepDt;
 }
