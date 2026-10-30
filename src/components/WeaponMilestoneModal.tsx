@@ -286,15 +286,18 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
       <div
         className="panel"
         style={{
-          maxWidth: '780px',
+          maxWidth: 'min(94vw, 760px)',
           width: '100%',
+          maxHeight: 'min(90vh, 90dvh)',
+          overflowY: 'auto',
           background: '#FAF6ED',
           border: '3px solid #1C1610',
           borderRadius: 16,
-          padding: '24px',
+          padding: 'clamp(14px, 3vw, 24px)',
           boxShadow: '6px 6px 0px #1C1610, 0 12px 28px rgba(0,0,0,0.4)',
           position: 'relative',
           textAlign: 'center',
+          boxSizing: 'border-box',
         }}
       >
         <LadaCardCorners variant="default" showBottomCorners />
@@ -358,8 +361,8 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 16,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+            gap: 14,
             textAlign: 'left',
           }}
         >

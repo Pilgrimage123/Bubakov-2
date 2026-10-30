@@ -10,6 +10,7 @@ import {
   shouldDrawCombatText,
   isCombatTextCategoryEnabled,
   isBossWarningBanner,
+  isDirectorWarningBanner,
   shouldShowWarningBanner,
   setCombatTextSettings,
   CombatTextCategory,
@@ -201,9 +202,15 @@ describe('Bojové plovoucí texty a varování (ADR 0016)', () => {
 
       // Režisér výpravy a přepadení
       expect(isBossWarningBanner('⚠️ Kradmé kroky za humny... Pozor na přepadení a drtivý přepad!')).toBe(false);
+      expect(isDirectorWarningBanner('⚠️ Kradmé kroky za humny... Pozor na přepadení a drtivý přepad!')).toBe(true);
       expect(isBossWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový (Hejkal)!')).toBe(false);
+      expect(isDirectorWarningBanner('⚠️ ELITNÍ BUBÁK: Vichřicový (Hejkal)!')).toBe(true);
       expect(isBossWarningBanner('🌑 Země puká: Objevila se Bubácká díra! Udrž rituál pro poklad!')).toBe(false);
+      expect(isDirectorWarningBanner('🌑 Země puká: Objevila se Bubácká díra! Udrž rituál pro poklad!')).toBe(true);
       expect(isBossWarningBanner('⚠️ Čas vypršel! Z Bubácké díry se vyvalil velký rozmrzelý bubák!')).toBe(false);
+      expect(isDirectorWarningBanner('⚠️ Čas vypršel! Z Bubácké díry se vyvalil velký rozmrzelý bubák!')).toBe(true);
+      expect(isDirectorWarningBanner('👑 PÝCHA PŘEDCHÁZÍ PÁD: Přichází Dvojče minibosse!')).toBe(true);
+      expect(isDirectorWarningBanner('⚠️ BLÍŽÍ SE ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️')).toBe(false);
     });
 
     it('vypnutí bossWarningBanners spolehlivě skryje varování bossů, ale zachová varování výpravy', () => {

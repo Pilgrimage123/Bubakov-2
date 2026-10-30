@@ -365,12 +365,12 @@ export const AppModals: React.FC<AppModalsProps> = ({
       {unlockNotice &&
         isGameEffectEnabled('unlockNotificationsEnabled') &&
         isCombatTextCategoryEnabled('unlocksMilestones', meta.combatTextSettings) && (
-        <div className="unlock-toast-banner" onClick={onDismissUnlockNotice}>
-          <div style={{ fontSize: '1.2rem', color: 'var(--mustard)', marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            {unlockNotice.icon && <GameIcon icon={unlockNotice.icon} size={20} />}
+        <div className="unlock-toast-banner" onClick={onDismissUnlockNotice} role="alert" title="Kliknutím zavřít oznámení">
+          <div className="unlock-toast-title">
+            {unlockNotice.icon && <GameIcon icon={unlockNotice.icon} size={18} style={{ flexShrink: 0 }} />}
             <span>{unlockNotice.title}</span>
           </div>
-          <div style={{ fontSize: '0.92rem', fontWeight: 700 }}>
+          <div className="unlock-toast-desc">
             {unlockNotice.desc}
           </div>
         </div>

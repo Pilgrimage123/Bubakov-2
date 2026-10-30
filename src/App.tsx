@@ -68,6 +68,7 @@ import {
   type CombatTextPreset,
   shouldDrawCombatText,
   shouldShowWarningBanner,
+  isDirectorWarningBanner,
   isCombatTextCategoryEnabled,
   inferCombatTextCategory,
   type CombatTextSettings,
@@ -4866,9 +4867,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               directorRef.current.step(dt, directorAdapter);
               engine.activeHazards = directorRef.current.hazards;
               engine.bubackaDira = directorRef.current.bubackaDira;
-              if (directorRef.current.telegraphMessage && runStatsRef.current.warningBanner !== directorRef.current.telegraphMessage) {
-                runStatsRef.current.warningBanner = directorRef.current.telegraphMessage;
-                setRunStats((s) => ({ ...s, warningBanner: directorRef.current!.telegraphMessage || '' }));
+              if (directorRef.current.telegraphMessage) {
+                if (runStatsRef.current.warningBanner !== directorRef.current.telegraphMessage) {
+                  const currentTelegraph = directorRef.current.telegraphMessage;
+                  runStatsRef.current.warningBanner = currentTelegraph;
+                  setRunStats((s) => ({ ...s, warningBanner: currentTelegraph }));
+                  const autoDismissMs = Math.max(2200, Math.round(((directorRef.current.telegraphTimer || 2.2) + 0.3) * 1000));
+                  setTimeout(() => {
+                    if (runStatsRef.current.warningBanner === currentTelegraph) {
+                      runStatsRef.current.warningBanner = '';
+                      setRunStats((s) => ({ ...s, warningBanner: '' }));
+                    }
+                  }, autoDismissMs);
+                }
+              } else if (
+                runStatsRef.current.warningBanner &&
+                isDirectorWarningBanner(runStatsRef.current.warningBanner)
+              ) {
+                runStatsRef.current.warningBanner = '';
+                setRunStats((s) => ({ ...s, warningBanner: '' }));
               }
             }
 
@@ -13607,9 +13624,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           {runStats.warningBanner &&
             isGameEffectEnabled('effectsEnabled') &&
             shouldShowWarningBanner(runStats.warningBanner, meta.combatTextSettings || DEFAULT_COMBAT_TEXT_SETTINGS) && (
-              <div id="boss-warning-banner" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <GameIcon icon="warning" size={22} />
-                <span>{runStats.warningBanner.replace(/^[^\p{L}\p{N}]+/u, '').trim()}</span>
+              <div id="boss-warning-banner" role="status" aria-live="polite">
+                <GameIcon icon="warning" size={18} style={{ flexShrink: 0 }} />
+                <span className="boss-warning-text">{runStats.warningBanner.replace(/^[^\p{L}\p{N}]+/u, '').trim()}</span>
               </div>
           )}
 

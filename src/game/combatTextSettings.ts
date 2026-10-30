@@ -236,13 +236,22 @@ export function inferCombatTextCategory(text: string): CombatTextCategory {
 }
 
 /**
+ * Rozpozná, zda varovný text na obrazovce patří k události režiséra výpravy (kradmé kroky, bubácká díra, přepadení, elitní bubák).
+ */
+export function isDirectorWarningBanner(text: string): boolean {
+  const norm = String(text || '').trim();
+  if (!norm) return false;
+  return /(?:elitn[íi] bub[áa]k|kradm[ée] kroky|dvoj[čc]e minibosse|bub[áa]ck[áa] d[íi]ra|[čc]as vypr[šs]el.*d[íi]ry|ritu[áa]l dokon[čc]en|p[řr]epad|p[ýy]cha p[řr]edch[áa]z[íi] p[áa]d)/i.test(norm);
+}
+
+/**
  * Rozpozná, zda varovný text na obrazovce patří k bossovi (příchod, schopnost nebo zuřivost).
  */
 export function isBossWarningBanner(text: string): boolean {
   const norm = String(text || '').trim();
   if (!norm) return false;
   // Pokud jde o elitního bubáka, přepad režiséra nebo bubáckou díru, jedná se o varování výpravy
-  if (/(?:elitn[íi] bub[áa]k|kradm[ée] kroky|dvoj[čc]e minibosse|bub[áa]ck[áa] d[íi]ra|[čc]as vypr[šs]el.*d[íi]ry|ritu[áa]l dokon[čc]en|p[řr]epad)/i.test(norm)) {
+  if (isDirectorWarningBanner(norm)) {
     return false;
   }
   return /(?:šéf úrovně|level boss|miniboss|midboss|morana|mlynář|mlynar|čert|cert|hejkal|obryně|obr|rytíř|rytir|drak|bílá paní|bila pani|klekánice|polednice|vodník|vodnik|meluzína|ohnivec|zbrojnoš|noční můra|sněhulák|pekelné mletí|stavid|povode[ňn]|moučný oblak|prokletí hlásky|odražená hlava|tři hlavy probuzeny|rampouchy ze stropu|pukající žula|probuzení hvozdu|čertovské rejdy|smrtící mraz|pokořen|vítězství|victory|beware.*boss|awakened frog)/i.test(norm);
