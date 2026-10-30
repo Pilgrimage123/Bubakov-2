@@ -3,6 +3,8 @@ import { sound } from '../audio';
 import { LEVEL_UNLOCKS } from '../data/levelUnlocks';
 import { GAME_LEVELS } from '../data/levels';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import type { GameLevelId, LevelProgress } from '../types';
 
@@ -75,9 +77,11 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
           flexDirection: 'column',
           textAlign: 'left',
           padding: '20px 22px',
+          position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         {/* MODAL HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -89,6 +93,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             </span>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon={progress.spoiledIcon} size={36} />
               <h2
                 style={{

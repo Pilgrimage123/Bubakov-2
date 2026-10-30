@@ -1187,23 +1187,23 @@ body {
 
 #boss-warning-banner {
   position: absolute;
-  top: 80px;
+  bottom: max(116px, calc(110px + env(safe-area-inset-bottom, 0px)));
   left: 50%;
   transform: translate(-50%, 0);
-  width: min(92vw, 1100px);
+  width: min(88vw, 760px);
   box-sizing: border-box;
   background: var(--blood-red);
   color: var(--parchment);
-  border: 4px solid var(--ink);
+  border: 3.5px solid var(--ink);
   border-radius: 12px;
-  padding: 12px 30px;
-  font-size: 1.8rem;
+  padding: 9px 22px;
+  font-size: clamp(1.1rem, 2.1vw, 1.45rem);
   font-weight: 900;
   line-height: 1.15;
   text-align: center;
   overflow-wrap: anywhere;
   text-shadow: 2px 2px 0px var(--ink);
-  box-shadow: 8px 8px 0px var(--ink);
+  box-shadow: 6px 6px 0px var(--ink);
   z-index: 15;
   pointer-events: none;
   animation: popIn 0.4s ease-out, bossPulse 1s alternate infinite;

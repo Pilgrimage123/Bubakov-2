@@ -5,6 +5,8 @@ import { Lada, drawValecniceCompanion } from '../render/ladaRenderer';
 import { GameIcon } from './GameIcon';
 import { WEAPON_UNLOCKS, type WeaponProgress } from '../data/weaponUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 
 export const ValecnicePreview: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -560,6 +562,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
             <div
@@ -608,9 +611,13 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
                   fontSize: '1.75rem',
                   color: '#8B1E0F',
                   textShadow: '1px 1px 0 rgba(255, 255, 255, 0.8)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
                 }}
               >
-                {progress.spoiledName}
+                <LadaFolkFlower variant="buttercup" size={18} spin />
+                <span>{progress.spoiledName}</span>
               </h2>
               <div style={{ fontWeight: 900, color: '#3D2210', fontSize: '0.98rem' }}>
                 {progress.spoiledTitle}

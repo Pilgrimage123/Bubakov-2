@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface HalapartnaIconProps {
   size?: string | number;
@@ -14,7 +15,7 @@ export const HalapartnaIcon: React.FC<HalapartnaIconProps> = ({
   ...props
 }) => {
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 120 120"
       width={size}
@@ -287,6 +288,6 @@ export const HalapartnaIcon: React.FC<HalapartnaIconProps> = ({
           <circle cx="93.5" cy="14" r="1.6" fill="#FFFFFF" className="lada-anim-glint" />
         </g>
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

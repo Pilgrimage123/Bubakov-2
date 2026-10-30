@@ -15,6 +15,8 @@ export function createMockCanvasContext(width = 1280, height = 720): CanvasRende
     arc: vi.fn(),
     ellipse: vi.fn(),
     rect: vi.fn(),
+    roundRect: vi.fn(),
+    clip: vi.fn(),
     bezierCurveTo: vi.fn(),
     quadraticCurveTo: vi.fn(),
     setLineDash: vi.fn(),

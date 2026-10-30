@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface KyselaOkurkaIconProps {
   size?: string | number;
@@ -15,7 +16,7 @@ export const KyselaOkurkaIcon: React.FC<KyselaOkurkaIconProps> = ({
 }) => {
   const s = typeof size === 'number' ? `${size}px` : size;
   return (
-    <svg
+    <LadaCanvasSvg
       width={s}
       height={s}
       viewBox="0 0 64 64"
@@ -58,6 +59,6 @@ export const KyselaOkurkaIcon: React.FC<KyselaOkurkaIconProps> = ({
         {/* Shiny brine glint */}
         <circle cx="53" cy="27" r="2.2" fill="#A7F3D0" className="lada-anim-glint" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

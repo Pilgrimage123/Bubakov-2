@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface FajfkaIconProps {
   size?: string | number;
@@ -14,7 +15,7 @@ export const FajfkaIcon: React.FC<FajfkaIconProps> = ({
   ...props
 }) => {
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 120 100"
       width={size}
@@ -356,6 +357,6 @@ export const FajfkaIcon: React.FC<FajfkaIconProps> = ({
           />
         </g>
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

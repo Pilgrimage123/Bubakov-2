@@ -3,6 +3,8 @@ import { sound } from '../audio';
 import { GameIcon } from './GameIcon';
 import { getWeaponProgress, type WeaponProgress } from '../data/weaponUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { WEAPONS_WITH_MILESTONES } from '../data/weaponMilestones';
 
 export interface ArsenalModalProps {
@@ -41,9 +43,11 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
           maxHeight: '88vh',
           display: 'flex',
           flexDirection: 'column',
+          position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2
@@ -56,8 +60,10 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
                 gap: '10px',
               }}
             >
+              <LadaFolkFlower variant="buttercup" size={22} spin />
               <GameIcon icon="sword" size={28} />
               Zbrojnice &amp; Knihovna zbraní Bubákova
+              <LadaFolkFlower variant="poppy" size={22} spin />
             </h2>
             <LadaBotanicalFlourish height={18} />
           </div>
@@ -181,12 +187,14 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
                   minWidth: 0,
                   maxWidth: '100%',
                   overflowWrap: 'break-word',
+                  position: 'relative',
                 }}
                 onClick={() => {
                   sound.coin();
                   onInspectWeapon(prog);
                 }}
               >
+                <LadaCardCorners variant={isUnlocked ? 'default' : 'locked'} showBottomCorners={true} />
                 <span
                   className={isUnlocked ? 'char-card-unlocked-badge' : 'char-card-locked-badge'}
                   style={{

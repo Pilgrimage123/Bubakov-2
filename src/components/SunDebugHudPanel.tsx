@@ -110,7 +110,7 @@ export const SunDebugHudPanel: React.FC<SunDebugHudPanelProps> = ({
     <aside
       id="sun-debug-hud-panel"
       aria-label="Ladicí panel slunce v popředí"
-      className="fixed left-3 top-[146px] z-40 w-[332px] select-none rounded-lg border-2 border-[#231409] bg-[#1E1915]/92 p-3 text-[#FAF6ED] shadow-[3px_3px_0_#231409] backdrop-blur-xs"
+      className="fixed bottom-14 left-3 z-40 w-[332px] select-none rounded-lg border-2 border-[#231409] bg-[#1E1915]/92 p-3 text-[#FAF6ED] shadow-[3px_3px_0_#231409] backdrop-blur-xs"
     >
       <div className="flex items-center justify-between gap-2 border-b border-[#F59E0B]/30 pb-2">
         <div className="min-w-0">

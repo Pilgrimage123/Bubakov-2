@@ -109,6 +109,7 @@ import {
   type ArenaRenderMetrics,
 } from './render/arenaRenderer';
 import {
+  renderSunForegroundOverlay,
   createDefaultSunOverlayConfig,
   createReusableSunFrameState,
   type SunOverlayConfig,
@@ -170,7 +171,7 @@ import { LadaCartouche } from './components/LadaCartouche';
 import { LadaCoverScene } from './components/LadaCoverScene';
 import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
-import { LadaHudBotanicalDecor } from './components/LadaHudBotanicalDecor';
+import { LadaHudBotanicalDecor, LadaFolkFlower, LadaFloralGarland } from './components/LadaHudBotanicalDecor';
 import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
@@ -1541,6 +1542,13 @@ export default function App() {
   const [isBestiaryOpen, setIsBestiaryOpen] = useState(false);
   const [isPlanOpen, setIsPlanOpen] = useState(false);
   const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const [hideHowToPlayCard, setHideHowToPlayCard] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('bubakov_hide_how_to_play_card') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
   const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -2218,6 +2226,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const arenaRenderOptionsRef = useRef<ArenaRenderOptions>({});
   const sunOverlayConfigRef = useRef<SunOverlayConfig>(createDefaultSunOverlayConfig());
   const sunFrameStateRef = useRef<SunComputedFrameState>(createReusableSunFrameState());
+  const sunForegroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const latestFpsRef = useRef<number>(60);
   const isUrlPerfOverlay = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -3391,8 +3400,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     // Seed a readable, combat-friendly composition instead of filling the
     // starting area with equally prominent decorative objects.
     const decor = seedArenaDecor(chosenLevel);
+    const initialPhase = getCurrentDayPhase(0, chosenLevelId);
+    const initialIsNight =
+      initialPhase.id === 'night' ||
+      initialPhase.id === 'dusk' ||
+      initialPhase.id === 'midnight';
     arenaChunkCacheRef.current = new ChunkBitmapCache({ chunkSize: 512 });
-    arenaChunkCacheRef.current.build(decor, chosenLevel.season, chosenLevel.theme, false);
+    arenaChunkCacheRef.current.build(decor, chosenLevel.season, chosenLevel.theme, initialIsNight);
 
     // Start from the engine's canonical defaults, then apply only values that
     // are specific to the selected level/run. This keeps simulation defaults
@@ -3489,7 +3503,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Level 0: Předjaří (Denní tání) – 2 vrány
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        engineRef.current.enemies.push(createEnemyInstance('vrana', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.7));
+        const sp = sanitizeArenaSpawnPoint(player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 20, 0);
+        engineRef.current.enemies.push(createEnemyInstance('vrana', sp.x, sp.y, 0.7));
       }
     } else if (chosenLevelId === 1) {
       // Level 1: Předjaří (Noční mrazy) – 2 mrazoví skřítci
@@ -4629,6 +4644,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 engine.grandfather.vy = dirY * moveSpeed;
                 engine.grandfather.x += engine.grandfather.vx * dt;
                 engine.grandfather.y += engine.grandfather.vy * dt;
+                if (engine.activeLevelId === 0) {
+                  resolveMarchThawObstacles(engine.grandfather, false);
+                }
                 if (Math.abs(dx) > 3) {
                   engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
                 }
@@ -5139,10 +5157,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     const count = isPhase2 ? 3 : 2;
                     for (let i = 0; i < count; i++) {
                       const a = Math.random() * Math.PI * 2;
-                      engine.enemies.push(createEnemyInstance(
-                        'sazovy_rarach',
+                      const sp = sanitizeArenaSpawnPoint(
                         cert.x + Math.cos(a) * 110,
                         cert.y + Math.sin(a) * 110,
+                        18,
+                        engine.activeLevelId ?? 0
+                      );
+                      engine.enemies.push(createEnemyInstance(
+                        'sazovy_rarach',
+                        sp.x,
+                        sp.y,
                         isPhase2 ? 1.15 : 1.0
                       ));
                     }
@@ -5245,8 +5269,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setRunStats((s) => ({ ...s, warningBanner: '🌲 PROBUZENÍ HVOZDU! HEJKAL PŘIVOLÁVÁ LESNÍ ŠELMY!' }));
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
                   // Summon a forest skodnik & cemetery hound
-                  engine.enemies.push(createEnemyInstance('skodnik', hejkal.x + 80, hejkal.y, 1.1));
-                  engine.enemies.push(createEnemyInstance('cerny_pes', hejkal.x - 80, hejkal.y, 1.1));
+                  const p1 = sanitizeArenaSpawnPoint(hejkal.x + 80, hejkal.y, 22, engine.activeLevelId ?? 0);
+                  const p2 = sanitizeArenaSpawnPoint(hejkal.x - 80, hejkal.y, 22, engine.activeLevelId ?? 0);
+                  engine.enemies.push(createEnemyInstance('skodnik', p1.x, p1.y, 1.1));
+                  engine.enemies.push(createEnemyInstance('cerny_pes', p2.x, p2.y, 1.1));
                   for (let i = 0; i < 30; i++) {
                     emitParticle(engine.particles, () => ({
                       x: hejkal.x,
@@ -5429,7 +5455,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   // Forge sparks burst
                   for (let i = 0; i < 2; i++) {
                     const ang = Math.random() * Math.PI * 2;
-                    engine.enemies.push(createEnemyInstance('jiskrivec', mlynar.x + Math.cos(ang) * 80, mlynar.y + Math.sin(ang) * 80, 0.9));
+                    const sp = sanitizeArenaSpawnPoint(mlynar.x + Math.cos(ang) * 80, mlynar.y + Math.sin(ang) * 80, 20, engine.activeLevelId ?? 0);
+                    engine.enemies.push(createEnemyInstance('jiskrivec', sp.x, sp.y, 0.9));
                   }
                   // Flour & spark explosion
                   for (let i = 0; i < 25; i++) {
@@ -5538,7 +5565,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }));
                   }
                   // Spawn one jiskrivec
-                  engine.enemies.push(createEnemyInstance('jiskrivec', mlynar.x + (Math.random() - 0.5) * 120, mlynar.y + (Math.random() - 0.5) * 120, 0.8));
+                  const spM = sanitizeArenaSpawnPoint(mlynar.x + (Math.random() - 0.5) * 120, mlynar.y + (Math.random() - 0.5) * 120, 20, engine.activeLevelId ?? 0);
+                  engine.enemies.push(createEnemyInstance('jiskrivec', spM.x, spM.y, 0.8));
                 }
               }
             }
@@ -5556,8 +5584,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   pushDamageText(engine.texts, rytir.x, rytir.y - 70, '🗡️ PROKLETÍ HLÁSKY!', '#94A3B8', true);
                   setRunStats((s) => ({ ...s, warningBanner: '🗡️ PROKLETÍ HLÁSKY! BEZHLAVÝ RYTÍŘ CVÁLÁ PO BOJIŠTI!' }));
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
-                  engine.enemies.push(createEnemyInstance('zbrojnos', rytir.x + 90, rytir.y, 1.1));
-                  engine.enemies.push(createEnemyInstance('bila_pani', rytir.x - 90, rytir.y, 1.1));
+                  const pR1 = sanitizeArenaSpawnPoint(rytir.x + 90, rytir.y, 24, engine.activeLevelId ?? 0);
+                  const pR2 = sanitizeArenaSpawnPoint(rytir.x - 90, rytir.y, 24, engine.activeLevelId ?? 0);
+                  engine.enemies.push(createEnemyInstance('zbrojnos', pR1.x, pR1.y, 1.1));
+                  engine.enemies.push(createEnemyInstance('bila_pani', pR2.x, pR2.y, 1.1));
                   for (let i = 0; i < 28; i++) {
                     emitParticle(engine.particles, () => ({
                       x: rytir.x,
@@ -5644,8 +5674,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   pushDamageText(engine.texts, drak.x, drak.y - 85, '🐉 PROBUZENÍ VŠECH TŘÍ HLAV!', '#DC2626', true);
                   setRunStats((s) => ({ ...s, warningBanner: '🐉 VŠECHNY TŘI HLAVY PROBUZENY! OHEŇ, MRÁZ A VICHR KŘÍDEL!' }));
                   setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
-                  engine.enemies.push(createEnemyInstance('snehulak', drak.x + 110, drak.y, 1.15));
-                  engine.enemies.push(createEnemyInstance('nocni_mura', drak.x - 110, drak.y, 1.15));
+                  const pD1 = sanitizeArenaSpawnPoint(drak.x + 110, drak.y, 26, engine.activeLevelId ?? 0);
+                  const pD2 = sanitizeArenaSpawnPoint(drak.x - 110, drak.y, 26, engine.activeLevelId ?? 0);
+                  engine.enemies.push(createEnemyInstance('snehulak', pD1.x, pD1.y, 1.15));
+                  engine.enemies.push(createEnemyInstance('nocni_mura', pD2.x, pD2.y, 1.15));
                   for (let i = 0; i < 45; i++) {
                     const ang = Math.random() * Math.PI * 2;
                     const spd = 60 + Math.random() * 220;
@@ -5959,8 +5991,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 time: 0,
                 rescued: false,
               }, engine.pendingDropBank);
-              // Spawn wave of sprites harassing him (frost sprites in Stage 1, rarachs in later stages)
-              const chasnikHarasserId = (engine.activeLevelId ?? 0) === 0 ? 'mrazovy_skritek' : 'rarach';
+              // Spawn wave of sprites harassing him (frost sprites in Předjaří Stages 1-2, rarachs in later stages)
+              const activeLvlId = engine.activeLevelId ?? 0;
+              const chasnikHarasserId = activeLvlId === 0 || activeLvlId === 1 ? 'mrazovy_skritek' : 'rarach';
               for (let i = 0; i < 5; i++) {
                 const hPos = sanitizeArenaSpawnPoint(
                   cx + (Math.random() - 0.5) * 60,
@@ -7091,22 +7124,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               // Boss bar je řízený přímo živým bossem, takže reaguje i na běžné zásahy.
               // Dříve se aktualizoval hlavně při spawn/death událostech a během boje mohl zamrznout.
-              const activeBoss = engine.enemies.find(
-                (e) =>
-                  !e.isDefeated &&
-                  (e.isBoss || e.isMiniboss || e.category === 'bosses')
-              );
+              let activeBoss: any = null;
+              for (let bi = 0; bi < engine.enemies.length; bi++) {
+                const cand = engine.enemies[bi];
+                if (!cand.isDefeated && (cand.isBoss || cand.isMiniboss || cand.category === 'bosses')) {
+                  activeBoss = cand;
+                  break;
+                }
+              }
               let nextBossHpPct: number | null = null;
               let nextBossTitle = '';
               if (activeBoss) {
                 if (activeBoss.isMinibossFlockMember) {
-                  const flockMembers = engine.enemies.filter(
-                    (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead
-                  );
-                  const totalFlockHp = flockMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
+                  let totalFlockHp = 0;
+                  for (let fi = 0; fi < engine.enemies.length; fi++) {
+                    const fm: any = engine.enemies[fi];
+                    if (fm.isMinibossFlockMember && !fm.isDefeated && !fm.dead) {
+                      totalFlockHp += Math.max(0, fm.hp || 0);
+                    }
+                  }
                   const totalFlockMaxHp = (activeBoss.flockTotal || 9) * (activeBoss.maxHp || 38);
                   nextBossHpPct = Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100));
-                  nextBossTitle = '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran';
+                  nextBossTitle = activeBoss.isBoss
+                    ? '👑 🐦‍⬛ Hejno mrazivých vran'
+                    : '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran';
                 } else {
                   nextBossHpPct = Math.max(
                     0,
@@ -7855,19 +7896,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const prevEx = e.x;
               const prevEy = e.y;
               e.update(dt, player);
-              if (engine.activeLevelId === 0 && !e.isDefeated && !e.dead) {
-                const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || isActiveVirtualCrow) && !e.isGroundedForLoot);
-                if (!isFlyingEnemy) {
-                  const enemyWater = getMarchWaterAndFloeEffect(e.x, e.y, engine.uiTime);
-                  if (enemyWater.onFloe) {
-                    e.x += enemyWater.carryVx * dt;
-                    e.y += enemyWater.carryVy * dt;
-                  } else if (enemyWater.inOpenWater && !isAquaticEnemy(e)) {
-                    // Very strong river/pond slow (72% slow in river, 68% in pond) for non-flying, non-water enemies
-                    e.x = prevEx + (e.x - prevEx) * enemyWater.speedMultiplier + enemyWater.carryVx * dt;
-                    e.y = prevEy + (e.y - prevEy) * enemyWater.speedMultiplier + enemyWater.carryVy * dt;
+              if (engine.activeLevelId === 0) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  if (!isFlyingEnemy) {
+                    const enemyWater = getMarchWaterAndFloeEffect(e.x, e.y, engine.uiTime);
+                    if (enemyWater.onFloe) {
+                      e.x += enemyWater.carryVx * dt;
+                      e.y += enemyWater.carryVy * dt;
+                    } else if (enemyWater.inOpenWater && !isAquaticEnemy(e)) {
+                      // Very strong river/pond slow (72% slow in river, 68% in pond) for non-flying, non-water enemies
+                      e.x = prevEx + (e.x - prevEx) * enemyWater.speedMultiplier + enemyWater.carryVx * dt;
+                      e.y = prevEy + (e.y - prevEy) * enemyWater.speedMultiplier + enemyWater.carryVy * dt;
+                    }
+                    resolveMarchThawObstacles(e, false);
+                  } else {
+                    clampToMarchArenaBounds(e);
                   }
-                  resolveMarchThawObstacles(e, false);
                 } else {
                   clampToMarchArenaBounds(e);
                 }
@@ -8094,7 +8139,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               d.vy *= drag;
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
-              clampToMarchArenaBounds(d, 32);
+            }
+            if (engine.activeLevelId === 0) {
+              clampToMarchArenaBounds(d, 28);
             }
             const dist = Math.hypot(d.x - player.x, d.y - player.y);
 
@@ -8111,6 +8158,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
+              if (engine.activeLevelId === 0) {
+                clampToMarchArenaBounds(d, 28);
+              }
               const curDist = Math.hypot(d.x - player.x, d.y - player.y);
 
               if (curDist < player.radius + d.radius + 14 || dist < player.radius + d.radius + 14) {
@@ -8547,6 +8597,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         arenaOptions.deltaTimeSeconds = frameProfiler.frameDelta / 1000;
         arenaOptions.sunOverlayConfig = sunOverlayConfigRef.current;
         arenaOptions.sunFrameState = sunFrameStateRef.current;
+        arenaOptions.skipSunInArenaPass = Boolean(sunForegroundCanvasRef.current);
         latestFpsRef.current = frameProfiler.fps;
         const arenaMetrics = renderArena(ctx, engine, camera, arenaOptions, arenaMetricsRef.current);
 
@@ -8678,6 +8729,39 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
               const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
               ctx.drawImage(fogCanvas, sx - 120, sy - 120);
+            }
+          }
+        }
+
+        // Dedicated Stage 1 Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
+        const sunFgCanvas = sunForegroundCanvasRef.current;
+        if (sunFgCanvas) {
+          if (sunFgCanvas.width !== canvas.width) sunFgCanvas.width = canvas.width;
+          if (sunFgCanvas.height !== canvas.height) sunFgCanvas.height = canvas.height;
+          const shouldRenderSunFg = curLvl.id === 0 && currentGameState === 'playing' && !engine.cutscene;
+          if (shouldRenderSunFg || (sunFgCanvas as any).__dirty) {
+            const sunFgCtx = sunFgCanvas.getContext('2d');
+            if (sunFgCtx) {
+              sunFgCtx.clearRect(0, 0, sunFgCanvas.width, sunFgCanvas.height);
+              if (shouldRenderSunFg) {
+                const tSunOverlayStart = performance.now();
+                renderSunForegroundOverlay(
+                  sunFgCtx,
+                  canvas.width,
+                  canvas.height,
+                  camera.x,
+                  camera.y,
+                  engine.gameTime || 0,
+                  engine.uiTime || 0,
+                  sunOverlayConfigRef.current,
+                  sunFrameStateRef.current,
+                  'all'
+                );
+                frameProfiler.current.lighting += performance.now() - tSunOverlayStart;
+                (sunFgCanvas as any).__dirty = true;
+              } else {
+                (sunFgCanvas as any).__dirty = false;
+              }
             }
           }
         }
@@ -11046,7 +11130,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if ((this as any)._lastDamageText && (this as any)._lastDamageText.life > 0.45 && (this as any)._lastDamageTextType === type) {
             (this as any)._lastDamageText.addAmount?.(dmgInt);
           } else {
-            let dt: DamageText;
+            let dt: DamageText | null;
             if (options?.isHunterCounter) {
               dt = pushDamageText(engineRef.current?.texts, this.x, this.y - 25, `${dmgInt} 💥`, '#F97316', false, 'enemyDamage');
             } else if (type === 'food') {
@@ -11056,7 +11140,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
             (this as any)._lastDamageText = dt;
             (this as any)._lastDamageTextType = type;
-            engineRef.current.texts.push(dt);
           }
         }
 
@@ -11779,7 +11862,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 setRunStats((s) => ({
                   ...s,
                   bossHpPct: Math.max(0, Math.min(100, (totalFlockHp / Math.max(1, totalFlockMaxHp)) * 100)),
-                  bossTitle: '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran',
+                  bossTitle: remainingBoss.isBoss
+                    ? '👑 🐦‍⬛ Hejno mrazivých vran'
+                    : '👑 MINIBOSS: 🐦‍⬛ Hejno mrazivých vran',
                 }));
               } else {
                 setRunStats((s) => ({
@@ -12705,6 +12790,28 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }}
       />
 
+      {/* STAGE 1 FOREGROUND SUN OVERLAY CANVAS (CLOSEST LAYER TO CAMERA — ABOVE ARENA & HUD) */}
+      <canvas
+        id="sun-foreground-canvas"
+        ref={sunForegroundCanvasRef}
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          maxWidth: '100vw',
+          maxHeight: '100dvh',
+          pointerEvents: 'none',
+          zIndex: 28,
+          display:
+            gameState === 'playing' &&
+            (engineRef.current.activeLevelId ?? selectedLevelId) === 0
+              ? 'block'
+              : 'none',
+        }}
+      />
+
       {/* IN-GAME HUD */}
       {gameState === 'playing' && (
         <div id="hud">
@@ -12729,9 +12836,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     )}%`,
                   }}
                 />
-                <div className="bar-text">
-                  <span style={{ marginRight: '6px', display: 'inline-flex', verticalAlign: 'middle' }}><GameIcon icon="lion" size={16} /></span>
-                  KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}
+                <div className="bar-text" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                  <LadaFolkFlower variant="buttercup" size={15} spin />
+                  <span style={{ display: 'inline-flex', verticalAlign: 'middle' }}><GameIcon icon="lion" size={16} /></span>
+                  <span>KURÁŽ {Math.ceil(runStats.hp)} / {Math.ceil(runStats.maxHp)}</span>
+                  <LadaFolkFlower variant="cornflower" size={15} spin />
                 </div>
               </div>
               <div
@@ -12742,6 +12851,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               >
                 <PernicekIcon size={20} />
                 <span>{runStats.gingerbread}</span>
+                <LadaFolkFlower variant="carmine" size={13} withLeaves={false} spin />
               </div>
               <button
                 className="hud-pause-btn"
@@ -12753,7 +12863,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
             </div>
 
-            {/* Stats row with Day/Night clock indicator */}
+            {/* Stats row with Day/Night clock indicator & animated colorful folk flower dividers */}
             <div id="stats-row">
               <div className="stats-clock-block">
                 <span className="stats-clock-icon" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon={runStats.dayPhase.icon} size={22} /></span>
@@ -12764,15 +12874,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   </div>
                 </div>
               </div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <LadaFolkFlower variant="buttercup" size={15} spin />
+              </span>
               <div id="coins-text" style={{ color: '#111111', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 Krejcary: {runStats.coins} <KrejcarIcon size={18} />
               </div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <LadaFolkFlower variant="poppy" size={15} />
+              </span>
               <div id="souls-text" style={{ color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}><GameIcon icon="urn" size={16} /> Dušičky: {runStats.souls}</div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <LadaFolkFlower variant="cornflower" size={15} spin />
+              </span>
               <div id="kills-text" style={{ color: '#7F1D1D', display: 'flex', alignItems: 'center', gap: '5px' }}>Zklidněno: {runStats.kills} <GameIcon icon="bread" size={16} /></div>
-              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="leaf" size={12} /></span>
+              <span className="hud-stat-divider" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <LadaFolkFlower variant="carmine" size={15} />
+              </span>
               <div id="chest-progress-text" style={{ color: '#78350F', display: 'flex', alignItems: 'center', gap: '5px' }} title={`Truhla s pokladem se objeví po každých ${DROP_THRESHOLDS.chest} bodech zahnadých nepřátel a po každém bossovi`}>
                 <GameIcon icon="chest" size={16} /> Poklad: {runStats.chestProgress}/{DROP_THRESHOLDS.chest}
               </div>
@@ -12782,7 +12900,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             {runStats.bossHpPct !== null && (
               <div id="boss-bar-wrap">
                 <div className="boss-title-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <LadaFolkFlower variant="poppy" size={18} spin />
                   <GameIcon icon="devil" size={20} /> {runStats.bossTitle} <GameIcon icon="devil" size={20} />
+                  <LadaFolkFlower variant="poppy" size={18} spin />
                 </div>
                 <div id="boss-bar-container">
                   <div id="boss-hp-fill" style={{ width: `${runStats.bossHpPct}%` }} />
@@ -12865,6 +12985,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 />
                 {isReady ? (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+                    <LadaFolkFlower variant="buttercup" size={16} spin />
                     <span
                       style={{
                         display: 'inline-flex',
@@ -12891,9 +13012,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     >
                       {keyHint}
                     </span>
+                    <LadaFolkFlower variant="buttercup" size={16} spin />
                   </span>
                 ) : (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 1 }}>
+                    <LadaFolkFlower variant="cornflower" size={15} />
                     <span
                       style={{
                         display: 'inline-flex',
@@ -12912,6 +13035,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       {abilityName}: <strong>{Math.ceil(runStats.ultCd)} s</strong> ({Math.round(readinessPct)} %)
                     </span>
                     <span style={{ opacity: 0.8, fontSize: '0.8rem' }}>{keyHint}</span>
+                    <LadaFolkFlower variant="cornflower" size={15} />
                   </span>
                 )}
               </button>
@@ -12953,7 +13077,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* 1. OBRAZOVKA: VÝBĚR VÝPRAVY (STAGE SELECT) */}
       {gameState === 'menu' && menuScreen === 'stage' && (
         <div id="main-menu" className="overlay">
-          <div className="panel" style={{ maxWidth: '1040px' }}>
+          <div className="panel" style={{ maxWidth: '1040px', position: 'relative' }}>
+            <LadaCardCorners variant="callout" showBottomCorners={true} />
             {/* Top quick audio toggles */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <button
@@ -12975,6 +13100,99 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
 
             <BubakovCoverTitle />
+
+            {/* RYCHLÝ PRŮVODCE: JAK HRÁT (BULLET HEAVEN PO ČESKU) */}
+            {!hideHowToPlayCard && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+                  border: '2px solid var(--wood-dark)',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  margin: '6px 0 10px 0',
+                  boxShadow: '2px 2px 0px var(--wood-dark)',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  textAlign: 'left',
+                  position: 'relative',
+                }}
+              >
+                <LadaCardCorners variant="default" showBottomCorners={true} />
+                <div style={{ flex: '1 1 520px', fontSize: '0.82rem', color: '#451A03', lineHeight: 1.4 }}>
+                  <div style={{ fontWeight: 900, color: '#991B1B', fontSize: '0.88rem', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <LadaFolkFlower variant="poppy" size={16} spin />
+                      <GameIcon icon="palette" size={16} /> Jak hrát Bubákov? Oddychový „Bullet Heaven“ v ladovském českém venkově!
+                      <LadaFolkFlower variant="cornflower" size={16} />
+                    </span>
+                  </div>
+                  <div>
+                    Zbraně <strong>automaticky kosí strašidla</strong> – ty jen uhýbáš <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>WASD</kbd> / <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>Šipky</kbd>, odemykáš vylepšení a na konci máš radost, jak moc ti to střílí!{' '}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <GameIcon icon="lightning" size={15} /> <kbd style={{ background: '#991B1B', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>Mezerník</kbd> spustí <strong>speciální zbraň</strong>
+                      </span>
+                      <span>•</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <PernicekIcon size={16} /> Za <strong>perníčky</strong> přijde <strong>Čertův dědeček</strong> (stiskni u něj <kbd style={{ background: '#047857', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>E</kbd> pro zbraně a upgrady)
+                      </span>
+                      <span>•</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <GameIcon icon="church" size={15} /> Klávesou <kbd style={{ background: '#1D4ED8', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>E</kbd> interaguješ i s <strong>prvky krajiny</strong> (kostel, hospoda, kaplička).
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0 }}>
+                  <button
+                    className="lada-btn btn-small"
+                    style={{
+                      background: '#1D4ED8',
+                      color: '#FFFFFF',
+                      fontWeight: 900,
+                      padding: '6px 12px',
+                      fontSize: '0.8rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onClick={() => {
+                      sound.coin();
+                      setIsControlsOpen(true);
+                    }}
+                    title="Otevřít podrobného průvodce Jak hrát, ovládání, pamětihodnosti v krajině a arzenál"
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <GameIcon icon="gamepad" size={15} /> Jak hrát & Ovládání
+                    </span>
+                  </button>
+                  <button
+                    className="lada-btn btn-small"
+                    style={{
+                      background: '#FDE68A',
+                      color: '#451A03',
+                      fontWeight: 900,
+                      padding: '6px 10px',
+                      fontSize: '0.76rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onClick={() => {
+                      sound.coin();
+                      setHideHowToPlayCard(true);
+                      try {
+                        window.localStorage.setItem('bubakov_hide_how_to_play_card', 'true');
+                      } catch {}
+                    }}
+                    title="Schovat tuto nápovědnou kartu a příště ji už nezobrazovat (průvodce zůstane vždy dostupný přes tlačítko Jak hrát & Ovládání dole)"
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <GameIcon icon="cancel" size={13} /> Už neukazovat
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* 8 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
@@ -13178,8 +13396,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '6px',
+                position: 'relative',
               }}
             >
+              <LadaCardCorners variant="default" showBottomCorners={true} />
               <div
                 style={{
                   display: 'flex',
@@ -13192,8 +13412,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center' }}><GameIcon icon="flame" size={24} /></span>
                   <div>
-                    <strong style={{ fontSize: '1.05rem', color: '#92400E' }}>
-                      Dynamická obtížnost (Režisér výpravy)
+                    <strong style={{ fontSize: '1.05rem', color: '#92400E', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <span>Dynamická obtížnost (Režisér výpravy)</span>
+                      <LadaFolkFlower variant="buttercup" size={16} spin />
                     </strong>
                     <div style={{ fontSize: '0.82rem', color: '#451A03', fontWeight: 700 }}>
                       Agresivita a tempo vln Režiséra výpravy během noci
@@ -13317,10 +13538,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <LadaFolkFlower variant="buttercup" size={18} spin />
                   Pokračovat k výběru lovce <GameIcon icon="arrow" size={18} />
                 </span>
               </button>
             </div>
+
+            <LadaFloralGarland repeatCount={9} height={22} />
 
             {/* MAIN HUB TOOLBAR */}
             <div className="menu-hub-toolbar">
@@ -13357,7 +13581,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                  <GameIcon icon="gamepad" size={16} /> Jak hrát & Ovládání
                 </span>
               </button>
               <button
@@ -13381,7 +13605,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* 2. OBRAZOVKA: VÝBĚR LOVCE (HUNTER SELECT) */}
       {gameState === 'menu' && menuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
-          <div className="panel" style={{ maxWidth: '1040px' }}>
+          <div className="panel" style={{ maxWidth: '1040px', position: 'relative' }}>
+            <LadaCardCorners variant="callout" showBottomCorners={true} />
             {/* Top Navigation Bar: Back button and chosen stage badge */}
             <div className="hunter-screen-nav-bar">
               <button
@@ -13482,6 +13707,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               {renderHunterSelectCard(grannyProg, grannyRef)}
             </div>
 
+            <LadaFloralGarland repeatCount={9} height={22} />
+
             {/* Bottom Toolbar on Hunter Select Screen */}
             <div className="menu-hub-toolbar">
               <button
@@ -13531,7 +13758,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                  <GameIcon icon="gamepad" size={16} /> Jak hrát & Ovládání
                 </span>
               </button>
               <button
@@ -13555,8 +13782,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* PAUSE MODAL (ODPOČINEK U MILNÍKU) */}
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
-          <div className="panel" style={{ maxWidth: '820px' }}>
-            <h1><span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="pause" size={24} /> HRA POZASTAVENA</span></h1>
+          <div className="panel" style={{ maxWidth: '820px', position: 'relative' }}>
+            <LadaCardCorners variant="callout" showBottomCorners={true} />
+            <h1>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <LadaFolkFlower variant="buttercup" size={22} spin />
+                <GameIcon icon="pause" size={24} /> HRA POZASTAVENA
+                <LadaFolkFlower variant="cornflower" size={22} spin />
+              </span>
+            </h1>
             <LadaBotanicalFlourish height={20} />
 
             {/* Top Primary Actions */}
@@ -13576,7 +13810,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setIsControlsOpen(true);
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="gamepad" size={16} /> Ovládání hry</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="gamepad" size={16} /> Jak hrát & Ovládání</span>
               </button>
               <button
                 className="lada-btn btn-small"
@@ -14054,14 +14288,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* PAINTED CHEST SEQUENCE – LADOVSKÝ VENKOVSKÝ AUTOMAT / SLOT MACHINE */}
       {gameState === 'chest' && (
         <div id="chest-ui" className="overlay" style={{ background: 'rgba(10, 6, 3, 0.88)', backdropFilter: 'blur(3px)' }}>
-          <div className="panel slot-machine-cabinet" style={{ textAlign: 'center' }}>
+          <div className="panel slot-machine-cabinet" style={{ textAlign: 'center', position: 'relative' }}>
+            <LadaCardCorners variant="selected" showBottomCorners={true} />
             {/* Ornate slot machine header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <LadaFolkFlower variant="buttercup" size={24} spin />
               <GameIcon icon="chest" size={36} />
               <h1 style={{ color: '#FDE047', textShadow: '3px 3px 0 var(--ink)', margin: 0, fontSize: '2.2rem' }}>
                 MALOVANÁ TRUHLA!
               </h1>
               <GameIcon icon="chest" size={36} />
+              <LadaFolkFlower variant="poppy" size={24} spin />
             </div>
             <LadaBotanicalFlourish height={20} />
 
@@ -14227,12 +14464,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* TALLY SCREEN */}
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
-          <div className="panel" style={{ maxWidth: '780px', margin: 'auto' }}>
+          <div className="panel" style={{ maxWidth: '780px', margin: 'auto', position: 'relative' }}>
+            <LadaCardCorners variant="callout" showBottomCorners={true} />
             <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
-              {tallyCounters.isVictory ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><GameIcon icon="trophy" size={28} /> ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!</span> : 'KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!'}
+              {tallyCounters.isVictory ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                  <LadaFolkFlower variant="buttercup" size={24} spin />
+                  <GameIcon icon="trophy" size={28} /> ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!
+                  <LadaFolkFlower variant="poppy" size={24} spin />
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                  <LadaFolkFlower variant="cornflower" size={22} />
+                  KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!
+                  <LadaFolkFlower variant="carmine" size={22} />
+                </span>
+              )}
             </h1>
             <LadaBotanicalFlourish height={22} />
-            <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--wood-dark)', marginTop: '-4px', marginBottom: '16px' }}>
+            <LadaFrieze repeatCount={14} height={18} />
+            <p style={{ fontWeight: 900, fontSize: '1.2rem', color: 'var(--wood-dark)', marginTop: '-2px', marginBottom: '16px' }}>
               {GAME_LEVELS[tallyCounters.levelId]?.name || 'Venkovská výprava'}
             </p>
 
@@ -14349,8 +14600,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* TAVERN & VILLAGE SCREEN */}
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
-          <div className="panel" style={{ maxWidth: '1000px' }}>
-            <h1 style={{ color: '#C53026', margin: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>HOSPODA U ČERNÉHO KOCOURA <GameIcon icon="beer" size={32} /></h1>
+          <div className="panel" style={{ maxWidth: '1000px', position: 'relative' }}>
+            <LadaCardCorners variant="callout" showBottomCorners={true} />
+            <h1 style={{ color: '#C53026', margin: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <LadaFolkFlower variant="buttercup" size={24} spin />
+              HOSPODA U ČERNÉHO KOCOURA <GameIcon icon="beer" size={32} />
+              <LadaFolkFlower variant="poppy" size={24} spin />
+            </h1>
             <LadaBotanicalFlourish height={20} />
             <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><GameIcon icon="music_on" size={18} /> V koutě vyhrávají pekelné dudy a voní čerstvý chléb... <GameIcon icon="music_on" size={18} /></span>
@@ -14405,10 +14661,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     const prog = t.getProgress(meta);
 
                     return (
-                      <div key={t.id} className={`trophy-card ${claimed ? 'claimed' : isMet ? 'completed' : ''}`}>
+                      <div key={t.id} className={`trophy-card ${claimed ? 'claimed' : isMet ? 'completed' : ''}`} style={{ position: 'relative' }}>
+                        <LadaCardCorners variant={claimed || isMet ? 'selected' : 'default'} showBottomCorners={true} />
                         <div>
                           <div className="trophy-header">
-                            <h4 className="trophy-title">{t.title}</h4>
+                            <h4 className="trophy-title" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                              <LadaFolkFlower variant={claimed ? 'buttercup' : 'cornflower'} size={14} spin={claimed || isMet} />
+                              {t.title}
+                            </h4>
                             <span className="trophy-reward" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               +{t.reward} <KrejcarIcon size={16} />
                             </span>
@@ -14436,7 +14696,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </div>
             )}
 
-            <div className="menu-hub-toolbar" style={{ marginTop: '20px' }}>
+            <LadaFloralGarland repeatCount={9} height={22} />
+
+            <div className="menu-hub-toolbar" style={{ marginTop: '12px' }}>
               <button
                 className="lada-btn"
                 style={{ padding: '10px 24px', background: 'var(--wood-dark)', color: 'var(--parchment)' }}
@@ -14474,7 +14736,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <GameIcon icon="gamepad" size={16} /> Ovládání hry
+                  <GameIcon icon="gamepad" size={16} /> Jak hrát & Ovládání
                 </span>
               </button>
               <button

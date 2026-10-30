@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 import { KrejcarIcon } from './KrejcarIcon';
 import { CzechBuchtaIcon } from './CzechBuchtaIcon';
 import { JitrniceIcon } from './JitrniceIcon';
@@ -554,7 +555,7 @@ export function isPickleIcon(icon: any): boolean {
 type UpgradedSvgProps = Omit<GameIconProps, 'icon'>;
 
 const UpgradedPitchforkSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kovářské vidle" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kovářské vidle" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <ellipse cx="14" cy="33" rx="10" ry="2.2" fill="#1A1612" opacity="0.24" />
     <g className="lada-anim-rock lada-melee-base">
@@ -645,11 +646,11 @@ const UpgradedPitchforkSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', clas
         <circle cx="30.5" cy="6.5" r="1.1" fill="#FEF08A" />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedFlailSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep na obilí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep na obilí" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <ellipse cx="18" cy="33" rx="13" ry="2.4" fill="#1A1612" opacity="0.24" />
     <g className="lada-anim-rock lada-melee-base" strokeLinecap="round" strokeLinejoin="round">
@@ -724,11 +725,11 @@ const UpgradedFlailSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', classNam
         />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedHromnickaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Hromnička" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Hromnička" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     {/* Secondary detail: Pulsing warm golden halo */}
     <circle
@@ -797,11 +798,11 @@ const UpgradedHromnickaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', clas
         <ellipse cx="18" cy="12.4" rx="1.6" ry="2.2" fill="#FFFDF7" />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedKropenkaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kropenka se svěcenou vodou" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kropenka se svěcenou vodou" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <g className="lada-anim-rock lada-melee-base">
       {/* Turned beechwood & brass handle */}
@@ -873,11 +874,11 @@ const UpgradedKropenkaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', class
         strokeLinejoin="round"
       />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedBeeSwarmSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Včelí roj" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Včelí roj" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <ellipse cx="18" cy="33" rx="12" ry="2.5" fill="#1A1612" opacity="0.24" />
     <g className="lada-anim-float lada-food-base">
@@ -923,11 +924,11 @@ const UpgradedBeeSwarmSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', class
         </g>
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedDevateroKvitiSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Devatero kvítí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Devatero kvítí" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     {/* Base: Gentle flower sway */}
     <g className="lada-anim-rock lada-flower-sway" strokeLinecap="round" strokeLinejoin="round">
@@ -973,11 +974,11 @@ const UpgradedDevateroKvitiSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', 
     <g className="lada-star-glint-2">
       <path d="M 28.5 4.5 L 29.1 6 L 30.6 6.6 L 29.1 7.2 L 28.5 8.7 L 27.9 7.2 L 26.4 6.6 L 27.9 6 Z" fill="#FFFDF7" stroke="#1A1612" strokeWidth="0.7" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedSnowballSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Sněhová koule" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Sněhová koule" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <ellipse cx="18" cy="32.5" rx="11.5" ry="2.5" fill="#1A1612" opacity="0.22" />
     <g className="lada-anim-float lada-food-base">
@@ -1030,11 +1031,11 @@ const UpgradedSnowballSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', class
         strokeLinejoin="round"
       />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedRoastedPotatoSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Pečený brambor" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Pečený brambor" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <ellipse cx="18" cy="32" rx="13.5" ry="3" fill="#1A1612" opacity="0.28" />
     <g className="lada-anim-float lada-food-base">
@@ -1078,11 +1079,11 @@ const UpgradedRoastedPotatoSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', 
       <path d="M 22 11.5 C 24 8, 20 5, 22 2" fill="none" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" opacity="0.32" />
       <path d="M 22 11.5 C 24 8, 20 5, 22 2" fill="none" stroke="#F3E9D2" strokeWidth="1.9" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedOvenBuildingSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Pekárna u rozpálené pece" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Pekárna u rozpálené pece" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <g className="lada-anim-float lada-food-base">
       {/* Whitewashed clay bakery oven dome */}
@@ -1118,11 +1119,11 @@ const UpgradedOvenBuildingSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', c
       <ellipse cx="18" cy="28" rx="4.8" ry="2.4" fill="#D97706" stroke="#1A1612" strokeWidth="1.5" />
       <rect x="4" y="29.5" width="28" height="3" rx="1" fill="#8C5A35" stroke="#1A1612" strokeWidth="2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedForgeBuildingSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kovářská výheň" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Kovářská výheň" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     <g className="lada-anim-float lada-food-base">
       {/* Secondary detail: Pulsing forge hearth ember halo */}
@@ -1148,11 +1149,11 @@ const UpgradedForgeBuildingSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', 
       />
       <line x1="7" y1="19.5" x2="27" y2="19.5" stroke="#E0F2FE" strokeWidth="1.4" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 const UpgradedBoziMukaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Boží muka u polní cesty" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={svgWrapStyle(size, style)} className={className} role="img" aria-label="Boží muka u polní cesty" {...props}>
     <style>{LADA_VILLAGE_ICON_KEYFRAMES}</style>
     {/* Secondary detail: Pulsing lantern halo */}
     <circle cx="18" cy="14" r="8.5" fill="#FEF08A" opacity="0.55" className="lada-halo-glow" />
@@ -1173,7 +1174,7 @@ const UpgradedBoziMukaSvg: React.FC<UpgradedSvgProps> = ({ size = '1.2em', class
       <circle cx="18" cy="25" r="1.4" fill="#C83E31" />
       <rect x="10" y="30.5" width="16" height="3" rx="1" fill="#8C5A35" stroke="#1A1612" strokeWidth="2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 export const GameIcon: React.FC<GameIconProps> = ({ icon, size = '1.2em', className = '', style = {}, ...props }) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LadaFrieze } from './LadaFrieze';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 import { sound } from '../audio';
 
 interface BubakovCoverTitleProps {
@@ -37,6 +38,8 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   // Timestamps (in animTime seconds) for click-triggered special animations
   const scareStartRef = useRef<number>(-100);
   const certStompStartRef = useRef<number>(-100);
+  const starSpinBurstRef = useRef<number>(-100);
+  const letterJumpRef = useRef<number[]>([-100, -100, -100, -100, -100, -100, -100]);
   const animTimeRef = useRef<number>(0);
 
   // Smoothly interpolated hover weights (0..1) to prevent any sudden jumps on mouse enter/leave
@@ -54,8 +57,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   ]);
 
   useEffect(() => {
-    if (!showCharacters) return;
-
     let rafId: number;
     let lastNow = performance.now();
 
@@ -80,6 +81,18 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [showCharacters, isBubakHovered, isCertHovered]);
+
+  const triggerLetterJump = (idx: number) => {
+    letterJumpRef.current[idx] = animTimeRef.current;
+  };
+
+  const handleStarClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    starSpinBurstRef.current = animTimeRef.current;
+    try {
+      sound.caneWhip();
+    } catch {}
+  };
 
   // Click on Bubák: smooth scare reaction ("BAF!") + sound
   const handleBubakClick = (e: React.MouseEvent) => {
@@ -412,28 +425,64 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     };
   });
 
+  // Top 5-pointed folk star continuous spin & click burst
+  const starBurstElapsed = t - starSpinBurstRef.current;
+  const starBurstEnv =
+    starBurstElapsed >= 0 && starBurstElapsed < 1.2
+      ? Math.sin((starBurstElapsed / 1.2) * Math.PI) * (1 - starBurstElapsed / 1.2)
+      : 0;
+  const starAngleDeg = t * 38 + Math.sin(t * 2.6) * 18 + starBurstEnv * 360;
+  const starScale = 1 + Math.sin(t * 3.4) * 0.09 + starBurstEnv * 0.28;
+
   return (
     <header className={`bubakov-cover-header relative select-none w-full flex flex-col items-center justify-center my-1 ${className}`}>
-      {/* Hand-drawn 5-pointed folk star */}
-      <div className="my-0.5">
-        <svg width="28" height="28" viewBox="0 0 40 40" className="drop-shadow-sm">
-          {/* Ink outer outline */}
-          <polygon
-            points="20,2 25,14 38,15 28,24 31,37 20,30 9,37 12,24 2,15 15,14"
-            fill="#C53026"
-            stroke="#1C1610"
-            strokeWidth="3.2"
-            strokeLinejoin="round"
-          />
-          {/* Inner folk highlight */}
-          <polygon
-            points="20,7 23,15 32,16 25,22 27,31 20,26 13,31 15,22 8,16 17,15"
-            fill="none"
-            stroke="#FAF5E8"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-        </svg>
+      {/* Hand-drawn 2D Canvas 5-pointed folk star with playful spin & twinkle */}
+      <div
+        className="my-0.5 cursor-pointer"
+        onClick={handleStarClick}
+        title="Ladovská pouťová hvězdička (klikni pro zatočení!)"
+        style={{
+          transform: `rotate(${starAngleDeg.toFixed(1)}deg) scale(${starScale.toFixed(3)})`,
+          transition: 'filter 0.15s ease',
+        }}
+      >
+        <LadaCanvasSvg
+          width={32}
+          height={32}
+          viewBox="0 0 40 40"
+          className="drop-shadow-sm"
+          aria-label="Ladovská pouťová hvězdička"
+        >
+          <g className="lada-anim-pulse">
+            {/* Warm golden village sun-rays behind the star */}
+            <polygon
+              points="20,0 23,12 35,5 28,16 40,20 28,24 35,35 23,28 20,40 17,28 5,35 12,24 0,20 12,16 5,5 17,12"
+              fill="#FACC15"
+              stroke="#1C1610"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            />
+            {/* Ink outer outline & Bright Poppy Vermilion star body */}
+            <polygon
+              points="20,2 25,14 38,15 28,24 31,37 20,30 9,37 12,24 2,15 15,14"
+              fill="#E6392B"
+              stroke="#1C1610"
+              strokeWidth="3.0"
+              strokeLinejoin="round"
+            />
+            {/* Inner warm cream & gold folk highlight */}
+            <polygon
+              points="20,7 23,15 32,16 25,22 27,31 20,26 13,31 15,22 8,16 17,15"
+              fill="#FACC15"
+              stroke="#FFFDF7"
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+            />
+            {/* Center cornflower blue folk cabochon */}
+            <circle cx="20" cy="21" r="3.6" fill="#2563EB" stroke="#1C1610" strokeWidth="1.4" />
+            <circle cx="19" cy="20" r="1.2" fill="#FFFDF7" className="lada-anim-glint" />
+          </g>
+        </LadaCanvasSvg>
       </div>
 
       {/* Main Illustration & Typography Stage */}
@@ -446,7 +495,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
           aria-label="Bubákov - Ladovská výprava"
         >
           <defs>
-            {/* Red text hatched fill pattern */}
+            {/* Bright Poppy Vermilion & Buttercup Gold hatched folk fill pattern */}
             <pattern
               id="folk-red-hatch"
               width="10"
@@ -454,8 +503,8 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
               patternUnits="userSpaceOnUse"
               patternTransform="rotate(45)"
             >
-              <rect width="10" height="10" fill="#C53026" />
-              <line x1="0" y1="0" x2="0" y2="10" stroke="#FDE8CD" strokeWidth="2.2" />
+              <rect width="10" height="10" fill="#E6392B" />
+              <line x1="0" y1="0" x2="0" y2="10" stroke="#FEF08A" strokeWidth="2.6" />
             </pattern>
 
             {/* Ink filter for organic line pressure */}
@@ -575,160 +624,291 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
           />
 
           {/* ============================================================== */}
-          {/* LEFT FOLK FLORAL STEM                                          */}
+          {/* LEFT FOLK FLORAL STEM (BREEZE-SWAYING & BLOOMING)              */}
           {/* ============================================================== */}
-          <g id="ribbon-streamer-left">
+          <g
+            id="ribbon-streamer-left"
+            transform={`rotate(${(Math.sin(t * 2.1) * 3.2).toFixed(2)}, 174, 166)`}
+          >
             <path
               d="M 174,166 Q 170,118 174,74 Q 178,50 176,30"
               stroke="#1C1610"
-              strokeWidth="5"
+              strokeWidth="5.2"
               strokeLinecap="round"
               fill="none"
             />
             <path
               d="M 174,166 Q 170,118 174,74 Q 178,50 176,30"
-              stroke="#E8B834"
-              strokeWidth="3"
+              stroke="#FACC15"
+              strokeWidth="3.2"
               strokeLinecap="round"
               fill="none"
             />
-            <path
-              d="M 174,142 C 182,142 186,126 178,118 C 172,113 170,127 174,142 Z"
-              fill="#528850"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 174,138 C 177,132 179,127 180,122" stroke="#1C1610" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <path
-              d="M 173,108 C 167,101 163,112 169,120 C 174,124 176,116 173,108 Z"
-              fill="#5B9557"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 173,111 C 171,114 169,116 167,117" stroke="#1C1610" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-            <path
-              d="M 174,82 C 182,80 186,66 178,58 C 172,54 170,66 174,82 Z"
-              fill="#4D834B"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 174,78 C 177,72 179,66 180,62" stroke="#1C1610" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <g transform="translate(176, 28)">
+            {/* Animated Cornflower Blue & Buttercup little folk flowers along left stem */}
+            <g transform={`translate(167, 148) rotate(${(t * 38).toFixed(1)}) scale(${(1 + Math.sin(t * 3.8) * 0.1).toFixed(3)})`}>
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -2.2,-2.6 -2.4,-5.6 0,-6.2 C 2.4,-5.6 2.2,-2.6 0,0 Z"
+                  fill="#38BDF8"
+                  stroke="#1C1610"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              ))}
+              <circle cx="0" cy="0" r="2.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1" />
+            </g>
+            <g transform={`translate(182, 94) rotate(${(-t * 42).toFixed(1)}) scale(${(1 + Math.cos(t * 3.6) * 0.1).toFixed(3)})`}>
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -2,-2.4 -2.2,-5.2 0,-5.7 C 2.2,-5.2 2,-2.4 0,0 Z"
+                  fill="#FACC15"
+                  stroke="#1C1610"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              ))}
+              <circle cx="0" cy="0" r="2.0" fill="#E6392B" stroke="#1C1610" strokeWidth="1" />
+            </g>
+            <g transform={`translate(174, 142) rotate(${(Math.sin(t * 3.0) * 6).toFixed(2)}) translate(-174, -142)`}>
+              <path
+                d="M 174,142 C 182,142 186,126 178,118 C 172,113 170,127 174,142 Z"
+                fill="#22C55E"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 174,138 C 177,132 179,127 180,122" stroke="#FEF08A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </g>
+            <g transform={`translate(173, 108) rotate(${(Math.cos(t * 2.8) * 6).toFixed(2)}) translate(-173, -108)`}>
+              <path
+                d="M 173,108 C 167,101 163,112 169,120 C 174,124 176,116 173,108 Z"
+                fill="#4ADE80"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 173,111 C 171,114 169,116 167,117" stroke="#1C1610" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+            </g>
+            <g transform={`translate(174, 82) rotate(${(Math.sin(t * 3.2 + 1) * 6).toFixed(2)}) translate(-174, -82)`}>
+              <path
+                d="M 174,82 C 182,80 186,66 178,58 C 172,54 170,66 174,82 Z"
+                fill="#16A34A"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 174,78 C 177,72 179,66 180,62" stroke="#FEF08A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </g>
+            <g
+              transform={`translate(176, 28) rotate(${(t * 26).toFixed(1)}) scale(${(1 + Math.sin(t * 3.4) * 0.09).toFixed(3)})`}
+            >
               {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <path
                   key={deg}
                   transform={`rotate(${deg})`}
                   d="M 0,0 C -5,-6 -5,-13 0,-14 C 5,-13 5,-6 0,0 Z"
-                  fill="#BA3852"
+                  fill="#E11D48"
                   stroke="#1C1610"
                   strokeWidth="2"
                   strokeLinejoin="round"
                 />
               ))}
-              <circle cx="0" cy="0" r="5" fill="#F4C732" stroke="#1C1610" strokeWidth="1.8" />
+              <circle cx="0" cy="0" r="5.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.8" />
+              <circle cx="-1.2" cy="-1.2" r="1.4" fill="#FFFDF7" />
             </g>
           </g>
 
           {/* ============================================================== */}
-          {/* RIGHT FOLK FLORAL STEM                                         */}
+          {/* RIGHT FOLK FLORAL STEM (BREEZE-SWAYING & BLOOMING)             */}
           {/* ============================================================== */}
-          <g id="ribbon-streamer-right">
+          <g
+            id="ribbon-streamer-right"
+            transform={`rotate(${(-Math.sin(t * 2.1 + 0.5) * 3.2).toFixed(2)}, 686, 166)`}
+          >
             <path
               d="M 686,166 Q 690,118 686,74 Q 682,50 684,30"
               stroke="#1C1610"
-              strokeWidth="5"
+              strokeWidth="5.2"
               strokeLinecap="round"
               fill="none"
             />
             <path
               d="M 686,166 Q 690,118 686,74 Q 682,50 684,30"
-              stroke="#E8B834"
-              strokeWidth="3"
+              stroke="#FACC15"
+              strokeWidth="3.2"
               strokeLinecap="round"
               fill="none"
             />
-            <path
-              d="M 686,142 C 678,142 674,126 682,118 C 688,113 690,127 686,142 Z"
-              fill="#528850"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 686,138 C 683,132 681,127 680,122" stroke="#1C1610" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <path
-              d="M 687,108 C 693,101 697,112 691,120 C 686,124 684,116 687,108 Z"
-              fill="#5B9557"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 687,111 C 689,114 691,116 693,117" stroke="#1C1610" strokeWidth="1.4" strokeLinecap="round" fill="none" />
-            <path
-              d="M 686,82 C 678,80 674,66 682,58 C 688,54 690,66 686,82 Z"
-              fill="#4D834B"
-              stroke="#1C1610"
-              strokeWidth="2.4"
-              strokeLinejoin="round"
-            />
-            <path d="M 686,78 C 683,72 681,66 680,62" stroke="#1C1610" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <g transform="translate(684, 28)">
+            {/* Animated Cornflower Blue & Buttercup little folk flowers along right stem */}
+            <g transform={`translate(693, 148) rotate(${(-t * 38).toFixed(1)}) scale(${(1 + Math.sin(t * 3.8 + 0.6) * 0.1).toFixed(3)})`}>
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -2.2,-2.6 -2.4,-5.6 0,-6.2 C 2.4,-5.6 2.2,-2.6 0,0 Z"
+                  fill="#38BDF8"
+                  stroke="#1C1610"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              ))}
+              <circle cx="0" cy="0" r="2.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1" />
+            </g>
+            <g transform={`translate(678, 94) rotate(${(t * 42).toFixed(1)}) scale(${(1 + Math.cos(t * 3.6 + 0.6) * 0.1).toFixed(3)})`}>
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -2,-2.4 -2.2,-5.2 0,-5.7 C 2.2,-5.2 2,-2.4 0,0 Z"
+                  fill="#FACC15"
+                  stroke="#1C1610"
+                  strokeWidth="1.2"
+                  strokeLinejoin="round"
+                />
+              ))}
+              <circle cx="0" cy="0" r="2.0" fill="#E6392B" stroke="#1C1610" strokeWidth="1" />
+            </g>
+            <g transform={`translate(686, 142) rotate(${(-Math.sin(t * 3.0) * 6).toFixed(2)}) translate(-686, -142)`}>
+              <path
+                d="M 686,142 C 678,142 674,126 682,118 C 688,113 690,127 686,142 Z"
+                fill="#22C55E"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 686,138 C 683,132 681,127 680,122" stroke="#FEF08A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </g>
+            <g transform={`translate(687, 108) rotate(${(-Math.cos(t * 2.8) * 6).toFixed(2)}) translate(-687, -108)`}>
+              <path
+                d="M 687,108 C 693,101 697,112 691,120 C 686,124 684,116 687,108 Z"
+                fill="#4ADE80"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 687,111 C 689,114 691,116 693,117" stroke="#1C1610" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+            </g>
+            <g transform={`translate(686, 82) rotate(${(-Math.sin(t * 3.2 + 1) * 6).toFixed(2)}) translate(-686, -82)`}>
+              <path
+                d="M 686,82 C 678,80 674,66 682,58 C 688,54 690,66 686,82 Z"
+                fill="#16A34A"
+                stroke="#1C1610"
+                strokeWidth="2.4"
+                strokeLinejoin="round"
+              />
+              <path d="M 686,78 C 683,72 681,66 680,62" stroke="#FEF08A" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </g>
+            <g
+              transform={`translate(684, 28) rotate(${(-t * 26).toFixed(1)}) scale(${(1 + Math.cos(t * 3.4) * 0.09).toFixed(3)})`}
+            >
               {[0, 60, 120, 180, 240, 300].map((deg) => (
                 <path
                   key={deg}
                   transform={`rotate(${deg})`}
                   d="M 0,0 C -5,-6 -5,-13 0,-14 C 5,-13 5,-6 0,0 Z"
-                  fill="#BA3852"
+                  fill="#E11D48"
                   stroke="#1C1610"
                   strokeWidth="2"
                   strokeLinejoin="round"
                 />
               ))}
-              <circle cx="0" cy="0" r="5" fill="#F4C732" stroke="#1C1610" strokeWidth="1.8" />
+              <circle cx="0" cy="0" r="5.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1.8" />
+              <circle cx="-1.2" cy="-1.2" r="1.4" fill="#FFFDF7" />
             </g>
           </g>
 
           {/* ============================================================== */}
-          {/* AUTHENTIC JOSEF LADA YELLOW CORNER FLOWERS (Four corners)      */}
+          {/* AUTHENTIC JOSEF LADA YELLOW CORNER FLOWERS (BLOOMING & SPINNING) */}
           {/* ============================================================== */}
           <g id="lada-cartouche-corner-flowers">
             {[
-              { x: 204, y: 40, rot: -15, prefix: 'tl' },
-              { x: 656, y: 40, rot: 15, prefix: 'tr' },
-              { x: 204, y: 150, rot: -45, prefix: 'bl' },
-              { x: 656, y: 150, rot: 45, prefix: 'br' },
-            ].map((corner) => (
-              <g key={corner.prefix} transform={`translate(${corner.x}, ${corner.y}) rotate(${corner.rot})`}>
-                {[0, 72, 144, 216, 288].map((angle, idx) => (
-                  <path
-                    key={`${corner.prefix}-${idx}`}
-                    transform={`rotate(${angle})`}
-                    d="M 0,0 C -7,-7 -8,-17 0,-19 C 8,-17 7,-7 0,0 Z"
-                    fill="#F5C834"
-                    stroke="#1C1610"
-                    strokeWidth="2.4"
-                    strokeLinejoin="round"
-                  />
-                ))}
-                <circle cx="0" cy="0" r="7.2" fill="#E5B224" stroke="#1C1610" strokeWidth="2" />
-                <circle cx="0" cy="0" r="1.1" fill="#1C1610" />
-                <circle cx="0" cy="-3.2" r="0.8" fill="#1C1610" />
-                <circle cx="3" cy="-1" r="0.8" fill="#1C1610" />
-                <circle cx="1.9" cy="2.5" r="0.8" fill="#1C1610" />
-                <circle cx="-1.9" cy="2.5" r="0.8" fill="#1C1610" />
-                <circle cx="-3" cy="-1" r="0.8" fill="#1C1610" />
-                <circle cx="0" cy="-5.2" r="0.7" fill="#1C1610" />
-                <circle cx="3.6" cy="-3.6" r="0.7" fill="#1C1610" />
-                <circle cx="5.2" cy="0" r="0.7" fill="#1C1610" />
-                <circle cx="3.6" cy="3.6" r="0.7" fill="#1C1610" />
-                <circle cx="0" cy="5.2" r="0.7" fill="#1C1610" />
-                <circle cx="-3.6" cy="3.6" r="0.7" fill="#1C1610" />
-                <circle cx="-5.2" cy="0" r="0.7" fill="#1C1610" />
-                <circle cx="-3.6" cy="-3.6" r="0.7" fill="#1C1610" />
-              </g>
-            ))}
+              { x: 204, y: 40, rot: -15, prefix: 'tl', dir: 1, petal: '#FACC15', core: '#F59E0B', budPetal: '#38BDF8', budDx: 15, budDy: 5 },
+              { x: 656, y: 40, rot: 15, prefix: 'tr', dir: -1, petal: '#FACC15', core: '#F59E0B', budPetal: '#38BDF8', budDx: -15, budDy: 5 },
+              { x: 204, y: 150, rot: -45, prefix: 'bl', dir: -1, petal: '#E11D48', core: '#FACC15', budPetal: '#FACC15', budDx: 15, budDy: -5 },
+              { x: 656, y: 150, rot: 45, prefix: 'br', dir: 1, petal: '#E11D48', core: '#FACC15', budPetal: '#FACC15', budDx: -15, budDy: -5 },
+            ].map((corner, cIdx) => {
+              const flowerRot = corner.rot + Math.sin(t * 2.0 + cIdx * 1.1) * 14 + t * 14 * corner.dir;
+              const flowerScale = 1 + Math.sin(t * 3.1 + cIdx * 0.9) * 0.08;
+              const leafRot = Math.sin(t * 2.6 + cIdx) * 6;
+              return (
+                <g key={corner.prefix} transform={`translate(${corner.x}, ${corner.y})`}>
+                  {/* Breathing green meadow leaves behind corner flower */}
+                  <g transform={`rotate(${leafRot.toFixed(1)})`}>
+                    <path
+                      d="M 0,0 C -10,-6 -20,-4 -18,4 C -16,10 -7,8 0,0 Z"
+                      fill="#22C55E"
+                      stroke="#1C1610"
+                      strokeWidth="1.8"
+                    />
+                    <path
+                      d="M 0,0 C 10,-6 20,-4 18,4 C 16,10 7,8 0,0 Z"
+                      fill="#4ADE80"
+                      stroke="#1C1610"
+                      strokeWidth="1.8"
+                    />
+                  </g>
+                  {/* Secondary blooming side forget-me-not bud */}
+                  <g
+                    transform={`translate(${corner.budDx}, ${corner.budDy}) rotate(${(-t * 28 * corner.dir).toFixed(1)}) scale(${(0.95 + Math.cos(t * 3.4 + cIdx) * 0.08).toFixed(3)})`}
+                  >
+                    {[0, 72, 144, 216, 288].map((deg) => (
+                      <path
+                        key={deg}
+                        transform={`rotate(${deg})`}
+                        d="M 0,0 C -2.4,-2.8 -2.6,-6 0,-6.6 C 2.6,-6 2.4,-2.8 0,0 Z"
+                        fill={corner.budPetal}
+                        stroke="#1C1610"
+                        strokeWidth="1.3"
+                        strokeLinejoin="round"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="2.3" fill="#E6392B" stroke="#1C1610" strokeWidth="1.1" />
+                  </g>
+                  {/* Main corner flower */}
+                  <g transform={`rotate(${flowerRot.toFixed(1)}) scale(${flowerScale.toFixed(3)})`}>
+                    {[0, 72, 144, 216, 288].map((angle, idx) => (
+                      <path
+                        key={`${corner.prefix}-${idx}`}
+                        transform={`rotate(${angle})`}
+                        d="M 0,0 C -7,-7 -8,-17 0,-19 C 8,-17 7,-7 0,0 Z"
+                        fill={corner.petal}
+                        stroke="#1C1610"
+                        strokeWidth="2.4"
+                        strokeLinejoin="round"
+                      />
+                    ))}
+                    {[0, 72, 144, 216, 288].map((angle, idx) => (
+                      <path
+                        key={`${corner.prefix}-hi-${idx}`}
+                        transform={`rotate(${angle})`}
+                        d="M 0,-3 C -3.2,-6.5 -3.2,-12.5 0,-14 C 3.2,-12.5 3.2,-6.5 0,-3 Z"
+                        fill="#FFFDF7"
+                        opacity="0.82"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="7.2" fill={corner.core} stroke="#1C1610" strokeWidth="2" />
+                    <circle cx="0" cy="0" r="1.1" fill="#1C1610" />
+                    <circle cx="0" cy="-3.2" r="0.8" fill="#1C1610" />
+                    <circle cx="3" cy="-1" r="0.8" fill="#1C1610" />
+                    <circle cx="1.9" cy="2.5" r="0.8" fill="#1C1610" />
+                    <circle cx="-1.9" cy="2.5" r="0.8" fill="#1C1610" />
+                    <circle cx="-3" cy="-1" r="0.8" fill="#1C1610" />
+                    <circle cx="0" cy="-5.2" r="0.7" fill="#1C1610" />
+                    <circle cx="3.6" cy="-3.6" r="0.7" fill="#1C1610" />
+                    <circle cx="5.2" cy="0" r="0.7" fill="#1C1610" />
+                    <circle cx="3.6" cy="3.6" r="0.7" fill="#1C1610" />
+                    <circle cx="0" cy="5.2" r="0.7" fill="#1C1610" />
+                    <circle cx="-3.6" cy="3.6" r="0.7" fill="#1C1610" />
+                    <circle cx="-5.2" cy="0" r="0.7" fill="#1C1610" />
+                    <circle cx="-3.6" cy="-3.6" r="0.7" fill="#1C1610" />
+                  </g>
+                </g>
+              );
+            })}
           </g>
 
           {/* ============================================================== */}
@@ -746,7 +926,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
               >
                 <title>Bubák ze slavné knihy Josefa Lady (klikni pro bafnutí!)</title>
 
-                {/* 1. Grounded Weathered Wooden Mounting Pole (stationary anchor) */}
+                {/* 1. Grounded Weathered Wooden Mounting Pole with Meadow Flowers at Base */}
                 <g id="bubak-wood-pole">
                   <rect
                     x="79.5"
@@ -761,6 +941,34 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
                   <line x1="82.5" y1="136" x2="82.5" y2="190" stroke="#9A5632" strokeWidth="1.6" />
                   <line x1="85.5" y1="138" x2="85.5" y2="186" stroke="#522712" strokeWidth="1.2" />
                   <ellipse cx="83.5" cy="164" rx="2" ry="3.2" fill="#3D1A0B" stroke="#1C1610" strokeWidth="1" />
+                  {/* Meadow turf & blooming folk flowers at base of pole */}
+                  <ellipse cx="84" cy="190" rx="22" ry="6" fill="#22C55E" stroke="#1C1610" strokeWidth="2.2" />
+                  <g transform={`translate(71, 187) rotate(${(t * 32).toFixed(1)})`}>
+                    {[0, 72, 144, 216, 288].map((deg) => (
+                      <path
+                        key={deg}
+                        transform={`rotate(${deg})`}
+                        d="M 0,0 C -2,-2.2 -2.2,-4.8 0,-5.3 C 2.2,-4.8 2,-2.2 0,0 Z"
+                        fill="#FACC15"
+                        stroke="#1C1610"
+                        strokeWidth="1.1"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="1.9" fill="#E6392B" stroke="#1C1610" strokeWidth="0.9" />
+                  </g>
+                  <g transform={`translate(96, 188) rotate(${(-t * 36).toFixed(1)})`}>
+                    {[0, 72, 144, 216, 288].map((deg) => (
+                      <path
+                        key={deg}
+                        transform={`rotate(${deg})`}
+                        d="M 0,0 C -1.8,-2 -2,-4.4 0,-4.8 C 2,-4.4 1.8,-2 0,0 Z"
+                        fill="#38BDF8"
+                        stroke="#1C1610"
+                        strokeWidth="1.1"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="1.7" fill="#FACC15" stroke="#1C1610" strokeWidth="0.9" />
+                  </g>
                 </g>
 
                 {/* 2. Articulated Upper Body Assembly (Torso + Skirt + Arms + Head move coherently together) */}
@@ -1006,7 +1214,7 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
               >
                 <title>Pekelný čertík Josefa Lady (klikni pro dupnutí kopytem, bodnutí vidlemi a spršku pekelných jisker!)</title>
 
-                {/* 1. Green Meadow Turf Pedestal with Josef Lada Grass Blades */}
+                {/* 1. Green Meadow Turf Pedestal with Josef Lada Grass Blades & Blooming Meadow Flowers */}
                 <g id="cert-turf-pedestal">
                   <ellipse cx="74" cy="168" rx="38" ry="12" fill="#3D7843" stroke="#1C1610" strokeWidth="3" />
                   <ellipse cx="74" cy="166" rx="32" ry="7" fill="#589B5F" />
@@ -1017,6 +1225,33 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
                     strokeLinecap="round"
                     fill="none"
                   />
+                  {/* Blooming Poppy & Daisy meadow flowers on Čertík's turf */}
+                  <g transform={`translate(45, 165) rotate(${(t * 34).toFixed(1)})`}>
+                    {[0, 72, 144, 216, 288].map((deg) => (
+                      <path
+                        key={deg}
+                        transform={`rotate(${deg})`}
+                        d="M 0,0 C -2,-2.2 -2.2,-4.8 0,-5.3 C 2.2,-4.8 2,-2.2 0,0 Z"
+                        fill="#FFFDF7"
+                        stroke="#1C1610"
+                        strokeWidth="1.1"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="1.8" fill="#FACC15" stroke="#1C1610" strokeWidth="0.9" />
+                  </g>
+                  <g transform={`translate(103, 165) rotate(${(-t * 30).toFixed(1)})`}>
+                    {[0, 72, 144, 216, 288].map((deg) => (
+                      <path
+                        key={deg}
+                        transform={`rotate(${deg})`}
+                        d="M 0,0 C -2,-2.2 -2.2,-4.8 0,-5.3 C 2.2,-4.8 2,-2.2 0,0 Z"
+                        fill="#FACC15"
+                        stroke="#1C1610"
+                        strokeWidth="1.1"
+                      />
+                    ))}
+                    <circle cx="0" cy="0" r="1.8" fill="#E6392B" stroke="#1C1610" strokeWidth="0.9" />
+                  </g>
 
                   {/* Smoothly modulated hoof stomp impact sparks */}
                   {stompImpactIntensity > 0.02 && (
@@ -1505,13 +1740,14 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
           )}
 
           {/* ============================================================== */}
-          {/* MAIN LETTERING: "BUBÁKOV"                                      */}
+          {/* MAIN LETTERING: "BUBÁKOV" (ANIMATED FOLK WAVE LETTERS)         */}
           {/* ============================================================== */}
           <g id="bubakov-word-group" filter="url(#lada-ink-spread)">
+            <title>BUBÁKOV</title>
             {/* Author label above title */}
             <text
               x="430"
-              y="52"
+              y="50"
               textAnchor="middle"
               fill="#7A4B27"
               stroke="#FAF5E8"
@@ -1526,90 +1762,238 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
               • JOS. LADA • BUBÁCI A HASTRMANI •
             </text>
 
-            {/* Deep black 3D ink shadow offset */}
-            <text
-              x="430"
-              y="116"
-              textAnchor="middle"
-              fill="#1C1610"
-              stroke="#1C1610"
-              strokeWidth="11"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              style={{
-                fontFamily: "'Eczar', serif",
-                fontSize: "76px",
-                fontWeight: 900,
-                letterSpacing: "7px",
-              }}
-            >
-              BUBÁKOV
-            </text>
+            {/* Individually animated B-U-B-Á-K-O-V letters in playful Czech village folk wave */}
+            {[
+              { char: 'B', x: 256, badgeColor: '#FACC15' },
+              { char: 'U', x: 314, badgeColor: '#38BDF8' },
+              { char: 'B', x: 372, badgeColor: '#4ADE80' },
+              { char: 'A', x: 430, badgeColor: '#FACC15', hasCarka: true },
+              { char: 'K', x: 488, badgeColor: '#E11D48' },
+              { char: 'O', x: 546, badgeColor: '#38BDF8' },
+              { char: 'V', x: 604, badgeColor: '#FACC15' },
+            ].map((item, idx) => {
+              const wavePhase = t * 3.2 - idx * 0.62;
+              const jumpElapsed = t - (letterJumpRef.current[idx] ?? -100);
+              const jumpEnv =
+                jumpElapsed >= 0 && jumpElapsed < 0.75
+                  ? Math.sin((jumpElapsed / 0.75) * Math.PI)
+                  : 0;
 
-            {/* Red main fill with folk hatched texture */}
-            <text
-              x="430"
-              y="114"
-              textAnchor="middle"
-              fill="url(#folk-red-hatch)"
-              stroke="#FAF5E8"
-              strokeWidth="2.4"
-              style={{
-                fontFamily: "'Eczar', serif",
-                fontSize: "76px",
-                fontWeight: 900,
-                letterSpacing: "7px",
-              }}
-            >
-              BUBÁKOV
-            </text>
+              const dy = Math.sin(wavePhase) * 4.2 - jumpEnv * 11;
+              const rot =
+                Math.cos(wavePhase * 0.85) * 3.6 +
+                Math.sin(jumpElapsed * 18) * jumpEnv * 10;
+              const scale = 1 + Math.max(0, Math.sin(wavePhase)) * 0.045 + jumpEnv * 0.14;
 
-            {/* Inner inline white folk contour / pinstripe */}
-            <text
-              x="430"
-              y="114"
-              textAnchor="middle"
-              fill="none"
-              stroke="#FFFFFF"
-              strokeWidth="1.2"
-              strokeDasharray="12 3"
-              style={{
-                fontFamily: "'Eczar', serif",
-                fontSize: "76px",
-                fontWeight: 900,
-                letterSpacing: "7px",
-              }}
-            >
-              BUBÁKOV
-            </text>
+              return (
+                <g
+                  key={idx}
+                  className="cursor-pointer"
+                  transform={`translate(${item.x}, ${(114 + dy).toFixed(2)}) rotate(${rot.toFixed(2)}) scale(${scale.toFixed(3)})`}
+                  onMouseEnter={() => triggerLetterJump(idx)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerLetterJump(idx);
+                    try {
+                      sound.caneWhip();
+                    } catch {}
+                  }}
+                >
+                  {/* Deep black 3D ink shadow offset */}
+                  <text
+                    x="0"
+                    y="2"
+                    textAnchor="middle"
+                    fill="#1C1610"
+                    stroke="#1C1610"
+                    strokeWidth="11"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    style={{
+                      fontFamily: "'Eczar', serif",
+                      fontSize: '76px',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {item.char}
+                  </text>
 
-            {/* Hand-drawn Czech acute accent on 'Á' */}
-            <g transform="translate(382, 42)">
-              <polygon points="10,16 26,2 32,4 16,20" fill="#1C1610" stroke="#1C1610" strokeWidth="4.5" strokeLinejoin="round" />
-              <polygon points="10,16 26,2 32,4 16,20" fill="#C53026" stroke="#FAF5E8" strokeWidth="1.6" strokeLinejoin="round" />
-              <line x1="14" y1="16" x2="26" y2="5" stroke="#FAF5E8" strokeWidth="1.4" />
-            </g>
+                  {/* Vibrant Poppy Vermilion & Buttercup Gold folk hatched main fill */}
+                  <text
+                    x="0"
+                    y="0"
+                    textAnchor="middle"
+                    fill="url(#folk-red-hatch)"
+                    stroke="#FFFDF7"
+                    strokeWidth="2.5"
+                    style={{
+                      fontFamily: "'Eczar', serif",
+                      fontSize: '76px',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {item.char}
+                  </text>
+
+                  {/* Inner inline warm cream folk contour / pinstripe */}
+                  <text
+                    x="0"
+                    y="0"
+                    textAnchor="middle"
+                    fill="none"
+                    stroke="#FFFDF7"
+                    strokeWidth="1.2"
+                    strokeDasharray="12 3"
+                    style={{
+                      fontFamily: "'Eczar', serif",
+                      fontSize: '76px',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {item.char}
+                  </text>
+
+                  {/* Hand-drawn Czech acute accent (čárka) on 'Á' with playful secondary follow-through */}
+                  {item.hasCarka && (
+                    <g
+                      transform={`translate(-16, ${(-72 + Math.sin(wavePhase - 0.5) * 2.2).toFixed(2)}) rotate(${(Math.cos(wavePhase - 0.4) * 5).toFixed(2)}, 20, 10)`}
+                    >
+                      <polygon
+                        points="10,16 26,2 32,4 16,20"
+                        fill="#1C1610"
+                        stroke="#1C1610"
+                        strokeWidth="4.5"
+                        strokeLinejoin="round"
+                      />
+                      <polygon
+                        points="10,16 26,2 32,4 16,20"
+                        fill="#FACC15"
+                        stroke="#FFFDF7"
+                        strokeWidth="1.6"
+                        strokeLinejoin="round"
+                      />
+                      <line x1="14" y1="16" x2="26" y2="5" stroke="#E6392B" strokeWidth="1.6" />
+                    </g>
+                  )}
+                </g>
+              );
+            })}
           </g>
 
           {/* ============================================================== */}
-          {/* CLEAN BASELINE FOLK ORNAMENT UNDER TITLE                       */}
+          {/* CLEAN BASELINE FOLK ORNAMENT UNDER TITLE (SWAYING & BLOOMING)  */}
           {/* ============================================================== */}
           <g id="bubakov-sub-ornament" transform="translate(430, 148)">
-            {/* Left sprig branch */}
-            <line x1="-90" y1="0" x2="-25" y2="0" stroke="#1C1610" strokeWidth="1.8" strokeDasharray="3 3" />
-            <circle cx="-95" cy="0" r="3.2" fill="#BA3852" stroke="#1C1610" strokeWidth="1.5" />
-            <circle cx="-60" cy="-4" r="2.2" fill="#528850" stroke="#1C1610" strokeWidth="1.2" />
-            <circle cx="-40" cy="4" r="2.2" fill="#528850" stroke="#1C1610" strokeWidth="1.2" />
+            {/* Left sprig branch with animated folk flowers & breathing leaves */}
+            <g transform={`rotate(${(Math.sin(t * 2.4) * 2.5).toFixed(2)})`}>
+              <line x1="-102" y1="0" x2="-22" y2="0" stroke="#1C1610" strokeWidth="2.4" />
+              <line x1="-102" y1="0" x2="-22" y2="0" stroke="#FACC15" strokeWidth="1.3" strokeDasharray="4 2" />
+              {/* Breathing green meadow leaves */}
+              <path
+                d="M -58,0 C -62,-7 -70,-6 -68,0 Z"
+                fill="#22C55E"
+                stroke="#1C1610"
+                strokeWidth="1.3"
+              />
+              <path
+                d="M -38,0 C -42,7 -50,6 -48,0 Z"
+                fill="#4ADE80"
+                stroke="#1C1610"
+                strokeWidth="1.3"
+              />
+              {/* Animated Cornflower Blue flower at x=-78 */}
+              <g transform={`translate(-78, 0) rotate(${(t * 36).toFixed(1)}) scale(${(1 + Math.sin(t * 3.5) * 0.1).toFixed(3)})`}>
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -2,-2.3 -2.2,-4.8 0,-5.3 C 2.2,-4.8 2,-2.3 0,0 Z"
+                    fill="#38BDF8"
+                    stroke="#1C1610"
+                    strokeWidth="1.1"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="1.9" fill="#FACC15" stroke="#1C1610" strokeWidth="0.95" />
+              </g>
+              {/* Animated Carmine Rose flower at tip x=-104 */}
+              <g transform={`translate(-104, 0) rotate(${(-t * 30).toFixed(1)}) scale(${(1 + Math.cos(t * 3.2) * 0.1).toFixed(3)})`}>
+                {[0, 60, 120, 180, 240, 300].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -2.2,-2.8 -2.4,-6 0,-6.5 C 2.4,-6 2.2,-2.8 0,0 Z"
+                    fill="#E11D48"
+                    stroke="#1C1610"
+                    strokeWidth="1.15"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="2.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1" />
+              </g>
+            </g>
 
-            {/* Central golden folk rosette */}
-            <circle cx="0" cy="0" r="6.5" fill="#F4C732" stroke="#1C1610" strokeWidth="1.8" />
-            <circle cx="0" cy="0" r="1.5" fill="#1C1610" />
+            {/* Central spinning golden & poppy folk flower rosette */}
+            <g transform={`rotate(${(t * 32).toFixed(1)}) scale(${(1 + Math.sin(t * 3.6) * 0.1).toFixed(3)})`}>
+              {[0, 60, 120, 180, 240, 300].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -3.2,-3.8 -3.6,-8.6 0,-9.4 C 3.6,-8.6 3.2,-3.8 0,0 Z"
+                  fill="#E6392B"
+                  stroke="#1C1610"
+                  strokeWidth="1.4"
+                  strokeLinejoin="round"
+                />
+              ))}
+              <circle cx="0" cy="0" r="4.6" fill="#FACC15" stroke="#1C1610" strokeWidth="1.6" />
+              <circle cx="0" cy="0" r="1.4" fill="#1C1610" />
+            </g>
 
-            {/* Right sprig branch */}
-            <line x1="25" y1="0" x2="90" y2="0" stroke="#1C1610" strokeWidth="1.8" strokeDasharray="3 3" />
-            <circle cx="95" cy="0" r="3.2" fill="#BA3852" stroke="#1C1610" strokeWidth="1.5" />
-            <circle cx="60" cy="-4" r="2.2" fill="#528850" stroke="#1C1610" strokeWidth="1.2" />
-            <circle cx="40" cy="4" r="2.2" fill="#528850" stroke="#1C1610" strokeWidth="1.2" />
+            {/* Right sprig branch with animated folk flowers & breathing leaves */}
+            <g transform={`rotate(${(-Math.sin(t * 2.4) * 2.5).toFixed(2)})`}>
+              <line x1="22" y1="0" x2="102" y2="0" stroke="#1C1610" strokeWidth="2.4" />
+              <line x1="22" y1="0" x2="102" y2="0" stroke="#FACC15" strokeWidth="1.3" strokeDasharray="4 2" />
+              {/* Breathing green meadow leaves */}
+              <path
+                d="M 58,0 C 62,-7 70,-6 68,0 Z"
+                fill="#22C55E"
+                stroke="#1C1610"
+                strokeWidth="1.3"
+              />
+              <path
+                d="M 38,0 C 42,7 50,6 48,0 Z"
+                fill="#4ADE80"
+                stroke="#1C1610"
+                strokeWidth="1.3"
+              />
+              {/* Animated Cornflower Blue flower at x=78 */}
+              <g transform={`translate(78, 0) rotate(${(-t * 36).toFixed(1)}) scale(${(1 + Math.sin(t * 3.5 + 0.5) * 0.1).toFixed(3)})`}>
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -2,-2.3 -2.2,-4.8 0,-5.3 C 2.2,-4.8 2,-2.3 0,0 Z"
+                    fill="#38BDF8"
+                    stroke="#1C1610"
+                    strokeWidth="1.1"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="1.9" fill="#FACC15" stroke="#1C1610" strokeWidth="0.95" />
+              </g>
+              {/* Animated Carmine Rose flower at tip x=104 */}
+              <g transform={`translate(104, 0) rotate(${(t * 30).toFixed(1)}) scale(${(1 + Math.cos(t * 3.2 + 0.5) * 0.1).toFixed(3)})`}>
+                {[0, 60, 120, 180, 240, 300].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -2.2,-2.8 -2.4,-6 0,-6.5 C 2.4,-6 2.2,-2.8 0,0 Z"
+                    fill="#E11D48"
+                    stroke="#1C1610"
+                    strokeWidth="1.15"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="2.2" fill="#FACC15" stroke="#1C1610" strokeWidth="1" />
+              </g>
+            </g>
           </g>
         </svg>
       </div>

@@ -13,6 +13,7 @@ import { PernicekIcon } from './PernicekIcon';
 import { GrandfatherScene } from './GrandfatherScene';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { toCanonicalWeaponId } from '../game/migration';
 import {
   getWeaponRankDef,
@@ -954,6 +955,10 @@ export function GrandfatherShop({
                         overflowWrap: 'break-word',
                       }}
                     >
+                      <LadaCardCorners
+                        variant={isHighlighted ? 'selected' : isMaxed ? 'locked' : 'default'}
+                        showBottomCorners={true}
+                      />
                       {/* Card Content Top */}
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -1170,6 +1175,7 @@ export function GrandfatherShop({
                 {activeDevice === 'gamepad' ? '[Y]' : '[R]'}
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <LadaFolkFlower variant="buttercup" size={16} spin />
                 <GameIcon icon="basket" size={18} /> ZAMÍCHAT NŮŠI
               </span>
               <span

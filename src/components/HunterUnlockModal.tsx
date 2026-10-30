@@ -2,6 +2,8 @@ import React from 'react';
 import { sound } from '../audio';
 import { HUNTER_UNLOCKS, type HunterProgress } from '../data/hunterUnlocks';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { LadaHunterCanvasPreview } from './LadaHunterCanvasPreview';
 
@@ -74,9 +76,11 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
           display: 'flex',
           flexDirection: 'column',
           textAlign: 'left',
+          position: 'relative',
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ flexShrink: 0 }}>
             <LadaHunterCanvasPreview hunterId={progress.id} size={96} filter={tierFilter} />
@@ -94,9 +98,13 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                 fontSize: '1.9rem',
                 color: '#8B1E0F',
                 textShadow: '1px 1px 0 rgba(255, 255, 255, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
               }}
             >
-              {progress.spoiledName}
+              <LadaFolkFlower variant="buttercup" size={20} spin />
+              <span>{progress.spoiledName}</span>
             </h2>
             <div style={{ fontWeight: 900, color: '#3D2210', fontSize: '1.05rem' }}>
               {progress.spoiledTitle}

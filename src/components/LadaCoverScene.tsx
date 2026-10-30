@@ -6,11 +6,57 @@ interface LadaCoverSceneProps {
   height?: number;
 }
 
+const COVER_SCENE_ANIM_STYLES = `
+  @keyframes ladaSceneFlowerSpin {
+    0% { transform: rotate(0deg) scale(0.95); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(0.95); }
+  }
+  @keyframes ladaSceneBouquetSway {
+    0%, 100% { transform: rotate(-3.5deg); }
+    50% { transform: rotate(4deg); }
+  }
+  @keyframes ladaSceneSmokeRise {
+    0%, 100% { transform: translate(0px, 0px) scale(0.92); opacity: 0.85; }
+    50% { transform: translate(3px, -5px) scale(1.14); opacity: 0.6; }
+  }
+  @keyframes ladaSceneGesture {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(3.5deg); }
+  }
+  .lada-scene-flower {
+    animation: ladaSceneFlowerSpin 9.5s linear infinite;
+  }
+  .lada-scene-flower-rev {
+    animation: ladaSceneFlowerSpin 9.5s linear infinite reverse;
+  }
+  .lada-scene-bouquet {
+    transform-origin: 0px 0px;
+    animation: ladaSceneBouquetSway 3.2s ease-in-out infinite;
+  }
+  .lada-scene-smoke-1 {
+    animation: ladaSceneSmokeRise 2.8s ease-in-out infinite;
+  }
+  .lada-scene-smoke-2 {
+    animation: ladaSceneSmokeRise 2.8s ease-in-out infinite 0.9s;
+  }
+  .lada-scene-arm {
+    transform-origin: 44px 68px;
+    animation: ladaSceneGesture 2.4s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lada-scene-flower, .lada-scene-flower-rev, .lada-scene-bouquet, .lada-scene-smoke-1, .lada-scene-smoke-2, .lada-scene-arm {
+      animation: none !important;
+    }
+  }
+`;
+
 /**
  * Illustrated vignette depicting the iconic lower scene from Josef Lada's
  * "Bubáci a hastrmani" book cover:
  * Vodník (Hastrman) in green frock coat and knitted cap smoking a clay pipe
- * at a rustic wooden table with an earthenware jug, chatting with a village elder.
+ * at a rustic wooden table with an earthenware jug & painted folk flower bouquet,
+ * chatting with a village elder.
  */
 export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
   className = '',
@@ -25,9 +71,11 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
     >
       <svg
         viewBox="0 0 520 220"
-        style={{ width: '100%', height: '100%', maxWidth: '520px' }}
+        style={{ width: '100%', height: '100%', maxWidth: '520px', overflow: 'visible' }}
         preserveAspectRatio="xMidYMid meet"
       >
+        <style>{COVER_SCENE_ANIM_STYLES}</style>
+
         {/* Wooden floor planks */}
         <g id="wooden-floor">
           <line x1="30" y1="200" x2="490" y2="200" stroke="#1C1610" strokeWidth="3" />
@@ -35,11 +83,29 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
           <line x1="40" y1="212" x2="480" y2="212" stroke="#1C1610" strokeWidth="2" strokeDasharray="30 8 40 10" />
         </g>
 
-        {/* Small picture frame on wall */}
-        <g transform="translate(185, 30)">
-          <rect x="0" y="0" width="32" height="38" fill="#C53026" stroke="#1C1610" strokeWidth="2.8" rx="2" />
-          <rect x="5" y="5" width="22" height="28" fill="#FAF5E8" stroke="#1C1610" strokeWidth="1.8" />
-          <path d="M 8,10 L 22,24 M 22,10 L 8,24" stroke="#3A7843" strokeWidth="2.4" />
+        {/* Small folk picture frame on wall with painted blooming flower */}
+        <g transform="translate(185, 26)">
+          <rect x="0" y="0" width="34" height="40" fill="#E6392B" stroke="#1C1610" strokeWidth="2.8" rx="2" />
+          <rect x="5" y="5" width="24" height="30" fill="#FFFDF7" stroke="#1C1610" strokeWidth="1.8" />
+          {/* Painted stem & leaves inside picture */}
+          <path d="M 17,32 Q 17,24 17,18" stroke="#16A34A" strokeWidth="2" fill="none" />
+          <path d="M 17,27 C 11,25 10,21 15,23 Z" fill="#22C55E" stroke="#1C1610" strokeWidth="1" />
+          <path d="M 17,27 C 23,25 24,21 19,23 Z" fill="#22C55E" stroke="#1C1610" strokeWidth="1" />
+          <g transform="translate(17, 16)">
+            <g className="lada-scene-flower">
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -2,-2.2 -2.2,-5 0,-5.5 C 2.2,-5 2,-2.2 0,0 Z"
+                  fill="#38BDF8"
+                  stroke="#1C1610"
+                  strokeWidth="1.1"
+                />
+              ))}
+              <circle cx="0" cy="0" r="2" fill="#FACC15" stroke="#1C1610" strokeWidth="0.9" />
+            </g>
+          </g>
         </g>
 
         {/* Rustic Wooden Table */}
@@ -52,22 +118,68 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
           <line x1="330" y1="130" x2="340" y2="198" stroke="#1C1610" strokeWidth="10" strokeLinecap="round" />
           <line x1="330" y1="130" x2="340" y2="198" stroke="#8C5832" strokeWidth="6" strokeLinecap="round" />
 
-          {/* Stretcher / crossbar */}
+          {/* Stretcher / crossbar with painted folk flowers */}
           <line x1="192" y1="168" x2="338" y2="168" stroke="#1C1610" strokeWidth="8" strokeLinecap="round" />
           <line x1="192" y1="168" x2="338" y2="168" stroke="#7A4B27" strokeWidth="4.5" strokeLinecap="round" />
+          <g transform="translate(265, 168)">
+            <g className="lada-scene-flower">
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -1.8,-2 -2,-4.4 0,-4.8 C 2,-4.4 1.8,-2 0,0 Z"
+                  fill="#FACC15"
+                  stroke="#1C1610"
+                  strokeWidth="1"
+                />
+              ))}
+              <circle cx="0" cy="0" r="1.7" fill="#E6392B" stroke="#1C1610" strokeWidth="0.8" />
+            </g>
+          </g>
 
           {/* Tabletop */}
           {/* Underboard */}
           <polygon points="170,126 360,126 352,142 178,142" fill="#7A4B27" stroke="#1C1610" strokeWidth="3" />
           {/* Green cloth top */}
-          <polygon points="160,120 370,120 364,128 166,128" fill="#3D7843" stroke="#1C1610" strokeWidth="3" />
-          <line x1="164" y1="124" x2="366" y2="124" stroke="#FDE047" strokeWidth="1.5" />
+          <polygon points="160,120 370,120 364,128 166,128" fill="#16A34A" stroke="#1C1610" strokeWidth="3" />
+          <line x1="164" y1="124" x2="366" y2="124" stroke="#FACC15" strokeWidth="1.6" />
+          {/* Embroidered corner flowers on tablecloth */}
+          <g transform="translate(182, 134)">
+            <g className="lada-scene-flower">
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -1.7,-1.9 -1.9,-4.2 0,-4.6 C 1.9,-4.2 1.7,-1.9 0,0 Z"
+                  fill="#E11D48"
+                  stroke="#1C1610"
+                  strokeWidth="1"
+                />
+              ))}
+              <circle cx="0" cy="0" r="1.6" fill="#FACC15" stroke="#1C1610" strokeWidth="0.8" />
+            </g>
+          </g>
+          <g transform="translate(348, 134)">
+            <g className="lada-scene-flower-rev">
+              {[0, 72, 144, 216, 288].map((deg) => (
+                <path
+                  key={deg}
+                  transform={`rotate(${deg})`}
+                  d="M 0,0 C -1.7,-1.9 -1.9,-4.2 0,-4.6 C 1.9,-4.2 1.7,-1.9 0,0 Z"
+                  fill="#38BDF8"
+                  stroke="#1C1610"
+                  strokeWidth="1"
+                />
+              ))}
+              <circle cx="0" cy="0" r="1.6" fill="#FACC15" stroke="#1C1610" strokeWidth="0.8" />
+            </g>
+          </g>
         </g>
 
-        {/* Earthenware Jug with folk star */}
-        <g id="ceramic-pitcher" transform="translate(245, 78)">
+        {/* Earthenware Jug with animated folk star & painted side flowers */}
+        <g id="ceramic-pitcher" transform="translate(238, 78)">
           {/* Pitcher shadow */}
-          <ellipse cx="20" cy="46" rx="14" ry="4" fill="rgba(28,22,16,0.2)" />
+          <ellipse cx="24" cy="46" rx="15" ry="4" fill="rgba(28,22,16,0.2)" />
           {/* Handle */}
           <path d="M 10,18 C -2,22 -2,38 10,40" fill="none" stroke="#1C1610" strokeWidth="5.5" strokeLinecap="round" />
           <path d="M 10,18 C -2,22 -2,38 10,40" fill="none" stroke="#9A6138" strokeWidth="3" strokeLinecap="round" />
@@ -84,13 +196,89 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
             stroke="#1C1610"
             strokeWidth="3"
           />
-          {/* Folk 5-pointed star on pitcher */}
-          <polygon
-            points="26,26 28,32 34,32 29,36 31,42 26,38 21,42 23,36 18,32 24,32"
-            fill="#FAF5E8"
+          {/* Animated Folk 5-pointed star & flower motif on pitcher */}
+          <g transform="translate(26, 33)">
+            <g className="lada-scene-flower">
+              <polygon
+                points="0,-9 2.4,-2.6 9,-2.2 3.8,2 5.5,8.5 0,4.8 -5.5,8.5 -3.8,2 -9,-2.2 -2.4,-2.6"
+                fill="#FACC15"
+                stroke="#1C1610"
+                strokeWidth="1.2"
+              />
+              <circle cx="0" cy="0" r="2.6" fill="#E6392B" stroke="#1C1610" strokeWidth="1" />
+            </g>
+          </g>
+        </g>
+
+        {/* Small Painted Folk Vase with Swaying Meadow Flower Bouquet on Table */}
+        <g id="table-flower-vase" transform="translate(302, 102)">
+          {/* Swaying stems & flowers */}
+          <g className="lada-scene-bouquet">
+            <path d="M 0,4 Q -8,-10 -12,-20" stroke="#16A34A" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+            <path d="M 0,4 Q 0,-14 0,-25" stroke="#16A34A" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+            <path d="M 0,4 Q 8,-10 12,-19" stroke="#16A34A" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+            {/* Leaves */}
+            <path d="M -3,-2 C -10,-4 -13,0 -7,3 Z" fill="#22C55E" stroke="#1C1610" strokeWidth="1.1" />
+            <path d="M 3,-2 C 10,-4 13,0 7,3 Z" fill="#22C55E" stroke="#1C1610" strokeWidth="1.1" />
+            {/* Left Cornflower */}
+            <g transform="translate(-12, -20)">
+              <g className="lada-scene-flower">
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -1.9,-2.2 -2.1,-4.8 0,-5.2 C 2.1,-4.8 1.9,-2.2 0,0 Z"
+                    fill="#38BDF8"
+                    stroke="#1C1610"
+                    strokeWidth="1.1"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="1.8" fill="#FACC15" stroke="#1C1610" strokeWidth="0.9" />
+              </g>
+            </g>
+            {/* Center Poppy Flower */}
+            <g transform="translate(0, -26)">
+              <g className="lada-scene-flower-rev">
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -2.2,-2.5 -2.5,-5.5 0,-6 C 2.5,-5.5 2.2,-2.5 0,0 Z"
+                    fill="#E6392B"
+                    stroke="#1C1610"
+                    strokeWidth="1.15"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="0.95" />
+              </g>
+            </g>
+            {/* Right Buttercup Flower */}
+            <g transform="translate(12, -19)">
+              <g className="lada-scene-flower">
+                {[0, 72, 144, 216, 288].map((deg) => (
+                  <path
+                    key={deg}
+                    transform={`rotate(${deg})`}
+                    d="M 0,0 C -1.9,-2.2 -2.1,-4.8 0,-5.2 C 2.1,-4.8 1.9,-2.2 0,0 Z"
+                    fill="#FACC15"
+                    stroke="#1C1610"
+                    strokeWidth="1.1"
+                  />
+                ))}
+                <circle cx="0" cy="0" r="1.8" fill="#E11D48" stroke="#1C1610" strokeWidth="0.9" />
+              </g>
+            </g>
+          </g>
+          {/* Painted cream & blue ceramic vase body */}
+          <path
+            d="M -7,2 L 7,2 C 11,8 10,17 6,21 L -6,21 C -10,17 -11,8 -7,2 Z"
+            fill="#FFFDF7"
             stroke="#1C1610"
-            strokeWidth="1.2"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
           />
+          <line x1="-8" y1="8" x2="8" y2="8" stroke="#2563EB" strokeWidth="1.8" />
+          <circle cx="0" cy="14" r="2.2" fill="#E6392B" stroke="#1C1610" strokeWidth="1" />
         </g>
 
         {/* Stool between table and peasant */}
@@ -164,9 +352,9 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
           <line x1="94" y1="46" x2="114" y2="78" stroke="#1C1610" strokeWidth="1" strokeDasharray="2 1" />
           {/* Pipe bowl */}
           <path d="M 112,74 L 118,74 L 116,68 L 110,68 Z" fill="#C53026" stroke="#1C1610" strokeWidth="1.8" />
-          {/* Smoke puff */}
-          <circle cx="114" cy="62" r="3.5" fill="rgba(240,240,240,0.85)" stroke="#1C1610" strokeWidth="1.2" />
-          <circle cx="118" cy="54" r="5" fill="rgba(240,240,240,0.85)" stroke="#1C1610" strokeWidth="1.2" />
+          {/* Animated Smoke puffs */}
+          <circle className="lada-scene-smoke-1" cx="114" cy="62" r="3.5" fill="rgba(240,240,240,0.85)" stroke="#1C1610" strokeWidth="1.2" />
+          <circle className="lada-scene-smoke-2" cx="118" cy="54" r="5" fill="rgba(240,240,240,0.85)" stroke="#1C1610" strokeWidth="1.2" />
 
           {/* Green frog-like head profile */}
           <ellipse cx="76" cy="38" rx="14" ry="16" fill="#884A39" stroke="#1C1610" strokeWidth="3" />
@@ -186,7 +374,7 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
           {/* Cap ribbing */}
           <line x1="68" y1="26" x2="86" y2="26" stroke="#FAF5E8" strokeWidth="1.5" />
           <line x1="72" y1="20" x2="84" y2="20" stroke="#FAF5E8" strokeWidth="1.5" />
-          <circle cx="80" cy="7" r="3.5" fill="#C53026" stroke="#1C1610" strokeWidth="1.8" />
+          <circle cx="80" cy="7" r="3.5" fill="#E6392B" stroke="#1C1610" strokeWidth="1.8" />
           {/* Long green hair strands */}
           <path d="M 64,36 Q 54,48 52,66" fill="none" stroke="#2D6836" strokeWidth="4" strokeLinecap="round" />
           <path d="M 68,36 Q 58,48 58,68" fill="none" stroke="#2D6836" strokeWidth="4" strokeLinecap="round" />
@@ -218,10 +406,12 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
 
           {/* Hands gesturing while talking */}
           {/* Left gesturing hand */}
-          <path d="M 44,68 Q 24,78 12,82" stroke="#1C1610" strokeWidth="8" strokeLinecap="round" />
-          <path d="M 44,68 Q 24,78 12,82" stroke="#9A653F" strokeWidth="5" strokeLinecap="round" />
-          {/* Open gesturing fingers */}
-          <path d="M 12,82 L 4,78 M 12,82 L 2,84 M 12,82 L 4,90 M 12,82 L 8,94" stroke="#E2B48A" strokeWidth="2.4" strokeLinecap="round" />
+          <g className="lada-scene-arm">
+            <path d="M 44,68 Q 24,78 12,82" stroke="#1C1610" strokeWidth="8" strokeLinecap="round" />
+            <path d="M 44,68 Q 24,78 12,82" stroke="#9A653F" strokeWidth="5" strokeLinecap="round" />
+            {/* Open gesturing fingers */}
+            <path d="M 12,82 L 4,78 M 12,82 L 2,84 M 12,82 L 4,90 M 12,82 L 8,94" stroke="#E2B48A" strokeWidth="2.4" strokeLinecap="round" />
+          </g>
 
           {/* Right hand tucked behind back */}
           <path d="M 64,68 Q 80,74 84,90" stroke="#1C1610" strokeWidth="8" strokeLinecap="round" />
@@ -238,7 +428,7 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
           {/* Wispy hair on neck */}
           <path d="M 56,42 Q 68,48 66,58" stroke="#8C5C36" strokeWidth="3.5" strokeLinecap="round" />
 
-          {/* Ribbed warm winter cap (beranice) with ear flaps */}
+          {/* Ribbed warm winter cap (beranice) with ear flaps & small folk flower pin */}
           <path
             d="M 34,32 Q 44,14 54,14 Q 64,18 64,34 Z"
             fill="#88432E"
@@ -254,3 +444,4 @@ export const LadaCoverScene: React.FC<LadaCoverSceneProps> = ({
     </div>
   );
 };
+

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface PernicekIconProps {
   size?: string | number;
@@ -21,7 +22,7 @@ export const PernicekIcon: React.FC<PernicekIconProps> = ({
   const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 36 36"
       width={pixelSize}
@@ -123,7 +124,7 @@ export const PernicekIcon: React.FC<PernicekIconProps> = ({
         <circle cx="18" cy="14" r="0.7" fill="#FFFDF8" />
         <circle cx="18" cy="22.5" r="0.7" fill="#FFFDF8" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };
 

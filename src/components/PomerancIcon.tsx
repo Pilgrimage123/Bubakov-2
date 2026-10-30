@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface PomerancIconProps {
   size?: string | number;
@@ -21,7 +22,7 @@ export const PomerancIcon: React.FC<PomerancIconProps> = ({
   const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 200 200"
       width={pixelSize}
@@ -192,6 +193,6 @@ export const PomerancIcon: React.FC<PomerancIconProps> = ({
         <circle cx="158" cy="74" r="2.5" fill="#FDE047" opacity="0.8" />
         <circle cx="152" cy="148" r="2" fill="#FDE047" opacity="0.7" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

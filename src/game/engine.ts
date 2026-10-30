@@ -3769,7 +3769,11 @@ export class GameEngine {
           const drag = Math.max(0, 1 - 7.5 * dt);
           d.vx *= drag;
           d.vy *= drag;
-          clampToMarchArenaBounds(d, 32);
+          if (Math.abs(d.vx) < 1.5) d.vx = 0;
+          if (Math.abs(d.vy) < 1.5) d.vy = 0;
+        }
+        if (this.state.activeLevelId === 0) {
+          clampToMarchArenaBounds(d, 28);
         }
 
         if (player && player.hp > 0) {
@@ -3779,6 +3783,9 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
+            if (this.state.activeLevelId === 0) {
+              clampToMarchArenaBounds(d, 28);
+            }
             const curDist = Math.hypot(d.x - player.x, d.y - player.y);
 
             if (curDist < player.radius + (d.radius || 12) + 14 || dist < player.radius + (d.radius || 12) + 14) {

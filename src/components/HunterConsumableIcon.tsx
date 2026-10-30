@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export type HunterConsumableKind = 'tepla_cikorka' | 'zejdlik_piva' | 'panak_koralky';
 interface Props { kind: HunterConsumableKind; size?: string | number; className?: string; style?: React.CSSProperties; }
@@ -7,7 +8,7 @@ export const HunterConsumableIcon: React.FC<Props> = ({ kind, size = 36, classNa
   const px = typeof size === 'number' ? `${size}px` : size;
   if (kind === 'tepla_cikorka') {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Teplá cikorka">
+      <LadaCanvasSvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Teplá cikorka">
         <g className="lada-anim-float">
           <path d="M10 15 H47 L44 47 Q43 54 29 54 Q15 54 14 47 Z" fill="#F5E6C8" stroke="#5B2118" strokeWidth="3"/>
           <ellipse cx="28.5" cy="17" rx="17" ry="4.5" fill="#6B351E" stroke="#5B2118" strokeWidth="2"/>
@@ -21,12 +22,12 @@ export const HunterConsumableIcon: React.FC<Props> = ({ kind, size = 36, classNa
         <g className="lada-anim-steam-2">
           <path d="M33 12 C28 6 35 3 32 0" fill="none" stroke="#FAF5E8" strokeWidth="2.2" strokeLinecap="round"/>
         </g>
-      </svg>
+      </LadaCanvasSvg>
     );
   }
   if (kind === 'zejdlik_piva') {
     return (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Žejdlík piva">
+      <LadaCanvasSvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Žejdlík piva">
         <g className="lada-anim-float">
           <path d="M12 15 H43 L40 53 Q39 57 27 57 Q15 57 14 53 Z" fill="#EAB308" stroke="#5B2118" strokeWidth="3"/>
           <path d="M43 23 H49 Q59 23 56 36 Q54 46 42 43" fill="none" stroke="#5B2118" strokeWidth="4"/>
@@ -36,11 +37,11 @@ export const HunterConsumableIcon: React.FC<Props> = ({ kind, size = 36, classNa
             <path d="M10 15 Q5 7 13 7 Q17 -1 25 6 Q31 -1 37 7 Q45 4 47 15 Z" fill="#FFF7D6" stroke="#5B2118" strokeWidth="2.5"/>
           </g>
         </g>
-      </svg>
+      </LadaCanvasSvg>
     );
   }
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Panák kořalky">
+    <LadaCanvasSvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={px} height={px} className={className} style={style} role="img" aria-label="Panák kořalky">
       <g className="lada-anim-float">
         <path d="M17 10 H47 L44 29 Q42 35 37 39 V51 Q37 56 32 56 Q27 56 27 51 V39 Q21 35 20 29 Z" fill="#F5E6C8" stroke="#5B2118" strokeWidth="3"/>
         <path d="M20 21 H44 L42 29 Q41 33 32 36 Q23 33 22 29 Z" fill="#C77722"/>
@@ -48,6 +49,6 @@ export const HunterConsumableIcon: React.FC<Props> = ({ kind, size = 36, classNa
         <path d="M29 44 l3 3 l3 -3" fill="none" stroke="#92400E" strokeWidth="2"/>
         <circle cx="26" cy="18" r="1.8" fill="#FFFFFF" className="lada-anim-glint"/>
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

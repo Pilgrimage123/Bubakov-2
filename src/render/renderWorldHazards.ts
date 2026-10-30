@@ -141,7 +141,11 @@ export function renderWorldHazardsAndEncounters(
         ctx.strokeStyle = COLORS.ink;
         ctx.lineWidth = canInteractPoi ? 2.5 : 2;
         ctx.beginPath();
-        ctx.roundRect(player.x - 175, player.y - 88, 350, 31, 8);
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 175, player.y - 88, 350, 31, 8);
+        } else {
+          ctx.rect(player.x - 175, player.y - 88, 350, 31);
+        }
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = canInteractPoi ? '#5B2118' : '#472A16';
@@ -155,7 +159,11 @@ export function renderWorldHazardsAndEncounters(
           ctx.strokeStyle = '#1C1917';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.roundRect(nearby.x - 86, nearby.y - 98, 172, 26, 8);
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(nearby.x - 86, nearby.y - 98, 172, 26, 8);
+          } else {
+            ctx.rect(nearby.x - 86, nearby.y - 98, 172, 26);
+          }
           ctx.fill();
           ctx.stroke();
           ctx.fillStyle = '#78350F';

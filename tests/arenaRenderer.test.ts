@@ -299,4 +299,47 @@ describe('Arena Renderer Seam & Performance Pipeline (Ticket #28)', () => {
     // Capacity grew upfront before the loop
     expect(renderer.drawableCapacity).toBeGreaterThanOrEqual(2501);
   });
+
+  it('renders Stage 1 foreground sun overlay after all entities, roofs, projectiles, and floating combat texts so nothing covers the sun', () => {
+    const order: string[] = [];
+    engine.activeLevelId = 0;
+    engine.gameTime = 150;
+    engine.player = {
+      x: 0,
+      y: 0,
+      hp: 100,
+      maxHp: 100,
+      weapons: [],
+      draw: () => order.push('player'),
+    } as any;
+    engine.texts = [
+      {
+        x: 0,
+        y: -20,
+        size: 18,
+        category: 'enemyDamage',
+        text: 'CRIT!',
+        draw: () => order.push('floating-text'),
+      } as any,
+    ];
+
+    const origDrawImage = ctx.drawImage;
+    (ctx as any).drawImage = vi.fn((...args: any[]) => {
+      order.push('sun-drawImage');
+      return (origDrawImage as any).apply(ctx, args);
+    });
+
+    renderArena(ctx, engine, camera, {
+      curLvl: { id: 0, season: 'spring', theme: 'village' },
+      combatTextsEnabled: true,
+    });
+
+    const playerIdx = order.indexOf('player');
+    const textIdx = order.indexOf('floating-text');
+    const firstSunIdx = order.indexOf('sun-drawImage');
+
+    expect(playerIdx).toBeGreaterThanOrEqual(0);
+    expect(textIdx).toBeGreaterThan(playerIdx);
+    expect(firstSunIdx).toBeGreaterThan(textIdx);
+  });
 });

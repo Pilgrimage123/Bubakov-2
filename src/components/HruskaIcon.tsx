@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface HruskaIconProps {
 	size?: string | number;
@@ -16,7 +17,7 @@ export const HruskaIcon: React.FC<HruskaIconProps> = ({
 	const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
 	return (
-		<svg
+		<LadaCanvasSvg
 			xmlns="http://www.w3.org/2000/svg"
 			viewBox="0 0 100 100"
 			width={pixelSize}
@@ -129,6 +130,6 @@ export const HruskaIcon: React.FC<HruskaIconProps> = ({
 				{/* Dew glint */}
 				<circle cx="33" cy="56" r="1.4" fill="#FFFFFF" className="lada-anim-glint" />
 			</g>
-		</svg>
+		</LadaCanvasSvg>
 	);
 };

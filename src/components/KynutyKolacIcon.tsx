@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface KynutyKolacIconProps {
 	size?: string | number;
@@ -16,7 +17,7 @@ export const KynutyKolacIcon: React.FC<KynutyKolacIconProps> = ({
 	const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
 	return (
-		<svg
+		<LadaCanvasSvg
 			xmlns="http://www.w3.org/2000/svg"
 			viewBox="0 0 200 200"
 			width={pixelSize}
@@ -177,6 +178,6 @@ export const KynutyKolacIcon: React.FC<KynutyKolacIconProps> = ({
 			<circle cx="100" cy="100" r="6" fill="#1C0A04" stroke="#1E150B" strokeWidth="1.8" />
 			<circle cx="98.5" cy="98.5" r="1.5" fill="#582613" />
 			</g>
-		</svg>
+		</LadaCanvasSvg>
 	);
 };

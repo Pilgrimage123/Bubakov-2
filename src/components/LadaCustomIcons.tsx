@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface LadaIconProps {
   size?: string | number;
@@ -21,7 +22,7 @@ const baseSvgStyle = (size: string | number, style: React.CSSProperties = {}): R
  * Wooden watermill cogwheel with iron hub (⚙️ / settings / mill)
  */
 export const LadaSettingsCogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mlýnské soukolí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mlýnské soukolí" {...props}>
     <g className="lada-anim-cog">
       {/* 8 Carved wooden cogs */}
       <path
@@ -40,14 +41,14 @@ export const LadaSettingsCogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <circle cx="18" cy="18" r="4.2" fill="#2A170A" stroke="#1A1612" strokeWidth="2" />
       <circle cx="18" cy="18" r="1.6" fill="#F3E9D2" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Rolled village chronicle parchment with red wax seal (💬 / combat text / scroll)
  */
 export const LadaCombatTextIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pergamenový svitek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pergamenový svitek" {...props}>
     <g className="lada-anim-float">
       {/* Rolled parchment roll */}
       <path
@@ -75,14 +76,14 @@ export const LadaCombatTextIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
         <path d="M 26 27 L 24 33 L 26 31 L 28 33 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="1.5" />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Wrought-iron village padlock (🔒 / lock / locked)
  */
 export const LadaPadlockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovaný zámek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovaný zámek" {...props}>
     <g className="lada-anim-shiver">
       {/* Wrought-iron arched shackle */}
       <path
@@ -120,14 +121,14 @@ export const LadaPadlockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <circle cx="10.5" cy="29" r="1.1" fill="#D9A036" />
       <circle cx="25.5" cy="29" r="1.1" fill="#D9A036" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Open wrought-iron padlock (🔓 / unlocked)
  */
 export const LadaOpenPadlockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Odemčený zámek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Odemčený zámek" {...props}>
     <g className="lada-anim-float">
       {/* Unlocked swung shackle */}
       <path
@@ -152,14 +153,14 @@ export const LadaOpenPadlockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <circle cx="18" cy="22" r="3" fill="#D9A036" stroke="#1A1612" strokeWidth="1.5" />
       <path d="M 17 22 L 19 22 L 18.5 27 L 17.5 27 Z" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Brass magnifying glass with turned wooden handle (🔎 / 🔍 / search / reveal)
  */
 export const LadaMagnifierIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mosazná lupa" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mosazná lupa" {...props}>
     <g className="lada-anim-rock">
       {/* Turned wooden handle */}
       <path
@@ -180,14 +181,14 @@ export const LadaMagnifierIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
         className="lada-anim-glint"
       />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Golden-baked cracklings flatbread (🫓 / skvarkova_placka)
  */
 export const LadaPlackaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Škvarková placka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Škvarková placka" {...props}>
     {/* Rising steam wisps */}
     <path d="M 14 8 C 13 5, 16 3, 15 1" fill="none" stroke="#F3E9D2" strokeWidth="2" strokeLinecap="round" className="lada-anim-steam-1" />
     <path d="M 22 9 C 23 6, 20 4, 22 2" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-2" />
@@ -207,14 +208,14 @@ export const LadaPlackaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       <rect x="22" y="23" width="2.6" height="2" rx="0.5" fill="#451A03" stroke="#1A1612" strokeWidth="1.2" />
       <rect x="11" y="22" width="2.5" height="2.2" rx="0.5" fill="#451A03" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Sturdy stitched wanderer's boots (👢 / 🥾 / toulave_boty)
  */
 export const LadaBootsIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Toulavé škorně" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Toulavé škorně" {...props}>
     {/* Dust puff at the heel */}
     <circle cx="8" cy="30" r="2.2" fill="#E8DCC2" stroke="#1A1612" strokeWidth="1.2" className="lada-anim-dust" />
     <g className="lada-anim-step">
@@ -234,14 +235,14 @@ export const LadaBootsIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       <line x1="16" y1="10" x2="16" y2="23" stroke="#D9A036" strokeWidth="1.5" strokeDasharray="1.5 1.5" />
       <rect x="18" y="21" width="3.5" height="3" rx="0.5" fill="#D9A036" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Tied linen coin pouch with gold ducat emblem (💰 / zlaty_dukat / money)
  */
 export const LadaDucatPouchIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Měšec s dukátem" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Měšec s dukátem" {...props}>
     <g className="lada-anim-rock">
       {/* Pouch ruffled top */}
       <path
@@ -267,14 +268,14 @@ export const LadaDucatPouchIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       {/* Star sparkle on gold coin */}
       <circle cx="21" cy="19" r="1.3" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Foaming earthenware tavern mug (🍺 / beer / korbel)
  */
 export const LadaBeerMugIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Korbel piva" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Korbel piva" {...props}>
     <g className="lada-anim-float">
       {/* Stoneware handle */}
       <path
@@ -314,14 +315,14 @@ export const LadaBeerMugIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
         <path d="M 11 14 C 11 18, 13 18, 13 14" fill="#FFFDF6" stroke="#1A1612" strokeWidth="1.5" />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folk golden carnival or boss crown (👑 / crown)
  */
 export const LadaCrownIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Královská koruna" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Královská koruna" {...props}>
     <g className="lada-anim-float">
       {/* Red velvet interior cap */}
       <path d="M 8 25 C 8 18, 28 18, 28 25 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="2" />
@@ -345,14 +346,14 @@ export const LadaCrownIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Gem glint */}
       <circle cx="18" cy="9" r="0.9" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Painted Czech folk ceramic trophy cup (🏆 / trophy)
  */
 export const LadaTrophyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malovaný pohár" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malovaný pohár" {...props}>
     <g className="lada-anim-float">
       {/* Ornate handles */}
       <path d="M 10 11 C 4 11, 4 20, 11 20" fill="none" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
@@ -374,14 +375,14 @@ export const LadaTrophyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       {/* Trophy glint */}
       <circle cx="13" cy="11" r="1.3" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Festive rosemary sprig with fluttering red ribbon (🎉 / celebration)
  */
 export const LadaCelebrationRibbonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Rozmarýn s pentlí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Rozmarýn s pentlí" {...props}>
     {/* Confetti sparkle */}
     <circle cx="8" cy="9" r="1.2" fill="#D9A036" className="lada-anim-glint" />
     <circle cx="28" cy="8" r="1.2" fill="#C83E31" className="lada-anim-glint" />
@@ -398,14 +399,14 @@ export const LadaCelebrationRibbonIcon: React.FC<LadaIconProps> = ({ size = '1.2
       <path d="M 17 22 C 14 26, 12 29, 13 32" fill="none" stroke="#C83E31" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M 19 22 C 22 26, 24 29, 23 32" fill="none" stroke="#C83E31" strokeWidth="2.4" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Birch twig broom (🧹 / broom)
  */
 export const LadaBroomIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Březové koště" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Březové koště" {...props}>
     {/* Dust sweep wisp */}
     <path d="M 6 31 C 10 32, 14 31, 16 30" fill="none" stroke="#E8DCC2" strokeWidth="2" strokeLinecap="round" className="lada-anim-dust" />
     <g className="lada-anim-rock">
@@ -426,14 +427,14 @@ export const LadaBroomIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       <line x1="16" y1="24" x2="11" y2="31" stroke="#8C5A35" strokeWidth="1.5" />
       <line x1="14" y1="22" x2="8" y2="29" stroke="#8C5A35" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Painted clay folk rooster (🐓 / rooster)
  */
 export const LadaRoosterIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hliněný kohoutek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hliněný kohoutek" {...props}>
     <g className="lada-anim-pulse">
       {/* Plump clay body */}
       <path
@@ -455,14 +456,14 @@ export const LadaRoosterIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       {/* Clay pedestal base */}
       <path d="M 15 29 L 21 29 L 23 33 L 13 33 Z" fill="#8C5A35" stroke="#1A1612" strokeWidth="2" strokeLinejoin="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Forged iron horseshoe (🧲 / horseshoe / podkova)
  */
 export const LadaHorseshoeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářská podkova" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářská podkova" {...props}>
     <g className="lada-anim-rock">
       {/* Heavy forged iron U-shape */}
       <path
@@ -482,14 +483,14 @@ export const LadaHorseshoeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       {/* Glint on polished heel calk */}
       <circle cx="11" cy="7" r="1" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved wooden cuckoo clock (⏰ / clock / cuckoo)
  */
 export const LadaCuckooClockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vyřezávané kukačky" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vyřezávané kukačky" {...props}>
     {/* Swinging carved pendulum */}
     <g className="lada-anim-rock">
       <line x1="18" y1="26" x2="18" y2="33" stroke="#1A1612" strokeWidth="2" />
@@ -507,14 +508,14 @@ export const LadaCuckooClockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <line x1="18" y1="20" x2="18" y2="17" stroke="#1A1612" strokeWidth="1.8" strokeLinecap="round" />
       <line x1="18" y1="20" x2="21" y2="20" stroke="#1A1612" strokeWidth="1.8" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Studded wooden round shield (🛡️ / 🛡 / shield)
  */
 export const LadaShieldIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Okovaný štít" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Okovaný štít" {...props}>
     <g className="lada-anim-float">
       {/* Shield body (oak planks) */}
       <path
@@ -537,14 +538,14 @@ export const LadaShieldIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       {/* Boss glint */}
       <circle cx="16.5" cy="15.5" r="1.1" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Forged hunter's sabre / crossed blades (🗡️ / ⚔️ / weapons)
  */
 export const LadaSwordIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecká šavle" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecká šavle" {...props}>
     <g className="lada-anim-rock">
       {/* Polished steel blade */}
       <path
@@ -562,14 +563,14 @@ export const LadaSwordIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Blade glint */}
       <circle cx="24" cy="9" r="1.2" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village hearth ember fire (🔥 / fire)
  */
 export const LadaHearthFireIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský ohýnek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský ohýnek" {...props}>
     {/* Crossed hearth logs */}
     <line x1="7" y1="31" x2="29" y2="28" stroke="#1A1612" strokeWidth="4.5" strokeLinecap="round" />
     <line x1="7" y1="31" x2="29" y2="28" stroke="#8C5A35" strokeWidth="3" strokeLinecap="round" />
@@ -595,14 +596,14 @@ export const LadaHearthFireIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       {/* Floating ember spark */}
       <circle cx="21" cy="6" r="1.2" fill="#FDE047" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Hand-drawn winter frost snowflake (❄️ / frost / ice)
  */
 export const LadaSnowflakeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Sněhová vločka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Sněhová vločka" {...props}>
     <g className="lada-anim-float">
       {/* 6 primary branches with ink outlines */}
       <g stroke="#1A1612" strokeWidth="3.2" strokeLinecap="round">
@@ -621,14 +622,14 @@ export const LadaSnowflakeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <circle cx="18" cy="18" r="3.2" fill="#FFFDF6" stroke="#1A1612" strokeWidth="1.8" />
       <circle cx="18" cy="18" r="1.3" fill="#38BDF8" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Rustic jagged golden lightning bolt (⚡ / lightning)
  */
 export const LadaLightningIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Blesk" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Blesk" {...props}>
     <g className="lada-anim-shiver">
       <path
         d="M 21 3 L 10 18 L 17 18 L 13 33 L 26 15 L 19 15 Z"
@@ -639,14 +640,14 @@ export const LadaLightningIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       />
       <circle cx="17" cy="14" r="1.5" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Swirling wind gust with blowing leaf (💨 / wind / dash)
  */
 export const LadaWindGustIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Větrný vír" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Větrný vír" {...props}>
     <g className="lada-anim-float">
       {/* Wind swirl curves */}
       <path d="M 5 15 C 15 15, 23 13, 27 10 C 30 7, 28 5, 25 6 C 22 7, 22 10, 24 11" fill="none" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" />
@@ -656,14 +657,14 @@ export const LadaWindGustIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       {/* Flying autumn oak leaf */}
       <path d="M 12 25 C 10 28, 14 30, 17 28 C 19 25, 17 23, 14 24 Z" fill="#D9A036" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Comic starburst impact (💥 / impact / hit)
  */
 export const LadaImpactBurstIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský prásk" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský prásk" {...props}>
     <g className="lada-anim-pulse">
       <path
         d="M 18 4 L 22 11 L 30 8 L 27 16 L 34 20 L 26 24 L 28 32 L 20 28 L 16 34 L 14 27 L 6 29 L 9 21 L 2 17 L 9 13 L 7 5 L 15 9 Z"
@@ -674,14 +675,14 @@ export const LadaImpactBurstIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       />
       <circle cx="18" cy="18" r="5" fill="#FEF08A" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * White birch log (🪵 / wood / log)
  */
 export const LadaBirchLogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Březové poleno" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Březové poleno" {...props}>
     <g className="lada-anim-float">
       {/* Log body */}
       <path
@@ -699,14 +700,14 @@ export const LadaBirchLogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <path d="M 21 19 L 25 20" stroke="#1A1612" strokeWidth="2.2" strokeLinecap="round" />
       <path d="M 15 22 L 18 23" stroke="#1A1612" strokeWidth="2.2" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village chapel bronze bell (🔔 / bell / zvonice)
  */
 export const LadaChapelBellIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zvonice" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zvonice" {...props}>
     <g className="lada-anim-rock">
       {/* Bell hanger loop */}
       <path d="M 15 8 C 15 5, 21 5, 21 8" fill="none" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
@@ -724,14 +725,14 @@ export const LadaChapelBellIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       <path d="M 10 22 C 14 21, 22 21, 26 22" fill="none" stroke="#8C5A35" strokeWidth="1.8" />
       <circle cx="15" cy="14" r="1.3" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Rosemary sprig and healing green herb (🌿 / herb / rosemary)
  */
 export const LadaRosemaryIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Snítka rozmarýnu" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Snítka rozmarýnu" {...props}>
     <g className="lada-anim-rock">
       <path d="M 8 30 C 14 26, 22 18, 26 7" fill="none" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
       <path d="M 8 30 C 14 26, 22 18, 26 7" fill="none" stroke="#4D7C0F" strokeWidth="1.8" strokeLinecap="round" />
@@ -742,14 +743,14 @@ export const LadaRosemaryIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <ellipse cx="16" cy="20" rx="2.2" ry="4.5" transform="rotate(-40 16 20)" fill="#4D7C0F" stroke="#1A1612" strokeWidth="1.6" />
       <ellipse cx="18" cy="23" rx="2.2" ry="4.5" transform="rotate(50 18 23)" fill="#4D7C0F" stroke="#1A1612" strokeWidth="1.6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Masopust folk painted skull (💀 / skull)
  */
 export const LadaFolkSkullIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Morová lebka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Morová lebka" {...props}>
     <g className="lada-anim-float">
       {/* Cranium */}
       <path
@@ -768,14 +769,14 @@ export const LadaFolkSkullIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <line x1="18" y1="26" x2="18" y2="29" stroke="#1A1612" strokeWidth="1.8" />
       <line x1="21" y1="26" x2="21" y2="29" stroke="#1A1612" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folk painted crimson heart (❤️ / ❤ / heart / hp)
  */
 export const LadaFolkHeartIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malované srdce" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malované srdce" {...props}>
     <g className="lada-anim-pulse">
       <path
         d="M 18 10 C 22 4, 31 5, 31 14 C 31 22, 23 26, 18 31 C 13 26, 5 22, 5 14 C 5 5, 14 4, 18 10 Z"
@@ -788,14 +789,14 @@ export const LadaFolkHeartIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <path d="M 12 12 C 14 9, 17 11, 16 14 C 15 17, 12 16, 12 12" fill="none" stroke="#FFFDF6" strokeWidth="1.6" strokeLinecap="round" />
       <circle cx="24" cy="12" r="1.3" fill="#FFFDF6" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Sourdough rye loaf (🍞 / 🥖 / bread)
  */
 export const LadaRyeBreadIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Žitný chléb" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Žitný chléb" {...props}>
     <path d="M 18 9 C 17 6, 20 4, 19 2" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-1" />
     <g className="lada-anim-float">
       <ellipse cx="18" cy="23" rx="14" ry="8" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" />
@@ -807,14 +808,14 @@ export const LadaRyeBreadIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <circle cx="15" cy="20" r="0.9" fill="#FFFDF6" />
       <circle cx="21" cy="21" r="0.9" fill="#FFFDF6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Golden village rohlík (🥐 / croissant / rohlik)
  */
 export const LadaCroissantIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pekařský rohlík" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pekařský rohlík" {...props}>
     <g className="lada-anim-float">
       <path
         d="M 6 25 C 8 13, 28 13, 30 25 C 28 26, 25 24, 23 21 C 20 18, 16 18, 13 21 C 11 24, 8 26, 6 25 Z"
@@ -828,14 +829,14 @@ export const LadaCroissantIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <circle cx="18" cy="17" r="0.8" fill="#1A1612" />
       <circle cx="21" cy="18" r="0.8" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Wheel of Olomouc curd cheese (🧀 / cheese)
  */
 export const LadaCheeseWheelIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Tvarůžek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Tvarůžek" {...props}>
     <g className="lada-anim-float">
       <path
         d="M 6 24 L 28 27 L 31 16 L 16 13 L 6 24 Z"
@@ -850,14 +851,14 @@ export const LadaCheeseWheelIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <circle cx="23" cy="22" r="2" fill="#D97706" />
       <circle cx="22" cy="16" r="1.3" fill="#D97706" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Granite fieldstone (🪨 / stone)
  */
 export const LadaGraniteStoneIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Polní kámen" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Polní kámen" {...props}>
     <g className="lada-anim-float">
       <path
         d="M 8 26 C 6 20, 11 11, 19 11 C 27 11, 30 18, 29 25 C 27 30, 12 31, 8 26 Z"
@@ -873,14 +874,14 @@ export const LadaGraniteStoneIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       <circle cx="20" cy="24" r="1.2" fill="#1A1612" opacity="0.6" />
       <circle cx="24" cy="20" r="0.9" fill="#1A1612" opacity="0.6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Woven wicker basket (🧺 / basket)
  */
 export const LadaWickerBasketIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Proutěný košík" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Proutěný košík" {...props}>
     <g className="lada-anim-rock">
       {/* Arched wicker handle */}
       <path d="M 11 17 C 11 8, 25 8, 25 17" fill="none" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" />
@@ -899,14 +900,14 @@ export const LadaWickerBasketIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       <line x1="14" y1="17" x2="14" y2="32" stroke="#D9A036" strokeWidth="1.5" />
       <line x1="22" y1="17" x2="22" y2="32" stroke="#D9A036" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Tallow candle in iron holder (🕯️ / 🕯 / candle / lantern)
  */
 export const LadaCandleIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Svíčka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Svíčka" {...props}>
     {/* Flickering candle flame */}
     <g className="lada-anim-flicker">
       <path d="M 18 5 C 18 5, 14 9, 14 12 C 14 14, 16 16, 18 16 C 20 16, 22 14, 22 12 C 22 9, 18 5, 18 5 Z" fill="#FDE047" stroke="#1A1612" strokeWidth="1.5" />
@@ -921,14 +922,14 @@ export const LadaCandleIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
     {/* Wrought-iron saucer and handle */}
     <ellipse cx="18" cy="29" rx="10" ry="2.5" fill="#2A170A" stroke="#1A1612" strokeWidth="2.2" />
     <path d="M 26 27 C 30 27, 30 32, 26 32" fill="none" stroke="#1A1612" strokeWidth="2" strokeLinecap="round" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Woodchopper's axe (🪓 / axe)
  */
 export const LadaAxeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Tesařská sekyra" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Tesařská sekyra" {...props}>
     <g className="lada-anim-rock">
       {/* Curved ash handle */}
       <path d="M 27 6 L 10 30" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
@@ -945,14 +946,14 @@ export const LadaAxeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className
       <path d="M 31 11 C 32 17, 28 22, 21 21" fill="none" stroke="#E0F2FE" strokeWidth="2" strokeLinecap="round" />
       <circle cx="30" cy="14" r="1.1" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Ashwood hunting bow (🏹 / bow)
  */
 export const LadaHuntingBowIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecký luk" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecký luk" {...props}>
     <g className="lada-anim-rock">
       {/* Curved wooden stave */}
       <path d="M 10 7 C 24 10, 24 26, 10 29" fill="none" stroke="#1A1612" strokeWidth="3.6" strokeLinecap="round" />
@@ -964,14 +965,14 @@ export const LadaHuntingBowIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       <polygon points="28,18 24,15 24,21" fill="#2A170A" stroke="#1A1612" strokeWidth="1.2" />
       <polygon points="8,18 5,16 6,18 5,20" fill="#C83E31" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Painted carnival target (🎯 / target)
  */
 export const LadaCarnivalTargetIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pouťový terč" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pouťový terč" {...props}>
     <g className="lada-anim-pulse">
       {/* Concentric rings */}
       <circle cx="18" cy="18" r="14" fill="#F3E9D2" stroke="#1A1612" strokeWidth="2.4" />
@@ -981,14 +982,14 @@ export const LadaCarnivalTargetIcon: React.FC<LadaIconProps> = ({ size = '1.2em'
       {/* Arrow hitting bullseye */}
       <line x1="28" y1="8" x2="18" y2="18" stroke="#1A1612" strokeWidth="2.2" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Nightwatchman's brass horn (🔊 / 🔇 / sound / mute)
  */
 export const LadaHornIcon: React.FC<LadaIconProps & { muted?: boolean }> = ({ size = '1.2em', muted = false, className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label={muted ? "Ztišený roh" : "Ponocenský roh"} {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label={muted ? "Ztišený roh" : "Ponocenský roh"} {...props}>
     <g className="lada-anim-rock">
       {/* Curved brass horn */}
       <path
@@ -1009,14 +1010,14 @@ export const LadaHornIcon: React.FC<LadaIconProps & { muted?: boolean }> = ({ si
         </g>
       )}
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Painted tavern violin / music note (🎵 / 🎶 / music / music_off)
  */
 export const LadaFiddleMusicIcon: React.FC<LadaIconProps & { muted?: boolean }> = ({ size = '1.2em', muted = false, className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label={muted ? "Ztišená hudba" : "Hospodská nota"} {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label={muted ? "Ztišená hudba" : "Hospodská nota"} {...props}>
     <g className="lada-anim-rock">
       {/* Eighth notes with wooden scroll */}
       <ellipse cx="11" cy="25" rx="4" ry="3" transform="rotate(-20 11 25)" fill="#8C5A35" stroke="#1A1612" strokeWidth="2" />
@@ -1029,7 +1030,7 @@ export const LadaFiddleMusicIcon: React.FC<LadaIconProps & { muted?: boolean }> 
         <line x1="6" y1="6" x2="30" y2="30" stroke="#C83E31" strokeWidth="3" strokeLinecap="round" />
       )}
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 
@@ -1037,7 +1038,7 @@ export const LadaFiddleMusicIcon: React.FC<LadaIconProps & { muted?: boolean }> 
  * Traditional Czech marionette puppet cross (🎮 / 🕹️ / game)
  */
 export const LadaPuppetToyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Loutkový vahadlo" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Loutkový vahadlo" {...props}>
     <g className="lada-anim-rock">
       {/* Crossed wooden bars */}
       <line x1="18" y1="6" x2="18" y2="28" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
@@ -1050,14 +1051,14 @@ export const LadaPuppetToyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       {/* Center iron rivet */}
       <circle cx="18" cy="14" r="2.2" fill="#2A170A" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Whitewashed Czech cottage (🏘️ / 🏘 / cottage)
  */
 export const LadaCottageIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovská chaloupka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovská chaloupka" {...props}>
     {/* Chimney smoke */}
     <path d="M 23 8 C 22 5, 25 3, 24 1" fill="none" stroke="#F3E9D2" strokeWidth="2" strokeLinecap="round" className="lada-anim-steam-1" />
     <g className="lada-anim-float">
@@ -1074,14 +1075,14 @@ export const LadaCottageIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       {/* Wooden cottage door */}
       <rect x="21" y="21" width="5" height="10" fill="#8C5A35" stroke="#1A1612" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village church spire (⛪ / church)
  */
 export const LadaChurchSpireIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský kostelíček" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský kostelíček" {...props}>
     <g className="lada-anim-float">
       {/* Spire cross */}
       <line x1="18" y1="3" x2="18" y2="9" stroke="#1A1612" strokeWidth="2.2" strokeLinecap="round" />
@@ -1093,14 +1094,14 @@ export const LadaChurchSpireIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       {/* Belfry arched louver window */}
       <path d="M 16 26 C 16 23, 20 23, 20 26 L 20 30 L 16 30 Z" fill="#2A170A" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * 8-point gold folk starburst (✨ / 🌟 / ✦ / star / sparkle)
  */
 export const LadaStarGlintIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lidová hvězdička" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lidová hvězdička" {...props}>
     <g className="lada-anim-glint">
       <path
         d="M 18 3 L 21 13 L 31 10 L 23 18 L 31 26 L 21 23 L 18 33 L 15 23 L 5 26 L 13 18 L 5 10 L 15 13 Z"
@@ -1111,14 +1112,14 @@ export const LadaStarGlintIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       />
       <circle cx="18" cy="18" r="2.5" fill="#FFFFFF" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Four-leaf green clover (🍀 / clover / luck / stesti)
  */
 export const LadaFourLeafCloverIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Čtyřlístek pro štěstí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Čtyřlístek pro štěstí" {...props}>
     <g className="lada-anim-float">
       {/* Stem */}
       <path d="M 18 18 C 17 26, 12 31, 8 32" fill="none" stroke="#1A1612" strokeWidth="2.6" strokeLinecap="round" />
@@ -1133,14 +1134,14 @@ export const LadaFourLeafCloverIcon: React.FC<LadaIconProps> = ({ size = '1.2em'
       {/* Dewdrop sparkle */}
       <circle cx="21" cy="9" r="1.2" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Orient pineapple (🍍 / pineapple / ananas)
  */
 export const LadaPineappleIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Orientální ananas" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Orientální ananas" {...props}>
     <g className="lada-anim-rock">
       {/* Green spiky crown */}
       <path
@@ -1156,14 +1157,14 @@ export const LadaPineappleIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <line x1="24" y1="16" x2="12" y2="28" stroke="#8C5A35" strokeWidth="1.8" />
       <line x1="10" y1="22" x2="26" y2="22" stroke="#8C5A35" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Roasted hearth potato (🥔 / potato / horky_brambor)
  */
 export const LadaRoastedPotatoIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pečený brambor" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pečený brambor" {...props}>
     <path d="M 14 10 C 13 6, 16 4, 15 2" fill="none" stroke="#F3E9D2" strokeWidth="2" strokeLinecap="round" className="lada-anim-steam-1" />
     <path d="M 22 11 C 23 7, 20 5, 22 3" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-2" />
     <g className="lada-anim-float">
@@ -1175,14 +1176,14 @@ export const LadaRoastedPotatoIcon: React.FC<LadaIconProps> = ({ size = '1.2em',
       {/* Hot cracked yellow crumb */}
       <path d="M 14 23 C 17 21, 19 25, 22 23" stroke="#FDE047" strokeWidth="2" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village grandmother in white kerchief with blue floral motifs (👵 / granny / babicka)
  */
 export const LadaGrannyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Babička v šátku" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Babička v šátku" {...props}>
     <g className="lada-anim-float">
       {/* Dark brown fringed shawl on shoulders */}
       <path
@@ -1227,14 +1228,14 @@ export const LadaGrannyIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       <circle cx="10.5" cy="22" r="1.3" fill="#2B6CB0" />
       <circle cx="25.5" cy="22" r="1.3" fill="#2B6CB0" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Wise grandfather in sheepskin cap (🧓 / grandpa / dedecek)
  */
 export const LadaGrandpaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dědeček s nůší" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dědeček s nůší" {...props}>
     {/* Pipe smoke wisp */}
     <path d="M 29 22 C 30 19, 28 16, 30 13" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-1" />
     <g className="lada-anim-float">
@@ -1271,14 +1272,14 @@ export const LadaGrandpaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <line x1="20.5" y1="24" x2="27" y2="25" stroke="#5C2C16" strokeWidth="2" strokeLinecap="round" />
       <rect x="26" y="22" width="3.2" height="4.2" rx="0.7" fill="#7A3A1E" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village Čert with horns (👹 / devil / cert)
  */
 export const LadaDevilIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský čertík" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský čertík" {...props}>
     <g className="lada-anim-flicker">
       {/* Black furry head */}
       <circle cx="18" cy="20" r="10" fill="#2A170A" stroke="#1A1612" strokeWidth="2.4" />
@@ -1293,14 +1294,14 @@ export const LadaDevilIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Playful red tongue sticking out */}
       <path d="M 16 24 C 16 29, 20 29, 20 24 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Mill pond wave & ripple (🌊 / water / wave)
  */
 export const LadaWaterWaveIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnická vlnka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnická vlnka" {...props}>
     <g className="lada-anim-rock">
       {/* Primary crest */}
       <path
@@ -1322,14 +1323,14 @@ export const LadaWaterWaveIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <circle cx="29" cy="14" r="2.2" fill="#FFFDF6" stroke="#1A1612" strokeWidth="1.5" />
       <circle cx="26" cy="13" r="1.5" fill="#FFFDF6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Forest animal paw print in snow (🐾 / paw)
  */
 export const LadaPawPrintIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Stopa ve sněhu" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Stopa ve sněhu" {...props}>
     <g className="lada-anim-pulse" fill="#2A170A" stroke="#1A1612" strokeWidth="1.8">
       {/* Main pad */}
       <ellipse cx="18" cy="23" rx="6.5" ry="5.5" />
@@ -1339,14 +1340,14 @@ export const LadaPawPrintIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <ellipse cx="21" cy="11" rx="2.4" ry="3.5" transform="rotate(10 21 11)" />
       <ellipse cx="26" cy="15" rx="2.2" ry="3.2" transform="rotate(25 26 15)" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village white goose (🪿 / goose)
  */
 export const LadaVillageGooseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Bílá husa" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Bílá husa" {...props}>
     <g className="lada-anim-step">
       {/* Plump goose body & long neck */}
       <path
@@ -1363,14 +1364,14 @@ export const LadaVillageGooseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       <line x1="16" y1="31" x2="16" y2="34" stroke="#D97706" strokeWidth="2.2" strokeLinecap="round" />
       <line x1="22" y1="31" x2="22" y2="34" stroke="#D97706" strokeWidth="2.2" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Snow-laden spruce pine tree (🌲 / pine)
  */
 export const LadaSpruceTreeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zasněžený smrček" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zasněžený smrček" {...props}>
     <g className="lada-anim-rock">
       {/* Trunk */}
       <rect x="16" y="27" width="4" height="6" fill="#5E3A21" stroke="#1A1612" strokeWidth="2" />
@@ -1384,14 +1385,14 @@ export const LadaSpruceTreeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       <polygon points="18,3 12,12 24,12" fill="#3D7843" stroke="#1A1612" strokeWidth="2.2" strokeLinejoin="round" />
       <path d="M 18,3 L 13,11 C 15,10, 21,10, 23,11 Z" fill="#FFFDF6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Woolly folk sheep (🐑 / sheep)
  */
 export const LadaFolkSheepIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Beránek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Beránek" {...props}>
     <g className="lada-anim-float">
       {/* Fluffy wool cloud body */}
       <path
@@ -1412,14 +1413,14 @@ export const LadaFolkSheepIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <line x1="22" y1="27" x2="22" y2="33" stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" />
       <line x1="26" y1="27" x2="26" y2="33" stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Sturdy farm ox (🐂 / ox)
  */
 export const LadaFarmOxIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vesnický vůl" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vesnický vůl" {...props}>
     <g className="lada-anim-float">
       {/* Ox body */}
       <path
@@ -1440,14 +1441,14 @@ export const LadaFarmOxIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       <line x1="26" y1="26" x2="26" y2="33" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
       <line x1="29" y1="26" x2="29" y2="33" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Mill pond frog (🐸 / frog)
  */
 export const LadaPondFrogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnická žabka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnická žabka" {...props}>
     <g className="lada-anim-pulse">
       {/* Plump green body */}
       <ellipse cx="18" cy="22" rx="10" ry="8" fill="#4D7C0F" stroke="#1A1612" strokeWidth="2.4" />
@@ -1461,14 +1462,14 @@ export const LadaPondFrogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       {/* Webbed feet */}
       <path d="M 8 28 L 4 31 M 28 28 L 32 31" stroke="#1A1612" strokeWidth="2.5" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Fairground mirror (🪞 / mirror)
  */
 export const LadaFairgroundMirrorIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pouťové zrcátko" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pouťové zrcátko" {...props}>
     <g className="lada-anim-float">
       {/* Turned handle */}
       <line x1="18" y1="27" x2="18" y2="34" stroke="#1A1612" strokeWidth="3.5" strokeLinecap="round" />
@@ -1479,14 +1480,14 @@ export const LadaFairgroundMirrorIcon: React.FC<LadaIconProps> = ({ size = '1.2e
       <circle cx="18" cy="15" r="8" fill="#E0F2FE" stroke="#1A1612" strokeWidth="1.8" />
       <circle cx="15" cy="12" r="1.3" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Coiled hemp rope (🪢 / rope)
  */
 export const LadaHempRopeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Konopný uzel" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Konopný uzel" {...props}>
     <g className="lada-anim-rock">
       {/* Rope knot loops */}
       <circle cx="14" cy="16" r="6" fill="none" stroke="#1A1612" strokeWidth="4.2" />
@@ -1499,14 +1500,14 @@ export const LadaHempRopeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <line x1="27" y1="22" x2="29" y2="30" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
       <line x1="27" y1="22" x2="29" y2="30" stroke="#D9A036" strokeWidth="2.6" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Granite & red brick fortress wall (🧱 / wall)
  */
 export const LadaStoneWallIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kamenná zídka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kamenná zídka" {...props}>
     <g className="lada-anim-float">
       {/* Wall base */}
       <rect x="5" y="9" width="26" height="20" rx="1.5" fill="#C83E31" stroke="#1A1612" strokeWidth="2.4" />
@@ -1519,14 +1520,14 @@ export const LadaStoneWallIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <line x1="10" y1="22" x2="10" y2="29" stroke="#FAF5E8" strokeWidth="1.8" />
       <line x1="22" y1="22" x2="22" y2="29" stroke="#FAF5E8" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Clay honey pot (🍯 / honey)
  */
 export const LadaHoneyPotIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrnec medu" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrnec medu" {...props}>
     <g className="lada-anim-float">
       {/* Clay jar body */}
       <path
@@ -1547,14 +1548,14 @@ export const LadaHoneyPotIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       />
       <circle cx="17.5" cy="19.5" r="0.9" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Knitted woolen sock (🧦 / sock)
  */
 export const LadaWoolSockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pletená ponožka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pletená ponožka" {...props}>
     <g className="lada-anim-rock">
       {/* Sock contour */}
       <path
@@ -1569,14 +1570,14 @@ export const LadaWoolSockIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <line x1="13" y1="13" x2="23" y2="13" stroke="#FAF5E8" strokeWidth="2" />
       <line x1="13" y1="16" x2="23" y2="16" stroke="#FAF5E8" strokeWidth="2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved bone dice (🎲 / dice)
  */
 export const LadaBoneDiceIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrací kostka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrací kostka" {...props}>
     <g className="lada-anim-rock">
       {/* Isometric cube faces */}
       <polygon points="18,5 29,11 18,17 7,11" fill="#FAF5E8" stroke="#1A1612" strokeWidth="2.3" strokeLinejoin="round" />
@@ -1589,14 +1590,14 @@ export const LadaBoneDiceIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <circle cx="23" cy="21" r="1.2" fill="#1A1612" />
       <circle cx="25" cy="25" r="1.2" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folk painted warning sign (⚠️ / ⚠ / 🚨 / warning)
  */
 export const LadaWarningSignIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Výstražná tabulka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Výstražná tabulka" {...props}>
     <g className="lada-anim-shiver">
       {/* Triangular painted village sign */}
       <polygon
@@ -1612,14 +1613,14 @@ export const LadaWarningSignIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <line x1="18" y1="13" x2="18" y2="20" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" />
       <circle cx="18" cy="24" r="1.5" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Embroidered folk checkmark (✅ / ✓ / check)
  */
 export const LadaCheckmarkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Splněno" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Splněno" {...props}>
     <g className="lada-anim-pulse">
       <path
         d="M 8 18 L 15 25 L 28 9"
@@ -1638,28 +1639,28 @@ export const LadaCheckmarkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
         strokeLinejoin="round"
       />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Crossed birch sticks (❌ / ✕ / 🛑 / cancel)
  */
 export const LadaCrossCancelIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zrušit" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zrušit" {...props}>
     <g className="lada-anim-rock">
       <line x1="8" y1="8" x2="28" y2="28" stroke="#1A1612" strokeWidth="4.6" strokeLinecap="round" />
       <line x1="8" y1="8" x2="28" y2="28" stroke="#C83E31" strokeWidth="2.8" strokeLinecap="round" />
       <line x1="28" y1="8" x2="8" y2="28" stroke="#1A1612" strokeWidth="4.6" strokeLinecap="round" />
       <line x1="28" y1="8" x2="8" y2="28" stroke="#C83E31" strokeWidth="2.8" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved wooden direction pointer (➔ / → / arrow)
  */
 export const LadaTavernArrowIcon: React.FC<LadaIconProps & { direction?: 'left' | 'right' }> = ({ size = '1.2em', direction = 'right', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ukazatel cesty" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ukazatel cesty" {...props}>
     <g className="lada-anim-float" transform={direction === 'left' ? 'scale(-1, 1) translate(-36, 0)' : undefined}>
       {/* Pointing tavern finger sign */}
       <path
@@ -1671,14 +1672,14 @@ export const LadaTavernArrowIcon: React.FC<LadaIconProps & { direction?: 'left' 
       />
       <circle cx="10" cy="18" r="1.3" fill="#2A170A" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Hand-inked question mark on parchment (❓ / question)
  */
 export const LadaQuestionMarkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Otazník" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Otazník" {...props}>
     <g className="lada-anim-float">
       <circle cx="18" cy="18" r="14" fill="#F3E9D2" stroke="#1A1612" strokeWidth="2.2" />
       <path
@@ -1690,14 +1691,14 @@ export const LadaQuestionMarkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       />
       <circle cx="18" cy="27" r="1.8" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Glowing tallow lantern / inspiration spark (💡 / hint / idea)
  */
 export const LadaLanternSparkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ponocenská lucerna" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ponocenská lucerna" {...props}>
     <g className="lada-anim-flicker">
       {/* Hanging ring */}
       <circle cx="18" cy="6" r="3" fill="none" stroke="#1A1612" strokeWidth="2" />
@@ -1709,14 +1710,14 @@ export const LadaLanternSparkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       {/* Base */}
       <rect x="9" y="28" width="18" height="3" fill="#2A170A" stroke="#1A1612" strokeWidth="2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folded realm parchment map (🗺️ / map)
  */
 export const LadaFoldedMapIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovská mapa" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovská mapa" {...props}>
     <g className="lada-anim-float">
       {/* 3 pleated accordion folds */}
       <polygon points="6,9 14,6 14,27 6,30" fill="#F3E9D2" stroke="#1A1612" strokeWidth="2.2" strokeLinejoin="round" />
@@ -1726,14 +1727,14 @@ export const LadaFoldedMapIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <path d="M 8 20 C 12 18, 17 21, 28 17" fill="none" stroke="#3A76A8" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M 16 14 L 18 10 L 20 14" fill="none" stroke="#8C5A35" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Leather hunting knapsack (🎒 / 🧳 / bag)
  */
 export const LadaKnapsackIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecká brašna" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Lovecká brašna" {...props}>
     <g className="lada-anim-rock">
       {/* Bag body */}
       <rect x="8" y="14" width="20" height="17" rx="3" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" />
@@ -1742,28 +1743,28 @@ export const LadaKnapsackIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       {/* Buckle */}
       <rect x="16.5" y="19" width="3" height="3" fill="#D9A036" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Wooden village crate (📦 / crate / box)
  */
 export const LadaStorageCrateIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěná bedýnka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěná bedýnka" {...props}>
     <g className="lada-anim-float">
       <rect x="6" y="10" width="24" height="20" rx="1.5" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" />
       <line x1="6" y1="10" x2="30" y2="30" stroke="#5E3A21" strokeWidth="2" />
       <line x1="30" y1="10" x2="6" y2="30" stroke="#5E3A21" strokeWidth="2" />
       <rect x="6" y="10" width="24" height="20" fill="none" stroke="#2A170A" strokeWidth="2.4" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Glazed village ceramic jug (🏺 / jug / urn)
  */
 export const LadaClayAmphoraIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Keramický džbán" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Keramický džbán" {...props}>
     <g className="lada-anim-rock">
       {/* Loop handle */}
       <path d="M 23 13 C 29 13, 29 23, 22 25" fill="none" stroke="#1A1612" strokeWidth="2.6" strokeLinecap="round" />
@@ -1778,14 +1779,14 @@ export const LadaClayAmphoraIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       {/* Painted floral band */}
       <line x1="12" y1="21" x2="24" y2="21" stroke="#3A76A8" strokeWidth="2.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Brass pocket compass (🧭 / compass)
  */
 export const LadaCompassIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mosazný kompas" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mosazný kompas" {...props}>
     <g className="lada-anim-rock">
       {/* Case ring */}
       <circle cx="18" cy="18" r="13" fill="#D9A036" stroke="#1A1612" strokeWidth="2.4" />
@@ -1797,14 +1798,14 @@ export const LadaCompassIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <polygon points="18,26 21,18 18,20" fill="#3A76A8" stroke="#1A1612" strokeWidth="1.2" />
       <circle cx="18" cy="18" r="1.5" fill="#2A170A" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Turning watermill paddle wheel (🔄 / refresh)
  */
 export const LadaWatermillTurnIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Otáčení" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Otáčení" {...props}>
     <g className="lada-anim-cog">
       <circle cx="18" cy="18" r="11" fill="none" stroke="#8C5A35" strokeWidth="3" />
       <line x1="18" y1="7" x2="18" y2="29" stroke="#1A1612" strokeWidth="2.2" />
@@ -1815,14 +1816,14 @@ export const LadaWatermillTurnIcon: React.FC<LadaIconProps> = ({ size = '1.2em',
       <path d="M 28 14 C 29 18, 27 24, 22 28" fill="none" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
       <circle cx="18" cy="18" r="3" fill="#D9A036" stroke="#1A1612" strokeWidth="1.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Iron ash bucket with broom (🗑️ / 🗑 / trash / delete)
  */
 export const LadaAshBucketIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kbelík s popelem" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kbelík s popelem" {...props}>
     <g className="lada-anim-rock">
       {/* Broom sticking out */}
       <line x1="12" y1="6" x2="20" y2="20" stroke="#8C5A35" strokeWidth="2.5" strokeLinecap="round" />
@@ -1837,14 +1838,14 @@ export const LadaAshBucketIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       {/* Iron handle arc */}
       <path d="M 8 15 C 8 8, 28 8, 28 15" fill="none" stroke="#1A1612" strokeWidth="2.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village blacksmith balance beam (⚖️ / scales)
  */
 export const LadaBalanceScalesIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářské váhy" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářské váhy" {...props}>
     <g className="lada-anim-rock">
       {/* Center column & base */}
       <line x1="18" y1="7" x2="18" y2="30" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" />
@@ -1860,14 +1861,14 @@ export const LadaBalanceScalesIcon: React.FC<LadaIconProps> = ({ size = '1.2em',
       <line x1="28" y1="12" x2="31" y2="22" stroke="#1A1612" strokeWidth="1.5" />
       <path d="M 24 22 C 24 25, 32 25, 32 22 Z" fill="#D9A036" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Josef Lada painter's palette (🎨 / palette / art)
  */
 export const LadaPainterPaletteIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malířská paleta" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malířská paleta" {...props}>
     <g className="lada-anim-float">
       {/* Kidney wooden palette */}
       <path
@@ -1886,14 +1887,14 @@ export const LadaPainterPaletteIcon: React.FC<LadaIconProps> = ({ size = '1.2em'
       <circle cx="10" cy="17" r="2.2" fill="#4D7C0F" />
       <circle cx="9" cy="23" r="2" fill="#FFFDF6" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Flask of Moravian slivovitz (🧪 / flask / potion)
  */
 export const LadaSlivovitzFlaskIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Slivovice" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Slivovice" {...props}>
     <g className="lada-anim-float">
       {/* Cork stopper */}
       <rect x="15" y="4" width="6" height="4" fill="#8C5A35" stroke="#1A1612" strokeWidth="1.8" />
@@ -1909,14 +1910,14 @@ export const LadaSlivovitzFlaskIcon: React.FC<LadaIconProps> = ({ size = '1.2em'
       <path d="M 11 20 L 25 20 L 27 27 C 27 30, 24 31, 22 31 L 14 31 C 12 31, 9 30, 9 27 Z" fill="#D9A036" />
       <circle cx="18" cy="24" r="1.5" fill="#FEF08A" className="lada-anim-foam" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folk puppet theatre booth (🎬 / theatre)
  */
 export const LadaPuppetBoothIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Loutkové divadélko" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Loutkové divadélko" {...props}>
     <g className="lada-anim-float">
       {/* Wooden arch frame */}
       <rect x="5" y="6" width="26" height="25" rx="2" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" />
@@ -1927,14 +1928,14 @@ export const LadaPuppetBoothIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <path d="M 27 12 C 22 12, 23 22, 27 22 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="1.5" />
       <path d="M 9 12 C 14 16, 22 16, 27 12 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="1.5" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved shepherd's willow flute (🪈 / pastyrska_pistala)
  */
 export const LadaShepherdsPipeIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pastýřská píšťalka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pastýřská píšťalka" {...props}>
     <g className="lada-anim-rock">
       {/* Willow whistle tube */}
       <line x1="6" y1="30" x2="28" y2="8" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
@@ -1946,14 +1947,14 @@ export const LadaShepherdsPipeIcon: React.FC<LadaIconProps> = ({ size = '1.2em',
       {/* Beveled labium mouth */}
       <rect x="25" y="7" width="2" height="3" fill="#8C5A35" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Smoked Prague ham on the bone (🍖 / 🥩 / meat)
  */
 export const LadaSmokedHamIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Uzená kýta" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Uzená kýta" {...props}>
     <path d="M 18 10 C 17 6, 20 4, 19 2" fill="none" stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-steam-1" />
     <g className="lada-anim-float">
       {/* White bone end */}
@@ -1965,14 +1966,14 @@ export const LadaSmokedHamIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <ellipse cx="25" cy="16" rx="5" ry="4" transform="rotate(-30 25 16)" fill="#C83E31" stroke="#1A1612" strokeWidth="1.6" />
       <circle cx="25" cy="16" r="1.5" fill="#FAF5E8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Curious field mouse Rézinka (🐭 / mouse / rezinka)
  */
 export const LadaMouseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Myška Rézinka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Myška Rézinka" {...props}>
     <g className="lada-anim-rock">
       {/* Curled pinkish tail */}
       <path d="M 6 25 C 4 23, 3 17, 7 14 C 9 12, 10 15, 8 18 C 7 20, 9 22, 12 23" fill="none" stroke="#DCA884" strokeWidth="2" strokeLinecap="round" />
@@ -2001,14 +2002,14 @@ export const LadaMouseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       <ellipse cx="24" cy="24" rx="2" ry="1.4" fill="#E8A598" stroke="#1A1612" strokeWidth="1.2" />
       <circle cx="26" cy="24.5" r="1.2" fill="#D9A036" stroke="#1A1612" strokeWidth="0.8" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Heavy blacksmith forge hammer (🔨 / hammer / kladivo)
  */
 export const LadaHammerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářské kladivo" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kovářské kladivo" {...props}>
     <g className="lada-anim-rock">
       {/* Wooden ash handle */}
       <path
@@ -2037,14 +2038,14 @@ export const LadaHammerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
       <circle cx="22" cy="12" r="1.6" fill="#1A1612" />
       <circle cx="22" cy="12" r="0.7" fill="#F3E9D2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Three-tined forged blacksmith pitchfork (🔱 / pitchfork / vidle)
  */
 export const LadaPitchforkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kované vidle" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kované vidle" {...props}>
     <g className="lada-anim-rock">
       {/* Wooden handle */}
       <line x1="8" y1="30" x2="20" y2="18" stroke="#8C5A35" strokeWidth="3.6" strokeLinecap="round" />
@@ -2061,14 +2062,14 @@ export const LadaPitchforkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <path d="M 21 17 C 26 17, 31 19, 34 14" fill="none" stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M 21 17 C 26 17, 31 19, 34 14" fill="none" stroke="#CBD5E1" strokeWidth="1.4" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Threshing flail & golden wheat sheaf (🌾 / flail / cep / obili)
  */
 export const LadaGrainFlailIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep na obilí" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Dřevěný cep na obilí" {...props}>
     <g className="lada-anim-rock" fill="none" strokeLinecap="round" strokeLinejoin="round">
       {/* Main crooked handle in warm, hand-carved wood. */}
       <path d="M 5 32 Q 10 26 14.5 19 Q 18 13.5 21 8" stroke="#1A1612" strokeWidth="5.1" />
@@ -2089,14 +2090,14 @@ export const LadaGrainFlailIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       <path d="M 23.5 14.7 l 3.1 -1.4 M 24.5 16.5 l 3.1 -1.5 M 25.4 18.3 l 3.2 -1.5" stroke="#3B2114" strokeWidth="1.8" />
       <path d="M 30.9 28.2 l 2 -1.2" stroke="#5B3418" strokeWidth="1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Busy bumblebee & honeybee swarm with straw skep (🐝 / bees / vcely / roj)
  */
 export const LadaBeeSwarmIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Včelí roj" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Včelí roj" {...props}>
     {/* Straw beehive skep */}
     <path
       d="M 10 30 C 9 20, 13 14, 18 14 C 23 14, 27 20, 26 30 Z"
@@ -2123,14 +2124,14 @@ export const LadaBeeSwarmIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       <line x1="9" y1="10.5" x2="9" y2="13.5" stroke="#1A1612" strokeWidth="1.2" />
       <ellipse cx="10" cy="8.5" rx="1.8" ry="2.6" transform="rotate(-20 10 8.5)" fill="#E0F2FE" opacity="0.85" stroke="#1A1612" strokeWidth="1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Ceramic soup bowl of steaming village garlic broth (🥣 / soup / polevka / miska)
  */
 export const LadaSoupBowlIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hliněná miska s polévkou" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hliněná miska s polévkou" {...props}>
     {/* Steam wisps */}
     <path d="M 14 10 C 13 8, 15 6, 14 4" fill="none" stroke="#D1D5DB" strokeWidth="1.8" strokeLinecap="round" className="lada-anim-float" />
     <path d="M 18 11 C 17 8, 20 6, 19 3" fill="none" stroke="#E5E7EB" strokeWidth="2.0" strokeLinecap="round" className="lada-anim-float" />
@@ -2155,14 +2156,14 @@ export const LadaSoupBowlIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
     <rect x="17" y="14" width="2" height="2" fill="#78350F" />
     {/* Folk painted glaze stripe */}
     <path d="M 8 20 C 12 24, 24 24, 28 20" fill="none" stroke="#FEF08A" strokeWidth="2" strokeLinecap="round" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Shepherd's warm patched woollen coat (🧥 / coat / kabat / hubertus)
  */
 export const LadaPatchedCoatIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Záplatovaný kabát" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Záplatovaný kabát" {...props}>
     {/* Coat body */}
     <path
       d="M 12 8 L 6 15 L 10 18 L 10 32 L 26 32 L 26 18 L 30 15 L 24 8 Z"
@@ -2185,14 +2186,14 @@ export const LadaPatchedCoatIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
     <line x1="11" y1="23.5" x2="15" y2="23.5" stroke="#FEF3C7" strokeWidth="1" strokeDasharray="1 1" />
     <line x1="11" y1="28.5" x2="15" y2="28.5" stroke="#FEF3C7" strokeWidth="1" strokeDasharray="1 1" />
     <rect x="21" y="19" width="3.5" height="3.5" rx="0.5" fill="#166534" stroke="#1A1612" strokeWidth="1.4" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Consecrated chalk with folk blessings (🖍️ / chalk / krida / K+M+B)
  */
 export const LadaHolyChalkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Posvěcená křída" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Posvěcená křída" {...props}>
     {/* Tříkrálové křížky */}
     <g stroke="#F3E9D2" strokeWidth="1.8" strokeLinecap="round">
       <line x1="8" y1="8" x2="8" y2="14" />
@@ -2213,14 +2214,14 @@ export const LadaHolyChalkIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <line x1="18" y1="26" x2="18" y2="34" />
       <line x1="14" y1="30" x2="22" y2="30" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Freshly dug horseradish root with green leaves (🫚 / horseradish / kren / koren)
  */
 export const LadaHorseradishRootIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pikantní křen" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pikantní křen" {...props}>
     {/* Green leafy tuft */}
     <path d="M 12 10 Q 7 5 9 2 Q 13 4 14 9" fill="#15803D" stroke="#1A1612" strokeWidth="1.6" />
     <path d="M 15 10 Q 15 2 18 1 Q 19 4 17 9" fill="#22C55E" stroke="#1A1612" strokeWidth="1.6" />
@@ -2240,14 +2241,14 @@ export const LadaHorseradishRootIcon: React.FC<LadaIconProps> = ({ size = '1.2em
     {/* Little side rootlet */}
     <path d="M 19 22 Q 24 24 23 27" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
     <path d="M 13 18 Q 9 20 10 24" fill="none" stroke="#1A1612" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Traditional wooden Easter ratchet rattle (🪇 / rattle / rehtacka / klapacka)
  */
 export const LadaRehtackaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Velikonoční řehtačka" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Velikonoční řehtačka" {...props}>
     {/* Wooden handle */}
     <line x1="8" y1="32" x2="16" y2="20" stroke="#1A1612" strokeWidth="4.2" strokeLinecap="round" />
     <line x1="8" y1="32" x2="16" y2="20" stroke="#8C5A35" strokeWidth="2.4" strokeLinecap="round" />
@@ -2269,14 +2270,14 @@ export const LadaRehtackaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
     {/* Sound click sparks */}
     <path d="M 29 8 L 32 6" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
     <path d="M 33 13 L 36 12" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved horn or bone coat button (🔘 / button / knoflik)
  */
 export const LadaBoneButtonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kostěný knoflík" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Kostěný knoflík" {...props}>
     {/* Outer button disc */}
     <circle cx="18" cy="18" r="14" fill="#E2D9C8" stroke="#1A1612" strokeWidth="2.6" />
     {/* Recessed inner ring */}
@@ -2289,14 +2290,14 @@ export const LadaBoneButtonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
     {/* Crossed thread sewing */}
     <line x1="14" y1="14" x2="22" y2="22" stroke="#8C5A35" strokeWidth="1.6" strokeLinecap="round" />
     <line x1="22" y1="14" x2="14" y2="22" stroke="#8C5A35" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Little granddaughter Barunka with red bow on braid & wildflower bouquet (👧 / barunka / devcatko)
  */
 export const LadaBarunkaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vnučka Barunka s kytičkou" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vnučka Barunka s kytičkou" {...props}>
     <g className="lada-anim-float">
       {/* Red bodice & white puffed sleeves */}
       <circle cx="10" cy="29" r="3.2" fill="#F4F1EA" stroke="#1A1612" strokeWidth="1.8" />
@@ -2327,14 +2328,14 @@ export const LadaBarunkaIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <circle cx="19.8" cy="29.2" r="1.7" fill="#FBBF24" stroke="#1A1612" strokeWidth="1" />
       <circle cx="18" cy="27.2" r="1.6" fill="#3B82F6" stroke="#1A1612" strokeWidth="1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Hand-bound countryside chronicle & bestiary book (📖 / book / kniha / bestiar)
  */
 export const LadaBookIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský bestiář a kronika" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský bestiář a kronika" {...props}>
     <g className="lada-anim-float">
       {/* Shadow */}
       <ellipse cx="18" cy="31" rx="13" ry="2.6" fill="#1A1612" opacity="0.25" />
@@ -2358,14 +2359,14 @@ export const LadaBookIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNam
       <path d="M 18 10 Q 19 19 22 29 L 24 27 L 26 30 Q 21 19 18 10 Z" fill="#C83E31" stroke="#1A1612" strokeWidth="1.4" />
       <circle cx="22" cy="28" r="1.4" fill="#FEF08A" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Authentic painted Czech folk chest (🎁 / chest / truhla / malovana_truhla)
  */
 export const LadaChestIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malovaná truhla" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Malovaná truhla" {...props}>
     <g className="lada-anim-float">
       {/* Chest ground shadow */}
       <ellipse cx="18" cy="31" rx="14" ry="3" fill="#1A1612" opacity="0.25" />
@@ -2388,14 +2389,14 @@ export const LadaChestIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Golden glint on iron corner fitting */}
       <circle cx="26" cy="11" r="1.5" fill="#FEF08A" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Spring green seedling & sprout (🌱 / seedling / sazenicka / predjari)
  */
 export const LadaSeedlingIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mladý klíček" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mladý klíček" {...props}>
     <g className="lada-anim-float">
       {/* Spring crumbly soil mound */}
       <ellipse cx="18" cy="30" rx="11" ry="3.5" fill="#5E3A21" stroke="#1A1612" strokeWidth="2.2" />
@@ -2412,14 +2413,14 @@ export const LadaSeedlingIcon: React.FC<LadaIconProps> = ({ size = '1.2em', clas
       {/* Dewdrop sparkle */}
       <circle cx="10" cy="8" r="1.3" fill="#FFFFFF" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Autumn oak & linden folk leaf (🍂 / 🍁 / autumn_leaf / leaf / podzim)
  */
 export const LadaAutumnLeafIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Podzimní list" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Podzimní list" {...props}>
     <g className="lada-anim-rock">
       {/* Curved wooden leaf stem */}
       <path d="M 7 30 Q 13 23 16 18" fill="none" stroke="#1A1612" strokeWidth="3" strokeLinecap="round" />
@@ -2447,14 +2448,14 @@ export const LadaAutumnLeafIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       {/* Morning moisture glint */}
       <circle cx="21" cy="7" r="1.3" fill="#FEF08A" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Weathered cemetery stone cross / headstone (🪦 / ⚰️ / tomb / hrbitov)
  */
 export const LadaTombstoneIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hřbitovní kříž" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hřbitovní kříž" {...props}>
     <g className="lada-anim-shiver">
       {/* Graveyard ground mound */}
       <ellipse cx="18" cy="31" rx="13" ry="3" fill="#1A1612" opacity="0.3" />
@@ -2476,14 +2477,14 @@ export const LadaTombstoneIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <ellipse cx="14" cy="29" rx="2.5" ry="1.5" fill="#4D7C0F" />
       <ellipse cx="21" cy="28.5" rx="2" ry="1.2" fill="#4D7C0F" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Three-headed fairytale dragon head (🐉 / dragon / drak)
  */
 export const LadaDragonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pohádkový drak" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pohádkový drak" {...props}>
     <g className="lada-anim-float">
       {/* Dragon neck */}
       <path d="M 9 32 Q 13 22 17 19 L 23 23 Q 19 28 17 32 Z" fill="#15803D" stroke="#1A1612" strokeWidth="2.2" strokeLinejoin="round" />
@@ -2512,14 +2513,14 @@ export const LadaDragonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classN
         <circle cx="33" cy="19" r="1.2" fill="#FBBF24" />
       </g>
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Winter flock crow / raven (🐦‍⬛ / crow / vrana)
  */
 export const LadaCrowIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 44 44" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mrazivá vrána" {...props}>
+  <LadaCanvasSvg viewBox="0 0 44 44" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Mrazivá vrána" {...props}>
     <g className="lada-anim-float">
       {/* Far / Right Wing with splayed primary feathers */}
       <path
@@ -2600,14 +2601,14 @@ export const LadaCrowIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNam
       <circle cx="28" cy="16.2" r="0.7" fill="#090B12" />
       <path d="M 22 13 L 26.8 16.5 L 30 14" fill="none" stroke="#090B12" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Czech two-tailed folk lion head (🦁 / lion / lev)
  */
 export const LadaLionIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Český lev" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Český lev" {...props}>
     <g className="lada-anim-float">
       {/* Full golden mane scallops */}
       <path
@@ -2632,14 +2633,14 @@ export const LadaLionIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNam
       {/* Tongue */}
       <path d="M 17 23 Q 18 26 19 23 Z" fill="#DC2626" stroke="#1A1612" strokeWidth="1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Sleepy village crescent moon (🌙 / moon / mesic)
  */
 export const LadaMoonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Noční měsíc" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Noční měsíc" {...props}>
     <g className="lada-anim-float">
       {/* Crescent moon body */}
       <path
@@ -2657,14 +2658,14 @@ export const LadaMoonIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNam
       <polygon points="23,5 29,3 24,9" fill="#C83E31" stroke="#1A1612" strokeWidth="1.4" strokeLinejoin="round" />
       <circle cx="30" cy="3" r="1.4" fill="#FAF5E8" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Village sleep & fatigue (💤 / sleep / spanek / vycerpany)
  */
 export const LadaSleepIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Spánek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Spánek" {...props}>
     <g className="lada-anim-float">
       {/* Large Z */}
       <path d="M 18 8 L 29 8 L 20 19 L 29 19" fill="none" stroke="#1A1612" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -2678,14 +2679,14 @@ export const LadaSleepIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Sleep star glint */}
       <circle cx="28" cy="7" r="1.3" fill="#FEF08A" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Carved wooden pause bars (⏸ / pause / pauza)
  */
 export const LadaPauseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pauza" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pauza" {...props}>
     <g className="lada-anim-rock">
       {/* Left carved wooden bar */}
       <rect x="8" y="7" width="7" height="22" rx="2" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" strokeLinejoin="round" />
@@ -2698,14 +2699,14 @@ export const LadaPauseIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       <circle cx="24.5" cy="9" r="0.9" fill="#1A1612" />
       <circle cx="24.5" cy="27" r="0.9" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Tavern tally slate & score ledger (📊 / chart / stats / ucet)
  */
 export const LadaStatsLedgerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hospodský účet a statistiky" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hospodský účet a statistiky" {...props}>
     <g className="lada-anim-float">
       {/* Wooden frame */}
       <rect x="6" y="6" width="24" height="25" rx="3" fill="#8C5A35" stroke="#1A1612" strokeWidth="2.4" strokeLinejoin="round" />
@@ -2722,14 +2723,14 @@ export const LadaStatsLedgerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       <line x1="15" y1="21" x2="15" y2="25" stroke="#F8FAFC" strokeWidth="1.6" strokeLinecap="round" />
       <line x1="18" y1="21" x2="18" y2="25" stroke="#FDE047" strokeWidth="1.6" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Weathered Gothic castle ruins with battlements & nocturnal glow (🏰 / castle / hrad / zricenina / zlenice)
  */
 export const LadaCastleRuinsIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zřícenina hradu Zlenice" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Zřícenina hradu Zlenice" {...props}>
     <g className="lada-anim-float">
       {/* Hillock / foundation rock */}
       <path d="M 4 31 Q 18 28 32 31 L 32 33 L 4 33 Z" fill="#334155" stroke="#1A1612" strokeWidth="2.2" strokeLinejoin="round" />
@@ -2754,14 +2755,14 @@ export const LadaCastleRuinsIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       {/* Clinging ivy / moss */}
       <path d="M 6 24 Q 9 24 8 28 Q 6 27 6 24" fill="#22C55E" stroke="#1A1612" strokeWidth="1.2" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folkloric spectral White Lady ghost (👻 / ghost / duch / bila_pani / strasidlo)
  */
 export const LadaGhostIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Bílá paní a strašidlo" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Bílá paní a strašidlo" {...props}>
     <g className="lada-anim-float">
       {/* Wispy floating gown with folds */}
       <path
@@ -2785,14 +2786,14 @@ export const LadaGhostIcon: React.FC<LadaIconProps> = ({ size = '1.2em', classNa
       {/* Floating spectral glint */}
       <circle cx="24" cy="9" r="1.2" fill="#FEF08A" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Authentic Czech village snowman with old pot, carrot & birch twigs (☃️ / snowman / snehulak)
  */
 export const LadaSnowmanIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský sněhulák" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Ladovský sněhulák" {...props}>
     <g className="lada-anim-rock">
       {/* Bottom large snowball */}
       <ellipse cx="18" cy="26" rx="9" ry="7.5" fill="#FFFFFF" stroke="#1A1612" strokeWidth="2.3" />
@@ -2826,14 +2827,14 @@ export const LadaSnowmanIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <line x1="24" y1="29" x2="28" y2="10" stroke="#8C5A35" strokeWidth="1.8" strokeLinecap="round" />
       <path d="M 27 10 L 29 4 L 31 10 L 26 9 Z" fill="#8C5A35" stroke="#1A1612" strokeWidth="1.2" strokeLinejoin="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Hrusice spotted village dog / voříšek (🐕 / dog / pes / vorisek / hafik)
  */
 export const LadaVillageDogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrusický voříšek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Hrusický voříšek" {...props}>
     <g className="lada-anim-rock">
       {/* Plump dog body */}
       <ellipse cx="17" cy="21" rx="8" ry="6" fill="#FDFBF7" stroke="#1A1612" strokeWidth="2.3" />
@@ -2862,14 +2863,14 @@ export const LadaVillageDogIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       {/* Red village collar */}
       <path d="M 21 18 Q 23 20 26 18" fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Waterman's dripping felt top hat with ribbon (🎩 / tophat / cylinder / vodnik_klobouk)
  */
 export const LadaWatermanHatIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnický cylinder" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Vodnický cylinder" {...props}>
     <g className="lada-anim-rock">
       {/* Flared curved hat brim */}
       <ellipse cx="18" cy="26" rx="14" ry="4" fill="#1E3A2F" stroke="#1A1612" strokeWidth="2.3" />
@@ -2894,14 +2895,14 @@ export const LadaWatermanHatIcon: React.FC<LadaIconProps> = ({ size = '1.2em', c
       </g>
       <path d="M 27 29 Q 26 32 27 33 Q 28 32 27 29 Z" fill="#38BDF8" stroke="#1A1612" strokeWidth="1.1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folk marsh marigold meadow flower / blatouch (🌼 / flower / kvet / blatouch / hermanek)
  */
 export const LadaMeadowFlowerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský blatouch a luční kvítek" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Venkovský blatouch a luční kvítek" {...props}>
     <g className="lada-anim-pulse">
       {/* Rustic stem */}
       <path d="M 18 24 Q 19 29 17 33" fill="none" stroke="#15803D" strokeWidth="2.4" strokeLinecap="round" />
@@ -2918,14 +2919,14 @@ export const LadaMeadowFlowerIcon: React.FC<LadaIconProps> = ({ size = '1.2em', 
       <circle cx="16.8" cy="15.5" r="0.8" fill="#FEF08A" />
       <circle cx="19.2" cy="17" r="0.8" fill="#FEF08A" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Folkloric blazing village sun with wavy ink rays (☀️ / sun / slunce / polednice / jasno)
  */
 export const LadaVillageSunIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Polední venkovské slunce" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Polední venkovské slunce" {...props}>
     <g className="lada-anim-pulse">
       {/* 8 Wavy radiating rays */}
       <g stroke="#1A1612" strokeWidth="2.4" strokeLinecap="round" fill="none">
@@ -2953,14 +2954,14 @@ export const LadaVillageSunIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cl
       {/* Sun glint spark */}
       <circle cx="16" cy="16" r="1.3" fill="#FFFDF0" className="lada-anim-glint" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Barefoot Shepherd boy with feather in hair, red neckerchief, blue vest & wooden flute (pasacek / shepherd)
  */
 export const LadaPasacekIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pasáček s píšťalkou a pírkem" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pasáček s píšťalkou a pírkem" {...props}>
     <g className="lada-anim-float">
       {/* Blue vest shoulders & red neckerchief */}
       <path
@@ -3017,14 +3018,14 @@ export const LadaPasacekIcon: React.FC<LadaIconProps> = ({ size = '1.2em', class
       <circle cx="26.5" cy="20.2" r="0.7" fill="#1A1612" />
       <circle cx="29" cy="18.5" r="0.7" fill="#1A1612" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 
 /**
  * Devout Sexton / Churchwarden in brown fedora hat with golden cross & holy water sprinkler (kostelnik / sexton)
  */
 export const LadaKostelnikIcon: React.FC<LadaIconProps> = ({ size = '1.2em', className = '', style = {}, ...props }) => (
-  <svg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pobožný kostelník s kropáčem" {...props}>
+  <LadaCanvasSvg viewBox="0 0 36 36" style={baseSvgStyle(size, style)} className={className} role="img" aria-label="Pobožný kostelník s kropáčem" {...props}>
     <g className="lada-anim-float">
       {/* Olive-brown coat & dark waistcoat shoulders */}
       <path
@@ -3072,6 +3073,6 @@ export const LadaKostelnikIcon: React.FC<LadaIconProps> = ({ size = '1.2em', cla
       <circle cx="29" cy="7.5" r="1.4" fill="#38BDF8" stroke="#1A1612" strokeWidth="1" className="lada-anim-glint" />
       <circle cx="33.5" cy="9.5" r="1.3" fill="#38BDF8" stroke="#1A1612" strokeWidth="1" />
     </g>
-  </svg>
+  </LadaCanvasSvg>
 );
 

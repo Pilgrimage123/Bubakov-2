@@ -10,6 +10,17 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '30. října 2026',
+    title: 'Průvodce „Jak hrát“ (Bullet Heaven po česku), interakce s krajinou a revize příručky lovce',
+    summary: 'Obohacení úvodní obrazovky i herní příručky o tematické představení Bubákova jako pohodového ladovského „bullet heaven“ z imaginárního českého venkova a kompletní synchronizace všech nápověd s aktuálním stavem hry.',
+    items: [
+      '🎨 Bullet Heaven po česku: Do hlavní nabídky i okna „Jak hrát & Ovládání“ přibylo srozumitelné vysvětlení žánru – zbraně střílejí a sekají samy, lovec jen uhýbá, sbírá kořist a na konci výpravy si užívá radost z toho, jak zběsile mu všechno střílí a kolik bubáků naráz vykosí.',
+      '⚡ Tři pilíře ovládání: Zdůrazněno spouštění speciální zbraně lovce klávesou [Mezerník], přivolání velkého Čertova dědečka sběrem perníčků (směna za zbraně a vylepšení klávesou [E] v jeho blízkosti) a interakce s prvky krajiny [E].',
+      '⛪ Přehled živé krajiny a pamětihodností: Popsány interaktivní body v terénu – Kostel [E] (Svatá záře), Hospoda [E] (Šenkýřův soudek), Kaplička se zvoničkou [E] (Zvonění na poplach), polní úroda, mlýnský náhon, škola, rybník s ledovými krami, 4 druhy lesa a Bubácká díra.',
+      '🗡️ Kompletní revize arzenálu a vesnice v příručce: Doplněny všechny 3 dříve chybějící zbraně (Bylinková fajfka, Formanský bič, Splašený houser – celkem všech 18 zbraní), všech 13 obecních staveb v Hospodě, folklórní milníky na 3., 5. a 8. hodnosti a sjednocena doba Jízdy na žernovu Krajánka (14 s).',
+    ],
+  },
+  {
     date: '28. října 2026',
     title: 'Rozdělení Předjaří na den a noc, osmidílná kampaň a 5minutové trvání (ADR 0035)',
     summary: 'Úvodní kraj Předjaří v Hrusicích byl rozdělen na dvě plnohodnotné samostatné výpravy – prosluněné Denní tání a třeskuté Noční mrazy. Obě výpravy trvají plných 5 minut a kampaň Bubákova byla sjednocena do osmidílné řady kapitol.',

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface JitrniceIconProps {
   size?: string | number;
@@ -14,7 +15,7 @@ export const JitrniceIcon: React.FC<JitrniceIconProps> = ({
   ...props
 }) => {
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 120 90"
       width={size}
@@ -272,6 +273,6 @@ export const JitrniceIcon: React.FC<JitrniceIconProps> = ({
       <g className="lada-anim-steam-2" fill="none" stroke="#FFFDF7" strokeWidth="2.0" strokeLinecap="round" opacity="0.7">
         <path d="M 68 18 C 72 13, 67 9, 71 4" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

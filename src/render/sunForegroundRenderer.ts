@@ -1496,31 +1496,41 @@ function bakeVolumetricSunbeamsCanvas(size = 512): HTMLCanvasElement {
   if (!ctx) return canvas;
 
   const cx = size * 0.5;
-  const cy = size * 0.42;
+  const cy = size * 0.5;
 
   ctx.clearRect(0, 0, size, size);
   ctx.save();
   ctx.translate(cx, cy);
 
-  const beamAngles = [-0.68, -0.36, -0.05, 0.28, 0.62];
-  const beamWidths = [26, 36, 44, 34, 24];
+  // Outer warm golden atmospheric corona halo
+  const haloGrad = ctx.createRadialGradient(0, 0, size * 0.14, 0, 0, size * 0.48);
+  haloGrad.addColorStop(0, 'rgba(254, 240, 138, 0.38)');
+  haloGrad.addColorStop(0.52, 'rgba(251, 191, 36, 0.18)');
+  haloGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+  ctx.fillStyle = haloGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, size * 0.48, 0, Math.PI * 2);
+  ctx.fill();
+
+  const beamAngles = [-0.88, -0.52, -0.18, 0.16, 0.5, 0.84, 2.35, -2.35];
+  const beamWidths = [28, 38, 46, 42, 36, 28, 26, 26];
 
   for (let i = 0; i < beamAngles.length; i++) {
     ctx.save();
     ctx.rotate(beamAngles[i]);
     const w = beamWidths[i];
-    const len = size * 0.56;
-    const grad = ctx.createLinearGradient(0, 20, 0, len);
-    grad.addColorStop(0, 'rgba(254, 240, 138, 0.26)');
-    grad.addColorStop(0.55, 'rgba(251, 191, 36, 0.12)');
-    grad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+    const len = size * 0.49;
+    const grad = ctx.createLinearGradient(0, 14, 0, len);
+    grad.addColorStop(0, 'rgba(254, 249, 195, 0.36)');
+    grad.addColorStop(0.55, 'rgba(251, 191, 36, 0.18)');
+    grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
 
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(-w * 0.35, 16);
-    ctx.lineTo(-w * 1.35, len);
-    ctx.lineTo(w * 1.35, len);
-    ctx.lineTo(w * 0.35, 16);
+    ctx.moveTo(-w * 0.32, 12);
+    ctx.lineTo(-w * 1.45, len);
+    ctx.lineTo(w * 1.45, len);
+    ctx.lineTo(w * 0.32, 12);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -1532,7 +1542,7 @@ function bakeVolumetricSunbeamsCanvas(size = 512): HTMLCanvasElement {
 
 /**
  * Pre-renders a small Ladovské V-flock of high-flying spring swallows/crows onto a 260x130
- * offscreen canvas that glides in the 1.62x foreground parallax plane in front of the sun.
+ * offscreen canvas that glides in the 1.58x foreground parallax plane around the sun's outer perimeter.
  */
 function bakeSpringBirdsCanvas(width = 260, height = 130): HTMLCanvasElement {
   const { canvas, ctx } = createOffscreenCanvas(width, height);
@@ -1696,9 +1706,13 @@ const STAGE_AMBIENT_COLORS: readonly AmbientStageColor[] = [
 
 /**
  * Pure zero-allocation math pass that computes the sun's diegetic 5-minute arc anchor,
- * 7-phase keyframe interpolation indices, 5-plane 3D parallax scrolling (0.45x far clouds,
- * 0.78x sunbeams, 1.00x sun rays, 1.15x 3D convex face relief, 1.48x foreground occluder clouds,
- * 1.62x spring birds, 1.80x lens flares), repulsive deadzone displacement, and proximity alpha fade.
+ * 7-phase keyframe interpolation indices, 6-plane 3D parallax scrolling:
+ *   Plane 1 (0.30x): Distant horizon clouds (`farClouds`)
+ *   Plane 2 (0.58x): Mid-sky Ladovské clouds (`nearClouds` — rendered behind the sun so they never cover it)
+ *   Plane 3 (0.80x): Volumetric golden sunbeams & corona (`sunbeams`)
+ *   Plane 4 (1.00x): Rotating outer sun rays crown (`raysCanvas` + 3D perspective `depthScale`)
+ *   Plane 5 (1.24x): 3D convex sun face differential relief (`faceCanvas` shifting relative to rays)
+ *   Plane 6 (1.58x & 1.90x): High-flying spring birds on outer perimeter + fast camera lens flares (`flares`)
  */
 export function computeSunForegroundState(
   screenWidth: number,
@@ -1742,7 +1756,7 @@ export function computeSunForegroundState(
   const marginX = Math.max(135, Math.min(240, screenWidth * 0.14));
   const anchorX = marginX + progress * Math.max(40, screenWidth - marginX * 2);
 
-  const zenithY = Math.max(92, Math.min(148, screenHeight * 0.13));
+  const zenithY = Math.max(96, Math.min(152, screenHeight * 0.135));
   const cornerDropY = Math.max(55, Math.min(130, screenHeight * 0.12));
   const normalizedArc = (progress - 0.5) * 2; // -1 at 0:00, 0 at 2:30, +1 at 5:00
   const anchorY = zenithY + normalizedArc * normalizedArc * cornerDropY;
@@ -1750,19 +1764,19 @@ export function computeSunForegroundState(
   outState.anchorX = anchorX;
   outState.anchorY = anchorY;
 
-  // 2. Multi-Plane 3D Parallax Scrolling (responsive across the full 3840x3350 arena)
+  // 2. High-Visibility Multi-Plane 3D Parallax Scrolling (responsive to every WASD step across the arena)
   const camCenterX = cameraX + centerX;
   const camCenterY = cameraY + centerY;
   const parallaxStrength = clamp(config.parallaxStrength ?? 1.0, 0, 3.0);
 
-  const maxParallaxX = Math.min(310, screenWidth * 0.24) * parallaxStrength;
-  const maxParallaxY = Math.min(195, screenHeight * 0.20) * parallaxStrength;
+  const maxParallaxX = Math.min(365, screenWidth * 0.27) * parallaxStrength;
+  const maxParallaxY = Math.min(225, screenHeight * 0.22) * parallaxStrength;
 
-  // Wide arena tanh + continuous spatial depth wave so every step anywhere on the map gives 3D feedback
+  // Fast initial response (tanh / 680) + continuous spatial wave (sin / 210) so every WASD step gives unmistakable 3D motion
   const normParallaxX =
-    Math.tanh(camCenterX / 1350) * 0.76 + Math.sin(camCenterX / 340) * 0.24;
+    Math.tanh(camCenterX / 680) * 0.68 + Math.sin(camCenterX / 210) * 0.32;
   const normParallaxY =
-    Math.tanh(camCenterY / 1050) * 0.76 + Math.sin(camCenterY / 290) * 0.24;
+    Math.tanh(camCenterY / 560) * 0.68 + Math.sin(camCenterY / 185) * 0.32;
 
   const parallaxOffsetX = -normParallaxX * maxParallaxX;
   const parallaxOffsetY = -normParallaxY * maxParallaxY;
@@ -1817,24 +1831,25 @@ export function computeSunForegroundState(
   outState.distanceToCenter = finalDist;
   outState.wasRepelled = wasRepelled;
 
-  // 3b. 3D Perspective Depth Scale & 1.15x Differential Convex Face Parallax
+  // 3b. PLANE 4 & PLANE 5: 3D Perspective Depth Scale (0.89..1.13) & 1.24x Differential Convex Face Parallax
   const depthScale = clamp(
-    1.0 + (parallaxOffsetY / Math.max(1, maxParallaxY || 1)) * 0.085 * Math.min(1.5, parallaxStrength),
-    0.92,
-    1.1
+    1.0 + (parallaxOffsetY / Math.max(1, maxParallaxY || 1)) * 0.115 * Math.min(1.6, parallaxStrength),
+    0.89,
+    1.13
   );
   outState.depthScale = depthScale;
 
-  // The chubby face shifts slightly more than the rays crown (+15% differential parallax), creating 3D spherical relief
+  // Plane 5 (1.24x): The convex sun face shifts up to ±20px relative to the rays crown (Plane 4, 1.00x),
+  // creating a dramatic 3D spherical relief where the face turns toward/away from the camera as you move!
   outState.faceOffsetX = clamp(
-    parallaxOffsetX * 0.075 + Math.sin(camCenterX / 240) * 4.5 * parallaxStrength,
-    -13,
-    13
+    parallaxOffsetX * 0.115 + Math.sin(camCenterX / 170) * 6.5 * parallaxStrength,
+    -20,
+    20
   );
   outState.faceOffsetY = clamp(
-    parallaxOffsetY * 0.075 + Math.cos(camCenterY / 220) * 3.5 * parallaxStrength,
-    -10,
-    10
+    parallaxOffsetY * 0.115 + Math.cos(camCenterY / 160) * 5.2 * parallaxStrength,
+    -15,
+    15
   );
 
   // 4. Proximity Alpha Fade (0.25 near the deadzone -> 0.95 toward the outer edges)
@@ -1848,60 +1863,81 @@ export function computeSunForegroundState(
     SUN_OFFSCREEN_SIZE * (config.sunScale ?? 0.62) * depthScale
   );
 
-  // 4b. Multi-Plane Sky Layers (0.45x Far Clouds, 0.78x Sunbeams, 1.48x Near Occluding Clouds, 1.62x Birds)
+  const halfSunR = outState.renderSizePx * 0.5;
   const tUi = uiTimeSeconds || 0;
 
-  // Plane 0.78x: Volumetric Sunbeams behind the sun
-  outState.sunbeamsX = anchorX + parallaxOffsetX * 0.78;
-  outState.sunbeamsY = anchorY + parallaxOffsetY * 0.78 + 18;
-  outState.sunbeamsTiltRad = clamp((centerX - sunX) / Math.max(400, screenWidth), -0.38, 0.38);
+  // PLANE 1 (0.30x Parallax): Deep Horizon Sky Clouds drifting slowly behind the sun
+  // Anchored to the sky arc with 0.30x parallax so they visibly lag behind the 1.00x sun by 0.70x!
+  const plane1BaseX = anchorX + parallaxOffsetX * 0.3;
+  const plane1BaseY = anchorY + parallaxOffsetY * 0.3;
+  const farDriftX = -camCenterX * 0.16 * parallaxStrength + tUi * 5.0;
+  const farDriftY = -camCenterY * 0.11 * parallaxStrength;
 
-  // Plane 0.45x: Distant Sky Clouds moving slower behind the sun
-  const farShiftX = -camCenterX * 0.095 * parallaxStrength + tUi * 4.5;
-  const farShiftY = -camCenterY * 0.065 * parallaxStrength;
   const far0 = outState.farClouds[0];
-  far0.x = sunX - 115 + wrapSignedSpan(farShiftX, 240);
-  far0.y = sunY - 38 + wrapSignedSpan(farShiftY, 70);
-  far0.width = 270;
-  far0.height = 126;
-  far0.alpha = outState.alpha * 0.58;
+  far0.x = plane1BaseX - 155 + wrapSignedSpan(farDriftX, 260);
+  far0.y = plane1BaseY - 42 + wrapSignedSpan(farDriftY, 68);
+  far0.width = 285;
+  far0.height = 134;
+  far0.alpha = outState.alpha * 0.64;
 
   const far1 = outState.farClouds[1];
-  far1.x = sunX + 125 + wrapSignedSpan(farShiftX + 190, 240);
-  far1.y = sunY + 24 + wrapSignedSpan(farShiftY - 35, 70);
-  far1.width = 240;
-  far1.height = 112;
-  far1.alpha = outState.alpha * 0.52;
+  far1.x = plane1BaseX + 165 + wrapSignedSpan(farDriftX + 180, 260);
+  far1.y = plane1BaseY + 32 + wrapSignedSpan(farDriftY - 34, 68);
+  far1.width = 255;
+  far1.height = 120;
+  far1.alpha = outState.alpha * 0.58;
 
-  // Plane 1.48x: Foreground Ladovské Clouds that glide IN FRONT OF the sun and partially cover it
-  const nearRelativeShiftX =
-    -camCenterX * 0.34 * parallaxStrength - parallaxOffsetX * 0.48 - tUi * 7.5;
-  const nearRelativeShiftY =
-    -camCenterY * 0.22 * parallaxStrength - parallaxOffsetY * 0.48;
+  // PLANE 2 (0.58x Parallax): Mid-Sky Ladovské Cumulus Clouds framing the sun from behind
+  // Rendered BEHIND the sun so they never occlude the sun's rays or face while providing strong 0.58x vs 1.00x shear!
+  const plane2BaseX = anchorX + parallaxOffsetX * 0.58;
+  const plane2BaseY = anchorY + parallaxOffsetY * 0.58;
+  const midDriftX = -camCenterX * 0.28 * parallaxStrength - tUi * 7.5;
+  const midDriftY = -camCenterY * 0.19 * parallaxStrength;
 
   const near0 = outState.nearClouds[0];
-  near0.x = sunX + wrapSignedSpan(nearRelativeShiftX + 42, 260);
-  near0.y = sunY + 34 + wrapSignedSpan(nearRelativeShiftY + 12, 85);
-  near0.width = Math.round(315 * depthScale);
-  near0.height = Math.round(152 * depthScale);
-  near0.alpha = clamp(outState.alpha * 0.88, 0.22, 0.88);
+  near0.x = plane2BaseX - 135 + wrapSignedSpan(midDriftX + 45, 290);
+  near0.y = plane2BaseY + 46 + wrapSignedSpan(midDriftY + 14, 78);
+  near0.width = Math.round(325 * depthScale);
+  near0.height = Math.round(156 * depthScale);
+  near0.alpha = clamp(outState.alpha * 0.86, 0.24, 0.88);
 
   const near1 = outState.nearClouds[1];
-  near1.x = sunX + wrapSignedSpan(nearRelativeShiftX - 165, 260);
-  near1.y = sunY - 28 + wrapSignedSpan(nearRelativeShiftY - 24, 85);
-  near1.width = Math.round(280 * depthScale);
-  near1.height = Math.round(136 * depthScale);
-  near1.alpha = clamp(outState.alpha * 0.82, 0.2, 0.84);
+  near1.x = plane2BaseX + 140 + wrapSignedSpan(midDriftX - 150, 290);
+  near1.y = plane2BaseY - 36 + wrapSignedSpan(midDriftY - 22, 78);
+  near1.width = Math.round(295 * depthScale);
+  near1.height = Math.round(142 * depthScale);
+  near1.alpha = clamp(outState.alpha * 0.82, 0.22, 0.84);
 
-  // Plane 1.62x: Foreground high-flying spring birds gliding across the sun
+  // PLANE 3 (0.80x Parallax): Volumetric Golden Sunbeams & Corona lagging slightly behind the sun disc
+  outState.sunbeamsX = sunX - parallaxOffsetX * 0.22;
+  outState.sunbeamsY = sunY - parallaxOffsetY * 0.22 + 10;
+  outState.sunbeamsTiltRad = clamp(
+    (centerX - sunX) / Math.max(360, screenWidth * 0.75) + normParallaxX * 0.22,
+    -0.48,
+    0.48
+  );
+
+  // PLANE 6A (1.58x Parallax): High-flying spring swallows gliding around the outer sky perimeter
+  // Kept strictly outside the sun's disc radius so they never cover the sun's face!
   const birdsShiftX =
-    -camCenterX * 0.44 * parallaxStrength - parallaxOffsetX * 0.62 + tUi * 18;
+    -camCenterX * 0.48 * parallaxStrength + parallaxOffsetX * 0.58 + tUi * 20;
   const birdsShiftY =
-    -camCenterY * 0.28 * parallaxStrength - parallaxOffsetY * 0.62 + Math.sin(tUi * 1.6) * 8;
-  outState.birdsFlock.x = sunX + wrapSignedSpan(birdsShiftX - 30, 310);
-  outState.birdsFlock.y = sunY - 12 + wrapSignedSpan(birdsShiftY, 95);
-  outState.birdsFlock.width = Math.round(182 * depthScale);
-  outState.birdsFlock.height = Math.round(91 * depthScale);
+    -camCenterY * 0.32 * parallaxStrength + parallaxOffsetY * 0.58 + Math.sin(tUi * 1.8) * 10;
+  let birdX = sunX + wrapSignedSpan(birdsShiftX - 180, 360);
+  let birdY = sunY + wrapSignedSpan(birdsShiftY + 110, 140);
+  const birdDx = birdX - sunX;
+  const birdDy = birdY - sunY;
+  const birdDist = Math.hypot(birdDx, birdDy);
+  const minBirdClearance = halfSunR + 68;
+  if (birdDist < minBirdClearance) {
+    const bAng = birdDist > 0.001 ? Math.atan2(birdDy, birdDx) : 0.65;
+    birdX = sunX + Math.cos(bAng) * minBirdClearance;
+    birdY = sunY + Math.sin(bAng) * minBirdClearance;
+  }
+  outState.birdsFlock.x = birdX;
+  outState.birdsFlock.y = birdY;
+  outState.birdsFlock.width = Math.round(186 * depthScale);
+  outState.birdsFlock.height = Math.round(93 * depthScale);
   outState.birdsFlock.alpha = clamp(outState.alpha * 0.9, 0.25, 0.9);
 
   // 5. Smoothly interpolated 7-stage atmospheric tint
@@ -1912,33 +1948,33 @@ export function computeSunForegroundState(
   outState.ambientB = Math.round(ambA.b + (ambB.b - ambA.b) * phaseBlend);
   outState.ambientAlpha = ambA.alpha + (ambB.alpha - ambA.alpha) * phaseBlend;
 
-  // 6. Fast Lens Flares (1.8x camera parallax along the optical axis opposite the sun)
-  const flareParallaxX = -normParallaxX * maxParallaxX * 1.8;
-  const flareParallaxY = -normParallaxY * maxParallaxY * 1.8;
+  // PLANE 6B (1.90x Parallax Camera Lens): Fast Optical Lens Flares along the optical axis opposite the sun
+  const flareParallaxX = -normParallaxX * maxParallaxX * 1.9;
+  const flareParallaxY = -normParallaxY * maxParallaxY * 1.9;
 
-  const axisX = centerX - sunX + flareParallaxX * 0.48;
-  const axisY = centerY - sunY + flareParallaxY * 0.48;
+  const axisX = centerX - sunX + flareParallaxX * 0.55;
+  const axisY = centerY - sunY + flareParallaxY * 0.55;
   const eveningFactor = smoothstep(0.45, 1.0, progress);
 
   const flare1 = outState.flares[0];
-  flare1.x = sunX + axisX * 0.68;
-  flare1.y = sunY + axisY * 0.68;
-  flare1.radius = 44;
-  flare1.alpha = 0.15 + eveningFactor * 0.06;
+  flare1.x = sunX + axisX * 0.72;
+  flare1.y = sunY + axisY * 0.72;
+  flare1.radius = 46;
+  flare1.alpha = 0.16 + eveningFactor * 0.06;
   flare1.tint = 'gold';
 
   const flare2 = outState.flares[1];
-  flare2.x = sunX + axisX * 1.18;
-  flare2.y = sunY + axisY * 1.18;
-  flare2.radius = 28;
-  flare2.alpha = 0.13 + eveningFactor * 0.05;
+  flare2.x = sunX + axisX * 1.22;
+  flare2.y = sunY + axisY * 1.22;
+  flare2.radius = 30;
+  flare2.alpha = 0.14 + eveningFactor * 0.05;
   flare2.tint = 'amber';
 
   const flare3 = outState.flares[2];
-  flare3.x = sunX + axisX * 1.62;
-  flare3.y = sunY + axisY * 1.62;
-  flare3.radius = 64;
-  flare3.alpha = 0.10 + eveningFactor * 0.06;
+  flare3.x = sunX + axisX * 1.66;
+  flare3.y = sunY + axisY * 1.66;
+  flare3.radius = 66;
+  flare3.alpha = 0.11 + eveningFactor * 0.06;
   flare3.tint = 'rose';
 
   return outState;
@@ -1947,14 +1983,16 @@ export function computeSunForegroundState(
 export type SunRenderPassMode = 'all' | 'sky_disc' | 'lens_only';
 
 /**
- * Renders the Stage 1 Multi-Plane 3D Sun Overlay, 7-stage narrative transition,
- * distant/foreground Ladovské clouds, volumetric sunbeams, spring birds, atmospheric light wash,
- * and 1.8x parallax lens flares onto the main 2D canvas.
+ * Renders the Stage 1 Multi-Plane 3D Sun Foreground Overlay (6 depth planes via offscreen cache):
+ *   1. Plane 1 (0.30x): Distant horizon clouds (`farCloudCanvas`)
+ *   2. Plane 2 (0.58x): Mid-sky Ladovské cumulus clouds (`nearCloudCanvasA/B`, behind the sun)
+ *   3. Plane 3 (0.80x): Volumetric golden sunbeams & corona (`sunbeamsCanvas`, behind the sun)
+ *   4. Plane 4 (1.00x): Rotating outer sun rays crown (`raysCanvas` + 3D perspective `depthScale`)
+ *   5. Plane 5 (1.24x): 3D convex sun face relief (`faceCanvas`, shifting relative to rays crown)
+ *   6. Plane 6 (1.58x & 1.90x): Perimeter spring swallows (`birdsCanvas`) + camera lens flares (`flare*Canvas`)
  *
- * Supports splitting into `'sky_disc'` (rendered before world roofs, treetops, projectiles,
- * particles, combat texts, and high VFX so those elements naturally occlude the sun) and
- * `'lens_only'` (rendered on the outermost camera lens layer).
- * Uses strictly pre-rendered offscreen canvases (`drawImage`) for zero frame-time lag.
+ * Uses strictly pre-rendered offscreen canvases (`drawImage`) for zero frame-time lag,
+ * and guarantees that the sun's rays and face are NEVER occluded by clouds or other elements.
  */
 export function renderSunForegroundOverlay(
   ctx: CanvasRenderingContext2D,
@@ -1987,7 +2025,7 @@ export function renderSunForegroundOverlay(
   ctx.save();
 
   if (passMode === 'all' || passMode === 'sky_disc') {
-    // LAYER 1 (0.45x Parallax): Distant Ladovské sky clouds drifting behind the sun
+    // PLANE 1 (0.30x Parallax): Distant Ladovské horizon clouds drifting slowly in the deep sky
     for (let i = 0; i < outState.farClouds.length; i++) {
       const fc = outState.farClouds[i];
       ctx.globalAlpha = fc.alpha;
@@ -2000,22 +2038,48 @@ export function renderSunForegroundOverlay(
       );
     }
 
-    // LAYER 2 (0.78x Parallax): Volumetric golden sunbeams (God-rays) radiating behind the sun
+    // PLANE 2 (0.58x Parallax): Mid-sky Ladovské clouds framing the sun from behind (never covering the sun!)
+    for (let i = 0; i < outState.nearClouds.length; i++) {
+      const nc = outState.nearClouds[i];
+      const cloudStamp = nc.variant === 0 ? buffers.nearCloudCanvasA : buffers.nearCloudCanvasB;
+      ctx.globalAlpha = nc.alpha;
+      ctx.drawImage(
+        cloudStamp,
+        nc.x - nc.width * 0.5,
+        nc.y - nc.height * 0.5,
+        nc.width,
+        nc.height
+      );
+    }
+
+    // PLANE 3 (0.80x Parallax): Volumetric golden sunbeams (God-rays) & outer corona radiating behind the sun
     ctx.save();
     ctx.translate(outState.sunbeamsX, outState.sunbeamsY);
     ctx.rotate(outState.sunbeamsTiltRad);
-    ctx.globalAlpha = outState.alpha * 0.72;
-    const beamSize = outState.renderSizePx * 1.42;
+    ctx.globalAlpha = outState.alpha * 0.82;
+    const beamSize = outState.renderSizePx * 1.52;
     ctx.drawImage(
       buffers.sunbeamsCanvas,
       -beamSize * 0.5,
-      -beamSize * 0.42,
+      -beamSize * 0.5,
       beamSize,
       beamSize
     );
     ctx.restore();
 
-    // LAYER 3 (1.00x Parallax): Rotating Sun Rays Crown + LAYER 4 (1.15x Parallax): 3D Convex Sun Face
+    // PLANE 6A (1.58x Parallax): High-flying spring swallows gliding around the outer sky perimeter
+    const bf = outState.birdsFlock;
+    ctx.globalAlpha = bf.alpha;
+    ctx.drawImage(
+      buffers.birdsCanvas,
+      bf.x - bf.width * 0.5,
+      bf.y - bf.height * 0.5,
+      bf.width,
+      bf.height
+    );
+
+    // PLANE 4 (1.00x Parallax): Rotating Sun Rays Crown + PLANE 5 (1.24x Parallax): 3D Convex Sun Face
+    // Rendered AFTER all clouds, beams, and birds so NOTHING ever covers the sun!
     const pairA = buffers.keyframes[outState.phaseIndexA] || buffers.keyframes[0];
     const pairB = buffers.keyframes[outState.phaseIndexB] || pairA;
     const blend = outState.phaseBlend;
@@ -2090,31 +2154,6 @@ export function renderSunForegroundOverlay(
         outState.renderSizePx
       );
     }
-
-    // LAYER 5 (1.48x Parallax): Near Foreground Ladovské Clouds passing IN FRONT OF the sun (occluding it!)
-    for (let i = 0; i < outState.nearClouds.length; i++) {
-      const nc = outState.nearClouds[i];
-      const cloudStamp = nc.variant === 0 ? buffers.nearCloudCanvasA : buffers.nearCloudCanvasB;
-      ctx.globalAlpha = nc.alpha;
-      ctx.drawImage(
-        cloudStamp,
-        nc.x - nc.width * 0.5,
-        nc.y - nc.height * 0.5,
-        nc.width,
-        nc.height
-      );
-    }
-
-    // LAYER 6 (1.62x Parallax): High-flying spring swallows/crows passing IN FRONT OF the sun
-    const bf = outState.birdsFlock;
-    ctx.globalAlpha = bf.alpha;
-    ctx.drawImage(
-      buffers.birdsCanvas,
-      bf.x - bf.width * 0.5,
-      bf.y - bf.height * 0.5,
-      bf.width,
-      bf.height
-    );
   }
 
   if (passMode === 'all' || passMode === 'lens_only') {

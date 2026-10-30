@@ -1,3 +1,18 @@
+## 2026-10-30 — Průvodce „Jak hrát“ (Bullet Heaven po česku), interakce s krajinou a synchronizace herních nápověd
+
+- **Tematické představení žánru „Bullet Heaven po česku“ (`ControlsModal.tsx`, `App.tsx`)**:
+  - Přímo na hlavní obrazovku výběru výpravy (pod titulní plátno Bubákova) i do úvodu modálu *Jak hrát & Ovládání* přibylo tematické představení hry: Bubákov je pohodová, oddychová *bullet heaven* záležitost v ladovské atmosféře imaginárního českého venkova, kde zbraně automaticky kosí monstra, hráč se soustředí na uhýbání a odemykání vylepšení a na konci výpravy má radost z toho, jak moc mu všechno střílí a kolik strašidel naráz vykosí.
+  - Jasně vypíchnuty tři nejdůležitější pilíře hratelnosti:
+    1. **[Mezerník]** spustí speciální zbraň (ultimátní schopnost lovce).
+    2. Sběrem **perníčků** dorazí na mapu velký **Čertův dědeček**, u něhož lze stiskem **[E]** perníčky vyměnit za nové zbraně a vylepšení.
+    3. Klávesou **[E]** a pohybem v terénu lze **interagovat s prvky krajiny** (Kostel – Svatá záře, Hospoda – Šenkýřův soudek, Kaplička – Zvonění na poplach, sběr vzácných folklórních předmětů) a využívat polní úrodu, mlýnský náhon, rybník s ledovými krami či 4 druhy lesa.
+- **Kompletní revize a synchronizace hráčské příručky s aktuálním stavem hry**:
+  - **7 lovců a schopnosti**: Sjednocena délka *Jízdy na žernovu* u Krajánka na kanonických **14 sekund** (`KRAJANEK_RIDE_DURATION = 14`, drtící práh 400 HP + 20 % za každý nákup u Dědečka) v příručce i lokalizacích (`cs.ts`, `en.ts`).
+  - **8 výprav a mechaniky kořisti**: Zpřesněno trvání výprav (5 minut / 300 s pro 1. a 2. úroveň *Denní tání* a *Noční mrazy* do večerního klekání či kuropění; 6 minut / 360 s pro úrovně 3–8), odstraněny zastaralé zmínky o „zkušenostních jiskrách“ a nahrazeny kanonickými mechanikami slévání perníčků (40 / 200 / 1000 b.), Velkého měšce krejcarů, expirace jídla a sběru folklórních předmětů klávesou `[E]`.
+  - **Čertův dědeček a milníky zbraní**: Doplněna tabulka rozvoje zbraně na hodnostech 2, 4, 6, 7 (specializované přírůstky dle kategorie zbraně) a křižovatky folklórních milníků na hodnostech **3, 5 a 8**, včetně výjimek ze zdražování pro buchty, měšec a vzácné okamžité dary.
+  - **Všech 18 zbraní v příručce**: Doplněny 3 dříve chybějící kanonické zbraně (*Bylinková fajfka*, *Formanský bič*, *Splašený houser*) a zaktualizovány popisy *Povidlových buchet* (1,8 s mlsání + 3,5 s obláček povidlové vůně), *Válečnice* a *Dřevěného cepu na obilí* (pevný postoj po 1,5 s).
+  - **Všech 13 obecních staveb v Hospodě**: Rozšířen přehled vesnice z původních 8 na všech **13 kanonických budov** dle `src/data/village.ts` (včetně *Kovářské výhně*, *Zvonice*, *Šenkýřovy kuráže*, *Návesní studánky*, *Kaple svaté vlny* při osvobození dušičky a *Božích muk u polní cesty*), včetně pravidla *Obecní přirážky (+20 %)* a *100% bezplatného vrácení krejcarů*.
+
 ## 2026-10-28 — Zpřesnění výkonnostní pipeline arény a důsledné poolování
 
 - **Optimalizace sběru vykreslitelných entit a nulové alokace v cyklu**:

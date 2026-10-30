@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface CesnekovaTopinkaIconProps {
   size?: string | number;
@@ -15,7 +16,7 @@ export const CesnekovaTopinkaIcon: React.FC<CesnekovaTopinkaIconProps> = ({
 }) => {
   const s = typeof size === 'number' ? `${size}px` : size;
   return (
-    <svg
+    <LadaCanvasSvg
       width={s}
       height={s}
       viewBox="0 0 64 64"
@@ -62,6 +63,6 @@ export const CesnekovaTopinkaIcon: React.FC<CesnekovaTopinkaIconProps> = ({
       <g className="lada-anim-steam-2" fill="none" stroke="#D9A036" strokeWidth="2.2" strokeLinecap="round">
         <path d="M55 24 C61 21 63 17 59 14" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { HUNTER_DETAILS, type HunterDetail } from '../data/hunterDetails';
 import { sound } from '../audio';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { WEAPONS } from '../data/weapons';
 import { LadaHunterCanvasPreview } from './LadaHunterCanvasPreview';
@@ -31,15 +33,20 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
     <div className="overlay" style={{ zIndex: 55 }} onClick={onClose}>
       <div
         className="panel"
-        style={{ maxWidth: '760px', width: '95%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', textAlign: 'left' }}
+        style={{ maxWidth: '760px', width: '95%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}
         onClick={(event) => event.stopPropagation()}
       >
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0, flex: '1 1 auto' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#166534', color: '#FFFFFF', padding: '4px 9px', borderRadius: '5px', fontWeight: 900, fontSize: '0.8rem' }}>
               <GameIcon icon="checkmark" size={14} /> ODEMČENÝ LOVEC
             </span>
-            <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#2A170A', overflowWrap: 'break-word' }}>{hunter.name}</h2>
+            <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#2A170A', overflowWrap: 'break-word', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
+              <span>{hunter.name}</span>
+              <LadaFolkFlower variant="cornflower" size={20} spin />
+            </h2>
             <div style={{ fontWeight: 800, color: '#78350F', overflowWrap: 'break-word' }}>{hunter.title}</div>
           </div>
           <button className="tab-btn" aria-label="Zavřít informace o lovci" onClick={() => { sound.coin(); onClose(); }} style={{ minWidth: 'auto', padding: '5px 12px', fontSize: '1.2rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>

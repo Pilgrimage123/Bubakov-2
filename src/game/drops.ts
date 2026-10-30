@@ -3,6 +3,7 @@ import type { EngineState } from './engineState';
 import { tryEmitParticle } from './particles';
 import { GINGERBREAD_VALUES, type GingerbreadSize, getGingerbreadSize } from '../data/gingerbread';
 import { ENEMY_POINTS } from '../constants';
+import { clampToMarchArenaBounds } from '../data/marchThawArena';
 import {
   SoADropManager,
   DropBank,
@@ -157,6 +158,7 @@ export function spawnDropWithLimit(
   incoming: GameDrop,
   pendingDropBank: PendingDropBank,
 ): boolean {
+  clampToMarchArenaBounds(incoming, 28);
   if (incoming.type === 'chest') {
     const activeChests = drops.filter((d) => !d.dead && d.type === 'chest').length;
     const pendingChests = pendingDropBank.byKey['chest']?.count || 0;
@@ -351,6 +353,7 @@ export function releasePendingDrops(
       materialized.expiration = SOUL_DROP_EXPIRATION;
     }
 
+    clampToMarchArenaBounds(materialized, 28);
     drops.push(materialized);
     activeCount++;
     released++;
@@ -872,6 +875,7 @@ export function createDropInstance(
     : (isHealingDrop(type) ? FOOD_DROP_EXPIRATION : type === 'soul' ? SOUL_DROP_EXPIRATION : undefined);
   drop.isHeavyAnchor = opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash';
   drop.isMercyDrop = opts.isMercyDrop;
+  clampToMarchArenaBounds(drop, 28);
   return drop;
 }
 
@@ -1103,6 +1107,7 @@ export function sweepCoinsIntoBigPouches(drops: GameDrop[], dt = 0.016): number 
         const pullSpeed = 240 * dt;
         coin.x += (dx / dist) * pullSpeed;
         coin.y += (dy / dist) * pullSpeed;
+        clampToMarchArenaBounds(coin, 28);
       }
     }
   }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export const ValecniceIcon: React.FC<{ size?: string | number; className?: string; style?: React.CSSProperties }> = ({
   size = 48,
@@ -7,7 +8,7 @@ export const ValecniceIcon: React.FC<{ size?: string | number; className?: strin
 }) => {
   const s = typeof size === 'number' ? size + 'px' : size;
   return (
-    <svg
+    <LadaCanvasSvg
       width={s}
       height={s}
       viewBox="0 0 64 64"
@@ -151,7 +152,7 @@ export const ValecniceIcon: React.FC<{ size?: string | number; className?: strin
         <circle cx="17" cy="3" r="1.8" fill="#B45309" stroke="#26150C" strokeWidth="1" />
       </g>
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };
 

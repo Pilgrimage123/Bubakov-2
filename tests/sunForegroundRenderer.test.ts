@@ -171,8 +171,22 @@ describe('Stage 1 Procedural Fairytale Sun Foreground Renderer', () => {
     expect(movedRight.x).toBeLessThan(neutral.x);
 
     // Differential 3D face parallax shifts the face relative to the rays crown when moving off-center
-    expect(Math.abs(movedRight.faceOffsetX)).toBeGreaterThan(0.5);
+    expect(Math.abs(movedRight.faceOffsetX)).toBeGreaterThan(1.0);
     expect(movedRight.nearClouds[0].x).not.toBeCloseTo(neutral.nearClouds[0].x, 1);
+
+    // 6-Plane shear check: farClouds (0.30x), nearClouds (0.58x), sunbeams (0.80x), and sun (1.00x) shift by distinct amounts
+    const sunShift = Math.abs(movedRight.x - neutral.x);
+    const beamsShift = Math.abs(movedRight.sunbeamsX - neutral.sunbeamsX);
+    expect(sunShift).toBeGreaterThan(25);
+    expect(beamsShift).toBeGreaterThan(15);
+    expect(Math.abs(movedRight.x - movedRight.sunbeamsX)).toBeGreaterThan(4);
+
+    // Birds flock is kept outside the sun's disc radius so it never covers the sun's face
+    const birdDistToSun = Math.hypot(
+      movedRight.birdsFlock.x - movedRight.x,
+      movedRight.birdsFlock.y - movedRight.y
+    );
+    expect(birdDistToSun).toBeGreaterThanOrEqual(movedRight.renderSizePx * 0.5 + 60);
 
     // Sun never flies off screen even after extreme camera travel
     expect(extremeRun.x).toBeGreaterThanOrEqual(72);
@@ -218,35 +232,38 @@ describe('Stage 1 Procedural Fairytale Sun Foreground Renderer', () => {
     expect(cornerState.alpha).toBeLessThanOrEqual(0.95);
   });
 
-  it('renders all 3D parallax planes and occlusion passes strictly via cached drawImage calls without per-frame Bezier or gradient allocations', () => {
+  it('renders all 6 3D parallax planes strictly via cached drawImage calls and draws raysCanvas + faceCanvas after clouds/beams/birds so nothing covers the sun', () => {
     const ctx = createMockCanvasContext(1440, 900);
-
-    // Warm up offscreen cache first
-    getSunOffscreenCanvases();
+    const buffers = getSunOffscreenCanvases();
 
     const config = createDefaultSunOverlayConfig();
     const state = createReusableSunFrameState();
 
     // 1) Exact keyframe at 150s (Noon):
-    // 2 far clouds + 1 volumetric sunbeams + 2 sun layers + 2 near occluding clouds + 1 bird flock + 3 lens flares = 11 drawImage calls
+    // 2 far clouds + 2 mid clouds + 1 volumetric sunbeams + 1 bird flock + 2 sun layers (rays + face) + 3 lens flares = 11 drawImage calls
     renderSunForegroundOverlay(ctx, 1440, 900, -720, -450, 150, 45, config, state, 'all');
     expect((ctx.bezierCurveTo as any).mock.calls.length).toBe(0);
     expect((ctx.createRadialGradient as any).mock.calls.length).toBe(0);
-    expect((ctx.drawImage as any).mock.calls.length).toBe(11);
+
+    const calls = (ctx.drawImage as any).mock.calls;
+    expect(calls.length).toBe(11);
+
+    // Verify draw order in 'sky_disc' (first 8 drawImage calls):
+    // indices 0..1 = farCloudCanvas, 2..3 = nearCloudCanvasA/B, 4 = sunbeamsCanvas, 5 = birdsCanvas, 6 = raysCanvas, 7 = faceCanvas
+    const noonPair = buffers.keyframes[3];
+    expect(calls[0][0]).toBe(buffers.farCloudCanvas);
+    expect(calls[2][0]).toBe(buffers.nearCloudCanvasA);
+    expect(calls[4][0]).toBe(buffers.sunbeamsCanvas);
+    expect(calls[5][0]).toBe(buffers.birdsCanvas);
+    expect(calls[6][0]).toBe(noonPair.raysCanvas);
+    expect(calls[7][0]).toBe(noonPair.faceCanvas);
 
     // 2) Mid-phase crossfade at 125s (between 10:00 Late Morning and 12:00 Noon):
-    // 2 far clouds + 1 sunbeams + 4 crossfaded sun layers + 2 near occluding clouds + 1 bird flock + 3 lens flares = 13 drawImage calls
+    // 2 far clouds + 2 mid clouds + 1 sunbeams + 1 bird flock + 4 crossfaded sun layers + 3 lens flares = 13 drawImage calls
     (ctx.drawImage as any).mockClear();
     renderSunForegroundOverlay(ctx, 1440, 900, -720, -450, 125, 45, config, state, 'all');
     expect((ctx.bezierCurveTo as any).mock.calls.length).toBe(0);
     expect((ctx.createRadialGradient as any).mock.calls.length).toBe(0);
     expect((ctx.drawImage as any).mock.calls.length).toBe(13);
-
-    // 3) Split 'sky_disc' (8 drawImage) + 'lens_only' (3 drawImage) passes for world occlusion
-    (ctx.drawImage as any).mockClear();
-    renderSunForegroundOverlay(ctx, 1440, 900, -720, -450, 150, 45, config, state, 'sky_disc');
-    expect((ctx.drawImage as any).mock.calls.length).toBe(8);
-    renderSunForegroundOverlay(ctx, 1440, 900, -720, -450, 150, 45, config, state, 'lens_only');
-    expect((ctx.drawImage as any).mock.calls.length).toBe(11);
   });
 });

@@ -5,6 +5,8 @@ import { drawEnemyRenderer, drawPrefixAura } from '../render/ladaRenderer';
 import { getEnemyProgress } from '../data/enemyUnlocks';
 import { KrejcarIcon } from './KrejcarIcon';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
+import { LadaCardCorners } from './LadaCardCorners';
+import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { ENEMY_PREFIX_DEFS, EnemyPrefixType } from '../types';
 
@@ -163,11 +165,14 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
   return (
     <div className="overlay" style={{ zIndex: 30 }} onClick={onClose}>
-      <div className="panel" style={{ maxWidth: '960px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
+      <div className="panel" style={{ maxWidth: '960px', width: '95%', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+        <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="book" size={24} /> Bestiář noční české vesnice
+              <LadaFolkFlower variant="cornflower" size={20} spin />
             </h2>
             <LadaBotanicalFlourish height={18} />
             <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem' }}>
@@ -384,7 +389,8 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                 })}
           </div>
 
-          <div className="bestiary-detail-card">
+          <div className="bestiary-detail-card" style={{ position: 'relative' }}>
+            <LadaCardCorners variant="default" showBottomCorners={true} />
             {selectedCategory === 'prefixes' ? (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

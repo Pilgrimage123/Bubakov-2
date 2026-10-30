@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface KrvaveJelitoIconProps {
   size?: string | number;
@@ -16,7 +17,7 @@ export const KrvaveJelitoIcon: React.FC<KrvaveJelitoIconProps> = ({
   const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 120 90"
       width={pixelSize}
@@ -297,6 +298,6 @@ export const KrvaveJelitoIcon: React.FC<KrvaveJelitoIconProps> = ({
       <g className="lada-anim-steam-2" fill="none" stroke="#FFFDF7" strokeWidth="2.0" strokeLinecap="round" opacity="0.7">
         <path d="M 68 17 C 72 12, 67 8, 71 3" />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

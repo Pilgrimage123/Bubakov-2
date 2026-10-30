@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface CzechBuchtaIconProps {
   size?: string | number;
@@ -97,7 +98,7 @@ export const CzechBuchtaIcon: React.FC<CzechBuchtaIconProps> = ({
   ...props
 }) => {
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 120 90"
       width={size}
@@ -370,6 +371,6 @@ export const CzechBuchtaIcon: React.FC<CzechBuchtaIconProps> = ({
           strokeLinecap="round"
         />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };

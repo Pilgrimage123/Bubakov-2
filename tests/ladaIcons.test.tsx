@@ -21,24 +21,24 @@ describe('Ladovské ikony a oprava zvukových / duplicitních ikon', () => {
   it('správně mapuje zvukové klíče sound_on, sound_off, music_on, music_off na ponocenský roh a notu', () => {
     // sound_on -> LadaHornIcon s popiskem "Ponocenský roh"
     const soundOnHtml = renderToStaticMarkup(<GameIcon icon="sound_on" size={16} />);
-    expect(soundOnHtml).toContain('<svg');
+    expect(soundOnHtml).toContain('<canvas');
     expect(soundOnHtml).toContain('aria-label="Ponocenský roh"');
     expect(soundOnHtml).not.toContain('stroke="#C83E31"');
 
     // sound_off -> LadaHornIcon muted s popiskem "Ztišený roh"
     const soundOffHtml = renderToStaticMarkup(<GameIcon icon="sound_off" size={16} />);
-    expect(soundOffHtml).toContain('<svg');
+    expect(soundOffHtml).toContain('<canvas');
     expect(soundOffHtml).toContain('aria-label="Ztišený roh"');
     expect(soundOffHtml).toContain('stroke="#C83E31"');
 
     // music_on -> LadaFiddleMusicIcon
     const musicOnHtml = renderToStaticMarkup(<GameIcon icon="music_on" size={16} />);
-    expect(musicOnHtml).toContain('<svg');
+    expect(musicOnHtml).toContain('<canvas');
     expect(musicOnHtml).toContain('aria-label="Hospodská nota"');
 
     // music_off -> LadaFiddleMusicIcon muted
     const musicOffHtml = renderToStaticMarkup(<GameIcon icon="music_off" size={16} />);
-    expect(musicOffHtml).toContain('<svg');
+    expect(musicOffHtml).toContain('<canvas');
     expect(musicOffHtml).toContain('aria-label="Ztišená hudba"');
     expect(musicOffHtml).toContain('stroke="#C83E31"');
   });

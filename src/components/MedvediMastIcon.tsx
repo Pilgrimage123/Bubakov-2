@@ -1,4 +1,5 @@
 import React from 'react';
+import { LadaCanvasSvg } from './LadaCanvasIcon';
 
 export interface MedvediMastIconProps {
   size?: string | number;
@@ -16,7 +17,7 @@ export const MedvediMastIcon: React.FC<MedvediMastIconProps> = ({
   const pixelSize = typeof size === 'number' ? `${size}px` : size;
 
   return (
-    <svg
+    <LadaCanvasSvg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 100 100"
       width={pixelSize}
@@ -290,6 +291,6 @@ export const MedvediMastIcon: React.FC<MedvediMastIconProps> = ({
         strokeLinecap="round"
       />
       </g>
-    </svg>
+    </LadaCanvasSvg>
   );
 };
