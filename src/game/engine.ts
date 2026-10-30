@@ -36,6 +36,7 @@ import {
   getHolyDamageMultiplier,
   getHolyPushMultiplier,
   isUnholyEnemy,
+  UNHOLY_ENEMY_IDS,
 } from '../data/holy';
 import {
   getWallDamageReduction,
@@ -134,6 +135,12 @@ import {
   resolveDubenObstacles,
   getDubenWaterEffect,
 } from '../data/dubnovyDenArena';
+import {
+  KVETEN_POIS,
+  resolveKvetenObstacles,
+  getKvetenWaterEffect,
+  isInsideKvetenPoi,
+} from '../data/kvetenArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -1030,6 +1037,48 @@ export class GameEngine {
       return leaderCrow;
     }
 
+    if (id === 'ledovi_muzi' && isBoss) {
+      const trioCount = 3;
+      let leaderBoss: any = null;
+      const roles = ['pankrac', 'servac', 'bonifac'] as const;
+      const names = [
+        'Pankrác (Ledový muž)',
+        'Servác (Ledový muž)',
+        'Bonifác (Ledový muž)',
+      ];
+      for (let i = 0; i < trioCount; i++) {
+        const angle = (i / trioCount) * Math.PI * 2;
+        const dist = 140;
+        const trioPos = sanitizeArenaSpawnPoint(
+          x + Math.cos(angle) * dist,
+          y + Math.sin(angle) * dist,
+          26,
+          levelId,
+          this.state.decor,
+          40
+        );
+        const trioTitle = names[i];
+        const enemy = this.enemyFactory
+          ? this.enemyFactory(id, trioPos.x, trioPos.y, multiplier, true, false, trioTitle, prefix)
+          : this.createHeadlessEnemy(id, trioPos.x, trioPos.y, multiplier, true, false, trioTitle, prefix);
+
+        enemy.isTrioMember = true;
+        enemy.trioRole = roles[i];
+        enemy.trioIndex = i;
+        enemy.trioTotal = trioCount;
+        enemy.customBossTitle = trioTitle;
+
+        this.state.enemies.push(enemy);
+        if (!enemy.isDefeated && !enemy.dead) {
+          this.livingEnemies.push(enemy);
+          this.spatialHash.insert(enemy);
+          this.director?.recordEnemySpawn(enemy, this.state.gameTime);
+        }
+        if (i === 0) leaderBoss = enemy;
+      }
+      return leaderBoss;
+    }
+
     const enemy = this.enemyFactory
       ? this.enemyFactory(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix)
       : this.createHeadlessEnemy(id, x, y, multiplier, isBoss, isMiniboss, customBossTitle, prefix);
@@ -1515,7 +1564,7 @@ export class GameEngine {
           if (this.panicTimer <= 0) this.panicked = false;
         }
 
-        if (this.isAttacking || (this.recoveryTimer || 0) > 0) {
+        if ((this.isAttacking || (this.recoveryTimer || 0) > 0) && this.id !== 'carodejnice_zaspalka' && this.id !== 'carodejnice_koste' && this.id !== 'ledovi_muzi') {
           this.vx = 0;
           this.vy = 0;
         } else if (player) {
@@ -1610,6 +1659,35 @@ export class GameEngine {
                 self.callbacks?.onSound?.('fuse');
               }
             }
+          } else if (this.id === 'chroust') {
+            // Erratic sine-wave buzzing flight pattern ignoring ground terrain
+            this.sinePhase = (this.sinePhase || (Math.random() * Math.PI * 2)) + dt * 6.5;
+            const sineOffset = Math.sin(this.sinePhase) * 0.95;
+            const flightDir = (this.panicked ? dir + Math.PI : dir) + sineOffset;
+            this.vx = Math.cos(flightDir) * spd * 1.08;
+            this.vy = Math.sin(flightDir) * spd * 1.08;
+            this.flightAltitude = 16 + Math.cos(this.sinePhase * 0.8) * 6;
+          } else if (this.id === 'pampeliska_chmyri' || this.id === 'pampeliska_chmyricko') {
+            // Sentient dandelion puffs drifting with ambient wind and floating harmonics
+            const isMini = this.id === 'pampeliska_chmyricko';
+            this.driftPhase = (this.driftPhase || (Math.random() * Math.PI * 2)) + dt * (isMini ? 4.2 : 2.5);
+            const gameTime = self.state.gameTime || 0;
+            const windAngle = 0.35 + Math.sin(gameTime * 0.18) * 0.3;
+            const windStrength = isMini ? 42 : 32;
+            const windVx = Math.cos(windAngle) * windStrength;
+            const windVy = Math.sin(windAngle) * windStrength;
+
+            const targetDir = this.panicked ? dir + Math.PI : dir;
+            const pursuitMult = isMini ? 1.25 : 0.75;
+            const pursuitVx = Math.cos(targetDir) * spd * pursuitMult;
+            const pursuitVy = Math.sin(targetDir) * spd * pursuitMult;
+
+            const sway = Math.sin(this.driftPhase) * (isMini ? 18 : 12);
+            const perpAngle = windAngle + Math.PI / 2;
+
+            this.vx = pursuitVx + windVx + Math.cos(perpAngle) * sway;
+            this.vy = pursuitVy + windVy + Math.sin(perpAngle) * sway;
+            this.flightAltitude = (isMini ? 12 : 18) + Math.sin(this.driftPhase) * (isMini ? 4 : 6);
           } else if (this.id === 'carodejnice_koste') {
             this.flightAltitude = 22 + Math.sin((this.animTime || 0) * 4) * 8;
             this.witchStateTimer = (typeof this.witchStateTimer === 'number' ? this.witchStateTimer : 3.0) - dt;
@@ -1661,6 +1739,188 @@ export class GameEngine {
               if (this.witchStateTimer <= 0) {
                 this.witchState = 'dive';
                 this.witchStateTimer = 2.6;
+              }
+            }
+          } else if (this.id === 'carodejnice_zaspalka') {
+            this.flightAltitude = 24 + Math.sin((this.animTime || 0) * 5) * 8;
+            this.zaspalkaTimer = (typeof this.zaspalkaTimer === 'number' ? this.zaspalkaTimer : 2.4) - dt;
+            if (!this.zaspalkaState) this.zaspalkaState = 'swoop';
+
+            if (this.zaspalkaState === 'swoop') {
+              // High-speed diagonal swoop pass across the player
+              if (this.swoopAngle === undefined) {
+                this.swoopAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              }
+              const swoopSpd = spd * 1.85;
+              this.vx = Math.cos(this.swoopAngle) * swoopSpd;
+              this.vy = Math.sin(this.swoopAngle) * swoopSpd;
+
+              // Sputter black ink smoke hazard behind flight path
+              this.smokeCooldown = (typeof this.smokeCooldown === 'number' ? this.smokeCooldown : 0.25) - dt;
+              if (this.smokeCooldown <= 0) {
+                this.smokeCooldown = 0.28;
+                const rearAngle = this.swoopAngle + Math.PI;
+                const smokeX = this.x + Math.cos(rearAngle) * 32;
+                const smokeY = this.y + Math.sin(rearAngle) * 32;
+                addEnemyHazard({
+                  id: `hazard_ink_smoke_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                  x: smokeX,
+                  y: smokeY,
+                  radius: 34,
+                  duration: 3.2,
+                  maxDuration: 3.2,
+                  type: 'soot',
+                  slowFactor: 0.70,
+                  kind: 'ink-smoke',
+                  damage: 14,
+                  sourceEnemyId: this.id,
+                });
+                tryEmitParticle(self.state.particles, () => ({
+                  x: smokeX,
+                  y: smokeY,
+                  vx: (Math.random() - 0.5) * 40,
+                  vy: (Math.random() - 0.5) * 40,
+                  life: 0.6,
+                  color: '#18181B',
+                  size: 6,
+                }), self.state.meta?.performanceProfile);
+              }
+
+              if (this.zaspalkaTimer <= 0) {
+                this.zaspalkaState = 'reposition';
+                this.zaspalkaTimer = 1.6;
+                this.swoopAngle = undefined;
+              }
+            } else {
+              // Reposition: banking hard around the perimeter to align next diagonal pass
+              const orbitDist = 320;
+              const currentAngle = Math.atan2(this.y - player.y, this.x - player.x);
+              const nextAngle = currentAngle + 2.0 * dt;
+              const targetX = player.x + Math.cos(nextAngle) * orbitDist;
+              const targetY = player.y + Math.sin(nextAngle) * orbitDist;
+
+              this.vx = (targetX - this.x) * 2.2;
+              this.vy = (targetY - this.y) * 2.2;
+
+              if (this.zaspalkaTimer <= 0) {
+                this.zaspalkaState = 'swoop';
+                this.zaspalkaTimer = 2.4;
+                const leadX = player.x + (player.vx || 0) * 0.35;
+                const leadY = player.y + (player.vy || 0) * 0.35;
+                this.swoopAngle = Math.atan2(leadY - this.y, leadX - this.x);
+                self.callbacks?.onSound?.('curse');
+              }
+            }
+          } else if (this.id === 'ledovi_muzi') {
+            const role = this.trioRole || (this.trioIndex === 1 ? 'servac' : this.trioIndex === 2 ? 'bonifac' : 'pankrac');
+            // Synchronized triad orbit around the player
+            const baseOrbit = (self.state.gameTime || 0) * 0.85;
+            const roleOffset = role === 'servac' ? (Math.PI * 2) / 3 : role === 'bonifac' ? (Math.PI * 4) / 3 : 0;
+            const orbitAngle = baseOrbit + roleOffset;
+            const targetDist = 210;
+            const targetX = player.x + Math.cos(orbitAngle) * targetDist;
+            const targetY = player.y + Math.sin(orbitAngle) * targetDist;
+            this.vx = (targetX - this.x) * 1.8;
+            this.vy = (targetY - this.y) * 1.8;
+
+            // Frost trails left as they step
+            this.frostTrailCooldown = (typeof this.frostTrailCooldown === 'number' ? this.frostTrailCooldown : 0.4) - dt;
+            if (this.frostTrailCooldown <= 0) {
+              this.frostTrailCooldown = 0.45;
+              addEnemyHazard({
+                id: `hazard_frost_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: this.x,
+                y: this.y,
+                radius: 26,
+                duration: 2.8,
+                maxDuration: 2.8,
+                type: 'frost',
+                slowFactor: 0.70,
+                kind: 'frost-trail',
+                sourceEnemyId: this.id,
+              });
+            }
+
+            // Role-specific attacks:
+            if (role === 'pankrac') {
+              this.icicleCooldown = (typeof this.icicleCooldown === 'number' ? this.icicleCooldown : 3.0) - dt;
+              if (this.icicleCooldown <= 0) {
+                this.icicleCooldown = 3.6;
+                const targetAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                const icicleCount = 5;
+                const spread = 0.22;
+                for (let k = 0; k < icicleCount; k++) {
+                  const angle = targetAngle + (k - (icicleCount - 1) / 2) * spread;
+                  const speed = 230;
+                  self.state.projectiles.push({
+                    x: this.x,
+                    y: this.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    angle,
+                    speed,
+                    dmg: 18,
+                    radius: 11,
+                    type: 'ice',
+                    visual: 'icicle',
+                    life: 2.6,
+                    maxLife: 2.6,
+                    isEnemy: true,
+                    pushback: 32,
+                    statusText: 'RAMPOUCH! ❄️',
+                    dead: false,
+                  });
+                }
+                self.callbacks?.onSound?.('freeze');
+                self.emitDamageText(this.x, this.y - 35, 'RAMPOUCHY! ❄️', '#BAE6FD', false);
+              }
+            } else if (role === 'servac') {
+              this.hailCooldown = (typeof this.hailCooldown === 'number' ? this.hailCooldown : 4.0) - dt;
+              if (this.hailCooldown <= 0) {
+                this.hailCooldown = 4.2;
+                for (let k = 0; k < 2; k++) {
+                  const offsetDist = 40 + Math.random() * 60;
+                  const offsetAng = Math.random() * Math.PI * 2;
+                  const hx = player.x + Math.cos(offsetAng) * offsetDist;
+                  const hy = player.y + Math.sin(offsetAng) * offsetDist;
+                  addEnemyHazard({
+                    id: `hazard_hail_${Math.round(self.state.gameTime * 1000)}_${k}_${Math.random().toString(36).slice(2, 7)}`,
+                    x: hx,
+                    y: hy,
+                    radius: 38,
+                    duration: 1.8,
+                    maxDuration: 1.8,
+                    type: 'frost',
+                    slowFactor: 0.65,
+                    kind: 'hail-circle',
+                    warningTimer: 1.1,
+                    damage: 26,
+                    oneShot: true,
+                    exploded: false,
+                    sourceEnemyId: this.id,
+                  });
+                }
+                self.callbacks?.onSound?.('fuse');
+                self.emitDamageText(this.x, this.y - 35, 'KRUPOBITÍ! 🌨️', '#93C5FD', false);
+              }
+            } else if (role === 'bonifac') {
+              this.freezePulseCooldown = (typeof this.freezePulseCooldown === 'number' ? this.freezePulseCooldown : 5.0) - dt;
+              if (this.freezePulseCooldown <= 0) {
+                this.freezePulseCooldown = 5.2;
+                if (self.state.drops) {
+                  for (let di = 0; di < self.state.drops.length; di++) {
+                    const d = self.state.drops[di];
+                    if (d && !d.dead && !d.isFrozen) {
+                      const dDist = Math.hypot(d.x - this.x, d.y - this.y);
+                      if (dDist <= 260) {
+                        d.isFrozen = true;
+                        d.freezeTimer = 6.0;
+                      }
+                    }
+                  }
+                }
+                self.callbacks?.onSound?.('freeze');
+                self.emitDamageText(this.x, this.y - 35, 'MRAZIVÝ DECH! 🧊', '#67E8F9', false);
               }
             }
           } else if (this.id === 'rehtackar') {
@@ -2114,6 +2374,50 @@ export class GameEngine {
           }
           this.hp = 0;
           this.isDefeated = true;
+          if (this.id === 'pampeliska_chmyri' && !this.hasSplit) {
+            this.hasSplit = true;
+            const isCleanDispersal = Boolean(
+              this.overkill ||
+              options?.isPiercing ||
+              options?.pierce ||
+              type === 'fire' ||
+              type === 'area' ||
+              type === 'explosive' ||
+              type === 'holy'
+            );
+            if (isCleanDispersal) {
+              self.emitDamageText(this.x, this.y - 25, 'ROZPRÁŠENO! 💨', '#E0F2FE', false);
+            } else {
+              self.emitDamageText(this.x, this.y - 25, 'ROZLÉTNUTÍ! 🌼', '#FEF08A', false);
+              const baseAngle = Math.atan2(this.vy || 0, this.vx || 1);
+              for (let i = 0; i < 3; i++) {
+                const spreadAngle = baseAngle + (i - 1) * (Math.PI * 0.45);
+                const spawnDist = 12;
+                const child = self.spawnMonster(
+                  'pampeliska_chmyricko',
+                  this.x + Math.cos(spreadAngle) * spawnDist,
+                  this.y + Math.sin(spreadAngle) * spawnDist,
+                  1.0
+                );
+                if (child) {
+                  child.kbx = Math.cos(spreadAngle) * 160;
+                  child.kby = Math.sin(spreadAngle) * 160;
+                }
+              }
+            }
+          }
+          if (this.id === 'carodejnice_zaspalka') {
+            if (self.director && Array.isArray(self.director.hazards)) {
+              self.director.hazards = self.director.hazards.filter(
+                (h: any) => h.sourceEnemyId !== 'carodejnice_zaspalka' && h.kind !== 'ink-smoke'
+              );
+              if (self.state.activeHazards) {
+                self.state.activeHazards = self.director.hazards;
+              }
+            }
+            self.spawnDrop('chest', this.x, this.y, { text: '🎁 POKLAD ČARODĚJNICE ZASPALKY!' });
+            self.emitDamageText(this.x, this.y - 40, 'ZASPALKA ZAŽEHÁNA! 🧹', '#F59E0B', true);
+          }
           if (this.isCarryingLootBundle && Array.isArray(this.carryingLootBundle) && this.carryingLootBundle.length > 0) {
             restoreStolenBundleDrops(this, self.state.drops, self.state.pendingDropBank);
           }
@@ -2132,22 +2436,51 @@ export class GameEngine {
           const curLvlId = self.state.activeLevelId !== undefined ? self.state.activeLevelId : 0;
           const curLvl = GAME_LEVELS[curLvlId];
           if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
-            self.state.levelVictoryTriggered = true;
-            if (self.state.meta) {
-              const nextLvlId = (curLvlId + 1) as GameLevelId;
-              const canUnlockNext = nextLvlId <= 7;
-              const nextHighest = canUnlockNext
-                ? Math.max(self.state.meta.highestLevelUnlocked || 1, nextLvlId)
-                : (self.state.meta.highestLevelUnlocked || 1);
-              self.state.meta.highestLevelUnlocked = nextHighest;
-              self.state.meta.completedLevels = {
-                ...(self.state.meta.completedLevels || {}),
-                [curLvlId]: true,
-              };
-              if (!self.state.meta.bestiaryKills) self.state.meta.bestiaryKills = {};
-              self.state.meta.bestiaryKills[this.id] = (self.state.meta.bestiaryKills[this.id] || 0) + 1;
+            let canTriggerVictory = true;
+            if (this.isTrioMember || this.id === 'ledovi_muzi') {
+              const livingTrio = self.livingEnemies.filter(
+                (e: any) => (e.isTrioMember || e.id === 'ledovi_muzi') && !e.isDefeated && !e.dead && e !== this
+              );
+              canTriggerVictory = livingTrio.length === 0;
             }
-            self.callbacks?.onVictory?.(curLvlId, 'boss');
+            if (canTriggerVictory) {
+              self.state.levelVictoryTriggered = true;
+              if (self.director && Array.isArray(self.director.hazards)) {
+                self.director.hazards = self.director.hazards.filter(
+                  (h: any) => h.sourceEnemyId !== 'ledovi_muzi' && h.type !== 'frost' && h.kind !== 'hail-circle'
+                );
+                if (self.state.activeHazards) {
+                  self.state.activeHazards = self.director.hazards;
+                }
+              }
+              if (self.state.drops) {
+                for (let di = 0; di < self.state.drops.length; di++) {
+                  const d = self.state.drops[di];
+                  if (d) {
+                    d.isFrozen = false;
+                    d.freezeTimer = 0;
+                  }
+                }
+              }
+              self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD LEDOVÝCH MUŽŮ!' });
+              self.emitDamageText(this.x, this.y - 50, 'LEDOVÍ MUŽI PŘEMOŽENI! 🌸', '#F59E0B', true);
+
+              if (self.state.meta) {
+                const nextLvlId = (curLvlId + 1) as GameLevelId;
+                const canUnlockNext = nextLvlId <= 7;
+                const nextHighest = canUnlockNext
+                  ? Math.max(self.state.meta.highestLevelUnlocked || 1, nextLvlId)
+                  : (self.state.meta.highestLevelUnlocked || 1);
+                self.state.meta.highestLevelUnlocked = nextHighest;
+                self.state.meta.completedLevels = {
+                  ...(self.state.meta.completedLevels || {}),
+                  [curLvlId]: true,
+                };
+                if (!self.state.meta.bestiaryKills) self.state.meta.bestiaryKills = {};
+                self.state.meta.bestiaryKills[this.id] = (self.state.meta.bestiaryKills[this.id] || 0) + 1;
+              }
+              self.callbacks?.onVictory?.(curLvlId, 'boss');
+            }
           }
           if (type === 'food') {
             this.defeatedByFood = true;
@@ -3576,12 +3909,16 @@ export class GameEngine {
             }
             const holyPush = p.type === 'holy' ? Math.max(0.1, 1 - getEnemyHolyResistance(e)) : 1;
             const kbMult = p.knockbackMult ?? 1;
+            const isPiercing = Boolean(p.penetrate || (typeof p.pierce === 'number' && p.pierce > 0));
             e.takeDamage(
               dmg,
               p.type,
               p.type === 'food' ? 0 : p.vx * 0.3 * holyPush * kbMult,
               p.type === 'food' ? 0 : p.vy * 0.3 * holyPush * kbMult,
-              p.stunDuration ? { stunDuration: p.stunDuration } : undefined
+              {
+                ...(p.stunDuration ? { stunDuration: p.stunDuration } : {}),
+                isPiercing,
+              }
             );
             if (p.type === 'ice') e.chill(p.chillDuration ?? 3.5);
             if (p.interruptsWindup) {
@@ -3646,6 +3983,17 @@ export class GameEngine {
       s.life -= dt;
       if (s.life <= 0) s.dead = true;
       if (s.visualOnly) continue;
+
+      if (this.state.drops) {
+        for (let di = 0; di < this.state.drops.length; di++) {
+          const d = this.state.drops[di];
+          if (d && !d.dead && d.isFrozen && Math.hypot(d.x - s.x, d.y - s.y) <= s.reach + 20) {
+            d.isFrozen = false;
+            d.freezeTimer = 0;
+            this.emitDamageText(d.x, d.y - 20, 'ROZMRAZENO! 💧', '#38BDF8', false);
+          }
+        }
+      }
 
       const nearby = this.spatialHash.queryCircle(s.x, s.y, s.reach + 72);
       for (let j = 0; j < nearby.length; j++) {
@@ -3845,7 +4193,11 @@ export class GameEngine {
         }
 
         if (typeof e.update === 'function') {
-          e.update(dt, player);
+          try {
+            e.update(dt, player);
+          } catch (err: any) {
+            console.error('ERROR IN E.UPDATE FOR:', e.id, e.trioRole, err?.message, err?.stack);
+          }
         }
 
         if (e.id === 'bludicka') {
@@ -4312,6 +4664,56 @@ export class GameEngine {
       }
     }
 
+    // Stage 5 ("KVĚTEN"): Enforce Květen v Hrusicích bounds, village obstacles, Maypole ward, Sv. Jan Nepomucký shrine, and open thawed waters
+    if (this.state.activeLevelId === 4) {
+      if (player && player.hp > 0) {
+        const waterEffect = getKvetenWaterEffect(player.x, player.y, this.state.gameTime || 0);
+        if (waterEffect.inOpenWater) {
+          player.x += waterEffect.carryVx * dt;
+          player.y += waterEffect.carryVy * dt;
+        }
+        resolveKvetenObstacles(player, false);
+        clampToMarchArenaBounds(player, 28);
+
+        // Maypole protective ward in village green (+20% defense)
+        const inVillage = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.village);
+        if (inVillage) {
+          player.defenseMultiplier = Math.max(player.defenseMultiplier || 1, 1.25);
+        }
+
+        // Sv. Jan Nepomucký shrine aura
+        const inShrine = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.shrine);
+        if (inShrine) {
+          for (let j = 0; j < this.livingEnemies.length; j++) {
+            const foe = this.livingEnemies[j];
+            if (foe.dead || foe.isDefeated) continue;
+            const dx = foe.x - KVETEN_POIS.shrine.x;
+            const dy = foe.y - KVETEN_POIS.shrine.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            if (dist < 260 + (foe.radius || 0)) {
+              foe.panicked = true;
+              foe.panicTimer = Math.max(foe.panicTimer || 0, 1.5);
+            }
+          }
+        }
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean(e.isFlying && !e.isGroundedForLoot);
+        if (!isFlying) {
+          const eWater = getKvetenWaterEffect(e.x, e.y, this.state.gameTime || 0);
+          if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+            e.x += eWater.carryVx * dt;
+            e.y += eWater.carryVy * dt;
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+          }
+        }
+        resolveKvetenObstacles(e, isFlying);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
     // Step drops
     if (this.state.drops) {
       sweepCoinsIntoBigPouches(this.state.drops, dt);
@@ -4347,10 +4749,34 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2) {
           clampToDubenArenaBounds(d, 28);
+        }
+
+        if (d.isFrozen) {
+          if (typeof d.freezeTimer === 'number' && d.freezeTimer > 0) {
+            d.freezeTimer -= dt;
+            if (d.freezeTimer <= 0) {
+              d.isFrozen = false;
+            }
+          }
+          if (player && player.hp > 0) {
+            const distToPlayer = Math.hypot(d.x - player.x, d.y - player.y);
+            if (distToPlayer <= player.radius + (d.radius || 12) + 6) {
+              if (!d.lastContactDmgTime || this.state.gameTime - d.lastContactDmgTime >= 0.8) {
+                d.lastContactDmgTime = this.state.gameTime;
+                if (typeof player.takeDamage === 'function') {
+                  player.takeDamage(8, 'ice', null, false);
+                } else {
+                  player.hp = Math.max(0, (player.hp || 0) - 8);
+                }
+                this.emitDamageText(d.x, d.y - 25, 'MRAZIVÝ STŘEP! ❄️', '#BAE6FD', true);
+              }
+            }
+          }
+          continue;
         }
 
         if (player && player.hp > 0) {
@@ -4364,7 +4790,7 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2) {
               clampToDubenArenaBounds(d, 28);

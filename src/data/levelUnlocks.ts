@@ -24,7 +24,7 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 2 && ((meta?.bestiaryKills?.morana || 0) >= 1 || !!meta?.completedLevels?.[1])) return true;
 	if (id === 3 && ((meta?.bestiaryKills?.cert || 0) >= 1 || (meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
 	if (id === 4 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
-	if (id === 5 && ((meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
+	if (id === 5 && ((meta?.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta?.bestiaryKills?.pankrac || 0) >= 1 || (meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
 	if (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
 	if (id === 7 && ((meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
 	return false;
@@ -144,9 +144,10 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "skeleton", name: "Kostlivec", icon: "💀" }
 	]),
 	5: makeSequentialUnlock(5, [
-		{ id: "obr", name: "Skalní obr ze Sázavy", icon: "🗿" },
-		{ id: "meluzina", name: "Meluzína", icon: "💨" },
-		{ id: "zmrzlik", name: "Zmrzlík", icon: "🧊" }
+		{ id: "ledovi_muzi", name: "Ledoví muži", icon: "🧊" },
+		{ id: "carodejnice_zaspalka", name: "Čarodějnice Zaspalka", icon: "🧹" },
+		{ id: "chroust", name: "Chroust obecný", icon: "🪲" },
+		{ id: "obr", name: "Skalní obr ze Sázavy", icon: "🗿" }
 	]),
 	6: makeSequentialUnlock(6, [
 		{ id: "mlynar", name: "Prokletý Mlynář", icon: "🌊" },

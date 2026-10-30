@@ -298,7 +298,7 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(-h.radius * 0.3, -h.radius * 0.1, 4, 0, Math.PI * 2);
         ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
         ctx.fill();
-      } else if (h.type === 'frost') {
+      } else if (h.type === 'frost' && h.kind !== 'hail-circle') {
         ctx.fillStyle = 'rgba(186, 230, 253, 0.22)';
         ctx.strokeStyle = 'rgba(2, 132, 199, 0.65)';
         ctx.lineWidth = 1.8;
@@ -306,6 +306,46 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+      } else if (h.kind === 'hail-circle') {
+        const isWarning = (h.warningTimer || 0) > 0;
+        const justExploded = h.exploded;
+        ctx.fillStyle = isWarning
+          ? 'rgba(186, 230, 253, 0.32)'
+          : justExploded
+          ? 'rgba(224, 242, 254, 0.85)'
+          : 'rgba(147, 197, 253, 0.45)';
+        ctx.strokeStyle = isWarning ? '#38BDF8' : justExploded ? '#FFFFFF' : '#0284C7';
+        ctx.lineWidth = isWarning ? 3.0 : 2.2;
+        if (isWarning) ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#0284C7';
+        ctx.lineWidth = 1.4;
+        for (const [hx, hy, hr] of [[-8, -6, 5], [10, -4, 6], [2, 8, 5.5], [-10, 10, 4.5]]) {
+          ctx.beginPath();
+          ctx.arc(hx, hy, hr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (h.type === 'soot' || h.kind === 'ink-smoke') {
+        ctx.fillStyle = 'rgba(24, 24, 27, 0.78)';
+        ctx.strokeStyle = 'rgba(9, 9, 11, 0.9)';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(39, 39, 42, 0.65)';
+        ctx.beginPath();
+        ctx.arc(-h.radius * 0.25, -h.radius * 0.2, h.radius * 0.55, 0, Math.PI * 2);
+        ctx.arc(h.radius * 0.3, h.radius * 0.15, h.radius * 0.45, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         const isFissure = h.kind === 'predictive-fissure';
         const isHexCircle = h.kind === 'hex-circle' || h.type === 'curse';

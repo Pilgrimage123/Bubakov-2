@@ -104,6 +104,34 @@ export function renderDrops(
     } else if (d.type === 'gingerbread_stash') {
       drawGingerbreadStash(ctx, d.x, d.y, d.time);
     }
+
+    if (d.isFrozen) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.65)';
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.9)';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      const r = (d.radius || 12) + 4;
+      ctx.moveTo(d.x, d.y - r - 3);
+      ctx.lineTo(d.x + r * 0.7, d.y - r * 0.3);
+      ctx.lineTo(d.x + r + 2, d.y + r * 0.4);
+      ctx.lineTo(d.x + r * 0.2, d.y + r + 2);
+      ctx.lineTo(d.x - r * 0.6, d.y + r * 0.7);
+      ctx.lineTo(d.x - r - 2, d.y - r * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Sharp ice spike accents
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(d.x - 2, d.y - r);
+      ctx.lineTo(d.x + 1, d.y + r * 0.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     if (isExpiring) {
       ctx.globalAlpha = 1.0;
     }

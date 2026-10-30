@@ -285,12 +285,12 @@ var TROPHIES = [
 	},
 	{
 		id: "level4_completed",
-		title: "❄️ Vládce Ladovské zimy",
-		desc: "Dokonči 5. úroveň: sraz na kolena obřího titána a osvoboď celý zasněžený kraj!",
+		title: "🌸 Májová slavnost v Hrusicích",
+		desc: "Dokonči 5. úroveň: zažeň nečekaný květnový mráz, přemož trio Ledových mužů a ochraň jarní květy!",
 		reward: 250,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.obr || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta.bestiaryKills?.pankrac || 0) >= 1 || (meta.bestiaryKills?.obr || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.obr || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[4]) || (meta.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta.bestiaryKills?.pankrac || 0) >= 1 || (meta.bestiaryKills?.obr || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},

@@ -1,3 +1,33 @@
+## 2026-10-30 — 5. Úroveň: Květen v Hrusicích – Májová slavnost (Májka, chrousti, pampeliškové chmýří, Čarodějnice Zaspalka a Ledoví muži)
+
+- **Kompletní vertikální řez 5. úrovně („Květen v Hrusicích“, `levelId: 4`) v autentickém stylu Josefa Lady**:
+  - **Definice kraje a 5minutová májová časová osa (`src/data/levels.ts`, `src/data/levelUnlocks.ts`, `src/App.tsx`, `src/data/trophies.ts`)**:
+    - Úroveň situována do rozkvetlého máje s májovou slavností a denními fázemi: prosluněné poledne (`noon` 0–150 s) a hřejivé odpoledne (`afternoon` 150–300 s).
+    - Odemkne se po porážce Vrchní Filipojakubské Čarodějnice ve 3. úrovni (*Dubnový den*). Vítězství nad Ledovými muži odemyká 6. úroveň (*Červnové louky*) a novou trofej `level4_completed` (*Přemožitel Ledových mužů*).
+  - **Májová aréna a motivy z ladovské ilustrace Květen (`src/data/kvetenArena.ts`, `src/render/kvetenSvgLandscape.ts`, `src/render/arenaRenderer.ts`, `src/App.tsx`)**:
+    - Zachována půdorysná kolizní geometrie a dominanty Stage 1 (Březen), ale převedena do májových barev a motivů z Ladova kalendária:
+      - Horní nápisová kartuše *KVĚTEN* lemovaná rozkvetlými blatouchy a máji.
+      - Centrální ozdobená májka s věncem a barevnými pentlemi na návsi.
+      - Kaplička se zaskleným obrazem sv. Jana Nepomuckého se svatozáří z hvězd.
+      - Pastvina s pasáčkem hrajícím na píšťalku a stádem ovcí na svahu.
+      - Koupající se chlapci v prohřátém potoce bez ledových ker.
+      - Kozí hájek (*„Máj, vyženeme kozy v háj“*).
+      - Postava starého hospodáře v teplém ovčím kožuchu (*„Do svatého Ducha nesvlíkej kožucha, a po svatém Duchu zůstaň zas v kožuchu“*).
+  - **Noví májoví nepřátelé (`src/data/enemies.ts`, `src/render/ladaRenderer.ts`, `src/game/engine.ts`, `src/components/gpu-animation/enemyCatalog.ts`, `src/i18n/locales/`)**:
+    - **Květnový chroust (`chroust`)**: buclatý bzučící hnědý brouk v ladovské vestičce, létající v nepravidelných sinusoidách (`sinePhase`), ignorující pozemní překážky (`flightAltitude`) a po zásahu trousíci drobná semínka zkušeností.
+    - **Pampeliškové chmýří (`pampeliska_chmyri`)**: usměvavý vznášející se chomáček semen unášený ambientním větrem mapy. Při zásahu tupou či nesekací zbraní se rozdělí na tři rychlá drobná chmýříčka (`pampeliska_chmyricko`), zatímco průrazné, plošné a ohnivé útoky jej čistě rozpráší bez dělení.
+  - **Hierarchie bossů a květnové vyvrcholení (`src/data/levels.ts`, `src/App.tsx`, `src/game/engine.ts`, `src/render/ladaRenderer.ts`, `src/render/renderDrops.ts`, `src/render/renderWorldHazards.ts`)**:
+    - **Miniboss (85 s, 60 zářezů)**: *Čarodějnice Zaspalka* (`carodejnice_zaspalka`) – zapomenutá babizna, která zaspala Filipojakubskou noc. Létá v rychlých diagonálních náletech na prskajícím březovém koštěti a za sebou dští zraňující oblaka černého inkoustového kouře (`ink-smoke`).
+    - **Finální Trio Boss (300 s, 260 zářezů)**: *Ledoví muži: Pankrác, Servác a Bonifác* (`ledovi_muzi`) – trojice zamračených vousatých kmetů v beraních kožusích synchronizovaně obíhajících hráče ve formaci:
+      - Pod nohama zanechávají mrazivé stopy (`frost-trail`), které zpomalují hráče.
+      - **Pankrác** metá 5směrné vějíře ostrých rampouchových projektilů (`icicle`).
+      - **Servác** vyvolává telegrafované dopadové kruhy krupobití (`hail-circle`).
+      - **Bonifác** mrazivým dechem obaluje XP kapky a mince do pichlavých ledových krystalů, které hráče při kontaktu zraňují, dokud nejsou roztáty úderem zbraně.
+      - Vítězství nastává až po poražení všech tří bratrů, což rozptýlí unseasonal frost, odemkne královskou truhlu a následující úroveň.
+  - **Testovací pokrytí a verifikace (`tests/`)**:
+    - Vytvořeno 6 nových ucelených testovacích sad (`level4Kveten.test.ts`, `kvetenArena.test.ts`, `chroustEnemy.test.ts`, `pampeliskaEnemy.test.ts`, `zaspalkaMiniboss.test.ts`, `ledoviMuziBoss.test.ts`).
+    - Všech 79 testovacích souborů (734 testů) prochází zeleně a `npm run build` sestavuje čistý produkční balíček.
+
 ## 2026-10-30 — Sjednocení hierarchie arén, konzistence číslování etap a dočištění odemykání 4. úrovně (ADR 0036)
 
 - **Sjednocení doménového modelu a terminologie (ADR 0036 & `GLOSSARY.md`)**:

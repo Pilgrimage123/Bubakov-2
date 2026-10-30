@@ -487,9 +487,9 @@ export class ArenaRenderer {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
           const decorExtent =
-            dec.type === 'march_mill' || dec.type === 'duben_border'
+            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border'
               ? 2600 * scale
-              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_'))
+              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_'))
               ? 480 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -507,9 +507,9 @@ export class ArenaRenderer {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent =
-          dec.type === 'march_mill' || dec.type === 'duben_border'
+          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border'
             ? 2600 * scale
-            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_'))
+            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_'))
             ? 480 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -657,16 +657,19 @@ export class ArenaRenderer {
     // 11. DAYLIGHT FOREGROUND SUN & 6-PLANE 3D PARALLAX OVERLAY PASS (CLOSEST TO CAMERA)
     // Rendered after all entities, roofs, projectiles, particles, floating combat texts, world VFX,
     // lighting, and off-screen indicators so NOTHING in the arena ever covers the sun.
-    // Supports Stage 1 (Předjaří v Hrusicích) and Stage 3 (Dubnový den).
+    // Supports Stage 1 (Předjaří v Hrusicích), Stage 3 (Dubnový den), and Stage 5 (Květen v Hrusicích).
     const isStageOneDaylight =
       (curLvl && curLvl.id === 0) ||
       (engine.activeLevelId === 0 && (!curLvl || curLvl.id === undefined || curLvl.id === 0));
     const isStageThreeDaylight =
       (curLvl && curLvl.id === 2) ||
       (engine.activeLevelId === 2 && (!curLvl || curLvl.id === undefined || curLvl.id === 2));
-    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight;
+    const isStageFiveDaylight =
+      (curLvl && curLvl.id === 4) ||
+      (engine.activeLevelId === 4 && (!curLvl || curLvl.id === undefined || curLvl.id === 4));
+    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight;
     if (isDaylightStage && !options?.skipSunInArenaPass) {
-      const sunVariant: SunVariant = isStageThreeDaylight ? 'duben' : 'march';
+      const sunVariant: SunVariant = (isStageThreeDaylight || isStageFiveDaylight) ? 'duben' : 'march';
       const tSunStart = now();
       const screenW = camera.zoom && camera.zoom !== 1 ? Math.round(width * camera.zoom) : width;
       const screenH = camera.zoom && camera.zoom !== 1 ? Math.round(height * camera.zoom) : height;

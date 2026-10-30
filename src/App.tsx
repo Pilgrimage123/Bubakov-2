@@ -241,6 +241,14 @@ import {
   drawMarchThawDynamicLandmark,
   drawDubenSpringLandmark,
 } from './render/marchThawSvgLandscape';
+import { drawKvetenMayLandmark } from './render/kvetenSvgLandscape';
+import {
+  KVETEN_POIS,
+  KVETEN_POND_REGION,
+  KVETEN_FOREST_ZONES,
+  resolveKvetenObstacles,
+  getKvetenWaterEffect,
+} from './data/kvetenArena';
 import {
   DUBEN_BELL_COOLDOWN,
   DUBEN_FOREST_ZONES,
@@ -986,6 +994,8 @@ class DecorItem {
       drawMarchThawLandmark(ctx, this.type, time, isNight);
     } else if (this.type.startsWith('duben_')) {
       drawDubenSpringLandmark(ctx, this.type, time, isNight);
+    } else if (this.type.startsWith('kveten_')) {
+      drawKvetenMayLandmark(ctx, this.type, time, isNight);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1321,6 +1331,23 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
       new DecorItem(DUBEN_POIS.shrine.x, DUBEN_POIS.shrine.y, 'duben_shrine', 1),
       ...DUBEN_FOREST_ZONES.map((fz) => new DecorItem(fz.x, fz.y, 'duben_birch_grove', 1)),
       new DecorItem(DUBEN_POIS.village.x - 45, DUBEN_POIS.village.y + 35, 'kaca', 1),
+    ];
+    return items;
+  }
+  if (level.id === 4 && (level.arena?.id === 'kvetnova_naves' || level.theme === 'spring_village')) {
+    const items: DecorItem[] = [
+      new DecorItem(0, 0, 'kveten_border', 1),
+      new DecorItem(KVETEN_POND_REGION.x, KVETEN_POND_REGION.y, 'kveten_pond', 1),
+      new DecorItem(KVETEN_POIS.fields.x, KVETEN_POIS.fields.y, 'kveten_pasture', 1),
+      new DecorItem(KVETEN_POIS.church.x, KVETEN_POIS.church.y, 'kveten_orchard', 1),
+      new DecorItem(KVETEN_POIS.tavern.x, KVETEN_POIS.tavern.y, 'kveten_tavern', 1),
+      new DecorItem(KVETEN_POIS.village.x, KVETEN_POIS.village.y, 'kveten_maypole', 1),
+      new DecorItem(KVETEN_POIS.mill.x, KVETEN_POIS.mill.y, 'kveten_brook', 1),
+      new DecorItem(KVETEN_POIS.shrine.x, KVETEN_POIS.shrine.y, 'kveten_shrine', 1),
+      new DecorItem(KVETEN_POIS.forest.x, KVETEN_POIS.forest.y, 'kveten_goat_grove', 1),
+      new DecorItem(580, 220, 'kveten_elder', 1),
+      ...KVETEN_FOREST_ZONES.map((fz) => new DecorItem(fz.x, fz.y, 'duben_birch_grove', 1)),
+      new DecorItem(KVETEN_POIS.village.x - 45, KVETEN_POIS.village.y + 35, 'kaca', 1),
     ];
     return items;
   }
@@ -5026,6 +5053,41 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.enemies.push(crowEnemy);
                   directorRef.current?.recordEnemySpawn(crowEnemy, newTime);
                 }
+              } else if (curLvl.finalBoss.id === 'ledovi_muzi') {
+                const trioCount = 3;
+                const roles = ['pankrac', 'servac', 'bonifac'] as const;
+                const names = [
+                  'Pankrác (Ledový muž)',
+                  'Servác (Ledový muž)',
+                  'Bonifác (Ledový muž)',
+                ];
+                for (let i = 0; i < trioCount; i++) {
+                  const angle = (i / trioCount) * Math.PI * 2;
+                  const dist = 140;
+                  const trioPos = sanitizeArenaSpawnPoint(
+                    spawnPos.x + Math.cos(angle) * dist,
+                    spawnPos.y + Math.sin(angle) * dist,
+                    26,
+                    engine.activeLevelId ?? 0,
+                    engine.decor,
+                    40
+                  );
+                  const trioEnemy = createEnemyInstance(
+                    curLvl.finalBoss.id,
+                    trioPos.x,
+                    trioPos.y,
+                    curLvl.finalBoss.multiplier,
+                    true,
+                    false,
+                    names[i]
+                  );
+                  (trioEnemy as any).isTrioMember = true;
+                  (trioEnemy as any).trioRole = roles[i];
+                  (trioEnemy as any).trioIndex = i;
+                  (trioEnemy as any).trioTotal = trioCount;
+                  engine.enemies.push(trioEnemy);
+                  directorRef.current?.recordEnemySpawn(trioEnemy, newTime);
+                }
               } else {
                 const safeBossPos = sanitizeArenaSpawnPoint(
                   spawnPos.x,
@@ -7553,7 +7615,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let nextBossHpPct: number | null = null;
               let nextBossTitle = '';
               if (activeBoss) {
-                if (activeBoss.isMinibossFlockMember) {
+                if (activeBoss.isTrioMember) {
+                  let totalTrioHp = 0;
+                  let totalTrioMaxHp = 0;
+                  for (let fi = 0; fi < engine.enemies.length; fi++) {
+                    const tm: any = engine.enemies[fi];
+                    if (tm.isTrioMember && !tm.isDefeated && !tm.dead) {
+                      totalTrioHp += Math.max(0, tm.hp || 0);
+                      totalTrioMaxHp += Math.max(1, tm.maxHp || 1600);
+                    }
+                  }
+                  nextBossHpPct = Math.max(0, Math.min(100, (totalTrioHp / Math.max(1, totalTrioMaxHp || 4800)) * 100));
+                  nextBossTitle = '❄️ Ledoví muži (Pankrác, Servác, Bonifác)';
+                } else if (activeBoss.isMinibossFlockMember) {
                   let totalFlockHp = 0;
                   for (let fi = 0; fi < engine.enemies.length; fi++) {
                     const fm: any = engine.enemies[fi];
@@ -12151,6 +12225,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             isHot: isFarKill,
             goldenRushTimer: isFarKill ? HOT_GINGERBREAD_DURATION : 0,
           });
+
+          if (this.id === 'chroust') {
+            spawnScatterDrop('gingerbread', {
+              value: 1,
+              radius: 9,
+              speed: 70 + Math.random() * 40,
+              text: '🌱 +XP SEMÍNKO',
+              textColor: '#84CC16',
+              size: 'small',
+            });
+          }
 
           // ADR 0013: Šance na extra krejcar podle Štěstí lovce (Štěstí * 0.05 %)
           const coinChance = Math.max(0, playerLuck) * 0.0005;

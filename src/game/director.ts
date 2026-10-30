@@ -104,7 +104,7 @@ export interface ArenaHazard {
   radius: number;
   duration: number;
   maxDuration: number;
-  type: 'mud' | 'fire' | 'frost' | 'curse';
+  type: 'mud' | 'fire' | 'frost' | 'curse' | 'soot' | 'ice';
   slowFactor: number;
   kind?: 'magma-trail' | 'predictive-fissure' | string;
   damage?: number;
@@ -1635,7 +1635,7 @@ export class RunDirector {
         continue;
       }
 
-      if (h.type === 'mud' || h.type === 'frost') {
+      if ((h.type === 'mud' || h.type === 'frost') && (!h.damage || h.damage <= 0)) {
         player.hazardSlowTimer = 0.25;
         player.hazardSlowFactor = h.slowFactor;
         continue;
@@ -1645,9 +1645,9 @@ export class RunDirector {
         continue;
       }
 
-      if ((h.type !== 'fire' && h.type !== 'curse') || !(h.damage && h.damage > 0)) continue;
+      if ((h.type !== 'fire' && h.type !== 'curse' && h.type !== 'frost' && h.type !== 'ice' && h.type !== 'soot') || !(h.damage && h.damage > 0)) continue;
 
-      const dmgType = h.type === 'curse' ? 'poison' : 'fire';
+      const dmgType = h.type === 'curse' ? 'poison' : (h.type === 'frost' || h.type === 'ice') ? 'ice' : 'fire';
 
       if (h.oneShot) {
         if (!h.exploded) {

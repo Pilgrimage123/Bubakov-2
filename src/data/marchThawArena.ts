@@ -929,7 +929,7 @@ export function collideCircleWithObstacles(
     if (dubenHit.hit) return dubenHit as ObstacleCollisionResult;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {
@@ -1165,7 +1165,7 @@ export function hasTerrainLineOfSight(
     if (!hasDubenTerrainLineOfSight(x1, y1, x2, y2)) return false;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {

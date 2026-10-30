@@ -435,123 +435,99 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	4: {
 		id: 4,
-		name: "5. Ladovská zima na Melechově",
-		shortTitle: "Ladovská zima",
-		subtitle: "Třeskutý mráz, sněžná vánice a Skalní obr ze Sázavy",
-		theme: "winter_frost",
-		season: "winter",
-		icon: "❄️",
+		name: "5. Květen v Hrusicích – Májová slavnost",
+		shortTitle: "Májová slavnost",
+		subtitle: "Rozkvetlé meze, májový deštík a Ledoví muži",
+		theme: "spring_village",
+		season: "spring",
+		icon: "🌸",
 		badge: "5. Úroveň",
-		description: "Bílé závěje přikryly chalupy, z okapů visí rampouchy a vánice skučí v komínech. Pod vrcholem Melechova se probouzí kamenný obr!",
-		lore: "Pravá Ladovská zima v plné síle! Mráz svírá pole a pekelný žár ohnivého muže taje rampouchy. Čelte větru i lavinám skalního titána!",
+		description: "Májová náves s vysokou májkou ožívá tancem a zpěvem. V potoce se koupou chlapci, na lukách znějí pastýřské píšťaly a vzduchem bzučí hejna chroustů. Do kraje však míří nečekaný chlad Ledových mužů!",
+		lore: "V máji nemá pastýřovi oschnout hůl a do svatého Ducha nesvlíkej kožucha! Užijte si kvetoucí stromy a chraňte jarní květy před námrazou a hrozbou tří Ledových mužů.",
 		unlockRequirementText: "Odemkne se po poražení Půlnočního Hejkala ve 4. úrovni",
-		skyColor: "#D8E8F5",
-		nightSkyColor: "#152238",
-		groundColor: "#EAF2F8",
-		ambientTint: "rgba(58, 118, 168, 0.15)",
-		weatherEffect: "snow",
+		skyColor: "#CBE8FA",
+		nightSkyColor: "#2A405A",
+		groundColor: "#A3D48B",
+		ambientTint: "rgba(255, 230, 160, 0.08)",
+		weatherEffect: "petals",
 		decorTypes: [
-			"snowman",
 			"cottage",
 			"tree",
-			"cross"
+			"rock",
+			"kaca"
 		],
-		miniBoss: {
-			id: "meluzina",
-			name: "💨 Větrná Meluzína z komína",
-			warning: "💨 POZOR: VÁNICE PŘINÁŠÍ MOCNOU MELUZÍNU! 💨",
-			time: 45,
-			kills: 70,
-			multiplier: 7.8
+		arena: {
+			id: "kvetnova_naves",
+			name: "Májové Hrusice",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
 		},
-		midBoss: {
-			id: "ohnivy_muz",
-			name: "🔥 Ohnivý rarach z pece",
-			warning: "🔥 POZOR: Z PECE VYLETĚL ŽHOUCÍ OHNIVÝ RARACH! 🔥",
-			time: 100,
-			kills: 150,
-			multiplier: 5.2
+		miniBoss: {
+			id: "carodejnice_zaspalka",
+			name: "🧹 Čarodějnice Zaspalka",
+			warning: "🧹 POZOR: ZAPOMENUTÁ FILIPOJAKUBSKÁ ČARODĚJNICE ZASPALKA VYRÁŽÍ DO NÁLETU! 🧹",
+			time: 85,
+			kills: 50,
+			multiplier: 3.2
 		},
 		finalBoss: {
-			id: "obr",
-			name: "🗿 Skalní obr ze Sázavy",
-			warning: "🗿 PŘICHÁZÍ LEGENDÁRNÍ BOSS: SKALNÍ OBR ZE SÁZAVY! 🗿",
-			time: 170,
-			kills: 270,
-			multiplier: 1.8
+			id: "ledovi_muzi",
+			name: "🧊 Ledoví Muži (Pankrác, Servác a Bonifác)",
+			warning: "🧊 POZOR: KVĚTNOVÝ MRÁZ! NA NÁVES PŘICHÁZEJÍ LEDOVÍ MUŽI V KOŽUŠÍCH! 🧊",
+			time: 300,
+			kills: 250,
+			multiplier: 1.15
 		},
 		spawnPools: {
 			noon: [
-				"zmrzlik",
-				"vanicka",
-				"plivnik",
-				"sazovy_rarach"
+				"chroust",
+				"pampeliska_chmyri",
+				"zaba",
+				"blatouch",
+				"mysak",
+				"sotek",
+				"vodnicek"
 			],
 			afternoon: [
-				"mrazik",
-				"meluzina",
-				"severak",
-				"zmrzlik",
-				"vanicka"
-			],
-			dusk: [
-				"meluzina",
-				"mrazik",
-				"ohnivy_muz",
-				"severak",
-				"drab"
-			],
-			night: [
-				"severak",
-				"ohnivy_muz",
-				"drab",
-				"meluzina",
-				"hromotluk"
-			],
-			midnight: [
-				"hromotluk",
-				"drab",
-				"ohnivy_muz",
-				"severak",
-				"sazovy_rarach"
+				"chroust",
+				"pampeliska_chmyri",
+				"vodnicek",
+				"hastrman",
+				"ropucha",
+				"topivec",
+				"blatouch"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "zmrzlik",
-				name: "Zmrzlík z okapu",
+				id: "chroust",
+				name: "Chroust obecný",
+				icon: "🪲",
+				role: "Bzučící hmyzí nepřítel ve vestičce se sinusovým letem"
+			},
+			{
+				id: "pampeliska_chmyri",
+				name: "Pampeliškové chmýří",
+				icon: "🌼",
+				role: "Usměvavé chmýří unášené větrem, které se při zásahu štěpí"
+			},
+			{
+				id: "carodejnice_zaspalka",
+				name: "Čarodějnice Zaspalka",
+				icon: "🧹",
+				role: "Nevyspalá čarodějnice na oštípaném březovém koštěti"
+			},
+			{
+				id: "ledovi_muzi",
+				name: "Ledoví muži",
 				icon: "🧊",
-				role: "Rampouchový diblík"
-			},
-			{
-				id: "meluzina",
-				name: "Meluzína",
-				icon: "💨",
-				role: "Větrná zimní paní"
-			},
-			{
-				id: "ohnivy_muz",
-				name: "Ohnivý rarach",
-				icon: "🔥",
-				role: "Pekelný žár"
-			},
-			{
-				id: "hromotluk",
-				name: "Hromotluk",
-				icon: "🧌",
-				role: "Hřmotný silák"
-			},
-			{
-				id: "obr",
-				name: "Skalní obr",
-				icon: "🗿",
-				role: "Legendární boss"
+				role: "Trio vousatých dědků v těžkých kožiších přinášejících náhlý květnový mráz"
 			}
 		],
 		bossMechanic: {
-			label: "Sázavské zemětřesení a balvany",
-			description: "Obr vrhá valící se balvany a drtivým úderem do země vyvolává otřesy.",
-			cadenceSeconds: 11
+			label: "🧊 Květnový mráz a trio Ledových mužů",
+			description: "Trio obíhá lovce a pokrývá jarní zem ledovou jinovatkou. Pankrác vrhá rampouchy, Servác krupobití a Bonifác zmrazuje drahokamy.",
+			cadenceSeconds: 6
 		}
 	},
 	5: {

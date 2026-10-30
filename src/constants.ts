@@ -80,8 +80,8 @@ var DAY_PHASES = [
 	}
 ];
 function getCurrentDayPhase(seconds: number, levelId?: number) {
-	if (levelId === 0 || levelId === 2) {
-		// 1. úroveň (Denní tání) a 3. úroveň (Dubnový den, 5 minut / 300 s): pouze světlé denní fáze (Poledne 0–150 s, Odpoledne 150 s+)
+	if (levelId === 0 || levelId === 2 || levelId === 4) {
+		// 1. úroveň (Denní tání), 3. úroveň (Dubnový den) a 5. úroveň (Květen v Hrusicích, 5 minut / 300 s): pouze světlé denní fáze (Poledne 0–150 s, Odpoledne 150 s+)
 		if (seconds < 150) return DAY_PHASES[0];
 		return DAY_PHASES[1];
 	}
@@ -96,6 +96,9 @@ function getCurrentDayPhase(seconds: number, levelId?: number) {
 	return DAY_PHASES[0];
 }
 var ENEMY_POINTS = {
+	pampeliska_chmyri: 12,
+	pampeliska_chmyricko: 6,
+	chroust: 16,
 	zaba: 10,
 	mysak: 14,
 	rarach: 18,
@@ -155,7 +158,9 @@ var ENEMY_POINTS = {
 	morana: 950,
 	krvavy_rarach: 62,
 	kalny_hastrman: 105,
-	cerny_vlkodlak: 110
+	cerny_vlkodlak: 110,
+	carodejnice_zaspalka: 750,
+	ledovi_muzi: 4800
 };
 var DROP_THRESHOLDS = {
 	chest: 29400,

@@ -7829,6 +7829,522 @@ var Lada = {
 
 		ctx.restore();
 	},
+	drawBroomWitchZaspalka(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false, attackInfo?: any, enemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const altitude = enemy?.flightAltitude || (24 + Math.sin(time * 5) * 8);
+		const bankTilt = Math.max(-0.45, Math.min(0.45, ((enemy?.vy || 0) * 0.002) + (Math.sin(time * 7) * 0.12)));
+
+		ctx.save();
+		ctx.translate(x, y - altitude);
+		ctx.scale(dir, 1);
+		ctx.rotate(bankTilt);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Drop shadow on ground (showing elevation)
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+		ctx.beginPath();
+		ctx.ellipse(0, altitude, 28, 12, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Dense sputtering black ink smoke clouds billowing backwards from broom tail
+		ctx.save();
+		for (let i = 0; i < 4; i++) {
+			const puffPhase = (time * 8 + i * 1.5) % 4;
+			const puffDist = 48 + puffPhase * 16;
+			const puffSpread = Math.sin(time * 9 + i * 2) * 8;
+			const puffRadius = 8 + puffPhase * 5;
+			const puffAlpha = Math.max(0.12, 0.85 - puffPhase * 0.18);
+			ctx.fillStyle = `rgba(24, 24, 27, ${puffAlpha})`;
+			ctx.strokeStyle = `rgba(9, 9, 11, ${puffAlpha * 1.1})`;
+			ctx.lineWidth = 2.0;
+			ctx.beginPath();
+			ctx.arc(-puffDist, 6 + puffSpread, puffRadius, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			// Sputtering fiery soot embers
+			if (i % 2 === 0) {
+				ctx.fillStyle = '#F97316';
+				ctx.beginPath();
+				ctx.arc(-puffDist + 2, 6 + puffSpread - 1, 2.4, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
+		ctx.restore();
+
+		// 1. Splintered birch broomstick (březové koště s bílou kůrou a černými zářezy)
+		ctx.fillStyle = '#F5F5F4';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-30, 5);
+		ctx.lineTo(30, -5);
+		ctx.stroke();
+
+		// Birch bark black lenticel markings
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 1.8;
+		for (let bi = -20; bi <= 24; bi += 8) {
+			ctx.beginPath();
+			ctx.moveTo(bi, -bi * 0.16 + 4);
+			ctx.lineTo(bi + 3, -bi * 0.16 + 2);
+			ctx.stroke();
+		}
+
+		// Birch bristles tied at the back with splintered jagged twigs
+		ctx.fillStyle = '#78350F';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-22, 3);
+		ctx.lineTo(-50, -10);
+		ctx.lineTo(-54, 18);
+		ctx.lineTo(-26, 8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Loose splintered twigs poking out wildly
+		ctx.strokeStyle = '#451A03';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-48, -6); ctx.lineTo(-60, -12);
+		ctx.moveTo(-52, 10); ctx.lineTo(-64, 16);
+		ctx.moveTo(-50, 4);  ctx.lineTo(-62, 3);
+		ctx.stroke();
+
+		// Straw binding twine
+		ctx.strokeStyle = '#FDE047';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-25, 2); ctx.lineTo(-27, 8);
+		ctx.moveTo(-22, 3); ctx.lineTo(-24, 9);
+		ctx.stroke();
+
+		// 2. Overslept Nightgown & Bed Quilt (rumpled folk nightshirt flapping backwards)
+		const windWave = Math.sin(time * 9) * 4;
+		ctx.fillStyle = '#FEF08A';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.moveTo(4, -8);
+		ctx.lineTo(-20, 2);
+		ctx.lineTo(-26 + windWave, 18);
+		ctx.quadraticCurveTo(-6, 14, 12, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Patchwork quilt / blanket wrapped around shoulders
+		ctx.fillStyle = '#0284C7';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(6, -16);
+		ctx.lineTo(-14, -6);
+		ctx.lineTo(-18 + windWave * 0.6, 6);
+		ctx.lineTo(8, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Torso & Gnarled Green Claws
+		ctx.fillStyle = '#166534';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.arc(8, -2, 4.0, 0, Math.PI * 2);
+		ctx.arc(18, -4, 3.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 4. Cranky Hag Head & Sleepy Features
+		ctx.fillStyle = '#BBF7D0';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.arc(13, -24, 10, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Long hooked crooked witch nose with hairy black wart
+		ctx.beginPath();
+		ctx.moveTo(20, -25);
+		ctx.quadraticCurveTo(31, -23, 29, -17);
+		ctx.lineTo(21, -19);
+		ctx.fillStyle = '#86EFAC';
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = '#18181B';
+		ctx.beginPath();
+		ctx.arc(26, -20, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Overslept cranky yawn/scowl with crooked snaggletooth
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(16, -17);
+		ctx.quadraticCurveTo(20, -13, 23, -17);
+		ctx.stroke();
+		ctx.fillStyle = '#FEF9C3';
+		ctx.fillRect(18, -17, 2.5, 3);
+
+		// Puffy tired dark sleep rings under eyes
+		ctx.fillStyle = 'rgba(76, 29, 149, 0.4)';
+		ctx.beginPath();
+		ctx.ellipse(18, -22, 4, 2.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Squinting angry red-veined eye
+		ctx.fillStyle = '#FEF08A';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.arc(18, -24, 3, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#DC2626';
+		ctx.beginPath();
+		ctx.arc(18.5, -24, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Disheveled gray strands of unbrushed hair
+		ctx.strokeStyle = '#94A3B8';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.moveTo(7, -22); ctx.lineTo(-6, -18);
+		ctx.moveTo(8, -27); ctx.lineTo(-5, -26);
+		ctx.moveTo(11, -31); ctx.lineTo(1, -32);
+		ctx.stroke();
+
+		// 5. Overslept Nightcap (čepec se střapcem)
+		ctx.fillStyle = '#DC2626';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(6, -30);
+		ctx.quadraticCurveTo(16, -38, 22, -30);
+		ctx.lineTo(13, -17);
+		ctx.lineTo(6, -22);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// White polka dots on nightcap
+		ctx.fillStyle = '#FFFFFF';
+		for (const [dx, dy] of [[11, -29], [17, -27], [13, -23], [9, -26]]) {
+			ctx.beginPath();
+			ctx.arc(dx, dy, 1.3, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Flapping nightcap tassel
+		const tasselSwing = Math.sin(time * 10) * 4;
+		ctx.strokeStyle = '#FEF08A';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(6, -30);
+		ctx.quadraticCurveTo(0, -36, -6 + tasselSwing, -32);
+		ctx.stroke();
+		ctx.fillStyle = '#FEF08A';
+		ctx.beginPath();
+		ctx.arc(-6 + tasselSwing, -32, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawLedoviMuzi(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false, attackInfo?: any, enemy?: any) {
+		const role = enemy?.trioRole || (enemy?.trioIndex === 1 ? 'servac' : enemy?.trioIndex === 2 ? 'bonifac' : 'pankrac');
+		const dir = vx < 0 ? -1 : 1;
+		const walkCycle = Math.sin(time * 6) * 5;
+		const bob = Math.abs(Math.sin(time * 6)) * 2;
+
+		ctx.save();
+		ctx.translate(x, y - bob);
+		ctx.scale(dir, 1);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Ground shadow
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+		ctx.beginPath();
+		ctx.ellipse(0, 24 + bob, 22, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Frost aura under feet turning ground frosty blue
+		ctx.save();
+		ctx.fillStyle = 'rgba(186, 230, 253, 0.28)';
+		ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.ellipse(0, 23 + bob, 26, 9, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 1. Heavy felt winter boots (válenky)
+		ctx.fillStyle = '#262626';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.4;
+		// Left boot
+		ctx.beginPath();
+		ctx.ellipse(-7 + walkCycle, 21, 6, 4.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Right boot
+		ctx.beginPath();
+		ctx.ellipse(7 - walkCycle, 21, 6, 4.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Heavy Sheepskin Coat (Ladovský beraní kožuch)
+		// Body silhouette of the thick suede coat
+		ctx.fillStyle = '#DFCEB3';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.moveTo(-18, -12);
+		ctx.lineTo(-22, 16);
+		ctx.quadraticCurveTo(0, 20, 22, 16);
+		ctx.lineTo(18, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Dark brown curly sheepskin fur trim along the bottom hem
+		ctx.fillStyle = '#3E2723';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-23, 14);
+		ctx.quadraticCurveTo(0, 18, 23, 14);
+		ctx.lineTo(24, 19);
+		ctx.quadraticCurveTo(0, 23, -24, 19);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Traditional folk embroidery down the center and pockets
+		const embroColor = role === 'pankrac' ? '#0284C7' : role === 'servac' ? '#15803D' : '#DC2626';
+		ctx.strokeStyle = embroColor;
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(0, -10);
+		ctx.lineTo(0, 15);
+		ctx.stroke();
+
+		// Folk spiral/floral flourishes along the coat front
+		ctx.fillStyle = embroColor;
+		for (const ey of [-4, 2, 8]) {
+			ctx.beginPath();
+			ctx.arc(-5, ey, 2.0, 0, Math.PI * 2);
+			ctx.arc(5, ey, 2.0, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Huge dark fur shawl collar around the neck and shoulders
+		ctx.fillStyle = '#3E2723';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-16, -14);
+		ctx.quadraticCurveTo(-22, -4, -14, 0);
+		ctx.lineTo(0, 4);
+		ctx.lineTo(14, 0);
+		ctx.quadraticCurveTo(22, -4, 16, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Coat sleeves with thick fur cuffs
+		ctx.fillStyle = '#DFCEB3';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.6;
+		// Left arm
+		ctx.beginPath();
+		ctx.ellipse(-15, -4, 6, 10, 0.25, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Right arm
+		ctx.beginPath();
+		ctx.ellipse(15, -4, 6, 10, -0.25, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Fur cuffs
+		ctx.fillStyle = '#3E2723';
+		ctx.beginPath();
+		ctx.ellipse(-17, 3, 5, 3.5, 0.2, 0, Math.PI * 2);
+		ctx.ellipse(17, 3, 5, 3.5, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Warm mittens (palčáky)
+		ctx.fillStyle = '#78350F';
+		ctx.beginPath();
+		ctx.arc(-18, 7, 3.5, 0, Math.PI * 2);
+		ctx.arc(18, 7, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Special prop: Pankrác holds a frost staff / walking cane
+		if (role === 'pankrac') {
+			ctx.strokeStyle = '#78350F';
+			ctx.lineWidth = 3.0;
+			ctx.beginPath();
+			ctx.moveTo(20, -18);
+			ctx.lineTo(21, 24);
+			ctx.stroke();
+			// Icicle tip on staff
+			ctx.fillStyle = '#BAE6FD';
+			ctx.strokeStyle = '#18181B';
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.moveTo(17, -18);
+			ctx.lineTo(21, -28);
+			ctx.lineTo(24, -18);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 3. Elder Head & Beard Details
+		ctx.fillStyle = '#FED7AA';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.arc(0, -18, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy folk elder cheeks
+		ctx.fillStyle = '#F87171';
+		ctx.beginPath();
+		ctx.arc(-6, -16, 2.5, 0, Math.PI * 2);
+		ctx.arc(6, -16, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Rounded Lada bulbous nose
+		ctx.fillStyle = '#FCA5A5';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.arc(0, -17, 4.0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Cranky elder eyes & bushy furrowed eyebrows
+		ctx.fillStyle = '#18181B';
+		ctx.beginPath();
+		ctx.arc(-4, -20, 1.4, 0, Math.PI * 2);
+		ctx.arc(4, -20, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.strokeStyle = '#94A3B8';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-7, -24); ctx.lineTo(-2, -22);
+		ctx.moveTo(7, -24);  ctx.lineTo(2, -22);
+		ctx.stroke();
+
+		// Role-specific distinct beards:
+		if (role === 'pankrac') {
+			// Pointed, sharp icy white beard
+			ctx.fillStyle = '#F0F9FF';
+			ctx.strokeStyle = '#18181B';
+			ctx.lineWidth = 2.6;
+			ctx.beginPath();
+			ctx.moveTo(-10, -14);
+			ctx.lineTo(-6, 2);
+			ctx.lineTo(0, 12);
+			ctx.lineTo(6, 2);
+			ctx.lineTo(10, -14);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		} else if (role === 'servac') {
+			// Broad, thick wild gray beard
+			ctx.fillStyle = '#CBD5E1';
+			ctx.strokeStyle = '#18181B';
+			ctx.lineWidth = 2.6;
+			ctx.beginPath();
+			ctx.moveTo(-11, -14);
+			ctx.quadraticCurveTo(-14, 2, -7, 10);
+			ctx.lineTo(0, 11);
+			ctx.lineTo(7, 10);
+			ctx.quadraticCurveTo(14, 2, 11, -14);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		} else {
+			// Bonifác: Long flowing wavy white beard down to his chest
+			ctx.fillStyle = '#FFFFFF';
+			ctx.strokeStyle = '#18181B';
+			ctx.lineWidth = 2.6;
+			ctx.beginPath();
+			ctx.moveTo(-11, -14);
+			ctx.quadraticCurveTo(-15, 4, -4, 16);
+			ctx.lineTo(0, 18);
+			ctx.lineTo(4, 16);
+			ctx.quadraticCurveTo(15, 4, 11, -14);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+
+			// Bonifác smokes a traditional folk pipe (dýmka)
+			ctx.strokeStyle = '#78350F';
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(3, -15);
+			ctx.lineTo(11, -11);
+			ctx.lineTo(11, -16);
+			ctx.stroke();
+			// Pipe bowl
+			ctx.fillStyle = '#451A03';
+			ctx.fillRect(9, -17, 4, 3);
+			// Smoke puff
+			const pipePuff = (time * 4) % 2;
+			ctx.fillStyle = `rgba(241, 245, 249, ${Math.max(0.2, 0.8 - pipePuff * 0.4)})`;
+			ctx.beginPath();
+			ctx.arc(11, -20 - pipePuff * 5, 2.5 + pipePuff * 2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// 4. Fur Cap (Beranice)
+		ctx.fillStyle = '#3E2723';
+		ctx.strokeStyle = '#18181B';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.ellipse(0, -27, 13, 7.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Earflaps
+		ctx.beginPath();
+		ctx.moveTo(-13, -27);
+		ctx.quadraticCurveTo(-15, -20, -11, -15);
+		ctx.lineTo(-7, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.beginPath();
+		ctx.moveTo(13, -27);
+		ctx.quadraticCurveTo(15, -20, 11, -15);
+		ctx.lineTo(7, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.restore();
+	},
 	drawRehtackar(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
 		const dir = vx < 0 ? -1 : 1;
 		const legStride = Math.sin(time * 11) * 8;
@@ -8430,6 +8946,207 @@ var Lada = {
 		ctx.beginPath();
 		ctx.arc(24.5, -31, 1.4, 0, Math.PI * 2);
 		ctx.fill();
+
+		ctx.restore();
+	},
+	drawChroust(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const flutter = Math.sin(time * 38);
+		const buzzBob = Math.cos(time * 16) * 3;
+		ctx.save();
+		ctx.translate(x, y + buzzBob);
+		ctx.scale(dir, 1);
+
+		if (panicked) {
+			this.drawPanicDrops(ctx, 4, -14, time);
+		}
+
+		// 6 jointed beetle legs dangling and pedaling
+		const legSwing = Math.sin(time * 20) * 3;
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		// Front legs
+		ctx.moveTo(4, 2); ctx.lineTo(8 + legSwing, 10);
+		// Middle legs
+		ctx.moveTo(0, 4); ctx.lineTo(1 - legSwing, 12);
+		// Back legs
+		ctx.moveTo(-6, 2); ctx.lineTo(-10 - legSwing, 12);
+		ctx.stroke();
+
+		// Plump striped abdomen (black with white/cream triangle teeth on the side)
+		ctx.fillStyle = '#1C1917';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.ellipse(-4, 0, 16, 11, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// White/cream triangular teeth on the side of abdomen
+		ctx.fillStyle = '#FEF3C7';
+		for (let i = 0; i < 4; i++) {
+			const tx = -14 + i * 5;
+			ctx.beginPath();
+			ctx.moveTo(tx, 3);
+			ctx.lineTo(tx + 2.5, 9);
+			ctx.lineTo(tx + 5, 3);
+			ctx.closePath();
+			ctx.fill();
+		}
+
+		// Vibrating transparent membranous wings under the elytras
+		ctx.save();
+		ctx.fillStyle = 'rgba(224, 242, 254, 0.55)';
+		ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
+		ctx.lineWidth = 1.2;
+		ctx.beginPath();
+		ctx.ellipse(-2, -8 + flutter * 3.5, 15, 6, -0.3 + flutter * 0.18, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Spread brown shiny wing cases (krovky)
+		ctx.fillStyle = '#78350F';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.ellipse(-5, -3, 13, 7.5, -0.22, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Thorax with tiny green folk waistcoat
+		ctx.fillStyle = '#15803D';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.ellipse(5, -1, 7.5, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Golden waistcoat buttons
+		ctx.fillStyle = '#FACC15';
+		ctx.beginPath();
+		ctx.arc(4, -3, 1.4, 0, Math.PI * 2);
+		ctx.arc(4, 1, 1.4, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Head with round beetle eyes
+		ctx.fillStyle = '#451A03';
+		ctx.beginPath();
+		ctx.arc(12, -2, 5.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Expressive eyes
+		ctx.fillStyle = panicked ? '#FEF08A' : '#FFFFFF';
+		ctx.beginPath();
+		ctx.arc(13.5, -3.5, panicked ? 2.6 : 2.0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(14, -3.5, 1.0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Fan-shaped cockchafer antennae (vějířovitá tykadla)
+		const antWave = Math.sin(time * 24) * 0.25;
+		ctx.strokeStyle = '#92400E';
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(15, -5);
+		ctx.lineTo(20, -11 + antWave * 4);
+		ctx.moveTo(19, -13 + antWave * 4);
+		ctx.lineTo(23, -8 + antWave * 4);
+		ctx.stroke();
+
+		ctx.restore();
+	},
+	drawDandelionSprite(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const flutter = Math.sin(time * 6);
+		const driftBob = Math.sin(time * 3.5) * 4;
+		const tilt = (vx !== 0 ? Math.sign(vx) * 0.12 : 0) + Math.cos(time * 2.8) * 0.08;
+
+		ctx.save();
+		ctx.translate(x, y + driftBob);
+		ctx.rotate(tilt);
+		ctx.scale(dir, 1);
+
+		if (panicked) {
+			this.drawPanicDrops(ctx, 4, -14, time);
+		}
+
+		// Thin dandelion stalk
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(-1 + flutter * 1.5, -6, 0, -12);
+		ctx.stroke();
+
+		// Radiating umbrella / pappus filaments (chmýří)
+		const rayCount = 11;
+		const rayRadius = 18;
+		ctx.strokeStyle = '#FFFBEB';
+		ctx.lineWidth = 1.4;
+		for (let i = 0; i < rayCount; i++) {
+			const angle = -Math.PI * 0.85 + (i / (rayCount - 1)) * (Math.PI * 0.7) + Math.sin(time * 4 + i) * 0.06;
+			const rx = Math.cos(angle) * rayRadius;
+			const ry = -12 + Math.sin(angle) * rayRadius;
+			ctx.beginPath();
+			ctx.moveTo(0, -12);
+			ctx.lineTo(rx, ry);
+			ctx.stroke();
+
+			// Fluffy white tuft at tip of each ray
+			ctx.fillStyle = '#FFFFFF';
+			ctx.beginPath();
+			ctx.arc(rx, ry, 2.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Tiny ink dot center on fluff tip
+			ctx.fillStyle = 'rgba(35, 23, 15, 0.4)';
+			ctx.beginPath();
+			ctx.arc(rx, ry, 0.9, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Inner cloud/fuzz volume
+		ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
+		ctx.beginPath();
+		ctx.arc(0, -18, 9, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Dandelion brown seed body at base
+		ctx.fillStyle = '#854D0E';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.ellipse(0, 5, 5, 8.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Playful smiling Ladovský folk face on the seed
+		// Rosy folk cheeks
+		ctx.fillStyle = '#F87171';
+		ctx.beginPath();
+		ctx.arc(-2.5, 6, 1.3, 0, Math.PI * 2);
+		ctx.arc(2.5, 6, 1.3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Friendly ink eyes
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(-2, 3.5, 1.1, 0, Math.PI * 2);
+		ctx.arc(2, 3.5, 1.1, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Cheerful curved smile
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 1.3;
+		ctx.lineCap = 'round';
+		ctx.beginPath();
+		ctx.arc(0, 4.8, 2.2, 0.25, Math.PI - 0.25);
+		ctx.stroke();
 
 		ctx.restore();
 	},
@@ -21094,6 +21811,10 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawBeranek: 'beranek',
   drawOldWitch: 'carodejnice_stara',
   drawSupremeWitch: 'vrchni_carodejnice',
+  drawChroust: 'chroust',
+  drawDandelionSprite: 'pampeliska_chmyri',
+  drawBroomWitchZaspalka: 'carodejnice_zaspalka',
+  drawLedoviMuzi: 'ledovi_muzi',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
