@@ -17,6 +17,12 @@ import {
   isInsideMarchPoi,
 } from '../data/marchThawArena';
 import {
+  DUBEN_POIS,
+  DUBEN_POIS_LIST,
+  getActiveDubenForestZone,
+  isInsideDubenPoi,
+} from '../data/dubnovyDenArena';
+import {
   drawMarianApparition,
   getMarianApparitionVisualState,
 } from './marchThawSvgLandscape';
@@ -145,6 +151,98 @@ export function renderWorldHazardsAndEncounters(
           ctx.roundRect(player.x - 175, player.y - 88, 350, 31, 8);
         } else {
           ctx.rect(player.x - 175, player.y - 88, 350, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = canInteractPoi ? '#5B2118' : '#472A16';
+        ctx.font = '900 12.5px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(detail, player.x, player.y - 72);
+
+        if (canInteractPoi && isInView(nearby.x, nearby.y, 140, camera)) {
+          ctx.fillStyle = '#FEF08A';
+          ctx.strokeStyle = '#1C1917';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(nearby.x - 86, nearby.y - 98, 172, 26, 8);
+          } else {
+            ctx.rect(nearby.x - 86, nearby.y - 98, 172, 26);
+          }
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#78350F';
+          ctx.font = '900 12.5px Eczar, serif';
+          ctx.fillText(interactHint, nearby.x, nearby.y - 85);
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1b. Level 2 (Stage 3: Dubnový den): Maypole ward ring, Easter bell shockwave & POI hints
+  if (engine.activeLevelId === 2 && engine.dubenDen) {
+    const duben = engine.dubenDen;
+
+    // Protective Maypole aura ring on village green when active
+    if (duben.maypoleWardActive && isInView(DUBEN_POIS.village.x, DUBEN_POIS.village.y, DUBEN_POIS.village.radius + 40, camera)) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 8]);
+      ctx.beginPath();
+      ctx.arc(DUBEN_POIS.village.x, DUBEN_POIS.village.y, DUBEN_POIS.village.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Expanding Easter bell holy wave ring at Kostel sv. Jiří
+    if ((duben.bellWaveTimer || 0) > 0 && isInView(DUBEN_POIS.church.x, DUBEN_POIS.church.y, 580, camera)) {
+      ctx.save();
+      const prog = 1 - Math.min(1, duben.bellWaveTimer / 3.5);
+      const radius = 80 + prog * 460;
+      ctx.strokeStyle = `rgba(254, 240, 138, ${Math.max(0.15, (1 - prog) * 0.85)})`;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(DUBEN_POIS.church.x, DUBEN_POIS.church.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof DUBEN_POIS_LIST)[number] | undefined;
+      for (let i = 0; i < DUBEN_POIS_LIST.length; i++) {
+        if (isInsideDubenPoi(player.x, player.y, DUBEN_POIS_LIST[i], 30)) {
+          nearbyPoi = DUBEN_POIS_LIST[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveDubenForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? DUBEN_POIS.forest : undefined);
+      if (nearby) {
+        const isGp = gamepadManager.activeDevice === 'gamepad';
+        const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
+        let detail = nearby.hint;
+        let canInteractPoi = false;
+        if (nearby.id === 'church') {
+          if ((duben.bellCooldown || 0) > 0) {
+            detail = `Velikonoční zvon se rozezní za ${Math.ceil(duben.bellCooldown)} s (+20 % zbroj a léčení)`;
+          } else {
+            detail = `${interactHint}: Velikonoční zvon ze Říma (Svatý otřes)`;
+            canInteractPoi = true;
+          }
+        }
+        ctx.save();
+        ctx.fillStyle = canInteractPoi ? 'rgba(254, 243, 199, .96)' : 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = canInteractPoi ? 2.5 : 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 195, player.y - 88, 390, 31, 8);
+        } else {
+          ctx.rect(player.x - 195, player.y - 88, 390, 31);
         }
         ctx.fill();
         ctx.stroke();

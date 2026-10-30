@@ -20,6 +20,12 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   defaultTab = 'controls',
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab);
+  const [controlsInputMode, setControlsInputMode] = useState<'touch' | 'keyboard' | 'gamepad'>(() => {
+    if (typeof window === 'undefined') return 'touch';
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 840;
+    return isTouch ? 'touch' : 'keyboard';
+  });
+
   React.useEffect(() => {
     if (isOpen) {
       const validTabs = ['controls', 'objective', 'dedecek', 'weapons', 'village'];
@@ -51,11 +57,11 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
       aria-label="Jak hrát, ovládání a cíl hry"
     >
       <div
-        className="panel"
+        className="panel controls-modal-panel"
         style={{
           maxWidth: '960px',
           width: '96%',
-          maxHeight: '90vh',
+          maxHeight: 'min(92vh, calc(100dvh - 20px))',
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -63,44 +69,46 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <LadaCardCorners variant="callout" showBottomCorners={true} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '1.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <LadaFolkFlower variant="buttercup" size={20} spin />
-              <GameIcon icon="game" size={28} /> JAK HRÁT, OVLÁDÁNÍ A CÍL HRY
+        <LadaCardCorners variant="callout" showBottomCorners={true} showInnerBorder={false} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '4px' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 style={{ margin: '0 0 2px 0', fontSize: 'clamp(1.1rem, 4vw, 1.85rem)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', lineHeight: 1.25 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <LadaFolkFlower variant="buttercup" size={20} spin />
+                <GameIcon icon="game" size={26} />
+              </span>
+              <span>JAK HRÁT, OVLÁDÁNÍ A CÍL HRY</span>
               <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
-            <LadaBotanicalFlourish height={18} />
+            <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+              <LadaBotanicalFlourish height={16} />
+            </div>
           </div>
           <button
             className="tab-btn"
             style={{
               padding: '6px 12px',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               minWidth: 'auto',
+              minHeight: '38px',
+              flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             onClick={() => {
               sound.coin();
               onClose();
             }}
             title="Zavřít okno"
+            aria-label="Zavřít okno"
           >
             <GameIcon icon="cancel" size={16} />
           </button>
         </div>
 
-        {/* Modal navigation tabs */}
-        <div
-          className="modal-tabs"
-          style={{
-            display: 'flex',
-            gap: '8px',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '14px',
-          }}
-        >
+        {/* Modal navigation tabs with horizontal scroll on mobile */}
+        <div className="modal-tabs controls-modal-tabs">
           <button
             className={`tab-btn ${activeTab === 'controls' ? 'active' : ''}`}
             onClick={() => {
@@ -169,22 +177,77 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              paddingRight: '6px',
+              paddingRight: '4px',
+              boxSizing: 'border-box',
             }}
           >
+            {/* INPUT MODE BAR (TOUCH / KEYBOARD / GAMEPAD) */}
+            <div className="controls-mode-bar">
+              <button
+                type="button"
+                className={`controls-mode-btn ${controlsInputMode === 'touch' ? 'active' : ''}`}
+                style={{
+                  background: controlsInputMode === 'touch' ? '#6D28D9' : '#FFFDF5',
+                  color: controlsInputMode === 'touch' ? '#FFFFFF' : '#4C1D95',
+                  borderColor: controlsInputMode === 'touch' ? '#4C1D95' : 'rgba(109, 40, 217, 0.4)',
+                  boxShadow: controlsInputMode === 'touch' ? '2px 2px 0 var(--ink)' : 'none',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setControlsInputMode('touch');
+                }}
+              >
+                <GameIcon icon="compass" size={16} /> 📱 Dotyk (Mobil & Tablet)
+              </button>
+              <button
+                type="button"
+                className={`controls-mode-btn ${controlsInputMode === 'keyboard' ? 'active' : ''}`}
+                style={{
+                  background: controlsInputMode === 'keyboard' ? '#1D4ED8' : '#FFFDF5',
+                  color: controlsInputMode === 'keyboard' ? '#FFFFFF' : '#1E3A8A',
+                  borderColor: controlsInputMode === 'keyboard' ? '#1E3A8A' : 'rgba(29, 78, 216, 0.4)',
+                  boxShadow: controlsInputMode === 'keyboard' ? '2px 2px 0 var(--ink)' : 'none',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setControlsInputMode('keyboard');
+                }}
+              >
+                <GameIcon icon="gamepad" size={16} /> ⌨️ Klávesnice & Myš
+              </button>
+              <button
+                type="button"
+                className={`controls-mode-btn ${controlsInputMode === 'gamepad' ? 'active' : ''}`}
+                style={{
+                  background: controlsInputMode === 'gamepad' ? '#166534' : '#FFFDF5',
+                  color: controlsInputMode === 'gamepad' ? '#FFFFFF' : '#14532D',
+                  borderColor: controlsInputMode === 'gamepad' ? '#14532D' : 'rgba(22, 101, 52, 0.4)',
+                  boxShadow: controlsInputMode === 'gamepad' ? '2px 2px 0 var(--ink)' : 'none',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  setControlsInputMode('gamepad');
+                }}
+              >
+                <GameIcon icon="game" size={16} /> 🎮 Ovladač / Gamepad
+              </button>
+            </div>
+
             {/* JAK HRÁT: BULLET HEAVEN PO ČESKU */}
             <div
               style={{
                 background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
                 border: '3px solid #B45309',
                 borderRadius: '10px',
-                padding: '14px 18px',
+                padding: '12px 16px',
                 color: '#111111',
                 boxShadow: '4px 4px 0 var(--ink)',
+                boxSizing: 'border-box',
               }}
             >
               <div
@@ -197,46 +260,409 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   marginBottom: '6px',
                 }}
               >
-                <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#78350F', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <GameIcon icon="wheat" size={22} /> Co je to Bubákov a jak hrát? (Bullet Heaven po česku)
+                <span style={{ fontSize: 'clamp(1.05rem, 3.5vw, 1.3rem)', fontWeight: 900, color: '#78350F', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <GameIcon icon="wheat" size={22} />
+                  <span>Co je to Bubákov a jak hrát? (Bullet Heaven po česku)</span>
                 </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span className="keycap keycap-accent">WASD / Šipky</span>
-                  <span className="keycap keycap-accent">Mezerník</span>
-                  <span className="keycap keycap-accent">E</span>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {controlsInputMode === 'touch' && (
+                    <>
+                      <span className="keycap keycap-accent" style={{ background: '#EDE9FE', borderColor: '#6D28D9', color: '#5B21B6', fontSize: '0.8rem', padding: '2px 8px' }}>🕹️ Joystick</span>
+                      <span className="keycap keycap-accent" style={{ background: '#FEE2E2', borderColor: '#DC2626', color: '#991B1B', fontSize: '0.8rem', padding: '2px 8px' }}>⚡ Schopnost</span>
+                      <span className="keycap keycap-accent" style={{ background: '#FEF3C7', borderColor: '#D97706', color: '#92400E', fontSize: '0.8rem', padding: '2px 8px' }}>🧺 Dotyk [E]</span>
+                    </>
+                  )}
+                  {controlsInputMode === 'keyboard' && (
+                    <>
+                      <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>WASD / Šipky</span>
+                      <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>Mezerník</span>
+                      <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>E</span>
+                    </>
+                  )}
+                  {controlsInputMode === 'gamepad' && (
+                    <>
+                      <span className="keycap keycap-accent" style={{ background: '#DCFCE7', borderColor: '#166534', color: '#14532D', fontSize: '0.82rem', padding: '2px 8px' }}>Páčka / D-Pad</span>
+                      <span className="keycap keycap-accent" style={{ background: '#DCFCE7', borderColor: '#166534', color: '#14532D', fontSize: '0.82rem', padding: '2px 8px' }}>RB / B</span>
+                      <span className="keycap keycap-accent" style={{ background: '#DCFCE7', borderColor: '#166534', color: '#14532D', fontSize: '0.82rem', padding: '2px 8px' }}>X</span>
+                    </>
+                  )}
                 </div>
               </div>
-              <p style={{ margin: '0 0 8px 0', fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.45, color: '#1F2937' }}>
-                <strong>Bubákov</strong> je hra žánru, kterému se říká <strong>bullet heaven</strong> – relativně oddychová záležitost zasazená do pohodové, skoro ladovské atmosféry imaginárního českého venkova. Vaše zbraně <strong>automaticky kosí strašidla</strong> kolem vás a vy jen šikovně uhýbáte, sbíráte kořist a odemykáte vylepšení. Na konci výpravy pak máte čirou radost z toho, jak moc vám to na všechny strany střílí a kolik stovek potvor zvládnete naráz vykosit!
+              <p style={{ margin: '0 0 8px 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.45, color: '#1F2937' }}>
+                <strong>Bubákov</strong> je hra žánru, kterému se říká <strong>bullet heaven</strong> – oddychová záležitost zasazená do pohodové, ladovské atmosféry českého venkova. Vaše zbraně <strong>automaticky kosí strašidla</strong> kolem vás a vy jen šikovně kličkujete, sbíráte perníčky a odemykáte vylepšení. Na konci výpravy pak máte čirou radost z toho, jak moc vám to na všechny strany střílí a kolik stovek potvor zvládnete naráz vykosit!
               </p>
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))',
                   gap: '8px',
                   marginTop: '6px',
                 }}
               >
                 <div style={{ background: '#FFFDF7', border: '2px solid #92400E', borderRadius: '6px', padding: '8px 10px', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.35 }}>
                   <strong style={{ color: '#B91C1C', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <GameIcon icon="lightning" size={16} /> 1. [Mezerník] Speciální zbraň:
+                    <GameIcon icon="lightning" size={16} /> 1. {controlsInputMode === 'touch' ? 'Tlačítko ⚡ Speciální schopnost:' : controlsInputMode === 'gamepad' ? '[RB / B] Speciální schopnost:' : '[Mezerník] Speciální zbraň:'}
                   </strong>
-                  Každý lovec má silnou speciální schopnost. Jakmile se dole nabije, odpálíte ji <strong>Mezerníkem</strong> (nebo <strong>[RB / B]</strong> na gamepadu).
+                  {controlsInputMode === 'touch'
+                    ? 'Každý lovec má silnou unikátní schopnost. Jakmile se v boji dole nabije (zlatá pulzující záře), odpálíte ji klepnutím na velké kruhové tlačítko s bleskem vpravo dole!'
+                    : controlsInputMode === 'gamepad'
+                    ? 'Každý lovec má silnou schopnost. Jakmile se dole nabije, odpálíte ji tlačítkem [RB] nebo [B] na ovladači.'
+                    : 'Každý lovec má silnou speciální schopnost. Jakmile se dole nabije, odpálíte ji Mezerníkem.'}
                 </div>
                 <div style={{ background: '#FFFDF7', border: '2px solid #92400E', borderRadius: '6px', padding: '8px 10px', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.35 }}>
                   <strong style={{ color: '#B45309', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <PernicekIcon size={16} /> 2. [E] Perníčky a Čertův dědeček:
+                    <PernicekIcon size={16} /> 2. {controlsInputMode === 'touch' ? 'Dotyková Nůše a Perníčky:' : controlsInputMode === 'gamepad' ? '[X] Perníčky a Čertův dědeček:' : '[E] Perníčky a Čertův dědeček:'}
                   </strong>
-                  Když nasbíráte perníčky z bubáků, přijde za vámi velký <strong>Čertův dědeček</strong>. Poblíž něj stiskněte <strong>E</strong> a vyměňte perníčky za nové zbraně a upgrady!
+                  {controlsInputMode === 'touch'
+                    ? 'Když nasbíráte perníčky z bubáků, přiběhne Čertův dědeček. Poblíž něj klepněte na velké dotykové tlačítko [OTEVŘÍT NŮŠI] a vyměňte perníčky za zbraně a dary!'
+                    : controlsInputMode === 'gamepad'
+                    ? 'Když nasbíráte perníčky, přijde Čertův dědeček. Poblíž něj stiskněte [X] na gamepadu a vyměňte perníčky za zbraně.'
+                    : 'Když nasbíráte perníčky z bubáků, přijde za vámi velký Čertův dědeček. Poblíž něj stiskněte E a vyměňte perníčky za nové zbraně a upgrady!'}
                 </div>
                 <div style={{ background: '#FFFDF7', border: '2px solid #92400E', borderRadius: '6px', padding: '8px 10px', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.35 }}>
                   <strong style={{ color: '#166534', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <GameIcon icon="compass" size={16} /> 3. [E] Interakce s krajinou:
+                    <GameIcon icon="compass" size={16} /> 3. {controlsInputMode === 'touch' ? 'Dotyk u prvků krajiny:' : controlsInputMode === 'gamepad' ? '[X] Interakce s krajinou:' : '[E] Interakce s krajinou:'}
                   </strong>
-                  V krajině jde interagovat s řadou prvků – u <strong>kostela, hospody či kapličky</strong>, s <strong>malovanými truhlami</strong> nebo <strong>folklórními předměty</strong> (poblíž stiskněte <strong>E</strong>).
+                  {controlsInputMode === 'touch'
+                    ? 'V krajině jde interagovat s řadou prvků – u kostela, hospody či kapličky, s malovanými truhlami nebo bubáckými dírami (vyskočí velké dotykové tlačítko).'
+                    : controlsInputMode === 'gamepad'
+                    ? 'V krajině můžete interagovat u kostela, hospody, kapličky či s truhlami stisknutím tlačítka [X].'
+                    : 'V krajině jde interagovat s řadou prvků – u kostela, hospody či kapličky, s malovanými truhlami nebo folklórními předměty (stiskněte E).'}
                 </div>
               </div>
             </div>
+
+            {/* DEDICATED TOUCHSCREEN GUIDE (WHEN TOUCH MODE IS ACTIVE) */}
+            {controlsInputMode === 'touch' && (
+              <>
+                {/* VISUAL TOUCH SCREEN DIAGRAM */}
+                <div
+                  style={{
+                    background: 'linear-gradient(135deg, #2A170A 0%, #170E06 100%)',
+                    border: '3px solid #D97706',
+                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    color: '#FEF3C7',
+                    boxShadow: '4px 4px 0 var(--ink)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#FDE68A', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <GameIcon icon="compass" size={22} />
+                      <span>Ladovské rozložení dotykového displeje v boji</span>
+                    </span>
+                    <span style={{ background: '#7C3AED', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 900 }}>
+                      Plná podpora mobilů a tabletů
+                    </span>
+                  </div>
+
+                  {/* Stylized Screen Representation */}
+                  <div
+                    style={{
+                      background: 'radial-gradient(ellipse at center, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                      border: '2px solid rgba(251, 191, 36, 0.4)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      margin: '8px 0',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Top bar mockup */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed rgba(254, 243, 199, 0.25)', paddingBottom: '6px' }}>
+                      <div style={{ fontSize: '0.8rem', color: '#FEF3C7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>❤️ Kuráž lovce</span> · <span>⏱️ Čas výpravy</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <span style={{ background: '#1c1917', border: '1px solid #78350F', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', color: '#FDE68A', fontWeight: 800 }}>⏸️ Pauza</span>
+                        <span style={{ background: '#1c1917', border: '1px solid #78350F', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', color: '#FDE68A', fontWeight: 800 }}>🔊 Zvuk</span>
+                      </div>
+                    </div>
+
+                    {/* Middle battle zone mockup */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '85px', position: 'relative' }}>
+                      {/* Left: Virtual Joystick */}
+                      <div
+                        style={{
+                          width: '80px',
+                          height: '80px',
+                          borderRadius: '50%',
+                          border: '2px solid rgba(168, 85, 247, 0.65)',
+                          background: 'rgba(109, 40, 217, 0.25)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 0 12px rgba(168, 85, 247, 0.3)',
+                          flexDirection: 'column',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#7C3AED', border: '2px solid #FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>
+                          🕹️
+                        </div>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 900, color: '#E9D5FF', marginTop: '2px' }}>JOYSTICK</span>
+                      </div>
+
+                      {/* Center: Context Action Button */}
+                      <div
+                        style={{
+                          padding: '6px 10px',
+                          background: 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
+                          border: '2px solid #FEF08A',
+                          borderRadius: '6px',
+                          color: '#FFFFFF',
+                          textAlign: 'center',
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          boxShadow: '0 0 10px rgba(245, 158, 11, 0.4)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                          <PernicekIcon size={14} /> <span>[E] OTEVŘÍT NŮŠI</span>
+                        </div>
+                        <div style={{ fontSize: '0.62rem', opacity: 0.9 }}>Objeví se u Dědečka a památek</div>
+                      </div>
+
+                      {/* Right: Ultimate Button */}
+                      <div
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '50%',
+                          border: '2px solid #F59E0B',
+                          background: 'radial-gradient(circle, #DC2626 0%, #991B1B 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 0 12px rgba(239, 68, 68, 0.5)',
+                          flexDirection: 'column',
+                          textAlign: 'center',
+                        }}
+                      >
+                        <GameIcon icon="lightning" size={24} />
+                        <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#FEF3C7' }}>SCHOPNOST</span>
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: '0.76rem', color: '#D6D3D1', fontStyle: 'italic', textAlign: 'center', borderTop: '1px dashed rgba(254, 243, 199, 0.25)', paddingTop: '4px' }}>
+                      Kdekoliv v levé polovině obrazovky položíte palec, joystick se vystředí pod prst pro okamžitý 360° pohyb.
+                    </div>
+                  </div>
+
+                  {/* Touch screen features cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 210px), 1fr))', gap: '8px', marginTop: '10px' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', padding: '8px 10px', fontSize: '0.84rem' }}>
+                      <strong style={{ color: '#C084FC', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                        🕹️ Plovoucí virtuální joystick:
+                      </strong>
+                      Položte palec do levé části displeje a táhněte v libovolném směru. Plynulý a citlivý pohyb pro bezpečné kličkování mezi bubáky.
+                    </div>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', padding: '8px 10px', fontSize: '0.84rem' }}>
+                      <strong style={{ color: '#FCA5A5', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                        ⚡ Akční tlačítko schopnosti:
+                      </strong>
+                      V pravém dolním rohu. Jakmile se schopnost lovce nabije, rozsvítí se a pulzuje zlatě. Klepnutím ji okamžitě odpálíte!
+                    </div>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', padding: '8px 10px', fontSize: '0.84rem' }}>
+                      <strong style={{ color: '#FDE68A', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                        🧺 Interakce u dědečka a památek:
+                      </strong>
+                      U Čertova dědečka, kostela, soudku či kapličky se na displeji objeví zřetelné tlačítko pro okamžitou interakci jedním dotykem.
+                    </div>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '6px', padding: '8px 10px', fontSize: '0.84rem' }}>
+                      <strong style={{ color: '#86EFAC', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                        🃏 Přímý výběr karet prstem:
+                      </strong>
+                      V nůši Čertova dědečka i na Křižovatce rozvoje zbraní stačí klepnout přímo na vybranou kartu. Žádné klávesy ani mačkání čísel.
+                    </div>
+                  </div>
+                </div>
+
+                {/* MOBILE ACCESSIBILITY SLIDER CARD */}
+                <div
+                  style={{
+                    background: '#F5F3FF',
+                    border: '3px solid #7C3AED',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    color: '#111111',
+                    boxShadow: '3px 3px 0 var(--ink)',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#5B21B6', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <GameIcon icon="gear" size={20} /> Mobilní usnadnění (úroveň 1–10) v Pauze a Nastavení
+                    </span>
+                    <span style={{ background: '#7C3AED', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', fontWeight: 900 }}>
+                      Doporučeno pro mobily
+                    </span>
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.92rem', lineHeight: 1.4, color: '#374151' }}>
+                    Na dotykových zařízeních je v menu pauzy i v Nastavení výpravy k dispozici posuvník <strong>Mobilní usnadnění (1–10)</strong>:
+                    <br />• <strong>Silnější magnet na perníčky a krejcary:</strong> Kořist k vám sama létá z větší dálky, takže nemusíte kličkovat do nebezpečných skrumáží.
+                    <br />• <strong>Asistence uhýbání:</strong> Zmenšuje zranitelný bod lovce před střelami bubáků a dává vám větší časovou rezervu na reakci.
+                    <br />• <strong>Hraní jednou rukou:</strong> Nastavení úrovně 6–10 je ideální pro pohodlné hraní v MHD nebo při držení mobilu jednou rukou!
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* KEYBOARD CONTROLS (WHEN KEYBOARD MODE IS ACTIVE) */}
+            {controlsInputMode === 'keyboard' && (
+              <>
+                {/* MOVEMENT */}
+                <div
+                  style={{
+                    background: 'var(--parchment)',
+                    border: '3px solid var(--ink)',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    color: '#111111',
+                    boxShadow: '3px 3px 0 var(--ink)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <GameIcon icon="boots" size={20} /> Pohyb hrdiny po venkovské krajině
+                    </span>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      <span className="keycap">W</span>
+                      <span className="keycap">A</span>
+                      <span className="keycap">S</span>
+                      <span className="keycap">D</span>
+                      <span style={{ alignSelf: 'center', fontWeight: 900, color: '#333', margin: '0 4px' }}>nebo</span>
+                      <span className="keycap">↑</span>
+                      <span className="keycap">←</span>
+                      <span className="keycap">↓</span>
+                      <span className="keycap">→</span>
+                    </div>
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
+                    Pohybujte se po ladovských loukách, zasněžených cestách i hřbitovech. Sledujte varovné nápřahy strašidel, manévrujte v širokých elipsách a sbírejte voňavé perníčky a zlaté krejcary, které po sobě zanechávají zklidnění bubáci.
+                  </p>
+                </div>
+
+                {/* DĚDEČEK INTERACTION */}
+                <div
+                  style={{
+                    background: '#FFFBEB',
+                    border: '3px solid #D97706',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    color: '#111111',
+                    boxShadow: '3px 3px 0 var(--ink)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#B45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <GameIcon icon="basket" size={20} /> Otevření nůše Čertova dědečka (Směna perníčků v terénu)
+                    </span>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span className="keycap keycap-accent">E</span>
+                      <span style={{ fontWeight: 800, color: '#92400E', fontSize: '0.9rem' }}>nebo kliknutí myší</span>
+                    </div>
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
+                    Když nasbíráte perníčky, zjeví se velký potulný Čertův dědeček a zavolá <em>„Pssst! Perníčky!“</em>. Přistupte k němu a stiskněte klávesu <strong>E</strong>, nebo klepněte na tlačítko <strong>OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a perníčky s ním vyměníte za nové zbraně a dary!
+                    V nůši můžete bleskově nakupovat klávesami <strong>[1]</strong> až <strong>[4]</strong>, přebalit nabídku klávesou <strong>[R]</strong> a nůši opustit klávesou <strong>[Esc]</strong>.
+                  </p>
+                </div>
+
+                {/* MILESTONE KEYBOARD CONTROLS */}
+                <div
+                  style={{
+                    background: '#F0FDF4',
+                    border: '3px solid #166534',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    color: '#111111',
+                    boxShadow: '3px 3px 0 var(--ink)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      <GameIcon icon="sparkles" size={20} /> Blesková volba milníků zbraní v boji
+                    </span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <span className="keycap keycap-accent">1</span>
+                      <span style={{ alignSelf: 'center', fontWeight: 900, color: '#166534' }}>a</span>
+                      <span className="keycap keycap-accent">2</span>
+                    </div>
+                  </div>
+                  <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
+                    Při dosažení <strong>3., 5. a 8. úrovně zbraně</strong> se otevře Křižovatka rozvoje zbraně s výběrem ze dvou unikátních folklórních větví. Nemusíte sundávat ruku z klávesnice – stiskněte <strong>[1]</strong> pro první větev nebo <strong>[2]</strong> pro druhou větev a okamžitě pokračujete v boji!
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* GAMEPAD CONTROLS (WHEN GAMEPAD MODE IS ACTIVE) */}
+            {controlsInputMode === 'gamepad' && (
+              <div
+                style={{
+                  background: '#EFF6FF',
+                  border: '3px solid #1D4ED8',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  color: '#111111',
+                  boxShadow: '3px 3px 0 var(--ink)',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1E40AF', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <GameIcon icon="gamepad" size={20} /> Plná podpora Gamepadu & Celá obrazovka
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span className="keycap keycap-accent">Gamepad</span>
+                    <span className="keycap">F (Fullscreen)</span>
+                  </div>
+                </div>
+                <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.4 }}>
+                  Hra automaticky rozpozná připojený ovladač (Xbox, PlayStation, Switch Pro) a dynamicky přizpůsobí nápovědy tlačítek v rozhraní:
+                  <br />• <strong>Pohyb:</strong> Levá analogová páčka nebo <strong>D-Pad</strong>.
+                  <br />• <strong>Speciální zbraň (schopnost lovce):</strong> Tlačítko <strong>[RB]</strong> nebo <strong>[B]</strong> na gamepadu.
+                  <br />• <strong>Interakce s okolím (Čertův dědeček, Truhla, Zvonice, Kaplička, Soudek):</strong> Tlačítko <strong>[X]</strong> na gamepadu.
+                  <br />• <strong>Výběr vylepšení v menu:</strong> <strong>D-Pad / Levá páčka</strong> přepíná karty, <strong>[A]</strong> potvrdí výběr.
+                  <br />• <strong>Pauza a Celá obrazovka:</strong> <strong>[Start]</strong> přepíná pauzu, klávesa <strong>[F]</strong> přepíná celou obrazovku.
+                </p>
+              </div>
+            )}
 
             {/* LANDSCAPE INTERACTION CARD */}
             <div
@@ -247,6 +673,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 padding: '12px 16px',
                 color: '#111111',
                 boxShadow: '3px 3px 0 var(--ink)',
+                boxSizing: 'border-box',
               }}
             >
               <div
@@ -258,58 +685,22 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                   <GameIcon icon="map" size={20} /> Interakce s prvky krajiny a pamětihodnostmi v terénu
                 </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span className="keycap keycap-accent">E</span>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>Dotyk</span>
                   <span style={{ fontWeight: 900, color: '#166534', fontSize: '0.9rem' }}>/</span>
-                  <span className="keycap">X (Gamepad)</span>
+                  <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>E</span>
+                  <span style={{ fontWeight: 900, color: '#166534', fontSize: '0.9rem' }}>/</span>
+                  <span className="keycap" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>X (Gamepad)</span>
                 </div>
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.92rem', lineHeight: 1.4 }}>
-                Ladovský venkov kolem vás žije a reaguje na každý váš krok! Když se přiblížíte k aktivnímu prvku, objeví se u něj výzva pro stisk <strong>[E]</strong> (nebo <strong>[X]</strong> na ovladači):
-                <br />• <strong>Pamětihodnosti na mapě [E]:</strong> Zazvoňte na <strong>zvonici u kostela</strong> (svatý otřes, léčení a +20 % zbroj), narazte <strong>pivní soudek u hospody</strong> (omráčí dav + 18 % útok) nebo se zastavte u <strong>kapličky na rozcestí</strong> (zjevení rozhání bubáky + 20 % kadence).
-                <br />• <strong>Poklady, pomocníci a anomálie [E]:</strong> Otevírejte <strong>malované truhly</strong> s venkovským výherním automatem, aktivujte <strong>vzácné folklórní předměty</strong> (Švandovy dudy, Ponocného trouba, Hlt slivovice...), osvobozujte obklíčené <strong>chasníky</strong> a stáním v kruhu zapečeťujte <strong>Bubácké díry</strong>.
+                Ladovský venkov kolem vás žije a reaguje na každý váš krok! Když se přiblížíte k aktivnímu prvku, objeví se u něj dotykové tlačítko (nebo výzva pro <strong>[E] / [X]</strong>):
+                <br />• <strong>Pamětihodnosti na mapě:</strong> Zazvoňte na <strong>zvonici u kostela</strong> (svatý otřes, léčení a +20 % zbroj), narazte <strong>pivní soudek u hospody</strong> (omráčí dav + 18 % útok) nebo se zastavte u <strong>kapličky na rozcestí</strong> (zjevení rozhání bubáky + 20 % kadence).
+                <br />• <strong>Poklady, pomocníci a anomálie:</strong> Otevírejte <strong>malované truhly</strong> s venkovským výherním automatem, aktivujte <strong>vzácné folklórní předměty</strong> (Švandovy dudy, Ponocného trouba, Hlt slivovice...), osvobozujte obklíčené <strong>chasníky</strong> a stáním v kruhu zapečeťujte <strong>Bubácké díry</strong>.
                 <br />• <strong>Vliv terénu:</strong> Zorané brázdy na <strong>poli</strong> zrychlují krok (+15 %, pozor na pluh!), <strong>plovoucí ledové kry</strong> na řece zrychlují (+20 %) zatímco hluboká voda mrazí, u <strong>mlýna</strong> kolo drtí v náhonu a moučný prach oslepuje běsy, a <strong>čtyři husté lesy</strong> v rozích poskytují krytí stromů (+15 % obrana i útok).
-              </p>
-            </div>
-
-            {/* GAMEPAD & FULLSCREEN */}
-            <div
-              style={{
-                background: '#EFF6FF',
-                border: '3px solid #1D4ED8',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                color: '#111111',
-                boxShadow: '3px 3px 0 var(--ink)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#1E40AF', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <GameIcon icon="gamepad" size={20} /> Plná podpora Gamepadu & Celá obrazovka
-                </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span className="keycap keycap-accent">Gamepad</span>
-                  <span className="keycap">F (Fullscreen)</span>
-                </div>
-              </div>
-              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.4 }}>
-                Hra automaticky rozpozná připojený ovladač (Xbox, PlayStation, Switch Pro) a dynamicky přizpůsobí nápovědy tlačítek v rozhraní:
-                <br />• <strong>Pohyb:</strong> Levá analogová páčka (s mrtvou zónou 0.15) nebo <strong>D-Pad</strong> (kombinovaný s <strong>WASD / šipkami</strong>).
-                <br />• <strong>Speciální zbraň (schopnost lovce):</strong> Tlačítko <strong>[RB]</strong> nebo <strong>[B]</strong> na gamepadu / <strong>[Mezerník]</strong> na klávesnici.
-                <br />• <strong>Interakce s okolím (Čertův dědeček, Truhla, Zvonice, Kaplička, Soudek):</strong> Tlačítko <strong>[X]</strong> na gamepadu / <strong>[E]</strong> na klávesnici.
-                <br />• <strong>Výběr vylepšení v menu:</strong> <strong>D-Pad / Levá páčka / A-D / Šipky</strong> přepíná karty, <strong>[A]</strong> nebo <strong>[Enter / Mezerník]</strong> potvrdí výběr.
-                <br />• <strong>Pauza a Celá obrazovka:</strong> <strong>[Start]</strong> / <strong>[Esc / P]</strong> přepíná pauzu, klávesa <strong>[F]</strong> přepíná režim celé obrazovky (Fullscreen).
               </p>
             </div>
 
@@ -322,6 +713,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 padding: '12px 16px',
                 color: '#111111',
                 boxShadow: '3px 3px 0 var(--ink)',
+                boxSizing: 'border-box',
               }}
             >
               <div
@@ -333,95 +725,25 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#92400E' }}>
+                <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#92400E' }}>
                   ⏸️ Pauza a odpočinek u milníku kdykoliv během hry
                 </span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <span className="keycap keycap-accent">P</span>
-                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#78350F' }}>nebo</span>
-                  <span className="keycap">Esc</span>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>Tlačítko ⏸️</span>
                   <span style={{ alignSelf: 'center', fontWeight: 900, color: '#78350F' }}>/</span>
-                  <span className="keycap">Start</span>
+                  <span className="keycap" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>P / Esc</span>
+                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#78350F' }}>/</span>
+                  <span className="keycap" style={{ fontSize: '0.82rem', padding: '2px 8px' }}>Start</span>
                 </div>
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Stisknutím klávesy <strong>P</strong>, <strong>Esc</strong> nebo tlačítka <strong>Start</strong> na gamepadu okamžitě <strong>pozastavíte celou hru</strong>.
+                Klepnutím na tlačítko <strong>⏸️ v horní liště</strong> (nebo stisknutím klávesy <strong>P</strong>, <strong>Esc</strong> či <strong>Start</strong> na gamepadu) okamžitě <strong>pozastavíte celou hru</strong>.
                 Při pauze si můžete v klidu prohlédnout svůj arzenál, úroveň zbraní, zbývající Kuráž a získané krejcary,
-                upravit nastavení plynulosti či zvuku, nebo výpravu bezpečně ukončit a odnést kořist do hospody.
+                nastavit Mobilní usnadnění, zvuk či výkon, nebo výpravu bezpečně ukončit a odnést kořist do hospody.
               </p>
             </div>
 
-            {/* DĚDEČEK INTERACTION */}
-            <div
-              style={{
-                background: '#FFFBEB',
-                border: '3px solid #D97706',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                color: '#111111',
-                boxShadow: '3px 3px 0 var(--ink)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#B45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <GameIcon icon="basket" size={20} /> Otevření nůše Čertova dědečka (Směna perníčků v terénu)
-                </span>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span className="keycap keycap-accent">E</span>
-                  <span style={{ fontWeight: 800, color: '#92400E', fontSize: '0.9rem' }}>nebo kliknutí myší</span>
-                </div>
-              </div>
-              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Když nasbíráte perníčky, zjeví se velký potulný Čertův dědeček a zavolá <em>„Pssst! Perníčky!“</em>. Přistupte k němu a stiskněte klávesu <strong>E</strong>,
-                nebo klepněte na tlačítko <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><GameIcon icon="basket" size={16} /> OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a perníčky s ním vyměníte za nové zbraně, jejich vylepšení i pasivní dary!
-                Přímo v nůši můžete bleskově nakupovat klávesami <strong>[1]</strong> až <strong>[4]</strong>, přebalit nabídku klávesou <strong>[R]</strong> a nůši opustit klávesou <strong>[Esc]</strong>.
-              </p>
-            </div>
-
-            {/* MILESTONE KEYBOARD CONTROLS */}
-            <div
-              style={{
-                background: '#F0FDF4',
-                border: '3px solid #166534',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                color: '#111111',
-                boxShadow: '3px 3px 0 var(--ink)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '1.22rem', fontWeight: 900, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <GameIcon icon="sparkles" size={20} /> Blesková volba milníků zbraní v boji
-                </span>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <span className="keycap keycap-accent">1</span>
-                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#166534' }}>a</span>
-                  <span className="keycap keycap-accent">2</span>
-                </div>
-              </div>
-              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Při dosažení <strong>3., 5. a 8. úrovně zbraně</strong> se otevře Křižovatka rozvoje zbraně s výběrem ze dvou unikátních folklórních větví (Plošná větev vs. Razantní větev).
-                Nemusíte sundávat ruku z klávesnice – stiskněte <strong>[1]</strong> pro první větev nebo <strong>[2]</strong> pro druhou větev a okamžitě pokračujete v boji!
-              </p>
-            </div>
-
-            {/* MOVEMENT */}
+            {/* ULTIMATE ABILITY & 7 HUNTERS */}
             <div
               style={{
                 background: 'var(--parchment)',
@@ -430,6 +752,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 padding: '12px 16px',
                 color: '#111111',
                 boxShadow: '3px 3px 0 var(--ink)',
+                boxSizing: 'border-box',
               }}
             >
               <div
@@ -441,54 +764,15 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <GameIcon icon="boots" size={20} /> Pohyb hrdiny po venkovské krajině
-                </span>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <span className="keycap">W</span>
-                  <span className="keycap">A</span>
-                  <span className="keycap">S</span>
-                  <span className="keycap">D</span>
-                  <span style={{ alignSelf: 'center', fontWeight: 900, color: '#333', margin: '0 4px' }}>nebo</span>
-                  <span className="keycap">↑</span>
-                  <span className="keycap">←</span>
-                  <span className="keycap">↓</span>
-                  <span className="keycap">→</span>
-                </div>
-              </div>
-              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Pohybujte se po ladovských loukách, zasněžených cestách i hřbitovech. Sledujte varovné nápřahy strašidel,
-                manévrujte v širokých elipsách a sbírejte voňavé perníčky a zlaté krejcary, které po sobě zanechávají zklidnění bubáci.
-              </p>
-            </div>
-
-            {/* ULTIMATE ABILITY */}
-            <div
-              style={{
-                background: 'var(--parchment)',
-                border: '3px solid var(--ink)',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                color: '#111111',
-                boxShadow: '3px 3px 0 var(--ink)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px',
-                }}
-              >
-                <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#B91C1C', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <GameIcon icon="lightning" size={20} /> Speciální zbraň a schopnost lovce (Ultimátum)
                 </span>
-                <span className="keycap keycap-wide">Mezerník (Space)</span>
+                <span className="keycap keycap-accent" style={{ fontSize: '0.82rem', padding: '2px 10px' }}>
+                  {controlsInputMode === 'touch' ? 'Tlačítko ⚡ blesku' : controlsInputMode === 'gamepad' ? 'Tlačítko [RB / B]' : 'Mezerník (Space)'}
+                </span>
               </div>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Každý ze 7 venkovských lovců má jedinečnou speciální schopnost, která se postupně nabíjí (při plném nabití se rozzáří ukazatel dole na obrazovce):
+                Každý ze 7 venkovských lovců má jedinečnou speciální schopnost, která se postupně nabíjí (při plném nabití se rozzáří ukazatel a tlačítko):
               </p>
               <ul
                 style={{
@@ -532,36 +816,16 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 padding: '12px 16px',
                 color: '#111111',
                 boxShadow: '3px 3px 0 var(--ink)',
+                boxSizing: 'border-box',
               }}
             >
-              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '1.18rem', fontWeight: 900, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <GameIcon icon="sword" size={20} /> Automatická střelba a radost z kosení hord (Bullet Heaven)
               </span>
               <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
                 Všech 18 venkovských zbraní (Osikový prut, Válečnice, Česneková topinka, Kyselá okurka, Povidlové buchty, Formanský bič, Splašený houser, Svěcená kropenka...)
-                <strong> útočí na nepřátele zcela automaticky</strong>! Nemusíte mířit myší – vy jen kličkujete mezi strašidly,
+                <strong> útočí na nepřátele zcela automaticky</strong>! Nemusíte ručně mířit – vy jen kličkujete mezi strašidly,
                 sbíráte perníčky, rozvíjíte zbraně u Čertova dědečka a užíváte si pohled na to, jak vaše výbava čistí celou louku.
-              </p>
-            </div>
-
-            {/* TOUCH CONTROLS */}
-            <div
-              style={{
-                background: 'var(--parchment)',
-                border: '3px solid var(--ink)',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                color: '#111111',
-                boxShadow: '3px 3px 0 var(--ink)',
-              }}
-            >
-              <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#6D28D9', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <GameIcon icon="compass" size={20} /> Dotykové ovládání a Mobilní usnadnění (Mobily a tablety)
-              </span>
-              <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                Na dotykových zařízeních se automaticky zobrazuje <strong>virtuální joystick</strong> v levém dolním rohu pro plynulý pohyb
-                a akční tlačítko pro spuštění speciální schopnosti <GameIcon icon="lightning" size={14} style={{ display: 'inline-block', verticalAlign: 'middle', margin: '0 2px' }} /> vpravo dole. V blízkosti Čertova dědečka či interaktivního prvku se objeví velké tlačítko pro okamžitou interakci.
-                V menu pauzy si navíc můžete zapnout <strong>Mobilní usnadnění (1–10)</strong> i na počítači!
               </p>
             </div>
           </div>
@@ -574,11 +838,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              paddingRight: '6px',
+              paddingRight: '4px',
+              boxSizing: 'border-box',
             }}
           >
             {/* MAIN GOAL */}
@@ -854,11 +1120,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              paddingRight: '6px',
+              paddingRight: '4px',
+              boxSizing: 'border-box',
             }}
           >
             {/* HERO CARD FOR DĚDEČEK */}
@@ -1017,11 +1285,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              paddingRight: '6px',
+              paddingRight: '4px',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -1433,11 +1703,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               flex: 1,
               minHeight: 0,
               overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
               textAlign: 'left',
               display: 'flex',
               flexDirection: 'column',
               gap: '12px',
-              paddingRight: '6px',
+              paddingRight: '4px',
+              boxSizing: 'border-box',
             }}
           >
             <div

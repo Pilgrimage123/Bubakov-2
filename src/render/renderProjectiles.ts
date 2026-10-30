@@ -310,10 +310,34 @@ export function renderProjectilesAndSlashes(
         Lada.drawDragonFrostball(ctx, 0, 0, p.radius || 16, uiTime);
       } else if (p.visual === 'dragon_wind') {
         Lada.drawDragonWind(ctx, 0, 0, p.radius || 22, p.angle || 0, uiTime);
-      } else {
-        Lada.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
+      } else if (p.visual === 'witch_venom') {
+        const r = p.radius || 9;
+        Lada.setupPath(ctx, '#CA8A04', COLORS.ink, 2.5);
         ctx.beginPath();
-        ctx.ellipse(0, 0, 7, 5, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, r * 1.15, r * 0.85, p.angle || 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#FEF08A';
+        ctx.beginPath();
+        ctx.arc(-r * 0.2, -r * 0.15, r * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.visual === 'witch_fireball') {
+        const r = p.radius || 11;
+        const pulse = 1 + Math.sin(uiTime * 14) * 0.12;
+        Lada.setupPath(ctx, '#9333EA', COLORS.ink, 2.5);
+        ctx.beginPath();
+        ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#F43F5E';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.55 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const r = p.radius || 7;
+        Lada.setupPath(ctx, p.color || COLORS.grey, COLORS.ink, 2);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r, Math.max(5, r * 0.72), p.angle || 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
       }

@@ -55,6 +55,12 @@ const CORNER_ANIM_STYLES = `
       animation: none !important;
     }
   }
+  @media (max-width: 640px) {
+    .lada-card-decor-wrap svg {
+      transform: scale(0.72);
+      transform-origin: center;
+    }
+  }
 `;
 
 /**

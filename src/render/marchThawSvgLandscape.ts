@@ -1677,6 +1677,103 @@ export function drawMarchRoofOverlay(
     return;
   }
 
+  if (zoneId === 'church_roof') {
+    ctx.save();
+    ctx.translate(-800, -650);
+    ctx.strokeStyle = ink;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 3.6;
+
+    // St. George nave red roof
+    ctx.fillStyle = '#C84B31';
+    ctx.beginPath();
+    ctx.moveTo(-112, -32);
+    ctx.lineTo(-92, -108);
+    ctx.lineTo(92, -108);
+    ctx.lineTo(112, -32);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Western bell tower upper masonry & onion spire
+    ctx.fillStyle = '#FBF5E6';
+    ctx.beginPath();
+    ctx.rect(-132, -135, 84, 72);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#2B2623';
+    ctx.beginPath();
+    ctx.arc(-90, -104, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#B93822';
+    ctx.beginPath();
+    ctx.moveTo(-140, -135);
+    ctx.lineTo(-90, -196);
+    ctx.lineTo(-40, -135);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#EAB308';
+    ctx.lineWidth = 3.4;
+    ctx.beginPath();
+    ctx.moveTo(-90, -196);
+    ctx.lineTo(-90, -222);
+    ctx.moveTo(-102, -210);
+    ctx.lineTo(-78, -210);
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (zoneId === 'tavern_roof' || zoneId === 'cottage_roof' || zoneId === 'mill_roof') {
+    const cfg =
+      zoneId === 'tavern_roof'
+        ? { cx: 440, cy: -75, hw: 98, hh: 65, roofH: 64, roofColor: '#9E3D29', gableColor: '#6D4226' }
+        : zoneId === 'cottage_roof'
+        ? { cx: -65, cy: -230, hw: 82, hh: 56, roofH: 58, roofColor: '#B84A32', gableColor: '#78492A' }
+        : { cx: 650, cy: 725, hw: 84, hh: 60, roofH: 60, roofColor: '#7A492E', gableColor: '#5B341E' };
+    ctx.save();
+    ctx.translate(cfg.cx, cfg.cy);
+    ctx.strokeStyle = ink;
+    ctx.lineJoin = 'round';
+
+    ctx.fillStyle = '#EDE0C8';
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.rect(cfg.hw * 0.3, -cfg.hh - cfg.roofH + 4, 20, 30);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = cfg.roofColor;
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    ctx.moveTo(-cfg.hw - 14, -cfg.hh + 4);
+    ctx.lineTo(-cfg.hw * 0.45, -cfg.hh - cfg.roofH);
+    ctx.lineTo(cfg.hw * 0.55, -cfg.hh - cfg.roofH);
+    ctx.lineTo(cfg.hw + 14, -cfg.hh + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = cfg.gableColor;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(-cfg.hw - 8, -cfg.hh + 4);
+    ctx.lineTo(-cfg.hw * 0.45, -cfg.hh - cfg.roofH);
+    ctx.lineTo(0, -cfg.hh + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
   // Fallback for procedural chalupa / church decor on later stages
   if (decorItem) {
     const s = decorItem.scale || 1;
@@ -1708,6 +1805,644 @@ export function drawMarchRoofOverlay(
     }
     ctx.restore();
   }
+}
+
+/**
+ * Renders Stage 3 ("3. Duben v Hrusicích – Dubnový den") spring village landmarks,
+ * matching the exact collision geometry in `DUBEN_OBSTACLES`, `DUBEN_POIS`, `DUBEN_POND_REGION`,
+ * and `DUBEN_FOREST_ZONES` in authentic Josef Lada ink-and-gouache style.
+ */
+export function drawDubenSpringLandmark(
+  ctx: CanvasRenderingContext2D,
+  type: string,
+  time = 0,
+  isNight = false
+): void {
+  const ink = '#23170F';
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  if (type === 'duben_border') {
+    // Ornate April village boundary fence & spring meadow border around [-1920..1920, -1675..1675]
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 6;
+    ctx.strokeRect(-1920, -1675, 3840, 3350);
+    ctx.strokeStyle = '#65A30D';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(-1930, -1685, 3860, 3370);
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_pond') {
+    // Vyhřátý rybník Brčálník at (-725, 615) with rx=280, ry=185 (no ice floes!)
+    // Muddy shallows rim
+    ctx.fillStyle = '#8B6E4E';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 290, 195, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Outer shallow spring water
+    ctx.fillStyle = '#38BDF8';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 276, 182, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Deep pond center
+    ctx.fillStyle = '#0284C7';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 192, 126, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Animated spring water ripples
+    ctx.strokeStyle = 'rgba(224, 242, 254, 0.72)';
+    ctx.lineWidth = 2.4;
+    for (let i = -2; i <= 2; i++) {
+      const rx = i * 65 + Math.sin(time * 1.6 + i) * 8;
+      const ry = (i % 2) * 35;
+      ctx.beginPath();
+      ctx.moveTo(rx - 26, ry);
+      ctx.quadraticCurveTo(rx, ry - 6, rx + 26, ry);
+      ctx.stroke();
+    }
+
+    // Blooming yellow marsh marigolds (blatouchy) & reeds along shore
+    const reedAngles = [-2.6, -2.1, -0.5, 0.4, 2.3, 2.8];
+    for (let i = 0; i < reedAngles.length; i++) {
+      const a = reedAngles[i];
+      const bx = Math.cos(a) * 268;
+      const by = Math.sin(a) * 174;
+      ctx.fillStyle = '#4D7C0F';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(bx, by, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FACC15';
+      ctx.beginPath();
+      ctx.arc(bx - 4, by - 3, 4.5, 0, Math.PI * 2);
+      ctx.arc(bx + 5, by + 2, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_church') {
+    // Kostel sv. Jiří at (-800, -650)
+    // Churchyard walls: church_wall_n (y=-150, halfW=180, halfH=14) & church_wall_s (y=+150, halfW=180, halfH=14)
+    ctx.fillStyle = '#D6D3D1';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.rect(-180, -164, 360, 28);
+    ctx.rect(-180, 136, 360, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    // Red tile wall capping
+    ctx.fillStyle = '#B93822';
+    ctx.beginPath();
+    ctx.rect(-182, -168, 364, 8);
+    ctx.rect(-182, 132, 364, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    // Eastern apse (church_apse at +95, 0, radius=46)
+    ctx.fillStyle = '#FBF5E6';
+    ctx.beginPath();
+    ctx.arc(95, 0, 46, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Apse conical roof
+    ctx.fillStyle = '#C84B31';
+    ctx.beginPath();
+    ctx.moveTo(55, -24);
+    ctx.lineTo(95, -76);
+    ctx.lineTo(142, -24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Main nave (church_main at 0, 0, halfW=105, halfH=68)
+    ctx.fillStyle = '#FBF5E6';
+    ctx.beginPath();
+    ctx.rect(-105, -68, 210, 136);
+    ctx.fill();
+    ctx.stroke();
+
+    // Arched stained-glass windows & southern portal
+    ctx.fillStyle = isNight ? '#FEF08A' : '#38BDF8';
+    for (let wx = -35; wx <= 45; wx += 40) {
+      ctx.beginPath();
+      ctx.rect(wx - 9, -22, 18, 34);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#5C3A21';
+    ctx.beginPath();
+    ctx.rect(-16, 28, 32, 40);
+    ctx.fill();
+    ctx.stroke();
+
+    // Nave roof
+    ctx.fillStyle = '#C84B31';
+    ctx.beginPath();
+    ctx.moveTo(-112, -32);
+    ctx.lineTo(-92, -108);
+    ctx.lineTo(92, -108);
+    ctx.lineTo(112, -32);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Western Bell Tower (church_tower at -90, 0, halfW=48, halfH=48)
+    ctx.fillStyle = '#FBF5E6';
+    ctx.beginPath();
+    ctx.rect(-138, -135, 96, 183);
+    ctx.fill();
+    ctx.stroke();
+
+    // Belfry arch with swinging Easter bell
+    ctx.fillStyle = '#2B2623';
+    ctx.beginPath();
+    ctx.arc(-90, -102, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(-90 + Math.sin(time * 3) * 3, -100, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tower spire & golden cross
+    ctx.fillStyle = '#B93822';
+    ctx.beginPath();
+    ctx.moveTo(-144, -135);
+    ctx.lineTo(-90, -196);
+    ctx.lineTo(-36, -135);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#EAB308';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(-90, -196);
+    ctx.lineTo(-90, -222);
+    ctx.moveTo(-102, -210);
+    ctx.lineTo(-78, -210);
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_tavern') {
+    // Kolednická hospoda at (440, -75): tavern_main (halfW=98, halfH=65) + tavern_stable (+95, 0, halfW=46, halfH=44)
+    // Stable wing
+    ctx.fillStyle = '#7C5032';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.rect(49, -44, 92, 88);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#6D4226';
+    ctx.beginPath();
+    ctx.moveTo(45, -38);
+    ctx.lineTo(65, -78);
+    ctx.lineTo(130, -78);
+    ctx.lineTo(146, -38);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Main tavern building
+    ctx.fillStyle = '#FDF6E2';
+    ctx.beginPath();
+    ctx.rect(-98, -65, 196, 130);
+    ctx.fill();
+    ctx.stroke();
+
+    // Timber log half-frame & door
+    ctx.fillStyle = '#5C3A21';
+    ctx.beginPath();
+    ctx.rect(-18, 15, 36, 50);
+    ctx.fill();
+    ctx.stroke();
+
+    // Cozy windows
+    ctx.fillStyle = isNight ? '#FEF08A' : '#7DD3FC';
+    ctx.beginPath();
+    ctx.rect(-72, -10, 32, 28);
+    ctx.rect(40, -10, 32, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    // Shingled tavern roof
+    ctx.fillStyle = '#9E3D29';
+    ctx.beginPath();
+    ctx.moveTo(-112, -61);
+    ctx.lineTo(-44, -129);
+    ctx.lineTo(54, -129);
+    ctx.lineTo(112, -61);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Folk gable
+    ctx.fillStyle = '#6D4226';
+    ctx.beginPath();
+    ctx.moveTo(-106, -61);
+    ctx.lineTo(-44, -129);
+    ctx.lineTo(0, -61);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_village_cottage') {
+    // Návesní roubenka at (-65, -230), halfW=82, halfH=56
+    ctx.fillStyle = '#6E4726';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.rect(-82, -56, 164, 112);
+    ctx.fill();
+    ctx.stroke();
+
+    // Whitewashed window surround
+    ctx.fillStyle = '#FAF6ED';
+    ctx.beginPath();
+    ctx.rect(-68, -24, 58, 52);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = isNight ? '#FEF08A' : '#7DD3FC';
+    ctx.beginPath();
+    ctx.rect(-52, -12, 26, 24);
+    ctx.fill();
+    ctx.stroke();
+
+    // Door
+    ctx.fillStyle = '#4A2E1B';
+    ctx.beginPath();
+    ctx.rect(18, 8, 30, 48);
+    ctx.fill();
+    ctx.stroke();
+
+    // Roof
+    ctx.fillStyle = '#B84A32';
+    ctx.beginPath();
+    ctx.moveTo(-96, -52);
+    ctx.lineTo(-36, -114);
+    ctx.lineTo(45, -114);
+    ctx.lineTo(96, -52);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_village_granary') {
+    // Farní sýpka at (165, -250), halfW=68, halfH=48
+    ctx.fillStyle = '#EFE6D5';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.rect(-68, -48, 136, 96);
+    ctx.fill();
+    ctx.stroke();
+
+    // Heavy wooden granary door
+    ctx.fillStyle = '#6E4726';
+    ctx.beginPath();
+    ctx.rect(-20, -4, 40, 52);
+    ctx.fill();
+    ctx.stroke();
+
+    // Steep shingle roof
+    ctx.fillStyle = '#8C3B2B';
+    ctx.beginPath();
+    ctx.moveTo(-78, -44);
+    ctx.lineTo(-28, -96);
+    ctx.lineTo(28, -96);
+    ctx.lineTo(78, -44);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_maypole') {
+    // Kolednická náves a Májka at (50, -75)
+    // Village green grassy/cobble circle
+    ctx.fillStyle = 'rgba(163, 230, 53, 0.22)';
+    ctx.strokeStyle = 'rgba(101, 163, 13, 0.55)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 145, 95, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Stone base of the Maypole
+    ctx.fillStyle = '#A8A29E';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 26, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Tall peeled spruce pole with spiral ribbon stripe
+    ctx.fillStyle = '#FDE68A';
+    ctx.beginPath();
+    ctx.rect(-6, -155, 12, 162);
+    ctx.fill();
+    ctx.stroke();
+
+    // Fluttering colorful ribbons hanging from the wreath
+    const ribbonColors = ['#EF4444', '#3B82F6', '#FACC15', '#EC4899', '#22C55E'];
+    for (let i = 0; i < ribbonColors.length; i++) {
+      const sway = Math.sin(time * 3.2 + i * 1.1) * 14;
+      const spreadX = (i - 2) * 14;
+      ctx.strokeStyle = ribbonColors[i];
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(spreadX * 0.5, -135);
+      ctx.quadraticCurveTo(spreadX + sway * 0.6, -102, spreadX * 1.3 + sway, -70);
+      ctx.stroke();
+    }
+
+    // Floral wreath ring at the top of the pole
+    ctx.fillStyle = '#4D7C0F';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.ellipse(0, -138, 34, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Green birch crown at the tip
+    ctx.fillStyle = '#65A30D';
+    ctx.beginPath();
+    ctx.moveTo(0, -192);
+    ctx.lineTo(-22, -144);
+    ctx.lineTo(22, -144);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_mill') {
+    // Jarní mlýn at (650, 725): mill_house (0, 0, halfW=84, halfH=60) + mill_wheel_housing (+80, 0, halfW=36, halfH=48)
+    // Mill race water channel
+    ctx.fillStyle = '#0284C7';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.rect(52, -110, 62, 230);
+    ctx.fill();
+    ctx.stroke();
+
+    // Rotating wooden waterwheel in housing (+80, 0)
+    ctx.save();
+    ctx.translate(80, 0);
+    ctx.fillStyle = '#5C3A21';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 42, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    const wheelAngle = time * 2.4;
+    for (let s = 0; s < 8; s++) {
+      const a = wheelAngle + (s * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a) * 40, Math.sin(a) * 40);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Main mill house (-84..84, -60..60)
+    ctx.fillStyle = '#F7EFE0';
+    ctx.beginPath();
+    ctx.rect(-84, -60, 168, 120);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#5C3A21';
+    ctx.beginPath();
+    ctx.rect(-18, 12, 34, 48);
+    ctx.fill();
+    ctx.stroke();
+
+    // Mill roof
+    ctx.fillStyle = '#7A492E';
+    ctx.beginPath();
+    ctx.moveTo(-98, -56);
+    ctx.lineTo(-38, -120);
+    ctx.lineTo(46, -120);
+    ctx.lineTo(98, -56);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_orchard') {
+    // Rozkvetlý ovocný sad at (125, 550)
+    // Apiary at (0, -60), halfW=42, halfH=34
+    ctx.fillStyle = '#92400E';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.rect(-42, -94, 84, 68);
+    ctx.fill();
+    ctx.stroke();
+
+    // Painted folk beehive panels (česna)
+    const hiveColors = ['#FACC15', '#EF4444', '#3B82F6'];
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = hiveColors[i];
+      ctx.beginPath();
+      ctx.rect(-32 + i * 23, -72, 18, 34);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Apiary shingle roof
+    ctx.fillStyle = '#78350F';
+    ctx.beginPath();
+    ctx.moveTo(-50, -92);
+    ctx.lineTo(0, -124);
+    ctx.lineTo(50, -92);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Stone orchard wall at (0, +90), halfW=85, halfH=14
+    ctx.fillStyle = '#A8A29E';
+    ctx.beginPath();
+    ctx.rect(-85, 76, 170, 28);
+    ctx.fill();
+    ctx.stroke();
+
+    // Blooming pink-and-white cherry/apple trees flanking the apiary
+    const treeOffsets = [
+      { dx: -115, dy: -15 },
+      { dx: 115, dy: -10 },
+      { dx: -95, dy: 55 },
+      { dx: 105, dy: 50 },
+    ];
+    for (let i = 0; i < treeOffsets.length; i++) {
+      const t = treeOffsets[i];
+      ctx.fillStyle = '#5C3A21';
+      ctx.beginPath();
+      ctx.rect(t.dx - 7, t.dy - 36, 14, 42);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FBCFE8';
+      ctx.beginPath();
+      ctx.arc(t.dx, t.dy - 54, 28, 0, Math.PI * 2);
+      ctx.arc(t.dx - 18, t.dy - 42, 22, 0, Math.PI * 2);
+      ctx.arc(t.dx + 18, t.dy - 42, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_fields') {
+    // Rozkvetlé meze a pole at (225, -975)
+    ctx.fillStyle = 'rgba(132, 204, 22, 0.22)';
+    ctx.strokeStyle = '#4D7C0F';
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 280, 170, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ploughed spring furrows & golden dandelions
+    ctx.strokeStyle = '#713F12';
+    ctx.lineWidth = 3;
+    for (let row = -3; row <= 3; row++) {
+      ctx.beginPath();
+      ctx.moveTo(-210, row * 34);
+      ctx.quadraticCurveTo(0, row * 34 - 8, 210, row * 34);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#FACC15';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2;
+    for (let i = -4; i <= 4; i++) {
+      const dx = i * 48;
+      const dy = ((i * 37) % 90) - 45;
+      ctx.beginPath();
+      ctx.arc(dx, dy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_shrine') {
+    // Boží muka s kočičkami at (-675, -38)
+    ctx.fillStyle = '#FBF5E6';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.rect(-18, -74, 36, 78);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#C84B31';
+    ctx.beginPath();
+    ctx.moveTo(-26, -74);
+    ctx.lineTo(0, -104);
+    ctx.lineTo(26, -74);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Pussy-willow twigs (kočičky) & golden cross
+    ctx.strokeStyle = '#EAB308';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -104);
+    ctx.lineTo(0, -122);
+    ctx.moveTo(-8, -114);
+    ctx.lineTo(8, -114);
+    ctx.stroke();
+
+    ctx.restore();
+    return;
+  }
+
+  if (type === 'duben_birch_grove') {
+    // Mladý březový háj grove cluster
+    const trees = [
+      { dx: -95, dy: -55, s: 1.05 },
+      { dx: 85, dy: -65, s: 1.0 },
+      { dx: -120, dy: 45, s: 0.95 },
+      { dx: 110, dy: 55, s: 1.05 },
+      { dx: 0, dy: -95, s: 1.1 },
+    ];
+    for (let i = 0; i < trees.length; i++) {
+      const tr = trees[i];
+      ctx.save();
+      ctx.translate(tr.dx, tr.dy);
+      ctx.scale(tr.s, tr.s);
+      // White birch trunk with black bark marks
+      ctx.fillStyle = '#F8FAFC';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.rect(-6, -54, 12, 58);
+      ctx.fill();
+      ctx.stroke();
+      // Fresh April birch foliage
+      ctx.fillStyle = '#84CC16';
+      ctx.beginPath();
+      ctx.arc(0, -68, 28, 0, Math.PI * 2);
+      ctx.arc(-18, -56, 21, 0, Math.PI * 2);
+      ctx.arc(18, -56, 21, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    return;
+  }
+
+  ctx.restore();
 }
 
 const CANOPY_SPRUCE_OFFSETS: ReadonlyArray<{ dx: number; dy: number; sc: number }> = [

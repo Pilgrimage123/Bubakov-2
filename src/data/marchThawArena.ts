@@ -1,5 +1,7 @@
 import {
+  DUBEN_ARENA_BOUNDS,
   collideCircleWithDubenObstacles,
+  resolveDubenObstacles,
   hasDubenTerrainLineOfSight,
   hasDubenRoofsInView,
   isEntityBehindDubenRoof,
@@ -1422,10 +1424,11 @@ export function sanitizeArenaSpawnPoint(
   margin = 48,
 ): { x: number; y: number } {
   const safeMargin = Math.max(24, margin) + Math.max(8, radius);
-  const minX = MARCH_ARENA_BOUNDS.minX + safeMargin;
-  const maxX = MARCH_ARENA_BOUNDS.maxX - safeMargin;
-  const minY = MARCH_ARENA_BOUNDS.minY + safeMargin;
-  const maxY = MARCH_ARENA_BOUNDS.maxY - safeMargin;
+  const bounds = activeLevelId === 2 ? DUBEN_ARENA_BOUNDS : MARCH_ARENA_BOUNDS;
+  const minX = bounds.minX + safeMargin;
+  const maxX = bounds.maxX - safeMargin;
+  const minY = bounds.minY + safeMargin;
+  const maxY = bounds.maxY - safeMargin;
 
   const dummy = {
     x: Math.max(minX, Math.min(maxX, x)),
@@ -1438,6 +1441,8 @@ export function sanitizeArenaSpawnPoint(
   for (let pass = 0; pass < 3; pass++) {
     if (activeLevelId === 0 || activeLevelId === 1) {
       resolveMarchThawObstacles(dummy, false);
+    } else if (activeLevelId === 2) {
+      resolveDubenObstacles(dummy, false);
     }
     if (solidDecor && solidDecor.length > 0) {
       for (let i = 0; i < solidDecor.length; i++) {

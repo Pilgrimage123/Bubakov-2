@@ -1641,7 +1641,7 @@ export class RunDirector {
         continue;
       }
 
-      if (h.type === 'curse' && engine?.state?.dubenDen?.maypoleWardActive) {
+      if (h.type === 'curse' && (engine?.state?.dubenDen?.maypoleWardActive || engine?.dubenDen?.maypoleWardActive)) {
         continue;
       }
 

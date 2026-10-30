@@ -22289,6 +22289,8 @@ function drawEnemyRenderer(
     !(recoveryTimer > 0) &&
     !enemy?.fusePrimed &&
     !(enemy?.clatterTimer > 0) &&
+    enemy?.witchState !== 'swoop' &&
+    !(typeof enemy?.hopHeight === 'number' && enemy.hopHeight > 1) &&
     (!extraArgs || extraArgs.length === 0);
   let drawnViaAtlas = false;
   if (canUseAtlas) {

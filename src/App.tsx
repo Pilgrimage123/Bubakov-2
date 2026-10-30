@@ -236,11 +236,21 @@ import {
   resolveMarchThawObstacles,
   sanitizeArenaSpawnPoint,
 } from './data/marchThawArena';
-import { drawMarchThawDynamicLandmark } from './render/marchThawSvgLandscape';
 import {
+  drawMarchThawDynamicLandmark,
+  drawDubenSpringLandmark,
+} from './render/marchThawSvgLandscape';
+import {
+  DUBEN_BELL_COOLDOWN,
+  DUBEN_FOREST_ZONES,
   DUBEN_POIS,
+  DUBEN_POND_REGION,
   clampToDubenArenaBounds,
+  getActiveDubenForestZone,
+  getDubenWaterEffect,
   isInsideDubenPoi,
+  pickDubenForestSpawnPoint,
+  resolveDubenObstacles,
 } from './data/dubnovyDenArena';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
@@ -973,6 +983,8 @@ class DecorItem {
 
     if (this.type.startsWith('march_')) {
       drawMarchThawLandmark(ctx, this.type, time, isNight);
+    } else if (this.type.startsWith('duben_')) {
+      drawDubenSpringLandmark(ctx, this.type, time, isNight);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1295,13 +1307,19 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
   }
   if (level.id === 2 && level.arena?.id === 'dubnova_naves') {
     const items: DecorItem[] = [
-      new DecorItem(DUBEN_POIS.tavern.x, DUBEN_POIS.tavern.y, 'cottage', 1.1),
+      new DecorItem(0, 0, 'duben_border', 1),
+      new DecorItem(DUBEN_POND_REGION.cx, DUBEN_POND_REGION.cy, 'duben_pond', 1),
+      new DecorItem(DUBEN_POIS.fields.x, DUBEN_POIS.fields.y, 'duben_fields', 1),
+      new DecorItem(DUBEN_POIS.church.x, DUBEN_POIS.church.y, 'duben_church', 1),
+      new DecorItem(DUBEN_POIS.tavern.x, DUBEN_POIS.tavern.y, 'duben_tavern', 1),
+      new DecorItem(-65, -230, 'duben_village_cottage', 1),
+      new DecorItem(165, -250, 'duben_village_granary', 1),
+      new DecorItem(DUBEN_POIS.village.x, DUBEN_POIS.village.y, 'duben_maypole', 1),
+      new DecorItem(DUBEN_POIS.mill.x, DUBEN_POIS.mill.y, 'duben_mill', 1),
+      new DecorItem(DUBEN_POIS.orchard.x, DUBEN_POIS.orchard.y, 'duben_orchard', 1),
+      new DecorItem(DUBEN_POIS.shrine.x, DUBEN_POIS.shrine.y, 'duben_shrine', 1),
+      ...DUBEN_FOREST_ZONES.map((fz) => new DecorItem(fz.x, fz.y, 'duben_birch_grove', 1)),
       new DecorItem(DUBEN_POIS.village.x - 45, DUBEN_POIS.village.y + 35, 'kaca', 1),
-      new DecorItem(DUBEN_POIS.shrine.x, DUBEN_POIS.shrine.y, 'bozi_muka', 1),
-      new DecorItem(DUBEN_POIS.orchard.x, DUBEN_POIS.orchard.y, 'tree', 1.15),
-      new DecorItem(DUBEN_POIS.orchard.x + 80, DUBEN_POIS.orchard.y - 40, 'tree', 1),
-      new DecorItem(DUBEN_POIS.orchard.x - 70, DUBEN_POIS.orchard.y + 30, 'tree', 0.9),
-      new DecorItem(DUBEN_POIS.fields.x, DUBEN_POIS.fields.y, 'rock', 1),
     ];
     return items;
   }
@@ -1566,6 +1584,10 @@ export default function App() {
     } catch {
       return false;
     }
+  });
+  const [quickGuideMode, setQuickGuideMode] = useState<'touch' | 'keyboard'>(() => {
+    if (typeof window === 'undefined') return 'touch';
+    return ('ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 840) ? 'touch' : 'keyboard';
   });
   const [isTestModeOpen, setIsTestModeOpen] = useState(false);
   const [isAnimationTesterOpen, setIsAnimationTesterOpen] = useState(false);
@@ -2378,7 +2400,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       levelWon: true,
       warningBanner: reason === 'boss'
         ? `🏆 ${GAME_LEVELS[lvlId].finalBoss.name} POKOŘEN – VÍTĚZSTVÍ!`
-        : (lvlId === 0 ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN V PŘEDJAŘÍ – VÍTĚZSTVÍ!' : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!'),
+        : (lvlId === 0
+            ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN V PŘEDJAŘÍ – VÍTĚZSTVÍ!'
+            : lvlId === 2
+            ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DUBNOVÝ DEN – VÍTĚZSTVÍ!'
+            : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!'),
     }));
 
     if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
@@ -2630,6 +2656,38 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
         eng.lightningFlash = Math.max(eng.lightningFlash, 0.35);
         pushDamageText(eng.texts, MARCH_THAW_POIS.shrine.x, MARCH_THAW_POIS.shrine.y - 110, '✦ ZJEVENÍ PANNY MARIE S JEŽÍŠKEM!', '#FEF08A', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+    }
+
+    // 2b. Level 2 (Stage 3: Dubnový den) Interaktivní objekty (Velikonoční zvonice u sv. Jiří)
+    if (eng.activeLevelId === 2 && eng.dubenDen) {
+      const duben = eng.dubenDen;
+      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.church, 35) && (duben.bellCooldown || 0) <= 0) {
+        duben.bellCooldown = DUBEN_BELL_COOLDOWN;
+        duben.bellWaveTimer = 3.5;
+        p.hp = Math.min(p.maxHp, p.hp + 20 * (p._cachedFrostHealMult ?? 1));
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          DUBEN_POIS.church.x,
+          DUBEN_POIS.church.y,
+          560,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (!enemy || enemy.dead || enemy.isDefeated) continue;
+          const dx = enemy.x - DUBEN_POIS.church.x;
+          const dy = enemy.y - DUBEN_POIS.church.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 540 + (enemy.radius || 0)) {
+            enemy.takeDamage(220 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520, { stunDuration: 3.0 });
+            enemy.panicked = true;
+            enemy.panicTimer = Math.max(enemy.panicTimer || 0, 4.5);
+          }
+        }
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.3);
+        pushDamageText(eng.texts, DUBEN_POIS.church.x, DUBEN_POIS.church.y - 100, '✦ VELIKONOČNÍ ZVON ZVONÍ Z ŘÍMA!', '#FEF08A', true, 'bossAnnouncements');
         sound.bell();
         return true;
       }
@@ -3528,14 +3586,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Level 1: Předjaří (Noční mrazy) – 2 mrazoví skřítci
       for (let i = 0; i < 2; i++) {
         const ang = (i / 2) * Math.PI * 2 + 0.3;
-        engineRef.current.enemies.push(createEnemyInstance('mrazovy_skritek', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
+        const sp = sanitizeArenaSpawnPoint(player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 20, 1);
+        engineRef.current.enemies.push(createEnemyInstance('mrazovy_skritek', sp.x, sp.y, 0.75));
       }
     } else if (chosenLevelId === 2) {
-      // Level 2: Náves a rybník – 2 rarášci
-      for (let i = 0; i < 2; i++) {
-        const ang = (i / 2) * Math.PI * 2 + 0.3;
-        engineRef.current.enemies.push(createEnemyInstance('rarach', player.x + Math.cos(ang) * 480, player.y + Math.sin(ang) * 480, 0.75));
-      }
+      // Level 2: Dubnový den – zkažená kraslice a rarášek
+      const sp1 = sanitizeArenaSpawnPoint(player.x + Math.cos(0.3) * 480, player.y + Math.sin(0.3) * 480, 20, 2);
+      const sp2 = sanitizeArenaSpawnPoint(player.x + Math.cos(Math.PI + 0.3) * 480, player.y + Math.sin(Math.PI + 0.3) * 480, 20, 2);
+      engineRef.current.enemies.push(createEnemyInstance('zkazena_kraslice', sp1.x, sp1.y, 0.85));
+      engineRef.current.enemies.push(createEnemyInstance('rarach', sp2.x, sp2.y, 0.75));
     } else if (chosenLevelId === 3) {
       // Level 3: Hřbitov – 2 kostlivci a černý pes
       for (let i = 0; i < 2; i++) {
@@ -4662,8 +4721,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 engine.grandfather.vy = dirY * moveSpeed;
                 engine.grandfather.x += engine.grandfather.vx * dt;
                 engine.grandfather.y += engine.grandfather.vy * dt;
-                if (engine.activeLevelId === 0) {
+                if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
                   resolveMarchThawObstacles(engine.grandfather, false);
+                } else if (engine.activeLevelId === 2) {
+                  resolveDubenObstacles(engine.grandfather, false);
+                  clampToDubenArenaBounds(engine.grandfather, 28);
                 }
                 if (Math.abs(dx) > 3) {
                   engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
@@ -4688,7 +4750,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               engine.dawnVictoryTriggered = true;
               sound.rooster();
               sound.victory();
-              const isDayLevel = (engine.activeLevelId ?? 0) === 0;
+              const isDayLevel = (engine.activeLevelId ?? 0) === 0 || (engine.activeLevelId ?? 0) === 2;
               const announcement = isDayLevel ? 'ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN!' : 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!';
               pushDamageText(engine.texts, player.x, player.y - 70, announcement, COLORS.mustard, true, 'bossAnnouncements');
               // All monsters panic and flee
@@ -5142,7 +5204,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       y: staraWitchBoss.y,
                       vx: Math.cos(ang) * 190,
                       vy: Math.sin(ang) * 190,
+                      angle: ang,
+                      speed: 190,
+                      dmg: 18,
                       damage: 18,
+                      type: 'poison',
+                      visual: 'witch_venom',
                       radius: 8,
                       color: '#CA8A04',
                       life: 2.2,
@@ -5171,7 +5238,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
                   for (let i = 0; i < 2; i++) {
                     const ang = Math.random() * Math.PI * 2;
-                    const witchMinion = createEnemyInstance('carodejnice_koste', vrchniCarodejniceBoss.x + Math.cos(ang) * 120, vrchniCarodejniceBoss.y + Math.sin(ang) * 120, 1.0);
+                    const sp = sanitizeArenaSpawnPoint(
+                      vrchniCarodejniceBoss.x + Math.cos(ang) * 120,
+                      vrchniCarodejniceBoss.y + Math.sin(ang) * 120,
+                      20,
+                      engine.activeLevelId ?? 2,
+                      engine.decor
+                    );
+                    const witchMinion = createEnemyInstance('carodejnice_koste', sp.x, sp.y, 1.0);
                     engine.enemies.push(witchMinion);
                   }
 
@@ -5197,12 +5271,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   for (let i = 0; i < count; i++) {
                     const angle = targetAngle + (i - (count - 1) / 2) * spread;
                     const speed = isPhase2 ? 240 : 200;
+                    const projDmg = isPhase2 ? 30 : 22;
                     engine.projectiles.push({
                       x: vrchniCarodejniceBoss.x,
                       y: vrchniCarodejniceBoss.y,
                       vx: Math.cos(angle) * speed,
                       vy: Math.sin(angle) * speed,
-                      damage: isPhase2 ? 30 : 22,
+                      angle,
+                      speed,
+                      dmg: projDmg,
+                      damage: projDmg,
+                      type: 'magic',
+                      visual: 'witch_fireball',
                       radius: 10,
                       color: '#A855F7',
                       life: 2.5,
@@ -6582,7 +6662,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             // Level 0 is a hand-composed, asymmetric map rather than a flat
             // decoration field.  These local rules intentionally run after
             // movement so every POI remains a readable, opt-in playstyle.
-            if (engine.activeLevelId === 0) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
               const thaw = engine.marchThaw as any;
               thaw.bellCooldown = Math.max(0, thaw.bellCooldown - dt);
               thaw.shrineCooldown = Math.max(0, thaw.shrineCooldown - dt);
@@ -6949,6 +7029,170 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 }
               }
+            } else if (engine.activeLevelId === 2) {
+              const duben = (engine.dubenDen || (engine.dubenDen = {
+                bellCooldown: 0,
+                bellWaveTimer: 0,
+                maypoleWardActive: false,
+                pollenCloudTimer: 0,
+                orchardPetalTimer: 0,
+                weatherPetalTimer: 0,
+                terrainHazardTimer: 0,
+              })) as any;
+              duben.bellCooldown = Math.max(0, (duben.bellCooldown || 0) - dt);
+              duben.bellWaveTimer = Math.max(0, (duben.bellWaveTimer || 0) - dt);
+              duben.pollenCloudTimer = Math.max(0, (duben.pollenCloudTimer || 0) - dt);
+
+              const inChurch = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.church);
+              const activeForestZone = getActiveDubenForestZone(player.x, player.y);
+              const inForest = Boolean(activeForestZone);
+              const inTavern = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.tavern);
+              const inVillage = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.village);
+              const inOrchard = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.orchard);
+              const inShrine = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.shrine);
+              const inFields = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.fields);
+              const inMill = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.mill);
+
+              duben.maypoleWardActive = inVillage;
+
+              // 1. NÁVES S MÁJKOU, KOSTEL & BŘEZOVÝ HÁJ: Armor & regeneration bonuses
+              player.arenaArmorBonus = (inVillage ? 0.20 : 0) + (inChurch ? 0.20 : 0) + (inForest ? 0.15 : 0);
+              if (inChurch || inTavern) {
+                player.hp = Math.min(player.maxHp, player.hp + 2.0 * dt * (player._cachedFrostHealMult ?? 1));
+              }
+
+              // 2. KOLEDNICKÁ HOSPODA & BŘEZOVÝ HÁJ: Tactical damage aura (+20 % / +15 %)
+              const baseDmgMult = (player as any)._baseMarchDmgMult ?? ((player as any)._baseMarchDmgMult = player.damageMultiplier || 1);
+              player.damageMultiplier = baseDmgMult * (1 + (inTavern ? 0.20 : 0) + (inForest ? 0.15 : 0));
+
+              // 3. BOŽÍ MUKA S KOČIČKAMI & JARNÍ MLÝN: Faster weapon cooldowns (+20 % cadence)
+              if ((inShrine || inMill) && player.weapons) {
+                for (let wi = 0; wi < player.weapons.length; wi++) {
+                  const w = player.weapons[wi];
+                  if (w && w.cd > 0) {
+                    w.cd = Math.max(0, w.cd - dt * 0.20);
+                  }
+                }
+              }
+
+              // 4. ROZKVETLÉ MEZE A POLE: +15 % furrow speed & Dandelion pollen cloud slowing nearby foes
+              if (inFields) {
+                player.x += moveVx * 0.15 * dt;
+                player.y += moveVy * 0.15 * dt;
+                if ((moveVx !== 0 || moveVy !== 0) && duben.pollenCloudTimer <= 0) {
+                  duben.pollenCloudTimer = 2.5;
+                  const nearFieldsFoes = enemySpatialHashRef.current.queryCircleInto(
+                    player.x,
+                    player.y,
+                    220,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < nearFieldsFoes.length; i++) {
+                    const foe = nearFieldsFoes[i];
+                    if (foe && !foe.dead && !foe.isDefeated) {
+                      foe.slowTimer = Math.max(foe.slowTimer || 0, 1.8);
+                    }
+                  }
+                  pushDamageText(engine.texts, player.x, player.y - 42, '🌼 PAMPELIŠKOVÝ PYL!', '#FEF08A', false, 'combatStates');
+                }
+              }
+
+              // 5. OVOCNÝ SAD: Cherry blossom flurry
+              if (inOrchard && Math.random() < 0.25) {
+                emitParticle(engine.particles, () => ({
+                  x: player.x + (Math.random() - 0.5) * 180,
+                  y: player.y - 60 + (Math.random() - 0.5) * 80,
+                  vx: 25 + Math.random() * 25,
+                  vy: 15 + Math.random() * 20,
+                  life: 1.4,
+                  color: '#FBCFE8',
+                  size: 3.2,
+                }));
+              }
+
+              // 6. VYHŘÁTÝ RYBNÍK BRČÁLNÍK: Thawed mud shallows & deep water
+              const waterEff = getDubenWaterEffect(player.x, player.y, false);
+              if (waterEff.inWater) {
+                const slowDrag = 1 - waterEff.slowRatio;
+                player.x -= moveVx * slowDrag * dt;
+                player.y -= moveVy * slowDrag * dt;
+              }
+
+              // 7. KOSTEL SV. JIŘÍ: Automatic Easter bell peal if swarmed inside churchyard while off cooldown
+              if (inChurch && duben.bellCooldown <= 0) {
+                const nearChurch = enemySpatialHashRef.current.queryCircleInto(
+                  DUBEN_POIS.church.x,
+                  DUBEN_POIS.church.y,
+                  280,
+                  terrainSpatialResultsRef.current,
+                );
+                let hasFoe = false;
+                for (let ci = 0; ci < nearChurch.length; ci++) {
+                  if (nearChurch[ci] && !nearChurch[ci].dead && !nearChurch[ci].isDefeated) {
+                    hasFoe = true;
+                    break;
+                  }
+                }
+                if (hasFoe) {
+                  triggerArenaInteractRef.current();
+                }
+              }
+
+              // 8. AMBIENT APRIL WEATHER: Drifting cherry petals & golden dandelion seeds
+              duben.weatherPetalTimer = (duben.weatherPetalTimer || 0) - dt;
+              if (duben.weatherPetalTimer <= 0) {
+                duben.weatherPetalTimer = 0.24;
+                const isPetal = Math.random() < 0.6;
+                emitParticle(engine.particles, () => ({
+                  x: player.x + (Math.random() - 0.5) * 1200,
+                  y: player.y - 350 + (Math.random() - 0.5) * 300,
+                  vx: 32 + Math.random() * 28,
+                  vy: 16 + Math.random() * 22,
+                  life: 3.5 + Math.random() * 1.5,
+                  color: isPetal ? '#FCE7F3' : '#FEF08A',
+                  size: isPetal ? 2.8 : 3.6,
+                }));
+              }
+
+              // 9. Solid village buildings, stone walls & outer arena boundary
+              resolveDubenObstacles(player, false);
+              clampToDubenArenaBounds(player, 28);
+
+              // Interactive spinning top (Káča) on the village green
+              for (const dec of engine.decor) {
+                dec.animTime = (dec.animTime || 0) + dt;
+                if (dec.type === 'kaca') {
+                  const distP = Math.hypot(player.x - dec.x, player.y - dec.y);
+                  if (distP < player.radius + dec.radius) {
+                    const dx = dec.x - player.x || 1;
+                    const dy = dec.y - player.y || 0;
+                    const len = Math.hypot(dx, dy) || 1;
+                    dec.vx = (dx / len) * 250;
+                    dec.vy = (dy / len) * 250;
+                  }
+                  dec.x += (dec.vx || 0) * dt;
+                  dec.y += (dec.vy || 0) * dt;
+                  dec.vx = (dec.vx || 0) * Math.max(0, 1 - 2.5 * dt);
+                  dec.vy = (dec.vy || 0) * Math.max(0, 1 - 2.5 * dt);
+                  clampToDubenArenaBounds(dec);
+                  if (Math.hypot(dec.vx, dec.vy) > 40) {
+                    const nearbyEnemies = enemySpatialHashRef.current.queryCircleInto(
+                      dec.x,
+                      dec.y,
+                      dec.radius + 80,
+                      terrainSpatialResultsRef.current,
+                    );
+                    for (let i = 0; i < nearbyEnemies.length; i++) {
+                      const enemy = nearbyEnemies[i];
+                      if (!enemy.dead && !enemy.isDefeated && Math.hypot(enemy.x - dec.x, enemy.y - dec.y) < enemy.radius + dec.radius) {
+                        enemy.takeDamage(24, 'physical', dec.vx * 1.5, dec.vy * 1.5);
+                        dec.vx *= -0.5;
+                        dec.vy *= -0.5;
+                      }
+                    }
+                  }
+                }
+              }
             } else {
               player.arenaArmorBonus = 0;
             }
@@ -6977,6 +7221,32 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 engine.plumPuddles[pi].life -= dt;
                 if (engine.plumPuddles[pi].life <= 0) {
                   engine.plumPuddles.splice(pi, 1);
+                }
+              }
+            }
+
+            if (engine.yolkPuddles && engine.yolkPuddles.length > 0) {
+              for (let yi = engine.yolkPuddles.length - 1; yi >= 0; yi--) {
+                const yp = engine.yolkPuddles[yi];
+                yp.life -= dt;
+                yp.damageTimer = (yp.damageTimer || 0.5) - dt;
+                if (yp.life <= 0) {
+                  engine.yolkPuddles.splice(yi, 1);
+                  continue;
+                }
+                if (player && player.hp > 0) {
+                  const pDist = Math.hypot(player.x - yp.x, player.y - yp.y);
+                  if (pDist <= (yp.radius || 48) + player.radius) {
+                    player.hazardSlowTimer = Math.max(player.hazardSlowTimer || 0, 0.25);
+                    player.hazardSlowFactor = 0.70;
+                    if (yp.damageTimer <= 0) {
+                      player.takeDamage(6, 'poison');
+                      pushDamageText(engine.texts, player.x, player.y - 35, 'PÁCHNOUCÍ ŽLOUTEK! 🥚', '#84CC16', false, 'hunterDamage');
+                    }
+                  }
+                }
+                if (yp.damageTimer <= 0) {
+                  yp.damageTimer = 0.5;
                 }
               }
             }
@@ -7613,10 +7883,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 if (p.boomerang && (p.hitCooldown || 0) > 0) {
                   continue;
                 }
-                player.takeDamage(p.dmg, p.type || 'blunt');
+                player.takeDamage(p.dmg ?? p.damage ?? 15, p.type || 'blunt');
                 if (p.pushback) {
-                  player.x += Math.cos(p.angle) * p.pushback;
-                  player.y += Math.sin(p.angle) * p.pushback;
+                  const pushAng = Number.isFinite(p.angle) ? p.angle : Math.atan2(p.vy || 0, p.vx || 1);
+                  player.x += Math.cos(pushAng) * p.pushback;
+                  player.y += Math.sin(pushAng) * p.pushback;
                 }
                 if (p.soakPlayer) {
                   player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(metaRef.current.forestLevel || 0));
@@ -8045,7 +8316,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const prevEx = e.x;
               const prevEy = e.y;
               e.update(dt, player);
-              if (engine.activeLevelId === 0) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
                 if (!e.isDefeated && !e.dead) {
                   const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || isActiveVirtualCrow) && !e.isGroundedForLoot);
                   if (!isFlyingEnemy) {
@@ -8065,6 +8336,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 } else {
                   clampToMarchArenaBounds(e);
                 }
+              } else if (engine.activeLevelId === 2) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  if (!isFlyingEnemy) {
+                    const isAquatic = isAquaticEnemy(e) || e.id === 'zaba' || e.id === 'ropucha' || e.id === 'vodnicek';
+                    const eWater = getDubenWaterEffect(e.x, e.y, isAquatic);
+                    if (eWater.inWater) {
+                      e.x = prevEx + (e.x - prevEx) * eWater.slowRatio;
+                      e.y = prevEy + (e.y - prevEy) * eWater.slowRatio;
+                    }
+                    resolveDubenObstacles(e, false);
+                  } else if (isInsideDubenPoi(e.x, e.y, DUBEN_POIS.orchard)) {
+                    e.x = prevEx + (e.x - prevEx) * 0.82;
+                    e.y = prevEy + (e.y - prevEy) * 0.82;
+                  }
+                }
+                clampToDubenArenaBounds(e, 28);
               }
             }
 
@@ -8289,8 +8577,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
             }
-            if (engine.activeLevelId === 0) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
               clampToMarchArenaBounds(d, 28);
+            } else if (engine.activeLevelId === 2) {
+              clampToDubenArenaBounds(d, 28);
             }
             const dist = Math.hypot(d.x - player.x, d.y - player.y);
 
@@ -8307,8 +8597,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
-              if (engine.activeLevelId === 0) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
                 clampToMarchArenaBounds(d, 28);
+              } else if (engine.activeLevelId === 2) {
+                clampToDubenArenaBounds(d, 28);
               }
               const curDist = Math.hypot(d.x - player.x, d.y - player.y);
 
@@ -8882,18 +9174,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Dedicated Stage 1 Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
+        // Dedicated Stage 1 & Stage 3 Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
         const sunFgCanvas = sunForegroundCanvasRef.current;
         if (sunFgCanvas) {
           if (sunFgCanvas.width !== canvas.width) sunFgCanvas.width = canvas.width;
           if (sunFgCanvas.height !== canvas.height) sunFgCanvas.height = canvas.height;
-          const shouldRenderSunFg = curLvl.id === 0 && currentGameState === 'playing' && !engine.cutscene;
+          const shouldRenderSunFg = (curLvl.id === 0 || curLvl.id === 2) && currentGameState === 'playing' && !engine.cutscene;
           if (shouldRenderSunFg || (sunFgCanvas as any).__dirty) {
             const sunFgCtx = sunFgCanvas.getContext('2d');
             if (sunFgCtx) {
               sunFgCtx.clearRect(0, 0, sunFgCanvas.width, sunFgCanvas.height);
               if (shouldRenderSunFg) {
                 const tSunOverlayStart = performance.now();
+                const sunVariant = curLvl.id === 2 ? 'duben' : 'march';
                 renderSunForegroundOverlay(
                   sunFgCtx,
                   canvas.width,
@@ -8904,7 +9197,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   engine.uiTime || 0,
                   sunOverlayConfigRef.current,
                   sunFrameStateRef.current,
-                  'all'
+                  'all',
+                  sunVariant
                 );
                 frameProfiler.current.lighting += performance.now() - tSunOverlayStart;
                 (sunFgCanvas as any).__dirty = true;
@@ -9028,10 +9322,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       };
       resolvedId =
         fallbackMap[id] ||
-        ((engineRef.current?.activeLevelId ?? 0) === 0
+        ((engineRef.current?.activeLevelId ?? 0) === 0 || (engineRef.current?.activeLevelId ?? 0) === 1
           ? 'mrazovy_skritek'
           : (engineRef.current?.activeLevelId ?? 1) === 2
-          ? 'skeleton'
+          ? 'zkazena_kraslice'
+          : (engineRef.current?.activeLevelId ?? 1) === 3
+          ? 'kostlivec'
           : 'rarach');
       stats = ENEMIES[resolvedId] || ENEMIES.rarach;
     }
@@ -9266,6 +9562,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       chargeSpeed: 0,
       pendingAttack: '' as string,
       puddleCd: (2.0 + Math.random() * 2.0) * (isBoss || isMiniboss || stats.category === 'bosses' ? 1.0 : 1.3),
+      hopPhase: 0,
+      hopHeight: 0,
+      fusePrimed: false,
+      fuseTimer: 0,
+      witchState: resolvedId === 'carodejnice_koste' ? ('dive' as string) : undefined,
+      witchStateTimer: resolvedId === 'carodejnice_koste' ? 3.0 : 0,
+      witchHexCooldown: resolvedId === 'carodejnice_koste' ? 0.8 : 0,
+      flightAltitude: resolvedId === 'carodejnice_koste' ? 22 : 0,
+      rehtackarPulseTimer: resolvedId === 'rehtackar' ? 1.5 : undefined,
+      clatterTimer: 0,
+      rehtackarBuffTimer: 0,
 
       update(dt: number, player: any) {
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
@@ -9275,6 +9582,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (this.fajfkaSlowTimer <= 0) { this.fajfkaMoveSlowFactor = 1; this.fajfkaAttackSlowFactor = 1; }
         if ((this.fajfkaSlowTimer || 0) > 0 && this.strikeTimer > 0) this.strikeTimer += dt * ((1 / Math.max(0.1, this.fajfkaAttackSlowFactor || 0.65)) - 1);
         if (this.silhouetteInvertTimer > 0) this.silhouetteInvertTimer -= dt;
+        if (this.rehtackarBuffTimer && this.rehtackarBuffTimer > 0) {
+          this.rehtackarBuffTimer = Math.max(0, this.rehtackarBuffTimer - dt);
+        }
+        if (this.clatterTimer && this.clatterTimer > 0) {
+          this.clatterTimer = Math.max(0, this.clatterTimer - dt);
+        }
 
         // Pekelný: Stopa žhavých uhlíků a plamínků
         if (this.hasFireTrail && !this.dead && !this.isDefeated && Math.random() < 0.28) {
@@ -9495,6 +9808,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if ((this.vycerpanyTimer || 0) > 0) {
           spd *= 0.50;
         }
+        if ((this.rehtackarBuffTimer || 0) > 0) {
+          spd *= 1.30;
+        }
         if (
           !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
           engineRef.current.plumPuddles &&
@@ -9507,6 +9823,22 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const pdy = this.y - pud.y;
             if (Math.abs(pdx) <= maxR && Math.abs(pdy) <= maxR && pdx * pdx + pdy * pdy <= maxR * maxR) {
               spd *= (1 - (pud.slowRatio || 0.35));
+              break;
+            }
+          }
+        }
+        if (
+          !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
+          engineRef.current.yolkPuddles &&
+          engineRef.current.yolkPuddles.length > 0
+        ) {
+          for (let yi = 0; yi < engineRef.current.yolkPuddles.length; yi++) {
+            const yp = engineRef.current.yolkPuddles[yi];
+            const maxR = (yp.radius || 48) + this.radius;
+            const ydx = this.x - yp.x;
+            const ydy = this.y - yp.y;
+            if (Math.abs(ydx) <= maxR && Math.abs(ydy) <= maxR && ydx * ydx + ydy * ydy <= maxR * maxR) {
+              spd *= 0.60;
               break;
             }
           }
@@ -9783,6 +10115,105 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (typeof player.chill === 'function') player.chill(0.65);
             emitParticle(engineRef.current.particles, () => ({ x: player.x, y: player.y, vx: (Math.random() - 0.5) * 24, vy: (Math.random() - 0.5) * 24, life: 0.35, color: '#BAE6FD', size: 3 }));
           }
+        } else if (this.id === 'zkazena_kraslice') {
+          if (this.fusePrimed) {
+            this.vx = 0;
+            this.vy = 0;
+          } else {
+            this.hopPhase = (this.hopPhase || 0) + dt * 4.5;
+            const hopFactor = Math.max(0, Math.sin(this.hopPhase));
+            this.hopHeight = hopFactor * 14;
+            const hopSpdMult = hopFactor > 0.2 ? 1.75 : 0.2;
+            const wobble = Math.sin((this.animTime || 0) * 6) * 0.45;
+            const finalDir = dirToPlayer + wobble;
+            this.vx = Math.cos(finalDir) * spd * hopSpdMult;
+            this.vy = Math.sin(finalDir) * spd * hopSpdMult;
+
+            if (distToPlayer <= this.radius + (player.radius || 18) + 14) {
+              this.fusePrimed = true;
+              this.fuseTimer = 1.2;
+              this.vx = 0;
+              this.vy = 0;
+              pushDamageText(engineRef.current.texts, this.x, this.y - 32, 'PRASKÁ! 🥚💥', '#EAB308', true, 'combatStates');
+            }
+          }
+        } else if (this.id === 'carodejnice_koste') {
+          this.flightAltitude = 22 + Math.sin((this.animTime || 0) * 4) * 8;
+          this.witchStateTimer = (typeof this.witchStateTimer === 'number' ? this.witchStateTimer : 3.0) - dt;
+          if (!this.witchState) this.witchState = 'dive';
+
+          if (this.witchState === 'dive') {
+            this.vx = Math.cos(dirToPlayer) * spd * 1.45;
+            this.vy = Math.sin(dirToPlayer) * spd * 1.45;
+            if (this.witchStateTimer <= 0 || distToPlayer < 65) {
+              this.witchState = 'hover';
+              this.witchStateTimer = 3.2;
+              this.witchHexCooldown = 0.8;
+            }
+          } else {
+            const targetDist = 210;
+            const orbitAngle = Math.atan2(this.y - player.y, this.x - player.x) + 0.05;
+            const destX = player.x + Math.cos(orbitAngle) * targetDist;
+            const destY = player.y + Math.sin(orbitAngle) * targetDist;
+            this.vx = (destX - this.x) * 1.6;
+            this.vy = (destY - this.y) * 1.6;
+
+            this.witchHexCooldown = (typeof this.witchHexCooldown === 'number' ? this.witchHexCooldown : 1.8) - dt;
+            if (this.witchHexCooldown <= 0) {
+              this.witchHexCooldown = 4.0;
+              const pHeading = Math.atan2(player.vy || 0, player.vx || 0);
+              const lead = Math.min(65, Math.hypot(player.vx || 0, player.vy || 0) * 0.7);
+              const hexX = player.x + Math.cos(pHeading) * lead;
+              const hexY = player.y + Math.sin(pHeading) * lead;
+              const hazardEntry = {
+                id: `hazard_urknuti_${Math.round((engineRef.current.gameTime || 0) * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: hexX,
+                y: hexY,
+                radius: 46,
+                duration: 1.8,
+                maxDuration: 1.8,
+                type: 'curse' as const,
+                slowFactor: 0.65,
+                kind: 'hex-circle' as const,
+                warningTimer: 1.1,
+                damage: 28,
+                oneShot: true,
+                exploded: false,
+                sourceEnemyId: this.id,
+              };
+              if (directorRef.current) {
+                directorRef.current.hazards.push(hazardEntry);
+              }
+              if (engineRef.current.activeHazards && engineRef.current.activeHazards !== directorRef.current?.hazards) {
+                engineRef.current.activeHazards.push(hazardEntry);
+              }
+              pushDamageText(engineRef.current.texts, hexX, hexY - 30, 'UŘKNUTÍ! 🔮', '#A855F7', true, 'combatStates');
+            }
+
+            if (this.witchStateTimer <= 0) {
+              this.witchState = 'dive';
+              this.witchStateTimer = 2.6;
+            }
+          }
+        } else if (this.id === 'rehtackar') {
+          this.rehtackarPulseTimer = (typeof this.rehtackarPulseTimer === 'number' ? this.rehtackarPulseTimer : 1.5) - dt;
+          if (this.rehtackarPulseTimer <= 0) {
+            this.rehtackarPulseTimer = 1.5;
+            this.clatterTimer = 0.55;
+            const nearbyAllies = enemySpatialHashRef.current.queryCircleInto(
+              this.x,
+              this.y,
+              160,
+              terrainSpatialResultsRef.current,
+            );
+            for (let i = 0; i < nearbyAllies.length; i++) {
+              const ally = nearbyAllies[i];
+              if (!ally || ally === this || ally.dead || ally.isDefeated) continue;
+              ally.rehtackarBuffTimer = 2.0;
+            }
+          }
+          this.vx = Math.cos(dirToPlayer) * spd;
+          this.vy = Math.sin(dirToPlayer) * spd;
         }
 
         // 1. RARÁŠEK (rarach / sazovy_rarach) - Hejnové obkličování & prudké výpady
@@ -11062,10 +11493,109 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         this.x += (this.vx + this.kbx) * dt;
         this.y += (this.vy + this.kby) * dt;
+
+        if (this.id === 'carodejnice_koste' && !this.dead && !this.isDefeated && Math.random() < 0.4) {
+          const bankAng = Math.atan2(this.vy || 0, this.vx || 0);
+          emitParticle(engineRef.current.particles, () => ({
+            x: this.x - Math.cos(bankAng) * 20 + (Math.random() - 0.5) * 6,
+            y: this.y - Math.sin(bankAng) * 20 - 12 + (Math.random() - 0.5) * 6,
+            vx: -Math.cos(bankAng) * 35 + (Math.random() - 0.5) * 20,
+            vy: -Math.sin(bankAng) * 35 - 15 - Math.random() * 20,
+            life: 0.45 + Math.random() * 0.25,
+            size: 2.4,
+            color: Math.random() < 0.6 ? '#F97316' : '#FBBF24',
+          }));
+        }
+
+        if (this.id === 'zkazena_kraslice' && this.fusePrimed && !this.dead) {
+          this.fuseTimer -= dt;
+          if (Math.random() < 0.25) {
+            emitParticle(engineRef.current.particles, () => ({
+              x: this.x + (Math.random() - 0.5) * 16,
+              y: this.y + (Math.random() - 0.5) * 16,
+              vx: (Math.random() - 0.5) * 20,
+              vy: -35 - Math.random() * 20,
+              life: 0.5,
+              size: 2.5,
+              color: '#84CC16',
+            }));
+          }
+          if (this.fuseTimer <= 0) {
+            this.detonateKraslice(player);
+          }
+        }
+      },
+
+      detonateKraslice(player: any) {
+        if (this.dead) return;
+        this.dead = true;
+        this.isDefeated = true;
+        this.cleanupLight();
+        const eng = engineRef.current;
+        eng.kills = (eng.kills || 0) + 1;
+        if (directorRef.current) {
+          directorRef.current.recordEnemyDeath(this, eng.gameTime);
+        }
+        sound.heavyHit();
+
+        const blastRadius = 110;
+        for (let s = 0; s < 12; s++) {
+          const ang = (s / 12) * Math.PI * 2 + Math.random() * 0.2;
+          const bSpd = 80 + Math.random() * 90;
+          emitParticle(eng.particles, () => ({
+            x: this.x,
+            y: this.y,
+            vx: Math.cos(ang) * bSpd,
+            vy: Math.sin(ang) * bSpd,
+            life: 0.6 + Math.random() * 0.4,
+            size: 3.5,
+            color: Math.random() < 0.5 ? '#FEF08A' : '#CA8A04',
+          }));
+        }
+
+        if (player && player.hp > 0) {
+          const pDist = Math.hypot(player.x - this.x, player.y - this.y);
+          if (pDist <= blastRadius) {
+            const dmg = Math.round(45 * (1 - pDist / blastRadius));
+            if (dmg > 0) {
+              player.takeDamage(dmg, 'poison', this);
+              pushDamageText(eng.texts, player.x, player.y - 42, `PUCH KRASLICE! -${dmg} 🥚💥`, '#84CC16', true, 'hunterDamage');
+            }
+          }
+        }
+
+        const nearbyFoes = enemySpatialHashRef.current.queryCircleInto(
+          this.x,
+          this.y,
+          blastRadius + 30,
+          terrainSpatialResultsRef.current,
+        );
+        for (let j = 0; j < nearbyFoes.length; j++) {
+          const foe = nearbyFoes[j];
+          if (!foe || foe === this || foe.dead || foe.isDefeated) continue;
+          const foeDist = Math.hypot(foe.x - this.x, foe.y - this.y);
+          if (foeDist <= blastRadius) {
+            const splashDmg = Math.round(95 * (1 - foeDist / blastRadius));
+            if (splashDmg > 0) {
+              foe.takeDamage(splashDmg, 'physical', (foe.x - this.x) * 2, (foe.y - this.y) * 2);
+            }
+          }
+        }
+
+        if (!eng.yolkPuddles) eng.yolkPuddles = [];
+        if (eng.yolkPuddles.length >= 18) eng.yolkPuddles.shift();
+        eng.yolkPuddles.push({
+          x: this.x,
+          y: this.y,
+          radius: 48,
+          life: 5.0,
+          maxLife: 5.0,
+          damageTimer: 0.5,
+        });
       },
 
       takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean; isCrit?: boolean; isCritical?: boolean }) {
-        if (this.isDefeated) return;
+        if (this.isDefeated || (this.id === 'zkazena_kraslice' && this.fusePrimed)) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (pokud útok neignoruje úhyb např. Formanský bič)
         if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
@@ -11380,6 +11910,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         if (this.hp <= 0 && !this.isDefeated) {
+          if (this.id === 'zkazena_kraslice' && type !== 'food') {
+            if (this.fusePrimed) return;
+            this.hp = 0;
+            this.fusePrimed = true;
+            this.fuseTimer = 1.2;
+            this.isDefeated = false;
+            this.dead = false;
+            pushDamageText(engineRef.current.texts, this.x, this.y - 32, 'PRASKÁ! 🥚💥', '#EAB308', true, 'combatStates');
+            return;
+          }
           this.isDefeated = true;
           this.cleanupLight();
           if ((player?.stickyPlumJamStacks || 0) > 0) {
@@ -13255,59 +13795,121 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             {/* RYCHLÝ PRŮVODCE: JAK HRÁT (BULLET HEAVEN PO ČESKU) */}
             {!hideHowToPlayCard && (
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
-                  border: '2px solid var(--wood-dark)',
-                  borderRadius: '10px',
-                  padding: '8px 12px',
-                  margin: '6px 0 10px 0',
-                  boxShadow: '2px 2px 0px var(--wood-dark)',
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  textAlign: 'left',
-                  position: 'relative',
-                }}
-              >
-                <LadaCardCorners variant="default" showBottomCorners={true} />
-                <div style={{ flex: '1 1 520px', fontSize: '0.82rem', color: '#451A03', lineHeight: 1.4 }}>
-                  <div style={{ fontWeight: 900, color: '#991B1B', fontSize: '0.88rem', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <div className="bubakov-how-to-play-card">
+                <LadaCardCorners variant="default" showBottomCorners={true} showInnerBorder={false} />
+                <div className="how-to-play-content">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <LadaFolkFlower variant="poppy" size={16} spin />
-                      <GameIcon icon="palette" size={16} /> Jak hrát Bubákov? Oddychový „Bullet Heaven“ v ladovském českém venkově!
+                      <strong style={{ color: '#991B1B', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <GameIcon icon="palette" size={16} /> Jak hrát Bubákov?
+                      </strong>
+                      <span style={{ color: '#78350F', fontSize: '0.76rem', fontWeight: 800, background: '#FEF08A', border: '1px solid #D97706', borderRadius: '4px', padding: '1px 6px' }}>
+                        Oddychový „Bullet Heaven“ po česku
+                      </span>
                       <LadaFolkFlower variant="cornflower" size={16} />
-                    </span>
+                    </div>
+
+                    {/* Quick Mode Switcher */}
+                    <div style={{ display: 'inline-flex', gap: '3px', background: 'rgba(180, 83, 9, 0.12)', border: '1px solid #B45309', borderRadius: '6px', padding: '2px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.coin();
+                          setQuickGuideMode('touch');
+                        }}
+                        style={{
+                          background: quickGuideMode === 'touch' ? '#6D28D9' : 'transparent',
+                          color: quickGuideMode === 'touch' ? '#FFFFFF' : '#6D28D9',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                        title="Zobrazit pokyny pro dotykové displeje, mobily a tablety"
+                      >
+                        📱 Dotyk
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sound.coin();
+                          setQuickGuideMode('keyboard');
+                        }}
+                        style={{
+                          background: quickGuideMode === 'keyboard' ? '#1D4ED8' : 'transparent',
+                          color: quickGuideMode === 'keyboard' ? '#FFFFFF' : '#1E3A8A',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          fontSize: '0.74rem',
+                          fontWeight: 900,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                        title="Zobrazit klávesové zkratky a ovládání myší"
+                      >
+                        ⌨️ Klávesy
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    Zbraně <strong>automaticky kosí strašidla</strong> – ty jen uhýbáš <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>WASD</kbd> / <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>Šipky</kbd>, odemykáš vylepšení a na konci máš radost, jak moc ti to střílí!{' '}
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <GameIcon icon="lightning" size={15} /> <kbd style={{ background: '#991B1B', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>Mezerník</kbd> spustí <strong>speciální zbraň</strong>
-                      </span>
-                      <span>•</span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <PernicekIcon size={16} /> Za <strong>perníčky</strong> přijde <strong>Čertův dědeček</strong> (stiskni u něj <kbd style={{ background: '#047857', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>E</kbd> pro zbraně a upgrady)
-                      </span>
-                      <span>•</span>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <GameIcon icon="church" size={15} /> Klávesou <kbd style={{ background: '#1D4ED8', color: '#FFF', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.75rem' }}>E</kbd> interaguješ i s <strong>prvky krajiny</strong> (kostel, hospoda, kaplička).
-                      </span>
-                    </span>
-                  </div>
+
+                  {quickGuideMode === 'touch' ? (
+                    <div>
+                      Zbraně <strong>automaticky kosí strašidla</strong> – ty jen ladně manévruješ po loukách, sbíráš perníčky a užíváš si čirou radost z obří palebné síly!
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#EDE9FE', border: '1px solid #7C3AED', borderRadius: '4px', padding: '2px 6px', color: '#5B21B6', fontWeight: 800, fontSize: '0.78rem' }}>
+                          🕹️ <strong>Virtuální joystick vlevo dole</strong> řídí pohyb
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEE2E2', border: '1px solid #DC2626', borderRadius: '4px', padding: '2px 6px', color: '#991B1B', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <GameIcon icon="lightning" size={14} /> <strong>Tlačítko ⚡ vpravo dole</strong> odpálí schopnost
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1px solid #D97706', borderRadius: '4px', padding: '2px 6px', color: '#92400E', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <PernicekIcon size={14} /> <strong>Dotykové [E]</strong> otevře nůši Dědečka i pamětihodnosti
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ECFDF5', border: '1px solid #059669', borderRadius: '4px', padding: '2px 6px', color: '#065F46', fontWeight: 800, fontSize: '0.78rem' }}>
+                          🃏 <strong>Dotykem na karty</strong> volíš zbraně a dary
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      Zbraně <strong>automaticky kosí strašidla</strong> – ty jen uhýbáš <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>WASD</kbd> / <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>Šipky</kbd>, odemykáš vylepšení a užíváš si čirou radost, jak moc ti to střílí!
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEE2E2', border: '1px solid #DC2626', borderRadius: '4px', padding: '2px 6px', color: '#991B1B', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <GameIcon icon="lightning" size={14} /> <kbd style={{ background: '#991B1B', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>Mezerník</kbd> spustí speciální zbraň
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1px solid #D97706', borderRadius: '4px', padding: '2px 6px', color: '#92400E', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <PernicekIcon size={14} /> Za perníčky přijde <strong>Čertův dědeček</strong> (<kbd style={{ background: '#047857', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> pro nůši)
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#EFF6FF', border: '1px solid #2563EB', borderRadius: '4px', padding: '2px 6px', color: '#1E40AF', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <GameIcon icon="church" size={14} /> Klávesou <kbd style={{ background: '#1D4ED8', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> ovládáš kostel, hospodu i kapličku
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0 }}>
+
+                <div className="how-to-play-actions">
                   <button
                     className="lada-btn btn-small"
                     style={{
                       background: '#1D4ED8',
                       color: '#FFFFFF',
                       fontWeight: 900,
-                      padding: '6px 12px',
-                      fontSize: '0.8rem',
-                      whiteSpace: 'nowrap',
+                      padding: '8px 14px',
+                      fontSize: '0.82rem',
+                      minHeight: '38px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     onClick={() => {
                       sound.coin();
@@ -13325,9 +13927,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       background: '#FDE68A',
                       color: '#451A03',
                       fontWeight: 900,
-                      padding: '6px 10px',
-                      fontSize: '0.76rem',
-                      whiteSpace: 'nowrap',
+                      padding: '8px 12px',
+                      fontSize: '0.78rem',
+                      minHeight: '38px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                     }}
                     onClick={() => {
                       sound.coin();
@@ -13336,7 +13941,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         window.localStorage.setItem('bubakov_hide_how_to_play_card', 'true');
                       } catch {}
                     }}
-                    title="Schovat tuto nápovědnou kartu a příště ji už nezobrazovat (průvodce zůstane vždy dostupný přes tlačítko Jak hrát & Ovládání dole)"
+                    title="Schovat tuto nápovědnou kartu"
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <GameIcon icon="cancel" size={13} /> Už neukazovat

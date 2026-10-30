@@ -487,10 +487,10 @@ export class ArenaRenderer {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
           const decorExtent =
-            dec.type === 'march_mill'
+            dec.type === 'march_mill' || dec.type === 'duben_border'
               ? 2600 * scale
-              : dec.type && dec.type.startsWith('march_')
-              ? 450 * scale
+              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_'))
+              ? 480 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
             continue;
@@ -507,10 +507,10 @@ export class ArenaRenderer {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent =
-          dec.type === 'march_mill'
+          dec.type === 'march_mill' || dec.type === 'duben_border'
             ? 2600 * scale
-            : dec.type && dec.type.startsWith('march_')
-            ? 450 * scale
+            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_'))
+            ? 480 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
           continue;

@@ -1686,6 +1686,94 @@ export class GameEngine {
             const moveDir = this.panicked ? dir + Math.PI : dir;
             this.vx = Math.cos(moveDir) * spd;
             this.vy = Math.sin(moveDir) * spd;
+          } else if (this.id === 'beranek') {
+            this.woolBurstTimer = (typeof this.woolBurstTimer === 'number' ? this.woolBurstTimer : 4.5) - dt;
+            if (this.woolBurstTimer <= 0 && dist < 240) {
+              this.woolBurstTimer = 5.0;
+              const pushAng = Math.atan2(player.y - this.y, player.x - this.x);
+              player.x += Math.cos(pushAng) * 140;
+              player.y += Math.sin(pushAng) * 140;
+              self.emitDamageText(this.x, this.y - 60, 'BERANÍ TRK! 🐏💨', '#FDE047', true);
+            }
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
+          } else if (this.id === 'carodejnice_stara') {
+            this.emberTimer = (typeof this.emberTimer === 'number' ? this.emberTimer : 4.0) - dt;
+            if (this.emberTimer <= 0) {
+              this.emberTimer = 4.5;
+              for (let i = 0; i < 3; i++) {
+                const ang = dir + (i - 1) * 0.25;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 190,
+                  vy: Math.sin(ang) * 190,
+                  angle: ang,
+                  speed: 190,
+                  dmg: 18,
+                  damage: 18,
+                  type: 'poison',
+                  visual: 'witch_venom',
+                  radius: 8,
+                  color: '#CA8A04',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 16,
+                  statusText: 'ZKAŽENÉ VEJCE! 🥚',
+                  dead: false,
+                });
+              }
+            }
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
+          } else if (this.id === 'vrchni_carodejnice') {
+            const isPhase2 = this.hp <= (this.maxHp || 3200) * 0.5;
+            this.fireVortexTimer = (typeof this.fireVortexTimer === 'number' ? this.fireVortexTimer : 3.5) - dt;
+            if (isPhase2 && !this.enraged) {
+              this.enraged = true;
+              this.speed = 140;
+              self.emitDamageText(this.x, this.y - 110, '🔥 FILIPOJAKUBSKÁ VICHŘICE!', '#DC2626', true);
+              for (let i = 0; i < 2; i++) {
+                const ang = (i / 2) * Math.PI * 2 + 0.4;
+                self.spawnMonster('carodejnice_koste', this.x + Math.cos(ang) * 120, this.y + Math.sin(ang) * 120, 1.0);
+              }
+            }
+            if (this.fireVortexTimer <= 0) {
+              this.fireVortexTimer = isPhase2 ? 2.8 : 4.0;
+              const count = isPhase2 ? 5 : 3;
+              const spread = isPhase2 ? 0.32 : 0.24;
+              for (let i = 0; i < count; i++) {
+                const angle = dir + (i - (count - 1) / 2) * spread;
+                const projSpd = isPhase2 ? 240 : 200;
+                const projDmg = isPhase2 ? 30 : 22;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(angle) * projSpd,
+                  vy: Math.sin(angle) * projSpd,
+                  angle,
+                  speed: projSpd,
+                  dmg: projDmg,
+                  damage: projDmg,
+                  type: 'magic',
+                  visual: 'witch_fireball',
+                  radius: 10,
+                  color: '#A855F7',
+                  life: 2.5,
+                  maxLife: 2.5,
+                  isEnemy: true,
+                  pushback: 24,
+                  statusText: 'UŘKNUTÍ! 🔮',
+                  dead: false,
+                });
+              }
+            }
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
           } else {
             const moveDir = this.panicked ? dir + Math.PI : dir;
             this.vx = Math.cos(moveDir) * spd;
@@ -3448,7 +3536,7 @@ export class GameEngine {
 
       if (p.isEnemy) {
         if (player && player.hp > 0 && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
-          player.takeDamage(p.dmg, p.type || 'blunt');
+          player.takeDamage(p.dmg ?? p.damage ?? 15, p.type || 'blunt');
           if (p.soakPlayer) {
             player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
           }
