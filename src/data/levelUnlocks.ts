@@ -129,11 +129,12 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "jezinka_mraziva", name: "Mrazivá jezinka", icon: "🧙‍♀️" }
 	]),
 	3: makeSequentialUnlock(3, [
-		{ id: "cert", name: "Pekelný Čert s vidlemi", icon: "👹" },
-		{ id: "hastrman", name: "Hastrman z Brčálníku", icon: "🎩" },
-		{ id: "polednice", name: "Polednice se srpem", icon: "☀️" },
-		{ id: "rarach", name: "Rarášek", icon: "👺" },
-		{ id: "zaba", name: "Rybniční žabka", icon: "🐸" }
+		{ id: "vrchni_carodejnice", name: "Vrchní Filipojakubská Čarodějnice", icon: "🧹" },
+		{ id: "carodejnice_stara", name: "Stará ježibaba z Melechu", icon: "🧙‍♀️" },
+		{ id: "beranek", name: "Obří kolednický beránek", icon: "🐑" },
+		{ id: "carodejnice_koste", name: "Čarodějnice na koštěti", icon: "🧹" },
+		{ id: "zkazena_kraslice", name: "Zkažená kraslice", icon: "🥚" },
+		{ id: "rehtackar", name: "Koledník s řehtačkou", icon: "🪓" }
 	]),
 	4: makeSequentialUnlock(4, [
 		{ id: "hejkal", name: "Půlnoční Hejkal", icon: "🌲" },

@@ -596,8 +596,8 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <GameIcon icon="rooster" size={24} /> Hlavní cíl: Přežít výpravu a vyprášit kožich finálnímu bossovi!
               </h3>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.4 }}>
-                Kampaň Bubákova vás provede <strong>8 rozmanitými kraji</strong> – od prosluněného denního tání v Hrusicích přes třeskuté noční mrazy, náves u Brčálníku a staré hamry až po tajemnou Dračí sluj pod Melechovem.
-                Úvodní dvě výpravy v Předjaří trvají <strong>5 minut (300 sekund)</strong>, navazujících 6 výprav pak <strong>6 minut (360 sekund)</strong>.
+                Kampaň Bubákova vás provede <strong>8 rozmanitými kraji</strong> – od prosluněného denního tání v Hrusicích přes třeskuté noční mrazy, rozkvetlý dubnový den a staré hamry až po tajemnou Dračí sluj pod Melechovem.
+                Úvodní tři jarní výpravy v Hrusicích trvají <strong>5 minut (300 sekund)</strong>, navazujících 5 výprav pak <strong>6 minut (360 sekund)</strong>.
                 Vydržíte-li naživu do konce a porazíte finálního bosse kraje, rozezní se <strong>večerní klekání zvonu</strong> (při denní výpravě) nebo třikrát hlasitě <strong>zakokrhá vesnický kohout</strong> (při noční výpravě) a úroveň je slavně vyhrána!
               </p>
             </div>
@@ -680,7 +680,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     <GameIcon icon="devil" size={16} /> Finální Boss & Vítězství
                   </div>
                   <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                    Vyvrcholení výpravy! Přichází vládce kraje (Hejno mrazivých vran, Morana, Pekelný Čert, Půlnoční Hejkal, Skalní obr, Prokletý Mlynář, Bezhlavý rytíř či Tříhlavý Drak). Jeho porážkou vítězíte!
+                    Vyvrcholení výpravy! Přichází vládce kraje (Hejno mrazivých vran, Morana, Vrchní Filipojakubská Čarodějnice, Půlnoční Hejkal, Skalní obr, Prokletý Mlynář, Bezhlavý rytíř či Tříhlavý Drak). Jeho porážkou vítězíte!
                   </div>
                 </div>
               </div>
@@ -698,7 +698,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   lineHeight: 1.45,
                 }}
               >
-                <strong style={{ color: '#1E3A8A' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří v Hrusicích – Denní tání ➔ 2. Předjaří v Hrusicích – Noční mrazy ➔ 3. Náves a rybník Brčálník ➔ 4. Starý hřbitov a Hrusický hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska a Zlenické podhradí ➔ 8. Dračí sluj pod Melechovskou skálou.
+                <strong style={{ color: '#1E3A8A' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří v Hrusicích – Denní tání ➔ 2. Předjaří v Hrusicích – Noční mrazy ➔ 3. Duben v Hrusicích – Dubnový den ➔ 4. Starý hřbitov a Hrusický hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska a Zlenické podhradí ➔ 8. Dračí sluj pod Melechovskou skálou.
               </div>
             </div>
 

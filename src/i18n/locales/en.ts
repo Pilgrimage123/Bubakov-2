@@ -316,7 +316,7 @@ export const en: Record<string, string> = {
   "level.3.badge": "Level 4",
   "level.3.description": "Mist gathers among mossy crosses. Skeletons rise from ancient graves and the dread Howler echoes through dark woods.",
   "level.3.lore": "At midnight the old graveyard stirs. Banish restless shades and face the great sovereign of the deep woods!",
-  "level.3.unlock_requirement": "Vanquish the Infernal Devil on Level 3",
+  "level.3.unlock_requirement": "Vanquish the High Brocken Witch on Level 3",
   "level.3.miniboss.name": "🔔 Duskwraith of Evening Bell",
   "level.3.miniboss.warning": "🔔 BEWARE: EVENING BELL CHIMES AND DUSKWRAITH NEARS! 🔔",
   "level.3.midboss.name": "⛓️ Infernal Bailiff with Whip",

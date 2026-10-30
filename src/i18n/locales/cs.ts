@@ -316,7 +316,7 @@ export const cs: Record<string, string> = {
   "level.3.badge": "4. Úroveň",
   "level.3.description": "Mlha stoupá mezi mechem obrostlými kříži. Ze starých hrobů vstávají kostlivci a v temném hvozdu děsivě volá Hejkal.",
   "level.3.lore": "O půlnoci ožívá starý hřbitov pod kostelem. Zažeňte hřbitovní běsy a utkejte se s obávaným vládcem hvozdu!",
-  "level.3.unlock_requirement": "Přemožte Pekelného Čerta na 3. úrovni",
+  "level.3.unlock_requirement": "Přemožte Vrchní Filipojakubskou Čarodějnici na 3. úrovni",
   "level.3.miniboss.name": "🔔 Večerní Klekánice",
   "level.3.miniboss.warning": "🔔 POZOR: ZVONÍ KLEKÁNÍ A PŘICHÁZÍ DĚSIVÁ KLEKÁNICE! 🔔",
   "level.3.midboss.name": "⛓️ Pekelný dráb s karabáčem",

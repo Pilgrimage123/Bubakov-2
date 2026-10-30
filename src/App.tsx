@@ -13357,7 +13357,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
                     (lvlId === 0 && (meta.bestiaryKills?.vrana || 0) >= 1) ||
                     (lvlId === 1 && (meta.bestiaryKills?.morana || 0) >= 1) ||
-                    (lvlId === 2 && (meta.bestiaryKills?.cert || 0) >= 1) ||
+                    (lvlId === 2 && ((meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1)) ||
                     (lvlId === 3 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 4 && (meta.bestiaryKills?.obr || 0) >= 1) ||
                     (lvlId === 5 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||

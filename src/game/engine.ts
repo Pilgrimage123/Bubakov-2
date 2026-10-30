@@ -1178,9 +1178,11 @@ export class GameEngine {
       };
       resolvedId =
         fallbackMap[id] ||
-        ((this.state.activeLevelId ?? 0) === 0
+        (((this.state.activeLevelId ?? 0) === 0 || this.state.activeLevelId === 1)
           ? 'mrazovy_skritek'
           : this.state.activeLevelId === 2
+          ? 'zkazena_kraslice'
+          : this.state.activeLevelId === 3
           ? 'skeleton'
           : 'rarach');
       stats = ENEMIES[resolvedId] || ENEMIES.rarach;
@@ -3895,7 +3897,7 @@ export class GameEngine {
         const d = this.state.decor[i];
         if (d.animTime !== undefined) d.animTime += dt;
 
-        if (d.type === 'ice_floe' && this.state.activeLevelId === 0) {
+        if (d.type === 'ice_floe' && (this.state.activeLevelId === 0 || this.state.activeLevelId === 1)) {
           const floeState = getMarchIceFloeState(d.floeIndex ?? i, this.state.gameTime || 0);
           d.x = floeState.x;
           d.y = floeState.y;
@@ -4004,8 +4006,8 @@ export class GameEngine {
       }
     }
 
-    // Stage 1 ("BŘEZEN"): Enforce impassable cottages/terrain, hard arena border, river/pond ice floes & Kaplička Marian Apparition
-    if (this.state.activeLevelId === 0) {
+    // Stage 1 & 2 ("BŘEZEN"): Enforce impassable cottages/terrain, hard arena border, river/pond ice floes & Kaplička Marian Apparition
+    if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1) {
       const thaw = this.state.marchThaw;
       if (thaw) {
         thaw.shrineCooldown = Math.max(0, (thaw.shrineCooldown || 0) - dt);
@@ -4257,7 +4259,7 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2) {
           clampToDubenArenaBounds(d, 28);
@@ -4268,13 +4270,13 @@ export class GameEngine {
           const dy = d.y - player.y;
           const pr = player.pickupRadius;
           const distSq = dx * dx + dy * dy;
-          if (distSq < pr * pr && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
+          if (canCollectDrop(d.type, player.hp, player.maxHp, player) && distSq < pr * pr) {
             const dist = Math.sqrt(distSq);
             const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * dt;
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2) {
               clampToDubenArenaBounds(d, 28);

@@ -199,12 +199,16 @@ Toulavý kramář a pekelník s nůší procházející herním světem, který 
 _Avoid_: level-up nabídka, obchodník, shopkeeper
 
 **Výprava**:
-Jednotlivý herní běh hráče zvolenou krajinou za účelem přežití, záchrany dušiček a poražení místního bosse.
-_Avoid_: run, zápas, kolo, match
+Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 8 po sobě jdoucích úrovní).
+_Avoid_: run, stage, level, zápas, kolo, match
 
 **Kraj**:
-Jednotlivá zeměpisná oblast a úroveň venkovského světa (např. Předjaří v Hrusicích, Náves a rybník Brčálník), nabízená k průzkumu v Nabídce výprav.
+Zeměpisná a folklórní oblast venkovského světa (např. Předjaří v Hrusicích, Duben v Hrusicích), která může hostit jednu i více tematických výprav.
 _Avoid_: stage, level, mapa, herní zóna
+
+**Aréna**:
+Fyzické bojiště a prostorové uspořádání krajiny s pevnými hranicemi, architektonickými překážkami, vodními toky a zákrytem střech (např. Březnové tání, Dubnová náves).
+_Avoid_: stage arena, mapa, herní plocha, map grid
 
 **Denní výprava**:
 Výprava odehrávající se za jasného denního svitu s otevřeným rozhledem a přehlednějším chováním polní havěti.

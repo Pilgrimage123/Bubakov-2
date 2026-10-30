@@ -46,8 +46,8 @@ export function renderWorldHazardsAndEncounters(
   const player = engine.player;
   const uiTime = engine.uiTime || 0;
 
-  // 1. Level 0: March Thaw Arena (Beer puddle, Kaplička Marian Apparition & POI hints)
-  if (engine.activeLevelId === 0 && engine.marchThaw) {
+  // 1. Level 0 & 1: March Thaw Arena (Beer puddle, Kaplička Marian Apparition & POI hints)
+  if ((engine.activeLevelId === 0 || engine.activeLevelId === 1) && engine.marchThaw) {
     const thaw = engine.marchThaw;
     if (thaw.beerPuddle && isInView(thaw.beerPuddle.x, thaw.beerPuddle.y, 60, camera)) {
       ctx.save();

@@ -1,3 +1,18 @@
+## 2026-10-30 — Sjednocení hierarchie arén, konzistence číslování etap a dočištění odemykání 4. úrovně (ADR 0036)
+
+- **Sjednocení doménového modelu a terminologie (ADR 0036 & `GLOSSARY.md`)**:
+  - Ukotvena striktní trojčlenka doménových pojmů: **Kraj** (zeměpisná oblast, např. *Předjaří v Hrusicích*, *Duben v Hrusicích*), **Aréna** (fyzické bojiště, překážky a dominanty se sémantickým ID `breznove_tani`, `dubnova_naves`) a **Výprava** / **Úroveň** (hratelná etapa 1 až 8 s vlastním fázováním a bossy).
+  - Vytvořen architektonický záznam `docs/adr/0036-hierarchie-aren-kraju-a-vyprav.md` a aktualizován `GLOSSARY.md`.
+- **Sdílená aréna Březnové tání (`breznove_tani`) pro 1. i 2. výpravu (`src/data/marchThawArena.ts`, `src/game/engine.ts`, `src/render/renderWorldHazards.ts`)**:
+  - Opravena absence terénních prvků v Nočních mrazech (`id: 1`): kolize pevných překážek, průhlednost a zákryty střech (`hasRoofsInView`, `isEntityBehindMarchRoof`), viditelnost (`hasTerrainLineOfSight`), unášení ledovými krami na Sázavě a zjevení Panny Marie u Kapličky sv. Prokopa jsou nyní aktivní pro `activeLevelId === 0 || activeLevelId === 1`.
+  - Doplněno bezpečné mapování fallbackových nepřátel pro 2. i 3. výpravu (`engine.ts`).
+- **Kanonizace 3. výpravy jako Dubnový den a dočištění odemykání (`src/data/levelUnlocks.ts`, `src/App.tsx`, `src/data/levels.ts`, `src/components/ControlsModal.tsx`, `src/components/KronikaChanges.tsx`, lokalizace)**:
+  - Odemykací cíl pro 4. úroveň (*Starý hřbitov a Hrusický hvozd*) v `levelUnlocks.ts` přepojen na dubnovou havěť a Vrchní Filipojakubskou Čarodějnici (`vrchni_carodejnice`, `carodejnice_stara`, `beranek`, `carodejnice_koste`, `zkazena_kraslice`, `rehtackar`).
+  - Dokončení 3. výpravy v `App.tsx` navázáno na registraci zabití Čarodějnice.
+  - V nápovědě `ControlsModal.tsx`, kronice `KronikaChanges.tsx` a lokalizacích `cs.ts` / `en.ts` vyčištěny reliktní zmínky o rybníku Brčálníku a Pekelném Čertovi.
+- **Rozšíření testovací sady (`tests/level2DubnovyDen.test.ts`)**:
+  - Doplněny integrační testy pro sdílenou fyziku arény `breznove_tani` (kolize, střechy, viewport) pro obě úvodní úrovně a ověření odemykání 4. úrovně po porážce Vrchní Čarodějnice. Všech 73 testovacích souborů (699 testů) prochází.
+
 ## 2026-10-30 — 3. Úroveň: Dubnový den v Hrusicích (Dubnová náves, aprílové slunce, velikonoční kraslice a čarodějnice)
 
 - **Kompletní vertikální řez 3. úrovně („Dubnový den“, `levelId: 2`) v autentickém stylu Josefa Lady**:

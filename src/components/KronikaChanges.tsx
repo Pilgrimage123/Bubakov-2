@@ -27,7 +27,7 @@ const KRONIKA: KronikaEntry[] = [
     items: [
       '☀️ Denní tání (1. úroveň, ID 0): Prosluněná denní výprava mezi tajícími mezemi a pučícími blatouchy. Cílem je vydržet až do večerního klekání a v čase 300 s zahnat finálního bosse Hejno mrazivých vran.',
       '❄️ Noční mrazy (2. úroveň, ID 1): Noční výprava na praskajících krách podél Sázavy s pochodem tajících sněhuláků, Mrazivým obrem a finální Moranou — špatně vynesenou smrtkou.',
-      '🗺️ Čistá osmidílná kampaň: Celý svět Bubákova je nově uspořádán do 8 lineárních kapitol (1. Denní tání, 2. Noční mrazy, 3. Náves a rybník Brčálník, 4. Starý hřbitov a hvozd, 5. Zima na Melechově, 6. Staré hamry a mlýn, 7. Pustá Hláska, 8. Dračí sluj).',
+      '🗺️ Čistá osmidílná kampaň: Celý svět Bubákova je nově uspořádán do 8 lineárních kapitol (1. Denní tání, 2. Noční mrazy, 3. Dubnový den, 4. Starý hřbitov a hvozd, 5. Zima na Melechově, 6. Staré hamry a mlýn, 7. Pustá Hláska, 8. Dračí sluj).',
       '⏱️ Pětiminutové trvání (300 s): Obě úvodní výpravy byly strategicky prodlouženy na 5 minut (dohromady 10 minut), s fázemi dne/noci, anomálním oknem Bubácké díry (120–175 s) a trojím odstupňováním bossů (Miniboss 85 s, Midboss 185 s, Finální boss 300 s).',
       '🔔 Tematické zakončení: Denní výprava slaví vítězství při večerním klekání zvonu, zatímco noční výpravy končí při ranním kuropění kohouta.',
     ],

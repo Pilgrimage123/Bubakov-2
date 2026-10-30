@@ -5,6 +5,13 @@ import { RUN_ROZMARY, selectRunRozmar } from '../src/data/runArchetypes';
 import { GameEngine } from '../src/game/engine';
 import { getLevelTranslation } from '../src/i18n';
 import { getCurrentDayPhase } from '../src/constants';
+import {
+  collideCircleWithObstacles,
+  hasRoofsInView,
+  isEntityBehindMarchRoof,
+  MARCH_THAW_OBSTACLES,
+  MARCH_THAW_ROOF_ZONES,
+} from '../src/data/marchThawArena';
 
 describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
   it('numbers player-facing game stages from 1 through 8 with Stage 3 mapped to ID 2', () => {
@@ -132,5 +139,45 @@ describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
     expect(state.activeLevelId).toBe(2);
     expect(state.spawnTimer).toBeGreaterThanOrEqual(2.0);
     expect(state.enemies.length).toBeGreaterThan(0);
+  });
+
+  it('binds Stage 4 progression to April creatures and Vrchní Čarodějnice', () => {
+    const lvl3Unlock = LEVEL_UNLOCKS[3];
+    expect(lvl3Unlock).toBeDefined();
+    const enemyIds = lvl3Unlock.targetEnemies.map((e: any) => e.id);
+    expect(enemyIds).toContain('vrchni_carodejnice');
+    expect(enemyIds).toContain('carodejnice_stara');
+    expect(enemyIds).toContain('beranek');
+    expect(enemyIds).toContain('zkazena_kraslice');
+
+    // Unlocks when Level 2 is completed or Vrchní Čarodějnice is slain
+    const unlockedViaBoss = getLevelProgress(3, { bestiaryKills: { vrchni_carodejnice: 1 } });
+    expect(unlockedViaBoss.isUnlocked).toBe(true);
+
+    const unlockedViaRun = getLevelProgress(3, { completedLevels: { 2: true } });
+    expect(unlockedViaRun.isUnlocked).toBe(true);
+  });
+
+  it('shares breznove_tani arena physics between Stage 1 (ID 0) and Stage 2 (ID 1)', () => {
+    const obs = MARCH_THAW_OBSTACLES[0];
+    expect(obs).toBeDefined();
+
+    // Collision check produces hit on both Level 0 and Level 1
+    const hit0 = collideCircleWithObstacles(obs.x, obs.y, 20, 0);
+    const hit1 = collideCircleWithObstacles(obs.x, obs.y, 20, 1);
+    expect(hit0.hit).toBe(true);
+    expect(hit1.hit).toBe(true);
+
+    // Roof checks work for both Level 0 and Level 1
+    const roof = MARCH_THAW_ROOF_ZONES[0];
+    expect(roof).toBeDefined();
+    const midX = (roof.minX + roof.maxX) / 2;
+    const midY = (roof.minY + roof.maxY) / 2;
+    expect(isEntityBehindMarchRoof(midX, midY, 0)).not.toBeNull();
+    expect(isEntityBehindMarchRoof(midX, midY, 1)).not.toBeNull();
+
+    // Viewport roofs in view check works for both
+    expect(hasRoofsInView(0, undefined, midX - 50, midY - 50, midX + 50, midY + 50)).toBe(true);
+    expect(hasRoofsInView(1, undefined, midX - 50, midY - 50, midX + 50, midY + 50)).toBe(true);
   });
 });
