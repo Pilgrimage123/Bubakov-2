@@ -313,15 +313,15 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	3: {
 		id: 3,
-		name: "4. Starý hřbitov a Hrusický hvozd",
-		shortTitle: "Hřbitov a hvozd",
-		subtitle: "Sychravá mlha, náhrobky, noční stíny a Půlnoční Hejkal",
-		theme: "autumn_graveyard",
-		season: "autumn",
-		icon: "🪦",
+		name: "4. Duben v Hrusicích – Dubnová noc",
+		shortTitle: "Dubnová noc",
+		subtitle: "Filipojakubská noc, plápolající hranice a reje čarodějnic",
+		theme: "spring_village",
+		season: "spring",
+		icon: "🔥",
 		badge: "4. Úroveň",
-		description: "Za vesnickou zdí šumí staré duby a hřbitovní kříže pohlcuje chladná podzimní mlha. Ze země vystupují umrlci a z lesa hejká prastarý běs.",
-		lore: "V hlubokém hvozdu za márnicí se ztratil nejeden chasník. Připravte své osikové pruty a postavte se nočním kostlivcům i obávanému Hejkalovi!",
+		description: "S příchodem noci vzplály na kopcích filipojakubské ohně. Vzduchem sviští čarodějnická košťata a z mezí vylézá noční jarní havěť.",
+		lore: "Na Filipa a Jakuba čarodějnice létat troufá! Zapalte smolné hranice, udržte oheň na návsi a vykažte z kraje noční čarodějnický sabat.",
 		unlockRequirementText: "Odemkne se pokořením Vrchní Filipojakubské Čarodějnice ve 3. úrovni",
 		skyColor: "#6B584E",
 		nightSkyColor: "#1A1822",
@@ -444,7 +444,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		badge: "5. Úroveň",
 		description: "Májová náves s vysokou májkou ožívá tancem a zpěvem. V potoce se koupou chlapci, na lukách znějí pastýřské píšťaly a vzduchem bzučí hejna chroustů. Do kraje však míří nečekaný chlad Ledových mužů!",
 		lore: "V máji nemá pastýřovi oschnout hůl a do svatého Ducha nesvlíkej kožucha! Užijte si kvetoucí stromy a chraňte jarní květy před námrazou a hrozbou tří Ledových mužů.",
-		unlockRequirementText: "Odemkne se po poražení Půlnočního Hejkala ve 4. úrovni",
+		unlockRequirementText: "Odemkne se po přežití Dubnové noci ve 4. úrovni",
 		skyColor: "#CBE8FA",
 		nightSkyColor: "#2A405A",
 		groundColor: "#A3D48B",
@@ -469,6 +469,14 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			time: 85,
 			kills: 50,
 			multiplier: 3.2
+		},
+		midBoss: {
+			id: "hastrman",
+			name: "💧 Bahenní hastrman z Brčálníku",
+			warning: "💧 POZOR: Z VYHŘÁTÉHO RYBNÍKA VYSTUPUJE BAHENNÍ HASTRMAN S HRNEČKY! 💧",
+			time: 185,
+			kills: 130,
+			multiplier: 1.6
 		},
 		finalBoss: {
 			id: "ledovi_muzi",
@@ -512,6 +520,12 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				role: "Usměvavé chmýří unášené větrem, které se při zásahu štěpí"
 			},
 			{
+				id: "hastrman",
+				name: "Bahenní hastrman",
+				icon: "💧",
+				role: "Záludný vládce rybníka Brčálníku vrhající leknínové bahno"
+			},
+			{
 				id: "carodejnice_zaspalka",
 				name: "Čarodějnice Zaspalka",
 				icon: "🧹",
@@ -541,7 +555,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		badge: "6. Úroveň",
 		description: "Pod zčernalými hamry se otáčí prokletý mlýn. Jiskry létají z kovadlin a mlynářova voda bere vše, co jí stojí v cestě.",
 		lore: "Zastavte zbojníky, jiskřivce a mlynářovy služebníky dřív, než se Čertův mlýn roztočí naplno.",
-		unlockRequirementText: "Odemkne se po poražení Skalního obra v 5. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Ledových mužů v 5. úrovni",
 		skyColor: "#8B5E3C",
 		nightSkyColor: "#21150F",
 		groundColor: "#514237",

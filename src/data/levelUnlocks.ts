@@ -146,8 +146,8 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 	5: makeSequentialUnlock(5, [
 		{ id: "ledovi_muzi", name: "Ledoví muži", icon: "🧊" },
 		{ id: "carodejnice_zaspalka", name: "Čarodějnice Zaspalka", icon: "🧹" },
-		{ id: "chroust", name: "Chroust obecný", icon: "🪲" },
-		{ id: "obr", name: "Skalní obr ze Sázavy", icon: "🗿" }
+		{ id: "hastrman", name: "Bahenní hastrman", icon: "💧" },
+		{ id: "chroust", name: "Chroust obecný", icon: "🪲" }
 	]),
 	6: makeSequentialUnlock(6, [
 		{ id: "mlynar", name: "Prokletý Mlynář", icon: "🌊" },
@@ -301,7 +301,7 @@ function computeLevelProgress(id: any, meta: any) {
 			count: cnt
 		};
 	});
-	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "obr" : id === 6 ? "mlynar" : id === 7 ? "bezhlavy_rytir" : "";
+	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "ledovi_muzi" : id === 6 ? "mlynar" : id === 7 ? "bezhlavy_rytir" : "";
 	const bossDefeated = bossId ? (meta?.bestiaryKills?.[bossId] || 0) >= 1 || !!meta?.completedLevels?.[id - 1] : false;
 	let percent = 0;
 	if (bossDefeated) {

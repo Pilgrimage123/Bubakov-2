@@ -1315,7 +1315,7 @@ export function hasRoofsInView(
     if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
   }
   if (
-    (activeLevelId === 0 || activeLevelId === 1) &&
+    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) &&
     viewRight >= ROOF_UNION_MIN_X &&
     viewLeft <= ROOF_UNION_MAX_X &&
     viewBottom >= ROOF_UNION_MIN_Y &&
@@ -1357,7 +1357,7 @@ export function isEntityBehindMarchRoof(
     const dubenRoof = isEntityBehindDubenRoof(x, y);
     if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
   }
-  if (activeLevelId === 0 || activeLevelId === 1) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
     const halfR = radius * 0.5;
     if (
       y >= ROOF_UNION_MIN_Y &&
@@ -1439,7 +1439,7 @@ export function sanitizeArenaSpawnPoint(
   const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
 
   for (let pass = 0; pass < 3; pass++) {
-    if (activeLevelId === 0 || activeLevelId === 1) {
+    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
       resolveMarchThawObstacles(dummy, false);
     } else if (activeLevelId === 2) {
       resolveDubenObstacles(dummy, false);

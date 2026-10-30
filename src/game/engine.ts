@@ -967,11 +967,9 @@ export class GameEngine {
       }
       this.spawnMonster('cerny_pes', player.x + 480, player.y - 100, 0.9);
     } else if (levelId === 4) {
-      for (let i = 0; i < 2; i++) {
-        const ang = (i / 2) * Math.PI * 2;
-        this.spawnMonster('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0);
-      }
-      this.spawnMonster('vanicka', player.x - 440, player.y - 180, 1.0);
+      this.spawnMonster('chroust', player.x + 460, player.y - 100, 1.0);
+      this.spawnMonster('chroust', player.x - 460, player.y + 100, 1.0);
+      this.spawnMonster('pampeliska_chmyri', player.x, player.y - 440, 1.0);
     } else if (levelId === 5) {
       this.spawnMonster('zbojnik', player.x + 460, player.y, 1.0);
       this.spawnMonster('jiskrivec', player.x - 460, player.y, 1.0);

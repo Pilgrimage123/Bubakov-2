@@ -328,3 +328,16 @@ _Avoid_: profil lovce, info karta, dossier karta
 Podrobné okno s plnými vlastnostmi, výbavou, pasivní a zvláštní schopností jednoho lovce, otevírané z Karty lovce.
 _Avoid_: profil, detail lovce, statistiky lovce
 
+**Dubnová noc**:
+Čtvrtá výprava kampaně odehrávající se za potemnělé Filipojakubské noci z 30. dubna na 1. května, provázená plápolajícími ohni, větrnými víry a rejem čarodějnic.
+_Avoid_: night stage 4, podzimní noc, čarodějnický level
+
+**Bahenní hastrman z Brčálníku**:
+Májový oblastní Midboss nastupující v 185. sekundě z vyhřátého rybníka Brčálníku v 5. úrovni, vrhající leknínové bahno a chránící své hrnečky s dušičkami.
+_Avoid_: vodník miniboss, rybniční boss, hastrman elite
+
+**Parita herního klienta**:
+Architektonické pravidlo zakazující stav, kdy nová strašidla, chování bossů či interakce pamětihodností existují pouze v testovacím simulačním enginu (`engine.ts`), aniž by byla plnohodnotně a paritně zrcadlena v interaktivním herním rozhraní (`App.tsx`).
+_Avoid_: duální engine nesoulad, engine-only mob, headless drift
+
+

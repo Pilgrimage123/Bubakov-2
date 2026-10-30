@@ -248,6 +248,7 @@ import {
   KVETEN_FOREST_ZONES,
   resolveKvetenObstacles,
   getKvetenWaterEffect,
+  isInsideKvetenPoi,
 } from './data/kvetenArena';
 import {
   DUBEN_BELL_COOLDOWN,
@@ -2721,6 +2722,97 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
 
+    // 2c. Level 4 (Stage 5: Květen v Hrusicích) Interaktivní objekty (Kostelní zvonice, Májový ležák a koláč v hospodě, Sloup sv. Jana Nepomuckého)
+    if (eng.activeLevelId === 4) {
+      const kv = eng.kveten || (eng.kveten = {
+        bellCooldown: 0,
+        kegCooldown: 0,
+        shrineCooldown: 0,
+        beerPuddle: null,
+        maypoleWardActive: false,
+        weatherPetalTimer: 0,
+        terrainHazardTimer: 0,
+      });
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.church, 30) && (kv.bellCooldown || 0) <= 0) {
+        kv.bellCooldown = 80;
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          KVETEN_POIS.church.x,
+          KVETEN_POIS.church.y,
+          950,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (!enemy || enemy.dead || enemy.isDefeated) continue;
+          const dx = enemy.x - KVETEN_POIS.church.x;
+          const dy = enemy.y - KVETEN_POIS.church.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 920 + (enemy.radius || 0)) {
+            enemy.takeDamage(180 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 480, (dy / dist) * 480, { stunDuration: 2.5 });
+            enemy.panicked = true;
+            enemy.panicTimer = Math.max(enemy.panicTimer || 0, 4.0);
+          }
+        }
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.3);
+        pushDamageText(eng.texts, KVETEN_POIS.church.x, KVETEN_POIS.church.y - 100, '🔔 MÁJOVÁ ZVONICE! SVATÝ HLAS!', '#FEF08A', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.tavern, 30) && (kv.kegCooldown || 0) <= 0) {
+        kv.kegCooldown = 18;
+        p.hp = Math.min(p.maxHp, p.hp + 24 * (p._cachedFrostHealMult ?? 1));
+        const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
+        const x = p.x + ((p.lastDx || 1) / direction) * 90;
+        const y = p.y + ((p.lastDy || 0) / direction) * 90;
+        kv.beerPuddle = { x, y, time: 8 };
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          x,
+          y,
+          180,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (!enemy || enemy.dead || enemy.isDefeated) continue;
+          const dx = enemy.x - x;
+          const dy = enemy.y - y;
+          if (dx * dx + dy * dy < 170 * 170) {
+            enemy.takeDamage(125 * (p.damageMultiplier || 1), 'physical', dx * 3, dy * 3);
+            enemy.stunTimer = Math.max(enemy.stunTimer || 0, 2.8);
+          }
+        }
+        pushDamageText(eng.texts, x, y - 30, '🍺 MÁJOVÝ LEŽÁK A KOLÁČE! (+KURÁŽ)', '#F6D365', true, 'combatStates');
+        sound.hit();
+        return true;
+      }
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.shrine, 35) && (kv.shrineCooldown || 0) <= 0) {
+        kv.shrineCooldown = 75;
+        p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          KVETEN_POIS.shrine.x,
+          KVETEN_POIS.shrine.y,
+          580,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (!enemy || enemy.dead || enemy.isDefeated) continue;
+          const dx = enemy.x - KVETEN_POIS.shrine.x;
+          const dy = enemy.y - KVETEN_POIS.shrine.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 560 + (enemy.radius || 0)) {
+            enemy.takeDamage(160 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520);
+            enemy.panicked = true;
+            enemy.panicTimer = Math.max(enemy.panicTimer || 0, 5.0);
+          }
+        }
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.35);
+        pushDamageText(eng.texts, KVETEN_POIS.shrine.x, KVETEN_POIS.shrine.y - 110, '✦ POŽEHNÁNÍ SV. JANA NEPOMUCKÉHO! (5 HVĚZD)', '#FEF08A', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+    }
+
     // 3. Interaktivní předmět / Truhla / Chasník v dosahu (~165 px)
     if (eng.drops && eng.drops.length > 0) {
       let nearestDrop: any = null;
@@ -3631,12 +3723,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
       engineRef.current.enemies.push(createEnemyInstance('cerny_pes', player.x + 480, player.y - 100, 0.9));
     } else if (chosenLevelId === 4) {
-      // Level 4: Ladovská zima – rampouchoví diblíci
-      for (let i = 0; i < 2; i++) {
-        const ang = (i / 2) * Math.PI * 2;
-        engineRef.current.enemies.push(createEnemyInstance('zmrzlik', player.x + Math.cos(ang) * 460, player.y + Math.sin(ang) * 460, 1.0));
-      }
-      engineRef.current.enemies.push(createEnemyInstance('vanicka', player.x - 440, player.y - 180, 1.0));
+      // Level 5: Květen v Hrusicích – májová havěť
+      engineRef.current.enemies.push(createEnemyInstance('chroust', player.x + 460, player.y - 100, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('chroust', player.x - 460, player.y + 100, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('pampeliska_chmyri', player.x, player.y - 440, 1.0));
     } else if (chosenLevelId === 5) {
       // Level 5: Hamry – lapka a jiskřivec
       engineRef.current.enemies.push(createEnemyInstance('zbojnik', player.x + 460, player.y, 1.0));
@@ -5649,93 +5739,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // SKALNÍ OBR BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 4)
-            if (obr && (obr.isBoss || engine.finalBossSpawned || curLvl.id === 4)) {
-              if (obr) {
-                const isPhase2 = obr.hp <= obr.maxHp * 0.5;
-
-                // Enrage trigger when dropping to 50% HP (Pukající žula)
-                if (isPhase2 && !obr.enraged) {
-                  obr.enraged = true;
-                  obr.speed = 64;
-                  sound.roar();
-                  pushDamageText(engine.texts, obr.x, obr.y - 70, '🗿 PUKAJÍCÍ ŽULA!', '#F59E0B', true);
-                  setRunStats((s) => ({ ...s, warningBanner: '🗿 PUKAJÍCÍ ŽULA! SKÁLY SE HROUTÍ A ŽULA PUKÁ!' }));
-                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
-                  for (let i = 0; i < 30; i++) {
-                    emitParticle(engine.particles, () => ({
-                      x: obr.x,
-                      y: obr.y,
-                      vx: (Math.random() - 0.5) * 190,
-                      vy: (Math.random() - 0.5) * 190,
-                      life: 0.9,
-                      color: i % 2 === 0 ? '#71717A' : '#F59E0B',
-                      size: 7,
-                    }));
-                  }
-                }
-
-                // 1. Rolling river boulders (Valící se balvany)
-                engine.obrBoulderTimer -= dt;
-                if (engine.obrBoulderTimer <= 0) {
-                  engine.obrBoulderTimer = isPhase2 ? 5.2 : 8.0;
-                  sound.hit();
-                  pushDamageText(engine.texts, obr.x, obr.y - 45, 'VALÍCÍ SE BALVAN! 🪨', '#71717A', true);
-                  const bAng = Math.atan2(player.y - obr.y, player.x - obr.x);
-                  const bCount = isPhase2 ? 2 : 1;
-                  for (let i = 0; i < bCount; i++) {
-                    const offset = (i - (bCount - 1) / 2) * 0.35;
-                    engine.projectiles.push({
-                      x: obr.x,
-                      y: obr.y,
-                      vx: Math.cos(bAng + offset) * 190,
-                      vy: Math.sin(bAng + offset) * 190,
-                      angle: bAng + offset,
-                      speed: 190,
-                      dmg: isPhase2 ? 34 : 26,
-                      radius: 22,
-                      type: 'physical',
-                      visual: 'boulder',
-                      life: 4.5,
-                      maxLife: 4.5,
-                      isEnemy: true,
-                      pushback: 50,
-                      statusText: 'BALVAN! 🪨',
-                      dead: false,
-                    });
-                  }
-                }
-
-                // 2. Riverquake Slam (Sázavské zemětřesení)
-                engine.obrQuakeTimer -= dt;
-                if (engine.obrQuakeTimer <= 0) {
-                  engine.obrQuakeTimer = isPhase2 ? 7.0 : 10.0;
-                  sound.thunder();
-                  pushDamageText(engine.texts, obr.x, obr.y - 50, 'ZEMĚTŘESENÍ! ⚡', '#D97706', true);
-                  const dist = Math.hypot(player.x - obr.x, player.y - obr.y);
-                  if (dist < 260) {
-                    player.takeDamage(isPhase2 ? 28 : 20, 'physical', obr, true);
-                    const qAng = Math.atan2(player.y - obr.y, player.x - obr.x);
-                    player.x += Math.cos(qAng) * 55;
-                    player.y += Math.sin(qAng) * 55;
-                  }
-                  for (let i = 0; i < 20; i++) {
-                    const qAng = Math.random() * Math.PI * 2;
-                    const qDist = Math.random() * 200;
-                    emitParticle(engine.particles, () => ({
-                      x: obr.x + Math.cos(qAng) * qDist,
-                      y: obr.y + Math.sin(qAng) * qDist,
-                      vx: 0,
-                      vy: -30,
-                      life: 0.5,
-                      color: '#52525B',
-                      size: 6,
-                    }));
-                  }
-                }
-              }
-            }
-
             // MLYNÁŘ BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 5)
             if (mlynar && (mlynar.isBoss || engine.finalBossSpawned || curLvl.id === 5)) {
               if (mlynar) {
@@ -7272,6 +7275,116 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 }
               }
+            } else if (engine.activeLevelId === 4) {
+              const kveten = (engine.kveten || (engine.kveten = {
+                bellCooldown: 0,
+                kegCooldown: 0,
+                shrineCooldown: 0,
+                beerPuddle: null,
+                maypoleWardActive: false,
+                weatherPetalTimer: 0,
+                terrainHazardTimer: 0,
+              })) as any;
+              kveten.bellCooldown = Math.max(0, (kveten.bellCooldown || 0) - dt);
+              kveten.kegCooldown = Math.max(0, (kveten.kegCooldown || 0) - dt);
+              kveten.shrineCooldown = Math.max(0, (kveten.shrineCooldown || 0) - dt);
+
+              const inChurch = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.church);
+              const inTavern = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.tavern);
+              const inVillage = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.village);
+              const inShrine = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.shrine);
+              const inFields = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.fields);
+              const inSchool = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.school);
+              const inMill = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.mill);
+              const inForest = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.forest);
+
+              kveten.maypoleWardActive = inVillage;
+
+              // 1. NÁVES S MÁJKOU, KOSTEL & KOZÍ HÁJ: Armor & regeneration
+              player.arenaArmorBonus = (inVillage ? 0.25 : 0) + (inChurch ? 0.20 : 0) + (inForest ? 0.15 : 0);
+              if (inChurch || inVillage) {
+                player.hp = Math.min(player.maxHp, player.hp + 2.5 * dt * (player._cachedFrostHealMult ?? 1));
+              }
+
+              // 2. MÁJOVÁ HOSPODA & KOZÍ HÁJ: Damage bonus (+20 % / +15 %)
+              const baseDmgMult = (player as any)._baseMarchDmgMult ?? ((player as any)._baseMarchDmgMult = player.damageMultiplier || 1);
+              player.damageMultiplier = baseDmgMult * (1 + (inTavern ? 0.20 : 0) + (inForest ? 0.15 : 0));
+
+              // 3. MÁJOVÁ ŠKOLA: Magnet / Pickup radius bonus
+              if (inSchool) {
+                player.pickupRadiusMultiplier = Math.max(player.pickupRadiusMultiplier || 1, 1.25);
+              }
+
+              // 4. MÁJOVÉ PASTVINY: +15 % movement speed
+              if (inFields) {
+                player.x += moveVx * 0.15 * dt;
+                player.y += moveVy * 0.15 * dt;
+              }
+
+              // 5. VYHŘÁTÁ VODA: Pond and stream warm currents
+              const waterEffect = getKvetenWaterEffect(player.x, player.y, engine.gameTime || 0);
+              if (waterEffect.inOpenWater) {
+                player.x += waterEffect.carryVx * dt;
+                player.y += waterEffect.carryVy * dt;
+              }
+
+              // 6. SV. JAN NEPOMUCKÝ: Holy aura panicking nearby unholy/demons
+              if (inShrine) {
+                const nearShrine = enemySpatialHashRef.current.queryCircleInto(
+                  KVETEN_POIS.shrine.x,
+                  KVETEN_POIS.shrine.y,
+                  260,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let i = 0; i < nearShrine.length; i++) {
+                  const foe = nearShrine[i];
+                  if (foe && !foe.dead && !foe.isDefeated) {
+                    foe.panicked = true;
+                    foe.panicTimer = Math.max(foe.panicTimer || 0, 1.5);
+                  }
+                }
+              }
+
+              // 7. AMBIENT MAY WEATHER: Floating lilac petals & dandelion puffs
+              kveten.weatherPetalTimer = (kveten.weatherPetalTimer || 0) - dt;
+              if (kveten.weatherPetalTimer <= 0) {
+                kveten.weatherPetalTimer = 0.22;
+                const isLilac = Math.random() < 0.55;
+                emitParticle(engine.particles, () => ({
+                  x: player.x + (Math.random() - 0.5) * 1200,
+                  y: player.y - 350 + (Math.random() - 0.5) * 300,
+                  vx: 28 + Math.random() * 32,
+                  vy: 14 + Math.random() * 24,
+                  life: 3.5 + Math.random() * 1.5,
+                  color: isLilac ? '#E9D5FF' : '#FEF08A',
+                  size: isLilac ? 3.0 : 3.8,
+                }));
+              }
+
+              // 8. Tavern beer puddle timer & tick
+              if (kveten.beerPuddle) {
+                kveten.beerPuddle.time -= dt;
+                if (kveten.beerPuddle.time <= 0) {
+                  kveten.beerPuddle = null;
+                } else {
+                  const nearbyEnemies = enemySpatialHashRef.current.queryCircleInto(
+                    kveten.beerPuddle.x,
+                    kveten.beerPuddle.y,
+                    120,
+                    terrainSpatialResultsRef.current,
+                  );
+                  for (let i = 0; i < nearbyEnemies.length; i++) {
+                    const enemy = nearbyEnemies[i];
+                    if (!enemy.dead && !enemy.isDefeated) {
+                      enemy.stunTimer = Math.max(enemy.stunTimer || 0, 0.35);
+                    }
+                  }
+                }
+              }
+
+              // 9. Arena obstacles and boundary
+              resolveKvetenObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
             } else {
               player.arenaArmorBonus = 0;
             }
@@ -8195,6 +8308,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             s.life -= dt;
             if (s.life <= 0) s.dead = true;
 
+            if (engine.drops) {
+              for (let di = 0; di < engine.drops.length; di++) {
+                const d = engine.drops[di];
+                if (d && !d.dead && d.isFrozen && Math.hypot(d.x - s.x, d.y - s.y) <= s.reach + 20) {
+                  d.isFrozen = false;
+                  d.freezeTimer = 0;
+                  pushDamageText(engine.texts, d.x, d.y - 20, 'ROZMRAZENO! 💧', '#38BDF8', false);
+                }
+              }
+            }
+
             const nearby = enemySpatialHashRef.current.queryCircle(s.x, s.y, s.reach + 72);
             for (const e of nearby) {
               if (e.isDefeated) continue;
@@ -8444,6 +8568,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }
                 }
                 clampToDubenArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 4) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || e.id === 'chroust' || e.id === 'carodejnice_zaspalka' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  if (!isFlyingEnemy) {
+                    const eWater = getKvetenWaterEffect(e.x, e.y, engine.gameTime || 0);
+                    if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+                      e.x += eWater.carryVx * dt;
+                      e.y += eWater.carryVy * dt;
+                      e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+                    }
+                  }
+                  resolveKvetenObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
               }
             }
 
@@ -8668,11 +8806,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
             }
-            if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4) {
               clampToMarchArenaBounds(d, 28);
             } else if (engine.activeLevelId === 2) {
               clampToDubenArenaBounds(d, 28);
             }
+
+            if (d.isFrozen) {
+              if (typeof d.freezeTimer === 'number' && d.freezeTimer > 0) {
+                d.freezeTimer -= dt;
+                if (d.freezeTimer <= 0) {
+                  d.isFrozen = false;
+                }
+              }
+            }
+
             const dist = Math.hypot(d.x - player.x, d.y - player.y);
 
             if (d.type === 'chasnik') {
@@ -8681,14 +8829,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 d.dead = true;
                 triggerRescueChasnik(d.x, d.y);
               }
-            } else if (dist < player.pickupRadius && currentGameState === 'playing' && gameStateRef.current === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
+            } else if (!d.isFrozen && dist < player.pickupRadius && currentGameState === 'playing' && gameStateRef.current === 'playing' && canCollectDrop(d.type, player.hp, player.maxHp, player)) {
               const passiveMagnetSpeed = player.type === 'korenarka' && (player.herbBoostTimer || 0) > 0 ? 5 : 1;
               const mobility = d.magnetMobility !== undefined ? d.magnetMobility : 1.0;
               const spd = Math.max(520, (player.pickupRadius - dist) * 7.5 + 380) * passiveMagnetSpeed * mobility * dt;
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
-              if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4) {
                 clampToMarchArenaBounds(d, 28);
               } else if (engine.activeLevelId === 2) {
                 clampToDubenArenaBounds(d, 28);
@@ -10305,6 +10453,235 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
           this.vx = Math.cos(dirToPlayer) * spd;
           this.vy = Math.sin(dirToPlayer) * spd;
+        } else if (this.id === 'chroust') {
+          // Erratic sine-wave buzzing flight pattern ignoring ground terrain
+          this.sinePhase = (this.sinePhase || (Math.random() * Math.PI * 2)) + dt * 6.5;
+          const sineOffset = Math.sin(this.sinePhase) * 0.95;
+          const flightDir = (this.panicked ? dirToPlayer + Math.PI : dirToPlayer) + sineOffset;
+          this.vx = Math.cos(flightDir) * spd * 1.08;
+          this.vy = Math.sin(flightDir) * spd * 1.08;
+          this.flightAltitude = 16 + Math.cos(this.sinePhase * 0.8) * 6;
+        } else if (this.id === 'pampeliska_chmyri' || this.id === 'pampeliska_chmyricko') {
+          // Sentient dandelion puffs drifting with ambient wind and floating harmonics
+          const isMini = this.id === 'pampeliska_chmyricko';
+          this.driftPhase = (this.driftPhase || (Math.random() * Math.PI * 2)) + dt * (isMini ? 4.2 : 2.5);
+          const gameTime = engineRef.current.gameTime || 0;
+          const windAngle = 0.35 + Math.sin(gameTime * 0.18) * 0.3;
+          const windStrength = isMini ? 42 : 32;
+          const windVx = Math.cos(windAngle) * windStrength;
+          const windVy = Math.sin(windAngle) * windStrength;
+
+          const targetDir = this.panicked ? dirToPlayer + Math.PI : dirToPlayer;
+          const pursuitMult = isMini ? 1.25 : 0.75;
+          const pursuitVx = Math.cos(targetDir) * spd * pursuitMult;
+          const pursuitVy = Math.sin(targetDir) * spd * pursuitMult;
+
+          const sway = Math.sin(this.driftPhase) * (isMini ? 18 : 12);
+          const perpAngle = windAngle + Math.PI / 2;
+
+          this.vx = pursuitVx + windVx + Math.cos(perpAngle) * sway;
+          this.vy = pursuitVy + windVy + Math.sin(perpAngle) * sway;
+          this.flightAltitude = (isMini ? 12 : 18) + Math.sin(this.driftPhase) * (isMini ? 4 : 6);
+        } else if (this.id === 'carodejnice_zaspalka') {
+          this.flightAltitude = 24 + Math.sin((this.animTime || 0) * 5) * 8;
+          this.zaspalkaTimer = (typeof this.zaspalkaTimer === 'number' ? this.zaspalkaTimer : 2.4) - dt;
+          if (!this.zaspalkaState) this.zaspalkaState = 'swoop';
+
+          if (this.zaspalkaState === 'swoop') {
+            // High-speed diagonal swoop pass across the player
+            if (this.swoopAngle === undefined) {
+              this.swoopAngle = Math.atan2(player.y - this.y, player.x - this.x);
+            }
+            const swoopSpd = spd * 1.85;
+            this.vx = Math.cos(this.swoopAngle) * swoopSpd;
+            this.vy = Math.sin(this.swoopAngle) * swoopSpd;
+
+            // Sputter black ink smoke hazard behind flight path
+            this.smokeCooldown = (typeof this.smokeCooldown === 'number' ? this.smokeCooldown : 0.25) - dt;
+            if (this.smokeCooldown <= 0) {
+              this.smokeCooldown = 0.28;
+              const rearAngle = this.swoopAngle + Math.PI;
+              const smokeX = this.x + Math.cos(rearAngle) * 32;
+              const smokeY = this.y + Math.sin(rearAngle) * 32;
+              const hazardEntry = {
+                id: `hazard_ink_smoke_${Math.round((engineRef.current.gameTime || 0) * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: smokeX,
+                y: smokeY,
+                radius: 34,
+                duration: 3.2,
+                maxDuration: 3.2,
+                type: 'soot' as const,
+                slowFactor: 0.70,
+                kind: 'ink-smoke' as const,
+                damage: 14,
+                sourceEnemyId: this.id,
+              };
+              if (directorRef.current) {
+                directorRef.current.hazards.push(hazardEntry);
+              }
+              if (engineRef.current.activeHazards && engineRef.current.activeHazards !== directorRef.current?.hazards) {
+                engineRef.current.activeHazards.push(hazardEntry);
+              }
+              emitParticle(engineRef.current.particles, () => ({
+                x: smokeX,
+                y: smokeY,
+                vx: (Math.random() - 0.5) * 40,
+                vy: (Math.random() - 0.5) * 40,
+                life: 0.6,
+                color: '#18181B',
+                size: 6,
+              }));
+            }
+
+            if (this.zaspalkaTimer <= 0) {
+              this.zaspalkaState = 'reposition';
+              this.zaspalkaTimer = 1.6;
+              this.swoopAngle = undefined;
+            }
+          } else {
+            // Reposition: banking hard around the perimeter to align next diagonal pass
+            const orbitDist = 320;
+            const currentAngle = Math.atan2(this.y - player.y, this.x - player.x);
+            const nextAngle = currentAngle + 2.0 * dt;
+            const targetX = player.x + Math.cos(nextAngle) * orbitDist;
+            const targetY = player.y + Math.sin(nextAngle) * orbitDist;
+
+            this.vx = (targetX - this.x) * 2.2;
+            this.vy = (targetY - this.y) * 2.2;
+
+            if (this.zaspalkaTimer <= 0) {
+              this.zaspalkaState = 'swoop';
+              this.zaspalkaTimer = 2.4;
+              const leadX = player.x + (player.vx || 0) * 0.35;
+              const leadY = player.y + (player.vy || 0) * 0.35;
+              this.swoopAngle = Math.atan2(leadY - this.y, leadX - this.x);
+              sound.smokePuff();
+            }
+          }
+        } else if (this.id === 'ledovi_muzi') {
+          const role = this.trioRole || (this.trioIndex === 1 ? 'servac' : this.trioIndex === 2 ? 'bonifac' : 'pankrac');
+          // Synchronized triad orbit around the player
+          const baseOrbit = (engineRef.current.gameTime || 0) * 0.85;
+          const roleOffset = role === 'servac' ? (Math.PI * 2) / 3 : role === 'bonifac' ? (Math.PI * 4) / 3 : 0;
+          const orbitAngle = baseOrbit + roleOffset;
+          const targetDist = 210;
+          const targetX = player.x + Math.cos(orbitAngle) * targetDist;
+          const targetY = player.y + Math.sin(orbitAngle) * targetDist;
+          this.vx = (targetX - this.x) * 1.8;
+          this.vy = (targetY - this.y) * 1.8;
+
+          // Frost trails left as they step
+          this.frostTrailCooldown = (typeof this.frostTrailCooldown === 'number' ? this.frostTrailCooldown : 0.4) - dt;
+          if (this.frostTrailCooldown <= 0) {
+            this.frostTrailCooldown = 0.45;
+            const hazardEntry = {
+              id: `hazard_frost_${Math.round((engineRef.current.gameTime || 0) * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+              x: this.x,
+              y: this.y,
+              radius: 26,
+              duration: 2.8,
+              maxDuration: 2.8,
+              type: 'frost' as const,
+              slowFactor: 0.70,
+              kind: 'frost-trail' as const,
+              sourceEnemyId: this.id,
+            };
+            if (directorRef.current) {
+              directorRef.current.hazards.push(hazardEntry);
+            }
+            if (engineRef.current.activeHazards && engineRef.current.activeHazards !== directorRef.current?.hazards) {
+              engineRef.current.activeHazards.push(hazardEntry);
+            }
+          }
+
+          // Role-specific attacks:
+          if (role === 'pankrac') {
+            this.icicleCooldown = (typeof this.icicleCooldown === 'number' ? this.icicleCooldown : 3.0) - dt;
+            if (this.icicleCooldown <= 0) {
+              this.icicleCooldown = 3.6;
+              const targetAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              const icicleCount = 5;
+              const spread = 0.22;
+              for (let k = 0; k < icicleCount; k++) {
+                const angle = targetAngle + (k - (icicleCount - 1) / 2) * spread;
+                const speed = 230;
+                engineRef.current.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(angle) * speed,
+                  vy: Math.sin(angle) * speed,
+                  angle,
+                  speed,
+                  dmg: 18,
+                  radius: 11,
+                  type: 'ice',
+                  visual: 'icicle',
+                  life: 2.6,
+                  maxLife: 2.6,
+                  isEnemy: true,
+                  pushback: 32,
+                  statusText: 'RAMPOUCH! ❄️',
+                  dead: false,
+                });
+              }
+              sound.freeze();
+              pushDamageText(engineRef.current.texts, this.x, this.y - 35, 'RAMPOUCHY! ❄️', '#BAE6FD', false);
+            }
+          } else if (role === 'servac') {
+            this.hailCooldown = (typeof this.hailCooldown === 'number' ? this.hailCooldown : 4.0) - dt;
+            if (this.hailCooldown <= 0) {
+              this.hailCooldown = 4.2;
+              for (let k = 0; k < 2; k++) {
+                const offsetDist = 40 + Math.random() * 60;
+                const offsetAng = Math.random() * Math.PI * 2;
+                const hx = player.x + Math.cos(offsetAng) * offsetDist;
+                const hy = player.y + Math.sin(offsetAng) * offsetDist;
+                const hazardEntry = {
+                  id: `hazard_hail_${Math.round((engineRef.current.gameTime || 0) * 1000)}_${k}_${Math.random().toString(36).slice(2, 7)}`,
+                  x: hx,
+                  y: hy,
+                  radius: 38,
+                  duration: 1.8,
+                  maxDuration: 1.8,
+                  type: 'frost' as const,
+                  slowFactor: 0.65,
+                  kind: 'hail-circle' as const,
+                  warningTimer: 1.1,
+                  damage: 26,
+                  oneShot: true,
+                  exploded: false,
+                  sourceEnemyId: this.id,
+                };
+                if (directorRef.current) {
+                  directorRef.current.hazards.push(hazardEntry);
+                }
+                if (engineRef.current.activeHazards && engineRef.current.activeHazards !== directorRef.current?.hazards) {
+                  engineRef.current.activeHazards.push(hazardEntry);
+                }
+              }
+              sound.candlePulse();
+              pushDamageText(engineRef.current.texts, this.x, this.y - 35, 'KRUPOBITÍ! 🌨️', '#93C5FD', false);
+            }
+          } else if (role === 'bonifac') {
+            this.freezePulseCooldown = (typeof this.freezePulseCooldown === 'number' ? this.freezePulseCooldown : 5.0) - dt;
+            if (this.freezePulseCooldown <= 0) {
+              this.freezePulseCooldown = 5.2;
+              if (engineRef.current.drops) {
+                for (let di = 0; di < engineRef.current.drops.length; di++) {
+                  const d = engineRef.current.drops[di];
+                  if (d && !d.dead && !d.isFrozen) {
+                    const dDist = Math.hypot(d.x - this.x, d.y - this.y);
+                    if (dDist <= 260) {
+                      d.isFrozen = true;
+                      d.freezeTimer = 6.0;
+                    }
+                  }
+                }
+              }
+              sound.freeze();
+              pushDamageText(engineRef.current.texts, this.x, this.y - 35, 'MRAZIVÝ DECH! 🧊', '#67E8F9', false);
+            }
+          }
         }
 
         // 1. RARÁŠEK (rarach / sazovy_rarach) - Hejnové obkličování & prudké výpady
@@ -12012,6 +12389,60 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             return;
           }
           this.isDefeated = true;
+          if (this.id === 'pampeliska_chmyri' && !this.hasSplit) {
+            this.hasSplit = true;
+            const isCleanDispersal = Boolean(
+              this.overkill ||
+              (options as any)?.isPiercing ||
+              (options as any)?.pierce ||
+              type === 'fire' ||
+              type === 'area' ||
+              type === 'explosive' ||
+              type === 'holy'
+            );
+            if (isCleanDispersal) {
+              pushDamageText(engineRef.current.texts, this.x, this.y - 25, 'ROZPRÁŠENO! 💨', '#E0F2FE', false);
+            } else {
+              pushDamageText(engineRef.current.texts, this.x, this.y - 25, 'ROZLÉTNUTÍ! 🌼', '#FEF08A', false);
+              const baseAngle = Math.atan2(this.vy || 0, this.vx || 1);
+              for (let i = 0; i < 3; i++) {
+                const spreadAngle = baseAngle + (i - 1) * (Math.PI * 0.45);
+                const spawnDist = 12;
+                const child = createEnemyInstance(
+                  'pampeliska_chmyricko',
+                  this.x + Math.cos(spreadAngle) * spawnDist,
+                  this.y + Math.sin(spreadAngle) * spawnDist,
+                  1.0
+                );
+                if (child) {
+                  child.kbx = Math.cos(spreadAngle) * 160;
+                  child.kby = Math.sin(spreadAngle) * 160;
+                  engineRef.current.enemies.push(child);
+                  directorRef.current?.recordEnemySpawn(child, engineRef.current.gameTime);
+                }
+              }
+            }
+          }
+          if (this.id === 'carodejnice_zaspalka') {
+            if (directorRef.current && Array.isArray(directorRef.current.hazards)) {
+              directorRef.current.hazards = directorRef.current.hazards.filter(
+                (h: any) => h.sourceEnemyId !== 'carodejnice_zaspalka' && h.kind !== 'ink-smoke'
+              );
+              if (engineRef.current.activeHazards) {
+                engineRef.current.activeHazards = directorRef.current.hazards;
+              }
+            }
+            spawnDropWithLimit(engineRef.current.drops, {
+              type: 'chest',
+              x: this.x,
+              y: this.y,
+              vx: 0,
+              vy: 0,
+              radius: 25,
+              time: 0,
+            }, engineRef.current.pendingDropBank);
+            pushDamageText(engineRef.current.texts, this.x, this.y - 40, 'ZASPALKA ZAŽEHÁNA! 🧹', '#F59E0B', true);
+          }
           this.cleanupLight();
           if ((player?.stickyPlumJamStacks || 0) > 0) {
             const engPud = engineRef.current;
@@ -12640,11 +13071,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const isBossMonster = this.isBoss || this.isMiniboss || this.category === 'bosses';
 
           if (isBossMonster) {
+            const isTrioMember = Boolean(this.isTrioMember || this.id === 'ledovi_muzi');
+            const remainingTrio = isTrioMember
+              ? (engineRef.current.enemies || []).filter(
+                  (e: any) => e !== this && (e.isTrioMember || e.id === 'ledovi_muzi') && !e.isDefeated && !e.dead
+                )
+              : [];
+            const isTrioDefeated = isTrioMember && remainingTrio.length === 0;
+
             const remainingBoss = engineRef.current.enemies.find(
               (e) => (e.isBoss || e.isMiniboss) && !e.isDefeated && e !== this
             );
             if (remainingBoss) {
-              if (remainingBoss.isMinibossFlockMember) {
+              if (remainingBoss.isTrioMember || remainingBoss.id === 'ledovi_muzi') {
+                const trioMembers = engineRef.current.enemies.filter(
+                  (e: any) => (e.isTrioMember || e.id === 'ledovi_muzi') && !e.isDefeated && !e.dead && e !== this
+                );
+                const totalTrioHp = trioMembers.reduce((sum: number, e: any) => sum + Math.max(0, e.hp || 0), 0);
+                const totalTrioMaxHp = (remainingBoss.trioTotal || 3) * (remainingBoss.maxHp || 1600);
+                setRunStats((s) => ({
+                  ...s,
+                  bossHpPct: Math.max(0, Math.min(100, (totalTrioHp / Math.max(1, totalTrioMaxHp)) * 100)),
+                  bossTitle: '❄️ Ledoví muži (Pankrác, Servác, Bonifác)',
+                }));
+              } else if (remainingBoss.isMinibossFlockMember) {
                 const flockMembers = engineRef.current.enemies.filter(
                   (e: any) => e.isMinibossFlockMember && !e.isDefeated && !e.dead && e !== this
                 );
@@ -12670,10 +13120,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               setRunStats((s) => ({ ...s, bossHpPct: null, bossTitle: '' }));
             }
 
-            if (!isFlockMember || isFlockDefeated) {
+            if ((!isFlockMember || isFlockDefeated) && (!isTrioMember || isTrioDefeated)) {
               sound.victory();
               sound.cheer();
-              const defeatName = this.customBossTitle || (isFlockMember ? 'Hejno mrazivých vran' : stats.name);
+              const defeatName = isTrioMember ? 'Ledoví muži' : (this.customBossTitle || (isFlockMember ? 'Hejno mrazivých vran' : stats.name));
               pushDamageText(engineRef.current.texts, this.x, this.y - 60, `👑 ${defeatName.toUpperCase()} ZKLIDNĚN!`, COLORS.mustard, true);
               if (this.isMiniboss) {
                 engineRef.current.coins = (engineRef.current.coins || 0) + 25;
@@ -12684,7 +13134,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             const curLvlId = engineRef.current.activeLevelId !== undefined ? engineRef.current.activeLevelId : 0;
             const curLvl = GAME_LEVELS[curLvlId];
             if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
-              triggerLevelVictory(curLvlId, 'boss');
+              let canTriggerVictory = true;
+              if (isTrioMember) {
+                canTriggerVictory = isTrioDefeated;
+              }
+              if (canTriggerVictory) {
+                if (directorRef.current && Array.isArray(directorRef.current.hazards)) {
+                  directorRef.current.hazards = directorRef.current.hazards.filter(
+                    (h: any) => h.sourceEnemyId !== 'ledovi_muzi' && h.type !== 'frost' && h.kind !== 'hail-circle'
+                  );
+                  if (engineRef.current.activeHazards) {
+                    engineRef.current.activeHazards = directorRef.current.hazards;
+                  }
+                }
+                if (engineRef.current.drops) {
+                  for (let di = 0; di < engineRef.current.drops.length; di++) {
+                    const d = engineRef.current.drops[di];
+                    if (d) {
+                      d.isFrozen = false;
+                      d.freezeTimer = 0;
+                    }
+                  }
+                }
+                triggerLevelVictory(curLvlId, 'boss');
+              }
             }
           }
         }
@@ -14066,7 +14539,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     (lvlId === 1 && (meta.bestiaryKills?.morana || 0) >= 1) ||
                     (lvlId === 2 && ((meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1)) ||
                     (lvlId === 3 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
-                    (lvlId === 4 && (meta.bestiaryKills?.obr || 0) >= 1) ||
+                    (lvlId === 4 && ((meta.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta.bestiaryKills?.obr || 0) >= 1)) ||
                     (lvlId === 5 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
                     (lvlId === 6 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
                     (lvlId === 7 && (meta.bestiaryKills?.drak || 0) >= 1);

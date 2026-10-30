@@ -27,7 +27,9 @@ describe('Level 5: Květen v Hrusicích (Stage 5 Core Definition & Progression)'
 
     // 5-minute (300 s) daytime schedule
     expect(lvl4.miniBoss).toMatchObject({ id: 'carodejnice_zaspalka', time: 85, kills: 50, multiplier: 3.2 });
+    expect(lvl4.midBoss).toMatchObject({ id: 'hastrman', time: 185, kills: 130, multiplier: 1.6 });
     expect(lvl4.finalBoss).toMatchObject({ id: 'ledovi_muzi', time: 300, kills: 250, multiplier: 1.15 });
+    expect(lvl4.keyEnemies.some((e) => e.id === 'hastrman')).toBe(true);
     expect(lvl4.bossMechanic.cadenceSeconds).toBe(6);
     expect(lvl4.arena).toMatchObject({ id: 'kvetnova_naves', layout: 'asymmetric_poi' });
   });
@@ -58,10 +60,12 @@ describe('Level 5: Květen v Hrusicích (Stage 5 Core Definition & Progression)'
     }
   });
 
-  it('gates Stage 5 progression behind Level 3 (Starý hřbitov / Hejkal)', () => {
+  it('gates Stage 5 progression behind Level 3 (Dubnová noc / Hejkal)', () => {
     expect(LEVEL_UNLOCKS[4]).toBeDefined();
     expect(LEVEL_UNLOCKS[4].defaultUnlocked).toBe(false);
     expect(LEVEL_UNLOCKS[4].realShortTitle).toBe(GAME_LEVELS[4].shortTitle);
+    expect(GAME_LEVELS[4].unlockRequirementText).toContain('Dubnové noci');
+    expect(GAME_LEVELS[3].name).toBe('4. Duben v Hrusicích – Dubnová noc');
 
     // Locked when Level 3 is not beaten
     const lockedProg = getLevelProgress(4, {});

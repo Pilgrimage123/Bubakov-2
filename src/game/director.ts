@@ -65,6 +65,10 @@ function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): b
     if (enemy.category === 'frost' || enemy.category === 'undead') return false;
     return true;
   }
+  if (levelId === 4) {
+    if (enemy.category === 'frost' || enemy.category === 'undead' || enemy.category === 'demons') return false;
+    return true;
+  }
   return true;
 }
 
@@ -1327,12 +1331,13 @@ export class RunDirector {
    */
   public getThematicPrefix(): EnemyPrefixType {
     const isLevel0 = this.levelId === 0;
-    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 3;
-    const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId >= 4;
-    const isNightCemetery = this.levelId === 2 || this.rozmar.formationBias === 'architects';
+    const isMay = this.levelId === 4;
+    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 7;
+    const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId === 5;
+    const isNightCemetery = this.rozmar.formationBias === 'architects';
 
     let weights: Record<EnemyPrefixType, number>;
-    if (isLevel0) {
+    if (isLevel0 || isMay) {
       weights = { vichricovy: 40, kamenny: 35, hromovy: 25, pekelny: 0, vycerpany: 0 };
     } else if (isWinter) {
       weights = { vichricovy: 35, kamenny: 35, pekelny: 15, hromovy: 15, vycerpany: 0 };
@@ -1363,7 +1368,7 @@ export class RunDirector {
     const mobId = forcedPrefix ? (candidateId || pool[0] || this.getRegularSpawnFallbackId()) : (pool[Math.floor(Math.random() * pool.length)] || this.getRegularSpawnFallbackId());
 
     let prefix = forcedPrefix || this.getThematicPrefix();
-    if (this.levelId === 0 && prefix === 'pekelny') {
+    if ((this.levelId === 0 || this.levelId === 4) && prefix === 'pekelny') {
       prefix = 'vichricovy';
     }
 

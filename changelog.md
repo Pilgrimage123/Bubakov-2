@@ -1,3 +1,18 @@
+## 2026-10-30 — Kalendářní posloupnost a plná parita enginu pro 5. úroveň (Májová slavnost, Dubnová noc, Midboss Hastrman a Ledoví muži trio) (ADR 0037)
+
+- **Kalendářní posloupnost 4. úrovně (ADR 0037 & `GLOSSARY.md`)**:
+  - Kanonizována 4. úroveň (`id: 3`) jako **4. Duben v Hrusicích – Dubnová noc** (Filipojakubská noc) pro zachování přirozené kalendářní linie (Březen Den/Noc ➔ Duben Den/Noc ➔ Květen).
+  - Aktualizován doménový model a glosář (`GLOSSARY.md`) a vytvořen architektonický záznam `docs/adr/0037-kvetnova-slavnost-parita-enginu-a-dubnova-noc.md`.
+- **Doplnění Midbosse pro 5. úroveň (`levels.ts`, `levelUnlocks.ts`, `i18n`)**:
+  - Na 185. sekundu (130 zářezů) nasazen vodní Midboss **💧 Bahenní hastrman z Brčálníku** (`hastrman`, násobitel 1.6), čímž je zaručen spolehlivý přechod do finálního střetu bez prodlev.
+- **Plná parita herního klienta v `src/App.tsx` s `src/game/engine.ts`**:
+  - **Chování nepřátel**: do hlavní herní smyčky doplněny autentické vzorce pro květnového chrousta (`sinePhase` bzučivý let ve výšce), pampeliškové chmýří (unášení ambientním vánkem, trojí dělení po seknutí nesekací/neohnivou zbraní na `pampeliska_chmyricko`), Čarodějnici Zaspalku (vysokorychlostní diagonální nálety s vlečkou černého kouře a truhlou po zahnání) a Ledové muže (orbit triadická formace, mrazivé stopy, Pankrácovy rampouchy, Servácovo krupobití, Bonifácovo zmrazování kapek).
+  - **Oprava kritického bugu vítězství**: porážka prvního z Ledových mužů již nespouští předčasné vítězství; úroveň je vítězná až po zklidnění celé bratrské trojice (Pankrác, Servác, Bonifác).
+  - **Interaktivní klávesa [E]**: zapojena podpora pro májové dominanty (zvonice kostela na vrchu se svatým hlasem, májový ležák a koláče v hospodě s obnovou kuráže, sloup sv. Jana Nepomuckého s pětihvězdnou aurou zahánějící zlé síly).
+  - **Dočištění reliktů**: odstraněny zimní potvory (`zmrzlik`, `vanicka`) z úvodní vlny a odstraněny neplatné pozůstatky Skalního obra ze Stage 5.
+- **Verifikace a testy**:
+  - Rozšířena testovací sada `tests/level4Kveten.test.ts`. Všech 79 testovacích sad (734 testů) prochází zeleně a `npm run build` sestavuje bez chyb.
+
 ## 2026-10-30 — 5. Úroveň: Květen v Hrusicích – Májová slavnost (Májka, chrousti, pampeliškové chmýří, Čarodějnice Zaspalka a Ledoví muži)
 
 - **Kompletní vertikální řez 5. úrovně („Květen v Hrusicích“, `levelId: 4`) v autentickém stylu Josefa Lady**:

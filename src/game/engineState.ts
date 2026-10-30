@@ -152,6 +152,16 @@ export interface EngineState {
     weatherPetalTimer: number;
     terrainHazardTimer: number;
   };
+  /** Runtime-only state for Květen v Hrusicích (5. úroveň). */
+  kveten?: {
+    bellCooldown: number;
+    kegCooldown: number;
+    shrineCooldown: number;
+    beerPuddle: { x: number; y: number; time: number } | null;
+    maypoleWardActive: boolean;
+    weatherPetalTimer: number;
+    terrainHazardTimer: number;
+  };
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
   yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
@@ -289,6 +299,15 @@ export function createInitialEngineState(): EngineState {
       maypoleWardActive: false,
       pollenCloudTimer: 0,
       orchardPetalTimer: 0,
+      weatherPetalTimer: 0,
+      terrainHazardTimer: 0,
+    },
+    kveten: {
+      bellCooldown: 0,
+      kegCooldown: 0,
+      shrineCooldown: 0,
+      beerPuddle: null,
+      maypoleWardActive: false,
       weatherPetalTimer: 0,
       terrainHazardTimer: 0,
     },
