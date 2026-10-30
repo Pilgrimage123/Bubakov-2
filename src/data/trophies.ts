@@ -263,12 +263,12 @@ var TROPHIES = [
 	},
 	{
 		id: "level2_completed",
-		title: "🍂 Osvoboditel návsi a rybníka",
-		desc: "Dokonči 3. úroveň: zažeň Pekelného Čerta nebo přežij noc u rybníka Brčálníku.",
+		title: "🧹 Dubnový přemožitel",
+		desc: "Dokonči 3. úroveň: zažeň Vrchní Filipojakubskou Čarodějnici a ochraň jarní náves.",
 		reward: 120,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.cert || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.cert || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},

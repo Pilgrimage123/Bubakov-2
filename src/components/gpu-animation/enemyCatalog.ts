@@ -46,6 +46,8 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   vrana: { archetype: 'bug', duration: '0.25s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 0.85, accentColor: '#1E293B' },
   mrazovy_skritek: { archetype: 'bug', duration: '0.23s', wobble: '8deg', squashX: 1.12, squashY: 0.89, baseScale: 0.85, accentColor: '#38BDF8' },
   zaba: { archetype: 'bug', duration: '0.28s', wobble: '5deg', squashX: 1.25, squashY: 0.80, baseScale: 0.75, accentColor: '#15803D' },
+  zkazena_kraslice: { archetype: 'bug', duration: '0.24s', wobble: '8deg', squashX: 1.18, squashY: 0.84, baseScale: 0.85, accentColor: '#EAB308' },
+  carodejnice_koste: { archetype: 'bug', duration: '0.22s', wobble: '7deg', squashX: 1.10, squashY: 0.91, baseScale: 0.90, accentColor: '#7C3AED' },
 
   // --- 2. VODNÍ A ŽELATINOVÁ HAVĚŤ (Slime archetype - high compression, minimal tilt) ---
   ropucha: { archetype: 'slime', duration: '0.70s', wobble: '3deg', squashX: 1.40, squashY: 0.64, baseScale: 1.05, accentColor: '#166534' },
@@ -67,6 +69,9 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   obrneny_zbojnik: { archetype: 'golem', duration: '1.10s', wobble: '16deg', squashX: 1.23, squashY: 0.80, baseScale: 1.45, accentColor: '#9A3412' },
   snehulak: { archetype: 'golem', duration: '1.05s', wobble: '14deg', squashX: 1.26, squashY: 0.78, baseScale: 1.40, accentColor: '#E2E8F0' },
   drab: { archetype: 'golem', duration: '1.08s', wobble: '16deg', squashX: 1.22, squashY: 0.81, baseScale: 1.40, accentColor: '#7F1D1D' },
+  beranek: { archetype: 'golem', duration: '0.85s', wobble: '12deg', squashX: 1.20, squashY: 0.83, baseScale: 1.35, accentColor: '#D97706' },
+  carodejnice_stara: { archetype: 'golem', duration: '1.10s', wobble: '14deg', squashX: 1.22, squashY: 0.81, baseScale: 1.50, accentColor: '#15803D' },
+  vrchni_carodejnice: { archetype: 'golem', duration: '1.25s', wobble: '16deg', squashX: 1.24, squashY: 0.80, baseScale: 1.70, accentColor: '#7C3AED' },
 
   // --- 4. BĚŽNÍ PĚŠÁCI, BUBÁCI, KOSTLIVCI A VENKOVANÉ (Runner archetype - balanced wobble) ---
   bubak: { archetype: 'runner', duration: '0.52s', wobble: '12deg', squashX: 1.16, squashY: 0.86, baseScale: 1.10, accentColor: '#78350F' },
@@ -100,6 +105,7 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   zbrojnos: { archetype: 'runner', duration: '0.54s', wobble: '12deg', squashX: 1.16, squashY: 0.86, baseScale: 1.10, accentColor: '#64748B' },
   nocni_mura: { archetype: 'runner', duration: '0.52s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.05, accentColor: '#581C87' },
   jezinka_mraziva: { archetype: 'runner', duration: '0.48s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.05, accentColor: '#0284C7' },
+  rehtackar: { archetype: 'runner', duration: '0.44s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#D97706' },
 };
 
 // In-memory cache for baked canvas data URIs so we bake each enemy at most once

@@ -210,28 +210,55 @@ export function renderWorldHazardsAndEncounters(
         ctx.stroke();
       } else {
         const isFissure = h.kind === 'predictive-fissure';
-        const isWarning = isFissure && (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
-        const justExploded = isFissure && h.exploded;
-        ctx.fillStyle = isWarning
-          ? 'rgba(251, 146, 60, 0.28)'
-          : justExploded
-            ? 'rgba(254, 240, 138, 0.8)'
-            : 'rgba(239, 68, 68, 0.45)';
-        ctx.strokeStyle = isWarning ? '#FBBF24' : justExploded ? '#FEF08A' : '#991B1B';
-        ctx.lineWidth = isWarning ? 3 : 2;
-        if (isWarning) ctx.setLineDash([7, 5]);
-        ctx.beginPath();
-        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.setLineDash([]);
-        if (isFissure) {
+        const isHexCircle = h.kind === 'hex-circle' || h.type === 'curse';
+        const isWarning = (isFissure || isHexCircle) && (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
+        const justExploded = (isFissure || isHexCircle) && h.exploded;
+
+        if (isHexCircle) {
+          ctx.fillStyle = isWarning
+            ? 'rgba(168, 85, 247, 0.28)'
+            : justExploded
+              ? 'rgba(216, 180, 254, 0.85)'
+              : 'rgba(147, 51, 234, 0.45)';
+          ctx.strokeStyle = isWarning ? '#C084FC' : justExploded ? '#F3E8FF' : '#7E22CE';
+          ctx.lineWidth = isWarning ? 3.2 : 2.2;
+          if (isWarning) ctx.setLineDash([8, 6]);
           ctx.beginPath();
-          ctx.moveTo(-h.radius * 0.75, -h.radius * 0.15);
-          ctx.lineTo(-h.radius * 0.2, h.radius * 0.18);
-          ctx.lineTo(h.radius * 0.15, -h.radius * 0.28);
-          ctx.lineTo(h.radius * 0.72, h.radius * 0.12);
+          ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+          ctx.fill();
           ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Inner magical hex runes
+          ctx.beginPath();
+          ctx.arc(0, 0, h.radius * 0.6, 0, Math.PI * 2);
+          ctx.moveTo(-h.radius * 0.4, 0);
+          ctx.lineTo(h.radius * 0.4, 0);
+          ctx.moveTo(0, -h.radius * 0.4);
+          ctx.lineTo(0, h.radius * 0.4);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = isWarning
+            ? 'rgba(251, 146, 60, 0.28)'
+            : justExploded
+              ? 'rgba(254, 240, 138, 0.8)'
+              : 'rgba(239, 68, 68, 0.45)';
+          ctx.strokeStyle = isWarning ? '#FBBF24' : justExploded ? '#FEF08A' : '#991B1B';
+          ctx.lineWidth = isWarning ? 3 : 2;
+          if (isWarning) ctx.setLineDash([7, 5]);
+          ctx.beginPath();
+          ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.setLineDash([]);
+          if (isFissure) {
+            ctx.beginPath();
+            ctx.moveTo(-h.radius * 0.75, -h.radius * 0.15);
+            ctx.lineTo(-h.radius * 0.2, h.radius * 0.18);
+            ctx.lineTo(h.radius * 0.15, -h.radius * 0.28);
+            ctx.lineTo(h.radius * 0.72, h.radius * 0.12);
+            ctx.stroke();
+          }
         }
       }
       ctx.restore();
@@ -265,6 +292,44 @@ export function renderWorldHazardsAndEncounters(
       ctx.beginPath();
       ctx.ellipse(-rad * 0.22, -rad * 0.12, rad * 0.28, rad * 0.16, 0.1, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // 3c. Zkažená kraslice: louže páchnoucího žloutku (yolkPuddles)
+  const yolkPuddles = (engine.yolkPuddles || engine.state?.yolkPuddles) as any[];
+  if (yolkPuddles && yolkPuddles.length > 0) {
+    for (let i = 0; i < yolkPuddles.length; i++) {
+      const pud = yolkPuddles[i];
+      const rad = pud.radius || 48;
+      if (!isInView(pud.x, pud.y, rad + 16, camera)) continue;
+      ctx.save();
+      ctx.translate(pud.x, pud.y);
+      const fadeAlpha = Math.min(1, (pud.life ?? 1) / 1.0);
+      ctx.globalAlpha = 0.82 * fadeAlpha;
+
+      // Outer noxious sulfur ring
+      ctx.fillStyle = '#CA8A04';
+      ctx.strokeStyle = '#231409';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, rad, rad * 0.65, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Inner pungent egg yolk pool
+      ctx.fillStyle = '#EAB308';
+      ctx.beginPath();
+      ctx.ellipse(-rad * 0.15, -rad * 0.08, rad * 0.6, rad * 0.4, 0.15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Moldy sulfur-green bubbles
+      ctx.fillStyle = '#84CC16';
+      ctx.beginPath();
+      ctx.arc(rad * 0.25, rad * 0.15, rad * 0.18, 0, Math.PI * 2);
+      ctx.arc(-rad * 0.28, rad * 0.12, rad * 0.14, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.restore();
     }
   }

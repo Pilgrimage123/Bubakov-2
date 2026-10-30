@@ -34,11 +34,38 @@ const LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
   'polednice',
 ]);
 
+const LEVEL_TWO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
+  'snehulak',
+  'tajici_snehulak',
+  'mrazik',
+  'zmrzlik',
+  'severak',
+  'mrazovy_skritek',
+  'mrazivy_obr',
+  'jezinka_mraziva',
+  'morana',
+  'kostlivec',
+  'kostlivec_kosa',
+  'krvavy_kostlivec',
+  'umrlec',
+  'hrobnik',
+  'cert',
+  'certik',
+  'drab',
+]);
+
 function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): boolean {
   const enemy = ENEMIES[enemyId];
   if (!enemy || enemy.category === 'bosses') return false;
-  if (levelId !== 0 && levelId !== 1) return true;
-  return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
+  if (levelId === 0 || levelId === 1) {
+    return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
+  }
+  if (levelId === 2) {
+    if (LEVEL_TWO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId)) return false;
+    if (enemy.category === 'frost' || enemy.category === 'undead') return false;
+    return true;
+  }
+  return true;
 }
 
 export const HORDE_CLEARING_WEAPONS = new Set<string>([
@@ -77,7 +104,7 @@ export interface ArenaHazard {
   radius: number;
   duration: number;
   maxDuration: number;
-  type: 'mud' | 'fire' | 'frost';
+  type: 'mud' | 'fire' | 'frost' | 'curse';
   slowFactor: number;
   kind?: 'magma-trail' | 'predictive-fissure' | string;
   damage?: number;
@@ -603,7 +630,7 @@ export class RunDirector {
     this.updatePacingValves(dt, engine, livingCount);
 
     // 5. Update Hazards (decay)
-    this.updateHazards(dt, player);
+    this.updateHazards(dt, player, engine);
 
     // 6. Update Bubácká díra
     this.updateBubackaDira(dt, engine, player, gameTime);
@@ -1587,7 +1614,7 @@ export class RunDirector {
     this.threatBudget = Math.max(0, this.threatBudget - 14);
   }
 
-  private updateHazards(dt: number, player: any): void {
+  private updateHazards(dt: number, player: any, engine?: any): void {
     for (let i = this.hazards.length - 1; i >= 0; i--) {
       const h = this.hazards[i];
       h.duration -= dt;
@@ -1614,12 +1641,18 @@ export class RunDirector {
         continue;
       }
 
-      if (h.type !== 'fire' || !(h.damage && h.damage > 0)) continue;
+      if (h.type === 'curse' && engine?.state?.dubenDen?.maypoleWardActive) {
+        continue;
+      }
+
+      if ((h.type !== 'fire' && h.type !== 'curse') || !(h.damage && h.damage > 0)) continue;
+
+      const dmgType = h.type === 'curse' ? 'poison' : 'fire';
 
       if (h.oneShot) {
         if (!h.exploded) {
           if (typeof player.takeDamage === 'function') {
-            player.takeDamage(h.damage, 'fire', null, false);
+            player.takeDamage(h.damage, dmgType, null, false);
           } else {
             player.hp = Math.max(0, (player.hp || 0) - h.damage);
           }
@@ -1631,7 +1664,7 @@ export class RunDirector {
         h.damageTimer = Math.max(0, (h.damageTimer || 0) - dt);
         if (h.damageTimer <= 0) {
           if (typeof player.takeDamage === 'function') {
-            player.takeDamage(h.damage, 'fire', null, false);
+            player.takeDamage(h.damage, dmgType, null, false);
           } else {
             player.hp = Math.max(0, (player.hp || 0) - h.damage);
           }

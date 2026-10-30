@@ -22,7 +22,7 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (meta?.completedLevels && meta.completedLevels[id]) return true;
 	if (id === 1 && ((meta?.bestiaryKills?.vrana || 0) >= 1 || !!meta?.completedLevels?.[0])) return true;
 	if (id === 2 && ((meta?.bestiaryKills?.morana || 0) >= 1 || !!meta?.completedLevels?.[1])) return true;
-	if (id === 3 && ((meta?.bestiaryKills?.cert || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
+	if (id === 3 && ((meta?.bestiaryKills?.cert || 0) >= 1 || (meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
 	if (id === 4 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
 	if (id === 5 && ((meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
 	if (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;

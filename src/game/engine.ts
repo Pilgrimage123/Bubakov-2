@@ -126,6 +126,14 @@ import {
   resolveMarchThawObstacles,
   sanitizeArenaSpawnPoint,
 } from '../data/marchThawArena';
+import {
+  DUBEN_POIS,
+  DUBEN_BELL_COOLDOWN,
+  clampToDubenArenaBounds,
+  isInsideDubenPoi,
+  resolveDubenObstacles,
+  getDubenWaterEffect,
+} from '../data/dubnovyDenArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -407,6 +415,7 @@ export interface GameEngineCallbacks {
   onRescueChasnik?: (x: number, y: number) => void;
   onOpenChest?: () => void;
   onWarningBanner?: (msg: string) => void;
+  onVictory?: (levelId: GameLevelId, reason: 'boss' | 'dawn') => void;
 }
 
 export class GameEngine {
@@ -415,6 +424,14 @@ export class GameEngine {
   public livingEnemies: any[];
   public director: RunDirector | null = null;
   public callbacks?: GameEngineCallbacks;
+
+  public get activeLevelId(): GameLevelId | undefined {
+    return this.state.activeLevelId;
+  }
+
+  public get yolkPuddles() {
+    return this.state.yolkPuddles;
+  }
   public enemyFactory?: (
     id: string,
     x: number,
@@ -1185,14 +1202,14 @@ export class GameEngine {
     }
     const renderScale = isCrowBossOrMiniboss ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;
     const radius = isCrowBossOrMiniboss ? Math.round(stats.radius * 1.15) : isMiniboss ? Math.round(stats.radius * 1.65) : isBoss ? stats.radius * 1.3 : stats.radius;
-    let poiseResist = (isMiniboss || isBoss) ? Math.max(0.82, (stats.poiseResist || 0) + 0.45) : stats.poiseResist || 0;
-    const foodResist = (isMiniboss || isBoss) ? Math.max(0.78, (stats.foodResist || 0) + 0.45) : stats.foodResist || 0;
+    let poiseResist = (isMiniboss || isBoss) ? Math.min(0.88, Math.max(0.82, (stats.poiseResist || 0) + 0.45)) : stats.poiseResist || 0;
+    const foodResist = (isMiniboss || isBoss) ? Math.min(0.85, Math.max(0.78, (stats.foodResist || 0) + 0.45)) : stats.foodResist || 0;
     const hunger = (isMiniboss || isBoss)
-      ? Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : stats.foodResist || 0) + 0.45)
+      ? Math.min(0.85, Math.max(0.78, (stats.hunger !== undefined ? stats.hunger : stats.foodResist || 0) + 0.45))
       : stats.hunger !== undefined
       ? stats.hunger
       : stats.foodResist || 0;
-    const willpower = (isMiniboss || isBoss) ? Math.max(0.85, (stats.willpower || 0) + 0.45) : stats.willpower || 0;
+    const willpower = (isMiniboss || isBoss) ? Math.min(0.95, Math.max(0.85, (stats.willpower || 0) + 0.45)) : stats.willpower || 0;
     const cadence: EnemyAttackCadence = stats.attackCadence || 'normal';
     let attackInterval = stats.attackInterval || (cadence === 'fast' ? 0.6 : cadence === 'slow' ? 1.8 : 1.2);
     const baseDamage = isCrowBossOrMiniboss
@@ -1345,6 +1362,13 @@ export class GameEngine {
       meltSquashY: 1.0,
       wobbleScaleX: 1.0,
       wobbleScaleY: 1.0,
+      witchState: resolvedId === 'carodejnice_koste' ? 'dive' : undefined,
+      witchStateTimer: resolvedId === 'carodejnice_koste' ? 3.0 : 0,
+      witchHexCooldown: resolvedId === 'carodejnice_koste' ? 0.8 : 0,
+      flightAltitude: resolvedId === 'carodejnice_koste' ? 22 : 0,
+      rehtackarPulseTimer: resolvedId === 'rehtackar' ? 1.5 : undefined,
+      clatterTimer: 0,
+      rehtackarBuffTimer: 0,
 
       interruptAttack() {
         this.isAttacking = false;
@@ -1356,6 +1380,12 @@ export class GameEngine {
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
         if (this.vycerpanyTimer > 0) this.vycerpanyTimer = Math.max(0, this.vycerpanyTimer - dt);
+        if (this.rehtackarBuffTimer && this.rehtackarBuffTimer > 0) {
+          this.rehtackarBuffTimer = Math.max(0, this.rehtackarBuffTimer - dt);
+        }
+        if (this.clatterTimer && this.clatterTimer > 0) {
+          this.clatterTimer = Math.max(0, this.clatterTimer - dt);
+        }
         for (const statusType in this.statusEffects) {
           const effect = this.statusEffects[statusType];
           if (!effect) continue;
@@ -1499,6 +1529,7 @@ export class GameEngine {
           if (this.garlicSlowTimer > 0) spd *= 0.75;
           if (this.panicked) spd *= 1.35;
           if ((this.vycerpanyTimer || 0) > 0) spd *= 0.50;
+          if ((this.rehtackarBuffTimer || 0) > 0) spd *= 1.30;
           if (
             !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
             self.state.plumPuddles &&
@@ -1511,6 +1542,23 @@ export class GameEngine {
               const pdy = this.y - pud.y;
               if (Math.abs(pdx) <= maxR && Math.abs(pdy) <= maxR && pdx * pdx + pdy * pdy <= maxR * maxR) {
                 spd *= (1 - (pud.slowRatio || 0.35));
+                break;
+              }
+            }
+          }
+
+          if (
+            !((this.isFlying || this.id === 'vrana') && !this.isGroundedForLoot) &&
+            self.state.yolkPuddles &&
+            self.state.yolkPuddles.length > 0
+          ) {
+            for (let yi = 0; yi < self.state.yolkPuddles.length; yi++) {
+              const yp = self.state.yolkPuddles[yi];
+              const maxR = yp.radius + this.radius;
+              const ydx = this.x - yp.x;
+              const ydy = this.y - yp.y;
+              if (Math.abs(ydx) <= maxR && Math.abs(ydy) <= maxR && ydx * ydx + ydy * ydy <= maxR * maxR) {
+                spd *= 0.60;
                 break;
               }
             }
@@ -1537,6 +1585,105 @@ export class GameEngine {
               this.vx = Math.cos(moveDir) * spd;
               this.vy = Math.sin(moveDir) * spd;
             }
+          } else if (this.id === 'zkazena_kraslice') {
+            if (this.fusePrimed) {
+              this.vx = 0;
+              this.vy = 0;
+            } else {
+              this.hopPhase = (this.hopPhase || 0) + dt * 4.5;
+              const hopFactor = Math.max(0, Math.sin(this.hopPhase));
+              this.hopHeight = hopFactor * 14;
+              const hopSpdMult = hopFactor > 0.2 ? 1.75 : 0.2;
+              const wobble = Math.sin((this.animTime || 0) * 6) * 0.45;
+              const finalDir = (this.panicked ? dir + Math.PI : dir) + wobble;
+              this.vx = Math.cos(finalDir) * spd * hopSpdMult;
+              this.vy = Math.sin(finalDir) * spd * hopSpdMult;
+
+              const pDist = Math.hypot(player.x - this.x, player.y - this.y);
+              if (pDist <= (this.radius + (player.radius || 18) + 14)) {
+                this.fusePrimed = true;
+                this.fuseTimer = 1.2;
+                this.vx = 0;
+                this.vy = 0;
+                self.callbacks?.onSound?.('fuse');
+              }
+            }
+          } else if (this.id === 'carodejnice_koste') {
+            this.flightAltitude = 22 + Math.sin((this.animTime || 0) * 4) * 8;
+            this.witchStateTimer = (typeof this.witchStateTimer === 'number' ? this.witchStateTimer : 3.0) - dt;
+            if (!this.witchState) this.witchState = 'dive';
+
+            if (this.witchState === 'dive') {
+              const moveDir = this.panicked ? dir + Math.PI : dir;
+              this.vx = Math.cos(moveDir) * spd * 1.45;
+              this.vy = Math.sin(moveDir) * spd * 1.45;
+              if (this.witchStateTimer <= 0 || dist < 65) {
+                this.witchState = 'hover';
+                this.witchStateTimer = 3.2;
+                this.witchHexCooldown = 0.8;
+              }
+            } else {
+              const targetDist = 210;
+              const orbitAngle = Math.atan2(this.y - player.y, this.x - player.x) + 0.05;
+              const destX = player.x + Math.cos(orbitAngle) * targetDist;
+              const destY = player.y + Math.sin(orbitAngle) * targetDist;
+              this.vx = (destX - this.x) * 1.6;
+              this.vy = (destY - this.y) * 1.6;
+
+              this.witchHexCooldown = (typeof this.witchHexCooldown === 'number' ? this.witchHexCooldown : 1.8) - dt;
+              if (this.witchHexCooldown <= 0) {
+                this.witchHexCooldown = 4.0;
+                const pHeading = Math.atan2(player.vy || 0, player.vx || 0);
+                const lead = Math.min(65, Math.hypot(player.vx || 0, player.vy || 0) * 0.7);
+                const hexX = player.x + Math.cos(pHeading) * lead;
+                const hexY = player.y + Math.sin(pHeading) * lead;
+                addEnemyHazard({
+                  id: `hazard_urknuti_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                  x: hexX,
+                  y: hexY,
+                  radius: 46,
+                  duration: 1.8,
+                  maxDuration: 1.8,
+                  type: 'curse',
+                  slowFactor: 0.65,
+                  kind: 'hex-circle',
+                  warningTimer: 1.1,
+                  damage: 28,
+                  oneShot: true,
+                  exploded: false,
+                  sourceEnemyId: this.id,
+                });
+                self.callbacks?.onSound?.('curse');
+              }
+
+              if (this.witchStateTimer <= 0) {
+                this.witchState = 'dive';
+                this.witchStateTimer = 2.6;
+              }
+            }
+          } else if (this.id === 'rehtackar') {
+            this.rehtackarPulseTimer = (typeof this.rehtackarPulseTimer === 'number' ? this.rehtackarPulseTimer : 1.5) - dt;
+            if (this.rehtackarPulseTimer <= 0) {
+              this.rehtackarPulseTimer = 1.5;
+              this.clatterTimer = 0.55;
+              self.callbacks?.onSound?.('rehtackar');
+
+              const auraRadius = 160;
+              const auraRadiusSq = auraRadius * auraRadius;
+              for (let i = 0; i < self.livingEnemies.length; i++) {
+                const ally = self.livingEnemies[i];
+                if (!ally || ally === this || ally.dead || ally.isDefeated) continue;
+                const adx = ally.x - this.x;
+                const ady = ally.y - this.y;
+                if (adx * adx + ady * ady <= auraRadiusSq) {
+                  ally.rehtackarBuffTimer = 2.0;
+                }
+              }
+            }
+
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
           } else {
             const moveDir = this.panicked ? dir + Math.PI : dir;
             this.vx = Math.cos(moveDir) * spd;
@@ -1577,10 +1724,107 @@ export class GameEngine {
         const kbDecay = Math.max(0, 1 - 8 * dt);
         this.kbx *= kbDecay;
         this.kby *= kbDecay;
+
+        if (this.id === 'carodejnice_koste' && !this.dead && !this.isDefeated) {
+          if (Math.random() < 0.45) {
+            const bankAng = Math.atan2(this.vy || 0, this.vx || 0);
+            tryEmitParticle(self.state.particles, () => ({
+              x: this.x - Math.cos(bankAng) * 20 + (Math.random() - 0.5) * 6,
+              y: this.y - Math.sin(bankAng) * 20 - 12 + (Math.random() - 0.5) * 6,
+              vx: -Math.cos(bankAng) * 35 + (Math.random() - 0.5) * 20,
+              vy: -Math.sin(bankAng) * 35 - 15 - Math.random() * 20,
+              life: 0.45 + Math.random() * 0.25,
+              maxLife: 0.7,
+              size: 2.2,
+              color: Math.random() < 0.6 ? '#F97316' : '#FBBF24',
+            }), self.state.meta?.performanceProfile);
+          }
+        }
+
+        if (this.id === 'zkazena_kraslice' && this.fusePrimed && !this.dead) {
+          this.fuseTimer -= dt;
+          if (Math.random() < 0.25) {
+            tryEmitParticle(self.state.particles, () => ({
+              x: this.x + (Math.random() - 0.5) * 16,
+              y: this.y + (Math.random() - 0.5) * 16,
+              vx: (Math.random() - 0.5) * 20,
+              vy: -35 - Math.random() * 20,
+              life: 0.5,
+              maxLife: 0.5,
+              size: 2.5,
+              color: '#84CC16',
+            }), self.state.meta?.performanceProfile);
+          }
+          if (this.fuseTimer <= 0) {
+            this.detonateKraslice(player);
+          }
+        }
+      },
+
+      detonateKraslice(player: any) {
+        if (this.dead) return;
+        this.dead = true;
+        this.isDefeated = true;
+        self.state.kills += 1;
+        self.callbacks?.onEnemyDefeated?.(this);
+        self.director?.recordEnemyDeath(this, self.state.gameTime);
+        self.callbacks?.onSound?.('explosion');
+
+        const blastRadius = 110;
+        for (let s = 0; s < 12; s++) {
+          const ang = (s / 12) * Math.PI * 2 + Math.random() * 0.2;
+          const bSpd = 80 + Math.random() * 90;
+          tryEmitParticle(self.state.particles, () => ({
+            x: this.x,
+            y: this.y,
+            vx: Math.cos(ang) * bSpd,
+            vy: Math.sin(ang) * bSpd,
+            life: 0.6 + Math.random() * 0.4,
+            maxLife: 1.0,
+            size: 3.5,
+            color: Math.random() < 0.5 ? '#FEF08A' : '#CA8A04',
+          }), self.state.meta?.performanceProfile);
+        }
+
+        if (player && player.hp > 0) {
+          const pDist = Math.hypot(player.x - this.x, player.y - this.y);
+          if (pDist <= blastRadius) {
+            const dmg = Math.round(45 * (1 - pDist / blastRadius));
+            if (dmg > 0) {
+              if (typeof player.takeDamage === 'function') {
+                player.takeDamage(dmg, 'poison', this);
+              } else {
+                player.hp = Math.max(0, player.hp - dmg);
+              }
+            }
+          }
+        }
+
+        for (let j = 0; j < self.livingEnemies.length; j++) {
+          const foe = self.livingEnemies[j];
+          if (!foe || foe === this || foe.dead) continue;
+          const foeDist = Math.hypot(foe.x - this.x, foe.y - this.y);
+          if (foeDist <= blastRadius) {
+            const splashDmg = Math.round(95 * (1 - foeDist / blastRadius));
+            if (splashDmg > 0) {
+              if (typeof foe.takeDamage === 'function') {
+                foe.takeDamage(splashDmg, 'physical', foe.x - this.x, foe.y - this.y);
+              } else {
+                foe.hp -= splashDmg;
+                if (foe.hp <= 0) foe.isDefeated = true;
+              }
+              const kbAng = Math.atan2(foe.y - this.y, foe.x - this.x);
+              foe.kbx = (foe.kbx || 0) + Math.cos(kbAng) * 160;
+              foe.kby = (foe.kby || 0) + Math.sin(kbAng) * 160;
+            }
+          }
+        }
+
+        self.spawnYolkPuddle(this.x, this.y, 48, 5.0);
       },
 
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
-        if (this.isDefeated || this.dead) return;
+        if (this.isDefeated || this.dead || (this.id === 'zkazena_kraslice' && this.fusePrimed)) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (bič ignoruje úhyb)
         if (this.prefix === 'vichricovy' && !options?.cannotDodge && !options?.ignoreDodge) {
@@ -1622,7 +1866,7 @@ export class GameEngine {
         } else {
           effectiveResist = this.poiseResist || 0;
         }
-        effectiveResist = Math.max(0, effectiveResist * (1 - ignoreResist));
+        effectiveResist = Math.min(0.90, Math.max(0, effectiveResist * (1 - ignoreResist)));
 
         let finalDamage = Math.max(1, amount * (1 - effectiveResist));
         if (self.state.player?.snackBonusDmg && ((this.snackTimer || 0) > 0 || this.statusEffects.pickle_sickness) && type !== 'food') {
@@ -1768,6 +2012,16 @@ export class GameEngine {
         }
 
         if (this.hp <= 0) {
+          if (this.id === 'zkazena_kraslice') {
+            if (this.fusePrimed) return;
+            this.hp = 0;
+            this.fusePrimed = true;
+            this.fuseTimer = 1.2;
+            this.isDefeated = false;
+            this.dead = false;
+            self.callbacks?.onSound?.('fuse');
+            return;
+          }
           this.hp = 0;
           this.isDefeated = true;
           if (this.isCarryingLootBundle && Array.isArray(this.carryingLootBundle) && this.carryingLootBundle.length > 0) {
@@ -1784,6 +2038,27 @@ export class GameEngine {
           }
           self.callbacks?.onEnemyDefeated?.(this);
           self.director?.recordEnemyDeath(this, self.state.gameTime);
+
+          const curLvlId = self.state.activeLevelId !== undefined ? self.state.activeLevelId : 0;
+          const curLvl = GAME_LEVELS[curLvlId];
+          if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
+            self.state.levelVictoryTriggered = true;
+            if (self.state.meta) {
+              const nextLvlId = (curLvlId + 1) as GameLevelId;
+              const canUnlockNext = nextLvlId <= 7;
+              const nextHighest = canUnlockNext
+                ? Math.max(self.state.meta.highestLevelUnlocked || 1, nextLvlId)
+                : (self.state.meta.highestLevelUnlocked || 1);
+              self.state.meta.highestLevelUnlocked = nextHighest;
+              self.state.meta.completedLevels = {
+                ...(self.state.meta.completedLevels || {}),
+                [curLvlId]: true,
+              };
+              if (!self.state.meta.bestiaryKills) self.state.meta.bestiaryKills = {};
+              self.state.meta.bestiaryKills[this.id] = (self.state.meta.bestiaryKills[this.id] || 0) + 1;
+            }
+            self.callbacks?.onVictory?.(curLvlId, 'boss');
+          }
           if (type === 'food') {
             this.defeatedByFood = true;
           } else {
@@ -2129,6 +2404,22 @@ export class GameEngine {
       slowRatio,
     });
     this.emitDamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false);
+  }
+
+  public spawnYolkPuddle(x: number, y: number, radius = 48, duration = 5.0): void {
+    if (!this.state.yolkPuddles) this.state.yolkPuddles = [];
+    if (this.state.yolkPuddles.length >= 24) {
+      this.state.yolkPuddles.shift();
+    }
+    this.state.yolkPuddles.push({
+      x,
+      y,
+      radius,
+      life: duration,
+      maxLife: duration,
+      damageTimer: 0.5,
+    });
+    this.emitDamageText(x, y - 25, 'SÍRA! 🥚', '#FACC15', false);
   }
 
   public triggerGoatBell(player: any): void {
@@ -3010,6 +3301,57 @@ export class GameEngine {
       compactInPlace(this.state.plumPuddles, keepLivePlumPuddle);
     }
 
+    // Step yolk puddles (Zkažená kraslice toxic pools)
+    if (this.state.yolkPuddles && this.state.yolkPuddles.length > 0) {
+      for (let i = 0; i < this.state.yolkPuddles.length; i++) {
+        const pud = this.state.yolkPuddles[i];
+        pud.life -= dt;
+        pud.damageTimer = (pud.damageTimer || 0.5) - dt;
+        if (pud.life <= 0) {
+          pud.dead = true;
+          continue;
+        }
+
+        // Slow and damage player over time
+        if (player && player.hp > 0) {
+          const pDist = Math.hypot(player.x - pud.x, player.y - pud.y);
+          if (pDist <= pud.radius + (player.radius || 18)) {
+            player.speedMultiplier = (player.speedMultiplier || 1) * 0.72;
+            if (pud.damageTimer <= 0) {
+              if (typeof player.takeDamage === 'function') {
+                player.takeDamage(6, 'poison');
+              } else {
+                player.hp = Math.max(0, player.hp - 6);
+              }
+            }
+          }
+        }
+
+        // Slow and damage enemies inside puddle
+        for (let j = 0; j < this.livingEnemies.length; j++) {
+          const foe = this.livingEnemies[j];
+          if (!foe || foe.dead || (foe.isFlying && !foe.isGroundedForLoot)) continue;
+          const fDist = Math.hypot(foe.x - pud.x, foe.y - pud.y);
+          if (fDist <= pud.radius + (foe.radius || 16)) {
+            foe.slowTimer = Math.max(foe.slowTimer || 0, 0.4);
+            if (pud.damageTimer <= 0) {
+              if (typeof foe.takeDamage === 'function') {
+                foe.takeDamage(10, 'magic');
+              } else {
+                foe.hp -= 10;
+                if (foe.hp <= 0) foe.isDefeated = true;
+              }
+            }
+          }
+        }
+
+        if (pud.damageTimer <= 0) {
+          pud.damageTimer = 0.5;
+        }
+      }
+      compactInPlace(this.state.yolkPuddles, (p) => !p.dead);
+    }
+
     // Step projectiles
     for (let i = 0; i < this.state.projectiles.length; i++) {
       const p = this.state.projectiles[i];
@@ -3760,6 +4102,126 @@ export class GameEngine {
       }
     }
 
+    // Stage 3 ("DUBEN"): Enforce Dubnový den bounds, village obstacles, Easter bell peal, Maypole ward, thawed pond mud, and pollen clouds
+    if (this.state.activeLevelId === 2) {
+      const duben = this.state.dubenDen;
+      if (duben) {
+        duben.bellCooldown = Math.max(0, (duben.bellCooldown || 0) - dt);
+        duben.bellWaveTimer = Math.max(0, (duben.bellWaveTimer || 0) - dt);
+        duben.pollenCloudTimer = Math.max(0, (duben.pollenCloudTimer || 0) - dt);
+      }
+      if (player && player.hp > 0) {
+        resolveDubenObstacles(player, false);
+        clampToDubenArenaBounds(player, 28);
+
+        // Maypole protective aura in village green
+        const inVillage = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.village);
+        if (duben) {
+          duben.maypoleWardActive = inVillage;
+        }
+
+        // Easter bell peal at Kostel sv. Jiří [E] or when swarmed
+        if (duben) {
+          const inChurch = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.church);
+          const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E']);
+          const bubakNearChurch =
+            inChurch &&
+            this.livingEnemies.some(
+              (foe) =>
+                !foe.dead &&
+                !foe.isDefeated &&
+                Math.hypot(foe.x - DUBEN_POIS.church.x, foe.y - DUBEN_POIS.church.y) < 280
+            );
+          if (inChurch && (eKeyPressed || bubakNearChurch) && duben.bellCooldown <= 0) {
+            duben.bellCooldown = DUBEN_BELL_COOLDOWN;
+            duben.bellWaveTimer = 3.5;
+            player.hp = Math.min(player.maxHp, player.hp + 20);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              const dx = foe.x - DUBEN_POIS.church.x;
+              const dy = foe.y - DUBEN_POIS.church.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist < 540 + (foe.radius || 0)) {
+                foe.takeDamage(140 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520);
+                foe.panicked = true;
+                foe.panicTimer = Math.max(foe.panicTimer || 0, 4.5);
+              }
+            }
+            this.emitDamageText(
+              DUBEN_POIS.church.x,
+              DUBEN_POIS.church.y - 100,
+              '✦ VELIKONOČNÍ ZVON ZVONÍ Z ŘÍMA!',
+              '#FEF08A',
+              true,
+              'bossAnnouncements'
+            );
+            this.callbacks?.onSound?.('bell');
+          }
+
+          // Dandelion pollen burst when moving in fields
+          const inFields = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.fields);
+          if (inFields && (player.vx || player.vy) && duben.pollenCloudTimer <= 0) {
+            duben.pollenCloudTimer = 2.5;
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (Math.hypot(foe.x - player.x, foe.y - player.y) < 220) {
+                foe.slowTimer = Math.max(foe.slowTimer || 0, 1.8);
+              }
+            }
+          }
+
+          // Ambient April weather: drifting petals & dandelion seeds fluttering across the village
+          duben.weatherPetalTimer = (duben.weatherPetalTimer || 0) - dt;
+          if (duben.weatherPetalTimer <= 0) {
+            duben.weatherPetalTimer = 0.22;
+            tryEmitParticle(this.state.particles, () => {
+              const isPetal = Math.random() < 0.6;
+              return {
+                x: player.x + (Math.random() - 0.5) * 1200,
+                y: player.y - 350 + (Math.random() - 0.5) * 300,
+                vx: 32 + Math.random() * 28,
+                vy: 16 + Math.random() * 22,
+                life: 3.5 + Math.random() * 1.5,
+                maxLife: 5.0,
+                size: isPetal ? 2.8 : 3.6,
+                color: isPetal ? '#FCE7F3' : '#FEF08A',
+                isWeather: true,
+              };
+            }, this.state.meta?.performanceProfile);
+          }
+        }
+
+        // Pond warm water & shallows
+        const waterEff = getDubenWaterEffect(player.x, player.y, false);
+        if (waterEff.inWater && waterEff.inDeepWater) {
+          player.speedMultiplier = (player.speedMultiplier || 1) * 0.88;
+        }
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean(e.isFlying && !e.isGroundedForLoot);
+        if (!isFlying) {
+          const isAquatic = isAquaticEnemy(e) || e.id === 'zaba' || e.id === 'ropucha' || e.id === 'vodnicek';
+          const eWater = getDubenWaterEffect(e.x, e.y, isAquatic);
+          if (eWater.inWater) {
+            if (isAquatic) {
+              e.speedMultiplier = (e.speedMultiplier || 1) * 1.15;
+            } else if (eWater.inDeepWater) {
+              e.slowTimer = Math.max(e.slowTimer || 0, 0.4);
+            }
+          }
+        } else {
+          // Orchard petal flurry slows flying enemies passing overhead
+          if (isInsideDubenPoi(e.x, e.y, DUBEN_POIS.orchard)) {
+            e.speedMultiplier = (e.speedMultiplier || 1) * 0.82;
+          }
+        }
+        resolveDubenObstacles(e, isFlying);
+        clampToDubenArenaBounds(e, 28);
+      }
+    }
+
     // Step drops
     if (this.state.drops) {
       sweepCoinsIntoBigPouches(this.state.drops, dt);
@@ -3797,6 +4259,8 @@ export class GameEngine {
         }
         if (this.state.activeLevelId === 0) {
           clampToMarchArenaBounds(d, 28);
+        } else if (this.state.activeLevelId === 2) {
+          clampToDubenArenaBounds(d, 28);
         }
 
         if (player && player.hp > 0) {
@@ -3812,6 +4276,8 @@ export class GameEngine {
             d.y += Math.sin(ang) * spd;
             if (this.state.activeLevelId === 0) {
               clampToMarchArenaBounds(d, 28);
+            } else if (this.state.activeLevelId === 2) {
+              clampToDubenArenaBounds(d, 28);
             }
             const curDist = Math.hypot(d.x - player.x, d.y - player.y);
 

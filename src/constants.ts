@@ -80,8 +80,8 @@ var DAY_PHASES = [
 	}
 ];
 function getCurrentDayPhase(seconds: number, levelId?: number) {
-	if (levelId === 0) {
-		// 1. úroveň (Denní tání, 5 minut / 300 s): pouze světlé fáze (Poledne 0–150 s, Odpoledne 150 s+)
+	if (levelId === 0 || levelId === 2) {
+		// 1. úroveň (Denní tání) a 3. úroveň (Dubnový den, 5 minut / 300 s): pouze světlé denní fáze (Poledne 0–150 s, Odpoledne 150 s+)
 		if (seconds < 150) return DAY_PHASES[0];
 		return DAY_PHASES[1];
 	}

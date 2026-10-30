@@ -91,6 +91,60 @@ export const SUN_VISUAL_PHASES: readonly SunPhaseMetadata[] = [
   },
 ];
 
+export type SunVariant = 'march' | 'duben';
+
+export const DUBEN_SUN_VISUAL_PHASES: readonly SunPhaseMetadata[] = [
+  {
+    index: 0,
+    id: 'sunrise',
+    label: 'Ranní rozbřesk',
+    clockLabel: '6:00',
+    defaultTimeSeconds: 0,
+  },
+  {
+    index: 1,
+    id: 'morning',
+    label: 'Jarní ráno',
+    clockLabel: '8:00',
+    defaultTimeSeconds: 50,
+  },
+  {
+    index: 2,
+    id: 'late_morning',
+    label: 'Aprílové poškadlení',
+    clockLabel: '10:00',
+    defaultTimeSeconds: 100,
+  },
+  {
+    index: 3,
+    id: 'noon',
+    label: 'Hřejivé poledne',
+    clockLabel: '12:00',
+    defaultTimeSeconds: 150,
+  },
+  {
+    index: 4,
+    id: 'afternoon',
+    label: 'Přeháňka a duha',
+    clockLabel: '15:00',
+    defaultTimeSeconds: 200,
+  },
+  {
+    index: 5,
+    id: 'early_evening',
+    label: 'Májový podvečer',
+    clockLabel: '18:00',
+    defaultTimeSeconds: 250,
+  },
+  {
+    index: 6,
+    id: 'sunset',
+    label: 'Filipojakubský západ',
+    clockLabel: '20:00',
+    defaultTimeSeconds: 300,
+  },
+];
+
 export interface SunOverlayConfig {
   /** Override time in seconds (0..300) from debug slider; null = use live engine.gameTime */
   manualTimeSeconds: number | null;
@@ -104,6 +158,8 @@ export interface SunOverlayConfig {
   showDeadzoneDebugRing: boolean;
   /** Whether the bullet-heaven readability stress test (hundreds of projectiles) is active */
   stressTestActive: boolean;
+  /** Thematic stage personality variant: 'march' (Stage 1) or 'duben' (Stage 3) */
+  variant?: SunVariant;
 }
 
 export function createDefaultSunOverlayConfig(): SunOverlayConfig {
@@ -114,6 +170,7 @@ export function createDefaultSunOverlayConfig(): SunOverlayConfig {
     sunScale: 0.62,
     showDeadzoneDebugRing: false,
     stressTestActive: false,
+    variant: 'march',
   };
 }
 
@@ -379,10 +436,357 @@ const PHASE_RAY_PALETTES: Record<SunVisualPhaseId, PhaseRayPalette> = {
  * Pre-renders the crown of 12 wavy S-curved flame rays and 12 sharp triangular spikes
  * for a specific time-of-day phase onto a 512x512 offscreen canvas.
  */
+/**
+ * Procedural folk wildflower wreath (Věneček z jarních pampelišek a vrbových kočiček)
+ * Worn by the April sun along the top rim of its head.
+ */
+function drawDubenWildflowerWreath(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  discR: number,
+  phaseId: SunVisualPhaseId
+): void {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // Arching green spring vine stem along forehead
+  ctx.strokeStyle = '#15803D';
+  ctx.lineWidth = 4.2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, discR - 4, -Math.PI * 0.78, -Math.PI * 0.22);
+  ctx.stroke();
+
+  // 7 alternating wreath elements: Dandelion blossoms & fuzzy pussy-willows (kočičky)
+  const elementAngles = [-0.74, -0.65, -0.57, -0.50, -0.43, -0.35, -0.26].map(
+    (frac) => Math.PI * frac
+  );
+
+  for (let i = 0; i < elementAngles.length; i++) {
+    const angle = elementAngles[i];
+    const nodeR = discR - 2;
+    const nx = cx + Math.cos(angle) * nodeR;
+    const ny = cy + Math.sin(angle) * nodeR;
+    const isDandelion = i % 2 === 1;
+
+    ctx.save();
+    ctx.translate(nx, ny);
+    ctx.rotate(angle + Math.PI * 0.5);
+
+    if (isDandelion) {
+      // Dandelion blossom: bright golden pom-pom with layered gouache petals
+      const dR = phaseId === 'noon' ? 14 : 12;
+
+      // Small green leafy sepals below
+      ctx.fillStyle = '#166534';
+      ctx.beginPath();
+      ctx.ellipse(0, 4, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer petals
+      ctx.fillStyle = phaseId === 'sunset' ? '#F97316' : '#FACC15';
+      ctx.beginPath();
+      ctx.arc(0, -2, dR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner dense gouache orange core
+      ctx.fillStyle = phaseId === 'sunset' ? '#DC2626' : '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(0, -2, dR * 0.58, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tiny center dot
+      ctx.fillStyle = '#FEF08A';
+      ctx.beginPath();
+      ctx.arc(0, -3, dR * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Folk ink outline
+      ctx.strokeStyle = '#231409';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(0, -2, dR, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Pussy-willow catkin (kočička): soft fuzzy silver-white oval
+      const catkinW = 7;
+      const catkinH = 11;
+
+      // Brown woody scale base
+      ctx.fillStyle = '#78350F';
+      ctx.beginPath();
+      ctx.ellipse(0, 6, 4, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Fluffy silver-white oval
+      ctx.fillStyle = phaseId === 'sunset' ? '#FED7AA' : '#F9FAFB';
+      ctx.beginPath();
+      ctx.ellipse(0, -1, catkinW, catkinH, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Delicate gouache shadow
+      ctx.fillStyle = phaseId === 'sunset' ? '#FB923C' : '#E5E7EB';
+      ctx.beginPath();
+      ctx.ellipse(1.5, 0, catkinW * 0.6, catkinH * 0.75, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Fine ink outline and fuzzy hairs
+      ctx.strokeStyle = '#231409';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.ellipse(0, -1, catkinW, catkinH, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Tiny fuzzy whiskers
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-catkinW - 2, -2);
+      ctx.lineTo(-catkinW, -1);
+      ctx.moveTo(catkinW, -1);
+      ctx.lineTo(catkinW + 2, -2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Rainbow halo (Duhový oblouk)
+ * Arches across the upper sun corona during afternoon sunshowers in Stage 3.
+ */
+function drawDubenRainbowHalo(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  baseR: number
+): void {
+  ctx.save();
+  const rainbowBands = [
+    { color: 'rgba(239, 68, 68, 0.42)', offset: 52 },
+    { color: 'rgba(249, 115, 22, 0.40)', offset: 46 },
+    { color: 'rgba(234, 179, 8, 0.42)', offset: 40 },
+    { color: 'rgba(34, 197, 94, 0.38)', offset: 34 },
+    { color: 'rgba(59, 130, 246, 0.38)', offset: 28 },
+    { color: 'rgba(168, 85, 247, 0.36)', offset: 22 },
+  ];
+
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 6;
+  const startAng = -Math.PI * 0.88;
+  const endAng = -Math.PI * 0.12;
+
+  for (let b = 0; b < rainbowBands.length; b++) {
+    const band = rainbowBands[b];
+    ctx.strokeStyle = band.color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseR + band.offset, startAng, endAng);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/**
+ * Teasing "Apríl!" prankster expression with cheekily protruding pink tongue.
+ */
+function drawDubenAprilMischiefMouth(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  inkColor: string
+): void {
+  ctx.save();
+  const mouthY = cy + 30;
+  ctx.fillStyle = '#3B1109';
+  ctx.beginPath();
+  ctx.moveTo(cx - 38, mouthY - 4);
+  ctx.bezierCurveTo(cx - 16, mouthY + 36, cx + 24, mouthY + 36, cx + 42, mouthY);
+  ctx.quadraticCurveTo(cx + 4, mouthY + 12, cx - 38, mouthY - 4);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#FB7185';
+  ctx.beginPath();
+  ctx.ellipse(cx + 18, mouthY + 22, 14, 19, 0.22, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#E11D48';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(cx + 17, mouthY + 10);
+  ctx.lineTo(cx + 19, mouthY + 32);
+  ctx.stroke();
+
+  ctx.strokeStyle = inkColor;
+  ctx.lineWidth = 3.6;
+  ctx.beginPath();
+  ctx.ellipse(cx + 18, mouthY + 22, 14, 19, 0.22, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.lineWidth = 4.8;
+  ctx.beginPath();
+  ctx.moveTo(cx - 38, mouthY - 4);
+  ctx.bezierCurveTo(cx - 16, mouthY + 36, cx + 24, mouthY + 36, cx + 42, mouthY);
+  ctx.stroke();
+
+  ctx.lineWidth = 3.6;
+  ctx.beginPath();
+  ctx.arc(cx - 40, mouthY - 6, 8, -2.4, -0.6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx + 44, mouthY - 2, 8, -2.6, -0.8);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Teasing winking eyes (one open with mischievous sparkle, one winking tight)
+ */
+function drawDubenAprilMischiefEyes(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  inkColor: string
+): void {
+  ctx.save();
+  const leftEyeX = cx - 31;
+  const rightEyeX = cx + 31;
+  const eyeY = cy - 22;
+
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.ellipse(leftEyeX, eyeY, 15, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(leftEyeX + 3, eyeY, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(leftEyeX + 5, eyeY - 2.5, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = inkColor;
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.ellipse(leftEyeX, eyeY, 15, 12, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.lineWidth = 5.2;
+  ctx.beginPath();
+  ctx.arc(rightEyeX, eyeY + 1, 14, Math.PI + 0.22, Math.PI * 2 - 0.22);
+  ctx.stroke();
+
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(rightEyeX + 13, eyeY - 2);
+  ctx.lineTo(rightEyeX + 22, eyeY - 8);
+  ctx.moveTo(rightEyeX + 14, eyeY + 2);
+  ctx.lineTo(rightEyeX + 24, eyeY + 3);
+  ctx.moveTo(rightEyeX + 13, eyeY + 6);
+  ctx.lineTo(rightEyeX + 21, eyeY + 11);
+  ctx.stroke();
+
+  ctx.lineWidth = 5.0;
+  ctx.beginPath();
+  ctx.moveTo(cx - 48, cy - 44);
+  ctx.quadraticCurveTo(cx - 31, cy - 56, cx - 14, cy - 42);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(cx + 14, cy - 38);
+  ctx.quadraticCurveTo(cx + 31, cy - 42, cx + 48, cy - 34);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * Sparkling April raindrops on cheeks during sunshower.
+ */
+function drawDubenRaindrops(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number
+): void {
+  ctx.save();
+  const drops = [
+    { x: cx - 48, y: cy + 18, r: 5.5 },
+    { x: cx - 36, y: cy + 34, r: 4.0 },
+    { x: cx + 46, y: cy + 22, r: 5.0 },
+  ];
+
+  for (let i = 0; i < drops.length; i++) {
+    const d = drops[i];
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.78)';
+    ctx.strokeStyle = '#0284C7';
+    ctx.lineWidth = 2.0;
+
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y - d.r * 1.5);
+    ctx.bezierCurveTo(d.x + d.r, d.y, d.x + d.r, d.y + d.r, d.x, d.y + d.r);
+    ctx.bezierCurveTo(d.x - d.r, d.y + d.r, d.x - d.r, d.y, d.x, d.y - d.r * 1.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(d.x - d.r * 0.3, d.y - d.r * 0.2, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/**
+ * Walpurgis sparks & twilight embers dancing around the April sunset.
+ */
+function drawDubenWalpurgisEmbers(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  discR: number
+): void {
+  ctx.save();
+  const duskGrad = ctx.createLinearGradient(0, cy + 30, 0, cy + discR + 15);
+  duskGrad.addColorStop(0, 'rgba(147, 51, 234, 0)');
+  duskGrad.addColorStop(0.55, 'rgba(126, 34, 206, 0.45)');
+  duskGrad.addColorStop(1, 'rgba(88, 28, 135, 0.75)');
+  ctx.fillStyle = duskGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, discR, 0, Math.PI * 2);
+  ctx.fill();
+
+  const sparks = [
+    { x: cx - 64, y: cy + 60, r: 4.5, c: '#F97316' },
+    { x: cx - 38, y: cy + 78, r: 3.5, c: '#FBBF24' },
+    { x: cx + 28, y: cy + 68, r: 5.0, c: '#EF4444' },
+    { x: cx + 62, y: cy + 54, r: 3.8, c: '#F59E0B' },
+  ];
+  for (let i = 0; i < sparks.length; i++) {
+    const s = sparks[i];
+    ctx.fillStyle = s.c;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FEF08A';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function bakeSunRaysCanvas(
   ctx: CanvasRenderingContext2D,
   size = SUN_OFFSCREEN_SIZE,
-  phaseId: SunVisualPhaseId = 'late_morning'
+  phaseId: SunVisualPhaseId = 'late_morning',
+  variant: SunVariant = 'march'
 ): void {
   const cx = size * 0.5;
   const cy = size * 0.5;
@@ -638,6 +1042,10 @@ export function bakeSunRaysCanvas(
   ctx.arc(0, 0, innerR + 1, 0, Math.PI * 2);
   ctx.fill();
 
+  if (variant === 'duben' && phaseId === 'afternoon') {
+    drawDubenRainbowHalo(ctx, 0, 0, innerR);
+  }
+
   ctx.restore();
 }
 
@@ -830,7 +1238,8 @@ function drawOpenHeartMouth(
 export function bakeSunFaceCanvas(
   ctx: CanvasRenderingContext2D,
   size = SUN_OFFSCREEN_SIZE,
-  phaseId: SunVisualPhaseId = 'late_morning'
+  phaseId: SunVisualPhaseId = 'late_morning',
+  variant: SunVariant = 'march'
 ): void {
   const cx = size * 0.5;
   const cy = size * 0.5;
@@ -949,8 +1358,11 @@ export function bakeSunFaceCanvas(
     // 8:00 Morning: Cheerful medium-open grin
     drawOpenHeartMouth(ctx, cx, cy, 0.86, 0.78, inkColor);
   } else if (phaseId === 'late_morning') {
-    // 10:00 Late Morning: Classic wide joyful open smile with heart tongue
-    drawOpenHeartMouth(ctx, cx, cy, 1.0, 1.0, inkColor);
+    if (variant === 'duben') {
+      drawDubenAprilMischiefMouth(ctx, cx, cy, inkColor);
+    } else {
+      drawOpenHeartMouth(ctx, cx, cy, 1.0, 1.0, inkColor);
+    }
   } else if (phaseId === 'noon') {
     // 12:00 Noon: Maximum euphoria wide laughing mouth
     drawOpenHeartMouth(ctx, cx, cy, 1.08, 1.14, inkColor);
@@ -998,24 +1410,35 @@ export function bakeSunFaceCanvas(
     ctx.stroke();
     ctx.restore();
   } else {
-    // 20:00 Sunset: Sleepy contented smile / blowing a goodnight kiss with waving little hand
-    ctx.save();
-    ctx.strokeStyle = inkColor;
-    ctx.lineWidth = 4.6;
-    ctx.beginPath();
-    ctx.moveTo(cx - 30, cy + 26);
-    ctx.quadraticCurveTo(cx - 2, cy + 45, cx + 28, cy + 25);
-    ctx.stroke();
+    if (variant === 'duben') {
+      ctx.save();
+      ctx.strokeStyle = inkColor;
+      ctx.lineWidth = 4.8;
+      ctx.beginPath();
+      ctx.moveTo(cx - 32, cy + 26);
+      ctx.quadraticCurveTo(cx + 8, cy + 42, cx + 36, cy + 22);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      // 20:00 Sunset: Sleepy contented smile / blowing a goodnight kiss with waving little hand
+      ctx.save();
+      ctx.strokeStyle = inkColor;
+      ctx.lineWidth = 4.6;
+      ctx.beginPath();
+      ctx.moveTo(cx - 30, cy + 26);
+      ctx.quadraticCurveTo(cx - 2, cy + 45, cx + 28, cy + 25);
+      ctx.stroke();
 
-    // Little waving golden-red sun hand on the bottom-right greeting goodbye
-    ctx.fillStyle = '#FB7185';
-    ctx.strokeStyle = inkColor;
-    ctx.lineWidth = 4.2;
-    ctx.beginPath();
-    ctx.ellipse(cx + 82, cy + 44, 18, 13, -0.45, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
+      // Little waving golden-red sun hand on the bottom-right greeting goodbye
+      ctx.fillStyle = '#FB7185';
+      ctx.strokeStyle = inkColor;
+      ctx.lineWidth = 4.2;
+      ctx.beginPath();
+      ctx.ellipse(cx + 82, cy + 44, 18, 13, -0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   // 4. Phase-Specific Eyes & Eyebrows
@@ -1053,6 +1476,27 @@ export function bakeSunFaceCanvas(
     ctx.quadraticCurveTo(cx - 31, cy - 46, cx - 14, cy - 38);
     ctx.moveTo(cx + 14, cy - 38);
     ctx.quadraticCurveTo(cx + 31, cy - 46, cx + 48, cy - 36);
+    ctx.stroke();
+    ctx.restore();
+  } else if (variant === 'duben' && phaseId === 'late_morning') {
+    drawDubenAprilMischiefEyes(ctx, cx, cy, inkColor);
+  } else if (variant === 'duben' && phaseId === 'noon') {
+    // Stage 3 April Noon: Euphoric clear laughing eyes without dark glasses
+    ctx.save();
+    ctx.strokeStyle = inkColor;
+    ctx.lineWidth = 5.0;
+    for (let i = 0; i < eyes.length; i++) {
+      const e = eyes[i];
+      ctx.beginPath();
+      ctx.arc(e.x, e.y - 4, 15, Math.PI + 0.2, Math.PI * 2 - 0.2);
+      ctx.stroke();
+    }
+    ctx.lineWidth = 5.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 48, cy - 42);
+    ctx.quadraticCurveTo(cx - 31, cy - 54, cx - 14, cy - 40);
+    ctx.moveTo(cx + 14, cy - 40);
+    ctx.quadraticCurveTo(cx + 31, cy - 54, cx + 48, cy - 42);
     ctx.stroke();
     ctx.restore();
   } else if (phaseId === 'noon') {
@@ -1290,8 +1734,16 @@ export function bakeSunFaceCanvas(
   ctx.stroke();
   ctx.restore();
 
-  // 6. Sunset (20:00) Special Details: Fairytale Nightcap ("Noční čepice") & Horizon Mist Veil
-  if (phaseId === 'sunset') {
+  // 6. Wreath & Sunset details
+  if (variant === 'duben') {
+    // Wildflower wreath worn across the top in all April phases
+    drawDubenWildflowerWreath(ctx, cx, cy, discR, phaseId);
+    if (phaseId === 'afternoon') {
+      drawDubenRaindrops(ctx, cx, cy);
+    } else if (phaseId === 'sunset') {
+      drawDubenWalpurgisEmbers(ctx, cx, cy, discR);
+    }
+  } else if (phaseId === 'sunset') {
     ctx.save();
     // Cozy blue-indigo fairytale nightcap with golden stars/dots and a fluffy pom-pom
     const capGrad = ctx.createLinearGradient(cx - 75, cy - 115, cx + 95, cy - 30);
@@ -1597,18 +2049,20 @@ function bakeSpringBirdsCanvas(width = 260, height = 130): HTMLCanvasElement {
  * Builds and caches all 7 daily keyframe offscreen canvas pairs (`raysCanvas` + `faceCanvas`),
  * multi-plane 3D parallax clouds, volumetric sunbeams, spring birds, and lens flare stamps once at initialization.
  */
-export function getSunOffscreenCanvases(): CachedSunCanvases {
-  if (cachedSunCanvases) return cachedSunCanvases;
+let cachedMarchSunCanvases: CachedSunCanvases | null = null;
+let cachedDubenSunCanvases: CachedSunCanvases | null = null;
 
+function buildSunOffscreenCanvases(variant: SunVariant): CachedSunCanvases {
   const keyframes: SunPhaseCanvasPair[] = [];
-  for (let i = 0; i < SUN_VISUAL_PHASES.length; i++) {
-    const phase = SUN_VISUAL_PHASES[i];
+  const phases = variant === 'duben' ? DUBEN_SUN_VISUAL_PHASES : SUN_VISUAL_PHASES;
+  for (let i = 0; i < phases.length; i++) {
+    const phase = phases[i];
     const { canvas: rCanvas, ctx: rCtx } = createOffscreenCanvas(
       SUN_OFFSCREEN_SIZE,
       SUN_OFFSCREEN_SIZE
     );
     if (rCtx) {
-      bakeSunRaysCanvas(rCtx, SUN_OFFSCREEN_SIZE, phase.id);
+      bakeSunRaysCanvas(rCtx, SUN_OFFSCREEN_SIZE, phase.id, variant);
     }
 
     const { canvas: fCanvas, ctx: fCtx } = createOffscreenCanvas(
@@ -1616,7 +2070,7 @@ export function getSunOffscreenCanvases(): CachedSunCanvases {
       SUN_OFFSCREEN_SIZE
     );
     if (fCtx) {
-      bakeSunFaceCanvas(fCtx, SUN_OFFSCREEN_SIZE, phase.id);
+      bakeSunFaceCanvas(fCtx, SUN_OFFSCREEN_SIZE, phase.id, variant);
     }
 
     keyframes.push({
@@ -1651,10 +2105,9 @@ export function getSunOffscreenCanvases(): CachedSunCanvases {
     'rgba(225, 29, 72, 0.24)'
   );
 
-  // Classic late_morning (index 2) exposed as default raysCanvas / faceCanvas
   const defaultPair = keyframes[2] || keyframes[0];
 
-  cachedSunCanvases = {
+  return {
     raysCanvas: defaultPair.raysCanvas,
     faceCanvas: defaultPair.faceCanvas,
     keyframes,
@@ -1667,7 +2120,20 @@ export function getSunOffscreenCanvases(): CachedSunCanvases {
     flareAmberCanvas,
     flareRoseCanvas,
   };
-  return cachedSunCanvases;
+}
+
+export function getSunOffscreenCanvases(variant: SunVariant = 'march'): CachedSunCanvases {
+  if (variant === 'duben') {
+    if (!cachedDubenSunCanvases) {
+      cachedDubenSunCanvases = buildSunOffscreenCanvases('duben');
+    }
+    return cachedDubenSunCanvases;
+  }
+  if (!cachedMarchSunCanvases) {
+    cachedMarchSunCanvases = buildSunOffscreenCanvases('march');
+    cachedSunCanvases = cachedMarchSunCanvases;
+  }
+  return cachedMarchSunCanvases;
 }
 
 function clamp(val: number, min: number, max: number): number {
@@ -1744,7 +2210,8 @@ export function computeSunForegroundState(
   outState.phaseIndexB = idxB;
   outState.phaseBlend = phaseBlend;
 
-  const dominantMeta = SUN_VISUAL_PHASES[rawFraction >= 0.5 ? idxB : idxA];
+  const phaseMetaList = config.variant === 'duben' ? DUBEN_SUN_VISUAL_PHASES : SUN_VISUAL_PHASES;
+  const dominantMeta = phaseMetaList[rawFraction >= 0.5 ? idxB : idxA];
   outState.activePhaseId = dominantMeta.id;
   outState.activePhaseLabel = dominantMeta.label;
   outState.activeClockLabel = dominantMeta.clockLabel;
@@ -2004,7 +2471,8 @@ export function renderSunForegroundOverlay(
   uiTimeSeconds: number,
   config: SunOverlayConfig,
   outState: SunComputedFrameState,
-  passMode: SunRenderPassMode = 'all'
+  passMode: SunRenderPassMode = 'all',
+  variant: SunVariant = config.variant || 'march'
 ): SunComputedFrameState {
   if (passMode !== 'lens_only') {
     computeSunForegroundState(
@@ -2019,7 +2487,7 @@ export function renderSunForegroundOverlay(
     );
   }
 
-  const buffers = getSunOffscreenCanvases();
+  const buffers = getSunOffscreenCanvases(variant);
   const halfSize = outState.renderSizePx * 0.5;
 
   ctx.save();

@@ -237,6 +237,11 @@ import {
   sanitizeArenaSpawnPoint,
 } from './data/marchThawArena';
 import { drawMarchThawDynamicLandmark } from './render/marchThawSvgLandscape';
+import {
+  DUBEN_POIS,
+  clampToDubenArenaBounds,
+  isInsideDubenPoi,
+} from './data/dubnovyDenArena';
 
 // Helper to render portrait canvases according to unlock tier (0 = 0-24%, 1 = 25-49%, 2 = 50-74%, 3 = 75-99%, 4 = 100%)
 // Locked portraits (tier < 4) are pre-rendered statically once per tier change to eliminate 60 FPS menu draw overhead.
@@ -1288,6 +1293,18 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     items.push(new DecorItem(MARCH_THAW_POIS.village.x - 45, MARCH_THAW_POIS.village.y + 35, 'kaca', 1));
     return items;
   }
+  if (level.id === 2 && level.arena?.id === 'dubnova_naves') {
+    const items: DecorItem[] = [
+      new DecorItem(DUBEN_POIS.tavern.x, DUBEN_POIS.tavern.y, 'cottage', 1.1),
+      new DecorItem(DUBEN_POIS.village.x - 45, DUBEN_POIS.village.y + 35, 'kaca', 1),
+      new DecorItem(DUBEN_POIS.shrine.x, DUBEN_POIS.shrine.y, 'bozi_muka', 1),
+      new DecorItem(DUBEN_POIS.orchard.x, DUBEN_POIS.orchard.y, 'tree', 1.15),
+      new DecorItem(DUBEN_POIS.orchard.x + 80, DUBEN_POIS.orchard.y - 40, 'tree', 1),
+      new DecorItem(DUBEN_POIS.orchard.x - 70, DUBEN_POIS.orchard.y + 30, 'tree', 0.9),
+      new DecorItem(DUBEN_POIS.fields.x, DUBEN_POIS.fields.y, 'rock', 1),
+    ];
+    return items;
+  }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
     if (!pool.includes('cottage')) pool.push('cottage');
@@ -1303,6 +1320,7 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     ruined_castle: 32,
     dragon_cave: 24,
     spring_river: 45,
+    spring_village: 38,
   };
 
   const target = themeDensity[level.theme] || 32;
@@ -4960,6 +4978,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             // SINGLE-PASS ACTIVE BOSS LOOKUP (avoids scanning engine.enemies 7x every frame)
             let moranaBoss: any = null;
+            let vrchniCarodejniceBoss: any = null;
+            let staraWitchBoss: any = null;
+            let beranekBoss: any = null;
             let cert: any = null;
             let hejkal: any = null;
             let obr: any = null;
@@ -4971,7 +4992,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (!e || e.isDefeated) continue;
               const eid = e.id;
               if (eid === 'morana' && !moranaBoss && (e.isBoss || (engine.activeLevelId === 1 && engine.finalBossSpawned))) moranaBoss = e;
-              else if (eid === 'cert' && !cert) cert = e;
+              else if (eid === 'vrchni_carodejnice' && !vrchniCarodejniceBoss && (e.isBoss || (engine.activeLevelId === 2 && engine.finalBossSpawned))) vrchniCarodejniceBoss = e;
+              else if (eid === 'carodejnice_stara' && !staraWitchBoss) staraWitchBoss = e;
+              else if (eid === 'beranek' && !beranekBoss) beranekBoss = e;
+              else if (eid === 'cert' && !cert && curLvl.id !== 2) cert = e;
               else if (eid === 'hejkal' && !hejkal) hejkal = e;
               else if (eid === 'obr' && !obr) obr = e;
               else if (eid === 'mlynar' && !mlynar) mlynar = e;
@@ -5079,8 +5103,122 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
             }
 
-            // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS (LEVEL 2)
-            if (cert && (cert.isBoss || engine.finalBossSpawned || curLvl.id === 2)) {
+            // DUBNOVÝ DEN BOSS MECHANICS (LEVEL 2: BERÁNEK, STARÁ JEŽIBABA, VRCHNÍ FILIPOJAKUBSKÁ ČARODĚJNICE)
+            if (curLvl.id === 2) {
+              // 1. Miniboss: Obří kolednický beránek
+              if (beranekBoss && !beranekBoss.isDefeated) {
+                beranekBoss.chargeTimer = (beranekBoss.chargeTimer !== undefined ? beranekBoss.chargeTimer : 5.0) - dt;
+                if (beranekBoss.chargeTimer <= 0) {
+                  beranekBoss.chargeTimer = 5.5;
+                  const chargeAng = Math.atan2(player.y - beranekBoss.y, player.x - beranekBoss.x);
+                  beranekBoss.vx = Math.cos(chargeAng) * 230;
+                  beranekBoss.vy = Math.sin(chargeAng) * 230;
+                  sound.roar?.();
+                  pushDamageText(engine.texts, beranekBoss.x, beranekBoss.y - 60, 'CUKROVÝ VÝPAD! 🐑💨', '#FEF08A', true);
+                  for (let i = 0; i < 12; i++) {
+                    emitParticle(engine.particles, () => ({
+                      x: beranekBoss.x + (Math.random() - 0.5) * 20,
+                      y: beranekBoss.y + (Math.random() - 0.5) * 20,
+                      vx: (Math.random() - 0.5) * 90,
+                      vy: (Math.random() - 0.5) * 90,
+                      life: 0.8,
+                      color: '#FFFFFF',
+                      size: 4 + Math.random() * 3,
+                    }));
+                  }
+                }
+              }
+
+              // 2. Midboss: Stará ježibaba z Melechu
+              if (staraWitchBoss && !staraWitchBoss.isDefeated) {
+                staraWitchBoss.emberTimer = (staraWitchBoss.emberTimer !== undefined ? staraWitchBoss.emberTimer : 4.0) - dt;
+                if (staraWitchBoss.emberTimer <= 0) {
+                  staraWitchBoss.emberTimer = 4.5;
+                  const targetAngle = Math.atan2(player.y - staraWitchBoss.y, player.x - staraWitchBoss.x);
+                  for (let i = 0; i < 3; i++) {
+                    const ang = targetAngle + (i - 1) * 0.25;
+                    engine.projectiles.push({
+                      x: staraWitchBoss.x,
+                      y: staraWitchBoss.y,
+                      vx: Math.cos(ang) * 190,
+                      vy: Math.sin(ang) * 190,
+                      damage: 18,
+                      radius: 8,
+                      color: '#CA8A04',
+                      life: 2.2,
+                      maxLife: 2.2,
+                      isEnemy: true,
+                      pushback: 16,
+                      statusText: 'ZKAŽENÉ VEJCE! 🥚',
+                      dead: false,
+                    });
+                  }
+                }
+              }
+
+              // 3. Final Boss: Vrchní Filipojakubská Čarodějnice
+              if (vrchniCarodejniceBoss && !vrchniCarodejniceBoss.isDefeated) {
+                const isPhase2 = vrchniCarodejniceBoss.hp <= vrchniCarodejniceBoss.maxHp * 0.5;
+                vrchniCarodejniceBoss.fireVortexTimer = (vrchniCarodejniceBoss.fireVortexTimer !== undefined ? vrchniCarodejniceBoss.fireVortexTimer : 3.5) - dt;
+
+                if (isPhase2 && !vrchniCarodejniceBoss.enraged) {
+                  vrchniCarodejniceBoss.enraged = true;
+                  vrchniCarodejniceBoss.speed = 140;
+                  sound.roar?.();
+                  pushDamageText(engine.texts, vrchniCarodejniceBoss.x, vrchniCarodejniceBoss.y - 110, '🔥 FILIPOJAKUBSKÁ VICHŘICE!', '#DC2626', true);
+                  setRunStats((s) => ({ ...s, warningBanner: '🔥 NEBE VZPLÁLO! VRCHNÍ ČARODĚJNICE ROZPĚLA OHNIVÝ REJ!' }));
+                  setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 4000);
+
+                  for (let i = 0; i < 2; i++) {
+                    const ang = Math.random() * Math.PI * 2;
+                    const witchMinion = createEnemyInstance('carodejnice_koste', vrchniCarodejniceBoss.x + Math.cos(ang) * 120, vrchniCarodejniceBoss.y + Math.sin(ang) * 120, 1.0);
+                    engine.enemies.push(witchMinion);
+                  }
+
+                  for (let i = 0; i < 30; i++) {
+                    const ang = (i / 30) * Math.PI * 2;
+                    emitParticle(engine.particles, () => ({
+                      x: vrchniCarodejniceBoss.x,
+                      y: vrchniCarodejniceBoss.y,
+                      vx: Math.cos(ang) * (110 + Math.random() * 100),
+                      vy: Math.sin(ang) * (110 + Math.random() * 100),
+                      life: 1.0,
+                      color: i % 2 === 0 ? '#EF4444' : '#A855F7',
+                      size: 5 + Math.random() * 3,
+                    }));
+                  }
+                }
+
+                if (vrchniCarodejniceBoss.fireVortexTimer <= 0) {
+                  vrchniCarodejniceBoss.fireVortexTimer = isPhase2 ? 2.8 : 4.0;
+                  const targetAngle = Math.atan2(player.y - vrchniCarodejniceBoss.y, player.x - vrchniCarodejniceBoss.x);
+                  const count = isPhase2 ? 5 : 3;
+                  const spread = isPhase2 ? 0.32 : 0.24;
+                  for (let i = 0; i < count; i++) {
+                    const angle = targetAngle + (i - (count - 1) / 2) * spread;
+                    const speed = isPhase2 ? 240 : 200;
+                    engine.projectiles.push({
+                      x: vrchniCarodejniceBoss.x,
+                      y: vrchniCarodejniceBoss.y,
+                      vx: Math.cos(angle) * speed,
+                      vy: Math.sin(angle) * speed,
+                      damage: isPhase2 ? 30 : 22,
+                      radius: 10,
+                      color: '#A855F7',
+                      life: 2.5,
+                      maxLife: 2.5,
+                      isEnemy: true,
+                      pushback: 24,
+                      statusText: 'UŘKNUTÍ! 🔮',
+                      dead: false,
+                    });
+                  }
+                }
+              }
+            }
+
+            // PEKELNÝ ČERT BOSS DYNAMIC SPECIAL MECHANICS
+            if (cert && (cert.isBoss || (engine.finalBossSpawned && curLvl.finalBoss?.id === 'cert'))) {
               if (cert) {
                 const isPhase2 = cert.hp <= cert.maxHp * 0.5;
 

@@ -54,7 +54,13 @@ export type BakedBubakId =
   | 'zbrojnos'
   | 'nocni_mura'
   | 'jezinka_mraziva'
-  | 'mrazivy_obr';
+  | 'mrazivy_obr'
+  | 'zkazena_kraslice'
+  | 'carodejnice_koste'
+  | 'rehtackar'
+  | 'beranek'
+  | 'carodejnice_stara'
+  | 'vrchni_carodejnice';
 
 export interface BakedFrame {
   canvas: any;
@@ -117,6 +123,12 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   nocni_mura: { size: 128, drawFn: (c, x, y, t, v, p) => Lada.drawNocniMura(c, x, y, t, v, p) },
   jezinka_mraziva: { size: 144, drawFn: (c, x, y, t, v, p) => Lada.drawFrostJezinka(c, x, y, t, v, p) },
   mrazivy_obr: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawFrostGiant(c, x, y, t, v, p) },
+  zkazena_kraslice: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawZkazenaKraslice(c, x, y, t, v, p) },
+  carodejnice_koste: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawBroomWitch(c, x, y, t, v, p) },
+  rehtackar: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawRehtackar(c, x, y, t, v, p) },
+  beranek: { size: 144, drawFn: (c, x, y, t, v, p) => Lada.drawBeranek(c, x, y, t, v, p) },
+  carodejnice_stara: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawOldWitch(c, x, y, t, v, p) },
+  vrchni_carodejnice: { size: 180, drawFn: (c, x, y, t, v, p) => Lada.drawSupremeWitch(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {

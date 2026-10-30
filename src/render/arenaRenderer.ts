@@ -44,6 +44,7 @@ import {
   createReusableSunFrameState,
   type SunOverlayConfig,
   type SunComputedFrameState,
+  type SunVariant,
 } from './sunForegroundRenderer';
 
 export interface CameraViewport {
@@ -653,17 +654,24 @@ export class ArenaRenderer {
     this.indicatorController.update(dropsArray, camera, Math.max(0, Math.min(0.1, deltaTimeSeconds)), hpPct);
     this.indicatorController.render(ctx);
 
-    // 11. STAGE 1 FOREGROUND SUN & 6-PLANE 3D PARALLAX OVERLAY PASS (CLOSEST TO CAMERA)
+    // 11. DAYLIGHT FOREGROUND SUN & 6-PLANE 3D PARALLAX OVERLAY PASS (CLOSEST TO CAMERA)
     // Rendered after all entities, roofs, projectiles, particles, floating combat texts, world VFX,
     // lighting, and off-screen indicators so NOTHING in the arena ever covers the sun.
+    // Supports Stage 1 (Předjaří v Hrusicích) and Stage 3 (Dubnový den).
     const isStageOneDaylight =
       (curLvl && curLvl.id === 0) ||
       (engine.activeLevelId === 0 && (!curLvl || curLvl.id === undefined || curLvl.id === 0));
-    if (isStageOneDaylight && !options?.skipSunInArenaPass) {
+    const isStageThreeDaylight =
+      (curLvl && curLvl.id === 2) ||
+      (engine.activeLevelId === 2 && (!curLvl || curLvl.id === undefined || curLvl.id === 2));
+    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight;
+    if (isDaylightStage && !options?.skipSunInArenaPass) {
+      const sunVariant: SunVariant = isStageThreeDaylight ? 'duben' : 'march';
       const tSunStart = now();
       const screenW = camera.zoom && camera.zoom !== 1 ? Math.round(width * camera.zoom) : width;
       const screenH = camera.zoom && camera.zoom !== 1 ? Math.round(height * camera.zoom) : height;
-      const sunConfig = options?.sunOverlayConfig || this.defaultSunConfig;
+      const baseSunConfig = options?.sunOverlayConfig || this.defaultSunConfig;
+      const sunConfig: SunOverlayConfig = baseSunConfig.variant === sunVariant ? baseSunConfig : { ...baseSunConfig, variant: sunVariant };
       const sunState = options?.sunFrameState || this.defaultSunState;
       renderSunForegroundOverlay(
         ctx,
@@ -675,7 +683,8 @@ export class ArenaRenderer {
         engine.uiTime || 0,
         sunConfig,
         sunState,
-        'all'
+        'all',
+        sunVariant
       );
       if (lightingEnabled) {
         lightingMs += now() - tSunStart;

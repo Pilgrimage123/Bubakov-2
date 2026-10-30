@@ -1,3 +1,10 @@
+import {
+  collideCircleWithDubenObstacles,
+  hasDubenTerrainLineOfSight,
+  hasDubenRoofsInView,
+  isEntityBehindDubenRoof,
+} from './dubnovyDenArena';
+
 export type MarchThawPoiId =
   | 'fields'
   | 'church'
@@ -915,6 +922,11 @@ export function collideCircleWithObstacles(
 ): ObstacleCollisionResult {
   const r = Math.max(2, radius || 8);
 
+  if (activeLevelId === 2) {
+    const dubenHit = collideCircleWithDubenObstacles(x, y, radius);
+    if (dubenHit.hit) return dubenHit as ObstacleCollisionResult;
+  }
+
   if (activeLevelId === 0) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
@@ -1147,6 +1159,10 @@ export function hasTerrainLineOfSight(
   activeLevelId = 0,
   decor?: any[],
 ): boolean {
+  if (activeLevelId === 2) {
+    if (!hasDubenTerrainLineOfSight(x1, y1, x2, y2)) return false;
+  }
+
   if (activeLevelId === 0) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
@@ -1293,6 +1309,9 @@ export function hasRoofsInView(
   viewRight: number,
   viewBottom: number
 ): boolean {
+  if (activeLevelId === 2) {
+    if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
+  }
   if (
     activeLevelId === 0 &&
     viewRight >= ROOF_UNION_MIN_X &&
@@ -1332,6 +1351,10 @@ export function isEntityBehindMarchRoof(
   decor?: any[],
   radius = 18,
 ): MarchRoofZone | null {
+  if (activeLevelId === 2) {
+    const dubenRoof = isEntityBehindDubenRoof(x, y);
+    if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
+  }
   if (activeLevelId === 0) {
     const halfR = radius * 0.5;
     if (

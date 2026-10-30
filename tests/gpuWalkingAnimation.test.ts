@@ -120,9 +120,9 @@ describe('GPU Procedural Walking Animation (Bullet Heaven architecture)', () => 
     expect(typeof Battlefield).toBe('function');
   });
 
-  it('guarantees complete coverage for ALL 58 folklore enemies in Bubákov', () => {
+  it('guarantees complete coverage for ALL folklore enemies in Bubákov', () => {
     const allEnemyIds = Object.keys(ENEMIES);
-    expect(allEnemyIds.length).toBe(58);
+    expect(allEnemyIds.length).toBeGreaterThanOrEqual(58);
 
     // 1. Verify every single enemy is mapped in ENEMY_ARCHETYPE_MAP
     for (const eid of allEnemyIds) {

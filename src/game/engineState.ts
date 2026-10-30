@@ -142,8 +142,19 @@ export interface EngineState {
     /** Accumulates elapsed time for 4 Hz local terrain-enemy interactions. */
     terrainHazardTimer: number;
   };
+  /** Runtime-only state for Dubnový den (3. úroveň). */
+  dubenDen: {
+    bellCooldown: number;
+    bellWaveTimer: number;
+    maypoleWardActive: boolean;
+    pollenCloudTimer: number;
+    orchardPetalTimer: number;
+    weatherPetalTimer: number;
+    terrainHazardTimer: number;
+  };
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
+  yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
   crowWave?: any;
   snowmanHorde?: any;
 }
@@ -272,7 +283,17 @@ export function createInitialEngineState(): EngineState {
       forestAmbushCooldown: 0,
       terrainHazardTimer: 0,
     },
+    dubenDen: {
+      bellCooldown: 0,
+      bellWaveTimer: 0,
+      maypoleWardActive: false,
+      pollenCloudTimer: 0,
+      orchardPetalTimer: 0,
+      weatherPetalTimer: 0,
+      terrainHazardTimer: 0,
+    },
     holyCircle: null,
     plumPuddles: [],
+    yolkPuddles: [],
   };
 }

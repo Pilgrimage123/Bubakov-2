@@ -1,3 +1,28 @@
+## 2026-10-30 — 3. Úroveň: Dubnový den v Hrusicích (Dubnová náves, aprílové slunce, velikonoční kraslice a čarodějnice)
+
+- **Kompletní vertikální řez 3. úrovně („Dubnový den“, `levelId: 2`) v autentickém stylu Josefa Lady**:
+  - **Definice kraje a 5minutové denní tempo (`src/data/levels.ts`, `src/data/levelUnlocks.ts`, `src/App.tsx`)**:
+    - Úroveň situována do rozkvetlého dubna s dvěma denními fázemi: polední svit (`noon` 0–150 s) a hřejivé odpoledne (`afternoon` 150–300 s).
+    - Odemkne se po poražení Morany ve 2. úrovni (*Noční mrazy*). Vítězství nad Vrchní Čarodějnicí odemyká 4. úroveň (*Starý hřbitov a Hrusický hvozd*) a trofej `level2_completed` (*Dubnový přemožitel*).
+  - **Dubnová náves a taktické body zájmu (`src/data/dubnovyDenArena.ts`, `src/render/arenaRenderer.ts`)**:
+    - Asymetrická aréna (2800 × 2200 px) s 9 lidovými body zájmu (POI): *Posvátná Májka* (ochranný posvěcený štít, rušení uřknutí a kleteb), *Zahrada s proutím* (+18 % rychlost pohybu), *Kolednické meze*, *Kostelní zvonice sv. Jiří*, *Dubnová náves*, *Hospoda*, *Mlýnský náhon*, *Okraj lesa* a *Boží muka*.
+    - Vyladěna kolizní mechanika, okluze střech roubenek i stínění v korunách rozkvetlých jabloní.
+  - **Aprílové popředí se sluníčkem a proměnlivé počasí (`src/render/sunForegroundRenderer.ts`, `src/render/arenaRenderer.ts`, `src/game/engine.ts`)**:
+    - Implementována varianta `variant: 'duben'` s novými ladovskými fázemi (rozpustile mrkající slunce s vyplazeným jazykem, pampeliškový věnec s kočičkami, odpolední dešťové kapky s duhovou korónou a filipojakubské jiskry).
+    - Hardwarově akcelerované částicové efekty poletujícího pampeliškového chmýří a růžových okvětních plátků na GPU bez runtime alokací.
+  - **Noví taktičtí nepřátelé kraje (`src/data/enemies.ts`, `src/render/ladaRenderer.ts`, `src/game/engine.ts`)**:
+    - **Zkažená kraslice (`zkazena_kraslice`)**: puklé velikonoční vejce plné síry s nepředvídatelným poskakováním, 1,2s varovným třesem s rudým pulzem, řetězovou plošnou explozí zraňující i okolní havěť a leptavou žloutkovou louží na zemi (`yolkPuddles`).
+    - **Čarodějnice na koštěti (`carodejnice_koste`)**: létající nepřítel (`isFlying: true`) ignorující terénní překážky, střídající střemhlavé nálety s kroužením v uctivé vzdálenosti a sesíláním telegrafovaného runového kruhu kletby (*Uřknutí*). Výfuk jisker a kouře z březového proutí.
+    - **Koledník s řehtačkou (`rehtackar`)**: podpůrný rusher v tradičním kroji s točící se dřevěnou klapačkou a barevnými velikonočními stuhami; každých 1,5 s vysílá zvukovou auru zrychlující okolní bubáky o +30 % (`rehtackarBuffTimer`).
+  - **Hierarchie bossů a dubnové vyvrcholení (`src/data/levels.ts`, `src/App.tsx`, `src/render/ladaRenderer.ts`, `src/data/trophies.ts`)**:
+    - **Miniboss (85 s, 50 zářezů)**: *Obří kolednický beránek* (`beranek`) – piškotový beránek s červenou stuhou a zvonkem, prorážející náves cukrovými výpady v oblacích moučkového cukru.
+    - **Midboss (185 s, 130 zářezů)**: *Stará ježibaba z Melechu* (`carodejnice_stara`) – let na pekařské lopatě, kotlík s vroucí sírou, salvy puklých kraslic a ohnivé víry.
+    - **Finální boss (300 s, 240 zářezů)**: *Vrchní Filipojakubská Čarodějnice* (`vrchni_carodejnice`) – nejmocnější čarodějnice Posázaví s ohnivým koštětem a fialovou róbou; v 50 % HP přechází do zuřivého režimu s vyvoláním letky čarodějnic a salvami ohnivých run.
+    - Odstraněny reliktní odkazy na pekelného čerta na 3. úrovni, nahrazeny uceleným dubnovým příběhem a trofejí `level2_completed`.
+  - **Striktní ochrana spawn poolů a testovací pokrytí (`src/game/director.ts`, `tests/`)**:
+    - Režisér výpravy striktně vylučuje mimosezónní mrazivé, hřbitovní a pekelné stvůry (`LEVEL_TWO_FORBIDDEN_REGULAR_SPAWNS`).
+    - Vytvořeny rozsáhlé testovací sady (`dubenArena.test.ts`, `dubenSunAndWeather.test.ts`, `zkazenaKraslice.test.ts`, `broomWitch.test.ts`, `rehtackarAndAprilWaves.test.ts`, `aprilBossesAndClimax.test.ts`, `level2DubnovyDen.test.ts`) s celkovým počtem 73 testovacích souborů a 697 zelených testů.
+
 ## 2026-10-30 — Ladovské animované květy a botanické dekorace v menu, HUDu a modálech
 
 - **Plynulá animace květů a doplňků po vzoru titulního plátna (`LadaHudBotanicalDecor.tsx`, `LadaBotanicalFlourish.tsx`, `LadaCardCorners.tsx`, `LadaCartouche.tsx`, `LadaFrieze.tsx`)**:

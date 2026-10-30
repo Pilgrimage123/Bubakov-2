@@ -206,123 +206,109 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	2: {
 		id: 2,
-		name: "3. Náves a rybník Brčálník",
-		shortTitle: "Náves a rybník",
-		subtitle: "Zlatavý podzim, skotačivá havěť a rybniční rejdy",
-		theme: "autumn_village",
-		season: "autumn",
-		icon: "🍂",
+		name: "3. Duben v Hrusicích – Dubnový den",
+		shortTitle: "Dubnový den",
+		subtitle: "Aprílové slunce, rozkvetlé meze a veselé jarní rejdy",
+		theme: "spring_village",
+		season: "spring",
+		icon: "🌸",
 		badge: "3. Úroveň",
-		description: "Slunce ozařuje hrusické doškové střechy. Na mezích šmejdí rarášci a z rybníka Brčálníku vylézají nenechaví vodníci.",
-		lore: "Klidné venkovské odpoledne narušily divoké rejdy. Zažeňte polní a rybniční potvory a vykažte z hospodské náse samotného Pekelného Čerta!",
-		unlockRequirementText: "Odemkne se po poražení Morany ve 2. úrovni",
-		skyColor: "#F7EDD5",
-		nightSkyColor: "#282F3D",
-		groundColor: "#F4ECE1",
-		ambientTint: "rgba(217, 160, 54, 0.08)",
-		weatherEffect: "leaves",
+		description: "Aprílové slunce prohřívá hrusické meze a zahrady. Z rozkvetlých luk vylézají jarní diblíci, koledníci spěchají s pomlázkami a vzduchem krouží první čarodějnice!",
+		lore: "Březen, za kamna vlezem; duben, ještě tam budem – ale venku už voní kvetoucí stromy a peče se velikonoční beránek! Udržte pořádek na návsi, zažeňte zlomyslné aprílové skřítky a vykažte z kraje hrusické čarodějnice.",
+		unlockRequirementText: "Odemkne se pokořením Morany ve 2. úrovni (Noční mrazy)",
+		skyColor: "#BEE3F8",
+		nightSkyColor: "#2A3D54",
+		groundColor: "#A8D08D",
+		ambientTint: "rgba(255, 235, 150, 0.06)",
+		weatherEffect: "petals",
 		decorTypes: [
 			"cottage",
 			"tree",
-			"will_o_wisp",
-			"cross"
+			"rock",
+			"kaca"
 		],
+		arena: {
+			id: "dubnova_naves",
+			name: "Dubnová náves",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "orchard", "pond", "mill", "forest", "shrine"]
+		},
 		miniBoss: {
-			id: "polednice",
-			name: "☀️ Polednice se srpem",
-			warning: "☀️ POZOR: PŘICHÁZÍ MOCNÁ POLEDNICE SE SRPEM! ☀️",
-			time: 45,
-			kills: 40,
-			multiplier: 3.5
+			id: "beranek",
+			name: "🐑 Obří kolednický beránek",
+			warning: "🐑 POZOR: Z ROZPÁLENÉ PECE VYSKOČIL OBŘÍ KOLEDNICKÝ BERÁNEK! 🐑",
+			time: 85,
+			kills: 50,
+			multiplier: 3.2
 		},
 		midBoss: {
-			id: "hastrman",
-			name: "💧 Hastrman z Brčálníku",
-			warning: "💧 POZOR: Z HLUBIN VYSTUPUJE VELKÝ HASTRMAN! 💧",
-			time: 95,
-			kills: 95,
-			multiplier: 4.5
+			id: "carodejnice_stara",
+			name: "🧹 Stará ježibaba z Melechu",
+			warning: "🧹 POZOR: ZE STRNIŠTĚ VZLÉTLI ČARODĚJNICKÉ VÍRY SE STAROU JEŽIBABOU! 🧹",
+			time: 185,
+			kills: 130,
+			multiplier: 1.6
 		},
 		finalBoss: {
-			id: "cert",
-			name: "👹 Pekelný Čert s vidlemi",
-			warning: "⚠️ PŘICHÁZÍ ŠÉF ÚROVNĚ: PEKELNÝ ČERT! ⚠️",
-			time: 160,
-			kills: 180,
-			multiplier: 1.25
+			id: "vrchni_carodejnice",
+			name: "🧹 Vrchní Filipojakubská Čarodějnice",
+			warning: "🧹 NEBE ZAPLÁLO! NAD HRUSICEMI KROUŽÍ VRCHNÍ FILIPOJAKUBSKÁ ČARODĚJNICE! 🧹",
+			time: 300,
+			kills: 240,
+			multiplier: 1.1
 		},
 		spawnPools: {
 			noon: [
-				"rarach",
+				"blatouch",
 				"zaba",
+				"zkazena_kraslice",
+				"rehtackar",
 				"mysak",
-				"sotek"
+				"sotek",
+				"rarach"
 			],
 			afternoon: [
 				"blatouch",
 				"zaba",
+				"zkazena_kraslice",
+				"carodejnice_koste",
+				"rehtackar",
 				"divozenka",
-				"rarach",
-				"sotek"
-			],
-			dusk: [
-				"topivec",
-				"blatouch",
-				"divozenka",
-				"certik",
-				"bludicka"
-			],
-			night: [
-				"topivec",
-				"hastrman",
-				"certik",
 				"ropucha",
-				"bludicka"
-			],
-			midnight: [
-				"certik",
-				"topivec",
-				"ropucha",
-				"sazovy_rarach",
-				"bludicka"
+				"jiskrivec",
+				"rarach"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "rarach",
-				name: "Rarášek",
-				icon: "👺",
-				role: "Polní havěť"
+				id: "zkazena_kraslice",
+				name: "Zkažená kraslice",
+				icon: "🥚",
+				role: "Výbušné velikonoční vejce působící řetězové exploze"
 			},
 			{
-				id: "zaba",
-				name: "Rybniční žabka",
-				icon: "🐸",
-				role: "Vodní předvoj"
+				id: "carodejnice_koste",
+				name: "Čarodějnice na koštěti",
+				icon: "🧹",
+				role: "Rychlá létající útočnice se střemhlavými nálety a uřknutím"
 			},
 			{
-				id: "blatouch",
-				name: "Blatouchový skřítek",
-				icon: "🌼",
-				role: "Rybniční diblík"
+				id: "rehtackar",
+				name: "Koledník s řehtačkou",
+				icon: "🪓",
+				role: "Podpůrný rychlík povzbuzující havěť klapáním"
 			},
 			{
-				id: "polednice",
-				name: "Polednice",
-				icon: "☀️",
-				role: "Polední přízrak"
-			},
-			{
-				id: "cert",
-				name: "Pekelný Čert",
-				icon: "👹",
-				role: "Hlavní boss"
+				id: "vrchni_carodejnice",
+				name: "Vrchní Filipojakubská Čarodějnice",
+				icon: "🧙‍♀️",
+				role: "Vrcholný boss kraje vládnoucí vichřici a ohňům"
 			}
 		],
 		bossMechanic: {
-			label: "Pekelný dupák a žhavé uhlíky",
-			description: "Čert zadupe kopytem, vyšle kruh žhavých jisker a přivolá nezbedné rarášky.",
-			cadenceSeconds: 12
+			label: "🧹 Filipojakubská vichřice a ohnivé koště",
+			description: "Vrchní Čarodějnice krouží nad návsí, metá hořící smolné věnce a vyvolává větrné víry rozmetající zkažené kraslice.",
+			cadenceSeconds: 6
 		}
 	},
 	3: {
