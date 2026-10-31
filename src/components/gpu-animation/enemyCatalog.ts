@@ -50,8 +50,12 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   carodejnice_koste: { archetype: 'bug', duration: '0.22s', wobble: '7deg', squashX: 1.10, squashY: 0.91, baseScale: 0.90, accentColor: '#7C3AED' },
   chroust: { archetype: 'bug', duration: '0.20s', wobble: '8deg', squashX: 1.14, squashY: 0.88, baseScale: 0.85, accentColor: '#78350F' },
   pampeliska_chmyricko: { archetype: 'bug', duration: '0.18s', wobble: '6deg', squashX: 1.10, squashY: 0.90, baseScale: 0.60, accentColor: '#FEF08A' },
+  boruvkovy_diblik: { archetype: 'bug', duration: '0.22s', wobble: '8deg', squashX: 1.12, squashY: 0.89, baseScale: 0.85, accentColor: '#312E81' },
+  roj_polnich_mysaku: { archetype: 'bug', duration: '0.16s', wobble: '9deg', squashX: 1.15, squashY: 0.87, baseScale: 0.90, accentColor: '#92400E' },
+  pekelny_roj_sazovniku: { archetype: 'bug', duration: '0.18s', wobble: '8deg', squashX: 1.14, squashY: 0.88, baseScale: 0.85, accentColor: '#EA580C' },
 
   // --- 2. VODNÍ A ŽELATINOVÁ HAVĚŤ (Slime archetype - high compression, minimal tilt) ---
+  rak_ricni: { archetype: 'slime', duration: '0.68s', wobble: '5deg', squashX: 1.25, squashY: 0.80, baseScale: 1.05, accentColor: '#0F766E' },
   ropucha: { archetype: 'slime', duration: '0.70s', wobble: '3deg', squashX: 1.40, squashY: 0.64, baseScale: 1.05, accentColor: '#166534' },
   vodnicek: { archetype: 'slime', duration: '0.62s', wobble: '4deg', squashX: 1.30, squashY: 0.72, baseScale: 0.90, accentColor: '#0EA5E9' },
   topivec: { archetype: 'slime', duration: '0.75s', wobble: '3deg', squashX: 1.42, squashY: 0.62, baseScale: 1.10, accentColor: '#0369A1' },
@@ -76,6 +80,9 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   carodejnice_stara: { archetype: 'golem', duration: '1.10s', wobble: '14deg', squashX: 1.22, squashY: 0.81, baseScale: 1.50, accentColor: '#15803D' },
   vrchni_carodejnice: { archetype: 'golem', duration: '1.25s', wobble: '16deg', squashX: 1.24, squashY: 0.80, baseScale: 1.70, accentColor: '#7C3AED' },
   ledovi_muzi: { archetype: 'golem', duration: '1.20s', wobble: '14deg', squashX: 1.25, squashY: 0.78, baseScale: 1.55, accentColor: '#38BDF8' },
+  cert_sekac: { archetype: 'golem', duration: '1.15s', wobble: '16deg', squashX: 1.25, squashY: 0.79, baseScale: 1.50, accentColor: '#DC2626' },
+  kralovsky_vele_rak: { archetype: 'golem', duration: '1.20s', wobble: '12deg', squashX: 1.28, squashY: 0.78, baseScale: 1.60, accentColor: '#0D9488' },
+  kralovska_polednice: { archetype: 'golem', duration: '1.25s', wobble: '14deg', squashX: 1.22, squashY: 0.82, baseScale: 1.65, accentColor: '#F59E0B' },
 
   // --- 4. BĚŽNÍ PĚŠÁCI, BUBÁCI, KOSTLIVCI A VENKOVANÉ (Runner archetype - balanced wobble) ---
   carodejnice_zaspalka: { archetype: 'runner', duration: '0.45s', wobble: '11deg', squashX: 1.15, squashY: 0.87, baseScale: 1.20, accentColor: '#6D28D9' },

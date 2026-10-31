@@ -9150,6 +9150,575 @@ var Lada = {
 
 		ctx.restore();
 	},
+	drawRakRicni(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const scuttleBob = Math.sin(time * 18) * 2;
+		const clawSnap = Math.sin(time * 12) * 0.2;
+		ctx.save();
+		ctx.translate(x, y + scuttleBob);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 4, -14, time);
+
+		// 8 walking legs
+		ctx.strokeStyle = '#0F766E';
+		ctx.lineWidth = 2.2;
+		for (let i = 0; i < 4; i++) {
+			const legSwing = Math.sin(time * 20 + i) * 4;
+			const lx = -6 + i * 5;
+			ctx.beginPath();
+			ctx.moveTo(lx, 4);
+			ctx.lineTo(lx - 4, 10);
+			ctx.lineTo(lx - 6 + legSwing, 15);
+			ctx.stroke();
+		}
+
+		// Dark green-blue crayfish carapace
+		ctx.fillStyle = '#0F766E';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 16, 11, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Segmented tail fan
+		ctx.fillStyle = '#115E59';
+		ctx.beginPath();
+		ctx.ellipse(-18, 0, 10, 7, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(-26, -7);
+		ctx.lineTo(-34, 0);
+		ctx.lineTo(-26, 7);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Defensive frontal carapace ridge (armored highlight)
+		ctx.strokeStyle = '#2DD4BF';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(4, 0, 9, -Math.PI * 0.35, Math.PI * 0.35);
+		ctx.stroke();
+
+		// Two large pinching claws
+		const drawClaw = (cy: number, rot: number) => {
+			ctx.save();
+			ctx.translate(14, cy);
+			ctx.rotate(rot + clawSnap);
+			ctx.fillStyle = '#0F766E';
+			ctx.strokeStyle = '#23170F';
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.ellipse(10, 0, 12, 6, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.beginPath();
+			ctx.moveTo(18, 0); ctx.lineTo(24, -3);
+			ctx.moveTo(18, 0); ctx.lineTo(24, 3);
+			ctx.stroke();
+			ctx.restore();
+		};
+		drawClaw(-8, -0.25);
+		drawClaw(8, 0.25);
+
+		// Antennae
+		ctx.strokeStyle = '#0F766E';
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(14, -3); ctx.quadraticCurveTo(28, -12, 38, -9);
+		ctx.moveTo(14, 3); ctx.quadraticCurveTo(28, 12, 38, 9);
+		ctx.stroke();
+
+		// Beady black eyes
+		ctx.fillStyle = '#111827';
+		ctx.beginPath();
+		ctx.arc(10, -4, 2, 0, Math.PI * 2);
+		ctx.arc(10, 4, 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawBoruvkovyDiblik(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const hop = Math.abs(Math.sin(time * 14)) * 4;
+		ctx.save();
+		ctx.translate(x, y - hop);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 4, -14, time);
+
+		// Woodland feet
+		ctx.fillStyle = '#78350F';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.ellipse(-4, 12, 4, 3, 0, 0, Math.PI * 2);
+		ctx.ellipse(4, 12, 4, 3, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Blueberry blue tunic
+		ctx.fillStyle = '#312E81';
+		ctx.beginPath();
+		ctx.moveTo(-9, 11); ctx.lineTo(-12, -2); ctx.lineTo(12, -2); ctx.lineTo(9, 11);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Head with rosy cheeks
+		ctx.fillStyle = '#FDE68A';
+		ctx.beginPath();
+		ctx.arc(0, -9, 8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#F87171';
+		ctx.beginPath();
+		ctx.arc(-3, -7, 1.8, 0, Math.PI * 2);
+		ctx.arc(3, -7, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+		// Cheerful eyes
+		ctx.fillStyle = '#1E1B4B';
+		ctx.beginPath();
+		ctx.arc(-2.5, -10, 1.2, 0, Math.PI * 2);
+		ctx.arc(2.5, -10, 1.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Green blueberry leaf cap
+		ctx.fillStyle = '#15803D';
+		ctx.beginPath();
+		ctx.ellipse(0, -16, 10, 5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Wicker basket on back
+		ctx.fillStyle = '#B45309';
+		ctx.fillRect(-14, -4, 6, 10);
+		ctx.strokeRect(-14, -4, 6, 10);
+		ctx.fillStyle = '#1E1B4B';
+		ctx.beginPath();
+		ctx.arc(-11, -5, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Hand holding blueberry ready to throw
+		ctx.fillStyle = '#1E1B4B';
+		ctx.beginPath();
+		ctx.arc(9, -2, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawRojPolnichMysaku(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 4, -14, time);
+
+		// Trio of darting mice forming the swarm
+		const mice = [
+			{ ox: 0, oy: 2, scale: 1.0, phase: 0 },
+			{ ox: -10, oy: -6, scale: 0.8, phase: 1.5 },
+			{ ox: 9, oy: 7, scale: 0.85, phase: 3.0 },
+		];
+
+		for (const m of mice) {
+			const mTime = time * 24 + m.phase;
+			const mBob = Math.sin(mTime) * 2;
+			ctx.save();
+			ctx.translate(m.ox, m.oy + mBob);
+			ctx.scale(m.scale, m.scale);
+
+			// Long pink tail
+			ctx.strokeStyle = '#F472B6';
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.moveTo(-10, 0);
+			ctx.quadraticCurveTo(-18, Math.sin(mTime * 1.5) * 8, -24, Math.cos(mTime) * 4);
+			ctx.stroke();
+
+			// Brown mouse body
+			ctx.fillStyle = '#78350F';
+			ctx.strokeStyle = '#23170F';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.ellipse(0, 0, 11, 7, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			// Pointy snout & pink nose
+			ctx.beginPath();
+			ctx.moveTo(8, -3); ctx.lineTo(15, 0); ctx.lineTo(8, 3);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = '#F472B6';
+			ctx.beginPath();
+			ctx.arc(15, 0, 1.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Round ears
+			ctx.fillStyle = '#B45309';
+			ctx.beginPath();
+			ctx.arc(3, -6, 3.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			// Whiskers
+			ctx.strokeStyle = '#FEF3C7';
+			ctx.lineWidth = 1;
+			ctx.beginPath();
+			ctx.moveTo(12, 0); ctx.lineTo(17, -4);
+			ctx.moveTo(12, 0); ctx.lineTo(17, 4);
+			ctx.stroke();
+
+			ctx.restore();
+		}
+
+		ctx.restore();
+	},
+	drawPekelnyRojSazovniku(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 4, -14, time);
+
+		// Flying pair of soot devils leaving smoky flame trail
+		const imps = [
+			{ ox: 0, oy: -3, phase: 0 },
+			{ ox: -12, oy: 6, phase: 2.2 },
+		];
+
+		for (const imp of imps) {
+			const iBob = Math.sin(time * 16 + imp.phase) * 3;
+			ctx.save();
+			ctx.translate(imp.ox, imp.oy + iBob);
+
+			// Flame & ember sparks
+			ctx.fillStyle = '#EA580C';
+			ctx.beginPath();
+			ctx.arc(-8, Math.sin(time * 20 + imp.phase) * 4, 3, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = '#FBBF24';
+			ctx.beginPath();
+			ctx.arc(-13, Math.cos(time * 18 + imp.phase) * 5, 2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Black soot body
+			ctx.fillStyle = '#18181B';
+			ctx.strokeStyle = '#450A0A';
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(0, 0, 9, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			// Tiny red horns
+			ctx.fillStyle = '#DC2626';
+			ctx.beginPath();
+			ctx.moveTo(-4, -7); ctx.lineTo(-6, -14); ctx.lineTo(-1, -8);
+			ctx.moveTo(2, -8); ctx.lineTo(6, -14); ctx.lineTo(4, -7);
+			ctx.fill();
+
+			// Glowing red eyes
+			ctx.fillStyle = '#EF4444';
+			ctx.beginPath();
+			ctx.arc(3, -2, 1.8, 0, Math.PI * 2);
+			ctx.arc(7, -2, 1.8, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Pointed bat wings
+			const wingFlap = Math.sin(time * 30 + imp.phase);
+			ctx.fillStyle = '#27272A';
+			ctx.beginPath();
+			ctx.moveTo(-4, 0); ctx.lineTo(-12, -8 * wingFlap); ctx.lineTo(-7, 4);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.restore();
+		}
+
+		ctx.restore();
+	},
+	drawCertSekac(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 4, -25, time);
+
+		// Goat legs with black hooves
+		ctx.strokeStyle = '#27272A';
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.moveTo(-8, 12); ctx.lineTo(-12, 24); ctx.lineTo(-8, 30);
+		ctx.moveTo(8, 12); ctx.lineTo(4, 24); ctx.lineTo(8, 30);
+		ctx.stroke();
+
+		// Black cloven hooves
+		ctx.fillStyle = '#09090B';
+		ctx.fillRect(-11, 28, 6, 4);
+		ctx.fillRect(5, 28, 6, 4);
+
+		// Devil torso in red & black reaper's apron
+		ctx.fillStyle = '#991B1B';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-16, 14); ctx.lineTo(-14, -16); ctx.lineTo(14, -16); ctx.lineTo(16, 14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Long swishing barbed devil tail
+		ctx.strokeStyle = '#991B1B';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-14, 8);
+		ctx.quadraticCurveTo(-26, 4 + Math.sin(time * 12) * 8, -32, -4);
+		ctx.stroke();
+		// Tail spearhead
+		ctx.fillStyle = '#DC2626';
+		ctx.beginPath();
+		ctx.moveTo(-32, -4); ctx.lineTo(-38, -10); ctx.lineTo(-30, -10);
+		ctx.closePath();
+		ctx.fill();
+
+		// Rohatá hlava
+		ctx.fillStyle = '#7F1D1D';
+		ctx.beginPath();
+		ctx.arc(0, -26, 12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Imposing curved horns
+		ctx.fillStyle = '#18181B';
+		ctx.beginPath();
+		ctx.moveTo(-6, -35); ctx.quadraticCurveTo(-14, -52, -22, -46); ctx.quadraticCurveTo(-12, -42, -4, -34);
+		ctx.moveTo(6, -35); ctx.quadraticCurveTo(14, -52, 22, -46); ctx.quadraticCurveTo(12, -42, 4, -34);
+		ctx.fill();
+		ctx.stroke();
+
+		// Planoucí žluté oči
+		ctx.fillStyle = '#FBBF24';
+		ctx.beginPath();
+		ctx.arc(3, -27, 2.5, 0, Math.PI * 2);
+		ctx.arc(8, -27, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Obří planoucí kosa (Flaming scythe)
+		const scytheSwing = Math.sin(time * 6) * 0.25;
+		ctx.save();
+		ctx.translate(10, -10);
+		ctx.rotate(scytheSwing);
+
+		// Ash wood snath (ratiště)
+		ctx.strokeStyle = '#78350F';
+		ctx.lineWidth = 4;
+		ctx.beginPath();
+		ctx.moveTo(-18, 38); ctx.lineTo(12, -45);
+		ctx.stroke();
+
+		// Huge curved blade of flaming black steel
+		ctx.fillStyle = '#18181B';
+		ctx.strokeStyle = '#EA580C';
+		ctx.lineWidth = 3.5;
+		ctx.beginPath();
+		ctx.moveTo(12, -45);
+		ctx.quadraticCurveTo(48, -55, 62, -25);
+		ctx.quadraticCurveTo(38, -38, 10, -42);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Flames radiating from the blade
+		ctx.strokeStyle = '#FBBF24';
+		ctx.lineWidth = 2;
+		for (let f = 0; f < 5; f++) {
+			const fx = 20 + f * 9;
+			const fy = -48 + Math.sin(time * 18 + f) * 6;
+			ctx.beginPath();
+			ctx.moveTo(fx, fy + 4); ctx.lineTo(fx + 4, fy - 6);
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		ctx.restore();
+	},
+	drawKralovskyVeleRak(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const mudSurge = Math.sin(time * 10) * 2.5;
+		ctx.save();
+		ctx.translate(x, y + mudSurge);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 6, -22, time);
+
+		// Walking legs
+		ctx.strokeStyle = '#115E59';
+		ctx.lineWidth = 3.5;
+		for (let i = 0; i < 4; i++) {
+			const legSwing = Math.sin(time * 14 + i * 0.8) * 5;
+			const lx = -10 + i * 8;
+			ctx.beginPath();
+			ctx.moveTo(lx, 6); ctx.lineTo(lx - 8, 16); ctx.lineTo(lx - 12 + legSwing, 24);
+			ctx.stroke();
+		}
+
+		// Heavy armored tail
+		ctx.fillStyle = '#0F766E';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.ellipse(-26, 0, 16, 12, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(-38, -12); ctx.lineTo(-54, 0); ctx.lineTo(-38, 12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Massive carapace body
+		ctx.fillStyle = '#134E4A';
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 24, 18, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Spiked ridges & golden king crest
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.moveTo(8, -18); ctx.lineTo(14, -26); ctx.lineTo(18, -16); ctx.lineTo(24, -24); ctx.lineTo(26, -14);
+		ctx.fill();
+		ctx.stroke();
+
+		// Heavy front deflecting shield plate
+		ctx.strokeStyle = '#2DD4BF';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(8, 0, 14, -Math.PI * 0.4, Math.PI * 0.4);
+		ctx.stroke();
+
+		// Two gargantuan crushing pincers (vele-klepeta)
+		const drawBossClaw = (cy: number, rot: number) => {
+			ctx.save();
+			ctx.translate(22, cy);
+			ctx.rotate(rot + Math.sin(time * 8) * 0.15);
+			ctx.fillStyle = '#0F766E';
+			ctx.strokeStyle = '#23170F';
+			ctx.lineWidth = 3.2;
+			ctx.beginPath();
+			ctx.ellipse(16, 0, 20, 10, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			// Pincer serrated teeth
+			ctx.fillStyle = '#FEF3C7';
+			ctx.beginPath();
+			ctx.moveTo(26, -3); ctx.lineTo(38, -6); ctx.lineTo(30, 0); ctx.lineTo(38, 6); ctx.lineTo(26, 3);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		};
+		drawBossClaw(-14, -0.3);
+		drawBossClaw(14, 0.3);
+
+		// Glowing turquoise eyes
+		ctx.fillStyle = '#22D3EE';
+		ctx.beginPath();
+		ctx.arc(16, -6, 3, 0, Math.PI * 2);
+		ctx.arc(16, 6, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.restore();
+	},
+	drawKralovskaPolednice(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false) {
+		const dir = vx < 0 ? -1 : 1;
+		const hover = Math.sin(time * 5) * 5;
+		const flutter = Math.sin(time * 12) * 4;
+		ctx.save();
+		ctx.translate(x, y + hover);
+		ctx.scale(dir, 1);
+		if (panicked) this.drawPanicDrops(ctx, 6, -26, time);
+
+		// Blinding solar heat aura radiating behind her
+		ctx.save();
+		ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+		ctx.lineWidth = 2.5;
+		for (let s = 0; s < 12; s++) {
+			const sa = (s / 12) * Math.PI * 2 + time * 0.5;
+			ctx.beginPath();
+			ctx.moveTo(Math.cos(sa) * 22, Math.sin(sa) * 22);
+			ctx.lineTo(Math.cos(sa) * 48, Math.sin(sa) * 48);
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		// Flowing white peasant dress & linen veil fluttering in the hot wind
+		ctx.fillStyle = '#FFFFFF';
+		ctx.strokeStyle = '#23170F';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(-14, -8);
+		ctx.quadraticCurveTo(-24 + flutter, 16, -18, 34);
+		ctx.quadraticCurveTo(0, 38, 18 + flutter, 34);
+		ctx.quadraticCurveTo(14, 16, 14, -8);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Red embroidered folk ribbon around waist
+		ctx.fillStyle = '#DC2626';
+		ctx.fillRect(-14, 2, 28, 4);
+
+		// Crown of golden wheat sheaves & poppies
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.arc(0, -22, 10, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Wheat ears crown
+		ctx.fillStyle = '#FCD34D';
+		for (let w = -3; w <= 3; w++) {
+			ctx.beginPath();
+			ctx.ellipse(w * 3.5, -34, 2, 6, w * 0.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		// Red poppy in crown
+		ctx.fillStyle = '#EF4444';
+		ctx.beginPath();
+		ctx.arc(0, -30, 3.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Pale ethereal face with burning amber eyes
+		ctx.fillStyle = '#FEF3C7';
+		ctx.beginPath();
+		ctx.arc(0, -20, 8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#B45309';
+		ctx.beginPath();
+		ctx.arc(-2.5, -20, 1.8, 0, Math.PI * 2);
+		ctx.arc(2.5, -20, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Golden grain sickle (Zlatý srp)
+		ctx.save();
+		ctx.translate(14, -4);
+		ctx.rotate(Math.sin(time * 4) * 0.2);
+		ctx.fillStyle = '#78350F';
+		ctx.fillRect(-2, 0, 4, 14);
+		ctx.strokeStyle = '#F59E0B';
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.arc(6, -2, 14, -Math.PI * 0.7, Math.PI * 0.3);
+		ctx.stroke();
+		ctx.restore();
+
+		ctx.restore();
+	},
 	drawZaba(ctx, x, y, time, vx, panicked) {
 		const hop = Math.abs(Math.sin(time * (panicked ? 20 : 10))) * (panicked ? 9 : 4);
 		const dir = vx < 0 ? -1 : 1;
@@ -21815,6 +22384,13 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawDandelionSprite: 'pampeliska_chmyri',
   drawBroomWitchZaspalka: 'carodejnice_zaspalka',
   drawLedoviMuzi: 'ledovi_muzi',
+  drawRakRicni: 'rak_ricni',
+  drawBoruvkovyDiblik: 'boruvkovy_diblik',
+  drawRojPolnichMysaku: 'roj_polnich_mysaku',
+  drawPekelnyRojSazovniku: 'pekelny_roj_sazovniku',
+  drawCertSekac: 'cert_sekac',
+  drawKralovskyVeleRak: 'kralovsky_vele_rak',
+  drawKralovskaPolednice: 'kralovska_polednice',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {

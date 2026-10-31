@@ -85,6 +85,13 @@ function getCurrentDayPhase(seconds: number, levelId?: number) {
 		if (seconds < 150) return DAY_PHASES[0];
 		return DAY_PHASES[1];
 	}
+	if (levelId === 6) {
+		// 7. úroveň (Červen v Hrusicích, 5 minut / 300 s): Ranní senoseč & polední žár (0–120 s), Odpolední pekelný žár (120–220 s), Podvečerní tůně & svatojánská bouře (220–300 s), Kuropění (300 s+)
+		if (seconds < 120) return DAY_PHASES[0];
+		if (seconds < 220) return DAY_PHASES[1];
+		if (seconds < 300) return DAY_PHASES[2];
+		return DAY_PHASES[5];
+	}
 	if (levelId === 1) {
 		// 2. úroveň (Noční mrazy, 5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
 		if (seconds < 100) return DAY_PHASES[2];
@@ -160,7 +167,14 @@ var ENEMY_POINTS = {
 	kalny_hastrman: 105,
 	cerny_vlkodlak: 110,
 	carodejnice_zaspalka: 750,
-	ledovi_muzi: 4800
+	ledovi_muzi: 4800,
+	rak_ricni: 65,
+	boruvkovy_diblik: 45,
+	roj_polnich_mysaku: 24,
+	pekelny_roj_sazovniku: 32,
+	cert_sekac: 650,
+	kralovsky_vele_rak: 1200,
+	kralovska_polednice: 7500
 };
 var DROP_THRESHOLDS = {
 	chest: 29400,

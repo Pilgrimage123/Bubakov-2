@@ -242,6 +242,15 @@ import {
   drawDubenSpringLandmark,
 } from './render/marchThawSvgLandscape';
 import { drawKvetenMayLandmark } from './render/kvetenSvgLandscape';
+import { drawCervenSummerLandmark } from './render/cervenSvgLandscape';
+import {
+  CERVEN_POIS,
+  CERVEN_POND_REGION,
+  CERVEN_HAYSTACK_OBSTACLES,
+  resolveCervenObstacles,
+  getCervenWaterEffect,
+  isInsideCervenPoi,
+} from './data/cervenArena';
 import {
   KVETEN_POIS,
   KVETEN_POND_REGION,
@@ -997,6 +1006,8 @@ class DecorItem {
       drawDubenSpringLandmark(ctx, this.type, time, isNight);
     } else if (this.type.startsWith('kveten_')) {
       drawKvetenMayLandmark(ctx, this.type, time, isNight);
+    } else if (this.type.startsWith('cerven_')) {
+      drawCervenSummerLandmark(ctx, this.type, time, isNight);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1349,6 +1360,20 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
       new DecorItem(580, 220, 'kveten_elder', 1),
       ...KVETEN_FOREST_ZONES.map((fz) => new DecorItem(fz.x, fz.y, 'duben_birch_grove', 1)),
       new DecorItem(KVETEN_POIS.village.x - 45, KVETEN_POIS.village.y + 35, 'kaca', 1),
+    ];
+    return items;
+  }
+  if (level.id === 6 && (level.arena?.id === 'cervnova_senosec' || level.theme === 'summer_harvest')) {
+    const items: DecorItem[] = [
+      new DecorItem(0, 0, 'cerven_border', 1),
+      new DecorItem(CERVEN_POND_REGION.x, CERVEN_POND_REGION.y, 'cerven_pond', 1),
+      new DecorItem(CERVEN_POIS.fields.x, CERVEN_POIS.fields.y, 'cerven_hay_wagon', 1),
+      new DecorItem(CERVEN_POIS.shrine.x, CERVEN_POIS.shrine.y, 'cerven_anthony_shrine', 1),
+      new DecorItem(CERVEN_POIS.mill.x, CERVEN_POIS.mill.y, 'cerven_crayfish_pool', 1),
+      new DecorItem(CERVEN_POIS.forest.x, CERVEN_POIS.forest.y, 'cerven_blueberry_grove', 1),
+      new DecorItem(CERVEN_POIS.tavern.x, CERVEN_POIS.tavern.y, 'cerven_tavern', 1),
+      ...CERVEN_HAYSTACK_OBSTACLES.map((h) => new DecorItem(h.x, h.y, 'cerven_haystack', 1)),
+      new DecorItem(CERVEN_POIS.village.x - 45, CERVEN_POIS.village.y + 35, 'kaca', 1),
     ];
     return items;
   }
@@ -2809,6 +2834,76 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         eng.lightningFlash = Math.max(eng.lightningFlash, 0.35);
         pushDamageText(eng.texts, KVETEN_POIS.shrine.x, KVETEN_POIS.shrine.y - 110, '✦ POŽEHNÁNÍ SV. JANA NEPOMUCKÉHO! (5 HVĚZD)', '#FEF08A', true, 'bossAnnouncements');
         sound.bell();
+        return true;
+      }
+    }
+
+    if (eng.activeLevelId === 6) {
+      const cv = (eng.cerven || (eng.cerven = {
+        bellCooldown: 0,
+        shrineCooldown: 0,
+        tavernCooldown: 0,
+        forestCooldown: 0,
+        weatherHayTimer: 0,
+      }));
+
+      // A. Poutní strom Sv. Antonína Paduánského: Vacuum-pulls all loose drops & grants holy shield
+      if (isInsideCervenPoi(p.x, p.y, CERVEN_POIS.shrine, 35) && (cv.shrineCooldown || 0) <= 0) {
+        cv.shrineCooldown = 75;
+        p.tempShield = Math.max(p.tempShield || 0, 80);
+        p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 3.0);
+        applyMagnetWave(eng.drops, p.x, p.y, 99999, true);
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.45);
+        pushDamageText(eng.texts, CERVEN_POIS.shrine.x, CERVEN_POIS.shrine.y - 110, '✦ POŽEHNÁNÍ SV. ANTONÍNA! (VYSAVAČ KAPEK)', '#FEF08A', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+
+      // B. Hrusický mrakozvon proti bouři
+      if (isInsideCervenPoi(p.x, p.y, CERVEN_POIS.church, 35) && (cv.bellCooldown || 0) <= 0) {
+        cv.bellCooldown = 60;
+        p.tempShield = Math.max(p.tempShield || 0, 50);
+        const nearby = enemySpatialHashRef.current.queryCircleInto(
+          CERVEN_POIS.church.x,
+          CERVEN_POIS.church.y,
+          580,
+          terrainSpatialResultsRef.current
+        );
+        for (let i = 0; i < nearby.length; i++) {
+          const enemy = nearby[i];
+          if (!enemy || enemy.dead || enemy.isDefeated) continue;
+          const dx = enemy.x - CERVEN_POIS.church.x;
+          const dy = enemy.y - CERVEN_POIS.church.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist < 560 + (enemy.radius || 0)) {
+            enemy.takeDamage(160 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 520, (dy / dist) * 520);
+            enemy.panicked = true;
+            enemy.panicTimer = Math.max(enemy.panicTimer || 0, 5.0);
+          }
+        }
+        eng.lightningFlash = Math.max(eng.lightningFlash, 0.35);
+        pushDamageText(eng.texts, CERVEN_POIS.church.x, CERVEN_POIS.church.y - 110, '🔔 MRAKOZVON ODRÁŽÍ BOUŘI A DÉMONY!', '#38BDF8', true, 'bossAnnouncements');
+        sound.bell();
+        return true;
+      }
+
+      // C. Borůvkový háj a lesní jahody
+      if (isInsideCervenPoi(p.x, p.y, CERVEN_POIS.forest, 35) && (cv.forestCooldown || 0) <= 0) {
+        cv.forestCooldown = 45;
+        p.hp = Math.min(p.maxHp, p.hp + 35 * (p._cachedFrostHealMult ?? 1));
+        p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.25);
+        pushDamageText(eng.texts, p.x, p.y - 35, '🫐 SLADKÉ LESNÍ BORŮVKY A JAHODY! (+ZDRAVÍ & RYCHLOST)', '#818CF8', true, 'combatStates');
+        sound.hit();
+        return true;
+      }
+
+      // D. Letní hospoda a chladivé podmáslí
+      if (isInsideCervenPoi(p.x, p.y, CERVEN_POIS.tavern, 35) && (cv.tavernCooldown || 0) <= 0) {
+        cv.tavernCooldown = 50;
+        p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
+        p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
+        pushDamageText(eng.texts, p.x, p.y - 35, '🥛 CHLADIVÉ HRUSICKÉ PODMÁSLÍ! (+KURÁŽ & SÍLA)', '#FDE047', true, 'combatStates');
+        sound.hit();
         return true;
       }
     }
@@ -7384,6 +7479,70 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
               // 9. Arena obstacles and boundary
               resolveKvetenObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 6) {
+              const cerven = (engine.cerven || (engine.cerven = {
+                bellCooldown: 0,
+                shrineCooldown: 0,
+                tavernCooldown: 0,
+                forestCooldown: 0,
+                weatherHayTimer: 0,
+              }));
+
+              cerven.bellCooldown = Math.max(0, (cerven.bellCooldown || 0) - dt);
+              cerven.shrineCooldown = Math.max(0, (cerven.shrineCooldown || 0) - dt);
+              cerven.tavernCooldown = Math.max(0, (cerven.tavernCooldown || 0) - dt);
+              cerven.forestCooldown = Math.max(0, (cerven.forestCooldown || 0) - dt);
+
+              const inVillage = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.village);
+              const inShrine = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.shrine);
+              const inFields = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.fields);
+
+              // 1. NÁVES: Movement speed bonus (+15%)
+              if (inVillage) {
+                player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+              }
+
+              // 2. SENOSEČ & KOPY SENA: Tactical cover damage reduction (+15%)
+              if (inFields) {
+                player.damageReduction = Math.max(player.damageReduction || 0, 0.15);
+              }
+
+              // 3. SV. ANTONÍN: Holy presence panicking unholy/demons within 260px
+              if (inShrine) {
+                const nearShrine = enemySpatialHashRef.current.queryCircleInto(
+                  CERVEN_POIS.shrine.x,
+                  CERVEN_POIS.shrine.y,
+                  260,
+                  terrainSpatialResultsRef.current,
+                );
+                for (let i = 0; i < nearShrine.length; i++) {
+                  const foe = nearShrine[i];
+                  if (foe && !foe.dead && !foe.isDefeated) {
+                    foe.panicked = true;
+                    foe.panicTimer = Math.max(foe.panicTimer || 0, 1.5);
+                  }
+                }
+              }
+
+              // 4. AMBIENT SUMMER WEATHER: Floating golden hay particles & sun glare
+              cerven.weatherHayTimer = (cerven.weatherHayTimer || 0) - dt;
+              if (cerven.weatherHayTimer <= 0) {
+                cerven.weatherHayTimer = 0.20;
+                const isSunDust = Math.random() < 0.6;
+                emitParticle(engine.particles, () => ({
+                  x: player.x + (Math.random() - 0.5) * 1200,
+                  y: player.y - 350 + (Math.random() - 0.5) * 300,
+                  vx: 24 + Math.random() * 30,
+                  vy: 12 + Math.random() * 20,
+                  life: 3.2 + Math.random() * 1.5,
+                  color: isSunDust ? '#FDE68A' : '#F59E0B',
+                  size: isSunDust ? 3.0 : 4.0,
+                }));
+              }
+
+              // 5. Arena obstacles and boundary
+              resolveCervenObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
             } else {
               player.arenaArmorBonus = 0;

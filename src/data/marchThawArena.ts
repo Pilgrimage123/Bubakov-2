@@ -929,7 +929,7 @@ export function collideCircleWithObstacles(
     if (dubenHit.hit) return dubenHit as ObstacleCollisionResult;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {
@@ -1165,7 +1165,7 @@ export function hasTerrainLineOfSight(
     if (!hasDubenTerrainLineOfSight(x1, y1, x2, y2)) return false;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {
@@ -1315,7 +1315,7 @@ export function hasRoofsInView(
     if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
   }
   if (
-    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) &&
+    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) &&
     viewRight >= ROOF_UNION_MIN_X &&
     viewLeft <= ROOF_UNION_MAX_X &&
     viewBottom >= ROOF_UNION_MIN_Y &&
@@ -1357,7 +1357,7 @@ export function isEntityBehindMarchRoof(
     const dubenRoof = isEntityBehindDubenRoof(x, y);
     if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
   }
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
     const halfR = radius * 0.5;
     if (
       y >= ROOF_UNION_MIN_Y &&
@@ -1439,7 +1439,7 @@ export function sanitizeArenaSpawnPoint(
   const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
 
   for (let pass = 0; pass < 3; pass++) {
-    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4) {
+    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
       resolveMarchThawObstacles(dummy, false);
     } else if (activeLevelId === 2) {
       resolveDubenObstacles(dummy, false);

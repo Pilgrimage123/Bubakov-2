@@ -656,107 +656,133 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	6: {
 		id: 6,
-		name: "7. Pustá Hláska a Zlenické podhradí",
-		shortTitle: "Hláska a podhradí",
-		subtitle: "Bílé paní, zbrojnoši a bezhlavý jezdec",
-		theme: "ruined_castle",
-		season: "autumn",
-		icon: "🏰",
+		name: "7. Červen v Hrusicích – Senoseč a pekelný žár",
+		shortTitle: "Letní senoseč",
+		subtitle: "Zlaté louky, vůně sena, tůně na racích a polední žár",
+		theme: "summer_harvest",
+		season: "summer",
+		icon: "🌾",
 		badge: "7. Úroveň",
-		description: "Rozbitými zdmi podhradí táhne ledový vítr. Přízraky hlídají cestu k věži, kde čeká rytíř bez hlavy.",
-		lore: "Přelstěte hradní stráž a vyhněte se odražené hlavě, která se vrací k pánovi jako střela.",
+		description: "Červnové slunce zalévá hrusické louky zlatým žárem. Sedláci svážejí voňavé seno na žebřiňáky a v tůních pod vrbami se loví raci. S poledním úžehem však přicházejí rohatí pekelníci a Královská Polednice!",
+		lore: "Na svatého Antonína kvete žito i malina, ale v pekelném poledním žáru seče trávu i duše rohatý pekelník s planoucí kosou. Chraňte žence a vykažte z lánů sluneční běsy!",
 		unlockRequirementText: "Odemkne se po poražení Prokletého Mlynáře v 6. úrovni",
-		skyColor: "#77808C",
-		nightSkyColor: "#121520",
-		groundColor: "#55545B",
-		ambientTint: "rgba(191, 219, 254, 0.15)",
-		weatherEffect: "fog",
+		skyColor: "#FDEBD0",
+		nightSkyColor: "#1B2631",
+		groundColor: "#E59866",
+		ambientTint: "rgba(243, 156, 18, 0.08)",
+		weatherEffect: "petals",
 		decorTypes: [
-			"tombstone",
-			"cross",
-			"tree"
+			"cottage",
+			"tree",
+			"haystack",
+			"rock"
 		],
+		arena: {
+			id: "cervnova_senosec",
+			name: "Červnové Hrusice",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
 		miniBoss: {
-			id: "bila_pani",
-			name: "👻 Bílá paní z věže",
-			warning: "👻 VĚŽ OPOUŠTÍ MOCNÝ PŘÍZRAK BÍLÉ PANÍ!",
-			time: 45,
+			id: "kralovsky_vele_rak",
+			name: "🦞 Královský Vele-rak z tůně",
+			warning: "🦞 POZOR: Z HLUBOKÉ TŮNĚ VYSTUPUJE OBRNĚNÝ KRÁLOVSKÝ VELE-RAK!",
+			time: 85,
 			kills: 90,
-			multiplier: 6.2
+			multiplier: 3.8
 		},
 		midBoss: {
-			id: "zbrojnos",
-			name: "🛡️ Zbrojnoš z podhradí",
-			warning: "🛡️ BRÁNU DRŽÍ TĚŽKÝ OBRNĚNÝ ZBROJNOŠ!",
-			time: 105,
-			kills: 190,
-			multiplier: 5.2
+			id: "cert_sekac",
+			name: "😈 Pekelný čert sekáč",
+			warning: "😈 POZOR: Z HOŘÍCÍHO STRNIŠTĚ VYCHÁZÍ PEKELNÝ ČERT S PLANOUCÍ KOSOU!",
+			time: 185,
+			kills: 210,
+			multiplier: 2.2
 		},
 		finalBoss: {
-			id: "bezhlavy_rytir",
-			name: "🗡️ Bezhlavý rytíř",
-			warning: "🗡️ ŠÉF ÚROVNĚ: BEZHLAVÝ RYTÍŘ VYJÍŽDÍ!",
-			time: 180,
-			kills: 330,
-			multiplier: 2.25
+			id: "kralovska_polednice",
+			name: "👑 Královská Polednice z rozpálených lánů",
+			warning: "👑 NEBE VZPLANULO ŽÁREM! PŘICHÁZÍ KRÁLOVSKÁ POLEDNICE S POLNÍ BOUŘÍ! 👑",
+			time: 300,
+			kills: 350,
+			multiplier: 1.45
 		},
 		spawnPools: {
 			noon: [
-				"bila_pani",
-				"zbrojnos",
-				"skeleton",
-				"krvavy_kostlivec"
+				"mysak",
+				"roj_polnich_mysaku",
+				"rak_ricni",
+				"boruvkovy_diblik",
+				"certik",
+				"rarach"
 			],
 			afternoon: [
-				"bila_pani",
-				"zbrojnos",
-				"cerny_pes",
-				"krvavy_kostlivec"
+				"roj_polnich_mysaku",
+				"pekelny_roj_sazovniku",
+				"rak_ricni",
+				"polednice",
+				"pekelny_cert",
+				"boruvkovy_diblik"
 			],
 			dusk: [
-				"zbrojnos",
-				"krvavy_kostlivec",
-				"obrneny_zbojnik",
-				"skeleton_scythe"
+				"pekelny_roj_sazovniku",
+				"pekelny_drab",
+				"polednice",
+				"pekelny_cert",
+				"cert_sekac",
+				"cerny_pes"
 			],
 			night: [
-				"bila_pani",
-				"zbrojnos",
-				"bubak",
-				"obrneny_zbojnik"
+				"pekelny_roj_sazovniku",
+				"pekelny_drab",
+				"pekelny_cert",
+				"polednice",
+				"cerny_vlk"
 			],
 			midnight: [
-				"zbrojnos",
-				"bubak",
-				"drab",
-				"obrneny_zbojnik",
+				"pekelny_cert",
+				"pekelny_drab",
+				"pekelny_roj_sazovniku",
+				"kralovska_polednice",
 				"cerny_pes"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "bila_pani",
-				name: "Bílá paní",
-				icon: "👻",
-				role: "Hradní přízrak"
+				id: "rak_ricni",
+				name: "Říční rak klepetáč",
+				icon: "🦞",
+				role: "Obrněný korýš z tůně"
 			},
 			{
-				id: "zbrojnos",
-				name: "Zbrojnoš",
-				icon: "🛡️",
-				role: "Těžká stráž"
+				id: "roj_polnich_mysaku",
+				name: "Roj polních myšáků",
+				icon: "🐁",
+				role: "Bleskové polní hejno"
 			},
 			{
-				id: "bezhlavy_rytir",
-				name: "Bezhlavý rytíř",
-				icon: "🗡️",
-				role: "Hlavní boss"
+				id: "pekelny_roj_sazovniku",
+				name: "Pekelný roj sazovníků",
+				icon: "🔥",
+				role: "Jiskřící pekelné hejno"
+			},
+			{
+				id: "cert_sekac",
+				name: "Pekelný čert sekáč",
+				icon: "😈",
+				role: "Pekelný sekáč s kosou"
+			},
+			{
+				id: "kralovska_polednice",
+				name: "Královská Polednice",
+				icon: "👑",
+				role: "Vládkyně poledního úžehu"
 			}
 		],
 		bossMechanic: {
-			label: "Odražená hlava",
-			description: "Rytířův odražený útok se vrací po bojišti a nutí měnit směr.",
-			cadenceSeconds: 12
+			label: "Sluneční úžeh a planoucí strniště",
+			description: "Spalující žár poledního slunce střídají výšlehy plamenů z posekaného sena a letní hromy.",
+			cadenceSeconds: 8
 		}
 	},
 	7: {

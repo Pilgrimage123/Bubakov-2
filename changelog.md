@@ -1,3 +1,35 @@
+## 2026-10-31 — 7. Úroveň: Červen v Hrusicích – Senoseč a pekelný žár (Vele-rak, Pekelný čert sekáč a Královská Polednice)
+
+- **Kompletní vertikální řez 7. úrovně („Červen v Hrusicích“, `levelId: 6`) v autentickém stylu Josefa Lady**:
+  - **Definice kraje a 5minutová červnová časová osa (`src/data/levels.ts`, `src/data/levelUnlocks.ts`, `src/constants.ts`, `src/i18n/locales/`)**:
+    - Úroveň situována do letní senoseče a poledního žáru se 300sekundovou časovou osou a fázemi: prosluněné poledne (`noon` 0–120 s), odpoledne (`afternoon` 120–220 s), podvečer (`dusk` 220–300 s) a letní svítání (`dawn` 300 s+).
+    - Zpřístupní se po porážce Prokletého Mlynáře v 6. úrovni. Vítězství nad Královskou Polednicí odemyká 8. úroveň (*Dračí sluj pod Melechovskou skálou*).
+    - Obtížnost kalibrována o +200 % oproti Stage 1 (zhruba 3násobná životnost bossů, vysoká hustota havěti, vyšší poškození).
+  - **Letní červnová aréna a motivy z ladovské ilustrace ČERVEN (`src/data/cervenArena.ts`, `src/render/cervenSvgLandscape.ts`, `src/render/arenaRenderer.ts`, `src/App.tsx`, `src/game/engine.ts`)**:
+    - Půdorysná kolizní geometrie a hranice shodné se Stage 1 (-1920..1920 × -1675..1675), ale kompletně proměněné do letní podoby podle Ladova kalendária:
+      - Horní ozdobná kartuše *ČERVEN* s letním sluncem, kopretinami, chrpy a blatouchy.
+      - Louky senoseče se ženci nakládajícími seno na dřevěný žebřiňák a 5 taktickými kupkami sena (`CERVEN_HAYSTACK_OBSTACLES`), které slouží jako krytí i kolizní překážky.
+      - Poutní strom sv. Antonína Paduánského (svátek 13. června) s věncem lučního kvítí, zarámovaným obrazem a veverkou. Při stisku [E] sesílá požehnání – magnetický vysavač přitáhne všechny volné kapky na mapě a udělí hráči svatý štít a nezranitelnost.
+      - Stinný borůvkový háj s košíky a jahůdkami – při stisku [E] osvěží lovce (+zdraví a rychlost pohybu).
+      - Kamenitý jez a tůně „Na racích“ s kluky chytajícími raky pod vrbami.
+      - Letní hospoda se stinnou pavlačí – při stisku [E] nabízí chladivé podmáslí s posílením Kuráže.
+      - Hrusický kostel se zvonem zvonícím proti mračnům [E] – zažehnává bouři a zahání blízké démony.
+      - Vyhřátý rybník a potok s lekníny, rákosím a teplou vodou zcela bez ledových ker.
+      - Důsledné dodržení pravidla: striktní zákaz hřbitovů, náhrobků a jakýchkoliv nemrtvých.
+  - **Taktická červnová havěť a nová hejna (`src/data/enemies.ts`, `src/render/ladaRenderer.ts`, `src/game/engine.ts`, `src/components/gpu-animation/enemyCatalog.ts`, `src/data/holy.ts`, `src/constants.ts`)**:
+    - **Říční rak (`rak_ricni`)**: obrněný korýš od jezu s masivními klepety; jeho čelní krunýř odráží 75 % poškození a nutí lovce k obcházení do zad.
+    - **Borůvkový diblík (`boruvkovy_diblik`)**: rychlý hravý lesní mužík z borůvčí a kapradí, uhýbající útokům.
+    - **Hejno polních myšáků (`roj_polnich_mysaku`)**: nové zběsilé hejno drobných hlodavců vyplašených kosami ze sena, proudící v hustých vlnách.
+    - **Pekelný roj sazovníků (`pekelny_roj_sazovniku`)**: nové pekelné hejno sazí a žhavých jisker ze sálavého letního žáru, útočící ve vysoké rychlosti.
+    - **Pekelní čerti (`certik`, `rarach`)**: pekelná kohorta nasazená namísto nemrtvých.
+  - **Hierarchie bossů senoseče a letního žáru (`src/data/levels.ts`, `src/render/ladaRenderer.ts`, `src/game/engine.ts`, `src/App.tsx`)**:
+    - **Miniboss (85 s, 90 zářezů)**: *Královský Vele-rak* (`kralovsky_vele_rak`) – obří obrněný korýš s čelním krunýřem pohlcujícím 80 % čelního zranění, prudkými výpady klepet a stříkáním bahenních vodních proudů.
+    - **Midboss (185 s, 210 zářezů)**: *Pekelný čert sekáč* (`cert_sekac`) – rohatý ďábel s obří planoucí kosou, 180stupňovým plamenným sekem a zanecháváním hořících stop na suché louce.
+    - **Finální boss (300 s, 350 zářezů)**: *Královská Polednice* (`kralovska_polednice`) – vládkyně poledního úžehu a letní bouře; sesílá pálivé sluneční kruhy a větrná tornáda plev a v 2. fázi (pod 60 % zdraví) přechází do svatojánské bouřky s blesky.
+  - **Testovací pokrytí a verifikace (`tests/`)**:
+    - Vytvořeny a integrovány 4 dedikované testovací sady: `tests/level6Cerven.test.ts`, `tests/cervenArena.test.ts`, `tests/cervenEnemiesAndSwarms.test.ts` a `tests/cervenBosses.test.ts`.
+    - Všech 83 testovacích souborů (761 testů) prochází kompletně zeleně bez regresí.
+
 ## 2026-10-30 — Kalendářní posloupnost a plná parita enginu pro 5. úroveň (Májová slavnost, Dubnová noc, Midboss Hastrman a Ledoví muži trio) (ADR 0037)
 
 - **Kalendářní posloupnost 4. úrovně (ADR 0037 & `GLOSSARY.md`)**:

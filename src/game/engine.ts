@@ -141,6 +141,12 @@ import {
   getKvetenWaterEffect,
   isInsideKvetenPoi,
 } from '../data/kvetenArena';
+import {
+  CERVEN_POIS,
+  resolveCervenObstacles,
+  getCervenWaterEffect,
+  isInsideCervenPoi,
+} from '../data/cervenArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -974,8 +980,8 @@ export class GameEngine {
       this.spawnMonster('zbojnik', player.x + 460, player.y, 1.0);
       this.spawnMonster('jiskrivec', player.x - 460, player.y, 1.0);
     } else if (levelId === 6) {
-      this.spawnMonster('zbrojnos', player.x + 460, player.y + 100, 1.0);
-      this.spawnMonster('bila_pani', player.x - 460, player.y - 100, 1.0);
+      this.spawnMonster('rak_ricni', player.x + 460, player.y + 100, 1.0);
+      this.spawnMonster('roj_polnich_mysaku', player.x - 460, player.y - 100, 1.0);
     } else if (levelId === 7) {
       this.spawnMonster('snehulak', player.x + 460, player.y, 1.0);
       this.spawnMonster('nocni_mura', player.x - 460, player.y, 1.0);
@@ -1562,7 +1568,7 @@ export class GameEngine {
           if (this.panicTimer <= 0) this.panicked = false;
         }
 
-        if ((this.isAttacking || (this.recoveryTimer || 0) > 0) && this.id !== 'carodejnice_zaspalka' && this.id !== 'carodejnice_koste' && this.id !== 'ledovi_muzi') {
+        if ((this.isAttacking || (this.recoveryTimer || 0) > 0) && this.id !== 'carodejnice_zaspalka' && this.id !== 'carodejnice_koste' && this.id !== 'ledovi_muzi' && this.id !== 'cert_sekac' && this.id !== 'kralovsky_vele_rak' && this.id !== 'kralovska_polednice') {
           this.vx = 0;
           this.vy = 0;
         } else if (player) {
@@ -1921,6 +1927,144 @@ export class GameEngine {
                 self.emitDamageText(this.x, this.y - 35, 'MRAZIVÝ DECH! 🧊', '#67E8F9', false);
               }
             }
+          } else if (this.id === 'kralovsky_vele_rak') {
+            // Miniboss: Steady pursuit with water rush charge & muddy projectile spray
+            this.chargeCooldown = (typeof this.chargeCooldown === 'number' ? this.chargeCooldown : 3.8) - dt;
+            if (this.chargeCooldown <= 0) {
+              this.chargeCooldown = 4.2;
+              this.speedBurstTimer = 1.2;
+              self.callbacks?.onSound?.('water_splash');
+              self.emitDamageText(this.x, this.y - 35, 'VÝPAD KLEPET! 🦞', '#0284C7', true);
+            }
+            if ((this.speedBurstTimer || 0) > 0) {
+              this.speedBurstTimer -= dt;
+              spd *= 1.85;
+            }
+
+            // Water mud jet
+            this.waterJetCooldown = (typeof this.waterJetCooldown === 'number' ? this.waterJetCooldown : 3.2) - dt;
+            if (this.waterJetCooldown <= 0 && dist < 360) {
+              this.waterJetCooldown = 3.6;
+              const targetAngle = Math.atan2(player.y - this.y, player.x - this.x);
+              for (let k = -1; k <= 1; k++) {
+                const angle = targetAngle + k * 0.22;
+                const speed = 210;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(angle) * speed,
+                  vy: Math.sin(angle) * speed,
+                  angle,
+                  speed,
+                  dmg: 22,
+                  radius: 10,
+                  type: 'water',
+                  visual: 'water_drop',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 25,
+                  statusText: 'BAHENNÍ STŘÍKNUTÍ! 💧',
+                  dead: false,
+                });
+              }
+            }
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
+          } else if (this.id === 'cert_sekac') {
+            // Midboss: Flaming scythe wide cleave & flaming hazards
+            this.scytheCleaveCooldown = (typeof this.scytheCleaveCooldown === 'number' ? this.scytheCleaveCooldown : 3.6) - dt;
+            if (this.scytheCleaveCooldown <= 0 && dist < 120) {
+              this.scytheCleaveCooldown = 4.0;
+              self.callbacks?.onSound?.('scythe');
+              self.emitDamageText(this.x, this.y - 45, 'PEKELNÝ SEK! 😈', '#DC2626', true);
+              if (dist <= 95) {
+                if (typeof player.takeDamage === 'function') {
+                  player.takeDamage(42, 'fire', this, true);
+                } else {
+                  player.hp = Math.max(0, player.hp - 42);
+                }
+              }
+            }
+
+            // Fire hazard drops
+            this.fireTrailCooldown = (typeof this.fireTrailCooldown === 'number' ? this.fireTrailCooldown : 2.4) - dt;
+            if (this.fireTrailCooldown <= 0) {
+              this.fireTrailCooldown = 2.8;
+              addEnemyHazard({
+                id: `hazard_fire_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: this.x,
+                y: this.y,
+                radius: 28,
+                duration: 3.5,
+                maxDuration: 3.5,
+                type: 'fire',
+                slowFactor: 0.85,
+                kind: 'fire-patch',
+                damage: 18,
+                sourceEnemyId: this.id,
+              });
+            }
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * spd;
+            this.vy = Math.sin(moveDir) * spd;
+          } else if (this.id === 'kralovska_polednice') {
+            // Final Boss: Floating solar heat waves, grain storms & summer storm lightning
+            const targetDist = 200;
+            const orbitSpeed = (self.state.gameTime || 0) * 0.9;
+            const targetX = player.x + Math.cos(orbitSpeed) * targetDist;
+            const targetY = player.y + Math.sin(orbitSpeed) * targetDist;
+            this.vx = (targetX - this.x) * 1.6;
+            this.vy = (targetY - this.y) * 1.6;
+
+            // Heat glare pulse
+            this.heatPulseCooldown = (typeof this.heatPulseCooldown === 'number' ? this.heatPulseCooldown : 3.8) - dt;
+            if (this.heatPulseCooldown <= 0) {
+              this.heatPulseCooldown = 4.2;
+              self.callbacks?.onSound?.('curse');
+              self.emitDamageText(this.x, this.y - 45, 'SLUNEČNÍ ÚŽEH! ☀️', '#F59E0B', true);
+              addEnemyHazard({
+                id: `hazard_heat_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: this.x,
+                y: this.y,
+                radius: 65,
+                duration: 2.5,
+                maxDuration: 2.5,
+                type: 'fire',
+                slowFactor: 0.75,
+                kind: 'heat-ring',
+                damage: 24,
+                sourceEnemyId: this.id,
+              });
+            }
+
+            // Phase 2 (< 60% HP): Svatojánská bouře (lightning strikes)
+            const hpRatio = (this.hp || 1) / (this.maxHp || 5500);
+            if (hpRatio < 0.60) {
+              this.lightningCooldown = (typeof this.lightningCooldown === 'number' ? this.lightningCooldown : 2.8) - dt;
+              if (this.lightningCooldown <= 0) {
+                this.lightningCooldown = 3.0;
+                self.callbacks?.onSound?.('bell');
+                self.emitDamageText(player.x, player.y - 40, 'BLESK! ⚡', '#FEF08A', true);
+                addEnemyHazard({
+                  id: `hazard_lightning_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                  x: player.x,
+                  y: player.y,
+                  radius: 40,
+                  duration: 1.4,
+                  maxDuration: 1.4,
+                  type: 'fire',
+                  slowFactor: 0.60,
+                  kind: 'lightning-strike',
+                  warningTimer: 0.8,
+                  damage: 35,
+                  oneShot: true,
+                  exploded: false,
+                  sourceEnemyId: this.id,
+                });
+              }
+            }
           } else if (this.id === 'rehtackar') {
             this.rehtackarPulseTimer = (typeof this.rehtackarPulseTimer === 'number' ? this.rehtackarPulseTimer : 1.5) - dt;
             if (this.rehtackarPulseTimer <= 0) {
@@ -2197,6 +2341,16 @@ export class GameEngine {
           amount *= (1 - this.prefixDamageReduction);
         }
 
+        // Říční rak a Královský Vele-rak: Čelní krunýř odráží 75-80 % poškození
+        if ((this.id === 'rak_ricni' || this.id === 'kralovsky_vele_rak') && kbx !== 0) {
+          const facing = (this.vx || 0) < 0 ? -1 : 1;
+          const isFrontal = (facing > 0 && kbx > 0) || (facing < 0 && kbx < 0);
+          if (isFrontal) {
+            amount *= (this.id === 'kralovsky_vele_rak' ? 0.20 : 0.25);
+            self.emitDamageText(this.x, this.y - 25, 'KRUNÝŘ! 🛡️', '#0EA5E9', true);
+          }
+        }
+
         const shadowMods = getShadowDefenseMultipliers(this);
         amount *= shadowMods.damageTakenMult;
         if (type === 'holy') {
@@ -2431,6 +2585,15 @@ export class GameEngine {
           self.callbacks?.onEnemyDefeated?.(this);
           self.director?.recordEnemyDeath(this, self.state.gameTime);
 
+          if (this.id === 'kralovsky_vele_rak' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '🦞 POKLAD KRÁLOVSKÉHO VELE-RAKA!' });
+            self.emitDamageText(this.x, this.y - 40, 'VELE-RAK POKOŘEN! 🦞', '#0EA5E9', true);
+          }
+          if (this.id === 'cert_sekac' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '😈 POKLAD PEKELNÉHO ČERTA SEKÁČE!' });
+            self.emitDamageText(this.x, this.y - 40, 'ČERT SEKÁČ ZAŽEHÁN! 😈', '#DC2626', true);
+          }
+
           const curLvlId = self.state.activeLevelId !== undefined ? self.state.activeLevelId : 0;
           const curLvl = GAME_LEVELS[curLvlId];
           if (this.isBoss && curLvl && this.id === curLvl.finalBoss.id) {
@@ -2460,8 +2623,24 @@ export class GameEngine {
                   }
                 }
               }
-              self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD LEDOVÝCH MUŽŮ!' });
-              self.emitDamageText(this.x, this.y - 50, 'LEDOVÍ MUŽI PŘEMOŽENI! 🌸', '#F59E0B', true);
+              if (this.id === 'ledovi_muzi') {
+                self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD LEDOVÝCH MUŽŮ!' });
+                self.emitDamageText(this.x, this.y - 50, 'LEDOVÍ MUŽI PŘEMOŽENI! 🌸', '#F59E0B', true);
+              } else if (this.id === 'kralovska_polednice') {
+                if (self.director && Array.isArray(self.director.hazards)) {
+                  self.director.hazards = self.director.hazards.filter(
+                    (h: any) => h.sourceEnemyId !== 'kralovska_polednice'
+                  );
+                  if (self.state.activeHazards) {
+                    self.state.activeHazards = self.director.hazards;
+                  }
+                }
+                self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD KRÁLOVSKÉ POLEDNICE!' });
+                self.emitDamageText(this.x, this.y - 50, 'KRÁLOVSKÁ POLEDNICE PŘEMOŽENA! 🌾', '#F59E0B', true);
+              } else {
+                self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD VLÁDCE OBLASTI!' });
+                self.emitDamageText(this.x, this.y - 50, 'VLÁDCE PŘEMOŽEN! 👑', '#F59E0B', true);
+              }
 
               if (self.state.meta) {
                 const nextLvlId = (curLvlId + 1) as GameLevelId;
@@ -4712,6 +4891,110 @@ export class GameEngine {
       }
     }
 
+    // Stage 7 ("ČERVEN"): Enforce Červen v Hrusicích bounds, haystacks & village obstacles, St. Anthony shrine blessing, and summer stream
+    if (this.state.activeLevelId === 6) {
+      if (player && player.hp > 0) {
+        const waterEffect = getCervenWaterEffect(player.x, player.y, this.state.gameTime || 0);
+        if (waterEffect.inOpenWater) {
+          player.x += waterEffect.carryVx * dt;
+          player.y += waterEffect.carryVy * dt;
+        }
+        resolveCervenObstacles(player, false);
+        clampToMarchArenaBounds(player, 28);
+
+        const inShrine = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.shrine);
+        const inChurch = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.church);
+        const inTavern = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.tavern);
+        const inForest = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.forest);
+        const inVillage = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.village);
+        const inFields = isInsideCervenPoi(player.x, player.y, CERVEN_POIS.fields);
+
+        // Village green pace bonus
+        if (inVillage) {
+          player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+        }
+
+        // Tactical haystacks & fields cover
+        if (inFields) {
+          player.damageReduction = Math.max(player.damageReduction || 0, 0.15);
+        }
+
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E']);
+
+        // [E] Poutní strom Sv. Antonína Paduánského: Vacuum-pulls all loose drops & grants temporary holy shield
+        if (inShrine) {
+          this.state.cervenActivePoiPrompt = CERVEN_POIS.shrine.interactPrompt;
+          if (eKeyPressed && (!player._cervenShrineCooldown || player._cervenShrineCooldown <= 0)) {
+            player._cervenShrineCooldown = 15.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POŽEHNÁNÍ SV. ANTONÍNA! ✨', '#F59E0B', true);
+            if (this.state.drops) {
+              applyMagnetWave(this.state.drops, player.x, player.y, 99999, true);
+            }
+            player.tempShield = Math.max(player.tempShield || 0, 80);
+            player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 2.5);
+          }
+        } else if (inChurch) {
+          this.state.cervenActivePoiPrompt = CERVEN_POIS.church.interactPrompt;
+          if (eKeyPressed && (!player._cervenChurchCooldown || player._cervenChurchCooldown <= 0)) {
+            player._cervenChurchCooldown = 12.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'MRAKOZVON ZAZVONIL! 🔔', '#38BDF8', true);
+            player.tempShield = Math.max(player.tempShield || 0, 50);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              const dist = Math.hypot(foe.x - player.x, foe.y - player.y);
+              if (dist <= 400) {
+                foe.panicked = true;
+                foe.panicTimer = Math.max(foe.panicTimer || 0, 3.0);
+              }
+            }
+          }
+        } else if (inTavern) {
+          this.state.cervenActivePoiPrompt = CERVEN_POIS.tavern.interactPrompt;
+          if (eKeyPressed && (!player._cervenTavernCooldown || player._cervenTavernCooldown <= 0)) {
+            player._cervenTavernCooldown = 10.0;
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'CHLADIVÉ PODMÁSLÍ! 🥛', '#10B981', true);
+            player.hp = Math.min(player.maxHp, player.hp + 35);
+            player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+          }
+        } else if (inForest) {
+          this.state.cervenActivePoiPrompt = CERVEN_POIS.forest.interactPrompt;
+          if (eKeyPressed && (!player._cervenForestCooldown || player._cervenForestCooldown <= 0)) {
+            player._cervenForestCooldown = 8.0;
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'BORŮVKY A JAHŮDKY! 🫐', '#818CF8', true);
+            player.hp = Math.min(player.maxHp, player.hp + 20);
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.20);
+          }
+        } else {
+          this.state.cervenActivePoiPrompt = null;
+        }
+
+        if (player._cervenShrineCooldown > 0) player._cervenShrineCooldown -= dt;
+        if (player._cervenChurchCooldown > 0) player._cervenChurchCooldown -= dt;
+        if (player._cervenTavernCooldown > 0) player._cervenTavernCooldown -= dt;
+        if (player._cervenForestCooldown > 0) player._cervenForestCooldown -= dt;
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean(e.isFlying && !e.isGroundedForLoot);
+        if (!isFlying) {
+          const eWater = getCervenWaterEffect(e.x, e.y, this.state.gameTime || 0);
+          if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+            e.x += eWater.carryVx * dt;
+            e.y += eWater.carryVy * dt;
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+          }
+        }
+        resolveCervenObstacles(e, isFlying);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
     // Step drops
     if (this.state.drops) {
       sweepCoinsIntoBigPouches(this.state.drops, dt);
@@ -4747,7 +5030,7 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 6) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2) {
           clampToDubenArenaBounds(d, 28);
@@ -4788,7 +5071,7 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 6) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2) {
               clampToDubenArenaBounds(d, 28);

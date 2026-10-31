@@ -487,9 +487,9 @@ export class ArenaRenderer {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
           const decorExtent =
-            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border'
+            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border'
               ? 2600 * scale
-              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_'))
+              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_'))
               ? 480 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -507,9 +507,9 @@ export class ArenaRenderer {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent =
-          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border'
+          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border'
             ? 2600 * scale
-            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_'))
+            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_'))
             ? 480 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {

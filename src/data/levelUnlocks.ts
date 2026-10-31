@@ -26,7 +26,7 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 4 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
 	if (id === 5 && ((meta?.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta?.bestiaryKills?.pankrac || 0) >= 1 || (meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
 	if (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
-	if (id === 7 && ((meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
+	if (id === 7 && ((meta?.bestiaryKills?.kralovska_polednice || 0) >= 1 || (meta?.bestiaryKills?.polednice || 0) >= 1 || (meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -155,9 +155,10 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "jiskrivec", name: "Jiskřivec", icon: "✨" }
 	]),
 	7: makeSequentialUnlock(7, [
-		{ id: "bezhlavy_rytir", name: "Bezhlavý rytíř", icon: "🗡️" },
-		{ id: "zbrojnos", name: "Zbrojnoš", icon: "🛡️" },
-		{ id: "bila_pani", name: "Bílá paní", icon: "👻" }
+		{ id: "kralovska_polednice", name: "Královská Polednice", icon: "👑" },
+		{ id: "cert_sekac", name: "Pekelný čert sekáč", icon: "😈" },
+		{ id: "kralovsky_vele_rak", name: "Královský Vele-rak", icon: "🦞" },
+		{ id: "pekelny_cert", name: "Pekelný čert", icon: "🔥" }
 	])
 };
 
@@ -301,7 +302,7 @@ function computeLevelProgress(id: any, meta: any) {
 			count: cnt
 		};
 	});
-	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "ledovi_muzi" : id === 6 ? "mlynar" : id === 7 ? "bezhlavy_rytir" : "";
+	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "ledovi_muzi" : id === 6 ? "mlynar" : id === 7 ? "kralovska_polednice" : "";
 	const bossDefeated = bossId ? (meta?.bestiaryKills?.[bossId] || 0) >= 1 || !!meta?.completedLevels?.[id - 1] : false;
 	let percent = 0;
 	if (bossDefeated) {

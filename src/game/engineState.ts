@@ -162,6 +162,15 @@ export interface EngineState {
     weatherPetalTimer: number;
     terrainHazardTimer: number;
   };
+  /** Runtime-only state for Červen v Hrusicích (7. úroveň). */
+  cerven?: {
+    bellCooldown: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    forestCooldown: number;
+    weatherHayTimer: number;
+  };
+  cervenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
   yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
