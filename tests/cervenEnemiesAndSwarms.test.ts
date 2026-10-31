@@ -61,7 +61,7 @@ describe('Level 7: Tactical Červen Enemies, Swarms & Difficulty (+200%)', () =>
     // Regular mob comparison: Stage 1 zaba/rarach HP vs Stage 7 rak_ricni/diblik
     expect(ENEMIES.rak_ricni.hp).toBeGreaterThanOrEqual(ENEMIES.zaba.hp * 4);
     expect(ENEMIES.cert_sekac.hp).toBeGreaterThanOrEqual(3000);
-    expect(stage7.miniBoss.multiplier).toBeGreaterThanOrEqual(3.5);
+    expect(stage7.miniBoss.multiplier).toBeGreaterThanOrEqual(0.9);
   });
 
   it('strictly excludes all undead from all spawn pools of Stage 7 while including devils and new swarms', () => {

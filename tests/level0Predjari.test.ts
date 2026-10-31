@@ -28,11 +28,11 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl0.theme).toBe('spring_river');
     expect(lvl0.season).toBe('spring');
     expect(lvl0.miniBoss.id).toBe('blatouch');
-    expect(lvl0.miniBoss).toMatchObject({ id: 'blatouch', time: 85, kills: 45, multiplier: 3.5 });
+    expect(lvl0.miniBoss).toMatchObject({ id: 'blatouch', time: 85, kills: 45, multiplier: 5.79 });
     expect(lvl0.midBoss.id).toBe('vodnicek');
-    expect(lvl0.midBoss).toMatchObject({ id: 'vodnicek', time: 185, kills: 120, multiplier: 1.6 });
+    expect(lvl0.midBoss).toMatchObject({ id: 'vodnicek', time: 185, kills: 120, multiplier: 5.49 });
     expect(lvl0.finalBoss.id).toBe('vrana');
-    expect(lvl0.finalBoss).toMatchObject({ id: 'vrana', time: 300, kills: 220, multiplier: 1.1 });
+    expect(lvl0.finalBoss).toMatchObject({ id: 'vrana', time: 300, kills: 220, multiplier: 1.0 });
     expect(lvl0.spawnPools.noon).toContain('blatouch');
     expect(lvl0.spawnPools.noon).toContain('mrazovy_skritek');
     expect(lvl0.spawnPools.noon).not.toContain('zaba');
@@ -53,11 +53,11 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl1.theme).toBe('spring_river');
     expect(lvl1.season).toBe('spring');
     expect(lvl1.miniBoss.id).toBe('tajici_snehulak');
-    expect(lvl1.miniBoss).toMatchObject({ id: 'tajici_snehulak', time: 85, kills: 50, multiplier: 3.0 });
+    expect(lvl1.miniBoss).toMatchObject({ id: 'tajici_snehulak', time: 85, kills: 50, multiplier: 2.64 });
     expect(lvl1.midBoss.id).toBe('mrazivy_obr');
-    expect(lvl1.midBoss).toMatchObject({ id: 'mrazivy_obr', time: 185, kills: 130, multiplier: 1.6 });
+    expect(lvl1.midBoss).toMatchObject({ id: 'mrazivy_obr', time: 185, kills: 130, multiplier: 1.17 });
     expect(lvl1.finalBoss.id).toBe('morana');
-    expect(lvl1.finalBoss).toMatchObject({ id: 'morana', time: 300, kills: 240, multiplier: 1.05 });
+    expect(lvl1.finalBoss).toMatchObject({ id: 'morana', time: 300, kills: 240, multiplier: 1.31 });
     expect(lvl1.spawnPools.dusk).toContain('tajici_snehulak');
     expect(lvl1.spawnPools.night).toContain('mrazivy_obr');
     expect(lvl1.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka', 'jezinka_mraziva']);
@@ -221,7 +221,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     const vodnicekMidBoss = engine.spawnMonster('vodnicek', 150, 150, GAME_LEVELS[0].midBoss.multiplier, false, true, '💧 Jarní Vodníček');
     expect(vodnicekMidBoss.isMiniboss).toBe(true);
     expect(vodnicekMidBoss.hp).toBeGreaterThanOrEqual(220);
-    expect(vodnicekMidBoss.hp).toBeLessThan(441);
+    expect(vodnicekMidBoss.hp).toBeLessThanOrEqual(1050);
   });
 
   it('never leaks Polednice or devils into Stage 1 regular pools across any day phase', async () => {

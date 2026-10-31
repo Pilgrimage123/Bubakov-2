@@ -202,6 +202,25 @@ export const DYNAMIC_DIFFICULTY_PRESETS: DifficultyPreset[] = [
   },
 ];
 
+/**
+ * Aditivní škálovací křivka obtížnosti mezi jednotlivými Výpravami kampaně (ADR 0038).
+ * Základ 100 % (1. úroveň), skok +35 % do 2. úrovně, a dále +25 %, +30 %, +35 %, +40 %, +45 %, +50 % až na 360 % v 8. úrovni.
+ */
+export const STAGE_THREAT_MULTIPLIERS: Record<number, number> = {
+  0: 1.00,
+  1: 1.35,
+  2: 1.60,
+  3: 1.90,
+  4: 2.25,
+  5: 2.65,
+  6: 3.10,
+  7: 3.60,
+};
+
+export function getStageThreatMultiplier(levelId: GameLevelId = 0): number {
+  return STAGE_THREAT_MULTIPLIERS[levelId] ?? 1.00;
+}
+
 export function getDifficultyPreset(val: number = 3.0): DifficultyPreset {
   let closest = DYNAMIC_DIFFICULTY_PRESETS[2]; // default 3.0
   let minDiff = 999;
@@ -853,8 +872,10 @@ export class RunDirector {
       ? Math.pow(this.pressureMultiplier, 1.3)
       : this.pressureMultiplier;
 
-    // Capacity and accrual scale with the selected baseline difficulty and adaptive pressure.
-    this.budgetCap = Math.round(cap * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * pressureSurge * openingCapFactor);
+    const stageThreatMult = getStageThreatMultiplier(this.levelId);
+
+    // Capacity and accrual scale with the selected baseline difficulty, stage threat multiplier, and adaptive pressure.
+    this.budgetCap = Math.round(cap * stageThreatMult * this.rozmar.threatMultiplier * (0.5 + normalizedDiff * 0.8) * pressureSurge * openingCapFactor);
 
     let accrualMult = 0.35 + Math.pow(normalizedDiff, 1.42) * 0.75;
 
@@ -864,7 +885,7 @@ export class RunDirector {
       accrualMult *= 0.45;
     }
 
-    const accrual = baseRate * this.rozmar.threatMultiplier * accrualMult * openingRateFactor * pressureSurge * dt;
+    const accrual = baseRate * stageThreatMult * this.rozmar.threatMultiplier * accrualMult * openingRateFactor * pressureSurge * dt;
     this.threatBudget = Math.min(this.budgetCap, this.threatBudget + accrual);
   }
 

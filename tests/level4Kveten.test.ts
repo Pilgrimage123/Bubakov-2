@@ -26,9 +26,9 @@ describe('Level 5: Květen v Hrusicích (Stage 5 Core Definition & Progression)'
     expect(lvl4.groundColor).toBe('#A3D48B');
 
     // 5-minute (300 s) daytime schedule
-    expect(lvl4.miniBoss).toMatchObject({ id: 'carodejnice_zaspalka', time: 85, kills: 50, multiplier: 3.2 });
-    expect(lvl4.midBoss).toMatchObject({ id: 'hastrman', time: 185, kills: 130, multiplier: 1.6 });
-    expect(lvl4.finalBoss).toMatchObject({ id: 'ledovi_muzi', time: 300, kills: 250, multiplier: 1.15 });
+    expect(lvl4.miniBoss).toMatchObject({ id: 'carodejnice_zaspalka', time: 85, kills: 50, multiplier: 0.92 });
+    expect(lvl4.midBoss).toMatchObject({ id: 'hastrman', time: 185, kills: 130, multiplier: 6.10 });
+    expect(lvl4.finalBoss).toMatchObject({ id: 'ledovi_muzi', time: 300, kills: 250, multiplier: 0.84 });
     expect(lvl4.keyEnemies.some((e) => e.id === 'hastrman')).toBe(true);
     expect(lvl4.bossMechanic.cadenceSeconds).toBe(6);
     expect(lvl4.arena).toMatchObject({ id: 'kvetnova_naves', layout: 'asymmetric_poi' });

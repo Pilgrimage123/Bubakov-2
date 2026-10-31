@@ -35,9 +35,9 @@ describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
     expect(lvl2.groundColor).toBe('#A8D08D');
 
     // 5-minute (300 s) daytime schedule
-    expect(lvl2.miniBoss).toMatchObject({ id: 'beranek', time: 85, kills: 50, multiplier: 3.2 });
-    expect(lvl2.midBoss).toMatchObject({ id: 'carodejnice_stara', time: 185, kills: 130, multiplier: 1.6 });
-    expect(lvl2.finalBoss).toMatchObject({ id: 'vrchni_carodejnice', time: 300, kills: 240, multiplier: 1.1 });
+    expect(lvl2.miniBoss).toMatchObject({ id: 'beranek', time: 85, kills: 50, multiplier: 1.35 });
+    expect(lvl2.midBoss).toMatchObject({ id: 'carodejnice_stara', time: 185, kills: 130, multiplier: 1.33 });
+    expect(lvl2.finalBoss).toMatchObject({ id: 'vrchni_carodejnice', time: 300, kills: 240, multiplier: 1.31 });
     expect(lvl2.bossMechanic.cadenceSeconds).toBe(6);
     expect(lvl2.arena).toMatchObject({ id: 'dubnova_naves', layout: 'asymmetric_poi' });
   });

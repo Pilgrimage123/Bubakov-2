@@ -29,9 +29,9 @@ describe('Level 7: Červen v Hrusicích (Stage 7 Core Definition & Progression)'
     expect(lvl6.groundColor).toBe('#E59866');
 
     // 5-minute (300 s) daytime schedule with +200% difficulty over Stage 1
-    expect(lvl6.miniBoss).toMatchObject({ id: 'kralovsky_vele_rak', time: 85, kills: 90, multiplier: 3.8 });
-    expect(lvl6.midBoss).toMatchObject({ id: 'cert_sekac', time: 185, kills: 210, multiplier: 2.2 });
-    expect(lvl6.finalBoss).toMatchObject({ id: 'kralovska_polednice', time: 300, kills: 350, multiplier: 1.45 });
+    expect(lvl6.miniBoss).toMatchObject({ id: 'kralovsky_vele_rak', time: 85, kills: 90, multiplier: 0.92 });
+    expect(lvl6.midBoss).toMatchObject({ id: 'cert_sekac', time: 185, kills: 210, multiplier: 0.97 });
+    expect(lvl6.finalBoss).toMatchObject({ id: 'kralovska_polednice', time: 300, kills: 350, multiplier: 1.01 });
     expect(lvl6.keyEnemies.some((e) => e.id === 'cert_sekac')).toBe(true);
     expect(lvl6.keyEnemies.some((e) => e.id === 'kralovska_polednice')).toBe(true);
     expect(lvl6.arena).toMatchObject({ id: 'cervnova_senosec', layout: 'asymmetric_poi' });

@@ -1,3 +1,22 @@
+## 2026-10-31 — Aditivní škálování obtížnosti Výprav a kotevní benchmark (ADR 0038)
+
+- **Aditivní škálování obtížnosti Výprav a kotevní benchmark (ADR 0038 & `GLOSSARY.md`)**:
+  - **Sjednocení časové osy na 300 sekund pro všech 8 Výprav**:
+    - Všech 8 úrovní kampaně sjednoceno na plnou 5minutovou délku (300 s do svítání / finálního bosse). Odstraněn 3minutový spěch z Výprav 4 (Dubnová noc), 6 (Staré hamry) a 8 (Dračí sluj).
+    - Stabilizovány jednotné milníky bossů: Miniboss v 85 s, Midboss ve 185 s a Finální boss ve 300 s.
+  - **Kotevní etalon 1. Výpravy (Hejno mrazivých vran = 1 800 Kuráže)**:
+    - Jako pevný základ ($1{,}00\times$) slouží Hejno mrazivých vran v 1. úrovni s celkovou Kuráží 1 800 (9 vran po 200 Kuráže).
+    - Od tohoto základu je odvozena Kuráž a násobitele všech bossů v kampani (až po Tříhlavého draka s 6 480 Kuráže v 8. Výpravě), čímž je odstraněna předchozí pilovitá horská dráha a 50tisícové „houbovité“ životy bossů.
+  - **Aditivní křivka rejdového rozpočtu Režiséra výpravy (`src/game/director.ts`)**:
+    - Zavedena autoritativní funkce `getStageThreatMultiplier(levelId)` s aditivním růstem (+20 % základ + 5 % za každou úroveň s úvodním krokem +15 % mezi 1. a 2. úrovní: $1{,}00\times \rightarrow 1{,}35\times \rightarrow 1{,}60\times \rightarrow 1{,}90\times \rightarrow 2{,}25\times \rightarrow 2{,}65\times \rightarrow 3{,}10\times \rightarrow 3{,}60\times$).
+    - Režisér získává v pozdějších Výpravách vyšší rozpočet na taktické formace, Přívlastky bubáka (pekelný, kamenný, hromový) a Ostřílené běsy bez jakéhokoliv skrytého navyšování základních statistik monster v Bestiáři (plné dodržení pravidla Zero-Hidden-Cheat dle ADR 0008).
+  - **Sanitace dat Rozmarů a spawn poolů (`src/data/runArchetypes.ts`, `src/data/levels.ts`)**:
+    - Aktualizovány Rozmary pro 5. Výpravu (*Májový vánek*, *Ledoví muži za humny*, *Brčálnické tůně*) a 7. Výpravu (*Letní senoseč*, *Spalující polední úžeh*, *Pekelná výheň na strništi*).
+    - Vyčištěny spawn pooly 7. Výpravy od omylem zařazených bossů a opraveny vazby v enginu na řádná strašidla z Bestiáře.
+  - **Verifikace a testy**:
+    - Aktualizovány odpovídající testovací sady (`tests/level0Predjari.test.ts`, `tests/level2DubnovyDen.test.ts`, `tests/level4Kveten.test.ts`, `tests/level6Cerven.test.ts`, `tests/cervenEnemiesAndSwarms.test.ts`, `tests/runDirector.test.ts`).
+    - Všech 83 testovacích souborů (761 testů) a Vite produkční sestavení prochází stoprocentně bez chyb.
+
 ## 2026-10-31 — 7. Úroveň: Červen v Hrusicích – Senoseč a pekelný žár (Vele-rak, Pekelný čert sekáč a Královská Polednice)
 
 - **Kompletní vertikální řez 7. úrovně („Červen v Hrusicích“, `levelId: 6`) v autentickém stylu Josefa Lady**:

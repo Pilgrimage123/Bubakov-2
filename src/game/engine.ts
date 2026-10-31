@@ -1228,6 +1228,9 @@ export class GameEngine {
         draci_plivnik: 'plivnik',
         lavy_rarach: 'sazovy_rarach',
         pekelny_pes: 'ohnivy_pes',
+        pekelny_cert: 'cert',
+        pekelny_drab: 'drab',
+        cerny_vlk: 'cerny_vlkodlak',
       };
       resolvedId =
         fallbackMap[id] ||
@@ -1250,9 +1253,9 @@ export class GameEngine {
     const isCrowBossOrMiniboss = resolvedId === 'vrana' && (isMiniboss || isBoss);
     if (isMiniboss || isBoss) {
       if (resolvedId === 'vrana') {
-        finalHp = isBoss ? 55 : 38; // 55 Kuráže na vránu jako finální boss = ~495 celkem, 38 pro miniboss
+        finalHp = isBoss ? 200 : 38; // 200 Kuráže na vránu jako finální boss = ~1800 celkem (kotevní benchmark), 38 pro miniboss (~342 celkem)
       } else if (isMiniboss) {
-        finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+        finalHp = Math.max(finalHp, 220);
       }
     }
     const renderScale = isCrowBossOrMiniboss ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : isBoss ? 1.35 : 1.0;

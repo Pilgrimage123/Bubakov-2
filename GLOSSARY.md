@@ -132,6 +132,14 @@ _Avoid_: vulnerability score, threat index, stress score, V-skóre
 Vrcholný skupinový boss 1. úrovně (Denní tání) tvořený kompaktní letovou formací 9 dravých vran se sdíleným ukazatelem Kuráže, vysokou rychlostí náletů (260 px/s) a dynamickým úbytkem těl při postupném zraňování; po porážce celého hejna zanechává malovanou truhlu a pečetí vítězství denní výpravy.
 _Avoid_: vrana miniboss, obří vrána, crow swarm boss
 
+**Kotevní boss výpravy**:
+Pevný referenční etalon pro odvození parametrů a Kuráže všech ostatních bossů v kampani, ztělesněný Hejnem mrazivých vran v 1. úrovni s výchozí celkovou výdrží 1 800 Kuráže (formace 9 vran po 200 Kuráže).
+_Avoid_: dummy boss, boss benchmark, HP scaler
+
+**Křivka obtížnosti výprav**:
+Pravidlo aditivního růstu náročnosti mezi Výpravami kampaně (+20 % základ + 5 % za každou úroveň s úvodním krokem +15 % mezi 1. a 2. Výpravou), promítané do rejdového rozpočtu Režiséra výpravy a odstupňování bossů od 100 % do 360 % v 8. úrovni.
+_Avoid_: exponenciální obtížnost, level stat-scaling, geometrické násobení, hidden cheat
+
 **Smart SVG sprity**:
 Původní přechodné DOM vektorové komponenty postav, kompletně nahrazené procedurálními ladovskými rutinami na HTML5 plátně (Canvas 2D) v bojové aréně i ve všech rozhraních.
 _Avoid_: SVG avatary, vektorové ikony postav, DOM postavy v aréně

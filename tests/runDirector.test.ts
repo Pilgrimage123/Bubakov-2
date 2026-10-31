@@ -736,7 +736,7 @@ describe('Dynamická obtížnost & Aktivní Režisér výpravy', () => {
     expect(twin).toBeDefined();
     expect(twin.isMiniboss).toBe(true);
     expect(twin.customBossTitle).toContain('Dvojče');
-    expect(director.threatBudget).toBeLessThanOrEqual(20); // 30 - 18 = 12 (+ accrual during 0.6s)
+    expect(director.threatBudget).toBeLessThanOrEqual(24); // 30 - 18 = 12 (+ accrual during 0.6s)
     expect(director.punitiveTwinCooldown).toBeGreaterThan(50);
   });
 

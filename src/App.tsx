@@ -9717,6 +9717,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         draci_plivnik: 'plivnik',
         lavy_rarach: 'sazovy_rarach',
         pekelny_pes: 'ohnivy_pes',
+        pekelny_cert: 'cert',
+        pekelny_drab: 'drab',
+        cerny_vlk: 'cerny_vlkodlak',
       };
       resolvedId =
         fallbackMap[id] ||
@@ -9734,11 +9737,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       prefix = undefined;
     }
     let finalHp = Math.round(stats.hp * (multiplier || 1));
-    if (isMiniboss) {
+    if (isMiniboss || isBoss) {
       if (resolvedId === 'vrana') {
-        finalHp = 38; // 38 Kuráže na vránu = ~342 Kuráže celkem pro vyvážené 9členné hejno
-      } else {
-        finalHp = isLevel0 ? Math.max(finalHp, 220) : Math.max(finalHp, 1400);
+        finalHp = isBoss ? 200 : 38; // 200 Kuráže na vránu = ~1800 celkem (kotevní benchmark), 38 pro miniboss
+      } else if (isMiniboss) {
+        finalHp = Math.max(finalHp, 220);
       }
     }
     const renderScale = (resolvedId === 'vrana' && isMiniboss) ? 1.2 : resolvedId === 'vrana' ? 0.34 : isMiniboss ? 1.75 : (isBoss ? 1.35 : 1.0);
@@ -14700,7 +14703,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     (lvlId === 3 && (meta.bestiaryKills?.hejkal || 0) >= 1) ||
                     (lvlId === 4 && ((meta.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta.bestiaryKills?.obr || 0) >= 1)) ||
                     (lvlId === 5 && (meta.bestiaryKills?.mlynar || 0) >= 1) ||
-                    (lvlId === 6 && (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1) ||
+                    (lvlId === 6 && ((meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || (meta.bestiaryKills?.kralovska_polednice || 0) >= 1 || (meta.bestiaryKills?.polednice || 0) >= 1)) ||
                     (lvlId === 7 && (meta.bestiaryKills?.drak || 0) >= 1);
 
                   return (

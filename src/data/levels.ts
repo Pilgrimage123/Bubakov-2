@@ -39,7 +39,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🌼 POZOR: Z ROZVODNĚNÉ MEZE VYBÍHÁ BLATOUCHOVÝ SKŘÍTEK!",
 			time: 85,
 			kills: 45,
-			multiplier: 3.5
+			multiplier: 5.79
 		},
 		midBoss: {
 			id: "vodnicek",
@@ -47,7 +47,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "💧 POZOR: Z TAJÍCÍCH KER VYSTUPUJE JARNÍ VODNÍČEK!",
 			time: 185,
 			kills: 120,
-			multiplier: 1.6
+			multiplier: 5.49
 		},
 		finalBoss: {
 			id: "vrana",
@@ -55,7 +55,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🐦‍⬛ NEBE ZTEMNĚLO! NAD POLEMI KROUŽÍ HEJNO MRAZIVÝCH VRAN! 🐦‍⬛",
 			time: 300,
 			kills: 220,
-			multiplier: 1.1
+			multiplier: 1.0
 		},
 		spawnPools: {
 			noon: [
@@ -134,7 +134,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "⛄ POZOR: ZE ZÁVĚJÍ SE VALÍ HORDA TAJÍCÍCH SNĚHULÁKŮ!",
 			time: 85,
 			kills: 50,
-			multiplier: 3.0
+			multiplier: 2.64
 		},
 		midBoss: {
 			id: "mrazivy_obr",
@@ -142,7 +142,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "❄️ POZOR: ZE ZAMRZLÝCH POLÍ VYSTUPUJE MRAZIVÝ OBR!",
 			time: 185,
 			kills: 130,
-			multiplier: 1.6
+			multiplier: 1.17
 		},
 		finalBoss: {
 			id: "morana",
@@ -150,7 +150,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "❄️ ZIMU NELZE VYNÉST! MORANA SE VRACÍ Z MRÁZŮ! ❄️",
 			time: 300,
 			kills: 240,
-			multiplier: 1.05
+			multiplier: 1.31
 		},
 		spawnPools: {
 			dusk: [
@@ -239,7 +239,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🐑 POZOR: Z ROZPÁLENÉ PECE VYSKOČIL OBŘÍ KOLEDNICKÝ BERÁNEK! 🐑",
 			time: 85,
 			kills: 50,
-			multiplier: 3.2
+			multiplier: 1.35
 		},
 		midBoss: {
 			id: "carodejnice_stara",
@@ -247,7 +247,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🧹 POZOR: ZE STRNIŠTĚ VZLÉTLI ČARODĚJNICKÉ VÍRY SE STAROU JEŽIBABOU! 🧹",
 			time: 185,
 			kills: 130,
-			multiplier: 1.6
+			multiplier: 1.33
 		},
 		finalBoss: {
 			id: "vrchni_carodejnice",
@@ -255,7 +255,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🧹 NEBE ZAPLÁLO! NAD HRUSICEMI KROUŽÍ VRCHNÍ FILIPOJAKUBSKÁ ČARODĚJNICE! 🧹",
 			time: 300,
 			kills: 240,
-			multiplier: 1.1
+			multiplier: 1.31
 		},
 		spawnPools: {
 			noon: [
@@ -339,25 +339,25 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			id: "klekanice",
 			name: "🔔 Večerní Klekánice",
 			warning: "🔔 POZOR: ZVONÍ KLEKÁNÍ A PŘICHÁZÍ DĚSIVÁ KLEKÁNICE! 🔔",
-			time: 45,
+			time: 85,
 			kills: 55,
-			multiplier: 3.8
+			multiplier: 2.21
 		},
 		midBoss: {
 			id: "drab",
 			name: "⛓️ Pekelný dráb s karabáčem",
 			warning: "⛓️ POZOR: PŘICHÁZÍ OBŘÍ PEKELNÝ DRÁB S ŘETĚZY! ⛓️",
-			time: 95,
+			time: 185,
 			kills: 125,
-			multiplier: 3.6
+			multiplier: 2.51
 		},
 		finalBoss: {
 			id: "hejkal",
 			name: "🌲 Půlnoční Hejkal z hvozdů",
 			warning: "🌲 PŘICHÁZÍ ŠÉF ÚROVNĚ: PŮLNOČNÍ HEJKAL! 🌲",
-			time: 165,
+			time: 300,
 			kills: 230,
-			multiplier: 1.55
+			multiplier: 0.57
 		},
 		spawnPools: {
 			noon: [
@@ -468,7 +468,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🧹 POZOR: ZAPOMENUTÁ FILIPOJAKUBSKÁ ČARODĚJNICE ZASPALKA VYRÁŽÍ DO NÁLETU! 🧹",
 			time: 85,
 			kills: 50,
-			multiplier: 3.2
+			multiplier: 0.92
 		},
 		midBoss: {
 			id: "hastrman",
@@ -476,7 +476,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "💧 POZOR: Z VYHŘÁTÉHO RYBNÍKA VYSTUPUJE BAHENNÍ HASTRMAN S HRNEČKY! 💧",
 			time: 185,
 			kills: 130,
-			multiplier: 1.6
+			multiplier: 6.10
 		},
 		finalBoss: {
 			id: "ledovi_muzi",
@@ -484,7 +484,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🧊 POZOR: KVĚTNOVÝ MRÁZ! NA NÁVES PŘICHÁZEJÍ LEDOVÍ MUŽI V KOŽUŠÍCH! 🧊",
 			time: 300,
 			kills: 250,
-			multiplier: 1.15
+			multiplier: 0.84
 		},
 		spawnPools: {
 			noon: [
@@ -570,25 +570,25 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			id: "zbojnik",
 			name: "🗡️ Zbojník z hamrů",
 			warning: "🗡️ ZE SOUTĚSKY VYRÁŽÍ OBÁVANÝ HEJTMAN ZBOJNÍK!",
-			time: 45,
+			time: 85,
 			kills: 80,
-			multiplier: 5.6
+			multiplier: 3.54
 		},
 		midBoss: {
 			id: "ohnivy_pes",
 			name: "🔥 Ohnivý pes z výhně",
 			warning: "🔥 VÝHEŇ VYPUSTILA MOCNÉHO OHNIVÉHO PSA!",
-			time: 100,
+			time: 185,
 			kills: 170,
-			multiplier: 5.0
+			multiplier: 4.65
 		},
 		finalBoss: {
 			id: "mlynar",
 			name: "🌊 Prokletý Mlynář",
 			warning: "🌊 ŠÉF ÚROVNĚ: MLYNÁŘ OTEVÍRÁ STAVIDLA!",
-			time: 175,
+			time: 300,
 			kills: 300,
-			multiplier: 2.05
+			multiplier: 0.43
 		},
 		spawnPools: {
 			noon: [
@@ -689,7 +689,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "🦞 POZOR: Z HLUBOKÉ TŮNĚ VYSTUPUJE OBRNĚNÝ KRÁLOVSKÝ VELE-RAK!",
 			time: 85,
 			kills: 90,
-			multiplier: 3.8
+			multiplier: 0.92
 		},
 		midBoss: {
 			id: "cert_sekac",
@@ -697,7 +697,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "😈 POZOR: Z HOŘÍCÍHO STRNIŠTĚ VYCHÁZÍ PEKELNÝ ČERT S PLANOUCÍ KOSOU!",
 			time: 185,
 			kills: 210,
-			multiplier: 2.2
+			multiplier: 0.97
 		},
 		finalBoss: {
 			id: "kralovska_polednice",
@@ -705,7 +705,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			warning: "👑 NEBE VZPLANULO ŽÁREM! PŘICHÁZÍ KRÁLOVSKÁ POLEDNICE S POLNÍ BOUŘÍ! 👑",
 			time: 300,
 			kills: 350,
-			multiplier: 1.45
+			multiplier: 1.01
 		},
 		spawnPools: {
 			noon: [
@@ -737,13 +737,13 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"pekelny_drab",
 				"pekelny_cert",
 				"polednice",
-				"cerny_vlk"
+				"cerny_vlkodlak"
 			],
 			midnight: [
 				"pekelny_cert",
 				"pekelny_drab",
 				"pekelny_roj_sazovniku",
-				"kralovska_polednice",
+				"cerny_vlkodlak",
 				"cerny_pes"
 			]
 		},
@@ -796,7 +796,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		badge: "8. Úroveň",
 		description: "V nejhlubší sluji pod skálou se střídá ledový dech s ohněm. Každý krok může spustit rampouch.",
 		lore: "Poslední výprava vede k tříhlavému drakovi: jedna hlava spí, druhá chrlí oheň a třetí hlídá kořist.",
-		unlockRequirementText: "Odemkne se po poražení Bezhlavého rytíře v 7. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Královské Polednice v 7. úrovni",
 		skyColor: "#334155",
 		nightSkyColor: "#080B15",
 		groundColor: "#25313D",
@@ -811,25 +811,25 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			id: "snehulak",
 			name: "☃️ Zlomyslný sněhulák",
 			warning: "☃️ ZE SLUJE SE KUTÁLÍ ZLOMYSLNÝ SNĚHULÁK!",
-			time: 45,
+			time: 85,
 			kills: 100,
-			multiplier: 6.8
+			multiplier: 3.14
 		},
 		midBoss: {
 			id: "nocni_mura",
 			name: "🌑 Noční můra",
 			warning: "🌑 TEMNOTOU SE ŽENE DĚSIVÁ NOČNÍ MŮRA!",
-			time: 105,
+			time: 185,
 			kills: 210,
-			multiplier: 9.6
+			multiplier: 9.23
 		},
 		finalBoss: {
 			id: "drak",
 			name: "🐉 Tříhlavý líný Drak",
 			warning: "🐉 ŠÉF ÚROVNĚ: PROBUDIL SE TŘÍHLAVÝ DRAK!",
-			time: 185,
+			time: 300,
 			kills: 360,
-			multiplier: 2.5
+			multiplier: 0.33
 		},
 		spawnPools: {
 			noon: [
