@@ -118,30 +118,114 @@ export const KVETEN_POIS: Record<KvetenPoiId, KvetenPoi> = {
   mill: {
     id: 'mill',
     title: 'Mlýn a koupaliště v potoce',
-    x: 1050,
-    y: 880,
-    radius: 320,
+    x: 650,
+    y: 725,
+    radius: 225,
     hint: 'MLÝN: Chlapci se cachtají v potoce u stavidla — svěží proud!',
   },
   forest: {
     id: 'forest',
     title: 'Májový kozí háj',
-    x: -1380,
-    y: 1020,
-    radius: 360,
+    x: -1225,
+    y: -475,
+    radius: 340,
     hint: 'KOZÍ HÁJ: „Máj, vyženeme kozy v háj“ — lesní úkryt před útoky!',
   },
   shrine: {
     id: 'shrine',
     title: 'Sloup sv. Jana Nepomuckého',
-    x: -110,
-    y: 780,
-    radius: 260,
+    x: -675,
+    y: -38,
+    radius: 190,
     hint: 'SV. JAN NEPOMUCKÝ: Poutní sloup sv. Jana Nepomuckého (svátek 16. května) — posvátná aura zahání kletby!',
   },
 };
 
 export const KVETEN_POIS_LIST: KvetenPoi[] = Object.values(KVETEN_POIS);
+
+export const KVETEN_NIGHT_POIS: Record<KvetenPoiId, KvetenPoi> = {
+  fields: {
+    id: 'fields',
+    title: 'Opuštěné pastviny pod hvězdami',
+    x: 225,
+    y: -975,
+    radius: 340,
+    hint: 'NOČNÍ PASTVINY: Pastýř zahnal ovce do ovčína — chladná májová rosa na pažitu zrychluje krok (+15 %)!',
+  },
+  church: {
+    id: 'church',
+    title: 'Noční kostel a šeříkový sad',
+    x: -800,
+    y: -650,
+    radius: 320,
+    hint: 'KOSTEL V NOCI: Půlnoční májová zvonice [E] — zahání noční můry, umrlce a dává +20 % zbroj!',
+  },
+  tavern: {
+    id: 'tavern',
+    title: 'Rozsvícená májová hospoda',
+    x: 440,
+    y: -75,
+    radius: 260,
+    hint: 'NOČNÍ HOSPODA: Tanečníci z návsi popíjejí uvnitř — májový džbánek [E] dodá kuráž (+20 % útok)!',
+  },
+  village: {
+    id: 'village',
+    title: 'Zšeřelá májka a svítící chalupy',
+    x: 50,
+    y: -75,
+    radius: 360,
+    hint: 'NOČNÍ MÁJKA: Náves utichla, okna chalup hřejí a lucerny u májky dávají +25 % obranu a regeneraci!',
+  },
+  school: {
+    id: 'school',
+    title: 'Ztichlá škola u šeříků',
+    x: 125,
+    y: 550,
+    radius: 240,
+    hint: 'ŠKOLA V NOCI: Vůně nočního šeříku bystří smysly ve tmě (+20 % dosah sběru a +15 % kadence)!',
+  },
+  pond: {
+    id: 'pond',
+    title: 'Měsíční rybník s rejem bludiček',
+    x: -725,
+    y: 615,
+    radius: 350,
+    hint: 'NOČNÍ RYBNÍK: Mezi lekníny krouží barevná hejna bludiček — pozor na topivce v hlubině!',
+  },
+  mill: {
+    id: 'mill',
+    title: 'Prokletý mlýn a noční náhon',
+    x: 650,
+    y: 725,
+    radius: 225,
+    hint: 'NOČNÍ MLÝN: Chlapci už spí doma a u stavidel číhá Prokletý Mlynář — proud strhává kostlivce!',
+  },
+  forest: {
+    id: 'forest',
+    title: 'Hluboký Hejkalův hvozd',
+    x: -1225,
+    y: -475,
+    radius: 340,
+    hint: 'HEJKALŮV HVOZD: Kozy jsou v chlévě a v lese planou oči Půlnočního Hejkala (+15 % krytí ve větvích)!',
+  },
+  shrine: {
+    id: 'shrine',
+    title: 'Sv. Jan Nepomucký se svatojánskými muškami',
+    x: -675,
+    y: -38,
+    radius: 190,
+    hint: 'SV. JAN NEPOMUCKÝ: Pět hvězd a roj svatojánských mušek [E] prozařuje tmu a zahání kletby Hejkala!',
+  },
+};
+
+export const KVETEN_NIGHT_POIS_LIST: KvetenPoi[] = Object.values(KVETEN_NIGHT_POIS);
+
+export function getKvetenPois(isNight = false): Record<KvetenPoiId, KvetenPoi> {
+  return isNight ? KVETEN_NIGHT_POIS : KVETEN_POIS;
+}
+export function getKvetenPoisList(isNight = false): KvetenPoi[] {
+  return isNight ? KVETEN_NIGHT_POIS_LIST : KVETEN_POIS_LIST;
+}
 
 export function isInsideKvetenPoi(x: number, y: number, poi: KvetenPoi, padding = 0): boolean {
   const dx = x - poi.x;
@@ -205,12 +289,12 @@ export function getKvetenWaterEffect(
 
   const streamInfo = isPointInMarchStreamWater(x, y);
   if (streamInfo.inStream) {
-    // Gentle warm spring water current
+    // Gentle warm spring water current (streamInfo.vx/vy is pre-scaled to 68 px/s)
     const currentSpeed = 22;
     return {
       inOpenWater: true,
-      carryVx: streamInfo.vx * currentSpeed,
-      carryVy: streamInfo.vy * currentSpeed,
+      carryVx: (streamInfo.vx / 68) * currentSpeed,
+      carryVy: (streamInfo.vy / 68) * currentSpeed,
     };
   }
 

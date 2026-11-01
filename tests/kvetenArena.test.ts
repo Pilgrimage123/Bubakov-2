@@ -36,13 +36,19 @@ describe('Level 5: Květen v Hrusicích (Arena Geometry & May Motifs)', () => {
     expect(KVETEN_POIS.forest.title).toContain('kozí háj');
     expect(KVETEN_POIS.forest.hint).toContain('Máj, vyženeme kozy v háj');
 
-    // POI coordinates match Stage 1 anchors
+    // POI coordinates match Stage 1 anchors and physical obstacles
     expect(KVETEN_POIS.fields.x).toBe(MARCH_THAW_POIS.fields.x);
     expect(KVETEN_POIS.fields.y).toBe(MARCH_THAW_POIS.fields.y);
     expect(KVETEN_POIS.church.x).toBe(MARCH_THAW_POIS.church.x);
     expect(KVETEN_POIS.church.y).toBe(MARCH_THAW_POIS.church.y);
     expect(KVETEN_POIS.village.x).toBe(MARCH_THAW_POIS.village.x);
     expect(KVETEN_POIS.village.y).toBe(MARCH_THAW_POIS.village.y);
+    expect(KVETEN_POIS.mill.x).toBe(MARCH_THAW_POIS.mill.x);
+    expect(KVETEN_POIS.mill.y).toBe(MARCH_THAW_POIS.mill.y);
+    expect(KVETEN_POIS.forest.x).toBe(MARCH_THAW_POIS.forest.x);
+    expect(KVETEN_POIS.forest.y).toBe(MARCH_THAW_POIS.forest.y);
+    expect(KVETEN_POIS.shrine.x).toBe(MARCH_THAW_POIS.shrine.x);
+    expect(KVETEN_POIS.shrine.y).toBe(MARCH_THAW_POIS.shrine.y);
   });
 
   it('resolves collision against cottages and clamps within physical arena borders', () => {
@@ -83,6 +89,11 @@ describe('Level 5: Květen v Hrusicích (Arena Geometry & May Motifs)', () => {
     // In open warm pond
     const pondEffect = getKvetenWaterEffect(KVETEN_POIS.pond.x, KVETEN_POIS.pond.y, 10);
     expect(pondEffect.inOpenWater).toBe(true);
+
+    // In warm stream (around waypoint 885, 1420)
+    const streamEffect = getKvetenWaterEffect(885, 1420, 10);
+    expect(streamEffect.inOpenWater).toBe(true);
+    expect(Math.hypot(streamEffect.carryVx, streamEffect.carryVy)).toBeCloseTo(22, 1);
   });
 
   it('safely renders all procedural May landmark decor items without canvas stack leaks', () => {
@@ -113,6 +124,8 @@ describe('Level 5: Květen v Hrusicích (Arena Geometry & May Motifs)', () => {
       'kveten_shrine',
       'kveten_pasture',
       'kveten_orchard',
+      'kveten_tavern',
+      'kveten_school',
       'kveten_brook',
       'kveten_goat_grove',
       'kveten_elder',
@@ -121,6 +134,7 @@ describe('Level 5: Květen v Hrusicích (Arena Geometry & May Motifs)', () => {
 
     for (const lm of landmarks) {
       expect(() => drawKvetenMayLandmark(mockCtx, lm, 5.0, false)).not.toThrow();
+      expect(() => drawKvetenMayLandmark(mockCtx, lm, 5.0, true)).not.toThrow();
     }
   });
 });

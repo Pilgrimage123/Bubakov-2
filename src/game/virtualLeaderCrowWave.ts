@@ -58,12 +58,26 @@ export interface VirtualLeaderCrowWaveOptions {
   orbitContractionSpeed?: number;
 }
 
+export type CrowWaveFormationType = 'crows' | 'wisp_swarm' | 'night_pack';
+
+const NIGHT_WISP_COLORS = ['#22D3EE', '#FACC15', '#F472B6', '#A3E635'] as const;
+
+export function isCrowWaveNightLevel(levelId?: number): boolean {
+  return levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7;
+}
+
+export function isCrowWaveSupportedLevel(levelId?: number): boolean {
+  return levelId === 0 || isCrowWaveNightLevel(levelId);
+}
+
 export class VirtualLeaderCrowWave {
   readonly count: number;
   readonly crows: any[] = [];
   readonly active: Uint8Array;
   readonly baseOffsetX: Float32Array;
   readonly baseOffsetY: Float32Array;
+  readonly packOffsetX: Float32Array;
+  readonly packOffsetY: Float32Array;
   readonly phaseOffset: Float32Array;
   readonly swirlSpeed: Float32Array;
   readonly flapSpeed: Float32Array;
@@ -76,6 +90,8 @@ export class VirtualLeaderCrowWave {
   readonly wobbleRadius: number;
 
   private readonly templates: any[] = [];
+  private readonly nightWispTemplates: any[] = [];
+  private readonly nightPackTemplates: any[] = [];
   private readonly startAt: number;
   private readonly interval: number;
   private readonly behaviorMode: CrowWaveBehaviorMode;
@@ -84,6 +100,7 @@ export class VirtualLeaderCrowWave {
   private readonly orbitContractionSpeed: number;
 
   private poolPrepared = false;
+  private preparedForNight = false;
   private waveNumber = 0;
   private activeCount = 0;
   private waveAge = 0;
@@ -100,6 +117,7 @@ export class VirtualLeaderCrowWave {
   public leaderX = 0;
   public leaderY = 0;
   public currentBehavior: CrowWaveBehavior = 'sweep-through';
+  public currentFormation: CrowWaveFormationType = 'crows';
   public nextWaveAt: number;
 
   constructor(options: VirtualLeaderCrowWaveOptions = {}) {
@@ -117,6 +135,8 @@ export class VirtualLeaderCrowWave {
     this.active = new Uint8Array(this.count);
     this.baseOffsetX = new Float32Array(this.count);
     this.baseOffsetY = new Float32Array(this.count);
+    this.packOffsetX = new Float32Array(this.count);
+    this.packOffsetY = new Float32Array(this.count);
     this.phaseOffset = new Float32Array(this.count);
     this.swirlSpeed = new Float32Array(this.count);
     this.flapSpeed = new Float32Array(this.count);
@@ -128,22 +148,47 @@ export class VirtualLeaderCrowWave {
 
   /**
    * Allocate the actual enemy objects once per run. Later waves reuse these
-   * same objects; no crow entities are constructed from the frame update.
+   * same objects; no entities are constructed from the frame update.
    */
-  preparePool(factory: CrowWaveEnemyFactory): void {
-    if (this.poolPrepared) return;
+  preparePool(factory: CrowWaveEnemyFactory, levelId = 0): void {
+    const isNight = isCrowWaveNightLevel(levelId);
+    if (this.poolPrepared && this.preparedForNight === isNight) return;
+    if (this.poolPrepared) {
+      this.resetRun();
+    }
 
     for (let i = 0; i < this.count; i++) {
-      const enemy = factory('vrana', 0, 0, 1, false, false);
+      const primaryId = isNight ? (i % 2 === 0 ? 'bludicka' : 'jiskrivec') : 'vrana';
+      const enemy = factory(primaryId, 0, 0, 1, false, false);
       const angle = i * CROW_WAVE_GOLDEN_ANGLE;
       const distance = this.flockRadius * Math.sqrt(i / this.count);
 
+      // Ground hunting pack V-wedge / coursing pack formation offsets
+      const rank = Math.floor(i / 5);
+      const lane = (i % 5) - 2;
+      const wedgeX = -rank * 22 + ((i * 13) % 11) - 5;
+      const wedgeY = lane * (24 + rank * 3.2) + (((i * 7) % 9) - 4);
+
       this.crows.push(enemy);
-      // Enemy objects are plain object records; restore from this baseline when
-      // reused, and replace the mutable status map separately on wave start.
       this.templates.push({ ...enemy });
+      if (isNight) {
+        const wispEnemy = i === 0 ? enemy : factory(i % 2 === 0 ? 'bludicka' : 'jiskrivec', 0, 0, 1, false, false);
+        const packEnemy = factory(i % 3 === 0 ? 'kostlivec' : 'cerny_pes', 0, 0, 1, false, false);
+        this.nightWispTemplates.push({
+          ...wispEnemy,
+          nightWispColor: NIGHT_WISP_COLORS[i % NIGHT_WISP_COLORS.length],
+        });
+        this.nightPackTemplates.push({
+          ...packEnemy,
+          hp: Math.min(packEnemy.hp || 40, 38),
+          maxHp: Math.min(packEnemy.maxHp || 40, 38),
+        });
+      }
+
       this.baseOffsetX[i] = Math.cos(angle) * distance;
       this.baseOffsetY[i] = Math.sin(angle) * distance;
+      this.packOffsetX[i] = Math.max(-this.flockRadius, Math.min(this.flockRadius, wedgeX));
+      this.packOffsetY[i] = Math.max(-this.flockRadius, Math.min(this.flockRadius, wedgeY));
       this.phaseOffset[i] = Math.random() * Math.PI * 2;
       this.swirlSpeed[i] = 0.55 + Math.random() * 0.85;
       this.flapSpeed[i] = 7.5 + Math.random() * 5.0;
@@ -157,7 +202,21 @@ export class VirtualLeaderCrowWave {
       enemy._crowWaveActive = false;
     }
 
+    this.preparedForNight = isNight;
     this.poolPrepared = true;
+  }
+
+  /**
+   * Returns a localized banner announcement for the newly launched wave.
+   */
+  getWaveAnnouncement(): { text: string; color: string } {
+    if (this.currentFormation === 'wisp_swarm') {
+      return { text: '✨ REJ BLUDIČEK A JISKŘIVCŮ!', color: '#38bdf8' };
+    }
+    if (this.currentFormation === 'night_pack') {
+      return { text: '🐺 SMEČKA ČERNÝCH PSŮ A KOSTLIVCŮ!', color: '#f87171' };
+    }
+    return { text: '🐦‍⬛ HEJNO VRAN PŘILÉTÁ!', color: '#fbbf24' };
   }
 
   /**
@@ -175,7 +234,10 @@ export class VirtualLeaderCrowWave {
     }
     this.crows.length = 0;
     this.templates.length = 0;
+    this.nightWispTemplates.length = 0;
+    this.nightPackTemplates.length = 0;
     this.poolPrepared = false;
+    this.preparedForNight = false;
     this.waveActive = false;
     this.waveNumber = 0;
     this.activeCount = 0;
@@ -183,6 +245,7 @@ export class VirtualLeaderCrowWave {
     this.travelled = 0;
     this.lastGameTime = -1;
     this.nextWaveAt = this.startAt;
+    this.currentFormation = 'crows';
   }
 
   /**
@@ -198,7 +261,7 @@ export class VirtualLeaderCrowWave {
   ): boolean {
     if (
       !this.poolPrepared ||
-      engine.activeLevelId !== 0 ||
+      !isCrowWaveSupportedLevel(engine.activeLevelId) ||
       !player ||
       dt <= 0 ||
       (engine.timeStopTimer || 0) > 0
@@ -217,14 +280,19 @@ export class VirtualLeaderCrowWave {
 
     if (this.waveActive) {
       this.waveAge += dt;
-      this.rotationAngle = this.waveAge * 0.22;
+      const isNightPack = this.currentFormation === 'night_pack';
+      const isWispSwarm = this.currentFormation === 'wisp_swarm';
+      const effectiveSweepSpeed = isNightPack ? this.sweepSpeed * 0.82 : this.sweepSpeed;
+      this.rotationAngle = isNightPack
+        ? Math.atan2(this.sweepDirY, this.sweepDirX)
+        : this.waveAge * (isWispSwarm ? 0.45 : 0.22);
 
       if (this.currentBehavior === 'sweep-through') {
-        this.leaderX += this.sweepDirX * this.sweepSpeed * dt;
-        this.leaderY += this.sweepDirY * this.sweepSpeed * dt;
-        this.travelled += this.sweepSpeed * dt;
+        this.leaderX += this.sweepDirX * effectiveSweepSpeed * dt;
+        this.leaderY += this.sweepDirY * effectiveSweepSpeed * dt;
+        this.travelled += effectiveSweepSpeed * dt;
       } else {
-        this.orbitAngle += this.orbitAngularSpeed * dt;
+        this.orbitAngle += (isWispSwarm ? this.orbitAngularSpeed * 1.18 : this.orbitAngularSpeed) * dt;
         this.orbitRadius = Math.max(65, this.orbitRadius - this.orbitContractionSpeed * dt);
         this.leaderX = player.x + Math.cos(this.orbitAngle) * this.orbitRadius;
         this.leaderY = player.y + Math.sin(this.orbitAngle) * this.orbitRadius;
@@ -233,10 +301,13 @@ export class VirtualLeaderCrowWave {
       const cosRotation = Math.cos(this.rotationAngle);
       const sinRotation = Math.sin(this.rotationAngle);
       const time = this.waveAge;
+      const wispPulseScale = isWispSwarm ? 0.88 + Math.sin(time * 2.8) * 0.18 : 1;
 
-      // No neighbour lookups: each bird reads only its own offset/phase and
-      // the virtual leader. Dead birds are disabled in-place, never spliced.
-      for (let i = 0; i < this.count; i++) {
+      const activeLimit = isNightPack ? Math.min(this.count, 42) : isWispSwarm ? Math.min(this.count, 64) : this.count;
+
+      // No neighbour lookups: each member reads only its own offset/phase and
+      // the virtual leader. Dead members are disabled in-place, never spliced.
+      for (let i = 0; i < activeLimit; i++) {
         if (this.active[i] === 0) continue;
         const enemy = this.crows[i];
         if (enemy.isDefeated || enemy.dead) {
@@ -286,16 +357,17 @@ export class VirtualLeaderCrowWave {
           }
         }
 
-        const offsetX = this.baseOffsetX[i];
-        const offsetY = this.baseOffsetY[i];
+        const offsetX = isNightPack ? this.packOffsetX[i] : this.baseOffsetX[i] * wispPulseScale;
+        const offsetY = isNightPack ? this.packOffsetY[i] : this.baseOffsetY[i] * wispPulseScale;
         const rotatedX = offsetX * cosRotation - offsetY * sinRotation;
         const rotatedY = offsetX * sinRotation + offsetY * cosRotation;
         const phase = this.phaseOffset[i];
         const speed = this.swirlSpeed[i];
 
-        // Cheap Lissajous wobble layered on top of the rotating Vogel spiral.
-        const wobbleX = Math.cos(time * speed + phase) * this.wobbleRadius;
-        const wobbleY = Math.sin(time * speed * 1.3 + phase) * this.wobbleRadius;
+        // Cheap Lissajous wobble layered on top of the rotating formation.
+        const wobbleAmp = isNightPack ? this.wobbleRadius * 0.45 : isWispSwarm ? this.wobbleRadius * 1.35 : this.wobbleRadius;
+        const wobbleX = Math.cos(time * speed + phase) * wobbleAmp;
+        const wobbleY = Math.sin(time * speed * 1.3 + phase) * wobbleAmp;
         const rawX = this.leaderX + rotatedX + wobbleX;
         const rawY = this.leaderY + rotatedY + wobbleY;
         const nextX = Math.max(MARCH_ARENA_BOUNDS.minX + 20, Math.min(MARCH_ARENA_BOUNDS.maxX - 20, rawX));
@@ -309,10 +381,10 @@ export class VirtualLeaderCrowWave {
         enemy.y = nextY;
         enemy.vx = (nextX - oldX) / dt;
         enemy.vy = (nextY - oldY) / dt;
+        enemy.lastDx = enemy.vx >= 0 ? 1 : -1;
         enemy.crowHeading = Math.atan2(enemy.vy, enemy.vx);
         enemy.crowFlapScale = 0.78 + Math.sin(time * this.flapSpeed[i] + phase) * 0.22;
         enemy.animTime = time;
-
       }
 
       if (this.activeCount <= 0) {
@@ -344,13 +416,13 @@ export class VirtualLeaderCrowWave {
 
   /**
    * Bounding-circle broadphase shared by player contact and projectile/AOE
-   * tests. The flock disk and each bird's wobble remain inside this radius,
+   * tests. The flock disk and each member's wobble remain inside this radius,
    * so distant attacks can reject the entire wave with one squared-distance
-   * comparison instead of scanning its 150 individual crows.
+   * comparison instead of scanning its individual members.
    */
   isWithinBounds(x: number, y: number, hitRadius: number): boolean {
     if (!this.waveActive) return false;
-    const reach = this.flockRadius + this.wobbleRadius + Math.max(0, hitRadius);
+    const reach = this.flockRadius + this.wobbleRadius * 1.4 + Math.max(0, hitRadius);
     const dx = x - this.leaderX;
     const dy = y - this.leaderY;
     return dx * dx + dy * dy <= reach * reach;
@@ -366,11 +438,25 @@ export class VirtualLeaderCrowWave {
     this.waveAge = 0;
     this.travelled = 0;
     this.rotationAngle = 0;
-    this.activeCount = this.count;
-    this.currentBehavior = this.resolveBehavior();
+
+    const isNight = isCrowWaveNightLevel(engine.activeLevelId);
+    if (isNight && this.nightWispTemplates.length === this.count && this.nightPackTemplates.length === this.count) {
+      this.currentFormation = (this.waveNumber % 2) === 0 ? 'wisp_swarm' : 'night_pack';
+      this.currentBehavior = this.currentFormation === 'wisp_swarm' ? 'contracting-orbit' : 'sweep-through';
+    } else {
+      this.currentFormation = 'crows';
+      this.currentBehavior = this.resolveBehavior();
+    }
+
+    const activeLimit = this.currentFormation === 'night_pack'
+      ? Math.min(this.count, 42)
+      : this.currentFormation === 'wisp_swarm'
+      ? Math.min(this.count, 64)
+      : this.count;
+    this.activeCount = activeLimit;
 
     // The radius encloses the viewport's half-diagonal plus the whole flock,
-    // so the leader and every attached crow begin outside the visible camera
+    // so the leader and every attached member begin outside the visible camera
     // while staying inside MARCH_ARENA_BOUNDS.
     this.spawnRadius = Math.hypot(viewWidth, viewHeight) * 0.5 + this.flockRadius + 100;
     let startAngle = Math.random() * Math.PI * 2;
@@ -408,7 +494,20 @@ export class VirtualLeaderCrowWave {
 
     for (let i = 0; i < this.count; i++) {
       const enemy = this.crows[i];
-      const template = this.templates[i];
+      if (i >= activeLimit) {
+        this.active[i] = 0;
+        enemy._crowWaveActive = false;
+        enemy.dead = true;
+        enemy.isDefeated = true;
+        continue;
+      }
+
+      const template =
+        this.currentFormation === 'wisp_swarm' && this.nightWispTemplates[i]
+          ? this.nightWispTemplates[i]
+          : this.currentFormation === 'night_pack' && this.nightPackTemplates[i]
+          ? this.nightPackTemplates[i]
+          : this.templates[i];
 
       // Delete ad-hoc state added by a previous life, then restore its baseline.
       for (const key in enemy) {
@@ -416,13 +515,15 @@ export class VirtualLeaderCrowWave {
       }
       Object.assign(enemy, template);
       enemy.statusEffects = {};
+      const initOffsetX = this.currentFormation === 'night_pack' ? this.packOffsetX[i] : this.baseOffsetX[i];
+      const initOffsetY = this.currentFormation === 'night_pack' ? this.packOffsetY[i] : this.baseOffsetY[i];
       enemy.x = Math.max(
         MARCH_ARENA_BOUNDS.minX + 20,
-        Math.min(MARCH_ARENA_BOUNDS.maxX - 20, this.leaderX + this.baseOffsetX[i]),
+        Math.min(MARCH_ARENA_BOUNDS.maxX - 20, this.leaderX + initOffsetX),
       );
       enemy.y = Math.max(
         MARCH_ARENA_BOUNDS.minY + 20,
-        Math.min(MARCH_ARENA_BOUNDS.maxY - 20, this.leaderY + this.baseOffsetY[i]),
+        Math.min(MARCH_ARENA_BOUNDS.maxY - 20, this.leaderY + initOffsetY),
       );
 
       enemy.hp = enemy.maxHp;
@@ -432,6 +533,7 @@ export class VirtualLeaderCrowWave {
       enemy.isMiniboss = false;
       enemy.panicked = false;
       enemy.isVirtualCrowMember = true;
+      enemy.nightFormationType = this.currentFormation;
       enemy._crowWaveOwner = this;
       enemy._crowWaveInEngine = false;
       enemy._crowWaveActive = true;
@@ -442,6 +544,7 @@ export class VirtualLeaderCrowWave {
       enemy.isSwarmLeader = i === 0;
       enemy.vx = this.sweepDirX * this.sweepSpeed;
       enemy.vy = this.sweepDirY * this.sweepSpeed;
+      enemy.lastDx = enemy.vx >= 0 ? 1 : -1;
       enemy.crowHeading = Math.atan2(enemy.vy, enemy.vx);
       enemy.crowFlapScale = 1;
       enemy.isAttacking = false;
@@ -456,7 +559,6 @@ export class VirtualLeaderCrowWave {
       this.previousX[i] = enemy.x;
       this.previousY[i] = enemy.y;
       this.active[i] = 1;
-
     }
 
     // Membership is discovered with one O(E) pass, then we insert missing
@@ -465,7 +567,7 @@ export class VirtualLeaderCrowWave {
       const existing = engine.enemies[i];
       if (existing._crowWaveOwner === this) existing._crowWaveInEngine = true;
     }
-    for (let i = 0; i < this.count; i++) {
+    for (let i = 0; i < activeLimit; i++) {
       const enemy = this.crows[i];
       if (!enemy._crowWaveInEngine) {
         engine.enemies.push(enemy);

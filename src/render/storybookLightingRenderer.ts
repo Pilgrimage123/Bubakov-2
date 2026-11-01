@@ -913,3 +913,278 @@ export function renderStorybookLightingComposite(
     ctx.restore();
   }
 }
+
+const eyeGlowStamps = new Map<string, HTMLCanvasElement>();
+
+function getEyeGlowStamp(hexColor: string): HTMLCanvasElement | null {
+  if (typeof document === 'undefined') return null;
+  let stamp = eyeGlowStamps.get(hexColor);
+  if (stamp) return stamp;
+
+  stamp = document.createElement('canvas');
+  stamp.width = 64;
+  stamp.height = 64;
+  const sCtx = stamp.getContext('2d');
+  if (!sCtx) return null;
+
+  const grad = sCtx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  grad.addColorStop(0, '#FFFFFF');
+  grad.addColorStop(0.28, hexColor);
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  sCtx.fillStyle = grad;
+  sCtx.beginPath();
+  sCtx.arc(32, 32, 30, 0, Math.PI * 2);
+  sCtx.fill();
+
+  eyeGlowStamps.set(hexColor, stamp);
+  return stamp;
+}
+
+const EMISSIVE_DEVIL_IDS = new Set<string>([
+  'cert',
+  'certik',
+  'pekelnicek',
+  'rarach',
+  'sazovy_rarach',
+  'krvavy_rarach',
+  'pekelny_cert',
+  'cert_sekac',
+  'plivnik',
+  'polni_plivnik',
+  'ohnivy_muz',
+  'ohnivy_pes',
+  'ohniva_kobyla',
+  'ohnivy_sudlicka',
+  'pekelny_roj_sazovniku',
+]);
+
+/**
+ * Returns true if the enemy is a devil/fiery demon that glows with its full body in the dark
+ * (rendered above the night lightmap without casting ground light circles).
+ */
+export function isEmissiveDevil(enemyOrId?: string | { id?: string; category?: string } | null): boolean {
+  if (!enemyOrId) return false;
+  if (typeof enemyOrId === 'string') return EMISSIVE_DEVIL_IDS.has(enemyOrId);
+  return (!!enemyOrId.id && EMISSIVE_DEVIL_IDS.has(enemyOrId.id)) || enemyOrId.category === 'devils';
+}
+
+/**
+ * Returns the signature glowing eye color for an enemy in night arenas based on its folklore category.
+ */
+export function getEnemyNightEyeColor(enemy: any): string {
+  const id = enemy?.id || '';
+  if (enemy?.nightWispColor) return enemy.nightWispColor;
+  if (id === 'bludicka') return '#22D3EE';
+  if (id === 'jiskrivec') return '#FACC15';
+
+  // Devils: bright sulfur-gold eyes
+  if (EMISSIVE_DEVIL_IDS.has(id)) return '#FACC15';
+
+  // Undead: spectral emerald or crimson-ruby
+  if (id === 'krvavy_kostlivec' || id === 'morana') return '#F43F5E';
+  if (
+    id === 'skeleton' ||
+    id === 'kostlivec' ||
+    id === 'skeleton_scythe' ||
+    id === 'kostlivec_kosa' ||
+    id === 'umrlec' ||
+    id === 'pisar' ||
+    id === 'hrobnik' ||
+    id === 'mlynar_duch' ||
+    id === 'bila_pani' ||
+    id === 'bezhlavy_rytir' ||
+    id === 'zbrojnos'
+  ) {
+    return '#34D399';
+  }
+
+  // Beasts, hounds, bailiffs & brigands: fiery crimson
+  if (
+    id === 'cerny_pes' ||
+    id === 'cerny_vlkodlak' ||
+    id === 'drab' ||
+    id === 'pekelny_drab' ||
+    id === 'zbojnik' ||
+    id === 'obrneny_zbojnik' ||
+    id === 'mlynar'
+  ) {
+    return '#EF4444';
+  }
+
+  // Night wraiths, witches & nightmares: mystic violet or amber
+  if (
+    id === 'klekanice' ||
+    id === 'nocni_mura' ||
+    id === 'bubak' ||
+    id === 'vrchni_carodejnice' ||
+    id === 'carodejnice_stara' ||
+    id === 'carodejnice_koste' ||
+    id === 'carodejnice_zaspalka'
+  ) {
+    return '#C084FC';
+  }
+
+  // Frost & water spooks
+  if (
+    id === 'mrazovy_skritek' ||
+    id === 'jezinka_mraziva' ||
+    id === 'mrazivy_obr' ||
+    id === 'tajici_snehulak' ||
+    id === 'snehulak' ||
+    id === 'ledovi_muzi'
+  ) {
+    return '#38BDF8';
+  }
+  if (
+    id === 'vodnicek' ||
+    id === 'hastrman' ||
+    id === 'kalny_hastrman' ||
+    id === 'topivec' ||
+    id === 'zaba' ||
+    id === 'ropucha' ||
+    id === 'rusalka'
+  ) {
+    return '#A3E635';
+  }
+
+  // Hejkalové, forest spooks & default nocturnal creatures: warm amber-gold
+  return '#FBBF24';
+}
+
+/**
+ * Post-lightmap emissive pass for Night Arenas (Stages 2, 4, 6 and any night phase):
+ * 1. Full-body self-illuminated devils (Čerti, Rarášci, Čertíci) are re-rendered above the
+ *    multiplicative shadow layer so their whole body shines in the dark without casting ground light.
+ * 2. All living enemies in the dark receive category-colored glowing eyes (plus colorful luminescence
+ *    for wisp swarms) using pre-baked radial stamps with zero per-frame allocations.
+ */
+export function renderNightEmissiveEntitiesPass(
+  ctx: CanvasRenderingContext2D,
+  enemies: any[] | undefined,
+  camera: {
+    x: number;
+    y: number;
+    viewLeft: number;
+    viewTop: number;
+    viewRight: number;
+    viewBottom: number;
+    zoom?: number;
+  },
+  dayPhaseId: string,
+  time = 0
+): number {
+  if (!enemies || enemies.length === 0) return 0;
+  if (dayPhaseId !== 'dusk' && dayPhaseId !== 'night' && dayPhaseId !== 'midnight') {
+    return 0;
+  }
+
+  const nightStrength = dayPhaseId === 'dusk' ? 0.68 : 0.96;
+  const { viewLeft, viewTop, viewRight, viewBottom } = camera;
+  let renderedCount = 0;
+
+  ctx.save();
+  if (camera.zoom && camera.zoom !== 1) {
+    ctx.scale(camera.zoom, camera.zoom);
+  }
+  ctx.translate(-camera.x, -camera.y);
+
+  for (let i = 0; i < enemies.length; i++) {
+    const enemy = enemies[i];
+    if (!enemy || enemy.dead || enemy.isDefeated) continue;
+    if (enemy._crowWaveOwner && !enemy._crowWaveActive) continue;
+
+    const r = Math.max(10, enemy.radius || 20);
+    if (
+      enemy.x + r + 24 < viewLeft ||
+      enemy.x - r - 24 > viewRight ||
+      enemy.y + r + 24 < viewTop ||
+      enemy.y - r - 24 > viewBottom
+    ) {
+      continue;
+    }
+
+    const id = enemy.id || '';
+    const isDevil = isEmissiveDevil(id);
+
+    // 1. Full-body self-luminous devils: draw their body above the night shadow pass
+    //    without adding any ground light source.
+    if (isDevil && typeof enemy.draw === 'function') {
+      const devilStamp = getEyeGlowStamp('#EF4444');
+      if (devilStamp) {
+        const auraR = r * 1.45;
+        ctx.globalAlpha = 0.26 * nightStrength;
+        ctx.drawImage(devilStamp, enemy.x - auraR, enemy.y - r * 0.4 - auraR, auraR * 2, auraR * 2);
+      }
+      ctx.globalAlpha = 0.88 * nightStrength;
+      enemy.draw(ctx);
+      renderedCount++;
+    }
+
+    // 2. Colorful wisp swarm luminescence for Bludičky & Jiskřivci
+    const eyeColor = getEnemyNightEyeColor(enemy);
+    const stamp = getEyeGlowStamp(eyeColor);
+    const phaseSeed = (enemy.crowWaveIndex ?? i) * 1.37;
+    const pulse = 0.82 + Math.sin(time * 4.5 + phaseSeed) * 0.18;
+
+    if (id === 'bludicka' || id === 'jiskrivec') {
+      const wispR = r * 1.55 * pulse;
+      if (stamp) {
+        ctx.globalAlpha = 0.78 * nightStrength;
+        ctx.drawImage(stamp, enemy.x - wispR, enemy.y - r * 0.35 - wispR, wispR * 2, wispR * 2);
+      }
+      ctx.globalAlpha = 0.95 * nightStrength;
+      ctx.fillStyle = eyeColor;
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y - r * 0.35, Math.max(3.5, r * 0.34), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y - r * 0.35, Math.max(1.8, r * 0.16), 0, Math.PI * 2);
+      ctx.fill();
+      renderedCount++;
+      continue;
+    }
+
+    // 3. Glowing eyes in the dark for all other nocturnal spooks, undead, hejkalové, hounds & bosses
+    // Periodic natural blink so eyes feel alive in the dark
+    const blinkWave = Math.sin(time * 2.7 + phaseSeed * 2.1);
+    if (blinkWave < -0.94) continue;
+
+    const facingDir = (enemy.lastDx ?? (enemy.vx !== undefined && enemy.vx < 0 ? -1 : 1)) >= 0 ? 1 : -1;
+    const isQuadruped = id === 'cerny_pes' || id === 'cerny_vlkodlak' || id === 'ohnivy_pes' || id === 'ohniva_kobyla';
+    const isFlying = id === 'vrana' || id === 'carodejnice_koste' || id === 'carodejnice_zaspalka' || id === 'vrchni_carodejnice';
+    const headX = enemy.x + facingDir * (isQuadruped ? r * 0.42 : isFlying ? r * 0.18 : r * 0.14);
+    const headY = enemy.y - (isQuadruped ? r * 0.48 : isFlying ? r * 0.72 : r * 0.68);
+    const eyeSpread = Math.max(2.6, Math.min(7.5, r * (enemy.isBoss || enemy.isMiniboss ? 0.24 : 0.21)));
+    const eyeRadius = Math.max(1.6, Math.min(4.2, r * (enemy.isBoss || enemy.isMiniboss ? 0.13 : 0.11))) * pulse;
+
+    const leftEyeX = headX - eyeSpread * 0.5;
+    const rightEyeX = headX + eyeSpread * 0.5;
+
+    if (stamp) {
+      const haloR = eyeRadius * 3.8;
+      ctx.globalAlpha = 0.65 * nightStrength;
+      ctx.drawImage(stamp, leftEyeX - haloR, headY - haloR, haloR * 2, haloR * 2);
+      ctx.drawImage(stamp, rightEyeX - haloR, headY - haloR, haloR * 2, haloR * 2);
+    }
+
+    ctx.globalAlpha = 0.96 * nightStrength;
+    ctx.fillStyle = eyeColor;
+    ctx.beginPath();
+    ctx.arc(leftEyeX, headY, eyeRadius, 0, Math.PI * 2);
+    ctx.arc(rightEyeX, headY, eyeRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crisp bright inner pupil spark
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(leftEyeX + facingDir * 0.4, headY - 0.3, eyeRadius * 0.42, 0, Math.PI * 2);
+    ctx.arc(rightEyeX + facingDir * 0.4, headY - 0.3, eyeRadius * 0.42, 0, Math.PI * 2);
+    ctx.fill();
+    renderedCount++;
+  }
+
+  ctx.restore();
+  return renderedCount;
+}
+

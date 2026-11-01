@@ -57,7 +57,17 @@ const LEVEL_TWO_FORBIDDEN_REGULAR_SPAWNS = new Set<string>([
 function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): boolean {
   const enemy = ENEMIES[enemyId];
   if (!enemy || enemy.category === 'bosses') return false;
-  if (levelId === 0 || levelId === 1) {
+  if (levelId === 0) {
+    return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
+  }
+  if (levelId === 1) {
+    const allowedNightFiery =
+      enemyId === 'certik' ||
+      enemyId === 'ohnivy_muz' ||
+      enemyId === 'ohniva_kobyla' ||
+      enemyId === 'jiskrivec' ||
+      enemyId === 'sazovy_rarach';
+    if (allowedNightFiery) return true;
     return enemy.category !== 'demons' && !LEVEL_ZERO_FORBIDDEN_REGULAR_SPAWNS.has(enemyId);
   }
   if (levelId === 2) {
@@ -67,6 +77,14 @@ function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): b
   }
   if (levelId === 4) {
     if (enemy.category === 'frost' || enemy.category === 'undead' || enemy.category === 'demons') return false;
+    return true;
+  }
+  if (levelId === 6) {
+    if (enemy.category === 'frost' || enemy.category === 'undead') return false;
+    return true;
+  }
+  if (levelId === 7) {
+    if (enemy.category === 'frost') return false;
     return true;
   }
   return true;
@@ -108,12 +126,15 @@ export interface ArenaHazard {
   radius: number;
   duration: number;
   maxDuration: number;
-  type: 'mud' | 'fire' | 'frost' | 'curse' | 'soot' | 'ice';
+  type: 'mud' | 'fire' | 'frost' | 'curse' | 'soot' | 'ice' | 'water';
   slowFactor: number;
-  kind?: 'magma-trail' | 'predictive-fissure' | string;
+  kind?: 'magma-trail' | 'predictive-fissure' | 'sulfur-flame' | string;
   damage?: number;
   damageInterval?: number;
   damageTimer?: number;
+  damagesEnemies?: boolean;
+  enemyDamage?: number;
+  enemyDamageTimer?: number;
   warningTimer?: number;
   oneShot?: boolean;
   exploded?: boolean;
@@ -996,7 +1017,7 @@ export class RunDirector {
 
       // Beasts & shadows -> Černý vlk z polesí / Ohnivý pes / Noční můra
       cerny_pes: 'cerny_vlkodlak',
-      ohnivy_pes: 'cerny_vlkodlak',
+      ohnivy_pes: 'ohniva_kobyla',
       nocni_mura: 'cerny_vlkodlak',
       bubak: 'hromotluk',
       hromotluk: 'obrneny_zbojnik',
@@ -1024,7 +1045,7 @@ export class RunDirector {
       certik: 'drab',
       drab: 'cert',
       jiskrivec: 'ohnivy_muz',
-      ohnivy_muz: 'drab',
+      ohnivy_muz: 'ohniva_kobyla',
     };
     const elite = eliteMap[baseId];
     if (!elite || !ENEMIES[elite]) return null;
@@ -1353,8 +1374,8 @@ export class RunDirector {
   public getThematicPrefix(): EnemyPrefixType {
     const isLevel0 = this.levelId === 0;
     const isMay = this.levelId === 4;
-    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 7;
-    const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId === 5;
+    const isWinter = this.rozmar.weatherOverride === 'snow' || this.levelId === 1;
+    const isCrimson = (this.rozmar as any)?.paletteBias === 'crimson' || this.levelId === 3 || this.levelId === 7;
     const isNightCemetery = this.rozmar.formationBias === 'architects';
 
     let weights: Record<EnemyPrefixType, number>;
@@ -1655,15 +1676,46 @@ export class RunDirector {
       // Telegraph hazards are inert until their warning window ends.
       if (typeof h.warningTimer === 'number' && h.warningTimer > 0) continue;
 
+      // Sulfur flames (Ohnivá kobyla) burn both the hunter AND other bubáky!
+      if (h.damagesEnemies || h.kind === 'sulfur-flame') {
+        h.enemyDamageTimer = Math.max(0, (h.enemyDamageTimer ?? 0) - dt);
+        if (h.enemyDamageTimer <= 0) {
+          h.enemyDamageTimer = h.damageInterval ?? 0.45;
+          const eDmg = h.enemyDamage ?? Math.max(18, (h.damage || 14) * 2);
+          const foes = engine?.livingEnemies || engine?.state?.enemies || [];
+          for (let j = 0; j < foes.length; j++) {
+            const foe = foes[j];
+            if (!foe || foe.dead || foe.hp <= 0) continue;
+            // Ohnivá kobyla is immune to her own sulfur hoof-flames
+            if (foe.id === 'ohniva_kobyla') continue;
+            const foeDist = Math.hypot(foe.x - h.x, foe.y - h.y);
+            if (foeDist <= h.radius + (foe.radius || 18) * 0.65) {
+              if (typeof foe.takeDamage === 'function') {
+                foe.takeDamage(eDmg, 'fire', 0, 0);
+              } else {
+                foe.hp = Math.max(0, foe.hp - eDmg);
+                if (foe.hp <= 0) foe.dead = true;
+              }
+              if (foe.hp <= 0 || foe.dead) {
+                foe.killedByFriendlyFire = true;
+              }
+            }
+          }
+        }
+      }
+
       const dist = Math.hypot(player.x - h.x, player.y - h.y);
       if (dist > h.radius) {
         if (typeof h.damageTimer === 'number') h.damageTimer = Math.max(0, h.damageTimer - dt);
         continue;
       }
 
-      if ((h.type === 'mud' || h.type === 'frost') && (!h.damage || h.damage <= 0)) {
+      if (typeof h.slowFactor === 'number' && h.slowFactor < 1) {
         player.hazardSlowTimer = 0.25;
         player.hazardSlowFactor = h.slowFactor;
+      }
+
+      if ((h.type === 'mud' || h.type === 'frost' || h.type === 'water') && (!h.damage || h.damage <= 0)) {
         continue;
       }
 
@@ -1671,9 +1723,27 @@ export class RunDirector {
         continue;
       }
 
-      if ((h.type !== 'fire' && h.type !== 'curse' && h.type !== 'frost' && h.type !== 'ice' && h.type !== 'soot') || !(h.damage && h.damage > 0)) continue;
+      if (
+        (h.type !== 'fire' &&
+          h.type !== 'curse' &&
+          h.type !== 'frost' &&
+          h.type !== 'ice' &&
+          h.type !== 'soot' &&
+          h.type !== 'water' &&
+          h.type !== 'mud') ||
+        !(h.damage && h.damage > 0)
+      ) {
+        continue;
+      }
 
-      const dmgType = h.type === 'curse' ? 'poison' : (h.type === 'frost' || h.type === 'ice') ? 'ice' : 'fire';
+      const dmgType =
+        h.type === 'curse'
+          ? 'poison'
+          : h.type === 'frost' || h.type === 'ice' || h.type === 'water'
+          ? 'ice'
+          : h.type === 'mud'
+          ? 'physical'
+          : 'fire';
 
       if (h.oneShot) {
         if (!h.exploded) {
@@ -1806,9 +1876,13 @@ export class RunDirector {
     const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
     const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
     const phaseKey = getCurrentDayPhase(state.gameTime || 0, levelId).id;
+    const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7;
+    const defaultPool = isNightLevel
+      ? (curLvl?.spawnPools?.midnight || curLvl?.spawnPools?.night || curLvl?.spawnPools?.dusk || [])
+      : (curLvl?.spawnPools?.noon || []);
     const phasePool: string[] = (curLvl?.spawnPools && curLvl.spawnPools[phaseKey])
       ? curLvl.spawnPools[phaseKey]
-      : (curLvl?.spawnPools?.noon || []);
+      : defaultPool;
     const isAllowed = (id: string) => isRegularSpawnAllowedForLevel(id, levelId);
 
     // Regular enemies must belong to the current phase; level 0 also excludes
@@ -1817,7 +1891,7 @@ export class RunDirector {
 
     // Keep a valid same-level fallback for incomplete level definitions.
     if (eligible.length === 0) {
-      const fallback = [...new Set(curLvl?.spawnPools?.noon || [])].filter(isAllowed);
+      const fallback = [...new Set(defaultPool)].filter(isAllowed);
       if (fallback.length > 0) eligible.push(...fallback);
     }
     if (eligible.length === 0) {

@@ -10657,6 +10657,189 @@ var Lada = {
 		}
 		ctx.restore();
 	},
+	drawOhnivaKobyla(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked = false, attackInfo?: any, enemy?: any) {
+		const isCharging = enemy?.aiState === "charge";
+		const isWindup = enemy?.aiState === "windup";
+		const dir = vx < 0 ? -1 : 1;
+		const gallopSpeed = isCharging ? 28 : panicked ? 22 : 14;
+		const phase = time * gallopSpeed;
+		const bounce = Math.abs(Math.sin(phase)) * (isCharging ? 6 : 3.5);
+		const rearTilt = isWindup ? -0.22 : isCharging ? 0.14 : Math.sin(phase) * 0.06;
+
+		ctx.save();
+		ctx.translate(x, y - bounce);
+		ctx.scale(dir * 1.12, 1.12);
+		ctx.rotate(rearTilt);
+
+		// 1. Blazing Sulfur Tail (whipping flames behind the mare)
+		const tailWave = Math.sin(phase * 1.4) * 5;
+		ctx.fillStyle = "#EA580C";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-18, -4);
+		ctx.quadraticCurveTo(-30, -14 + tailWave, -38, -4 + tailWave);
+		ctx.quadraticCurveTo(-32, 4 + tailWave, -26, 2);
+		ctx.quadraticCurveTo(-34, 9 + tailWave, -20, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FACC15";
+		ctx.beginPath();
+		ctx.moveTo(-19, -3);
+		ctx.quadraticCurveTo(-28, -9 + tailWave, -33, -2 + tailWave);
+		ctx.quadraticCurveTo(-26, 3 + tailWave, -19, 2);
+		ctx.closePath();
+		ctx.fill();
+
+		// 2. Galloping Legs & Glowing Sulfur-Iron Horseshoes
+		const leg1 = Math.sin(phase) * (isCharging ? 11 : 7);
+		const leg2 = Math.cos(phase) * (isCharging ? 11 : 7);
+		const drawHorseLeg = (lx: number, ly: number, swing: number, isBack: boolean) => {
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 5;
+			ctx.lineCap = "round";
+			ctx.beginPath();
+			ctx.moveTo(lx, ly);
+			ctx.lineTo(lx + swing * 0.6, ly + 9);
+			ctx.lineTo(lx + swing, ly + 17);
+			ctx.stroke();
+
+			ctx.strokeStyle = isBack ? "#450A0A" : "#7F1D1D";
+			ctx.lineWidth = 2.6;
+			ctx.beginPath();
+			ctx.moveTo(lx, ly);
+			ctx.lineTo(lx + swing * 0.6, ly + 9);
+			ctx.lineTo(lx + swing, ly + 17);
+			ctx.stroke();
+
+			// Glowing red-gold sulfur horseshoe at the hoof
+			ctx.fillStyle = "#FACC15";
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.ellipse(lx + swing + 1, ly + 17.5, 4.2, 2.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		};
+
+		drawHorseLeg(-13, 5, -leg1, true);
+		drawHorseLeg(10, 5, -leg2, true);
+		drawHorseLeg(-9, 6, leg2, false);
+		drawHorseLeg(14, 6, leg1, false);
+
+		// 3. Powerful Hell-Mare Body (dark charred crimson with glowing sulfur ribs/cracks)
+		ctx.fillStyle = "#271212";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 21, 11.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Glowing sulfur cracks along flank
+		ctx.strokeStyle = "#F97316";
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-8, -4);
+		ctx.lineTo(-4, 2);
+		ctx.lineTo(-6, 6);
+		ctx.moveTo(1, -5);
+		ctx.lineTo(4, 1);
+		ctx.lineTo(2, 5);
+		ctx.stroke();
+
+		// 4. Muscular Arched Neck & Equine Head
+		ctx.fillStyle = "#3B1414";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(11, -5);
+		ctx.quadraticCurveTo(18, -19, 24, -18);
+		ctx.lineTo(31, -11);
+		ctx.quadraticCurveTo(28, -5, 22, -6);
+		ctx.lineTo(16, 4);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 5. Blazing Sulfur Mane along Neck & Crown
+		const maneFlicker = Math.sin(phase * 1.6) * 2.5;
+		ctx.fillStyle = "#EA580C";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(7, -8);
+		ctx.lineTo(10, -18 + maneFlicker);
+		ctx.lineTo(14, -13);
+		ctx.lineTo(17, -23 - maneFlicker);
+		ctx.lineTo(20, -16);
+		ctx.lineTo(24, -25 + maneFlicker);
+		ctx.lineTo(24, -16);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FACC15";
+		ctx.beginPath();
+		ctx.moveTo(10, -9);
+		ctx.lineTo(12, -16 + maneFlicker);
+		ctx.lineTo(16, -13);
+		ctx.lineTo(18, -20 - maneFlicker);
+		ctx.lineTo(22, -15);
+		ctx.closePath();
+		ctx.fill();
+
+		// Pointed Horse Ears
+		ctx.fillStyle = "#3B1414";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(21, -17);
+		ctx.lineTo(20, -24);
+		ctx.lineTo(24, -18);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 6. Glowing Sulfur-Yellow & Fiery Eye
+		ctx.fillStyle = "#FACC15";
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.arc(23.5, -13.5, 2.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#DC2626";
+		ctx.beginPath();
+		ctx.arc(24, -13.5, 1.1, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 7. Flared Snorting Nostrils & Sulfur Sparks
+		ctx.fillStyle = "#FACC15";
+		ctx.beginPath();
+		ctx.arc(29, -10.5, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+
+		if (isWindup || isCharging) {
+			// Jet of sulfur flame from nostrils
+			ctx.fillStyle = "#FACC15";
+			ctx.strokeStyle = "#EA580C";
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.moveTo(31, -10);
+			ctx.lineTo(38, -13 + maneFlicker * 0.5);
+			ctx.lineTo(35, -8);
+			ctx.lineTo(39, -5 - maneFlicker * 0.5);
+			ctx.lineTo(30, -8);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		ctx.restore();
+	},
 	drawVodnicek(ctx, x, y, time, vx, panicked) {
 		const dir = vx < 0 ? -1 : 1;
 		const walkSpeed = panicked ? 22 : 12;
@@ -22391,6 +22574,12 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawCertSekac: 'cert_sekac',
   drawKralovskyVeleRak: 'kralovsky_vele_rak',
   drawKralovskaPolednice: 'kralovska_polednice',
+  drawFrostling: 'mrazovy_skritek',
+  drawSnehulak: 'snehulak',
+  drawOhnivaKobyla: 'ohniva_kobyla',
+  drawRusalka: 'rusalka',
+  drawOhnivySudlicka: 'ohnivy_sudlicka',
+  drawSvatojanskyVladce: 'svatojansky_vladce',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
@@ -23545,12 +23734,33 @@ function drawEnemyRenderer(
   const rawRenderScale = typeof enemy?.renderScale === 'number' ? enemy.renderScale : 1.0;
   const renderScale = enemy?.isMinibossFlockMember && rawRenderScale < 0.5 ? 1.15 : rawRenderScale;
   const palette = enemy?.palette;
+  const hasFilterPalette =
+    palette === 'crimson' || palette === 'soot' || palette === 'bog' || palette === 'steel';
+
+  const bakedMobId = METHOD_TO_MOB_ID[method];
+  const effectiveAnimTime =
+    bakedMobId === 'vrana' && typeof (enemy?.flockIndex ?? enemy?.crowWaveIndex) === 'number'
+      ? time + ((enemy?.flockIndex ?? enemy?.crowWaveIndex) as number) * 0.17
+      : time;
+  const canUseAtlas =
+    Boolean(bakedMobId) &&
+    !enemy?.isBoss &&
+    !isAttacking &&
+    !(recoveryTimer > 0) &&
+    !enemy?.fusePrimed &&
+    !(enemy?.clatterTimer > 0) &&
+    enemy?.witchState !== 'swoop' &&
+    !enemy?.isCharging &&
+    enemy?.aiState !== 'charge' &&
+    !(typeof enemy?.hopHeight === 'number' && enemy.hopHeight > 1) &&
+    (!extraArgs || extraArgs.length === 0);
+
   const hasBodyTransform =
     k.phase !== 0 ||
     staggerAngle !== 0 ||
     staggerY !== 0 ||
     renderScale !== 1.0 ||
-    Boolean(palette);
+    (hasFilterPalette && !canUseAtlas);
 
   if (hasBodyTransform) {
     ctx.save();
@@ -23565,32 +23775,13 @@ function drawEnemyRenderer(
       ctx.scale(k.scaleX * renderScale, k.scaleY * renderScale);
     }
     ctx.translate(-x, -y);
-
-    if (palette) {
-      if (palette === 'crimson') ctx.filter = 'sepia(0.85) saturate(4.5) hue-rotate(320deg) brightness(0.92)';
-      else if (palette === 'soot') ctx.filter = 'brightness(0.48) contrast(1.4) drop-shadow(0 0 2px #EA580C)';
-      else if (palette === 'bog') ctx.filter = 'sepia(0.8) hue-rotate(65deg) saturate(2.4) brightness(0.85)';
-      else if (palette === 'steel') ctx.filter = 'grayscale(0.85) contrast(1.3) brightness(1.1)';
-    }
   }
 
-  const bakedMobId = METHOD_TO_MOB_ID[method];
-  const effectiveAnimTime =
-    bakedMobId === 'vrana' && typeof (enemy?.flockIndex ?? enemy?.crowWaveIndex) === 'number'
-      ? time + ((enemy?.flockIndex ?? enemy?.crowWaveIndex) as number) * 0.17
-      : time;
-  const canUseAtlas =
-    bakedMobId &&
-    !enemy?.isBoss &&
-    !isAttacking &&
-    !(recoveryTimer > 0) &&
-    !enemy?.fusePrimed &&
-    !(enemy?.clatterTimer > 0) &&
-    enemy?.witchState !== 'swoop' &&
-    !(typeof enemy?.hopHeight === 'number' && enemy.hopHeight > 1) &&
-    (!extraArgs || extraArgs.length === 0);
   let drawnViaAtlas = false;
   if (canUseAtlas) {
+    if (bakedMobId === 'mrazovy_skritek' && !enemy?._auraDrawnInGroundPass) {
+      Lada.drawFrostlingAura(ctx, x, y, time, 1);
+    }
     const hasMeltTransform =
       bakedMobId === 'tajici_snehulak' &&
       (typeof enemy?.meltSquashX === 'number' || typeof enemy?.wobbleScaleX === 'number');
@@ -23605,14 +23796,40 @@ function drawEnemyRenderer(
       ctx.translate(x, y + 18 * (1 - mSy));
       ctx.scale(mSx, mSy);
       ctx.translate(-x, -y);
-      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, effectiveAnimTime, effectiveVx, panicked);
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(
+        ctx,
+        bakedMobId,
+        x,
+        y,
+        effectiveAnimTime,
+        effectiveVx,
+        panicked,
+        hasFilterPalette ? palette : undefined
+      );
       ctx.restore();
     } else {
-      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(ctx, bakedMobId, x, y, effectiveAnimTime, effectiveVx, panicked);
+      drawnViaAtlas = getGlobalBakedBubakAtlas().draw(
+        ctx,
+        bakedMobId,
+        x,
+        y,
+        effectiveAnimTime,
+        effectiveVx,
+        panicked,
+        hasFilterPalette ? palette : undefined
+      );
     }
   }
 
   if (!drawnViaAtlas) {
+    if (hasFilterPalette) {
+      if (!hasBodyTransform) ctx.save();
+      if (palette === 'crimson') ctx.filter = 'sepia(0.85) saturate(4.5) hue-rotate(320deg) brightness(0.92)';
+      else if (palette === 'soot') ctx.filter = 'brightness(0.48) contrast(1.4) drop-shadow(0 0 2px #EA580C)';
+      else if (palette === 'bog') ctx.filter = 'sepia(0.8) hue-rotate(65deg) saturate(2.4) brightness(0.85)';
+      else if (palette === 'steel') ctx.filter = 'grayscale(0.85) contrast(1.3) brightness(1.1)';
+    }
+
     const attackInfo = enemy && (enemy.isActive !== undefined || enemy.isWindup !== undefined)
       ? enemy
       : getEnemyAttackAnimationState(enemy || {}, time);
@@ -23641,6 +23858,10 @@ function drawEnemyRenderer(
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, false);
     } else {
       drawer.call(Lada, ctx, x, y, time, effectiveVx, panicked, attackInfo, enemy);
+    }
+
+    if (hasFilterPalette && !hasBodyTransform) {
+      ctx.restore();
     }
   }
 
@@ -24621,15 +24842,419 @@ export function drawPlumPuddle(
   ctx.restore();
 }
 
+function drawRusalka(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isWindingUp = Boolean(attackInfo && attackInfo.windupProgress > 0 && !attackInfo.isStrike);
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const wProg = attackInfo?.windupProgress || 0;
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const floatY = Math.sin(t * 3.4) * 3.5;
+  ctx.translate(0, floatY);
+
+  // 1. Water vortex ring around feet
+  ctx.save();
+  ctx.strokeStyle = isStriking ? '#22D3EE' : 'rgba(56, 189, 248, 0.72)';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(0, 18, 24 + Math.sin(t * 5) * 3, 8, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(14, 116, 144, 0.35)';
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Flowing pale moonlit gown with reed-green hem
+  ctx.fillStyle = panicked ? '#BAE6FD' : '#E0F2FE';
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(-11, -8);
+  ctx.quadraticCurveTo(-18, 8, -20 + Math.sin(t * 4) * 3, 19);
+  ctx.quadraticCurveTo(0, 23, 20 + Math.cos(t * 4) * 3, 19);
+  ctx.quadraticCurveTo(18, 8, 11, -8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Sea-green apron/hem wave
+  ctx.fillStyle = '#34D399';
+  ctx.beginPath();
+  ctx.moveTo(-17, 12);
+  ctx.quadraticCurveTo(0, 17, 17, 12);
+  ctx.lineTo(19, 19);
+  ctx.quadraticCurveTo(0, 23, -19, 19);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 3. Long sea-green hair cascading down back and shoulders
+  ctx.fillStyle = '#10B981';
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-12, -24);
+  ctx.quadraticCurveTo(-22, -8, -18 + Math.sin(t * 3.5) * 4, 10);
+  ctx.quadraticCurveTo(-10, 6, -9, -12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 4. Arms raised in alluring water-song gesture
+  const armWave = isStriking ? 0.65 * (1 - sProg) : isWindingUp ? -0.45 * wProg : Math.sin(t * 4.2) * 0.22;
+  ctx.save();
+  ctx.translate(10, -8);
+  ctx.rotate(-0.35 + armWave);
+  ctx.fillStyle = '#E0F2FE';
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.rect(-3, -2, 16, 6);
+  ctx.fill();
+  ctx.stroke();
+  // Glowing water orb in hand
+  ctx.fillStyle = '#22D3EE';
+  ctx.beginPath();
+  ctx.arc(15, 1, 4.5 + Math.sin(t * 6) * 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 5. Pale head & face
+  ctx.fillStyle = '#F0FDFA';
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.arc(0, -18, 10.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing emerald-cyan eyes
+  ctx.fillStyle = '#06B6D4';
+  ctx.beginPath();
+  ctx.arc(-3, -19, 1.8, 0, Math.PI * 2);
+  ctx.arc(4, -19, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Singing mouth
+  ctx.fillStyle = '#0F766E';
+  ctx.beginPath();
+  ctx.ellipse(1, -14.5, isWindingUp || isStriking ? 3.2 : 2.0, isWindingUp || isStriking ? 2.4 : 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 6. Crown of white & golden water lilies (lekníny)
+  for (let i = -1; i <= 1; i++) {
+    const lx = i * 6.5;
+    const ly = -28 + Math.abs(i) * 1.5;
+    ctx.fillStyle = i === 0 ? '#FACC15' : '#FFFFFF';
+    ctx.strokeStyle = '#1E293B';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawOhnivySudlicka(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isWindingUp = Boolean(attackInfo && attackInfo.windupProgress > 0 && !attackInfo.isStrike);
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const wProg = attackInfo?.windupProgress || 0;
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const bob = Math.sin(t * 6.2) * 2.5;
+  ctx.translate(0, bob);
+
+  // 1. Fiery aura & ember sparks around feet
+  ctx.fillStyle = 'rgba(249, 115, 22, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 16, 22, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Boots
+  const stride = Math.sin(t * 7.5) * 5;
+  ctx.fillStyle = '#27272A';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.rect(-9 + stride, 8, 7, 11);
+  ctx.rect(2 - stride, 8, 7, 11);
+  ctx.fill();
+  ctx.stroke();
+
+  // 3. Charred coat with glowing ember seams
+  ctx.fillStyle = panicked ? '#7C2D12' : '#431407';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(-12, -10);
+  ctx.lineTo(-16, 11);
+  ctx.lineTo(16, 11);
+  ctx.lineTo(12, -10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing magma ribs/seams
+  ctx.strokeStyle = '#F97316';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(0, -8);
+  ctx.lineTo(0, 10);
+  ctx.moveTo(-7, -2);
+  ctx.lineTo(7, -2);
+  ctx.moveTo(-8, 4);
+  ctx.lineTo(8, 4);
+  ctx.stroke();
+
+  // 4. Blazing head & tricorn hat with flames
+  ctx.fillStyle = '#FB923C';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.arc(0, -18, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White-hot eyes
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(-3, -19, 2.1, 0, Math.PI * 2);
+  ctx.arc(4, -19, 2.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dark rustic hat with flame plume
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.moveTo(-15, -24);
+  ctx.quadraticCurveTo(0, -34, 15, -24);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 5. White-hot polearm (Žhavá sudlice)
+  const thrustX = isStriking ? 16 * (1 - sProg * 0.5) : isWindingUp ? -8 * wProg : 0;
+  ctx.save();
+  ctx.translate(6 + thrustX, -4);
+  ctx.rotate(isStriking ? 0.08 : -0.18);
+
+  // Polearm shaft
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(-18, 6);
+  ctx.lineTo(22, -6);
+  ctx.stroke();
+  ctx.strokeStyle = '#9A3412';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(-18, 6);
+  ctx.lineTo(22, -6);
+  ctx.stroke();
+
+  // Glowing white-hot sudlice blade with side hook
+  ctx.fillStyle = isStriking ? '#FEF08A' : '#F97316';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(20, -12);
+  ctx.lineTo(36, -10);
+  ctx.lineTo(24, 1);
+  ctx.lineTo(21, 5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawSvatojanskyVladce(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isWindingUp = Boolean(attackInfo && attackInfo.windupProgress > 0 && !attackInfo.isStrike);
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const wProg = attackInfo?.windupProgress || 0;
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const breathe = Math.sin(t * 3.0) * 2.0;
+
+  // 1. Golden fern ground aura
+  ctx.save();
+  ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 32 + Math.sin(t * 4) * 3, 11, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // 2. Massive root-and-bark legs
+  const step = Math.sin(t * 4.5) * 4;
+  ctx.fillStyle = '#3F2E21';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.rect(-14, 8 + step * 0.5, 10, 15);
+  ctx.rect(4, 8 - step * 0.5, 10, 15);
+  ctx.fill();
+  ctx.stroke();
+
+  // 3. Deep forest moss & oak-bark mantle
+  ctx.fillStyle = panicked ? '#15803D' : '#14532D';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(-20, -14 + breathe);
+  ctx.quadraticCurveTo(-26, 4, -22, 14);
+  ctx.lineTo(22, 14);
+  ctx.quadraticCurveTo(26, 4, 20, -14 + breathe);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden treasure chest strapped to his side/belt
+  ctx.fillStyle = '#B45309';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.rect(-16, -2 + breathe, 14, 11);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#FACC15';
+  ctx.fillRect(-16, 2 + breathe, 14, 3);
+  ctx.beginPath();
+  ctx.arc(-9, -2 + breathe, 4, Math.PI, 0);
+  ctx.fill();
+  ctx.stroke();
+
+  // 4. Bearded woodland face & glowing amber eyes
+  ctx.fillStyle = '#D6D3D1';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.arc(0, -21 + breathe, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Mossy beard
+  ctx.fillStyle = '#365314';
+  ctx.beginPath();
+  ctx.moveTo(-11, -18 + breathe);
+  ctx.quadraticCurveTo(0, -2 + breathe, 11, -18 + breathe);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing golden eyes
+  ctx.fillStyle = '#FACC15';
+  ctx.beginPath();
+  ctx.arc(-4, -23 + breathe, 2.3, 0, Math.PI * 2);
+  ctx.arc(4, -23 + breathe, 2.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 5. Crown of Blooming Golden Fern (Koruna ze zlatého kapradí)
+  for (let i = -2; i <= 2; i++) {
+    const fx = i * 5.5;
+    const fy = -32 + Math.abs(i) * 1.2 + breathe;
+    ctx.fillStyle = i === 0 ? '#FEF08A' : '#F59E0B';
+    ctx.strokeStyle = '#1C1917';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(fx, fy + 4);
+    ctx.lineTo(fx - 3.5, fy - 4);
+    ctx.lineTo(fx, fy - 8);
+    ctx.lineTo(fx + 3.5, fy - 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 6. Gnarled root staff with Midsummer Wisp Lantern
+  const staffSwing = isStriking ? 0.55 * (1 - sProg) : isWindingUp ? -0.4 * wProg : 0;
+  ctx.save();
+  ctx.translate(16, -6 + breathe);
+  ctx.rotate(staffSwing);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 5.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 20);
+  ctx.lineTo(0, -20);
+  ctx.stroke();
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.moveTo(0, 20);
+  ctx.lineTo(0, -20);
+  ctx.stroke();
+
+  // Glowing wisp lantern hanging from staff top
+  ctx.fillStyle = '#22D3EE';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(4, -18, 5.5 + Math.sin(t * 6) * 1.0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
 (Lada as any).drawGingerbreadHeart = drawGingerbreadHeartCanvas;
+(Lada as any).drawRusalka = drawRusalka;
+(Lada as any).drawOhnivySudlicka = drawOhnivySudlicka;
+(Lada as any).drawSvatojanskyVladce = drawSvatojanskyVladce;
 
 export {
   Lada,
   drawEnemyRenderer,
   computeEnemyKinematics,
   drawGingerbreadHeartCanvas,
+  drawRusalka,
+  drawOhnivySudlicka,
+  drawSvatojanskyVladce,
   type EnemyAttackInfo,
 };

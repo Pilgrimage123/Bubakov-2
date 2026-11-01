@@ -118,6 +118,10 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   nocni_mura: { archetype: 'runner', duration: '0.52s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.05, accentColor: '#581C87' },
   jezinka_mraziva: { archetype: 'runner', duration: '0.48s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.05, accentColor: '#0284C7' },
   rehtackar: { archetype: 'runner', duration: '0.44s', wobble: '10deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#D97706' },
+  ohniva_kobyla: { archetype: 'runner', duration: '0.36s', wobble: '12deg', squashX: 1.18, squashY: 0.85, baseScale: 1.25, accentColor: '#F97316' },
+  rusalka: { archetype: 'slime', duration: '0.64s', wobble: '4deg', squashX: 1.28, squashY: 0.78, baseScale: 1.15, accentColor: '#22D3EE' },
+  ohnivy_sudlicka: { archetype: 'runner', duration: '0.44s', wobble: '13deg', squashX: 1.18, squashY: 0.85, baseScale: 1.20, accentColor: '#EA580C' },
+  svatojansky_vladce: { archetype: 'golem', duration: '1.22s', wobble: '15deg', squashX: 1.24, squashY: 0.80, baseScale: 1.70, accentColor: '#FACC15' },
 };
 
 // In-memory cache for baked canvas data URIs so we bake each enemy at most once

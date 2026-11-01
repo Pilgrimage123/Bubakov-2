@@ -333,6 +333,63 @@ export function renderProjectilesAndSlashes(
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.55 * pulse, 0, Math.PI * 2);
         ctx.fill();
+      } else if (p.visual === 'pollen') {
+        const r = p.radius || 8;
+        const pulse = 1 + Math.sin(uiTime * 12) * 0.1;
+        Lada.setupPath(ctx, '#FACC15', COLORS.ink, 2.2);
+        ctx.beginPath();
+        ctx.arc(0, 0, r * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#FEF08A';
+        for (let s = 0; s < 5; s++) {
+          const sa = (s / 5) * Math.PI * 2 + uiTime * 3;
+          ctx.beginPath();
+          ctx.arc(Math.cos(sa) * r * 0.55, Math.sin(sa) * r * 0.55, r * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (p.visual === 'bubble') {
+        const r = p.radius || 9;
+        Lada.setupPath(ctx, 'rgba(125, 211, 252, 0.72)', COLORS.ink, 2.0);
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(-r * 0.32, -r * 0.32, r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.visual === 'water_drop') {
+        const r = p.radius || 8;
+        ctx.rotate(p.angle || 0);
+        Lada.setupPath(ctx, '#0284C7', COLORS.ink, 2.0);
+        ctx.beginPath();
+        ctx.moveTo(r * 1.25, 0);
+        ctx.quadraticCurveTo(0, -r * 0.85, -r, 0);
+        ctx.quadraticCurveTo(0, r * 0.85, r * 1.25, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#BAE6FD';
+        ctx.beginPath();
+        ctx.arc(-r * 0.15, -r * 0.2, r * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.visual === 'wind_blade') {
+        const r = p.radius || 11;
+        Lada.drawDragonWind(ctx, 0, 0, r * 1.2, p.angle || 0, uiTime);
+      } else if (p.visual === 'log') {
+        const r = p.radius || 11;
+        ctx.rotate((p.angle || 0) + uiTime * 8);
+        Lada.setupPath(ctx, '#78350F', COLORS.ink, 2.4);
+        ctx.beginPath();
+        ctx.rect(-r * 1.2, -r * 0.55, r * 2.4, r * 1.1);
+        ctx.fill();
+        ctx.stroke();
+        Lada.setupPath(ctx, '#D97706', COLORS.ink, 1.8);
+        ctx.beginPath();
+        ctx.ellipse(r * 1.2, 0, r * 0.35, r * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       } else {
         const r = p.radius || 7;
         Lada.setupPath(ctx, p.color || COLORS.grey, COLORS.ink, 2);

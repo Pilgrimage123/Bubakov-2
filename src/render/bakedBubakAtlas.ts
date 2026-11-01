@@ -60,7 +60,25 @@ export type BakedBubakId =
   | 'rehtackar'
   | 'beranek'
   | 'carodejnice_stara'
-  | 'vrchni_carodejnice';
+  | 'vrchni_carodejnice'
+  | 'rusalka'
+  | 'ohnivy_sudlicka'
+  | 'svatojansky_vladce'
+  | 'chroust'
+  | 'pampeliska_chmyri'
+  | 'pampeliska_chmyricko'
+  | 'roj_polnich_mysaku'
+  | 'pekelny_roj_sazovniku'
+  | 'rak_ricni'
+  | 'boruvkovy_diblik'
+  | 'ohniva_kobyla'
+  | 'mrazovy_skritek'
+  | 'snehulak'
+  | 'carodejnice_zaspalka'
+  | 'ledovi_muzi'
+  | 'cert_sekac'
+  | 'kralovsky_vele_rak'
+  | 'kralovska_polednice';
 
 export interface BakedFrame {
   canvas: any;
@@ -77,6 +95,13 @@ interface MobConfig {
   size: number;
   drawFn: (ctx: any, x: number, y: number, time: number, vx: number, panicked: boolean) => void;
 }
+
+const PALETTE_FILTERS: Record<string, string> = {
+  crimson: 'sepia(0.85) saturate(4.5) hue-rotate(320deg) brightness(0.92)',
+  soot: 'brightness(0.48) contrast(1.4) drop-shadow(0 0 2px #EA580C)',
+  bog: 'sepia(0.8) hue-rotate(65deg) saturate(2.4) brightness(0.85)',
+  steel: 'grayscale(0.85) contrast(1.3) brightness(1.1)',
+};
 
 const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   rarach: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawRarach(c, x, y, t, v, p) },
@@ -129,6 +154,24 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   beranek: { size: 144, drawFn: (c, x, y, t, v, p) => Lada.drawBeranek(c, x, y, t, v, p) },
   carodejnice_stara: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawOldWitch(c, x, y, t, v, p) },
   vrchni_carodejnice: { size: 180, drawFn: (c, x, y, t, v, p) => Lada.drawSupremeWitch(c, x, y, t, v, p) },
+  rusalka: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawRusalka(c, x, y, t, v, p) },
+  ohnivy_sudlicka: { size: 160, drawFn: (c, x, y, t, v, p) => (Lada as any).drawOhnivySudlicka(c, x, y, t, v, p) },
+  svatojansky_vladce: { size: 184, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSvatojanskyVladce(c, x, y, t, v, p) },
+  chroust: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawChroust(c, x, y, t, v, p) },
+  pampeliska_chmyri: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawDandelionSprite(c, x, y, t, v, p) },
+  pampeliska_chmyricko: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawDandelionSprite(c, x, y, t, v, p) },
+  roj_polnich_mysaku: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawRojPolnichMysaku(c, x, y, t, v, p) },
+  pekelny_roj_sazovniku: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawPekelnyRojSazovniku(c, x, y, t, v, p) },
+  rak_ricni: { size: 112, drawFn: (c, x, y, t, v, p) => Lada.drawRakRicni(c, x, y, t, v, p) },
+  boruvkovy_diblik: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawBoruvkovyDiblik(c, x, y, t, v, p) },
+  ohniva_kobyla: { size: 144, drawFn: (c, x, y, t, v, p) => Lada.drawOhnivaKobyla(c, x, y, t, v, p) },
+  mrazovy_skritek: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawFrostling(c, x, y, t, v, p, true) },
+  snehulak: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawSnehulak(c, x, y, t, v, p, false) },
+  carodejnice_zaspalka: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawBroomWitchZaspalka(c, x, y, t, v, p) },
+  ledovi_muzi: { size: 144, drawFn: (c, x, y, t, v, p) => Lada.drawLedoviMuzi(c, x, y, t, v, p) },
+  cert_sekac: { size: 168, drawFn: (c, x, y, t, v, p) => Lada.drawCertSekac(c, x, y, t, v, p) },
+  kralovsky_vele_rak: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawKralovskyVeleRak(c, x, y, t, v, p) },
+  kralovska_polednice: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawKralovskaPolednice(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {
@@ -141,21 +184,24 @@ export class BakedBubakAtlas {
     this.initialized = true;
   }
 
-  public ensureMobBaked(mobId: string): void {
+  public ensureMobBaked(mobId: string, palette?: string): void {
     const resolvedId = (mobId === 'skeleton' ? 'kostlivec' : mobId) as BakedBubakId;
-    if (this.bakedMobs.has(resolvedId)) return;
+    const paletteSuffix = palette && PALETTE_FILTERS[palette] ? `_${palette}` : '';
+    const bakeKey = `${resolvedId}${paletteSuffix}`;
+    if (this.bakedMobs.has(bakeKey)) return;
 
     const cfg = MOB_CONFIGS[resolvedId];
     if (!cfg) return;
 
-    this.bakedMobs.add(resolvedId);
+    this.bakedMobs.add(bakeKey);
     if (resolvedId === 'kostlivec') {
-      this.bakedMobs.add('skeleton');
+      this.bakedMobs.add(`skeleton${paletteSuffix}`);
     }
 
     const canvasSize = cfg.size;
     const originX = canvasSize / 2;
     const originY = canvasSize / 2;
+    const filterStr = palette ? PALETTE_FILTERS[palette] : undefined;
 
     // Pre-bake both normal and panicked states across discrete animation steps with pre-flipped left/right canvases
     for (const panicked of [false, true]) {
@@ -165,6 +211,9 @@ export class BakedBubakAtlas {
         const { canvas, ctx } = this.createFrameCanvas(canvasSize, canvasSize);
 
         ctx.save();
+        if (filterStr) {
+          ctx.filter = filterStr;
+        }
         ctx.translate(originX, originY);
         cfg.drawFn(ctx, 0, 0, animTime, 1, panicked);
         ctx.restore();
@@ -188,14 +237,14 @@ export class BakedBubakAtlas {
         };
 
         // Standard key
-        const key = `${resolvedId}_${step}_${panicked ? 1 : 0}`;
+        const key = `${bakeKey}_${step}_${panicked ? 1 : 0}`;
         this.frames.set(key, frameObj);
         if (resolvedId === 'kostlivec') {
-          this.frames.set(`skeleton_${step}_${panicked ? 1 : 0}`, frameObj);
+          this.frames.set(`skeleton${paletteSuffix}_${step}_${panicked ? 1 : 0}`, frameObj);
         }
 
         // Also set legacy key for backward compatibility with pilot tests
-        if (!panicked) {
+        if (!panicked && !paletteSuffix) {
           this.frames.set(`${resolvedId}_${step}`, frameObj);
           if (resolvedId === 'kostlivec') {
             this.frames.set(`skeleton_${step}`, frameObj);
@@ -245,6 +294,7 @@ export class BakedBubakAtlas {
       fillText: () => {},
       strokeText: () => {},
       measureText: (text: string) => ({ width: text.length * 8 }),
+      filter: '',
       fillStyle: '#000',
       strokeStyle: '#000',
       lineWidth: 1,
@@ -257,15 +307,18 @@ export class BakedBubakAtlas {
     return { canvas, ctx };
   }
 
-  public getFrame(mobId: string, animTime: number, panicked = false): BakedFrame | undefined {
+  public getFrame(mobId: string, animTime: number, panicked = false, palette?: string): BakedFrame | undefined {
     if (!this.initialized) this.init();
     const resolvedId = mobId === 'skeleton' ? 'kostlivec' : mobId;
-    if (!this.bakedMobs.has(resolvedId)) {
-      this.ensureMobBaked(resolvedId);
+    const paletteSuffix = palette && PALETTE_FILTERS[palette] ? `_${palette}` : '';
+    const bakeKey = `${resolvedId}${paletteSuffix}`;
+    if (!this.bakedMobs.has(bakeKey)) {
+      this.ensureMobBaked(resolvedId, palette);
     }
     const cyclePeriod = (Math.PI * 2) / (panicked ? 20 : 12);
     const step = Math.floor(((Math.abs(animTime) / cyclePeriod) * this.frameSteps) % this.frameSteps);
     return (
+      this.frames.get(`${bakeKey}_${step}_${panicked ? 1 : 0}`) ||
       this.frames.get(`${resolvedId}_${step}_${panicked ? 1 : 0}`) ||
       this.frames.get(`${resolvedId}_${step}`) ||
       this.frames.get(`${mobId}_${step}_${panicked ? 1 : 0}`) ||
@@ -280,9 +333,10 @@ export class BakedBubakAtlas {
     y: number,
     animTime: number,
     vx = 1,
-    panicked = false
+    panicked = false,
+    palette?: string
   ): boolean {
-    const frame = this.getFrame(mobId, animTime, panicked);
+    const frame = this.getFrame(mobId, animTime, panicked, palette);
     if (!frame || typeof ctx.drawImage !== 'function') return false;
 
     const srcCanvas = vx < 0 ? (frame.flippedCanvas || frame.canvas) : frame.canvas;

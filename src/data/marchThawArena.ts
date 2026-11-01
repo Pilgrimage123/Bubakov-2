@@ -149,6 +149,90 @@ export const MARCH_THAW_DECOR = [
 
 export const MARCH_THAW_POIS_LIST: MarchThawPoi[] = Object.values(MARCH_THAW_POIS);
 
+export const MARCH_NIGHT_POIS: Record<MarchThawPoiId, MarchThawPoi> = {
+  fields: {
+    id: 'fields',
+    title: 'Ztichlá noční pole',
+    x: 225,
+    y: -975,
+    radius: 340,
+    hint: 'NOČNÍ POLE: Sedlák s koňmi už spí v chalupě — zmrzlé brázdy zrychlují (+15 %) a třpytí se v nich stříbrné krejcary!',
+  },
+  church: {
+    id: 'church',
+    title: 'Noční kostel na vrchu',
+    x: -800,
+    y: -650,
+    radius: 320,
+    hint: 'KOSTEL V NOCI: Půlnoční zvonice [E] — svatý otřes zahání kostlivce a umrlce + léčení a +20 % zbroj',
+  },
+  tavern: {
+    id: 'tavern',
+    title: 'Rozsvícená hospoda',
+    x: 440,
+    y: -75,
+    radius: 260,
+    hint: 'NOČNÍ HOSPODA: Z oken hřeje světlo a svařák [E] — odhodí noční smečky a dodá kuráž (+18 % útok)',
+  },
+  village: {
+    id: 'village',
+    title: 'Spící chalupy s teplými okny',
+    x: 50,
+    y: -75,
+    radius: 360,
+    hint: 'CHALUPY V NOCI: Lidé zalezli ke kamnům — teplá záře oken hřeje lovce (+16 % pohyb a 2× rychlejší ultimátka)',
+  },
+  school: {
+    id: 'school',
+    title: 'Zšeřelá škola',
+    x: 125,
+    y: 550,
+    radius: 240,
+    hint: 'NOČNÍ ŠKOLA: Učitel ponocuje u kahance — moudrá rozvaha (+20 % kadence útoků a zpomalení bubáků)',
+  },
+  pond: {
+    id: 'pond',
+    title: 'Zamrzající černý rybník',
+    x: -725,
+    y: 615,
+    radius: 300,
+    hint: 'NOČNÍ RYBNÍK: Nad krami tančí bludičky (+20 % rychlost na ledu, černá voda silně mrazí!)',
+  },
+  mill: {
+    id: 'mill',
+    title: 'Noční mlýn a stavidlo',
+    x: 650,
+    y: 725,
+    radius: 240,
+    hint: 'NOČNÍ MLÝN: Kolo klape do tmy a drtí kostlivce v náhonu + moučná mlha oslepuje běsy',
+  },
+  forest: {
+    id: 'forest',
+    title: 'Temný hejkalův les',
+    x: -1225,
+    y: -475,
+    radius: 370,
+    hint: 'TEMNÝ LES: Ve křoví svítí oči hejkalů a černých psů, ale stromy dávají krytí (+15 % obrana i útok)',
+  },
+  shrine: {
+    id: 'shrine',
+    title: 'Kaplička se svíčkou',
+    x: -675,
+    y: -38,
+    radius: 165,
+    hint: 'KAPLIČKA V NOCI: Plamínek svíce a zjevení Panny Marie [E] rozhání temnotu (+20 % kadence)',
+  },
+};
+
+export const MARCH_NIGHT_POIS_LIST: MarchThawPoi[] = Object.values(MARCH_NIGHT_POIS);
+
+export function getMarchPois(isNight = false): Record<MarchThawPoiId, MarchThawPoi> {
+  return isNight ? MARCH_NIGHT_POIS : MARCH_THAW_POIS;
+}
+export function getMarchPoisList(isNight = false): MarchThawPoi[] {
+  return isNight ? MARCH_NIGHT_POIS_LIST : MARCH_THAW_POIS_LIST;
+}
+
 // The apparition is a meaningful sanctuary event, not a map-wide automatic attack.
 // Its cooldown is shared by manual activation and the guarded automatic trigger.
 export const MARCH_MARIAN_APPARITION_COOLDOWN = 30;
@@ -924,12 +1008,12 @@ export function collideCircleWithObstacles(
 ): ObstacleCollisionResult {
   const r = Math.max(2, radius || 8);
 
-  if (activeLevelId === 2) {
+  if (activeLevelId === 2 || activeLevelId === 3) {
     const dubenHit = collideCircleWithDubenObstacles(x, y, radius);
     if (dubenHit.hit) return dubenHit as ObstacleCollisionResult;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {
@@ -1161,11 +1245,11 @@ export function hasTerrainLineOfSight(
   activeLevelId = 0,
   decor?: any[],
 ): boolean {
-  if (activeLevelId === 2) {
+  if (activeLevelId === 2 || activeLevelId === 3) {
     if (!hasDubenTerrainLineOfSight(x1, y1, x2, y2)) return false;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
     for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
       const obs = MARCH_THAW_OBSTACLES[i];
       if (obs.shape === 'box') {
@@ -1311,11 +1395,11 @@ export function hasRoofsInView(
   viewRight: number,
   viewBottom: number
 ): boolean {
-  if (activeLevelId === 2) {
+  if (activeLevelId === 2 || activeLevelId === 3) {
     if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
   }
   if (
-    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) &&
+    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) &&
     viewRight >= ROOF_UNION_MIN_X &&
     viewLeft <= ROOF_UNION_MAX_X &&
     viewBottom >= ROOF_UNION_MIN_Y &&
@@ -1353,11 +1437,11 @@ export function isEntityBehindMarchRoof(
   decor?: any[],
   radius = 18,
 ): MarchRoofZone | null {
-  if (activeLevelId === 2) {
+  if (activeLevelId === 2 || activeLevelId === 3) {
     const dubenRoof = isEntityBehindDubenRoof(x, y);
     if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
   }
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
     const halfR = radius * 0.5;
     if (
       y >= ROOF_UNION_MIN_Y &&
@@ -1424,7 +1508,7 @@ export function sanitizeArenaSpawnPoint(
   margin = 48,
 ): { x: number; y: number } {
   const safeMargin = Math.max(24, margin) + Math.max(8, radius);
-  const bounds = activeLevelId === 2 ? DUBEN_ARENA_BOUNDS : MARCH_ARENA_BOUNDS;
+  const bounds = (activeLevelId === 2 || activeLevelId === 3) ? DUBEN_ARENA_BOUNDS : MARCH_ARENA_BOUNDS;
   const minX = bounds.minX + safeMargin;
   const maxX = bounds.maxX - safeMargin;
   const minY = bounds.minY + safeMargin;
@@ -1439,9 +1523,9 @@ export function sanitizeArenaSpawnPoint(
   const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
 
   for (let pass = 0; pass < 3; pass++) {
-    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 6) {
+    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
       resolveMarchThawObstacles(dummy, false);
-    } else if (activeLevelId === 2) {
+    } else if (activeLevelId === 2 || activeLevelId === 3) {
       resolveDubenObstacles(dummy, false);
     }
     if (solidDecor && solidDecor.length > 0) {

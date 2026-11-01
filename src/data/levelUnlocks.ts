@@ -22,11 +22,11 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (meta?.completedLevels && meta.completedLevels[id]) return true;
 	if (id === 1 && ((meta?.bestiaryKills?.vrana || 0) >= 1 || !!meta?.completedLevels?.[0])) return true;
 	if (id === 2 && ((meta?.bestiaryKills?.morana || 0) >= 1 || !!meta?.completedLevels?.[1])) return true;
-	if (id === 3 && ((meta?.bestiaryKills?.cert || 0) >= 1 || (meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
-	if (id === 4 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
-	if (id === 5 && ((meta?.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta?.bestiaryKills?.pankrac || 0) >= 1 || (meta?.bestiaryKills?.obr || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
-	if (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
-	if (id === 7 && ((meta?.bestiaryKills?.kralovska_polednice || 0) >= 1 || (meta?.bestiaryKills?.polednice || 0) >= 1 || (meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
+	if (id === 3 && ((meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || !!meta?.completedLevels?.[2])) return true;
+	if (id === 4 && ((meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta?.bestiaryKills?.hejkal || 0) >= 1 || !!meta?.completedLevels?.[3])) return true;
+	if (id === 5 && ((meta?.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta?.bestiaryKills?.pankrac || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
+	if (id === 6 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || (meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
+	if (id === 7 && ((meta?.bestiaryKills?.kralovska_polednice || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -137,7 +137,7 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "rehtackar", name: "Koledník s řehtačkou", icon: "🪓" }
 	]),
 	4: makeSequentialUnlock(4, [
-		{ id: "hejkal", name: "Půlnoční Hejkal", icon: "🌲" },
+		{ id: "vrchni_carodejnice", name: "Filipojakubský sabat čarodějnic", icon: "🧹" },
 		{ id: "drab", name: "Pekelný dráb", icon: "⛓️" },
 		{ id: "klekanice", name: "Večerní Klekánice", icon: "🔔" },
 		{ id: "cerny_pes", name: "Černý pes", icon: "🐕" },
@@ -150,6 +150,7 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "chroust", name: "Chroust obecný", icon: "🪲" }
 	]),
 	6: makeSequentialUnlock(6, [
+		{ id: "hejkal", name: "Půlnoční Hejkal", icon: "🌲" },
 		{ id: "mlynar", name: "Prokletý Mlynář", icon: "🌊" },
 		{ id: "zbojnik", name: "Zbojník", icon: "🗡️" },
 		{ id: "jiskrivec", name: "Jiskřivec", icon: "✨" }
@@ -157,8 +158,8 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 	7: makeSequentialUnlock(7, [
 		{ id: "kralovska_polednice", name: "Královská Polednice", icon: "👑" },
 		{ id: "cert_sekac", name: "Pekelný čert sekáč", icon: "😈" },
-		{ id: "kralovsky_vele_rak", name: "Královský Vele-rak", icon: "🦞" },
-		{ id: "pekelny_cert", name: "Pekelný čert", icon: "🔥" }
+		{ id: "polednice", name: "Polednice z lánů", icon: "🌾" },
+		{ id: "rak_ricni", name: "Říční rak z tůně", icon: "🦞" }
 	])
 };
 
@@ -302,8 +303,14 @@ function computeLevelProgress(id: any, meta: any) {
 			count: cnt
 		};
 	});
-	const bossId = id === 1 ? "vrana" : id === 2 ? "morana" : id === 3 ? "cert" : id === 4 ? "hejkal" : id === 5 ? "ledovi_muzi" : id === 6 ? "mlynar" : id === 7 ? "kralovska_polednice" : "";
-	const bossDefeated = bossId ? (meta?.bestiaryKills?.[bossId] || 0) >= 1 || !!meta?.completedLevels?.[id - 1] : false;
+	const prevLevel = GAME_LEVELS[(id - 1) as keyof typeof GAME_LEVELS];
+	const bossId = prevLevel?.finalBoss?.id || "";
+	const bossDefeated = bossId
+		? (meta?.bestiaryKills?.[bossId] || 0) >= 1 ||
+		  (id === 4 && (meta?.bestiaryKills?.hejkal || 0) >= 1) ||
+		  (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || (meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1)) ||
+		  !!meta?.completedLevels?.[id - 1]
+		: false;
 	let percent = 0;
 	if (bossDefeated) {
 		curCount = def.maxCount;
@@ -358,4 +365,4 @@ function getLevelProgress(id: any, meta: any) {
 	return res;
 }
 
-export { LEVEL_ORDER, getPreviousLevel, isLevelFullyUnlocked, canLevelUnlock, getActiveUnlockingLevel, makeSequentialUnlock, LEVEL_UNLOCKS, getLevelProgress };
+export { LEVEL_ORDER, getPreviousLevel, isLevelFullyUnlocked, canLevelUnlock, getActiveUnlockingLevel, makeSequentialUnlock, LEVEL_UNLOCKS, getLevelProgress, computeLevelProgress };

@@ -3,6 +3,12 @@ import { createGrandfatherRuntime, type GrandfatherRuntimeState } from './grandf
 import type { DynamicLightSource, ShadowZone, LightOccluder } from './storybookLighting';
 import { createRareDropTracker, type RareDropTracker, createFolkloreDropTracker, type FolkloreDropTracker, createSwarmDropReservoir, type SwarmDropReservoir, createPendingDropBank, type PendingDropBank } from './drops';
 import type { KrajanekCoastingStone, KrajanekFurrow } from './krajanekAbility';
+import {
+  createInitialSvatojanskeByliny,
+  createInitialSvatojanskyPoklad,
+  type SvatojanskaBylinaState,
+  type SvatojanskyPokladState,
+} from '../data/cervenArena';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -162,13 +168,18 @@ export interface EngineState {
     weatherPetalTimer: number;
     terrainHazardTimer: number;
   };
-  /** Runtime-only state for Červen v Hrusicích (7. úroveň). */
+  /** Runtime-only state for Červen v Hrusicích (7. a 8. úroveň). */
   cerven?: {
     bellCooldown: number;
     shrineCooldown: number;
     tavernCooldown: number;
     forestCooldown: number;
     weatherHayTimer: number;
+    herbs?: SvatojanskaBylinaState[];
+    herbsCollected?: number;
+    herbsTarget?: number;
+    poklad?: SvatojanskyPokladState;
+    svatojanskaZareTimer?: number;
   };
   cervenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
@@ -319,6 +330,18 @@ export function createInitialEngineState(): EngineState {
       maypoleWardActive: false,
       weatherPetalTimer: 0,
       terrainHazardTimer: 0,
+    },
+    cerven: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      forestCooldown: 0,
+      weatherHayTimer: 0,
+      herbs: createInitialSvatojanskeByliny(),
+      herbsCollected: 0,
+      herbsTarget: 9,
+      poklad: createInitialSvatojanskyPoklad(),
+      svatojanskaZareTimer: 0,
     },
     holyCircle: null,
     plumPuddles: [],

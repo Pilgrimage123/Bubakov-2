@@ -9,7 +9,11 @@
  */
 
 import type { EngineState } from '../game/engineState';
-import { getStorybookSnowColor, renderStorybookLightingComposite } from './storybookLightingRenderer';
+import {
+  getStorybookSnowColor,
+  renderStorybookLightingComposite,
+  renderNightEmissiveEntitiesPass,
+} from './storybookLightingRenderer';
 import { shouldDrawCombatText } from '../game/effectSettings';
 
 import { ChunkBitmapCache } from './chunkCache';
@@ -442,9 +446,32 @@ export class ArenaRenderer {
     } else if (curLvl.theme === 'autumn_graveyard') {
       ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#383B30' : '#202127';
     } else if (curLvl.theme === 'spring_river') {
-      ctx.fillStyle = phase.id === 'noon' || phase.id === 'afternoon' ? '#D6EAF8' : (phase.id === 'dusk' ? '#9AA9BB' : '#1B2A38');
+      ctx.fillStyle =
+        phase.id === 'noon' || phase.id === 'afternoon'
+          ? curLvl.groundColor || '#D0D3D4'
+          : phase.id === 'dusk'
+          ? '#8A9AA6'
+          : '#1B2A38';
+    } else if (curLvl.theme === 'spring_village') {
+      ctx.fillStyle =
+        phase.id === 'noon' || phase.id === 'afternoon'
+          ? curLvl.groundColor || '#A8D08D'
+          : phase.id === 'dusk'
+          ? '#5A7550'
+          : curLvl.groundColor && curLvl.groundColor !== '#A8D08D' && curLvl.groundColor !== '#A3D48B'
+          ? curLvl.groundColor
+          : '#2E3D2B';
+    } else if (curLvl.theme === 'summer_harvest' || curLvl.theme === 'midsummer_night') {
+      ctx.fillStyle =
+        phase.id === 'noon' || phase.id === 'afternoon'
+          ? curLvl.groundColor || '#E59866'
+          : phase.id === 'dusk'
+          ? '#B87A4B'
+          : curLvl.theme === 'midsummer_night'
+          ? curLvl.groundColor || '#1E2D24'
+          : '#2B3A2C';
     } else {
-      ctx.fillStyle = phase.skyColor || getStorybookSnowColor(phase.id || 'noon', kurazRatio);
+      ctx.fillStyle = curLvl.groundColor || phase.skyColor || getStorybookSnowColor(phase.id || 'noon', kurazRatio);
     }
     ctx.fillRect(0, 0, width, height);
     const backdropMs = now() - tBackdropStart;
@@ -488,9 +515,9 @@ export class ArenaRenderer {
           const scale = dec.scale || 1;
           const decorExtent =
             dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border'
-              ? 2600 * scale
+              ? 3200 * scale
               : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_'))
-              ? 480 * scale
+              ? 560 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
             continue;
@@ -508,9 +535,9 @@ export class ArenaRenderer {
         const scale = dec.scale || 1;
         const decorExtent =
           dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border'
-            ? 2600 * scale
+            ? 3200 * scale
             : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_'))
-            ? 480 * scale
+            ? 560 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
           continue;
@@ -637,11 +664,20 @@ export class ArenaRenderer {
           engine.lightSources || EMPTY_RENDER_ITEMS,
           phase.id,
           kurazRatio,
-          curLvl.season === 'winter',
+          curLvl.season === 'winter' || curLvl.weatherEffect === 'snow' || curLvl.id === 1,
           engine.shadowZones || EMPTY_RENDER_ITEMS,
           performanceProfile === 'performance' ? EMPTY_LIGHT_OCCLUDERS : (engine.occluders || EMPTY_LIGHT_OCCLUDERS),
           performanceProfile,
           true
+        );
+      }
+      if (isNight && engine.enemies && engine.enemies.length > 0) {
+        renderNightEmissiveEntitiesPass(
+          ctx,
+          engine.enemies,
+          camera,
+          phase.id,
+          engine.uiTime || engine.gameTime || 0
         );
       }
       lightingMs = now() - tLightStart;

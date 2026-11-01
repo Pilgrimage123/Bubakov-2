@@ -8,7 +8,9 @@ export const UNHOLY_ENEMY_IDS = new Set<string>([
 	"carodejnice_zaspalka",
 	"carodejnice_koste",
 	"cert_sekac",
-	"pekelny_roj_sazovniku"
+	"pekelny_roj_sazovniku",
+	"ohniva_kobyla",
+	"ohnivy_sudlicka"
 ]);
 
 /**

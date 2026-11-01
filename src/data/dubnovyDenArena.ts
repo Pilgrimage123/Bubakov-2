@@ -139,6 +139,90 @@ export const DUBEN_POIS: Record<DubenPoiId, DubenPoi> = {
 
 export const DUBEN_POIS_LIST: DubenPoi[] = Object.values(DUBEN_POIS);
 
+export const DUBEN_NIGHT_POIS: Record<DubenPoiId, DubenPoi> = {
+  fields: {
+    id: 'fields',
+    title: 'Zšeřelé meze a čarodějný dým',
+    x: 225,
+    y: -975,
+    radius: 340,
+    hint: 'NOČNÍ MEZE: Koledníci zalezli do chalup — v brázdách +15 % rychlost a smolný dým mate čarodějnice!',
+  },
+  church: {
+    id: 'church',
+    title: 'Noční kostel sv. Jiří',
+    x: -800,
+    y: -650,
+    radius: 320,
+    hint: 'KOSTEL SV. JIŘÍ: Půlnoční zvonice [E] — posvátný hlas zvonu pálí nemrtvé, čerty a snímá uřknutí!',
+  },
+  tavern: {
+    id: 'tavern',
+    title: 'Zamčená hospoda se světlem',
+    x: 440,
+    y: -75,
+    radius: 260,
+    hint: 'HOSPODA V NOCI: Šenkýř podává okénkem horkou medovinu [E] — kuráž (+20 % útok a obnova zdraví)!',
+  },
+  village: {
+    id: 'village',
+    title: 'Filipojakubská vatra u májky',
+    x: 50,
+    y: -75,
+    radius: 360,
+    hint: 'FILIPOJAKUBSKÁ VATRA: Plápolající hranice na návsi pálí temnotu, snímá kletby a dává +25 % obranu!',
+  },
+  orchard: {
+    id: 'orchard',
+    title: 'Měsíční sad se světluškami',
+    x: 125,
+    y: 550,
+    radius: 250,
+    hint: 'NOČNÍ SAD: Včely spí v úlech a mezi květy krouží světlušky — zpomaluje nálety čarodějnic!',
+  },
+  pond: {
+    id: 'pond',
+    title: 'Temný rybník s bludičkami',
+    x: -725,
+    y: 615,
+    radius: 300,
+    hint: 'NOČNÍ BRČÁLNÍK: Nad černou hladinou tančí barevné bludičky — bahno zdržuje smečky kostlivců!',
+  },
+  mill: {
+    id: 'mill',
+    title: 'Čertovský náhon u mlýna',
+    x: 650,
+    y: 725,
+    radius: 240,
+    hint: 'MLÝN V NOCI: Ve tmě u stavidel září čerti — mlýnské kolo drtí dotírající smečky!',
+  },
+  forest: {
+    id: 'forest',
+    title: 'Čarodějnický březový háj',
+    x: -1225,
+    y: -475,
+    radius: 370,
+    hint: 'SABATNÍ HÁJ: Mezi břízkami svítí oči černých psů a čarodějnic, krytí větví dává +15 % obranu!',
+  },
+  shrine: {
+    id: 'shrine',
+    title: 'Boží muka s hromničkou',
+    x: -675,
+    y: -38,
+    radius: 165,
+    hint: 'BOŽÍ MUKA V NOCI: Rozžatá hromnička u kočiček žehná lovci (+20 % kadence a ochrana před čerty)!',
+  },
+};
+
+export const DUBEN_NIGHT_POIS_LIST: DubenPoi[] = Object.values(DUBEN_NIGHT_POIS);
+
+export function getDubenPois(isNight = false): Record<DubenPoiId, DubenPoi> {
+  return isNight ? DUBEN_NIGHT_POIS : DUBEN_POIS;
+}
+export function getDubenPoisList(isNight = false): DubenPoi[] {
+  return isNight ? DUBEN_NIGHT_POIS_LIST : DUBEN_POIS_LIST;
+}
+
 export const DUBEN_BELL_COOLDOWN = 25;
 
 export function isInsideDubenPoi(x: number, y: number, poi: DubenPoi, padding = 0): boolean {

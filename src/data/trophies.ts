@@ -274,12 +274,12 @@ var TROPHIES = [
 	},
 	{
 		id: "level3_completed",
-		title: "🪦 Pokořitel hvozdů a hřbitova",
-		desc: "Dokonči 4. úroveň: přemož mocného vládce hvozdů a očisti starobylý hřbitov od nočních stínů.",
+		title: "🧹 Filipojakubský přemožitel",
+		desc: "Dokonči 4. úroveň: zažeň Filipojakubský sabat čarodějnic a ochraň noční náves.",
 		reward: 180,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.hejkal || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.hejkal || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[3]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
@@ -329,34 +329,34 @@ var TROPHIES = [
 	},
 	{
 		id: "level5_completed",
-		title: "⚙️ Osvoboditel starých hamrů",
-		desc: "Dokonči 6. úroveň: pokoř Prokletého Mlynáře nebo přežij vřavu u hamrů.",
+		title: "🌲 Přemožitel půlnočního hvozdu",
+		desc: "Dokonči 6. úroveň: přemož Půlnočního Hejkala a otevři stavidla z nočního hamru.",
 		reward: 220,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.mlynar || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.hejkal || 0) >= 1 || (meta.bestiaryKills.mlynar || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.mlynar || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[5]) || (meta.bestiaryKills.hejkal || 0) >= 1 || (meta.bestiaryKills.mlynar || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level6_completed",
-		title: "🏰 Pán pusté hlásky",
-		desc: "Dokonči 7. úroveň: překonej Bezhlavého rytíře a hradní zlenické přízraky.",
+		title: "🌾 Pokořitel poledního žáru",
+		desc: "Dokonči 7. úroveň: přemož Královskou Polednici a letní sluneční běsy.",
 		reward: 260,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.kralovska_polednice || 0) >= 1 || (meta.bestiaryKills.polednice || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.bezhlavy_rytir || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[6]) || (meta.bestiaryKills.kralovska_polednice || 0) >= 1 || (meta.bestiaryKills.polednice || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},
 	{
 		id: "level7_completed",
-		title: "👑 Drakobijec z Melechova",
-		desc: "Dokonči 8. úroveň: zvládni dračí sluj a dosáhni legendárního triumfu!",
+		title: "🌿 Pán svatojánské noci",
+		desc: "Dokonči 8. úroveň: získej zlaté kapradí a přemož Svatojánského Vládce Hvozdu!",
 		reward: 350,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.drak || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.svatojansky_vladce || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.drak || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.svatojansky_vladce || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	}

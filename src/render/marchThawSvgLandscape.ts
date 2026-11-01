@@ -1401,32 +1401,52 @@ export function drawMarchThawDynamicLandmark(
   }
 
   if (type === 'march_fields') {
-    const dy = Math.sin(time * 0.62) * 68;
-    const dx = Math.cos(time * 0.62) * 35;
-    ctx.save();
-    ctx.translate(dx, dy);
-    ctx.scale(1.2, 1.2);
-    for (const hx of [-42, -6]) {
-      ctx.fillStyle = hx < -20 ? '#7C4427' : '#F1ECE1';
+    if (!isNight) {
+      const dy = Math.sin(time * 0.62) * 68;
+      const dx = Math.cos(time * 0.62) * 35;
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.scale(1.2, 1.2);
+      for (const hx of [-42, -6]) {
+        ctx.fillStyle = hx < -20 ? '#7C4427' : '#F1ECE1';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.ellipse(hx, 0, 20, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(hx - 15, -8, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
       ctx.strokeStyle = ink;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.ellipse(hx, 0, 20, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(14, 2);
+      ctx.lineTo(56, 12);
+      ctx.lineTo(74, 2);
       ctx.stroke();
+      ctx.restore();
+    } else {
+      // At night, the farmer and horses are asleep in the warm cottage;
+      // only the unhitched wooden plough rests in the furrow while glowing eyes watch from the ridge.
+      ctx.save();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
-      ctx.arc(hx - 15, -8, 6.5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(-18, 6);
+      ctx.lineTo(24, 14);
+      ctx.lineTo(42, 2);
       ctx.stroke();
+      const pulse = 0.65 + Math.sin(time * 4.2) * 0.35;
+      ctx.fillStyle = `rgba(250, 204, 21, ${pulse})`;
+      ctx.beginPath();
+      ctx.arc(-68, -24, 3.2, 0, Math.PI * 2);
+      ctx.arc(-60, -24, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(14, 2);
-    ctx.lineTo(56, 12);
-    ctx.lineTo(74, 2);
-    ctx.stroke();
-    ctx.restore();
 
     for (let i = 0; i < 9; i++) {
       const cx = -135 + ((i * 46 + time * 38) % 300);
@@ -1824,13 +1844,106 @@ export function drawDubenSpringLandmark(
   ctx.lineCap = 'round';
 
   if (type === 'duben_border') {
-    // Ornate April village boundary fence & spring meadow border around [-1920..1920, -1675..1675]
+    // 1. Village dirt road network connecting all Duben POIs
+    ctx.save();
+    ctx.strokeStyle = isNight ? '#5C4938' : '#C9AA79';
+    ctx.lineWidth = 54;
+    ctx.beginPath();
+    // Main E-W village road from Church & Shrine through Village Green to Tavern
+    ctx.moveTo(-800, -650);
+    ctx.quadraticCurveTo(-420, -280, 50, -75);
+    ctx.lineTo(440, -75);
+    // North road to Fields
+    ctx.moveTo(50, -75);
+    ctx.quadraticCurveTo(140, -520, 225, -975);
+    // South road to Orchard & Mill
+    ctx.moveTo(50, -75);
+    ctx.quadraticCurveTo(95, 240, 125, 550);
+    ctx.quadraticCurveTo(380, 660, 650, 725);
+    // Southwest path via Shrine to Pond
+    ctx.moveTo(50, -75);
+    ctx.quadraticCurveTo(-340, -55, -675, -38);
+    ctx.quadraticCurveTo(-710, 280, -725, 615);
+    ctx.stroke();
+
+    // Road ink border lines
+    ctx.strokeStyle = isNight ? 'rgba(35, 23, 15, 0.45)' : 'rgba(110, 78, 46, 0.45)';
+    ctx.lineWidth = 58;
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Mill stream (náhon) flowing past the Duben watermill at x ≈ 730
+    ctx.save();
+    ctx.strokeStyle = isNight ? '#1E4E68' : '#38BDF8';
+    ctx.lineWidth = 56;
+    ctx.beginPath();
+    ctx.moveTo(680, -1675);
+    ctx.quadraticCurveTo(710, -450, 730, 725);
+    ctx.quadraticCurveTo(745, 1200, 760, 1675);
+    ctx.stroke();
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Ornate April village boundary fence & spring meadow border around [-1920..1920, -1675..1675]
     ctx.strokeStyle = ink;
     ctx.lineWidth = 6;
     ctx.strokeRect(-1920, -1675, 3840, 3350);
     ctx.strokeStyle = '#65A30D';
     ctx.lineWidth = 10;
     ctx.strokeRect(-1930, -1685, 3860, 3370);
+    ctx.strokeStyle = '#EAB308';
+    ctx.lineWidth = 3.5;
+    ctx.strokeRect(-1936, -1691, 3872, 3382);
+
+    // 4. Top Ornamental DUBEN / DUBNOVÁ NOC Cartouche Banner
+    ctx.save();
+    ctx.translate(0, -1590);
+    ctx.fillStyle = isNight ? '#1E1B2E' : '#FEF3C7';
+    ctx.strokeStyle = isNight ? '#FACC15' : ink;
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.moveTo(-280, -45);
+    ctx.quadraticCurveTo(0, -65, 280, -45);
+    ctx.quadraticCurveTo(300, 0, 280, 45);
+    ctx.quadraticCurveTo(0, 25, -280, 45);
+    ctx.quadraticCurveTo(-300, 0, -280, -45);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = isNight ? '#FDE047' : '#C84B31';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.4;
+    ctx.font = isNight ? '900 40px Eczar, Georgia, serif' : '900 48px Eczar, Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const bannerTitle = isNight ? 'DUBEN • FILIPOJAKUBSKÁ NOC' : 'DUBEN';
+    ctx.fillText(bannerTitle, 0, -2);
+    ctx.strokeText(bannerTitle, 0, -2);
+
+    // Flanking Easter kraslice & pussy-willow buds
+    for (const side of [-1, 1]) {
+      ctx.save();
+      ctx.translate(side * 295, 0);
+      ctx.fillStyle = side < 0 ? '#EF4444' : '#3B82F6';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 14, 19, side * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#FEF08A';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-10, 0);
+      ctx.lineTo(10, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+
     ctx.restore();
     return;
   }
@@ -2211,6 +2324,54 @@ export function drawDubenSpringLandmark(
     ctx.fill();
     ctx.stroke();
 
+    if (isNight) {
+      // Filipojakubská vatra (Walpurgis Night Bonfire) blazing on the village green beside the Maypole
+      ctx.save();
+      ctx.translate(58, 22);
+      const flicker = Math.sin(time * 9.5) * 4;
+      // Warm ground firelight ring
+      ctx.fillStyle = 'rgba(251, 146, 60, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 4, 48 + flicker, 26 + flicker * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Crossed stacked timber pyre logs
+      ctx.fillStyle = '#5C3A21';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.rect(-24, 0, 48, 10);
+      ctx.rect(-18, -8, 36, 9);
+      ctx.fill();
+      ctx.stroke();
+      // Outer orange-red gouache flame
+      ctx.fillStyle = '#F97316';
+      ctx.beginPath();
+      ctx.moveTo(-22, 0);
+      ctx.quadraticCurveTo(-26, -34, flicker * 0.6, -58 - flicker);
+      ctx.quadraticCurveTo(26, -34, 22, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Inner butter-gold flame core
+      ctx.fillStyle = '#FDE047';
+      ctx.beginPath();
+      ctx.moveTo(-12, -2);
+      ctx.quadraticCurveTo(-14, -22, -flicker * 0.4, -40 - flicker * 0.6);
+      ctx.quadraticCurveTo(14, -22, 12, -2);
+      ctx.closePath();
+      ctx.fill();
+      // Rising sparks
+      ctx.fillStyle = '#FEF08A';
+      for (let sp = 0; sp < 5; sp++) {
+        const sy = -44 - ((time * 38 + sp * 14) % 45);
+        const sx = Math.sin(time * 5 + sp * 1.7) * 14;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
     ctx.restore();
     return;
   }
@@ -2335,6 +2496,19 @@ export function drawDubenSpringLandmark(
       ctx.stroke();
     }
 
+    if (isNight) {
+      // At night the bees sleep in the hives and colorful fireflies dance among the blossoms
+      const wispColors = ['#FDE047', '#38BDF8', '#A3E635', '#F472B6'];
+      for (let w = 0; w < 6; w++) {
+        const wx = Math.cos(time * 1.8 + w * 1.1) * 95;
+        const wy = -35 + Math.sin(time * 2.5 + w * 1.4) * 45;
+        ctx.fillStyle = wispColors[w % wispColors.length];
+        ctx.beginPath();
+        ctx.arc(wx, wy, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     ctx.restore();
     return;
   }
@@ -2402,6 +2576,18 @@ export function drawDubenSpringLandmark(
     ctx.lineTo(8, -114);
     ctx.stroke();
 
+    if (isNight) {
+      const flicker = 0.8 + Math.sin(time * 7) * 0.2;
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.46 * flicker})`;
+      ctx.beginPath();
+      ctx.arc(0, -46, 14 * flicker, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FEF08A';
+      ctx.beginPath();
+      ctx.arc(0, -46, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
     return;
   }
@@ -2429,7 +2615,7 @@ export function drawDubenSpringLandmark(
       ctx.fill();
       ctx.stroke();
       // Fresh April birch foliage
-      ctx.fillStyle = '#84CC16';
+      ctx.fillStyle = isNight ? '#365314' : '#84CC16';
       ctx.beginPath();
       ctx.arc(0, -68, 28, 0, Math.PI * 2);
       ctx.arc(-18, -56, 21, 0, Math.PI * 2);
@@ -2437,6 +2623,20 @@ export function drawDubenSpringLandmark(
       ctx.fill();
       ctx.stroke();
       ctx.restore();
+    }
+    if (isNight) {
+      // Glowing eyes of night hounds & forest spooks peeping from the birch grove
+      const blink = Math.sin(time * 3.8) > -0.75 ? 1 : 0.15;
+      ctx.fillStyle = `rgba(239, 68, 68, ${0.9 * blink})`;
+      ctx.beginPath();
+      ctx.arc(-42, -18, 3.2, 0, Math.PI * 2);
+      ctx.arc(-34, -18, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(250, 204, 21, ${0.9 * blink})`;
+      ctx.beginPath();
+      ctx.arc(48, 12, 3.4, 0, Math.PI * 2);
+      ctx.arc(57, 12, 3.4, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.restore();
     return;

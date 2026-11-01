@@ -934,6 +934,29 @@ const ENEMIES: Record<string, EnemyStats> = {
 		lore: "Černý pes, který si místo tlapek nese žhavé uhlíky.",
 		danger: "★★★★☆"
 	},
+	ohniva_kobyla: {
+		id: "ohniva_kobyla",
+		name: "Ohnivá kobyla",
+		title: "Pekelná klisna se sirnou hřívou",
+		category: "demons",
+		hp: 640,
+		speed: 118,
+		damage: 34,
+		attackCadence: "fast",
+		attackInterval: 0.6,
+		radius: 28,
+		mass: 3.4,
+		foodResist: 0.65,
+		poiseResist: 0.6,
+		willpower: 0.45,
+		xp: 22,
+		coinValue: 16,
+		method: "drawOhnivaKobyla",
+		weakness: "Svěcená kropenka, mrazivá koule a úskok do strany",
+		strength: "Bleskový trysk zanechávající hořící sirné plameny pálící lovce i bubáky",
+		lore: "Zdivočelá pekelná klisna sršící jiskrami, která za temných nocí tryskem přebíhá přes hrusická pole. Kudy prožene svá rozžhavená kopyta, tam ze země vyrazí hořící sirné plameny, které sežehnou lovce i neopatrné bubáky.",
+		danger: "★★★★☆"
+	},
 	mlynar: {
 		id: "mlynar",
 		name: "Čertovský Mlynář",
@@ -1679,6 +1702,78 @@ const ENEMIES: Record<string, EnemyStats> = {
 		strength: "Polední úžeh, větrné obilné tornádo, blesky svatojánské bouře",
 		lore: "Královna polního poledního žáru. Zjevuje se přesně v poledne v bílém plátně a se srpem v ruce, v patách jí kráčí pekelní čerti a hromové mraky.",
 		danger: "★★★★★"
+	},
+	rusalka: {
+		id: "rusalka",
+		name: "Rusalka z hluboké tůně",
+		title: "Bledá vodní víla s věnečkem leknínů",
+		category: "water",
+		hp: 2900,
+		speed: 108,
+		damage: 38,
+		attackCadence: "fast",
+		attackInterval: 0.85,
+		radius: 30,
+		mass: 1.9,
+		foodResist: 0.25,
+		poiseResist: 0.78,
+		willpower: 0.72,
+		xp: 40,
+		coinValue: 22,
+		isFlying: false,
+		method: "drawRusalka",
+		weakness: "Svatojánské byliny, Hromnička",
+		strength: "Vábivý vodní zpěv, vír stříbrných kapek a tůňové bludičky",
+		lore: "O svatojánské noci vystupuje z hluboké tůně pod vrbami bledá Rusalka s dlouhými zelenkavými vlasy a věncem leknínů. Kdo podlehne jejímu zpěvu, toho stáhne vodní vír pod hladinu.",
+		danger: "★★★★☆"
+	},
+	ohnivy_sudlicka: {
+		id: "ohnivy_sudlicka",
+		name: "Ohnivý sudlička z mezí",
+		title: "Noční ohnivý přízrak se žhavou sudlicí",
+		category: "demons",
+		hp: 3600,
+		speed: 122,
+		damage: 44,
+		attackCadence: "fast",
+		attackInterval: 0.78,
+		radius: 34,
+		mass: 2.3,
+		foodResist: 0.2,
+		poiseResist: 0.84,
+		willpower: 0.82,
+		xp: 52,
+		coinValue: 28,
+		isFlying: false,
+		method: "drawOhnivySudlicka",
+		weakness: "Svěcená kropenka, chladná voda z tůně",
+		strength: "Prudký výpad žhavou sudlicí, ohnivá brázda v mezích a roj jisker",
+		lore: "Křivopřísežník, který zaživa posouval mezníky na polích a po smrti musí o svatojánské noci bloudit jako planoucí přízrak se žhavou sudlicí v ruce.",
+		danger: "★★★★☆"
+	},
+	svatojansky_vladce: {
+		id: "svatojansky_vladce",
+		name: "Svatojánský Vládce Hvozdu s Pokladem",
+		title: "Prastarý strážce zlatého kapradí a zemských pokladů",
+		category: "bosses",
+		hp: 6400,
+		speed: 98,
+		damage: 54,
+		attackCadence: "normal",
+		attackInterval: 1.0,
+		radius: 42,
+		mass: 3.4,
+		foodResist: 0.15,
+		poiseResist: 0.92,
+		willpower: 0.96,
+		xp: 90,
+		coinValue: 55,
+		isFlying: false,
+		method: "drawSvatojanskyVladce",
+		weakness: "Svatojánská záře devatera bylin, posvátný oheň",
+		strength: "Kořenové okovy, zemětřesný výbuch pokladu a přivolávání bludiček",
+		lore: "Jen jednou v roce, o půlnoci na svatého Jana Křtitele, rozkvete v nejhlubším hrusickém hvozdu zlaté kapradí a země se otevře. Poklad však střeží mohutný Svatojánský Vládce Hvozdu s korunou ze zlatého kapradí a lucernou plnou bludiček!",
+		danger: "★★★★★"
 	}
 };
 
@@ -1692,7 +1787,9 @@ const UNHOLY_IDS = new Set<string>([
 	"carodejnice_zaspalka",
 	"carodejnice_koste",
 	"cert_sekac",
-	"pekelny_roj_sazovniku"
+	"pekelny_roj_sazovniku",
+	"ohniva_kobyla",
+	"ohnivy_sudlicka"
 ]);
 
 for (const enemy of Object.values(ENEMIES)) {
@@ -1702,5 +1799,7 @@ for (const enemy of Object.values(ENEMIES)) {
 // Non-enumerable legacy aliases for backward compatibility (preserves 58 canonical enemy count)
 Object.defineProperty(ENEMIES, 'skeleton', { value: ENEMIES.kostlivec, enumerable: false, configurable: true, writable: true });
 Object.defineProperty(ENEMIES, 'skeleton_scythe', { value: ENEMIES.kostlivec_kosa, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(ENEMIES, 'pekelny_cert', { value: { ...ENEMIES.cert_sekac, id: 'pekelny_cert' }, enumerable: false, configurable: true, writable: true });
+Object.defineProperty(ENEMIES, 'pekelny_drab', { value: { ...ENEMIES.drab, id: 'pekelny_drab' }, enumerable: false, configurable: true, writable: true });
 
 export { ENEMIES };

@@ -113,7 +113,10 @@ export class ChunkBitmapCache {
       item.type === 'march_mill' ||
       item.type === 'march_fields' ||
       item.type === 'march_shrine' ||
-      (typeof item.type === 'string' && item.type.startsWith('duben_'))
+      (typeof item.type === 'string' &&
+        (item.type.startsWith('duben_') ||
+          item.type.startsWith('kveten_') ||
+          item.type.startsWith('cerven_')))
     ) {
       return true;
     }

@@ -66,12 +66,12 @@ describe('Level 7: Červen v Hrusicích (Stage 7 Core Definition & Progression)'
     }
   });
 
-  it('gates Stage 7 progression behind Level 5 (Staré hamry a Čertův mlýn / Mlynář)', () => {
+  it('gates Stage 7 progression behind Level 5 (Májová noc v Hrusicích / Hejkal & Mlynář)', () => {
     expect(LEVEL_UNLOCKS[6]).toBeDefined();
     expect(LEVEL_UNLOCKS[6].defaultUnlocked).toBe(false);
     expect(LEVEL_UNLOCKS[6].realShortTitle).toBe(GAME_LEVELS[6].shortTitle);
-    expect(GAME_LEVELS[6].unlockRequirementText).toContain('Prokletého Mlynáře');
-    expect(GAME_LEVELS[5].name).toContain('Staré hamry a Čertův mlýn');
+    expect(GAME_LEVELS[6].unlockRequirementText).toContain('Půlnočního Hejkala');
+    expect(GAME_LEVELS[5].name).toContain('Májová noc');
 
     // Locked when Level 5 is not beaten
     const lockedProg = getLevelProgress(6, {});
@@ -83,9 +83,11 @@ describe('Level 7: Červen v Hrusicích (Stage 7 Core Definition & Progression)'
     expect(unlockedProg.spoiledName).toBe(GAME_LEVELS[6].name);
     expect(unlockedProg.tier).toBe(4);
 
-    // Also unlocked if Mlynar is killed in bestiary
+    // Also unlocked if Mlynar or Hejkal is killed in bestiary
     const unlockedViaBoss = getLevelProgress(6, { bestiaryKills: { mlynar: 1 } });
     expect(unlockedViaBoss.isUnlocked).toBe(true);
+    const unlockedViaHejkal = getLevelProgress(6, { bestiaryKills: { hejkal: 1 } });
+    expect(unlockedViaHejkal.isUnlocked).toBe(true);
   });
 
   it('defeating Level 6 final boss unlocks Level 7 (Dračí sluj pod Melechovskou skálou)', () => {
@@ -252,5 +254,50 @@ describe('Level 7: Červen v Hrusicích (Stage 7 Core Definition & Progression)'
     // Both swarm types feature high count and relentless rush
     expect(ENEMIES.roj_polnich_mysaku.speed).toBeGreaterThanOrEqual(140);
     expect(ENEMIES.pekelny_roj_sazovniku.speed).toBeGreaterThanOrEqual(135);
+  });
+
+  it('defines Stage 8 (levelId 7: Červen v Hrusicích – Červnová noc) with Svatojánské byliny & Poklad v zemi mechanic', () => {
+    const lvl7 = GAME_LEVELS[7];
+    expect(lvl7).toBeDefined();
+    expect(lvl7.id).toBe(7);
+    expect(lvl7.name).toBe('8. Červen v Hrusicích – Červnová noc');
+    expect(lvl7.shortTitle).toBe('Červnová noc');
+    expect(lvl7.arena?.id).toBe('cervnova_senosec');
+    expect(lvl7.miniBoss.id).toBe('rusalka');
+    expect(lvl7.midBoss.id).toBe('ohnivy_sudlicka');
+    expect(lvl7.finalBoss.id).toBe('svatojansky_vladce');
+
+    const engine = new GameEngine();
+    engine.initRun(7, 'wanderer', { highestLevelUnlocked: 7, completedLevels: { 6: true } });
+
+    expect(engine.state.activeLevelId).toBe(7);
+    expect(engine.state.cerven.herbs).toHaveLength(9);
+    expect(engine.state.cerven.poklad.unlocked).toBe(false);
+    expect(engine.state.cerven.poklad.opened).toBe(false);
+
+    // Collect all 9 Svatojánské byliny by stepping over each herb location
+    for (let i = 0; i < engine.state.cerven.herbs.length; i++) {
+      const herb = engine.state.cerven.herbs[i];
+      engine.state.player.x = herb.x;
+      engine.state.player.y = herb.y;
+      engine.update(0.05);
+      expect(herb.collected).toBe(true);
+    }
+
+    expect(engine.state.cerven.herbsCollected).toBe(9);
+    expect(engine.state.cerven.poklad.unlocked).toBe(true);
+
+    // Step onto the unlocked Svatojánský poklad v zemi to open it
+    const prevGingerbread = engine.state.gingerbread;
+    const prevCoins = engine.state.coins;
+    engine.state.player.x = engine.state.cerven.poklad.x;
+    engine.state.player.y = engine.state.cerven.poklad.y;
+    engine.update(0.05);
+
+    expect(engine.state.cerven.poklad.opened).toBe(true);
+    expect(engine.state.cerven.svatojanskaZareTimer).toBeGreaterThan(10);
+    expect(engine.state.gingerbread).toBeGreaterThanOrEqual(prevGingerbread + 25);
+    expect(engine.state.coins).toBeGreaterThanOrEqual(prevCoins + 60);
+    expect(engine.state.drops.some((d: any) => d.type === 'chest')).toBe(true);
   });
 });

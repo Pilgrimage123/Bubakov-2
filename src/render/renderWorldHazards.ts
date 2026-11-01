@@ -13,15 +13,34 @@ import { Lada, drawValecniceCompanion } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
 import {
   MARCH_THAW_POIS,
+  getMarchPois,
+  getMarchPoisList,
   getActiveMarchForestZone,
   isInsideMarchPoi,
 } from '../data/marchThawArena';
 import {
   DUBEN_POIS,
   DUBEN_POIS_LIST,
+  getDubenPois,
+  getDubenPoisList,
   getActiveDubenForestZone,
   isInsideDubenPoi,
 } from '../data/dubnovyDenArena';
+import {
+  KVETEN_POIS,
+  getKvetenPois,
+  getKvetenPoisList,
+  isInsideKvetenPoi,
+} from '../data/kvetenArena';
+import {
+  getCervenPois,
+  getCervenPoisList,
+  isInsideCervenPoi,
+} from '../data/cervenArena';
+import {
+  drawSvatojanskaBylina,
+  drawSvatojanskyPoklad,
+} from './cervenSvgLandscape';
 import {
   drawMarianApparition,
   getMarianApparitionVisualState,
@@ -30,8 +49,6 @@ import { getRankedWeaponStats } from '../data/weaponMilestones';
 import { isGameEffectEnabled } from '../game/effectSettings';
 import { tryEmitParticle } from '../game/particles';
 import { gamepadManager } from '../game/gamepad';
-
-const MARCH_POI_LIST = Object.values(MARCH_THAW_POIS);
 
 export interface WorldHazardsRenderOptions {
   warningIndicatorsEnabled?: boolean;
@@ -52,9 +69,13 @@ export function renderWorldHazardsAndEncounters(
   const player = engine.player;
   const uiTime = engine.uiTime || 0;
 
-  // 1. Level 0 & 1: March Thaw Arena (Beer puddle, Kaplička Marian Apparition & POI hints)
+  // 1. Level 0 & 1: March Thaw Arena (Beer puddle, Kaplička Marian Apparition & Day/Night POI hints)
   if ((engine.activeLevelId === 0 || engine.activeLevelId === 1) && engine.marchThaw) {
     const thaw = engine.marchThaw;
+    const isMarchNight = engine.activeLevelId === 1;
+    const marchPois = getMarchPois(isMarchNight);
+    const marchPoiList = getMarchPoisList(isMarchNight);
+
     if (thaw.beerPuddle && isInView(thaw.beerPuddle.x, thaw.beerPuddle.y, 60, camera)) {
       ctx.save();
       ctx.translate(thaw.beerPuddle.x, thaw.beerPuddle.y);
@@ -77,7 +98,7 @@ export function renderWorldHazardsAndEncounters(
     }
 
     // Brief Marian Apparition at Kaplička: appears small, grows larger while scattering bubáci, then vanishes
-    const shrinePoi = MARCH_THAW_POIS.shrine;
+    const shrinePoi = marchPois.shrine;
     const appTimer = thaw.apparitionTimer || 0;
     const marianVisual = getMarianApparitionVisualState(appTimer, thaw.shrineCharge || 0);
     if (marianVisual.visible && isInView(shrinePoi.x, shrinePoi.y - 120, 580, camera)) {
@@ -102,15 +123,15 @@ export function renderWorldHazardsAndEncounters(
     }
 
     if (player) {
-      let nearbyPoi: (typeof MARCH_POI_LIST)[number] | undefined;
-      for (let i = 0; i < MARCH_POI_LIST.length; i++) {
-        if (isInsideMarchPoi(player.x, player.y, MARCH_POI_LIST[i], 30)) {
-          nearbyPoi = MARCH_POI_LIST[i];
+      let nearbyPoi: (typeof marchPoiList)[number] | undefined;
+      for (let i = 0; i < marchPoiList.length; i++) {
+        if (isInsideMarchPoi(player.x, player.y, marchPoiList[i], 30)) {
+          nearbyPoi = marchPoiList[i];
           break;
         }
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
-      const nearby = nearbyPoi || (activeForest ? MARCH_THAW_POIS.forest : undefined);
+      const nearby = nearbyPoi || (activeForest ? marchPois.forest : undefined);
       if (nearby) {
         const isGp = gamepadManager.activeDevice === 'gamepad';
         const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
@@ -181,46 +202,49 @@ export function renderWorldHazardsAndEncounters(
     }
   }
 
-  // 1b. Level 2 (Stage 3: Dubnový den): Maypole ward ring, Easter bell shockwave & POI hints
-  if (engine.activeLevelId === 2 && engine.dubenDen) {
+  // 1b. Level 2 & 3 (Stage 3: Dubnový den & Stage 4: Filipojakubská noc): Maypole/bonfire ward ring, bell shockwave & POI hints
+  if ((engine.activeLevelId === 2 || engine.activeLevelId === 3) && engine.dubenDen) {
     const duben = engine.dubenDen;
+    const isDubenNight = engine.activeLevelId === 3;
+    const dubenPois = getDubenPois(isDubenNight);
+    const dubenPoiList = getDubenPoisList(isDubenNight);
 
-    // Protective Maypole aura ring on village green when active
-    if (duben.maypoleWardActive && isInView(DUBEN_POIS.village.x, DUBEN_POIS.village.y, DUBEN_POIS.village.radius + 40, camera)) {
+    // Protective Maypole / Filipojakubská vatra aura ring on village green when active
+    if (duben.maypoleWardActive && isInView(dubenPois.village.x, dubenPois.village.y, dubenPois.village.radius + 40, camera)) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+      ctx.strokeStyle = isDubenNight ? 'rgba(251, 146, 60, 0.68)' : 'rgba(250, 204, 21, 0.55)';
       ctx.lineWidth = 3;
       ctx.setLineDash([10, 8]);
       ctx.beginPath();
-      ctx.arc(DUBEN_POIS.village.x, DUBEN_POIS.village.y, DUBEN_POIS.village.radius, 0, Math.PI * 2);
+      ctx.arc(dubenPois.village.x, dubenPois.village.y, dubenPois.village.radius, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.restore();
     }
 
-    // Expanding Easter bell holy wave ring at Kostel sv. Jiří
-    if ((duben.bellWaveTimer || 0) > 0 && isInView(DUBEN_POIS.church.x, DUBEN_POIS.church.y, 580, camera)) {
+    // Expanding Easter / Walpurgis bell holy wave ring at Kostel sv. Jiří
+    if ((duben.bellWaveTimer || 0) > 0 && isInView(dubenPois.church.x, dubenPois.church.y, 580, camera)) {
       ctx.save();
       const prog = 1 - Math.min(1, duben.bellWaveTimer / 3.5);
       const radius = 80 + prog * 460;
       ctx.strokeStyle = `rgba(254, 240, 138, ${Math.max(0.15, (1 - prog) * 0.85)})`;
       ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.arc(DUBEN_POIS.church.x, DUBEN_POIS.church.y, radius, 0, Math.PI * 2);
+      ctx.arc(dubenPois.church.x, dubenPois.church.y, radius, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
 
     if (player) {
-      let nearbyPoi: (typeof DUBEN_POIS_LIST)[number] | undefined;
-      for (let i = 0; i < DUBEN_POIS_LIST.length; i++) {
-        if (isInsideDubenPoi(player.x, player.y, DUBEN_POIS_LIST[i], 30)) {
-          nearbyPoi = DUBEN_POIS_LIST[i];
+      let nearbyPoi: (typeof dubenPoiList)[number] | undefined;
+      for (let i = 0; i < dubenPoiList.length; i++) {
+        if (isInsideDubenPoi(player.x, player.y, dubenPoiList[i], 30)) {
+          nearbyPoi = dubenPoiList[i];
           break;
         }
       }
       const activeForest = !nearbyPoi ? getActiveDubenForestZone(player.x, player.y, 30) : null;
-      const nearby = nearbyPoi || (activeForest ? DUBEN_POIS.forest : undefined);
+      const nearby = nearbyPoi || (activeForest ? dubenPois.forest : undefined);
       if (nearby) {
         const isGp = gamepadManager.activeDevice === 'gamepad';
         const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
@@ -228,9 +252,11 @@ export function renderWorldHazardsAndEncounters(
         let canInteractPoi = false;
         if (nearby.id === 'church') {
           if ((duben.bellCooldown || 0) > 0) {
-            detail = `Velikonoční zvon se rozezní za ${Math.ceil(duben.bellCooldown)} s (+20 % zbroj a léčení)`;
+            detail = `Zvon sv. Jiří se rozezní za ${Math.ceil(duben.bellCooldown)} s (+20 % zbroj a léčení)`;
           } else {
-            detail = `${interactHint}: Velikonoční zvon ze Říma (Svatý otřes)`;
+            detail = isDubenNight
+              ? `${interactHint}: Půlnoční zvon sv. Jiří (Svatý otřes proti sabatu)`
+              : `${interactHint}: Velikonoční zvon ze Říma (Svatý otřes)`;
             canInteractPoi = true;
           }
         }
@@ -273,6 +299,182 @@ export function renderWorldHazardsAndEncounters(
     }
   }
 
+  // 1c. Level 4 & 5 (Stage 5: Májová slavnost & Stage 6: Májová noc): POI hints & Nepomucký shrine aura
+  if (engine.activeLevelId === 4 || engine.activeLevelId === 5) {
+    const isKvetenNight = engine.activeLevelId === 5;
+    const kvetenPois = getKvetenPois(isKvetenNight);
+    const kvetenPoiList = getKvetenPoisList(isKvetenNight);
+
+    if (player) {
+      let nearbyPoi: (typeof kvetenPoiList)[number] | undefined;
+      for (let i = 0; i < kvetenPoiList.length; i++) {
+        if (isInsideKvetenPoi(player.x, player.y, kvetenPoiList[i], 30)) {
+          nearbyPoi = kvetenPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? kvetenPois.forest : undefined);
+      if (nearby) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 205, player.y - 88, 410, 31, 8);
+        } else {
+          ctx.rect(player.x - 205, player.y - 88, 410, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12.5px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(nearby.hint, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1d. Level 6 & 7 (Stage 7: Letní senoseč & Stage 8: Červnová noc): POI hints & Svatojánské byliny / Poklad v zemi
+  if (engine.activeLevelId === 6 || engine.activeLevelId === 7) {
+    const isCervenNight = engine.activeLevelId === 7;
+    const cervenPois = getCervenPois(isCervenNight);
+    const cervenPoiList = getCervenPoisList(isCervenNight);
+
+    // Stage 8 (Červnová noc): Render uncollected St. John's herbs, buried Earth Treasure, and firefly compass
+    if (isCervenNight && engine.cerven) {
+      const uiTime = engine.uiTime || 0;
+      const herbs = engine.cerven.herbs;
+      let nearestHerb: any = null;
+      let nearestHerbDistSq = Infinity;
+
+      if (Array.isArray(herbs)) {
+        for (let i = 0; i < herbs.length; i++) {
+          const herb = herbs[i];
+          if (herb.collected) continue;
+          if (player) {
+            const dx = herb.x - player.x;
+            const dy = herb.y - player.y;
+            const dSq = dx * dx + dy * dy;
+            if (dSq < nearestHerbDistSq) {
+              nearestHerbDistSq = dSq;
+              nearestHerb = herb;
+            }
+          }
+          if (!isInView(herb.x, herb.y, 48, camera)) continue;
+          drawSvatojanskaBylina(ctx, herb.x, herb.y, herb.flowerColor, herb.glowColor, uiTime);
+          if (player) {
+            const pdx = herb.x - player.x;
+            const pdy = herb.y - player.y;
+            if (pdx * pdx + pdy * pdy <= 340 * 340) {
+              ctx.save();
+              ctx.fillStyle = herb.glowColor || '#FEF08A';
+              ctx.strokeStyle = '#1C1917';
+              ctx.lineWidth = 2.5;
+              ctx.font = '800 11px Eczar, Georgia, serif';
+              ctx.textAlign = 'center';
+              ctx.strokeText(`🌿 ${herb.name}`, herb.x, herb.y - 26);
+              ctx.fillText(`🌿 ${herb.name}`, herb.x, herb.y - 26);
+              ctx.restore();
+            }
+          }
+        }
+      }
+
+      const poklad = engine.cerven.poklad;
+      if (poklad && isInView(poklad.x, poklad.y, 65, camera)) {
+        drawSvatojanskyPoklad(ctx, poklad.x, poklad.y, Boolean(poklad.unlocked), Boolean(poklad.opened), uiTime);
+        if (poklad.unlocked && !poklad.opened) {
+          ctx.save();
+          ctx.fillStyle = '#FEF08A';
+          ctx.strokeStyle = '#1C1917';
+          ctx.lineWidth = 2.5;
+          ctx.font = '900 12px Eczar, Georgia, serif';
+          ctx.textAlign = 'center';
+          ctx.strokeText('🌿 POKLAD V ZEMI OTEVŘEN! [VSTUP NEBO E]', poklad.x, poklad.y - 44);
+          ctx.fillText('🌿 POKLAD V ZEMI OTEVŘEN! [VSTUP NEBO E]', poklad.x, poklad.y - 44);
+          ctx.restore();
+        }
+      }
+
+      // Svatojánská muška compass around the hunter guiding to the nearest uncollected herb or unlocked Poklad
+      if (player) {
+        const targetObj = poklad && poklad.unlocked && !poklad.opened ? poklad : nearestHerb;
+        if (targetObj) {
+          const tdx = targetObj.x - player.x;
+          const tdy = targetObj.y - player.y;
+          const tDist = Math.hypot(tdx, tdy);
+          if (tDist > 95) {
+            const ang = Math.atan2(tdy, tdx);
+            const compassR = 76;
+            const cx = player.x + Math.cos(ang) * compassR;
+            const cy = player.y + Math.sin(ang) * compassR;
+            const isPokladTarget = targetObj === poklad;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.fillStyle = isPokladTarget ? 'rgba(250, 204, 21, 0.35)' : 'rgba(163, 230, 53, 0.32)';
+            ctx.beginPath();
+            ctx.arc(0, 0, 12 + Math.sin(uiTime * 6) * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.rotate(ang);
+            ctx.fillStyle = isPokladTarget ? '#FACC15' : '#A3E635';
+            ctx.strokeStyle = '#1C1917';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(9, 0);
+            ctx.lineTo(-6, -6);
+            ctx.lineTo(-3, 0);
+            ctx.lineTo(-6, 6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof cervenPoiList)[number] | undefined;
+      for (let i = 0; i < cervenPoiList.length; i++) {
+        if (isInsideCervenPoi(player.x, player.y, cervenPoiList[i], 30)) {
+          nearbyPoi = cervenPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? cervenPois.forest : undefined);
+      if (nearby) {
+        const herbsNote =
+          isCervenNight && engine.cerven && Array.isArray(engine.cerven.herbs)
+            ? ` [🌿 Byliny: ${engine.cerven.herbsCollected || 0}/${engine.cerven.herbsTarget || 9}]`
+            : '';
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 220, player.y - 88, 440, 31, 8);
+        } else {
+          ctx.rect(player.x - 220, player.y - 88, 440, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${nearby.title}${herbsNote}`, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
   // 2. Active Hazards from RunDirector (Bláto, Námraza, Magmatické trhliny)
   const hazards = engine.activeHazards || engine.hazards;
   if (hazards && hazards.length > 0) {
@@ -285,30 +487,74 @@ export function renderWorldHazardsAndEncounters(
       const fadeAlpha = Math.min(1, (h.duration ?? 1) / 1.0);
       ctx.globalAlpha = 0.75 * fadeAlpha;
 
+      const isWarning = (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
+      const justExploded = Boolean(h.exploded);
+
       if (h.type === 'mud') {
-        ctx.fillStyle = '#5A3825';
-        ctx.strokeStyle = '#26150C';
-        ctx.lineWidth = 2.5;
+        ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : '#5A3825';
+        ctx.strokeStyle = isWarning ? '#F59E0B' : '#26150C';
+        ctx.lineWidth = isWarning ? 3.0 : 2.5;
+        if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
-        ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
+        if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle' || h.kind === 'water-jar-trap') {
+          ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        } else {
+          ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
+        }
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = '#784323';
-        ctx.beginPath();
-        ctx.arc(-h.radius * 0.3, -h.radius * 0.1, 4, 0, Math.PI * 2);
-        ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (h.type === 'frost' && h.kind !== 'hail-circle') {
-        ctx.fillStyle = 'rgba(186, 230, 253, 0.22)';
-        ctx.strokeStyle = 'rgba(2, 132, 199, 0.65)';
-        ctx.lineWidth = 1.8;
+        ctx.setLineDash([]);
+        if (h.kind === 'chain-shackle') {
+          ctx.strokeStyle = '#94A3B8';
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.moveTo(-h.radius * 0.65, -h.radius * 0.65);
+          ctx.lineTo(h.radius * 0.65, h.radius * 0.65);
+          ctx.moveTo(h.radius * 0.65, -h.radius * 0.65);
+          ctx.lineTo(-h.radius * 0.65, h.radius * 0.65);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = '#784323';
+          ctx.beginPath();
+          ctx.arc(-h.radius * 0.3, -h.radius * 0.1, 4, 0, Math.PI * 2);
+          ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (h.type === 'water' || h.kind === 'water-geyser' || h.kind === 'mill-surge' || h.kind === 'whirlpool') {
+        ctx.fillStyle = isWarning
+          ? 'rgba(56, 189, 248, 0.28)'
+          : justExploded
+          ? 'rgba(186, 230, 253, 0.85)'
+          : 'rgba(14, 165, 233, 0.45)';
+        ctx.strokeStyle = isWarning ? '#38BDF8' : justExploded ? '#FFFFFF' : '#0369A1';
+        ctx.lineWidth = isWarning ? 3.0 : 2.2;
+        if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+        ctx.setLineDash([]);
+        // Swirling water ripple ring
+        ctx.strokeStyle = '#BAE6FD';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius * 0.55, 0.3, Math.PI * 1.65);
+        ctx.stroke();
+      } else if (h.type === 'frost' && h.kind !== 'hail-circle') {
+        ctx.fillStyle = isWarning
+          ? 'rgba(186, 230, 253, 0.32)'
+          : justExploded
+          ? 'rgba(224, 242, 254, 0.82)'
+          : 'rgba(186, 230, 253, 0.22)';
+        ctx.strokeStyle = isWarning ? '#38BDF8' : justExploded ? '#FFFFFF' : 'rgba(2, 132, 199, 0.65)';
+        ctx.lineWidth = isWarning ? 3.0 : 1.8;
+        if (isWarning) ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
       } else if (h.kind === 'hail-circle') {
-        const isWarning = (h.warningTimer || 0) > 0;
-        const justExploded = h.exploded;
         ctx.fillStyle = isWarning
           ? 'rgba(186, 230, 253, 0.32)'
           : justExploded
@@ -346,11 +592,63 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(-h.radius * 0.25, -h.radius * 0.2, h.radius * 0.55, 0, Math.PI * 2);
         ctx.arc(h.radius * 0.3, h.radius * 0.15, h.radius * 0.45, 0, Math.PI * 2);
         ctx.fill();
+      } else if (h.kind === 'sulfur-flame') {
+        const flicker = Math.sin((h.duration ?? 1) * 14 + h.x * 0.07 + h.y * 0.05) * 0.12 + 0.88;
+        // Outer scorched sulfur pool with bold ink ring
+        ctx.fillStyle = 'rgba(234, 88, 12, 0.52)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Bright burning sulfur-yellow core
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.78)';
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius * 0.68 * flicker, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flickering sulfur-lime & golden flame tongues (hurts both hunter & bubáky)
+        ctx.fillStyle = '#FEF08A';
+        ctx.strokeStyle = '#CA8A04';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        const flameR = h.radius * 0.52 * flicker;
+        ctx.moveTo(-flameR * 0.7, flameR * 0.3);
+        ctx.lineTo(-flameR * 0.35, -flameR * 0.95);
+        ctx.lineTo(0, -flameR * 0.25);
+        ctx.lineTo(flameR * 0.35, -flameR * 1.05);
+        ctx.lineTo(flameR * 0.7, flameR * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (h.kind === 'lightning-strike') {
+        ctx.fillStyle = isWarning
+          ? 'rgba(250, 204, 21, 0.32)'
+          : justExploded
+          ? 'rgba(254, 249, 195, 0.9)'
+          : 'rgba(234, 179, 8, 0.5)';
+        ctx.strokeStyle = isWarning ? '#FACC15' : '#FFFFFF';
+        ctx.lineWidth = isWarning ? 3.2 : 2.4;
+        if (isWarning) ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Jagged lightning bolt icon in center
+        ctx.strokeStyle = '#FEF08A';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(4, -h.radius * 0.55);
+        ctx.lineTo(-5, 0);
+        ctx.lineTo(3, 0);
+        ctx.lineTo(-4, h.radius * 0.55);
+        ctx.stroke();
       } else {
         const isFissure = h.kind === 'predictive-fissure';
-        const isHexCircle = h.kind === 'hex-circle' || h.type === 'curse';
-        const isWarning = (isFissure || isHexCircle) && (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
-        const justExploded = (isFissure || isHexCircle) && h.exploded;
+        const isHexCircle = h.kind === 'hex-circle' || h.type === 'curse' || h.kind === 'witch-gust';
 
         if (isHexCircle) {
           ctx.fillStyle = isWarning

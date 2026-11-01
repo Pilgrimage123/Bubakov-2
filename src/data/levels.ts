@@ -164,12 +164,27 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"tajici_snehulak",
 				"jezinka_mraziva",
 				"bludicka",
-				"mrazivy_obr"
+				"mrazivy_obr",
+				"kostlivec",
+				"umrlec",
+				"bubak",
+				"hejkal",
+				"ohnivy_muz",
+				"ohniva_kobyla"
 			],
 			midnight: [
 				"mrazovy_skritek",
 				"bludicka",
 				"jezinka_mraziva"
+			],
+			dawn: [
+				"mrazovy_skritek",
+				"bludicka",
+				"jezinka_mraziva",
+				"tajici_snehulak",
+				"mrazivy_obr",
+				"ohnivy_muz",
+				"ohniva_kobyla"
 			]
 		},
 		keyEnemies: [
@@ -315,26 +330,32 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		id: 3,
 		name: "4. Duben v Hrusicích – Dubnová noc",
 		shortTitle: "Dubnová noc",
-		subtitle: "Filipojakubská noc, plápolající hranice a reje čarodějnic",
+		subtitle: "Filipojakubská noc, plápolající hranice, svítící čerti a reje čarodějnic",
 		theme: "spring_village",
 		season: "spring",
 		icon: "🔥",
 		badge: "4. Úroveň",
-		description: "S příchodem noci vzplály na kopcích filipojakubské ohně. Vzduchem sviští čarodějnická košťata a z mezí vylézá noční jarní havěť.",
-		lore: "Na Filipa a Jakuba čarodějnice létat troufá! Zapalte smolné hranice, udržte oheň na návsi a vykažte z kraje noční čarodějnický sabat.",
+		description: "Lidé se zamkli v chalupách a na hrusické návsi vzplála filipojakubská vatra. Ve tmě září oči kostlivců, smečky černých psů i celí čerti a nad březovým hájem krouží noční sabat!",
+		lore: "Na Filipa a Jakuba čarodějnice létat troufá! Udržte ochranný oheň u májky, odrážejte hejna bludiček a vykažte z návsi Filipojakubský sabat.",
 		unlockRequirementText: "Odemkne se pokořením Vrchní Filipojakubské Čarodějnice ve 3. úrovni",
-		skyColor: "#6B584E",
-		nightSkyColor: "#1A1822",
-		groundColor: "#36382E",
+		skyColor: "#241E30",
+		nightSkyColor: "#14111D",
+		groundColor: "#2E352B",
 		ambientTint: "rgba(38, 28, 48, 0.45)",
 		weatherEffect: "fog",
 		decorTypes: [
-			"tombstone",
-			"cross",
+			"cottage",
 			"tree",
+			"rock",
 			"will_o_wisp",
-			"cottage"
+			"kaca"
 		],
+		arena: {
+			id: "dubnova_naves",
+			name: "Dubnová náves v noci",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "orchard", "pond", "mill", "forest", "shrine"]
+		},
 		miniBoss: {
 			id: "klekanice",
 			name: "🔔 Večerní Klekánice",
@@ -352,85 +373,117 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 2.51
 		},
 		finalBoss: {
-			id: "hejkal",
-			name: "🌲 Půlnoční Hejkal z hvozdů",
-			warning: "🌲 PŘICHÁZÍ ŠÉF ÚROVNĚ: PŮLNOČNÍ HEJKAL! 🌲",
+			id: "vrchni_carodejnice",
+			name: "🧹 Filipojakubský sabat čarodějnic",
+			warning: "🧹 VATRA VZPLÁLA! NAD NÁVSÍ KROUŽÍ FILIPOJAKUBSKÝ SABAT ČARODĚJNIC! 🧹",
 			time: 300,
 			kills: 230,
-			multiplier: 0.57
+			multiplier: 1.48
 		},
 		spawnPools: {
 			noon: [
 				"skeleton",
 				"cerny_pes",
-				"hrobnik",
-				"umrlec"
+				"carodejnice_koste",
+				"rarach",
+				"certik"
 			],
 			afternoon: [
 				"hrobnik",
 				"pisar",
 				"skeleton_scythe",
 				"cerny_pes",
-				"drevorubec"
+				"carodejnice_koste",
+				"sazovy_rarach"
 			],
 			dusk: [
-				"krvavy_kostlivec",
+				"carodejnice_koste",
+				"skeleton",
 				"skeleton_scythe",
-				"hrobnik",
 				"cerny_pes",
-				"umrlec"
+				"umrlec",
+				"rarach",
+				"certik",
+				"klekanice",
+				"ohnivy_muz"
 			],
 			night: [
+				"carodejnice_koste",
 				"bubak",
 				"krvavy_kostlivec",
-				"stodolnik",
-				"drevorubec",
-				"drab"
+				"umrlec",
+				"cerny_pes",
+				"sazovy_rarach",
+				"certik",
+				"bludicka",
+				"jiskrivec",
+				"ohnivy_muz",
+				"ohniva_kobyla"
 			],
 			midnight: [
-				"hromotluk",
-				"drab",
+				"carodejnice_koste",
 				"bubak",
 				"krvavy_kostlivec",
-				"cerny_pes"
+				"skeleton_scythe",
+				"cerny_pes",
+				"pisar",
+				"sazovy_rarach",
+				"bludicka",
+				"jiskrivec",
+				"hejkal",
+				"ohnivy_muz",
+				"ohniva_kobyla"
+			],
+			dawn: [
+				"carodejnice_koste",
+				"bubak",
+				"krvavy_kostlivec",
+				"skeleton_scythe",
+				"cerny_pes",
+				"sazovy_rarach",
+				"bludicka",
+				"jiskrivec",
+				"certik",
+				"ohnivy_muz",
+				"ohniva_kobyla"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "skeleton",
-				name: "Kostlivec",
-				icon: "💀",
-				role: "Hřbitovní cháska"
+				id: "carodejnice_koste",
+				name: "Čarodějnice na koštěti",
+				icon: "🧹",
+				role: "Noční nálety nad filipojakubskou vatrou"
+			},
+			{
+				id: "ohniva_kobyla",
+				name: "Ohnivá kobyla a Ohnivý muž",
+				icon: "🐎",
+				role: "Pekelný trysk zanechávající sirné plameny pálící lovce i bubáky"
 			},
 			{
 				id: "cerny_pes",
-				name: "Černý pes",
+				name: "Smečka černých psů",
 				icon: "🐕",
-				role: "Noční stín"
+				role: "Rychlá noční smečka se žhnoucíma očima"
 			},
 			{
-				id: "bubak",
-				name: "Bubák ze stodoly",
-				icon: "👻",
-				role: "Noční strašidlo"
+				id: "certik",
+				name: "Svítící čertík a rarášek",
+				icon: "😈",
+				role: "Pekelná cháska zářící ve tmě"
 			},
 			{
-				id: "klekanice",
-				name: "Klekánice",
-				icon: "🔔",
-				role: "Večerní přízrak"
-			},
-			{
-				id: "hejkal",
-				name: "Půlnoční Hejkal",
-				icon: "🌲",
-				role: "Hlavní boss"
+				id: "vrchni_carodejnice",
+				name: "Filipojakubský sabat čarodějnic",
+				icon: "🧙‍♀️",
+				role: "Hlavní boss filipojakubské půlnoci"
 			}
 		],
 		bossMechanic: {
-			label: "Hromové zahejkání a padající větve",
-			description: "Mocný řev otřese hvozdem, vrhne salvu větví a přivolá lesní potvory.",
-			cadenceSeconds: 12
+			label: "🔥 Filipojakubský sabat a ohnivé věnce",
+			description: "Vrchní čarodějnice vede půlnoční sabat nad vatrou, metá smolné ohnivé věnce a přivolává smečky černých psů i čertíky.",
+			cadenceSeconds: 6
 		}
 	},
 	4: {
@@ -546,112 +599,156 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	5: {
 		id: 5,
-		name: "6. Staré hamry a Čertův mlýn",
-		shortTitle: "Hamry a Čertův mlýn",
-		subtitle: "Žhavé výhně, moučný prach a zrádná povodeň",
-		theme: "mill_forge",
-		season: "autumn",
-		icon: "⚙️",
+		name: "6. Květen v Hrusicích – Májová noc",
+		shortTitle: "Májová noc",
+		subtitle: "Svatojánské mušky u Nepomuckého, ztichlá májka a Půlnoční Hejkal v hvozdu",
+		theme: "spring_village",
+		season: "spring",
+		icon: "🌲",
 		badge: "6. Úroveň",
-		description: "Pod zčernalými hamry se otáčí prokletý mlýn. Jiskry létají z kovadlin a mlynářova voda bere vše, co jí stojí v cestě.",
-		lore: "Zastavte zbojníky, jiskřivce a mlynářovy služebníky dřív, než se Čertův mlýn roztočí naplno.",
+		description: "Na májové Hrusice padla voňavá hvězdnatá noc. Pastýř i tanečníci zalezli do chalup, u sochy sv. Jana Nepomuckého tančí svatojánské mušky, ale z mlýnského náhonu a tmavého hvozdu se plíží noční běsi a Půlnoční Hejkal!",
+		lore: "Když utichne májová muzika a rozsvítí se okna chalup, probouzí se lesní říše. Nepřibližujte se k lesu bez světla, zažeňte Prokletého Mlynáře od stavidel a utkejte se s Půlnočním Hejkalem!",
 		unlockRequirementText: "Odemkne se po poražení Ledových mužů v 5. úrovni",
-		skyColor: "#8B5E3C",
-		nightSkyColor: "#21150F",
-		groundColor: "#514237",
-		ambientTint: "rgba(255, 125, 30, 0.16)",
+		skyColor: "#1E2F38",
+		nightSkyColor: "#0F1A22",
+		groundColor: "#253B2C",
+		ambientTint: "rgba(20, 42, 38, 0.45)",
 		weatherEffect: "fog",
 		decorTypes: [
 			"cottage",
 			"tree",
-			"will_o_wisp"
+			"will_o_wisp",
+			"kaca"
 		],
+		arena: {
+			id: "kvetnova_naves",
+			name: "Májové Hrusice v noci",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
 		miniBoss: {
 			id: "zbojnik",
-			name: "🗡️ Zbojník z hamrů",
-			warning: "🗡️ ZE SOUTĚSKY VYRÁŽÍ OBÁVANÝ HEJTMAN ZBOJNÍK!",
+			name: "🗡️ Zbojník z hamrů a smečka",
+			warning: "🗡️ ZE STÍNŮ LESA VYRÁŽÍ OBÁVANÝ HEJTMAN ZBOJNÍK SE SMEČKOU!",
 			time: 85,
 			kills: 80,
 			multiplier: 3.54
 		},
 		midBoss: {
-			id: "ohnivy_pes",
-			name: "🔥 Ohnivý pes z výhně",
-			warning: "🔥 VÝHEŇ VYPUSTILA MOCNÉHO OHNIVÉHO PSA!",
+			id: "mlynar",
+			name: "🌊 Prokletý Mlynář z nočního náhonu",
+			warning: "🌊 POZOR: PROKLETÝ MLYNÁŘ OTEVÍRÁ NOČNÍ STAVIDLA!",
 			time: 185,
 			kills: 170,
-			multiplier: 4.65
+			multiplier: 0.48
 		},
 		finalBoss: {
-			id: "mlynar",
-			name: "🌊 Prokletý Mlynář",
-			warning: "🌊 ŠÉF ÚROVNĚ: MLYNÁŘ OTEVÍRÁ STAVIDLA!",
+			id: "hejkal",
+			name: "🌲 Půlnoční Hejkal z hvozdů",
+			warning: "🌲 HVOZD ZAŘVAL! Z TEMNÉHO LESA VYCHÁZÍ PŮLNOČNÍ HEJKAL! 🌲",
 			time: 300,
 			kills: 300,
-			multiplier: 0.43
+			multiplier: 0.65
 		},
 		spawnPools: {
 			noon: [
 				"zbojnik",
 				"jiskrivec",
 				"sazovy_rarach",
-				"sotek"
+				"divozenka"
 			],
 			afternoon: [
 				"zbojnik",
 				"jiskrivec",
 				"ohnivy_pes",
-				"ropucha"
+				"drevorubec"
 			],
 			dusk: [
-				"ohnivy_pes",
-				"obrneny_zbojnik",
+				"drevorubec",
+				"divozenka",
+				"skodnik",
+				"cerny_pes",
+				"kostlivec",
+				"bubak",
+				"certik",
 				"zbojnik",
-				"drab"
+				"ohnivy_muz"
 			],
 			night: [
+				"hejkal",
+				"drevorubec",
+				"stodolnik",
+				"nocni_mura",
+				"cerny_pes",
+				"umrlec",
+				"bludicka",
+				"jiskrivec",
+				"ohnivy_muz",
 				"ohnivy_pes",
-				"obrneny_zbojnik",
-				"drab",
-				"jiskrivec"
+				"ohniva_kobyla"
 			],
 			midnight: [
-				"obrneny_zbojnik",
-				"ohnivy_pes",
-				"drab",
-				"sazovy_rarach"
+				"hejkal",
+				"nocni_mura",
+				"stodolnik",
+				"umrlec",
+				"krvavy_kostlivec",
+				"cerny_pes",
+				"ohnivy_muz",
+				"ohniva_kobyla",
+				"sazovy_rarach",
+				"bludicka",
+				"jiskrivec"
+			],
+			dawn: [
+				"hejkal",
+				"nocni_mura",
+				"stodolnik",
+				"umrlec",
+				"cerny_pes",
+				"ohnivy_muz",
+				"ohniva_kobyla",
+				"bludicka",
+				"jiskrivec",
+				"zbojnik"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "zbojnik",
-				name: "Zbojník",
-				icon: "🗡️",
-				role: "Hamerský lapka"
-			},
-			{
-				id: "jiskrivec",
-				name: "Jiskřivec",
-				icon: "✨",
-				role: "Žhavý skřítek"
-			},
-			{
-				id: "ohnivy_pes",
-				name: "Ohnivý pes",
-				icon: "🔥",
-				role: "Strážce výhně"
+				id: "hejkal",
+				name: "Půlnoční Hejkal",
+				icon: "🌲",
+				role: "Hlavní boss májového hvozdu s hromovým zahejkáním"
 			},
 			{
 				id: "mlynar",
-				name: "Mlynář",
+				name: "Prokletý Mlynář",
 				icon: "🌊",
-				role: "Hlavní boss"
+				role: "Mezi-boss z nočního mlýnského náhonu"
+			},
+			{
+				id: "ohniva_kobyla",
+				name: "Ohnivá kobyla",
+				icon: "🐎",
+				role: "Bleskový trysk se sirnými plameny pálícími lovce i bubáky"
+			},
+			{
+				id: "bludicka",
+				name: "Rej bludiček a jiskřivců",
+				icon: "✨",
+				role: "Barevná kroužící hejna světýlek ve tmě"
+			},
+			{
+				id: "nocni_mura",
+				name: "Noční můra a Stodolník",
+				icon: "🦇",
+				role: "Temné přízraky se svítícíma očima"
 			}
 		],
 		bossMechanic: {
-			label: "Povodňová vlna a moučný mrak",
-			description: "Pravidelné vlny tlačí lovce; moučný mrak na chvíli zhoršuje výhled.",
-			cadenceSeconds: 14
+			label: "🌲 Hromové zahejkání a noční stavidla",
+			description: "Půlnoční Hejkal otřásá májovým hvozdem, vrhá salvy větví a přivolává lesní smečky, zatímco od mlýna hrozí noční přívaly.",
+			cadenceSeconds: 10
 		}
 	},
 	6: {
@@ -665,7 +762,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		badge: "7. Úroveň",
 		description: "Červnové slunce zalévá hrusické louky zlatým žárem. Sedláci svážejí voňavé seno na žebřiňáky a v tůních pod vrbami se loví raci. S poledním úžehem však přicházejí rohatí pekelníci a Královská Polednice!",
 		lore: "Na svatého Antonína kvete žito i malina, ale v pekelném poledním žáru seče trávu i duše rohatý pekelník s planoucí kosou. Chraňte žence a vykažte z lánů sluneční běsy!",
-		unlockRequirementText: "Odemkne se po poražení Prokletého Mlynáře v 6. úrovni",
+		unlockRequirementText: "Odemkne se po poražení Půlnočního Hejkala a Prokletého Mlynáře v 6. úrovni",
 		skyColor: "#FDEBD0",
 		nightSkyColor: "#1B2631",
 		groundColor: "#E59866",
@@ -721,30 +818,39 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"pekelny_roj_sazovniku",
 				"rak_ricni",
 				"polednice",
+				"cert_sekac",
 				"pekelny_cert",
 				"boruvkovy_diblik"
 			],
 			dusk: [
 				"pekelny_roj_sazovniku",
+				"drab",
 				"pekelny_drab",
 				"polednice",
-				"pekelny_cert",
 				"cert_sekac",
 				"cerny_pes"
 			],
 			night: [
 				"pekelny_roj_sazovniku",
-				"pekelny_drab",
-				"pekelny_cert",
+				"drab",
+				"cert_sekac",
 				"polednice",
 				"cerny_vlkodlak"
 			],
 			midnight: [
-				"pekelny_cert",
-				"pekelny_drab",
+				"cert_sekac",
+				"drab",
 				"pekelny_roj_sazovniku",
 				"cerny_vlkodlak",
 				"cerny_pes"
+			],
+			dawn: [
+				"mysak",
+				"roj_polnich_mysaku",
+				"rak_ricni",
+				"boruvkovy_diblik",
+				"certik",
+				"rarach"
 			]
 		},
 		keyEnemies: [
@@ -787,107 +893,157 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 	},
 	7: {
 		id: 7,
-		name: "8. Dračí sluj pod Melechovskou skálou",
-		shortTitle: "Dračí sluj",
-		subtitle: "Rampouchy, noční můry a líný tříhlavý drak",
-		theme: "dragon_cave",
-		season: "winter",
-		icon: "🐉",
+		name: "8. Červen v Hrusicích – Červnová noc",
+		shortTitle: "Červnová noc",
+		subtitle: "Svatojánská noc, zlaté kapradí, bludičky v rákosí a poklad v zemi",
+		theme: "summer_harvest",
+		season: "summer",
+		icon: "🌿",
 		badge: "8. Úroveň",
-		description: "V nejhlubší sluji pod skálou se střídá ledový dech s ohněm. Každý krok může spustit rampouch.",
-		lore: "Poslední výprava vede k tříhlavému drakovi: jedna hlava spí, druhá chrlí oheň a třetí hlídá kořist.",
+		description: "Na vyhřáté hrusické louky padla čarovná Svatojánská noc! V rákosí u rybníka tančí bludičky, mezemi bloudí Ohnivý sudlička a kdo nasbírá devatero svatojánských bylin, tomu v hvozdu rozkvete Zlaté kapradí a otevře Poklad v zemi!",
+		lore: "Jen jednou v roce, o svatojánské půlnoci, se otevírají skály a poklady v zemi. Nasbírej po loukách a u tůní devatero čarovných bylin, nedej se svést zpěvem Rusalky a přemož Svatojánského Vládce Hvozdu!",
 		unlockRequirementText: "Odemkne se po poražení Královské Polednice v 7. úrovni",
-		skyColor: "#334155",
-		nightSkyColor: "#080B15",
-		groundColor: "#25313D",
-		ambientTint: "rgba(96, 165, 250, 0.18)",
-		weatherEffect: "snow",
+		skyColor: "#1E293B",
+		nightSkyColor: "#0B1120",
+		groundColor: "#2C4230",
+		ambientTint: "rgba(30, 58, 138, 0.42)",
+		weatherEffect: "fireflies",
 		decorTypes: [
-			"tree",
-			"cross",
-			"snowman"
+			"cerven_border",
+			"cerven_hay_wagon",
+			"cerven_anthony_shrine",
+			"cerven_crayfish_pool",
+			"cerven_blueberry_grove",
+			"cerven_tavern",
+			"cerven_pond",
+			"cerven_haystack"
 		],
+		arena: {
+			id: "cervnova_senosec",
+			name: "Červnové Hrusice v noci",
+			layout: "asymmetric_poi",
+			poiOrder: [
+				"fields",
+				"church",
+				"tavern",
+				"village",
+				"school",
+				"pond",
+				"mill",
+				"forest",
+				"shrine"
+			]
+		},
 		miniBoss: {
-			id: "snehulak",
-			name: "☃️ Zlomyslný sněhulák",
-			warning: "☃️ ZE SLUJE SE KUTÁLÍ ZLOMYSLNÝ SNĚHULÁK!",
+			id: "rusalka",
+			name: "🌊 Rusalka z hluboké tůně",
+			warning: "🌊 POZOR: Z MĚSÍČNÍ TŮNĚ VYSTUPUJE VÁBIVÁ RUSALKA!",
 			time: 85,
-			kills: 100,
-			multiplier: 3.14
+			kills: 90,
+			multiplier: 1.05
 		},
 		midBoss: {
-			id: "nocni_mura",
-			name: "🌑 Noční můra",
-			warning: "🌑 TEMNOTOU SE ŽENE DĚSIVÁ NOČNÍ MŮRA!",
+			id: "ohnivy_sudlicka",
+			name: "🔥 Ohnivý sudlička z mezí",
+			warning: "🔥 POZOR: PO NOČNÍCH MEZÍCH SE ŽENE OHNIVÝ SUDLIČKA SE ŽHAVOU SUDLICÍ!",
 			time: 185,
 			kills: 210,
-			multiplier: 9.23
+			multiplier: 1.12
 		},
 		finalBoss: {
-			id: "drak",
-			name: "🐉 Tříhlavý líný Drak",
-			warning: "🐉 ŠÉF ÚROVNĚ: PROBUDIL SE TŘÍHLAVÝ DRAK!",
+			id: "svatojansky_vladce",
+			name: "🌿 Svatojánský Vládce Hvozdu s Pokladem",
+			warning: "🌿 ZLATÉ KAPRADÍ ROZKVETLO! PŘICHÁZÍ SVATOJÁNSKÝ VLÁDCE HVOZDU S POKLADEM! 🌿",
 			time: 300,
-			kills: 360,
-			multiplier: 0.33
+			kills: 350,
+			multiplier: 1.18
 		},
 		spawnPools: {
 			noon: [
-				"snehulak",
-				"nocni_mura",
-				"severak",
-				"sazovy_rarach"
+				"bludicka",
+				"rak_ricni",
+				"boruvkovy_diblik",
+				"roj_polnich_mysaku",
+				"divozenka"
 			],
 			afternoon: [
-				"snehulak",
-				"nocni_mura",
-				"ohnivy_pes",
-				"mrazik"
+				"bludicka",
+				"divozenka",
+				"jiskrivec",
+				"kalny_hastrman",
+				"certik"
 			],
 			dusk: [
-				"nocni_mura",
-				"snehulak",
-				"ohnivy_pes",
-				"krvavy_kostlivec"
+				"bludicka",
+				"divozenka",
+				"jiskrivec",
+				"rak_ricni",
+				"boruvkovy_diblik",
+				"certik",
+				"ohnivy_muz"
 			],
 			night: [
+				"bludicka",
+				"divozenka",
+				"rusalka",
+				"ohnivy_sudlicka",
+				"ohnivy_muz",
+				"ohniva_kobyla",
+				"pekelny_roj_sazovniku",
+				"kalny_hastrman",
 				"nocni_mura",
-				"snehulak",
-				"severak",
-				"obrneny_zbojnik"
+				"cerny_vlkodlak",
+				"hejkal"
 			],
 			midnight: [
-				"snehulak",
+				"ohnivy_sudlicka",
+				"rusalka",
+				"ohnivy_muz",
+				"ohniva_kobyla",
+				"pekelny_roj_sazovniku",
+				"cert_sekac",
 				"nocni_mura",
-				"ohnivy_pes",
-				"hromotluk",
-				"drab"
+				"cerny_vlkodlak",
+				"hejkal",
+				"klekanice",
+				"bludicka"
+			],
+			dawn: [
+				"ohnivy_sudlicka",
+				"rusalka",
+				"ohnivy_muz",
+				"ohniva_kobyla",
+				"pekelny_roj_sazovniku",
+				"cert_sekac",
+				"nocni_mura",
+				"cerny_vlkodlak",
+				"bludicka"
 			]
 		},
 		keyEnemies: [
 			{
-				id: "snehulak",
-				name: "Sněhulák",
-				icon: "☃️",
-				role: "Ledový bijec"
+				id: "rusalka",
+				name: "Rusalka z tůně",
+				icon: "🌊",
+				role: "Vábivá vodní víla"
 			},
 			{
-				id: "nocni_mura",
-				name: "Noční můra",
-				icon: "🌑",
-				role: "Stínový lovec"
+				id: "ohnivy_sudlicka",
+				name: "Ohnivý sudlička",
+				icon: "🔥",
+				role: "Planoucí přízrak z mezí"
 			},
 			{
-				id: "drak",
-				name: "Drak",
-				icon: "🐉",
-				role: "Hlavní boss"
+				id: "svatojansky_vladce",
+				name: "Svatojánský Vládce Hvozdu",
+				icon: "🌿",
+				role: "Strážce zlatého kapradí a pokladu"
 			}
 		],
 		bossMechanic: {
-			label: "Rampouchy a tři dračí hlavy",
-			description: "Rampouchy padají ze stropu; drak střídá spící, ohnivou a hlídající hlavu.",
-			cadenceSeconds: 10
+			label: "Svatojánské byliny a Zlaté kapradí",
+			description: "Sbírej po aréně devatero svatojánských bylin, odemkni Poklad v zemi u hvozdu a získej Svatojánskou záři!",
+			cadenceSeconds: 9
 		}
 	}
 };

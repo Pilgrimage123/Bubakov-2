@@ -39,13 +39,19 @@ describe('Level 7: Červen v Hrusicích (Arena Geometry & June Harvest Motifs)',
     expect(CERVEN_POIS.forest.title).toContain('Borůvkový háj');
     expect(CERVEN_POIS.tavern.title).toContain('pod lipou');
 
-    // POI coordinates match Stage 1 anchors
+    // POI coordinates match Stage 1 anchors and physical obstacles
     expect(CERVEN_POIS.fields.x).toBe(MARCH_THAW_POIS.fields.x);
     expect(CERVEN_POIS.fields.y).toBe(MARCH_THAW_POIS.fields.y);
     expect(CERVEN_POIS.church.x).toBe(MARCH_THAW_POIS.church.x);
     expect(CERVEN_POIS.church.y).toBe(MARCH_THAW_POIS.church.y);
     expect(CERVEN_POIS.village.x).toBe(MARCH_THAW_POIS.village.x);
     expect(CERVEN_POIS.village.y).toBe(MARCH_THAW_POIS.village.y);
+    expect(CERVEN_POIS.mill.x).toBe(MARCH_THAW_POIS.mill.x);
+    expect(CERVEN_POIS.mill.y).toBe(MARCH_THAW_POIS.mill.y);
+    expect(CERVEN_POIS.forest.x).toBe(MARCH_THAW_POIS.forest.x);
+    expect(CERVEN_POIS.forest.y).toBe(MARCH_THAW_POIS.forest.y);
+    expect(CERVEN_POIS.shrine.x).toBe(MARCH_THAW_POIS.shrine.x);
+    expect(CERVEN_POIS.shrine.y).toBe(MARCH_THAW_POIS.shrine.y);
   });
 
   it('resolves collision against cottages and tactical haystacks, clamping within arena bounds', () => {
@@ -91,6 +97,11 @@ describe('Level 7: Červen v Hrusicích (Arena Geometry & June Harvest Motifs)',
     // In open warm pond
     const pondEffect = getCervenWaterEffect(CERVEN_POIS.pond.x, CERVEN_POIS.pond.y, 10);
     expect(pondEffect.inOpenWater).toBe(true);
+
+    // In warm summer creek (around waypoint 885, 1420)
+    const streamEffect = getCervenWaterEffect(885, 1420, 10);
+    expect(streamEffect.inOpenWater).toBe(true);
+    expect(Math.hypot(streamEffect.carryVx, streamEffect.carryVy)).toBeCloseTo(20, 1);
   });
 
   it('safely renders all procedural June landmark decor items without canvas stack leaks', () => {
@@ -126,12 +137,20 @@ describe('Level 7: Červen v Hrusicích (Arena Geometry & June Harvest Motifs)',
       'cerven_tavern',
       'cerven_pond',
       'cerven_haystack',
+      'cerven_village',
+      'cerven_church',
+      'cerven_school',
     ];
 
     for (const lm of landmarks) {
       saveCount = 0;
       restoreCount = 0;
       expect(() => drawCervenSummerLandmark(mockCtx, lm, 5.0, false)).not.toThrow();
+      expect(saveCount).toBe(restoreCount);
+
+      saveCount = 0;
+      restoreCount = 0;
+      expect(() => drawCervenSummerLandmark(mockCtx, lm, 5.0, true)).not.toThrow();
       expect(saveCount).toBe(restoreCount);
     }
   });
