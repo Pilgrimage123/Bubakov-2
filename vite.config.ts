@@ -44,6 +44,18 @@ export default defineConfig({
           if (id.includes('src/render/marchThawSvgLandscape')) {
             return 'march-thaw-landscape';
           }
+          if (id.includes('src/render/kvetenSvgLandscape')) {
+            return 'kveten-landscape';
+          }
+          if (id.includes('src/render/cervenSvgLandscape')) {
+            return 'cerven-landscape';
+          }
+          if (id.includes('src/components/ControlsModal')) {
+            return 'controls-modal';
+          }
+          if (id.includes('src/game/engine')) {
+            return 'game-engine';
+          }
         },
       },
     },

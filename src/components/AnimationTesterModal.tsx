@@ -44,7 +44,7 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Veselý mlynářský tovaryš',
     desc: 'Pocestný tovaryš v zeleném klobouku s bílým perem a vřesem, červeném šátku s bílými puntíky, modré vestě se zlatými knoflíky, žlutých kalhotách s koženou záplatou a pruhovaných punčochách.',
     icon: 'krajanek',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawKrajanek(ctx, x, y, t, dx, dy, flee, scale),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawKrajanek(ctx, x, y, t, dx, dy, flee, scale, false, hurt),
   },
   {
     id: 'krajanek_ride',
@@ -52,7 +52,8 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Schopnost: Balancování na rotujícím kameni',
     desc: 'Krajánek hbitě surfuje na kutálejícím se mlýnském kameni, máchá oškrtelem a kolem srší jiskry a kamenné odštěpky.',
     icon: 'krajanek',
-    draw: (ctx, x, y, t, dx, dy, _flee, scale) => Lada.drawKrajanekRide(ctx, x, y, t, dx || 1, dy || 0, scale, 0.18, true, 1.05),
+    draw: (ctx, x, y, t, dx, dy, _flee, scale, hurt = false) =>
+      Lada.drawKrajanekRide(ctx, x, y, t, dx || 1, dy || 0, scale, 0.18, true, 1.05, hurt),
   },
   {
     id: 'wanderer',
@@ -60,7 +61,7 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Vesnický tulák z Hrusic',
     desc: 'Rozverný tulák v mechově zeleném záplatovaném kabátě, krátkým bílým vousem, fajfkou, červeným nosem, plnou mošnou, soudkem na opasku a sukovitou větvitou holí.',
     icon: 'wanderer',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale, false, 0, hurt),
   },
   {
     id: 'wanderer_whirl',
@@ -68,7 +69,7 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Schopnost: Pověstná sukovice',
     desc: 'Tulák se točí ve 360° vzdušném víru, máchá mohutnou sukovitou holí a šíří odstředivou sílu s vlajícími šosy a létající mošnou.',
     icon: 'wanderer',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale, true, (t * 0.9) % 1),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawWanderer(ctx, x, y, t, dx, dy, flee, scale, true, (t * 0.9) % 1, hurt),
   },
   {
     id: 'shepherd',
@@ -84,7 +85,7 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Bylinkářka z hlubokých hvozdů',
     desc: 'Moudrá žena v červeném šátku s nůší čerstvých bylin a květů. Důstojný krok lesní ranhojičky.',
     icon: 'herbs',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawKorenarka(ctx, x, y, t, dx, dy, flee, scale),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawKorenarka(ctx, x, y, t, dx, dy, flee, scale, hurt),
   },
   {
     id: 'watchman',
@@ -92,7 +93,7 @@ const HUNTERS_LIST: HunterDef[] = [
     title: 'Noční strážce v suknici',
     desc: 'Obrněný strážce v temném plášti s kovanou halapartnou a hořící lucernou. Klapající krok noční hlídky.',
     icon: 'lantern',
-    draw: (ctx, x, y, t, dx, dy, flee, scale) => Lada.drawWatchman(ctx, x, y, t, dx, dy, flee, scale),
+    draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) => Lada.drawWatchman(ctx, x, y, t, dx, dy, flee, scale, hurt),
   },
   {
     id: 'sexton',
@@ -118,7 +119,7 @@ const HUNTERS_LIST: HunterDef[] = [
     desc: 'Samostatný náhled Barunky se zapleteným copem s červenou mašlí, červenou šněrovačkou a kytičkou lučního kvítí.',
     icon: 'barunka',
     draw: (ctx, x, y, t, dx, dy, flee, scale, hurt = false) =>
-      Lada.drawBarunka(ctx, x, y, t, Math.abs(dx) > 0.1 || flee, scale * 1.2, flee, hurt, Math.hypot(dx, dy) > 1.25, dx < 0 ? -1 : 1),
+      Lada.drawBarunka(ctx, x, y, t, Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1 || flee, scale * 1.2, flee, hurt, Math.hypot(dx, dy) > 1.25, dx < 0 ? -1 : 1),
   },
   {
     id: 'valecnice',
@@ -332,6 +333,9 @@ export function AnimationTesterModal({ isOpen, onClose }: AnimationTesterModalPr
             const dx = isSprinting ? 1.8 * dir : isWalking ? 1 * dir : isFleeing ? 1.8 * dir : dir * 0.01;
             const dy = isSprinting ? 0.5 : isWalking ? 0.2 : isFleeing ? 0.4 : 0;
 
+            if (h.id !== 'krajanek_ride') {
+              Lada.drawShadow(ctx, cx, cy, 20 * zoomScale);
+            }
             if (h.id === 'granny') {
               Lada.drawGranny(ctx, cx, cy, t, dx, dy, isFleeing, zoomScale, grannyWithBarunka, isHurt);
             } else if (h.id === 'valecnice') {

@@ -268,6 +268,10 @@ _Avoid_: mob benchmark, enemy perf test, test zátěže monster
 Čistá vektorová kresba hrdiny štětcem na herní 2D plátno v ladovském tušovém a kvašovém stylu, určená pro plynulý běh bojové arény bez paměťových alokací.
 _Avoid_: sprite, lovecký sprite, spritový list, rastrový sprite
 
+**Pohybové stavy lovce**:
+Čtveřice čitelných tělesných postojů každého vesnického hrdiny na bojišti — klid s chůzí, zrychlený sprint s vířením prachu, úlek při zásahu a panický úprk po vyčerpání Kuráže — při nichž si postava drží poslední vodorovné natočení i během čistě svislého pohybu.
+_Avoid_: animační stavy spritu, hit animace, walk cycle
+
 **Procedurální kresba kramáře**:
 Interaktivní procedurální tušová a kvašová kresba Čertova dědečka s nůší a myškou Rézinkou na 2D plátně v kramářském krámku i dialogových oknech, nahrazující původní těžké Smart SVG komponenty.
 _Avoid_: SVG dědeček, DOM postava dědečka, kramářský sprite

@@ -780,6 +780,7 @@ export class GameEngine {
       ultMaxCd: cType === 'krajanek' ? KRAJANEK_ABILITY_COOLDOWN : cType === 'tulak' ? 21 : cType === 'babicka' ? 45 : cType === 'kostelnik' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
+      facingX: 1 as 1 | -1,
       animTime: 0,
       valecniceAngle: 0,
       valecniceOrbitDir: 1,
@@ -4320,6 +4321,9 @@ export class GameEngine {
         moveVy = steer.vyRatio * effectiveSpeed;
         player.lastDx = steer.vxRatio;
         player.lastDy = steer.vyRatio;
+        if (Math.abs(steer.vxRatio) > 0.01) {
+          player.facingX = steer.vxRatio > 0 ? 1 : -1;
+        }
         player.animTime += dt;
       } else if (mx !== 0 || my !== 0) {
         const len = Math.hypot(mx, my);
@@ -4328,9 +4332,12 @@ export class GameEngine {
         moveVy = (my / len) * effectiveSpeed;
         player.lastDx = mx;
         player.lastDy = my;
+        if (Math.abs(mx) > 0.01) {
+          player.facingX = mx > 0 ? 1 : -1;
+        }
         player.animTime += dt;
       } else {
-        player.animTime = 0;
+        player.animTime += dt;
       }
 
       let pushX = 0;

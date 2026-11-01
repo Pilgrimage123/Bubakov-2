@@ -1,3 +1,14 @@
+## 2026-11-01 – Sjednocené pohybové stavy lovců a vodorovné natočení (ADR 0039)
+
+- **Pohybové stavy lovců (`src/render/ladaRenderer.ts`)**:
+  - Krajánek, Tulák, Kořenářka a Ponocný dostali stejné čtyři stavy jako Pasáček, Kostelník a Babička: klid/chůze, sprint (prach za patami, vlající oděv), úlek po zásahu (záklon, vykulené oči, kapky potu) a úprk při nulové Kuráži.
+  - Chodidla zůstávají ukotvená na zemi, houpání a náklon se týká jen horní poloviny těla; z Kořenářky a Ponocného odstraněn duplicitní vnitřní stín; opraven únik `ctx.save()` ve vířící sukovici Tuláka.
+- **Vodorovné natočení (`src/game/engine.ts`, `src/App.tsx`)**:
+  - Nové `facingX` drží poslední vodorovný směr při čistě svislém pohybu (včetně Hromničky a Petrolejky), míření zbraní přes `lastDx`/`lastDy` zůstává beze změny.
+  - `animTime` běží spojitě i v klidu; `isHurt` se předává všem 7 lovcům i v Animačním testeru.
+- **Distribuce a rozdělení bundlu (`vite.config.ts`)**: nové chunky `kveten-landscape`, `cerven-landscape`, `game-engine`, `controls-modal`; hlavní `index.js` z 1 610 kB na 743 kB, bez varování.
+- **Dokumentace a testy**: nový pojem *Pohybové stavy lovce* v `GLOSSARY.md`, ADR 0039; `tests/animationTester.test.ts` pokrývá 7 lovců × 8 stavů, vyváženost zásobníku plátna a `facingX`. Všech 86 souborů (802 testů) a build prochází.
+
 ## 2026-10-31 — Aditivní škálování obtížnosti Výprav a kotevní benchmark (ADR 0038)
 
 - **Aditivní škálování obtížnosti Výprav a kotevní benchmark (ADR 0038 & `GLOSSARY.md`)**:

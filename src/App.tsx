@@ -3428,6 +3428,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       ultMaxCd: cType === 'krajanek' ? 30 : cType === 'tulak' ? 21 : cType === 'babicka' ? 45 : cType === 'kostelnik' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
+      facingX: 1 as 1 | -1,
       animTime: 0,
       valecniceAngle: 0,
       valecniceOrbitDir: 1,
@@ -3588,13 +3589,14 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           sound.hit();
           setGameState('fleeing');
           engineRef.current.fleeTimer = 3.0;
-          const fleeDirX = attacker ? (this.x - attacker.x) : (this.lastDx < 0 ? -1 : 1);
+          const fleeDirX = attacker ? (this.x - attacker.x) : ((this.facingX ?? (this.lastDx < 0 ? -1 : 1)) < 0 ? -1 : 1);
           const fleeDirY = attacker ? (this.y - attacker.y) : -0.25;
           const fleeLen = Math.hypot(fleeDirX, fleeDirY) || 1;
           this.fleeVx = (fleeDirX / fleeLen) * 235;
           this.fleeVy = (fleeDirY / fleeLen) * 235;
           this.lastDx = this.fleeVx >= 0 ? 1.8 : -1.8;
           this.lastDy = this.fleeVy >= 0 ? 0.5 : -0.5;
+          this.facingX = this.fleeVx >= 0 ? 1 : -1;
           engineRef.current.enemies.forEach((m) => {
             m.panicked = true;
             m.vx = -m.vx * 3;
@@ -3776,13 +3778,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             (this.pistalkaSpeedTimer ?? 0) > 0 ||
             (this.speedMultiplier ?? 1) > 1.28);
         const animT = this.animTime || engineRef.current?.uiTime || 0;
-        const facingSign = (this.lastDx ?? 1) >= 0 ? 1 : -1;
+        if (Math.abs(this.lastDx ?? 0) > 0.01) {
+          this.facingX = this.lastDx > 0 ? 1 : -1;
+        }
+        const facingSign: 1 | -1 = (this.facingX ?? ((this.lastDx ?? 1) < 0 ? -1 : 1)) < 0 ? -1 : 1;
+        const rawAbsDx = Math.abs(this.lastDx ?? 0);
+        const signedMoveDx = rawAbsDx > 0.01 ? this.lastDx : facingSign * 0.001;
         const drawDx = isPlayerMoving
           ? (isSprinting
-              ? facingSign * Math.max(1.6, Math.abs(this.lastDx) * 1.6)
-              : this.lastDx)
+              ? (rawAbsDx > 0.01 ? facingSign * Math.max(1.6, rawAbsDx * 1.6) : facingSign * 0.001)
+              : signedMoveDx)
           : facingSign * 0.001;
-        const drawDy = isPlayerMoving ? (isSprinting ? this.lastDy * 1.6 : this.lastDy) : 0;
+        const rawAbsDy = Math.abs(this.lastDy ?? 0);
+        const drawDy = isPlayerMoving
+          ? (isSprinting
+              ? (rawAbsDy > 0.01 ? (this.lastDy > 0 ? 1 : -1) * Math.max(1.6, rawAbsDy * 1.6) : this.lastDy * 1.6)
+              : this.lastDy)
+          : 0;
 
         if (this.type === 'krajanek') {
           Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
@@ -3805,9 +3817,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               this.krajanekTilt || 0,
               Boolean(this.krajanekIsDrifting),
               colossusScale,
+              isHurt,
             );
           } else {
-            Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
+            Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, false, isHurt);
           }
         } else if (this.type === 'tulak' || this.type === 'wanderer') {
           const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
@@ -3816,9 +3829,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else if (this.type === 'pasacek' || this.type === 'shepherd') {
           Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'korenarka') {
-          Lada.drawKorenarka(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
+          Lada.drawKorenarka(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'ponocny' || this.type === 'watchman') {
-          Lada.drawWatchman(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1);
+          Lada.drawWatchman(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'kostelnik' || this.type === 'sexton') {
           Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
         } else if (this.type === 'babicka' || this.type === 'granny') {
@@ -3831,15 +3844,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Draw blessed candle in hand if Hromnička is equipped
         if (this._hromnickaWeapon) {
-          const flip = this.lastDx >= 0 ? 1 : -1;
-          Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, this.animTime || 0);
+          const flip = facingSign;
+          Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, animT);
         }
 
         // Draw Petrolejka brass lantern in hand during low-visibility phases
         const petrolejkaRadius = engineRef.current?.petrolejkaLight?.radius ?? 0;
         if (petrolejkaRadius > 0) {
           const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
-          const flip = this.lastDx >= 0 ? 1 : -1;
+          const flip = facingSign;
           Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
         }
       },
@@ -6822,6 +6835,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               moveVy = steer.vyRatio * effectiveSpeed;
               player.lastDx = steer.vxRatio;
               player.lastDy = steer.vyRatio;
+              if (Math.abs(steer.vxRatio) > 0.01) {
+                player.facingX = steer.vxRatio > 0 ? 1 : -1;
+              }
               player.animTime += dt;
             } else if (mx !== 0 || my !== 0) {
               const len = Math.hypot(mx, my);
@@ -6831,9 +6847,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               moveVy = my * normScale * effectiveSpeed;
               player.lastDx = mx * normScale;
               player.lastDy = my * normScale;
+              if (Math.abs(mx) > 0.01) {
+                player.facingX = mx > 0 ? 1 : -1;
+              }
               player.animTime += dt;
             } else {
-              player.animTime = 0;
+              player.animTime += dt;
             }
 
             // Výpočet odporu a odtlačení davu v 1 průchodu přes spatialHash.queryRadius
@@ -8419,12 +8438,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           } else if (currentGameState === 'fleeing') {
             engine.fleeTimer -= dt;
             player.animTime = (player.animTime || 0) + dt * 1.6;
-            const fleeVx = typeof player.fleeVx === 'number' ? player.fleeVx : (player.lastDx < 0 ? -220 : 220);
+            const fleeVx = typeof player.fleeVx === 'number' ? player.fleeVx : ((player.facingX ?? (player.lastDx < 0 ? -1 : 1)) < 0 ? -220 : 220);
             const fleeVy = typeof player.fleeVy === 'number' ? player.fleeVy : -45;
             player.x += fleeVx * dt;
             player.y += fleeVy * dt;
             player.lastDx = fleeVx < 0 ? -1.8 : 1.8;
             player.lastDy = fleeVy < 0 ? -0.5 : 0.5;
+            player.facingX = fleeVx < 0 ? -1 : 1;
             if (engine.fleeTimer <= 0) {
               // Transition to tally screen
               setTallyCounters({
