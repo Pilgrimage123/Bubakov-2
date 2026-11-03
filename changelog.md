@@ -1,3 +1,23 @@
+## 2026-11-03 – Renesance Pohádkové knihy, ex-libris vazba a literární typografie (ADR 0040)
+
+- **Pohádková kniha Bubákova jako výchozí režim (`src/App.tsx`, `GLOSSARY.md`, ADR 0040)**:
+  - Hlavní nabídka (`stage select`) se nově po spuštění hry otevírá přímo do ilustrované dvojstrany `LadaStorybookSpread` s dřevoryty, šelestem stránek a plátěnými záložkami namísto sterilní mřížky karet.
+  - Volba hráče (včetně případného přepnutí na mřížku `grid`) je perzistentně uložena v `localStorage` (`bubakov_menu_view_mode`), takže preferovaný styl hráče zůstává zachován.
+  - Prvky mřížkového výběru (výběr dynamické obtížnosti, spodní potvrzovací lišta a hlavní navigační lišta) jsou důsledně zapouzdřeny v `{menuViewMode === 'grid'}`, aby v knižním módu neprosakovaly pod otevřenou knihu.
+- **Hřejivý knižní papír chamois a knihařská vazba (`src/index.css`)**:
+  - Odstraněn studený tečkovaný rastr i nepatřičné tmavé fleky. Panely a modální okna přešly na hřejivý tón ofsetového papíru chamois (`#F4ECD8` až `#EFE4CE`) s přirozeným stínováním a tmavě zelenou plátěnou vazbou (`border-left: 14px solid #25382C`).
+  - Dvojstrana knihy nese měkký stín hřbetu uprostřed, zatímco modály mají knihařskou vazbu po levé straně.
+- **Ex-libris vnitřní linka v kartách (`src/components/LadaCardCorners.tsx`, `src/index.css`)**:
+  - Rohové lidové květy a lístky jsou po obvodu karty svázány jemnou 1px vnitřní linkou (`inset: 5px`) do ucelené viněty, která přirozeně reaguje na stav karty (karmínová, inkoustová, zlatavá, hnědá) bez jakéhokoliv přetékání mimo kartu.
+  - Nastaven jednoznačný kontext vrstvení (`z-index: 1` základ, `z-index: 5` pro `:hover`) pro karty výprav, lovců i trofejí, eliminující překryvy stínů a ořezávání v mřížce.
+  - Odstraněny redundantní linky `::before` u `.vignette-card` a `.pause-weapon-card`.
+- **Literární typografie a knižní záložky (`src/components/PlanModal.tsx`, `src/index.css`)**:
+  - Zavedena stylizovaná dřevorytová iniciála (`LadaDropCap` a třída `.lada-initial-letter`) na úvodních odstavcích oken.
+  - V záhlaví modálů vykukuje textilní knižní záložka s červeným stehem odkazující na řemeslnou knižní vazbu.
+- **Kanonizace pojmů a dokumentace (`GLOSSARY.md`, `src/components/KronikaChanges.tsx`, ADR 0040)**:
+  - Přesně rozlišeny pojmy *Pohádková kniha Bubákova* (ústřední herní dvojstrana), *Kronika výpravy* (záznam cílů v poli) a *Kronika Bubákova* (záznamy verzí a historie změn).
+  - Přidán architektonický záznam `docs/adr/0040-renesance-pohadkove-knihy-a-ex-libris-typografie.md`.
+
 ## 2026-11-01 – Sjednocené pohybové stavy lovců a vodorovné natočení (ADR 0039)
 
 - **Pohybové stavy lovců (`src/render/ladaRenderer.ts`)**:
