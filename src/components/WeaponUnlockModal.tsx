@@ -550,7 +550,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
   return (
     <div className="overlay" style={{ zIndex: 50 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '660px',
           width: '95%',
@@ -562,7 +562,17 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA BUBÁKOVA · KOVÁŘSKÝ NÁČRT ZBRANĚ</span>
+          <span>
+            List zbrojnice · <strong>{progress.percent} % ukováno</strong>
+          </span>
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
             <div

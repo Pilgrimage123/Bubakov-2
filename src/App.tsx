@@ -173,6 +173,8 @@ import { LadaCoverScene } from './components/LadaCoverScene';
 import { LadaCardCorners } from './components/LadaCardCorners';
 import { LadaBotanicalFlourish } from './components/LadaBotanicalFlourish';
 import { LadaHudBotanicalDecor, LadaFolkFlower, LadaFloralGarland } from './components/LadaHudBotanicalDecor';
+import { LadaBookSvgDefs, LadaStorybookSpread, LadaDropCap, LadaLindenVineta } from './components/LadaStorybookSpread';
+import { ladaPageFoley } from './components/ladaPageTurnAudio';
 import { GrandfatherShop } from './components/GrandfatherShop';
 import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
@@ -1402,6 +1404,7 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     dragon_cave: 24,
     spring_river: 45,
     spring_village: 38,
+    summer_harvest: 38,
   };
 
   const target = themeDensity[level.theme] || 32;
@@ -7774,6 +7777,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (waterEffect.inOpenWater) {
                 player.x += waterEffect.carryVx * dt;
                 player.y += waterEffect.carryVy * dt;
+                player.waterSoakedTimer = Math.max(player.waterSoakedTimer || 0, 0.6);
               }
 
               // 6. SV. JAN NEPOMUCKÝ: Holy aura panicking nearby unholy/demons
@@ -10060,19 +10064,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Dedicated Stage 1 & Stage 3 Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
+        // Dedicated Daylight Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
         const sunFgCanvas = sunForegroundCanvasRef.current;
         if (sunFgCanvas) {
           if (sunFgCanvas.width !== canvas.width) sunFgCanvas.width = canvas.width;
           if (sunFgCanvas.height !== canvas.height) sunFgCanvas.height = canvas.height;
-          const shouldRenderSunFg = (curLvl.id === 0 || curLvl.id === 2) && currentGameState === 'playing' && !engine.cutscene;
+          const shouldRenderSunFg = (curLvl.id === 0 || curLvl.id === 2 || curLvl.id === 4 || curLvl.id === 6) && currentGameState === 'playing' && !engine.cutscene;
           if (shouldRenderSunFg || (sunFgCanvas as any).__dirty) {
             const sunFgCtx = sunFgCanvas.getContext('2d');
             if (sunFgCtx) {
               sunFgCtx.clearRect(0, 0, sunFgCanvas.width, sunFgCanvas.height);
               if (shouldRenderSunFg) {
                 const tSunOverlayStart = performance.now();
-                const sunVariant = curLvl.id === 2 ? 'duben' : 'march';
+                const sunVariant = curLvl.id === 0 ? 'march' : 'duben';
                 renderSunForegroundOverlay(
                   sunFgCtx,
                   canvas.width,
@@ -15261,40 +15265,73 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
             </div>
 
+            <LadaBookSvgDefs />
             <BubakovCoverTitle />
 
-            {/* RYCHLÝ PRŮVODCE: JAK HRÁT (BULLET HEAVEN PO ČESKU) */}
+            {/* OTEVŘENÁ POHÁDKOVÁ KNIHA BUBÁKOVA (1930–1950 SNDK / ALBATROS DVOJSTRANA) */}
+            <LadaStorybookSpread
+              meta={meta}
+              selectedLevelId={selectedLevelId}
+              levelProgress={levelProgress}
+              onSelectLevel={(lvlId) => {
+                setSelectedLevelId(lvlId);
+                saveMeta({ ...meta, selectedLevel: lvlId });
+              }}
+              onInspectLockedLevel={(prog) => {
+                setSelectedLevelDetail(prog);
+              }}
+              onProceedToHunters={() => setMenuScreen('hunter')}
+              onQuickStartWithHunter={(hunterId) => {
+                const hp = getHunterProgress(hunterId, meta);
+                if (hp.isUnlocked) {
+                  startGame(hunterId);
+                } else {
+                  setMenuScreen('hunter');
+                }
+              }}
+              onOpenTavern={() => setGameState('tavern')}
+              onOpenArsenal={() => setIsArsenalOpen(true)}
+              onOpenBestiary={() => setIsBestiaryOpen(true)}
+              onOpenControls={() => setIsControlsOpen(true)}
+              unlockedWeaponsCount={unlockedWeaponsCount}
+              totalWeaponsCount={Object.keys(WEAPONS).length}
+            />
+
+            {/* RYCHLÝ PRŮVODCE: JAK HRÁT (BULLET HEAVEN PO ČESKU — VLOŽENÝ KNIŽNÍ EX LIBRIS LÍSTEK) */}
             {!hideHowToPlayCard && (
-              <div className="bubakov-how-to-play-card">
+              <div className="bubakov-how-to-play-card lada-ex-libris-slip">
+                <span className="lada-brass-pin" aria-hidden="true" />
                 <LadaCardCorners variant="default" showBottomCorners={true} showInnerBorder={false} />
                 <div className="how-to-play-content">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                  <div className="lada-ex-libris-kicker" style={{ marginBottom: '2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    <span>📖 VLOŽENÝ LÍSTEK Z KRONIKY</span>
+                    <span>Rady na cestu</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <LadaFolkFlower variant="poppy" size={16} spin />
-                      <strong style={{ color: '#991B1B', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                        <GameIcon icon="palette" size={16} /> Jak hrát Bubákov?
+                      <strong style={{ color: '#C83E2B', fontFamily: 'var(--font-signpost)', fontSize: '0.96rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <GameIcon icon="palette" size={16} /> Jak hrát Bubákov
                       </strong>
-                      <span style={{ color: '#78350F', fontSize: '0.76rem', fontWeight: 800, background: '#FEF08A', border: '1px solid #D97706', borderRadius: '4px', padding: '1px 6px' }}>
-                        Oddychový „Bullet Heaven“ po česku
-                      </span>
                       <LadaFolkFlower variant="cornflower" size={16} />
                     </div>
 
-                    {/* Quick Mode Switcher */}
-                    <div style={{ display: 'inline-flex', gap: '3px', background: 'rgba(180, 83, 9, 0.12)', border: '1px solid #B45309', borderRadius: '6px', padding: '2px' }}>
+                    {/* Quick Mode Switcher — Josef Lada Book Ribbon Toggles */}
+                    <div style={{ display: 'inline-flex', gap: '4px', background: '#F2E5C6', border: '2px solid #1C1613', borderRadius: '6px', padding: '2px', boxShadow: '2px 2px 0 #1C1613' }}>
                       <button
                         type="button"
                         onClick={() => {
                           sound.coin();
+                          ladaPageFoley.playCornerHover();
                           setQuickGuideMode('touch');
                         }}
                         style={{
-                          background: quickGuideMode === 'touch' ? '#6D28D9' : 'transparent',
-                          color: quickGuideMode === 'touch' ? '#FFFFFF' : '#6D28D9',
-                          border: 'none',
+                          background: quickGuideMode === 'touch' ? '#C83E2B' : 'transparent',
+                          color: quickGuideMode === 'touch' ? '#F6EBD8' : '#221B17',
+                          border: quickGuideMode === 'touch' ? '1.5px solid #1C1613' : '1.5px solid transparent',
                           borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '0.74rem',
+                          padding: '3px 9px',
+                          fontSize: '0.75rem',
                           fontWeight: 900,
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -15309,15 +15346,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         type="button"
                         onClick={() => {
                           sound.coin();
+                          ladaPageFoley.playCornerHover();
                           setQuickGuideMode('keyboard');
                         }}
                         style={{
-                          background: quickGuideMode === 'keyboard' ? '#1D4ED8' : 'transparent',
-                          color: quickGuideMode === 'keyboard' ? '#FFFFFF' : '#1E3A8A',
-                          border: 'none',
+                          background: quickGuideMode === 'keyboard' ? '#2B5B84' : 'transparent',
+                          color: quickGuideMode === 'keyboard' ? '#F6EBD8' : '#221B17',
+                          border: quickGuideMode === 'keyboard' ? '1.5px solid #1C1613' : '1.5px solid transparent',
                           borderRadius: '4px',
-                          padding: '3px 8px',
-                          fontSize: '0.74rem',
+                          padding: '3px 9px',
+                          fontSize: '0.75rem',
                           fontWeight: 900,
                           cursor: 'pointer',
                           display: 'inline-flex',
@@ -15332,35 +15370,37 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   </div>
 
                   {quickGuideMode === 'touch' ? (
-                    <div>
-                      Zbraně <strong>automaticky kosí strašidla</strong> – ty jen ladně manévruješ po loukách, sbíráš perníčky a užíváš si čirou radost z obří palebné síly!
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '4px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#EDE9FE', border: '1px solid #7C3AED', borderRadius: '4px', padding: '2px 6px', color: '#5B21B6', fontWeight: 800, fontSize: '0.78rem' }}>
+                    <div style={{ lineHeight: 1.45 }}>
+                      <LadaDropCap letter="Z" variant="poppy" />
+                      braně <strong>automaticky kosí strašidla</strong> – ty jen ladně manévruješ po loukách, sbíráš perníčky a užíváš si čirou radost z obří palebné síly!
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '6px', clear: 'both' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #2B5B84', borderRadius: '4px', padding: '2px 7px', color: '#2B5B84', fontWeight: 800, fontSize: '0.78rem' }}>
                           🕹️ <strong>Virtuální joystick vlevo dole</strong> řídí pohyb
                         </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEE2E2', border: '1px solid #DC2626', borderRadius: '4px', padding: '2px 6px', color: '#991B1B', fontWeight: 800, fontSize: '0.78rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #C83E2B', borderRadius: '4px', padding: '2px 7px', color: '#C83E2B', fontWeight: 800, fontSize: '0.78rem' }}>
                           <GameIcon icon="lightning" size={14} /> <strong>Tlačítko ⚡ vpravo dole</strong> odpálí schopnost
                         </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1px solid #D97706', borderRadius: '4px', padding: '2px 6px', color: '#92400E', fontWeight: 800, fontSize: '0.78rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1.5px solid #6E3B1E', borderRadius: '4px', padding: '2px 7px', color: '#6E3B1E', fontWeight: 800, fontSize: '0.78rem' }}>
                           <PernicekIcon size={14} /> <strong>Dotykové [E]</strong> otevře nůši Dědečka i pamětihodnosti
                         </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#ECFDF5', border: '1px solid #059669', borderRadius: '4px', padding: '2px 6px', color: '#065F46', fontWeight: 800, fontSize: '0.78rem' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #4D784E', borderRadius: '4px', padding: '2px 7px', color: '#4D784E', fontWeight: 800, fontSize: '0.78rem' }}>
                           🃏 <strong>Dotykem na karty</strong> volíš zbraně a dary
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <div>
-                      Zbraně <strong>automaticky kosí strašidla</strong> – ty jen uhýbáš <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>WASD</kbd> / <kbd style={{ background: '#1c1917', color: '#FEF3C7', padding: '0 4px', borderRadius: '3px', fontSize: '0.74rem' }}>Šipky</kbd>, odemykáš vylepšení a užíváš si čirou radost, jak moc ti to střílí!
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '4px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEE2E2', border: '1px solid #DC2626', borderRadius: '4px', padding: '2px 6px', color: '#991B1B', fontWeight: 800, fontSize: '0.78rem' }}>
-                          <GameIcon icon="lightning" size={14} /> <kbd style={{ background: '#991B1B', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>Mezerník</kbd> spustí speciální zbraň
+                    <div style={{ lineHeight: 1.45 }}>
+                      <LadaDropCap letter="Z" variant="cobalt" />
+                      braně <strong>automaticky kosí strašidla</strong> – ty jen uhýbáš <kbd style={{ background: '#221B17', color: '#F6EBD8', padding: '0 5px', borderRadius: '3px', fontSize: '0.74rem' }}>WASD</kbd> / <kbd style={{ background: '#221B17', color: '#F6EBD8', padding: '0 5px', borderRadius: '3px', fontSize: '0.74rem' }}>Šipky</kbd>, odemykáš vylepšení a užíváš si čirou radost, jak moc ti to střílí!
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '6px', clear: 'both' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #C83E2B', borderRadius: '4px', padding: '2px 7px', color: '#C83E2B', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <GameIcon icon="lightning" size={14} /> <kbd style={{ background: '#C83E2B', color: '#F6EBD8', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>Mezerník</kbd> spustí speciální zbraň
                         </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1px solid #D97706', borderRadius: '4px', padding: '2px 6px', color: '#92400E', fontWeight: 800, fontSize: '0.78rem' }}>
-                          <PernicekIcon size={14} /> Za perníčky přijde <strong>Čertův dědeček</strong> (<kbd style={{ background: '#047857', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> pro nůši)
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1.5px solid #6E3B1E', borderRadius: '4px', padding: '2px 7px', color: '#6E3B1E', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <PernicekIcon size={14} /> Za perníčky přijde <strong>Čertův dědeček</strong> (<kbd style={{ background: '#4D784E', color: '#F6EBD8', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> pro nůši)
                         </span>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#EFF6FF', border: '1px solid #2563EB', borderRadius: '4px', padding: '2px 6px', color: '#1E40AF', fontWeight: 800, fontSize: '0.78rem' }}>
-                          <GameIcon icon="church" size={14} /> Klávesou <kbd style={{ background: '#1D4ED8', color: '#FFF', padding: '0 4px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> ovládáš kostel, hospodu i kapličku
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #2B5B84', borderRadius: '4px', padding: '2px 7px', color: '#2B5B84', fontWeight: 800, fontSize: '0.78rem' }}>
+                          <GameIcon icon="church" size={14} /> Klávesou <kbd style={{ background: '#2B5B84', color: '#F6EBD8', padding: '0 5px', borderRadius: '3px', fontWeight: 900, fontSize: '0.74rem' }}>E</kbd> ovládáš kostel, hospodu i kapličku
                         </span>
                       </div>
                     </div>
@@ -15371,8 +15411,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   <button
                     className="lada-btn btn-small"
                     style={{
-                      background: '#1D4ED8',
-                      color: '#FFFFFF',
+                      background: '#2B5B84',
+                      color: '#F6EBD8',
                       fontWeight: 900,
                       padding: '8px 14px',
                       fontSize: '0.82rem',
@@ -15383,19 +15423,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }}
                     onClick={() => {
                       sound.coin();
+                      ladaPageFoley.playFullPageTurn(0);
                       setIsControlsOpen(true);
                     }}
                     title="Otevřít podrobného průvodce Jak hrát, ovládání, pamětihodnosti v krajině a arzenál"
                   >
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <GameIcon icon="gamepad" size={15} /> Jak hrát & Ovládání
+                      <GameIcon icon="gamepad" size={15} /> Jak hrát &amp; Ovládání
                     </span>
                   </button>
                   <button
                     className="lada-btn btn-small"
                     style={{
-                      background: '#FDE68A',
-                      color: '#451A03',
+                      background: '#E2A83B',
+                      color: '#221B17',
                       fontWeight: 900,
                       padding: '8px 12px',
                       fontSize: '0.78rem',
@@ -15836,8 +15877,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* 2. OBRAZOVKA: VÝBĚR LOVCE (HUNTER SELECT) */}
       {gameState === 'menu' && menuScreen === 'hunter' && (
         <div id="hunter-menu" className="overlay">
-          <div className="panel" style={{ maxWidth: '1040px', position: 'relative' }}>
+          <div className="panel lada-storybook-modal" style={{ maxWidth: '1040px', position: 'relative' }}>
+            <LadaBookSvgDefs />
+            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+            <div className="lada-page-running-header" style={{ marginBottom: '8px' }}>
+              <span>📖 KRONIKA BUBÁKOVA · SNDK PRAHA</span>
+              <span>
+                Kapitola IV · Družina venkovských lovců · <strong>Str. 12–13</strong>
+              </span>
+            </div>
+
             {/* Top Navigation Bar: Back button and chosen stage badge */}
             <div className="hunter-screen-nav-bar">
               <button
@@ -15853,6 +15907,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
                 onClick={() => {
                   sound.coin();
+                  ladaPageFoley.playFullPageTurn(0);
                   setMenuScreen('stage');
                 }}
               >
@@ -15863,6 +15918,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 className="hunter-stage-chip"
                 onClick={() => {
                   sound.coin();
+                  ladaPageFoley.playFullPageTurn(0);
                   setMenuScreen('stage');
                 }}
                 title="Klikněte pro změnu výpravy"
@@ -16016,8 +16072,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* PAUSE MODAL (ODPOČINEK U MILNÍKU) */}
       {gameState === 'paused' && (
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
-          <div className="panel" style={{ maxWidth: '820px', position: 'relative' }}>
+          <div className="panel lada-storybook-modal" style={{ maxWidth: '840px', position: 'relative' }}>
+            <LadaBookSvgDefs />
+            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+            <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+              <span>📖 KRONIKA BUBÁKOVA · ODPOČINEK U MILNÍKU</span>
+              <span>
+                Pozastavená výprava · Zápisník v poli · <strong>Str. 14</strong>
+              </span>
+            </div>
+
             <h1>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <LadaFolkFlower variant="buttercup" size={22} spin />
@@ -16277,7 +16346,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 perks.push({
                   icon: 'krvave_jelito',
                   name: `Krvavé jelito`,
-                  desc: `Násobení poškození všech zbraní ×${(1.15 ** pl.jelitoCount).toFixed(2)}; každý stack je ×1,15`,
+                  desc: `Násobení poškození všech zbraní ×${(1.15 ** pl.jelitoCount).toFixed(2)}; každý kus násobí ×1,15`,
                   badge: `${pl.jelitoCount}×`,
                 });
               }
@@ -16285,7 +16354,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 perks.push({
                   icon: 'bag',
                   name: `Tulácký instinkt`,
-                  desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi damage multiplikátory`,
+                  desc: `+${pl.tulakDamageBonus} % k poškození všech zbraní (+35 % síla úderu); násobí se se všemi násobiteli poškození`,
                   badge: `+${pl.tulakDamageBonus} %`,
                 });
               }
@@ -16706,8 +16775,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* TALLY SCREEN */}
       {gameState === 'tally' && (
         <div id="tally-screen" className="overlay">
-          <div className="panel" style={{ maxWidth: '780px', margin: 'auto', position: 'relative' }}>
+          <div className="panel lada-storybook-modal" style={{ maxWidth: '800px', margin: 'auto', position: 'relative' }}>
+            <LadaBookSvgDefs />
+            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+            <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+              <span>📖 KRONIKA BUBÁKOVA · ZÁVĚREČNÝ ZÁPIS VÝPRAVY</span>
+              <span>
+                Doslov kapitoly · Sečtení kořisti · <strong>Str. 16</strong>
+              </span>
+            </div>
+
             <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
               {tallyCounters.isVictory ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
@@ -16843,8 +16925,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       {/* TAVERN & VILLAGE SCREEN */}
       {gameState === 'tavern' && (
         <div id="tavern-screen" className="overlay">
-          <div className="panel" style={{ maxWidth: '1000px', position: 'relative' }}>
+          <div className="panel lada-storybook-modal" style={{ maxWidth: '1000px', position: 'relative' }}>
+            <LadaBookSvgDefs />
+            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+            <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+              <span>📖 KRONIKA BUBÁKOVA · OBECNÍ ŠENK A SYSLOVSKÉ VÝZVY</span>
+              <span>
+                Kapitola V · Hospoda U Černého kocoura · <strong>Str. 18–19</strong>
+              </span>
+            </div>
+
             <h1 style={{ color: '#C53026', margin: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <LadaFolkFlower variant="buttercup" size={24} spin />
               HOSPODA U ČERNÉHO KOCOURA <GameIcon icon="beer" size={32} />
@@ -16854,14 +16949,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             <p style={{ fontWeight: 900, fontSize: '1.25rem', marginTop: '-4px', color: 'var(--wood-dark)' }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}><GameIcon icon="music_on" size={18} /> V koutě vyhrávají pekelné dudy a voní čerstvý chléb... <GameIcon icon="music_on" size={18} /></span>
             </p>
-            <LadaCoverScene height={150} />
+            <LadaCoverScene height={180} />
             <LadaFrieze repeatCount={18} height={20} />
 
             <div className="modal-tabs" style={{ marginBottom: '14px' }}>
               <button
-                className={`tab-btn ${activeTavernTab === 'crafts' ? 'active' : ''}`}
+                className={`tab-btn lada-bookmark-ribbon ribbon-poppy ${activeTavernTab === 'crafts' ? 'active' : ''}`}
                 onClick={() => {
                   setActiveTavernTab('crafts');
+                  ladaPageFoley.playFullPageTurn(0);
                   sound.coin();
                 }}
               >
@@ -16870,9 +16966,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </span>
               </button>
               <button
-                className={`tab-btn ${activeTavernTab === 'trophies' ? 'active' : ''}`}
+                className={`tab-btn lada-bookmark-ribbon ribbon-ochre ${activeTavernTab === 'trophies' ? 'active' : ''}`}
                 onClick={() => {
                   setActiveTavernTab('trophies');
+                  ladaPageFoley.playFullPageTurn(0);
                   sound.coin();
                 }}
               >

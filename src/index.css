@@ -29,8 +29,25 @@
   --dark-blue: #1E3A8A;
   --blue: #2563EB;
 
+  /* 1930s–1950s SNDK / Albatros Josef Lada Palette & Book Material Tokens */
+  --lada-cobalt: #2B5B84;
+  --lada-poppy: #C83E2B;
+  --lada-ochre: #E2A83B;
+  --lada-willow: #4D784E;
+  --lada-plaster: #F6EBD8;
+  --lada-ink: #1C1613;
+  --lada-letterpress: #221B17;
+  --lada-binding: #25382C;
+  --lada-paper-center: #F2E5C6;
+  --lada-paper-margin: #D5B886;
+  --lada-paper-gutter: #B59461;
+  --lada-foxing-1: #8F5330;
+  --lada-foxing-2: #6E3B1E;
+
   /* Typography tokens */
-  --font-display: 'Eczar', serif;
+  --font-display: 'Eczar', 'Berkshire Swash', serif;
+  --font-storybook: 'Alegreya', 'Eczar', Georgia, serif;
+  --font-signpost: 'Berkshire Swash', 'Rye', 'Eczar', serif;
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
   /* Focus & Accessibility tokens */
@@ -170,25 +187,32 @@ body {
 }
 
 .panel {
-  background-color: #FAF5E8;
-  background-image: 
-    radial-gradient(#E8DDC3 1.2px, transparent 1.2px),
-    linear-gradient(to bottom, #FAF5E8, #F4EBD8);
-  background-size: 20px 20px, 100% 100%;
-  border: 4px solid var(--ink);
-  border-left: 14px solid var(--lada-spine);
+  background-color: #F2E5C6;
+  background-image:
+    radial-gradient(circle at 8% 12%, rgba(143, 83, 48, 0.22) 0%, transparent 9%),
+    radial-gradient(circle at 93% 14%, rgba(110, 59, 30, 0.19) 0%, transparent 8%),
+    radial-gradient(circle at 6% 88%, rgba(143, 83, 48, 0.24) 0%, transparent 11%),
+    radial-gradient(circle at 92% 86%, rgba(110, 59, 30, 0.20) 0%, transparent 10%),
+    radial-gradient(ellipse at center, #F2E5C6 58%, #D5B886 92%, #B59461 100%);
+  border: 4px solid #1C1613;
+  border-left: 14px solid #25382C;
   border-radius: 14px;
-  padding: 1.75rem 2rem;
-  color: var(--ink);
-  box-shadow: 10px 10px 0px var(--ink), inset 0 0 0 1.5px rgba(43, 26, 14, 0.28), inset 0 0 25px rgba(138, 92, 54, 0.08);
+  padding: 1.65rem 1.9rem;
+  color: #221B17;
+  box-shadow:
+    0 0 0 4px #25382C,
+    10px 10px 0px #1C1613,
+    inset 0 0 0 2px rgba(28, 22, 19, 0.28),
+    inset 16px 0 28px rgba(181, 148, 97, 0.38),
+    inset 0 0 32px rgba(143, 83, 48, 0.16);
   text-align: center;
   position: relative;
-  max-height: 90vh;
-  max-height: 90dvh;
+  max-height: 92vh;
+  max-height: 92dvh;
   overflow-y: auto;
   overflow-x: hidden;
-  width: 95%;
-  max-width: 980px;
+  width: 96%;
+  max-width: 1080px;
   box-sizing: border-box;
   min-height: 0;
 }
@@ -197,64 +221,64 @@ body {
   width: 12px;
 }
 .panel::-webkit-scrollbar-track {
-  background: #E8DCC2;
-  border: 2px solid var(--ink);
+  background: #D5B886;
+  border: 2px solid #1C1613;
   border-radius: 6px;
 }
 .panel::-webkit-scrollbar-thumb {
-  background: var(--mustard);
-  border: 2px solid var(--ink);
+  background: #E2A83B;
+  border: 2px solid #1C1613;
   border-radius: 6px;
 }
 
 .panel h1, .panel h2 {
   margin-top: 0;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  font-family: 'Eczar', serif;
+  font-family: 'Eczar', 'Berkshire Swash', serif;
 }
 
 .panel h1 {
-  font-size: 3rem;
-  color: #C53026;
+  font-size: 2.85rem;
+  color: #C83E2B;
   margin-bottom: 8px;
   line-height: 1.1;
-  text-shadow: 2.5px 2.5px 0px var(--ink);
+  text-shadow: 2.5px 2.5px 0px #1C1613;
 }
 
 .panel h2 {
   font-size: 1.85rem;
-  color: #3D7843;
-  text-shadow: 2px 2px 0px var(--ink);
+  color: #4D784E;
+  text-shadow: 2px 2px 0px #1C1613;
 }
 
 .lada-btn {
-  background-color: var(--blood-red);
-  color: #FAF5E8;
-  border: 3.5px solid var(--ink);
+  background-color: #C83E2B;
+  color: #F6EBD8;
+  border: 3.5px solid #1C1613;
   border-radius: 8px;
   padding: 10px 20px;
   font-family: 'Eczar', serif;
   font-size: 1.15rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 4px 4px 0px var(--ink);
-  transition: all 0.1s ease-out;
+  box-shadow: 4px 4px 0px #1C1613, inset 0 0 0 2px rgba(28, 22, 19, 0.22);
+  transition: transform 0.14s steps(4), background-color 0.14s steps(4), box-shadow 0.14s steps(4);
   margin: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .lada-btn:hover {
-  background-color: var(--mustard);
-  color: var(--ink);
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px var(--ink);
+  background-color: #E2A83B;
+  color: #221B17;
+  transform: translate(-1.5px, -1.5px) rotate(-0.4deg);
+  box-shadow: 5.5px 5.5px 0px #1C1613, inset 0 0 0 2px rgba(143, 83, 48, 0.35);
 }
 
 .lada-btn:active {
   transform: translate(4px, 4px);
-  box-shadow: 0px 0px 0px var(--ink);
+  box-shadow: 0px 0px 0px #1C1613;
 }
 
 .btn-small {
@@ -3742,9 +3766,1322 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  transition: all 0.15s steps(4);
   user-select: none;
   font-family: 'Eczar', serif;
 }
 
+/* ============================================================================
+   1930s–1950s SNDK / ALBATROS JOSEF LADA FAIRY-TALE BOOK SPREAD UI
+   ============================================================================ */
 
+/* Hardcover Binding Edge (#25382C forest-green cloth peeking 14px out) */
+.lada-book-hardcover {
+  position: relative;
+  margin: 10px 0 18px 0;
+  padding: 14px;
+  background-color: #25382C;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.04) 0px,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.14) 0px,
+      rgba(0, 0, 0, 0.14) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  border: 4px solid #1C1613;
+  border-radius: 14px;
+  box-shadow:
+    8px 10px 0px #1C1613,
+    inset 0 0 0 2px rgba(226, 168, 59, 0.35);
+}
+
+/* Brass / Gold Corner Protectors on Hardcover Binding */
+.lada-brass-corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #F6EBD8 0%, #E2A83B 45%, #8F5330 100%);
+  border: 2.5px solid #1C1613;
+  z-index: 6;
+  pointer-events: none;
+}
+.lada-brass-tl,
+.lada-brass-corner.corner-tl {
+  top: -3px;
+  left: -3px;
+  border-radius: 12px 0 10px 0;
+}
+.lada-brass-tr,
+.lada-brass-corner.corner-tr {
+  top: -3px;
+  right: -3px;
+  border-radius: 0 12px 0 10px;
+}
+.lada-brass-bl,
+.lada-brass-corner.corner-bl {
+  bottom: -3px;
+  left: -3px;
+  border-radius: 0 10px 0 12px;
+}
+.lada-brass-br,
+.lada-brass-corner.corner-br {
+  bottom: -3px;
+  right: -3px;
+  border-radius: 10px 0 12px 0;
+}
+
+/* Woven Cloth Bookmark Navigation Tabs (Záložky) */
+.lada-bookmarks-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px;
+  margin-bottom: -3px;
+  position: relative;
+  z-index: 5;
+}
+
+.lada-bookmark-ribbon {
+  position: relative;
+  padding: 7px 15px 9px 15px;
+  border: 3px solid #1C1613;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-family: var(--font-storybook);
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #F6EBD8;
+  cursor: pointer;
+  box-shadow: 3px -2px 0 rgba(28, 22, 19, 0.45);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+  white-space: nowrap;
+}
+
+.lada-bookmark-ribbon:hover {
+  transform: translateY(-4px) rotate(-0.6deg);
+  filter: brightness(1.08);
+}
+
+.lada-bookmark-ribbon.active {
+  transform: translateY(-5px);
+  padding-bottom: 11px;
+  box-shadow: 4px -3px 0 #1C1613;
+  z-index: 6;
+}
+
+.lada-bookmark-ribbon.ribbon-poppy {
+  background-color: #C83E2B;
+}
+.lada-bookmark-ribbon.ribbon-cobalt {
+  background-color: #2B5B84;
+}
+.lada-bookmark-ribbon.ribbon-ochre {
+  background-color: #E2A83B;
+  color: #221B17;
+}
+.lada-bookmark-ribbon.ribbon-willow {
+  background-color: #4D784E;
+}
+
+.lada-ribbon-stitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-bottom: 1.5px dashed rgba(246, 235, 216, 0.55);
+  padding-bottom: 1px;
+}
+
+/* Open Two-Page Book Spread Container */
+.lada-book-spread {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  background-color: #F2E5C6;
+  border: 3.5px solid #1C1613;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 2px rgba(28, 22, 19, 0.2),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  text-align: left;
+}
+
+@media (min-width: 900px) {
+  .lada-book-spread {
+    grid-template-columns: 1fr 22px 1.12fr;
+  }
+}
+
+/* Full-bleed Paper Fiber Grain Overlay */
+.lada-paper-fiber-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  mix-blend-mode: multiply;
+  opacity: 0.08;
+  background-image: radial-gradient(#6E3B1E 0.75px, transparent 0.75px),
+    radial-gradient(#8F5330 0.65px, #F2E5C6 0.65px);
+  background-size: 14px 14px;
+  background-position: 0 0, 7px 7px;
+}
+
+/* Individual Aged & Foxed Book Page */
+.lada-book-page {
+  position: relative;
+  padding: 16px 20px 18px 20px;
+  color: #221B17;
+  font-family: var(--font-storybook);
+  z-index: 2;
+  min-width: 0;
+}
+
+.lada-book-page-left {
+  background:
+    radial-gradient(ellipse at 52% 50%, #F2E5C6 56%, #D5B886 88%, #B59461 100%);
+  box-shadow: inset -18px 0 28px rgba(181, 148, 97, 0.52);
+}
+
+.lada-book-page-right {
+  background:
+    radial-gradient(ellipse at 48% 50%, #F2E5C6 56%, #D5B886 88%, #B59461 100%);
+  box-shadow: inset 18px 0 28px rgba(181, 148, 97, 0.52);
+}
+
+/* Organic Foxing Spots (Rezavé skvrny) near margins & spine */
+.lada-foxing-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lada-foxing-left {
+  background-image:
+    radial-gradient(circle at 6% 9%, rgba(143, 83, 48, 0.28) 0%, rgba(143, 83, 48, 0.08) 4%, transparent 9%),
+    radial-gradient(circle at 12% 18%, rgba(110, 59, 30, 0.22) 0%, transparent 5%),
+    radial-gradient(circle at 96% 14%, rgba(143, 83, 48, 0.30) 0%, transparent 7%),
+    radial-gradient(circle at 94% 84%, rgba(110, 59, 30, 0.28) 0%, transparent 8%),
+    radial-gradient(circle at 8% 91%, rgba(143, 83, 48, 0.25) 0%, transparent 10%);
+}
+
+.lada-foxing-right {
+  background-image:
+    radial-gradient(circle at 4% 14%, rgba(143, 83, 48, 0.30) 0%, transparent 7%),
+    radial-gradient(circle at 6% 84%, rgba(110, 59, 30, 0.28) 0%, transparent 8%),
+    radial-gradient(circle at 92% 10%, rgba(143, 83, 48, 0.26) 0%, transparent 9%),
+    radial-gradient(circle at 88% 89%, rgba(110, 59, 30, 0.24) 0%, transparent 10%),
+    radial-gradient(circle at 94% 48%, rgba(143, 83, 48, 0.20) 0%, transparent 6%);
+}
+
+/* Deep Central Spine Gutter */
+.lada-book-spine-gutter {
+  display: none;
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    #D5B886 0%,
+    #B59461 25%,
+    #6E3B1E 50%,
+    #B59461 75%,
+    #D5B886 100%
+  );
+  border-left: 2px solid rgba(28, 22, 19, 0.55);
+  border-right: 2px solid rgba(28, 22, 19, 0.55);
+  z-index: 3;
+}
+
+@media (min-width: 900px) {
+  .lada-book-spine-gutter {
+    display: block;
+  }
+}
+
+.lada-spine-cord {
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  height: 6px;
+  background: #E2A83B;
+  border: 1.5px solid #1C1613;
+  border-radius: 3px;
+}
+.lada-spine-cord.cord-top { top: 18%; }
+.lada-spine-cord.cord-mid { top: 50%; }
+.lada-spine-cord.cord-bot { top: 82%; }
+
+/* Dog-Eared Upper-Right Page Corner */
+.lada-dog-ear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(225deg, #25382C 48%, #D5B886 50%, #F6EBD8 100%);
+  border-left: 2.5px solid #1C1613;
+  border-bottom: 2.5px solid #1C1613;
+  border-radius: 0 0 0 6px;
+  box-shadow: -3px 3px 5px rgba(28, 22, 19, 0.28);
+  cursor: pointer;
+  z-index: 6;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lada-dog-ear:hover {
+  transform: scale(1.14);
+}
+
+/* Stepped 12-FPS Storybook Page Transition */
+@keyframes ladaSteppedPageTurn {
+  0% {
+    opacity: 0.35;
+    transform: translateX(8px) rotate(0.4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotate(0deg);
+  }
+}
+
+.lada-stepped-page-reveal {
+  animation: ladaSteppedPageTurn 0.24s steps(6) forwards;
+}
+
+/* Running Page Header */
+.lada-page-running-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #6E3B1E;
+  border-bottom: 2px solid rgba(28, 22, 19, 0.3);
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+}
+
+/* Left Page Portrait Section */
+.lada-portrait-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.lada-oval-garland-frame {
+  width: 148px;
+  height: 118px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lada-oval-garland-frame:hover {
+  transform: scale(1.04) rotate(-1deg);
+}
+
+.lada-portrait-caption {
+  flex: 1;
+  min-width: 0;
+}
+
+.lada-portrait-title {
+  font-family: var(--font-signpost);
+  font-size: 1.25rem;
+  color: #221B17;
+  line-height: 1.15;
+}
+
+.lada-portrait-subtitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #6E3B1E;
+  margin: 2px 0 6px 0;
+}
+
+.lada-inline-switch-btn {
+  background: #F6EBD8;
+  color: #221B17;
+  border: 2.5px solid #1C1613;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-family: var(--font-storybook);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+}
+.lada-inline-switch-btn:hover {
+  background: #E2A83B;
+  transform: translate(-1px, -1px);
+}
+
+/* Vitality & Magic Gauges with 2px Darker Watercolor Wet-Edge Rim */
+.lada-gauges-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(246, 235, 216, 0.75);
+  border: 3px solid #1C1613;
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 3px 3px 0 #1C1613;
+}
+
+.lada-vessel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lada-gauge-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #221B17;
+  margin-bottom: 2px;
+}
+
+.lada-gouache-gauge-track {
+  width: 100%;
+  height: 14px;
+  background: #F6EBD8;
+  border: 2.5px solid #1C1613;
+  border-radius: 999px;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.lada-gouache-gauge-fill {
+  height: 100%;
+  border-radius: 999px;
+  mix-blend-mode: multiply;
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lada-gouache-gauge-fill.fill-poppy {
+  background-color: #C83E2B;
+  border: 2px solid #7F1D14; /* 2px darker watercolor wet-edge rim */
+}
+
+.lada-gouache-gauge-fill.fill-cobalt {
+  background-color: #2B5B84;
+  border: 2px solid #16324B; /* 2px darker watercolor wet-edge rim */
+}
+
+/* 3-Line-Tall Boxed Woodcut Drop Cap (Iniciála) */
+.lada-drop-cap {
+  float: left;
+  position: relative;
+  width: 54px;
+  height: 54px;
+  margin: 2px 10px 4px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.lada-drop-cap-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: multiply;
+}
+
+.lada-drop-cap-letter {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-signpost);
+  font-size: 2rem;
+  font-weight: 900;
+  color: #F6EBD8;
+  text-shadow: 2px 2px 0 #1C1613;
+  line-height: 1;
+}
+
+/* Story Passage (Zápisník cest) & Calligraphy Choices */
+.lada-story-passage {
+  position: relative;
+  z-index: 2;
+}
+
+.lada-story-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #6E3B1E;
+  margin-bottom: 6px;
+}
+
+.lada-story-stage-tag {
+  background: #E2A83B;
+  color: #221B17;
+  border: 2px solid #1C1613;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-size: 0.74rem;
+}
+
+.lada-story-prose {
+  font-family: var(--font-storybook);
+  font-size: 0.96rem;
+  line-height: 1.48;
+  color: #221B17;
+  margin: 0 0 10px 0;
+  min-height: 62px;
+}
+
+.lada-calligraphy-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  clear: both;
+}
+
+.lada-calligraphy-choice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 11px;
+  background: rgba(246, 235, 216, 0.72);
+  border: 2.5px solid #1C1613;
+  border-radius: 7px;
+  color: #221B17;
+  font-family: var(--font-storybook);
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 2.5px 2.5px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+}
+
+.lada-calligraphy-choice:hover {
+  background: #E2A83B;
+  transform: translate(3px, -1px) rotate(-0.3deg);
+}
+
+.lada-calligraphy-choice.active-choice {
+  background: #F6EBD8;
+  border-color: #C83E2B;
+  border-width: 3px;
+}
+
+.lada-choice-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #C83E2B;
+  color: #F6EBD8;
+  border: 2px solid #1C1613;
+  font-weight: 900;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.lada-choice-quill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #E2A83B;
+  color: #221B17;
+  border: 2px solid #1C1613;
+  font-weight: 900;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+/* Right Page Chapters */
+.lada-chapter-heading-wrap {
+  margin-bottom: 8px;
+}
+
+.lada-chapter-heading {
+  font-family: var(--font-signpost) !important;
+  font-size: 1.45rem !important;
+  color: #C83E2B !important;
+  text-shadow: 1.5px 1.5px 0 #1C1613 !important;
+  margin: 0 !important;
+  text-transform: none !important;
+  letter-spacing: 0.5px !important;
+}
+
+.lada-chapter-sub {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #6E3B1E;
+  margin: 1px 0 0 0;
+}
+
+/* Tab 1: Illustrated Map & Wooden Village Signposts (Rozchodníky) */
+.lada-illustrated-map-frame {
+  position: relative;
+  width: 100%;
+  height: 255px;
+  border: 3.5px solid #1C1613;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F2E5C6;
+  box-shadow: 4px 4px 0 #1C1613;
+}
+
+.lada-signpost-marker {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 3;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lada-signpost-marker:hover {
+  z-index: 5;
+  transform: translate(-50%, -54%) scale(1.08) !important;
+}
+
+.lada-signpost-plank {
+  background: #E2A83B;
+  color: #221B17;
+  border: 2.5px solid #1C1613;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: var(--font-storybook);
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0 #1C1613;
+}
+
+.lada-signpost-marker.selected .lada-signpost-plank {
+  background: #C83E2B;
+  color: #F6EBD8;
+  border-width: 3px;
+  box-shadow: 3px 3px 0 #1C1613, 0 0 0 2px #E2A83B;
+}
+
+.lada-signpost-marker.locked .lada-signpost-plank {
+  background: #D5B886;
+  color: #6E3B1E;
+  opacity: 0.88;
+}
+
+.lada-signpost-post {
+  width: 4px;
+  height: 10px;
+  background: #6E3B1E;
+  border-left: 1.5px solid #1C1613;
+  border-right: 1.5px solid #1C1613;
+}
+
+.lada-map-selected-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #F6EBD8;
+  border: 3px solid #1C1613;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #1C1613;
+}
+
+/* Tab 2: 3x3 Collector's Inventory Grid with Corner Slits (Fotorůžky) */
+.lada-fotoruzky-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.lada-fotoruzky-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px 6px 6px;
+  background: #F6EBD8;
+  border: 3px solid #1C1613;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+  min-height: 92px;
+}
+
+.lada-fotoruzky-slot:hover {
+  background: #F2E5C6;
+  transform: translate(-1.5px, -1.5px) rotate(-0.8deg);
+}
+
+.lada-fotoruzky-slot.active {
+  background: #FEF3C7;
+  border-color: #C83E2B;
+  box-shadow: 4px 4px 0 #1C1613;
+}
+
+/* Photo-corner slits (Fotorůžky) */
+.fotoruzek {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-color: #1C1613;
+  border-style: solid;
+  pointer-events: none;
+}
+.fotoruzek-tl {
+  top: 3px;
+  left: 3px;
+  border-width: 2.5px 0 0 2.5px;
+}
+.fotoruzek-tr {
+  top: 3px;
+  right: 3px;
+  border-width: 2.5px 2.5px 0 0;
+}
+.fotoruzek-bl {
+  bottom: 3px;
+  left: 3px;
+  border-width: 0 0 2.5px 2.5px;
+}
+.fotoruzek-br {
+  bottom: 3px;
+  right: 3px;
+  border-width: 0 2.5px 2.5px 0;
+}
+
+.lada-wax-seal-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #C83E2B;
+  color: #F6EBD8;
+  border: 2px solid #1C1613;
+  font-size: 0.7rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lada-slot-caption {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #221B17;
+  text-align: center;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+
+/* Pinned Paper Slip Tooltip (Ex Libris Note) */
+.lada-ex-libris-slip {
+  position: relative;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #F6EBD8;
+  border: 3px solid #1C1613;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #1C1613;
+}
+
+.lada-brass-pin {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #F6EBD8, #E2A83B 55%, #6E3B1E 100%);
+  border: 2.5px solid #1C1613;
+  box-shadow: 1px 2px 0 #1C1613;
+}
+
+.lada-ex-libris-kicker {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #6E3B1E;
+}
+
+.lada-ex-libris-title {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #221B17;
+  margin: 1px 0 3px 0;
+}
+
+.lada-ex-libris-stat {
+  display: inline-block;
+  color: #F6EBD8;
+  border: 2px solid #1C1613;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.lada-ex-libris-lore {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #221B17;
+  line-height: 1.35;
+  margin: 4px 0 0 0;
+}
+
+/* Tab 3: Folk Bestiary Cross-Hatched Cards */
+.lada-bestiary-spread-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .lada-bestiary-spread-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lada-bestiary-encyclo-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px;
+  background: #F6EBD8;
+  border: 3px solid #1C1613;
+  border-radius: 7px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+}
+
+.lada-bestiary-encyclo-card:hover {
+  background: #F2E5C6;
+  transform: translate(-1px, -1px);
+}
+
+.lada-bestiary-encyclo-card.active {
+  background: #FEF3C7;
+  border-color: #C83E2B;
+  box-shadow: 4px 4px 0 #1C1613;
+}
+
+.lada-bestiary-card-art {
+  width: 68px;
+  height: 68px;
+  border: 2.5px solid #1C1613;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   PHYSICAL JOSEF LADA PAGE-TURNING ANIMATION SYSTEM (150gsm Wood-Pulp Paper)
+   ============================================================================ */
+
+/* Book Margin Controls (16-FPS Karel Zeman Stop-Motion & Paper Foley Mute) */
+.lada-book-margin-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  z-index: 6;
+}
+
+.lada-margin-pill-btn {
+  background: #F6EBD8;
+  color: #221B17;
+  border: 2.5px solid #1C1613;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-family: var(--font-storybook);
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
+}
+
+.lada-margin-pill-btn:hover {
+  background: #E2A83B;
+  transform: translate(-1px, -1px);
+}
+
+.lada-margin-pill-btn.active {
+  background: #E2A83B;
+  color: #1C1613;
+}
+
+/* Stepped, Deckled Parchment Page Stack Edges (8px–12px outer page strips with dark foxing ticks) */
+.lada-book-deckled-stack-wrap {
+  position: relative;
+  border-radius: 10px;
+  background-color: #D5B886;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      #F2E5C6 0px,
+      #F2E5C6 2px,
+      #B59461 2px,
+      #6E3B1E 3px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 11px,
+      rgba(110, 59, 30, 0.42) 11px,
+      rgba(110, 59, 30, 0.42) 13px
+    );
+  border: 3px solid #1C1613;
+  box-shadow:
+    inset 0 0 6px rgba(28, 22, 19, 0.45),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: padding-left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    padding-right 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Right Page Viewport housing static under-page, traveling shadow & turning-leaf */
+.lada-right-page-viewport {
+  position: relative;
+  min-width: 0;
+  overflow: visible;
+  z-index: 6;
+}
+
+.lada-under-page {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Double-Sided Turning Leaf (<div class="turning-leaf">) anchored to the central spine */
+.turning-leaf {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 14;
+  overflow: visible;
+}
+
+.turning-leaf-cascade {
+  z-index: 13;
+  filter: brightness(0.95);
+}
+
+/* Front Face (recto — Outgoing Right Page clipped along moving diagonal crease) */
+.turning-leaf-recto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+/* Rolling Paper Highlight & Belly Shadow across the lifted recto sheet */
+.turning-leaf-recto-highlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 249, 235, 0.25) 46%,
+    rgba(62, 38, 18, 0.18) 68%,
+    transparent 88%
+  );
+  background-size: 220% 100%;
+  mix-blend-mode: multiply;
+}
+
+/* Back Face (verso — spans full 2-page spread [-100%..100%] so it sweeps across the spine onto the Left Page) */
+.turning-leaf-verso {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -100%;
+  width: 200%;
+  background:
+    radial-gradient(ellipse at 52% 50%, #F2E5C6 52%, #D5B886 85%, #B59461 100%);
+  box-shadow:
+    inset 0 0 28px rgba(143, 83, 48, 0.32);
+  z-index: 4;
+  overflow: hidden;
+  will-change: clip-path, opacity;
+}
+
+/* Synchronized SVG India-Ink Outline & Crease Highlight over the Verso Polygon */
+.turning-leaf-curl-svg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+  filter: drop-shadow(-5px 4px 8px rgba(42, 26, 14, 0.36));
+}
+
+/* Ink Show-Through (Průsvit tisku — 6% opacity horizontally flipped silhouette when 20%..80% mid-air) */
+.turning-leaf-ink-showthrough {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  padding: 16px 20px;
+  filter: grayscale(1) contrast(1.8) sepia(0.5);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Rolling Paper Highlight (#FFF9EB at 25%) & Concave Belly Shadow across Verso curl */
+.turning-leaf-belly-gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: linear-gradient(
+    90deg,
+    rgba(42, 26, 14, 0.34) 0%,
+    rgba(255, 249, 235, 0.25) 36%,
+    rgba(242, 229, 198, 0.08) 68%,
+    rgba(42, 26, 14, 0.28) 100%
+  );
+}
+
+/* Traveling Cast Shadows on Static Pages Beneath (Warm Dark Umber rgba(42, 26, 14, 0.45)) */
+.lada-right-lift-shadow {
+  position: absolute;
+  top: -8%;
+  bottom: -8%;
+  pointer-events: none;
+  z-index: 8;
+  background: linear-gradient(
+    90deg,
+    rgba(42, 26, 14, 0.48) 0%,
+    rgba(42, 26, 14, 0.22) 48%,
+    transparent 100%
+  );
+  filter: blur(5px);
+  transform-origin: bottom left;
+}
+
+.lada-left-landing-shadow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 9;
+  background: linear-gradient(
+    270deg,
+    rgba(42, 26, 14, 0.46) 0%,
+    rgba(42, 26, 14, 0.18) 55%,
+    transparent 100%
+  );
+  filter: blur(4px);
+}
+
+/* Dog-Eared Corner Peeks (Oslí uši — Bottom-Right Next & Bottom-Left Previous) */
+.lada-dog-ear-bottom {
+  position: absolute;
+  bottom: 0;
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  cursor: grab;
+  z-index: 15;
+  font-family: var(--font-storybook);
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #6E3B1E;
+  user-select: none;
+  touch-action: none;
+}
+
+.lada-dog-ear-bottom:active {
+  cursor: grabbing;
+}
+
+.lada-dog-ear-next {
+  right: 0;
+}
+
+.lada-dog-ear-prev {
+  left: 0;
+}
+
+.lada-dog-ear-label {
+  background: rgba(246, 235, 216, 0.9);
+  border: 2px solid #1C1613;
+  border-radius: 5px;
+  padding: 1px 6px;
+  box-shadow: 2px 2px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.18s ease;
+}
+
+.lada-dog-ear-flap {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid #1C1613;
+  box-shadow: -3px -3px 6px rgba(42, 26, 14, 0.38);
+  transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease;
+}
+
+.lada-dog-ear-next .lada-dog-ear-flap {
+  background: linear-gradient(315deg, #25382C 46%, #D5B886 50%, #FFF9EB 100%);
+  border-radius: 8px 0 0 0;
+}
+
+.lada-dog-ear-prev .lada-dog-ear-flap {
+  background: linear-gradient(45deg, #25382C 46%, #D5B886 50%, #FFF9EB 100%);
+  border-radius: 0 8px 0 0;
+}
+
+/* Hover State: Gently curl the corner upward by 28px–35px with 6px umber drop shadow */
+.lada-dog-ear-next:hover .lada-dog-ear-flap,
+.lada-dog-ear-next.hovered .lada-dog-ear-flap {
+  width: 34px;
+  height: 34px;
+  transform: translate(-3px, -3px) rotate(-4deg);
+  box-shadow: -6px -6px 8px rgba(42, 26, 14, 0.45);
+}
+
+.lada-dog-ear-prev:hover .lada-dog-ear-flap,
+.lada-dog-ear-prev.hovered .lada-dog-ear-flap {
+  width: 32px;
+  height: 32px;
+  transform: translate(3px, -3px) rotate(4deg);
+  box-shadow: 6px -6px 8px rgba(42, 26, 14, 0.45);
+}
+
+.lada-dog-ear-bottom:hover .lada-dog-ear-label {
+  background: #E2A83B;
+  color: #1C1613;
+  transform: translateY(-2px);
+}
+
+/* Cloth Bookmark Ribbon Pendulum Physics when a page rushes past */
+@keyframes ladaRibbonPendulum {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3.2deg) translateY(-2px);
+  }
+  55% {
+    transform: rotate(2.4deg) translateY(-1px);
+  }
+  80% {
+    transform: rotate(-1.1deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.lada-ribbon-pendulum-active .lada-bookmark-ribbon {
+  transform-origin: bottom center;
+  animation: ladaRibbonPendulum 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Page Settling & "Paper Thud" Bounce (92%–100%) — 1px micro-jolt on pinned Ex Libris slips */
+@keyframes ladaPaperThudJolt {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-1.5px) rotate(-0.35deg);
+  }
+  75% {
+    transform: translateY(1px) rotate(0.2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+.lada-ex-libris-thud-jolt {
+  animation: ladaPaperThudJolt 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Single-Sheet Verso & Curl SVG (for single-page storybook modals like "Jak hrát") */
+.turning-leaf-verso.lada-single-sheet-verso {
+  left: 0;
+  width: 100%;
+}
+
+.turning-leaf-curl-svg.lada-single-sheet-curl-svg {
+  left: 0;
+  width: 100%;
+}
+
+.lada-controls-sheet-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1.5px dashed rgba(28, 22, 19, 0.25);
+  z-index: 16;
+  flex-shrink: 0;
+}
+
+.lada-controls-sheet-footer .lada-dog-ear-bottom {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  right: auto;
+}
+
+/* ============================================================================
+ * JOSEF LADA SNDK STORYBOOK MODALS & SCREENS (Jak hrát, Zbrojnice, Bestiář, Hospoda)
+ * ============================================================================ */
+
+.panel.lada-storybook-modal {
+  position: relative;
+  background-color: #F2E5C6;
+  background-image:
+    /* Central spine & margin vignette */
+    radial-gradient(ellipse at 50% 45%, rgba(246, 235, 216, 0.72) 0%, rgba(213, 184, 134, 0.45) 76%, rgba(181, 148, 97, 0.68) 100%),
+    /* Organic rust-brown foxing spots near corners & margins */
+    radial-gradient(circle at 6% 8%, rgba(143, 83, 48, 0.22) 0%, rgba(143, 83, 48, 0.07) 26px, transparent 52px),
+    radial-gradient(circle at 94% 11%, rgba(110, 59, 30, 0.20) 0%, rgba(110, 59, 30, 0.06) 24px, transparent 48px),
+    radial-gradient(circle at 92% 89%, rgba(143, 83, 48, 0.22) 0%, rgba(143, 83, 48, 0.07) 30px, transparent 60px),
+    radial-gradient(circle at 8% 87%, rgba(110, 59, 30, 0.18) 0%, rgba(110, 59, 30, 0.06) 22px, transparent 44px);
+  border: 4px solid #1C1613;
+  box-shadow:
+    0 0 0 6px #25382C,
+    0 0 0 9px #1C1613,
+    10px 12px 0 rgba(28, 22, 19, 0.88),
+    inset 0 0 28px rgba(143, 83, 48, 0.22);
+}
+
+.panel.lada-storybook-modal .lada-page-running-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-heading, 'Rye', serif);
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(34, 27, 23, 0.78);
+  border-bottom: 1.5px dashed rgba(28, 22, 19, 0.32);
+  padding: 2px 10px 5px;
+  margin-bottom: 8px;
+}
+
+/* Cloth Bookmark Ribbon Bar inside "Jak hrát" & Tavern/Arsenal modals */
+.lada-controls-bookmark-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.lada-controls-bookmark-bar .lada-bookmark-ribbon,
+.modal-tabs .tab-btn.lada-bookmark-ribbon {
+  position: relative;
+  border: 2.5px solid #1C1613;
+  border-bottom-width: 3px;
+  border-radius: 9px 9px 4px 4px;
+  font-family: var(--font-heading, 'Rye', serif);
+  box-shadow: 2px 3px 0 #1C1613;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.18s ease;
+}
+
+.lada-controls-bookmark-bar .lada-bookmark-ribbon:hover,
+.modal-tabs .tab-btn.lada-bookmark-ribbon:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 5px 0 #1C1613;
+  filter: brightness(1.05);
+}
+
+.lada-controls-bookmark-bar .lada-bookmark-ribbon.active,
+.modal-tabs .tab-btn.lada-bookmark-ribbon.active {
+  transform: translateY(-3px);
+  box-shadow: 3px 5px 0 #1C1613, 0 0 0 2px #E2A83B;
+}
+
+.modal-tabs .tab-btn.lada-bookmark-ribbon-red {
+  background: linear-gradient(180deg, #C83E2B 0%, #9E2A1B 100%);
+  color: #FFFDF7;
+}
+
+.modal-tabs .tab-btn.lada-bookmark-ribbon-cobalt {
+  background: linear-gradient(180deg, #2B5B84 0%, #1E4263 100%);
+  color: #FFFDF7;
+}
+
+.modal-tabs .tab-btn.lada-bookmark-ribbon-ochre {
+  background: linear-gradient(180deg, #E2A83B 0%, #B8821E 100%);
+  color: #1C1613;
+}
+
+.modal-tabs .tab-btn.lada-bookmark-ribbon-green {
+  background: linear-gradient(180deg, #4D784E 0%, #365837 100%);
+  color: #FFFDF7;
+}
+
+/* Inline "Jak hrát" card on Main Menu styled as a pinned Ex Libris parchment slip */
+.bubakov-how-to-play-card.lada-ex-libris-slip {
+  position: relative;
+  background-color: #F6EBD8;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(143, 83, 48, 0.16) 0%, transparent 45px),
+    radial-gradient(circle at 88% 82%, rgba(110, 59, 30, 0.16) 0%, transparent 50px);
+  border: 3px solid #1C1613;
+  box-shadow: 4px 5px 0 rgba(28, 22, 19, 0.85);
+}

@@ -683,17 +683,17 @@ export class ArenaRenderer {
       lightingMs = now() - tLightStart;
     }
 
-    // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS)
+    // 10. OFF-SCREEN INDICATORS PASS (HEAVY ANCHORS & BOSS THREATS)
     const hpPct = playerHp / (playerMaxHp || 1);
     const dropsArray = engine?.drops ?? [];
     const deltaTimeSeconds = options?.deltaTimeSeconds ?? 1 / 60;
-    this.indicatorController.update(dropsArray, camera, Math.max(0, Math.min(0.1, deltaTimeSeconds)), hpPct);
+    this.indicatorController.update(dropsArray, camera, Math.max(0, Math.min(0.1, deltaTimeSeconds)), hpPct, engine?.enemies);
     this.indicatorController.render(ctx);
 
     // 11. DAYLIGHT FOREGROUND SUN & 6-PLANE 3D PARALLAX OVERLAY PASS (CLOSEST TO CAMERA)
     // Rendered after all entities, roofs, projectiles, particles, floating combat texts, world VFX,
     // lighting, and off-screen indicators so NOTHING in the arena ever covers the sun.
-    // Supports Stage 1 (Předjaří v Hrusicích), Stage 3 (Dubnový den), and Stage 5 (Květen v Hrusicích).
+    // Supports all daytime stages: Stage 1 (Předjaří v Hrusicích), Stage 3 (Dubnový den), Stage 5 (Májová slavnost), and Stage 7 (Letní senoseč).
     const isStageOneDaylight =
       (curLvl && curLvl.id === 0) ||
       (engine.activeLevelId === 0 && (!curLvl || curLvl.id === undefined || curLvl.id === 0));
@@ -703,9 +703,12 @@ export class ArenaRenderer {
     const isStageFiveDaylight =
       (curLvl && curLvl.id === 4) ||
       (engine.activeLevelId === 4 && (!curLvl || curLvl.id === undefined || curLvl.id === 4));
-    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight;
+    const isStageSevenDaylight =
+      (curLvl && curLvl.id === 6) ||
+      (engine.activeLevelId === 6 && (!curLvl || curLvl.id === undefined || curLvl.id === 6));
+    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight || isStageSevenDaylight;
     if (isDaylightStage && !options?.skipSunInArenaPass) {
-      const sunVariant: SunVariant = (isStageThreeDaylight || isStageFiveDaylight) ? 'duben' : 'march';
+      const sunVariant: SunVariant = isStageOneDaylight ? 'march' : 'duben';
       const tSunStart = now();
       const screenW = camera.zoom && camera.zoom !== 1 ? Math.round(width * camera.zoom) : width;
       const screenH = camera.zoom && camera.zoom !== 1 ? Math.round(height * camera.zoom) : height;

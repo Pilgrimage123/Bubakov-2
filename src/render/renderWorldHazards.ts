@@ -490,13 +490,67 @@ export function renderWorldHazardsAndEncounters(
       const isWarning = (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
       const justExploded = Boolean(h.exploded);
 
-      if (h.type === 'mud') {
+      if (h.kind === 'root-snare') {
+        ctx.fillStyle = isWarning ? 'rgba(74, 222, 128, 0.25)' : 'rgba(63, 98, 18, 0.55)';
+        ctx.strokeStyle = isWarning ? '#4ADE80' : '#365314';
+        ctx.lineWidth = isWarning ? 3.0 : 2.6;
+        if (isWarning) ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Tangled thorny woodland roots
+        ctx.strokeStyle = '#78350F';
+        ctx.lineWidth = 3.2;
+        for (let r = 0; r < 4; r++) {
+          const ra = (r / 4) * Math.PI;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(ra) * -h.radius * 0.78, Math.sin(ra) * -h.radius * 0.78);
+          ctx.quadraticCurveTo(0, (r % 2 === 0 ? 1 : -1) * h.radius * 0.35, Math.cos(ra) * h.radius * 0.78, Math.sin(ra) * h.radius * 0.78);
+          ctx.stroke();
+        }
+      } else if (h.kind === 'water-jar-trap') {
+        ctx.fillStyle = isWarning ? 'rgba(56, 189, 248, 0.26)' : 'rgba(14, 165, 233, 0.48)';
+        ctx.strokeStyle = isWarning ? '#38BDF8' : '#0369A1';
+        ctx.lineWidth = isWarning ? 3.0 : 2.4;
+        if (isWarning) ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Hastrman's painted soul jar in center
+        ctx.fillStyle = '#F8FAFC';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(0, 2, h.radius * 0.32, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#EF4444';
+        ctx.fillRect(-h.radius * 0.24, -h.radius * 0.28, h.radius * 0.48, h.radius * 0.16);
+        ctx.strokeRect(-h.radius * 0.24, -h.radius * 0.28, h.radius * 0.48, h.radius * 0.16);
+      } else if (h.kind === 'hejkal-roar') {
+        ctx.fillStyle = isWarning ? 'rgba(74, 222, 128, 0.22)' : 'rgba(22, 163, 74, 0.35)';
+        ctx.strokeStyle = '#4ADE80';
+        ctx.lineWidth = 3.0;
+        if (isWarning) ctx.setLineDash([8, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius * 0.65, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (h.type === 'mud') {
         ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : '#5A3825';
         ctx.strokeStyle = isWarning ? '#F59E0B' : '#26150C';
         ctx.lineWidth = isWarning ? 3.0 : 2.5;
         if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
-        if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle' || h.kind === 'water-jar-trap') {
+        if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle') {
           ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         } else {
           ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
@@ -540,6 +594,26 @@ export function renderWorldHazardsAndEncounters(
         ctx.beginPath();
         ctx.arc(0, 0, h.radius * 0.55, 0.3, Math.PI * 1.65);
         ctx.stroke();
+      } else if (h.kind === 'crow-vortex' || h.kind === 'triad-blizzard') {
+        ctx.fillStyle = isWarning ? 'rgba(56, 189, 248, 0.26)' : 'rgba(14, 116, 144, 0.42)';
+        ctx.strokeStyle = isWarning ? '#7DD3FC' : '#BAE6FD';
+        ctx.lineWidth = isWarning ? 3.0 : 2.4;
+        if (isWarning) ctx.setLineDash([7, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Swirling cyclone arcs
+        const spin = uiTime * 5;
+        ctx.strokeStyle = h.kind === 'crow-vortex' ? '#1E293B' : '#E0F2FE';
+        ctx.lineWidth = 2.2;
+        for (let s = 0; s < 3; s++) {
+          const sa = spin + (s / 3) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, h.radius * 0.62, sa, sa + 1.15);
+          ctx.stroke();
+        }
       } else if (h.type === 'frost' && h.kind !== 'hail-circle') {
         ctx.fillStyle = isWarning
           ? 'rgba(186, 230, 253, 0.32)'
@@ -592,16 +666,18 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(-h.radius * 0.25, -h.radius * 0.2, h.radius * 0.55, 0, Math.PI * 2);
         ctx.arc(h.radius * 0.3, h.radius * 0.15, h.radius * 0.45, 0, Math.PI * 2);
         ctx.fill();
-      } else if (h.kind === 'sulfur-flame') {
+      } else if (h.kind === 'sulfur-flame' || h.kind === 'pitch-wreath') {
         const flicker = Math.sin((h.duration ?? 1) * 14 + h.x * 0.07 + h.y * 0.05) * 0.12 + 0.88;
-        // Outer scorched sulfur pool with bold ink ring
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.52)';
-        ctx.strokeStyle = COLORS.ink;
-        ctx.lineWidth = 2.2;
+        // Outer scorched sulfur/pitch pool with bold ink ring
+        ctx.fillStyle = isWarning ? 'rgba(249, 115, 22, 0.28)' : 'rgba(234, 88, 12, 0.52)';
+        ctx.strokeStyle = isWarning ? '#F97316' : COLORS.ink;
+        ctx.lineWidth = isWarning ? 3.0 : 2.2;
+        if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+        ctx.setLineDash([]);
 
         // Bright burning sulfur-yellow core
         ctx.fillStyle = 'rgba(250, 204, 21, 0.78)';
@@ -609,7 +685,7 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(0, 0, h.radius * 0.68 * flicker, 0, Math.PI * 2);
         ctx.fill();
 
-        // Flickering sulfur-lime & golden flame tongues (hurts both hunter & bubáky)
+        // Flickering flame tongues
         ctx.fillStyle = '#FEF08A';
         ctx.strokeStyle = '#CA8A04';
         ctx.lineWidth = 1.5;

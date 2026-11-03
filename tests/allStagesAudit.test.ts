@@ -156,4 +156,43 @@ describe('Comprehensive 8-Stage Audit (Levels 0 through 7)', () => {
       }
     }
   });
+
+  it('verifies all 8 stages have consistent arena IDs and 9 authentic POIs in poiOrder', () => {
+    const expectedArenas = [
+      'breznove_tani',
+      'breznove_tani',
+      'dubnova_naves',
+      'dubnova_naves',
+      'kvetnova_naves',
+      'kvetnova_naves',
+      'cervnova_senosec',
+      'cervnova_senosec',
+    ];
+
+    for (let id = 0; id <= 7; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      expect(level.arena.id, `Level ${id} arena id`).toBe(expectedArenas[id]);
+      expect(level.arena.poiOrder.length, `Level ${id} poiOrder length`).toBeGreaterThanOrEqual(9);
+      expect(level.arena.poiOrder).toContain('fields');
+      expect(level.arena.poiOrder).toContain('church');
+      expect(level.arena.poiOrder).toContain('tavern');
+      expect(level.arena.poiOrder).toContain('pond');
+      expect(level.arena.poiOrder).toContain('mill');
+      expect(level.arena.poiOrder).toContain('forest');
+      expect(level.arena.poiOrder).toContain('shrine');
+    }
+  });
+
+  it('verifies non-empty decorTypes and valid themes across all 8 stages', () => {
+    const validThemes = ['spring_river', 'spring_village', 'summer_harvest'];
+    for (let id = 0; id <= 7; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      expect(validThemes).toContain(level.theme);
+      expect(level.decorTypes.length, `Level ${id} decorTypes`).toBeGreaterThan(0);
+      expect(level.decorTypes).toContain('cottage');
+      expect(level.decorTypes).toContain('tree');
+      expect(level.decorTypes).toContain('rock');
+      expect(level.decorTypes).toContain('kaca');
+    }
+  });
 });

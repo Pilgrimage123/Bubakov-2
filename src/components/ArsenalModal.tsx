@@ -6,6 +6,7 @@ import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { WEAPONS_WITH_MILESTONES } from '../data/weaponMilestones';
+import { ladaPageFoley } from './ladaPageTurnAudio';
 
 export interface ArsenalModalProps {
   isOpen: boolean;
@@ -23,6 +24,12 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
     [canonicalWeaponIds, meta]
   );
 
+  React.useEffect(() => {
+    if (isOpen) {
+      ladaPageFoley.playFullPageTurn(0);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const unlockedCount = progresses.filter((p) => p.isUnlocked).length;
@@ -36,7 +43,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
   return (
     <div className="overlay" style={{ zIndex: 40 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '1020px',
           width: '95%',
@@ -47,14 +54,27 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA VENKOVSKÉ ZBROJNICE · SNDK PRAHA</span>
+          <span>
+            Kapitola II · Zbraně a řemeslný fortel · <strong>Str. 6–7</strong>
+          </span>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2
               style={{
                 margin: '0 0 4px 0',
                 fontSize: '1.9rem',
-                color: 'var(--ink)',
+                color: '#C83E2B',
+                textShadow: '2px 2px 0 #1C1613',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
@@ -73,6 +93,10 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
               padding: '6px 12px',
               fontSize: '1.2rem',
               minWidth: 'auto',
+              background: '#C83E2B',
+              color: '#F6EBD8',
+              border: '3px solid #1C1613',
+              boxShadow: '3px 3px 0 #1C1613',
             }}
             onClick={() => {
               sound.coin();
@@ -90,18 +114,19 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '10px',
-            margin: '14px 0 10px 0',
-            background: 'var(--parchmentDark)',
+            margin: '10px 0 10px 0',
+            background: '#F6EBD8',
             padding: '8px 14px',
             borderRadius: '8px',
-            border: '2px solid var(--ink)',
+            border: '2.5px solid #1C1613',
+            boxShadow: '3px 3px 0 #1C1613',
           }}
         >
           <div
             style={{
               fontWeight: 900,
               fontSize: '0.95rem',
-              color: '#111111',
+              color: '#221B17',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
@@ -109,26 +134,27 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
           >
             <GameIcon icon="chart" size={18} />
             Stav zbrojnice:{' '}
-            <span style={{ color: '#111111', fontWeight: 900 }}>
+            <span style={{ color: '#C83E2B', fontWeight: 900 }}>
               {unlockedCount} / {totalCount}
             </span>{' '}
             zbraní odemčeno ({Math.floor((unlockedCount / totalCount) * 100)} %)
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             <button
-              className={`tab-btn ${filter === 'all' ? 'active' : ''}`}
-              style={{ padding: '4px 10px', fontSize: '0.85rem' }}
+              className={`tab-btn lada-bookmark-ribbon ribbon-poppy ${filter === 'all' ? 'active' : ''}`}
+              style={{ padding: '4px 12px', fontSize: '0.85rem' }}
               onClick={() => {
                 sound.coin();
+                ladaPageFoley.playFullPageTurn(0);
                 setFilter('all');
               }}
             >
               Všechny ({totalCount})
             </button>
             <button
-              className={`tab-btn ${filter === 'unlocked' ? 'active' : ''}`}
+              className={`tab-btn lada-bookmark-ribbon ribbon-willow ${filter === 'unlocked' ? 'active' : ''}`}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 fontSize: '0.85rem',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -136,6 +162,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
               }}
               onClick={() => {
                 sound.coin();
+                ladaPageFoley.playFullPageTurn(0);
                 setFilter('unlocked');
               }}
             >
@@ -143,9 +170,9 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
               Odemčené ({unlockedCount})
             </button>
             <button
-              className={`tab-btn ${filter === 'locked' ? 'active' : ''}`}
+              className={`tab-btn lada-bookmark-ribbon ribbon-cobalt ${filter === 'locked' ? 'active' : ''}`}
               style={{
-                padding: '4px 10px',
+                padding: '4px 12px',
                 fontSize: '0.85rem',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -153,6 +180,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
               }}
               onClick={() => {
                 sound.coin();
+                ladaPageFoley.playFullPageTurn(0);
                 setFilter('locked');
               }}
             >

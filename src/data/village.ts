@@ -111,7 +111,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Starý borový les za vsí skrývá nebezpečná rašeliniště a hluboké louže. Kdo se však naučí lesním stezkám s lesními mužíky, nezapadne do bahna a promočení z něj spadne mnohem rychleji.",
 		bonusDesc: (lvl) => `Zvyk na mokřad: o ${Math.round(getForestDebuffReduction(lvl) * 100)}% kratší trvání promočení a zpomalení`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
-		canvasDrawer: "drawScarecrowScene"
+		canvasDrawer: "drawForestScene"
 	},
 	{
 		id: "wall",
@@ -135,7 +135,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Kovář se spřátelil s ohnivými mužíky, kteří mu neúnavně dmýchají rozžhavené uhlí v kovářské výhni. Každá zbraň ukovaná v tomto plameni má trvalou a spolehlivou váhu.",
 		bonusDesc: (lvl) => `Výheň: +${lvl * 2} přímé poškození ke každému zásahu`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawOvenScene"
+		canvasDrawer: "drawForgeScene"
 	},
 	{
 		id: "oven",
@@ -159,7 +159,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Kovaná brána se železným křížem drží neklidné umrlce na posvěcené půdě. Zkrocení strašidelní furianti pomáhají hrobníkům a občas vyhrabou ze starých hrobů cenné stříbrné tolary a měšce krejcarů.",
 		bonusDesc: (lvl) => `Poklady starých časů: +${lvl * 10}% k hodnotě Krejcarů & +${lvl * 1}% šance na tolar (až 25 %)`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawWallScene"
+		canvasDrawer: "drawUndeadScene"
 	},
 	{
 		id: "bell",
@@ -171,7 +171,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Klekánice se usadily pod šindelovou střechou zvonice a tahají za těžký zvonový provaz. Každý úder zvonu probouzí v lovci ráznost a urychluje návrat jeho mocné schopnosti.",
 		bonusDesc: (lvl) => `Hlahol zvonu: +${lvl * 8}% k rychlosti dobíjení schopnosti`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawWallScene"
+		canvasDrawer: "drawBellScene"
 	},
 	{
 		id: "regen",
@@ -183,7 +183,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Na prosluněné mezi za chalupou pomáhají lesní divoženky sbírat mateřídoušku, třezalku a heřmánek. Voňavé masti a horké odvary dodávají lovci klidnou mysl a vracejí ztracenou Kuráž v průběhu celé noci.",
 		bonusDesc: (lvl) => `Voňavé býlí: +${lvl * 4} Kuráže doplňováno každých 5 sekund`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawOvenScene"
+		canvasDrawer: "drawHerbGardenScene"
 	},
 	{
 		id: "tavernShield",
@@ -195,7 +195,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "V hospodě U Černého kocoura se diblíci naučili čepovat chladné ležáky a pobízet chasníky k odvaze. Když jde do tuhého a lovci docházejí síly, vzpomene si na hospodskou rvačku a zasadí drtivý úder!",
 		bonusDesc: (lvl) => `Zoufalá kuráž: až +${lvl * 25}% k poškození zbraní úměrně chybějící Kuráži`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawWallScene"
+		canvasDrawer: "drawTavernShieldScene"
 	},
 	{
 		id: "water",
@@ -207,7 +207,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Uprostřed návsi vyvěrá křišťálový pramen, který nikdy nezamrzá. Vodní víly v něm omývají měsíční kameny. Napije-li se z něj lovec, zahojí se mu rány a získá okamžitou nezranitelnost.",
 		bonusDesc: (lvl) => `Pramenitá voda: +${lvl * 20}% k účinku lektvarů & ${lvl > 0 ? Math.min(5, 1 + lvl * 0.5).toFixed(1) : '0'} s nezranitelnosti po vypití`,
 		cost: (_lvl, total) => getVillageBuildingCost(75, total ?? _lvl),
-		canvasDrawer: "drawMillScene"
+		canvasDrawer: "drawWaterWellScene"
 	},
 	{
 		id: "church",
@@ -219,7 +219,7 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Bludičky přilétly z močálů do kaple a omývají svěcenou vodou oltář. Kdykoliv lovec rozbije hliněný hrneček a osvobodí zbloudilou dušičku, posvěcený zvon vyšle kolem lovce mocnou rázovou vlnu, která smete okolní bubáky.",
 		bonusDesc: (lvl) => `Svatá vlna: +${lvl * 8}% svaté poškození & ${lvl * 75} posvátného poškození při osvobození dušičky`,
 		cost: (_lvl, total) => getVillageBuildingCost(30, total ?? _lvl),
-		canvasDrawer: "drawWallScene"
+		canvasDrawer: "drawChurchWaveScene"
 	},
 	{
 		id: "boziMuka",
@@ -231,6 +231,6 @@ export const VILLAGE_BUILDINGS: VillageBuilding[] = [
 		story: "Drobná kamenná boží muka na rozcestí se zapálenou svící chrání pocestné a zahánějí zlé moci. Kdo u nich v tichosti postojí, toho provází štěstěna na každém kroku.",
 		bonusDesc: (lvl) => `Přízeň osudu: +${lvl * 5}% k základnímu Štěstí lovce na výpravě`,
 		cost: (_lvl, total) => getVillageBuildingCost(50, total ?? _lvl),
-		canvasDrawer: "drawWallScene"
+		canvasDrawer: "drawBoziMukaScene"
 	}
 ];

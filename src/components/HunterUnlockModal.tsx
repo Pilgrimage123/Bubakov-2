@@ -68,7 +68,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
   return (
     <div className="overlay" style={{ zIndex: 45 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '680px',
           width: '95%',
@@ -80,7 +80,17 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA BUBÁKOVA · STOPA V LIDOVÝCH POVĚSTECH</span>
+          <span>
+            Pátrání po lovci · <strong>{progress.percent} % odhaleno</strong>
+          </span>
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ flexShrink: 0 }}>
             <LadaHunterCanvasPreview hunterId={progress.id} size={96} filter={tierFilter} />

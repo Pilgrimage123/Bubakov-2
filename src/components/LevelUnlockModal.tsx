@@ -67,7 +67,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
   return (
     <div className="overlay" style={{ zIndex: 45 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '720px',
           width: '95%',
@@ -81,7 +81,17 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA BUBÁKOVA · MAPA NOČNÍCH KRAJŮ</span>
+          <span>
+            Průzkum stezky · <strong>{progress.percent} % probádáno</strong>
+          </span>
+        </div>
         {/* MODAL HEADER */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>

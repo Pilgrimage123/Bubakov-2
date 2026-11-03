@@ -9,6 +9,8 @@ import { LadaCardCorners } from './LadaCardCorners';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { ENEMY_PREFIX_DEFS, EnemyPrefixType } from '../types';
+import { LadaDropCap, LadaLindenVineta } from './LadaStorybookSpread';
+import { ladaPageFoley } from './ladaPageTurnAudio';
 
 export const PREFIX_KEYS: EnemyPrefixType[] = ['vichricovy', 'hromovy', 'kamenny', 'pekelny', 'vycerpany'];
 
@@ -154,6 +156,12 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
     return () => cancelAnimationFrame(animId);
   }, [isOpen, selectedCategory, currentMonster, enemyProg.tier, selectedPrefixId]);
 
+  useEffect(() => {
+    if (isOpen) {
+      ladaPageFoley.playFullPageTurn(0);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const totalMonsters = Object.keys(ENEMIES).length;
@@ -165,24 +173,44 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
   return (
     <div className="overlay" style={{ zIndex: 30 }} onClick={onClose}>
-      <div className="panel" style={{ maxWidth: '960px', width: '95%', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+      <div className="panel lada-storybook-modal" style={{ maxWidth: '980px', width: '95%', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 BUBÁCI A HASTRMANI · KRONIKA NOČNÍCH BĚSŮ</span>
+          <span>
+            Kapitola III · Bestiář českého venkova · <strong>Str. 8–9</strong>
+          </span>
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#C83E2B', textShadow: '2px 2px 0 #1C1613' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
               <GameIcon icon="book" size={24} /> Bestiář noční české vesnice
               <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />
-            <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem' }}>
+            <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem', color: '#221B17' }}>
               Encyklopedie {totalMonsters} lidových strašidel, bubáků a diblíků. Zkoumejte, jak je zklidnit
               poctivým výpraskem nebo usmířit voňavou buchtou.
             </p>
           </div>
           <button
             className="tab-btn"
-            style={{ padding: '4px 10px', fontSize: '1.1rem', minWidth: 'auto' }}
+            style={{
+              padding: '4px 10px',
+              fontSize: '1.1rem',
+              minWidth: 'auto',
+              background: '#C83E2B',
+              color: '#F6EBD8',
+              border: '3px solid #1C1613',
+              boxShadow: '3px 3px 0 #1C1613',
+            }}
             onClick={() => {
               sound.coin();
               onClose();
@@ -194,8 +222,8 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
         <div
           style={{
-            background: 'var(--parchmentDark)',
-            border: '2px solid var(--ink)',
+            background: '#F6EBD8',
+            border: '2.5px solid #1C1613',
             borderRadius: '8px',
             padding: '6px 14px',
             marginBottom: '10px',
@@ -206,26 +234,27 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
             gap: '8px',
             fontSize: '0.88rem',
             fontWeight: 900,
-            color: '#111111',
+            color: '#221B17',
+            boxShadow: '3px 3px 0 #1C1613',
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             <GameIcon icon="magnifier" size={14} />
             Spatřeno strašidel:{' '}
-            <strong>
+            <strong style={{ color: '#C83E2B' }}>
               {discoveredCount} / {totalMonsters}
             </strong>
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             <GameIcon icon="trophy" size={14} />
             Zcela probádáno (100 %):{' '}
-            <strong>
+            <strong style={{ color: '#4D784E' }}>
               {fullyMasteredCount} / {totalMonsters}
             </strong>
           </span>
           <span
             style={{
-              color: '#2A170A',
+              color: '#6E3B1E',
               fontWeight: 900,
               display: 'inline-flex',
               alignItems: 'center',
@@ -256,8 +285,8 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                 margin: '2px',
                 padding: '4px 9px',
                 fontSize: '0.82rem',
-                backgroundColor: selectedCategory === cat.id ? 'var(--mustard)' : 'var(--wood-dark)',
-                color: selectedCategory === cat.id ? 'var(--ink)' : 'var(--parchment)',
+                backgroundColor: selectedCategory === cat.id ? '#E2A83B' : '#25382C',
+                color: selectedCategory === cat.id ? '#1C1613' : '#F6EBD8',
               }}
               onClick={() => {
                 setSelectedCategory(cat.id);
@@ -267,6 +296,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                     setSelectedId(list[0].id);
                   }
                 }
+                ladaPageFoley.playFullPageTurn(0);
                 sound.coin();
               }}
             >
@@ -454,9 +484,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                   ))}
                 </div>
 
-                <p style={{ fontWeight: 700, lineHeight: 1.35, margin: '10px 0' }}>
-                  {PREFIX_LORE[selectedPrefixId].lore}
-                </p>
+
 
                 <div
                   style={{
@@ -710,9 +738,12 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                   )}
                 </div>
 
-                <p style={{ fontWeight: 700, lineHeight: 1.35, margin: '10px 0' }}>
-                  {enemyProg.spoiledLore}
+                <p style={{ fontWeight: 700, lineHeight: 1.45, margin: '10px 0', minHeight: '54px' }}>
+                  <LadaDropCap letter={(enemyProg.spoiledLore || 'V').charAt(0).toUpperCase()} variant="poppy" />
+                  {(enemyProg.spoiledLore || '').slice(1)}
                 </p>
+
+                <LadaLindenVineta />
 
                 <div
                   style={{

@@ -23,20 +23,31 @@ export interface VillageViewProps {
 
 export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRefundAll, onClose }) => {
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
+  const metaRef = useRef<MetaProgression>(meta);
+  metaRef.current = meta;
+  const hoveredIdRef = useRef<string | null>(null);
+  const upgradeBurstsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     let animId: number;
     const startTime = performance.now();
     const loop = (now: number) => {
-      const elapsed = (now - startTime) / 1000;
+      const elapsed = Math.max(0, (now - startTime) / 1000);
+      const currentMeta = metaRef.current;
       VILLAGE_BUILDINGS.forEach((b) => {
         const c = canvasRefs.current[b.id];
         if (c) {
           const ctx = c.getContext('2d');
           if (ctx) {
             ctx.clearRect(0, 0, c.width, c.height);
+            const lvl = (currentMeta[b.levelKey] as number) || 0;
+            const burstStart = upgradeBurstsRef.current[b.id] || 0;
+            const isHighlighted =
+              hoveredIdRef.current === b.id || (burstStart > 0 && now - burstStart < 1200);
             const drawer = (Lada as any)[b.canvasDrawer];
-            if (typeof drawer === 'function') drawer.call(Lada, ctx, c.width, c.height, elapsed);
+            if (typeof drawer === 'function') {
+              drawer.call(Lada, ctx, c.width, c.height, elapsed, lvl, isHighlighted);
+            }
           }
         }
       });
@@ -165,7 +176,18 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
           const canAfford = meta.krejcary >= cost;
 
           return (
-            <div key={b.id} className="vignette-card">
+            <div
+              key={b.id}
+              className="vignette-card"
+              onMouseEnter={() => {
+                hoveredIdRef.current = b.id;
+              }}
+              onMouseLeave={() => {
+                if (hoveredIdRef.current === b.id) {
+                  hoveredIdRef.current = null;
+                }
+              }}
+            >
               <LadaCardCorners variant="default" showBottomCorners={true} />
               <canvas
                 ref={(el) => {
@@ -223,6 +245,7 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
                   disabled={!canAfford}
                   style={{ whiteSpace: 'normal', textAlign: 'center' }}
                   onClick={() => {
+                    upgradeBurstsRef.current[b.id] = performance.now();
                     onUpgrade(b.levelKey, cost);
                     sound.coin();
                     sound.levelUp();

@@ -14,13 +14,63 @@ import {
   getUndeadTolarChance,
 } from '../src/data/village';
 import { getWeaponDamage } from '../src/data/weapons';
+import { Lada } from '../src/render/ladaRenderer';
 import type { MetaProgression } from '../src/types';
 
+function createMockCanvasContext() {
+  const noop = () => {};
+  return {
+    save: noop,
+    restore: noop,
+    translate: noop,
+    rotate: noop,
+    scale: noop,
+    setTransform: noop,
+    beginPath: noop,
+    closePath: noop,
+    clip: noop,
+    moveTo: noop,
+    lineTo: noop,
+    arc: (_x: number, _y: number, r: number) => {
+      if (r < 0) throw new DOMException("The radius provided is negative.", "IndexSizeError");
+    },
+    arcTo: noop,
+    ellipse: (_x: number, _y: number, rx: number, ry: number) => {
+      if (rx < 0 || ry < 0) throw new DOMException("The radius provided is negative.", "IndexSizeError");
+    },
+    rect: noop,
+    roundRect: noop,
+    quadraticCurveTo: noop,
+    bezierCurveTo: noop,
+    setLineDash: noop,
+    createLinearGradient: () => ({ addColorStop: noop }),
+    createRadialGradient: () => ({ addColorStop: noop }),
+    fill: noop,
+    stroke: noop,
+    fillRect: noop,
+    strokeRect: noop,
+    clearRect: noop,
+    drawImage: noop,
+    fillText: noop,
+    strokeText: noop,
+    measureText: (text: string) => ({ width: text.length * 8 }),
+    fillStyle: '#000',
+    strokeStyle: '#000',
+    lineWidth: 1,
+    lineCap: 'round',
+    lineJoin: 'round',
+    globalAlpha: 1,
+  } as unknown as CanvasRenderingContext2D;
+}
+
 describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
-  it('has harmonized village buildings with appropriate tiers and folklore helpers', () => {
+  it('has harmonized village buildings with appropriate tiers and 13 unique animated Ladovské scenes', () => {
     expect(VILLAGE_BUILDINGS).toHaveLength(13);
 
     const validBaseCosts = [30, 50, 75];
+    const seenDrawers = new Set<string>();
+    const ctx = createMockCanvasContext();
+
     for (const b of VILLAGE_BUILDINGS) {
       expect(validBaseCosts).toContain(b.baseCost);
       expect(b.name).toBeTruthy();
@@ -28,7 +78,19 @@ describe('Hospodská ekonomika a obecní vylepšení (Village Economy)', () => {
       expect(b.story).toBeTruthy();
       expect(b.bonusDesc(1)).toBeTruthy();
       expect(b.canvasDrawer).toBeTruthy();
+      seenDrawers.add(b.canvasDrawer);
+
+      const drawer = (Lada as any)[b.canvasDrawer];
+      expect(typeof drawer).toBe('function');
+
+      // Render across multiple cyclic seconds (including negative, zero, fractional and large timestamps), levels, and highlight states
+      for (const t of [-2.5, -1, -0.25, 0, 0.1, 0.5, 1.25, 2.75, 5, 10]) {
+        expect(() => drawer(ctx, 300, 140, t, 0, false)).not.toThrow();
+        expect(() => drawer(ctx, 300, 140, t, 3, true)).not.toThrow();
+      }
     }
+
+    expect(seenDrawers.size).toBe(13);
   });
 
   it('calculates total village levels correctly across all buildings', () => {

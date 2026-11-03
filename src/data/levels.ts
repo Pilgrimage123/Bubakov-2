@@ -31,7 +31,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			id: "breznove_tani",
 			name: "Březnové tání",
 			layout: "asymmetric_poi",
-			poiOrder: ["fields", "church", "tavern", "pond", "mill", "forest", "shrine"]
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
 			id: "blatouch",
@@ -126,7 +126,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			id: "breznove_tani",
 			name: "Březnové tání",
 			layout: "asymmetric_poi",
-			poiOrder: ["fields", "church", "tavern", "pond", "mill", "forest", "shrine"]
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
 			id: "tajici_snehulak",
@@ -617,6 +617,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		decorTypes: [
 			"cottage",
 			"tree",
+			"rock",
 			"will_o_wisp",
 			"kaca"
 		],
@@ -772,7 +773,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			"cottage",
 			"tree",
 			"haystack",
-			"rock"
+			"rock",
+			"kaca"
 		],
 		arena: {
 			id: "cervnova_senosec",
@@ -909,14 +911,12 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		ambientTint: "rgba(30, 58, 138, 0.42)",
 		weatherEffect: "fireflies",
 		decorTypes: [
-			"cerven_border",
-			"cerven_hay_wagon",
-			"cerven_anthony_shrine",
-			"cerven_crayfish_pool",
-			"cerven_blueberry_grove",
-			"cerven_tavern",
-			"cerven_pond",
-			"cerven_haystack"
+			"cottage",
+			"tree",
+			"haystack",
+			"rock",
+			"will_o_wisp",
+			"kaca"
 		],
 		arena: {
 			id: "cervnova_senosec",

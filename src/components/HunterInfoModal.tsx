@@ -32,15 +32,25 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
   return (
     <div className="overlay" style={{ zIndex: 55 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{ maxWidth: '760px', width: '95%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}
         onClick={(event) => event.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA BUBÁKOVA · SPIS VENKOVSKÉHO LOVCE</span>
+          <span>
+            Osobní list družiny · <strong>{hunter.name}</strong>
+          </span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#166534', color: '#FFFFFF', padding: '4px 9px', borderRadius: '5px', fontWeight: 900, fontSize: '0.8rem' }}>
-              <GameIcon icon="checkmark" size={14} /> ODEMČENÝ LOVEC
+            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <GameIcon icon="checkmark" size={14} /> Společník na výpravu
             </span>
             <h2 style={{ margin: '7px 0 2px', fontSize: '1.8rem', color: '#2A170A', overflowWrap: 'break-word', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
@@ -58,9 +68,6 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
           <section style={{ ...detailSection, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap', background: 'linear-gradient(180deg, #FEF3C7 0%, #FFFBEB 100%)' }}>
             <div style={{ margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <LadaHunterCanvasPreview hunterId={hunterKey} size={150} />
-              <div style={{ fontWeight: 900, fontSize: '0.85rem', color: '#78350F', marginTop: '6px' }}>
-                🎨 Autentický Ladovský 2D sprite z arény
-              </div>
             </div>
           </section>
           <section style={detailSection}>
@@ -117,7 +124,7 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
             </h3>
             <p style={{ margin: 0, lineHeight: 1.45 }}>{hunter.ability}</p>
             <div style={{ marginTop: '8px', fontWeight: 900, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <GameIcon icon="clock" size={16} /> Základní cooldown: {hunter.cooldownSeconds} s
+              <GameIcon icon="clock" size={16} /> Doba nabíjení: {hunter.cooldownSeconds} s
             </div>
           </section>
           <section style={{ ...detailSection, marginBottom: 0 }}>

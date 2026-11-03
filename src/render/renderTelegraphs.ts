@@ -61,6 +61,48 @@ export function renderEnemyTelegraphs(
     if (e.brawlTimer && e.brawlTimer > 0) {
       Lada.drawSvandaBrawlCloud(ctx, e.x, e.y, uiTime);
     }
+
+    // 5. Boss Phase 2 Enrage Aura (50% HP threshold)
+    if (e.enraged && (e.isBoss || e.isMiniboss)) {
+      ctx.save();
+      const pulse = 1 + Math.sin(uiTime * 8) * 0.08;
+      const r = (e.radius || 32) * 1.35 * pulse;
+      ctx.fillStyle = 'rgba(220, 38, 38, 0.16)';
+      ctx.strokeStyle = '#EF4444';
+      ctx.lineWidth = 2.6;
+      ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.ellipse(e.x, e.y + (e.radius || 32) * 0.55, r, r * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // 6. Coordinated Minion-to-Boss Synergy Tether & Ward Ring
+    if (e._tetheredBoss && !e._tetheredBoss.dead && !e._tetheredBoss.isDefeated) {
+      const boss = e._tetheredBoss;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.72)';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(e.x, e.y);
+      ctx.lineTo(boss.x, boss.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+    if ((e._synergyMinionCount || 0) > 0 && (e.isBoss || e.isMiniboss)) {
+      ctx.save();
+      const r = (e.radius || 34) * 1.15;
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   return rendered;

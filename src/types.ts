@@ -558,6 +558,21 @@ export interface Trophy {
   unlocked?: (meta: any) => boolean;
 }
 
+export type VillageCanvasDrawer =
+  | 'drawScarecrowScene'
+  | 'drawMillScene'
+  | 'drawForestScene'
+  | 'drawWallScene'
+  | 'drawForgeScene'
+  | 'drawOvenScene'
+  | 'drawUndeadScene'
+  | 'drawBellScene'
+  | 'drawHerbGardenScene'
+  | 'drawTavernShieldScene'
+  | 'drawWaterWellScene'
+  | 'drawChurchWaveScene'
+  | 'drawBoziMukaScene';
+
 export interface VillageBuilding {
   id: string;
   name: string;
@@ -568,7 +583,7 @@ export interface VillageBuilding {
   baseCost: number;
   bonusDesc: (lvl: number) => string;
   cost: (lvl: number, totalVillageLevels?: number) => number;
-  canvasDrawer: 'drawOvenScene' | 'drawScarecrowScene' | 'drawMillScene' | 'drawWallScene';
+  canvasDrawer: VillageCanvasDrawer;
 }
 
 export interface HunterProgress {

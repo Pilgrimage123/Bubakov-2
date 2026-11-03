@@ -390,6 +390,107 @@ export function renderProjectilesAndSlashes(
         ctx.ellipse(r * 1.2, 0, r * 0.35, r * 0.55, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+      } else if (p.visual === 'crow_feather') {
+        const r = p.radius || 9;
+        ctx.rotate(p.angle || 0);
+        Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.2);
+        ctx.beginPath();
+        ctx.moveTo(-r * 1.4, 0);
+        ctx.quadraticCurveTo(-r * 0.2, -r * 0.75, r * 1.4, 0);
+        ctx.quadraticCurveTo(-r * 0.2, r * 0.75, -r * 1.4, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#7DD3FC';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-r * 1.1, 0);
+        ctx.lineTo(r * 1.15, 0);
+        ctx.stroke();
+      } else if (p.visual === 'straw_doll') {
+        const r = p.radius || 12;
+        ctx.rotate(uiTime * 6 + (p.angle || 0));
+        // Crossed straw sheaf body
+        Lada.setupPath(ctx, '#FACC15', COLORS.ink, 2.4);
+        ctx.beginPath();
+        ctx.rect(-r * 0.35, -r * 1.1, r * 0.7, r * 2.2);
+        ctx.rect(-r * 1.0, -r * 0.3, r * 2.0, r * 0.55);
+        ctx.fill();
+        ctx.stroke();
+        // White kerchief head with red folkloric ribbon
+        Lada.setupPath(ctx, '#F8FAFC', COLORS.ink, 2.0);
+        ctx.beginPath();
+        ctx.arc(0, -r * 0.85, r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#DC2626';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.4, 0);
+        ctx.lineTo(r * 0.4, 0);
+        ctx.stroke();
+      } else if (p.visual === 'fire_wreath') {
+        const r = p.radius || 12;
+        ctx.rotate(uiTime * 9);
+        Lada.setupPath(ctx, 'rgba(249, 115, 22, 0.35)', COLORS.ink, 2.4);
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        for (let k = 0; k < 6; k++) {
+          const ka = (k / 6) * Math.PI * 2;
+          Lada.setupPath(ctx, k % 2 === 0 ? '#F97316' : '#FDE047', COLORS.ink, 1.8);
+          ctx.beginPath();
+          ctx.arc(Math.cos(ka) * r * 0.85, Math.sin(ka) * r * 0.85, r * 0.36, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (p.visual === 'solar_sickle') {
+        const r = p.radius || 12;
+        ctx.rotate(uiTime * 11 + (p.angle || 0));
+        // Crescent golden harvesting blade
+        Lada.setupPath(ctx, '#FACC15', COLORS.ink, 2.4);
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.1, -Math.PI * 0.65, Math.PI * 0.55);
+        ctx.quadraticCurveTo(r * 0.35, 0, 0, -r * 0.95);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Wooden handle
+        Lada.setupPath(ctx, '#92400E', COLORS.ink, 2.0);
+        ctx.beginPath();
+        ctx.rect(-r * 0.3, r * 0.45, r * 0.45, r * 0.75);
+        ctx.fill();
+        ctx.stroke();
+      } else if (p.visual === 'fern_blossom') {
+        const r = p.radius || 11;
+        ctx.rotate(uiTime * 5 + (p.angle || 0));
+        for (let f = 0; f < 5; f++) {
+          const fa = (f / 5) * Math.PI * 2;
+          ctx.save();
+          ctx.rotate(fa);
+          Lada.setupPath(ctx, f % 2 === 0 ? '#FACC15' : '#A3E635', COLORS.ink, 2.0);
+          ctx.beginPath();
+          ctx.ellipse(r * 0.55, 0, r * 0.55, r * 0.28, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        Lada.setupPath(ctx, '#FEF08A', COLORS.ink, 1.8);
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.36, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else if (p.visual === 'water_wave') {
+        const r = p.radius || 12;
+        ctx.rotate(p.angle || 0);
+        Lada.setupPath(ctx, '#38BDF8', COLORS.ink, 2.4);
+        ctx.beginPath();
+        ctx.arc(0, 0, r, -Math.PI * 0.55, Math.PI * 0.55);
+        ctx.quadraticCurveTo(r * 0.25, 0, 0, -r * 0.85);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
       } else {
         const r = p.radius || 7;
         Lada.setupPath(ctx, p.color || COLORS.grey, COLORS.ink, 2);

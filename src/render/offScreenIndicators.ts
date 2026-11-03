@@ -3,7 +3,7 @@ import type { GameDrop } from '../types';
 
 export interface IndicatorItem {
   active: boolean;
-  type: 'big_pouch' | 'gingerbread_stash' | 'chest';
+  type: 'big_pouch' | 'gingerbread_stash' | 'chest' | 'boss_threat';
   worldX: number;
   worldY: number;
   screenX: number;
@@ -15,7 +15,7 @@ export interface IndicatorItem {
 }
 
 export class OffScreenIndicatorController {
-  public static readonly MAX_INDICATORS = 6;
+  public static readonly MAX_INDICATORS = 8;
   public static readonly MARGIN = 48; // 48px margin inside viewport
 
   public readonly pool: IndicatorItem[] = [];
@@ -91,19 +91,19 @@ export class OffScreenIndicatorController {
   }
 
   /**
-   * Updates indicator pool based on current heavy anchor drops on map.
+   * Updates indicator pool based on current heavy anchor drops and off-screen bosses on map.
    */
   public update(
     drops: readonly GameDrop[] | null | undefined,
     camera: CameraViewport,
     dt: number,
-    playerHpPct = 1.0
+    playerHpPct = 1.0,
+    enemies?: readonly any[] | null
   ): number {
     // Reset pool
     for (let i = 0; i < OffScreenIndicatorController.MAX_INDICATORS; i++) {
       this.pool[i].active = false;
     }
-    if (!drops || drops.length === 0) return 0;
 
     const camX = camera.x;
     const camY = camera.y;
@@ -111,49 +111,81 @@ export class OffScreenIndicatorController {
     const camH = camera.height;
 
     let activeCount = 0;
-    for (let i = 0; i < drops.length; i++) {
-      const d = drops[i];
-      if (!d || d.dead) continue;
-      const isAnchor =
-        d.type === 'big_pouch' ||
-        d.type === 'gingerbread_stash' ||
-        d.type === 'chest' ||
-        d.isHeavyAnchor;
+    if (drops && drops.length > 0) {
+      for (let i = 0; i < drops.length; i++) {
+        const d = drops[i];
+        if (!d || d.dead) continue;
+        const isAnchor =
+          d.type === 'big_pouch' ||
+          d.type === 'gingerbread_stash' ||
+          d.type === 'chest' ||
+          d.isHeavyAnchor;
 
-      if (!isAnchor) continue;
+        if (!isAnchor) continue;
 
-      // Fast-exit if drop is already inside the visible camera viewport
-      if (d.x >= camX && d.x <= camX + camW && d.y >= camY && d.y <= camY + camH) {
-        continue;
+        // Fast-exit if drop is already inside the visible camera viewport
+        if (d.x >= camX && d.x <= camX + camW && d.y >= camY && d.y <= camY + camH) {
+          continue;
+        }
+
+        if (activeCount >= OffScreenIndicatorController.MAX_INDICATORS) break;
+
+        const proj = OffScreenIndicatorController.projectToViewportEllipse(d.x, d.y, camera);
+        if (!proj.isOffScreen) continue;
+
+        const ind = this.pool[activeCount];
+        ind.active = true;
+        ind.type = (d.type as any) || 'chest';
+        ind.worldX = d.x;
+        ind.worldY = d.y;
+        ind.screenX = proj.screenX;
+        ind.screenY = proj.screenY;
+        ind.angle = proj.angle;
+        ind.distance = proj.distance;
+        ind.pulseTimer += dt;
+
+        // Distance lerp: 0.75x (far >= 2500px) to 1.15x (near edge)
+        const distFactor = Math.max(0, Math.min(1, (proj.distance - 600) / 2000));
+        let baseScale = 1.15 - distFactor * 0.40;
+
+        // Pulse Košík arrow in sync with low-HP warning when HP < 30%
+        if (ind.type === 'gingerbread_stash' && playerHpPct < 0.30) {
+          baseScale *= 1.0 + Math.sin(ind.pulseTimer * 8.0) * 0.22;
+        }
+
+        ind.scale = baseScale;
+        activeCount++;
       }
+    }
 
-      if (activeCount >= OffScreenIndicatorController.MAX_INDICATORS) break;
+    if (enemies && enemies.length > 0) {
+      for (let i = 0; i < enemies.length; i++) {
+        const e = enemies[i];
+        if (!e || e.dead || e.isDefeated || (!e.isBoss && !e.isMiniboss)) continue;
+        if (e.x >= camX && e.x <= camX + camW && e.y >= camY && e.y <= camY + camH) {
+          continue;
+        }
+        if (activeCount >= OffScreenIndicatorController.MAX_INDICATORS) break;
 
-      const proj = OffScreenIndicatorController.projectToViewportEllipse(d.x, d.y, camera);
-      if (!proj.isOffScreen) continue;
+        const proj = OffScreenIndicatorController.projectToViewportEllipse(e.x, e.y, camera);
+        if (!proj.isOffScreen) continue;
 
-      const ind = this.pool[activeCount];
-      ind.active = true;
-      ind.type = (d.type as any) || 'chest';
-      ind.worldX = d.x;
-      ind.worldY = d.y;
-      ind.screenX = proj.screenX;
-      ind.screenY = proj.screenY;
-      ind.angle = proj.angle;
-      ind.distance = proj.distance;
-      ind.pulseTimer += dt;
+        const ind = this.pool[activeCount];
+        ind.active = true;
+        ind.type = 'boss_threat';
+        ind.worldX = e.x;
+        ind.worldY = e.y;
+        ind.screenX = proj.screenX;
+        ind.screenY = proj.screenY;
+        ind.angle = proj.angle;
+        ind.distance = proj.distance;
+        ind.pulseTimer += dt;
 
-      // Distance lerp: 0.75x (far >= 2500px) to 1.15x (near edge)
-      const distFactor = Math.max(0, Math.min(1, (proj.distance - 600) / 2000));
-      let baseScale = 1.15 - distFactor * 0.40;
-
-      // Pulse Košík arrow in sync with low-HP warning when HP < 30%
-      if (ind.type === 'gingerbread_stash' && playerHpPct < 0.30) {
-        baseScale *= 1.0 + Math.sin(ind.pulseTimer * 8.0) * 0.22;
+        const distFactor = Math.max(0, Math.min(1, (proj.distance - 600) / 2000));
+        const baseScale = (1.2 - distFactor * 0.35) * (1.0 + Math.sin(ind.pulseTimer * 6.0) * 0.12);
+        ind.scale = baseScale;
+        activeCount++;
       }
-
-      ind.scale = baseScale;
-      activeCount++;
     }
 
     return activeCount;
@@ -172,7 +204,7 @@ export class OffScreenIndicatorController {
       ctx.rotate(ind.angle);
       ctx.scale(ind.scale, ind.scale);
 
-      // Distinct styling per Heavy Anchor type
+      // Distinct styling per Heavy Anchor or Boss Threat type
       let badgeColor = '#F59E0B'; // Gold Pouch
       let badgeGlow = 'rgba(245, 158, 11, 0.45)';
       let iconSymbol = '🪙';
@@ -188,6 +220,11 @@ export class OffScreenIndicatorController {
         badgeGlow = 'rgba(139, 92, 246, 0.50)';
         iconSymbol = '👑';
         label = 'TRUHLA';
+      } else if (ind.type === 'boss_threat') {
+        badgeColor = '#EF4444'; // Boss Threat
+        badgeGlow = 'rgba(239, 68, 68, 0.58)';
+        iconSymbol = '💀';
+        label = 'VLÁDCE';
       }
 
       // Outer glow underlay stamp instead of shadowBlur (ADR 0029)

@@ -318,5 +318,156 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
     expect(player.hazardSlowTimer).toBeGreaterThan(0);
     expect(player.hazardSlowFactor).toBeLessThan(1);
   });
+
+  it('Every big stage boss (Stages 1 to 8) executes at least 3 distinct, graphically & tactically impressive attacks/maneuvers', () => {
+    // 1. Stage 1 Final Boss: Hejno mrazivých vran (vrana boss flock)
+    {
+      const engine = new GameEngine();
+      engine.initRun(0, 'wanderer');
+      engine.state.player!.weapons = [];
+      const vranaBoss = engine.spawnMonster('vrana', 120, 120, 1.0, true, false);
+      vranaBoss.crowDiveCooldown = 0;
+      vranaBoss.featherVolleyCooldown = 0;
+      vranaBoss.vortexCooldown = 0;
+      engine.update(0.1);
+      expect(vranaBoss.crowDiveTimer).toBeGreaterThan(0); // Attack 1: Dive pass
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'crow_feather')).toBe(true); // Attack 2: 3-way icy feathers
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'crow-vortex')).toBe(true); // Attack 3: Crow vortex cyclone
+    }
+
+    // 2. Stage 2 Final Boss: Smrtka Morana
+    {
+      const engine = new GameEngine();
+      engine.initRun(1, 'wanderer');
+      engine.state.player!.weapons = [];
+      const morana = engine.spawnMonster('morana', 120, 120, 1.0, true, false);
+      morana.windBladeCooldown = 0;
+      morana.blizzardCooldown = 0;
+      morana.effigyCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true); // Attack 1: Frost wind blades
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true); // Attack 2: Blizzard AoE
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'straw_doll')).toBe(true); // Attack 3: Straw effigy burst + herald summon
+    }
+
+    // 3. Stage 3 & 4 Final Boss: Vrchní čarodějnice
+    {
+      const engine = new GameEngine();
+      engine.initRun(3, 'wanderer');
+      engine.state.player!.weapons = [];
+      const witch = engine.spawnMonster('vrchni_carodejnice', 120, 120, 1.0, true, false);
+      witch.fireVortexTimer = 0;
+      witch.pitchWreathCooldown = 0;
+      witch.sabatDashCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true); // Attack 1: Witch fireball spread
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true); // Attack 2: Blazing pitch wreaths + pitch-wreath hazard
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'pitch-wreath')).toBe(true);
+      expect(witch.sabatDashTimer).toBeGreaterThan(0); // Attack 3: Jet-broom dash + hex-circle + summon
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hex-circle')).toBe(true);
+    }
+
+    // 4. Stage 5 Final Boss: Ledoví muži (Pankrác, Servác a Bonifác)
+    {
+      const engine = new GameEngine();
+      engine.initRun(4, 'wanderer');
+      engine.state.player!.weapons = [];
+      const saint = engine.spawnMonster('ledovi_muzi', 120, 120, 1.0, true, false);
+      saint.icicleCooldown = 0;
+      saint.hailCooldown = 0;
+      saint.freezePulseCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true); // Attack 1: 5-way icicle fan
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true); // Attack 2: Hailstorm circles
+      expect(saint.triadDashTimer).toBeGreaterThan(0); // Attack 3: Freeze pulse + Triad convergence dash + triad-blizzard
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'triad-blizzard')).toBe(true);
+    }
+
+    // 5. Stage 6 Final Boss: Lesní Hejkal
+    {
+      const engine = new GameEngine();
+      engine.initRun(5, 'wanderer');
+      engine.state.player!.weapons = [];
+      const hejkal = engine.spawnMonster('hejkal', 120, 120, 1.0, true, false);
+      hejkal.howlCooldown = 0;
+      hejkal.logTossCooldown = 0;
+      hejkal.rootSnareCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hejkal-roar')).toBe(true); // Attack 1: Thunder howl roar ring
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true); // Attack 2: 3-way log toss
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true); // Attack 3: Root snare traps + woodland leap
+      expect(hejkal.hejkalLeapTimer).toBeGreaterThan(0);
+    }
+
+    // 6. Stage 7 Final Boss: Královská Polednice
+    {
+      const engine = new GameEngine();
+      engine.initRun(6, 'wanderer');
+      engine.state.player!.weapons = [];
+      const polednice = engine.spawnMonster('kralovska_polednice', 120, 120, 1.0, true, false);
+      polednice.heatPulseCooldown = 0;
+      polednice.sickleCooldown = 0;
+      polednice.lightningCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'heat-ring')).toBe(true); // Attack 1: Solar heat ring
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'solar_sickle')).toBe(true); // Attack 2: Spinning golden sickles
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'lightning-strike')).toBe(true); // Attack 3: Noon lightning strikes
+    }
+
+    // 7. Stage 8 Final Boss: Svatojánský Vládce Hvozdu s Pokladem
+    {
+      const engine = new GameEngine();
+      engine.initRun(7, 'wanderer');
+      engine.state.player!.weapons = [];
+      const vladce = engine.spawnMonster('svatojansky_vladce', 120, 120, 1.0, true, false);
+      vladce.treasurePulseCooldown = 0;
+      vladce.fernBarrageCooldown = 0;
+      vladce.midsummerBoltCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'heat-ring')).toBe(true); // Attack 1: Golden fern bloom ring
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fern_blossom')).toBe(true); // Attack 2: 5-way Fern Blossom barrage + root-snare
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'lightning-strike')).toBe(true); // Attack 3: Midsummer thunderbolt
+    }
+  });
+
+  it('triggers Boss Phase 2 Enrage at <= 50% HP, Interactive Hazard Counterplay, and Minion-to-Boss Synergy Tether backlash', () => {
+    const engine = new GameEngine();
+    engine.initRun(5, 'wanderer');
+    const player = engine.state.player!;
+    player.weapons = [];
+
+    // Spawn Hejkal boss and a nearby minion within 280px
+    const hejkal = engine.spawnMonster('hejkal', 100, 100, 1.0, true, false);
+    const baseSpeed = hejkal.speed;
+    hejkal.hp = Math.floor(hejkal.maxHp * 0.45);
+    hejkal.rootSnareCooldown = 0;
+
+    const minion = engine.spawnMonster('cerny_pes', 140, 100, 1.0, false, false);
+    engine.update(0.1);
+
+    // 1. Boss Enrage triggered at <= 50% HP
+    expect(hejkal.enraged).toBe(true);
+    expect(hejkal.speed).toBeGreaterThan(baseSpeed);
+
+    // 2. Minion-to-Boss Synergy Tether established
+    expect(minion._tetheredBoss).toBe(hejkal);
+    expect(hejkal._synergyMinionCount).toBeGreaterThanOrEqual(1);
+
+    // 3. Interactive Hazard Counterplay: Fire/Holy attack destroys Hejkal's root-snare trap and deals backlash damage to Hejkal
+    const rootSnare = engine.director?.hazards.find((h: any) => h.kind === 'root-snare');
+    expect(rootSnare).toBeDefined();
+    const hpBeforeTrapBreak = hejkal.hp;
+    const cleared = engine.interactWithEnemyHazards(rootSnare!.x, rootSnare!.y, 60, 'fire');
+    expect(cleared).toBeGreaterThanOrEqual(1);
+    expect(hejkal.hp).toBeLessThan(hpBeforeTrapBreak);
+
+    // 4. Killing the tethered minion triggers Tether Backlash on the boss
+    const hpBeforeMinionDeath = hejkal.hp;
+    minion.takeDamage(99999, 'physical');
+    expect(minion.isDefeated).toBe(true);
+    expect(hejkal.hp).toBeLessThan(hpBeforeMinionDeath);
+  });
 });
+
 

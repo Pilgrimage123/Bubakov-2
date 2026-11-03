@@ -74,7 +74,7 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
   return (
     <div className="overlay" style={{ zIndex: 45 }} onClick={onClose}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '740px',
           width: '95%',
@@ -86,7 +86,17 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
+        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
+        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" />
+        <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
+          <span>📖 KRONIKA BUBÁKOVA · TIRÁŽ A NASTAVENÍ KNIHY</span>
+          <span>
+            Technický list · <strong>SNDK Praha</strong>
+          </span>
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>

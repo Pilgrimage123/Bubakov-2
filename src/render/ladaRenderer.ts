@@ -14649,10 +14649,10 @@ var Lada = {
 		ctx.arc(0, 0, r, 0, Math.PI * 2);
 		ctx.fill();
 		if (panicked) for (let i = 0; i < 3; i++) {
-			const pt = (time * 5 + i * .33) % 1;
+			const pt = ((time * 5 + i * .33) % 1 + 1) % 1;
 			ctx.fillStyle = "#FDE047";
 			ctx.beginPath();
-			ctx.arc(-12 - pt * 20, Math.sin(time * 10 + i) * 6, 2 - pt, 0, Math.PI * 2);
+			ctx.arc(-12 - pt * 20, Math.sin(time * 10 + i) * 6, Math.max(0.1, 2 - pt), 0, Math.PI * 2);
 			ctx.fill();
 		}
 		ctx.restore();
@@ -14831,13 +14831,13 @@ var Lada = {
 		// Puffing soot clouds and bright fiery sparks from the nozzle
 		ctx.fillStyle = 'rgba(39, 39, 42, 0.7)';
 		for (let i = 0; i < 2; i++) {
-			const pt = (time * 5 + i * 0.5) % 1;
+			const pt = ((time * 5 + i * 0.5) % 1 + 1) % 1;
 			ctx.beginPath();
-			ctx.arc(17 + pt * 10, 2 - pt * 4, 1.5 + pt * 3, 0, Math.PI * 2);
+			ctx.arc(17 + pt * 10, 2 - pt * 4, Math.max(0.1, 1.5 + pt * 3), 0, Math.PI * 2);
 			ctx.fill();
 		}
 		ctx.fillStyle = '#F97316';
-		const spT = (time * 8) % 1;
+		const spT = ((time * 8) % 1 + 1) % 1;
 		ctx.beginPath();
 		ctx.arc(18 + spT * 8, 1 - spT * 3, 1.2, 0, Math.PI * 2);
 		ctx.fill();
@@ -15011,7 +15011,7 @@ var Lada = {
 		// Dancing fire sparks around him
 		ctx.fillStyle = '#F59E0B';
 		for (let i = 0; i < 3; i++) {
-			const st = (time * 5 + i * 0.33) % 1;
+			const st = ((time * 5 + i * 0.33) % 1 + 1) % 1;
 			const sx = -12 + (i * 12) + Math.sin(st * 6) * 4;
 			const sy = -14 - st * 22;
 			ctx.beginPath();
@@ -16389,10 +16389,10 @@ var Lada = {
 		ctx.fill();
 
 		for (let i = 0; i < 3; i++) {
-			const sPhase = (time * 3 + i * 0.33) % 1;
+			const sPhase = ((time * 3 + i * 0.33) % 1 + 1) % 1;
 			ctx.fillStyle = isEnraged ? "#F87171" : "#BAE6FD";
 			ctx.beginPath();
-			ctx.arc(-4 + i * 4 + Math.sin(time * 8 + i) * 3, -22 - sPhase * 18, 1.6 * (1 - sPhase * 0.5), 0, Math.PI * 2);
+			ctx.arc(-4 + i * 4 + Math.sin(time * 8 + i) * 3, -22 - sPhase * 18, Math.max(0.1, 1.6 * (1 - sPhase * 0.5)), 0, Math.PI * 2);
 			ctx.fill();
 		}
 
@@ -20776,22 +20776,22 @@ var Lada = {
 		ctx.stroke();
 
 		// Glowing ember inside pipe bowl
-		const puffCycle = (time * 0.9) % 2.8;
+		const puffCycle = ((time * 0.9) % 2.8 + 2.8) % 2.8;
 		const isDrawing = puffCycle < 0.9;
 		const emberGlow = isDrawing ? (1 + Math.sin(time * 16) * 0.25) : 0.65;
 		ctx.fillStyle = isDrawing ? "#F97316" : "#DC2626";
 		ctx.beginPath();
-		ctx.ellipse(bowlX, bowlY - 5, 3.6 * emberGlow, 2.2, 0, 0, Math.PI * 2);
+		ctx.ellipse(bowlX, bowlY - 5, Math.max(0.1, 3.6 * emberGlow), 2.2, 0, 0, Math.PI * 2);
 		ctx.fill();
 
 		// Billowing Smoke Puffs
 		ctx.save();
 		const puffBaseTime = time * 1.5;
 		for (let pi = 0; pi < 5; pi++) {
-			const pAge = (puffBaseTime + pi * 0.55) % 2.4;
+			const pAge = ((puffBaseTime + pi * 0.55) % 2.4 + 2.4) % 2.4;
 			if (pAge > 0.05) {
 				const pFrac = pAge / 2.4;
-				const pRad = 3.2 + pFrac * 10;
+				const pRad = Math.max(0.1, 3.2 + pFrac * 10);
 				const pAlpha = Math.max(0, 0.7 - pFrac * 0.72);
 				const px = bowlX + pFrac * 16 + Math.sin(pAge * 3.5 + pi) * 5;
 				const py = bowlY - 8 - pFrac * 34 - Math.pow(pFrac, 1.4) * 10;
@@ -20844,109 +20844,2035 @@ var Lada = {
 
 		ctx.restore(); // End Grandfather
 	},
-	drawOvenScene(ctx, w, h, time) {
-		ctx.fillStyle = COLORS.bone;
-		ctx.fillRect(0, 0, w, h);
-		this.setupPath(ctx, COLORS.red, COLORS.ink, 3);
-		ctx.fillRect(w / 2 - 60, h - 80, 120, 80);
-		ctx.strokeRect(w / 2 - 60, h - 80, 120, 80);
-		ctx.beginPath();
-		ctx.arc(w / 2, h - 80, 60, Math.PI, 0);
-		ctx.fill();
-		ctx.stroke();
-		ctx.fillStyle = COLORS.ink;
-		ctx.beginPath();
-		ctx.arc(w / 2, h - 30, 25, Math.PI, 0);
-		ctx.lineTo(w / 2 + 25, h);
-		ctx.lineTo(w / 2 - 25, h);
-		ctx.fill();
-		ctx.fillStyle = COLORS.mustard;
-		ctx.beginPath();
-		ctx.moveTo(w / 2 - 15, h);
-		ctx.quadraticCurveTo(w / 2 - 10, h - 30 - Math.sin(time * 10) * 10, w / 2, h - 40 + Math.cos(time * 8) * 5);
-		ctx.quadraticCurveTo(w / 2 + 10, h - 30 - Math.cos(time * 12) * 10, w / 2 + 15, h);
-		ctx.fill();
-		this.setupPath(ctx, "#8C5329", COLORS.ink, 2);
-		ctx.fillRect(w / 2 + 35, h - 32, 40, 7);
-		this.drawCzechBuchta(ctx, w / 2 + 45, h - 38, .72, -.04);
-		this.drawCzechBuchta(ctx, w / 2 + 60, h - 39, .68, .04);
-		const rx = w / 4;
-		const ry = h / 2 + Math.sin(time * 5) * 10;
-		this.drawRarach(ctx, rx, ry, time, 1, false);
-	},
-	drawScarecrowScene(ctx, w, h, time) {
-		ctx.fillStyle = "#2C3540";
-		ctx.fillRect(0, 0, w, h);
-		ctx.fillStyle = COLORS.parchment;
-		ctx.beginPath();
-		ctx.arc(w * .8, h * .3, 20, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.strokeStyle = COLORS.mustard;
-		ctx.lineWidth = 3;
-		for (let i = 0; i < w; i += 12) {
-			const sway = Math.sin(time * 2 + i) * 10;
-			ctx.beginPath();
-			ctx.moveTo(i, h);
-			ctx.quadraticCurveTo(i + sway / 2, h - 20, i + sway, h - 40);
-			ctx.stroke();
-		}
-		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3);
-		ctx.fillRect(w / 2 - 5, h / 4, 10, h * .75);
-		ctx.strokeRect(w / 2 - 5, h / 4, 10, h * .75);
-		ctx.fillRect(w / 2 - 40, h / 2 - 10, 80, 10);
-		ctx.strokeRect(w / 2 - 40, h / 2 - 10, 80, 10);
-		ctx.save();
-		ctx.translate(w / 2, h / 2);
-		ctx.rotate(Math.sin(time) * .1);
-		ctx.translate(-w / 2, -h / 2);
-		this.drawBubak(ctx, w / 2, h / 2 - 20, time, 0, false);
-		ctx.restore();
-	},
-	drawMillScene(ctx, w, h, time) {
-		ctx.fillStyle = COLORS.bone;
-		ctx.fillRect(0, 0, w, h);
-		ctx.fillStyle = COLORS.water;
-		ctx.beginPath();
-		ctx.moveTo(0, h);
-		ctx.lineTo(0, h - 30);
-		for (let i = 0; i <= w; i += 20) ctx.quadraticCurveTo(i + 10, h - 30 + Math.sin(time * 4 + i) * 5, i + 20, h - 30);
-		ctx.lineTo(w, h);
-		ctx.fill();
-		const mx = w / 2;
-		const my = h / 2;
-		ctx.save();
-		ctx.translate(mx, my);
-		ctx.rotate(-time);
-		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 3);
-		ctx.beginPath();
-		ctx.arc(0, 0, 40, 0, Math.PI * 2);
-		ctx.stroke();
-		for (let i = 0; i < 8; i++) {
-			ctx.rotate(Math.PI / 4);
-			ctx.beginPath();
-			ctx.moveTo(0, 0);
-			ctx.lineTo(40, 0);
-			ctx.stroke();
-			ctx.fillRect(35, -10, 10, 20);
-			ctx.strokeRect(35, -10, 10, 20);
-		}
-		ctx.restore();
-		this.drawHastrman(ctx, w * .8, h / 2 - Math.sin(time * 5) * 5, time, -1, false);
-	},
-	drawWallScene(ctx, w, h, time) {
-		ctx.fillStyle = COLORS.bone;
-		ctx.fillRect(0, 0, w, h);
-		this.setupPath(ctx, COLORS.grey, COLORS.ink, 2);
-		for (let row = 0; row < 4; row++) {
-			const y = h - 20 - row * 20;
-			const offset = row % 2 === 0 ? 0 : 15;
-			for (let col = 0; col < 5; col++) {
-				const x = col * 30 - offset;
-				ctx.fillRect(x, y, 30, 20);
-				ctx.strokeRect(x, y, 30, 20);
+	_drawVillageSceneFrame(ctx: CanvasRenderingContext2D, w: number, h: number, time: number, level = 0, isHighlighted = false) {
+		const lvl = Math.max(0, level || 0);
+		// Celebratory golden sparkles when hovered, upgraded, or at higher levels
+		const sparkleCount = (isHighlighted ? 5 : 0) + Math.min(4, lvl);
+		for (let i = 0; i < sparkleCount; i++) {
+			const phase = ((time * (isHighlighted ? 2.4 : 1.3) + i * 0.37) % 1 + 1) % 1;
+			const sx = 24 + ((i * 67 + 19) % (w - 48)) + Math.sin(time * 3 + i) * 6;
+			const sy = h - 18 - phase * (h - 36);
+			const r = Math.max(0, (1 - Math.abs(phase - 0.5) * 1.8) * (isHighlighted ? 4.2 : 3.0));
+			if (r > 0.4) {
+				ctx.save();
+				ctx.translate(sx, sy);
+				ctx.rotate(time * 2 + i);
+				ctx.fillStyle = isHighlighted ? "#FEF08A" : "#FBBF24";
+				ctx.beginPath();
+				ctx.moveTo(0, -r * 1.4);
+				ctx.quadraticCurveTo(r * 0.3, -r * 0.3, r * 1.4, 0);
+				ctx.quadraticCurveTo(r * 0.3, r * 0.3, 0, r * 1.4);
+				ctx.quadraticCurveTo(-r * 0.3, r * 0.3, -r * 1.4, 0);
+				ctx.quadraticCurveTo(-r * 0.3, -r * 0.3, 0, -r * 1.4);
+				ctx.closePath();
+				ctx.fill();
+				ctx.restore();
 			}
 		}
-		this.drawSkeleton(ctx, w / 2 + 20, h - 30, time, -1, false);
+
+		// Warm golden highlight glow border when hovered or just upgraded
+		if (isHighlighted) {
+			ctx.save();
+			ctx.strokeStyle = "rgba(251, 191, 36, 0.65)";
+			ctx.lineWidth = 4;
+			ctx.strokeRect(2, 2, w - 4, h - 4);
+			ctx.restore();
+		}
+
+		// Authentic Josef Lada woodcut corner ink ticks
+		ctx.save();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		ctx.lineCap = "round";
+		const cLen = 10;
+		ctx.beginPath();
+		// Top-left
+		ctx.moveTo(4, 4 + cLen); ctx.lineTo(4, 4); ctx.lineTo(4 + cLen, 4);
+		// Top-right
+		ctx.moveTo(w - 4 - cLen, 4); ctx.lineTo(w - 4, 4); ctx.lineTo(w - 4, 4 + cLen);
+		// Bottom-left
+		ctx.moveTo(4, h - 4 - cLen); ctx.lineTo(4, h - 4); ctx.lineTo(4 + cLen, h - 4);
+		// Bottom-right
+		ctx.moveTo(w - 4 - cLen, h - 4); ctx.lineTo(w - 4, h - 4); ctx.lineTo(w - 4, h - 4 - cLen);
+		ctx.stroke();
+		ctx.restore();
+	},
+
+	drawScarecrowScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.55 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Late-afternoon harvest gouache sky
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#EAB676");
+		skyGrad.addColorStop(0.55, "#F5DFB0");
+		skyGrad.addColorStop(1, "#D9A036");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Warm setting sun on the right with folkloric rays
+		const sunX = w * 0.82;
+		const sunY = h * 0.26;
+		ctx.fillStyle = "rgba(254, 240, 138, 0.35)";
+		ctx.beginPath();
+		ctx.arc(sunX, sunY, 28 + Math.sin(t * 3) * 2, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#FEF08A", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.arc(sunX, sunY, 16, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Distant Hrusice church spire & rolling hills
+		this.setupPath(ctx, "#8C9E6E", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 38);
+		ctx.quadraticCurveTo(w * 0.25, h - 54, w * 0.55, h - 40);
+		ctx.quadraticCurveTo(w * 0.8, h - 50, w, h - 36);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Tiny village church silhouette on horizon
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 1.8);
+		ctx.fillRect(34, h - 60, 14, 14);
+		ctx.strokeRect(34, h - 60, 14, 14);
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(32, h - 60);
+		ctx.lineTo(41, h - 74);
+		ctx.lineTo(50, h - 60);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Startled crow flapping away in upper-left sky
+		const crowX = 72 + Math.sin(t * 1.8) * 14;
+		const crowY = 26 + Math.cos(t * 2.4) * 5;
+		ctx.save();
+		ctx.translate(crowX, crowY);
+		ctx.scale(0.52, 0.52);
+		this.drawStageCrow(ctx, 0, 0, t, -1, true);
+		ctx.restore();
+
+		// 2. Foreground grassy field ridge (polní mez) & boundary stone (mezník)
+		this.setupPath(ctx, "#5A7D3A", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 26);
+		ctx.quadraticCurveTo(w * 0.5, h - 34, w, h - 24);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Stone boundary marker (hraniční mezník) on left
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(18, h - 18);
+		ctx.lineTo(18, h - 42);
+		ctx.arc(26, h - 42, 8, Math.PI, 0);
+		ctx.lineTo(34, h - 18);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(26, h - 45); ctx.lineTo(26, h - 33);
+		ctx.moveTo(22, h - 40); ctx.lineTo(30, h - 40);
+		ctx.stroke();
+
+		// Swaying golden wheat stalks & poppies/cornflowers
+		for (let i = 8; i < w; i += 14) {
+			const sway = Math.sin(t * 2.4 + i * 0.1) * 7;
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 4.2;
+			ctx.beginPath();
+			ctx.moveTo(i, h);
+			ctx.quadraticCurveTo(i + sway * 0.5, h - 20, i + sway, h - 42);
+			ctx.stroke();
+			ctx.strokeStyle = "#F59E0B";
+			ctx.lineWidth = 2.4;
+			ctx.stroke();
+
+			// Wheat ear head
+			this.setupPath(ctx, "#FBBF24", COLORS.ink, 1.4);
+			ctx.beginPath();
+			ctx.ellipse(i + sway, h - 44, 3, 6, sway * 0.03, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+
+			if (i % 42 === 8) {
+				// Red poppy (vlčí mák)
+				this.setupPath(ctx, "#DC2626", COLORS.ink, 1.5);
+				ctx.beginPath();
+				ctx.arc(i + sway * 0.6 + 5, h - 24, 4.5, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = COLORS.ink;
+				ctx.beginPath();
+				ctx.arc(i + sway * 0.6 + 5, h - 24, 1.5, 0, Math.PI * 2);
+				ctx.fill();
+			} else if (i % 42 === 22) {
+				// Blue cornflower (chrpa)
+				this.setupPath(ctx, "#2563EB", COLORS.ink, 1.4);
+				ctx.beginPath();
+				ctx.arc(i + sway * 0.6 + 4, h - 22, 4, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+
+		// 3. Stretched braided wheat rope (pšeničné lano) between stakes with fluttering ribbons
+		const stakeLeftX = 56;
+		const stakeRightX = w - 48;
+		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2.4);
+		ctx.fillRect(stakeLeftX - 3, h - 56, 6, 42);
+		ctx.strokeRect(stakeLeftX - 3, h - 56, 6, 42);
+		ctx.fillRect(stakeRightX - 3, h - 56, 6, 42);
+		ctx.strokeRect(stakeRightX - 3, h - 56, 6, 42);
+
+		const ropeSag = 10 + Math.sin(t * 3) * 2.5;
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 6;
+		ctx.beginPath();
+		ctx.moveTo(stakeLeftX, h - 48);
+		ctx.quadraticCurveTo(w * 0.5, h - 48 + ropeSag, stakeRightX, h - 48);
+		ctx.stroke();
+		ctx.strokeStyle = "#FBBF24";
+		ctx.lineWidth = 3.2;
+		ctx.stroke();
+
+		// Red folk ribbons tied to the wheat rope
+		for (let rIdx = 1; rIdx <= 3; rIdx++) {
+			const rx = stakeLeftX + ((stakeRightX - stakeLeftX) * rIdx) / 4;
+			const ry = h - 48 + ropeSag * (rIdx === 2 ? 0.95 : 0.7);
+			const ribWave = Math.sin(t * 5 + rIdx) * 4;
+			this.setupPath(ctx, "#DC2626", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.moveTo(rx, ry);
+			ctx.lineTo(rx - 3 + ribWave, ry + 11);
+			ctx.lineTo(rx + 2 + ribWave, ry + 10);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 4. Center Scarecrow Post & Pacified Bubák in Šosatý Kabát
+		const cx = w * 0.5;
+		const cy = h * 0.54;
+		if (lvl > 0 || isHighlighted) {
+			ctx.fillStyle = "rgba(250, 204, 21, 0.22)";
+			ctx.beginPath();
+			ctx.arc(cx, cy, 42 + Math.sin(t * 4) * 4, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2.8);
+		ctx.fillRect(cx - 4, 22, 8, h - 22);
+		ctx.strokeRect(cx - 4, 22, 8, h - 22);
+		ctx.fillRect(cx - 38, cy - 8, 76, 8);
+		ctx.strokeRect(cx - 38, cy - 8, 76, 8);
+
+		ctx.save();
+		ctx.translate(cx, cy - 6);
+		ctx.rotate(Math.sin(t * 2.2) * 0.11);
+		// Patched blue-green tailcoat (šosatý kabát) sleeves & tails on the crossbeam
+		this.setupPath(ctx, "#1E3A5F", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-30, -4);
+		ctx.lineTo(30, -4);
+		ctx.lineTo(26, 6);
+		ctx.lineTo(14, 6);
+		ctx.lineTo(18, 28);
+		ctx.lineTo(2, 22);
+		ctx.lineTo(-2, 22);
+		ctx.lineTo(-18, 28);
+		ctx.lineTo(-14, 6);
+		ctx.lineTo(-26, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Brass buttons on the tailcoat
+		ctx.fillStyle = "#FBBF24";
+		ctx.beginPath();
+		ctx.arc(-4, 4, 2, 0, Math.PI * 2);
+		ctx.arc(4, 4, 2, 0, Math.PI * 2);
+		ctx.arc(-4, 11, 2, 0, Math.PI * 2);
+		ctx.arc(4, 11, 2, 0, Math.PI * 2);
+		ctx.fill();
+		// Draw the pacified Bubák
+		ctx.scale(0.85, 0.85);
+		this.drawBubak(ctx, 0, -10, t, 0, false);
+		ctx.restore();
+
+		// 5. Rolling golden Krejcary & Perníček drawn toward the hunter
+		const coinCount = 2 + Math.min(3, lvl);
+		for (let c = 0; c < coinCount; c++) {
+			const prog = ((t * 0.55 + c * (1 / coinCount)) % 1 + 1) % 1;
+			const kx = w - 26 - prog * (w * 0.42);
+			const ky = h - 14 - Math.abs(Math.sin(t * 7 + c)) * 9;
+			this.setupPath(ctx, "#FBBF24", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.arc(kx, ky, 5.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#B45309";
+			ctx.beginPath();
+			ctx.arc(kx, ky, 2.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawMillScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.65 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Crisp daytime riverside sky & distant willow bank
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#CFE8F3");
+		skyGrad.addColorStop(0.65, "#F3E9D2");
+		skyGrad.addColorStop(1, "#D4E4BC");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Green pond bank in background with cat-tails (orobince)
+		this.setupPath(ctx, "#658B4E", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 42);
+		ctx.quadraticCurveTo(w * 0.6, h - 52, w, h - 38);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Cat-tails (rákosí a orobince) on right bank
+		const reedXs = [w - 22, w - 34, w - 14];
+		for (let r = 0; r < reedXs.length; r++) {
+			const rx = reedXs[r];
+			const rSway = Math.sin(t * 2.2 + r) * 3;
+			ctx.strokeStyle = "#166534";
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.moveTo(rx, h - 28);
+			ctx.quadraticCurveTo(rx + rSway * 0.5, h - 56, rx + rSway, h - 78 + r * 6);
+			ctx.stroke();
+			this.setupPath(ctx, "#5E3A21", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.ellipse(rx + rSway * 0.85, h - 68 + r * 6, 3.2, 8.5, 0.05, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 2. Half-timbered Bohemian Mill House (Mlýnice) on left
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 2.8);
+		ctx.fillRect(6, 26, 108, h - 40);
+		ctx.strokeRect(6, 26, 108, h - 40);
+
+		// Half-timbered beams (hrázdění) & flour sacks
+		ctx.strokeStyle = COLORS.woodDark;
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(6, 56); ctx.lineTo(114, 56);
+		ctx.moveTo(42, 26); ctx.lineTo(42, h - 14);
+		ctx.moveTo(6, 26); ctx.lineTo(42, 56);
+		ctx.stroke();
+
+		// Red shingle gable roof
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(0, 28);
+		ctx.lineTo(60, 4);
+		ctx.lineTo(122, 28);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Mill window
+		this.setupPath(ctx, "#38BDF8", COLORS.ink, 2);
+		ctx.fillRect(16, 34, 16, 16);
+		ctx.strokeRect(16, 34, 16, 16);
+
+		// Wooden overhead flume / sluice trough (vantrok / náhon) pouring water onto wheel
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.4);
+		ctx.fillRect(88, 18, 62, 10);
+		ctx.strokeRect(88, 18, 62, 10);
+
+		// Gushing waterfall stream from flume onto wheel paddles
+		const streamGrad = ctx.createLinearGradient(142, 24, 168, 95);
+		streamGrad.addColorStop(0, "#7DD3FC");
+		streamGrad.addColorStop(0.5, "#0284C7");
+		streamGrad.addColorStop(1, "#E0F2FE");
+		this.setupPath(ctx, streamGrad, COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(142, 28);
+		ctx.quadraticCurveTo(166, 36, 172 + Math.sin(t * 8) * 3, 96);
+		ctx.lineTo(154, 96);
+		ctx.quadraticCurveTo(152, 44, 134, 28);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Rotating Wooden Mill Wheel (Mlýnské kolo)
+		const mx = 128;
+		const my = 72;
+		const wheelSpeed = 1.6 + Math.min(1.2, lvl * 0.25);
+		ctx.save();
+		ctx.translate(mx, my);
+		ctx.rotate(t * wheelSpeed);
+		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.arc(0, 0, 38, 0, Math.PI * 2);
+		ctx.stroke();
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, 28, 0, Math.PI * 2);
+		ctx.stroke();
+
+		for (let i = 0; i < 8; i++) {
+			ctx.save();
+			ctx.rotate((i * Math.PI) / 4);
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(38, 0);
+			ctx.stroke();
+			this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.2);
+			ctx.fillRect(31, -8, 11, 16);
+			ctx.strokeRect(31, -8, 11, 16);
+			// Splashing water droplet on each paddle tip
+			this.setupPath(ctx, "#BAE6FD", COLORS.ink, 1.2);
+			ctx.beginPath();
+			ctx.arc(44, 0, 2.6, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		}
+		// Iron hub
+		this.setupPath(ctx, "#334155", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.arc(0, 0, 9, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 4. Cheerful Hastrman helper splashing water on the right
+		const hx = w * 0.76;
+		const hy = h * 0.56 + Math.sin(t * 5) * 4;
+		ctx.save();
+		ctx.translate(hx, hy);
+		ctx.scale(0.88, 0.88);
+		this.drawHastrman(ctx, 0, 0, t, -1, false);
+		ctx.restore();
+
+		// Glowing teacup for souls (hrneček na dušičky) on a willow stump when upgraded
+		if (lvl > 0 || isHighlighted) {
+			const cupX = w - 42;
+			const cupY = h - 34;
+			this.setupPath(ctx, "#FEF3C7", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.arc(cupX, cupY, 6, 0, Math.PI);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "rgba(125, 211, 252, 0.55)";
+			ctx.beginPath();
+			ctx.arc(cupX, cupY - 5 - Math.sin(t * 4) * 2, 4, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// 5. Foaming millrace water wave at bottom (náhon pod splavem)
+		this.setupPath(ctx, "#0284C7", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(0, h);
+		ctx.lineTo(0, h - 26);
+		for (let i = 0; i <= w; i += 20) {
+			ctx.quadraticCurveTo(i + 10, h - 28 + Math.sin(t * 5 + i * 0.15) * 5, i + 20, h - 26);
+		}
+		ctx.lineTo(w, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// White foam crests & flying water droplets
+		ctx.strokeStyle = "#F8FAFC";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		for (let i = 15; i < w - 20; i += 35) {
+			const wy = h - 15 + Math.cos(t * 4 + i) * 2;
+			ctx.moveTo(i, wy);
+			ctx.quadraticCurveTo(i + 10, wy - 3, i + 20, wy);
+		}
+		ctx.stroke();
+
+		for (let d = 0; d < 5; d++) {
+			const dp = ((t * 2.2 + d * 0.2) % 1 + 1) % 1;
+			const dx = mx + 26 + dp * 38;
+			const dy = my + 18 - Math.sin(dp * Math.PI) * 26;
+			this.setupPath(ctx, "#E0F2FE", COLORS.ink, 1.3);
+			ctx.beginPath();
+			ctx.arc(dx, dy, Math.max(0.1, 2.8 * (1 - dp * 0.4)), 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawForestScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Deep pine forest canopy background with warm golden sunbeams
+		const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+		bgGrad.addColorStop(0, "#1E3528");
+		bgGrad.addColorStop(0.6, "#2D4C39");
+		bgGrad.addColorStop(1, "#3A5A36");
+		ctx.fillStyle = bgGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Diagonal golden forest sunbeams
+		ctx.save();
+		ctx.fillStyle = "rgba(253, 224, 71, 0.12)";
+		for (let b = 0; b < 3; b++) {
+			const bx = 45 + b * 85 + Math.sin(t + b) * 6;
+			ctx.beginPath();
+			ctx.moveTo(bx, 0);
+			ctx.lineTo(bx + 28, 0);
+			ctx.lineTo(bx + 64, h);
+			ctx.lineTo(bx + 20, h);
+			ctx.closePath();
+			ctx.fill();
+		}
+		ctx.restore();
+
+		// Tall red-barked Scots pines (borovice) & dark spruces
+		const treeXs = [22, 68, 128, 195, 248, 282];
+		for (let i = 0; i < treeXs.length; i++) {
+			const tx = treeXs[i];
+			const sway = Math.sin(t * 1.6 + i) * 2.5;
+			// Reddish pine trunk
+			this.setupPath(ctx, "#8C4A27", COLORS.ink, 2.2);
+			ctx.fillRect(tx - 5, 18, 10, h - 32);
+			ctx.strokeRect(tx - 5, 18, 10, h - 32);
+			// Layered pine needle boughs
+			this.setupPath(ctx, i % 2 === 0 ? "#233E2B" : "#2E5339", COLORS.ink, 2.2);
+			for (let tier = 0; tier < 3; tier++) {
+				const ty = 34 - tier * 12;
+				const tw = 26 - tier * 4;
+				ctx.beginPath();
+				ctx.moveTo(tx - tw + sway, ty + 14);
+				ctx.quadraticCurveTo(tx + sway, ty - 8, tx + tw + sway, ty + 14);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+			}
+		}
+
+		// 2. Mossy forest floor & bubbling peat bog puddles (rašeliniště a louže)
+		this.setupPath(ctx, "#3F6234", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 38);
+		ctx.quadraticCurveTo(w * 0.5, h - 46, w, h - 36);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Bog puddles on left and right with animated ripples
+		const puddles = [
+			{ x: 46, y: h - 18, rx: 32, ry: 9 },
+			{ x: w - 52, y: h - 16, rx: 34, ry: 9 }
+		];
+		for (let p = 0; p < puddles.length; p++) {
+			const pd = puddles[p];
+			this.setupPath(ctx, "#1E4E68", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.ellipse(pd.x, pd.y, Math.max(0.1, pd.rx), Math.max(0.1, pd.ry), 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			const rip = ((t * 0.9 + p * 0.5) % 1 + 1) % 1;
+			const rX = Math.max(0.1, pd.rx * 0.65 * rip);
+			const rY = Math.max(0.1, pd.ry * 0.65 * rip);
+			ctx.strokeStyle = "rgba(186, 230, 253, 0.7)";
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.ellipse(pd.x, pd.y, rX, rY, 0, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+
+		// 3. Dry timber corduroy footpath (suchá haťová stezka z klád) across the center
+		const logCount = 7;
+		for (let l = 0; l < logCount; l++) {
+			const ly = h - 38 + l * 5.2;
+			const lw = 56 + l * 6;
+			const lx = w * 0.5 - lw * 0.5 + Math.sin(l * 0.7) * 3;
+			this.setupPath(ctx, l % 2 === 0 ? "#9A6238" : "#7C4D2B", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.roundRect(lx, ly, lw, 4.8, 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Red fly-agaric mushroom (muchomůrka) & fern on the side
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 1.6);
+		ctx.fillRect(88, h - 30, 5, 10);
+		ctx.strokeRect(88, h - 30, 5, 10);
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(90.5, h - 30, 8, Math.PI, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FFFFFF";
+		ctx.beginPath();
+		ctx.arc(88, h - 33, 1.3, 0, Math.PI * 2);
+		ctx.arc(93, h - 34, 1.3, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 4. Lesní mužíci helpers clearing dry trails with axes & lanterns
+		const drawLesniMuzik = (mx: number, my: number, dir: number, phaseOffset: number, hasLantern: boolean) => {
+			const chop = Math.sin(t * 7 + phaseOffset);
+			const bob = Math.abs(chop) * 2.5;
+			ctx.save();
+			ctx.translate(mx, my - bob);
+			ctx.scale(dir * 0.92, 0.92);
+			this.drawShadow(ctx, 0, 20, 14);
+			// Boots
+			this.setupPath(ctx, "#3D2210", COLORS.ink, 2);
+			ctx.fillRect(-8, 12, 6, 7);
+			ctx.strokeRect(-8, 12, 6, 7);
+			ctx.fillRect(2, 12, 6, 7);
+			ctx.strokeRect(2, 12, 6, 7);
+			// Moss-green coat
+			this.setupPath(ctx, "#2E6930", COLORS.ink, 2.4);
+			ctx.beginPath();
+			ctx.moveTo(-11, -6);
+			ctx.lineTo(-14, 14);
+			ctx.lineTo(14, 14);
+			ctx.lineTo(11, -6);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Long mossy white-grey beard
+			this.setupPath(ctx, "#E2E8F0", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.moveTo(-8, -8);
+			ctx.quadraticCurveTo(0, 14, 8, -8);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Rosy face & nose
+			this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.arc(0, -12, 8, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#DC2626";
+			ctx.beginPath();
+			ctx.arc(3, -11, 2.5, 0, Math.PI * 2);
+			ctx.fill();
+			// Pine-cone bark cap with oak leaf
+			this.setupPath(ctx, "#78350F", COLORS.ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(-12, -15);
+			ctx.quadraticCurveTo(0, -34, 12, -15);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Swinging hatchet or glowing lantern
+			ctx.save();
+			ctx.translate(10, -2);
+			ctx.rotate(chop * 0.55);
+			ctx.strokeStyle = COLORS.woodDark;
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.moveTo(0, 8);
+			ctx.lineTo(14, -12);
+			ctx.stroke();
+			if (hasLantern) {
+				ctx.fillStyle = "rgba(253, 224, 71, 0.38)";
+				ctx.beginPath();
+				ctx.arc(14, -6, 12, 0, Math.PI * 2);
+				ctx.fill();
+				this.setupPath(ctx, "#FDE047", COLORS.ink, 1.8);
+				ctx.fillRect(10, -10, 8, 10);
+				ctx.strokeRect(10, -10, 8, 10);
+			} else {
+				this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2);
+				ctx.beginPath();
+				ctx.moveTo(12, -12);
+				ctx.lineTo(22, -16);
+				ctx.lineTo(20, -6);
+				ctx.closePath();
+				ctx.fill();
+				ctx.stroke();
+			}
+			ctx.restore();
+			ctx.restore();
+		};
+
+		drawLesniMuzik(112, h - 42, 1, 0, false);
+		drawLesniMuzik(192, h - 40, -1, 1.8, lvl > 0 || isHighlighted);
+
+		// Flying golden wood chips in center where the hatchet clears branches
+		for (let c = 0; c < 4; c++) {
+			const cp = ((t * 2.5 + c * 0.25) % 1 + 1) % 1;
+			const cx = 136 + (c % 2 === 0 ? 1 : -1) * cp * 18;
+			const cy = h - 42 - Math.sin(cp * Math.PI) * 18;
+			this.setupPath(ctx, "#FDE68A", COLORS.ink, 1.2);
+			ctx.fillRect(cx, cy, 4, 2.5);
+			ctx.strokeRect(cx, cy, 4, 2.5);
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawWallScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Starlit nocturnal sky & warm cottage rooftops protected behind the bastion
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#172033");
+		skyGrad.addColorStop(0.65, "#28354E");
+		skyGrad.addColorStop(1, "#3B4252");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Crescent moon & stars
+		this.setupPath(ctx, "#FEF08A", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(38, 26, 12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Protected village cottage roof & glowing window behind wall on right
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 2);
+		ctx.fillRect(w - 78, 38, 52, 36);
+		ctx.strokeRect(w - 78, 38, 52, 36);
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(w - 84, 40);
+		ctx.lineTo(w - 52, 16);
+		ctx.lineTo(w - 20, 40);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 1.8);
+		ctx.fillRect(w - 60, 46, 14, 14);
+		ctx.strokeRect(w - 60, 46, 14, 14);
+
+		// 2. Massive Granite Bastion & Crenellated Ramparts (Kamenné hradby a bašta)
+		const wallTop = h - 72;
+		for (let row = 0; row < 4; row++) {
+			const y = h - 18 - row * 18;
+			const offset = row % 2 === 0 ? 0 : 16;
+			for (let col = 0; col < 11; col++) {
+				const x = col * 32 - offset;
+				const shade = (row + col) % 3 === 0 ? "#94A3B8" : (row + col) % 2 === 0 ? "#8A887D" : "#CBD5E1";
+				this.setupPath(ctx, shade, COLORS.ink, 2.2);
+				ctx.fillRect(x, y, 32, 18);
+				ctx.strokeRect(x, y, 32, 18);
+			}
+		}
+
+		// Crenellations (cimbuří) along top of wall
+		for (let m = 12; m < w - 20; m += 36) {
+			this.setupPath(ctx, "#94A3B8", COLORS.ink, 2.2);
+			ctx.fillRect(m, wallTop - 12, 20, 12);
+			ctx.strokeRect(m, wallTop - 12, 20, 12);
+		}
+
+		// Timber scaffolding (lešení) & mortar tub (maltovník)
+		ctx.strokeStyle = COLORS.woodDark;
+		ctx.lineWidth = 3.2;
+		ctx.beginPath();
+		ctx.moveTo(76, wallTop - 22); ctx.lineTo(76, h);
+		ctx.moveTo(196, wallTop - 22); ctx.lineTo(196, h);
+		ctx.moveTo(68, h - 38); ctx.lineTo(204, h - 38);
+		ctx.stroke();
+
+		// Wooden mortar tub with fresh white lime mortar
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(116, h - 38);
+		ctx.lineTo(120, h - 50);
+		ctx.lineTo(148, h - 50);
+		ctx.lineTo(152, h - 38);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 1.6);
+		ctx.beginPath();
+		ctx.ellipse(134, h - 50, 13, 4, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 3. Kostliví zedníci (Skeletal Masons) with trowels & mason aprons
+		const sx = 166;
+		const sy = h - 42;
+		ctx.save();
+		ctx.translate(sx, sy);
+		ctx.scale(0.86, 0.86);
+		this.drawSkeleton(ctx, 0, 0, t, -1, false);
+		// White mason apron (zednická zástěra)
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 1.8);
+		ctx.fillRect(-9, -4, 18, 16);
+		ctx.strokeRect(-9, -4, 18, 16);
+		// Animated arm slapping mortar with a silver mason's trowel (zednická lžíce)
+		const trowelSwing = Math.sin(t * 8) * 0.45;
+		ctx.save();
+		ctx.translate(-10, -6);
+		ctx.rotate(trowelSwing);
+		this.setupPath(ctx, "#E2E8F0", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.moveTo(-4, 0);
+		ctx.lineTo(-18, -6);
+		ctx.lineTo(-12, 6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+		ctx.restore();
+
+		// Second skeletal mason helper on left hoisting a stone block
+		ctx.save();
+		ctx.translate(94, h - 42);
+		ctx.scale(0.82, 0.82);
+		this.drawSkeleton(ctx, 0, 0, t + 1.5, 1, false);
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 1.8);
+		ctx.fillRect(-9, -4, 18, 15);
+		ctx.strokeRect(-9, -4, 18, 15);
+		ctx.restore();
+
+		// Flying white mortar droplets from the trowel
+		for (let d = 0; d < 3; d++) {
+			const dp = ((t * 2.6 + d * 0.33) % 1 + 1) % 1;
+			const dx = 144 - dp * 14;
+			const dy = h - 52 - Math.sin(dp * Math.PI) * 14;
+			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.2);
+			ctx.beginPath();
+			ctx.arc(dx, dy, Math.max(0.1, 2.2), 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Bohemian banner & burning bastion torch when upgraded
+		if (lvl > 0 || isHighlighted) {
+			ctx.strokeStyle = COLORS.ink;
+			ctx.lineWidth = 2.5;
+			ctx.beginPath();
+			ctx.moveTo(58, wallTop - 12);
+			ctx.lineTo(58, 14);
+			ctx.stroke();
+			const flagWave = Math.sin(t * 6) * 3;
+			this.setupPath(ctx, "#DC2626", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.moveTo(58, 16);
+			ctx.lineTo(84, 20 + flagWave);
+			ctx.lineTo(58, 28);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawForgeScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.7 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Soot-darkened smithy interior with warm hearth glow
+		ctx.fillStyle = "#261710";
+		ctx.fillRect(0, 0, w, h);
+
+		const fireGlow = ctx.createRadialGradient(w * 0.48, h - 38, 8, w * 0.48, h - 38, 125);
+		fireGlow.addColorStop(0, "rgba(251, 191, 36, 0.45)");
+		fireGlow.addColorStop(0.5, "rgba(234, 88, 12, 0.22)");
+		fireGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+		ctx.fillStyle = fireGlow;
+		ctx.fillRect(0, 0, w, h);
+
+		// Cobblestone floor
+		this.setupPath(ctx, "#3E2723", COLORS.ink, 2.2);
+		ctx.fillRect(0, h - 22, w, 22);
+		ctx.strokeRect(0, h - 22, w, 22);
+
+		// 2. Brick Forge Hearth (Kovářská výheň) & Chimney Hood on left-center
+		this.setupPath(ctx, "#7C2D12", COLORS.ink, 2.6);
+		ctx.fillRect(82, h - 68, 78, 48);
+		ctx.strokeRect(82, h - 68, 78, 48);
+
+		// Hooded brick chimney
+		this.setupPath(ctx, "#57534E", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(76, 40);
+		ctx.lineTo(100, 0);
+		ctx.lineTo(144, 0);
+		ctx.lineTo(166, 40);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Blazing coal bed & dancing forge flames
+		this.setupPath(ctx, "#18181B", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(121, h - 42, 24, Math.PI, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		const flameH = 26 + Math.sin(t * 14) * 6 + Math.min(10, lvl * 2);
+		this.setupPath(ctx, "#EA580C", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(102, h - 42);
+		ctx.quadraticCurveTo(110, h - 42 - flameH, 121, h - 48 - flameH);
+		ctx.quadraticCurveTo(132, h - 42 - flameH, 140, h - 42);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.moveTo(110, h - 42);
+		ctx.quadraticCurveTo(121, h - 38 - flameH * 0.8, 132, h - 42);
+		ctx.closePath();
+		ctx.fill();
+
+		// 3. Heavy Iron Anvil on Oak Stump (Kovadlina na špalku) with glowing blade
+		const ax = 196;
+		const ay = h - 22;
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.4);
+		ctx.fillRect(ax - 14, ay - 22, 28, 22);
+		ctx.strokeRect(ax - 14, ay - 22, 28, 22);
+
+		// Anvil horn & body
+		this.setupPath(ctx, "#475569", COLORS.ink, 2.5);
+		ctx.beginPath();
+		ctx.moveTo(ax - 24, ay - 34);
+		ctx.lineTo(ax + 18, ay - 34);
+		ctx.lineTo(ax + 14, ay - 22);
+		ctx.lineTo(ax - 14, ay - 22);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// White-hot glowing sword blade resting on anvil
+		this.setupPath(ctx, "#FEF08A", "#EA580C", 1.8);
+		ctx.fillRect(ax - 18, ay - 38, 26, 4);
+		ctx.strokeRect(ax - 18, ay - 38, 26, 4);
+
+		// 4. Diblík pumping bellows on left & Ohnivý mužík hammering on right
+		ctx.save();
+		ctx.translate(46, h - 36);
+		ctx.scale(0.84, 0.84);
+		this.drawCertik(ctx, 0, 0, t, 1, false);
+		ctx.restore();
+
+		ctx.save();
+		ctx.translate(248, h - 38);
+		ctx.scale(0.76, 0.76);
+		this.drawOhnivyMuz(ctx, 0, 0, t, -1, false);
+		ctx.restore();
+
+		// Flying golden anvil sparks
+		const sparkCount = 6 + Math.min(6, lvl * 2);
+		for (let s = 0; s < sparkCount; s++) {
+			const sp = ((t * 3.2 + s * (1 / sparkCount)) % 1 + 1) % 1;
+			const ang = -Math.PI * 0.85 + (s % 5) * 0.35;
+			const sx = ax - 4 + Math.cos(ang) * sp * 38;
+			const sy = ay - 38 + Math.sin(ang) * sp * 34 + sp * sp * 22;
+			ctx.fillStyle = s % 2 === 0 ? "#FEF08A" : "#F97316";
+			ctx.beginPath();
+			ctx.arc(sx, sy, Math.max(0.1, 2.6 * (1 - sp)), 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawOvenScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Cozy whitewashed Czech country bakery wall & folkloric blue trim
+		ctx.fillStyle = COLORS.parchment;
+		ctx.fillRect(0, 0, w, h);
+
+		// Blue folkloric wall stripe & timber ceiling beam
+		ctx.fillStyle = "#1D4ED8";
+		ctx.fillRect(0, h - 28, w, 4);
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.2);
+		ctx.fillRect(0, h - 22, w, 22);
+		ctx.strokeRect(0, h - 22, w, 22);
+
+		// Hanging braided pretzel (preclík) & herbs on top wall
+		this.setupPath(ctx, "#D97706", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(36, 24, 7, 0, Math.PI * 2);
+		ctx.arc(46, 24, 7, 0, Math.PI * 2);
+		ctx.stroke();
+
+		// 2. Domed clay & brick bread oven (Rozpálená pec) in center
+		const ox = w * 0.52;
+		const oy = h - 22;
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 3);
+		ctx.fillRect(ox - 56, oy - 62, 112, 62);
+		ctx.strokeRect(ox - 56, oy - 62, 112, 62);
+		ctx.beginPath();
+		ctx.arc(ox, oy - 62, 56, Math.PI, 0);
+		ctx.fill();
+		ctx.stroke();
+
+		// Red brick arch trim around firebox mouth
+		this.setupPath(ctx, COLORS.red, COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.arc(ox, oy - 22, 31, Math.PI, 0);
+		ctx.lineTo(ox + 31, oy);
+		ctx.lineTo(ox - 31, oy);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Dark oven interior & roaring golden flames
+		ctx.fillStyle = COLORS.ink;
+		ctx.beginPath();
+		ctx.arc(ox, oy - 22, 24, Math.PI, 0);
+		ctx.lineTo(ox + 24, oy);
+		ctx.lineTo(ox - 24, oy);
+		ctx.closePath();
+		ctx.fill();
+
+		ctx.fillStyle = "#F97316";
+		ctx.beginPath();
+		ctx.moveTo(ox - 18, oy);
+		ctx.quadraticCurveTo(ox - 10, oy - 28 - Math.sin(t * 10) * 8, ox, oy - 36 + Math.cos(t * 8) * 5);
+		ctx.quadraticCurveTo(ox + 10, oy - 28 - Math.cos(t * 12) * 8, ox + 18, oy);
+		ctx.fill();
+
+		ctx.fillStyle = "#FEF08A";
+		ctx.beginPath();
+		ctx.moveTo(ox - 10, oy);
+		ctx.quadraticCurveTo(ox, oy - 26 - Math.sin(t * 14) * 6, ox + 10, oy);
+		ctx.fill();
+
+		// 3. Wooden cooling table on right with Czech buchty & ceramic pot of plum jam (povidla)
+		this.setupPath(ctx, "#8C5329", COLORS.ink, 2.2);
+		ctx.fillRect(ox + 42, oy - 30, 56, 7);
+		ctx.strokeRect(ox + 42, oy - 30, 56, 7);
+		ctx.fillRect(ox + 48, oy - 23, 6, 23);
+		ctx.strokeRect(ox + 48, oy - 23, 6, 23);
+		ctx.fillRect(ox + 86, oy - 23, 6, 23);
+		ctx.strokeRect(ox + 86, oy - 23, 6, 23);
+
+		this.drawCzechBuchta(ctx, ox + 52, oy - 36, 0.72, -0.04);
+		this.drawCzechBuchta(ctx, ox + 66, oy - 37, 0.68, 0.04);
+
+		// Blue ceramic pot of plum povidla with wooden spoon
+		this.setupPath(ctx, "#1D4ED8", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(ox + 86, oy - 38, 9, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#3B0764";
+		ctx.beginPath();
+		ctx.ellipse(ox + 86, oy - 44, 7, 2.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 4. Tamed Rarášek helper sliding baker's peel (sázecí lopata) with perníček
+		const slide = Math.sin(t * 3.5) * 14;
+		const rx = 54 + slide * 0.5;
+		const ry = h * 0.56 + Math.sin(t * 6) * 5;
+
+		// Baker's wooden peel reaching into the oven
+		this.setupPath(ctx, "#B45309", COLORS.ink, 2.2);
+		ctx.fillRect(rx + 8, oy - 18, 68 + slide, 4);
+		ctx.strokeRect(rx + 8, oy - 18, 68 + slide, 4);
+		ctx.beginPath();
+		ctx.ellipse(rx + 82 + slide, oy - 16, 14, 5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Gingerbread heart on the peel
+		this.setupPath(ctx, "#92400E", "#FEF3C7", 1.5);
+		ctx.beginPath();
+		ctx.arc(rx + 82 + slide, oy - 20, 5.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.save();
+		ctx.translate(rx, ry);
+		ctx.scale(0.88, 0.88);
+		this.drawRarach(ctx, 0, 0, t, 1, false);
+		ctx.restore();
+
+		// Fragrant golden perníček aroma curls rising
+		ctx.strokeStyle = "rgba(217, 119, 6, 0.55)";
+		ctx.lineWidth = 2;
+		for (let wIdx = 0; wIdx < 3; wIdx++) {
+			const wx = ox + 48 + wIdx * 16;
+			const wy = oy - 46 - (((t * 14 + wIdx * 10) % 28 + 28) % 28);
+			ctx.beginPath();
+			ctx.moveTo(wx, wy + 10);
+			ctx.quadraticCurveTo(wx - 5, wy + 5, wx + 3, wy);
+			ctx.stroke();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawUndeadScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Misty indigo cemetery night & full moon
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#0F172A");
+		skyGrad.addColorStop(0.65, "#1E293B");
+		skyGrad.addColorStop(1, "#334155");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Full luminous moon behind iron gate
+		ctx.fillStyle = "rgba(226, 232, 240, 0.2)";
+		ctx.beginPath();
+		ctx.arc(w * 0.5, 38, 34, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(w * 0.5, 38, 20, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Stone Cemetery Gate Pillars & Wrought-Iron Arch with Cross (Hřbitovní brána)
+		const gx = w * 0.5;
+		const gy = h - 22;
+		this.setupPath(ctx, "#64748B", COLORS.ink, 2.6);
+		ctx.fillRect(gx - 58, 36, 20, gy - 36);
+		ctx.strokeRect(gx - 58, 36, 20, gy - 36);
+		ctx.fillRect(gx + 38, 36, 20, gy - 36);
+		ctx.strokeRect(gx + 38, 36, 20, gy - 36);
+
+		// Wrought-iron arch & cross
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 3.2;
+		ctx.beginPath();
+		ctx.moveTo(gx - 38, 46);
+		ctx.quadraticCurveTo(gx, 18, gx + 38, 46);
+		ctx.stroke();
+		// Iron gate bars
+		for (let b = -30; b <= 30; b += 12) {
+			ctx.beginPath();
+			ctx.moveTo(gx + b, 38);
+			ctx.lineTo(gx + b, gy);
+			ctx.stroke();
+		}
+		// Top iron cross
+		ctx.beginPath();
+		ctx.moveTo(gx, 8); ctx.lineTo(gx, 28);
+		ctx.moveTo(gx - 7, 15); ctx.lineTo(gx + 7, 15);
+		ctx.stroke();
+
+		// Crooked stone headstone being straightened on the left
+		const stoneTilt = Math.sin(t * 2.5) * 0.08;
+		ctx.save();
+		ctx.translate(42, gy);
+		ctx.rotate(stoneTilt);
+		this.setupPath(ctx, "#94A3B8", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-14, 0);
+		ctx.lineTo(-14, -34);
+		ctx.arc(0, -34, 14, Math.PI, 0);
+		ctx.lineTo(14, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Ground turf
+		this.setupPath(ctx, "#1E3A2F", COLORS.ink, 2.4);
+		ctx.fillRect(0, gy, w, h - gy);
+		ctx.strokeRect(0, gy, w, h - gy);
+
+		// 3. Tamed Bezhlavý furiant on left straightening headstone
+		ctx.save();
+		ctx.translate(78, gy - 12);
+		ctx.scale(0.42, 0.42);
+		this.drawBezhlavyRytir(ctx, 0, 0, t, -1, false, false);
+		ctx.restore();
+
+		// 4. Unearthed silver Tolar & Krejcar pouch on right with spectral sparkles
+		const tx = w - 62;
+		const ty = gy - 4;
+		this.setupPath(ctx, "#B45309", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.arc(tx, ty - 6, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Gleaming silver Tolar coin bobbing above the unearthed mound
+		const tolarY = ty - 24 + Math.sin(t * 4.5) * 4;
+		ctx.fillStyle = "rgba(186, 230, 253, 0.35)";
+		ctx.beginPath();
+		ctx.arc(tx + 16, tolarY, 15, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#E2E8F0", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.arc(tx + 16, tolarY, 9.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.arc(tx - 6, tolarY + 8, 6.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rolling cemetery mist ribbons
+		ctx.fillStyle = "rgba(203, 213, 225, 0.22)";
+		for (let m = 0; m < 3; m++) {
+			const mx = (((t * 18 + m * 110) % (w + 80) + (w + 80)) % (w + 80)) - 40;
+			ctx.beginPath();
+			ctx.ellipse(mx, gy - 4, 42, 7, 0, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawBellScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.65 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Copper-violet Klekání dusk sky
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#2E1C44");
+		skyGrad.addColorStop(0.55, "#7C3AED");
+		skyGrad.addColorStop(1, "#EA580C");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		const bellAngle = Math.sin(t * 4.5) * 0.42;
+		const ringPeak = Math.abs(bellAngle);
+
+		// Concentric acoustic shockwave rings (Hlahol zvonu) radiating from belfry
+		for (let r = 0; r < 3; r++) {
+			const rp = ((t * 1.4 + r * 0.33) % 1 + 1) % 1;
+			ctx.strokeStyle = `rgba(254, 240, 138, ${(1 - rp) * 0.55})`;
+			ctx.lineWidth = 2.4;
+			ctx.beginPath();
+			ctx.arc(w * 0.5, 48, Math.max(0.1, 22 + rp * 95), 0, Math.PI * 2);
+			ctx.stroke();
+		}
+
+		// 2. Timber-framed Village Belfry (Zvonice se šindelovou střechou)
+		const bx = w * 0.5;
+		this.setupPath(ctx, COLORS.woodLight, COLORS.ink, 2.8);
+		ctx.fillRect(bx - 36, 34, 8, h - 34);
+		ctx.strokeRect(bx - 36, 34, 8, h - 34);
+		ctx.fillRect(bx + 28, 34, 8, h - 34);
+		ctx.strokeRect(bx + 28, 34, 8, h - 34);
+		// Crossbeams
+		ctx.fillRect(bx - 40, 34, 80, 7);
+		ctx.strokeRect(bx - 40, 34, 80, 7);
+
+		// Swinging Bronze Bell (Mosazný zvon se srdcem)
+		ctx.save();
+		ctx.translate(bx, 41);
+		ctx.rotate(bellAngle);
+		this.setupPath(ctx, "#F59E0B", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-14, 0);
+		ctx.quadraticCurveTo(-18, 22, -26, 32);
+		ctx.lineTo(26, 32);
+		ctx.quadraticCurveTo(18, 22, 14, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Bell clapper (srdce zvonu)
+		this.setupPath(ctx, "#78350F", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, 35, 5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Shingled Belfry Roof (Šindelová střecha)
+		this.setupPath(ctx, "#5E3A21", COLORS.ink, 3);
+		ctx.beginPath();
+		ctx.moveTo(bx - 52, 36);
+		ctx.lineTo(bx, 6);
+		ctx.lineTo(bx + 52, 36);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Bell rope (zvonový provaz) moving up and down
+		const ropePull = Math.sin(t * 4.5) * 8;
+		ctx.strokeStyle = "#FDE68A";
+		ctx.lineWidth = 3;
+		ctx.beginPath();
+		ctx.moveTo(bx, 72);
+		ctx.quadraticCurveTo(bx - 12, 96, bx - 26, 108 + ropePull);
+		ctx.stroke();
+
+		// 3. Klekánice helper pulling the bell rope on the left
+		ctx.save();
+		ctx.translate(bx - 56, h - 26 + ropePull * 0.4);
+		this.setupPath(ctx, "#312E81", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-14, 24);
+		ctx.quadraticCurveTo(-16, -6, 0, -18);
+		ctx.quadraticCurveTo(16, -6, 14, 24);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Hooded Klekánice face & crooked nose
+		this.setupPath(ctx, "#FDE68A", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(4, -10, 7.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#F59E0B";
+		ctx.beginPath();
+		ctx.arc(6, -11, 2, 0, Math.PI * 2);
+		ctx.fill();
+		// Outstretched arms gripping rope
+		this.drawLimb(ctx, 6, -2, 28, 6 + ropePull * 0.5, "#312E81", 4);
+		ctx.restore();
+
+		// 4. Nocturnal birds (noční ptáci) circling the belfry
+		ctx.save();
+		ctx.translate(bx + 68 + Math.cos(t * 2.5) * 10, 44 + Math.sin(t * 3.5) * 8);
+		ctx.scale(0.55, 0.55);
+		this.drawStageCrow(ctx, 0, 0, t, -1, ringPeak > 0.3);
+		ctx.restore();
+
+		if (lvl > 0 || isHighlighted) {
+			ctx.save();
+			ctx.translate(42 + Math.sin(t * 2.2) * 8, 38 + Math.cos(t * 3) * 6);
+			ctx.scale(0.48, 0.48);
+			this.drawStageCrow(ctx, 0, 0, t + 1.2, 1, false);
+			ctx.restore();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawHerbGardenScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Sun-drenched summer meadow & whitewashed cottage wall with drying herbs
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#FEF3C7");
+		skyGrad.addColorStop(0.6, "#ECFCCB");
+		skyGrad.addColorStop(1, "#86EFAC");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Cottage eaves on left with hanging herb bundles (sušená mateřídouška a třezalka)
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 2.5);
+		ctx.fillRect(0, 14, 118, h - 34);
+		ctx.strokeRect(0, 14, 118, h - 34);
+		this.setupPath(ctx, "#92400E", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(0, 6);
+		ctx.lineTo(132, 6);
+		ctx.lineTo(122, 22);
+		ctx.lineTo(0, 22);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Hanging herb bundles swaying under the eaves
+		const herbColors = ["#A855F7", "#FACC15", "#F8FAFC", "#4ADE80"];
+		for (let i = 0; i < 4; i++) {
+			const hx = 18 + i * 24;
+			const sway = Math.sin(t * 2.5 + i) * 0.1;
+			ctx.save();
+			ctx.translate(hx, 22);
+			ctx.rotate(sway);
+			this.setupPath(ctx, "#15803D", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.moveTo(0, 0);
+			ctx.lineTo(-7, 18);
+			ctx.lineTo(7, 18);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			this.setupPath(ctx, herbColors[i], COLORS.ink, 1.4);
+			ctx.beginPath();
+			ctx.arc(-3, 19, 3.5, 0, Math.PI * 2);
+			ctx.arc(3, 19, 3.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		// 2. Woven wattle fence (proutěný plůtek) & blooming herb bed on right
+		this.setupPath(ctx, "#65A30D", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 30);
+		ctx.quadraticCurveTo(w * 0.5, h - 38, w, h - 28);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#78350F";
+		ctx.lineWidth = 2.6;
+		for (let fx = 128; fx < w - 12; fx += 18) {
+			ctx.beginPath();
+			ctx.moveTo(fx, h - 48);
+			ctx.lineTo(fx, h - 22);
+			ctx.stroke();
+		}
+		ctx.beginPath();
+		ctx.moveTo(124, h - 40); ctx.lineTo(w - 10, h - 40);
+		ctx.moveTo(124, h - 32); ctx.lineTo(w - 10, h - 32);
+		ctx.stroke();
+
+		// Blooming thyme (purple), St. John's wort (gold), and chamomile (white)
+		for (let bx = 134; bx < w - 16; bx += 20) {
+			const bSway = Math.sin(t * 3 + bx) * 2.5;
+			const col = bx % 40 === 14 ? "#C084FC" : "#FACC15";
+			this.setupPath(ctx, col, COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(bx + bSway, h - 22, 4.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 3. Bába kořenářka apron & Divoženka dancing in the sun-drenched garden
+		this.drawBabickaApron(ctx, 56, h - 42, t);
+
+		ctx.save();
+		ctx.translate(216, h - 44);
+		ctx.scale(0.86, 0.86);
+		this.drawDivozenka(ctx, 0, 0, t, -1, false);
+		ctx.restore();
+
+		// 4. Floating green & gold healing regeneration crosses (+Kuráž)
+		const crossCount = 3 + Math.min(3, lvl);
+		for (let c = 0; c < crossCount; c++) {
+			const cp = ((t * 0.75 + c * (1 / crossCount)) % 1 + 1) % 1;
+			const cx = 140 + ((c * 39) % 120) + Math.sin(t * 2 + c) * 6;
+			const cy = h - 20 - cp * 85;
+			this.setupPath(ctx, "#22C55E", COLORS.ink, 1.4);
+			ctx.beginPath();
+			ctx.rect(cx - 2, cy - 6, 4, 12);
+			ctx.rect(cx - 6, cy - 2, 12, 4);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawTavernShieldScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.65 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Cozy wainscoted interior of Hospoda U Černého kocoura
+		ctx.fillStyle = "#5C3A21";
+		ctx.fillRect(0, 0, w, h);
+		this.setupPath(ctx, "#F3E9D2", COLORS.ink, 2.4);
+		ctx.fillRect(0, 0, w, h - 54);
+		ctx.strokeRect(0, 0, w, h - 54);
+
+		// Glowing leaded bullseye tavern window on left
+		this.setupPath(ctx, "#FDE047", COLORS.ink, 2.4);
+		ctx.fillRect(22, 16, 42, 42);
+		ctx.strokeRect(22, 16, 42, 42);
+		ctx.strokeStyle = COLORS.ink;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(43, 37, 8, 0, Math.PI * 2);
+		ctx.moveTo(43, 16); ctx.lineTo(43, 58);
+		ctx.moveTo(22, 37); ctx.lineTo(64, 37);
+		ctx.stroke();
+
+		// Iconic Black Cat (Černý kocour) perched on top shelf wagging tail
+		ctx.save();
+		ctx.translate(w - 42, 34);
+		this.setupPath(ctx, "#18181B", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.ellipse(0, 6, 10, 7, 0, 0, Math.PI * 2);
+		ctx.arc(-6, -2, 6.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#FACC15";
+		ctx.beginPath();
+		ctx.arc(-8, -3, 1.6, 0, Math.PI * 2);
+		ctx.arc(-4, -3, 1.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// 2. Embossed Tavern Courage Shield (Šenkýřův štít kuráže) in center with fiery aura
+		const sx = w * 0.5;
+		const sy = 42;
+		const pulse = 1 + Math.sin(t * 5) * 0.06;
+		ctx.save();
+		ctx.translate(sx, sy);
+		ctx.scale(pulse, pulse);
+		ctx.fillStyle = "rgba(239, 68, 68, 0.28)";
+		ctx.beginPath();
+		ctx.arc(0, 0, 30, 0, Math.PI * 2);
+		ctx.fill();
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(-18, -18);
+		ctx.lineTo(18, -18);
+		ctx.lineTo(18, 2);
+		ctx.quadraticCurveTo(16, 18, 0, 24);
+		ctx.quadraticCurveTo(-16, 18, -18, 2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, 0, 7, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// 3. Heavy Oak Taproom Bar (Šenk) & Brass-Hooped Lager Barrel
+		this.setupPath(ctx, "#78350F", COLORS.ink, 2.8);
+		ctx.fillRect(0, h - 42, w, 42);
+		ctx.strokeRect(0, h - 42, w, 42);
+		this.setupPath(ctx, "#B45309", COLORS.ink, 2.6);
+		ctx.fillRect(0, h - 48, w, 8);
+		ctx.strokeRect(0, h - 48, w, 8);
+
+		// Oak beer barrel on left of bar
+		this.setupPath(ctx, "#92400E", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.ellipse(86, h - 62, 22, 16, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.strokeStyle = "#F59E0B";
+		ctx.lineWidth = 2.5;
+		ctx.beginPath();
+		ctx.moveTo(74, h - 76); ctx.lineTo(74, h - 48);
+		ctx.moveTo(98, h - 76); ctx.lineTo(98, h - 48);
+		ctx.stroke();
+
+		// 4. Diblík & Permoník polishing foaming beer mugs (korbele s pěnou)
+		ctx.save();
+		ctx.translate(42, h - 48);
+		ctx.scale(0.78, 0.78);
+		this.drawCertik(ctx, 0, 0, t, 1, false);
+		ctx.restore();
+
+		// Bearded Permoník helper on right polishing a foaming mug
+		const px = w - 68;
+		const py = h - 46;
+		const polishBob = Math.sin(t * 8) * 3;
+		ctx.save();
+		ctx.translate(px, py + polishBob * 0.4);
+		this.setupPath(ctx, "#1E3A8A", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.ellipse(0, 4, 13, 14, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// White miner's beard & rosy face
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.moveTo(-9, -6);
+		ctx.quadraticCurveTo(0, 12, 9, -6);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		this.setupPath(ctx, COLORS.skin, COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(0, -10, 8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Red Permoník pointed cap with miner's lamp crest
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(-10, -14);
+		ctx.lineTo(0, -30);
+		ctx.lineTo(10, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Two foaming golden beer mugs (korbele) on the bar counter
+		const mugXs = [142, 184];
+		for (let m = 0; m < mugXs.length; m++) {
+			const mx = mugXs[m] + (m === 1 ? polishBob : 0);
+			const my = h - 62;
+			this.setupPath(ctx, "#F59E0B", COLORS.ink, 2.2);
+			ctx.fillRect(mx - 8, my, 16, 18);
+			ctx.strokeRect(mx - 8, my, 16, 18);
+			ctx.beginPath();
+			ctx.arc(mx + 8, my + 9, 5, -Math.PI * 0.5, Math.PI * 0.5);
+			ctx.stroke();
+			// Frothy white beer foam head
+			this.setupPath(ctx, "#FFFFFF", COLORS.ink, 1.8);
+			ctx.beginPath();
+			ctx.arc(mx - 4, my - 1, 5, 0, Math.PI * 2);
+			ctx.arc(mx + 3, my - 2, 5.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawWaterWellScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.6 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Enchanted moonlit village green (Náves pod hvězdami)
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#0F243C");
+		skyGrad.addColorStop(0.6, "#1E4068");
+		skyGrad.addColorStop(1, "#1D4E4A");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Descending silver-aqua moonbeam into the spring
+		ctx.fillStyle = "rgba(125, 211, 252, 0.16)";
+		ctx.beginPath();
+		ctx.moveTo(w * 0.5 - 22, 0);
+		ctx.lineTo(w * 0.5 + 22, 0);
+		ctx.lineTo(w * 0.5 + 54, h);
+		ctx.lineTo(w * 0.5 - 54, h);
+		ctx.closePath();
+		ctx.fill();
+
+		// Grassy village green ground
+		this.setupPath(ctx, "#1E3A2F", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 32);
+		ctx.quadraticCurveTo(w * 0.5, h - 40, w, h - 30);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Stone Village Well & Shingled Canopy (Návesní studánka s rumpálem)
+		const wx = w * 0.5;
+		const wy = h - 22;
+
+		// Timber roof supports & shingled roof
+		this.setupPath(ctx, COLORS.woodDark, COLORS.ink, 2.5);
+		ctx.fillRect(wx - 40, 32, 6, wy - 52);
+		ctx.strokeRect(wx - 40, 32, 6, wy - 52);
+		ctx.fillRect(wx + 34, 32, 6, wy - 52);
+		ctx.strokeRect(wx + 34, 32, 6, wy - 52);
+
+		this.setupPath(ctx, "#5E3A21", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(wx - 52, 34);
+		ctx.lineTo(wx, 8);
+		ctx.lineTo(wx + 52, 34);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Stone well basin & crystalline spring water
+		this.setupPath(ctx, "#94A3B8", COLORS.ink, 2.8);
+		ctx.fillRect(wx - 44, wy - 30, 88, 28);
+		ctx.strokeRect(wx - 44, wy - 30, 88, 28);
+
+		this.setupPath(ctx, "#38BDF8", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.ellipse(wx, wy - 30, 44, 11, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Glowing moonstones (měsíční kameny) shimmering in the crystal spring
+		for (let m = -1; m <= 1; m++) {
+			const mx = wx + m * 18;
+			const my = wy - 30 + Math.sin(t * 4 + m) * 2;
+			this.setupPath(ctx, "#E0F2FE", "#0284C7", 1.6);
+			ctx.beginPath();
+			ctx.arc(mx, my, 5 + (m === 0 ? 1.5 : 0), 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// 3. Two Vodní víly (Water Nymphs) tending the crystal spring
+		const drawVila = (vx: number, vy: number, dir: number, phase: number) => {
+			const bob = Math.sin(t * 3.5 + phase) * 3.5;
+			ctx.save();
+			ctx.translate(vx, vy + bob);
+			ctx.scale(dir * 0.9, 0.9);
+			// Flowing aqua-white gown
+			this.setupPath(ctx, "#E0F2FE", COLORS.ink, 2.2);
+			ctx.beginPath();
+			ctx.moveTo(-10, -6);
+			ctx.lineTo(-15, 22);
+			ctx.lineTo(15, 22);
+			ctx.lineTo(10, -6);
+			ctx.closePath();
+			ctx.fill();
+			ctx.stroke();
+			// Long golden-green hair
+			this.setupPath(ctx, "#FDE047", COLORS.ink, 2);
+			ctx.beginPath();
+			ctx.arc(0, -16, 9, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			// Water-lily crown
+			this.setupPath(ctx, "#4ADE80", COLORS.ink, 1.6);
+			ctx.beginPath();
+			ctx.ellipse(0, -24, 9, 3, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			// Arms holding a glowing moonstone over the water
+			this.drawLimb(ctx, 6, -4, 20, 2, "#E0F2FE", 3.5);
+			this.setupPath(ctx, "#BAE6FD", COLORS.ink, 1.5);
+			ctx.beginPath();
+			ctx.arc(22, 2, 4.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.restore();
+		};
+
+		drawVila(62, wy - 28, 1, 0);
+		drawVila(w - 62, wy - 28, -1, 1.8);
+
+		// Rising crystalline droplets & invulnerability shield rings
+		const dropCount = 4 + Math.min(4, lvl);
+		for (let d = 0; d < dropCount; d++) {
+			const dp = ((t * 0.9 + d * (1 / dropCount)) % 1 + 1) % 1;
+			const dx = wx - 28 + ((d * 19) % 56) + Math.sin(t * 3 + d) * 4;
+			const dy = wy - 34 - dp * 64;
+			this.drawHolyDroplet(ctx, dx, dy);
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawChurchWaveScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.65 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Sacred night sky & whitewashed Village Chapel (Kaple svaté vlny)
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#172554");
+		skyGrad.addColorStop(0.6, "#1E3A8A");
+		skyGrad.addColorStop(1, "#3B82F6");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		const cx = w * 0.5;
+		const cy = h * 0.52;
+
+		// Expanding Golden-Azure Holy Shockwaves (Svatá vlna)
+		for (let wIdx = 0; wIdx < 3; wIdx++) {
+			const wp = ((t * 1.1 + wIdx * 0.33) % 1 + 1) % 1;
+			ctx.strokeStyle = wIdx % 2 === 0
+				? `rgba(254, 240, 138, ${(1 - wp) * 0.65})`
+				: `rgba(125, 211, 252, ${(1 - wp) * 0.65})`;
+			ctx.lineWidth = 3;
+			ctx.beginPath();
+			ctx.arc(cx, cy, Math.max(0.1, 18 + wp * 115), 0, Math.PI * 2);
+			ctx.stroke();
+		}
+
+		// Whitewashed Baroque Chapel Gable & Altar in center
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(cx - 56, h);
+		ctx.lineTo(cx - 56, 44);
+		ctx.quadraticCurveTo(cx, 12, cx + 56, 44);
+		ctx.lineTo(cx + 56, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Red tile chapel roof trim & golden cross
+		this.setupPath(ctx, "#DC2626", COLORS.ink, 2.8);
+		ctx.beginPath();
+		ctx.moveTo(cx - 64, 48);
+		ctx.quadraticCurveTo(cx, 8, cx + 64, 48);
+		ctx.lineTo(cx + 56, 52);
+		ctx.quadraticCurveTo(cx, 16, cx - 56, 52);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Consecrated Sanctuary Bell in arch
+		const bellSwing = Math.sin(t * 4) * 0.25;
+		ctx.save();
+		ctx.translate(cx, 44);
+		ctx.rotate(bellSwing);
+		this.setupPath(ctx, "#FBBF24", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(-10, 0);
+		ctx.lineTo(-16, 18);
+		ctx.lineTo(16, 18);
+		ctx.lineTo(10, 0);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		// Chapel Altar & Soul Jar (Hrneček s dušičkou)
+		this.setupPath(ctx, "#E2E8F0", COLORS.ink, 2.4);
+		ctx.fillRect(cx - 34, h - 32, 68, 28);
+		ctx.strokeRect(cx - 34, h - 32, 68, 28);
+		this.drawSoulJar(ctx, cx, h - 46, t);
+
+		// 2. Penitent Bludičky (Kající se bludičky) orbiting & polishing the bell and altar
+		const bludickaCount = 3 + Math.min(2, lvl);
+		for (let b = 0; b < bludickaCount; b++) {
+			const ang = t * 2.2 + (b * Math.PI * 2) / bludickaCount;
+			const bx = cx + Math.cos(ang) * 64;
+			const by = 66 + Math.sin(ang * 1.5) * 28;
+			this.drawBludicka(ctx, bx, by, t + b, Math.cos(ang), false);
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
+	},
+
+	drawBoziMukaScene(ctx, w, h, time, level = 0, isHighlighted = false) {
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(0, 0, w, h);
+		ctx.clip();
+
+		const speed = isHighlighted ? 1.65 : 1;
+		const t = time * speed;
+		const lvl = Math.max(0, level || 0);
+
+		// 1. Peaceful twilight sky at a country crossroads (U polní cesty)
+		const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+		skyGrad.addColorStop(0, "#1E1B4B");
+		skyGrad.addColorStop(0.55, "#312E81");
+		skyGrad.addColorStop(1, "#4C1D95");
+		ctx.fillStyle = skyGrad;
+		ctx.fillRect(0, 0, w, h);
+
+		// Rolling meadow & winding country dirt path (polní cesta)
+		this.setupPath(ctx, "#2E4F34", COLORS.ink, 2.4);
+		ctx.beginPath();
+		ctx.moveTo(0, h - 38);
+		ctx.quadraticCurveTo(w * 0.5, h - 48, w, h - 34);
+		ctx.lineTo(w, h);
+		ctx.lineTo(0, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		this.setupPath(ctx, "#B48456", COLORS.ink, 2.2);
+		ctx.beginPath();
+		ctx.moveTo(20, h);
+		ctx.quadraticCurveTo(w * 0.4, h - 34, w * 0.68, h - 38);
+		ctx.lineTo(w * 0.82, h - 36);
+		ctx.quadraticCurveTo(w * 0.56, h - 22, 86, h);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// 2. Whitewashed Stone Wayside Shrine (Kamenná Boží muka)
+		const sx = w * 0.5;
+		const sy = h - 22;
+
+		// Warm eternal candle halo radiating from the shrine niche
+		const haloR = 54 + Math.sin(t * 6) * 5 + Math.min(18, lvl * 4);
+		const candleGrad = ctx.createRadialGradient(sx, 54, 4, sx, 54, haloR);
+		candleGrad.addColorStop(0, "rgba(254, 240, 138, 0.55)");
+		candleGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.22)");
+		candleGrad.addColorStop(1, "rgba(245, 158, 11, 0)");
+		ctx.fillStyle = candleGrad;
+		ctx.beginPath();
+		ctx.arc(sx, 54, haloR, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Stepped stone plinth & whitewashed column
+		this.setupPath(ctx, "#CBD5E1", COLORS.ink, 2.6);
+		ctx.fillRect(sx - 28, sy - 10, 56, 10);
+		ctx.strokeRect(sx - 28, sy - 10, 56, 10);
+
+		this.setupPath(ctx, "#F8FAFC", COLORS.ink, 2.6);
+		ctx.fillRect(sx - 18, 38, 36, sy - 48);
+		ctx.strokeRect(sx - 18, 38, 36, sy - 48);
+
+		// Shingled cap & forged golden cross on top
+		this.setupPath(ctx, "#B91C1C", COLORS.ink, 2.6);
+		ctx.beginPath();
+		ctx.moveTo(sx - 24, 38);
+		ctx.lineTo(sx, 20);
+		ctx.lineTo(sx + 24, 38);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		ctx.strokeStyle = "#FBBF24";
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(sx, 6); ctx.lineTo(sx, 20);
+		ctx.moveTo(sx - 5, 11); ctx.lineTo(sx + 5, 11);
+		ctx.stroke();
+
+		// Arched lantern niche with eternal beeswax candle (věčné světlo)
+		this.setupPath(ctx, "#1E293B", COLORS.ink, 2);
+		ctx.beginPath();
+		ctx.arc(sx, 52, 10, Math.PI, 0);
+		ctx.lineTo(sx + 10, 66);
+		ctx.lineTo(sx - 10, 66);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Candle & flickering golden flame
+		ctx.fillStyle = "#FEF3C7";
+		ctx.fillRect(sx - 2.5, 58, 5, 8);
+		ctx.fillStyle = "#FACC15";
+		ctx.beginPath();
+		ctx.ellipse(sx + Math.sin(t * 14) * 1.2, 53, 3.2, 5.5, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Folk floral wreath at the base of the column
+		this.setupPath(ctx, "#16A34A", COLORS.ink, 1.8);
+		ctx.beginPath();
+		ctx.ellipse(sx, sy - 12, 16, 5, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = "#EF4444";
+		ctx.beginPath();
+		ctx.arc(sx - 8, sy - 12, 2.5, 0, Math.PI * 2);
+		ctx.arc(sx + 8, sy - 12, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// 3. Svatojánští broučci (Fireflies) guarding the eternal light
+		const bugCount = 5 + Math.min(5, lvl * 2);
+		for (let i = 0; i < bugCount; i++) {
+			const ang = t * (1.6 + (i % 3) * 0.3) + i * 1.25;
+			const distX = 34 + (i % 4) * 16;
+			const distY = 18 + (i % 3) * 10;
+			const bx = sx + Math.cos(ang) * distX;
+			const by = 58 + Math.sin(ang * 1.4) * distY;
+
+			// Warm firefly lantern glow
+			ctx.fillStyle = "rgba(250, 204, 21, 0.38)";
+			ctx.beginPath();
+			ctx.arc(bx, by, 8 + Math.sin(t * 8 + i) * 2, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Tiny fluttering wings
+			ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+			ctx.beginPath();
+			ctx.ellipse(bx - 2, by - 3, 3.5, 1.8, -0.4, 0, Math.PI * 2);
+			ctx.ellipse(bx + 2, by - 3, 3.5, 1.8, 0.4, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Firefly body & glowing abdomen
+			this.setupPath(ctx, "#78350F", COLORS.ink, 1.4);
+			ctx.beginPath();
+			ctx.ellipse(bx, by, 3.5, 2.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+			ctx.fillStyle = "#FEF08A";
+			ctx.beginPath();
+			ctx.arc(bx + 2, by + 1, 2.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		this._drawVillageSceneFrame(ctx, w, h, time, level, isHighlighted);
+		ctx.restore();
 	},
 	drawHromnickaAura(ctx, x, y, reach, time, pulseTimer = 0) {
 		ctx.save();
