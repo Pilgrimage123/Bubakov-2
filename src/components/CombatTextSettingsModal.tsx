@@ -69,7 +69,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
           <div>
             <h2 style={{ margin: '0 0 2px 0', fontSize: '1.75rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
-              <GameIcon icon="combat_text" size={26} /> BOJOVÉ TEXTY A VAROVÁNÍ
+              <GameIcon icon="combat_text" size={26} /> Bojové texty a čísla
               <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={16} />

@@ -725,7 +725,7 @@ export const FOLKLORE_POCKET_ITEMS: FolklorePocketItem[] = [
     id: 'medvedi_mast',
     czechName: 'Bylinková medvědí mast',
     folkSubtitle: 'Kamenný kelímek od kořenářky',
-    categoryLabel: 'Kořenářčin kelímek · Zdraví',
+    categoryLabel: 'Kořenářčin kelímek · Kuráž',
     statsBadge: '+30 Max Kuráže · Zocelení',
     rarityColor: '#4D784E',
     czechLore:
@@ -905,12 +905,13 @@ export interface LadaStorybookSpreadProps {
   onOpenArsenal: () => void;
   onOpenBestiary: () => void;
   onOpenControls: () => void;
+  onOpenSettings?: () => void;
   unlockedWeaponsCount: number;
   totalWeaponsCount: number;
 }
 
 const PORTRAIT_CHARACTERS: Array<{
-  id: 'vodnik_lada' | CharacterType;
+  id: CharacterType;
   czechTitle: string;
   czechSubtitle: string;
   hp: number;
@@ -920,20 +921,9 @@ const PORTRAIT_CHARACTERS: Array<{
   quote: string;
 }> = [
   {
-    id: 'vodnik_lada',
-    czechTitle: 'Hastrman Česílko u vrby',
-    czechSubtitle: 'Bafající pán tůně · Patron kroniky',
-    hp: 160,
-    maxHp: 160,
-    magic: 120,
-    maxMagic: 120,
-    quote:
-      '„Bylo, nebylo, za devatero vrbami u hrusického rybníka seděl starý vodník na větvi, pokuřoval z fajfky a hlídal, kudy v noci táhnou bubáci...“',
-  },
-  {
     id: 'krajanek',
     czechTitle: 'Vandrovní Krajánek',
-    czechSubtitle: 'Mlynářský chasník · Hraniční obránce',
+    czechSubtitle: 'Mlynářský chasník a hraniční obránce',
     hp: 170,
     maxHp: 170,
     magic: 100,
@@ -943,8 +933,8 @@ const PORTRAIT_CHARACTERS: Array<{
   },
   {
     id: 'wanderer',
-    czechTitle: 'Vesnický Tulák s prutem',
-    czechSubtitle: 'Znalec polních mezí · Mistr osikového prutu',
+    czechTitle: 'Vesnický Tulák',
+    czechSubtitle: 'Znalec polních mezí a mistr osikového prutu',
     hp: 150,
     maxHp: 150,
     magic: 95,
@@ -954,14 +944,25 @@ const PORTRAIT_CHARACTERS: Array<{
   },
   {
     id: 'shepherd',
-    czechTitle: 'Veselý Pasáček s píšťalkou',
-    czechSubtitle: 'Čiperný chasník · Pán vrbové muziky',
+    czechTitle: 'Veselý Pasáček',
+    czechSubtitle: 'Čiperný chasník a pán vrbové muziky',
     hp: 140,
     maxHp: 140,
     magic: 115,
     maxMagic: 120,
     quote:
       '„Jen co pasáček zaduje do vrbové píšťalky a zazvoní kozím zvonkem, dají se noční strašidla do tance, až z nich lítají krejcary!“',
+  },
+  {
+    id: 'watchman',
+    czechTitle: 'Hrusický Ponocný',
+    czechSubtitle: 'Strážce nočního klidu s lucernou a halapartnou',
+    hp: 180,
+    maxHp: 180,
+    magic: 110,
+    maxMagic: 110,
+    quote:
+      '„Chval každý duch Hospodina i v noční hodinu! Ponocný zatroubí na roh, rozsvítí lucernu a zbloudilé duše provede bezpečně k domovu.“',
   },
 ];
 
@@ -977,6 +978,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
   onOpenArsenal,
   onOpenBestiary,
   onOpenControls,
+  onOpenSettings,
   unlockedWeaponsCount,
   totalWeaponsCount,
 }) => {
@@ -989,8 +991,21 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
   const [ribbonPendulumSwing, setRibbonPendulumSwing] = useState<boolean>(false);
   const [settleThudJolt, setSettleThudJolt] = useState<boolean>(false);
   // Default to silky-smooth 60 FPS page turn physics; 16 FPS Karel Zeman stop-motion is optional
-  const [stopMotion16Fps, setStopMotion16Fps] = useState<boolean>(false);
-  const [foleyMuted, setFoleyMuted] = useState<boolean>(false);
+  const [stopMotion16Fps, setStopMotion16Fps] = useState<boolean>(() => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage.getItem('bubakov_storybook_stopmotion') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [foleyMuted, setFoleyMuted] = useState<boolean>(() => {
+    try {
+      if (ladaPageFoley.muted) return true;
+      return typeof window !== 'undefined' && window.localStorage.getItem('bubakov_storybook_foleymuted') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const [portraitIndex, setPortraitIndex] = useState<number>(0);
   const [selectedPocketItem, setSelectedPocketItem] = useState<FolklorePocketItem>(
@@ -1477,7 +1492,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             <div className="lada-chapter-heading-wrap">
               <h2 className="lada-chapter-heading">Krajina za devatero horami</h2>
               <p className="lada-chapter-sub">
-                Ilustrovaná mapa kraje · Výběr noční výpravy
+                Ilustrovaná mapa a výběr výpravy
               </p>
             </div>
 
@@ -1674,7 +1689,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             <div className="lada-chapter-heading-wrap">
               <h2 className="lada-chapter-heading">Mošna a poklady</h2>
               <p className="lada-chapter-sub">
-                Sběratelské album s fotorůžky · Nalezené poklady
+                Sběratelské album nalezených pokladů
               </p>
             </div>
 
@@ -1767,7 +1782,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             <div className="lada-chapter-heading-wrap">
               <h2 className="lada-chapter-heading">Bubáci a hastrmani</h2>
               <p className="lada-chapter-sub">
-                Lidový bestiář · Slabiny a zvyky noční chásky
+                Lidový bestiář: slabiny a zvyky nočních běsů
               </p>
             </div>
 
@@ -1845,7 +1860,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                 </button>
               </div>
               <p className="lada-ex-libris-lore mt-1">
-                <strong>Rada hospodáře:</strong> „{selectedBestiaryEntry.weakness}.“ —{' '}
+                <strong>Rada hospodáře:</strong> „{selectedBestiaryEntry.weakness}.“{' '}
                 {selectedBestiaryEntry.lore}
               </p>
             </div>
@@ -1922,6 +1937,23 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               🍺 Hospoda ({meta.krejcary} kr.)
             </span>
           </button>
+          {onOpenSettings && (
+            <button
+              type="button"
+              className="lada-bookmark-ribbon ribbon-slate"
+              onMouseEnter={() => ladaPageFoley.playCornerHover()}
+              onClick={() => {
+                ladaPageFoley.playCornerHover();
+                sound.coin();
+                onOpenSettings();
+              }}
+              title="Nastavení hry, audia a grafiky"
+            >
+              <span className="lada-ribbon-stitch">
+                ⚙️ Nastavení
+              </span>
+            </button>
+          )}
         </nav>
 
         {/* Book Margin Controls: Karel Zeman 16-FPS Stop-Motion Toggle & Paper Foley Mute Toggle */}
@@ -1931,7 +1963,13 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             className={`lada-margin-pill-btn ${stopMotion16Fps ? 'active' : ''}`}
             onClick={() => {
               ladaPageFoley.playCornerHover();
-              setStopMotion16Fps((prev) => !prev);
+              setStopMotion16Fps((prev) => {
+                const next = !prev;
+                try {
+                  window.localStorage.setItem('bubakov_storybook_stopmotion', String(next));
+                } catch {}
+                return next;
+              });
             }}
             title="Přepnout krokovou animaci po okénkách (styl loutkového filmu Karla Zemana a Jiřího Trnky) vs. plynulý otáčecí arch"
           >
@@ -1944,6 +1982,9 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               const nextMuted = !foleyMuted;
               setFoleyMuted(nextMuted);
               ladaPageFoley.muted = nextMuted;
+              try {
+                window.localStorage.setItem('bubakov_storybook_foleymuted', String(nextMuted));
+              } catch {}
               if (!nextMuted) {
                 ladaPageFoley.playCornerHover();
               }
@@ -1973,7 +2014,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
           <div className="lada-paper-fiber-overlay" aria-hidden="true" />
 
           {/* ====================================================================
-              LEFT PAGE: CHARACTER PORTRAIT, CERAMIC GAUGES & ZÁPISNÍK CEST
+              LEFT PAGE: CHARACTER PORTRAIT, CERAMIC GAUGES & CÍL VÝPRAVY
              ==================================================================== */}
           <div className="lada-book-page lada-book-page-left">
             <div className="lada-foxing-layer lada-foxing-left" aria-hidden="true" />
@@ -2084,108 +2125,44 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                       fill="none"
                     />
 
-                    {activePortrait.id === 'vodnik_lada' ? (
+                    {activePortrait.id === 'krajanek' && (
                       <g transform="translate(88, 52)">
-                        <path
-                          d="M 16 54 L 6 96 L 62 96 L 52 54 Z"
-                          fill="#4D784E"
+                        {/* Sturdy Miller Walking Stick & Red Polka-Dot Bundle */}
+                        <line
+                          x1="62"
+                          y1="18"
+                          x2="56"
+                          y2="96"
                           stroke="#1C1613"
-                          strokeWidth="3.2"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M 25 54 L 22 86 L 46 86 L 43 54 Z"
-                          fill="#C83E2B"
-                          stroke="#1C1613"
-                          strokeWidth="2.6"
-                        />
-                        <circle cx="34" cy="64" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
-                        <circle cx="34" cy="74" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
-                        <circle
-                          cx="34"
-                          cy="38"
-                          r="16"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                        />
-                        <circle cx="29" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="39" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="25" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
-                        <circle cx="43" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
-                        <path
-                          d="M 28 45 Q 34 49, 40 45"
-                          stroke="#1C1613"
-                          strokeWidth="2.4"
-                          fill="none"
+                          strokeWidth="4"
                           strokeLinecap="round"
                         />
-                        <path
-                          d="M 38 46 Q 58 49, 62 40 L 68 40 L 67 49 Q 57 55, 38 46 Z"
-                          fill="#E2A83B"
-                          stroke="#1C1613"
-                          strokeWidth="2.4"
-                          strokeLinejoin="round"
-                        />
-                        <circle
-                          cx="70"
-                          cy="31"
-                          r="4.5"
-                          fill="#F6EBD8"
-                          fillOpacity="0.85"
-                          stroke="#1C1613"
-                          strokeWidth="1.6"
-                        />
-                        <circle
-                          cx="77"
-                          cy="21"
-                          r="6"
-                          fill="#F6EBD8"
-                          fillOpacity="0.75"
-                          stroke="#1C1613"
-                          strokeWidth="1.6"
-                        />
-                        <ellipse
-                          cx="34"
-                          cy="23"
-                          rx="23"
-                          ry="5"
-                          fill="#4D784E"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 20 23 L 22 5 L 46 5 L 48 23 Z"
-                          fill="#4D784E"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                          strokeLinejoin="round"
-                        />
-                        <rect
-                          x="21"
-                          y="16"
-                          width="26"
-                          height="5.5"
-                          fill="#C83E2B"
-                          stroke="#1C1613"
-                          strokeWidth="2"
-                        />
-                      </g>
-                    ) : (
-                      <g transform="translate(88, 52)">
+                        {/* Spotted Red Cloth Bundle */}
+                        <circle cx="58" cy="24" r="11" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.6" />
+                        <circle cx="54" cy="20" r="2.2" fill="#FFFDF7" />
+                        <circle cx="62" cy="22" r="2.2" fill="#FFFDF7" />
+                        <circle cx="58" cy="28" r="2.2" fill="#FFFDF7" />
+                        <path d="M 52 16 C 50 10, 60 10, 58 16" fill="#C83E2B" stroke="#1C1613" strokeWidth="2" />
+
+                        {/* Miller's Ochre Yellow Coat */}
                         <path
                           d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
-                          fill={activePortrait.id === 'krajanek' ? '#E2A83B' : '#C83E2B'}
+                          fill="#E2A83B"
                           stroke="#1C1613"
                           strokeWidth="3.2"
                           strokeLinejoin="round"
                         />
+                        {/* Rustic White Undershirt & Brass Buttons */}
                         <path
                           d="M 22 54 L 20 90 L 48 90 L 46 54 Z"
                           fill="#F6EBD8"
                           stroke="#1C1613"
                           strokeWidth="2.6"
                         />
+                        <circle cx="34" cy="64" r="2.2" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.2" />
+                        <circle cx="34" cy="74" r="2.2" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.2" />
+
+                        {/* Head & Cheerful Face */}
                         <circle
                           cx="34"
                           cy="38"
@@ -2196,13 +2173,17 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                         />
                         <circle cx="29" cy="36" r="2.3" fill="#1C1613" />
                         <circle cx="39" cy="36" r="2.3" fill="#1C1613" />
+                        <circle cx="26" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
+                        <circle cx="42" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
                         <path
-                          d="M 28 44 Q 34 48, 40 44"
+                          d="M 28 44 Q 34 49, 40 44"
                           stroke="#1C1613"
                           strokeWidth="2.4"
                           fill="none"
                           strokeLinecap="round"
                         />
+
+                        {/* Peasant Miller Cap (Navy with red feather cockade) */}
                         <ellipse
                           cx="34"
                           cy="24"
@@ -2224,14 +2205,241 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                           stroke="#1C1613"
                           strokeWidth="2.2"
                         />
+                      </g>
+                    )}
+
+                    {activePortrait.id === 'wanderer' && (
+                      <g transform="translate(88, 52)">
+                        {/* Slender Willow Fishing Rod & Line */}
+                        <path
+                          d="M 64 96 Q 60 40, 72 10"
+                          stroke="#7A5832"
+                          strokeWidth="3.4"
+                          fill="none"
+                          strokeLinecap="round"
+                        />
+                        <path
+                          d="M 72 10 Q 76 35, 68 60"
+                          stroke="#1C1613"
+                          strokeWidth="1.2"
+                          strokeDasharray="3 3"
+                          fill="none"
+                        />
+
+                        {/* Weathered Moss Green Coat */}
+                        <path
+                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
+                          fill="#4D784E"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M 23 54 L 21 90 L 47 90 L 45 54 Z"
+                          fill="#F6EBD8"
+                          stroke="#1C1613"
+                          strokeWidth="2.6"
+                        />
+                        <circle cx="34" cy="65" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
+                        <circle cx="34" cy="76" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
+
+                        {/* Head & Weathered Face with Clay Pipe */}
+                        <circle
+                          cx="34"
+                          cy="38"
+                          r="15.5"
+                          fill="#F6EBD8"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                        />
+                        <circle cx="29" cy="36" r="2.3" fill="#1C1613" />
+                        <circle cx="39" cy="36" r="2.3" fill="#1C1613" />
+                        <circle cx="26" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.35" />
+                        <circle cx="42" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.35" />
+                        {/* Clay Pipe */}
+                        <path
+                          d="M 38 46 Q 52 48, 56 42 L 60 42 L 59 48 Q 50 53, 38 46 Z"
+                          fill="#E2A83B"
+                          stroke="#1C1613"
+                          strokeWidth="2.2"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="62" cy="35" r="3.5" fill="#F6EBD8" fillOpacity="0.75" />
+
+                        {/* Wide-Brimmed Felt Hat */}
+                        <ellipse
+                          cx="34"
+                          cy="23"
+                          rx="24"
+                          ry="6"
+                          fill="#5D3A1A"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M 20 23 L 23 7 L 45 7 L 48 23 Z"
+                          fill="#6E4423"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                    )}
+
+                    {activePortrait.id === 'shepherd' && (
+                      <g transform="translate(88, 52)">
+                        {/* Shepherd's Willow Whistle in Hand */}
+                        <path
+                          d="M 36 46 L 54 48 L 53 54 L 35 52 Z"
+                          fill="#D97706"
+                          stroke="#1C1613"
+                          strokeWidth="2.2"
+                          strokeLinejoin="round"
+                        />
+                        <circle cx="42" cy="49" r="1.3" fill="#1C1613" />
+                        <circle cx="47" cy="50" r="1.3" fill="#1C1613" />
+
+                        {/* Sheepskin Vest over Red Plaid Shirt */}
+                        <path
+                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
+                          fill="#C83E2B"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                          strokeLinejoin="round"
+                        />
+                        {/* Fluffy Sheepskin Vest Front */}
+                        <path
+                          d="M 20 54 Q 18 72, 19 92 L 49 92 Q 50 72, 48 54 Z"
+                          fill="#F4EED8"
+                          stroke="#1C1613"
+                          strokeWidth="2.6"
+                          strokeLinejoin="round"
+                        />
+                        <line x1="34" y1="56" x2="34" y2="90" stroke="#1C1613" strokeWidth="2" strokeDasharray="3 3" />
+
+                        {/* Head & Youthful Face */}
+                        <circle
+                          cx="34"
+                          cy="38"
+                          r="15"
+                          fill="#F6EBD8"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                        />
+                        <circle cx="29" cy="35" r="2.3" fill="#1C1613" />
+                        <circle cx="39" cy="35" r="2.3" fill="#1C1613" />
+                        <circle cx="25" cy="40" r="3.4" fill="#C83E2B" fillOpacity="0.5" />
+                        <circle cx="43" cy="40" r="3.4" fill="#C83E2B" fillOpacity="0.5" />
+                        <path
+                          d="M 28 44 Q 34 49, 40 44"
+                          stroke="#1C1613"
+                          strokeWidth="2.4"
+                          fill="none"
+                          strokeLinecap="round"
+                        />
+
+                        {/* Young Peasant Cap with Tassel */}
+                        <ellipse
+                          cx="34"
+                          cy="24"
+                          rx="21"
+                          ry="5.5"
+                          fill="#221B17"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M 20 24 C 20 12, 48 12, 48 24 Z"
+                          fill="#2B5B84"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                        />
+                        <line x1="48" y1="20" x2="56" y2="28" stroke="#E2A83B" strokeWidth="2.8" strokeLinecap="round" />
+                        <circle cx="57" cy="30" r="3" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.4" />
+                      </g>
+                    )}
+
+                    {activePortrait.id === 'watchman' && (
+                      <g transform="translate(88, 52)">
+                        {/* Night Watchman Halberd Staff & Blade */}
                         <line
                           x1="62"
-                          y1="22"
+                          y1="10"
                           x2="56"
-                          y2="94"
+                          y2="96"
                           stroke="#1C1613"
-                          strokeWidth="4"
+                          strokeWidth="3.8"
                           strokeLinecap="round"
+                        />
+                        {/* Crescent Moon Halberd Blade */}
+                        <path
+                          d="M 62 10 Q 72 16, 70 28 Q 63 24, 62 10 Z"
+                          fill="#78716C"
+                          stroke="#1C1613"
+                          strokeWidth="2.2"
+                        />
+                        <path
+                          d="M 62 8 L 62 2 L 64 2 L 64 8 Z"
+                          fill="#78716C"
+                          stroke="#1C1613"
+                          strokeWidth="1.5"
+                        />
+
+                        {/* Heavy Navy Night Watchman Greatcoat */}
+                        <path
+                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
+                          fill="#1E293B"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                          strokeLinejoin="round"
+                        />
+                        {/* Large Warm Collar */}
+                        <path
+                          d="M 16 54 L 28 66 L 40 66 L 52 54 Z"
+                          fill="#334155"
+                          stroke="#1C1613"
+                          strokeWidth="2.4"
+                        />
+                        {/* Brass Lantern in Hand */}
+                        <rect x="10" y="66" width="12" height="16" rx="2" fill="#FACC15" stroke="#1C1613" strokeWidth="2.2" />
+                        <line x1="16" y1="62" x2="16" y2="66" stroke="#1C1613" strokeWidth="2" />
+                        <circle cx="16" cy="74" r="3" fill="#FFFDF7" />
+
+                        {/* Head & Stern Vigilant Face with Beard */}
+                        <circle
+                          cx="34"
+                          cy="38"
+                          r="15.5"
+                          fill="#F6EBD8"
+                          stroke="#1C1613"
+                          strokeWidth="3.2"
+                        />
+                        <circle cx="29" cy="35" r="2.3" fill="#1C1613" />
+                        <circle cx="39" cy="35" r="2.3" fill="#1C1613" />
+                        {/* Graying Beard */}
+                        <path
+                          d="M 26 42 Q 34 53, 42 42 Z"
+                          fill="#E2E8F0"
+                          stroke="#1C1613"
+                          strokeWidth="2.2"
+                        />
+
+                        {/* Tall Black Night Watchman Hat */}
+                        <ellipse
+                          cx="34"
+                          cy="24"
+                          rx="22"
+                          ry="5.5"
+                          fill="#1C1613"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M 21 24 L 23 8 L 45 8 L 47 24 Z"
+                          fill="#0F172A"
+                          stroke="#1C1613"
+                          strokeWidth="3"
+                          strokeLinejoin="round"
                         />
                       </g>
                     )}
@@ -2295,12 +2503,12 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   className="lada-inline-switch-btn"
                   onClick={handleCyclePortrait}
                 >
-                  🔄 Přelistovat postavu ({portraitIndex + 1}/{PORTRAIT_CHARACTERS.length})
+                  🔄 Přelistovat postavu ({(portraitIndex % PORTRAIT_CHARACTERS.length) + 1}/{PORTRAIT_CHARACTERS.length})
                 </button>
               </div>
             </div>
 
-            {/* 2. VITALITY & MAGIC GAUGES (Zdraví / Kuráž & Čáry / Schopnost) */}
+            {/* 2. VITALITY & MAGIC GAUGES (Kuráž & Čáry) */}
             <div className="lada-gauges-block">
               <div className="lada-vessel-row">
                 <div className="lada-ceramic-vessel" aria-hidden="true">
@@ -2318,7 +2526,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="lada-gauge-label-row">
-                    <span>♥ Zdraví a kuráž</span>
+                    <span>♥ Kuráž lovce</span>
                     <span className="tabular-nums">
                       {activePortrait.hp} / {activePortrait.maxHp}
                     </span>
@@ -2373,10 +2581,10 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
 
             <LadaLindenVineta />
 
-            {/* 3. ACTIVE QUEST / STORY PASSAGE (Zápisník cest) */}
+            {/* 3. ACTIVE QUEST / STORY PASSAGE (Cíl výpravy) */}
             <div className="lada-story-passage">
               <div className="lada-story-header">
-                <span>📜 Zápisník cest · Kronika poutníka</span>
+                <span>📜 Cíl výpravy</span>
                 <span className="lada-story-stage-tag">{currentLevel.shortTitle}</span>
               </div>
 
@@ -2389,7 +2597,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                 </span>
               </p>
 
-              <div className="lada-calligraphy-choices" role="group" aria-label="Volby v zápisníku cest">
+              <div className="lada-calligraphy-choices" role="group" aria-label="Volby výpravy">
                 <button
                   type="button"
                   className="lada-calligraphy-choice active-choice"
@@ -2416,8 +2624,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   onClick={() => {
                     ladaPageFoley.playFullPageTurn(0);
                     sound.coin();
-                    const chosenHunter: CharacterType =
-                      activePortrait.id === 'vodnik_lada' ? 'krajanek' : activePortrait.id;
+                    const chosenHunter: CharacterType = activePortrait.id;
                     const prog = HUNTER_UNLOCKS[chosenHunter];
                     if (prog) {
                       onQuickStartWithHunter(chosenHunter);
@@ -2431,11 +2638,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   </span>
                   <span className="flex-1 text-left">
                     <strong>
-                      „Hned vyslat na stráž:{' '}
-                      {activePortrait.id === 'vodnik_lada'
-                        ? 'Vandrovního Krajánka'
-                        : activePortrait.czechTitle}
-                      “
+                      „Hned vyslat na stráž: {activePortrait.czechTitle}“
                     </strong>
                     <small className="block opacity-80">
                       Rychlý odchod do noci

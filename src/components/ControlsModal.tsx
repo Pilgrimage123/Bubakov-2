@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { sound } from '../audio';
 import { KrejcarIcon } from './KrejcarIcon';
 import { PernicekIcon } from './PernicekIcon';
@@ -11,8 +11,6 @@ import { LadaGrandfatherCanvasPreview } from './LadaGrandfatherCanvasPreview';
 import {
   LadaDropCap,
   LadaLindenVineta,
-  evaluatePaperTurnCurve,
-  computeSingleSheetTurnGeometry,
 } from './LadaStorybookSpread';
 import { ladaPageFoley } from './ladaPageTurnAudio';
 
@@ -42,34 +40,34 @@ const CONTROLS_CHAPTER_META: Record<
   }
 > = {
   controls: {
-    folio: 'Kapitola I · Jak hrát, pohyb a ovládání v poli',
+    folio: 'Kapitola I · Jak hrát a ovládání',
     pages: 'Str. 1–2',
     ribbonClass: 'ribbon-poppy',
-    shortLabel: 'I. Jak hrát & Ovládání',
+    shortLabel: 'Jak hrát a ovládání',
   },
   objective: {
-    folio: 'Kapitola II · Cíl výpravy, kraje a pamětihodnosti',
+    folio: 'Kapitola II · Cíl výpravy a kraje',
     pages: 'Str. 3–4',
     ribbonClass: 'ribbon-cobalt',
-    shortLabel: 'II. Cíl hry & Krajina',
+    shortLabel: 'Cíl výpravy a kraje',
   },
   dedecek: {
-    folio: 'Kapitola III · Čertův dědeček a voňavé perníčky',
+    folio: 'Kapitola III · Čertův dědeček a perníčky',
     pages: 'Str. 5–6',
     ribbonClass: 'ribbon-ochre',
-    shortLabel: 'III. Čertův dědeček',
+    shortLabel: 'Čertův dědeček',
   },
   weapons: {
-    folio: 'Kapitola IV · Venkovská zbrojnice a 18 zbraní',
+    folio: 'Kapitola IV · Venkovská zbrojnice a zbraně',
     pages: 'Str. 7–8',
     ribbonClass: 'ribbon-willow',
-    shortLabel: 'IV. Zbraně & Arzenál (18)',
+    shortLabel: 'Zbraně a výstroj',
   },
   village: {
-    folio: 'Kapitola V · Hospoda U Černého kocoura a obec',
+    folio: 'Kapitola V · Hospoda a obecní vylepšení',
     pages: 'Str. 9–10',
     ribbonClass: 'ribbon-poppy',
-    shortLabel: 'V. Vesnice & Hospoda (13)',
+    shortLabel: 'Hospoda a obec',
   },
 };
 
@@ -79,149 +77,22 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
   defaultTab = 'controls',
 }) => {
   const [activeTab, setActiveTab] = useState<ControlsChapterId>('controls');
-  const [outgoingTab, setOutgoingTab] = useState<ControlsChapterId | null>(null);
   const [controlsInputMode, setControlsInputMode] = useState<'touch' | 'keyboard' | 'gamepad'>(() => {
     if (typeof window === 'undefined') return 'touch';
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth <= 840;
     return isTouch ? 'touch' : 'keyboard';
   });
 
-  // Physical Single-Sheet Page-Turn State & Direct DOM Refs (0 React re-renders per frame!)
-  const [turnDirection, setTurnDirection] = useState<'forward' | 'backward'>('forward');
-  const [ribbonSwing, setRibbonSwing] = useState<boolean>(false);
-  const [hoverCorner, setHoverCorner] = useState<'next' | 'prev' | null>(null);
-  const animRafRef = useRef<number | null>(null);
-  const turnProgressRef = useRef<number>(0);
-
-  const rightLiftShadowRef = useRef<HTMLDivElement | null>(null);
-  const rectoDivRef = useRef<HTMLDivElement | null>(null);
-  const rectoHighlightRef = useRef<HTMLDivElement | null>(null);
-  const versoDivRef = useRef<HTMLDivElement | null>(null);
-  const versoBellyRef = useRef<HTMLDivElement | null>(null);
-  const curlSvgRef = useRef<SVGSVGElement | null>(null);
-  const curlPolyRef = useRef<SVGPolygonElement | null>(null);
-  const curlLineRef = useRef<SVGLineElement | null>(null);
-
-  const applySheetTurnDomGeometry = useCallback(
-    (progress: number, dir: 'forward' | 'backward') => {
-      const g = computeSingleSheetTurnGeometry(progress, dir);
-
-      if (rightLiftShadowRef.current) {
-        const show = g.rightLiftShadowOpacity > 0.004;
-        rightLiftShadowRef.current.style.opacity = show
-          ? g.rightLiftShadowOpacity.toFixed(3)
-          : '0';
-        rightLiftShadowRef.current.style.left = `${Math.max(0, g.foldBotX - 4).toFixed(2)}%`;
-        rightLiftShadowRef.current.style.width = `${g.rightLiftShadowWidthPct.toFixed(2)}%`;
-        rightLiftShadowRef.current.style.transform = `skewX(${g.foldAngleDeg.toFixed(2)}deg)`;
-      }
-
-      if (rectoDivRef.current) {
-        if (g.foldTopX > 0.15) {
-          rectoDivRef.current.style.display = '';
-          rectoDivRef.current.style.clipPath = g.rectoClipPath;
-        } else {
-          rectoDivRef.current.style.display = 'none';
-        }
-      }
-
-      if (rectoHighlightRef.current) {
-        rectoHighlightRef.current.style.backgroundPosition = `${(
-          100 - g.effectiveP * 100
-        ).toFixed(1)}% 0%`;
-      }
-
-      if (versoDivRef.current) {
-        if (g.versoOpacity > 0.004) {
-          versoDivRef.current.style.display = '';
-          versoDivRef.current.style.clipPath = g.versoClipPath;
-          versoDivRef.current.style.opacity = g.versoOpacity.toFixed(3);
-        } else {
-          versoDivRef.current.style.display = 'none';
-        }
-      }
-
-      if (versoBellyRef.current) {
-        versoBellyRef.current.style.background = `linear-gradient(${(
-          90 + g.foldAngleDeg
-        ).toFixed(
-          1
-        )}deg, rgba(42, 26, 14, 0.28) 0%, rgba(255, 249, 235, 0.34) 35%, rgba(242, 229, 198, 0.08) 68%, rgba(42, 26, 14, 0.36) 100%)`;
-      }
-
-      if (curlSvgRef.current) {
-        curlSvgRef.current.style.opacity = g.versoOpacity > 0.004 ? g.versoOpacity.toFixed(3) : '0';
-      }
-      if (curlPolyRef.current) {
-        curlPolyRef.current.setAttribute('points', g.versoPolygonSvgPoints);
-      }
-      if (curlLineRef.current) {
-        curlLineRef.current.setAttribute('x1', g.creaseTopSpreadX.toFixed(2));
-        curlLineRef.current.setAttribute('x2', g.creaseBotSpreadX.toFixed(2));
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (isOpen) {
-      const validTabs: ControlsChapterId[] = ['controls', 'objective', 'dedecek', 'weapons', 'village'];
-      const next = validTabs.includes(defaultTab as ControlsChapterId)
-        ? (defaultTab as ControlsChapterId)
-        : 'controls';
-      setActiveTab(next);
-      setOutgoingTab(null);
-      turnProgressRef.current = 0;
-      ladaPageFoley.playFullPageTurn(0);
-    }
-    return () => {
-      if (animRafRef.current !== null) {
-        cancelAnimationFrame(animRafRef.current);
-      }
-    };
-  }, [defaultTab, isOpen]);
-
   const switchChapterWithPageTurn = useCallback(
     (targetTab: ControlsChapterId) => {
       if (targetTab === activeTab) return;
-      if (animRafRef.current !== null) {
-        cancelAnimationFrame(animRafRef.current);
-      }
-      const curIdx = CONTROLS_CHAPTER_ORDER.indexOf(activeTab);
-      const nextIdx = CONTROLS_CHAPTER_ORDER.indexOf(targetTab);
-      const dir: 'forward' | 'backward' = nextIdx >= curIdx ? 'forward' : 'backward';
-      const dist = Math.max(1, Math.abs(nextIdx - curIdx));
-
-      turnProgressRef.current = 0.01;
-      setOutgoingTab(activeTab);
       setActiveTab(targetTab);
-      setTurnDirection(dir);
-      setRibbonSwing(true);
-      setHoverCorner(null);
-      ladaPageFoley.playFullPageTurn(dist > 1 ? dist : 0);
-
-      const durationMs = 540;
-      const startTime = performance.now();
-
-      const step = (now: number) => {
-        const rawT = Math.min(1, Math.max(0, (now - startTime) / durationMs));
-        const curved = evaluatePaperTurnCurve(rawT);
-        turnProgressRef.current = curved;
-        applySheetTurnDomGeometry(curved, dir);
-        if (rawT < 1) {
-          animRafRef.current = requestAnimationFrame(step);
-        } else {
-          animRafRef.current = null;
-          turnProgressRef.current = 0;
-          applySheetTurnDomGeometry(0, dir);
-          setOutgoingTab(null);
-          window.setTimeout(() => setRibbonSwing(false), 180);
-        }
-      };
-
-      animRafRef.current = requestAnimationFrame(step);
+      sound.coin();
+      if (sound.enabled) {
+        ladaPageFoley.playCornerHover();
+      }
     },
-    [activeTab, applySheetTurnDomGeometry]
+    [activeTab]
   );
 
   const handleStepChapter = useCallback(
@@ -233,6 +104,16 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
     },
     [activeTab, switchChapterWithPageTurn]
   );
+
+  useEffect(() => {
+    if (isOpen) {
+      const validTabs: ControlsChapterId[] = ['controls', 'objective', 'dedecek', 'weapons', 'village'];
+      const next = validTabs.includes(defaultTab as ControlsChapterId)
+        ? (defaultTab as ControlsChapterId)
+        : 'controls';
+      setActiveTab(next);
+    }
+  }, [defaultTab, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -254,24 +135,6 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
 
   const chapterMeta = CONTROLS_CHAPTER_META[activeTab] || CONTROLS_CHAPTER_META.controls;
   const activeIdx = CONTROLS_CHAPTER_ORDER.indexOf(activeTab);
-  const isTurning = outgoingTab !== null;
-  const isPeekingNext = !isTurning && hoverCorner === 'next';
-  const effectiveDir: 'forward' | 'backward' = isTurning ? turnDirection : 'forward';
-  const initialGeom = computeSingleSheetTurnGeometry(
-    isTurning ? turnProgressRef.current : isPeekingNext ? 0.065 : 0,
-    effectiveDir
-  );
-
-  const underSheetTab: ControlsChapterId = isTurning
-    ? effectiveDir === 'forward'
-      ? activeTab
-      : outgoingTab || activeTab
-    : activeTab;
-  const rectoSheetTab: ControlsChapterId = isTurning
-    ? effectiveDir === 'forward'
-      ? outgoingTab || activeTab
-      : activeTab
-    : activeTab;
 
   const renderControlsChapterContent = (tabId: ControlsChapterId) => (
     <>
@@ -1094,7 +957,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     lineHeight: 1.45,
                   }}
                 >
-                  <strong style={{ color: '#2B5B84' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří v Hrusicích – Denní tání ➔ 2. Předjaří v Hrusicích – Noční mrazy ➔ 3. Duben v Hrusicích – Dubnový den ➔ 4. Starý hřbitov a Hrusický hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska a Zlenické podhradí ➔ 8. Dračí sluj pod Melechovskou skálou.
+                  <strong style={{ color: '#2B5B84' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří: Denní tání ➔ 2. Předjaří: Noční mrazy ➔ 3. Duben: Dubnový den ➔ 4. Starý hřbitov a hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska ➔ 8. Dračí sluj pod Melechovem.
                 </div>
               </div>
 
@@ -1730,7 +1593,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               >
                 <span className="lada-brass-pin" aria-hidden="true" />
                 <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', color: '#C83E2B', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <GameIcon icon="cottage" size={24} /> Hospoda U Černého kocoura – 13 obecních vylepšení
+                  <GameIcon icon="cottage" size={24} /> Hospoda U Černého kocoura: Obecní vylepšení
                 </h3>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.45, minHeight: '56px' }}>
                   <LadaDropCap letter="Ž" variant="poppy" />
@@ -1922,9 +1785,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
       aria-label="Jak hrát, ovládání a cíl hry"
     >
       <div
-        className={`panel controls-modal-panel lada-storybook-modal ${
-          ribbonSwing ? 'lada-ribbon-pendulum-active' : ''
-        }`}
+        className="panel controls-modal-panel lada-storybook-modal"
         style={{
           maxWidth: '1000px',
           width: '96%',
@@ -1936,16 +1797,11 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Brass Corner Protectors */}
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} showInnerBorder={false} />
 
         {/* Running Book Header (Záhlaví otevřené knihy) */}
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 RADY STARÉHO HOSPODÁŘE · SNDK PRAHA</span>
+          <span>📖 RADY STARÉHO HOSPODÁŘE</span>
           <span>
             {chapterMeta.folio} · <strong>{chapterMeta.pages}</strong>
           </span>
@@ -1971,7 +1827,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 <LadaFolkFlower variant="buttercup" size={20} spin />
                 <GameIcon icon="game" size={26} />
               </span>
-              <span>JAK HRÁT, OVLÁDÁNÍ A CÍL HRY</span>
+              <span>JAK HRÁT A OVLÁDÁNÍ</span>
               <LadaFolkFlower variant="poppy" size={20} spin="reverse" />
             </h2>
             <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
@@ -2017,7 +1873,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GameIcon icon="game" size={17} /> Jak hrát &amp; Ovládání
+              <GameIcon icon="game" size={17} /> Jak hrát a ovládání
             </span>
           </button>
           <button
@@ -2030,7 +1886,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GameIcon icon="target" size={17} /> Cíl hry, Kraje &amp; Krajina
+              <GameIcon icon="target" size={17} /> Cíl výpravy a kraje
             </span>
           </button>
           <button
@@ -2043,7 +1899,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GameIcon icon="grandpa" size={17} /> Čertův dědeček &amp; Nůše
+              <GameIcon icon="grandpa" size={17} /> Čertův dědeček
             </span>
           </button>
           <button
@@ -2056,7 +1912,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GameIcon icon="weapons" size={17} /> Zbraně &amp; Arzenál (18)
+              <GameIcon icon="weapons" size={17} /> Zbraně a výstroj
             </span>
           </button>
           <button
@@ -2069,116 +1925,20 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <GameIcon icon="village" size={17} /> Vesnice &amp; Hospoda (13)
+              <GameIcon icon="village" size={17} /> Hospoda a obec
             </span>
           </button>
         </div>
 
-        {/* Single-Sheet Book Page Stage with Physical Page-Turn Overlay */}
+        {/* Single-Sheet Book Page Stage */}
         <div className="lada-controls-book-sheet">
-          <div className="lada-foxing-layer lada-foxing-right" aria-hidden="true" />
-
-          {renderControlsChapterContent(underSheetTab)}
-
-          {/* Traveling Cast Shadow on Static Sheet Beneath */}
-          <div
-            ref={rightLiftShadowRef}
-            className="lada-right-lift-shadow"
-            aria-hidden="true"
-            style={{
-              left: `${Math.max(0, initialGeom.foldBotX - 4).toFixed(2)}%`,
-              width: `${initialGeom.rightLiftShadowWidthPct.toFixed(2)}%`,
-              opacity: isTurning || isPeekingNext ? initialGeom.rightLiftShadowOpacity : 0,
-              transform: `skewX(${initialGeom.foldAngleDeg.toFixed(2)}deg)`,
-            }}
-          />
-
-          {/* Physical Turning Leaf Overlay */}
-          {(isTurning || isPeekingNext) && (
-            <div className="turning-leaf" aria-hidden="true">
-              {/* Front Face (recto) — Outgoing chapter peeling away */}
-              <div
-                ref={rectoDivRef}
-                className="turning-leaf-recto"
-                style={{
-                  clipPath: initialGeom.rectoClipPath,
-                }}
-              >
-                <div className="lada-foxing-layer lada-foxing-right" />
-                {renderControlsChapterContent(rectoSheetTab)}
-                <div
-                  ref={rectoHighlightRef}
-                  className="lada-belly-highlight-overlay"
-                  style={{
-                    backgroundPosition: `${(100 - initialGeom.effectiveP * 100).toFixed(1)}% 0%`,
-                  }}
-                />
-              </div>
-
-              {/* Back Face (verso) — Curved parchment underside */}
-              <div
-                ref={versoDivRef}
-                className="turning-leaf-verso lada-single-sheet-verso"
-                style={{
-                  clipPath: initialGeom.versoClipPath,
-                  opacity: initialGeom.versoOpacity,
-                }}
-              >
-                <div className="lada-foxing-layer lada-foxing-left" />
-                <div
-                  ref={versoBellyRef}
-                  className="lada-verso-belly-shading"
-                  style={{
-                    background: `linear-gradient(${(90 + initialGeom.foldAngleDeg).toFixed(
-                      1
-                    )}deg, rgba(42, 26, 14, 0.28) 0%, rgba(255, 249, 235, 0.34) 35%, rgba(242, 229, 198, 0.08) 68%, rgba(42, 26, 14, 0.36) 100%)`,
-                  }}
-                />
-              </div>
-
-              {/* Dynamic SVG Fold Crease & Deckled Edge Highlight */}
-              <svg
-                ref={curlSvgRef}
-                className="turning-leaf-curl-svg lada-single-sheet-curl-svg"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                style={{ opacity: initialGeom.versoOpacity }}
-              >
-                <polygon
-                  ref={curlPolyRef}
-                  points={initialGeom.versoPolygonSvgPoints}
-                  fill="#F2E5C6"
-                  fillOpacity="0.92"
-                  stroke="#1C1613"
-                  strokeWidth="0.45"
-                  strokeLinejoin="round"
-                />
-                <line
-                  ref={curlLineRef}
-                  x1={initialGeom.creaseTopSpreadX.toFixed(2)}
-                  y1="0"
-                  x2={initialGeom.creaseBotSpreadX.toFixed(2)}
-                  y2="100"
-                  stroke="#FFF9EB"
-                  strokeWidth="0.9"
-                  strokeOpacity="0.65"
-                />
-              </svg>
-            </div>
-          )}
+          {renderControlsChapterContent(activeTab)}
 
           {/* Dedicated Sheet Footer Bar for Dog-Eared Corner Peeks (Oslí uši) */}
           <div className="lada-controls-sheet-footer">
             <button
               type="button"
-              className={`lada-dog-ear-bottom lada-dog-ear-prev ${
-                hoverCorner === 'prev' ? 'hovered' : ''
-              }`}
-              onMouseEnter={() => {
-                setHoverCorner('prev');
-                ladaPageFoley.playCornerHover();
-              }}
-              onMouseLeave={() => setHoverCorner((c) => (c === 'prev' ? null : c))}
+              className="lada-dog-ear-bottom lada-dog-ear-prev"
               onClick={() => handleStepChapter(-1)}
               title="Předchozí kapitola příručky (←)"
               aria-label="Předchozí kapitola příručky"
@@ -2189,20 +1949,13 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
               </span>
             </button>
 
-            <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#6E3B1E', opacity: 0.85 }}>
-              Listujte kapitolami šipkami ← / → nebo rohy listu
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#6E3B1E', opacity: 0.85 }}>
+              Kapitola {activeIdx + 1} z {CONTROLS_CHAPTER_ORDER.length} · Listujte šipkami ← / →
             </span>
 
             <button
               type="button"
-              className={`lada-dog-ear-bottom lada-dog-ear-next ${
-                hoverCorner === 'next' ? 'hovered' : ''
-              }`}
-              onMouseEnter={() => {
-                setHoverCorner('next');
-                ladaPageFoley.playCornerHover();
-              }}
-              onMouseLeave={() => setHoverCorner((c) => (c === 'next' ? null : c))}
+              className="lada-dog-ear-bottom lada-dog-ear-next"
               onClick={() => handleStepChapter(1)}
               title="Další kapitola příručky (→)"
               aria-label="Další kapitola příručky"

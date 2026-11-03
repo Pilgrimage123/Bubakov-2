@@ -36,15 +36,11 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
         style={{ maxWidth: '760px', width: '95%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', textAlign: 'left', position: 'relative' }}
         onClick={(event) => event.stopPropagation()}
       >
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 KRONIKA BUBÁKOVA · SPIS VENKOVSKÉHO LOVCE</span>
+          <span>📖 Spis lovce</span>
           <span>
-            Osobní list družiny · <strong>{hunter.name}</strong>
+            Lovec: <strong>{hunter.name}</strong>
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>

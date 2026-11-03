@@ -34,7 +34,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
     {
       pct: 25,
       tier: 1,
-      title: '25 % – První stopa z lidových pověstí',
+      title: '25 %: První stopa z pověstí',
       desc: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledLore || '',
       weapon: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledWeaponHint || '',
       reached: progress.percent >= 25,
@@ -42,7 +42,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
     {
       pct: 50,
       tier: 2,
-      title: '50 % – Zřetelná kresba a odhalení zbraně',
+      title: '50 %: Zřetelná kresba a zbraň',
       desc: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledLore || '',
       weapon: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledWeaponHint || '',
       reached: progress.percent >= 50,
@@ -50,7 +50,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
     {
       pct: 75,
       tier: 3,
-      title: '75 % – Téměř plné barvy a speciální schopnost',
+      title: '75 %: Zvláštní schopnost',
       desc: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledLore || '',
       weapon: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledAbilityHint || '',
       reached: progress.percent >= 75,
@@ -58,7 +58,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
     {
       pct: 100,
       tier: 4,
-      title: '100 % – Plné odemčení a vstup do party',
+      title: '100 %: Lovec odemčen',
       desc: `Lovec ${def?.realName || ''} se trvale přidá k tvé družině a bude kdykoliv k dispozici pro novou výpravu!`,
       weapon: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledWeaponHint || '',
       reached: progress.isUnlocked || progress.percent >= 100,
@@ -80,15 +80,11 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 KRONIKA BUBÁKOVA · STOPA V LIDOVÝCH POVĚSTECH</span>
+          <span>📖 Odemčení lovce</span>
           <span>
-            Pátrání po lovci · <strong>{progress.percent} % odhaleno</strong>
+            Postup: <strong>{progress.percent} %</strong>
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>

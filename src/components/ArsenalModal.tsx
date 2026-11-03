@@ -54,16 +54,12 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
 
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 KRONIKA VENKOVSKÉ ZBROJNICE · SNDK PRAHA</span>
+          <span>📖 Venkovská zbrojnice</span>
           <span>
-            Kapitola II · Zbraně a řemeslný fortel · <strong>Str. 6–7</strong>
+            Kapitola II · Zbraně a řemeslný fortel · <strong>{unlockedCount} / {totalCount}</strong>
           </span>
         </div>
 
@@ -82,7 +78,7 @@ export const ArsenalModal: React.FC<ArsenalModalProps> = ({ isOpen, onClose, met
             >
               <LadaFolkFlower variant="buttercup" size={22} spin />
               <GameIcon icon="sword" size={28} />
-              Zbrojnice &amp; Knihovna zbraní Bubákova
+              Venkovská zbrojnice
               <LadaFolkFlower variant="poppy" size={22} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />

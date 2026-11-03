@@ -29,7 +29,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
     {
       pct: 25,
       tier: 1,
-      title: '25 % – První stopa, mlha a obrysy krajiny',
+      title: '25 %: První stopa a obrysy',
       desc: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledDesc || '',
       boss: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledBossHint || '',
       weather: def?.milestones.find((m) => m.tierLevel === 1)?.spoiledWeatherHint || '',
@@ -38,7 +38,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
     {
       pct: 50,
       tier: 2,
-      title: '50 % – Zřetelná stezka, počasí a první běsi',
+      title: '50 %: Zřetelná stezka a počasí',
       desc: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledDesc || '',
       boss: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledBossHint || '',
       weather: def?.milestones.find((m) => m.tierLevel === 2)?.spoiledWeatherHint || '',
@@ -47,7 +47,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
     {
       pct: 75,
       tier: 3,
-      title: '75 % – Téměř plné barvy a odhalení hlavního bosse',
+      title: '75 %: Hlavní boss kraje',
       desc: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledDesc || '',
       boss: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledBossHint || '',
       weather: def?.milestones.find((m) => m.tierLevel === 3)?.spoiledWeatherHint || '',
@@ -56,7 +56,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
     {
       pct: 100,
       tier: 4,
-      title: '100 % – Otevřená brána a neomezený přístup',
+      title: '100 %: Kraj plně otevřen',
       desc: `Cesta do ${def?.realName || lvl?.name || 'této oblasti'} je plně probádána a přístupna pro všechny vaše hrdiny a výpravy!`,
       boss: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledBossHint || '',
       weather: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledWeatherHint || '',
@@ -81,15 +81,11 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 KRONIKA BUBÁKOVA · MAPA NOČNÍCH KRAJŮ</span>
+          <span>📖 Průzkum kraje</span>
           <span>
-            Průzkum stezky · <strong>{progress.percent} % probádáno</strong>
+            Probádáno: <strong>{progress.percent} %</strong>
           </span>
         </div>
         {/* MODAL HEADER */}

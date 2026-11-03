@@ -17,7 +17,7 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
   return (
     <div className="overlay" style={{ zIndex: 35 }}>
       <div
-        className="panel"
+        className="panel lada-storybook-modal"
         style={{
           maxWidth: '880px',
           width: '95%',
@@ -29,6 +29,10 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
         }}
       >
         <LadaCardCorners variant="callout" />
+        <div className="lada-page-running-header" style={{ marginBottom: '8px' }}>
+          <span>📖 Kronika vývoje</span>
+          <span>Zápisy o změnách</span>
+        </div>
         <h2 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <LadaFolkFlower variant="buttercup" size={20} spin />
           <GameIcon icon="scroll" size={24} /> Kronika Bubákova

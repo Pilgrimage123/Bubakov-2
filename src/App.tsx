@@ -1622,6 +1622,7 @@ export default function App() {
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather' | 'milestone'>('menu');
   const [pendingMilestones, setPendingMilestones] = useState<PendingMilestoneChoice[]>([]);
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
+  const [menuViewMode, setMenuViewMode] = useState<'grid' | 'book'>('grid');
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
   const gameStateRef = useRef(gameState);
@@ -2466,26 +2467,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       ...s,
       levelWon: true,
       warningBanner: reason === 'boss'
-        ? `🏆 ${GAME_LEVELS[lvlId].finalBoss.name} POKOŘEN – VÍTĚZSTVÍ!`
+        ? `🏆 ${GAME_LEVELS[lvlId].finalBoss.name} pokořen, vítězství!`
         : (!isNightLevel
             ? (lvlId === 0
-                ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN V PŘEDJAŘÍ – VÍTĚZSTVÍ!'
+                ? '🔔 Zvoní klekání, den v Předjaří přežit!'
                 : lvlId === 2
-                ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DUBNOVÝ DEN – VÍTĚZSTVÍ!'
+                ? '🔔 Zvoní klekání, dubnový den přežit!'
                 : lvlId === 4
-                ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE MÁJOVOU SLAVNOST – VÍTĚZSTVÍ!'
+                ? '🔔 Zvoní klekání, májová slavnost přežita!'
                 : lvlId === 6
-                ? '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE LETNÍ SENOSEČ – VÍTĚZSTVÍ!'
-                : '🔔 ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN – VÍTĚZSTVÍ!')
+                ? '🔔 Zvoní klekání, letní senoseč přežita!'
+                : '🔔 Zvoní klekání, den přežit!')
             : (lvlId === 1
-                ? '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOČNÍ MRAZY – VÍTĚZSTVÍ!'
+                ? '🐓 Svítání, noční mrazy přežity!'
                 : lvlId === 3
-                ? '🐓 SVÍTÁNÍ! PŘEŽILI JSTE DUBNOVOU NOC – VÍTĚZSTVÍ!'
+                ? '🐓 Svítání, dubnová noc přežita!'
                 : lvlId === 5
-                ? '🐓 SVÍTÁNÍ! PŘEŽILI JSTE MÁJOVOU NOC – VÍTĚZSTVÍ!'
+                ? '🐓 Svítání, májová noc přežita!'
                 : lvlId === 7
-                ? '🐓 SVÍTÁNÍ! PŘEŽILI JSTE ČERVNOVOU NOC – VÍTĚZSTVÍ!'
-                : '🐓 SVÍTÁNÍ! PŘEŽILI JSTE NOC – VÍTĚZSTVÍ!')),
+                ? '🐓 Svítání, červnová noc přežita!'
+                : '🐓 Svítání, noc přežita!')),
     }));
 
     if (canUnlockNext && (curMeta.highestLevelUnlocked || 1) < nextLvlId) {
@@ -3235,19 +3236,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (!levelProg.isUnlocked) {
         sound.hit();
         setSelectedLevelDetail(levelProg);
-        if (levelProg.isQueued) {
-          showUnlockNotice({
-            icon: 'padlock',
-            title: `${levelProg.spoiledName} je v pořadí!`,
-            desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${levelProg.requiredLevelName}).`,
-          }, 4500);
-        } else {
-          showUnlockNotice({
-            icon: 'padlock',
-            title: `${levelProg.spoiledName} je uzamčena!`,
-            desc: `Splněno ${levelProg.percent} % výzvy (${levelProg.curCount} / ${levelProg.maxCount} zahnáno).`,
-          }, 4500);
-        }
         return;
       }
 
@@ -3255,19 +3243,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (!hunterProg.isUnlocked) {
         sound.hit();
         setSelectedHunterDetail(hunterProg);
-        if (hunterProg.isQueued) {
-          showUnlockNotice({
-            icon: 'padlock',
-            title: `${hunterProg.spoiledName} je v pořadí!`,
-            desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${hunterProg.requiredHunterName}).`,
-          }, 4500);
-        } else {
-          showUnlockNotice({
-            icon: 'padlock',
-            title: `${hunterProg.spoiledName} je uzamčen!`,
-            desc: `Splněno ${hunterProg.percent} % výzvy (${hunterProg.curCount} / ${hunterProg.maxCount} zahnáno).`,
-          }, 4500);
-        }
         return;
       }
     }
@@ -14847,19 +14822,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         onClick={() => {
           sound.hit();
           setSelectedHunterDetail(prog);
-          if (prog.isQueued) {
-            showUnlockNotice({
-              icon: 'padlock',
-              title: `${prog.spoiledName} je v pořadí!`,
-              desc: `Tento lovec se začne odemykat teprve poté, co odemknete předchozího lovce (${prog.requiredHunterName}).`,
-            }, 4500);
-          } else {
-            showUnlockNotice({
-              icon: 'padlock',
-              title: `${prog.spoiledName} je uzamčen!`,
-              desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno.`,
-            }, 4500);
-          }
         }}
         title="Klikněte pro podrobnosti výzvy"
       >
@@ -15266,37 +15228,94 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
 
             <LadaBookSvgDefs />
-            <BubakovCoverTitle />
+            {menuViewMode === 'grid' && <BubakovCoverTitle />}
+
+            {/* VÝBĚR REŽIMU ZOBRAZENÍ VÝPRAV: PŘEHLED KARET VS. POHÁDKOVÁ KRONIKA */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '4px 0 14px 0', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={`tab-btn ${menuViewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.coin();
+                  setMenuViewMode('grid');
+                }}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '0.88rem',
+                  fontWeight: 900,
+                  background: menuViewMode === 'grid' ? '#E2A83B' : '#FAF5E8',
+                  color: '#1C1613',
+                  border: '2.5px solid #1C1613',
+                  borderRadius: '6px',
+                  boxShadow: '2px 2px 0 #1C1613',
+                  cursor: 'pointer',
+                }}
+                title="Přehledné karty výprav s milníky a úkoly"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <GameIcon icon="map" size={16} /> Přehled výprav (Karty)
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`tab-btn ${menuViewMode === 'book' ? 'active' : ''}`}
+                onClick={() => {
+                  sound.coin();
+                  setMenuViewMode('book');
+                }}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: '0.88rem',
+                  fontWeight: 900,
+                  background: menuViewMode === 'book' ? '#E2A83B' : '#FAF5E8',
+                  color: '#1C1613',
+                  border: '2.5px solid #1C1613',
+                  borderRadius: '6px',
+                  boxShadow: '2px 2px 0 #1C1613',
+                  cursor: 'pointer',
+                }}
+                title="Ilustrovaná pohádková kronika Ladova kraje"
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <GameIcon icon="book" size={16} /> Pohádková kronika (Kniha)
+                </span>
+              </button>
+            </div>
 
             {/* OTEVŘENÁ POHÁDKOVÁ KNIHA BUBÁKOVA (1930–1950 SNDK / ALBATROS DVOJSTRANA) */}
-            <LadaStorybookSpread
-              meta={meta}
-              selectedLevelId={selectedLevelId}
-              levelProgress={levelProgress}
-              onSelectLevel={(lvlId) => {
-                setSelectedLevelId(lvlId);
-                saveMeta({ ...meta, selectedLevel: lvlId });
-              }}
-              onInspectLockedLevel={(prog) => {
-                setSelectedLevelDetail(prog);
-              }}
-              onProceedToHunters={() => setMenuScreen('hunter')}
-              onQuickStartWithHunter={(hunterId) => {
-                const hp = getHunterProgress(hunterId, meta);
-                if (hp.isUnlocked) {
-                  startGame(hunterId);
-                } else {
-                  setMenuScreen('hunter');
-                }
-              }}
-              onOpenTavern={() => setGameState('tavern')}
-              onOpenArsenal={() => setIsArsenalOpen(true)}
-              onOpenBestiary={() => setIsBestiaryOpen(true)}
-              onOpenControls={() => setIsControlsOpen(true)}
-              unlockedWeaponsCount={unlockedWeaponsCount}
-              totalWeaponsCount={Object.keys(WEAPONS).length}
-            />
+            {menuViewMode === 'book' && (
+              <LadaStorybookSpread
+                meta={meta}
+                selectedLevelId={selectedLevelId}
+                levelProgress={levelProgress}
+                onSelectLevel={(lvlId) => {
+                  setSelectedLevelId(lvlId);
+                  saveMeta({ ...meta, selectedLevel: lvlId });
+                }}
+                onInspectLockedLevel={(prog) => {
+                  setSelectedLevelDetail(prog);
+                }}
+                onProceedToHunters={() => setMenuScreen('hunter')}
+                onQuickStartWithHunter={(hunterId) => {
+                  const hp = getHunterProgress(hunterId, meta);
+                  if (hp.isUnlocked) {
+                    startGame(hunterId);
+                  } else {
+                    setMenuScreen('hunter');
+                  }
+                }}
+                onOpenTavern={() => setGameState('tavern')}
+                onOpenArsenal={() => setIsArsenalOpen(true)}
+                onOpenBestiary={() => setIsBestiaryOpen(true)}
+                onOpenControls={() => setIsControlsOpen(true)}
+                onOpenSettings={() => setIsSettingsDevOpen(true)}
+                unlockedWeaponsCount={unlockedWeaponsCount}
+                totalWeaponsCount={Object.keys(WEAPONS).length}
+              />
+            )}
 
+            {menuViewMode === 'grid' && (
+              <>
             {/* RYCHLÝ PRŮVODCE: JAK HRÁT (BULLET HEAVEN PO ČESKU — VLOŽENÝ KNIŽNÍ EX LIBRIS LÍSTEK) */}
             {!hideHowToPlayCard && (
               <div className="bubakov-how-to-play-card lada-ex-libris-slip">
@@ -15492,17 +15511,6 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         } else {
                           sound.hit();
                           setSelectedLevelDetail(prog);
-                          if (prog.isQueued) {
-                            showUnlockNotice({
-                              title: `${prog.spoiledName} je v pořadí!`,
-                              desc: `Tato úroveň se začne odhalovat teprve poté, co prozkoumáte a pokoříte předchozí úroveň (${prog.requiredLevelName}).`,
-                            });
-                          } else {
-                            showUnlockNotice({
-                              title: `${prog.spoiledName} (${prog.percent} %)`,
-                              desc: `Splněno ${prog.percent} % výzvy: ${prog.curCount} / ${prog.maxCount} zahnáno. Klikněte pro podrobnosti výzvy!`,
-                            });
-                          }
                         }
                       }}
                       title={isUnlocked ? (isSelected ? `Zvoleno: ${lvl.name} (klikněte pro výběr lovce)` : `Zvolit výpravu: ${lvl.name}`) : 'Klikněte pro podrobnosti výzvy a milníků'}
@@ -15870,6 +15878,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 </span>
               </button>
             </div>
+            </>
+            )}
           </div>
         </div>
       )}
@@ -15879,16 +15889,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="hunter-menu" className="overlay">
           <div className="panel lada-storybook-modal" style={{ maxWidth: '1040px', position: 'relative' }}>
             <LadaBookSvgDefs />
-            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
 
             <div className="lada-page-running-header" style={{ marginBottom: '8px' }}>
-              <span>📖 KRONIKA BUBÁKOVA · SNDK PRAHA</span>
+              <span>📖 Výběr lovce</span>
               <span>
-                Kapitola IV · Družina venkovských lovců · <strong>Str. 12–13</strong>
+                Hrdina pro výpravu
               </span>
             </div>
 
@@ -15946,7 +15952,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   onClick={toggleSound}
                   title="Zapnout / vypnout zvukové efekty"
                 >
-                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} /> {soundEnabled ? 'Zvuk' : 'Zvuk'}</span>
+                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={soundEnabled ? "sound_on" : "sound_off"} size={14} /> {soundEnabled ? 'Zvuk: Zap' : 'Zvuk: Vyp'}</span>
                 </button>
                 <button
                   className="sound-toggle-btn"
@@ -15954,7 +15960,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   onClick={toggleMusic}
                   title="Zapnout / vypnout vesnickou hudbu"
                 >
-                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} /> {musicEnabled ? 'Hudba' : 'Hudba'}</span>
+                  <span className="sound-btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon={musicEnabled ? "music_on" : "music_off"} size={14} /> {musicEnabled ? 'Hudba: Zap' : 'Hudba: Vyp'}</span>
                 </button>
               </div>
             </div>
@@ -15976,7 +15982,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
 
             {/* Character Selection Grid with animated canvas portraits */}
-            <div className="char-select-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 215px), 1fr))', gap: '15px' }}>
+            <div className="char-select-grid">
               {/* Krajánek a Tulák */}
               {renderHunterSelectCard(krajanekProg, krajanekRef)}
               {renderHunterSelectCard(wandererProg, wandererRef)}
@@ -15999,69 +16005,25 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
             <LadaFloralGarland repeatCount={9} height={22} />
 
-            {/* Bottom Toolbar on Hunter Select Screen */}
-            <div className="menu-hub-toolbar">
+            {/* Clean bottom navigation */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '14px', marginBottom: '6px' }}>
               <button
                 className="lada-btn btn-small"
                 style={{
                   background: 'var(--wood-dark)',
                   color: 'var(--parchment)',
                   fontWeight: 900,
+                  padding: '9px 20px',
+                  fontSize: '0.95rem',
                 }}
                 onClick={() => {
                   sound.coin();
+                  ladaPageFoley.playFullPageTurn(0);
                   setMenuScreen('stage');
                 }}
               >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><GameIcon icon="arrow_left" size={14} /> Zpět k výběru výpravy</span>
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: 'var(--mustard)', color: 'var(--ink)' }}
-                onClick={() => setGameState('tavern')}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="village" size={18} /> Vesnice & Hospoda ({meta.krejcary} <KrejcarIcon size={16} />)
-                </span>
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: '#E06D29', color: '#FFFFFF' }}
-                onClick={() => setIsArsenalOpen(true)}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="sword" size={16} /> Zbrojnice ({unlockedWeaponsCount}/{Object.keys(WEAPONS).length})
-                </span>
-              </button>
-              <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
-                </span>
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: '#1D4ED8', color: '#FFFFFF', fontWeight: 900 }}
-                onClick={() => {
-                  sound.coin();
-                  setIsControlsOpen(true);
-                }}
-                title="Detailní vysvětlení ovládání hry, cílů a rad pro přežití"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="gamepad" size={16} /> Jak hrát & Ovládání
-                </span>
-              </button>
-              <button
-                className="lada-btn btn-small"
-                style={{ background: 'var(--wood-dark)', color: 'var(--parchment)', fontWeight: 900 }}
-                onClick={() => {
-                  sound.coin();
-                  setIsSettingsDevOpen(true);
-                }}
-                title="Nastavení grafiky, audia, výkonu a vývojářské nástroje"
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="gear" size={16} /> Nastavení a vývoj
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <GameIcon icon="arrow_left" size={14} /> Zpět k výběru výpravy
                 </span>
               </button>
             </div>
@@ -16074,17 +16036,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="pause-screen" className="overlay" style={{ background: 'rgba(20, 15, 10, 0.88)', zIndex: 40 }}>
           <div className="panel lada-storybook-modal" style={{ maxWidth: '840px', position: 'relative' }}>
             <LadaBookSvgDefs />
-            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
 
             <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-              <span>📖 KRONIKA BUBÁKOVA · ODPOČINEK U MILNÍKU</span>
-              <span>
-                Pozastavená výprava · Zápisník v poli · <strong>Str. 14</strong>
-              </span>
+              <span>📖 Odpočinek u milníku</span>
+              <span>Výprava pozastavena</span>
             </div>
 
             <h1>
@@ -16512,7 +16468,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI ({gamepadUiState.activeDevice === 'gamepad' ? '[X] / [E]' : '[E] / [X]'})
+            <GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI ({gamepadUiState.activeDevice === 'gamepad' ? '[X]' : '[E]'})
           </span>
         </button>
       )}
@@ -16777,30 +16733,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="tally-screen" className="overlay">
           <div className="panel lada-storybook-modal" style={{ maxWidth: '800px', margin: 'auto', position: 'relative' }}>
             <LadaBookSvgDefs />
-            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
 
             <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-              <span>📖 KRONIKA BUBÁKOVA · ZÁVĚREČNÝ ZÁPIS VÝPRAVY</span>
-              <span>
-                Doslov kapitoly · Sečtení kořisti · <strong>Str. 16</strong>
-              </span>
+              <span>📖 Konec výpravy</span>
+              <span>Sečtení kořisti</span>
             </div>
 
             <h1 className="tally-title" id="tally-title" style={{ animation: 'popIn 0.5s forwards', color: tallyCounters.isVictory ? '#D97706' : '#C53026', textShadow: '2px 2px 0 var(--ink)', margin: '4px 0' }}>
               {tallyCounters.isVictory ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                   <LadaFolkFlower variant="buttercup" size={24} spin />
-                  <GameIcon icon="trophy" size={28} /> ÚROVEŇ POKOŘENA – VÍTĚZSTVÍ!
+                  <GameIcon icon="trophy" size={28} /> VÍTĚZSTVÍ! ÚROVEŇ POKOŘENA
                   <LadaFolkFlower variant="poppy" size={24} spin="reverse" />
                 </span>
               ) : (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
                   <LadaFolkFlower variant="cornflower" size={22} spin />
-                  KURÁŽ VYPRCHALA – ÚTĚK DO BEZPEČÍ!
+                  KURÁŽ VYPRCHALA, ÚTĚK DO BEZPEČÍ!
                   <LadaFolkFlower variant="carmine" size={22} spin="reverse" />
                 </span>
               )}
@@ -16927,16 +16877,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         <div id="tavern-screen" className="overlay">
           <div className="panel lada-storybook-modal" style={{ maxWidth: '1000px', position: 'relative' }}>
             <LadaBookSvgDefs />
-            <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-            <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-            <span className="lada-brass-corner corner-br" aria-hidden="true" />
             <LadaCardCorners variant="callout" showBottomCorners={true} />
 
             <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-              <span>📖 KRONIKA BUBÁKOVA · OBECNÍ ŠENK A SYSLOVSKÉ VÝZVY</span>
+              <span>📖 Obecní šenk</span>
               <span>
-                Kapitola V · Hospoda U Černého kocoura · <strong>Str. 18–19</strong>
+                Hospoda U Černého kocoura
               </span>
             </div>
 
@@ -16962,7 +16908,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="village" size={18} /> Naše vesnice Bubákov
+                  <GameIcon icon="village" size={18} /> Rozvoj vesnice
                 </span>
               </button>
               <button
@@ -16974,7 +16920,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }}
               >
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="trophy" size={18} /> Síň slávy a Syslovské výzvy
+                  <GameIcon icon="trophy" size={18} /> Syslovské výzvy
                 </span>
               </button>
             </div>

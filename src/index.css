@@ -187,24 +187,17 @@ body {
 }
 
 .panel {
-  background-color: #F2E5C6;
-  background-image:
-    radial-gradient(circle at 8% 12%, rgba(143, 83, 48, 0.22) 0%, transparent 9%),
-    radial-gradient(circle at 93% 14%, rgba(110, 59, 30, 0.19) 0%, transparent 8%),
-    radial-gradient(circle at 6% 88%, rgba(143, 83, 48, 0.24) 0%, transparent 11%),
-    radial-gradient(circle at 92% 86%, rgba(110, 59, 30, 0.20) 0%, transparent 10%),
-    radial-gradient(ellipse at center, #F2E5C6 58%, #D5B886 92%, #B59461 100%);
+  background-color: #FAF5E8;
+  background-image: 
+    radial-gradient(#E8DDC3 1.2px, transparent 1.2px),
+    linear-gradient(to bottom, #FAF5E8, #F4EBD8);
+  background-size: 20px 20px, 100% 100%;
   border: 4px solid #1C1613;
   border-left: 14px solid #25382C;
   border-radius: 14px;
   padding: 1.65rem 1.9rem;
   color: #221B17;
-  box-shadow:
-    0 0 0 4px #25382C,
-    10px 10px 0px #1C1613,
-    inset 0 0 0 2px rgba(28, 22, 19, 0.28),
-    inset 16px 0 28px rgba(181, 148, 97, 0.38),
-    inset 0 0 32px rgba(143, 83, 48, 0.16);
+  box-shadow: 10px 10px 0px #1C1613, inset 0 0 0 1.5px rgba(43, 26, 14, 0.28);
   text-align: center;
   position: relative;
   max-height: 92vh;
@@ -293,11 +286,11 @@ body {
 }
 
 .char-select-grid {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 16px;
   margin-top: 20px;
   justify-content: center;
-  flex-wrap: wrap;
 }
 
 /* Hunter selection cards: avoid clipped copy and keep labels readable at narrow widths. */
@@ -426,7 +419,7 @@ body {
   padding: 16px;
   color: var(--ink);
   cursor: pointer;
-  width: 260px;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -438,12 +431,14 @@ body {
   flex-direction: column;
   overflow: hidden;
   overflow-wrap: break-word;
+  z-index: 1;
 }
 
 .char-card:hover {
   transform: scale(1.03) translateY(-4px);
   box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 9px 9px 0px var(--ink);
   background-color: #FFF4DB;
+  z-index: 5;
 }
 
 .char-card.char-card-locked {
@@ -708,12 +703,7 @@ body {
 }
 
 .vignette-card::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border: 1.5px solid rgba(43, 26, 14, 0.28);
-  border-radius: 7px;
-  pointer-events: none;
+  display: none;
 }
 
 .vig-canvas {
@@ -1523,18 +1513,21 @@ body {
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
+  z-index: 1;
 }
 
 .level-card:hover {
   transform: translateY(-2px);
   box-shadow: 6px 6px 0px var(--ink);
   border-color: #C53026;
+  z-index: 5;
 }
 
 .level-card-selected {
   border-color: #C53026;
   box-shadow: 5px 5px 0px var(--ink);
   background: #FFFDF8;
+  z-index: 2;
 }
 
 .level-card-locked {
@@ -1825,6 +1818,14 @@ body {
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
+  z-index: 1;
+  transition: all 0.15s ease;
+}
+
+.trophy-card:hover {
+  z-index: 5;
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0px var(--ink);
 }
 
 .trophy-card.claimed {
@@ -1835,6 +1836,7 @@ body {
 .trophy-card.completed {
   border-color: var(--mustard);
   box-shadow: 4px 4px 0px var(--mustard);
+  z-index: 2;
 }
 
 .trophy-header {
@@ -2545,8 +2547,8 @@ body {
     display: none;
   }
 
-  #stats-row > div:nth-child(n + 4) {
-    display: none;
+  #stats-row > *:nth-child(n + 4) {
+    display: none !important;
   }
 
   #boss-warning-banner {
@@ -2969,12 +2971,7 @@ body {
 }
 
 .pause-weapon-card::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border: 1px solid rgba(43, 26, 14, 0.22);
-  border-radius: 6px;
-  pointer-events: none;
+  display: none;
 }
 
 /* Keycap styling for controls guide */
@@ -3214,6 +3211,11 @@ body {
   justify-content: center;
   z-index: 24;
   pointer-events: auto;
+  max-width: min(96vw, 680px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 6px;
+  scrollbar-width: thin;
 }
 
 @media (pointer: coarse), (hover: none) {
@@ -3889,6 +3891,9 @@ body {
 }
 .lada-bookmark-ribbon.ribbon-willow {
   background-color: #4D784E;
+}
+.lada-bookmark-ribbon.ribbon-slate {
+  background-color: #5A4738;
 }
 
 .lada-ribbon-stitch {
@@ -4697,6 +4702,12 @@ body {
   overflow: visible;
 }
 
+@media (max-width: 899px) {
+  .lada-book-spread .turning-leaf {
+    display: none !important;
+  }
+}
+
 .turning-leaf-cascade {
   z-index: 13;
   filter: brightness(0.95);
@@ -4989,21 +5000,14 @@ body {
 
 .panel.lada-storybook-modal {
   position: relative;
-  background-color: #F2E5C6;
+  background-color: #FAF5E8;
   background-image:
-    /* Central spine & margin vignette */
-    radial-gradient(ellipse at 50% 45%, rgba(246, 235, 216, 0.72) 0%, rgba(213, 184, 134, 0.45) 76%, rgba(181, 148, 97, 0.68) 100%),
-    /* Organic rust-brown foxing spots near corners & margins */
-    radial-gradient(circle at 6% 8%, rgba(143, 83, 48, 0.22) 0%, rgba(143, 83, 48, 0.07) 26px, transparent 52px),
-    radial-gradient(circle at 94% 11%, rgba(110, 59, 30, 0.20) 0%, rgba(110, 59, 30, 0.06) 24px, transparent 48px),
-    radial-gradient(circle at 92% 89%, rgba(143, 83, 48, 0.22) 0%, rgba(143, 83, 48, 0.07) 30px, transparent 60px),
-    radial-gradient(circle at 8% 87%, rgba(110, 59, 30, 0.18) 0%, rgba(110, 59, 30, 0.06) 22px, transparent 44px);
+    radial-gradient(#E8DDC3 1.2px, transparent 1.2px),
+    linear-gradient(to bottom, #FAF5E8, #F4EBD8);
+  background-size: 20px 20px, 100% 100%;
   border: 4px solid #1C1613;
-  box-shadow:
-    0 0 0 6px #25382C,
-    0 0 0 9px #1C1613,
-    10px 12px 0 rgba(28, 22, 19, 0.88),
-    inset 0 0 28px rgba(143, 83, 48, 0.22);
+  border-left: 14px solid #25382C;
+  box-shadow: 10px 10px 0px #1C1613, inset 0 0 0 1.5px rgba(43, 26, 14, 0.28);
 }
 
 .panel.lada-storybook-modal .lada-page-running-header {

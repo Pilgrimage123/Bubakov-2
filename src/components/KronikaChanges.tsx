@@ -10,6 +10,17 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '3. listopadu 2026',
+    title: 'Harmonizace knižního rozhraní, oprava překryvů karet a zklidnění grafiky',
+    summary: 'Kompletní revize vizuálních prvků nabídky a dialogových oken: odstranění přetékání rohových linek karet, oprava vrstvení (z-index) při najetí myší, důsledné oddělení knižního a mřížkového režimu a sjednocení vzhledu všech oken podle vzoru starých českých knih.',
+    items: [
+      '🌿 Zamezení přesahu rohových ozdob: Květinové a listové linky v rozích karet (LadaCardCorners) byly upraveny z přesahujících záporných souřadnic na vnitřní lícování. Tím je zabráněno zasahování inkoustových kontur do sousedních karet a ořezávání v mřížce.',
+      '📚 Důsledné oddělení pohádkové knihy od mřížky: V knižním režimu se již pod otevřenou dvojstranou nezobrazují prvky mřížkového výběru (výběr dynamické obtížnosti, spodní lišta nabídky). Kniha má vlastní záložky a plynulý přechod k výběru lovce.',
+      '🎯 Oprava vrstvení karet při najetí myší: Zaveden jednoznačný kontext vrstvení (z-index) pro karty výprav, lovců i trofejí, díky čemuž se zvětšená karta při najetí myší vždy zobrazí nad okolními kartami bez kolizí stínů.',
+      '📖 Sjednocení stylů oken a kroniky: Okna nastavení, zbrojnice, bestiáře i kroniky vývoje získala jednotnou knižní vazbu s horní běžící hlavičkou, papírovou texturou a eliminací zdvojených vnitřních rámečků.',
+    ],
+  },
+  {
     date: '30. října 2026',
     title: 'Průvodce „Jak hrát“ (Bullet Heaven po česku), interakce s krajinou a revize příručky lovce',
     summary: 'Obohacení úvodní obrazovky i herní příručky o tematické představení Bubákova jako pohodového ladovského „bullet heaven“ z imaginárního českého venkova a kompletní synchronizace všech nápověd s aktuálním stavem hry.',
@@ -247,7 +258,7 @@ const KRONIKA: KronikaEntry[] = [
       '⚖️ Sjednocení bodového rozpočtu: Každý bubák stojí Režiséra přesně tolik bodů rozpočtu hrozeb, jaká je jeho hodnota pro výpočet odměn a perníčků (ENEMY_POINTS).',
       '👑 Dvojče minibosse na extrémní obtížnosti: Pokud na obtížnosti 4,50× a vyšší lovec drtivě dominuje aréně (dominance 0,70+), Režisér za 30 bodů rozpočtu povolá trestné Dvojče minibosse se zlatou korunkou.',
       '🕊️ Poklid za pecí bez trestání: Na mírné obtížnosti do 2,00× Režisér hráče za úspěch vůbec netrestá – násobitel tlaku zůstává pevně zastropován na 1,00× a Dvojče minibosse se nikdy nezjeví.',
-      '🛟 Progresivní asistence a Vyčerpaný přívlastek: V tísni (nízká Kuráž a dominance) Režisér plynule nasazuje Vyčerpané bubáky (-50 % rychlost, -50 % útok, -50 % životy), jejichž kořist a perníčky zůstávají plně zachovány.',
+      '🛟 Progresivní asistence a Vyčerpaný přívlastek: V tísni (nízká Kuráž a dominance) Režisér plynule nasazuje Vyčerpané bubáky (-50 % rychlost, -50 % útok, -50 % Kuráž), jejichž kořist a perníčky zůstávají plně zachovány.',
       '📱 Přehledný výhled na bojiště: Výstrahy a oznámení Režiséra se nově zobrazují výhradně v horní liště HUDu, aby nikdy nezakrývaly dění kolem lovce ani na menších obrazovkách telefonů.',
       '🧪 Pro testery: při vysoké dominanci na obtížnosti 4,5+ sledujte příchod Dvojčete; naopak při poklesu Kuráže pod 25 % ověřte výskyt zesláblých Vyčerpaných monster.',
     ],

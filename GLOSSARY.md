@@ -210,6 +210,10 @@ _Avoid_: level-up nabídka, obchodník, shopkeeper
 Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 8 po sobě jdoucích úrovní).
 _Avoid_: run, stage, level, zápas, kolo, match
 
+**Kronika výpravy**:
+Kanonické označení pro ilustrovanou knihu, přehled úkolů, cílů a záznam postupu hráče v menu a v pozastavené hře.
+_Avoid_: zápisník cest, zápisník z cest, zápisník v poli, cestovní deník
+
 **Kraj**:
 Zeměpisná a folklórní oblast venkovského světa (např. Předjaří v Hrusicích, Duben v Hrusicích), která může hostit jednu i více tematických výprav.
 _Avoid_: stage, level, mapa, herní zóna
@@ -347,6 +351,10 @@ _Avoid_: night stage 4, podzimní noc, čarodějnický level
 **Bahenní hastrman z Brčálníku**:
 Májový oblastní Midboss nastupující v 185. sekundě z vyhřátého rybníka Brčálníku v 5. úrovni, vrhající leknínové bahno a chránící své hrnečky s dušičkami.
 _Avoid_: vodník miniboss, rybniční boss, hastrman elite
+
+**Hastrman Brčál**:
+Kanonický ladovský vodník z Hrusic v zeleném fraku bafající z fajfky na vrbové větvi, který dohlíží na rybník a noční dění v kraji. Vystupuje jako patron a příběhová postava či boss, nikoli jako hratelný lovec.
+_Avoid_: Česílko, vodník Česílko, Hastrman Česílko, rybniční skřítek
 
 **Parita herního klienta**:
 Architektonické pravidlo zakazující stav, kdy nová strašidla, chování bossů či interakce pamětihodností existují pouze v testovacím simulačním enginu (`engine.ts`), aniž by byla plnohodnotně a paritně zrcadlena v interaktivním herním rozhraní (`App.tsx`).

@@ -4,6 +4,7 @@ import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
+import { ladaPageFoley } from './ladaPageTurnAudio';
 import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
 
 interface SettingsDevModalProps {
@@ -57,6 +58,50 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
   onOpenPlan,
   onOpenResetProgress,
 }) => {
+  const [foleySoundEnabled, setFoleySoundEnabled] = React.useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('bubakov_storybook_foleymuted');
+        if (stored !== null) return stored !== 'true';
+      }
+      return !ladaPageFoley.muted;
+    } catch {
+      return !ladaPageFoley.muted;
+    }
+  });
+
+  const [stopMotion16Fps, setStopMotion16Fps] = React.useState<boolean>(() => {
+    try {
+      return typeof window !== 'undefined' && window.localStorage.getItem('bubakov_storybook_stopmotion') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleFoley = () => {
+    const nextEnabled = !foleySoundEnabled;
+    setFoleySoundEnabled(nextEnabled);
+    ladaPageFoley.muted = !nextEnabled;
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('bubakov_storybook_foleymuted', String(!nextEnabled));
+      }
+    } catch {}
+    if (nextEnabled) {
+      ladaPageFoley.playCornerHover();
+    }
+  };
+
+  const handleToggleStopMotion = () => {
+    const next = !stopMotion16Fps;
+    setStopMotion16Fps(next);
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('bubakov_storybook_stopmotion', String(next));
+      }
+    } catch {}
+  };
+
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -86,15 +131,11 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" />
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 KRONIKA BUBÁKOVA · TIRÁŽ A NASTAVENÍ KNIHY</span>
+          <span>📖 Nastavení výpravy</span>
           <span>
-            Technický list · <strong>SNDK Praha</strong>
+            Tiráž a předvolby
           </span>
         </div>
 
@@ -102,7 +143,7 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
           <div>
             <h2 style={{ margin: '0 0 2px 0', fontSize: '1.8rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
-              <GameIcon icon="cog" size={26} /> NASTAVENÍ A VÝVOJ
+              <GameIcon icon="cog" size={26} /> Nastavení a předvolby
               <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={16} />
@@ -186,6 +227,24 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   {musicEnabled ? 'Hudba v pozadí: ZAP' : 'Hudba v pozadí: VYP'}
                 </button>
               )}
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: foleySoundEnabled ? '#16A34A' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  handleToggleFoley();
+                }}
+                title="Procedurální šelest 150g papíru při otáčení stránek v knize a příručkách"
+              >
+                <GameIcon icon={foleySoundEnabled ? 'book' : 'mute'} size={16} />
+                {foleySoundEnabled ? 'Šelest stránek: ZAP' : 'Šelest stránek: VYP'}
+              </button>
             </div>
           </div>
 
@@ -339,6 +398,21 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                   </span>
                 </button>
               )}
+
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: stopMotion16Fps ? '#B45309' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  handleToggleStopMotion();
+                }}
+                title="Kroková animace otáčení stránek: loutkový krok (16 FPS Karel Zeman) vs. plynulý list (60 FPS)"
+              >
+                Animace knihy: {stopMotion16Fps ? 'Loutkový krok (16 FPS Zeman)' : 'Plynulé otáčení (60 FPS)'}
+              </button>
             </div>
           </div>
 

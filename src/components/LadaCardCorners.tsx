@@ -106,7 +106,7 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
 
       {/* TOP-LEFT CORNER: Josef Lada 5-petal yellow flower with stippled seed core */}
       <svg
-        className="absolute -top-[6px] -left-[6px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        className="absolute top-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
         width="28"
         height="28"
         viewBox="0 0 28 28"
@@ -183,7 +183,7 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
 
       {/* TOP-RIGHT CORNER: Josef Lada 5-petal yellow flower with stippled seed core + side forget-me-not */}
       <svg
-        className="absolute -top-[6px] -right-[6px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+        className="absolute top-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
         width="28"
         height="28"
         viewBox="0 0 28 28"
@@ -261,7 +261,7 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
       {/* BOTTOM-LEFT CORNER: Folk leaf sprig with carmine-rose blossom + cornflower side bud */}
       {showBottomCorners && (
         <svg
-          className="absolute -bottom-[5px] -left-[5px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          className="absolute bottom-[2px] left-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
           width="24"
           height="24"
           viewBox="0 0 26 26"
@@ -318,7 +318,7 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
       {/* BOTTOM-RIGHT CORNER: Folk leaf sprig with carmine-rose blossom + cornflower side bud */}
       {showBottomCorners && (
         <svg
-          className="absolute -bottom-[5px] -right-[5px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
+          className="absolute bottom-[2px] right-[2px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] overflow-visible"
           width="24"
           height="24"
           viewBox="0 0 26 26"

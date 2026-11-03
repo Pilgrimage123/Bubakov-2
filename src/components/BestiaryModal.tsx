@@ -38,7 +38,7 @@ export const PREFIX_LORE: Record<EnemyPrefixType, { title: string; lore: string;
     title: 'Kamenný krunýřník',
     lore: 'Monstrum obrostlé starobylou žulovou krustou z hrusických lomů a mezí.',
     advice:
-      'Pohlcuje 91 % veškerého poškození a nelze jej omráčit ani uplatit jídlem. Plouží se pomalu – není nutné s ním plýtvat časem, raději kolem něj manévrujte.',
+      'Pohlcuje 91 % veškerého poškození a nelze jej omráčit ani uplatit jídlem. Plouží se pomalu, není proto nutné s ním plýtvat časem, raději kolem něj manévrujte.',
     traits: [
       '91 % redukce veškerého zranění',
       '-20 % rychlost pohybu',
@@ -174,16 +174,12 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
   return (
     <div className="overlay" style={{ zIndex: 30 }} onClick={onClose}>
       <div className="panel lada-storybook-modal" style={{ maxWidth: '980px', width: '95%', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-        <span className="lada-brass-corner corner-tl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-tr" aria-hidden="true" />
-        <span className="lada-brass-corner corner-bl" aria-hidden="true" />
-        <span className="lada-brass-corner corner-br" aria-hidden="true" />
         <LadaCardCorners variant="callout" showBottomCorners={true} />
 
         <div className="lada-page-running-header" style={{ marginBottom: '6px' }}>
-          <span>📖 BUBÁCI A HASTRMANI · KRONIKA NOČNÍCH BĚSŮ</span>
+          <span>📖 Bubáci a hastrmani</span>
           <span>
-            Kapitola III · Bestiář českého venkova · <strong>Str. 8–9</strong>
+            Kapitola III · Bestiář českého venkova · <strong>{discoveredCount}/{totalMonsters}</strong>
           </span>
         </div>
 
@@ -191,7 +187,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
           <div>
             <h2 style={{ margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#C83E2B', textShadow: '2px 2px 0 #1C1613' }}>
               <LadaFolkFlower variant="buttercup" size={20} spin />
-              <GameIcon icon="book" size={24} /> Bestiář noční české vesnice
+              <GameIcon icon="book" size={24} /> Bestiář české vesnice
               <LadaFolkFlower variant="cornflower" size={20} spin="reverse" />
             </h2>
             <LadaBotanicalFlourish height={18} />
@@ -484,7 +480,9 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                   ))}
                 </div>
 
-
+                <p style={{ fontWeight: 700, lineHeight: 1.45, margin: '10px 0', color: '#221B17' }}>
+                  {PREFIX_LORE[selectedPrefixId].lore}
+                </p>
 
                 <div
                   style={{

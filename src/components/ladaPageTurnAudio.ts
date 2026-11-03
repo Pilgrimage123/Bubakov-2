@@ -15,6 +15,8 @@
  * ============================================================================
  */
 
+import { sound } from '../audio';
+
 class LadaPageTurnFoleyEngine {
   private ctx: AudioContext | null = null;
   private pinkNoiseBuffer: AudioBuffer | null = null;
@@ -22,7 +24,7 @@ class LadaPageTurnFoleyEngine {
   private lastHoverAt: number = 0;
 
   private getContext(): AudioContext | null {
-    if (this.muted || typeof window === 'undefined') return null;
+    if (this.muted || typeof window === 'undefined' || !sound.enabled) return null;
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return null;
     if (!this.ctx) {
@@ -90,7 +92,7 @@ class LadaPageTurnFoleyEngine {
 
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.085, now + 0.014);
+      gain.gain.linearRampToValueAtTime(0.035, now + 0.014);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.062);
 
       source.connect(bandpass);
@@ -131,8 +133,8 @@ class LadaPageTurnFoleyEngine {
 
       const liftGain = ctx.createGain();
       liftGain.gain.setValueAtTime(0.001, t0);
-      liftGain.gain.linearRampToValueAtTime(0.14, t0 + 0.08);
-      liftGain.gain.setValueAtTime(0.12, t0 + 0.26);
+      liftGain.gain.linearRampToValueAtTime(0.045, t0 + 0.08);
+      liftGain.gain.setValueAtTime(0.04, t0 + 0.26);
       liftGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45);
 
       noiseSource.connect(bandpass);
