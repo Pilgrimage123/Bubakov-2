@@ -75,6 +75,7 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
 }) => {
   const isSelected = variant === 'selected';
   const isLocked = variant === 'locked';
+  const isCallout = variant === 'callout';
 
   // Bright Czech village gouache flower & leaf colors
   const yellowPetalFill = isSelected ? '#FEF08A' : isLocked ? '#E2C872' : '#FACC15';
@@ -89,17 +90,20 @@ export const LadaCardCorners: React.FC<LadaCardCornersProps> = ({
     >
       <style>{CORNER_ANIM_STYLES}</style>
 
-      {/* Inner double border vignette frame */}
+      {/* Inner ex-libris vignette frame binding corner florals */}
       {showInnerBorder && (
         <div
-          className="absolute inset-[4px] rounded-[6px] border transition-colors duration-150"
+          className="absolute inset-[5px] rounded-[6px] border pointer-events-none transition-colors duration-150"
           style={{
             borderColor: isSelected
-              ? '#F59E0B'
+              ? '#C53026'
+              : isCallout
+              ? '#B45309'
               : isLocked
-              ? 'rgba(61, 34, 16, 0.28)'
-              : 'rgba(28, 22, 16, 0.34)',
-            borderWidth: isSelected ? '2px' : '1.5px',
+              ? 'rgba(61, 34, 16, 0.22)'
+              : 'rgba(28, 22, 16, 0.30)',
+            borderWidth: isSelected ? '1.75px' : '1px',
+            borderStyle: 'solid',
           }}
         />
       )}

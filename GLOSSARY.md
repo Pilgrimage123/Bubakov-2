@@ -210,9 +210,17 @@ _Avoid_: level-up nabídka, obchodník, shopkeeper
 Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 8 po sobě jdoucích úrovní).
 _Avoid_: run, stage, level, zápas, kolo, match
 
+**Pohádková kniha Bubákova**:
+Kanonické označení pro ústřední interaktivní ilustrovanou dvojstranu (`LadaStorybookSpread`) ve stylu českých pohádkových knih (SNDK/Albatros), sloužící k volbě výpravy, prohlížení světa a četbě příběhu s autentickým šelestem stránek, plátěnými záložkami a dřevorytovým písmem.
+_Avoid_: grid menu, stage selector, hlavní menu, úroveň box
+
 **Kronika výpravy**:
-Kanonické označení pro ilustrovanou knihu, přehled úkolů, cílů a záznam postupu hráče v menu a v pozastavené hře.
+Průběžný záznam cílů, splněných výzev a postupu hráče v terénu během aktuální noční výpravy či v obrazovce pozastavené hry.
 _Avoid_: zápisník cest, zápisník z cest, zápisník v poli, cestovní deník
+
+**Kronika Bubákova (Kronika vývoje)**:
+Historický archiv reálných verzí a skutečných vývojových změn hry Bubákov přístupný v okně záznamů.
+_Avoid_: changelog, git log, patch notes
 
 **Kraj**:
 Zeměpisná a folklórní oblast venkovského světa (např. Předjaří v Hrusicích, Duben v Hrusicích), která může hostit jednu i více tematických výprav.

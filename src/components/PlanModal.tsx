@@ -2,6 +2,7 @@ import React from 'react';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaBotanicalFlourish } from './LadaBotanicalFlourish';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
+import { LadaDropCap } from './LadaStorybookSpread';
 import { KronikaChanges } from './KronikaChanges';
 import { GameIcon } from './GameIcon';
 
@@ -46,9 +47,11 @@ export function PlanModal({ isOpen, onClose }: PlanModalProps) {
             marginTop: '-6px',
             marginBottom: '14px',
             color: 'var(--wood-dark)',
+            minHeight: '52px',
           }}
         >
-          Historie skutečných změn Bubákova. Nejnovější zápis je vždy nahoře.
+          <LadaDropCap letter="H" variant="poppy" />
+          <strong>istorie</strong> skutečných změn a kronika vývoje Bubákova. Nejnovější zápis je vždy nahoře.
         </p>
 
         <KronikaChanges />

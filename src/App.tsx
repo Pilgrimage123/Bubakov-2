@@ -1622,7 +1622,15 @@ export default function App() {
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'chest' | 'fleeing' | 'tally' | 'tavern' | 'grandfather' | 'milestone'>('menu');
   const [pendingMilestones, setPendingMilestones] = useState<PendingMilestoneChoice[]>([]);
   const [menuScreen, setMenuScreen] = useState<'stage' | 'hunter'>('stage');
-  const [menuViewMode, setMenuViewMode] = useState<'grid' | 'book'>('grid');
+  const [menuViewMode, setMenuViewMode] = useState<'grid' | 'book'>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = window.localStorage.getItem('bubakov_menu_view_mode');
+        if (saved === 'grid' || saved === 'book') return saved;
+      }
+    } catch {}
+    return 'book';
+  });
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
   const gameStateRef = useRef(gameState);
@@ -15238,6 +15246,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={() => {
                   sound.coin();
                   setMenuViewMode('grid');
+                  try {
+                    window.localStorage.setItem('bubakov_menu_view_mode', 'grid');
+                  } catch {}
                 }}
                 style={{
                   padding: '6px 16px',
@@ -15262,6 +15273,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 onClick={() => {
                   sound.coin();
                   setMenuViewMode('book');
+                  try {
+                    window.localStorage.setItem('bubakov_menu_view_mode', 'book');
+                  } catch {}
                 }}
                 style={{
                   padding: '6px 16px',

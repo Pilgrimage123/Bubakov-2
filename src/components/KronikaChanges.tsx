@@ -11,13 +11,14 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '3. listopadu 2026',
-    title: 'Harmonizace knižního rozhraní, oprava překryvů karet a zklidnění grafiky',
-    summary: 'Kompletní revize vizuálních prvků nabídky a dialogových oken: odstranění přetékání rohových linek karet, oprava vrstvení (z-index) při najetí myší, důsledné oddělení knižního a mřížkového režimu a sjednocení vzhledu všech oken podle vzoru starých českých knih.',
+    title: 'Renesance Pohádkové knihy, ex-libris vazba a literární typografie (ADR 0040)',
+    summary: 'Návrat k ryzí estetice staré české pohádkové knížky (SNDK/Albatros): otevřená kniha je nově výchozí tváří hry, rozhraní získalo hřejivý chamois papír s knihařskou vazbou, rohové ornamenty propojuje elegantní ex-libris linka a texty zdobí dřevorytové iniciály.',
     items: [
-      '🌿 Zamezení přesahu rohových ozdob: Květinové a listové linky v rozích karet (LadaCardCorners) byly upraveny z přesahujících záporných souřadnic na vnitřní lícování. Tím je zabráněno zasahování inkoustových kontur do sousedních karet a ořezávání v mřížce.',
-      '📚 Důsledné oddělení pohádkové knihy od mřížky: V knižním režimu se již pod otevřenou dvojstranou nezobrazují prvky mřížkového výběru (výběr dynamické obtížnosti, spodní lišta nabídky). Kniha má vlastní záložky a plynulý přechod k výběru lovce.',
-      '🎯 Oprava vrstvení karet při najetí myší: Zaveden jednoznačný kontext vrstvení (z-index) pro karty výprav, lovců i trofejí, díky čemuž se zvětšená karta při najetí myší vždy zobrazí nad okolními kartami bez kolizí stínů.',
-      '📖 Sjednocení stylů oken a kroniky: Okna nastavení, zbrojnice, bestiáře i kroniky vývoje získala jednotnou knižní vazbu s horní běžící hlavičkou, papírovou texturou a eliminací zdvojených vnitřních rámečků.',
+      '📖 Pohádková kniha Bubákova jako výchozí tvář: Hra se ihned po spuštění otevírá do plnohodnotné ilustrované dvojstrany s dřevoryty, šelestem stránek a plátěnými záložkami. Volba hráče (včetně případného přepnutí na mřížku) se spolehlivě ukládá do paměti prohlížeče.',
+      '📜 Hřejivý knižní papír chamois: Chladný tečkovaný rastr byl nahrazen autentickým tónem ofsetového papíru chamois (#F4ECD8 až #EFE4CE) s jemnou patinou, stínem hřbetu uprostřed dvojstrany a tmavě zelenou plátěnou vazbou na levé straně dialogových oken.',
+      '🌿 Ex-libris vnitřní linka v LadaCardCorners: Rohové lidové květy a lístky jsou po obvodu karty propojeny jemnou 1px linkou do uzavřené viněty, která přirozeně reaguje na stav karty (karmínová, inkoustová, zlatavá, hnědá) bez jakéhokoliv přetékání.',
+      '🔠 Dřevorytové iniciály a látková záložka: Úvodní odstavce v oknech získaly autentickou iniciálu (LadaDropCap) a v záhlaví každého modálu vykukuje látková knižní záložka s červeným stehem.',
+      '🎯 Kontext vrstvení a čisté oddělení režimů: Opraveno vrstvení (z-index) při najetí myší na karty výprav i lovců a zamezeno jakémukoliv průsaku mřížkových ovládacích prvků pod otevřenou knihu.',
     ],
   },
   {
