@@ -24856,6 +24856,14 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawRusalka: 'rusalka',
   drawOhnivySudlicka: 'ohnivy_sudlicka',
   drawSvatojanskyVladce: 'svatojansky_vladce',
+  drawPolniKrecek: 'polni_krecek',
+  drawZitnaBaba: 'zitna_baba',
+  drawKulovyBlesk: 'kulovy_blesk',
+  drawKrecekObilnik: 'krecek_obilnik',
+  drawZitnaMatka: 'zitna_matka',
+  drawHromotlukMarketa: 'hromotluk_marketa',
+  drawHeadlessKnight: 'bezhlavy_rytir',
+  drawDragon: 'drak',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
@@ -27516,6 +27524,1393 @@ function drawSvatojanskyVladce(
   ctx.restore();
 }
 
+function drawPolniKrecek(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isStriking = Boolean(attackInfo?.isStrike);
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const hop = Math.abs(Math.sin(t * 9.5)) * 3.5;
+  ctx.translate(0, -hop);
+
+  // Little paws
+  const stride = Math.sin(t * 10) * 3.5;
+  ctx.fillStyle = '#FDE68A';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(-6 + stride, 10, 4.5, 2.8, 0, 0, Math.PI * 2);
+  ctx.ellipse(5 - stride, 10, 4.5, 2.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Plump tricolor hamster belly & peasant vest
+  ctx.fillStyle = panicked ? '#F59E0B' : '#D97706';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(0, 1, 12.5, 11, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Black & cream hamster belly patch (typický polní křeček s černým bříškem)
+  ctx.fillStyle = '#292524';
+  ctx.beginPath();
+  ctx.ellipse(1, 3, 7.5, 6.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Puffed cheeks stuffed with grain!
+  const cheekPuff = 6.2 + Math.sin(t * 7) * 0.8 + (isStriking ? 1.8 : 0);
+  ctx.fillStyle = '#FEF3C7';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(-6, -6, cheekPuff, 0, Math.PI * 2);
+  ctx.arc(7, -6, cheekPuff, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Round ears
+  ctx.fillStyle = '#B45309';
+  ctx.beginPath();
+  ctx.arc(-7, -14, 4, 0, Math.PI * 2);
+  ctx.arc(6, -14, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Eyes & buck teeth
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(-2.5, -9, 1.8, 0, Math.PI * 2);
+  ctx.arc(3.5, -9, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-1, -4, 4, 3.5);
+  ctx.strokeRect(-1, -4, 4, 3.5);
+
+  // Stolen golden wheat ear held in paws
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-4, 2);
+  ctx.lineTo(13, -3);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawZitnaBaba(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isWindingUp = Boolean(attackInfo && attackInfo.windupProgress > 0 && !attackInfo.isStrike);
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const wProg = attackInfo?.windupProgress || 0;
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const sway = Math.sin(t * 5.2) * 2.2;
+  ctx.translate(0, sway);
+
+  // Straw skirt woven from golden rye stalks
+  ctx.fillStyle = panicked ? '#FDE047' : '#EAB308';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(-11, -6);
+  ctx.lineTo(-16, 15);
+  ctx.lineTo(16, 15);
+  ctx.lineTo(11, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red poppy apron
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.rect(-7, -2, 14, 13);
+  ctx.fill();
+  ctx.stroke();
+
+  // Sun-weathered head with headscarf & poppy/cornflower wreath
+  ctx.fillStyle = '#FDE68A';
+  ctx.beginPath();
+  ctx.arc(0, -15, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing midday eyes
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-3, -16, 1.9, 0, Math.PI * 2);
+  ctx.arc(3.5, -16, 1.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wreath of red poppies and blue cornflowers
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-5, -24, 3.5, 0, Math.PI * 2);
+  ctx.arc(5, -24, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#2563EB';
+  ctx.beginPath();
+  ctx.arc(0, -25, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Gleaming golden harvest sickle (Zlatý srp)
+  const swing = isStriking ? 0.85 * (1 - sProg * 0.4) : isWindingUp ? -0.55 * wProg : 0;
+  ctx.save();
+  ctx.translate(9, -4);
+  ctx.rotate(swing);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.arc(6, -4, 10, -Math.PI * 0.75, Math.PI * 0.45);
+  ctx.stroke();
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(6, -4, 10, -Math.PI * 0.75, Math.PI * 0.45);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawKulovyBlesk(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1
+): void {
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const pulse = Math.sin(t * 14) * 2.2;
+
+  // Outer electric corona
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 19 + pulse, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Zig-zag lightning whiskers around orb
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 2.2;
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + t * 4.5;
+    const r1 = 12;
+    const r2 = 19 + (i % 2) * 3;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+    ctx.lineTo(Math.cos(a + 0.18) * ((r1 + r2) * 0.5), Math.sin(a + 0.18) * ((r1 + r2) * 0.5));
+    ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+    ctx.stroke();
+  }
+
+  // Core ball lightning sphere with Ladovská ink outline
+  ctx.fillStyle = panicked ? '#FEF08A' : '#38BDF8';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.arc(0, 0, 13 + pulse * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner hot plasma core & mischievous Ladovský face
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.arc(-2, -2, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(-3.5, -2, 2.0, 0, Math.PI * 2);
+  ctx.arc(3.5, -2, 2.0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.moveTo(-4, 4);
+  ctx.lineTo(-1, 6);
+  ctx.lineTo(1, 3.5);
+  ctx.lineTo(4, 6);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKrecekObilnik(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const bob = Math.abs(Math.sin(t * 6.5)) * 3.5;
+  ctx.translate(0, -bob);
+
+  // Grain-sheaf royal aura
+  ctx.fillStyle = 'rgba(234, 179, 8, 0.24)';
+  ctx.beginPath();
+  ctx.ellipse(0, 18, 28, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sturdy hind paws
+  ctx.fillStyle = '#FDE68A';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.ellipse(-11, 15, 7, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(11, 15, 7, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Royal crimson & gold harvest coat over rotund hamster body
+  ctx.fillStyle = panicked ? '#D97706' : '#B45309';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.ellipse(0, 1, 22, 19, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Embroidered folk waistcoat
+  ctx.fillStyle = '#991B1B';
+  ctx.beginPath();
+  ctx.rect(-12, -6, 24, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FACC15';
+  ctx.fillRect(-2, -6, 4, 18);
+
+  // Enormous stuffed cheeks
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.arc(-12, -12, 9.5, 0, Math.PI * 2);
+  ctx.arc(12, -12, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Crown of woven golden wheat ears
+  for (let i = -2; i <= 2; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#FACC15' : '#F59E0B';
+    ctx.beginPath();
+    ctx.moveTo(i * 5, -24);
+    ctx.lineTo(i * 5 - 3, -33);
+    ctx.lineTo(i * 5 + 3, -33);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Eyes, whiskers & wooden flail (cep ze slámy)
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(-5, -16, 2.4, 0, Math.PI * 2);
+  ctx.arc(5, -16, 2.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  const flailAngle = isStriking ? 0.9 * (1 - sProg * 0.4) : -0.35;
+  ctx.save();
+  ctx.translate(16, -4);
+  ctx.rotate(flailAngle);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(0, 14);
+  ctx.lineTo(0, -18);
+  ctx.stroke();
+  ctx.fillStyle = '#FACC15';
+  ctx.beginPath();
+  ctx.rect(-4, -26, 12, 9);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawZitnaMatka(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const floatY = Math.sin(t * 3.8) * 3.0;
+  ctx.translate(0, floatY);
+
+  // Swirling chaff & golden grain aura
+  ctx.fillStyle = 'rgba(250, 204, 21, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 20, 30, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tall majestic gown of golden rye sheaves
+  ctx.fillStyle = panicked ? '#FDE047' : '#CA8A04';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(-14, -14);
+  ctx.lineTo(-24, 20);
+  ctx.lineTo(24, 20);
+  ctx.lineTo(14, -14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Crimson St. Margaret sash
+  ctx.fillStyle = '#B91C1C';
+  ctx.beginPath();
+  ctx.rect(-13, -4, 26, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head & radiant sun-halo crown of wheat, poppies, and cornflowers
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.arc(0, -23, 11.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-4, -24, 2.2, 0, Math.PI * 2);
+  ctx.arc(4, -24, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  for (let i = -3; i <= 3; i++) {
+    const a = (i / 3) * 0.95;
+    ctx.save();
+    ctx.translate(0, -23);
+    ctx.rotate(a);
+    ctx.fillStyle = i % 2 === 0 ? '#FACC15' : '#EF4444';
+    ctx.beginPath();
+    ctx.arc(0, -15, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Giant Crescent Golden Sickle of St. Margaret
+  const sickleRot = isStriking ? 1.05 * (1 - sProg * 0.3) : Math.sin(t * 4) * 0.15;
+  ctx.save();
+  ctx.translate(15, -8);
+  ctx.rotate(sickleRot);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(6, -6, 15, -Math.PI * 0.8, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(6, -6, 15, -Math.PI * 0.8, Math.PI * 0.5);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawHromotlukMarketa(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  t = 0,
+  dir = 1,
+  panicked = false,
+  scale = 1,
+  attackInfo?: EnemyAttackInfo
+): void {
+  const isStriking = Boolean(attackInfo?.isStrike);
+  const sProg = attackInfo?.strikeProgress || 0;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if (dir < 0) ctx.scale(-1, 1);
+  if (scale !== 1) ctx.scale(scale, scale);
+
+  const stomp = Math.abs(Math.sin(t * 5.5)) * 3.5;
+  ctx.translate(0, -stomp);
+
+  // Heavy boots
+  ctx.fillStyle = '#292524';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.rect(-16, 12, 11, 13);
+  ctx.rect(5, 12, 11, 13);
+  ctx.fill();
+  ctx.stroke();
+
+  // Barrel-chested village fair brawler in festive vest & paper roses
+  ctx.fillStyle = panicked ? '#EA580C' : '#9A3412';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 25, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Fairground shooting target shield strapped to chest/left arm
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(-14, 2, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-14, 2, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#FACC15';
+  ctx.beginPath();
+  ctx.arc(-14, 2, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Bearded Ruddy Head & Hat with Fairground Paper Roses (papírové růže ze střelnice)
+  ctx.fillStyle = '#FDBA74';
+  ctx.beginPath();
+  ctx.arc(0, -22, 12.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Handlebar mustache
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(-9, -18);
+  ctx.quadraticCurveTo(0, -14, 9, -18);
+  ctx.stroke();
+
+  // Hat with paper roses
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.ellipse(0, -31, 16, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#F43F5E';
+  ctx.beginPath();
+  ctx.arc(-6, -34, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#38BDF8';
+  ctx.beginPath();
+  ctx.arc(5, -34, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Giant Iron-Banded Harvest Flail (Okovaný cep)
+  const flailSwing = isStriking ? 1.15 * (1 - sProg * 0.35) : -0.3;
+  ctx.save();
+  ctx.translate(19, -6);
+  ctx.rotate(flailSwing);
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(0, 18);
+  ctx.lineTo(0, -22);
+  ctx.stroke();
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = '#1C1917';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.rect(3, -28, 12, 18);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * 1. Srpnový čmelák (Furry buzzing bumblebee with black-and-amber striped body & vibrating wings)
+ */
+export function drawSrpnoveCmelak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(0, 18, 14, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Vibrating transparent wings
+  const wingFlap = Math.sin(time * 48) * 0.45;
+  ctx.save();
+  ctx.rotate(wingFlap);
+  ctx.fillStyle = 'rgba(224, 242, 254, 0.65)';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.ellipse(-12, -14, 16, 7, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(12, -14, 16, 7, 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Round fuzzy body with striped amber & black bands
+  ctx.lineWidth = 2.4;
+  ctx.strokeStyle = '#23170F';
+
+  // Abdomen stripes
+  const stripes = ['#23170F', '#F59E0B', '#23170F', '#FBBF24', '#23170F'];
+  for (let i = 0; i < stripes.length; i++) {
+    ctx.fillStyle = isHurt ? '#EF4444' : stripes[i];
+    ctx.beginPath();
+    ctx.ellipse(0, -6 + i * 4, 13 - Math.abs(i - 2) * 2.2, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Furry head with antennae & eyes
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#1C1917';
+  ctx.beginPath();
+  ctx.arc(0, -12, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Big shiny cartoon eyes
+  ctx.fillStyle = panicked ? '#FEF08A' : '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(-3.5, -13, 2.5, 0, Math.PI * 2);
+  ctx.arc(3.5, -13, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(-3.5, -13, 1.2, 0, Math.PI * 2);
+  ctx.arc(3.5, -13, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Antennae
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(-2, -18);
+  ctx.quadraticCurveTo(-7, -24, -4, -26);
+  ctx.moveTo(2, -18);
+  ctx.quadraticCurveTo(7, -24, 4, -26);
+  ctx.stroke();
+
+  // Stinger at the bottom
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.moveTo(-2.5, 12);
+  ctx.lineTo(2.5, 12);
+  ctx.lineTo(0, 18);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 2. Zlatohlávek (Emerald-green metallic armored rose chafer beetle)
+ */
+export function drawZlatohlavek(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0, 16, 16, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Six articulated beetle legs
+  ctx.strokeStyle = '#14532D';
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  const legWiggle = Math.sin(time * 14) * 3;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    // Front leg
+    ctx.moveTo(side * 8, -6);
+    ctx.lineTo(side * 18, -12 + legWiggle * side);
+    ctx.lineTo(side * 22, -8 + legWiggle * side);
+    // Mid leg
+    ctx.moveTo(side * 10, 2);
+    ctx.lineTo(side * 20, 4 - legWiggle * side);
+    ctx.lineTo(side * 24, 8 - legWiggle * side);
+    // Back leg
+    ctx.moveTo(side * 8, 10);
+    ctx.lineTo(side * 19, 18 + legWiggle * side);
+    ctx.lineTo(side * 22, 24 + legWiggle * side);
+    ctx.stroke();
+  }
+
+  // Metallic green carapace (Elytra)
+  const shellGrad = ctx.createLinearGradient(-14, -14, 14, 18);
+  shellGrad.addColorStop(0, isHurt ? '#F87171' : '#4ADE80');
+  shellGrad.addColorStop(0.4, isHurt ? '#EF4444' : '#16A34A');
+  shellGrad.addColorStop(0.8, isHurt ? '#B91C1C' : '#15803D');
+  shellGrad.addColorStop(1, '#052E16');
+
+  ctx.fillStyle = shellGrad;
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 14, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Elytra split seam
+  ctx.beginPath();
+  ctx.moveTo(0, -6);
+  ctx.lineTo(0, 19);
+  ctx.stroke();
+
+  // Pronotum (štít) & head
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#15803D';
+  ctx.beginPath();
+  ctx.ellipse(0, -9, 11, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Little head with golden pincer jaws
+  ctx.fillStyle = '#064E3B';
+  ctx.beginPath();
+  ctx.arc(0, -17, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Little eyes
+  ctx.fillStyle = '#FACC15';
+  ctx.beginPath();
+  ctx.arc(-3, -18, 1.5, 0, Math.PI * 2);
+  ctx.arc(3, -18, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 3. Polní myšice (Quick little field mouse with big round ears & tail)
+ */
+export function drawPolniMysice(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, 12, 14, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Long sinuous tail
+  const tailWave = Math.sin(time * 16) * 5;
+  ctx.strokeStyle = '#F472B6';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-10, 4);
+  ctx.quadraticCurveTo(-18 + tailWave, 2, -26, -4 - tailWave);
+  ctx.stroke();
+
+  // Plump brown body
+  ctx.fillStyle = isHurt ? '#F87171' : '#92400E';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 13, 9, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White belly fur patch
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.ellipse(2, 6, 8, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head and snout
+  ctx.fillStyle = isHurt ? '#F87171' : '#A16207';
+  ctx.beginPath();
+  ctx.moveTo(8, -4);
+  ctx.lineTo(19, 2);
+  ctx.lineTo(9, 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Pink nose
+  ctx.fillStyle = '#F472B6';
+  ctx.beginPath();
+  ctx.arc(19, 2, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Big round mouse ears
+  for (const earY of [-6, 0]) {
+    ctx.fillStyle = '#B45309';
+    ctx.beginPath();
+    ctx.arc(6, earY, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FBCFE8';
+    ctx.beginPath();
+    ctx.arc(6, earY, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Beady black eye
+  ctx.fillStyle = panicked ? '#FEF08A' : '#000000';
+  ctx.beginPath();
+  ctx.arc(13, -1, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Whiskers
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(17, 1); ctx.lineTo(24, -3);
+  ctx.moveTo(17, 3); ctx.lineTo(24, 5);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 4. Královský čmelák (Stage 11 Mini-boss: Giant crowned monarch bumblebee)
+ */
+export function drawKralovskyCmelak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  drawSrpnoveCmelak(ctx, 0, 0, time, 1.45, panicked, isHurt);
+
+  // Golden wheat & clover crown on head
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-10, -22);
+  ctx.lineTo(-8, -32);
+  ctx.lineTo(-3, -26);
+  ctx.lineTo(0, -35);
+  ctx.lineTo(3, -26);
+  ctx.lineTo(8, -32);
+  ctx.lineTo(10, -22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Crown jewels (rubies)
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(0, -26, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 5. Zlatohlávek Žrout (Stage 11 Mid-boss: Heavy armored giant emerald beetle)
+ */
+export function drawZlatohlavekZrout(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.4,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  drawZlatohlavek(ctx, 0, 0, time, 1.6, panicked, isHurt);
+
+  // Big serrated golden horns/mandibles
+  ctx.fillStyle = '#D97706';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(-6, -26);
+  ctx.quadraticCurveTo(-14, -40, -4, -44);
+  ctx.quadraticCurveTo(-8, -36, -2, -26);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(6, -26);
+  ctx.quadraticCurveTo(14, -40, 4, -44);
+  ctx.quadraticCurveTo(8, -36, 2, -26);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 6. Dožínkový chasník s věncem (Stage 11 Final Boss: Sturdy festive farmhand spinning a giant wreath)
+ */
+export function drawDozinkovyChasnik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const isStriking = attackInfo?.isStrike;
+  const sProg = attackInfo?.strikeProgress ?? 0;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(28, 25, 23, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24, 28, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // White folk linen shirt with embroidered vest
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#FEF3C7';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 22, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Red traditional festive vest (kordulka)
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-16, -12);
+  ctx.lineTo(-4, 16);
+  ctx.lineTo(-18, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(16, -12);
+  ctx.lineTo(4, 16);
+  ctx.lineTo(18, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Broad leather belt (opasek s mosaznou sponou)
+  ctx.fillStyle = '#78350F';
+  ctx.fillRect(-16, 12, 32, 7);
+  ctx.strokeRect(-16, 12, 32, 7);
+  ctx.fillStyle = '#FACC15';
+  ctx.fillRect(-5, 11, 10, 9);
+  ctx.strokeRect(-5, 11, 10, 9);
+
+  // Sturdy booted legs
+  ctx.fillStyle = '#1C1917';
+  ctx.fillRect(-12, 19, 8, 16);
+  ctx.strokeRect(-12, 19, 8, 16);
+  ctx.fillRect(4, 19, 8, 16);
+  ctx.strokeRect(4, 19, 8, 16);
+
+  // Merry ruddy face with broad smile & mustache
+  ctx.fillStyle = '#FDBA74';
+  ctx.beginPath();
+  ctx.arc(0, -20, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Big friendly mustache
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(-10, -17);
+  ctx.quadraticCurveTo(0, -13, 10, -17);
+  ctx.stroke();
+
+  // Black felt hat with red & blue ribbons
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.ellipse(0, -30, 18, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, -33, 11, Math.PI, 0);
+  ctx.fill();
+  ctx.stroke();
+
+  // Ribbons on hat
+  ctx.fillStyle = '#3B82F6';
+  ctx.fillRect(8, -35, 4, 16);
+
+  // Giant Spinning Harvest Wreath (Dožínkový věnec) held in hands
+  const wreathRot = isStriking ? sProg * Math.PI * 4 : time * 3.5;
+  ctx.save();
+  ctx.translate(0, -5);
+  ctx.rotate(wreathRot);
+
+  ctx.strokeStyle = '#EAB308';
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.arc(0, 0, 26, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.stroke();
+
+  // Wreath ribbons & flowers
+  const wCols = ['#EF4444', '#3B82F6', '#22C55E', '#EC4899'];
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    ctx.fillStyle = wCols[i];
+    ctx.beginPath();
+    ctx.arc(Math.cos(a) * 26, Math.sin(a) * 26, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * 7. Netopýr Ušatec (Stage 12 Mini-boss: Long-eared brown bat with huge leathery wings)
+ */
+export function drawNetopyrUsatec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Flapping leathery bat wings
+  const wingFlap = Math.sin(time * 16) * 0.42;
+
+  ctx.save();
+  ctx.fillStyle = isHurt ? '#F87171' : '#3B2F2F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+
+  // Left wing
+  ctx.beginPath();
+  ctx.moveTo(-6, -4);
+  ctx.lineTo(-32, -22 + wingFlap * 14);
+  ctx.lineTo(-44, -4 + wingFlap * 10);
+  ctx.quadraticCurveTo(-34, 4, -26, 0);
+  ctx.quadraticCurveTo(-18, 6, -6, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Right wing
+  ctx.beginPath();
+  ctx.moveTo(6, -4);
+  ctx.lineTo(32, -22 - wingFlap * 14);
+  ctx.lineTo(44, -4 - wingFlap * 10);
+  ctx.quadraticCurveTo(34, 4, 26, 0);
+  ctx.quadraticCurveTo(18, 6, 6, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Fuzzy bat body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#451A03';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 11, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head
+  ctx.beginPath();
+  ctx.arc(0, -10, 8.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Huge long ears (Netopýr ušatý)
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#78350F';
+    ctx.beginPath();
+    ctx.moveTo(side * 3, -16);
+    ctx.lineTo(side * 8, -32);
+    ctx.lineTo(side * 12, -18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FBCFE8';
+    ctx.beginPath();
+    ctx.moveTo(side * 4, -17);
+    ctx.lineTo(side * 8, -28);
+    ctx.lineTo(side * 10, -19);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Glowing red night eyes
+  ctx.fillStyle = panicked ? '#FEF08A' : '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-3, -10, 2, 0, Math.PI * 2);
+  ctx.arc(3, -10, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Little fangs
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(-2, -5); ctx.lineTo(-1, -2); ctx.lineTo(0, -5);
+  ctx.moveTo(0, -5); ctx.lineTo(1, -2); ctx.lineTo(2, -5);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 8. Noční můra (Stage 12 Mid-boss: Spectral nocturnal moth with velvet patterned wings)
+ */
+export function drawNocniMura(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const wingSway = Math.sin(time * 12) * 0.35;
+
+  // Velvet patterned moth wings
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.rotate(wingSway * side);
+
+    // Large upper forewing
+    ctx.fillStyle = isHurt ? '#F87171' : '#1E1B4B';
+    ctx.strokeStyle = '#23170F';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(0, -4);
+    ctx.lineTo(38, -32);
+    ctx.quadraticCurveTo(46, -10, 32, 10);
+    ctx.quadraticCurveTo(18, 8, 0, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Eyespot marking on forewing (přízračné paví oko)
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(24, -14, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#6366F1';
+    ctx.beginPath();
+    ctx.arc(24, -14, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Lower hindwing
+    ctx.fillStyle = isHurt ? '#FCA5A5' : '#312E81';
+    ctx.beginPath();
+    ctx.moveTo(0, 4);
+    ctx.quadraticCurveTo(28, 12, 22, 28);
+    ctx.quadraticCurveTo(8, 26, 0, 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Furry dark indigo body
+  ctx.fillStyle = isHurt ? '#EF4444' : '#0F172A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 9, 17, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head with feathered plumose antennae
+  ctx.beginPath();
+  ctx.arc(0, -11, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Feathered comb antennae
+  ctx.strokeStyle = '#C7D2FE';
+  ctx.lineWidth = 1.8;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 2, -16);
+    ctx.quadraticCurveTo(side * 12, -28, side * 16, -26);
+    ctx.stroke();
+    for (let c = 0; c < 5; c++) {
+      const ca = c * 3;
+      ctx.beginPath();
+      ctx.moveTo(side * (3 + ca * 0.7), -18 - ca * 1.5);
+      ctx.lineTo(side * (6 + ca * 0.7), -22 - ca * 1.5);
+      ctx.stroke();
+    }
+  }
+
+  // Large moonlit eyes
+  ctx.fillStyle = panicked ? '#FEF08A' : '#A5B4FC';
+  ctx.beginPath();
+  ctx.arc(-3, -11, 2.5, 0, Math.PI * 2);
+  ctx.arc(3, -11, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 9. Výr velký ze Zlenic (Stage 12 Final Boss: Giant majestic horned owl with glowing orange eyes)
+ */
+export function drawVyrVelky(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.5,
+  panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const isStriking = attackInfo?.isStrike;
+  const sProg = attackInfo?.strikeProgress ?? 0;
+  const wingBeat = isStriking ? Math.sin(sProg * Math.PI * 6) * 0.5 : Math.sin(time * 8) * 0.28;
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+  ctx.beginPath();
+  ctx.ellipse(0, 28, 36, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Huge broad owl wings spread wide
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.rotate(wingBeat * side);
+
+    ctx.fillStyle = isHurt ? '#F87171' : '#451A03';
+    ctx.strokeStyle = '#23170F';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(44, -28);
+    ctx.lineTo(58, -10);
+    ctx.lineTo(52, 12);
+    ctx.lineTo(36, 24);
+    ctx.lineTo(16, 20);
+    ctx.lineTo(0, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Wing feather striations
+    ctx.strokeStyle = '#78350F';
+    ctx.lineWidth = 2;
+    for (let f = 1; f <= 4; f++) {
+      ctx.beginPath();
+      ctx.moveTo(f * 10, -6);
+      ctx.lineTo(f * 12 + 8, 16);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Heavy speckled owl body (tečkované peří)
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#78350F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 18, 24, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Breast feather flecks
+  ctx.fillStyle = '#FEF3C7';
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 12, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#451A03';
+  ctx.lineWidth = 1.8;
+  for (let r = -2; r <= 2; r++) {
+    for (let c = -1; c <= 1; c++) {
+      ctx.beginPath();
+      ctx.arc(c * 6, r * 5 + 6, 2.5, Math.PI, 0);
+      ctx.stroke();
+    }
+  }
+
+  // Broad round owl head with tufted ear horns (ouška Výra velkého)
+  ctx.fillStyle = isHurt ? '#EF4444' : '#5C2D12';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, -18, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Dramatic tufted ear feather horns
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#23170F';
+    ctx.beginPath();
+    ctx.moveTo(side * 6, -28);
+    ctx.lineTo(side * 18, -42);
+    ctx.lineTo(side * 14, -26);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Big round glowing orange owl eyes (planoucí zrak)
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#23170F';
+    ctx.beginPath();
+    ctx.arc(side * 6, -18, 7.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = panicked ? '#FEF08A' : '#EA580C';
+    ctx.beginPath();
+    ctx.arc(side * 6, -18, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(side * 6, -18, 3.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000000';
+    ctx.beginPath();
+    ctx.arc(side * 6, -18, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Sharp hooked predatory beak
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.moveTo(-3, -15);
+  ctx.lineTo(3, -15);
+  ctx.lineTo(0, -8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Sharp talons at the bottom
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 2.8;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 8, 22); ctx.lineTo(side * 12, 28);
+    ctx.moveTo(side * 8, 22); ctx.lineTo(side * 8, 29);
+    ctx.moveTo(side * 8, 22); ctx.lineTo(side * 4, 28);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
@@ -27523,6 +28918,21 @@ function drawSvatojanskyVladce(
 (Lada as any).drawRusalka = drawRusalka;
 (Lada as any).drawOhnivySudlicka = drawOhnivySudlicka;
 (Lada as any).drawSvatojanskyVladce = drawSvatojanskyVladce;
+(Lada as any).drawPolniKrecek = drawPolniKrecek;
+(Lada as any).drawZitnaBaba = drawZitnaBaba;
+(Lada as any).drawKulovyBlesk = drawKulovyBlesk;
+(Lada as any).drawKrecekObilnik = drawKrecekObilnik;
+(Lada as any).drawZitnaMatka = drawZitnaMatka;
+(Lada as any).drawHromotlukMarketa = drawHromotlukMarketa;
+(Lada as any).drawSrpnoveCmelak = drawSrpnoveCmelak;
+(Lada as any).drawZlatohlavek = drawZlatohlavek;
+(Lada as any).drawPolniMysice = drawPolniMysice;
+(Lada as any).drawKralovskyCmelak = drawKralovskyCmelak;
+(Lada as any).drawZlatohlavekZrout = drawZlatohlavekZrout;
+(Lada as any).drawDozinkovyChasnik = drawDozinkovyChasnik;
+(Lada as any).drawNetopyrUsatec = drawNetopyrUsatec;
+(Lada as any).drawNocniMura = drawNocniMura;
+(Lada as any).drawVyrVelky = drawVyrVelky;
 
 export {
   Lada,
@@ -27532,5 +28942,11 @@ export {
   drawRusalka,
   drawOhnivySudlicka,
   drawSvatojanskyVladce,
+  drawPolniKrecek,
+  drawZitnaBaba,
+  drawKulovyBlesk,
+  drawKrecekObilnik,
+  drawZitnaMatka,
+  drawHromotlukMarketa,
   type EnemyAttackInfo,
 };

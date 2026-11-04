@@ -93,7 +93,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({ isOpen, 
               <strong>Uzamčení hrdinů:</strong> Tulák, Pasáček, Bába kořenářka, Ponocný, Pobožný kostelník i Babička budou znovu uzamčeni (postup 0 %). Zůstane pouze výchozí Krajánek.
             </li>
             <li>
-              <strong>Uzamčení úrovní 2 až 6:</strong> Les u rybníka, Zimní Hrusice, Čertův mlýn, Zřícenina hradu i Dračí sluj se uzamknou. Bude přístupná pouze 1. úroveň.
+              <strong>Uzamčení úrovní 2 až 8:</strong> Noční mrazy, Dubnový den, Dubnová noc, Májová slavnost, Májová noc, Letní senoseč i Červnová noc se uzamknou. Bude přístupná pouze 1. úroveň.
             </li>
             <li>
               <strong>Uzamčení zbraní:</strong> Uzamčené zbraně se vrátí do stavu před odemčením. Zůstanou přístupné pouze výchozí zbraně.

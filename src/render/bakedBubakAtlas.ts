@@ -78,7 +78,23 @@ export type BakedBubakId =
   | 'ledovi_muzi'
   | 'cert_sekac'
   | 'kralovsky_vele_rak'
-  | 'kralovska_polednice';
+  | 'kralovska_polednice'
+  | 'polni_krecek'
+  | 'zitna_baba'
+  | 'kulovy_blesk'
+  | 'krecek_obilnik'
+  | 'zitna_matka'
+  | 'hromotluk_marketa'
+  | 'bezhlavy_rytir'
+  | 'drak'
+  | 'srpnove_cmelak'
+  | 'zlatohlavek'
+  | 'polni_mysice'
+  | 'kralovsky_cmelak'
+  | 'zlatohlavek_zrout'
+  | 'dozinkovy_chasnik'
+  | 'netopyr_usatec'
+  | 'vyr_velky';
 
 export interface BakedFrame {
   canvas: any;
@@ -172,6 +188,22 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   cert_sekac: { size: 168, drawFn: (c, x, y, t, v, p) => Lada.drawCertSekac(c, x, y, t, v, p) },
   kralovsky_vele_rak: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawKralovskyVeleRak(c, x, y, t, v, p) },
   kralovska_polednice: { size: 160, drawFn: (c, x, y, t, v, p) => Lada.drawKralovskaPolednice(c, x, y, t, v, p) },
+  polni_krecek: { size: 96, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPolniKrecek(c, x, y, t, v, p) },
+  zitna_baba: { size: 136, drawFn: (c, x, y, t, v, p) => (Lada as any).drawZitnaBaba(c, x, y, t, v, p) },
+  kulovy_blesk: { size: 112, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKulovyBlesk(c, x, y, t, v, p) },
+  krecek_obilnik: { size: 152, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKrecekObilnik(c, x, y, t, v, p) },
+  zitna_matka: { size: 164, drawFn: (c, x, y, t, v, p) => (Lada as any).drawZitnaMatka(c, x, y, t, v, p) },
+  hromotluk_marketa: { size: 184, drawFn: (c, x, y, t, v, p) => (Lada as any).drawHromotlukMarketa(c, x, y, t, v, p) },
+  bezhlavy_rytir: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawHeadlessKnight(c, x, y, t, v, p) },
+  drak: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDragon(c, x, y, t, v, p) },
+  srpnove_cmelak: { size: 104, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSrpnoveCmelak(c, x, y, t, v, p) },
+  zlatohlavek: { size: 112, drawFn: (c, x, y, t, v, p) => (Lada as any).drawZlatohlavek(c, x, y, t, v, p) },
+  polni_mysice: { size: 96, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPolniMysice(c, x, y, t, v, p) },
+  kralovsky_cmelak: { size: 152, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKralovskyCmelak(c, x, y, t, v, p) },
+  zlatohlavek_zrout: { size: 164, drawFn: (c, x, y, t, v, p) => (Lada as any).drawZlatohlavekZrout(c, x, y, t, v, p) },
+  dozinkovy_chasnik: { size: 184, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDozinkovyChasnik(c, x, y, t, v, p) },
+  netopyr_usatec: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawNetopyrUsatec(c, x, y, t, v, p) },
+  vyr_velky: { size: 192, drawFn: (c, x, y, t, v, p) => (Lada as any).drawVyrVelky(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {

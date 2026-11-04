@@ -1045,6 +1045,598 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			description: "Sbírej po aréně devatero svatojánských bylin, odemkni Poklad v zemi u hvozdu a získej Svatojánskou záři!",
 			cadenceSeconds: 9
 		}
+	},
+	8: {
+		id: 8,
+		name: "9. Červenec v Hrusicích – Žně na sv. Markétu a poutní veselice",
+		shortTitle: "Červencové žně",
+		subtitle: "Zlaté lány žita, panáci ze snopů, ženci se srpy a poutní střelnice na návsi",
+		theme: "summer_harvest",
+		season: "summer",
+		icon: "🌾",
+		badge: "9. Úroveň",
+		description: "Na svatou Markétu hodila srp do žita! Hrusická pole zlátla pod červencovým sluncem, sedláci stavějí panáky ze snopů a na návsi vyhrává poutní střelnice s papírovými růžemi. Z obilí však vylézají polní křečci, Žitné báby a Pouťový Hromotluk!",
+		lore: "O červencových žních praská země horkem a každá ruka se ohání srpem. Zastřílej si na poutní střelnici pro ostrou mušku, kryj se za panáky žita a vyžeň ze strniště Krále křečků Obilníka, Žitnou matku i Pouťového Hromotluka!",
+		unlockRequirementText: "Odemkne se po poražení Svatojánského Vládce Hvozdu v 8. úrovni",
+		skyColor: "#FEF3C7",
+		nightSkyColor: "#1E293B",
+		groundColor: "#D97706",
+		ambientTint: "rgba(245, 158, 11, 0.09)",
+		weatherEffect: "petals",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"haystack",
+			"rock",
+			"kaca"
+		],
+		arena: {
+			id: "cervencove_zne",
+			name: "Červencové žně",
+			layout: "asymmetric_poi",
+			poiOrder: [
+				"fields",
+				"church",
+				"tavern",
+				"village",
+				"school",
+				"pond",
+				"mill",
+				"forest",
+				"shrine"
+			]
+		},
+		miniBoss: {
+			id: "krecek_obilnik",
+			name: "🐹 Král polních křečků Obilník",
+			warning: "🐹 POZOR: Z OBILNÉ NORY VYLÉZÁ KRÁL POLNÍCH KŘEČKŮ OBILNÍK!",
+			time: 85,
+			kills: 95,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "zitna_matka",
+			name: "🌾 Žitná matka se zlatým srpem",
+			warning: "🌾 POZOR: ZE ZRALÉHO ŽITA POVSTÁVÁ ŽITNÁ MATKA SE ZLATÝM SRPEM!",
+			time: 185,
+			kills: 225,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "hromotluk_marketa",
+			name: "🎯 Pouťový Hromotluk od sv. Markéty",
+			warning: "🎯 POUŤ SE ZVRHLA! PŘICHÁZÍ HŘMOTNÝ POUŤOVÝ HROMOTLUK S CEPEM A TERČI! 🎯",
+			time: 300,
+			kills: 375,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"polni_krecek",
+				"roj_polnich_mysaku",
+				"zitna_baba",
+				"boruvkovy_diblik",
+				"rak_ricni",
+				"sotek"
+			],
+			afternoon: [
+				"polni_krecek",
+				"zitna_baba",
+				"polednice",
+				"roj_polnich_mysaku",
+				"cert_sekac",
+				"pekelny_roj_sazovniku"
+			],
+			dusk: [
+				"zitna_baba",
+				"polni_krecek",
+				"polednice",
+				"cert_sekac",
+				"drab",
+				"zbojnik"
+			],
+			night: [
+				"zitna_baba",
+				"cert_sekac",
+				"drab",
+				"polednice",
+				"zbojnik"
+			],
+			midnight: [
+				"zitna_baba",
+				"cert_sekac",
+				"drab",
+				"zbojnik"
+			],
+			dawn: [
+				"polni_krecek",
+				"roj_polnich_mysaku",
+				"zitna_baba",
+				"boruvkovy_diblik",
+				"rak_ricni"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "polni_krecek",
+				name: "Polní křeček",
+				icon: "🐹",
+				role: "Zlodějíček klasů a grošů"
+			},
+			{
+				id: "zitna_baba",
+				name: "Žitná bába (Srpanda)",
+				icon: "🌾",
+				role: "Polední strašidlo se zlatým srpem"
+			},
+			{
+				id: "krecek_obilnik",
+				name: "Král křečků Obilník",
+				icon: "👑",
+				role: "Mini-boss polních nor"
+			},
+			{
+				id: "zitna_matka",
+				name: "Žitná matka",
+				icon: "☀️",
+				role: "Mezi-boss zralých lánů"
+			},
+			{
+				id: "hromotluk_marketa",
+				name: "Pouťový Hromotluk",
+				icon: "🎯",
+				role: "Vrcholný boss pouti sv. Markéty"
+			}
+		],
+		bossMechanic: {
+			label: "Poutní střelnice a Panáci žita",
+			description: "Trefuj terče na poutní střelnici na návsi pro Pouťovou mušku (+25 % nabíjení zbraní, +20 % štěstí) a využívej panáky žita jako kryt!",
+			cadenceSeconds: 8
+		}
+	},
+	9: {
+		id: 9,
+		name: "10. Červenec v Hrusicích – Bouře sv. Eliáše a Dračí sluj",
+		shortTitle: "Červencová noc",
+		subtitle: "Hromobití sv. Eliáše, kulové blesky, Bezhlavý rytíř a Tříhlavý Drak",
+		theme: "summer_harvest",
+		season: "summer",
+		icon: "⚡",
+		badge: "10. Úroveň",
+		isNightLevel: true,
+		description: "Po parném červencovém dni se nad Hrusicemi strhla hromová bouře svatého Eliáše! Mezi chalupami poskakují kulové blesky, z podhradí vyjíždí Bezhlavý rytíř se zbrojnoši a ve skalní sluji se probouzí Tříhlavý líný Drak!",
+		lore: "Svatý Eliáš jezdí po nebi na ohnivém voze a metá blesky do strniště. Přežij údery Eliášova hromu, odraz útok Bílé paní a Bezhlavého rytíře a pokoř Tříhlavého melechovského Draka!",
+		unlockRequirementText: "Odemkne se po poražení Pouťového Hromotluka v 9. úrovni",
+		skyColor: "#1E1B4B",
+		nightSkyColor: "#0F172A",
+		groundColor: "#1E293B",
+		ambientTint: "rgba(56, 189, 248, 0.36)",
+		weatherEffect: "rain",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"haystack",
+			"rock",
+			"will_o_wisp",
+			"kaca"
+		],
+		arena: {
+			id: "cervencove_zne",
+			name: "Červencová bouře v noci",
+			layout: "asymmetric_poi",
+			poiOrder: [
+				"fields",
+				"church",
+				"tavern",
+				"village",
+				"school",
+				"pond",
+				"mill",
+				"forest",
+				"shrine"
+			]
+		},
+		miniBoss: {
+			id: "bila_pani",
+			name: "👻 Bílá paní a rytířský zbrojnoš",
+			warning: "👻 POZOR: ZBOŘENÝMI HRADBAMI PROCHÁZÍ BÍLÁ PANÍ SE ZBROJNOŠEM!",
+			time: 85,
+			kills: 100,
+			multiplier: 10.5
+		},
+		midBoss: {
+			id: "bezhlavy_rytir",
+			name: "🗡️ Bezhlavý rytíř ze Zlenic",
+			warning: "🗡️ HROM UDEŘIL! Z PODHRADÍ VYJÍŽDÍ BEZHLAVÝ RYTÍŘ!",
+			time: 185,
+			kills: 240,
+			multiplier: 0.72
+		},
+		finalBoss: {
+			id: "drak",
+			name: "🐉 Tříhlavý líný Drak pod Melechovem",
+			warning: "🐉 SKÁLA PUKLA BLESKEM! ZE SLUJE VYLÉZÁ TŘÍHLAVÝ LÍNÝ DRAK! 🐉",
+			time: 300,
+			kills: 400,
+			multiplier: 0.78
+		},
+		spawnPools: {
+			noon: [
+				"kulovy_blesk",
+				"plivnik",
+				"jiskrivec",
+				"bludicka",
+				"zbrojnos"
+			],
+			afternoon: [
+				"kulovy_blesk",
+				"plivnik",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_sudlicka"
+			],
+			dusk: [
+				"kulovy_blesk",
+				"plivnik",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_muz",
+				"cerny_pes"
+			],
+			night: [
+				"kulovy_blesk",
+				"plivnik",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_sudlicka",
+				"ohniva_kobyla",
+				"cerny_vlkodlak",
+				"nocni_mura",
+				"krvavy_kostlivec"
+			],
+			midnight: [
+				"kulovy_blesk",
+				"plivnik",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_sudlicka",
+				"ohniva_kobyla",
+				"cerny_vlkodlak",
+				"cert_sekac",
+				"krvavy_kostlivec",
+				"bezhlavy_rytir"
+			],
+			dawn: [
+				"kulovy_blesk",
+				"plivnik",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_sudlicka",
+				"ohniva_kobyla"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "kulovy_blesk",
+				name: "Kulový blesk",
+				icon: "⚡",
+				role: "Jiskřící posel bouře sv. Eliáše"
+			},
+			{
+				id: "plivnik",
+				name: "Ohnivý Plivník",
+				icon: "🔥",
+				role: "Domácí ohnivýarášek ze stavení"
+			},
+			{
+				id: "bila_pani",
+				name: "Bílá paní a Zbrojnoš",
+				icon: "👻",
+				role: "Noční přízrak a obrněný strážce"
+			},
+			{
+				id: "bezhlavy_rytir",
+				name: "Bezhlavý rytíř",
+				icon: "🗡️",
+				role: "Mezi-boss z podhradí"
+			},
+			{
+				id: "drak",
+				name: "Tříhlavý líný Drak",
+				icon: "🐉",
+				role: "Vrcholný boss červencové bouře"
+			}
+		],
+		bossMechanic: {
+			label: "Blesky svatého Eliáše a Dračí dech",
+			description: "Bouřkové blesky sv. Eliáše bijí do návsi a strniště – nalákej do nich bubáky a přežij výboj pro trofej Blesk svatého Eliáše!",
+			cadenceSeconds: 9
+		}
+	},
+	10: {
+		id: 10,
+		name: "11. Srpen v Hrusicích – Dožínková slavnost a pečení chleba",
+		shortTitle: "Dožínková slavnost",
+		subtitle: "Svátek svatého Bartoloměje, dožínkový věnec, horký chléb a srpnové vosy",
+		theme: "august_harvest",
+		season: "summer",
+		icon: "🌾",
+		badge: "11. Úroveň",
+		description: "Konec žní a začátek dožínkové veselice! Na návsi voní čerstvě pečený chléb z kamenné pece, hraje muzika a pole křižují čmeláci, zlatohlávci a rozjařený Dožínkový chasník s věncem.",
+		lore: "Na svatého Bartoloměje sedlák žita dožije. V Hrusicích vyhrává muzika, hospodyně pečou křupavý chléb v návesní peci a dožínkový chasník vyzývá k tanci celou ves.",
+		unlockRequirementText: "Poražte Tříhlavého Draka v 10. úrovni (Červencová noc)",
+		skyColor: "#FDE68A",
+		nightSkyColor: "#FDE68A",
+		groundColor: "#FEF08A",
+		ambientTint: "rgba(245, 158, 11, 0.08)",
+		weatherEffect: "sunflower_bloom",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"sunflower",
+			"bread_oven",
+			"harvest_wagon"
+		],
+		arena: {
+			id: "srpnova_slavnost",
+			name: "Srpnová dožínková náves",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "kralovsky_cmelak",
+			name: "🐝 Královský čmelák",
+			warning: "🐝 POZOR: ZE SLUNEČNIC VYLETĚL OBŘÍ KRÁLOVSKÝ ČMELÁK!",
+			time: 85,
+			kills: 100,
+			multiplier: 3.2
+		},
+		midBoss: {
+			id: "zlatohlavek_zrout",
+			name: "🪲 Zlatohlávek Žrout ze sadu",
+			warning: "🪲 POZOR: ZE SADU SE VALÍ SMARAGDOVÝ ZLATOHLÁVEK ŽROUT!",
+			time: 185,
+			kills: 240,
+			multiplier: 1.85
+		},
+		finalBoss: {
+			id: "dozinkovy_chasnik",
+			name: "🌾 Dožínkový chasník s věncem",
+			warning: "🌾 DOŽÍNKY VRCHOLÍ! DOŽÍNKOVÝ CHASNÍK ROZTÁČÍ OBŘÍ VĚNEC! 🌾",
+			time: 300,
+			kills: 390,
+			multiplier: 0.95
+		},
+		spawnPools: {
+			noon: [
+				"srpnove_cmelak",
+				"polni_mysice",
+				"zlatohlavek",
+				"mysak",
+				"sotek"
+			],
+			afternoon: [
+				"srpnove_cmelak",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"zitna_baba"
+			],
+			dusk: [
+				"srpnove_cmelak",
+				"zlatohlavek",
+				"polni_mysice",
+				"zitna_baba",
+				"klekanice",
+				"chroust"
+			],
+			night: [
+				"srpnove_cmelak",
+				"zlatohlavek",
+				"polni_mysice",
+				"klekanice",
+				"divozenka",
+				"plivnik"
+			],
+			midnight: [
+				"srpnove_cmelak",
+				"zlatohlavek",
+				"polni_mysice",
+				"klekanice",
+				"cert",
+				"divozenka"
+			],
+			dawn: [
+				"srpnove_cmelak",
+				"zlatohlavek",
+				"polni_mysice",
+				"zitna_baba",
+				"polni_krecek"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "srpnove_cmelak",
+				name: "Srpnový čmelák",
+				icon: "🐝",
+				role: "Bzučící letec ze slunečnic"
+			},
+			{
+				id: "zlatohlavek",
+				name: "Zlatohlávek skvostný",
+				icon: "🪲",
+				role: "Obrněný brouk odrážející střely"
+			},
+			{
+				id: "polni_mysice",
+				name: "Polní myšice",
+				icon: "🐭",
+				role: "Rychlá zlodějka ze strniště"
+			},
+			{
+				id: "kralovsky_cmelak",
+				name: "Královský čmelák",
+				icon: "👑",
+				role: "První mini-boss úrovně"
+			},
+			{
+				id: "zlatohlavek_zrout",
+				name: "Zlatohlávek Žrout",
+				icon: "🪲",
+				role: "Těžký valící se mezi-boss"
+			},
+			{
+				id: "dozinkovy_chasnik",
+				name: "Dožínkový chasník",
+				icon: "🌾",
+				role: "Vrcholný boss dožínek"
+			}
+		],
+		bossMechanic: {
+			label: "Chlebová pec a Sázecí lopata",
+			description: "Přistup k návesní peci na chléb a stiskni [E] pro horký pecen – posílí útok tupých zbraní a léčení ze svačinek!",
+			cadenceSeconds: 22
+		}
+	},
+	11: {
+		id: 11,
+		name: "12. Srpen v Hrusicích – Vavřinecká noc padajících hvězd a Výr velký",
+		shortTitle: "Vavřinecká noc",
+		subtitle: "Slzy svatého Vavřince, signální vatry a král nočního nebe Výr velký",
+		theme: "laurence_night",
+		season: "summer",
+		icon: "🌠",
+		badge: "12. Úroveň",
+		description: "Černá srpnová obloha plná padajících hvězd! Na vrších vzplanou dožínkové vatry zahánějící Noční můry a ze zlenických skal slétá obávaný Výr velký.",
+		lore: "Kolem svatého Vavřince padají z nebe ohnivé slzy. Kdo v noci zažehne posvátnou vatru u kostela, zažene můří přízraky a získá sílu čelit Výru velkému.",
+		unlockRequirementText: "Poražte Dožínkového chasníka v 11. úrovni (Dožínková slavnost)",
+		skyColor: "#0F172A",
+		nightSkyColor: "#020617",
+		groundColor: "#1E293B",
+		ambientTint: "rgba(99, 102, 241, 0.15)",
+		weatherEffect: "shooting_stars",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"bonfire",
+			"ruin_wall",
+			"owl_perch"
+		],
+		arena: {
+			id: "vavrinecka_noc",
+			name: "Vavřinecká noční aréna",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "netopyr_usatec",
+			name: "🦇 Netopýr Ušatec",
+			warning: "🦇 POZOR: ZE ZLENICKÉ VĚŽE SLÉTÁ NETOPÝR UŠATEC S OCHROMUJÍCÍM PÍSKOTEM!",
+			time: 85,
+			kills: 110,
+			multiplier: 3.1
+		},
+		midBoss: {
+			id: "nocni_mura",
+			name: "🦋 Noční můra ze skal",
+			warning: "🦋 POZOR: ZE STÍNŮ VYSTUPUJE PŘÍZRAČNÁ NOČNÍ MŮRA SE SPÁNKOTVORNÝM PRACHEM!",
+			time: 185,
+			kills: 250,
+			multiplier: 1.8
+		},
+		finalBoss: {
+			id: "vyr_velky",
+			name: "🦉 Výr velký ze Zlenic",
+			warning: "🦉 NOCÍ ZAHOUKAL VÝR VELKÝ! KRÁL NOČNÍCH LOVCŮ KROUŽÍ NAD HRUSICEMI! 🦉",
+			time: 300,
+			kills: 410,
+			multiplier: 0.72
+		},
+		spawnPools: {
+			noon: [
+				"nocni_mura",
+				"kulovy_blesk",
+				"plivnik",
+				"bludicka",
+				"polni_mysice"
+			],
+			afternoon: [
+				"nocni_mura",
+				"kulovy_blesk",
+				"zbrojnos",
+				"cerny_pes",
+				"srpnove_cmelak"
+			],
+			dusk: [
+				"nocni_mura",
+				"cerny_pes",
+				"zbrojnos",
+				"bila_pani",
+				"ohnivy_sudlicka"
+			],
+			night: [
+				"nocni_mura",
+				"cerny_vlkodlak",
+				"krvavy_kostlivec",
+				"bila_pani",
+				"ohniva_kobyla",
+				"ohnivy_sudlicka"
+			],
+			midnight: [
+				"nocni_mura",
+				"cerny_vlkodlak",
+				"cert_sekac",
+				"krvavy_kostlivec",
+				"bezhlavy_rytir",
+				"ohniva_kobyla"
+			],
+			dawn: [
+				"nocni_mura",
+				"cerny_pes",
+				"kulovy_blesk",
+				"bila_pani",
+				"zbrojnos"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "nocni_mura",
+				name: "Noční můra",
+				icon: "🦋",
+				role: "Přízrak uspávající lovce"
+			},
+			{
+				id: "netopyr_usatec",
+				name: "Netopýr Ušatec",
+				icon: "🦇",
+				role: "Rychlý letec z hradní věže"
+			},
+			{
+				id: "vyr_velky",
+				name: "Výr velký ze Zlenic",
+				icon: "🦉",
+				role: "Vrcholný dravý boss noci"
+			},
+			{
+				id: "kulovy_blesk",
+				name: "Kulový blesk",
+				icon: "⚡",
+				role: "Zbloudilý výboj z bouří"
+			},
+			{
+				id: "cerny_vlkodlak",
+				name: "Černý vlkodlak",
+				icon: "🐺",
+				role: "Dravý noční lovec ze skal"
+			}
+		],
+		bossMechanic: {
+			label: "Vavřinecká vatra a Perseidy",
+			description: "Zapal svatou vatru u kostela [E] a chytej padající hvězdy – zaženou Noční můry a okamžitě dobijí ultimátku!",
+			cadenceSeconds: 16
+		}
 	}
 };
 function isLevelUnlocked(levelId, meta) { return (meta?.highestLevelUnlocked ?? 0) >= levelId; }

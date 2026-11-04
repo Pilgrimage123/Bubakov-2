@@ -1420,11 +1420,11 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     { levelId: 0, x: 18, y: 74, shortLabel: '1. Předjaří (Den)', regionNote: 'Tající louky u vsi', tilt: -3 },
     { levelId: 1, x: 44, y: 80, shortLabel: '2. Předjaří (Noc)', regionNote: 'Zamrzlý rybník', tilt: 2 },
     { levelId: 2, x: 24, y: 48, shortLabel: '3. Duben (Den)', regionNote: 'Rozkvetlá náves', tilt: -2 },
-    { levelId: 3, x: 54, y: 54, shortLabel: '4. Hrusický hvozd', regionNote: 'Hluboký les za pilou', tilt: 3 },
-    { levelId: 4, x: 78, y: 68, shortLabel: '5. Ladovská zima', regionNote: 'Zavátá náves a led', tilt: -2 },
-    { levelId: 5, x: 76, y: 40, shortLabel: '6. Čertův mlýn', regionNote: 'Starý mlýn u náhonu', tilt: 2 },
-    { levelId: 6, x: 34, y: 22, shortLabel: '7. Pustá Hláska', regionNote: 'Větrná strážní věž', tilt: -3 },
-    { levelId: 7, x: 74, y: 18, shortLabel: '8. Dračí sluj', regionNote: 'Svatý Jiří a sluj', tilt: 3 },
+    { levelId: 3, x: 54, y: 54, shortLabel: '4. Duben (Noc)', regionNote: 'Filipojakubská noc', tilt: 3 },
+    { levelId: 4, x: 78, y: 68, shortLabel: '5. Květen (Den)', regionNote: 'Májová slavnost', tilt: -2 },
+    { levelId: 5, x: 76, y: 40, shortLabel: '6. Květen (Noc)', regionNote: 'Májová noc v hvozdu', tilt: 2 },
+    { levelId: 6, x: 34, y: 22, shortLabel: '7. Červen (Den)', regionNote: 'Letní senoseč', tilt: -3 },
+    { levelId: 7, x: 74, y: 18, shortLabel: '8. Červen (Noc)', regionNote: 'Svatojánská noc', tilt: 3 },
   ];
 
   const hpPct = Math.round((activePortrait.hp / activePortrait.maxHp) * 100);
@@ -2040,7 +2040,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               <div
                 className="lada-oval-garland-frame"
                 onClick={handleCyclePortrait}
-                title="Klikněte pro přelistování postavy v medailonu (Vodník / Krajánek / Tulák / Pasáček)"
+                title="Klikněte pro přelistování postavy v medailonu (Krajánek / Tulák / Pasáček / Ponocný)"
               >
                 <svg
                   viewBox="0 0 240 190"
@@ -2592,7 +2592,8 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                 <LadaDropCap letter={storyFirstLetter} variant="poppy" />
                 {storyRestText}{' '}
                 <span className="lada-story-stage-note">
-                  Dnes v noci čeká kraj <strong>„{currentLevel.name}“</strong>, kde řádí{' '}
+                  {currentLevel.isNightLevel ? 'Dnes v noci čeká kraj' : 'Dnes za bílého dne čeká kraj'}{' '}
+                  <strong>„{currentLevel.name}“</strong>, kde řádí{' '}
                   <em>{currentLevel.finalBoss.name}</em>.
                 </span>
               </p>

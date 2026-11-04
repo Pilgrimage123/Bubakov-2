@@ -5,9 +5,9 @@ import { getLevelTranslation } from '../src/i18n';
 import { getCurrentDayPhase } from '../src/constants';
 
 describe('Level 5: Květen v Hrusicích (Stage 5 Core Definition & Progression)', () => {
-  it('numbers player-facing game stages from 1 through 8 with Stage 5 mapped to ID 4', () => {
+  it('numbers player-facing game stages sequentially with Stage 5 mapped to ID 4', () => {
     expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(GAME_LEVELS[4].id).toBe(4);
     expect(GAME_LEVELS[4].name.startsWith('5. ')).toBe(true);
   });

@@ -14,9 +14,9 @@ import {
 } from '../src/data/marchThawArena';
 
 describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
-  it('numbers player-facing game stages from 1 through 8 with Stage 3 mapped to ID 2', () => {
+  it('numbers player-facing game stages sequentially with Stage 3 mapped to ID 2', () => {
     expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(GAME_LEVELS[2].id).toBe(2);
     expect(GAME_LEVELS[2].name.startsWith('3. ')).toBe(true);
   });

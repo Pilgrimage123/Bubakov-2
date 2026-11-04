@@ -192,8 +192,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
             </h2>
             <LadaBotanicalFlourish height={18} />
             <p style={{ fontWeight: 700, margin: '0 0 8px 0', fontSize: '0.94rem', color: '#221B17' }}>
-              Encyklopedie {totalMonsters} lidových strašidel, bubáků a diblíků. Zkoumejte, jak je zklidnit
-              poctivým výpraskem nebo usmířit voňavou buchtou.
+              Kronika {totalMonsters} lidových strašidel, jejich zvyků, slabin a odolností.
             </p>
           </div>
           <button
@@ -486,25 +485,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
                 <div
                   style={{
-                    background: 'rgba(0,0,0,0.04)',
-                    borderLeft: '4px solid var(--mustard)',
-                    padding: '8px 12px',
-                    margin: '10px 0',
-                    fontStyle: 'italic',
-                    fontWeight: 600,
-                    fontSize: '0.92rem',
-                  }}
-                >
-                  <GameIcon
-                    icon="scroll"
-                    size={14}
-                    style={{ marginRight: '4px', verticalAlign: 'middle' }}
-                  />
-                  „Z kroniky Ladova kraje: {PREFIX_LORE[selectedPrefixId].lore}“
-                </div>
-
-                <div
-                  style={{
                     borderTop: '2px dashed #bbb',
                     paddingTop: '10px',
                     marginTop: '10px',
@@ -574,7 +554,7 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
 
                 <div className="hunter-progress-wrap" style={{ margin: '10px 0 14px 0' }}>
                   <div className="hunter-progress-header">
-                    <span>Postup terénního výzkumu a zápisů v kronice:</span>
+                    <span>Postup výzkumu v kronice:</span>
                     <span>
                       {enemyProg.kills} / {enemyProg.maxKills} zahnáno ({enemyProg.percent} %)
                     </span>
@@ -742,29 +722,6 @@ export const BestiaryModal: React.FC<BestiaryModalProps> = ({ isOpen, onClose, b
                 </p>
 
                 <LadaLindenVineta />
-
-                <div
-                  style={{
-                    background: 'rgba(0,0,0,0.04)',
-                    borderLeft: '4px solid var(--mustard)',
-                    padding: '8px 12px',
-                    margin: '10px 0',
-                    fontStyle: 'italic',
-                    fontWeight: 600,
-                    fontSize: '0.92rem',
-                  }}
-                >
-                  <GameIcon
-                    icon="scroll"
-                    size={14}
-                    style={{ marginRight: '4px', verticalAlign: 'middle' }}
-                  />
-                  „Z kroniky Ladova kraje:{' '}
-                  {enemyProg.tier >= 2
-                    ? 'Kdo chce přemoci tohoto tvora, musí znát jeho zvyky a nenechat se překvapit nočním přepadem.'
-                    : 'Kronikáři zatím shromažďují zkazky o tomto tajemném nočním úkazu.'}
-                  “
-                </div>
 
                 <div
                   style={{

@@ -254,6 +254,9 @@ describe('i18n localization module', () => {
             expect(descCs).not.toBe(`milestone.${c.id}.desc`);
             expect(descEn).not.toBe(`milestone.${c.id}.desc`);
 
+            expect(nameEn).not.toBe(nameCs);
+            expect(descEn).not.toBe(descCs);
+
             expect(nameCs.length).toBeGreaterThan(0);
             expect(nameEn.length).toBeGreaterThan(0);
             expect(descCs.length).toBeGreaterThan(0);

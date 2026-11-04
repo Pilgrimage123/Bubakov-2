@@ -861,7 +861,7 @@ export function GrandfatherShop({
                         : `Úroveň: ${owned} / ${maxStacks}`;
                       displayName = `${item!.name} (Úroveň ${nextRank})`;
                       if (isMilestoneRank) {
-                        displayDesc = `Výběr ze dvou unikátních schopností na 3., 5. a 8. stupni zbraně!`;
+                        displayDesc = `Výběr ze dvou schopností na ${nextRank}. stupni zbraně!`;
                       } else if (candidateUpgrade) {
                         displayDesc = `${candidateUpgrade.name}: ${candidateUpgrade.ui_text}`;
                         if (isAtCap) {
@@ -878,7 +878,7 @@ export function GrandfatherShop({
                   } else if (item?.isRareInstant) {
                     levelBadge = 'Okamžitý zásah';
                     buttonLabel = 'POUŽÍT';
-                    displayDesc = `${item!.description} (Ihned zavře nůši a spustí se na louce!)`;
+                    displayDesc = `${item!.description} (Spustí se ihned!)`;
                   } else if (item?.isAnanas) {
                     owned = purchasedIds.filter((id) => id === item!.id).length;
                     maxStacks = item!.maxStacks || 2;

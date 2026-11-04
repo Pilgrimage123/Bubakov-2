@@ -245,6 +245,24 @@ import {
 } from './render/marchThawSvgLandscape';
 import { drawKvetenMayLandmark } from './render/kvetenSvgLandscape';
 import { drawCervenSummerLandmark } from './render/cervenSvgLandscape';
+import { drawCervenecDecoration } from './render/cervenecSvgLandscape';
+import { drawSrpenDecoration } from './render/srpenSvgLandscape';
+import {
+  CERVENEC_POIS,
+  CERVENEC_DECOR,
+  getCervenecPois,
+  resolveCervenecObstacles,
+  getCervenecWaterEffect,
+  isInsideCervenecPoi,
+} from './data/cervenecArena';
+import {
+  SRPEN_POIS,
+  SRPEN_DECOR,
+  getSrpenPois,
+  resolveSrpenObstacles,
+  getSrpenWaterEffect,
+  isInsideSrpenPoi,
+} from './data/srpenArena';
 import {
   CERVEN_POIS,
   CERVEN_POND_REGION,
@@ -1015,6 +1033,10 @@ class DecorItem {
       drawKvetenMayLandmark(ctx, this.type, time, isNight);
     } else if (this.type.startsWith('cerven_')) {
       drawCervenSummerLandmark(ctx, this.type, time, isNight);
+    } else if (this.type.startsWith('cervenec_')) {
+      drawCervenecDecoration(ctx, this, time, isNight);
+    } else if (this.type.startsWith('srpen_')) {
+      drawSrpenDecoration(ctx, this, time, isNight);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1388,6 +1410,20 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     ];
     return items;
   }
+  if ((level.id === 8 || level.id === 9) && (level.arena?.id === 'cervencove_zne' || level.theme === 'july_harvest' || level.theme === 'elias_storm')) {
+    const items: DecorItem[] = [
+      ...CERVENEC_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(CERVENEC_POIS.village.x - 50, CERVENEC_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
+  if ((level.id === 10 || level.id === 11) && (level.arena?.id === 'srpnova_slavnost' || level.arena?.id === 'vavrinecka_noc' || level.theme === 'august_harvest' || level.theme === 'laurence_night')) {
+    const items: DecorItem[] = [
+      ...SRPEN_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(SRPEN_POIS.village.x - 50, SRPEN_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
     if (!pool.includes('cottage')) pool.push('cottage');
@@ -1579,7 +1615,7 @@ export default function App() {
   // Selected level state - Level 0 (Předjaří) default for new players
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 7 ? s : 0) as GameLevelId;
+    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 11 ? s : 0) as GameLevelId;
   });
 
   const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0] || GAME_LEVELS[1];
@@ -1604,7 +1640,7 @@ export default function App() {
   const levelProgress = useMemo(
     () =>
       Object.fromEntries(
-        ([0, 1, 2, 3, 4, 5, 6, 7] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+        ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
       ) as Record<GameLevelId, LevelProgress>,
     [meta]
   );
@@ -2454,7 +2490,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     const curMeta = metaRef.current;
     const nextLvlId = (lvlId + 1) as GameLevelId;
-    const canUnlockNext = nextLvlId <= 7;
+    const canUnlockNext = nextLvlId <= 9;
     const nextHighest = canUnlockNext
       ? Math.max(curMeta.highestLevelUnlocked || 1, nextLvlId)
       : (curMeta.highestLevelUnlocked || 1);
@@ -2485,6 +2521,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ? '🔔 Zvoní klekání, májová slavnost přežita!'
                 : lvlId === 6
                 ? '🔔 Zvoní klekání, letní senoseč přežita!'
+                : lvlId === 8
+                ? '🔔 Zvoní klekání, červencové žně přežity!'
                 : '🔔 Zvoní klekání, den přežit!')
             : (lvlId === 1
                 ? '🐓 Svítání, noční mrazy přežity!'
@@ -2494,6 +2532,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ? '🐓 Svítání, májová noc přežita!'
                 : lvlId === 7
                 ? '🐓 Svítání, červnová noc přežita!'
+                : lvlId === 9
+                ? '🐓 Svítání, bouře svatého Eliáše přežita!'
                 : '🐓 Svítání, noc přežita!')),
     }));
 
@@ -2503,11 +2543,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         title: `${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
       }, 6000);
-    } else if (lvlId >= 7) {
+    } else if (lvlId >= 9) {
       showUnlockNotice({
         icon: 'crown',
         title: `VŠECHNY ÚROVNĚ DOKONČENY!`,
-        desc: `Svatojánský Vládce Hvozdu byl přemožen a kouzelná noc pominula! Celý Bubákov oslavuje vaše legendární hrdinství!`,
+        desc: `Tříhlavý Drak pod Melechovem byl přemožen a bouře sv. Eliáše pominula! Celý Bubákov oslavuje vaše legendární hrdinství!`,
       }, 6000);
     }
 
@@ -3091,6 +3131,112 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
 
+    if (eng.activeLevelId === 8 || eng.activeLevelId === 9) {
+      const cvc = eng.cervenec;
+      const isNight = eng.activeLevelId === 9;
+      const pois = getCervenecPois(isNight);
+      const strelnice = cvc.strelnice;
+      if (!isNight && strelnice && strelnice.cooldown <= 0 && isInsideCervenecPoi(p.x, p.y, pois.village)) {
+        strelnice.cooldown = 42;
+        strelnice.buffTimer = 18;
+        strelnice.rosesBurstTimer = 2.5;
+        strelnice.shotsFired += 1;
+        p.hp = Math.min(p.maxHp, p.hp + 15 * (p._cachedFrostHealMult ?? 1));
+        for (const m of eng.enemies) {
+          if (!m || m.dead || m.isDefeated) continue;
+          const dist = Math.hypot(m.x - p.x, m.y - p.y);
+          if (dist < 220) {
+            const ang = Math.atan2(m.y - p.y, m.x - p.x);
+            m.x += Math.cos(ang) * 90;
+            m.y += Math.sin(ang) * 90;
+          }
+        }
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 45,
+          '🌹 POUŤOVÁ RŮŽE ZE STŘELNICE! (+25% RYCHLOST ZBRANÍ & +20 ŠTĚSTÍ)',
+          '#F43F5E',
+          true,
+          'combatStates'
+        );
+        sound.cheer();
+        return true;
+      }
+      if (isInsideCervenecPoi(p.x, p.y, pois.shrine) && cvc.shrineCooldown <= 0) {
+        cvc.shrineCooldown = 48;
+        p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
+        p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.2);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          isNight
+            ? '⚡ HROMOSVOD SV. ELIÁŠE! (+30 HP & OCHRANA)'
+            : '🌾 SNOP SVATÉ MARKÉTY! (+30 HP & POŽEHNÁNÍ)',
+          '#FDE047',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+      if (isInsideCervenecPoi(p.x, p.y, pois.church) && cvc.bellCooldown <= 0) {
+        cvc.bellCooldown = 55;
+        p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 4.5);
+        for (const m of eng.enemies) {
+          if (!m || m.dead || m.isDefeated) continue;
+          if (Math.hypot(m.x - p.x, m.y - p.y) < 320 && !m.isBoss && !m.isMiniboss) {
+            m.panicked = true;
+            m.panicTimer = Math.max(m.panicTimer || 0, 3.0);
+          }
+        }
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          isNight ? '🔔 ZVONĚNÍ PROTI MRAČNŮM!' : '🔔 POUTNÍ ZVON U SV. VÁCLAVA!',
+          '#FDE047',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+      if (isInsideCervenecPoi(p.x, p.y, pois.forest) && cvc.forestCooldown <= 0) {
+        cvc.forestCooldown = 44;
+        p.hp = Math.min(p.maxHp, p.hp + 28 * (p._cachedFrostHealMult ?? 1));
+        p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.22);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🍓 SLADKÉ LESNÍ MALINY! (+28 HP & +RYCHLOST)',
+          '#FB7185',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+      if (isInsideCervenecPoi(p.x, p.y, pois.tavern) && cvc.tavernCooldown <= 0) {
+        cvc.tavernCooldown = 50;
+        p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
+        p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🍺 POUTNÍ DŽBÁNEK U SEJPKŮ! (+KURÁŽ & SÍLA)',
+          '#FDE047',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+    }
+
     // 3. Interaktivní předmět / Truhla / Chasník v dosahu (~165 px)
     if (eng.drops && eng.drops.length > 0) {
       let nearestDrop: any = null;
@@ -3636,29 +3782,53 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
         const levelId = engineRef.current.activeLevelId ?? 0;
         const decor = engineRef.current.decor;
+        const radius = Number(impact.radius ?? 0);
+        const dmg = Number(impact.dmg ?? 0);
+        const impactType = impact.type || 'physical';
+        const baseKnockback = Number(impact.baseKnockback ?? 200);
+        const knockbackMult = Number(impact.knockbackMult ?? 1);
+        const stunDuration = Number(impact.stunDuration ?? 0);
+        const critChanceBonus = Number(impact.critChanceBonus ?? 0);
+        const critDamageMult = Number(impact.critDamageMult ?? 1);
+        const critKnockbackMult = Number(impact.critKnockbackMult ?? 1);
+        const ignoreResist = Number(impact.ignoreResist ?? 0);
         // Broadphase rejects the whole virtual flock or snowman horde before per-entity AOE collision tests.
         const crowWaveImpactMayHit = crowWaveRef.current?.isWithinBounds(
-          impact.x, impact.y, impact.radius + CROW_WAVE_HIT_RADIUS
+          impact.x, impact.y, radius + CROW_WAVE_HIT_RADIUS
         ) ?? false;
         const snowmanHordeImpactMayHit = snowmanHordeRef.current?.isWithinBounds(
-          impact.x, impact.y, impact.radius + SNOWMAN_HORDE_HIT_RADIUS
+          impact.x, impact.y, radius + SNOWMAN_HORDE_HIT_RADIUS
         ) ?? false;
-        const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, impact.radius + 60);
+        const nearby = enemySpatialHashRef.current.queryCircle(impact.x, impact.y, radius + 60);
         for (let i = 0; i < nearby.length; i++) {
           const e = nearby[i];
           if (e.isDefeated) continue;
           if (e.isVirtualCrowMember && !crowWaveImpactMayHit) continue;
           if (e.isVirtualSnowmanMember && !snowmanHordeImpactMayHit) continue;
-          const dx=e.x-impact.x, dy=e.y-impact.y, reach=impact.radius+e.radius;
-          if (dx*dx+dy*dy <= reach*reach) {
+          const dx = e.x - impact.x;
+          const dy = e.y - impact.y;
+          const distSq = dx * dx + dy * dy;
+          const reach = radius + e.radius;
+          if (distSq <= reach * reach) {
             if (!hasTerrainLineOfSight(impact.x, impact.y, e.x, e.y, levelId, decor)) continue;
-            e.takeDamage(impact.dmg, impact.type, dx*4, dy*4);
+            const dist = Math.sqrt(distSq) || 1;
+            const kbForce = baseKnockback * knockbackMult;
+            const kbx = distSq > 1 ? (dx / dist) * kbForce : dx * 4 * knockbackMult;
+            const kby = distSq > 1 ? (dy / dist) * kbForce : dy * 4 * knockbackMult;
+            e.takeDamage(dmg, impactType, kbx, kby, {
+              weaponId: impact.weaponId,
+              stunDuration,
+              critChanceBonus,
+              critDamageMult,
+              critKnockbackMult,
+              ignoreResist,
+            });
             if (!impact.noMasteryProc && impact.weaponId) this.triggerWeaponMastery(impact.weaponId, e, 'hit');
           }
         }
         pushDamageText(engineRef.current.texts, impact.x, impact.y - 20, 'BUM!', COLORS.mustard, true);
       },
-      spawnHromnickaPulse(reach: number, dmg: number, level: number) {
+      spawnHromnickaPulse(reach: number, dmg: number, level: number, knockbackMult = 1, stunDuration = 0) {
         this.hromnickaPulseTimer = 0.35;
         this.hromnickaPulseRadius = reach;
         pushTransientLight(createHolyCathedralLight(this.x, this.y));
@@ -3676,9 +3846,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             if (!hasTerrainLineOfSight(this.x, this.y, e.x, e.y, levelId, decor)) continue;
             const dist = Math.sqrt(distSq) || 1;
             const holyPush = getHolyPushMultiplier(e);
-            const kbForce = (120 + level * 10) * holyPush;
+            const kbForce = (120 + level * 10) * holyPush * knockbackMult;
             const finalDmg = dmg * (isUnholyEnemy(e) ? 1.5 : 1.0);
-            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce);
+            e.takeDamage(finalDmg, 'holy', (dx / dist) * kbForce, (dy / dist) * kbForce, {
+              weaponId: 'hromnicka',
+              stunDuration,
+            });
             if (isUnholyEnemy(e)) {
               pushDamageText(engineRef.current.texts, e.x, e.y - 35, 'SVATÉ SPÁLENÍ! 🔥', COLORS.mustard, true);
             }
@@ -3970,7 +4143,83 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           pulsing: true,
         });
       }
-    }
+    } else if (chosenLevelId === 9) {
+        engine.lightSources.push(
+          {
+            id: 'cervenec_night_shrine',
+            x: CERVENEC_POIS.shrine.x,
+            y: CERVENEC_POIS.shrine.y - 25,
+            radius: 260,
+            color: '#93C5FD',
+            intensity: 0.85,
+            type: 'bozi_muka',
+            pulsing: true,
+          },
+          {
+            id: 'cervenec_night_village',
+            x: CERVENEC_POIS.village.x,
+            y: CERVENEC_POIS.village.y - 20,
+            radius: 240,
+            color: '#FBBF24',
+            intensity: 0.78,
+            type: 'bozi_muka',
+            pulsing: true,
+          },
+          {
+            id: 'cervenec_night_tavern',
+            x: CERVENEC_POIS.tavern.x,
+            y: CERVENEC_POIS.tavern.y - 10,
+            radius: 220,
+            color: '#F59E0B',
+            intensity: 0.74,
+            type: 'window',
+            pulsing: true,
+          }
+        );
+      } else if (chosenLevelId === 11) {
+        engine.lightSources.push(
+          {
+            id: 'vavrinecka_vatra_light',
+            x: -800,
+            y: -650,
+            radius: 340,
+            color: '#F97316',
+            intensity: 0.95,
+            type: 'hearth',
+            pulsing: true,
+          },
+          {
+            id: 'srpen_night_village',
+            x: SRPEN_POIS.village.x,
+            y: SRPEN_POIS.village.y - 20,
+            radius: 240,
+            color: '#FBBF24',
+            intensity: 0.78,
+            type: 'bozi_muka',
+            pulsing: true,
+          },
+          {
+            id: 'srpen_night_tavern',
+            x: SRPEN_POIS.tavern.x,
+            y: SRPEN_POIS.tavern.y - 10,
+            radius: 220,
+            color: '#F59E0B',
+            intensity: 0.74,
+            type: 'window',
+            pulsing: true,
+          },
+          {
+            id: 'srpen_night_shrine',
+            x: SRPEN_POIS.shrine.x,
+            y: SRPEN_POIS.shrine.y - 25,
+            radius: 260,
+            color: '#FEF08A',
+            intensity: 0.82,
+            type: 'bozi_muka',
+            pulsing: true,
+          }
+        );
+      }
     engine.nextBossMechanicAt =
       chosenLevel.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     engine.spawnTimer = (chosenLevelId === 1 || chosenLevelId === 0) ? 3.5 : 2.0;
@@ -3986,10 +4235,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     engine.snowmanHorde = snowmanHordeRef.current;
     engineRef.current = engine;
 
-    // Stage 1's flock & night arenas (Stages 2, 4, 6, 8) use fixed preallocated pools; no enemy objects are created in the frame loop.
+    // Stage 1's flock & night arenas (Stages 2, 4, 6, 8, 10, 12) use fixed preallocated pools; no enemy objects are created in the frame loop.
     crowWaveRef.current?.resetRun();
     snowmanHordeRef.current?.resetRun();
-    if (chosenLevelId === 0 || chosenLevelId === 1 || chosenLevelId === 3 || chosenLevelId === 5 || chosenLevelId === 7) {
+    if (chosenLevelId === 0 || chosenLevelId === 1 || chosenLevelId === 3 || chosenLevelId === 5 || chosenLevelId === 7 || chosenLevelId === 9 || chosenLevelId === 11) {
       crowWaveRef.current?.preparePool(createEnemyInstance, chosenLevelId);
     }
     if (chosenLevelId === 0 || chosenLevelId === 1) {
@@ -4094,6 +4343,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       // Level 8: Červen v Hrusicích (Červnová noc) – bludička z rákosí a říční rak
       engineRef.current.enemies.push(createEnemyInstance('bludicka', player.x + 460, player.y, 1.0));
       engineRef.current.enemies.push(createEnemyInstance('rak_ricni', player.x - 460, player.y, 1.0));
+    } else if (chosenLevelId === 8) {
+      // Level 9: Červenec v Hrusicích (Červencové žně) – polní křečci a žitná bába
+      engineRef.current.enemies.push(createEnemyInstance('polni_krecek', player.x + 450, player.y + 80, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('polni_krecek', player.x - 450, player.y - 80, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('zitna_baba', player.x, player.y - 450, 1.0));
+    } else if (chosenLevelId === 9) {
+      // Level 10: Červenec v Hrusicích (Bouře sv. Eliáše) – kulový blesk a plivník
+      engineRef.current.enemies.push(createEnemyInstance('kulovy_blesk', player.x + 460, player.y, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('plivnik', player.x - 460, player.y, 1.0));
+    } else if (chosenLevelId === 10) {
+      // Level 11: Srpen v Hrusicích (Dožínková slavnost) – srpnový čmelák a polní myšice
+      engineRef.current.enemies.push(createEnemyInstance('srpnove_cmelak', player.x + 440, player.y + 60, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('polni_mysice', player.x - 440, player.y - 60, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('polni_mysice', player.x + 400, player.y - 100, 1.0));
+    } else if (chosenLevelId === 11) {
+      // Level 12: Srpen v Hrusicích (Vavřinecká noc) – noční můra a netopýr ušatec
+      engineRef.current.enemies.push(createEnemyInstance('nocni_mura', player.x + 450, player.y, 1.0));
+      engineRef.current.enemies.push(createEnemyInstance('cerny_vlkodlak', player.x - 460, player.y + 60, 1.0));
     }
 
     livingEnemiesRef.current.length = 0;
@@ -4157,34 +4424,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   // Reset all meta progression back to initial state (locks everything, resets all upgrades)
   const handleResetProgress = () => {
     const defaultMeta: MetaProgression = {
-      krejcary: 0,
-      regenLevel: 0,
-      ovenLevel: 0,
-      scarecrowLevel: 0,
-      millLevel: 0,
-      wallLevel: 0,
-      bakeryLevel: 0,
-      bellLevel: 0,
-      boziMukaLevel: 0,
-      totalSoulsSaved: 0,
-      totalChasnikSaved: 0,
-      season: 'autumn',
-      trophiesClaimed: {},
-      bestiaryKills: {},
-      villageStoryRead: {},
-      highestSurviveTime: 0,
-      unlockedHunters: { krajanek: true, wanderer: true, shepherd: false, korenarka: false, watchman: false, sexton: false, granny: false },
-      unlockedWeapons: { povidlove_buchty: true, osikovy_prut: true, hromnicka: true, bylinkova_fajfka: true },
-      hunterKillCounts: {},
-      weaponKillCounts: {},
-      selectedLevel: 0,
-      highestLevelUnlocked: 1,
-      completedLevels: {},
-      levelKillCounts: {},
-      dynamicDifficulty: 3.0,
-      performanceProfile: 'balanced',
-      performanceMode: false,
-      dynamicLightingEnabled: true,
+      ...createDefaultMetaProgression(),
+      currentLang: metaRef.current.currentLang || 'cs',
     };
     saveMeta(defaultMeta);
     setSelectedLevelId(0);
@@ -5204,6 +5445,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 6 || engine.activeLevelId === 7) {
                   resolveCervenObstacles(engine.grandfather, false);
+                } else if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
+                  resolveCervenecObstacles(engine.grandfather, false);
                 }
                 if (Math.abs(dx) > 3) {
                   engine.grandfather.facingDir = dx >= 0 ? 1 : -1;
@@ -5232,7 +5475,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 (engine.activeLevelId ?? 0) === 0 ||
                 (engine.activeLevelId ?? 0) === 2 ||
                 (engine.activeLevelId ?? 0) === 4 ||
-                (engine.activeLevelId ?? 0) === 6;
+                (engine.activeLevelId ?? 0) === 6 ||
+                (engine.activeLevelId ?? 0) === 8;
               const announcement = isDayLevel ? 'ZVONÍ KLEKÁNÍ! PŘEŽILI JSTE DEN!' : 'KUROPĚNÍ! KOHOUT ZAKOKRHAL!';
               pushDamageText(engine.texts, player.x, player.y - 70, announcement, COLORS.mustard, true, 'bossAnnouncements');
               // All monsters panic and flee
@@ -8003,6 +8247,166 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // 7. Arena obstacles and boundary
               resolveCervenObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
+              const cvc = engine.cervenec;
+              const isNight = engine.activeLevelId === 9;
+              const pois = getCervenecPois(isNight);
+
+              if (cvc.shrineCooldown > 0) cvc.shrineCooldown = Math.max(0, cvc.shrineCooldown - dt);
+              if (cvc.bellCooldown > 0) cvc.bellCooldown = Math.max(0, cvc.bellCooldown - dt);
+              if (cvc.forestCooldown > 0) cvc.forestCooldown = Math.max(0, cvc.forestCooldown - dt);
+              if (cvc.tavernCooldown > 0) cvc.tavernCooldown = Math.max(0, cvc.tavernCooldown - dt);
+
+              const strelnice = cvc.strelnice;
+              if (strelnice) {
+                if (strelnice.cooldown > 0) strelnice.cooldown = Math.max(0, strelnice.cooldown - dt);
+                if (strelnice.rosesBurstTimer > 0) strelnice.rosesBurstTimer = Math.max(0, strelnice.rosesBurstTimer - dt);
+                if (strelnice.buffTimer > 0) {
+                  strelnice.buffTimer = Math.max(0, strelnice.buffTimer - dt);
+                  if (player.weapons) {
+                    for (let wIdx = 0; wIdx < player.weapons.length; wIdx++) {
+                      const w: any = player.weapons[wIdx];
+                      if (w && w.cd > 0) {
+                        w.cd = Math.max(0, w.cd - dt * 0.25);
+                      }
+                    }
+                  }
+                  player.luck = Math.max(player.luck || 0, 20);
+                }
+              }
+
+              // 1. Prompt detection
+              let promptText: string | null = null;
+              if (!isNight && strelnice && isInsideCervenecPoi(player.x, player.y, pois.village)) {
+                promptText = strelnice.cooldown <= 0
+                  ? 'Stiskni [E]: Poutní střelnice na návsi (vystřelit růži +25 % rychlost zbraní)'
+                  : `Poutní střelnice nabíjí vzduchovky (${Math.ceil(strelnice.cooldown)}s)`;
+              } else if (isInsideCervenecPoi(player.x, player.y, pois.shrine)) {
+                promptText = cvc.shrineCooldown <= 0
+                  ? (isNight ? 'Stiskni [E]: Hromosvod u Boží muky (+30 HP)' : 'Stiskni [E]: Snop svaté Markéty (+30 HP)')
+                  : `Boží muka odpočívá (${Math.ceil(cvc.shrineCooldown)}s)`;
+              } else if (isInsideCervenecPoi(player.x, player.y, pois.church)) {
+                promptText = cvc.bellCooldown <= 0
+                  ? 'Stiskni [E]: Zazvonit u sv. Václava (ochrana & zaplašení)'
+                  : `Zvon odpočívá (${Math.ceil(cvc.bellCooldown)}s)`;
+              } else if (isInsideCervenecPoi(player.x, player.y, pois.forest)) {
+                promptText = cvc.forestCooldown <= 0
+                  ? 'Stiskni [E]: Nasbírat sladké lesní maliny (+28 HP & rychlost)'
+                  : `Maliní dorůstá (${Math.ceil(cvc.forestCooldown)}s)`;
+              } else if (isInsideCervenecPoi(player.x, player.y, pois.tavern)) {
+                promptText = cvc.tavernCooldown <= 0
+                  ? 'Stiskni [E]: Poutní džbánek u Sejpků (+25 HP & síla)'
+                  : `Šenkýř točí čerstvý džbánek (${Math.ceil(cvc.tavernCooldown)}s)`;
+              }
+              engine.cervenecActivePoiPrompt = promptText;
+
+              // 2. Žitný lán (fields) cover bonus
+              const inGrainField = isInsideCervenecPoi(player.x, player.y, pois.fields);
+              player.arenaArmorBonus = inGrainField ? 0.16 : 0;
+
+              // 3. Water / brook effect
+              const waterEff = getCervenecWaterEffect(player.x, player.y, engine.gameTime);
+              if (waterEff.inOpenWater && !(player.type === 'krajanek' && player.krajanekRideTimer > 0)) {
+                player.x += waterEff.carryVx * dt;
+                player.y += waterEff.carryVy * dt;
+                player.waterSoakedTimer = Math.max(player.waterSoakedTimer || 0, 1.0);
+              }
+
+              // 4. Night Stage 10: Bouře sv. Eliáše — periodic telegraphed lightning strikes
+              if (isNight) {
+                if (cvc.stormWarning && cvc.stormWarning.timer > 0) {
+                  cvc.stormWarning.timer -= dt;
+                  if (cvc.stormWarning.timer <= 0) {
+                    const strike = cvc.stormWarning;
+                    cvc.stormWarning = null;
+                    sound.heavyHit();
+                    if (!metaRef.current.lightningWitnessed) {
+                      metaRef.current.lightningWitnessed = true;
+                      saveMeta({ ...metaRef.current, lightningWitnessed: true });
+                    }
+                    const pDist = Math.hypot(player.x - strike.x, player.y - strike.y);
+                    if (pDist <= strike.radius) {
+                      player.takeDamage(28, 'fire', undefined, true);
+                      pushDamageText(
+                        engine.texts,
+                        player.x,
+                        player.y - 45,
+                        '⚡ BLESK SVATÉHO ELIÁŠE!',
+                        '#60A5FA',
+                        true,
+                        'combatStates'
+                      );
+                    }
+                    for (const m of engine.enemies) {
+                      if (!m || m.dead || m.isDefeated || m.id === 'kulovy_blesk') continue;
+                      if (Math.hypot(m.x - strike.x, m.y - strike.y) <= strike.radius + m.radius) {
+                        m.hp -= 120;
+                        m.stunTimer = Math.max(m.stunTimer || 0, 1.5);
+                      }
+                    }
+                    if (engine.particles && engine.particles.length < activeMaxParticlesRef.current - 12) {
+                      for (let i = 0; i < 12; i++) {
+                        const ang = (i / 12) * Math.PI * 2;
+                        emitParticle(engine.particles, () => ({
+                          x: strike.x,
+                          y: strike.y,
+                          vx: Math.cos(ang) * (90 + Math.random() * 80),
+                          vy: Math.sin(ang) * (90 + Math.random() * 80),
+                          life: 0.45,
+                          color: i % 2 === 0 ? '#93C5FD' : '#FEF08A',
+                          size: 4.5,
+                        }));
+                      }
+                    }
+                  }
+                } else {
+                  cvc.stormBoltTimer = (cvc.stormBoltTimer || 0) - dt;
+                  if (cvc.stormBoltTimer <= 0) {
+                    cvc.stormBoltTimer = 11 + Math.random() * 5;
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 60 + Math.random() * 160;
+                    cvc.stormWarning = {
+                      x: player.x + Math.cos(angle) * dist,
+                      y: player.y + Math.sin(angle) * dist,
+                      radius: 85,
+                      timer: 1.65,
+                      maxTimer: 1.65,
+                    };
+                  }
+                }
+              }
+
+              // 5. Ambient particles (golden wheat chaff by day, storm sparks/rain by night)
+              cvc.weatherChaffTimer = (cvc.weatherChaffTimer || 0) + dt;
+              if (cvc.weatherChaffTimer >= 0.24 && engine.particles.length < activeMaxParticlesRef.current - 8) {
+                cvc.weatherChaffTimer = 0;
+                if (isNight) {
+                  emitParticle(engine.particles, () => ({
+                    x: player.x + (Math.random() - 0.5) * 1200,
+                    y: player.y - 360 + (Math.random() - 0.5) * 260,
+                    vx: -45 - Math.random() * 35,
+                    vy: 140 + Math.random() * 60,
+                    life: 1.4 + Math.random() * 0.6,
+                    color: Math.random() < 0.35 ? '#93C5FD' : '#60A5FA',
+                    size: 3.2,
+                  }));
+                } else {
+                  const isPoppyPetal = Math.random() < 0.25;
+                  emitParticle(engine.particles, () => ({
+                    x: player.x + (Math.random() - 0.5) * 1200,
+                    y: player.y - 350 + (Math.random() - 0.5) * 300,
+                    vx: 26 + Math.random() * 28,
+                    vy: 14 + Math.random() * 18,
+                    life: 3.0 + Math.random() * 1.4,
+                    color: isPoppyPetal ? '#EF4444' : '#FBBF24',
+                    size: isPoppyPetal ? 3.8 : 3.2,
+                  }));
+                }
+              }
+
+              // 6. Arena obstacles and boundary
+              resolveCervenecObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
             } else {
               player.arenaArmorBonus = 0;
             }
@@ -9216,6 +9620,20 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   resolveCervenObstacles(e, isFlyingEnemy);
                 }
                 clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'kulovy_blesk' || e.id === 'bila_pani' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  if (!isFlyingEnemy) {
+                    const eWater = getCervenecWaterEffect(e.x, e.y, engine.gameTime || 0);
+                    if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+                      e.x += eWater.carryVx * dt;
+                      e.y += eWater.carryVy * dt;
+                      e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+                    }
+                  }
+                  resolveCervenecObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
               }
             }
 
@@ -9440,7 +9858,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
             }
-            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9) {
               clampToMarchArenaBounds(d, 28);
             } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);
@@ -9470,7 +9888,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
-              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9) {
                 clampToMarchArenaBounds(d, 28);
               } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
                 clampToDubenArenaBounds(d, 28);
@@ -15495,10 +15913,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </div>
             )}
 
-            {/* 8 PROGRESSIVE GAME LEVELS SELECTOR */}
+            {/* 12 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
-                {([0, 1, 2, 3, 4, 5, 6, 7] as GameLevelId[]).map((lvlId) => {
+                {([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
                   const isUnlocked = prog?.isUnlocked ?? false;
@@ -15511,7 +15929,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     (lvlId === 4 && ((meta.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta.bestiaryKills?.obr || 0) >= 1)) ||
                     (lvlId === 5 && ((meta.bestiaryKills?.hejkal || 0) >= 1 || (meta.bestiaryKills?.mlynar || 0) >= 1)) ||
                     (lvlId === 6 && ((meta.bestiaryKills?.kralovska_polednice || 0) >= 1 || (meta.bestiaryKills?.polednice || 0) >= 1 || (meta.bestiaryKills?.bezhlavy_rytir || 0) >= 1)) ||
-                    (lvlId === 7 && ((meta.bestiaryKills?.svatojansky_vladce || 0) >= 1 || (meta.bestiaryKills?.drak || 0) >= 1));
+                    (lvlId === 7 && ((meta.bestiaryKills?.svatojansky_vladce || 0) >= 1 || (meta.bestiaryKills?.drak || 0) >= 1)) ||
+                    (lvlId === 8 && (meta.bestiaryKills?.hromotluk_marketa || 0) >= 1) ||
+                    (lvlId === 9 && (meta.bestiaryKills?.drak || 0) >= 1) ||
+                    (lvlId === 10 && (meta.bestiaryKills?.dozinkovy_chasnik || 0) >= 1) ||
+                    (lvlId === 11 && (meta.bestiaryKills?.vyr_velky || 0) >= 1);
 
                   return (
                     <div
@@ -15708,7 +16130,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       <LadaFolkFlower variant="carmine" size={16} spin="reverse" />
                     </strong>
                     <div style={{ fontSize: '0.82rem', color: '#451A03', fontWeight: 700 }}>
-                      Agresivita a tempo vln Režiséra výpravy během noci
+                      Agresivita a tempo vln během výpravy
                     </div>
                   </div>
                 </div>
@@ -15800,19 +16222,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <LadaCardCorners variant="callout" showBottomCorners={true} />
               <div className="stage-summary-info">
                 <div style={{ fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', color: 'var(--wood-dark)' }}>
-                  Vybraná výprava pro nadcházející noc:
+                  Vybraná výprava:
                 </div>
                 <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px', margin: '2px 0', flexWrap: 'wrap' }}>
                   <LadaFolkFlower variant="poppy" size={18} spin />
                   <GameIcon icon={currentLevel.icon} size={32} />
                   <span>{currentLevel.name}</span>
                   <span style={{ fontSize: '0.9rem', color: '#78350F' }}>
-                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})
+                    ({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : currentLevel.season === 'summer' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="sun" size={13} /> Léto</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})
                   </span>
                   <LadaFolkFlower variant="cornflower" size={18} spin="reverse" />
                 </div>
                 <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.3 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="wheat" size={16} /> {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní noční nezbeda: ${currentLevel.finalBoss.name}`}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><GameIcon icon="wheat" size={16} /> {levelProgress[selectedLevelId]?.spoiledBossHint || `Hlavní boss: ${currentLevel.finalBoss.name}`}</span>
                 </div>
               </div>
 
@@ -15862,7 +16284,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
+                  <GameIcon icon="book" size={16} /> Bestiář venkova
                 </span>
               </button>
               <button
@@ -15951,7 +16373,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     <span>Cíl výpravy:</span>
                   </div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--ink)' }}>
-                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
+                    {currentLevel.name} <span style={{ fontSize: '0.82rem', color: '#78350F' }}>({currentLevel.shortTitle} • {currentLevel.season === 'winter' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="snowflake" size={13} /> Zima</span> : currentLevel.season === 'spring' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="seedling" size={13} /> Jaro</span> : currentLevel.season === 'summer' ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="sun" size={13} /> Léto</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon icon="autumn_leaf" size={13} /> Podzim</span>})</span>
                   </div>
                 </div>
                 <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#1D4ED8', textDecoration: 'underline', marginLeft: '6px' }}>
@@ -15990,7 +16412,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </h1>
               <LadaBotanicalFlourish height={20} />
               <p style={{ fontSize: '1.15rem', fontWeight: 800, marginTop: '-2px', color: 'var(--wood-dark)' }}>
-                Koho vyšlete do noci na výpravu do kraje: <strong>{currentLevel.name}</strong>?
+                Koho vyšlete na výpravu: <strong>{currentLevel.name}</strong>?
               </p>
               <LadaFrieze repeatCount={16} height={18} />
             </div>
@@ -16825,7 +17247,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               )}
             <LadaBotanicalFlourish height={18} className="my-2" />
             <div className="tally-actions-row" style={{ marginTop: '16px' }}>
-              {tallyCounters.isVictory && tallyCounters.levelId < 7 && (
+              {tallyCounters.isVictory && tallyCounters.levelId < 11 && (
                 <button
                   className="lada-btn"
                   style={{ fontSize: '1.25rem', padding: '12px 32px', background: 'var(--leaf-green)' }}
@@ -17023,7 +17445,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </button>
               <button className="lada-btn btn-small" onClick={() => setIsBestiaryOpen(true)}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <GameIcon icon="book" size={16} /> Bestiář nočního venkova
+                  <GameIcon icon="book" size={16} /> Bestiář venkova
                 </span>
               </button>
               <button

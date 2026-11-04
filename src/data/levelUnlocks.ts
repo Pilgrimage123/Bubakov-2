@@ -9,7 +9,11 @@ var LEVEL_ORDER = [
 	4,
 	5,
 	6,
-	7
+	7,
+	8,
+	9,
+	10,
+	11
 ];
 function getPreviousLevel(id: number) {
 	const idx = LEVEL_ORDER.indexOf(id);
@@ -27,6 +31,10 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 5 && ((meta?.bestiaryKills?.ledovi_muzi || 0) >= 1 || (meta?.bestiaryKills?.pankrac || 0) >= 1 || !!meta?.completedLevels?.[4])) return true;
 	if (id === 6 && ((meta?.bestiaryKills?.hejkal || 0) >= 1 || (meta?.bestiaryKills?.mlynar || 0) >= 1 || !!meta?.completedLevels?.[5])) return true;
 	if (id === 7 && ((meta?.bestiaryKills?.kralovska_polednice || 0) >= 1 || !!meta?.completedLevels?.[6])) return true;
+	if (id === 8 && ((meta?.bestiaryKills?.svatojansky_vladce || 0) >= 1 || !!meta?.completedLevels?.[7])) return true;
+	if (id === 9 && ((meta?.bestiaryKills?.hromotluk_marketa || 0) >= 1 || !!meta?.completedLevels?.[8])) return true;
+	if (id === 10 && ((meta?.bestiaryKills?.drak || 0) >= 1 || !!meta?.completedLevels?.[9])) return true;
+	if (id === 11 && ((meta?.bestiaryKills?.dozinkovy_chasnik || 0) >= 1 || !!meta?.completedLevels?.[10])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -160,6 +168,32 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "cert_sekac", name: "Pekelný čert sekáč", icon: "😈" },
 		{ id: "polednice", name: "Polednice z lánů", icon: "🌾" },
 		{ id: "rak_ricni", name: "Říční rak z tůně", icon: "🦞" }
+	]),
+	8: makeSequentialUnlock(8, [
+		{ id: "svatojansky_vladce", name: "Svatojánský Vládce Hvozdu", icon: "🌿" },
+		{ id: "ohnivy_sudlicka", name: "Ohnivý sudlička", icon: "🔥" },
+		{ id: "rusalka", name: "Rusalka z tůně", icon: "🌊" },
+		{ id: "bludicka", name: "Bludička", icon: "✨" }
+	]),
+	9: makeSequentialUnlock(9, [
+		{ id: "hromotluk_marketa", name: "Pouťový Hromotluk", icon: "🎯" },
+		{ id: "zitna_matka", name: "Žitná matka", icon: "🌾" },
+		{ id: "krecek_obilnik", name: "Král polních křečků Obilník", icon: "🐹" },
+		{ id: "zitna_baba", name: "Žitná bába (Srpanda)", icon: "☀️" },
+		{ id: "polni_krecek", name: "Polní křeček", icon: "🐹" }
+	]),
+	10: makeSequentialUnlock(10, [
+		{ id: "drak", name: "Tříhlavý líný Drak", icon: "🐉" },
+		{ id: "bezhlavy_rytir", name: "Bezhlavý rytíř", icon: "🗡️" },
+		{ id: "bila_pani", name: "Bílá paní", icon: "👻" },
+		{ id: "kulovy_blesk", name: "Kulový blesk", icon: "⚡" }
+	]),
+	11: makeSequentialUnlock(11, [
+		{ id: "dozinkovy_chasnik", name: "Dožínkový chasník s věncem", icon: "🌾" },
+		{ id: "zlatohlavek_zrout", name: "Zlatohlávek Žrout ze sadu", icon: "🪲" },
+		{ id: "kralovsky_cmelak", name: "Královský čmelák", icon: "🐝" },
+		{ id: "srpnove_cmelak", name: "Srpnový čmelák", icon: "🐝" },
+		{ id: "zlatohlavek", name: "Zlatohlávek skvostný", icon: "🪲" }
 	])
 };
 

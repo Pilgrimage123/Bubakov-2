@@ -359,6 +359,50 @@ var TROPHIES = [
 			cur: (meta.completedLevels && meta.completedLevels[7]) || (meta.bestiaryKills.svatojansky_vladce || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
+	},
+	{
+		id: "level8_completed",
+		title: "🌾 Hospodář červencových žní",
+		desc: "Dokonči 9. úroveň: zastřílej si na pouti sv. Markéty a přemož Pouťového Hromotluka!",
+		reward: 380,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[8]) || (meta.bestiaryKills?.hromotluk_marketa || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[8]) || (meta.bestiaryKills?.hromotluk_marketa || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level9_completed",
+		title: "🐉 Pán bouře svatého Eliáše",
+		desc: "Dokonči 10. úroveň: přežij bouři sv. Eliáše, odraz Bezhlavého rytíře a pokoř Tříhlavého Draka!",
+		reward: 420,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[9]) || (meta.bestiaryKills?.drak || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[9]) || (meta.bestiaryKills?.drak || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level10_completed",
+		title: "🌾 Vládce srpnových dožínek",
+		desc: "Dokonči 11. úroveň: upeč si křupavý chléb v návesní peci a pokoř Dožínkového chasníka!",
+		reward: 450,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[10]) || (meta.bestiaryKills?.dozinkovy_chasnik || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[10]) || (meta.bestiaryKills?.dozinkovy_chasnik || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level11_completed",
+		title: "🦉 Pokořitel Výra velkého",
+		desc: "Dokonči 12. úroveň: rozdmýchej Vavřineckou vatru, chytej Perseidy a přemož Výra velkého!",
+		reward: 500,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[11]) || (meta.bestiaryKills?.vyr_velky || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[11]) || (meta.bestiaryKills?.vyr_velky || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
 	}
 ];
 

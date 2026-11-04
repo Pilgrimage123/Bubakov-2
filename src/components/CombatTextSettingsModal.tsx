@@ -96,7 +96,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
             lineHeight: 1.4,
           }}
         >
-          Přizpůsobte si zobrazení čísel, textů i varovných bannerů pro maximální snímkovou frekvenci (FPS) a nerušený přehled v boji.
+          Nastavte si čísla, texty a varování v boji pro čistý přehled a plynulé FPS.
         </p>
 
         {/* Sekce rychlých předvoleb */}
@@ -214,7 +214,7 @@ export const CombatTextSettingsModal: React.FC<CombatTextSettingsModalProps> = (
           </div>
         </div>
 
-        {/* Seznam 9 zaškrtávacích kategorií */}
+        {/* Seznam 12 zaškrtávacích kategorií */}
         <div
           style={{
             flex: 1,

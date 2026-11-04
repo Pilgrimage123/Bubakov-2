@@ -166,14 +166,10 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
             </div>
             <div>
               <div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.05rem' }}>
-                Výprava do této úrovně je zatím uzamčena!
+                Čeká v pořadí na: {progress.requiredLevelName}
               </div>
               <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '2px' }}>
-                Nová úroveň se začne odemykat teprve poté, co prozkoumáte a pokoříte předchozí úroveň:{' '}
-                <strong>{progress.requiredLevelName}</strong>.
-              </div>
-              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#B45309', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <GameIcon icon="scroll" size={14} /> Cesta se odemyká postupně zdoláváním hlavních bossů předchozích výprav.
+                Stezka se otevře po průzkumu či pokoření předchozí výpravy: <strong>{progress.requiredLevelName}</strong>.
               </div>
             </div>
           </div>
@@ -513,7 +509,7 @@ export const LevelUnlockModal: React.FC<LevelUnlockModalProps> = ({
                   wordBreak: 'break-word',
                 }}
               >
-                {m.reached ? m.desc : 'Podrobnosti o krajině a počasí se odhalí po splnění tohoto milníku.'}
+                {m.reached ? m.desc : `Odhalí se při dosažení ${m.pct} %.`}
               </p>
 
               {m.reached && m.boss && (

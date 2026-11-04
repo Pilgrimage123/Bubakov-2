@@ -116,7 +116,9 @@ export class ChunkBitmapCache {
       (typeof item.type === 'string' &&
         (item.type.startsWith('duben_') ||
           item.type.startsWith('kveten_') ||
-          item.type.startsWith('cerven_')))
+          item.type.startsWith('cerven_') ||
+          item.type.startsWith('cervenec_') ||
+          item.type.startsWith('srpen_')))
     ) {
       return true;
     }

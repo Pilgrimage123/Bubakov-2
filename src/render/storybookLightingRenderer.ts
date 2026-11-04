@@ -956,6 +956,8 @@ const EMISSIVE_DEVIL_IDS = new Set<string>([
   'ohniva_kobyla',
   'ohnivy_sudlicka',
   'pekelny_roj_sazovniku',
+  'kulovy_blesk',
+  'drak',
 ]);
 
 /**

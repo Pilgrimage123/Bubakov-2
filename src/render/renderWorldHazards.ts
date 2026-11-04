@@ -38,6 +38,11 @@ import {
   isInsideCervenPoi,
 } from '../data/cervenArena';
 import {
+  getCervenecPois,
+  getCervenecPoisList,
+  isInsideCervenecPoi,
+} from '../data/cervenecArena';
+import {
   drawSvatojanskaBylina,
   drawSvatojanskyPoklad,
 } from './cervenSvgLandscape';
@@ -470,6 +475,70 @@ export function renderWorldHazardsAndEncounters(
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`${nearby.title}${herbsNote}`, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1e. Level 8 & 9 (Stage 9: Červencové žně & Stage 10: Bouře sv. Eliáše): POI hints & St. Elias lightning warning
+  if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
+    const isCervenecNight = engine.activeLevelId === 9;
+    const cervenecPois = getCervenecPois(isCervenecNight);
+    const cervenecPoiList = getCervenecPoisList(isCervenecNight);
+
+    // Stage 10: St. Elias lightning strike ground telegraph
+    const strikeWarn = engine.cervenec?.stormWarning;
+    if (isCervenecNight && strikeWarn && strikeWarn.timer > 0 && isInView(strikeWarn.x, strikeWarn.y, strikeWarn.radius + 30, camera)) {
+      const progress = 1 - Math.max(0, Math.min(1, strikeWarn.timer / (strikeWarn.maxTimer || 1.65)));
+      ctx.save();
+      ctx.translate(strikeWarn.x, strikeWarn.y);
+      ctx.fillStyle = `rgba(96, 165, 250, ${0.18 + progress * 0.28})`;
+      ctx.strokeStyle = '#93C5FD';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, strikeWarn.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = '#FEF08A';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(6, strikeWarn.radius * (1 - progress)), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof cervenecPoiList)[number] | undefined;
+      for (let i = 0; i < cervenecPoiList.length; i++) {
+        if (isInsideCervenecPoi(player.x, player.y, cervenecPoiList[i], 30)) {
+          nearbyPoi = cervenecPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? cervenecPois.forest : undefined);
+      const bannerText = engine.cervenecActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
         ctx.restore();
       }
     }

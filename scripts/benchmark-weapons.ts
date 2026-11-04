@@ -188,6 +188,8 @@ function runSimulation(
     lastDy: 0,
     animTime: 0,
     valecniceAngle: 0,
+    flailStanceTimer: 1.5,
+    stillTimer: 1.5,
     hasSoakedCane: false,
     cooldownBonus: 0,
     cooldownMultiplier: 1,
@@ -223,13 +225,14 @@ function runSimulation(
       });
     },
     spawnMeleeSlash(slash: any) {
+      if (slash.visualOnly) return;
       slashes.push({
         x: slash.x,
         y: slash.y,
         angle: slash.angle,
         reach: slash.reach,
         arc: slash.arc,
-        dmg: slash.dmg,
+        dmg: slash.dmg ?? 0,
         life: slash.life || 0.3,
         dead: false,
         hitList: [],

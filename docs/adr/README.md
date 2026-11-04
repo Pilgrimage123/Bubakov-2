@@ -40,3 +40,8 @@ This directory records architectural decisions made for the project Bubákov.
 | [0033](0033-likvidace-smart-svg-a-sjednoceni-na-canvas.md) | Likvidace Smart SVG komponent a sjednocení vizuálu postav na Canvas 2D |
 | [0034](0034-harmonizace-meritka-areny-entit-a-lidove-perspektivy.md) | Harmonizace měřítka arény, entit, projektilů a lidové perspektivy |
 | [0035](0035-rozdeleni-predjari-na-den-a-noc.md) | Rozdělení Předjaří na denní a noční výpravu a přečíslování krajů |
+| [0036](0036-hierarchie-aren-kraju-a-vyprav.md) | Hierarchie arén, krajů a výprav (4 kraje × 2 denní doby) |
+| [0037](0037-kvetnova-slavnost-parita-enginu-a-dubnova-noc.md) | Květnová slavnost, parita enginu a rebalanc Dubnové noci |
+| [0038](0038-aditivni-skalovani-obtiznosti-vyprav-a-kotevni-benchmark.md) | Aditivní škálování obtížnosti výprav a kotevní benchmark |
+| [0039](0039-sjednocena-kinematika-a-orientace-lovcu.md) | Sjednocená kinematika a orientace lovců |
+| [0040](0040-renesance-pohadkove-knihy-a-ex-libris-typografie.md) | Renesance Pohádkové knihy a Ex Libris typografie |

@@ -537,7 +537,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
       pct: 100,
       tier: 4,
       title: '100 %: Zbraň odemčena',
-      desc: `Zbraň ${def?.realName || ''} se trvale přidá k výběru vylepšení při postupu na novou úroveň!`,
+      desc: `Zbraň ${def?.realName || ''} se trvale zařadí do nabídky v nůši Čertova dědečka!`,
       stats: def?.milestones.find((m) => m.tierLevel === 4)?.spoiledStatsHint || '',
       reached: progress.isUnlocked || progress.percent >= 100,
     },
@@ -662,11 +662,10 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
             </div>
             <div>
               <div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.05rem' }}>
-                Výzva k ukování je zatím uzamčena!
+                Čeká v pořadí na: {progress.requiredWeaponName}
               </div>
               <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '2px' }}>
-                Nová zbraň se nikdy nezačne odemykat, dokud není odemčena zbraň před ní. Kovář začne tuto zbraň
-                kalit teprve po odemčení zbraně: <strong>{progress.requiredWeaponName}</strong>.
+                Kovář začne tuto zbraň kalit hned po odemčení zbraně <strong>{progress.requiredWeaponName}</strong>.
               </div>
               <div
                 style={{
@@ -680,15 +679,18 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
                   flexWrap: 'wrap',
                 }}
               >
-                <GameIcon icon="impact" size={14} /> Pořadí kovářské dílny: Vidle{' '}
+                <GameIcon icon="impact" size={14} /> Pořadí kování: Vidle{' '}
                 <GameIcon icon="arrow" size={11} /> Halapartna{' '}
                 <GameIcon icon="arrow" size={11} /> Cep{' '}
-                <GameIcon icon="arrow" size={11} /> Byliny{' '}
+                <GameIcon icon="arrow" size={11} /> Devatero kvítí{' '}
                 <GameIcon icon="arrow" size={11} /> Sněhová koule{' '}
                 <GameIcon icon="arrow" size={11} /> Koláč{' '}
                 <GameIcon icon="arrow" size={11} /> Brambor{' '}
-                <GameIcon icon="arrow" size={11} /> Včely{' '}
-                <GameIcon icon="arrow" size={11} /> Svěcená voda
+                <GameIcon icon="arrow" size={11} /> Včelí roj{' '}
+                <GameIcon icon="arrow" size={11} /> Svěcená kropenka{' '}
+                <GameIcon icon="arrow" size={11} /> Valaška{' '}
+                <GameIcon icon="arrow" size={11} /> Česneková topinka{' '}
+                <GameIcon icon="arrow" size={11} /> Kyselá okurka
               </div>
             </div>
           </div>
@@ -940,7 +942,7 @@ export const WeaponUnlockModal: React.FC<WeaponUnlockModalProps> = ({ progress, 
                   wordBreak: 'break-word',
                 }}
               >
-                {m.reached ? m.desc : 'Tato stopa a vlastnost se odhalí po dosažení tohoto milníku.'}
+                {m.reached ? m.desc : `Odhalí se při dosažení ${m.pct} %.`}
               </p>
               {m.reached && m.stats && (
                 <div

@@ -88,9 +88,6 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
                 <span style={{ fontSize: '1.25rem', fontWeight: 900 }}>{hunter.luck}</span>
               </div>
             </div>
-            <p style={{ margin: '8px 0 0', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Jde o základní hodnoty před dalšími bonusy z hospody, předmětů a mobilního usnadnění. Dočasné bonusy mohou výsledné hodnoty změnit.
-            </p>
           </section>
           <section style={detailSection}>
             <h3 style={{ margin: '0 0 6px', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px', overflowWrap: 'anywhere' }}>
@@ -106,7 +103,6 @@ export const HunterInfoModal: React.FC<HunterInfoModalProps> = ({ hunter, onClos
                 <p style={{ margin: '7px 0 0', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{starterWeapon.desc}</p>
               </>
             )}
-            <p style={{ margin: '7px 0 0', fontSize: '0.8rem', lineHeight: 1.35 }}>Jde o základní hodnoty zbraně na 1. úrovni, před vylepšeními, bonusy lovce a odolnostmi nepřátel.</p>
           </section>
           <section style={detailSection}>
             <h3 style={{ margin: '0 0 6px', color: '#78350F', display: 'flex', alignItems: 'center', gap: '6px' }}>

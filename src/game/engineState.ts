@@ -9,6 +9,16 @@ import {
   type SvatojanskaBylinaState,
   type SvatojanskyPokladState,
 } from '../data/cervenArena';
+import {
+  createInitialPoutniStrelnice,
+  type PoutniStrelniceState,
+} from '../data/cervenecArena';
+import {
+  createInitialChlebovaPec,
+  createInitialVavrineckaVatra,
+  type ChlebovaPecState,
+  type VavrineckaVatraState,
+} from '../data/srpenArena';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -182,6 +192,30 @@ export interface EngineState {
     svatojanskaZareTimer?: number;
   };
   cervenActivePoiPrompt?: string | null;
+  /** Runtime-only state for Červenec v Hrusicích (9. a 10. úroveň). */
+  cervenec: {
+    bellCooldown: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    forestCooldown: number;
+    strelnice: PoutniStrelniceState;
+    stormBoltTimer: number;
+    stormWarning?: { x: number; y: number; radius: number; timer: number; maxTimer?: number } | null;
+    weatherChaffTimer?: number;
+  };
+  cervenecActivePoiPrompt?: string | null;
+  /** Runtime-only state for Srpen v Hrusicích (11. a 12. úroveň). */
+  srpen: {
+    bellCooldown: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    forestCooldown: number;
+    chlebovaPec: ChlebovaPecState;
+    vatra: VavrineckaVatraState;
+    perseidsShowerTimer?: number;
+    activePerseids?: Array<{ x: number; y: number; radius: number; timer: number; maxTimer: number }>;
+  };
+  srpenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
   yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
@@ -342,6 +376,24 @@ export function createInitialEngineState(): EngineState {
       herbsTarget: 9,
       poklad: createInitialSvatojanskyPoklad(),
       svatojanskaZareTimer: 0,
+    },
+    cervenec: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      forestCooldown: 0,
+      strelnice: createInitialPoutniStrelnice(),
+      stormBoltTimer: 16,
+    },
+    srpen: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      forestCooldown: 0,
+      chlebovaPec: createInitialChlebovaPec(),
+      vatra: createInitialVavrineckaVatra(),
+      perseidsShowerTimer: 7.5,
+      activePerseids: [],
     },
     holyCircle: null,
     plumPuddles: [],

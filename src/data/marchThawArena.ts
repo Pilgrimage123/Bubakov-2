@@ -7,6 +7,14 @@ import {
   isEntityBehindDubenRoof,
 } from './dubnovyDenArena';
 
+const CERVENEC_EXTRA_OBSTACLES: MarchObstacle[] = [
+  { id: 'panak_zita_1', x: -190, y: -930, shape: 'circle', radius: 44, blocksSight: true },
+  { id: 'panak_zita_2', x: 95, y: -1060, shape: 'circle', radius: 46, blocksSight: true },
+  { id: 'panak_zita_3', x: 390, y: -900, shape: 'circle', radius: 44, blocksSight: true },
+  { id: 'panak_zita_4', x: 640, y: -1020, shape: 'circle', radius: 42, blocksSight: true },
+  { id: 'poutni_strelnice_budka', x: 65, y: -135, shape: 'box', halfW: 62, halfH: 34, cornerRadius: 12, blocksSight: false },
+];
+
 export type MarchThawPoiId =
   | 'fields'
   | 'church'
@@ -348,7 +356,7 @@ export function clampToMarchArenaBounds(
  */
 export interface MarchObstacle {
   id: string;
-  kind: 'chalupa' | 'church' | 'wall' | 'school' | 'mill' | 'shrine' | 'forest' | 'prop';
+  kind?: 'chalupa' | 'church' | 'wall' | 'school' | 'mill' | 'shrine' | 'forest' | 'prop';
   shape: 'circle' | 'box';
   x: number;
   y: number;
@@ -356,6 +364,7 @@ export interface MarchObstacle {
   halfW?: number;
   halfH?: number;
   cornerRadius?: number;
+  blocksSight?: boolean;
 }
 
 export const MARCH_THAW_OBSTACLES: readonly MarchObstacle[] = [
@@ -1013,9 +1022,22 @@ export function collideCircleWithObstacles(
     if (dubenHit.hit) return dubenHit as ObstacleCollisionResult;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
-    for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
-      const obs = MARCH_THAW_OBSTACLES[i];
+  if (
+    activeLevelId === 0 ||
+    activeLevelId === 1 ||
+    activeLevelId === 4 ||
+    activeLevelId === 5 ||
+    activeLevelId === 6 ||
+    activeLevelId === 7 ||
+    activeLevelId === 8 ||
+    activeLevelId === 9
+  ) {
+    const obstaclesList =
+      activeLevelId === 8 || activeLevelId === 9
+        ? [...MARCH_THAW_OBSTACLES, ...CERVENEC_EXTRA_OBSTACLES]
+        : MARCH_THAW_OBSTACLES;
+    for (let i = 0; i < obstaclesList.length; i++) {
+      const obs = obstaclesList[i];
       if (obs.shape === 'box') {
         const hw = obs.halfW || 40;
         const hh = obs.halfH || 40;
@@ -1249,9 +1271,23 @@ export function hasTerrainLineOfSight(
     if (!hasDubenTerrainLineOfSight(x1, y1, x2, y2)) return false;
   }
 
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
-    for (let i = 0; i < MARCH_THAW_OBSTACLES.length; i++) {
-      const obs = MARCH_THAW_OBSTACLES[i];
+  if (
+    activeLevelId === 0 ||
+    activeLevelId === 1 ||
+    activeLevelId === 4 ||
+    activeLevelId === 5 ||
+    activeLevelId === 6 ||
+    activeLevelId === 7 ||
+    activeLevelId === 8 ||
+    activeLevelId === 9
+  ) {
+    const obstaclesList =
+      activeLevelId === 8 || activeLevelId === 9
+        ? [...MARCH_THAW_OBSTACLES, ...CERVENEC_EXTRA_OBSTACLES]
+        : MARCH_THAW_OBSTACLES;
+    for (let i = 0; i < obstaclesList.length; i++) {
+      const obs = obstaclesList[i];
+      if (obs.blocksSight === false) continue;
       if (obs.shape === 'box') {
         const hw = Math.max(8, (obs.halfW || 40) - 4);
         const hh = Math.max(8, (obs.halfH || 40) - 4);
@@ -1399,7 +1435,7 @@ export function hasRoofsInView(
     if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
   }
   if (
-    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) &&
+    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9) &&
     viewRight >= ROOF_UNION_MIN_X &&
     viewLeft <= ROOF_UNION_MAX_X &&
     viewBottom >= ROOF_UNION_MIN_Y &&
@@ -1441,7 +1477,7 @@ export function isEntityBehindMarchRoof(
     const dubenRoof = isEntityBehindDubenRoof(x, y);
     if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
   }
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9) {
     const halfR = radius * 0.5;
     if (
       y >= ROOF_UNION_MIN_Y &&
@@ -1523,8 +1559,24 @@ export function sanitizeArenaSpawnPoint(
   const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
 
   for (let pass = 0; pass < 3; pass++) {
-    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7) {
+    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9) {
       resolveMarchThawObstacles(dummy, false);
+      if (activeLevelId === 8 || activeLevelId === 9) {
+        for (let ci = 0; ci < CERVENEC_EXTRA_OBSTACLES.length; ci++) {
+          const cObs = CERVENEC_EXTRA_OBSTACLES[ci];
+          if (cObs.shape === 'circle') {
+            const reach = (cObs.radius || 44) + dummy.radius + 4;
+            const dx = dummy.x - cObs.x;
+            const dy = dummy.y - cObs.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < reach * reach) {
+              const dist = Math.sqrt(distSq) || 1;
+              dummy.x = cObs.x + (dx / dist) * reach;
+              dummy.y = cObs.y + (dy / dist) * reach;
+            }
+          }
+        }
+      }
     } else if (activeLevelId === 2 || activeLevelId === 3) {
       resolveDubenObstacles(dummy, false);
     }

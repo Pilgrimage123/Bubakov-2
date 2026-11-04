@@ -277,7 +277,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 </div>
                 <p style={{ margin: '0 0 10px 0', fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.5, color: '#221B17', minHeight: '58px' }}>
                   <LadaDropCap letter="B" variant="poppy" />
-                  <strong>ubákov</strong> je akční pohádková výprava o <strong>kosení celých houfů strašidel</strong> – oddychová záležitost zasazená do pohodové, ladovské atmosféry českého venkova. Vaše zbraně <strong>automaticky kosí strašidla</strong> kolem vás a vy jen šikovně kličkujete, sbíráte perníčky a odemykáte vylepšení. Na konci výpravy pak máte čirou radost z toho, jak moc vám to na všechny strany střílí a kolik stovek potvor zvládnete naráz vykosit!
+                  <strong>ubákov</strong> je akční pohádková výprava v ladovské atmosféře českého venkova. Vaše zbraně <strong>automaticky kosí strašidla</strong> kolem vás – vy jen kličkujete, sbíráte perníčky a u Čertova dědečka rozvíjíte svůj arzenál.
                 </p>
                 <div
                   style={{
@@ -293,30 +293,30 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       <GameIcon icon="lightning" size={16} /> 1. {controlsInputMode === 'touch' ? 'Tlačítko ⚡ Speciální schopnost:' : controlsInputMode === 'gamepad' ? '[RB / B] Speciální schopnost:' : '[Mezerník] Speciální zbraň:'}
                     </strong>
                     {controlsInputMode === 'touch'
-                      ? 'Každý lovec má silnou unikátní schopnost. Jakmile se v boji dole nabije (zlatá pulzující záře), odpálíte ji klepnutím na velké kruhové tlačítko s bleskem vpravo dole!'
+                      ? 'Každý lovec má silnou schopnost. Jakmile se dole nabije, odpálíte ji tlačítkem s bleskem vpravo dole!'
                       : controlsInputMode === 'gamepad'
-                      ? 'Každý lovec má silnou schopnost. Jakmile se dole nabije, odpálíte ji tlačítkem [RB] nebo [B] na ovladači.'
-                      : 'Každý lovec má silnou speciální schopnost. Jakmile se dole nabije, odpálíte ji Mezerníkem.'}
+                      ? 'Každý lovec má silnou schopnost. Jakmile se dole nabije, odpálíte ji tlačítkem [RB] nebo [B].'
+                      : 'Každý lovec má silnou schopnost. Jakmile se dole nabije, odpálíte ji Mezerníkem.'}
                   </div>
                   <div style={{ background: '#FAF5E8', border: '2.5px solid #1C1613', borderRadius: '6px', padding: '8px 10px', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.35, boxShadow: '2px 2px 0 #1C1613' }}>
                     <strong style={{ color: '#8F5330', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                       <PernicekIcon size={16} /> 2. {controlsInputMode === 'touch' ? 'Dotyková Nůše a Perníčky:' : controlsInputMode === 'gamepad' ? '[X] Perníčky a Čertův dědeček:' : '[E] Perníčky a Čertův dědeček:'}
                     </strong>
                     {controlsInputMode === 'touch'
-                      ? 'Když nasbíráte perníčky z bubáků, přiběhne Čertův dědeček. Poblíž něj klepněte na velké dotykové tlačítko [OTEVŘÍT NŮŠI] a vyměňte perníčky za zbraně a dary!'
+                      ? 'Za nasbírané perníčky přiběhne Čertův dědeček. Klepněte u něj na [OTEVŘÍT NŮŠI] a vyměňte perníčky za zbraně a dary!'
                       : controlsInputMode === 'gamepad'
-                      ? 'Když nasbíráte perníčky, přijde Čertův dědeček. Poblíž něj stiskněte [X] na ovladači a vyměňte perníčky za zbraně.'
-                      : 'Když nasbíráte perníčky z bubáků, přijde za vámi velký Čertův dědeček. Poblíž něj stiskněte E a vyměňte perníčky za nové zbraně a vylepšení!'}
+                      ? 'Za nasbírané perníčky přijde Čertův dědeček. Poblíž něj stiskněte [X] a vyměňte perníčky za zbraně a dary.'
+                      : 'Za nasbírané perníčky přijde Čertův dědeček. Poblíž něj stiskněte E a vyměňte perníčky za zbraně a vylepšení!'}
                   </div>
                   <div style={{ background: '#FAF5E8', border: '2.5px solid #1C1613', borderRadius: '6px', padding: '8px 10px', fontSize: '0.88rem', fontWeight: 700, lineHeight: 1.35, boxShadow: '2px 2px 0 #1C1613' }}>
                     <strong style={{ color: '#4D784E', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                       <GameIcon icon="compass" size={16} /> 3. {controlsInputMode === 'touch' ? 'Dotyk u prvků krajiny:' : controlsInputMode === 'gamepad' ? '[X] Interakce s krajinou:' : '[E] Interakce s krajinou:'}
                     </strong>
                     {controlsInputMode === 'touch'
-                      ? 'V krajině jde interagovat s řadou prvků – u kostela, hospody či kapličky, s malovanými truhlami nebo bubáckými dírami (vyskočí velké dotykové tlačítko).'
+                      ? 'U kostela, hospody, kapličky či malovaných truhel vyskočí dotykové tlačítko pro okamžitou interakci.'
                       : controlsInputMode === 'gamepad'
-                      ? 'V krajině můžete interagovat u kostela, hospody, kapličky či s truhlami stisknutím tlačítka [X].'
-                      : 'V krajině jde interagovat s řadou prvků – u kostela, hospody či kapličky, s malovanými truhlami nebo folklórními předměty (stiskněte E).'}
+                      ? 'U kostela, hospody, kapličky či malovaných truhel interagujete stisknutím tlačítka [X].'
+                      : 'U kostela, hospody, kapličky či malovaných truhel interagujete stisknutím klávesy E.'}
                   </div>
                 </div>
               </div>
@@ -487,10 +487,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       </span>
                     </div>
                     <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.92rem', lineHeight: 1.4, color: '#221B17' }}>
-                      Na dotykových zařízeních je v menu pauzy i v Nastavení výpravy k dispozici posuvník <strong>Mobilní usnadnění (1–10)</strong>:
-                      <br />• <strong>Silnější magnet na perníčky a krejcary:</strong> Kořist k vám sama létá z větší dálky, takže nemusíte kličkovat do nebezpečných skrumáží.
-                      <br />• <strong>Asistence uhýbání:</strong> Zmenšuje zranitelný bod lovce před střelami bubáků a dává vám větší časovou rezervu na reakci.
-                      <br />• <strong>Hraní jednou rukou:</strong> Nastavení úrovně 6–10 je ideální pro pohodlné hraní v MHD nebo při držení mobilu jednou rukou!
+                      V pauze i v Nastavení najdete posuvník <strong>Mobilní usnadnění (1–10)</strong>: zesiluje magnet na kořist, zmenšuje zranitelný bod lovce a usnadňuje hraní jednou rukou.
                     </p>
                   </div>
                 </>
@@ -535,7 +532,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       </div>
                     </div>
                     <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                      Pohybujte se po ladovských loukách, zasněžených cestách i hřbitovech. Sledujte varovné nápřahy strašidel, manévrujte v širokých elipsách a sbírejte voňavé perníčky a zlaté krejcary, které po sobě zanechávají zklidnění bubáci.
+                      Sledujte varovné nápřahy strašidel, manévrujte v obloucích a sbírejte perníčky i krejcary.
                     </p>
                   </div>
 
@@ -568,8 +565,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       </div>
                     </div>
                     <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                      Když nasbíráte perníčky, zjeví se velký potulný Čertův dědeček a zavolá <em>„Pssst! Perníčky!“</em>. Přistupte k němu a stiskněte klávesu <strong>E</strong>, nebo klepněte na tlačítko <strong>OTEVŘÍT DĚDEČKOVU NŮŠI</strong>. Hra se pozastaví a perníčky s ním vyměníte za nové zbraně a dary!
-                      V nůši můžete bleskově nakupovat klávesami <strong>[1]</strong> až <strong>[4]</strong>, přebalit nabídku klávesou <strong>[R]</strong> a nůši opustit klávesou <strong>[Esc]</strong>.
+                      Za nasbírané perníčky dorazí Čertův dědeček. Stiskněte u něj <strong>E</strong> (hra se pozastaví) a nakupujte klávesami <strong>[1]–[4]</strong>, přebalte nabídku <strong>[R]</strong> nebo odejděte <strong>[Esc]</strong>.
                     </p>
                   </div>
 
@@ -603,7 +599,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       </div>
                     </div>
                     <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.94rem', lineHeight: 1.35 }}>
-                      Při dosažení <strong>3., 5. a 8. úrovně zbraně</strong> se otevře Křižovatka rozvoje zbraně s výběrem ze dvou unikátních folklórních větví. Nemusíte sundávat ruku z klávesnice – stiskněte <strong>[1]</strong> pro první větev nebo <strong>[2]</strong> pro druhou větev a okamžitě pokračujete v boji!
+                      Na <strong>3., 5. a 8. úrovni zbraně</strong> volíte ze dvou větví milníku klávesou <strong>[1]</strong> nebo <strong>[2]</strong>.
                     </p>
                   </div>
                 </>
@@ -769,25 +765,25 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   }}
                 >
                   <li>
-                    <strong>Krajánek:</strong> <em>Jízda na žernovu</em> – naskočí na rotující žulový mlýnský kámen (žernov). Získá <strong>14 s nezranitelnosti</strong>, dvojnásobnou rychlost, na placku drtí běžné bubáky pod limitem Kuráže (400 Kuráže, roste o +20 % za každý nákup u Dědečka), těžším cílům udílí 180 fyzického poškození každých 0,5 s a kolem sebe šíří jiskrovou auru Vůle (75 poškození / 0,5 s v okruhu 85 px, nabíjení 30 s). Výchozí zbraň: Osikový prut.
+                    <strong>Krajánek:</strong> <em>Jízda na žernovu</em> – 14 s nezranitelnosti na mlýnském kameni, 2× rychlost a drcení běžných bubáků (start: Osikový prut).
                   </li>
                   <li>
-                    <strong>Tulák:</strong> <em>Pověstná sukovice</em> – otočka sukovitou holí zraní (185 fyzického poškození do 260 px, 55 do 600 px), silně odhodí okolní bubáky, vynuluje jejich postoj a vystraší je až na 4 s (rychlé nabíjení 21 s). Výchozí Kuráž 230, Štěstí 70, startovní zbraň Bylinková fajfka. Pasivně Tulácký instinkt: +35 % k poškození všech zbraní.
+                    <strong>Tulák:</strong> <em>Pověstná sukovice</em> – kruhový úder holí odhodí a vystraší bubáky v okolí; pasivně +35 % poškození zbraní (start: Bylinková fajfka).
                   </li>
                   <li>
-                    <strong>Pasáček:</strong> <em>Dusot stáda</em> – pastýřská píšťalka přivolá běžící stádo 22 beranů, které smete nepřátele masivním nárazem (140 fyzického poškození + 3,6 s dupání po 35 poškození, nabíjení 30 s). Vysoká rychlost (220), obří magnet (160) a startovní Povidlové buchty. Výchozí Kuráž 55, avšak disponuje 35% šancí na ÚHYB a 0,6 s nezranitelností po zásahu!
+                    <strong>Pasáček:</strong> <em>Dusot stáda</em> – přivolá stádo 22 beranů; vysoká rychlost, 35% šance na úhyb a velký magnet (start: Povidlové buchty).
                   </li>
                   <li>
-                    <strong>Bába kořenářka:</strong> <em>Očistné kadidlo</em> – vyvolá bylinné útočiště (+55 Kuráže, +30 štít, 1,8 s nezranitelnost), nasákne a zpomalí okolní nepřátele na 4,5 s (120 přírodního poškození + 4,8 s zóna, nabíjení 30 s). Pasivní Bylinný záblesk každých 9 s: obnoví 18 % max. Kuráže, na 3 s zvýší dosah i rychlost magnetu 5× a poskytne nezranitelnost. Začíná s Devaterem kvítí.
+                    <strong>Bába kořenářka:</strong> <em>Očistné kadidlo</em> – léčivé útočiště (+55 Kuráže, štít) a zpomalení nepřátel; pasivně Bylinný záblesk každých 9 s (start: Devatero kvítí).
                   </li>
                   <li>
-                    <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubí na volský roh, čímž v okruhu 900 px vystraší nepřátele až na 5 s a udělí 110 fyzického poškození (nabíjení 30 s). Pasivně šíří stálou posvátnou Auru lucerny (16 svatého poškození/s v okruhu 85 px). Začíná s Kovanou halapartnou.
+                    <strong>Ponocný:</strong> <em>Noční roh a poplach</em> – zatroubení vystraší a zraní nepřátele v širokém okruhu; pasivně posvátná Aura lucerny (start: Kovaná halapartna).
                   </li>
                   <li>
-                    <strong>Pobožný kostelník:</strong> <em>Farní požehnání</em> – úder kostelního zvonu a sloup svatého světla očistí nemrtvé a démony v okruhu 650 px (běžné nečisté cíle okamžitě vymýtí, bossům ubere 25 % max. Kuráže, nabíjení 35 s). Začíná se Svěcenou kropenkou.
+                    <strong>Pobožný kostelník:</strong> <em>Farní požehnání</em> – úder zvonu a sloup světla očistí nemrtvé i démony a bossům ubere 25 % Kuráže (start: Svěcená kropenka).
                   </li>
                   <li>
-                    <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zastaví čas pro scénku a zasáhne až do 1 100 px; působí buď jako <strong>Jídlo</strong> (chléb nasytí) nebo <strong>Světlo</strong> (vlídné slovo zažene démony) podle toho, proti čemu má daný bubák menší odolnost (nabíjení 45 s). Vysoké výchozí Štěstí (120) a startovní Kynutý koláč!
+                    <strong>Babička a Barunka:</strong> <em>Chléb se solí a vlídné slovo</em> – zasáhne celé okolí Jídlem či Světlem dle slabiny bubáka; vysoké Štěstí (start: Kynutý koláč).
                   </li>
                 </ul>
               </div>
@@ -853,9 +849,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                 </h3>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: '0.96rem', lineHeight: 1.48, minHeight: '58px' }}>
                   <LadaDropCap letter="K" variant="cobalt" />
-                  ampaň Bubákova vás provede <strong>8 rozmanitými kraji</strong> – od prosluněného denního tání v Hrusicích přes třeskuté noční mrazy, rozkvetlý dubnový den a staré hamry až po tajemnou Dračí sluj pod Melechovem.
-                  Úvodní tři jarní výpravy v Hrusicích trvají <strong>5 minut (300 sekund)</strong>, navazujících 5 výprav pak <strong>6 minut (360 sekund)</strong>.
-                  Vydržíte-li naživu do konce a porazíte finálního bosse kraje, rozezní se <strong>večerní klekání zvonu</strong> (při denní výpravě) nebo třikrát hlasitě <strong>zakokrhá vesnický kohout</strong> (při noční výpravě) a úroveň je slavně vyhrána!
+                  ampaň nabízí <strong>8 výprav</strong> podle hrusického kalendáře od Předjaří po Svatojánskou noc. Každá trvá <strong>5 minut (300 s)</strong> – přežijte do konce a porazte finálního bosse kraje, než zazní večerní klekání či kohoutí zakokrhání!
                 </p>
               </div>
 
@@ -894,7 +888,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       <GameIcon icon="rooster" size={16} /> Úvod &amp; Miniboss
                     </div>
                     <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                      Začátek výpravy s drobnou polní a lesní havětí. Od <strong>0:25</strong> přichází s nůší Čertův dědeček a v první třetině výpravy (<strong>85 s</strong> v Předjaří / <strong>45 s</strong> v dalších krajích) nastupuje Miniboss kraje!
+                      Začátek výpravy s drobnou polní a lesní havětí. Od <strong>0:25</strong> přichází s nůší Čertův dědeček a v první třetině výpravy (<strong>85 s</strong>) nastupuje Miniboss kraje!
                     </div>
                   </div>
                   <div
@@ -924,7 +918,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                       <GameIcon icon="skull" size={16} /> Zlom výpravy &amp; Midboss
                     </div>
                     <div style={{ fontSize: '0.86rem', fontWeight: 700, marginTop: '2px' }}>
-                      V polovině výpravy (<strong>185 s</strong> v Předjaří / <strong>95–105 s</strong> v dalších krajích) nastupuje silný Midboss (Jarní Vodníček, Mrazivý obr, Hastrman, Pekelný dráb...) s obří perníčkovou odměnou.
+                      Za polovinou výpravy (<strong>185 s</strong>) nastupuje silný Midboss (Jarní Vodníček, Mrazivý obr, Hastrman, Pekelný dráb...) s obří perníčkovou odměnou.
                     </div>
                   </div>
                   <div
@@ -957,7 +951,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     lineHeight: 1.45,
                   }}
                 >
-                  <strong style={{ color: '#2B5B84' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří: Denní tání ➔ 2. Předjaří: Noční mrazy ➔ 3. Duben: Dubnový den ➔ 4. Starý hřbitov a hvozd ➔ 5. Ladovská zima na Melechově ➔ 6. Staré hamry a Čertův mlýn ➔ 7. Pustá Hláska ➔ 8. Dračí sluj pod Melechovem.
+                  <strong style={{ color: '#2B5B84' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří: Denní tání ➔ 2. Předjaří: Noční mrazy ➔ 3. Duben: Dubnový den ➔ 4. Duben: Filipojakubská noc ➔ 5. Květen: Májová slavnost ➔ 6. Květen: Májová noc v hvozdu ➔ 7. Červen: Letní senoseč ➔ 8. Červen: Svatojánská noc.
                 </div>
               </div>
 

@@ -391,7 +391,7 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
                     sound.coin();
                     onOpenCombatTextSettings();
                   }}
-                  title="Podrobné nastavení a vypínání 9 kategorií plovoucích textů v aréně"
+                  title="Podrobné nastavení a vypínání 12 kategorií plovoucích textů v aréně"
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <GameIcon icon="combat_text" size={16} /> Texty v boji...

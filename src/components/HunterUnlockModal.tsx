@@ -148,10 +148,10 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
             </div>
             <div>
               <div style={{ fontWeight: 900, color: '#92400E', fontSize: '1.05rem' }}>
-                Výzva k odemčení je zatím uzamčena!
+                Čeká v pořadí na: {progress.requiredHunterName}
               </div>
               <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#78350F', marginTop: '2px' }}>
-                Nový lovec se nikdy nezačne odemykat, dokud není plně odemčen lovec před ním. Nejprve musíte splnit výzvu a odemknout lovce: <strong>{progress.requiredHunterName}</strong>.
+                Výzva se zpřístupní hned po odemčení lovce <strong>{progress.requiredHunterName}</strong>.
               </div>
               <div
                 style={{
@@ -165,10 +165,11 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                   flexWrap: 'wrap',
                 }}
               >
-                <GameIcon icon="scroll" size={14} /> Pořadí odemykání: Tulák{' '}
-                <GameIcon icon="arrow" size={11} /> Pasáček{' '}
+                <GameIcon icon="scroll" size={14} /> Pořadí odemykání: Pasáček{' '}
                 <GameIcon icon="arrow" size={11} /> Bába kořenářka{' '}
-                <GameIcon icon="arrow" size={11} /> Ponocný
+                <GameIcon icon="arrow" size={11} /> Ponocný{' '}
+                <GameIcon icon="arrow" size={11} /> Pobožný kostelník{' '}
+                <GameIcon icon="arrow" size={11} /> Babička a Barunka
               </div>
             </div>
           </div>
@@ -372,7 +373,7 @@ export const HunterUnlockModal: React.FC<HunterUnlockModalProps> = ({
                   wordBreak: 'break-word',
                 }}
               >
-                {m.reached ? m.desc : 'Tato stopa a část identity se odhalí po splnění tohoto milníku.'}
+                {m.reached ? m.desc : `Odhalí se při dosažení ${m.pct} %.`}
               </p>
               {m.reached && m.weapon && (
                 <div
