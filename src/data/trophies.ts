@@ -425,6 +425,28 @@ var TROPHIES = [
 			cur: (meta.completedLevels && meta.completedLevels[13]) || (meta.bestiaryKills?.kvilici_meluzina || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
+	},
+	{
+		id: "level14_completed",
+		title: "🪁 Vládce říjnové drakiády",
+		desc: "Dokonči 15. úroveň: upeč křupavou bramboru v popelu na návsi a sraz k zemi obřího papírového draka Větrníka!",
+		reward: 650,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[14]) || (meta.bestiaryKills?.drak_vetrnik || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[14]) || (meta.bestiaryKills?.drak_vetrnik || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level15_completed",
+		title: "🕯️ Pokořitel hlubin a Dušiček",
+		desc: "Dokonči 16. úroveň: zažehni dušičkovou svíci u Božích muk a přemož obří Hrusickou Veleštiku z bahna Brčálníku!",
+		reward: 700,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[15]) || (meta.bestiaryKills?.vele_stika || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[15]) || (meta.bestiaryKills?.vele_stika || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
 	}
 ];
 

@@ -25,6 +25,12 @@ import {
   type KotelNaPovidlaState,
   type SvatovaclavskyOhenState,
 } from '../data/zariArena';
+import {
+  createInitialOhnicekBramborState,
+  createInitialDusickovaSviceState,
+  type OhnicekBramborState,
+  type DusickovaSviceState,
+} from '../data/rijenArena';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -232,6 +238,16 @@ export interface EngineState {
     ohen: SvatovaclavskyOhenState;
   };
   zariActivePoiPrompt?: string | null;
+  /** Runtime-only state for Říjen v Hrusicích (15. a 16. úroveň). */
+  rijen: {
+    bellCooldown: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    forestCooldown: number;
+    ohnicek: OhnicekBramborState;
+    svice: DusickovaSviceState;
+  };
+  rijenActivePoiPrompt?: string | null;
   marchThawActivePoiPrompt?: string | null;
   dubenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
@@ -423,6 +439,15 @@ export function createInitialEngineState(): EngineState {
       kotel: createInitialKotelNaPovidlaState(),
       ohen: createInitialSvatovaclavskyOhenState(),
     },
+    rijen: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      forestCooldown: 0,
+      ohnicek: createInitialOhnicekBramborState(),
+      svice: createInitialDusickovaSviceState(),
+    },
+    rijenActivePoiPrompt: null,
     holyCircle: null,
     marchThawActivePoiPrompt: null,
     dubenActivePoiPrompt: null,

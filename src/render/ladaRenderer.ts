@@ -24879,6 +24879,14 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawPovidlovyCert: 'povidlovy_cert',
   drawPosvicenskyHospodar: 'posvicensky_hospodar',
   drawKviliciMeluzina: 'kvilici_meluzina',
+  drawBramborovaMandelinka: 'bramborova_mandelinka',
+  drawPodzimniStrasak: 'podzimni_strasak',
+  drawKralovskyHavran: 'kralovsky_havran',
+  drawHastrmanPodzimni: 'hastrman_podzimni',
+  drawDrakVetrnik: 'drak_vetrnik',
+  drawDusickovaBludicka: 'dusickova_bludicka',
+  drawCertRybnikar: 'cert_rybnikar',
+  drawVeleStika: 'vele_stika',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
@@ -29237,6 +29245,966 @@ function drawKviliciMeluzina(
   ctx.restore();
 }
 
+/**
+ * 12. Bramborová mandelinka (Stage 15 Swarm: Striped Colorado potato beetle from potato fields)
+ */
+function drawBramborovaMandelinka(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const wiggle = Math.sin(time * 16) * 1.5;
+
+  // Tiny black legs
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.0;
+  for (const side of [-1, 1]) {
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(side * 8, i * 4);
+      ctx.lineTo(side * 14 + wiggle * side, i * 6 + 4);
+      ctx.stroke();
+    }
+  }
+
+  // Striped rounded elytron (yellow with 10 black stripes)
+  ctx.fillStyle = isHurt ? '#F87171' : '#FDE047';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.ellipse(0, 3, 11, 13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Black stripes on shell
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.8;
+  for (let s = -8; s <= 8; s += 3.6) {
+    if (Math.abs(s) < 0.5) continue;
+    ctx.beginPath();
+    ctx.moveTo(s, -6);
+    ctx.lineTo(s * 0.9, 13);
+    ctx.stroke();
+  }
+
+  // Centre divide line
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(0, -9);
+  ctx.lineTo(0, 15);
+  ctx.stroke();
+
+  // Orange/yellow pronotum with black spots
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.ellipse(0, -8, 8, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(-3, -8, 1.2, 0, Math.PI * 2);
+  ctx.arc(3, -8, 1.2, 0, Math.PI * 2);
+  ctx.arc(0, -6, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head and antennae
+  ctx.fillStyle = '#451A03';
+  ctx.beginPath();
+  ctx.arc(0, -13, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-2, -16);
+  ctx.lineTo(-6, -21);
+  ctx.moveTo(2, -16);
+  ctx.lineTo(6, -21);
+  ctx.stroke();
+
+  // Eyes
+  ctx.fillStyle = panicked ? '#DC2626' : '#1E293B';
+  ctx.beginPath();
+  ctx.arc(-2, -13, 1.2, 0, Math.PI * 2);
+  ctx.arc(2, -13, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 13. Podzimní polní strašák (Stage 15 Heavy Runner: Straw scarecrow with rake and pumpkin head)
+ */
+function drawPodzimniStrasak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const sway = Math.sin(time * 3.5) * 0.08;
+  ctx.rotate(sway);
+
+  // Wooden stake
+  ctx.strokeStyle = '#543622';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, 24);
+  ctx.lineTo(0, -18);
+  ctx.moveTo(-20, -4);
+  ctx.lineTo(20, -4);
+  ctx.stroke();
+
+  // Straw sticking out at bottom
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-8, 14);
+  ctx.lineTo(-12, 22);
+  ctx.moveTo(0, 16);
+  ctx.lineTo(2, 25);
+  ctx.moveTo(8, 14);
+  ctx.lineTo(12, 22);
+  ctx.stroke();
+
+  // Old torn coat
+  ctx.fillStyle = isHurt ? '#F87171' : '#334155';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.moveTo(-14, -8);
+  ctx.lineTo(-18, 8);
+  ctx.lineTo(-8, 15);
+  ctx.lineTo(0, 13);
+  ctx.lineTo(8, 15);
+  ctx.lineTo(18, 8);
+  ctx.lineTo(14, -8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Patches on coat
+  ctx.fillStyle = '#B45309';
+  ctx.fillRect(-8, 0, 6, 6);
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 1.4;
+  ctx.strokeRect(-8, 0, 6, 6);
+
+  // Straw hands holding wooden rake
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-18, 6);
+  ctx.lineTo(-24, 10);
+  ctx.moveTo(18, 6);
+  ctx.lineTo(24, 10);
+  ctx.stroke();
+
+  // Wooden rake on side
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(22, -18);
+  ctx.lineTo(26, 26);
+  ctx.moveTo(20, 26);
+  ctx.lineTo(32, 26);
+  for (let t = 20; t <= 32; t += 4) {
+    ctx.moveTo(t, 26);
+    ctx.lineTo(t, 31);
+  }
+  ctx.stroke();
+
+  // Pumpkin head
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#EA580C';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.arc(0, -18, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Pumpkin vertical ribbing
+  ctx.strokeStyle = '#C2410C';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(0, -18, 6, 11, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Carved eyes and crooked toothy grin
+  ctx.fillStyle = panicked ? '#FEF08A' : '#23170F';
+  ctx.beginPath();
+  ctx.moveTo(-6, -21);
+  ctx.lineTo(-3, -19);
+  ctx.lineTo(-6, -17);
+  ctx.closePath();
+  ctx.moveTo(6, -21);
+  ctx.lineTo(3, -19);
+  ctx.lineTo(6, -17);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(0, -14, 6, 0.1 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+
+  // Crumpled old brown hat
+  ctx.fillStyle = '#451A03';
+  ctx.beginPath();
+  ctx.ellipse(0, -25, 15, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(-7, -34, 14, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 14. Královský havran ze strniště (Stage 15 Mini-boss: Giant crowned black raven)
+ */
+function drawKralovskyHavran(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.3,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Mandatory collision shadow for flying entities (offset +24px on Y)
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.38)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24, 30, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const flap = Math.sin(time * 8) * 0.45;
+
+  // Jet-black wings with purple gloss
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.rotate(flap * side);
+    ctx.fillStyle = isHurt ? '#7F1D1D' : '#1E1B4B';
+    ctx.strokeStyle = '#23170F';
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.moveTo(0, -2);
+    ctx.quadraticCurveTo(24, -28, 48, -14);
+    ctx.quadraticCurveTo(34, 4, 16, 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Feather lines
+    ctx.strokeStyle = '#4338CA';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(20, -10);
+    ctx.lineTo(38, -12);
+    ctx.moveTo(16, -2);
+    ctx.lineTo(32, -4);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Black raven body
+  ctx.fillStyle = isHurt ? '#991B1B' : '#0F172A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 14, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Tail feathers
+  ctx.fillStyle = '#090D16';
+  ctx.beginPath();
+  ctx.moveTo(-8, 16);
+  ctx.lineTo(0, 32);
+  ctx.lineTo(8, 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.arc(0, -15, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Sharp yellow beak
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(0, -18);
+  ctx.lineTo(14, -13);
+  ctx.lineTo(0, -10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden royal crown
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-8, -22);
+  ctx.lineTo(-7, -32);
+  ctx.lineTo(-2, -26);
+  ctx.lineTo(0, -34);
+  ctx.lineTo(2, -26);
+  ctx.lineTo(7, -32);
+  ctx.lineTo(8, -22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Beady raven eye
+  ctx.fillStyle = panicked ? '#EF4444' : '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(3, -16, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(3.5, -16, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 15. Podzimní hastrman z rákosí (Stage 15 Mid-boss: Green water sprite with fishnet and reed hat)
+ */
+function drawHastrmanPodzimni(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 1.5;
+
+  // Muddy pond puddle under feet
+  ctx.fillStyle = 'rgba(44, 32, 18, 0.42)';
+  ctx.beginPath();
+  ctx.ellipse(0, 26, 26, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Muddy black boots
+  ctx.fillStyle = '#1C1917';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(-8, 22, 6, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(8, 22, 6, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Dripping dark green frock coat with water drops
+  ctx.fillStyle = isHurt ? '#F87171' : '#15803D';
+  ctx.beginPath();
+  ctx.moveTo(-16, -6);
+  ctx.lineTo(-20, 16);
+  ctx.lineTo(-8, 14);
+  ctx.lineTo(0, 18);
+  ctx.lineTo(8, 14);
+  ctx.lineTo(20, 16);
+  ctx.lineTo(16, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Water droplets dripping from coat tails
+  ctx.fillStyle = '#38BDF8';
+  for (let i = -14; i <= 14; i += 7) {
+    const dropY = 16 + ((time * 18 + Math.abs(i) * 5) % 8);
+    ctx.beginPath();
+    ctx.arc(i, dropY, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Red neckerchief
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-8, -8);
+  ctx.lineTo(8, -8);
+  ctx.lineTo(0, 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Green frog-like head with big smiling mouth
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#4ADE80';
+  ctx.beginPath();
+  ctx.arc(0, -16 + bob, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Big bulging froggy eyes
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(-6, -24 + bob, 5, 0, Math.PI * 2);
+  ctx.arc(6, -24 + bob, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(-6, -24 + bob, 2.5, 0, Math.PI * 2);
+  ctx.arc(6, -24 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wide hastrman smile with green lip line
+  ctx.strokeStyle = '#14532D';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(0, -12 + bob, 9, 0.1 * Math.PI, 0.9 * Math.PI);
+  ctx.stroke();
+
+  // Green top hat with water reed sticking out
+  ctx.fillStyle = '#166534';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.ellipse(0, -28 + bob, 18, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(-10, -42 + bob, 20, 14);
+  ctx.fill();
+  ctx.stroke();
+
+  // Reed plume
+  ctx.strokeStyle = '#854D0E';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(8, -36 + bob);
+  ctx.quadraticCurveTo(18, -48 + bob, 14, -56 + bob);
+  ctx.stroke();
+
+  // Fishnet held in hand with glistening carp
+  ctx.strokeStyle = '#A16207';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(-22, 6, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let r = -28; r <= -16; r += 4) {
+    ctx.moveTo(r, 0);
+    ctx.lineTo(r + 6, 12);
+  }
+  ctx.stroke();
+
+  // Small caught carp
+  ctx.fillStyle = '#0D9488';
+  ctx.beginPath();
+  ctx.ellipse(-22, 6, 8, 4, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 16. Hrusický drak Větrník (Stage 15 Final Boss: Giant smiling Lada paper kite dragon)
+ */
+function drawDrakVetrnik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.5,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Mandatory collision shadow for flying entities (offset +26px on Y)
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.38)';
+  ctx.beginPath();
+  ctx.ellipse(0, 26, 36, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const sway = Math.sin(time * 3.5) * 0.12;
+  ctx.rotate(sway);
+
+  // Massive kite diamond body
+  const top = { x: 0, y: -38 };
+  const right = { x: 32, y: -8 };
+  const bottom = { x: 0, y: 42 };
+  const left = { x: -32, y: -8 };
+  const center = { x: 0, y: -8 };
+
+  const quadrants = [
+    { p1: top, p2: right, p3: center, c: isHurt ? '#F87171' : '#EF4444' },
+    { p1: right, p2: bottom, p3: center, c: isHurt ? '#FCA5A5' : '#F59E0B' },
+    { p1: bottom, p2: left, p3: center, c: isHurt ? '#F87171' : '#3B82F6' },
+    { p1: left, p2: top, p3: center, c: isHurt ? '#FCA5A5' : '#10B981' },
+  ];
+
+  for (const q of quadrants) {
+    ctx.fillStyle = q.c;
+    ctx.beginPath();
+    ctx.moveTo(q.p1.x, q.p1.y);
+    ctx.lineTo(q.p2.x, q.p2.y);
+    ctx.lineTo(q.p3.x, q.p3.y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Thick wooden cross braces
+  ctx.strokeStyle = '#543622';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.moveTo(top.x, top.y);
+  ctx.lineTo(bottom.x, bottom.y);
+  ctx.moveTo(left.x, left.y);
+  ctx.lineTo(right.x, right.y);
+  ctx.stroke();
+
+  // Thick ink perimeter
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.6;
+  ctx.beginPath();
+  ctx.moveTo(top.x, top.y);
+  ctx.lineTo(right.x, right.y);
+  ctx.lineTo(bottom.x, bottom.y);
+  ctx.lineTo(left.x, left.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Large friendly Lada smiling face on the kite
+  // Rosy cheeks
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.45)';
+  ctx.beginPath();
+  ctx.arc(-14, -6, 6, 0, Math.PI * 2);
+  ctx.arc(14, -6, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Round eyes
+  ctx.fillStyle = panicked ? '#FEF08A' : '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(-10, -16, 5, 0, Math.PI * 2);
+  ctx.arc(10, -16, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(-9, -16, 2.8, 0, Math.PI * 2);
+  ctx.arc(11, -16, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Big smiling mouth
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, -6, 12, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  // Red tongue
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(0, 0, 5, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.fill();
+
+  // Flapping tail with colorful bows
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(bottom.x, bottom.y);
+  const tailWave1 = Math.sin(time * 5) * 14;
+  const tailWave2 = Math.cos(time * 5) * 16;
+  ctx.quadraticCurveTo(tailWave1, 65, tailWave2, 88);
+  ctx.quadraticCurveTo(-tailWave1, 110, tailWave1 * 0.5, 135);
+  ctx.stroke();
+
+  const bows = [
+    { x: tailWave1 * 0.6, y: 65, c: '#EF4444' },
+    { x: tailWave2 * 0.8, y: 88, c: '#FACC15' },
+    { x: -tailWave1 * 0.7, y: 110, c: '#3B82F6' },
+    { x: tailWave1 * 0.4, y: 132, c: '#10B981' },
+  ];
+
+  for (const b of bows) {
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.fillStyle = b.c;
+    ctx.beginPath();
+    ctx.moveTo(-9, -5);
+    ctx.lineTo(9, 5);
+    ctx.lineTo(9, -5);
+    ctx.lineTo(-9, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#23170F';
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Whirling wind swirls around the kite
+  ctx.strokeStyle = '#FDE68A';
+  ctx.lineWidth = 2.2;
+  for (let w = 0; w < 3; w++) {
+    const a = time * 4 + (w * Math.PI * 2) / 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 46 + w * 6, a, a + 1.2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+/**
+ * 17. Dušičková bludička (Stage 16 Mini-boss: Red lantern spirit with holy candleflame)
+ */
+function drawDusickovaBludicka(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.2,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Shadow for floating spirit
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 22, 22, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const floatY = Math.sin(time * 4) * 3;
+  ctx.translate(0, floatY);
+
+  // Red glass candle lantern base
+  ctx.fillStyle = isHurt ? '#F87171' : '#DC2626';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') {
+    (ctx as any).roundRect(-10, 2, 20, 16, 4);
+  } else {
+    ctx.rect(-10, 2, 20, 16);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  // Glass transparency highlight
+  ctx.fillStyle = 'rgba(254, 240, 138, 0.4)';
+  ctx.fillRect(-6, 4, 12, 12);
+
+  // Candle stub inside lantern
+  ctx.fillStyle = '#FEF3C7';
+  ctx.fillRect(-4, 7, 8, 9);
+
+  // Dancing blue-golden holy spirit flame
+  const flicker = 0.8 + 0.25 * Math.sin(time * 8);
+  ctx.fillStyle = isHurt ? '#F87171' : '#60A5FA';
+  ctx.beginPath();
+  ctx.ellipse(0, -6, 12 * flicker, 18 * flicker, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.ellipse(0, -4, 7 * flicker, 11 * flicker, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ethereal glowing eyes of the spirit
+  ctx.fillStyle = panicked ? '#EF4444' : '#1E293B';
+  ctx.beginPath();
+  ctx.arc(-3, -5, 1.8, 0, Math.PI * 2);
+  ctx.arc(3, -5, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Halo of warm candle light
+  ctx.fillStyle = 'rgba(253, 224, 71, 0.25)';
+  ctx.beginPath();
+  ctx.arc(0, -6, 26 * flicker, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * 18. Pekelný čert rybníkář (Stage 16 Mid-boss: Muddy devil with trident and reed tuft)
+ */
+function drawCertRybnikar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.4,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 4) * 1.5;
+
+  // Muddy pond ground shadow
+  ctx.fillStyle = 'rgba(30, 20, 15, 0.45)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24, 28, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Muddy hooves
+  ctx.fillStyle = '#1C1917';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(-9, 20, 7, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(9, 20, 7, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Devil tail with pond reed tuft
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.moveTo(10, 8);
+  ctx.quadraticCurveTo(24, 12 + Math.sin(time * 6) * 4, 30, 2);
+  ctx.stroke();
+  ctx.fillStyle = '#854D0E';
+  ctx.beginPath();
+  ctx.arc(31, 2, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sooty black and muddy brown body
+  ctx.fillStyle = isHurt ? '#B91C1C' : '#2A1D15';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.0;
+  ctx.beginPath();
+  ctx.ellipse(0, 6, 16, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Mud splatters on chest
+  ctx.fillStyle = '#451A03';
+  ctx.beginPath();
+  ctx.arc(-4, 4, 4, 0, Math.PI * 2);
+  ctx.arc(5, 8, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Devil head with goat horns
+  ctx.fillStyle = isHurt ? '#DC2626' : '#2A1D15';
+  ctx.beginPath();
+  ctx.arc(0, -14 + bob, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Twisted goat horns
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 6, -24 + bob);
+    ctx.quadraticCurveTo(side * 18, -36 + bob, side * 14, -42 + bob);
+    ctx.quadraticCurveTo(side * 8, -34 + bob, side * 3, -25 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Glowing red eyes
+  ctx.fillStyle = panicked ? '#FEF08A' : '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-5, -16 + bob, 3, 0, Math.PI * 2);
+  ctx.arc(5, -16 + bob, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mischievous fanged grin
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(0, -10 + bob, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+  ctx.stroke();
+
+  // Rusty pitchfork / trident held in right hand
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(18, -26);
+  ctx.lineTo(18, 22);
+  ctx.stroke();
+
+  // Trident prongs
+  ctx.strokeStyle = '#57534E';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(12, -26);
+  ctx.lineTo(24, -26);
+  ctx.moveTo(12, -36);
+  ctx.lineTo(12, -26);
+  ctx.moveTo(18, -38);
+  ctx.lineTo(18, -26);
+  ctx.moveTo(24, -36);
+  ctx.lineTo(24, -26);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 19. Hrusická Veleštika (Stage 16 Final Boss: Giant ancient monster pike from the pond mud)
+ */
+function drawVeleStika(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.55,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const wiggle = Math.sin(time * 4) * 0.15;
+  ctx.rotate(wiggle);
+
+  // Muddy splash shadow
+  ctx.fillStyle = 'rgba(24, 34, 44, 0.45)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24, 38, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Giant predatory pike body (torpedo shaped)
+  ctx.fillStyle = isHurt ? '#B91C1C' : '#14532D';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.6;
+  ctx.beginPath();
+  ctx.moveTo(-38, 0);
+  ctx.quadraticCurveTo(-15, -18, 26, -12);
+  ctx.lineTo(46, -4);
+  ctx.lineTo(46, 6);
+  ctx.quadraticCurveTo(24, 16, -15, 14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Lighter cream belly
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#D1FAE5';
+  ctx.beginPath();
+  ctx.moveTo(-30, 2);
+  ctx.quadraticCurveTo(-10, 10, 24, 8);
+  ctx.lineTo(42, 4);
+  ctx.quadraticCurveTo(20, 14, -12, 12);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mottled yellowish-gold spots on dark green scales
+  ctx.fillStyle = '#FBBF24';
+  const spots = [
+    [-22, -4], [-12, -8], [-2, -2], [10, -6], [22, -4],
+    [-18, 4], [-6, 6], [8, 4], [18, 2], [30, 0],
+  ];
+  for (const [sx, sy] of spots) {
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 3.2, 2.2, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Toothy predatory pike jaw
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.moveTo(32, 2);
+  ctx.lineTo(46, 0);
+  ctx.stroke();
+
+  // Sharp white teeth
+  ctx.fillStyle = '#FFFFFF';
+  for (let tx = 34; tx <= 44; tx += 2.5) {
+    ctx.beginPath();
+    ctx.moveTo(tx, 0);
+    ctx.lineTo(tx + 1, -2.5);
+    ctx.lineTo(tx + 2, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(tx, 1);
+    ctx.lineTo(tx + 1, 3.5);
+    ctx.lineTo(tx + 2, 1);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Yellow predatory eye
+  ctx.fillStyle = panicked ? '#EF4444' : '#FACC15';
+  ctx.beginPath();
+  ctx.arc(28, -8, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(28, -8, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Dorsal and tail fins with dark spines
+  ctx.fillStyle = '#15803D';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.4;
+  // Tail fin
+  ctx.beginPath();
+  ctx.moveTo(-36, 0);
+  ctx.lineTo(-52, -14 + Math.sin(time * 6) * 3);
+  ctx.lineTo(-44, 0);
+  ctx.lineTo(-52, 14 - Math.sin(time * 6) * 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Dorsal fin near tail
+  ctx.beginPath();
+  ctx.moveTo(-24, -14);
+  ctx.lineTo(-34, -24);
+  ctx.lineTo(-18, -14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
@@ -29264,6 +30232,14 @@ function drawKviliciMeluzina(
 (Lada as any).drawPovidlovyCert = drawPovidlovyCert;
 (Lada as any).drawPosvicenskyHospodar = drawPosvicenskyHospodar;
 (Lada as any).drawKviliciMeluzina = drawKviliciMeluzina;
+(Lada as any).drawBramborovaMandelinka = drawBramborovaMandelinka;
+(Lada as any).drawPodzimniStrasak = drawPodzimniStrasak;
+(Lada as any).drawKralovskyHavran = drawKralovskyHavran;
+(Lada as any).drawHastrmanPodzimni = drawHastrmanPodzimni;
+(Lada as any).drawDrakVetrnik = drawDrakVetrnik;
+(Lada as any).drawDusickovaBludicka = drawDusickovaBludicka;
+(Lada as any).drawCertRybnikar = drawCertRybnikar;
+(Lada as any).drawVeleStika = drawVeleStika;
 
 export {
   Lada,
@@ -29284,5 +30260,13 @@ export {
   drawPovidlovyCert,
   drawPosvicenskyHospodar,
   drawKviliciMeluzina,
+  drawBramborovaMandelinka,
+  drawPodzimniStrasak,
+  drawKralovskyHavran,
+  drawHastrmanPodzimni,
+  drawDrakVetrnik,
+  drawDusickovaBludicka,
+  drawCertRybnikar,
+  drawVeleStika,
   type EnemyAttackInfo,
 };

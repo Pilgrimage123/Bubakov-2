@@ -15,7 +15,9 @@ var LEVEL_ORDER = [
 	10,
 	11,
 	12,
-	13
+	13,
+	14,
+	15
 ];
 function getPreviousLevel(id: number) {
 	const idx = LEVEL_ORDER.indexOf(id);
@@ -39,6 +41,8 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 11 && ((meta?.bestiaryKills?.dozinkovy_chasnik || 0) >= 1 || !!meta?.completedLevels?.[10])) return true;
 	if (id === 12 && ((meta?.bestiaryKills?.vyr_velky || 0) >= 1 || !!meta?.completedLevels?.[11])) return true;
 	if (id === 13 && ((meta?.bestiaryKills?.posvicensky_hospodar || 0) >= 1 || !!meta?.completedLevels?.[12])) return true;
+	if (id === 14 && ((meta?.bestiaryKills?.kvilici_meluzina || 0) >= 1 || !!meta?.completedLevels?.[13])) return true;
+	if (id === 15 && ((meta?.bestiaryKills?.drak_vetrnik || 0) >= 1 || !!meta?.completedLevels?.[14])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -210,6 +214,18 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "povidlovy_cert", name: "Povidlový čert s měchačkou", icon: "🍯" },
 		{ id: "kralovsky_srsen", name: "Královský sršeň ze sadu", icon: "🐝" },
 		{ id: "svestkovy_srsen", name: "Švestkový sršeň", icon: "🐝" }
+	]),
+	14: makeSequentialUnlock(14, [
+		{ id: "kvilici_meluzina", name: "Kvílící Meluzína", icon: "🌬️" },
+		{ id: "bila_pani", name: "Bílá paní", icon: "👻" },
+		{ id: "mlynar", name: "Prokletý mlynář", icon: "🌊" },
+		{ id: "topivec", name: "Rybniční topivec", icon: "💧" }
+	]),
+	15: makeSequentialUnlock(15, [
+		{ id: "drak_vetrnik", name: "Hrusický drak Větrník", icon: "🪁" },
+		{ id: "hastrman_podzimni", name: "Podzimní hastrman z rákosí", icon: "🐸" },
+		{ id: "kralovsky_havran", name: "Královský havran ze strniště", icon: "🦅" },
+		{ id: "podzimni_strasak", name: "Podzimní polní strašák", icon: "🌾" }
 	])
 };
 

@@ -7,6 +7,8 @@ import { SRPEN_DECOR, getSrpenWaterEffect, SRPEN_POIS } from '../src/data/srpenA
 import { drawSrpenDecoration, drawSrpenSummerLandmark } from '../src/render/srpenSvgLandscape';
 import { ZARI_DECOR, getZariWaterEffect, ZARI_POIS } from '../src/data/zariArena';
 import { drawZariDecoration } from '../src/render/zariSvgLandscape';
+import { RIJEN_DECOR, getRijenWaterEffect, RIJEN_POIS } from '../src/data/rijenArena';
+import { drawRijenDecoration } from '../src/render/rijenSvgLandscape';
 import { drawDubenSpringLandmark } from '../src/render/marchThawSvgLandscape';
 import { drawKvetenMayLandmark } from '../src/render/kvetenSvgLandscape';
 import { getCervenWaterEffect } from '../src/data/cervenArena';
@@ -54,8 +56,8 @@ function createMockCtx() {
   } as unknown as CanvasRenderingContext2D & { getSaveDepth: () => number };
 }
 
-describe('Seasonal Maps & Month Representation Audit (All 14 Stages)', () => {
-  it('verifies that each of the 7 represented months matches its authentic season and thematic setting', () => {
+describe('Seasonal Maps & Month Representation Audit (All 16 Stages)', () => {
+  it('verifies that each of the 8 represented months matches its authentic season and thematic setting', () => {
     const monthConfigs = [
       { id: 0, month: 'Březen (Předjaří)', season: 'spring', theme: 'spring_river', isNight: false },
       { id: 1, month: 'Březen (Noční mráz)', season: 'spring', theme: 'spring_river', isNight: true },
@@ -71,6 +73,8 @@ describe('Seasonal Maps & Month Representation Audit (All 14 Stages)', () => {
       { id: 11, month: 'Srpen (Vavřinecká noc)', season: 'summer', theme: 'laurence_night', isNight: true },
       { id: 12, month: 'Září (Posvícení a švestky)', season: 'autumn', theme: 'september_feast', isNight: false },
       { id: 13, month: 'Září (Svatováclavská noc)', season: 'autumn', theme: 'wenceslas_night', isNight: true },
+      { id: 14, month: 'Říjen (Bramborová nať a drakiáda)', season: 'autumn', theme: 'october_harvest', isNight: false },
+      { id: 15, month: 'Říjen (Dušičková noc a výlov rybníka)', season: 'autumn', theme: 'all_souls_night', isNight: true },
     ];
 
     for (const cfg of monthConfigs) {
@@ -258,7 +262,19 @@ describe('Seasonal Maps & Month Representation Audit (All 14 Stages)', () => {
     }
   });
 
-  it('verifies summer & autumn water physics in Stages 7–14 never carries winter ice floes and treats bridges safely', () => {
+  it('verifies Říjen (Stages 15 & 16) autumn landscape renders without canvas stack imbalances', () => {
+    for (const d of RIJEN_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawRijenDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawRijenDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies summer & autumn water physics in Stages 7–16 never carries winter ice floes and treats bridges safely', () => {
     // Test June water
     const juneBridge = getCervenWaterEffect(425, -455, 10);
     expect(juneBridge.inOpenWater).toBe(false);
@@ -290,10 +306,18 @@ describe('Seasonal Maps & Month Representation Audit (All 14 Stages)', () => {
 
     const septemberPond = getZariWaterEffect(-725, 615, 10);
     expect(septemberPond.inOpenWater).toBe(true);
+
+    // Test October water
+    const octoberBridge = getRijenWaterEffect(475, 420, 14);
+    expect(octoberBridge.inOpenWater).toBe(false);
+    expect(octoberBridge.carryVx).toBe(0);
+
+    const octoberPond = getRijenWaterEffect(-725, 615, 14);
+    expect(octoberPond.inOpenWater).toBe(true);
   });
 
-  it('verifies stage numbering and ordering: IDs 0..13, titles 1..14, and sequential unlock progression', () => {
-    for (let id = 0; id <= 13; id++) {
+  it('verifies stage numbering and ordering: IDs 0..15, titles 1..16, and sequential unlock progression', () => {
+    for (let id = 0; id <= 15; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(level.id).toBe(id);
       expect(level.name.startsWith(`${id + 1}.`), `Level ${id} name should start with '${id + 1}.'`).toBe(true);

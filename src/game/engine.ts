@@ -179,6 +179,15 @@ import {
   createInitialKotelNaPovidlaState,
   createInitialSvatovaclavskyOhenState,
 } from '../data/zariArena';
+import {
+  RIJEN_POIS,
+  getRijenPois,
+  resolveRijenObstacles,
+  getRijenWaterEffect,
+  isInsideRijenPoi,
+  createInitialOhnicekBramborState,
+  createInitialDusickovaSviceState,
+} from '../data/rijenArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -521,6 +530,20 @@ export class GameEngine {
   }
   public set zari(val: any) {
     this.state.zari = val;
+  }
+
+  public get rijen() {
+    return this.state.rijen;
+  }
+  public set rijen(val: any) {
+    this.state.rijen = val;
+  }
+
+  public get rijenActivePoiPrompt() {
+    return this.state.rijenActivePoiPrompt;
+  }
+  public set rijenActivePoiPrompt(val: any) {
+    this.state.rijenActivePoiPrompt = val;
   }
 
   public get yolkPuddles() {
@@ -1712,7 +1735,13 @@ export class GameEngine {
           this.id !== 'kralovsky_srsen' &&
           this.id !== 'povidlovy_cert' &&
           this.id !== 'posvicensky_hospodar' &&
-          this.id !== 'kvilici_meluzina'
+          this.id !== 'kvilici_meluzina' &&
+          this.id !== 'kralovsky_havran' &&
+          this.id !== 'hastrman_podzimni' &&
+          this.id !== 'drak_vetrnik' &&
+          this.id !== 'dusickova_bludicka' &&
+          this.id !== 'cert_rybnikar' &&
+          this.id !== 'vele_stika'
         ) {
           this.vx = 0;
           this.vy = 0;
@@ -3568,6 +3597,328 @@ export class GameEngine {
             const melDir = this.panicked ? dir + Math.PI : (this.meluzinaGustTimer > 0 && typeof this.meluzinaGustAngle === 'number' ? this.meluzinaGustAngle : dir);
             this.vx = Math.cos(melDir) * spd * melMult;
             this.vy = Math.sin(melDir) * spd * melMult;
+          } else if (this.id === 'kralovsky_havran') {
+            // Stage 15 Miniboss: Královský havran — dark feather volley, dive swoop poryv
+            this.havranFeatherCooldown = (typeof this.havranFeatherCooldown === 'number' ? this.havranFeatherCooldown : 2.5) - bossCdDt;
+            if (this.havranFeatherCooldown <= 0) {
+              this.havranFeatherCooldown = 3.6;
+              for (let k = -1; k <= 1; k++) {
+                const ang = dir + k * 0.22;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 270,
+                  vy: Math.sin(ang) * 270,
+                  angle: ang,
+                  speed: 270,
+                  dmg: 28,
+                  radius: 12,
+                  type: 'magic',
+                  visual: 'crow_feather',
+                  color: '#334155',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 35,
+                  statusText: 'ČERNÉ BRKO KRÁLOVSKÉHO HAVRANA! 🦅🖤',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('swish');
+              self.emitDamageText(this.x, this.y - 65, 'ČERNÁ HAVRANÍ PERA! 🦅🖤', '#94A3B8', true);
+            }
+            this.havranDiveTimer = Math.max(0, (this.havranDiveTimer || 0) - dt);
+            this.havranDiveCooldown = (typeof this.havranDiveCooldown === 'number' ? this.havranDiveCooldown : 3.8) - bossCdDt;
+            if (this.havranDiveCooldown <= 0) {
+              this.havranDiveCooldown = 4.8;
+              this.havranDiveTimer = 0.85;
+              this.havranDiveAngle = dir;
+              self.callbacks?.onSound?.('howl');
+              self.emitDamageText(this.x, this.y - 55, 'STŘEMHLAVÝ PORYV HAVRANA! 🦅💨', '#CBD5E1', true);
+            }
+            const havMult = this.havranDiveTimer > 0 ? 2.2 : 1.0;
+            const havDir = this.panicked ? dir + Math.PI : (this.havranDiveTimer > 0 && typeof this.havranDiveAngle === 'number' ? this.havranDiveAngle : dir);
+            this.vx = Math.cos(havDir) * spd * havMult;
+            this.vy = Math.sin(havDir) * spd * havMult;
+          } else if (this.id === 'hastrman_podzimni') {
+            // Stage 15 Midboss: Hastrman podzimní — mud ball barrage, autumn whirlpool trap
+            this.hastrmanMudCooldown = (typeof this.hastrmanMudCooldown === 'number' ? this.hastrmanMudCooldown : 2.8) - bossCdDt;
+            if (this.hastrmanMudCooldown <= 0 && dist < 360) {
+              this.hastrmanMudCooldown = 3.8;
+              for (let k = -1; k <= 1; k++) {
+                const ang = dir + k * 0.28;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 220,
+                  vy: Math.sin(ang) * 220,
+                  angle: ang,
+                  speed: 220,
+                  dmg: 30,
+                  radius: 14,
+                  type: 'poison',
+                  visual: 'mud_ball',
+                  color: '#15803D',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 40,
+                  statusText: 'KALNÉ BLÁTO Z POTOKA! 🐸💧',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('splash');
+              self.emitDamageText(this.x, this.y - 65, 'LEKNÍNOVÉ KALNÉ KLUBKO! 🐸💧', '#10B981', true);
+            }
+            this.hastrmanWhirlCooldown = (typeof this.hastrmanWhirlCooldown === 'number' ? this.hastrmanWhirlCooldown : 4.0) - bossCdDt;
+            if (this.hastrmanWhirlCooldown <= 0) {
+              this.hastrmanWhirlCooldown = 5.2;
+              addEnemyHazard({
+                id: `hazard_hastrman_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: player.x,
+                y: player.y,
+                radius: 68,
+                duration: 2.8,
+                maxDuration: 2.8,
+                type: 'mud',
+                slowFactor: 0.50,
+                kind: 'mud-patch',
+                warningTimer: 0.8,
+                damage: 32,
+                oneShot: true,
+                exploded: false,
+                sourceEnemyId: this.id,
+              });
+              self.callbacks?.onSound?.('curse');
+              self.emitDamageText(this.x, this.y - 70, 'BLÁTIVÝ PODZIMNÍ VÍR! 🐸🌀', '#059669', true);
+            }
+            this.vx = Math.cos(dir) * spd;
+            this.vy = Math.sin(dir) * spd;
+          } else if (this.id === 'drak_vetrnik') {
+            // Stage 15 Final Boss: Drak Větrník — 5-way paper ribbon streamers, drakiáda whirlwind, storm swoop
+            this.drakStreamerCooldown = (typeof this.drakStreamerCooldown === 'number' ? this.drakStreamerCooldown : 2.2) - bossCdDt;
+            if (this.drakStreamerCooldown <= 0) {
+              this.drakStreamerCooldown = 3.2;
+              for (let k = -2; k <= 2; k++) {
+                const ang = dir + k * 0.22;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 280,
+                  vy: Math.sin(ang) * 280,
+                  angle: ang,
+                  speed: 280,
+                  dmg: 34,
+                  radius: 14,
+                  type: 'magic',
+                  visual: 'wind_blade',
+                  color: '#F97316',
+                  life: 2.5,
+                  maxLife: 2.5,
+                  isEnemy: true,
+                  pushback: 45,
+                  statusText: 'PAPÍROVÁ PENTLE VĚTRNÍKA! 🪁🍂',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('swish');
+              self.emitDamageText(this.x, this.y - 75, 'PENTLOVÁ SALVA VĚTRNÍKA! 🪁💨', '#F97316', true, 'bossAnnouncements');
+            }
+            this.drakWhirlCooldown = (typeof this.drakWhirlCooldown === 'number' ? this.drakWhirlCooldown : 3.8) - bossCdDt;
+            if (this.drakWhirlCooldown <= 0) {
+              this.drakWhirlCooldown = 4.6;
+              addEnemyHazard({
+                id: `hazard_drak_vetrnik_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: player.x,
+                y: player.y,
+                radius: 80,
+                duration: 2.8,
+                maxDuration: 2.8,
+                type: 'curse',
+                slowFactor: 0.50,
+                kind: 'crow-vortex',
+                warningTimer: 0.85,
+                damage: 38,
+                oneShot: true,
+                exploded: false,
+                sourceEnemyId: this.id,
+              });
+              self.callbacks?.onSound?.('howl');
+              self.emitDamageText(this.x, this.y - 70, 'DRAKIÁDOVÝ ORKÁN ZE STRNIŠTĚ! 🌪️🪁', '#FB923C', true);
+            }
+            this.drakSwoopTimer = Math.max(0, (this.drakSwoopTimer || 0) - dt);
+            this.drakSwoopCooldown = (typeof this.drakSwoopCooldown === 'number' ? this.drakSwoopCooldown : 4.2) - bossCdDt;
+            if (this.drakSwoopCooldown <= 0) {
+              this.drakSwoopCooldown = 5.2;
+              this.drakSwoopTimer = 1.0;
+              this.drakSwoopAngle = dir;
+              self.emitDamageText(this.x, this.y - 60, 'PORYV ŘÍJNOVÉHO VICHRU! 💨🪁', '#FDBA74', true);
+            }
+            const drakMult = this.drakSwoopTimer > 0 ? 2.15 : 1.0;
+            const drakDir = this.panicked ? dir + Math.PI : (this.drakSwoopTimer > 0 && typeof this.drakSwoopAngle === 'number' ? this.drakSwoopAngle : dir);
+            this.vx = Math.cos(drakDir) * spd * drakMult;
+            this.vy = Math.sin(drakDir) * spd * drakMult;
+          } else if (this.id === 'dusickova_bludicka') {
+            // Stage 16 Miniboss: Dušičková bludička — will-o'-wisp soul orbs, spectral flicker dash
+            this.bludickaOrbCooldown = (typeof this.bludickaOrbCooldown === 'number' ? this.bludickaOrbCooldown : 2.4) - bossCdDt;
+            if (this.bludickaOrbCooldown <= 0) {
+              this.bludickaOrbCooldown = 3.4;
+              for (let k = -1; k <= 1; k++) {
+                const ang = dir + k * 0.25;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 230,
+                  vy: Math.sin(ang) * 230,
+                  angle: ang,
+                  speed: 230,
+                  dmg: 26,
+                  radius: 12,
+                  type: 'magic',
+                  visual: 'will_o_wisp',
+                  color: '#38BDF8',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 32,
+                  statusText: 'DUŠIČKOVÝ PLAMÍNEK! 🕯️✨',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('swish');
+              self.emitDamageText(this.x, this.y - 60, 'SVĚTÉLKA Z RYBNÍKA! 🕯️✨', '#7DD3FC', true);
+            }
+            this.bludickaFlickerTimer = Math.max(0, (this.bludickaFlickerTimer || 0) - dt);
+            this.bludickaFlickerCooldown = (typeof this.bludickaFlickerCooldown === 'number' ? this.bludickaFlickerCooldown : 3.6) - bossCdDt;
+            if (this.bludickaFlickerCooldown <= 0) {
+              this.bludickaFlickerCooldown = 4.5;
+              this.bludickaFlickerTimer = 0.75;
+              this.bludickaFlickerAngle = dir;
+              self.emitDamageText(this.x, this.y - 50, 'BLUDIČKOVÝ PŘEZÁŘIVÝ TŘPYT! 🕯️💨', '#BAE6FD', true);
+            }
+            const bMult = this.bludickaFlickerTimer > 0 ? 2.0 : 1.0;
+            const bDir = this.panicked ? dir + Math.PI : (this.bludickaFlickerTimer > 0 && typeof this.bludickaFlickerAngle === 'number' ? this.bludickaFlickerAngle : dir);
+            this.vx = Math.cos(bDir) * spd * bMult;
+            this.vy = Math.sin(bDir) * spd * bMult;
+          } else if (this.id === 'cert_rybnikar') {
+            // Stage 16 Midboss: Čert rybníkář — fire coals, tangled fishnet hazard trap
+            this.certCoalCooldown = (typeof this.certCoalCooldown === 'number' ? this.certCoalCooldown : 2.6) - bossCdDt;
+            if (this.certCoalCooldown <= 0 && dist < 360) {
+              this.certCoalCooldown = 3.6;
+              for (let k = -1; k <= 1; k++) {
+                const ang = dir + k * 0.26;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 240,
+                  vy: Math.sin(ang) * 240,
+                  angle: ang,
+                  speed: 240,
+                  dmg: 32,
+                  radius: 13,
+                  type: 'fire',
+                  visual: 'coal',
+                  color: '#EF4444',
+                  life: 2.2,
+                  maxLife: 2.2,
+                  isEnemy: true,
+                  pushback: 40,
+                  statusText: 'ŽHAVÝ UHLÍK Z PEKLA! 🐟🔥',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('explosion');
+              self.emitDamageText(this.x, this.y - 65, 'PEKELNÝ ŽHAVÝ UHLÍK! 🐟🔥', '#EF4444', true);
+            }
+            this.certNetCooldown = (typeof this.certNetCooldown === 'number' ? this.certNetCooldown : 3.8) - bossCdDt;
+            if (this.certNetCooldown <= 0) {
+              this.certNetCooldown = 4.8;
+              addEnemyHazard({
+                id: `hazard_cert_rybnikar_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: player.x,
+                y: player.y,
+                radius: 70,
+                duration: 2.6,
+                maxDuration: 2.6,
+                type: 'mud',
+                slowFactor: 0.45,
+                kind: 'mud-patch',
+                warningTimer: 0.85,
+                damage: 32,
+                oneShot: true,
+                exploded: false,
+                sourceEnemyId: this.id,
+              });
+              self.callbacks?.onSound?.('curse');
+              self.emitDamageText(this.x, this.y - 70, 'ZATÁHNUTÍ SÍTĚ PODBĚRÁKEM! 🕸️🐟', '#F87171', true);
+            }
+            this.vx = Math.cos(dir) * spd;
+            this.vy = Math.sin(dir) * spd;
+          } else if (this.id === 'vele_stika') {
+            // Stage 16 Final Boss: Veleštika — water splash wave, lightning surge charge, whirlpool trap
+            this.stikaWaveCooldown = (typeof this.stikaWaveCooldown === 'number' ? this.stikaWaveCooldown : 2.2) - bossCdDt;
+            if (this.stikaWaveCooldown <= 0) {
+              this.stikaWaveCooldown = 3.2;
+              for (let k = -2; k <= 2; k++) {
+                const ang = dir + k * 0.22;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(ang) * 270,
+                  vy: Math.sin(ang) * 270,
+                  angle: ang,
+                  speed: 270,
+                  dmg: 36,
+                  radius: 14,
+                  type: 'magic',
+                  visual: 'water_blast',
+                  color: '#0284C7',
+                  life: 2.5,
+                  maxLife: 2.5,
+                  isEnemy: true,
+                  pushback: 48,
+                  statusText: 'VÝLOVOVÁ VLNA VELEŠTIKY! 🐟🌊',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('splash');
+              self.emitDamageText(this.x, this.y - 75, 'VODNÍ TŘÍŠŤ VELEŠTIKY! 🐟🌊', '#38BDF8', true, 'bossAnnouncements');
+            }
+            this.stikaWhirlCooldown = (typeof this.stikaWhirlCooldown === 'number' ? this.stikaWhirlCooldown : 3.6) - bossCdDt;
+            if (this.stikaWhirlCooldown <= 0) {
+              this.stikaWhirlCooldown = 4.6;
+              addEnemyHazard({
+                id: `hazard_vele_stika_${Math.round(self.state.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                x: player.x,
+                y: player.y,
+                radius: 82,
+                duration: 2.8,
+                maxDuration: 2.8,
+                type: 'mud',
+                slowFactor: 0.48,
+                kind: 'mud-patch',
+                warningTimer: 0.85,
+                damage: 40,
+                oneShot: true,
+                exploded: false,
+                sourceEnemyId: this.id,
+              });
+              self.callbacks?.onSound?.('howl');
+              self.emitDamageText(this.x, this.y - 70, 'HLUBINNÝ RYBNÍKOVÝ VÍR! 🐟🌀', '#0284C7', true);
+            }
+            this.stikaSurgeTimer = Math.max(0, (this.stikaSurgeTimer || 0) - dt);
+            this.stikaSurgeCooldown = (typeof this.stikaSurgeCooldown === 'number' ? this.stikaSurgeCooldown : 4.0) - bossCdDt;
+            if (this.stikaSurgeCooldown <= 0) {
+              this.stikaSurgeCooldown = 5.0;
+              this.stikaSurgeTimer = 0.95;
+              this.stikaSurgeAngle = dir;
+              self.callbacks?.onSound?.('splash');
+              self.emitDamageText(this.x, this.y - 60, 'BLESKOVÝ VÝPAD VELEŠTIKY! 🐟💨', '#7DD3FC', true);
+            }
+            const stikaMult = this.stikaSurgeTimer > 0 ? 2.3 : 1.0;
+            const stikaDir = this.panicked ? dir + Math.PI : (this.stikaSurgeTimer > 0 && typeof this.stikaSurgeAngle === 'number' ? this.stikaSurgeAngle : dir);
+            this.vx = Math.cos(stikaDir) * spd * stikaMult;
+            this.vy = Math.sin(stikaDir) * spd * stikaMult;
           } else if (this.id === 'blatouch' && (this.isMiniboss || this.isBoss)) {
             // Attack 1: Pollen Spray - 3-way yellow pollen projectiles
             this.pollenCooldown = (typeof this.pollenCooldown === 'number' ? this.pollenCooldown : 3.2) - bossCdDt;
@@ -4984,6 +5335,22 @@ export class GameEngine {
             self.spawnDrop('chest', this.x, this.y, { text: '🥄 POKLAD POVIDLOVÉHO ČERTA!' });
             self.emitDamageText(this.x, this.y - 40, 'POVIDLOVÝ ČERT S MĚCHAČKOU POKOŘEN! 🥄🍑', '#A855F7', true);
           }
+          if (this.id === 'kralovsky_havran' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '🦅 POKLAD KRÁLOVSKÉHO HAVRANA!' });
+            self.emitDamageText(this.x, this.y - 40, 'KRÁLOVSKÝ HAVRAN ZAŽEHNÁN! 🦅🍂', '#94A3B8', true);
+          }
+          if (this.id === 'hastrman_podzimni' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '🐸 POKLAD PODZIMNÍHO HASTRMANA!' });
+            self.emitDamageText(this.x, this.y - 40, 'PODZIMNÍ HASTRMAN POKOŘEN! 🐸💧', '#10B981', true);
+          }
+          if (this.id === 'dusickova_bludicka' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '🕯️ POKLAD DUŠIČKOVÉ BLUDIČKY!' });
+            self.emitDamageText(this.x, this.y - 40, 'DUŠIČKOVÁ BLUDIČKA UKONEJŠENA! 🕯️✨', '#38BDF8', true);
+          }
+          if (this.id === 'cert_rybnikar' && (this.isMiniboss || this.isBoss)) {
+            self.spawnDrop('chest', this.x, this.y, { text: '🐟 POKLAD PEKELNÉHO ČERTA RYBNÍKÁŘE!' });
+            self.emitDamageText(this.x, this.y - 40, 'ČERT RYBNÍKÁŘ S PODBĚRÁKEM ZAHNÁN! 🐟🔥', '#EF4444', true);
+          }
 
           const curLvlId = self.state.activeLevelId !== undefined ? self.state.activeLevelId : 0;
           const curLvl = GAME_LEVELS[curLvlId];
@@ -5050,6 +5417,12 @@ export class GameEngine {
               } else if (this.id === 'kvilici_meluzina') {
                 self.spawnDrop('chest', this.x, this.y, { text: '🌪️ POKLAD KVÍLÍCÍ MELUZÍNY!' });
                 self.emitDamageText(this.x, this.y - 50, 'KVÍLÍCÍ MELUZÍNA UKONEJŠENA! 🌪️🕯️', '#38BDF8', true);
+              } else if (this.id === 'drak_vetrnik') {
+                self.spawnDrop('chest', this.x, this.y, { text: '🪁 POKLAD HRUSICKÉHO DRAKA VĚTRNÍKA!' });
+                self.emitDamageText(this.x, this.y - 50, 'DRAK VĚTRNÍK ZDOLÁN! DRAKIÁDA VRCHOLÍ! 🪁🍂', '#F97316', true);
+              } else if (this.id === 'vele_stika') {
+                self.spawnDrop('chest', this.x, this.y, { text: '🐟 POKLAD HRUSICKÉ VELEŠTIKY!' });
+                self.emitDamageText(this.x, this.y - 50, 'HRUSICKÁ VELEŠTIKA VYLOVENA! VÝLOV DOKONČEN! 🐟💧', '#0EA5E9', true);
               } else {
                 self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD VLÁDCE OBLASTI!' });
                 self.emitDamageText(this.x, this.y - 50, 'VLÁDCE PŘEMOŽEN! 👑', '#F59E0B', true);
@@ -5057,7 +5430,7 @@ export class GameEngine {
 
               if (self.state.meta) {
                 const nextLvlId = (curLvlId + 1) as GameLevelId;
-                const canUnlockNext = nextLvlId <= 13;
+                const canUnlockNext = nextLvlId <= 15;
                 const nextHighest = canUnlockNext
                   ? Math.max(self.state.meta.highestLevelUnlocked || 1, nextLvlId)
                   : (self.state.meta.highestLevelUnlocked || 1);
@@ -8394,6 +8767,267 @@ export class GameEngine {
           }
         }
         resolveZariObstacles(e, isFlying);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
+    // Stage 15 & 16 ("ŘÍJEN"): Ohníček na návsi (Day) & Dušičková svíce a výlov (Night)
+    if (this.state.activeLevelId === 14 || this.state.activeLevelId === 15) {
+      const isRijenNight = this.state.activeLevelId === 15;
+      const rijenPois = getRijenPois(isRijenNight);
+      const rj10 = this.state.rijen || (this.state.rijen = {
+        bellCooldown: 0,
+        shrineCooldown: 0,
+        tavernCooldown: 0,
+        forestCooldown: 0,
+        ohnicek: createInitialOhnicekBramborState(),
+        svice: createInitialDusickovaSviceState(),
+      });
+      if (!rj10.ohnicek) {
+        rj10.ohnicek = createInitialOhnicekBramborState();
+      }
+      if (!rj10.svice) {
+        rj10.svice = createInitialDusickovaSviceState();
+      }
+
+      // Ohníček z bramborové natě update (Stage 15 Day)
+      if (rj10.ohnicek.cooldown > 0) rj10.ohnicek.cooldown = Math.max(0, rj10.ohnicek.cooldown - dt);
+      if (rj10.ohnicek.smokeBurstTimer > 0) rj10.ohnicek.smokeBurstTimer = Math.max(0, rj10.ohnicek.smokeBurstTimer - dt);
+      if (rj10.ohnicek.sparksTimer > 0) {
+        rj10.ohnicek.sparksTimer = Math.max(0, rj10.ohnicek.sparksTimer - dt);
+        if (player) {
+          player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+          player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.20);
+          player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+        }
+      }
+
+      // Dušičková svíce u Božích muk update (Stage 16 Night)
+      if (rj10.svice.cooldown > 0) rj10.svice.cooldown = Math.max(0, rj10.svice.cooldown - dt);
+      if (rj10.svice.candleActiveTimer > 0) {
+        rj10.svice.candleActiveTimer = Math.max(0, rj10.svice.candleActiveTimer - dt);
+        if (player) {
+          player.damageReduction = Math.max(player.damageReduction || 0, 0.30);
+          player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.35);
+        }
+      }
+
+      if (player && player.hp > 0) {
+        const waterEffect = getRijenWaterEffect(player.x, player.y, this.state.gameTime || 0, isRijenNight);
+        if (waterEffect.inOpenWater) {
+          player.x += waterEffect.carryVx * dt;
+          player.y += waterEffect.carryVy * dt;
+        }
+        if (waterEffect.inMudPond) {
+          player.speedMultiplier = Math.min(player.speedMultiplier || 1, 0.75);
+        }
+        resolveRijenObstacles(player, false);
+        clampToMarchArenaBounds(player, 28);
+
+        const inShrine = isInsideRijenPoi(player.x, player.y, rijenPois.shrine);
+        const inChurch = isInsideRijenPoi(player.x, player.y, rijenPois.church);
+        const inTavern = isInsideRijenPoi(player.x, player.y, rijenPois.tavern);
+        const inForest = isInsideRijenPoi(player.x, player.y, rijenPois.forest);
+        const inVillage = isInsideRijenPoi(player.x, player.y, rijenPois.village);
+        const inFields = isInsideRijenPoi(player.x, player.y, rijenPois.fields);
+        const inSchool = isInsideRijenPoi(player.x, player.y, rijenPois.school);
+
+        if (inFields) {
+          player.damageReduction = Math.max(player.damageReduction || 0, 0.18);
+        }
+        if (inSchool) {
+          player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+        }
+
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+
+        // Stage 15 Daytime Mechanic: [E] Ohníček z bramborové natě na návsi
+        if (!isRijenNight && inVillage) {
+          this.state.rijenActivePoiPrompt = rijenPois.village.hint || null;
+          if (eKeyPressed && rj10.ohnicek.cooldown <= 0) {
+            rj10.ohnicek.cooldown = 20.0;
+            rj10.ohnicek.sparksTimer = 18.0;
+            rj10.ohnicek.smokeBurstTimer = 2.5;
+            rj10.ohnicek.potatoesRoasted = (rj10.ohnicek.potatoesRoasted || 0) + 1;
+            player.hp = Math.min(player.maxHp, player.hp + 40);
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(
+              rj10.ohnicek.x,
+              rj10.ohnicek.y - 65,
+              '🥔 HORKÁ PEČENÁ BRAMBORA Z POPELA! (+40 KURÁŽ, +25 % ÚTOK, +20 % DOBÍJENÍ)! 🥔✨',
+              '#F59E0B',
+              true,
+              'bossAnnouncements'
+            );
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (!foe || foe.dead || foe.isDefeated) continue;
+              const dx = foe.x - rj10.ohnicek.x;
+              const dy = foe.y - rj10.ohnicek.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist <= 380) {
+                foe.takeDamage(100 * (player.damageMultiplier || 1), 'fire', (dx / dist) * 440, (dy / dist) * 440);
+                foe.slowTimer = Math.max(foe.slowTimer || 0, 2.5);
+              }
+            }
+          }
+        } else if (isRijenNight && (inShrine || Math.hypot(player.x - rj10.svice.x, player.y - rj10.svice.y) <= rj10.svice.radius)) {
+          // Stage 16 Nighttime Mechanic: [E] Zažehnout dušičkovou svíci u Božích muk
+          this.state.rijenActivePoiPrompt = rijenPois.shrine.hint || null;
+          if (eKeyPressed && rj10.svice.cooldown <= 0) {
+            rj10.svice.cooldown = 20.0;
+            rj10.svice.candleActiveTimer = 18.0;
+            rj10.svice.candlesLit = (rj10.svice.candlesLit || 0) + 1;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(
+              rj10.svice.x,
+              rj10.svice.y - 60,
+              '🕯️ DUŠIČKOVÁ POSVÁTNÁ OCHRANA! (+100 ŠTÍT, +30 % ZBROJ, +35 % DOBÍJENÍ)! 🕯️✨',
+              '#38BDF8',
+              true,
+              'bossAnnouncements'
+            );
+            player.tempShield = Math.max(player.tempShield || 0, 100);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (!foe || foe.dead || foe.isDefeated) continue;
+              const dx = foe.x - rj10.svice.x;
+              const dy = foe.y - rj10.svice.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist <= 440) {
+                foe.takeDamage(130 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 440, (dy / dist) * 440);
+                foe.panicked = true;
+                foe.panicTimer = Math.max(foe.panicTimer || 0, 3.5);
+              }
+            }
+          }
+        } else if (inChurch) {
+          this.state.rijenActivePoiPrompt = rijenPois.church.hint || null;
+          if (eKeyPressed && (!player._rijenChurchCooldown || player._rijenChurchCooldown <= 0)) {
+            player._rijenChurchCooldown = 12.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'ŘÍJNOVÝ ZVON SV. MIKULÁŠE! 🔔🍂', '#38BDF8', true);
+            player.tempShield = Math.max(player.tempShield || 0, 70);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - player.x, foe.y - player.y) <= 420) {
+                foe.panicked = true;
+                foe.panicTimer = Math.max(foe.panicTimer || 0, 3.0);
+              }
+            }
+          }
+        } else if (inTavern) {
+          this.state.rijenActivePoiPrompt = rijenPois.tavern.hint || null;
+          if (eKeyPressed && (!player._rijenTavernCooldown || player._rijenTavernCooldown <= 0)) {
+            player._rijenTavernCooldown = 10.0;
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, isRijenNight ? 'DUŠIČKOVÁ POLÉVKA A ČAJ! 🍵🕯️' : 'BRAMBOROVÁ POLÉVKA S HOUBAMI! 🍲🥔', '#F59E0B', true);
+            player.hp = Math.min(player.maxHp, player.hp + 45);
+            player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+          }
+        } else if (inForest) {
+          this.state.rijenActivePoiPrompt = rijenPois.forest.hint || null;
+          if (eKeyPressed && (!player._rijenForestCooldown || player._rijenForestCooldown <= 0)) {
+            player._rijenForestCooldown = 8.0;
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'PODZIMNÍ STUDÁNKA V BUKOVÉM LESE! 💧🍁', '#10B981', true);
+            player.hp = Math.min(player.maxHp, player.hp + 30);
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.20);
+          }
+        } else if (inShrine && !isRijenNight) {
+          this.state.rijenActivePoiPrompt = rijenPois.shrine.hint || null;
+          if (eKeyPressed && (!player._rijenShrineCooldown || player._rijenShrineCooldown <= 0)) {
+            player._rijenShrineCooldown = 15.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POŽEHNÁNÍ OD BOŽÍCH MUK! 🌾✨', '#FEF08A', true);
+            if (this.state.drops) {
+              applyMagnetWave(this.state.drops, player.x, player.y, 99999, true);
+            }
+            player.tempShield = Math.max(player.tempShield || 0, 75);
+            player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 2.0);
+          }
+        } else if (inSchool && !isRijenNight) {
+          this.state.rijenActivePoiPrompt = rijenPois.school.hint || null;
+          if (eKeyPressed && (!player._rijenSchoolCooldown || player._rijenSchoolCooldown <= 0)) {
+            player._rijenSchoolCooldown = 8.0;
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'ŠKOLNÍ PAPÍROVÝ DRAK! 🪁✨', '#FB923C', true);
+            player.hp = Math.min(player.maxHp, player.hp + 25);
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.22);
+          }
+        } else {
+          this.state.rijenActivePoiPrompt = null;
+        }
+
+        if (player._rijenShrineCooldown > 0) player._rijenShrineCooldown -= dt;
+        if (player._rijenChurchCooldown > 0) player._rijenChurchCooldown -= dt;
+        if (player._rijenTavernCooldown > 0) player._rijenTavernCooldown -= dt;
+        if (player._rijenForestCooldown > 0) player._rijenForestCooldown -= dt;
+        if (player._rijenSchoolCooldown > 0) player._rijenSchoolCooldown -= dt;
+
+        // Stage 16 Night Mechanic: Dušičkový větrný poryv
+        if (isRijenNight) {
+          if (rj10.svice.windWarning) {
+            rj10.svice.windWarning.timer -= dt;
+            if (rj10.svice.windWarning.timer <= 0) {
+              const wx = rj10.svice.windWarning.x;
+              const wy = rj10.svice.windWarning.y;
+              const wRad = rj10.svice.windWarning.radius || 120;
+              rj10.svice.windWarning = null;
+              this.callbacks?.onSound?.('howl');
+              this.emitDamageText(wx, wy - 50, '🕯️ SVĚTLO ROZEHNALO NOČNÍ STÍNY! 💨✨', '#38BDF8', true, 'bossAnnouncements');
+              const pDist = Math.hypot(player.x - wx, player.y - wy);
+              if (pDist <= wRad) {
+                player.hp = Math.min(player.maxHp, player.hp + 25);
+                player.tempShield = Math.max(player.tempShield || 0, 50);
+                this.emitDamageText(player.x, player.y - 45, 'DUŠIČKOVÝ POKOJ! ✨', '#38BDF8', true);
+              }
+              for (let j = 0; j < this.livingEnemies.length; j++) {
+                const foe = this.livingEnemies[j];
+                if (!foe || foe.dead || foe.isDefeated) continue;
+                const fDist = Math.hypot(foe.x - wx, foe.y - wy);
+                if (fDist <= wRad + (foe.radius || 16)) {
+                  foe.takeDamage(200 * (player.damageMultiplier || 1), 'holy', (foe.x - wx) * 3, (foe.y - wy) * 3, { stunDuration: 1.2 });
+                }
+              }
+              this.spawnDrop('coin', wx, wy, { value: 5, isHot: true });
+            }
+          } else {
+            rj10.svice.windGustTimer = (typeof rj10.svice.windGustTimer === 'number' ? rj10.svice.windGustTimer : 7.0) - dt;
+            if (rj10.svice.windGustTimer <= 0) {
+              rj10.svice.windGustTimer = 9.0;
+              const offsetAng = (this.state.gameTime || 0) * 1.5;
+              const tx = player.x + Math.cos(offsetAng) * 115;
+              const ty = player.y + Math.sin(offsetAng) * 115;
+              rj10.svice.windWarning = {
+                x: tx,
+                y: ty,
+                radius: 120,
+                timer: 1.1,
+                maxTimer: 1.1,
+              };
+              this.emitDamageText(tx, ty - 32, '🕯️ PORYV DUŠIČKOVÉHO VĚTRU! 🕯️', '#BAE6FD', false);
+            }
+          }
+        }
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean((e.isFlying || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'bludicka' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina') && !e.isGroundedForLoot);
+        if (!isFlying) {
+          const eWater = getRijenWaterEffect(e.x, e.y, this.state.gameTime || 0, isRijenNight);
+          if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+            e.x += eWater.carryVx * dt;
+            e.y += eWater.carryVy * dt;
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+          }
+          if (eWater.inMudPond && !isAquaticEnemy(e)) {
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.4);
+          }
+        }
+        resolveRijenObstacles(e, isFlying);
         clampToMarchArenaBounds(e, 28);
       }
     }

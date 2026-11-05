@@ -53,6 +53,11 @@ import {
   isInsideZariPoi,
 } from '../data/zariArena';
 import {
+  getRijenPois,
+  getRijenPoisList,
+  isInsideRijenPoi,
+} from '../data/rijenArena';
+import {
   drawSvatojanskaBylina,
   drawSvatojanskyPoklad,
 } from './cervenSvgLandscape';
@@ -694,6 +699,105 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? zariPois.forest : undefined);
       const bannerText = engine.zariActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1h. Level 14 & 15 (Stage 15: Říjnová drakiáda & Stage 16: Dušičková noc): POI hints, Ohníček z natě burst & Dušičková svíce aura
+  if (engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+    const isRijenNight = engine.activeLevelId === 15;
+    const rijenPois = getRijenPois(isRijenNight);
+    const rijenPoiList = getRijenPoisList(isRijenNight);
+
+    // Stage 15: Ohníček z bramborové natě warm fragrant smoke & ember burst ring
+    const ohnicek = engine.rijen?.ohnicek;
+    if (!isRijenNight && ohnicek && ohnicek.smokeBurstTimer > 0 && isInView(ohnicek.x, ohnicek.y, ohnicek.radius + 220, camera)) {
+      ctx.save();
+      ctx.translate(ohnicek.x, ohnicek.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 6);
+      ctx.fillStyle = `rgba(234, 88, 12, ${0.14 + pulse * 0.12})`;
+      ctx.strokeStyle = '#F97316';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 380, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Stage 16: Dušičková svíce warm radiant sacred circle
+    const svice = engine.rijen?.svice;
+    if (isRijenNight && svice && svice.candleActiveTimer > 0 && isInView(svice.x, svice.y, svice.radius + 260, camera)) {
+      ctx.save();
+      ctx.translate(svice.x, svice.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 5);
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.14 + pulse * 0.12})`;
+      ctx.strokeStyle = '#FDE047';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 440, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    const windWarn = svice?.windWarning;
+    if (isRijenNight && windWarn && windWarn.timer > 0 && isInView(windWarn.x, windWarn.y, windWarn.radius + 30, camera)) {
+      const progress = 1 - Math.max(0, Math.min(1, windWarn.timer / (windWarn.maxTimer || 2.3)));
+      ctx.save();
+      ctx.translate(windWarn.x, windWarn.y);
+      ctx.fillStyle = `rgba(56, 189, 248, ${0.16 + progress * 0.30})`;
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, windWarn.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = '#BAE6FD';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(6, windWarn.radius * (1 - progress)), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof rijenPoiList)[number] | undefined;
+      for (let i = 0; i < rijenPoiList.length; i++) {
+        if (isInsideRijenPoi(player.x, player.y, rijenPoiList[i], 30)) {
+          nearbyPoi = rijenPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? rijenPois.forest : undefined);
+      const bannerText = engine.rijenActivePoiPrompt || nearby?.title;
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';

@@ -1981,6 +1981,289 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			description: "Zažehni svatý oheň u kostela sv. Václava [E] pro posvátný štít a záštitu proti přízrakům, a využívej poryvy svatováclavského vichru!",
 			cadenceSeconds: 20
 		}
+	},
+	14: {
+		id: 14,
+		name: "15. Říjen v Hrusicích – Bramborová nať a drakiáda",
+		shortTitle: "Říjnová drakiáda",
+		subtitle: "Vonící dým z bramborové natě, draci na větru a pečené brambory v popelu",
+		theme: "october_harvest",
+		season: "autumn",
+		icon: "🥔",
+		badge: "15. Úroveň",
+		description: "Kraj provoněl kouř z doutnající bramborové natě, na podzimním nebi krouží pestrobarevní draci a ve žhavém popelu na návsi se pečou křupavé brambory. Upeč si horkou bramboru [E] pro posilující svačinku a zažeň hladové běsy!",
+		lore: "Když se v říjnu zvedne sychravý podzimní vítr a na polích se pálí bramborová nať, pouštějí kluci z Hrusic papírové draky. Nad strništi však krouží hejna havranů a ze starého novinového papíru ožívá samotný drak Větrník!",
+		unlockRequirementText: "Odemkne se po poražení Kvílící Meluzíny ve 14. úrovni (Svatováclavská noc)",
+		skyColor: "#FDE68A",
+		nightSkyColor: "#FDE68A",
+		groundColor: "#B45309",
+		ambientTint: "rgba(217, 119, 6, 0.08)",
+		weatherEffect: "falling_leaves",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"potato_fire",
+			"kite"
+		],
+		arena: {
+			id: "rijnova_drakiada",
+			name: "Říjnová náves a brambořiště",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "kralovsky_havran",
+			name: "🦅 Královský havran ze strniště",
+			warning: "🦅 POZOR: ZE STRNIŠTĚ VYLETĚL OBŘÍ ČERNÝ HAVRAN!",
+			time: 85,
+			kills: 120,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "hastrman_podzimni",
+			name: "🐸 Podzimní hastrman z rákosí",
+			warning: "🐸 POZOR: Z KALNÉHO RYBNÍKA VYSTUPUJE HASTRMAN SE SÍTÍ!",
+			time: 185,
+			kills: 280,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "drak_vetrnik",
+			name: "🪁 Hrusický drak Větrník",
+			warning: "🪁 NEBE TEMNÍ! NAD HRUSICEMI KROUŽÍ OBŘÍ PAPÍROVÝ DRAK VĚTRNÍK! 🪁",
+			time: 300,
+			kills: 440,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"bramborova_mandelinka",
+				"polni_mysice",
+				"podzimni_strasak",
+				"svestkovy_srsen",
+				"mysak",
+				"cert_sekac"
+			],
+			afternoon: [
+				"bramborova_mandelinka",
+				"podzimni_strasak",
+				"polni_krecek",
+				"svestkovy_srsen",
+				"srpnove_cmelak",
+				"cert_sekac"
+			],
+			dusk: [
+				"bramborova_mandelinka",
+				"podzimni_strasak",
+				"polni_mysice",
+				"svestkovy_srsen",
+				"drab",
+				"cert_sekac"
+			],
+			night: [
+				"bramborova_mandelinka",
+				"podzimni_strasak",
+				"polni_krecek",
+				"svestkovy_srsen",
+				"cert_sekac"
+			],
+			midnight: [
+				"bramborova_mandelinka",
+				"podzimni_strasak",
+				"polni_mysice",
+				"svestkovy_srsen",
+				"cert_sekac"
+			],
+			dawn: [
+				"bramborova_mandelinka",
+				"podzimni_strasak",
+				"polni_mysice",
+				"mysak",
+				"svestkovy_srsen",
+				"cert_sekac"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "bramborova_mandelinka",
+				name: "Bramborová mandelinka",
+				icon: "🪲",
+				role: "Pruhovaný hmyzí škůdce z bramborových lánů"
+			},
+			{
+				id: "podzimni_strasak",
+				name: "Podzimní polní strašák",
+				icon: "🌾",
+				role: "Obrněný slaměný běs se zahradnickými hráběmi"
+			},
+			{
+				id: "kralovsky_havran",
+				name: "Královský havran ze strniště",
+				icon: "🦅",
+				role: "Rychlý letec a první mini-boss úrovně"
+			},
+			{
+				id: "hastrman_podzimni",
+				name: "Podzimní hastrman z rákosí",
+				icon: "🐸",
+				role: "Mezi-boss z Brčálníku vrhající rybářskou síť"
+			},
+			{
+				id: "drak_vetrnik",
+				name: "Hrusický drak Větrník",
+				icon: "🪁",
+				role: "Vele-boss říjnového nebe a vládce sychravého větru"
+			}
+		],
+		bossMechanic: {
+			label: "Ohníček z bramborové natě",
+			description: "Přistup k ohništi na návsi a stiskni [E] pro upečení horké brambory – popálíš běsy v okolí a získáš posilující svačinku!",
+			cadenceSeconds: 20
+		}
+	},
+	15: {
+		id: 15,
+		name: "16. Říjen v Hrusicích – Dušičková noc a výlov rybníka",
+		shortTitle: "Dušičková noc",
+		subtitle: "Svíce na hřbitově, vypuštěný rybník plný kaprů a děsuplný Čert rybníkář",
+		theme: "all_souls_night",
+		season: "autumn",
+		icon: "🕯️",
+		badge: "16. Úroveň",
+		isNightLevel: true,
+		description: "Na Hrusice padla tichá dušičková noc. U Božích muk a na hřbitově plápolají hřejivé svíce, z vypuštěného rybníka Brčálníku stoupá pach bahna a z kalné tůně vylézá Pekelný čert rybníkář s obří Veleštikou. Zažehni dušičkovou svíci [E] pro posvátnou záštitu!",
+		lore: "Na Dušičky vzpomínají v Hrusicích na všechny předky a rozsvěcejí svíčky ve skleněných lucernách. V rybníce Brčálníku vrcholí noční výlov kaprů, do kterého se míchají noční bludičky, čerti od kádí a zubaté obludy z nejhlubší tůně.",
+		unlockRequirementText: "Odemkne se po poražení draka Větrníka v 15. úrovni (Říjnová drakiáda)",
+		skyColor: "#0D1322",
+		nightSkyColor: "#070B14",
+		groundColor: "#1B2232",
+		ambientTint: "rgba(120, 140, 180, 0.25)",
+		weatherEffect: "fog",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"graveyard_candle",
+			"carp_tub"
+		],
+		arena: {
+			id: "dusickova_noc",
+			name: "Dušičková noční aréna",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "dusickova_bludicka",
+			name: "🕯️ Dušičková bludička z hřbitova",
+			warning: "🕯️ POZOR: Z HŘBITOVA U KOSTELA VYSTUPUJE DUŠIČKOVÁ BLUDIČKA!",
+			time: 85,
+			kills: 125,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "cert_rybnikar",
+			name: "🐟 Pekelný čert rybníkář",
+			warning: "🐟 POZOR: Z VYPUŠTĚNÉHO RYBNÍKA VYSTUPUJE PEKELNÝ ČERT RYBNÍKÁŘ S NEVODEM!",
+			time: 185,
+			kills: 290,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "vele_stika",
+			name: "🐟 Hrusická Veleštika ze dna Brčálníku",
+			warning: "🐟 HLUBINY SE VZBOURUJÍ! Z BAHNA RYBNÍKA VYPLOUVÁ OBŘÍ VELEŠTIKA! 🐟",
+			time: 300,
+			kills: 450,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"cerny_pes",
+				"bubak"
+			],
+			afternoon: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_pes"
+			],
+			dusk: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_pes",
+				"bubak"
+			],
+			night: [
+				"topivec",
+				"bludicka",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_vlkodlak",
+				"krvavy_kostlivec",
+				"hejkal"
+			],
+			midnight: [
+				"topivec",
+				"bludicka",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_vlkodlak",
+				"krvavy_kostlivec",
+				"ohniva_kobyla",
+				"hejkal"
+			],
+			dawn: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"cerny_pes",
+				"zbrojnos"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "topivec",
+				name: "Rybniční topivec",
+				icon: "💧",
+				role: "Vodní běs číhající v bahně u vypuštěného rybníka"
+			},
+			{
+				id: "bludicka",
+				name: "Mlžná bludička",
+				icon: "✨",
+				role: "Záhrobní světýlko lákající do bažin"
+			},
+			{
+				id: "dusickova_bludicka",
+				name: "Dušičková bludička",
+				icon: "🕯️",
+				role: "Záhrobní mini-boss z kostelního hřbitova"
+			},
+			{
+				id: "cert_rybnikar",
+				name: "Pekelný čert rybníkář",
+				icon: "🐟",
+				role: "Mezi-boss z výlovu kradoucí kapry s okovanými vidlemi"
+			},
+			{
+				id: "vele_stika",
+				name: "Hrusická Veleštika",
+				icon: "🐟",
+				role: "Legendární obludná zubatice z nejhlubšího bahna Brčálníku"
+			}
+		],
+		bossMechanic: {
+			label: "Dušičková svíce a ochranný plamen",
+			description: "Přistup k Božím mukám a stiskni [E] pro zažehnutí dušičkové svíce – posvátný plamen spálí okolní noční přízraky a dodá hřejivou kuráž!",
+			cadenceSeconds: 20
+		}
 	}
 };
 function isLevelUnlocked(levelId: number, meta: any) {

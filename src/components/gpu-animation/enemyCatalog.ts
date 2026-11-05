@@ -141,6 +141,14 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   povidlovy_cert: { archetype: 'golem', duration: '1.14s', wobble: '14deg', squashX: 1.24, squashY: 0.80, baseScale: 1.56, accentColor: '#581C87' },
   posvicensky_hospodar: { archetype: 'golem', duration: '1.26s', wobble: '15deg', squashX: 1.25, squashY: 0.79, baseScale: 1.72, accentColor: '#B91C1C' },
   kvilici_meluzina: { archetype: 'golem', duration: '1.22s', wobble: '13deg', squashX: 1.22, squashY: 0.81, baseScale: 1.70, accentColor: '#38BDF8' },
+  bramborova_mandelinka: { archetype: 'bug', duration: '0.20s', wobble: '8deg', squashX: 1.15, squashY: 0.88, baseScale: 0.90, accentColor: '#F59E0B' },
+  podzimni_strasak: { archetype: 'golem', duration: '1.18s', wobble: '12deg', squashX: 1.22, squashY: 0.82, baseScale: 1.45, accentColor: '#EA580C' },
+  kralovsky_havran: { archetype: 'golem', duration: '1.10s', wobble: '14deg', squashX: 1.20, squashY: 0.82, baseScale: 1.50, accentColor: '#312E81' },
+  hastrman_podzimni: { archetype: 'golem', duration: '1.20s', wobble: '14deg', squashX: 1.24, squashY: 0.80, baseScale: 1.58, accentColor: '#16A34A' },
+  drak_vetrnik: { archetype: 'golem', duration: '1.28s', wobble: '16deg', squashX: 1.26, squashY: 0.78, baseScale: 1.80, accentColor: '#EF4444' },
+  dusickova_bludicka: { archetype: 'bug', duration: '0.45s', wobble: '9deg', squashX: 1.16, squashY: 0.85, baseScale: 1.35, accentColor: '#60A5FA' },
+  cert_rybnikar: { archetype: 'golem', duration: '1.22s', wobble: '14deg', squashX: 1.25, squashY: 0.80, baseScale: 1.62, accentColor: '#991B1B' },
+  vele_stika: { archetype: 'golem', duration: '1.30s', wobble: '16deg', squashX: 1.28, squashY: 0.76, baseScale: 1.82, accentColor: '#0F766E' },
 };
 
 // In-memory cache for baked canvas data URIs so we bake each enemy at most once

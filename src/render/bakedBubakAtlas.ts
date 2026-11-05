@@ -99,7 +99,15 @@ export type BakedBubakId =
   | 'kralovsky_srsen'
   | 'povidlovy_cert'
   | 'posvicensky_hospodar'
-  | 'kvilici_meluzina';
+  | 'kvilici_meluzina'
+  | 'bramborova_mandelinka'
+  | 'podzimni_strasak'
+  | 'kralovsky_havran'
+  | 'hastrman_podzimni'
+  | 'drak_vetrnik'
+  | 'dusickova_bludicka'
+  | 'cert_rybnikar'
+  | 'vele_stika';
 
 export interface BakedFrame {
   canvas: any;
@@ -214,6 +222,14 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   povidlovy_cert: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPovidlovyCert(c, x, y, t, v, p) },
   posvicensky_hospodar: { size: 188, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPosvicenskyHospodar(c, x, y, t, v, p) },
   kvilici_meluzina: { size: 188, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKviliciMeluzina(c, x, y, t, v, p) },
+  bramborova_mandelinka: { size: 96, drawFn: (c, x, y, t, v, p) => (Lada as any).drawBramborovaMandelinka(c, x, y, t, v, p) },
+  podzimni_strasak: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPodzimniStrasak(c, x, y, t, v, p) },
+  kralovsky_havran: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKralovskyHavran(c, x, y, t, v, p) },
+  hastrman_podzimni: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawHastrmanPodzimni(c, x, y, t, v, p) },
+  drak_vetrnik: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDrakVetrnik(c, x, y, t, v, p) },
+  dusickova_bludicka: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDusickovaBludicka(c, x, y, t, v, p) },
+  cert_rybnikar: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawCertRybnikar(c, x, y, t, v, p) },
+  vele_stika: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawVeleStika(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {

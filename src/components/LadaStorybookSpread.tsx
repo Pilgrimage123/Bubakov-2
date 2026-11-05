@@ -1431,6 +1431,8 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     { levelId: 11, x: 88, y: 24, shortLabel: '12. Srpen (Noc)', regionNote: 'Vavřinecká noc', tilt: 3 },
     { levelId: 12, x: 30, y: 10, shortLabel: '13. Září (Den)', regionNote: 'Zářijové posvícení', tilt: -2 },
     { levelId: 13, x: 82, y: 10, shortLabel: '14. Září (Noc)', regionNote: 'Svatováclavská noc', tilt: 2 },
+    { levelId: 14, x: 22, y: 6, shortLabel: '15. Říjen (Den)', regionNote: 'Říjnová drakiáda', tilt: -1 },
+    { levelId: 15, x: 74, y: 6, shortLabel: '16. Říjen (Noc)', regionNote: 'Dušičková noc', tilt: 2 },
   ];
 
   const hpPct = Math.round((activePortrait.hp / activePortrait.maxHp) * 100);

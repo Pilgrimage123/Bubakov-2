@@ -542,9 +542,9 @@ export class ArenaRenderer {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
           const decorExtent =
-            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border'
+            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border'
               ? 3200 * scale
-              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_'))
+              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_'))
               ? 560 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -562,9 +562,9 @@ export class ArenaRenderer {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent =
-          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border'
+          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border'
             ? 3200 * scale
-            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_'))
+            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_'))
             ? 560 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -743,7 +743,10 @@ export class ArenaRenderer {
     const isStageThirteenDaylight =
       (curLvl && curLvl.id === 12) ||
       (engine.activeLevelId === 12 && (!curLvl || curLvl.id === undefined || curLvl.id === 12));
-    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight || isStageSevenDaylight || isStageNineDaylight || isStageElevenDaylight || isStageThirteenDaylight;
+    const isStageFifteenDaylight =
+      (curLvl && curLvl.id === 14) ||
+      (engine.activeLevelId === 14 && (!curLvl || curLvl.id === undefined || curLvl.id === 14));
+    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight || isStageSevenDaylight || isStageNineDaylight || isStageElevenDaylight || isStageThirteenDaylight || isStageFifteenDaylight;
     if (isDaylightStage && !options?.skipSunInArenaPass) {
       const sunVariant: SunVariant = isStageOneDaylight ? 'march' : 'duben';
       const tSunStart = now();

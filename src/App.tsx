@@ -248,6 +248,7 @@ import { drawCervenSummerLandmark } from './render/cervenSvgLandscape';
 import { drawCervenecDecoration } from './render/cervenecSvgLandscape';
 import { drawSrpenDecoration } from './render/srpenSvgLandscape';
 import { drawZariDecoration } from './render/zariSvgLandscape';
+import { drawRijenDecoration } from './render/rijenSvgLandscape';
 import {
   CERVENEC_POIS,
   CERVENEC_DECOR,
@@ -272,6 +273,14 @@ import {
   getZariWaterEffect,
   isInsideZariPoi,
 } from './data/zariArena';
+import {
+  RIJEN_POIS,
+  RIJEN_DECOR,
+  getRijenPois,
+  resolveRijenObstacles,
+  getRijenWaterEffect,
+  isInsideRijenPoi,
+} from './data/rijenArena';
 import {
   CERVEN_POIS,
   CERVEN_POND_REGION,
@@ -1048,6 +1057,8 @@ class DecorItem {
       drawSrpenDecoration(ctx, this, time, isNight);
     } else if (this.type.startsWith('zari_')) {
       drawZariDecoration(ctx, this, time, isNight);
+    } else if (this.type.startsWith('rijen_')) {
+      drawRijenDecoration(ctx, this, time, isNight);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1442,6 +1453,13 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     ];
     return items;
   }
+  if ((level.id === 14 || level.id === 15) && (level.arena?.id === 'rijnova_drakiada' || level.arena?.id === 'dusickova_noc' || level.theme === 'october_harvest' || level.theme === 'all_souls_night')) {
+    const items: DecorItem[] = [
+      ...RIJEN_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(RIJEN_POIS.village.x - 50, RIJEN_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
     if (!pool.includes('cottage')) pool.push('cottage');
@@ -1466,6 +1484,8 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     laurence_night: 38,
     september_feast: 38,
     wenceslas_night: 38,
+    october_harvest: 38,
+    all_souls_night: 38,
   };
 
   const target = themeDensity[level.theme] || 32;
@@ -3567,6 +3587,157 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
 
+    if (eng.activeLevelId === 14 || eng.activeLevelId === 15) {
+      const rj = eng.rijen;
+      const isNight = eng.activeLevelId === 15;
+      const pois = getRijenPois(isNight);
+      const ohnicek = rj?.ohnicek;
+      const svice = rj?.svice;
+
+      // Ohníček na návsi (Stage 15 daytime village green)
+      if (!isNight && ohnicek && ohnicek.cooldown <= 0 && isInsideRijenPoi(p.x, p.y, pois.village)) {
+        ohnicek.cooldown = 20.0;
+        ohnicek.sparksTimer = 18.0;
+        ohnicek.smokeBurstTimer = 2.5;
+        ohnicek.potatoesRoasted = (ohnicek.potatoesRoasted || 0) + 1;
+        p.hp = Math.min(p.maxHp, p.hp + 40 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          pois.village.x,
+          pois.village.y - 65,
+          '🥔 HORKÁ PEČENÁ BRAMBORA Z POPELA! (+40 KURÁŽ, +25 % ÚTOK, +20 % DOBÍJENÍ)! 🥔✨',
+          '#F59E0B',
+          true,
+          'bossAnnouncements'
+        );
+        for (let j = 0; j < eng.enemies.length; j++) {
+          const foe = eng.enemies[j];
+          if (!foe || foe.dead || foe.isDefeated) continue;
+          const dx = foe.x - (ohnicek.x || 50);
+          const dy = foe.y - (ohnicek.y || -75);
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist <= 380) {
+            foe.takeDamage(100 * (p.damageMultiplier || 1), 'fire', (dx / dist) * 440, (dy / dist) * 440);
+            foe.slowTimer = Math.max(foe.slowTimer || 0, 2.5);
+          }
+        }
+        p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
+        p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.15);
+        sound.cheer();
+        return true;
+      }
+
+      // Dušičková svíce u Božích muk (Stage 16 nighttime shrine)
+      if (isNight && svice && svice.cooldown <= 0 && (isInsideRijenPoi(p.x, p.y, pois.shrine) || Math.hypot(p.x - svice.x, p.y - svice.y) <= svice.radius)) {
+        svice.cooldown = 20.0;
+        svice.candleActiveTimer = 18.0;
+        svice.candlesLit = (svice.candlesLit || 0) + 1;
+        p.tempShield = Math.max(p.tempShield || 0, 100);
+        pushDamageText(
+          eng.texts,
+          svice.x,
+          svice.y - 60,
+          '🕯️ DUŠIČKOVÁ POSVÁTNÁ OCHRANA! (+100 ŠTÍT, +30 % ZBROJ, +35 % DOBÍJENÍ)! 🕯️✨',
+          '#38BDF8',
+          true,
+          'bossAnnouncements'
+        );
+        for (let j = 0; j < eng.enemies.length; j++) {
+          const foe = eng.enemies[j];
+          if (!foe || foe.dead || foe.isDefeated) continue;
+          const dx = foe.x - svice.x;
+          const dy = foe.y - svice.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist <= 440) {
+            foe.takeDamage(130 * (p.damageMultiplier || 1), 'holy', (dx / dist) * 440, (dy / dist) * 440);
+            foe.panicked = true;
+            foe.panicTimer = Math.max(foe.panicTimer || 0, 3.5);
+          }
+        }
+        sound.bell();
+        return true;
+      }
+
+      // Boží muka (daytime shrine)
+      if (!isNight && isInsideRijenPoi(p.x, p.y, pois.shrine) && (rj.shrineCooldown || 0) <= 0) {
+        rj.shrineCooldown = 25.0;
+        p.tempShield = Math.max(p.tempShield || 0, 75);
+        p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 2.0);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🌾 POŽEHNÁNÍ OD BOŽÍCH MUK! ✨',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+
+      // Kostel sv. Mikuláše (church)
+      if (isInsideRijenPoi(p.x, p.y, pois.church) && (rj.bellCooldown || 0) <= 0) {
+        rj.bellCooldown = 25.0;
+        p.tempShield = Math.max(p.tempShield || 0, 70);
+        for (let j = 0; j < eng.enemies.length; j++) {
+          const foe = eng.enemies[j];
+          if (!foe || foe.dead || foe.isDefeated) continue;
+          if (Math.hypot(foe.x - p.x, foe.y - p.y) <= 420) {
+            foe.panicked = true;
+            foe.panicTimer = Math.max(foe.panicTimer || 0, 3.0);
+          }
+        }
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🔔 ŘÍJNOVÝ ZVON SV. MIKULÁŠE! 🍂',
+          '#38BDF8',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+
+      // Hospoda (tavern)
+      if (isInsideRijenPoi(p.x, p.y, pois.tavern) && (rj.tavernCooldown || 0) <= 0) {
+        rj.tavernCooldown = 30.0;
+        p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
+        p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          isNight ? '🍵 DUŠIČKOVÁ POLÉVKA A ČAJ! 🕯️' : '🍲 BRAMBOROVÁ POLÉVKA S HOUBAMI! 🥔',
+          '#F59E0B',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+
+      // Les (forest)
+      if (isInsideRijenPoi(p.x, p.y, pois.forest) && (rj.forestCooldown || 0) <= 0) {
+        rj.forestCooldown = 30.0;
+        p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
+        p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.20);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '💧 PODZIMNÍ STUDÁNKA V BUKOVÉM LESE! 🍁',
+          '#10B981',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+    }
+
     // 3. Interaktivní předmět / Truhla / Chasník v dosahu (~165 px)
     if (eng.drops && eng.drops.length > 0) {
       let nearestDrop: any = null;
@@ -4589,6 +4760,49 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             color: '#FEF08A',
             intensity: 0.85,
             type: 'bozi_muka',
+            pulsing: true,
+          }
+        );
+      } else if (chosenLevelId === 15) {
+        engine.lightSources.push(
+          {
+            id: 'dusickova_svice_light',
+            x: RIJEN_POIS.shrine.x,
+            y: RIJEN_POIS.shrine.y - 25,
+            radius: 360,
+            color: '#38BDF8',
+            intensity: 0.96,
+            type: 'hearth',
+            pulsing: true,
+          },
+          {
+            id: 'rijen_night_church',
+            x: RIJEN_POIS.church.x,
+            y: RIJEN_POIS.church.y,
+            radius: 280,
+            color: '#FEF08A',
+            intensity: 0.85,
+            type: 'bozi_muka',
+            pulsing: true,
+          },
+          {
+            id: 'rijen_night_village',
+            x: RIJEN_POIS.village.x,
+            y: RIJEN_POIS.village.y - 20,
+            radius: 250,
+            color: '#F59E0B',
+            intensity: 0.80,
+            type: 'bozi_muka',
+            pulsing: true,
+          },
+          {
+            id: 'rijen_night_tavern',
+            x: RIJEN_POIS.tavern.x,
+            y: RIJEN_POIS.tavern.y - 10,
+            radius: 230,
+            color: '#F59E0B',
+            intensity: 0.76,
+            type: 'window',
             pulsing: true,
           }
         );
@@ -5834,6 +6048,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 12 || engine.activeLevelId === 13) {
                   resolveZariObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
+                } else if (engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+                  resolveRijenObstacles(engine.grandfather, false);
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 }
                 if (Math.abs(dx) > 3) {
@@ -9166,6 +9383,170 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // 6. Arena obstacles and boundary
               resolveZariObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+              const rj = engine.rijen;
+              const isNight = engine.activeLevelId === 15;
+              const pois = getRijenPois(isNight);
+
+              if (rj.shrineCooldown > 0) rj.shrineCooldown = Math.max(0, rj.shrineCooldown - dt);
+              if (rj.bellCooldown > 0) rj.bellCooldown = Math.max(0, rj.bellCooldown - dt);
+              if (rj.forestCooldown > 0) rj.forestCooldown = Math.max(0, rj.forestCooldown - dt);
+              if (rj.tavernCooldown > 0) rj.tavernCooldown = Math.max(0, rj.tavernCooldown - dt);
+
+              const ohnicek = rj.ohnicek;
+              if (ohnicek) {
+                if (ohnicek.cooldown > 0) ohnicek.cooldown = Math.max(0, ohnicek.cooldown - dt);
+                if (ohnicek.smokeBurstTimer > 0) ohnicek.smokeBurstTimer = Math.max(0, ohnicek.smokeBurstTimer - dt);
+                if (ohnicek.sparksTimer > 0) {
+                  ohnicek.sparksTimer = Math.max(0, ohnicek.sparksTimer - dt);
+                  if (player.weapons) {
+                    for (let wIdx = 0; wIdx < player.weapons.length; wIdx++) {
+                      const w: any = player.weapons[wIdx];
+                      if (w && w.cd > 0) {
+                        w.cd = Math.max(0, w.cd - dt * 0.20);
+                      }
+                    }
+                  }
+                  player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+                  player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+                }
+              }
+
+              const svice = rj.svice;
+              if (svice) {
+                if (svice.cooldown > 0) svice.cooldown = Math.max(0, svice.cooldown - dt);
+                if (svice.candleActiveTimer > 0) {
+                  svice.candleActiveTimer = Math.max(0, svice.candleActiveTimer - dt);
+                  player.arenaArmorBonus = 0.30;
+                  if (player.ultCd > 0) {
+                    player.ultCd = Math.max(0, player.ultCd - dt * 0.5);
+                  }
+                }
+              }
+
+              // 1. Prompt detection
+              let promptText: string | null = null;
+              if (!isNight && ohnicek && isInsideRijenPoi(player.x, player.y, pois.village)) {
+                promptText = ohnicek.cooldown <= 0
+                  ? 'Stiskni [E]: Upéct bramboru v popelu (+40 Kuráž, +25 % útok, +20 % dobíjení)'
+                  : `Ohníček z bramborové natě doutná (${Math.ceil(ohnicek.cooldown)}s)`;
+              } else if (isNight && svice && (isInsideRijenPoi(player.x, player.y, pois.shrine) || Math.hypot(player.x - svice.x, player.y - svice.y) <= svice.radius)) {
+                promptText = svice.cooldown <= 0
+                  ? 'Stiskni [E]: Zažehnout dušičkovou svíci (+100 štít, +30 % zbroj & záštita)'
+                  : `Dušičková svíce plápolá (${Math.ceil(svice.cooldown)}s)`;
+              } else if (isInsideRijenPoi(player.x, player.y, pois.shrine)) {
+                promptText = (rj.shrineCooldown || 0) <= 0
+                  ? (isNight ? 'Stiskni [E]: Zažehnout dušičkovou svíci (+ochrana)' : 'Stiskni [E]: Požehnání od Božích muk (+ochrana)')
+                  : `Boží muka odpočívá (${Math.ceil(rj.shrineCooldown || 0)}s)`;
+              } else if (isInsideRijenPoi(player.x, player.y, pois.church)) {
+                promptText = (rj.bellCooldown || 0) <= 0
+                  ? 'Stiskni [E]: Zvon sv. Mikuláše (ochrana & zaplašení)'
+                  : `Zvon odpočívá (${Math.ceil(rj.bellCooldown || 0)}s)`;
+              } else if (isInsideRijenPoi(player.x, player.y, pois.tavern)) {
+                promptText = (rj.tavernCooldown || 0) <= 0
+                  ? (isNight ? 'Stiskni [E]: Dušičková polévka a čaj (+45 HP & síla)' : 'Stiskni [E]: Bramborová polévka s houbami (+45 HP & síla)')
+                  : `Šenkýřka chystá polévku (${Math.ceil(rj.tavernCooldown || 0)}s)`;
+              } else if (isInsideRijenPoi(player.x, player.y, pois.forest)) {
+                promptText = (rj.forestCooldown || 0) <= 0
+                  ? 'Stiskni [E]: Podzimní studánka v bukovém lese (+30 HP & rychlost)'
+                  : `Studánka doplňuje vodu (${Math.ceil(rj.forestCooldown || 0)}s)`;
+              }
+              engine.rijenActivePoiPrompt = promptText;
+
+              // 2. Brambořiště a dračí strniště cover bonus
+              const inPotatoField = isInsideRijenPoi(player.x, player.y, pois.fields);
+              if (inPotatoField) {
+                player.arenaArmorBonus = Math.max(player.arenaArmorBonus || 0, 0.18);
+              }
+
+              // 3. Water / stream & mud pond effect
+              const waterEff = getRijenWaterEffect(player.x, player.y, engine.gameTime, isNight);
+              if (waterEff.inOpenWater && !(player.type === 'krajanek' && player.krajanekRideTimer > 0)) {
+                player.x += waterEff.carryVx * dt;
+                player.y += waterEff.carryVy * dt;
+                player.waterSoakedTimer = Math.max(player.waterSoakedTimer || 0, 1.0);
+              }
+              if (waterEff.inMudPond && !(player.type === 'krajanek' && player.krajanekRideTimer > 0)) {
+                player.speedMultiplier = Math.min(player.speedMultiplier || 1, 0.75);
+              }
+
+              // 4. Night Stage 16: Dušičkový vítr
+              if (isNight && svice) {
+                if (svice.windWarning) {
+                  svice.windWarning.timer -= dt;
+                  if (svice.windWarning.timer <= 0) {
+                    const wx = svice.windWarning.x;
+                    const wy = svice.windWarning.y;
+                    const wRad = svice.windWarning.radius;
+                    svice.windWarning = null;
+                    sound.heavyHit();
+                    pushDamageText(
+                      engine.texts,
+                      wx,
+                      wy - 45,
+                      '🕯️ POSVÁTNÝ DUŠIČKOVÝ PORYV! ✨',
+                      '#38BDF8',
+                      true,
+                      'bossAnnouncements'
+                    );
+                    const pDist = Math.hypot(player.x - wx, player.y - wy);
+                    if (pDist <= wRad) {
+                      player.hp = Math.min(player.maxHp, player.hp + 25);
+                      player.tempShield = Math.max(player.tempShield || 0, 50);
+                    }
+                    for (let j = 0; j < engine.enemies.length; j++) {
+                      const foe = engine.enemies[j];
+                      if (!foe || foe.dead || foe.isDefeated) continue;
+                      const fDist = Math.hypot(foe.x - wx, foe.y - wy);
+                      if (fDist <= wRad + (foe.radius || 16)) {
+                        foe.takeDamage(200 * (player.damageMultiplier || 1), 'holy', (foe.x - wx) * 3, (foe.y - wy) * 3);
+                      }
+                    }
+                  }
+                } else {
+                  svice.windGustTimer = (typeof svice.windGustTimer === 'number' ? svice.windGustTimer : 7.0) - dt;
+                  if (svice.windGustTimer <= 0) {
+                    svice.windGustTimer = 9.0;
+                    const offsetAng = (engine.gameTime || 0) * 1.5;
+                    const tx = player.x + Math.cos(offsetAng) * 115;
+                    const ty = player.y + Math.sin(offsetAng) * 115;
+                    svice.windWarning = {
+                      x: tx,
+                      y: ty,
+                      radius: 120,
+                      timer: 1.1,
+                      maxTimer: 1.1,
+                    };
+                    pushDamageText(
+                      engine.texts,
+                      tx,
+                      ty - 30,
+                      '🕯️ PORYV DUŠIČKOVÉHO VĚTRU! 🕯️',
+                      '#BAE6FD',
+                      false,
+                      'combatStates'
+                    );
+                  }
+                }
+              }
+
+              // 5. Autumn foliage / smoke drifting particles
+              if (Math.random() < 0.18) {
+                const isCrimson = Math.random() < 0.35;
+                emitParticle(engine.particles, () => ({
+                  x: player.x + (Math.random() - 0.5) * 1200,
+                  y: player.y - 350 + (Math.random() - 0.5) * 300,
+                  vx: 32 + Math.random() * 32,
+                  vy: 18 + Math.random() * 20,
+                  life: 3.0 + Math.random() * 1.4,
+                  color: isCrimson ? '#991B1B' : '#D97706',
+                  size: isCrimson ? 3.8 : 3.2,
+                }));
+              }
+
+              // 6. Arena obstacles and boundary
+              resolveRijenObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
             } else {
               player.arenaArmorBonus = 0;
             }
@@ -10419,6 +10800,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     }
                   }
                   resolveZariObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  if (!isFlyingEnemy) {
+                    const eWater = getRijenWaterEffect(e.x, e.y, engine.gameTime || 0, engine.activeLevelId === 15);
+                    if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+                      e.x += eWater.carryVx * dt;
+                      e.y += eWater.carryVy * dt;
+                      e.slowTimer = Math.max(e.slowTimer || 0, 0.35);
+                    }
+                    if (eWater.inMudPond && !isAquaticEnemy(e)) {
+                      e.slowTimer = Math.max(e.slowTimer || 0, 0.40);
+                    }
+                  }
+                  resolveRijenObstacles(e, isFlyingEnemy);
                 }
                 clampToMarchArenaBounds(e, 28);
               }
