@@ -5,6 +5,8 @@ import { CERVENEC_DECOR, getCervenecWaterEffect, CERVENEC_POIS } from '../src/da
 import { drawCervenecDecoration, drawCervenecSummerLandmark } from '../src/render/cervenecSvgLandscape';
 import { SRPEN_DECOR, getSrpenWaterEffect, SRPEN_POIS } from '../src/data/srpenArena';
 import { drawSrpenDecoration, drawSrpenSummerLandmark } from '../src/render/srpenSvgLandscape';
+import { ZARI_DECOR, getZariWaterEffect, ZARI_POIS } from '../src/data/zariArena';
+import { drawZariDecoration } from '../src/render/zariSvgLandscape';
 import { drawDubenSpringLandmark } from '../src/render/marchThawSvgLandscape';
 import { drawKvetenMayLandmark } from '../src/render/kvetenSvgLandscape';
 import { getCervenWaterEffect } from '../src/data/cervenArena';
@@ -52,8 +54,8 @@ function createMockCtx() {
   } as unknown as CanvasRenderingContext2D & { getSaveDepth: () => number };
 }
 
-describe('Seasonal Maps & Month Representation Audit (All 12 Stages)', () => {
-  it('verifies that each of the 6 represented months matches its authentic season and thematic setting', () => {
+describe('Seasonal Maps & Month Representation Audit (All 14 Stages)', () => {
+  it('verifies that each of the 7 represented months matches its authentic season and thematic setting', () => {
     const monthConfigs = [
       { id: 0, month: 'Březen (Předjaří)', season: 'spring', theme: 'spring_river', isNight: false },
       { id: 1, month: 'Březen (Noční mráz)', season: 'spring', theme: 'spring_river', isNight: true },
@@ -67,6 +69,8 @@ describe('Seasonal Maps & Month Representation Audit (All 12 Stages)', () => {
       { id: 9, month: 'Červenec (Bouře sv. Eliáše)', season: 'summer', theme: 'summer_harvest', isNight: true },
       { id: 10, month: 'Srpen (Dožínky)', season: 'summer', theme: 'august_harvest', isNight: false },
       { id: 11, month: 'Srpen (Vavřinecká noc)', season: 'summer', theme: 'laurence_night', isNight: true },
+      { id: 12, month: 'Září (Posvícení a švestky)', season: 'autumn', theme: 'september_feast', isNight: false },
+      { id: 13, month: 'Září (Svatováclavská noc)', season: 'autumn', theme: 'wenceslas_night', isNight: true },
     ];
 
     for (const cfg of monthConfigs) {
@@ -221,7 +225,40 @@ describe('Seasonal Maps & Month Representation Audit (All 12 Stages)', () => {
     }
   });
 
-  it('verifies summer water physics in Stages 7–12 never carries winter ice floes and treats bridges safely', () => {
+  it('verifies Září (Stages 13 & 14) September feast & St. Wenceslas night map has all 10 landmarks properly positioned', () => {
+    expect(ZARI_DECOR.length).toBe(10);
+    const types = ZARI_DECOR.map((d) => d.type);
+    expect(types).toContain('zari_border');
+    expect(types).toContain('zari_fields');
+    expect(types).toContain('zari_church');
+    expect(types).toContain('zari_village');
+    expect(types).toContain('zari_tavern');
+    expect(types).toContain('zari_pond');
+    expect(types).toContain('zari_mill');
+    expect(types).toContain('zari_forest');
+    expect(types).toContain('zari_shrine');
+    expect(types).toContain('zari_school');
+
+    const villageDecor = ZARI_DECOR.find((d) => d.type === 'zari_village');
+    const tavernDecor = ZARI_DECOR.find((d) => d.type === 'zari_tavern');
+    expect(villageDecor?.x).toBe(ZARI_POIS.village.x);
+    expect(villageDecor?.y).toBe(ZARI_POIS.village.y);
+    expect(tavernDecor?.x).toBe(ZARI_POIS.tavern.x);
+    expect(tavernDecor?.y).toBe(ZARI_POIS.tavern.y);
+    expect(villageDecor?.x).not.toBe(tavernDecor?.x);
+
+    for (const d of ZARI_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawZariDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawZariDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies summer & autumn water physics in Stages 7–14 never carries winter ice floes and treats bridges safely', () => {
     // Test June water
     const juneBridge = getCervenWaterEffect(425, -455, 10);
     expect(juneBridge.inOpenWater).toBe(false);
@@ -245,17 +282,24 @@ describe('Seasonal Maps & Month Representation Audit (All 12 Stages)', () => {
 
     const augustPond = getSrpenWaterEffect(-725, 615, 10);
     expect(augustPond.inOpenWater).toBe(true);
+
+    // Test September water
+    const septemberBridge = getZariWaterEffect(475, 420, 10);
+    expect(septemberBridge.inOpenWater).toBe(false);
+    expect(septemberBridge.carryVx).toBe(0);
+
+    const septemberPond = getZariWaterEffect(-725, 615, 10);
+    expect(septemberPond.inOpenWater).toBe(true);
   });
 
-  it('verifies stage numbering and ordering: IDs 0..11, titles 1..12, and sequential unlock progression', () => {
-    for (let id = 0; id <= 11; id++) {
+  it('verifies stage numbering and ordering: IDs 0..13, titles 1..14, and sequential unlock progression', () => {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(level.id).toBe(id);
       expect(level.name.startsWith(`${id + 1}.`), `Level ${id} name should start with '${id + 1}.'`).toBe(true);
       expect(level.badge).toBe(`${id + 1}. Úroveň`);
 
       if (id > 0) {
-        const prevLevel = GAME_LEVELS[(id - 1) as keyof typeof GAME_LEVELS];
         expect(
           level.unlockRequirementText.toLowerCase(),
           `Level ${id} unlock text mentions level ${id}`

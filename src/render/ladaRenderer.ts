@@ -24874,6 +24874,11 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawDozinkovyChasnik: 'dozinkovy_chasnik',
   drawNetopyrUsatec: 'netopyr_usatec',
   drawVyrVelky: 'vyr_velky',
+  drawSvestkovySrsen: 'svestkovy_srsen',
+  drawKralovskySrsen: 'kralovsky_srsen',
+  drawPovidlovyCert: 'povidlovy_cert',
+  drawPosvicenskyHospodar: 'posvicensky_hospodar',
+  drawKviliciMeluzina: 'kvilici_meluzina',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
@@ -28921,6 +28926,306 @@ export function drawVyrVelky(
   ctx.restore();
 }
 
+/**
+ * 10. Švestkový sršeň (Stage 13 Swarm: Plum orchard hornet with violet-glazed stinger)
+ */
+function drawSvestkovySrsen(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const buzz = Math.sin(time * 24) * 0.38;
+  // Translucent amber wings
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.scale(side, 1);
+    ctx.rotate(buzz * side);
+    ctx.fillStyle = 'rgba(254, 243, 199, 0.82)';
+    ctx.strokeStyle = '#23170F';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(15, -8, 14, 6, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Striped yellow-and-plum abdomen
+  ctx.fillStyle = isHurt ? '#F87171' : '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.ellipse(0, 5, 10, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Dark stripes
+  ctx.fillStyle = '#31102F';
+  ctx.fillRect(-8, 1, 16, 4);
+  ctx.fillRect(-7, 8, 14, 4);
+
+  // Head & antennae
+  ctx.fillStyle = '#451A03';
+  ctx.beginPath();
+  ctx.arc(0, -10, 7.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = panicked ? '#FEF08A' : '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-3, -11, 2, 0, Math.PI * 2);
+  ctx.arc(3, -11, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sharp stinger with plum jam drop
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.moveTo(-3, 18);
+  ctx.lineTo(3, 18);
+  ctx.lineTo(0, 26);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#6B21A8';
+  ctx.beginPath();
+  ctx.arc(0, 26, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 11. Královský sršeň ze sadu (Stage 13 Mini-boss: Giant crowned orchard hornet)
+ */
+function drawKralovskySrsen(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.3,
+  panicked = false,
+  isHurt = false
+): void {
+  drawSvestkovySrsen(ctx, cx, cy, time, scale * 1.25, panicked, isHurt);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Golden orchard crown
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(-9, -19);
+  ctx.lineTo(-7, -29);
+  ctx.lineTo(-2, -23);
+  ctx.lineTo(0, -31);
+  ctx.lineTo(2, -23);
+  ctx.lineTo(7, -29);
+  ctx.lineTo(9, -19);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 12. Povidlový čert s měchačkou (Stage 13 Mid-boss: Sooty plum-jam imp wielding a giant wooden stirrer)
+ */
+function drawPovidlovyCert(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Ground shadow
+  ctx.fillStyle = 'rgba(49, 16, 47, 0.38)';
+  ctx.beginPath();
+  ctx.ellipse(0, 24, 24, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Shaggy plum-soot fur torso
+  ctx.fillStyle = isHurt ? '#F87171' : '#3B0764';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 18, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head & curved devil horns
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#2E1065';
+  ctx.beginPath();
+  ctx.arc(0, -18, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#D97706';
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 5, -27);
+    ctx.quadraticCurveTo(side * 15, -38, side * 8, -42);
+    ctx.quadraticCurveTo(side * 6, -34, side * 2, -28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Glowing mischievous eyes & red tongue
+  ctx.fillStyle = panicked ? '#FEF08A' : '#F59E0B';
+  ctx.beginPath();
+  ctx.arc(-4, -19, 2.5, 0, Math.PI * 2);
+  ctx.arc(4, -19, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.ellipse(0, -11, 3.5, 5, 0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Giant wooden plum-butter paddle (měchačka na povidla)
+  const stir = Math.sin(time * 7) * 0.22;
+  ctx.save();
+  ctx.translate(16, 0);
+  ctx.rotate(stir);
+  ctx.fillStyle = '#92400E';
+  ctx.fillRect(-3, -28, 6, 44);
+  ctx.strokeRect(-3, -28, 6, 44);
+  // Sticky dark-purple plum butter on paddle blade
+  ctx.fillStyle = '#4A044E';
+  ctx.beginPath();
+  ctx.ellipse(0, -30, 9, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * 13. Posvícenský Hospodář (Stage 13 Final Boss: Boisterous feast host with plum-cake platter and jug)
+ */
+function drawPosvicenskyHospodar(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  drawDozinkovyChasnik(ctx, cx, cy, time, scale, panicked, isHurt, attackInfo);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Festive Posvícení koláč (plum & curd pastry wheel) held in front
+  const spin = time * 2.8;
+  ctx.save();
+  ctx.translate(0, -4);
+  ctx.rotate(spin);
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.8;
+  ctx.beginPath();
+  ctx.arc(0, 0, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White curd ring & dark plum jam center
+  ctx.fillStyle = '#FEFCE8';
+  ctx.beginPath();
+  ctx.arc(0, 0, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#4A044E';
+  ctx.beginPath();
+  ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * 14. Kvílící Meluzína (Stage 14 Final Boss: Wailing spectral wind spirit of St. Wenceslas Night)
+ */
+function drawKviliciMeluzina(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const sway = Math.sin(time * 5) * 4;
+  // Swirling misty vortex tail
+  ctx.fillStyle = isHurt ? '#FCA5A5' : 'rgba(186, 230, 253, 0.84)';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-18, -6);
+  ctx.quadraticCurveTo(-24 + sway, 14, 0 + sway * 1.4, 32);
+  ctx.quadraticCurveTo(24 + sway, 14, 18, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Flowing spectral hair & veil
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.arc(0, -16, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing cyan eyes & wailing mouth
+  ctx.fillStyle = panicked ? '#FEF08A' : '#38BDF8';
+  ctx.beginPath();
+  ctx.arc(-4, -18, 2.5, 0, Math.PI * 2);
+  ctx.arc(4, -18, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.ellipse(0, -11, 3.5, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Swirling St. Wenceslas wind rings & autumn leaves
+  ctx.strokeStyle = '#7DD3FC';
+  ctx.lineWidth = 2.2;
+  for (let i = 0; i < 3; i++) {
+    const a = time * 4.5 + (i * Math.PI * 2) / 3;
+    ctx.beginPath();
+    ctx.arc(0, 2, 22 + i * 6, a, a + 1.4);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
@@ -28943,6 +29248,11 @@ export function drawVyrVelky(
 (Lada as any).drawNetopyrUsatec = drawNetopyrUsatec;
 (Lada as any).drawNocniMura = drawNocniMura;
 (Lada as any).drawVyrVelky = drawVyrVelky;
+(Lada as any).drawSvestkovySrsen = drawSvestkovySrsen;
+(Lada as any).drawKralovskySrsen = drawKralovskySrsen;
+(Lada as any).drawPovidlovyCert = drawPovidlovyCert;
+(Lada as any).drawPosvicenskyHospodar = drawPosvicenskyHospodar;
+(Lada as any).drawKviliciMeluzina = drawKviliciMeluzina;
 
 export {
   Lada,
@@ -28958,5 +29268,10 @@ export {
   drawKrecekObilnik,
   drawZitnaMatka,
   drawHromotlukMarketa,
+  drawSvestkovySrsen,
+  drawKralovskySrsen,
+  drawPovidlovyCert,
+  drawPosvicenskyHospodar,
+  drawKviliciMeluzina,
   type EnemyAttackInfo,
 };

@@ -94,7 +94,12 @@ export type BakedBubakId =
   | 'zlatohlavek_zrout'
   | 'dozinkovy_chasnik'
   | 'netopyr_usatec'
-  | 'vyr_velky';
+  | 'vyr_velky'
+  | 'svestkovy_srsen'
+  | 'kralovsky_srsen'
+  | 'povidlovy_cert'
+  | 'posvicensky_hospodar'
+  | 'kvilici_meluzina';
 
 export interface BakedFrame {
   canvas: any;
@@ -204,6 +209,11 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   dozinkovy_chasnik: { size: 184, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDozinkovyChasnik(c, x, y, t, v, p) },
   netopyr_usatec: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawNetopyrUsatec(c, x, y, t, v, p) },
   vyr_velky: { size: 192, drawFn: (c, x, y, t, v, p) => (Lada as any).drawVyrVelky(c, x, y, t, v, p) },
+  svestkovy_srsen: { size: 108, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSvestkovySrsen(c, x, y, t, v, p) },
+  kralovsky_srsen: { size: 156, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKralovskySrsen(c, x, y, t, v, p) },
+  povidlovy_cert: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPovidlovyCert(c, x, y, t, v, p) },
+  posvicensky_hospodar: { size: 188, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPosvicenskyHospodar(c, x, y, t, v, p) },
+  kvilici_meluzina: { size: 188, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKviliciMeluzina(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {

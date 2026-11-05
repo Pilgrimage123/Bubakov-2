@@ -1642,6 +1642,286 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			description: "Zapal svatou vatru u kostela [E] a chytej padající hvězdy – zaženou Noční můry a okamžitě dobijí ultimátku!",
 			cadenceSeconds: 16
 		}
+	},
+	12: {
+		id: 12,
+		name: "13. Září v Hrusicích – Posvícení a sklizeň švestek",
+		shortTitle: "Zářijové posvícení",
+		subtitle: "Babí léto, modrající se švestkové sady, kotel na povidla a posvícenské koláče",
+		theme: "september_feast",
+		season: "autumn",
+		icon: "🍯",
+		badge: "13. Úroveň",
+		description: "Kraj zalévá zlatavé slunce babího léta, v sadech dozrávají modré švestky a na hrusické návsi bublá v měděném kotli hustá povidlová várka. Zamíchej kotlem na povidla [E] pro opaření bubáků a posvícenskou kuráž!",
+		lore: "Když v září zavoní po vsi vařená švestková povidla a posvícenské koláče, slétají se ze sadů vykrmení sršni, zpod kotle vykukuje Povidlový čert a náves brání rozjařený Posvícenský Hospodář!",
+		unlockRequirementText: "Odemkne se po poražení Výra velkého ve 12. úrovni (Vavřinecká noc)",
+		skyColor: "#FDE68A",
+		nightSkyColor: "#FDE68A",
+		groundColor: "#D9A05B",
+		ambientTint: "rgba(217, 119, 6, 0.08)",
+		weatherEffect: "falling_leaves",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"plum_tree",
+			"povidla_cauldron"
+		],
+		arena: {
+			id: "zarijove_posviceni",
+			name: "Zářijová posvícenská náves",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "kralovsky_srsen",
+			name: "🐝 Královský sršeň ze sadu",
+			warning: "🐝 POZOR: ZE ŠVESTKOVÉHO SADU VYLETĚL OBŘÍ KRÁLOVSKÝ SRŠEŇ!",
+			time: 85,
+			kills: 110,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "povidlovy_cert",
+			name: "🍯 Povidlový čert s měchačkou",
+			warning: "🍯 POZOR: ZPOD KOTLE VYSKOČIL POVIDLOVÝ ČERT S OBŘÍ MĚCHAČKOU!",
+			time: 185,
+			kills: 255,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "posvicensky_hospodar",
+			name: "🥧 Posvícenský Hospodář",
+			warning: "🥧 POSVÍCENÍ VRCHOLÍ! PŘICHÁZÍ HROMOTLUCKÝ POSVÍCENSKÝ HOSPODÁŘ! 🥧",
+			time: 300,
+			kills: 410,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"mysak",
+				"sotek"
+			],
+			afternoon: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"srpnove_cmelak"
+			],
+			dusk: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"sotek",
+				"srpnove_cmelak"
+			],
+			night: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"sotek"
+			],
+			midnight: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"srpnove_cmelak"
+			],
+			dawn: [
+				"svestkovy_srsen",
+				"zlatohlavek",
+				"polni_mysice",
+				"polni_krecek",
+				"mysak"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "svestkovy_srsen",
+				name: "Švestkový sršeň",
+				icon: "🐝",
+				role: "Dravý podzimní letec ze švestkového sadu"
+			},
+			{
+				id: "zlatohlavek",
+				name: "Zlatohlávek skvostný",
+				icon: "🪲",
+				role: "Obrněný brouk mlsající spadané švestky"
+			},
+			{
+				id: "kralovsky_srsen",
+				name: "Královský sršeň ze sadu",
+				icon: "👑",
+				role: "První mini-boss úrovně"
+			},
+			{
+				id: "povidlovy_cert",
+				name: "Povidlový čert s měchačkou",
+				icon: "🍯",
+				role: "Mezi-boss rozstřikující vařící povidla"
+			},
+			{
+				id: "posvicensky_hospodar",
+				name: "Posvícenský Hospodář",
+				icon: "🥧",
+				role: "Vrcholný boss zářijového posvícení"
+			}
+		],
+		bossMechanic: {
+			label: "Kotel na povidla a Měchačka",
+			description: "Přistup k měděnému kotli na návsi a stiskni [E] pro zamíchání vroucích povidel – opaříš okolní bubáky a získáš Sladkou posvícenskou kuráž!",
+			cadenceSeconds: 20
+		}
+	},
+	13: {
+		id: 13,
+		name: "14. Září v Hrusicích – Svatováclavská noc a mlhy u rybníka",
+		shortTitle: "Svatováclavská noc",
+		subtitle: "Husté podzimní mlhy nad rybníkem, svatý oheň u kostela a Kvílící Meluzína",
+		theme: "wenceslas_night",
+		season: "autumn",
+		icon: "🌫️",
+		badge: "14. Úroveň",
+		isNightLevel: true,
+		description: "S příchodem svatováclavské noci zahalila Hrusice hustá stříbřitá mlha od rybníka a v komínech naříká větrná Meluzína. Zažehni Svatováclavský svatý oheň u kostela [E] a odraz nápor nočních přízraků!",
+		lore: "Na svatého Václava bývá mlha lepkavá a z rybníků vylézají vodníci s bludičkami. Kdo u kostela rozdmýchá Svatováclavský oheň, toho nezlomí ani mrazivý nářek Kvílící Meluzíny.",
+		unlockRequirementText: "Odemkne se po poražení Posvícenského Hospodáře ve 13. úrovni (Zářijové posvícení)",
+		skyColor: "#0F172A",
+		nightSkyColor: "#090F1C",
+		groundColor: "#1E293B",
+		ambientTint: "rgba(148, 163, 184, 0.22)",
+		weatherEffect: "fog",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"wenceslas_fire",
+			"pond_mist"
+		],
+		arena: {
+			id: "svatovaclavska_noc",
+			name: "Svatováclavská mlžná aréna",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "bila_pani",
+			name: "👻 Bílá paní ve svatováclavské mlze",
+			warning: "👻 POZOR: Z HUSTÉ MLHY U KOSTELA VYSTUPUJE BÍLÁ PANÍ!",
+			time: 85,
+			kills: 115,
+			multiplier: 11.2
+		},
+		midBoss: {
+			id: "mlynar",
+			name: "🌊 Mlžný Mlynář od splavu",
+			warning: "🌊 POZOR: OD ZAMLŽENÉHO NÁHONU PŘICHÁZÍ PROKLETÝ MLYNÁŘ!",
+			time: 185,
+			kills: 265,
+			multiplier: 0.85
+		},
+		finalBoss: {
+			id: "kvilici_meluzina",
+			name: "🌬️ Kvílící Meluzína",
+			warning: "🌬️ KOMÍNY KVIČÍ VICHŘICÍ! Z MLHY SLÉTÁ KVÍLÍCÍ MELUZÍNA! 🌬️",
+			time: 300,
+			kills: 425,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"cerny_pes",
+				"bubak"
+			],
+			afternoon: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_pes"
+			],
+			dusk: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_pes",
+				"bubak"
+			],
+			night: [
+				"topivec",
+				"bludicka",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_vlkodlak",
+				"krvavy_kostlivec",
+				"hejkal"
+			],
+			midnight: [
+				"topivec",
+				"bludicka",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_vlkodlak",
+				"krvavy_kostlivec",
+				"ohniva_kobyla",
+				"hejkal"
+			],
+			dawn: [
+				"bludicka",
+				"topivec",
+				"nocni_mura",
+				"cerny_pes",
+				"zbrojnos"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "topivec",
+				name: "Rybniční topivec",
+				icon: "💧",
+				role: "Zákeřný vodník číhající v mlze u rybníka"
+			},
+			{
+				id: "bludicka",
+				name: "Mlžná bludička",
+				icon: "✨",
+				role: "Lákavé světýlko nad podzimní tůní"
+			},
+			{
+				id: "bila_pani",
+				name: "Bílá paní v mlze",
+				icon: "👻",
+				role: "První přízračný mini-boss"
+			},
+			{
+				id: "mlynar",
+				name: "Mlžný Mlynář",
+				icon: "🌊",
+				role: "Mezi-boss od mlýnského splavu"
+			},
+			{
+				id: "kvilici_meluzina",
+				name: "Kvílící Meluzína",
+				icon: "🌬️",
+				role: "Vrcholný větrný boss svatováclavské noci"
+			}
+		],
+		bossMechanic: {
+			label: "Svatováclavský svatý oheň a Mlžný vichr",
+			description: "Zažehni svatý oheň u kostela sv. Václava [E] pro posvátný štít a záštitu proti přízrakům, a využívej poryvy svatováclavského vichru!",
+			cadenceSeconds: 20
+		}
 	}
 };
 function isLevelUnlocked(levelId: number, meta: any) {

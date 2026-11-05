@@ -24,6 +24,13 @@ const SRPEN_EXTRA_OBSTACLES: MarchObstacle[] = [
   { id: 'vavrinecka_vatra_podstavec', x: -800, y: -650, shape: 'circle', radius: 36, blocksSight: false },
 ];
 
+const ZARI_EXTRA_OBSTACLES: MarchObstacle[] = [
+  { id: 'kotel_na_povidla_naves', x: 45, y: -95, shape: 'circle', radius: 46, blocksSight: false },
+  { id: 'sudy_se_svestkami_sad', x: -100, y: 680, shape: 'circle', radius: 44, blocksSight: true },
+  { id: 'svatovaclavsky_ohen_podstavec', x: -800, y: -650, shape: 'circle', radius: 36, blocksSight: false },
+  { id: 'lesni_skalka_zari', x: 730, y: -570, shape: 'circle', radius: 42, blocksSight: true },
+];
+
 export type MarchThawPoiId =
   | 'fields'
   | 'church'
@@ -1041,13 +1048,17 @@ export function collideCircleWithObstacles(
     activeLevelId === 8 ||
     activeLevelId === 9 ||
     activeLevelId === 10 ||
-    activeLevelId === 11
+    activeLevelId === 11 ||
+    activeLevelId === 12 ||
+    activeLevelId === 13
   ) {
     const obstaclesList =
       activeLevelId === 8 || activeLevelId === 9
         ? [...MARCH_THAW_OBSTACLES, ...CERVENEC_EXTRA_OBSTACLES]
         : activeLevelId === 10 || activeLevelId === 11
         ? [...MARCH_THAW_OBSTACLES, ...SRPEN_EXTRA_OBSTACLES]
+        : activeLevelId === 12 || activeLevelId === 13
+        ? [...MARCH_THAW_OBSTACLES, ...ZARI_EXTRA_OBSTACLES]
         : MARCH_THAW_OBSTACLES;
     for (let i = 0; i < obstaclesList.length; i++) {
       const obs = obstaclesList[i];
@@ -1294,13 +1305,17 @@ export function hasTerrainLineOfSight(
     activeLevelId === 8 ||
     activeLevelId === 9 ||
     activeLevelId === 10 ||
-    activeLevelId === 11
+    activeLevelId === 11 ||
+    activeLevelId === 12 ||
+    activeLevelId === 13
   ) {
     const obstaclesList =
       activeLevelId === 8 || activeLevelId === 9
         ? [...MARCH_THAW_OBSTACLES, ...CERVENEC_EXTRA_OBSTACLES]
         : activeLevelId === 10 || activeLevelId === 11
         ? [...MARCH_THAW_OBSTACLES, ...SRPEN_EXTRA_OBSTACLES]
+        : activeLevelId === 12 || activeLevelId === 13
+        ? [...MARCH_THAW_OBSTACLES, ...ZARI_EXTRA_OBSTACLES]
         : MARCH_THAW_OBSTACLES;
     for (let i = 0; i < obstaclesList.length; i++) {
       const obs = obstaclesList[i];
@@ -1452,7 +1467,7 @@ export function hasRoofsInView(
     if (hasDubenRoofsInView(viewLeft, viewTop, viewRight, viewBottom)) return true;
   }
   if (
-    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11) &&
+    (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11 || activeLevelId === 12 || activeLevelId === 13) &&
     viewRight >= ROOF_UNION_MIN_X &&
     viewLeft <= ROOF_UNION_MAX_X &&
     viewBottom >= ROOF_UNION_MIN_Y &&
@@ -1494,7 +1509,7 @@ export function isEntityBehindMarchRoof(
     const dubenRoof = isEntityBehindDubenRoof(x, y);
     if (dubenRoof) return dubenRoof as unknown as MarchRoofZone;
   }
-  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11) {
+  if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11 || activeLevelId === 12 || activeLevelId === 13) {
     const halfR = radius * 0.5;
     if (
       y >= ROOF_UNION_MIN_Y &&
@@ -1576,7 +1591,7 @@ export function sanitizeArenaSpawnPoint(
   const solidDecor = decor && decor.length > 0 ? getFilteredDecorCache(decor).solidObstacles : null;
 
   for (let pass = 0; pass < 3; pass++) {
-    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11) {
+    if (activeLevelId === 0 || activeLevelId === 1 || activeLevelId === 4 || activeLevelId === 5 || activeLevelId === 6 || activeLevelId === 7 || activeLevelId === 8 || activeLevelId === 9 || activeLevelId === 10 || activeLevelId === 11 || activeLevelId === 12 || activeLevelId === 13) {
       resolveMarchThawObstacles(dummy, false);
       if (activeLevelId === 8 || activeLevelId === 9) {
         for (let ci = 0; ci < CERVENEC_EXTRA_OBSTACLES.length; ci++) {
@@ -1605,6 +1620,21 @@ export function sanitizeArenaSpawnPoint(
               const dist = Math.sqrt(distSq) || 1;
               dummy.x = sObs.x + (dx / dist) * reach;
               dummy.y = sObs.y + (dy / dist) * reach;
+            }
+          }
+        }
+      } else if (activeLevelId === 12 || activeLevelId === 13) {
+        for (let zi = 0; zi < ZARI_EXTRA_OBSTACLES.length; zi++) {
+          const zObs = ZARI_EXTRA_OBSTACLES[zi];
+          if (zObs.shape === 'circle') {
+            const reach = (zObs.radius || 44) + dummy.radius + 4;
+            const dx = dummy.x - zObs.x;
+            const dy = dummy.y - zObs.y;
+            const distSq = dx * dx + dy * dy;
+            if (distSq < reach * reach) {
+              const dist = Math.sqrt(distSq) || 1;
+              dummy.x = zObs.x + (dx / dist) * reach;
+              dummy.y = zObs.y + (dy / dist) * reach;
             }
           }
         }

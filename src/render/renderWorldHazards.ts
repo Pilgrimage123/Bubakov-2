@@ -48,6 +48,11 @@ import {
   isInsideSrpenPoi,
 } from '../data/srpenArena';
 import {
+  getZariPois,
+  getZariPoisList,
+  isInsideZariPoi,
+} from '../data/zariArena';
+import {
   drawSvatojanskaBylina,
   drawSvatojanskyPoklad,
 } from './cervenSvgLandscape';
@@ -590,6 +595,105 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? srpenPois.forest : undefined);
       const bannerText = engine.srpenActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1g. Level 12 & 13 (Stage 13: Zářijové posvícení & Stage 14: Svatováclavská noc): POI hints, Kotel na povidla splash & Svatováclavský vichr telegraph
+  if (engine.activeLevelId === 12 || engine.activeLevelId === 13) {
+    const isZariNight = engine.activeLevelId === 13;
+    const zariPois = getZariPois(isZariNight);
+    const zariPoiList = getZariPoisList(isZariNight);
+
+    // Stage 13: Kotel na povidla warm plum-butter splash ring when stirred
+    const kotel = engine.zari?.kotel;
+    if (!isZariNight && kotel && kotel.stirActiveTimer > 0 && isInView(kotel.x, kotel.y, kotel.radius + 220, camera)) {
+      ctx.save();
+      ctx.translate(kotel.x, kotel.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 6);
+      ctx.fillStyle = `rgba(107, 33, 168, ${0.14 + pulse * 0.12})`;
+      ctx.strokeStyle = '#C084FC';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 380, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Stage 14: Svatováclavský svatý oheň warm protective ring & Svatováclavský vichr ground telegraph
+    const ohen = engine.zari?.ohen;
+    if (isZariNight && ohen && ohen.blessingActiveTimer > 0 && isInView(ohen.x, ohen.y, ohen.radius + 260, camera)) {
+      ctx.save();
+      ctx.translate(ohen.x, ohen.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 5);
+      ctx.fillStyle = `rgba(251, 191, 36, ${0.12 + pulse * 0.1})`;
+      ctx.strokeStyle = '#FDE047';
+      ctx.lineWidth = 2.8;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 440, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    const mistWarn = ohen?.mistWarning;
+    if (isZariNight && mistWarn && mistWarn.timer > 0 && isInView(mistWarn.x, mistWarn.y, mistWarn.radius + 30, camera)) {
+      const progress = 1 - Math.max(0, Math.min(1, mistWarn.timer / (mistWarn.maxTimer || 2.3)));
+      ctx.save();
+      ctx.translate(mistWarn.x, mistWarn.y);
+      ctx.fillStyle = `rgba(125, 211, 252, ${0.16 + progress * 0.30})`;
+      ctx.strokeStyle = '#7DD3FC';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, mistWarn.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = '#E0F2FE';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(6, mistWarn.radius * (1 - progress)), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof zariPoiList)[number] | undefined;
+      for (let i = 0; i < zariPoiList.length; i++) {
+        if (isInsideZariPoi(player.x, player.y, zariPoiList[i], 30)) {
+          nearbyPoi = zariPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? zariPois.forest : undefined);
+      const bannerText = engine.zariActivePoiPrompt || nearby?.title;
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';

@@ -13,7 +13,9 @@ var LEVEL_ORDER = [
 	8,
 	9,
 	10,
-	11
+	11,
+	12,
+	13
 ];
 function getPreviousLevel(id: number) {
 	const idx = LEVEL_ORDER.indexOf(id);
@@ -35,6 +37,8 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 9 && ((meta?.bestiaryKills?.hromotluk_marketa || 0) >= 1 || !!meta?.completedLevels?.[8])) return true;
 	if (id === 10 && ((meta?.bestiaryKills?.drak || 0) >= 1 || !!meta?.completedLevels?.[9])) return true;
 	if (id === 11 && ((meta?.bestiaryKills?.dozinkovy_chasnik || 0) >= 1 || !!meta?.completedLevels?.[10])) return true;
+	if (id === 12 && ((meta?.bestiaryKills?.vyr_velky || 0) >= 1 || !!meta?.completedLevels?.[11])) return true;
+	if (id === 13 && ((meta?.bestiaryKills?.posvicensky_hospodar || 0) >= 1 || !!meta?.completedLevels?.[12])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -194,6 +198,18 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "kralovsky_cmelak", name: "Královský čmelák", icon: "🐝" },
 		{ id: "srpnove_cmelak", name: "Srpnový čmelák", icon: "🐝" },
 		{ id: "zlatohlavek", name: "Zlatohlávek skvostný", icon: "🪲" }
+	]),
+	12: makeSequentialUnlock(12, [
+		{ id: "vyr_velky", name: "Výr velký ze Zlenic", icon: "🦉" },
+		{ id: "netopyr_usatec", name: "Netopýr Ušatec", icon: "🦇" },
+		{ id: "nocni_mura", name: "Noční můra", icon: "🦋" },
+		{ id: "cerny_vlkodlak", name: "Černý vlkodlak", icon: "🐺" }
+	]),
+	13: makeSequentialUnlock(13, [
+		{ id: "posvicensky_hospodar", name: "Posvícenský Hospodář", icon: "🥧" },
+		{ id: "povidlovy_cert", name: "Povidlový čert s měchačkou", icon: "🍯" },
+		{ id: "kralovsky_srsen", name: "Královský sršeň ze sadu", icon: "🐝" },
+		{ id: "svestkovy_srsen", name: "Švestkový sršeň", icon: "🐝" }
 	])
 };
 

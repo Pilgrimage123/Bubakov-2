@@ -19,6 +19,12 @@ import {
   type ChlebovaPecState,
   type VavrineckaVatraState,
 } from '../data/srpenArena';
+import {
+  createInitialKotelNaPovidlaState,
+  createInitialSvatovaclavskyOhenState,
+  type KotelNaPovidlaState,
+  type SvatovaclavskyOhenState,
+} from '../data/zariArena';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -216,6 +222,16 @@ export interface EngineState {
     activePerseids?: Array<{ x: number; y: number; radius: number; timer: number; maxTimer: number }>;
   };
   srpenActivePoiPrompt?: string | null;
+  /** Runtime-only state for Září v Hrusicích (13. a 14. úroveň). */
+  zari: {
+    bellCooldown: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    forestCooldown: number;
+    kotel: KotelNaPovidlaState;
+    ohen: SvatovaclavskyOhenState;
+  };
+  zariActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
   yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
@@ -394,6 +410,14 @@ export function createInitialEngineState(): EngineState {
       vatra: createInitialVavrineckaVatra(),
       perseidsShowerTimer: 7.5,
       activePerseids: [],
+    },
+    zari: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      forestCooldown: 0,
+      kotel: createInitialKotelNaPovidlaState(),
+      ohen: createInitialSvatovaclavskyOhenState(),
     },
     holyCircle: null,
     plumPuddles: [],

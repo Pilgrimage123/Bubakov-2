@@ -10,7 +10,7 @@ import { ENEMIES } from '../src/data/enemies';
 describe('Level 7: Červen v Hrusicích (Stage 7 Core Definition & Progression)', () => {
   it('numbers player-facing game stages sequentially with Stage 7 mapped to ID 6', () => {
     expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
     expect(GAME_LEVELS[6].id).toBe(6);
     expect(GAME_LEVELS[6].name.startsWith('7. ')).toBe(true);
   });

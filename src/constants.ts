@@ -85,15 +85,15 @@ function getCurrentDayPhase(seconds: number, levelId?: number) {
 		if (seconds < 150) return DAY_PHASES[0];
 		return DAY_PHASES[1];
 	}
-	if (levelId === 6 || levelId === 8 || levelId === 10) {
-		// 7. úroveň (Červen), 9. úroveň (Červencový den) a 11. úroveň (Srpnový den, 5 minut / 300 s): Poledne (0–120 s), Odpoledne (120–220 s), Podvečer (220–300 s), Kuropění (300 s+)
+	if (levelId === 6 || levelId === 8 || levelId === 10 || levelId === 12) {
+		// 7. úroveň (Červen), 9. úroveň (Červencový den), 11. úroveň (Srpnový den) a 13. úroveň (Zářijové posvícení, 5 minut / 300 s): Poledne (0–120 s), Odpoledne (120–220 s), Podvečer (220–300 s), Kuropění (300 s+)
 		if (seconds < 120) return DAY_PHASES[0];
 		if (seconds < 220) return DAY_PHASES[1];
 		if (seconds < 300) return DAY_PHASES[2];
 		return DAY_PHASES[5];
 	}
-	if (levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11) {
-		// 2., 4., 6., 8., 10. a 12. úroveň (Noční výpravy, 5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
+	if (levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13) {
+		// 2., 4., 6., 8., 10., 12. a 14. úroveň (Noční výpravy, 5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
 		if (seconds < 100) return DAY_PHASES[2];
 		if (seconds < 200) return DAY_PHASES[3];
 		if (seconds < 300) return DAY_PHASES[4];
@@ -197,7 +197,12 @@ var ENEMY_POINTS = {
 	rehtackar: 55,
 	carodejnice_koste: 135,
 	pekelny_cert: 380,
-	pekelny_drab: 290
+	pekelny_drab: 290,
+	svestkovy_srsen: 38,
+	kralovsky_srsen: 1850,
+	povidlovy_cert: 2750,
+	posvicensky_hospodar: 9800,
+	kvilici_meluzina: 11200
 };
 var DROP_THRESHOLDS = {
 	chest: 29400,

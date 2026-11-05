@@ -8,9 +8,9 @@ import { RunDirector, STAGE_THREAT_MULTIPLIERS } from '../src/game/director';
 import { cs } from '../src/i18n/locales/cs';
 import { en } from '../src/i18n/locales/en';
 
-describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
-  it('verifies that all 12 canonical levels have valid IDs 0 to 11 and complete definitions', () => {
-    for (let id = 0; id <= 11; id++) {
+describe('Comprehensive 14-Stage Audit (Levels 0 through 13)', () => {
+  it('verifies that all 14 canonical levels have valid IDs 0 to 13 and complete definitions', () => {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(level, `Level ${id} must be defined in GAME_LEVELS`).toBeDefined();
       expect(level.id).toBe(id);
@@ -29,7 +29,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
   it('verifies every enemy referenced across all level spawn pools exists in ENEMIES', () => {
     const missingEnemies: Array<{ levelId: number; pool: string; enemyId: string }> = [];
 
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       for (const [poolName, pool] of Object.entries(level.spawnPools || {})) {
         for (const enemyId of pool) {
@@ -44,7 +44,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
   });
 
   it('verifies all miniBoss, midBoss, and finalBoss IDs exist in ENEMIES', () => {
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(ENEMIES[level.miniBoss.id], `miniBoss ${level.miniBoss.id} in level ${id}`).toBeDefined();
       expect(ENEMIES[level.midBoss.id], `midBoss ${level.midBoss.id} in level ${id}`).toBeDefined();
@@ -53,7 +53,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
   });
 
   it('verifies all keyEnemies across all levels exist in ENEMIES', () => {
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       for (const keyEnemy of level.keyEnemies || []) {
         expect(ENEMIES[keyEnemy.id], `keyEnemy ${keyEnemy.id} in level ${id}`).toBeDefined();
@@ -62,7 +62,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
   });
 
   it('verifies all targetEnemies in LEVEL_UNLOCKS exist in ENEMIES', () => {
-    for (let id = 1; id <= 11; id++) {
+    for (let id = 1; id <= 13; id++) {
       const def = LEVEL_UNLOCKS[id];
       expect(def, `LEVEL_UNLOCKS[${id}] must exist`).toBeDefined();
       for (const target of def.targetEnemies || []) {
@@ -71,10 +71,10 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies director wave pools return non-empty valid enemy sets for every day phase in all 12 levels', () => {
+  it('verifies director wave pools return non-empty valid enemy sets for every day phase in all 14 levels', () => {
     const engine = new GameEngine();
 
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       engine.initRun(id as any, 'wanderer');
       const director = new RunDirector(id as any, engine);
 
@@ -99,6 +99,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     expect(engine.cerven).toBe(engine.state.cerven);
     expect(engine.cervenec).toBe(engine.state.cervenec);
     expect(engine.srpen).toBe(engine.state.srpen);
+    expect(engine.zari).toBe(engine.state.zari);
 
     // Verify setting through accessors modifies state directly
     engine.cerven = {
@@ -111,13 +112,13 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     expect(engine.state.cerven?.bellCooldown).toBe(5);
   });
 
-  it('verifies progressive level unlock chain from level 0 through level 11', () => {
+  it('verifies progressive level unlock chain from level 0 through level 13', () => {
     // Level 0 is always unlocked
     expect(isLevelUnlocked(0, {})).toBe(true);
 
     let currentMeta: any = { completedLevels: {}, bestiaryKills: {}, highestLevelUnlocked: 0 };
 
-    for (let id = 0; id < 11; id++) {
+    for (let id = 0; id < 13; id++) {
       const nextId = id + 1;
       const curLevel = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
 
@@ -140,8 +141,8 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies complete Czech and English translations exist for all 12 levels and their bosses', () => {
-    for (let id = 0; id <= 11; id++) {
+  it('verifies complete Czech and English translations exist for all 14 levels and their bosses', () => {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
 
       // Level name & subtitle
@@ -159,7 +160,7 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies all 12 stages have consistent arena IDs and 9 authentic POIs in poiOrder', () => {
+  it('verifies all 14 stages have consistent arena IDs and 9 authentic POIs in poiOrder', () => {
     const expectedArenas = [
       'breznove_tani',
       'breznove_tani',
@@ -173,9 +174,11 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
       'cervencove_zne',
       'srpnova_slavnost',
       'vavrinecka_noc',
+      'zarijove_posviceni',
+      'svatovaclavska_noc',
     ];
 
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(level.arena.id, `Level ${id} arena id`).toBe(expectedArenas[id]);
       expect(level.arena.poiOrder.length, `Level ${id} poiOrder length`).toBeGreaterThanOrEqual(9);
@@ -189,9 +192,17 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies non-empty decorTypes and valid themes across all 12 stages', () => {
-    const validThemes = ['spring_river', 'spring_village', 'summer_harvest', 'august_harvest', 'laurence_night'];
-    for (let id = 0; id <= 11; id++) {
+  it('verifies non-empty decorTypes and valid themes across all 14 stages', () => {
+    const validThemes = [
+      'spring_river',
+      'spring_village',
+      'summer_harvest',
+      'august_harvest',
+      'laurence_night',
+      'september_feast',
+      'wenceslas_night',
+    ];
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(validThemes).toContain(level.theme);
       expect(level.decorTypes.length, `Level ${id} decorTypes`).toBeGreaterThan(0);
@@ -201,9 +212,9 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies day and night phases across all 12 stages via getCurrentDayPhase and isNightLevel', () => {
-    // Even levels (0, 2, 4, 6, 8, 10) are day levels; odd levels (1, 3, 5, 7, 9, 11) are night levels
-    for (let id = 0; id <= 11; id++) {
+  it('verifies day and night phases across all 14 stages via getCurrentDayPhase and isNightLevel', () => {
+    // Even levels (0, 2, 4, 6, 8, 10, 12) are day levels; odd levels (1, 3, 5, 7, 9, 11, 13) are night levels
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       const isNight = id % 2 === 1;
 
@@ -220,8 +231,8 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies STAGE_THREAT_MULTIPLIERS exists for every level 0 through 11 and scales progressively', () => {
-    for (let id = 0; id <= 11; id++) {
+  it('verifies STAGE_THREAT_MULTIPLIERS exists for every level 0 through 13 and scales progressively', () => {
+    for (let id = 0; id <= 13; id++) {
       const mult = STAGE_THREAT_MULTIPLIERS[id];
       expect(mult, `Threat multiplier for level ${id} must be defined`).toBeGreaterThan(0);
       if (id > 0) {
@@ -232,9 +243,9 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
     }
   });
 
-  it('verifies all spawnable enemies across all 12 stages have an entry in ENEMY_POINTS', () => {
+  it('verifies all spawnable enemies across all 14 stages have an entry in ENEMY_POINTS', () => {
     const missingPoints: string[] = [];
-    for (let id = 0; id <= 11; id++) {
+    for (let id = 0; id <= 13; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       for (const pool of Object.values(level.spawnPools || {})) {
         for (const enemyId of pool) {

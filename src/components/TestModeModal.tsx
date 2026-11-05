@@ -1334,7 +1334,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   color: '#FEF3C7',
                 }}
               >
-                Zvolte si stage pro testování (přístupných je všech 12 úrovní včetně bossů):
+                Zvolte si stage pro testování (přístupných je všech 14 úrovní včetně bossů):
               </div>
               <div
                 style={{
@@ -1343,8 +1343,8 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   gap: '12px',
                 }}
               >
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((lvlId) => {
-                  const lvl = GAME_LEVELS[lvlId];
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((lvlId) => {
+                  const lvl = GAME_LEVELS[lvlId as keyof typeof GAME_LEVELS];
                   const isSelected = selectedLevel === lvlId;
                   return (
                     <div

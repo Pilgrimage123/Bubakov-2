@@ -403,6 +403,28 @@ var TROPHIES = [
 			cur: (meta.completedLevels && meta.completedLevels[11]) || (meta.bestiaryKills?.vyr_velky || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
+	},
+	{
+		id: "level12_completed",
+		title: "🍯 Mistr zářijového posvícení",
+		desc: "Dokonči 13. úroveň: uhlídej měděný kotel švestkových povidel na návsi a přemož Posvícenského Hospodáře!",
+		reward: 550,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[12]) || (meta.bestiaryKills?.posvicensky_hospodar || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[12]) || (meta.bestiaryKills?.posvicensky_hospodar || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level13_completed",
+		title: "🌫️ Strážce svatováclavské noci",
+		desc: "Dokonči 14. úroveň: zažehni Svatováclavský svatý oheň u kostela a v podzimní mlze utiš Kvílící Meluzínu!",
+		reward: 600,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[13]) || (meta.bestiaryKills?.kvilici_meluzina || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[13]) || (meta.bestiaryKills?.kvilici_meluzina || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
 	}
 ];
 
