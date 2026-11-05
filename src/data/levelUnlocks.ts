@@ -342,7 +342,8 @@ function computeLevelProgress(id: any, meta: any) {
 	const bossDefeated = bossId
 		? (meta?.bestiaryKills?.[bossId] || 0) >= 1 ||
 		  (id === 4 && (meta?.bestiaryKills?.hejkal || 0) >= 1) ||
-		  (id === 6 && ((meta?.bestiaryKills?.mlynar || 0) >= 1 || (meta?.bestiaryKills?.bezhlavy_rytir || 0) >= 1)) ||
+		  (id === 5 && (meta?.bestiaryKills?.pankrac || 0) >= 1) ||
+		  (id === 6 && (meta?.bestiaryKills?.mlynar || 0) >= 1) ||
 		  !!meta?.completedLevels?.[id - 1]
 		: false;
 	let percent = 0;

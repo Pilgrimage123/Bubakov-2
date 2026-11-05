@@ -17,7 +17,7 @@ import {
   CERVEN_POND_REGION,
 } from '../data/cervenArena';
 
-function drawSummerCottage(
+export function drawSummerCottage(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,

@@ -470,6 +470,20 @@ export class ArenaRenderer {
           : curLvl.theme === 'midsummer_night'
           ? curLvl.groundColor || '#1E2D24'
           : '#2B3A2C';
+    } else if (curLvl.theme === 'august_harvest') {
+      ctx.fillStyle =
+        phase.id === 'noon' || phase.id === 'afternoon'
+          ? curLvl.groundColor || '#ECC97E'
+          : phase.id === 'dusk'
+          ? '#C29845'
+          : '#2D3528';
+    } else if (curLvl.theme === 'laurence_night') {
+      ctx.fillStyle =
+        phase.id === 'noon' || phase.id === 'afternoon'
+          ? '#D4AF37'
+          : phase.id === 'dusk'
+          ? '#5A462B'
+          : curLvl.groundColor || '#182030';
     } else {
       ctx.fillStyle = curLvl.groundColor || phase.skyColor || getStorybookSnowColor(phase.id || 'noon', kurazRatio);
     }

@@ -4,7 +4,11 @@ import {
   MARCH_THAW_POIS,
   MARCH_FOREST_ZONES,
   MARCH_THAW_ROOF_ZONES,
-  getMarchWaterAndFloeEffect,
+  MARCH_POND_REGION,
+  MARCH_STREAM_WAYPOINTS,
+  isPointInMarchPondWater,
+  isPointOnMarchBridge,
+  isPointInMarchStreamWater,
   type MarchThawPoi,
   type MarchThawPoiId,
   type MarchObstacle,
@@ -17,6 +21,8 @@ export type SrpenPoi = MarchThawPoi;
 
 export const SRPEN_ARENA_BOUNDS = MARCH_ARENA_BOUNDS;
 export const SRPEN_FOREST_ZONES: readonly MarchForestZone[] = MARCH_FOREST_ZONES;
+export const SRPEN_STREAM_WAYPOINTS = MARCH_STREAM_WAYPOINTS;
+export const SRPEN_POND_REGION = MARCH_POND_REGION;
 
 /**
  * Interactive Chlebová pec (Village Bread Oven) on the Hrusice village green.
@@ -246,7 +252,8 @@ export const SRPEN_DECOR = [
   { type: 'srpen_border', x: 0, y: 0, scale: 1.25 },
   { type: 'srpen_fields', x: SRPEN_POIS.fields.x, y: SRPEN_POIS.fields.y, scale: 1 },
   { type: 'srpen_church', x: SRPEN_POIS.church.x, y: SRPEN_POIS.church.y, scale: 1 },
-  { type: 'srpen_village', x: SRPEN_POIS.tavern.x, y: SRPEN_POIS.tavern.y, scale: 1 },
+  { type: 'srpen_village', x: SRPEN_POIS.village.x, y: SRPEN_POIS.village.y, scale: 1 },
+  { type: 'srpen_tavern', x: SRPEN_POIS.tavern.x, y: SRPEN_POIS.tavern.y, scale: 1 },
   { type: 'srpen_pond', x: SRPEN_POIS.pond.x, y: SRPEN_POIS.pond.y, scale: 1 },
   { type: 'srpen_mill', x: SRPEN_POIS.mill.x, y: SRPEN_POIS.mill.y, scale: 1 },
   { type: 'srpen_forest', x: SRPEN_POIS.forest.x, y: SRPEN_POIS.forest.y, scale: 1 },
@@ -318,13 +325,33 @@ export function getSrpenWaterEffect(
   y: number,
   time = 0
 ): { inOpenWater: boolean; inFord: boolean; carryVx: number; carryVy: number } {
-  const eff = getMarchWaterAndFloeEffect(x, y, time);
-  return {
-    inOpenWater: eff.inOpenWater,
-    inFord: Boolean((eff as any).inFord),
-    carryVx: eff.carryVx,
-    carryVy: eff.carryVy,
-  };
+  const onBridge = isPointOnMarchBridge(x, y);
+  if (onBridge) {
+    return { inOpenWater: false, inFord: false, carryVx: 0, carryVy: 0 };
+  }
+
+  const streamInfo = isPointInMarchStreamWater(x, y);
+  if (streamInfo.inStream) {
+    const currentSpeed = 20;
+    return {
+      inOpenWater: true,
+      inFord: false,
+      carryVx: (streamInfo.vx / 68) * currentSpeed,
+      carryVy: (streamInfo.vy / 68) * currentSpeed,
+    };
+  }
+
+  const inPond = isPointInMarchPondWater(x, y);
+  if (inPond) {
+    return {
+      inOpenWater: true,
+      inFord: false,
+      carryVx: Math.sin(time * 0.7) * 3.5,
+      carryVy: Math.cos(time * 0.7) * 3.5,
+    };
+  }
+
+  return { inOpenWater: false, inFord: false, carryVx: 0, carryVy: 0 };
 }
 
 export function collideCircleWithSrpenObstacles(

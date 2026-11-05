@@ -95,6 +95,14 @@ function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLevelId): b
     if (enemy.category === 'frost') return false;
     return true;
   }
+  if (levelId === 10) {
+    if (enemy.category === 'frost' || enemy.category === 'undead') return false;
+    return true;
+  }
+  if (levelId === 11) {
+    if (enemy.category === 'frost') return false;
+    return true;
+  }
   return true;
 }
 
@@ -246,6 +254,8 @@ export const STAGE_THREAT_MULTIPLIERS: Record<number, number> = {
   7: 3.60,
   8: 4.15,
   9: 4.75,
+  10: 5.40,
+  11: 6.10,
 };
 
 export function getStageThreatMultiplier(levelId: GameLevelId = 0): number {
@@ -1059,6 +1069,9 @@ export class RunDirector {
       polni_krecek: 'roj_polnich_mysaku',
       zitna_baba: 'polednice',
       kulovy_blesk: 'ohnivy_sudlicka',
+      srpnove_cmelak: 'kralovsky_cmelak',
+      zlatohlavek: 'zlatohlavek_zrout',
+      polni_mysice: 'srpnove_cmelak',
     };
     const elite = eliteMap[baseId];
     if (!elite || !ENEMIES[elite]) return null;
@@ -1227,7 +1240,7 @@ export class RunDirector {
       meetsDominance &&
       (!this.activePunitiveMiniboss || this.activePunitiveMiniboss.dead || this.activePunitiveMiniboss.isDefeated)
     ) {
-      const curLvl: GameLevelDef = GAME_LEVELS[this.levelId] || GAME_LEVELS[1];
+      const curLvl: GameLevelDef = GAME_LEVELS[this.levelId] || GAME_LEVELS[0];
       const targetMini = gameTime > 150 && curLvl.midBoss ? curLvl.midBoss : curLvl.miniBoss;
       if (targetMini) {
         const ang = Math.random() * Math.PI * 2;
@@ -1889,7 +1902,7 @@ export class RunDirector {
     const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
     const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
     const phaseKey = getCurrentDayPhase(state.gameTime || 0, levelId).id;
-    const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9;
+    const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11;
     const defaultPool = isNightLevel
       ? (curLvl?.spawnPools?.midnight || curLvl?.spawnPools?.night || curLvl?.spawnPools?.dusk || [])
       : (curLvl?.spawnPools?.noon || []);

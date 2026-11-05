@@ -43,6 +43,11 @@ import {
   isInsideCervenecPoi,
 } from '../data/cervenecArena';
 import {
+  getSrpenPois,
+  getSrpenPoisList,
+  isInsideSrpenPoi,
+} from '../data/srpenArena';
+import {
   drawSvatojanskaBylina,
   drawSvatojanskyPoklad,
 } from './cervenSvgLandscape';
@@ -521,6 +526,70 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? cervenecPois.forest : undefined);
       const bannerText = engine.cervenecActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1f. Level 10 & 11 (Stage 11: Dožínková slavnost & Stage 12: Vavřinecká noc): POI hints & Perseid star warning
+  if (engine.activeLevelId === 10 || engine.activeLevelId === 11) {
+    const isSrpenNight = engine.activeLevelId === 11;
+    const srpenPois = getSrpenPois(isSrpenNight);
+    const srpenPoiList = getSrpenPoisList(isSrpenNight);
+
+    // Stage 12: Perseid falling star ground telegraph
+    const starWarn = engine.srpen?.vatra?.starWarning;
+    if (isSrpenNight && starWarn && starWarn.timer > 0 && isInView(starWarn.x, starWarn.y, starWarn.radius + 30, camera)) {
+      const progress = 1 - Math.max(0, Math.min(1, starWarn.timer / (starWarn.maxTimer || 2.2)));
+      ctx.save();
+      ctx.translate(starWarn.x, starWarn.y);
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.16 + progress * 0.32})`;
+      ctx.strokeStyle = '#FDE047';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, starWarn.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(6, starWarn.radius * (1 - progress)), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof srpenPoiList)[number] | undefined;
+      for (let i = 0; i < srpenPoiList.length; i++) {
+        if (isInsideSrpenPoi(player.x, player.y, srpenPoiList[i], 30)) {
+          nearbyPoi = srpenPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? srpenPois.forest : undefined);
+      const bannerText = engine.srpenActivePoiPrompt || nearby?.title;
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';

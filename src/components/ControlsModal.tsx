@@ -938,7 +938,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   </div>
                 </div>
 
-                {/* 8-LEVEL CAMPAIGN OVERVIEW */}
+                {/* 12-LEVEL CAMPAIGN OVERVIEW */}
                 <div
                   style={{
                     marginTop: '12px',
@@ -951,7 +951,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                     lineHeight: 1.45,
                   }}
                 >
-                  <strong style={{ color: '#2B5B84' }}>Osmidílná cesta Bubákovem:</strong> 1. Předjaří: Denní tání ➔ 2. Předjaří: Noční mrazy ➔ 3. Duben: Dubnový den ➔ 4. Duben: Filipojakubská noc ➔ 5. Květen: Májová slavnost ➔ 6. Květen: Májová noc v hvozdu ➔ 7. Červen: Letní senoseč ➔ 8. Červen: Svatojánská noc.
+                  <strong style={{ color: '#2B5B84' }}>Dvanáctidílná cesta Bubákovem:</strong> 1. Předjaří: Denní tání ➔ 2. Předjaří: Noční mrazy ➔ 3. Duben: Dubnový den ➔ 4. Duben: Filipojakubská noc ➔ 5. Květen: Májová slavnost ➔ 6. Květen: Májová noc v hvozdu ➔ 7. Červen: Letní senoseč ➔ 8. Červen: Svatojánská noc ➔ 9. Červenec: Červencové žně ➔ 10. Červenec: Bouře sv. Eliáše ➔ 11. Srpen: Dožínková slavnost ➔ 12. Srpen: Vavřinecká noc.
                 </div>
               </div>
 

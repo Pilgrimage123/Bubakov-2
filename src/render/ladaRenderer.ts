@@ -24862,8 +24862,18 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawKrecekObilnik: 'krecek_obilnik',
   drawZitnaMatka: 'zitna_matka',
   drawHromotlukMarketa: 'hromotluk_marketa',
+  drawBezhlavyRytir: 'bezhlavy_rytir',
   drawHeadlessKnight: 'bezhlavy_rytir',
+  drawDrak: 'drak',
   drawDragon: 'drak',
+  drawSrpnoveCmelak: 'srpnove_cmelak',
+  drawZlatohlavek: 'zlatohlavek',
+  drawPolniMysice: 'polni_mysice',
+  drawKralovskyCmelak: 'kralovsky_cmelak',
+  drawZlatohlavekZrout: 'zlatohlavek_zrout',
+  drawDozinkovyChasnik: 'dozinkovy_chasnik',
+  drawNetopyrUsatec: 'netopyr_usatec',
+  drawVyrVelky: 'vyr_velky',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {

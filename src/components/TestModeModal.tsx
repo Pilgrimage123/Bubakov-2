@@ -1105,7 +1105,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
               <GameIcon icon="map" size={16} /> 2. Úroveň:
             </span>
-            <strong>Úr. {selectedLevel} ({GAME_LEVELS[selectedLevel]?.shortTitle})</strong>
+            <strong>Úr. {selectedLevel + 1} ({GAME_LEVELS[selectedLevel]?.shortTitle})</strong>
           </button>
 
           {/* TAB 3: WEAPONS */}
@@ -1334,7 +1334,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   color: '#FEF3C7',
                 }}
               >
-                Zvolte si stage pro testování (přístupných je všech 7 úrovní včetně bossů):
+                Zvolte si stage pro testování (přístupných je všech 12 úrovní včetně bossů):
               </div>
               <div
                 style={{
@@ -1343,7 +1343,7 @@ export const TestModeModal: React.FC<TestModeModalProps> = ({
                   gap: '12px',
                 }}
               >
-                {[0, 1, 2, 3, 4, 5, 6].map((lvlId) => {
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((lvlId) => {
                   const lvl = GAME_LEVELS[lvlId];
                   const isSelected = selectedLevel === lvlId;
                   return (

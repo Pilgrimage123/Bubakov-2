@@ -607,7 +607,7 @@ export class GameEngine {
 
     const nextState = createInitialEngineState();
     nextState.activeLevelId = levelId;
-    const levelDef: GameLevelDef = GAME_LEVELS[levelId] || GAME_LEVELS[1];
+    const levelDef: GameLevelDef = GAME_LEVELS[levelId] || GAME_LEVELS[0];
     nextState.nextBossMechanicAt = levelDef.bossMechanic?.cadenceSeconds ?? Number.POSITIVE_INFINITY;
     nextState.spawnTimer = (levelId === 1 || levelId === 0) ? 3.5 : 2.0;
 
@@ -1057,6 +1057,12 @@ export class GameEngine {
     } else if (levelId === 9) {
       this.spawnMonster('kulovy_blesk', player.x + 460, player.y + 80, 1.0);
       this.spawnMonster('plivnik', player.x - 460, player.y - 80, 1.0);
+    } else if (levelId === 10) {
+      this.spawnMonster('srpnove_cmelak', player.x + 440, player.y + 60, 1.0);
+      this.spawnMonster('polni_mysice', player.x - 440, player.y - 60, 1.0);
+    } else if (levelId === 11) {
+      this.spawnMonster('nocni_mura', player.x + 450, player.y, 1.0);
+      this.spawnMonster('cerny_vlkodlak', player.x - 460, player.y + 60, 1.0);
     }
   }
 
@@ -7858,7 +7864,7 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
           clampToDubenArenaBounds(d, 28);
@@ -7899,7 +7905,7 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);

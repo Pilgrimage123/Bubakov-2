@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { GAME_LEVELS } from '../src/data/levels';
 import { LEVEL_UNLOCKS, getLevelProgress } from '../src/data/levelUnlocks';
+import { getCurrentDayPhase } from '../src/constants';
+import { GameEngine } from '../src/game/engine';
 import {
   SRPEN_POIS,
   SRPEN_SPECIAL_OBSTACLES,
@@ -181,5 +183,59 @@ describe('Levels 11 & 12: Srpen v Hrusicích (Stages 11 & 12 Core Definition, Ar
     const vatra = createInitialVavrineckaVatra();
     expect(vatra.radius).toBeGreaterThan(100);
     expect(vatra.shootingStarTimer).toBeGreaterThan(0);
+  });
+
+  it('correctly reports day and night phases for Stage 11 and Stage 12', () => {
+    const stage11Phase = getCurrentDayPhase(0, 10);
+    expect(stage11Phase.id).toBe('noon');
+
+    const stage12Phase = getCurrentDayPhase(0, 11);
+    expect(stage12Phase.id).toBe('dusk');
+  });
+
+  it('handles Stage 11 Chlebová pec [E] interaction in GameEngine update loop', () => {
+    const engine = new GameEngine();
+    engine.initRun(10, 'wanderer');
+    const player = engine.state.player!;
+
+    // Position player inside village POI
+    player.x = SRPEN_POIS.village.x;
+    player.y = SRPEN_POIS.village.y;
+    player.hp = 50;
+
+    // Press [E]
+    engine.state.keys = { e: true };
+    engine.update(0.1);
+
+    expect(engine.srpen.chlebovaPec.cooldown).toBeGreaterThan(15);
+    expect(engine.srpen.chlebovaPec.buffTimer).toBeGreaterThan(15);
+    expect(engine.srpen.chlebovaPec.breadsBaked).toBe(1);
+    expect(player.hp).toBeGreaterThan(50);
+  });
+
+  it('handles Stage 12 Vavřinecká vatra [E] interaction and Perseid falling stars in GameEngine', () => {
+    const engine = new GameEngine();
+    engine.initRun(11, 'wanderer');
+    const player = engine.state.player!;
+
+    // Position player at Vavřinecká vatra
+    player.x = engine.srpen.vatra.x;
+    player.y = engine.srpen.vatra.y;
+
+    // Press [E]
+    engine.state.keys = { e: true };
+    engine.update(0.1);
+
+    expect(engine.srpen.vatra.cooldown).toBeGreaterThan(15);
+    expect(engine.srpen.vatra.litTimer).toBeGreaterThan(15);
+    expect(player.tempShield).toBeGreaterThan(0);
+
+    // Fast-forward shootingStarTimer to trigger a star warning
+    engine.state.keys = {};
+    engine.srpen.vatra.shootingStarTimer = 0.05;
+    engine.update(0.1);
+
+    expect(engine.srpen.vatra.starWarning).toBeDefined();
+    expect(engine.srpen.vatra.starWarning?.radius).toBeGreaterThan(0);
   });
 });

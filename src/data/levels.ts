@@ -106,6 +106,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		season: "spring",
 		icon: "❄️",
 		badge: "2. Úroveň",
+		isNightLevel: true,
 		description: "Se západem slunce udeřil do Hrusic krutý mráz. Závěje ožívají tajícími sněhuláky a z mrazivé mlhy přichází samotná Morana.",
 		lore: "Noc v předjaří bývá zrádná – sotva sníh roztaje, mráz zpevní zemi v kámen. Zažeňte noční běsy a pošlete Moranu tam, kam patří!",
 		unlockRequirementText: "Odemkne se pokořením Hejna mrazivých vran v 1. úrovni",
@@ -335,6 +336,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		season: "spring",
 		icon: "🔥",
 		badge: "4. Úroveň",
+		isNightLevel: true,
 		description: "Lidé se zamkli v chalupách a na hrusické návsi vzplála filipojakubská vatra. Ve tmě září oči kostlivců, smečky černých psů i celí čerti a nad březovým hájem krouží noční sabat!",
 		lore: "Na Filipa a Jakuba čarodějnice létat troufá! Udržte ochranný oheň u májky, odrážejte hejna bludiček a vykažte z návsi Filipojakubský sabat.",
 		unlockRequirementText: "Odemkne se pokořením Vrchní Filipojakubské Čarodějnice ve 3. úrovni",
@@ -606,6 +608,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		season: "spring",
 		icon: "🌲",
 		badge: "6. Úroveň",
+		isNightLevel: true,
 		description: "Na májové Hrusice padla voňavá hvězdnatá noc. Pastýř i tanečníci zalezli do chalup, u sochy sv. Jana Nepomuckého tančí svatojánské mušky, ale z mlýnského náhonu a tmavého hvozdu se plíží noční běsi a Půlnoční Hejkal!",
 		lore: "Když utichne májová muzika a rozsvítí se okna chalup, probouzí se lesní říše. Nepřibližujte se k lesu bez světla, zažeňte Prokletého Mlynáře od stavidel a utkejte se s Půlnočním Hejkalem!",
 		unlockRequirementText: "Odemkne se po poražení Ledových mužů v 5. úrovni",
@@ -902,6 +905,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		season: "summer",
 		icon: "🌿",
 		badge: "8. Úroveň",
+		isNightLevel: true,
 		description: "Na vyhřáté hrusické louky padla čarovná Svatojánská noc! V rákosí u rybníka tančí bludičky, mezemi bloudí Ohnivý sudlička a kdo nasbírá devatero svatojánských bylin, tomu v hvozdu rozkvete Zlaté kapradí a otevře Poklad v zemi!",
 		lore: "Jen jednou v roce, o svatojánské půlnoci, se otevírají skály a poklady v zemi. Nasbírej po loukách a u tůní devatero čarovných bylin, nedej se svést zpěvem Rusalky a přemož Svatojánského Vládce Hvozdu!",
 		unlockRequirementText: "Odemkne se po poražení Královské Polednice v 7. úrovni",
@@ -1364,7 +1368,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		badge: "11. Úroveň",
 		description: "Konec žní a začátek dožínkové veselice! Na návsi voní čerstvě pečený chléb z kamenné pece, hraje muzika a pole křižují čmeláci, zlatohlávci a rozjařený Dožínkový chasník s věncem.",
 		lore: "Na svatého Bartoloměje sedlák žita dožije. V Hrusicích vyhrává muzika, hospodyně pečou křupavý chléb v návesní peci a dožínkový chasník vyzývá k tanci celou ves.",
-		unlockRequirementText: "Poražte Tříhlavého Draka v 10. úrovni (Červencová noc)",
+		unlockRequirementText: "Odemkne se po poražení Tříhlavého Draka v 10. úrovni (Červencová noc)",
 		skyColor: "#FDE68A",
 		nightSkyColor: "#FDE68A",
 		groundColor: "#FEF08A",
@@ -1508,9 +1512,10 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		season: "summer",
 		icon: "🌠",
 		badge: "12. Úroveň",
+		isNightLevel: true,
 		description: "Černá srpnová obloha plná padajících hvězd! Na vrších vzplanou dožínkové vatry zahánějící Noční můry a ze zlenických skal slétá obávaný Výr velký.",
 		lore: "Kolem svatého Vavřince padají z nebe ohnivé slzy. Kdo v noci zažehne posvátnou vatru u kostela, zažene můří přízraky a získá sílu čelit Výru velkému.",
-		unlockRequirementText: "Poražte Dožínkového chasníka v 11. úrovni (Dožínková slavnost)",
+		unlockRequirementText: "Odemkne se po poražení Dožínkového chasníka v 11. úrovni (Dožínková slavnost)",
 		skyColor: "#0F172A",
 		nightSkyColor: "#020617",
 		groundColor: "#1E293B",
@@ -1639,6 +1644,11 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		}
 	}
 };
-function isLevelUnlocked(levelId, meta) { return (meta?.highestLevelUnlocked ?? 0) >= levelId; }
+function isLevelUnlocked(levelId: number, meta: any) {
+  if (levelId === 0) return true;
+  if ((meta?.highestLevelUnlocked ?? 0) >= levelId) return true;
+  if (meta?.completedLevels && meta.completedLevels[levelId]) return true;
+  return false;
+}
 
 export { GAME_LEVELS, isLevelUnlocked };

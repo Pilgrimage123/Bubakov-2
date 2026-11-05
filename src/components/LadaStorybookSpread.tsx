@@ -1408,7 +1408,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     setPortraitIndex((prev) => (prev + 1) % PORTRAIT_CHARACTERS.length);
   };
 
-  // Signpost coordinates on the Right-Page Illustrated Landscape Map (aligned 1:1 with the 8 GAME_LEVELS)
+  // Signpost coordinates on the Right-Page Illustrated Landscape Map (aligned 1:1 with the 12 GAME_LEVELS)
   const MAP_SIGNPOSTS: Array<{
     levelId: GameLevelId;
     x: number;
@@ -1425,6 +1425,10 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     { levelId: 5, x: 76, y: 40, shortLabel: '6. Květen (Noc)', regionNote: 'Májová noc v hvozdu', tilt: 2 },
     { levelId: 6, x: 34, y: 22, shortLabel: '7. Červen (Den)', regionNote: 'Letní senoseč', tilt: -3 },
     { levelId: 7, x: 74, y: 18, shortLabel: '8. Červen (Noc)', regionNote: 'Svatojánská noc', tilt: 3 },
+    { levelId: 8, x: 16, y: 32, shortLabel: '9. Červenec (Den)', regionNote: 'Červencové žně', tilt: -2 },
+    { levelId: 9, x: 52, y: 34, shortLabel: '10. Červenec (Noc)', regionNote: 'Bouře sv. Eliáše', tilt: 2 },
+    { levelId: 10, x: 52, y: 14, shortLabel: '11. Srpen (Den)', regionNote: 'Dožínková slavnost', tilt: -1 },
+    { levelId: 11, x: 88, y: 24, shortLabel: '12. Srpen (Noc)', regionNote: 'Vavřinecká noc', tilt: 3 },
   ];
 
   const hpPct = Math.round((activePortrait.hp / activePortrait.maxHp) * 100);

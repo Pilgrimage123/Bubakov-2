@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { GAME_LEVELS, isLevelUnlocked } from '../src/data/levels';
 import { ENEMIES } from '../src/data/enemies';
 import { LEVEL_UNLOCKS, getLevelProgress } from '../src/data/levelUnlocks';
-import { getCurrentDayPhase } from '../src/constants';
+import { getCurrentDayPhase, ENEMY_POINTS } from '../src/constants';
 import { GameEngine } from '../src/game/engine';
-import { RunDirector } from '../src/game/director';
+import { RunDirector, STAGE_THREAT_MULTIPLIERS } from '../src/game/director';
 import { cs } from '../src/i18n/locales/cs';
 import { en } from '../src/i18n/locales/en';
 
@@ -199,5 +199,51 @@ describe('Comprehensive 12-Stage Audit (Levels 0 through 11)', () => {
       expect(level.decorTypes).toContain('tree');
       expect(level.decorTypes).toContain('rock');
     }
+  });
+
+  it('verifies day and night phases across all 12 stages via getCurrentDayPhase and isNightLevel', () => {
+    // Even levels (0, 2, 4, 6, 8, 10) are day levels; odd levels (1, 3, 5, 7, 9, 11) are night levels
+    for (let id = 0; id <= 11; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      const isNight = id % 2 === 1;
+
+      if (isNight) {
+        expect(level.isNightLevel, `Level ${id} must have isNightLevel = true`).toBe(true);
+        // Phase at start (0s) should be dusk
+        const startPhase = getCurrentDayPhase(0, id);
+        expect(startPhase.id, `Level ${id} at 0s should start in dusk`).toBe('dusk');
+      } else {
+        expect(level.isNightLevel, `Level ${id} must have isNightLevel = false or undefined`).toBeFalsy();
+        const startPhase = getCurrentDayPhase(0, id);
+        expect(startPhase.id, `Level ${id} at 0s should start in noon`).toBe('noon');
+      }
+    }
+  });
+
+  it('verifies STAGE_THREAT_MULTIPLIERS exists for every level 0 through 11 and scales progressively', () => {
+    for (let id = 0; id <= 11; id++) {
+      const mult = STAGE_THREAT_MULTIPLIERS[id];
+      expect(mult, `Threat multiplier for level ${id} must be defined`).toBeGreaterThan(0);
+      if (id > 0) {
+        expect(mult, `Threat multiplier for level ${id} should be >= level ${id - 1}`).toBeGreaterThanOrEqual(
+          STAGE_THREAT_MULTIPLIERS[id - 1]
+        );
+      }
+    }
+  });
+
+  it('verifies all spawnable enemies across all 12 stages have an entry in ENEMY_POINTS', () => {
+    const missingPoints: string[] = [];
+    for (let id = 0; id <= 11; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      for (const pool of Object.values(level.spawnPools || {})) {
+        for (const enemyId of pool) {
+          if ((ENEMY_POINTS as Record<string, number>)[enemyId] === undefined) {
+            missingPoints.push(enemyId);
+          }
+        }
+      }
+    }
+    expect(Array.from(new Set(missingPoints))).toEqual([]);
   });
 });

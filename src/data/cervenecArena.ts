@@ -4,7 +4,11 @@ import {
   MARCH_THAW_POIS,
   MARCH_FOREST_ZONES,
   MARCH_THAW_ROOF_ZONES,
-  getMarchWaterAndFloeEffect,
+  MARCH_POND_REGION,
+  MARCH_STREAM_WAYPOINTS,
+  isPointInMarchPondWater,
+  isPointOnMarchBridge,
+  isPointInMarchStreamWater,
   type MarchThawPoi,
   type MarchThawPoiId,
   type MarchObstacle,
@@ -17,6 +21,8 @@ export type CervenecPoi = MarchThawPoi;
 
 export const CERVENEC_ARENA_BOUNDS = MARCH_ARENA_BOUNDS;
 export const CERVENEC_FOREST_ZONES: readonly MarchForestZone[] = MARCH_FOREST_ZONES;
+export const CERVENEC_STREAM_WAYPOINTS = MARCH_STREAM_WAYPOINTS;
+export const CERVENEC_POND_REGION = MARCH_POND_REGION;
 
 /**
  * Interactive Poutní střelnice (Fairground Shooting Gallery) on the Hrusice village green.
@@ -215,7 +221,8 @@ export const CERVENEC_DECOR = [
   { type: 'cervenec_border', x: 0, y: 0, scale: 1.25 },
   { type: 'cervenec_fields', x: CERVENEC_POIS.fields.x, y: CERVENEC_POIS.fields.y, scale: 1 },
   { type: 'cervenec_church', x: CERVENEC_POIS.church.x, y: CERVENEC_POIS.church.y, scale: 1 },
-  { type: 'cervenec_village', x: CERVENEC_POIS.tavern.x, y: CERVENEC_POIS.tavern.y, scale: 1 },
+  { type: 'cervenec_village', x: CERVENEC_POIS.village.x, y: CERVENEC_POIS.village.y, scale: 1 },
+  { type: 'cervenec_tavern', x: CERVENEC_POIS.tavern.x, y: CERVENEC_POIS.tavern.y, scale: 1 },
   { type: 'cervenec_pond', x: CERVENEC_POIS.pond.x, y: CERVENEC_POIS.pond.y, scale: 1 },
   { type: 'cervenec_mill', x: CERVENEC_POIS.mill.x, y: CERVENEC_POIS.mill.y, scale: 1 },
   { type: 'cervenec_forest', x: CERVENEC_POIS.forest.x, y: CERVENEC_POIS.forest.y, scale: 1 },
@@ -283,13 +290,33 @@ export function getCervenecWaterEffect(
   y: number,
   time = 0
 ): { inOpenWater: boolean; inFord: boolean; carryVx: number; carryVy: number } {
-  const eff = getMarchWaterAndFloeEffect(x, y, time);
-  return {
-    inOpenWater: eff.inOpenWater,
-    inFord: Boolean((eff as any).inFord),
-    carryVx: eff.carryVx,
-    carryVy: eff.carryVy,
-  };
+  const onBridge = isPointOnMarchBridge(x, y);
+  if (onBridge) {
+    return { inOpenWater: false, inFord: false, carryVx: 0, carryVy: 0 };
+  }
+
+  const streamInfo = isPointInMarchStreamWater(x, y);
+  if (streamInfo.inStream) {
+    const currentSpeed = 20;
+    return {
+      inOpenWater: true,
+      inFord: false,
+      carryVx: (streamInfo.vx / 68) * currentSpeed,
+      carryVy: (streamInfo.vy / 68) * currentSpeed,
+    };
+  }
+
+  const inPond = isPointInMarchPondWater(x, y);
+  if (inPond) {
+    return {
+      inOpenWater: true,
+      inFord: false,
+      carryVx: Math.sin(time * 0.7) * 3.5,
+      carryVy: Math.cos(time * 0.7) * 3.5,
+    };
+  }
+
+  return { inOpenWater: false, inFord: false, carryVx: 0, carryVy: 0 };
 }
 
 export function collideCircleWithCervenecObstacles(
