@@ -124,6 +124,10 @@ _Avoid_: spawn delay, slot hoarding, držení slotů
 Pravidlo Režiséra výpravy, podle kterého se při vyčerpání efektivní kapacity bojiště tlak na hráče nezvyšuje prostým navyšováním počtu těl, nýbrž investicí rejdového rozpočtu do elitních variant, přívlastků a Ostřílených běsů.
 _Avoid_: mob spam, entity bloating, zahušťování nepřátel
 
+**Trojjedinost nepřátelských vln**:
+Pravidlo vyvážené skladby spawn bazénů Režiséra výpravy, v němž každá fáze dne i noci povinně kombinuje drobnou havěť (citlivou na aury), přímé těžké běsy (odolné proti odhození a zranitelné sečnými zbraněmi) a taktické narušitele či letce (vynucující mířené projektily a úskoky).
+_Avoid_: wave balance, mob variety, pestrost vln, enemy triad
+
 **Ukazatel ohrožení lovce**:
 Normalizovaný index (0,0 až 1,0) vyhodnocovaný Režisérem výpravy z Kuráže, nedávného zranění, připravenosti arzenálu a hustoty běsů pro dynamické řízení tempa a kořisti.
 _Avoid_: vulnerability score, threat index, stress score, V-skóre
@@ -288,6 +292,10 @@ _Avoid_: animační stavy spritu, hit animace, walk cycle
 Interaktivní procedurální tušová a kvašová kresba Čertova dědečka s nůší a myškou Rézinkou na 2D plátně v kramářském krámku i dialogových oknech, nahrazující původní těžké Smart SVG komponenty.
 _Avoid_: SVG dědeček, DOM postava dědečka, kramářský sprite
 
+**Kruhový zásobník terénu**:
+Předalokované statické pole pevných rozměrů (typicky 32–64 slotů) pro správu Zrádného terénu a dynamických environmentálních zón, které nově vznikající kaluže zapisuje přímým přepisem na indexu hlavy bez volání alokačních metod `.push()`, `.splice()` nebo `.filter()`.
+_Avoid_: hazard array, ring buffer, kalužové pole, dynamický seznam pastí
+
 
 ## Aréna a měřítko
 
@@ -306,6 +314,14 @@ _Avoid_: projectile hitbox, bullet size, sprite scale
 **Základový půdorys stavby**:
 Přízemní kolizní stopa vesnických stavení a stromů omezená na jejich základnu a spodní stěny, jež umožňuje postavám přirozeně procházet v zákrytu za převislou šindelovou střechou či korunou stromu.
 _Avoid_: building hitbox, obstacle box, neviditelná zeď
+
+**Signaturní vesnická mechanika**:
+Jediné hlavní interaktivní ohnisko výpravy ovládané klávesou [E] s pevnou dobou nabíjení (15–20 s), svázané s dominantou daného kalendářního měsíce (např. Kotel na povidla, Svatováclavský oheň, Chlebová pec), zatímco ostatní body zájmu poskytují pouze pasivní zónové aury.
+_Avoid_: stage gimmick, level mechanic, E-ability, aktivní budova
+
+**Kolizní stín letce**:
+Oválný poloprůhledný stín vrhaný létajícími monstry na zemský povrch s pevným svislým odsazením (+20–30 bodů pod středem těla), který lovci udává přesnou polohu kolizní stopy a bod dopadu projektilů.
+_Avoid_: flying shadow, výškový stín, letový offset
 
 
 **Distribuce a rozdělení bundlu**:

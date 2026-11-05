@@ -1,6 +1,6 @@
 # Bubákov: Velký průvodce tvorbou výprav a malováním kraje
 > **Dokument**: `docs/STAGE_CREATION_GUIDE.md`  
-> **Verze**: 2.1 (Září 2026 – Aktualizováno pro 14 výprav / 7 kalendářních měsíců)  
+> **Verze**: 2.2 (Září 2026 – Aktualizováno pro 14 výprav a Pět pilířů ladovského kodexu)  
 > **Autoři**: Hrusický ponocný, rada starších a architekti Bubákova  
 > **Kánon**: `GLOSSARY.md`, ADRs `0001`–`0040`, Stages 1–14 (Březen až Září)
 
@@ -11,9 +11,9 @@
             /  \        HRUSICKÁ KRONIKA TVŮRCŮ VÝPRAV
            / /\ \       ==============================
           / /  \ \      „Kdo maže, ten jede. Kdo v Hrusicích nemíchá povidla,
-         / / /\ \ \      toho Meluzína sfoukne do rybníka. A kdo zapomene
-        / / /  \ \ \     na ohraničení plátna, toho stihne hněv obecního písaře!“
-       /_/ /____\ \_\
+         / / /\ \ \      toho Meluzína sfoukne do rybníka. Kdo zapomene na ořez
+        / / /  \ \ \     plátna, toho pohltí prázdno. A kdo alokuje paměť
+       /_/ /____\ \_\    v herním cyklu, tomu čert vezme celou výslužku!“
          |  ____  |
          | |    | |     Architektonický kodex pro tvorbu nových měsíců,
          | | [] | |     folklórních arén, nočních přízraků a ladovských kvašů.
@@ -24,30 +24,61 @@ Tento dokument představuje **vyčerpávající technickou a folklórní bibli**
 
 ---
 
-## 1. Ladovské desatero pro stavitele krajiny
+## 1. Pět pilířů ladovského kodexu výprav
 
-Dříve než sáhneš do kódu, vryj si do paměti desatero hrusického vkusu a softwarové cti:
+Dříve než sáhneš do kódu, vryj si do paměti pět pilířů hrusického vkusu, herního balancu a softwarové cti. Každá nová výprava musí bez výjimky vyhovovat všem pěti pilířům:
 
+### Pilíř I: Dramaturgie, tempo a kotevní křivka výpravy
+1. **Zlatý trojzubec příchodu bossů (`85 s` • `185 s` • `300 s`)**  
+   Nevymýšlej svévolné časy příchodu! MiniBoss dorazí přesně v **85. sekundě** otestovat začátečnickou kuráž, Mezi-boss vtrhne v **185. sekundě** zkazit svačinu a Vele-boss sestoupí v **300. sekundě** při slavnostním kuropění k finálnímu zúčtování.
+2. **Kotevní boss výpravy (Etalon 1 800 Kuráže — ADR 0038)**  
+   Základní křivka výdrže bossů vychází z Hejna mrazivých vran (1. úroveň = 9 vran × 200 Kuráže = 1 800 základní Kuráže). Životy všech dalších bossů v kampani rostou aditivně podle Křivky obtížnosti výprav (`+20 % základ + 5 % za každou úroveň`).
+3. **Žádný útok bez telegrafovaného nápřahu (0.6–1.2 s — ADR 0024)**  
+   Každý útok bosse či těžkého běsa (švih kosou, plivnutí ohně, nálet, vrh balvanu) musí mít zřetelnou přípravnou fázi (**Nápřah**) – rozkročení, zrudnutí tušové kontury nebo varovný kruh na zemi. I babička s nůší a motykou musí mít čas zareagovat!
+
+### Pilíř II: Taktika a Pravidlo trojjedinosti vln
+1. **Pravidlo trojjedinosti nepřátelských vln (Ochrana proti dominanci jedné zbraně)**  
+   Aby hráč neprošel hrou pouhým stáním na místě s jednou zbraní, každý bazén vln (`spawnPools`) v každé fázi dne (`noon`, `dusk`, `night`...) **musí** kombinovat tři taktické archetypy:
+   - **Roj / drobná havěť** (`radius: 11–15 px` — myšáci, chrousti, vosy): Zranitelná plošnými aurami (*Bylinková fajfka*, *Devatero kvítí*), vytváří prostorový tlak na pohyb lovce.
+   - **Přímý běžec / těžký běs** (`radius: 25–34 px` — drábi, sekáči, čerti): Odolný proti odhození, nutí hráče k boji na blízko sečnými zbraněmi (*Kovaná halapartna*, *Dřevěný cep*).
+   - **Taktický narušitel / letec / odrážeč** (sršni s nálety, střelci, monstra s *Bleskovým odrazem*): Trestá pasivní kroužení a nutí k přesným zásahům projektily (*Perníčky*, *Povidlové buchty*, *Kyselá okurka*).
+2. **Šetření slotů pro Virtuální vůdce (ADR 0027)**  
+   Při plánování formací (hejna vran, roje sršňů, smečky netopýrů) Režisér výpravy koordinuje letky přes jediného *Virtuálního vůdce* (Virtual Leader), který zabírá pouhé 3 jednotky kapacity bojiště a zamezuje zasekávání výpočetního snímku.
+3. **Kvalitativní vyrovnání namísto monster spamu**  
+   Při naplnění Efektivní kapacity bojiště Režisér výpravy nezvyšuje obtížnost bezhlavým množením těl, ale investuje rejdový rozpočet do *Ostřílených běsů* a *Přívlastků bubáků*.
+
+### Pilíř III: Ladovská estetika, optický kontrast a akustika
 1. **Tlustá černá tuš je zákon (`#23170F`)**  
    Každá roubenka, kačena na rybníce, strašák v poli i pekelný rarach musí mít nekompromisní tušovou konturu (`lineWidth: 3–6 px`). Žádné rozmazané mlhavé stíny západních fantasy RPG! V Hrusicích platí čistá linie Josefa Lady.
-2. **Žádné ledové kry uprostřed léta!**  
-   Pokud kalendář ukazuje Červenec nebo Září, je přísně zakázáno kreslit na potok březnové ledové kry (`ice_floe`). Slunící se žába na leknínu nebo líný kapr u mlýna ano; permafrost v župním posvícení znamená okamžitou exkomunikaci z cechu.
-3. **Poctivá roubenka, žádný gotický hrad**  
-   V Hrusicích stavíme z trámů, vápna a pálených tašek. Žádné fantasy věžičky s ostny. Naše dominanty jsou barokní kostelík sv. Mikuláše, hospoda U Sejků, vodní mlýn s kolem a Boží muka u polní cesty.
-4. **Párová symetrie dne a noci (Bratská dvojčata)**  
-   Každý měsíc přichází jako bratrská dvojice: **Den** (sudé ID: poctivá vesnická práce, sečení sena, sklizeň pšenice, vaření povidel) a **Noc** (liché ID: běsi vylézají ze stodol, Sabat čarodějnic, Vavřinecká vatra, svatováclavské mlhy).
-5. **Zlatý trojzubec bossů: `85 s` • `185 s` • `300 s`**  
-   Nevymýšlej svévolné časy příchodu! MiniBoss dorazí v **85. sekundě** otestovat začátečnickou kuráž, Mezi-boss vtrhne v **185. sekundě** zkazit svačinu a Vele-boss sestoupí přesně ve **300. sekundě** ke slavnostnímu zúčtování.
-6. **Zákon dvojí parity (Headless Engine & Browser App)**  
+2. **Povinný kolizní stín letce**  
+   Každé létající monstrum (`isFlying: true` — vrány, netopýři, sršni, meluzíny) **musí** na zem vrhat oválný poloprůhledný stín posunutý o `+20–30 px` svisle pod středem těla. Tento stín určuje reálný bod kolize se střelami a zabraňuje optickému klamu v lidové perspektivě.
+3. **Lunární kontrast v hluboké noci**  
+   V nočních výpravách (`groundColor: #1E293B`) nesmí tmavá monstra (černí psi, netopýři, můry) splynout s trávou. Tmavé siluety musí mít světlý vnitřní lem (měsíční svit) nebo jemnou kvašovou auru.
+4. **Zákaz ledových ker v létě a na podzim!**  
+   Pokud kalendář ukazuje Červen, Červenec, Srpen či Září, je přísně zakázáno kreslit na potok březnové ledové kry (`ice_floe`). Slunící se žába, lekníny, čeřící se voda nebo plující kachny ano; permafrost v župním posvícení je nepřípustný.
+5. **Akustická trojice každé výpravy**  
+   Každý měsíc musí mít definovanou zvukovou tvář skládající se ze tří prvků:
+   - *Sezónní ruch pozadí (Ambient loop)*: tání sněhu na jaře, cvrčci v létě, vítr v komínech na podzim.
+   - *Varovná polnice ponocného*: jasné zatroubení na roh při ohlášení bossů (85 s, 185 s, 300 s).
+   - *Rituální zvuk vesnické práce*: specifický zvuk pro signaturní [E] mechaniku (zasyčení vařících povidel, praskot v peci, úder zvonu).
+
+### Pilíř IV: Systémová integrita, nulová alokace a paměťový rozpočet
+1. **Zákon dvojí parity (Headless Engine & Browser App — ADR 0037)**  
    Co se stane v `src/game/engine.ts`, musí se na vlas stejně odehrát v `src/App.tsx`. Pokud jablko spadne ze stromu v simulaci a v prohlížeči neudělá křup, Vitest zapláče a CI pipeline shoří popelem.
-7. **Žádný útok bez nápřahu (*Telegraphing*)**  
-   Každý útok bosse či těžkého běsa musí mít viditelný nápřah (`0.6–1.2 s`) – rozkročení, zrudnutí kontury nebo varovný kruh na zemi. I babička s nůší a motykou musí mít čas uskočit!
-8. **Kotva měřítka je Myslivec v holínkách (ADR 0034)**  
-   Dospělý lovec má výšku `75–80 px` a poloměr kolize `20 px`. Myšák má `14 px`, čarodějnice `24 px`, drak `64 px`. Pokud je polní kobylka větší než farní kostel, stvořil jsi Godzillu, ne Ladův pohádkový kraj.
-9. **Kvašová záře a petrolejový svit (ADR 0003)**  
-   V nočních výpravách světlo neplyne jako z moderní LED baterky; stupňuje se v teplých kvašových prstencích (*Kvašová záře*) s tušovým tečkováním okolo lampy, ohně a osvětlených oken roubenek.
-10. **Kód v ASCII snake_case, poezie v `cs.ts`**  
-    V datových strukturách píšeme `svestkovy_srsen` a `kotel_na_povidla`. Krásné české háčky a čárky patří do lokalizačních souborů, příběhových svitků a do srdcí hráčů!
+2. **Kruhový zásobník terénu (Zero-Allocation Ring Buffer)**  
+   Veškerý dynamický *Zrádný terén* (kaluže povidel, louže tajícího sněhu, mlžná ložiska, rozsypané uhlíky) musí používat předalokované pole s pevným stropem (32–64 slotů). Je **přísně zakázáno** volat v herní smyčce `.push()`, `.splice()` nebo `.filter()`.
+3. **Škrcení plovoucích textů u plošných pastí (FCT Throttling — ADR 0016)**  
+   Když 30 nepřátel najednou vběhne do vroucích povidel, systém nesmí vychrlit 30 plovoucích čísel v jednom snímku. Plovoucí texty se škrtí na max. 1 text za `0.25 s` na entitu, a při hromadném zásahu (>5 entit) se zobrazí jediný souhrnný text nad středem zóny.
+4. **Snímkový rozpočet p95 pod 16.7 ms (ADR 0029)**  
+   Veškerá nová monstra a procedurální kresby musí projít automatickým benchmarkem (`enemyFpsBenchmark.test.ts`) pod zátěží 40 entit a udržet p95 čas pod 16.7 ms.
+
+### Pilíř V: Vesnický folklór a jednotná smlouva bodů zájmu
+1. **Právě jedno aktivní ohnisko výpravy (Signaturní vesnická mechanika)**  
+   Z 9 kanonických bodů zájmu má každá výprava právě jedno hlavní interaktivní centrum s klávesou `[E]` (např. *Kotel na povidla* na návsi, *Chlebová pec*, *Svatováclavský oheň* u kostela) s pevnou dobou nabíjení (15–20 s). Ostatní POI slouží jako taktické pasivní zóny (krytí, regenerace, zrychlení).
+2. **Jednotná smlouva nápovědy na HUDu**  
+   Nápověda k interakci má vždy striktní formát: `[E] <Sloveso v infinitivu> <Předmět> (<Název dominanty>)` (např. `[E] Zamíchat povidla (Kotel na povidla)`). Stisk klávesy musí vždy vyvolat trojí odezvu: (a) zvukový signál, (b) vizuální rázovou vlnu na plátně, (c) odpočet nabíjení na HUDu.
+3. **Kód v ASCII snake_case, poezie v `cs.ts`**  
+   V datových strukturách píšeme `svestkovy_srsen` a `kotel_na_povidla`. Krásné české háčky a čárky patří do lokalizačních souborů `cs.ts`, příběhových svitků a do srdcí hráčů!
 
 ---
 
@@ -70,28 +101,28 @@ Kampaň Bubákova se řídí přísným třístupňovým modelem (**ADR 0036** a
 
 ### 2.1 Velká tabulka výprav (Kánon 1. až 14. úrovně)
 
-| UI Úroveň | `GameLevelId` | Režim | Název výpravy (`name`) | Aréna ID | MiniBoss (`85 s`) | MeziBoss (`185 s`) | VeleBoss (`300 s`) |
-| :--- | :---: | :---: | :--- | :--- | :--- | :--- | :--- |
-| **1. Úroveň** | `0` | Den | Předjaří v Hrusicích – Denní tání | `breznove_tani` | `blatouch` | `vodnicek` | `vrana` (Hejno mrazivých vran) |
-| **2. Úroveň** | `1` | Noc | Předjaří v Hrusicích – Noční mrazy | `breznove_tani` | `tajici_snehulak` | `mrazivy_obr` | `morana` |
-| **3. Úroveň** | `2` | Den | Duben v Hrusicích – Dubnový den | `dubnova_naves` | `beranek` | `carodejnice_stara` | `vrchni_carodejnice` |
-| **4. Úroveň** | `3` | Noc | Duben v Hrusicích – Dubnová noc | `dubnova_naves` | `klekanice` | `drab` | `vrchni_carodejnice` (Sabat) |
-| **5. Úroveň** | `4` | Den | Květen v Hrusicích – Májová slavnost | `kvetnova_naves` | `carodejnice_zaspalka` | `hastrman` | `ledovi_muzi` (Trio bratří) |
-| **6. Úroveň** | `5` | Noc | Květen v Hrusicích – Májová noc | `kvetnova_naves` | `zbojnik` | `mlynar` | `hejkal` |
-| **7. Úroveň** | `6` | Den | Červen v Hrusicích – Senoseč a žár | `cervnova_senosec` | `kralovsky_vele_rak` | `cert_sekac` | `kralovska_polednice` |
-| **8. Úroveň** | `7` | Noc | Červen v Hrusicích – Červnová noc | `cervnova_senosec` | `rusalka` | `ohnivy_sudlicka` | `svatojansky_vladce` |
-| **9. Úroveň** | `8` | Den | Červenec v Hrusicích – Žně sv. Markéty | `cervencove_zne` | `krecek_obilnik` | `zitna_matka` | `hromotluk_marketa` |
-| **10. Úroveň** | `9` | Noc | Červenec v Hrusicích – Bouře sv. Eliáše | `cervencove_zne` | `bila_pani` | `bezhlavy_rytir` | `drak` |
-| **11. Úroveň** | `10` | Den | Srpen v Hrusicích – Dožínková slavnost | `srpnova_slavnost` | `kralovsky_cmelak` | `zlatohlavek_zrout` | `dozinkovy_chasnik` |
-| **12. Úroveň** | `11` | Noc | Srpen v Hrusicích – Vavřinecká noc | `vavrinecka_noc` | `netopyr_usatec` | `nocni_mura` | `vyr_velky` |
-| **13. Úroveň** | `12` | Den | Září v Hrusicích – Posvícení a švestky | `zarijove_posviceni` | `kralovsky_srsen` | `povidlovy_cert` | `posvicensky_hospodar` |
-| **14. Úroveň** | `13` | Noc | Září v Hrusicích – Svatováclavská noc | `svatovaclavska_noc` | `bila_pani` | `mlynar` | `kvilici_meluzina` |
+| UI Úroveň | `GameLevelId` | Režim | Název výpravy (`name`) | Aréna ID | Signaturní mechanika [E] | MiniBoss (`85 s`) | MeziBoss (`185 s`) | VeleBoss (`300 s`) |
+| :--- | :---: | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1. Úroveň** | `0` | Den | Předjaří v Hrusicích – Denní tání | `breznove_tani` | `[E] Rozbít hrneček (Kaplička)` | `blatouch` | `vodnicek` | `vrana` (Hejno vran) |
+| **2. Úroveň** | `1` | Noc | Předjaří v Hrusicích – Noční mrazy | `breznove_tani` | `[E] Zapálit louč (Náves)` | `tajici_snehulak` | `mrazivy_obr` | `morana` |
+| **3. Úroveň** | `2` | Den | Duben v Hrusicích – Dubnový den | `dubnova_naves` | `[E] Pověsit pentli (Májka)` | `beranek` | `carodejnice_stara` | `vrchni_carodejnice` |
+| **4. Úroveň** | `3` | Noc | Duben v Hrusicích – Dubnová noc | `dubnova_naves` | `[E] Rozfoukat popel (Oheň)` | `klekanice` | `drab` | `vrchni_carodejnice` (Sabat) |
+| **5. Úroveň** | `4` | Den | Květen v Hrusicích – Májová slavnost | `kvetnova_naves` | `[E] Narazit májový soudek (Hospoda)` | `carodejnice_zaspalka` | `hastrman` | `ledovi_muzi` (Trio bratří) |
+| **6. Úroveň** | `5` | Noc | Květen v Hrusicích – Májová noc | `kvetnova_naves` | `[E] Pomodlit se (Boží muka)` | `zbojnik` | `mlynar` | `hejkal` |
+| **7. Úroveň** | `6` | Den | Červen v Hrusicích – Senoseč a žár | `cervnova_senosec` | `[E] Napít se podmáslí (Hospoda)` | `kralovsky_vele_rak` | `cert_sekac` | `kralovska_polednice` |
+| **8. Úroveň** | `7` | Noc | Červen v Hrusicích – Červnová noc | `cervnova_senosec` | `[E] Natrhat kapradí (Hvozd)` | `rusalka` | `ohnivy_sudlicka` | `svatojansky_vladce` |
+| **9. Úroveň** | `8` | Den | Červenec v Hrusicích – Žně sv. Markéty | `cervencove_zne` | `[E] Vystřelit růži (Střelnice)` | `krecek_obilnik` | `zitna_matka` | `hromotluk_marketa` |
+| **10. Úroveň** | `9` | Noc | Červenec v Hrusicích – Bouře sv. Eliáše | `cervencove_zne` | `[E] Uzemnit bleskosvod (Kostel)` | `bila_pani` | `bezhlavy_rytir` | `drak` |
+| **11. Úroveň** | `10` | Den | Srpen v Hrusicích – Dožínková slavnost | `srpnova_slavnost` | `[E] Upéct chléb (Chlebová pec)` | `kralovsky_cmelak` | `zlatohlavek_zrout` | `dozinkovy_chasnik` |
+| **12. Úroveň** | `11` | Noc | Srpen v Hrusicích – Vavřinecká noc | `vavrinecka_noc` | `[E] Zažehnout vatru (Vavřinecká vatra)`| `netopyr_usatec` | `nocni_mura` | `vyr_velky` |
+| **13. Úroveň** | `12` | Den | Září v Hrusicích – Posvícení a švestky | `zarijove_posviceni` | `[E] Zamíchat povidla (Kotel)` | `svestkovy_srsen` | `povidlovy_cert` | `posvicensky_hospodar` |
+| **14. Úroveň** | `13` | Noc | Září v Hrusicích – Svatováclavská noc | `svatovaclavska_noc` | `[E] Zažehnout svatý oheň (Kostel)` | `bila_pani` | `mlynar` | `kvilici_meluzina` |
 
 ---
 
 ## 3. Celková mapa architektury a souborových vazeb
 
-Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a 16) vyžaduje přesný chirurgický zásah do **9 vrstev systému**:
+Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a 16) vyžaduje přesný zásah do **9 vrstev systému**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -150,7 +181,7 @@ Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a
 
 ## 4. Anatomie 5minutové výpravy (Časová osa přežití)
 
-Každá výprava trvá přesně **300 sekund** (5 minut), po nichž přichází finální souboj s Vele-bossem. Podívej se, jak probíhá dramaturgický oblouk řízený `RunDirectorem`:
+Každá výprava trvá přesně **300 sekund** (5 minut), po nichž přichází finální souboj s Vele-bossem:
 
 ```mermaid
 flowchart TD
@@ -164,14 +195,106 @@ flowchart TD
 
 ---
 
-## 5. Krok za krokem: Jak uvařit nový měsíc
+## 5. Implementační vzory: Nulová alokace, FCT a Kolizní stín
+
+Zde jsou konkrétní technické vzory zavedené v Pěti pilířích kodexu:
+
+### 5.1 Vzor: Kruhový zásobník terénu (Zero-Allocation Ring Buffer)
+
+Nikdy v herní smyčce nealokuj dynamické objekty. Použij předalokovaný statický buffer:
+
+```ts
+// src/data/<mesic>Arena.ts nebo renderWorldHazards.ts
+export const MAX_WORLD_HAZARDS = 32;
+
+export interface WorldHazardSlot {
+  active: boolean;
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  slowRatio: number;
+}
+
+export function createHazardPool(size = MAX_WORLD_HAZARDS): WorldHazardSlot[] {
+  return Array.from({ length: size }, () => ({
+    active: false,
+    x: 0,
+    y: 0,
+    radius: 0,
+    life: 0,
+    maxLife: 1,
+    slowRatio: 0,
+  }));
+}
+
+/** Zápis do kruhového zásobníku přímým přepisem bez .push() a .splice() */
+export function spawnHazardSlot(
+  pool: WorldHazardSlot[],
+  head: { index: number },
+  x: number,
+  y: number,
+  radius: number,
+  life: number,
+  slowRatio = 0.4
+): void {
+  const slot = pool[head.index];
+  slot.active = true;
+  slot.x = x;
+  slot.y = y;
+  slot.radius = radius;
+  slot.life = life;
+  slot.maxLife = life;
+  slot.slowRatio = slowRatio;
+  head.index = (head.index + 1) % pool.length;
+}
+```
+
+### 5.2 Vzor: Škrcení plovoucích textů pro Zrádný terén (FCT Throttling)
+
+Zabraň přetížení obrazovky texty při hromadném zásahu monster v kaluži či ohništi:
+
+```ts
+// Plovoucí text se smí generovat max. 1x za 0.25 s na monstrum
+if (distSq < hazard.radius * hazard.radius) {
+  enemy.speedModifier = hazard.slowRatio;
+  
+  const now = engine.state.gameTime;
+  if (!enemy.lastHazardTextTime || now - enemy.lastHazardTextTime >= 0.25) {
+    enemy.lastHazardTextTime = now;
+    engine.addCombatText('Opařen!', enemy.x, enemy.y - 15, 'debuff');
+  }
+}
+```
+
+### 5.3 Vzor: Kolizní stín letce na plátně (Canvas 2D)
+
+Pro všechna létající monstra promítni stín na zemský povrch:
+
+```ts
+// src/render/ladaRenderer.ts uvnitř drawFlyingEnemy
+if (enemy.isFlying) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.38)';
+  ctx.beginPath();
+  // Oválný stín posunutý svisle o +24 px pod střed letící bytosti
+  ctx.ellipse(0, 24, enemy.radius * 0.9, enemy.radius * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+```
+
+---
+
+## 6. Krok za krokem: Jak uvařit nový měsíc
 
 ### Krok 1: Typy a registrace v `levels.ts`
 
 1. **`src/types.ts`**: Rozšiř union `GameLevelId` o novou úroveň (např. `14 | 15`).
 2. **`src/constants.ts`**:
    - V `getCurrentDayPhase(seconds, levelId)` přiřaď své denní ID k denní větvi a noční ID k noční větvi.
-   - V `ENEMY_POINTS` definuj hodnotu bodů pro každého nového nepřítele (auditoři v testech nesnesou nepřiřazenou nulu!).
+   - V `ENEMY_POINTS` definuj hodnotu bodů pro každého nového nepřítele.
 3. **`src/data/levels.ts`**:
    Vytvoř záznam pro den i noc:
    ```ts
@@ -220,14 +343,18 @@ flowchart TD
          kills: 440,
          multiplier: 1.0,
        },
-       // ... spawnPools, keyEnemies a bossMechanic
+       bossMechanic: {
+         label: "Ohníček z bramborové natě",
+         description: "Přistup k ohništi na návsi a stiskni [E] pro upečení horké brambory – popálíš běsy v okolí a získáš posilující svačinku!",
+         cadenceSeconds: 20
+       }
      },
    };
    ```
 
 ### Krok 2: Posloupnost odemykání v `levelUnlocks.ts`
 
-Žádná úroveň v Hrusicích nesmí viset ve vzduchu. Každá nová výprava musí navazovat na předchozí:
+Žádná úroveň v Hrusicích nesmí viset ve vzduchu:
 1. Přidej nová ID do pole `LEVEL_ORDER`.
 2. V funkci `isLevelFullyUnlocked(id, meta)` přidej podmínku:
    ```ts
@@ -255,15 +382,15 @@ Každý modul arény **musí exportovat přesně 10 dekorativních dominant** v 
    - `forest`: `(650, 725)` — Hluboký hvozd a skály
    - `shrine`: `(820, -620)` — Boží muka u rozcestí
 
-Přidej 4–8 specifických sezónních překážek s půdorysem (**Základový půdorys stavby**, ADR 0034) – např. kotel s povidly, kádě na ryby nebo hromady dýní.
+Přidej 4–8 specifických sezónních překážek s půdorysem (**Základový půdorys stavby**, ADR 0034).
 
 ---
 
-## 6. Škola ladovského malířství: Procedurální plátno a kvaš
+## 7. Škola ladovského malířství: Procedurální plátno a kvaš
 
 Všechno vizuální kouzlo Bubákova se odehrává v Canvas 2D v souboru `src/render/<mesic>SvgLandscape.ts`. Zde neexistují žádné bitmapové textury z cizích balíčků; každý tah štětce a tužky je počítán procedurálně.
 
-### 6.1 Dva souřadnicové světy plátna
+### 7.1 Dva souřadnicové světy plátna
 
 Když `arenaRenderer.ts` nebo `Decor.draw()` volá tvé vykreslování:
 ```ts
@@ -299,20 +426,7 @@ vznikají dva zcela odlišné souřadnicové prostory:
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 6.2 Tajemství ladovských barev a textur
-
-Jak docílit toho, aby grafika vypadala jako originál od Josefa Lady z Albatrosu:
-
-* **Obrysová tuš**: Vždy používej barvu `#23170F` (teplá hnědočerná kostní tuš) namísto digitální `#000000`.
-* **Trámové roubení**: Trámy chalup kresli teplým okrem (`#8B5A2B` nebo `#5C3A1E`) s jemnými vodorovnými vrypy léta dřeva. Spáry mezi trámy vyplň bílým vápenným tmelem (`#FDFBF7`).
-* **Šindelové a taškové střechy**: Využij terakotu (`#C84B31`) se střídavým vzorem tašek nebo došků. U komína nezapomeň na bílou čepici a kadeřavý kouř ze suchého březového dřeva.
-* **Proměna oken mezi dnem a nocí**:
-  - Ve dne: Světle modrý blankyt oblohy (`#38BDF8`) s bílým křížem rámu a červeným muškátem v truhlíku.
-  - V noci: Zářící máslově žluté světlo petrolejky (`#FDE047`) s jemnou poloprůhlednou žlutou aurou okolo okna (`rgba(250, 204, 21, 0.35)`).
-
-### 6.3 Sezónní proměna Hrusic napříč kalendářním rokem
-
-Hrusická náves nikdy nespí týmž spánkem:
+### 7.2 Sezónní proměna Hrusic napříč kalendářním rokem
 
 ```
 ┌───────────────┬──────────────────────┬──────────────────────────────────────┐
@@ -340,25 +454,23 @@ Hrusická náves nikdy nespí týmž spánkem:
 │               │ zlaté babí léto      │ babího léta, svatováclavský oheň     │
 ├───────────────┼──────────────────────┼──────────────────────────────────────┤
 │ 15–16: Říjen  │ Spadané listí, dým   │ Ohníčky z bramborové natě, draci     │
-│ (Návrh)       │ a sychravý vítr      │ na nebi, výlov rybníka a kádě s kapry│
+│ (Plánováno)   │ a sychravý vítr      │ na nebi, výlov rybníka a kádě s kapry│
 ├───────────────┼──────────────────────┼──────────────────────────────────────┤
 │ 17–18: Listop.│ Holé stromy, ranní   │ Svatomartinská husa v pekáči, hřbitov│
-│ (Návrh)       │ mrazíky a mlhy       │ se svíčkami na Dušičky, první vločky │
+│ (Plánováno)   │ mrazíky a mlhy       │ se svíčkami na Dušičky, první vločky │
 ├───────────────┼──────────────────────┼──────────────────────────────────────┤
 │ 19–20: Prosin.│ Hluboký ladovský     │ Zasněžená náves, kluci na sáňkách,   │
-│ (Návrh)       │ sníh, tiché Vánoce   │ Mikuláš s čertem a andělem, Betlém   │
+│ (Plánováno)   │ sníh, tiché Vánoce   │ Mikuláš s čertem a andělem, Betlém   │
 └───────────────┴──────────────────────┴──────────────────────────────────────┘
 ```
 
 ---
 
-## 7. Zákon dvojí parity (Headless Engine & Browser App)
+## 8. Zákon dvojí parity (Headless Engine & Browser App)
 
 > **ZLATÉ PRAVIDLO ADR 0037**: Bubákov disponuje dvěma běhovými prostředími:
 > 1. **Bezhlavá simulace** (`src/game/engine.ts` a `src/game/engineState.ts`), která běží v unit testech, CI auditech a výkonnostních testech bez DOMu.
 > 2. **Interaktivní klient** (`src/App.tsx`), který vykresluje hru v prohlížeči, snímá klávesnici, hraje zvuky a spravuje React stav.
-
-Pokud přidáš novou mechaniku (např. míchání povidel, zapálení vatry nebo chlebovou pec) **pouze do jednoho souboru**, hra se rozpadne. 
 
 ### Kontrolní tabulka 1:1 parity
 
@@ -375,38 +487,7 @@ Pokud přidáš novou mechaniku (např. míchání povidel, zapálení vatry neb
 
 ---
 
-## 8. Ředitel výpravy a rejdový rozpočet (`director.ts`)
-
-Režisér výpravy (`RunDirector`) řídí přísun nepřátel podle přísných zákonů folklórní gradace:
-
-1. **Škálování hrozby (`STAGE_THREAT_MULTIPLIERS`)**:
-   Každá další úroveň musí mít násobitel stejný nebo vyšší než úroveň předchozí (**ADR 0038**):
-   ```ts
-   export const STAGE_THREAT_MULTIPLIERS: Record<number, number> = {
-     0: 1.0,   1: 1.05,
-     2: 1.12,  3: 1.18,
-     4: 1.25,  5: 1.32,
-     6: 1.40,  7: 1.48,
-     8: 1.55,  9: 1.62,
-     10: 1.70, 11: 1.78,
-     12: 1.85, 13: 1.92,
-     14: 2.00, 15: 2.08, // Další podzimní stupně
-   };
-   ```
-2. **Kategorizace spawnů (`isRegularSpawnAllowedForLevel`)**:
-   - V denních úrovních je **přísně zakázáno** spawnovat nemrtvé (`undead` – kostlivci, umrlci, hrobníci) a mrazivé bytosti (`frost` – sypači sněhu, rampouchy).
-   - V letních nočních úrovních se vyvaruj mrazivých monster, ledaže jde o ledové muže či horský mráz.
-3. **Noční bazény (`RunDirector.getWeightedPool`)**:
-   Nezapomeň přidat své nové liché ID do podmínky `isNightLevel`:
-   ```ts
-   const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15;
-   ```
-
----
-
 ## 9. Hrusická síň hanby aneb 8 nejnebezpečnějších pastí
-
-Zde jsou skutečné chyby, které potrápily autory předchozích výprav. Vyvaruj se jich!
 
 ```
                     HRUSICKÉ PASTÍŘSKÉ OSIDLO
@@ -439,7 +520,7 @@ pokud chybí 3200px limit!                   takže noc začíná v pravé poled
 ### 4. Puklé záchranné lano plátna (*The Broken Canvas Stack*)
 * **Co se stalo**: Hra náhle spadla s chybou v testu plátna `ctx.getSaveDepth() !== 0`.
 * **Proč**: Uvnitř složité kreslicí metody byl zavolán `ctx.save()`, ale po předčasném `return` chyběl odpovídající `ctx.restore()`.
-* **Náprava**: Každý `ctx.save()` musí mít svůj `ctx.restore()` na stejné úrovni zanoření. Ideálně zabal kreslení do bloku `try { ... } finally { ctx.restore(); }` nebo zkontroluj počet otevření a zavření.
+* **Náprava**: Každý `ctx.save()` musí mít svůj `ctx.restore()` na stejné úrovni zanoření.
 
 ### 5. Ledový březen o žních (*The Winter-in-Summer Blunder*)
 * **Co se stalo**: Uprostřed červencových žní plavaly na hrusickém potoce bílé ledové kry a postava se na nich klouzala.
@@ -454,7 +535,7 @@ pokud chybí 3200px limit!                   takže noc začíná v pravé poled
 ### 7. Hluchá browserová ozvěna (*The Headless-Only Parity Trap*)
 * **Co se stalo**: Unit testy výpravy prošly na 100 %, ale hráč v prohlížeči po stisku `[E]` u kotle s povidly neviděl žádný efekt ani text.
 * **Proč**: Mechanika byla naimplementována pouze v `src/game/engine.ts`, ale v `src/App.tsx` v obsluze klávesy `KeyE` nebyla zapsána!
-* **Náprava**: Pokaždé zkontroluj tabulku parity v Sekci 7. Co umí engine, musí umět i React klient.
+* **Náprava**: Pokaždé zkontroluj tabulku parity v Sekci 8. Co umí engine, musí umět i React klient.
 
 ### 8. Zatmění slunce v poledne (*Missing Daylight Sun Overlay*)
 * **Co se stalo**: V denní úrovni chybělo animované ladovské usmívající se sluníčko v pravém horním rohu.
@@ -465,8 +546,6 @@ pokud chybí 3200px limit!                   takže noc začíná v pravé poled
 
 ## 10. Verifikace a spouštění testů
 
-Před odesláním kódu do hlavní větve spusť tuto trojici příkazů. Žádný kód nesmí jít ven, dokud neprojde kompletní testovací mašinérie:
-
 ```bash
 # 1. Kontrola typové čistoty TypeScriptu
 npm run typecheck
@@ -474,7 +553,7 @@ npm run typecheck
 # 2. Rychlý audit všech výprav a mapových podkladů
 npx vitest run tests/allStagesAudit.test.ts tests/allStagesMapsAndSeasons.test.ts
 
-# 3. Spuštění dedikovaného testu nového měsíce
+# 3. Spuštění dedikovaného testu měsíce
 npx vitest run tests/level12Zari.test.ts
 
 # 4. Spuštění celého testovacího arzenálu (850+ testů)
@@ -488,18 +567,21 @@ npm run build
 
 ## 11. Předletová kontrola Ponocného (Checklist)
 
-Před zapískáním na roh a ohlášením hotové práce si odškrtni každý bod:
-
 - [ ] **Typy a data**: `GameLevelId` rozšířen v `src/types.ts` a definice zapsána v `src/data/levels.ts`.
 - [ ] **Fáze dne**: `getCurrentDayPhase` v `src/constants.ts` správně obsluhuje denní (start `noon`) i noční (start `dusk`) úroveň.
+- [ ] **Trojjedinost vln**: Každá fáze v `spawnPools` obsahuje zástupce roje (havěť), přímého běžce (těžký běs) a taktického narušitele/letce.
 - [ ] **Rozpočet**: Všechna nová monstra mají své body v `ENEMY_POINTS` v `src/constants.ts`.
 - [ ] **Postup kampaně**: `LEVEL_ORDER`, `isLevelFullyUnlocked` a `LEVEL_UNLOCKS` provázány s předchozím bossem v `levelUnlocks.ts`.
 - [ ] **Aréna a dominanty**: Modul `<mesic>Arena.ts` exportuje 9 POI, 10 prvků v `<MESIC>_DECOR` a sezónní překážky s půdorysem.
-- [ ] **Kreslicí rutina**: Modul `<mesic>SvgLandscape.ts` kreslí cesty, potok, mostky, 4 roubenky a reaguje na `isNight` (zlatá okna, kvašové stíny, noční kartuše).
+- [ ] **Nulová alokace terénu**: Zrádný terén používá kruhový zásobník (Ring Buffer) bez `.push()`, `.splice()` či `.filter()`.
+- [ ] **Škrcení textů**: Plovoucí bojové texty u plošných pastí mají cooldown `0.25 s` a agregaci při >5 zásazích.
+- [ ] **Signaturní mechanika**: Právě jedno [E] ohnisko s formátem `[E] <Sloveso> <Předmět> (<Dominanta>)` a trojí odezvou (audio, rázová vlna, cooldown).
+- [ ] **Optický kontrast a letci**: Každý letec má pozemní stín posunutý o `+20–30 px` na ose Y a noční běsi mají kontrastní konturu.
+- [ ] **Akustická trojice**: Definována ambientní smyčka, varovná polnice ponocného pro bosse a rituální zvuk pro [E].
+- [ ] **Kreslicí rutina**: Modul `<mesic>SvgLandscape.ts` kreslí cesty, potok, mostky, 4 roubenky a reaguje na `isNight`.
 - [ ] **Plátno v bezpečí**: Všechny kreslicí metody mají dokonale vyvážený stack (`ctx.save()` / `ctx.restore()`).
 - [ ] **Ořez kamery**: V `arenaRenderer.ts` je `<mesic>_border` zařazen pod `3200 * scale` a `<mesic>_*` pod `560 * scale`.
 - [ ] **Sluníčko**: Denní úroveň je zapsána v `isDaylightStage` v `arenaRenderer.ts`.
-- [ ] **Běsi a režisér**: `STAGE_THREAT_MULTIPLIERS`, filtry spawnů a `isNightLevel` nastaveny v `director.ts` a `virtualLeaderCrowWave.ts`.
 - [ ] **Dvojí parita**: Stav, překážky, klávesa [E], drop clampy a bossové zrcadleni 1:1 mezi `engine.ts` a `App.tsx`.
 - [ ] **Lokalizace**: České (`cs.ts`) i anglické (`en.ts`) texty doplněny pro úroveň, podtitul, mechaniku i všechna nová monstra a bosse.
 - [ ] **Kniha a trofeje**: Přidána trofej v `trophies.ts` a viněta v `LadaStorybookSpread.tsx`.
