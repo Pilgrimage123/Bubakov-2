@@ -26061,6 +26061,17 @@ function drawEnemyRenderer(
     renderScale !== 1.0 ||
     (hasFilterPalette && !canUseAtlas);
 
+  // Pilíř III: Kolizní stín letce promítnutý na zemský povrch pod létající bytostí (ADR 0034)
+  if (enemy?.isFlying && !enemy?.isGroundedForLoot) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(10, 15, 30, 0.32)';
+    ctx.beginPath();
+    const shadowR = Math.max(14, (radius || 20) * 0.9);
+    ctx.ellipse(x, y + 24, shadowR, shadowR * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   if (hasBodyTransform) {
     ctx.save();
     ctx.translate(x, y);

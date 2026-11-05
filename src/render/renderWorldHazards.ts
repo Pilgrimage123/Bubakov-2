@@ -1025,10 +1025,11 @@ export function renderWorldHazardsAndEncounters(
     snowmanHorde.renderPuddles(ctx, viewLeft, viewTop, viewRight, viewBottom, uiTime);
   }
 
-  // 3b. Povidlové a kloboukové zpomalující louže (plumPuddles)
+  // 3b. Povidlové a kloboukové zpomalující louže (plumPuddles - Ring Buffer)
   if (engine.plumPuddles && engine.plumPuddles.length > 0) {
     for (let i = 0; i < engine.plumPuddles.length; i++) {
       const pud = engine.plumPuddles[i];
+      if (pud.dead || (pud.life ?? 0) <= 0) continue;
       const rad = pud.radius || 44;
       if (!isInView(pud.x, pud.y, rad + 16, camera)) continue;
       ctx.save();
@@ -1050,11 +1051,12 @@ export function renderWorldHazardsAndEncounters(
     }
   }
 
-  // 3c. Zkažená kraslice: louže páchnoucího žloutku (yolkPuddles)
+  // 3c. Zkažená kraslice: louže páchnoucího žloutku (yolkPuddles - Ring Buffer)
   const yolkPuddles = (engine.yolkPuddles || engine.state?.yolkPuddles) as any[];
   if (yolkPuddles && yolkPuddles.length > 0) {
     for (let i = 0; i < yolkPuddles.length; i++) {
       const pud = yolkPuddles[i];
+      if (pud.dead || (pud.life ?? 0) <= 0) continue;
       const rad = pud.radius || 48;
       if (!isInView(pud.x, pud.y, rad + 16, camera)) continue;
       ctx.save();

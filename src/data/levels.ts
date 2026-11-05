@@ -62,13 +62,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"mrazovy_skritek",
 				"mysak",
 				"sotek",
-				"blatouch"
+				"blatouch",
+				"tajici_snehulak",
+				"jezinka_mraziva",
+				"vrana"
 			],
 			afternoon: [
 				"blatouch",
 				"sotek",
 				"jezinka_mraziva",
-				"mysak"
+				"mysak",
+				"tajici_snehulak",
+				"vrana"
 			]
 		},
 		keyEnemies: [
@@ -281,7 +286,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"rehtackar",
 				"mysak",
 				"sotek",
-				"rarach"
+				"rarach",
+				"drab",
+				"carodejnice_koste"
 			],
 			afternoon: [
 				"blatouch",
@@ -292,7 +299,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"divozenka",
 				"ropucha",
 				"jiskrivec",
-				"rarach"
+				"rarach",
+				"drab"
 			]
 		},
 		keyEnemies: [
@@ -388,7 +396,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_pes",
 				"carodejnice_koste",
 				"rarach",
-				"certik"
+				"certik",
+				"drab"
 			],
 			afternoon: [
 				"hrobnik",
@@ -396,7 +405,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"skeleton_scythe",
 				"cerny_pes",
 				"carodejnice_koste",
-				"sazovy_rarach"
+				"sazovy_rarach",
+				"drab"
 			],
 			dusk: [
 				"carodejnice_koste",
@@ -549,7 +559,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"blatouch",
 				"mysak",
 				"sotek",
-				"vodnicek"
+				"vodnicek",
+				"drevorubec"
 			],
 			afternoon: [
 				"chroust",
@@ -659,13 +670,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"zbojnik",
 				"jiskrivec",
 				"sazovy_rarach",
-				"divozenka"
+				"divozenka",
+				"mysak",
+				"drevorubec",
+				"chroust"
 			],
 			afternoon: [
 				"zbojnik",
 				"jiskrivec",
 				"ohnivy_pes",
-				"drevorubec"
+				"drevorubec",
+				"mysak",
+				"chroust"
 			],
 			dusk: [
 				"drevorubec",
@@ -676,7 +692,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"bubak",
 				"certik",
 				"zbojnik",
-				"ohnivy_muz"
+				"ohnivy_muz",
+				"chroust"
 			],
 			night: [
 				"hejkal",
@@ -689,7 +706,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"jiskrivec",
 				"ohnivy_muz",
 				"ohnivy_pes",
-				"ohniva_kobyla"
+				"ohniva_kobyla",
+				"chroust"
 			],
 			midnight: [
 				"hejkal",
@@ -702,7 +720,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"ohniva_kobyla",
 				"sazovy_rarach",
 				"bludicka",
-				"jiskrivec"
+				"jiskrivec",
+				"mysak",
+				"chroust"
 			],
 			dawn: [
 				"hejkal",
@@ -714,7 +734,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"ohniva_kobyla",
 				"bludicka",
 				"jiskrivec",
-				"zbojnik"
+				"zbojnik",
+				"mysak",
+				"chroust"
 			]
 		},
 		keyEnemies: [
@@ -816,7 +838,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"rak_ricni",
 				"boruvkovy_diblik",
 				"certik",
-				"rarach"
+				"rarach",
+				"cert_sekac",
+				"srpnove_cmelak"
 			],
 			afternoon: [
 				"roj_polnich_mysaku",
@@ -855,7 +879,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"rak_ricni",
 				"boruvkovy_diblik",
 				"certik",
-				"rarach"
+				"rarach",
+				"cert_sekac",
+				"srpnove_cmelak"
 			]
 		},
 		keyEnemies: [
@@ -968,14 +994,18 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"rak_ricni",
 				"boruvkovy_diblik",
 				"roj_polnich_mysaku",
-				"divozenka"
+				"divozenka",
+				"cert_sekac",
+				"pekelny_roj_sazovniku"
 			],
 			afternoon: [
 				"bludicka",
 				"divozenka",
 				"jiskrivec",
 				"kalny_hastrman",
-				"certik"
+				"certik",
+				"cert_sekac",
+				"pekelny_roj_sazovniku"
 			],
 			dusk: [
 				"bludicka",
@@ -984,7 +1014,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"rak_ricni",
 				"boruvkovy_diblik",
 				"certik",
-				"ohnivy_muz"
+				"ohnivy_muz",
+				"cert_sekac",
+				"pekelny_roj_sazovniku"
 			],
 			night: [
 				"bludicka",
@@ -1121,7 +1153,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"zitna_baba",
 				"boruvkovy_diblik",
 				"rak_ricni",
-				"sotek"
+				"sotek",
+				"cert_sekac",
+				"srpnove_cmelak"
 			],
 			afternoon: [
 				"polni_krecek",
@@ -1137,27 +1171,35 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polednice",
 				"cert_sekac",
 				"drab",
-				"zbojnik"
+				"zbojnik",
+				"polni_mysice",
+				"srpnove_cmelak"
 			],
 			night: [
 				"zitna_baba",
 				"cert_sekac",
 				"drab",
 				"polednice",
-				"zbojnik"
+				"zbojnik",
+				"polni_mysice",
+				"srpnove_cmelak"
 			],
 			midnight: [
 				"zitna_baba",
 				"cert_sekac",
 				"drab",
-				"zbojnik"
+				"zbojnik",
+				"polni_mysice",
+				"srpnove_cmelak"
 			],
 			dawn: [
 				"polni_krecek",
 				"roj_polnich_mysaku",
 				"zitna_baba",
 				"boruvkovy_diblik",
-				"rak_ricni"
+				"rak_ricni",
+				"cert_sekac",
+				"srpnove_cmelak"
 			]
 		},
 		keyEnemies: [
@@ -1418,14 +1460,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polni_mysice",
 				"zlatohlavek",
 				"mysak",
-				"sotek"
+				"sotek",
+				"cert_sekac"
 			],
 			afternoon: [
 				"srpnove_cmelak",
 				"zlatohlavek",
 				"polni_mysice",
 				"polni_krecek",
-				"zitna_baba"
+				"zitna_baba",
+				"cert_sekac"
 			],
 			dusk: [
 				"srpnove_cmelak",
@@ -1456,7 +1500,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"zlatohlavek",
 				"polni_mysice",
 				"zitna_baba",
-				"polni_krecek"
+				"polni_krecek",
+				"cert_sekac"
 			]
 		},
 		keyEnemies: [
@@ -1565,7 +1610,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"kulovy_blesk",
 				"plivnik",
 				"bludicka",
-				"polni_mysice"
+				"polni_mysice",
+				"zbrojnos"
 			],
 			afternoon: [
 				"nocni_mura",
@@ -1579,7 +1625,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_pes",
 				"zbrojnos",
 				"bila_pani",
-				"ohnivy_sudlicka"
+				"ohnivy_sudlicka",
+				"polni_mysice",
+				"kulovy_blesk"
 			],
 			night: [
 				"nocni_mura",
@@ -1587,7 +1635,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"krvavy_kostlivec",
 				"bila_pani",
 				"ohniva_kobyla",
-				"ohnivy_sudlicka"
+				"ohnivy_sudlicka",
+				"polni_mysice",
+				"kulovy_blesk"
 			],
 			midnight: [
 				"nocni_mura",
@@ -1595,14 +1645,17 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cert_sekac",
 				"krvavy_kostlivec",
 				"bezhlavy_rytir",
-				"ohniva_kobyla"
+				"ohniva_kobyla",
+				"polni_mysice",
+				"kulovy_blesk"
 			],
 			dawn: [
 				"nocni_mura",
 				"cerny_pes",
 				"kulovy_blesk",
 				"bila_pani",
-				"zbrojnos"
+				"zbrojnos",
+				"polni_mysice"
 			]
 		},
 		keyEnemies: [
@@ -1703,14 +1756,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"zlatohlavek",
 				"polni_mysice",
 				"mysak",
-				"sotek"
+				"sotek",
+				"cert_sekac"
 			],
 			afternoon: [
 				"svestkovy_srsen",
 				"zlatohlavek",
 				"polni_mysice",
 				"polni_krecek",
-				"srpnove_cmelak"
+				"srpnove_cmelak",
+				"cert_sekac"
 			],
 			dusk: [
 				"svestkovy_srsen",
@@ -1718,28 +1773,32 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polni_mysice",
 				"polni_krecek",
 				"sotek",
-				"srpnove_cmelak"
+				"srpnove_cmelak",
+				"cert_sekac"
 			],
 			night: [
 				"svestkovy_srsen",
 				"zlatohlavek",
 				"polni_mysice",
 				"polni_krecek",
-				"sotek"
+				"sotek",
+				"cert_sekac"
 			],
 			midnight: [
 				"svestkovy_srsen",
 				"zlatohlavek",
 				"polni_mysice",
 				"polni_krecek",
-				"srpnove_cmelak"
+				"srpnove_cmelak",
+				"cert_sekac"
 			],
 			dawn: [
 				"svestkovy_srsen",
 				"zlatohlavek",
 				"polni_mysice",
 				"polni_krecek",
-				"mysak"
+				"mysak",
+				"cert_sekac"
 			]
 		},
 		keyEnemies: [

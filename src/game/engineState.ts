@@ -232,9 +232,13 @@ export interface EngineState {
     ohen: SvatovaclavskyOhenState;
   };
   zariActivePoiPrompt?: string | null;
+  marchThawActivePoiPrompt?: string | null;
+  dubenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
   plumPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; slowRatio: number; dead?: boolean }>;
+  plumPuddlesHead?: number;
   yolkPuddles?: Array<{ x: number; y: number; radius: number; life: number; maxLife: number; damageTimer: number; dead?: boolean }>;
+  yolkPuddlesHead?: number;
   crowWave?: any;
   snowmanHorde?: any;
 }
@@ -420,7 +424,11 @@ export function createInitialEngineState(): EngineState {
       ohen: createInitialSvatovaclavskyOhenState(),
     },
     holyCircle: null,
+    marchThawActivePoiPrompt: null,
+    dubenActivePoiPrompt: null,
     plumPuddles: [],
+    plumPuddlesHead: 0,
     yolkPuddles: [],
+    yolkPuddlesHead: 0,
   };
 }

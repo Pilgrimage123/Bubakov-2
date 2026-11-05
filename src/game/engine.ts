@@ -526,6 +526,15 @@ export class GameEngine {
   public get yolkPuddles() {
     return this.state.yolkPuddles;
   }
+  public get plumPuddles() {
+    return this.state.plumPuddles;
+  }
+  public get marchThawActivePoiPrompt() {
+    return this.state.marchThawActivePoiPrompt;
+  }
+  public get dubenActivePoiPrompt() {
+    return this.state.dubenActivePoiPrompt;
+  }
   public enemyFactory?: (
     id: string,
     x: number,
@@ -1742,6 +1751,7 @@ export class GameEngine {
           ) {
             for (let pi = 0; pi < self.state.plumPuddles.length; pi++) {
               const pud = self.state.plumPuddles[pi];
+              if (pud.dead || (pud.life ?? 0) <= 0) continue;
               const maxR = pud.radius + this.radius;
               const pdx = this.x - pud.x;
               const pdy = this.y - pud.y;
@@ -1759,6 +1769,7 @@ export class GameEngine {
           ) {
             for (let yi = 0; yi < self.state.yolkPuddles.length; yi++) {
               const yp = self.state.yolkPuddles[yi];
+              if (yp.dead || (yp.life ?? 0) <= 0) continue;
               const maxR = yp.radius + this.radius;
               const ydx = this.x - yp.x;
               const ydy = this.y - yp.y;
@@ -5393,34 +5404,60 @@ export class GameEngine {
   }
 
   public spawnPlumPuddle(x: number, y: number, slowRatio = 0.35): void {
-    if (!this.state.plumPuddles) this.state.plumPuddles = [];
-    if (this.state.plumPuddles.length >= 24) {
-      this.state.plumPuddles.shift();
+    if (!this.state.plumPuddles) {
+      this.state.plumPuddles = [];
     }
-    this.state.plumPuddles.push({
-      x,
-      y,
-      radius: 44,
-      life: 6.5,
-      maxLife: 6.5,
-      slowRatio,
-    });
+    if (this.state.plumPuddles.length < 32) {
+      this.state.plumPuddles.push({
+        x,
+        y,
+        radius: 44,
+        life: 6.5,
+        maxLife: 6.5,
+        slowRatio,
+        dead: false,
+      });
+    } else {
+      const idx = (this.state.plumPuddlesHead || 0) % 32;
+      this.state.plumPuddlesHead = (idx + 1) % 32;
+      const slot = this.state.plumPuddles[idx];
+      slot.x = x;
+      slot.y = y;
+      slot.radius = 44;
+      slot.life = 6.5;
+      slot.maxLife = 6.5;
+      slot.slowRatio = slowRatio;
+      slot.dead = false;
+    }
     this.emitDamageText(x, y - 25, 'POVIDLÍ! 🍯', '#A855F7', false);
   }
 
   public spawnYolkPuddle(x: number, y: number, radius = 48, duration = 5.0): void {
-    if (!this.state.yolkPuddles) this.state.yolkPuddles = [];
-    if (this.state.yolkPuddles.length >= 24) {
-      this.state.yolkPuddles.shift();
+    if (!this.state.yolkPuddles) {
+      this.state.yolkPuddles = [];
     }
-    this.state.yolkPuddles.push({
-      x,
-      y,
-      radius,
-      life: duration,
-      maxLife: duration,
-      damageTimer: 0.5,
-    });
+    if (this.state.yolkPuddles.length < 32) {
+      this.state.yolkPuddles.push({
+        x,
+        y,
+        radius,
+        life: duration,
+        maxLife: duration,
+        damageTimer: 0.5,
+        dead: false,
+      });
+    } else {
+      const idx = (this.state.yolkPuddlesHead || 0) % 32;
+      this.state.yolkPuddlesHead = (idx + 1) % 32;
+      const slot = this.state.yolkPuddles[idx];
+      slot.x = x;
+      slot.y = y;
+      slot.radius = radius;
+      slot.life = duration;
+      slot.maxLife = duration;
+      slot.damageTimer = 0.5;
+      slot.dead = false;
+    }
     this.emitDamageText(x, y - 25, 'SÍRA! 🥚', '#FACC15', false);
   }
 
@@ -6358,20 +6395,21 @@ export class GameEngine {
       }
     }
 
-    // Step plum jam puddles
+    // Step plum jam puddles (Zero-Allocation Ring Buffer)
     if (this.state.plumPuddles && this.state.plumPuddles.length > 0) {
       for (let i = 0; i < this.state.plumPuddles.length; i++) {
         const pud = this.state.plumPuddles[i];
+        if (pud.dead || pud.life <= 0) continue;
         pud.life -= dt;
         if (pud.life <= 0) pud.dead = true;
       }
-      compactInPlace(this.state.plumPuddles, keepLivePlumPuddle);
     }
 
-    // Step yolk puddles (Zkažená kraslice toxic pools)
+    // Step yolk puddles (Zero-Allocation Ring Buffer with FCT Throttling)
     if (this.state.yolkPuddles && this.state.yolkPuddles.length > 0) {
       for (let i = 0; i < this.state.yolkPuddles.length; i++) {
         const pud = this.state.yolkPuddles[i];
+        if (pud.dead || pud.life <= 0) continue;
         pud.life -= dt;
         pud.damageTimer = (pud.damageTimer || 0.5) - dt;
         if (pud.life <= 0) {
@@ -6394,7 +6432,7 @@ export class GameEngine {
           }
         }
 
-        // Slow and damage enemies inside puddle
+        // Slow and damage enemies inside puddle with FCT Throttling (0.25 s)
         for (let j = 0; j < this.livingEnemies.length; j++) {
           const foe = this.livingEnemies[j];
           if (!foe || foe.dead || (foe.isFlying && !foe.isGroundedForLoot)) continue;
@@ -6402,11 +6440,16 @@ export class GameEngine {
           if (fDist <= pud.radius + (foe.radius || 16)) {
             foe.slowTimer = Math.max(foe.slowTimer || 0, 0.4);
             if (pud.damageTimer <= 0) {
+              const now = this.state.gameTime || 0;
               if (typeof foe.takeDamage === 'function') {
                 foe.takeDamage(10, 'magic');
               } else {
                 foe.hp -= 10;
                 if (foe.hp <= 0) foe.isDefeated = true;
+              }
+              if (!foe.lastHazardTextTime || now - foe.lastHazardTextTime >= 0.25) {
+                foe.lastHazardTextTime = now;
+                this.emitDamageText(foe.x, foe.y - 18, 'SÍRA! −10', '#FACC15', false);
               }
             }
           }
@@ -6416,7 +6459,6 @@ export class GameEngine {
           pud.damageTimer = 0.5;
         }
       }
-      compactInPlace(this.state.yolkPuddles, (p) => !p.dead);
     }
 
     // Step projectiles
@@ -7141,6 +7183,12 @@ export class GameEngine {
           const isMarchNight = this.state.activeLevelId === 1;
           const marchPois = getMarchPois(isMarchNight);
           const inShrine = isInsideMarchPoi(player.x, player.y, marchPois.shrine);
+          const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+          this.state.marchThawActivePoiPrompt = inShrine
+            ? ((thaw.shrineCooldown || 0) <= 0
+                ? '[E] Pomodlit se (Mariánská kaplička)'
+                : `Kaplička odpočívá (${Math.ceil(thaw.shrineCooldown || 0)}s)`)
+            : null;
           const bubakNearShrine =
             inShrine &&
             this.livingEnemies.some(
@@ -7149,9 +7197,10 @@ export class GameEngine {
                 !foe.isDefeated &&
                 Math.hypot(foe.x - marchPois.shrine.x, foe.y - marchPois.shrine.y) < 250
             );
-          if (inShrine && bubakNearShrine) {
+          const eTrigger = inShrine && eKeyPressed && (thaw.shrineCooldown || 0) <= 0;
+          if (inShrine && (bubakNearShrine || eTrigger)) {
             thaw.shrineCharge = (thaw.shrineCharge || 0) + dt * 1.35;
-            if (thaw.shrineCharge >= 1.6 && thaw.shrineCooldown <= 0) {
+            if ((eTrigger || thaw.shrineCharge >= 1.6) && thaw.shrineCooldown <= 0) {
               thaw.shrineCharge = 0;
               thaw.shrineCooldown = MARCH_MARIAN_APPARITION_COOLDOWN;
               thaw.apparitionTimer = 4.2;
@@ -7249,7 +7298,12 @@ export class GameEngine {
         // Bell peal at Kostel sv. Jiří [E] or when swarmed
         if (duben) {
           const inChurch = isInsideDubenPoi(player.x, player.y, dubenPois.church);
-          const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E']);
+          this.state.dubenActivePoiPrompt = inChurch
+            ? ((duben.bellCooldown || 0) <= 0
+                ? (isDubenNight ? '[E] Rozeznít zvon (Kostel sv. Jiří)' : '[E] Rozeznít velikonoční zvon (Kostel sv. Jiří)')
+                : `Zvon odpočívá (${Math.ceil(duben.bellCooldown || 0)}s)`)
+            : null;
+          const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
           const bubakNearChurch =
             inChurch &&
             this.livingEnemies.some(

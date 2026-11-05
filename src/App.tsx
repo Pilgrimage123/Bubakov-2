@@ -7807,6 +7807,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const inFields = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.fields);
               const inMill = isInsideMarchPoi(player.x, player.y, MARCH_THAW_POIS.mill);
 
+              engine.marchThawActivePoiPrompt = inShrine
+                ? ((thaw.shrineCooldown || 0) <= 0
+                    ? '[E] Pomodlit se (Mariánská kaplička)'
+                    : `Kaplička odpočívá (${Math.ceil(thaw.shrineCooldown || 0)}s)`)
+                : null;
+
               // 1. KOSTEL & LES: Armor & regeneration bonuses
               player.arenaArmorBonus = (inChurch ? 0.20 : 0) + (inForest ? 0.15 : 0);
               if (inChurch) {
@@ -8193,6 +8199,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const inShrine = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.shrine);
               const inFields = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.fields);
               const inMill = isInsideDubenPoi(player.x, player.y, DUBEN_POIS.mill);
+
+              engine.dubenActivePoiPrompt = inChurch
+                ? ((duben.bellCooldown || 0) <= 0
+                    ? (isDubenNight ? '[E] Rozeznít zvon (Kostel sv. Jiří)' : '[E] Rozeznít velikonoční zvon (Kostel sv. Jiří)')
+                    : `Zvon odpočívá (${Math.ceil(duben.bellCooldown || 0)}s)`)
+                : null;
 
               duben.maypoleWardActive = inVillage;
 
