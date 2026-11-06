@@ -1,8 +1,16 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { sound } from '../audio';
 import { ladaPageFoley } from './ladaPageTurnAudio';
 import { GAME_LEVELS, type GameLevelDef } from '../data/levels';
-import { HUNTER_UNLOCKS } from '../data/hunterUnlocks';
+import { HUNTER_UNLOCKS, getHunterProgress } from '../data/hunterUnlocks';
+import { HUNTER_DETAILS, type HunterDetailKey } from '../data/hunterDetails';
+import { ENEMIES, getEnemyCadenceInfo } from '../data/enemies';
+import { WEAPONS } from '../data/weapons';
+import { getWeaponProgress } from '../data/weaponUnlocks';
+import { WEAPONS_WITH_MILESTONES } from '../data/weaponMilestones';
+import { GameIcon } from './GameIcon';
+import { LadaHunterCanvasPreview } from './LadaHunterCanvasPreview';
+import { drawEnemyRenderer } from '../render/ladaRenderer';
 import type { CharacterType, GameLevelId, MetaProgression } from '../types';
 
 export type BookChapterTab = 'map' | 'inventory' | 'bestiary';
@@ -475,422 +483,174 @@ export const LadaLindenVineta: React.FC<{ className?: string }> = ({ className =
   </div>
 );
 
-export interface FolklorePocketItem {
-  id: string;
-  czechName: string;
-  folkSubtitle: string;
-  categoryLabel: string;
-  statsBadge: string;
-  rarityColor: string;
-  czechLore: string;
-  usageNote: string;
-  drawSvg: () => React.ReactNode;
-}
+/**
+ * Renders the authentic in-game enemy sprite directly from `drawEnemyRenderer` (same as BestiaryModal
+ * and the main arena canvas), ensuring 1:1 visual parity with the game.
+ */
+const LadaEnemyCanvasPreview: React.FC<{ enemyId: string; size?: number; animated?: boolean }> = ({
+  enemyId,
+  size = 64,
+  animated = false,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-export const FOLKLORE_POCKET_ITEMS: FolklorePocketItem[] = [
-  {
-    id: 'buchty_v_uzlicku',
-    czechName: 'Buchty v uzlíčku',
-    folkSubtitle: 'Poctivé povidlové buchty z pece',
-    categoryLabel: 'Dar na cestu · Hojení',
-    statsBadge: '+45 Kuráže · Usmíří bubáky',
-    rarityColor: '#C83E2B',
-    czechLore:
-      '„Kdo má v uzlíčku poctivé povidlové buchty od mámy, toho v lese ani hladový hejkal nepřemůže.“',
-    usageNote:
-      'Teplé kynuté buchty v puntíkovaném šátku obnovují Kuráž a lákají mlsná strašidla.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <path
-          d="M 18 48 C 14 30, 30 22, 42 24 C 54 22, 70 30, 66 48 C 64 64, 20 64, 18 48 Z"
-          fill="#C83E2B"
-          stroke="#1C1613"
-          strokeWidth="3.2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 42 24 C 34 12, 22 10, 26 20 C 30 25, 38 25, 42 24 Z"
-          fill="#C83E2B"
-          stroke="#1C1613"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 42 24 C 50 12, 62 10, 58 20 C 54 25, 46 25, 42 24 Z"
-          fill="#C83E2B"
-          stroke="#1C1613"
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <ellipse
-          cx="42"
-          cy="42"
-          rx="17"
-          ry="11"
-          fill="#E2A83B"
-          stroke="#1C1613"
-          strokeWidth="2.8"
-        />
-        <path d="M 35 34 Q 42 42, 35 50 M 49 34 Q 42 42, 49 50" stroke="#1C1613" strokeWidth="2" fill="none" />
-        <circle cx="26" cy="52" r="2.3" fill="#F6EBD8" />
-        <circle cx="57" cy="51" r="2.3" fill="#F6EBD8" />
-        <circle cx="42" cy="58" r="2.3" fill="#F6EBD8" />
-      </svg>
-    ),
-  },
-  {
-    id: 'certuv_roh',
-    czechName: 'Čertův roh z kovárny',
-    folkSubtitle: 'Očouzený suvenýr z pekla',
-    categoryLabel: 'Pekelná trofej · Síla',
-    statsBadge: '+25 % Zásah · Pekelný žár',
-    rarityColor: '#C83E2B',
-    czechLore:
-      '„Upadl starému čertovi, když ho kovář v Hrusicích vzal kleštěmi za nos a vyprovodil ze dveří.“',
-    usageNote:
-      'Zakroucený roh dosud hřeje pekelným uhlím a přidává zbraním pádnou sílu proti noční chásce.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <path
-          d="M 22 62 C 16 38, 32 16, 62 18 C 52 28, 42 40, 40 60 Z"
-          fill="#2B5B84"
-          stroke="#1C1613"
-          strokeWidth="3.2"
-          strokeLinejoin="round"
-        />
-        <path d="M 25 50 Q 34 48, 39 53 M 29 38 Q 38 36, 44 41 M 36 28 Q 44 27, 49 31" stroke="#1C1613" strokeWidth="2.4" fill="none" />
-        <circle cx="58" cy="28" r="4" fill="#C83E2B" stroke="#1C1613" strokeWidth="2" />
-        <circle cx="24" cy="24" r="3" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.8" />
-      </svg>
-    ),
-  },
-  {
-    id: 'hrnecek_s_dusickou',
-    czechName: 'Hrneček s dušičkou',
-    folkSubtitle: 'Malovaný hrníček s pokličkou',
-    categoryLabel: 'Vodníkův poklad · Čáry',
-    statsBadge: '+1 Dušička · Ochrana u vody',
-    rarityColor: '#2B5B84',
-    czechLore:
-      '„Pod pokličkou to tichounce šplouchá a svítí. Kdo hrneček odklopí na břehu, vysvobodí dušičku z tůně.“',
-    usageNote:
-      'Keramický hrníček střežený starým hastrmanem pod vrbou vyzařuje tiché světlo a chrání u vody.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <ellipse cx="40" cy="64" rx="24" ry="5.5" fill="#F6EBD8" stroke="#1C1613" strokeWidth="3" />
-        <path
-          d="M 22 34 L 26 60 C 28 65, 52 65, 54 60 L 58 34 Z"
-          fill="#2B5B84"
-          stroke="#1C1613"
-          strokeWidth="3.2"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 56 39 C 68 39, 68 55, 54 55"
-          fill="none"
-          stroke="#1C1613"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-        <circle cx="40" cy="48" r="5.5" fill="#E2A83B" stroke="#1C1613" strokeWidth="2" />
-        <circle cx="40" cy="48" r="2" fill="#C83E2B" />
-        <ellipse
-          cx="39"
-          cy="29"
-          rx="20"
-          ry="5"
-          transform="rotate(-8 39 29)"
-          fill="#F6EBD8"
-          stroke="#1C1613"
-          strokeWidth="3"
-        />
-        <circle cx="38" cy="22" r="4" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.4" />
-        <path d="M 48 22 C 52 14, 58 16, 54 25" stroke="#E2A83B" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    id: 'kouzelna_pistalka',
-    czechName: 'Kouzelná vrbová píšťalka',
-    folkSubtitle: 'Jarní píšťalka z vrbové kůry',
-    categoryLabel: 'Pasáčkův nástroj · Rychlost',
-    statsBadge: '+18 % Nabíjení · Veselá nota',
-    rarityColor: '#4D784E',
-    czechLore:
-      '„Uřezaná na jaře z čerstvého vrbového proutku, když míza stoupá: ‚Otloukej se, píšťaličko, nebudeš-li se otloukati...‘“',
-    usageNote:
-      'Veselá písnička pasáčka zahání chmury v lese a zrychluje kadenci všech venkovských zbraní.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <g transform="rotate(-28 42 42)">
-          <rect
-            x="14"
-            y="36"
-            width="56"
-            height="13"
-            rx="5"
-            fill="#E2A83B"
-            stroke="#1C1613"
-            strokeWidth="3.2"
-          />
-          <rect
-            x="38"
-            y="36"
-            width="32"
-            height="13"
-            rx="4"
-            fill="#4D784E"
-            stroke="#1C1613"
-            strokeWidth="3"
-          />
-          <circle cx="46" cy="42.5" r="2.2" fill="#1C1613" />
-          <circle cx="54" cy="42.5" r="2.2" fill="#1C1613" />
-          <circle cx="62" cy="42.5" r="2.2" fill="#1C1613" />
-        </g>
-        <path d="M 54 18 L 54 30 M 54 18 L 64 15 L 64 27" stroke="#1C1613" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-        <circle cx="52" cy="30" r="2.8" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.6" />
-        <circle cx="62" cy="27" r="2.8" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.6" />
-      </svg>
-    ),
-  },
-  {
-    id: 'osikovy_prut',
-    czechName: 'Poctivý osikový prut',
-    folkSubtitle: 'Pružný proutek od rybníka',
-    categoryLabel: 'Základní zbraň · Švih',
-    statsBadge: 'Široký švih · Odraz strašidel',
-    rarityColor: '#4D784E',
-    czechLore:
-      '„Na rarášky a noční darmošlapy platí nejlépe pružný proutek z osiky, namočený v obecním rybníku.“',
-    usageNote:
-      'Klasický ohebný prut s jarními lístky svižně práská kolem lovce a zahání dotěrné skřítky.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <path
-          d="M 18 66 Q 38 38, 66 18"
-          fill="none"
-          stroke="#1C1613"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 18 66 Q 38 38, 66 18"
-          fill="none"
-          stroke="#E2A83B"
-          strokeWidth="2.4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 48 32 C 44 20, 54 14, 60 22 C 56 28, 52 32, 48 32 Z"
-          fill="#4D784E"
-          stroke="#1C1613"
-          strokeWidth="2.5"
-        />
-        <path
-          d="M 36 46 C 26 42, 26 32, 36 34 C 40 38, 38 44, 36 46 Z"
-          fill="#4D784E"
-          stroke="#1C1613"
-          strokeWidth="2.5"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 'pytlacka_petrolejka',
-    czechName: 'Pytlácká petrolejka',
-    folkSubtitle: 'Mosazná lucerna ponocného',
-    categoryLabel: 'Světlo v noci · Dosah',
-    statsBadge: '+30 Dosah sběru · Záře v mlze',
-    rarityColor: '#E2A83B',
-    czechLore:
-      '„Hřejivý plamínek v mosazné lucerně prosvětlí i nejhlubší lesní houštinu a ukáže zatoulané krejcary.“',
-    usageNote:
-      'Zlatavé světlo lucerny rozhání noční stíny na návsi a přitahuje perníčky i krejcary z větší dálky.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <circle cx="42" cy="44" r="24" fill="#E2A83B" fillOpacity="0.28" />
-        <path d="M 30 24 L 54 24 L 50 16 L 34 16 Z" fill="#2B5B84" stroke="#1C1613" strokeWidth="2.8" strokeLinejoin="round" />
-        <rect x="28" y="56" width="28" height="10" rx="3" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.8" />
-        <path d="M 32 24 L 29 56 L 55 56 L 52 24 Z" fill="#F6EBD8" stroke="#1C1613" strokeWidth="2.8" strokeLinejoin="round" />
-        <path
-          d="M 42 32 C 36 40, 37 50, 42 52 C 47 50, 48 40, 42 32 Z"
-          fill="#E2A83B"
-          stroke="#1C1613"
-          strokeWidth="2.2"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: 'medvedi_mast',
-    czechName: 'Bylinková medvědí mast',
-    folkSubtitle: 'Kamenný kelímek od kořenářky',
-    categoryLabel: 'Kořenářčin kelímek · Kuráž',
-    statsBadge: '+30 Max Kuráže · Zocelení',
-    rarityColor: '#4D784E',
-    czechLore:
-      '„Svařená o svatojánské noci z devatera kvítí, smůly a medvědího sádla. Dává chasníkům medvědí výdrž.“',
-    usageNote:
-      'Kameninový kelímek převázaný režným provázkem trvale posiluje maximální Kuráž pro dlouhé zimní noci.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <rect x="24" y="30" width="36" height="36" rx="8" fill="#E2A83B" stroke="#1C1613" strokeWidth="3.2" />
-        <path d="M 22 24 L 62 24 L 58 32 L 26 32 Z" fill="#F6EBD8" stroke="#1C1613" strokeWidth="3" strokeLinejoin="round" />
-        <rect x="30" y="40" width="24" height="16" rx="3" fill="#F6EBD8" stroke="#1C1613" strokeWidth="2.2" />
-        <path d="M 42 43 L 42 53 M 37 48 L 47 48" stroke="#C83E2B" strokeWidth="3.2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    id: 'krajac_povidel',
-    czechName: 'Krajáč švestkových povidel',
-    folkSubtitle: 'Malovaný džbánek ze špajzu',
-    categoryLabel: 'Dědečkův dar · Zpomalení',
-    statsBadge: '-35 % Rychlost bubáků v louži',
-    rarityColor: '#2B5B84',
-    czechLore:
-      '„Tak hustá a sladká povidla, že v nich uvízne i splašený hejkal a zapomene, kam vlastně pospíchal.“',
-    usageNote:
-      'Poctivá domácí švestková povidla v puntíkovaném krajáči lepí bubákům paty a brzdí jejich úprk.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <path
-          d="M 25 28 C 20 42, 22 62, 30 66 L 54 66 C 62 62, 64 42, 59 28 Z"
-          fill="#C83E2B"
-          stroke="#1C1613"
-          strokeWidth="3.2"
-          strokeLinejoin="round"
-        />
-        <ellipse cx="42" cy="28" rx="17" ry="5" fill="#2B5B84" stroke="#1C1613" strokeWidth="3" />
-        <circle cx="34" cy="46" r="2.8" fill="#F6EBD8" />
-        <circle cx="48" cy="44" r="2.8" fill="#F6EBD8" />
-        <circle cx="41" cy="55" r="2.8" fill="#F6EBD8" />
-      </svg>
-    ),
-  },
-  {
-    id: 'svaty_kropac',
-    czechName: 'Kostelníkův svatý kropáč',
-    folkSubtitle: 'Posvěcená kropenka od oltáře',
-    categoryLabel: 'Posvěcená zbraň · Světlo',
-    statsBadge: 'Dvojnásobný zásah nemrtvým',
-    rarityColor: '#2B5B84',
-    czechLore:
-      '„Když kostelník třikrát máchne kropáčem u hřbitovní zdi, kostlivci si raději spořádaně lehnou zpátky pod drn.“',
-    usageNote:
-      'Rozstřikuje svěcenou studánkovou vodu v širokém oblouku a zahání kostlivce, umrlce i čerty.',
-    drawSvg: () => (
-      <svg viewBox="0 0 84 84" className="w-16 h-16 overflow-visible">
-        <line x1="22" y1="64" x2="50" y2="36" stroke="#1C1613" strokeWidth="5.5" strokeLinecap="round" />
-        <line x1="22" y1="64" x2="50" y2="36" stroke="#E2A83B" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="54" cy="32" r="11" fill="#E2A83B" stroke="#1C1613" strokeWidth="3.2" />
-        <circle cx="51" cy="29" r="1.6" fill="#1C1613" />
-        <circle cx="57" cy="30" r="1.6" fill="#1C1613" />
-        <circle cx="54" cy="35" r="1.6" fill="#1C1613" />
-        <path d="M 68 18 C 68 23, 63 23, 63 18 C 63 15, 65.5 12, 65.5 12 C 65.5 12, 68 15, 68 18 Z" fill="#2B5B84" stroke="#1C1613" strokeWidth="1.8" />
-        <path d="M 38 18 C 38 22, 34 22, 34 18 C 34 15, 36 13, 36 13 C 36 13, 38 15, 38 18 Z" fill="#2B5B84" stroke="#1C1613" strokeWidth="1.8" />
-      </svg>
-    ),
-  },
-];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const m = ENEMIES[enemyId];
+    if (!m) return;
+
+    const dpr = typeof window !== 'undefined' ? Math.min(2, window.devicePixelRatio || 1) : 1;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+
+    let rafId = 0;
+    const startTime = performance.now();
+
+    const renderFrame = (elapsed: number) => {
+      ctx.save();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, size, size);
+
+      const cx = size / 2;
+      const cy = size / 2;
+      let scale = 1.02;
+      if (m.radius > 45) scale = 0.45;
+      else if (m.radius > 35) scale = 0.55;
+      else if (m.radius > 25) scale = 0.72;
+      else if (m.radius < 15) scale = 1.3;
+
+      ctx.translate(cx, cy);
+      ctx.scale(scale, scale);
+      ctx.translate(-cx, -cy);
+
+      const extraArgs: any[] = [];
+      let extraY = 6;
+      if (m.method === 'drawHastrman') {
+        extraArgs.push(false);
+        extraY = 12;
+      } else if (m.method === 'drawStrasak') {
+        extraArgs.push(true);
+      } else if (m.method === 'drawKrakonos') {
+        extraArgs.push(0);
+        extraY = 18;
+      } else if (m.method === 'drawRarach') {
+        extraArgs.push('#ef4444');
+      } else if (m.method === 'drawPira') {
+        extraArgs.push('#eab308');
+      } else if (m.method === 'drawVozka') {
+        extraArgs.push(1);
+      } else if (m.method === 'drawVila') {
+        extraArgs.push('#ec4899');
+      } else if (m.method === 'drawKanciKral') {
+        extraArgs.push(false);
+      } else if (
+        ['drawCert', 'drawPolednice', 'drawCarodejnice', 'drawDivous', 'drawKozel'].includes(m.method)
+      ) {
+        extraY = 12;
+      } else if (
+        ['drawMorana', 'drawGolem', 'drawBazilisek', 'drawPerchta', 'drawDrak', 'drawZitnyDedek'].includes(
+          m.method
+        )
+      ) {
+        extraY = 18;
+      }
+
+      const enemyToRender = { ...m, semiVisible: false };
+      drawEnemyRenderer(m.method, ctx, cx, cy + extraY, elapsed, 0, false, enemyToRender, extraArgs);
+      ctx.restore();
+    };
+
+    if (animated) {
+      const tick = (now: number) => {
+        renderFrame((now - startTime) / 1000);
+        rafId = requestAnimationFrame(tick);
+      };
+      rafId = requestAnimationFrame(tick);
+      return () => cancelAnimationFrame(rafId);
+    } else {
+      renderFrame(0.6);
+      return undefined;
+    }
+  }, [enemyId, size, animated]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      style={{ width: `${size}px`, height: `${size}px` }}
+      className="block select-none pointer-events-none"
+      aria-label={ENEMIES[enemyId]?.name || enemyId}
+    />
+  );
+};
+
+const CANONICAL_ENEMY_CATEGORY_LABELS: Record<string, string> = {
+  swarms: 'Šotci a havěť',
+  undead: 'Kostlivci a umrlci',
+  water: 'Hastrmani a tůně',
+  winter: 'Mrazíci a vánice',
+  forest: 'Lesní přízraky',
+  demons: 'Pekelná cháska',
+  bosses: 'Velcí bossové',
+};
 
 export interface FolkBestiaryPreviewEntry {
   id: string;
+  legacyKillId?: string;
   czechName: string;
   folkSubtitle: string;
-  habitat: string;
+  categoryLabel: string;
   weakness: string;
+  strength: string;
+  statsSummary: string;
   gouacheBg: string;
   lore: string;
   drawCreatureSvg: () => React.ReactNode;
 }
 
+const buildBestiaryStatsSummary = (enemyId: string): string => {
+  const e = ENEMIES[enemyId];
+  if (!e) return '';
+  const cad = getEnemyCadenceInfo(e.attackCadence);
+  const hungerPct = Math.round((e.foodResist || 0) * 100);
+  const poisePct = Math.round((e.poiseResist || 0) * 100);
+  const willPct = Math.round((e.willpower || 0) * 100);
+  return `Kuráž ${e.hp} · Rychlost ${e.speed} · Útok ${e.damage} (${cad.shortLabel} ${cad.interval.toFixed(1).replace('.', ',')} s) · Odolnosti: Hlad ${hungerPct} %, Postoj ${poisePct} %, Vůle ${willPct} %`;
+};
+
+const buildBestiaryEntry = (
+  id: string,
+  gouacheBg: string,
+  legacyKillId?: string
+): FolkBestiaryPreviewEntry => {
+  const e = ENEMIES[id];
+  return {
+    id,
+    legacyKillId,
+    czechName: e?.name || id,
+    folkSubtitle: e?.title || '',
+    categoryLabel: CANONICAL_ENEMY_CATEGORY_LABELS[e?.category || ''] || 'Strašidla',
+    weakness: e?.weakness || '',
+    strength: e?.strength || '',
+    statsSummary: buildBestiaryStatsSummary(id),
+    gouacheBg,
+    lore: e?.lore || '',
+    drawCreatureSvg: () => <LadaEnemyCanvasPreview enemyId={id} size={64} />,
+  };
+};
+
 const FOLK_BESTIARY_ENTRIES: FolkBestiaryPreviewEntry[] = [
-  {
-    id: 'vodnik',
-    czechName: 'Hastrman od vrb',
-    folkSubtitle: 'Pán vrbové tůně a stavidel',
-    habitat: 'Rybník a mlýnský náhon',
-    weakness: 'Usmíří ho teplá buchta, nemá rád suché pruty',
-    gouacheBg: '#2B5B84',
-    lore: 'Sedává za měsíčních nocí na hlavaté vrbě, bafá z fajfky a v zeleném šosatém fraku přešívá střevíce. Ze šosu mu věčně kape voda.',
-    drawCreatureSvg: () => (
-      <svg viewBox="0 0 110 110" className="w-24 h-24 overflow-visible">
-        <rect x="6" y="6" width="98" height="98" rx="10" fill="url(#lada-crosshatch)" />
-        <path d="M 10 86 Q 55 78, 100 88" stroke="#1C1613" strokeWidth="5" fill="none" strokeLinecap="round" />
-        <path d="M 36 52 L 28 82 L 82 82 L 74 52 Z" fill="#4D784E" stroke="#1C1613" strokeWidth="3.2" strokeLinejoin="round" />
-        <circle cx="55" cy="40" r="15" fill="#7BA07B" stroke="#1C1613" strokeWidth="3.2" />
-        <circle cx="50" cy="38" r="2.2" fill="#1C1613" />
-        <circle cx="60" cy="38" r="2.2" fill="#1C1613" />
-        <path d="M 49 46 Q 55 50, 61 46" stroke="#1C1613" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-        <path d="M 60 47 Q 76 49, 80 42 L 85 42 L 84 50 Q 76 54, 60 47 Z" fill="#E2A83B" stroke="#1C1613" strokeWidth="2.2" />
-        <ellipse cx="55" cy="26" rx="21" ry="4.5" fill="#4D784E" stroke="#1C1613" strokeWidth="3" />
-        <path d="M 42 26 L 44 10 L 66 10 L 68 26 Z" fill="#4D784E" stroke="#1C1613" strokeWidth="3" strokeLinejoin="round" />
-        <rect x="43" y="20" width="24" height="5" fill="#C83E2B" stroke="#1C1613" strokeWidth="2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'rarach',
-    czechName: 'Rarášek šotek',
-    folkSubtitle: 'Čiperný šotek z kovářské pece',
-    habitat: 'Rozpálené pece a stodoly',
-    weakness: 'Kropáč se svěcenou vodou a rychlý prut',
-    gouacheBg: '#C83E2B',
-    lore: 'Čiperný venkovský nezbeda v rudém kožíšku, jenž v noci plete koním hřívy, krade ze špajzu povidla a práská dvířky od pece.',
-    drawCreatureSvg: () => (
-      <svg viewBox="0 0 110 110" className="w-24 h-24 overflow-visible">
-        <rect x="6" y="6" width="98" height="98" rx="10" fill="url(#lada-crosshatch)" />
-        <path d="M 38 56 L 32 86 L 78 86 L 72 56 Z" fill="#C83E2B" stroke="#1C1613" strokeWidth="3.2" strokeLinejoin="round" />
-        <circle cx="55" cy="40" r="15" fill="#C83E2B" stroke="#1C1613" strokeWidth="3.2" />
-        <path d="M 44 28 C 36 16, 40 10, 48 22" fill="#221B17" stroke="#1C1613" strokeWidth="2.8" strokeLinecap="round" />
-        <path d="M 66 28 C 74 16, 70 10, 62 22" fill="#221B17" stroke="#1C1613" strokeWidth="2.8" strokeLinecap="round" />
-        <circle cx="49" cy="38" r="2.8" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.5" />
-        <circle cx="61" cy="38" r="2.8" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.5" />
-        <path d="M 48 46 Q 55 51, 62 46" stroke="#1C1613" strokeWidth="2.5" fill="none" />
-        <path d="M 53 48 C 53 56, 59 56, 58 48 Z" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.8" />
-      </svg>
-    ),
-  },
-  {
-    id: 'klekanice',
-    czechName: 'Šerá Klekánice',
-    folkSubtitle: 'Večerní postrach opozdilců',
-    habitat: 'Okolí zvonice a náves',
-    weakness: 'Jasná záře petrolejky a kostelní zvon',
-    gouacheBg: '#E2A83B',
-    lore: 'Jakmile ze zvonice odzvoní klekání, vynoří se z večerní mlhy v šedém plášti a dívá se, kdo zůstal venku po soumraku.',
-    drawCreatureSvg: () => (
-      <svg viewBox="0 0 110 110" className="w-24 h-24 overflow-visible">
-        <rect x="6" y="6" width="98" height="98" rx="10" fill="url(#lada-crosshatch)" />
-        <path d="M 24 88 C 26 42, 38 16, 55 16 C 72 16, 84 42, 86 88 Z" fill="#2B5B84" stroke="#1C1613" strokeWidth="3.2" strokeLinejoin="round" />
-        <ellipse cx="55" cy="44" rx="13" ry="14" fill="#F6EBD8" stroke="#1C1613" strokeWidth="2.8" />
-        <circle cx="50" cy="42" r="2.2" fill="#1C1613" />
-        <circle cx="60" cy="42" r="2.2" fill="#1C1613" />
-        <path d="M 55 43 L 52 50 L 57 50" fill="none" stroke="#1C1613" strokeWidth="2.2" strokeLinejoin="round" />
-        <circle cx="55" cy="62" r="5" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.4" />
-      </svg>
-    ),
-  },
-  {
-    id: 'hejkal',
-    czechName: 'Lesní Hejkal z boru',
-    folkSubtitle: 'Divoký pán hlubokého hvozdu',
-    habitat: 'Hustý borový les',
-    weakness: 'Neodpovídat mu na zahoukání a pálit z dálky',
-    gouacheBg: '#4D784E',
-    lore: 'Zarostlý divous v mechovém kožichu s větvičkami ve vousech. Kdo mu v lese odpoví na jeho „Hej, hej!“, tomu skočí za krk.',
-    drawCreatureSvg: () => (
-      <svg viewBox="0 0 110 110" className="w-24 h-24 overflow-visible">
-        <rect x="6" y="6" width="98" height="98" rx="10" fill="url(#lada-crosshatch)" />
-        <path d="M 26 88 C 24 50, 36 22, 55 22 C 74 22, 86 50, 84 88 Z" fill="#4D784E" stroke="#1C1613" strokeWidth="3.2" strokeLinejoin="round" />
-        <path d="M 42 24 L 34 10 M 68 24 L 76 10 M 55 22 L 55 8" stroke="#1C1613" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="48" cy="42" r="2.5" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.6" />
-        <circle cx="62" cy="42" r="2.5" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.6" />
-        <ellipse cx="55" cy="54" rx="8" ry="6" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.6" />
-      </svg>
-    ),
-  },
+  buildBestiaryEntry('hastrman', '#E6F0F5', 'vodnik'),
+  buildBestiaryEntry('rarach', '#FBE9E5'),
+  buildBestiaryEntry('klekanice', '#F6EBD8'),
+  buildBestiaryEntry('cert', '#F5E4DC'),
+  buildBestiaryEntry('morana', '#E8EEF5'),
+  buildBestiaryEntry('hejkal', '#E6F0E6'),
 ];
 
 export interface LadaStorybookSpreadProps {
@@ -910,60 +670,65 @@ export interface LadaStorybookSpreadProps {
   totalWeaponsCount: number;
 }
 
-const PORTRAIT_CHARACTERS: Array<{
+interface PortraitHunterEntry {
   id: CharacterType;
   czechTitle: string;
   czechSubtitle: string;
-  hp: number;
+  role: string;
   maxHp: number;
-  magic: number;
-  maxMagic: number;
-  quote: string;
-}> = [
-  {
-    id: 'krajanek',
-    czechTitle: 'Vandrovní Krajánek',
-    czechSubtitle: 'Mlynářský chasník a hraniční obránce',
-    hp: 170,
-    maxHp: 170,
-    magic: 100,
-    maxMagic: 100,
-    quote:
-      '„Z mlýna do mlýna putuje veselý krajánek s uzlíčkem buchet a mlýnským kamenem. Kde udeří do země, tam se bubákům zatočí šiška!“',
-  },
-  {
-    id: 'wanderer',
-    czechTitle: 'Vesnický Tulák',
-    czechSubtitle: 'Znalec polních mezí a mistr osikového prutu',
-    hp: 150,
-    maxHp: 150,
-    magic: 95,
-    maxMagic: 100,
-    quote:
-      '„Kdo zná každou polní mez a u potoka si uřízne pružný osikový prut, ten se ani půlnoční chásky u kapličky nezalekne.“',
-  },
-  {
-    id: 'shepherd',
-    czechTitle: 'Veselý Pasáček',
-    czechSubtitle: 'Čiperný chasník a pán vrbové muziky',
-    hp: 140,
-    maxHp: 140,
-    magic: 115,
-    maxMagic: 120,
-    quote:
-      '„Jen co pasáček zaduje do vrbové píšťalky a zazvoní kozím zvonkem, dají se noční strašidla do tance, až z nich lítají krejcary!“',
-  },
-  {
-    id: 'watchman',
-    czechTitle: 'Hrusický Ponocný',
-    czechSubtitle: 'Strážce nočního klidu s lucernou a halapartnou',
-    hp: 180,
-    maxHp: 180,
-    magic: 110,
-    maxMagic: 110,
-    quote:
-      '„Chval každý duch Hospodina i v noční hodinu! Ponocný zatroubí na roh, rozsvítí lucernu a zbloudilé duše provede bezpečně k domovu.“',
-  },
+  speed: number;
+  pickupRadius: number;
+  luck: number;
+  weaponName: string;
+  weaponIcon: string;
+  weaponBaseDmg: number;
+  weaponBaseCd: number;
+  weaponDesc: string;
+  weaponSummary: string;
+  passiveSummary: string;
+  abilityName: string;
+  abilityDetail: string;
+  cooldownSeconds: number;
+  playstyle: string;
+}
+
+const buildPortraitHunterEntry = (
+  id: CharacterType,
+  detailKey: HunterDetailKey
+): PortraitHunterEntry => {
+  const d = HUNTER_DETAILS[detailKey];
+  const w = WEAPONS[d.weaponId];
+  return {
+    id,
+    czechTitle: d.name,
+    czechSubtitle: d.title,
+    role: d.role,
+    maxHp: d.maxHp,
+    speed: d.speed,
+    pickupRadius: d.pickupRadius,
+    luck: d.luck,
+    weaponName: w?.name || d.weapon.split('–')[0].trim(),
+    weaponIcon: w?.icon || '⚔️',
+    weaponBaseDmg: w?.baseDmg ?? 20,
+    weaponBaseCd: w?.baseCd ?? 1.0,
+    weaponDesc: w?.desc || d.weapon,
+    weaponSummary: d.weapon,
+    passiveSummary: d.passive,
+    abilityName: d.abilityName,
+    abilityDetail: d.ability,
+    cooldownSeconds: d.cooldownSeconds,
+    playstyle: d.playstyle,
+  };
+};
+
+const PORTRAIT_CHARACTERS: PortraitHunterEntry[] = [
+  buildPortraitHunterEntry('krajanek', 'krajanek'),
+  buildPortraitHunterEntry('wanderer', 'tulak'),
+  buildPortraitHunterEntry('shepherd', 'pasacek'),
+  buildPortraitHunterEntry('korenarka', 'korenarka'),
+  buildPortraitHunterEntry('watchman', 'ponocny'),
+  buildPortraitHunterEntry('sexton', 'kostelnik'),
+  buildPortraitHunterEntry('granny', 'babicka'),
 ];
 
 export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
@@ -1008,8 +773,19 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
   });
 
   const [portraitIndex, setPortraitIndex] = useState<number>(0);
-  const [selectedPocketItem, setSelectedPocketItem] = useState<FolklorePocketItem>(
-    FOLKLORE_POCKET_ITEMS[0]
+  const canonicalWeaponIds = useMemo(() => Array.from(WEAPONS_WITH_MILESTONES), []);
+  const canonicalWeaponProgresses = useMemo(
+    () => canonicalWeaponIds.map((id) => getWeaponProgress(id, meta)),
+    [canonicalWeaponIds, meta]
+  );
+  const [selectedWeaponId, setSelectedWeaponId] = useState<string>(
+    () => Array.from(WEAPONS_WITH_MILESTONES)[0] || 'osikovy_prut'
+  );
+  const selectedWeaponProg = useMemo(
+    () =>
+      canonicalWeaponProgresses.find((p) => p.id === selectedWeaponId) ||
+      canonicalWeaponProgresses[0],
+    [canonicalWeaponProgresses, selectedWeaponId]
   );
   const [selectedBestiaryEntry, setSelectedBestiaryEntry] = useState<FolkBestiaryPreviewEntry>(
     FOLK_BESTIARY_ENTRIES[0]
@@ -1435,10 +1211,10 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     { levelId: 15, x: 74, y: 6, shortLabel: '16. Říjen (Noc)', regionNote: 'Dušičková noc', tilt: 2 },
   ];
 
-  const hpPct = Math.round((activePortrait.hp / activePortrait.maxHp) * 100);
-  const magicPct = Math.round((activePortrait.magic / activePortrait.maxMagic) * 100);
-  const storyFirstLetter = activePortrait.quote.replace(/^„/, '').charAt(0) || 'B';
-  const storyRestText = activePortrait.quote.replace(/^„./, '„');
+  const activeHunterProg = getHunterProgress(activePortrait.id, meta);
+  const levelLoreText = currentLevel.lore || currentLevel.description || '';
+  const storyFirstLetter = levelLoreText.replace(/^„/, '').charAt(0) || 'B';
+  const storyRestText = levelLoreText.slice(1);
 
   // Dynamic Left & Right Page Stack Thickness (8px–12px of stepped deckled parchment)
   const currentChapterIdx = CHAPTER_ORDER.indexOf(activeTab);
@@ -1489,7 +1265,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             {tab === 'map'
               ? 'Kapitola I · Krajina za devatero horami'
               : tab === 'inventory'
-              ? 'Kapitola II · Mošna a poklady'
+              ? `Kapitola II · Venkovská zbrojnice (${unlockedWeaponsCount}/${totalWeaponsCount})`
               : 'Kapitola III · Bubáci a hastrmani'}
           </span>
           <span>Str. {pageNum}</span>
@@ -1695,18 +1471,24 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
         {tab === 'inventory' && (
           <div className="lada-right-tab-content">
             <div className="lada-chapter-heading-wrap">
-              <h2 className="lada-chapter-heading">Mošna a poklady</h2>
+              <h2 className="lada-chapter-heading">Venkovská zbrojnice</h2>
               <p className="lada-chapter-sub">
-                Sběratelské album nalezených pokladů
+                Zbraně a řemeslný fortel · Stav zbrojnice: {unlockedWeaponsCount} / {totalWeaponsCount} zbraní odemčeno
               </p>
             </div>
 
-            <div className="lada-fotoruzky-grid" role="listbox" aria-label="Předměty v mošně">
-              {FOLKLORE_POCKET_ITEMS.map((item) => {
-                const isActive = selectedPocketItem.id === item.id;
+            <div
+              className="lada-fotoruzky-grid"
+              role="listbox"
+              aria-label="Zbraně ve venkovské zbrojnici"
+              style={{ maxHeight: '290px', overflowY: 'auto', padding: '2px 4px 4px 2px' }}
+            >
+              {canonicalWeaponProgresses.map((prog) => {
+                const isActive = selectedWeaponProg?.id === prog.id;
+                const isUnlocked = prog.isUnlocked;
                 return (
                   <button
-                    key={item.id}
+                    key={prog.id}
                     type="button"
                     role="option"
                     aria-selected={isActive}
@@ -1716,7 +1498,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                       if (!isStaticInteractive) return;
                       ladaPageFoley.playCornerHover();
                       sound.coin();
-                      setSelectedPocketItem(item);
+                      setSelectedWeaponId(prog.id);
                     }}
                   >
                     <span className="fotoruzek fotoruzek-tl" aria-hidden="true" />
@@ -1730,58 +1512,100 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                       </span>
                     )}
 
-                    <div className="lada-slot-illustration" style={{ mixBlendMode: 'multiply' }}>
-                      {item.drawSvg()}
+                    <div
+                      className="lada-slot-illustration flex items-center justify-center"
+                      style={{
+                        filter:
+                          !isUnlocked && prog.tier === 0
+                            ? 'grayscale(1) brightness(0.4)'
+                            : !isUnlocked && prog.tier === 1
+                            ? 'contrast(150%) brightness(0.65)'
+                            : 'none',
+                      }}
+                    >
+                      <GameIcon
+                        icon={prog.tier === 0 ? 'question' : prog.realIcon}
+                        size={42}
+                      />
                     </div>
-                    <span className="lada-slot-caption">{item.czechName}</span>
+                    <span className="lada-slot-caption">
+                      {prog.spoiledName}
+                    </span>
+                    <span
+                      className={`text-[9.5px] font-black px-1.5 py-0.5 rounded border border-[#1C1613] ${
+                        isUnlocked
+                          ? 'bg-[#4D784E] text-[#F6EBD8]'
+                          : 'bg-[#E2A83B] text-[#1C1613]'
+                      }`}
+                    >
+                      {isUnlocked ? '✓ Odemčeno' : `🔒 ${prog.percent} %`}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            <div
-              className={`lada-ex-libris-slip ${
-                settleThudJolt ? 'lada-ex-libris-thud-jolt' : ''
-              }`}
-            >
-              <div className="lada-brass-pin" aria-hidden="true" />
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                <div>
-                  <div className="lada-ex-libris-kicker">
-                    EX LIBRIS BUBÁKOV · {selectedPocketItem.categoryLabel}
+            {selectedWeaponProg && (
+              <div
+                className={`lada-ex-libris-slip ${
+                  settleThudJolt ? 'lada-ex-libris-thud-jolt' : ''
+                }`}
+              >
+                <div className="lada-brass-pin" aria-hidden="true" />
+                <div className="flex items-start justify-between gap-2 flex-wrap">
+                  <div>
+                    <div className="lada-ex-libris-kicker">
+                      {selectedWeaponProg.clueTag}
+                    </div>
+                    <h3 className="lada-ex-libris-title">
+                      {selectedWeaponProg.spoiledName}{' '}
+                      <span className="text-xs font-normal italic opacity-80">
+                        ({selectedWeaponProg.spoiledTitle})
+                      </span>
+                    </h3>
                   </div>
-                  <h3 className="lada-ex-libris-title">
-                    {selectedPocketItem.czechName}{' '}
-                    <span className="text-xs font-normal italic opacity-80">
-                      ({selectedPocketItem.folkSubtitle})
-                    </span>
-                  </h3>
+                  <span
+                    className="lada-ex-libris-stat"
+                    style={{
+                      backgroundColor: selectedWeaponProg.isUnlocked ? '#4D784E' : '#2B5B84',
+                    }}
+                  >
+                    {selectedWeaponProg.spoiledStatsHint}
+                  </span>
                 </div>
-                <span
-                  className="lada-ex-libris-stat"
-                  style={{ backgroundColor: selectedPocketItem.rarityColor }}
-                >
-                  {selectedPocketItem.statsBadge}
-                </span>
+                <p className="lada-ex-libris-lore">{selectedWeaponProg.spoiledDesc}</p>
+                {selectedWeaponProg.isUnlocked &&
+                  WEAPONS[selectedWeaponProg.id]?.desc &&
+                  WEAPONS[selectedWeaponProg.id]?.desc !== selectedWeaponProg.spoiledDesc && (
+                    <p className="text-xs font-bold text-[#6E3B1E] mt-1 mb-0">
+                      ⚔ V aréně: {WEAPONS[selectedWeaponProg.id].desc}
+                    </p>
+                  )}
+                {!selectedWeaponProg.isUnlocked && (
+                  <div className="text-xs font-extrabold text-[#6E3B1E] mt-1">
+                    {selectedWeaponProg.isQueued
+                      ? `🔒 V pořadí — nejprve odemkni: ${selectedWeaponProg.requiredWeaponName}`
+                      : `🎯 Výzva (${selectedWeaponProg.curCount}/${selectedWeaponProg.maxCount} · ${selectedWeaponProg.percent} %): ${selectedWeaponProg.challengeShortDesc}`}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-dashed border-[#6E3B1E]/40">
+                  <span className="text-xs font-bold text-[#221B17]/85">
+                    Celkem ve zbrojnici: {unlockedWeaponsCount} z {totalWeaponsCount} zbraní
+                  </span>
+                  <button
+                    type="button"
+                    className="lada-inline-switch-btn"
+                    onClick={() => {
+                      if (!isStaticInteractive) return;
+                      sound.coin();
+                      onOpenArsenal();
+                    }}
+                  >
+                    ⚔ Otevřít celou Venkovskou zbrojnici ({unlockedWeaponsCount}/{totalWeaponsCount})
+                  </button>
+                </div>
               </div>
-              <p className="lada-ex-libris-lore">{selectedPocketItem.czechLore}</p>
-              <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-dashed border-[#6E3B1E]/40">
-                <span className="text-xs italic text-[#221B17]/80">
-                  {selectedPocketItem.usageNote}
-                </span>
-                <button
-                  type="button"
-                  className="lada-inline-switch-btn"
-                  onClick={() => {
-                    if (!isStaticInteractive) return;
-                    sound.coin();
-                    onOpenArsenal();
-                  }}
-                >
-                  ⚔ Otevřít celou Zbrojnici ({unlockedWeaponsCount}/{totalWeaponsCount})
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -1790,14 +1614,16 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             <div className="lada-chapter-heading-wrap">
               <h2 className="lada-chapter-heading">Bubáci a hastrmani</h2>
               <p className="lada-chapter-sub">
-                Lidový bestiář: slabiny a zvyky nočních běsů
+                Bestiář českého venkova: útočná kadence, odolnosti (Hlad · Postoj · Vůle) a slabiny
               </p>
             </div>
 
             <div className="lada-bestiary-spread-grid">
               {FOLK_BESTIARY_ENTRIES.map((entry) => {
                 const isSelected = selectedBestiaryEntry.id === entry.id;
-                const killCount = meta.bestiaryKills?.[entry.id] || 0;
+                const killCount =
+                  (meta.bestiaryKills?.[entry.id] || 0) +
+                  (entry.legacyKillId ? meta.bestiaryKills?.[entry.legacyKillId] || 0 : 0);
                 return (
                   <button
                     key={entry.id}
@@ -1815,7 +1641,6 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                       className="lada-bestiary-card-art"
                       style={{
                         backgroundColor: entry.gouacheBg,
-                        mixBlendMode: 'multiply',
                       }}
                     >
                       {entry.drawCreatureSvg()}
@@ -1831,7 +1656,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                         {entry.lore}
                       </div>
                       <div className="mt-1 text-[11px] font-extrabold text-[#C83E2B]">
-                        Zklidněno v noci: {killCount}×
+                        Zahnáno na výpravách: {killCount}×
                       </div>
                     </div>
                   </button>
@@ -1845,32 +1670,56 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               }`}
             >
               <div className="lada-brass-pin" aria-hidden="true" />
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <div className="lada-ex-libris-kicker">
-                    ZÁPIS V KRONICE STRAŠIDEL · {selectedBestiaryEntry.habitat}
-                  </div>
-                  <h3 className="lada-ex-libris-title">
-                    {selectedBestiaryEntry.czechName} ({selectedBestiaryEntry.folkSubtitle})
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  className="lada-btn btn-small"
-                  style={{ margin: 0, background: '#2B5B84', color: '#F6EBD8' }}
-                  onClick={() => {
-                    if (!isStaticInteractive) return;
-                    sound.coin();
-                    onOpenBestiary();
+              <div className="flex items-start gap-3">
+                <div
+                  className="shrink-0 rounded-lg border-2 border-[#1C1613] flex items-center justify-center shadow-[2px_2px_0_#1C1613]"
+                  style={{
+                    width: '78px',
+                    height: '78px',
+                    backgroundColor: selectedBestiaryEntry.gouacheBg,
                   }}
                 >
-                  📖 Otevřít celý Bestiář
-                </button>
+                  <LadaEnemyCanvasPreview
+                    enemyId={selectedBestiaryEntry.id}
+                    size={74}
+                    animated={isStaticInteractive}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div>
+                      <div className="lada-ex-libris-kicker">
+                        BESTIÁŘ ČESKÉHO VENKOVA · {selectedBestiaryEntry.categoryLabel}
+                      </div>
+                      <h3 className="lada-ex-libris-title">
+                        {selectedBestiaryEntry.czechName} ({selectedBestiaryEntry.folkSubtitle})
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="lada-btn btn-small"
+                      style={{ margin: 0, background: '#2B5B84', color: '#F6EBD8' }}
+                      onClick={() => {
+                        if (!isStaticInteractive) return;
+                        sound.coin();
+                        onOpenBestiary();
+                      }}
+                    >
+                      📖 Otevřít celý Bestiář
+                    </button>
+                  </div>
+                  {selectedBestiaryEntry.statsSummary && (
+                    <div className="text-xs font-extrabold text-[#6E3B1E] mt-1">
+                      📊 {selectedBestiaryEntry.statsSummary}
+                    </div>
+                  )}
+                  <p className="lada-ex-libris-lore mt-1">
+                    <strong>Silná stránka:</strong> {selectedBestiaryEntry.strength} ·{' '}
+                    <strong>Slabina:</strong> {selectedBestiaryEntry.weakness}.{' '}
+                    {selectedBestiaryEntry.lore}
+                  </p>
+                </div>
               </div>
-              <p className="lada-ex-libris-lore mt-1">
-                <strong>Rada hospodáře:</strong> „{selectedBestiaryEntry.weakness}.“{' '}
-                {selectedBestiaryEntry.lore}
-              </p>
             </div>
           </div>
         )}
@@ -1916,7 +1765,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             onClick={() => handleSwitchTab('inventory')}
           >
             <span className="lada-ribbon-stitch">
-              🎒 Mošna a poklady ({unlockedWeaponsCount}/{totalWeaponsCount})
+              ⚔️ Venkovská zbrojnice ({unlockedWeaponsCount}/{totalWeaponsCount})
             </span>
           </button>
           <button
@@ -2043,547 +1892,167 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
               <span>„ČESKÉ POHÁDKY A BUBÁCI“</span>
             </div>
 
-            {/* 1. OVAL FOLKLORIC GARLAND PORTRAIT FRAME */}
+            {/* 1. AUTHENTIC IN-GAME HUNTER PORTRAIT & HEADER */}
             <div className="lada-portrait-section">
               <div
-                className="lada-oval-garland-frame"
+                className="lada-oval-garland-frame flex flex-col items-center justify-center relative overflow-hidden"
+                style={{
+                  width: '126px',
+                  height: '126px',
+                  background: 'radial-gradient(circle at 50% 42%, #FFFDF7 0%, #F2E5C6 68%, #DFCCA4 100%)',
+                  border: '3px solid #1C1613',
+                  borderRadius: '14px',
+                  boxShadow: '3px 3px 0 #1C1613',
+                }}
                 onClick={handleCyclePortrait}
-                title="Klikněte pro přelistování postavy v medailonu (Krajánek / Tulák / Pasáček / Ponocný)"
+                title="Klikněte pro přelistování postavy (skutečná podoba lovce ze hry)"
               >
-                <svg
-                  viewBox="0 0 240 190"
-                  className="w-full h-full overflow-visible"
-                  style={{ filter: 'url(#lada-ink-filter)' }}
-                >
-                  <defs>
-                    <clipPath id="lada-oval-clip">
-                      <ellipse cx="120" cy="95" rx="86" ry="72" />
-                    </clipPath>
-                  </defs>
-
-                  <g clipPath="url(#lada-oval-clip)" style={{ mixBlendMode: 'multiply' }}>
-                    <rect x="20" y="15" width="200" height="160" fill="#2B5B84" fillOpacity="0.9" />
-                    <path
-                      d="M 64 42 A 14 14 0 1 0 78 58 A 11 11 0 1 1 64 42 Z"
-                      fill="#E2A83B"
-                      stroke="#1C1613"
-                      strokeWidth="2"
-                    />
-                    <circle cx="172" cy="40" r="2.5" fill="#E2A83B" />
-                    <circle cx="152" cy="54" r="2" fill="#F6EBD8" />
-                    <circle cx="94" cy="34" r="2" fill="#F6EBD8" />
-
-                    <rect
-                      x="154"
-                      y="96"
-                      width="34"
-                      height="22"
-                      fill="#F6EBD8"
-                      stroke="#1C1613"
-                      strokeWidth="2.4"
-                    />
-                    <polygon
-                      points="150,96 171,78 192,96"
-                      fill="#C83E2B"
-                      stroke="#1C1613"
-                      strokeWidth="2.5"
-                      strokeLinejoin="round"
-                    />
-                    <rect
-                      x="166"
-                      y="102"
-                      width="8"
-                      height="8"
-                      fill="#E2A83B"
-                      stroke="#1C1613"
-                      strokeWidth="1.8"
-                    />
-
-                    <ellipse
-                      cx="120"
-                      cy="148"
-                      rx="95"
-                      ry="32"
-                      fill="#4D784E"
-                      stroke="#1C1613"
-                      strokeWidth="3"
-                    />
-                    <ellipse
-                      cx="92"
-                      cy="154"
-                      rx="58"
-                      ry="16"
-                      fill="#2B5B84"
-                      stroke="#1C1613"
-                      strokeWidth="2.5"
-                    />
-
-                    <path
-                      d="M 44 142 C 46 118, 40 94, 48 82 C 56 80, 62 86, 58 102 C 55 116, 58 132, 60 142 Z"
-                      fill="#6E3B1E"
-                      stroke="#1C1613"
-                      strokeWidth="2.8"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M 48 82 Q 32 60, 26 48 M 50 80 Q 48 56, 46 42 M 54 82 Q 66 58, 72 48"
-                      stroke="#4D784E"
-                      strokeWidth="3.2"
-                      strokeLinecap="round"
-                      fill="none"
-                    />
-
-                    {activePortrait.id === 'krajanek' && (
-                      <g transform="translate(88, 52)">
-                        {/* Sturdy Miller Walking Stick & Red Polka-Dot Bundle */}
-                        <line
-                          x1="62"
-                          y1="18"
-                          x2="56"
-                          y2="96"
-                          stroke="#1C1613"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                        />
-                        {/* Spotted Red Cloth Bundle */}
-                        <circle cx="58" cy="24" r="11" fill="#C83E2B" stroke="#1C1613" strokeWidth="2.6" />
-                        <circle cx="54" cy="20" r="2.2" fill="#FFFDF7" />
-                        <circle cx="62" cy="22" r="2.2" fill="#FFFDF7" />
-                        <circle cx="58" cy="28" r="2.2" fill="#FFFDF7" />
-                        <path d="M 52 16 C 50 10, 60 10, 58 16" fill="#C83E2B" stroke="#1C1613" strokeWidth="2" />
-
-                        {/* Miller's Ochre Yellow Coat */}
-                        <path
-                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
-                          fill="#E2A83B"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                          strokeLinejoin="round"
-                        />
-                        {/* Rustic White Undershirt & Brass Buttons */}
-                        <path
-                          d="M 22 54 L 20 90 L 48 90 L 46 54 Z"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="2.6"
-                        />
-                        <circle cx="34" cy="64" r="2.2" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.2" />
-                        <circle cx="34" cy="74" r="2.2" fill="#C83E2B" stroke="#1C1613" strokeWidth="1.2" />
-
-                        {/* Head & Cheerful Face */}
-                        <circle
-                          cx="34"
-                          cy="38"
-                          r="15.5"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                        />
-                        <circle cx="29" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="39" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="26" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
-                        <circle cx="42" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.45" />
-                        <path
-                          d="M 28 44 Q 34 49, 40 44"
-                          stroke="#1C1613"
-                          strokeWidth="2.4"
-                          fill="none"
-                          strokeLinecap="round"
-                        />
-
-                        {/* Peasant Miller Cap (Navy with red feather cockade) */}
-                        <ellipse
-                          cx="34"
-                          cy="24"
-                          rx="22"
-                          ry="5.5"
-                          fill="#221B17"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 19 24 C 20 10, 48 10, 49 24 Z"
-                          fill="#2B5B84"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 44 16 C 54 6, 64 8, 56 20"
-                          fill="#C83E2B"
-                          stroke="#1C1613"
-                          strokeWidth="2.2"
-                        />
-                      </g>
-                    )}
-
-                    {activePortrait.id === 'wanderer' && (
-                      <g transform="translate(88, 52)">
-                        {/* Slender Willow Fishing Rod & Line */}
-                        <path
-                          d="M 64 96 Q 60 40, 72 10"
-                          stroke="#7A5832"
-                          strokeWidth="3.4"
-                          fill="none"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M 72 10 Q 76 35, 68 60"
-                          stroke="#1C1613"
-                          strokeWidth="1.2"
-                          strokeDasharray="3 3"
-                          fill="none"
-                        />
-
-                        {/* Weathered Moss Green Coat */}
-                        <path
-                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
-                          fill="#4D784E"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M 23 54 L 21 90 L 47 90 L 45 54 Z"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="2.6"
-                        />
-                        <circle cx="34" cy="65" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
-                        <circle cx="34" cy="76" r="2.2" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.2" />
-
-                        {/* Head & Weathered Face with Clay Pipe */}
-                        <circle
-                          cx="34"
-                          cy="38"
-                          r="15.5"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                        />
-                        <circle cx="29" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="39" cy="36" r="2.3" fill="#1C1613" />
-                        <circle cx="26" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.35" />
-                        <circle cx="42" cy="41" r="3.2" fill="#C83E2B" fillOpacity="0.35" />
-                        {/* Clay Pipe */}
-                        <path
-                          d="M 38 46 Q 52 48, 56 42 L 60 42 L 59 48 Q 50 53, 38 46 Z"
-                          fill="#E2A83B"
-                          stroke="#1C1613"
-                          strokeWidth="2.2"
-                          strokeLinejoin="round"
-                        />
-                        <circle cx="62" cy="35" r="3.5" fill="#F6EBD8" fillOpacity="0.75" />
-
-                        {/* Wide-Brimmed Felt Hat */}
-                        <ellipse
-                          cx="34"
-                          cy="23"
-                          rx="24"
-                          ry="6"
-                          fill="#5D3A1A"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 20 23 L 23 7 L 45 7 L 48 23 Z"
-                          fill="#6E4423"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                    )}
-
-                    {activePortrait.id === 'shepherd' && (
-                      <g transform="translate(88, 52)">
-                        {/* Shepherd's Willow Whistle in Hand */}
-                        <path
-                          d="M 36 46 L 54 48 L 53 54 L 35 52 Z"
-                          fill="#D97706"
-                          stroke="#1C1613"
-                          strokeWidth="2.2"
-                          strokeLinejoin="round"
-                        />
-                        <circle cx="42" cy="49" r="1.3" fill="#1C1613" />
-                        <circle cx="47" cy="50" r="1.3" fill="#1C1613" />
-
-                        {/* Sheepskin Vest over Red Plaid Shirt */}
-                        <path
-                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
-                          fill="#C83E2B"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                          strokeLinejoin="round"
-                        />
-                        {/* Fluffy Sheepskin Vest Front */}
-                        <path
-                          d="M 20 54 Q 18 72, 19 92 L 49 92 Q 50 72, 48 54 Z"
-                          fill="#F4EED8"
-                          stroke="#1C1613"
-                          strokeWidth="2.6"
-                          strokeLinejoin="round"
-                        />
-                        <line x1="34" y1="56" x2="34" y2="90" stroke="#1C1613" strokeWidth="2" strokeDasharray="3 3" />
-
-                        {/* Head & Youthful Face */}
-                        <circle
-                          cx="34"
-                          cy="38"
-                          r="15"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                        />
-                        <circle cx="29" cy="35" r="2.3" fill="#1C1613" />
-                        <circle cx="39" cy="35" r="2.3" fill="#1C1613" />
-                        <circle cx="25" cy="40" r="3.4" fill="#C83E2B" fillOpacity="0.5" />
-                        <circle cx="43" cy="40" r="3.4" fill="#C83E2B" fillOpacity="0.5" />
-                        <path
-                          d="M 28 44 Q 34 49, 40 44"
-                          stroke="#1C1613"
-                          strokeWidth="2.4"
-                          fill="none"
-                          strokeLinecap="round"
-                        />
-
-                        {/* Young Peasant Cap with Tassel */}
-                        <ellipse
-                          cx="34"
-                          cy="24"
-                          rx="21"
-                          ry="5.5"
-                          fill="#221B17"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 20 24 C 20 12, 48 12, 48 24 Z"
-                          fill="#2B5B84"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <line x1="48" y1="20" x2="56" y2="28" stroke="#E2A83B" strokeWidth="2.8" strokeLinecap="round" />
-                        <circle cx="57" cy="30" r="3" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.4" />
-                      </g>
-                    )}
-
-                    {activePortrait.id === 'watchman' && (
-                      <g transform="translate(88, 52)">
-                        {/* Night Watchman Halberd Staff & Blade */}
-                        <line
-                          x1="62"
-                          y1="10"
-                          x2="56"
-                          y2="96"
-                          stroke="#1C1613"
-                          strokeWidth="3.8"
-                          strokeLinecap="round"
-                        />
-                        {/* Crescent Moon Halberd Blade */}
-                        <path
-                          d="M 62 10 Q 72 16, 70 28 Q 63 24, 62 10 Z"
-                          fill="#78716C"
-                          stroke="#1C1613"
-                          strokeWidth="2.2"
-                        />
-                        <path
-                          d="M 62 8 L 62 2 L 64 2 L 64 8 Z"
-                          fill="#78716C"
-                          stroke="#1C1613"
-                          strokeWidth="1.5"
-                        />
-
-                        {/* Heavy Navy Night Watchman Greatcoat */}
-                        <path
-                          d="M 14 54 L 6 96 L 62 96 L 54 54 Z"
-                          fill="#1E293B"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                          strokeLinejoin="round"
-                        />
-                        {/* Large Warm Collar */}
-                        <path
-                          d="M 16 54 L 28 66 L 40 66 L 52 54 Z"
-                          fill="#334155"
-                          stroke="#1C1613"
-                          strokeWidth="2.4"
-                        />
-                        {/* Brass Lantern in Hand */}
-                        <rect x="10" y="66" width="12" height="16" rx="2" fill="#FACC15" stroke="#1C1613" strokeWidth="2.2" />
-                        <line x1="16" y1="62" x2="16" y2="66" stroke="#1C1613" strokeWidth="2" />
-                        <circle cx="16" cy="74" r="3" fill="#FFFDF7" />
-
-                        {/* Head & Stern Vigilant Face with Beard */}
-                        <circle
-                          cx="34"
-                          cy="38"
-                          r="15.5"
-                          fill="#F6EBD8"
-                          stroke="#1C1613"
-                          strokeWidth="3.2"
-                        />
-                        <circle cx="29" cy="35" r="2.3" fill="#1C1613" />
-                        <circle cx="39" cy="35" r="2.3" fill="#1C1613" />
-                        {/* Graying Beard */}
-                        <path
-                          d="M 26 42 Q 34 53, 42 42 Z"
-                          fill="#E2E8F0"
-                          stroke="#1C1613"
-                          strokeWidth="2.2"
-                        />
-
-                        {/* Tall Black Night Watchman Hat */}
-                        <ellipse
-                          cx="34"
-                          cy="24"
-                          rx="22"
-                          ry="5.5"
-                          fill="#1C1613"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M 21 24 L 23 8 L 45 8 L 47 24 Z"
-                          fill="#0F172A"
-                          stroke="#1C1613"
-                          strokeWidth="3"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                    )}
-                  </g>
-
-                  <ellipse
-                    cx="120"
-                    cy="95"
-                    rx="86"
-                    ry="72"
-                    fill="none"
-                    stroke="#1C1613"
-                    strokeWidth="4.2"
-                  />
-                  <ellipse
-                    cx="120"
-                    cy="95"
-                    rx="92"
-                    ry="78"
-                    fill="none"
-                    stroke="#E2A83B"
-                    strokeWidth="3"
-                    strokeDasharray="10 5"
-                  />
-                  <ellipse
-                    cx="120"
-                    cy="95"
-                    rx="95"
-                    ry="81"
-                    fill="none"
-                    stroke="#1C1613"
-                    strokeWidth="2.5"
-                  />
-
-                  {[
-                    { cx: 30, cy: 65, col: '#C83E2B' },
-                    { cx: 30, cy: 125, col: '#E2A83B' },
-                    { cx: 210, cy: 65, col: '#C83E2B' },
-                    { cx: 210, cy: 125, col: '#E2A83B' },
-                    { cx: 120, cy: 16, col: '#C83E2B' },
-                  ].map((fl, idx) => (
-                    <g key={idx} transform={`translate(${fl.cx}, ${fl.cy})`}>
-                      <path
-                        d="M -10 0 C -14 -8, -4 -14, 0 -4 C 4 -14, 14 -8, 10 0 Z"
-                        fill="#4D784E"
-                        stroke="#1C1613"
-                        strokeWidth="2"
-                      />
-                      <circle cx="0" cy="0" r="6.5" fill={fl.col} stroke="#1C1613" strokeWidth="2.2" />
-                      <circle cx="0" cy="0" r="2.5" fill="#F6EBD8" stroke="#1C1613" strokeWidth="1.4" />
-                    </g>
-                  ))}
-                </svg>
+                <div
+                  className="absolute inset-x-0 bottom-0 h-6 pointer-events-none"
+                  style={{
+                    background: '#4D784E',
+                    opacity: 0.28,
+                    borderTop: '2px solid #1C1613',
+                  }}
+                />
+                <LadaHunterCanvasPreview
+                  hunterId={activePortrait.id}
+                  size={114}
+                  className="relative z-10 block mx-auto"
+                />
               </div>
 
               <div className="lada-portrait-caption">
+                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                  <span className="inline-block px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded border-2 border-[#1C1613] bg-[#2B5B84] text-[#F6EBD8]">
+                    {activePortrait.role}
+                  </span>
+                  <span
+                    className={`inline-block px-2 py-0.5 text-[10px] font-black rounded border-2 border-[#1C1613] ${
+                      activeHunterProg?.isUnlocked
+                        ? 'bg-[#4D784E] text-[#F6EBD8]'
+                        : 'bg-[#E2A83B] text-[#1C1613]'
+                    }`}
+                  >
+                    {activeHunterProg?.isUnlocked
+                      ? '✓ Odemčeno'
+                      : `🔒 Uzamčeno (${activeHunterProg?.percent ?? 0} %)`}
+                  </span>
+                </div>
                 <div className="lada-portrait-title">{activePortrait.czechTitle}</div>
                 <div className="lada-portrait-subtitle">{activePortrait.czechSubtitle}</div>
-                <button
-                  type="button"
-                  className="lada-inline-switch-btn"
-                  onClick={handleCyclePortrait}
-                >
-                  🔄 Přelistovat postavu ({(portraitIndex % PORTRAIT_CHARACTERS.length) + 1}/{PORTRAIT_CHARACTERS.length})
-                </button>
+                <div className="text-[11px] font-bold text-[#221B17]/85 leading-snug mb-1.5">
+                  {activePortrait.playstyle}
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    className="lada-inline-switch-btn"
+                    onClick={() => {
+                      sound.coin();
+                      ladaPageFoley.playCornerHover();
+                      setPortraitIndex(
+                        (prev) => (prev - 1 + PORTRAIT_CHARACTERS.length) % PORTRAIT_CHARACTERS.length
+                      );
+                    }}
+                  >
+                    ◀ Předchozí
+                  </button>
+                  <button
+                    type="button"
+                    className="lada-inline-switch-btn"
+                    onClick={handleCyclePortrait}
+                  >
+                    Další lovec ({(portraitIndex % PORTRAIT_CHARACTERS.length) + 1}/{PORTRAIT_CHARACTERS.length}) ▶
+                  </button>
+                </div>
               </div>
             </div>
 
-            {/* 2. VITALITY & MAGIC GAUGES (Kuráž & Čáry) */}
-            <div className="lada-gauges-block">
-              <div className="lada-vessel-row">
-                <div className="lada-ceramic-vessel" aria-hidden="true">
-                  <svg viewBox="0 0 44 44" className="w-10 h-10 overflow-visible">
-                    <path
-                      d="M 13 12 L 31 12 L 28 18 C 35 22, 35 36, 28 39 L 16 39 C 9 36, 9 22, 16 18 Z"
-                      fill="#C83E2B"
-                      stroke="#1C1613"
-                      strokeWidth="2.8"
-                      strokeLinejoin="round"
-                    />
-                    <path d="M 28 16 C 37 16, 37 28, 29 28" fill="none" stroke="#1C1613" strokeWidth="2.8" />
-                    <circle cx="22" cy="27" r="4" fill="#E2A83B" stroke="#1C1613" strokeWidth="1.6" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="lada-gauge-label-row">
-                    <span>♥ Kuráž lovce</span>
-                    <span className="tabular-nums">
-                      {activePortrait.hp} / {activePortrait.maxHp}
-                    </span>
+            {/* 2. CLEAR, STRUCTURED HUNTER DOSSIER: ZÁKLADNÍ VLASTNOSTI, VÝCHOZÍ ZBRAŇ, PASIVNÍ A HLAVNÍ SCHOPNOST */}
+            <div className="lada-gauges-block space-y-2">
+              {/* 4 Canonical Base Attributes */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md px-2 py-1 shadow-[1.5px_1.5px_0_#1C1613]">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[#6E3B1E] flex items-center gap-1">
+                    <GameIcon icon="heart" size={13} />
+                    <span>Základní Kuráž</span>
                   </div>
-                  <div className="lada-gouache-gauge-track">
-                    <div
-                      className="lada-gouache-gauge-fill fill-poppy"
-                      style={{ width: `${hpPct}%` }}
-                    />
+                  <div className="text-sm font-black text-[#C83E2B] tabular-nums">
+                    {activePortrait.maxHp}
+                  </div>
+                </div>
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md px-2 py-1 shadow-[1.5px_1.5px_0_#1C1613]">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[#6E3B1E] flex items-center gap-1">
+                    <GameIcon icon="boots" size={13} />
+                    <span>Rychlost</span>
+                  </div>
+                  <div className="text-sm font-black text-[#2B5B84] tabular-nums">
+                    {activePortrait.speed}
+                  </div>
+                </div>
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md px-2 py-1 shadow-[1.5px_1.5px_0_#1C1613]">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[#6E3B1E] flex items-center gap-1">
+                    <GameIcon icon="horseshoe" size={13} />
+                    <span>Dosah sběru</span>
+                  </div>
+                  <div className="text-sm font-black text-[#4D784E] tabular-nums">
+                    {activePortrait.pickupRadius} px
+                  </div>
+                </div>
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md px-2 py-1 shadow-[1.5px_1.5px_0_#1C1613]">
+                  <div className="text-[10px] font-black uppercase tracking-wide text-[#6E3B1E] flex items-center gap-1">
+                    <GameIcon icon="clover" size={13} />
+                    <span>Štěstí</span>
+                  </div>
+                  <div className="text-sm font-black text-[#9A5B13] tabular-nums">
+                    {activePortrait.luck}
                   </div>
                 </div>
               </div>
 
-              <div className="lada-vessel-row">
-                <div className="lada-ceramic-vessel" aria-hidden="true">
-                  <svg viewBox="0 0 44 44" className="w-10 h-10 overflow-visible">
-                    <path
-                      d="M 14 10 L 30 10 L 33 38 L 11 38 Z"
-                      fill="#2B5B84"
-                      stroke="#1C1613"
-                      strokeWidth="2.8"
-                      strokeLinejoin="round"
-                    />
-                    <ellipse
-                      cx="22"
-                      cy="10"
-                      rx="9"
-                      ry="3"
-                      fill="#F6EBD8"
-                      stroke="#1C1613"
-                      strokeWidth="2.4"
-                    />
-                    <circle cx="22" cy="25" r="4.2" fill="#F6EBD8" stroke="#1C1613" strokeWidth="1.6" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="lada-gauge-label-row">
-                    <span>✦ Čáry a fortel</span>
-                    <span className="tabular-nums">
-                      {activePortrait.magic} / {activePortrait.maxMagic}
+              {/* Starting Weapon + Passive Ability in a clean 2-column or stacked layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md p-2 shadow-[2px_2px_0_#1C1613]">
+                  <div className="flex items-center justify-between gap-1 flex-wrap mb-1">
+                    <div className="text-[11px] font-black uppercase tracking-wide text-[#6E3B1E] flex items-center gap-1">
+                      <GameIcon icon={activePortrait.weaponIcon} size={16} />
+                      <span>Výchozí zbraň: {activePortrait.weaponName}</span>
+                    </div>
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#F2E5C6] border border-[#1C1613] text-[#221B17] tabular-nums">
+                      Útok {activePortrait.weaponBaseDmg} · {activePortrait.weaponBaseCd} s
                     </span>
                   </div>
-                  <div className="lada-gouache-gauge-track">
-                    <div
-                      className="lada-gouache-gauge-fill fill-cobalt"
-                      style={{ width: `${magicPct}%` }}
-                    />
-                  </div>
+                  <p className="text-[11.5px] font-bold text-[#221B17] leading-snug m-0">
+                    {activePortrait.weaponDesc}
+                  </p>
                 </div>
+
+                <div className="bg-[#FFFDF7] border-2 border-[#1C1613] rounded-md p-2 shadow-[2px_2px_0_#1C1613]">
+                  <div className="text-[11px] font-black uppercase tracking-wide text-[#4D784E] flex items-center gap-1 mb-1">
+                    <GameIcon icon="clover" size={15} />
+                    <span>Pasivní schopnost lovce</span>
+                  </div>
+                  <p className="text-[11.5px] font-bold text-[#221B17] leading-snug m-0">
+                    {activePortrait.passiveSummary}
+                  </p>
+                </div>
+              </div>
+
+              {/* Active Ability [Mezerník] — Full Detailed Breakdown */}
+              <div className="bg-[#FEF3C7] border-2 border-[#1C1613] rounded-md p-2.5 shadow-[2px_2px_0_#1C1613]">
+                <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                  <div className="text-xs font-black uppercase tracking-wide text-[#9A3412] flex items-center gap-1.5">
+                    <GameIcon icon="lightning" size={16} />
+                    <span>Zvláštní schopnost [Mezerník]: {activePortrait.abilityName}</span>
+                  </div>
+                  <span className="text-[10.5px] font-black px-2 py-0.5 rounded bg-[#FFFDF7] border border-[#1C1613] text-[#1C1613] tabular-nums">
+                    ⏱ Nabíjení: {activePortrait.cooldownSeconds} s
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#221B17] leading-relaxed m-0">
+                  {activePortrait.abilityDetail}
+                </p>
               </div>
             </div>
 
@@ -2592,7 +2061,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
             {/* 3. ACTIVE QUEST / STORY PASSAGE (Cíl výpravy) */}
             <div className="lada-story-passage">
               <div className="lada-story-header">
-                <span>📜 Cíl výpravy</span>
+                <span>📜 Cíl výpravy ({currentLevel.badge})</span>
                 <span className="lada-story-stage-tag">{currentLevel.shortTitle}</span>
               </div>
 
@@ -2600,9 +2069,9 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                 <LadaDropCap letter={storyFirstLetter} variant="poppy" />
                 {storyRestText}{' '}
                 <span className="lada-story-stage-note">
-                  {currentLevel.isNightLevel ? 'Dnes v noci čeká kraj' : 'Dnes za bílého dne čeká kraj'}{' '}
-                  <strong>„{currentLevel.name}“</strong>, kde řádí{' '}
-                  <em>{currentLevel.finalBoss.name}</em>.
+                  Postupně čelíte třem postrachům kraje: <strong>{currentLevel.miniBoss.name}</strong> (1:25),{' '}
+                  <strong>{currentLevel.midBoss.name}</strong> (3:05) a na závěr{' '}
+                  <em>{currentLevel.finalBoss.name}</em> (5:00).
                 </span>
               </p>
 
@@ -2622,7 +2091,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   <span className="flex-1 text-left">
                     <strong>„Vyrazit do kraje: {currentLevel.name}“</strong>
                     <small className="block opacity-80">
-                      Výběr lovce a odchod na výpravu
+                      Výběr lovce a odchod na 6minutovou výpravu
                     </small>
                   </span>
                 </button>
@@ -2647,10 +2116,12 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   </span>
                   <span className="flex-1 text-left">
                     <strong>
-                      „Hned vyslat na stráž: {activePortrait.czechTitle}“
+                      „Hned vyslat na výpravu: {activePortrait.czechTitle}“
                     </strong>
                     <small className="block opacity-80">
-                      Rychlý odchod do noci
+                      {activeHunterProg?.isUnlocked
+                        ? `Výchozí zbraň: ${activePortrait.weaponName} · Schopnost: ${activePortrait.abilityName}`
+                        : `Lovec je zatím uzamčen (${activeHunterProg?.percent ?? 0} %) — otevře výběr lovců`}
                     </small>
                   </span>
                 </button>
@@ -2670,7 +2141,7 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
                   <span className="flex-1 text-left">
                     <strong>„Rady starého hospodáře“</strong>
                     <small className="block opacity-80">
-                      Ovládání, pamětihodnosti a směna perníčků
+                      Ovládání, pamětihodnosti [E], Dědečkova nůše a Hospoda
                     </small>
                   </span>
                 </button>

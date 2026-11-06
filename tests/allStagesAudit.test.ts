@@ -262,4 +262,42 @@ describe('Comprehensive 16-Stage Audit (Levels 0 through 15)', () => {
     }
     expect(Array.from(new Set(missingPoints))).toEqual([]);
   });
+
+  it('enforces campaign-wide 7 / 2 / 1 enemy and boss repetition caps across all stages', () => {
+    const regularStageCounts = new Map<string, number>();
+    const miniMidStageCounts = new Map<string, number>();
+    const finalBossStageCounts = new Map<string, number>();
+
+    for (let id = 0; id <= 15; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      const uniqueRegularInStage = new Set<string>();
+      for (const pool of Object.values(level.spawnPools || {})) {
+        for (const enemyId of pool) {
+          uniqueRegularInStage.add(enemyId);
+        }
+      }
+      for (const enemyId of uniqueRegularInStage) {
+        regularStageCounts.set(enemyId, (regularStageCounts.get(enemyId) || 0) + 1);
+      }
+
+      miniMidStageCounts.set(level.miniBoss.id, (miniMidStageCounts.get(level.miniBoss.id) || 0) + 1);
+      miniMidStageCounts.set(level.midBoss.id, (miniMidStageCounts.get(level.midBoss.id) || 0) + 1);
+      finalBossStageCounts.set(level.finalBoss.id, (finalBossStageCounts.get(level.finalBoss.id) || 0) + 1);
+    }
+
+    for (const [enemyId, count] of regularStageCounts.entries()) {
+      expect(count, `Regular enemy '${enemyId}' appears in ${count} stages (max allowed is 7)`).toBeLessThanOrEqual(7);
+    }
+    for (const [bossId, count] of miniMidStageCounts.entries()) {
+      expect(count, `Mini/Mid-boss '${bossId}' appears in ${count} stages (max allowed is 2)`).toBeLessThanOrEqual(2);
+    }
+    for (const [finalBossId, count] of finalBossStageCounts.entries()) {
+      if (finalBossId === 'vrchni_carodejnice') {
+        expect(count).toBeLessThanOrEqual(2);
+      } else {
+        expect(count, `Final boss '${finalBossId}' must be unique to 1 single stage`).toBe(1);
+      }
+    }
+  });
 });
+

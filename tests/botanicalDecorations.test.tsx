@@ -449,6 +449,18 @@ describe('Ladovské botanické dekorace a animované květy v menu a HUDu', () =
     expect(bookMarkup).toContain('lada-dog-ear-prev');
     expect(bookMarkup).toContain('Plynulý list (Loutkový krok)');
     expect(bookMarkup).toContain('Šelest stránek');
+    expect(bookMarkup).toContain('Venkovská zbrojnice');
+    expect(bookMarkup).toContain('Základní Kuráž');
+    expect(bookMarkup).toContain('Dosah sběru');
+    expect(bookMarkup).toContain('Výchozí zbraň: Osikový prut');
+    expect(bookMarkup).toContain('Pasivní schopnost lovce');
+    expect(bookMarkup).toContain('Zvláštní schopnost [Mezerník]: Jízda na žernovu');
+    expect(bookMarkup).toContain('po dobu 14 s je Krajánek nezranitelný');
+    expect(bookMarkup).toContain('Hejno mrazivých vran');
+    expect(bookMarkup).not.toContain('Mošna a poklady');
+    expect(bookMarkup).not.toContain('Sběratelské album');
+    expect(bookMarkup).not.toContain('Čáry a fortel');
+    expect(bookMarkup).not.toContain('Čertův roh');
     expect(bookMarkup).not.toContain('Selected Signpost');
     expect(bookMarkup).not.toContain('Wayfarer');
 

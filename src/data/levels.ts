@@ -2042,8 +2042,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polni_mysice",
 				"podzimni_strasak",
 				"svestkovy_srsen",
-				"mysak",
-				"cert_sekac"
+				"skodnik",
+				"boruvkovy_diblik"
 			],
 			afternoon: [
 				"bramborova_mandelinka",
@@ -2051,7 +2051,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polni_krecek",
 				"svestkovy_srsen",
 				"srpnove_cmelak",
-				"cert_sekac"
+				"boruvkovy_diblik"
 			],
 			dusk: [
 				"bramborova_mandelinka",
@@ -2059,29 +2059,29 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"polni_mysice",
 				"svestkovy_srsen",
 				"drab",
-				"cert_sekac"
+				"boruvkovy_diblik"
 			],
 			night: [
 				"bramborova_mandelinka",
 				"podzimni_strasak",
 				"polni_krecek",
 				"svestkovy_srsen",
-				"cert_sekac"
+				"boruvkovy_diblik"
 			],
 			midnight: [
 				"bramborova_mandelinka",
 				"podzimni_strasak",
 				"polni_mysice",
 				"svestkovy_srsen",
-				"cert_sekac"
+				"boruvkovy_diblik"
 			],
 			dawn: [
 				"bramborova_mandelinka",
 				"podzimni_strasak",
 				"polni_mysice",
-				"mysak",
+				"skodnik",
 				"svestkovy_srsen",
-				"cert_sekac"
+				"boruvkovy_diblik"
 			]
 		},
 		keyEnemies: [
@@ -2179,21 +2179,21 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		spawnPools: {
 			noon: [
-				"bludicka",
+				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
 				"bubak"
 			],
 			afternoon: [
-				"bludicka",
+				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_pes"
 			],
 			dusk: [
-				"bludicka",
+				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"zbrojnos",
@@ -2202,7 +2202,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			],
 			night: [
 				"topivec",
-				"bludicka",
+				"kalny_hastrman",
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_vlkodlak",
@@ -2211,16 +2211,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			],
 			midnight: [
 				"topivec",
-				"bludicka",
+				"kalny_hastrman",
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_vlkodlak",
 				"krvavy_kostlivec",
-				"ohniva_kobyla",
+				"hrobnik",
 				"hejkal"
 			],
 			dawn: [
-				"bludicka",
+				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
@@ -2235,10 +2235,10 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				role: "Vodní běs číhající v bahně u vypuštěného rybníka"
 			},
 			{
-				id: "bludicka",
-				name: "Mlžná bludička",
-				icon: "✨",
-				role: "Záhrobní světýlko lákající do bažin"
+				id: "kalny_hastrman",
+				name: "Kalný hastrman z výlovu",
+				icon: "💧",
+				role: "Záludný vodník v bahně vypuštěného rybníka Brčálníku"
 			},
 			{
 				id: "dusickova_bludicka",

@@ -1706,11 +1706,11 @@ export default function App() {
   const [menuViewMode, setMenuViewMode] = useState<'grid' | 'book'>(() => {
     try {
       if (typeof window !== 'undefined') {
-        const saved = window.localStorage.getItem('bubakov_menu_view_mode');
+        const saved = window.localStorage.getItem('bubakov_menu_view_mode_v2');
         if (saved === 'grid' || saved === 'book') return saved;
       }
     } catch {}
-    return 'book';
+    return 'grid';
   });
   // The Canvas loop is intentionally mounted only once. Keep React UI state
   // in refs so the long-lived RAF callback never reads stale render values.
@@ -16851,6 +16851,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setMenuViewMode('grid');
                   try {
                     window.localStorage.setItem('bubakov_menu_view_mode', 'grid');
+                    window.localStorage.setItem('bubakov_menu_view_mode_v2', 'grid');
                   } catch {}
                 }}
                 style={{
@@ -16878,6 +16879,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   setMenuViewMode('book');
                   try {
                     window.localStorage.setItem('bubakov_menu_view_mode', 'book');
+                    window.localStorage.setItem('bubakov_menu_view_mode_v2', 'book');
                   } catch {}
                 }}
                 style={{
