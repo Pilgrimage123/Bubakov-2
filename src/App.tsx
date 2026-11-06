@@ -6399,6 +6399,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 engine.grandfather.y += engine.grandfather.vy * dt;
                 if (engine.activeLevelId === 0 || engine.activeLevelId === 1) {
                   resolveMarchThawObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
                   resolveDubenObstacles(engine.grandfather, false);
                   clampToDubenArenaBounds(engine.grandfather, 28);
@@ -6407,8 +6408,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 6 || engine.activeLevelId === 7) {
                   resolveCervenObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
                   resolveCervenecObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 10 || engine.activeLevelId === 11) {
                   resolveSrpenObstacles(engine.grandfather, false);
                   clampToMarchArenaBounds(engine.grandfather, 28);

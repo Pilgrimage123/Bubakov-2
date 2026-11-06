@@ -5547,6 +5547,27 @@ export class GameEngine {
               } else if (this.id === 'vele_stika') {
                 self.spawnDrop('chest', this.x, this.y, { text: '🐟 POKLAD HRUSICKÉ VELEŠTIKY!' });
                 self.emitDamageText(this.x, this.y - 50, 'HRUSICKÁ VELEŠTIKA VYLOVENA! VÝLOV DOKONČEN! 🐟💧', '#0EA5E9', true);
+              } else if (this.id === 'listopadovy_mrazivec') {
+                self.spawnDrop('chest', this.x, this.y, { text: '❄️ POKLAD LISTOPADOVÉHO MRAZIVCE!' });
+                self.emitDamageText(this.x, this.y - 50, 'LISTOPADOVÝ MRAZIVEC ZAŽENÁN! ❄️🍂', '#38BDF8', true);
+              } else if (this.id === 'jezdec_meluziny') {
+                self.spawnDrop('chest', this.x, this.y, { text: '🌪️ POKLAD JEZDCE MELUZÍNY!' });
+                self.emitDamageText(this.x, this.y - 50, 'JEZDEC MELUZÍNY ROZPRÁŠEN! 🌪️🌲', '#94A3B8', true);
+              } else if (this.id === 'kral_mrazik') {
+                self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD KRÁLE MRÁZÍKA!' });
+                self.emitDamageText(this.x, this.y - 50, 'KRÁL MRÁZÍK PŘEMOŽEN! ADVENT VRCHOLÍ! 👑❄️', '#38BDF8', true);
+              } else if (this.id === 'vladce_chumelenice') {
+                self.spawnDrop('chest', this.x, this.y, { text: '⛄ POKLAD VLÁDCE CHUMELENICE!' });
+                self.emitDamageText(this.x, this.y - 50, 'VLÁDCE CHUMELENICE ZDOLÁN! ❄️⛄', '#E2E8F0', true);
+              } else if (this.id === 'perchta_s_nozem') {
+                self.spawnDrop('chest', this.x, this.y, { text: '🗡️ POKLAD ŠEREDNÉ PERCHTY!' });
+                self.emitDamageText(this.x, this.y - 50, 'ŠEREDNÁ PERCHTA ZAŽENÁNA! PŮST DODRŽEN! 🗡️❄️', '#EF4444', true);
+              } else if (this.id === 'rychtar_masek') {
+                self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD RYCHTÁŘE MAŠKAR!' });
+                self.emitDamageText(this.x, this.y - 50, 'RYCHTÁŘ MAŠKAR UCTĚN! MASOPUST VRCHOLÍ! 👑🎭', '#F59E0B', true);
+              } else if (this.id === 'bakchus_s_pivnim_soudkem') {
+                self.spawnDrop('chest', this.x, this.y, { text: '🍺 POKLAD BAKCHA S PIVNÍM SOUDKEM!' });
+                self.emitDamageText(this.x, this.y - 50, 'BAKCHUS PŘEMOŽEN! CELOROČNÍ CYKLUS DOKONČEN! 🍺👑🎉', '#EAB308', true);
               } else {
                 self.spawnDrop('chest', this.x, this.y, { text: '👑 POKLAD VLÁDCE OBLASTI!' });
                 self.emitDamageText(this.x, this.y - 50, 'VLÁDCE PŘEMOŽEN! 👑', '#F59E0B', true);
@@ -5554,7 +5575,7 @@ export class GameEngine {
 
               if (self.state.meta) {
                 const nextLvlId = (curLvlId + 1) as GameLevelId;
-                const canUnlockNext = nextLvlId <= 15;
+                const canUnlockNext = nextLvlId <= 23;
                 const nextHighest = canUnlockNext
                   ? Math.max(self.state.meta.highestLevelUnlocked || 1, nextLvlId)
                   : (self.state.meta.highestLevelUnlocked || 1);

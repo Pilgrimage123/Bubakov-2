@@ -23,6 +23,12 @@ describe('Comprehensive 24-Stage Audit (Levels 0 through 23)', () => {
       expect(level.finalBoss?.id).toBeTruthy();
       expect(level.midBoss?.id).toBeTruthy();
       expect(level.miniBoss?.id).toBeTruthy();
+      expect(level.miniBoss?.time, `Level ${id} miniBoss.time`).toBe(85);
+      expect(level.midBoss?.time, `Level ${id} midBoss.time`).toBe(185);
+      expect(level.finalBoss?.time, `Level ${id} finalBoss.time`).toBe(300);
+      expect(level.miniBoss?.warning, `Level ${id} miniBoss.warning`).toBeTruthy();
+      expect(level.midBoss?.warning, `Level ${id} midBoss.warning`).toBeTruthy();
+      expect(level.finalBoss?.warning, `Level ${id} finalBoss.warning`).toBeTruthy();
     }
   });
 
@@ -104,6 +110,7 @@ describe('Comprehensive 24-Stage Audit (Levels 0 through 23)', () => {
     expect(engine.listopad).toBe(engine.state.listopad);
     expect(engine.prosinec).toBe(engine.state.prosinec);
     expect(engine.leden).toBe(engine.state.leden);
+    expect(engine.unor).toBe(engine.state.unor);
 
     // Verify setting through accessors modifies state directly
     engine.cerven = {
@@ -154,6 +161,8 @@ describe('Comprehensive 24-Stage Audit (Levels 0 through 23)', () => {
       expect(en[`level.${id}.name`], `en level.${id}.name`).toBeTruthy();
       expect(cs[`level.${id}.subtitle`], `cs level.${id}.subtitle`).toBeTruthy();
       expect(en[`level.${id}.subtitle`], `en level.${id}.subtitle`).toBeTruthy();
+      expect(cs[`level.${id}.description`], `cs level.${id}.description`).toBeTruthy();
+      expect(en[`level.${id}.description`], `en level.${id}.description`).toBeTruthy();
 
       // Boss translations
       const bosses = [level.miniBoss.id, level.midBoss.id, level.finalBoss.id];

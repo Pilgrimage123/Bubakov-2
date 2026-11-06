@@ -1,8 +1,8 @@
 # Bubákov: Velký průvodce tvorbou výprav a malováním kraje
 > **Dokument**: `docs/STAGE_CREATION_GUIDE.md`  
-> **Verze**: 2.3 (Prosinec 2026 – Aktualizováno pro 20 výprav a kompletní 12měsíční kalendářní cyklus)  
+> **Verze**: 2.4 (Únor 2026 – Aktualizováno pro 24 výprav a kompletní 12měsíční kalendářní cyklus)  
 > **Autoři**: Hrusický ponocný, rada starších a architekti Bubákova  
-> **Kánon**: `GLOSSARY.md`, ADRs `0001`–`0042`, Stages 1–20 (Březen až Prosinec)
+> **Kánon**: `GLOSSARY.md`, ADRs `0001`–`0044`, Stages 1–24 (Březen až Únor)
 
 ---
 
@@ -20,7 +20,7 @@
          |_|____|_|
 ```
 
-Tento dokument představuje **vyčerpávající technickou a folklórní bibli** pro tvorbu nových hratelných výprav (**Výpravy**), sezónních krajů (**Kraje**) a bitevních polí (**Arény**) v **Bubákově**. Shrnuje zkušenosti nabyté při stavbě všech 20 úrovní (od březnového tání přes posvícení až po štědrovečerní prosincový sníh) a slouží jako neprůstřelný návod pro správu, rozšiřování a zachování celého 12měsíčního kalendářního cyklu Hrusic.
+Tento dokument představuje **vyčerpávající technickou a folklórní bibli** pro tvorbu nových hratelných výprav (**Výpravy**), sezónních krajů (**Kraje**) a bitevních polí (**Arény**) v **Bubákově**. Shrnuje zkušenosti nabyté při stavbě všech 24 úrovní (od březnového tání přes posvícení až po masopustní rej a pochovávání basy) a slouží jako neprůstřelný návod pro správu, rozšiřování a zachování celého 12měsíčního kalendářního cyklu Hrusic.
 
 ---
 
@@ -87,7 +87,7 @@ Dříve než sáhneš do kódu, vryj si do paměti pět pilířů hrusického vk
 
 ---
 
-## 2. Doménový model a přehled kampaně (Stavy 1–14)
+## 2. Doménový model a přehled kampaně (Výpravy 1–24)
 
 Kampaň Bubákova se řídí přísným třístupňovým modelem (**ADR 0036** a **ADR 0037**):
 
@@ -474,11 +474,17 @@ vznikají dva zcela odlišné souřadnicové prostory:
 │ 15–16: Říjen  │ Spadané listí, dým   │ Ohníčky z bramborové natě, draci     │
 │               │ a sychravý vítr      │ na nebi, výlov rybníka a kádě s kapry│
 ├───────────────┼──────────────────────┼──────────────────────────────────────┤
-│ 17–18: Listop.│ Holé stromy, ranní   │ Svatomartinská husa v pekáči, hřbitov│
-│ (Plánováno)   │ mrazíky a mlhy       │ se svíčkami na Dušičky, první vločky │
+│ 17–18: Listop.│ Holé stromy, ranní   │ Svatomartinská husa v pekáči, uhlíř- │
+│               │ mrazíky a mlhy       │ ský milíř v hvozdu, první vločky     │
 ├───────────────┼──────────────────────┼──────────────────────────────────────┤
 │ 19–20: Prosin.│ Hluboký ladovský     │ Zasněžená náves, kluci na sáňkách,   │
-│ (Plánováno)   │ sníh, tiché Vánoce   │ Mikuláš s čertem a andělem, Betlém   │
+│               │ sníh, tiché Vánoce   │ Mikuláš s čertem a andělem, Betlém   │
+├───────────────┼──────────────────────┼──────────────────────────────────────┤
+│ 21–22: Leden  │ Třeskuté mrazy, hlu- │ Stavění sněhuláka na návsi, tříkrá-  │
+│               │ boké sněhové závěje  │ lová koleda s kometou, křída K+M+B   │
+├───────────────┼──────────────────────┼──────────────────────────────────────┤
+│ 23–24: Únor   │ Masopustní veselí,   │ Smažení masopustních koblih, tanec   │
+│               │ rej pestrých maškar  │ laufra s bábou, pochovávání basy     │
 └───────────────┴──────────────────────┴──────────────────────────────────────┘
 ```
 

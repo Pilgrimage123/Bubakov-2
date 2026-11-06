@@ -3178,21 +3178,27 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		miniBoss: {
 			id: "masopustni_medved",
-			name: "Masopustní medvěd",
-			spawnTime: 85,
-			description: "Huňatý medvěd vedený medvědářem s velkým zvoncem"
+			name: "🐻 Masopustní medvěd",
+			warning: "🐻 POZOR: Z HOSPODY VYBÍHÁ HUŇATÝ MASOPUSTNÍ MEDVĚD!",
+			time: 85,
+			kills: 150,
+			multiplier: 1.0
 		},
 		midBoss: {
 			id: "slamennik_obr",
-			name: "Obří slaměník",
-			spawnTime: 185,
-			description: "Vysoký oživlý panák z pšeničné slámy s cepem"
+			name: "🌾 Obří slaměník",
+			warning: "🌾 POZOR: ZE STODOLY SE ŘÍTÍ OBŘÍ SLAMĚNÍK S CEPEM!",
+			time: 185,
+			kills: 340,
+			multiplier: 1.0
 		},
 		finalBoss: {
 			id: "rychtar_masek",
-			name: "Rychtář maškar",
-			spawnTime: 300,
-			description: "Hrdý vůdce masopustu s právem a glejtem"
+			name: "👑 Rychtář maškar",
+			warning: "👑 MASOPUST VRCHOLÍ! NA NÁVES VSTOUPIL RYCHTÁŘ MAŠKAR S FERULÍ A PRÁVEM! 👑",
+			time: 300,
+			kills: 520,
+			multiplier: 1.0
 		},
 		spawnPools: {
 			noon: [
@@ -3309,21 +3315,27 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		miniBoss: {
 			id: "nocni_kobold",
-			name: "Noční kobold",
-			spawnTime: 85,
-			description: "Skřet vylézající z pivovarských sklepů"
+			name: "👺 Noční kobold",
+			warning: "👺 POZOR: ZE SKLEPA VYRÁŽÍ NOČNÍ KOBOLD A KRADE VÝSLUŽKU!",
+			time: 85,
+			kills: 160,
+			multiplier: 1.0
 		},
 		midBoss: {
 			id: "umrlec_basista",
-			name: "Umrlec basista",
-			spawnTime: 185,
-			description: "Kostlivec se smyčcem a kornoutem ze staré márnice"
+			name: "☠️ Umrlec basista",
+			warning: "☠️ POZOR: ZE STARÉ MÁRNICE VYCHÁZÍ UMRLEC BASISTA S ROZVRZANOU BASOU!",
+			time: 185,
+			kills: 360,
+			multiplier: 1.0
 		},
 		finalBoss: {
 			id: "bakchus_s_pivnim_soudkem",
-			name: "Bakchus s pivním soudkem",
-			spawnTime: 300,
-			description: "Nespoutaný bůh masopustního veselí a piva na sudu"
+			name: "🍺 Bakchus s pivním soudkem",
+			warning: "🍺 PŮLNOC ODBILA! NA PIVNÍM SUDU PŘIJÍŽDÍ ROZPUSTILÝ I DĚSIVÝ BAKCHUS! 🍺",
+			time: 300,
+			kills: 550,
+			multiplier: 1.0
 		},
 		spawnPools: {
 			noon: [
