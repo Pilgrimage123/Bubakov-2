@@ -8665,6 +8665,14 @@ export class GameEngine {
       if (zr9.kotel.stirActiveTimer > 0) {
         zr9.kotel.stirActiveTimer = Math.max(0, zr9.kotel.stirActiveTimer - dt);
         if (player) {
+          if (player.weapons) {
+            for (let wIdx = 0; wIdx < player.weapons.length; wIdx++) {
+              const w: any = player.weapons[wIdx];
+              if (w && w.cd > 0) {
+                w.cd = Math.max(0, w.cd - dt * 0.20);
+              }
+            }
+          }
           player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
           player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.20);
           player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
@@ -8676,10 +8684,19 @@ export class GameEngine {
       if (zr9.ohen.blessingActiveTimer > 0) {
         zr9.ohen.blessingActiveTimer = Math.max(0, zr9.ohen.blessingActiveTimer - dt);
         if (player) {
+          player.arenaArmorBonus = Math.max(player.arenaArmorBonus || 0, 0.25);
           player.damageReduction = Math.max(player.damageReduction || 0, 0.25);
           player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.35);
+          if (player.ultCd > 0) {
+            player.ultCd = Math.max(0, player.ultCd - dt * 0.5);
+          }
         }
       }
+
+      if (zr9.shrineCooldown > 0) zr9.shrineCooldown = Math.max(0, zr9.shrineCooldown - dt);
+      if (zr9.bellCooldown > 0) zr9.bellCooldown = Math.max(0, zr9.bellCooldown - dt);
+      if (zr9.tavernCooldown > 0) zr9.tavernCooldown = Math.max(0, zr9.tavernCooldown - dt);
+      if (zr9.forestCooldown > 0) zr9.forestCooldown = Math.max(0, zr9.forestCooldown - dt);
 
       if (player && player.hp > 0) {
         const waterEffect = getZariWaterEffect(player.x, player.y, this.state.gameTime || 0, isZariNight);
@@ -8699,17 +8716,24 @@ export class GameEngine {
         const inSchool = isInsideZariPoi(player.x, player.y, zariPois.school);
 
         if (inFields) {
-          player.damageReduction = Math.max(player.damageReduction || 0, 0.15);
+          player.arenaArmorBonus = Math.max(player.arenaArmorBonus || 0, 0.18);
+          player.damageReduction = Math.max(player.damageReduction || 0, 0.18);
         }
         if (inSchool) {
-          player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.18);
+          if (isZariNight) {
+            player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.20);
+          } else {
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.18);
+          }
         }
 
         const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
 
         // Stage 13 Daytime Mechanic: [E] Kotel na povidla na návsi
         if (!isZariNight && inVillage) {
-          this.state.zariActivePoiPrompt = zariPois.village.hint || null;
+          this.state.zariActivePoiPrompt = zr9.kotel.cooldown <= 0
+            ? '[E] Zamíchat povidla (Kotel)'
+            : `Povidla v kotli probublávají (${Math.ceil(zr9.kotel.cooldown)}s)`;
           if (eKeyPressed && zr9.kotel.cooldown <= 0) {
             zr9.kotel.cooldown = 20.0;
             zr9.kotel.stirActiveTimer = 18.0;
@@ -8739,7 +8763,9 @@ export class GameEngine {
           }
         } else if (isZariNight && (inChurch || Math.hypot(player.x - zr9.ohen.x, player.y - zr9.ohen.y) <= zr9.ohen.radius)) {
           // Stage 14 Nighttime Mechanic: [E] Svatováclavský svatý oheň u kostela
-          this.state.zariActivePoiPrompt = zariPois.church.hint || null;
+          this.state.zariActivePoiPrompt = zr9.ohen.cooldown <= 0
+            ? '[E] Zažehnout svatý oheň (Kostel)'
+            : `Svatováclavský oheň plápolá (${Math.ceil(zr9.ohen.cooldown)}s)`;
           if (eKeyPressed && zr9.ohen.cooldown <= 0) {
             zr9.ohen.cooldown = 20.0;
             zr9.ohen.blessingActiveTimer = 18.0;
@@ -8768,9 +8794,12 @@ export class GameEngine {
             }
           }
         } else if (inShrine) {
-          this.state.zariActivePoiPrompt = zariPois.shrine.hint || null;
-          if (eKeyPressed && (!player._zariShrineCooldown || player._zariShrineCooldown <= 0)) {
-            player._zariShrineCooldown = 15.0;
+          this.state.zariActivePoiPrompt = (zr9.shrineCooldown || 0) <= 0
+            ? (isZariNight ? '[E] Přijmout svatováclavské požehnání (Boží muka)' : '[E] Přijmout posvícenské požehnání (Boží muka)')
+            : `Boží muka odpočívá (${Math.ceil(zr9.shrineCooldown || 0)}s)`;
+          if (eKeyPressed && (!zr9.shrineCooldown || zr9.shrineCooldown <= 0)) {
+            zr9.shrineCooldown = 30.0;
+            player._zariShrineCooldown = 30.0;
             this.callbacks?.onSound?.('bell');
             this.emitDamageText(player.x, player.y - 45, isZariNight ? 'SVATOVÁCLAVSKÉ POŽEHNÁNÍ! 🕯️✨' : 'POSVÍCENSKÉ POŽEHNÁNÍ! 🍑✨', '#FEF08A', true);
             if (this.state.drops) {
@@ -8780,9 +8809,12 @@ export class GameEngine {
             player.invulnerabilityTimer = Math.max(player.invulnerabilityTimer || 0, 2.5);
           }
         } else if (inChurch && !isZariNight) {
-          this.state.zariActivePoiPrompt = zariPois.church.hint || null;
-          if (eKeyPressed && (!player._zariChurchCooldown || player._zariChurchCooldown <= 0)) {
-            player._zariChurchCooldown = 12.0;
+          this.state.zariActivePoiPrompt = (zr9.bellCooldown || 0) <= 0
+            ? '[E] Rozeznít zvon (Kostel)'
+            : `Zvon odpočívá (${Math.ceil(zr9.bellCooldown || 0)}s)`;
+          if (eKeyPressed && (!zr9.bellCooldown || zr9.bellCooldown <= 0)) {
+            zr9.bellCooldown = 35.0;
+            player._zariChurchCooldown = 35.0;
             this.callbacks?.onSound?.('bell');
             this.emitDamageText(player.x, player.y - 45, 'POSVÍCENSKÝ ZVON SV. BARTOLOMĚJE! 🔔🍑', '#38BDF8', true);
             player.tempShield = Math.max(player.tempShield || 0, 65);
@@ -8796,31 +8828,28 @@ export class GameEngine {
             }
           }
         } else if (inTavern) {
-          this.state.zariActivePoiPrompt = zariPois.tavern.hint || null;
-          if (eKeyPressed && (!player._zariTavernCooldown || player._zariTavernCooldown <= 0)) {
-            player._zariTavernCooldown = 10.0;
+          this.state.zariActivePoiPrompt = (zr9.tavernCooldown || 0) <= 0
+            ? '[E] Ochutnat posvícenské koláče (Hospoda)'
+            : `Šenkýř chystá koláče (${Math.ceil(zr9.tavernCooldown || 0)}s)`;
+          if (eKeyPressed && (!zr9.tavernCooldown || zr9.tavernCooldown <= 0)) {
+            zr9.tavernCooldown = 35.0;
+            player._zariTavernCooldown = 35.0;
             this.callbacks?.onSound?.('heal');
             this.emitDamageText(player.x, player.y - 45, 'POSVÍCENSKÉ KOLÁČE A DŽBÁNEK! 🥧🍺', '#F59E0B', true);
             player.hp = Math.min(player.maxHp, player.hp + 45);
             player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
           }
         } else if (inForest) {
-          this.state.zariActivePoiPrompt = zariPois.forest.hint || null;
-          if (eKeyPressed && (!player._zariForestCooldown || player._zariForestCooldown <= 0)) {
-            player._zariForestCooldown = 8.0;
+          this.state.zariActivePoiPrompt = (zr9.forestCooldown || 0) <= 0
+            ? '[E] Napít se z pramene (Hvozd)'
+            : `Pramen doplňuje vodu (${Math.ceil(zr9.forestCooldown || 0)}s)`;
+          if (eKeyPressed && (!zr9.forestCooldown || zr9.forestCooldown <= 0)) {
+            zr9.forestCooldown = 30.0;
+            player._zariForestCooldown = 30.0;
             this.callbacks?.onSound?.('heal');
             this.emitDamageText(player.x, player.y - 45, 'PRAMEN POD BUKOVÝM LESEM! 💧🍂', '#10B981', true);
             player.hp = Math.min(player.maxHp, player.hp + 28);
             player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.22);
-          }
-        } else if (inSchool && !isZariNight) {
-          this.state.zariActivePoiPrompt = zariPois.school.hint || null;
-          if (eKeyPressed && (!player._zariSchoolCooldown || player._zariSchoolCooldown <= 0)) {
-            player._zariSchoolCooldown = 8.0;
-            this.callbacks?.onSound?.('heal');
-            this.emitDamageText(player.x, player.y - 45, 'KOŠÍK MODRÝCH ŠVESTEK! 🍑✨', '#A855F7', true);
-            player.hp = Math.min(player.maxHp, player.hp + 30);
-            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.18);
           }
         } else {
           this.state.zariActivePoiPrompt = null;
@@ -8830,7 +8859,6 @@ export class GameEngine {
         if (player._zariChurchCooldown > 0) player._zariChurchCooldown -= dt;
         if (player._zariTavernCooldown > 0) player._zariTavernCooldown -= dt;
         if (player._zariForestCooldown > 0) player._zariForestCooldown -= dt;
-        if (player._zariSchoolCooldown > 0) player._zariSchoolCooldown -= dt;
 
         // Stage 14 Night Mechanic: Svatováclavský mlžný poryv
         if (isZariNight) {

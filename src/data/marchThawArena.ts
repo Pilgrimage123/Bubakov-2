@@ -25,7 +25,7 @@ const SRPEN_EXTRA_OBSTACLES: MarchObstacle[] = [
 ];
 
 const ZARI_EXTRA_OBSTACLES: MarchObstacle[] = [
-  { id: 'kotel_na_povidla_naves', x: 45, y: -95, shape: 'circle', radius: 46, blocksSight: false },
+  { id: 'kotel_na_povidla', x: 45, y: -95, shape: 'circle', radius: 46, blocksSight: false },
   { id: 'sudy_se_svestkami_sad', x: -100, y: 680, shape: 'circle', radius: 44, blocksSight: true },
   { id: 'svatovaclavsky_ohen_podstavec', x: -800, y: -650, shape: 'circle', radius: 36, blocksSight: false },
   { id: 'lesni_skalka_zari', x: 730, y: -570, shape: 'circle', radius: 42, blocksSight: true },

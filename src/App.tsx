@@ -9319,10 +9319,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               }
               engine.zariActivePoiPrompt = promptText;
 
-              // 2. Zorané strniště a švestkový sad (fields) cover bonus
+              // 2. Zorané strniště a švestkový sad (fields) cover bonus & školní zahrada (school)
               const inOrchardField = isInsideZariPoi(player.x, player.y, pois.fields);
               if (inOrchardField) {
                 player.arenaArmorBonus = Math.max(player.arenaArmorBonus || 0, 0.18);
+              }
+              const inSchool = isInsideZariPoi(player.x, player.y, pois.school);
+              if (inSchool) {
+                if (isNight) {
+                  player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.20);
+                } else {
+                  player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.18);
+                }
               }
 
               // 3. Water / brook effect

@@ -163,7 +163,7 @@ describe('Stages 13 & 14: Září v Hrusicích (Posvícení & Svatováclavská n
     }
   });
 
-  it('calculates September water effects and obstacle collisions accurately', () => {
+  it('calculates September water effects and obstacle collisions accurately across all 4 landmarks', () => {
     // On bridge -> dry
     const onBridge = getZariWaterEffect(475, 420, 12);
     expect(onBridge.inOpenWater).toBe(false);
@@ -174,10 +174,117 @@ describe('Stages 13 & 14: Září v Hrusicích (Posvícení & Svatováclavská n
     expect(inPond.inOpenWater).toBe(true);
     expect(inPond.speedMult).toBeLessThan(1);
 
-    // Obstacle pushout around copper cauldron at (45, -95)
-    const entity = { x: 46, y: -95 };
-    const hit = resolveZariObstacles(entity, 18);
-    expect(hit).toBe(true);
+    // 1. Obstacle pushout around copper cauldron at (45, -95)
+    const entityCauldron = { x: 46, y: -95 };
+    const hitCauldron = resolveZariObstacles(entityCauldron, 18);
+    expect(hitCauldron).toBe(true);
+
+    // 2. Obstacle pushout around barrels of plums in orchard at (-100, 680)
+    const entityPlums = { x: -99, y: 681 };
+    const hitPlums = resolveZariObstacles(entityPlums, 18);
+    expect(hitPlums).toBe(true);
+
+    // 3. Obstacle pushout around St. Wenceslas fire pedestal at (-800, -650)
+    const entityFire = { x: -801, y: -649 };
+    const hitFire = resolveZariObstacles(entityFire, 18);
+    expect(hitFire).toBe(true);
+
+    // 4. Obstacle pushout around forest boulder at (730, -570)
+    const entityBoulder = { x: 731, y: -569 };
+    const hitBoulder = resolveZariObstacles(entityBoulder, 18);
+    expect(hitBoulder).toBe(true);
+  });
+
+  it('handles Stage 13 Kotel na povidla [E] interaction in GameEngine update loop with canonical prompt', () => {
+    const engine = new GameEngine();
+    engine.initRun(12, 'wanderer');
+    const player = engine.state.player!;
+
+    // Position player at village POI near cauldron
+    player.x = ZARI_POIS.village.x;
+    player.y = ZARI_POIS.village.y;
+    player.hp = 50;
+
+    // Before key press: active prompt should match canonical infinitive format
+    engine.update(0.05);
+    expect(engine.zariActivePoiPrompt).toBe('[E] Zamíchat povidla (Kotel)');
+
+    // Press [E]
+    engine.state.keys = { e: true };
+    engine.update(0.1);
+
+    expect(engine.zari.kotel.cooldown).toBeGreaterThan(15);
+    expect(engine.zari.kotel.stirActiveTimer).toBeGreaterThan(15);
+    expect(engine.zari.kotel.batchesCooked).toBe(1);
+    expect(player.hp).toBeGreaterThan(50);
+
+    // Active prompt indicates bubbling cauldron on cooldown
+    engine.state.keys = {};
+    engine.update(0.05);
+    expect(engine.zariActivePoiPrompt).toContain('Povidla v kotli probublávají');
+  });
+
+  it('handles Stage 14 Svatováclavský oheň [E] interaction, prompt and mist warning in GameEngine loop', () => {
+    const engine = new GameEngine();
+    engine.initRun(13, 'wanderer');
+    const player = engine.state.player!;
+
+    // Position player at church POI near fire
+    player.x = ZARI_NIGHT_POIS.church.x;
+    player.y = ZARI_NIGHT_POIS.church.y;
+
+    // Before key press: active prompt should match canonical format
+    engine.update(0.05);
+    expect(engine.zariActivePoiPrompt).toBe('[E] Zažehnout svatý oheň (Kostel)');
+
+    // Press [E]
+    engine.state.keys = { e: true };
+    engine.update(0.1);
+
+    expect(engine.zari.ohen.cooldown).toBeGreaterThan(15);
+    expect(engine.zari.ohen.blessingActiveTimer).toBeGreaterThan(15);
+    expect(engine.zari.ohen.firesKindled).toBe(1);
+    expect(player.tempShield).toBeGreaterThan(0);
+
+    // Prompt indicates burning sacred fire
+    engine.state.keys = {};
+    engine.update(0.05);
+    expect(engine.zariActivePoiPrompt).toContain('Svatováclavský oheň plápolá');
+
+    // Trigger mist warning by advancing mistGustTimer
+    engine.zari.ohen.mistGustTimer = 0.05;
+    engine.update(0.1);
+    expect(engine.zari.ohen.mistWarning).toBeDefined();
+    expect(engine.zari.ohen.mistWarning?.radius).toBeGreaterThan(0);
+  });
+
+  it('applies passive zone buffs for fields and school correctly in both day and night stages', () => {
+    const engineDay = new GameEngine();
+    engineDay.initRun(12, 'wanderer');
+    const playerDay = engineDay.state.player!;
+
+    // In school during day: speed bonus
+    playerDay.x = ZARI_POIS.school.x;
+    playerDay.y = ZARI_POIS.school.y;
+    engineDay.update(0.05);
+    expect(playerDay.speedMultiplier).toBeGreaterThanOrEqual(1.18);
+
+    // In fields: defense/cover bonus
+    playerDay.x = ZARI_POIS.fields.x;
+    playerDay.y = ZARI_POIS.fields.y;
+    engineDay.update(0.05);
+    expect(playerDay.damageReduction).toBeGreaterThanOrEqual(0.18);
+    expect(playerDay.arenaArmorBonus).toBeGreaterThanOrEqual(0.18);
+
+    const engineNight = new GameEngine();
+    engineNight.initRun(13, 'wanderer');
+    const playerNight = engineNight.state.player!;
+
+    // In school during night: cooldown multiplier
+    playerNight.x = ZARI_NIGHT_POIS.school.x;
+    playerNight.y = ZARI_NIGHT_POIS.school.y;
+    engineNight.update(0.05);
+    expect(playerNight.cooldownMultiplier).toBeGreaterThanOrEqual(1.20);
   });
 
   it('initializes GameEngine runs on levels 12 and 13 and supports unlocks and trophies', () => {

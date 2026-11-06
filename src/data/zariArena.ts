@@ -136,7 +136,7 @@ export const ZARI_POIS: Record<ZariPoiId, ZariPoi> = {
     x: MARCH_THAW_POIS.school.x,
     y: MARCH_THAW_POIS.school.y,
     radius: MARCH_THAW_POIS.school.radius,
-    hint: 'ŠKOLNÍ ZAHRADA [E]: Košík modrých švestek osvěží krok (+30 Kuráž a +18 % rychlost)!',
+    hint: 'ŠKOLNÍ ZAHRADA: Košík modrých švestek a spadané listí osvěží krok (+18 % rychlost)!',
   },
   pond: {
     id: 'pond',
@@ -271,17 +271,16 @@ export const ZARI_NIGHT_DECOR = ZARI_DECOR;
 
 /**
  * Tactical September obstacles:
- * - Měděný kotel na povidla na návsi
- * - Posvícenský vůz se švestkami u hospody
- * - 4 švestkové kádě a kupky bramborové natě v polích
+ * - Měděný kotel na povidla na návsi (45, -95)
+ * - Dřevěné kádě a koše se švestkami v sadu (-100, 680)
+ * - Kamenný podstavec pro Svatováclavský oheň u kostela (-800, -650)
+ * - Mechová lesní skalka ve hvozdu (730, -570)
  */
 export const ZARI_SPECIAL_OBSTACLES: MarchObstacle[] = [
-  { id: 'kotel_na_povidla', x: 45, y: -95, shape: 'circle', radius: 42, blocksSight: false },
-  { id: 'posvicensky_vuz', x: 460, y: -140, shape: 'box', halfW: 66, halfH: 38, cornerRadius: 8, blocksSight: true },
-  { id: 'kad_svestek_1', x: -210, y: -940, shape: 'circle', radius: 44, blocksSight: true },
-  { id: 'kad_svestek_2', x: 110, y: -1080, shape: 'circle', radius: 46, blocksSight: true },
-  { id: 'kad_svestek_3', x: 410, y: -920, shape: 'circle', radius: 44, blocksSight: true },
-  { id: 'kad_svestek_4', x: 660, y: -1040, shape: 'circle', radius: 42, blocksSight: true },
+  { id: 'kotel_na_povidla', x: 45, y: -95, shape: 'circle', radius: 46, blocksSight: false },
+  { id: 'sudy_se_svestkami_sad', x: -100, y: 680, shape: 'circle', radius: 44, blocksSight: true },
+  { id: 'svatovaclavsky_ohen_podstavec', x: -800, y: -650, shape: 'circle', radius: 36, blocksSight: false },
+  { id: 'lesni_skalka_zari', x: 730, y: -570, shape: 'circle', radius: 42, blocksSight: true },
 ];
 
 export const ZARI_OBSTACLES: MarchObstacle[] = [
@@ -305,13 +304,16 @@ export function isInsideZariPoi(
   x: number,
   y: number,
   poiOrId: ZariPoi | ZariPoiId,
-  extraRadius = 0
+  extraRadius = 0,
+  isNightOrLevelId: boolean | number = false
 ): boolean {
-  const poi = typeof poiOrId === 'string' ? ZARI_POIS[poiOrId] : poiOrId;
+  const isNight = typeof isNightOrLevelId === 'number' ? isNightOrLevelId === 13 : Boolean(isNightOrLevelId);
+  const pois = isNight ? ZARI_NIGHT_POIS : ZARI_POIS;
+  const poi = typeof poiOrId === 'string' ? pois[poiOrId] : poiOrId;
   if (!poi) return false;
   const dx = x - poi.x;
   const dy = y - poi.y;
-  const r = poi.radius + extraRadius;
+  const r = poi.radius + (typeof extraRadius === 'number' ? extraRadius : 0);
   return dx * dx + dy * dy <= r * r;
 }
 
