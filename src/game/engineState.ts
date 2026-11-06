@@ -190,6 +190,7 @@ export interface EngineState {
     weatherPetalTimer: number;
     terrainHazardTimer: number;
   };
+  kvetenActivePoiPrompt?: string | null;
   /** Runtime-only state for Červen v Hrusicích (7. a 8. úroveň). */
   cerven?: {
     bellCooldown: number;
@@ -447,10 +448,15 @@ export function createInitialEngineState(): EngineState {
       ohnicek: createInitialOhnicekBramborState(),
       svice: createInitialDusickovaSviceState(),
     },
-    rijenActivePoiPrompt: null,
     holyCircle: null,
     marchThawActivePoiPrompt: null,
     dubenActivePoiPrompt: null,
+    kvetenActivePoiPrompt: null,
+    cervenActivePoiPrompt: null,
+    cervenecActivePoiPrompt: null,
+    srpenActivePoiPrompt: null,
+    zariActivePoiPrompt: null,
+    rijenActivePoiPrompt: null,
     plumPuddles: [],
     plumPuddlesHead: 0,
     yolkPuddles: [],

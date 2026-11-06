@@ -163,7 +163,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"mrazovy_skritek",
 				"tajici_snehulak",
 				"jezinka_mraziva",
-				"blatouch"
+				"blatouch",
+				"vrana"
 			],
 			night: [
 				"mrazovy_skritek",
@@ -176,12 +177,14 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"bubak",
 				"hejkal",
 				"ohnivy_muz",
-				"ohniva_kobyla"
+				"ohniva_kobyla",
+				"vrana"
 			],
 			midnight: [
 				"mrazovy_skritek",
 				"bludicka",
-				"jezinka_mraziva"
+				"jezinka_mraziva",
+				"vrana"
 			],
 			dawn: [
 				"mrazovy_skritek",
@@ -190,7 +193,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"tajici_snehulak",
 				"mrazivy_obr",
 				"ohnivy_muz",
-				"ohniva_kobyla"
+				"ohniva_kobyla",
+				"vrana"
 			]
 		},
 		keyEnemies: [
@@ -1900,14 +1904,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
-				"bubak"
+				"bubak",
+				"svestkovy_srsen"
 			],
 			afternoon: [
 				"bludicka",
 				"topivec",
 				"nocni_mura",
 				"zbrojnos",
-				"cerny_pes"
+				"cerny_pes",
+				"svestkovy_srsen"
 			],
 			dusk: [
 				"bludicka",
@@ -1915,7 +1921,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_pes",
-				"bubak"
+				"bubak",
+				"svestkovy_srsen"
 			],
 			night: [
 				"topivec",
@@ -1924,7 +1931,8 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"zbrojnos",
 				"cerny_vlkodlak",
 				"krvavy_kostlivec",
-				"hejkal"
+				"hejkal",
+				"svestkovy_srsen"
 			],
 			midnight: [
 				"topivec",
@@ -1934,14 +1942,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_vlkodlak",
 				"krvavy_kostlivec",
 				"ohniva_kobyla",
-				"hejkal"
+				"hejkal",
+				"svestkovy_srsen"
 			],
 			dawn: [
 				"bludicka",
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
-				"zbrojnos"
+				"zbrojnos",
+				"svestkovy_srsen"
 			]
 		},
 		keyEnemies: [
@@ -2179,37 +2189,46 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		},
 		spawnPools: {
 			noon: [
+				"zaba",
 				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
-				"bubak"
+				"bubak",
+				"carodejnice_koste"
 			],
 			afternoon: [
-				"kalny_hastrman",
-				"topivec",
-				"nocni_mura",
-				"zbrojnos",
-				"cerny_pes"
-			],
-			dusk: [
+				"zaba",
 				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_pes",
-				"bubak"
+				"carodejnice_koste"
+			],
+			dusk: [
+				"zaba",
+				"kalny_hastrman",
+				"topivec",
+				"nocni_mura",
+				"zbrojnos",
+				"cerny_pes",
+				"bubak",
+				"carodejnice_koste"
 			],
 			night: [
+				"zaba",
 				"topivec",
 				"kalny_hastrman",
 				"nocni_mura",
 				"zbrojnos",
 				"cerny_vlkodlak",
 				"krvavy_kostlivec",
-				"hejkal"
+				"hejkal",
+				"carodejnice_koste"
 			],
 			midnight: [
+				"zaba",
 				"topivec",
 				"kalny_hastrman",
 				"nocni_mura",
@@ -2217,14 +2236,17 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_vlkodlak",
 				"krvavy_kostlivec",
 				"hrobnik",
-				"hejkal"
+				"hejkal",
+				"carodejnice_koste"
 			],
 			dawn: [
+				"zaba",
 				"kalny_hastrman",
 				"topivec",
 				"nocni_mura",
 				"cerny_pes",
-				"zbrojnos"
+				"zbrojnos",
+				"carodejnice_koste"
 			]
 		},
 		keyEnemies: [

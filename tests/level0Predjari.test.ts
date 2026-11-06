@@ -60,7 +60,7 @@ describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
     expect(lvl1.finalBoss).toMatchObject({ id: 'morana', time: 300, kills: 240, multiplier: 1.31 });
     expect(lvl1.spawnPools.dusk).toContain('tajici_snehulak');
     expect(lvl1.spawnPools.night).toContain('mrazivy_obr');
-    expect(lvl1.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka', 'jezinka_mraziva']);
+    expect(lvl1.spawnPools.midnight).toEqual(['mrazovy_skritek', 'bludicka', 'jezinka_mraziva', 'vrana']);
     expect(lvl1.spawnPools.midnight).not.toContain(lvl1.finalBoss.id);
   });
 

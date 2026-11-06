@@ -8683,6 +8683,26 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // 9. Arena obstacles and boundary
               resolveKvetenObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
+
+              // 10. Active POI prompt for Květen HUD
+              const inTavernKv = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.tavern);
+              const inChurchKv = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.church);
+              const inShrineKv = isInsideKvetenPoi(player.x, player.y, KVETEN_POIS.shrine);
+              if (inTavernKv) {
+                engine.kvetenActivePoiPrompt = (kveten.kegCooldown || 0) <= 0
+                  ? '[E] Narazit májový soudek (Hospoda)'
+                  : `Hospodský naráží nový soudek (${Math.ceil(kveten.kegCooldown)}s)`;
+              } else if (inChurchKv) {
+                engine.kvetenActivePoiPrompt = (kveten.bellCooldown || 0) <= 0
+                  ? (isKvetenNight ? '[E] Rozeznít půlnoční zvon (Kostel sv. Mikuláše)' : '[E] Rozeznít májový zvon (Kostel sv. Mikuláše)')
+                  : `Májový zvon chladne (${Math.ceil(kveten.bellCooldown)}s)`;
+              } else if (inShrineKv) {
+                engine.kvetenActivePoiPrompt = (kveten.shrineCooldown || 0) <= 0
+                  ? '[E] Pomodlit se (Boží muka)'
+                  : `Boží muka odpočívají (${Math.ceil(kveten.shrineCooldown)}s)`;
+              } else {
+                engine.kvetenActivePoiPrompt = null;
+              }
             } else if (engine.activeLevelId === 6 || engine.activeLevelId === 7) {
               const isCervenNight = engine.activeLevelId === 7;
               const cervenPois = getCervenPois(isCervenNight);
@@ -8866,6 +8886,31 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // 7. Arena obstacles and boundary
               resolveCervenObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
+
+              // 8. Active POI prompt for Červen HUD
+              const inShrineCv = isInsideCervenPoi(player.x, player.y, cervenPois.shrine);
+              const inChurchCv = isInsideCervenPoi(player.x, player.y, cervenPois.church);
+              const inTavernCv = isInsideCervenPoi(player.x, player.y, cervenPois.tavern);
+              const inForestCv = isInsideCervenPoi(player.x, player.y, cervenPois.forest);
+              if (inTavernCv) {
+                engine.cervenActivePoiPrompt = (cerven.tavernCooldown || 0) <= 0
+                  ? '[E] Napít se podmáslí (Hospoda)'
+                  : `Šenkýřka chladí džbánek (${Math.ceil(cerven.tavernCooldown)}s)`;
+              } else if (inForestCv && isCervenNight) {
+                engine.cervenActivePoiPrompt = (cerven.forestCooldown || 0) <= 0
+                  ? '[E] Natrhat kapradí (Hvozd)'
+                  : `Kapradí dorůstá (${Math.ceil(cerven.forestCooldown)}s)`;
+              } else if (inChurchCv) {
+                engine.cervenActivePoiPrompt = (cerven.bellCooldown || 0) <= 0
+                  ? '[E] Rozeznít zvon (Kostel)'
+                  : `Zvon chladne (${Math.ceil(cerven.bellCooldown)}s)`;
+              } else if (inShrineCv) {
+                engine.cervenActivePoiPrompt = (cerven.shrineCooldown || 0) <= 0
+                  ? '[E] Pomodlit se (Boží muka)'
+                  : `Boží muka odpočívají (${Math.ceil(cerven.shrineCooldown)}s)`;
+              } else {
+                engine.cervenActivePoiPrompt = null;
+              }
             } else if (engine.activeLevelId === 8 || engine.activeLevelId === 9) {
               const cvc = engine.cervenec;
               const isNight = engine.activeLevelId === 9;
@@ -8898,23 +8943,23 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let promptText: string | null = null;
               if (!isNight && strelnice && isInsideCervenecPoi(player.x, player.y, pois.village)) {
                 promptText = strelnice.cooldown <= 0
-                  ? 'Stiskni [E]: Poutní střelnice na návsi (vystřelit růži +25 % rychlost zbraní)'
+                  ? '[E] Vystřelit růži (Střelnice)'
                   : `Poutní střelnice nabíjí vzduchovky (${Math.ceil(strelnice.cooldown)}s)`;
               } else if (isInsideCervenecPoi(player.x, player.y, pois.shrine)) {
                 promptText = cvc.shrineCooldown <= 0
-                  ? (isNight ? 'Stiskni [E]: Hromosvod u Boží muky (+30 HP)' : 'Stiskni [E]: Snop svaté Markéty (+30 HP)')
+                  ? (isNight ? '[E] Uzemnit bleskosvod (Boží muka)' : '[E] Pomodlit se u snopu (Boží muka)')
                   : `Boží muka odpočívá (${Math.ceil(cvc.shrineCooldown)}s)`;
               } else if (isInsideCervenecPoi(player.x, player.y, pois.church)) {
                 promptText = cvc.bellCooldown <= 0
-                  ? 'Stiskni [E]: Zazvonit u sv. Václava (ochrana & zaplašení)'
+                  ? (isNight ? '[E] Uzemnit bleskosvod (Kostel)' : '[E] Rozeznít zvon (Kostel)')
                   : `Zvon odpočívá (${Math.ceil(cvc.bellCooldown)}s)`;
               } else if (isInsideCervenecPoi(player.x, player.y, pois.forest)) {
                 promptText = cvc.forestCooldown <= 0
-                  ? 'Stiskni [E]: Nasbírat sladké lesní maliny (+28 HP & rychlost)'
+                  ? '[E] Nasbírat sladké lesní maliny (Hvozd)'
                   : `Maliní dorůstá (${Math.ceil(cvc.forestCooldown)}s)`;
               } else if (isInsideCervenecPoi(player.x, player.y, pois.tavern)) {
                 promptText = cvc.tavernCooldown <= 0
-                  ? 'Stiskni [E]: Poutní džbánek u Sejpků (+25 HP & síla)'
+                  ? '[E] Vypít poutní džbánek (Hospoda)'
                   : `Šenkýř točí čerstvý džbánek (${Math.ceil(cvc.tavernCooldown)}s)`;
               }
               engine.cervenecActivePoiPrompt = promptText;
@@ -9070,27 +9115,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let promptText: string | null = null;
               if (!isNight && pec && isInsideSrpenPoi(player.x, player.y, pois.village)) {
                 promptText = pec.cooldown <= 0
-                  ? 'Stiskni [E]: Horká chlebová pec na návsi (čerstvý pecen +25 % léčení, +20 % útok)'
+                  ? '[E] Upéct chléb (Chlebová pec)'
                   : `Chlebová pec peče další várku (${Math.ceil(pec.cooldown)}s)`;
               } else if (isNight && vatra && (isInsideSrpenPoi(player.x, player.y, pois.church) || Math.hypot(player.x - vatra.x, player.y - vatra.y) <= vatra.radius)) {
                 promptText = vatra.cooldown <= 0
-                  ? 'Stiskni [E]: Rozpálit Vavřineckou vatru (+20 % zbroj & 1.5× ult)'
+                  ? '[E] Zažehnout vatru (Vavřinecká vatra)'
                   : `Vavřinecká vatra plane (${Math.ceil(vatra.cooldown)}s)`;
               } else if (isInsideSrpenPoi(player.x, player.y, pois.shrine)) {
                 promptText = (sr.shrineCooldown || 0) <= 0
-                  ? (isNight ? 'Stiskni [E]: Plamen sv. Vavřince (+ochrana)' : 'Stiskni [E]: Dožínkové požehnání (+ochrana)')
+                  ? (isNight ? '[E] Přijmout ochranu sv. Vavřince (Boží muka)' : '[E] Přijmout dožínkové požehnání (Boží muka)')
                   : `Boží muka odpočívá (${Math.ceil(sr.shrineCooldown || 0)}s)`;
               } else if (isInsideSrpenPoi(player.x, player.y, pois.church)) {
                 promptText = (sr.bellCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Zvon sv. Bartoloměje (ochrana & zaplašení)'
+                  ? '[E] Rozeznít zvon (Kostel)'
                   : `Zvon odpočívá (${Math.ceil(sr.bellCooldown || 0)}s)`;
               } else if (isInsideSrpenPoi(player.x, player.y, pois.tavern)) {
                 promptText = (sr.tavernCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Dožínkový máz piva a koláče (+42 HP & síla)'
+                  ? '[E] Vypít dožínkový máz (Hospoda)'
                   : `Šenkýř čepuje nový máz (${Math.ceil(sr.tavernCooldown || 0)}s)`;
               } else if (isInsideSrpenPoi(player.x, player.y, pois.forest)) {
                 promptText = (sr.forestCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Lesní pramen pod skalami (+25 HP & rychlost)'
+                  ? '[E] Napít se z pramene (Hvozd)'
                   : `Pramen doplňuje vodu (${Math.ceil(sr.forestCooldown || 0)}s)`;
               }
               engine.srpenActivePoiPrompt = promptText;
@@ -9249,27 +9294,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let promptText: string | null = null;
               if (!isNight && kotel && isInsideZariPoi(player.x, player.y, pois.village)) {
                 promptText = kotel.cooldown <= 0
-                  ? 'Stiskni [E]: Zamíchat kotel na povidla (+35 Kuráž, +25 % útok, +20 % dobíjení)'
+                  ? '[E] Zamíchat povidla (Kotel)'
                   : `Povidla v kotli probublávají (${Math.ceil(kotel.cooldown)}s)`;
               } else if (isNight && ohen && (isInsideZariPoi(player.x, player.y, pois.church) || Math.hypot(player.x - ohen.x, player.y - ohen.y) <= ohen.radius)) {
                 promptText = ohen.cooldown <= 0
-                  ? 'Stiskni [E]: Rozdmychat Svatováclavský svatý oheň (+95 štít, +25 % zbroj & 1.5× ult)'
+                  ? '[E] Zažehnout svatý oheň (Kostel)'
                   : `Svatováclavský oheň plápolá (${Math.ceil(ohen.cooldown)}s)`;
               } else if (isInsideZariPoi(player.x, player.y, pois.shrine)) {
                 promptText = (zr.shrineCooldown || 0) <= 0
-                  ? (isNight ? 'Stiskni [E]: Svatováclavské požehnání (+ochrana)' : 'Stiskni [E]: Posvícenské požehnání (+ochrana)')
+                  ? (isNight ? '[E] Přijmout svatováclavské požehnání (Boží muka)' : '[E] Přijmout posvícenské požehnání (Boží muka)')
                   : `Boží muka odpočívá (${Math.ceil(zr.shrineCooldown || 0)}s)`;
               } else if (isInsideZariPoi(player.x, player.y, pois.church)) {
                 promptText = (zr.bellCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Zvon sv. Bartoloměje (ochrana & zaplašení)'
+                  ? '[E] Rozeznít zvon (Kostel)'
                   : `Zvon odpočívá (${Math.ceil(zr.bellCooldown || 0)}s)`;
               } else if (isInsideZariPoi(player.x, player.y, pois.tavern)) {
                 promptText = (zr.tavernCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Posvícenské koláče a džbánek (+45 HP & síla)'
+                  ? '[E] Ochutnat posvícenské koláče (Hospoda)'
                   : `Šenkýř chystá koláče (${Math.ceil(zr.tavernCooldown || 0)}s)`;
               } else if (isInsideZariPoi(player.x, player.y, pois.forest)) {
                 promptText = (zr.forestCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Pramen pod bukovým lesem (+28 HP & rychlost)'
+                  ? '[E] Napít se z pramene (Hvozd)'
                   : `Pramen doplňuje vodu (${Math.ceil(zr.forestCooldown || 0)}s)`;
               }
               engine.zariActivePoiPrompt = promptText;
@@ -9428,27 +9473,27 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let promptText: string | null = null;
               if (!isNight && ohnicek && isInsideRijenPoi(player.x, player.y, pois.village)) {
                 promptText = ohnicek.cooldown <= 0
-                  ? 'Stiskni [E]: Upéct bramboru v popelu (+40 Kuráž, +25 % útok, +20 % dobíjení)'
+                  ? '[E] Upéct bramboru (Ohníček na návsi)'
                   : `Ohníček z bramborové natě doutná (${Math.ceil(ohnicek.cooldown)}s)`;
               } else if (isNight && svice && (isInsideRijenPoi(player.x, player.y, pois.shrine) || Math.hypot(player.x - svice.x, player.y - svice.y) <= svice.radius)) {
                 promptText = svice.cooldown <= 0
-                  ? 'Stiskni [E]: Zažehnout dušičkovou svíci (+100 štít, +30 % zbroj & záštita)'
+                  ? '[E] Zažehnout dušičkovou svíci (Boží muka)'
                   : `Dušičková svíce plápolá (${Math.ceil(svice.cooldown)}s)`;
               } else if (isInsideRijenPoi(player.x, player.y, pois.shrine)) {
                 promptText = (rj.shrineCooldown || 0) <= 0
-                  ? (isNight ? 'Stiskni [E]: Zažehnout dušičkovou svíci (+ochrana)' : 'Stiskni [E]: Požehnání od Božích muk (+ochrana)')
+                  ? (isNight ? '[E] Zažehnout dušičkovou svíci (Boží muka)' : '[E] Pomodlit se (Boží muka)')
                   : `Boží muka odpočívá (${Math.ceil(rj.shrineCooldown || 0)}s)`;
               } else if (isInsideRijenPoi(player.x, player.y, pois.church)) {
                 promptText = (rj.bellCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Zvon sv. Mikuláše (ochrana & zaplašení)'
+                  ? '[E] Rozeznít zvon (Kostel)'
                   : `Zvon odpočívá (${Math.ceil(rj.bellCooldown || 0)}s)`;
               } else if (isInsideRijenPoi(player.x, player.y, pois.tavern)) {
                 promptText = (rj.tavernCooldown || 0) <= 0
-                  ? (isNight ? 'Stiskni [E]: Dušičková polévka a čaj (+45 HP & síla)' : 'Stiskni [E]: Bramborová polévka s houbami (+45 HP & síla)')
+                  ? (isNight ? '[E] Dát si dušičkovou polévku (Hospoda)' : '[E] Dát si bramboračku s houbami (Hospoda)')
                   : `Šenkýřka chystá polévku (${Math.ceil(rj.tavernCooldown || 0)}s)`;
               } else if (isInsideRijenPoi(player.x, player.y, pois.forest)) {
                 promptText = (rj.forestCooldown || 0) <= 0
-                  ? 'Stiskni [E]: Podzimní studánka v bukovém lese (+30 HP & rychlost)'
+                  ? '[E] Napít se ze studánky (Hvozd)'
                   : `Studánka doplňuje vodu (${Math.ceil(rj.forestCooldown || 0)}s)`;
               }
               engine.rijenActivePoiPrompt = promptText;
@@ -11043,7 +11088,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
             }
-            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15) {
               clampToMarchArenaBounds(d, 28);
             } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);
@@ -11073,7 +11118,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
-              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15) {
                 clampToMarchArenaBounds(d, 28);
               } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
                 clampToDubenArenaBounds(d, 28);

@@ -10,6 +10,18 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '6. listopadu 2026',
+    title: 'Kanonická parita výprav, rozpočet strašidel a Pravidlo trojjedinosti vln (ADR 0041)',
+    summary: 'Kompletní audit a harmonizace všech 16 výprav podle průvodce STAGE_CREATION_GUIDE.md: doplnění bodů v ENEMY_POINTS pro dubnové bosse, sjednocení vlnových bazénů na trojjedinost havěti, běžců a letců, 1:1 parita headless simulace a prohlížeče a kanonizace nápověd klávesy [E].',
+    items: [
+      '⚖️ Rozpočet strašidel v ENEMY_POINTS: Doplněno chybějící bodové ohodnocení pro Beránka (700), Starou čarodějnici (1500) a Vrchní čarodějnici (4500) v souladu s aditivní křivkou obtížnosti.',
+      '🦅 Pravidlo trojjedinosti vln: Všechny noční výpravy (Noční mrazy, Svatováclavská noc, Dušičková noc) nyní spolehlivě kombinují drobnou havěť/roj, těžkého běsa i taktického letce/narušitele bez dominance jediné zbraně.',
+      '🍺 Dvojí parita pro Květen, Červen a Říjen: Plně nasimulována interakce májového soudku i zvonice v headless enginu, sjednoceno nastavování kvetenActivePoiPrompt i cervenActivePoiPrompt a rozšířen clamp dropů pro Říjen.',
+      '🎯 Sjednocení nápovědy klávesy [E]: Všechny interakční výzvy sjednoceny na standardní formát [E] <Sloveso v infinitivu> <Předmět> (<Název dominanty>).',
+      '📚 Doménová dokumentace a ADR 0041: Aktualizován GLOSSARY.md na 16 úrovní a vytvořen nový architektonický záznam ADR 0041.',
+    ],
+  },
+  {
     date: '3. listopadu 2026',
     title: 'Renesance Pohádkové knihy, ex-libris vazba a literární typografie (ADR 0040)',
     summary: 'Návrat k ryzí estetice staré české pohádkové knížky (SNDK/Albatros): otevřená kniha je nově výchozí tváří hry, rozhraní získalo hřejivý chamois papír s knihařskou vazbou, rohové ornamenty propojuje elegantní ex-libris linka a texty zdobí dřevorytové iniciály.',

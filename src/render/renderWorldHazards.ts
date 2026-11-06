@@ -335,7 +335,8 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? kvetenPois.forest : undefined);
-      if (nearby) {
+      const bannerText = engine.kvetenActivePoiPrompt || nearby?.hint;
+      if (nearby && bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
         ctx.strokeStyle = COLORS.ink;
@@ -352,7 +353,7 @@ export function renderWorldHazardsAndEncounters(
         ctx.font = '900 12.5px Eczar, Georgia, serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(nearby.hint, player.x, player.y - 72);
+        ctx.fillText(bannerText, player.x, player.y - 72);
         ctx.restore();
       }
     }
@@ -468,11 +469,12 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? cervenPois.forest : undefined);
-      if (nearby) {
-        const herbsNote =
-          isCervenNight && engine.cerven && Array.isArray(engine.cerven.herbs)
-            ? ` [🌿 Byliny: ${engine.cerven.herbsCollected || 0}/${engine.cerven.herbsTarget || 9}]`
-            : '';
+      const herbsNote =
+        isCervenNight && engine.cerven && Array.isArray(engine.cerven.herbs)
+          ? ` [🌿 Byliny: ${engine.cerven.herbsCollected || 0}/${engine.cerven.herbsTarget || 9}]`
+          : '';
+      const bannerText = engine.cervenActivePoiPrompt || (nearby ? `${nearby.title}${herbsNote}` : null);
+      if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
         ctx.strokeStyle = COLORS.ink;
@@ -489,7 +491,7 @@ export function renderWorldHazardsAndEncounters(
         ctx.font = '900 12px Eczar, Georgia, serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${nearby.title}${herbsNote}`, player.x, player.y - 72);
+        ctx.fillText(bannerText, player.x, player.y - 72);
         ctx.restore();
       }
     }

@@ -115,7 +115,7 @@ Kampaň Bubákova se řídí přísným třístupňovým modelem (**ADR 0036** a
 | **10. Úroveň** | `9` | Noc | Červenec v Hrusicích – Bouře sv. Eliáše | `cervencove_zne` | `[E] Uzemnit bleskosvod (Kostel)` | `bila_pani` | `bezhlavy_rytir` | `drak` |
 | **11. Úroveň** | `10` | Den | Srpen v Hrusicích – Dožínková slavnost | `srpnova_slavnost` | `[E] Upéct chléb (Chlebová pec)` | `kralovsky_cmelak` | `zlatohlavek_zrout` | `dozinkovy_chasnik` |
 | **12. Úroveň** | `11` | Noc | Srpen v Hrusicích – Vavřinecká noc | `vavrinecka_noc` | `[E] Zažehnout vatru (Vavřinecká vatra)`| `netopyr_usatec` | `nocni_mura` | `vyr_velky` |
-| **13. Úroveň** | `12` | Den | Září v Hrusicích – Posvícení a švestky | `zarijove_posviceni` | `[E] Zamíchat povidla (Kotel)` | `svestkovy_srsen` | `povidlovy_cert` | `posvicensky_hospodar` |
+| **13. Úroveň** | `12` | Den | Září v Hrusicích – Posvícení a švestky | `zarijove_posviceni` | `[E] Zamíchat povidla (Kotel)` | `kralovsky_srsen` | `povidlovy_cert` | `posvicensky_hospodar` |
 | **14. Úroveň** | `13` | Noc | Září v Hrusicích – Svatováclavská noc | `svatovaclavska_noc` | `[E] Zažehnout svatý oheň (Kostel)` | `bila_pani` | `mlynar` | `kvilici_meluzina` |
 | **15. Úroveň** | `14` | Den | Říjen v Hrusicích – Bramborová nať a drakiáda | `rijnova_drakiada` | `[E] Upéct bramboru (Ohníček na návsi)` | `kralovsky_havran` | `hastrman_podzimni` | `drak_vetrnik` |
 | **16. Úroveň** | `15` | Noc | Říjen v Hrusicích – Dušičková noc a výlov rybníka | `dusickova_noc` | `[E] Zažehnout dušičkovou svíci (Boží muka)` | `dusickova_bludicka` | `cert_rybnikar` | `vele_stika` |

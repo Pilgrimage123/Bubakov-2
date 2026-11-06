@@ -248,7 +248,7 @@ describe('Comprehensive 16-Stage Audit (Levels 0 through 15)', () => {
     }
   });
 
-  it('verifies all spawnable enemies across all 16 stages have an entry in ENEMY_POINTS', () => {
+  it('verifies all spawnable enemies and bosses across all 16 stages have an entry in ENEMY_POINTS', () => {
     const missingPoints: string[] = [];
     for (let id = 0; id <= 15; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
@@ -259,8 +259,39 @@ describe('Comprehensive 16-Stage Audit (Levels 0 through 15)', () => {
           }
         }
       }
+      for (const bossId of [level.miniBoss.id, level.midBoss.id, level.finalBoss.id]) {
+        if ((ENEMY_POINTS as Record<string, number>)[bossId] === undefined) {
+          missingPoints.push(`boss:${bossId}`);
+        }
+      }
     }
     expect(Array.from(new Set(missingPoints))).toEqual([]);
+  });
+
+  it('enforces the Rule of Trinity (Pravidlo trojjedinosti vln) across all day/night phases in all 16 stages', () => {
+    const violations: string[] = [];
+    for (let id = 0; id <= 15; id++) {
+      const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
+      for (const [phase, pool] of Object.entries(level.spawnPools || {})) {
+        if (!Array.isArray(pool) || pool.length === 0) continue;
+        let hasSwarm = false;
+        let hasRunner = false;
+        let hasFlyerOrDisruptor = false;
+        for (const enemyId of pool) {
+          const enemy = ENEMIES[enemyId];
+          if (!enemy) continue;
+          if (enemy.radius <= 16 || enemy.category === 'swarm') hasSwarm = true;
+          if ((enemy.radius >= 24 && !enemy.isFlying) || enemy.category === 'heavy') hasRunner = true;
+          if (enemy.isFlying || enemy.category === 'disruptor' || enemy.behavior === 'charges' || enemy.behavior === 'leaps') {
+            hasFlyerOrDisruptor = true;
+          }
+        }
+        if (!hasSwarm || !hasRunner || !hasFlyerOrDisruptor) {
+          violations.push(`Level ${id} (${phase}): swarm=${hasSwarm}, runner=${hasRunner}, flyer/disruptor=${hasFlyerOrDisruptor}`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
   });
 
   it('enforces campaign-wide 7 / 2 / 1 enemy and boss repetition caps across all stages', () => {

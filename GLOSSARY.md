@@ -211,8 +211,28 @@ Toulavý kramář a pekelník s nůší procházející herním světem, který 
 _Avoid_: level-up nabídka, obchodník, shopkeeper
 
 **Výprava**:
-Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 8 po sobě jdoucích úrovní).
+Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 16 po sobě jdoucích úrovní od Března po Říjen).
 _Avoid_: run, stage, level, zápas, kolo, match
+
+**Ohnisko výpravy**:
+Jediné hlavní interaktivní centrum vesnice ovládané klávesou [E] s pevnou dobou nabíjení, specifické pro danou Výpravu.
+_Avoid_: interaktivní bod, aktivní POI, mechanika mapy
+
+**Pravidlo trojjedinosti vln**:
+Taktické pravidlo povinné kombinace tří archetypů (drobná havěť či roj, přímý běžec či těžký běs a taktický letec či narušitel) v každém bazénu vln všech fází dne.
+_Avoid_: wave trinity, vyvážení vln, skladba nepřátel
+
+**Kolizní stín letce**:
+Zemský oválný poloprůhledný stín posunutý o +20–30 px svisle pod středem těla letícího strašidla, určující bod kolize se střelami v lidové perspektivě.
+_Avoid_: flying shadow, stín pod monstrem
+
+**Kruhový zásobník terénu**:
+Předalokované pole s pevnou kapacitou slotů pro Zrádný terén zaručující nulovou alokaci v herním cyklu.
+_Avoid_: ring buffer, pool pastí, terénní cache
+
+**Škrcení bojových textů**:
+Časové omezení frekvence generování plovoucích bojových čísel na max. 1 text za 0.25 s a jejich agregace při hromadném zásahu.
+_Avoid_: floating text throttling, FCT throttle, omezení textů
 
 **Pohádková kniha Bubákova**:
 Kanonické označení pro ústřední interaktivní ilustrovanou dvojstranu (`LadaStorybookSpread`) ve stylu českých pohádkových knih (SNDK/Albatros), sloužící k volbě výpravy, prohlížení světa a četbě příběhu s autentickým šelestem stránek, plátěnými záložkami a dřevorytovým písmem.

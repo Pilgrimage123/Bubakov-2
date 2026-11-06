@@ -1,3 +1,28 @@
+## 2026-11-06 – Kanonická parita výprav, rozpočet strašidel a Pravidlo trojjedinosti vln (ADR 0041)
+
+- **Audit a harmonizace všech 16 výprav (`docs/STAGE_CREATION_GUIDE.md`, ADR 0041)**:
+  - Proveden hloubkový audit všech 16 úrovní (od březnového tání po říjnovou Dušičkovou noc) proti Pěti pilířům ladovského kodexu výprav.
+  - V Tabulce 2.1 průvodce opraven překlep u Minibosse 13. úrovně (Zářijové posvícení) z řadového strašidla `svestkovy_srsen` na skutečného bosse `kralovsky_srsen`.
+- **Doplnění chybějících rejdových bodů `ENEMY_POINTS` (`src/constants.ts`)**:
+  - Vyřešena Past č. 6 z průvodce doplněním chybějících bodových hodnot do tabulky `ENEMY_POINTS` pro klíčové bosse Dubnové výpravy: `beranek: 700`, `carodejnice_stara: 1500` a `vrchni_carodejnice: 4500`, respektující aditivní křivku obtížnosti ADR 0038.
+- **Vynucení Pravidla trojjedinosti vln v nočních výpravách (`src/data/levels.ts`)**:
+  - Každý bazén vln ve všech fázích dne i noci nyní povinně kombinuje drobnou havěť/roj (`radius: 11–15 px`), přímého běžce/těžkého běsa (`radius: 25–34 px`) a taktického letce/narušitele.
+  - Do nočních fází 2. úrovně (Noční mrazy) přidána `vrana` (`isFlying: true`).
+  - Do všech fází 14. úrovně (Svatováclavská noc) přidán `svestkovy_srsen` (`isFlying: true`).
+  - Do všech fází 16. úrovně (Dušičková noc) doplněna drobná havěť `zaba` (`radius: 12 px`) a letec `carodejnice_koste` (`isFlying: true`).
+  - Všechna zařazení striktně dodržují celokampaňový limit maximálně 7 výskytů na monstrum.
+- **1:1 parita headless simulace a prohlížeče (`src/game/engine.ts`, `src/game/engineState.ts`, `src/App.tsx`)**:
+  - Zavedeno pole `kvetenActivePoiPrompt` v `EngineState` a implementovány gettery/settery na třídě `GameEngine`.
+  - V bezhlavém enginu (`src/game/engine.ts`) plně nasimulována interakce klávesy `[E]` pro májový soudek piva i zvonici sv. Mikuláše v Květnu včetně louží piva a omráčení běsů.
+  - V `src/App.tsx` zprovozněno plnohodnotné nastavování `kvetenActivePoiPrompt` a `cervenActivePoiPrompt` na HUDu.
+  - Omezování dropů arény `clampToMarchArenaBounds` v `engine.ts` i `App.tsx` rozšířeno o 15. a 16. úroveň (Říjen).
+- **Kanonizace HUD nápovědy klávesy `[E]` (`src/App.tsx`, `src/render/renderWorldHazards.ts`)**:
+  - Všechny interakční texty sjednoceny na striktní formát `[E] <Sloveso v infinitivu> <Předmět> (<Název dominanty>)` (např. `[E] Vystřelit růži (Střelnice)`, `[E] Upéct chléb (Chlebová pec)`, `[E] Zamíchat povidla (Kotel)`, `[E] Upéct bramboru (Ohníček na návsi)`).
+- **Doménová dokumentace a automatické audity (`GLOSSARY.md`, `docs/adr/`, `tests/allStagesAudit.test.ts`)**:
+  - V `GLOSSARY.md` aktualizován rozsah pojmu Výprava na 16 úrovní a doplněny termíny: *Ohnisko výpravy*, *Pravidlo trojjedinosti vln*, *Kolizní stín letce*, *Kruhový zásobník terénu* a *Škrcení bojových textů*.
+  - Zapsán architektonický záznam `docs/adr/0041-kanonicka-parita-vyprav-a-trojjedinost-vln.md`.
+  - V `tests/allStagesAudit.test.ts` rozšířeny testy pro permanentní verifikaci bodů všech bossů a Pravidla trojjedinosti vln. Všech 91 testovacích souborů (860 testů) i produkční build prochází.
+
 ## 2026-11-03 – Renesance Pohádkové knihy, ex-libris vazba a literární typografie (ADR 0040)
 
 - **Pohádková kniha Bubákova jako výchozí režim (`src/App.tsx`, `GLOSSARY.md`, ADR 0040)**:

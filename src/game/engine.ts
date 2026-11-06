@@ -555,8 +555,44 @@ export class GameEngine {
   public get marchThawActivePoiPrompt() {
     return this.state.marchThawActivePoiPrompt;
   }
+  public set marchThawActivePoiPrompt(val: any) {
+    this.state.marchThawActivePoiPrompt = val;
+  }
   public get dubenActivePoiPrompt() {
     return this.state.dubenActivePoiPrompt;
+  }
+  public set dubenActivePoiPrompt(val: any) {
+    this.state.dubenActivePoiPrompt = val;
+  }
+  public get kvetenActivePoiPrompt() {
+    return this.state.kvetenActivePoiPrompt;
+  }
+  public set kvetenActivePoiPrompt(val: any) {
+    this.state.kvetenActivePoiPrompt = val;
+  }
+  public get cervenActivePoiPrompt() {
+    return this.state.cervenActivePoiPrompt;
+  }
+  public set cervenActivePoiPrompt(val: any) {
+    this.state.cervenActivePoiPrompt = val;
+  }
+  public get cervenecActivePoiPrompt() {
+    return this.state.cervenecActivePoiPrompt;
+  }
+  public set cervenecActivePoiPrompt(val: any) {
+    this.state.cervenecActivePoiPrompt = val;
+  }
+  public get srpenActivePoiPrompt() {
+    return this.state.srpenActivePoiPrompt;
+  }
+  public set srpenActivePoiPrompt(val: any) {
+    this.state.srpenActivePoiPrompt = val;
+  }
+  public get zariActivePoiPrompt() {
+    return this.state.zariActivePoiPrompt;
+  }
+  public set zariActivePoiPrompt(val: any) {
+    this.state.zariActivePoiPrompt = val;
   }
   public enemyFactory?: (
     id: string,
@@ -7809,6 +7845,94 @@ export class GameEngine {
             }
           }
         }
+
+        // Květen POI [E] interaction & cooldown tick
+        const kv = (this.state.kveten || (this.state.kveten = {
+          bellCooldown: 0,
+          kegCooldown: 0,
+          shrineCooldown: 0,
+          beerPuddle: null,
+          maypoleWardActive: false,
+          weatherPetalTimer: 0,
+          terrainHazardTimer: 0,
+        }));
+        kv.bellCooldown = Math.max(0, (kv.bellCooldown || 0) - dt);
+        kv.kegCooldown = Math.max(0, (kv.kegCooldown || 0) - dt);
+        kv.shrineCooldown = Math.max(0, (kv.shrineCooldown || 0) - dt);
+
+        if (kv.beerPuddle) {
+          kv.beerPuddle.time -= dt;
+          if (kv.beerPuddle.time <= 0) {
+            kv.beerPuddle = null;
+          } else {
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - kv.beerPuddle.x, foe.y - kv.beerPuddle.y) < 120) {
+                foe.stunTimer = Math.max(foe.stunTimer || 0, 0.35);
+              }
+            }
+          }
+        }
+
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+        const inTavern = isInsideKvetenPoi(player.x, player.y, kvetenPois.tavern);
+        const inChurch = isInsideKvetenPoi(player.x, player.y, kvetenPois.church);
+
+        if (inTavern) {
+          this.state.kvetenActivePoiPrompt = (kv.kegCooldown || 0) <= 0
+            ? '[E] Narazit májový soudek (Hospoda)'
+            : `Hospodský naráží nový soudek (${Math.ceil(kv.kegCooldown)}s)`;
+          if (eKeyPressed && (kv.kegCooldown || 0) <= 0) {
+            kv.kegCooldown = 18;
+            player.hp = Math.min(player.maxHp, player.hp + 24);
+            const dir = Math.hypot(player.lastDx || 0, player.lastDy || 0) || 1;
+            const px = player.x + ((player.lastDx || 1) / dir) * 90;
+            const py = player.y + ((player.lastDy || 0) / dir) * 90;
+            kv.beerPuddle = { x: px, y: py, time: 8 };
+            this.callbacks?.onSound?.('beer');
+            this.emitDamageText(player.x, player.y - 45, 'MÁJOVÝ SOUDEK NARAZEN! 🍺 (+24 Kuráže, louže piva)', '#FDE047', true);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - px, foe.y - py) < 170) {
+                foe.takeDamage(125 * (player.damageMultiplier || 1), 'physical', (foe.x - px) * 3, (foe.y - py) * 3);
+                foe.stunTimer = Math.max(foe.stunTimer || 0, 2.8);
+              }
+            }
+          }
+        } else if (inChurch) {
+          this.state.kvetenActivePoiPrompt = (kv.bellCooldown || 0) <= 0
+            ? (isKvetenNight ? '[E] Rozeznít půlnoční zvon (Kostel sv. Mikuláše)' : '[E] Rozeznít májový zvon (Kostel sv. Mikuláše)')
+            : `Májový zvon chladne (${Math.ceil(kv.bellCooldown)}s)`;
+          if (eKeyPressed && (kv.bellCooldown || 0) <= 0) {
+            kv.bellCooldown = 80;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, isKvetenNight ? '🔔 PŮLNOČNÍ ZVON ZAHÁNÍ HEJKALY!' : '🔔 MÁJOVÁ ZVONICE! SVATÝ HLAS!', '#FEF08A', true);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              const dx = foe.x - kvetenPois.church.x;
+              const dy = foe.y - kvetenPois.church.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist < 920 + (foe.radius || 0)) {
+                foe.takeDamage(180 * (player.damageMultiplier || 1), 'holy', (dx / dist) * 480, (dy / dist) * 480);
+                foe.panicked = true;
+                foe.panicTimer = Math.max(foe.panicTimer || 0, 4.0);
+              }
+            }
+          }
+        } else if (inShrine) {
+          this.state.kvetenActivePoiPrompt = '[E] Pomodlit se (Boží muka)';
+          if (eKeyPressed && (kv.shrineCooldown || 0) <= 0) {
+            kv.shrineCooldown = 20;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POŽEHNÁNÍ SV. JANA NEPOMUCKÉHO! ✨', '#FEF08A', true);
+            player.tempShield = Math.max(player.tempShield || 0, 60);
+          }
+        } else {
+          this.state.kvetenActivePoiPrompt = null;
+        }
       }
 
       for (let j = 0; j < this.livingEnemies.length; j++) {
@@ -9067,7 +9191,7 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
           clampToDubenArenaBounds(d, 28);
@@ -9108,7 +9232,7 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);
