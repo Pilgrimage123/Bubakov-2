@@ -2286,6 +2286,1126 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			description: "Přistup k Božím mukám a stiskni [E] pro zažehnutí dušičkové svíce – posvátný plamen spálí okolní noční přízraky a dodá hřejivou kuráž!",
 			cadenceSeconds: 20
 		}
+	},
+	16: {
+		id: 16,
+		name: "17. Listopad v Hrusicích – Svatomartinská slavnost a husí hody",
+		shortTitle: "Svatomartinská slavnost",
+		subtitle: "Svatomartinská husa v pekáči, mladé víno U Sejků a příjezd jezdce na bílém koni",
+		theme: "st_martin_feast",
+		season: "autumn",
+		icon: "🪿",
+		badge: "17. Úroveň",
+		isNightLevel: false,
+		description: "Na svatého Martina kouří se z komínů a u Sejků voní dozlatova upečená husa s červeným zelím. Po polích běhají splašené husy ze statku, z lesa se tlačí divočáci a od Zlenic přijíždí tajemný Martinský jezdec na bílém koni. Přistup k hospodě a ochutnej husu [E] pro posílení!",
+		lore: "Svatomartinské posvícení je v Hrusicích svátkem hojnosti a dobrého jídla před příchodem zimy. Hospodyně pečou svatomartinské rohlíčky a husy, ale studený vítr přináší první mrazíky a divokou zvěř z hlubokých panských hvozdů.",
+		unlockRequirementText: "Odemkne se po poražení Veleštiky v 16. úrovni (Dušičková noc)",
+		skyColor: "#E2E8F0",
+		groundColor: "#8D6E63",
+		ambientTint: "rgba(180, 160, 140, 0.12)",
+		weatherEffect: "falling_leaves",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"roast_goose",
+			"wine_barrel"
+		],
+		arena: {
+			id: "listopad_naves",
+			name: "Listopadová náves a svatomartinské polnosti",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "kralovska_husa",
+			name: "🪿 Královská svatomartinská husa",
+			warning: "🪿 POZOR: ZE STATKU VYLETĚLA OBŘÍ KRÁLOVSKÁ HUSA S ROZTAŽENÝMI KŘÍDLY!",
+			time: 85,
+			kills: 130,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "martinsky_jezdec",
+			name: "⚔️ Martinský jezdec na bílém koni",
+			warning: "⚔️ POZOR: Z MLHY VYJÍŽDÍ MARTINSKÝ JEZDEC NA BÍLÉM KONI!",
+			time: 185,
+			kills: 300,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "listopadovy_mrazivec",
+			name: "❄️ Listopadový Mrazivec",
+			warning: "❄️ MRAZIVÝ VÍTR DUJE Z HOR! PŘICHÁZÍ VLÁDCE PRVNÍHO MRÁZU LISTOPADOVÝ MRAZIVEC! ❄️",
+			time: 300,
+			kills: 460,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana"
+			],
+			afternoon: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana",
+				"drab"
+			],
+			dusk: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana",
+				"drab",
+				"drevorubec"
+			],
+			night: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana",
+				"drab"
+			],
+			midnight: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana",
+				"drab"
+			],
+			dawn: [
+				"polni_mysice",
+				"svatomartinska_husa",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"vrana"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "svatomartinska_husa",
+				name: "Svatomartinská husa",
+				icon: "🪿",
+				role: "Bleskový a kousavý běžec ze selského dvora"
+			},
+			{
+				id: "divoky_kanec",
+				name: "Divoký kanec",
+				icon: "🐗",
+				role: "Obrněný štětináč prorážející houfy zbraní"
+			},
+			{
+				id: "lesni_pytlak",
+				name: "Lesní pytlák s prakem",
+				icon: "🏹",
+				role: "Záludný střelec z křovisek a mlází"
+			},
+			{
+				id: "kralovska_husa",
+				name: "Královská husa",
+				icon: "👑",
+				role: "Rychlý mini-boss s mohutnými křídly"
+			},
+			{
+				id: "martinsky_jezdec",
+				name: "Martinský jezdec",
+				icon: "⚔️",
+				role: "Rytířský mezi-boss přinášející sněhovou vánici"
+			},
+			{
+				id: "listopadovy_mrazivec",
+				name: "Listopadový Mrazivec",
+				icon: "❄️",
+				role: "Vele-boss chladu zlenických skal a prvních námraz"
+			}
+		],
+		bossMechanic: {
+			label: "Svatomartinská pečená husa",
+			description: "Přistup k hospodě U Sejků a stiskni [E] pro ochutnání pečené husy – získáš posilující žár, rychlost a vypudíš mráz z těla!",
+			cadenceSeconds: 20
+		}
+	},
+	17: {
+		id: 17,
+		name: "18. Listopad v Hrusicích – Listopadové mlhy a noční hon",
+		shortTitle: "Listopadový noční hon",
+		subtitle: "Sychravé mlhy nad hvozdem, zapálený milíř a běsnící divočák Kňour",
+		theme: "november_fog_hunt",
+		season: "autumn",
+		icon: "🐗",
+		badge: "18. Úroveň",
+		isNightLevel: true,
+		description: "Temná listopadová noc zahalila hrusické lesy do neprostupné bílé mlhy. V hloubi hvozdu plápolá uhlířský milíř, kolem krouží Černý myslivec se smečkou ohařů a zem duní pod kopyty bájného kance Kňoura. Přistup k milíři a stiskni [E] pro zažehnutí uhlíků a rozehnání mlhy!",
+		lore: "V pozdním listopadu se panstvo a lesníci vydávali na velký noční hon na černou zvěř. Jenže v hrusických lesích nečíhají jen kanci, ale i temné stíny, zapomenutí pytláci a přízraky, které se bojí jen žáru dřevěného uhlí.",
+		unlockRequirementText: "Odemkne se po poražení Listopadového Mrazivce v 17. úrovni",
+		skyColor: "#0F172A",
+		nightSkyColor: "#050A14",
+		groundColor: "#1A2228",
+		ambientTint: "rgba(100, 116, 139, 0.35)",
+		weatherEffect: "fog",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"charcoal_kiln",
+			"hunting_stand"
+		],
+		arena: {
+			id: "listopad_naves",
+			name: "Listopadový noční hvozd",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "mlzny_prizrak",
+			name: "🌫️ Mlžný přízrak z rašeliniště",
+			warning: "🌫️ POZOR: Z HUSTÉ MLHY VYSTUPUJE CHLADNÝ MLŽNÝ PŘÍZRAK!",
+			time: 85,
+			kills: 135,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "cerny_myslivec",
+			name: "🏹 Černý myslivec z hvozdu",
+			warning: "🏹 POZOR: ZE SKAL SE OZÝVÁ ZLOVĚSTNÝ ROH ČERNÉHO MYSLIVCE!",
+			time: 185,
+			kills: 310,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "kanec_knour",
+			name: "🐗 Obří divočák Kňour",
+			warning: "🐗 ZEMĚ SE TŘESE! Z HVOZDU VYBÍHÁ OBŘÍ DIVOČÁK KŇOUR! 🐗",
+			time: 300,
+			kills: 470,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"mlzny_prizrak",
+				"carodejnice_koste"
+			],
+			afternoon: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"cerny_vlkodlak",
+				"carodejnice_koste"
+			],
+			dusk: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"cerny_vlkodlak",
+				"carodejnice_koste",
+				"hejkal"
+			],
+			night: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"cerny_vlkodlak",
+				"umrlec",
+				"hejkal",
+				"carodejnice_koste"
+			],
+			midnight: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"cerny_vlkodlak",
+				"umrlec",
+				"hrobnik",
+				"hejkal",
+				"carodejnice_koste"
+			],
+			dawn: [
+				"polni_mysice",
+				"divoky_kanec",
+				"lesni_pytlak",
+				"cerny_vlkodlak",
+				"carodejnice_koste"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "divoky_kanec",
+				name: "Divoký kanec",
+				icon: "🐗",
+				role: "Zuřivý lesní běžec s kly"
+			},
+			{
+				id: "cerny_vlkodlak",
+				name: "Černý vlkodlak",
+				icon: "🐺",
+				role: "Rychlý noční lovec z hvozdu"
+			},
+			{
+				id: "mlzny_prizrak",
+				name: "Mlžný přízrak",
+				icon: "🌫️",
+				role: "Beztvarý vznášející se mini-boss"
+			},
+			{
+				id: "cerny_myslivec",
+				name: "Černý myslivec",
+				icon: "🏹",
+				role: "Prokletý lovec s černou kuší"
+			},
+			{
+				id: "kanec_knour",
+				name: "Divočák Kňour",
+				icon: "🐗",
+				role: "Nezastavitelný vládce černé zvěře"
+			}
+		],
+		bossMechanic: {
+			label: "Uhlířský milíř",
+			description: "Přistup k milíři v hvozdu a stiskni [E] pro přiložení dříví – rozžhavené uhlíky spálí okolní běsy a kouř rozežene nepřátelské hejno!",
+			cadenceSeconds: 20
+		}
+	},
+	18: {
+		id: 18,
+		name: "19. Prosinec v Hrusicích – Mikulášská obchůzka a sněhové závěje",
+		shortTitle: "Mikulášská obchůzka",
+		subtitle: "Koledníci na zasněžené návsi, adventní věnec a hrozivý Čert Richter s řetězem",
+		theme: "st_nicholas_procession",
+		season: "winter",
+		icon: "🎅",
+		badge: "19. Úroveň",
+		isNightLevel: false,
+		description: "Na Hrusice napadl čistý bílý ladovský sníh! Po návsi chodí Mikuláš s andělem a koledníky, ale z pekelných děr vylézá rozpustilý Čert s pytlem a obří Čert Richter s řetězy. Přistup k lípě na návsi a zažehni adventní svíci [E] pro posvátnou ochranu před pekelníky!",
+		lore: "V předvečer svatého Mikuláše obchází hrusická chasa v maskách chalupy. Děti přednášejí básničky a dostávají křížaly a perníčky. Jenže když se setmí, praví pekelní čerti se vmísí mezi maškary a začnou trestat všechny hříšníky.",
+		unlockRequirementText: "Odemkne se po poražení divočáka Kňoura v 18. úrovni",
+		skyColor: "#F1F5F9",
+		groundColor: "#E2E8F0",
+		ambientTint: "rgba(226, 232, 240, 0.15)",
+		weatherEffect: "snow",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"snowman",
+			"advent_wreath"
+		],
+		arena: {
+			id: "prosinec_zima",
+			name: "Zasněžená prosincová náves",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "cert_s_pytlem",
+			name: "👹 Pekelný čert s pytlem",
+			warning: "👹 POZOR: ZE ZÁVĚJE VYSKOČIL ČERT S PYTLEM NA NEPOSLUŠNÉ KOLEDNÍKY!",
+			time: 85,
+			kills: 140,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "maskarni_kozel",
+			name: "🐐 Kolednický maškarní kozel",
+			warning: "🐐 POZOR: PO ZASNĚŽENÉ NÁVSI TRKÁ ROZDIVOČELÝ MAŠKARNÍ KOZEL!",
+			time: 185,
+			kills: 320,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "mikulassky_cert",
+			name: "🔥 Mikulášský čert Richter",
+			warning: "🔥 PEKLO SE OTEVŘELO! NA ZASNĚŽENOU NÁVES VLÍTNUL ČERT RICHTER S ROZPÁLENÝM ŘETĚZEM! 🔥",
+			time: 300,
+			kills: 480,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"tajici_snehulak",
+				"drab",
+				"vrana"
+			],
+			afternoon: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"sazovy_rarach",
+				"drab",
+				"vrana"
+			],
+			dusk: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"sazovy_rarach",
+				"pekelny_cert",
+				"drab",
+				"vrana"
+			],
+			night: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"sazovy_rarach",
+				"pekelny_cert",
+				"drab",
+				"vrana"
+			],
+			midnight: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"sazovy_rarach",
+				"pekelny_cert",
+				"drab",
+				"vrana"
+			],
+			dawn: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"certik",
+				"tajici_snehulak",
+				"drab",
+				"vrana"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "ledovy_rampousik",
+				name: "Ledový rampouch",
+				icon: "❄️",
+				role: "Drobné skákající ledové střepy"
+			},
+			{
+				id: "snehova_jezinka",
+				name: "Sněhová jezinka",
+				icon: "❄️",
+				role: "Zimní přízrak tančící v závějích"
+			},
+			{
+				id: "cert_s_pytlem",
+				name: "Čert s pytlem",
+				icon: "👹",
+				role: "Hbitý mini-boss s pytlem na zlobivé koledníky"
+			},
+			{
+				id: "maskarni_kozel",
+				name: "Maškarní kozel",
+				icon: "🐐",
+				role: "Trkající masopustní mezi-boss"
+			},
+			{
+				id: "mikulassky_cert",
+				name: "Čert Richter",
+				icon: "🔥",
+				role: "Obří chlupatý vládce pekelných maškar"
+			}
+		],
+		bossMechanic: {
+			label: "Adventní věnec na návsi",
+			description: "Přistup k návesní lípě a stiskni [E] pro zažehnutí adventní svíce – zlaté posvátné světlo zažene čerty a dodá posilu!",
+			cadenceSeconds: 20
+		}
+	},
+	19: {
+		id: 19,
+		name: "20. Prosinec v Hrusicích – Štědrovečerní noc a Král Mrazík",
+		shortTitle: "Štědrovečerní noc",
+		subtitle: "Zvonění hrusického kostela, tichá vánice a finální souboj s Králem Mrazíkem",
+		theme: "christmas_eve_miracle",
+		season: "winter",
+		icon: "⭐",
+		badge: "20. Úroveň",
+		isNightLevel: true,
+		description: "Štědrovečerní tichá noc nad Hrusicemi. Okna chalup svítí zlatým světlem, z kostela sv. Mikuláše se nese slavnostní zvonění, ale nad zasněženým krajem se vzpíná obří vánice a sestupuje sám Vládce zimní noci Král Mrazík! Přistup ke kostelu a rozezvuč zvon [E] k omráčení všech běsů!",
+		lore: "Na Štědrý večer drží všichni půst, aby spatřili zlaté prasátko. Po večeři jdou všichni Hrusičtí na půlnoční mši do kostela sv. Mikuláše. V tuto posvátnou noc však zima ukazuje svou největší moc a lovec musí obhájit vesnici před samotným vládcem mrazu.",
+		unlockRequirementText: "Odemkne se po poražení čerta Richtera v 19. úrovni",
+		skyColor: "#0B132B",
+		nightSkyColor: "#030712",
+		groundColor: "#CBD5E1",
+		ambientTint: "rgba(147, 197, 253, 0.35)",
+		weatherEffect: "blizzard",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"christmas_tree",
+			"church_bell"
+		],
+		arena: {
+			id: "prosinec_zima",
+			name: "Štědrovečerní zasněžená aréna",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "mraziva_sova",
+			name: "🦉 Noční mrazivá sova",
+			warning: "🦉 POZOR: Z KOSTELNÍ VĚŽE SE SNÁŠÍ OBŘÍ BÍLÁ MRAZIVÁ SOVA!",
+			time: 85,
+			kills: 145,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "jezdec_meluziny",
+			name: "🌪️ Zimní jezdec Meluzíny",
+			warning: "🌪️ POZOR: Z VÁNICE VYJÍŽDÍ LEDOVÝ JEZDEC MELUZÍNY!",
+			time: 185,
+			kills: 330,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "kral_mrazik",
+			name: "👑 Vládce zimní noci Král Mrazík",
+			warning: "👑 NEBE ZMRAZILA POLÁRNÍ ZÁŘE! PŘICHÁZÍ SAMOTNÝ VLÁDCE ZIMNÍ NOCI KRÁL MRAZÍK! 👑",
+			time: 300,
+			kills: 500,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"meluzina"
+			],
+			afternoon: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"meluzina"
+			],
+			dusk: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"kostlivec_kosa",
+				"meluzina"
+			],
+			night: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"kostlivec_kosa",
+				"nocni_mura",
+				"meluzina"
+			],
+			midnight: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"kostlivec_kosa",
+				"nocni_mura",
+				"hrobnik",
+				"meluzina"
+			],
+			dawn: [
+				"ledovy_rampousik",
+				"snehova_jezinka",
+				"mrazik",
+				"severak",
+				"mrazivy_obr",
+				"meluzina"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "ledovy_rampousik",
+				name: "Ledový rampouch",
+				icon: "❄️",
+				role: "Rychlé hejno ledových krystalků"
+			},
+			{
+				id: "snehova_jezinka",
+				name: "Sněhová jezinka",
+				icon: "❄️",
+				role: "Zimní víla ve sněhových závějích"
+			},
+			{
+				id: "mraziva_sova",
+				name: "Mrazivá sova",
+				icon: "🦉",
+				role: "Tichý noční letec a první mini-boss"
+			},
+			{
+				id: "jezdec_meluziny",
+				name: "Jezdec Meluzíny",
+				icon: "🌪️",
+				role: "Bouřlivý větrný mezi-boss ve vánici"
+			},
+			{
+				id: "kral_mrazik",
+				name: "Král Mrazík",
+				icon: "👑",
+				role: "Vele-boss celého roku a vládce ledového království"
+			}
+		],
+		bossMechanic: {
+			label: "Štědrovečerní zvon sv. Mikuláše",
+			description: "Přistup ke kostelu sv. Mikuláše a stiskni [E] pro rozeznění štědrovečerního zvonu – mohutná rázová vlna omráčí všechny běsy a rozzáří nebe!",
+			cadenceSeconds: 20
+		}
+	},
+	20: {
+		id: 20,
+		name: "21. Leden v Hrusicích – Tříkrálová koleda a sníh",
+		shortTitle: "Tříkrálová koleda",
+		subtitle: "Tříkrálový průvod na návsi, stavění sněhuláků a vládce lednových vánic",
+		theme: "january_frost",
+		season: "winter",
+		icon: "⛄",
+		badge: "21. Úroveň",
+		isNightLevel: false,
+		description: "Na hrusickou náves napadly poctivé lednové závěje. Děti staví obří sněhuláky a po chalupách obchází tříkrálový průvod. Ale z mrazivých polí se valí divoká vánice!",
+		lore: "V lednu mrzne, až praští. Hospodáři sedí u kamen a venku se prohání splašení sáňkaři i zimní běsi pod velením Vládce chumelenice.",
+		unlockRequirementText: "Odemkne se po přečkání štědrovečerní noci ve 20. úrovni",
+		skyColor: "#E2E8F0",
+		nightSkyColor: "#94A3B8",
+		groundColor: "#F8FAFC",
+		ambientTint: "rgba(226, 232, 240, 0.25)",
+		weatherEffect: "snow",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"haystack",
+			"wooden_cart"
+		],
+		arena: {
+			id: "lednova_zavej",
+			name: "Lednová zasněžená náves a rybník",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "obri_snehulak",
+			name: "⛄ Obří sněhulák z návsi",
+			warning: "⛄ POZOR: ZE SNĚHOVÝCH ZÁVĚJÍ POVSTAL OBŘÍ SNĚHULÁK S HRNCEM NA HLAVĚ!",
+			time: 85,
+			kills: 140,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "trikralovy_jezdec",
+			name: "👑 Tříkrálový jezdec",
+			warning: "👑 POZOR: SNĚHEM CVÁLÁ TŘÍKRÁLOVÝ JEZDEC SE ZÁŘÍCÍ HVĚZDOU!",
+			time: 185,
+			kills: 320,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "vladce_chumelenice",
+			name: "❄️ Vládce chumelenice",
+			warning: "❄️ NEBE ZAHALILA BÍLÁ TMA! SESTUPUJE VLÁDCE LEDNOVÝCH CHUMELENIC! ❄️",
+			time: 300,
+			kills: 480,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			],
+			afternoon: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			],
+			dusk: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			],
+			night: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			],
+			midnight: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			],
+			dawn: [
+				"zimni_vrabec",
+				"kluk_na_sankach",
+				"ledovy_skritek",
+				"trikralovy_kolednik",
+				"chumelenice"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "zimni_vrabec",
+				name: "Zimní vrabčák",
+				icon: "🐦",
+				role: "Rychlý lehký letec v hejnech"
+			},
+			{
+				id: "kluk_na_sankach",
+				name: "Kluk na saních",
+				icon: "🛷",
+				role: "Splašený těžký sáňkař řítící se sněhem"
+			},
+			{
+				id: "obri_snehulak",
+				name: "Obří sněhulák",
+				icon: "⛄",
+				role: "První mohutný mini-boss"
+			},
+			{
+				id: "trikralovy_jezdec",
+				name: "Tříkrálový jezdec",
+				icon: "👑",
+				role: "Jezdecký mezi-boss se zlatou hvězdou"
+			},
+			{
+				id: "vladce_chumelenice",
+				name: "Vládce chumelenice",
+				icon: "❄️",
+				role: "Vele-boss lednových mrazů a bílé tmy"
+			}
+		],
+		bossMechanic: {
+			label: "⛄ Postavení obranného sněhuláka na návsi",
+			description: "Přistup ke středu návsi a stiskni [E] pro postavení sněhuláka – rázová vlna odrazí běsy a vyléčí lovce!",
+			cadenceSeconds: 15
+		}
+	},
+	21: {
+		id: 21,
+		name: "22. Leden v Hrusicích – Tříkrálová noc a perchta",
+		shortTitle: "Tříkrálová noc",
+		subtitle: "Ztichlá lednová fara, svěcená křída K+M+B a šeredná Perchta s nožem",
+		theme: "january_frost",
+		season: "winter",
+		icon: "🗡️",
+		badge: "22. Úroveň",
+		isNightLevel: true,
+		description: "Tříkrálová noc přikryla Hrusice třeskutým mrazem. Po staveních obchází noční děs – strašlivá Perchta v bílé roušce s ostrým nožem, která páře břicha všem, kdo porušili půst!",
+		lore: "Za hluboké lednové noci se nikdo neodváží ven bez svěcené křídy K+M+B. Odemkněte ochranu fary a čelte noční můře v podobě Šeredné Perchty s nožem!",
+		unlockRequirementText: "Odemkne se po poražení Vládce chumelenice ve 21. úrovni",
+		skyColor: "#0F172A",
+		nightSkyColor: "#020617",
+		groundColor: "#1E293B",
+		ambientTint: "rgba(15, 23, 42, 0.65)",
+		weatherEffect: "blizzard",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"will_o_wisp",
+			"kaca"
+		],
+		arena: {
+			id: "lednova_zavej",
+			name: "Lednová noční vánice u fary",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "ledova_klekanice",
+			name: "🔔 Ledová klekánice",
+			warning: "🔔 POZOR: Z NOČNÍ MLHY SE OZÝVÁ LEDOVÝ ZVON ŠEDIVÉ KLEKÁNICE!",
+			time: 85,
+			kills: 150,
+			multiplier: 1.0
+		},
+		midBoss: {
+			id: "kostlivec_s_kosou",
+			name: "💀 Mrazivý kostlivec s kosou",
+			warning: "💀 POZOR: Z HŘBITOVNÍ ZÁVĚJE VYSTUPUJE ZIMNÍ SMRTKA S KOSOU!",
+			time: 185,
+			kills: 340,
+			multiplier: 1.0
+		},
+		finalBoss: {
+			id: "perchta_s_nozem",
+			name: "🔪 Šeredná Perchta s nožem",
+			warning: "🔪 PŮLNOČNÍ ZVON ODTIKL! PŘICHÁZÍ DĚSIVÁ ŠEREDNÁ PERCHTA S NOŽEM A NŮŽKAMI! 🔪",
+			time: 300,
+			kills: 520,
+			multiplier: 1.0
+		},
+		spawnPools: {
+			noon: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			],
+			afternoon: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			],
+			dusk: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			],
+			night: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			],
+			midnight: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			],
+			dawn: [
+				"zimni_vrabec",
+				"nocni_zavejnik",
+				"mrazivy_havran",
+				"chumelenice",
+				"ledovy_skritek"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "mrazivy_havran",
+				name: "Mrazivý havran",
+				icon: "🦅",
+				role: "Rychlý dravý letec s nálety"
+			},
+			{
+				id: "nocni_zavejnik",
+				name: "Noční závějník",
+				icon: "❄️",
+				role: "Těžký sněhový běs s mrazivým krokem"
+			},
+			{
+				id: "ledova_klekanice",
+				name: "Ledová klekánice",
+				icon: "🔔",
+				role: "Noční mini-boss s mrazivým zvonem"
+			},
+			{
+				id: "kostlivec_s_kosou",
+				name: "Kostlivec s kosou",
+				icon: "💀",
+				role: "Zimní mezi-boss se sečnou kosou"
+			},
+			{
+				id: "perchta_s_nozem",
+				name: "Perchta s nožem",
+				icon: "🔪",
+				role: "Kultovní vele-boss tříkrálové noci s obřím tesákem"
+			}
+		],
+		bossMechanic: {
+			label: "✍️ Posvěcení dveří křídou K+M+B",
+			description: "Přistup ke dveřím fary a stiskni [E] pro posvěcení křídou K+M+B – posvátná aura zažene chlad a omráčí všechna nečistá strašidla!",
+			cadenceSeconds: 15
+		}
+	},
+	22: {
+		id: 22,
+		name: "23. Únor v Hrusicích – Masopustní průvod a koblihy",
+		shortTitle: "Masopustní průvod",
+		subtitle: "Veselý masopustní rej na návsi, smažení koblih v hospodě a Rychtář maškar",
+		theme: "carnival_feast",
+		season: "winter",
+		icon: "🎭",
+		badge: "23. Úroveň",
+		isNightLevel: false,
+		description: "Na zasněžené hrusické návsi vrcholí masopustní veselí! Průvod pestrých masek v čele s laufrem a bábou s nůší obchází stavení. U hospody voní čerstvé sádlové koblihy a celému reji velí přísný Rychtář maškar.",
+		lore: "Masopust držíme, nic se nebojíme! Hráč se zapojí do tance maškar, smaží v hostinci horké koblihy pro posilnění a čelí bujarému náporu masopustních figur.",
+		unlockRequirementText: "Odemkne se po poražení Šeredné Perchty s nožem ve 22. úrovni",
+		skyColor: "#E2E8F0",
+		nightSkyColor: "#94A3B8",
+		groundColor: "#F1F5F9",
+		ambientTint: "rgba(255, 248, 220, 0.15)",
+		weatherEffect: "snow",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"snowman",
+			"fence"
+		],
+		arena: {
+			id: "unorova_naves",
+			name: "Masopustní zasněžená náves",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "masopustni_medved",
+			name: "Masopustní medvěd",
+			spawnTime: 85,
+			description: "Huňatý medvěd vedený medvědářem s velkým zvoncem"
+		},
+		midBoss: {
+			id: "slamennik_obr",
+			name: "Obří slaměník",
+			spawnTime: 185,
+			description: "Vysoký oživlý panák z pšeničné slámy s cepem"
+		},
+		finalBoss: {
+			id: "rychtar_masek",
+			name: "Rychtář maškar",
+			spawnTime: 300,
+			description: "Hrdý vůdce masopustu s právem a glejtem"
+		},
+		spawnPools: {
+			noon: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			],
+			afternoon: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			],
+			dusk: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			],
+			night: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			],
+			midnight: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			],
+			dawn: [
+				"masopustni_kominik",
+				"baba_s_nusi",
+				"masopustni_krasojezdec",
+				"masopustni_laufr",
+				"koblihovy_rarach"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "masopustni_laufr",
+				name: "Masopustní Laufr",
+				icon: "🏃",
+				role: "Rychlý běžec s bičíkem"
+			},
+			{
+				id: "baba_s_nusi",
+				name: "Bába s nůší",
+				icon: "👵",
+				role: "Těžká tancující maškara s nůší"
+			},
+			{
+				id: "masopustni_medved",
+				name: "Masopustní medvěd",
+				icon: "🐻",
+				role: "Hromotluk s medvědářem jako mini-boss"
+			},
+			{
+				id: "slamennik_obr",
+				name: "Obří slaměník",
+				icon: "🌾",
+				role: "Slaměný mezi-boss rozmetající stébla"
+			},
+			{
+				id: "rychtar_masek",
+				name: "Rychtář maškar",
+				icon: "👑",
+				role: "Vele-boss s masopustním glejtem a právem"
+			}
+		],
+		bossMechanic: {
+			label: "🍩 Smažení masopustních koblih v hostinci",
+			description: "Přistup k hostinci U Cikánů a stiskni [E] pro usmažení čerstvých koblih – vyléčí kuráž a udělí rychlostní bonus!",
+			cadenceSeconds: 15
+		}
+	},
+	23: {
+		id: 23,
+		name: "24. Únor v Hrusicích – Masopustní rej a pochovávání basy",
+		shortTitle: "Masopustní rej a basa",
+		subtitle: "Půlnoční smuteční průvod, pochovávání basy u márnice a samotný Bakchus",
+		theme: "carnival_night",
+		season: "winter",
+		icon: "🎻",
+		badge: "24. Úroveň",
+		isNightLevel: true,
+		description: "Úderem půlnoci utichá veselí a nastává obřad pochovávání basy. Z potemnělých koutů vystupují smuteční maškary, kostlivci a sám Bakchus s pivním soudkem, který se odmítá vzdát vlády před nadcházejícím půstem!",
+		lore: "Konec masopustu, muzika musí ztichnout! U márnice zapalte smolné louče, vykonejte symbolický pohřeb basy a přemozte Bakcha pro završení celoročního putování.",
+		unlockRequirementText: "Odemkne se po poražení Rychtáře maškar ve 23. úrovni",
+		skyColor: "#0F172A",
+		nightSkyColor: "#020617",
+		groundColor: "#1E293B",
+		ambientTint: "rgba(15, 23, 42, 0.70)",
+		weatherEffect: "snow",
+		decorTypes: [
+			"cottage",
+			"tree",
+			"rock",
+			"will_o_wisp",
+			"kaca"
+		],
+		arena: {
+			id: "unorova_naves",
+			name: "Noční smuteční náves u márnice",
+			layout: "asymmetric_poi",
+			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
+		},
+		miniBoss: {
+			id: "nocni_kobold",
+			name: "Noční kobold",
+			spawnTime: 85,
+			description: "Skřet vylézající z pivovarských sklepů"
+		},
+		midBoss: {
+			id: "umrlec_basista",
+			name: "Umrlec basista",
+			spawnTime: 185,
+			description: "Kostlivec se smyčcem a kornoutem ze staré márnice"
+		},
+		finalBoss: {
+			id: "bakchus_s_pivnim_soudkem",
+			name: "Bakchus s pivním soudkem",
+			spawnTime: 300,
+			description: "Nespoutaný bůh masopustního veselí a piva na sudu"
+		},
+		spawnPools: {
+			noon: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			],
+			afternoon: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			],
+			dusk: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			],
+			night: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			],
+			midnight: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			],
+			dawn: [
+				"plivnik_uhlik",
+				"masopustni_basa",
+				"smutecni_maskara",
+				"nocni_smrtak",
+				"mrazivy_havran"
+			]
+		},
+		keyEnemies: [
+			{
+				id: "nocni_smrtak",
+				name: "Noční Smrťák",
+				icon: "💀",
+				role: "Smuteční maškara s dřevěnou kosou"
+			},
+			{
+				id: "masopustni_basa",
+				name: "Pochovaná basa",
+				icon: "🎻",
+				role: "Těžká oživlá basa s dunivým tónem"
+			},
+			{
+				id: "nocni_kobold",
+				name: "Noční kobold",
+				icon: "👺",
+				role: "Noční mini-boss ze sklepů"
+			},
+			{
+				id: "umrlec_basista",
+				name: "Umrlec basista",
+				icon: "☠️",
+				role: "Kostlivý mezi-boss se smyčcem"
+			},
+			{
+				id: "bakchus_s_pivnim_soudkem",
+				name: "Bakchus s pivním soudkem",
+				icon: "🍺",
+				role: "Vrcholný vele-boss celého roku sedící na pivním sudu"
+			}
+		],
+		bossMechanic: {
+			label: "🎻 Pochování basy a zapálení loučí",
+			description: "Přistup k márnici a stiskni [E] pro zapálení loučí a symbolický pohřeb basy – mocná rázová vlna ochromí a zažene noční běsy!",
+			cadenceSeconds: 15
+		}
 	}
 };
 function isLevelUnlocked(levelId: number, meta: any) {

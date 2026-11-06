@@ -85,15 +85,15 @@ function getCurrentDayPhase(seconds: number, levelId?: number) {
 		if (seconds < 150) return DAY_PHASES[0];
 		return DAY_PHASES[1];
 	}
-	if (levelId === 6 || levelId === 8 || levelId === 10 || levelId === 12 || levelId === 14) {
-		// 7. úroveň (Červen), 9. úroveň (Červencový den), 11. úroveň (Srpnový den), 13. úroveň (Zářijové posvícení) a 15. úroveň (Říjnová drakiáda, 5 minut / 300 s): Poledne (0–120 s), Odpoledne (120–220 s), Podvečer (220–300 s), Kuropění (300 s+)
+	if (levelId === 6 || levelId === 8 || levelId === 10 || levelId === 12 || levelId === 14 || levelId === 16 || levelId === 18 || levelId === 20 || levelId === 22) {
+		// 7., 9., 11., 13., 15., 17. (Listopadový den), 19. (Prosincový den), 21. (Lednový den) a 23. (Únorový den) úroveň: Poledne (0–120 s), Odpoledne (120–220 s), Podvečer (220–300 s), Kuropění (300 s+)
 		if (seconds < 120) return DAY_PHASES[0];
 		if (seconds < 220) return DAY_PHASES[1];
 		if (seconds < 300) return DAY_PHASES[2];
 		return DAY_PHASES[5];
 	}
-	if (levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15) {
-		// 2., 4., 6., 8., 10., 12., 14. a 16. úroveň (Noční výpravy, 5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
+	if (levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15 || levelId === 17 || levelId === 19 || levelId === 21 || levelId === 23) {
+		// Noční výpravy (5 minut / 300 s): tmavé fáze rozprostřené do 300 s (Soumrak 0–100 s, Hluboká noc 100–200 s, Půlnoc 200–300 s, Kuropění 300 s+)
 		if (seconds < 100) return DAY_PHASES[2];
 		if (seconds < 200) return DAY_PHASES[3];
 		if (seconds < 300) return DAY_PHASES[4];
@@ -213,7 +213,52 @@ var ENEMY_POINTS = {
 	drak_vetrnik: 10500,
 	dusickova_bludicka: 2050,
 	cert_rybnikar: 2950,
-	vele_stika: 11800
+	vele_stika: 11800,
+	svatomartinska_husa: 95,
+	divoky_kanec: 140,
+	lesni_pytlak: 115,
+	kralovska_husa: 2150,
+	martinsky_jezdec: 3100,
+	listopadovy_mrazivec: 12200,
+	mlzny_prizrak: 2200,
+	cerny_myslivec: 3200,
+	kanec_knour: 12600,
+	ledovy_rampousik: 28,
+	snehova_jezinka: 110,
+	cert_s_pytlem: 2300,
+	maskarni_kozel: 3350,
+	mikulassky_cert: 13200,
+	mraziva_sova: 2400,
+	jezdec_meluziny: 3500,
+	kral_mrazik: 14000,
+	zimni_vrabec: 26,
+	kluk_na_sankach: 125,
+	ledovy_skritek: 95,
+	trikralovy_kolednik: 135,
+	chumelenice: 105,
+	nocni_zavejnik: 155,
+	mrazivy_havran: 110,
+	obri_snehulak: 2450,
+	trikralovy_jezdec: 3600,
+	vladce_chumelenice: 14500,
+	ledova_klekanice: 2650,
+	kostlivec_s_kosou: 3800,
+	perchta_s_nozem: 15500,
+	masopustni_laufr: 130,
+	baba_s_nusi: 165,
+	masopustni_kominik: 90,
+	koblihovy_rarach: 115,
+	masopustni_krasojezdec: 145,
+	masopustni_medved: 2700,
+	slamennik_obr: 3900,
+	rychtar_masek: 16000,
+	nocni_smrtak: 175,
+	smutecni_maskara: 140,
+	masopustni_basa: 180,
+	plivnik_uhlik: 120,
+	nocni_kobold: 2850,
+	umrlec_basista: 4100,
+	bakchus_s_pivnim_soudkem: 16800
 };
 var DROP_THRESHOLDS = {
 	chest: 29400,

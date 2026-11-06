@@ -15,9 +15,9 @@ import {
 describe('Level 1: Předjaří v Hrusicích (Tutorial / Prologue)', () => {
   it('numbers player-facing game stages sequentially from 1 without changing internal IDs', () => {
     expect(Object.values(GAME_LEVELS).map((level) => Number(level.name.match(/^\d+/)?.[0])))
-      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+      .toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]);
     expect(GAME_LEVELS[0].id).toBe(0);
-    expect(GAME_LEVELS[15].id).toBe(15);
+    expect(GAME_LEVELS[23].id).toBe(23);
   });
 
   it('defines valid Level 0 structure (Denní tání) with correct theme and bosses', () => {

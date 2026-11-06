@@ -58,6 +58,26 @@ import {
   isInsideRijenPoi,
 } from '../data/rijenArena';
 import {
+  getListopadPois,
+  getListopadPoisList,
+  isInsideListopadPoi,
+} from '../data/listopadArena';
+import {
+  getProsinecPois,
+  getProsinecPoisList,
+  isInsideProsinecPoi,
+} from '../data/prosinecArena';
+import {
+  getLedenPois,
+  getLedenPoisList,
+  isInsideLedenPoi,
+} from '../data/ledenArena';
+import {
+  getUnorPois,
+  getUnorPoisList,
+  isInsideUnorPoi,
+} from '../data/unorArena';
+import {
   drawSvatojanskaBylina,
   drawSvatojanskyPoklad,
 } from './cervenSvgLandscape';
@@ -800,6 +820,274 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? rijenPois.forest : undefined);
       const bannerText = engine.rijenActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1i. Level 16 & 17 (Stage 17: Posvícenská husa & Stage 18: Mlhavá noc): POI hints & visual rings
+  if (engine.activeLevelId === 16 || engine.activeLevelId === 17) {
+    const isListopadNight = engine.activeLevelId === 17;
+    const listopadPois = getListopadPois(isListopadNight);
+    const listopadPoiList = getListopadPoisList(isListopadNight);
+
+    if (player) {
+      let nearbyPoi: (typeof listopadPoiList)[number] | undefined;
+      for (let i = 0; i < listopadPoiList.length; i++) {
+        if (isInsideListopadPoi(player.x, player.y, listopadPoiList[i], 30)) {
+          nearbyPoi = listopadPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? listopadPois.forest : undefined);
+      const bannerText = engine.listopadActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1j. Level 18 & 19 (Stage 19: Adventní čas & Stage 20: Štědrovečerní noc): POI hints & visual rings
+  if (engine.activeLevelId === 18 || engine.activeLevelId === 19) {
+    const isProsinecNight = engine.activeLevelId === 19;
+    const prosinecPois = getProsinecPois(isProsinecNight);
+    const prosinecPoiList = getProsinecPoisList(isProsinecNight);
+
+    // Stage 19: Adventní věnec warm candle aura
+    const advent = engine.prosinec?.advent;
+    if (!isProsinecNight && advent && advent.lightTimer > 0 && isInView(advent.x, advent.y, advent.radius + 220, camera)) {
+      ctx.save();
+      ctx.translate(advent.x, advent.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 5);
+      ctx.fillStyle = `rgba(253, 224, 71, ${0.16 + pulse * 0.12})`;
+      ctx.strokeStyle = '#FDE047';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 420, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Stage 20: Štědrovečerní zvon chime ripple
+    const zvon = engine.prosinec?.zvon;
+    if (isProsinecNight && zvon && zvon.chimeTimer > 0 && isInView(zvon.x, zvon.y, zvon.radius + 250, camera)) {
+      ctx.save();
+      ctx.translate(zvon.x, zvon.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 4);
+      ctx.fillStyle = `rgba(186, 230, 253, ${0.18 + pulse * 0.14})`;
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 500, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof prosinecPoiList)[number] | undefined;
+      for (let i = 0; i < prosinecPoiList.length; i++) {
+        if (isInsideProsinecPoi(player.x, player.y, prosinecPoiList[i], 30)) {
+          nearbyPoi = prosinecPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? prosinecPois.forest : undefined);
+      const bannerText = engine.prosinecActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1k. Level 20 & 21 (Stage 21: Tříkrálová koleda & Stage 22: Tříkrálová noc a perchta): POI hints & visual rings
+  if (engine.activeLevelId === 20 || engine.activeLevelId === 21) {
+    const isLedenNight = engine.activeLevelId === 21;
+    const ledenPois = getLedenPois(isLedenNight);
+    const ledenPoiList = getLedenPoisList(isLedenNight);
+
+    // Stage 21: Sněhulák snow shield aura
+    const snehulak = engine.leden?.snehulak;
+    if (!isLedenNight && snehulak && snehulak.snowShieldTimer > 0 && isInView(snehulak.x, snehulak.y, snehulak.radius + 220, camera)) {
+      ctx.save();
+      ctx.translate(snehulak.x, snehulak.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 5);
+      ctx.fillStyle = `rgba(186, 230, 253, ${0.16 + pulse * 0.12})`;
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 420, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Stage 22: Tříkrálová fara holy aura
+    const fara = engine.leden?.fara;
+    if (isLedenNight && fara && fara.holyAuraTimer > 0 && isInView(fara.x, fara.y, fara.radius + 250, camera)) {
+      ctx.save();
+      ctx.translate(fara.x, fara.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 4);
+      ctx.fillStyle = `rgba(254, 240, 138, ${0.18 + pulse * 0.14})`;
+      ctx.strokeStyle = '#EAB308';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 500, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof ledenPoiList)[number] | undefined;
+      for (let i = 0; i < ledenPoiList.length; i++) {
+        if (isInsideLedenPoi(player.x, player.y, ledenPoiList[i], 30)) {
+          nearbyPoi = ledenPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? ledenPois.forest : undefined);
+      const bannerText = engine.ledenActivePoiPrompt || nearby?.title;
+      if (bannerText) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 248, 222, .94)';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(player.x - 240, player.y - 88, 480, 31, 8);
+        } else {
+          ctx.rect(player.x - 240, player.y - 88, 480, 31);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#472A16';
+        ctx.font = '900 12px Eczar, Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(bannerText, player.x, player.y - 72);
+        ctx.restore();
+      }
+    }
+  }
+
+  // 1l. Level 22 & 23 (Stage 23: Masopustní průvod & Stage 24: Masopustní rej a pochovávání basy): POI hints & visual rings
+  if (engine.activeLevelId === 22 || engine.activeLevelId === 23) {
+    const isUnorNight = engine.activeLevelId === 23;
+    const unorPois = getUnorPois(isUnorNight);
+    const unorPoiList = getUnorPoisList(isUnorNight);
+
+    // Stage 23: Koblihy frying aura
+    const koblihy = engine.unor?.koblihy;
+    if (!isUnorNight && koblihy && koblihy.speedBoostTimer > 0 && isInView(koblihy.x, koblihy.y, koblihy.radius + 220, camera)) {
+      ctx.save();
+      ctx.translate(koblihy.x, koblihy.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 5);
+      ctx.fillStyle = `rgba(245, 158, 11, ${0.16 + pulse * 0.12})`;
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 420, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // Stage 24: Pochovávání basy holy shockwave aura
+    const basa = engine.unor?.basa;
+    if (isUnorNight && basa && basa.shockwaveTimer > 0 && isInView(basa.x, basa.y, basa.radius + 260, camera)) {
+      ctx.save();
+      ctx.translate(basa.x, basa.y);
+      const pulse = 0.5 + 0.5 * Math.sin(uiTime * 4);
+      ctx.fillStyle = `rgba(254, 240, 138, ${0.18 + pulse * 0.14})`;
+      ctx.strokeStyle = '#EAB308';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 6]);
+      ctx.beginPath();
+      ctx.arc(0, 0, 520, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    if (player) {
+      let nearbyPoi: (typeof unorPoiList)[number] | undefined;
+      for (let i = 0; i < unorPoiList.length; i++) {
+        if (isInsideUnorPoi(player.x, player.y, unorPoiList[i], 30)) {
+          nearbyPoi = unorPoiList[i];
+          break;
+        }
+      }
+      const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
+      const nearby = nearbyPoi || (activeForest ? unorPois.forest : undefined);
+      const bannerText = engine.unorActivePoiPrompt || nearby?.title;
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';

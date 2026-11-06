@@ -1,8 +1,8 @@
 # Bubákov: Velký průvodce tvorbou výprav a malováním kraje
 > **Dokument**: `docs/STAGE_CREATION_GUIDE.md`  
-> **Verze**: 2.2 (Září 2026 – Aktualizováno pro 14 výprav a Pět pilířů ladovského kodexu)  
+> **Verze**: 2.3 (Prosinec 2026 – Aktualizováno pro 20 výprav a kompletní 12měsíční kalendářní cyklus)  
 > **Autoři**: Hrusický ponocný, rada starších a architekti Bubákova  
-> **Kánon**: `GLOSSARY.md`, ADRs `0001`–`0040`, Stages 1–14 (Březen až Září)
+> **Kánon**: `GLOSSARY.md`, ADRs `0001`–`0042`, Stages 1–20 (Březen až Prosinec)
 
 ---
 
@@ -20,7 +20,7 @@
          |_|____|_|
 ```
 
-Tento dokument představuje **vyčerpávající technickou a folklórní bibli** pro tvorbu nových hratelných výprav (**Výpravy**), sezónních krajů (**Kraje**) a bitevních polí (**Arény**) v **Bubákově**. Shrnuje zkušenosti nabyté při stavbě všech 14 úrovní (od březnového tání až po svatováclavskou podzimní noc) a slouží jako neprůstřelný návod pro budoucí měsíce (Říjen, Listopad, Prosinec a zimní cyklus).
+Tento dokument představuje **vyčerpávající technickou a folklórní bibli** pro tvorbu nových hratelných výprav (**Výpravy**), sezónních krajů (**Kraje**) a bitevních polí (**Arény**) v **Bubákově**. Shrnuje zkušenosti nabyté při stavbě všech 20 úrovní (od březnového tání přes posvícení až po štědrovečerní prosincový sníh) a slouží jako neprůstřelný návod pro správu, rozšiřování a zachování celého 12měsíčního kalendářního cyklu Hrusic.
 
 ---
 
@@ -65,6 +65,11 @@ Dříve než sáhneš do kódu, vryj si do paměti pět pilířů hrusického vk
 ### Pilíř IV: Systémová integrita, nulová alokace a paměťový rozpočet
 1. **Zákon dvojí parity (Headless Engine & Browser App — ADR 0037)**  
    Co se stane v `src/game/engine.ts`, musí se na vlas stejně odehrát v `src/App.tsx`. Pokud jablko spadne ze stromu v simulaci a v prohlížeči neudělá křup, Vitest zapláče a CI pipeline shoří popelem.
+   Každá aréna vyžaduje přesně **4 body parity v `src/App.tsx`**:
+   - (1) **Smyčka hráče** (`App.tsx`): detekce interakčního promptu `[E]`, chování vody/ledu (`getWaterEffect`), sezónní částice, `resolveObstacles(player, false)` a `clampToMarchArenaBounds(player, 28)`.
+   - (2) **Smyčka nepřátel** (`App.tsx`): vliv vody/ledu na monstra, `resolveObstacles(e, isFlyingEnemy)` a `clampToMarchArenaBounds(e, 28)`.
+   - (3) **Smyčka předmětů a dropů** (`App.tsx`): zařazení `engine.activeLevelId === X` do podmínky pro `clampToMarchArenaBounds(d, 28)` při pohybu i magnetickém sběru.
+   - (4) **Kolize Dědečka** (`App.tsx`): `resolveObstacles(engine.grandfather, false)` a `clampToMarchArenaBounds(engine.grandfather, 28)`.
 2. **Kruhový zásobník terénu (Zero-Allocation Ring Buffer)**  
    Veškerý dynamický *Zrádný terén* (kaluže povidel, louže tajícího sněhu, mlžná ložiska, rozsypané uhlíky) musí používat předalokované pole s pevným stropem (32–64 slotů). Je **přísně zakázáno** volat v herní smyčce `.push()`, `.splice()` nebo `.filter()`.
 3. **Škrcení plovoucích textů u plošných pastí (FCT Throttling — ADR 0016)**  
@@ -99,7 +104,7 @@ Kampaň Bubákova se řídí přísným třístupňovým modelem (**ADR 0036** a
            └── isNightLevel: true, měsíc, kvašové svícení, běsi, čarodějnice
 ```
 
-### 2.1 Velká tabulka výprav (Kánon 1. až 16. úrovně)
+### 2.1 Velká tabulka výprav (Kánon 1. až 24. úrovně – Celoroční cyklus 12 měsíců)
 
 | UI Úroveň | `GameLevelId` | Režim | Název výpravy (`name`) | Aréna ID | Signaturní mechanika [E] | MiniBoss (`85 s`) | MeziBoss (`185 s`) | VeleBoss (`300 s`) |
 | :--- | :---: | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -119,18 +124,26 @@ Kampaň Bubákova se řídí přísným třístupňovým modelem (**ADR 0036** a
 | **14. Úroveň** | `13` | Noc | Září v Hrusicích – Svatováclavská noc | `svatovaclavska_noc` | `[E] Zažehnout svatý oheň (Kostel)` | `bila_pani` | `mlynar` | `kvilici_meluzina` |
 | **15. Úroveň** | `14` | Den | Říjen v Hrusicích – Bramborová nať a drakiáda | `rijnova_drakiada` | `[E] Upéct bramboru (Ohníček na návsi)` | `kralovsky_havran` | `hastrman_podzimni` | `drak_vetrnik` |
 | **16. Úroveň** | `15` | Noc | Říjen v Hrusicích – Dušičková noc a výlov rybníka | `dusickova_noc` | `[E] Zažehnout dušičkovou svíci (Boží muka)` | `dusickova_bludicka` | `cert_rybnikar` | `vele_stika` |
+| **17. Úroveň** | `16` | Den | Listopad v Hrusicích – Svatomartinské posvícení | `listopadove_posviceni` | `[E] Upéct husu v pekáči (Hospoda Na Rychtě)` | `kralovska_husa` | `martinsky_jezdec` | `listopadovy_mrazivec` |
+| **18. Úroveň** | `17` | Noc | Listopad v Hrusicích – Listopadové mrazy a mlhy | `listopadove_posviceni` | `[E] Přiložit do milíře (Uhlířský milíř)` | `cerny_myslivec` | `kanec_knour` | `jezdec_meluziny` |
+| **19. Úroveň** | `18` | Den | Prosinec v Hrusicích – Adventní trh a svatý Mikuláš | `prosincovy_advent` | `[E] Zapálit adventní svíci (Adventní věnec na návsi)` | `cert_s_pytlem` | `mikulassky_cert` | `kral_mrazik` |
+| **20. Úroveň** | `19` | Noc | Prosinec v Hrusicích – Štědrovečerní noc a chlad | `prosincovy_advent` | `[E] Zazvonit na zvon (Zvonice sv. Mikuláše)` | `maskarni_kozel` | `mraziva_sova` | `kral_mrazik` |
+| **21. Úroveň** | `20` | Den | Leden v Hrusicích – Tříkrálová koleda a sníh | `lednova_zavej` | `[E] Postavit sněhuláka (Náves u kašny)` | `obri_snehulak` | `trikralovy_jezdec` | `vladce_chumelenice` |
+| **22. Úroveň** | `21` | Noc | Leden v Hrusicích – Tříkrálová noc a perchta | `lednova_zavej` | `[E] Napsat K+M+B svěcenou křídou (Dveře fary)` | `ledova_klekanice` | `kostlivec_s_kosou` | `perchta_s_nozem` |
+| **23. Úroveň** | `22` | Den | Únor v Hrusicích – Masopustní průvod a koblihy | `unorova_naves` | `[E] Smažit masopustní koblihy (Hostinec U Cikánů)` | `masopustni_medved` | `slamennik_obr` | `rychtar_masek` |
+| **24. Úroveň** | `23` | Noc | Únor v Hrusicích – Masopustní rej a pochovávání basy | `unorova_naves` | `[E] Pochovat basu a rozsvítit louče (Stará márnice)` | `nocni_kobold` | `umrlec_basista` | `bakchus_s_pivnim_soudkem` |
 
 ---
 
 ## 3. Celková mapa architektury a souborových vazeb
 
-Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a 16) vyžaduje přesný zásah do **9 vrstev systému**:
+Přidání nového měsíčního páru výprav (např. Listopad – úrovně 16 a 17, Prosinec – úrovně 18 a 19) vyžaduje přesný zásah do **9 vrstev systému**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 1. TYPY, FÁZE DNE A REGISTR VÝPRAV                                         │
-│    • src/types.ts              (Rozšíření unionu GameLevelId: ... | 14 | 15)│
-│    • src/data/levels.ts        (Záznamy GAME_LEVELS[14] a GAME_LEVELS[15])  │
+│    • src/types.ts              (Rozšíření unionu GameLevelId: ... | 20 | 21 | 22 | 23)│
+│    • src/data/levels.ts        (Záznamy GAME_LEVELS[16] až GAME_LEVELS[19]) │
 │    • src/constants.ts          (getCurrentDayPhase větve pro den a noc,     │
 │                                 rozpočtové body monster v ENEMY_POINTS)     │
 │    • src/data/levelUnlocks.ts  (LEVEL_ORDER, isLevelFullyUnlocked,          │
@@ -150,11 +163,13 @@ Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a
 │ 4. PROCEDURÁLNÍ KRAJINA, KVAŠOVÉ SVĚTLO & PLÁTNO                            │
 │    • src/render/<mesic>SvgLandscape.ts (Kreslení všech 10 prvků dekoru)     │
 │    • src/render/arenaRenderer.ts       (Barevná témata, ořezové poloměry    │
-│                                         3200px/560px a denní sluníčko)      │
-│    • src/render/renderWorldHazards.ts  (Kaluže povidel, mlha, oheň, jiskry) │
-│    • src/render/chunkCache.ts          (Registrace v isDynamicItem)         │
+│                                         3200px/560px v chunked i fallback   │
+│                                         průchodu a denní sluníčko)          │
+│    • src/render/renderWorldHazards.ts  (Sekce 1a–1j: kruhy dosahu POI       │
+│                                         a nápovědní banner aktivního POI)   │
+│    • src/render/chunkCache.ts          (Registrace prefixu v isDynamicItem) │
 │    • src/render/ladaRenderer.ts        (Směrování dekorací a spritů monster)│
-│    • src/render/bakedBubakAtlas.ts     (Předpečení pro GPU atlas)           │
+│    • src/render/bakedBubakAtlas.ts     (Předpečení pro GPU atlas monster)   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 5. ZÁKON DVOJÍ PARITY (SIMULACE & PROHLÍŽEČ — ADR 0037)                    │
 │    • src/game/engineState.ts   (Stavové rozhraní <mesic> a activePoiPrompt) │
@@ -164,15 +179,16 @@ Přidání nového měsíčního páru výprav (např. Říjen – úrovně 15 a
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 6. GPU ANIMACE, KATALOG & ARCHEKODY                                         │
 │    • src/components/gpu-animation/enemyCatalog.ts (GPU kůstky a katalogy)  │
-│    • src/data/runArchetypes.ts (Doporučené runové stavby pro daný měsíc)    │
+│    • src/data/runArchetypes.ts (RUN_ROZMARY[levelId] – přesně 2 kanonické   │
+│                                 rozmary pro každou novou úroveň)            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 7. TROFEJE, KNIŽNÍ SPREAD & DVOJJAZYČNÝ PŘEKLAD                             │
 │    • src/data/trophies.ts      (Trofeje za dokončení výpravy a mechaniky)   │
-│    • src/components/LadaStorybookSpread.tsx (Ex-libris viněta měsíce)       │
+│    • src/components/LadaStorybookSpread.tsx (Viněta a pin v MAP_SIGNPOSTS) │
 │    • src/i18n/locales/cs.ts & en.ts (Kompletní lokalizační klíče)          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │ 8. AUTOMATICKÉ AUDITY A VERIFIKAČNÍ TESTY                                   │
-│    • tests/allStagesAudit.test.ts          (Invariance všech 14+ úrovní)    │
+│    • tests/allStagesAudit.test.ts          (Invariance všech 20 úrovní)     │
 │    • tests/allStagesMapsAndSeasons.test.ts (Audit plátna, POI a stacku)     │
 │    • tests/level<id><Mesic>.test.ts        (Dedikovaná integrační sada)     │
 │    • tests/enemyFpsBenchmark.test.ts       (Rozpočet p95 < 16.7 ms)         │
@@ -544,6 +560,21 @@ pokud chybí 3200px limit!                   takže noc začíná v pravé poled
 * **Proč**: V `src/render/arenaRenderer.ts` v Pass 11 má pomocná funkce `isDaylightStage(levelId)` explicitní výčet denních úrovní.
 * **Náprava**: Přidej své nové denní ID do `isDaylightStage(levelId)`.
 
+### 9. Zmizení rozmarů a runového výběru (*The Missing Run Rozmar Trap*)
+* **Co se stalo**: Hráč vybral novou úroveň, ale hra spadla nebo nenabídla žádné runové modifikátory.
+* **Proč**: V `src/data/runArchetypes.ts` v záznamu `RUN_ROZMARY` chyběl klíč nového `levelId`.
+* **Náprava**: Vždy definuj přesně 2 kanonické rozmary s platnou hodnotou `formationBias` (`pincer`, `hammer_anvil`, `spiral`, `encirclement` apod.).
+
+### 10. Skrytý nápovědní banner POI (*The Ghost HUD Prompt Trap*)
+* **Co se stalo**: Hráč stál u aktivního POI a mohl stisknout `[E]`, ale v horní části obrazovky se nezobrazil žádný banner.
+* **Proč**: V `src/render/renderWorldHazards.ts` chyběla obsluha `engine.<mesic>ActivePoiPrompt` v sekcích 1a–1j.
+* **Náprava**: Přidej blok vykreslení banneru a aury pro daný měsíc do `renderWorldHazards.ts`.
+
+### 11. Zaseknuté dynamické POI v mezipaměti (*The Stale Chunk Cache Trap*)
+* **Co se stalo**: Animovaný oheň milíře nebo rotující prvky POI zamrzly a překreslovaly se rozmazaně.
+* **Proč**: V `src/render/chunkCache.ts` v metodě `isDynamicItem` chyběl prefix nového měsíce.
+* **Náprava**: Přidej `item.type.startsWith('<mesic>_')` do `isDynamicItem`.
+
 ---
 
 ## 10. Verifikace a spouštění testů
@@ -586,7 +617,10 @@ npm run build
 - [ ] **Sluníčko**: Denní úroveň je zapsána v `isDaylightStage` v `arenaRenderer.ts`.
 - [ ] **Dvojí parita**: Stav, překážky, klávesa [E], drop clampy a bossové zrcadleni 1:1 mezi `engine.ts` a `App.tsx`.
 - [ ] **Lokalizace**: České (`cs.ts`) i anglické (`en.ts`) texty doplněny pro úroveň, podtitul, mechaniku i všechna nová monstra a bosse.
-- [ ] **Kniha a trofeje**: Přidána trofej v `trophies.ts` a viněta v `LadaStorybookSpread.tsx`.
+- [ ] **Kniha a trofeje**: Přidána trofej v `trophies.ts`, viněta a pin v `MAP_SIGNPOSTS` v `LadaStorybookSpread.tsx`.
+- [ ] **Runové rozmary**: V `src/data/runArchetypes.ts` definovány přesně 2 rozmary s platným `formationBias`.
+- [ ] **Nápovědní banner**: V `src/render/renderWorldHazards.ts` integrován banner a vizuální kruh pro aktivní POI.
+- [ ] **Atlas a mezipaměť**: Monstra zapsána v `bakedBubakAtlas.ts` a prefix dekorací v `chunkCache.ts`.
 - [ ] **Zkouška ohněm**: Všechny testy v `vitest` i produkční `npm run build` hlásí zelenou!
 
 ---

@@ -9,6 +9,14 @@ import { ZARI_DECOR, getZariWaterEffect, ZARI_POIS } from '../src/data/zariArena
 import { drawZariDecoration } from '../src/render/zariSvgLandscape';
 import { RIJEN_DECOR, getRijenWaterEffect, RIJEN_POIS } from '../src/data/rijenArena';
 import { drawRijenDecoration } from '../src/render/rijenSvgLandscape';
+import { LISTOPAD_DECOR, getListopadWaterEffect, LISTOPAD_POIS } from '../src/data/listopadArena';
+import { drawListopadDecoration } from '../src/render/listopadSvgLandscape';
+import { PROSINEC_DECOR, getProsinecWaterEffect, PROSINEC_POIS } from '../src/data/prosinecArena';
+import { drawProsinecDecoration } from '../src/render/prosinecSvgLandscape';
+import { LEDEN_DECOR, getLedenWaterEffect, LEDEN_POIS } from '../src/data/ledenArena';
+import { drawLedenDecoration } from '../src/render/ledenSvgLandscape';
+import { UNOR_DECOR, getUnorWaterEffect, UNOR_POIS } from '../src/data/unorArena';
+import { drawUnorDecoration } from '../src/render/unorSvgLandscape';
 import { drawDubenSpringLandmark } from '../src/render/marchThawSvgLandscape';
 import { drawKvetenMayLandmark } from '../src/render/kvetenSvgLandscape';
 import { getCervenWaterEffect } from '../src/data/cervenArena';
@@ -75,6 +83,14 @@ describe('Seasonal Maps & Month Representation Audit (All 16 Stages)', () => {
       { id: 13, month: 'Září (Svatováclavská noc)', season: 'autumn', theme: 'wenceslas_night', isNight: true },
       { id: 14, month: 'Říjen (Bramborová nať a drakiáda)', season: 'autumn', theme: 'october_harvest', isNight: false },
       { id: 15, month: 'Říjen (Dušičková noc a výlov rybníka)', season: 'autumn', theme: 'all_souls_night', isNight: true },
+      { id: 16, month: 'Listopad (Svatomartinské posvícení)', season: 'autumn', theme: 'st_martin_feast', isNight: false },
+      { id: 17, month: 'Listopad (Lov v mlze)', season: 'autumn', theme: 'november_fog_hunt', isNight: true },
+      { id: 18, month: 'Prosinec (Mikulášská obchůzka)', season: 'winter', theme: 'st_nicholas_procession', isNight: false },
+      { id: 19, month: 'Prosinec (Štědrovečerní noc)', season: 'winter', theme: 'christmas_eve_miracle', isNight: true },
+      { id: 20, month: 'Leden (Tříkrálová koleda a sníh)', season: 'winter', theme: 'january_frost', isNight: false },
+      { id: 21, month: 'Leden (Tříkrálová noc a perchta)', season: 'winter', theme: 'january_frost', isNight: true },
+      { id: 22, month: 'Únor (Masopustní průvod a koblihy)', season: 'winter', theme: 'carnival_feast', isNight: false },
+      { id: 23, month: 'Únor (Masopustní rej a pochovávání basy)', season: 'winter', theme: 'carnival_night', isNight: true },
     ];
 
     for (const cfg of monthConfigs) {
@@ -274,7 +290,55 @@ describe('Seasonal Maps & Month Representation Audit (All 16 Stages)', () => {
     }
   });
 
-  it('verifies summer & autumn water physics in Stages 7–16 never carries winter ice floes and treats bridges safely', () => {
+  it('verifies Listopad (Stages 17 & 18) November landscape renders without canvas stack imbalances', () => {
+    for (const d of LISTOPAD_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawListopadDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawListopadDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies Prosinec (Stages 19 & 20) December winter landscape renders without canvas stack imbalances', () => {
+    for (const d of PROSINEC_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawProsinecDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawProsinecDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies Leden (Stages 21 & 22) January winter landscape renders without canvas stack imbalances', () => {
+    for (const d of LEDEN_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawLedenDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawLedenDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies Únor (Stages 23 & 24) February carnival landscape renders without canvas stack imbalances', () => {
+    for (const d of UNOR_DECOR) {
+      const ctx = createMockCtx();
+      expect(() => drawUnorDecoration(ctx, d, 2.0, false)).not.toThrow();
+      expect(ctx.getSaveDepth(), `Stack balance for ${d.type} (day)`).toBe(0);
+
+      const ctxNight = createMockCtx();
+      expect(() => drawUnorDecoration(ctxNight, d, 2.0, true)).not.toThrow();
+      expect(ctxNight.getSaveDepth(), `Stack balance for ${d.type} (night)`).toBe(0);
+    }
+  });
+
+  it('verifies summer, autumn & winter water physics in Stages 7–24 treats ice/bridges correctly', () => {
     // Test June water
     const juneBridge = getCervenWaterEffect(425, -455, 10);
     expect(juneBridge.inOpenWater).toBe(false);
@@ -314,10 +378,32 @@ describe('Seasonal Maps & Month Representation Audit (All 16 Stages)', () => {
 
     const octoberPond = getRijenWaterEffect(-725, 615, 14);
     expect(octoberPond.inOpenWater).toBe(true);
+
+    // Test November water
+    const novemberBridge = getListopadWaterEffect(475, 420, 16);
+    expect(novemberBridge.inOpenWater).toBe(false);
+
+    const novemberPond = getListopadWaterEffect(-725, 615, 16);
+    expect(novemberPond.inOpenWater).toBe(true);
+
+    // Test December frozen water
+    const decemberIce = getProsinecWaterEffect(-725, 615, 18);
+    expect(decemberIce.onIce).toBe(true);
+    expect(decemberIce.speedMult).toBeGreaterThan(1.0);
+
+    // Test January frozen water
+    const januaryIce = getLedenWaterEffect(-725, 615, 20);
+    expect(januaryIce.onIce).toBe(true);
+    expect(januaryIce.speedMult).toBeGreaterThan(1.0);
+
+    // Test February frozen water
+    const februaryIce = getUnorWaterEffect(-725, 615, 22);
+    expect(februaryIce.onIce).toBe(true);
+    expect(februaryIce.speedMult).toBeGreaterThan(1.0);
   });
 
-  it('verifies stage numbering and ordering: IDs 0..15, titles 1..16, and sequential unlock progression', () => {
-    for (let id = 0; id <= 15; id++) {
+  it('verifies stage numbering and ordering: IDs 0..23, titles 1..24, and sequential unlock progression', () => {
+    for (let id = 0; id <= 23; id++) {
       const level = GAME_LEVELS[id as keyof typeof GAME_LEVELS];
       expect(level.id).toBe(id);
       expect(level.name.startsWith(`${id + 1}.`), `Level ${id} name should start with '${id + 1}.'`).toBe(true);

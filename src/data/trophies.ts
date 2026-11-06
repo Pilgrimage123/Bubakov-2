@@ -447,6 +447,94 @@ var TROPHIES = [
 			cur: (meta.completedLevels && meta.completedLevels[15]) || (meta.bestiaryKills?.vele_stika || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
+	},
+	{
+		id: "level16_completed",
+		title: "🪿 Svatomartinský hodovník",
+		desc: "Dokonči 17. úroveň: ochutnej pečenou husu U Sejků a poraz Listopadového Mrazivce!",
+		reward: 750,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[16]) || (meta.bestiaryKills?.listopadovy_mrazivec || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[16]) || (meta.bestiaryKills?.listopadovy_mrazivec || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level17_completed",
+		title: "🐗 Pán mlžného nočního honu",
+		desc: "Dokonči 18. úroveň: přilož do uhlířského milíře a udolej divočáka Kňoura!",
+		reward: 800,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[17]) || (meta.bestiaryKills?.kanec_knour || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[17]) || (meta.bestiaryKills?.kanec_knour || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level18_completed",
+		title: "🎅 Přemožitel čerta Richtera",
+		desc: "Dokonči 19. úroveň: zažehni adventní svíci na návsi a vyžeň z Hrusic Čerta Richtera!",
+		reward: 850,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[18]) || (meta.bestiaryKills?.mikulassky_cert || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[18]) || (meta.bestiaryKills?.mikulassky_cert || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level19_completed",
+		title: "⭐ Hrdina štědrovečerních Hrusic",
+		desc: "Dokonči 20. úroveň: rozezvuč štědrovečerní zvon v kostele sv. Mikuláše a zlom vládu Krále Mrazíka!",
+		reward: 1000,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[19]) || (meta.bestiaryKills?.kral_mrazik || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[19]) || (meta.bestiaryKills?.kral_mrazik || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level20_completed",
+		title: "⛄ Stavitel sněhuláků",
+		desc: "Dokonči 21. úroveň: postav sněhuláka na návsi a zažeň Vládce chumelenice!",
+		reward: 1050,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[20]) || (meta.bestiaryKills?.vladce_chumelenice || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[20]) || (meta.bestiaryKills?.vladce_chumelenice || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level21_completed",
+		title: "🗡️ Krotitel Perchty s nožem",
+		desc: "Dokonči 22. úroveň: posvěť faru křídou K+M+B a přemož Šerednou Perchtu s nožem v tříkrálové noci!",
+		reward: 1200,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[21]) || (meta.bestiaryKills?.perchta_s_nozem || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[21]) || (meta.bestiaryKills?.perchta_s_nozem || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level22_completed",
+		title: "🎭 Král masopustního průvodu",
+		desc: "Dokonči 23. úroveň: usmaž masopustní koblihy u hostince a pokoř Rychtáře maškar!",
+		reward: 1350,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[22]) || (meta.bestiaryKills?.rychtar_masek || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[22]) || (meta.bestiaryKills?.rychtar_masek || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
+	},
+	{
+		id: "level23_completed",
+		title: "🎻 Pán celého roku a krotitel Bakcha",
+		desc: "Dokonči 24. úroveň: pochovej basu u márnice, zažehni louče a přemož samotného Bakcha!",
+		reward: 1500,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[23]) || (meta.bestiaryKills?.bakchus_s_pivnim_soudkem || 0) >= 1,
+		getProgress: (meta) => ({
+			cur: (meta.completedLevels && meta.completedLevels[23]) || (meta.bestiaryKills?.bakchus_s_pivnim_soudkem || 0) >= 1 ? 1 : 0,
+			max: 1
+		})
 	}
 ];
 

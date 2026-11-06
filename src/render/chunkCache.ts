@@ -120,7 +120,11 @@ export class ChunkBitmapCache {
           item.type.startsWith('cervenec_') ||
           item.type.startsWith('srpen_') ||
           item.type.startsWith('zari_') ||
-          item.type.startsWith('rijen_')))
+          item.type.startsWith('rijen_') ||
+          item.type.startsWith('listopad_') ||
+          item.type.startsWith('prosinec_') ||
+          item.type.startsWith('leden_') ||
+          item.type.startsWith('unor_')))
     ) {
       return true;
     }

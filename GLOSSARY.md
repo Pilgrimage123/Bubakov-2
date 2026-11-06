@@ -211,7 +211,7 @@ Toulavý kramář a pekelník s nůší procházející herním světem, který 
 _Avoid_: level-up nabídka, obchodník, shopkeeper
 
 **Výprava**:
-Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 16 po sobě jdoucích úrovní od Března po Říjen).
+Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 24 po sobě jdoucích úrovní uzavírajících kompletní 12měsíční kalendářní cyklus od Března po Únor).
 _Avoid_: run, stage, level, zápas, kolo, match
 
 **Ohnisko výpravy**:

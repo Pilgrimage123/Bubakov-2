@@ -17,7 +17,15 @@ var LEVEL_ORDER = [
 	12,
 	13,
 	14,
-	15
+	15,
+	16,
+	17,
+	18,
+	19,
+	20,
+	21,
+	22,
+	23
 ];
 function getPreviousLevel(id: number) {
 	const idx = LEVEL_ORDER.indexOf(id);
@@ -43,6 +51,14 @@ function isLevelFullyUnlocked(id: number, meta: any) {
 	if (id === 13 && ((meta?.bestiaryKills?.posvicensky_hospodar || 0) >= 1 || !!meta?.completedLevels?.[12])) return true;
 	if (id === 14 && ((meta?.bestiaryKills?.kvilici_meluzina || 0) >= 1 || !!meta?.completedLevels?.[13])) return true;
 	if (id === 15 && ((meta?.bestiaryKills?.drak_vetrnik || 0) >= 1 || !!meta?.completedLevels?.[14])) return true;
+	if (id === 16 && ((meta?.bestiaryKills?.vele_stika || 0) >= 1 || !!meta?.completedLevels?.[15])) return true;
+	if (id === 17 && ((meta?.bestiaryKills?.listopadovy_mrazivec || 0) >= 1 || !!meta?.completedLevels?.[16])) return true;
+	if (id === 18 && ((meta?.bestiaryKills?.kanec_knour || 0) >= 1 || !!meta?.completedLevels?.[17])) return true;
+	if (id === 19 && ((meta?.bestiaryKills?.mikulassky_cert || 0) >= 1 || !!meta?.completedLevels?.[18])) return true;
+	if (id === 20 && ((meta?.bestiaryKills?.kral_mrazik || 0) >= 1 || !!meta?.completedLevels?.[19])) return true;
+	if (id === 21 && ((meta?.bestiaryKills?.vladce_chumelenice || 0) >= 1 || !!meta?.completedLevels?.[20])) return true;
+	if (id === 22 && ((meta?.bestiaryKills?.perchta_s_nozem || 0) >= 1 || !!meta?.completedLevels?.[21])) return true;
+	if (id === 23 && ((meta?.bestiaryKills?.rychtar_masek || 0) >= 1 || !!meta?.completedLevels?.[22])) return true;
 	return false;
 }
 function canLevelUnlock(id: number, meta: any) {
@@ -226,6 +242,48 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "hastrman_podzimni", name: "Podzimní hastrman z rákosí", icon: "🐸" },
 		{ id: "kralovsky_havran", name: "Královský havran ze strniště", icon: "🦅" },
 		{ id: "podzimni_strasak", name: "Podzimní polní strašák", icon: "🌾" }
+	]),
+	16: makeSequentialUnlock(16, [
+		{ id: "vele_stika", name: "Hrusická Veleštika", icon: "🐟" },
+		{ id: "cert_rybnikar", name: "Pekelný čert rybníkář", icon: "🐟" },
+		{ id: "dusickova_bludicka", name: "Dušičková bludička", icon: "🕯️" }
+	]),
+	17: makeSequentialUnlock(17, [
+		{ id: "listopadovy_mrazivec", name: "Listopadový Mrazivec", icon: "❄️" },
+		{ id: "martinsky_jezdec", name: "Martinský jezdec na bílém koni", icon: "⚔️" },
+		{ id: "kralovska_husa", name: "Královská svatomartinská husa", icon: "🪿" },
+		{ id: "svatomartinska_husa", name: "Svatomartinská husa", icon: "🪿" }
+	]),
+	18: makeSequentialUnlock(18, [
+		{ id: "kanec_knour", name: "Obří divočák Kňour", icon: "🐗" },
+		{ id: "cerny_myslivec", name: "Černý myslivec z hvozdu", icon: "🏹" },
+		{ id: "mlzny_prizrak", name: "Mlžný přízrak z rašeliniště", icon: "🌫️" },
+		{ id: "divoky_kanec", name: "Divoký kanec", icon: "🐗" }
+	]),
+	19: makeSequentialUnlock(19, [
+		{ id: "mikulassky_cert", name: "Mikulášský čert Richter", icon: "🔥" },
+		{ id: "maskarni_kozel", name: "Kolednický maškarní kozel", icon: "🐐" },
+		{ id: "cert_s_pytlem", name: "Pekelný čert s pytlem", icon: "👹" }
+	]),
+	20: makeSequentialUnlock(20, [
+		{ id: "kral_mrazik", name: "Král Mrazík", icon: "👑" },
+		{ id: "mraziva_sova", name: "Noční mrazivá sova", icon: "🦉" },
+		{ id: "jezdec_meluziny", name: "Zimní jezdec Meluzíny", icon: "🌪️" }
+	]),
+	21: makeSequentialUnlock(21, [
+		{ id: "vladce_chumelenice", name: "Vládce chumelenice", icon: "❄️" },
+		{ id: "trikralovy_jezdec", name: "Tříkrálový jezdec", icon: "👑" },
+		{ id: "obri_snehulak", name: "Obří sněhulák", icon: "⛄" }
+	]),
+	22: makeSequentialUnlock(22, [
+		{ id: "perchta_s_nozem", name: "Šeredná Perchta s nožem", icon: "🔪" },
+		{ id: "kostlivec_s_kosou", name: "Kostlivec s kosou", icon: "💀" },
+		{ id: "ledova_klekanice", name: "Ledová klekánice", icon: "🔔" }
+	]),
+	23: makeSequentialUnlock(23, [
+		{ id: "rychtar_masek", name: "Rychtář maškar", icon: "👑" },
+		{ id: "slamennik_obr", name: "Obří slaměník", icon: "🌾" },
+		{ id: "masopustni_medved", name: "Masopustní medvěd", icon: "🐻" }
 	])
 };
 

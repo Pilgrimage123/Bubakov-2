@@ -542,9 +542,9 @@ export class ArenaRenderer {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
           const decorExtent =
-            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border'
+            dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border' || dec.type === 'listopad_border' || dec.type === 'prosinec_border' || dec.type === 'leden_border' || dec.type === 'unor_border'
               ? 3200 * scale
-              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_'))
+              : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_') || dec.type.startsWith('listopad_') || dec.type.startsWith('prosinec_') || dec.type.startsWith('leden_') || dec.type.startsWith('unor_'))
               ? 560 * scale
               : 100 * scale;
           if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -562,9 +562,9 @@ export class ArenaRenderer {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
         const decorExtent =
-          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border'
+          dec.type === 'march_mill' || dec.type === 'duben_border' || dec.type === 'kveten_border' || dec.type === 'cerven_border' || dec.type === 'cervenec_border' || dec.type === 'srpen_border' || dec.type === 'zari_border' || dec.type === 'rijen_border' || dec.type === 'listopad_border' || dec.type === 'prosinec_border' || dec.type === 'leden_border' || dec.type === 'unor_border'
             ? 3200 * scale
-            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_'))
+            : dec.type && (dec.type.startsWith('march_') || dec.type.startsWith('duben_') || dec.type.startsWith('kveten_') || dec.type.startsWith('cerven_') || dec.type.startsWith('cervenec_') || dec.type.startsWith('srpen_') || dec.type.startsWith('zari_') || dec.type.startsWith('rijen_') || dec.type.startsWith('listopad_') || dec.type.startsWith('prosinec_') || dec.type.startsWith('leden_') || dec.type.startsWith('unor_'))
             ? 560 * scale
             : 100 * scale;
         if (!isInView(dec.x, dec.y - 45 * scale, decorExtent, viewLeft, viewTop, viewRight, viewBottom)) {
@@ -746,7 +746,19 @@ export class ArenaRenderer {
     const isStageFifteenDaylight =
       (curLvl && curLvl.id === 14) ||
       (engine.activeLevelId === 14 && (!curLvl || curLvl.id === undefined || curLvl.id === 14));
-    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight || isStageSevenDaylight || isStageNineDaylight || isStageElevenDaylight || isStageThirteenDaylight || isStageFifteenDaylight;
+    const isStageSeventeenDaylight =
+      (curLvl && curLvl.id === 16) ||
+      (engine.activeLevelId === 16 && (!curLvl || curLvl.id === undefined || curLvl.id === 16));
+    const isStageNineteenDaylight =
+      (curLvl && curLvl.id === 18) ||
+      (engine.activeLevelId === 18 && (!curLvl || curLvl.id === undefined || curLvl.id === 18));
+    const isStageTwentyOneDaylight =
+      (curLvl && curLvl.id === 20) ||
+      (engine.activeLevelId === 20 && (!curLvl || curLvl.id === undefined || curLvl.id === 20));
+    const isStageTwentyThreeDaylight =
+      (curLvl && curLvl.id === 22) ||
+      (engine.activeLevelId === 22 && (!curLvl || curLvl.id === undefined || curLvl.id === 22));
+    const isDaylightStage = isStageOneDaylight || isStageThreeDaylight || isStageFiveDaylight || isStageSevenDaylight || isStageNineDaylight || isStageElevenDaylight || isStageThirteenDaylight || isStageFifteenDaylight || isStageSeventeenDaylight || isStageNineteenDaylight || isStageTwentyOneDaylight || isStageTwentyThreeDaylight;
     if (isDaylightStage && !options?.skipSunInArenaPass) {
       const sunVariant: SunVariant = isStageOneDaylight ? 'march' : 'duben';
       const tSunStart = now();

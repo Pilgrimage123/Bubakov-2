@@ -107,7 +107,52 @@ export type BakedBubakId =
   | 'drak_vetrnik'
   | 'dusickova_bludicka'
   | 'cert_rybnikar'
-  | 'vele_stika';
+  | 'vele_stika'
+  | 'svatomartinska_husa'
+  | 'divoky_kanec'
+  | 'lesni_pytlak'
+  | 'kralovska_husa'
+  | 'martinsky_jezdec'
+  | 'listopadovy_mrazivec'
+  | 'mlzny_prizrak'
+  | 'cerny_myslivec'
+  | 'kanec_knour'
+  | 'ledovy_rampousik'
+  | 'snehova_jezinka'
+  | 'cert_s_pytlem'
+  | 'maskarni_kozel'
+  | 'mikulassky_cert'
+  | 'mraziva_sova'
+  | 'jezdec_meluziny'
+  | 'kral_mrazik'
+  | 'zimni_vrabec'
+  | 'kluk_na_sankach'
+  | 'ledovy_skritek'
+  | 'trikralovy_kolednik'
+  | 'chumelenice'
+  | 'nocni_zavejnik'
+  | 'mrazivy_havran'
+  | 'obri_snehulak'
+  | 'trikralovy_jezdec'
+  | 'vladce_chumelenice'
+  | 'ledova_klekanice'
+  | 'kostlivec_s_kosou'
+  | 'perchta_s_nozem'
+  | 'masopustni_laufr'
+  | 'baba_s_nusi'
+  | 'masopustni_kominik'
+  | 'koblihovy_rarach'
+  | 'masopustni_krasojezdec'
+  | 'masopustni_medved'
+  | 'slamennik_obr'
+  | 'rychtar_masek'
+  | 'nocni_smrtak'
+  | 'smutecni_maskara'
+  | 'masopustni_basa'
+  | 'plivnik_uhlik'
+  | 'nocni_kobold'
+  | 'umrlec_basista'
+  | 'bakchus_s_pivnim_soudkem';
 
 export interface BakedFrame {
   canvas: any;
@@ -132,7 +177,7 @@ const PALETTE_FILTERS: Record<string, string> = {
   steel: 'grayscale(0.85) contrast(1.3) brightness(1.1)',
 };
 
-const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
+export const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   rarach: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawRarach(c, x, y, t, v, p) },
   mysak: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawMysak(c, x, y, t, v, p) },
   bludicka: { size: 96, drawFn: (c, x, y, t, v, p) => Lada.drawBludicka(c, x, y, t, v, p) },
@@ -230,6 +275,51 @@ const MOB_CONFIGS: Record<BakedBubakId, MobConfig> = {
   dusickova_bludicka: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDusickovaBludicka(c, x, y, t, v, p) },
   cert_rybnikar: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawCertRybnikar(c, x, y, t, v, p) },
   vele_stika: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawVeleStika(c, x, y, t, v, p) },
+  svatomartinska_husa: { size: 128, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSvatomartinskaHusa(c, x, y, t, v, p) },
+  divoky_kanec: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawDivokyKanec(c, x, y, t, v, p) },
+  lesni_pytlak: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawLesniPytlak(c, x, y, t, v, p) },
+  kralovska_husa: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKralovskaHusa(c, x, y, t, v, p) },
+  martinsky_jezdec: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMartinskyJezdec(c, x, y, t, v, p) },
+  listopadovy_mrazivec: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawListopadovyMrazivec(c, x, y, t, v, p) },
+  mlzny_prizrak: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMlznyPrizrak(c, x, y, t, v, p) },
+  cerny_myslivec: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawCernyMyslivec(c, x, y, t, v, p) },
+  kanec_knour: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKanecKnour(c, x, y, t, v, p) },
+  ledovy_rampousik: { size: 96, drawFn: (c, x, y, t, v, p) => (Lada as any).drawLedovyRampousik(c, x, y, t, v, p) },
+  snehova_jezinka: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSnehovaJezinka(c, x, y, t, v, p) },
+  cert_s_pytlem: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawCertSPytlem(c, x, y, t, v, p) },
+  maskarni_kozel: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMaskarniKozel(c, x, y, t, v, p) },
+  mikulassky_cert: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMikulasskyCert(c, x, y, t, v, p) },
+  mraziva_sova: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMrazivaSova(c, x, y, t, v, p) },
+  jezdec_meluziny: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawJezdecMeluziny(c, x, y, t, v, p) },
+  kral_mrazik: { size: 200, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKralMrazik(c, x, y, t, v, p) },
+  zimni_vrabec: { size: 96, drawFn: (c, x, y, t, v, p) => (Lada as any).drawZimniVrabec(c, x, y, t, v, p) },
+  kluk_na_sankach: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKlukNaSankach(c, x, y, t, v, p) },
+  ledovy_skritek: { size: 112, drawFn: (c, x, y, t, v, p) => (Lada as any).drawLedovySkritek(c, x, y, t, v, p) },
+  trikralovy_kolednik: { size: 156, drawFn: (c, x, y, t, v, p) => (Lada as any).drawTrikralovyKolednik(c, x, y, t, v, p) },
+  chumelenice: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawChumelenice(c, x, y, t, v, p) },
+  nocni_zavejnik: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawNocniZavejnik(c, x, y, t, v, p) },
+  mrazivy_havran: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMrazivyHavran(c, x, y, t, v, p) },
+  obri_snehulak: { size: 188, drawFn: (c, x, y, t, v, p) => (Lada as any).drawObriSnehulak(c, x, y, t, v, p) },
+  trikralovy_jezdec: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawTrikralovyJezdec(c, x, y, t, v, p) },
+  vladce_chumelenice: { size: 200, drawFn: (c, x, y, t, v, p) => (Lada as any).drawVladceChumelenice(c, x, y, t, v, p) },
+  ledova_klekanice: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawLedovaKlekanice(c, x, y, t, v, p) },
+  kostlivec_s_kosou: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKostlivecSKosou(c, x, y, t, v, p) },
+  perchta_s_nozem: { size: 200, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPerchtaSNozem(c, x, y, t, v, p) },
+  masopustni_laufr: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMasopustniLaufr(c, x, y, t, v, p) },
+  baba_s_nusi: { size: 180, drawFn: (c, x, y, t, v, p) => (Lada as any).drawBabaSNusi(c, x, y, t, v, p) },
+  masopustni_kominik: { size: 156, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMasopustniKominik(c, x, y, t, v, p) },
+  koblihovy_rarach: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawKoblihovyRarach(c, x, y, t, v, p) },
+  masopustni_krasojezdec: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMasopustniKrasojezdec(c, x, y, t, v, p) },
+  masopustni_medved: { size: 196, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMasopustniMedved(c, x, y, t, v, p) },
+  slamennik_obr: { size: 200, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSlamennikObr(c, x, y, t, v, p) },
+  rychtar_masek: { size: 208, drawFn: (c, x, y, t, v, p) => (Lada as any).drawRychtarMasek(c, x, y, t, v, p) },
+  nocni_smrtak: { size: 176, drawFn: (c, x, y, t, v, p) => (Lada as any).drawNocniSmrtak(c, x, y, t, v, p) },
+  smutecni_maskara: { size: 168, drawFn: (c, x, y, t, v, p) => (Lada as any).drawSmutecniMaskara(c, x, y, t, v, p) },
+  masopustni_basa: { size: 184, drawFn: (c, x, y, t, v, p) => (Lada as any).drawMasopustniBasa(c, x, y, t, v, p) },
+  plivnik_uhlik: { size: 148, drawFn: (c, x, y, t, v, p) => (Lada as any).drawPlivnikUhlik(c, x, y, t, v, p) },
+  nocni_kobold: { size: 192, drawFn: (c, x, y, t, v, p) => (Lada as any).drawNocniKobold(c, x, y, t, v, p) },
+  umrlec_basista: { size: 200, drawFn: (c, x, y, t, v, p) => (Lada as any).drawUmrlecBasista(c, x, y, t, v, p) },
+  bakchus_s_pivnim_soudkem: { size: 212, drawFn: (c, x, y, t, v, p) => (Lada as any).drawBakchusSPivnimSoudkem(c, x, y, t, v, p) },
 };
 
 export class BakedBubakAtlas {

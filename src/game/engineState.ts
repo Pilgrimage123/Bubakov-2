@@ -31,6 +31,30 @@ import {
   type OhnicekBramborState,
   type DusickovaSviceState,
 } from '../data/rijenArena';
+import {
+  createInitialSvatomartinskaHusaPekacState,
+  createInitialUhliarskyMilirState,
+  type SvatomartinskaHusaPekacState,
+  type UhliarskyMilirState,
+} from '../data/listopadArena';
+import {
+  createInitialAdventniVenecState,
+  createInitialStedrovecerniZvonState,
+  type AdventniVenecState,
+  type StedrovecerniZvonState,
+} from '../data/prosinecArena';
+import {
+  createInitialSnehulakNavesState,
+  createInitialTrikralovaFaraState,
+  type SnehulakNavesState,
+  type TrikralovaFaraState,
+} from '../data/ledenArena';
+import {
+  createInitialMasopustniKoblihyState,
+  createInitialPochovavaniBasyState,
+  type MasopustniKoblihyState,
+  type PochovavaniBasyState,
+} from '../data/unorArena';
 
 export interface PendingMilestoneChoice {
   weaponId: string;
@@ -249,6 +273,50 @@ export interface EngineState {
     svice: DusickovaSviceState;
   };
   rijenActivePoiPrompt?: string | null;
+  /** Runtime-only state for Listopad v Hrusicích (17. a 18. úroveň). */
+  listopad: {
+    tavernCooldown: number;
+    shrineCooldown: number;
+    schoolCooldown: number;
+    forestCooldown: number;
+    bellCooldown?: number;
+    husaPekac: SvatomartinskaHusaPekacState;
+    milir: UhliarskyMilirState;
+  };
+  listopadActivePoiPrompt?: string | null;
+  /** Runtime-only state for Prosinec v Hrusicích (19. a 20. úroveň). */
+  prosinec: {
+    bellCooldown: number;
+    churchCooldown?: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    schoolCooldown: number;
+    forestCooldown?: number;
+    advent: AdventniVenecState;
+    zvon: StedrovecerniZvonState;
+  };
+  prosinecActivePoiPrompt?: string | null;
+  /** Runtime-only state for Leden v Hrusicích (21. a 22. úroveň). */
+  leden: {
+    bellCooldown: number;
+    churchCooldown?: number;
+    shrineCooldown: number;
+    tavernCooldown: number;
+    schoolCooldown: number;
+    forestCooldown?: number;
+    snehulak: SnehulakNavesState;
+    fara: TrikralovaFaraState;
+  };
+  ledenActivePoiPrompt?: string | null;
+  /** Runtime-only state for Únor v Hrusicích (23. a 24. úroveň). */
+  unor: {
+    tavernCooldown: number;
+    mortuaryCooldown?: number;
+    shrineCooldown: number;
+    koblihy: MasopustniKoblihyState;
+    basa: PochovavaniBasyState;
+  };
+  unorActivePoiPrompt?: string | null;
   marchThawActivePoiPrompt?: string | null;
   dubenActivePoiPrompt?: string | null;
   holyCircle: { x: number; y: number; radius: number; life: number; active: boolean } | null;
@@ -448,6 +516,37 @@ export function createInitialEngineState(): EngineState {
       ohnicek: createInitialOhnicekBramborState(),
       svice: createInitialDusickovaSviceState(),
     },
+    listopad: {
+      tavernCooldown: 0,
+      shrineCooldown: 0,
+      schoolCooldown: 0,
+      forestCooldown: 0,
+      husaPekac: createInitialSvatomartinskaHusaPekacState(),
+      milir: createInitialUhliarskyMilirState(),
+    },
+    prosinec: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      schoolCooldown: 0,
+      advent: createInitialAdventniVenecState(),
+      zvon: createInitialStedrovecerniZvonState(),
+    },
+    leden: {
+      bellCooldown: 0,
+      shrineCooldown: 0,
+      tavernCooldown: 0,
+      schoolCooldown: 0,
+      snehulak: createInitialSnehulakNavesState(),
+      fara: createInitialTrikralovaFaraState(),
+    },
+    unor: {
+      tavernCooldown: 0,
+      mortuaryCooldown: 0,
+      shrineCooldown: 0,
+      koblihy: createInitialMasopustniKoblihyState(),
+      basa: createInitialPochovavaniBasyState(),
+    },
     holyCircle: null,
     marchThawActivePoiPrompt: null,
     dubenActivePoiPrompt: null,
@@ -457,6 +556,10 @@ export function createInitialEngineState(): EngineState {
     srpenActivePoiPrompt: null,
     zariActivePoiPrompt: null,
     rijenActivePoiPrompt: null,
+    listopadActivePoiPrompt: null,
+    prosinecActivePoiPrompt: null,
+    ledenActivePoiPrompt: null,
+    unorActivePoiPrompt: null,
     plumPuddles: [],
     plumPuddlesHead: 0,
     yolkPuddles: [],

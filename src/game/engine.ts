@@ -188,6 +188,42 @@ import {
   createInitialOhnicekBramborState,
   createInitialDusickovaSviceState,
 } from '../data/rijenArena';
+import {
+  LISTOPAD_POIS,
+  getListopadPois,
+  resolveListopadObstacles,
+  getListopadWaterEffect,
+  isInsideListopadPoi,
+  createInitialSvatomartinskaHusaPekacState,
+  createInitialUhliarskyMilirState,
+} from '../data/listopadArena';
+import {
+  PROSINEC_POIS,
+  getProsinecPois,
+  resolveProsinecObstacles,
+  getProsinecWaterEffect,
+  isInsideProsinecPoi,
+  createInitialAdventniVenecState,
+  createInitialStedrovecerniZvonState,
+} from '../data/prosinecArena';
+import {
+  LEDEN_POIS,
+  getLedenPois,
+  resolveLedenObstacles,
+  getLedenWaterEffect,
+  isInsideLedenPoi,
+  createInitialSnehulakNavesState,
+  createInitialTrikralovaFaraState,
+} from '../data/ledenArena';
+import {
+  UNOR_POIS,
+  getUnorPois,
+  resolveUnorObstacles,
+  getUnorWaterEffect,
+  isInsideUnorPoi,
+  createInitialMasopustniKoblihyState,
+  createInitialPochovavaniBasyState,
+} from '../data/unorArena';
 
 export const MAX_PARTICLES = 300;
 export const MAX_DAMAGE_TEXTS = 90;
@@ -544,6 +580,58 @@ export class GameEngine {
   }
   public set rijenActivePoiPrompt(val: any) {
     this.state.rijenActivePoiPrompt = val;
+  }
+
+  public get listopad() {
+    return this.state.listopad;
+  }
+  public set listopad(val: any) {
+    this.state.listopad = val;
+  }
+  public get listopadActivePoiPrompt() {
+    return this.state.listopadActivePoiPrompt;
+  }
+  public set listopadActivePoiPrompt(val: any) {
+    this.state.listopadActivePoiPrompt = val;
+  }
+
+  public get prosinec() {
+    return this.state.prosinec;
+  }
+  public set prosinec(val: any) {
+    this.state.prosinec = val;
+  }
+  public get prosinecActivePoiPrompt() {
+    return this.state.prosinecActivePoiPrompt;
+  }
+  public set prosinecActivePoiPrompt(val: any) {
+    this.state.prosinecActivePoiPrompt = val;
+  }
+
+  public get leden() {
+    return this.state.leden;
+  }
+  public set leden(val: any) {
+    this.state.leden = val;
+  }
+  public get ledenActivePoiPrompt() {
+    return this.state.ledenActivePoiPrompt;
+  }
+  public set ledenActivePoiPrompt(val: any) {
+    this.state.ledenActivePoiPrompt = val;
+  }
+
+  public get unor() {
+    return this.state.unor;
+  }
+  public set unor(val: any) {
+    this.state.unor = val;
+  }
+  public get unorActivePoiPrompt() {
+    return this.state.unorActivePoiPrompt;
+  }
+  public set unorActivePoiPrompt(val: any) {
+    this.state.unorActivePoiPrompt = val;
   }
 
   public get yolkPuddles() {
@@ -9184,6 +9272,439 @@ export class GameEngine {
       }
     }
 
+    // Stage 17 & 18 ("LISTOPAD"): Svatomartinská husa (Day) & Uhlířský milíř (Night)
+    if (this.state.activeLevelId === 16 || this.state.activeLevelId === 17) {
+      const isListopadNight = this.state.activeLevelId === 17;
+      const listopadPois = getListopadPois(isListopadNight);
+      const lp = this.state.listopad || (this.state.listopad = {
+        tavernCooldown: 0,
+        shrineCooldown: 0,
+        schoolCooldown: 0,
+        forestCooldown: 0,
+        husaPekac: createInitialSvatomartinskaHusaPekacState(),
+        milir: createInitialUhliarskyMilirState(),
+      });
+      if (!lp.husaPekac) lp.husaPekac = createInitialSvatomartinskaHusaPekacState();
+      if (!lp.milir) lp.milir = createInitialUhliarskyMilirState();
+
+      if (lp.husaPekac.cooldown > 0) lp.husaPekac.cooldown = Math.max(0, lp.husaPekac.cooldown - dt);
+      if (lp.milir.cooldown > 0) lp.milir.cooldown = Math.max(0, lp.milir.cooldown - dt);
+
+      if (player && player.hp > 0) {
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+        const waterEffect = getListopadWaterEffect(player.x, player.y, this.state.activeLevelId);
+        if (waterEffect.inOpenWater) {
+          player.speedModifier = (player.speedModifier || 1) * waterEffect.speedMult;
+        }
+
+        resolveListopadObstacles(player, 22);
+        clampToMarchArenaBounds(player, 28);
+
+        const inTavern = isInsideListopadPoi(player.x, player.y, listopadPois.tavern);
+        const inForest = isInsideListopadPoi(player.x, player.y, listopadPois.forest);
+        const inChurch = isInsideListopadPoi(player.x, player.y, listopadPois.church);
+        const inShrine = isInsideListopadPoi(player.x, player.y, listopadPois.shrine);
+        const inVillage = isInsideListopadPoi(player.x, player.y, listopadPois.village);
+
+        if (!isListopadNight && inTavern) {
+          this.state.listopadActivePoiPrompt = lp.husaPekac.cooldown <= 0
+            ? '[E] Ochutnat svatomartinskou husu (Hospoda U Sejků)'
+            : `Husa se peče v troubě (${Math.ceil(lp.husaPekac.cooldown)}s)`;
+          if (eKeyPressed && lp.husaPekac.cooldown <= 0) {
+            lp.husaPekac.cooldown = 20.0;
+            lp.husaPekac.feastsEaten++;
+            player.hp = Math.min(player.maxHp, player.hp + 45);
+            player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+            player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.20);
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.15);
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'SVATOMARTINSKÁ PEČENÁ HUSA! 🪿 (+45 Kuráž, +25% útok)', '#F59E0B', true);
+
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - player.x, foe.y - player.y) < 380) {
+                foe.takeDamage(160 * (player.damageMultiplier || 1), 'fire', (foe.x - player.x) * 2.5, (foe.y - player.y) * 2.5);
+                foe.panicked = true;
+              }
+            }
+          }
+        } else if (isListopadNight && inForest) {
+          this.state.listopadActivePoiPrompt = lp.milir.cooldown <= 0
+            ? '[E] Přiložit do milíře (Uhlířský milíř)'
+            : `Uhlí v milíři žhne (${Math.ceil(lp.milir.cooldown)}s)`;
+          if (eKeyPressed && lp.milir.cooldown <= 0) {
+            lp.milir.cooldown = 20.0;
+            lp.milir.woodFed++;
+            player.shield = Math.min(250, (player.shield || 0) + 90);
+            player.speedMultiplier = Math.max(player.speedMultiplier || 1, 1.30);
+            this.callbacks?.onSound?.('fire');
+            this.emitDamageText(player.x, player.y - 45, 'UHLÍŘSKÝ MILÍŘ ŽHNE! 🌫️ (+90 Štít, dým)', '#E2E8F0', true);
+
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - lp.milir.x, foe.y - lp.milir.y) < 440) {
+                foe.takeDamage(220 * (player.damageMultiplier || 1), 'fire', (foe.x - lp.milir.x) * 3, (foe.y - lp.milir.y) * 3);
+                foe.stunTimer = Math.max(foe.stunTimer || 0, 2.0);
+              }
+            }
+          }
+        } else if (inChurch) {
+          this.state.listopadActivePoiPrompt = (lp.tavernCooldown <= 0)
+            ? '[E] Rozeznít zvon sv. Mikuláše (Kostel)'
+            : `Zvon sv. Mikuláše chladne (${Math.ceil(lp.tavernCooldown)}s)`;
+          if (eKeyPressed && lp.tavernCooldown <= 0) {
+            lp.tavernCooldown = 15.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'ZVON SV. MIKULÁŠE! 🔔 (+75 Štít)', '#FEF08A', true);
+            player.shield = Math.min(250, (player.shield || 0) + 75);
+          }
+        } else if (inShrine) {
+          this.state.listopadActivePoiPrompt = (lp.shrineCooldown <= 0)
+            ? '[E] Pomodlit se u Božích muk (Boží muka)'
+            : `Boží muka (${Math.ceil(lp.shrineCooldown)}s)`;
+          if (eKeyPressed && lp.shrineCooldown <= 0) {
+            lp.shrineCooldown = 15.0;
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POŽEHNÁNÍ POUTNÍKŮ! ✝️', '#FEF08A', true);
+            player.hp = Math.min(player.maxHp, player.hp + 35);
+          }
+        } else if (inVillage) {
+          this.state.listopadActivePoiPrompt = listopadPois.village.hint || null;
+        } else {
+          this.state.listopadActivePoiPrompt = null;
+        }
+
+        if (lp.tavernCooldown > 0) lp.tavernCooldown = Math.max(0, lp.tavernCooldown - dt);
+        if (lp.shrineCooldown > 0) lp.shrineCooldown = Math.max(0, lp.shrineCooldown - dt);
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean((e.isFlying || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak' || e.id === 'vrana') && !e.isGroundedForLoot);
+        if (!isFlying) {
+          const eWater = getListopadWaterEffect(e.x, e.y, this.state.activeLevelId);
+          if (eWater.inOpenWater && !isAquaticEnemy(e)) {
+            e.slowTimer = Math.max(e.slowTimer || 0, 0.4);
+          }
+        }
+        resolveListopadObstacles(e, 22);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
+    // Stage 19 & 20 ("PROSINEC"): Adventní věnec (Day) & Štědrovečerní zvon (Night)
+    if (this.state.activeLevelId === 18 || this.state.activeLevelId === 19) {
+      const isProsinecNight = this.state.activeLevelId === 19;
+      const prosinecPois = getProsinecPois(isProsinecNight);
+      const pr = this.state.prosinec || (this.state.prosinec = {
+        bellCooldown: 0,
+        shrineCooldown: 0,
+        tavernCooldown: 0,
+        schoolCooldown: 0,
+        advent: createInitialAdventniVenecState(),
+        zvon: createInitialStedrovecerniZvonState(),
+      });
+      if (!pr.advent) pr.advent = createInitialAdventniVenecState();
+      if (!pr.zvon) pr.zvon = createInitialStedrovecerniZvonState();
+
+      if (pr.advent.cooldown > 0) pr.advent.cooldown = Math.max(0, pr.advent.cooldown - dt);
+      if (pr.zvon.cooldown > 0) pr.zvon.cooldown = Math.max(0, pr.zvon.cooldown - dt);
+
+      if (player && player.hp > 0) {
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+        const waterEffect = getProsinecWaterEffect(player.x, player.y, this.state.activeLevelId);
+        if (waterEffect.onIce) {
+          player.speedModifier = (player.speedModifier || 1) * waterEffect.speedMult;
+        }
+
+        resolveProsinecObstacles(player, 22);
+        clampToMarchArenaBounds(player, 28);
+
+        const inVillage = isInsideProsinecPoi(player.x, player.y, prosinecPois.village);
+        const inChurch = isInsideProsinecPoi(player.x, player.y, prosinecPois.church);
+        const inTavern = isInsideProsinecPoi(player.x, player.y, prosinecPois.tavern);
+        const inShrine = isInsideProsinecPoi(player.x, player.y, prosinecPois.shrine);
+
+        if (!isProsinecNight && inVillage) {
+          this.state.prosinecActivePoiPrompt = pr.advent.cooldown <= 0
+            ? '[E] Zapálit adventní svíci (Návesní lípa)'
+            : `Adventní věnec plane (${Math.ceil(pr.advent.cooldown)}s)`;
+          if (eKeyPressed && pr.advent.cooldown <= 0) {
+            pr.advent.cooldown = 20.0;
+            pr.advent.candlesLit++;
+            player.hp = Math.min(player.maxHp, player.hp + 50);
+            player.damageMultiplier = Math.max(player.damageMultiplier || 1, 1.25);
+            player.defenseMultiplier = Math.max(player.defenseMultiplier || 1, 1.30);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'ADVENTNÍ SVÍCE PLANE! 🕯️ (+50 HP, +25% útok)', '#FDE047', true);
+
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - player.x, foe.y - player.y) < 420) {
+                foe.takeDamage(200 * (player.damageMultiplier || 1), 'holy', (foe.x - player.x) * 3, (foe.y - player.y) * 3);
+                foe.panicked = true;
+              }
+            }
+          }
+        } else if (isProsinecNight && inChurch) {
+          this.state.prosinecActivePoiPrompt = pr.zvon.cooldown <= 0
+            ? '[E] Rozeznít štědrovečerní zvon (Kostel sv. Mikuláše)'
+            : `Štědrovečerní zvon chladne (${Math.ceil(pr.zvon.cooldown)}s)`;
+          if (eKeyPressed && pr.zvon.cooldown <= 0) {
+            pr.zvon.cooldown = 20.0;
+            pr.zvon.bellsTolled++;
+            player.shield = Math.min(300, (player.shield || 0) + 120);
+            player.cooldownMultiplier = Math.max(player.cooldownMultiplier || 1, 1.35);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'ŠTĚDROVEČERNÍ ZVON SV. MIKULÁŠE! 🔔 (+120 Štít, omráčení)', '#BAE6FD', true);
+
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (foe.dead || foe.isDefeated) continue;
+              if (Math.hypot(foe.x - prosinecPois.church.x, foe.y - prosinecPois.church.y) < 600) {
+                foe.takeDamage(280 * (player.damageMultiplier || 1), 'holy', (foe.x - prosinecPois.church.x) * 4, (foe.y - prosinecPois.church.y) * 4);
+                foe.stunTimer = Math.max(foe.stunTimer || 0, 3.5);
+              }
+            }
+          }
+        } else if (inTavern) {
+          this.state.prosinecActivePoiPrompt = (pr.tavernCooldown <= 0)
+            ? '[E] Ohřát se u kachlových kamen (Hospoda U Sejků)'
+            : `Kachlová kamna (${Math.ceil(pr.tavernCooldown)}s)`;
+          if (eKeyPressed && pr.tavernCooldown <= 0) {
+            pr.tavernCooldown = 15.0;
+            player.hp = Math.min(player.maxHp, player.hp + 50);
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'HORKÝ PUNČ A KACHLOVÁ KAMNA! ☕ (+50 Kuráž)', '#F59E0B', true);
+          }
+        } else if (inShrine) {
+          this.state.prosinecActivePoiPrompt = (pr.shrineCooldown <= 0)
+            ? '[E] Zapálit štědrovečerní lucernu (Boží muka)'
+            : `Lucerna (${Math.ceil(pr.shrineCooldown)}s)`;
+          if (eKeyPressed && pr.shrineCooldown <= 0) {
+            pr.shrineCooldown = 15.0;
+            player.shield = Math.min(250, (player.shield || 0) + 95);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'ŠTĚDROVEČERNÍ LUCERNA! ⭐ (+95 Štít)', '#FEF08A', true);
+          }
+        } else {
+          this.state.prosinecActivePoiPrompt = null;
+        }
+
+        if (pr.tavernCooldown > 0) pr.tavernCooldown = Math.max(0, pr.tavernCooldown - dt);
+        if (pr.shrineCooldown > 0) pr.shrineCooldown = Math.max(0, pr.shrineCooldown - dt);
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        const isFlying = Boolean((e.isFlying || e.id === 'mraziva_sova' || e.id === 'jezdec_meluziny' || e.id === 'vrana') && !e.isGroundedForLoot);
+        resolveProsinecObstacles(e, 22);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
+    // Stage 21 & 22 ("LEDEN"): Postavit sněhuláka (Day) & Posvěcení dveří křídou K+M+B (Night)
+    if (this.state.activeLevelId === 20 || this.state.activeLevelId === 21) {
+      const isLedenNight = this.state.activeLevelId === 21;
+      const ledenPois = getLedenPois(isLedenNight);
+      const ld = this.state.leden || (this.state.leden = {
+        bellCooldown: 0,
+        shrineCooldown: 0,
+        tavernCooldown: 0,
+        schoolCooldown: 0,
+        snehulak: createInitialSnehulakNavesState(),
+        fara: createInitialTrikralovaFaraState(),
+      });
+
+      if (ld.snehulak.cooldown > 0) ld.snehulak.cooldown = Math.max(0, ld.snehulak.cooldown - dt);
+      if (ld.snehulak.snowShieldTimer > 0) ld.snehulak.snowShieldTimer = Math.max(0, ld.snehulak.snowShieldTimer - dt);
+      if (ld.fara.cooldown > 0) ld.fara.cooldown = Math.max(0, ld.fara.cooldown - dt);
+      if (ld.fara.holyAuraTimer > 0) ld.fara.holyAuraTimer = Math.max(0, ld.fara.holyAuraTimer - dt);
+
+      if (player && player.hp > 0) {
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+        const waterEffect = getLedenWaterEffect(player.x, player.y, this.state.activeLevelId);
+        if (waterEffect.onIce) {
+          player.speedMultiplier = (player.speedMultiplier || 1) * 1.15;
+        }
+
+        resolveLedenObstacles(player, 22);
+        clampToMarchArenaBounds(player, 28);
+
+        const inVillage = isInsideLedenPoi(player.x, player.y, ledenPois.village);
+        const inChurch = isInsideLedenPoi(player.x, player.y, ledenPois.church);
+        const inTavern = isInsideLedenPoi(player.x, player.y, ledenPois.tavern);
+        const inShrine = isInsideLedenPoi(player.x, player.y, ledenPois.shrine);
+
+        if (!isLedenNight && inVillage) {
+          this.state.ledenActivePoiPrompt = ld.snehulak.cooldown <= 0
+            ? '[E] Postavit sněhuláka (Náves u kašny)'
+            : `Sněhulák (${Math.ceil(ld.snehulak.cooldown)}s)`;
+          if (eKeyPressed && ld.snehulak.cooldown <= 0) {
+            ld.snehulak.cooldown = 15.0;
+            ld.snehulak.snowmenBuilt++;
+            ld.snehulak.snowShieldTimer = 12.0;
+            player.hp = Math.min(player.maxHp, player.hp + 30);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POSTAVEN SNĚHULÁK! ⛄ (+30 Kuráž, rázová vlna)', '#BAE6FD', true);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              const dist = Math.hypot(foe.x - player.x, foe.y - player.y);
+              if (dist < 220) {
+                foe.takeDamage(70 * (player.damageMultiplier || 1), 'ice', (foe.x - player.x) * 3, (foe.y - player.y) * 3);
+              }
+            }
+          }
+        } else if (isLedenNight && inChurch) {
+          this.state.ledenActivePoiPrompt = ld.fara.cooldown <= 0
+            ? '[E] Napsat K+M+B svěcenou křídou (Dveře fary)'
+            : `Svěcená křída (${Math.ceil(ld.fara.cooldown)}s)`;
+          if (eKeyPressed && ld.fara.cooldown <= 0) {
+            ld.fara.cooldown = 15.0;
+            ld.fara.blessingsCount++;
+            ld.fara.holyAuraTimer = 15.0;
+            player.shield = Math.min(250, (player.shield || 0) + 75);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'K + M + B POSVÍCENO! ✍️ (Omráčení běsů & štít)', '#FEF08A', true);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (Math.hypot(foe.x - ledenPois.church.x, foe.y - ledenPois.church.y) < 250) {
+                foe.takeDamage(120 * (player.damageMultiplier || 1), 'holy', (foe.x - ledenPois.church.x) * 4, (foe.y - ledenPois.church.y) * 4);
+                if (typeof foe.freeze === 'function') foe.freeze(3.0);
+              }
+            }
+          }
+        } else if (inTavern) {
+          this.state.ledenActivePoiPrompt = (ld.tavernCooldown <= 0)
+            ? '[E] Dát si horký čaj s medem (Hostinec U Cikánů)'
+            : `Hostinec (${Math.ceil(ld.tavernCooldown)}s)`;
+          if (eKeyPressed && ld.tavernCooldown <= 0) {
+            ld.tavernCooldown = 15.0;
+            player.hp = Math.min(player.maxHp, player.hp + 45);
+            this.callbacks?.onSound?.('heal');
+            this.emitDamageText(player.x, player.y - 45, 'HORKÝ ČAJ S MEDEM! ☕ (+45 Kuráž)', '#4ADE80', true);
+          }
+        } else if (inShrine) {
+          this.state.ledenActivePoiPrompt = (ld.shrineCooldown <= 0)
+            ? '[E] Zapálit svíci v závěji (Boží muka)'
+            : `Boží muka (${Math.ceil(ld.shrineCooldown)}s)`;
+          if (eKeyPressed && ld.shrineCooldown <= 0) {
+            ld.shrineCooldown = 15.0;
+            player.shield = Math.min(250, (player.shield || 0) + 80);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'SVĚTLO V ZÁVĚJI! 🕯️ (+80 Štít)', '#FEF08A', true);
+          }
+        } else {
+          this.state.ledenActivePoiPrompt = null;
+        }
+
+        if (ld.tavernCooldown > 0) ld.tavernCooldown = Math.max(0, ld.tavernCooldown - dt);
+        if (ld.shrineCooldown > 0) ld.shrineCooldown = Math.max(0, ld.shrineCooldown - dt);
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        resolveLedenObstacles(e, 22);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
+    // Stage 23 & 24 ("ÚNOR"): Smažit koblihy (Day) & Pochovávání basy (Night)
+    if (this.state.activeLevelId === 22 || this.state.activeLevelId === 23) {
+      const isUnorNight = this.state.activeLevelId === 23;
+      const unorPois = getUnorPois(isUnorNight);
+      const un = this.state.unor || (this.state.unor = {
+        tavernCooldown: 0,
+        mortuaryCooldown: 0,
+        shrineCooldown: 0,
+        koblihy: createInitialMasopustniKoblihyState(),
+        basa: createInitialPochovavaniBasyState(),
+      });
+
+      if (un.koblihy.cooldown > 0) un.koblihy.cooldown = Math.max(0, un.koblihy.cooldown - dt);
+      if (un.koblihy.speedBoostTimer > 0) un.koblihy.speedBoostTimer = Math.max(0, un.koblihy.speedBoostTimer - dt);
+      if (un.basa.cooldown > 0) un.basa.cooldown = Math.max(0, un.basa.cooldown - dt);
+      if (un.basa.shockwaveTimer > 0) un.basa.shockwaveTimer = Math.max(0, un.basa.shockwaveTimer - dt);
+
+      if (player && player.hp > 0) {
+        const eKeyPressed = Boolean(this.state.keys?.['e'] || this.state.keys?.['E'] || this.state.keys?.['KeyE']);
+        const waterEffect = getUnorWaterEffect(player.x, player.y, this.state.activeLevelId);
+        if (waterEffect.onIce) {
+          player.speedMultiplier = (player.speedMultiplier || 1) * 1.15;
+        }
+        if (un.koblihy.speedBoostTimer > 0) {
+          player.speedMultiplier = (player.speedMultiplier || 1) * 1.25;
+        }
+
+        resolveUnorObstacles(player, 22);
+        clampToMarchArenaBounds(player, 28);
+
+        const inVillage = isInsideUnorPoi(player.x, player.y, unorPois.village);
+        const inChurch = isInsideUnorPoi(player.x, player.y, unorPois.church);
+        const inTavern = isInsideUnorPoi(player.x, player.y, unorPois.tavern);
+        const inShrine = isInsideUnorPoi(player.x, player.y, unorPois.shrine);
+
+        if (!isUnorNight && inTavern) {
+          this.state.unorActivePoiPrompt = un.koblihy.cooldown <= 0
+            ? '[E] Smažit masopustní koblihy (Hostinec U Cikánů)'
+            : `Koblihy (${Math.ceil(un.koblihy.cooldown)}s)`;
+          if (eKeyPressed && un.koblihy.cooldown <= 0) {
+            un.koblihy.cooldown = 15.0;
+            un.koblihy.koblihyCooked = (un.koblihy.koblihyCooked || 0) + 1;
+            un.koblihy.speedBoostTimer = 10.0;
+            player.hp = Math.min(player.maxHp, player.hp + 45 * (player._cachedFrostHealMult ?? 1));
+            this.callbacks?.onSound?.('drink');
+            this.emitDamageText(player.x, player.y - 45, 'HORKÉ KOBLIHY USMAŽENY! 🍩 (+45 Kuráž & +25% Rychlost)', '#F59E0B', true);
+          }
+        } else if (isUnorNight && inChurch) {
+          this.state.unorActivePoiPrompt = un.basa.cooldown <= 0
+            ? '[E] Pochovat basu a rozsvítit louče (Stará márnice)'
+            : `Pochování basy (${Math.ceil(un.basa.cooldown)}s)`;
+          if (eKeyPressed && un.basa.cooldown <= 0) {
+            un.basa.cooldown = 15.0;
+            un.basa.basasBuried = (un.basa.basasBuried || 0) + 1;
+            un.basa.shockwaveTimer = 4.0;
+            player.shield = Math.min(250, (player.shield || 0) + 100);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'BASA POCHOVÁNA! 🎻 (Posvátný ráz a omráčení)', '#FEF08A', true);
+            for (let j = 0; j < this.livingEnemies.length; j++) {
+              const foe = this.livingEnemies[j];
+              if (Math.hypot(foe.x - unorPois.church.x, foe.y - unorPois.church.y) < 260) {
+                foe.takeDamage(140 * (player.damageMultiplier || 1), 'holy', (foe.x - unorPois.church.x) * 4.5, (foe.y - unorPois.church.y) * 4.5);
+                if (typeof foe.freeze === 'function') foe.freeze(3.0);
+              }
+            }
+          }
+        } else if (inVillage) {
+          this.state.unorActivePoiPrompt = 'Masopustní náves (+20 % šance na kritický zásah)';
+        } else if (inShrine) {
+          this.state.unorActivePoiPrompt = (un.shrineCooldown <= 0)
+            ? '[E] Pomodlit se u ověnčených Božích muk'
+            : `Boží muka (${Math.ceil(un.shrineCooldown)}s)`;
+          if (eKeyPressed && un.shrineCooldown <= 0) {
+            un.shrineCooldown = 15.0;
+            player.shield = Math.min(250, (player.shield || 0) + 80);
+            this.callbacks?.onSound?.('bell');
+            this.emitDamageText(player.x, player.y - 45, 'POSVÍCENÉ CHVOJÍ! 🌿 (+80 Štít)', '#FEF08A', true);
+          }
+        } else {
+          this.state.unorActivePoiPrompt = null;
+        }
+
+        if (un.tavernCooldown > 0) un.tavernCooldown = Math.max(0, un.tavernCooldown - dt);
+        if (un.shrineCooldown > 0) un.shrineCooldown = Math.max(0, un.shrineCooldown - dt);
+      }
+
+      for (let j = 0; j < this.livingEnemies.length; j++) {
+        const e = this.livingEnemies[j];
+        resolveUnorObstacles(e, 22);
+        clampToMarchArenaBounds(e, 28);
+      }
+    }
+
     // Step drops
     if (this.state.drops) {
       sweepCoinsIntoBigPouches(this.state.drops, dt);
@@ -9219,7 +9740,7 @@ export class GameEngine {
           if (Math.abs(d.vx) < 1.5) d.vx = 0;
           if (Math.abs(d.vy) < 1.5) d.vy = 0;
         }
-        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15) {
+        if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15 || this.state.activeLevelId === 16 || this.state.activeLevelId === 17 || this.state.activeLevelId === 18 || this.state.activeLevelId === 19 || this.state.activeLevelId === 20 || this.state.activeLevelId === 21 || this.state.activeLevelId === 22 || this.state.activeLevelId === 23) {
           clampToMarchArenaBounds(d, 28);
         } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
           clampToDubenArenaBounds(d, 28);
@@ -9260,7 +9781,7 @@ export class GameEngine {
             const ang = Math.atan2(player.y - d.y, player.x - d.x);
             d.x += Math.cos(ang) * spd;
             d.y += Math.sin(ang) * spd;
-            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15) {
+            if (this.state.activeLevelId === 0 || this.state.activeLevelId === 1 || this.state.activeLevelId === 4 || this.state.activeLevelId === 5 || this.state.activeLevelId === 6 || this.state.activeLevelId === 7 || this.state.activeLevelId === 8 || this.state.activeLevelId === 9 || this.state.activeLevelId === 10 || this.state.activeLevelId === 11 || this.state.activeLevelId === 12 || this.state.activeLevelId === 13 || this.state.activeLevelId === 14 || this.state.activeLevelId === 15 || this.state.activeLevelId === 16 || this.state.activeLevelId === 17 || this.state.activeLevelId === 18 || this.state.activeLevelId === 19 || this.state.activeLevelId === 20 || this.state.activeLevelId === 21 || this.state.activeLevelId === 22 || this.state.activeLevelId === 23) {
               clampToMarchArenaBounds(d, 28);
             } else if (this.state.activeLevelId === 2 || this.state.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);

@@ -1209,6 +1209,14 @@ export const LadaStorybookSpread: React.FC<LadaStorybookSpreadProps> = ({
     { levelId: 13, x: 82, y: 10, shortLabel: '14. Září (Noc)', regionNote: 'Svatováclavská noc', tilt: 2 },
     { levelId: 14, x: 22, y: 6, shortLabel: '15. Říjen (Den)', regionNote: 'Říjnová drakiáda', tilt: -1 },
     { levelId: 15, x: 74, y: 6, shortLabel: '16. Říjen (Noc)', regionNote: 'Dušičková noc', tilt: 2 },
+    { levelId: 16, x: 14, y: 16, shortLabel: '17. Listopad (Den)', regionNote: 'Svatomartinské posvícení', tilt: -2 },
+    { levelId: 17, x: 62, y: 16, shortLabel: '18. Listopad (Noc)', regionNote: 'Lov v mlze a uhlířský milíř', tilt: 3 },
+    { levelId: 18, x: 38, y: 4, shortLabel: '19. Prosinec (Den)', regionNote: 'Adventní čas a koledy', tilt: -1 },
+    { levelId: 19, x: 86, y: 4, shortLabel: '20. Prosinec (Noc)', regionNote: 'Štědrovečerní tichá noc', tilt: 2 },
+    { levelId: 20, x: 26, y: 88, shortLabel: '21. Leden (Den)', regionNote: 'Tříkrálová koleda a sníh', tilt: -2 },
+    { levelId: 21, x: 68, y: 88, shortLabel: '22. Leden (Noc)', regionNote: 'Tříkrálová noc a perchta', tilt: 2 },
+    { levelId: 22, x: 20, y: 94, shortLabel: '23. Únor (Den)', regionNote: 'Masopustní průvod a koblihy', tilt: -2 },
+    { levelId: 23, x: 64, y: 94, shortLabel: '24. Únor (Noc)', regionNote: 'Masopustní rej a pochovávání basy', tilt: 2 },
   ];
 
   const activeHunterProg = getHunterProgress(activePortrait.id, meta);

@@ -119,6 +119,21 @@ export function isRegularSpawnAllowedForLevel(enemyId: string, levelId: GameLeve
     if (enemy.category === 'frost') return false;
     return true;
   }
+  if (levelId === 16) {
+    if (enemy.category === 'frost' || enemy.category === 'undead') return false;
+    return true;
+  }
+  if (levelId === 17) {
+    if (enemy.category === 'frost') return false;
+    return true;
+  }
+  if (levelId === 18) {
+    if (enemy.category === 'undead') return false;
+    return true;
+  }
+  if (levelId === 19) {
+    return true;
+  }
   return true;
 }
 
@@ -276,6 +291,14 @@ export const STAGE_THREAT_MULTIPLIERS: Record<number, number> = {
   13: 7.65,
   14: 8.45,
   15: 9.30,
+  16: 10.20,
+  17: 11.15,
+  18: 12.15,
+  19: 13.20,
+  20: 14.30,
+  21: 15.45,
+  22: 16.65,
+  23: 17.90,
 };
 
 export function getStageThreatMultiplier(levelId: GameLevelId = 0): number {
@@ -1923,7 +1946,7 @@ export class RunDirector {
     const levelId: GameLevelId = state.activeLevelId ?? this.levelId;
     const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
     const phaseKey = getCurrentDayPhase(state.gameTime || 0, levelId).id;
-    const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15;
+    const isNightLevel = levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15 || levelId === 17 || levelId === 19 || levelId === 21 || levelId === 23;
     const defaultPool = isNightLevel
       ? (curLvl?.spawnPools?.midnight || curLvl?.spawnPools?.night || curLvl?.spawnPools?.dusk || [])
       : (curLvl?.spawnPools?.noon || []);

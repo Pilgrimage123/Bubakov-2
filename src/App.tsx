@@ -249,6 +249,10 @@ import { drawCervenecDecoration } from './render/cervenecSvgLandscape';
 import { drawSrpenDecoration } from './render/srpenSvgLandscape';
 import { drawZariDecoration } from './render/zariSvgLandscape';
 import { drawRijenDecoration } from './render/rijenSvgLandscape';
+import { drawListopadDecoration } from './render/listopadSvgLandscape';
+import { drawProsinecDecoration } from './render/prosinecSvgLandscape';
+import { drawLedenDecorItem as drawLedenDecoration } from './render/ledenSvgLandscape';
+import { drawUnorDecorItem as drawUnorDecoration } from './render/unorSvgLandscape';
 import {
   CERVENEC_POIS,
   CERVENEC_DECOR,
@@ -281,6 +285,38 @@ import {
   getRijenWaterEffect,
   isInsideRijenPoi,
 } from './data/rijenArena';
+import {
+  LISTOPAD_POIS,
+  LISTOPAD_DECOR,
+  getListopadPois,
+  resolveListopadObstacles,
+  getListopadWaterEffect,
+  isInsideListopadPoi,
+} from './data/listopadArena';
+import {
+  PROSINEC_POIS,
+  PROSINEC_DECOR,
+  getProsinecPois,
+  resolveProsinecObstacles,
+  getProsinecWaterEffect,
+  isInsideProsinecPoi,
+} from './data/prosinecArena';
+import {
+  LEDEN_POIS,
+  LEDEN_DECOR,
+  getLedenPois,
+  resolveLedenObstacles,
+  getLedenWaterEffect,
+  isInsideLedenPoi,
+} from './data/ledenArena';
+import {
+  UNOR_POIS,
+  UNOR_DECOR,
+  getUnorPois,
+  resolveUnorObstacles,
+  getUnorWaterEffect,
+  isInsideUnorPoi,
+} from './data/unorArena';
 import {
   CERVEN_POIS,
   CERVEN_POND_REGION,
@@ -1059,6 +1095,14 @@ class DecorItem {
       drawZariDecoration(ctx, this, time, isNight);
     } else if (this.type.startsWith('rijen_')) {
       drawRijenDecoration(ctx, this, time, isNight);
+    } else if (this.type.startsWith('listopad_')) {
+      drawListopadDecoration(ctx, this, time, isNight);
+    } else if (this.type.startsWith('prosinec_')) {
+      drawProsinecDecoration(ctx, this, time, isNight);
+    } else if (this.type.startsWith('leden_')) {
+      drawLedenDecoration(ctx, this, isNight, time);
+    } else if (this.type.startsWith('unor_')) {
+      drawUnorDecoration(ctx, this, isNight, time);
     } else if (this.type === 'tree') {
       Lada.setupPath(ctx, COLORS.woodDark);
       ctx.beginPath();
@@ -1460,6 +1504,34 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     ];
     return items;
   }
+  if ((level.id === 16 || level.id === 17) && (level.arena?.id === 'listopad_naves' || level.theme === 'st_martin_feast' || level.theme === 'misty_night_hunt')) {
+    const items: DecorItem[] = [
+      ...LISTOPAD_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(LISTOPAD_POIS.village.x - 50, LISTOPAD_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
+  if ((level.id === 18 || level.id === 19) && (level.arena?.id === 'prosinec_zima' || level.theme === 'st_nicholas_procession' || level.theme === 'christmas_eve_miracle')) {
+    const items: DecorItem[] = [
+      ...PROSINEC_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(PROSINEC_POIS.village.x - 50, PROSINEC_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
+  if ((level.id === 20 || level.id === 21) && (level.arena?.id === 'lednova_zavej' || level.theme === 'january_frost')) {
+    const items: DecorItem[] = [
+      ...LEDEN_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(LEDEN_POIS.village.x - 50, LEDEN_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
+  if ((level.id === 22 || level.id === 23) && (level.arena?.id === 'unorova_naves' || level.theme === 'carnival_feast' || level.theme === 'carnival_night')) {
+    const items: DecorItem[] = [
+      ...UNOR_DECOR.map((item) => new DecorItem(item.x, item.y, item.type, item.scale)),
+      new DecorItem(UNOR_POIS.village.x - 50, UNOR_POIS.village.y + 42, 'kaca', 1),
+    ];
+    return items;
+  }
   const pool = [...(level.decorTypes.length ? level.decorTypes : ['tree'])];
   if (level.theme === 'autumn_village' || level.theme === 'winter_frost' || level.theme === 'mill_forge') {
     if (!pool.includes('cottage')) pool.push('cottage');
@@ -1486,6 +1558,13 @@ function seedArenaDecor(level: GameLevelDef): DecorItem[] {
     wenceslas_night: 38,
     october_harvest: 38,
     all_souls_night: 38,
+    st_martin_feast: 38,
+    misty_night_hunt: 38,
+    st_nicholas_procession: 38,
+    christmas_eve_miracle: 38,
+    january_frost: 38,
+    carnival_feast: 38,
+    carnival_night: 38,
   };
 
   const target = themeDensity[level.theme] || 32;
@@ -3738,7 +3817,294 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
     }
 
-    // 3. Interaktivní předmět / Truhla / Chasník v dosahu (~165 px)
+    if (eng.activeLevelId === 16 || eng.activeLevelId === 17) {
+      const lp = eng.listopad;
+      const isNight = eng.activeLevelId === 17;
+      const pois = getListopadPois(isNight);
+
+      // Hospoda (tavern) - Svatomartinská husa
+      if (isInsideListopadPoi(p.x, p.y, pois.tavern) && (lp.tavernCooldown || 0) <= 0) {
+        lp.tavernCooldown = 15.0;
+        p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🍗 PEČENÁ SVATOMARTINSKÁ HUSA! (+45 Kuráž)',
+          '#F59E0B',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+
+      // Boží muka (shrine)
+      if (isInsideListopadPoi(p.x, p.y, pois.shrine) && (lp.shrineCooldown || 0) <= 0) {
+        lp.shrineCooldown = 15.0;
+        p.tempShield = Math.max(p.tempShield || 0, 80);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🕯️ SVĚTLO V LISTOPADOVÉ MLZE (+80 Štít)!',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+    }
+
+    if (eng.activeLevelId === 18 || eng.activeLevelId === 19) {
+      const pr = eng.prosinec;
+      const isNight = eng.activeLevelId === 19;
+      const pois = getProsinecPois(isNight);
+      const advent = pr?.advent;
+      const zvon = pr?.zvon;
+
+      // Rozžehnutí adventního věnce na návsi (Level 18 Day)
+      if (!isNight && advent && advent.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.village) || Math.hypot(p.x - advent.x, p.y - advent.y) <= advent.radius)) {
+        advent.cooldown = 15.0;
+        advent.candlesLit = (advent.candlesLit || 0) + 1;
+        advent.lightTimer = 4.0;
+        p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🕯️ ADVENTNÍ VĚNEC ROZŽEHNUT! (+30 Kuráž & Svatá záře)',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+
+      // Rozeznění štědrovečerního zvonu (Level 19 Night)
+      if (isNight && zvon && zvon.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.church) || Math.hypot(p.x - zvon.x, p.y - zvon.y) <= zvon.radius)) {
+        zvon.cooldown = 15.0;
+        zvon.bellsTolled = (zvon.bellsTolled || 0) + 1;
+        zvon.chimeTimer = 4.0;
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🔔 ŠTĚDROVEČERNÍ ZVON ROZEZNĚN! (Svatý úder)',
+          '#38BDF8',
+          true,
+          'combatStates'
+        );
+        for (let j = 0; j < (eng.livingEnemies || eng.enemies || []).length; j++) {
+          const foe = (eng.livingEnemies || eng.enemies)[j];
+          if (foe && !foe.dead && Math.hypot(foe.x - pois.church.x, foe.y - pois.church.y) < 250) {
+            foe.takeDamage?.(100 * (p.damageMultiplier || 1), 'holy', (foe.x - pois.church.x) * 4, (foe.y - pois.church.y) * 4);
+            foe.freeze?.(2.5);
+          }
+        }
+        sound.bell();
+        return true;
+      }
+
+      // Hospoda (tavern)
+      if (isInsideProsinecPoi(p.x, p.y, pois.tavern) && (pr.tavernCooldown || 0) <= 0) {
+        pr.tavernCooldown = 15.0;
+        p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '☕ HORKÝ VÁNOČNÍ PUNČ! (+45 Kuráž)',
+          '#F59E0B',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+
+      // Boží muka (shrine)
+      if (isInsideProsinecPoi(p.x, p.y, pois.shrine) && (pr.shrineCooldown || 0) <= 0) {
+        pr.shrineCooldown = 15.0;
+        p.tempShield = Math.max(p.tempShield || 0, 80);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🕯️ SVĚTLO V PROSINCOVÉ VÁNICI (+80 Štít)!',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+    }
+
+    if (eng.activeLevelId === 20 || eng.activeLevelId === 21) {
+      const ld = eng.leden;
+      const isNight = eng.activeLevelId === 21;
+      const pois = getLedenPois(isNight);
+      const snehulak = ld?.snehulak;
+      const fara = ld?.fara;
+
+      // Stavění sněhuláka na návsi (Level 20 Day)
+      if (!isNight && snehulak && snehulak.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.village) || Math.hypot(p.x - snehulak.x, p.y - snehulak.y) <= snehulak.radius)) {
+        snehulak.cooldown = 15.0;
+        snehulak.snowmenBuilt = (snehulak.snowmenBuilt || 0) + 1;
+        snehulak.snowShieldTimer = 4.0;
+        p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '⛄ OBŘÍ SNĚHULÁK POSTAVEN! (+30 Kuráž & Mrazivá rázová vlna)',
+          '#38BDF8',
+          true,
+          'combatStates'
+        );
+        for (let j = 0; j < (eng.livingEnemies || eng.enemies || []).length; j++) {
+          const foe = (eng.livingEnemies || eng.enemies)[j];
+          if (foe && !foe.dead && Math.hypot(foe.x - pois.village.x, foe.y - pois.village.y) < 220) {
+            foe.takeDamage?.(80 * (p.damageMultiplier || 1), 'ice', (foe.x - pois.village.x) * 3, (foe.y - pois.village.y) * 3);
+            foe.freeze?.(2.0);
+          }
+        }
+        sound.hit();
+        return true;
+      }
+
+      // Posvěcení dveří křídou K+M+B na faře (Level 21 Night)
+      if (isNight && fara && fara.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.church) || Math.hypot(p.x - fara.x, p.y - fara.y) <= fara.radius)) {
+        fara.cooldown = 15.0;
+        fara.blessingsCount = (fara.blessingsCount || 0) + 1;
+        fara.holyAuraTimer = 4.0;
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '✨ K + M + B POSVĚCENO! (Omráčení běsů & Štít)',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        for (let j = 0; j < (eng.livingEnemies || eng.enemies || []).length; j++) {
+          const foe = (eng.livingEnemies || eng.enemies)[j];
+          if (foe && !foe.dead && Math.hypot(foe.x - pois.church.x, foe.y - pois.church.y) < 250) {
+            foe.takeDamage?.(120 * (p.damageMultiplier || 1), 'holy', (foe.x - pois.church.x) * 4, (foe.y - pois.church.y) * 4);
+            foe.freeze?.(3.0);
+          }
+        }
+        sound.bell();
+        return true;
+      }
+
+      // Hospoda (tavern)
+      if (isInsideLedenPoi(p.x, p.y, pois.tavern) && (ld.tavernCooldown || 0) <= 0) {
+        ld.tavernCooldown = 15.0;
+        p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '☕ HORKÝ ČAJ S MEDEM! (+45 Kuráž)',
+          '#4ADE80',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+
+      // Boží muka (shrine)
+      if (isInsideLedenPoi(p.x, p.y, pois.shrine) && (ld.shrineCooldown || 0) <= 0) {
+        ld.shrineCooldown = 15.0;
+        p.tempShield = Math.max(p.tempShield || 0, 80);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🕯️ SVĚTLO V ZÁVĚJI! (+80 Štít)',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+    }
+
+    if (eng.activeLevelId === 22 || eng.activeLevelId === 23) {
+      const un = eng.unor;
+      const isNight = eng.activeLevelId === 23;
+      const pois = getUnorPois(isNight);
+      const koblihy = un?.koblihy;
+      const basa = un?.basa;
+
+      // Smažení masopustních koblih v Hostinci U Cikánů (Level 22 Day)
+      if (!isNight && koblihy && koblihy.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.tavern) || Math.hypot(p.x - koblihy.x, p.y - koblihy.y) <= koblihy.radius)) {
+        koblihy.cooldown = 15.0;
+        koblihy.koblihyCooked = (koblihy.koblihyCooked || 0) + 1;
+        koblihy.speedBoostTimer = 10.0;
+        p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🍩 HORKÉ KOBLIHY USMAŽENY! (+45 Kuráž & +25% Rychlost)',
+          '#F59E0B',
+          true,
+          'combatStates'
+        );
+        sound.hit();
+        return true;
+      }
+
+      // Pochovávání basy a rozsvícení loučí ve Staré márnici (Level 23 Night)
+      if (isNight && basa && basa.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.church) || Math.hypot(p.x - basa.x, p.y - basa.y) <= basa.radius)) {
+        basa.cooldown = 15.0;
+        basa.basasBuried = (basa.basasBuried || 0) + 1;
+        basa.shockwaveTimer = 4.0;
+        p.tempShield = Math.max(p.tempShield || 0, 100);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🎻 BASA POCHOVÁNA! SVATÝ RÁZ A OMRÁČENÍ! (+100 Štít)',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        for (let j = 0; j < (eng.livingEnemies || eng.enemies || []).length; j++) {
+          const foe = (eng.livingEnemies || eng.enemies)[j];
+          if (foe && !foe.dead && Math.hypot(foe.x - pois.church.x, foe.y - pois.church.y) < 260) {
+            foe.takeDamage?.(140 * (p.damageMultiplier || 1), 'holy', (foe.x - pois.church.x) * 4.5, (foe.y - pois.church.y) * 4.5);
+            foe.freeze?.(3.0);
+          }
+        }
+        sound.bell();
+        return true;
+      }
+
+      // Boží muka (shrine)
+      if (isInsideUnorPoi(p.x, p.y, pois.shrine) && (un.shrineCooldown || 0) <= 0) {
+        un.shrineCooldown = 15.0;
+        p.tempShield = Math.max(p.tempShield || 0, 80);
+        pushDamageText(
+          eng.texts,
+          p.x,
+          p.y - 35,
+          '🌿 POSVÍCENÉ CHVOJÍ! POŽEHNÁNÍ BOŽÍCH MUK (+80 Štít)!',
+          '#FEF08A',
+          true,
+          'combatStates'
+        );
+        sound.bell();
+        return true;
+      }
+    }
     if (eng.drops && eng.drops.length > 0) {
       let nearestDrop: any = null;
       let nearestDistSq = 165 * 165;
@@ -6051,6 +6417,18 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 } else if (engine.activeLevelId === 14 || engine.activeLevelId === 15) {
                   resolveRijenObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
+                } else if (engine.activeLevelId === 16 || engine.activeLevelId === 17) {
+                  resolveListopadObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
+                } else if (engine.activeLevelId === 18 || engine.activeLevelId === 19) {
+                  resolveProsinecObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
+                } else if (engine.activeLevelId === 20 || engine.activeLevelId === 21) {
+                  resolveLedenObstacles(engine.grandfather, false);
+                  clampToMarchArenaBounds(engine.grandfather, 28);
+                } else if (engine.activeLevelId === 22 || engine.activeLevelId === 23) {
+                  resolveUnorObstacles(engine.grandfather, false);
                   clampToMarchArenaBounds(engine.grandfather, 28);
                 }
                 if (Math.abs(dx) > 3) {
@@ -9600,6 +9978,164 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               // 6. Arena obstacles and boundary
               resolveRijenObstacles(player, false);
               clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 16 || engine.activeLevelId === 17) {
+              const lp = engine.listopad;
+              const isNight = engine.activeLevelId === 17;
+              const pois = getListopadPois(isNight);
+
+              if (lp.bellCooldown > 0) lp.bellCooldown = Math.max(0, lp.bellCooldown - dt);
+              if (lp.tavernCooldown > 0) lp.tavernCooldown = Math.max(0, lp.tavernCooldown - dt);
+              if (lp.shrineCooldown > 0) lp.shrineCooldown = Math.max(0, lp.shrineCooldown - dt);
+
+              let promptText: string | null = null;
+              if (isInsideListopadPoi(player.x, player.y, pois.tavern)) {
+                promptText = (lp.tavernCooldown || 0) <= 0
+                  ? '[E] Dát si pečenou husu (Hostinec U Cikánů)'
+                  : `Hostinec (${Math.ceil(lp.tavernCooldown || 0)}s)`;
+              } else if (isInsideListopadPoi(player.x, player.y, pois.shrine)) {
+                promptText = (lp.shrineCooldown || 0) <= 0
+                  ? '[E] Zapálit svíci v mlze (Boží muka)'
+                  : `Boží muka (${Math.ceil(lp.shrineCooldown || 0)}s)`;
+              }
+              engine.listopadActivePoiPrompt = promptText;
+
+              const waterEff = getListopadWaterEffect(player.x, player.y, engine.activeLevelId);
+              if (waterEff.inWater) {
+                player.speedMultiplier = (player.speedMultiplier || 1) * waterEff.speedMult;
+              }
+              resolveListopadObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 18 || engine.activeLevelId === 19) {
+              const pr = engine.prosinec;
+              const isNight = engine.activeLevelId === 19;
+              const pois = getProsinecPois(isNight);
+
+              if (pr.bellCooldown > 0) pr.bellCooldown = Math.max(0, pr.bellCooldown - dt);
+              if (pr.tavernCooldown > 0) pr.tavernCooldown = Math.max(0, pr.tavernCooldown - dt);
+              if (pr.shrineCooldown > 0) pr.shrineCooldown = Math.max(0, pr.shrineCooldown - dt);
+              if (pr.advent?.cooldown > 0) pr.advent.cooldown = Math.max(0, pr.advent.cooldown - dt);
+              if (pr.advent?.lightTimer > 0) pr.advent.lightTimer = Math.max(0, pr.advent.lightTimer - dt);
+              if (pr.zvon?.cooldown > 0) pr.zvon.cooldown = Math.max(0, pr.zvon.cooldown - dt);
+              if (pr.zvon?.chimeTimer > 0) pr.zvon.chimeTimer = Math.max(0, pr.zvon.chimeTimer - dt);
+
+              let promptText: string | null = null;
+              const inVillage = isInsideProsinecPoi(player.x, player.y, pois.village);
+              const inChurch = isInsideProsinecPoi(player.x, player.y, pois.church);
+              const inTavern = isInsideProsinecPoi(player.x, player.y, pois.tavern);
+              const inShrine = isInsideProsinecPoi(player.x, player.y, pois.shrine);
+
+              if (!isNight && inVillage) {
+                promptText = (pr.advent?.cooldown || 0) <= 0
+                  ? '[E] Rozžehnout adventní věnec (Náves)'
+                  : `Adventní věnec (${Math.ceil(pr.advent?.cooldown || 0)}s)`;
+              } else if (isNight && inChurch) {
+                promptText = (pr.zvon?.cooldown || 0) <= 0
+                  ? '[E] Rozeznít štědrovečerní zvon (Kostel)'
+                  : `Štědrovečerní zvon (${Math.ceil(pr.zvon?.cooldown || 0)}s)`;
+              } else if (inTavern) {
+                promptText = (pr.tavernCooldown || 0) <= 0
+                  ? '[E] Dát si vánoční punč (Hospoda)'
+                  : `Hospoda (${Math.ceil(pr.tavernCooldown || 0)}s)`;
+              } else if (inShrine) {
+                promptText = (pr.shrineCooldown || 0) <= 0
+                  ? '[E] Zapálit svíci v mrazu (Boží muka)'
+                  : `Boží muka (${Math.ceil(pr.shrineCooldown || 0)}s)`;
+              }
+              engine.prosinecActivePoiPrompt = promptText;
+
+              const waterEff = getProsinecWaterEffect(player.x, player.y, engine.activeLevelId);
+              if (waterEff.onIce) {
+                player.speedMultiplier = (player.speedMultiplier || 1) * 1.15;
+              }
+              resolveProsinecObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 20 || engine.activeLevelId === 21) {
+              const ld = engine.leden;
+              const isNight = engine.activeLevelId === 21;
+              const pois = getLedenPois(isNight);
+
+              if (ld.tavernCooldown > 0) ld.tavernCooldown = Math.max(0, ld.tavernCooldown - dt);
+              if (ld.shrineCooldown > 0) ld.shrineCooldown = Math.max(0, ld.shrineCooldown - dt);
+              if (ld.snehulak?.cooldown > 0) ld.snehulak.cooldown = Math.max(0, ld.snehulak.cooldown - dt);
+              if (ld.snehulak?.snowShieldTimer > 0) ld.snehulak.snowShieldTimer = Math.max(0, ld.snehulak.snowShieldTimer - dt);
+              if (ld.fara?.cooldown > 0) ld.fara.cooldown = Math.max(0, ld.fara.cooldown - dt);
+              if (ld.fara?.holyAuraTimer > 0) ld.fara.holyAuraTimer = Math.max(0, ld.fara.holyAuraTimer - dt);
+
+              let promptText: string | null = null;
+              const inVillage = isInsideLedenPoi(player.x, player.y, pois.village);
+              const inChurch = isInsideLedenPoi(player.x, player.y, pois.church);
+              const inTavern = isInsideLedenPoi(player.x, player.y, pois.tavern);
+              const inShrine = isInsideLedenPoi(player.x, player.y, pois.shrine);
+
+              if (!isNight && inVillage) {
+                promptText = (ld.snehulak?.cooldown || 0) <= 0
+                  ? '[E] Postavit sněhuláka (Náves u kašny)'
+                  : `Sněhulák (${Math.ceil(ld.snehulak?.cooldown || 0)}s)`;
+              } else if (isNight && inChurch) {
+                promptText = (ld.fara?.cooldown || 0) <= 0
+                  ? '[E] Napsat K+M+B svěcenou křídou (Dveře fary)'
+                  : `Svěcená křída (${Math.ceil(ld.fara?.cooldown || 0)}s)`;
+              } else if (inTavern) {
+                promptText = (ld.tavernCooldown || 0) <= 0
+                  ? '[E] Dát si horký čaj s medem (Hostinec U Cikánů)'
+                  : `Hostinec (${Math.ceil(ld.tavernCooldown || 0)}s)`;
+              } else if (inShrine) {
+                promptText = (ld.shrineCooldown || 0) <= 0
+                  ? '[E] Zapálit svíci v závěji (Boží muka)'
+                  : `Boží muka (${Math.ceil(ld.shrineCooldown || 0)}s)`;
+              }
+              engine.ledenActivePoiPrompt = promptText;
+
+              const waterEff = getLedenWaterEffect(player.x, player.y, engine.activeLevelId);
+              if (waterEff.onIce) {
+                player.speedMultiplier = (player.speedMultiplier || 1) * 1.15;
+              }
+              resolveLedenObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
+            } else if (engine.activeLevelId === 22 || engine.activeLevelId === 23) {
+              const un = engine.unor;
+              const isNight = engine.activeLevelId === 23;
+              const pois = getUnorPois(isNight);
+
+              if (un.tavernCooldown > 0) un.tavernCooldown = Math.max(0, un.tavernCooldown - dt);
+              if (un.shrineCooldown > 0) un.shrineCooldown = Math.max(0, un.shrineCooldown - dt);
+              if (un.koblihy?.cooldown > 0) un.koblihy.cooldown = Math.max(0, un.koblihy.cooldown - dt);
+              if (un.koblihy?.speedBoostTimer > 0) un.koblihy.speedBoostTimer = Math.max(0, un.koblihy.speedBoostTimer - dt);
+              if (un.basa?.cooldown > 0) un.basa.cooldown = Math.max(0, un.basa.cooldown - dt);
+              if (un.basa?.shockwaveTimer > 0) un.basa.shockwaveTimer = Math.max(0, un.basa.shockwaveTimer - dt);
+
+              let promptText: string | null = null;
+              const inVillage = isInsideUnorPoi(player.x, player.y, pois.village);
+              const inChurch = isInsideUnorPoi(player.x, player.y, pois.church);
+              const inTavern = isInsideUnorPoi(player.x, player.y, pois.tavern);
+              const inShrine = isInsideUnorPoi(player.x, player.y, pois.shrine);
+
+              if (!isNight && inTavern) {
+                promptText = (un.koblihy?.cooldown || 0) <= 0
+                  ? '[E] Smažit masopustní koblihy (Hostinec U Cikánů)'
+                  : `Koblihy (${Math.ceil(un.koblihy?.cooldown || 0)}s)`;
+              } else if (isNight && inChurch) {
+                promptText = (un.basa?.cooldown || 0) <= 0
+                  ? '[E] Pochovat basu a rozsvítit louče (Stará márnice)'
+                  : `Pochování basy (${Math.ceil(un.basa?.cooldown || 0)}s)`;
+              } else if (inVillage) {
+                promptText = 'Masopustní náves (+20 % šance na kritický zásah)';
+              } else if (inShrine) {
+                promptText = (un.shrineCooldown || 0) <= 0
+                  ? '[E] Pomodlit se u ověnčených Božích muk'
+                  : `Boží muka (${Math.ceil(un.shrineCooldown || 0)}s)`;
+              }
+              engine.unorActivePoiPrompt = promptText;
+
+              const waterEff = getUnorWaterEffect(player.x, player.y, engine.activeLevelId);
+              if (waterEff.onIce) {
+                player.speedMultiplier = (player.speedMultiplier || 1) * 1.15;
+              }
+              if (un.koblihy?.speedBoostTimer > 0) {
+                player.speedMultiplier = (player.speedMultiplier || 1) * 1.25;
+              }
+              resolveUnorObstacles(player, false);
+              clampToMarchArenaBounds(player, 28);
             } else {
               player.arenaArmorBonus = 0;
             }
@@ -10872,6 +11408,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   resolveRijenObstacles(e, isFlyingEnemy);
                 }
                 clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 16 || engine.activeLevelId === 17) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak' || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  resolveListopadObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 18 || engine.activeLevelId === 19) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'mraziva_sova' || e.id === 'kral_mrazik' || e.id === 'jezdec_meluziny' || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak' || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  resolveProsinecObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 20 || engine.activeLevelId === 21) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'mrazivy_havran' || e.id === 'chumelenice' || e.id === 'vladce_chumelenice' || e.id === 'trikralovy_jezdec' || e.id === 'mraziva_sova' || e.id === 'kral_mrazik' || e.id === 'jezdec_meluziny' || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak' || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  resolveLedenObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
+              } else if (engine.activeLevelId === 22 || engine.activeLevelId === 23) {
+                if (!e.isDefeated && !e.dead) {
+                  const isFlyingEnemy = Boolean((e.isFlying || e.id === 'plivnik_uhlik' || e.id === 'koblihovy_rarach' || e.id === 'mrazivy_havran' || e.id === 'chumelenice' || e.id === 'vladce_chumelenice' || e.id === 'trikralovy_jezdec' || e.id === 'mraziva_sova' || e.id === 'kral_mrazik' || e.id === 'jezdec_meluziny' || e.id === 'kralovska_husa' || e.id === 'mlzny_prizrak' || e.id === 'kralovsky_havran' || e.id === 'drak_vetrnik' || e.id === 'dusickova_bludicka' || e.id === 'vrana' || e.id === 'chroust' || e.id === 'bludicka' || e.id === 'svestkovy_srsen' || e.id === 'kralovsky_srsen' || e.id === 'srpnove_cmelak' || e.id === 'zlatohlavek' || e.id === 'nocni_mura' || e.id === 'bila_pani' || e.id === 'kvilici_meluzina' || isActiveVirtualCrow) && !e.isGroundedForLoot);
+                  resolveUnorObstacles(e, isFlyingEnemy);
+                }
+                clampToMarchArenaBounds(e, 28);
               }
             }
 
@@ -11096,7 +11656,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               if (Math.abs(d.vx) < 1.5) d.vx = 0;
               if (Math.abs(d.vy) < 1.5) d.vy = 0;
             }
-            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+            if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15 || engine.activeLevelId === 16 || engine.activeLevelId === 17 || engine.activeLevelId === 18 || engine.activeLevelId === 19 || engine.activeLevelId === 20 || engine.activeLevelId === 21 || engine.activeLevelId === 22 || engine.activeLevelId === 23) {
               clampToMarchArenaBounds(d, 28);
             } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
               clampToDubenArenaBounds(d, 28);
@@ -11126,7 +11686,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               const ang = Math.atan2(player.y - d.y, player.x - d.x);
               d.x += Math.cos(ang) * spd;
               d.y += Math.sin(ang) * spd;
-              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15) {
+              if (engine.activeLevelId === 0 || engine.activeLevelId === 1 || engine.activeLevelId === 4 || engine.activeLevelId === 5 || engine.activeLevelId === 6 || engine.activeLevelId === 7 || engine.activeLevelId === 8 || engine.activeLevelId === 9 || engine.activeLevelId === 10 || engine.activeLevelId === 11 || engine.activeLevelId === 12 || engine.activeLevelId === 13 || engine.activeLevelId === 14 || engine.activeLevelId === 15 || engine.activeLevelId === 16 || engine.activeLevelId === 17 || engine.activeLevelId === 18 || engine.activeLevelId === 19 || engine.activeLevelId === 20 || engine.activeLevelId === 21 || engine.activeLevelId === 22 || engine.activeLevelId === 23) {
                 clampToMarchArenaBounds(d, 28);
               } else if (engine.activeLevelId === 2 || engine.activeLevelId === 3) {
                 clampToDubenArenaBounds(d, 28);

@@ -46,3 +46,6 @@ This directory records architectural decisions made for the project Bubákov.
 | [0039](0039-sjednocena-kinematika-a-orientace-lovcu.md) | Sjednocená kinematika a orientace lovců |
 | [0040](0040-renesance-pohadkove-knihy-a-ex-libris-typografie.md) | Renesance Pohádkové knihy a Ex Libris typografie |
 | [0041](0041-kanonicka-parita-vyprav-a-trojjedinost-vln.md) | Kanonická parita výprav, rozpočet strašidel a Pravidlo trojjedinosti vln |
+| [0042](0042-dokonceni-rocniho-cyklu-listopad-prosinec.md) | Dokončení ročního cyklu: Listopad a Prosinec (Výpravy 17–20) a audit kodexu |
+| [0043](0043-lednove-vypravy-a-perchta-s-nozem.md) | Lednové výpravy (Výpravy 21–22) a folklórní boss Šeredná Perchta s nožem |
+| [0044](0044-unor-masopust-a-zavrseni-rocniho-cyklu.md) | Únor v Hrusicích (Výpravy 23–24), Masopustní veselí, Bakchus a završení ročního cyklu |

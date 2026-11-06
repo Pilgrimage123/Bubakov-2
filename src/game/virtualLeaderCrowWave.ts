@@ -63,7 +63,7 @@ export type CrowWaveFormationType = 'crows' | 'wisp_swarm' | 'night_pack';
 const NIGHT_WISP_COLORS = ['#22D3EE', '#FACC15', '#F472B6', '#A3E635'] as const;
 
 export function isCrowWaveNightLevel(levelId?: number): boolean {
-  return levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15;
+  return levelId === 1 || levelId === 3 || levelId === 5 || levelId === 7 || levelId === 9 || levelId === 11 || levelId === 13 || levelId === 15 || levelId === 17 || levelId === 19 || levelId === 21 || levelId === 23;
 }
 
 export function isCrowWaveSupportedLevel(levelId?: number): boolean {

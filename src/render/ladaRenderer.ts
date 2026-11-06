@@ -24887,6 +24887,51 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawDusickovaBludicka: 'dusickova_bludicka',
   drawCertRybnikar: 'cert_rybnikar',
   drawVeleStika: 'vele_stika',
+  drawSvatomartinskaHusa: 'svatomartinska_husa',
+  drawDivokyKanec: 'divoky_kanec',
+  drawLesniPytlak: 'lesni_pytlak',
+  drawKralovskaHusa: 'kralovska_husa',
+  drawMartinskyJezdec: 'martinsky_jezdec',
+  drawListopadovyMrazivec: 'listopadovy_mrazivec',
+  drawMlznyPrizrak: 'mlzny_prizrak',
+  drawCernyMyslivec: 'cerny_myslivec',
+  drawKanecKnour: 'kanec_knour',
+  drawLedovyRampousik: 'ledovy_rampousik',
+  drawSnehovaJezinka: 'snehova_jezinka',
+  drawCertSPytlem: 'cert_s_pytlem',
+  drawMaskarniKozel: 'maskarni_kozel',
+  drawMikulasskyCert: 'mikulassky_cert',
+  drawMrazivaSova: 'mraziva_sova',
+  drawJezdecMeluziny: 'jezdec_meluziny',
+  drawKralMrazik: 'kral_mrazik',
+  drawZimniVrabec: 'zimni_vrabec',
+  drawKlukNaSankach: 'kluk_na_sankach',
+  drawLedovySkritek: 'ledovy_skritek',
+  drawTrikralovyKolednik: 'trikralovy_kolednik',
+  drawChumelenice: 'chumelenice',
+  drawNocniZavejnik: 'nocni_zavejnik',
+  drawMrazivyHavran: 'mrazivy_havran',
+  drawObriSnehulak: 'obri_snehulak',
+  drawTrikralovyJezdec: 'trikralovy_jezdec',
+  drawVladceChumelenice: 'vladce_chumelenice',
+  drawLedovaKlekanice: 'ledova_klekanice',
+  drawKostlivecSKosou: 'kostlivec_s_kosou',
+  drawPerchtaSNozem: 'perchta_s_nozem',
+  drawMasopustniLaufr: 'masopustni_laufr',
+  drawBabaSNusi: 'baba_s_nusi',
+  drawMasopustniKominik: 'masopustni_kominik',
+  drawKoblihovyRarach: 'koblihovy_rarach',
+  drawMasopustniKrasojezdec: 'masopustni_krasojezdec',
+  drawMasopustniMedved: 'masopustni_medved',
+  drawSlamennikObr: 'slamennik_obr',
+  drawRychtarMasek: 'rychtar_masek',
+  drawNocniSmrtak: 'nocni_smrtak',
+  drawSmutecniMaskara: 'smutecni_maskara',
+  drawMasopustniBasa: 'masopustni_basa',
+  drawPlivnikUhlik: 'plivnik_uhlik',
+  drawNocniKobold: 'nocni_kobold',
+  drawUmrlecBasista: 'umrlec_basista',
+  drawBakchusSPivnimSoudkem: 'bakchus_s_pivnim_soudkem',
 };
 
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
@@ -30205,6 +30250,2981 @@ function drawVeleStika(
   ctx.restore();
 }
 
+function drawSvatomartinskaHusa(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.0,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 8) * 3;
+  const wingFlap = Math.sin(time * 12) * 0.25;
+
+  // Legs
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-4, 10);
+  ctx.lineTo(-6, 20);
+  ctx.lineTo(-10, 22);
+  ctx.moveTo(4, 10);
+  ctx.lineTo(6, 20);
+  ctx.lineTo(2, 22);
+  ctx.stroke();
+
+  // Body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 4 + bob, 18, 12, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Wings
+  ctx.save();
+  ctx.translate(-2, 2 + bob);
+  ctx.rotate(wingFlap);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 14, 8, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Long neck & head
+  ctx.beginPath();
+  ctx.moveTo(10, 4 + bob);
+  ctx.quadraticCurveTo(18, -4 + bob, 16, -16 + bob);
+  ctx.arc(16, -18 + bob, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Orange Beak
+  ctx.fillStyle = '#EA580C';
+  ctx.beginPath();
+  ctx.moveTo(20, -20 + bob);
+  ctx.lineTo(28, -17 + bob);
+  ctx.lineTo(20, -14 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Eye
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(17, -19 + bob, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawDivokyKanec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.2,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const runBob = Math.sin(time * 7) * 2.5;
+
+  // Legs
+  ctx.fillStyle = '#292524';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  const legOffset = Math.sin(time * 7) * 6;
+  ctx.fillRect(-14 + legOffset, 12, 6, 12);
+  ctx.strokeRect(-14 + legOffset, 12, 6, 12);
+  ctx.fillRect(8 - legOffset, 12, 6, 12);
+  ctx.strokeRect(8 - legOffset, 12, 6, 12);
+
+  // Boar Body
+  ctx.fillStyle = isHurt ? '#7F1D1D' : '#451A03';
+  ctx.beginPath();
+  ctx.ellipse(0, runBob, 24, 16, -0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Bristles along the back
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+  for (let i = -16; i <= 10; i += 4) {
+    ctx.beginPath();
+    ctx.moveTo(i, -14 + runBob);
+    ctx.lineTo(i - 2, -20 + runBob);
+    ctx.stroke();
+  }
+
+  // Snout & Head
+  ctx.fillStyle = isHurt ? '#991B1B' : '#573016';
+  ctx.beginPath();
+  ctx.moveTo(14, -8 + runBob);
+  ctx.lineTo(28, 4 + runBob);
+  ctx.lineTo(14, 12 + runBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Snout tip
+  ctx.fillStyle = '#1C1917';
+  ctx.beginPath();
+  ctx.arc(28, 4 + runBob, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // White Tusks
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.moveTo(24, 6 + runBob);
+  ctx.lineTo(27, -4 + runBob);
+  ctx.lineTo(22, 4 + runBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red eye
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(17, -2 + runBob, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawLesniPytlak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.15,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const sneakBob = Math.sin(time * 5) * 2;
+
+  // Legs in brown trousers
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = '#573016';
+  ctx.fillRect(-8, 10, 6, 14);
+  ctx.strokeRect(-8, 10, 6, 14);
+  ctx.fillRect(2, 10, 6, 14);
+  ctx.strokeRect(2, 10, 6, 14);
+
+  // Coat
+  ctx.fillStyle = isHurt ? '#F87171' : '#166534';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-12, -10 + sneakBob, 24, 22, 4); else ctx.rect(-12, -10 + sneakBob, 24, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(0, -18 + sneakBob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Hunter's green hat with feather
+  ctx.fillStyle = '#14532D';
+  ctx.beginPath();
+  ctx.ellipse(0, -23 + sneakBob, 12, 4, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Feather
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-6, -24 + sneakBob);
+  ctx.lineTo(-12, -34 + sneakBob);
+  ctx.stroke();
+
+  // Wooden Slingshot
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(10, 2 + sneakBob);
+  ctx.lineTo(16, -2 + sneakBob);
+  ctx.lineTo(14, -10 + sneakBob);
+  ctx.moveTo(16, -2 + sneakBob);
+  ctx.lineTo(20, -8 + sneakBob);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKralovskaHusa(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.55,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  drawSvatomartinskaHusa(ctx, 0, 0, time, 1.35, false, isHurt);
+
+  // Royal Golden Crown
+  ctx.fillStyle = '#FBBF24';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const crownY = -28 + Math.sin(time * 8) * 3;
+  ctx.moveTo(14, crownY);
+  ctx.lineTo(12, crownY - 10);
+  ctx.lineTo(17, crownY - 5);
+  ctx.lineTo(22, crownY - 12);
+  ctx.lineTo(25, crownY - 4);
+  ctx.lineTo(28, crownY - 10);
+  ctx.lineTo(26, crownY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red jewels on crown
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(17, crownY - 4, 1.5, 0, Math.PI * 2);
+  ctx.arc(22, crownY - 4, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawMartinskyJezdec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.65,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const gallop = Math.sin(time * 8) * 3;
+
+  // White Steed
+  ctx.fillStyle = '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(-4, 12 + gallop, 26, 16, 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Steed neck & head
+  ctx.beginPath();
+  ctx.moveTo(14, 8 + gallop);
+  ctx.lineTo(24, -8 + gallop);
+  ctx.lineTo(32, -4 + gallop);
+  ctx.lineTo(28, 12 + gallop);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Legs
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-18, 20 + gallop);
+  ctx.lineTo(-24, 34);
+  ctx.moveTo(-10, 22 + gallop);
+  ctx.lineTo(-6, 34);
+  ctx.moveTo(10, 22 + gallop);
+  ctx.lineTo(16, 34);
+  ctx.moveTo(18, 20 + gallop);
+  ctx.lineTo(26, 34);
+  ctx.stroke();
+
+  // Red Saddle & Cape
+  ctx.fillStyle = isHurt ? '#F87171' : '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-14, 0 + gallop);
+  ctx.lineTo(4, 0 + gallop);
+  ctx.lineTo(-4, 14 + gallop);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // St. Martin's Knight Torso
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-8, -14 + gallop, 16, 18, 3); else ctx.rect(-8, -14 + gallop, 16, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  // Helmet
+  ctx.fillStyle = '#CBD5E1';
+  ctx.beginPath();
+  ctx.arc(0, -20 + gallop, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Lance
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-10, 4 + gallop);
+  ctx.lineTo(38, -26 + gallop);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawListopadovyMrazivec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.75,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const floatBob = Math.sin(time * 3.5) * 4;
+
+  // Frost aura
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+  ctx.beginPath();
+  ctx.arc(0, floatBob, 44, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Heavy grey-blue coat
+  ctx.fillStyle = isHurt ? '#93C5FD' : '#334155';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-22, 28 + floatBob);
+  ctx.lineTo(-14, -14 + floatBob);
+  ctx.lineTo(14, -14 + floatBob);
+  ctx.lineTo(22, 28 + floatBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Long icicle beard
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.moveTo(-10, -2 + floatBob);
+  ctx.lineTo(0, 24 + floatBob);
+  ctx.lineTo(10, -2 + floatBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Head with frost hood
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.arc(0, -18 + floatBob, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Cold glowing cyan eyes
+  ctx.fillStyle = '#38BDF8';
+  ctx.beginPath();
+  ctx.arc(-4, -18 + floatBob, 2.5, 0, Math.PI * 2);
+  ctx.arc(4, -18 + floatBob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Crystal Ice Staff
+  ctx.strokeStyle = '#0284C7';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(22, 32 + floatBob);
+  ctx.lineTo(22, -34 + floatBob);
+  ctx.stroke();
+  // Diamond crystal head
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.moveTo(22, -44 + floatBob);
+  ctx.lineTo(28, -36 + floatBob);
+  ctx.lineTo(22, -28 + floatBob);
+  ctx.lineTo(16, -36 + floatBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMlznyPrizrak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.4,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Mandatory shadow for flyer
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, 26, 26, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const sway = Math.sin(time * 4) * 0.15;
+  const bob = Math.cos(time * 3) * 5;
+  ctx.rotate(sway);
+
+  // Foggy swirling body
+  ctx.fillStyle = isHurt ? 'rgba(252, 165, 165, 0.75)' : 'rgba(226, 232, 240, 0.82)';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-18, 16 + bob);
+  ctx.quadraticCurveTo(-26, -10 + bob, 0, -22 + bob);
+  ctx.quadraticCurveTo(26, -10 + bob, 18, 16 + bob);
+  ctx.quadraticCurveTo(8, 24 + bob, 0, 14 + bob);
+  ctx.quadraticCurveTo(-8, 24 + bob, -18, 16 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Ghost eyes
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.ellipse(-6, -6 + bob, 3, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(6, -6 + bob, 3, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCernyMyslivec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.5,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 5) * 2;
+
+  // Dark boots & trousers
+  ctx.fillStyle = '#0F172A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.fillRect(-10, 12, 7, 16);
+  ctx.strokeRect(-10, 12, 7, 16);
+  ctx.fillRect(3, 12, 7, 16);
+  ctx.strokeRect(3, 12, 7, 16);
+
+  // Dark hunting coat
+  ctx.fillStyle = isHurt ? '#7F1D1D' : '#1E293B';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-14, -12 + bob, 28, 26, 4); else ctx.rect(-14, -12 + bob, 28, 26);
+  ctx.fill();
+  ctx.stroke();
+
+  // Face
+  ctx.fillStyle = '#D6D3D1';
+  ctx.beginPath();
+  ctx.arc(0, -20 + bob, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Red eyes
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-3, -20 + bob, 2, 0, Math.PI * 2);
+  ctx.arc(3, -20 + bob, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Broad brimmed black hat
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.ellipse(0, -26 + bob, 18, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Black Crossbow
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(8, -2 + bob);
+  ctx.lineTo(24, 6 + bob);
+  ctx.moveTo(20, -4 + bob);
+  ctx.lineTo(24, 16 + bob);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKanecKnour(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.85,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  drawDivokyKanec(ctx, 0, 0, time, 1.45, false, isHurt);
+
+  // Giant curved white tusks
+  ctx.fillStyle = '#FEF08A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  const bob = Math.sin(time * 7) * 3;
+  ctx.beginPath();
+  ctx.moveTo(32, 6 + bob);
+  ctx.quadraticCurveTo(46, -10 + bob, 38, -18 + bob);
+  ctx.lineTo(34, -4 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawLedovyRampousik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 0.95,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const jump = Math.abs(Math.sin(time * 8)) * 6;
+
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#BAE6FD';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+
+  // Trio of sharp ice shards
+  ctx.beginPath();
+  ctx.moveTo(0, -18 - jump);
+  ctx.lineTo(6, 6 - jump);
+  ctx.lineTo(-6, 6 - jump);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.moveTo(-8, -10 - jump);
+  ctx.lineTo(-2, 4 - jump);
+  ctx.lineTo(-12, 4 - jump);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(8, -12 - jump);
+  ctx.lineTo(12, 4 - jump);
+  ctx.lineTo(3, 4 - jump);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSnehovaJezinka(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.25,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const dance = Math.sin(time * 6) * 3;
+
+  // Icy gown
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#E0F2FE';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-14, 22);
+  ctx.lineTo(-6, -6 + dance);
+  ctx.lineTo(6, -6 + dance);
+  ctx.lineTo(14, 22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Head
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.arc(0, -14 + dance, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Flowing snow hair
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.moveTo(-7, -14 + dance);
+  ctx.quadraticCurveTo(-14, 4 + dance, -18, 14);
+  ctx.lineTo(-10, 10 + dance);
+  ctx.closePath();
+  ctx.fill();
+
+  // Ice blue eyes
+  ctx.fillStyle = '#0284C7';
+  ctx.beginPath();
+  ctx.arc(-2, -14 + dance, 1.5, 0, Math.PI * 2);
+  ctx.arc(2, -14 + dance, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCertSPytlem(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 7) * 2;
+
+  // Shaggy Black Fur Body
+  ctx.fillStyle = isHurt ? '#7F1D1D' : '#18181B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, bob, 16, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Red devil face
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Horns
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.moveTo(-5, -24 + bob);
+  ctx.lineTo(-10, -34 + bob);
+  ctx.lineTo(-2, -26 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(5, -24 + bob);
+  ctx.lineTo(10, -34 + bob);
+  ctx.lineTo(2, -26 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Burlap Sack over shoulder
+  ctx.fillStyle = '#A16207';
+  ctx.beginPath();
+  ctx.ellipse(16, 4 + bob, 14, 18, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMaskarniKozel(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.55,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const buck = Math.sin(time * 9) * 4;
+
+  // Body in sheepskin
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#D6D3D1';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(0, 4 + buck, 16, 22, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Goat Head
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.moveTo(-4, -14 + buck);
+  ctx.lineTo(16, -10 + buck);
+  ctx.lineTo(4, 2 + buck);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Curved Wooden Horns
+  ctx.strokeStyle = '#451A03';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(2, -14 + buck);
+  ctx.quadraticCurveTo(-6, -30 + buck, -16, -26 + buck);
+  ctx.moveTo(6, -14 + buck);
+  ctx.quadraticCurveTo(0, -32 + buck, -8, -28 + buck);
+  ctx.stroke();
+
+  // Brass Bell
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(0, 10 + buck, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMikulasskyCert(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.85,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  drawCertSPytlem(ctx, 0, 0, time, 1.35, false, isHurt);
+
+  // Flaming Chain
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  const bob = Math.sin(time * 7) * 2;
+  ctx.moveTo(-14, 4 + bob);
+  ctx.lineTo(-28, 20 + Math.sin(time * 10) * 8);
+  ctx.lineTo(-18, 32);
+  ctx.stroke();
+
+  // Glowing sulfur eyes
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.arc(-3, -20 + bob, 3, 0, Math.PI * 2);
+  ctx.arc(3, -20 + bob, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawMrazivaSova(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.5,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  // Mandatory collision shadow for flyer
+  ctx.fillStyle = 'rgba(10, 15, 30, 0.38)';
+  ctx.beginPath();
+  ctx.ellipse(0, 26, 32, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const flap = Math.sin(time * 9) * 0.3;
+  const bob = Math.cos(time * 6) * 4;
+
+  // Owl Wings
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+
+  ctx.save();
+  ctx.translate(-14, bob);
+  ctx.rotate(flap);
+  ctx.beginPath();
+  ctx.ellipse(-14, 0, 18, 10, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(14, bob);
+  ctx.rotate(-flap);
+  ctx.beginPath();
+  ctx.ellipse(14, 0, 18, 10, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Round Owl Body
+  ctx.beginPath();
+  ctx.arc(0, bob, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Huge Yellow Owl Eyes
+  ctx.fillStyle = '#FBBF24';
+  ctx.beginPath();
+  ctx.arc(-5, -2 + bob, 5, 0, Math.PI * 2);
+  ctx.arc(5, -2 + bob, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.arc(-5, -2 + bob, 2.5, 0, Math.PI * 2);
+  ctx.arc(5, -2 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Beak
+  ctx.fillStyle = '#475569';
+  ctx.beginPath();
+  ctx.moveTo(-2, 2 + bob);
+  ctx.lineTo(2, 2 + bob);
+  ctx.lineTo(0, 7 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawJezdecMeluziny(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.7,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const vortex = time * 8;
+  const bob = Math.sin(time * 5) * 4;
+
+  // Swirling Blizzard base
+  ctx.strokeStyle = 'rgba(186, 230, 253, 0.7)';
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.arc(0, 18 + bob, 18 - i * 4, vortex + i, vortex + i + Math.PI);
+    ctx.stroke();
+  }
+
+  // Armored Ice Rider
+  ctx.fillStyle = isHurt ? '#93C5FD' : '#67E8F9';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-10, -10 + bob, 20, 22, 4); else ctx.rect(-10, -10 + bob, 20, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  // Frost Helmet & Horns
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Ice Banner
+  ctx.strokeStyle = '#0284C7';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(14, 20 + bob);
+  ctx.lineTo(14, -38 + bob);
+  ctx.stroke();
+
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.moveTo(14, -38 + bob);
+  ctx.lineTo(34, -30 + bob);
+  ctx.lineTo(14, -22 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKralMrazik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.9,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 3;
+
+  // Majestic Cyan Royal Mantle
+  ctx.fillStyle = isHurt ? '#7DD3FC' : '#0369A1';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-24, 34 + bob);
+  ctx.lineTo(-14, -16 + bob);
+  ctx.lineTo(14, -16 + bob);
+  ctx.lineTo(24, 34 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // White Fur Trim
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-6, -16 + bob, 12, 50, 4); else ctx.rect(-6, -16 + bob, 12, 50);
+  ctx.fill();
+  ctx.stroke();
+
+  // Long Flowing White Beard
+  ctx.fillStyle = '#F1F5F9';
+  ctx.beginPath();
+  ctx.moveTo(-12, -2 + bob);
+  ctx.quadraticCurveTo(0, 30 + bob, 0, 36 + bob);
+  ctx.quadraticCurveTo(0, 30 + bob, 12, -2 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Head & Kind Blue Eyes
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#0284C7';
+  ctx.beginPath();
+  ctx.arc(-3, -18 + bob, 2, 0, Math.PI * 2);
+  ctx.arc(3, -18 + bob, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Royal Ice Crown
+  ctx.fillStyle = '#E0F2FE';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-12, -24 + bob);
+  ctx.lineTo(-8, -36 + bob);
+  ctx.lineTo(-2, -28 + bob);
+  ctx.lineTo(0, -40 + bob);
+  ctx.lineTo(2, -28 + bob);
+  ctx.lineTo(8, -36 + bob);
+  ctx.lineTo(12, -24 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden Frost Staff with 8-pointed star
+  ctx.strokeStyle = '#FBBF24';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(24, 38 + bob);
+  ctx.lineTo(24, -42 + bob);
+  ctx.stroke();
+
+  // Staff Star
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(24, -44 + bob, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawZimniVrabec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.0,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const flap = Math.sin(time * 16) * 6;
+  const bob = Math.sin(time * 8) * 2;
+
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#78716C';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.ellipse(-10, flap + bob, 8, 4, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isHurt ? '#F87171' : '#A8A29E';
+  ctx.beginPath();
+  ctx.ellipse(0, bob, 10, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isHurt ? '#F87171' : '#78716C';
+  ctx.beginPath();
+  ctx.arc(8, -4 + bob, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.moveTo(13, -4 + bob);
+  ctx.lineTo(18, -2 + bob);
+  ctx.lineTo(13, 0 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(9, -6 + bob, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawKlukNaSankach(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.25,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 6) * 2;
+
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-20, 16 + bob);
+  ctx.lineTo(18, 16 + bob);
+  ctx.quadraticCurveTo(24, 14 + bob, 26, 8 + bob);
+  ctx.stroke();
+
+  ctx.fillStyle = '#B45309';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-16, 10 + bob, 32, 6, 2); else ctx.rect(-16, 10 + bob, 32, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isHurt ? '#F87171' : '#1D4ED8';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-10, -8 + bob, 20, 18, 4); else ctx.rect(-10, -8 + bob, 20, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-6, -6 + bob);
+  ctx.quadraticCurveTo(-18, -12 + Math.sin(time * 10) * 4 + bob, -24, -8 + bob);
+  ctx.lineTo(-22, -4 + bob);
+  ctx.quadraticCurveTo(-14, -8 + bob, -6, -2 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(2, -14 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.arc(2, -18 + bob, 8, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawLedovySkritek(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.05,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 8) * 3;
+
+  ctx.fillStyle = isHurt ? '#BAE6FD' : '#38BDF8';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -18 + bob);
+  ctx.lineTo(12, 4 + bob);
+  ctx.lineTo(0, 18 + bob);
+  ctx.lineTo(-12, 4 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#E0F2FE';
+  ctx.beginPath();
+  ctx.moveTo(-8, -14 + bob);
+  ctx.lineTo(0, -32 + bob);
+  ctx.lineTo(8, -14 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#0284C7';
+  ctx.beginPath();
+  ctx.arc(-3, -2 + bob, 2, 0, Math.PI * 2);
+  ctx.arc(3, -2 + bob, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawTrikralovyKolednik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.2,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 4) * 2;
+
+  ctx.fillStyle = isHurt ? '#FECACA' : '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-12, 22 + bob);
+  ctx.lineTo(-8, -10 + bob);
+  ctx.lineTo(8, -10 + bob);
+  ctx.lineTo(12, 22 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(0, -14 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FBBF24';
+  ctx.beginPath();
+  ctx.moveTo(-8, -18 + bob);
+  ctx.lineTo(-8, -26 + bob);
+  ctx.lineTo(-4, -22 + bob);
+  ctx.lineTo(0, -28 + bob);
+  ctx.lineTo(4, -22 + bob);
+  ctx.lineTo(8, -26 + bob);
+  ctx.lineTo(8, -18 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(14, 24 + bob);
+  ctx.lineTo(14, -36 + bob);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(14, -38 + bob, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawChumelenice(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.2,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const rot = time * 5;
+  ctx.rotate(rot);
+
+  ctx.fillStyle = isHurt ? '#FCA5A5' : 'rgba(224, 242, 254, 0.85)';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+
+  for (let i = 0; i < 4; i++) {
+    ctx.rotate(Math.PI / 2);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(12, 10, 18, 0);
+    ctx.quadraticCurveTo(8, -6, 0, 0);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(6, 6, 3, 0, Math.PI * 2);
+  ctx.arc(-8, 5, 2.5, 0, Math.PI * 2);
+  ctx.arc(2, -9, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawNocniZavejnik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 2;
+
+  ctx.fillStyle = isHurt ? '#CBD5E1' : '#334155';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, 8 + bob, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isHurt ? '#E2E8F0' : '#475569';
+  ctx.beginPath();
+  ctx.arc(0, -10 + bob, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#38BDF8';
+  ctx.beginPath();
+  ctx.arc(-4, -12 + bob, 2.5, 0, Math.PI * 2);
+  ctx.arc(4, -12 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.arc(-14, -8 + bob, 6, 0, Math.PI * 2);
+  ctx.arc(14, -8 + bob, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMrazivyHavran(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.25,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const flap = Math.sin(time * 12) * 8;
+  const bob = Math.sin(time * 6) * 3;
+
+  ctx.fillStyle = isHurt ? '#475569' : '#0F172A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-18, flap + bob);
+  ctx.lineTo(0, -6 + bob);
+  ctx.lineTo(18, flap + bob);
+  ctx.lineTo(0, 8 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isHurt ? '#334155' : '#1E293B';
+  ctx.beginPath();
+  ctx.ellipse(0, bob, 8, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
+  ctx.moveTo(0, -10 + bob);
+  ctx.lineTo(10, -12 + bob);
+  ctx.lineTo(0, -6 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawObriSnehulak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.65,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 2;
+
+  ctx.fillStyle = isHurt ? '#CBD5E1' : '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, 16 + bob, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, -4 + bob, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, -22 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#23170F';
+  ctx.beginPath();
+  ctx.arc(-3, -24 + bob, 1.8, 0, Math.PI * 2);
+  ctx.arc(3, -24 + bob, 1.8, 0, Math.PI * 2);
+  ctx.arc(0, -18 + bob, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#EA580C';
+  ctx.beginPath();
+  ctx.moveTo(0, -22 + bob);
+  ctx.lineTo(12, -20 + bob);
+  ctx.lineTo(0, -19 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#475569';
+  ctx.beginPath();
+  ctx.moveTo(-8, -28 + bob);
+  ctx.lineTo(-6, -40 + bob);
+  ctx.lineTo(6, -40 + bob);
+  ctx.lineTo(8, -28 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-12, -4 + bob);
+  ctx.lineTo(-24, -14 + bob);
+  ctx.moveTo(12, -4 + bob);
+  ctx.lineTo(24, -14 + bob);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawTrikralovyJezdec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.75,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 5) * 3;
+
+  ctx.fillStyle = isHurt ? '#CBD5E1' : '#E2E8F0';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 10 + bob, 24, 14, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(12, 6 + bob);
+  ctx.lineTo(24, -8 + bob);
+  ctx.lineTo(28, -4 + bob);
+  ctx.lineTo(20, 16 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-12, -6 + bob);
+  ctx.lineTo(-4, -22 + bob);
+  ctx.lineTo(10, -22 + bob);
+  ctx.lineTo(8, -2 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FACC15';
+  ctx.beginPath();
+  ctx.moveTo(0, -26 + bob);
+  ctx.lineTo(0, -34 + bob);
+  ctx.lineTo(4, -30 + bob);
+  ctx.lineTo(8, -34 + bob);
+  ctx.lineTo(8, -26 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#FBBF24';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(16, 12 + bob);
+  ctx.lineTo(16, -42 + bob);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(16, -44 + bob, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawVladceChumelenice(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.85,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 3;
+
+  ctx.fillStyle = isHurt ? '#7DD3FC' : '#0284C7';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-24, 34 + bob);
+  ctx.lineTo(-14, -14 + bob);
+  ctx.lineTo(14, -14 + bob);
+  ctx.lineTo(24, 34 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.moveTo(-14, -2 + bob);
+  ctx.quadraticCurveTo(0, 36 + bob, 0, 42 + bob);
+  ctx.quadraticCurveTo(0, 36 + bob, 14, -2 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(0, -16 + bob, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.moveTo(-12, -22 + bob);
+  ctx.lineTo(-8, -42 + bob);
+  ctx.lineTo(-2, -30 + bob);
+  ctx.lineTo(0, -46 + bob);
+  ctx.lineTo(2, -30 + bob);
+  ctx.lineTo(8, -42 + bob);
+  ctx.lineTo(12, -22 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawLedovaKlekanice(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 4) * 2;
+
+  ctx.fillStyle = isHurt ? '#94A3B8' : '#475569';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-16, 26 + bob);
+  ctx.lineTo(-8, -10 + bob);
+  ctx.lineTo(8, -10 + bob);
+  ctx.lineTo(16, 26 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#64748B';
+  ctx.beginPath();
+  ctx.arc(0, -14 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.beginPath();
+  ctx.arc(2, -13 + bob, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#7DD3FC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(14, 2 + bob);
+  ctx.lineTo(20, 14 + bob);
+  ctx.lineTo(8, 14 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKostlivecSKosou(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.6,
+  _panicked = false,
+  isHurt = false
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 2;
+
+  ctx.fillStyle = isHurt ? '#475569' : '#0F172A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-16, 30 + bob);
+  ctx.lineTo(-10, -12 + bob);
+  ctx.lineTo(10, -12 + bob);
+  ctx.lineTo(16, 30 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#0284C7';
+  ctx.beginPath();
+  ctx.arc(-3, -18 + bob, 2, 0, Math.PI * 2);
+  ctx.arc(3, -18 + bob, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(18, 32 + bob);
+  ctx.lineTo(18, -36 + bob);
+  ctx.stroke();
+
+  ctx.fillStyle = '#BAE6FD';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(18, -36 + bob);
+  ctx.quadraticCurveTo(0, -48 + bob, -18, -38 + bob);
+  ctx.quadraticCurveTo(-2, -40 + bob, 18, -30 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawPerchtaSNozem(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.9,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const bob = Math.sin(time * 3) * 2;
+  const slashAngle = isAttacking ? -0.8 + Math.sin(time * 20) * 0.4 : 0;
+
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#F1F5F9';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-22, 36 + bob);
+  ctx.lineTo(-14, -18 + bob);
+  ctx.lineTo(14, -18 + bob);
+  ctx.lineTo(22, 36 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-10, 4 + bob, 20, 22, 3); else ctx.rect(-10, 4 + bob, 20, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#B45309';
+  ctx.beginPath();
+  ctx.arc(-14, 8 + bob, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.arc(0, -22 + bob, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(0, -23 + bob);
+  ctx.lineTo(10, -18 + bob);
+  ctx.lineTo(0, -15 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#991B1B';
+  ctx.beginPath();
+  ctx.arc(-3, -22 + bob, 2.2, 0, Math.PI * 2);
+  ctx.arc(3, -22 + bob, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(16, -6 + bob);
+  ctx.rotate(slashAngle);
+
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-2, 0, 4, 12, 1); else ctx.rect(-2, 0, 4, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isAttacking ? '#EF4444' : '#E2E8F0';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-4, 0);
+  ctx.lineTo(-5, -28);
+  ctx.lineTo(6, -26);
+  ctx.lineTo(8, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-5, -28);
+  ctx.lineTo(-4, 0);
+  ctx.stroke();
+
+  ctx.restore();
+
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-6, 2 + bob);
+  ctx.lineTo(-12, 14 + bob);
+  ctx.moveTo(-10, 2 + bob);
+  ctx.lineTo(-4, 14 + bob);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMasopustniLaufr(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.3,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 9) * 3;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const whipSwing = isAttacking ? Math.sin(time * 25) * 0.8 : Math.sin(time * 4) * 0.2;
+
+  // Patched Harlequin-style festive trousers & coat
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#FEF08A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-12, 26 + bob);
+  ctx.lineTo(-6, -8 + bob);
+  ctx.lineTo(6, -8 + bob);
+  ctx.lineTo(12, 26 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red and green fabric patches
+  ctx.fillStyle = '#EF4444';
+  ctx.fillRect(-8, 6 + bob, 6, 8);
+  ctx.fillStyle = '#10B981';
+  ctx.fillRect(2, 14 + bob, 6, 8);
+
+  // Head and smiling wooden mask
+  ctx.fillStyle = '#FDE047';
+  ctx.beginPath();
+  ctx.arc(0, -16 + bob, 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Tall cone carnival hat with colorful ribbons
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(-9, -22 + bob);
+  ctx.lineTo(0, -42 + bob);
+  ctx.lineTo(9, -22 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Ribbons flowing from hat peak
+  ctx.strokeStyle = '#3B82F6';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -42 + bob);
+  ctx.quadraticCurveTo(10, -36 + bob, 16, -26 + bob);
+  ctx.moveTo(0, -42 + bob);
+  ctx.quadraticCurveTo(-10, -36 + bob, -14, -28 + bob);
+  ctx.stroke();
+
+  // Horsehair whip in hand
+  ctx.save();
+  ctx.translate(12, -4 + bob);
+  ctx.rotate(whipSwing);
+  ctx.fillStyle = '#78350F';
+  ctx.fillRect(-2, -10, 4, 14);
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.quadraticCurveTo(12, -16, 20, 8);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawBabaSNusi(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.55,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 5) * 2.5;
+
+  // Woven wicker basket (nůše)
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#D97706';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-16, -18 + bob, 32, 38, 4);
+  else ctx.rect(-16, -18 + bob, 32, 38);
+  ctx.fill();
+  ctx.stroke();
+
+  // Wicker lattice lines
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-16, -6 + bob);
+  ctx.lineTo(16, -6 + bob);
+  ctx.moveTo(-16, 6 + bob);
+  ctx.lineTo(16, 6 + bob);
+  ctx.moveTo(-6, -18 + bob);
+  ctx.lineTo(-6, 20 + bob);
+  ctx.moveTo(6, -18 + bob);
+  ctx.lineTo(6, 20 + bob);
+  ctx.stroke();
+
+  // Old peasant woman body & apron in front
+  ctx.fillStyle = '#4B5563';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-14, 28 + bob);
+  ctx.lineTo(-10, 0 + bob);
+  ctx.lineTo(10, 0 + bob);
+  ctx.lineTo(14, 28 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Woman's head with kerchief (šátek)
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(-6, -8 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Playful old man puppet sitting inside nůše waving pipe
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(8, -26 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Old man fur cap
+  ctx.fillStyle = '#1F2937';
+  ctx.beginPath();
+  ctx.arc(8, -30 + bob, 9, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMasopustniKominik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.1,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 8) * 2;
+
+  // Black soot suit
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#1E293B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-10, 22 + bob);
+  ctx.lineTo(-7, -8 + bob);
+  ctx.lineTo(7, -8 + bob);
+  ctx.lineTo(10, 22 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // White chimney-sweep cap
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Soot on face
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.arc(-2, -18 + bob, 2.5, 0, Math.PI * 2);
+  ctx.arc(3, -16 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wire chimney brush on shoulder
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(8, 12 + bob);
+  ctx.lineTo(16, -26 + bob);
+  ctx.stroke();
+
+  // Brush bristles circle
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.arc(16, -26 + bob, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawKoblihovyRarach(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.05,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 10) * 3;
+  const spin = Math.sin(time * 6) * 0.15;
+  ctx.rotate(spin);
+
+  // Golden fried doughnut body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#D97706';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, bob, 16, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White powdered sugar dusting
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(0, -4 + bob, 12, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Strawberry jam dollop in center
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.arc(0, bob, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Little mischievous imp horns and tail
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.moveTo(-8, -12 + bob);
+  ctx.lineTo(-14, -22 + bob);
+  ctx.lineTo(-4, -14 + bob);
+  ctx.moveTo(8, -12 + bob);
+  ctx.lineTo(14, -22 + bob);
+  ctx.lineTo(4, -14 + bob);
+  ctx.fill();
+  ctx.stroke();
+
+  // Tiny devil tail
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, 14 + bob);
+  ctx.quadraticCurveTo(14, 20 + bob, 18, 12 + bob);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMasopustniKrasojezdec(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.4,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 7) * 3.5;
+
+  // Hobby-horse cloth skirt
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#EF4444';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-22, 6 + bob, 44, 20, 6);
+  else ctx.rect(-22, 6 + bob, 44, 20);
+  ctx.fill();
+  ctx.stroke();
+
+  // Wooden horse head in front
+  ctx.fillStyle = '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(14, 8 + bob);
+  ctx.lineTo(26, -14 + bob);
+  ctx.lineTo(32, -8 + bob);
+  ctx.lineTo(22, 14 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Horse ears and red bridle
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(18, 2 + bob);
+  ctx.lineTo(28, -10 + bob);
+  ctx.stroke();
+
+  // Rider body & festive jacket
+  ctx.fillStyle = '#3B82F6';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-10, 8 + bob);
+  ctx.lineTo(-8, -14 + bob);
+  ctx.lineTo(8, -14 + bob);
+  ctx.lineTo(10, 8 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Rider head and feathered hat
+  ctx.fillStyle = '#FED7AA';
+  ctx.beginPath();
+  ctx.arc(0, -22 + bob, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillRect(-12, -30 + bob, 24, 6);
+  ctx.fillStyle = '#10B981';
+  ctx.beginPath();
+  ctx.moveTo(0, -30 + bob);
+  ctx.lineTo(10, -44 + bob);
+  ctx.lineTo(4, -30 + bob);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawMasopustniMedved(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.75,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 4) * 3;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const roarAngle = isAttacking ? Math.sin(time * 20) * 0.15 : 0;
+
+  // Massive pea-straw rope & shaggy bear body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#78350F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 8 + bob, 26, 32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Straw texture bands around belly
+  ctx.strokeStyle = '#CA8A04';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 0 + bob, 24, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 16 + bob, 25, 8, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Shaggy bear head & ears
+  ctx.save();
+  ctx.translate(0, -26 + bob);
+  ctx.rotate(roarAngle);
+
+  ctx.fillStyle = '#92400E';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, 0, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Round ears with colorful ribbons
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.arc(-14, -12, 7, 0, Math.PI * 2);
+  ctx.arc(14, -12, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Snout & red tongue
+  ctx.fillStyle = '#B45309';
+  ctx.beginPath();
+  ctx.ellipse(0, 4, 10, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = isAttacking ? '#DC2626' : '#23170F';
+  ctx.beginPath();
+  ctx.arc(0, 8, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  // Big heavy bear paws
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(-24, 2 + bob, 10, 0, Math.PI * 2);
+  ctx.arc(24, 2 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawSlamennikObr(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.84,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3.5) * 2.5;
+
+  // Massive oat-straw bundle body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#EAB308';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(-28, 42 + bob);
+  ctx.lineTo(-20, -18 + bob);
+  ctx.lineTo(20, -18 + bob);
+  ctx.lineTo(28, 42 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red ribbon waist rope
+  ctx.fillStyle = '#DC2626';
+  ctx.fillRect(-22, 10 + bob, 44, 8);
+  ctx.strokeRect(-22, 10 + bob, 44, 8);
+
+  // Straw stalks bursting out
+  ctx.strokeStyle = '#CA8A04';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-24, 40 + bob);
+  ctx.lineTo(-34, 52 + bob);
+  ctx.moveTo(24, 40 + bob);
+  ctx.lineTo(34, 52 + bob);
+  ctx.moveTo(-16, -14 + bob);
+  ctx.lineTo(-26, -26 + bob);
+  ctx.moveTo(16, -14 + bob);
+  ctx.lineTo(26, -26 + bob);
+  ctx.stroke();
+
+  // Head of braided straw with pointy witch-like cone top
+  ctx.fillStyle = '#FDE047';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, -30 + bob, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Straw cone hat with paper flowers
+  ctx.fillStyle = '#EAB308';
+  ctx.beginPath();
+  ctx.moveTo(-14, -36 + bob);
+  ctx.lineTo(0, -58 + bob);
+  ctx.lineTo(14, -36 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing eyes inside straw
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-5, -30 + bob, 3, 0, Math.PI * 2);
+  ctx.arc(5, -30 + bob, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawRychtarMasek(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.92,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 2;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const staffAngle = isAttacking ? Math.sin(time * 18) * 0.4 : 0;
+
+  // Aristocratic festive coat with golden braid
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#1E3A8A';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(-24, 38 + bob);
+  ctx.lineTo(-18, -14 + bob);
+  ctx.lineTo(18, -14 + bob);
+  ctx.lineTo(24, 38 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden vest & buttons
+  ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (typeof (ctx as any).roundRect === 'function') (ctx as any).roundRect(-10, -6 + bob, 20, 26, 3);
+  else ctx.rect(-10, -6 + bob, 20, 26);
+  ctx.fill();
+  ctx.stroke();
+
+  // Reeve ceremonial sash (červeno-bílá šerpa)
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(-16, -10 + bob);
+  ctx.lineTo(16, 28 + bob);
+  ctx.stroke();
+
+  // Head and dignified bearded mask
+  ctx.fillStyle = '#FED7AA';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, -24 + bob, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Grey ceremonial beard
+  ctx.fillStyle = '#E2E8F0';
+  ctx.beginPath();
+  ctx.moveTo(-10, -18 + bob);
+  ctx.quadraticCurveTo(0, -6 + bob, 10, -18 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Tricorne hat with peacock feathers
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.moveTo(-22, -32 + bob);
+  ctx.lineTo(0, -44 + bob);
+  ctx.lineTo(22, -32 + bob);
+  ctx.lineTo(0, -28 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Peacock feather
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(4, -42 + bob);
+  ctx.quadraticCurveTo(20, -56 + bob, 26, -50 + bob);
+  ctx.stroke();
+
+  // Ceremonial wooden reeve's staff (rychtářské právo)
+  ctx.save();
+  ctx.translate(22, -4 + bob);
+  ctx.rotate(staffAngle);
+  ctx.fillStyle = '#78350F';
+  ctx.fillRect(-3, -32, 6, 68);
+  ctx.strokeRect(-3, -32, 6, 68);
+
+  // Ornate brass finial on top of the staff
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.arc(0, -32, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawNocniSmrtak(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.45,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 4) * 2;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const scytheSwing = isAttacking ? Math.sin(time * 20) * 0.5 : 0;
+
+  // White funeral shroud
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#F1F5F9';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-14, 32 + bob);
+  ctx.lineTo(-10, -12 + bob);
+  ctx.lineTo(10, -12 + bob);
+  ctx.lineTo(14, 32 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Skeletal ribs painted in black ink on white shroud
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-8, 0 + bob);
+  ctx.lineTo(8, 0 + bob);
+  ctx.moveTo(-7, 8 + bob);
+  ctx.lineTo(7, 8 + bob);
+  ctx.moveTo(-6, 16 + bob);
+  ctx.lineTo(6, 16 + bob);
+  ctx.stroke();
+
+  // Skull mask
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(0, -20 + bob, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Hollow eye sockets & grinning teeth
+  ctx.fillStyle = '#0F172A';
+  ctx.beginPath();
+  ctx.arc(-3.5, -20 + bob, 2.5, 0, Math.PI * 2);
+  ctx.arc(3.5, -20 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wooden carnival scythe
+  ctx.save();
+  ctx.translate(14, -8 + bob);
+  ctx.rotate(scytheSwing);
+
+  ctx.fillStyle = '#78350F';
+  ctx.fillRect(-2, -26, 4, 62);
+  ctx.strokeRect(-2, -26, 4, 62);
+
+  // Scythe wooden blade
+  ctx.fillStyle = '#CBD5E1';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, -26);
+  ctx.quadraticCurveTo(-22, -32, -30, -14);
+  ctx.quadraticCurveTo(-18, -22, 0, -20);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawSmutecniMaskara(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.35,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 5) * 2;
+
+  // Black mourning cloak & skirt
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#18181B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(-16, 28 + bob);
+  ctx.lineTo(-10, -8 + bob);
+  ctx.lineTo(10, -8 + bob);
+  ctx.lineTo(16, 28 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Black mourning veil over head
+  ctx.fillStyle = '#27272A';
+  ctx.beginPath();
+  ctx.arc(0, -18 + bob, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White weeping handkerchief in hand
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.moveTo(6, -14 + bob);
+  ctx.lineTo(16, -6 + bob);
+  ctx.lineTo(10, 4 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Dripping black candle in other hand
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillRect(-14, -6 + bob, 4, 14);
+  ctx.fillStyle = '#EF4444';
+  ctx.beginPath();
+  ctx.arc(-12, -9 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawMasopustniBasa(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.6,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 6) * 3;
+  const strum = Math.sin(time * 15) * 0.1;
+  ctx.rotate(strum);
+
+  // Double bass resonant body
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#92400E';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  // Upper bout
+  ctx.ellipse(0, -6 + bob, 16, 14, 0, 0, Math.PI * 2);
+  // Lower bout
+  ctx.ellipse(0, 16 + bob, 22, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // F-holes in black ink
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-10, 8 + bob);
+  ctx.quadraticCurveTo(-6, 16 + bob, -8, 22 + bob);
+  ctx.moveTo(10, 8 + bob);
+  ctx.quadraticCurveTo(6, 16 + bob, 8, 22 + bob);
+  ctx.stroke();
+
+  // Long neck & scroll head with tuning pegs
+  ctx.fillStyle = '#451A03';
+  ctx.fillRect(-3, -40 + bob, 6, 34);
+  ctx.strokeRect(-3, -40 + bob, 6, 34);
+
+  // Scroll head
+  ctx.beginPath();
+  ctx.arc(0, -42 + bob, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Snapped, vibrating strings
+  ctx.strokeStyle = '#FDE047';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-2, -40 + bob);
+  ctx.quadraticCurveTo(-12, -10 + bob, -1, 26 + bob);
+  ctx.moveTo(2, -40 + bob);
+  ctx.quadraticCurveTo(12, -10 + bob, 1, 26 + bob);
+  ctx.stroke();
+
+  // Metal endpin walking foot
+  ctx.fillStyle = '#64748B';
+  ctx.fillRect(-1.5, 34 + bob, 3, 10);
+
+  ctx.restore();
+}
+
+function drawPlivnikUhlik(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.0,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 12) * 3;
+  const flicker = 0.8 + 0.2 * Math.sin(time * 20);
+
+  // Glowing bonfire ember core
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#EF4444';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, bob, 12 * flicker, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner fiery orange/yellow spark
+  ctx.fillStyle = '#FDE047';
+  ctx.beginPath();
+  ctx.arc(0, bob, 6 * flicker, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Charred black crust spots
+  ctx.fillStyle = '#18181B';
+  ctx.beginPath();
+  ctx.arc(-5, -4 + bob, 3, 0, Math.PI * 2);
+  ctx.arc(4, 5 + bob, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Flickering sparks flying around
+  for (let i = 0; i < 4; i++) {
+    const sparkA = time * 8 + i * (Math.PI / 2);
+    const sx = Math.cos(sparkA) * 18;
+    const sy = Math.sin(sparkA) * 14 + bob;
+    ctx.fillStyle = '#F59E0B';
+    ctx.fillRect(sx - 1.5, sy - 1.5, 3, 3);
+  }
+
+  ctx.restore();
+}
+
+function drawNocniKobold(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.7,
+  _panicked = false,
+  isHurt = false,
+  _attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 5) * 2.5;
+
+  // Squat cellar goblin body in leather apron
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#475569';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.ellipse(0, 10 + bob, 20, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Brown leather apron
+  ctx.fillStyle = '#78350F';
+  ctx.fillRect(-12, 4 + bob, 24, 22);
+  ctx.strokeRect(-12, 4 + bob, 24, 22);
+
+  // Large toothy goblin head & pointy ears
+  ctx.fillStyle = '#64748B';
+  ctx.beginPath();
+  ctx.arc(0, -14 + bob, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Pointy ears
+  ctx.beginPath();
+  ctx.moveTo(-12, -16 + bob);
+  ctx.lineTo(-24, -24 + bob);
+  ctx.lineTo(-10, -8 + bob);
+  ctx.moveTo(12, -16 + bob);
+  ctx.lineTo(24, -24 + bob);
+  ctx.lineTo(10, -8 + bob);
+  ctx.fill();
+  ctx.stroke();
+
+  // Wicked grin with crooked yellow fangs
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.moveTo(-8, -10 + bob);
+  ctx.lineTo(-6, -6 + bob);
+  ctx.lineTo(-4, -10 + bob);
+  ctx.lineTo(4, -10 + bob);
+  ctx.lineTo(6, -6 + bob);
+  ctx.lineTo(8, -10 + bob);
+  ctx.fill();
+  ctx.stroke();
+
+  // Stolen carnival sausage ring around neck
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, -2 + bob, 14, 0, Math.PI);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawUmrlecBasista(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.8,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3.5) * 2;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const bowAngle = isAttacking ? Math.sin(time * 22) * 0.6 : Math.sin(time * 4) * 0.2;
+
+  // Funeral frock coat (černý smuteční frak)
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#09090B';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(-20, 36 + bob);
+  ctx.lineTo(-14, -12 + bob);
+  ctx.lineTo(14, -12 + bob);
+  ctx.lineTo(20, 36 + bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // White skeleton collar and ribs peeking out
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(-6, -2 + bob);
+  ctx.lineTo(6, -2 + bob);
+  ctx.moveTo(-5, 6 + bob);
+  ctx.lineTo(5, 6 + bob);
+  ctx.stroke();
+
+  // Grim skull head
+  ctx.fillStyle = '#F8FAFC';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, -24 + bob, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Deep black eye sockets
+  ctx.fillStyle = '#09090B';
+  ctx.beginPath();
+  ctx.arc(-4, -24 + bob, 3, 0, Math.PI * 2);
+  ctx.arc(4, -24 + bob, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Funeral musician top hat (cylinder) with black ribbon
+  ctx.fillStyle = '#18181B';
+  ctx.beginPath();
+  ctx.fillRect(-14, -36 + bob, 28, 5);
+  ctx.fillRect(-9, -52 + bob, 18, 16);
+  ctx.strokeRect(-9, -52 + bob, 18, 16);
+
+  // Deadly razor-sharp musical horsehair bow
+  ctx.save();
+  ctx.translate(18, -4 + bob);
+  ctx.rotate(bowAngle);
+
+  ctx.strokeStyle = '#78350F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(0, -28);
+  ctx.lineTo(0, 34);
+  ctx.stroke();
+
+  ctx.strokeStyle = isAttacking ? '#EF4444' : '#E2E8F0';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-6, -24);
+  ctx.lineTo(-6, 30);
+  ctx.stroke();
+
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawBakchusSPivnimSoudkem(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  scale = 1.95,
+  _panicked = false,
+  isHurt = false,
+  attackInfo?: EnemyAttackInfo
+): void {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+
+  const bob = Math.sin(time * 3) * 2.5;
+  const isAttacking = Boolean(attackInfo?.isActive);
+  const mugSplash = isAttacking ? Math.sin(time * 20) * 0.35 : 0;
+
+  // Giant wooden beer barrel (pivní soudek) underneath
+  ctx.fillStyle = '#78350F';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 22 + bob, 32, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Iron barrel hoops
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.ellipse(0, 14 + bob, 30, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 28 + bob, 30, 8, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Jolly rotund belly in red festive doublet
+  ctx.fillStyle = isHurt ? '#FCA5A5' : '#DC2626';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.ellipse(0, -6 + bob, 24, 20, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Garland of sausages across chest
+  ctx.strokeStyle = '#B91C1C';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(0, -10 + bob, 18, 0.2, Math.PI - 0.2);
+  ctx.stroke();
+
+  // Jolly, flushed red face of Bakchus
+  ctx.fillStyle = '#FED7AA';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.arc(0, -28 + bob, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Rosy red cheeks & nose
+  ctx.fillStyle = '#F87171';
+  ctx.beginPath();
+  ctx.arc(-8, -26 + bob, 4, 0, Math.PI * 2);
+  ctx.arc(8, -26 + bob, 4, 0, Math.PI * 2);
+  ctx.arc(0, -26 + bob, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Laughing open mouth
+  ctx.fillStyle = '#7F1D1D';
+  ctx.beginPath();
+  ctx.arc(0, -20 + bob, 6, 0, Math.PI);
+  ctx.fill();
+  ctx.stroke();
+
+  // Crown of winter evergreen ivy and hops
+  ctx.strokeStyle = '#15803D';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.arc(0, -36 + bob, 16, Math.PI * 0.9, Math.PI * 2.1);
+  ctx.stroke();
+
+  // Right hand holding frothing ceramic beer stein (korbel)
+  ctx.save();
+  ctx.translate(24, -18 + bob);
+  ctx.rotate(mugSplash);
+
+  // Grey stoneware stein
+  ctx.fillStyle = '#CBD5E1';
+  ctx.strokeStyle = '#23170F';
+  ctx.lineWidth = 3;
+  ctx.fillRect(-6, -10, 12, 18);
+  ctx.strokeRect(-6, -10, 12, 18);
+
+  // Overflowing creamy beer froth
+  ctx.fillStyle = '#FEF08A';
+  ctx.beginPath();
+  ctx.arc(0, -10, 7, Math.PI, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // White foam spill
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(4, -8, 4, 0, Math.PI * 2);
+  ctx.arc(-4, -6, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  ctx.restore();
+}
+
 (Lada as any).drawPrefixAura = drawPrefixAura;
 (Lada as any).drawGander = drawGander;
 (Lada as any).drawPlumPuddle = drawPlumPuddle;
@@ -30240,6 +33260,51 @@ function drawVeleStika(
 (Lada as any).drawDusickovaBludicka = drawDusickovaBludicka;
 (Lada as any).drawCertRybnikar = drawCertRybnikar;
 (Lada as any).drawVeleStika = drawVeleStika;
+(Lada as any).drawSvatomartinskaHusa = drawSvatomartinskaHusa;
+(Lada as any).drawDivokyKanec = drawDivokyKanec;
+(Lada as any).drawLesniPytlak = drawLesniPytlak;
+(Lada as any).drawKralovskaHusa = drawKralovskaHusa;
+(Lada as any).drawMartinskyJezdec = drawMartinskyJezdec;
+(Lada as any).drawListopadovyMrazivec = drawListopadovyMrazivec;
+(Lada as any).drawMlznyPrizrak = drawMlznyPrizrak;
+(Lada as any).drawCernyMyslivec = drawCernyMyslivec;
+(Lada as any).drawKanecKnour = drawKanecKnour;
+(Lada as any).drawLedovyRampousik = drawLedovyRampousik;
+(Lada as any).drawSnehovaJezinka = drawSnehovaJezinka;
+(Lada as any).drawCertSPytlem = drawCertSPytlem;
+(Lada as any).drawMaskarniKozel = drawMaskarniKozel;
+(Lada as any).drawMikulasskyCert = drawMikulasskyCert;
+(Lada as any).drawMrazivaSova = drawMrazivaSova;
+(Lada as any).drawJezdecMeluziny = drawJezdecMeluziny;
+(Lada as any).drawKralMrazik = drawKralMrazik;
+(Lada as any).drawZimniVrabec = drawZimniVrabec;
+(Lada as any).drawKlukNaSankach = drawKlukNaSankach;
+(Lada as any).drawLedovySkritek = drawLedovySkritek;
+(Lada as any).drawTrikralovyKolednik = drawTrikralovyKolednik;
+(Lada as any).drawChumelenice = drawChumelenice;
+(Lada as any).drawNocniZavejnik = drawNocniZavejnik;
+(Lada as any).drawMrazivyHavran = drawMrazivyHavran;
+(Lada as any).drawObriSnehulak = drawObriSnehulak;
+(Lada as any).drawTrikralovyJezdec = drawTrikralovyJezdec;
+(Lada as any).drawVladceChumelenice = drawVladceChumelenice;
+(Lada as any).drawLedovaKlekanice = drawLedovaKlekanice;
+(Lada as any).drawKostlivecSKosou = drawKostlivecSKosou;
+(Lada as any).drawPerchtaSNozem = drawPerchtaSNozem;
+(Lada as any).drawMasopustniLaufr = drawMasopustniLaufr;
+(Lada as any).drawBabaSNusi = drawBabaSNusi;
+(Lada as any).drawMasopustniKominik = drawMasopustniKominik;
+(Lada as any).drawKoblihovyRarach = drawKoblihovyRarach;
+(Lada as any).drawMasopustniKrasojezdec = drawMasopustniKrasojezdec;
+(Lada as any).drawMasopustniMedved = drawMasopustniMedved;
+(Lada as any).drawSlamennikObr = drawSlamennikObr;
+(Lada as any).drawRychtarMasek = drawRychtarMasek;
+(Lada as any).drawNocniSmrtak = drawNocniSmrtak;
+(Lada as any).drawSmutecniMaskara = drawSmutecniMaskara;
+(Lada as any).drawMasopustniBasa = drawMasopustniBasa;
+(Lada as any).drawPlivnikUhlik = drawPlivnikUhlik;
+(Lada as any).drawNocniKobold = drawNocniKobold;
+(Lada as any).drawUmrlecBasista = drawUmrlecBasista;
+(Lada as any).drawBakchusSPivnimSoudkem = drawBakchusSPivnimSoudkem;
 
 export {
   Lada,
@@ -30268,5 +33333,50 @@ export {
   drawDusickovaBludicka,
   drawCertRybnikar,
   drawVeleStika,
+  drawSvatomartinskaHusa,
+  drawDivokyKanec,
+  drawLesniPytlak,
+  drawKralovskaHusa,
+  drawMartinskyJezdec,
+  drawListopadovyMrazivec,
+  drawMlznyPrizrak,
+  drawCernyMyslivec,
+  drawKanecKnour,
+  drawLedovyRampousik,
+  drawSnehovaJezinka,
+  drawCertSPytlem,
+  drawMaskarniKozel,
+  drawMikulasskyCert,
+  drawMrazivaSova,
+  drawJezdecMeluziny,
+  drawKralMrazik,
+  drawZimniVrabec,
+  drawKlukNaSankach,
+  drawLedovySkritek,
+  drawTrikralovyKolednik,
+  drawChumelenice,
+  drawNocniZavejnik,
+  drawMrazivyHavran,
+  drawObriSnehulak,
+  drawTrikralovyJezdec,
+  drawVladceChumelenice,
+  drawLedovaKlekanice,
+  drawKostlivecSKosou,
+  drawPerchtaSNozem,
+  drawMasopustniLaufr,
+  drawBabaSNusi,
+  drawMasopustniKominik,
+  drawKoblihovyRarach,
+  drawMasopustniKrasojezdec,
+  drawMasopustniMedved,
+  drawSlamennikObr,
+  drawRychtarMasek,
+  drawNocniSmrtak,
+  drawSmutecniMaskara,
+  drawMasopustniBasa,
+  drawPlivnikUhlik,
+  drawNocniKobold,
+  drawUmrlecBasista,
+  drawBakchusSPivnimSoudkem,
   type EnemyAttackInfo,
 };
