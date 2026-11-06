@@ -72,7 +72,7 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   hromotluk: { archetype: 'golem', duration: '1.25s', wobble: '17deg', squashX: 1.24, squashY: 0.80, baseScale: 1.65, accentColor: '#78350F' },
   bezhlavy_rytir: { archetype: 'golem', duration: '1.15s', wobble: '15deg', squashX: 1.22, squashY: 0.81, baseScale: 1.60, accentColor: '#475569' },
   drak: { archetype: 'golem', duration: '1.45s', wobble: '14deg', squashX: 1.28, squashY: 0.76, baseScale: 1.90, accentColor: '#B91C1C' },
-  morana: { archetype: 'golem', duration: '1.20s', wobble: '15deg', squashX: 1.22, squashY: 0.82, baseScale: 1.55, accentColor: '#334155' },
+  morana: { archetype: 'runner', duration: '0.78s', wobble: '9deg', squashX: 1.12, squashY: 0.89, baseScale: 1.55, accentColor: '#7DD3FC' },
   obrneny_zbojnik: { archetype: 'golem', duration: '1.10s', wobble: '16deg', squashX: 1.23, squashY: 0.80, baseScale: 1.45, accentColor: '#9A3412' },
   snehulak: { archetype: 'golem', duration: '1.05s', wobble: '14deg', squashX: 1.26, squashY: 0.78, baseScale: 1.40, accentColor: '#E2E8F0' },
   drab: { archetype: 'golem', duration: '1.08s', wobble: '16deg', squashX: 1.22, squashY: 0.81, baseScale: 1.40, accentColor: '#7F1D1D' },

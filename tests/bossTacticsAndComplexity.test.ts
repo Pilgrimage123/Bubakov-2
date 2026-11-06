@@ -468,6 +468,193 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
     expect(minion.isDefeated).toBe(true);
     expect(hejkal.hp).toBeLessThan(hpBeforeMinionDeath);
   });
+
+  it('Stage 2 (Level 1) Morana overhaul: spawns straw effigies, triggers backlash when effigy is cleansed, and enrages below 50% HP', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer');
+    engine.state.player!.weapons = [];
+
+    const morana = engine.spawnMonster('morana', 150, 150, 1.0, true, false);
+    const baseSpeed = morana.speed;
+
+    // Trigger Morana's Attack 3 (effigy & totem ritual)
+    morana.effigyCooldown = 0;
+    engine.update(0.1);
+
+    // 1. Spawns 6 straw dolls
+    const strawDolls = engine.state.projectiles.filter((p: any) => p.visual === 'straw_doll');
+    expect(strawDolls.length).toBe(6);
+
+    // 2. Spawns 3 straw effigies in triangle
+    const effigies = engine.director?.hazards.filter((h: any) => h.kind === 'straw-effigy');
+    expect(effigies.length).toBe(3);
+
+    // 3. Counterplay: destroying straw effigy with holy/fire inflicts backlash damage on Morana
+    const hpBeforeEffigyBreak = morana.hp;
+    const targetEffigy = effigies[0];
+    const cleared = engine.interactWithEnemyHazards(targetEffigy.x, targetEffigy.y, 40, 'holy');
+    expect(cleared).toBeGreaterThanOrEqual(1);
+    expect(morana.hp).toBeLessThan(hpBeforeEffigyBreak);
+
+    // 4. Phase 2 Enrage at <= 50% HP
+    morana.hp = Math.floor(morana.maxHp * 0.48);
+    morana.stunTimer = 0;
+    engine.update(0.1);
+    expect(morana.enraged).toBe(true);
+    expect(morana.speed).toBeGreaterThan(baseSpeed);
+  });
+
+  it('Winter Half bosses (Stages 17 to 24 / Levels 16 to 23) execute at least 2 distinct tactical attacks with hazards and projectiles', () => {
+    // 1. Stage 17 (Level 16): Listopadový mrazivec & Královská husa
+    {
+      const engine = new GameEngine();
+      engine.initRun(16, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const mrazivec = engine.spawnMonster('listopadovy_mrazivec', 120, 120, 1.0, true, false);
+      mrazivec.mrazivecBreathCooldown = 0;
+      mrazivec.mrazivecHoarfrostCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true);
+
+      const husa = engine.spawnMonster('kralovska_husa', 140, 140, 1.0, false, true);
+      husa.husaHonkCooldown = 0;
+      husa.husaDiveCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(husa.husaDiveTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'pollen')).toBe(true);
+    }
+
+    // 2. Stage 18 (Level 17): Jezdec Meluzíny & Černý myslivec
+    {
+      const engine = new GameEngine();
+      engine.initRun(17, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const meluzina = engine.spawnMonster('jezdec_meluziny', 120, 120, 1.0, true, false);
+      meluzina.meluzinaGaleCooldown = 0;
+      meluzina.meluzinaLogCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+
+      const myslivec = engine.spawnMonster('cerny_myslivec', 140, 140, 1.0, false, true);
+      myslivec.spearCooldown = 0;
+      myslivec.boarTrapCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+    }
+
+    // 3. Stage 19 & 20 (Levels 18 & 19): Král Mrázík & Čert s pytlem
+    {
+      const engine = new GameEngine();
+      engine.initRun(18, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const mrazik = engine.spawnMonster('kral_mrazik', 120, 120, 1.0, true, false);
+      mrazik.mrazikCrownCooldown = 0;
+      mrazik.mrazikHailCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+
+      const cert = engine.spawnMonster('cert_s_pytlem', 140, 140, 1.0, false, true);
+      cert.sootBagCooldown = 0;
+      cert.chainWhipCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'soot-cloud')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+    }
+
+    // 4. Stage 21 (Level 20): Vládce chumelenice & Obří sněhulák
+    {
+      const engine = new GameEngine();
+      engine.initRun(20, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const vladce = engine.spawnMonster('vladce_chumelenice', 120, 120, 1.0, true, false);
+      vladce.whiteoutCooldown = 0;
+      vladce.avalancheCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'triad-blizzard')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_blast')).toBe(true);
+
+      const snehulak = engine.spawnMonster('obri_snehulak', 140, 140, 1.0, false, true);
+      snehulak.snowballDashCooldown = 0;
+      snehulak.freezingPuddleCooldown = 0;
+      engine.update(0.1);
+      expect(snehulak.snowballDashTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true);
+    }
+
+    // 5. Stage 22 (Level 21): Šeredná Perchta s nožem & Kostlivec s kosou
+    {
+      const engine = new GameEngine();
+      engine.initRun(21, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const perchta = engine.spawnMonster('perchta_s_nozem', 120, 120, 1.0, true, false);
+      perchta.perchtaHexCooldown = 0;
+      perchta.perchtaNeedlesCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hex-circle')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+
+      const kostlivec = engine.spawnMonster('kostlivec_s_kosou', 140, 140, 1.0, true, false);
+      kostlivec.scytheCleaveCooldown = 0;
+      kostlivec.boneVolleyCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+    }
+
+    // 6. Stage 23 (Level 22): Rychtář maškar & Masopustní medvěd
+    {
+      const engine = new GameEngine();
+      engine.initRun(22, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const rychtar = engine.spawnMonster('rychtar_masek', 120, 120, 1.0, true, false);
+      rychtar.feruleStrikeCooldown = 0;
+      rychtar.confettiBurstCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'straw_doll')).toBe(true);
+
+      const medved = engine.spawnMonster('masopustni_medved', 140, 140, 1.0, false, true);
+      medved.bearRoarCooldown = 0;
+      medved.bearChargeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(medved.bearChargeTimer).toBeGreaterThan(0);
+    }
+
+    // 7. Stage 24 (Level 23): Bakchus s pivním soudkem & Umrlec basista
+    {
+      const engine = new GameEngine();
+      engine.initRun(23, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      const bakchus = engine.spawnMonster('bakchus_s_pivnim_soudkem', 120, 120, 1.0, true, false);
+      bakchus.kegRollCooldown = 0;
+      bakchus.foamSplashCooldown = 0;
+      bakchus.bacchicBurstCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'bubble')).toBe(true);
+
+      const basista = engine.spawnMonster('umrlec_basista', 140, 140, 1.0, true, false);
+      basista.bassScreechCooldown = 0;
+      basista.bowSlashCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+    }
+  });
 });
 
 

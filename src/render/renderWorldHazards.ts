@@ -1335,6 +1335,44 @@ export function renderWorldHazardsAndEncounters(
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+      } else if (h.kind === 'straw-effigy') {
+        // Authentic Czech Folklore Straw Effigy Totem (Slaměná modla zimy)
+        ctx.fillStyle = isWarning ? 'rgba(253, 224, 71, 0.28)' : 'rgba(217, 119, 6, 0.45)';
+        ctx.strokeStyle = isWarning ? '#FDE047' : '#B45309';
+        ctx.lineWidth = isWarning ? 3.0 : 2.4;
+        if (isWarning) ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Central straw effigy with wooden cross & red ribbons
+        ctx.strokeStyle = '#78350F';
+        ctx.lineWidth = 3.0;
+        ctx.beginPath();
+        ctx.moveTo(0, -h.radius * 0.7);
+        ctx.lineTo(0, h.radius * 0.7);
+        ctx.moveTo(-h.radius * 0.5, -h.radius * 0.2);
+        ctx.lineTo(h.radius * 0.5, -h.radius * 0.2);
+        ctx.stroke();
+
+        // Straw bundle body
+        ctx.fillStyle = '#FDE047';
+        ctx.strokeStyle = '#A16207';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(0, 2, h.radius * 0.28, h.radius * 0.42, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Little red fluttering ribbon
+        ctx.strokeStyle = '#EF4444';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(0, -h.radius * 0.2);
+        ctx.quadraticCurveTo(-h.radius * 0.35, -h.radius * 0.1, -h.radius * 0.45, -h.radius * 0.35);
+        ctx.stroke();
       } else if (h.kind === 'lightning-strike') {
         ctx.fillStyle = isWarning
           ? 'rgba(250, 204, 21, 0.32)'

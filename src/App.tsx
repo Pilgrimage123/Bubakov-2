@@ -6832,17 +6832,30 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               else if (eid === 'svatojansky_vladce' && !svatojanskyVladce) svatojanskyVladce = e;
             }
 
-            // MORANA BOSS DYNAMIC MECHANICS (LEVEL 1 - MRAZIVÝ DECH A SNĚŽNÁ VÁNICE)
+            const addRuntimeHazard = (h: any) => {
+              if (directorRef.current?.hazards) {
+                directorRef.current.hazards.push(h);
+              }
+              if (Array.isArray((engine as any).activeHazards) && (engine as any).activeHazards !== directorRef.current?.hazards) {
+                (engine as any).activeHazards.push(h);
+              }
+            };
+
+            // MORANA BOSS DYNAMIC MECHANICS (LEVEL 1 - MRAZIVÝ VICHR, SNĚŽNÁ VÁNICE A VYNÁŠENÍ SMRTI)
             if (moranaBoss && curLvl.id === 1) {
               const isPhase2 = moranaBoss.hp <= moranaBoss.maxHp * 0.5;
-              moranaBoss.moranaWindTimer = (moranaBoss.moranaWindTimer !== undefined ? moranaBoss.moranaWindTimer : 4.5) - dt;
-              moranaBoss.moranaBlizzardTimer = (moranaBoss.moranaBlizzardTimer !== undefined ? moranaBoss.moranaBlizzardTimer : 10.5) - dt;
+              moranaBoss.moranaWindTimer = (moranaBoss.moranaWindTimer !== undefined ? moranaBoss.moranaWindTimer : 4.0) - dt;
+              moranaBoss.moranaBlizzardTimer = (moranaBoss.moranaBlizzardTimer !== undefined ? moranaBoss.moranaBlizzardTimer : 8.5) - dt;
+              moranaBoss.moranaEffigyTimer = (moranaBoss.moranaEffigyTimer !== undefined ? moranaBoss.moranaEffigyTimer : 12.0) - dt;
+              moranaBoss.windupTimer = Math.max(0, (moranaBoss.windupTimer || 0) - dt);
+              moranaBoss.isWindup = moranaBoss.windupTimer > 0;
+              moranaBoss.isAttacking = moranaBoss.windupTimer > 0;
 
               if (isPhase2 && !moranaBoss.enraged) {
                 moranaBoss.enraged = true;
                 moranaBoss.speed = 82;
                 sound.roar();
-                pushDamageText(engine.texts, moranaBoss.x, moranaBoss.y - 110, '❄️ SMRTÍCÍ MRAZ!', '#BAE6FD', true);
+                pushDamageText(engine.texts, moranaBoss.x, moranaBoss.y - 110, '❄️ SMRTÍCÍ MRAZ! MORANA SE ROZHNĚVALA!', '#BAE6FD', true);
                 setRunStats((s) => ({ ...s, warningBanner: '❄️ MORANA SE ROZHNĚVALA! PŘICHÁZÍ SNĚŽNÁ VÁNICE!' }));
                 setTimeout(() => setRunStats((s) => ({ ...s, warningBanner: '' })), 3500);
                 for (let i = 0; i < 28; i++) {
@@ -6859,9 +6872,12 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }
               }
 
-              // Aimed icy wind blades fan toward the player's current position.
+              // Attack 1: Mrazivý vichr (0.8s telegraphed nápřah -> 3 or 5 frost wind blades)
               if (moranaBoss.moranaWindTimer <= 0) {
-                moranaBoss.moranaWindTimer = isPhase2 ? 3.3 : 4.8;
+                moranaBoss.moranaWindTimer = isPhase2 ? 2.8 : 4.0;
+                moranaBoss.windupTimer = 0.8;
+                moranaBoss.isWindup = true;
+                moranaBoss.isAttacking = true;
                 const targetAngle = Math.atan2(player.y - moranaBoss.y, player.x - moranaBoss.x);
                 const count = isPhase2 ? 5 : 3;
                 const spread = isPhase2 ? 0.30 : 0.22;
@@ -6874,59 +6890,102 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     angle,
-                    speed,
-                    dmg: isPhase2 ? 22 : 16,
-                    radius: isPhase2 ? 15 : 13,
-                    type: 'physical',
-                    visual: 'dragon_wind',
-                    life: 2.8,
-                    maxLife: 2.8,
-                    isEnemy: true,
-                    pushback: isPhase2 ? 48 : 34,
-                    statusText: 'MRAZIVÝ VÍTR! ❄️',
-                    dead: false,
-                  });
-                }
-                for (let i = 0; i < 10; i++) {
-                  const angle = targetAngle + (Math.random() - 0.5) * 1.4;
-                  emitParticle(engine.particles, () => ({
-                    x: moranaBoss.x,
-                    y: moranaBoss.y,
-                    vx: Math.cos(angle) * (100 + Math.random() * 110),
-                    vy: Math.sin(angle) * (100 + Math.random() * 110),
-                    life: 0.55,
-                    color: i % 2 === 0 ? '#E0F2FE' : '#7DD3FC',
-                    size: 4 + Math.random() * 3,
-                  }));
-                }
+                      speed,
+                      dmg: isPhase2 ? 24 : 18,
+                      radius: isPhase2 ? 15 : 13,
+                      type: 'ice',
+                      visual: 'wind_blade',
+                      color: '#7DD3FC',
+                      life: 2.8,
+                      maxLife: 2.8,
+                      isEnemy: true,
+                      pushback: isPhase2 ? 48 : 34,
+                      statusText: 'MRAZIVÝ VICHR! ❄️',
+                      dead: false,
+                    });
+                  }
+                  sound.slash();
+                  pushDamageText(engine.texts, moranaBoss.x, moranaBoss.y - 75, 'MRAZIVÝ VICHR! ❄️', '#BAE6FD', true);
+                  for (let i = 0; i < 10; i++) {
+                    const angle = targetAngle + (Math.random() - 0.5) * 1.4;
+                    emitParticle(engine.particles, () => ({
+                      x: moranaBoss.x,
+                      y: moranaBoss.y,
+                      vx: Math.cos(angle) * (100 + Math.random() * 110),
+                      vy: Math.sin(angle) * (100 + Math.random() * 110),
+                      life: 0.55,
+                      color: i % 2 === 0 ? '#E0F2FE' : '#7DD3FC',
+                      size: 4 + Math.random() * 3,
+                    }));
+                  }
               }
 
-              // A second attack fills the arena with slower, dodgeable spiral gusts.
+              // Attack 2: Sněžná vánice (Blizzard AoE zone hazard with 0.9s warning circle)
               if (moranaBoss.moranaBlizzardTimer <= 0) {
-                moranaBoss.moranaBlizzardTimer = isPhase2 ? 8 : 12;
-                sound.roar();
+                moranaBoss.moranaBlizzardTimer = isPhase2 ? 6.5 : 9.5;
+                sound.freeze();
                 pushDamageText(engine.texts, moranaBoss.x, moranaBoss.y - 95, '🌨️ VÁNICE!', '#E0F2FE', true);
-                const count = isPhase2 ? 12 : 8;
-                for (let i = 0; i < count; i++) {
-                  const angle = (i / count) * Math.PI * 2;
-                  const speed = isPhase2 ? 175 : 145;
+                addRuntimeHazard({
+                  id: `hazard_morana_blizzard_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                  x: player.x,
+                  y: player.y,
+                  radius: isPhase2 ? 70 : 55,
+                  duration: 3.0,
+                  maxDuration: 3.0,
+                  type: 'frost',
+                  slowFactor: 0.60,
+                  kind: 'blizzard-zone',
+                  warningTimer: 0.9,
+                  damage: isPhase2 ? 26 : 20,
+                  sourceEnemyId: moranaBoss.id,
+                });
+              }
+
+              // Attack 3: Vynášení smrti / Slaměné modly zimy (6-way doll projectiles + 3 straw effigies)
+              if (moranaBoss.moranaEffigyTimer <= 0) {
+                moranaBoss.moranaEffigyTimer = isPhase2 ? 8.0 : 11.0;
+                sound.bell();
+                pushDamageText(engine.texts, moranaBoss.x, moranaBoss.y - 90, '🌾💀 VYNÁŠENÍ SMRTI!', '#FDE047', true);
+                const dollCount = 6;
+                for (let k = 0; k < dollCount; k++) {
+                  const ang = (k / dollCount) * Math.PI * 2 + (engine.gameTime || 0) * 0.5;
                   engine.projectiles.push({
                     x: moranaBoss.x,
                     y: moranaBoss.y,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    angle,
-                    speed,
-                    dmg: isPhase2 ? 18 : 12,
-                    radius: isPhase2 ? 13 : 11,
-                    type: 'physical',
-                    visual: 'dragon_wind',
-                    life: 2.5,
-                    maxLife: 2.5,
+                    vx: Math.cos(ang) * 185,
+                    vy: Math.sin(ang) * 185,
+                    angle: ang,
+                    speed: 185,
+                    dmg: 22,
+                    radius: 12,
+                    type: 'magic',
+                    visual: 'straw_doll',
+                    color: '#FDE047',
+                    life: 2.6,
+                    maxLife: 2.6,
                     isEnemy: true,
-                    pushback: 32,
-                    statusText: 'VÁNICE! 🌨️',
+                    pushback: 24,
+                    statusText: 'SLAMĚNÁ MORANA! 🌾💀',
                     dead: false,
+                  });
+                }
+                for (let k = 0; k < 3; k++) {
+                  const totemAng = (k / 3) * Math.PI * 2 + Math.PI / 6;
+                  const tx = moranaBoss.x + Math.cos(totemAng) * 90;
+                  const ty = moranaBoss.y + Math.sin(totemAng) * 90;
+                  addRuntimeHazard({
+                    id: `hazard_morana_effigy_${Math.round(engine.gameTime * 1000)}_${k}_${Math.random().toString(36).slice(2, 6)}`,
+                    x: tx,
+                    y: ty,
+                    radius: 36,
+                    duration: 5.5,
+                    maxDuration: 5.5,
+                    type: 'frost',
+                    slowFactor: 0.75,
+                    kind: 'straw-effigy',
+                    warningTimer: 0.5,
+                    damage: 18,
+                    sourceEnemyId: moranaBoss.id,
                   });
                 }
               }
@@ -7907,6 +7966,778 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   const wisp = createEnemyInstance('bludicka', wPos.x, wPos.y, 1.25);
                   (wisp as any).isSummoned = true;
                   engine.enemies.push(wisp);
+                }
+              }
+            }
+
+            // WINTER HALF BOSS DYNAMIC MECHANICS (STAGES 17 TO 24 / LEVELS 16 TO 23 - ADR 0037 PARITY)
+            if (curLvl.id >= 16 && curLvl.id <= 23) {
+              for (let wi = 0, wLen = engine.enemies.length; wi < wLen; wi++) {
+                const foe = engine.enemies[wi];
+                if (!foe || foe.isDefeated || foe.dead) continue;
+                const distToPlayer = Math.hypot(player.x - foe.x, player.y - foe.y);
+                const foeDir = Math.atan2(player.y - foe.y, player.x - foe.x);
+
+                if (foe.id === 'listopadovy_mrazivec') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 18000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 55) * 1.28);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '❄️ LISTOPADOVÝ MRÁZ ZESILUJE!', '#38BDF8', true);
+                  }
+                  foe.mrazivecBreathCooldown = (typeof foe.mrazivecBreathCooldown === 'number' ? foe.mrazivecBreathCooldown : 2.5) - dt;
+                  foe.windupTimer = Math.max(0, (foe.windupTimer || 0) - dt);
+                  foe.isWindup = foe.windupTimer > 0;
+                  foe.isAttacking = foe.windupTimer > 0;
+                  if (foe.mrazivecBreathCooldown <= 0) {
+                    foe.mrazivecBreathCooldown = isPhase2 ? 2.4 : 3.5;
+                    foe.windupTimer = 0.8;
+                    foe.isWindup = true;
+                    foe.isAttacking = true;
+                    const count = isPhase2 ? 5 : 3;
+                    const spread = 0.24;
+                    for (let k = 0; k < count; k++) {
+                      const ang = foeDir + (k - (count - 1) / 2) * spread;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 230,
+                        vy: Math.sin(ang) * 230,
+                        angle: ang,
+                        speed: 230,
+                        dmg: isPhase2 ? 30 : 24,
+                        radius: 12,
+                        type: 'ice',
+                        visual: 'icicle',
+                        color: '#BAE6FD',
+                        life: 2.5,
+                        maxLife: 2.5,
+                        isEnemy: true,
+                        pushback: 35,
+                        statusText: 'MRAZIVÁ JINOVATKA! ❄️',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'MRAZIVÝ VÝDECH! ❄️', '#BAE6FD', true);
+                  }
+                  foe.mrazivecHoarfrostCooldown = (typeof foe.mrazivecHoarfrostCooldown === 'number' ? foe.mrazivecHoarfrostCooldown : 3.4) - dt;
+                  if (foe.mrazivecHoarfrostCooldown <= 0) {
+                    foe.mrazivecHoarfrostCooldown = isPhase2 ? 3.6 : 4.8;
+                    addRuntimeHazard({
+                      id: `hazard_mrazivec_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 65,
+                      duration: 3.2,
+                      maxDuration: 3.2,
+                      type: 'frost',
+                      slowFactor: 0.55,
+                      kind: 'blizzard-zone',
+                      warningTimer: 0.85,
+                      damage: 26,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.freeze();
+                    pushDamageText(engine.texts, player.x, player.y - 40, 'PŘÍZEMNÍ MRAZÍK! ❄️🌾', '#7DD3FC', true);
+                  }
+                } else if (foe.id === 'kralovska_husa' || foe.id === 'svatomartinska_husa') {
+                  foe.husaHonkCooldown = (typeof foe.husaHonkCooldown === 'number' ? foe.husaHonkCooldown : 2.6) - dt;
+                  if (foe.husaHonkCooldown <= 0 && distToPlayer < 260) {
+                    foe.husaHonkCooldown = 3.8;
+                    addRuntimeHazard({
+                      id: `hazard_husa_honk_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: foe.x,
+                      y: foe.y,
+                      radius: 68,
+                      duration: 2.0,
+                      maxDuration: 2.0,
+                      type: 'mud',
+                      slowFactor: 0.65,
+                      kind: 'ground-shockwave',
+                      warningTimer: 0.6,
+                      damage: 24,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.bell();
+                    pushDamageText(engine.texts, foe.x, foe.y - 45, 'HUSÍ ZAKEJHÁNÍ! 🪿🔊', '#FEF08A', true);
+                  }
+                  foe.husaDiveCooldown = (typeof foe.husaDiveCooldown === 'number' ? foe.husaDiveCooldown : 3.5) - dt;
+                  foe.husaDiveTimer = Math.max(0, (foe.husaDiveTimer || 0) - dt);
+                  if (foe.husaDiveCooldown <= 0) {
+                    foe.husaDiveCooldown = 4.5;
+                    foe.husaDiveTimer = 0.85;
+                    foe.husaDiveAngle = foeDir;
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 45, 'SVATOMARTINSKÝ NÁLET! 🪿💨', '#F8FAFC', true);
+                    for (let k = -1; k <= 1; k++) {
+                      const ang = foeDir + k * 0.28;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 220,
+                        vy: Math.sin(ang) * 220,
+                        angle: ang,
+                        speed: 220,
+                        dmg: 20,
+                        radius: 11,
+                        type: 'magic',
+                        visual: 'pollen',
+                        color: '#F8FAFC',
+                        life: 2.2,
+                        maxLife: 2.2,
+                        isEnemy: true,
+                        pushback: 25,
+                        statusText: 'HUSÍ PEŘÍ! 🪿',
+                        dead: false,
+                      });
+                    }
+                  }
+                } else if (foe.id === 'cerny_myslivec') {
+                  foe.spearCooldown = (typeof foe.spearCooldown === 'number' ? foe.spearCooldown : 2.8) - dt;
+                  if (foe.spearCooldown <= 0 && distToPlayer < 420) {
+                    foe.spearCooldown = 3.6;
+                    engine.projectiles.push({
+                      x: foe.x,
+                      y: foe.y,
+                      vx: Math.cos(foeDir) * 310,
+                      vy: Math.sin(foeDir) * 310,
+                      angle: foeDir,
+                      speed: 310,
+                      dmg: 32,
+                      radius: 13,
+                      type: 'physical',
+                      visual: 'log',
+                      color: '#475569',
+                      life: 2.4,
+                      maxLife: 2.4,
+                      isEnemy: true,
+                      pushback: 40,
+                      statusText: 'LOVECKÝ OŠTĚP! 🗡️🌲',
+                      dead: false,
+                    });
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'LOVECKÝ NÁPŘAH! 🌲🎯', '#94A3B8', true);
+                  }
+                  foe.boarTrapCooldown = (typeof foe.boarTrapCooldown === 'number' ? foe.boarTrapCooldown : 3.8) - dt;
+                  if (foe.boarTrapCooldown <= 0) {
+                    foe.boarTrapCooldown = 4.8;
+                    addRuntimeHazard({
+                      id: `hazard_myslivec_trap_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 50,
+                      duration: 5.0,
+                      maxDuration: 5.0,
+                      type: 'mud',
+                      slowFactor: 0.50,
+                      kind: 'root-snare',
+                      warningTimer: 0.75,
+                      damage: 26,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.bell();
+                    pushDamageText(engine.texts, player.x, player.y - 40, 'ŠTVANICKÁ PAST! 🪤💥', '#F59E0B', true);
+                  }
+                } else if (foe.id === 'jezdec_meluziny') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 20000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 68) * 1.25);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 70, '🌪️ MELUZÍNA BURÁCÍ!', '#67E8F9', true);
+                  }
+                  foe.meluzinaGaleCooldown = (typeof foe.meluzinaGaleCooldown === 'number' ? foe.meluzinaGaleCooldown : 2.5) - dt;
+                  if (foe.meluzinaGaleCooldown <= 0) {
+                    foe.meluzinaGaleCooldown = isPhase2 ? 2.4 : 3.4;
+                    const count = isPhase2 ? 5 : 4;
+                    for (let k = 0; k < count; k++) {
+                      const ang = foeDir + (k - (count - 1) / 2) * 0.22;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 250,
+                        vy: Math.sin(ang) * 250,
+                        angle: ang,
+                        speed: 250,
+                        dmg: 28,
+                        radius: 12,
+                        type: 'ice',
+                        visual: 'wind_blade',
+                        color: '#67E8F9',
+                        life: 2.5,
+                        maxLife: 2.5,
+                        isEnemy: true,
+                        pushback: 45,
+                        statusText: 'MELUZÍNSKÁ ČEPEL! 🌪️',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'MELUZÍNSKÝ PORYV! 🌪️❄️', '#BAE6FD', true);
+                  }
+                  foe.meluzinaLogCooldown = (typeof foe.meluzinaLogCooldown === 'number' ? foe.meluzinaLogCooldown : 3.8) - dt;
+                  if (foe.meluzinaLogCooldown <= 0) {
+                    foe.meluzinaLogCooldown = 4.6;
+                    for (let k = -1; k <= 1; k += 2) {
+                      const ang = foeDir + k * 0.35;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 190,
+                        vy: Math.sin(ang) * 190,
+                        angle: ang,
+                        speed: 190,
+                        dmg: 32,
+                        radius: 14,
+                        type: 'physical',
+                        visual: 'log',
+                        color: '#78350F',
+                        life: 2.6,
+                        maxLife: 2.6,
+                        isEnemy: true,
+                        pushback: 35,
+                        statusText: 'POLOMOVÝ KMEN! 🌲💥',
+                        dead: false,
+                      });
+                    }
+                    sound.heavyHit();
+                  }
+                } else if (foe.id === 'cert_s_pytlem') {
+                  foe.sootBagCooldown = (typeof foe.sootBagCooldown === 'number' ? foe.sootBagCooldown : 2.8) - dt;
+                  if (foe.sootBagCooldown <= 0) {
+                    foe.sootBagCooldown = 4.0;
+                    addRuntimeHazard({
+                      id: `hazard_cert_soot_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 60,
+                      duration: 4.2,
+                      maxDuration: 4.2,
+                      type: 'soot',
+                      slowFactor: 0.60,
+                      kind: 'soot-cloud',
+                      warningTimer: 0.7,
+                      damage: 24,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.bell();
+                    pushDamageText(engine.texts, player.x, player.y - 40, 'SAZOVÝ PYTEL! 🎒💨', '#71717A', true);
+                  }
+                  foe.chainWhipCooldown = (typeof foe.chainWhipCooldown === 'number' ? foe.chainWhipCooldown : 3.2) - dt;
+                  if (foe.chainWhipCooldown <= 0 && distToPlayer < 320) {
+                    foe.chainWhipCooldown = 4.2;
+                    for (let k = -1; k <= 1; k++) {
+                      const ang = foeDir + k * 0.22;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 240,
+                        vy: Math.sin(ang) * 240,
+                        angle: ang,
+                        speed: 240,
+                        dmg: 28,
+                        radius: 12,
+                        type: 'physical',
+                        visual: 'wind_blade',
+                        color: '#B91C1C',
+                        life: 2.2,
+                        maxLife: 2.2,
+                        isEnemy: true,
+                        pushback: 35,
+                        statusText: 'PEKELNÝ ŘETĚZ! ⛓️🔥',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 48, 'ŠVIH ŘETĚZEM! ⛓️', '#DC2626', true);
+                  }
+                } else if (foe.id === 'kral_mrazik') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 24000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 60) * 1.30);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '👑 KRÁL MRÁZÍK VLÁDNE PEVNOU RUKOU!', '#0284C7', true);
+                  }
+                  foe.mrazikCrownCooldown = (typeof foe.mrazikCrownCooldown === 'number' ? foe.mrazikCrownCooldown : 2.6) - dt;
+                  if (foe.mrazikCrownCooldown <= 0) {
+                    foe.mrazikCrownCooldown = isPhase2 ? 2.5 : 3.6;
+                    const spikes = isPhase2 ? 10 : 8;
+                    for (let k = 0; k < spikes; k++) {
+                      const ang = (k / spikes) * Math.PI * 2 + (engine.gameTime || 0) * 0.4;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 220,
+                        vy: Math.sin(ang) * 220,
+                        angle: ang,
+                        speed: 220,
+                        dmg: 28,
+                        radius: 13,
+                        type: 'ice',
+                        visual: 'icicle',
+                        color: '#38BDF8',
+                        life: 2.6,
+                        maxLife: 2.6,
+                        isEnemy: true,
+                        pushback: 35,
+                        statusText: 'MRAZIVÁ KORUNA! 👑❄️',
+                        dead: false,
+                      });
+                    }
+                    sound.freeze();
+                    pushDamageText(engine.texts, foe.x, foe.y - 55, 'KORUNA MRÁZU! 👑❄️', '#38BDF8', true);
+                  }
+                  foe.mrazikHailCooldown = (typeof foe.mrazikHailCooldown === 'number' ? foe.mrazikHailCooldown : 3.8) - dt;
+                  if (foe.mrazikHailCooldown <= 0) {
+                    foe.mrazikHailCooldown = isPhase2 ? 3.6 : 4.8;
+                    addRuntimeHazard({
+                      id: `hazard_mrazik_hail_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 75,
+                      duration: 2.8,
+                      maxDuration: 2.8,
+                      type: 'frost',
+                      slowFactor: 0.50,
+                      kind: 'hail-circle',
+                      warningTimer: 0.9,
+                      damage: 34,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.freeze();
+                    pushDamageText(engine.texts, player.x, player.y - 45, 'KRÁLOVSKÝ LEDOPÁD! 🌨️👑', '#BAE6FD', true);
+                  }
+                } else if (foe.id === 'obri_snehulak') {
+                  foe.snowballDashCooldown = (typeof foe.snowballDashCooldown === 'number' ? foe.snowballDashCooldown : 2.8) - dt;
+                  foe.snowballDashTimer = Math.max(0, (foe.snowballDashTimer || 0) - dt);
+                  if (foe.snowballDashCooldown <= 0) {
+                    foe.snowballDashCooldown = 4.2;
+                    foe.snowballDashTimer = 0.9;
+                    foe.snowballDashAngle = foeDir;
+                    sound.heavyHit();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'VALÍCÍ SE KOULE! ⛄💨', '#CBD5E1', true);
+                  }
+                  foe.freezingPuddleCooldown = (typeof foe.freezingPuddleCooldown === 'number' ? foe.freezingPuddleCooldown : 3.6) - dt;
+                  if (foe.freezingPuddleCooldown <= 0) {
+                    foe.freezingPuddleCooldown = 4.6;
+                    addRuntimeHazard({
+                      id: `hazard_snehulak_puddle_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: foe.x,
+                      y: foe.y,
+                      radius: 60,
+                      duration: 3.5,
+                      maxDuration: 3.5,
+                      type: 'frost',
+                      slowFactor: 0.55,
+                      kind: 'blizzard-zone',
+                      warningTimer: 0.4,
+                      damage: 24,
+                      sourceEnemyId: foe.id,
+                    });
+                    pushDamageText(engine.texts, foe.x, foe.y - 40, 'MRAZIVÁ BŘEČKA! ⛄❄️', '#E2E8F0', true);
+                  }
+                } else if (foe.id === 'vladce_chumelenice') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 26000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 60) * 1.30);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '❄️ CHUMELENICE HOUSTNE! BÍLÁ TMA!', '#0EA5E9', true);
+                  }
+                  foe.whiteoutCooldown = (typeof foe.whiteoutCooldown === 'number' ? foe.whiteoutCooldown : 3.0) - dt;
+                  if (foe.whiteoutCooldown <= 0) {
+                    foe.whiteoutCooldown = isPhase2 ? 3.4 : 4.6;
+                    addRuntimeHazard({
+                      id: `hazard_vladce_whiteout_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 80,
+                      duration: 3.5,
+                      maxDuration: 3.5,
+                      type: 'frost',
+                      slowFactor: 0.50,
+                      kind: 'triad-blizzard',
+                      warningTimer: 0.9,
+                      damage: 32,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.freeze();
+                    pushDamageText(engine.texts, player.x, player.y - 45, 'BÍLÁ TMA! 🌨️❄️', '#BAE6FD', true);
+                  }
+                  foe.avalancheCooldown = (typeof foe.avalancheCooldown === 'number' ? foe.avalancheCooldown : 3.6) - dt;
+                  if (foe.avalancheCooldown <= 0) {
+                    foe.avalancheCooldown = 4.6;
+                    for (let k = -1; k <= 1; k++) {
+                      const ang = foeDir + k * 0.28;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 220,
+                        vy: Math.sin(ang) * 220,
+                        angle: ang,
+                        speed: 220,
+                        dmg: 30,
+                        radius: 14,
+                        type: 'ice',
+                        visual: 'water_blast',
+                        color: '#E0F2FE',
+                        life: 2.6,
+                        maxLife: 2.6,
+                        isEnemy: true,
+                        pushback: 50,
+                        statusText: 'LAVINA! 🏔️❄️',
+                        dead: false,
+                      });
+                    }
+                    sound.heavyHit();
+                  }
+                } else if (foe.id === 'kostlivec_s_kosou') {
+                  foe.scytheCleaveCooldown = (typeof foe.scytheCleaveCooldown === 'number' ? foe.scytheCleaveCooldown : 2.5) - dt;
+                  if (foe.scytheCleaveCooldown <= 0 && distToPlayer < 240) {
+                    foe.scytheCleaveCooldown = 3.6;
+                    for (let k = -1; k <= 1; k++) {
+                      const ang = foeDir + k * 0.32;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 230,
+                        vy: Math.sin(ang) * 230,
+                        angle: ang,
+                        speed: 230,
+                        dmg: 34,
+                        radius: 14,
+                        type: 'physical',
+                        visual: 'wind_blade',
+                        color: '#94A3B8',
+                        life: 2.0,
+                        maxLife: 2.0,
+                        isEnemy: true,
+                        pushback: 45,
+                        statusText: 'ZÁSEK KOSOU! 💀⚔️',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 48, 'MRAZIVÝ ZÁSEK! 💀', '#E2E8F0', true);
+                  }
+                  foe.boneVolleyCooldown = (typeof foe.boneVolleyCooldown === 'number' ? foe.boneVolleyCooldown : 3.4) - dt;
+                  if (foe.boneVolleyCooldown <= 0) {
+                    foe.boneVolleyCooldown = 4.4;
+                    for (let k = -1; k <= 1; k += 2) {
+                      const ang = foeDir + k * 0.22;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 260,
+                        vy: Math.sin(ang) * 260,
+                        angle: ang,
+                        speed: 260,
+                        dmg: 26,
+                        radius: 11,
+                        type: 'ice',
+                        visual: 'icicle',
+                        color: '#CBD5E1',
+                        life: 2.4,
+                        maxLife: 2.4,
+                        isEnemy: true,
+                        pushback: 25,
+                        statusText: 'KOSTĚNÁ STŘELA! 🦴',
+                        dead: false,
+                      });
+                    }
+                  }
+                } else if (foe.id === 'perchta_s_nozem') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 26000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 62) * 1.30);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '🗡️ PERCHTA OTEVÍRÁ NŮŽ! PŮST PORUŠEN!', '#EF4444', true);
+                  }
+                  foe.perchtaLungeCooldown = (typeof foe.perchtaLungeCooldown === 'number' ? foe.perchtaLungeCooldown : 2.8) - dt;
+                  foe.perchtaLungeTimer = Math.max(0, (foe.perchtaLungeTimer || 0) - dt);
+                  foe.windupTimer = Math.max(0, (foe.windupTimer || 0) - dt);
+                  foe.isWindup = foe.windupTimer > 0;
+                  foe.isAttacking = foe.windupTimer > 0 || foe.perchtaLungeTimer > 0;
+                  if (foe.perchtaLungeCooldown <= 0) {
+                    foe.perchtaLungeCooldown = isPhase2 ? 3.0 : 4.2;
+                    foe.windupTimer = 0.8;
+                    foe.isWindup = true;
+                    foe.isAttacking = true;
+                    foe.perchtaLungeTimer = 0.7;
+                    foe.perchtaLungeAngle = foeDir;
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'ROZPÁRÁNÍ BŘICHA! 🗡️🩸', '#DC2626', true);
+                  }
+                  foe.perchtaHexCooldown = (typeof foe.perchtaHexCooldown === 'number' ? foe.perchtaHexCooldown : 3.6) - dt;
+                  if (foe.perchtaHexCooldown <= 0) {
+                    foe.perchtaHexCooldown = isPhase2 ? 3.8 : 5.0;
+                    addRuntimeHazard({
+                      id: `hazard_perchta_hex_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 70,
+                      duration: 5.0,
+                      maxDuration: 5.0,
+                      type: 'curse',
+                      slowFactor: 0.50,
+                      kind: 'hex-circle',
+                      warningTimer: 0.9,
+                      damage: 32,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.bell();
+                    pushDamageText(engine.texts, player.x, player.y - 45, 'KLETBA PŮSTU! ✂️💀', '#A855F7', true);
+                  }
+                  foe.perchtaNeedlesCooldown = (typeof foe.perchtaNeedlesCooldown === 'number' ? foe.perchtaNeedlesCooldown : 4.2) - dt;
+                  if (foe.perchtaNeedlesCooldown <= 0) {
+                    foe.perchtaNeedlesCooldown = isPhase2 ? 3.2 : 4.5;
+                    for (let k = -2; k <= 2; k++) {
+                      const ang = foeDir + k * 0.18;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 270,
+                        vy: Math.sin(ang) * 270,
+                        angle: ang,
+                        speed: 270,
+                        dmg: 26,
+                        radius: 11,
+                        type: 'ice',
+                        visual: 'icicle',
+                        color: '#E2E8F0',
+                        life: 2.4,
+                        maxLife: 2.4,
+                        isEnemy: true,
+                        pushback: 25,
+                        statusText: 'ŠICÍ JEHLA! 🪡❄️',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                  }
+                } else if (foe.id === 'masopustni_medved') {
+                  foe.bearRoarCooldown = (typeof foe.bearRoarCooldown === 'number' ? foe.bearRoarCooldown : 2.8) - dt;
+                  if (foe.bearRoarCooldown <= 0 && distToPlayer < 260) {
+                    foe.bearRoarCooldown = 4.0;
+                    addRuntimeHazard({
+                      id: `hazard_bear_roar_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: foe.x,
+                      y: foe.y,
+                      radius: 70,
+                      duration: 2.2,
+                      maxDuration: 2.2,
+                      type: 'mud',
+                      slowFactor: 0.60,
+                      kind: 'ground-shockwave',
+                      warningTimer: 0.6,
+                      damage: 28,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'MEDVĚDÍ ZAMRUČENÍ! 🐻🔊', '#B45309', true);
+                  }
+                  foe.bearChargeCooldown = (typeof foe.bearChargeCooldown === 'number' ? foe.bearChargeCooldown : 3.8) - dt;
+                  foe.bearChargeTimer = Math.max(0, (foe.bearChargeTimer || 0) - dt);
+                  if (foe.bearChargeCooldown <= 0) {
+                    foe.bearChargeCooldown = 4.8;
+                    foe.bearChargeTimer = 0.85;
+                    foe.bearChargeAngle = foeDir;
+                    sound.heavyHit();
+                    pushDamageText(engine.texts, foe.x, foe.y - 48, 'MEDVĚDÍ VÝPAD! 🐻💨', '#78350F', true);
+                  }
+                } else if (foe.id === 'rychtar_masek') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 28000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 65) * 1.28);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '🎭 RYCHTÁŘ ZAHALIL NÁVES DO REJE!', '#F59E0B', true);
+                  }
+                  foe.feruleStrikeCooldown = (typeof foe.feruleStrikeCooldown === 'number' ? foe.feruleStrikeCooldown : 2.8) - dt;
+                  if (foe.feruleStrikeCooldown <= 0) {
+                    foe.feruleStrikeCooldown = isPhase2 ? 3.0 : 4.2;
+                    addRuntimeHazard({
+                      id: `hazard_rychtar_ferule_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: foe.x,
+                      y: foe.y,
+                      radius: 75,
+                      duration: 2.2,
+                      maxDuration: 2.2,
+                      type: 'mud',
+                      slowFactor: 0.55,
+                      kind: 'ground-shockwave',
+                      warningTimer: 0.8,
+                      damage: 32,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.heavyHit();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'ÚDER MASOPUSTNÍ FERULÍ! 🎭📜', '#F59E0B', true);
+                  }
+                  foe.confettiBurstCooldown = (typeof foe.confettiBurstCooldown === 'number' ? foe.confettiBurstCooldown : 3.6) - dt;
+                  if (foe.confettiBurstCooldown <= 0) {
+                    foe.confettiBurstCooldown = isPhase2 ? 3.4 : 4.6;
+                    for (let k = -2; k <= 2; k++) {
+                      const ang = foeDir + k * 0.22;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 230,
+                        vy: Math.sin(ang) * 230,
+                        angle: ang,
+                        speed: 230,
+                        dmg: 24,
+                        radius: 12,
+                        type: 'magic',
+                        visual: 'straw_doll',
+                        color: k % 2 === 0 ? '#DC2626' : '#F59E0B',
+                        life: 2.4,
+                        maxLife: 2.4,
+                        isEnemy: true,
+                        pushback: 25,
+                        statusText: 'MASOPUSTNÍ KONFETY! 🎉🎭',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'MASOPUSTNÍ REJ! 🎭🎉', '#DC2626', true);
+                  }
+                } else if (foe.id === 'umrlec_basista') {
+                  foe.bassScreechCooldown = (typeof foe.bassScreechCooldown === 'number' ? foe.bassScreechCooldown : 2.8) - dt;
+                  if (foe.bassScreechCooldown <= 0 && distToPlayer < 280) {
+                    foe.bassScreechCooldown = 4.0;
+                    addRuntimeHazard({
+                      id: `hazard_basista_screech_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: foe.x,
+                      y: foe.y,
+                      radius: 70,
+                      duration: 2.4,
+                      maxDuration: 2.4,
+                      type: 'mud',
+                      slowFactor: 0.60,
+                      kind: 'ground-shockwave',
+                      warningTimer: 0.7,
+                      damage: 30,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.bell();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'SKŘÍPĚNÍ BASY! 🎻💀', '#64748B', true);
+                  }
+                  foe.bowSlashCooldown = (typeof foe.bowSlashCooldown === 'number' ? foe.bowSlashCooldown : 3.4) - dt;
+                  if (foe.bowSlashCooldown <= 0) {
+                    foe.bowSlashCooldown = 4.4;
+                    for (let k = -1; k <= 1; k++) {
+                      const ang = foeDir + k * 0.25;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 250,
+                        vy: Math.sin(ang) * 250,
+                        angle: ang,
+                        speed: 250,
+                        dmg: 28,
+                        radius: 13,
+                        type: 'physical',
+                        visual: 'wind_blade',
+                        color: '#475569',
+                        life: 2.2,
+                        maxLife: 2.2,
+                        isEnemy: true,
+                        pushback: 35,
+                        statusText: 'SEKNUTÍ SMYČCEM! 🎻',
+                        dead: false,
+                      });
+                    }
+                    sound.slash();
+                  }
+                } else if (foe.id === 'bakchus_s_pivnim_soudkem') {
+                  const isPhase2 = foe.hp <= (foe.maxHp || 30000) * 0.5;
+                  if (isPhase2 && !foe.enraged) {
+                    foe.enraged = true;
+                    foe.speed = Math.round((foe.speed || 60) * 1.35);
+                    sound.roar();
+                    pushDamageText(engine.texts, foe.x, foe.y - 75, '🍺 BAKCHUS ROZRÁŽÍ PIVNÍ SUD!', '#D97706', true);
+                  }
+                  foe.kegRollCooldown = (typeof foe.kegRollCooldown === 'number' ? foe.kegRollCooldown : 2.6) - dt;
+                  if (foe.kegRollCooldown <= 0) {
+                    foe.kegRollCooldown = isPhase2 ? 2.4 : 3.6;
+                    for (let k = -1; k <= 1; k += 2) {
+                      const ang = foeDir + k * 0.28;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 220,
+                        vy: Math.sin(ang) * 220,
+                        angle: ang,
+                        speed: 220,
+                        dmg: 36,
+                        radius: 15,
+                        type: 'physical',
+                        visual: 'log',
+                        color: '#92400E',
+                        life: 2.8,
+                        maxLife: 2.8,
+                        isEnemy: true,
+                        pushback: 55,
+                        statusText: 'PIVNÍ SUD! 🍺💥',
+                        dead: false,
+                      });
+                    }
+                    sound.heavyHit();
+                    pushDamageText(engine.texts, foe.x, foe.y - 50, 'VALÍCÍ SE PIVNÍ SUD! 🍺💨', '#D97706', true);
+                  }
+                  foe.foamSplashCooldown = (typeof foe.foamSplashCooldown === 'number' ? foe.foamSplashCooldown : 3.4) - dt;
+                  if (foe.foamSplashCooldown <= 0) {
+                    foe.foamSplashCooldown = isPhase2 ? 3.4 : 4.6;
+                    addRuntimeHazard({
+                      id: `hazard_bakchus_foam_${Math.round(engine.gameTime * 1000)}_${Math.random().toString(36).slice(2, 7)}`,
+                      x: player.x,
+                      y: player.y,
+                      radius: 75,
+                      duration: 3.5,
+                      maxDuration: 3.5,
+                      type: 'mud',
+                      slowFactor: 0.45,
+                      kind: 'mud-patch',
+                      warningTimer: 0.85,
+                      damage: 28,
+                      sourceEnemyId: foe.id,
+                    });
+                    sound.splash();
+                    pushDamageText(engine.texts, player.x, player.y - 45, 'PĚNOVÁ TŘÍŠŤ! 🍺🫧', '#FEF08A', true);
+                  }
+                  foe.bacchicBurstCooldown = (typeof foe.bacchicBurstCooldown === 'number' ? foe.bacchicBurstCooldown : 4.0) - dt;
+                  if (foe.bacchicBurstCooldown <= 0) {
+                    foe.bacchicBurstCooldown = isPhase2 ? 3.8 : 5.0;
+                    const count = isPhase2 ? 10 : 8;
+                    for (let k = 0; k < count; k++) {
+                      const ang = (k / count) * Math.PI * 2 + (engine.gameTime || 0) * 0.5;
+                      engine.projectiles.push({
+                        x: foe.x,
+                        y: foe.y,
+                        vx: Math.cos(ang) * 200,
+                        vy: Math.sin(ang) * 200,
+                        angle: ang,
+                        speed: 200,
+                        dmg: 25,
+                        radius: 12,
+                        type: 'magic',
+                        visual: 'bubble',
+                        color: '#FBBF24',
+                        life: 2.5,
+                        maxLife: 2.5,
+                        isEnemy: true,
+                        pushback: 25,
+                        statusText: 'CHMELOVÝ POHÁR! 🍺✨',
+                        dead: false,
+                      });
+                    }
+                    sound.bell();
+                    pushDamageText(engine.texts, foe.x, foe.y - 55, 'BAKCHŮV PŮLNOČNÍ REJ! 🍺👑', '#EAB308', true);
+                  }
                 }
               }
             }
