@@ -2,7 +2,7 @@ import type { GameLevelId, GameLevelDef, EnemyPrefixType } from '../types';
 import { getCurrentDayPhase } from '../constants';
 import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
-import { ENEMIES } from '../data/enemies';
+import { ENEMIES, BUBAK_THREAT_COSTS } from '../data/enemies';
 import { toCanonicalWeaponId } from './migration';
 import {
   computeVulnerabilityScore,
@@ -1133,8 +1133,10 @@ export class RunDirector {
     return this.getWeightedPool(engine);
   }
 
-  /** Regular tactical mobs cost 3; named elite variants cost 8 threat. */
+  /** Scaled tactical threat cost (1..12) based on composite threat and annoyance, or 18 for minibosses/twins. */
   public getBubakThreatCost(enemyId: string): number {
+    const cost = BUBAK_THREAT_COSTS[enemyId];
+    if (cost !== undefined) return cost;
     const isEliteVariant = Object.keys(ENEMIES).some(
       (baseId) => this.getEliteVariantForId(baseId) === enemyId
     );

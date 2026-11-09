@@ -52,6 +52,7 @@ This directory records architectural decisions made for the project Bubákov.
 | [0045](0045-ladovska-vizualni-hierarchie-a-polarita-kontrastu.md) | Ladovská vizuální hierarchie a polarita kontrastu v hordě |
 | [0046](0046-morfologie-strel-nocni-inverze-a-kridovy-naprah.md) | Morfologie střel, noční konturová inverze a křídový nápřah |
 | [0047](0047-vizualni-hierarchie-bossu-stavove-efekty-a-slite-pernicky.md) | Vizuální hierarchie bossů, kreslené stavové efekty a stupně perníčků |
+| [0048](0048-vyladeni-hodnoty-nepratel-a-index-hrozby-a-otravnosti.md) | Vyladění hodnoty nepřátel, kompozitní index hrozby a otravnosti |
 
 
 

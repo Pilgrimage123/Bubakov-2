@@ -72,6 +72,14 @@ _Avoid_: affix, mob prefix, monster modifier, prefix
 Trestná kopie oblastního minibosse povolaná Režisérem výpravy při drtivé dominanci a úspěchu lovce bez ohledu na základní nastavení obtížnosti.
 _Avoid_: twin miniboss, boss clone, dvojník
 
+**Herní hodnota strašidla**:
+Kanonické bodové ohodnocení strašidla na bojišti vypočítané z kompozitního indexu hrozby (kombinace efektivního poškození za sekundu, efektivní Kuráže, přirážek za otravnost/střelbu/krádeže a slev za snadnou zranitelnost). Určuje celkové skóre běhu, velikost získávaných perníků a frekvenci uvolňování předmětových truhel a posil.
+_Avoid_: mob XP, expy, monster score, bodový rank, body bubáka
+
+**Rejdová cena strašidla**:
+Počet bodů (v rozmezí 1 až 12 pro běžná strašidla, 18 pro trestné Dvojče), které Režisér výpravy musí investovat ze svého Rejdového rozpočtu za vyslání daného strašidla do arény, odvozený z jeho skutečné nebezpečnosti a míry otravnosti pro lovce.
+_Avoid_: spawn cost, monster cost, váha monstra, threat cost
+
 **Vyčerpaný bubák**:
 Oslabená varianta strašidla s poloviční Kuráží i rychlostí nasazovaná v krizi pro záchranu lovce při zachování plné hodnoty odměn.
 _Avoid_: debuffed enemy, unavený bubák, oslabený nepřítel
