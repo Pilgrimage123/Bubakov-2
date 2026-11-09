@@ -33,6 +33,11 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
   const selectedIndexRef = React.useRef(0);
   selectedIndexRef.current = selectedIndex;
 
+  const isTouchDevice = React.useMemo(
+    () => typeof window !== 'undefined' && ('ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || window.matchMedia('(pointer: coarse)').matches),
+    []
+  );
+
   React.useEffect(() => {
     setSelectedIndex(0);
   }, [weaponId, rank]);
@@ -521,25 +526,27 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
                   }}
                   title={`Zvolit milník (Klávesa ${index + 1} / Enter / Gamepad A)`}
                 >
-                  <span
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.28)',
-                      border: '1px solid rgba(255, 255, 255, 0.4)',
-                      padding: '2px 7px',
-                      borderRadius: 4,
-                      fontSize: '0.85rem',
-                      fontFamily: 'var(--font-ui)',
-                      lineHeight: 1,
-                    }}
-                  >
-                    {activeDevice === 'gamepad'
-                      ? isSelected
-                        ? '[A]'
-                        : '[D-Pad]'
-                      : isSelected
-                        ? `[${index + 1} / Enter]`
-                        : `[${index + 1}]`}
-                  </span>
+                  {!isTouchDevice && (
+                    <span
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.28)',
+                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                        padding: '2px 7px',
+                        borderRadius: 4,
+                        fontSize: '0.85rem',
+                        fontFamily: 'var(--font-ui)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {activeDevice === 'gamepad'
+                        ? isSelected
+                          ? '[A]'
+                          : '[D-Pad]'
+                        : isSelected
+                          ? `[${index + 1} / Enter]`
+                          : `[${index + 1}]`}
+                    </span>
+                  )}
                   <span>{t('milestone_modal.choose_btn', lang)}</span>
                 </button>
               </div>
@@ -561,11 +568,13 @@ export const WeaponMilestoneModal: React.FC<WeaponMilestoneModalProps> = ({
             flexWrap: 'wrap',
           }}
         >
-          <GameIcon icon={activeDevice === 'gamepad' ? 'gamepad' : 'controls'} size={16} />
+          <GameIcon icon={isTouchDevice ? 'touch' : activeDevice === 'gamepad' ? 'gamepad' : 'controls'} size={16} />
           <span>
-            {activeDevice === 'gamepad'
-              ? 'Gamepad: [D-Pad / Levá páčka] Přepnout kartu • [A] Potvrdit vylepšení'
-              : 'Klávesnice: [A / D nebo Šipky] Přepnout kartu • [Enter / Mezerník nebo 1-2] Potvrdit vylepšení'}
+            {isTouchDevice
+              ? 'Dotykové ovládání: Klepnutím na kartu zvolte vylepšení zbraně'
+              : activeDevice === 'gamepad'
+                ? 'Gamepad: [D-Pad / Levá páčka] Přepnout kartu • [A] Potvrdit vylepšení'
+                : 'Klávesnice: [A / D nebo Šipky] Přepnout kartu • [Enter / Mezerník nebo 1-2] Potvrdit vylepšení'}
           </span>
         </div>
       </div>

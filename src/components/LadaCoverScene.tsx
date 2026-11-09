@@ -73,7 +73,7 @@ function smoothstep01(x: number): number {
 /**
  * Pure deterministic choreography calculator for the Hospoda U Černého kocoura scene:
  * - Left: Hastrman slyly puffing on his clay pipe, blowing smoke rings, winking, and tapping his webbed foot.
- * - Center: Tavern table with glazed pitcher and hanging portrait of Emperor Franz Joseph I.
+ * - Center: Tavern table with embroidered tablecloth and hanging portrait of Emperor Franz Joseph I.
  * - Right: Czech Bubák and beautiful Rusalka clinking foaming beer mugs with a hearty splash and taking a synchronized gulp.
  */
 export function computeTavernSceneChoreography(
@@ -274,13 +274,13 @@ export function computeTavernSceneChoreography(
     bubakHeadTiltRad = -0.34 * gulpIntensity + gulpBob * 0.04;
     rusalkaHeadTiltRad = 0.34 * gulpIntensity - gulpBob * 0.04;
 
-    bubakMugX = lerp(359, 314, enterGulp);
-    bubakMugY = lerp(91, 88, enterGulp) + gulpBob * 1.8;
-    bubakMugTiltRad = lerp(0.18, -0.78, enterGulp);
+    bubakMugX = lerp(359, 322, enterGulp);
+    bubakMugY = lerp(91, 95, enterGulp) + gulpBob * 1.8;
+    bubakMugTiltRad = lerp(0.18, -0.58, enterGulp);
 
-    rusalkaMugX = lerp(389, 434, enterGulp);
-    rusalkaMugY = lerp(91, 88, enterGulp) + gulpBob * 1.8;
-    rusalkaMugTiltRad = lerp(-0.18, 0.78, enterGulp);
+    rusalkaMugX = lerp(389, 430, enterGulp);
+    rusalkaMugY = lerp(91, 95, enterGulp) + gulpBob * 1.8;
+    rusalkaMugTiltRad = lerp(-0.18, 0.58, enterGulp);
 
     beerLevel = lerp(0.95, 0.34, smoothstep01(p));
     foamHeadScale = lerp(1.3, 0.78, smoothstep01(p));
@@ -297,13 +297,13 @@ export function computeTavernSceneChoreography(
     bubakHeadTiltRad = lerp(-0.18, 0, settle);
     rusalkaHeadTiltRad = lerp(0.18, 0, settle);
 
-    bubakMugX = lerp(314, baseBubakMugX, settle);
-    bubakMugY = lerp(88, baseBubakMugY, settle);
-    bubakMugTiltRad = lerp(-0.4, 0.04, settle);
+    bubakMugX = lerp(322, baseBubakMugX, settle);
+    bubakMugY = lerp(95, baseBubakMugY, settle);
+    bubakMugTiltRad = lerp(-0.36, 0.04, settle);
 
-    rusalkaMugX = lerp(434, baseRusalkaMugX, settle);
-    rusalkaMugY = lerp(88, baseRusalkaMugY, settle);
-    rusalkaMugTiltRad = lerp(0.4, -0.04, settle);
+    rusalkaMugX = lerp(430, baseRusalkaMugX, settle);
+    rusalkaMugY = lerp(95, baseRusalkaMugY, settle);
+    rusalkaMugTiltRad = lerp(0.36, -0.04, settle);
 
     const refill = smoothstep01(Math.max(0, (p - 0.45) / 0.55));
     beerLevel = lerp(0.34, 0.94, refill);
@@ -465,179 +465,355 @@ function drawEmperorPortrait2D(
   const cx = px + pw * 0.48;
   const cy = py + ph * 0.34;
 
-  // 4. Uniform & Shoulders of Franz Joseph I
-  // Dark Austrian pike-grey / military general tunic
-  ctx.fillStyle = '#243044';
+  // 4. Uniform & Shoulders of Emperor Franz Joseph I
+  // Dark Austrian pike-grey / military general tunic with high shoulders
+  ctx.fillStyle = '#1E293B';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.0;
   ctx.beginPath();
   ctx.moveTo(cx - 18, py + ph);
-  ctx.lineTo(cx - 15, cy + 18);
-  ctx.quadraticCurveTo(cx - 8, cy + 12, cx, cy + 13);
-  ctx.quadraticCurveTo(cx + 8, cy + 12, cx + 15, cy + 18);
+  ctx.lineTo(cx - 16, cy + 19);
+  ctx.quadraticCurveTo(cx - 9, cy + 13, cx, cy + 14);
+  ctx.quadraticCurveTo(cx + 9, cy + 13, cx + 16, cy + 19);
   ctx.lineTo(cx + 18, py + ph);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Red piping on tunic front opening
+  // Golden epaulettes / aguillettes on shoulders
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.ellipse(cx - 14.5, cy + 19.5, 3.2, 1.8, -0.25, 0, Math.PI * 2);
+  ctx.ellipse(cx + 14.5, cy + 19.5, 3.2, 1.8, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Imperial broad crimson sash across right shoulder to left hip
+  ctx.fillStyle = '#DC2626';
+  ctx.beginPath();
+  ctx.moveTo(cx - 13, cy + 19);
+  ctx.lineTo(cx - 8, cy + 18);
+  ctx.lineTo(cx + 11, py + ph);
+  ctx.lineTo(cx + 5, py + ph);
+  ctx.closePath();
+  ctx.fill();
+
+  // Red piping down front tunic opening
   ctx.strokeStyle = '#DC2626';
   ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.moveTo(cx - 2, cy + 15);
+  ctx.moveTo(cx - 2, cy + 16);
   ctx.lineTo(cx - 2, py + ph);
   ctx.stroke();
 
   // Double-breasted golden brass buttons
   ctx.fillStyle = '#FACC15';
   for (let b = 0; b < 3; b++) {
-    const by = cy + 20 + b * 7;
+    const by = cy + 21 + b * 7;
     ctx.beginPath();
-    ctx.arc(cx - 7, by, 1.4, 0, Math.PI * 2);
+    ctx.arc(cx - 6.5, by, 1.35, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + 3, by, 1.4, 0, Math.PI * 2);
+    ctx.arc(cx + 2.5, by, 1.35, 0, Math.PI * 2);
     ctx.fill();
   }
 
   // High stand-up crimson collar with golden oak-leaf embroidery
-  ctx.fillStyle = '#B91C1C';
+  ctx.fillStyle = '#991B1B';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.6;
   ctx.beginPath();
-  ctx.moveTo(cx - 7, cy + 8);
-  ctx.lineTo(cx + 7, cy + 8);
-  ctx.lineTo(cx + 8, cy + 14);
-  ctx.lineTo(cx - 8, cy + 14);
+  ctx.moveTo(cx - 7.5, cy + 9);
+  ctx.lineTo(cx + 7.5, cy + 9);
+  ctx.lineTo(cx + 8.5, cy + 15);
+  ctx.lineTo(cx - 8.5, cy + 15);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Golden embroidery stitches on collar
+  // White shirt collar points peeking above red collar band
+  ctx.fillStyle = '#FFFDF7';
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, cy + 9);
+  ctx.lineTo(cx - 2, cy + 7);
+  ctx.lineTo(cx, cy + 9);
+  ctx.lineTo(cx + 2, cy + 7);
+  ctx.lineTo(cx + 5, cy + 9);
+  ctx.closePath();
+  ctx.fill();
+
+  // Golden oak-leaf embroidery on stand-up collar
   ctx.strokeStyle = '#FEF08A';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(cx - 6, cy + 11);
-  ctx.lineTo(cx - 1, cy + 11);
-  ctx.moveTo(cx + 1, cy + 11);
-  ctx.lineTo(cx + 6, cy + 11);
+  ctx.moveTo(cx - 7, cy + 12); ctx.lineTo(cx - 1, cy + 12);
+  ctx.moveTo(cx + 1, cy + 12); ctx.lineTo(cx + 7, cy + 12);
   ctx.stroke();
 
-  // Orders and Medals on chest
-  // Cross of the Order of Maria Theresa on black-and-gold ribbon
-  ctx.fillStyle = '#FFFDF7';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.0;
-  ctx.beginPath();
-  ctx.rect(cx - 6, cy + 16, 4, 4);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#E6392B';
-  ctx.fillRect(cx - 5, cy + 17, 2, 2);
-
-  // Order of the Golden Fleece (Zlaté rouno) pendant
+  // Orders and Medals:
+  // Order of the Golden Fleece (Zlaté rouno) suspended from red neck ribbon
   ctx.fillStyle = '#F59E0B';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.9;
   ctx.beginPath();
-  ctx.arc(cx - 1, cy + 18, 2.2, 0, Math.PI * 2);
+  ctx.arc(cx, cy + 16.5, 2.0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
 
-  // Imperial breast star badge
+  // Grand Cross star of Maria Theresa on breast
   ctx.fillStyle = '#E2E8F0';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 0.9;
   ctx.beginPath();
-  ctx.arc(cx + 7, cy + 23, 3.2, 0, Math.PI * 2);
+  ctx.rect(cx + 6.5, cy + 22, 4.5, 4.5);
   ctx.fill();
+  ctx.stroke();
   ctx.fillStyle = '#DC2626';
   ctx.beginPath();
-  ctx.arc(cx + 7, cy + 23, 1.4, 0, Math.PI * 2);
+  ctx.arc(cx + 8.75, cy + 24.25, 1.4, 0, Math.PI * 2);
   ctx.fill();
 
-  // 5. Head, Neck & Hair of Franz Joseph I
+  // --------------------------------------------------------------------------
+  // 5. AUTHENTIC LADOVSKÝ FACE OF EMPEROR FRANZ JOSEPH I (CÍSAŘ PÁN)
+  // - High domed balding forehead with noble aged facial structure
+  // - Snow-white imperial mutton-chop whiskers & drooping mustache (Backenbart)
+  // - Clean-shaven rounded chin visible below the mustache
+  // - Calm, dignified blue-grey eyes with hooded lids & bushy white eyebrows
+  // - Aristocratic Habsburg nose and calm imperial expression
+  // --------------------------------------------------------------------------
   // Neck
   ctx.fillStyle = '#F5D0A9';
   ctx.beginPath();
-  ctx.rect(cx - 4.5, cy + 3, 9, 7);
+  ctx.rect(cx - 4.5, cy + 4, 9, 7);
   ctx.fill();
 
-  // Head oval
+  // Shaded base of neck
+  ctx.fillStyle = '#E2B080';
+  ctx.beginPath();
+  ctx.rect(cx - 4.5, cy + 9, 9, 2);
+  ctx.fill();
+
+  // Noble head contour with high balding forehead & rounded jaw
   ctx.fillStyle = '#F5D0A9';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.ellipse(cx, cy - 2, 7.8, 10.2, 0, 0, Math.PI * 2);
+  // Forehead top dome
+  ctx.moveTo(cx - 6.5, cy - 6);
+  ctx.quadraticCurveTo(cx, cy - 14, cx + 6.5, cy - 6);
+  // Right temple down to cheek
+  ctx.quadraticCurveTo(cx + 8.2, cy, cx + 7.5, cy + 6);
+  // Clean-shaven rounded chin
+  ctx.quadraticCurveTo(cx + 4.5, cy + 11.5, cx, cy + 11.8);
+  ctx.quadraticCurveTo(cx - 4.5, cy + 11.5, cx - 7.5, cy + 6);
+  // Left cheek up to temple
+  ctx.quadraticCurveTo(cx - 8.2, cy, cx - 6.5, cy - 6);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Hair: light brown/blonde brushed back from high forehead
-  ctx.fillStyle = '#C8A365';
+  // Soft elder rosy flush on cheekbones
+  ctx.fillStyle = 'rgba(239, 68, 68, 0.14)';
+  ctx.beginPath();
+  ctx.ellipse(cx - 4.2, cy - 0.5, 2.6, 1.8, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 4.2, cy - 0.5, 2.6, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // High receding bald forehead highlight
+  ctx.fillStyle = '#FDF0D5';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 7.5, 4.2, 3.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Regal forehead character creases (jemné vrásky starého mocnáře)
+  ctx.strokeStyle = '#D4A373';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 8.5, 4.6, Math.PI * 1.15, Math.PI * 1.85);
+  ctx.arc(cx, cy - 6.5, 5.2, Math.PI * 1.18, Math.PI * 1.82);
+  ctx.stroke();
+
+  // Fluffy silvery-white hair fringe around the sides of the head & ears
+  ctx.fillStyle = '#FFFDF7';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.3;
+  // Left hair tuft around ear
+  ctx.beginPath();
+  ctx.moveTo(cx - 6.5, cy - 7);
+  ctx.quadraticCurveTo(cx - 10.5, cy - 3, cx - 8.5, cy + 2);
+  ctx.quadraticCurveTo(cx - 7.0, cy - 1, cx - 6.8, cy - 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Right hair tuft around ear
+  ctx.beginPath();
+  ctx.moveTo(cx + 6.5, cy - 7);
+  ctx.quadraticCurveTo(cx + 10.5, cy - 3, cx + 8.5, cy + 2);
+  ctx.quadraticCurveTo(cx + 7.0, cy - 1, cx + 6.8, cy - 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Clean-shaven chin contour & gentle chin cleft
+  ctx.strokeStyle = '#C49272';
+  ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  ctx.arc(cx, cy + 8.8, 2.2, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+
+  // --------------------------------------------------------------------------
+  // THE ICONIC KAISER-FRANZ-JOSEPH BACKENBART (BÍLÉ LICOUSY SPOJENÉ S KNÍREM)
+  // Voluminous snow-white bushy sideburns running down the cheeks and connecting
+  // seamlessly into the full drooping mustache, leaving the chin clean-shaven!
+  // --------------------------------------------------------------------------
+  // Left bushy white mutton-chop sideburn (licous)
+  ctx.fillStyle = '#FFFDF7';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.arc(cx, cy - 7, 7.6, Math.PI * 1.05, Math.PI * 1.95);
-  ctx.quadraticCurveTo(cx, cy - 8, cx, cy - 6);
+  ctx.moveTo(cx - 7.5, cy - 3);
+  ctx.quadraticCurveTo(cx - 11.5, cy + 1, cx - 11.0, cy + 5);
+  ctx.quadraticCurveTo(cx - 8.5, cy + 8, cx - 5.5, cy + 7);
+  ctx.quadraticCurveTo(cx - 2.5, cy + 5.5, cx - 0.2, cy + 4.8);
+  ctx.quadraticCurveTo(cx - 3.2, cy + 2.8, cx - 4.5, cy + 2.0);
+  ctx.quadraticCurveTo(cx - 6.5, cy + 0.5, cx - 7.5, cy - 3);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Iconic imperial mutton-chop whiskers & mustache (licousy spojené s knírem)
-  ctx.fillStyle = '#D9A036';
+  // Right bushy white mutton-chop sideburn (licous)
+  ctx.beginPath();
+  ctx.moveTo(cx + 7.5, cy - 3);
+  ctx.quadraticCurveTo(cx + 11.5, cy + 1, cx + 11.0, cy + 5);
+  ctx.quadraticCurveTo(cx + 8.5, cy + 8, cx + 5.5, cy + 7);
+  ctx.quadraticCurveTo(cx + 2.5, cy + 5.5, cx + 0.2, cy + 4.8);
+  ctx.quadraticCurveTo(cx + 3.2, cy + 2.8, cx + 4.5, cy + 2.0);
+  ctx.quadraticCurveTo(cx + 6.5, cy + 0.5, cx + 7.5, cy - 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Drooping white mustache connecting the sideburns across the upper lip
+  ctx.beginPath();
+  ctx.moveTo(cx - 6.2, cy + 4.2);
+  ctx.quadraticCurveTo(cx - 3.0, cy + 2.2, cx, cy + 3.0);
+  ctx.quadraticCurveTo(cx + 3.0, cy + 2.2, cx + 6.2, cy + 4.2);
+  ctx.quadraticCurveTo(cx + 4.0, cy + 6.5, cx + 0.6, cy + 5.6);
+  ctx.lineTo(cx - 0.6, cy + 5.6);
+  ctx.quadraticCurveTo(cx - 4.0, cy + 6.5, cx - 6.2, cy + 4.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Silvery-grey hair texture strokes on whiskers (dodává ladovskou plastičnost)
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  ctx.moveTo(cx - 9.5, cy + 2.5); ctx.lineTo(cx - 7.0, cy + 5.5);
+  ctx.moveTo(cx - 7.5, cy + 2.0); ctx.lineTo(cx - 4.5, cy + 5.2);
+  ctx.moveTo(cx + 9.5, cy + 2.5); ctx.lineTo(cx + 7.0, cy + 5.5);
+  ctx.moveTo(cx + 7.5, cy + 2.0); ctx.lineTo(cx + 4.5, cy + 5.2);
+  ctx.moveTo(cx - 3.5, cy + 3.5); ctx.lineTo(cx - 1.0, cy + 4.8);
+  ctx.moveTo(cx + 3.5, cy + 3.5); ctx.lineTo(cx + 1.0, cy + 4.8);
+  ctx.stroke();
+
+  // Dignified closed lips under mustache
+  ctx.strokeStyle = '#B91C1C';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 2.2, cy + 6.6);
+  ctx.lineTo(cx + 2.2, cy + 6.6);
+  ctx.stroke();
+
+  // Aristocratic Habsburg nose
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.3;
-  // Left sideburn & mustache wing
+  ctx.lineWidth = 1.35;
   ctx.beginPath();
-  ctx.moveTo(cx - 7, cy - 3);
-  ctx.quadraticCurveTo(cx - 11, cy + 2, cx - 8, cy + 6);
-  ctx.quadraticCurveTo(cx - 4, cy + 4, cx - 1, cy + 3);
-  ctx.quadraticCurveTo(cx - 5, cy + 1, cx - 6, cy - 1);
-  ctx.closePath();
-  ctx.fill();
+  // Bridge from between eyebrows down to tip
+  ctx.moveTo(cx - 0.4, cy - 3.8);
+  ctx.lineTo(cx - 0.3, cy + 0.8);
+  ctx.quadraticCurveTo(cx + 0.3, cy + 2.0, cx + 1.6, cy + 1.8);
+  // Nostril wing
+  ctx.quadraticCurveTo(cx + 2.6, cy + 1.4, cx + 2.2, cy + 0.6);
   ctx.stroke();
 
-  // Right sideburn & mustache wing
-  ctx.beginPath();
-  ctx.moveTo(cx + 7, cy - 3);
-  ctx.quadraticCurveTo(cx + 11, cy + 2, cx + 8, cy + 6);
-  ctx.quadraticCurveTo(cx + 4, cy + 4, cx + 1, cy + 3);
-  ctx.quadraticCurveTo(cx + 5, cy + 1, cx + 6, cy - 1);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Parted chin visible below mustache
+  // Calm, dignified elderly blue-grey eyes with hooded eyelids
+  const eyeY = cy - 2.8;
+  // Left eye
+  ctx.fillStyle = '#FFFDF7';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.arc(cx, cy + 5, 2.0, 0.2, Math.PI - 0.2);
+  ctx.ellipse(cx - 3.6, eyeY, 1.9, 1.3, -0.05, 0, Math.PI * 2);
+  ctx.fill();
   ctx.stroke();
 
-  // Eyes: noble calm blue eyes
+  // Right eye
+  ctx.beginPath();
+  ctx.ellipse(cx + 3.6, eyeY, 1.9, 1.3, 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Clear Austrian blue-grey irises & dark pupils
+  ctx.fillStyle = '#38BDF8';
+  ctx.beginPath();
+  ctx.arc(cx - 3.5, eyeY, 0.9, 0, Math.PI * 2);
+  ctx.arc(cx + 3.5, eyeY, 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(cx - 3.5, eyeY, 0.45, 0, Math.PI * 2);
+  ctx.arc(cx + 3.5, eyeY, 0.45, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Heavy regal upper eyelid crease
+  ctx.strokeStyle = '#A87654';
+  ctx.lineWidth = 0.9;
+  ctx.beginPath();
+  ctx.arc(cx - 3.6, eyeY - 0.8, 1.9, Math.PI * 1.15, Math.PI * 1.85);
+  ctx.arc(cx + 3.6, eyeY - 0.8, 1.9, Math.PI * 1.15, Math.PI * 1.85);
+  ctx.stroke();
+
+  // Bushy snow-white imperial eyebrows
   ctx.fillStyle = '#FFFDF7';
-  ctx.beginPath();
-  ctx.ellipse(cx - 3.2, cy - 3.2, 1.8, 1.3, 0, 0, Math.PI * 2);
-  ctx.ellipse(cx + 3.2, cy - 3.2, 1.8, 1.3, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#1D4ED8';
-  ctx.beginPath();
-  ctx.arc(cx - 3.2, cy - 3.2, 0.9, 0, Math.PI * 2);
-  ctx.arc(cx + 3.2, cy - 3.2, 0.9, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eyebrows & straight aristocratic nose
-  ctx.strokeStyle = '#78350F';
-  ctx.lineWidth = 1.1;
-  ctx.beginPath();
-  ctx.moveTo(cx - 5.5, cy - 5.5);
-  ctx.lineTo(cx - 1.5, cy - 5.0);
-  ctx.moveTo(cx + 1.5, cy - 5.0);
-  ctx.lineTo(cx + 5.5, cy - 5.5);
-  ctx.stroke();
-
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.3;
+  ctx.lineWidth = 1.2;
+  // Left eyebrow
   ctx.beginPath();
-  ctx.moveTo(cx - 0.5, cy - 4.5);
-  ctx.lineTo(cx - 0.5, cy);
-  ctx.lineTo(cx + 1.2, cy + 0.6);
+  ctx.moveTo(cx - 6.2, eyeY - 2.0);
+  ctx.quadraticCurveTo(cx - 3.8, eyeY - 3.6, cx - 1.2, eyeY - 2.4);
+  ctx.quadraticCurveTo(cx - 3.6, eyeY - 2.7, cx - 6.2, eyeY - 2.0);
+  ctx.closePath();
+  ctx.fill();
   ctx.stroke();
+
+  // Right eyebrow
+  ctx.beginPath();
+  ctx.moveTo(cx + 1.2, eyeY - 2.4);
+  ctx.quadraticCurveTo(cx + 3.8, eyeY - 3.6, cx + 6.2, eyeY - 2.0);
+  ctx.quadraticCurveTo(cx + 3.6, eyeY - 2.7, cx + 1.2, eyeY - 2.4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Authentic Czech Tavern Homage to Švejk:
+  // A few tiny fly specks ("muší tečky") on the glass (pan Palivec: "Mouchy na něj sraly...")
+  ctx.fillStyle = 'rgba(28, 22, 16, 0.82)';
+  const flySpecks = [
+    [cx - 12, cy - 8],
+    [cx + 13, cy + 4],
+    [cx - 10, cy + 18],
+    [cx + 11, cy - 10],
+  ];
+  for (const [fx, fy] of flySpecks) {
+    ctx.beginPath();
+    ctx.arc(fx, fy, 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   ctx.restore(); // end clip
 
@@ -663,34 +839,211 @@ function drawEmperorPortrait2D(
 }
 
 /**
- * Draws a glistening crystal-blue teardrop water droplet with India ink outline and white highlight.
+ * Draws a glistening crystal-blue teardrop water droplet with India ink outline,
+ * vertical elongation support, surface tension stem, and specular highlights.
  */
 function drawWaterDroplet2D(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  size: number = 2.6
+  size: number = 2.6,
+  stretch: number = 1.0,
+  stemLength: number = 0
 ): void {
   const INK = '#1C1610';
   ctx.save();
   ctx.translate(x, y);
+
+  // Surface tension neck connecting back to the wet source
+  if (stemLength > 0.4) {
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = Math.max(0.9, size * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(0, -size * 1.45 * stretch);
+    ctx.lineTo(0, -size * 1.45 * stretch - stemLength);
+    ctx.stroke();
+
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.25, -size * 1.45 * stretch);
+    ctx.lineTo(-size * 0.1, -size * 1.45 * stretch - stemLength);
+    ctx.moveTo(size * 0.25, -size * 1.45 * stretch);
+    ctx.lineTo(size * 0.1, -size * 1.45 * stretch - stemLength);
+    ctx.stroke();
+  }
+
+  // Droplet body with bulbous lower tear & tapered upper tip
   ctx.fillStyle = '#38BDF8';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.25;
   ctx.beginPath();
-  ctx.moveTo(0, -size * 1.45);
-  ctx.quadraticCurveTo(size * 1.15, 0, 0, size);
-  ctx.quadraticCurveTo(-size * 1.15, 0, 0, -size * 1.45);
+  ctx.moveTo(0, -size * 1.45 * stretch);
+  ctx.quadraticCurveTo(size * 1.15, 0, 0, size * stretch);
+  ctx.quadraticCurveTo(-size * 1.15, 0, 0, -size * 1.45 * stretch);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Crisp white specular highlight
-  ctx.fillStyle = '#E0F2FE';
+  // Bottom refraction zone (rich cyan shadow)
+  ctx.fillStyle = '#0284C7';
   ctx.beginPath();
-  ctx.arc(-size * 0.25, size * 0.15, size * 0.28, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.38 * stretch, size * 0.62, size * 0.32 * stretch, 0, 0, Math.PI);
   ctx.fill();
+
+  // Crisp white specular glint near upper curve
+  ctx.fillStyle = '#FFFDF7';
+  ctx.beginPath();
+  ctx.arc(-size * 0.26, -size * 0.18 * stretch, size * 0.28, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Secondary soft bottom rim highlight
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.arc(size * 0.2, size * 0.48 * stretch, size * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
+}
+
+/**
+ * Renders a physically realistic gravity-accelerated falling water drop with:
+ * - Hanging swelling bead phase (surface tension buildup)
+ * - Rapid downward quadratic acceleration (v ~ t^1.8)
+ * - Elongated teardrop shape with velocity stretch
+ * - Expanding surface impact splash rings with fading opacity
+ */
+function drawRealisticDripCycle2D(
+  ctx: CanvasRenderingContext2D,
+  originX: number,
+  originY: number,
+  groundY: number,
+  timeVal: number,
+  cycleDuration: number = 1.6,
+  timeOffset: number = 0,
+  dropScale: number = 2.4
+): void {
+  const INK = '#1C1610';
+  const rawT = (timeVal + timeOffset) % cycleDuration;
+  const progress = rawT / cycleDuration;
+  const fallDistance = groundY - originY;
+
+  if (progress < 0.26) {
+    // Phase 1: Swelling drop forming and hanging from wet tip
+    const swell = progress / 0.26;
+    const curSize = dropScale * (0.5 + 0.5 * swell);
+    const hangY = originY + swell * 2.2;
+    drawWaterDroplet2D(ctx, originX, hangY, curSize, 1.0 + swell * 0.25, swell * 1.8);
+  } else if (progress < 0.82) {
+    // Phase 2: Detaching and accelerating downward with gravity
+    const fallT = (progress - 0.26) / (0.82 - 0.26);
+    const fallEase = Math.pow(fallT, 1.75);
+    const curY = originY + 2.2 + (fallDistance - 2.2) * fallEase;
+    const speedStretch = 1.0 + fallT * 0.75;
+    drawWaterDroplet2D(ctx, originX, curY, dropScale, speedStretch, 0);
+  } else {
+    // Phase 3: Surface impact splash rings on floor puddle
+    const splashT = (progress - 0.82) / (1.0 - 0.82);
+    const ringR = 2.5 + splashT * 12.0;
+    const ringAlpha = Math.max(0, 1.0 - splashT);
+
+    ctx.save();
+    ctx.strokeStyle = `rgba(56, 189, 248, ${ringAlpha * 0.85})`;
+    ctx.lineWidth = 1.35;
+    ctx.beginPath();
+    ctx.ellipse(originX, groundY, ringR, ringR * 0.28, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner bright water ripple
+    if (splashT > 0.15) {
+      const innerT = (splashT - 0.15) / 0.85;
+      const innerR = 1.5 + innerT * 7.5;
+      const innerAlpha = Math.max(0, (1.0 - innerT) * 0.65);
+      ctx.strokeStyle = `rgba(186, 230, 253, ${innerAlpha})`;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.ellipse(originX, groundY, innerR, innerR * 0.28, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Micro splash beads bouncing slightly up on impact
+    if (splashT < 0.55) {
+      const bounce = Math.sin((splashT / 0.55) * Math.PI) * 3.6;
+      ctx.fillStyle = '#38BDF8';
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(originX - 3.0, groundY - bounce * 0.8, 1.0, 0, Math.PI * 2);
+      ctx.arc(originX + 2.8, groundY - bounce * 0.9, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+/**
+ * Draws the stationary multi-layered water puddle on the tavern floor beneath Rusalka.
+ * Anchored permanently to the wooden floor planks at world coordinates so it never shifts
+ * when Rusalka sways, toasts, or leans!
+ */
+function drawRusalkaFloorPuddle2D(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  t: number
+): void {
+  const INK = '#1C1610';
+  const puddlePulse = Math.sin(t * 3.8) * 2.2;
+
+  // Outer shimmering aqua pool with Ladovský ink outline
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.38)';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.ellipse(centerX, centerY, 34 + puddlePulse, 6.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Inner bright sky-blue water reflection
+  ctx.fillStyle = '#BAE6FD';
+  ctx.beginPath();
+  ctx.ellipse(centerX - 3, centerY, 22 + puddlePulse * 0.5, 4.0, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Deep cyan core refraction
+  ctx.fillStyle = 'rgba(2, 132, 199, 0.45)';
+  ctx.beginPath();
+  ctx.ellipse(centerX + 4, centerY + 0.8, 14, 2.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Gentle concentric water ripples expanding from where hair & dress water drips strike
+  const rip1 = ((t * 14) % 18);
+  const ripAlpha1 = Math.max(0, 1 - rip1 / 20);
+  ctx.strokeStyle = `rgba(56, 189, 248, ${ripAlpha1 * 0.75})`;
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.ellipse(centerX - 8, centerY, rip1, rip1 * 0.25, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const rip2 = (((t * 14) + 9) % 18);
+  const ripAlpha2 = Math.max(0, 1 - rip2 / 20);
+  ctx.strokeStyle = `rgba(186, 230, 253, ${ripAlpha2 * 0.7})`;
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.ellipse(centerX + 9, centerY, rip2, rip2 * 0.24, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Small detached splash droplets on wooden floor planks left and right
+  ctx.fillStyle = '#7DD3FC';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.ellipse(centerX - 33, centerY + 2.0, 5.5, 2.0, 0, 0, Math.PI * 2);
+  ctx.ellipse(centerX + 31, centerY + 1.2, 6.5, 2.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(centerX - 18, centerY + 4.5, 3.8, 1.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
 }
 
 /**
@@ -745,13 +1098,21 @@ function drawHastrman2D(
   ctx.fill();
   ctx.stroke();
 
-  // Ripple ring under dripping coat-tail
-  const rippleR = 4 + ((t * 16) % 16);
-  const rippleAlpha = Math.max(0, 1 - rippleR / 20);
-  ctx.strokeStyle = `rgba(56, 189, 248, ${rippleAlpha * 0.75})`;
-  ctx.lineWidth = 1.2;
+  // Expanding realistic ripple rings under dripping swallowtails and boots
+  const rippleR1 = 3 + ((t * 15) % 18);
+  const rippleAlpha1 = Math.max(0, 1 - rippleR1 / 20);
+  ctx.strokeStyle = `rgba(56, 189, 248, ${rippleAlpha1 * 0.75})`;
+  ctx.lineWidth = 1.25;
   ctx.beginPath();
-  ctx.ellipse(30, 142, rippleR, rippleR * 0.28, 0, 0, Math.PI * 2);
+  ctx.ellipse(28, 142, rippleR1, rippleR1 * 0.28, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const rippleR2 = 2.5 + (((t * 15) + 8) % 18);
+  const rippleAlpha2 = Math.max(0, 1 - rippleR2 / 20);
+  ctx.strokeStyle = `rgba(186, 230, 253, ${rippleAlpha2 * 0.7})`;
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.ellipse(37, 142, rippleR2, rippleR2 * 0.27, 0, 0, Math.PI * 2);
   ctx.stroke();
 
   // --------------------------------------------------------------------------
@@ -877,147 +1238,8 @@ function drawHastrman2D(
   drawWaterDroplet2D(ctx, 119, 142, 2.2);
 
   // --------------------------------------------------------------------------
-  // 4. LEFT ARM & ORNATE PIPE WITH GOLDEN BRASS LID & FISH EMBLEM
+  // 4. ORNATE PIPE STEM & BOWL BASE (ARM & HAND RENDERED IN FRONT OF COAT!)
   // --------------------------------------------------------------------------
-  // Left emerald-green sleeve reaching toward pipe
-  ctx.fillStyle = '#15803D';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(82, 52);
-  ctx.lineTo(96, 49);
-  ctx.lineTo(102, 61);
-  ctx.lineTo(86, 65);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Red cuff trim & crisp white shirt cuff with golden cufflink
-  ctx.strokeStyle = '#DC2626';
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.moveTo(95, 49);
-  ctx.lineTo(101, 61);
-  ctx.stroke();
-
-  ctx.fillStyle = '#FFFDF7';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.moveTo(96, 49);
-  ctx.lineTo(103, 47);
-  ctx.lineTo(106, 58);
-  ctx.lineTo(100, 60);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Curved brown pipe stem from mouth corner (89, 32) to bowl (107, 46)
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 4.8;
-  ctx.beginPath();
-  ctx.moveTo(88, 32);
-  ctx.quadraticCurveTo(98, 34, 105, 46);
-  ctx.stroke();
-
-  ctx.strokeStyle = '#9A3412';
-  ctx.lineWidth = 2.6;
-  ctx.beginPath();
-  ctx.moveTo(88, 32);
-  ctx.quadraticCurveTo(98, 34, 105, 46);
-  ctx.stroke();
-
-  // Golden ferrule band on pipe stem
-  ctx.strokeStyle = '#FACC15';
-  ctx.lineWidth = 2.4;
-  ctx.beginPath();
-  ctx.moveTo(98, 37);
-  ctx.lineTo(101, 35);
-  ctx.stroke();
-
-  // Ornate terracotta-red pipe bowl (hlavička fajfky) at (110, 44)
-  ctx.fillStyle = '#C2410C';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.moveTo(103, 45);
-  ctx.quadraticCurveTo(103, 54, 110, 54);
-  ctx.quadraticCurveTo(118, 54, 118, 39);
-  ctx.lineTo(104, 39);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Golden Fish relief emblem (zlatá rybička) on pipe bowl side!
-  ctx.fillStyle = '#FACC15';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.0;
-  ctx.beginPath();
-  ctx.ellipse(111, 45.5, 3.6, 1.9, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(107.5, 45.5);
-  ctx.lineTo(105.5, 44);
-  ctx.lineTo(105.5, 47);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Domed hinged golden brass wind-cap (zlaté víčko fajfky) on top of bowl
-  ctx.fillStyle = '#FACC15';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.arc(111, 39, 6.8, Math.PI, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // Brass cap rim & top finial knob
-  ctx.fillRect(103.5, 37.5, 15, 2.5);
-  ctx.strokeRect(103.5, 37.5, 15, 2.5);
-  ctx.beginPath();
-  ctx.arc(111, 31.2, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // Curling blue-white smoke wisp rising directly from the golden pipe cap
-  ctx.save();
-  ctx.globalAlpha = 0.72 + state.pipeEmberGlow * 0.25;
-  ctx.fillStyle = '#F8FAFC';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.6;
-  ctx.beginPath();
-  ctx.arc(110 + Math.sin(t * 4) * 1.5, 25, 4.2, 0, Math.PI * 2);
-  ctx.arc(113 + Math.cos(t * 3.5) * 2, 18, 6.0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
-
-  // Hastrman's lime-green left hand with upright thumb & 3 fingers cradling the pipe
-  ctx.fillStyle = '#A3E635';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.9;
-  // Palm & upright thumb
-  ctx.beginPath();
-  ctx.moveTo(99, 51);
-  ctx.quadraticCurveTo(97, 43, 100, 41);
-  ctx.quadraticCurveTo(103, 41, 103, 48);
-  ctx.lineTo(108, 50);
-  ctx.lineTo(106, 59);
-  ctx.lineTo(99, 57);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  // 3 curled green fingers gripping below the pipe bowl
-  for (let f = 0; f < 3; f++) {
-    ctx.beginPath();
-    ctx.ellipse(109 - f * 0.8, 51.5 + f * 3.2, 4.2, 1.7, 0.1, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
 
   // --------------------------------------------------------------------------
   // 5. GOLDEN WAISTCOAT, WHITE COLLAR & BIG RED NECKERCHIEF BOW
@@ -1178,11 +1400,10 @@ function drawHastrman2D(
   ctx.moveTo(119, 94); ctx.lineTo(122, 99);
   ctx.stroke();
 
-  // Water droplets dripping from the heel & upturned sole of the raised boot!
-  const bootDropOffset = ((t * 2.2) % 1) * 6;
-  drawWaterDroplet2D(ctx, 109, 120 + bootDropOffset * 0.6, 2.5);
-  drawWaterDroplet2D(ctx, 126, 114 + bootDropOffset * 0.4, 2.3);
-  drawWaterDroplet2D(ctx, 132, 107 + bootDropOffset * 0.3, 1.9);
+  // Water droplets dripping realistically from the heel & upturned sole of the raised boot!
+  drawRealisticDripCycle2D(ctx, 109, 120, 142, t, 1.5, 0.1, 2.3);
+  drawRealisticDripCycle2D(ctx, 126, 114, 142, t, 1.7, 0.8, 2.1);
+  drawRealisticDripCycle2D(ctx, 132, 107, 142, t, 1.9, 1.3, 1.8);
 
   ctx.restore();
 
@@ -1310,18 +1531,197 @@ function drawHastrman2D(
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = '#A3E635';
+  // Complete lime-green right hand resting on his crossed blue knee (with thumb & 4 tapping fingers!)
+  const handTap = tapY * 0.28;
+  ctx.fillStyle = '#84CC16';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  // Palm resting on knee
   ctx.beginPath();
-  ctx.ellipse(69, 79, 4.0, 3.0, -0.4, 0, Math.PI * 2);
+  ctx.ellipse(70, 79 + handTap, 5.2, 3.6, -0.25, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Water droplets dripping from the swallowtail tips & coat
-  const tailDrop = ((t * 2.4) % 1) * 7;
-  drawWaterDroplet2D(ctx, 20, 121 + tailDrop * 0.5, 2.2);
-  drawWaterDroplet2D(ctx, 27, 136 + tailDrop * 0.7, 2.4);
-  drawWaterDroplet2D(ctx, 35, 131 + tailDrop * 0.4, 2.1);
-  drawWaterDroplet2D(ctx, 46, 102 + tailDrop * 0.3, 2.3);
+  // Thumb resting inward
+  ctx.fillStyle = '#A3E635';
+  ctx.beginPath();
+  ctx.ellipse(67.5, 82.2 + handTap, 3.0, 1.5, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 4 distinct webbed green fingers resting over his knee and tapping rhythmically with his boot
+  for (let f = 0; f < 4; f++) {
+    const fingerTap = handTap + Math.sin(t * 7 + f * 0.5) * 0.45;
+    ctx.beginPath();
+    ctx.ellipse(74.2 + f * 0.7, 76.4 + f * 2.1 + fingerTap, 3.4, 1.35, 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // --------------------------------------------------------------------------
+  // 7B. LEFT FOREGROUND ARM, 4-FINGERED HAND & ORNATE PIPE WITH BRASS LID
+  // Drawn IN FRONT of waistcoat & frock coat so the entire arm from shoulder
+  // to elbow to wrist to pipe-cradling fingers is 100% connected and visible!
+  // --------------------------------------------------------------------------
+  // Left emerald-green bent sleeve from shoulder (78, 49) -> elbow (92, 63) -> cuff (101, 54)
+  ctx.fillStyle = '#15803D';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(77, 47);
+  ctx.quadraticCurveTo(88, 52, 98, 48);
+  ctx.lineTo(103, 59);
+  ctx.quadraticCurveTo(91, 66, 80, 58);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Red cuff trim & crisp white shirt cuff with golden cufflink
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(96, 48);
+  ctx.lineTo(101, 59);
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFDF7';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(97, 48);
+  ctx.lineTo(104, 46);
+  ctx.lineTo(107, 57);
+  ctx.lineTo(100, 59);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Curved brown pipe stem from mouth corner (88, 32) to bowl (106, 46)
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 4.8;
+  ctx.beginPath();
+  ctx.moveTo(88, 32);
+  ctx.quadraticCurveTo(98, 34, 105, 46);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#9A3412';
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  ctx.moveTo(88, 32);
+  ctx.quadraticCurveTo(98, 34, 105, 46);
+  ctx.stroke();
+
+  // Golden ferrule band on pipe stem
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(98, 37);
+  ctx.lineTo(101, 35);
+  ctx.stroke();
+
+  // Ornate terracotta-red pipe bowl (hlavička fajfky) at (110, 44)
+  ctx.fillStyle = '#C2410C';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(103, 45);
+  ctx.quadraticCurveTo(103, 54, 110, 54);
+  ctx.quadraticCurveTo(118, 54, 118, 39);
+  ctx.lineTo(104, 39);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Golden Fish relief emblem (zlatá rybička) on pipe bowl side!
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  ctx.ellipse(111, 45.5, 3.6, 1.9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(107.5, 45.5);
+  ctx.lineTo(105.5, 44);
+  ctx.lineTo(105.5, 47);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Glowing orange-gold tobacco ember peeking at rim when Hastrman puffs!
+  if (state.pipeEmberGlow > 0.05) {
+    ctx.fillStyle = '#FB923C';
+    ctx.beginPath();
+    ctx.ellipse(111, 38.6, 5.2, 1.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Domed hinged golden brass wind-cap (zlaté víčko fajfky) on top of bowl (lifts slightly on puff!)
+  ctx.save();
+  ctx.translate(104, 38.5);
+  ctx.rotate(-state.pipeEmberGlow * 0.14);
+  ctx.translate(-104, -38.5);
+  ctx.fillStyle = '#FACC15';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(111, 39, 6.8, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Brass cap rim & top finial knob
+  ctx.fillRect(103.5, 37.5, 15, 2.5);
+  ctx.strokeRect(103.5, 37.5, 15, 2.5);
+  ctx.beginPath();
+  ctx.arc(111, 31.2, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Curling blue-white smoke wisp rising directly from the golden pipe cap
+  ctx.save();
+  ctx.globalAlpha = 0.72 + state.pipeEmberGlow * 0.25;
+  ctx.fillStyle = '#F8FAFC';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(110 + Math.sin(t * 4) * 1.5, 25, 4.2, 0, Math.PI * 2);
+  ctx.arc(113 + Math.cos(t * 3.5) * 2, 18, 6.0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Hastrman's lime-green left hand with upright thumb & 4 fingers cradling the pipe bowl!
+  ctx.fillStyle = '#84CC16';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  // Palm & upright thumb resting against stem neck
+  ctx.beginPath();
+  ctx.moveTo(99, 52);
+  ctx.quadraticCurveTo(98, 43, 101, 41);
+  ctx.quadraticCurveTo(104, 41, 104, 47);
+  ctx.lineTo(109, 49);
+  ctx.lineTo(107, 58);
+  ctx.lineTo(100, 57);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 4 curled green fingers gripping the warm terracotta pipe bowl
+  ctx.fillStyle = '#A3E635';
+  for (let f = 0; f < 4; f++) {
+    ctx.beginPath();
+    ctx.ellipse(110.5 - f * 0.7, 49.5 + f * 2.4, 4.0, 1.45, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Water droplets dripping realistically from the swallowtail tips & coat into floor puddle
+  drawRealisticDripCycle2D(ctx, 20, 115, 142, t, 1.4, 0.0, 2.3);
+  drawRealisticDripCycle2D(ctx, 27, 131, 142, t, 1.2, 0.5, 2.4);
+  drawRealisticDripCycle2D(ctx, 35, 120, 142, t, 1.6, 0.9, 2.2);
+  drawRealisticDripCycle2D(ctx, 46, 102, 142, t, 1.8, 0.3, 2.2);
 
   // --------------------------------------------------------------------------
   // 8. LONG WAVY TWO-TONE GREEN HAIR LOCKS WITH DRIPPING WATER DROPLETS
@@ -1360,11 +1760,11 @@ function drawHastrman2D(
   ctx.fill();
   ctx.stroke();
 
-  // Water droplets dripping from green hair tips
-  drawWaterDroplet2D(ctx, 21 + hairWave, 64, 2.1);
-  drawWaterDroplet2D(ctx, 22 + hairWave, 83, 2.5);
-  drawWaterDroplet2D(ctx, 32 + hairWave * 0.7, 68, 2.0);
-  drawWaterDroplet2D(ctx, 55, 65, 2.2);
+  // Water droplets dripping realistically from green hair tips down to coat and floor puddle
+  drawRealisticDripCycle2D(ctx, 21 + hairWave, 64, 115, t, 1.5, 0.2, 2.2);
+  drawRealisticDripCycle2D(ctx, 22 + hairWave, 83, 142, t, 1.7, 0.7, 2.4);
+  drawRealisticDripCycle2D(ctx, 32 + hairWave * 0.7, 68, 120, t, 1.6, 1.1, 2.0);
+  drawRealisticDripCycle2D(ctx, 55, 65, 96, t, 1.8, 0.4, 2.1);
 
   // --------------------------------------------------------------------------
   // 9. EXPRESSIVE FACE, SHAVED STUBBLE, BULBOUS NOSE & SLYLY WINKING EYES!
@@ -1553,8 +1953,7 @@ function drawHastrman2D(
   ctx.quadraticCurveTo(36, 19, 52, 18);
   ctx.closePath();
   ctx.fill();
-  ctx.stroke();
-  drawWaterDroplet2D(ctx, 23, 30 + ((t * 4) % 4), 2.3);
+  drawRealisticDripCycle2D(ctx, 23, 27, 60, t, 1.8, 0.4, 2.2);
 
   // Cattail 1 (lower-left)
   ctx.strokeStyle = INK;
@@ -1756,32 +2155,10 @@ function drawRusalka2D(
   ctx.translate(x, y);
 
   // --------------------------------------------------------------------------
-  // 1. SHIMMERING MULTI-LAYERED WATER PUDDLE AT HER BARE FEET
+  // 1. WATER PUDDLE BENEATH HER BARE FEET
+  // Rendered stationary at fixed tavern floor coordinates in drawTavernCoverCanvas
+  // so the puddle stays permanently on the floor planks and never moves with Rusalka!
   // --------------------------------------------------------------------------
-  const puddlePulse = Math.sin(t * 3.8) * 2.5;
-  ctx.fillStyle = 'rgba(56, 189, 248, 0.38)';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  ctx.ellipse(2, 70, 32 + puddlePulse, 6.2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // Inner bright sky-blue puddle reflection
-  ctx.fillStyle = '#BAE6FD';
-  ctx.beginPath();
-  ctx.ellipse(-2, 70, 21 + puddlePulse * 0.5, 3.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Small detached puddle splashes on left and right
-  ctx.fillStyle = '#7DD3FC';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.ellipse(-29, 72, 5.5, 2.0, 0, 0, Math.PI * 2);
-  ctx.ellipse(28, 71, 6.5, 2.2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
 
   // --------------------------------------------------------------------------
   // 2. BACK CASCADE OF LUSH WAVY GOLDEN-BLONDE HAIR & GREEN POND REEDS
@@ -1902,8 +2279,36 @@ function drawRusalka2D(
   ctx.stroke();
 
   // --------------------------------------------------------------------------
-  // 4. WET TRANSLUCENT AQUA-MINT & ICE-BLUE GOWN WITH DRIPPING TATTERED HEM
+  // 3B. RUSALKA'S SECOND (LEFT / FAR) ARM & DELICATE HAND RESTING ON HER HIP
+  // Gives Rusalka both arms & hands so her pose is complete and natural!
   // --------------------------------------------------------------------------
+  // Translucent aqua off-shoulder sleeve ruffle on her far shoulder
+  ctx.fillStyle = '#A7F3D0';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.9;
+  ctx.beginPath();
+  ctx.ellipse(9, -6, 6.0, 3.4, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Upper & lower left arm curving gracefully to her curvy hip (9, -5) -> (21, 5) -> (13, 14)
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 7.4;
+  ctx.beginPath();
+  ctx.moveTo(8, -5);
+  ctx.quadraticCurveTo(22, 4, 13, 14);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#F7C59F';
+  ctx.lineWidth = 4.4;
+  ctx.beginPath();
+  ctx.moveTo(8, -5);
+  ctx.quadraticCurveTo(22, 4, 13, 14);
+  ctx.stroke();
+
+  // Delicate water droplet dripping realistically from her far elbow down to skirt
+  drawRealisticDripCycle2D(ctx, 20, 9, 68, t, 1.6, 0.4, 2.0);
+
   // Back/right flowing skirt train in seafoam-aqua
   ctx.fillStyle = '#A7F3D0';
   ctx.strokeStyle = INK;
@@ -1946,6 +2351,26 @@ function drawRusalka2D(
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+
+  // Rusalka's left hand with thumb & 4 slender peach fingers resting on her hip over the gown waist!
+  ctx.fillStyle = '#F7C59F';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(12.5, 14.5, 3.8, 2.8, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // Thumb & 4 delicate fingers resting forward on hip
+  ctx.beginPath();
+  ctx.ellipse(13.5, 11.8, 2.1, 1.0, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  for (let f = 0; f < 4; f++) {
+    ctx.beginPath();
+    ctx.ellipse(9.4 + f * 0.4, 13.0 + f * 1.45, 2.6, 0.95, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
 
   // Soft sky-blue wet fabric fold highlights & vertical drapery lines
   ctx.fillStyle = '#BAE6FD';
@@ -2225,14 +2650,15 @@ function drawRusalka2D(
 
   // --------------------------------------------------------------------------
   // 6. GLISTENING CRYSTAL-BLUE WATER DROPLETS DRIPPING FROM HAIR & HEM
+  // Realistic gravity-accelerated teardrop water cycles falling down to floor puddle (y = 70)
   // --------------------------------------------------------------------------
-  const d1 = ((t * 1.4) % 1) * 8;
-  const d2 = (((t * 1.4) + 0.5) % 1) * 8;
-  drawWaterDroplet2D(ctx, 11, -12 + d1 * 0.6, 2.2);
-  drawWaterDroplet2D(ctx, 18 + hairSway * 0.5, 8 + d2 * 0.8, 2.5);
-  drawWaterDroplet2D(ctx, 13 + hairSway * 0.4, 28 + d1 * 0.7, 2.1);
-  drawWaterDroplet2D(ctx, 27 + hairSway, 52 + d2 * 0.5, 2.2);
-  drawWaterDroplet2D(ctx, -15, 54 + d1 * 0.6, 2.0);
+  drawRealisticDripCycle2D(ctx, 11, -12, 36, t, 1.4, 0.0, 2.2);
+  drawRealisticDripCycle2D(ctx, 18 + hairSway * 0.5, 8, 70, t, 1.6, 0.5, 2.5);
+  drawRealisticDripCycle2D(ctx, 13 + hairSway * 0.4, 28, 70, t, 1.5, 0.9, 2.1);
+  drawRealisticDripCycle2D(ctx, 27 + hairSway, 52, 70, t, 1.3, 0.3, 2.3);
+  drawRealisticDripCycle2D(ctx, -15, 54, 70, t, 1.7, 0.7, 2.2);
+  drawRealisticDripCycle2D(ctx, 8, 67, 70, t, 1.2, 0.2, 2.4);
+  drawRealisticDripCycle2D(ctx, 15, 66, 70, t, 1.4, 0.8, 2.1);
 
   ctx.restore();
 }
@@ -2576,40 +3002,146 @@ function drawTavernBubak2D(
   }
 
   // --------------------------------------------------------------------------
-  // 5. BLUE-AND-WHITE POLKA-DOT NECKERCHIEF / BANDANA (PUNTÍKOVANÝ ŠÁTEK)
+  // 5. PLUMP LIME-GREEN GOBLIN NECK, COLLAR FOLDS & POLKA-DOT BANDANA
+  // Sturdy, fleshy goblin neck column connecting torso shoulders to the tilting
+  // head socket without gaps during gulps and tilts, collared by a folded
+  // blue polka-dot bandana (puntíkovaný šátek) with realistic fabric collar folds!
   // --------------------------------------------------------------------------
+  // 5A. Fleshy Lime-Green Goblin Neck Column
+  // Neck column extends from collar line (y = -8) up into the rotating head socket (y = -25)
+  const neckGulpOffset = state.gulpBob * 0.7;
+  ctx.fillStyle = '#84CC16';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.6;
+  ctx.beginPath();
+  // Left neck contour from shoulder up to left jaw socket
+  ctx.moveTo(-12, -9);
+  ctx.quadraticCurveTo(-14, -18, -10, -26);
+  // Throat top across to right jaw socket
+  ctx.quadraticCurveTo(0, -27 + neckGulpOffset, 10, -25);
+  // Right neck contour down to right shoulder
+  ctx.quadraticCurveTo(13, -17, 11, -9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Shaded olive undertone along neck sides and throat recess
+  ctx.fillStyle = '#65A30D';
+  ctx.beginPath();
+  ctx.moveTo(-12, -9);
+  ctx.quadraticCurveTo(-14, -18, -10, -26);
+  ctx.lineTo(-5, -26);
+  ctx.quadraticCurveTo(-7, -17, -7, -9);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(11, -9);
+  ctx.quadraticCurveTo(13, -17, 10, -25);
+  ctx.lineTo(6, -25);
+  ctx.quadraticCurveTo(8, -17, 7, -9);
+  ctx.closePath();
+  ctx.fill();
+
+  // Plump central throat highlight (warm lime)
+  ctx.fillStyle = '#A3E635';
+  ctx.beginPath();
+  ctx.ellipse(0, -17 + neckGulpOffset * 0.5, 4.5, 6.0, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Fleshy goblin throat creases / Adam's apple bump (ohryzek)
+  ctx.strokeStyle = '#4D7C0F';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  // Upper throat crease below chin
+  ctx.arc(0, -21 + neckGulpOffset * 0.8, 6.2, 0.25 * Math.PI, 0.75 * Math.PI);
+  // Lower neck fold above bandana collar
+  ctx.arc(0, -14 + neckGulpOffset * 0.4, 7.8, 0.22 * Math.PI, 0.78 * Math.PI);
+  ctx.stroke();
+
+  // 5B. Rich Fabric Collar Folds & Blue Polka-Dot Bandana
+  // Folded bandana base wrapping snugly around the plump neck
+  ctx.fillStyle = '#0284C7';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2;
+  // Main folded collar ring around the base of the neck
+  ctx.beginPath();
+  ctx.moveTo(-14, -14);
+  ctx.quadraticCurveTo(0, -7, 13, -13);
+  ctx.quadraticCurveTo(15, -6, 12, -4);
+  ctx.quadraticCurveTo(0, 0, -13, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Deep shadow fold inside the collar roll
+  ctx.strokeStyle = '#0369A1';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(-12, -11);
+  ctx.quadraticCurveTo(0, -5, 11, -10);
+  ctx.stroke();
+
+  // Ruffled collar hem & tension folds radiating to knot
+  ctx.strokeStyle = '#075985';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(-9, -12); ctx.lineTo(-7, -7);
+  ctx.moveTo(-4, -10); ctx.lineTo(-2, -5);
+  ctx.moveTo(5, -10); ctx.lineTo(3, -5);
+  ctx.moveTo(9, -11); ctx.lineTo(8, -7);
+  ctx.stroke();
+
+  // Plump knotted center bow at front of throat
   ctx.fillStyle = '#0284C7';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.0;
-  // Neck band
   ctx.beginPath();
-  ctx.moveTo(-13, -13);
-  ctx.quadraticCurveTo(0, -7, 12, -12);
-  ctx.lineTo(10, -6);
-  ctx.quadraticCurveTo(0, -2, -12, -8);
+  ctx.ellipse(2, -5, 3.8, 3.0, 0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Knot core crease
+  ctx.strokeStyle = '#0369A1';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(2, -5, 2.0, -0.4, Math.PI * 0.8);
+  ctx.stroke();
+
+  // Two hanging triangular knot ends with jagged/ruffled tips at front of chest
+  ctx.fillStyle = '#0284C7';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  // Left knot ribbon
+  ctx.moveTo(0, -5);
+  ctx.quadraticCurveTo(-4, 0, -5, 6);
+  ctx.lineTo(-1, 3);
+  ctx.lineTo(2, -3);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Two hanging triangular knot ends at front of throat
+  // Right knot ribbon
   ctx.beginPath();
-  ctx.moveTo(1, -7);
-  ctx.lineTo(-2, 3);
-  ctx.lineTo(4, -2);
-  ctx.lineTo(9, 2);
-  ctx.lineTo(7, -7);
+  ctx.moveTo(3, -4);
+  ctx.quadraticCurveTo(7, 1, 10, 6);
+  ctx.lineTo(7, 2);
+  ctx.lineTo(3, -3);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Crisp white polka dots on neckerchief
+  // Crisp white polka dots on collar folds and knot ribbons
   ctx.fillStyle = '#FFFDF7';
-  const dotCoords = [
-    [-8, -10], [-3, -8.5], [2, -8], [6, -9], [1, -2], [6, -2.5],
+  const bandanaDots = [
+    [-10, -11.5], [-5, -9.5], [0, -8.5], [5, -9.0], [9, -10.5],
+    [-9, -7.5], [-4, -6.0], [5, -6.0], [9, -7.0],
+    [-3, 2.0], [7, 2.5],
   ];
-  for (const [dx, dy] of dotCoords) {
+  for (const [dx, dy] of bandanaDots) {
     ctx.beginPath();
-    ctx.arc(dx, dy, 1.1, 0, Math.PI * 2);
+    ctx.arc(dx, dy, 1.15, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2710,6 +3242,27 @@ function drawTavernBubak2D(
 
   // 6C. Lime-Green Goblin Head Contour (widens with cheek laugh lines)
   const jawDropPx = isGulp ? 1.5 : jawOpen * 3.8;
+
+  // Fleshy under-chin throat flap (ensures 100% continuous connection to neck column at all tilt angles!)
+  ctx.fillStyle = '#84CC16';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-11, 8 + jawDropPx * 0.4);
+  ctx.quadraticCurveTo(-10, 19, -5, 23);
+  ctx.quadraticCurveTo(2, 25, 8, 21);
+  ctx.quadraticCurveTo(14, 16, 12, 7 + jawDropPx * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Throat crease under chin
+  ctx.strokeStyle = '#4D7C0F';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(1, 17 + jawDropPx * 0.6, 5.0, 0.2 * Math.PI, 0.8 * Math.PI);
+  ctx.stroke();
+
   ctx.fillStyle = '#84CC16';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.6;
@@ -3174,48 +3727,168 @@ export function drawTavernCoverCanvas(
 
   drawFolkFlower2D(ctx, 268, 168, 4.8, '#FACC15', '#E6392B', -t * 0.7);
 
-  // Little Black Tavern Cat ("Černý kocour") perched near the stretcher
+  // Little Black Tavern Cat ("Černý kocour") standing proudly on 4 paws near the stretcher
   ctx.save();
   ctx.translate(225, 194);
   const catTailWag = Math.sin(t * 4.2) * 5;
+  const catLookUp = state.clinkImpact * 2.2 + state.gulpIntensity * 1.5;
+
+  // Soft floor shadow under Černý kocour's 4 paws
+  ctx.fillStyle = 'rgba(28, 22, 16, 0.22)';
+  ctx.beginPath();
+  ctx.ellipse(1, 3.5, 14, 2.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // S-curved black tail with white tip wagging happily
   ctx.strokeStyle = INK;
   ctx.lineWidth = 4.2;
   ctx.beginPath();
-  ctx.moveTo(-10, -4);
-  ctx.quadraticCurveTo(-22, -10 + catTailWag, -18, -18);
+  ctx.moveTo(-10, -6);
+  ctx.quadraticCurveTo(-22, -12 + catTailWag, -18, -21);
+  ctx.stroke();
+  ctx.strokeStyle = '#FFFDF7';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-19, -18.5);
+  ctx.lineTo(-18, -21);
   ctx.stroke();
 
+  // Far pair of cat legs & white-toed paws (back-left & front-left)
+  ctx.fillStyle = '#14100C';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.6;
+  for (const lx of [-8.5, 4.5]) {
+    ctx.beginPath();
+    ctx.roundRect(lx - 1.8, -4, 3.6, 6.8, 1.5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FFFDF7';
+    ctx.beginPath();
+    ctx.ellipse(lx + 0.6, 2.8, 2.6, 1.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#14100C';
+  }
+
+  // Plump arched black cat body
+  ctx.fillStyle = '#1C1610';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 2.0;
+  ctx.beginPath();
+  ctx.ellipse(0, -7, 11.5, 7.2, -0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Near pair of cat legs & white-toed paws with paw-pad lines (back-right & front-right)
+  for (const lx of [-5.5, 7.5]) {
+    ctx.fillStyle = '#1C1610';
+    ctx.beginPath();
+    ctx.roundRect(lx - 2.0, -3.5, 4.0, 7.0, 1.6);
+    ctx.fill();
+    ctx.stroke();
+    // White sock & 3-toed cat paw
+    ctx.fillStyle = '#FFFDF7';
+    ctx.beginPath();
+    ctx.ellipse(lx + 0.8, 3.4, 2.9, 1.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(lx + 1.4, 2.6); ctx.lineTo(lx + 1.4, 4.1);
+    ctx.moveTo(lx + 2.5, 2.7); ctx.lineTo(lx + 2.5, 4.0);
+    ctx.stroke();
+    ctx.lineWidth = 1.6;
+  }
+
+  // White chest bib (náprsenka)
+  ctx.fillStyle = '#FFFDF7';
+  ctx.beginPath();
+  ctx.ellipse(8.2, -7.2, 3.2, 4.2, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Round black head tilting slightly up toward the clinking beer mugs
+  ctx.save();
+  ctx.translate(9, -13.5 - catLookUp * 0.4);
+  ctx.rotate(-catLookUp * 0.06);
+
+  ctx.fillStyle = '#1C1610';
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(0, 0, 6.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Pointed cat ears with pink inner concha triangles
   ctx.fillStyle = '#1C1610';
   ctx.beginPath();
-  ctx.ellipse(0, -6, 11, 7.5, 0, 0, Math.PI * 2);
+  ctx.moveTo(-5, -3.5);
+  ctx.lineTo(-3.2, -10.5);
+  ctx.lineTo(0, -5);
+  ctx.closePath();
+  ctx.moveTo(1, -5);
+  ctx.lineTo(4.2, -10.5);
+  ctx.lineTo(6, -3.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FDA4AF';
+  ctx.beginPath();
+  ctx.moveTo(-4, -4.5);
+  ctx.lineTo(-3, -8.5);
+  ctx.lineTo(-1, -5);
+  ctx.closePath();
+  ctx.moveTo(2, -5);
+  ctx.lineTo(4, -8.5);
+  ctx.lineTo(5, -4.5);
+  ctx.closePath();
   ctx.fill();
 
+  // Bright golden cat eyes with vertical slit pupils looking up at the beer mugs
+  ctx.fillStyle = '#FACC15';
   ctx.beginPath();
-  ctx.arc(9, -13, 6.5, 0, Math.PI * 2);
+  ctx.arc(-1.2, -0.8, 1.7, 0, Math.PI * 2);
+  ctx.arc(3.2, -0.8, 1.7, 0, Math.PI * 2);
   ctx.fill();
+  ctx.fillStyle = INK;
   ctx.beginPath();
-  ctx.moveTo(4, -17);
-  ctx.lineTo(6, -23);
-  ctx.lineTo(9, -18);
-  ctx.moveTo(10, -18);
-  ctx.lineTo(13, -23);
-  ctx.lineTo(15, -17);
+  ctx.ellipse(-1.0, -1.1, 0.55, 1.25, 0, 0, Math.PI * 2);
+  ctx.ellipse(3.4, -1.1, 0.55, 1.25, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // Cute pink triangle nose & smiling cat mouth
+  ctx.fillStyle = '#FB7185';
+  ctx.beginPath();
+  ctx.arc(1.2, 1.2, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Crisp white folk whiskers (vousky) on both cheeks
+  ctx.strokeStyle = '#FFFDF7';
+  ctx.lineWidth = 1.1;
+  ctx.beginPath();
+  ctx.moveTo(-2.5, 1.2); ctx.lineTo(-8.5, 0.2);
+  ctx.moveTo(-2.5, 2.0); ctx.lineTo(-8.2, 2.4);
+  ctx.moveTo(4.2, 1.2);  ctx.lineTo(10.0, 0.2);
+  ctx.moveTo(4.2, 2.0);  ctx.lineTo(9.8, 2.4);
+  ctx.stroke();
+  ctx.restore();
+
+  // Festive red ribbon bow around Černý kocour's neck
   ctx.fillStyle = '#E6392B';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.ellipse(6, -8, 3.5, 2, -0.3, 0, Math.PI * 2);
-  ctx.ellipse(11, -7, 3.5, 2, 0.3, 0, Math.PI * 2);
+  ctx.ellipse(5.8, -8.2, 3.5, 2.0, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(11.2, -7.2, 3.5, 2.0, 0.3, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-
   ctx.fillStyle = '#FACC15';
   ctx.beginPath();
-  ctx.arc(8, -13.5, 1.5, 0, Math.PI * 2);
-  ctx.arc(12.2, -13.5, 1.5, 0, Math.PI * 2);
+  ctx.arc(8.5, -7.7, 1.5, 0, Math.PI * 2);
   ctx.fill();
+  ctx.stroke();
   ctx.restore();
 
   // Table wooden apron underboard
@@ -3252,50 +3925,8 @@ export function drawTavernCoverCanvas(
   drawFolkFlower2D(ctx, 182, 135, 4.4, '#E11D48', '#FACC15', t * 0.9);
   drawFolkFlower2D(ctx, 354, 135, 4.4, '#38BDF8', '#FACC15', -t * 0.9);
 
-  // Glazed Earthenware Beer Pitcher (Džbánek s hvězdou) on table
-  ctx.save();
-  ctx.translate(228, 79);
-  ctx.fillStyle = 'rgba(28, 22, 16, 0.2)';
-  ctx.beginPath();
-  ctx.ellipse(24, 44, 15, 3.8, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 5.5;
-  ctx.beginPath();
-  ctx.moveTo(11, 17);
-  ctx.bezierCurveTo(-1, 21, -1, 36, 11, 38);
-  ctx.stroke();
-  ctx.strokeStyle = '#9A6138';
-  ctx.lineWidth = 2.8;
-  ctx.beginPath();
-  ctx.moveTo(11, 17);
-  ctx.bezierCurveTo(-1, 21, -1, 36, 11, 38);
-  ctx.stroke();
-
-  ctx.fillStyle = '#B47B49';
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = 2.8;
-  ctx.beginPath();
-  ctx.moveTo(14, 10);
-  ctx.bezierCurveTo(8, 22, 8, 37, 14, 42);
-  ctx.bezierCurveTo(18, 45, 34, 45, 38, 42);
-  ctx.bezierCurveTo(44, 37, 44, 22, 38, 10);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.fillStyle = '#FFFDF7';
-  ctx.lineWidth = 2.0;
-  ctx.beginPath();
-  ctx.arc(20, 9, 4.5, 0, Math.PI * 2);
-  ctx.arc(26, 7.5, 5.2, 0, Math.PI * 2);
-  ctx.arc(32, 9, 4.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  drawFolkFlower2D(ctx, 26, 28, 6.2, '#FACC15', '#E6392B', t * 0.5);
-  ctx.restore();
+  // Folkloric floral centerpiece on the tablecloth (table mug / pitcher removed)
+  drawFolkFlower2D(ctx, 268, 125.5, 5.2, '#FACC15', '#E6392B', t * 0.5);
 
   // ==========================================================================
   // 4. LEFT CHARACTER: AUTENTICKÝ ŠIBALSKÝ HASTRMAN (VODNÍK)
@@ -3349,32 +3980,42 @@ export function drawTavernCoverCanvas(
   // expressive blue eye with lashes, wet ruffled aqua-mint dress, bare feet in
   // a puddle, and toasting heartily with her foaming beer mug!
   // ==========================================================================
+  // Stationary water puddle on wooden floor planks beneath Rusalka's feet
+  // Fixed at world coordinates (458, 196) so it never moves when Rusalka leans or gulps!
+  drawRusalkaFloorPuddle2D(ctx, 458, 196, t);
+
   const rusalkaX = 456 + state.rusalkaBodyLeanX;
   const rusalkaY = 126;
 
   drawRusalka2D(ctx, rusalkaX, rusalkaY, state, t);
 
   // ==========================================================================
-  // 7. TOASTING ARMS & THE TWO FOAMING BEER MUGS (KORBELE S PĚNIVÝM PIVEM)
+  // 7. TOASTING ARMS, HANDS LOCKED TO MUG HANDLES & FOAMING BEER MUGS
+  // Exact rotated world-space handle grip coordinates ensure the hands never
+  // detach from the handles and the arms never fold into the neck during gulp!
   // ==========================================================================
-  // Bubák's left arm extends clearly OUTWARD in front of his shoulder (never buried in torso!)
-  const bubakShoulderX = bubakX + 12;
+  const bCos = Math.cos(state.bubakMugTiltRad);
+  const bSin = Math.sin(state.bubakMugTiltRad);
+  // Bubák's mug has handleSide = 'left' -> local handle grip center is (-15.5, 2)
+  const bubakHandX = state.bubakMugX + (-15.5 * bCos - 2.0 * bSin);
+  const bubakHandY = state.bubakMugY + (-15.5 * bSin + 2.0 * bCos);
+
+  const bubakShoulderX = bubakX + 11;
   const bubakShoulderY = bubakY - 5;
-  const bubakHandX = state.bubakMugX - 13;
-  const bubakHandY = state.bubakMugY + 2;
-  const bubakElbowX = (bubakShoulderX + bubakHandX) * 0.5 + 3;
-  const bubakElbowY = Math.max(bubakY + 5, bubakHandY + 12);
+  // Natural lower-forward elbow between shoulder and mug handle grip
+  const bubakElbowX = (bubakShoulderX + bubakHandX) * 0.5 + 7;
+  const bubakElbowY = Math.max(bubakShoulderY + 14, bubakHandY + 13);
 
   // Bubák's fuzzy lime-green raised arm (outline + green fill + bright highlight)
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 9.6;
+  ctx.lineWidth = 9.4;
   ctx.beginPath();
   ctx.moveTo(bubakShoulderX, bubakShoulderY);
   ctx.quadraticCurveTo(bubakElbowX, bubakElbowY, bubakHandX, bubakHandY);
   ctx.stroke();
 
   ctx.strokeStyle = '#84CC16';
-  ctx.lineWidth = 6.0;
+  ctx.lineWidth = 5.8;
   ctx.beginPath();
   ctx.moveTo(bubakShoulderX, bubakShoulderY);
   ctx.quadraticCurveTo(bubakElbowX, bubakElbowY, bubakHandX, bubakHandY);
@@ -3387,7 +4028,7 @@ export function drawTavernCoverCanvas(
   ctx.quadraticCurveTo(bubakElbowX, bubakElbowY - 1, bubakHandX, bubakHandY - 1);
   ctx.stroke();
 
-  // Bristly goblin hairs along Bubák's raised forearm (as in reference pic!)
+  // Bristly goblin hairs along Bubák's raised forearm
   ctx.strokeStyle = INK;
   ctx.lineWidth = 1.3;
   for (let h = 1; h <= 4; h++) {
@@ -3395,20 +4036,23 @@ export function drawTavernCoverCanvas(
     const hx = (1 - u) * (1 - u) * bubakShoulderX + 2 * (1 - u) * u * bubakElbowX + u * u * bubakHandX;
     const hy = (1 - u) * (1 - u) * bubakShoulderY + 2 * (1 - u) * u * bubakElbowY + u * u * bubakHandY;
     ctx.beginPath();
-    ctx.moveTo(hx + 2, hy + 3);
-    ctx.lineTo(hx + 5, hy + 7);
+    ctx.moveTo(hx + 1, hy + 3);
+    ctx.lineTo(hx + 4, hy + 7);
     ctx.stroke();
   }
 
-  // Rusalka's warm sun-kissed peach arm reaching from her ruffled off-shoulder sleeve to the beer mug
-  const rusalkaShoulderX = rusalkaX - 3;
-  const rusalkaShoulderY = rusalkaY - 6;
-  const rusalkaElbowX = (rusalkaShoulderX + state.rusalkaMugX + 14) * 0.5 + 2;
-  const rusalkaElbowY = Math.max(rusalkaY + 10, state.rusalkaMugY + 11);
-  const rusalkaHandX = state.rusalkaMugX + 11;
-  const rusalkaHandY = state.rusalkaMugY + 2;
+  const rCos = Math.cos(state.rusalkaMugTiltRad);
+  const rSin = Math.sin(state.rusalkaMugTiltRad);
+  // Rusalka's mug has handleSide = 'right' -> local handle grip center is (+15.5, 2)
+  const rusalkaHandX = state.rusalkaMugX + (15.5 * rCos - 2.0 * rSin);
+  const rusalkaHandY = state.rusalkaMugY + (15.5 * rSin + 2.0 * rCos);
 
-  // Trailing wet green pond stem & water droplet near Rusalka's wrist (homage to reference artwork)
+  const rusalkaShoulderX = rusalkaX - 4;
+  const rusalkaShoulderY = rusalkaY - 6;
+  const rusalkaElbowX = (rusalkaShoulderX + rusalkaHandX) * 0.5 - 5;
+  const rusalkaElbowY = Math.max(rusalkaShoulderY + 15, rusalkaHandY + 13);
+
+  // Trailing wet green pond stem & water droplet near Rusalka's wrist
   ctx.strokeStyle = INK;
   ctx.lineWidth = 3.2;
   ctx.beginPath();
@@ -3421,9 +4065,10 @@ export function drawTavernCoverCanvas(
   ctx.moveTo(rusalkaHandX + 1, rusalkaHandY + 3);
   ctx.quadraticCurveTo(rusalkaHandX + 5, rusalkaHandY + 14, rusalkaHandX + 1 + Math.sin(t * 3.5) * 2, rusalkaHandY + 23);
   ctx.stroke();
-  drawWaterDroplet2D(ctx, rusalkaHandX + 1, rusalkaHandY + 27 + ((t * 12) % 8), 2.2);
+  // Realistic elongated water droplet dripping from Rusalka's toasting forearm to stationary floor puddle
+  drawRealisticDripCycle2D(ctx, rusalkaHandX + 1, rusalkaHandY + 25, 196, t, 1.5, 0.4, 2.3);
 
-  // Arm outline & warm peach skin fill
+  // Rusalka's right arm outline & warm peach skin fill
   ctx.strokeStyle = INK;
   ctx.lineWidth = 8.2;
   ctx.beginPath();
@@ -3438,7 +4083,7 @@ export function drawTavernCoverCanvas(
   ctx.quadraticCurveTo(rusalkaElbowX, rusalkaElbowY, rusalkaHandX, rusalkaHandY);
   ctx.stroke();
 
-  // Translucent wet aqua off-shoulder sleeve ruffle draping over upper arm
+  // Translucent wet aqua off-shoulder sleeve ruffle draping over Rusalka's upper right arm
   ctx.fillStyle = '#E0F2FE';
   ctx.strokeStyle = INK;
   ctx.lineWidth = 2.0;
@@ -3452,6 +4097,64 @@ export function drawTavernCoverCanvas(
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+
+  // Golden beer streams & foam pouring from the tilted mug rims into Bubák's & Rusalka's open mouths during synchronized_gulp!
+  if (state.gulpIntensity > 0.12) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, state.gulpIntensity * 1.15);
+    const bRimX = state.bubakMugX + (-7 * bCos - (-14) * bSin);
+    const bRimY = state.bubakMugY + (-7 * bSin + (-14) * bCos);
+    const bMouthX = bubakX + 8;
+    const bMouthY = bubakY - 28;
+
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 6.2;
+    ctx.beginPath();
+    ctx.moveTo(bRimX, bRimY);
+    ctx.quadraticCurveTo((bRimX + bMouthX) * 0.5, Math.min(bRimY, bMouthY) - 3, bMouthX, bMouthY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    ctx.moveTo(bRimX, bRimY);
+    ctx.quadraticCurveTo((bRimX + bMouthX) * 0.5, Math.min(bRimY, bMouthY) - 3, bMouthX, bMouthY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FFFDF7';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(bRimX, bRimY - 1);
+    ctx.quadraticCurveTo((bRimX + bMouthX) * 0.5, Math.min(bRimY, bMouthY) - 4, bMouthX, bMouthY - 1);
+    ctx.stroke();
+
+    const rRimX = state.rusalkaMugX + (7 * rCos - (-14) * rSin);
+    const rRimY = state.rusalkaMugY + (7 * rSin + (-14) * rCos);
+    const rMouthX = rusalkaX - 11;
+    const rMouthY = rusalkaY - 25;
+
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 5.6;
+    ctx.beginPath();
+    ctx.moveTo(rRimX, rRimY);
+    ctx.quadraticCurveTo((rRimX + rMouthX) * 0.5, Math.min(rRimY, rMouthY) - 3, rMouthX, rMouthY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 3.4;
+    ctx.beginPath();
+    ctx.moveTo(rRimX, rRimY);
+    ctx.quadraticCurveTo((rRimX + rMouthX) * 0.5, Math.min(rRimY, rMouthY) - 3, rMouthX, rMouthY);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FFFDF7';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(rRimX, rRimY - 1);
+    ctx.quadraticCurveTo((rRimX + rMouthX) * 0.5, Math.min(rRimY, rMouthY) - 4, rMouthX, rMouthY - 1);
+    ctx.stroke();
+    ctx.restore();
+  }
 
   // Draw both foaming beer mugs
   drawFoamingBeerMug2D(
@@ -3475,40 +4178,58 @@ export function drawTavernCoverCanvas(
     t + 0.7
   );
 
-  // Bubák's plump lime-green hand with 3 distinct fingers wrapped around the mug handle!
+  // Bubák's plump lime-green hand with thumb & 4 fingers rotated with the mug handle!
+  ctx.save();
+  ctx.translate(bubakHandX, bubakHandY);
+  ctx.rotate(state.bubakMugTiltRad);
   ctx.fillStyle = '#84CC16';
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.9;
+  ctx.lineWidth = 1.8;
+  // Palm wrapping outer side of handle
   ctx.beginPath();
-  ctx.ellipse(bubakHandX - 1, bubakHandY, 5.0, 4.4, 0.15, 0, Math.PI * 2);
+  ctx.ellipse(-1.8, 0, 4.6, 4.8, 0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  // Bubák's curled green fingers gripping the handle
+  // Upright thumb resting on top of handle arch
   ctx.fillStyle = '#A3E635';
-  for (let f = -1; f <= 1; f++) {
+  ctx.beginPath();
+  ctx.ellipse(0.6, -4.6, 2.8, 1.45, -0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // 4 curled green fingers gripping through the handle loop
+  for (let f = 0; f < 4; f++) {
     ctx.beginPath();
-    ctx.ellipse(bubakHandX + 1.5, bubakHandY + f * 2.4, 2.6, 1.4, 0.1, 0, Math.PI * 2);
+    ctx.ellipse(1.6, -3.0 + f * 2.1, 2.8, 1.25, 0.05, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
+  ctx.restore();
 
-  // Rusalka's warm peach hand with delicate fingers wrapped around the mug handle
+  // Rusalka's warm peach hand with thumb & 4 slender fingers rotated with the mug handle!
+  ctx.save();
+  ctx.translate(rusalkaHandX, rusalkaHandY);
+  ctx.rotate(state.rusalkaMugTiltRad);
   ctx.fillStyle = '#F7C59F';
   ctx.strokeStyle = INK;
-  ctx.lineWidth = 1.9;
+  ctx.lineWidth = 1.7;
+  // Graceful palm wrapping outer side of handle
   ctx.beginPath();
-  ctx.ellipse(rusalkaHandX, rusalkaHandY, 4.4, 3.8, -0.15, 0, Math.PI * 2);
+  ctx.ellipse(1.6, 0, 4.2, 4.4, -0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
-  // Finger knuckle lines on Rusalka's hand
-  ctx.strokeStyle = '#D97706';
-  ctx.lineWidth = 1.0;
+  // Delicate thumb resting on top of handle arch
   ctx.beginPath();
-  ctx.moveTo(rusalkaHandX - 2.5, rusalkaHandY - 1);
-  ctx.lineTo(rusalkaHandX + 1, rusalkaHandY - 1);
-  ctx.moveTo(rusalkaHandX - 2.5, rusalkaHandY + 1.2);
-  ctx.lineTo(rusalkaHandX + 1, rusalkaHandY + 1.2);
+  ctx.ellipse(-0.6, -4.4, 2.5, 1.3, 0.35, 0, Math.PI * 2);
+  ctx.fill();
   ctx.stroke();
+  // 4 slender peach fingers curled around the handle vertical bar
+  for (let f = 0; f < 4; f++) {
+    ctx.beginPath();
+    ctx.ellipse(-1.5, -2.8 + f * 2.0, 2.6, 1.15, -0.05, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
 
   // ==========================================================================
   // 8. HEARTY CLINK STARBURST, FLYING FOAM BLOBS & GOLDEN BEER DROPLETS

@@ -9,6 +9,14 @@ import {
   getSunOffscreenCanvases,
   renderSunForegroundOverlay,
 } from '../src/render/sunForegroundRenderer';
+import {
+  createReusableWeatherSkyState,
+  getWeatherSkyOffscreenCanvases,
+  computeWeatherWindState,
+  resolveWeatherEffectId,
+  renderWeatherAndSkyOverlay,
+  type WeatherEffectId,
+} from '../src/render/weatherSkyRenderer';
 import { GameEngine } from '../src/game/engine';
 import { createMockCanvasContext } from './helpers/mockCanvas';
 
@@ -153,4 +161,93 @@ describe('Ticket 03: Aprílové sluníčko a proměnlivé počasí', () => {
     expect(sample.vx).toBeGreaterThan(0); // drifting east with breeze
     expect(['#FCE7F3', '#FEF08A']).toContain(sample.color);
   });
+
+  it('animates sun rays breathing pulse, face head-nod/tilt, cloud billowing, and bird wing-beats over time', () => {
+    const config = createDefaultSunOverlayConfig();
+    const stateT0 = computeSunForegroundState(
+      1280,
+      720,
+      0,
+      0,
+      150,
+      0.2,
+      config,
+      createReusableSunFrameState()
+    );
+    const stateT1 = computeSunForegroundState(
+      1280,
+      720,
+      0,
+      0,
+      150,
+      1.1,
+      config,
+      createReusableSunFrameState()
+    );
+
+    expect(stateT0.raysScalePulse).not.toBeCloseTo(stateT1.raysScalePulse, 4);
+    expect(stateT0.faceTiltRad).not.toBeCloseTo(stateT1.faceTiltRad, 4);
+    expect(stateT0.faceBobY).not.toBeCloseTo(stateT1.faceBobY, 4);
+    expect(stateT0.birdsTiltRad).not.toBeCloseTo(stateT1.birdsTiltRad, 4);
+    expect(stateT0.nearClouds[0].width).not.toBe(stateT1.nearClouds[0].width);
+  });
+
+  it('renders all 10 seasonal weather effects and night-sky animations via zero-allocation offscreen stamps', () => {
+    const stamps1 = getWeatherSkyOffscreenCanvases();
+    const stamps2 = getWeatherSkyOffscreenCanvases();
+    expect(stamps1).toBe(stamps2);
+
+    expect(resolveWeatherEffectId('falling_leaves', 12, 'autumn')).toBe('falling_leaves');
+    expect(resolveWeatherEffectId('leaves', 12, 'autumn')).toBe('falling_leaves');
+    expect(resolveWeatherEffectId('blizzard', 20, 'winter')).toBe('blizzard');
+    expect(resolveWeatherEffectId(null, 0, 'spring')).toBe('ice_drift');
+
+    const effects: WeatherEffectId[] = [
+      'ice_drift',
+      'snow',
+      'blizzard',
+      'petals',
+      'fog',
+      'fireflies',
+      'rain',
+      'sunflower_bloom',
+      'shooting_stars',
+      'falling_leaves',
+    ];
+
+    const state = createReusableWeatherSkyState();
+    for (let i = 0; i < effects.length; i++) {
+      const effect = effects[i];
+      const mockCtx = createMockCanvasContext();
+      const isNightStage = i % 2 === 1;
+      renderWeatherAndSkyOverlay(
+        mockCtx as unknown as CanvasRenderingContext2D,
+        1280,
+        720,
+        240,
+        -120,
+        12.5 + i * 1.7,
+        {
+          levelId: i,
+          season: i < 3 ? 'winter' : i < 6 ? 'spring' : i < 8 ? 'summer' : 'autumn',
+          weatherEffect: effect,
+          dayPhaseId: isNightStage ? 'midnight' : 'dusk',
+          performanceProfile: 'balanced',
+        },
+        state
+      );
+
+      expect(state.activeWeather).toBe(effect);
+      expect(state.renderedParticleCount).toBeGreaterThan(10);
+      expect(mockCtx.drawImage).toHaveBeenCalled();
+      // Zero per-frame gradient or Bezier allocations during weather overlay pass
+      expect(mockCtx.createRadialGradient).not.toHaveBeenCalled();
+      expect(mockCtx.bezierCurveTo).not.toHaveBeenCalled();
+    }
+
+    const windCalm = Math.abs(computeWeatherWindState(5.0, 'petals', state.wind).effectiveWindVx);
+    const windStorm = Math.abs(computeWeatherWindState(5.0, 'blizzard', state.wind).effectiveWindVx);
+    expect(windStorm).toBeGreaterThan(windCalm);
+  });
 });
+

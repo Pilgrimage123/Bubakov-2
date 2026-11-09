@@ -217,13 +217,19 @@ export function isInsideLedenPoi(
   x: number,
   y: number,
   poiOrId: LedenPoi | LedenPoiId,
+  extraRadiusOrNight: number | boolean = 0,
   isNightOrLevelId: boolean | number = false
 ): boolean {
-  const poi = typeof poiOrId === 'string' ? getLedenPois(isNightOrLevelId)[poiOrId] : poiOrId;
+  const extraRadius = typeof extraRadiusOrNight === 'number' ? extraRadiusOrNight : 0;
+  const isNight = typeof extraRadiusOrNight === 'boolean'
+    ? extraRadiusOrNight
+    : (typeof isNightOrLevelId === 'number' ? isNightOrLevelId === 21 : Boolean(isNightOrLevelId));
+  const poi = typeof poiOrId === 'string' ? getLedenPois(isNight)[poiOrId] : poiOrId;
   if (!poi) return false;
   const dx = x - poi.x;
   const dy = y - poi.y;
-  return dx * dx + dy * dy <= poi.radius * poi.radius;
+  const r = poi.radius + extraRadius;
+  return dx * dx + dy * dy <= r * r;
 }
 
 export function getLedenWaterEffect(x: number, y: number, _levelId: number = 20) {

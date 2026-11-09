@@ -27,30 +27,78 @@ export const VillageView: React.FC<VillageViewProps> = ({ meta, onUpgrade, onRef
   metaRef.current = meta;
   const hoveredIdRef = useRef<string | null>(null);
   const upgradeBurstsRef = useRef<Record<string, number>>({});
+  const animStateRef = useRef<
+    Record<string, { phase: number; speed: number; highlightAlpha: number }>
+  >({});
 
   useEffect(() => {
     let animId: number;
-    const startTime = performance.now();
+    let lastTime = performance.now();
+
     const loop = (now: number) => {
-      const elapsed = Math.max(0, (now - startTime) / 1000);
+      const rawDt = (now - lastTime) / 1000;
+      const dt = Math.min(0.05, Math.max(0.001, rawDt));
+      lastTime = now;
+
       const currentMeta = metaRef.current;
-      VILLAGE_BUILDINGS.forEach((b) => {
+      const dpr = typeof window !== 'undefined' ? Math.min(2, window.devicePixelRatio || 1) : 1;
+      const logicalW = 300;
+      const logicalH = 140;
+
+      VILLAGE_BUILDINGS.forEach((b, idx) => {
         const c = canvasRefs.current[b.id];
-        if (c) {
-          const ctx = c.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, c.width, c.height);
-            const lvl = (currentMeta[b.levelKey] as number) || 0;
-            const burstStart = upgradeBurstsRef.current[b.id] || 0;
-            const isHighlighted =
-              hoveredIdRef.current === b.id || (burstStart > 0 && now - burstStart < 1200);
-            const drawer = (Lada as any)[b.canvasDrawer];
-            if (typeof drawer === 'function') {
-              drawer.call(Lada, ctx, c.width, c.height, elapsed, lvl, isHighlighted);
-            }
-          }
+        if (!c) return;
+        const ctx = c.getContext('2d');
+        if (!ctx) return;
+
+        const targetW = Math.round(logicalW * dpr);
+        const targetH = Math.round(logicalH * dpr);
+        if (c.width !== targetW || c.height !== targetH) {
+          c.width = targetW;
+          c.height = targetH;
         }
+
+        let st = animStateRef.current[b.id];
+        if (!st) {
+          st = { phase: idx * 0.85, speed: 1, highlightAlpha: 0 };
+          animStateRef.current[b.id] = st;
+        }
+
+        const burstStart = upgradeBurstsRef.current[b.id] || 0;
+        const burstAge = burstStart > 0 ? now - burstStart : Infinity;
+        const isBursting = burstAge < 1500;
+        const isHovered = hoveredIdRef.current === b.id;
+        const isHighlighted = isHovered || isBursting;
+
+        const burstBoost = isBursting ? Math.max(0, 1 - burstAge / 1500) * 0.95 : 0;
+        const targetSpeed = (isHovered ? 1.42 : 1.0) + burstBoost;
+        const lerpFactor = 1 - Math.exp(-dt * 9);
+        st.speed += (targetSpeed - st.speed) * lerpFactor;
+        st.phase += dt * st.speed;
+
+        const targetHighlight = isHighlighted ? 1 : 0;
+        st.highlightAlpha += (targetHighlight - st.highlightAlpha) * (1 - Math.exp(-dt * 10));
+
+        ctx.save();
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, logicalW, logicalH);
+
+        const lvl = (currentMeta[b.levelKey] as number) || 0;
+        const drawer = (Lada as any)[b.canvasDrawer];
+        if (typeof drawer === 'function') {
+          drawer.call(
+            Lada,
+            ctx,
+            logicalW,
+            logicalH,
+            st.phase,
+            lvl,
+            isHighlighted || st.highlightAlpha > 0.15
+          );
+        }
+        ctx.restore();
       });
+
       animId = requestAnimationFrame(loop);
     };
     animId = requestAnimationFrame(loop);

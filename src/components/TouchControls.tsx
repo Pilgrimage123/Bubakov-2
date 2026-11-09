@@ -10,6 +10,11 @@ interface TouchControlsProps {
   onStop: () => void;
   onTriggerUltimate: () => void;
   ultCooldown: number;
+  onInteract?: () => void;
+  canInteract?: boolean;
+  interactPrompt?: string | null;
+  interactLabel?: string;
+  interactIcon?: string;
 }
 
 export const TouchControls: React.FC<TouchControlsProps> = ({
@@ -20,6 +25,11 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
   onStop,
   onTriggerUltimate,
   ultCooldown,
+  onInteract,
+  canInteract,
+  interactPrompt,
+  interactLabel,
+  interactIcon,
 }) => {
   const zoneRef = useRef<HTMLDivElement>(null);
   const baseRef = useRef<HTMLDivElement>(null);
@@ -157,6 +167,28 @@ export const TouchControls: React.FC<TouchControlsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Interactive Arena Effect Action Button (positioned comfortably for mobile screens) */}
+      <button
+        type="button"
+        className={`touch-interact-btn ${canInteract ? 'can-interact' : ''}`}
+        onClick={() => {
+          onInteract?.();
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          onInteract?.();
+        }}
+        title={interactPrompt || 'Aktivovat interaktivní prvek v aréně'}
+        aria-label={interactPrompt || 'Aktivovat interaktivní prvek v aréně'}
+      >
+        <div className="touch-interact-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <GameIcon icon={(interactIcon as any) || (canInteract ? 'bell' : 'hand')} size={24} />
+        </div>
+        <div className="touch-interact-label">
+          {interactLabel || (canInteract ? 'POUŽÍT' : 'INTERAKCE')}
+        </div>
+      </button>
 
       {/* Special Ability Button (bottom right) */}
       <button

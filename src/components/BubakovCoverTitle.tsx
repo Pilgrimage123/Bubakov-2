@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { LadaFrieze } from './LadaFrieze';
-import { LadaCanvasSvg } from './LadaCanvasIcon';
 import { sound } from '../audio';
 
 interface BubakovCoverTitleProps {
@@ -12,6 +11,22 @@ interface BubakovCoverTitleProps {
 }
 
 export const BUBAK_CROW_CYCLE_DURATION = 9.6;
+
+/**
+ * Shared vertical alignment landmarks (in local 225x252 canvas coordinates,
+ * where both left & right canvases apply ctx.translate(..., 52) so stageY = localY + 4).
+ * Ensures Bubák (left) and Čert (right) stand at the exact same height flanking the headline.
+ */
+export const COVER_CHARACTER_ALIGNMENT = {
+  groundTurfY: 168,
+  groundShadowY: 170,
+  waistY: 116,
+  torsoCenterY: 92,
+  shoulderY: 69,
+  headCenterY: 42,
+  eyeCenterY: 34.5,
+  topCrownY: 9,
+} as const;
 
 export type BubakCrowPhase =
   | 'patrol_approach'
@@ -216,21 +231,23 @@ export function computeBubakCrowChoreography(
   const recoveryShakeMask =
     smoothstep(7.65, 7.9, cycleT) * (1 - smoothstep(8.5, 8.95, cycleT));
 
+  // In drawScarecrowArm, +angle raises the left arm UPWARD toward the head,
+  // and -angle raises the right arm UPWARD toward the head.
   const bubakLeftArmAngle =
-    Math.sin(bPhase - 0.2) * 10 * (1 - onHeadMask * 0.6) -
-    leftSwatWave * 36 +
-    onHeadMask * 14 +
-    inhaleLevel * 20 -
-    screamLevel * 44 -
-    recoveryShakeMask * 26 +
+    Math.sin(bPhase - 0.2) * 10 * (1 - onHeadMask * 0.6) +
+    leftSwatWave * 34 -
+    onHeadMask * 10 -
+    inhaleLevel * 16 +
+    screamLevel * 38 +
+    recoveryShakeMask * 24 +
     Math.sin(t * 24) * (screamLevel * 8 + annoyanceLevel * 3.5);
 
   const bubakRightArmAngle =
-    Math.sin(bPhase + 0.3) * 10 * (1 - onHeadMask * 0.6) +
-    rightSwatWave * 36 -
-    onHeadMask * 14 -
-    inhaleLevel * 20 +
-    screamLevel * 44 +
+    Math.sin(bPhase + 0.3) * 10 * (1 - onHeadMask * 0.6) -
+    rightSwatWave * 34 +
+    onHeadMask * 10 +
+    inhaleLevel * 16 -
+    screamLevel * 38 -
     recoveryShakeMask * 18 -
     Math.sin(t * 24) * (screamLevel * 8 + annoyanceLevel * 3.5);
 
@@ -460,10 +477,16 @@ export function computeBubakCrowChoreography(
   // Lower-lid annoyance squint vs wide-open screaming eyes
   const bubakEyeSquint = clamp01(annoyanceLevel * 0.52 - screamLevel * 0.65);
 
-  // Angry V-shaped brow slant (in degrees) & vertical press
+  // Expressive brow slant: warmly arched & good-natured (-6 deg) when calm, V-shaped when annoyed/screaming
+  const kindlyCalmMix = clamp01(1 - (annoyanceLevel * 2.5 + inhaleLevel * 3 + screamLevel * 3));
   const bubakBrowSlant =
-    annoyanceLevel * 22 + inhaleLevel * 25 + screamLevel * 28 + hoverMix * 4;
+    -6.5 * kindlyCalmMix +
+    annoyanceLevel * 22 +
+    inhaleLevel * 25 +
+    screamLevel * 28 +
+    hoverMix * 3;
   const bubakBrowDy =
+    -1.2 * kindlyCalmMix +
     Math.cos(bPhase) * 0.8 * (1 - annoyanceLevel) +
     annoyanceLevel * 2.8 +
     inhaleLevel * 3.2 -
@@ -472,8 +495,8 @@ export function computeBubakCrowChoreography(
   // Warm crimson rage flush on Bubák's burlap cheeks/brow
   const bubakRageFlush = clamp01(annoyanceLevel * 0.68 + inhaleLevel * 0.75 + screamLevel * 0.95);
 
-  // Deformable Toothy Maw (0.16 = grumbling clenched teeth, 0.7 = normal open, 1.68 = giant ANGRY SCREAM!)
-  const idleMouthWave = 0.58 + Math.sin(bPhase) * 0.22 + Math.cos(bPhase * 2) * 0.1;
+  // Deformable Toothy Maw (0.16 = grumbling clenched teeth, 0.52 = kindly village smile, 1.68 = giant ANGRY SCREAM!)
+  const idleMouthWave = 0.48 + Math.sin(bPhase) * 0.14 + Math.cos(bPhase * 2) * 0.06;
   const grumbleMutters =
     annoyanceLevel * (0.28 + Math.abs(Math.sin(t * 16)) * 0.22);
   const screamRoarWave =
@@ -490,10 +513,10 @@ export function computeBubakCrowChoreography(
   bubakMouthOpen = Math.max(0.16, Math.min(1.72, bubakMouthOpen));
 
   const bubakMouthWidth =
-    0.95 +
-    screamLevel * 0.32 -
+    1.02 +
+    screamLevel * 0.30 -
     inhaleLevel * 0.12 +
-    annoyanceLevel * 0.06;
+    annoyanceLevel * 0.04;
 
   // Crooked annoyed snarl slant when the crow is pestering or on his head
   const bubakMouthSlant =
@@ -685,23 +708,23 @@ function drawBlackAndWhiteCrow2D(
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
 
-  // 1. FAR WING (visible when flying, braking, or hopping with wing-flap)
+  // 1. FAR WING (sweeps naturally upward & backward from far shoulder for 3D depth)
   if (crowFlightBlend > 0.05) {
     ctx.save();
-    ctx.translate(3, -10);
-    ctx.rotate(-crowWingFlapAngle * 0.9 - 0.15);
+    ctx.translate(2, -12);
+    ctx.rotate(-crowWingFlapAngle * 0.85 + 0.18);
     ctx.scale(1, 0.45 + crowFlightBlend * 0.55);
 
-    // Glossy black primary wing fan
+    // Glossy black primary wing fan sweeping upward & back
     ctx.beginPath();
-    ctx.moveTo(-2, 0);
-    ctx.quadraticCurveTo(6, -12, 16, -22);
-    ctx.lineTo(22, -25);
-    ctx.lineTo(18, -16);
-    ctx.lineTo(25, -18);
-    ctx.lineTo(19, -10);
-    ctx.lineTo(24, -10);
-    ctx.quadraticCurveTo(15, -3, 6, 2);
+    ctx.moveTo(2, 0);
+    ctx.quadraticCurveTo(-5, -10, -13, -21);
+    ctx.lineTo(-20, -25);
+    ctx.lineTo(-15, -16);
+    ctx.lineTo(-22, -18);
+    ctx.lineTo(-16, -10);
+    ctx.lineTo(-20, -9);
+    ctx.quadraticCurveTo(-10, -2, 2, 2);
     ctx.closePath();
     ctx.fillStyle = blackDeep;
     ctx.fill();
@@ -711,9 +734,9 @@ function drawBlackAndWhiteCrow2D(
 
     // Crisp white covert wing patch on far wing
     ctx.beginPath();
-    ctx.moveTo(0, -1);
-    ctx.quadraticCurveTo(6, -8, 12, -12);
-    ctx.quadraticCurveTo(11, -5, 5, 0);
+    ctx.moveTo(1, -1);
+    ctx.quadraticCurveTo(-4, -8, -10, -12);
+    ctx.quadraticCurveTo(-10, -5, -4, 0);
     ctx.closePath();
     ctx.fillStyle = whiteShadow;
     ctx.fill();
@@ -1071,14 +1094,14 @@ function drawBlackAndWhiteCrow2D(
 }
 
 const FROND_SKIRT_DOTS = [
-  [52, 138, '#7C924F'],
-  [75, 145, '#A8813C'],
-  [84, 152, '#7C924F'],
-  [93, 145, '#A8813C'],
-  [116, 138, '#7C924F'],
+  [54, 130, '#7C924F'],
+  [75, 136, '#A8813C'],
+  [84, 142, '#7C924F'],
+  [93, 136, '#A8813C'],
+  [114, 130, '#7C924F'],
 ] as const;
 
-const TORSO_SEAM_STITCH_YS = [76, 86, 96, 106, 116, 123] as const;
+const TORSO_SEAM_STITCH_YS = [72, 81, 90, 99, 108, 115] as const;
 
 const HEAD_STRAW_TUFTS = [
   [-10, -22, -16, -29, 0.4],
@@ -1130,20 +1153,20 @@ export function drawBubakAndCrowCoverCanvas(
   // ==========================================================================
   // 1. WEATHERED WOODEN MOUNTING POLE & BLOOMING MEADOW TURF PEDESTAL
   // ==========================================================================
-  // Soft ground shadow
+  // Soft ground shadow (aligned with COVER_CHARACTER_ALIGNMENT.groundShadowY = 170)
   ctx.beginPath();
-  ctx.ellipse(84, 192, 26, 6.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(84, COVER_CHARACTER_ALIGNMENT.groundShadowY, 26, 6.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(28, 22, 16, 0.18)';
   ctx.fill();
 
-  // Wooden pole
+  // Wooden pole (spans from waist y=118 down to ground turf y=168)
   ctx.save();
   ctx.translate(state.bubakPoleBendX, 0);
   ctx.beginPath();
   if (typeof ctx.roundRect === 'function') {
-    ctx.roundRect(79.5, 130, 9, 60, 1.5);
+    ctx.roundRect(79.5, 118, 9, 50, 1.5);
   } else {
-    ctx.rect(79.5, 130, 9, 60);
+    ctx.rect(79.5, 118, 9, 50);
   }
   ctx.fillStyle = '#783E24';
   ctx.fill();
@@ -1153,21 +1176,21 @@ export function drawBubakAndCrowCoverCanvas(
 
   // Wood grain lines & knot
   ctx.beginPath();
-  ctx.moveTo(82.5, 134);
-  ctx.lineTo(82.5, 189);
+  ctx.moveTo(82.5, 122);
+  ctx.lineTo(82.5, 167);
   ctx.strokeStyle = '#9A5632';
   ctx.lineWidth = 1.6;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(85.5, 136);
-  ctx.lineTo(85.5, 186);
+  ctx.moveTo(85.5, 124);
+  ctx.lineTo(85.5, 165);
   ctx.strokeStyle = '#522712';
   ctx.lineWidth = 1.2;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.ellipse(83.5, 164, 2.0, 3.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(83.5, 150, 2.0, 3.2, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#3D1A0B';
   ctx.fill();
   ctx.strokeStyle = ink;
@@ -1175,9 +1198,9 @@ export function drawBubakAndCrowCoverCanvas(
   ctx.stroke();
   ctx.restore();
 
-  // Green meadow turf mound & grass blades
+  // Green meadow turf mound & grass blades (shared baseline COVER_CHARACTER_ALIGNMENT.groundTurfY = 168)
   ctx.beginPath();
-  ctx.ellipse(84, 190, 23, 6.2, 0, 0, Math.PI * 2);
+  ctx.ellipse(84, COVER_CHARACTER_ALIGNMENT.groundTurfY, 23, 6.2, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#22C55E';
   ctx.fill();
   ctx.strokeStyle = ink;
@@ -1185,35 +1208,35 @@ export function drawBubakAndCrowCoverCanvas(
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.ellipse(84, 189, 18, 3.6, 0, 0, Math.PI * 2);
+  ctx.ellipse(84, COVER_CHARACTER_ALIGNMENT.groundTurfY - 1, 18, 3.6, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#4ADE80';
   ctx.fill();
 
-  drawFivePetalFolkFlower(ctx, 70, 187, t * 0.55, 5.2, '#FACC15', '#E6392B');
-  drawFivePetalFolkFlower(ctx, 97, 188, -t * 0.62, 4.8, '#38BDF8', '#FACC15');
+  drawFivePetalFolkFlower(ctx, 70, COVER_CHARACTER_ALIGNMENT.groundTurfY - 3, t * 0.55, 5.2, '#FACC15', '#E6392B');
+  drawFivePetalFolkFlower(ctx, 97, COVER_CHARACTER_ALIGNMENT.groundTurfY - 2, -t * 0.62, 4.8, '#38BDF8', '#FACC15');
 
   // ==========================================================================
   // 2. ARTICULATED UPPER BODY (SKIRT, ARMS, TORSO & EXPRESSIVE HEAD)
   // ==========================================================================
   ctx.save();
-  ctx.translate(84 + state.bubakTorsoX, 124 + state.bubakTorsoY);
+  ctx.translate(84 + state.bubakTorsoX, COVER_CHARACTER_ALIGNMENT.waistY + state.bubakTorsoY);
   ctx.rotate((state.bubakTorsoRot * Math.PI) / 180);
-  ctx.translate(-84, -124);
+  ctx.translate(-84, -COVER_CHARACTER_ALIGNMENT.waistY);
 
-  // 2a. Lower Shredded Leaf-Frond Skirt (pivots at waist 84, 126)
+  // 2a. Lower Shredded Leaf-Frond Skirt (pivots at waist 84, 118)
   ctx.save();
-  ctx.translate(84, 126);
+  ctx.translate(84, 118);
   ctx.rotate((state.bubakSkirtRot * Math.PI) / 180);
-  ctx.translate(-84, -126);
+  ctx.translate(-84, -118);
 
   ctx.beginPath();
-  ctx.moveTo(54, 124);
-  ctx.quadraticCurveTo(40, 140, 31, 154);
-  ctx.quadraticCurveTo(44, 148, 56, 134);
-  ctx.quadraticCurveTo(68, 158, 84, 165);
-  ctx.quadraticCurveTo(100, 158, 112, 134);
-  ctx.quadraticCurveTo(124, 148, 137, 154);
-  ctx.quadraticCurveTo(128, 140, 114, 124);
+  ctx.moveTo(54, 115);
+  ctx.quadraticCurveTo(40, 130, 31, 143);
+  ctx.quadraticCurveTo(44, 138, 56, 125);
+  ctx.quadraticCurveTo(68, 146, 84, 152);
+  ctx.quadraticCurveTo(100, 146, 112, 125);
+  ctx.quadraticCurveTo(124, 138, 137, 143);
+  ctx.quadraticCurveTo(128, 130, 114, 115);
   ctx.closePath();
   ctx.fillStyle = '#1E2519';
   ctx.fill();
@@ -1223,16 +1246,16 @@ export function drawBubakAndCrowCoverCanvas(
 
   // Inner moss-green & russet frond highlights
   ctx.beginPath();
-  ctx.moveTo(60, 126);
-  ctx.quadraticCurveTo(50, 138, 42, 147);
-  ctx.moveTo(84, 128);
-  ctx.lineTo(84, 159);
-  ctx.moveTo(72, 128);
-  ctx.lineTo(62, 149);
-  ctx.moveTo(96, 128);
-  ctx.lineTo(106, 149);
-  ctx.moveTo(108, 126);
-  ctx.quadraticCurveTo(118, 138, 126, 147);
+  ctx.moveTo(60, 117);
+  ctx.quadraticCurveTo(50, 128, 42, 136);
+  ctx.moveTo(84, 119);
+  ctx.lineTo(84, 147);
+  ctx.moveTo(72, 119);
+  ctx.lineTo(62, 138);
+  ctx.moveTo(96, 119);
+  ctx.lineTo(106, 138);
+  ctx.moveTo(108, 117);
+  ctx.quadraticCurveTo(118, 128, 126, 136);
   ctx.strokeStyle = '#5F733E';
   ctx.lineWidth = 2.1;
   ctx.stroke();
@@ -1249,7 +1272,7 @@ export function drawBubakAndCrowCoverCanvas(
   // Helper to draw Left (-1) and Right (+1) Flared Burlap Arms & Shredded Straw Cuffs
   const drawScarecrowArm = (side: -1 | 1, armAngleDeg: number, cuffFlutterDeg: number) => {
     const shoulderX = side === -1 ? 68 : 100;
-    const shoulderY = 74;
+    const shoulderY = COVER_CHARACTER_ALIGNMENT.shoulderY;
     ctx.save();
     ctx.translate(shoulderX, shoulderY);
     ctx.rotate((armAngleDeg * Math.PI) / 180);
@@ -1357,42 +1380,42 @@ export function drawBubakAndCrowCoverCanvas(
   drawScarecrowArm(-1, state.bubakLeftArmAngle, state.bubakLeftCuffFlutter);
   drawScarecrowArm(1, state.bubakRightArmAngle, state.bubakRightCuffFlutter);
 
-  // 2b. Plump Burlap Sack Torso (pivots/scales at 84, 98)
+  // 2b. Plump Burlap Sack Torso (pivots/scales at 84, COVER_CHARACTER_ALIGNMENT.torsoCenterY = 92)
   ctx.save();
-  ctx.translate(84, 98);
+  ctx.translate(84, COVER_CHARACTER_ALIGNMENT.torsoCenterY);
   ctx.scale(state.bubakTorsoScaleX, state.bubakTorsoScaleY);
-  ctx.translate(-84, -98);
+  ctx.translate(-84, -COVER_CHARACTER_ALIGNMENT.torsoCenterY);
 
   ctx.beginPath();
-  ctx.ellipse(84, 98, 24.5, 29.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(84, COVER_CHARACTER_ALIGNMENT.torsoCenterY, 24.5, 27.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#C2945D';
   ctx.fill();
 
   // Warm sunlit burlap belly highlight (zero per-frame gradient allocation)
   ctx.beginPath();
-  ctx.ellipse(79, 91, 15.5, 19.0, -0.15, 0, Math.PI * 2);
+  ctx.ellipse(79, 86, 15.5, 17.5, -0.15, 0, Math.PI * 2);
   ctx.fillStyle = '#D5A76E';
   ctx.fill();
 
-  drawBurlapCrosshatch(ctx, 84, 98, 24.5, 29.5);
+  drawBurlapCrosshatch(ctx, 84, COVER_CHARACTER_ALIGNMENT.torsoCenterY, 24.5, 27.5);
 
   ctx.beginPath();
-  ctx.ellipse(84, 98, 24.5, 29.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(84, COVER_CHARACTER_ALIGNMENT.torsoCenterY, 24.5, 27.5, 0, 0, Math.PI * 2);
   ctx.strokeStyle = ink;
   ctx.lineWidth = 3.4;
   ctx.stroke();
 
   // Vertical Forest-Green Center Seam with black ink core & cross-stitches
   ctx.beginPath();
-  ctx.moveTo(84, 69);
-  ctx.lineTo(84, 126);
+  ctx.moveTo(84, 65);
+  ctx.lineTo(84, 118);
   ctx.strokeStyle = '#486935';
   ctx.lineWidth = 5.4;
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(84, 69);
-  ctx.lineTo(84, 126);
+  ctx.moveTo(84, 65);
+  ctx.lineTo(84, 118);
   for (const sy of TORSO_SEAM_STITCH_YS) {
     ctx.moveTo(81, sy);
     ctx.lineTo(87, sy);
@@ -1403,14 +1426,14 @@ export function drawBubakAndCrowCoverCanvas(
 
   // Organic belly fold wrinkles
   ctx.beginPath();
-  ctx.moveTo(65, 88);
-  ctx.bezierCurveTo(72, 92, 78, 92, 82, 90);
-  ctx.moveTo(86, 90);
-  ctx.bezierCurveTo(92, 92, 98, 92, 103, 88);
-  ctx.moveTo(66, 108);
-  ctx.bezierCurveTo(73, 112, 78, 112, 82, 110);
-  ctx.moveTo(86, 110);
-  ctx.bezierCurveTo(92, 112, 97, 112, 102, 108);
+  ctx.moveTo(65, 83);
+  ctx.bezierCurveTo(72, 87, 78, 87, 82, 85);
+  ctx.moveTo(86, 85);
+  ctx.bezierCurveTo(92, 87, 98, 87, 103, 83);
+  ctx.moveTo(66, 101);
+  ctx.bezierCurveTo(73, 105, 78, 105, 82, 103);
+  ctx.moveTo(86, 103);
+  ctx.bezierCurveTo(92, 105, 97, 105, 102, 101);
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.1;
   ctx.stroke();
@@ -1444,8 +1467,8 @@ export function drawBubakAndCrowCoverCanvas(
     ctx.stroke();
     ctx.restore();
   };
-  drawPatch(98, 86, 5, 7, '#382C1E');
-  drawPatch(71, 110, 4.5, 6, '#2E2419');
+  drawPatch(98, 81, 5, 7, '#382C1E');
+  drawPatch(71, 103, 4.5, 6, '#2E2419');
   ctx.restore(); // end torso
 
   // ==========================================================================
@@ -1457,21 +1480,46 @@ export function drawBubakAndCrowCoverCanvas(
   ctx.scale(state.bubakHeadScaleX, state.bubakHeadScaleY);
   ctx.translate(0, -26); // Center of head is now (0, 0)
 
-  // 3a. Golden Straw Tufts sprouting from top of head (bend under crow's feet!)
-  const strawSquash = state.isCrowOnHead ? 2.8 : 0;
+  // 3a. Red Polka-Dot Czech Village Kerchief (vesnický puntíkovaný šátek) tied around neck
+  ctx.save();
   ctx.beginPath();
-  for (const [x1, y1, x2, y2, w] of HEAD_STRAW_TUFTS) {
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2 + strawSquash * w);
-  }
+  ctx.moveTo(-18, 19);
+  ctx.quadraticCurveTo(0, 27, 18, 19);
+  ctx.lineTo(13, 28);
+  ctx.quadraticCurveTo(0, 31, -13, 28);
+  ctx.closePath();
+  ctx.fillStyle = '#DC2626';
+  ctx.fill();
   ctx.strokeStyle = ink;
-  ctx.lineWidth = 3.8;
+  ctx.lineWidth = 2.4;
   ctx.stroke();
-  ctx.strokeStyle = '#FACC15';
+
+  // Tied village kerchief knot & two little floppy ends at the throat
+  ctx.beginPath();
+  ctx.moveTo(-2, 25);
+  ctx.lineTo(-7, 33);
+  ctx.lineTo(-1, 31);
+  ctx.lineTo(5, 33);
+  ctx.lineTo(2, 25);
+  ctx.closePath();
+  ctx.fillStyle = '#B91C1C';
+  ctx.fill();
+  ctx.strokeStyle = ink;
   ctx.lineWidth = 2.0;
   ctx.stroke();
 
-  // 3b. Burlap Head Oval with Woven Cross-Hatch & Emotional Rage Flush
+  // White folk polka dots on the red kerchief
+  ctx.fillStyle = '#FAF6ED';
+  ctx.beginPath();
+  ctx.arc(-11, 23.5, 1.3, 0, Math.PI * 2);
+  ctx.arc(-5, 25.5, 1.3, 0, Math.PI * 2);
+  ctx.arc(0, 26.0, 1.4, 0, Math.PI * 2);
+  ctx.arc(5, 25.5, 1.3, 0, Math.PI * 2);
+  ctx.arc(11, 23.5, 1.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 3b. Burlap Head Oval with Woven Cross-Hatch, Rosy Village Cheeks & Emotional Rage Flush
   ctx.beginPath();
   ctx.ellipse(0, 0, 21.0, 25.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#C2945D';
@@ -1483,6 +1531,16 @@ export function drawBubakAndCrowCoverCanvas(
   ctx.fill();
 
   drawBurlapCrosshatch(ctx, 0, 0, 21.0, 25.5);
+
+  // Plump rosy-apple village cheek blushes (always warm & good-natured, deeper in excitement)
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = '#E11D48';
+  ctx.beginPath();
+  ctx.ellipse(-13.5, 2.0, 5.2, 3.6, -0.15, 0, Math.PI * 2);
+  ctx.ellipse(13.5, 2.0, 5.2, 3.6, 0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   // Crimson-vermilion rage flush across cheeks and forehead when annoyed or screaming
   if (state.bubakRageFlush > 0.02) {
@@ -1502,17 +1560,142 @@ export function drawBubakAndCrowCoverCanvas(
   ctx.lineWidth = 3.4;
   ctx.stroke();
 
-  // Cheek contour wrinkles
+  // Round Josef Lada Village Ears on sides of head
+  for (const side of [-1, 1] as const) {
+    ctx.save();
+    ctx.translate(side * 20.5, -1.5);
+    ctx.beginPath();
+    ctx.arc(side * 2.0, 0, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#C2945D';
+    ctx.fill();
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(side * 1.8, 0.2, 2.1, 0, Math.PI * 2);
+    ctx.fillStyle = '#A06E3B';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Kindly smiling cheek crinkles under eyes
   ctx.beginPath();
-  ctx.moveTo(-16, -5);
-  ctx.bezierCurveTo(-12, -7, -8, -7, -6, -5);
-  ctx.moveTo(6, -5);
-  ctx.bezierCurveTo(8, -7, 12, -7, 16, -5);
+  ctx.moveTo(-15.5, -2.5);
+  ctx.quadraticCurveTo(-11.0, 0.2, -6.5, -2.2);
+  ctx.moveTo(6.5, -2.2);
+  ctx.quadraticCurveTo(11.0, 0.2, 15.5, -2.5);
   ctx.strokeStyle = ink;
   ctx.lineWidth = 1.8;
   ctx.stroke();
 
-  // 3c. Left & Right Expressive Eyes with Glaring Pupils, Annoyed Lower Squint & V-Scowl Brows
+  // 3c. TATTERED JOSEF LADA VILLAGE FELT HAT ("otrhaný vesnický klobouk")
+  // Sits on top of Bubák's head with golden straw tufts poking through the torn crown up to localY = 9!
+  const strawSquash = state.isCrowOnHead ? 2.8 : 0;
+  ctx.save();
+  ctx.translate(0, strawSquash * 0.35);
+
+  // Crumpled weathered brown felt hat crown with a torn notch at the top
+  ctx.beginPath();
+  ctx.moveTo(-19, -15);
+  ctx.bezierCurveTo(-21, -24, -15, -30, -7, -29.5);
+  ctx.lineTo(-4, -26.5); // Torn V-split in crown where straw pokes out
+  ctx.lineTo(1, -29.8);
+  ctx.bezierCurveTo(11, -30.5, 19, -25, 18.5, -15);
+  ctx.closePath();
+  ctx.fillStyle = '#6B4423';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.8;
+  ctx.stroke();
+
+  // Warm sunlit felt highlight on left crown
+  ctx.beginPath();
+  ctx.moveTo(-15, -18);
+  ctx.quadraticCurveTo(-14, -26, -6, -27);
+  ctx.quadraticCurveTo(-8, -21, -15, -18);
+  ctx.fillStyle = '#855832';
+  ctx.fill();
+
+  // Golden Straw Tufts sprouting through the torn crown of the tattered hat (reaching localY = 9!)
+  ctx.beginPath();
+  for (const [x1, y1, x2, y2, w] of HEAD_STRAW_TUFTS) {
+    ctx.moveTo(x1 * 0.82, y1 + 1.2);
+    ctx.lineTo(x2 * 0.88, y2 + strawSquash * w);
+  }
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 3.6;
+  ctx.stroke();
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 1.9;
+  ctx.stroke();
+
+  // Stitched ochre sackcloth patch on the tattered hat crown
+  ctx.save();
+  ctx.translate(8.5, -23.5);
+  ctx.rotate(0.18);
+  ctx.beginPath();
+  ctx.rect(-4.5, -3.5, 9.0, 7.0);
+  ctx.fillStyle = '#D97706';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  // Cross-stitches on hat patch
+  ctx.beginPath();
+  ctx.moveTo(-4.8, -2.0);
+  ctx.lineTo(-2.8, -2.0);
+  ctx.moveTo(-4.8, 1.5);
+  ctx.lineTo(-2.8, 1.5);
+  ctx.moveTo(2.8, -2.0);
+  ctx.lineTo(4.8, -2.0);
+  ctx.moveTo(2.8, 1.5);
+  ctx.lineTo(4.8, 1.5);
+  ctx.strokeStyle = '#FAF6ED';
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+  ctx.restore();
+
+  // Faded red village ribbon band around base of hat crown
+  ctx.beginPath();
+  ctx.moveTo(-18.5, -17.8);
+  ctx.quadraticCurveTo(0, -20.2, 18.2, -17.8);
+  ctx.lineTo(18.8, -14.8);
+  ctx.quadraticCurveTo(0, -17.0, -19.0, -14.8);
+  ctx.closePath();
+  ctx.fillStyle = '#B91C1C';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  // Little yellow meadow buttercup flower tucked into the left hatband
+  ctx.beginPath();
+  ctx.moveTo(-13, -17);
+  ctx.quadraticCurveTo(-18, -22, -21, -25);
+  ctx.strokeStyle = '#4D7C0F';
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+  drawFivePetalFolkFlower(ctx, -21.5, -25.5, 0.25, 3.6, '#FACC15', '#D97706');
+
+  // Floppy, undulating tattered hat brim with a frayed notch on the left edge
+  ctx.beginPath();
+  ctx.moveTo(-28.5, -14.0);
+  ctx.quadraticCurveTo(-24, -18.5, -17, -17.5);
+  ctx.lineTo(-14.5, -14.2); // Frayed V-notch in the tattered brim
+  ctx.lineTo(-12.0, -17.2);
+  ctx.quadraticCurveTo(0, -19.5, 15, -17.2);
+  ctx.quadraticCurveTo(23, -18.2, 28.5, -13.5);
+  ctx.quadraticCurveTo(18, -11.2, 0, -13.2);
+  ctx.quadraticCurveTo(-18, -11.2, -28.5, -14.0);
+  ctx.closePath();
+  ctx.fillStyle = '#5C3A21';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.6;
+  ctx.stroke();
+  ctx.restore();
+
+  // 3d. Left & Right Expressive Eyes (Warm & Good-Natured when calm, Glaring/Wide when Crow pesters)
   const drawBubakEye = (ex: number, ey: number, side: -1 | 1) => {
     ctx.save();
     ctx.translate(ex, ey);
@@ -1540,22 +1723,22 @@ export function drawBubakAndCrowCoverCanvas(
       ctx.stroke();
     }
 
-    // Mobile pupil (rolls straight up when crow is on Bubák's head!)
+    // Mobile pupil (warm hazel-brown iris rim + dark pupil + double catchlight)
     const px = state.bubakPupilDx;
     const py = state.bubakPupilDy;
-    if (state.screamLevel > 0.25) {
-      ctx.beginPath();
-      ctx.arc(px, py, 3.9, 0, Math.PI * 2);
-      ctx.fillStyle = '#EF4444';
-      ctx.fill();
-    }
     ctx.beginPath();
-    ctx.arc(px, py, 2.9, 0, Math.PI * 2);
+    ctx.arc(px, py, 3.8, 0, Math.PI * 2);
+    ctx.fillStyle = state.screamLevel > 0.25 ? '#EF4444' : '#78350F';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(px, py, 2.6, 0, Math.PI * 2);
     ctx.fillStyle = ink;
     ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(px - 0.8, py - 0.9, 1.0, 0, Math.PI * 2);
+    ctx.arc(px - 0.9, py - 1.0, 1.15, 0, Math.PI * 2);
+    ctx.arc(px + 0.9, py + 0.8, 0.55, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
 
@@ -1574,8 +1757,8 @@ export function drawBubakAndCrowCoverCanvas(
       ctx.stroke();
     }
 
-    // Angry upper eyelid cut-in matching brow slant
-    if (state.annoyanceLevel > 0.15 || state.screamLevel > 0.15) {
+    // Angry upper eyelid cut-in matching brow slant (only when annoyed/screaming)
+    if (state.annoyanceLevel > 0.22 || state.screamLevel > 0.15) {
       ctx.save();
       ctx.translate(0, -5.2 + state.bubakBrowDy * 0.65);
       ctx.rotate(((-side * state.bubakBrowSlant) * Math.PI) / 180);
@@ -1601,39 +1784,41 @@ export function drawBubakAndCrowCoverCanvas(
     ctx.lineWidth = 2.6;
     ctx.stroke();
 
-    // Heavy expressive outer brow ridge above eye
+    // Expressive outer brow ridge above eye (softly arched & good-natured when calm!)
     ctx.save();
     ctx.translate(0, -6.8 + state.bubakBrowDy * 0.5);
     ctx.rotate(((-side * state.bubakBrowSlant) * Math.PI) / 180);
     ctx.beginPath();
-    ctx.moveTo(-7.2, -0.5);
-    ctx.quadraticCurveTo(0, -2.2, 7.2, 0.5);
+    ctx.moveTo(-6.8, 0.4);
+    ctx.quadraticCurveTo(0, -3.2, 6.8, 0.4);
     ctx.strokeStyle = ink;
-    ctx.lineWidth = 3.2;
+    ctx.lineWidth = 3.0;
     ctx.stroke();
     ctx.restore();
 
     ctx.restore();
   };
 
-  drawBubakEye(-8.5, -8, -1);
-  drawBubakEye(8.5, -8, 1);
+  drawBubakEye(-8.5, -7.2, -1);
+  drawBubakEye(8.5, -7.2, 1);
 
-  // Center brow furrow ticks between eyes
-  ctx.beginPath();
-  ctx.moveTo(-2.8, -16 + state.bubakBrowDy * 0.5);
-  ctx.lineTo(-1.5, -10.5 + state.bubakBrowDy * 0.5);
-  ctx.moveTo(2.8, -16 + state.bubakBrowDy * 0.5);
-  ctx.lineTo(1.5, -10.5 + state.bubakBrowDy * 0.5);
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
+  // Center brow furrow ticks between eyes (only appear when annoyed or screaming)
+  if (state.annoyanceLevel > 0.25 || state.screamLevel > 0.15) {
+    ctx.beginPath();
+    ctx.moveTo(-2.8, -14.5 + state.bubakBrowDy * 0.5);
+    ctx.lineTo(-1.5, -10.0 + state.bubakBrowDy * 0.5);
+    ctx.moveTo(2.8, -14.5 + state.bubakBrowDy * 0.5);
+    ctx.lineTo(1.5, -10.0 + state.bubakBrowDy * 0.5);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+  }
 
   // Pulsing folk comic anger vein on temple when boiling with annoyance
   if (state.annoyanceLevel > 0.42 || state.screamLevel > 0.2) {
     const veinScale = 0.75 + Math.abs(Math.sin(t * 16)) * 0.35;
     ctx.save();
-    ctx.translate(14.5, -15.5);
+    ctx.translate(14.5, -13.5);
     ctx.scale(veinScale, veinScale);
     ctx.strokeStyle = '#E6392B';
     ctx.lineWidth = 2.2;
@@ -1650,52 +1835,60 @@ export function drawBubakAndCrowCoverCanvas(
     ctx.restore();
   }
 
-  // 3d. Snout / Button Nose (wrinkles upward during snarl & scream)
-  const noseY = 1.0 - Math.max(state.annoyanceLevel, state.screamLevel) * 1.4;
+  // 3e. Plump Josef Lada Village Potato Nose (kulatý bramborový nos)
+  const noseY = 0.8 - Math.max(state.annoyanceLevel, state.screamLevel) * 1.2;
   ctx.beginPath();
-  ctx.ellipse(0, noseY, 3.8, 3.2, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#A06E3B';
+  ctx.ellipse(0, noseY, 4.4, 3.5, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#D97706';
   ctx.fill();
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.2;
   ctx.stroke();
 
+  // Warm highlight on the potato nose tip
   ctx.beginPath();
-  ctx.arc(-1.3, noseY + 0.3, 0.85, 0, Math.PI * 2);
-  ctx.arc(1.3, noseY + 0.3, 0.85, 0, Math.PI * 2);
+  ctx.ellipse(-1.2, noseY - 1.0, 1.6, 0.9, -0.2, 0, Math.PI * 2);
+  ctx.fillStyle = '#FDE68A';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(-1.4, noseY + 0.6, 0.8, 0, Math.PI * 2);
+  ctx.arc(1.4, noseY + 0.6, 0.8, 0, Math.PI * 2);
   ctx.fillStyle = ink;
   ctx.fill();
 
-  // 3e. Deformable Stitched Toothy Maw (mutters in annoyance -> rips wide open in ANGRY SCREAM!)
+  // 3f. Warm Good-Natured Village Smile ("dobromyslný výraz") -> Deforms into Roaring Maw when Crow pecks!
   ctx.save();
-  ctx.translate(0, 11.5);
+  ctx.translate(0, 11.2);
   ctx.rotate((state.bubakMouthSlant * Math.PI) / 180);
 
-  const mw = 12.5 * state.bubakMouthWidth;
+  const mw = 12.8 * state.bubakMouthWidth;
   const openH = Math.max(2.2, 8.8 * state.bubakMouthOpen);
-  const topY = -openH * 0.38;
-  const botY = openH * 0.72;
+  const kindlySmileCurve = clamp01(1 - (state.annoyanceLevel * 1.8 + state.screamLevel * 2.2));
+  const smileCornerLift = -3.2 * kindlySmileCurve;
+  const topY = -openH * 0.28 + kindlySmileCurve * 1.4;
+  const botY = openH * 0.76 + kindlySmileCurve * 1.2;
 
-  // Mouth cavity path (flat crimson-burgundy gouache fill, zero gradient allocation)
+  // Mouth cavity path (curves warmly upward at the corners when in his good-natured village state!)
   ctx.beginPath();
-  ctx.moveTo(-mw, 0);
-  ctx.bezierCurveTo(-mw * 0.65, topY - 2.5, mw * 0.65, topY - 2.5, mw, 0);
-  ctx.bezierCurveTo(mw * 0.88, botY + 3.5, -mw * 0.88, botY + 3.5, -mw, 0);
+  ctx.moveTo(-mw, smileCornerLift);
+  ctx.bezierCurveTo(-mw * 0.55, topY - 1.5, mw * 0.55, topY - 1.5, mw, smileCornerLift);
+  ctx.bezierCurveTo(mw * 0.82, botY + 3.8, -mw * 0.82, botY + 3.8, -mw, smileCornerLift);
   ctx.closePath();
   ctx.fillStyle = '#7A110E';
   ctx.fill();
 
-  // Clip teeth & roaring tongue inside the mouth cavity
+  // Clip rounded village teeth & tongue inside the mouth cavity
   ctx.save();
   ctx.clip();
 
   // Inner dark throat depth ellipse
   ctx.beginPath();
-  ctx.ellipse(0, openH * 0.15, mw * 0.65, openH * 0.45, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, openH * 0.18, mw * 0.65, openH * 0.45, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#450A0A';
   ctx.fill();
 
-  // Vibrating red tongue & uvula during the angry scream
+  // Happy rosy tongue in calm smile, or vibrating red tongue & uvula during the angry scream
   if (state.bubakMouthOpen > 0.85) {
     const tongueVibX = Math.sin(t * 40) * 0.9;
     ctx.beginPath();
@@ -1715,64 +1908,90 @@ export function drawBubakAndCrowCoverCanvas(
     ctx.strokeStyle = ink;
     ctx.lineWidth = 1.2;
     ctx.stroke();
+  } else {
+    // Warm friendly pink tongue inside his good-natured smile
+    ctx.beginPath();
+    ctx.ellipse(0, botY * 0.85, mw * 0.48, Math.max(2.2, openH * 0.36), 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#FB7185';
+    ctx.fill();
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
   }
 
-  // Upper row of sharp saw-teeth
-  const toothCount = 6;
-  const toothSpan = mw * 1.72;
+  // Friendly rounded village upper teeth (kulaté dobromyslné zuby instead of sharp fangs)
+  const toothCount = 5;
+  const toothSpan = mw * 1.45;
   const startX = -toothSpan * 0.5;
   const stepX = toothSpan / toothCount;
-  const toothDepth = Math.min(5.2, openH * 0.46);
+  const toothDepth = Math.min(4.2, openH * 0.42);
 
-  ctx.beginPath();
-  ctx.moveTo(startX, topY - 3);
+  ctx.fillStyle = '#FAF6ED';
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 1.3;
   for (let i = 0; i < toothCount; i++) {
     const tx0 = startX + i * stepX;
     const txMid = tx0 + stepX * 0.5;
     const tx1 = tx0 + stepX;
-    const archOffset = (1 - Math.pow((txMid / mw), 2)) * 1.4;
-    ctx.lineTo(tx0, topY - archOffset);
-    ctx.lineTo(txMid, topY - archOffset + toothDepth);
-    ctx.lineTo(tx1, topY - archOffset);
+    const archOffset = (1 - Math.pow(txMid / mw, 2)) * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(tx0, topY - archOffset - 2.5);
+    ctx.lineTo(tx0, topY - archOffset + toothDepth * 0.45);
+    ctx.quadraticCurveTo(
+      txMid,
+      topY - archOffset + toothDepth * 1.15,
+      tx1,
+      topY - archOffset + toothDepth * 0.45
+    );
+    ctx.lineTo(tx1, topY - archOffset - 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
-  ctx.lineTo( startX + toothSpan, topY - 3);
-  ctx.closePath();
-  ctx.fillStyle = '#FAF6ED';
-  ctx.fill();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 1.3;
-  ctx.stroke();
 
-  // Lower row of sharp saw-teeth
-  ctx.beginPath();
-  ctx.moveTo(startX, botY + 4);
-  for (let i = 0; i < toothCount; i++) {
-    const tx0 = startX + i * stepX;
-    const txMid = tx0 + stepX * 0.5;
-    const tx1 = tx0 + stepX;
-    const archOffset = (1 - Math.pow((txMid / mw), 2)) * 1.8;
-    ctx.lineTo(tx0, botY + archOffset);
-    ctx.lineTo(txMid, botY + archOffset - toothDepth);
-    ctx.lineTo(tx1, botY + archOffset);
+  // Lower row of rounded teeth (visible when muttering or screaming)
+  if (state.annoyanceLevel > 0.25 || state.screamLevel > 0.2) {
+    for (let i = 0; i < toothCount; i++) {
+      const tx0 = startX + i * stepX;
+      const txMid = tx0 + stepX * 0.5;
+      const tx1 = tx0 + stepX;
+      const archOffset = (1 - Math.pow(txMid / mw, 2)) * 1.5;
+      ctx.beginPath();
+      ctx.moveTo(tx0, botY + archOffset + 3.0);
+      ctx.lineTo(tx0, botY + archOffset - toothDepth * 0.4);
+      ctx.quadraticCurveTo(
+        txMid,
+        botY + archOffset - toothDepth * 1.05,
+        tx1,
+        botY + archOffset - toothDepth * 0.4
+      );
+      ctx.lineTo(tx1, botY + archOffset + 3.0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
   }
-  ctx.lineTo(startX + toothSpan, botY + 4);
-  ctx.closePath();
-  ctx.fillStyle = '#FAF6ED';
-  ctx.fill();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 1.3;
-  ctx.stroke();
 
   ctx.restore(); // end mouth clip
 
-  // Outer stitched lip seam outline
+  // Outer lip seam outline
   ctx.beginPath();
-  ctx.moveTo(-mw, 0);
-  ctx.bezierCurveTo(-mw * 0.65, topY - 2.5, mw * 0.65, topY - 2.5, mw, 0);
-  ctx.bezierCurveTo(mw * 0.88, botY + 3.5, -mw * 0.88, botY + 3.5, -mw, 0);
+  ctx.moveTo(-mw, smileCornerLift);
+  ctx.bezierCurveTo(-mw * 0.55, topY - 1.5, mw * 0.55, topY - 1.5, mw, smileCornerLift);
+  ctx.bezierCurveTo(mw * 0.82, botY + 3.8, -mw * 0.82, botY + 3.8, -mw, smileCornerLift);
   ctx.closePath();
   ctx.strokeStyle = ink;
-  ctx.lineWidth = 2.8;
+  ctx.lineWidth = 2.6;
+  ctx.stroke();
+
+  // Warm Josef Lada smile dimples at the corners of his mouth
+  ctx.beginPath();
+  ctx.arc(-mw - 1.2, smileCornerLift + 0.5, 2.2, -Math.PI * 0.65, Math.PI * 0.45);
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(mw + 1.2, smileCornerLift + 0.5, 2.2, Math.PI * 0.55, Math.PI * 1.65);
   ctx.stroke();
 
   ctx.restore(); // end mouth
@@ -2047,12 +2266,14 @@ export function computeCertTailFireChoreography(
     mouthMode = p < 0.45 ? 'grin_tongue' : 'startled_gasp';
     tongueLength = Math.max(0, 0.8 * (1 - p * 2.1));
     pitchforkPlanted = smoothstep(0, 1, Math.max(0, (p - 0.35) / 0.65));
-    torsoTiltDeg = lerp(0, 7, flareEase);
+    torsoSwayX = lerp(0, 3.5, flareEase);
+    torsoTiltDeg = lerp(0, 9, flareEase);
   } else if (cycleTime < 3.7) {
     // PHASE 3: STARTLED PANIC DOUBLE-TAKE ("JÉMINÁČKU!")
     phase = 'startled_panic';
     const p = (cycleTime - 2.75) / 0.95; // 0..1
     const jumpArc = Math.sin(Math.min(1, p * 1.35) * Math.PI);
+    const panicExit = smoothstep(0.75, 1.0, p);
 
     jumpY = -jumpArc * 11.5;
     leftHoofLiftY = jumpArc * 9;
@@ -2060,22 +2281,22 @@ export function computeCertTailFireChoreography(
     pitchforkPlanted = 1;
 
     // Giant bugged-out eyes & trembling pinpoint pupils staring at roaring tail blaze
-    eyeScaleX = 1.48 + Math.sin(t * 32) * 0.05;
-    eyeScaleY = 1.54 + Math.cos(t * 32) * 0.05;
-    const jitterX = Math.sin(t * 45) * 0.55;
-    const jitterY = Math.cos(t * 41) * 0.55;
+    eyeScaleX = lerp(1.48 + Math.sin(t * 32) * 0.05, 1.34, panicExit);
+    eyeScaleY = lerp(1.54 + Math.cos(t * 32) * 0.05, 1.38, panicExit);
+    const jitterX = Math.sin(t * 45) * 0.55 * (1 - panicExit);
+    const jitterY = Math.cos(t * 41) * 0.55 * (1 - panicExit);
     leftPupilDx = -3.9 + jitterX;
-    leftPupilDy = -1.0 + jitterY;
+    leftPupilDy = lerp(-1.0 + jitterY, 0.9, panicExit);
     rightPupilDx = -3.9 + jitterX;
-    rightPupilDy = -1.0 + jitterY;
-    pupilRadius = 1.65;
-    browTiltDeg = 20;
-    browLiftY = -6.5;
+    rightPupilDy = lerp(-1.0 + jitterY, 0.9, panicExit);
+    pupilRadius = lerp(1.65, 2.05, panicExit);
+    browTiltDeg = lerp(20, -14, panicExit);
+    browLiftY = lerp(-6.5, -2.2, panicExit);
 
     mouthMode = 'startled_gasp';
     tongueLength = 0;
-    torsoSwayX = 3.5 + Math.sin(t * 30) * 1.2;
-    torsoTiltDeg = 9 + Math.sin(t * 26) * 3;
+    torsoSwayX = lerp(3.5 + Math.sin(t * 30) * 1.2, 0, panicExit);
+    torsoTiltDeg = lerp(9 + Math.sin(t * 26) * 3, -11, panicExit);
 
     flameIntensity = 3.0 + Math.sin(t * 28) * 0.22;
     smokePuffIntensity = 0.85;
@@ -2085,34 +2306,35 @@ export function computeCertTailFireChoreography(
     // PHASE 4: FRANTIC TAIL-CHASING SPIN & BLOWING OUT TAIL FIRE ("FÚÚÚ!")
     phase = 'chasing_and_blowing';
     const p = (cycleTime - 3.7) / 2.5; // 0..1 over 2.5 seconds
+    const spinExit = smoothstep(0.88, 1.0, p);
     pitchforkPlanted = 1;
 
     // 3 energetic tail-chasing revolutions on his cloven goat hooves
     spinAngleRad = p * Math.PI * 6;
     bodyTurnDir = Math.cos(spinAngleRad);
     torsoSwayX = Math.sin(spinAngleRad) * 9.5;
-    torsoBobY = -Math.abs(Math.sin(spinAngleRad * 2)) * 4.5;
-    torsoTiltDeg = -11 + Math.sin(spinAngleRad) * 7;
+    torsoBobY = -Math.abs(Math.sin(spinAngleRad * 2)) * 4.5 * (1 - spinExit);
+    torsoTiltDeg = lerp(-11 + Math.sin(spinAngleRad) * 7, -6, spinExit);
 
     // Rapid prancing hooves while spinning & chasing tail
-    leftHoofLiftY = Math.max(0, Math.sin(t * 22)) * 8.5;
-    rightHoofLiftY = Math.max(0, -Math.sin(t * 22)) * 8.5;
+    leftHoofLiftY = Math.max(0, Math.sin(t * 22)) * 8.5 * (1 - spinExit);
+    rightHoofLiftY = Math.max(0, -Math.sin(t * 22)) * 8.5 * (1 - spinExit);
 
     // Big eyes locked onto the burning tail while rolling with the spin
-    eyeScaleX = 1.34;
-    eyeScaleY = 1.38;
+    eyeScaleX = lerp(1.34, 1.22, spinExit);
+    eyeScaleY = lerp(1.38, 1.14, spinExit);
     eyeRollAngleRad = spinAngleRad;
     leftPupilDx = -3.5 + Math.cos(spinAngleRad) * 1.1;
     leftPupilDy = 0.9 + Math.sin(spinAngleRad * 2) * 0.8;
     rightPupilDx = -3.5 + Math.cos(spinAngleRad) * 1.1;
     rightPupilDy = 0.9 + Math.sin(spinAngleRad * 2) * 0.8;
-    pupilRadius = 2.05;
-    browTiltDeg = -14; // Furrowed determined blowing brows
-    browLiftY = -2.2;
+    pupilRadius = lerp(2.05, 2.35, spinExit);
+    browTiltDeg = lerp(-14, 12, spinExit); // Furrowed determined blowing brows
+    browLiftY = lerp(-2.2, -1.5, spinExit);
 
     // Puffed-out furry cheeks & rhythmic forceful blowing gusts ("FÚÚÚ!")
     mouthMode = 'blowing';
-    const blowPulse = 0.82 + 0.18 * Math.sin(t * 19);
+    const blowPulse = (0.82 + 0.18 * Math.sin(t * 19)) * (1 - spinExit * 0.5);
     cheekPuff = blowPulse;
     windBlowPower = blowPulse;
     tongueLength = 0;
@@ -2120,7 +2342,7 @@ export function computeCertTailFireChoreography(
     // Flame gets blown sideways and shrinks progressively from 2.95 down to 0.35 as Čertík blows it out!
     const extinguishProgress = smoothstep(0, 1, p);
     flameIntensity =
-      lerp(2.9, 0.35, extinguishProgress) * (0.88 + 0.12 * Math.sin(t * 30));
+      lerp(2.9, 0.25, extinguishProgress) * (0.88 + 0.12 * Math.sin(t * 30));
     smokePuffIntensity = lerp(0.65, 1.0, extinguishProgress);
     sparkCount = Math.max(3, Math.round(lerp(11, 3, extinguishProgress)));
     folkCallout = 'FÚÚÚ!';
@@ -2128,7 +2350,7 @@ export function computeCertTailFireChoreography(
     // PHASE 5: SIZZLING EXTINGUISH & DIZZY RELIEF ("UF!")
     phase = 'sizzling_extinguish';
     const p = (cycleTime - 6.2) / 1.15; // 0..1
-    pitchforkPlanted = 1 - smoothstep(0, 1, Math.max(0, (p - 0.65) / 0.35));
+    pitchforkPlanted = 1 - smoothstep(0, 1, Math.max(0, (p - 0.55) / 0.45));
 
     // Dizzy swirling eyes after spinning & relieved sigh
     eyeScaleX = 1.22;
@@ -2150,7 +2372,7 @@ export function computeCertTailFireChoreography(
 
     torsoBobY = Math.sin(p * Math.PI) * 2.5;
     torsoSwayX = Math.sin(p * Math.PI * 2) * 2.0;
-    torsoTiltDeg = lerp(-6, 2, smoothstep(0, 1, p));
+    torsoTiltDeg = lerp(-6, 0, smoothstep(0, 1, p));
 
     // Tiny sizzling ember on tail tip + big rising dark soot cloud
     flameIntensity = 0.18 + Math.sin(t * 16) * 0.05;
@@ -2164,8 +2386,8 @@ export function computeCertTailFireChoreography(
     const settle = smoothstep(0, 1, p);
     pitchforkPlanted = 0;
 
-    eyeScaleX = lerp(1.22, 1.26, settle);
-    eyeScaleY = lerp(1.16, 1.26, settle);
+    eyeScaleX = lerp(1.22, 1.28, settle);
+    eyeScaleY = lerp(1.16, 1.28, settle);
     const rollAngle = t * 4.8;
     eyeRollAngleRad = rollAngle;
     leftPupilDx = Math.cos(rollAngle) * lerp(1.8, 3.6, settle);
@@ -2173,7 +2395,7 @@ export function computeCertTailFireChoreography(
     rightPupilDx = Math.cos(rollAngle + 0.5) * lerp(1.8, 3.6, settle);
     rightPupilDy = Math.sin(rollAngle + 0.5) * lerp(1.8, 3.6, settle);
     pupilRadius = 2.55;
-    browTiltDeg = lerp(8, -5, settle);
+    browTiltDeg = lerp(12, -4, settle);
     browLiftY = -1.8;
 
     mouthMode = 'grin_tongue';
@@ -2183,30 +2405,45 @@ export function computeCertTailFireChoreography(
     sparkCount = 2;
   }
 
-  // Compute tail base and world-space tail tip coordinates
+  // Compute tail base and world-space tail tip coordinates with smooth blending across phase boundaries
   const tailBaseX = 60 + torsoSwayX * 0.65;
-  const tailBaseY = 114 + torsoBobY + jumpY * 0.75;
+  const tailBaseY = 110 + torsoBobY + jumpY * 0.75;
 
-  let tailTipX = 16;
-  let tailTipY = 86;
+  // Base playful wag pose
+  const wagDeg = Math.sin(t * 3.1) * 10 + Math.cos(t * 1.9) * 4;
+  const wagRad = (wagDeg * Math.PI) / 180;
+  const rawDx = -42;
+  const rawDy = -28;
+  const wagTipX = tailBaseX + rawDx * Math.cos(wagRad) - rawDy * Math.sin(wagRad);
+  const wagTipY = tailBaseY + rawDx * Math.sin(wagRad) + rawDy * Math.cos(wagRad);
 
-  if (phase === 'chasing_and_blowing') {
-    // During tail-chasing spin, tail whips in an energetic ellipse in front/left of Čertík so his wind streams hit the blaze directly!
-    const chaseWave = Math.sin(spinAngleRad);
-    tailTipX = 18 + chaseWave * 10;
-    tailTipY = 88 + Math.cos(spinAngleRad * 2) * 6 + jumpY * 0.5;
-  } else if (phase === 'tail_flare_up' || phase === 'startled_panic') {
-    // Tail jerks upright in alarm so the huge roaring fire is prominently framed
-    tailTipX = 16 + Math.sin(t * 22) * 2.2;
-    tailTipY = 84 + Math.cos(t * 19) * 2.0 + jumpY * 0.6;
-  } else {
-    // Playful sinuous wag
-    const wagDeg = Math.sin(t * 3.1) * 10 + Math.cos(t * 1.9) * 4;
-    const wagRad = (wagDeg * Math.PI) / 180;
-    const rawDx = -42;
-    const rawDy = -28;
-    tailTipX = tailBaseX + rawDx * Math.cos(wagRad) - rawDy * Math.sin(wagRad);
-    tailTipY = tailBaseY + rawDx * Math.sin(wagRad) + rawDy * Math.cos(wagRad);
+  // Alarmed upright blaze pose
+  const alarmTipX = 16 + Math.sin(t * 22) * 2.2;
+  const alarmTipY = 80 + Math.cos(t * 19) * 2.0 + jumpY * 0.6;
+
+  // Frantic tail-chasing ellipse pose
+  const chaseWave = Math.sin(spinAngleRad);
+  const chaseTipX = 18 + chaseWave * 10;
+  const chaseTipY = 84 + Math.cos(spinAngleRad * 2) * 6 + jumpY * 0.5;
+
+  let tailTipX = wagTipX;
+  let tailTipY = wagTipY;
+
+  if (phase === 'tail_flare_up') {
+    const p = (cycleTime - 1.8) / 0.95;
+    const blend = smoothstep(0, 0.45, p);
+    tailTipX = lerp(wagTipX, alarmTipX, blend);
+    tailTipY = lerp(wagTipY, alarmTipY, blend);
+  } else if (phase === 'startled_panic') {
+    const p = (cycleTime - 2.75) / 0.95;
+    const blendToChase = smoothstep(0.75, 1.0, p);
+    tailTipX = lerp(alarmTipX, chaseTipX, blendToChase);
+    tailTipY = lerp(alarmTipY, chaseTipY, blendToChase);
+  } else if (phase === 'chasing_and_blowing') {
+    const p = (cycleTime - 3.7) / 2.5;
+    const blendToWag = smoothstep(0.85, 1.0, p);
+    tailTipX = lerp(chaseTipX, wagTipX, blendToWag);
+    tailTipY = lerp(chaseTipY, wagTipY, blendToWag);
   }
 
   return {
@@ -2270,22 +2507,23 @@ export function drawCertCoverCanvas(
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   // Map 225x252 stage slice (stageX: 655..880, stageY: -48..204)
-  // Local origin (0, 0) corresponds to stageX = 700, stageY = 4
+  // Local origin (0, 0) corresponds to stageX = 691, stageY = 4 so Čert center (73) sits at stageX = 764,
+  // symmetric with Bubák at stageX = 96 (84px outside the 180..680 BUBÁKOV cartouche) and at the exact same vertical height!
   const scaleX = canvasWidth / 225;
   const scaleY = canvasHeight / 252;
   ctx.scale(scaleX, scaleY);
-  ctx.translate(45, 52);
+  ctx.translate(36, 52);
 
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   // ==========================================================================
-  // 1. WATERCOLOR TURF SHADOW & MEADOW GRASS TUFTS
+  // 1. WATERCOLOR TURF SHADOW & BLOOMING MEADOW TURF PEDESTAL (MATCHING BUBÁK HEIGHT)
   // ==========================================================================
   ctx.save();
-  ctx.fillStyle = 'rgba(28, 22, 16, 0.22)';
+  ctx.fillStyle = 'rgba(28, 22, 16, 0.20)';
   ctx.beginPath();
-  ctx.ellipse(74, 165, 38, 7.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(73, COVER_CHARACTER_ALIGNMENT.groundShadowY, 32, 6.8, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Warm fiery ground reflection when tail is blazing
@@ -2293,23 +2531,36 @@ export function drawCertCoverCanvas(
     const glowAlpha = Math.min(0.32, (state.flameIntensity - 1.0) * 0.15);
     ctx.fillStyle = `rgba(249, 115, 22, ${glowAlpha.toFixed(3)})`;
     ctx.beginPath();
-    ctx.ellipse(32, 163, 34, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(32, COVER_CHARACTER_ALIGNMENT.groundTurfY - 2, 34, 8, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Ladovské green turf tufts
+  // Green meadow turf mound matching Bubák's exact groundTurfY = 168
+  ctx.beginPath();
+  ctx.ellipse(73, COVER_CHARACTER_ALIGNMENT.groundTurfY, 26, 6.2, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#22C55E';
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.3;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.ellipse(73, COVER_CHARACTER_ALIGNMENT.groundTurfY - 1, 20, 3.6, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#4ADE80';
+  ctx.fill();
+
+  // Ladovské green turf tufts & 5-petal folk flowers
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.1;
   ctx.beginPath();
-  ctx.moveTo(42, 165);
-  ctx.quadraticCurveTo(38, 157, 34, 162);
-  ctx.moveTo(46, 165);
-  ctx.quadraticCurveTo(45, 156, 49, 161);
-  ctx.moveTo(100, 165);
-  ctx.quadraticCurveTo(104, 156, 109, 161);
-  ctx.moveTo(105, 165);
-  ctx.quadraticCurveTo(111, 158, 115, 163);
+  ctx.moveTo(46, COVER_CHARACTER_ALIGNMENT.groundTurfY);
+  ctx.quadraticCurveTo(42, COVER_CHARACTER_ALIGNMENT.groundTurfY - 8, 38, COVER_CHARACTER_ALIGNMENT.groundTurfY - 3);
+  ctx.moveTo(98, COVER_CHARACTER_ALIGNMENT.groundTurfY);
+  ctx.quadraticCurveTo(102, COVER_CHARACTER_ALIGNMENT.groundTurfY - 8, 106, COVER_CHARACTER_ALIGNMENT.groundTurfY - 3);
   ctx.stroke();
+
+  drawFivePetalFolkFlower(ctx, 56, COVER_CHARACTER_ALIGNMENT.groundTurfY - 2, -t * 0.58, 4.8, '#38BDF8', '#FACC15');
+  drawFivePetalFolkFlower(ctx, 89, COVER_CHARACTER_ALIGNMENT.groundTurfY - 3, t * 0.62, 5.2, '#FACC15', '#E6392B');
   ctx.restore();
 
   // ==========================================================================
@@ -2403,15 +2654,16 @@ export function drawCertCoverCanvas(
     ctx.restore();
   };
 
-  if (state.pitchforkPlanted > 0.5) {
-    // Pitchfork planted upright in the turf to the right of Čertík while he panics & chases his tail
+  // When pitchfork is fully planted in the turf (during startled_panic & chasing_and_blowing),
+  // draw it in the background layer; during transition (0 <= pitchforkPlanted < 0.85) it is drawn in foreground hand layer
+  if (state.pitchforkPlanted >= 0.85) {
     const plantedWobble =
       state.phase === 'startled_panic'
         ? Math.sin(t * 28) * 3.5
         : state.phase === 'chasing_and_blowing'
           ? Math.sin(t * 16) * 1.8
           : 0;
-    drawIronPitchfork(118, 66, 6, plantedWobble);
+    drawIronPitchfork(116, 70, 6, plantedWobble);
   }
 
   // ==========================================================================
@@ -2587,22 +2839,22 @@ export function drawCertCoverCanvas(
   }
 
   // ==========================================================================
-  // 4. TWO-JOINT CLOVEN GOAT LEGS (GROUNDED & PRANCING DURING SPIN)
+  // 4. TWO-JOINT CLOVEN GOAT LEGS (GROUNDED AT COVER_CHARACTER_ALIGNMENT.groundTurfY = 168)
   // ==========================================================================
-  const hipCenterX = 72 + state.torsoSwayX * 0.55;
-  const hipCenterY = 115 + state.torsoBobY + state.jumpY;
+  const hipCenterX = 73 + state.torsoSwayX * 0.55;
+  const hipCenterY = 112 + state.torsoBobY + state.jumpY;
 
   const leftHipX = hipCenterX - 8;
   const leftHipY = hipCenterY;
-  const leftHoofX = 59 + Math.sin(state.spinAngleRad) * 6;
-  const leftHoofY = 162 - state.leftHoofLiftY + state.jumpY * 0.35;
+  const leftHoofX = 60 + Math.sin(state.spinAngleRad) * 6;
+  const leftHoofY = (COVER_CHARACTER_ALIGNMENT.groundTurfY - 2) - state.leftHoofLiftY + state.jumpY * 0.35;
   const leftKneeX = (leftHipX + leftHoofX) * 0.5 - 5.5;
   const leftKneeY = (leftHipY + leftHoofY) * 0.5 - 2;
 
   const rightHipX = hipCenterX + 9;
   const rightHipY = hipCenterY;
-  const rightHoofX = 85 - Math.sin(state.spinAngleRad) * 6;
-  const rightHoofY = 162 - state.rightHoofLiftY + state.jumpY * 0.35;
+  const rightHoofX = 86 - Math.sin(state.spinAngleRad) * 6;
+  const rightHoofY = (COVER_CHARACTER_ALIGNMENT.groundTurfY - 2) - state.rightHoofLiftY + state.jumpY * 0.35;
   const rightKneeX = (rightHipX + rightHoofX) * 0.5 + 5.5;
   const rightKneeY = (rightHipY + rightHoofY) * 0.5 - 2;
 
@@ -2679,20 +2931,23 @@ export function drawCertCoverCanvas(
     ctx.lineWidth = 2.0;
     ctx.setLineDash([7, 5]);
     ctx.beginPath();
-    ctx.ellipse(72, 156, 26, 6.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(73, COVER_CHARACTER_ALIGNMENT.groundTurfY - 6, 26, 6.5, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
   }
 
   // ==========================================================================
-  // 5. SHAGGY BLACK FURRY TORSO & PELVIS (WITH SPIN MOTION)
+  // 5. SHAGGY BLACK FURRY TORSO & PELVIS (ALIGNED AT COVER_CHARACTER_ALIGNMENT.torsoCenterY = 92)
   // ==========================================================================
   ctx.save();
-  ctx.translate(73 + state.torsoSwayX, 96 + state.torsoBobY + state.jumpY);
+  ctx.translate(
+    73 + state.torsoSwayX,
+    COVER_CHARACTER_ALIGNMENT.torsoCenterY + state.torsoBobY + state.jumpY
+  );
   ctx.rotate((state.torsoTiltDeg * Math.PI) / 180);
 
-  // Shaggy pelvis & belly silhouette
+  // Shaggy pelvis & belly silhouette (spanning y = -24..+24 around torsoCenterY = 92)
   ctx.fillStyle = '#221915';
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.8;
@@ -2702,27 +2957,35 @@ export function drawCertCoverCanvas(
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.moveTo(-17, -20);
-  ctx.bezierCurveTo(-24, -4, -22, 14, -13, 22);
+  ctx.moveTo(-17, -24);
+  ctx.bezierCurveTo(-24, -6, -22, 14, -13, 22);
   ctx.bezierCurveTo(-4, 27, 6, 27, 15, 22);
-  ctx.bezierCurveTo(22, 14, 24, -4, 17, -20);
+  ctx.bezierCurveTo(22, 14, 24, -6, 17, -24);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Ladovské curly fur hatch marks on chest & belly
+  // Shaggy furry neck connecting shoulders (y = -24) up to head base (y = -34)
+  ctx.beginPath();
+  ctx.roundRect(-8.5, -35, 17, 14, 4);
+  ctx.fill();
+  ctx.stroke();
+
+  // Ladovské curly fur hatch marks on chest & belly (shift horizontally with bodyTurnDir during spin!)
+  const spinShiftX =
+    state.phase === 'chasing_and_blowing' ? (1 - state.bodyTurnDir) * 3.5 : 0;
   ctx.strokeStyle = '#4D3B31';
   ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(-6, -6, 4.2, 0.2, Math.PI - 0.2);
-  ctx.moveTo(9, -6);
-  ctx.arc(5, -6, 4.2, 0.2, Math.PI - 0.2);
-  ctx.moveTo(-2, 4);
-  ctx.arc(-6, 4, 4.5, 0.2, Math.PI - 0.2);
-  ctx.moveTo(10, 5);
-  ctx.arc(6, 5, 4.5, 0.2, Math.PI - 0.2);
-  ctx.moveTo(4, 14);
-  ctx.arc(0, 14, 4.5, 0.2, Math.PI - 0.2);
+  ctx.arc(-6 + spinShiftX, -8, 4.2, 0.2, Math.PI - 0.2);
+  ctx.moveTo(9 + spinShiftX, -8);
+  ctx.arc(5 + spinShiftX, -8, 4.2, 0.2, Math.PI - 0.2);
+  ctx.moveTo(-2 + spinShiftX, 3);
+  ctx.arc(-6 + spinShiftX, 3, 4.5, 0.2, Math.PI - 0.2);
+  ctx.moveTo(10 + spinShiftX, 4);
+  ctx.arc(6 + spinShiftX, 4, 4.5, 0.2, Math.PI - 0.2);
+  ctx.moveTo(4 + spinShiftX, 14);
+  ctx.arc(0 + spinShiftX, 14, 4.5, 0.2, Math.PI - 0.2);
   ctx.stroke();
 
   // Folksy hemp rope belt with brass buckle around Čertík's waist
@@ -2734,11 +2997,13 @@ export function drawCertCoverCanvas(
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = '#FACC15';
-  ctx.beginPath();
-  ctx.roundRect(-4.5, 7.8, 9, 7.8, 1.8);
-  ctx.fill();
-  ctx.stroke();
+  if (state.bodyTurnDir >= -0.25) {
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.roundRect(-4.5 + spinShiftX * 1.2, 7.8, 9, 7.8, 1.8);
+    ctx.fill();
+    ctx.stroke();
+  }
 
   // ==========================================================================
   // 6. ARMS & HANDS (GRIPPING PITCHFORK, GRABBING HEAD IN PANIC, OR FANNING)
@@ -2748,70 +3013,90 @@ export function drawCertCoverCanvas(
     ctx.strokeStyle = ink;
     ctx.lineWidth = 9.5;
     ctx.beginPath();
-    ctx.moveTo(-15, -14);
-    ctx.quadraticCurveTo(-30, -28, -20, -44);
-    ctx.moveTo(15, -14);
-    ctx.quadraticCurveTo(30, -28, 20, -44);
+    ctx.moveTo(-15, -18);
+    ctx.quadraticCurveTo(-31, -34, -20, -54);
+    ctx.moveTo(15, -18);
+    ctx.quadraticCurveTo(31, -34, 20, -54);
     ctx.stroke();
 
     ctx.strokeStyle = '#2B201B';
     ctx.lineWidth = 5.8;
     ctx.beginPath();
-    ctx.moveTo(-15, -14);
-    ctx.quadraticCurveTo(-30, -28, -20, -44);
-    ctx.moveTo(15, -14);
-    ctx.quadraticCurveTo(30, -28, 20, -44);
+    ctx.moveTo(-15, -18);
+    ctx.quadraticCurveTo(-31, -34, -20, -54);
+    ctx.moveTo(15, -18);
+    ctx.quadraticCurveTo(31, -34, 20, -54);
     ctx.stroke();
+
+    // Clawed devil paws on temples
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.arc(-20, -54, 4.6, 0, Math.PI * 2);
+    ctx.arc(20, -54, 4.6, 0, Math.PI * 2);
+    ctx.fill();
   } else if (state.phase === 'chasing_and_blowing') {
     // Arms pumping & fanning frantically while spinning and blowing out the tail!
     const pump = Math.sin(t * 24) * 8;
     ctx.strokeStyle = ink;
     ctx.lineWidth = 9.5;
     ctx.beginPath();
-    ctx.moveTo(-15, -12);
-    ctx.quadraticCurveTo(-30, -6 + pump, -36, 4 - pump);
-    ctx.moveTo(15, -12);
-    ctx.quadraticCurveTo(28, -8 - pump, 22, 6 + pump);
+    ctx.moveTo(-15, -16);
+    ctx.quadraticCurveTo(-30, -10 + pump, -36, 2 - pump);
+    ctx.moveTo(15, -16);
+    ctx.quadraticCurveTo(28, -12 - pump, 22, 4 + pump);
     ctx.stroke();
 
     ctx.strokeStyle = '#2B201B';
     ctx.lineWidth = 5.8;
     ctx.beginPath();
-    ctx.moveTo(-15, -12);
-    ctx.quadraticCurveTo(-30, -6 + pump, -36, 4 - pump);
-    ctx.moveTo(15, -12);
-    ctx.quadraticCurveTo(28, -8 - pump, 22, 6 + pump);
+    ctx.moveTo(-15, -16);
+    ctx.quadraticCurveTo(-30, -10 + pump, -36, 2 - pump);
+    ctx.moveTo(15, -16);
+    ctx.quadraticCurveTo(28, -12 - pump, 22, 4 + pump);
     ctx.stroke();
+
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.arc(-36, 2 - pump, 4.5, 0, Math.PI * 2);
+    ctx.arc(22, 4 + pump, 4.5, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     // Left arm gesturing playfully (or wiping brow during sizzling_extinguish)
-    const wipeLift = state.phase === 'sizzling_extinguish' ? -24 : 0;
+    const wipeLift = state.phase === 'sizzling_extinguish' ? -28 : 0;
     ctx.strokeStyle = ink;
     ctx.lineWidth = 9.5;
     ctx.beginPath();
-    ctx.moveTo(-15, -12);
-    ctx.quadraticCurveTo(-28, -2 + wipeLift * 0.6, -24, 12 + wipeLift);
+    ctx.moveTo(-15, -16);
+    ctx.quadraticCurveTo(-28, -6 + wipeLift * 0.6, -24, 10 + wipeLift);
     ctx.stroke();
 
     ctx.strokeStyle = '#2B201B';
     ctx.lineWidth = 5.8;
     ctx.beginPath();
-    ctx.moveTo(-15, -12);
-    ctx.quadraticCurveTo(-28, -2 + wipeLift * 0.6, -24, 12 + wipeLift);
+    ctx.moveTo(-15, -16);
+    ctx.quadraticCurveTo(-28, -6 + wipeLift * 0.6, -24, 10 + wipeLift);
     ctx.stroke();
+
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.arc(-24, 10 + wipeLift, 4.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // ==========================================================================
   // 7. DEVIL HEAD, CURVED CRIMSON HORNS, BIG ROLLING EYES & PUFFED CHEEKS
+  //    Aligned at COVER_CHARACTER_ALIGNMENT.headCenterY = 42 (y = -50 relative to torsoCenterY = 92)
   // ==========================================================================
   ctx.save();
-  // Head sits at (0, -37) relative to torso center
+  const headOffsetY =
+    COVER_CHARACTER_ALIGNMENT.headCenterY - COVER_CHARACTER_ALIGNMENT.torsoCenterY; // -50
   const headLookOffsetX =
     state.phase === 'chasing_and_blowing' ||
     state.phase === 'tail_flare_up' ||
     state.phase === 'startled_panic'
       ? -3.5
       : Math.sin(t * 2.5) * 1.4;
-  ctx.translate(headLookOffsetX, -37);
+  ctx.translate(headLookOffsetX, headOffsetY);
 
   // Shaggy goat ears sticking out from sides of head
   const earWiggle = Math.sin(t * 8) * 4;
@@ -2852,21 +3137,21 @@ export function drawCertCoverCanvas(
   ctx.fill();
   ctx.restore();
 
-  // Curved Crimson Devil Horns with gold-ribbed rings
+  // Curved Crimson Devil Horns with gold-ribbed rings (tips reach localY = 9, matching Bubák's straw tufts at localY = 9!)
   const hornTremble =
     state.phase === 'startled_panic' ? Math.sin(t * 38) * 3.5 : Math.sin(t * 3.5) * 1.8;
 
   // Left horn
   ctx.save();
-  ctx.translate(-9, -15);
+  ctx.translate(-9, -14);
   ctx.rotate(((-8 - hornTremble) * Math.PI) / 180);
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.3;
   ctx.beginPath();
   ctx.moveTo(-5, 2);
-  ctx.bezierCurveTo(-12, -12, -21, -22, -24, -29);
-  ctx.bezierCurveTo(-14, -25, -4, -14, 3, -1);
+  ctx.bezierCurveTo(-11, -8, -18, -14, -21, -19);
+  ctx.bezierCurveTo(-12, -16, -4, -9, 3, -1);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -2874,26 +3159,26 @@ export function drawCertCoverCanvas(
   ctx.strokeStyle = '#FEF08A';
   ctx.lineWidth = 1.3;
   ctx.beginPath();
-  ctx.moveTo(-6, -5);
-  ctx.lineTo(-1, -7);
-  ctx.moveTo(-11, -12);
-  ctx.lineTo(-6, -14);
-  ctx.moveTo(-16, -19);
-  ctx.lineTo(-12, -21);
+  ctx.moveTo(-6, -4);
+  ctx.lineTo(-1, -5);
+  ctx.moveTo(-10, -9);
+  ctx.lineTo(-5, -10);
+  ctx.moveTo(-14, -13);
+  ctx.lineTo(-10, -15);
   ctx.stroke();
   ctx.restore();
 
   // Right horn
   ctx.save();
-  ctx.translate(9, -15);
+  ctx.translate(9, -14);
   ctx.rotate(((8 + hornTremble) * Math.PI) / 180);
   ctx.fillStyle = '#DC2626';
   ctx.strokeStyle = ink;
   ctx.lineWidth = 2.3;
   ctx.beginPath();
   ctx.moveTo(-3, -1);
-  ctx.bezierCurveTo(4, -14, 14, -25, 24, -29);
-  ctx.bezierCurveTo(21, -22, 12, -12, 5, 2);
+  ctx.bezierCurveTo(4, -9, 12, -16, 21, -19);
+  ctx.bezierCurveTo(18, -14, 11, -8, 5, 2);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
@@ -2901,12 +3186,12 @@ export function drawCertCoverCanvas(
   ctx.strokeStyle = '#FEF08A';
   ctx.lineWidth = 1.3;
   ctx.beginPath();
-  ctx.moveTo(1, -7);
-  ctx.lineTo(6, -5);
-  ctx.moveTo(6, -14);
-  ctx.lineTo(11, -12);
-  ctx.moveTo(12, -21);
-  ctx.lineTo(16, -19);
+  ctx.moveTo(1, -5);
+  ctx.lineTo(6, -4);
+  ctx.moveTo(5, -10);
+  ctx.lineTo(10, -9);
+  ctx.moveTo(10, -15);
+  ctx.lineTo(14, -13);
   ctx.stroke();
   ctx.restore();
 
@@ -3036,8 +3321,9 @@ export function drawCertCoverCanvas(
     ctx.restore();
   };
 
-  drawGooglyEye(-7.8, -3.5, state.leftPupilDx, state.leftPupilDy, true);
-  drawGooglyEye(7.8, -3.5, state.rightPupilDx, state.rightPupilDy, false);
+  // Eyes positioned at -7.5 relative to headCenterY = 42 -> localY = 34.5, matching Bubák's eye level (localY = 34)!
+  drawGooglyEye(-7.8, -7.5, state.leftPupilDx, state.leftPupilDy, true);
+  drawGooglyEye(7.8, -7.5, state.rightPupilDx, state.rightPupilDy, false);
 
   // Red devilish nose
   ctx.fillStyle = '#DC2626';
@@ -3159,31 +3445,38 @@ export function drawCertCoverCanvas(
   ctx.restore(); // end head group
 
   // ==========================================================================
-  // 8. RIGHT ARM & HELD PITCHFORK (WHEN NOT PLANTED IN TURF)
+  // 8. RIGHT ARM & HELD/PLANTING PITCHFORK (SMOOTHLY INTERPOLATED, NEVER MISSING!)
   // ==========================================================================
-  if (state.pitchforkPlanted <= 0.5) {
-    const handX = 24 + Math.sin(t * 2.5) * 2.0;
-    const handY = -28 + Math.cos(t * 5.0) * 1.8;
+  if (state.phase !== 'startled_panic' && state.phase !== 'chasing_and_blowing') {
+    const baseHandX = 24 + Math.sin(t * 2.5) * 2.0;
+    const baseHandY = -22 + Math.cos(t * 5.0) * 1.8;
+    const plantedHandX = 43 - state.torsoSwayX;
+    const plantedHandY = -22 - state.torsoBobY;
 
-    // Right arm from shoulder (15, -14) to hand
+    const handX = lerp(baseHandX, plantedHandX, state.pitchforkPlanted);
+    const handY = lerp(baseHandY, plantedHandY, state.pitchforkPlanted);
+
+    // Right arm from shoulder (15, -16) to hand
     ctx.strokeStyle = ink;
     ctx.lineWidth = 9.5;
     ctx.beginPath();
-    ctx.moveTo(15, -14);
+    ctx.moveTo(15, -16);
     ctx.quadraticCurveTo(24, -18, handX, handY);
     ctx.stroke();
 
     ctx.strokeStyle = '#2B201B';
     ctx.lineWidth = 5.8;
     ctx.beginPath();
-    ctx.moveTo(15, -14);
+    ctx.moveTo(15, -16);
     ctx.quadraticCurveTo(24, -18, handX, handY);
     ctx.stroke();
 
-    const forkSwayDeg = -6 + Math.sin(t * 2.5) * 3.5;
-    drawIronPitchfork(handX, handY, forkSwayDeg, 0);
+    if (state.pitchforkPlanted < 0.85) {
+      const forkSwayDeg = lerp(-6 + Math.sin(t * 2.5) * 3.5, 6, state.pitchforkPlanted);
+      drawIronPitchfork(handX, handY, forkSwayDeg, 0);
+    }
 
-    // Clawed devil fist clutching the shaft
+    // Clawed devil fist clutching the shaft (or resting on hip when planted)
     ctx.fillStyle = ink;
     ctx.beginPath();
     ctx.ellipse(handX, handY, 5.0, 5.4, 0, 0, Math.PI * 2);
@@ -3208,7 +3501,8 @@ export function drawCertCoverCanvas(
   if (state.windBlowPower > 0.08) {
     ctx.save();
     const mouthOriginX = 56 + state.torsoSwayX * 0.6;
-    const mouthOriginY = 66 + state.torsoBobY + state.jumpY;
+    const mouthOriginY =
+      COVER_CHARACTER_ALIGNMENT.headCenterY + 8 + state.torsoBobY + state.jumpY; // 50 + bob + jump
     const targetX = tailTipX + 2;
     const targetY = tailTipY - 10;
 
@@ -3321,10 +3615,274 @@ export function drawCertCoverCanvas(
 }
 
 /**
+ * 6.8-second cycle for the central purple ugly-cute Bubák head holding a Czech povidlová buchta
+ * ("fialová ošklivá roztomilá hlava bubáka která drží v ruce buchtu a občas vykoukne a zase zaleze"):
+ * 1. [0.00s .. 2.80s] admiring_buchta: Fully peeked out over the top center of the BUBÁKOV cartouche,
+ *    proudly holding & waving a golden povidlová buchta in his right hand, licking his crooked
+ *    snaggletooth grin while his big lopsided googly eyes gaze at the buchta.
+ * 2. [2.80s .. 3.75s] ducking_back: Quick startled glance forward, clutches the buchta, and slides
+ *    down behind the top edge of the cartouche ("zase zaleze").
+ * 3. [3.75s .. 5.45s] hidden_behind_sign: Tucked completely out of sight behind the signboard;
+ *    near the end, his stubby purple clawed paw grabs the top edge of the cartouche first.
+ * 4. [5.45s .. 6.80s] peeking_out: Cautiously pokes his big wonky eyes over the rim looking left & right,
+ *    then pops all the way up with a springy bounce ("občas vykoukne") raising his steaming buchta!
+ */
+export const PEEKING_BUBAK_CYCLE_SECONDS = 6.8;
+
+export type PeekingBubakPhase =
+  | 'admiring_buchta'
+  | 'ducking_back'
+  | 'hidden_behind_sign'
+  | 'peeking_out';
+
+export interface PeekingBubakChoreographyState {
+  phase: PeekingBubakPhase;
+  cycleTime: number;
+  /** 0 = completely hidden behind cartouche top edge (y=18), 1 = fully peeked out above cartouche */
+  peekProgress: number;
+  /** Vertical offset in SVG units (0 = fully up, +60 = hidden below y=18 clip line) */
+  headOffsetY: number;
+  /** Subtle horizontal sway while peeking */
+  headOffsetX: number;
+  /** Head tilt in degrees */
+  headTiltDeg: number;
+  /** Squash & stretch scales for comic bounce when popping up / ducking down */
+  headScaleX: number;
+  headScaleY: number;
+  /** Eye pupil offsets (looking left/right when peeking, then gazing at the buchta) */
+  leftPupilDx: number;
+  leftPupilDy: number;
+  rightPupilDx: number;
+  rightPupilDy: number;
+  eyeScale: number;
+  /** 0..1 how far the cute pink tongue sticks out licking lips toward the buchta */
+  tongueOut: number;
+  /** Right arm & buchta vertical offset & wave angle */
+  buchtaOffsetY: number;
+  buchtaWaveDeg: number;
+  /** Left paw grip vertical offset & scale on the cartouche rim */
+  leftPawOffsetY: number;
+  leftPawScale: number;
+  /** Ear wiggle angle in degrees */
+  earWiggleDeg: number;
+  /** Steam opacity above the warm baked buchta */
+  steamOpacity: number;
+}
+
+export function computePeekingBubakChoreography(
+  t: number,
+  manualPeekStart: number = -100,
+  hoverMix: number = 0
+): PeekingBubakChoreographyState {
+  const manualElapsed = t - manualPeekStart;
+  const isManualActive = manualElapsed >= 0 && manualElapsed < 3.6;
+
+  // If user clicked the peeking Bubák, remap cycleTime into an excited pop-up & buchta wave
+  const cycleTime = isManualActive
+    ? manualElapsed < 0.45
+      ? 6.1 + (manualElapsed / 0.45) * 0.7
+      : ((manualElapsed - 0.45) / 3.15) * 2.75
+    : ((t % PEEKING_BUBAK_CYCLE_SECONDS) + PEEKING_BUBAK_CYCLE_SECONDS) %
+      PEEKING_BUBAK_CYCLE_SECONDS;
+
+  let phase: PeekingBubakPhase = 'admiring_buchta';
+  let peekProgress = 1;
+  let headOffsetY = 0;
+  let headOffsetX = 0;
+  let headTiltDeg = 0;
+  let headScaleX = 1;
+  let headScaleY = 1;
+  let leftPupilDx = 2.2;
+  let leftPupilDy = -0.3;
+  let rightPupilDx = 1.8;
+  let rightPupilDy = -0.2;
+  let eyeScale = 1;
+  let tongueOut = 0.75;
+  let buchtaOffsetY = 0;
+  let buchtaWaveDeg = 0;
+  let leftPawOffsetY = 0;
+  let leftPawScale = 1;
+  let earWiggleDeg = Math.sin(t * 8.5) * 5;
+  let steamOpacity = 0.9;
+
+  if (cycleTime < 2.8) {
+    // PHASE 1: ADMIRING & WAVING THE POVIDLOVÁ BUCHTA
+    phase = 'admiring_buchta';
+    peekProgress = 1;
+    headOffsetY = Math.sin(t * 4.2) * 1.6;
+    headOffsetX = Math.sin(t * 2.4) * 1.8;
+    headTiltDeg = -3.2 + Math.sin(t * 3.4) * 4.5;
+    headScaleX = 1 + Math.sin(t * 6.4) * 0.025;
+    headScaleY = 1 - Math.sin(t * 6.4) * 0.025;
+
+    // Glances at the player briefly in the middle of admiring the buchta
+    const lookAtPlayer =
+      cycleTime > 1.25 && cycleTime < 1.95
+        ? Math.sin(((cycleTime - 1.25) / 0.7) * Math.PI)
+        : 0;
+    leftPupilDx = lerp(2.5, 0, lookAtPlayer);
+    leftPupilDy = lerp(-0.3, 0.3, lookAtPlayer);
+    rightPupilDx = lerp(1.9, 0, lookAtPlayer);
+    rightPupilDy = lerp(-0.2, 0.3, lookAtPlayer);
+    eyeScale = 1 + Math.sin(t * 5.0) * 0.04;
+
+    tongueOut = 0.55 + 0.45 * Math.max(0, Math.sin(t * 6.2));
+    buchtaOffsetY = Math.sin(t * 5.2 - 0.4) * 2.2;
+    buchtaWaveDeg = Math.sin(t * 6.0) * 9.5;
+    leftPawOffsetY = 0;
+    leftPawScale = 1;
+    earWiggleDeg = Math.sin(t * 9.5) * 6.5;
+    steamOpacity = 0.92;
+  } else if (cycleTime < 3.75) {
+    // PHASE 2: STARTLED GLANCE & DUCKING BACK BEHIND CARTOUCHE ("zase zaleze")
+    phase = 'ducking_back';
+    const p = (cycleTime - 2.8) / 0.95; // 0..1
+
+    if (p < 0.26) {
+      // Quick comic anticipation hop before ducking down
+      const hop = Math.sin((p / 0.26) * Math.PI);
+      peekProgress = 1;
+      headOffsetY = -3.8 * hop;
+      headScaleX = 1 - 0.05 * hop;
+      headScaleY = 1 + 0.06 * hop;
+      leftPupilDx = 0;
+      leftPupilDy = 0;
+      rightPupilDx = 0;
+      rightPupilDy = 0;
+      eyeScale = 1 + 0.16 * hop;
+      tongueOut = Math.max(0, 1 - p * 4);
+      buchtaOffsetY = -2.5 * hop;
+      buchtaWaveDeg = -8 * hop;
+      leftPawOffsetY = 0;
+      leftPawScale = 1;
+      steamOpacity = 0.85;
+    } else {
+      const slideP = smoothstep(0.26, 1.0, p);
+      peekProgress = 1 - slideP;
+      headOffsetY = lerp(0, 66, slideP);
+      headTiltDeg = lerp(0, 6, slideP);
+      headScaleX = lerp(1, 1.06, slideP);
+      headScaleY = lerp(1, 0.92, slideP);
+      leftPupilDx = 0;
+      leftPupilDy = -1.6;
+      rightPupilDx = 0;
+      rightPupilDy = -1.4;
+      eyeScale = 1.1;
+      tongueOut = 0;
+      buchtaOffsetY = lerp(0, 64, slideP);
+      buchtaWaveDeg = lerp(-4, -18, slideP);
+      const pawSlide = smoothstep(0.55, 1.0, p);
+      leftPawOffsetY = lerp(0, 14, pawSlide);
+      leftPawScale = 1 - pawSlide;
+      steamOpacity = 1 - slideP;
+    }
+  } else if (cycleTime < 5.45) {
+    // PHASE 3: HIDDEN BEHIND THE BUBÁKOV SIGNBOARD
+    phase = 'hidden_behind_sign';
+    const p = (cycleTime - 3.75) / 1.7; // 0..1
+    peekProgress = 0;
+    headOffsetY = 66;
+    buchtaOffsetY = 64;
+    tongueOut = 0;
+    steamOpacity = 0;
+
+    // Near the end of hiding, his stubby purple left paw reaches up to grip the top rim first!
+    if (p > 0.72) {
+      const gripP = smoothstep(0.72, 1.0, p);
+      leftPawOffsetY = lerp(14, 0, gripP);
+      leftPawScale = gripP;
+    } else {
+      leftPawOffsetY = 14;
+      leftPawScale = 0;
+    }
+  } else {
+    // PHASE 4: CAUTIOUSLY PEEKING OUT & POPPING UP WITH BUCHTA ("občas vykoukne")
+    phase = 'peeking_out';
+    const p = (cycleTime - 5.45) / 1.35; // 0..1
+    leftPawOffsetY = 0;
+    leftPawScale = 1;
+
+    if (p < 0.46) {
+      // Cautious half-peek: tattered hat & eyes poke just above the top edge of the cartouche looking left & right
+      const halfP = smoothstep(0, 0.46, p);
+      peekProgress = halfP * 0.45;
+      headOffsetY = lerp(66, 15, halfP);
+      const lookDir = Math.sin((p / 0.46) * Math.PI * 2);
+      leftPupilDx = lookDir * 2.6;
+      leftPupilDy = -0.8;
+      rightPupilDx = lookDir * 2.1;
+      rightPupilDy = -0.6;
+      eyeScale = 1.12;
+      tongueOut = 0;
+      buchtaOffsetY = lerp(64, 32, halfP);
+      buchtaWaveDeg = -10;
+      steamOpacity = halfP * 0.35;
+    } else {
+      // Coast is clear! Pops all the way up with a springy overshoot and raises the buchta!
+      const popP = (p - 0.46) / 0.54; // 0..1
+      const easePop = smoothstep(0, 1, popP);
+      const overshoot = Math.sin(popP * Math.PI) * 4.5 * (1 - popP * 0.4);
+      peekProgress = 0.45 + easePop * 0.55;
+      headOffsetY = lerp(15, 0, easePop) - overshoot;
+      headTiltDeg = lerp(0, -3.2, easePop);
+      headScaleX = 1 - overshoot * 0.014;
+      headScaleY = 1 + overshoot * 0.018;
+      leftPupilDx = lerp(0, 2.4, easePop);
+      leftPupilDy = -0.3;
+      rightPupilDx = lerp(0, 1.8, easePop);
+      rightPupilDy = -0.2;
+      eyeScale = 1.05;
+      tongueOut = easePop * 0.75;
+      buchtaOffsetY = lerp(32, 0, easePop) - overshoot * 1.15;
+      buchtaWaveDeg = Math.sin(popP * Math.PI * 2) * 11;
+      steamOpacity = lerp(0.35, 0.92, easePop);
+    }
+  }
+
+  // Smoothly blend toward full peek if hovered
+  if (hoverMix > 0.01) {
+    const h = smoothstep(0, 1, Math.min(1, hoverMix));
+    peekProgress = lerp(peekProgress, 1, h);
+    headOffsetY = lerp(headOffsetY, Math.sin(t * 5.0) * 1.8, h);
+    buchtaOffsetY = lerp(buchtaOffsetY, Math.sin(t * 6.0 - 0.3) * 2.4, h);
+    buchtaWaveDeg = lerp(buchtaWaveDeg, Math.sin(t * 7.5) * 12, h);
+    leftPawOffsetY = lerp(leftPawOffsetY, 0, h);
+    leftPawScale = lerp(leftPawScale, 1, h);
+    tongueOut = lerp(tongueOut, 0.85, h);
+    steamOpacity = lerp(steamOpacity, 0.95, h);
+  }
+
+  return {
+    phase,
+    cycleTime,
+    peekProgress,
+    headOffsetY,
+    headOffsetX,
+    headTiltDeg,
+    headScaleX,
+    headScaleY,
+    leftPupilDx,
+    leftPupilDy,
+    rightPupilDx,
+    rightPupilDy,
+    eyeScale,
+    tongueOut,
+    buchtaOffsetY,
+    buchtaWaveDeg,
+    leftPawOffsetY,
+    leftPawScale,
+    earWiggleDeg,
+    steamOpacity,
+  };
+}
+
+/**
  * Authentic Josef Lada title banner inspired directly by his classic book covers,
  * Easter postcard vignettes, and zincography floral motifs ("zinkografie"):
  *
  * Features:
+ * - Central purple ugly-cute Bubák head holding a steaming Czech povidlová buchta that
+ *   periodically peeks out from behind the top center of the BUBÁKOV signboard and ducks back in
  * - Silky-smooth 60 FPS continuous 2D Canvas animation for Bubák (Scarecrow) on the left
  *   with a mischievous black-and-white crow (vrána šedivka) pestering him, tauntingly
  *   landing on his head, and triggering Bubák's boiling annoyance and angry scream
@@ -3357,30 +3915,41 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
   interactiveBubak = true,
 }) => {
   const headerRef = useRef<HTMLElement | null>(null);
-  const starWrapRef = useRef<HTMLDivElement | null>(null);
   const bubakCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const certCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const letterGroupRefs = useRef<(SVGGElement | null)[]>([]);
   const letterCarkaRef = useRef<SVGGElement | null>(null);
 
+  // Refs for the central peeking purple ugly-cute Bubák head & buchta (updated at 60 FPS)
+  const peekingHeadGroupRef = useRef<SVGGElement | null>(null);
+  const peekingBuchtaArmRef = useRef<SVGGElement | null>(null);
+  const peekingLeftPawRef = useRef<SVGGElement | null>(null);
+  const peekingLeftPupilRef = useRef<SVGGElement | null>(null);
+  const peekingRightPupilRef = useRef<SVGGElement | null>(null);
+  const peekingTongueRef = useRef<SVGGElement | null>(null);
+  const peekingLeftEarRef = useRef<SVGGElement | null>(null);
+  const peekingRightEarRef = useRef<SVGGElement | null>(null);
+  const peekingSteamRef = useRef<SVGGElement | null>(null);
+
   const isBubakHoveredRef = useRef<boolean>(false);
   const isCertHoveredRef = useRef<boolean>(false);
+  const isPeekingBubakHoveredRef = useRef<boolean>(false);
 
   // Timestamps (in animTime seconds) for click-triggered special animations
   const scareStartRef = useRef<number>(-100);
   const certStompStartRef = useRef<number>(-100);
-  const starSpinBurstRef = useRef<number>(-100);
+  const peekingBubakClickStartRef = useRef<number>(-100);
   const letterJumpRef = useRef<number[]>([-100, -100, -100, -100, -100, -100, -100]);
   const animTimeRef = useRef<number>(0);
 
   // Smoothly interpolated hover weights (0..1) to prevent any sudden jumps on mouse enter/leave
   const bubakHoverMixRef = useRef<number>(0);
   const certHoverMixRef = useRef<number>(0);
+  const peekingBubakHoverMixRef = useRef<number>(0);
 
   useEffect(() => {
     let rafId = 0;
     let isRunning = false;
-    let isVisible = true;
     let lastNow = performance.now();
 
     const syncOneCanvasBackingSize = (canvas: HTMLCanvasElement | null) => {
@@ -3388,8 +3957,9 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
       const rect = canvas.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const targetW = Math.max(180, Math.min(540, Math.round(rect.width * dpr)));
-        const targetH = Math.max(200, Math.min(600, Math.round(rect.height * dpr)));
+        // Lock backing buffer strictly to 225:252 aspect ratio so neither character ever stretches vertically or horizontally
+        const targetW = Math.max(225, Math.min(450, Math.round(rect.width * dpr)));
+        const targetH = Math.round((targetW * 252) / 225);
         if (canvas.width !== targetW || canvas.height !== targetH) {
           canvas.width = targetW;
           canvas.height = targetH;
@@ -3435,17 +4005,69 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
         }
       }
 
-      // 2. Direct 60 FPS DOM transform update for the top 5-pointed folk star (zero React re-render)
-      const starEl = starWrapRef.current;
-      if (starEl) {
-        const starBurstElapsed = timeSec - starSpinBurstRef.current;
-        const starBurstEnv =
-          starBurstElapsed >= 0 && starBurstElapsed < 1.2
-            ? Math.sin((starBurstElapsed / 1.2) * Math.PI) * (1 - starBurstElapsed / 1.2)
-            : 0;
-        const starAngleDeg = timeSec * 38 + Math.sin(timeSec * 2.6) * 18 + starBurstEnv * 360;
-        const starScale = 1 + Math.sin(timeSec * 3.4) * 0.09 + starBurstEnv * 0.28;
-        starEl.style.transform = `rotate(${starAngleDeg.toFixed(1)}deg) scale(${starScale.toFixed(3)})`;
+      // 2. Direct 60 FPS DOM transform update for the central peeking purple ugly-cute Bubák head & buchta
+      const peekState = computePeekingBubakChoreography(
+        timeSec,
+        peekingBubakClickStartRef.current,
+        peekingBubakHoverMixRef.current
+      );
+      if (peekingHeadGroupRef.current) {
+        peekingHeadGroupRef.current.setAttribute(
+          'transform',
+          `translate(${(430 + peekState.headOffsetX).toFixed(2)}, ${(18 + peekState.headOffsetY).toFixed(2)}) rotate(${peekState.headTiltDeg.toFixed(2)}) scale(${peekState.headScaleX.toFixed(3)}, ${peekState.headScaleY.toFixed(3)})`
+        );
+      }
+      if (peekingBuchtaArmRef.current) {
+        peekingBuchtaArmRef.current.setAttribute(
+          'transform',
+          `translate(466, ${(18 + peekState.buchtaOffsetY).toFixed(2)}) rotate(${peekState.buchtaWaveDeg.toFixed(2)}, -6, 4)`
+        );
+      }
+      if (peekingLeftPawRef.current) {
+        peekingLeftPawRef.current.setAttribute(
+          'transform',
+          `translate(394, ${(18 + peekState.leftPawOffsetY).toFixed(2)}) scale(${peekState.leftPawScale.toFixed(3)})`
+        );
+        peekingLeftPawRef.current.setAttribute(
+          'opacity',
+          peekState.leftPawScale.toFixed(3)
+        );
+      }
+      if (peekingLeftPupilRef.current) {
+        peekingLeftPupilRef.current.setAttribute(
+          'transform',
+          `translate(${peekState.leftPupilDx.toFixed(2)}, ${peekState.leftPupilDy.toFixed(2)}) scale(${peekState.eyeScale.toFixed(3)})`
+        );
+      }
+      if (peekingRightPupilRef.current) {
+        peekingRightPupilRef.current.setAttribute(
+          'transform',
+          `translate(${peekState.rightPupilDx.toFixed(2)}, ${peekState.rightPupilDy.toFixed(2)}) scale(${peekState.eyeScale.toFixed(3)})`
+        );
+      }
+      if (peekingTongueRef.current) {
+        peekingTongueRef.current.setAttribute(
+          'transform',
+          `scale(1, ${peekState.tongueOut.toFixed(3)})`
+        );
+      }
+      if (peekingLeftEarRef.current) {
+        peekingLeftEarRef.current.setAttribute(
+          'transform',
+          `translate(-23, -23) rotate(${(-12 + peekState.earWiggleDeg).toFixed(2)})`
+        );
+      }
+      if (peekingRightEarRef.current) {
+        peekingRightEarRef.current.setAttribute(
+          'transform',
+          `translate(23, -24) rotate(${(14 - peekState.earWiggleDeg).toFixed(2)})`
+        );
+      }
+      if (peekingSteamRef.current) {
+        peekingSteamRef.current.setAttribute(
+          'opacity',
+          peekState.steamOpacity.toFixed(3)
+        );
       }
 
       // 3. Direct 60 FPS DOM transform update for B-U-B-Á-K-O-V letters (zero React re-render)
@@ -3494,9 +4116,12 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
       // Smooth exponential damping for hover states
       const targetBubakHover = isBubakHoveredRef.current ? 1 : 0;
       const targetCertHover = isCertHoveredRef.current ? 1 : 0;
+      const targetPeekingHover = isPeekingBubakHoveredRef.current ? 1 : 0;
       const lerpFactor = 1 - Math.exp(-dt * 7);
       bubakHoverMixRef.current += (targetBubakHover - bubakHoverMixRef.current) * lerpFactor;
       certHoverMixRef.current += (targetCertHover - certHoverMixRef.current) * lerpFactor;
+      peekingBubakHoverMixRef.current +=
+        (targetPeekingHover - peekingBubakHoverMixRef.current) * lerpFactor;
 
       renderFastDomAndCanvasFrame(t);
 
@@ -3506,7 +4131,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     const startLoop = () => {
       if (isRunning) return;
       if (typeof document !== 'undefined' && document.hidden) return;
-      if (!isVisible) return;
       isRunning = true;
       lastNow = performance.now();
       rafId = requestAnimationFrame(tick);
@@ -3526,23 +4150,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
       }
     };
 
-    let intersectionObserver: IntersectionObserver | null = null;
-    if (typeof IntersectionObserver !== 'undefined' && headerRef.current) {
-      intersectionObserver = new IntersectionObserver(
-        (entries) => {
-          const entry = entries[0];
-          isVisible = entry ? entry.isIntersecting : true;
-          if (isVisible) {
-            startLoop();
-          } else {
-            stopLoop();
-          }
-        },
-        { threshold: 0.01 }
-      );
-      intersectionObserver.observe(headerRef.current);
-    }
-
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => {
@@ -3561,7 +4168,6 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
 
     return () => {
       stopLoop();
-      if (intersectionObserver) intersectionObserver.disconnect();
       if (resizeObserver) resizeObserver.disconnect();
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -3573,11 +4179,11 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     letterJumpRef.current[idx] = animTimeRef.current;
   };
 
-  const handleStarClick = (e: React.MouseEvent) => {
+  const handlePeekingBubakClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    starSpinBurstRef.current = animTimeRef.current;
+    peekingBubakClickStartRef.current = animTimeRef.current;
     try {
-      sound.caneWhip();
+      sound.coin();
     } catch {}
   };
 
@@ -3615,66 +4221,11 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
     certStompStartRef.current = animTimeRef.current;
   };
 
-  const staticStarGraphic = useMemo(
-    () => (
-      <LadaCanvasSvg
-        width={32}
-        height={32}
-        viewBox="0 0 40 40"
-        aria-label="Ladovská pouťová hvězdička"
-      >
-        <g className="lada-anim-pulse">
-          {/* Warm golden village sun-rays behind the star */}
-          <polygon
-            points="20,0 23,12 35,5 28,16 40,20 28,24 35,35 23,28 20,40 17,28 5,35 12,24 0,20 12,16 5,5 17,12"
-            fill="#FACC15"
-            stroke="#1C1610"
-            strokeWidth="1.4"
-            strokeLinejoin="round"
-          />
-          {/* Ink outer outline & Bright Poppy Vermilion star body */}
-          <polygon
-            points="20,2 25,14 38,15 28,24 31,37 20,30 9,37 12,24 2,15 15,14"
-            fill="#E6392B"
-            stroke="#1C1610"
-            strokeWidth="3.0"
-            strokeLinejoin="round"
-          />
-          {/* Inner warm cream & gold folk highlight */}
-          <polygon
-            points="20,7 23,15 32,16 25,22 27,31 20,26 13,31 15,22 8,16 17,15"
-            fill="#FACC15"
-            stroke="#FFFDF7"
-            strokeWidth="1.3"
-            strokeLinejoin="round"
-          />
-          {/* Center cornflower blue folk cabochon */}
-          <circle cx="20" cy="21" r="3.6" fill="#2563EB" stroke="#1C1610" strokeWidth="1.4" />
-          <circle cx="19" cy="20" r="1.2" fill="#FFFDF7" className="lada-anim-glint" />
-        </g>
-      </LadaCanvasSvg>
-    ),
-    []
-  );
-
   return (
     <header
       ref={headerRef}
       className={`bubakov-cover-header relative select-none w-full box-border flex flex-col items-center justify-center my-0.5 sm:my-1 overflow-visible ${className}`}
     >
-      {/* Hand-drawn 2D Canvas 5-pointed folk star with playful spin & twinkle */}
-      <div
-        ref={starWrapRef}
-        className="my-0.5 cursor-pointer will-change-transform"
-        onClick={handleStarClick}
-        title="Ladovská pouťová hvězdička (klikni pro zatočení!)"
-        style={{
-          transform: 'rotate(0deg) scale(1)',
-        }}
-      >
-        {staticStarGraphic}
-      </div>
-
       {/* Main Illustration & Typography Stage (viewBox="-20 -48 900 252" prevents any edge cropping on mobile or desktop) */}
       <div className="relative w-full max-w-[840px] px-1 sm:px-3 box-border flex items-center justify-center">
         <div className="relative w-full aspect-[900/252]">
@@ -3697,6 +4248,12 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
               <rect width="10" height="10" fill="#E6392B" />
               <line x1="0" y1="0" x2="0" y2="10" stroke="#FEF08A" strokeWidth="2.6" />
             </pattern>
+
+            {/* Clip region along the top edge (y=19) of the BUBÁKOV cartouche so the purple Bubák
+                genuinely disappears behind the signboard when he ducks down ("zase zaleze") */}
+            <clipPath id="peeking-bubak-above-cartouche">
+              <rect x="310" y="-65" width="240" height="84" />
+            </clipPath>
 
             {/* GPU-composited CSS animations for folk floral stems & rosettes (zero React re-renders!) */}
             <style>{`
@@ -3735,6 +4292,480 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
             fillOpacity="0.5"
           />
 
+          {/* ============================================================== */}
+          {/* CENTRAL PEEKING PURPLE UGLY-CUTE BUBÁK HEAD HOLDING A BUCHTA   */}
+          {/* ("fialová ošklivá roztomilá hlava bubáka která drží v ruce     */}
+          {/*  buchtu a občas vykoukne a zase zaleze")                       */}
+          {/* ============================================================== */}
+          <g
+            id="lada-peeking-purple-bubak"
+            data-testid="peeking-purple-bubak"
+            clipPath="url(#peeking-bubak-above-cartouche)"
+            className="cursor-pointer"
+            onClick={handlePeekingBubakClick}
+            onMouseEnter={() => {
+              isPeekingBubakHoveredRef.current = true;
+            }}
+            onMouseLeave={() => {
+              isPeekingBubakHoveredRef.current = false;
+            }}
+          >
+            <title>Ladovský vesnický bubák v otrhaném klobouku s povidlovou buchtou (občas vykoukne a zase zaleze – klikni!)</title>
+
+            {/* 1. JOSEF LADA VILLAGE PURPLE BUBÁK HEAD IN TATTERED HAT WITH GOOD-NATURED SMILE */}
+            {/* ("Bubák bude více ladovský a vesnický, otrhaný klobouk, dobromyslný výraz")    */}
+            <g
+              ref={peekingHeadGroupRef}
+              transform="translate(430, 18) rotate(-3.2) scale(1, 1)"
+            >
+              {/* Red Polka-Dot Czech Village Kerchief (vesnický puntíkovaný šátek) at his neck */}
+              <g id="peeking-bubak-village-kerchief">
+                <path
+                  d="M -21,4 Q 0,13 21,4 L 16,13 Q 0,17 -16,13 Z"
+                  fill="#DC2626"
+                  stroke="#1C1610"
+                  strokeWidth="2.4"
+                  strokeLinejoin="round"
+                />
+                {/* Tied kerchief knot at throat */}
+                <path
+                  d="M -4,10 L -9,18 L -1,15 L 7,18 L 4,10 Z"
+                  fill="#B91C1C"
+                  stroke="#1C1610"
+                  strokeWidth="2.0"
+                  strokeLinejoin="round"
+                />
+                {/* White folk polka dots on kerchief */}
+                <circle cx="-12" cy="8.5" r="1.4" fill="#FFFDF7" />
+                <circle cx="-5" cy="10.2" r="1.4" fill="#FFFDF7" />
+                <circle cx="0" cy="11.0" r="1.5" fill="#FFFDF7" />
+                <circle cx="5" cy="10.2" r="1.4" fill="#FFFDF7" />
+                <circle cx="12" cy="8.5" r="1.4" fill="#FFFDF7" />
+              </g>
+
+              {/* Plump, Round Josef Lada Village Left Ear (kulaté vesnické ucho) */}
+              <g ref={peekingLeftEarRef} transform="translate(-24, -19) rotate(-8)">
+                <path
+                  d="M 2,-6 C -8,-9 -15,-5 -15,1 C -15,7 -7,10 2,5 Z"
+                  fill="#7C3AED"
+                  stroke="#1C1610"
+                  strokeWidth="2.6"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M 0,-3 C -5,-5 -9,-2 -9,1 C -9,4 -4,5 0,2 Z"
+                  fill="#C084FC"
+                />
+                <path
+                  d="M -2,-1 Q -6,1 -3,3"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </g>
+
+              {/* Plump, Round Josef Lada Village Right Ear (with cute folk mole) */}
+              <g ref={peekingRightEarRef} transform="translate(24, -19) rotate(8)">
+                <path
+                  d="M -2,-6 C 8,-9 15,-5 15,1 C 15,7 7,10 -2,5 Z"
+                  fill="#7C3AED"
+                  stroke="#1C1610"
+                  strokeWidth="2.6"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M 0,-3 C 5,-5 9,-2 9,1 C 9,4 4,5 0,2 Z"
+                  fill="#C084FC"
+                />
+                <path
+                  d="M 2,-1 Q 6,1 3,3"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <circle cx="9" cy="-4.5" r="1.8" fill="#A855F7" stroke="#1C1610" strokeWidth="1.3" />
+              </g>
+
+              {/* Chubby pear/dumpling-shaped Josef Lada village purple head */}
+              <path
+                d="M -25,-5 C -28,-16 -24,-31 -13,-36 C -4,-40 4,-40 13,-36 C 24,-31 28,-16 25,-5 C 22,5 13,10 0,10 C -13,10 -22,5 -25,-5 Z"
+                fill="#8B5CF6"
+                stroke="#1C1610"
+                strokeWidth="3.0"
+                strokeLinejoin="round"
+              />
+
+              {/* Soft lavender-violet gouache highlight across forehead & plump cheeks */}
+              <path
+                d="M -19,-21 C -15,-31 -3,-34 11,-31 C 19,-28 22,-18 19,-9 C 10,-15 -7,-15 -19,-21 Z"
+                fill="#A78BFA"
+                opacity="0.78"
+              />
+
+              {/* Warm curly village locks of hair peeking out under the tattered hat brim at temples */}
+              <path
+                d="M -24,-24 C -29,-22 -29,-16 -23,-15 C -27,-13 -25,-9 -20,-11"
+                fill="#4C1D95"
+                stroke="#1C1610"
+                strokeWidth="2.0"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M 24,-24 C 29,-22 29,-16 23,-15 C 27,-13 25,-9 20,-11"
+                fill="#4C1D95"
+                stroke="#1C1610"
+                strokeWidth="2.0"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Deep plum lower chin & jaw warmth */}
+              <path
+                d="M -22,-3 C -15,6 15,6 22,-3 C 19,5 11,9 0,9 C -11,9 -19,5 -22,-3 Z"
+                fill="#5B21B6"
+                opacity="0.58"
+              />
+
+              {/* Plump rosy-apple Czech village cheeks & cute folk freckles/warts */}
+              <ellipse cx="-16.5" cy="-11.5" rx="5.6" ry="3.6" fill="#F43F5E" opacity="0.62" />
+              <ellipse cx="16.5" cy="-11.5" rx="5.6" ry="3.6" fill="#F43F5E" opacity="0.62" />
+              <circle cx="-19" cy="-14.5" r="2.0" fill="#C084FC" stroke="#1C1610" strokeWidth="1.4" />
+              <circle cx="19" cy="-15.0" r="1.7" fill="#C084FC" stroke="#1C1610" strokeWidth="1.3" />
+              <circle cx="-14.5" cy="-10.5" r="0.9" fill="#1C1610" opacity="0.55" />
+              <circle cx="14.5" cy="-10.5" r="0.9" fill="#1C1610" opacity="0.55" />
+
+              {/* Little smudge of dark plum povidla jam on his right cheek from snacking on the buchta! */}
+              <path
+                d="M 13,-7.5 C 16,-9.5 19,-7.5 18,-4.8 C 16,-3.0 12,-4.8 13,-7.5 Z"
+                fill="#581C87"
+                stroke="#1C1610"
+                strokeWidth="1.1"
+              />
+
+              {/* WARM, GOOD-NATURED EYES ("dobromyslný výraz") WITH SMILING LOWER LIDS */}
+              {/* Left Eye (big, warm & welcoming) */}
+              <g transform="translate(-9.5, -20.5)">
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="6.8"
+                  fill="#FEF9C3"
+                  stroke="#1C1610"
+                  strokeWidth="2.4"
+                />
+                <g ref={peekingLeftPupilRef} transform="translate(2.2, -0.3)">
+                  <circle cx="0" cy="0" r="3.6" fill="#65A30D" stroke="#1C1610" strokeWidth="1.2" />
+                  <circle cx="0" cy="0" r="1.9" fill="#1C1610" />
+                  <circle cx="-1.0" cy="-1.0" r="1.1" fill="#FFFDF7" />
+                  <circle cx="0.9" cy="0.8" r="0.55" fill="#FFFDF7" />
+                </g>
+                {/* Happy smiling lower-eyelid crinkle (dobromyslná vráska pod okem) */}
+                <path
+                  d="M -5.2,6.2 Q 0,4.2 5.2,6.2"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                />
+                {/* Kindly, softly arched Josef Lada left eyebrow */}
+                <path
+                  d="M -6.8,-6.2 Q -0.5,-10.8 5.8,-6.8"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="2.8"
+                  strokeLinecap="round"
+                />
+              </g>
+
+              {/* Right Eye (slightly smaller, affectionately wonky & good-natured) */}
+              <g transform="translate(9.5, -20.0)">
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="5.6"
+                  fill="#FEF08A"
+                  stroke="#1C1610"
+                  strokeWidth="2.4"
+                />
+                <g ref={peekingRightPupilRef} transform="translate(1.8, -0.2)">
+                  <circle cx="0" cy="0" r="2.9" fill="#65A30D" stroke="#1C1610" strokeWidth="1.2" />
+                  <circle cx="0" cy="0" r="1.5" fill="#1C1610" />
+                  <circle cx="-0.8" cy="-0.8" r="0.9" fill="#FFFDF7" />
+                  <circle cx="0.7" cy="0.6" r="0.45" fill="#FFFDF7" />
+                </g>
+                {/* Happy smiling lower-eyelid crinkle */}
+                <path
+                  d="M -4.5,5.2 Q 0,3.5 4.5,5.2"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+                {/* Kindly, softly arched Josef Lada right eyebrow */}
+                <path
+                  d="M -5.2,-5.8 Q 0.5,-10.0 6.2,-5.4"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="2.7"
+                  strokeLinecap="round"
+                />
+              </g>
+
+              {/* Plump, round Josef Lada village potato nose (kulatý bramborový nos) */}
+              <ellipse
+                cx="0"
+                cy="-13.2"
+                rx="5.6"
+                ry="4.2"
+                fill="#D946EF"
+                stroke="#1C1610"
+                strokeWidth="2.3"
+              />
+              <ellipse cx="-1.7" cy="-14.6" rx="2.0" ry="1.1" fill="#F5D0FE" />
+              <circle cx="-1.9" cy="-12.0" r="0.85" fill="#1C1610" />
+              <circle cx="1.9" cy="-12.0" r="0.85" fill="#1C1610" />
+
+              {/* BROAD, WARM, GOOD-NATURED VILLAGE SMILE ("dobromyslný výraz") WITH CHEEK DIMPLES */}
+              <g id="peeking-bubak-kindly-smile">
+                {/* Broad upward-curving friendly mouth cavity */}
+                <path
+                  d="M -13.5,-6.8 Q 0,-2.8 13.5,-6.5 Q 9.5,3.8 0,3.8 Q -9.5,3.8 -13.5,-6.8 Z"
+                  fill="#4C0519"
+                  stroke="#1C1610"
+                  strokeWidth="2.3"
+                  strokeLinejoin="round"
+                />
+
+                {/* Friendly rounded village front teeth (kulaté dobromyslné zuby — no sharp fangs!) */}
+                <path
+                  d="M -7.5,-5.4 L -7.5,-2.2 Q -4.2,-0.8 -1.0,-2.2 L -1.0,-4.8 Z"
+                  fill="#FFFDF7"
+                  stroke="#1C1610"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M 1.2,-4.8 L 1.2,-2.4 Q 4.2,-1.0 7.2,-2.4 L 7.2,-5.3 Z"
+                  fill="#FFFDF7"
+                  stroke="#1C1610"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                />
+
+                {/* Warm smiling cheek dimples at both corners of the mouth (ladovské dolíčky) */}
+                <path
+                  d="M -15.5,-8.5 Q -17.5,-6.2 -14.2,-4.0"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="2.1"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M 15.5,-8.2 Q 17.5,-5.9 14.2,-3.8"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="2.1"
+                  strokeLinecap="round"
+                />
+
+                {/* Happy pink tongue poking out to taste the sweet povidlová buchta */}
+                <g transform="translate(0.5, -1.6)">
+                  <g ref={peekingTongueRef} transform="scale(1, 0.75)">
+                    <path
+                      d="M -4.2,0 C -4.5,5.6 4.5,5.8 4.2,0 Z"
+                      fill="#FB7185"
+                      stroke="#1C1610"
+                      strokeWidth="1.6"
+                      strokeLinejoin="round"
+                    />
+                    <line x1="0" y1="0.5" x2="0" y2="3.8" stroke="#E11D48" strokeWidth="1.1" />
+                  </g>
+                </g>
+              </g>
+
+              {/* ============================================================ */}
+              {/* WEATHERED, TATTERED JOSEF LADA VILLAGE FELT HAT              */}
+              {/* ("otrhaný vesnický klobouk" with patch, straw & meadow bloom) */}
+              {/* ============================================================ */}
+              <g id="peeking-bubak-tattered-hat" transform="translate(0, -1) rotate(-2.5)">
+                {/* Golden village straw stalks poking out through the torn split in the hat crown */}
+                <path
+                  d="M -5,-41 L -10,-48 M -2,-41 L -2,-49 M 1,-40 L 6,-47"
+                  fill="none"
+                  stroke="#1C1610"
+                  strokeWidth="3.4"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M -5,-41 L -10,-48 M -2,-41 L -2,-49 M 1,-40 L 6,-47"
+                  fill="none"
+                  stroke="#FACC15"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+
+                {/* Crumpled, dented brown village felt crown with a ragged tear at the top */}
+                <path
+                  d="M -21,-28 C -23,-37 -17,-44 -7,-44 L -3,-39 L 1,-44 C 12,-45 20,-38 20,-28 Z"
+                  fill="#6B4423"
+                  stroke="#1C1610"
+                  strokeWidth="2.8"
+                  strokeLinejoin="round"
+                />
+
+                {/* Warm sunlit felt gouache highlight on left side of crown */}
+                <path
+                  d="M -17,-31 C -16,-38 -11,-41 -5,-41 C -7,-36 -11,-32 -17,-31 Z"
+                  fill="#855832"
+                />
+
+                {/* Sewn ochre burlap patch on the right side of the tattered hat crown */}
+                <path
+                  d="M 5,-40 L 14,-38 L 13,-31 L 4,-33 Z"
+                  fill="#D97706"
+                  stroke="#1C1610"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+                {/* Cream folk cross-stitches holding the patch onto the hat */}
+                <line x1="6" y1="-41.2" x2="6.5" y2="-38.5" stroke="#FAF6ED" strokeWidth="1.2" />
+                <line x1="11" y1="-40.2" x2="11.5" y2="-37.5" stroke="#FAF6ED" strokeWidth="1.2" />
+                <line x1="13" y1="-35.5" x2="15.5" y2="-35.0" stroke="#FAF6ED" strokeWidth="1.2" />
+                <line x1="5.5" y1="-33.8" x2="6.0" y2="-31.2" stroke="#FAF6ED" strokeWidth="1.2" />
+
+                {/* Faded red village ribbon band around the base of the hat crown */}
+                <path
+                  d="M -21,-30.5 Q 0,-33.5 20,-30.5 L 20.5,-27.2 Q 0,-30.2 -21.5,-27.2 Z"
+                  fill="#B91C1C"
+                  stroke="#1C1610"
+                  strokeWidth="1.9"
+                  strokeLinejoin="round"
+                />
+
+                {/* Little Czech village meadow flower (blatouch) tucked into the left hatband */}
+                <path
+                  d="M -14,-29.5 Q -20,-35 -24,-38"
+                  fill="none"
+                  stroke="#4D7C0F"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                <g transform="translate(-24.5, -38.5)">
+                  <circle cx="0" cy="-2.6" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="1.1" />
+                  <circle cx="2.5" cy="-0.8" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="1.1" />
+                  <circle cx="1.5" cy="2.1" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="1.1" />
+                  <circle cx="-1.5" cy="2.1" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="1.1" />
+                  <circle cx="-2.5" cy="-0.8" r="2.1" fill="#FACC15" stroke="#1C1610" strokeWidth="1.1" />
+                  <circle cx="0" cy="0" r="1.6" fill="#D97706" stroke="#1C1610" strokeWidth="0.9" />
+                </g>
+
+                {/* Floppy, wavy tattered hat brim with a frayed V-notch on the left side */}
+                <path
+                  d="M -31,-25.5 Q -26,-30.5 -18,-29.5 L -15,-25.2 L -12.5,-29.2 Q 0,-32.0 16,-29.0 Q 25,-30.0 31,-25.0 Q 20,-22.2 0,-24.8 Q -20,-22.2 -31,-25.5 Z"
+                  fill="#5C3A21"
+                  stroke="#1C1610"
+                  strokeWidth="2.7"
+                  strokeLinejoin="round"
+                />
+              </g>
+            </g>
+
+            {/* 2. PURPLE BUBÁK RIGHT ARM & HAND PROUDLY HOLDING A GOLDEN POVIDLOVÁ BUCHTA */}
+            <g
+              ref={peekingBuchtaArmRef}
+              transform="translate(466, 18) rotate(0, -6, 4)"
+            >
+              {/* Chubby purple forearm reaching up from behind the cartouche */}
+              <path
+                d="M -11,8 C -10,-2 -6,-11 -1,-16 L 7,-12 C 4,-6 1,2 -1,8 Z"
+                fill="#7C3AED"
+                stroke="#1C1610"
+                strokeWidth="2.6"
+                strokeLinejoin="round"
+              />
+
+              {/* Warm aromatic steam wisps rising from the freshly baked buchta */}
+              <g ref={peekingSteamRef} opacity="0.9">
+                <path
+                  d="M 0,-35 Q -4,-40 0,-45 Q 4,-50 0,-54"
+                  fill="none"
+                  stroke="#FFFDF7"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M 10,-33 Q 7,-38 11,-43 Q 14,-47 10,-51"
+                  fill="none"
+                  stroke="#FEF08A"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                />
+              </g>
+
+              {/* GOLDEN CZECH BAKED POVIDLOVÁ BUCHTA (held in his hand!) */}
+              <g id="peeking-bubak-buchta" transform="translate(5, -22) rotate(8)">
+                {/* Pillowy soft pale-gold pulled-apart yeast dough base (střída z pekáče) */}
+                <path
+                  d="M -15,3 C -17,8 -13,13 -4,14 C 6,15 16,12 18,6 C 20,1 18,-5 12,-8 C 4,-11 -9,-10 -14,-3 C -15,-1 -15,1 -15,3 Z"
+                  fill="#FDE68A"
+                  stroke="#1C1610"
+                  strokeWidth="2.6"
+                  strokeLinejoin="round"
+                />
+                {/* Golden-brown butter-brushed baked top crust (zlatavá kůrčička) */}
+                <path
+                  d="M -14,-1 C -12,-8 -2,-11 8,-9 C 16,-7 19,-1 17,4 C 13,8 3,8 -6,5 C -11,3 -14,1 -14,-1 Z"
+                  fill="#D97706"
+                  stroke="#1C1610"
+                  strokeWidth="2.2"
+                  strokeLinejoin="round"
+                />
+                {/* Warm sunlit crust sheen */}
+                <path
+                  d="M -9,-4 C -4,-7 5,-7 11,-4"
+                  fill="none"
+                  stroke="#FEF08A"
+                  strokeWidth="2.0"
+                  strokeLinecap="round"
+                />
+                {/* Rich dark plum jam (švestková povidla) peeking out of the bitten/pulled side */}
+                <ellipse
+                  cx="-6"
+                  cy="5.5"
+                  rx="5.2"
+                  ry="3.2"
+                  transform="rotate(-10 -6 5.5)"
+                  fill="#581C87"
+                  stroke="#1C1610"
+                  strokeWidth="1.8"
+                />
+                <ellipse cx="-7" cy="4.8" rx="2.1" ry="1.0" fill="#F43F5E" />
+                {/* Sprinkled white powdered sugar dots (moučkový cukr) */}
+                <circle cx="-3" cy="-5" r="1.1" fill="#FFFDF7" />
+                <circle cx="2" cy="-6" r="1.2" fill="#FFFDF7" />
+                <circle cx="7" cy="-4" r="1.0" fill="#FFFDF7" />
+                <circle cx="0" cy="-2" r="1.1" fill="#FFFDF7" />
+                <circle cx="5" cy="-1" r="0.9" fill="#FFFDF7" />
+              </g>
+
+              {/* Chubby purple 3-fingered bubák hand clutching the bottom of the buchta */}
+              <path
+                d="M -4,-13 C -7,-16 -4,-21 1,-19 C 3,-22 8,-21 8,-17 C 12,-18 14,-14 10,-11 C 6,-9 -1,-9 -4,-13 Z"
+                fill="#8B5CF6"
+                stroke="#1C1610"
+                strokeWidth="2.3"
+                strokeLinejoin="round"
+              />
+              {/* Little cream claws on the hand holding the buchta */}
+              <circle cx="-2" cy="-18" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+              <circle cx="5" cy="-19" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+              <circle cx="10" cy="-15" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+            </g>
+          </g>
+
           {/* Josef Lada Vignette Frame / Cartouche */}
           <rect
             x="180"
@@ -3760,6 +4791,49 @@ export const BubakovCoverTitle: React.FC<BubakovCoverTitleProps> = ({
             stroke="#1C1610"
             strokeWidth="1.6"
           />
+
+          {/* ============================================================== */}
+          {/* PEEKING BUBÁK'S LEFT PURPLE PAW GRIPPING FRONT OF CARTOUCHE    */}
+          {/* ============================================================== */}
+          <g
+            id="lada-peeking-bubak-left-paw"
+            ref={peekingLeftPawRef}
+            transform="translate(394, 18) scale(1)"
+            className="cursor-pointer"
+            onClick={handlePeekingBubakClick}
+          >
+            <ellipse
+              cx="-6"
+              cy="1.5"
+              rx="3.8"
+              ry="4.8"
+              fill="#8B5CF6"
+              stroke="#1C1610"
+              strokeWidth="2.2"
+            />
+            <ellipse
+              cx="0"
+              cy="2.2"
+              rx="3.8"
+              ry="5.2"
+              fill="#8B5CF6"
+              stroke="#1C1610"
+              strokeWidth="2.2"
+            />
+            <ellipse
+              cx="6"
+              cy="1.5"
+              rx="3.8"
+              ry="4.8"
+              fill="#8B5CF6"
+              stroke="#1C1610"
+              strokeWidth="2.2"
+            />
+            {/* Little pale-yellow claws gripping the signboard rim */}
+            <circle cx="-6" cy="4.2" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+            <circle cx="0" cy="5.0" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+            <circle cx="6" cy="4.2" r="1.3" fill="#FEF08A" stroke="#1C1610" strokeWidth="1.0" />
+          </g>
 
           {/* ============================================================== */}
           {/* LEFT FOLK FLORAL STEM (BREEZE-SWAYING & BLOOMING)              */}

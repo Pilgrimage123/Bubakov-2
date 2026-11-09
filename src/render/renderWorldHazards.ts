@@ -89,6 +89,14 @@ import { getRankedWeaponStats } from '../data/weaponMilestones';
 import { isGameEffectEnabled } from '../game/effectSettings';
 import { tryEmitParticle } from '../game/particles';
 import { gamepadManager } from '../game/gamepad';
+import { formatInteractPrompt } from '../game/arenaInteractions';
+
+function getLocalizedBannerText(text: string | null | undefined, engine: any): string | null {
+  if (!text) return null;
+  const isTouch = Boolean(engine.touchEnabled || engine.isMobile);
+  const isGamepad = Boolean(engine.isGamepad || gamepadManager.activeDevice === 'gamepad');
+  return formatInteractPrompt(text, isTouch, isGamepad);
+}
 
 export interface WorldHazardsRenderOptions {
   warningIndicatorsEnabled?: boolean;
@@ -173,8 +181,9 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? marchPois.forest : undefined);
       if (nearby) {
+        const isTouch = Boolean(engine.touchEnabled || engine.isMobile);
         const isGp = gamepadManager.activeDevice === 'gamepad';
-        const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
+        const interactHint = isTouch ? '[KLEPNI] Aktivovat' : (isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat');
         let detail = nearby.hint;
         let canInteractPoi = false;
         if (nearby.id === 'church') {
@@ -286,8 +295,9 @@ export function renderWorldHazardsAndEncounters(
       const activeForest = !nearbyPoi ? getActiveDubenForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? dubenPois.forest : undefined);
       if (nearby) {
+        const isTouch = Boolean(engine.touchEnabled || engine.isMobile);
         const isGp = gamepadManager.activeDevice === 'gamepad';
-        const interactHint = isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat';
+        const interactHint = isTouch ? '[KLEPNI] Aktivovat' : (isGp ? '[X] / [E] Aktivovat' : '[E] / [X] Aktivovat');
         let detail = nearby.hint;
         let canInteractPoi = false;
         if (nearby.id === 'church') {
@@ -355,7 +365,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? kvetenPois.forest : undefined);
-      const bannerText = engine.kvetenActivePoiPrompt || nearby?.hint;
+      const bannerText = getLocalizedBannerText(engine.kvetenActivePoiPrompt || nearby?.hint, engine);
       if (nearby && bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -493,7 +503,7 @@ export function renderWorldHazardsAndEncounters(
         isCervenNight && engine.cerven && Array.isArray(engine.cerven.herbs)
           ? ` [🌿 Byliny: ${engine.cerven.herbsCollected || 0}/${engine.cerven.herbsTarget || 9}]`
           : '';
-      const bannerText = engine.cervenActivePoiPrompt || (nearby ? `${nearby.title}${herbsNote}` : null);
+      const bannerText = getLocalizedBannerText(engine.cervenActivePoiPrompt || (nearby ? `${nearby.title}${herbsNote}` : null), engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -557,7 +567,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? cervenecPois.forest : undefined);
-      const bannerText = engine.cervenecActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.cervenecActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -621,7 +631,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? srpenPois.forest : undefined);
-      const bannerText = engine.srpenActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.srpenActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -720,7 +730,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? zariPois.forest : undefined);
-      const bannerText = engine.zariActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.zariActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -819,7 +829,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? rijenPois.forest : undefined);
-      const bannerText = engine.rijenActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.rijenActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -859,7 +869,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? listopadPois.forest : undefined);
-      const bannerText = engine.listopadActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.listopadActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -935,7 +945,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? prosinecPois.forest : undefined);
-      const bannerText = engine.prosinecActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.prosinecActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -1011,7 +1021,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? ledenPois.forest : undefined);
-      const bannerText = engine.ledenActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.ledenActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';
@@ -1087,7 +1097,7 @@ export function renderWorldHazardsAndEncounters(
       }
       const activeForest = !nearbyPoi ? getActiveMarchForestZone(player.x, player.y, 30) : null;
       const nearby = nearbyPoi || (activeForest ? unorPois.forest : undefined);
-      const bannerText = engine.unorActivePoiPrompt || nearby?.title;
+      const bannerText = getLocalizedBannerText(engine.unorActivePoiPrompt || nearby?.title, engine);
       if (bannerText) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 248, 222, .94)';

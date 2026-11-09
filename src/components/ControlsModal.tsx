@@ -409,7 +409,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-                            <PernicekIcon size={14} /> <span>[E] OTEVŘÍT NŮŠI</span>
+                            <PernicekIcon size={14} /> <span>OTEVŘÍT NŮŠI</span>
                           </div>
                           <div style={{ fontSize: '0.62rem', opacity: 0.92 }}>Objeví se u Dědečka a památek</div>
                         </div>
@@ -678,7 +678,7 @@ export const ControlsModal: React.FC<ControlsModalProps> = ({
                   </div>
                 </div>
                 <p style={{ margin: '6px 0 0 0', fontWeight: 700, fontSize: '0.92rem', lineHeight: 1.4 }}>
-                  Ladovský venkov kolem vás žije a reaguje na každý váš krok! Když se přiblížíte k aktivnímu prvku, objeví se u něj dotykové tlačítko (nebo výzva pro <strong>[E] / [X]</strong>):
+                  Ladovský venkov kolem vás žije a reaguje na každý váš krok! Když se přiblížíte k aktivnímu prvku, objeví se u něj akční tlačítko (nebo klávesová / gamepadová výzva):
                   <br />• <strong>Pamětihodnosti na mapě:</strong> Zazvoňte na <strong>zvonici u kostela</strong> (svatý otřes, léčení a +20 % zbroj), narazte <strong>pivní soudek u hospody</strong> (omráčí dav + 18 % útok) nebo se zastavte u <strong>kapličky na rozcestí</strong> (zjevení rozhání bubáky + 20 % kadence).
                   <br />• <strong>Poklady, pomocníci a anomálie:</strong> Otevírejte <strong>malované truhly</strong> s venkovským kolem štěstí, aktivujte <strong>vzácné folklórní předměty</strong> (Švandovy dudy, Ponocného trouba, Hlt slivovice...), osvobozujte obklíčené <strong>chasníky</strong> a stáním v kruhu zapečeťujte <strong>Bubácké díry</strong>.
                   <br />• <strong>Vliv terénu:</strong> Zorané brázdy na <strong>poli</strong> zrychlují krok (+15 %, pozor na pluh!), <strong>plovoucí ledové kry</strong> na řece zrychlují (+20 %) zatímco hluboká voda mrazí, u <strong>mlýna</strong> kolo drtí v náhonu a moučný prach oslepuje běsy, a <strong>čtyři husté lesy</strong> v rozích poskytují krytí stromů (+15 % obrana i útok).

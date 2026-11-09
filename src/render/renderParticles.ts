@@ -104,6 +104,42 @@ export class ParticleBatchRenderer {
       if (!p || (p.life ?? 0) <= 0) continue;
       if (!isParticleInView(p.x, p.y, p.size || 6, camera)) continue;
 
+      if (p.isComicPopup || p.text) {
+        rendered++;
+        ctx.save();
+        const alpha = Math.max(0, Math.min(1, (p.life || 0) * 1.5));
+        ctx.globalAlpha = alpha;
+        ctx.translate(p.x, p.y);
+
+        // Draw Lada calligraphic cloud puff
+        const text = p.text || 'BÁC!';
+        ctx.fillStyle = p.bg || '#FEF08A';
+        ctx.strokeStyle = COLORS.ink;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.arc(-14, -2, 10, 0, Math.PI * 2);
+        ctx.arc(-4, -10, 12, 0, Math.PI * 2);
+        ctx.arc(10, -8, 11, 0, Math.PI * 2);
+        ctx.arc(16, 2, 9, 0, Math.PI * 2);
+        ctx.arc(4, 10, 10, 0, Math.PI * 2);
+        ctx.arc(-8, 8, 9, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw bold calligraphic Lada text
+        ctx.font = '900 13px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = p.textColor || '#DC2626';
+        ctx.fillText(text, 0, 0);
+
+        ctx.restore();
+        continue;
+      }
       rendered++;
       const rawAlpha = Math.max(0, Math.min(1, (p.life || 0) * 2.5));
       const tier = rawAlpha <= 0.3125 ? 0 : rawAlpha <= 0.625 ? 1 : rawAlpha <= 0.875 ? 2 : 3;

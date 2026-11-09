@@ -116,6 +116,11 @@ import {
   type SunOverlayConfig,
   type SunComputedFrameState,
 } from './render/sunForegroundRenderer';
+import {
+  renderWeatherAndSkyOverlay,
+  createReusableWeatherSkyState,
+  type WeatherSkyFrameState,
+} from './render/weatherSkyRenderer';
 import { SunDebugHudPanel, type SunDebugLiveTelemetry } from './components/SunDebugHudPanel';
 import {
   getPetrolejkaRadius,
@@ -158,6 +163,7 @@ import { getWeaponProgress, WEAPON_UNLOCKS, WeaponProgress, getActiveUnlockingWe
 import {
   getLevelProgress,
   LEVEL_UNLOCKS,
+  LEVEL_ORDER,
   LevelProgress,
   getActiveUnlockingLevel,
   isLevelFullyUnlocked,
@@ -180,6 +186,11 @@ import { WeaponMilestoneModal } from './components/WeaponMilestoneModal';
 import type { PendingMilestoneChoice } from './game/engineState';
 import { gamepadManager, type InputDeviceMode } from './game/gamepad';
 import { isInteractiveArenaDrop } from './render/renderDrops';
+import {
+  evaluateArenaInteraction,
+  getArenaInteractionPadding,
+  formatInteractPrompt,
+} from './game/arenaInteractions';
 import { RunDirector, DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from './game/director';
 import {
   canCollectDrop,
@@ -475,26 +486,6 @@ function compactInPlace<T>(items: T[], keep: (item: T) => boolean): void {
 const HUD_SYNC_INTERVAL_SECONDS = 0.15;
 const MAX_PARTICLES = 300;
 const MAX_DAMAGE_TEXTS = 40;
-
-let fogPuffCanvas: HTMLCanvasElement | null = null;
-function getFogPuffCanvas(): HTMLCanvasElement {
-  if (!fogPuffCanvas && typeof document !== 'undefined') {
-    fogPuffCanvas = document.createElement('canvas');
-    fogPuffCanvas.width = 240;
-    fogPuffCanvas.height = 240;
-    const fctx = fogPuffCanvas.getContext('2d');
-    if (fctx) {
-      const grad = fctx.createRadialGradient(120, 120, 10, 120, 120, 120);
-      grad.addColorStop(0, 'rgba(180, 195, 215, 0.12)');
-      grad.addColorStop(1, 'rgba(180, 195, 215, 0)');
-      fctx.fillStyle = grad;
-      fctx.beginPath();
-      fctx.arc(120, 120, 120, 0, Math.PI * 2);
-      fctx.fill();
-    }
-  }
-  return fogPuffCanvas!;
-}
 
 // Floating damage / status text
 class DamageText {
@@ -1739,7 +1730,7 @@ export default function App() {
   // Selected level state - Level 0 (Předjaří) default for new players
   const [selectedLevelId, setSelectedLevelId] = useState<GameLevelId>(() => {
     const s = meta.selectedLevel;
-    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 11 ? s : 0) as GameLevelId;
+    return (typeof s === 'number' && Number.isInteger(s) && s >= 0 && s <= 23 ? s : 0) as GameLevelId;
   });
 
   const currentLevel = GAME_LEVELS[selectedLevelId] || GAME_LEVELS[0];
@@ -1764,7 +1755,7 @@ export default function App() {
   const levelProgress = useMemo(
     () =>
       Object.fromEntries(
-        ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
+        (LEVEL_ORDER as GameLevelId[]).map((id) => [id, getLevelProgress(id, meta)])
       ) as Record<GameLevelId, LevelProgress>,
     [meta]
   );
@@ -1925,6 +1916,10 @@ export default function App() {
     levelTitle: GAME_LEVELS[0].name,
     levelWon: false,
     isTestMode: false,
+    canInteract: false,
+    interactPrompt: null as string | null,
+    interactLabel: 'POUŽÍT',
+    interactIcon: 'hand',
   });
 
   const runStatsRef = useRef(runStats);
@@ -2501,6 +2496,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
   const arenaRenderOptionsRef = useRef<ArenaRenderOptions>({});
   const sunOverlayConfigRef = useRef<SunOverlayConfig>(createDefaultSunOverlayConfig());
   const sunFrameStateRef = useRef<SunComputedFrameState>(createReusableSunFrameState());
+  const weatherSkyStateRef = useRef<WeatherSkyFrameState>(createReusableWeatherSkyState());
   const sunForegroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const latestFpsRef = useRef<number>(60);
   const isUrlPerfOverlay = useMemo(() => {
@@ -2614,7 +2610,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
     const curMeta = metaRef.current;
     const nextLvlId = (lvlId + 1) as GameLevelId;
-    const canUnlockNext = nextLvlId <= 13;
+    const canUnlockNext = nextLvlId <= 23;
     const nextHighest = canUnlockNext
       ? Math.max(curMeta.highestLevelUnlocked ?? 0, nextLvlId)
       : (curMeta.highestLevelUnlocked ?? 0);
@@ -2651,6 +2647,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ? '🔔 Zvoní klekání, dožínková slavnost přežita!'
                 : lvlId === 12
                 ? '🔔 Zvoní klekání, zářijové posvícení přežito!'
+                : lvlId === 14
+                ? '🔔 Zvoní klekání, říjnová drakiáda přežita!'
+                : lvlId === 16
+                ? '🔔 Zvoní klekání, svatomartinské posvícení přežito!'
+                : lvlId === 18
+                ? '🔔 Zvoní klekání, adventní den přežit!'
+                : lvlId === 20
+                ? '🔔 Zvoní klekání, tříkrálový den přežit!'
+                : lvlId === 22
+                ? '🔔 Zvoní klekání, masopustní průvod přežit!'
                 : '🔔 Zvoní klekání, den přežit!')
             : (lvlId === 1
                 ? '🐓 Svítání, noční mrazy přežity!'
@@ -2666,6 +2672,16 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 ? '🐓 Svítání, vavřinecká noc přežita!'
                 : lvlId === 13
                 ? '🐓 Svítání, svatováclavská noc přežita!'
+                : lvlId === 15
+                ? '🐓 Svítání, dušičková noc přežita!'
+                : lvlId === 17
+                ? '🐓 Svítání, listopadový hon v mlze přežit!'
+                : lvlId === 19
+                ? '🐓 Svítání, štědrovečerní tichá noc přežita!'
+                : lvlId === 21
+                ? '🐓 Svítání, tříkrálová noční vánice přežita!'
+                : lvlId === 23
+                ? '🐓 Svítání, masopustní rej přežit a basa pochována!'
                 : '🐓 Svítání, noc přežita!')),
     }));
 
@@ -2675,11 +2691,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         title: `${GAME_LEVELS[lvlId].shortTitle.toUpperCase()} POKOŘENA!`,
         desc: `Odemčena nová úroveň: ${GAME_LEVELS[nextLvlId].name}! Nyní se v ní můžete utkat s novými monstry.`,
       }, 6000);
-    } else if (lvlId >= 13) {
+    } else if (lvlId >= 23) {
       showUnlockNotice({
         icon: 'crown',
-        title: `VŠECHNY ÚROVNĚ DOKONČENY!`,
-        desc: `Kvílící Meluzína byla ukonejšena a Svatováclavská noc skončila! Celý Bubákov oslavuje vaše legendární hrdinství napříč všemi 14 výpravami!`,
+        title: `CELOROČNÍ CYKLUS DOKONČEN!`,
+        desc: `Bakchus byl přemožen a masopustní basa slavnostně pochována! Celý Bubákov oslavuje vaše hrdinství napříč všemi 24 výpravami celého roku!`,
       }, 6000);
     }
 
@@ -2829,15 +2845,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     };
   }, []);
 
-  // Unified Arena Interaction (Key E or Gamepad X [buttons[2]])
+  // Unified Arena Interaction (Key E, Gamepad X [buttons[2]], or On-Screen Action Button)
   const triggerArenaInteract = useCallback(() => {
     if (gameStateRef.current !== 'playing') return false;
     const eng = engineRef.current;
     const p = eng.player;
     if (!p) return false;
 
-    // 1. Čertův dědeček v dosahu
-    if (eng.grandfather.active && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 220) {
+    const isMobileDevice = touchEnabled || isTouchScreen || (typeof window !== 'undefined' && window.innerWidth <= 1024);
+    const pad = getArenaInteractionPadding(isMobileDevice, mobileAccessibilityLevelRef.current);
+
+    // 1. Čertův dědeček v dosahu (mobilní rádius zvětšen na 290 px pro snadné přiblížení)
+    const grandfatherThreshold = isMobileDevice ? 290 : 220;
+    if (eng.grandfather.active && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < grandfatherThreshold) {
       gamepadManager.consumeActionsAndLockBleed(eng.keys);
       openGrandfatherShop();
       return true;
@@ -2846,7 +2866,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     // 2. Level 0 & 1 Interaktivní objekty (Kostelní zvonice, Hospodský soudek, Kaplička / Oltář)
     if (eng.activeLevelId === 0 || eng.activeLevelId === 1) {
       const thaw = eng.marchThaw;
-      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, 30) && thaw.bellCooldown <= 0) {
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.church, pad) && thaw.bellCooldown <= 0) {
         thaw.bellCooldown = 90;
         const nearby = enemySpatialHashRef.current.queryCircleInto(
           MARCH_THAW_POIS.church.x,
@@ -2876,7 +2896,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.bell();
         return true;
       }
-      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, 30) && thaw.kegCooldown <= 0) {
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.tavern, pad) && thaw.kegCooldown <= 0) {
         thaw.kegCooldown = 16;
         const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
         const x = p.x + ((p.lastDx || 1) / direction) * 90;
@@ -2901,7 +2921,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         return true;
       }
-      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.shrine, 35) && thaw.shrineCooldown <= 0 && (thaw.apparitionTimer || 0) <= 0) {
+      if (isInsideMarchPoi(p.x, p.y, MARCH_THAW_POIS.shrine, pad) && thaw.shrineCooldown <= 0 && (thaw.apparitionTimer || 0) <= 0) {
         thaw.shrineCharge = 0;
         thaw.shrineCooldown = MARCH_MARIAN_APPARITION_COOLDOWN;
         thaw.apparitionTimer = 4.2;
@@ -2935,7 +2955,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     if ((eng.activeLevelId === 2 || eng.activeLevelId === 3) && eng.dubenDen) {
       const duben = eng.dubenDen as any;
       const isNight = eng.activeLevelId === 3;
-      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.church, 35) && (duben.bellCooldown || 0) <= 0) {
+      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.church, pad) && (duben.bellCooldown || 0) <= 0) {
         duben.bellCooldown = DUBEN_BELL_COOLDOWN;
         duben.bellWaveTimer = 3.5;
         p.hp = Math.min(p.maxHp, p.hp + 20 * (p._cachedFrostHealMult ?? 1));
@@ -2970,7 +2990,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.bell();
         return true;
       }
-      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.tavern, 30) && (duben.kegCooldown || 0) <= 0) {
+      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.tavern, pad) && (duben.kegCooldown || 0) <= 0) {
         duben.kegCooldown = 16;
         p.hp = Math.min(p.maxHp, p.hp + 22 * (p._cachedFrostHealMult ?? 1));
         const nearby = enemySpatialHashRef.current.queryCircleInto(
@@ -3001,7 +3021,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         return true;
       }
-      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.shrine, 35) && (duben.shrineCooldown || 0) <= 0) {
+      if (isInsideDubenPoi(p.x, p.y, DUBEN_POIS.shrine, pad) && (duben.shrineCooldown || 0) <= 0) {
         duben.shrineCooldown = 70;
         p.hp = Math.min(p.maxHp, p.hp + 22 * (p._cachedFrostHealMult ?? 1));
         const nearby = enemySpatialHashRef.current.queryCircleInto(
@@ -3049,7 +3069,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         weatherPetalTimer: 0,
         terrainHazardTimer: 0,
       });
-      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.church, 30) && (kv.bellCooldown || 0) <= 0) {
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.church, pad) && (kv.bellCooldown || 0) <= 0) {
         kv.bellCooldown = 80;
         const nearby = enemySpatialHashRef.current.queryCircleInto(
           KVETEN_POIS.church.x,
@@ -3082,7 +3102,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.bell();
         return true;
       }
-      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.tavern, 30) && (kv.kegCooldown || 0) <= 0) {
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.tavern, pad) && (kv.kegCooldown || 0) <= 0) {
         kv.kegCooldown = 18;
         p.hp = Math.min(p.maxHp, p.hp + 24 * (p._cachedFrostHealMult ?? 1));
         const direction = Math.hypot(p.lastDx || 0, p.lastDy || 0) || 1;
@@ -3117,7 +3137,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         return true;
       }
-      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.shrine, 35) && (kv.shrineCooldown || 0) <= 0) {
+      if (isInsideKvetenPoi(p.x, p.y, KVETEN_POIS.shrine, pad) && (kv.shrineCooldown || 0) <= 0) {
         kv.shrineCooldown = 75;
         p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
         const nearby = enemySpatialHashRef.current.queryCircleInto(
@@ -3173,7 +3193,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       if (isNight && cv.poklad && cv.poklad.unlocked && !cv.poklad.opened) {
         const pdx = p.x - cv.poklad.x;
         const pdy = p.y - cv.poklad.y;
-        if (pdx * pdx + pdy * pdy <= 125 * 125) {
+        const pokladThresh = isMobileDevice ? 180 : 125;
+        if (pdx * pdx + pdy * pdy <= pokladThresh * pokladThresh) {
           cv.poklad.opened = true;
           cv.svatojanskaZareTimer = 15.0;
           eng.gingerbread = (eng.gingerbread || 0) + 25;
@@ -3203,7 +3224,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // A. Poutní strom Sv. Antonína Paduánského: Vacuum-pulls all loose drops & grants holy shield
-      if (isInsideCervenPoi(p.x, p.y, cervenPois.shrine, 35) && (cv.shrineCooldown || 0) <= 0) {
+      if (isInsideCervenPoi(p.x, p.y, cervenPois.shrine, pad) && (cv.shrineCooldown || 0) <= 0) {
         cv.shrineCooldown = 75;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 3.0);
@@ -3215,7 +3236,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // B. Hrusický mrakozvon proti bouři / nočním běsům
-      if (isInsideCervenPoi(p.x, p.y, cervenPois.church, 35) && (cv.bellCooldown || 0) <= 0) {
+      if (isInsideCervenPoi(p.x, p.y, cervenPois.church, pad) && (cv.bellCooldown || 0) <= 0) {
         cv.bellCooldown = 60;
         p.tempShield = Math.max(p.tempShield || 0, 50);
         const nearby = enemySpatialHashRef.current.queryCircleInto(
@@ -3243,7 +3264,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // C. Borůvkový háj / Palouk zlatého kapradí
-      if (isInsideCervenPoi(p.x, p.y, cervenPois.forest, 35) && (cv.forestCooldown || 0) <= 0) {
+      if (isInsideCervenPoi(p.x, p.y, cervenPois.forest, pad) && (cv.forestCooldown || 0) <= 0) {
         cv.forestCooldown = 45;
         p.hp = Math.min(p.maxHp, p.hp + 35 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.25);
@@ -3253,7 +3274,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // D. Letní hospoda a chladivé podmáslí / Noční hospoda U Sejků
-      if (isInsideCervenPoi(p.x, p.y, cervenPois.tavern, 35) && (cv.tavernCooldown || 0) <= 0) {
+      if (isInsideCervenPoi(p.x, p.y, cervenPois.tavern, pad) && (cv.tavernCooldown || 0) <= 0) {
         cv.tavernCooldown = 50;
         p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
         p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
@@ -3268,7 +3289,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const isNight = eng.activeLevelId === 9;
       const pois = getCervenecPois(isNight);
       const strelnice = cvc.strelnice;
-      if (!isNight && strelnice && strelnice.cooldown <= 0 && isInsideCervenecPoi(p.x, p.y, pois.village)) {
+      if (!isNight && strelnice && strelnice.cooldown <= 0 && isInsideCervenecPoi(p.x, p.y, pois.village, pad)) {
         strelnice.cooldown = 42;
         strelnice.buffTimer = 18;
         strelnice.rosesBurstTimer = 2.5;
@@ -3295,7 +3316,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.cheer();
         return true;
       }
-      if (isInsideCervenecPoi(p.x, p.y, pois.shrine) && cvc.shrineCooldown <= 0) {
+      if (isInsideCervenecPoi(p.x, p.y, pois.shrine, pad) && cvc.shrineCooldown <= 0) {
         cvc.shrineCooldown = 48;
         p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.2);
@@ -3313,7 +3334,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         return true;
       }
-      if (isInsideCervenecPoi(p.x, p.y, pois.church) && cvc.bellCooldown <= 0) {
+      if (isInsideCervenecPoi(p.x, p.y, pois.church, pad) && cvc.bellCooldown <= 0) {
         cvc.bellCooldown = 55;
         p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 4.5);
         for (const m of eng.enemies) {
@@ -3335,7 +3356,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.bell();
         return true;
       }
-      if (isInsideCervenecPoi(p.x, p.y, pois.forest) && cvc.forestCooldown <= 0) {
+      if (isInsideCervenecPoi(p.x, p.y, pois.forest, pad) && cvc.forestCooldown <= 0) {
         cvc.forestCooldown = 44;
         p.hp = Math.min(p.maxHp, p.hp + 28 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.22);
@@ -3351,7 +3372,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         sound.hit();
         return true;
       }
-      if (isInsideCervenecPoi(p.x, p.y, pois.tavern) && cvc.tavernCooldown <= 0) {
+      if (isInsideCervenecPoi(p.x, p.y, pois.tavern, pad) && cvc.tavernCooldown <= 0) {
         cvc.tavernCooldown = 50;
         p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
         p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
@@ -3377,7 +3398,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const vatra = sr?.vatra;
 
       // Chlebová pec (Stage 11 daytime village green)
-      if (!isNight && pec && pec.cooldown <= 0 && isInsideSrpenPoi(p.x, p.y, pois.village)) {
+      if (!isNight && pec && pec.cooldown <= 0 && (isInsideSrpenPoi(p.x, p.y, pois.village, pad) || Math.hypot(p.x - (pec.x || 45), p.y - (pec.y || -95)) <= (pec.radius + pad))) {
         pec.cooldown = 18.0;
         pec.buffTimer = 18.0;
         pec.flourBurstTimer = 2.5;
@@ -3408,7 +3429,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Vavřinecká vatra (Stage 12 night hill / church)
-      if (isNight && vatra && vatra.cooldown <= 0 && (isInsideSrpenPoi(p.x, p.y, pois.church) || Math.hypot(p.x - vatra.x, p.y - vatra.y) <= vatra.radius)) {
+      if (isNight && vatra && vatra.cooldown <= 0 && (isInsideSrpenPoi(p.x, p.y, pois.church, pad) || Math.hypot(p.x - vatra.x, p.y - vatra.y) <= (vatra.radius + pad))) {
         vatra.cooldown = 18.0;
         vatra.litTimer = 18.0;
         p.tempShield = Math.max(p.tempShield || 0, 90);
@@ -3438,7 +3459,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Kaplička (shrine)
-      if (isInsideSrpenPoi(p.x, p.y, pois.shrine) && (sr.shrineCooldown || 0) <= 0) {
+      if (isInsideSrpenPoi(p.x, p.y, pois.shrine, pad) && (sr.shrineCooldown || 0) <= 0) {
         sr.shrineCooldown = 30.0;
         p.tempShield = Math.max(p.tempShield || 0, 75);
         p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 2.5);
@@ -3456,7 +3477,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Kostel sv. Bartoloměje (church)
-      if (isInsideSrpenPoi(p.x, p.y, pois.church) && (sr.bellCooldown || 0) <= 0) {
+      if (isInsideSrpenPoi(p.x, p.y, pois.church, pad) && (sr.bellCooldown || 0) <= 0) {
         sr.bellCooldown = 35.0;
         p.tempShield = Math.max(p.tempShield || 0, 60);
         for (let j = 0; j < eng.enemies.length; j++) {
@@ -3481,7 +3502,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Hospoda (tavern)
-      if (isInsideSrpenPoi(p.x, p.y, pois.tavern) && (sr.tavernCooldown || 0) <= 0) {
+      if (isInsideSrpenPoi(p.x, p.y, pois.tavern, pad) && (sr.tavernCooldown || 0) <= 0) {
         sr.tavernCooldown = 35.0;
         p.hp = Math.min(p.maxHp, p.hp + 42 * (p._cachedFrostHealMult ?? 1));
         p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
@@ -3499,7 +3520,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Les (forest)
-      if (isInsideSrpenPoi(p.x, p.y, pois.forest) && (sr.forestCooldown || 0) <= 0) {
+      if (isInsideSrpenPoi(p.x, p.y, pois.forest, pad) && (sr.forestCooldown || 0) <= 0) {
         sr.forestCooldown = 30.0;
         p.hp = Math.min(p.maxHp, p.hp + 25 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.22);
@@ -3525,7 +3546,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const ohen = zr?.ohen;
 
       // Kotel na povidla (Stage 13 daytime village green)
-      if (!isNight && kotel && kotel.cooldown <= 0 && isInsideZariPoi(p.x, p.y, pois.village)) {
+      if (!isNight && kotel && kotel.cooldown <= 0 && (isInsideZariPoi(p.x, p.y, pois.village, pad) || Math.hypot(p.x - (kotel.x || 45), p.y - (kotel.y || -95)) <= (kotel.radius + pad))) {
         kotel.cooldown = 20.0;
         kotel.stirActiveTimer = 18.0;
         kotel.splashBurstTimer = 2.5;
@@ -3556,7 +3577,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Svatováclavský svatý oheň (Stage 14 night hill / church)
-      if (isNight && ohen && ohen.cooldown <= 0 && (isInsideZariPoi(p.x, p.y, pois.church) || Math.hypot(p.x - ohen.x, p.y - ohen.y) <= ohen.radius)) {
+      if (isNight && ohen && ohen.cooldown <= 0 && (isInsideZariPoi(p.x, p.y, pois.church, pad) || Math.hypot(p.x - ohen.x, p.y - ohen.y) <= (ohen.radius + pad))) {
         ohen.cooldown = 20.0;
         ohen.blessingActiveTimer = 18.0;
         ohen.firesKindled = (ohen.firesKindled || 0) + 1;
@@ -3587,7 +3608,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Kaplička (shrine)
-      if (isInsideZariPoi(p.x, p.y, pois.shrine) && (zr.shrineCooldown || 0) <= 0) {
+      if (isInsideZariPoi(p.x, p.y, pois.shrine, pad) && (zr.shrineCooldown || 0) <= 0) {
         zr.shrineCooldown = 30.0;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 2.5);
@@ -3605,7 +3626,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Kostel sv. Bartoloměje (church)
-      if (isInsideZariPoi(p.x, p.y, pois.church) && (zr.bellCooldown || 0) <= 0) {
+      if (isInsideZariPoi(p.x, p.y, pois.church, pad) && (zr.bellCooldown || 0) <= 0) {
         zr.bellCooldown = 35.0;
         p.tempShield = Math.max(p.tempShield || 0, 65);
         for (let j = 0; j < eng.enemies.length; j++) {
@@ -3630,7 +3651,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Hospoda (tavern)
-      if (isInsideZariPoi(p.x, p.y, pois.tavern) && (zr.tavernCooldown || 0) <= 0) {
+      if (isInsideZariPoi(p.x, p.y, pois.tavern, pad) && (zr.tavernCooldown || 0) <= 0) {
         zr.tavernCooldown = 35.0;
         p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
         p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
@@ -3648,7 +3669,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Les (forest)
-      if (isInsideZariPoi(p.x, p.y, pois.forest) && (zr.forestCooldown || 0) <= 0) {
+      if (isInsideZariPoi(p.x, p.y, pois.forest, pad) && (zr.forestCooldown || 0) <= 0) {
         zr.forestCooldown = 30.0;
         p.hp = Math.min(p.maxHp, p.hp + 28 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.22);
@@ -3674,7 +3695,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const svice = rj?.svice;
 
       // Ohníček na návsi (Stage 15 daytime village green)
-      if (!isNight && ohnicek && ohnicek.cooldown <= 0 && isInsideRijenPoi(p.x, p.y, pois.village)) {
+      if (!isNight && ohnicek && ohnicek.cooldown <= 0 && (isInsideRijenPoi(p.x, p.y, pois.village, pad) || Math.hypot(p.x - (ohnicek.x || 50), p.y - (ohnicek.y || -75)) <= (ohnicek.radius + pad))) {
         ohnicek.cooldown = 20.0;
         ohnicek.sparksTimer = 18.0;
         ohnicek.smokeBurstTimer = 2.5;
@@ -3707,7 +3728,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Dušičková svíce u Božích muk (Stage 16 nighttime shrine)
-      if (isNight && svice && svice.cooldown <= 0 && (isInsideRijenPoi(p.x, p.y, pois.shrine) || Math.hypot(p.x - svice.x, p.y - svice.y) <= svice.radius)) {
+      if (isNight && svice && svice.cooldown <= 0 && (isInsideRijenPoi(p.x, p.y, pois.shrine, pad) || Math.hypot(p.x - svice.x, p.y - svice.y) <= (svice.radius + pad))) {
         svice.cooldown = 20.0;
         svice.candleActiveTimer = 18.0;
         svice.candlesLit = (svice.candlesLit || 0) + 1;
@@ -3738,7 +3759,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Boží muka (daytime shrine)
-      if (!isNight && isInsideRijenPoi(p.x, p.y, pois.shrine) && (rj.shrineCooldown || 0) <= 0) {
+      if (!isNight && isInsideRijenPoi(p.x, p.y, pois.shrine, pad) && (rj.shrineCooldown || 0) <= 0) {
         rj.shrineCooldown = 25.0;
         p.tempShield = Math.max(p.tempShield || 0, 75);
         p.invulnerabilityTimer = Math.max(p.invulnerabilityTimer || 0, 2.0);
@@ -3756,7 +3777,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Kostel sv. Mikuláše (church)
-      if (isInsideRijenPoi(p.x, p.y, pois.church) && (rj.bellCooldown || 0) <= 0) {
+      if (isInsideRijenPoi(p.x, p.y, pois.church, pad) && (rj.bellCooldown || 0) <= 0) {
         rj.bellCooldown = 25.0;
         p.tempShield = Math.max(p.tempShield || 0, 70);
         for (let j = 0; j < eng.enemies.length; j++) {
@@ -3781,7 +3802,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Hospoda (tavern)
-      if (isInsideRijenPoi(p.x, p.y, pois.tavern) && (rj.tavernCooldown || 0) <= 0) {
+      if (isInsideRijenPoi(p.x, p.y, pois.tavern, pad) && (rj.tavernCooldown || 0) <= 0) {
         rj.tavernCooldown = 30.0;
         p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
         p.damageMultiplier = Math.max(p.damageMultiplier || 1, 1.25);
@@ -3799,7 +3820,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Les (forest)
-      if (isInsideRijenPoi(p.x, p.y, pois.forest) && (rj.forestCooldown || 0) <= 0) {
+      if (isInsideRijenPoi(p.x, p.y, pois.forest, pad) && (rj.forestCooldown || 0) <= 0) {
         rj.forestCooldown = 30.0;
         p.hp = Math.min(p.maxHp, p.hp + 30 * (p._cachedFrostHealMult ?? 1));
         p.speedMultiplier = Math.max(p.speedMultiplier || 1, 1.20);
@@ -3823,7 +3844,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const pois = getListopadPois(isNight);
 
       // Hospoda (tavern) - Svatomartinská husa
-      if (isInsideListopadPoi(p.x, p.y, pois.tavern) && (lp.tavernCooldown || 0) <= 0) {
+      if (isInsideListopadPoi(p.x, p.y, pois.tavern, pad) && (lp.tavernCooldown || 0) <= 0) {
         lp.tavernCooldown = 15.0;
         p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
         pushDamageText(
@@ -3840,7 +3861,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Boží muka (shrine)
-      if (isInsideListopadPoi(p.x, p.y, pois.shrine) && (lp.shrineCooldown || 0) <= 0) {
+      if (isInsideListopadPoi(p.x, p.y, pois.shrine, pad) && (lp.shrineCooldown || 0) <= 0) {
         lp.shrineCooldown = 15.0;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         pushDamageText(
@@ -3865,7 +3886,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const zvon = pr?.zvon;
 
       // Rozžehnutí adventního věnce na návsi (Level 18 Day)
-      if (!isNight && advent && advent.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.village) || Math.hypot(p.x - advent.x, p.y - advent.y) <= advent.radius)) {
+      if (!isNight && advent && advent.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.village, pad) || Math.hypot(p.x - advent.x, p.y - advent.y) <= (advent.radius + pad))) {
         advent.cooldown = 15.0;
         advent.candlesLit = (advent.candlesLit || 0) + 1;
         advent.lightTimer = 4.0;
@@ -3884,7 +3905,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Rozeznění štědrovečerního zvonu (Level 19 Night)
-      if (isNight && zvon && zvon.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.church) || Math.hypot(p.x - zvon.x, p.y - zvon.y) <= zvon.radius)) {
+      if (isNight && zvon && zvon.cooldown <= 0 && (isInsideProsinecPoi(p.x, p.y, pois.church, pad) || Math.hypot(p.x - zvon.x, p.y - zvon.y) <= (zvon.radius + pad))) {
         zvon.cooldown = 15.0;
         zvon.bellsTolled = (zvon.bellsTolled || 0) + 1;
         zvon.chimeTimer = 4.0;
@@ -3909,7 +3930,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Hospoda (tavern)
-      if (isInsideProsinecPoi(p.x, p.y, pois.tavern) && (pr.tavernCooldown || 0) <= 0) {
+      if (isInsideProsinecPoi(p.x, p.y, pois.tavern, pad) && (pr.tavernCooldown || 0) <= 0) {
         pr.tavernCooldown = 15.0;
         p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
         pushDamageText(
@@ -3926,7 +3947,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Boží muka (shrine)
-      if (isInsideProsinecPoi(p.x, p.y, pois.shrine) && (pr.shrineCooldown || 0) <= 0) {
+      if (isInsideProsinecPoi(p.x, p.y, pois.shrine, pad) && (pr.shrineCooldown || 0) <= 0) {
         pr.shrineCooldown = 15.0;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         pushDamageText(
@@ -3951,7 +3972,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const fara = ld?.fara;
 
       // Stavění sněhuláka na návsi (Level 20 Day)
-      if (!isNight && snehulak && snehulak.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.village) || Math.hypot(p.x - snehulak.x, p.y - snehulak.y) <= snehulak.radius)) {
+      if (!isNight && snehulak && snehulak.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.village, pad) || Math.hypot(p.x - snehulak.x, p.y - snehulak.y) <= (snehulak.radius + pad))) {
         snehulak.cooldown = 15.0;
         snehulak.snowmenBuilt = (snehulak.snowmenBuilt || 0) + 1;
         snehulak.snowShieldTimer = 4.0;
@@ -3977,7 +3998,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Posvěcení dveří křídou K+M+B na faře (Level 21 Night)
-      if (isNight && fara && fara.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.church) || Math.hypot(p.x - fara.x, p.y - fara.y) <= fara.radius)) {
+      if (isNight && fara && fara.cooldown <= 0 && (isInsideLedenPoi(p.x, p.y, pois.church, pad) || Math.hypot(p.x - fara.x, p.y - fara.y) <= (fara.radius + pad))) {
         fara.cooldown = 15.0;
         fara.blessingsCount = (fara.blessingsCount || 0) + 1;
         fara.holyAuraTimer = 4.0;
@@ -4002,7 +4023,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Hospoda (tavern)
-      if (isInsideLedenPoi(p.x, p.y, pois.tavern) && (ld.tavernCooldown || 0) <= 0) {
+      if (isInsideLedenPoi(p.x, p.y, pois.tavern, pad) && (ld.tavernCooldown || 0) <= 0) {
         ld.tavernCooldown = 15.0;
         p.hp = Math.min(p.maxHp, p.hp + 45 * (p._cachedFrostHealMult ?? 1));
         pushDamageText(
@@ -4019,7 +4040,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Boží muka (shrine)
-      if (isInsideLedenPoi(p.x, p.y, pois.shrine) && (ld.shrineCooldown || 0) <= 0) {
+      if (isInsideLedenPoi(p.x, p.y, pois.shrine, pad) && (ld.shrineCooldown || 0) <= 0) {
         ld.shrineCooldown = 15.0;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         pushDamageText(
@@ -4044,7 +4065,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       const basa = un?.basa;
 
       // Smažení masopustních koblih v Hostinci U Cikánů (Level 22 Day)
-      if (!isNight && koblihy && koblihy.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.tavern) || Math.hypot(p.x - koblihy.x, p.y - koblihy.y) <= koblihy.radius)) {
+      if (!isNight && koblihy && koblihy.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.tavern, pad) || Math.hypot(p.x - koblihy.x, p.y - koblihy.y) <= (koblihy.radius + pad))) {
         koblihy.cooldown = 15.0;
         koblihy.koblihyCooked = (koblihy.koblihyCooked || 0) + 1;
         koblihy.speedBoostTimer = 10.0;
@@ -4063,7 +4084,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Pochovávání basy a rozsvícení loučí ve Staré márnici (Level 23 Night)
-      if (isNight && basa && basa.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.church) || Math.hypot(p.x - basa.x, p.y - basa.y) <= basa.radius)) {
+      if (isNight && basa && basa.cooldown <= 0 && (isInsideUnorPoi(p.x, p.y, pois.church, pad) || Math.hypot(p.x - basa.x, p.y - basa.y) <= (basa.radius + pad))) {
         basa.cooldown = 15.0;
         basa.basasBuried = (basa.basasBuried || 0) + 1;
         basa.shockwaveTimer = 4.0;
@@ -4089,7 +4110,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       }
 
       // Boží muka (shrine)
-      if (isInsideUnorPoi(p.x, p.y, pois.shrine) && (un.shrineCooldown || 0) <= 0) {
+      if (isInsideUnorPoi(p.x, p.y, pois.shrine, pad) && (un.shrineCooldown || 0) <= 0) {
         un.shrineCooldown = 15.0;
         p.tempShield = Math.max(p.tempShield || 0, 80);
         pushDamageText(
@@ -4107,7 +4128,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
     if (eng.drops && eng.drops.length > 0) {
       let nearestDrop: any = null;
-      let nearestDistSq = 165 * 165;
+      const dropRange = isMobileDevice ? 240 : 165;
+      let nearestDistSq = dropRange * dropRange;
       for (let i = 0; i < eng.drops.length; i++) {
         const d = eng.drops[i];
         if (!d || d.dead || !isInteractiveArenaDrop(d.type)) continue;
@@ -4131,7 +4153,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
     }
 
     return false;
-  }, [openGrandfatherShop]);
+  }, [openGrandfatherShop, touchEnabled, isTouchScreen]);
 
   const triggerArenaInteractRef = useRef(triggerArenaInteract);
   triggerArenaInteractRef.current = triggerArenaInteract;
@@ -4427,6 +4449,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       ultMaxCd: cType === 'krajanek' ? 30 : cType === 'tulak' ? 21 : cType === 'babicka' ? 45 : cType === 'kostelnik' ? 35 : 30,
       lastDx: 1,
       lastDy: 0,
+      vx: 0,
+      vy: 0,
       facingX: 1 as 1 | -1,
       animTime: 0,
       valecniceAngle: 0,
@@ -4593,6 +4617,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           const fleeLen = Math.hypot(fleeDirX, fleeDirY) || 1;
           this.fleeVx = (fleeDirX / fleeLen) * 235;
           this.fleeVy = (fleeDirY / fleeLen) * 235;
+          this.vx = this.fleeVx;
+          this.vy = this.fleeVy;
           this.lastDx = this.fleeVx >= 0 ? 1.8 : -1.8;
           this.lastDy = this.fleeVy >= 0 ? 0.5 : -0.5;
           this.facingX = this.fleeVx >= 0 ? 1 : -1;
@@ -4795,7 +4821,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         const isFleeing = (engineRef.current?.fleeTimer ?? 0) > 0;
         const isHurt = !isFleeing && (this.hurtTimer ?? 0) > 0;
-        const isPlayerMoving = Math.abs(this.vx || 0) > 0.1 || Math.abs(this.vy || 0) > 0.1;
+        const isPlayerMoving = isFleeing || Math.abs(this.vx || 0) > 0.1 || Math.abs(this.vy || 0) > 0.1;
         const isSprinting =
           !isFleeing &&
           isPlayerMoving &&
@@ -4810,13 +4836,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         const facingSign: 1 | -1 = (this.facingX ?? ((this.lastDx ?? 1) < 0 ? -1 : 1)) < 0 ? -1 : 1;
         const rawAbsDx = Math.abs(this.lastDx ?? 0);
         const signedMoveDx = rawAbsDx > 0.01 ? this.lastDx : facingSign * 0.001;
-        const drawDx = isPlayerMoving
+        const drawDx = isFleeing
+          ? facingSign * Math.max(1.8, rawAbsDx)
+          : isPlayerMoving
           ? (isSprinting
               ? (rawAbsDx > 0.01 ? facingSign * Math.max(1.6, rawAbsDx * 1.6) : facingSign * 0.001)
               : signedMoveDx)
           : facingSign * 0.001;
         const rawAbsDy = Math.abs(this.lastDy ?? 0);
-        const drawDy = isPlayerMoving
+        const drawDy = isFleeing
+          ? (rawAbsDy > 0.01 ? this.lastDy : -0.4)
+          : isPlayerMoving
           ? (isSprinting
               ? (rawAbsDy > 0.01 ? (this.lastDy > 0 ? 1 : -1) * Math.max(1.6, rawAbsDy * 1.6) : this.lastDy * 1.6)
               : this.lastDy)
@@ -4830,7 +4860,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               Lada.drawCoastingZernov?.(ctx, engineRef.current.krajanekCoastingStones[i], engineRef.current?.uiTime || 0);
             }
           }
-          if ((this.krajanekRideTimer || 0) > 0) {
+          if (!isFleeing && (this.krajanekRideTimer || 0) > 0) {
             const colossusScale = 1 + (this.krajanekColossusStacks || 0) * 0.05;
             Lada.drawKrajanekRide(
               ctx,
@@ -4849,7 +4879,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, false, isHurt);
           }
         } else if (this.type === 'tulak' || this.type === 'wanderer') {
-          const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+          const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
           const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
           Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
         } else if (this.type === 'pasacek' || this.type === 'shepherd') {
@@ -4863,15 +4893,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         } else if (this.type === 'babicka' || this.type === 'granny') {
           Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
         } else {
-          const isWhirling = Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+          const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
           const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
           Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
         }
 
+        const handItemBob = isPlayerMoving
+          ? -Math.abs(Math.sin(animT * (isFleeing ? 24 : isSprinting ? 20 : 14))) * (isFleeing ? 5 : isSprinting ? 4 : 2.5)
+          : -Math.sin(animT * 2.4) * 0.8;
+
         // Draw blessed candle in hand if Hromnička is equipped
         if (this._hromnickaWeapon) {
           const flip = facingSign;
-          Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10, 1, animT);
+          Lada.drawBlessedCandle(ctx, this.x + flip * 15, this.y - 10 + handItemBob, 1, animT);
         }
 
         // Draw Petrolejka brass lantern in hand during low-visibility phases
@@ -4879,7 +4913,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         if (petrolejkaRadius > 0) {
           const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
           const flip = facingSign;
-          Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
+          Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2 + handItemBob, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
         }
       },
     };
@@ -5377,6 +5411,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       levelTitle: chosenLevel.name,
       levelWon: false,
       isTestMode: isTestMode,
+      canInteract: false,
+      interactPrompt: null,
+      interactLabel: 'POUŽÍT',
+      interactIcon: 'hand',
     });
 
     setIsTestModeOpen(false);
@@ -8962,6 +9000,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             }
 
             // Výsledný posun hráče
+            player.vx = moveVx;
+            player.vy = moveVy;
             player.x += (moveVx + pushX) * dt;
             player.y += (moveVy + pushY) * dt;
 
@@ -9741,6 +9781,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   life: 3.5 + Math.random() * 1.5,
                   color: isDubenNight ? (isPrimary ? '#F97316' : '#FDE047') : (isPrimary ? '#FCE7F3' : '#FEF08A'),
                   size: isPrimary ? 2.8 : 3.6,
+                  isWeather: true,
                 }));
               }
 
@@ -9753,7 +9794,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 dec.animTime = (dec.animTime || 0) + dt;
                 if (dec.type === 'kaca') {
                   const distP = Math.hypot(player.x - dec.x, player.y - dec.y);
-                  if (distP < player.radius + dec.radius) {
+                  const isMobileDevice = touchEnabled || isTouchScreen;
+                  const kickerExtra = isMobileDevice ? 32 + mobileAccessibilityLevelRef.current * 2 : 12;
+                  if (distP < player.radius + dec.radius + kickerExtra) {
                     const dx = dec.x - player.x || 1;
                     const dy = dec.y - player.y || 0;
                     const len = Math.hypot(dx, dy) || 1;
@@ -9868,6 +9911,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   life: 3.5 + Math.random() * 1.5,
                   color: isKvetenNight ? (isPrimary ? '#A3E635' : '#FEF08A') : (isPrimary ? '#E9D5FF' : '#FEF08A'),
                   size: isPrimary ? 3.0 : 3.8,
+                  isWeather: true,
                 }));
               }
 
@@ -10080,6 +10124,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     life: 2.8 + Math.random() * 1.5,
                     color: isFernSpore ? '#FDE047' : '#A3E635',
                     size: isFernSpore ? 3.5 : 3.0,
+                    isWeather: true,
                   }));
                 } else {
                   const isSunDust = Math.random() < 0.6;
@@ -10091,6 +10136,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     life: 3.2 + Math.random() * 1.5,
                     color: isSunDust ? '#FDE68A' : '#F59E0B',
                     size: isSunDust ? 3.0 : 4.0,
+                    isWeather: true,
                   }));
                 }
               }
@@ -11354,6 +11400,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 }
               }
 
+              const isMobileClient = touchEnabled || isTouchScreen || (typeof window !== 'undefined' && window.innerWidth <= 1024);
+              const interactInfo = evaluateArenaInteraction(
+                engine,
+                isMobileClient,
+                mobileAccessibilityLevelRef.current
+              );
+
               const prevStats = runStatsRef.current;
               const nextChestProgress = Math.floor(engine.pointsChest);
               const hasChanged =
@@ -11368,7 +11421,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                 Math.round(prevStats.ultCd) !== Math.round(player.ultCd) ||
                 prevStats.bossHpPct !== nextBossHpPct ||
                 prevStats.bossTitle !== nextBossTitle ||
-                prevStats.chestProgress !== nextChestProgress;
+                prevStats.chestProgress !== nextChestProgress ||
+                prevStats.canInteract !== interactInfo.canInteract ||
+                prevStats.interactLabel !== interactInfo.label ||
+                prevStats.interactPrompt !== interactInfo.prompt;
 
               if (hasChanged) {
                 setRunStats((prev) => ({
@@ -11386,6 +11442,10 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   chestProgress: nextChestProgress,
                   bossHpPct: nextBossHpPct,
                   bossTitle: nextBossTitle,
+                  canInteract: interactInfo.canInteract,
+                  interactPrompt: interactInfo.prompt,
+                  interactLabel: interactInfo.label,
+                  interactIcon: interactInfo.icon,
                 }));
               }
             }
@@ -11394,6 +11454,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             player.animTime = (player.animTime || 0) + dt * 1.6;
             const fleeVx = typeof player.fleeVx === 'number' ? player.fleeVx : ((player.facingX ?? (player.lastDx < 0 ? -1 : 1)) < 0 ? -220 : 220);
             const fleeVy = typeof player.fleeVy === 'number' ? player.fleeVy : -45;
+            player.vx = fleeVx;
+            player.vy = fleeVy;
             player.x += fleeVx * dt;
             player.y += fleeVy * dt;
             player.lastDx = fleeVx < 0 ? -1.8 : 1.8;
@@ -12710,9 +12772,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     const foe = engine.enemies[k];
                     if (!foe.isDefeated && !foe.dead) {
                       if (foe.isBoss || foe.isMiniboss) {
-                        foe.takeDamage(650, 'holy');
+                        foe.takeDamage(650, 'holy', 0, 0);
                       } else {
-                        foe.takeDamage(foe.hp || 50, 'holy');
+                        foe.takeDamage(foe.hp || 50, 'holy', 0, 0);
                       }
                     }
                   }
@@ -12810,9 +12872,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
           // Update particles
           if (engine.particles) {
-            for (const p of engine.particles) {
-              p.x += (p.vx || 0) * dt;
-              p.y += (p.vy || 0) * dt;
+            const uiT = engine.uiTime || 0;
+            for (let i = 0; i < engine.particles.length; i++) {
+              const p = engine.particles[i];
+              if (p.isWeather) {
+                const flutter = Math.sin(uiT * 2.6 + (p.life || 0) * 3.1 + i * 0.7);
+                p.x += ((p.vx || 0) + flutter * 24) * dt;
+                p.y += ((p.vy || 0) + Math.cos(uiT * 1.9 + i) * 8) * dt;
+              } else {
+                p.x += (p.vx || 0) * dt;
+                p.y += (p.vy || 0) * dt;
+              }
               p.life -= dt;
             }
             compactInPlace(engine.particles, keepLiveParticle);
@@ -13064,45 +13134,38 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }
         }
 
-        // Weather overlay per level: snowflakes, autumn leaves, or graveyard mist
-        if (curLvl.weatherEffect === 'snow') {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
-          const t = engine.uiTime;
-          for (let i = 0; i < 55; i++) {
-            const sx = ((i * 123 + t * 45) % canvas.width);
-            const sy = ((i * 77 + t * 85) % canvas.height);
-            ctx.beginPath();
-            ctx.arc(sx, sy, 2 + (i % 3), 0, Math.PI * 2);
-            ctx.fill();
-          }
-        } else if (curLvl.weatherEffect === 'leaves') {
-          const t = engine.uiTime;
-          for (let i = 0; i < 35; i++) {
-            const sx = ((i * 147 + t * 35 + Math.sin(t + i) * 25) % canvas.width);
-            const sy = ((i * 93 + t * 45) % canvas.height);
-            ctx.fillStyle = i % 3 === 0 ? 'rgba(217, 160, 54, 0.75)' : i % 3 === 1 ? 'rgba(209, 52, 43, 0.65)' : 'rgba(140, 90, 53, 0.7)';
-            ctx.beginPath();
-            ctx.ellipse(sx, sy, 4, 2.5, Math.sin(t * 1.5 + i), 0, Math.PI * 2);
-            ctx.fill();
-          }
-        } else if (curLvl.weatherEffect === 'fog') {
-          const t = engine.uiTime;
-          const fogCanvas = getFogPuffCanvas();
-          if (fogCanvas) {
-            for (let i = 0; i < 22; i++) {
-              const sx = ((i * 190 + t * 22) % (canvas.width + 200)) - 100;
-              const sy = (i * 55 + Math.sin(t * 0.5 + i) * 30) % canvas.height;
-              ctx.drawImage(fogCanvas, sx - 120, sy - 120);
-            }
-          }
-        }
+        // Multi-plane 3D parallax weather & night-sky animation overlay (snow, blizzard, ice drift, petals, leaves, fireflies, rain, golden harvest pollen, Perseid meteors, fog & wind-curl ribbons)
+        renderWeatherAndSkyOverlay(
+          ctx,
+          canvas.width,
+          canvas.height,
+          camera.x,
+          camera.y,
+          engine.uiTime || 0,
+          {
+            levelId: curLvl.id,
+            season: curLvl.season,
+            weatherEffect: curLvl.weatherEffect,
+            weatherOverride: (engine as any).runDirector?.rozmar?.weatherOverride ?? null,
+            dayPhaseId: phase.id,
+            performanceProfile:
+              metaRef.current.performanceProfile ||
+              (metaRef.current.performanceMode ? 'performance' : 'balanced'),
+          },
+          weatherSkyStateRef.current
+        );
 
         // Dedicated Daylight Foreground Sun Overlay Canvas (rendered above all arena, floating text, indicator & HUD elements)
         const sunFgCanvas = sunForegroundCanvasRef.current;
         if (sunFgCanvas) {
           if (sunFgCanvas.width !== canvas.width) sunFgCanvas.width = canvas.width;
           if (sunFgCanvas.height !== canvas.height) sunFgCanvas.height = canvas.height;
-          const shouldRenderSunFg = (curLvl.id === 0 || curLvl.id === 2 || curLvl.id === 4 || curLvl.id === 6 || curLvl.id === 8 || curLvl.id === 10) && currentGameState === 'playing' && !engine.cutscene;
+          const shouldRenderSunFg =
+            curLvl.id % 2 === 0 &&
+            curLvl.id >= 0 &&
+            curLvl.id <= 22 &&
+            currentGameState === 'playing' &&
+            !engine.cutscene;
           if (shouldRenderSunFg || (sunFgCanvas as any).__dirty) {
             const sunFgCtx = sunFgCanvas.getContext('2d');
             if (sunFgCtx) {
@@ -13501,6 +13564,13 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       rehtackarBuffTimer: 0,
 
       update(dt: number, player: any) {
+        if (!Number.isFinite(this.kbx)) this.kbx = 0;
+        if (!Number.isFinite(this.kby)) this.kby = 0;
+        if (!Number.isFinite(this.vx)) this.vx = 0;
+        if (!Number.isFinite(this.vy)) this.vy = 0;
+        if (!Number.isFinite(this.animTime)) this.animTime = 0;
+        if (!Number.isFinite(this.x)) this.x = player?.x ?? 0;
+        if (!Number.isFinite(this.y)) this.y = player?.y ?? 0;
         if (this.hitFlashTimer > 0) this.hitFlashTimer -= dt;
         if (this.contactTimer > 0) this.contactTimer -= dt;
         if (this.garlicSlowTimer > 0) this.garlicSlowTimer -= dt;
@@ -15994,7 +16064,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         });
       },
 
-      takeDamage(amount: number, type: string, kbx: number, kby: number, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean; isCrit?: boolean; isCritical?: boolean }) {
+      takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: { ignoreResist?: number; stunDuration?: number; source?: string; isHunterCounter?: boolean; allowFractionalDamage?: boolean; cannotDodge?: boolean; ignoreDodge?: boolean; isCrit?: boolean; isCritical?: boolean }) {
+        kbx = typeof kbx === 'number' && Number.isFinite(kbx) ? kbx : 0;
+        kby = typeof kby === 'number' && Number.isFinite(kby) ? kby : 0;
         if (this.isDefeated || (this.id === 'zkazena_kraslice' && this.fusePrimed)) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (pokud útok neignoruje úhyb např. Formanský bič)
@@ -17154,6 +17226,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
       },
 
       draw(ctx: CanvasRenderingContext2D) {
+        if (!Number.isFinite(this.x) || !Number.isFinite(this.y)) return;
+        if (!Number.isFinite(this.animTime)) this.animTime = 0;
         // Virtual flock members blit the pre-baked 12-frame Ladovská flying crow
         // from BakedBubakAtlas with zero per-frame path rasterization or allocations.
         if (this.isVirtualCrowMember) {
@@ -17956,16 +18030,40 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           if (gameState === 'playing') {
             const eng = engineRef.current;
             const p = eng.player;
-            if (eng.grandfather.active && p && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 240) {
+            if (p) {
               const canvas = canvasRef.current;
               if (canvas) {
                 const rect = canvas.getBoundingClientRect();
                 const clickScreenX = (e.clientX - rect.left) * (canvas.width / rect.width);
                 const clickScreenY = (e.clientY - rect.top) * (canvas.height / rect.height);
-                const gScreenX = eng.grandfather.x - eng.camera.x;
-                const gScreenY = eng.grandfather.y - eng.camera.y;
-                if (Math.hypot(clickScreenX - gScreenX, clickScreenY - gScreenY) < 100) {
-                  openGrandfatherShop();
+                const clickWorldX = clickScreenX + eng.camera.x;
+                const clickWorldY = clickScreenY + eng.camera.y;
+
+                // 1. Direct Grandfather shop tap
+                if (eng.grandfather.active && Math.hypot(eng.grandfather.x - p.x, eng.grandfather.y - p.y) < 320) {
+                  if (Math.hypot(clickWorldX - eng.grandfather.x, clickWorldY - eng.grandfather.y) < 130) {
+                    openGrandfatherShop();
+                    return;
+                  }
+                }
+
+                // 2. Direct Tap near player (< 220px) triggers any available arena effect
+                const distToPlayer = Math.hypot(clickWorldX - p.x, clickWorldY - p.y);
+                if (distToPlayer <= 220) {
+                  if (triggerArenaInteract()) {
+                    return;
+                  }
+                }
+
+                // 3. Or tapping directly on/near any active interactive POI target
+                const isMobileClient = touchEnabled || isTouchScreen || (typeof window !== 'undefined' && window.innerWidth <= 1024);
+                const interactInfo = evaluateArenaInteraction(eng, isMobileClient, mobileAccessibilityLevelRef.current);
+                if (interactInfo.canInteract && interactInfo.targetX !== undefined && interactInfo.targetY !== undefined) {
+                  if (Math.hypot(clickWorldX - interactInfo.targetX, clickWorldY - interactInfo.targetY) < 180) {
+                    if (triggerArenaInteract()) {
+                      return;
+                    }
+                  }
                 }
               }
             }
@@ -18039,7 +18137,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               <button
                 className="hud-pause-btn"
                 onClick={togglePause}
-                title={gamepadUiState.activeDevice === 'gamepad' ? 'Pozastavit hru [Start]' : 'Pozastavit hru [P / Esc]'}
+                title={(isTouchScreen || touchEnabled) ? 'Pozastavit hru' : (gamepadUiState.activeDevice === 'gamepad' ? 'Pozastavit hru [Start]' : 'Pozastavit hru [P / Esc]')}
                 aria-label="Pozastavit hru"
               >
                 <GameIcon icon="pause" size={16} />
@@ -18142,7 +18240,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                         : pType === 'babicka' || pType === 'granny'
                           ? 'Vlídné slovo'
                           : 'Speciální schopnost';
-            const keyHint = gamepadUiState.activeDevice === 'gamepad' ? '[RB / B]' : '[MEZERNÍK]';
+            const keyHint = (isTouchScreen || touchEnabled) ? '' : (gamepadUiState.activeDevice === 'gamepad' ? '[RB / B]' : '[MEZERNÍK]');
 
             return (
               <button
@@ -18155,7 +18253,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   padding: '8px 18px 11px',
                   minWidth: '290px',
                 }}
-                title={`${abilityName} — ${isReady ? 'Připravena!' : `Nabíjí se (${Math.ceil(runStats.ultCd)} s)`} ${keyHint}`}
+                title={`${abilityName} — ${isReady ? 'Připravena!' : `Nabíjí se (${Math.ceil(runStats.ultCd)} s)`}${keyHint ? ' ' + keyHint : ''}`}
               >
                 {/* Visual readiness fill bar at bottom of button */}
                 <div
@@ -18187,17 +18285,19 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                       <GameIcon icon={abilityIcon} size={16} />
                     </span>
                     <span>{abilityName.toUpperCase()}: PŘIPRAVENA!</span>
-                    <span
-                      style={{
-                        background: 'rgba(0,0,0,0.28)',
-                        border: '1px solid rgba(255,255,255,0.45)',
-                        borderRadius: 5,
-                        padding: '1px 6px',
-                        fontSize: '0.82rem',
-                      }}
-                    >
-                      {keyHint}
-                    </span>
+                    {keyHint ? (
+                      <span
+                        style={{
+                          background: 'rgba(0,0,0,0.28)',
+                          border: '1px solid rgba(255,255,255,0.45)',
+                          borderRadius: 5,
+                          padding: '1px 6px',
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        {keyHint}
+                      </span>
+                    ) : null}
                     <LadaFolkFlower variant="buttercup" size={16} spin="reverse" />
                   </span>
                 ) : (
@@ -18257,6 +18357,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }}
           onTriggerUltimate={triggerUltimate}
           ultCooldown={runStats.ultCd}
+          onInteract={triggerArenaInteract}
+          canInteract={runStats.canInteract}
+          interactPrompt={runStats.interactPrompt}
+          interactLabel={runStats.interactLabel}
+          interactIcon={runStats.interactIcon}
         />
       )}
 
@@ -18286,7 +18391,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             </div>
 
             <LadaBookSvgDefs />
-            {menuViewMode === 'grid' && <BubakovCoverTitle />}
+            <BubakovCoverTitle compact={menuViewMode === 'book'} />
 
             {/* VÝBĚR REŽIMU ZOBRAZENÍ VÝPRAV: PŘEHLED KARET VS. POHÁDKOVÁ KRONIKA */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', margin: '4px 0 14px 0', flexWrap: 'wrap' }}>
@@ -18466,7 +18571,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                           <GameIcon icon="lightning" size={14} /> <strong>Tlačítko ⚡ vpravo dole</strong> odpálí schopnost
                         </span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FEF3C7', border: '1.5px solid #6E3B1E', borderRadius: '4px', padding: '2px 7px', color: '#6E3B1E', fontWeight: 800, fontSize: '0.78rem' }}>
-                          <PernicekIcon size={14} /> <strong>Dotykové [E]</strong> otevře nůši Dědečka i pamětihodnosti
+                          <PernicekIcon size={14} /> <strong>Dotykové tlačítko akce</strong> otevře nůši Dědečka i pamětihodnosti
                         </span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#FAF5E8', border: '1.5px solid #4D784E', borderRadius: '4px', padding: '2px 7px', color: '#4D784E', fontWeight: 800, fontSize: '0.78rem' }}>
                           🃏 <strong>Dotykem na karty</strong> volíš zbraně a dary
@@ -18547,29 +18652,17 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               </div>
             )}
 
-            {/* 12 PROGRESSIVE GAME LEVELS SELECTOR */}
+            {/* 24 PROGRESSIVE GAME LEVELS SELECTOR */}
             <div className="level-select-section" style={{ margin: '10px 0 16px 0' }}>
               <div className="level-grid">
-                {([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as GameLevelId[]).map((lvlId) => {
+                {(LEVEL_ORDER as GameLevelId[]).map((lvlId) => {
                   const prog = levelProgress[lvlId];
                   const lvl = GAME_LEVELS[lvlId];
                   const isUnlocked = prog?.isUnlocked ?? false;
                   const isSelected = selectedLevelId === lvlId;
                   const isCompleted = !!(meta.completedLevels && meta.completedLevels[lvlId]) ||
-                    (lvlId === 0 && (meta.bestiaryKills?.vrana || 0) >= 1) ||
-                    (lvlId === 1 && (meta.bestiaryKills?.morana || 0) >= 1) ||
-                    (lvlId === 2 && (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1) ||
-                    (lvlId === 3 && (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1) ||
-                    (lvlId === 4 && (meta.bestiaryKills?.ledovi_muzi || 0) >= 1) ||
-                    (lvlId === 5 && ((meta.bestiaryKills?.hejkal || 0) >= 1 || (meta.bestiaryKills?.mlynar || 0) >= 1)) ||
-                    (lvlId === 6 && (meta.bestiaryKills?.kralovska_polednice || 0) >= 1) ||
-                    (lvlId === 7 && (meta.bestiaryKills?.svatojansky_vladce || 0) >= 1) ||
-                    (lvlId === 8 && (meta.bestiaryKills?.hromotluk_marketa || 0) >= 1) ||
-                    (lvlId === 9 && (meta.bestiaryKills?.drak || 0) >= 1) ||
-                    (lvlId === 10 && (meta.bestiaryKills?.dozinkovy_chasnik || 0) >= 1) ||
-                    (lvlId === 11 && (meta.bestiaryKills?.vyr_velky || 0) >= 1) ||
-                    (lvlId === 12 && (meta.bestiaryKills?.posvicensky_hospodar || 0) >= 1) ||
-                    (lvlId === 13 && (meta.bestiaryKills?.kvilici_meluzina || 0) >= 1);
+                    (meta.highestLevelUnlocked ?? 0) > lvlId ||
+                    (lvlId < 23 && isLevelFullyUnlocked(lvlId + 1, meta));
 
                   return (
                     <div
@@ -19540,7 +19633,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI ({gamepadUiState.activeDevice === 'gamepad' ? '[X]' : '[E]'})
+            <GameIcon icon="basket" size={22} /> OTEVŘÍT DĚDEČKOVU NŮŠI{(isTouchScreen || touchEnabled) ? '' : ` (${gamepadUiState.activeDevice === 'gamepad' ? '[X]' : '[E]'})`}
           </span>
         </button>
       )}
@@ -19774,7 +19867,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><GameIcon icon="dash" size={16} /> Přeskočit točení</span>{' '}
-                  <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
+                  {!(isTouchScreen || touchEnabled) && (
+                    <span style={{ fontSize: '0.9rem', opacity: 0.85 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
+                  )}
                 </button>
               ) : (
                 <button
@@ -19792,7 +19887,9 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                   }}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><GameIcon icon="chest" size={20} /> Vyzvednout poklad</span>{' '}
-                  <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
+                  {!(isTouchScreen || touchEnabled) && (
+                    <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>{gamepadUiState.activeDevice === 'gamepad' ? '[A]' : '[Mezerník]'}</span>
+                  )}
                 </button>
               )}
             </div>
@@ -20202,9 +20299,11 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             color: '#2D1609',
           }}
           title={
-            gamepadUiState.connected
-              ? `Připojen gamepad: ${gamepadUiState.name} • Aktivní vstup: ${gamepadUiState.activeDevice === 'gamepad' ? 'Gamepad' : 'Klávesnice'}`
-              : 'Ovládání klávesnicí (připojte USB/Bluetooth gamepad a stiskněte libovolné tlačítko)'
+            (isTouchScreen || touchEnabled)
+              ? 'Dotykové ovládání (Virtuální joystick & dotyková tlačítka)'
+              : gamepadUiState.connected
+                ? `Připojen gamepad: ${gamepadUiState.name} • Aktivní vstup: ${gamepadUiState.activeDevice === 'gamepad' ? 'Gamepad' : 'Klávesnice'}`
+                : 'Ovládání klávesnicí (připojte USB/Bluetooth gamepad a stiskněte libovolné tlačítko)'
           }
         >
           <span
@@ -20212,22 +20311,24 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: gamepadUiState.connected ? '#16A34A' : '#9CA3AF',
+              background: (isTouchScreen || touchEnabled) ? '#0284C7' : gamepadUiState.connected ? '#16A34A' : '#9CA3AF',
               border: '1px solid #1C1610',
               display: 'inline-block',
             }}
           />
-          <GameIcon icon="gamepad" size={15} />
+          <GameIcon icon={(isTouchScreen || touchEnabled) ? 'touch' : 'gamepad'} size={15} />
           <span>
-            {gamepadUiState.connected
-              ? gamepadUiState.activeDevice === 'gamepad'
-                ? 'Gamepad aktivní'
-                : 'Gamepad (Klávesnice)'
-              : 'Klávesnice'}
+            {(isTouchScreen || touchEnabled)
+              ? 'Dotykové ovládání'
+              : gamepadUiState.connected
+                ? gamepadUiState.activeDevice === 'gamepad'
+                  ? 'Gamepad aktivní'
+                  : 'Gamepad (Klávesnice)'
+                : 'Klávesnice'}
           </span>
         </div>
 
-        {/* Fullscreen Toggle Button [F] */}
+        {/* Fullscreen Toggle Button */}
         <button
           onClick={toggleFullscreen}
           style={{
@@ -20244,19 +20345,21 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
             color: '#2D1609',
             cursor: 'pointer',
           }}
-          title="Přepnout celou obrazovku (Klávesa F)"
+          title={(isTouchScreen || touchEnabled) ? 'Přepnout celou obrazovku' : 'Přepnout celou obrazovku (Klávesa F)'}
         >
           <span>{isFullscreen ? 'Okno' : 'Celá obrazovka'}</span>
-          <span
-            style={{
-              background: 'rgba(0,0,0,0.14)',
-              borderRadius: 4,
-              padding: '0 4px',
-              fontSize: '0.7rem',
-            }}
-          >
-            [F]
-          </span>
+          {!(isTouchScreen || touchEnabled) && (
+            <span
+              style={{
+                background: 'rgba(0,0,0,0.14)',
+                borderRadius: 4,
+                padding: '0 4px',
+                fontSize: '0.7rem',
+              }}
+            >
+              [F]
+            </span>
+          )}
         </button>
       </div>
     </>

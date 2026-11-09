@@ -180,9 +180,13 @@ describe('Animation Tester Data & Rendering Capabilities', () => {
         opsByState[st.name] = rec.ops.join('|');
       }
 
-      // Hurt and Sprint must each produce distinct procedural kinematics compared to normal walk/idle
+      // Hurt, Sprint, and Fleeing must each produce distinct procedural kinematics compared to normal walk/idle
       expect(opsByState['hurt'], `${hunter.id} hurt kinematics`).not.toBe(opsByState['idle-right']);
       expect(opsByState['sprint-right'], `${hunter.id} sprint kinematics`).not.toBe(opsByState['walk-right']);
+      expect(opsByState['fleeing'], `${hunter.id} fleeing kinematics`).not.toBe(opsByState['idle-left']);
+
+      // Hunters must run upright when fleeing — never rotate 90 degrees (Math.PI / 2 ≈ 1.571) to lie flat
+      expect(opsByState['fleeing'], `${hunter.id} must not lie down horizontally when fleeing`).not.toContain('rotate:1.571');
 
       // Vertical movement while facing left must keep negative horizontal scale (-1)
       expect(opsByState['walk-vertical-left'], `${hunter.id} left facing on vertical walk`).toContain('scale:-1.00,1.00');

@@ -6,6 +6,7 @@ import { LadaFolkFlower } from './LadaHudBotanicalDecor';
 import { GameIcon } from './GameIcon';
 import { ladaPageFoley } from './ladaPageTurnAudio';
 import { DYNAMIC_DIFFICULTY_PRESETS, getDifficultyPreset } from '../game/director';
+import { getLadaArtSettings, setLadaArtSettings, type LadaArtSettings } from '../game/ladaArtSettings';
 
 interface SettingsDevModalProps {
   isOpen: boolean;
@@ -77,6 +78,13 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
       return false;
     }
   });
+
+  const [artSettings, setArtSettingsState] = React.useState<LadaArtSettings>(() => getLadaArtSettings());
+
+  const handleUpdateArtSettings = (partial: Partial<LadaArtSettings>) => {
+    setLadaArtSettings(partial);
+    setArtSettingsState(getLadaArtSettings());
+  };
 
   const handleToggleFoley = () => {
     const nextEnabled = !foleySoundEnabled;
@@ -487,6 +495,106 @@ export const SettingsDevModal: React.FC<SettingsDevModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* SEKCE: LADOVSKÝ HLAVNÍ VÝTVARNÍK (ART DIRECTOR INSPECTOR) */}
+          <div
+            style={{
+              background: 'var(--parchmentDark)',
+              border: '2px solid var(--ink)',
+              borderRadius: '10px',
+              padding: '14px 18px',
+              textAlign: 'left',
+            }}
+          >
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <GameIcon icon="palette" size={18} /> Hlavní Výtvarník (Lada Art Director)
+            </h3>
+            <p style={{ margin: '0 0 12px', fontSize: '0.88rem', fontWeight: 700, color: '#451A03' }}>
+              Inspekce Ladovské kaligrafické perokresby, jazyka tvarů (kruhy/trojúhelníky/čtverce) a pravidla barev 60-30-10 v aréně.
+            </p>
+
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', fontWeight: 900, color: '#78350F' }}>
+                <span>🖊️ Tloušťka Ladovské perokresby (kontura)</span>
+                <span>{artSettings.outlineWidth} px</span>
+              </div>
+              <input
+                aria-label="Tloušťka Ladovské perokresby"
+                type="range"
+                min={0}
+                max={6}
+                step={0.5}
+                value={artSettings.outlineWidth}
+                onChange={(e) => {
+                  sound.coin();
+                  handleUpdateArtSettings({ outlineWidth: parseFloat(e.target.value) });
+                }}
+                style={{ width: '100%', accentColor: '#B45309', cursor: 'pointer', margin: '6px 0' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: artSettings.showShapeOverlays ? '#16A34A' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  handleUpdateArtSettings({ showShapeOverlays: !artSettings.showShapeOverlays });
+                }}
+                title="Zobrazit barevné obrysy tvarů entit (Kruhy=Hrdinové, Trojúhelníky=Rychlí, Čtverce=Tanky)"
+              >
+                <GameIcon icon="eye" size={16} />
+                Jazyk tvarů entit: {artSettings.showShapeOverlays ? 'ZAP (Inspector)' : 'VYP'}
+              </button>
+
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: artSettings.showPaletteAnalyzer ? '#16A34A' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  handleUpdateArtSettings({ showPaletteAnalyzer: !artSettings.showPaletteAnalyzer });
+                }}
+                title="Zobrazit real-time HUD rozložení barev 60-30-10 v aréně"
+              >
+                <GameIcon icon="scales" size={16} />
+                HUD Paleta 60-30-10: {artSettings.showPaletteAnalyzer ? 'ZAP (Inspector)' : 'VYP'}
+              </button>
+
+              <button
+                className="lada-btn btn-small"
+                style={{
+                  background: artSettings.comicSoundPopupsEnabled ? '#16A34A' : 'var(--wood-dark)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+                onClick={() => {
+                  sound.coin();
+                  handleUpdateArtSettings({ comicSoundPopupsEnabled: !artSettings.comicSoundPopupsEnabled });
+                }}
+                title="Vypustit veselé Lada komiksové hlášky BÁC! a PRÁSK! při silných zásazích"
+              >
+                <GameIcon icon="chat" size={16} />
+                Komiksové BÁC! & PRÁSK!: {artSettings.comicSoundPopupsEnabled ? 'ZAP' : 'VYP'}
+              </button>
+            </div>
+          </div>
 
           {/* SEKCE 2: VÝVOJÁŘSKÉ A TESTOVACÍ NÁSTROJE */}
           <div

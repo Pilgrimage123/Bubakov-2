@@ -1080,6 +1080,7 @@ export function renderNightEmissiveEntitiesPass(
     return 0;
   }
 
+  const safeTime = Number.isFinite(time) ? time : 0;
   const nightStrength = dayPhaseId === 'dusk' ? 0.68 : 0.96;
   const { viewLeft, viewTop, viewRight, viewBottom } = camera;
   let renderedCount = 0;
@@ -1094,8 +1095,9 @@ export function renderNightEmissiveEntitiesPass(
     const enemy = enemies[i];
     if (!enemy || enemy.dead || enemy.isDefeated) continue;
     if (enemy._crowWaveOwner && !enemy._crowWaveActive) continue;
+    if (!Number.isFinite(enemy.x) || !Number.isFinite(enemy.y)) continue;
 
-    const r = Math.max(10, enemy.radius || 20);
+    const r = Math.max(10, Number.isFinite(enemy.radius) && enemy.radius > 0 ? enemy.radius : 20);
     if (
       enemy.x + r + 24 < viewLeft ||
       enemy.x - r - 24 > viewRight ||
@@ -1126,7 +1128,7 @@ export function renderNightEmissiveEntitiesPass(
     const eyeColor = getEnemyNightEyeColor(enemy);
     const stamp = getEyeGlowStamp(eyeColor);
     const phaseSeed = (enemy.crowWaveIndex ?? i) * 1.37;
-    const pulse = 0.82 + Math.sin(time * 4.5 + phaseSeed) * 0.18;
+    const pulse = 0.82 + Math.sin(safeTime * 4.5 + phaseSeed) * 0.18;
 
     if (id === 'bludicka' || id === 'jiskrivec') {
       const wispR = r * 1.55 * pulse;
@@ -1149,7 +1151,7 @@ export function renderNightEmissiveEntitiesPass(
 
     // 3. Glowing eyes in the dark for all other nocturnal spooks, undead, hejkalové, hounds & bosses
     // Periodic natural blink so eyes feel alive in the dark
-    const blinkWave = Math.sin(time * 2.7 + phaseSeed * 2.1);
+    const blinkWave = Math.sin(safeTime * 2.7 + phaseSeed * 2.1);
     if (blinkWave < -0.94) continue;
 
     const facingDir = (enemy.lastDx ?? (enemy.vx !== undefined && enemy.vx < 0 ? -1 : 1)) >= 0 ? 1 : -1;

@@ -222,13 +222,19 @@ export function isInsideUnorPoi(
   x: number,
   y: number,
   poiOrId: UnorPoi | UnorPoiId,
+  extraRadiusOrNight: number | boolean = 0,
   isNightOrLevelId: boolean | number = false
 ): boolean {
-  const poi = typeof poiOrId === 'string' ? getUnorPois(isNightOrLevelId)[poiOrId] : poiOrId;
+  const extraRadius = typeof extraRadiusOrNight === 'number' ? extraRadiusOrNight : 0;
+  const isNight = typeof extraRadiusOrNight === 'boolean'
+    ? extraRadiusOrNight
+    : (typeof isNightOrLevelId === 'number' ? isNightOrLevelId === 23 : Boolean(isNightOrLevelId));
+  const poi = typeof poiOrId === 'string' ? getUnorPois(isNight)[poiOrId] : poiOrId;
   if (!poi) return false;
   const dx = x - poi.x;
   const dy = y - poi.y;
-  return dx * dx + dy * dy <= poi.radius * poi.radius;
+  const r = poi.radius + extraRadius;
+  return dx * dx + dy * dy <= r * r;
 }
 
 export function getUnorWaterEffect(x: number, y: number, _levelId: number = 22) {

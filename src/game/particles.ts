@@ -7,6 +7,8 @@
  * Plan: docs/plans/arena-performance-implementation-plan.md (Section 4)
  */
 
+import { getRandomLadaComicPopup, getLadaArtSettings } from './ladaArtSettings';
+
 export interface Particle {
   x: number;
   y: number;
@@ -17,6 +19,10 @@ export interface Particle {
   size?: number;
   color?: string;
   alpha?: number;
+  text?: string;
+  textColor?: string;
+  isComicPopup?: boolean;
+  bg?: string;
   [key: string]: any;
 }
 
@@ -74,3 +80,40 @@ export function tryEmitParticleBurst(
   }
   return emitted;
 }
+
+/**
+ * Emits a Lada whimsical comic sound popup ("BÁC!", "PRÁSK!", "KŘUP!")
+ * in a calligraphic cloud puff at impact coordinates.
+ */
+export function tryEmitLadaComicPopup(
+  particles: Particle[],
+  x: number,
+  y: number,
+  customText?: string,
+  profile?: string
+): boolean {
+  if (!getLadaArtSettings().comicSoundPopupsEnabled) {
+    return false;
+  }
+  const popup = getRandomLadaComicPopup();
+  const text = customText || popup.text;
+  return tryEmitParticle(
+    particles,
+    {
+      x: x + (Math.random() * 16 - 8),
+      y: y - 10 + (Math.random() * 10 - 5),
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: -1.2 - Math.random() * 0.8,
+      life: 1.0,
+      maxLife: 1.0,
+      size: 24,
+      text,
+      textColor: popup.color,
+      bg: popup.bg,
+      isComicPopup: true,
+    },
+    profile,
+    true // Force emission for heavy impact feel
+  );
+}
+

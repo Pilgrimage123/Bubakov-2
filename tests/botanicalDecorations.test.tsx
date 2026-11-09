@@ -12,10 +12,12 @@ import { LadaCartouche } from '../src/components/LadaCartouche';
 import { LadaFrieze } from '../src/components/LadaFrieze';
 import {
   BubakovCoverTitle,
+  COVER_CHARACTER_ALIGNMENT,
   computeBubakCrowChoreography,
   drawBubakAndCrowCoverCanvas,
   computeCertTailFireChoreography,
   drawCertCoverCanvas,
+  computePeekingBubakChoreography,
 } from '../src/components/BubakovCoverTitle';
 import {
   LadaCoverScene,
@@ -136,8 +138,17 @@ describe('Ladovské botanické dekorace a animované květy v menu a HUDu', () =
     expect(frieze).toContain('transform-box: fill-box');
   });
 
-  it('vykresluje BubakovCoverTitle s 2D canvas animací strašáka Bubáka i čertíka vedle hlavního nápisu bez ořezu na mobilu i desktopu', () => {
+  it('vykresluje BubakovCoverTitle s ladovským vesnickým bubákem v otrhaném klobouku s dobromyslným výrazem a buchtou uprostřed i 2D canvas animací strašáka Bubáka a čertíka vedle hlavního nápisu bez ořezu', () => {
     const html = renderToStaticMarkup(<BubakovCoverTitle showCharacters={true} />);
+    expect(html).toContain('id="lada-peeking-purple-bubak"');
+    expect(html).toContain('data-testid="peeking-purple-bubak"');
+    expect(html).toContain('id="peeking-bubak-tattered-hat"');
+    expect(html).toContain('id="peeking-bubak-village-kerchief"');
+    expect(html).toContain('id="peeking-bubak-kindly-smile"');
+    expect(html).toContain('id="peeking-bubak-buchta"');
+    expect(html).toContain('id="lada-peeking-bubak-left-paw"');
+    expect(html).toContain('Ladovský vesnický bubák v otrhaném klobouku s povidlovou buchtou');
+    expect(html).not.toContain('Ladovská pouťová hvězdička');
     expect(html).toContain('id="lada-cover-strasak"');
     expect(html).toContain('data-testid="bubak-crow-canvas"');
     expect(html).toContain('Strašák Bubák a strakatá vrána šedivka');
@@ -149,12 +160,33 @@ describe('Ladovské botanické dekorace a animované květy v menu a HUDu', () =
     expect(html).toContain('aspect-[900/252]');
     expect(html).toContain('left:0%;top:0%;width:25%;height:100%');
     expect(html).toContain('left:75%;top:0%;width:25%;height:100%');
+
+    // Verify the peeking purple Bubák choreography cycles through admiring_buchta, ducking_back, hidden_behind_sign, and peeking_out
+    const admiring = computePeekingBubakChoreography(1.0);
+    expect(admiring.phase).toBe('admiring_buchta');
+    expect(admiring.peekProgress).toBe(1);
+    expect(admiring.tongueOut).toBeGreaterThan(0.5);
+
+    const ducking = computePeekingBubakChoreography(3.4);
+    expect(ducking.phase).toBe('ducking_back');
+    expect(ducking.headOffsetY).toBeGreaterThan(15);
+
+    const hidden = computePeekingBubakChoreography(4.3);
+    expect(hidden.phase).toBe('hidden_behind_sign');
+    expect(hidden.peekProgress).toBe(0);
+    expect(hidden.headOffsetY).toBe(66);
+
+    const peeking = computePeekingBubakChoreography(5.8);
+    expect(peeking.phase).toBe('peeking_out');
+    expect(peeking.peekProgress).toBeGreaterThan(0.1);
   });
 
-  it('plynule animuje choreografii černobílé vrány (obtěžování, přistání na hlavě, posmívání a rozzuřený křik Bubáka) bez ořezu a bez alokací gradientů', () => {
+  it('plynule animuje choreografii černobílé vrány (dobromyslný klid v otrhaném klobouku, obtěžování, přistání na hlavě, posmívání a rozzuřený křik Bubáka) bez ořezu a bez alokací gradientů', () => {
     const patrol = computeBubakCrowChoreography(0.5);
     expect(patrol.phase).toBe('patrol_approach');
     expect(patrol.isCrowOnHead).toBe(false);
+    // In calm patrol state, Bubák has a warm, good-natured expression (negative/kindly brow slant)
+    expect(patrol.bubakBrowSlant).toBeLessThan(0);
 
     const pestering = computeBubakCrowChoreography(2.2);
     expect(pestering.phase).toBe('pestering');
@@ -292,6 +324,62 @@ describe('Ladovské botanické dekorace a animované květy v menu a HUDu', () =
     expect(calls.length).toBeGreaterThan(150);
     expect(calls).toContain('fillText');
     expect(gradientAllocations).toBe(0);
+  });
+
+  it('udržuje Bubáka i Čertíka vedle nápisu BUBÁKOV v naprosto stejné vertikální výšce (COVER_CHARACTER_ALIGNMENT)', () => {
+    expect(COVER_CHARACTER_ALIGNMENT.groundTurfY).toBe(168);
+    expect(COVER_CHARACTER_ALIGNMENT.torsoCenterY).toBe(92);
+    expect(COVER_CHARACTER_ALIGNMENT.headCenterY).toBe(42);
+    expect(COVER_CHARACTER_ALIGNMENT.eyeCenterY).toBe(34.5);
+    expect(COVER_CHARACTER_ALIGNMENT.topCrownY).toBe(9);
+
+    // During angry_scream, Bubák raises both arms upward (left arm > 0 deg, right arm < 0 deg)
+    const scream = computeBubakCrowChoreography(6.35);
+    expect(scream.bubakLeftArmAngle).toBeGreaterThan(10);
+    expect(scream.bubakRightArmAngle).toBeLessThan(-10);
+
+    // Capture ellipse calls on both canvases at t = 0 to verify both draw their green turf mound at COVER_CHARACTER_ALIGNMENT.groundTurfY (168)
+    // and their torso at COVER_CHARACTER_ALIGNMENT.torsoCenterY (92)
+    const recordEllipses = (drawFn: (ctx: CanvasRenderingContext2D) => void) => {
+      const ellipses: Array<{ x: number; y: number; rx: number; ry: number }> = [];
+      const translates: Array<{ x: number; y: number }> = [];
+      const ctx = new Proxy(
+        {},
+        {
+          get(_target, prop) {
+            if (prop === 'ellipse') {
+              return (x: number, y: number, rx: number, ry: number) => {
+                ellipses.push({ x, y, rx, ry });
+              };
+            }
+            if (prop === 'translate') {
+              return (x: number, y: number) => {
+                translates.push({ x, y });
+              };
+            }
+            return () => {};
+          },
+          set() {
+            return true;
+          },
+        }
+      ) as unknown as CanvasRenderingContext2D;
+      drawFn(ctx);
+      return { ellipses, translates };
+    };
+
+    const bubakRec = recordEllipses((ctx) => drawBubakAndCrowCoverCanvas(ctx, 225, 252, 0));
+    const certRec = recordEllipses((ctx) => drawCertCoverCanvas(ctx, 225, 252, 0));
+
+    // Both canvases translate by y = 52 at root level
+    expect(bubakRec.translates[0]).toEqual({ x: 32, y: 52 });
+    expect(certRec.translates[0]).toEqual({ x: 36, y: 52 });
+
+    // Both draw their ground shadow at groundShadowY (170) and green meadow turf mound at groundTurfY (168)
+    expect(bubakRec.ellipses.some((e) => e.y === COVER_CHARACTER_ALIGNMENT.groundTurfY)).toBe(true);
+    expect(certRec.ellipses.some((e) => e.y === COVER_CHARACTER_ALIGNMENT.groundTurfY)).toBe(true);
+    expect(bubakRec.ellipses.some((e) => e.y === COVER_CHARACTER_ALIGNMENT.groundShadowY)).toBe(true);
+    expect(certRec.ellipses.some((e) => e.y === COVER_CHARACTER_ALIGNMENT.groundShadowY)).toBe(true);
   });
 
   it('vykresluje a plynule animuje scénu v Hospodě U Černého kocoura (Hastrman popotahující z fajfky s kroužky dýmu, Český bubák a krásná rusalka ťukající pěnivými korbely a pijící na ex)', () => {

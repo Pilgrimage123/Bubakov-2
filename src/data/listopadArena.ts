@@ -232,13 +232,19 @@ export function isInsideListopadPoi(
   x: number,
   y: number,
   poiOrId: ListopadPoi | ListopadPoiId,
+  extraRadiusOrNight: number | boolean = 0,
   isNightOrLevelId: boolean | number = false
 ): boolean {
-  const poi = typeof poiOrId === 'string' ? getListopadPois(isNightOrLevelId)[poiOrId] : poiOrId;
+  const extraRadius = typeof extraRadiusOrNight === 'number' ? extraRadiusOrNight : 0;
+  const isNight = typeof extraRadiusOrNight === 'boolean'
+    ? extraRadiusOrNight
+    : (typeof isNightOrLevelId === 'number' ? isNightOrLevelId === 17 : Boolean(isNightOrLevelId));
+  const poi = typeof poiOrId === 'string' ? getListopadPois(isNight)[poiOrId] : poiOrId;
   if (!poi) return false;
   const dx = x - poi.x;
   const dy = y - poi.y;
-  return dx * dx + dy * dy <= poi.radius * poi.radius;
+  const r = poi.radius + extraRadius;
+  return dx * dx + dy * dy <= r * r;
 }
 
 export function getListopadWaterEffect(x: number, y: number, _levelId: number = 16) {

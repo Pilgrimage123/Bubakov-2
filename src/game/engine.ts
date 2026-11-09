@@ -6015,6 +6015,8 @@ export class GameEngine {
       },
 
       takeDamage(amount: number, type = 'physical', kbx = 0, kby = 0, options?: any) {
+        kbx = typeof kbx === 'number' && Number.isFinite(kbx) ? kbx : 0;
+        kby = typeof kby === 'number' && Number.isFinite(kby) ? kby : 0;
         if (this.isDefeated || this.dead || (this.id === 'zkazena_kraslice' && this.fusePrimed)) return;
 
         // Vichřicový: 50% šance vyhnout se jakémukoliv zranění (bič ignoruje úhyb)
@@ -7564,6 +7566,8 @@ export class GameEngine {
         pushY *= pushScale;
       }
 
+      player.vx = moveVx;
+      player.vy = moveVy;
       player.x += (moveVx + pushX) * dt;
       player.y += (moveVy + pushY) * dt;
 
@@ -8567,7 +8571,7 @@ export class GameEngine {
               }
               if (d.type === 'kaca' && Math.hypot(d.vx, d.vy) > 50) {
                 if (typeof e.takeDamage === 'function') {
-                  e.takeDamage(20, false, 'physical', player);
+                  e.takeDamage(20, 'physical', 0, 0);
                 } else {
                   e.hp -= 20;
                   if (e.hp <= 0) e.isDefeated = true;
@@ -10957,10 +10961,17 @@ export class GameEngine {
 
     // Step particles
     if (this.state.particles) {
+      const uiT = this.state.uiTime || 0;
       for (let i = 0; i < this.state.particles.length; i++) {
         const p = this.state.particles[i];
-        p.x += (p.vx || 0) * dt;
-        p.y += (p.vy || 0) * dt;
+        if (p.isWeather) {
+          const flutter = Math.sin(uiT * 2.6 + (p.life || 0) * 3.1 + i * 0.7);
+          p.x += ((p.vx || 0) + flutter * 24) * dt;
+          p.y += ((p.vy || 0) + Math.cos(uiT * 1.9 + i) * 8) * dt;
+        } else {
+          p.x += (p.vx || 0) * dt;
+          p.y += (p.vy || 0) * dt;
+        }
         p.life -= dt;
       }
       compactInPlace(this.state.particles, keepLiveParticle);

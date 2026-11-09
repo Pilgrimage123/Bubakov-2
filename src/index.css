@@ -2165,6 +2165,72 @@ body {
   transition: all 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
+/* Touch controls: dedicated interactive arena action button */
+.touch-interact-btn {
+  position: absolute;
+  bottom: max(124px, calc(10dvh + env(safe-area-inset-bottom, 0px) + 118px));
+  right: max(20px, calc(16px + env(safe-area-inset-right, 0px)));
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 3.5px solid var(--ink);
+  box-shadow: 4px 4px 0px var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 30;
+  font-family: 'Eczar', serif;
+  background: var(--parchment);
+  color: var(--wood-dark);
+  opacity: 0.72;
+  transition: all 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.touch-interact-btn.can-interact {
+  background: #FEF08A;
+  color: #78350F;
+  border-color: #451A03;
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow: 5px 5px 0px var(--ink), 0 0 20px rgba(250, 204, 21, 0.85);
+  animation: touchInteractPulse 1.1s alternate infinite ease-in-out;
+}
+
+@keyframes touchInteractPulse {
+  0% { transform: scale(1.04); box-shadow: 4px 4px 0px var(--ink), 0 0 10px rgba(250, 204, 21, 0.6); }
+  100% { transform: scale(1.14); box-shadow: 6px 6px 0px var(--ink), 0 0 24px rgba(245, 158, 11, 0.95); }
+}
+
+.touch-interact-btn:active {
+  transform: translate(3px, 3px) scale(0.95) !important;
+  box-shadow: 1px 1px 0px var(--ink) !important;
+}
+
+.touch-interact-icon {
+  font-size: 24px;
+  line-height: 1;
+  filter: drop-shadow(1px 1px 0 rgba(255, 255, 255, 0.6));
+}
+
+.touch-interact-label {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-top: 1px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0.5px 0.5px 0 rgba(255, 255, 255, 0.8);
+}
+
 /* Touch controls responsive sizing on standard mobile phones */
 @media (max-width: 600px) {
   .joystick-base {
@@ -2184,6 +2250,21 @@ body {
     height: 76px;
     bottom: max(24px, calc(10dvh + env(safe-area-inset-bottom, 0px) + 18px));
     right: max(16px, calc(12px + env(safe-area-inset-right, 0px)));
+  }
+
+  .touch-interact-btn {
+    width: 68px;
+    height: 68px;
+    bottom: max(110px, calc(10dvh + env(safe-area-inset-bottom, 0px) + 102px));
+    right: max(16px, calc(12px + env(safe-area-inset-right, 0px)));
+  }
+
+  .touch-interact-icon {
+    font-size: 22px;
+  }
+
+  .touch-interact-label {
+    font-size: 9px;
   }
 
   .touch-ult-icon {
@@ -2222,6 +2303,21 @@ body {
     height: 66px;
     bottom: max(16px, calc(7dvh + env(safe-area-inset-bottom, 0px) + 10px));
     right: max(24px, calc(18px + env(safe-area-inset-right, 0px)));
+  }
+
+  .touch-interact-btn {
+    width: 62px;
+    height: 62px;
+    bottom: max(16px, calc(7dvh + env(safe-area-inset-bottom, 0px) + 10px));
+    right: max(100px, calc(94px + env(safe-area-inset-right, 0px)));
+  }
+
+  .touch-interact-icon {
+    font-size: 20px;
+  }
+
+  .touch-interact-label {
+    font-size: 8.5px;
   }
 
   .touch-ult-icon {

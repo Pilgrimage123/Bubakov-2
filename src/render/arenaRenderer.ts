@@ -30,6 +30,7 @@ import {
 import { OffScreenIndicatorController } from './offScreenIndicators';
 import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { Lada } from './ladaRenderer';
+import { getLadaArtSettings, drawLadaShapeOverlay, getEntityLadaShape } from '../game/ladaArtSettings';
 import {
   isEntityBehindMarchRoof,
   hasRoofsInView,
@@ -676,6 +677,30 @@ export class ArenaRenderer {
     this.worldCombatVfxOptions.isPaused = options?.isPaused;
     renderWorldCombatVfx(ctx, engine, camera, this.worldCombatVfxOptions);
 
+    // 8c. LADOVSKÁ SHAPE LANGUAGE OVERLAY PASS (DEBUG INSPECTOR)
+    if (getLadaArtSettings().showShapeOverlays) {
+      if (engine.player) {
+        drawLadaShapeOverlay(
+          ctx,
+          engine.player.x,
+          engine.player.y,
+          engine.player.radius || 24,
+          getEntityLadaShape(engine.player),
+          'Hráč (Oblý / Hruška)'
+        );
+      }
+      if (engine.enemies) {
+        for (let i = 0; i < engine.enemies.length; i++) {
+          const e = engine.enemies[i];
+          if (!e || e.dead || e.isDefeated) continue;
+          if (!isInView(e.x, e.y, e.radius || 20, camera)) continue;
+          const shape = getEntityLadaShape(e);
+          const shapeLabel = shape === 'triangle' ? 'Rychlý (Špička)' : shape === 'square' ? 'Tank (Čtverec)' : 'Kruh';
+          drawLadaShapeOverlay(ctx, e.x, e.y, e.radius || 20, shape, shapeLabel);
+        }
+      }
+    }
+
     ctx.restore(); // END WORLD SPACE PASS (TRANSLATED BY CAMERA)
 
     // 9. LIGHTING PASS (SCREEN SPACE)
@@ -783,6 +808,35 @@ export class ArenaRenderer {
       if (lightingEnabled) {
         lightingMs += now() - tSunStart;
       }
+    }
+
+    // 12. LADOVSKÁ 60-30-10 PALETTE BUDGET ANALYZER HUD (SCREEN SPACE)
+    if (getLadaArtSettings().showPaletteAnalyzer) {
+      ctx.save();
+      const hudX = 16;
+      const hudY = height - 145;
+      ctx.fillStyle = 'rgba(30, 24, 18, 0.92)';
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(hudX, hudY, 280, 130, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FEF08A';
+      ctx.font = '900 13px system-ui, sans-serif';
+      ctx.fillText('🎨 LADOVSKÁ PALETA (60-30-10 HUD)', hudX + 14, hudY + 22);
+
+      ctx.font = '700 11px system-ui, sans-serif';
+      ctx.fillStyle = '#E5E7EB';
+      ctx.fillText('60% Klidná plocha: Akvarel podklad / Sníh / Pažit', hudX + 14, hudY + 44);
+      ctx.fillText('30% Kulisy: Chaloupky, ploty & kapličky', hudX + 14, hudY + 62);
+      ctx.fillText('10% Akce & Střely: Perníčky, zlato & máky', hudX + 14, hudY + 80);
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.fillText('✓ Přehlednost v hordě: OPTIMÁLNÍ (60 FPS)', hudX + 14, hudY + 104);
+      ctx.restore();
     }
 
     const totalMs = now() - tStart;
