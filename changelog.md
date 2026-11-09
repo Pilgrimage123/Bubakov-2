@@ -1,20 +1,24 @@
 ## 2026-11-09 – Čertova babička (ADR 0051), Zakletá princezna (ADR 0052) a Kinematika Čertova dědečka (ADR 0053)
 
-- **Čertova babička, Ohrada z mouky a Babiččin bezedný pekáč (`src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0051)**:
-  - Babiččin bezedný pekáč jako nová zbraň lovce: vrhá rotující litinové pekáče tvořící ochranný štít kolem lovce a deflektující nepřátelské střely na orbitální vzdálenost.
-  - Bossovský boj Čertovy babičky: útok rozháněním dřevěným válečkem na nudle, kruhová ohrada z vysypané mouky omezující arénu a salva hořících povidlových koláčů.
-  - Vytvořena dedikovaná integrační testovací sada [`tests/certovaBabickaAndBezednyPekac.test.ts`](file:///d:/bubakov/tests/certovaBabickaAndBezednyPekac.test.ts).
-- **Zakletá princezna, Noční odkletí a Královské věno (`src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0052)**:
-  - Kompletní procedurální 2D Canvas přemalba Zakleté princezny dle autentické kresby: zlatá koruna s rubíny, medové lokny s růží, lesními houbami a pavučinkou se zavěšeným pavoukem, fialové potrhané šaty s krémovou krajkou a mechem.
-  - Plynulý valčíkový skluz (~125 px/s), homing křivka pro Královský kapesníček a mechanika nočního odkletí s Královským věnem (truhla, perníčky, šperky).
-  - Vytvořena dedikovaná integrační testovací sada [`tests/zakletaPrinceznaAndKralovskeVeno.test.ts`](file:///d:/bubakov/tests/zakletaPrinceznaAndKralovskeVeno.test.ts).
+- **Čertova babička, Ohrada z mouky a Babiččin bezedný pekáč (`src/game/director.ts`, `src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0051)**:
+  - Vzácný spawn (5 % šance) při neúspěšném rituálu Bubácké díry namísto Barbuchy. Dynamické škálování na 3,5× Kuráže a bodů finálního bosse úrovně. Postupné zvětšování a přechod do zuřivosti (vyražení kopyta z boty, plameny, pára).
+  - Ohrada z mouky a hořícího uhlí (izolovaná kruhová aréna, hoření při překročení), útok rozháněním rozžhaveným válečkem na nudle, kulomet z vykrajovátek (360° spirálový bullet hell), cukrová poleva (-70 % zpomalení) a vyvolávání připálených perníkových zmetků.
+  - Fáze 2 (< 50 % HP): Čtyři rotující litinové pekáče tvořící štít, chlebová sázecí lopata a bázlivý Pekelný dědeček v křoví nabízející sušené švestky (léčení) a fajfku (kouřový štít).
+  - Odměna: Porážka babičku nezabije – usedne na pařez a zanechá malovanou almaru s evoluční zbraní *Babiččin bezedný pekáč* (`bezedny_pekac`), která každých 5 s metá salvu horkých buchet drtících nepřátele a léčících 5 HP.
+  - Dedikovaná testovací sada [`tests/certovaBabickaAndBezednyPekac.test.ts`](file:///d:/bubakov/tests/certovaBabickaAndBezednyPekac.test.ts).
+- **Zakletá princezna, Noční odkletí a Královské věno (`src/game/director.ts`, `src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0052)**:
+  - Noční megaboss (20 % šance z Bubácké díry výhradně v nočních fázích `night` a `midnight`), 2,0× škálování Kuráže finálního bosse úrovně, rychlost 125 px/s a pasivní regenerace +1 % max Kuráže za sekundu.
+  - Vynoření z barokního mramorového sarkofágu s odletujícím víkem, uzavření arény do *Hřbitovního plotu se svícemi* s mrazivým zraněním na hranici a odrazy perel.
+  - Útoky: *Valčík kostlivých nápadníků* (rotující řady koster), *Potrhané korále* (odrážející se perly), *Královský kapesníček* (naváděný projektil udělující *Společenské faux pas* s inverzním ovládáním chůze na 3 s), *Kletba modré krve* (ledové gejzíry z erbů) a padající mramorové balvany.
+  - Dual victory condition (odkletí): sražení Kuráže na 0 nebo přežití 3 nocí (60 s s kuropěním po 20 s a 40 s). Za svítání odjíždí ve zlatém kočáře a zanechává *Královské věno* (+200 kr., plný heal a obranný artefakt `Perlový náhrdelník zakleté panny` střílející 12 odrážejících se perel při obdržení zásahu).
+  - Dedikovaná testovací sada [`tests/zakletaPrinceznaAndKralovskeVeno.test.ts`](file:///d:/bubakov/tests/zakletaPrinceznaAndKralovskeVeno.test.ts).
 - **Kinematika, vizuál a animované stavy Čertova dědečka s nůší (`src/render/ladaRenderer.ts`, `src/components/GrandfatherShop.tsx`, ADR 0053)**:
   - Třívrstvá kinematika pohybu (*Čertovské kulhání*): tvrdý dopad kopyta s prachovým obláčkem, odvalení šněrovací škorně a pružná sekundární setrvačnost kramářské nůše.
   - 3 plnohodnotné stavy (`walking`, `waiting`, `interacting`): bafání z vyřezávané dýmky s ladovskými obláčky kouře s tušovou konturou, vyceněné křivé zuby, hřejivá krbová aura a pozdvižená ruka nabízející jarmareční perníček.
   - Proděravělý výplet nůše a uvízlý perníček na boku (propojení s ADR 0051), kmitající myška Rézinka, svisle visící bandaska a měděný zvonec.
   - Geometrická oprava náklonu nůše: odstraněno dřívější přepadávání nůše dozadu, těžiště a sklon nůše (+0.08 až +0.18 rad) nyní přirozeně dosedá na shrbená záda kramáře.
   - Integrace živého Canvas portrétu do záhlaví modálu `GrandfatherShop.tsx`.
-  - Vytvořena dedikovaná integrační testovací sada [`tests/certuvDedecekAnimationAndStates.test.ts`](file:///d:/bubakov/tests/certuvDedecekAnimationAndStates.test.ts).
+  - Dedikovaná testovací sada [`tests/certuvDedecekAnimationAndStates.test.ts`](file:///d:/bubakov/tests/certuvDedecekAnimationAndStates.test.ts).
 
 ## 2026-11-09 – Vyjasnění Bubácké díry a Strachem nacpaný Barbucha (ADR 0050)
 
