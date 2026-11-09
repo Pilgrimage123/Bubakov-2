@@ -84,7 +84,10 @@ export function tryEmitParticleBurst(
 /**
  * Emits a Lada whimsical comic sound popup ("BÁC!", "PRÁSK!", "KŘUP!")
  * in a calligraphic cloud puff at impact coordinates.
+ * Budgeted to max 3 concurrent active popups (ADR 0047).
  */
+export const MAX_CONCURRENT_COMIC_POPUPS = 3;
+
 export function tryEmitLadaComicPopup(
   particles: Particle[],
   x: number,
@@ -94,6 +97,14 @@ export function tryEmitLadaComicPopup(
 ): boolean {
   if (!getLadaArtSettings().comicSoundPopupsEnabled) {
     return false;
+  }
+  let activeCount = 0;
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    if (p && (p.life ?? 0) > 0 && (p.isComicPopup || p.text)) {
+      activeCount++;
+      if (activeCount >= MAX_CONCURRENT_COMIC_POPUPS) return false;
+    }
   }
   const popup = getRandomLadaComicPopup();
   const text = customText || popup.text;

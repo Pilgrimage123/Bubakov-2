@@ -28,6 +28,7 @@ describe('Perníčky Denominations & Gingerbread Icon', () => {
       lineTo: vi.fn(),
       arc: vi.fn(),
       ellipse: vi.fn(),
+      rect: vi.fn(),
       bezierCurveTo: vi.fn(),
       fill: vi.fn(),
       stroke: vi.fn(),
@@ -51,13 +52,13 @@ describe('Perníčky Denominations & Gingerbread Icon', () => {
   it('draws all three denominations in Lada.drawGingerbread without error', () => {
     const mockCtx = createMockContext();
 
-    // Obří perníček: čertovská hlava
+    // Obří perníček: královský zlacený kůň se svatozáří (ADR 0047)
     expect(() => {
       Lada.drawGingerbread(mockCtx, 100, 100, 1.5, 'giant', false);
       Lada.drawGingerbread(mockCtx, 100, 100, 1.5, 'giant', true);
     }).not.toThrow();
 
-    // Velký perníček: Ladovský český perníkový panáček
+    // Velký perníček: mandlový perníkový bochánek s bílou polevou (ADR 0047)
     expect(() => {
       Lada.drawGingerbread(mockCtx, 100, 100, 1.5, 'large', false);
       Lada.drawGingerbread(mockCtx, 100, 100, 1.5, 'large', true);

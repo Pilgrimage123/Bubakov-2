@@ -10,6 +10,7 @@
 import { Lada } from './ladaRenderer';
 import { isInView, type CameraViewport } from './arenaRenderer';
 import { gamepadManager } from '../game/gamepad';
+import { resolveGingerbreadTier } from './pernicekCanvas';
 
 const INTERACTIVE_DROP_TYPES = new Set([
   'chest',
@@ -68,7 +69,8 @@ export function renderDrops(
     if (d.type === 'coin') {
       Lada.drawCoin(ctx, d.x, d.y, d.time, d.value || 1);
     } else if (d.type === 'gingerbread') {
-      Lada.drawGingerbread(ctx, d.x, d.y, d.time, d.size || 'small', !!d.isHot);
+      const gbSize = d.size || resolveGingerbreadTier(d.value);
+      Lada.drawGingerbread(ctx, d.x, d.y, d.time, gbSize, !!d.isHot);
     } else if (d.type === 'potion') {
       Lada.drawPotion(ctx, d.x, d.y, d.time);
     } else if (d.type === 'bread' || d.type === 'pear') {

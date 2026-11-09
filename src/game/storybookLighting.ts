@@ -239,6 +239,66 @@ export function isRayBlockedByOccluders(
 }
 
 /**
+ * Computes a continuous illumination factor [0.0, 1.0] for an entity position.
+ * Used for Fairytale Silhouette Inversion (Noční konturová inverze, ADR 0046).
+ * 1.0 = fully lit (black ink contour, standard thickness)
+ * 0.0 = deep darkness (1.5px chalk-white woodcut contour)
+ * (0.0, 1.0) = smooth transition at the rim of light reach.
+ */
+export function computeEntityIllumination(
+  x: number,
+  y: number,
+  lightSources: DynamicLightSource[] | undefined,
+  dayPhaseId: string,
+  shadowZones: ShadowZone[] = [],
+  occluders: LightOccluder[] = []
+): number {
+  if (dayPhaseId === 'noon' || dayPhaseId === 'afternoon') {
+    for (let i = 0; i < shadowZones.length; i++) {
+      const sz = shadowZones[i];
+      const dx = x - sz.x;
+      const dy = y - sz.y;
+      if (dx * dx + dy * dy <= sz.radius * sz.radius) {
+        return 0.85; // Soft daylight shadow
+      }
+    }
+    return 1.0;
+  }
+
+  if (!lightSources || lightSources.length === 0) {
+    return 0.0;
+  }
+
+  let maxFactor = 0.0;
+  for (let i = 0; i < lightSources.length; i++) {
+    const src = lightSources[i];
+    const reach = src.radius * (src.intensity ?? 1);
+    if (reach <= 0) continue;
+    const dx = x - src.x;
+    const dy = y - src.y;
+    const distSq = dx * dx + dy * dy;
+    if (distSq > reach * reach) continue;
+
+    if (occluders.length > 0 && isRayBlockedByOccluders(src.x, src.y, x, y, occluders)) {
+      continue;
+    }
+
+    const innerReach = reach * 0.70;
+    if (distSq <= innerReach * innerReach) {
+      return 1.0; // Early exit on fully lit
+    }
+
+    const dist = Math.sqrt(distSq);
+    const ratio = Math.max(0, Math.min(1, (reach - dist) / (reach - innerReach)));
+    if (ratio > maxFactor) {
+      maxFactor = ratio;
+    }
+  }
+
+  return maxFactor;
+}
+
+/**
  * Calculates the active radius of the player's Petrolejka based on Kuráž and day phase.
  * In daytime (noon, afternoon), the Petrolejka rests on the belt and emits 0 radius.
  * In low-visibility phases (dusk, night, midnight, dawn), radius scales with Kuráž.

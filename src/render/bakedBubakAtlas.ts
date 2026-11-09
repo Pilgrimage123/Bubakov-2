@@ -363,7 +363,13 @@ export class BakedBubakAtlas {
           ctx.filter = filterStr;
         }
         ctx.translate(originX, originY);
-        cfg.drawFn(ctx, 0, 0, animTime, 1, panicked);
+        const prevRole = (Lada as any).currentRole;
+        (Lada as any).currentRole = 'enemy';
+        try {
+          cfg.drawFn(ctx, 0, 0, animTime, 1, panicked);
+        } finally {
+          (Lada as any).currentRole = prevRole;
+        }
         ctx.restore();
 
         const { canvas: flippedCanvas, ctx: flippedCtx } = this.createFrameCanvas(canvasSize, canvasSize);

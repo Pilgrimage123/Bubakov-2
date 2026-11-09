@@ -739,19 +739,23 @@ export class VirtualLeaderSnowmanHorde {
 
       ctx.save();
       ctx.translate(px, py);
-      ctx.globalAlpha = 0.52 * alpha;
+      // ADR 0045: Puddle capped at max 0.32 opacity without dark stroke for 60% calm floor rule
+      ctx.globalAlpha = Math.min(0.32, 0.32 * alpha);
 
-      // Puddle body
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.26)';
-      ctx.strokeStyle = 'rgba(2, 132, 199, 0.7)';
-      ctx.lineWidth = 1.8;
+      // Puddle body as soft translucent watercolor wash without harsh dark stroke
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
       ctx.beginPath();
       ctx.ellipse(0, 0, r, r * 0.62, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
+
+      // Soft water wash rim
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.82, r * 0.50, 0, 0, Math.PI * 2);
+      ctx.fill();
 
       // Concentric ripples
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.42)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       const ripple = ((Math.sin(uiTime * 3.5 + p * 1.3) + 1) * 0.5) * (r * 0.68);

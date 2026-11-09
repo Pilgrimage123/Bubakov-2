@@ -1,3 +1,29 @@
+## 2026-11-09 – Ladovská vizuální hierarchie, noční křídová inverze a tříúrovňové slévání perníčků (ADR 0045, 0046, 0047)
+
+- **Dvouúrovňová kaligrafická linka a kontrastní lem (`src/render/ladaRenderer.ts`, ADR 0045)**:
+  - Zavedena sytá černohnědá tušová linka `#26150C` pro hrdiny, bubáky i projektily podle perokreseb Josefa Lady.
+  - Dynamická adaptace hustoty (`isCrowded`): při přehuštění bojiště se vnitřní detaily postav ztenčují na 0.85 px, čímž se zamezuje slévání černých skvrn.
+  - Hrdina získal jemný kontrastní světlý lem (`drawHunterContrastHalo`), který zajišťuje okamžitou periferní orientaci v chumlech 300+ strašidel.
+- **Polarita 10% akcentní palety a morfologie střel (`src/render/renderProjectiles.ts`, ADR 0045, ADR 0046)**:
+  - Zavedeno striktní dělení akcentů: spojenecké zbraně vyzařují teplé, zlatavé a posvěcené odstíny v oblých kapkách a bocháncích; nepřátelské útoky nesou ostrou čertovskou rumělku `#E62A19` a špičaté tvary.
+  - Morfologie davu podle Ladova tvarosloví: hrdinové a spojenci = kruhy/hrušky, rychlí útočníci = trojúhelníky, odolní tanci = čtverce a valivý objem.
+- **Klidný akvarelový terén a bezkonturové louže (`src/render/arenaRenderer.ts`, `src/render/renderWorldHazards.ts`, ADR 0045)**:
+  - Podlahová plocha (60 % obrazovky) byla očištěna od černých linek a rušivých ostrých textur do podoby jemného akvarelového papíru chamois.
+  - Louže rozlitého piva, povidel a bláta jsou kresleny jako měkké lazury s organickým rozpitím a jemnými stříkanci bez tvrdých obrysů.
+- **Noční konturová inverze a pohádkové siluety (`src/render/storybookLightingRenderer.ts`, `src/game/storybookLighting.ts`, ADR 0046)**:
+  - Ve tmě neosvětlení běsi plynule splývají s noční temnotou a jejich černá tušová kontura inverzně přechází v zářící křídovou bílou (`#FFFBEB`).
+  - Rozsvícené oči, svatozáře a křídové siluety jsou vykreslovány v passu emise nad nočním světelným násobením (multiply pass).
+- **Křídový nápřah útoků a diskrétní kolébavý krok (`src/render/renderTelegraphs.ts`, `src/render/ladaRenderer.ts`, ADR 0046)**:
+  - Náhrada syntetického tweeningu diskrétním 4-fázovým kolébáním papírových vystřihovánek (±5° naklánění s vertikálním pulzem).
+  - Telegrafy nápřahu útoků jsou ztvárněny jako křídové elipsy na zemi s tužkovým šrafováním a postupně se nalévající rumělkovou lazurou.
+- **Kreslené stavové efekty bez RGB tintu a Zoufalá kuráž (`src/render/ladaRenderer.ts`, `src/render/arenaRenderer.ts`, ADR 0047)**:
+  - Stavové efekty jsou znázorněny výhradně fyzickou kresbou (rampouchy z klobouku při zmrazení, kouř a uhlíky při hoření, cákance u bot při zpomalení) bez digitálního přebarvování spritů.
+  - Při poklesu Kuráže pod 35 % se namísto generické červené viněty aplikuje zažloutnutí okrajů do staré knižní vazby, tužkové šrafování rohů a dým z fajfky.
+- **Tříúrovňové slévání Perníčků a Kramářská pečeť velitelů (`src/render/pernicekCanvas.ts`, `src/render/renderParticles.ts`, ADR 0047)**:
+  - Vizuální hierarchie sloučené kořisti: drobné perníkové srdíčko (14 px) → mandlový bochánek s bílou polevou (22 px) → královský zlacený kůň se svatozáří (32 px).
+  - Bossové a Ostřílení běsi získali zesílenou 4px konturu, kvašové tečkování a malovanou dřevěnou Kramářskou pečeť (vyřezávaný lidový erb) vznášející se nad hlavou.
+  - Komiksová citoslovce („BÁC!“, „PRÁSK!“) jsou vyhrazena kritickým zásahům a skonu bossů se striktním rozpočtem max. 3 současných bublin s knižní typografií Eczar.
+
 ## 2026-11-06 – Kanonická parita výprav, rozpočet strašidel a Pravidlo trojjedinosti vln (ADR 0041)
 
 - **Audit a harmonizace všech 16 výprav (`docs/STAGE_CREATION_GUIDE.md`, ADR 0041)**:

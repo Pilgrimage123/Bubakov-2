@@ -30,6 +30,7 @@ import {
 import { OffScreenIndicatorController } from './offScreenIndicators';
 import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { Lada } from './ladaRenderer';
+import { computeEntityIllumination } from '../game/storybookLighting';
 import { getLadaArtSettings, drawLadaShapeOverlay, getEntityLadaShape } from '../game/ladaArtSettings';
 import {
   isEntityBehindMarchRoof,
@@ -119,6 +120,7 @@ export interface ArenaRenderMetrics {
 export interface ArenaEntityPassOptions {
   combatVfxEnabled?: boolean;
   afterEntitiesDrawn?: (entity: any) => void;
+  dayPhase?: any;
 }
 
 /**
@@ -273,6 +275,8 @@ export class ArenaRenderer {
       }
     }
 
+    const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
+    const isNight = isNightPhase(phase.id);
     if (engine.enemies && engine.enemies.length > 0) {
       for (let i = 0; i < engine.enemies.length; i++) {
         const enemy = engine.enemies[i];
@@ -298,6 +302,21 @@ export class ArenaRenderer {
             !enemy.isDefeated
           ) {
             visibleFrostlingCount++;
+          }
+          if (isNight) {
+            const illum = computeEntityIllumination(
+              enemy.x,
+              enemy.y,
+              engine.lightSources,
+              phase.id,
+              engine.shadowZones,
+              engine.occluders
+            );
+            enemy._illumination = illum;
+            enemy._nightInversionRatio = 1 - illum;
+          } else {
+            enemy._illumination = 1;
+            enemy._nightInversionRatio = 0;
           }
           this.preallocatedDrawables[this.drawableCount++] = enemy;
         } else {
@@ -375,10 +394,48 @@ export class ArenaRenderer {
       this.preallocatedDrawables[j + 1] = item;
     }
 
+    // ADR 0045: Two-level calligraphic line hierarchy and horde anti-clumping
+    if (this.drawableCount > 8) {
+      for (let i = 0; i < this.drawableCount; i++) {
+        const d = this.preallocatedDrawables[i];
+        if (d && !d.isPlayer && !d.isBoss) {
+          const r = d.radius || 20;
+          let nearby = 0;
+          const minJ = Math.max(0, i - 6);
+          const maxJ = Math.min(this.drawableCount, i + 7);
+          for (let j = minJ; j < maxJ; j++) {
+            if (i === j) continue;
+            const other = this.preallocatedDrawables[j];
+            if (other && !other.isPlayer) {
+              const dy = Math.abs(d.y - other.y);
+              if (dy > r * 1.5) continue;
+              const dx = Math.abs(d.x - other.x);
+              if (dx < r * 1.5) {
+                nearby++;
+                if (nearby >= 2) break;
+              }
+            }
+          }
+          d._isCrowded = nearby >= 2;
+        }
+      }
+    }
+
     try {
       for (let i = 0; i < this.drawableCount; i++) {
         const drawable = this.preallocatedDrawables[i];
         if (drawable && typeof drawable.draw === 'function') {
+          if (drawable.isPlayer) {
+            Lada.currentRole = 'hunter';
+            Lada.nightInversionRatio = 0;
+          } else if (drawable.isBoss) {
+            Lada.currentRole = 'boss';
+            Lada.nightInversionRatio = drawable._nightInversionRatio ?? 0;
+          } else {
+            Lada.currentRole = 'enemy';
+            Lada.isCrowded = Boolean(drawable._isCrowded);
+            Lada.nightInversionRatio = drawable._nightInversionRatio ?? 0;
+          }
           drawable.draw(ctx);
           renderedEntities++;
         }
@@ -389,10 +446,12 @@ export class ArenaRenderer {
         }
       }
     } finally {
+      Lada.nightInversionRatio = 0;
       for (let i = 0; i < this.drawableCount; i++) {
         const d = this.preallocatedDrawables[i];
-        if (d && d._auraDrawnInGroundPass) {
-          d._auraDrawnInGroundPass = false;
+        if (d) {
+          if (d._auraDrawnInGroundPass) d._auraDrawnInGroundPass = false;
+          if (d._isCrowded) d._isCrowded = false;
         }
         this.preallocatedDrawables[i] = null;
       }
@@ -538,7 +597,8 @@ export class ArenaRenderer {
       activeChunks = options.chunkCache.render(ctx, camera);
       const dynamicDecor = options.chunkCache.getDynamicDecor();
       if (dynamicDecor && dynamicDecor.length > 0) {
-        const isNight = isNightPhase(phase.id);
+        const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
+    const isNight = isNightPhase(phase.id);
         for (let i = 0; i < dynamicDecor.length; i++) {
           const dec = dynamicDecor[i];
           const scale = dec.scale || 1;
@@ -558,7 +618,8 @@ export class ArenaRenderer {
         }
       }
     } else if (engine.decor && engine.decor.length > 0) {
-      const isNight = isNightPhase(phase.id);
+      const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
+    const isNight = isNightPhase(phase.id);
       for (let i = 0; i < engine.decor.length; i++) {
         const dec = engine.decor[i];
         const scale = dec.scale || 1;
@@ -601,6 +662,7 @@ export class ArenaRenderer {
     const tEntitiesStart = now();
     this.entityPassOptions.combatVfxEnabled = combatVfxEnabled;
     this.entityPassOptions.afterEntitiesDrawn = options?.afterEntitiesDrawn;
+    this.entityPassOptions.dayPhase = phase;
     renderedEntities = this.renderEntities(ctx, engine, camera, this.entityPassOptions);
 
     // 4b. ROOF OCCLUSION PASS FOR CHARACTERS & DROPS (chalupy, hospoda, škola, mlýn, kostel)
@@ -707,8 +769,9 @@ export class ArenaRenderer {
     let lightingMs = 0;
     if (lightingEnabled) {
       const tLightStart = now();
-      const isNight = isNightPhase(phase.id);
-      if ((isNight && engine.lightSources && engine.lightSources.length > 0) || kurazRatio < 0.25) {
+      const phase = options?.dayPhase || (engine as any).dayPhase || DEFAULT_DAY_PHASE;
+    const isNight = isNightPhase(phase.id);
+      if ((isNight && engine.lightSources && engine.lightSources.length > 0) || kurazRatio < 0.35) {
         renderStorybookLightingComposite(
           ctx,
           width,

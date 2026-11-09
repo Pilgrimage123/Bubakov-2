@@ -10,6 +10,21 @@ type KronikaEntry = {
 
 const KRONIKA: KronikaEntry[] = [
   {
+    date: '9. listopadu 2026',
+    title: 'Ladovská vizuální hierarchie, noční křídová inverze a tříúrovňové slévání perníčků (ADR 0045, 0046, 0047)',
+    summary: 'Rozsáhlá harmonizace výtvarné estetiky Josefa Lady a herní přehlednosti bullet heaven: sytá černohnědá kaligrafická linka, kontrastní lem lovce, bezkonturový klidný akvarelový terén, noční křídová inverze neosvětlených běsů, diskrétní 4-fázový kolébavý krok loutek, kreslené stavové efekty bez RGB tintu, knižní viněta nízké Kuráže, tříúrovňové slévání perníčků a malovaná Kramářská pečeť velitelů.',
+    items: [
+      '✒️ Dvouúrovňová kaligrafická linka a kontrastní lem: Sytá černohnědá tušová kontura #26150C pro postavy a střely; adaptivní ztenčení vnitřních linek na 0.85 px v přehuštěném bojišti a plovoucí krémový lem za lovcem pro periferní orientaci v davu.',
+      '🎨 Polarita 10% akcentní palety a morfologie střel: Zbraně a spojenci září teplou zlatavou a kvašovou září v oblých tvarech, zatímco nepřátelské útoky nesou ostrou čertovskou rumělku #E62A19 a špičaté zuby.',
+      '🌾 Klidný akvarelový terén a bezkonturové louže: Plocha podlahy (60 %) je zbavena rušivých tmavých linek do jemného papíru chamois; louže piva, povidel i bláta se organicky rozpíjejí jako akvarelové lazury bez tvrdých obrysů.',
+      '🌙 Noční křídová inverze: Neosvětlení běsi v noční temnotě splývají se stíny a jejich tuš se mění v křídovou bílou (#FFFBEB) s rozsvícenýma kvašovýma očima v emisi nad nočním multiply lightmapem.',
+      '🎭 Křídový nápřah a diskrétní kolébavý krok: Nahrazení digitálního tweeningu autentickým kolébáním papírových vystřihovánek (±5° náklon, squash 0.75x a stretch 1.25x). Telegrafy útoků v perspektivní křídové elipse s tužkovým šrafováním.',
+      '❄️ Kreslené stavové efekty a viněta Zoufalé kuráže: Žádné digitální přebarvování spritů – stavy jsou znázorněny rampouchy, sazkami a pivní pěnou. Při Kuráži pod 35 % se aktivuje žloutnoucí knižní vazba a dým z fajfky.',
+      '🍪 Tříúrovňové slévání perníčků a Kramářská pečeť: Kořist se slévá do 3 úrovní (srdíčko 14 px → mandlový bochánek 22 px → královský zlacený kůň 32 px). Bossové a Ostřílení běsi nesou 4px konturu, kvašové tečkování a malovanou dřevěnou Kramářskou pečeť s vlajícími stuhami.',
+      '💥 Regulace komiksových citoslovcí: Obláčky „BÁC!“ a „PRÁSK!“ v autentické knižní typografii Eczar jsou vyhrazeny pro kritické zásahy a doražení bossů se striktním limitem max. 3 současných instancí.',
+    ],
+  },
+  {
     date: '6. listopadu 2026',
     title: 'Kanonická parita výprav, rozpočet strašidel a Pravidlo trojjedinosti vln (ADR 0041)',
     summary: 'Kompletní audit a harmonizace všech 16 výprav podle průvodce STAGE_CREATION_GUIDE.md: doplnění bodů v ENEMY_POINTS pro dubnové bosse, sjednocení vlnových bazénů na trojjedinost havěti, běžců a letců, 1:1 parita headless simulace a prohlížeče a kanonizace nápověd klávesy [E].',

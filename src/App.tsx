@@ -98,6 +98,7 @@ import {
   drawEnemyAttackEffectsPost,
   drawPrefixAura,
   drawGingerbreadHeartCanvas,
+  drawHunterDesperateKurazFx,
 } from './render/ladaRenderer';
 import { getGlobalBakedBubakAtlas } from './render/bakedBubakAtlas';
 import { drawGlyphText, resetGlobalGlyphAtlas } from './render/glyphAtlas';
@@ -4795,6 +4796,8 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
       draw(ctx: CanvasRenderingContext2D) {
         Lada.drawShadow(ctx, this.x, this.y, this.radius);
+        // ADR 0045: Hunter white/cream contrast underlay halo for 100% readability
+        Lada.drawHunterContrastHalo(ctx, this.x, this.y, this.radius, this.animTime);
 
         if (this.soulBuffTimer > 0) {
           ctx.save();
@@ -4852,50 +4855,56 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               : this.lastDy)
           : 0;
 
-        if (this.type === 'krajanek') {
-          Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
-          Lada.drawKrajanekFurrows?.(ctx, this.krajanekFurrows || engineRef.current?.krajanekFurrows || []);
-          if (engineRef.current?.krajanekCoastingStones && engineRef.current.krajanekCoastingStones.length > 0) {
-            for (let i = 0; i < engineRef.current.krajanekCoastingStones.length; i++) {
-              Lada.drawCoastingZernov?.(ctx, engineRef.current.krajanekCoastingStones[i], engineRef.current?.uiTime || 0);
+        const prevHunterRole = (Lada as any).currentRole;
+        (Lada as any).currentRole = 'hunter';
+        try {
+          if (this.type === 'krajanek') {
+            Lada.drawKrajanekFlats(ctx, this.krajanekFlats || []);
+            Lada.drawKrajanekFurrows?.(ctx, this.krajanekFurrows || engineRef.current?.krajanekFurrows || []);
+            if (engineRef.current?.krajanekCoastingStones && engineRef.current.krajanekCoastingStones.length > 0) {
+              for (let i = 0; i < engineRef.current.krajanekCoastingStones.length; i++) {
+                Lada.drawCoastingZernov?.(ctx, engineRef.current.krajanekCoastingStones[i], engineRef.current?.uiTime || 0);
+              }
             }
-          }
-          if (!isFleeing && (this.krajanekRideTimer || 0) > 0) {
-            const colossusScale = 1 + (this.krajanekColossusStacks || 0) * 0.05;
-            Lada.drawKrajanekRide(
-              ctx,
-              this.x,
-              this.y,
-              engineRef.current?.uiTime || this.animTime || 0,
-              drawDx,
-              drawDy,
-              1,
-              this.krajanekTilt || 0,
-              Boolean(this.krajanekIsDrifting),
-              colossusScale,
-              isHurt,
-            );
+            if (!isFleeing && (this.krajanekRideTimer || 0) > 0) {
+              const colossusScale = 1 + (this.krajanekColossusStacks || 0) * 0.05;
+              Lada.drawKrajanekRide(
+                ctx,
+                this.x,
+                this.y,
+                engineRef.current?.uiTime || this.animTime || 0,
+                drawDx,
+                drawDy,
+                1,
+                this.krajanekTilt || 0,
+                Boolean(this.krajanekIsDrifting),
+                colossusScale,
+                isHurt,
+              );
+            } else {
+              Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, false, isHurt);
+            }
+          } else if (this.type === 'tulak' || this.type === 'wanderer') {
+            const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+            const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
+            Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
+          } else if (this.type === 'pasacek' || this.type === 'shepherd') {
+            Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
+          } else if (this.type === 'korenarka') {
+            Lada.drawKorenarka(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
+          } else if (this.type === 'ponocny' || this.type === 'watchman') {
+            Lada.drawWatchman(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
+          } else if (this.type === 'kostelnik' || this.type === 'sexton') {
+            Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
+          } else if (this.type === 'babicka' || this.type === 'granny') {
+            Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
           } else {
-            Lada.drawKrajanek(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, false, isHurt);
+            const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
+            const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
+            Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
           }
-        } else if (this.type === 'tulak' || this.type === 'wanderer') {
-          const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
-          const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
-          Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
-        } else if (this.type === 'pasacek' || this.type === 'shepherd') {
-          Lada.drawShepherd(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
-        } else if (this.type === 'korenarka') {
-          Lada.drawKorenarka(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
-        } else if (this.type === 'ponocny' || this.type === 'watchman') {
-          Lada.drawWatchman(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
-        } else if (this.type === 'kostelnik' || this.type === 'sexton') {
-          Lada.drawSexton(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isHurt);
-        } else if (this.type === 'babicka' || this.type === 'granny') {
-          Lada.drawGranny(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, true, isHurt);
-        } else {
-          const isWhirling = !isFleeing && Boolean(engineRef.current?.sukovice && engineRef.current.sukovice.t < engineRef.current.sukovice.dur);
-          const sukoviceT = engineRef.current?.sukovice ? (engineRef.current.sukovice.t / engineRef.current.sukovice.dur) : 0;
-          Lada.drawWanderer(ctx, this.x, this.y, animT, drawDx, drawDy, isFleeing, 1, isWhirling, sukoviceT, isHurt);
+        } finally {
+          (Lada as any).currentRole = prevHunterRole;
         }
 
         const handItemBob = isPlayerMoving
@@ -4910,10 +4919,15 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
 
         // Draw Petrolejka brass lantern in hand during low-visibility phases
         const petrolejkaRadius = engineRef.current?.petrolejkaLight?.radius ?? 0;
+        const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
         if (petrolejkaRadius > 0) {
-          const kurazRatio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
           const flip = facingSign;
           Lada.drawPetrolejka(ctx, this.x - flip * 14, this.y - 2 + handItemBob, 0.85, engineRef.current?.uiTime || 0, kurazRatio);
+        }
+
+        // Vizuální reakce lovce při Zoufalé kuráži (<35% Kuráže, ADR 0047, Ticket 06)
+        if (kurazRatio < 0.35) {
+          drawHunterDesperateKurazFx(ctx, this.x, this.y, facingSign, animT, kurazRatio);
         }
       },
     };
@@ -10262,7 +10276,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     for (const m of engine.enemies) {
                       if (!m || m.dead || m.isDefeated || m.id === 'kulovy_blesk') continue;
                       if (Math.hypot(m.x - strike.x, m.y - strike.y) <= strike.radius + m.radius) {
-                        m.hp -= 120;
+                        m.takeDamage(120, 'lightning', 0, 0, { ignoreResist: 0 });
                         m.stunTimer = Math.max(m.stunTimer || 0, 1.5);
                       }
                     }
@@ -10436,7 +10450,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     for (const m of engine.enemies) {
                       if (!m || m.dead || m.isDefeated) continue;
                       if (Math.hypot(m.x - strike.x, m.y - strike.y) <= strike.radius + m.radius) {
-                        m.hp -= 130;
+                        m.takeDamage(130, 'lightning', 0, 0, { ignoreResist: 0 });
                         m.stunTimer = Math.max(m.stunTimer || 0, 2.0);
                         m.panicked = true;
                         m.panicTimer = Math.max(m.panicTimer || 0, 3.0);
@@ -10623,7 +10637,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
                     for (const m of engine.enemies) {
                       if (!m || m.dead || m.isDefeated) continue;
                       if (Math.hypot(m.x - strike.x, m.y - strike.y) <= strike.radius + m.radius) {
-                        m.hp -= 140;
+                        m.takeDamage(140, 'lightning', 0, 0, { ignoreResist: 0 });
                         m.stunTimer = Math.max(m.stunTimer || 0, 2.0);
                         m.panicked = true;
                         m.panicTimer = Math.max(m.panicTimer || 0, 3.0);
@@ -11351,7 +11365,7 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
               let activeBoss: any = null;
               for (let bi = 0; bi < engine.enemies.length; bi++) {
                 const cand = engine.enemies[bi];
-                if (!cand.isDefeated && (cand.isBoss || cand.isMiniboss || cand.category === 'bosses')) {
+                if (!cand.isDefeated && !cand.dead && (cand.hp ?? 1) > 0 && (cand.isBoss || cand.isMiniboss || cand.category === 'bosses')) {
                   activeBoss = cand;
                   break;
                 }
@@ -17450,51 +17464,57 @@ const applyBearMaskOverheal = (player: any, healing: number) => {
         }
 
         if (isSpecialBoss) {
-          // Get smart detailed attack animation state according to enemy attack speed & cadence
-          const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
+          const prevBossRole = (Lada as any).currentRole;
+          (Lada as any).currentRole = 'boss';
+          try {
+            // Get smart detailed attack animation state according to enemy attack speed & cadence
+            const attackInfo = getEnemyAttackAnimationState(this, this.animTime);
 
-          // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
-          if (isGameEffectEnabled('combatVfxEnabled') && attackInfo.isActive) {
-            drawEnemyAttackEffectsPre(ctx, this, attackInfo);
-          }
+            // Pre-sprite attack effects (ground impact shockwave for slow monsters, foot dust clouds)
+            if (isGameEffectEnabled('combatVfxEnabled') && attackInfo.isActive) {
+              drawEnemyAttackEffectsPre(ctx, this, attackInfo);
+            }
 
-          // Apply procedural attack kinematics (lunge, lean, squash & stretch, tension tremor)
-          if (attackInfo.isActive) {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            ctx.translate(attackInfo.lungeX + attackInfo.shakeX, attackInfo.lungeY + attackInfo.shakeY);
-            ctx.rotate(attackInfo.leanAngle * attackInfo.facingDir);
-            ctx.scale(attackInfo.squashX, attackInfo.squashY);
-            ctx.translate(-this.x, -this.y);
-          }
+            // Apply procedural attack kinematics (lunge, lean, squash & stretch, tension tremor)
+            if (attackInfo.isActive) {
+              ctx.save();
+              ctx.translate(this.x, this.y);
+              ctx.translate(attackInfo.lungeX + attackInfo.shakeX, attackInfo.lungeY + attackInfo.shakeY);
+              ctx.rotate(attackInfo.leanAngle * attackInfo.facingDir);
+              ctx.scale(attackInfo.squashX, attackInfo.squashY);
+              ctx.translate(-this.x, -this.y);
+            }
 
-          const idleFacingVx = Math.abs(this.vx) > 0.01 ? this.vx : (this.lastDx || 1);
-          const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : idleFacingVx;
+            const idleFacingVx = Math.abs(this.vx) > 0.01 ? this.vx : (this.lastDx || 1);
+            const renderFacingVx = attackInfo.isActive ? (attackInfo.facingDir >= 0 ? 1 : -1) : idleFacingVx;
 
-          if (this.id === 'cert') {
-            const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
-              ? Math.cos(this.chargeDirX)
-              : renderFacingVx;
-            Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300, attackInfo);
-          } else if (this.id === 'hejkal') {
-            Lada.drawHejkal(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
-          } else if (this.id === 'obr') {
-            Lada.drawObr(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
-          } else if (this.id === 'mlynar') {
-            Lada.drawMlynar(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.hp <= this.maxHp * 0.5);
-          } else if (this.id === 'drak') {
-            const attacks = {
-              fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
-              ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
-              roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
-            };
-            Lada.drawDrak(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
-          }
+            if (this.id === 'cert') {
+              const certFacingVx = this.aiState === 'windup' && Number.isFinite(this.chargeDirX)
+                ? Math.cos(this.chargeDirX)
+                : renderFacingVx;
+              Lada.drawCert(ctx, this.x, this.y, this.animTime, certFacingVx, isFleeing, this.isBoss, this.aiState === 'charge' || this.aiState === 'windup' || Math.abs(this.vx) > 300, attackInfo);
+            } else if (this.id === 'hejkal') {
+              Lada.drawHejkal(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
+            } else if (this.id === 'obr') {
+              Lada.drawObr(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, attackInfo);
+            } else if (this.id === 'mlynar') {
+              Lada.drawMlynar(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.hp <= this.maxHp * 0.5);
+            } else if (this.id === 'drak') {
+              const attacks = {
+                fire: engineRef.current.drakBreathTimer > (this.hp <= this.maxHp * 0.5 ? 3.0 : 5.0) ? 1 : 0,
+                ice: engineRef.current.drakSnoreTimer > 3.6 && (this.enraged || this.hp <= this.maxHp * 0.5) ? 1 : 0,
+                roar: engineRef.current.drakIcicleTimer > (this.hp <= this.maxHp * 0.5 ? 4.2 : 6.7) || engineRef.current.drakWingGustTimer > 7.2 ? 1 : 0,
+              };
+              Lada.drawDrak(ctx, this.x, this.y, this.animTime, renderFacingVx, isFleeing, this.enraged || this.hp <= this.maxHp * 0.5, attacks);
+            }
 
-          if (attackInfo.isActive) {
-            ctx.restore();
-            // Optional post-sprite attack graphics; hit/damage simulation is independent.
-            if (isGameEffectEnabled('combatVfxEnabled')) drawEnemyAttackEffectsPost(ctx, this, attackInfo);
+            if (attackInfo.isActive) {
+              ctx.restore();
+              // Optional post-sprite attack graphics; hit/damage simulation is independent.
+              if (isGameEffectEnabled('combatVfxEnabled')) drawEnemyAttackEffectsPost(ctx, this, attackInfo);
+            }
+          } finally {
+            (Lada as any).currentRole = prevBossRole;
           }
         } else {
           // Unified modern enemy renderer with computeEnemyKinematics, underlay ground VFX, single transform and overlay weapon VFX

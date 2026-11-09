@@ -36,8 +36,11 @@ export function renderEnemyTelegraphs(
 
     rendered++;
 
-    // 1. Výstražný symbol nápřahu (Windup Warning Indicator)
+    // 1. Výstražný symbol nápřahu a křídový nápřah útoků (ADR 0046, Ticket 05)
     if (warningEnabled && (e.windupTimer || 0) > 0 && (e.strikeTimer || 0) <= 0) {
+      const effectiveDelay = e.attackDelay || e.attackInterval || 1.2;
+      const progress = Math.min(1, e.windupTimer / effectiveDelay);
+      drawChalkTelegraphZone(ctx, e, progress);
       drawEnemyWarningSign(ctx, e);
     }
 
@@ -106,4 +109,57 @@ export function renderEnemyTelegraphs(
   }
 
   return rendered;
+}
+
+/**
+ * Křídový nápřah útoků (ADR 0046).
+ * Vykresluje zónu úderu křídovým obrysem s tužkovým šrafováním
+ * a postupně nátékající tenkou akvarelovou rumělkou (#E62A19).
+ */
+export function drawChalkTelegraphZone(
+  ctx: CanvasRenderingContext2D,
+  enemy: any,
+  progress: number
+) {
+  const radius = enemy.radius || 20;
+  const reach = radius * (enemy.isBoss ? 2.5 : 1.75);
+  const facingDir = (enemy.lastDx ?? (enemy.vx !== undefined && enemy.vx < 0 ? -1 : 1)) >= 0 ? 1 : -1;
+  const attackAngle = typeof enemy.attackAngle === 'number'
+    ? enemy.attackAngle
+    : (facingDir < 0 ? Math.PI : 0);
+
+  const forwardOffset = reach * 0.45;
+  const centerX = enemy.x + Math.cos(attackAngle) * forwardOffset;
+  const centerY = enemy.y + Math.sin(attackAngle) * forwardOffset * 0.55;
+  const radiusX = reach;
+  const radiusY = reach * 0.52;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+
+  // Postupně nátékající akvarelová rumělka
+  const fillAlpha = Math.min(0.32, 0.08 + progress * 0.22);
+  ctx.fillStyle = `rgba(230, 42, 25, ${fillAlpha})`;
+  ctx.fill();
+
+  // Křídový obrys
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = progress > 0.70 ? '#FEF08A' : 'rgba(255, 251, 235, 0.85)';
+  ctx.stroke();
+
+  // Tužkové šrafování
+  ctx.clip();
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(45, 22, 9, 0.22)';
+  ctx.lineWidth = 1.0;
+  const startX = centerX - radiusX - 10;
+  const endX = centerX + radiusX + 10;
+  for (let hx = startX; hx < endX; hx += 8) {
+    ctx.moveTo(hx, centerY - radiusY - 10);
+    ctx.lineTo(hx + radiusY * 2, centerY + radiusY + 10);
+  }
+  ctx.stroke();
+
+  ctx.restore();
 }

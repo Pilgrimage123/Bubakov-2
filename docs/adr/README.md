@@ -49,3 +49,9 @@ This directory records architectural decisions made for the project Bubákov.
 | [0042](0042-dokonceni-rocniho-cyklu-listopad-prosinec.md) | Dokončení ročního cyklu: Listopad a Prosinec (Výpravy 17–20) a audit kodexu |
 | [0043](0043-lednove-vypravy-a-perchta-s-nozem.md) | Lednové výpravy (Výpravy 21–22) a folklórní boss Šeredná Perchta s nožem |
 | [0044](0044-unor-masopust-a-zavrseni-rocniho-cyklu.md) | Únor v Hrusicích (Výpravy 23–24), Masopustní veselí, Bakchus a završení ročního cyklu |
+| [0045](0045-ladovska-vizualni-hierarchie-a-polarita-kontrastu.md) | Ladovská vizuální hierarchie a polarita kontrastu v hordě |
+| [0046](0046-morfologie-strel-nocni-inverze-a-kridovy-naprah.md) | Morfologie střel, noční konturová inverze a křídový nápřah |
+| [0047](0047-vizualni-hierarchie-bossu-stavove-efekty-a-slite-pernicky.md) | Vizuální hierarchie bossů, kreslené stavové efekty a stupně perníčků |
+
+
+

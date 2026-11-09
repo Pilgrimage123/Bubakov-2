@@ -127,20 +127,21 @@ export function renderWorldHazardsAndEncounters(
     if (thaw.beerPuddle && isInView(thaw.beerPuddle.x, thaw.beerPuddle.y, 60, camera)) {
       ctx.save();
       ctx.translate(thaw.beerPuddle.x, thaw.beerPuddle.y);
-      ctx.globalAlpha = Math.min(0.72, thaw.beerPuddle.time / 1.2);
-      ctx.fillStyle = '#D98B22';
-      ctx.strokeStyle = '#6B3510';
-      ctx.lineWidth = 2.5;
+      // ADR 0045: Calm 60% floor rule - watercolor beer wash capped at max 0.35 opacity without dark stroke
+      ctx.globalAlpha = Math.min(0.35, thaw.beerPuddle.time / 1.2);
+      ctx.fillStyle = 'rgba(217, 139, 34, 0.85)';
       ctx.beginPath();
       ctx.ellipse(0, 0, 52, 24, 0.12, 0, Math.PI * 2);
       ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = '#FFF1AE';
-      ctx.lineWidth = 2;
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(0, -2, 38, 16, 0.12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
       for (let i = -2; i <= 2; i++) {
         ctx.beginPath();
-        ctx.arc(i * 13, -3 + (i & 1) * 5, 4, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.arc(i * 13, -3 + (i & 1) * 5, 3.5, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
     }
@@ -1131,7 +1132,8 @@ export function renderWorldHazardsAndEncounters(
       ctx.save();
       ctx.translate(h.x, h.y);
       const fadeAlpha = Math.min(1, (h.duration ?? 1) / 1.0);
-      ctx.globalAlpha = 0.75 * fadeAlpha;
+      // ADR 0045: Puddles and ground hazards capped at max 0.35 opacity to preserve 60% calm floor
+      ctx.globalAlpha = Math.min(0.35, 0.35 * fadeAlpha);
 
       const isWarning = (h.warningTimer || 0) > 0 && (options?.warningIndicatorsEnabled !== false);
       const justExploded = Boolean(h.exploded);
@@ -1191,10 +1193,8 @@ export function renderWorldHazardsAndEncounters(
         ctx.arc(0, 0, h.radius * 0.65, 0, Math.PI * 2);
         ctx.stroke();
       } else if (h.type === 'mud') {
-        ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : '#5A3825';
-        ctx.strokeStyle = isWarning ? '#F59E0B' : '#26150C';
-        ctx.lineWidth = isWarning ? 3.0 : 2.5;
-        if (isWarning) ctx.setLineDash([7, 5]);
+        // ADR 0045: Calm 60% floor rule - soft watercolor mud wash without dark ink outline
+        ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : 'rgba(90, 56, 37, 0.85)';
         ctx.beginPath();
         if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle') {
           ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
@@ -1202,8 +1202,15 @@ export function renderWorldHazardsAndEncounters(
           ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
         }
         ctx.fill();
-        ctx.stroke();
-        ctx.setLineDash([]);
+
+        if (isWarning) {
+          ctx.strokeStyle = '#F59E0B';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([7, 5]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
         if (h.kind === 'chain-shackle') {
           ctx.strokeStyle = '#94A3B8';
           ctx.lineWidth = 2.4;
@@ -1214,7 +1221,7 @@ export function renderWorldHazardsAndEncounters(
           ctx.lineTo(-h.radius * 0.65, h.radius * 0.65);
           ctx.stroke();
         } else {
-          ctx.fillStyle = '#784323';
+          ctx.fillStyle = 'rgba(120, 67, 35, 0.6)';
           ctx.beginPath();
           ctx.arc(-h.radius * 0.3, -h.radius * 0.1, 4, 0, Math.PI * 2);
           ctx.arc(h.radius * 0.2, h.radius * 0.15, 5, 0, Math.PI * 2);
@@ -1226,14 +1233,17 @@ export function renderWorldHazardsAndEncounters(
           : justExploded
           ? 'rgba(186, 230, 253, 0.85)'
           : 'rgba(14, 165, 233, 0.45)';
-        ctx.strokeStyle = isWarning ? '#38BDF8' : justExploded ? '#FFFFFF' : '#0369A1';
-        ctx.lineWidth = isWarning ? 3.0 : 2.2;
-        if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
-        ctx.setLineDash([]);
+
+        if (isWarning) {
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([7, 5]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         // Swirling water ripple ring
         ctx.strokeStyle = '#BAE6FD';
         ctx.lineWidth = 1.8;
@@ -1265,9 +1275,18 @@ export function renderWorldHazardsAndEncounters(
           ? 'rgba(186, 230, 253, 0.32)'
           : justExploded
           ? 'rgba(224, 242, 254, 0.82)'
-          : 'rgba(186, 230, 253, 0.22)';
-        ctx.strokeStyle = isWarning ? '#38BDF8' : justExploded ? '#FFFFFF' : 'rgba(2, 132, 199, 0.65)';
-        ctx.lineWidth = isWarning ? 3.0 : 1.8;
+          : 'rgba(186, 230, 253, 0.28)';
+        ctx.beginPath();
+        ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isWarning) {
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([7, 5]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         if (isWarning) ctx.setLineDash([7, 5]);
         ctx.beginPath();
         ctx.arc(0, 0, h.radius, 0, Math.PI * 2);

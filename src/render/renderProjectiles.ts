@@ -33,12 +33,15 @@ export function renderProjectilesAndSlashes(
 
   // 1. Draw Flying Projectiles
   if (projectiles && projectiles.length > 0) {
+    const prevProjRole = (Lada as any).currentRole;
     for (let i = 0; i < projectiles.length; i++) {
       const p = projectiles[i];
       if (!p || p.dead) continue;
       if (!isInView(p.x, p.y, p.radius || 12, camera)) continue;
 
       renderedProjectiles++;
+      const isEnemy = Boolean(p.isEnemy || p.isHostile || p.source === 'enemy');
+      (Lada as any).currentRole = isEnemy ? 'enemy' : 'projectile';
 
       // Fast path for radially symmetric or self-positioning projectiles (no outer save/translate/rotate needed)
       if (p.visual === 'snowball' || p.visual === 'snowball_small') {
@@ -312,14 +315,20 @@ export function renderProjectilesAndSlashes(
         Lada.drawDragonWind(ctx, 0, 0, p.radius || 22, p.angle || 0, uiTime);
       } else if (p.visual === 'witch_venom') {
         const r = p.radius || 9;
-        Lada.setupPath(ctx, '#CA8A04', COLORS.ink, 2.5);
+        ctx.rotate(p.angle || 0);
+        // ADR 0045 & ADR 0046: Sharp aggressive barb in threat palette
+        Lada.setupPath(ctx, '#15803D', '#E62A19', 2.4);
         ctx.beginPath();
-        ctx.ellipse(0, 0, r * 1.15, r * 0.85, p.angle || 0, 0, Math.PI * 2);
+        ctx.moveTo(r * 1.5, 0); // sharp stinger
+        ctx.lineTo(-r * 0.7, -r * 0.7);
+        ctx.lineTo(-r * 0.3, 0);
+        ctx.lineTo(-r * 0.7, r * 0.7);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#FEF08A';
         ctx.beginPath();
-        ctx.arc(-r * 0.2, -r * 0.15, r * 0.35, 0, Math.PI * 2);
+        ctx.arc(-r * 0.1, 0, r * 0.28, 0, Math.PI * 2);
         ctx.fill();
       } else if (p.visual === 'witch_fireball') {
         const r = p.radius || 11;
@@ -393,20 +402,39 @@ export function renderProjectilesAndSlashes(
       } else if (p.visual === 'crow_feather') {
         const r = p.radius || 9;
         ctx.rotate(p.angle || 0);
-        Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.2);
-        ctx.beginPath();
-        ctx.moveTo(-r * 1.4, 0);
-        ctx.quadraticCurveTo(-r * 0.2, -r * 0.75, r * 1.4, 0);
-        ctx.quadraticCurveTo(-r * 0.2, r * 0.75, -r * 1.4, 0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        ctx.strokeStyle = '#7DD3FC';
-        ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.moveTo(-r * 1.1, 0);
-        ctx.lineTo(r * 1.15, 0);
-        ctx.stroke();
+        if (isEnemy) {
+          // ADR 0045 & ADR 0046: Sharp aggressive frost dart with threat contour
+          Lada.setupPath(ctx, '#0F172A', '#E62A19', 2.2);
+          ctx.beginPath();
+          ctx.moveTo(r * 1.5, 0);
+          ctx.lineTo(-r * 1.1, -r * 0.65);
+          ctx.lineTo(-r * 0.5, 0);
+          ctx.lineTo(-r * 1.1, r * 0.65);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.8, 0);
+          ctx.lineTo(r * 1.2, 0);
+          ctx.stroke();
+        } else {
+          Lada.setupPath(ctx, '#1E293B', COLORS.ink, 2.2);
+          ctx.beginPath();
+          ctx.moveTo(-r * 1.4, 0);
+          ctx.quadraticCurveTo(-r * 0.2, -r * 0.75, r * 1.4, 0);
+          ctx.quadraticCurveTo(-r * 0.2, r * 0.75, -r * 1.4, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#7DD3FC';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(-r * 1.1, 0);
+          ctx.lineTo(r * 1.15, 0);
+          ctx.stroke();
+        }
       } else if (p.visual === 'straw_doll') {
         const r = p.radius || 12;
         ctx.rotate(uiTime * 6 + (p.angle || 0));
@@ -493,15 +521,45 @@ export function renderProjectilesAndSlashes(
         ctx.stroke();
       } else {
         const r = p.radius || 7;
-        Lada.setupPath(ctx, p.color || COLORS.grey, COLORS.ink, 2);
-        ctx.beginPath();
-        ctx.ellipse(0, 0, r, Math.max(5, r * 0.72), p.angle || 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        if (isEnemy) {
+          // ADR 0045 & ADR 0046: Sharp aggressive spike/arrowhead in cinnabar #E62A19 with sulfur core
+          ctx.beginPath();
+          ctx.moveTo(r * 1.5, 0); // sharp tip
+          ctx.lineTo(-r * 0.9, -r * 0.75);
+          ctx.lineTo(-r * 0.4, 0);
+          ctx.lineTo(-r * 0.9, r * 0.75);
+          ctx.closePath();
+          ctx.fillStyle = '#E62A19'; // cinnabar threat
+          ctx.strokeStyle = '#7F1D1D';
+          ctx.lineWidth = 2.2;
+          ctx.fill();
+          ctx.stroke();
+          // Sulfur core
+          ctx.fillStyle = '#FEF08A';
+          ctx.beginPath();
+          ctx.moveTo(r * 0.8, 0);
+          ctx.lineTo(-r * 0.4, -r * 0.35);
+          ctx.lineTo(-r * 0.1, 0);
+          ctx.lineTo(-r * 0.4, r * 0.35);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          // Rounded organic player bullet in cobalt blue #1E56A0 / linden green
+          Lada.setupPath(ctx, p.color || '#1E56A0', COLORS.ink, 2.4);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, r, Math.max(5, r * 0.82), 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.beginPath();
+          ctx.arc(-r * 0.25, -r * 0.25, r * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       ctx.restore();
     }
+    (Lada as any).currentRole = prevProjRole;
   }
 
   // 2. Draw Melee Slashes

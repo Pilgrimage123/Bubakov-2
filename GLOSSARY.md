@@ -405,3 +405,57 @@ Architektonické pravidlo zakazující stav, kdy nová strašidla, chování bos
 _Avoid_: duální engine nesoulad, engine-only mob, headless drift
 
 
+## Výtvarný styl a vizuální hierarchie
+
+**Dvouúrovňová linka**:
+Hierarchické odstupňování síly tušové kontury (3,5 px lovec a střely se světlým lemem, 2,5–3 px vnější silueta strašidel a 1 px vnitřní vlasové detaily) zamezující vzniku nečitelného tmavého šumu při překryvu stovek entit.
+_Avoid_: jednotná kontura, tlustá linka pro vše, jednolité obrysy
+
+**Polarita akcentní palety**:
+Striktní rozdělení 10% syté barevné vrstvy na výstražnou rumělkovou červeň pro nebezpečí a nápřahy, zlatožlutou pro odměny a Perníčky a kobaltovou modř pro zásahy lovce.
+_Avoid_: nerozlišené akcenty, náhodné barvy střel, žluté projektily nepřátel
+
+**Akvarelové stopy terénu**:
+Dočasné louže a komické skvrny na zemi (rozlité pivo, bláto, povidla) vykreslované výhradně jako poloprůhledné rozpité lazury (max. 35 % krytí) bez černé linky, zachovávající klidnou 60% plochu podlahy.
+_Avoid_: ohraničené louže, komiksové kaluže s linkou, neprůhledné skvrny
+
+**Komiksová citoslovce**:
+Textové dýmové obláčky („BÁC!“, „PRÁSK!“) vyhrazené výhradně pro kritické zásahy, exploze milníků a pád bossů s přísným limitem současného zobrazení chránícím rozpočet snímku.
+_Avoid_: plovoucí komiksový spam, citoslovce u každého zásahu, textový smog
+
+**Noční konturová inverze**:
+Výměna sytě černé tušové linky za křídově bílou konturu (1,5 px) pro entity nacházející se mimo kužel světla Petrolejky v nočních výpravách, inspirovaná Ladovými kresbami na tmavomodrém kartonu.
+_Avoid_: černá linka ve tmě, noční neviditelnost, digitální bloom obrys
+
+**Kánon tvarů střel**:
+Striktní morfologické pravidlo odlišující projektily lovce (výhradně oblé organické tvary jako buchty, knedlíky či kapky) od střel strašidel (výhradně agresivní ostré tvary jako vidle, trny a střepy).
+_Avoid_: špičaté střely hráče, oblé projektily nepřátel, nerozlišené siluety střel
+
+**Diskrétní kolébavý krok**:
+Čtyřfázový cyklus procedurální papírové animace (Squash and Stretch) s fixním náklonem ±5° a kompresí výšky 0,9×–1,1× vázanou na rychlost běhu, zamezující stroboskopickému kmitání při stovkách entit.
+_Avoid_: spojitý plynulý squash, náhodné škálování spritů, plynulá 3D chůze
+
+**Křídový nápřah**:
+Folklórní telegraf zóny útoku tvořený kresbou bílou či okrovou křídou s tužkovým šrafováním a postupnou akvarelovou rumělkou, provázený hlubokým přikrčením strašidla a tušovým vykřičníkem.
+_Avoid_: laserové kužely, moderní telegraph kruhy, sci-fi výstražné zóny
+
+**Kramářská pečeť bosse**:
+Drobný malovaný folklórní erb vznášející se nad hlavou velitelů a bossů, doplněný o zesílenou 4px tušovou konturu a kvašové tečkování pro okamžitou orientaci v chumlu hordy.
+_Avoid_: boss šipka, kruh pod bossem, arkádový terč
+
+**Kreslené stavové efekty**:
+Vizuální indikátory bojových stavů (kreslené rampouchy u mrazu, stoupající uhlíky se sazemi u ohně, stříkající kapky u zpomalení) zachovávající integritu kvašové kresby bez digitálního celotělového tónování.
+_Avoid_: celotělové modrání, digitální tint, RGB shader stavů
+
+**Stupně slitých perníčků**:
+Tříúrovňová vizuální hierarchie kořisti v 10% zlaté paletě (drobná perníková hvězdička, mandlový bochánek s polevou a velký zlacený kůň) zajišťující přehlednost po masivním sloučení dropů na bojišti.
+_Avoid_: generické XP koule, svítící krystaly, beztvaré hromádky
+
+**Knižní viněta kuráže**:
+Dramatické varování před vyčerpáním Kuráže stylizované do zažloutlého knižního okraje s tužkovým šrafováním na rozích, doplněné o komické kapky potu a poplašený dým z fajfky lovce.
+_Avoid_: krvavá viněta, červené blikání obrazovky, moderní low-health efekt
+
+
+
+
+

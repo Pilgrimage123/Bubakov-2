@@ -9,6 +9,8 @@
 
 import { COLORS } from '../constants';
 
+export const MAX_CONCURRENT_COMIC_POPUPS = 3;
+
 export interface CameraViewport {
   x: number;
   y: number;
@@ -97,6 +99,7 @@ export class ParticleBatchRenderer {
     if (!particles || particles.length === 0) return 0;
 
     let rendered = 0;
+    let comicPopupCount = 0;
 
     // Pass 1: Frustum cull and bucket visible particles by color and quantized alpha tier (0..3)
     for (let i = 0; i < particles.length; i++) {
@@ -105,6 +108,10 @@ export class ParticleBatchRenderer {
       if (!isParticleInView(p.x, p.y, p.size || 6, camera)) continue;
 
       if (p.isComicPopup || p.text) {
+        if (comicPopupCount >= MAX_CONCURRENT_COMIC_POPUPS) {
+          continue; // Strict cap of max 3 concurrent visible comic sound bubbles (ADR 0047)
+        }
+        comicPopupCount++;
         rendered++;
         ctx.save();
         const alpha = Math.max(0, Math.min(1, (p.life || 0) * 1.5));
@@ -130,8 +137,8 @@ export class ParticleBatchRenderer {
         ctx.fill();
         ctx.stroke();
 
-        // Draw bold calligraphic Lada text
-        ctx.font = '900 13px system-ui, sans-serif';
+        // Draw bold calligraphic Lada text in authentic folk serif font
+        ctx.font = '900 14px "Eczar", "Palatino Linotype", serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = p.textColor || '#DC2626';

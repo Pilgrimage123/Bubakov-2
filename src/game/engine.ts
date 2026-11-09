@@ -17,7 +17,7 @@ import { distanceSq, isInView } from './perf';
 import { getCachedHomingTarget } from './homing';
 import { isDirectTargetable, isJezinkaSemiVisible, JEZINKA_UNCRITICAL_DAMAGE_MULTIPLIER } from './targeting';
 import { stepCrowForaging, restoreStolenBundleDrops } from './crowForaging';
-import { tryEmitParticle, getParticleLimit } from './particles';
+import { tryEmitParticle, getParticleLimit, tryEmitLadaComicPopup } from './particles';
 import { ENEMIES } from '../data/enemies';
 import { GAME_LEVELS } from '../data/levels';
 import { WEAPONS, createWeaponMasteryState, getWeaponDamage } from '../data/weapons';
@@ -6118,6 +6118,10 @@ export class GameEngine {
           finalDamage = Math.round(finalDamage * baseCritMult);
         }
 
+        if (isCriticalHit && self.state.particles) {
+          tryEmitLadaComicPopup(self.state.particles, this.x, this.y, undefined, 'combat');
+        }
+
         if (isCriticalHit && self.state.player) {
           const now = self.state.gameTime;
           const p = self.state.player;
@@ -6233,6 +6237,9 @@ export class GameEngine {
           }
           this.hp = 0;
           this.isDefeated = true;
+          if ((this.isBoss || this.isMiniboss || this.category === 'bosses') && self.state.particles) {
+            tryEmitLadaComicPopup(self.state.particles, this.x, this.y, 'PRÁSK!', 'combat');
+          }
           // Tether Backlash: Defeating a minion tethered to a Boss/Miniboss shocks the Boss!
           if (this._tetheredBoss && !this._tetheredBoss.dead && !this._tetheredBoss.isDefeated) {
             const boss = this._tetheredBoss;

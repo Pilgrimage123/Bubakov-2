@@ -16,6 +16,8 @@ export interface LadaArtSettings {
   comicSoundPopupsEnabled: boolean;
   /** Floor contrast adaptability mode: 'adaptable' | 'strict_paper_wash' | 'low_contrast' */
   floorContrastMode: 'adaptable' | 'strict_paper_wash' | 'low_contrast';
+  /** Two-level calligraphic outline hierarchy (ADR 0045): Hunter 3.5px, Enemies 2.75px, Details 1.0px, Bosses 4.0px */
+  hierarchicalOutlineEnabled?: boolean;
 }
 
 export const DEFAULT_LADA_ART_SETTINGS: LadaArtSettings = {
@@ -24,6 +26,7 @@ export const DEFAULT_LADA_ART_SETTINGS: LadaArtSettings = {
   showPaletteAnalyzer: false,
   comicSoundPopupsEnabled: true,
   floorContrastMode: 'adaptable',
+  hierarchicalOutlineEnabled: true,
 };
 
 let activeLadaArtSettings: LadaArtSettings = { ...DEFAULT_LADA_ART_SETTINGS };

@@ -1,10 +1,14 @@
 import React from 'react';
-import { getLadaArtSettings } from '../game/ladaArtSettings';
+import { getLadaArtSettings, getEntityLadaShape } from '../game/ladaArtSettings';
 import { FROSTLING_AURA_RADIUS } from '../game/frostAura';
 import { COLORS } from '../constants';
 import type { Enemy, EnemyAttackCadence, EnemyAttackInfo } from '../types';
 import { CADENCE_ATTACK_DELAYS, CADENCE_RECOVERY_DURATIONS } from '../types';
-import { drawGingerbreadHeartCanvas } from './pernicekCanvas';
+import {
+  drawGingerbreadHeartCanvas,
+  drawGingerbreadLoafCanvas,
+  drawGingerbreadHorseCanvas,
+} from './pernicekCanvas';
 import { drawGlyphText } from './glyphAtlas';
 import { getGlobalBakedBubakAtlas } from './bakedBubakAtlas';
 
@@ -81,12 +85,86 @@ export function getCachedLadaSprite(
   return canvas;
 }
 
+const CHALK_CONTOUR_COLORS: string[] = [];
+for (let i = 0; i <= 20; i++) {
+  const t = i / 20;
+  const r = Math.round(38 + (255 - 38) * t);
+  const g = Math.round(21 + (251 - 21) * t);
+  const b = Math.round(12 + (235 - 12) * t);
+  CHALK_CONTOUR_COLORS.push(`rgb(${r},${g},${b})`);
+}
+
 var Lada = {
-	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4) {
-		const globalOutline = getLadaArtSettings().outlineWidth;
-		const effectiveWidth = stroke === COLORS.ink ? (lineWidth === 4 ? globalOutline : (lineWidth * globalOutline) / 4) : lineWidth;
+	currentRole: 'neutral' as 'hunter' | 'player' | 'enemy' | 'boss' | 'projectile' | 'prop' | 'neutral',
+	isCrowded: false,
+	nightInversionRatio: 0,
+	setRole(role: 'hunter' | 'player' | 'enemy' | 'boss' | 'projectile' | 'prop' | 'neutral') {
+		this.currentRole = role;
+	},
+	setNightInversion(ratio: number) {
+		this.nightInversionRatio = Math.max(0, Math.min(1, ratio));
+	},
+	getOutlineWidth(requestedWidth = 4, isDetail = false) {
+		const settings = getLadaArtSettings();
+		const scale = (settings.outlineWidth || 4) / 4;
+		if (settings.hierarchicalOutlineEnabled === false) {
+			return requestedWidth === 4 ? settings.outlineWidth : (requestedWidth * scale);
+		}
+		const role = this.currentRole || 'neutral';
+		const isMajor = !isDetail && requestedWidth >= 2.4;
+
+		if (isMajor) {
+			if (role === 'hunter' || role === 'player') return 3.5 * scale;
+			if (role === 'boss') return 4.0 * scale;
+			if (role === 'enemy') return 2.75 * scale;
+			if (role === 'projectile') return 3.2 * scale;
+			return requestedWidth * scale;
+		} else {
+			// Inner detail line (perokresba: 1px)
+			if (this.isCrowded) return 0.85 * scale;
+			return Math.min(requestedWidth, 1.15) * scale;
+		}
+	},
+	getContourStroke(stroke = COLORS.ink): string {
+		if (this.nightInversionRatio <= 0) return stroke;
+		const isInkStroke =
+			stroke === COLORS.ink ||
+			stroke === '#000' ||
+			stroke === '#000000' ||
+			stroke === '#111' ||
+			stroke === '#111111' ||
+			stroke === '#2D1609' ||
+			stroke === '#2A170A';
+		if (!isInkStroke) return stroke;
+		const stepIndex = Math.max(0, Math.min(20, Math.round(this.nightInversionRatio * 20)));
+		return CHALK_CONTOUR_COLORS[stepIndex];
+	},
+	getContourWidth(requestedWidth = 4, isDetail = false): number {
+		const normalWidth = this.getOutlineWidth(requestedWidth, isDetail);
+		if (this.nightInversionRatio <= 0) return normalWidth;
+		const settings = getLadaArtSettings();
+		const scale = (settings.outlineWidth || 4) / 4;
+		const targetChalkWidth = (isDetail ? 0.85 : 1.5) * scale;
+		const ratio = Math.max(0, Math.min(1, this.nightInversionRatio));
+		return normalWidth * (1 - ratio) + targetChalkWidth * ratio;
+	},
+	setupPath(ctx, fill, stroke = COLORS.ink, lineWidth = 4, isDetail = false) {
+		const isInkStroke =
+			stroke === COLORS.ink ||
+			stroke === '#000' ||
+			stroke === '#000000' ||
+			stroke === '#111' ||
+			stroke === '#111111' ||
+			stroke === '#2D1609' ||
+			stroke === '#2A170A';
+		const effectiveWidth = isInkStroke
+			? this.getContourWidth(lineWidth, isDetail)
+			: lineWidth;
+		const effectiveStroke = isInkStroke
+			? this.getContourStroke(stroke)
+			: stroke;
 		ctx.fillStyle = fill;
-		ctx.strokeStyle = stroke;
+		ctx.strokeStyle = effectiveStroke;
 		ctx.lineWidth = effectiveWidth;
 		ctx.lineJoin = "round";
 		ctx.lineCap = "round";
@@ -97,12 +175,27 @@ var Lada = {
 		ctx.ellipse(x, y + radius * .8, radius * .95, radius * .35, 0, 0, Math.PI * 2);
 		ctx.fill();
 	},
+	drawHunterContrastHalo(ctx, x, y, radius = 24, _animTime = 0) {
+		ctx.save();
+		// Subtle 0.75-1px white/cream contrast underlay rim (ADR 0045)
+		ctx.strokeStyle = 'rgba(255, 253, 245, 0.90)';
+		ctx.lineWidth = 2.0;
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		ctx.beginPath();
+		const r = radius * 1.05;
+		const cy = y - radius * 0.15;
+		ctx.ellipse(x, cy, r * 0.88, r * 1.12, 0, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.restore();
+	},
 	drawLimb(ctx, x1, y1, x2, y2, color, width, extra) {
 		ctx.beginPath();
 		ctx.moveTo(x1, y1);
 		ctx.lineTo(x2, y2);
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = width + 4;
+		ctx.strokeStyle = this.getContourStroke(COLORS.ink);
+		const outlineW = this.getContourWidth(4);
+		ctx.lineWidth = width + outlineW;
 		ctx.stroke();
 		ctx.beginPath();
 		ctx.moveTo(x1, y1);
@@ -117,8 +210,9 @@ var Lada = {
 		ctx.moveTo(x1, y1);
 		ctx.lineTo(kx, ky);
 		ctx.lineTo(x2, y2);
-		ctx.strokeStyle = COLORS.ink;
-		ctx.lineWidth = width + 4;
+		ctx.strokeStyle = this.getContourStroke(COLORS.ink);
+		const outlineW = this.getContourWidth(4);
+		ctx.lineWidth = width + outlineW;
 		ctx.lineJoin = "round";
 		ctx.lineCap = "round";
 		ctx.stroke();
@@ -16213,48 +16307,51 @@ var Lada = {
 	drawHellSpark(ctx, x, y, radius = 10, time = 0) {
 		ctx.save();
 		ctx.translate(x, y);
-		ctx.fillStyle = "rgba(239, 68, 68, 0.35)";
+		ctx.fillStyle = "rgba(230, 42, 25, 0.35)";
 		ctx.beginPath();
 		ctx.arc(0, 0, radius + 6, 0, Math.PI * 2);
 		ctx.fill();
-		this.setupPath(ctx, "#FBBF24", COLORS.ink, 2);
+		// ADR 0045 & ADR 0046: Sharp aggressive 4-point star in pekelná rumělka #E62A19
+		this.setupPath(ctx, "#E62A19", COLORS.ink, 2.5);
 		ctx.beginPath();
-		ctx.arc(0, 0, radius, 0, Math.PI * 2);
+		const rot = time * 6;
+		for (let i = 0; i < 8; i++) {
+			const a = rot + (i / 8) * Math.PI * 2;
+			const dist = i % 2 === 0 ? radius * 1.5 : radius * 0.45;
+			if (i === 0) ctx.moveTo(Math.cos(a) * dist, Math.sin(a) * dist);
+			else ctx.lineTo(Math.cos(a) * dist, Math.sin(a) * dist);
+		}
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.fillStyle = "#FFFFFF";
+		// Hot sulfur core
+		ctx.fillStyle = "#FEF08A";
 		ctx.beginPath();
-		ctx.arc(0, 0, radius * .5, 0, Math.PI * 2);
+		ctx.arc(0, 0, radius * 0.38, 0, Math.PI * 2);
 		ctx.fill();
-		ctx.strokeStyle = "#DC2626";
-		ctx.lineWidth = 2;
-		for (let i = 0; i < 4; i++) {
-			const fAng = time * 8 + i * Math.PI / 2;
-			ctx.beginPath();
-			ctx.moveTo(Math.cos(fAng) * radius * .8, Math.sin(fAng) * radius * .8);
-			ctx.lineTo(Math.cos(fAng) * (radius + 5), Math.sin(fAng) * (radius + 5));
-			ctx.stroke();
-		}
 		ctx.restore();
 	},
 	drawWoodShard(ctx, x, y, radius = 12, angle = 0) {
 		ctx.save();
 		ctx.translate(x, y);
 		ctx.rotate(angle);
-		this.setupPath(ctx, "#78350F", COLORS.ink, 2.5);
+		// ADR 0045 & ADR 0046: Sharp jagged wooden splinter with danger tip
+		this.setupPath(ctx, "#5C2E0B", COLORS.ink, 2.5);
 		ctx.beginPath();
-		ctx.ellipse(0, 0, radius * 1.3, radius * .7, 0, 0, Math.PI * 2);
+		ctx.moveTo(radius * 1.6, 0); // sharp splinter tip
+		ctx.lineTo(-radius * 0.9, -radius * 0.55);
+		ctx.lineTo(-radius * 0.4, 0);
+		ctx.lineTo(-radius * 0.9, radius * 0.55);
+		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
-		ctx.strokeStyle = "#15803D";
-		ctx.lineWidth = 2;
+		// Threat accent tip in pekelná rumělka
+		ctx.strokeStyle = "#E62A19";
+		ctx.lineWidth = 1.8;
 		ctx.beginPath();
-		ctx.moveTo(-radius * .5, -radius * .5);
-		ctx.lineTo(-radius * .8, -radius * 1.1);
-		ctx.moveTo(radius * .2, -radius * .4);
-		ctx.lineTo(radius * .1, -radius * 1);
-		ctx.moveTo(radius * .4, radius * .4);
-		ctx.lineTo(radius * .7, radius * .9);
+		ctx.moveTo(radius * 0.6, -radius * 0.2);
+		ctx.lineTo(radius * 1.5, 0);
+		ctx.lineTo(radius * 0.6, radius * 0.2);
 		ctx.stroke();
 		ctx.restore();
 	},
@@ -18075,232 +18172,14 @@ var Lada = {
 		}
 
 		if (size === 'giant') {
-			// NEJVĚTŠÍ DENOMINACE: ČERTOVSKÁ HLAVA S RŮŽKY (LADOVSKÝ ČERTÍK)
-			const s = 1.35;
-			ctx.scale(s, s);
-
-			// Perníkový korpus hlavy čerta (horned devil head)
-			ctx.fillStyle = '#6E2E0A';
-			ctx.strokeStyle = '#321404';
-			ctx.lineWidth = 2.2;
-			ctx.lineJoin = 'round';
-			ctx.lineCap = 'round';
-
-			ctx.beginPath();
-			ctx.moveTo(0, -7);
-			// Pravý roh nahoru a ven
-			ctx.bezierCurveTo(4, -8, 8, -13, 11, -19);
-			ctx.bezierCurveTo(13, -19, 14, -15, 12, -9);
-			// Pravé špičaté ouško
-			ctx.lineTo(16, -6);
-			ctx.lineTo(13, -2);
-			// Pravá tvář k bradě
-			ctx.bezierCurveTo(15, 6, 9, 14, 0, 16);
-			// Levá brada k levé tváři
-			ctx.bezierCurveTo(-9, 14, -15, 6, -13, -2);
-			// Levé ouško
-			ctx.lineTo(-16, -6);
-			ctx.lineTo(-12, -9);
-			// Levý roh nahoru
-			ctx.bezierCurveTo(-14, -15, -13, -19, -11, -19);
-			// Vnitřní hrana levého rohu zpět ke středu
-			ctx.bezierCurveTo(-8, -13, -4, -8, 0, -7);
-			ctx.closePath();
-			ctx.fill();
-			ctx.stroke();
-
-			// Teplý pečený kvašový lesk uprostřed tváře
-			ctx.fillStyle = '#8C4215';
-			ctx.beginPath();
-			ctx.ellipse(0, 3, 7.5, 6.5, 0, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Cukrová poleva – bílé zdobení rohů
-			ctx.strokeStyle = '#FFFDF5';
-			ctx.lineWidth = 1.6;
-			ctx.beginPath();
-			ctx.moveTo(3, -9); ctx.lineTo(10, -17);
-			ctx.moveTo(6, -11); ctx.lineTo(10, -11);
-			ctx.moveTo(-3, -9); ctx.lineTo(-10, -17);
-			ctx.moveTo(-6, -11); ctx.lineTo(-10, -11);
-			ctx.stroke();
-
-			// Cukrové obloučky na tvářích
-			ctx.strokeStyle = '#FFFDF5';
-			ctx.lineWidth = 1.3;
-			ctx.beginPath();
-			ctx.arc(-8, 3, 2, 0, Math.PI);
-			ctx.arc(8, 3, 2, 0, Math.PI);
-			ctx.stroke();
-
-			// Oči z rubínových cukrových perliček
-			ctx.fillStyle = '#DC2626';
-			ctx.beginPath();
-			ctx.arc(-4.5, 0, 2, 0, Math.PI * 2);
-			ctx.arc(4.5, 0, 2, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Jiskřičky v očích
-			ctx.fillStyle = '#FFFFFF';
-			ctx.beginPath();
-			ctx.arc(-4, -0.6, 0.7, 0, Math.PI * 2);
-			ctx.arc(5, -0.6, 0.7, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Lišácký úsměv
-			ctx.strokeStyle = '#321404';
-			ctx.lineWidth = 1.4;
-			ctx.beginPath();
-			ctx.arc(0, 6, 5, 0.15 * Math.PI, 0.85 * Math.PI);
-			ctx.stroke();
-
-			// Červený cukrový jazyk
-			ctx.fillStyle = '#EF4444';
-			ctx.beginPath();
-			ctx.arc(0, 8, 2.2, 0, Math.PI);
-			ctx.fill();
-
-			// Bílý cukrový zoubek
-			ctx.fillStyle = '#FFFDF5';
-			ctx.beginPath();
-			ctx.moveTo(-2, 7.5); ctx.lineTo(-1, 9.5); ctx.lineTo(0, 7.5);
-			ctx.fill();
-
-			// Zlatá cukrová perlička na čele
-			ctx.fillStyle = '#F59E0B';
-			ctx.beginPath();
-			ctx.arc(0, -4, 1.3, 0, Math.PI * 2);
-			ctx.fill();
-
+			// TIER 3: KRÁLOVSKÝ ZLACENÝ KŮŇ SE SVATOZÁŘÍ (50+ hodnot, 32 px, ADR 0047)
+			drawGingerbreadHorseCanvas(ctx, 0, 0, 32);
 		} else if (size === 'large') {
-			// VELKÝ PERNÍČEK: LADOVSKÝ ČESKÝ PERNÍKOVÝ PANÁČEK
-			const s = 1.15;
-			ctx.scale(s, s);
-
-			ctx.fillStyle = '#78350F';
-			ctx.strokeStyle = '#2B1204';
-			ctx.lineWidth = 2.0;
-			ctx.lineJoin = 'round';
-			ctx.lineCap = 'round';
-
-			// Ladovská silueta perníkového panáčka (hlava, rozpažené ruce, kabátek a nožky)
-			ctx.beginPath();
-			// Hlava panáčka nahoře
-			ctx.arc(0, -11, 5.5, 0.75 * Math.PI, 0.25 * Math.PI, false);
-			// Pravé rameno k paži
-			ctx.lineTo(3.5, -6.5);
-			// Pravá rozpažená ruka ven
-			ctx.lineTo(12, -4);
-			// Pravá ručka (kulatý okraj)
-			ctx.arc(12.5, -2, 2.2, -0.4 * Math.PI, 0.5 * Math.PI, false);
-			// Spodní hrana pravé paže k pasu
-			ctx.lineTo(4.5, 0.5);
-			// Pas k pravému boku
-			ctx.lineTo(5, 4);
-			// Pravá noha dolů
-			ctx.lineTo(6.5, 12);
-			// Pravá botka / patička
-			ctx.arc(4.5, 13, 2.2, 0, Math.PI, false);
-			// Vnitřní šev mezi nožkami k rozkroku
-			ctx.lineTo(2.5, 12);
-			ctx.lineTo(0, 5);
-			// Levá noha vnitřní šev dolů
-			ctx.lineTo(-2.5, 12);
-			// Levá botka
-			ctx.arc(-4.5, 13, 2.2, 0, Math.PI, false);
-			// Levá noha vnější šev nahoru
-			ctx.lineTo(-6.5, 12);
-			// Levý bok k pasu
-			ctx.lineTo(-5, 4);
-			ctx.lineTo(-4.5, 0.5);
-			// Spodní hrana levé paže ven
-			ctx.lineTo(-12.5, -2);
-			// Levá ručka (kulatý okraj)
-			ctx.arc(-12.5, -2, 2.2, 0.5 * Math.PI, 1.4 * Math.PI, false);
-			// Horní hrana levé paže k rameni
-			ctx.lineTo(-3.5, -6.5);
-			ctx.closePath();
-			ctx.fill();
-			ctx.stroke();
-
-			// Teplý pečený kvašový lesk tváře a bříška
-			ctx.fillStyle = '#92400E';
-			ctx.beginPath();
-			ctx.arc(0, -11, 3.8, 0, Math.PI * 2);
-			ctx.fill();
-			ctx.beginPath();
-			ctx.ellipse(0, 2, 3.5, 4.5, 0, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Bílé cukrové oči
-			ctx.fillStyle = '#FFFDF5';
-			ctx.beginPath();
-			ctx.arc(-2, -12, 1.1, 0, Math.PI * 2);
-			ctx.arc(2, -12, 1.1, 0, Math.PI * 2);
-			ctx.fill();
-			// Černé zorničky
-			ctx.fillStyle = '#2B1204';
-			ctx.beginPath();
-			ctx.arc(-2, -12, 0.5, 0, Math.PI * 2);
-			ctx.arc(2, -12, 0.5, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Ladovský usměvavý oblouček pusy
-			ctx.strokeStyle = '#FFFDF5';
-			ctx.lineWidth = 1.3;
-			ctx.beginPath();
-			ctx.arc(0, -10.5, 2.4, 0.15 * Math.PI, 0.85 * Math.PI);
-			ctx.stroke();
-
-			// Červené cukrové tvářičky
-			ctx.fillStyle = '#EF4444';
-			ctx.beginPath();
-			ctx.arc(-3.5, -9.8, 0.9, 0, Math.PI * 2);
-			ctx.arc(3.5, -9.8, 0.9, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Cukrová linka límečku / mašličky
-			ctx.strokeStyle = '#FFFDF5';
-			ctx.lineWidth = 1.4;
-			ctx.beginPath();
-			ctx.moveTo(-3, -6.5); ctx.lineTo(0, -5.2); ctx.lineTo(3, -6.5);
-			ctx.stroke();
-			// Rubínový uzlík mašličky
-			ctx.fillStyle = '#DC2626';
-			ctx.beginPath();
-			ctx.arc(0, -5.5, 1.2, 0, Math.PI * 2);
-			ctx.fill();
-
-			// 3 bílé cukrové knoflíčky na vestě
-			ctx.fillStyle = '#FFFDF5';
-			ctx.beginPath();
-			ctx.arc(0, -2, 1.3, 0, Math.PI * 2);
-			ctx.arc(0, 1.5, 1.3, 0, Math.PI * 2);
-			ctx.arc(0, 5, 1.3, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Cukrové manžetky na zápěstích
-			ctx.strokeStyle = '#FFFDF5';
-			ctx.lineWidth = 1.3;
-			ctx.beginPath();
-			ctx.moveTo(-9.5, -4.5); ctx.lineTo(-9, -0.5);
-			ctx.moveTo(9.5, -4.5); ctx.lineTo(9, -0.5);
-			ctx.stroke();
-
-			// Cukrové manžetky na botkách
-			ctx.beginPath();
-			ctx.moveTo(-6, 9.5); ctx.lineTo(-2.5, 9.5);
-			ctx.moveTo(2.5, 9.5); ctx.lineTo(6, 9.5);
-			ctx.stroke();
-
-			// Cukrová vlnovka na čepičce
-			ctx.beginPath();
-			ctx.arc(0, -14.5, 2.5, 0.8 * Math.PI, 0.2 * Math.PI);
-			ctx.stroke();
-
+			// TIER 2: MANDLOVÝ PERNÍKOVÝ BOCHÁNEK S BÍLOU POLEVOU (5–10 hodnot, 22 px, ADR 0047)
+			drawGingerbreadLoafCanvas(ctx, 0, 0, 22);
 		} else {
-			// ZÁKLADNÍ DENOMINACE: MALÉ JEDNODUŠE BÍLE ZDOBENÉ PERNÍKOVÉ SRDÍČKO
-			drawGingerbreadHeartCanvas(ctx, 0, 0, 22);
+			// TIER 1: DROBNÉ PERNÍKOVÉ SRDÍČKO / HVĚZDIČKA (1–2 hodnoty, 14 px, ADR 0047)
+			drawGingerbreadHeartCanvas(ctx, 0, 0, 14);
 		}
 
 		ctx.restore();
@@ -26701,6 +26580,45 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawBakchusSPivnimSoudkem: 'bakchus_s_pivnim_soudkem',
 };
 
+export interface DiscreteWaddleResult {
+  phase: number;
+  leanAngle: number;
+  scaleX: number;
+  scaleY: number;
+}
+
+const WADDLE_RIGHT: DiscreteWaddleResult[] = [
+  { phase: 0, leanAngle: -0.087, scaleX: 1.05, scaleY: 0.95 },
+  { phase: 1, leanAngle: 0, scaleX: 0.96, scaleY: 1.06 },
+  { phase: 2, leanAngle: 0.087, scaleX: 1.05, scaleY: 0.95 },
+  { phase: 3, leanAngle: 0, scaleX: 0.96, scaleY: 1.06 },
+];
+
+const WADDLE_LEFT: DiscreteWaddleResult[] = [
+  { phase: 0, leanAngle: 0.087, scaleX: 1.05, scaleY: 0.95 },
+  { phase: 1, leanAngle: 0, scaleX: 0.96, scaleY: 1.06 },
+  { phase: 2, leanAngle: -0.087, scaleX: 1.05, scaleY: 0.95 },
+  { phase: 3, leanAngle: 0, scaleX: 0.96, scaleY: 1.06 },
+];
+
+const TANK_PULSE_PHASES: DiscreteWaddleResult[] = [
+  { phase: 0, leanAngle: 0, scaleX: 1.08, scaleY: 0.92 },
+  { phase: 1, leanAngle: 0, scaleX: 1.00, scaleY: 1.00 },
+  { phase: 2, leanAngle: 0, scaleX: 0.95, scaleY: 1.05 },
+  { phase: 3, leanAngle: 0, scaleX: 1.00, scaleY: 1.00 },
+];
+
+function getDiscreteWaddle(time: number, vx: number, panicked = false): DiscreteWaddleResult {
+  const stepFreq = panicked ? 16 : 8;
+  const phase = Math.floor((Math.abs(time) * stepFreq) % 4);
+  return vx < 0 ? WADDLE_LEFT[phase] : WADDLE_RIGHT[phase];
+}
+
+function getDiscreteTankPulse(time: number): DiscreteWaddleResult {
+  const phase = Math.floor((Math.abs(time) * 10) % 4); // 2.5 Hz * 4 = 10
+  return TANK_PULSE_PHASES[phase];
+}
+
 function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult {
   const isAttacking = !!params.isAttacking;
   const recoveryTimer = params.recoveryTimer || 0;
@@ -26761,11 +26679,11 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         result.lungeX = -6 * Math.cos(attackAngle) * p2;
         result.lungeY = -6 * Math.sin(attackAngle) * p2;
       } else {
-        // Phase 3: Apex tension & high frequency shake
+        // Phase 3: Apex tension & high frequency shake (Nápřah: Squash na 0.75x)
         result.phase = 3;
         const p3 = (progress - 0.67) / 0.33;
-        result.scaleY = 1.18;
-        result.scaleX = 0.92;
+        result.scaleY = 0.75;
+        result.scaleX = 1.18;
         result.shakeX = Math.sin(time * 50) * (2.2 * Math.max(0.3, p3));
         result.shakeY = Math.cos(time * 45) * (1.6 * Math.max(0.3, p3));
         result.leanAngle = -0.16 * facingDir;
@@ -26777,12 +26695,12 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
     } else if (recoveryTimer > 0) {
       const recProgress = 1 - recoveryTimer / recoveryDuration;
       if (recProgress < 0.35) {
-        // Phase 4: Massive forward lunge (36px) & impact
+        // Phase 4: Massive forward lunge (36px) & impact (Strike: Stretch na 1.25x)
         result.phase = 4;
         result.lungeX = Math.cos(attackAngle) * 36;
         result.lungeY = Math.sin(attackAngle) * 36;
-        result.scaleY = 0.82;
-        result.scaleX = 1.18;
+        result.scaleY = 1.25;
+        result.scaleX = 0.85;
         result.leanAngle = 0.22 * facingDir;
         result.hasSlashingArc = true;
         result.hasShockwave = true;
@@ -26793,8 +26711,8 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         const ease = 1 - p5;
         result.lungeX = Math.cos(attackAngle) * 36 * ease;
         result.lungeY = Math.sin(attackAngle) * 36 * ease;
-        result.scaleY = 0.82 + 0.18 * p5;
-        result.scaleX = 1.18 - 0.18 * p5;
+        result.scaleY = 1.25 - 0.25 * p5;
+        result.scaleX = 0.85 + 0.15 * p5;
         result.leanAngle = 0.22 * ease * facingDir;
       }
     }
@@ -26807,15 +26725,15 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         const p1 = Math.max(0.2, progress / 0.375);
         result.lungeX = -8 * Math.cos(attackAngle) * p1;
         result.lungeY = -8 * Math.sin(attackAngle) * p1;
-        result.scaleY = 1.0 + 0.08 * p1;
-        result.scaleX = 1.0 - 0.05 * p1;
+        result.scaleY = 1.0 - 0.12 * p1;
+        result.scaleX = 1.0 + 0.10 * p1;
         result.leanAngle = -0.12 * p1 * facingDir;
       } else {
-        // Phase 2: Curve with shake & golden star flare
+        // Phase 2: Curve with shake & golden star flare (Nápřah: Squash na 0.75x)
         result.phase = 2;
         const p2 = (progress - 0.375) / 0.625;
-        result.scaleY = 1.08;
-        result.scaleX = 0.95;
+        result.scaleY = p2 > 0.5 ? 0.75 : (0.88 - 0.13 * (p2 / 0.5));
+        result.scaleX = p2 > 0.5 ? 1.18 : (1.10 + 0.08 * (p2 / 0.5));
         result.shakeX = Math.sin(time * 45) * (1.6 * p2);
         result.shakeY = Math.cos(time * 40) * (1.2 * p2);
         result.leanAngle = -0.12 * facingDir;
@@ -26827,12 +26745,12 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
     } else if (recoveryTimer > 0) {
       const recProgress = 1 - recoveryTimer / recoveryDuration;
       if (recProgress < 0.35) {
-        // Phase 3: Spring lunge (24px)
+        // Phase 3: Spring lunge (24px) (Strike: Stretch na 1.25x)
         result.phase = 3;
         result.lungeX = Math.cos(attackAngle) * 24;
         result.lungeY = Math.sin(attackAngle) * 24;
-        result.scaleY = 0.88;
-        result.scaleX = 1.12;
+        result.scaleY = 1.25;
+        result.scaleX = 0.85;
         result.leanAngle = 0.16 * facingDir;
         result.hasSlashingArc = true;
         result.hasGroundDust = true;
@@ -26843,8 +26761,8 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         const ease = 1 - p4;
         result.lungeX = Math.cos(attackAngle) * 24 * ease;
         result.lungeY = Math.sin(attackAngle) * 24 * ease;
-        result.scaleY = 0.88 + 0.12 * p4;
-        result.scaleX = 1.12 - 0.12 * p4;
+        result.scaleY = 1.25 - 0.25 * p4;
+        result.scaleX = 0.85 + 0.15 * p4;
         result.leanAngle = 0.16 * ease * facingDir;
       }
     }
@@ -26856,15 +26774,15 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         // Phase 1: Spring compression
         result.phase = 1;
         const p1 = Math.max(0.3, progress / 0.67);
-        result.scaleY = 1.0 - 0.22 * p1;
-        result.scaleX = 1.0 + 0.22 * p1;
+        result.scaleY = 1.0 - 0.25 * p1;
+        result.scaleX = 1.0 + 0.20 * p1;
         result.leanAngle = 0.05 * p1 * facingDir;
         result.shakeX = Math.sin(time * 60) * (0.8 * p1);
         result.hasGroundDust = true;
       } else {
         result.phase = 1;
-        result.scaleY = 0.78;
-        result.scaleX = 1.22;
+        result.scaleY = 0.75;
+        result.scaleX = 1.20;
         result.shakeX = Math.sin(time * 70) * 1.5;
         result.shakeY = Math.cos(time * 65) * 1.0;
         result.leanAngle = 0.05 * facingDir;
@@ -26872,12 +26790,12 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
     } else if (recoveryTimer > 0) {
       const recProgress = 1 - recoveryTimer / recoveryDuration;
       if (recProgress < 0.4) {
-        // Phase 2: Rapid lunge & 3 claw sparks
+        // Phase 2: Rapid lunge & 3 claw sparks (Strike: Stretch na 1.25x)
         result.phase = 2;
         result.lungeX = Math.cos(attackAngle) * 20;
         result.lungeY = Math.sin(attackAngle) * 20;
-        result.scaleY = 1.16;
-        result.scaleX = 0.86;
+        result.scaleY = 1.25;
+        result.scaleX = 0.85;
         result.leanAngle = 0.18 * facingDir;
         result.hasClawSparks = true;
       } else {
@@ -26887,8 +26805,8 @@ function computeEnemyKinematics(params: KinematicsParams): EnemyKinematicsResult
         const ease = 1 - p3;
         result.lungeX = Math.cos(attackAngle) * 20 * ease;
         result.lungeY = Math.sin(attackAngle) * 20 * ease;
-        result.scaleY = 1.16 - 0.16 * p3;
-        result.scaleX = 0.86 + 0.14 * p3;
+        result.scaleY = 1.25 - 0.25 * p3;
+        result.scaleX = 0.85 + 0.15 * p3;
         result.leanAngle = 0.18 * ease * facingDir;
       }
     }
@@ -27747,6 +27665,386 @@ function drawThematicEnemyDetails(
   ctx.restore();
 }
 
+/**
+ * Kreslené stavové efekty bez RGB tintu (ADR 0047, Ticket 06).
+ * - Zmrazení: kreslené rampouchy z oděvu a bílé ledové akcenty
+ * - Zapálení: stoupající uhlíky v rumělce, tužkové sazové šrafování a obláček kouře
+ * - Zpomalení: komické kapky bláta či pivní pěny u nohou
+ */
+function drawDrawnEnemyStatusEffects(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  enemy: any,
+  facingDir: 1 | -1,
+  time: number,
+  radius: number
+) {
+  if (!enemy || enemy.dead || enemy.isDefeated) return;
+
+  const isFrozen = Boolean(enemy.isFrozen || (enemy.chillTimer || 0) > 0 || enemy.chilled);
+  const isBurning = Boolean(enemy.isBurning || (enemy.burnTimer || 0) > 0 || (enemy.fireTimer || 0) > 0);
+  const isSlowed = Boolean(
+    (enemy.slowTimer || 0) > 0 ||
+    (enemy.fajfkaSlowTimer || 0) > 0 ||
+    (enemy.garlicSlowTimer || 0) > 0 ||
+    enemy.valecniceSlowed
+  );
+
+  if (!isFrozen && !isBurning && !isSlowed) return;
+
+  ctx.save();
+
+  // 1. ZMRAZENÍ: Kreslené rampouchy z těla / klobouku
+  if (isFrozen) {
+    const icicleY = y - radius * 0.35;
+    const offsets = [-radius * 0.45, 0, radius * 0.45];
+    for (let i = 0; i < offsets.length; i++) {
+      const ix = x + offsets[i] * facingDir;
+      const len = 10 + (i % 2) * 5;
+      const w = 4;
+      ctx.beginPath();
+      ctx.moveTo(ix - w * 0.5, icicleY);
+      ctx.lineTo(ix + w * 0.5, icicleY);
+      ctx.lineTo(ix, icicleY + len);
+      ctx.closePath();
+      ctx.fillStyle = '#BAE6FD'; // Light gouache sky blue
+      ctx.fill();
+      ctx.strokeStyle = '#26150C'; // Calligraphic ink outline
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // White chalk highlight
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(ix - 0.5, icicleY + 1);
+      ctx.lineTo(ix - 0.5, icicleY + len * 0.75);
+      ctx.stroke();
+    }
+  }
+
+  // 2. ZAPÁLENÍ: Stoupající kreslené uhlíky a sazové šrafování
+  if (isBurning) {
+    // Sazové tužkové šrafování na okraji
+    ctx.strokeStyle = 'rgba(30, 27, 24, 0.45)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    const sootY = y - radius * 0.2;
+    for (let s = -radius * 0.3; s <= radius * 0.3; s += 5) {
+      ctx.moveTo(x + s, sootY - 4);
+      ctx.lineTo(x + s + 3, sootY + 4);
+    }
+    ctx.stroke();
+
+    // 3 stoupající uhlíky
+    for (let i = 0; i < 3; i++) {
+      const dt = (time * 3.5 + i * 0.35) % 1;
+      const ex = x + Math.sin(time * 6 + i * 2) * (radius * 0.55);
+      const ey = y - radius * 0.4 - dt * 26;
+      const emberR = 2.4 * (1 - dt * 0.4);
+
+      ctx.beginPath();
+      ctx.arc(ex, ey, emberR, 0, Math.PI * 2);
+      ctx.fillStyle = '#E62A19'; // Pekelná rumělka
+      ctx.fill();
+      ctx.strokeStyle = '#26150C';
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+
+      // Sulfur core
+      ctx.beginPath();
+      ctx.arc(ex, ey, emberR * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FEF08A';
+      ctx.fill();
+    }
+  }
+
+  // 3. ZPOMALENÍ: Kapky bláta či pivní pěny u nohou
+  if (isSlowed) {
+    const feetY = y + radius * 0.72;
+    for (let i = 0; i < 3; i++) {
+      const dt = (time * 4.0 + i * 0.33) % 1;
+      const dir = (i % 2 === 0 ? 1 : -1) * facingDir;
+      const dx = x + dir * (radius * 0.4 + dt * 14);
+      const dy = feetY - Math.sin(dt * Math.PI) * 8 + dt * 4;
+      const dropR = 2.2 * (1 - dt * 0.3);
+
+      ctx.beginPath();
+      ctx.arc(dx, dy, dropR, 0, Math.PI * 2);
+      ctx.fillStyle = i === 1 ? '#FEF08A' : '#78350F';
+      ctx.fill();
+      ctx.strokeStyle = '#26150C';
+      ctx.lineWidth = 1.0;
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+/**
+ * Vizuální reakce lovce při Zoufalé kuráži (<35% Kuráže, ADR 0047, Ticket 06).
+ * Animované komické kapky potu stříkající z čela a poplašený hustý dým z fajfky.
+ */
+function drawHunterDesperateKurazFx(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  facingSign: 1 | -1,
+  time: number,
+  kurazRatio: number
+) {
+  if (kurazRatio >= 0.35) return;
+  const intensity = Math.min(1.0, (0.35 - kurazRatio) / 0.35);
+
+  ctx.save();
+  // 1. Komické kapky potu stříkající z čela
+  const sweatCount = 2;
+  for (let i = 0; i < sweatCount; i++) {
+    const sweatPhase = (time * 4.2 + i * 0.5) % 1;
+    const sx = x + facingSign * (10 + sweatPhase * 16);
+    const sy = y - 28 - Math.sin(sweatPhase * Math.PI) * 10 + sweatPhase * 8;
+    const dropR = 2.5 * (1 - sweatPhase * 0.4);
+
+    ctx.fillStyle = '#67E8F9';
+    ctx.strokeStyle = '#26150C';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.arc(sx, sy, dropR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // White reflection tick
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(sx - dropR * 0.3, sy - dropR * 0.3, dropR * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // 2. Poplašený hustý dým z fajfky
+  const smokeCount = 3;
+  for (let j = 0; j < smokeCount; j++) {
+    const sPhase = (time * 2.8 + j * 0.33) % 1;
+    const puffR = (5 + sPhase * 9) * (0.8 + intensity * 0.4);
+    const px = x + facingSign * (14 + sPhase * 18);
+    const py = y - 24 - sPhase * 24;
+
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 0.75 - sPhase * 0.7);
+    ctx.fillStyle = '#F1F5F9';
+    ctx.strokeStyle = '#26150C';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(px, py, puffR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    if (j === 0) {
+      ctx.strokeStyle = '#64748B';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(px - puffR * 0.3, py - puffR * 0.2);
+      ctx.lineTo(px + puffR * 0.3, py + puffR * 0.2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawBossGouacheStippling(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius: number,
+  time: number,
+  _enemy: any
+): void {
+  ctx.save();
+  ctx.fillStyle = '#B45309'; // Teplá pálená siena / okr pro ladovské kvašové tečkování
+  const numDots = 10;
+  const dotR = 1.35;
+  const dist = (radius || 24) * 0.95;
+  const wobble = Math.sin(time * 2.5) * 0.05;
+  ctx.beginPath();
+  for (let i = 0; i < numDots; i++) {
+    const angle = (i / numDots) * Math.PI * 2 + wobble;
+    const dx = x + Math.cos(angle) * dist;
+    const dy = y + Math.sin(angle) * (dist * 0.88);
+    ctx.moveTo(dx + dotR, dy);
+    ctx.arc(dx, dy, dotR, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * Malovaná Kramářská pečeť (vyřezávaný lidový erb) vznášející se nad hlavou bossů a Ostřílených běsů (ADR 0047).
+ * Nahrazuje moderní arkádové šipky a kruhy pod nohama tradiční dřevěnou malovanou plaketou s lidovým erbem.
+ */
+function drawKramarskaPecet(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  enemy: any,
+  time: number
+): void {
+  const r = enemy?.radius || 24;
+  const bob = Math.sin(time * 2.8) * 2.5;
+  const sealY = y - r - 22 + bob;
+
+  ctx.save();
+  ctx.translate(x, sealY);
+
+  // 1. Jemný stín pod pečetí
+  ctx.fillStyle = 'rgba(38, 21, 12, 0.22)';
+  ctx.beginPath();
+  ctx.ellipse(0, 15, 8, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Vlající červené lidové stuhy (folk swallowtail ribbons)
+  const ribFlutter = Math.sin(time * 3.2) * 1.5;
+  ctx.fillStyle = '#DC2626';
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.6;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // Levá stuha
+  ctx.beginPath();
+  ctx.moveTo(-3, 6);
+  ctx.lineTo(-7 + ribFlutter, 16);
+  ctx.lineTo(-4 + ribFlutter, 14);
+  ctx.lineTo(-2 + ribFlutter, 16);
+  ctx.lineTo(0, 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Pravá stuha
+  ctx.beginPath();
+  ctx.moveTo(3, 6);
+  ctx.lineTo(7 - ribFlutter, 16);
+  ctx.lineTo(4 - ribFlutter, 14);
+  ctx.lineTo(2 - ribFlutter, 16);
+  ctx.lineTo(0, 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // 3. Dřevěná malovaná kramářská pečeť (vyřezávaný kruhový medailon)
+  // Sytě černá ladovská kontura (3.6px tuš)
+  ctx.lineWidth = 3.6;
+  ctx.strokeStyle = '#26150C';
+  ctx.fillStyle = '#FFFBEB'; // Světlý pergamenový podklad
+
+  ctx.beginPath();
+  ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Vnitřní teplý zlatý kvašový terč
+  ctx.fillStyle = '#F59E0B';
+  ctx.beginPath();
+  ctx.arc(0, 0, 8.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Kvašové tečkování po vnitřním obvodu medailonu (tečky pečeného okru)
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const tx = Math.cos(a) * 6.2;
+    const ty = Math.sin(a) * 6.2;
+    ctx.moveTo(tx + 0.7, ty);
+    ctx.arc(tx, ty, 0.7, 0, Math.PI * 2);
+  }
+  ctx.fill();
+
+  // 4. Folklórní erbovní motiv uvnitř pečeti podle typu bosse
+  const mobId = enemy?.id || '';
+  const isPekelny = enemy?.prefix === 'pekelny' || mobId.includes('cert');
+  const isRytir = mobId.includes('rytir') || mobId.includes('zbojnik');
+  const isVodak = mobId.includes('hastrman') || mobId.includes('rak') || mobId.includes('blatouch');
+  const isKanec = mobId.includes('kanec') || mobId.includes('hejkal');
+
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.35;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (isPekelny) {
+    // Čertovské růžky
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.moveTo(-4, 3);
+    ctx.bezierCurveTo(-5, -2, -6, -5, -3, -4);
+    ctx.lineTo(0, -1);
+    ctx.lineTo(3, -4);
+    ctx.bezierCurveTo(6, -5, 5, -2, 4, 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else if (isRytir) {
+    // Zkřížené meče / čepele
+    ctx.beginPath();
+    ctx.moveTo(-4, -4); ctx.lineTo(4, 4);
+    ctx.moveTo(4, -4); ctx.lineTo(-4, 4);
+    ctx.stroke();
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (isVodak) {
+    // Vodnická vlnovka a dušičková kapka
+    ctx.beginPath();
+    ctx.arc(0, 1, 3.5, 0.2 * Math.PI, 0.8 * Math.PI);
+    ctx.stroke();
+    ctx.fillStyle = '#0284C7';
+    ctx.beginPath();
+    ctx.arc(0, -2, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (isKanec) {
+    // Kly / žalud
+    ctx.fillStyle = '#FEF08A';
+    ctx.beginPath();
+    ctx.moveTo(-3, 2); ctx.lineTo(-4, -2); ctx.lineTo(-1, 0); ctx.closePath();
+    ctx.moveTo(3, 2); ctx.lineTo(4, -2); ctx.lineTo(1, 0); ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    // Univerzální královská trojcípá koruna / lidové slunce
+    ctx.fillStyle = '#FEF08A';
+    ctx.beginPath();
+    ctx.moveTo(-4, 2.5);
+    ctx.lineTo(-4, -2);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(0, -3.5);
+    ctx.lineTo(2, 0);
+    ctx.lineTo(4, -2);
+    ctx.lineTo(4, 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Rubínová perlička uprostřed koruny
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.arc(0, 0.8, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Horní závěsné ouško medailonu
+  ctx.strokeStyle = '#26150C';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(0, -10.5, 2.2, Math.PI, 0);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawEnemyRenderer(
   method: string,
   ctx: CanvasRenderingContext2D,
@@ -27761,6 +28059,22 @@ function drawEnemyRenderer(
   const drawer = (Lada as any)[method];
   if (typeof drawer !== 'function') return;
 
+  const prevRole = Lada.currentRole;
+  const prevCrowded = Lada.isCrowded;
+  const prevNightInversion = Lada.nightInversionRatio;
+  const isEliteOrBoss = Boolean(
+    enemy?.isBoss ||
+    enemy?.isMiniboss ||
+    enemy?.prefix === 'ostrileny' ||
+    enemy?.prefix === 'velitel' ||
+    enemy?.category === 'bosses' ||
+    (typeof enemy?.maxHp === 'number' && enemy.maxHp >= 1000)
+  );
+  Lada.currentRole = isEliteOrBoss ? 'boss' : 'enemy';
+  Lada.isCrowded = Boolean(enemy?._isCrowded);
+  Lada.nightInversionRatio = enemy?._nightInversionRatio ?? 0;
+
+  try {
   const radius = enemy?.radius || 24;
   const cadence: EnemyAttackCadence = enemy?.attackCadence || enemy?.cadence || 'normal';
   const recoveryTimer =
@@ -27872,12 +28186,45 @@ function drawEnemyRenderer(
     !enemy?.isCharging &&
     enemy?.aiState !== 'charge' &&
     !(typeof enemy?.hopHeight === 'number' && enemy.hopHeight > 1) &&
-    (!extraArgs || extraArgs.length === 0);
+    (!extraArgs || extraArgs.length === 0) &&
+    !((enemy?._nightInversionRatio ?? 0) > 0.05);
+
+  const isTank = Boolean(
+    enemy?.isTank ||
+    enemy?.isBoss ||
+    enemy?.id === 'hejkal' ||
+    enemy?.id === 'divoky_kanec' ||
+    enemy?.id === 'kanec_knour' ||
+    enemy?.id === 'mrazivy_obr' ||
+    enemy?.id === 'obri_snehulak' ||
+    enemy?.id === 'hromotluk' ||
+    (typeof getEntityLadaShape === 'function' && getEntityLadaShape(enemy) === 'square')
+  );
+  const isFrozen = Boolean(enemy?.isFrozen || (enemy?.chillTimer || 0) > 0 || enemy?.chilled);
+  const isSlowed = Boolean(
+    (enemy?.slowTimer || 0) > 0 ||
+    (enemy?.fajfkaSlowTimer || 0) > 0 ||
+    (enemy?.garlicSlowTimer || 0) > 0 ||
+    enemy?.valecniceSlowed
+  );
+  const isWaddling = k.phase === 0 && !enemy?.dead && !enemy?.isDefeated;
+  const waddleTime = isSlowed ? time * 0.5 : time;
+  const rawWaddle = isWaddling
+    ? (isTank ? getDiscreteTankPulse(waddleTime) : getDiscreteWaddle(waddleTime, effectiveVx, panicked))
+    : null;
+  const waddle = isFrozen
+    ? { phase: 1, leanAngle: 0, scaleX: 1.0, scaleY: 1.0 }
+    : rawWaddle;
+  const waddleLean = waddle ? waddle.leanAngle : 0;
+  const waddleScaleX = waddle ? waddle.scaleX : 1;
+  const waddleScaleY = waddle ? waddle.scaleY : 1;
 
   const hasBodyTransform =
     k.phase !== 0 ||
     staggerAngle !== 0 ||
     staggerY !== 0 ||
+    waddleLean !== 0 ||
+    waddleScaleY !== 1 ||
     renderScale !== 1.0 ||
     (hasFilterPalette && !canUseAtlas);
 
@@ -27898,11 +28245,14 @@ function drawEnemyRenderer(
     if (k.lungeX !== 0 || k.shakeX !== 0 || k.lungeY !== 0 || k.shakeY !== 0 || staggerY !== 0) {
       ctx.translate(k.lungeX + k.shakeX, k.lungeY + k.shakeY + staggerY);
     }
-    if (k.leanAngle !== 0 || staggerAngle !== 0) {
-      ctx.rotate(k.leanAngle + staggerAngle);
+    const totalLean = k.leanAngle + staggerAngle + waddleLean;
+    if (totalLean !== 0) {
+      ctx.rotate(totalLean);
     }
-    if (k.scaleX * renderScale !== 1 || k.scaleY * renderScale !== 1) {
-      ctx.scale(k.scaleX * renderScale, k.scaleY * renderScale);
+    const finalScaleX = k.scaleX * waddleScaleX * renderScale;
+    const finalScaleY = k.scaleY * waddleScaleY * renderScale;
+    if (finalScaleX !== 1 || finalScaleY !== 1) {
+      ctx.scale(finalScaleX, finalScaleY);
     }
     ctx.translate(-x, -y);
   }
@@ -28005,12 +28355,24 @@ function drawEnemyRenderer(
 
   // Palette accent overlay details (Ladovske detaily spritu bez cheatovani)
   if (!enemy?.dead && !enemy?.isDefeated) {
+    if (isEliteOrBoss) {
+      drawBossGouacheStippling(ctx, x, y, radius, time, enemy);
+    }
     drawThematicEnemyDetails(ctx, x, y, enemy, facingDir, time, radius, panicked);
+    drawDrawnEnemyStatusEffects(ctx, x, y, enemy, facingDir, time, radius);
+    if (isEliteOrBoss) {
+      drawKramarskaPecet(ctx, x, y, enemy, time);
+    }
   }
 
   // 3. Overlay VFX (weapon silhouettes, star flares, slashing arcs)
   if (k.phase > 0) {
     drawOverlayVfx(ctx, x, y, k, radius, enemy, facingDir, time, attackAngle);
+  }
+  } finally {
+    Lada.currentRole = prevRole;
+    Lada.isCrowded = prevCrowded;
+    Lada.nightInversionRatio = prevNightInversion;
   }
 }
 
@@ -28042,16 +28404,16 @@ export function drawEnemyWarningSign(
 
   // Podkladový kruh s ladovskou černou konturou
   ctx.beginPath();
-  ctx.arc(0, 0, 8, 0, Math.PI * 2);
-  ctx.fillStyle = progress > 0.75 ? "#c82a1e" : "#f1a834"; // Změna barvy z oranžové na rudou
+  ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
+  ctx.fillStyle = progress > 0.70 ? "#E62A19" : "#FEF08A";
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "#1a120b";
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = "#26150C";
   ctx.stroke();
 
-  // Inkoustový vykřičník
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 11px serif";
+  // Ladovský inkoustový vykřičník
+  ctx.fillStyle = progress > 0.70 ? "#FFFBEB" : "#26150C";
+  ctx.font = "900 12px Eczar, serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("!", 0, 0.5);
@@ -28060,6 +28422,15 @@ export function drawEnemyWarningSign(
 }
 
 (Lada as any).drawEnemyWarningSign = drawEnemyWarningSign;
+(Lada as any).getDiscreteWaddle = getDiscreteWaddle;
+(Lada as any).getDiscreteTankPulse = getDiscreteTankPulse;
+(Lada as any).computeEnemyKinematics = computeEnemyKinematics;
+(Lada as any).drawDrawnEnemyStatusEffects = drawDrawnEnemyStatusEffects;
+(Lada as any).drawHunterDesperateKurazFx = drawHunterDesperateKurazFx;
+(Lada as any).drawBossGouacheStippling = drawBossGouacheStippling;
+(Lada as any).drawKramarskaPecet = drawKramarskaPecet;
+(Lada as any).drawGingerbreadLoaf = drawGingerbreadLoafCanvas;
+(Lada as any).drawGingerbreadHorse = drawGingerbreadHorseCanvas;
 
 /**
  * Ladovské točící se hvězdičky omráčení nad hlavou bubáka
@@ -35152,5 +35523,13 @@ export {
   drawNocniKobold,
   drawUmrlecBasista,
   drawBakchusSPivnimSoudkem,
+  getDiscreteWaddle,
+  getDiscreteTankPulse,
+  drawDrawnEnemyStatusEffects,
+  drawHunterDesperateKurazFx,
+  drawBossGouacheStippling,
+  drawKramarskaPecet,
+  drawGingerbreadLoafCanvas,
+  drawGingerbreadHorseCanvas,
   type EnemyAttackInfo,
 };

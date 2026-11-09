@@ -16,6 +16,7 @@
 import { COLORS } from '../constants';
 import type { DynamicLightSource, ShadowZone, LightOccluder } from '../game/storybookLighting';
 import { computeOccluderSegments, computeSurfaceReliefHighlight } from '../game/storybookLighting';
+import { Lada } from './ladaRenderer';
 
 let lightBufferCanvas: HTMLCanvasElement | null = null;
 let lightBufferCtx: CanvasRenderingContext2D | null = null;
@@ -669,7 +670,7 @@ export function renderStorybookLightingComposite(
     dayPhaseId === 'dawn';
 
   // Daytime with high Kuráž requires only the subtle atmosphere; no darkness veil
-  if (!isNightPhase && kurazRatio >= 0.25) {
+  if (!isNightPhase && kurazRatio >= 0.35) {
     return;
   }
 
@@ -866,27 +867,47 @@ export function renderStorybookLightingComposite(
   }
 
   // -------------------------------------------------------------
-  // 5. CRITICAL KURÁŽ FEAR VIGNETTE & TREMBLING INK CONTOURS
+  // 5. KNIŽNÍ VINĚTA ZOUFALÉ KURÁŽE (<35% Kuráž, ADR 0047, Ticket 06)
   // -------------------------------------------------------------
-  if (kurazRatio < 0.25) {
+  if (kurazRatio < 0.35) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(25, 20, 15, 0.40)';
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    const t = performance.now() * 0.012;
+    const intensity = Math.min(1.0, (0.35 - kurazRatio) / 0.35);
 
-    // Jittering vignette pen corners
-    ctx.moveTo(10, 10 + Math.sin(t) * 4);
-    ctx.lineTo(85, 10 + Math.cos(t) * 3);
-    ctx.moveTo(screenWidth - 10, 10 + Math.sin(t * 1.2) * 4);
-    ctx.lineTo(screenWidth - 85, 10);
-    ctx.moveTo(10, screenHeight - 10 + Math.cos(t * 1.5) * 4);
-    ctx.lineTo(85, screenHeight - 10);
-    ctx.moveTo(screenWidth - 10, screenHeight - 10);
-    ctx.lineTo(screenWidth - 85, screenHeight - 10 + Math.sin(t) * 4);
+    // Knižní tužkové šrafování v rozích obrazovky
+    ctx.strokeStyle = `rgba(45, 25, 12, ${0.25 + 0.25 * intensity})`;
+    ctx.lineWidth = 1.2;
+    const cornerSize = 75;
+    const step = 7;
+    ctx.beginPath();
+    // Top-left
+    for (let d = 10; d < cornerSize; d += step) {
+      ctx.moveTo(10, d); ctx.lineTo(d, 10);
+    }
+    // Top-right
+    for (let d = 10; d < cornerSize; d += step) {
+      ctx.moveTo(screenWidth - 10, d); ctx.lineTo(screenWidth - d, 10);
+    }
+    // Bottom-left
+    for (let d = 10; d < cornerSize; d += step) {
+      ctx.moveTo(10, screenHeight - d); ctx.lineTo(d, screenHeight - 10);
+    }
+    // Bottom-right
+    for (let d = 10; d < cornerSize; d += step) {
+      ctx.moveTo(screenWidth - 10, screenHeight - d); ctx.lineTo(screenWidth - d, screenHeight - 10);
+    }
     ctx.stroke();
 
-    // Darkening edge fear wash (cached on screen resize / context change)
+    // Knižní rohové linky (bookbinding corner brackets)
+    ctx.strokeStyle = `rgba(60, 35, 18, ${0.35 + 0.35 * intensity})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(8, cornerSize + 8); ctx.lineTo(8, 8); ctx.lineTo(cornerSize + 8, 8);
+    ctx.moveTo(screenWidth - 8, cornerSize + 8); ctx.lineTo(screenWidth - 8, 8); ctx.lineTo(screenWidth - cornerSize - 8, 8);
+    ctx.moveTo(8, screenHeight - cornerSize - 8); ctx.lineTo(8, screenHeight - 8); ctx.lineTo(cornerSize + 8, screenHeight - 8);
+    ctx.moveTo(screenWidth - 8, screenHeight - cornerSize - 8); ctx.lineTo(screenWidth - 8, screenHeight - 8); ctx.lineTo(screenWidth - cornerSize - 8, screenHeight - 8);
+    ctx.stroke();
+
+    // Warm aged parchment radial gradient (teplé zažloutnutí okrajů v tónu starého papíru)
     if (
       !cachedVignetteGrad ||
       cachedVignetteCtx !== ctx ||
@@ -899,13 +920,15 @@ export function renderStorybookLightingComposite(
       cachedVignetteGrad = ctx.createRadialGradient(
         screenWidth * 0.5,
         screenHeight * 0.5,
-        screenHeight * 0.35,
+        screenHeight * 0.32,
         screenWidth * 0.5,
         screenHeight * 0.5,
         Math.hypot(screenWidth, screenHeight) * 0.52
       );
       cachedVignetteGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-      cachedVignetteGrad.addColorStop(1, 'rgba(12, 10, 20, 0.42)');
+      cachedVignetteGrad.addColorStop(0.60, 'rgba(195, 160, 100, 0)');
+      cachedVignetteGrad.addColorStop(0.85, 'rgba(135, 95, 50, 0.26)');
+      cachedVignetteGrad.addColorStop(1.0, 'rgba(65, 40, 20, 0.52)');
     }
     ctx.fillStyle = cachedVignetteGrad;
     ctx.fillRect(0, 0, screenWidth, screenHeight);
@@ -1109,6 +1132,7 @@ export function renderNightEmissiveEntitiesPass(
 
     const id = enemy.id || '';
     const isDevil = isEmissiveDevil(id);
+    const nightInversionRatio = enemy._nightInversionRatio ?? 0;
 
     // 1. Full-body self-luminous devils: draw their body above the night shadow pass
     //    without adding any ground light source.
@@ -1121,6 +1145,16 @@ export function renderNightEmissiveEntitiesPass(
       }
       ctx.globalAlpha = 0.88 * nightStrength;
       enemy.draw(ctx);
+      renderedCount++;
+    } else if (nightInversionRatio > 0.05 && typeof enemy.draw === 'function') {
+      // Fairytale Silhouette Inversion (chalk-white woodcut contours above night lightmap, ADR 0046)
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.96, nightInversionRatio * nightStrength);
+      const prevInversion = Lada.nightInversionRatio;
+      Lada.nightInversionRatio = nightInversionRatio;
+      enemy.draw(ctx);
+      Lada.nightInversionRatio = prevInversion;
+      ctx.restore();
       renderedCount++;
     }
 
