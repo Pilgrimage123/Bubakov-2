@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { GameEngine } from '../src/game/engine';
 import { ENEMIES } from '../src/data/enemies';
+import { GAME_LEVELS } from '../src/data/levels';
 
 describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per encounter)', () => {
   it('Stage 1 (Level 0): Blatouchový skřítek miniboss fires pollen spray & spawns vine mud patch', () => {
@@ -76,6 +77,24 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
     expect(blizzards.length).toBeGreaterThan(0);
   });
 
+  it('Stage 2 (Level 1): Tající sněhulák miniboss rolls snowball projectile & spawns slush puddle hazard', () => {
+    const engine = new GameEngine();
+    engine.initRun(1, 'wanderer');
+
+    const boss = engine.spawnMonster('tajici_snehulak', 100, 100, 1.0, false, true);
+    expect(boss).toBeDefined();
+
+    boss.snowballCooldown = 0;
+    boss.slushPuddleCooldown = 0;
+    engine.update(0.1);
+
+    const snowballs = engine.state.projectiles.filter((p: any) => p.visual === 'snowball');
+    expect(snowballs.length).toBeGreaterThan(0);
+
+    const slush = engine.director?.hazards.filter((h: any) => h.kind === 'slush-puddle');
+    expect(slush.length).toBeGreaterThan(0);
+  });
+
   it('Stage 3 (Level 2): Obří kolednický beránek miniboss executes ramming push & ground slam shockwave', () => {
     const engine = new GameEngine();
     engine.initRun(2, 'wanderer');
@@ -94,15 +113,57 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
     expect(shockwaves.length).toBeGreaterThan(0);
   });
 
-  it('Stage 3 (Level 2): Stará ježibaba z Melechu midboss fires poison eggs & spawns broom gust hazard', () => {
+  it('Stage 3 (Level 2): Koledující bubák s pomlázkou midboss executes whip lash, painted egg volley & yolk puddles', () => {
     const engine = new GameEngine();
     engine.initRun(2, 'wanderer');
+
+    const boss = engine.spawnMonster('koledujici_bubak', 100, 100, 1.0, false, true);
+    expect(boss).toBeDefined();
+
+    boss.pomlazkaCooldown = 0;
+    boss.krasliceCooldown = 0;
+    boss.carolHopCooldown = 0;
+    engine.update(0.1);
+
+    const eggs = engine.state.projectiles.filter((p: any) => p.visual === 'painted_egg');
+    expect(eggs.length).toBe(3);
+
+    const yolks = engine.director?.hazards.filter((h: any) => h.kind === 'yolk-puddle');
+    expect(yolks.length).toBeGreaterThan(0);
+    expect(boss.hopSpeedTimer).toBeGreaterThan(0);
+  });
+
+  it('Stage 3 (Level 2): Pan Zajíc z březového háje final boss executes rabbit stomp, egg basket & pollen dash', () => {
+    const engine = new GameEngine();
+    engine.initRun(2, 'wanderer');
+
+    const boss = engine.spawnMonster('pan_zajic', 120, 120, 1.0, true, false);
+    expect(boss).toBeDefined();
+
+    boss.leapCooldown = 0;
+    boss.eggBasketCooldown = 0;
+    boss.sprintCooldown = 0;
+    engine.update(0.1);
+
+    const stomps = engine.director?.hazards.filter((h: any) => h.kind === 'rabbit-stomp');
+    expect(stomps.length).toBeGreaterThan(0);
+
+    const eggs = engine.state.projectiles.filter((p: any) => p.visual === 'painted_egg');
+    expect(eggs.length).toBe(3);
+
+    expect(boss.sprintTimer).toBeGreaterThan(0);
+  });
+
+  it('Stage 4 (Level 3): Stará ježibaba z Melechu midboss fires poison eggs, broom gust hazard & sweep pass', () => {
+    const engine = new GameEngine();
+    engine.initRun(3, 'wanderer');
 
     const boss = engine.spawnMonster('carodejnice_stara', 100, 100, 1.0, false, true);
     expect(boss).toBeDefined();
 
     boss.emberTimer = 0;
     boss.gustCooldown = 0;
+    boss.broomSweepCooldown = 0;
     engine.update(0.1);
 
     const venomProjs = engine.state.projectiles.filter((p: any) => p.visual === 'witch_venom');
@@ -110,6 +171,7 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
 
     const gusts = engine.director?.hazards.filter((h: any) => h.kind === 'witch-gust');
     expect(gusts.length).toBeGreaterThan(0);
+    expect(boss.broomSweepTimer).toBeGreaterThan(0);
   });
 
   it('Stage 4 (Level 3): Večerní Klekánice miniboss executes bell toll shockwave & night shadow dash', () => {
@@ -128,38 +190,46 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
     expect(boss.speedBurstTimer).toBeGreaterThan(0);
   });
 
-  it('Stage 4 (Level 3): Pekelný dráb midboss executes whip cleave & chain shackles hazard', () => {
-    const engine = new GameEngine();
-    engine.initRun(3, 'wanderer');
-
-    const boss = engine.spawnMonster('drab', 80, 0, 1.0, false, true);
-    expect(boss).toBeDefined();
-
-    const initialHp = engine.state.player!.hp;
-    boss.whipCleaveCooldown = 0;
-    boss.shackleCooldown = 0;
-    engine.update(0.1);
-
-    expect(engine.state.player!.hp).toBeLessThan(initialHp);
-
-    const shackles = engine.director?.hazards.filter((h: any) => h.kind === 'chain-shackle');
-    expect(shackles.length).toBeGreaterThan(0);
-  });
-
-  it('Stage 5 (Level 4): Čarodějnice Zaspalka miniboss executes swoop pass & ink smoke trail', () => {
+  it('Stage 5 (Level 4): Čarodějnice Zaspalka miniboss executes swoop pass, ink smoke trail & sleepy hex', () => {
     const engine = new GameEngine();
     engine.initRun(4, 'wanderer');
 
     const boss = engine.spawnMonster('carodejnice_zaspalka', 200, 200, 1.0, false, true);
     expect(boss).toBeDefined();
 
-    for (let i = 0; i < 5; i++) {
-      engine.update(0.1);
-    }
+    // Trigger swoop & reposition with sleepy hex
+    boss.zaspalkaState = 'reposition';
+    boss.sleepyHexCooldown = 0;
+    engine.update(0.1);
 
-    expect(boss.zaspalkaState).toBe('swoop');
+    const hex = engine.state.projectiles.filter((p: any) => p.statusText?.includes('OSPALÉ UŘKNUTÍ'));
+    expect(hex.length).toBeGreaterThan(0);
+
+    boss.zaspalkaState = 'swoop';
+    boss.smokeCooldown = 0;
+    engine.update(0.1);
+
     const smoke = engine.director?.hazards.filter((h: any) => h.kind === 'ink-smoke');
     expect(smoke.length).toBeGreaterThan(0);
+  });
+
+  it('Stage 6 (Level 5): Skalní obr ze Sázavy midboss executes rolling boulder, rock stomp & rock shower', () => {
+    const engine = new GameEngine();
+    engine.initRun(5, 'wanderer');
+
+    const boss = engine.spawnMonster('obr', 100, 100, 1.0, false, true);
+    expect(boss).toBeDefined();
+
+    boss.boulderCooldown = 0;
+    boss.stompCooldown = 0;
+    boss.rockThrowCooldown = 0;
+    engine.update(0.1);
+
+    const boulders = engine.state.projectiles.filter((p: any) => p.visual === 'boulder');
+    expect(boulders.length).toBe(4); // 1 giant rolling boulder + 3-way rock shower
+
+    const stomps = engine.director?.hazards.filter((h: any) => h.kind === 'rock-stomp');
+    expect(stomps.length).toBeGreaterThan(0);
   });
 
   it('Stage 5 (Level 4): Bahenní hastrman midboss fires water spray & spawns water jar traps', () => {
@@ -654,6 +724,792 @@ describe('Miniboss & Boss Tactical Complexity Audit (At least 2 attacks per enco
       expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
       expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
     }
+  });
+
+  describe('Etapa 2 (Léto: Úrovně 6–11) Tactical Hierarchy & Season Canon Audit', () => {
+    it('Level 6 (Červen Den): Vele-rak (2 attacks), Čert sekáč (3 attacks), Královská Polednice (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(6, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: kralovsky_vele_rak (2 attacks)
+      const rak = engine.spawnMonster('kralovsky_vele_rak', 100, 100, 1.0, false, true);
+      rak.chargeCooldown = 0;
+      rak.waterJetCooldown = 0;
+      engine.update(0.1);
+      expect(rak.speedBurstTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_drop')).toBe(true);
+
+      // Midboss: cert_sekac (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const sekac = engine.spawnMonster('cert_sekac', 105, 105, 1.0, true, false);
+      sekac.scytheCleaveCooldown = 0;
+      sekac.fireTrailCooldown = 0;
+      sekac.pitchforkVolleyCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'fire-patch')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(sekac.hellDashTimer).toBeGreaterThan(0);
+
+      // Finalboss: kralovska_polednice (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const polednice = engine.spawnMonster('kralovska_polednice', 120, 120, 1.0, true, false);
+      polednice.heatPulseCooldown = 0;
+      polednice.sickleCooldown = 0;
+      polednice.lightningCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'heat-ring')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'lightning-strike')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'solar_sickle')).toBe(true);
+
+      // Enrage: drops below 50% HP
+      polednice.hp = polednice.maxHp * 0.4;
+      engine.update(0.1);
+      expect(polednice.enraged).toBe(true);
+    });
+
+    it('Level 7 (Červen Noc): Rusalka (2 attacks), Ohnivý sudlička (3 attacks), Svatojánský Vládce (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(7, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: rusalka (2 attacks)
+      const rusalka = engine.spawnMonster('rusalka', 100, 100, 1.0, false, true);
+      rusalka.waterSongCooldown = 0;
+      rusalka.drownLungeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'whirlpool')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'water-jar-trap')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_wave')).toBe(true);
+
+      // Midboss: ohnivy_sudlicka (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const sudlicka = engine.spawnMonster('ohnivy_sudlicka', 110, 110, 1.0, true, false);
+      sudlicka.sudliceDashCooldown = 0;
+      sudlicka.emberFanCooldown = 0;
+      sudlicka.sudliceBurstCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'fire-patch')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'hell_spark')).toBe(true);
+      expect(sudlicka.sudliceDashTimer).toBeGreaterThan(0);
+
+      // Finalboss: svatojansky_vladce (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const vladce = engine.spawnMonster('svatojansky_vladce', 130, 130, 1.0, true, false);
+      vladce.treasurePulseCooldown = 0;
+      vladce.fernBarrageCooldown = 0;
+      vladce.midsummerBoltCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'heat-ring')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'lightning-strike')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fern_blossom')).toBe(true);
+
+      // Enrage
+      vladce.hp = vladce.maxHp * 0.45;
+      engine.update(0.1);
+      expect(vladce.enraged).toBe(true);
+    });
+
+    it('Level 8 (Červenec Den): Křeček Obilník (2 attacks), Žitná matka (3 attacks), Pouťový Hromotluk (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(8, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: krecek_obilnik (2 attacks)
+      const krecek = engine.spawnMonster('krecek_obilnik', 100, 100, 1.0, false, true);
+      krecek.burrowDashCooldown = 0;
+      krecek.grainVolleyCooldown = 0;
+      engine.update(0.1);
+      expect(krecek.burrowDashTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'pollen')).toBe(true);
+
+      // Midboss: zitna_matka (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const matka = engine.spawnMonster('zitna_matka', 110, 110, 1.0, true, false);
+      matka.sickleFanCooldown = 0;
+      matka.chaffWhirlCooldown = 0;
+      matka.snopGaleCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'solar_sickle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'heat-ring')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'pollen')).toBe(true);
+
+      // Finalboss: hromotluk_marketa (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const hromotluk = engine.spawnMonster('hromotluk_marketa', 130, 130, 1.0, true, false);
+      hromotluk.targetSalvoCooldown = 0;
+      hromotluk.malletQuakeCooldown = 0;
+      hromotluk.fairChargeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(hromotluk.fairChargeTimer).toBeGreaterThan(0);
+
+      // Enrage
+      hromotluk.hp = hromotluk.maxHp * 0.45;
+      engine.update(0.1);
+      expect(hromotluk.enraged).toBe(true);
+    });
+
+    it('Level 9 (Červenec Noc): Bílá paní (2 attacks), Bezhlavý rytíř (3 attacks), Drak (3 attacks + Enrage) & Hromotluk in pool', () => {
+      const engine = new GameEngine();
+      engine.initRun(9, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Verify hromotluk integrated in Level 9 spawn pools
+      const lvl9 = GAME_LEVELS[9];
+      expect(lvl9?.spawnPools?.night).toContain('hromotluk');
+      expect(lvl9?.spawnPools?.midnight).toContain('hromotluk');
+
+      // Miniboss: bila_pani (2 attacks)
+      const bilaPani = engine.spawnMonster('bila_pani', 100, 100, 1.0, false, true);
+      bilaPani.wailCooldown = 0;
+      bilaPani.bilaMistCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+
+      // Midboss: bezhlavy_rytir (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const rytir = engine.spawnMonster('bezhlavy_rytir', 110, 110, 1.0, true, false);
+      rytir.knightChargeCooldown = 0;
+      rytir.headTossCooldown = 0;
+      engine.update(0.1);
+      expect(rytir.knightChargeTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hex-circle')).toBe(true);
+
+      // Finalboss: drak (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const drak = engine.spawnMonster('drak', 130, 130, 1.0, true, false);
+      drak.dragonFireCooldown = 0;
+      drak.dragonFrostCooldown = 0;
+      drak.dragonGaleCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+
+      // Enrage
+      drak.hp = drak.maxHp * 0.45;
+      engine.update(0.1);
+      expect(drak.enraged).toBe(true);
+    });
+
+    it('Level 10 (Srpen Den): Královský čmelák (2 attacks), Zlatohlávek Žrout (3 attacks), Dožínkový chasník (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(10, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: kralovsky_cmelak (2 attacks)
+      const cmelak = engine.spawnMonster('kralovsky_cmelak', 100, 100, 1.0, false, true);
+      cmelak.cmelakDiveCooldown = 0;
+      cmelak.cmelakPollenCooldown = 0;
+      engine.update(0.1);
+      expect(cmelak.cmelakDiveTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+
+      // Midboss: zlatohlavek_zrout (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const zrout = engine.spawnMonster('zlatohlavek_zrout', 110, 110, 1.0, true, false);
+      zrout.zroutChargeCooldown = 0;
+      zrout.zroutSplatCooldown = 0;
+      zrout.zroutCiderCooldown = 0;
+      engine.update(0.1);
+      expect(zrout.zroutChargeTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+
+      // Finalboss: dozinkovy_chasnik (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const chasnik = engine.spawnMonster('dozinkovy_chasnik', 130, 130, 1.0, true, false);
+      chasnik.chasnikWreathCooldown = 0;
+      chasnik.chasnikFlailCooldown = 0;
+      chasnik.chasnikSprintCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+      expect(chasnik.chasnikSprintTimer).toBeGreaterThan(0);
+
+      // Enrage
+      chasnik.hp = chasnik.maxHp * 0.45;
+      engine.update(0.1);
+      expect(chasnik.enraged).toBe(true);
+    });
+
+    it('Level 11 (Srpen Noc): Netopýr Ušatec (2 attacks), Noční můra (3 attacks), Výr velký (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(11, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: netopyr_usatec (2 attacks)
+      const bat = engine.spawnMonster('netopyr_usatec', 100, 100, 1.0, false, true);
+      bat.screechCooldown = 0;
+      engine.update(0.1);
+      expect(bat.batSwoopTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+
+      // Midboss: nocni_mura (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const mura = engine.spawnMonster('nocni_mura', 110, 110, 1.0, true, false);
+      mura.muraDustCooldown = 0;
+      mura.muraBoltCooldown = 0;
+      mura.muraFlutterCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true);
+      expect(mura.muraFlutterTimer).toBeGreaterThan(0);
+
+      // Finalboss: vyr_velky (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const vyr = engine.spawnMonster('vyr_velky', 130, 130, 1.0, true, false);
+      vyr.vyrVortexCooldown = 0;
+      vyr.vyrHootCooldown = 0;
+      vyr.vyrSwoopCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+      expect(vyr.vyrSwoopTimer).toBeGreaterThan(0);
+
+      // Enrage
+      vyr.hp = vyr.maxHp * 0.45;
+      engine.update(0.1);
+      expect(vyr.enraged).toBe(true);
+    });
+
+    it('Level 12 (Září Den): Královský sršeň (2 attacks), Povidlový čert (3 attacks), Posvícenský hospodář (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(12, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: kralovsky_srsen (2 attacks)
+      const srsen = engine.spawnMonster('kralovsky_srsen', 100, 100, 1.0, false, true);
+      srsen.srsenDiveCooldown = 0;
+      srsen.srsenPlumCooldown = 0;
+      engine.update(0.1);
+      expect(srsen.srsenDiveTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+
+      // Midboss: povidlovy_cert (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const cert = engine.spawnMonster('povidlovy_cert', 110, 110, 1.0, true, false);
+      cert.povidlaSplashCooldown = 0;
+      cert.mechackaSlamCooldown = 0;
+      cert.certSootRushCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(cert.mechackaRushTimer > 0 || cert.certSootRushTimer > 0).toBe(true);
+
+      // Finalboss: posvicensky_hospodar (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const hosp = engine.spawnMonster('posvicensky_hospodar', 130, 130, 1.0, true, false);
+      hosp.kolacVolleyCooldown = 0;
+      hosp.hospodarSlamCooldown = 0;
+      hosp.hospodarSprintCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(hosp.hospodarSprintTimer).toBeGreaterThan(0);
+
+      // Enrage
+      hosp.hp = hosp.maxHp * 0.45;
+      engine.update(0.1);
+      expect(hosp.enraged).toBe(true);
+    });
+
+    it('Level 13 (Září Noc): Svatováclavský strážce (2 attacks), Chmelový skřítek (3 attacks), Kvílící Meluzína (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(13, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: svatovaclavsky_strazce (2 attacks)
+      const strazce = engine.spawnMonster('svatovaclavsky_strazce', 100, 100, 1.0, false, true);
+      strazce.strazceSwordCooldown = 0;
+      strazce.strazceBannerCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'witch_fireball')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+
+      // Midboss: chmelovy_skritek (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const chmel = engine.spawnMonster('chmelovy_skritek', 110, 110, 1.0, true, false);
+      chmel.chmelPollenCooldown = 0;
+      chmel.chmelSnareCooldown = 0;
+      chmel.chmelLeapCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'pollen')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+      expect(chmel.chmelLeapTimer).toBeGreaterThan(0);
+
+      // Finalboss: kvilici_meluzina (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const meluzina = engine.spawnMonster('kvilici_meluzina', 130, 130, 1.0, true, false);
+      meluzina.meluzinaBladeCooldown = 0;
+      meluzina.meluzinaVortexCooldown = 0;
+      meluzina.meluzinaGustCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'crow-vortex')).toBe(true);
+      expect(meluzina.meluzinaGustTimer).toBeGreaterThan(0);
+
+      // Enrage
+      meluzina.hp = meluzina.maxHp * 0.45;
+      engine.update(0.1);
+      expect(meluzina.enraged).toBe(true);
+    });
+
+    it('Level 14 (Říjen Den): Královský havran (2 attacks), Hastrman podzimní (3 attacks), Drak Větrník (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(14, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: kralovsky_havran (2 attacks)
+      const havran = engine.spawnMonster('kralovsky_havran', 100, 100, 1.0, false, true);
+      havran.havranFeatherCooldown = 0;
+      havran.havranDiveCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'crow_feather')).toBe(true);
+      expect(havran.havranDiveTimer).toBeGreaterThan(0);
+
+      // Midboss: hastrman_podzimni (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const hast = engine.spawnMonster('hastrman_podzimni', 110, 110, 1.0, true, false);
+      hast.hastrmanMudCooldown = 0;
+      hast.hastrmanWhirlCooldown = 0;
+      hast.hastrmanReedCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'mud_ball')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(hast.hastrmanReedTimer).toBeGreaterThan(0);
+
+      // Finalboss: drak_vetrnik (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const drak = engine.spawnMonster('drak_vetrnik', 130, 130, 1.0, true, false);
+      drak.drakStreamerCooldown = 0;
+      drak.drakWhirlCooldown = 0;
+      drak.drakSwoopCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'crow-vortex')).toBe(true);
+      expect(drak.drakSwoopTimer).toBeGreaterThan(0);
+
+      // Enrage
+      drak.hp = drak.maxHp * 0.45;
+      engine.update(0.1);
+      expect(drak.enraged).toBe(true);
+    });
+
+    it('Level 15 (Říjen Noc): Dušičková bludička (2 attacks), Čert rybníkář (3 attacks), Veleštika (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(15, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: dusickova_bludicka (2 attacks)
+      const bludicka = engine.spawnMonster('dusickova_bludicka', 100, 100, 1.0, false, true);
+      bludicka.bludickaOrbCooldown = 0;
+      bludicka.bludickaFlickerCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'will_o_wisp')).toBe(true);
+      expect(bludicka.bludickaFlickerTimer).toBeGreaterThan(0);
+
+      // Midboss: cert_rybnikar (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const rybnikar = engine.spawnMonster('cert_rybnikar', 110, 110, 1.0, true, false);
+      rybnikar.certCoalCooldown = 0;
+      rybnikar.certNetCooldown = 0;
+      rybnikar.certTridentCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'coal')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+
+      // Finalboss: vele_stika (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const stika = engine.spawnMonster('vele_stika', 130, 130, 1.0, true, false);
+      stika.stikaWaveCooldown = 0;
+      stika.stikaWhirlCooldown = 0;
+      stika.stikaSurgeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_blast')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(stika.stikaSurgeTimer).toBeGreaterThan(0);
+
+      // Enrage
+      stika.hp = stika.maxHp * 0.45;
+      engine.update(0.1);
+      expect(stika.enraged).toBe(true);
+    });
+
+    it('Level 16 (Listopad Den): Královská husa (2 attacks), Martinský jezdec (3 attacks), Listopadový mrazivec (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(16, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: kralovska_husa (2 attacks)
+      const husa = engine.spawnMonster('kralovska_husa', 100, 100, 1.0, false, true);
+      husa.husaHonkCooldown = 0;
+      husa.husaDiveCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(husa.husaDiveTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'pollen')).toBe(true);
+
+      // Midboss: martinsky_jezdec (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const jezdec = engine.spawnMonster('martinsky_jezdec', 110, 110, 1.0, true, false);
+      jezdec.jezdecLanceCooldown = 0;
+      jezdec.jezdecHoofCooldown = 0;
+      jezdec.jezdecFlurryCooldown = 0;
+      engine.update(0.1);
+      expect(jezdec.jezdecLanceTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+
+      // Finalboss: listopadovy_mrazivec (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const mrazivec = engine.spawnMonster('listopadovy_mrazivec', 130, 130, 1.0, true, false);
+      mrazivec.mrazivecBreathCooldown = 0;
+      mrazivec.mrazivecHoarfrostCooldown = 0;
+      mrazivec.mrazivecGaleCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true);
+      expect(mrazivec.mrazivecGaleTimer).toBeGreaterThan(0);
+
+      // Enrage
+      mrazivec.hp = mrazivec.maxHp * 0.45;
+      engine.update(0.1);
+      expect(mrazivec.enraged).toBe(true);
+    });
+
+    it('Level 17 (Listopad Noc): Mlžný přízrak (2 attacks), Černý myslivec (3 attacks), Zuřivý kanec Kňour (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(17, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: mlzny_prizrak (2 attacks)
+      const prizrak = engine.spawnMonster('mlzny_prizrak', 100, 100, 1.0, false, true);
+      prizrak.prizrakFogCooldown = 0;
+      prizrak.prizrakPhaseCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'will_o_wisp')).toBe(true);
+      expect(prizrak.prizrakPhaseTimer).toBeGreaterThan(0);
+
+      // Midboss: cerny_myslivec (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const myslivec = engine.spawnMonster('cerny_myslivec', 110, 110, 1.0, true, false);
+      myslivec.spearCooldown = 0;
+      myslivec.boarTrapCooldown = 0;
+      myslivec.myslivecHornCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+
+      // Finalboss: kanec_knour (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const knour = engine.spawnMonster('kanec_knour', 130, 130, 1.0, true, false);
+      knour.knourChargeCooldown = 0;
+      knour.knourStompCooldown = 0;
+      knour.knourTuskFlingCooldown = 0;
+      engine.update(0.1);
+      expect(knour.knourChargeTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+
+      // Enrage
+      knour.hp = knour.maxHp * 0.45;
+      engine.update(0.1);
+      expect(knour.enraged).toBe(true);
+    });
+  });
+
+  describe('Etapa 4 (Zima: Úrovně 18–23) Tactical Hierarchy & Season Canon Audit', () => {
+    it('Level 18 (Prosinec Den): Čert s pytlem (2 attacks), Maškarní kozel (3 attacks), Mikulášský čert Richter (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(18, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: cert_s_pytlem (2 attacks)
+      const cert = engine.spawnMonster('cert_s_pytlem', 100, 100, 1.0, false, true);
+      cert.sootBagCooldown = 0;
+      cert.chainWhipCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'soot-cloud')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+
+      // Midboss: maskarni_kozel (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const kozel = engine.spawnMonster('maskarni_kozel', 110, 110, 1.0, true, false);
+      kozel.kozelChargeCooldown = 0;
+      kozel.kozelBellCooldown = 0;
+      kozel.kozelBuckCooldown = 0;
+      engine.update(0.1);
+      expect(kozel.kozelChargeTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'horseshoe')).toBe(true);
+
+      // Finalboss: mikulassky_cert (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const richter = engine.spawnMonster('mikulassky_cert', 130, 130, 1.0, true, false);
+      richter.richterChainCooldown = 0;
+      richter.richterFissureCooldown = 0;
+      richter.richterRushCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'fire_wreath')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(richter.richterRushTimer).toBeGreaterThan(0);
+
+      // Enrage
+      richter.hp = richter.maxHp * 0.45;
+      engine.update(0.1);
+      expect(richter.enraged).toBe(true);
+    });
+
+    it('Level 19 (Prosinec Noc): Mrazivá sova (2 attacks), Jezdec Meluzíny (3 attacks), Král Mrázík (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(19, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: mraziva_sova (2 attacks)
+      const sova = engine.spawnMonster('mraziva_sova', 100, 100, 1.0, false, true);
+      sova.sovaFeatherCooldown = 0;
+      sova.sovaSwoopCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'crow_feather')).toBe(true);
+      expect(sova.sovaSwoopTimer).toBeGreaterThan(0);
+
+      // Midboss: jezdec_meluziny (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const meluzina = engine.spawnMonster('jezdec_meluziny', 110, 110, 1.0, true, false);
+      meluzina.meluzinaGaleCooldown = 0;
+      meluzina.meluzinaLogCooldown = 0;
+      meluzina.meluzinaVortexCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'crow-vortex')).toBe(true);
+
+      // Finalboss: kral_mrazik (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const mrazik = engine.spawnMonster('kral_mrazik', 130, 130, 1.0, true, false);
+      mrazik.mrazikCrownCooldown = 0;
+      mrazik.mrazikHailCooldown = 0;
+      mrazik.mrazikSceptreCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hail-circle')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_blast')).toBe(true);
+
+      // Enrage
+      mrazik.hp = mrazik.maxHp * 0.45;
+      engine.update(0.1);
+      expect(mrazik.enraged).toBe(true);
+    });
+
+    it('Level 20 (Leden Den): Obří sněhulák (2 attacks), Tříkrálový jezdec (3 attacks), Vládce chumelenice (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(20, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: obri_snehulak (2 attacks)
+      const snehulak = engine.spawnMonster('obri_snehulak', 100, 100, 1.0, false, true);
+      snehulak.snowballDashCooldown = 0;
+      snehulak.freezingPuddleCooldown = 0;
+      engine.update(0.1);
+      expect(snehulak.snowballDashTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true);
+
+      // Midboss: trikralovy_jezdec (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const jezdec = engine.spawnMonster('trikralovy_jezdec', 110, 110, 1.0, true, false);
+      jezdec.jezdecStarCooldown = 0;
+      jezdec.jezdecIncenseCooldown = 0;
+      jezdec.jezdecChargeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'will_o_wisp')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'soot-cloud')).toBe(true);
+      expect(jezdec.jezdecChargeTimer).toBeGreaterThan(0);
+
+      // Finalboss: vladce_chumelenice (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const vladce = engine.spawnMonster('vladce_chumelenice', 130, 130, 1.0, true, false);
+      vladce.whiteoutCooldown = 0;
+      vladce.avalancheCooldown = 0;
+      vladce.chumelGaleCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'triad-blizzard')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'water_blast')).toBe(true);
+      expect(vladce.chumelGaleTimer).toBeGreaterThan(0);
+
+      // Enrage
+      vladce.hp = vladce.maxHp * 0.45;
+      engine.update(0.1);
+      expect(vladce.enraged).toBe(true);
+    });
+
+    it('Level 21 (Leden Noc): Ledová klekánice (2 attacks), Kostlivec s kosou (3 attacks), Perchta s nožem (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(21, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: ledova_klekanice (2 attacks)
+      const klekanice = engine.spawnMonster('ledova_klekanice', 100, 100, 1.0, false, true);
+      klekanice.klekaniceBellCooldown = 0;
+      klekanice.klekaniceFadeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(klekanice.klekaniceFadeTimer).toBeGreaterThan(0);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'will_o_wisp')).toBe(true);
+
+      // Midboss: kostlivec_s_kosou (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const kostlivec = engine.spawnMonster('kostlivec_s_kosou', 110, 110, 1.0, true, false);
+      kostlivec.scytheCleaveCooldown = 0;
+      kostlivec.boneVolleyCooldown = 0;
+      kostlivec.graveFrostCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'blizzard-zone')).toBe(true);
+
+      // Finalboss: perchta_s_nozem (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const perchta = engine.spawnMonster('perchta_s_nozem', 130, 130, 1.0, true, false);
+      perchta.perchtaLungeCooldown = 0;
+      perchta.perchtaHexCooldown = 0;
+      perchta.perchtaNeedlesCooldown = 0;
+      engine.update(0.1);
+      expect(perchta.perchtaLungeTimer).toBeGreaterThan(0);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'hex-circle')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'icicle')).toBe(true);
+
+      // Enrage
+      perchta.hp = perchta.maxHp * 0.45;
+      engine.update(0.1);
+      expect(perchta.enraged).toBe(true);
+    });
+
+    it('Level 22 (Únor Den): Masopustní medvěd (2 attacks), Obří slaměník (3 attacks), Rychtář maškar (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(22, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: masopustni_medved (2 attacks)
+      const medved = engine.spawnMonster('masopustni_medved', 100, 100, 1.0, false, true);
+      medved.bearRoarCooldown = 0;
+      medved.bearChargeCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(medved.bearChargeTimer).toBeGreaterThan(0);
+
+      // Midboss: slamennik_obr (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const slamennik = engine.spawnMonster('slamennik_obr', 110, 110, 1.0, true, false);
+      slamennik.slamennikFlailCooldown = 0;
+      slamennik.slamennikChaffCooldown = 0;
+      slamennik.slamennikStompCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+
+      // Finalboss: rychtar_masek (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const rychtar = engine.spawnMonster('rychtar_masek', 130, 130, 1.0, true, false);
+      rychtar.feruleStrikeCooldown = 0;
+      rychtar.confettiBurstCooldown = 0;
+      rychtar.rychtarWaltzCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'straw_doll')).toBe(true);
+      expect(rychtar.rychtarWaltzTimer).toBeGreaterThan(0);
+
+      // Enrage
+      rychtar.hp = rychtar.maxHp * 0.45;
+      engine.update(0.1);
+      expect(rychtar.enraged).toBe(true);
+    });
+
+    it('Level 23 (Únor Noc): Noční kobold (2 attacks), Umrlec basista (3 attacks), Bakchus s pivním soudkem (3 attacks + Enrage)', () => {
+      const engine = new GameEngine();
+      engine.initRun(23, 'wanderer');
+      engine.state.player!.weapons = [];
+
+      // Miniboss: nocni_kobold (2 attacks)
+      const kobold = engine.spawnMonster('nocni_kobold', 100, 100, 1.0, false, true);
+      kobold.koboldSackCooldown = 0;
+      kobold.koboldSneakCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(kobold.koboldSneakTimer).toBeGreaterThan(0);
+
+      // Midboss: umrlec_basista (3 attacks)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const basista = engine.spawnMonster('umrlec_basista', 110, 110, 1.0, true, false);
+      basista.bassScreechCooldown = 0;
+      basista.bowSlashCooldown = 0;
+      basista.bassStringSnareCooldown = 0;
+      engine.update(0.1);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'ground-shockwave')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'wind_blade')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'root-snare')).toBe(true);
+
+      // Finalboss: bakchus_s_pivnim_soudkem (3 attacks + Enrage)
+      engine.state.projectiles = [];
+      if (engine.director) engine.director.hazards = [];
+      const bakchus = engine.spawnMonster('bakchus_s_pivnim_soudkem', 130, 130, 1.0, true, false);
+      bakchus.kegRollCooldown = 0;
+      bakchus.foamSplashCooldown = 0;
+      bakchus.bacchicBurstCooldown = 0;
+      engine.update(0.1);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'log')).toBe(true);
+      expect(engine.director?.hazards.some((h: any) => h.kind === 'mud-patch')).toBe(true);
+      expect(engine.state.projectiles.some((p: any) => p.visual === 'bubble')).toBe(true);
+
+      // Enrage
+      bakchus.hp = bakchus.maxHp * 0.45;
+      engine.update(0.1);
+      expect(bakchus.enraged).toBe(true);
+    });
   });
 });
 

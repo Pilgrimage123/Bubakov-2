@@ -198,6 +198,7 @@ export interface BubackaDiraState {
   isCompleted: boolean;
   isFailed: boolean;
   playerInside: boolean;
+  emergence?: number;
 }
 
 export type PacingValvePhase = 'buildup' | 'peak' | 'lull' | 'telegraph' | 'ambush';
@@ -1882,9 +1883,19 @@ export class RunDirector {
 
     const dira = this.bubackaDira;
     dira.timeRemaining -= dt;
+    dira.emergence = 1 - Math.max(0, dira.timeRemaining / 15.0);
 
     const dist = Math.hypot(player.x - dira.x, player.y - dira.y);
     dira.playerInside = dist <= dira.radius;
+
+    // Inward vortex pull on player when near or inside the hole
+    if (dist <= dira.radius * 1.35 && dist > 1) {
+      const pullFactor = Math.max(0, 1 - dist / (dira.radius * 1.35));
+      const pullStrength = 60 * pullFactor;
+      const pullAngle = Math.atan2(dira.y - player.y, dira.x - player.x);
+      player.x += Math.cos(pullAngle) * pullStrength * dt;
+      player.y += Math.sin(pullAngle) * pullStrength * dt;
+    }
 
     if (dira.playerInside) {
       dira.holdTimeRemaining -= dt;
@@ -1900,7 +1911,7 @@ export class RunDirector {
     if (dira.timeRemaining <= 0 && dira.holdTimeRemaining > 0) {
       // Failed!
       dira.isFailed = true;
-      this.triggerTelegraph('⚠️ Čas vypršel! Z Bubácké díry se vyvalil velký rozmrzelý bubák!', 3.0, engine);
+      this.triggerTelegraph('⚠️ Čas vypršel! Z Bubácké díry se vyvalil Strachem nacpaný Barbucha!', 3.5, engine);
       this.resolveBubackaDiraFailure(engine, dira);
     }
   }
@@ -1930,15 +1941,29 @@ export class RunDirector {
           value: 20,
         });
       }
+    } else if (engine.spawnDrop) {
+      engine.spawnDrop('chest', dira.x, dira.y, { text: 'POKLAD Z DÍRY!' });
+      for (let i = 0; i < 4; i++) {
+        engine.spawnDrop('gingerbread', dira.x + (Math.random() * 40 - 20), dira.y + (Math.random() * 40 - 20), {
+          size: 'giant',
+          value: 20,
+        });
+      }
     }
   }
 
   private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
-    const pool = this.getWeightedPool(engine);
-    const bossCandidate = pool.find((id) => id === this.rozmar.preferredEnemyIds[0]);
-    const bossId = bossCandidate || pool[0] || this.getRegularSpawnFallbackId();
-    const furious = engine.spawnMonster(bossId, dira.x, dira.y, 1.45, false, true, '🧌 Procitlý noční hromotluk z díry');
+    const player = engine.state?.player ?? engine.player;
+    const kurazRatio = player && player.maxHp ? Math.max(0, Math.min(1, player.hp / player.maxHp)) : 1.0;
+    const fearFactor = 1.0 - kurazRatio;
+    // Initial scale inversely proportional to player Kuráž (1.2x up to 1.7x)
+    const initialScale = 1.2 + fearFactor * 0.5;
+
+    const furious = engine.spawnMonster('barbucha', dira.x, dira.y, initialScale, false, true, '🧌 Strachem nacpaný Barbucha');
     if (furious) {
+      furious.barbuchaBaseScale = initialScale;
+      furious.renderScale = initialScale;
+      furious.radius = Math.round(26 * initialScale);
       this.recordEnemySpawn(furious, engine.state.gameTime);
     }
   }

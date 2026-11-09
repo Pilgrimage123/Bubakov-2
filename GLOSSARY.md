@@ -45,8 +45,12 @@ Masivní protiúder Režiséra výpravy následující po fázi Oddychu, vedený
 _Avoid_: ambush wave, wave rush, counter-attack
 
 **Bubácká díra**:
-Dočasná anomálie a trhlina v zemi vyvolaná Režisérem výpravy, ze které vyvěrá neklid; lovec ji musí zapečetit setrváním v jejím kruhu dříve, než z ní vystoupí zuřivý netvor.
-_Avoid_: rift, portál, portal, spawner, trhlina
+Garantovaná časová anomálie vyvolaná Režisérem výpravy právě jednou za Výpravu v okně klidu, z níž vyvěrá stínový dým a kterou lovec musí zapečetit 4sekundovým setrváním v jejím víru dříve, než se z ní vyvalí Strachem nacpaný Barbucha.
+_Avoid_: rift, portál, portal, spawner, trhlina, pekelná díra
+
+**Strachem nacpaný Barbucha**:
+Těžké dýmotvorné strašidlo z kouře s divokou černou kšticí a ostrými vystřelovacími drápy (žihadly), jež vystupuje z nezapečetěné Bubácké díry; jeho velikost roste s chybějící Kuráží lovce a úspěšné zásahy jej postupně vyfukují zpět do neškodné podoby.
+_Avoid_: sněhulák, sněžný bubák, kouřové monstrum, stínový boss
 
 **Mariáš ďáblů**:
 Bojová mechanika Pekelného Čerta, kdy ze svého balíčku pravidelně tasí mariášovou kartu (Srdce, Kule, Listy, Žaludy) s tematickým útokem či vyvoláním pekelné havěti.
@@ -233,6 +237,30 @@ _Avoid_: wave trinity, vyvážení vln, skladba nepřátel
 **Kolizní stín letce**:
 Zemský oválný poloprůhledný stín posunutý o +20–30 px svisle pod středem těla letícího strašidla, určující bod kolize se střelami v lidové perspektivě.
 _Avoid_: flying shadow, stín pod monstrem
+
+**Koledující bubák**:
+Velikonoční oblastní Mezi-boss nastupující v 185. sekundě ve 3. úrovni (Dubnový den), šlehající pletenou vrbovou pomlázkou s barevnými pentlemi a metající malovaná velikonoční vajíčka.
+_Avoid_: velikonoční koledník, koledník, easter boy
+
+**Pan Zajíc**:
+Velikonoční Vele-boss 3. úrovně (Dubnový den) z březového háje, skákající přes bojiště s nůší kraslic, metající bouchací vajíčka a kličkující v osení.
+_Avoid_: velikonoční králík, easter bunny, zajíc boss
+
+**Masopustní laufr**:
+Tradiční masopustní maska rychlého běžce s řehtačkou, kloboukem s pentlemi a rolničkami, vystupující jako svižný Miniboss v 24. úrovni při nočním pochovávání basy (nahrazuje cizorodého kobolda).
+_Avoid_: noční kobold, kobold, běhoun
+
+**Svatováclavský strážce**:
+Podzimní oblastní Miniboss ve 14. úrovni (Září noc) střežící chrámové relikvie se zářícím svatováclavským mečem a štítem.
+_Avoid_: bílá paní v září, templář, rytíř stínů
+
+**Chmelový skřítek**:
+Podzimní oblastní Mezi-boss ve 14. úrovni (Září noc) z chmelnic u rybníka Brčálníku, útočící omamným chmelovým pylem a záchytnými šlahouny révy.
+_Avoid_: mlynář v září, pivní skřítek, chmelák
+
+**Taktická trojice útoků bosse**:
+Kanonické pravidlo odstupňování bojových dovedností bossů podle jejich hierarchického zařazení ve Zlatém trojzubci příchodu (Miniboss v 85. s = 2 telegrafované schopnosti; Mezi-boss v 185. s = 2 až 3 schopnosti s přivoláváním poskoků či zónovými pastmi; Vele-boss ve 300. s = minimálně 3 velkolepé fázované útoky s fází zuřivosti pod 50 % Kuráže).
+_Avoid_: boss moveset, attack roster, skill list, kombo útoky
 
 **Kruhový zásobník terénu**:
 Předalokované pole s pevnou kapacitou slotů pro Zrádný terén zaručující nulovou alokaci v herním cyklu.

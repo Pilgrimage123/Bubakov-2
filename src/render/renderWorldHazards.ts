@@ -1192,11 +1192,46 @@ export function renderWorldHazardsAndEncounters(
         ctx.beginPath();
         ctx.arc(0, 0, h.radius * 0.65, 0, Math.PI * 2);
         ctx.stroke();
+      } else if (h.kind === 'yolk-puddle') {
+        // Authentic Easter egg yolk splatter - soft sunny gouache
+        ctx.fillStyle = isWarning ? 'rgba(254, 240, 138, 0.35)' : 'rgba(250, 204, 21, 0.82)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, h.radius, h.radius * 0.72, 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        // Inner rich yolk core
+        ctx.fillStyle = isWarning ? 'rgba(234, 179, 8, 0.45)' : 'rgba(217, 119, 6, 0.90)';
+        ctx.beginPath();
+        ctx.arc(-h.radius * 0.1, -h.radius * 0.05, h.radius * 0.38, 0, Math.PI * 2);
+        ctx.fill();
+        if (isWarning) {
+          ctx.strokeStyle = '#FACC15';
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      } else if (h.kind === 'slush-puddle') {
+        // Melty slush puddle in early spring
+        ctx.fillStyle = isWarning ? 'rgba(186, 230, 253, 0.30)' : 'rgba(147, 197, 253, 0.65)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, h.radius, h.radius * 0.68, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.8)';
+        ctx.beginPath();
+        ctx.arc(h.radius * 0.2, h.radius * 0.1, h.radius * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        if (isWarning) {
+          ctx.strokeStyle = '#38BDF8';
+          ctx.lineWidth = 2.0;
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       } else if (h.type === 'mud') {
         // ADR 0045: Calm 60% floor rule - soft watercolor mud wash without dark ink outline
         ctx.fillStyle = isWarning ? 'rgba(120, 67, 35, 0.35)' : 'rgba(90, 56, 37, 0.85)';
         ctx.beginPath();
-        if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle') {
+        if (h.kind === 'ground-shockwave' || h.kind === 'chain-shackle' || h.kind === 'rabbit-stomp' || h.kind === 'rock-stomp') {
           ctx.arc(0, 0, h.radius, 0, Math.PI * 2);
         } else {
           ctx.ellipse(0, 0, h.radius, h.radius * 0.65, 0.2, 0, Math.PI * 2);
@@ -1556,33 +1591,154 @@ export function renderWorldHazardsAndEncounters(
   if (dira && !dira.isCompleted && !dira.isFailed && isInView(dira.x, dira.y, (dira.radius || 40) + 30, camera)) {
     ctx.save();
     ctx.translate(dira.x, dira.y);
-    ctx.fillStyle = '#0F172A';
+
+    // Deep pit abyss
+    ctx.fillStyle = '#090D16';
     ctx.strokeStyle = '#1E293B';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4.5;
     ctx.beginPath();
     ctx.ellipse(0, 0, dira.radius, dira.radius * 0.7, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
+    // Swirling vortex strands drawing inward
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, dira.radius * 0.94, dira.radius * 0.64, 0, 0, Math.PI * 2);
+    ctx.clip();
+
+    const vortexSpeed = dira.playerInside ? 4.5 : 2.2;
+    const vortexRot = (engine.gameTime || 0) * vortexSpeed;
+    for (let i = 0; i < 4; i++) {
+      const strandAng = vortexRot + (i * Math.PI) / 2;
+      ctx.strokeStyle = i % 2 === 0 ? 'rgba(56, 189, 248, 0.28)' : 'rgba(139, 92, 246, 0.38)';
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      for (let r = dira.radius * 0.88; r > 8; r -= 10) {
+        const a = strandAng + (1 - r / dira.radius) * 2.4;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * (r * 0.65);
+        if (r === dira.radius * 0.88) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Emerging Barbucha telegraph inside the hole
+    const emergence = typeof dira.emergence === 'number'
+      ? dira.emergence
+      : (1 - Math.max(0, dira.timeRemaining / 15.0));
+
+    if (emergence > 0.12) {
+      const emergeY = (1 - emergence) * 35 - 5;
+      const eyeJitter = Math.sin((engine.gameTime || 0) * 14) * 1.5;
+
+      // Glowing white/blue smoke puff rising
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.75)';
+      ctx.beginPath();
+      ctx.arc(0, emergeY + 12, 18 * emergence, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Barbucha spiky black hair tuft peeking out
+      if (emergence > 0.35) {
+        ctx.fillStyle = '#111827';
+        for (let sp = -3; sp <= 3; sp++) {
+          ctx.beginPath();
+          ctx.moveTo(sp * 5, emergeY - 8);
+          ctx.lineTo(sp * 7 + eyeJitter, emergeY - 18 - Math.abs(sp) * 2);
+          ctx.lineTo(sp * 5 + 3, emergeY - 6);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // Barbucha terrified wide eyes peering out from the abyss
+      const eyeR = Math.min(6.5, 3 + emergence * 4);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(-7, emergeY - 2, eyeR, 0, Math.PI * 2);
+      ctx.arc(7, emergeY - 2, eyeR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Irises & pupils
+      ctx.fillStyle = '#38BDF8';
+      ctx.beginPath();
+      ctx.arc(-7 + eyeJitter * 0.4, emergeY - 2, eyeR * 0.6, 0, Math.PI * 2);
+      ctx.arc(7 + eyeJitter * 0.4, emergeY - 2, eyeR * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(-7 + eyeJitter * 0.5, emergeY - 2, eyeR * 0.35, 0, Math.PI * 2);
+      ctx.arc(7 + eyeJitter * 0.5, emergeY - 2, eyeR * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Orange carrot nose
+      if (emergence > 0.45) {
+        ctx.fillStyle = '#EA580C';
+        ctx.beginPath();
+        ctx.moveTo(0, emergeY + 1);
+        ctx.lineTo(9 + eyeJitter, emergeY + 4);
+        ctx.lineTo(1, emergeY + 5);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Reaching black claws grasping the rim
+      if (emergence > 0.6) {
+        const clawReachY = -dira.radius * 0.45 + (1 - emergence) * 15;
+        ctx.fillStyle = '#0F172A';
+        ctx.strokeStyle = '#020617';
+        ctx.lineWidth = 1.2;
+        // Left claws grasping
+        for (let c = 0; c < 3; c++) {
+          ctx.beginPath();
+          ctx.moveTo(-dira.radius * 0.55 + c * 5, clawReachY);
+          ctx.lineTo(-dira.radius * 0.58 + c * 5, clawReachY - 9);
+          ctx.lineTo(-dira.radius * 0.52 + c * 5, clawReachY);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+        // Right claws grasping
+        for (let c = 0; c < 3; c++) {
+          ctx.beginPath();
+          ctx.moveTo(dira.radius * 0.45 + c * 5, clawReachY);
+          ctx.lineTo(dira.radius * 0.48 + c * 5, clawReachY - 9);
+          ctx.lineTo(dira.radius * 0.52 + c * 5, clawReachY);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+
+    // Purple pulsating ring
     ctx.strokeStyle = '#7C3AED';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.ellipse(0, 0, dira.radius * 0.85, dira.radius * 0.55, Math.sin(engine.gameTime * 3) * 0.1, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, dira.radius * 0.88, dira.radius * 0.58, Math.sin(engine.gameTime * 3) * 0.1, 0, Math.PI * 2);
     ctx.stroke();
 
+    // Circular sealing hold progress arc
     const holdProgress = 1 - Math.max(0, dira.holdTimeRemaining / dira.totalHoldRequired);
     ctx.strokeStyle = dira.playerInside ? '#22C55E' : '#F59E0B';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4.5;
     ctx.beginPath();
     ctx.arc(0, 0, dira.radius + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * holdProgress);
     ctx.stroke();
 
+    // Label with warning and timer
     ctx.fillStyle = dira.playerInside ? '#86EFAC' : '#FDE047';
     ctx.font = 'bold 12px "Cinzel", "Crimson Text", serif';
     ctx.textAlign = 'center';
     const label = dira.playerInside
-      ? `PEČETĚNÍ... ${Math.ceil(dira.holdTimeRemaining)}s`
-      : `ZAPEČEŤ DÍRU! (${Math.ceil(dira.timeRemaining)}s)`;
+      ? `PEČETĚNÍ... ${Math.ceil(dira.holdTimeRemaining)}s (DRŽ POZICI!)`
+      : `⚠️ ZAPEČEŤ DÍRU! (${Math.ceil(dira.timeRemaining)}s) - VYVĚRÁ BARBUCHA!`;
     ctx.fillText(label, 0, -dira.radius - 12);
     ctx.restore();
   }

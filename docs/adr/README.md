@@ -53,6 +53,8 @@ This directory records architectural decisions made for the project Bubákov.
 | [0046](0046-morfologie-strel-nocni-inverze-a-kridovy-naprah.md) | Morfologie střel, noční konturová inverze a křídový nápřah |
 | [0047](0047-vizualni-hierarchie-bossu-stavove-efekty-a-slite-pernicky.md) | Vizuální hierarchie bossů, kreslené stavové efekty a stupně perníčků |
 | [0048](0048-vyladeni-hodnoty-nepratel-a-index-hrozby-a-otravnosti.md) | Vyladění hodnoty nepřátel, kompozitní index hrozby a otravnosti |
+| [0049](0049-standardizace-trojice-utoku-bossu-a-sezonni-kanon.md) | Standardizace trojice útoků bossů, sezónní kánon a integrace bestiáře |
+| [0050](0050-vyjasneni-bubacke-diry-a-strachem-nacpany-barbucha.md) | Vyjasnění Bubácké díry, rituál pečetění a Strachem nacpaný Barbucha |
 
 
 

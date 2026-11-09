@@ -36,8 +36,8 @@ describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
 
     // 5-minute (300 s) daytime schedule
     expect(lvl2.miniBoss).toMatchObject({ id: 'beranek', time: 85, kills: 50, multiplier: 1.35 });
-    expect(lvl2.midBoss).toMatchObject({ id: 'carodejnice_stara', time: 185, kills: 130, multiplier: 1.33 });
-    expect(lvl2.finalBoss).toMatchObject({ id: 'vrchni_carodejnice', time: 300, kills: 240, multiplier: 1.31 });
+    expect(lvl2.midBoss).toMatchObject({ id: 'koledujici_bubak', time: 185, kills: 130, multiplier: 1.33 });
+    expect(lvl2.finalBoss).toMatchObject({ id: 'pan_zajic', time: 300, kills: 240, multiplier: 1.31 });
     expect(lvl2.bossMechanic.cadenceSeconds).toBe(6);
     expect(lvl2.arena).toMatchObject({ id: 'dubnova_naves', layout: 'asymmetric_poi' });
   });
@@ -145,13 +145,13 @@ describe('Level 3: Dubnový den (Stage 3 Core Definition & Pacing)', () => {
     const lvl3Unlock = LEVEL_UNLOCKS[3];
     expect(lvl3Unlock).toBeDefined();
     const enemyIds = lvl3Unlock.targetEnemies.map((e: any) => e.id);
-    expect(enemyIds).toContain('vrchni_carodejnice');
-    expect(enemyIds).toContain('carodejnice_stara');
+    expect(enemyIds).toContain('pan_zajic');
+    expect(enemyIds).toContain('koledujici_bubak');
     expect(enemyIds).toContain('beranek');
     expect(enemyIds).toContain('zkazena_kraslice');
 
-    // Unlocks when Level 2 is completed or Vrchní Čarodějnice is slain
-    const unlockedViaBoss = getLevelProgress(3, { bestiaryKills: { vrchni_carodejnice: 1 } });
+    // Unlocks when Level 2 is completed or Pan Zajíc is slain
+    const unlockedViaBoss = getLevelProgress(3, { bestiaryKills: { pan_zajic: 1 } });
     expect(unlockedViaBoss.isUnlocked).toBe(true);
 
     const unlockedViaRun = getLevelProgress(3, { completedLevels: { 2: true } });

@@ -64,6 +64,7 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   vanicka: { archetype: 'slime', duration: '0.65s', wobble: '3deg', squashX: 1.30, squashY: 0.72, baseScale: 1.00, accentColor: '#93C5FD' },
   tajici_snehulak: { archetype: 'slime', duration: '0.80s', wobble: '3deg', squashX: 1.45, squashY: 0.60, baseScale: 1.25, accentColor: '#60A5FA' },
   zmrzlik: { archetype: 'slime', duration: '0.58s', wobble: '4deg', squashX: 1.28, squashY: 0.74, baseScale: 0.90, accentColor: '#38BDF8' },
+  barbucha: { archetype: 'slime', duration: '0.65s', wobble: '4deg', squashX: 1.25, squashY: 0.80, baseScale: 1.35, accentColor: '#38BDF8' },
   pampeliska_chmyri: { archetype: 'slime', duration: '0.65s', wobble: '2deg', squashX: 1.25, squashY: 0.75, baseScale: 0.90, accentColor: '#FEF08A' },
 
   // --- 3. TĚŽCÍ OBRNĚNCI, OBŘI A BOSSOVÉ (Golem archetype - slow, heavy footfall) ---
@@ -77,6 +78,7 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   snehulak: { archetype: 'golem', duration: '1.05s', wobble: '14deg', squashX: 1.26, squashY: 0.78, baseScale: 1.40, accentColor: '#E2E8F0' },
   drab: { archetype: 'golem', duration: '1.08s', wobble: '16deg', squashX: 1.22, squashY: 0.81, baseScale: 1.40, accentColor: '#7F1D1D' },
   beranek: { archetype: 'golem', duration: '0.85s', wobble: '12deg', squashX: 1.20, squashY: 0.83, baseScale: 1.35, accentColor: '#D97706' },
+  pan_zajic: { archetype: 'golem', duration: '0.85s', wobble: '12deg', squashX: 1.20, squashY: 0.82, baseScale: 1.45, accentColor: '#D97706' },
   carodejnice_stara: { archetype: 'golem', duration: '1.10s', wobble: '14deg', squashX: 1.22, squashY: 0.81, baseScale: 1.50, accentColor: '#15803D' },
   vrchni_carodejnice: { archetype: 'golem', duration: '1.25s', wobble: '16deg', squashX: 1.24, squashY: 0.80, baseScale: 1.70, accentColor: '#7C3AED' },
   ledovi_muzi: { archetype: 'golem', duration: '1.20s', wobble: '14deg', squashX: 1.25, squashY: 0.78, baseScale: 1.55, accentColor: '#38BDF8' },
@@ -87,6 +89,7 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   // --- 4. BĚŽNÍ PĚŠÁCI, BUBÁCI, KOSTLIVCI A VENKOVANÉ (Runner archetype - balanced wobble) ---
   carodejnice_zaspalka: { archetype: 'runner', duration: '0.45s', wobble: '11deg', squashX: 1.15, squashY: 0.87, baseScale: 1.20, accentColor: '#6D28D9' },
   bubak: { archetype: 'runner', duration: '0.52s', wobble: '12deg', squashX: 1.16, squashY: 0.86, baseScale: 1.10, accentColor: '#78350F' },
+  koledujici_bubak: { archetype: 'runner', duration: '0.52s', wobble: '12deg', squashX: 1.16, squashY: 0.86, baseScale: 1.15, accentColor: '#B45309' },
   kostlivec: { archetype: 'runner', duration: '0.48s', wobble: '9deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#F5F5F4' },
   kostlivec_kosa: { archetype: 'runner', duration: '0.50s', wobble: '10deg', squashX: 1.15, squashY: 0.87, baseScale: 1.05, accentColor: '#E7E5E4' },
   skeleton: { archetype: 'runner', duration: '0.48s', wobble: '9deg', squashX: 1.14, squashY: 0.88, baseScale: 1.00, accentColor: '#F5F5F4' },
@@ -141,6 +144,8 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   povidlovy_cert: { archetype: 'golem', duration: '1.14s', wobble: '14deg', squashX: 1.24, squashY: 0.80, baseScale: 1.56, accentColor: '#581C87' },
   posvicensky_hospodar: { archetype: 'golem', duration: '1.26s', wobble: '15deg', squashX: 1.25, squashY: 0.79, baseScale: 1.72, accentColor: '#B91C1C' },
   kvilici_meluzina: { archetype: 'golem', duration: '1.22s', wobble: '13deg', squashX: 1.22, squashY: 0.81, baseScale: 1.70, accentColor: '#38BDF8' },
+  svatovaclavsky_strazce: { archetype: 'golem', duration: '1.18s', wobble: '13deg', squashX: 1.22, squashY: 0.81, baseScale: 1.55, accentColor: '#DC2626' },
+  chmelovy_skritek: { archetype: 'runner', duration: '0.54s', wobble: '11deg', squashX: 1.18, squashY: 0.85, baseScale: 1.25, accentColor: '#65A30D' },
   bramborova_mandelinka: { archetype: 'bug', duration: '0.20s', wobble: '8deg', squashX: 1.15, squashY: 0.88, baseScale: 0.90, accentColor: '#F59E0B' },
   podzimni_strasak: { archetype: 'golem', duration: '1.18s', wobble: '12deg', squashX: 1.22, squashY: 0.82, baseScale: 1.45, accentColor: '#EA580C' },
   kralovsky_havran: { archetype: 'golem', duration: '1.10s', wobble: '14deg', squashX: 1.20, squashY: 0.82, baseScale: 1.50, accentColor: '#312E81' },

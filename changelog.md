@@ -1,3 +1,34 @@
+## 2026-11-09 – Vyjasnění Bubácké díry a Strachem nacpaný Barbucha (ADR 0050)
+
+- **Mechanika Bubácké díry a gravitační vír (`src/game/director.ts`, `src/game/engine.ts`, `src/render/renderWorldHazards.ts`, ADR 0050)**:
+  - Zpřesněny podmínky vzniku: Bubácká díra se otevírá v nočních fázích (Dusk a Night) v intervalu 25–45 s při nízké Kuráži lovce (< 60 %) se stropem max. 1 aktivní díry na scéně.
+  - Implementován pozvolný gravitační tah (vortex pull) do středu jámy, který zrychluje s blížícím se vypršením 7sekundového limitu.
+  - Tlumení Petrolejky: Uvnitř nebezpečného rádiusu díry klesá světelný dosah Petrolejky na 65 % původního poloměru.
+  - Autentický telegrafovaný zrod: Uvnitř vířící jámy se postupně vynořují dýmové obláčky, oči, oranžový nos a černé drápy zachycující se okraje jámy.
+  - Dvoukolejné vyústění: Úspěšné zadupání díry (stání v kruhu 2.5 s) díru zacelí, přičte +25 Kuráže a zanechá odměnu. Vypršení limitu vyvolá nebezpečného minibosse.
+- **Strachem nacpaný Barbucha (`src/render/ladaRenderer.ts`, `src/render/renderProjectiles.ts`, `src/data/enemies.ts`, ADR 0050)**:
+  - 100% procedurální ladovský Canvas 2D vektorový render: Nadýchané modrobílé oblaky kouře s černou tušovou konturou, rozježená kštice, mrkvový nos, vyceněné zuby, ruměnec na tvářích, vznášející se kouřový ocas a ostré zakřivené drápy.
+  - Inverzní škálování strachem: Velikost Barbuchy se odvíjí od chybějící Kuráže lovce (1.2× až 1.7×). Čím větší strach lovec má, tím je Barbucha mohutnější a hrozivější.
+  - Mechanika vyfukování (Deflation): Zásahy lovce Barbuchu postupně vyfukují až na scvrklých 0.6× jeho základní velikosti.
+  - Útoky drápy (žihadly): Při vyšší odvaze lovce (> 50 % Kuráže) pálí Barbucha v panice všesměrovou 8-střelovou kruhovou salvu (nova); při nízké odvaze lovce (≤ 50 %) míří přímo na něj zahuštěným kuželem 5 žihadel v úhlu ±25°.
+  - Odměna po rozplynutí: Porážka Barbuchy nedává truhlu, nýbrž zanechává citoslovce `💨 PUF! (Barbucha rozplynut)`, obří perníčky a záchrannou teplou Škvarkovou placku 🫓 s potlačenou diverzí pro okamžité doplnění sil.
+- **Katalogová integrita a dedikované testy (`tests/barbuchaAndBubackaDira.test.ts`)**:
+  - Zařazení Barbuchy do kánonu 157 nepřátel: doplněny `ENEMY_POINTS` (350), `BUBAK_THREAT_COSTS` (14), `ENEMY_ARCHETYPE_MAP` (slime/cloud pro GPU chůzi) a lokalizace v `cs.ts` a `en.ts`.
+  - Vytvořena nová integrační testovací sada o 9 testech ověřující veškeré chování v headless simulaci i grafickém klientu.
+
+## 2026-11-09 – Standardizace trojice útoků bossů a sezónní kánon (ADR 0049)
+
+- **Hierarchie Zlatého trojzubce pro 72 bossů (`src/game/engine.ts`, `src/data/levels.ts`, ADR 0049)**:
+  - Odstupňování bojových dovedností: Miniboss (85 s) má přesně 2 telegrafované schopnosti; Mezi-boss (185 s) kombinuje 2–3 schopnosti s prostorovou kontrolou bojiště; Krajový Vele-boss (300 s) nese minimálně 3 fázované útoky a Enrage fázi při poklesu pod 50 % zdraví.
+  - Eliminace generických kontaktních bossů – všechny klíčové postavy mají unikátní telegrafovaný bojový styl.
+- **Harmonizace velikonočního a sabatového kánonu (`src/data/levels.ts`)**:
+  - Úroveň 2 (Dubnový den – Velikonoce): Nasazen Obří kolednický beránek, Koledující bubák s pomlázkou a malovanými kraslicemi a Vele-boss Pan Zajíc z březového háje.
+  - Úroveň 3 (Dubnová noc – Filipojakubský sabat): Nasazena Klekánice z mezí, Černokněžník ze skal vyvolávající ohnivé diblíky a Vrchní Filipojakubská Čarodějnice na koštěti.
+- **Nasazení nevyužitých monster z bestiáře a vyčištění kánonu**:
+  - Skalní obr ze Sázavy (`obr`, 8 640 HP) nasazen jako Mezi-boss v 6. úrovni s vrháním balvanů.
+  - Do vlnových bazénů integrováni Obrněný zbojník, Hromotluk, Zmrzlík, Vanička a Krvavý rarášek.
+  - Odstraněny duplicity (Bílá paní v září) a cizí terminologie (Noční kobold přepracován na Masopustního laufra).
+
 ## 2026-11-09 – Kompletní architektura vesnických budov, neprůchodnost a soulad krajin s kalendářem a denní dobou (ADR 0029, 0034)
 
 - **Kompletní architektura vesnických budov a odstranění plovoucích střech (`src/render/villageBuildingRenderer.ts`)**:

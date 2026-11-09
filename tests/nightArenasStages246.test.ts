@@ -48,12 +48,12 @@ describe('Stages 2, 4, 6, and 8: Night Arenas for Březen, Duben, Květen, and �
 
     // Stage 4 (Duben – Dubnová noc / Filipojakubská noc)
     expect(GAME_LEVELS[3].miniBoss.id).toBe('klekanice');
-    expect(GAME_LEVELS[3].midBoss.id).toBe('drab');
+    expect(GAME_LEVELS[3].midBoss.id).toBe('carodejnice_stara');
     expect(GAME_LEVELS[3].finalBoss.id).toBe('vrchni_carodejnice');
 
     // Stage 6 (Květen – Májová noc v Hrusicích)
     expect(GAME_LEVELS[5].miniBoss.id).toBe('zbojnik');
-    expect(GAME_LEVELS[5].midBoss.id).toBe('mlynar');
+    expect(GAME_LEVELS[5].midBoss.id).toBe('obr');
     expect(GAME_LEVELS[5].finalBoss.id).toBe('hejkal');
 
     // Stage 8 (Červen – Červnová noc / Svatojánská noc)
@@ -298,7 +298,7 @@ describe('Stages 2, 4, 6, and 8: Night Arenas for Březen, Duben, Květen, and �
     expect(progLvl6.isUnlocked).toBe(true);
 
     // isLevelFullyUnlocked checks
-    expect(isLevelFullyUnlocked(3, { bestiaryKills: { vrchni_carodejnice: 1 } })).toBe(true);
+    expect(isLevelFullyUnlocked(3, { bestiaryKills: { pan_zajic: 1 } })).toBe(true);
     expect(isLevelFullyUnlocked(4, { bestiaryKills: { vrchni_carodejnice: 1 } })).toBe(true);
     expect(isLevelFullyUnlocked(6, { bestiaryKills: { hejkal: 1 } })).toBe(true);
   });

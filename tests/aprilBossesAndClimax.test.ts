@@ -49,19 +49,19 @@ describe('Ticket 07: Dubnoví bossové, hierarchie a trofej', () => {
 
     // Midboss at 185 s (~130 kills)
     expect(lvl2.midBoss).toMatchObject({
-      id: 'carodejnice_stara',
+      id: 'koledujici_bubak',
       time: 185,
       kills: 130,
     });
-    expect(lvl2.midBoss.warning).toContain('STAROU JEŽIBABOU');
+    expect(lvl2.midBoss.warning).toContain('KOLEDUJÍCÍ BUBÁK');
 
     // Final boss at 300 s (~240 kills)
     expect(lvl2.finalBoss).toMatchObject({
-      id: 'vrchni_carodejnice',
+      id: 'pan_zajic',
       time: 300,
       kills: 240,
     });
-    expect(lvl2.finalBoss.warning).toContain('VRCHNÍ FILIPOJAKUBSKÁ ČARODĚJNICE');
+    expect(lvl2.finalBoss.warning).toContain('PAN ZAJÍC');
   });
 
   it('renders all three bosses with authentic Lada illustrations and elevation shadows', () => {
@@ -99,7 +99,7 @@ describe('Ticket 07: Dubnoví bossové, hierarchie a trofej', () => {
     }).not.toThrow();
   });
 
-  it('defeating Vrchní Filipojakubská Čarodějnice triggers victory and unlocks Stage 4', () => {
+  it('defeating Pan Zajíc triggers victory and unlocks Stage 4', () => {
     const engine = new GameEngine();
     const onVictorySpy = vi.fn();
 
@@ -114,29 +114,29 @@ describe('Ticket 07: Dubnoví bossové, hierarchie a trofej', () => {
     expect(engine.state.levelVictoryTriggered).toBe(false);
     expect(engine.state.meta.completedLevels?.[2]).toBeFalsy();
 
-    // Spawn Vrchní Čarodějnice as the final level boss
-    const supremeWitch = engine.spawnMonster('vrchni_carodejnice', 200, 200, 1.0, true);
-    expect(supremeWitch).toBeDefined();
-    expect(supremeWitch.isBoss).toBe(true);
+    // Spawn Pan Zajíc as the final level boss
+    const panZajic = engine.spawnMonster('pan_zajic', 200, 200, 1.0, true);
+    expect(panZajic).toBeDefined();
+    expect(panZajic.isBoss).toBe(true);
 
     // Defeat the boss with decisive lethal damage
-    supremeWitch.takeDamage(50000, 'physical');
+    panZajic.takeDamage(50000, 'physical');
 
-    expect(supremeWitch.isDefeated).toBe(true);
+    expect(panZajic.isDefeated).toBe(true);
     expect(engine.state.levelVictoryTriggered).toBe(true);
     expect(onVictorySpy).toHaveBeenCalledWith(2, 'boss');
 
     // Progression verification: Level 2 marked completed, Stage 4 (id: 3) unlocked
     expect(engine.state.meta.completedLevels?.[2]).toBe(true);
     expect(engine.state.meta.highestLevelUnlocked).toBeGreaterThanOrEqual(3);
-    expect(engine.state.meta.bestiaryKills?.vrchni_carodejnice).toBe(1);
+    expect(engine.state.meta.bestiaryKills?.pan_zajic).toBe(1);
   });
 
   it('awards and satisfies level2_completed trophy upon April victory', () => {
     const trophy = TROPHIES.find((t) => t.id === 'level2_completed');
     expect(trophy).toBeDefined();
-    expect(trophy?.title).toContain('Dubnový přemožitel');
-    expect(trophy?.desc).toContain('Vrchní Filipojakubskou Čarodějnici');
+    expect(trophy?.title).toContain('Velikonoční koledník');
+    expect(trophy?.desc).toContain('Pana Zajíce');
 
     // Prior to victory
     const mockMetaUnfinished = {

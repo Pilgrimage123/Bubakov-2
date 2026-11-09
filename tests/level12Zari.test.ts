@@ -87,17 +87,19 @@ describe('Stages 13 & 14: Září v Hrusicích (Posvícení & Svatováclavská n
     expect(stage14.theme).toBe('wenceslas_night');
     expect(stage14.weatherEffect).toBe('fog');
     expect(stage14.isNightLevel).toBe(true);
-    expect(stage14.miniBoss.id).toBe('bila_pani');
-    expect(stage14.midBoss.id).toBe('mlynar');
+    expect(stage14.miniBoss.id).toBe('svatovaclavsky_strazce');
+    expect(stage14.midBoss.id).toBe('chmelovy_skritek');
     expect(stage14.finalBoss.id).toBe('kvilici_meluzina');
   });
 
-  it('registers all 5 September enemies/bosses in ENEMIES, ENEMY_POINTS, ENEMY_ARCHETYPE_MAP, and Lada renderer', () => {
+  it('registers all 7 September enemies/bosses in ENEMIES, ENEMY_POINTS, ENEMY_ARCHETYPE_MAP, and Lada renderer', () => {
     const newIds = [
       'svestkovy_srsen',
       'kralovsky_srsen',
       'povidlovy_cert',
       'posvicensky_hospodar',
+      'svatovaclavsky_strazce',
+      'chmelovy_skritek',
       'kvilici_meluzina',
     ] as const;
 

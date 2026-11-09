@@ -263,12 +263,12 @@ var TROPHIES = [
 	},
 	{
 		id: "level2_completed",
-		title: "🧹 Dubnový přemožitel",
-		desc: "Dokonči 3. úroveň: zažeň Vrchní Filipojakubskou Čarodějnici a ochraň jarní náves.",
+		title: "🐰 Velikonoční koledník",
+		desc: "Dokonči 3. úroveň: přemož Pana Zajíce s nůší kraslic a ochraň velikonoční náves.",
 		reward: 120,
-		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1,
+		isMet: (meta) => !!(meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.pan_zajic || 0) >= 1 || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1,
 		getProgress: (meta) => ({
-			cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1 ? 1 : 0,
+			cur: (meta.completedLevels && meta.completedLevels[2]) || (meta.bestiaryKills?.pan_zajic || 0) >= 1 || (meta.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta.bestiaryKills?.cert || 0) >= 1 ? 1 : 0,
 			max: 1
 		})
 	},

@@ -11,6 +11,31 @@ type KronikaEntry = {
 const KRONIKA: KronikaEntry[] = [
   {
     date: '9. listopadu 2026',
+    title: 'Vyjasnění Bubácké díry a Strachem nacpaný Barbucha (ADR 0050)',
+    summary: 'Kompletní přepracování nočního nebezpečí Bubácké díry a zavedení nového minibosse Strachem nacpaného Barbuchy s inverzním škálováním strachem lovce, vyfukováním, salvou žihadel a posilující Škvarkovou plackou.',
+    items: [
+      '🕳️ Gravitační vír a tlumení Petrolejky: Bubácká díra se otevírá v nočních fázích při Kuráži pod 60 %, vtahuje lovce gravitačním vírem do svého středu a tlumí dosah Petrolejky na 65 %.',
+      '⏳ Telegrafovaný zrod v propasti: Uvnitř díry se během 7sekundového odpočtu postupně vynořují dýmové obláčky, oči, oranžový nos a drápy zatínající se do okraje jámy. Včasné zadupání díru zacelí a odmění lovce +25 Kuráže a truhlou.',
+      '💨 Strachem nacpaný Barbucha: Z propasti se při vypršení limitu vynoří kouřové strašidlo v autentickém ladovském provedení s tušovou konturou, rozježenou kšticí, mrkvovým nosem a zahnutými drápy.',
+      '😱 Inverzní škálování strachem: Velikost Barbuchy roste od 1.2× až po 1.7× podle chybějící Kuráže lovce – čím větší strach, tím hrozivější kolos.',
+      '🎈 Mechanika vyfukování (Deflation): Každý zásah udatného lovce Barbuchu postupně vyfukuje až na scvrklých 0.6× jeho základní velikosti.',
+      '🪡 Salva žihadel: Při Kuráži > 50 % pálí všesměrovou 8-střelovou kruhovou salvu (nova); při Kuráži ≤ 50 % vystřeluje směrový kužel 5 zahuštěných žihadel.',
+      '🫓 Záchranná Škvarková placka: Porážka Barbuchy nedává truhlu, ale zanechá citoslovce „💨 PUF! (Barbucha rozplynut)“, obří perníčky a teplou posilující Škvarkovou placku s garantovanou regenerací.',
+    ],
+  },
+  {
+    date: '9. listopadu 2026',
+    title: 'Standardizace trojice útoků bossů a sezónní kánon (ADR 0049)',
+    summary: 'Standardizace bojových dovedností všech 72 bossů podle hierarchie Zlatého trojzubce, sezónní harmonizace velikonoc a sabatu a nasazení nevyužitých monster z bestiáře.',
+    items: [
+      '🔱 Zlatý trojzubec: Miniboss má 2 telegrafované schopnosti, Mezi-boss 2–3 schopnosti s prostorovou kontrolou a Krajový Vele-boss minimálně 3 fázované útoky a zuřivost (Enrage) pod 50 % Kuráže.',
+      '🥚 Velikonoční a sabatový kánon: Úroveň 2 obsazena Beránkem, Koledujícím bubákem s pomlázkou a Panem Zajícem; Úroveň 3 Klekánicí, Černokněžníkem a Vrchní Filipojakubskou Čarodějnicí.',
+      '🏔️ Skalní obr ze Sázavy: Zaveden jako Mezi-boss v Květnu s vrháním balvanů; do vln zapojeni Obrněný zbojník, Hromotluk, Zmrzlík, Vanička a Krvavý rarášek.',
+      '🎭 Vymýcení cizorodých elementů: Noční kobold nahrazen autentickým českým Masopustním laufrem s řehtačkami a rolničkami.',
+    ],
+  },
+  {
+    date: '9. listopadu 2026',
     title: 'Vyladění herní hodnoty nepřátel, rejdových cen a indexu hrozby a otravnosti (ADR 0048)',
     summary: 'Kompletní matematická rekalibrace 152 kanonických nepřátel a bossů: zavedení kompozitního indexu hrozby a otravnosti, vyvážení tabulky ENEMY_POINTS, monotónní odměny perníčků a krejcarů, dynamická rejdová cena BUBAK_THREAT_COSTS v Režisérovi výpravy a audit rovnováhy všech 24 fází.',
     items: [

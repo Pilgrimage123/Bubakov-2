@@ -89,6 +89,35 @@ export function renderProjectilesAndSlashes(
         }
         continue;
       }
+      if (p.visual === 'painted_egg') {
+        const r = p.radius || 11;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle || 0);
+        Lada.setupPath(ctx, p.color || '#E11D48', COLORS.ink, 2.2);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * 1.25, r * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Traditional white & yellow wax-resist zig-zag patterns
+        ctx.strokeStyle = '#FEF08A';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.6, -r * 0.4);
+        ctx.lineTo(-r * 0.3, r * 0.4);
+        ctx.lineTo(0, -r * 0.4);
+        ctx.lineTo(r * 0.3, r * 0.4);
+        ctx.lineTo(r * 0.6, -r * 0.4);
+        ctx.stroke();
+        // Little ribbon loop end
+        ctx.strokeStyle = '#22C55E';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(-r * 1.2, 0, 3.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        continue;
+      }
 
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -305,6 +334,30 @@ export function renderProjectilesAndSlashes(
         Lada.drawHellSpark(ctx, 0, 0, p.radius || 10, uiTime);
       } else if (p.visual === 'wood_shard') {
         Lada.drawWoodShard(ctx, 0, 0, p.radius || 12, p.angle || 0);
+      } else if (p.visual === 'barbucha_claw') {
+        ctx.save();
+        ctx.rotate(p.angle || 0);
+        const r = p.radius || 10;
+        ctx.fillStyle = '#0F172A';
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(r * 1.6, 0);
+        ctx.quadraticCurveTo(r * 0.2, -r * 0.85, -r * 1.1, -r * 0.55);
+        ctx.quadraticCurveTo(-r * 0.35, 0, -r * 1.1, r * 0.55);
+        ctx.quadraticCurveTo(r * 0.2, r * 0.85, r * 1.6, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#EF4444';
+        ctx.beginPath();
+        ctx.moveTo(r * 1.6, 0);
+        ctx.lineTo(r * 0.8, -r * 0.3);
+        ctx.lineTo(r * 0.8, r * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       } else if (p.visual === 'icicle') {
         Lada.drawIcicle(ctx, 0, 0, p.radius || 14, p.angle || Math.PI / 2);
       } else if (p.visual === 'dragon_fireball') {

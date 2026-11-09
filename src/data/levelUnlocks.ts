@@ -52,9 +52,10 @@ function isLevelFullyUnlocked(id: number, meta: any): boolean {
 	if (bossId && (meta?.bestiaryKills?.[bossId] || 0) >= 1) return true;
 
 	// Historical/alias boss checks for specific stages
+	if (id === 3 && ((meta?.bestiaryKills?.pan_zajic || 0) >= 1 || (meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1)) return true;
 	if (id === 4 && ((meta?.bestiaryKills?.vrchni_carodejnice || 0) >= 1 || (meta?.bestiaryKills?.hejkal || 0) >= 1)) return true;
 	if (id === 5 && (meta?.bestiaryKills?.pankrac || 0) >= 1) return true;
-	if (id === 6 && (meta?.bestiaryKills?.mlynar || 0) >= 1) return true;
+	if (id === 6 && ((meta?.bestiaryKills?.obr || 0) >= 1 || (meta?.bestiaryKills?.mlynar || 0) >= 1)) return true;
 
 	// Also check if progressive kill count has reached maxCount
 	const def = LEVEL_UNLOCKS[id];
@@ -173,20 +174,19 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 		{ id: "bludicka", name: "Noční bludička", icon: "✨" }
 	]),
 	3: makeSequentialUnlock(3, [
-		{ id: "vrchni_carodejnice", name: "Vrchní Filipojakubská Čarodějnice", icon: "🧹" },
-		{ id: "carodejnice_stara", name: "Stará ježibaba z Melechu", icon: "🧙‍♀️" },
+		{ id: "pan_zajic", name: "Pan Zajíc z březového háje", icon: "🐰" },
+		{ id: "koledujici_bubak", name: "Koledující bubák", icon: "🌿" },
 		{ id: "beranek", name: "Obří kolednický beránek", icon: "🐑" },
-		{ id: "carodejnice_koste", name: "Čarodějnice na koštěti", icon: "🧹" },
 		{ id: "zkazena_kraslice", name: "Zkažená kraslice", icon: "🥚" },
 		{ id: "rehtackar", name: "Koledník s řehtačkou", icon: "🪓" }
 	]),
 	4: makeSequentialUnlock(4, [
 		{ id: "vrchni_carodejnice", name: "Filipojakubský sabat čarodějnic", icon: "🧹" },
-		{ id: "drab", name: "Pekelný dráb", icon: "⛓️" },
+		{ id: "carodejnice_stara", name: "Stará ježibaba z Melechu", icon: "🧙‍♀️" },
 		{ id: "klekanice", name: "Večerní Klekánice", icon: "🔔" },
 		{ id: "cerny_pes", name: "Černý pes", icon: "🐕" },
 		{ id: "skeleton", name: "Kostlivec", icon: "💀" },
-		{ id: "certik", name: "Svítící čertík", icon: "😈" }
+		{ id: "krvavy_rarach", name: "Krvavý rarach", icon: "😈" }
 	]),
 	5: makeSequentialUnlock(5, [
 		{ id: "ledovi_muzi", name: "Ledoví muži", icon: "🧊" },
@@ -198,7 +198,7 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 	]),
 	6: makeSequentialUnlock(6, [
 		{ id: "hejkal", name: "Půlnoční Hejkal", icon: "🌲" },
-		{ id: "mlynar", name: "Prokletý Mlynář", icon: "🌊" },
+		{ id: "obr", name: "Skalní obr ze Sázavy", icon: "🪨" },
 		{ id: "zbojnik", name: "Zbojník", icon: "🗡️" },
 		{ id: "jiskrivec", name: "Jiskřivec", icon: "✨" },
 		{ id: "drevorubec", name: "Lesní dřevorubec", icon: "🪓" }
@@ -261,8 +261,8 @@ var LEVEL_UNLOCKS: Record<number, any> = {
 	]),
 	14: makeSequentialUnlock(14, [
 		{ id: "kvilici_meluzina", name: "Kvílící Meluzína", icon: "🌬️" },
-		{ id: "mlynar", name: "Mlžný Mlynář", icon: "🌊" },
-		{ id: "bila_pani", name: "Bílá paní", icon: "👻" },
+		{ id: "chmelovy_skritek", name: "Chmelový skřítek ze Žatce", icon: "🌿" },
+		{ id: "svatovaclavsky_strazce", name: "Svatováclavský strážce", icon: "🛡️" },
 		{ id: "topivec", name: "Rybniční topivec", icon: "💧" },
 		{ id: "bludicka", name: "Bludička", icon: "✨" },
 		{ id: "cerny_pes", name: "Černý pes", icon: "🐕" }

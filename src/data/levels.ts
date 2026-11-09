@@ -65,6 +65,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"blatouch",
 				"tajici_snehulak",
 				"jezinka_mraziva",
+				"zmrzlik",
 				"vrana"
 			],
 			afternoon: [
@@ -73,6 +74,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"jezinka_mraziva",
 				"mysak",
 				"tajici_snehulak",
+				"zmrzlik",
 				"vrana"
 			]
 		},
@@ -163,6 +165,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"mrazovy_skritek",
 				"tajici_snehulak",
 				"jezinka_mraziva",
+				"zmrzlik",
 				"blatouch",
 				"vrana"
 			],
@@ -170,6 +173,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"mrazovy_skritek",
 				"tajici_snehulak",
 				"jezinka_mraziva",
+				"zmrzlik",
 				"bludicka",
 				"mrazivy_obr",
 				"kostlivec",
@@ -267,17 +271,17 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 1.35
 		},
 		midBoss: {
-			id: "carodejnice_stara",
-			name: "🧹 Stará ježibaba z Melechu",
-			warning: "🧹 POZOR: ZE STRNIŠTĚ VZLÉTLI ČARODĚJNICKÉ VÍRY SE STAROU JEŽIBABOU! 🧹",
+			id: "koledujici_bubak",
+			name: "🌿 Koledující bubák s pomlázkou",
+			warning: "🌿 POZOR: Z ROZKVETLÝCH MEZÍ PŘICHÁZÍ KOLEDUJÍCÍ BUBÁK S POMLÁZKOU! 🌿",
 			time: 185,
 			kills: 130,
 			multiplier: 1.33
 		},
 		finalBoss: {
-			id: "vrchni_carodejnice",
-			name: "🧹 Vrchní Filipojakubská Čarodějnice",
-			warning: "🧹 NEBE ZAPLÁLO! NAD HRUSICEMI KROUŽÍ VRCHNÍ FILIPOJAKUBSKÁ ČARODĚJNICE! 🧹",
+			id: "pan_zajic",
+			name: "🐰 Pan Zajíc z březového háje",
+			warning: "🐰 ZVONÍ VELIKONOČNÍ ZVONY! Z BŘEZOVÉHO HÁJE SKÁČE PAN ZAJÍC S NŮŠÍ! 🐰🌸",
 			time: 300,
 			kills: 240,
 			multiplier: 1.31
@@ -379,9 +383,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 2.21
 		},
 		midBoss: {
-			id: "drab",
-			name: "⛓️ Pekelný dráb s karabáčem",
-			warning: "⛓️ POZOR: PŘICHÁZÍ OBŘÍ PEKELNÝ DRÁB S ŘETĚZY! ⛓️",
+			id: "carodejnice_stara",
+			name: "🧹 Stará ježibaba z Melechu",
+			warning: "🧹 POZOR: ZE STRNIŠTĚ VZLÉTAJÍ ČARODĚJNICKÉ VÍRY SE STAROU JEŽIBABOU! 🧹",
 			time: 185,
 			kills: 125,
 			multiplier: 2.51
@@ -400,6 +404,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_pes",
 				"carodejnice_koste",
 				"rarach",
+				"krvavy_rarach",
 				"certik",
 				"drab"
 			],
@@ -419,6 +424,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"cerny_pes",
 				"umrlec",
 				"rarach",
+				"krvavy_rarach",
 				"certik",
 				"klekanice",
 				"ohnivy_muz"
@@ -427,6 +433,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"carodejnice_koste",
 				"bubak",
 				"krvavy_kostlivec",
+				"krvavy_rarach",
 				"umrlec",
 				"cerny_pes",
 				"sazovy_rarach",
@@ -654,9 +661,9 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			multiplier: 3.54
 		},
 		midBoss: {
-			id: "mlynar",
-			name: "🌊 Prokletý Mlynář z nočního náhonu",
-			warning: "🌊 POZOR: PROKLETÝ MLYNÁŘ OTEVÍRÁ NOČNÍ STAVIDLA!",
+			id: "obr",
+			name: "🪨 Skalní obr ze Sázavy",
+			warning: "🪨 ZE SKALNÍ ROKLE SE ŘÍTÍ SKALNÍ OBR ZE SÁZAVY S BALVANY! 🪨",
 			time: 185,
 			kills: 170,
 			multiplier: 0.48
@@ -672,6 +679,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 		spawnPools: {
 			noon: [
 				"zbojnik",
+				"obrneny_zbojnik",
 				"jiskrivec",
 				"sazovy_rarach",
 				"divozenka",
@@ -681,6 +689,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			],
 			afternoon: [
 				"zbojnik",
+				"obrneny_zbojnik",
 				"jiskrivec",
 				"ohnivy_pes",
 				"drevorubec",
@@ -696,11 +705,13 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				"bubak",
 				"certik",
 				"zbojnik",
+				"obrneny_zbojnik",
 				"ohnivy_muz",
 				"chroust"
 			],
 			night: [
 				"hejkal",
+				"obrneny_zbojnik",
 				"drevorubec",
 				"stodolnik",
 				"nocni_mura",
@@ -1336,6 +1347,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			night: [
 				"kulovy_blesk",
 				"plivnik",
+				"hromotluk",
 				"zbrojnos",
 				"bila_pani",
 				"ohnivy_sudlicka",
@@ -1347,6 +1359,7 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			midnight: [
 				"kulovy_blesk",
 				"plivnik",
+				"hromotluk",
 				"zbrojnos",
 				"bila_pani",
 				"ohnivy_sudlicka",
@@ -1875,20 +1888,20 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 			poiOrder: ["fields", "church", "tavern", "village", "school", "pond", "mill", "forest", "shrine"]
 		},
 		miniBoss: {
-			id: "bila_pani",
-			name: "👻 Bílá paní ve svatováclavské mlze",
-			warning: "👻 POZOR: Z HUSTÉ MLHY U KOSTELA VYSTUPUJE BÍLÁ PANÍ!",
+			id: "svatovaclavsky_strazce",
+			name: "🛡️ Svatováclavský strážce",
+			warning: "🛡️ POZOR: Z POSVÁTNÉHO PÍSKOVCE OŽÍVÁ SVATOVÁCLAVSKÝ STRÁŽCE S PLAMENNÝM MEČEM!",
 			time: 85,
 			kills: 115,
-			multiplier: 11.2
+			multiplier: 1.0
 		},
 		midBoss: {
-			id: "mlynar",
-			name: "🌊 Mlžný Mlynář od splavu",
-			warning: "🌊 POZOR: OD ZAMLŽENÉHO NÁHONU PŘICHÁZÍ PROKLETÝ MLYNÁŘ!",
+			id: "chmelovy_skritek",
+			name: "🌿 Chmelový skřítek ze Žatce",
+			warning: "🌿 POZOR: ZE CHMELNIC PŘISKAKUJE OMAMNÝ CHMELOVÝ SKŘÍTEK S LIÁNY!",
 			time: 185,
 			kills: 265,
-			multiplier: 0.85
+			multiplier: 1.0
 		},
 		finalBoss: {
 			id: "kvilici_meluzina",
@@ -1968,16 +1981,16 @@ var GAME_LEVELS: Record<GameLevelId, GameLevelDef> = {
 				role: "Lákavé světýlko nad podzimní tůní"
 			},
 			{
-				id: "bila_pani",
-				name: "Bílá paní v mlze",
-				icon: "👻",
-				role: "První přízračný mini-boss"
+				id: "svatovaclavsky_strazce",
+				name: "Svatováclavský strážce",
+				icon: "🛡️",
+				role: "První posvátný mini-boss s plamenným mečem"
 			},
 			{
-				id: "mlynar",
-				name: "Mlžný Mlynář",
-				icon: "🌊",
-				role: "Mezi-boss od mlýnského splavu"
+				id: "chmelovy_skritek",
+				name: "Chmelový skřítek ze Žatce",
+				icon: "🌿",
+				role: "Omamný mezi-boss svazující chmelovými liánami"
 			},
 			{
 				id: "kvilici_meluzina",

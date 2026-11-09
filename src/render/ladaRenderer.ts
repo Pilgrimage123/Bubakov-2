@@ -9412,6 +9412,639 @@ var Lada = {
 
 		ctx.restore();
 	},
+	drawKoledujiciBubak(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const isAttacking = Boolean(attackInfo?.isActive || enemy?.isAttacking || enemy?.isWindup);
+		const whipSwing = isAttacking ? Math.sin(time * 24) * 0.45 + 0.6 : Math.sin(time * 6) * 0.15;
+
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(dir, 1);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Ground shadow
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+		ctx.beginPath();
+		ctx.ellipse(0, 24, 24, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Legs & Boots
+		ctx.fillStyle = '#44403C';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.rect(-10, 8, 7, 14);
+		ctx.rect(3, 8, 7, 14);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rustic Linen Coat / Halena
+		ctx.fillStyle = '#E5E5E5';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.moveTo(-14, 10);
+		ctx.lineTo(14, 10);
+		ctx.lineTo(18, -12);
+		ctx.lineTo(-18, -12);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Green Embroidered Vest
+		ctx.fillStyle = '#15803D';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-10, 8);
+		ctx.lineTo(-4, -10);
+		ctx.lineTo(-14, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(10, 8);
+		ctx.lineTo(4, -10);
+		ctx.lineTo(14, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Spook Head
+		ctx.fillStyle = '#FEF3C7';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.arc(0, -18, 12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Eyes & Rosy Cheeks
+		ctx.fillStyle = '#EF4444';
+		ctx.beginPath();
+		ctx.arc(-6, -15, 3, 0, Math.PI * 2);
+		ctx.arc(6, -15, 3, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(-4, -18, 1.8, 0, Math.PI * 2);
+		ctx.arc(4, -18, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Smiling Mouth
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.arc(0, -16, 5, 0.2, Math.PI - 0.2);
+		ctx.stroke();
+
+		// Broad-Brimmed Hat
+		ctx.fillStyle = '#292524';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.ellipse(0, -28, 20, 6, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.rect(-9, -40, 18, 14);
+		ctx.fill();
+		ctx.stroke();
+
+		// Colorful Fluttering Ribbons on Hat
+		const ribbonColors = ['#EF4444', '#3B82F6', '#EAB308', '#10B981'];
+		for (let i = 0; i < ribbonColors.length; i++) {
+			ctx.strokeStyle = ribbonColors[i];
+			ctx.lineWidth = 2.4;
+			const rOffset = (i - 1.5) * 4;
+			const wave = Math.sin(time * 8 + i) * 6;
+			ctx.beginPath();
+			ctx.moveTo(rOffset, -28);
+			ctx.quadraticCurveTo(rOffset + wave, -16, rOffset + wave * 1.5, -4);
+			ctx.stroke();
+		}
+
+		// Left Hand with Basket of Painted Eggs
+		ctx.fillStyle = '#B45309';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.ellipse(-16, 2, 8, 6, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		// Painted Eggs inside
+		const eggColors = ['#EF4444', '#FBBF24', '#38BDF8'];
+		for (let i = 0; i < eggColors.length; i++) {
+			ctx.fillStyle = eggColors[i];
+			ctx.beginPath();
+			ctx.ellipse(-18 + i * 4, 0, 3, 4, 0.2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// Right Hand with Braided Pomlázka (Willow Switch)
+		ctx.save();
+		ctx.translate(14, -4);
+		ctx.rotate(whipSwing);
+		// Braided willow rod
+		ctx.strokeStyle = '#A16207';
+		ctx.lineWidth = 3.6;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(12, -18, 22, -34);
+		ctx.stroke();
+		// Pomlázka tip ribbons
+		for (let i = 0; i < ribbonColors.length; i++) {
+			ctx.strokeStyle = ribbonColors[i];
+			ctx.lineWidth = 2.0;
+			const rWave = Math.sin(time * 12 + i) * 8;
+			ctx.beginPath();
+			ctx.moveTo(22, -34);
+			ctx.lineTo(28 + rWave, -44 - i * 3);
+			ctx.stroke();
+		}
+		ctx.restore();
+
+		ctx.restore();
+	},
+	drawPanZajic(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const hop = Math.abs(Math.sin(time * 8)) * 8;
+		const earTwitch = Math.sin(time * 14) * 0.12;
+
+		ctx.save();
+		ctx.translate(x, y - hop);
+		ctx.scale(dir, 1);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Ground shadow
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.30)';
+		ctx.beginPath();
+		ctx.ellipse(0, 30 + hop, 30 - hop * 0.5, 10 - hop * 0.2, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Wicker Basket on Back (Nůše plná kraslic)
+		ctx.fillStyle = '#92400E';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.moveTo(-12, 10);
+		ctx.lineTo(-28, -6);
+		ctx.lineTo(-22, -26);
+		ctx.lineTo(-6, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Wicker pattern
+		ctx.strokeStyle = '#78350F';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.moveTo(-24, -14);
+		ctx.lineTo(-8, 2);
+		ctx.moveTo(-20, -22);
+		ctx.lineTo(-12, -4);
+		ctx.stroke();
+		// Big Decorated Kraslice peaking out of basket
+		const basketEggs = ['#EF4444', '#F59E0B', '#3B82F6', '#10B981'];
+		for (let i = 0; i < basketEggs.length; i++) {
+			ctx.fillStyle = basketEggs[i];
+			ctx.strokeStyle = '#1C1917';
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.ellipse(-24 + i * 5, -28 + (i % 2) * 3, 4, 6, 0.25, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Powerful Hare Hind Legs & Paws
+		ctx.fillStyle = '#B45309';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.ellipse(-8, 18, 12, 7, 0.3, 0, Math.PI * 2);
+		ctx.ellipse(14, 20, 14, 6, -0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Torso & Warm Cream Chest
+		ctx.fillStyle = '#D97706';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.4;
+		ctx.beginPath();
+		ctx.ellipse(0, 0, 18, 22, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Folk Embroidered Vest (Červená vestička)
+		ctx.fillStyle = '#DC2626';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-14, -12);
+		ctx.lineTo(8, -12);
+		ctx.lineTo(14, 10);
+		ctx.lineTo(-14, 10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Golden Buttons
+		ctx.fillStyle = '#FBBF24';
+		for (let b = 0; b < 3; b++) {
+			ctx.beginPath();
+			ctx.arc(-2, -6 + b * 6, 2, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		// White Fur Chest bib
+		ctx.fillStyle = '#FFFBEB';
+		ctx.beginPath();
+		ctx.ellipse(4, -8, 7, 10, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Hare Head
+		ctx.fillStyle = '#D97706';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.2;
+		ctx.beginPath();
+		ctx.ellipse(8, -24, 14, 12, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Snout & Cheeks
+		ctx.fillStyle = '#FEF3C7';
+		ctx.beginPath();
+		ctx.ellipse(16, -22, 7, 6, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Dark Nose & Whiskers
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(20, -24, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 1.6;
+		ctx.beginPath();
+		ctx.moveTo(17, -22); ctx.lineTo(29, -24);
+		ctx.moveTo(17, -20); ctx.lineTo(28, -19);
+		ctx.moveTo(17, -23); ctx.lineTo(27, -27);
+		ctx.stroke();
+
+		// Expressive Hare Eye with Gold Iris
+		ctx.fillStyle = '#F59E0B';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.ellipse(10, -27, 4, 3, 0.1, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(11, -27, 2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Tall Hare Ears (Twitching)
+		ctx.save();
+		ctx.translate(2, -34);
+		ctx.rotate(earTwitch);
+		// Left Ear
+		ctx.fillStyle = '#B45309';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.ellipse(-6, -18, 5, 20, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#FDA4AF';
+		ctx.beginPath();
+		ctx.ellipse(-6, -18, 2.5, 14, -0.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Right Ear
+		ctx.fillStyle = '#D97706';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.ellipse(6, -18, 5, 22, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = '#FDA4AF';
+		ctx.beginPath();
+		ctx.ellipse(6, -18, 2.5, 15, 0.15, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Front Paws
+		ctx.fillStyle = '#D97706';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.ellipse(16, -2, 6, 4, -0.4, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Enrage / Phase 2 Golden Spring Aura
+		if (enemy?.enraged || (enemy?.hp && enemy?.maxHp && enemy.hp <= enemy.maxHp * 0.5)) {
+			ctx.strokeStyle = 'rgba(251, 191, 36, 0.65)';
+			ctx.lineWidth = 3.0;
+			ctx.beginPath();
+			ctx.arc(0, -6, 38, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+	},
+	drawSvatovaclavskyStrazce(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const isAttacking = Boolean(attackInfo?.isActive || enemy?.isAttacking || enemy?.isWindup);
+		const swordAngle = isAttacking ? Math.sin(time * 20) * 0.45 - 0.7 : -0.25 + Math.sin(time * 4) * 0.1;
+
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.scale(dir, 1);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Shadow
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+		ctx.beginPath();
+		ctx.ellipse(0, 26, 26, 9, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Sandstone greaves & plated boots
+		ctx.fillStyle = '#94A3B8';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.rect(-12, 10, 9, 16);
+		ctx.rect(3, 10, 9, 16);
+		ctx.fill();
+		ctx.stroke();
+
+		// Chainmail hauberk & red surcoat
+		ctx.fillStyle = '#DC2626';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.2;
+		ctx.beginPath();
+		ctx.moveTo(-16, 12);
+		ctx.lineTo(16, 12);
+		ctx.lineTo(18, -14);
+		ctx.lineTo(-18, -14);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Gold chain & ducal cross
+		ctx.strokeStyle = '#FBBF24';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-10, -8);
+		ctx.lineTo(0, -2);
+		ctx.lineTo(10, -8);
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(0, -2);
+		ctx.lineTo(0, 6);
+		ctx.moveTo(-4, 2);
+		ctx.lineTo(4, 2);
+		ctx.stroke();
+
+		// St. Wenceslas Kite Shield (Left arm)
+		ctx.save();
+		ctx.translate(-14, 0);
+		ctx.fillStyle = '#F8FAFC';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-10, -16);
+		ctx.lineTo(10, -16);
+		ctx.lineTo(8, 10);
+		ctx.lineTo(0, 20);
+		ctx.lineTo(-8, 10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Black Eagle emblem
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.ellipse(0, -2, 5, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(-6, -6); ctx.lineTo(-1, -1); ctx.lineTo(-6, 4);
+		ctx.moveTo(6, -6); ctx.lineTo(1, -1); ctx.lineTo(6, 4);
+		ctx.stroke();
+		ctx.restore();
+
+		// Knight Head & Svatováclavská přilbice
+		ctx.fillStyle = '#E2E8F0';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 3.0;
+		ctx.beginPath();
+		ctx.arc(0, -22, 12, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Nasal guard helmet
+		ctx.fillStyle = '#64748B';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-14, -22);
+		ctx.lineTo(0, -36);
+		ctx.lineTo(14, -22);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Nose guard
+		ctx.beginPath();
+		ctx.moveTo(0, -26);
+		ctx.lineTo(0, -16);
+		ctx.stroke();
+
+		// Piercing eyes in visor shadow
+		ctx.fillStyle = '#F59E0B';
+		ctx.beginPath();
+		ctx.arc(-4, -22, 2.2, 0, Math.PI * 2);
+		ctx.arc(4, -22, 2.2, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Flaming Sword (Right hand)
+		ctx.save();
+		ctx.translate(16, -4);
+		ctx.rotate(swordAngle);
+		// Hilt & guard
+		ctx.fillStyle = '#FBBF24';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.rect(-2, 0, 4, 12);
+		ctx.rect(-8, -2, 16, 4);
+		ctx.fill();
+		ctx.stroke();
+		// Blade with flames
+		ctx.fillStyle = '#F8FAFC';
+		ctx.strokeStyle = '#EF4444';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-3, -2);
+		ctx.lineTo(0, -38);
+		ctx.lineTo(3, -2);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Holy fire flame tongues
+		ctx.strokeStyle = '#F59E0B';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.moveTo(-4, -10); ctx.quadraticCurveTo(-8, -18, -2, -24);
+		ctx.moveTo(4, -16); ctx.quadraticCurveTo(8, -26, 2, -32);
+		ctx.stroke();
+		ctx.restore();
+
+		ctx.restore();
+	},
+	drawChmelovySkritek(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
+		const dir = vx < 0 ? -1 : 1;
+		const hop = Math.abs(Math.sin(time * 9)) * 6;
+		const sway = Math.sin(time * 6) * 0.12;
+
+		ctx.save();
+		ctx.translate(x, y - hop);
+		ctx.scale(dir, 1);
+		ctx.rotate(sway);
+		ctx.lineJoin = 'round';
+		ctx.lineCap = 'round';
+
+		// Shadow
+		ctx.save();
+		ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+		ctx.beginPath();
+		ctx.ellipse(0, 22 + hop, 20 - hop * 0.4, 7 - hop * 0.2, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+
+		// Bare goblin feet / earthy legs
+		ctx.fillStyle = '#713F12';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.rect(-8, 8, 6, 12);
+		ctx.rect(2, 8, 6, 12);
+		ctx.fill();
+		ctx.stroke();
+
+		// Leafy green tunic
+		ctx.fillStyle = '#4D7C0F';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.8;
+		ctx.beginPath();
+		ctx.moveTo(-12, 10);
+		ctx.lineTo(12, 10);
+		ctx.lineTo(15, -10);
+		ctx.lineTo(-15, -10);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+
+		// Hop vine belt with little golden hop cone
+		ctx.strokeStyle = '#CA8A04';
+		ctx.lineWidth = 2.4;
+		ctx.beginPath();
+		ctx.moveTo(-13, 2);
+		ctx.lineTo(13, 2);
+		ctx.stroke();
+		ctx.fillStyle = '#A3E635';
+		ctx.beginPath();
+		ctx.ellipse(4, 5, 4, 6, 0.2, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Mischievous Head & Face
+		ctx.fillStyle = '#FEF08A';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.arc(0, -16, 11, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+
+		// Rosy Cheeks & pointed ears
+		ctx.fillStyle = '#EF4444';
+		ctx.beginPath();
+		ctx.arc(-5, -13, 2.5, 0, Math.PI * 2);
+		ctx.arc(5, -13, 2.5, 0, Math.PI * 2);
+		ctx.fill();
+
+		// Pointed ears
+		ctx.fillStyle = '#FEF08A';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.0;
+		ctx.beginPath();
+		ctx.moveTo(-11, -16); ctx.lineTo(-18, -20); ctx.lineTo(-10, -12); ctx.fill(); ctx.stroke();
+		ctx.beginPath();
+		ctx.moveTo(11, -16); ctx.lineTo(18, -20); ctx.lineTo(10, -12); ctx.fill(); ctx.stroke();
+
+		// Sly Eyes & Grin
+		ctx.fillStyle = '#1C1917';
+		ctx.beginPath();
+		ctx.arc(-4, -17, 1.8, 0, Math.PI * 2);
+		ctx.arc(4, -17, 1.8, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 1.8;
+		ctx.beginPath();
+		ctx.arc(0, -13, 4, 0.2, Math.PI - 0.2);
+		ctx.stroke();
+
+		// Giant Hop-Cone Hat (Šiška chmele)
+		ctx.fillStyle = '#65A30D';
+		ctx.strokeStyle = '#1C1917';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(-13, -20);
+		ctx.quadraticCurveTo(-14, -36, 0, -42);
+		ctx.quadraticCurveTo(14, -36, 13, -20);
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+		// Cone bract scales
+		ctx.fillStyle = '#84CC16';
+		for (let s = -2; s <= 2; s++) {
+			ctx.beginPath();
+			ctx.ellipse(s * 4, -28 + Math.abs(s) * 2, 4, 3, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.stroke();
+		}
+
+		// Fresh Hop Vine Staff in hand
+		ctx.save();
+		ctx.translate(14, -8);
+		ctx.strokeStyle = '#65A30D';
+		ctx.lineWidth = 2.6;
+		ctx.beginPath();
+		ctx.moveTo(0, 18);
+		ctx.lineTo(0, -16);
+		ctx.stroke();
+		// Hop cone blossom at tip
+		ctx.fillStyle = '#BEF264';
+		ctx.beginPath();
+		ctx.ellipse(0, -20, 6, 8, 0, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.stroke();
+		ctx.restore();
+
+		ctx.restore();
+	},
 	drawOldWitch(ctx: CanvasRenderingContext2D, x: number, y: number, time: number, vx: number, panicked: boolean, attackInfo?: any, enemy?: any) {
 		const dir = vx < 0 ? -1 : 1;
 		const altitude = enemy?.flightAltitude || (26 + Math.sin(time * 3.5) * 7);
@@ -26483,6 +27116,8 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawBroomWitch: 'carodejnice_koste',
   drawRehtackar: 'rehtackar',
   drawBeranek: 'beranek',
+  drawKoledujiciBubak: 'koledujici_bubak',
+  drawPanZajic: 'pan_zajic',
   drawOldWitch: 'carodejnice_stara',
   drawSupremeWitch: 'vrchni_carodejnice',
   drawChroust: 'chroust',
@@ -26525,6 +27160,8 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawPovidlovyCert: 'povidlovy_cert',
   drawPosvicenskyHospodar: 'posvicensky_hospodar',
   drawKviliciMeluzina: 'kvilici_meluzina',
+  drawSvatovaclavskyStrazce: 'svatovaclavsky_strazce',
+  drawChmelovySkritek: 'chmelovy_skritek',
   drawBramborovaMandelinka: 'bramborova_mandelinka',
   drawPodzimniStrasak: 'podzimni_strasak',
   drawKralovskyHavran: 'kralovsky_havran',
@@ -26555,6 +27192,7 @@ const METHOD_TO_MOB_ID: Record<string, string> = {
   drawLedovySkritek: 'ledovy_skritek',
   drawTrikralovyKolednik: 'trikralovy_kolednik',
   drawChumelenice: 'chumelenice',
+  drawBarbucha: 'barbucha',
   drawNocniZavejnik: 'nocni_zavejnik',
   drawMrazivyHavran: 'mrazivy_havran',
   drawObriSnehulak: 'obri_snehulak',
@@ -33705,6 +34343,259 @@ function drawChumelenice(
   ctx.restore();
 }
 
+function drawBarbucha(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  time: number,
+  vx = 0,
+  _panicked = false,
+  attackInfo?: any,
+  enemy?: any
+): void {
+  const targetEnemy = enemy || attackInfo || {};
+  const isAttacking = Boolean(targetEnemy.isAttacking || targetEnemy.isWindup || (targetEnemy.windupTimer > 0) || attackInfo?.isAttacking);
+  const dir = vx < 0 ? -1 : 1;
+  const bob = Math.sin(time * 3.8) * 4;
+  const tailSway = Math.sin(time * 4.2) * 5;
+  const attackLift = isAttacking ? 6 : 0;
+  const tremble = isAttacking ? (Math.random() - 0.5) * 1.8 : 0;
+
+  // Ground shadow
+  ctx.save();
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 26, 26, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(cx, cy + bob - attackLift + tremble);
+  ctx.scale(dir, 1);
+
+  // 1. Swirling smoke tail (wispy curved smoke tail below)
+  ctx.save();
+  ctx.fillStyle = '#E0F2FE';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.4;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-10, 14);
+  ctx.quadraticCurveTo(-18 + tailSway, 26, -12 + tailSway * 1.2, 36);
+  ctx.quadraticCurveTo(-6 + tailSway, 44, -14 + tailSway, 48);
+  ctx.quadraticCurveTo(-20 + tailSway, 44, -16 + tailSway * 0.8, 38);
+  ctx.quadraticCurveTo(-24 + tailSway * 0.5, 28, -6, 16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // 2. Main smoke cloud body & head (multiple overlapping puffy lobes)
+  const drawCloudLobe = (lx: number, ly: number, r: number) => {
+    ctx.beginPath();
+    ctx.arc(lx, ly, r, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(lx - r * 0.3, ly - r * 0.3, r * 0.2, lx, ly, r);
+    grad.addColorStop(0, '#FFFFFF');
+    grad.addColorStop(0.65, '#F0F9FF');
+    grad.addColorStop(1, '#BAE6FD');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#18181B';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+  };
+
+  // Back lobes / torso
+  drawCloudLobe(-12, 6, 15);
+  drawCloudLobe(10, 8, 14);
+  drawCloudLobe(-2, 10, 16);
+  drawCloudLobe(0, -2, 18);
+
+  // Upper head cloud dome
+  drawCloudLobe(-6, -18, 15);
+  drawCloudLobe(8, -16, 15);
+  drawCloudLobe(0, -22, 17);
+
+  // 3. Spiky wild black tuft of hair on top
+  ctx.fillStyle = '#111827';
+  ctx.strokeStyle = '#09090B';
+  ctx.lineWidth = 1.6;
+  const hairSpikes = [
+    [-18, -26, -26, -34, -14, -28],
+    [-12, -30, -18, -42, -8, -32],
+    [-6, -34, -8, -48, -1, -34],
+    [-2, -35, 4, -49, 5, -34],
+    [4, -34, 12, -44, 9, -31],
+    [9, -30, 18, -38, 14, -26],
+    [14, -26, 22, -32, 16, -20],
+  ];
+  for (let i = 0; i < hairSpikes.length; i++) {
+    const [x1, y1, x2, y2, x3, y3] = hairSpikes[i];
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(x3, y3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // 4. Arms ending in sharp black claws
+  const drawClawArm = (isLeft: boolean) => {
+    ctx.save();
+    const side = isLeft ? -1 : 1;
+    const ax = side * 14;
+    const ay = isAttacking ? -16 : -6;
+    const armAngle = isAttacking ? (isLeft ? -0.45 : 0.45) : (isLeft ? -0.15 : 0.15);
+
+    ctx.translate(ax, ay);
+    ctx.rotate(armAngle);
+
+    // Puffy cloud arm segments
+    drawCloudLobe(side * 6, -2, 9);
+    drawCloudLobe(side * 14, -4, 8);
+
+    // Hand palm
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#18181B';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(side * 18, -4, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 4 sharp curved black claws
+    ctx.fillStyle = '#0F172A';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.4;
+    const clawAngles = [-0.65, -0.22, 0.22, 0.65];
+    for (let c = 0; c < clawAngles.length; c++) {
+      const ca = clawAngles[c];
+      ctx.save();
+      ctx.translate(side * 20, -4);
+      ctx.rotate(side * (ca + (isAttacking ? Math.sin(time * 16 + c) * 0.1 : 0)));
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.quadraticCurveTo(side * 7, -3, side * 13, 0);
+      ctx.quadraticCurveTo(side * 6, 2, 0, 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      if (isAttacking) {
+        ctx.fillStyle = '#EF4444';
+        ctx.beginPath();
+        ctx.moveTo(side * 9, -1);
+        ctx.lineTo(side * 13, 0);
+        ctx.lineTo(side * 9, 1);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  };
+
+  drawClawArm(true);
+  drawClawArm(false);
+
+  // 5. Expressive terrified / angry face
+  // Rosy cheeks
+  ctx.save();
+  ctx.fillStyle = 'rgba(251, 113, 133, 0.65)';
+  ctx.beginPath();
+  ctx.ellipse(-10, -8, 5, 4, 0, 0, Math.PI * 2);
+  ctx.ellipse(10, -7, 5, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Wide popping round eyes
+  const eyePupilShift = Math.sin(time * 6) * 1.2;
+  const drawEye = (ex: number, ey: number, r: number) => {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.strokeStyle = '#18181B';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.arc(ex, ey, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Iris & pupil
+    ctx.fillStyle = '#38BDF8';
+    ctx.beginPath();
+    ctx.arc(ex + eyePupilShift * 0.4, ey, r * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#0F172A';
+    ctx.beginPath();
+    ctx.arc(ex + eyePupilShift * 0.5, ey, r * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tiny white highlight
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(ex + eyePupilShift * 0.3 - 1.2, ey - 1.2, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  drawEye(-5, -17, 6.2);
+  drawEye(7, -16, 6.5);
+
+  // Furrowed sharp black eyebrows
+  ctx.strokeStyle = '#111827';
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-11, -22);
+  ctx.lineTo(-2, -20);
+  ctx.moveTo(13, -21);
+  ctx.lineTo(4, -19);
+  ctx.stroke();
+
+  // Pointy carrot-like orange-red nose
+  ctx.fillStyle = '#EA580C';
+  ctx.strokeStyle = '#991B1B';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(0, -14);
+  ctx.quadraticCurveTo(8, -13, 13, -11);
+  ctx.quadraticCurveTo(6, -8, 1, -9);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Gaping roaring mouth with 2 square white cartoon teeth
+  ctx.fillStyle = '#450A0A';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-7, -6);
+  ctx.quadraticCurveTo(0, -9, 7, -6);
+  ctx.quadraticCurveTo(6, 4, 0, 5);
+  ctx.quadraticCurveTo(-6, 4, -7, -6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Pink tongue inside
+  ctx.fillStyle = '#F43F5E';
+  ctx.beginPath();
+  ctx.arc(0, 3, 3.5, Math.PI, Math.PI * 2);
+  ctx.fill();
+
+  // Two square white cartoon teeth sticking down from upper lip
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#18181B';
+  ctx.lineWidth = 1.4;
+  ctx.fillRect(-4, -7, 3.5, 4);
+  ctx.strokeRect(-4, -7, 3.5, 4);
+  ctx.fillRect(0.5, -7, 3.5, 4);
+  ctx.strokeRect(0.5, -7, 3.5, 4);
+
+  ctx.restore();
+}
+
 function drawNocniZavejnik(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -35427,6 +36318,7 @@ function drawBakchusSPivnimSoudkem(
 (Lada as any).drawLedovySkritek = drawLedovySkritek;
 (Lada as any).drawTrikralovyKolednik = drawTrikralovyKolednik;
 (Lada as any).drawChumelenice = drawChumelenice;
+(Lada as any).drawBarbucha = drawBarbucha;
 (Lada as any).drawNocniZavejnik = drawNocniZavejnik;
 (Lada as any).drawMrazivyHavran = drawMrazivyHavran;
 (Lada as any).drawObriSnehulak = drawObriSnehulak;
@@ -35500,6 +36392,7 @@ export {
   drawLedovySkritek,
   drawTrikralovyKolednik,
   drawChumelenice,
+  drawBarbucha,
   drawNocniZavejnik,
   drawMrazivyHavran,
   drawObriSnehulak,

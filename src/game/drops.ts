@@ -808,6 +808,7 @@ export interface DropSpawnOptions {
   isHeavyAnchor?: boolean;
   isMercyDrop?: boolean;
   skipConsolidation?: boolean;
+  skipDiversion?: boolean;
   text?: string;
   textColor?: string;
 }
