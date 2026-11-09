@@ -811,6 +811,7 @@ export interface DropSpawnOptions {
   skipDiversion?: boolean;
   text?: string;
   textColor?: string;
+  rewardWeapon?: string;
 }
 
 /**
@@ -876,6 +877,8 @@ export function createDropInstance(
     : (isHealingDrop(type) ? FOOD_DROP_EXPIRATION : type === 'soul' ? SOUL_DROP_EXPIRATION : undefined);
   drop.isHeavyAnchor = opts.isHeavyAnchor || type === 'big_pouch' || type === 'gingerbread_stash';
   drop.isMercyDrop = opts.isMercyDrop;
+  if (opts.text) (drop as any).text = opts.text;
+  if ((opts as any).rewardWeapon) (drop as any).rewardWeapon = (opts as any).rewardWeapon;
   clampToMarchArenaBounds(drop, 28);
   return drop;
 }

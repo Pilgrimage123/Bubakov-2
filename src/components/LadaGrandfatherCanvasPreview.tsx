@@ -11,6 +11,7 @@ export interface LadaGrandfatherCanvasPreviewProps {
   isMoving?: boolean;
   facingDir?: number;
   scale?: number;
+  state?: 'walking' | 'waiting' | 'interacting';
   onClick?: () => void;
 }
 
@@ -24,6 +25,7 @@ export const LadaGrandfatherCanvasPreview: React.FC<LadaGrandfatherCanvasPreview
   isMoving = false,
   facingDir = 1,
   scale: customScale,
+  state,
   onClick,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -58,7 +60,8 @@ export const LadaGrandfatherCanvasPreview: React.FC<LadaGrandfatherCanvasPreview
         isMoving,
         facingDir,
         isInteracting,
-        scale
+        scale,
+        state
       );
 
       animId = requestAnimationFrame(render);
@@ -66,7 +69,7 @@ export const LadaGrandfatherCanvasPreview: React.FC<LadaGrandfatherCanvasPreview
 
     animId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animId);
-  }, [w, h, scale, isMoving, isInteracting, facingDir]);
+  }, [w, h, scale, isMoving, isInteracting, facingDir, state]);
 
   return (
     <canvas

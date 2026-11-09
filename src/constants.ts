@@ -122,6 +122,8 @@ var ENEMY_POINTS = {
 	hrobnik: 103,
 	bubak: 229,
 	barbucha: 350,
+	certova_babicka: 3500,
+	zakleta_princezna: 2000,
 	hromotluk: 274,
 	stodolnik: 187,
 	cerny_pes: 178,

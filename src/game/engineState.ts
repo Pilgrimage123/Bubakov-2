@@ -169,6 +169,17 @@ export interface EngineState {
   activeRareOverlay: { type: string; timer: number; title: string; subtitle: string } | null;
   slivoviceVapor: { x: number; y: number; dirAngle: number; life: number } | null;
   sootFootprints: Array<{ x: number; y: number; life: number; angle: number }>;
+  certovaBabickaArena?: { x: number; y: number; radius: number; active: boolean; bushAngle?: number } | null;
+  certovaBabickaGraceTimer?: number;
+  zakletaPrinceznaArena?: {
+    x: number;
+    y: number;
+    radius: number;
+    active: boolean;
+    nightStage: number;
+    timer: number;
+  } | null;
+  zakletaPrinceznaGraceTimer?: number;
   cameraTremorTimer: number;
   cameraTremorIntensity?: number;
   hitstopTimer?: number;
@@ -429,6 +440,10 @@ export function createInitialEngineState(): EngineState {
     activeRareOverlay: null,
     slivoviceVapor: null,
     sootFootprints: [],
+    certovaBabickaArena: null,
+    certovaBabickaGraceTimer: 0,
+    zakletaPrinceznaArena: null,
+    zakletaPrinceznaGraceTimer: 0,
     cameraTremorTimer: 0,
     cameraTremorIntensity: 10,
     hitstopTimer: 0,

@@ -11,6 +11,7 @@ import {
 import { GameIcon } from './GameIcon';
 import { PernicekIcon } from './PernicekIcon';
 import { GrandfatherScene } from './GrandfatherScene';
+import { LadaGrandfatherCanvasPreview } from './LadaGrandfatherCanvasPreview';
 import { sound } from '../audio';
 import { LadaCardCorners } from './LadaCardCorners';
 import { LadaFolkFlower } from './LadaHudBotanicalDecor';
@@ -525,8 +526,30 @@ export function GrandfatherShop({
             gap: 10,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <GameIcon icon="basket" size={isMobile ? 28 : 34} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div
+              style={{
+                width: isMobile ? 44 : 52,
+                height: isMobile ? 44 : 52,
+                borderRadius: '50%',
+                border: '2.5px solid #FEF3C7',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.45)',
+                overflow: 'hidden',
+                background: 'radial-gradient(circle, #78350F 0%, #3B1505 100%)',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Čertův dědeček – potulný kramář s nůší plnou pokladů"
+            >
+              <LadaGrandfatherCanvasPreview
+                size={isMobile ? 50 : 62}
+                scale={isMobile ? 0.38 : 0.46}
+                state="interacting"
+                isInteracting={true}
+              />
+            </div>
             <div>
               <h2
                 style={{

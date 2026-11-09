@@ -1743,6 +1743,122 @@ export function renderWorldHazardsAndEncounters(
     ctx.restore();
   }
 
+  // 4b. ADR 0051: Ohrada z mouky a hořícího uhlí (Čertova babička)
+  const cArena = engine.state?.certovaBabickaArena || engine.certovaBabickaArena;
+  if (cArena && cArena.active && isInView(cArena.x, cArena.y, cArena.radius + 60, camera)) {
+    ctx.save();
+    ctx.translate(cArena.x, cArena.y);
+    const time = engine.gameTime || 0;
+
+    // Glowing inner heat vignette
+    const heatGrad = ctx.createRadialGradient(0, 0, cArena.radius * 0.7, 0, 0, cArena.radius);
+    heatGrad.addColorStop(0, 'rgba(239, 68, 68, 0)');
+    heatGrad.addColorStop(0.7, 'rgba(249, 115, 22, 0.08)');
+    heatGrad.addColorStop(1, 'rgba(239, 68, 68, 0.22)');
+    ctx.fillStyle = heatGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, cArena.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spilled flour outer boundary ring
+    ctx.strokeStyle = '#F8FAFC';
+    ctx.lineWidth = 14;
+    ctx.setLineDash([28, 14, 18, 10]);
+    ctx.beginPath();
+    ctx.arc(0, 0, cArena.radius - 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Burning glowing coals on the outer rim
+    ctx.strokeStyle = '#EA580C';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([8, 16, 12, 14]);
+    ctx.lineDashOffset = -time * 25;
+    ctx.beginPath();
+    ctx.arc(0, 0, cArena.radius - 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FBBF24';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([4, 20]);
+    ctx.lineDashOffset = time * 35;
+    ctx.beginPath();
+    ctx.arc(0, 0, cArena.radius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label: OHRADA Z MOUKY A UHLÍ
+    ctx.fillStyle = '#FED7AA';
+    ctx.font = 'bold 12px "Cinzel", "Crimson Text", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔥 OHRADA Z MOUKY A HOŘÍCÍHO UHLÍ 🔥', 0, -cArena.radius - 14);
+    ctx.restore();
+  }
+
+  // 4c. ADR 0052: Hřbitovní plot se svícemi (Zakletá princezna)
+  const pArena = engine.state?.zakletaPrinceznaArena || engine.zakletaPrinceznaArena;
+  if (pArena && pArena.active && isInView(pArena.x, pArena.y, pArena.radius + 60, camera)) {
+    ctx.save();
+    ctx.translate(pArena.x, pArena.y);
+    const time = engine.gameTime || 0;
+
+    // Glowing graveyard violet/cold vignette
+    const coldGrad = ctx.createRadialGradient(0, 0, pArena.radius * 0.65, 0, 0, pArena.radius);
+    coldGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+    coldGrad.addColorStop(0.7, 'rgba(129, 140, 248, 0.08)');
+    coldGrad.addColorStop(1, 'rgba(56, 189, 248, 0.22)');
+    ctx.fillStyle = coldGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, pArena.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wrought-iron rusted cemetery fence boundary
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, pArena.radius - 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Picket spikes and fence bars
+    const picketCount = 36;
+    for (let pi = 0; pi < picketCount; pi++) {
+      const ang = (pi / picketCount) * Math.PI * 2;
+      const px = Math.cos(ang) * (pArena.radius - 4);
+      const py = Math.sin(ang) * (pArena.radius - 4);
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(ang + Math.PI / 2);
+      ctx.fillStyle = '#1E293B';
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(-2, -10, 4, 20);
+      ctx.strokeRect(-2, -10, 4, 20);
+
+      // Flickering cemetery candles every 3rd picket
+      if (pi % 3 === 0) {
+        ctx.fillStyle = '#991B1B';
+        ctx.fillRect(-3, -16, 6, 8);
+        const flameFlicker = Math.sin(time * 8 + pi) * 1.5;
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.ellipse(0, -18 + flameFlicker, 2.5, 4.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FEF08A';
+        ctx.beginPath();
+        ctx.ellipse(0, -18 + flameFlicker, 1.2, 2.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Label: HŘBITOVNÍ PLOT SE SVÍCEMI
+    const night = pArena.nightStage || 1;
+    ctx.fillStyle = '#BAE6FD';
+    ctx.font = 'bold 12px "Cinzel", "Crimson Text", serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`🕯️ HŘBITOVNÍ PLOT SE SVÍCEMI 🕯️ (NOC ${night}/3)`, 0, -pArena.radius - 14);
+    ctx.restore();
+  }
+
   // 5. Posvěcená tříkrálová křída (Holy Chalk Circle)
   const hc = engine.holyCircle;
   if (hc && hc.active && isInView(hc.x, hc.y, hc.radius + 30, camera)) {

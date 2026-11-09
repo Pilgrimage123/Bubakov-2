@@ -358,6 +358,99 @@ export function renderProjectilesAndSlashes(
         ctx.closePath();
         ctx.fill();
         ctx.restore();
+      } else if (p.visual === 'vykrajovatko') {
+        // ADR 0051: Ostré plechové vykrajovátko (prasátko / srdíčko / čert)
+        ctx.save();
+        ctx.rotate((p.angle || 0) + uiTime * 8.0);
+        const r = p.radius || 11;
+        ctx.strokeStyle = '#94A3B8';
+        ctx.fillStyle = '#E2E8F0';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(0, r * 0.8);
+        ctx.bezierCurveTo(-r * 1.2, 0, -r * 1.1, -r * 1.0, 0, -r * 0.4);
+        ctx.bezierCurveTo(r * 1.1, -r * 1.0, r * 1.2, 0, 0, r * 0.8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#64748B';
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+        ctx.restore();
+      } else if (p.visual === 'horka_buchta') {
+        // ADR 0051: Křupavá horká pocukrovaná buchta
+        ctx.save();
+        ctx.rotate((p.angle || 0));
+        const r = p.radius || 14;
+        ctx.fillStyle = '#D97706';
+        ctx.strokeStyle = '#18181B';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        if (typeof (ctx as any).roundRect === 'function') {
+          (ctx as any).roundRect(-r, -r * 0.8, r * 2, r * 1.6, 6);
+        } else {
+          ctx.rect(-r, -r * 0.8, r * 2, r * 1.6);
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#FEF3C7';
+        ctx.beginPath();
+        ctx.ellipse(0, -r * 0.2, r * 0.7, r * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(-r * 0.4, -r * 0.35, r * 0.8, r * 0.25);
+        ctx.restore();
+      } else if (p.visual === 'perla') {
+        // ADR 0052: Třpytivá perla z roztržených korálů / Perlového náhrdelníku
+        ctx.save();
+        const r = p.radius || 10;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = p.isEnemy ? '#38BDF8' : '#60A5FA';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Iridescent pearlescent highlight
+        ctx.fillStyle = '#BAE6FD';
+        ctx.beginPath();
+        ctx.arc(-r * 0.3, -r * 0.3, r * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(-r * 0.35, -r * 0.35, r * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if (p.visual === 'kapesnicek') {
+        // ADR 0052: Královský hedvábný kapesníček s monogramem
+        ctx.save();
+        ctx.rotate((p.angle || 0) + Math.sin(uiTime * 6) * 0.25);
+        const r = p.radius || 14;
+        ctx.fillStyle = '#FDF2F8';
+        ctx.strokeStyle = '#DB2777';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-r, -r);
+        ctx.lineTo(r, -r * 0.7);
+        ctx.lineTo(r * 0.8, r);
+        ctx.lineTo(-r * 0.7, r * 0.8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Lace ruffle edge
+        ctx.strokeStyle = '#F472B6';
+        ctx.lineWidth = 1.0;
+        for (let li = -r; li <= r; li += 6) {
+          ctx.beginPath();
+          ctx.arc(li, -r, 2.5, 0, Math.PI);
+          ctx.stroke();
+        }
+        // Royal Crown monogram in center
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       } else if (p.visual === 'icicle') {
         Lada.drawIcicle(ctx, 0, 0, p.radius || 14, p.angle || Math.PI / 2);
       } else if (p.visual === 'dragon_fireball') {

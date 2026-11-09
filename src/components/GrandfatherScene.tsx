@@ -41,6 +41,12 @@ export function GrandfatherScene({
     state === 'purchasing' ||
     state === 'rerolling';
   const isMoving = state === 'reaching';
+  const grandfatherState: 'walking' | 'waiting' | 'interacting' =
+    state === 'reaching'
+      ? 'walking'
+      : state === 'idle'
+      ? 'waiting'
+      : 'interacting';
 
   return (
     <div
@@ -66,6 +72,7 @@ export function GrandfatherScene({
         scale={isMobile ? 2.0 : 2.35}
         isInteracting={isInteracting}
         isMoving={isMoving}
+        state={grandfatherState}
       />
 
       {/* Floating prompt tooltip */}

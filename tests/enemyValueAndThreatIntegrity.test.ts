@@ -6,8 +6,8 @@ import { RunDirector } from '../src/game/director';
 describe('Enemy Value, Danger, and Threat Cost Integrity', () => {
   const canonicalIds = Object.keys(ENEMIES);
 
-  it('ensures all 157 canonical enemies and legacy aliases have valid ENEMY_POINTS', () => {
-    expect(canonicalIds.length).toBe(157);
+  it('ensures all 159 canonical enemies and legacy aliases have valid ENEMY_POINTS', () => {
+    expect(canonicalIds.length).toBe(159);
 
     for (const id of canonicalIds) {
       const points = ENEMY_POINTS[id as keyof typeof ENEMY_POINTS];

@@ -94,7 +94,9 @@ export type WeaponId =
   | 'svecena_kropenka'
   | 'bylinkova_fajfka'
   | 'formansky_bic'
-  | 'splaseny_houser';
+  | 'splaseny_houser'
+  | 'bezedny_pekac'
+  | 'perlovy_nahrdelnik';
 
 export interface MilestoneChoice {
   id: string;
@@ -494,6 +496,8 @@ export interface EnemyStats {
   name: string;
   title: string;
   category: string;
+  isBoss?: boolean;
+  isMiniboss?: boolean;
   isUnholy?: boolean;
   isFlying?: boolean;
   hp: number;

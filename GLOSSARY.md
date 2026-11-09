@@ -52,6 +52,34 @@ _Avoid_: rift, portál, portal, spawner, trhlina, pekelná díra
 Těžké dýmotvorné strašidlo z kouře s divokou černou kšticí a ostrými vystřelovacími drápy (žihadly), jež vystupuje z nezapečetěné Bubácké díry; jeho velikost roste s chybějící Kuráží lovce a úspěšné zásahy jej postupně vyfukují zpět do neškodné podoby.
 _Avoid_: sněhulák, sněžný bubák, kouřové monstrum, stínový boss
 
+**Čertova babička**:
+Vzácný, postupně se zvětšující pekelný vele-boss s variabilními statistikami (3,5násobek Kuráže a hodnoty hlavního bosse dané úrovně), který se s 5% šancí vydrápe ze selhané Bubácké díry namísto Barbuchy; uvězní lovce v moučné ohradě a v průběhu 60sekundové zkoušky vytrvalosti roste z měřítka 1,35× až na gigantických 2,45×, přičemž jí postupně protrhnou šátek růžky, vyrazí ocas a z explodující boty vystřelí čertovské kopýtko.
+_Avoid_: babička, čertice, pekelná bába, boss babička
+
+**Ohrada z mouky a uhlí**:
+Dočasná neprostupná kruhová bariéra vytyčená Čertovou babičkou po jejím probuzení z Bubácké díry, jež izoluje lovce v přehledném duelu, zraňuje při pokusu o únik a pozastavuje příchod běžných vln Režiséra výpravy.
+_Avoid_: boss ring, aréna, moučný kruh, bariéra
+
+**Babiččin bezedný pekáč**:
+Legendární zbraňový artefakt získávaný z Malované almary po vyčerpání Kuráže Čertovy babičky, který v pravidelných vlnách rozmetá horké pocukrované buchty drtící okolní nepřátele a obnovující Kuráž lovce při přeběhnutí.
+_Avoid_: evoluce zbraně, super zbraň, pekáč buchet
+
+**Zakletá princezna**:
+Noční aristokratický megaboss z pohádek Boženy Němcové s variabilními statistikami (2násobek Kuráže a bodů hlavního bosse měsíce, rychlý pohyb a stálá regenerace 1 % Kuráže za sekundu), která se zjevuje výhradně v nočních fázích se vzácnou 20% šancí ze selhané Bubácké díry namísto Barbuchy; duel nabízí duální vítěznou podmínku (sražení Kuráže na 0 nebo přežití tří 20sekundových nocí do kuropění), přičemž s každým zakokrháním kohouta z princezny opadává černá kletba a mění se z uhelné kostry v živou dívku.
+_Avoid_: princezna, mrtvá nevěsta, zombie princezna, boss princezna
+
+**Hřbitovní plot se svícemi**:
+Kruhová aréna o poloměru 450 px vytyčená kovaným rezavým plotem s rozžatými hřbitovními svícemi, která izoluje lovce v duelu se Zakletou princeznou, trestá pokus o únik záhrobním mrazem a slouží jako odrazová stěna pro stovky letících perel z roztržených korálů.
+_Avoid_: plot aréna, cemetery fence, hřbitovní kruh
+
+**Společenské faux pas**:
+Dočasný 3sekundový stav způsobený dotykem letícího Královského kapesníčku Zakleté princezny, při němž lovec zrudne studem a jeho směrové ovládání se plně obrátí (inverze os pohybu).
+_Avoid_: confuse, zmatení, inverted controls, debuff trapas
+
+**Perlový náhrdelník zakleté panny**:
+Obranný zbraňový artefakt získávaný z Královského věna po odkletí Zakleté princezny, jenž při každém obdrženém zásahu lovce nebo prasknutí štítu vymrští do všech stran salvu 12 perel odrážejících se od překážek a nepřátel.
+_Avoid_: perly, perl necklace, obranný náhrdelník
+
 **Mariáš ďáblů**:
 Bojová mechanika Pekelného Čerta, kdy ze svého balíčku pravidelně tasí mariášovou kartu (Srdce, Kule, Listy, Žaludy) s tematickým útokem či vyvoláním pekelné havěti.
 _Avoid_: card attack, boss deck, spell cards
@@ -221,6 +249,14 @@ _Avoid_: mince, zlato, peníze, gold
 **Čertův dědeček**:
 Toulavý kramář a pekelník s nůší procházející herním světem, který za perníčky nabízí runová vylepšení a zbraně.
 _Avoid_: level-up nabídka, obchodník, shopkeeper
+
+**Kramářská nůše**:
+Monumentální proutěná nůše nošená na zádech Čertova dědečka na kožených popruzích, obsahující starožitné kramářské zboží, truhličku, byliny, zavěšenou bandasku, myšku Rézinku a proděravělý výplet, jímž trousí perníčky.
+_Avoid_: batoh, nákupní košík, backpack, inventář
+
+**Čertovské kulhání**:
+Asymetrická kinematika chůze Čertova dědečka skládající se z těžkého dopadu kopyta, odvalení šněrovací škorně a pružné sekundární setrvačnosti nůše.
+_Avoid_: pajdání, kolébání, waddle, kulhání bez nůše
 
 **Výprava**:
 Samostatná hratelná úroveň kampaně s uceleným časovým harmonogramem, vlastním fázováním dne, specifickou havětí a hierarchií bossů (v nabídce tvoří 24 po sobě jdoucích úrovní uzavírajících kompletní 12měsíční kalendářní cyklus od Března po Únor).

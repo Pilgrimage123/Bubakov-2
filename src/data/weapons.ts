@@ -851,6 +851,92 @@ const CANONICAL_WEAPONS: Record<string, any> = {
 	}
 };
 
+/**
+ * Speciální boss / evoluční zbraně (ADR 0051).
+ * Nejsou součástí základního 18-zbraňového arzenálu s milníky (ADR 0026),
+ * avšak jsou plně dostupné skrze proxy WEAPONS[id].
+ */
+export const SPECIAL_WEAPONS: Record<string, any> = {
+	bezedny_pekac: {
+		id: "bezedny_pekac",
+		name: "Babiččin bezedný pekáč",
+		type: "food",
+		icon: "bezedny_pekac",
+		baseDmg: 65,
+		baseCd: 5.0,
+		speed: 280,
+		desc: "Legendární zbraňový pekáč z Malované almary Čertovy babičky. Vystřelí každých 5 sekund kruhovou salvu 8 horkých buchet, jež prorážejí nepřátele a sebrání kterékoli z nich obnoví 5 Kuráže.",
+		fire: (player: any, level: number) => {
+			const w = player._firingWeapon;
+			const stats = getWeaponStats('bezedny_pekac', level, w);
+			const dmg = getWeaponDamage(player, 65) * stats.damageMult;
+			const count = 8;
+			const radius = Math.round(18 * stats.areaRadiusMult);
+			const waveTracker = { eaten: 0 };
+			for (let i = 0; i < count; i++) {
+				const angle = (i / count) * Math.PI * 2;
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle,
+					speed: 280,
+					dmg,
+					radius,
+					type: "food",
+					visual: "horka_buchta",
+					penetrate: true,
+					pierce: 99,
+					life: 1.6,
+					isBunHeal: true,
+					healAmount: 5,
+					waveTracker,
+				});
+			}
+			sound.slash();
+			return true;
+		}
+	},
+	perlovy_nahrdelnik: {
+		id: "perlovy_nahrdelnik",
+		name: "Perlový náhrdelník zakleté panny",
+		type: "magic",
+		icon: "perlovy_nahrdelnik",
+		baseDmg: 45,
+		baseCd: 4.0,
+		speed: 360,
+		desc: "Vznešený artefakt z Královského věna Zakleté princezny. Vystřelí kruhovou salvu 12 perel odrážejících se od stěn a udělujících zranění s omráčením.",
+		fire: (player: any, level: number) => {
+			const w = player._firingWeapon;
+			const stats = getWeaponStats('perlovy_nahrdelnik', level, w);
+			const dmg = getWeaponDamage(player, 45) * stats.damageMult;
+			const count = 12;
+			const radius = Math.round(12 * stats.areaRadiusMult);
+			for (let i = 0; i < count; i++) {
+				const angle = (i / count) * Math.PI * 2;
+				player.spawnProjectile({
+					x: player.x,
+					y: player.y,
+					angle,
+					speed: 360,
+					dmg,
+					radius,
+					type: "magic",
+					visual: "perla",
+					penetrate: false,
+					pierce: 3,
+					life: 3.5,
+					maxLife: 3.5,
+					isBouncingPearl: true,
+					bounces: 0,
+					stunDuration: 0.4,
+				});
+			}
+			sound.bell();
+			return true;
+		}
+	}
+};
+
 // Legacy fallbacky pro zachování zpětné kompatibility
 export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	cane: 'osikovy_prut',
@@ -874,20 +960,29 @@ export const WEAPON_LEGACY_ALIASES: Record<string, WeaponId> = {
 	houser: 'splaseny_houser',
 	wp_splaseny_houser: 'splaseny_houser',
 	splaseny_houser: 'splaseny_houser',
+	wp_bezedny_pekac: 'bezedny_pekac',
+	wp_perlovy_nahrdelnik: 'perlovy_nahrdelnik',
 };
 
 const WEAPONS: Record<string, any> = new Proxy(CANONICAL_WEAPONS, {
 	get(target, prop: string | symbol) {
 		if (typeof prop === 'string') {
 			if (prop in target) return target[prop];
+			if (prop in SPECIAL_WEAPONS) return SPECIAL_WEAPONS[prop];
 			const canonical = WEAPON_LEGACY_ALIASES[prop];
 			if (canonical && canonical in target) return target[canonical];
+			if (canonical && canonical in SPECIAL_WEAPONS) return SPECIAL_WEAPONS[canonical];
 		}
 		return (target as any)[prop];
 	},
 	has(target, prop: string | symbol) {
 		if (typeof prop === 'string') {
-			return prop in target || (prop in WEAPON_LEGACY_ALIASES && WEAPON_LEGACY_ALIASES[prop] in target);
+			return (
+				prop in target ||
+				prop in SPECIAL_WEAPONS ||
+				(prop in WEAPON_LEGACY_ALIASES &&
+					(WEAPON_LEGACY_ALIASES[prop] in target || WEAPON_LEGACY_ALIASES[prop] in SPECIAL_WEAPONS))
+			);
 		}
 		return prop in target;
 	},

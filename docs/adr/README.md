@@ -55,6 +55,9 @@ This directory records architectural decisions made for the project Bubákov.
 | [0048](0048-vyladeni-hodnoty-nepratel-a-index-hrozby-a-otravnosti.md) | Vyladění hodnoty nepřátel, kompozitní index hrozby a otravnosti |
 | [0049](0049-standardizace-trojice-utoku-bossu-a-sezonni-kanon.md) | Standardizace trojice útoků bossů, sezónní kánon a integrace bestiáře |
 | [0050](0050-vyjasneni-bubacke-diry-a-strachem-nacpany-barbucha.md) | Vyjasnění Bubácké díry, rituál pečetění a Strachem nacpaný Barbucha |
+| [0051](0051-certova-babicka-ohrada-z-mouky-a-bezedny-pekac.md) | Čertova babička, Ohrada z mouky a uhlí a Babiččin bezedný pekáč |
+| [0052](0052-zakleta-princezna-nocni-odkleti-a-kralovske-veno.md) | Zakletá princezna, Hřbitovní plot se svícemi a Královské věno |
+| [0053](0053-kinematika-vizual-a-animovane-stavy-certova-dedecka.md) | Kinematika, vizuální kodex a animované stavy Čertova dědečka s nůší |
 
 
 

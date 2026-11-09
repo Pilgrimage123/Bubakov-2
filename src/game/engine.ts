@@ -972,6 +972,7 @@ export class GameEngine {
       soulBuffTimer: 0,
       waterSoakedTimer: 0,
       slowTimer: 0,
+      fauxPasTimer: 0,
       hasSoakedCane: false,
       hromnickaPulseTimer: 0,
       hromnickaPulseRadius: 0,
@@ -1158,6 +1159,39 @@ export class GameEngine {
         }
         self.callbacks?.onSound?.('hit');
         self.callbacks?.onPlayerTakeDamage?.(hurtDmg, type);
+
+        // ADR 0052: Perlový náhrdelník zakleté panny odvetná perlová salva
+        if (this.weapons && this.weapons.some((w: any) => w.id === 'perlovy_nahrdelnik')) {
+          if (!this._pearlRetaliationCooldown || this._pearlRetaliationCooldown <= 0) {
+            this._pearlRetaliationCooldown = 1.8;
+            for (let pi = 0; pi < 12; pi++) {
+              const ang = (pi / 12) * Math.PI * 2;
+              self.state.projectiles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(ang) * 360,
+                vy: Math.sin(ang) * 360,
+                angle: ang,
+                speed: 360,
+                dmg: 45,
+                radius: 12,
+                type: 'magic',
+                visual: 'perla',
+                isEnemy: false,
+                isBouncingPearl: true,
+                bounces: 0,
+                penetrate: false,
+                pierce: 3,
+                life: 3.5,
+                maxLife: 3.5,
+                dead: false,
+                hitList: [],
+              });
+            }
+            self.callbacks?.onSound?.('swish');
+            self.emitDamageText(this.x, this.y - 45, '💎 PERLOVÁ ODVETA!', '#38BDF8', true);
+          }
+        }
 
         if (absorbed > 0 && remainingDmg <= 0) {
           self.emitDamageText(this.x, this.y - 35, 'ŠTÍT POHLTIL! 🛡️', '#38BDF8', true);
@@ -6333,6 +6367,431 @@ export class GameEngine {
               }
               self.callbacks?.onSound?.('hit');
             }
+          } else if (this.id === 'certova_babicka') {
+            // ADR 0051: Čertova babička — přírodní katastrofa v zástěře a šátku s růžky
+            this.survivalTimer = (this.survivalTimer || 0) + dt;
+
+            // 4 Fury Stages and dramatic scale growth (1.35x -> 2.45x)
+            const prevStage = this.furyStage || 1;
+            if (this.survivalTimer >= 45) {
+              this.furyStage = 4;
+              this.renderScale = 2.45;
+              if (prevStage < 4) {
+                self.emitDamageText(this.x, this.y - 65, '🔥 PLNÉ PEKLO! BABIČKA ŠÍLÍ!', '#B91C1C', true);
+                self.callbacks?.onSound?.('roar');
+              }
+            } else if (this.survivalTimer >= 30) {
+              this.furyStage = 3;
+              this.renderScale = 2.05;
+              this.pekaceShieldActive = true;
+              if (prevStage < 3) {
+                self.emitDamageText(this.x, this.y - 60, '💥 KŘÁP! BOTA EXPLODOVALA V KOPÝTKO!', '#EA580C', true);
+                self.callbacks?.onSound?.('parry');
+              }
+            } else if (this.survivalTimer >= 15) {
+              this.furyStage = 2;
+              this.renderScale = 1.70;
+              if (prevStage < 2) {
+                self.emitDamageText(this.x, this.y - 55, '😈 RŮŽKY PROTRHLY ŠÁTEK!', '#DC2626', true);
+                self.callbacks?.onSound?.('swish');
+              }
+            } else {
+              this.furyStage = 1;
+              this.renderScale = 1.35;
+            }
+            this.radius = Math.round(36 * this.renderScale);
+
+            // Movement towards player (faster as she gets angrier)
+            const speedMult = 1.0 + (this.furyStage - 1) * 0.12;
+            const currentSpeed = (this.speed || 78) * speedMult;
+            const moveDir = this.panicked ? dir + Math.PI : dir;
+            this.vx = Math.cos(moveDir) * currentSpeed;
+            this.vy = Math.sin(moveDir) * currentSpeed;
+
+            // Reduce movement while winding up rolling pin charge
+            if (this.windupTimer > 0) {
+              this.vx *= 0.15;
+              this.vy *= 0.15;
+            }
+
+            // Pan orbit rotation in Stage 3 & 4
+            if (this.pekaceShieldActive) {
+              this.orbitAngle = (this.orbitAngle || 0) + dt * 2.8;
+            }
+
+            // Screen-shake in Stage 4 on heavy hoof stomps
+            if (this.furyStage === 4) {
+              this.stepTimer = (this.stepTimer || 0) + dt;
+              if (this.stepTimer >= 0.45) {
+                this.stepTimer = 0;
+                self.state.cameraTremorTimer = Math.max(self.state.cameraTremorTimer || 0, 0.35);
+                self.state.cameraTremorIntensity = 4.0;
+              }
+            }
+
+            // Attack 1: Válečkový parní válec (Charge attack with burning ground trail)
+            this.valecCooldown = (typeof this.valecCooldown === 'number' ? this.valecCooldown : 3.0) - dt;
+            this.windupTimer = Math.max(0, (this.windupTimer || 0) - dt);
+            this.isWindup = this.windupTimer > 0;
+            this.isAttacking = this.windupTimer > 0 || (this.chargeActiveTimer || 0) > 0;
+
+            if (this.valecCooldown <= 0 && !this.isCharging && !this.isWindup) {
+              this.windupTimer = 0.8;
+              this.isWindup = true;
+              this.valecCooldown = 6.5;
+              this.isCharging = true;
+              self.callbacks?.onSound?.('swish');
+              self.emitDamageText(this.x, this.y - 50, '⚠️ NÁPŘAH: VÁLEČKOVÝ PARNÍ VÁLEC!', '#EA580C', true);
+            }
+
+            if (this.isCharging && this.windupTimer <= 0) {
+              this.isCharging = false;
+              this.chargeActiveTimer = 0.85;
+              this.chargeDir = dir;
+            }
+
+            if ((this.chargeActiveTimer || 0) > 0) {
+              this.chargeActiveTimer -= dt;
+              this.vx = Math.cos(this.chargeDir || dir) * 360;
+              this.vy = Math.sin(this.chargeDir || dir) * 360;
+
+              // Leave fire trail hazard
+              if (self.director && Array.isArray(self.director.hazards)) {
+                this.trailTimer = (this.trailTimer || 0) + dt;
+                if (this.trailTimer >= 0.12) {
+                  this.trailTimer = 0;
+                  self.director.hazards.push({
+                    id: `babicka_fire_${Date.now()}_${Math.random()}`,
+                    type: 'fire',
+                    x: this.x,
+                    y: this.y,
+                    radius: 35,
+                    duration: 3.0,
+                    maxDuration: 3.0,
+                    slowFactor: 1.0,
+                    damage: 8,
+                    sourceEnemyId: this.id,
+                  });
+                }
+              }
+            }
+
+            // Attack 2: Vykrajovátkový vějíř (Bullet hell cookie cutter spiral)
+            this.vykrajovatkoCooldown = (typeof this.vykrajovatkoCooldown === 'number' ? this.vykrajovatkoCooldown : 2.0) - dt;
+            if (this.vykrajovatkoCooldown <= 0 && !this.isAttacking) {
+              this.vykrajovatkoCooldown = this.furyStage >= 3 ? 3.2 : 4.5;
+              const count = this.furyStage >= 4 ? 14 : this.furyStage >= 3 ? 10 : 8;
+              const baseAngle = Math.random() * Math.PI * 2;
+              for (let k = 0; k < count; k++) {
+                const angle = baseAngle + (k / count) * Math.PI * 2;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(angle) * 240,
+                  vy: Math.sin(angle) * 240,
+                  angle,
+                  speed: 240,
+                  dmg: 20,
+                  radius: 11,
+                  type: 'enemy',
+                  visual: 'vykrajovatko',
+                  color: '#CBD5E1',
+                  life: 2.5,
+                  maxLife: 2.5,
+                  isEnemy: true,
+                  pushback: 18,
+                  statusText: 'VYKRAJOVÁTKO! 🍪',
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('hit');
+              self.emitDamageText(this.x, this.y - 45, '🍪 SALVA VYKRAJOVÁTEK!', '#94A3B8', true);
+            }
+
+            // Attack 3: Cukrová poleva (Icing puddle slowing player)
+            this.polevaCooldown = (typeof this.polevaCooldown === 'number' ? this.polevaCooldown : 5.0) - dt;
+            if (this.polevaCooldown <= 0) {
+              this.polevaCooldown = 6.0;
+              if (self.director && Array.isArray(self.director.hazards)) {
+                self.director.hazards.push({
+                  id: `babicka_icing_${Date.now()}_${Math.random()}`,
+                  type: 'mud',
+                  x: player.x,
+                  y: player.y,
+                  radius: 55,
+                  duration: 4.0,
+                  maxDuration: 4.0,
+                  slowFactor: 0.3,
+                  sourceEnemyId: this.id,
+                  kind: 'icing-puddle',
+                });
+                self.emitDamageText(player.x, player.y - 25, 'LEPKAVÁ POLEVA! -60% RYCHLOST', '#F8FAFC', true);
+              }
+            }
+
+            // Grandpa Bush Interaction in Stage 3 & 4
+            if (this.furyStage >= 3 && this.grandpaBush) {
+              this.grandpaBush.cooldown = Math.max(0, (this.grandpaBush.cooldown || 0) - dt);
+              const arena = self.state.certovaBabickaArena;
+              if (arena) {
+                const bushX = arena.x + Math.cos(this.grandpaBush.angle) * (arena.radius - 40);
+                const bushY = arena.y + Math.sin(this.grandpaBush.angle) * (arena.radius - 40);
+                this.grandpaBush.x = bushX;
+                this.grandpaBush.y = bushY;
+                if (this.grandpaBush.cooldown <= 0) {
+                  this.grandpaBush.active = true;
+                  const distToPlayer = Math.hypot(player.x - bushX, player.y - bushY);
+                  if (distToPlayer < 80) {
+                    if (this.grandpaBush.giftType === 'plums') {
+                      player.hp = Math.min(player.maxHp, (player.hp || 0) + 30);
+                      self.emitDamageText(player.x, player.y - 40, '🍇 SUŠENÉ ŠVESTKY OD DĚDKA! +30 KURÁŽ', '#A855F7', true);
+                      this.grandpaBush.giftType = 'pipe';
+                    } else {
+                      player.smokeShieldTimer = 3.0;
+                      self.emitDamageText(player.x, player.y - 40, '💨 DÝM Z FAJKY! ŠTÍT 3s', '#94A3B8', true);
+                      this.grandpaBush.giftType = 'plums';
+                    }
+                    self.emitDamageText(this.x, this.y - 50, '„TY STARÝ ZRÁDCE!“ 🔥', '#DC2626', true);
+                    this.grandpaBush.cooldown = 12.0;
+                    this.grandpaBush.active = false;
+                    this.grandpaBush.angle = (this.grandpaBush.angle + Math.PI * 0.6) % (Math.PI * 2);
+                  }
+                }
+              }
+            }
+
+            // Duel Completion check: 60s survival timer or 0 Kuráž
+            if (this.survivalTimer >= 60.0 || this.hp <= 0) {
+              this.isDefeated = true;
+              this.dead = true;
+              self.state.certovaBabickaArena = null;
+              if (self.director) {
+                self.director.isCertovaBabickaDuelActive = false;
+              }
+              self.state.certovaBabickaGraceTimer = 3.0;
+
+              // Spawn Malovaná almara drop
+              self.spawnDrop('chest', this.x, this.y, { text: 'MALOVANÁ ALMARA 🎨', rewardWeapon: 'bezedny_pekac' });
+
+              if (this.hp <= 0) {
+                self.emitDamageText(this.x, this.y - 65, '🏆 HEROICKÝ TRIUMF: BABIČKA UDOLÁNA SILOU!', '#F59E0B', true);
+                for (let bi = 0; bi < 5; bi++) {
+                  self.spawnDrop('gingerbread', this.x + (Math.random() * 50 - 25), this.y + (Math.random() * 50 - 25), {
+                    size: 'giant',
+                    value: 20,
+                  });
+                }
+              } else {
+                self.emitDamageText(this.x, this.y - 65, '👵 „MŮJ KŘÍŽ! A VÁNOČKA SPÁLENÁ!“ (Zkouška dokončena)', '#FBBF24', true);
+              }
+
+              // Award Babiččin bezedný pekáč to player
+              try {
+                self.upgradeWeapon('bezedny_pekac');
+              } catch (_) {}
+            }
+          } else if (this.id === 'zakleta_princezna') {
+            // ADR 0052: Zakletá princezna — noční aristokratický megaboss
+            this.survivalTimer = (this.survivalTimer || 0) + dt;
+
+            // 1% Kuráž regen per second
+            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.01 * dt);
+
+            // 3 Nights progression (0-20s, 20-40s, 40-60s)
+            const prevNight = this.nightStage || 1;
+            if (this.survivalTimer >= 40 || this.hp <= this.maxHp * 0.33) {
+              this.nightStage = 3;
+              if (prevNight < 3) {
+                self.emitDamageText(this.x, this.y - 60, '🐓 2. KUROPĚNÍ: „JEŠTĚ JEDNU NOC, TY KŘUPANE!“ 👑🔥', '#F97316', true);
+                self.callbacks?.onSound?.('swish');
+              }
+            } else if (this.survivalTimer >= 20 || this.hp <= this.maxHp * 0.66) {
+              this.nightStage = 2;
+              if (prevNight < 2) {
+                self.emitDamageText(this.x, this.y - 60, '🐓 1. KUROPĚNÍ: „POLOVIC UŽ ZE MĚ SPADLO!“ 👑✨', '#FACC15', true);
+                self.callbacks?.onSound?.('parry');
+              }
+            } else {
+              this.nightStage = 1;
+            }
+
+            // Movement: Ethereal graceful waltz glide towards the player
+            const waltzSway = Math.sin((this.survivalTimer || 0) * 2.8) * 0.32;
+            const princessMoveDir = (this.panicked ? dir + Math.PI : dir) + waltzSway;
+            const princessSpeed = (this.speed || 125) * (this.nightStage >= 3 ? 1.15 : 1.0);
+            this.vx = Math.cos(princessMoveDir) * princessSpeed;
+            this.vy = Math.sin(princessMoveDir) * princessSpeed;
+            this.facing = this.vx < 0 ? -1 : 1;
+            this.facingX = this.facing;
+
+            if (self.state.zakletaPrinceznaArena) {
+              self.state.zakletaPrinceznaArena.nightStage = this.nightStage;
+              self.state.zakletaPrinceznaArena.timer = this.survivalTimer;
+            }
+
+            // Attack 1: Valčík kostlivých nápadníků (Rotující stěny koster)
+            this.waltzAngle = (this.waltzAngle || 0) + (this.nightStage >= 3 ? 2.5 : this.nightStage >= 2 ? 1.8 : 1.3) * dt;
+            const spokeCount = this.nightStage >= 3 ? 4 : this.nightStage >= 2 ? 3 : 2;
+            const spokeLength = 160;
+            if (player && player.hp > 0 && (!player.invulnerabilityTimer || player.invulnerabilityTimer <= 0)) {
+              for (let s = 0; s < spokeCount; s++) {
+                const sAngle = this.waltzAngle + (s / spokeCount) * Math.PI * 2;
+                const ex = this.x + Math.cos(sAngle) * spokeLength;
+                const ey = this.y + Math.sin(sAngle) * spokeLength;
+                const ldx = ex - this.x;
+                const ldy = ey - this.y;
+                const lLenSq = ldx * ldx + ldy * ldy;
+                const t = Math.max(0, Math.min(1, ((player.x - this.x) * ldx + (player.y - this.y) * ldy) / (lLenSq || 1)));
+                const projX = this.x + t * ldx;
+                const projY = this.y + t * ldy;
+                if (Math.hypot(player.x - projX, player.y - projY) < (player.radius || 20) + 14) {
+                  player.takeDamage(16, 'physical');
+                  self.emitDamageText(player.x, player.y - 30, 'VALČÍK KOSTER! -16', '#CBD5E1', true);
+                  self.callbacks?.onSound?.('hit');
+                  break;
+                }
+              }
+            }
+
+            // Attack 2: Potrhané korále (Bullet Hell odrazivých perel)
+            this.koraleCooldown = (typeof this.koraleCooldown === 'number' ? this.koraleCooldown : 2.5) - dt;
+            if (this.koraleCooldown <= 0) {
+              this.koraleCooldown = this.nightStage >= 3 ? 3.5 : 4.5;
+              const count = this.nightStage >= 3 ? 24 : this.nightStage >= 2 ? 18 : 12;
+              const baseAngle = Math.random() * Math.PI * 2;
+              for (let k = 0; k < count; k++) {
+                const angle = baseAngle + (k / count) * Math.PI * 2;
+                self.state.projectiles.push({
+                  x: this.x,
+                  y: this.y,
+                  vx: Math.cos(angle) * 260,
+                  vy: Math.sin(angle) * 260,
+                  angle,
+                  speed: 260,
+                  dmg: 18,
+                  radius: 9,
+                  type: 'magic',
+                  visual: 'perla',
+                  color: '#E0F2FE',
+                  life: 4.0,
+                  maxLife: 4.0,
+                  isEnemy: true,
+                  isBouncingPearl: true,
+                  bounces: 0,
+                  dead: false,
+                });
+              }
+              self.callbacks?.onSound?.('swish');
+              self.emitDamageText(this.x, this.y - 45, '💎 POTRHANÉ KORÁLE!', '#38BDF8', true);
+            }
+
+            // Attack 3: Královský kapesníček (Homing handkerchief -> Společenské faux pas)
+            this.kapesnicekCooldown = (typeof this.kapesnicekCooldown === 'number' ? this.kapesnicekCooldown : 6.0) - dt;
+            if (this.kapesnicekCooldown <= 0) {
+              this.kapesnicekCooldown = 8.0;
+              const angToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+              self.state.projectiles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(angToPlayer) * 150,
+                vy: Math.sin(angToPlayer) * 150,
+                angle: angToPlayer,
+                speed: 150,
+                dmg: 10,
+                radius: 14,
+                type: 'magic',
+                visual: 'kapesnicek',
+                color: '#F472B6',
+                life: 4.5,
+                maxLife: 4.5,
+                isEnemy: true,
+                isHomingHandkerchief: true,
+                dead: false,
+              });
+              self.emitDamageText(this.x, this.y - 50, '🧣 „TAK SE PŘECE PŘED DÁMOU NEUTÍKÁ!“', '#EC4899', true);
+            }
+
+            // Attack 4: Kletba modré krve (Záhrobní erby na zemi)
+            this.modraKrevCooldown = (typeof this.modraKrevCooldown === 'number' ? this.modraKrevCooldown : 4.0) - dt;
+            if (this.modraKrevCooldown <= 0 && self.director && Array.isArray(self.director.hazards)) {
+              this.modraKrevCooldown = 6.5;
+              self.director.hazards.push({
+                id: `princezna_crest_${Date.now()}_${Math.random()}`,
+                type: 'curse',
+                x: player.x,
+                y: player.y,
+                radius: 65,
+                duration: 3.5,
+                maxDuration: 3.5,
+                slowFactor: 0.8,
+                damage: 22,
+                damageInterval: 0.8,
+                kind: 'modra-krev',
+                sourceEnemyId: this.id,
+              });
+              self.emitDamageText(player.x, player.y - 25, '⚜️ KLETBA MODRÉ KRVE!', '#3B82F6', true);
+            }
+
+            // Stage 2 & 3: Padající kusy mramorové rakve
+            if (this.nightStage >= 2) {
+              this.rakevCooldown = (typeof this.rakevCooldown === 'number' ? this.rakevCooldown : 3.0) - dt;
+              if (this.rakevCooldown <= 0 && self.director && Array.isArray(self.director.hazards)) {
+                this.rakevCooldown = 5.0;
+                const rx = player.x + (Math.random() * 160 - 80);
+                const ry = player.y + (Math.random() * 160 - 80);
+                self.director.hazards.push({
+                  id: `princezna_coffin_${Date.now()}_${Math.random()}`,
+                  type: 'frost',
+                  x: rx,
+                  y: ry,
+                  radius: 45,
+                  duration: 5.0,
+                  maxDuration: 5.0,
+                  slowFactor: 0.6,
+                  damage: 20,
+                  kind: 'mramor-rakev',
+                  sourceEnemyId: this.id,
+                });
+                self.emitDamageText(rx, ry - 35, '🪨 MRAMOROVÉ KUSY RAKVE!', '#94A3B8', true);
+                self.callbacks?.onSound?.('heavyHit');
+              }
+            }
+
+            // Duel Completion check: 60s survival timer or 0 Kuráž
+            if (this.survivalTimer >= 60.0 || this.hp <= 0) {
+              this.isDefeated = true;
+              this.dead = true;
+              self.state.zakletaPrinceznaArena = null;
+              if (self.director) {
+                self.director.isZakletaPrinceznaDuelActive = false;
+              }
+              self.state.zakletaPrinceznaGraceTimer = 3.0;
+
+              // Spawn Královské věno drop
+              self.spawnDrop('chest', this.x, this.y, { text: 'KRÁLOVSKÉ VĚNO 👑', rewardWeapon: 'perlovy_nahrdelnik' });
+
+              player.hp = player.maxHp;
+              self.state.coins = (self.state.coins || 0) + 200;
+              self.emitDamageText(player.x, player.y - 45, '+200 kr. (KRÁLOVSKÉ VĚNO) 🪙', '#F59E0B', true);
+              self.emitDamageText(player.x, player.y - 25, '❤️ PLNÁ KURÁŽ OBNOVENA!', '#10B981', true);
+
+              if (this.hp <= 0) {
+                self.emitDamageText(this.x, this.y - 65, '🏆 ODKLETO SILOU: PRINCEZNA PROPUŠTĚNA ZE ZÁKROVÍ!', '#F59E0B', true);
+                for (let bi = 0; bi < 5; bi++) {
+                  self.spawnDrop('gingerbread', this.x + (Math.random() * 50 - 25), this.y + (Math.random() * 50 - 25), {
+                    size: 'giant',
+                    value: 20,
+                  });
+                }
+              } else {
+                self.emitDamageText(this.x, this.y - 65, '👑 „PÁCHNEŠ ČESNEKEM, ALE DÍKY!“ (Odkleto do kuropění)', '#38BDF8', true);
+              }
+
+              // Award Perlový náhrdelník zakleté panny to player
+              try {
+                self.upgradeWeapon('perlovy_nahrdelnik');
+              } catch (_) {}
+            }
           } else if (this.id === 'morana') {
             // Stage 2 Final Boss: Smrtka Morana — 3 authentic folklore attacks + telegraphs + effigy backlash
             const isPhase2 = this.hp <= (this.maxHp || 2500) * 0.5;
@@ -8992,6 +9451,13 @@ export class GameEngine {
     this.state.gameTime += dt;
     const player = this.state.player;
 
+    if (this.state.certovaBabickaGraceTimer > 0) {
+      this.state.certovaBabickaGraceTimer = Math.max(0, this.state.certovaBabickaGraceTimer - dt);
+    }
+    if (this.state.zakletaPrinceznaGraceTimer && this.state.zakletaPrinceznaGraceTimer > 0) {
+      this.state.zakletaPrinceznaGraceTimer = Math.max(0, this.state.zakletaPrinceznaGraceTimer - dt);
+    }
+
     if (this.state.flourStormTimer > 0) this.state.flourStormTimer -= dt;
     if (this.state.lightningFlash > 0) this.state.lightningFlash -= dt;
     if (this.state.lightningStrike) {
@@ -9143,6 +9609,15 @@ export class GameEngine {
         player.animTime += dt;
       }
 
+      // ADR 0052: Společenské faux pas (inverzní směrové ovládání)
+      if (player.fauxPasTimer > 0) {
+        moveVx = -moveVx;
+        moveVy = -moveVy;
+        player.lastDx = -player.lastDx;
+        player.lastDy = -player.lastDy;
+        player.facingX = (player.facingX === 1 ? -1 : 1) as 1 | -1;
+      }
+
       let pushX = 0;
       let pushY = 0;
       let totalResistance = 0;
@@ -9254,6 +9729,47 @@ export class GameEngine {
         player.ultCd -= dt * (1 + (this.state.meta?.bellLevel || 0) * 0.08);
       }
       if (player.invulnerabilityTimer > 0) player.invulnerabilityTimer = Math.max(0, player.invulnerabilityTimer - dt);
+      if (player.smokeShieldTimer > 0) player.smokeShieldTimer = Math.max(0, player.smokeShieldTimer - dt);
+      if (player.fauxPasTimer > 0) player.fauxPasTimer = Math.max(0, player.fauxPasTimer - dt);
+      if (player._flourRingDmgCooldown > 0) player._flourRingDmgCooldown = Math.max(0, player._flourRingDmgCooldown - dt);
+      if (player._fenceColdDmgCooldown > 0) player._fenceColdDmgCooldown = Math.max(0, player._fenceColdDmgCooldown - dt);
+      if (player._pearlRetaliationCooldown > 0) player._pearlRetaliationCooldown = Math.max(0, player._pearlRetaliationCooldown - dt);
+
+      // ADR 0051: Ohrada z mouky a uhlí (uzavřená aréna zraňující na okraji)
+      const cArena = this.state.certovaBabickaArena;
+      if (cArena && cArena.active) {
+        const d = Math.hypot(player.x - cArena.x, player.y - cArena.y);
+        const maxDist = cArena.radius - (player.radius || 24);
+        if (d > maxDist) {
+          const ang = Math.atan2(player.y - cArena.y, player.x - cArena.x);
+          player.x = cArena.x + Math.cos(ang) * (maxDist - 2);
+          player.y = cArena.y + Math.sin(ang) * (maxDist - 2);
+          if (!player._flourRingDmgCooldown || player._flourRingDmgCooldown <= 0) {
+            player.takeDamage(5, 'fire');
+            player._flourRingDmgCooldown = 0.6;
+            this.emitDamageText(player.x, player.y - 20, 'ŽHAVÝ OKRAJ! -5', '#EF4444', true);
+            this.callbacks?.onSound?.('hit');
+          }
+        }
+      }
+
+      // ADR 0052: Hřbitovní plot se svícemi (uzavřená aréna Zakleté princezny)
+      const pArena = this.state.zakletaPrinceznaArena;
+      if (pArena && pArena.active) {
+        const d = Math.hypot(player.x - pArena.x, player.y - pArena.y);
+        const maxDist = pArena.radius - (player.radius || 24);
+        if (d > maxDist) {
+          const ang = Math.atan2(player.y - pArena.y, player.x - pArena.x);
+          player.x = pArena.x + Math.cos(ang) * (maxDist - 2);
+          player.y = pArena.y + Math.sin(ang) * (maxDist - 2);
+          if (!player._fenceColdDmgCooldown || player._fenceColdDmgCooldown <= 0) {
+            player.takeDamage(5, 'cold');
+            player._fenceColdDmgCooldown = 0.6;
+            this.emitDamageText(player.x, player.y - 20, 'ZÁHROBNÍ MRÁZ! -5', '#38BDF8', true);
+            this.callbacks?.onSound?.('hit');
+          }
+        }
+      }
       if (player.repulseCooldown > 0) player.repulseCooldown = Math.max(0, player.repulseCooldown - dt);
       if (player.dodgeCooldown > 0) player.dodgeCooldown -= dt;
 
@@ -9553,6 +10069,21 @@ export class GameEngine {
         }
       }
 
+      // ADR 0052: Naváděný královský kapesníček neúnavně sleduje lovce
+      if (p.isHomingHandkerchief && player && player.hp > 0) {
+        const targetAng = Math.atan2(player.y - p.y, player.x - p.x);
+        const currentAng = Math.atan2(p.vy, p.vx);
+        let diff = targetAng - currentAng;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        const turnRate = 2.8 * dt;
+        const newAng = currentAng + Math.max(-turnRate, Math.min(turnRate, diff));
+        const spd = p.speed || 150;
+        p.vx = Math.cos(newAng) * spd;
+        p.vy = Math.sin(newAng) * spd;
+        p.angle = newAng;
+      }
+
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
@@ -9577,6 +10108,8 @@ export class GameEngine {
           p.x = obsHit.x;
           p.y = obsHit.y;
           const isBouncingProj =
+            p.isBouncingPearl ||
+            p.visual === 'perla' ||
             (typeof p.bounces === 'number' && p.bounces > 0) ||
             p.visual === 'kolac' ||
             p.visual === 'gander' ||
@@ -9594,7 +10127,10 @@ export class GameEngine {
               p.vy = -p.vy;
             }
             p.angle = Math.atan2(p.vy, p.vx);
-            if (typeof p.bounces === 'number' && p.bounces > 0) {
+            if (p.isBouncingPearl) {
+              p.bounces = (p.bounces || 0) + 1;
+              if (p.bounces > 4) p.dead = true;
+            } else if (typeof p.bounces === 'number' && p.bounces > 0) {
               p.bounces--;
             }
             this.callbacks?.onSound?.('hit');
@@ -9607,6 +10143,18 @@ export class GameEngine {
 
       if (p.isEnemy) {
         if (player && player.hp > 0 && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+          if (player.smokeShieldTimer > 0) {
+            this.emitDamageText(player.x, player.y - 25, '💨 DÝM Z FAJKY ODVRÁTIL ZÁSAH!', '#94A3B8', true);
+            p.dead = true;
+            continue;
+          }
+          if (p.isHomingHandkerchief) {
+            player.fauxPasTimer = 3.0;
+            this.emitDamageText(player.x, player.y - 35, 'SPOLEČENSKÉ FAUX PAS! 😱 (INVERZNÍ CHŮZE 3s)', '#EC4899', true);
+            this.callbacks?.onSound?.('swish');
+            p.dead = true;
+            continue;
+          }
           player.takeDamage(p.dmg ?? p.damage ?? 15, p.type || 'blunt');
           if (p.soakPlayer) {
             player.waterSoakedTimer = 3.5 * Math.max(0.15, 1 - getForestDebuffReduction(this.state.meta?.forestLevel || 0));
@@ -9616,11 +10164,96 @@ export class GameEngine {
           }
           p.dead = true;
         }
+
+        // ADR 0052: Odraz perel od Hřbitovního plotu
+        if (p.isBouncingPearl && this.state.zakletaPrinceznaArena && this.state.zakletaPrinceznaArena.active) {
+          const arena = this.state.zakletaPrinceznaArena;
+          const pDist = Math.hypot(p.x - arena.x, p.y - arena.y);
+          const maxArenaDist = arena.radius - (p.radius || 10);
+          if (pDist >= maxArenaDist) {
+            const nx = (p.x - arena.x) / (pDist || 1);
+            const ny = (p.y - arena.y) / (pDist || 1);
+            const dot = p.vx * nx + p.vy * ny;
+            if (dot > 0) {
+              p.vx -= 2 * dot * nx;
+              p.vy -= 2 * dot * ny;
+              p.angle = Math.atan2(p.vy, p.vx);
+              p.x = arena.x + nx * (maxArenaDist - 2);
+              p.y = arena.y + ny * (maxArenaDist - 2);
+              p.bounces = (p.bounces || 0) + 1;
+              if (p.bounces > 4) {
+                p.dead = true;
+              }
+            }
+          }
+        }
         continue;
+      }
+
+      // ADR 0052: Odraz hráčových perel z Perlového náhrdelníku od plotu
+      if (p.isBouncingPearl && this.state.zakletaPrinceznaArena && this.state.zakletaPrinceznaArena.active) {
+        const arena = this.state.zakletaPrinceznaArena;
+        const pDist = Math.hypot(p.x - arena.x, p.y - arena.y);
+        const maxArenaDist = arena.radius - (p.radius || 10);
+        if (pDist >= maxArenaDist) {
+          const nx = (p.x - arena.x) / (pDist || 1);
+          const ny = (p.y - arena.y) / (pDist || 1);
+          const dot = p.vx * nx + p.vy * ny;
+          if (dot > 0) {
+            p.vx -= 2 * dot * nx;
+            p.vy -= 2 * dot * ny;
+            p.angle = Math.atan2(p.vy, p.vx);
+            p.x = arena.x + nx * (maxArenaDist - 2);
+            p.y = arena.y + ny * (maxArenaDist - 2);
+            p.bounces = (p.bounces || 0) + 1;
+            if (p.bounces > 4) {
+              p.dead = true;
+            }
+          }
+        }
+      }
+
+      // ADR 0051: Horká buchta léčí lovce při sebrání (max 3 buchty na salvu)
+      if (p.isBunHeal && !p.isEnemy && player && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+        const canEat = p.waveTracker ? p.waveTracker.eaten < 3 : (p._bunsEatenThisWave || 0) < 3;
+        if (canEat) {
+          if (p.waveTracker) p.waveTracker.eaten++;
+          else p._bunsEatenThisWave = (p._bunsEatenThisWave || 0) + 1;
+          player.hp = Math.min(player.maxHp, (player.hp || 0) + (p.healAmount || 5));
+          this.emitDamageText(player.x, player.y - 30, '+5 KURÁŽ (HORKÁ BUCHTA!) 🥐', '#10B981', true);
+          p.dead = true;
+          continue;
+        }
       }
 
       if (p.type === 'fire' || p.type === 'holy' || p.type === 'water' || p.type === 'ice') {
         this.interactWithEnemyHazards(p.x, p.y, (p.radius || 12) + 14, p.type);
+      }
+
+      // ADR 0051: Čertova babička 4 rotující litinové pekáče pohlcující střely před zásahem těla
+      if (!p.isEnemy) {
+        const potentialPanBosses = this.livingEnemies.length > 0 ? this.livingEnemies : this.state.enemies;
+        let blockedByPan = false;
+        for (let ei = 0; ei < potentialPanBosses.length; ei++) {
+          const e = potentialPanBosses[ei];
+          if (e.id === 'certova_babicka' && e.pekaceShieldActive && !e.dead && !e.isDefeated) {
+            const panDist = 85 * ((e.renderScale || 1.35) / 1.35);
+            for (let k = 0; k < 4; k++) {
+              const panA = (e.orbitAngle || 0) + k * (Math.PI / 2);
+              const panPx = e.x + Math.cos(panA) * panDist;
+              const panPy = e.y + Math.sin(panA) * panDist;
+              if (Math.hypot(p.x - panPx, p.y - panPy) < (p.radius || 10) + 20) {
+                this.emitDamageText(panPx, panPy - 15, 'CINK! 🍳', '#CBD5E1', true);
+                this.callbacks?.onSound?.('parry');
+                p.dead = true;
+                blockedByPan = true;
+                break;
+              }
+            }
+            if (blockedByPan) break;
+          }
+        }
+        if (blockedByPan) continue;
       }
 
       const nearby = this.spatialHash.queryCircle(p.x, p.y, p.radius + 72);
@@ -9631,6 +10264,24 @@ export class GameEngine {
         const dy = p.y - e.y;
         const reach = p.radius + e.radius;
         if (!p.hitList.includes(e) && distanceSq(p.x, p.y, e.x, e.y) < reach * reach) {
+          // ADR 0051: Čertova babička 4 rotující litinové pekáče pohlcující střely
+          if (e.id === 'certova_babicka' && e.pekaceShieldActive) {
+            const panDist = 85 * ((e.renderScale || 1.35) / 1.35);
+            let blockedByPan = false;
+            for (let k = 0; k < 4; k++) {
+              const panA = (e.orbitAngle || 0) + k * (Math.PI / 2);
+              const panPx = e.x + Math.cos(panA) * panDist;
+              const panPy = e.y + Math.sin(panA) * panDist;
+              if (Math.hypot(p.x - panPx, p.y - panPy) < (p.radius || 10) + 18) {
+                this.emitDamageText(panPx, panPy - 15, 'CINK! 🍳', '#CBD5E1', true);
+                this.callbacks?.onSound?.('parry');
+                p.dead = true;
+                blockedByPan = true;
+                break;
+              }
+            }
+            if (blockedByPan) continue;
+          }
           p.hitList.push(e);
           const baseHunger = typeof e.hunger === 'number' ? e.hunger : e.foodResist || 0;
           const red = this.state.player?.foodResistReduction || 0;
@@ -12542,6 +13193,11 @@ export class GameEngine {
                   this.emitDamageText(player.x, player.y - 80, `SVATÁ VLNA! ⛪ -${waveDmg}`, '#FEF08A', true);
                 }
               } else if (d.type === 'chest') {
+                if ((d as any).rewardWeapon) {
+                  try {
+                    this.upgradeWeapon((d as any).rewardWeapon);
+                  } catch (_) {}
+                }
                 this.callbacks?.onOpenChest?.();
               } else if (d.type === 'chasnik') {
                 this.callbacks?.onRescueChasnik?.(d.x, d.y);

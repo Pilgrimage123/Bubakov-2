@@ -1,3 +1,21 @@
+## 2026-11-09 – Čertova babička (ADR 0051), Zakletá princezna (ADR 0052) a Kinematika Čertova dědečka (ADR 0053)
+
+- **Čertova babička, Ohrada z mouky a Babiččin bezedný pekáč (`src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0051)**:
+  - Babiččin bezedný pekáč jako nová zbraň lovce: vrhá rotující litinové pekáče tvořící ochranný štít kolem lovce a deflektující nepřátelské střely na orbitální vzdálenost.
+  - Bossovský boj Čertovy babičky: útok rozháněním dřevěným válečkem na nudle, kruhová ohrada z vysypané mouky omezující arénu a salva hořících povidlových koláčů.
+  - Vytvořena dedikovaná integrační testovací sada [`tests/certovaBabickaAndBezednyPekac.test.ts`](file:///d:/bubakov/tests/certovaBabickaAndBezednyPekac.test.ts).
+- **Zakletá princezna, Noční odkletí a Královské věno (`src/game/engine.ts`, `src/render/ladaRenderer.ts`, ADR 0052)**:
+  - Kompletní procedurální 2D Canvas přemalba Zakleté princezny dle autentické kresby: zlatá koruna s rubíny, medové lokny s růží, lesními houbami a pavučinkou se zavěšeným pavoukem, fialové potrhané šaty s krémovou krajkou a mechem.
+  - Plynulý valčíkový skluz (~125 px/s), homing křivka pro Královský kapesníček a mechanika nočního odkletí s Královským věnem (truhla, perníčky, šperky).
+  - Vytvořena dedikovaná integrační testovací sada [`tests/zakletaPrinceznaAndKralovskeVeno.test.ts`](file:///d:/bubakov/tests/zakletaPrinceznaAndKralovskeVeno.test.ts).
+- **Kinematika, vizuál a animované stavy Čertova dědečka s nůší (`src/render/ladaRenderer.ts`, `src/components/GrandfatherShop.tsx`, ADR 0053)**:
+  - Třívrstvá kinematika pohybu (*Čertovské kulhání*): tvrdý dopad kopyta s prachovým obláčkem, odvalení šněrovací škorně a pružná sekundární setrvačnost kramářské nůše.
+  - 3 plnohodnotné stavy (`walking`, `waiting`, `interacting`): bafání z vyřezávané dýmky s ladovskými obláčky kouře s tušovou konturou, vyceněné křivé zuby, hřejivá krbová aura a pozdvižená ruka nabízející jarmareční perníček.
+  - Proděravělý výplet nůše a uvízlý perníček na boku (propojení s ADR 0051), kmitající myška Rézinka, svisle visící bandaska a měděný zvonec.
+  - Geometrická oprava náklonu nůše: odstraněno dřívější přepadávání nůše dozadu, těžiště a sklon nůše (+0.08 až +0.18 rad) nyní přirozeně dosedá na shrbená záda kramáře.
+  - Integrace živého Canvas portrétu do záhlaví modálu `GrandfatherShop.tsx`.
+  - Vytvořena dedikovaná integrační testovací sada [`tests/certuvDedecekAnimationAndStates.test.ts`](file:///d:/bubakov/tests/certuvDedecekAnimationAndStates.test.ts).
+
 ## 2026-11-09 – Vyjasnění Bubácké díry a Strachem nacpaný Barbucha (ADR 0050)
 
 - **Mechanika Bubácké díry a gravitační vír (`src/game/director.ts`, `src/game/engine.ts`, `src/render/renderWorldHazards.ts`, ADR 0050)**:

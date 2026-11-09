@@ -199,6 +199,8 @@ export const ENEMY_ARCHETYPE_MAP: Record<
   nocni_kobold: { archetype: 'golem', duration: '1.20s', wobble: '14deg', squashX: 1.24, squashY: 0.80, baseScale: 1.70, accentColor: '#6B7280' },
   umrlec_basista: { archetype: 'golem', duration: '1.26s', wobble: '15deg', squashX: 1.26, squashY: 0.78, baseScale: 1.80, accentColor: '#475569' },
   bakchus_s_pivnim_soudkem: { archetype: 'golem', duration: '1.34s', wobble: '16deg', squashX: 1.28, squashY: 0.75, baseScale: 1.95, accentColor: '#D97706' },
+  certova_babicka: { archetype: 'runner', duration: '0.95s', wobble: '14deg', squashX: 1.25, squashY: 0.78, baseScale: 1.85, accentColor: '#EA580C' },
+  zakleta_princezna: { archetype: 'runner', duration: '0.85s', wobble: '10deg', squashX: 1.18, squashY: 0.84, baseScale: 1.70, accentColor: '#38BDF8' },
 };
 
 // In-memory cache for baked canvas data URIs so we bake each enemy at most once

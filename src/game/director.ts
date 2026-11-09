@@ -1,5 +1,5 @@
 import type { GameLevelId, GameLevelDef, EnemyPrefixType } from '../types';
-import { getCurrentDayPhase } from '../constants';
+import { getCurrentDayPhase, ENEMY_POINTS } from '../constants';
 import { GAME_LEVELS } from '../data/levels';
 import { selectRunRozmar, type RunRozmarDef } from '../data/runArchetypes';
 import { ENEMIES, BUBAK_THREAT_COSTS } from '../data/enemies';
@@ -199,6 +199,8 @@ export interface BubackaDiraState {
   isFailed: boolean;
   playerInside: boolean;
   emergence?: number;
+  forceCertovaBabicka?: boolean;
+  forceZakletaPrincezna?: boolean;
 }
 
 export type PacingValvePhase = 'buildup' | 'peak' | 'lull' | 'telegraph' | 'ambush';
@@ -477,6 +479,8 @@ export class RunDirector {
   public hazards: ArenaHazard[] = [];
   public bubackaDira: BubackaDiraState | null = null;
   public bubackaDiraSpawned = false;
+  public isCertovaBabickaDuelActive = false;
+  public isZakletaPrinceznaDuelActive = false;
 
   public telegraphMessage: string | null = null;
   public telegraphTimer = 0;
@@ -752,6 +756,17 @@ export class RunDirector {
     }
 
     // 8. Tactical Spawning if in buildup or peak
+    // ADR 0051: During duel with Čertova babička or post-fight grace period, standard waves are paused.
+    const isDuelActive = Boolean(
+      this.isCertovaBabickaDuelActive ||
+      this.isZakletaPrinceznaDuelActive ||
+      (state.certovaBabickaGraceTimer && state.certovaBabickaGraceTimer > 0) ||
+      (state.zakletaPrinceznaGraceTimer && state.zakletaPrinceznaGraceTimer > 0)
+    );
+    if (isDuelActive) {
+      return;
+    }
+
     this.formationCooldown -= dt;
     this.nextHazardCooldown -= dt;
     this.prefixSpawnCooldown -= dt;
@@ -1911,6 +1926,24 @@ export class RunDirector {
     if (dira.timeRemaining <= 0 && dira.holdTimeRemaining > 0) {
       // Failed!
       dira.isFailed = true;
+      const currentPhase = getCurrentDayPhase(gameTime, this.levelId);
+      const isNight = currentPhase.id === 'night' || currentPhase.id === 'midnight';
+      const roll = Math.random();
+
+      // ADR 0052: 20% flat chance in night for Zakletá princezna
+      if (dira.forceZakletaPrincezna || (isNight && !dira.forceCertovaBabicka && roll < 0.20)) {
+        this.triggerTelegraph('🕯️ PŮLNOČNÍ ZÁMRAK: Ze sarkofágu vstává Zakletá princezna! 👑💀', 4.0, engine);
+        this.resolveZakletaPrinceznaSpawn(engine, dira);
+        return;
+      }
+
+      // ADR 0051: Flat 5% chance to spawn Čertova babička instead of Barbucha
+      const isBabicka = Boolean(dira.forceCertovaBabicka ?? (isNight ? (roll >= 0.20 && roll < 0.25) : (roll < 0.05)));
+      if (isBabicka) {
+        this.triggerTelegraph('🔥 SÍRA A SKOŘICE! Z DÍRY VYSTUPUJE ČERTOVA BABIČKA! 👵⚡', 4.0, engine);
+        this.resolveCertovaBabickaSpawn(engine, dira);
+        return;
+      }
       this.triggerTelegraph('⚠️ Čas vypršel! Z Bubácké díry se vyvalil Strachem nacpaný Barbucha!', 3.5, engine);
       this.resolveBubackaDiraFailure(engine, dira);
     }
@@ -1950,6 +1983,153 @@ export class RunDirector {
         });
       }
     }
+  }
+
+  private resolveCertovaBabickaSpawn(engine: any, dira: BubackaDiraState): void {
+    const player = engine.state?.player ?? engine.player;
+    const levelId: GameLevelId = engine.state?.activeLevelId ?? this.levelId ?? 0;
+    const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
+    const finalBossId = curLvl?.finalBoss?.id || (curLvl?.bosses && curLvl.bosses.length > 0 ? curLvl.bosses[curLvl.bosses.length - 1].id : null);
+    const baseBossEnemy = finalBossId ? ENEMIES[finalBossId] : null;
+    const bossHp = baseBossEnemy?.hp || 2500;
+    const bossDmg = baseBossEnemy?.damage || 35;
+    const bossPoints = (ENEMY_POINTS as any)[finalBossId || ''] || 1000;
+
+    // ADR 0051: Dynamické škálování 3,5x hlavní boss daného stage
+    const calculatedHp = Math.round(bossHp * 3.5);
+    const calculatedDamage = Math.round(bossDmg * 1.5);
+    const calculatedPoints = Math.round(bossPoints * 3.5);
+
+    // Clamping 450 px radius arena strictly inside bounds
+    const arenaRadius = 450;
+    const clampedX = Math.max(-1300, Math.min(1300, dira.x));
+    const clampedY = Math.max(-1100, Math.min(1100, dira.y));
+
+    if (engine.state) {
+      engine.state.certovaBabickaArena = {
+        x: clampedX,
+        y: clampedY,
+        radius: arenaRadius,
+        active: true,
+        bushAngle: Math.PI * 0.75,
+      };
+    }
+
+    this.isCertovaBabickaDuelActive = true;
+
+    // Purge/repel normal trash in the arena
+    if (engine.state?.enemies) {
+      for (const e of engine.state.enemies) {
+        if (!e.isBoss && !e.dead && Math.hypot(e.x - clampedX, e.y - clampedY) <= arenaRadius + 50) {
+          e.takeDamage(99999, 'fire');
+        }
+      }
+    }
+
+    const babicka = engine.spawnMonster(
+      'certova_babicka',
+      clampedX,
+      clampedY,
+      1.35,
+      true,
+      true,
+      '👵 Čertova babička'
+    );
+
+    if (babicka) {
+      babicka.hp = calculatedHp;
+      babicka.maxHp = calculatedHp;
+      babicka.damage = calculatedDamage;
+      babicka.pointValue = calculatedPoints;
+      babicka.renderScale = 1.35;
+      babicka.furyStage = 1;
+      babicka.survivalTimer = 0;
+      babicka.orbitAngle = 0;
+      babicka.pekaceShieldActive = false;
+      babicka.grandpaBush = {
+        angle: Math.PI * 0.75,
+        cooldown: 5.0,
+        active: false,
+        giftType: 'plums',
+      };
+      this.recordEnemySpawn(babicka, engine.state.gameTime);
+    }
+
+    const isPlayerBabicka = player?.type === 'babicka' || player?.type === 'granny';
+    if (isPlayerBabicka) {
+      engine.emitDamageText?.(clampedX, clampedY - 60, '„DVĚ BABIČKY NA JEDNÉ NÁVSI?! TY RATIBOŘICKÁ PODVODNICE!“ 👵⚡', '#DC2626', true);
+    } else {
+      engine.emitDamageText?.(clampedX, clampedY - 60, '„KDE JE TEN STARÝ DAREBÁK?! 15:00 – ČAS NA SVAČINU!“ 🔥', '#EA580C', true);
+    }
+  }
+
+  private resolveZakletaPrinceznaSpawn(engine: any, dira: BubackaDiraState): void {
+    const levelId: GameLevelId = engine.state?.activeLevelId ?? this.levelId ?? 0;
+    const curLvl: GameLevelDef | undefined = GAME_LEVELS[levelId];
+    const finalBossId = curLvl?.finalBoss?.id || (curLvl?.bosses && curLvl.bosses.length > 0 ? curLvl.bosses[curLvl.bosses.length - 1].id : null);
+    const baseBossEnemy = finalBossId ? ENEMIES[finalBossId] : null;
+    const bossHp = baseBossEnemy?.hp || 2500;
+    const bossDmg = baseBossEnemy?.damage || 35;
+    const bossPoints = (ENEMY_POINTS as any)[finalBossId || ''] || 1000;
+
+    // ADR 0052: Dynamické škálování 2,0x hlavní boss daného stage
+    const calculatedHp = Math.round(bossHp * 2.0);
+    const calculatedDamage = Math.round(bossDmg * 1.2);
+    const calculatedPoints = Math.round(bossPoints * 2.0);
+
+    // Clamping 450 px radius arena strictly inside bounds
+    const arenaRadius = 450;
+    const clampedX = Math.max(-1300, Math.min(1300, dira.x));
+    const clampedY = Math.max(-1100, Math.min(1100, dira.y));
+
+    if (engine.state) {
+      engine.state.zakletaPrinceznaArena = {
+        x: clampedX,
+        y: clampedY,
+        radius: arenaRadius,
+        active: true,
+        nightStage: 1,
+        timer: 0,
+      };
+    }
+
+    this.isZakletaPrinceznaDuelActive = true;
+
+    // Purge/repel normal trash in the arena
+    if (engine.state?.enemies) {
+      for (const e of engine.state.enemies) {
+        if (!e.isBoss && !e.dead && Math.hypot(e.x - clampedX, e.y - clampedY) <= arenaRadius + 50) {
+          e.takeDamage(99999, 'cold');
+        }
+      }
+    }
+
+    const princezna = engine.spawnMonster(
+      'zakleta_princezna',
+      clampedX,
+      clampedY,
+      1.45,
+      true,
+      true,
+      '👑 Zakletá princezna'
+    );
+
+    if (princezna) {
+      princezna.hp = calculatedHp;
+      princezna.maxHp = calculatedHp;
+      princezna.damage = calculatedDamage;
+      princezna.pointValue = calculatedPoints;
+      princezna.speed = 125;
+      princezna.renderScale = 1.45;
+      princezna.nightStage = 1;
+      princezna.survivalTimer = 0;
+      princezna.waltzAngle = 0;
+      princezna.waltzRadius = 140;
+      princezna.isAttacking = false;
+      this.recordEnemySpawn(princezna, engine.state.gameTime);
+    }
+
+    engine.emitDamageText?.(clampedX, clampedY - 60, '„TO SI ZE MĚ DĚLÁTE ŠOUFKY! 300 LET ČEKÁM A VLEZE MI SEM TENHLE DRNOHRYZ?!“ 👑💀', '#38BDF8', true);
   }
 
   private resolveBubackaDiraFailure(engine: any, dira: BubackaDiraState): void {
